@@ -56,11 +56,19 @@ $plugin->component = 'local_sentientia_users';
 // site admin always; otherwise same open_path tenant root; an unresolvable
 // viewer or target is refused. Refusal is error_profilenotavailable, the
 // same for a missing id as for an out-of-tenant one.
-$plugin->version   = 2026092400;  // Profile reads are tenant-bounded (N1)
+// 2026-09-24 — N1 review follow-up: the edit-user form's supervisor label
+// callback applies profile_access too (it printed name + email for any
+// posted id); list_users and exportcsv fail closed for an unresolvable
+// caller and for a missing org filter; local_sentientia_platform, whose
+// tenant class this plugin already calls unconditionally, is declared.
+$plugin->version   = 2026092401;  // N1 review: supervisor label + list fail-closed
+// 2026092400: Profile reads are tenant-bounded (N1).
 // 2026092200: Manage Users counts are tenant-bounded.
+// 2026090302: H1, signup no longer reveals whether an email exists.
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '2.7.8';
+$plugin->release   = '2.7.9';
 $plugin->dependencies = [
     'local_sentientia_org' => 2026051501,
+    'local_sentientia_platform' => ANY_VERSION,
 ];

@@ -34,7 +34,11 @@ defined('MOODLE_INTERNAL') || die();
  *   - a missing id and an out-of-tenant id raise an IDENTICAL exception,
  *     so the refusal page cannot be used to enumerate other tenants' ids;
  *   - the edit-user dynamic form, which pre-fills a user's email, employee id
- *     and dates by id, applies the same rule to tenant editors.
+ *     and dates by id, applies the same rule to tenant editors;
+ *   - the same form's supervisor autocomplete, whose label callback prints
+ *     "<full name> (<email>)" for whatever id is posted in open_supervisorid,
+ *     labels only users the editor may view, and renders a refused id and a
+ *     missing id identically (review follow-up, 2026-09-24).
  *
  * @package    local_sentientia_users
  * @category   test
@@ -61,11 +65,12 @@ final class profile_access_test extends \advanced_testcase {
      * A live user whose open_path is exactly $path (null = column NULL).
      *
      * @param string|null $path
+     * @param array $record Extra fields for the data generator (names, email).
      * @return \stdClass
      */
-    private function user_at(?string $path): \stdClass {
+    private function user_at(?string $path, array $record = []): \stdClass {
         global $DB;
-        $user = $this->getDataGenerator()->create_user();
+        $user = $this->getDataGenerator()->create_user($record);
         $DB->set_field('user', 'open_path', $path, ['id' => $user->id]);
         $user->open_path = $path;
         return $user;
@@ -126,18 +131,91 @@ final class profile_access_test extends \advanced_testcase {
     }
 
     /**
-     * A non-admin holding local/sentientia_users:edit at system context.
+     * A non-admin holding the given capabilities at system context.
      *
      * @param string $path
+     * @param string[] $caps Defaults to local/sentientia_users:edit only.
      * @return \stdClass
      */
-    private function editor_at(string $path): \stdClass {
+    private function editor_at(string $path, array $caps = ['local/sentientia_users:edit']): \stdClass {
         $editor = $this->user_at($path);
         $sysctx = \context_system::instance();
         $roleid = $this->getDataGenerator()->create_role();
-        role_change_permission($roleid, $sysctx, 'local/sentientia_users:edit', CAP_ALLOW);
+        foreach ($caps as $cap) {
+            role_change_permission($roleid, $sysctx, $cap, CAP_ALLOW);
+        }
         role_assign($roleid, $editor->id, $sysctx->id);
         return $editor;
+    }
+
+    /**
+     * Build the edit-user form the way core_form\external\dynamic_form::
+     * execute() does for a SUBMITTED payload, and return the HTML it would
+     * send back. The payload must fail validation, because that is the path
+     * on which execute() re-renders the form instead of processing it.
+     *
+     * @param array $formdata The posted fields (userid, open_supervisorid...).
+     * @return string Rendered form HTML.
+     */
+    private function render_submitted_edit_form(array $formdata): string {
+        // confirm_sesskey() reads the request, not the ajax payload.
+        $_POST['sesskey'] = sesskey();
+        $formdata += [
+            'sesskey' => sesskey(),
+            '_qf__local_sentientia_users_form_edit_user' => 1,
+        ];
+
+        $form = new form\edit_user(null, null, 'post', '', [], true, $formdata, true);
+        $form->set_data_for_dynamic_submission();
+        $this->assertTrue($form->is_submitted(), 'The probe must be read as a submission');
+        $this->assertFalse($form->is_validated(),
+            'The probe must fail validation, the path on which dynamic_form re-renders the form');
+        return $form->render();
+    }
+
+    /**
+     * The <option> the supervisor autocomplete rendered for $id, with the id
+     * itself masked, so the markup for two different ids can be compared.
+     *
+     * @param string $html Rendered form.
+     * @param int $id
+     * @return string
+     */
+    private function supervisor_option(string $html, int $id): string {
+        $this->assertSame(1, preg_match('~<select[^>]*\bname="open_supervisorid"[^>]*>(.*?)</select>~s',
+            $html, $select), 'The rendered form must contain the supervisor autocomplete');
+        $this->assertSame(1, preg_match('~<option[^>]*\bvalue="' . $id . '"[^>]*>.*?</option>~s',
+            $select[1], $option), "The posted supervisor id {$id} must be rendered as an option");
+        return str_replace((string) $id, 'ID', $option[0]);
+    }
+
+    /**
+     * A user whose names and email cannot occur anywhere else in a form.
+     *
+     * @param string|null $path
+     * @param string $tag
+     * @return \stdClass
+     */
+    private function probe_user_at(?string $path, string $tag): \stdClass {
+        return $this->user_at($path, [
+            'firstname' => $tag . 'probefirst',
+            'lastname'  => $tag . 'probelast',
+            'email'     => $tag . '.probe@example.com',
+        ]);
+    }
+
+    /**
+     * Assert that nothing identifying $user is in $html.
+     *
+     * @param \stdClass $user
+     * @param string $html
+     * @param string $case
+     */
+    private function assert_not_leaked(\stdClass $user, string $html, string $case): void {
+        foreach ([$user->email, $user->firstname, $user->lastname] as $needle) {
+            $this->assertStringNotContainsString($needle, $html,
+                "{$case}: the rendered form must not carry '{$needle}'");
+        }
     }
 
     // ─── Rule 1: own profile ────────────────────────────────────────────
@@ -367,5 +445,114 @@ final class profile_access_test extends \advanced_testcase {
             ['userid' => (int) $colleague->id], true);
         $form->set_data_for_dynamic_submission();
         $this->assertInstanceOf(form\edit_user::class, $form);
+    }
+
+    // ─── Edit-user form: the supervisor label callback ──────────────────
+    //
+    // MoodleQuickForm_autocomplete::setValue() adds every posted value as an
+    // option, and the label callback runs on each option at render time. So
+    // posting open_supervisorid=<id> with one invalid field made the
+    // re-rendered form print "<full name> (<email>)" for any id in any tenant,
+    // and print no label for a missing id. The check on the form's own userid
+    // does not stop it: the prober edits themselves (rule 1) or creates
+    // (userid=0, no target to bound).
+
+    public function test_supervisor_label_is_tenant_bounded_when_editing(): void {
+        $editor = $this->editor_at('/1');
+        $this->setUser($editor);
+        $zeea = $this->probe_user_at('/177', 'zeea');
+        $missingid = $this->missing_userid();
+
+        // The editor opens their OWN record, which rule 1 always allows, and
+        // blanks the email so validation fails and the form is re-rendered.
+        $probe = fn(int $supervisorid): string => $this->render_submitted_edit_form([
+            'userid' => (int) $editor->id,
+            'open_supervisorid' => $supervisorid,
+            'email' => '',
+        ]);
+
+        $crosshtml = $probe((int) $zeea->id);
+        $this->assert_not_leaked($zeea, $crosshtml, 'Cross-tenant supervisor id, edit mode');
+        $crossoption = $this->supervisor_option($crosshtml, (int) $zeea->id);
+        $this->assertStringNotContainsString('data-html', $crossoption);
+
+        $missingoption = $this->supervisor_option($probe($missingid), $missingid);
+        $this->assertSame($missingoption, $crossoption,
+            'An out-of-tenant supervisor id must render exactly like a missing one');
+    }
+
+    public function test_supervisor_label_is_tenant_bounded_when_creating(): void {
+        // :create alone. check_access_for_dynamic_submission() has no target
+        // to bound in create mode (userid=0), so only the callback stands in
+        // the way.
+        $creator = $this->editor_at('/1', ['local/sentientia_users:create']);
+        $this->setUser($creator);
+        $targets = [
+            'ZEEA /177'      => $this->probe_user_at('/177', 'zeea'),
+            'Public /77'     => $this->probe_user_at('/77', 'public'),
+            'look-alike /10' => $this->probe_user_at('/10', 'lookalike'),
+            'no tenant'      => $this->probe_user_at(null, 'notenant'),
+        ];
+        $missingid = $this->missing_userid();
+
+        $probe = fn(int $supervisorid): string => $this->render_submitted_edit_form([
+            'userid' => 0,
+            'open_supervisorid' => $supervisorid,
+            'email' => '',
+            'firstname' => '',
+            'lastname' => '',
+        ]);
+
+        $missingoption = $this->supervisor_option($probe($missingid), $missingid);
+        $this->assertStringNotContainsString('data-html', $missingoption);
+
+        foreach ($targets as $case => $target) {
+            $html = $probe((int) $target->id);
+            $this->assert_not_leaked($target, $html, "{$case} supervisor id, create mode");
+            $this->assertSame($missingoption, $this->supervisor_option($html, (int) $target->id),
+                "{$case}: must render exactly like a missing id");
+        }
+    }
+
+    public function test_supervisor_label_still_renders_for_same_tenant_and_for_admin(): void {
+        global $DB;
+        $colleague = $this->probe_user_at('/1/2', 'colleague');
+        $zeea = $this->probe_user_at('/177', 'zeea');
+        $gone = $this->probe_user_at('/1', 'gone');
+        $DB->set_field('user', 'deleted', 1, ['id' => $gone->id]);
+        $label = fn(\stdClass $u): string => $u->firstname . ' ' . $u->lastname . ' (' . $u->email . ')';
+
+        // Same-tenant editor: a colleague keeps the label it had before.
+        $editor = $this->editor_at('/1');
+        $this->setUser($editor);
+        $html = $this->render_submitted_edit_form([
+            'userid' => (int) $editor->id,
+            'open_supervisorid' => (int) $colleague->id,
+            'email' => '',
+        ]);
+        $this->assertStringContainsString('data-html="' . $label($colleague) . '"',
+            $this->supervisor_option($html, (int) $colleague->id),
+            'A same-tenant supervisor must keep its "name (email)" label');
+
+        // A deleted colleague gets no label, like a missing id.
+        $html = $this->render_submitted_edit_form([
+            'userid' => (int) $editor->id,
+            'open_supervisorid' => (int) $gone->id,
+            'email' => '',
+        ]);
+        $this->assert_not_leaked($gone, $html, 'Deleted same-tenant supervisor id');
+
+        // Site admin: a user in any tenant is labelled (rule 2).
+        $this->setAdminUser();
+        $html = $this->render_submitted_edit_form([
+            'userid' => 0,
+            'open_supervisorid' => (int) $zeea->id,
+            'email' => '',
+            'firstname' => '',
+            'lastname' => '',
+        ]);
+        $this->assertStringContainsString('data-html="' . $label($zeea) . '"',
+            $this->supervisor_option($html, (int) $zeea->id),
+            'A site admin must still see the label for a user in any tenant');
     }
 }

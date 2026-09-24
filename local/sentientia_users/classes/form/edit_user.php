@@ -145,13 +145,31 @@ class edit_user extends \core_form\dynamic_form {
         // manager and silently break the org chart. The new selector calls
         // `local_sentientia_users_search_supervisors` and intersects scope with
         // both the caller's tenant AND (when editing) the subject's tenant.
+        //
+        // N1 follow-up (review, 2026-09-24): the label callback below is a
+        // read-by-id entry point of its own. The autocomplete adds EVERY
+        // submitted value as an option (MoodleQuickForm_autocomplete::
+        // setValue()), and core_form\external\dynamic_form re-renders the
+        // form whenever validation fails, calling this callback on each
+        // option. Without the check, any :create or :edit holder could post
+        // open_supervisorid=<any id> plus one invalid field and read that
+        // user's full name and email from data-html, in any tenant, with a
+        // missing id showing no label (an existence oracle). So: the same
+        // profile_access rule as profile.php, and the same `false` for a
+        // refused, missing, deleted or nonsense id.
         $mgr_options = [
             'multiple' => false,
             'ajax' => 'local_sentientia_users/supervisor_selector',
             'noselectionstring' => '— No supervisor —',
             'valuehtmlcallback' => function ($userid) {
+                global $USER;
+                $userid = (int) $userid;
+                if ($userid <= 0
+                        || !\local_sentientia_users\profile_access::can_view((int) $USER->id, $userid)) {
+                    return false;
+                }
                 $user = \core_user::get_user($userid);
-                if (!$user) {
+                if (!$user || !empty($user->deleted)) {
                     return false;
                 }
                 return fullname($user) . ' (' . s($user->email) . ')';

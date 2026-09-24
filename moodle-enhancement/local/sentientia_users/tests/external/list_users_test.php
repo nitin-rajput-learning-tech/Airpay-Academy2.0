@@ -236,4 +236,68 @@ final class list_users_test extends \advanced_testcase {
         $this->assertNotContains((int) $u_other->id, $ids,
             'Default scope must keep cross-tenant users out');
     }
+
+    /**
+     * Fail closed (N1 review, 2026-09-24): an org filter naming an org that
+     * does not exist used to drop the tenant clause altogether, so a /8001
+     * caller saw every tenant. It must now fall back to the caller's tenant.
+     */
+    public function test_missing_orgid_keeps_caller_tenant_scope(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+
+        $this->seed_org('/8001', 0, 1);
+        $this->seed_org('/8002', 0, 1);
+        $missingorgid = 8999;
+        $this->assertFalse($DB->record_exists('local_sentientia_org', ['id' => $missingorgid]),
+            'precondition: the probe org id must not exist');
+
+        $caller = $this->user_at_path('/8001');
+        $this->grant_cap($caller, 'local/sentientia_users:view');
+        $this->setUser($caller);
+
+        $u_own_tenant = $this->user_at_path('/8001/9001');
+        $u_other      = $this->user_at_path('/8002');
+
+        foreach (['orgid', 'org_l1', 'org_l3'] as $key) {
+            $r = $this->call([
+                'filters' => json_encode([$key => $missingorgid, 'status' => 'all']),
+                'perpage' => 50,
+            ]);
+            $ids = array_column($r['rows'], 'id');
+            $this->assertContains((int) $u_own_tenant->id, $ids,
+                "{$key}={$missingorgid}: the caller's own tenant must still be listed");
+            $this->assertNotContains((int) $u_other->id, $ids,
+                "{$key}={$missingorgid}: a missing org must not lift the tenant boundary");
+        }
+    }
+
+    /**
+     * Fail closed (N1 review, 2026-09-24): a non-siteadmin :view holder whose
+     * open_path has no tenant root used to get NO tenant clause, and so listed
+     * every tenant's users. They must now list nobody, as
+     * tenant::path_filter() already does for them.
+     */
+    public function test_unresolvable_caller_lists_nobody(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+
+        $this->user_at_path('/8001');
+        $this->user_at_path('/8002/9002');
+
+        foreach ([null, '', '/', '/abc'] as $path) {
+            $caller = $this->getDataGenerator()->create_user();
+            $DB->set_field('user', 'open_path', $path, ['id' => $caller->id]);
+            $caller->open_path = $path;
+            $this->grant_cap($caller, 'local/sentientia_users:view');
+            $this->setUser($caller);
+
+            $label = $path === null ? 'NULL' : "'{$path}'";
+            $r = $this->call(['filters' => json_encode(['status' => 'all']), 'perpage' => 50]);
+            $this->assertSame(0, (int) $r['total'], "Caller at {$label} must list nobody");
+            $this->assertSame([], $r['rows'], "Caller at {$label} must get no rows");
+        }
+    }
 }

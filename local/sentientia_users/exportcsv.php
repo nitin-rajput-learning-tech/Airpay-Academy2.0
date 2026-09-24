@@ -45,25 +45,34 @@ $orderby = "u.{$sort} {$sortdir}, u.id ASC";
 $where = ['u.deleted = 0', 'u.id > 2'];
 $sqlparams = [];
 
+// Fail closed, exactly as list_users (N1 review, 2026-09-24): a filter_orgid
+// naming a missing or path-less org used to skip the tenant clause, and so
+// did a caller with no tenant root; either exported every tenant's users.
+// A missing org now falls through to the caller's own tenant, and an
+// unresolvable caller exports nothing.
+$org = null;
 if ($orgid > 0) {
     $org = $DB->get_record('local_sentientia_org', ['id' => $orgid], 'path');
-    if ($org && !empty($org->path)) {
-        // Same tenant boundary check as list_users — non-siteadmin can only
-        // export from their own tenant tree.
-        if (!is_siteadmin()) {
-            $caller_parts = explode('/', trim($USER->open_path ?? '', '/'));
-            $caller_top = isset($caller_parts[0]) && ctype_digit($caller_parts[0])
-                ? '/' . (int) $caller_parts[0] : '';
-            $is_inside = ($org->path === $caller_top)
-                || (strpos($org->path, $caller_top . '/') === 0);
-            if (empty($caller_top) || !$is_inside) {
-                throw new \moodle_exception('outoftenant', 'local_sentientia_users');
-            }
-        }
-        $where[] = '(u.open_path = :orgexact OR u.open_path LIKE :orgprefix)';
-        $sqlparams['orgexact']  = rtrim($org->path, '/');
-        $sqlparams['orgprefix'] = $DB->sql_like_escape(rtrim($org->path, '/') . '/') . '%';
+    if (!$org || empty($org->path)) {
+        $org = null;
     }
+}
+if ($org) {
+    // Same tenant boundary check as list_users — non-siteadmin can only
+    // export from their own tenant tree.
+    if (!is_siteadmin()) {
+        $caller_parts = explode('/', trim($USER->open_path ?? '', '/'));
+        $caller_top = isset($caller_parts[0]) && ctype_digit($caller_parts[0])
+            ? '/' . (int) $caller_parts[0] : '';
+        $is_inside = ($org->path === $caller_top)
+            || (strpos($org->path, $caller_top . '/') === 0);
+        if (empty($caller_top) || !$is_inside) {
+            throw new \moodle_exception('outoftenant', 'local_sentientia_users');
+        }
+    }
+    $where[] = '(u.open_path = :orgexact OR u.open_path LIKE :orgprefix)';
+    $sqlparams['orgexact']  = rtrim($org->path, '/');
+    $sqlparams['orgprefix'] = $DB->sql_like_escape(rtrim($org->path, '/') . '/') . '%';
 } else if (!is_siteadmin()) {
     $parts = explode('/', trim($USER->open_path ?? '', '/'));
     $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
@@ -71,6 +80,9 @@ if ($orgid > 0) {
         $where[] = '(u.open_path = :userorgexact OR u.open_path LIKE :userorgprefix)';
         $sqlparams['userorgexact']  = '/' . $top;
         $sqlparams['userorgprefix'] = $DB->sql_like_escape('/' . $top . '/') . '%';
+    } else {
+        // No tenant root: never guess one. Export nothing.
+        $where[] = '1=0';
     }
 }
 
