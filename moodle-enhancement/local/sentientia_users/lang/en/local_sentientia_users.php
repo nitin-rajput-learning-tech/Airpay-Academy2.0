@@ -83,6 +83,9 @@ $string['usernametaken'] = 'This username is already taken. Please choose anothe
 $string['emailtaken'] = 'This email is already registered. Please use a different email.';
 $string['cannotdeleteself'] = 'You cannot delete your own account.';
 $string['cannotdeletesystemuser'] = 'System users cannot be deleted.';
+// N1 (2026-09-24): the one refusal for another user's profile. Shown alike for
+// an out-of-tenant id and an id that does not exist, so it never confirms either.
+$string['error_profilenotavailable'] = 'This profile is not available to you.';
 $string['confirmdelete'] = 'Are you sure you want to delete {$a}? This cannot be undone.';
 $string['confirmsuspend'] = 'Are you sure you want to suspend {$a}? They will be unable to log in.';
 $string['confirmactivate'] = 'Are you sure you want to reactivate {$a}?';

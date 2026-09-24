@@ -15,11 +15,25 @@ require_once($CFG->libdir . '/gdlib.php');
 require_login();
 
 $userid = optional_param('id', $USER->id, PARAM_INT);
-$user = $DB->get_record('user', ['id' => $userid, 'deleted' => 0],
-    '*', MUST_EXIST);
+
+// Page URL and a system context come first, so a refusal below renders as a
+// normal error page rather than one carrying a "$PAGE->context was not set"
+// notice. The user context is set only after the check: context_user::
+// instance() on a missing id throws its own error, which would tell a
+// missing id apart from a refused one.
+$context_sys = context_system::instance();
+$PAGE->set_context($context_sys);
+$PAGE->set_url(new moodle_url('/local/sentientia_users/photo.php',
+    ['id' => $userid]));
+
+// N1 (UAT 2026-09-24): tenant boundary first, before the record is loaded.
+// The old MUST_EXIST load ran ahead of the auth check, so a missing id and a
+// refused id gave different errors. Both now raise the same exception; the
+// edit-cap check below still applies on top, within the tenant.
+$user = \local_sentientia_users\profile_access::get_viewable_user(
+    (int) $USER->id, (int) $userid);
 
 // Auth: self OR has edit cap.
-$context_sys = context_system::instance();
 $is_self = ((int) $userid === (int) $USER->id);
 if (!$is_self && !has_capability('local/sentientia_users:edit', $context_sys)
     && !is_siteadmin()) {
@@ -27,8 +41,6 @@ if (!$is_self && !has_capability('local/sentientia_users:edit', $context_sys)
         'change another user\'s photo');
 }
 
-$PAGE->set_url(new moodle_url('/local/sentientia_users/photo.php',
-    ['id' => $userid]));
 $PAGE->set_context(context_user::instance($userid));
 $PAGE->set_pagelayout('standard');
 $PAGE->set_title('Change profile photo');
