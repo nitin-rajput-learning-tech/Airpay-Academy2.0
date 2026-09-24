@@ -107,3 +107,27 @@ feat/wave2-callers-* branches (merged to production 2026-05-30). DEPRECATION-SCH
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+
+## 2026-09-24 - DPDP erasure kept deleting certification records
+
+**Defect.** `local_sentientia_privacy\privacy_manager::process_deletion()` (the DPDP
+right-to-erasure flow) calls a Sentientia provider's `anonymise_data_for_user()` when it has
+one and `delete_data_for_user()` otherwise. This provider had no anonymise hook, so every
+approved erasure deleted the person's `local_sentientia_programs_users` rows: the
+certification-program enrolment and COMPLETION record (status 2 + `timecompleted`). That flow
+promises to keep completions, anonymised, against the user row it anonymises in place.
+
+**Fix.** `privacy\provider::anonymise_data_for_user()` added. Table by table:
+- `local_sentientia_programs_users`: kept unchanged, keyed to the anonymised user. Every column
+  is record data (ids, status code, timestamps); no free text to blank. In-progress enrolments
+  are kept too (`currentlevelid` is part of the record).
+- `local_sentientia_programs`, `_levels`, `_courses`: no user column; nothing to do.
+
+The method body is deliberately empty: its existence is what routes the DPDP flow away from
+the delete. `delete_data_for_user()` is unchanged and stays core's full erasure.
+
+**Test.** `tests/privacy_anonymise_test.php`: the rows (and their status, completion time,
+level) survive `anonymise_data_for_user()`; `delete_data_for_user()` still erases them and only
+them. Written, not yet run (shared test DB being rebuilt). No version bump (class change only).
+Both trees.

@@ -27,6 +27,32 @@ use core_privacy\local\request\writer;
  * - For challenges they CREATED: anonymise `createdby = 0` rather
  *   than delete (other users may have joined).
  *
+ * **DPDP erasure (local_sentientia_privacy\privacy_manager), audited
+ * 2026-09-24.** That flow calls a provider's anonymise_data_for_user() when
+ * it has one, to KEEP learning and compliance records keyed to the user row
+ * it anonymises in place, and delete_data_for_user() otherwise. This provider
+ * deliberately has NO anonymise hook, so the DPDP flow erases here exactly as
+ * core does. Table by table:
+ * - attempts: ERASED. A voluntary gamification opt-in, not a learning or
+ *   compliance record: the learner can delete their own row at any time
+ *   (challenge_engine::leave(), even after completing), and `progress` is
+ *   only a count derived from core data (course completions, quiz attempts,
+ *   days with course access); the completions and attempts themselves are
+ *   the learning records, which the flow keeps in core's own tables. The
+ *   flow's Step 2 already erases the rest of gamification (points log,
+ *   badges, streaks), and `pointsawarded` is the same kind of data. Keeping
+ *   the rows would also put "Deleted User"
+ *   back on the public leaderboard: leaderboard_manager rebuilds it from
+ *   attempts every 15 minutes and does not filter deleted users.
+ * - leaderboard: ERASED. Derived; recomputed from attempts.
+ * - challenges (as author): KEPT, `createdby` anonymised to 0, as above -
+ *   it is shared configuration other people have joined. `open_path` (the
+ *   creator's org path) is cleared with it; tenant scoping reads
+ *   `costcenterid`, which is untouched, so the challenge stays visible to
+ *   the same tenant.
+ * Pinned by tests/privacy_anonymise_test.php. Before adding an anonymise
+ * hook that keeps attempts, make the leaderboard rebuild skip deleted users.
+ *
  * @package local_sentientia_challenge
  */
 class provider implements

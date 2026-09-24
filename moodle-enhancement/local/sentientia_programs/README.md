@@ -43,7 +43,11 @@ php "C:/xampp/htdocs/moodle5/public/local/sentientia_programs/cli/smoke_enrol_co
 
 ## Privacy / GDPR
 
-Provider exists.
+`classes/privacy/provider.php` covers `local_sentientia_programs_users`
+(enrolment + completion). Core's erasure (`delete_data_for_user`) deletes the
+rows. The Sentientia DPDP erasure (`local_sentientia_privacy`) calls
+`anonymise_data_for_user` instead (2026-09-24), which keeps them - the
+certification record - keyed to the anonymised user row.
 
 ## Open backlog
 

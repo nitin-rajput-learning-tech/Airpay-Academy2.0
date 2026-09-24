@@ -63,3 +63,7 @@ $string['privacy:metadata:local_sentientia_recompletion_history'] = 'Per-user re
 $string['privacy:metadata:local_sentientia_recompletion_history:userid'] = 'The user whose completion was reset';
 $string['privacy:metadata:local_sentientia_recompletion_history:courseid'] = 'The course that was reset';
 $string['privacy:metadata:local_sentientia_recompletion_history:reason'] = 'Why the reset fired';
+$string['privacy:metadata:local_sentientia_recompletion_history:reset_by_userid'] = 'The administrator who reset another person\'s completion (empty when the scheduled task did it)';
+$string['privacy:metadata:local_sentientia_recompletion_history:previous_timecompleted'] = 'When the user last completed the course before it was reset';
+$string['privacy:metadata:local_sentientia_recompletion_history:timecreated'] = 'When the reset happened';
+$string['privacy:export:resets_performed'] = 'Resets I performed';

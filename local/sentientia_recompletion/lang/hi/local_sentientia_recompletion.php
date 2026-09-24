@@ -66,3 +66,7 @@ $string['privacy:metadata:local_sentientia_recompletion_history']          = '�
 $string['privacy:metadata:local_sentientia_recompletion_history:userid']   = 'जिस यूज़र की पूर्णता रीसेट की गई';
 $string['privacy:metadata:local_sentientia_recompletion_history:courseid'] = 'जो कोर्स रीसेट किया गया';
 $string['privacy:metadata:local_sentientia_recompletion_history:reason']   = 'रीसेट क्यों ट्रिगर हुआ';
+$string['privacy:metadata:local_sentientia_recompletion_history:reset_by_userid'] = 'वह एडमिन जिसने किसी और की पूर्णता रीसेट की (शेड्यूल्ड टास्क द्वारा किए गए रीसेट के लिए खाली)';
+$string['privacy:metadata:local_sentientia_recompletion_history:previous_timecompleted'] = 'रीसेट से पहले यूज़र ने कोर्स आख़िरी बार कब पूरा किया था';
+$string['privacy:metadata:local_sentientia_recompletion_history:timecreated'] = 'रीसेट कब हुआ';
+$string['privacy:export:resets_performed'] = 'मेरे द्वारा किए गए रीसेट';
