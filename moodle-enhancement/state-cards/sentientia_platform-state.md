@@ -181,3 +181,51 @@ Version 2026092400 (test-only change; no upgrade step).
   `local_sentientia_manager/member.php`, `local_sentientia_skills/index.php` and
   `theme_sentientia/classes/output/core_renderer.php`. `theme_airpayux`'s `core_renderer.php` has the
   same bug and is outside the scan (not a `sentientia*` component), so nothing flags it.
+
+
+## 2026-09-24 - Privacy provider now covers the ADR-017 user-type tables (erasure fix)
+
+Defect: `classes/privacy/provider.php` covered only the two feature-flag tables. The five tables in
+`schema\user_type_tables::TABLES` (`local_sentientia_user_type` and the employee / consumer /
+partner-employee / operator profiles) are created by `user_type_tables::ensure()` from
+`db/install.php` and upgrade step 2026052801. The moodle-enhancement tree's `install.xml` does not
+list them, so `privacy_coverage_test` could not see them. Nothing exported or erased them: a
+public-signup learner's consumer profile and classification row survived a DPDP erasure that
+`local_sentientia_privacy` reported as 'completed'.
+
+Fix (both trees, class and lang changes only, no version bump):
+- `get_metadata()` declares all five tables with their personal columns. There are 35 new
+  `privacy:metadata:*` strings, in en and hi.
+- `get_contexts_for_userid()` reports the system context only when the user has data here: a flag or
+  audit row they wrote, a user-type row of their own, or another person's profile that names them as
+  manager. It used to report the system context for everyone.
+- `get_users_in_context()` lists the row owners and the people named in `manager_userid` /
+  `partner_manager_userid`. `export_user_data()` exports the subject's own rows. For managers it
+  exports only a count of the profiles that name them; the reports' own fields are not included.
+- On erasure (`delete_data_for_user` / `_for_users`), the subject's own rows are deleted. Where
+  another person's profile names the subject as manager, only that column is set to NULL. Both
+  columns are nullable in `install.xml`, in `ensure()` and in the upgrade step. The other person's
+  row is kept. `delete_data_for_all_users_in_context(system)` empties the five tables. There is no
+  `anonymise_data_for_user()`: these rows are personal data, not learning, compliance or financial
+  records, so the DPDP flow's `delete_data_for_user()` path is correct here.
+- Each access checks the table with `table_exists()`. A table the site lacks is skipped and never
+  throws, because a throwing provider marks the whole erasure 'partial'.
+- `privacy_coverage_test` now also reads tables that a plugin lists in a `classes/schema/*::TABLES`
+  constant, using their live DB columns. Only explicitly listed tables count, so this adds no false
+  positives. `manager_userid` and `partner_manager_userid` were added to `USER_COLUMNS`; only this
+  plugin uses them.
+- New `tests/privacy_provider_test.php` creates the tables through `ensure()` if they are missing
+  and seeds all five. It asserts: metadata names every table and each declared field is a real
+  column with a lang string; contexts and userlists include owners and managers; erasure removes
+  the subject's rows and sets the manager link on other people's rows to NULL; nothing happens in
+  a non-system context; a dropped table never throws (the test re-creates it in `finally`); the
+  export has the expected shape.
+
+Verified without PHPUnit (the shared test DB must not be re-initialised). The provider ran in a
+stub harness against SQLite with the real column definitions. It passed all 161 checks in both
+trees. The original provider fails more than 40 of those checks. The PHPUnit tests have NOT been
+run yet.
+
+Still open (outside this change): `db/install.xml` differs between the trees. The top-level
+`local/` copy declares the five tables and the moodle-enhancement copy does not. This is baselined
+drift. `db/install.php`'s docblock describes only the moodle-enhancement version.

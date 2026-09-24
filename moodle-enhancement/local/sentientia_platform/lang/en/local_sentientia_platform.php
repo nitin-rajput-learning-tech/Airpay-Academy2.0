@@ -122,3 +122,42 @@ $string['privacy:metadata:flag_audit:old_value']        = 'The flag value before
 $string['privacy:metadata:flag_audit:new_value']        = 'The flag value after the change';
 $string['privacy:metadata:flag_audit:reason']           = 'The reason recorded for the change';
 $string['privacy:metadata:flag_audit:timecreated']      = 'When the change was made';
+
+// Privacy provider (2026-09-24) — the ADR-017 user-type tables. Erasure
+// deletes the person's own rows and clears the manager link on anyone
+// else's profile that names them.
+$string['privacy:metadata:user_type']                     = 'The account type of each person (employee, consumer, partner employee or operator), recorded when the account is created';
+$string['privacy:metadata:user_type:userid']              = 'The person the account type belongs to';
+$string['privacy:metadata:user_type:user_type']           = 'The account type';
+$string['privacy:metadata:user_type:provisioning_source'] = 'How the account was created, for example public signup or HR sync';
+$string['privacy:metadata:user_type:provisioned_at']      = 'When the account was created';
+$string['privacy:metadata:employee_profile']                  = 'The employee profile of staff at a customer organisation';
+$string['privacy:metadata:employee_profile:userid']           = 'The employee the profile belongs to';
+$string['privacy:metadata:employee_profile:employee_id']      = 'The employee number';
+$string['privacy:metadata:employee_profile:department']       = 'The department';
+$string['privacy:metadata:employee_profile:job_title']        = 'The job title';
+$string['privacy:metadata:employee_profile:manager_userid']   = 'The person recorded as the employee\'s manager';
+$string['privacy:metadata:employee_profile:hire_date']        = 'The date the employee joined';
+$string['privacy:metadata:employee_profile:cost_center_path'] = 'The organisation unit the employee belonged to when the account was created';
+$string['privacy:metadata:consumer_profile']                     = 'The profile of a learner who signed up publicly';
+$string['privacy:metadata:consumer_profile:userid']              = 'The learner the profile belongs to';
+$string['privacy:metadata:consumer_profile:interests_json']      = 'The topics the learner chose';
+$string['privacy:metadata:consumer_profile:weekly_goal']         = 'The learner\'s weekly learning goal';
+$string['privacy:metadata:consumer_profile:referral_source']     = 'How the learner heard about the platform';
+$string['privacy:metadata:consumer_profile:consent_marketing']   = 'Whether the learner agreed to receive marketing messages';
+$string['privacy:metadata:consumer_profile:consent_leaderboard'] = 'Whether the learner agreed to appear on leaderboards';
+$string['privacy:metadata:consumer_profile:payment_history_url'] = 'A link to the learner\'s payment history';
+$string['privacy:metadata:partner_employee_profile']                        = 'The profile of staff at a partner organisation';
+$string['privacy:metadata:partner_employee_profile:userid']                 = 'The person the profile belongs to';
+$string['privacy:metadata:partner_employee_profile:customer_id']            = 'The partner organisation the person works for';
+$string['privacy:metadata:partner_employee_profile:partner_employee_id']    = 'The person\'s employee number at the partner organisation';
+$string['privacy:metadata:partner_employee_profile:partner_department']     = 'The person\'s department at the partner organisation';
+$string['privacy:metadata:partner_employee_profile:partner_job_title']      = 'The person\'s job title at the partner organisation';
+$string['privacy:metadata:partner_employee_profile:partner_manager_userid'] = 'The person recorded as their manager at the partner organisation';
+$string['privacy:metadata:partner_employee_profile:partner_hire_date']      = 'The date the person joined the partner organisation';
+$string['privacy:metadata:partner_employee_profile:cost_center_path']       = 'The organisation unit the person belonged to when the account was created';
+$string['privacy:metadata:operator_profile']                        = 'The profile of platform operators such as site administrators and support staff';
+$string['privacy:metadata:operator_profile:userid']                 = 'The operator the profile belongs to';
+$string['privacy:metadata:operator_profile:operator_role']          = 'The operator\'s role';
+$string['privacy:metadata:operator_profile:contact_phone']          = 'The operator\'s contact phone number';
+$string['privacy:metadata:operator_profile:oncall_for_customer_id'] = 'The customer organisation the operator is on call for';
