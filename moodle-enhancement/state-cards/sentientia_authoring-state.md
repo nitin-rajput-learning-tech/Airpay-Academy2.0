@@ -207,3 +207,36 @@ phpunit init gated on shared XAMPP DB per parallel-session coordination).
 Mirrored to top-level `local/` + `moodle-enhancement/local/`. Version 2026080501
 → 2026090700 (0.2.0 → 0.2.1-alpha). No schema/flag change. NOT deployed (review
 diff; live flag flips + deploy stay Nitin-gated).
+
+## 2026-09-24 — DPDP erasure anonymises instead of deleting (privacy provider)
+
+Defect (confirmed): `classes/privacy/provider.php` delete_data_for_user() and
+delete_data_for_users() DELETED the erased person's drafts (with their cards,
+questions and voiceovers via purge_drafts()) and their templates. Drafts are
+tenant-shared (draft_manager::list_for_actor() matches on costcenterid), carry
+other reviewers' notes and the published_courseid provenance of live courses;
+templates are shared tenant assets. And get_contexts_for_userid() always
+returned the system context, so local_sentientia_privacy Step 0 ran this
+erasure for EVERY DPDP request - each one deleted the tenant's work.
+
+Fix: both delete paths now anonymise in place and keep the rows -
+draft.ownerid -> 0 (NOT NULL column, 0 = nobody), draft.reviewed_by -> NULL,
+template.ownerid -> 0 (no is_builtin filter: nothing is deleted any more, so a
+built-in the person owned is anonymised too rather than left naming them).
+purge_drafts() removed (dead). get_contexts_for_userid() reports the system
+context only when the user owns a draft/template or reviewed a draft (and never
+for id 0); get_users_in_context() lists ids > 0 only. delete_data_for_all_users_in_context()
+unchanged (core system-context wipe).
+
+ownerid 0 never grants access: draft_manager::load_for_actor()/list_for_actor()
+and template_manager::load_for_actor()/list_for_actor() now require actor id > 0
+for the owner match, so a CLI / not-logged-in caller (id 0) cannot "own" every
+anonymised row across tenants; the tenant (costcenterid) match still shows an
+anonymised draft/template to its own tenant. tokens_used_today() left as is
+(a cap, not access). NEW tests/privacy_provider_test.php (5 tests: contexts only
+for owner/reviewer/template author, not a bystander or 0; single + bulk erasure
+keep drafts/cards/questions/voiceover/notes/templates with ownerid 0, clear the
+subject's reviewed_by, leave the other author's rows untouched; userlist never
+contains 0 or the erased author; id-0 actor gets no ownership) - written, NOT
+executed (shared test DB rebuild in progress). No schema, string or version
+change. Both trees.
