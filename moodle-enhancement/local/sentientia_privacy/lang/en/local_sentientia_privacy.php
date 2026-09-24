@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Privacy (DPDP)';
+$string['pluginname'] = 'Sentientia Privacy (DPDP)';
 $string['privacy:metadata'] = 'Stores privacy request records and consent logs.';
 $string['messageprovider:privacy_request'] = 'DPDP privacy request notifications';
 $string['myprivacy'] = 'My Privacy & Data';

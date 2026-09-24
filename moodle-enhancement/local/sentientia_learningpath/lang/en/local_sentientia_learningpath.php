@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Learning Paths';
+$string['pluginname'] = 'Sentientia Learning Paths';
 
 // Capabilities.
 $string['sentientia_learningpath:manage'] = 'Manage learning paths';

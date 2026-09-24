@@ -145,3 +145,12 @@ Courses section gone**. Each query now gets its own bounded fragment with a dist
 Verified on local data with the page's exact queries: 672 public learners and 6 featured courses (the
 broken query returns 0). A sweep of every file 86bb0c26f touched found no other variable whose assignment
 was removed while a use remained.
+
+
+## 2026-09-24 - White-label display name (W2-06)
+
+`pluginname` no longer carries the Airpay brand: "Airpay X" became "Sentientia X", and in Hindi
+"एयरपे" became "सेंटिएंटिया". Where one tree already had a Sentientia name it was reused, so both trees now
+agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
+Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
+white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.

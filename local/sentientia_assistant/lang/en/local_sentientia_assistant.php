@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay AI Learning Assistant';
+$string['pluginname'] = 'Sentientia AI Learning Assistant';
 $string['enabled'] = 'Enable AI Assistant';
 $string['enabled_desc'] = 'Show the AI chatbot bubble on all pages. Uncheck to hide the chatbot site-wide.';
 $string['privacy:metadata'] = 'The AI assistant stores chat logs linked to user IDs.';

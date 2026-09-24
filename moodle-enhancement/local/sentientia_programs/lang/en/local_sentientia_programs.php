@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Certification Programs';
+$string['pluginname'] = 'Sentientia Certification Programs';
 
 // Capabilities.
 $string['sentientia_programs:view']   = 'View certification programs';

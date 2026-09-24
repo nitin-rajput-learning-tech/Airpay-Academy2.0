@@ -129,3 +129,12 @@ final-clause OLD==NEW for sampled users 772/826/2/1); a future, gated cutover
 auto-switches the whole manager surface to the Sentientia org model with no
 caller change. New `team_manager_test` (3 methods, model path) closes the
 long-standing coverage gap. version 2026052201 → 2026060200 / 1.3.3.
+
+
+## 2026-09-24 - White-label display name (W2-06)
+
+`pluginname` no longer carries the Airpay brand: "Airpay X" became "Sentientia X", and in Hindi
+"एयरपे" became "सेंटिएंटिया". Where one tree already had a Sentientia name it was reused, so both trees now
+agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
+Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
+white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.

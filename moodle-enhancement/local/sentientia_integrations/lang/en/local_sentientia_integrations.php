@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Integrations Hub';
+$string['pluginname'] = 'Sentientia Integrations Hub';
 
 // Settings page
 $string['settings_heading'] = 'Airpay Integrations Configuration';

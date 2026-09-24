@@ -8,7 +8,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'एयरपे इंटीग्रेशंस हब';
+$string['pluginname'] = 'सेंटिएंटिया इंटीग्रेशंस हब';
 
 // Settings page.
 $string['settings_heading'] = 'एयरपे इंटीग्रेशंस कॉन्फ़िगरेशन';

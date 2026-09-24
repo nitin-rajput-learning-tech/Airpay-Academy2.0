@@ -1,6 +1,6 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
-$string['pluginname'] = 'एयरपे अनुपालन रिपोर्ट';
+$string['pluginname'] = 'सेंटिएंटिया अनुपालन रिपोर्ट';
 $string['sentientia_compliance_report:export'] = 'अनुपालन रिपोर्ट निर्यात करें';
 $string['taskrefresh'] = 'अनुपालन स्नैपशॉट ताज़ा करें';
 $string['messageprovider:compliance_alert'] = 'अनुपालन समयसीमा अलर्ट';

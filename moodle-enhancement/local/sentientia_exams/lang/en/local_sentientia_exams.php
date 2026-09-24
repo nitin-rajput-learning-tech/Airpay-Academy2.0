@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Online Exams';
+$string['pluginname'] = 'Sentientia Online Exams';
 $string['sentientia_exams:manage'] = 'Manage online exams';
 $string['sentientia_exams:view'] = 'View online exams';
 $string['sentientia_exams:enrol'] = 'Enrol users into exams (via parent quiz course)';

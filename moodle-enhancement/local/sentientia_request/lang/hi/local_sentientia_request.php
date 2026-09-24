@@ -9,7 +9,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'एयरपे कोर्स अनुरोध';
+$string['pluginname'] = 'सेंटिएंटिया कोर्स अनुरोध';
 
 // Navigation.
 $string['myrequests']       = 'मेरे कोर्स अनुरोध';

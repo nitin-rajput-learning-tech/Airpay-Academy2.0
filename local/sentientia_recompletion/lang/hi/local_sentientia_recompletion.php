@@ -8,7 +8,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'एयरपे रीकम्प्लीशन';
+$string['pluginname'] = 'सेंटिएंटिया रीकम्प्लीशन';
 
 // Navigation.
 $string['rules']     = 'रीकम्प्लीशन नियम';

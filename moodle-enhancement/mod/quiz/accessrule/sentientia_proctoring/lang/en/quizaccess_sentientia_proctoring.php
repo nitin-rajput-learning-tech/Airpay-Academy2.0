@@ -4,7 +4,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Proctoring';
+$string['pluginname'] = 'Sentientia Proctoring';
 $string['enable']     = 'Require proctoring';
 $string['enable_help'] = 'Enable to require identity verification + live monitoring + AI review for every attempt on this quiz.';
 $string['notrunning']  = 'Proctoring runtime not loaded — refresh the page and ensure your browser allows webcam and microphone.';

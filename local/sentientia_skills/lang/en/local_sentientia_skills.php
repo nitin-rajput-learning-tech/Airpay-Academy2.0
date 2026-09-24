@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Skills Matrix';
+$string['pluginname'] = 'Sentientia Skills Matrix';
 $string['myskills_title'] = 'My Skills';
 $string['privacy:metadata'] = 'The skills plugin stores skill level data linked to user IDs.';
 

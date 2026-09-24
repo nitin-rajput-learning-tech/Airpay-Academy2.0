@@ -4,7 +4,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Recompletion';
+$string['pluginname'] = 'Sentientia Recompletion';
 
 // Navigation.
 $string['rules']           = 'Recompletion rules';

@@ -8,7 +8,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname']            = 'एयरपे कोर (साझा संरचना)';
+$string['pluginname']            = 'सेंटिएंटिया कोर (साझा संरचना)';
 $string['error_outoftenant']     = 'आपके पास इस टेनेंट तक पहुँच नहीं है।';
 $string['error_invalidtenant']   = 'अमान्य टेनेंट पहचानकर्ता।';
 

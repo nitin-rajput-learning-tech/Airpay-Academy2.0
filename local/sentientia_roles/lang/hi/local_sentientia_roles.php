@@ -8,7 +8,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'एयरपे रोल प्रबंधन';
+$string['pluginname'] = 'सेंटिएंटिया रोल प्रबंधन';
 
 // Capabilities.
 $string['sentientia_roles:view']   = 'रोल-प्रबंधन UI देखें';

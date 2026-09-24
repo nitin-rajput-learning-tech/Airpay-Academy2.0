@@ -1,6 +1,6 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
-$string['pluginname'] = 'Airpay Employee Lifecycle';
+$string['pluginname'] = 'Sentientia Employee Lifecycle';
 
 // Joiner auto-enrolment (2026-08-07, ADR-029).
 $string['autoenrol_heading'] = 'Joiner auto-enrolment';

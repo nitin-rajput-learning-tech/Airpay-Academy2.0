@@ -8,7 +8,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname']       = 'एयरपे मैनेजर डैशबोर्ड';
+$string['pluginname']       = 'सेंटिएंटिया मैनेजर डैशबोर्ड';
 $string['myteam']           = 'मेरी टीम';
 $string['teamlearning']     = 'टीम लर्निंग डैशबोर्ड';
 

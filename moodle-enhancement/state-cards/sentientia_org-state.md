@@ -181,3 +181,12 @@ The descendants-only branch of the access filter was unbounded; the sibling exac
 Fixed via the new `\local_sentientia_platform	enant::path_descendant_filter()` (exact-or-descendant
 for an arbitrary path), locked by a DB-level boundary suite in `tenant_test.php`, and prevented from
 returning by `tools/check-path-boundary.php` - pre-commit CHECK 18 and the `path-boundary-check` CI job.
+
+
+## 2026-09-24 - White-label display name (W2-06)
+
+`pluginname` no longer carries the Airpay brand: "Airpay X" became "Sentientia X", and in Hindi
+"एयरपे" became "सेंटिएंटिया". Where one tree already had a Sentientia name it was reused, so both trees now
+agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
+Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
+white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.

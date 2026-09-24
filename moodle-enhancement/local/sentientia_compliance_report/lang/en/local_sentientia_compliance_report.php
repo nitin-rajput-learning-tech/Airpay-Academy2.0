@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Compliance Report';
+$string['pluginname'] = 'Sentientia Compliance Report';
 $string['sentientia_compliance_report:export'] = 'Export the compliance report';
 $string['taskrefresh'] = 'Refresh compliance snapshot';
 $string['messageprovider:compliance_alert'] = 'Compliance deadline alerts';

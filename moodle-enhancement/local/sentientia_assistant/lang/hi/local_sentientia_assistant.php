@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'एयरपे AI शिक्षा सहायक';
+$string['pluginname'] = 'सेंटिएंटिया AI शिक्षा सहायक';
 $string['privacy:metadata:chat_log'] = 'शिक्षार्थी और AI सहायक के बीच बातचीत का लॉग।';
 $string['privacy:metadata:chat_log:userid'] = 'वह उपयोगकर्ता जिसने संदेश भेजा या प्राप्त किया।';
 $string['privacy:metadata:chat_log:role'] = 'संदेश उपयोगकर्ता का था या सहायक का।';

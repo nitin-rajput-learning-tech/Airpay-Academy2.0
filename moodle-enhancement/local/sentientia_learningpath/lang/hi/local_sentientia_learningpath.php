@@ -10,7 +10,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'एयरपे लर्निंग पाथ';
+$string['pluginname'] = 'सेंटिएंटिया लर्निंग पाथ';
 
 // Capabilities.
 $string['sentientia_learningpath:manage'] = 'लर्निंग पाथ प्रबंधित करें';

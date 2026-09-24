@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Course Catalog';
+$string['pluginname'] = 'Sentientia Course Catalog';
 $string['catalog'] = 'Course Catalog';
 $string['privacy:metadata'] = 'The catalog plugin does not store personal data.';
 $string['search'] = 'Search courses, topics, skills...';

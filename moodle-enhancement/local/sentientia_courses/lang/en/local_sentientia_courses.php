@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Course Engine';
+$string['pluginname'] = 'Sentientia Course Engine';
 
 // Capabilities.
 $string['sentientia_courses:manage'] = 'Manage courses';

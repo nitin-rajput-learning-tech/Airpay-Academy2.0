@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Classroom Training';
+$string['pluginname'] = 'Sentientia Classroom Training';
 
 // Capabilities.
 $string['sentientia_classroom:manage'] = 'Manage classroom sessions';

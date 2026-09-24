@@ -6,7 +6,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'एयरपे ऑनलाइन परीक्षाएँ';
+$string['pluginname'] = 'सेंटिएंटिया ऑनलाइन परीक्षाएँ';
 $string['sentientia_exams:manage'] = 'ऑनलाइन परीक्षाएँ प्रबंधित करें';
 $string['sentientia_exams:view']   = 'ऑनलाइन परीक्षाएँ देखें';
 $string['sentientia_exams:enrol']  = 'यूज़र्स को परीक्षाओं में नामांकित करें (पैरेंट क्विज़ कोर्स के माध्यम से)';

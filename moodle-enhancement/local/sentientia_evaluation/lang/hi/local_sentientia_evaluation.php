@@ -13,7 +13,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'एयरपे मूल्यांकन';
+$string['pluginname'] = 'सेंटिएंटिया मूल्यांकन';
 
 // Capabilities.
 $string['sentientia_evaluation:manage']  = 'मूल्यांकन फॉर्म प्रबंधित करें';

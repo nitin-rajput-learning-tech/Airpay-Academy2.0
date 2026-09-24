@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'एयरपे गेमिफिकेशन';
+$string['pluginname'] = 'सेंटिएंटिया गेमिफिकेशन';
 $string['points'] = 'अंक';
 $string['totalpoints'] = 'कुल अंक';
 $string['pointstoday'] = 'आज के अंक';

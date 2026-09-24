@@ -9,7 +9,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'एयरपे कार्ट';
+$string['pluginname'] = 'सेंटिएंटिया कार्ट';
 
 // Navigation.
 $string['cart']         = 'कार्ट';

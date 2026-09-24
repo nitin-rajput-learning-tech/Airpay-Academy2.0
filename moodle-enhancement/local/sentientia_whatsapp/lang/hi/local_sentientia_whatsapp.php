@@ -6,7 +6,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'एयरपे WhatsApp और SMS';
+$string['pluginname'] = 'सेंटिएंटिया WhatsApp और SMS';
 
 // Page chrome
 $string['preferences_pagetitle']   = 'संचार प्राथमिकताएँ';

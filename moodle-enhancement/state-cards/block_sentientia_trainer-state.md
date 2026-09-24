@@ -68,3 +68,12 @@ exercises the underlying queries.
 
 Initial state card for the trainer dashboard block. Plugin has been
 live since 2026-04-16; created now as part of the P1 state-card pass.
+
+
+## 2026-09-24 - White-label display name (W2-06)
+
+`pluginname` no longer carries the Airpay brand: "Airpay X" became "Sentientia X", and in Hindi
+"एयरपे" became "सेंटिएंटिया". Where one tree already had a Sentientia name it was reused, so both trees now
+agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
+Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
+white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
