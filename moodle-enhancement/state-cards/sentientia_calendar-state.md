@@ -195,3 +195,7 @@ Master flag `sentientia.calendar_sync.enabled` still default OFF.
 `delete_data_for_user()` compared `(int) $context->instanceid === $userid`, where `$userid` is a string from the DB record, so the check never matched and nothing was ever deleted: ICS tokens and encrypted OAuth refresh tokens survived every erasure. `$userid` is now cast to int.
 
 Found by a read-only audit of all 38 Sentientia privacy providers, run because `local_sentientia_privacy\privacy_manager::process_deletion()` now calls every one of them. Class change only: no version bump. Covered by `local_sentientia_privacy\erasure_scope_test` / `privacy_manager_test`.
+
+## 2026-09-24 - Erasure review follow-up
+
+`export_user_data()` had the same string-vs-int `===` as the delete path, so a calendar data export was always empty. `$userid` is now cast to int, as in `delete_data_for_user()`.

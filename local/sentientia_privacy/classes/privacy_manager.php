@@ -162,7 +162,9 @@ class privacy_manager {
         // Each of those plugins already knows its own tables: that is what its
         // privacy provider's delete_data_for_user() is for, and a platform test
         // (local_sentientia_platform\privacy_coverage_test) fails the build if a
-        // provider does not declare every user table it owns. So ask them.
+        // provider does not declare every user table in its install.xml. (It
+        // cannot see tables created at runtime or only in upgrade.php - those
+        // gaps are found by audit, as on 2026-09-24.) So ask them.
         //
         // Deliberately ONLY local_sentientia_* providers, not core ones: this flow
         // promises to keep anonymised learning records (grades, completions,

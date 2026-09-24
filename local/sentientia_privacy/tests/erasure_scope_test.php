@@ -163,6 +163,40 @@ final class erasure_scope_test extends \advanced_testcase {
             'AI spend must stay on the ledger.');
     }
 
+    public function test_a_reviewer_is_anonymised_and_the_candidates_review_kept(): void {
+        global $DB;
+        // The subject reviewed SOMEONE ELSE's proctored attempt.
+        $session = $this->row('local_sentientia_proctor_sessions', [
+            'userid' => $this->other->id, 'quizid' => 1, 'consent_given_at' => time(),
+        ]);
+        $review = $this->row('local_sentientia_proctor_reviews', [
+            'sessionid' => $session, 'reviewer_userid' => $this->subject->id, 'decision' => 'fail',
+        ]);
+
+        $this->erase_subject();
+
+        $kept = $DB->get_record('local_sentientia_proctor_reviews', ['id' => $review]);
+        $this->assertNotFalse($kept, 'The candidate\'s verdict must survive the reviewer\'s erasure.');
+        $this->assertEquals(0, $kept->reviewer_userid);
+        $this->assertNotNull($DB->get_field('local_sentientia_proctor_sessions', 'consent_given_at', ['id' => $session]),
+            'Another person\'s session is untouched.');
+    }
+
+    public function test_a_deciders_note_goes_with_them(): void {
+        global $DB;
+        $request = $this->row('local_sentientia_courses_requests', [
+            'requester_userid' => $this->other->id, 'decided_by' => $this->subject->id,
+            'status' => 'rejected', 'decision_reason' => 'written by the subject',
+        ]);
+
+        $this->erase_subject();
+
+        $row = $DB->get_record('local_sentientia_courses_requests', ['id' => $request], '*', MUST_EXIST);
+        $this->assertEquals(0, $row->decided_by);
+        $this->assertNull($row->decision_reason);
+        $this->assertEquals($this->other->id, $row->requester_userid, 'The requester is not the subject.');
+    }
+
     public function test_learning_and_compliance_records_are_kept(): void {
         global $DB;
         $completion = $this->row('local_sentientia_learningpath_users', [

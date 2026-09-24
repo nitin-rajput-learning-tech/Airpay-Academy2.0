@@ -144,3 +144,7 @@ white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after
 The anonymise step blanked `decision_reason` on rows where the subject was the ASSIGNED manager. That note is written by whoever decided, which can be a site admin, so it wiped a third party's text while leaving the subject's own notes on requests they decided. Each actor column is now anonymised together with the text that actor wrote.
 
 Found by a read-only audit of all 38 Sentientia privacy providers, run because `local_sentientia_privacy\privacy_manager::process_deletion()` now calls every one of them. Class change only: no version bump. Covered by `local_sentientia_privacy\erasure_scope_test` / `privacy_manager_test`.
+
+## 2026-09-24 - Erasure review follow-up
+
+`form\decide_request_dynamic_form::check_access_for_dynamic_submission()` checked only the `:approve` capability, so any approver could decide any request by id. It now applies the same ownership gate as `external\decide_request` and `bulk_decide`: the assigned manager, or a site admin.

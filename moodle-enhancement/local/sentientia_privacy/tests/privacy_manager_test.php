@@ -128,6 +128,8 @@ final class privacy_manager_test extends \advanced_testcase {
 
         test\privacy_manager_with_a_failing_provider::process_deletion(
             $requestid, (int) get_admin()->id);
+        // An incomplete erasure is also raised to developers.
+        $this->assertDebuggingCalled();
 
         $request = $DB->get_record('local_privacy_requests', ['id' => $requestid], '*', MUST_EXIST);
         $this->assertSame('partial', $request->status,

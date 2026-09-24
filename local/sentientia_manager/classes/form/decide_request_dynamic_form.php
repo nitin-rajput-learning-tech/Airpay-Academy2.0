@@ -55,8 +55,23 @@ class decide_request_dynamic_form extends dynamic_form {
     }
 
     protected function check_access_for_dynamic_submission(): void {
-        require_capability('local/sentientia_manager:approve',
-            $this->get_context_for_dynamic_submission());
+        global $DB, $USER;
+        $context = $this->get_context_for_dynamic_submission();
+        require_capability('local/sentientia_manager:approve', $context);
+        // Same gate as external\decide_request and bulk_decide: only the
+        // assigned manager (or a site admin) decides a request. This form
+        // checked the capability alone, so any approver could decide any
+        // request by id (2026-09-24).
+        $requestid = (int) $this->optional_param('requestid', 0, PARAM_INT);
+        if ($requestid <= 0) {
+            throw new \moodle_exception('invalidrecord', 'error');
+        }
+        $row = $DB->get_record('local_sentientia_mgr_requests', ['id' => $requestid],
+            'id, managerid', MUST_EXIST);
+        if (!is_siteadmin() && (int) $row->managerid !== (int) $USER->id) {
+            throw new \required_capability_exception($context,
+                'local/sentientia_manager:approve', 'nopermissions', '');
+        }
     }
 
     public function process_dynamic_submission() {

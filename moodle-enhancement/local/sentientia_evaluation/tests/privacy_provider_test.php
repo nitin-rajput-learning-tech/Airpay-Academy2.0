@@ -33,10 +33,12 @@ final class privacy_provider_test extends provider_testcase {
      * An assignment row: $userid was asked to answer, $assignedby (or NULL for
      * the system) asked them.
      */
-    private function assign(int $userid, ?int $assignedby): int {
+    private function assign(int $userid, ?int $assignedby, int $evaluationid = 1): int {
         global $DB;
+        // UNIQUE(evaluationid, userid, trigger_event, source_id): a second row
+        // for the same person needs another evaluation.
         return $DB->insert_record('local_sentientia_evaluation_assign', (object) [
-            'evaluationid' => 1, 'userid' => $userid, 'trigger_event' => 'course_completed',
+            'evaluationid' => $evaluationid, 'userid' => $userid, 'trigger_event' => 'course_completed',
             'status' => 'pending', 'assigned_by_userid' => $assignedby,
             'timecreated' => time(), 'timemodified' => time(),
         ]);
@@ -46,7 +48,8 @@ final class privacy_provider_test extends provider_testcase {
         global $DB;
         return $DB->insert_record('local_sentientia_evaluation_triggers', (object) [
             'evaluationid' => 1, 'userid' => $userid, 'trigger_event' => 'course_completed',
-            'fire_after' => time(), 'status' => 'pending', 'timecreated' => time(),
+            // status is an INT column here (0 = pending), unlike assign.status.
+            'fire_after' => time(), 'status' => 0, 'timecreated' => time(),
         ]);
     }
 
@@ -84,7 +87,7 @@ final class privacy_provider_test extends provider_testcase {
         // the system (NULL assigner - what the broken code rewrote), and a
         // trigger of their own.
         $bysubject = $this->assign((int) $other->id, (int) $subject->id);
-        $bysystem = $this->assign((int) $other->id, null);
+        $bysystem = $this->assign((int) $other->id, null, 2);
         $this->trigger((int) $other->id);
 
         $syscontext = \context_system::instance();

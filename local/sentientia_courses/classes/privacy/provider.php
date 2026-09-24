@@ -213,7 +213,12 @@ class provider implements
                 ['requester_userid' => $userid]);
             // Anonymise rather than delete: the row is another
             // person's record or shared configuration.
-            $DB->set_field('local_sentientia_courses_requests', 'decided_by', 0, ['decided_by' => $userid]);
+            // The decider's own note goes with them (as in the manager
+            // provider). One statement: once decided_by is 0 the row no longer
+            // matches. decided_by stays 0, not NULL - NULL means 'pending' here.
+            $DB->execute("UPDATE {local_sentientia_courses_requests}
+                             SET decided_by = 0, decision_reason = NULL
+                           WHERE decided_by = :u", ['u' => $userid]);
             $DB->delete_records('local_sentientia_courses_remind_sent', ['userid' => $userid]);
         }
     }
@@ -235,7 +240,9 @@ class provider implements
 
         $DB->set_field_select('local_sentientia_courses_requests', 'requester_userid', 0,
             "requester_userid $insql", $params);
-        $DB->set_field_select('local_sentientia_courses_requests', 'decided_by', 0, "decided_by $insql", $params);
+        $DB->execute("UPDATE {local_sentientia_courses_requests}
+                         SET decided_by = 0, decision_reason = NULL
+                       WHERE decided_by $insql", $params);
         $DB->delete_records_select('local_sentientia_courses_remind_sent', "userid $insql", $params);
     }
 }

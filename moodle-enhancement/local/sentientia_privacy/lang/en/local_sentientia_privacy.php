@@ -38,3 +38,4 @@ $string['needsfollowup']      = 'Needs manual follow-up';
 $string['erasurecompleted']   = 'The account was anonymised and all of this user\'s Sentientia data was erased.';
 $string['erasurepartial']     = 'The account was anonymised, but some data could not be erased. The request is marked Incomplete; its note lists what remains.';
 $string['requestnotpending']  = 'This request has already been processed.';
+$string['erasurenotapplicable'] = 'This is not an account-deletion request, or its user no longer exists. Nothing was changed.';

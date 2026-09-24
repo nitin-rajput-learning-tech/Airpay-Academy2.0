@@ -387,3 +387,7 @@ white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after
 Erasing a tenant manager deleted the tenant's course-share requests, including decided ones that carry another person's decision. `requester_userid` is now anonymised to 0 instead. `list_pending_requests()` uses a LEFT JOIN on the user so these requests stay in the admin inbox, and `manage_requests.php` shows '-' for the name.
 
 Found by a read-only audit of all 38 Sentientia privacy providers, run because `local_sentientia_privacy\privacy_manager::process_deletion()` now calls every one of them. Class change only: no version bump. Covered by `local_sentientia_privacy\erasure_scope_test` / `privacy_manager_test`.
+
+## 2026-09-24 - Erasure review follow-up
+
+When the DECIDER of a course-share request is erased, their `decision_reason` text is now cleared together with `decided_by`, in one UPDATE, as the manager provider does. `decided_by` stays 0 because NULL means 'pending' in this schema.

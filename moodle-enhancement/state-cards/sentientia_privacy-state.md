@@ -121,3 +121,7 @@ flow has always promised, and still erase the personal data around them. Before 
 records, a regression from the old eight-table behaviour. The audit also found scope bugs in providers that Step 0 now
 reaches (xapi, evaluation, WhatsApp, manager, courses, aiquiz), each fixed in its own plugin.
 `tests/erasure_scope_test.php` seeds another person's rows next to the subject's and asserts that they survive.
+
+## 2026-09-24 - Erasure review follow-up
+
+Review follow-ups. Approve on a request that is not an account deletion, or whose user row is gone, now says nothing changed (`erasurenotapplicable`, en + hi) instead of reporting an erasure. Only a stored status of 'partial' gives the 'some data could not be erased' message. The Step 0 comment no longer claims the coverage test sees tables created at runtime or only in upgrade.php. Test fixes: the partial-erasure test expects its `debugging()` call. `erasure_scope_test` adds a proctoring reviewer case and a courses decider case.

@@ -107,3 +107,7 @@ white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after
 (1) Recording rows were hard-deleted. They are the only pointer to the S3 chunks, and the purge task is the only code that deletes S3 objects, so the video stayed in S3 for good. Recordings are now expired (`retain_until` in the past) and the next daily purge deletes the objects. (2) New `anonymise_data_for_user()` for the DPDP flow: it deletes identity (face-match), events and recordings; it keeps the session and review (the exam-integrity verdict on a kept quiz attempt) and unlinks `identity_id` / `consent_given_at`.
 
 Found by a read-only audit of all 38 Sentientia privacy providers, run because `local_sentientia_privacy\privacy_manager::process_deletion()` now calls every one of them. Class change only: no version bump. Covered by `local_sentientia_privacy\erasure_scope_test` / `privacy_manager_test`.
+
+## 2026-09-24 - Erasure review follow-up
+
+(1) `anonymise_data_for_user()` no longer nulls `consent_given_at` on kept sessions: it is the lawful-basis record for the kept exam-integrity verdict. (2) A REVIEWER's data was never found: `get_contexts_for_userid()` and `get_users_in_context()` now include `reviews.reviewer_userid`, and both erasure paths anonymise it to 0 while keeping the candidate's review.

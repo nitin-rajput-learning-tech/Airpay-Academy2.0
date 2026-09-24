@@ -47,11 +47,19 @@ if (is_siteadmin() || has_capability('local/sentientia_privacy:manage', context_
             redirect($panelurl, get_string('requestnotpending', 'local_sentientia_privacy'),
                 null, \core\output\notification::NOTIFY_WARNING);
         }
+        if ($action === 'approve' && $request->request_type !== 'account_delete') {
+            redirect($panelurl, get_string('erasurenotapplicable', 'local_sentientia_privacy'),
+                null, \core\output\notification::NOTIFY_WARNING);
+        }
     }
     if ($action === 'approve' && confirm_sesskey()) {
         // process_deletion() requires the approving admin's id; this call used to
         // omit it, so every Approve click died with an ArgumentCountError.
-        $manager::process_deletion($reqid, (int) $USER->id);
+        if (!$manager::process_deletion($reqid, (int) $USER->id)) {
+            // Not an account deletion, or the user row is gone: nothing changed.
+            redirect($panelurl, get_string('erasurenotapplicable', 'local_sentientia_privacy'),
+                null, \core\output\notification::NOTIFY_WARNING);
+        }
         // It can finish 'partial' (some data could not be erased), and saying
         // "processed successfully" then would be the false success it now reports.
         $status = $DB->get_field('local_privacy_requests', 'status', ['id' => $reqid]);
@@ -59,8 +67,12 @@ if (is_siteadmin() || has_capability('local/sentientia_privacy:manage', context_
             redirect($panelurl, get_string('erasurecompleted', 'local_sentientia_privacy'),
                 null, \core\output\notification::NOTIFY_SUCCESS);
         }
-        redirect($panelurl, get_string('erasurepartial', 'local_sentientia_privacy'),
-            null, \core\output\notification::NOTIFY_ERROR);
+        if ($status === 'partial') {
+            redirect($panelurl, get_string('erasurepartial', 'local_sentientia_privacy'),
+                null, \core\output\notification::NOTIFY_ERROR);
+        }
+        redirect($panelurl, get_string('erasurenotapplicable', 'local_sentientia_privacy'),
+            null, \core\output\notification::NOTIFY_WARNING);
     }
     if ($action === 'reject' && confirm_sesskey()) {
         $DB->set_field('local_privacy_requests', 'status', 'rejected', ['id' => $reqid]);

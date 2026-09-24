@@ -138,7 +138,9 @@ class provider implements
 
     public static function export_user_data(approved_contextlist $contextlist): void {
         global $DB;
-        $userid = $contextlist->get_user()->id;
+        // (int): as in delete_data_for_user() - a string id never matched the
+        // === below, so a calendar export was always empty (fixed 2026-09-24).
+        $userid = (int) $contextlist->get_user()->id;
 
         foreach ($contextlist->get_contexts() as $context) {
             if ($context->contextlevel !== CONTEXT_USER || (int) $context->instanceid !== $userid) {

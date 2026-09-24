@@ -36,7 +36,9 @@ class provider implements
     public static function get_contexts_for_userid(int $userid): contextlist {
         $list = new contextlist();
         global $DB;
-        if ($DB->record_exists('local_sentientia_proctor_sessions', ['userid' => $userid])) {
+        // A reviewer holds data here too: reviews.reviewer_userid (2026-09-24).
+        if ($DB->record_exists('local_sentientia_proctor_sessions', ['userid' => $userid])
+                || $DB->record_exists('local_sentientia_proctor_reviews', ['reviewer_userid' => $userid])) {
             $list->add_system_context();
         }
         return $list;
@@ -46,8 +48,10 @@ class provider implements
         if (!$userlist->get_context() instanceof \context_system) return;
         global $DB;
         $ids = $DB->get_fieldset_sql(
-            "SELECT DISTINCT userid FROM {local_sentientia_proctor_sessions}");
-        $userlist->add_users($ids);
+            "SELECT DISTINCT userid FROM {local_sentientia_proctor_sessions} WHERE userid > 0");
+        $ids = array_merge($ids, $DB->get_fieldset_sql(
+            "SELECT DISTINCT reviewer_userid FROM {local_sentientia_proctor_reviews} WHERE reviewer_userid > 0"));
+        $userlist->add_users(array_values(array_unique($ids)));
     }
 
     public static function export_user_data(approved_contextlist $contextlist): void {
@@ -99,6 +103,7 @@ class provider implements
      */
     private static function delete_for_user(int $userid): void {
         global $DB;
+        self::anonymise_reviewer($userid);
         $session_ids = $DB->get_fieldset_select('local_sentientia_proctor_sessions',
             'id', 'userid = :u', ['u' => $userid]);
         if (empty($session_ids)) return;
@@ -120,6 +125,7 @@ class provider implements
     public static function anonymise_data_for_user(approved_contextlist $contextlist): void {
         global $DB;
         $userid = (int) $contextlist->get_user()->id;
+        self::anonymise_reviewer($userid);
         $session_ids = $DB->get_fieldset_select('local_sentientia_proctor_sessions',
             'id', 'userid = :u', ['u' => $userid]);
         if (empty($session_ids)) {
@@ -132,10 +138,24 @@ class provider implements
         $DB->delete_records_select('local_sentientia_proctor_identity', "sessionid $insql", $inparams);
         self::expire_recordings($insql, $inparams);
         // The session and its review stay: they are the exam-integrity verdict
-        // on a quiz attempt this flow keeps. Only the identity link is cut.
+        // on a quiz attempt this flow keeps. Only the identity link is cut; the
+        // consent timestamp stays as the lawful-basis record for that verdict.
         $DB->execute("UPDATE {local_sentientia_proctor_sessions}
-                         SET identity_id = NULL, consent_given_at = NULL
+                         SET identity_id = NULL
                        WHERE id $insql", $inparams);
+    }
+
+    /**
+     * A reviewer acted on SOMEONE ELSE's attempt: keep the review (it is the
+     * candidate's record), drop the reviewer's id. reviewer_userid is NOT NULL,
+     * hence 0.
+     */
+    private static function anonymise_reviewer(int $userid): void {
+        global $DB;
+        if ($userid > 0) {
+            $DB->set_field('local_sentientia_proctor_reviews', 'reviewer_userid', 0,
+                ['reviewer_userid' => $userid]);
+        }
     }
 
     /**
