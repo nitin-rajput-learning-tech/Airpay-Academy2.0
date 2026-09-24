@@ -136,3 +136,14 @@ white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after
 New `anonymise_data_for_user()` for the DPDP flow. It keeps attendance, which is the only record that the employee attended an ILT or compliance session, keyed to the anonymised user, and clears its `notes`. It still deletes the roster row. Core's full erasure (`delete_data_for_user()`) is unchanged.
 
 Found by a read-only audit of all 38 Sentientia privacy providers, run because `local_sentientia_privacy\privacy_manager::process_deletion()` now calls every one of them. Class change only: no version bump. Covered by `local_sentientia_privacy\erasure_scope_test` / `privacy_manager_test`.
+
+## 2026-09-24 - Waiting list: fresh-install table + privacy coverage
+
+`local_sentientia_classroom_waitlist` holds a userid and, after an admin removal, the admin's free-text `reason`. Two defects:
+
+- The provider never touched it. It was not declared, a waitlist-only user got no context, it was not exported, and neither erasure path deleted it, so a DPDP erasure read 'completed' with the rows still there. Now it is declared (`privacy:metadata:waitlist*`, en + hi), reported by `get_contexts_for_userid()` / `get_users_in_context()`, and exported. `delete_data_for_user()`, `delete_data_for_users()` and `delete_data_for_all_users_in_context()` delete it. `anonymise_data_for_user()` deletes it too: a waiting-list place is a queue entry, not a learning record. After the delete, each queue the user was still waiting in is renumbered, so the people behind them move up (`waitlist_manager::renumber_positions()` is now public for this). Every access is guarded by `table_exists()`.
+- Only `db/upgrade.php` (step 2026051130) created it. `db/install.xml` did not, so a fresh install, and the PHPUnit database, had no waiting list. It is now in `install.xml`, identical field by field to that step (checked with Moodle's own XMLDB loader). A site already installed fresh (UAT's 5.2 install is one) would still lack it, so new upgrade step 2026092400 creates it where missing, with the same definition, and is a no-op everywhere else. Version 2026092400 / release 1.10.3: the deploy needs the Notifications upgrade run.
+
+Tests: `tests/privacy_waitlist_test.php` (+ `tests/fixtures/provider_without_waitlist.php`, a double that reports the table absent). Written, not yet run: the shared PHPUnit database is being rebuilt. It must be re-initialised from this `install.xml` first. Until then the table is missing there, and core's `core_privacy\privacy\provider_test::test_metadata_provider` fails for this plugin, because it asserts that every declared table exists.
+
+Still open (not in this change): `local_sentientia_locations` and the `locationid` columns (upgrade step 2026051160) are also missing from `install.xml`. The provider does not anonymise the actor columns `attendance.markedby` / `users.enrolledby`. The `markedat` field it declares does not exist.

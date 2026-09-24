@@ -213,5 +213,40 @@ function xmldb_local_sentientia_classroom_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051600, 'local', 'sentientia_classroom');
     }
 
+    // 2026092400 — the waiting list only ever came from step 2026051130, never
+    // from install.xml, so a site installed fresh after that step has no such
+    // table and the waitlist web services fail there. install.xml declares it
+    // from this version; this step creates it where it is still missing.
+    // Definition identical to step 2026051130 and to install.xml.
+    if ($oldversion < 2026092400) {
+        $table = new \xmldb_table('local_sentientia_classroom_waitlist');
+        $table->add_field('id',           XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('classroomid',  XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('userid',       XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('position',     XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('status',       XMLDB_TYPE_CHAR,    '20', null, XMLDB_NOTNULL, null, 'waiting');
+        $table->add_field('reason',       XMLDB_TYPE_TEXT,    null, null, null, null, null);
+        $table->add_field('promoted_at',  XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('removed_at',   XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('timecreated',  XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('fk_classroom', XMLDB_KEY_FOREIGN,
+            ['classroomid'], 'local_sentientia_classroom', ['id']);
+        $table->add_key('fk_user', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+
+        $table->add_index('idx_classroom_status', XMLDB_INDEX_NOTUNIQUE,
+            ['classroomid', 'status']);
+        $table->add_index('idx_user_status', XMLDB_INDEX_NOTUNIQUE,
+            ['userid', 'status']);
+
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026092400, 'local', 'sentientia_classroom');
+    }
+
     return true;
 }
