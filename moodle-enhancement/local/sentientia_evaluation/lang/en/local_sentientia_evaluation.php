@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Evaluations';
+$string['pluginname'] = 'Sentientia Evaluations';
 
 // Capabilities.
 $string['sentientia_evaluation:manage'] = 'Manage evaluation forms';

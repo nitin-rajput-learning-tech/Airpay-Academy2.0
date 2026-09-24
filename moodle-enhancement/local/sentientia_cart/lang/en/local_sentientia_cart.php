@@ -4,7 +4,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Cart';
+$string['pluginname'] = 'Sentientia Cart';
 
 // Navigation.
 $string['cart']         = 'Cart';

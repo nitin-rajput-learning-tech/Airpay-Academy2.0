@@ -9,7 +9,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 // Plugin identity.
-$string['pluginname'] = 'एयरपे ऑर्गनाइज़ेशन इंजन';
+$string['pluginname'] = 'सेंटिएंटिया ऑर्गनाइज़ेशन इंजन';
 
 // Capabilities.
 $string['sentientia_org:manage']                    = 'संगठन प्रबंधित करें';

@@ -6,7 +6,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'एयरपे सर्टिफिकेशन प्रोग्राम';
+$string['pluginname'] = 'सेंटिएंटिया सर्टिफिकेशन प्रोग्राम';
 
 // Capabilities.
 $string['sentientia_programs:view']   = 'प्रोग्राम देखें';

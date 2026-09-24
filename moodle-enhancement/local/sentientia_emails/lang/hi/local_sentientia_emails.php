@@ -1,6 +1,6 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
-$string['pluginname'] = 'एयरपे ईमेल टेम्पलेट';
+$string['pluginname'] = 'सेंटिएंटिया ईमेल टेम्पलेट';
 $string['emailpreview'] = 'ईमेल टेम्पलेट प्रीव्यू';
 $string['emailpreview_desc'] = 'डिप्लॉयमेंट से पहले सभी ब्रांडेड ईमेल टेम्पलेट देखें।';
 $string['selecttemplate'] = 'टेम्पलेट चुनें';

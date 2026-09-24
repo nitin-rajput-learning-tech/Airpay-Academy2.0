@@ -8,7 +8,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'एयरपे कोर्स इंजन';
+$string['pluginname'] = 'सेंटिएंटिया कोर्स इंजन';
 
 // Capabilities.
 $string['sentientia_courses:manage']     = 'कोर्स प्रबंधित करें';

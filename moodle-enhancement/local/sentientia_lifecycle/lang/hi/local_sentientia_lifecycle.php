@@ -7,7 +7,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname']       = 'एयरपे एम्प्लॉयी लाइफ़साइकल';
+$string['pluginname']       = 'सेंटिएंटिया एम्प्लॉयी लाइफ़साइकल';
 
 // Joiner auto-enrolment (2026-08-07, ADR-029).
 $string['autoenrol_heading']      = 'जॉइनर ऑटो-नामांकन';

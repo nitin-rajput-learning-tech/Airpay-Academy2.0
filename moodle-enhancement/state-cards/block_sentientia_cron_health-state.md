@@ -95,3 +95,12 @@ remains accurate as-is.
 
 None — this is a read-only dashboard widget. Visibility is gated by
 the site-admin check inside `get_content()` rather than a flag.
+
+
+## 2026-09-24 - White-label display name (W2-06)
+
+`pluginname` no longer carries the Airpay brand: "Airpay X" became "Sentientia X", and in Hindi
+"एयरपे" became "सेंटिएंटिया". Where one tree already had a Sentientia name it was reused, so both trees now
+agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
+Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
+white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.

@@ -47,20 +47,30 @@ if ($coursecount == 0 && !empty($public_category_ids)) {
 }
 
 // Count Public tenant learners only.
+//
+// 86bb0c26f replaced $publicpath with the bounded $publicsql above but left these
+// two queries still binding the removed variable. PHP read it as NULL, `LIKE NULL`
+// matched nothing, and the public homepage showed "0+ Learners" with the whole
+// Featured Courses section missing. Each query now gets its own bounded fragment
+// with a distinct parameter tag.
+[$pubusersql, $pubuserargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+    '/' . $public_costcenter_id, '', 'open_path', 'pubu');
 $usercount = $DB->count_records_sql(
-    "SELECT COUNT(*) FROM {user} WHERE deleted = 0 AND suspended = 0 AND id > 1 AND open_path LIKE :p",
-    ['p' => $publicpath]);
+    "SELECT COUNT(*) FROM {user} WHERE deleted = 0 AND suspended = 0 AND id > 1 AND {$pubusersql}",
+    $pubuserargs);
 
 // Get featured courses — STRICTLY Public tenant only. No fallback.
+[$pubcoursesql, $pubcourseargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+    '/' . $public_costcenter_id, 'c', 'open_path', 'pubc');
 $featured = $DB->get_records_sql(
     "SELECT c.id, c.fullname, c.summary, c.summaryformat, COUNT(ue.id) as enrolcount
        FROM {course} c
        JOIN {enrol} e ON e.courseid = c.id
        JOIN {user_enrolments} ue ON ue.enrolid = e.id
-      WHERE c.visible = 1 AND c.id > 1 AND c.open_path LIKE :pubpath
+      WHERE c.visible = 1 AND c.id > 1 AND {$pubcoursesql}
    GROUP BY c.id, c.fullname, c.summary, c.summaryformat
    ORDER BY enrolcount DESC",
-    ['pubpath' => $publicpath], 0, 6);
+    $pubcourseargs, 0, 6);
 
 // If open_path not populated, try costcenter category match.
 if (empty($featured) && !empty($public_category_ids)) {

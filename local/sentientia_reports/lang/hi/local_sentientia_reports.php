@@ -8,7 +8,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'एयरपे रिपोर्ट्स';
+$string['pluginname'] = 'सेंटिएंटिया रिपोर्ट्स';
 
 // Capabilities.
 $string['sentientia_reports:view']   = 'सहेजी गई रिपोर्ट्स देखें';

@@ -7,7 +7,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname']    = 'एयरपे रेटिंग्स';
+$string['pluginname']    = 'सेंटिएंटिया रेटिंग्स';
 $string['rate']          = 'रेट करें';
 $string['yourrating']    = 'आपकी रेटिंग';
 $string['averagerating'] = 'औसत रेटिंग';

@@ -173,3 +173,37 @@ Leaderboard ranking, neighbour ranking and the top-10 badge rank all scoped with
 Fixed via the new `\local_sentientia_platform	enant::path_descendant_filter()` (exact-or-descendant
 for an arbitrary path), locked by a DB-level boundary suite in `tenant_test.php`, and prevented from
 returning by `tools/check-path-boundary.php` - pre-commit CHECK 18 and the `path-boundary-check` CI job.
+
+
+## 2026-09-24 - Regression in 86bb0c26f, caught before it reached UAT
+
+`leaderboard::get_rank()` destructured the new tenant filter straight into `$params`:
+
+```php
+$params = ['pts' => $userpoints];
+[$ranksql, $params] = tenant::path_descendant_filter(...);   // replaced, not merged
+```
+
+That dropped `:pts`, so every call threw `Incorrect number of query parameters. Expected 3, got 2`. The
+learner dashboard (`theme/sentientia/layout/dashboard.php:244`) and the profile
+(`sentientia_users/classes/user_manager.php:247`) both catch `Throwable`, so nothing errored on screen:
+the **whole gamification row** (level, rank, streak calendar, department leaderboard) and the profile
+trophy and badge cards simply disappeared for every learner with points - which, since each login earns
+10 points, is every learner.
+
+Found by the Wave 2 checklist workflow reading the code, not by a test: the path-boundary tests exercised
+`path_descendant_filter()` itself, not each call site. Fixed by merging (`$params += $rankargs`), as
+`badge_manager.php` already did. Verified on local data: `get_rank()` returns a within-tenant rank for 24
+users across `/1`, `/77` and `/177` with no exception, and the dashboard's leaderboard data builds.
+
+A sweep of every PHP file 86bb0c26f touched found no other destructuring that overwrote a populated
+array; the three other matches were initialised to `[]` immediately before.
+
+
+## 2026-09-24 - White-label display name (W2-06)
+
+`pluginname` no longer carries the Airpay brand: "Airpay X" became "Sentientia X", and in Hindi
+"एयरपे" became "सेंटिएंटिया". Where one tree already had a Sentientia name it was reused, so both trees now
+agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
+Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
+white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.

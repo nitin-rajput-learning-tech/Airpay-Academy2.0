@@ -9,7 +9,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'एयरपे प्रॉक्टरिंग';
+$string['pluginname'] = 'सेंटिएंटिया प्रॉक्टरिंग';
 
 // Navigation.
 $string['adminhome']   = 'प्रॉक्टरिंग एडमिन';

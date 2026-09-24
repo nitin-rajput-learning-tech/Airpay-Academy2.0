@@ -4,7 +4,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Certificate Health';
+$string['pluginname'] = 'Sentientia Certificate Health';
 
 $string['sentientia_cert_health:addinstance']   = 'Add an Airpay Cert Health block';
 $string['sentientia_cert_health:myaddinstance'] = 'Add an Airpay Cert Health block to the My Moodle page';

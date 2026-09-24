@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Gamification';
+$string['pluginname'] = 'Sentientia Gamification';
 $string['privacy:metadata'] = 'The gamification plugin stores points and badge data linked to user IDs.';
 
 // Points.

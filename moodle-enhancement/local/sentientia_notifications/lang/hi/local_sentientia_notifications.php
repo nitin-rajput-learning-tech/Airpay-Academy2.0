@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'एयरपे स्मार्ट सूचनाएँ';
+$string['pluginname'] = 'सेंटिएंटिया स्मार्ट सूचनाएँ';
 $string['taskprocessrules'] = 'एयरपे सूचना नियम प्रक्रिया';
 $string['messageprovider:smart_alert'] = 'एयरपे लर्निंग अलर्ट';
 $string['notifications'] = 'सूचनाएँ';

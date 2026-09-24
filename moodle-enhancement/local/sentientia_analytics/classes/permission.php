@@ -233,8 +233,12 @@ class permission {
             'capability = :cap AND permission = :perm',
             ['cap' => 'local/sentientia_courses:manage', 'perm' => CAP_ALLOW]);
 
+        // :view and :export only. NOT :viewallorgs -- the holders of
+        // local/sentientia_courses:manage are tenant admins, and granting them
+        // cross-tenant analytics is exactly the leak this class exists to stop.
+        // (The first version of this method did grant it; see db/access.php.)
         foreach ($roleids as $roleid) {
-            foreach ([self::VIEW_CAPABILITY, self::VIEWALL_CAPABILITY, self::EXPORT_CAPABILITY] as $cap) {
+            foreach ([self::VIEW_CAPABILITY, self::EXPORT_CAPABILITY] as $cap) {
                 assign_capability($cap, CAP_ALLOW, $roleid, $systemcontext->id, true);
             }
         }

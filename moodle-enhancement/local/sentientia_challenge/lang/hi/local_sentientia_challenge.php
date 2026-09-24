@@ -10,7 +10,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'एयरपे गेमिफ़िकेशन चैलेंज';
+$string['pluginname'] = 'सेंटिएंटिया गेमिफ़िकेशन चैलेंज';
 
 // Capabilities.
 $string['sentientia_challenge:view']        = 'चैलेंज और लीडरबोर्ड देखें';

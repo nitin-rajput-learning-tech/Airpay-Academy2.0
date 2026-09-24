@@ -52,13 +52,20 @@ $capabilities = [
     // See every org's numbers, not just the caller's own subtree. Without
     // this, permission::visible_org_path() clamps the view to the caller's
     // tenant, which is what a line manager or an org admin should get.
+    //
+    // NO ARCHETYPE DEFAULT (2026-09-24). The first version granted this to the
+    // `manager` archetype. On this platform the tenant admins ARE manager-
+    // archetype roles assigned at system context -- UAT's Airpay L&D admin and
+    // the ZEEA admin both hold `administrator` (archetype manager) -- so the
+    // default handed every tenant admin every other tenant's analytics, and the
+    // ZEEA admin's CSV export would have carried all-tenant totals. Site admins
+    // pass has_capability() by the admin bypass and need no grant. Grant this
+    // only deliberately, to a genuinely platform-wide role.
     'local/sentientia_analytics:viewallorgs' => [
         'riskbitmask'  => RISK_PERSONAL,
         'captype'      => 'read',
         'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes'   => [
-            'manager' => CAP_ALLOW,
-        ],
+        'archetypes'   => [],
     ],
 
     // Download the CSV. This releases a named per-learner dataset in one

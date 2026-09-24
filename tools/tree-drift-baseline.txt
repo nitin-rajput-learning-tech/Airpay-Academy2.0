@@ -12,12 +12,8 @@
 #
 # Generated 2026-09-22 with --update-baseline
 CONTENT sentientia_analytics/db/caches.php
-CONTENT sentientia_cart/lang/en/local_sentientia_cart.php
-CONTENT sentientia_catalog/lang/en/local_sentientia_catalog.php
-CONTENT sentientia_challenge/lang/en/local_sentientia_challenge.php
 CONTENT sentientia_classroom/classes/ics_builder.php
 CONTENT sentientia_compliance_report/classes/compliance_engine.php
-CONTENT sentientia_compliance_report/lang/en/local_sentientia_compliance_report.php
 CONTENT sentientia_courses/classes/task/course_overdue.php
 CONTENT sentientia_courses/classes/task/course_reminder.php
 CONTENT sentientia_courses/lang/en/local_sentientia_courses.php
@@ -26,14 +22,11 @@ CONTENT sentientia_courses/templates/share_page.mustache
 CONTENT sentientia_emails/classes/email_context.php
 CONTENT sentientia_emails/classes/external/rule_api.php
 CONTENT sentientia_emails/classes/external/template_api.php
-CONTENT sentientia_emails/lang/en/local_sentientia_emails.php
 CONTENT sentientia_emails/templates/enrollment/welcome_new_user.mustache
-CONTENT sentientia_evaluation/lang/en/local_sentientia_evaluation.php
 CONTENT sentientia_exams/classes/task/exam_overdue.php
 CONTENT sentientia_exams/classes/task/exam_reminder.php
 CONTENT sentientia_exams/lang/en/local_sentientia_exams.php
 CONTENT sentientia_exams/lang/hi/local_sentientia_exams.php
-CONTENT sentientia_gamification/lang/en/local_sentientia_gamification.php
 CONTENT sentientia_leaderboard/classes/external/get_board.php
 CONTENT sentientia_leaderboard/classes/external/list_boards.php
 CONTENT sentientia_leaderboard/classes/external/set_optout.php
@@ -48,9 +41,7 @@ CONTENT sentientia_learningpath/tests/crud_test.php
 CONTENT sentientia_learningpath/tests/enrolment_window_test.php
 CONTENT sentientia_learningpath/tests/path_assignment_test.php
 CONTENT sentientia_learningpath/version.php
-CONTENT sentientia_manager/lang/en/local_sentientia_manager.php
 CONTENT sentientia_notifications/classes/rule_engine.php
-CONTENT sentientia_notifications/lang/en/local_sentientia_notifications.php
 CONTENT sentientia_notifications/templates/prefs.mustache
 CONTENT sentientia_org/classes/accesslib.php
 CONTENT sentientia_org/classes/test/bizlms_fixture.php
@@ -64,13 +55,7 @@ CONTENT sentientia_pages/templates/certificate_celebration.mustache
 CONTENT sentientia_pages/templates/onboarding.mustache
 CONTENT sentientia_platform/cli/mint_session.php
 CONTENT sentientia_platform/db/install.xml
-CONTENT sentientia_platform/lang/en/local_sentientia_platform.php
-CONTENT sentientia_privacy/lang/en/local_sentientia_privacy.php
-CONTENT sentientia_proctoring/lang/en/local_sentientia_proctoring.php
 CONTENT sentientia_pwa/mock_receiver.php
-CONTENT sentientia_recompletion/lang/en/local_sentientia_recompletion.php
-CONTENT sentientia_reports/lang/en/local_sentientia_reports.php
-CONTENT sentientia_roles/lang/en/local_sentientia_roles.php
 CONTENT sentientia_skills/amd/src/skill_actions.js
 CONTENT sentientia_skills/db/upgrade.php
 CONTENT sentientia_whatsapp/lang/en/local_sentientia_whatsapp.php

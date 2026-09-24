@@ -155,6 +155,13 @@ final class permission_test extends \advanced_testcase {
     public function test_viewallorgs_holder_is_unrestricted(): void {
         $this->resetAfterTest();
         $this->ensure_bizlms_schema();
+        global $DB;
+
+        // :viewallorgs has no archetype default (2026-09-24), so grant it
+        // deliberately, the only way a site should ever get it.
+        $roleid = (int) $DB->get_field('role', 'id', ['shortname' => 'manager']);
+        assign_capability(permission::VIEWALL_CAPABILITY, CAP_ALLOW, $roleid,
+            \context_system::instance()->id, true);
 
         $u = $this->user_at_path('/1/2');
         $this->give_system_role((int) $u->id, 'manager');
@@ -163,6 +170,41 @@ final class permission_test extends \advanced_testcase {
         $this->assertTrue(permission::can_view_all_orgs());
         $this->assertSame('', permission::visible_org_path(),
             'empty string means site-wide, which only :viewallorgs grants');
+    }
+
+    public function test_a_manager_archetype_tenant_admin_stays_in_their_tenant(): void {
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+
+        // The case the first version got wrong. On this platform a tenant admin
+        // IS a manager-archetype role at system context (UAT: `administrator`).
+        // The original archetype default gave that role :viewallorgs, so the ZEEA
+        // admin's dashboard and CSV export carried every tenant's figures.
+        $u = $this->user_at_path('/177');
+        $this->give_system_role((int) $u->id, 'manager');
+        $this->setUser($u);
+
+        $this->assertTrue(permission::can_view(),
+            'a tenant admin must still open the dashboard');
+        $this->assertTrue(permission::can_export(),
+            'and export their own tenant');
+        $this->assertFalse(permission::can_view_all_orgs(),
+            'but must not see other tenants by default');
+        $this->assertSame('/177', permission::visible_org_path());
+        $this->assertSame('/177', permission::clamp_org_path('/1'),
+            'a query-string org from another tenant is pinned back');
+    }
+
+    public function test_the_back_fill_never_grants_viewallorgs(): void {
+        $this->resetAfterTest();
+        global $DB;
+
+        permission::grant_to_default_roles();
+
+        $this->assertSame(0, $DB->count_records('role_capabilities',
+            ['capability' => permission::VIEWALL_CAPABILITY, 'permission' => CAP_ALLOW]),
+            'the holders of local/sentientia_courses:manage are tenant admins; '
+            . 'granting them cross-tenant analytics is the leak');
     }
 
     // ── 3. the ?orgid= clamp, including the path boundary ───────────────

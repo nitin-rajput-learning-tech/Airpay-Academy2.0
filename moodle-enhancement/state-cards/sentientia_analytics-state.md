@@ -138,6 +138,39 @@ and `administrator`; the course drill-down query now returns rows and honours th
 `tests/permission_test.php` covers all of the above, including that `local/courses:manage` really is
 unregistered - the original defect in one assertion.
 
+## 2026-09-24 - `:viewallorgs` had the wrong default (fixed before it reached UAT)
+
+The 2026-09-22 capability layer gave `local/sentientia_analytics:viewallorgs` a `manager` archetype
+default, and the back-fill granted it to holders of `local/sentientia_courses:manage`. On this platform
+**tenant admins are manager-archetype roles at system context**. UAT confirms it: Meera (Airpay) and Juma
+(ZEEA) both hold `administrator` (id 9, archetype manager) at context level 10. So after the deploy every
+tenant admin would have read every other tenant's analytics, and the ZEEA admin's CSV export would have
+carried all-tenant totals. The fix I wrote to stop a cross-tenant leak would have created one.
+
+Now (2026092400 / 1.2.1-beta): `:viewallorgs` has **no** archetype default; `grant_to_default_roles()`
+grants only `:view` and `:export`; a new upgrade step revokes `:viewallorgs` from every role, because
+changing an archetype never revokes grants Moodle already applied. Site admins still pass by the admin
+bypass.
+
+Verified on local XAMPP, which had run the old step: before the upgrade `:viewallorgs` was held by
+manager and administrator; after, by nobody, with `:view` and `:export` unchanged. New tests:
+`test_a_manager_archetype_tenant_admin_stays_in_their_tenant` and
+`test_the_back_fill_never_grants_viewallorgs`.
+
+UAT pre-flight, read-only: the analytics capabilities are not yet registered there, and Meera's
+manager-archetype role means she **keeps** dashboard access once the role-id-9 fallback is gone - the
+lock-out risk recorded in the 2026-09-24 evidence file does not materialise.
+
+
+## 2026-09-24 - White-label display name (W2-06)
+
+`pluginname` no longer carries the Airpay brand: "Airpay X" became "Sentientia X", and in Hindi
+"एयरपे" became "सेंटिएंटिया". Where one tree already had a Sentientia name it was reused, so both trees now
+agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
+Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
+white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+
 ## 2026-09-24 - Wave 2 N5 + N6: refusals that said nothing, and a header that printed a template
 
 **N5 (Medium, proven on UAT).** Every refusal on all three pages threw
@@ -170,7 +203,9 @@ its column header. That string is the site's name-*format template*, `{$a->first
 `atrisk_col_learner` ("Learner" / "शिक्षार्थी"). The per-row name is unchanged.
 
 New strings (en + hi, both trees): `error_noorgscope`, `error_outofscope`, `atrisk_col_learner`.
-Version 2026092400. Guarded platform-wide by
+Version 2026092401 / 1.2.2-beta (2026092400 is the `:viewallorgs` revoke step above, which this
+change keeps unchanged; no new upgrade step - the bump is so the deploy's cache purge serves the new
+strings). Guarded platform-wide by
 `local_sentientia_platform/tests/exception_strings_test.php`.
 
 Not done here, noted for whoever next touches the predictive surfaces: the per-row name in the at-risk table

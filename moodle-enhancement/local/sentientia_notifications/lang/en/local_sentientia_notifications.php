@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Smart Notifications';
+$string['pluginname'] = 'Sentientia Smart Notifications';
 $string['privacy:metadata'] = 'The notifications plugin stores notification preferences and delivery logs.';
 
 // Capabilities.

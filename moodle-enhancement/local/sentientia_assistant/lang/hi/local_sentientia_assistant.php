@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'एयरपे AI शिक्षा सहायक';
+$string['pluginname'] = 'सेंटिएंटिया AI शिक्षा सहायक';
 $string['privacy:metadata:chat_log'] = 'शिक्षार्थी और AI सहायक के बीच बातचीत का लॉग।';
 $string['privacy:metadata:chat_log:userid'] = 'वह उपयोगकर्ता जिसने संदेश भेजा या प्राप्त किया।';
 $string['privacy:metadata:chat_log:role'] = 'संदेश उपयोगकर्ता का था या सहायक का।';
@@ -47,6 +47,7 @@ $string['quick_questions']   = 'त्वरित प्रश्न';
 // P1 #50 (2026-05-20) — Hindi top-up: 3 strings (settings + privacy).
 $string['enabled']          = 'AI सहायक सक्षम करें';
 $string['enabled_desc']     = 'सभी पेज पर AI चैटबॉट बबल दिखाएँ। साइट-व्यापी रूप से चैटबॉट छिपाने के लिए अनचेक करें।';
+$string['privacy:metadata'] = 'AI सहायक यूज़र ID से लिंक्ड चैट लॉग संग्रहीत करता है।';
 
 // Role-aware quick-action chips (2026-06-01).
 $string['qa_learn']       = 'आगे क्या सीखें?';
@@ -97,25 +98,3 @@ $string['tool_book_full']       = 'वह ILT सत्र भरा हुआ �
 $string['tool_recommend']       = 'अंतराल भरने वाली सामग्री सुझाएँ';
 $string['tool_recommend_intro'] = 'यहाँ कुछ कोर्स हैं जो आपके कौशल अंतराल भरने में मदद कर सकते हैं:';
 $string['tool_recommend_none']  = 'अभी सुझाने हेतु नए कोर्स नहीं मिले — आप सभी प्रासंगिक कोर्स में नामांकित हैं।';
-
-// Privacy metadata (classes/privacy/provider.php, added 2026-09-22).
-// Replaced a null_provider that wrongly asserted this plugin held no
-// personal data. Every table below is keyed on a user id.
-$string['privacy:metadata:chat_log'] = 'कर्मचारी और AI सहायक के बीच हुआ प्रत्येक संदेश, संदेश पाठ सहित।';
-$string['privacy:metadata:chat_log:userid'] = 'इस रिकॉर्ड से संबंधित उपयोगकर्ता की आईडी।';
-$string['privacy:metadata:chat_log:role'] = 'संदेश उपयोगकर्ता का था या सहायक का।';
-$string['privacy:metadata:chat_log:message'] = 'संदेश का पाठ।';
-$string['privacy:metadata:chat_log:model'] = 'उत्तर देने वाला AI मॉडल।';
-$string['privacy:metadata:chat_log:tokens_in'] = 'मॉडल को भेजे गए टोकन।';
-$string['privacy:metadata:chat_log:tokens_out'] = 'मॉडल से प्राप्त टोकन।';
-$string['privacy:metadata:chat_log:timecreated'] = 'रिकॉर्ड कब बनाया गया।';
-$string['privacy:metadata:agent_audit'] = 'AI एजेंट द्वारा कर्मचारी की ओर से की गई कार्रवाइयों का लेखा-जोखा।';
-$string['privacy:metadata:agent_audit:userid'] = 'इस रिकॉर्ड से संबंधित उपयोगकर्ता की आईडी।';
-$string['privacy:metadata:agent_audit:costcenterid'] = 'रिकॉर्ड का टेनेंट (लागत केंद्र)।';
-$string['privacy:metadata:agent_audit:tool'] = 'सहायक द्वारा प्रयुक्त उपकरण।';
-$string['privacy:metadata:agent_audit:args_json'] = 'उस उपकरण को दिए गए तर्क।';
-$string['privacy:metadata:agent_audit:proposed_by'] = 'कार्रवाई किसने प्रस्तावित की।';
-$string['privacy:metadata:agent_audit:outcome'] = 'कार्रवाई का परिणाम।';
-$string['privacy:metadata:agent_audit:detail'] = 'परिणाम का विवरण।';
-$string['privacy:metadata:agent_audit:idempotency_key'] = 'कार्रवाई को दो बार चलने से रोकने वाली कुंजी।';
-$string['privacy:metadata:agent_audit:timecreated'] = 'रिकॉर्ड कब बनाया गया।';

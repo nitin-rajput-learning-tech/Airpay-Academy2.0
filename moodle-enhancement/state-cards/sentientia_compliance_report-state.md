@@ -188,6 +188,15 @@ Sentientia plugin's `install.xml` and fails the build if a plugin declaring a us
 declares `null_provider`, ships no provider, or declares only some of the tables it owns. Structural
 rather than an allowlist, so a new plugin with a copy-pasted `null_provider` fails on its first CI run.
 
+## 2026-09-24 - White-label display name (W2-06)
+
+`pluginname` no longer carries the Airpay brand: "Airpay X" became "Sentientia X", and in Hindi
+"एयरपे" became "सेंटिएंटिया". Where one tree already had a Sentientia name it was reused, so both trees now
+agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
+Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
+white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+
 ## 2026-09-24 - Wave 2 N5: refusals rendered as "error/nopermission"
 
 Both entry points refused with `moodle_exception('nopermission')`. Core has no such key in

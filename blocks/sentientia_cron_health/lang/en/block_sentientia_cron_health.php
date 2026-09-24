@@ -4,7 +4,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname']        = 'Airpay Cron Health';
+$string['pluginname']        = 'Sentientia Cron Health';
 $string['sentientia_cron_health:addinstance'] = 'Add an Airpay Cron Health block';
 $string['sentientia_cron_health:myaddinstance'] = 'Add an Airpay Cron Health block to the My Moodle page';
 

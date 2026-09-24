@@ -7,7 +7,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'एयरपे क्लासरूम';
+$string['pluginname'] = 'सेंटिएंटिया क्लासरूम';
 
 // Capabilities.
 $string['sentientia_classroom:view']       = 'क्लासरूम देखें';

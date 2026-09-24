@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'एयरपे कोर्स कैटलॉग';
+$string['pluginname'] = 'सेंटिएंटिया कोर्स कैटलॉग';
 $string['catalog'] = 'कोर्स कैटलॉग';
 $string['privacy:metadata'] = 'कैटलॉग प्लगइन व्यक्तिगत डेटा संग्रहीत नहीं करता है।';
 $string['search'] = 'कोर्स, विषय, कौशल खोजें...';
