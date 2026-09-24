@@ -25,16 +25,24 @@ if (!\local_sentientia_compliance_report\permission::can_export()) {
         \local_sentientia_compliance_report\permission::EXPORT_CAPABILITY, 'nopermissions', '');
 }
 
-$orgpath = '';
-if (!is_siteadmin()) {
-    $orgpath = \local_sentientia_org\tenant_manager::get_tenant_path();
+// The same scope as the page (viewer_scope), so the download can never hold
+// more than the screen shows. An export-capability holder is tenant-level
+// there, so this is the tenant, as before. Fails closed: a non-site-admin
+// whose tenant cannot be resolved used to get orgpath '' - the whole site.
+$scope = \local_sentientia_compliance_report\viewer_scope::for_user($USER);
+if ($scope === null) {
+    $reason = \local_sentientia_compliance_report\viewer_scope::refusal_reason($USER);
+    throw new moodle_exception(
+        $reason === \local_sentientia_compliance_report\viewer_scope::REFUSED_NO_TENANT ? 'error_notenant' : 'error_noaccess',
+        'local_sentientia_compliance_report');
 }
+$orgpath = $scope->orgpath;
 
 $format = optional_param('format', 'xlsx', PARAM_ALPHA);
 
 $engine = \local_sentientia_compliance_report\compliance_engine::class;
-$matrix = $engine::get_compliance_matrix($orgpath, 0, 10000); // All employees.
-$kpis = $engine::get_summary_kpis($orgpath);
+$matrix = $engine::get_compliance_matrix($orgpath, 0, 10000, $scope->userids); // All employees in scope.
+$kpis = $engine::get_summary_kpis($orgpath, $scope->userids);
 
 // CSV export option.
 if ($format === 'csv') {

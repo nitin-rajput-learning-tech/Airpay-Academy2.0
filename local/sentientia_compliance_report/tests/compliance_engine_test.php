@@ -250,6 +250,16 @@ final class compliance_engine_test extends \advanced_testcase {
      * a foreign BU resets the whole drill-down. Site admins are untouched.
      */
     public function test_clamp_filter_to_tenant(): void {
+        global $DB;
+        $this->resetAfterTest();
+        // Since 2026-09-24 each level must be a real child of the one above
+        // (team_scope_test covers the cross-tenant cases), so the chain exists.
+        $this->add_root_org(1, 'Airpay');
+        foreach ([[5, 1, '/1/5', 2], [9, 5, '/1/5/9', 3]] as [$id, $parent, $path, $depth]) {
+            $this->add_root_org($id, 'Org ' . $id);
+            $DB->update_record('local_sentientia_org', (object) [
+                'id' => $id, 'parentid' => $parent, 'path' => $path, 'depth' => $depth]);
+        }
         // Own tenant — kept, including deeper levels.
         $this->assertSame([1, 5, 9], compliance_engine::clamp_filter_to_tenant('/1', 1, 5, 9));
         // No BU chosen — kept.

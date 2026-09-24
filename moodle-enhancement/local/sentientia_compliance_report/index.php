@@ -14,52 +14,31 @@ require_once(__DIR__ . '/../../config.php');
 require_login();
 
 $systemcontext = context_system::instance();
-$isadmin = is_siteadmin() || has_capability('local/courses:manage', $systemcontext);
 
-// BizLMS admin fallback.
-if (!$isadmin) {
-    $hasbizlmsadmin = $DB->record_exists_sql(
-        "SELECT 1 FROM {role_assignments} ra
-         JOIN {context} ctx ON ctx.id = ra.contextid
-         WHERE ra.userid = :uid AND ra.roleid = 9 AND ctx.contextlevel = 40",
-        ['uid' => $USER->id]);
-    $isadmin = $hasbizlmsadmin;
-}
-
-// Managers can view compliance for their team (read-only).
-// Check capability first, then fall back to supervisor relationship.
-$ismanager = false;
-if (!$isadmin) {
-    // Capability-based check (covers HRBP, trainer roles).
-    if (has_capability('moodle/site:viewreports', $systemcontext)) {
-        $ismanager = true;
-    } else {
-        // Supervisor relationship check — guard against missing column.
-        try {
-            $dbman = $DB->get_manager();
-            $usertable = new xmldb_table('user');
-            $superfield = new xmldb_field('open_supervisorid');
-            if ($dbman->field_exists($usertable, $superfield)) {
-                $directreports = $DB->count_records_select('user',
-                    "open_supervisorid = :uid AND deleted = 0 AND suspended = 0",
-                    ['uid' => $USER->id]);
-                $ismanager = ($directreports > 0);
-            }
-        } catch (\Throwable $e) {
-            // Column doesn't exist — not a manager in this context.
-            $ismanager = false;
-        }
-    }
-}
-if (!$isadmin && !$ismanager) {
+// Who may see the report, and how much of it: site admin -> every tenant;
+// compliance admin or report viewer -> their tenant; line manager -> their
+// reporting tree (direct reports and everyone below them). See viewer_scope.
+// Until 2026-09-24 a line manager was scoped to their whole tenant.
+$scope = \local_sentientia_compliance_report\viewer_scope::for_user($USER);
+if ($scope === null) {
     // Plain lang string, not required_capability_exception: no single
     // capability decides this gate (it mixes site admin, a role id, a
     // capability and the supervisor relationship), so naming one capability
     // would tell the user something false. N5 (2026-09-24): this used to be
     // moodle_exception('nopermission'), a key core does not have, which
-    // rendered as the bare identifier "error/nopermission".
-    throw new moodle_exception('error_noaccess', 'local_sentientia_compliance_report');
+    // rendered as the bare identifier "error/nopermission". Also refused: a
+    // non-admin whose tenant cannot be resolved (every query reads '' as the
+    // whole site).
+    // Someone who qualifies but whose account has no resolvable organisation
+    // is told so - "you are not allowed" would describe the wrong problem.
+    $reason = \local_sentientia_compliance_report\viewer_scope::refusal_reason($USER);
+    throw new moodle_exception(
+        $reason === \local_sentientia_compliance_report\viewer_scope::REFUSED_NO_TENANT ? 'error_notenant' : 'error_noaccess',
+        'local_sentientia_compliance_report');
 }
+// null for site admins and tenant-level viewers; for a line manager, exactly
+// the people they may see. Passed to every report query below.
+$teamuserids = $scope->userids;
 
 $PAGE->set_url(new moodle_url('/local/sentientia_compliance_report/index.php'));
 $PAGE->set_context($systemcontext);
@@ -67,13 +46,34 @@ $PAGE->set_title(get_string('compliancereport', 'local_sentientia_compliance_rep
 $PAGE->set_pagelayout('standard');
 
 $tab    = optional_param('tab', 'matrix', PARAM_ALPHA);
+if ($tab === 'config' && !$scope->can_configure()) {
+    // Not offered to anyone else (see $canconfigure below); a hand-typed
+    // ?tab=config used to list every tenant's excluded users, with emails.
+    $tab = 'matrix';
+}
 $page   = optional_param('page', 0, PARAM_INT);
 $bu     = optional_param('bu', 0, PARAM_INT);
 $dept   = optional_param('dept', 0, PARAM_INT);
 $subdept = optional_param('subdept', 0, PARAM_INT);
 
+// Configuration - the Configure tab and the four actions below - is SITE-ADMIN
+// ONLY. The tab link has only ever been rendered for site admins
+// ({{#is_siteadmin}} in dashboard.mustache), but until 2026-09-24 nothing on
+// the server enforced it: anyone past the view gate above, including a line
+// manager with one direct report or any holder of moodle/site:viewreports,
+// could open ?tab=config (every tenant's excluded users, with their emails) or
+// POST action=exclude for any user in any tenant, or deactivate a mandatory
+// course site-wide. The compliance_engine mutators check nothing and are not
+// tenant-scoped, so the gate has to be here. Widening configuration to tenant
+// admins needs tenant-scoped engine methods first.
+$canconfigure = $scope->can_configure();
+
 // Handle admin actions: manage courses, exclude users.
 $action = optional_param('action', '', PARAM_ALPHA);
+if ($action && !$canconfigure) {
+    throw new moodle_exception('nopermissions', 'error', '',
+        get_string('configure', 'local_sentientia_compliance_report'));
+}
 if ($action && confirm_sesskey()) {
     $engine_cls = \local_sentientia_compliance_report\compliance_engine::class;
     switch ($action) {
@@ -107,11 +107,9 @@ if ($action && confirm_sesskey()) {
     }
 }
 
-// Tenant scoping.
-$orgpath = '';
-if (!is_siteadmin()) {
-    $orgpath = \local_sentientia_org\tenant_manager::get_tenant_path();
-}
+// Tenant scoping: '' only for a site admin (viewer_scope never yields '' for
+// anyone else).
+$orgpath = $scope->orgpath;
 
 // A scoped admin may only drill down INSIDE their own tenant. The BU dropdown
 // never offers another root org, but a hand-edited ?bu= used to widen the
@@ -134,9 +132,11 @@ if ($bu > 0) {
 $engine = \local_sentientia_compliance_report\compliance_engine::class;
 
 // Build filter dropdown data.
-$filter_bus = $engine::get_org_hierarchy_level(1, $orgpath); // Business Units.
-$filter_depts = ($bu > 0) ? $engine::get_org_hierarchy_children($bu) : [];
-$filter_subdepts = ($dept > 0) ? $engine::get_org_hierarchy_children($dept) : [];
+// Headcounts in the dropdowns follow the scope: a line manager sees their
+// team's numbers, not the tenant's. The ids were clamped above.
+$filter_bus = $engine::get_org_hierarchy_level(1, $orgpath, $teamuserids); // Business Units.
+$filter_depts = ($bu > 0) ? $engine::get_org_hierarchy_children($bu, $teamuserids) : [];
+$filter_subdepts = ($dept > 0) ? $engine::get_org_hierarchy_children($dept, $teamuserids) : [];
 
 // Mark selected values.
 foreach ($filter_bus as &$item) { $item['selected'] = ($item['id'] == $bu); }
@@ -146,10 +146,12 @@ unset($item);
 
 // Get data based on active tab — use cache for expensive queries.
 $cache = \cache::make_from_params(\cache_store::MODE_APPLICATION, 'local_sentientia_compliance_report', 'dashboard');
-$cachekey = 'kpis_' . md5($filterpath);
+// Keyed on the scope too: two line managers in one tenant share $filterpath,
+// and must not be served each other's figures (or the tenant's).
+$cachekey = $scope->kpi_cache_key($filterpath);
 $kpis = $cache->get($cachekey);
 if ($kpis === false) {
-    $kpis = $engine::get_summary_kpis($filterpath);
+    $kpis = $engine::get_summary_kpis($filterpath, $teamuserids);
     $cache->set($cachekey, $kpis);  // TTL managed by Moodle cache definition.
 }
 
@@ -194,22 +196,27 @@ $kpi_tiles = [
         'color' => 'info',
     ],
 ];
-$matrix = ($tab === 'matrix') ? $engine::get_compliance_matrix($filterpath, $page, 50) : null;
-$defaulters = ($tab === 'defaulters') ? $engine::get_defaulters($filterpath) : null;
-$scorecard = ($tab === 'scorecard') ? $engine::get_department_scorecard($filterpath) : null;
-$manager_report = ($tab === 'manager') ? $engine::get_manager_report($filterpath) : null;
+$matrix = ($tab === 'matrix') ? $engine::get_compliance_matrix($filterpath, $page, 50, $teamuserids) : null;
+$defaulters = ($tab === 'defaulters') ? $engine::get_defaulters($filterpath, 100, $teamuserids) : null;
+$scorecard = ($tab === 'scorecard') ? $engine::get_department_scorecard($filterpath, $teamuserids) : null;
+$manager_report = ($tab === 'manager') ? $engine::get_manager_report($filterpath, $teamuserids) : null;
+// Only a team view lists a manager who has left (their reports are still in
+// the tree); say so rather than show a stale name as if they were current.
+foreach ($manager_report ?? [] as $mr) {
+    $mr->mgr_left = !empty($mr->mgr_deleted);
+}
 
 // Config tab: compliance courses + excluded users.
 $config_courses = [];
 $config_excluded = [];
-if ($tab === 'config') {
+if ($tab === 'config' && $canconfigure) {
     $config_courses = $engine::get_managed_courses();
     $config_excluded = $engine::get_excluded_users();
 }
 
 // Get all courses for the add-course dropdown.
 $allcourses = [];
-if ($tab === 'config') {
+if ($tab === 'config' && $canconfigure) {
     $allcourses = $DB->get_records_select('course', 'id > 1 AND visible = 1', null, 'fullname', 'id, fullname');
     $allcourses = array_values(array_map(fn($c) => ['id' => $c->id, 'name' => format_string($c->fullname)], $allcourses));
 }
@@ -249,6 +256,8 @@ $data = [
     'manager_report'    => $manager_report,
     'has_manager_report' => !empty($manager_report),
     'is_scoped'         => !empty($orgpath),
+    'is_team_scope'     => ($scope->level === \local_sentientia_compliance_report\viewer_scope::LEVEL_TEAM),
+    'team_size'         => count($teamuserids ?? []),
     'is_siteadmin'      => is_siteadmin(),
     // Same authority export.php enforces — keeps the button and the gate in
     // lockstep so a manager who can view never sees a button that 403s.

@@ -385,11 +385,17 @@ class compliance_engine {
      * Get the compliance matrix — one row per user, one column per mandatory course.
      * This is the core report matching your Python script output.
      */
-    public static function get_compliance_matrix(string $orgpath = '', int $page = 0, int $perpage = 50): array {
+    public static function get_compliance_matrix(string $orgpath = '', int $page = 0, int $perpage = 50,
+            ?array $userids = null): array {
         global $DB;
 
         $conditions = ['1=1'];
         $params = [];
+        [$teamsql, $teamargs] = self::users_filter($userids, 's.userid');
+        if ($teamsql !== '') {
+            $conditions[] = substr($teamsql, strlen(' AND '));
+            $params += $teamargs;
+        }
 
         if (!empty($orgpath)) {
             // Match exact tenant root OR descendant (`'/1' . '%'` would leak /10, /177).
@@ -409,12 +415,15 @@ class compliance_engine {
         $total = $DB->count_records_sql(
             "SELECT COUNT(DISTINCT s.userid) FROM {local_compliance_snapshot} s WHERE $where", $params);
 
+        // The ORDER BY columns are selected too: PostgreSQL rejects DISTINCT
+        // with an ORDER BY on unselected columns. They depend only on userid,
+        // so the rows are the same; s.userid breaks ties for stable pages.
         $user_ids = $DB->get_records_sql(
-            "SELECT DISTINCT s.userid
+            "SELECT DISTINCT s.userid, u.lastname, u.firstname
                FROM {local_compliance_snapshot} s
                JOIN {user} u ON u.id = s.userid
               WHERE $where
-           ORDER BY u.lastname, u.firstname",
+           ORDER BY u.lastname, u.firstname, s.userid",
             $params, $page * $perpage, $perpage);
 
         $rows = [];
@@ -470,8 +479,9 @@ class compliance_engine {
     /**
      * Get department compliance scorecard.
      */
-    public static function get_department_scorecard(string $orgpath = ''): array {
+    public static function get_department_scorecard(string $orgpath = '', ?array $userids = null): array {
         global $DB;
+        [$teamsql, $teamargs] = self::users_filter($userids, 'userid');
 
         $orgfilter = '';
         $params = [];
@@ -501,18 +511,24 @@ class compliance_engine {
             [$deptsql, $deptargs] = \local_sentientia_platform\tenant::path_descendant_filter(
                 (string) $dept->path, '', 'department_path', 'dept');
 
+            $deptargs += $teamargs;
             $total = $DB->count_records_sql(
-                "SELECT COUNT(*) FROM {local_compliance_snapshot} WHERE {$deptsql}",
+                "SELECT COUNT(*) FROM {local_compliance_snapshot} WHERE {$deptsql}{$teamsql}",
                 $deptargs);
+            if ($userids !== null && $total === 0) {
+                // A manager sees the departments their team is in, not every
+                // department of the tenant with a row of zeros.
+                continue;
+            }
 
             $completed = $DB->count_records_sql(
                 "SELECT COUNT(*) FROM {local_compliance_snapshot}
-                  WHERE {$deptsql} AND status = 'completed'",
+                  WHERE {$deptsql}{$teamsql} AND status = 'completed'",
                 $deptargs);
 
             $overdue = $DB->count_records_sql(
                 "SELECT COUNT(*) FROM {local_compliance_snapshot}
-                  WHERE {$deptsql} AND status = 'overdue'",
+                  WHERE {$deptsql}{$teamsql} AND status = 'overdue'",
                 $deptargs);
 
             $rate = $total > 0 ? round(($completed / $total) * 100) : 0;
@@ -537,7 +553,7 @@ class compliance_engine {
     /**
      * Get defaulters list — employees overdue on any mandatory course.
      */
-    public static function get_defaulters(string $orgpath = '', int $limit = 100): array {
+    public static function get_defaulters(string $orgpath = '', int $limit = 100, ?array $userids = null): array {
         global $DB;
 
         $orgfilter = '';
@@ -548,23 +564,33 @@ class compliance_engine {
             $params['orgexact']  = $orgpath;
             $params['orgprefix'] = $DB->sql_like_escape($orgpath) . '/%';
         }
+        [$teamsql, $teamargs] = self::users_filter($userids, 's.userid');
+        $orgfilter .= $teamsql;
+        $params += $teamargs;
 
+        // Keyed on the snapshot row (s.id). It was keyed on s.userid, and
+        // get_records_sql() keeps one row per first-column value, so a person
+        // overdue on two courses showed once. The course name comes from a
+        // subquery because a course listed for several entities has several
+        // local_compliance_courses rows, which the old JOIN multiplied.
         return array_values($DB->get_records_sql(
-            "SELECT s.userid, u.firstname, u.lastname, u.email, u.open_designation,
-                    s.courseid, cc.coursename, s.days_overdue, s.progress_percent,
-                    s.deadline_date, s.department_path
+            "SELECT s.id, s.userid, u.firstname, u.lastname, u.email, u.open_designation,
+                    s.courseid,
+                    (SELECT MAX(cc.coursename) FROM {local_compliance_courses} cc
+                      WHERE cc.courseid = s.courseid) AS coursename,
+                    s.days_overdue, s.progress_percent, s.deadline_date, s.department_path
                FROM {local_compliance_snapshot} s
                JOIN {user} u ON u.id = s.userid
-               JOIN {local_compliance_courses} cc ON cc.courseid = s.courseid
               WHERE s.status = 'overdue' $orgfilter
-           ORDER BY s.days_overdue DESC",
+                AND EXISTS (SELECT 1 FROM {local_compliance_courses} cx WHERE cx.courseid = s.courseid)
+           ORDER BY s.days_overdue DESC, s.id ASC",
             $params, 0, $limit));
     }
 
     /**
      * Get compliance summary KPIs.
      */
-    public static function get_summary_kpis(string $orgpath = ''): array {
+    public static function get_summary_kpis(string $orgpath = '', ?array $userids = null): array {
         global $DB;
 
         $orgfilter = '';
@@ -574,6 +600,9 @@ class compliance_engine {
             $params['orgexact']  = $orgpath;
             $params['orgprefix'] = $DB->sql_like_escape($orgpath) . '/%';
         }
+        [$teamsql, $teamargs] = self::users_filter($userids, 'userid');
+        $orgfilter .= $teamsql;
+        $params += $teamargs;
 
         $total = $DB->count_records_sql(
             "SELECT COUNT(*) FROM {local_compliance_snapshot} WHERE 1=1 $orgfilter", $params);
@@ -610,7 +639,7 @@ class compliance_engine {
      * "Team Items" heading beside assignment counts, so a row could read
      * "3 items, 2 completed, 3 overdue, 22%" - true, and unreadable.
      */
-    public static function get_manager_report(string $orgpath = ''): array {
+    public static function get_manager_report(string $orgpath = '', ?array $userids = null): array {
         global $DB;
 
         $orgfilter = '';
@@ -620,10 +649,21 @@ class compliance_engine {
             $params['orgexact']  = $orgpath;
             $params['orgprefix'] = $DB->sql_like_escape($orgpath) . '/%';
         }
+        // For a line manager: one row per manager in their tree (their own
+        // direct reports, then each sub-manager's), counting only team members.
+        [$teamsql, $teamargs] = self::users_filter($userids, 's.userid');
+        $orgfilter .= $teamsql;
+        $params += $teamargs;
+        // Tenant and site views have always hidden a manager who has left. A
+        // team view must not: get_reporting_tree() walks through a deleted
+        // middle manager, so their reports are in every other tab, and would
+        // vanish from this one. The page labels such a row (mgr_deleted).
+        $mgrfilter = ($userids === null) ? 'AND mgr.deleted = 0' : '';
 
         return array_values($DB->get_records_sql(
             "SELECT u.open_supervisorid as managerid,
                     mgr.firstname as mgr_firstname, mgr.lastname as mgr_lastname,
+                    mgr.deleted as mgr_deleted,
                     COUNT(DISTINCT s.userid) as team_members,
                     COUNT(*) as team_assignments,
                     SUM(CASE WHEN s.status = 'completed' THEN 1 ELSE 0 END) as team_completed,
@@ -633,9 +673,9 @@ class compliance_engine {
                FROM {local_compliance_snapshot} s
                JOIN {user} u ON u.id = s.userid
                JOIN {user} mgr ON mgr.id = u.open_supervisorid
-              WHERE u.open_supervisorid > 0 AND mgr.deleted = 0 $orgfilter
-           GROUP BY u.open_supervisorid, mgr.firstname, mgr.lastname
-             HAVING team_members > 0
+              WHERE u.open_supervisorid > 0 $mgrfilter $orgfilter
+           GROUP BY u.open_supervisorid, mgr.firstname, mgr.lastname, mgr.deleted
+             HAVING COUNT(DISTINCT s.userid) > 0
            ORDER BY team_overdue DESC, team_rate ASC",
             $params));
     }
@@ -647,6 +687,78 @@ class compliance_engine {
             return get_string('status_' . $status, 'local_sentientia_compliance_report');
         }
         return ucfirst($status);
+    }
+
+    // ════════════════════════════════════════════════════
+    // TEAM SCOPE (line managers)
+    // ════════════════════════════════════════════════════
+
+    /** Reporting chains deeper than this are cut off (and cycles cannot loop). */
+    public const MAX_REPORTING_DEPTH = 32;
+
+    /**
+     * Everyone who reports to $managerid, directly or through other managers.
+     *
+     * Walks open_supervisorid down from the manager one level at a time.
+     * The result is bounded to $tenantpath, so a mis-keyed supervisor cannot
+     * pull in another tenant's people, and it is cycle-safe. Deleted users are
+     * walked through, so a deleted middle manager does not cut their team off,
+     * but they are never returned. The manager is not included.
+     *
+     * @param int $managerid
+     * @param string $tenantpath the manager's tenant root, e.g. '/1'. Must not be ''.
+     * @return int[] user ids
+     */
+    public static function get_reporting_tree(int $managerid, string $tenantpath): array {
+        global $DB;
+        if ($managerid <= 0 || trim($tenantpath, '/') === '') {
+            // An empty path would make the tenant bound below match everyone.
+            return [];
+        }
+        [$tenantsql, $tenantargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+            $tenantpath, '', 'open_path', 'rtten');
+
+        $seen = [$managerid => true];
+        $team = [];
+        $frontier = [$managerid];
+        for ($depth = 0; $frontier && $depth < self::MAX_REPORTING_DEPTH; $depth++) {
+            [$insql, $inargs] = $DB->get_in_or_equal($frontier, SQL_PARAMS_NAMED, 'rtsup');
+            $rows = $DB->get_records_select('user',
+                "open_supervisorid {$insql} AND {$tenantsql}", $inargs + $tenantargs, '', 'id, deleted');
+            $frontier = [];
+            foreach ($rows as $row) {
+                $id = (int) $row->id;
+                if (isset($seen[$id])) {
+                    continue;
+                }
+                $seen[$id] = true;
+                $frontier[] = $id;
+                if (empty($row->deleted)) {
+                    $team[] = $id;
+                }
+            }
+        }
+        return $team;
+    }
+
+    /**
+     * SQL fragment restricting a query to a set of users.
+     *
+     * @param int[]|null $userids null = no restriction
+     * @param string $column e.g. 's.userid'
+     * @return array [string $sql (starting with ' AND ', or ''), array $params]
+     */
+    private static function users_filter(?array $userids, string $column): array {
+        global $DB;
+        if ($userids === null) {
+            return ['', []];
+        }
+        if (!$userids) {
+            // Nobody - a manager whose whole team has left.
+            return [' AND 1 = 0', []];
+        }
+        [$insql, $params] = $DB->get_in_or_equal(array_map('intval', $userids), SQL_PARAMS_NAMED, 'teamu');
+        return [" AND {$column} {$insql}", $params];
     }
 
     // ════════════════════════════════════════════════════
@@ -689,10 +801,29 @@ class compliance_engine {
      * @return array [$bu, $dept, $subdept]
      */
     public static function clamp_filter_to_tenant(string $orgpath, int $bu, int $dept, int $subdept): array {
-        if ($orgpath !== '' && $bu > 0 && ('/' . $bu) !== $orgpath) {
+        if ($orgpath === '') {
+            return [$bu, $dept, $subdept];
+        }
+        if ($bu > 0 && ('/' . $bu) !== $orgpath) {
             return [0, 0, 0];
         }
+        // Each deeper level must be a child of the one above. Until 2026-09-24
+        // only the BU was checked, and ?dept=<any org id> listed that org's
+        // children - another tenant's departments, with headcounts - in the
+        // Sub-department dropdown. A dept only means something under a BU.
+        if ($dept > 0 && ($bu <= 0 || self::parent_of($dept) !== $bu)) {
+            return [$bu, 0, 0];
+        }
+        if ($subdept > 0 && ($dept <= 0 || self::parent_of($subdept) !== $dept)) {
+            return [$bu, $dept, 0];
+        }
         return [$bu, $dept, $subdept];
+    }
+
+    /** Parent org id of an org unit, or -1 when it does not exist. */
+    private static function parent_of(int $orgid): int {
+        $org = \local_sentientia_org\org_manager::get($orgid);
+        return $org ? (int) ($org->parentid ?? -1) : -1;
     }
 
     /** CSS class for status badge. */
@@ -722,7 +853,8 @@ class compliance_engine {
      * @param string $parentpath filter to children of this path
      * @return array [{id, name, user_count}]
      */
-    public static function get_org_hierarchy_level(int $level, string $parentpath = ''): array {
+    public static function get_org_hierarchy_level(int $level, string $parentpath = '',
+            ?array $userids = null): array {
         global $DB;
 
         // Level 1: top-level costcenters (BU).
@@ -741,16 +873,31 @@ class compliance_engine {
                 $params['pexact']  = $parentpath;
                 $params['pprefix'] = $DB->sql_like_escape($parentpath) . '/%';
             }
-            $sql = "SELECT t.tenantid AS id, COUNT(DISTINCT t.userid) AS user_count
-                      FROM (SELECT u.id AS userid,
-                                   CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(u.open_path, '/', 2), '/', -1) AS UNSIGNED) AS tenantid
-                              FROM {user} u
-                             WHERE u.deleted = 0 AND u.suspended = 0
-                               AND u.open_path IS NOT NULL AND u.open_path != ''{$scope}) t
-                     WHERE t.tenantid > 0
-                  GROUP BY t.tenantid
-                  ORDER BY user_count DESC, t.tenantid ASC";
-            $records = $DB->get_records_sql($sql, $params);
+            // A line manager's headcounts are their team's, not the tenant's.
+            [$teamsql, $teamargs] = self::users_filter($userids, 'u.id');
+            $scope .= $teamsql;
+            $params += $teamargs;
+            // Grouped by tenant id in PHP. The SQL used SUBSTRING_INDEX and
+            // CAST(... AS UNSIGNED), which only MySQL/MariaDB accept, so this
+            // failed on PostgreSQL (CI's database). One row per active user.
+            $paths = $DB->get_fieldset_sql(
+                "SELECT u.open_path
+                   FROM {user} u
+                  WHERE u.deleted = 0 AND u.suspended = 0
+                    AND u.open_path IS NOT NULL AND u.open_path <> ''{$scope}", $params);
+            $counts = [];
+            foreach ($paths as $path) {
+                $tenantid = self::tenant_id_from_path((string) $path);
+                if ($tenantid > 0) {
+                    $counts[$tenantid] = ($counts[$tenantid] ?? 0) + 1;
+                }
+            }
+            // Same order as before: most people first, then the lower id.
+            uksort($counts, fn($a, $b) => [$counts[$b], $a] <=> [$counts[$a], $b]);
+            $records = [];
+            foreach ($counts as $tenantid => $n) {
+                $records[] = (object) ['id' => $tenantid, 'user_count' => $n];
+            }
         } else {
             return []; // Use get_org_hierarchy_children for deeper levels.
         }
@@ -777,8 +924,9 @@ class compliance_engine {
      * @param int $parentid costcenter ID
      * @return array [{id, name, user_count}]
      */
-    public static function get_org_hierarchy_children(int $parentid): array {
+    public static function get_org_hierarchy_children(int $parentid, ?array $userids = null): array {
         global $DB;
+        [$teamsql, $teamargs] = self::users_filter($userids, 'id');
 
         $children = \local_sentientia_org\org_manager::get_children((int)$parentid);
         $result = [];
@@ -793,7 +941,7 @@ class compliance_engine {
             [$kidsql, $kidargs] = \local_sentientia_platform\tenant::path_descendant_filter(
                 $childpath, '', 'open_path', 'kid');
             $usercount = $DB->count_records_select('user',
-                "deleted = 0 AND suspended = 0 AND {$kidsql}", $kidargs);
+                "deleted = 0 AND suspended = 0 AND {$kidsql}{$teamsql}", $kidargs + $teamargs);
             $result[] = [
                 'id'         => (int)$c->id,
                 'name'       => format_string($c->fullname),

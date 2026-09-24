@@ -17,6 +17,14 @@
     </div>
     {{/last_refreshed}}
 
+    {{! Line managers see their reporting tree only - say so, so a short list does not read as missing data. }}
+    {{#is_team_scope}}
+    <div class="alert alert-info" role="status" style="font-size:13px; margin-bottom:12px;">
+        <i class="fa fa-users" aria-hidden="true"></i>
+        {{#str}}scope_team, local_sentientia_compliance_report, {{team_size}}{{/str}}
+    </div>
+    {{/is_team_scope}}
+
     {{! KPI Summary Bar — Phase B0 iter X: migrated to tokens-aware stat_card partial }}
     {{#has_kpi_tiles}}
     <div class="airpay-stat-grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));">
@@ -177,7 +185,7 @@
         <tbody>
             {{#manager_report}}
             <tr>
-                <td><strong>{{mgr_firstname}} {{mgr_lastname}}</strong></td>
+                <td><strong>{{mgr_firstname}} {{mgr_lastname}}</strong>{{#mgr_left}} <span class="badge badge-secondary">{{#str}}manager_left, local_sentientia_compliance_report{{/str}}</span>{{/mgr_left}}</td>
                 <td>{{team_members}}</td>
                 <td>{{team_assignments}}</td>
                 <td>{{team_completed}}</td>

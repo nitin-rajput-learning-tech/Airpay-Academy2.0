@@ -142,3 +142,8 @@ $string['privacy:metadata:compliance_courses:createdby'] = 'The ID of the user w
 // Refusal on index.php (N5, 2026-09-24). Replaces moodle_exception('nopermission'),
 // which named a core key that does not exist and rendered as "error/nopermission".
 $string['error_noaccess'] = 'You do not have access to the compliance report. It is open to compliance administrators, people who can view site reports, and managers with people reporting to them.';
+
+// Line managers see their reporting tree only (2026-09-24).
+$string['scope_team'] = 'Showing your reporting team only: {$a} people - your direct reports and everyone who reports to them.';
+$string['error_notenant'] = 'Your account is not linked to an organisation, so the compliance report cannot be scoped to it. Ask an administrator to set your organisation.';
+$string['manager_left'] = 'no longer with the organisation';

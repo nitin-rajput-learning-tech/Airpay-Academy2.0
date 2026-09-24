@@ -247,3 +247,68 @@ Version 2026092400. Guarded platform-wide by
   accepts any `?bu=`). Such a user sees or exports every tenant's matrix. Same defect analytics fixed
   on 2026-09-22 (`visible_org_path()` returning null and the page refusing). Line managers are also
   shown their whole tenant rather than their team.
+
+## 2026-09-24 - Line managers see their reporting tree only; configuration is site-admin only (1.0.5, 2026092401)
+
+**Product rule (Nitin, 2026-09-24):** a line manager (L2) sees compliance for their direct reports and
+their extended teams, meaning everyone below them in the `open_supervisorid` chain, and nobody else.
+
+**Before.** index.php admitted a line manager through the supervisor relationship and then scoped them
+to their whole tenant, so they could read every employee's compliance status.
+
+**Now.** `classes/viewer_scope.php` is the single access decision, and index.php uses it:
+
+| Level | Who | Sees |
+|---|---|---|
+| site | site admin | every tenant |
+| tenant | `local/courses:manage` (where BizLMS declares it), role id 9 at a category, or `moodle/site:viewreports` | own tenant, unchanged |
+| team | admitted only as a supervisor | `compliance_engine::get_reporting_tree()`: direct plus indirect reports |
+
+- **Refused:** everyone else, and any non-site-admin whose tenant cannot be resolved. The engine reads
+  `''` as the whole site. export.php, still gated on the export capability, refuses that case too.
+- **The tree walk** is breadth-first over `open_supervisorid` and bounded to the manager's tenant. It
+  is cycle-safe, capped at 32 levels, and walks through deleted middle managers without returning them.
+- **The queries.** The five report queries take `?array $userids` (null = unrestricted, `[]` =
+  nobody). The KPI cache key includes the scope, so two managers in one tenant no longer share cached
+  figures. The scorecard lists only departments the team is in. A banner (`scope_team`, en + hi) tells
+  the manager they are seeing their team.
+- **Configuration and actions:** the Configure tab and `addcourse` / `removecourse` / `exclude` /
+  `include` are site-admin only on the server as well. The tab has only ever been shown to site admins,
+  but anyone past the view gate could POST those actions for any user in any tenant, or open
+  `?tab=config` and see every tenant's excluded users. These were the N5 review's High and Medium
+  findings.
+
+**Tests:** `tests/team_scope_test.php` covers the tree (direct, extended, a deleted middle manager, a
+cross-tenant mis-key, a cycle, no tenant), each viewer level, the cache key, and every report query
+under a team.
+
+**Still open:** tenant-admin configuration needs tenant-scoped engine mutators first. The filter
+dropdowns' per-BU user counts are tenant-wide. They are aggregate counts, not people.
+
+**Same day, after the team-scope review** (20 agents, 4 lenses, 16 findings confirmed, all fixed):
+- `?dept` / `?subdept` were never checked. `?dept=<any org id>` listed another tenant's departments,
+  with headcounts, in the Sub-department dropdown. This predates today. `clamp_filter_to_tenant()` now
+  requires each level to be a real child of the one above.
+- Dropdown headcounts follow the scope: a manager sees their team's numbers.
+- Page and Export can no longer disagree. An export-capability holder is tenant-level in
+  `viewer_scope`, which restores what a category Manager with direct reports saw before today.
+  export.php resolves its scope through `viewer_scope` as well.
+- A refusal says why. `error_notenant` covers someone who qualifies but has no resolvable
+  organisation; `error_noaccess` covers everyone else.
+- Two changes for PostgreSQL, CI's database:
+  - `get_compliance_matrix()` now selects its ORDER BY columns.
+  - `get_manager_report()` uses `HAVING COUNT(...)` in place of an alias, and
+    `get_org_hierarchy_level()` groups tenants in PHP instead of MySQL-only
+    `SUBSTRING_INDEX` / `CAST ... UNSIGNED`.
+- `get_defaulters()` was keyed on `s.userid`, so a person overdue on two courses showed once; it is
+  now keyed on `s.id`. The course name comes from a subquery, so a course listed for several entities
+  no longer multiplies rows.
+- In a team view, the Manager Report keeps the group of a manager who has left, labelled
+  `manager_left`, since those reports are in every other tab. Tenant and site views are unchanged.
+- The config gate and KPI cache key are now `viewer_scope::can_configure()` / `kpi_cache_key()`,
+  and tested.
+- `team_scope_test` now:
+  - carries `@group tenant_isolation` on the class, where PHPUnit sees it;
+  - seeds a real org tree, so the scorecard and dropdown assertions run;
+  - covers role 9 at a category, precedence, the tenant-level no-tenant refusal, the clamp, two-course
+    defaulters and the left-manager group.

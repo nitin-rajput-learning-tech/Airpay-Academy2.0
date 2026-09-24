@@ -140,5 +140,10 @@ reviewers) found one blocker. The blocker was fixed before any deploy.
 | N11 | Medium | WhatsApp provider reported only users with a saved preference. A user with send-log rows alone was never erased, by core's flow or ours. | Fixed |
 | N12 | **High (blocker)** | **Evaluation provider `delete_data_for_user()` never set `$userid`**, so it deleted `WHERE userid IS NULL`. Because `assigned_by_userid` is nullable, the anonymise step would have rewritten other people's system-assigned rows, and Step 0 would have triggered that on UAT. `get_contexts_for_userid()` also ignored assign-only users. Introduced by my `951b20982`. | Fixed in both trees; `tests/privacy_provider_test.php` asserts that the other user's rows survive untouched |
 
-A read-only audit of all 38 providers that Step 0 calls is running. Its findings are the gate for
-running the W2-02 probe on UAT.
+The audit of all 38 providers finished: 15 findings confirmed, all fixed in `b2a8dee40`.
+
+| # | Severity | Defect | Status |
+|---|---|---|---|
+| N13 | **High** | **Compliance report configuration was open to every viewer.** A line manager with one direct report could POST `action=exclude` for any user in any tenant, deactivate a mandatory course site-wide, or open `?tab=config` to see every tenant's excluded users with their emails. The UI only ever showed the tab to site admins. Found by the N5 review. | Fixed: site-admin only on the server as well |
+| N14 | **High** | **Line managers saw their whole tenant's compliance**, not their team. | Fixed per the product rule: direct reports plus extended teams (`viewer_scope`) |
+| N15 | Medium | A non-admin whose `open_path` is empty resolved to `''`, which the report and the export read as the whole site. | Fixed: refused |
