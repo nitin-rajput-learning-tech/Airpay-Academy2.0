@@ -52,7 +52,13 @@ if (!$isadmin) {
     }
 }
 if (!$isadmin && !$ismanager) {
-    throw new moodle_exception('nopermission');
+    // Plain lang string, not required_capability_exception: no single
+    // capability decides this gate (it mixes site admin, a role id, a
+    // capability and the supervisor relationship), so naming one capability
+    // would tell the user something false. N5 (2026-09-24): this used to be
+    // moodle_exception('nopermission'), a key core does not have, which
+    // rendered as the bare identifier "error/nopermission".
+    throw new moodle_exception('error_noaccess', 'local_sentientia_compliance_report');
 }
 
 $PAGE->set_url(new moodle_url('/local/sentientia_compliance_report/index.php'));

@@ -138,3 +138,7 @@ $string['privacy:metadata:compliance_email_log:sent_to'] = 'The email address th
 $string['privacy:metadata:compliance_email_log:timecreated'] = 'When the record was created.';
 $string['privacy:metadata:compliance_courses'] = 'Which courses are mandatory. This is shared configuration, not one person\'s data; it records only who created each row.';
 $string['privacy:metadata:compliance_courses:createdby'] = 'The ID of the user who created the record.';
+
+// Refusal on index.php (N5, 2026-09-24). Replaces moodle_exception('nopermission'),
+// which named a core key that does not exist and rendered as "error/nopermission".
+$string['error_noaccess'] = 'You do not have access to the compliance report. It is open to compliance administrators, people who can view site reports, and managers with people reporting to them.';

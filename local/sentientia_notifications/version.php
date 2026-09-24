@@ -8,7 +8,8 @@ $plugin->component = 'local_sentientia_notifications';
 // rule_manager_nudge) route the manager->reports grouping through the
 // local_sentientia_core\org seam (reports_by_manager): identical under
 // org_legacy ON (prod-verified: 117 managers exact match); model at cutover.
-$plugin->version   = 2026092200;  // new-course broadcast no longer spans tenants
+$plugin->version   = 2026092400;  // N5: nudge.php refusal renders a real message (was raw "error/nopermission")
+// 2026092200: new-course broadcast no longer spans tenants
 // 2026060200:
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;

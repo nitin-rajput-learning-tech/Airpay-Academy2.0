@@ -138,7 +138,6 @@ and `administrator`; the course drill-down query now returns rows and honours th
 `tests/permission_test.php` covers all of the above, including that `local/courses:manage` really is
 unregistered - the original defect in one assertion.
 
-
 ## 2026-09-24 - `:viewallorgs` had the wrong default (fixed before it reached UAT)
 
 The 2026-09-22 capability layer gave `local/sentientia_analytics:viewallorgs` a `manager` archetype
@@ -170,3 +169,65 @@ lock-out risk recorded in the 2026-09-24 evidence file does not materialise.
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+
+## 2026-09-24 - Wave 2 N5 + N6: refusals that said nothing, and a header that printed a template
+
+**N5 (Medium, proven on UAT).** Every refusal on all three pages threw
+`moodle_exception('nopermission')`. With no component that key is looked up in core's
+`lang/en/error.php`, which has only the plural `nopermissions` (and that one takes a `{$a}`), so
+the user saw the bare identifier `error/nopermission`. Three different refusals rendered
+identically, and none said what was missing.
+
+Each site now says which of the three it is:
+
+| Site | Condition | Now throws |
+|------|-----------|-----------|
+| `index.php`, `drilldown.php` | `permission::can_view()` false | `required_capability_exception(..., permission::VIEW_CAPABILITY, 'nopermissions', '')` - "Sorry, but you do not currently have permissions to do that (View the analytics dashboard)" |
+| `export.php` | `permission::can_export()` false | same, with `EXPORT_CAPABILITY` |
+| `index.php`, `export.php`, `drilldown.php` | `visible_org_path()` / `clamp_org_path()` returned `null` - no tenant could be established | new `error_noorgscope` |
+| `drilldown.php` (department) | requested path outside the viewer's subtree | new `error_outofscope` |
+
+`index.php`'s `clamp_org_path()` null is always the missing-scope case: an out-of-scope `?orgid=`
+is clamped, never refused, so only the drill-down can produce `error_outofscope`.
+
+Two more broken keys in the same files were fixed in passing: `drilldown.php` unknown `?type=`
+threw `invalidparam` and `export.php` unknown `?format=` threw `invalidformat` (a *portfolio*
+string). Neither exists in `error.php`; both now throw core's `invalidaccess` ("This page was not
+accessed correctly"), which is accurate - only a hand-edited URL reaches either.
+
+**N6 (Low, proven on UAT).** The At-Risk Learners table (`templates/predictive_atrisk.mustache`,
+ME tree only - the predictive surfaces are not in the top-level tree) used core `fullnamedisplay` as
+its column header. That string is the site's name-*format template*, `{$a->firstname}
+{$a->lastname}`, not a label, so the header printed the raw placeholder. It now uses the new
+`atrisk_col_learner` ("Learner" / "शिक्षार्थी"). The per-row name is unchanged.
+
+New strings (en + hi, both trees): `error_noorgscope`, `error_outofscope`, `atrisk_col_learner`.
+Version 2026092401 / 1.2.2-beta (2026092400 is the `:viewallorgs` revoke step above, which this
+change keeps unchanged; no new upgrade step - the bump is so the deploy's cache purge serves the new
+strings). Guarded platform-wide by
+`local_sentientia_platform/tests/exception_strings_test.php`.
+
+Not done here, noted for whoever next touches the predictive surfaces: the per-row name in the at-risk table
+is `format_string()`-ed in `predictive_engine` and then escaped again by `{{firstname}}`, so a name
+containing `&` shows as `&amp;`. Pre-existing, unrelated to N6.
+
+**Review pass (same day), two pre-existing `drilldown.php` defects fixed while the file was open:**
+
+- `?path=` is now `rtrim`-ed once, right after it is sanitised. `clamp_org_path()` returns an
+  unrestricted (`:viewallorgs`) viewer's path untrimmed, and the page compared that with a trimmed
+  copy, so `/1/15/` told a site-wide viewer the org was "outside your access" - which the new N5
+  message made actively misleading. `get_department_users()` matches `open_path` exactly, so an
+  untrimmed path also listed nobody.
+- The department heading names an org only if that org's own `path` is the requested path. Org
+  ids are global, so `?path=/1/<an org of another tenant>` passed the clamp (it is under `/1`) and
+  printed the other tenant's department name; the user list was already empty. An org whose `path`
+  is not populated now shows as "Department #id".
+
+Still open (pre-existing, not changed): with `type=course` the page prints any course's full name
+across tenants, and `MUST_EXIST` tells an existing course id from a missing one. The top-level tree's
+`templates/dashboard.mustache` includes `predictive_atrisk`, which exists only in the ME tree
+(baselined drift), so N6 takes effect only where the ME analytics tree is deployed, as on UAT.
+
+Covered by version 2026092401 (unreleased). Visual evidence for the "Learner" header and the four
+refusal messages is still owed from the UAT browser pass.

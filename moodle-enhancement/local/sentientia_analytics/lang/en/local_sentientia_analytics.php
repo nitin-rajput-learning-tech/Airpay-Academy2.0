@@ -58,3 +58,16 @@ $string['sentientia_analytics:export'] = 'Download the analytics CSV export';
 // Previously hardcoded in index.php / dashboard.mustache.
 $string['allbusinessunits'] = 'All Business Units';
 $string['exportcsv'] = 'Export CSV';
+
+// Refusals (N5, 2026-09-24). These replace moodle_exception('nopermission'),
+// which named a core key that does not exist and rendered as the bare
+// identifier "error/nopermission". A missing capability is reported by
+// required_capability_exception with core's 'nopermissions'; these two cover
+// the refusals that are about org scope rather than capability.
+$string['error_noorgscope'] = 'Your account is not assigned to an organisation, so no analytics can be shown. Ask your administrator to set your organisation.';
+$string['error_outofscope'] = 'That part of the organisation is outside your access.';
+
+// At-Risk Learners table (N6, 2026-09-24). The column header used core
+// 'fullnamedisplay', which is a name-format template, not a label, and
+// printed the raw placeholder "{$a->firstname} {$a->lastname}".
+$string['atrisk_col_learner'] = 'Learner';

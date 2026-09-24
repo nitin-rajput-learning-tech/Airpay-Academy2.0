@@ -135,7 +135,6 @@ Fixed via the new `\local_sentientia_platform	enant::path_descendant_filter()` (
 for an arbitrary path), locked by a DB-level boundary suite in `tenant_test.php`, and prevented from
 returning by `tools/check-path-boundary.php` - pre-commit CHECK 18 and the `path-boundary-check` CI job.
 
-
 ## 2026-09-24 - White-label display name (W2-06)
 
 `pluginname` no longer carries the Airpay brand: "Airpay X" became "Sentientia X", and in Hindi
@@ -143,3 +142,22 @@ returning by `tools/check-path-boundary.php` - pre-commit CHECK 18 and the `path
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+
+## 2026-09-24 - Wave 2 N5: nudge.php refusal rendered as "error/nopermission"
+
+`nudge.php` refused a non-manager with `moodle_exception('nopermission')`. Core has no such key in
+`lang/en/error.php` - only the plural `nopermissions` - so the user saw the bare identifier
+`error/nopermission`. What decides this gate is the supervisor relationship, not a capability, so
+it now throws the new plugin string `error_nudge_notyourreport` ("You can only send reminders to
+people who report to you.", en + hi, both trees) rather than `required_capability_exception`.
+
+Still open, not changed here: the gate's middle clause asks
+`has_capability('local/courses:manage')`, a pre-ADR-025 name. BizLMS declares it (`local_courses/db/access.php`), so on a site that also runs BizLMS, as
+the current airpay.academy stack does, it grants to whoever holds it. Sentientia does not
+ship `local_courses`, so on UAT and on a fresh Sentientia install it is
+dead code (false plus a debugging notice), and effective access is site admins and direct
+supervisors. (Review pass: the first version of this note said no shipped plugin declares it.)
+
+Version 2026092400. Guarded platform-wide by
+`local_sentientia_platform/tests/exception_strings_test.php`.

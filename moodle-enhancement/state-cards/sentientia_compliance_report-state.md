@@ -188,7 +188,6 @@ Sentientia plugin's `install.xml` and fails the build if a plugin declaring a us
 declares `null_provider`, ships no provider, or declares only some of the tables it owns. Structural
 rather than an allowlist, so a new plugin with a copy-pasted `null_provider` fails on its first CI run.
 
-
 ## 2026-09-24 - White-label display name (W2-06)
 
 `pluginname` no longer carries the Airpay brand: "Airpay X" became "Sentientia X", and in Hindi
@@ -202,3 +201,49 @@ white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after
 (1) New `anonymise_data_for_user()` for the DPDP flow. It keeps exemptions (the audit record of why mandatory training was excused, and by whom) with their free-text reason blanked, and deletes the derived snapshot and the email log as before. (2) N7: the Manager Report counted people under a 'Team Items' heading beside assignment counts. It now shows Team members and Assignments separately (`team_members`, `team_assignments`; en + hi strings). This was verified on local data (23 managers, 0 invariant violations) and needs an on-screen check.
 
 Found by a read-only audit of all 38 Sentientia privacy providers, run because `local_sentientia_privacy\privacy_manager::process_deletion()` now calls every one of them. Class change only: no version bump. Covered by `local_sentientia_privacy\erasure_scope_test` / `privacy_manager_test`.
+
+
+## 2026-09-24 - Wave 2 N5: refusals rendered as "error/nopermission"
+
+Both entry points refused with `moodle_exception('nopermission')`. Core has no such key in
+`lang/en/error.php` - only the plural `nopermissions`, which takes a `{$a}` - so the user saw the
+bare identifier `error/nopermission`.
+
+- `export.php`: `permission::can_export()` is a single capability, so it now throws
+  `required_capability_exception(context_system, permission::EXPORT_CAPABILITY, 'nopermissions', '')`,
+  which names "Export the compliance report".
+- `index.php`: no single capability decides this gate - it mixes site admin, the retired
+  `local/courses:manage`, role id 9 at category context, `moodle/site:viewreports` and the
+  supervisor relationship - so naming one capability would be false. It now throws the new plugin
+  string `error_noaccess` (en + hi, both trees): "You do not have access to the compliance report.
+  It is open to compliance administrators, people who can view site reports, and managers with
+  people reporting to them." (Review pass: the first wording, "Only compliance administrators, and
+  managers ...", left out the `moodle/site:viewreports` way in that the gate honours.)
+
+Still open, not changed here (an access decision, not a message fix): `index.php` still asks
+`has_capability('local/courses:manage')`. BizLMS declares it (`local_courses/db/access.php`), so on a site that also runs BizLMS, as
+the current airpay.academy stack does, it grants to whoever holds it. Sentientia does not
+ship `local_courses`, so on UAT and on a fresh Sentientia install that clause is dead
+code that answers false with a debugging notice. The same retired name is what
+`permission::grant_export_to_default_roles()` step 1 keys on (see the analytics state card,
+2026-09-22).
+
+Version 2026092400. Guarded platform-wide by
+`local_sentientia_platform/tests/exception_strings_test.php`.
+
+**Found by the N5 review, pre-existing, NOT fixed here (each is an access decision):**
+
+- **High.** `index.php` runs the admin actions (`addcourse`, `removecourse`, `exclude`, `include`)
+  for every user who passes the view gate - any line manager with one direct report, any holder of
+  `moodle/site:viewreports`. Only `confirm_sesskey()` protects them, and that passes for the user's
+  own session. `compliance_engine::exclude_user()` / `include_user()` / `add_compliance_course()` /
+  `remove_compliance_course()` check nothing themselves and are not tenant-scoped, so a line manager
+  can POST `action=exclude&userid=<anyone, any tenant>` or deactivate a mandatory course site-wide.
+  Needs its own change: gate the actions on `is_siteadmin()` or a new manage capability, and clamp
+  to the tenant.
+- **Medium.** `index.php` and `export.php` scope with `tenant_manager::get_tenant_path()`, which
+  returns `''` for a non-admin whose `open_path` is empty or malformed, and
+  `get_compliance_matrix('')` reads that as the whole site (`clamp_filter_to_tenant('')` also
+  accepts any `?bu=`). Such a user sees or exports every tenant's matrix. Same defect analytics fixed
+  on 2026-09-22 (`visible_org_path()` returning null and the page refusing). Line managers are also
+  shown their whole tenant rather than their team.

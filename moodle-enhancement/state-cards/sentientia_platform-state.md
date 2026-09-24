@@ -118,7 +118,6 @@ The middle row is the point: the row count is identical and the old script would
 The CLI now also exists in both plugin trees (it was top-level only), draining one entry from
 `tools/tree-drift-baseline.txt`.
 
-
 ## 2026-09-24 - White-label display name (W2-06)
 
 `pluginname` no longer carries the Airpay brand: "Airpay X" became "Sentientia X", and in Hindi
@@ -126,3 +125,59 @@ The CLI now also exists in both plugin trees (it was top-level only), draining o
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+
+## 2026-09-24 - exception_strings_test: a refusal must name a string that exists (Wave 2 N5)
+
+UAT defect N5: eleven refusals in four plugins threw `moodle_exception('nopermission')`. With no
+component, `moodle_exception` reads core's `lang/en/error.php`, which has only the plural
+`nopermissions`, so each rendered as the bare identifier `error/nopermission`. Nothing errors when
+this happens; the page just tells the user nothing.
+
+New `tests/exception_strings_test.php` (both trees) walks the PHP of every plugin whose name starts
+`sentientia` (via `core_component`, so it follows whichever tree is deployed; the legacy
+pre-de-brand theme directory is not scanned),
+tokenizes it - comments and string contents cannot match - and finds every
+`new moodle_exception('<literal>' ...)` / `print_error('<literal>' ...)` whose component resolves to
+core's error file (none, `''`, `'error'`, `'moodle'`, `'core'`, `null`). Each key must pass
+`get_string_manager()->string_exists($key, 'error')`.
+
+- Non-empty-scan assertions: more than 20 components, and at least 25 core-resolved call sites (46
+  when written).
+- A fixture test pins the tokenizer: twelve call shapes it must find, eleven it must skip.
+- **Baseline, shrink-only.** The first run found 12 more sites in plugins outside this change
+  (`manager`, `skills`, `whatsapp`, `users`, `leaderboard`, `courses`, `theme_sentientia`). They
+  are listed in `BASELINE` by component-relative path and key (no line
+  numbers). A new offender fails; fixing a baselined one also fails until its entry is lowered, so
+  the list cannot rot into an allowlist.
+
+Verified without PHPUnit (the shared test DB is not to be re-initialised): the class was executed
+under a stub harness against both trees - both tests pass - and two mutants (a baseline entry
+deleted; a count raised) each failed with the intended message.
+
+Version 2026092400 (test-only change; no upgrade step).
+
+**Review pass (same day).**
+
+- The scanner now also reads `new required_capability_exception($context, $cap, '<key>', '<file>')`
+  - the form the test itself recommends - and checks `<key>` whenever `<file>` resolves to core.
+  Its constructor passes that pair to `moodle_exception` unchanged, so a singular `'nopermission'`
+  there renders `error/nopermission` exactly like N5 (core itself has that typo in places). The
+  first two arguments are arbitrary expressions, so arguments are split at depth zero rather than
+  read at fixed offsets. 7 such sites per tree today, all `'nopermissions'`: 53 checked sites in
+  each tree.
+- Fixture: fifteen shapes it must find, fourteen it must skip (added: three
+  `required_capability_exception` forms incl. nested calls, an interpolated capability and a
+  trailing comma; skipped: plugin file, dynamic key, dynamic file, too few arguments).
+- Verified under the stub harness against both trees: both tests pass. A planted
+  `required_capability_exception(..., 'nopermission', '')` fails the new scanner with the intended
+  message and passes the old one - the blind spot, demonstrated.
+- The docblock no longer calls the gate "BLOCKING": in CI the full PHPUnit run is still
+  `continue-on-error` and only `--group tenant_isolation` blocks, and no pre-commit check runs this.
+  Promoting it (a blocking group, or a standalone `tools/` gate that reads core `lang/en/error.php`)
+  is left until it has passed under real PHPUnit once - making a never-run test blocking could turn
+  CI red for the wrong reason.
+- Baseline unchanged (12 sites). Three of them show users the same `error/nopermission` as N5:
+  `local_sentientia_manager/member.php`, `local_sentientia_skills/index.php` and
+  `theme_sentientia/classes/output/core_renderer.php`. `theme_airpayux`'s `core_renderer.php` has the
+  same bug and is outside the scan (not a `sentientia*` component), so nothing flags it.

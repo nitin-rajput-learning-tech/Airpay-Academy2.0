@@ -35,7 +35,11 @@ if (is_siteadmin()) {
 }
 
 if (!$ismanager) {
-    throw new moodle_exception('nopermission');
+    // Plain lang string, not required_capability_exception: what decides this
+    // gate is the supervisor relationship, not a capability. N5 (2026-09-24):
+    // this used to be moodle_exception('nopermission'), a key core does not
+    // have, which rendered as the bare identifier "error/nopermission".
+    throw new moodle_exception('error_nudge_notyourreport', 'local_sentientia_notifications');
 }
 
 $target = $DB->get_record('user', ['id' => $targetid], 'id, firstname, lastname, email', MUST_EXIST);

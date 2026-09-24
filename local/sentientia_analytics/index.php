@@ -20,8 +20,15 @@ $systemcontext = context_system::instance();
 // other Sentientia deployment. permission::can_view() checks a real
 // capability at system context AND at the category contexts where BizLMS
 // assigns its org-admin shell.
+//
+// Refusals name what was missing (N5, 2026-09-24). These used to throw
+// moodle_exception('nopermission'), a key core does not have - core has only
+// the plural 'nopermissions' - so every refusal on this page rendered as the
+// bare identifier "error/nopermission". Guarded platform-wide by
+// local/sentientia_platform/tests/exception_strings_test.php.
 if (!\local_sentientia_analytics\permission::can_view()) {
-    throw new moodle_exception('nopermission');
+    throw new \required_capability_exception($systemcontext,
+        \local_sentientia_analytics\permission::VIEW_CAPABILITY, 'nopermissions', '');
 }
 
 $canviewall = \local_sentientia_analytics\permission::can_view_all_orgs();
@@ -55,7 +62,10 @@ if ($orgpath === null) {
     // No tenant could be established for this user. Refuse: the only
     // fallbacks available are tenant 1 (someone else's data) and the empty
     // string, which analytics_manager reads as every tenant at once.
-    throw new moodle_exception('nopermission');
+    // clamp_org_path() returns null only when visible_org_path() does - an
+    // out-of-scope ?orgid= is clamped, not refused - so this is always the
+    // missing-scope case, not the out-of-scope one.
+    throw new moodle_exception('error_noorgscope', 'local_sentientia_analytics');
 }
 
 if ($org !== null && $orgpath !== rtrim($requestedpath, '/')) {

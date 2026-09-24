@@ -22,7 +22,10 @@ $validpages = [
 ];
 
 if (!isset($validpages[$page])) {
-    throw new moodle_exception('invalidpage', 'error');
+    // 'invalidpage' is not a core error key and rendered as the bare
+    // identifier "error/invalidpage" (N5 sweep, 2026-09-24). Only a
+    // hand-edited or stale ?page= reaches here.
+    throw new moodle_exception('invalidaccess');
 }
 
 $pagetitle = $validpages[$page];

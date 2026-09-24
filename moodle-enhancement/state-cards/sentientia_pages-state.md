@@ -133,7 +133,6 @@ Fixed via the new `\local_sentientia_platform	enant::path_descendant_filter()` (
 for an arbitrary path), locked by a DB-level boundary suite in `tenant_test.php`, and prevented from
 returning by `tools/check-path-boundary.php` - pre-commit CHECK 18 and the `path-boundary-check` CI job.
 
-
 ## 2026-09-24 - Regression in 86bb0c26f, caught before it reached UAT
 
 `homepage.php` replaced `$publicpath` with a bounded `$publicsql` for the course count but left the
@@ -154,3 +153,30 @@ was removed while a use remained.
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+
+## 2026-09-24 - Wave 2 N5: two refusals rendered as raw identifiers
+
+- `qr_attendance.php` refused with `moodle_exception('nopermission')` - not a core key (core has
+  only the plural `nopermissions`), so the user saw `error/nopermission`. Now core
+  `nopermissiontoaccesspage` ("You don't have permission to access this page."). A plain core
+  string rather than `required_capability_exception` because the capability the page checks is
+  undeclared (below), and rather than a new plugin string because this plugin has no Hindi pack
+  yet and core's string is already translated.
+- `index.php` unknown `?page=` threw `moodle_exception('invalidpage', 'error')` - also not a core
+  key, shown as `error/invalidpage`. Now core `invalidaccess`.
+
+**Open - capability undeclared where BizLMS is absent.** `qr_attendance.php` gates on
+`local/classroom:takesessionattendance`, the pre-ADR-025 BizLMS name. BizLMS `local_classroom`
+declares it (`db/access.php`, `CONTEXT_COURSECAT`, no archetype defaults), so on a site that also
+runs BizLMS, as the current airpay.academy stack does, it passes for whoever was explicitly granted
+it at system context. Sentientia does not ship `local_classroom`, so on UAT and on a fresh
+Sentientia install it is undeclared: `has_capability()` answers false with a debugging notice and
+**only site admins can display the attendance QR** - trainers cannot. The likely successor is
+`local/sentientia_classroom:attendance` (archetypes manager + editingteacher). Choosing it is an
+access decision for its own change; recorded in the code at the check. (The first version of this
+note said "no shipped plugin declares it"; corrected in the review pass, because the decision
+should not be made on that premise.)
+
+Version 2026092400. Guarded platform-wide by
+`local_sentientia_platform/tests/exception_strings_test.php`.

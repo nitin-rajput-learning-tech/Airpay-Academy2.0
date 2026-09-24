@@ -84,3 +84,6 @@ $string['privacy:metadata:prefs:disabled_rule_types'] = 'यूज़र द्�
 $string['privacy:metadata:prefs:quiet_hours_start']   = 'क्वायट आवर्स विंडो का प्रारंभ घंटा।';
 $string['privacy:metadata:prefs:quiet_hours_end']     = 'क्वायट आवर्स विंडो का समाप्ति घंटा।';
 $string['privacy:metadata:prefs:timemodified']        = 'अंतिम अपडेट टाइमस्टैम्प।';
+
+// Refusal on nudge.php (N5, 2026-09-24) - see lang/en.
+$string['error_nudge_notyourreport'] = 'आप केवल उन्हीं लोगों को अनुस्मारक भेज सकते हैं जो आपको रिपोर्ट करते हैं।';

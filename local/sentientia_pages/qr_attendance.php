@@ -19,8 +19,27 @@ $sessionid = required_param('sessionid', PARAM_INT);
 $context = context_system::instance();
 
 // Only trainers and admins can generate QR codes.
+//
+// KNOWN GAP (recorded 2026-09-24, deliberately not fixed here): the
+// capability below is the pre-ADR-025 BizLMS name. BizLMS local_classroom
+// declares it (db/access.php: CONTEXT_COURSECAT, no archetype defaults), so on
+// a site that also runs BizLMS, as the current airpay.academy stack does, it
+// passes for whoever was explicitly granted it at system context. Sentientia
+// does not ship local_classroom, so on UAT and on a fresh Sentientia install
+// it is undeclared: has_capability() answers false with a debugging notice
+// and only site admins get past this check. The likely successor is
+// local/sentientia_classroom:attendance; choosing it is an access decision for
+// its own change, not a side effect of a message fix.
+//
+// That is also why the refusal is a plain lang string rather than
+// required_capability_exception: where the capability is undeclared, naming it
+// to the user would send them to ask for a permission nobody can grant. Core's
+// 'nopermissiontoaccesspage' is used rather than a new plugin string because
+// this plugin has no Hindi pack yet, and core's string is already translated.
+// N5: this used to be moodle_exception('nopermission'), a key core does not
+// have, which rendered as the bare identifier "error/nopermission".
 if (!has_capability('local/classroom:takesessionattendance', $context) && !is_siteadmin()) {
-    throw new moodle_exception('nopermission');
+    throw new moodle_exception('nopermissiontoaccesspage');
 }
 
 global $DB, $CFG, $OUTPUT, $PAGE;
