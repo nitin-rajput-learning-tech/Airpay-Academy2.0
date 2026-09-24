@@ -17,8 +17,12 @@ require_once($CFG->libdir . '/excellib.class.php');
 // than the dashboard's view access, which managers still retain in index.php.
 // Using the capability also drops the phantom `local/courses:manage` reference
 // (that capability is only registered on the BizLMS production stack).
+// N5 (2026-09-24): refusal names the capability. This used to be
+// moodle_exception('nopermission'), a key core does not have, which rendered
+// as the bare identifier "error/nopermission".
 if (!\local_sentientia_compliance_report\permission::can_export()) {
-    throw new moodle_exception('nopermission');
+    throw new \required_capability_exception(\context_system::instance(),
+        \local_sentientia_compliance_report\permission::EXPORT_CAPABILITY, 'nopermissions', '');
 }
 
 $orgpath = '';

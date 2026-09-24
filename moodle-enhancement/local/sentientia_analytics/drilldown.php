@@ -18,15 +18,21 @@ $context = context_system::instance();
 // Capability layer added 2026-09-22 -- see classes/permission.php. The old
 // gate named local/courses:manage, undefined since ADR-025 renamed it, so
 // this page was reachable only by site admins and only by accident.
+//
+// Each refusal below says which of three different things was missing (N5,
+// 2026-09-24). All three used to throw moodle_exception('nopermission'), a
+// key core does not have, so a missing capability, a missing org and an
+// out-of-scope department all rendered as the same bare "error/nopermission".
 if (!\local_sentientia_analytics\permission::can_view()) {
-    throw new moodle_exception('nopermission');
+    throw new \required_capability_exception($context,
+        \local_sentientia_analytics\permission::VIEW_CAPABILITY, 'nopermissions', '');
 }
 
 // The org subtree this viewer may see. '' means unrestricted, which only a
 // holder of :viewallorgs gets; null means no tenant could be established.
 $viewerorgpath = \local_sentientia_analytics\permission::visible_org_path();
 if ($viewerorgpath === null) {
-    throw new moodle_exception('nopermission');
+    throw new moodle_exception('error_noorgscope', 'local_sentientia_analytics');
 }
 
 $type = required_param('type', PARAM_ALPHA); // 'department' or 'course'
@@ -48,7 +54,7 @@ if ($type === 'department') {
     // -- a viewer must never be shown numbers labelled as one org that came
     // from another.
     if (\local_sentientia_analytics\permission::clamp_org_path($path) !== rtrim($path, '/')) {
-        throw new moodle_exception('nopermission');
+        throw new moodle_exception('error_outofscope', 'local_sentientia_analytics');
     }
 
     $deptname = '';
@@ -157,5 +163,8 @@ if ($type === 'department') {
     echo $OUTPUT->footer();
 
 } else {
-    throw new moodle_exception('invalidparam', 'error');
+    // Only a hand-edited URL reaches here: the dashboard links type=department
+    // and type=course only. ('invalidparam' is not a core error key and
+    // rendered as the bare identifier "error/invalidparam".)
+    throw new moodle_exception('invalidaccess');
 }

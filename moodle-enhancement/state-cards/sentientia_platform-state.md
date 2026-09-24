@@ -117,3 +117,33 @@ The middle row is the point: the row count is identical and the old script would
 
 The CLI now also exists in both plugin trees (it was top-level only), draining one entry from
 `tools/tree-drift-baseline.txt`.
+
+## 2026-09-24 - exception_strings_test: a refusal must name a string that exists (Wave 2 N5)
+
+UAT defect N5: eleven refusals in four plugins threw `moodle_exception('nopermission')`. With no
+component, `moodle_exception` reads core's `lang/en/error.php`, which has only the plural
+`nopermissions`, so each rendered as the bare identifier `error/nopermission`. Nothing errors when
+this happens; the page just tells the user nothing.
+
+New `tests/exception_strings_test.php` (both trees) walks the PHP of every plugin whose name starts
+`sentientia` (via `core_component`, so it follows whichever tree is deployed; the legacy
+pre-de-brand theme directory is not scanned),
+tokenizes it - comments and string contents cannot match - and finds every
+`new moodle_exception('<literal>' ...)` / `print_error('<literal>' ...)` whose component resolves to
+core's error file (none, `''`, `'error'`, `'moodle'`, `'core'`, `null`). Each key must pass
+`get_string_manager()->string_exists($key, 'error')`.
+
+- Non-empty-scan assertions: more than 20 components, and at least 25 core-resolved call sites (46
+  when written).
+- A fixture test pins the tokenizer: twelve call shapes it must find, eleven it must skip.
+- **Baseline, shrink-only.** The first run found 12 more sites in plugins outside this change
+  (`manager`, `skills`, `whatsapp`, `users`, `leaderboard`, `courses`, `theme_sentientia`). They
+  are listed in `BASELINE` by component-relative path and key (no line
+  numbers). A new offender fails; fixing a baselined one also fails until its entry is lowered, so
+  the list cannot rot into an allowlist.
+
+Verified without PHPUnit (the shared test DB is not to be re-initialised): the class was executed
+under a stub harness against both trees - both tests pass - and two mutants (a baseline entry
+deleted; a count raised) each failed with the intended message.
+
+Version 2026092400 (test-only change; no upgrade step).

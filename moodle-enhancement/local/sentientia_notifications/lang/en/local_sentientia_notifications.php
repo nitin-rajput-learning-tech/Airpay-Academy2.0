@@ -80,3 +80,7 @@ $string['privacy:metadata:prefs:disabled_rule_types'] = 'Comma-separated list of
 $string['privacy:metadata:prefs:quiet_hours_start'] = 'Quiet hours window start hour.';
 $string['privacy:metadata:prefs:quiet_hours_end'] = 'Quiet hours window end hour.';
 $string['privacy:metadata:prefs:timemodified'] = 'Last update timestamp.';
+
+// Refusal on nudge.php (N5, 2026-09-24). Replaces moodle_exception('nopermission'),
+// which named a core key that does not exist and rendered as "error/nopermission".
+$string['error_nudge_notyourreport'] = 'You can only send reminders to people who report to you.';

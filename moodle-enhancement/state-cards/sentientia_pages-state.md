@@ -132,3 +132,24 @@ Public homepage hero stats were unbounded and would also have dropped courses at
 Fixed via the new `\local_sentientia_platform	enant::path_descendant_filter()` (exact-or-descendant
 for an arbitrary path), locked by a DB-level boundary suite in `tenant_test.php`, and prevented from
 returning by `tools/check-path-boundary.php` - pre-commit CHECK 18 and the `path-boundary-check` CI job.
+
+## 2026-09-24 - Wave 2 N5: two refusals rendered as raw identifiers
+
+- `qr_attendance.php` refused with `moodle_exception('nopermission')` - not a core key (core has
+  only the plural `nopermissions`), so the user saw `error/nopermission`. Now core
+  `nopermissiontoaccesspage` ("You don't have permission to access this page."). A plain core
+  string rather than `required_capability_exception` because the capability the page checks is
+  undeclared (below), and rather than a new plugin string because this plugin has no Hindi pack
+  yet and core's string is already translated.
+- `index.php` unknown `?page=` threw `moodle_exception('invalidpage', 'error')` - also not a core
+  key, shown as `error/invalidpage`. Now core `invalidaccess`.
+
+**Open - capability undeclared.** `qr_attendance.php` gates on
+`local/classroom:takesessionattendance`, the pre-ADR-025 name. No shipped plugin declares it, so
+`has_capability()` answers false with a debugging notice and in practice **only site admins can
+display the attendance QR** - trainers cannot. The likely successor is
+`local/sentientia_classroom:attendance` (archetypes manager + editingteacher). Choosing it is an
+access decision for its own change; recorded in the code at the check.
+
+Version 2026092400. Guarded platform-wide by
+`local_sentientia_platform/tests/exception_strings_test.php`.

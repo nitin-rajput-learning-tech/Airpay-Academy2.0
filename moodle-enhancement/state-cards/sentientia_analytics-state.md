@@ -137,3 +137,42 @@ Verified on the local install after upgrade: all three capabilities registered a
 and `administrator`; the course drill-down query now returns rows and honours the org scope.
 `tests/permission_test.php` covers all of the above, including that `local/courses:manage` really is
 unregistered - the original defect in one assertion.
+
+## 2026-09-24 - Wave 2 N5 + N6: refusals that said nothing, and a header that printed a template
+
+**N5 (Medium, proven on UAT).** Every refusal on all three pages threw
+`moodle_exception('nopermission')`. With no component that key is looked up in core's
+`lang/en/error.php`, which has only the plural `nopermissions` (and that one takes a `{$a}`), so
+the user saw the bare identifier `error/nopermission`. Three different refusals rendered
+identically, and none said what was missing.
+
+Each site now says which of the three it is:
+
+| Site | Condition | Now throws |
+|------|-----------|-----------|
+| `index.php`, `drilldown.php` | `permission::can_view()` false | `required_capability_exception(..., permission::VIEW_CAPABILITY, 'nopermissions', '')` - "Sorry, but you do not currently have permissions to do that (View the analytics dashboard)" |
+| `export.php` | `permission::can_export()` false | same, with `EXPORT_CAPABILITY` |
+| `index.php`, `export.php`, `drilldown.php` | `visible_org_path()` / `clamp_org_path()` returned `null` - no tenant could be established | new `error_noorgscope` |
+| `drilldown.php` (department) | requested path outside the viewer's subtree | new `error_outofscope` |
+
+`index.php`'s `clamp_org_path()` null is always the missing-scope case: an out-of-scope `?orgid=`
+is clamped, never refused, so only the drill-down can produce `error_outofscope`.
+
+Two more broken keys in the same files were fixed in passing: `drilldown.php` unknown `?type=`
+threw `invalidparam` and `export.php` unknown `?format=` threw `invalidformat` (a *portfolio*
+string). Neither exists in `error.php`; both now throw core's `invalidaccess` ("This page was not
+accessed correctly"), which is accurate - only a hand-edited URL reaches either.
+
+**N6 (Low, proven on UAT).** The At-Risk Learners table (`templates/predictive_atrisk.mustache`,
+ME tree only - the predictive surfaces are not in the top-level tree) used core `fullnamedisplay` as
+its column header. That string is the site's name-*format template*, `{$a->firstname}
+{$a->lastname}`, not a label, so the header printed the raw placeholder. It now uses the new
+`atrisk_col_learner` ("Learner" / "शिक्षार्थी"). The per-row name is unchanged.
+
+New strings (en + hi, both trees): `error_noorgscope`, `error_outofscope`, `atrisk_col_learner`.
+Version 2026092400. Guarded platform-wide by
+`local_sentientia_platform/tests/exception_strings_test.php`.
+
+Not done here, noted for whoever next touches the predictive surfaces: the per-row name in the at-risk table
+is `format_string()`-ed in `predictive_engine` and then escaped again by `{{firstname}}`, so a name
+containing `&` shows as `&amp;`. Pre-existing, unrelated to N6.

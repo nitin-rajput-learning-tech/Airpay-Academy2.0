@@ -187,3 +187,26 @@ Guarded platform-wide by `local_sentientia_platform\privacy_coverage_test`, whic
 Sentientia plugin's `install.xml` and fails the build if a plugin declaring a user-identifying column
 declares `null_provider`, ships no provider, or declares only some of the tables it owns. Structural
 rather than an allowlist, so a new plugin with a copy-pasted `null_provider` fails on its first CI run.
+
+## 2026-09-24 - Wave 2 N5: refusals rendered as "error/nopermission"
+
+Both entry points refused with `moodle_exception('nopermission')`. Core has no such key in
+`lang/en/error.php` - only the plural `nopermissions`, which takes a `{$a}` - so the user saw the
+bare identifier `error/nopermission`.
+
+- `export.php`: `permission::can_export()` is a single capability, so it now throws
+  `required_capability_exception(context_system, permission::EXPORT_CAPABILITY, 'nopermissions', '')`,
+  which names "Export the compliance report".
+- `index.php`: no single capability decides this gate - it mixes site admin, the retired
+  `local/courses:manage`, role id 9 at category context, `moodle/site:viewreports` and the
+  supervisor relationship - so naming one capability would be false. It now throws the new plugin
+  string `error_noaccess` (en + hi, both trees).
+
+Still open, not changed here (an access decision, not a message fix): `index.php` still asks
+`has_capability('local/courses:manage')`, which no shipped plugin declares, so that clause is dead
+code that answers false with a debugging notice. The same retired name is what
+`permission::grant_export_to_default_roles()` step 1 keys on (see the analytics state card,
+2026-09-22).
+
+Version 2026092400. Guarded platform-wide by
+`local_sentientia_platform/tests/exception_strings_test.php`.

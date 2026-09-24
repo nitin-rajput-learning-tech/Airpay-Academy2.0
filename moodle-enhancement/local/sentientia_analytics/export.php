@@ -19,8 +19,13 @@ $context = context_system::instance();
 // The old gate named local/courses:manage, undefined since ADR-025, so in
 // practice only site admins could export -- and anyone who could view could
 // also export, because both pages asked the same dead question.
+//
+// Refusals name what was missing (N5, 2026-09-24): the old
+// moodle_exception('nopermission') named a key core does not have and
+// rendered as the bare identifier "error/nopermission".
 if (!\local_sentientia_analytics\permission::can_export()) {
-    throw new moodle_exception('nopermission');
+    throw new \required_capability_exception($context,
+        \local_sentientia_analytics\permission::EXPORT_CAPABILITY, 'nopermissions', '');
 }
 
 $range = optional_param('range', '30d', PARAM_ALPHANUMEXT);
@@ -32,7 +37,7 @@ $format = optional_param('format', 'csv', PARAM_ALPHA);
 // malformed open_path was handed a whole-site export. Refuse instead.
 $orgpath = \local_sentientia_analytics\permission::visible_org_path();
 if ($orgpath === null) {
-    throw new moodle_exception('nopermission');
+    throw new moodle_exception('error_noorgscope', 'local_sentientia_analytics');
 }
 
 $data = \local_sentientia_analytics\analytics_manager::get_export_data($range, $orgpath);
@@ -100,5 +105,7 @@ if ($format === 'csv') {
     die();
 }
 
-// Unknown format.
-throw new moodle_exception('invalidformat', 'error');
+// Unknown format. The dashboard only ever links format=csv, so anything else
+// is a hand-edited URL. ('invalidformat' is a portfolio string, not an error
+// one, and rendered as the bare identifier "error/invalidformat".)
+throw new moodle_exception('invalidaccess');

@@ -60,3 +60,10 @@ $string['sentientia_analytics:export'] = 'विश्लेषण CSV निर
 // Previously hardcoded in index.php / dashboard.mustache.
 $string['allbusinessunits'] = 'सभी व्यावसायिक इकाइयाँ';
 $string['exportcsv'] = 'CSV निर्यात करें';
+
+// Refusals (N5, 2026-09-24) - see lang/en.
+$string['error_noorgscope'] = 'आपका खाता किसी संगठन को असाइन नहीं है, इसलिए कोई विश्लेषण नहीं दिखाया जा सकता। अपना संगठन सेट करवाने के लिए अपने व्यवस्थापक से संपर्क करें।';
+$string['error_outofscope'] = 'संगठन का वह हिस्सा आपकी पहुँच से बाहर है।';
+
+// At-Risk Learners table (N6, 2026-09-24) - see lang/en.
+$string['atrisk_col_learner'] = 'शिक्षार्थी';

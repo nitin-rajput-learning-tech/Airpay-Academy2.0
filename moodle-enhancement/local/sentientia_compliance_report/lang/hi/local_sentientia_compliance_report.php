@@ -125,3 +125,6 @@ $string['privacy:metadata:compliance_email_log:sent_to'] = 'जिस ईमे�
 $string['privacy:metadata:compliance_email_log:timecreated'] = 'रिकॉर्ड कब बनाया गया।';
 $string['privacy:metadata:compliance_courses'] = 'कौन से पाठ्यक्रम अनिवार्य हैं। यह साझा विन्यास है, किसी एक व्यक्ति का डेटा नहीं; इसमें केवल प्रत्येक पंक्ति के निर्माता का उल्लेख है।';
 $string['privacy:metadata:compliance_courses:createdby'] = 'रिकॉर्ड बनाने वाले उपयोगकर्ता की आईडी।';
+
+// Refusal on index.php (N5, 2026-09-24) - see lang/en.
+$string['error_noaccess'] = 'केवल अनुपालन व्यवस्थापक, और वे प्रबंधक जिन्हें लोग रिपोर्ट करते हैं, ही अनुपालन रिपोर्ट खोल सकते हैं।';
