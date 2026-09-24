@@ -396,8 +396,11 @@ class draft_manager {
         }
         $actorroot = self::tenant_root_for($actor);
         if (!$manageall) {
-            if ((int) $draft->ownerid !== (int) $actor->id
-                    && (int) $draft->costcenterid !== $actorroot) {
+            // ownerid 0 is an author anonymised by a privacy erasure, so it
+            // never makes anyone the owner - not even a caller whose id is 0
+            // (CLI, or no one logged in). The draft stays visible to its tenant.
+            $isowner = (int) $actor->id > 0 && (int) $draft->ownerid === (int) $actor->id;
+            if (!$isowner && (int) $draft->costcenterid !== $actorroot) {
                 return null;
             }
         }
@@ -423,9 +426,11 @@ class draft_manager {
             return array_values($DB->get_records(self::DRAFT_TABLE, [], 'timecreated DESC', '*', 0, $limit));
         }
         $tenant = self::tenant_root_for($actor);
+        // ownerid > 0: an anonymised draft (ownerid 0) is listed by tenant
+        // only, never as "owned" by a caller whose id is 0.
         return array_values($DB->get_records_sql(
             "SELECT * FROM {" . self::DRAFT_TABLE . "}
-              WHERE ownerid = :uid OR costcenterid = :cid
+              WHERE (ownerid = :uid AND ownerid > 0) OR costcenterid = :cid
            ORDER BY timecreated DESC",
             ['uid' => (int) $actor->id, 'cid' => $tenant], 0, $limit));
     }

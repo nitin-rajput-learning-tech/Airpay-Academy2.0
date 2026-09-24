@@ -185,7 +185,10 @@ class template_manager {
         }
         $root = self::tenant_root_for($actor);
         // Visible if: owned by actor, OR shared built-in (costcenterid 0), OR same tenant.
-        if ((int) $tpl->ownerid === (int) $actor->id
+        // ownerid 0 (built-in, or an author anonymised by a privacy erasure)
+        // never makes anyone the owner - not even a caller whose id is 0.
+        $isowner = (int) $actor->id > 0 && (int) $tpl->ownerid === (int) $actor->id;
+        if ($isowner
                 || (int) $tpl->costcenterid === 0
                 || (int) $tpl->costcenterid === $root) {
             return $tpl;
@@ -206,10 +209,11 @@ class template_manager {
             return array_values($DB->get_records(self::TABLE, ['archived' => 0], 'is_builtin DESC, name ASC'));
         }
         $root = self::tenant_root_for($actor);
+        // ownerid > 0: see load_for_actor() - ownerid 0 is nobody.
         return array_values($DB->get_records_sql(
             "SELECT * FROM {" . self::TABLE . "}
               WHERE archived = 0
-                AND (ownerid = :uid OR costcenterid = 0 OR costcenterid = :cid)
+                AND ((ownerid = :uid AND ownerid > 0) OR costcenterid = 0 OR costcenterid = :cid)
            ORDER BY is_builtin DESC, name ASC",
             ['uid' => (int) $actor->id, 'cid' => $root]
         ));
