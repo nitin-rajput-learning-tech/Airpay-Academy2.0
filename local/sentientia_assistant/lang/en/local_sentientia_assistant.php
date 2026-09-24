@@ -4,6 +4,7 @@ defined('MOODLE_INTERNAL') || die();
 $string['pluginname'] = 'Airpay AI Learning Assistant';
 $string['enabled'] = 'Enable AI Assistant';
 $string['enabled_desc'] = 'Show the AI chatbot bubble on all pages. Uncheck to hide the chatbot site-wide.';
+$string['privacy:metadata'] = 'The AI assistant stores chat logs linked to user IDs.';
 $string['privacy:metadata:chat_log'] = 'Conversation log between the learner and the AI assistant.';
 $string['privacy:metadata:chat_log:userid'] = 'The user who sent or received the message.';
 $string['privacy:metadata:chat_log:role'] = 'Whether the message was from the user or the assistant.';
@@ -95,25 +96,3 @@ $string['tool_book_full']       = 'That ILT session is full, so I could not book
 $string['tool_recommend']       = 'Recommend gap-closing content';
 $string['tool_recommend_intro'] = 'Here are some courses that could help close your skill gaps:';
 $string['tool_recommend_none']  = 'I could not find new courses to recommend right now — you are enrolled in everything relevant.';
-
-// Privacy metadata (classes/privacy/provider.php, added 2026-09-22).
-// Replaced a null_provider that wrongly asserted this plugin held no
-// personal data. Every table below is keyed on a user id.
-$string['privacy:metadata:chat_log'] = 'Every message exchanged between an employee and the AI assistant, including the message text.';
-$string['privacy:metadata:chat_log:userid'] = 'The ID of the user this record is about.';
-$string['privacy:metadata:chat_log:role'] = 'Whether the message came from the user or the assistant.';
-$string['privacy:metadata:chat_log:message'] = 'The text of the message.';
-$string['privacy:metadata:chat_log:model'] = 'The AI model that answered.';
-$string['privacy:metadata:chat_log:tokens_in'] = 'How many tokens were sent to the model.';
-$string['privacy:metadata:chat_log:tokens_out'] = 'How many tokens the model returned.';
-$string['privacy:metadata:chat_log:timecreated'] = 'When the record was created.';
-$string['privacy:metadata:agent_audit'] = 'An audit trail of the actions the AI agent took on an employee\'s behalf.';
-$string['privacy:metadata:agent_audit:userid'] = 'The ID of the user this record is about.';
-$string['privacy:metadata:agent_audit:costcenterid'] = 'The tenant (cost centre) the record belongs to.';
-$string['privacy:metadata:agent_audit:tool'] = 'The tool the assistant invoked on the user\'s behalf.';
-$string['privacy:metadata:agent_audit:args_json'] = 'The arguments passed to that tool.';
-$string['privacy:metadata:agent_audit:proposed_by'] = 'Who proposed the action.';
-$string['privacy:metadata:agent_audit:outcome'] = 'What happened when the action ran.';
-$string['privacy:metadata:agent_audit:detail'] = 'Further detail about the outcome.';
-$string['privacy:metadata:agent_audit:idempotency_key'] = 'The key used to stop the action running twice.';
-$string['privacy:metadata:agent_audit:timecreated'] = 'When the record was created.';

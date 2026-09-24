@@ -37,12 +37,16 @@ ZEEA (`/177`: Fatma Khamis id 12, Juma Mwakalinga id 13).
 | Admin dashboard (`/my/`) | 8 active users, **9 total** | yes |
 | Manage Users table (`/local/sentientia_users/index.php`) | **8** rows (excludes Admin User) | yes |
 | Manage Users tiles | **10** total, 10 active, 0 suspended | **no** — 8 + ZEEA's 2, because `'/1%'` matches `/177` but not `/77` |
-| Compliance → Department Scorecard | totals **3 / 6 / 6 = 15** for a 9-person tenant | **no** — `$dept->path . '%'` double-counts sibling departments |
+| Compliance → Department Scorecard | totals **3 / 6 / 6 = 15** | **yes** — *corrected after review:* Total counts user × mandatory-course rows, not people. 3 mandatory courses: `/1/2` Rahul + Arjun = 6, `/1/79` Vikram + Priya = 6, `/1/114` Sneha = 3. `'/1/2%'` cannot match `/1/79` or `/1/114`. My first reading called this a double-count; it is not. |
 | Learner dashboard leaderboard, "Your department" (as Priya) | Priya 390, Vikram 270, Rahul 270, Joseph 270, **Fatma Khamis 270** | **no** — Fatma is ZEEA; an Airpay learner is shown another tenant's employee |
 
-All three wrong surfaces are fixed in `86bb0c26f`, which is **not yet deployed**. After Window A:
-Manage Users tiles should read 8, scorecard totals should sum to at most 9, and Fatma should leave
-Priya's leaderboard.
+Both wrong surfaces are fixed in `86bb0c26f`, which is **not yet deployed**. After Window A: Manage
+Users tiles should read 8 (matching the table), the scorecard should stay **3 / 6 / 6**, and Fatma
+should leave Priya's leaderboard. The dashboard's 9 against Manage Users' 8 is expected and stays:
+the dashboard counts Admin User (id 2, `/1`), the Manage Users table does not.
+
+**Correction.** An earlier version of this file predicted the scorecard would "sum to at most 9".
+That was wrong and would have produced a false failure; the checklist workflow's critic caught it.
 
 Also captured, unchanged by the pending deploy: compliance BU filter reads "AIRPAY … (9)"; Defaulters
 tab lists 9; the footer private-and-confidential notice is served; public login hero shows
@@ -106,3 +110,19 @@ Meera reaches analytics today **only** through the hardcoded role-id-9 fallback,
 removes. If UAT's *Administrator* role does not carry the `manager` archetype (and does not hold
 `local/sentientia_courses:manage`), the deploy would lock the demo admin out of analytics. Check the
 role's archetype and the new capability grants on the box, before and after `upgrade.php`.
+
+## Caught before the deploy
+
+The Wave 2 checklist workflow (six read-only derivers plus a completeness critic, run over
+`c74bd55be..HEAD`) found four defects **in the commits waiting to be deployed**. Each was fixed and
+verified on local data before Window A:
+
+| Defect | Visible effect if shipped | Source |
+|---|---|---|
+| `leaderboard::get_rank()` overwrote `$params` | whole gamification row gone from every learner dashboard and profile | `86bb0c26f` |
+| `homepage.php` still bound the removed `$publicpath` | public homepage "0+ Learners", Featured Courses gone | `86bb0c26f` |
+| assistant privacy provider replaced by a generated one | Anthropic external-location declaration dropped | `951b20982` |
+| `:viewallorgs` defaulted to the manager archetype | every tenant admin reads every tenant's analytics | `b1ae4bd64` |
+
+All four are mine. None was caught by a test: each failure was swallowed by a `catch`, or was a
+policy error rather than a code error.

@@ -137,3 +137,27 @@ Verified on the local install after upgrade: all three capabilities registered a
 and `administrator`; the course drill-down query now returns rows and honours the org scope.
 `tests/permission_test.php` covers all of the above, including that `local/courses:manage` really is
 unregistered - the original defect in one assertion.
+
+
+## 2026-09-24 - `:viewallorgs` had the wrong default (fixed before it reached UAT)
+
+The 2026-09-22 capability layer gave `local/sentientia_analytics:viewallorgs` a `manager` archetype
+default, and the back-fill granted it to holders of `local/sentientia_courses:manage`. On this platform
+**tenant admins are manager-archetype roles at system context**. UAT confirms it: Meera (Airpay) and Juma
+(ZEEA) both hold `administrator` (id 9, archetype manager) at context level 10. So after the deploy every
+tenant admin would have read every other tenant's analytics, and the ZEEA admin's CSV export would have
+carried all-tenant totals. The fix I wrote to stop a cross-tenant leak would have created one.
+
+Now (2026092400 / 1.2.1-beta): `:viewallorgs` has **no** archetype default; `grant_to_default_roles()`
+grants only `:view` and `:export`; a new upgrade step revokes `:viewallorgs` from every role, because
+changing an archetype never revokes grants Moodle already applied. Site admins still pass by the admin
+bypass.
+
+Verified on local XAMPP, which had run the old step: before the upgrade `:viewallorgs` was held by
+manager and administrator; after, by nobody, with `:view` and `:export` unchanged. New tests:
+`test_a_manager_archetype_tenant_admin_stays_in_their_tenant` and
+`test_the_back_fill_never_grants_viewallorgs`.
+
+UAT pre-flight, read-only: the analytics capabilities are not yet registered there, and Meera's
+manager-archetype role means she **keeps** dashboard access once the role-id-9 fallback is gone - the
+lock-out risk recorded in the 2026-09-24 evidence file does not materialise.

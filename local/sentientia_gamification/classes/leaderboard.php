@@ -96,8 +96,15 @@ class leaderboard {
             $org = $parts[1] ?? '';
             if (!empty($org)) {
                 // '/1' . '%' also matched '/177': the rank denominator counted another tenant's users.
-                [$ranksql, $params] = \local_sentientia_platform\tenant::path_descendant_filter(
+                //
+                // MERGE, do not assign. 86bb0c26f wrote `[$ranksql, $params] = ...`, which
+                // replaced ['pts' => $userpoints] instead of adding to it. The query then threw
+                // 'Incorrect number of query parameters', and both the dashboard and the profile
+                // catch Throwable -- so the whole gamification row silently vanished for every
+                // learner with points. badge_manager.php already merged correctly.
+                [$ranksql, $rankargs] = \local_sentientia_platform\tenant::path_descendant_filter(
                     '/' . $org, '', 'open_path', 'rankorg');
+                $params += $rankargs;
                 $orgfilter = "AND s.userid IN (SELECT id FROM {user} "
                     . "WHERE {$ranksql} AND deleted = 0)";
             }

@@ -160,3 +160,22 @@ Guarded platform-wide by `local_sentientia_platform\privacy_coverage_test`, whic
 Sentientia plugin's `install.xml` and fails the build if a plugin declaring a user-identifying column
 declares `null_provider`, ships no provider, or declares only some of the tables it owns. Structural
 rather than an allowlist, so a new plugin with a copy-pasted `null_provider` fails on its first CI run.
+
+
+## 2026-09-24 - Correction: 951b20982 wrongly replaced this plugin's privacy provider
+
+The 2026-09-22 survey that found five `null_provider` plugins grepped provider files for the word
+`null_provider`. This plugin's provider contained it only in a comment ("Replaces the former
+null_provider"). It already had a **real, hand-written provider**: both tables, the export labels, and an
+`add_external_location_link('anthropic_api', ...)` declaring that chat messages leave the platform when
+live AI is on. The generator overwrote it with a generic one and **dropped that external-location
+declaration** - a privacy regression, and the entry for this plugin in the 951b20982 commit message and
+in the section above is false.
+
+Restored `classes/privacy/provider.php` and both lang files byte-for-byte from `c74bd55be` (the version
+UAT runs), in both trees. Nothing else had touched those three files since. `version.php` stays at
+2026092201 - sites that already upgraded to it must not see a downgrade - with its comment corrected to
+say there is no functional change against 2026080500.
+
+The other four claims held: compliance_report, courses and exams were genuine 20-line `null_provider`
+stubs, and ratings had no provider in either tree.
