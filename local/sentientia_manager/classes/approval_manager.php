@@ -23,6 +23,12 @@ defined('MOODLE_INTERNAL') || die();
  * can request from / be allocated to a manager. The schema field
  * `managerid` on requests/allocations is the tenant boundary.
  *
+ * ADR-031 (2026-09-25): an allocation also checks both TARGETS against the
+ * manager's tenant - the user (a direct report in the same tenant) and the
+ * course / classroom / program / path (its open_path under the manager's
+ * root). Only a cross-tenant manager (site admin or :crosstenant holder)
+ * skips that, and keeps the legacy "no reports = anyone" behaviour.
+ *
  * @package    local_sentientia_manager
  */
 class approval_manager {
@@ -409,16 +415,14 @@ class approval_manager {
                                                string $note = ''): int {
         global $DB;
 
-        // Validate target is in direct-report list (or skip on stock test DB
-        // where open_supervisorid doesn't exist — managers can allocate
-        // freely; production tenant scoping kicks in).
-        $reports = self::direct_report_ids($managerid);
-        if (!empty($reports) && !in_array($userid, $reports, true)) {
-            throw new \moodle_exception('notdirectreport', 'local_sentientia_manager');
-        }
+        // ADR-031: the target must be a direct report in the manager's own
+        // tenant. Until 2026-09-25 an empty report list skipped this check, so
+        // any :allocate holder with no reports - every tenant admin, by default
+        // - could enrol any user of any tenant and send them a notification.
+        self::guard_direct_report($managerid, $userid);
 
-        // Course must exist.
-        $DB->get_record('course', ['id' => $courseid], 'id', MUST_EXIST);
+        // Course must exist and (ADR-031) sit inside the manager's tenant.
+        self::require_item_in_tenant($managerid, 'course', $courseid);
 
         // Idempotent: don't double-allocate.
         if ($DB->record_exists('local_sentientia_mgr_allocations',
@@ -504,9 +508,9 @@ class approval_manager {
 
         self::guard_direct_report($managerid, $userid);
 
-        // Classroom must exist + be active.
-        $classroom = $DB->get_record('local_sentientia_classroom',
-            ['id' => $classroomid], 'id, name, status', MUST_EXIST);
+        // Classroom must exist and (ADR-031) sit inside the manager's tenant.
+        $classroom = self::require_item_in_tenant($managerid,
+            'local_sentientia_classroom', $classroomid, 'id, name, status, open_path');
 
         if (self::allocation_exists($userid, self::ITEM_CLASSROOM, $classroomid)) {
             throw new \moodle_exception('duplicateallocation', 'local_sentientia_manager');
@@ -547,8 +551,8 @@ class approval_manager {
 
         self::guard_direct_report($managerid, $userid);
 
-        $program = $DB->get_record('local_sentientia_programs',
-            ['id' => $programid], 'id, name, status', MUST_EXIST);
+        $program = self::require_item_in_tenant($managerid,
+            'local_sentientia_programs', $programid, 'id, name, status, open_path');
 
         if (self::allocation_exists($userid, self::ITEM_PROGRAM, $programid)) {
             throw new \moodle_exception('duplicateallocation', 'local_sentientia_manager');
@@ -593,8 +597,8 @@ class approval_manager {
 
         self::guard_direct_report($managerid, $userid);
 
-        $path = $DB->get_record('local_sentientia_learningpath',
-            ['id' => $pathid], 'id, name, status', MUST_EXIST);
+        $path = self::require_item_in_tenant($managerid,
+            'local_sentientia_learningpath', $pathid, 'id, name, status, open_path');
 
         if (self::allocation_exists($userid, self::ITEM_PATH, $pathid)) {
             throw new \moodle_exception('duplicateallocation', 'local_sentientia_manager');
@@ -620,13 +624,147 @@ class approval_manager {
     }
 
     /**
-     * Shared: throw if the manager-user relationship is invalid.
+     * Shared: throw unless $managerid may allocate to $userid.
+     *
+     * ADR-031. A cross-tenant manager (site admin or :crosstenant holder) is
+     * unchanged: restricted to their direct reports when they have any, free
+     * otherwise. Anyone else must pass BOTH checks:
+     *  - the target is in the manager's own tenant (tenant::require_same_tenant_user,
+     *    which refuses a missing id exactly like an out-of-tenant one), and
+     *  - the target is one of the manager's direct reports. An empty report
+     *    list is no longer a bypass: a tenant admin with no reports allocates
+     *    to nobody (it used to mean "anybody, in any tenant").
+     *
+     * @throws \moodle_exception error_outoftenant | notdirectreport
      */
     private static function guard_direct_report(int $managerid, int $userid): void {
         $reports = self::direct_report_ids($managerid);
-        if (!empty($reports) && !in_array($userid, $reports, true)) {
+        if (\local_sentientia_platform\tenant::is_cross_tenant($managerid)) {
+            if (!empty($reports) && !in_array($userid, $reports, true)) {
+                throw new \moodle_exception('notdirectreport', 'local_sentientia_manager');
+            }
+            return;
+        }
+        \local_sentientia_platform\tenant::require_same_tenant_user($userid, $managerid);
+        if (!in_array($userid, $reports, true)) {
             throw new \moodle_exception('notdirectreport', 'local_sentientia_manager');
         }
+    }
+
+    /**
+     * Shared: load the item being allocated (a course, classroom, program or
+     * learning path) and refuse unless it is inside $managerid's tenant.
+     *
+     * ADR-031 rule 5. A cross-tenant manager gets the old MUST_EXIST load. For
+     * anyone else the item's open_path must be the manager's root or '/'-bounded
+     * under it. A missing item and an item with no path are refused exactly
+     * like an out-of-tenant one: tenant::require_path_access() waves '' through
+     * as a legacy unscoped row, which for a WRITE would let a tenant admin push
+     * every unscoped course, so the empty path is refused here first.
+     *
+     * @param int $managerid
+     * @param string $table
+     * @param int $itemid
+     * @param string $fields must include open_path
+     * @return \stdClass the item record
+     * @throws \moodle_exception error_outoftenant
+     */
+    private static function require_item_in_tenant(int $managerid, string $table,
+                                                    int $itemid, string $fields = '*'): \stdClass {
+        global $DB;
+        if (\local_sentientia_platform\tenant::is_cross_tenant($managerid)) {
+            return $DB->get_record($table, ['id' => $itemid], $fields, MUST_EXIST);
+        }
+        $item = $DB->get_record($table, ['id' => $itemid], $fields);
+        $path = $item ? trim((string) ($item->open_path ?? '')) : '';
+        if ($path === '') {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        \local_sentientia_platform\tenant::require_path_access($path, $managerid);
+        return $item;
+    }
+
+    /**
+     * The org path $managerid is scoped to (tenant::scope_path(), ADR-031):
+     * '' cross-tenant, '/N' their tenant, null nothing.
+     */
+    private static function manager_scope(int $managerid): ?string {
+        global $DB, $USER;
+        $manager = ($managerid === (int) ($USER->id ?? 0)) ? $USER
+            : $DB->get_record('user', ['id' => $managerid], 'id, open_path');
+        return $manager ? \local_sentientia_platform\tenant::scope_path($manager) : null;
+    }
+
+    /**
+     * The users $managerid may allocate to, as id => "Name <email>", for the
+     * allocation forms.
+     *
+     * ADR-031: a manager's direct reports inside their own tenant. Only a
+     * cross-tenant manager with no reports keeps the legacy fallback (any
+     * active user, capped at 200). A scoped manager with no reports gets
+     * nobody; the fallback used to list 200 users of every tenant, emails
+     * included, to every tenant admin.
+     *
+     * @return array<int, string>
+     */
+    public static function allocatable_user_options(int $managerid): array {
+        global $DB;
+        $scope = self::manager_scope($managerid);
+        if ($scope === null) {
+            return [];
+        }
+        $reportids = self::direct_report_ids($managerid);
+        if (!empty($reportids)) {
+            [$insql, $params] = $DB->get_in_or_equal($reportids, SQL_PARAMS_NAMED, 'uid');
+            $where = "id $insql AND deleted = 0";
+            if ($scope !== '') {
+                [$pathsql, $pathargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+                    $scope, '', 'open_path', 'allocuser');
+                $where .= " AND $pathsql";
+                $params += $pathargs;
+            }
+            $users = $DB->get_records_select('user', $where, $params,
+                'lastname ASC, firstname ASC', 'id, firstname, lastname, email');
+        } else if ($scope === '') {
+            $users = $DB->get_records_select('user',
+                'deleted = 0 AND suspended = 0 AND id > 2', null,
+                'lastname ASC, firstname ASC', 'id, firstname, lastname, email', 0, 200);
+        } else {
+            $users = [];
+        }
+        $options = [];
+        foreach ($users as $u) {
+            $options[(int) $u->id] = fullname($u) . ' <' . s($u->email) . '>';
+        }
+        return $options;
+    }
+
+    /**
+     * The courses $managerid may allocate, as id => "Full name (shortname)",
+     * for the allocation forms: visible courses (capped at 200), and for a
+     * scoped manager only those inside their own tenant (ADR-031).
+     *
+     * @return array<int, string>
+     */
+    public static function allocatable_course_options(int $managerid): array {
+        global $DB;
+        $scope = self::manager_scope($managerid);
+        if ($scope === null) {
+            return [];
+        }
+        $where = 'visible = 1 AND id > 1';
+        $params = [];
+        if ($scope !== '') {
+            [$pathsql, $params] = \local_sentientia_platform\tenant::path_descendant_filter(
+                $scope, '', 'open_path', 'alloccourse');
+            $where .= " AND $pathsql";
+        }
+        $options = [];
+        foreach ($DB->get_records_select('course', $where, $params, 'fullname ASC',
+                'id, fullname, shortname', 0, 200) as $c) {
+            $options[(int) $c->id] = format_string($c->fullname) . ' (' . s($c->shortname) . ')';
+        }
+        return $options;
     }
 
     /**

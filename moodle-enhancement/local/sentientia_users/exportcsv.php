@@ -57,10 +57,13 @@ if ($orgid > 0) {
         $org = null;
     }
 }
+// ADR-031: only a cross-tenant caller (site admin or :crosstenant) is unscoped,
+// exactly as list_users.
+$crosstenant = \local_sentientia_platform\tenant::is_cross_tenant();
 if ($org) {
-    // Same tenant boundary check as list_users — non-siteadmin can only
+    // Same tenant boundary check as list_users — a scoped caller can only
     // export from their own tenant tree.
-    if (!is_siteadmin()) {
+    if (!$crosstenant) {
         $caller_parts = explode('/', trim($USER->open_path ?? '', '/'));
         $caller_top = isset($caller_parts[0]) && ctype_digit($caller_parts[0])
             ? '/' . (int) $caller_parts[0] : '';
@@ -73,7 +76,7 @@ if ($org) {
     $where[] = '(u.open_path = :orgexact OR u.open_path LIKE :orgprefix)';
     $sqlparams['orgexact']  = rtrim($org->path, '/');
     $sqlparams['orgprefix'] = $DB->sql_like_escape(rtrim($org->path, '/') . '/') . '%';
-} else if (!is_siteadmin()) {
+} else if (!$crosstenant) {
     $parts = explode('/', trim($USER->open_path ?? '', '/'));
     $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
     if ($top > 0) {

@@ -213,3 +213,18 @@ white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after
   cross-tree drift). Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`);
   `delete_org_test` now asserts the `error_outoftenant` code (its message never contained
   'outoftenant').
+
+## 2026-09-25 - ADR-031 follow-up: edit_org parent pick (1.4.3 -> 1.4.4, 2026092500)
+
+Wave 1 changed this plugin without a version bump; this bumps it. Review finding:
+`form\edit_org::check_access_for_dynamic_submission()` scope-checked the RAW posted `parentid`, but the
+parent select offers only in-scope orgs of depth <= 4. A posted value not on offer (a scoped `:manage`
+holder's own depth-5 org, say) was exported as null, and `org_manager::create()` then made a NEW
+TOP-LEVEL tenant (parentid 0, path '/newid'). `validation()` now refuses a posted parent that the
+select dropped (`invalidparent`) and, for a new node, any parent the caller may not use
+(`error_parent_outofscope`, new en + hi string): a scoped caller needs an existing parent whose path is
+in their tenant, never 0. `process_dynamic_submission()` re-checks it (`error_outoftenant`).
+Tests (`tenant_scope_test`, `@group tenant_isolation`): the depth-5 / 0 / other-tenant / missing
+parents are refused with no new root; an offered in-tenant parent still works; the site admin can
+still create a tenant but not via an unoffered parent; and a literal Airpay /1 vs ZEEA /177 (+ /10
+prefix trap) tree for `get_all_in_scope`, `list_children`, `path_in_scope` and `cascade_where_sql`.

@@ -83,6 +83,7 @@ $string['missingrequiredfields'] = 'Please fill in all required fields.';
 $string['name_required']         = 'Organisation name is required.';
 $string['invalid_color']         = 'Use a valid hex colour, e.g. #0066A7.';
 $string['invalidparent']         = 'Selected parent organisation does not exist.';
+$string['error_parent_outofscope'] = 'Choose a parent organisation inside your own organisation. Only a platform (cross-tenant) administrator can create a new top-level tenant.';
 $string['cannotdeletetenant']    = 'Top-level tenants cannot be deleted. Hide them instead to keep historical data intact.';
 $string['orghaschildren']        = 'Cannot delete: this organisation still has sub-orgs. Delete or move them first.';
 $string['orghasusers']           = 'Cannot delete: this organisation still has users assigned. Reassign them first.';

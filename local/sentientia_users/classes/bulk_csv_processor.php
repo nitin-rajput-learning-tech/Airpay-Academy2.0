@@ -20,6 +20,14 @@ class bulk_csv_processor {
     public const SUPPORTED_ACTIONS = ['suspend', 'activate'];
 
     /**
+     * ADR-031: the skip reason for an email that matches nobody AND for one
+     * that matches an account outside a scoped caller's tenant. They used to
+     * differ ("User in another tenant."), which told a tenant admin which
+     * emails exist in other tenants.
+     */
+    public const NOT_FOUND_REASON = 'User not found.';
+
+    /**
      * Parse CSV content and execute actions row-by-row.
      *
      * Expected CSV format (header line required):
@@ -101,9 +109,25 @@ class bulk_csv_processor {
             if (!$user) {
                 $summary['skipped'][] = [
                     'email' => $email, 'action' => $action,
-                    'reason' => 'User not found.',
+                    'reason' => self::NOT_FOUND_REASON,
                 ];
                 continue;
+            }
+
+            // Tenant scope guard for scoped callers. ADR-031: FIRST, and with
+            // the not-found answer, so a tenant admin cannot tell an email in
+            // another tenant (or the site admin's) from one that is nobody's.
+            if ($caller_tenant_top > 0) {
+                $u_parts = explode('/', trim((string) $user->open_path, '/'));
+                $u_top = isset($u_parts[0]) && ctype_digit($u_parts[0])
+                    ? (int) $u_parts[0] : 0;
+                if ($u_top !== $caller_tenant_top) {
+                    $summary['skipped'][] = [
+                        'email' => $email, 'action' => $action,
+                        'reason' => self::NOT_FOUND_REASON,
+                    ];
+                    continue;
+                }
             }
 
             // Self/guest/admin guard.
@@ -113,20 +137,6 @@ class bulk_csv_processor {
                     'reason' => 'Cannot act on self/guest/site admin.',
                 ];
                 continue;
-            }
-
-            // Tenant scope guard for non-siteadmins.
-            if ($caller_tenant_top > 0) {
-                $u_parts = explode('/', trim((string) $user->open_path, '/'));
-                $u_top = isset($u_parts[0]) && ctype_digit($u_parts[0])
-                    ? (int) $u_parts[0] : 0;
-                if ($u_top !== $caller_tenant_top) {
-                    $summary['skipped'][] = [
-                        'email' => $email, 'action' => $action,
-                        'reason' => 'User in another tenant.',
-                    ];
-                    continue;
-                }
             }
 
             // ADR-031: only a site admin may suspend a site admin, and a scoped

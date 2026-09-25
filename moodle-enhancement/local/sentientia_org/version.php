@@ -30,8 +30,13 @@ defined('MOODLE_INTERNAL') || die();
 $plugin->component = 'local_sentientia_org';
 // P1 #54 (2026-05-20) — Hindi pack: 55 strings covering capabilities,
 // settings, CRUD form, hierarchy, branding, errors, confirmations.
-$plugin->version   = 2026092200;  // descendants-only access filter is /-bounded
+// ADR-031 (2026-09-25) — the org tree, list_children, admin.php and every org
+// write are bounded to the caller's tenant (fail closed on no tenant), and
+// edit_org refuses a parent outside the caller's scope instead of silently
+// creating a new top-level tenant.
+$plugin->version   = 2026092500;  // ADR-031 tenant-bounded org tree + parent pick
+// 2026092200: descendants-only access filter is /-bounded.
 // 2026052002:
 $plugin->requires  = 2022041900; // Moodle 4.0+
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.4.3'; // +2026-09-08 cascade_* strings (org cascade filter i18n, en+hi) — this ME tree is what UAT runs
+$plugin->release   = '1.4.4'; // ADR-031 tenant scope. 1.4.3: +2026-09-08 cascade_* strings (org cascade filter i18n, en+hi) — this ME tree is what UAT runs

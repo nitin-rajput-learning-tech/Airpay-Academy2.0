@@ -51,11 +51,12 @@ class bulk_import_processor {
             'failed'    => [],
         ];
 
-        // Caller's tenant scope: non-siteadmin can only create users in
-        // their own tenant root.
+        // Caller's tenant scope: a caller who is not cross-tenant (ADR-031:
+        // site admin or :crosstenant) can only create users in their own
+        // tenant root.
         $caller_tenant_top = 0;
         $caller_path = '';
-        if (!is_siteadmin($caller_userid)) {
+        if (!\local_sentientia_platform\tenant::is_cross_tenant($caller_userid)) {
             $caller = $DB->get_record('user', ['id' => $caller_userid],
                 'id, open_path');
             $caller_path = (string) ($caller->open_path ?? '');

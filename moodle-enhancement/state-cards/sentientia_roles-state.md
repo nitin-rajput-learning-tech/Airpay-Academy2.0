@@ -285,3 +285,22 @@ role to anyone in any tenant, and read every tenant's role holders and audit log
   must be granted `:manage` / `:assign` (and `local/sentientia_platform:crosstenant`) deliberately.
   Core `moodle/role:manage` / `:override` on the tenant-admin role still reach `/admin/roles/` - that
   root cause is outside this plugin.
+
+## 2026-09-25 - ADR-031 follow-up (no version bump; still 2026092500)
+
+- Four existing tests broke on wave 1 (`update_capability()` now requires a cross-tenant caller) and
+  were never run: `role_manager_test::test_audit_records_open_path_from_user` and the privacy
+  `provider_test` changedby / export / redact tests. Each now makes `$u` cross-tenant with a dedicated
+  role carrying only `local/sentientia_platform:crosstenant`, so changedby is still `$u` and the audit
+  and privacy assertions mean what they did.
+- `unassign_user_from_role()`: after the tenant/assignability check (so a scoped caller still gets
+  `error_outoftenant` for a missing or foreign id), it refuses with the new
+  `err_assignment_not_found` (en + hi) unless the user exists and holds a manual system-context
+  assignment of the role; it used to write a `role_unassigned` audit row for anyone, or for nobody.
+- New structural test: no role, in any context, holds `local/sentientia_roles:manage` or `:assign`;
+  and no role outside the manager archetype holds core `moodle/role:manage`. The manager-archetype
+  default of `moodle/role:manage` / `:override` / `:assign` (the same escalation via
+  /admin/roles/*.php) is pinned, not removed: that is Nitin's decision (PROHIBIT on role 9, or
+  category-context assignment).
+- Ops: do NOT run the UAT interim lockdown `--revert` after roles 2026092500 - it would re-grant
+  `roles:manage` / `:assign` to role 9.

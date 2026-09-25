@@ -161,3 +161,32 @@ walk. Only `tenant::is_cross_tenant()` sees anyone. index.php's `?manager=` pick
 `local_sentientia_platform` declared as a dependency. Tests: `tests/tenant_scope_test.php`
 (`@group tenant_isolation`). The supervisor chain itself is not tenant-bounded (supervisor links are
 already guarded against crossing tenants when set).
+
+## 2026-09-25 - ADR-031 follow-up: allocation targets tenant-bounded (1.3.4 -> 1.3.5, 2026092501)
+
+Wave-1 review found a P0 cross-tenant write the sweep had missed. `approval_manager::create_allocation()`
+(and `bulk_allocate()`, which goes through it) used `if (!empty($reports) && !in_array(...))`, so any
+`:allocate` holder with no direct reports - every tenant admin, by the manager-archetype default - could
+enrol any user of any tenant into any course of any tenant (manual enrol as student) and notify them.
+The course's tenant was never checked, reports or not.
+
+- `guard_direct_report()` (shared by the course and typed allocations): a manager who is not
+  `tenant::is_cross_tenant()` must pass `tenant::require_same_tenant_user()` (a missing id is refused
+  like an out-of-tenant one) AND have the target among their direct reports; an empty report list is
+  no longer a bypass. The stock-DB leniency is dropped (fail closed: every production schema has
+  `open_supervisorid`). A cross-tenant manager keeps the legacy rule (reports only if they have any).
+- `require_item_in_tenant()`: the course (and classroom / program / learning path for the typed
+  allocations) must have a non-empty `open_path` that is the manager's root or '/'-bounded beneath it
+  (`tenant::require_path_access()` plus an explicit refusal of '', which that helper waves through). A
+  missing item gets the same `error_outoftenant`.
+- The two allocation forms no longer list 200 users of every tenant (with emails) and every tenant's
+  courses: `allocatable_user_options()` / `allocatable_course_options()` offer the manager's in-tenant
+  reports and in-tenant courses; only a cross-tenant manager with no reports keeps the "any user"
+  fallback.
+- Tests: `approval_manager_test` and the privacy `provider_test` now allocate as a /1 manager to a /1
+  report of a /1 course (they relied on the removed leniency); `tenant_scope_test` adds the
+  cross-tenant refusals (no-reports tenant admin vs a /177 user and /177 course, the WS paths, '' /
+  NULL / `/10` course paths, a drifted /177 "report", a /177 classroom, no-tenant managers, the
+  pickers) and the site admin still allocating anywhere.
+- Not changed: `delete_allocation` WS keeps its owner-or-siteadmin gate; the `idx_user_course` unique
+  index means one user can hold only one non-course allocation (courseid = 0) - pre-existing.

@@ -127,7 +127,40 @@ class edit_org extends \core_form\dynamic_form {
                 $errors[$field] = get_string('invalid_color', 'local_sentientia_org');
             }
         }
+        // ADR-031: a new node must hang under a parent the caller may use.
+        // check_access_for_dynamic_submission() scope-checks the RAW posted
+        // parentid, but the parent select offers only in-scope orgs of depth
+        // <= 4. Any other posted value (a depth-5 org of the caller's own, say)
+        // is exported as null, and org_manager::create() then made a NEW
+        // TOP-LEVEL tenant with parentid 0. Refuse instead of falling through.
+        if ((int) ($data['orgid'] ?? 0) === 0) {
+            $postedparent = (int) $this->optional_param('parentid', 0, PARAM_INT);
+            $parentid = (int) ($data['parentid'] ?? 0);
+            if ($postedparent !== $parentid) {
+                $errors['parentid'] = get_string('invalidparent', 'local_sentientia_org');
+            } else if (!self::parent_allowed($parentid)) {
+                $errors['parentid'] = get_string('error_parent_outofscope', 'local_sentientia_org');
+            }
+        }
         return $errors;
+    }
+
+    /**
+     * ADR-031: may the current user create a node under $parentid?
+     *
+     * A cross-tenant caller: under any existing org, or at 0 (a new top-level
+     * tenant). Anyone else: only under an existing org whose path is inside
+     * their own tenant - never at 0.
+     *
+     * @param int $parentid
+     * @return bool
+     */
+    private static function parent_allowed(int $parentid): bool {
+        if ($parentid <= 0) {
+            return \local_sentientia_platform\tenant::is_cross_tenant();
+        }
+        $parent = org_manager::get($parentid);
+        return $parent && org_manager::path_in_scope((string) ($parent->path ?? ''));
     }
 
     public function process_dynamic_submission() {
@@ -135,6 +168,11 @@ class edit_org extends \core_form\dynamic_form {
         $orgid = (int) $data->orgid;
 
         if ($orgid === 0) {
+            // ADR-031: authoritative re-check of what validation() reports, so
+            // no path into create() can make a scoped caller a new tenant.
+            if (!self::parent_allowed((int) ($data->parentid ?? 0))) {
+                throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+            }
             $newid = org_manager::create($data);
             return [
                 'orgid'   => $newid,

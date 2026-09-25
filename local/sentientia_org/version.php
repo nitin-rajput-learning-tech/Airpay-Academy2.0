@@ -35,8 +35,13 @@ $plugin->component = 'local_sentientia_org';
 //                       out of per-tenant brand config → brand blue. Fixes
 //                       the Public tenant's off-brand identity on existing
 //                       installs; defaults() already brand-correct.
-$plugin->version   = 2026092200;  // descendants-only access filter is /-bounded
+// ADR-031 (2026-09-25) — the org tree, list_children, admin.php and every org
+// write are bounded to the caller's tenant (fail closed on no tenant), and
+// edit_org refuses a parent outside the caller's scope instead of silently
+// creating a new top-level tenant.
+$plugin->version   = 2026092500;  // ADR-031 tenant-bounded org tree + parent pick
+// 2026092200: descendants-only access filter is /-bounded.
 // 2026090800:
 $plugin->requires  = 2022041900; // Moodle 4.0+
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.4.3'; // +2026-09-08 cascade_* strings (org cascade filter i18n, en+hi)
+$plugin->release   = '1.4.4'; // ADR-031 tenant scope. 1.4.3: +2026-09-08 cascade_* strings (org cascade filter i18n, en+hi)

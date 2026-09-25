@@ -22,6 +22,21 @@ use local_sentientia_roles\role_manager;
  */
 final class provider_test extends \core_privacy\tests\provider_testcase {
 
+    /**
+     * Make $u cross-tenant, the only kind of caller role_manager lets edit a
+     * shared role definition since ADR-031 (a manager-archetype role, which
+     * every tenant admin holds, no longer suffices). A dedicated role carrying
+     * only local/sentientia_platform:crosstenant, so the audit rows written
+     * afterwards still have changedby = $u.
+     */
+    private function make_cross_tenant(\stdClass $u): void {
+        $sysctx = \context_system::instance();
+        $roleid = $this->getDataGenerator()->create_role();
+        assign_capability('local/sentientia_platform:crosstenant', CAP_ALLOW, $roleid, $sysctx->id, true);
+        role_assign($roleid, $u->id, $sysctx->id);
+        accesslib_clear_all_caches_for_unit_testing();
+    }
+
     public function test_get_metadata(): void {
         $collection = new \core_privacy\local\metadata\collection('local_sentientia_roles');
         $collection = provider::get_metadata($collection);
@@ -37,13 +52,9 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $u = $this->getDataGenerator()->create_user();
         $rid = create_role('Test', 'privrole', '');
         // role_manager::update_capability writes audit row with changedby = current user.
-        $this->setUser($u);
-        // Admin caller is needed for the cap; switch to admin context.
-        $this->setAdminUser();
-        // Re-trigger as $u — they need :manage cap, which requires assigning manager role.
+        // ADR-031: only a cross-tenant caller may edit a role definition.
         $sysctx = \context_system::instance();
-        role_assign((int) $GLOBALS['DB']->get_field('role', 'id', ['shortname' => 'manager']),
-            $u->id, $sysctx->id);
+        $this->make_cross_tenant($u);
         $this->setUser($u);
         role_manager::update_capability($rid, 'moodle/course:create', 'allow');
 
@@ -63,9 +74,8 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $sysctx = \context_system::instance();
         $rid = create_role('Test', 'privexport', '');
 
-        // Make $u the changedby for an audit row.
-        role_assign((int) $GLOBALS['DB']->get_field('role', 'id', ['shortname' => 'manager']),
-            $u->id, $sysctx->id);
+        // Make $u the changedby for an audit row (ADR-031: as a cross-tenant caller).
+        $this->make_cross_tenant($u);
         $this->setUser($u);
         role_manager::update_capability($rid, 'moodle/course:create', 'allow', 'GDPR test');
 
@@ -86,8 +96,8 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $sysctx = \context_system::instance();
         $rid = create_role('Test', 'privdel', '');
 
-        role_assign((int) $DB->get_field('role', 'id', ['shortname' => 'manager']),
-            $u->id, $sysctx->id);
+        // ADR-031: only a cross-tenant caller may edit a role definition.
+        $this->make_cross_tenant($u);
         $this->setUser($u);
         role_manager::update_capability($rid, 'moodle/course:create', 'allow');
 

@@ -486,8 +486,19 @@ class role_manager {
             throw new \moodle_exception('err_role_not_found', 'local_sentientia_roles');
         }
         $role = $allroles[$roleid];
-        // ADR-031: the same bounds as assigning.
+        // ADR-031: the same bounds as assigning (and, as there, before any
+        // existence check so a scoped caller learns nothing about other tenants).
         self::require_assignable($roleid, $userid);
+        // Only an assignment that exists can be removed. role_unassign() is a
+        // silent no-op otherwise, and the audit log used to record a
+        // "role_unassigned" for a user who never held the role, or for an id
+        // that is nobody. role_unassign() only removes manual assignments
+        // (component ''), so that is the one that must exist.
+        if (!$DB->record_exists('user', ['id' => $userid, 'deleted' => 0])
+                || !$DB->record_exists('role_assignments', ['roleid' => $roleid,
+                    'userid' => $userid, 'contextid' => $context->id, 'component' => ''])) {
+            throw new \moodle_exception('err_assignment_not_found', 'local_sentientia_roles');
+        }
 
         $tx = $DB->start_delegated_transaction();
         try {

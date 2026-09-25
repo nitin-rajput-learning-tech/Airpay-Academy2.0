@@ -118,8 +118,8 @@ class search_supervisors extends external_api {
                                                   int $subject_userid): array {
         global $DB;
 
-        // siteadmin: no extra filter.
-        if (is_siteadmin($caller)) {
+        // Cross-tenant caller (ADR-031: site admin or :crosstenant): no extra filter.
+        if (\local_sentientia_platform\tenant::is_cross_tenant((int) $caller->id)) {
             // BUT if subject_userid is set, still scope to subject's tenant.
             if ($subject_userid > 0) {
                 $subject_path = (string) $DB->get_field('user', 'open_path',

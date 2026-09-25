@@ -216,4 +216,59 @@ final class tenant_scope_test extends \advanced_testcase {
         $this->assertFalse($DB->record_exists('role_assignments',
             ['roleid' => $roleid, 'userid' => $theirs->id]));
     }
+
+    public function test_no_role_holds_role_authority_beyond_what_is_decided(): void {
+        global $DB;
+        // Structural, over EVERY role and context, not just the manager
+        // archetype: the plugin's role authority is granted by nobody. Site
+        // admins need no role for it, and a cross-tenant caller is recognised
+        // by role_manager through tenant::is_cross_tenant().
+        foreach (['local/sentientia_roles:manage', 'local/sentientia_roles:assign'] as $cap) {
+            $holders = $DB->get_fieldset_select('role_capabilities', 'roleid',
+                'capability = :cap AND permission = :allow', ['cap' => $cap, 'allow' => CAP_ALLOW]);
+            $this->assertSame([], array_values($holders), "No role may hold {$cap}.");
+        }
+
+        // Core moodle/role:manage reaches the same escalation through
+        // /admin/roles/*.php. Moodle grants it to the manager archetype, which
+        // is what tenant admins hold; revoking it from them is an open decision
+        // (PROHIBIT on the tenant-admin role, or category-context assignment),
+        // so that one default is pinned here and nothing else may join it.
+        $managerarchetype = array_map('intval', $DB->get_fieldset_select('role', 'id',
+            'archetype = :archetype', ['archetype' => 'manager']));
+        $holders = array_map('intval', $DB->get_fieldset_select('role_capabilities', 'roleid',
+            'capability = :cap AND permission = :allow', ['cap' => 'moodle/role:manage', 'allow' => CAP_ALLOW]));
+        $this->assertSame([], array_values(array_diff($holders, $managerarchetype)),
+            'Only the manager archetype may hold moodle/role:manage, pending the tenant-admin decision.');
+    }
+
+    public function test_unassigning_a_role_that_is_not_held_writes_no_audit_row(): void {
+        global $DB;
+        $roleid = create_role('Never held', 'neverheld', '');
+        $theirs = $this->user_at('/177/178');
+        $mine = $this->user_at('/1/2');
+        $before = $DB->count_records('local_sentientia_roles_auditlog');
+
+        // Cross-tenant caller: an assignment that does not exist, and an id
+        // that is nobody, are refused instead of logged as "role_unassigned".
+        $this->setAdminUser();
+        $this->assert_refused(fn() => role_manager::unassign_user_from_role($roleid, (int) $theirs->id),
+            'err_assignment_not_found', 'Nothing to remove, so nothing to audit.');
+        $this->assert_refused(fn() => role_manager::unassign_user_from_role($roleid, 999999),
+            'err_assignment_not_found', 'Nor for an id that is nobody.');
+
+        // Scoped caller: the tenant refusal still comes first, so a missing or
+        // foreign id is not told apart by an "assignment not found".
+        $admin = $this->tenant_admin('/1');
+        $this->setUser($admin);
+        $this->assert_refused(fn() => role_manager::unassign_user_from_role($this->managerroleid, 999999),
+            'error_outoftenant', 'A missing id is the tenant refusal for a scoped caller.');
+        $this->assert_refused(fn() => role_manager::unassign_user_from_role($this->managerroleid, (int) $theirs->id),
+            'error_outoftenant', 'So is another tenant\'s user.');
+        $this->assert_refused(fn() => role_manager::unassign_user_from_role($this->managerroleid, (int) $mine->id),
+            'err_assignment_not_found', 'An in-tenant colleague who does not hold the role.');
+
+        $this->assertSame($before, $DB->count_records('local_sentientia_roles_auditlog'),
+            'No refused unassign may write an audit row.');
+    }
 }

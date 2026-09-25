@@ -109,6 +109,7 @@ $string['err_filterstoolong']      = 'Filter blob exceeds limit.';
 // ADR-031 (2026-09-25).
 $string['err_definitions_crosstenant'] = 'Role definitions are shared by every tenant, so only a platform (cross-tenant) administrator can change them.';
 $string['err_role_not_assignable'] = 'You can only assign a role that you hold yourself and are allowed to assign, to someone else in your own organisation.';
+$string['err_assignment_not_found'] = 'That user does not hold this role at site level, so there is nothing to remove.';
 
 // Privacy provider strings.
 $string['privacy:metadata:auditlog']               = 'Append-only audit log of role and capability mutations made through the airpay role-management UI.';

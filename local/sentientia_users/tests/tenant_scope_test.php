@@ -14,7 +14,12 @@
  *  - the single-user suspend web service took any user id;
  *  - the edit form offered, and accepted, every tenant's organisations;
  *  - a caller whose open_path did not resolve was treated as unscoped by the
- *    HRMS importer, its run history, the KPI counts and the filter chips.
+ *    HRMS importer, its run history, the KPI counts and the filter chips;
+ *  - (follow-up) refusals told a tenant admin that an email, username or
+ *    manager code exists in another tenant; the supervisor guard let a
+ *    tenant-less supervisor or subordinate through; :crosstenant holders who
+ *    are not site admins were locked out of other tenants' users; and the
+ *    HRMS cron swallowed every importer failure as a success.
  *
  * @package    local_sentientia_users
  * @category   test
@@ -33,6 +38,10 @@ defined('MOODLE_INTERNAL') || die();
  * @covers \local_sentientia_users\external\bulk_action
  * @covers \local_sentientia_users\external\list_filter_options
  * @covers \local_sentientia_users\form\edit_user
+ * @covers \local_sentientia_users\profile_access
+ * @covers \local_sentientia_users\bulk_csv_processor
+ * @covers \local_sentientia_users\external\list_users
+ * @covers \local_sentientia_users\task\hrms_sync
  * @group tenant_isolation
  */
 final class tenant_scope_test extends \advanced_testcase {
@@ -310,5 +319,222 @@ final class tenant_scope_test extends \advanced_testcase {
         $values = external\list_filter_options::execute('open_designation')['designation'];
         $this->assertContains('Engineer A', $values);
         $this->assertContains('Engineer B', $values);
+    }
+
+    // ── ADR-031 follow-up (2026-09-25) ────────────────────────────────────
+
+    /** A cross-tenant platform user: a tenant admin who ALSO holds :crosstenant. */
+    private function cross_tenant_user(string $path): \stdClass {
+        $u = $this->tenant_admin($path);
+        $syscontext = \context_system::instance();
+        $roleid = $this->getDataGenerator()->create_role();
+        assign_capability(\local_sentientia_platform\tenant::CROSS_TENANT_CAPABILITY, CAP_ALLOW,
+            $roleid, $syscontext->id, true);
+        role_assign($roleid, $u->id, $syscontext->id);
+        accesslib_clear_all_caches_for_unit_testing();
+        return $u;
+    }
+
+    /** User ids list_users returns to the current user (no filters). */
+    private function listed_ids(): array {
+        $rows = external\list_users::execute('', 'firstname', 'asc', 0, 100,
+            json_encode(['status' => 'all']))['rows'];
+        return array_map('intval', array_column($rows, 'id'));
+    }
+
+    public function test_the_airpay_tenant_admin_manages_only_slash_1_users(): void {
+        global $DB;
+        // The literal UAT tenants: Airpay /1, Public /77, ZEEA /177, and /10,
+        // which a '/1%' prefix would wrongly admit.
+        $admin = $this->tenant_admin('/1');
+        $mine = $this->user_at('/1/2', ['open_designation' => 'Airpay role']);
+        $zeea = $this->user_at('/177/178', ['open_designation' => 'ZEEA role']);
+        $public = $this->user_at('/77');
+        $trap = $this->user_at('/10', ['open_designation' => 'Trap role']);
+        $this->setUser($admin);
+
+        $ids = $this->listed_ids();
+        $this->assertContains((int) $mine->id, $ids);
+        foreach ([$zeea, $public, $trap] as $other) {
+            $this->assertNotContains((int) $other->id, $ids, "{$other->open_path} must not be listed to /1.");
+            $this->assertFalse(profile_access::can_view((int) $admin->id, (int) $other->id));
+            $this->assert_refused(fn() => external\suspend_user::execute((int) $other->id, true),
+                'error_profilenotavailable', "No suspending {$other->open_path} from /1.");
+        }
+        $this->assertSame(['Airpay role'],
+            external\list_filter_options::execute('open_designation')['designation']);
+        $r = external\bulk_action::execute('suspend', [(int) $mine->id, (int) $zeea->id, (int) $trap->id]);
+        $this->assertSame(1, $r['count']);
+        $this->assertSame(0, (int) $DB->get_field('user', 'suspended', ['id' => $zeea->id]));
+        $this->assertSame(0, (int) $DB->get_field('user', 'suspended', ['id' => $trap->id]));
+    }
+
+    public function test_a_crosstenant_holder_manages_users_in_every_tenant(): void {
+        $platform = $this->cross_tenant_user('/1');
+        $zeea = $this->user_at('/177/178');
+        $mine = $this->user_at('/1/2');
+        $this->assertFalse(is_siteadmin($platform->id), 'Precondition: not a site admin.');
+
+        // profile_access rule 2 is the ADR-031 authority, not is_siteadmin().
+        $this->assertTrue(profile_access::can_view((int) $platform->id, (int) $zeea->id));
+        $this->setUser($platform);
+        // The edit form used to refuse them (require_can_view ran first).
+        $form = new form\edit_user(null, null, 'post', '', [], true, ['userid' => (int) $zeea->id], true);
+        $form->set_data_for_dynamic_submission();
+        $ids = $this->listed_ids();
+        $this->assertContains((int) $zeea->id, $ids, 'list_users is unscoped for :crosstenant.');
+        $this->assertContains((int) $mine->id, $ids);
+
+        // A plain tenant admin is still held to their own tenant.
+        $tenantadmin = $this->tenant_admin('/1');
+        $this->assertFalse(profile_access::can_view((int) $tenantadmin->id, (int) $zeea->id));
+        $this->setUser($tenantadmin);
+        $this->assertNotContains((int) $zeea->id, $this->listed_ids());
+    }
+
+    public function test_bulk_csv_answers_not_found_for_another_tenants_email(): void {
+        global $DB;
+        $caller = $this->tenant_admin('/1');
+        $mine = $this->user_at('/1/2', ['email' => 'mine@a.test']);
+        $zeea = $this->user_at('/177/178', ['email' => 'zeea@z.test']);
+        $trap = $this->user_at('/10', ['email' => 'trap@t.test']);
+        $siteadmin = get_admin();
+        $DB->set_field('user', 'open_path', '/177', ['id' => $siteadmin->id]);
+        $DB->set_field('user', 'email', 'siteadmin@z.test', ['id' => $siteadmin->id]);
+        $siteadmin->email = 'siteadmin@z.test';
+        $this->setUser($caller);
+
+        $csv = "email,action\nmine@a.test,suspend\nzeea@z.test,suspend\ntrap@t.test,suspend\n"
+            . "nobody@x.test,suspend\n" . $siteadmin->email . ",suspend\n";
+        $r = bulk_csv_processor::process($csv, (int) $caller->id);
+
+        $this->assertSame([(int) $mine->id], array_column($r['succeeded'], 'userid'));
+        $reasons = array_column($r['skipped'], 'reason', 'email');
+        foreach (['zeea@z.test', 'trap@t.test', 'nobody@x.test', $siteadmin->email] as $email) {
+            $this->assertSame(bulk_csv_processor::NOT_FOUND_REASON, $reasons[$email] ?? null,
+                "{$email}: out of tenant and missing must be the same answer.");
+        }
+        $this->assertSame(0, (int) $DB->get_field('user', 'suspended', ['id' => $zeea->id]));
+        $this->assertSame(0, (int) $DB->get_field('user', 'suspended', ['id' => $trap->id]));
+    }
+
+    public function test_hrms_refusals_do_not_say_where_an_account_lives(): void {
+        global $DB;
+        $caller = $this->tenant_admin($this->orga->path);
+        $this->user_at($this->orgb->path, ['username' => 'theirs', 'email' => 'theirs@b.test']);
+        $this->user_at($this->orgb->path, ['open_employeeid' => 'MGRB']);
+        $this->setUser($caller);
+
+        $csv = $this->hrms_csv(
+            // Matches tenant B's account: refused, generically.
+            ['company_code' => 'TENANTA', 'username' => 'theirs', 'email' => 'theirs@b.test',
+                'employee_code' => 'EMPG1', 'first_name' => 'Mallory', 'last_name' => 'Evil'],
+            // New in-tenant users whose manager code exists only in tenant B, or nowhere.
+            ['company_code' => 'TENANTA', 'username' => 'newa', 'email' => 'newa@a.test',
+                'employee_code' => 'EMPG2', 'first_name' => 'New', 'last_name' => 'A',
+                'reportingmanager_empid' => 'MGRB'],
+            ['company_code' => 'TENANTA', 'username' => 'newb', 'email' => 'newb@a.test',
+                'employee_code' => 'EMPG3', 'first_name' => 'New', 'last_name' => 'B',
+                'reportingmanager_empid' => 'NOSUCH']);
+        $runid = hrms_importer::import_csv($csv, (int) $caller->id, 'oracle.csv');
+
+        $errors = array_values($DB->get_records('local_sentientia_users_sync_errors',
+            ['runid' => $runid, 'severity' => 'error'], 'csv_line_number ASC'));
+        $this->assertCount(1, $errors);
+        $this->assertSame(hrms_importer::ROW_CONFLICT_ERROR, $errors[0]->error_message);
+        $this->assertStringNotContainsStringIgnoringCase('tenant', $errors[0]->error_message);
+
+        $warnings = array_values($DB->get_records('local_sentientia_users_sync_errors',
+            ['runid' => $runid, 'severity' => 'warning'], 'csv_line_number ASC'));
+        $this->assertCount(2, $warnings);
+        $this->assertSame(str_replace('NOSUCH', 'CODE', $warnings[1]->error_message),
+            str_replace('MGRB', 'CODE', $warnings[0]->error_message),
+            'A manager code used only by another tenant reads exactly like one used by nobody.');
+        $this->assertEmpty($DB->get_field('user', 'open_supervisorid', ['username' => 'newa']));
+    }
+
+    public function test_the_supervisor_guard_fails_closed_and_honours_crosstenant(): void {
+        global $DB;
+        $caller = $this->tenant_admin('/1');
+        $sub = $this->user_at('/1/2');
+        $colleague = $this->user_at('/1/3');
+        $pathless = $this->user_at('');
+        $zeea = $this->user_at('/177/178');
+        $this->setUser($caller);
+
+        foreach ([(int) $pathless->id => 'a supervisor with no tenant', (int) $zeea->id => 'a ZEEA supervisor',
+                999999 => 'a missing supervisor id'] as $supid => $what) {
+            try {
+                user_manager::update((int) $sub->id, (object) ['open_supervisorid' => $supid]);
+                $this->fail("Linking {$what} must be refused.");
+            } catch (\moodle_exception $e) {
+                $this->assertSame('supervisor_wrong_tenant', $e->errorcode, $what);
+                $this->assertStringNotContainsString('177', $e->getMessage(),
+                    'The refusal must not name the other tenant.');
+            }
+        }
+        $nosub = $this->user_at('');
+        $this->assert_refused(fn() => user_manager::update((int) $nosub->id,
+            (object) ['open_supervisorid' => (int) $colleague->id]),
+            'supervisor_wrong_tenant', 'A subordinate with no tenant cannot be linked either.');
+        $this->assertEmpty($DB->get_field('user', 'open_supervisorid', ['id' => $sub->id]));
+
+        // The in-tenant function survives.
+        user_manager::update((int) $sub->id, (object) ['open_supervisorid' => (int) $colleague->id]);
+        $this->assertSame((int) $colleague->id, (int) $DB->get_field('user', 'open_supervisorid', ['id' => $sub->id]));
+
+        // A :crosstenant holder may link across tenants, like the site admin.
+        $this->setUser($this->cross_tenant_user('/1'));
+        user_manager::update((int) $sub->id, (object) ['open_supervisorid' => (int) $zeea->id]);
+        $this->assertSame((int) $zeea->id, (int) $DB->get_field('user', 'open_supervisorid', ['id' => $sub->id]));
+    }
+
+    public function test_hrms_sync_swallows_only_the_tenant_refusal(): void {
+        $file = make_request_directory() . DIRECTORY_SEPARATOR . 'hrms.csv';
+        file_put_contents($file, $this->hrms_csv(['company_code' => 'TENANTA', 'username' => 'cronny',
+            'email' => 'cronny@a.test', 'employee_code' => 'EMPC1', 'first_name' => 'Cron', 'last_name' => 'Ny']));
+        set_config('hrms_sync_mode', 'filesystem', 'local_sentientia_users');
+        set_config('hrms_sync_path', realpath($file), 'local_sentientia_users');
+        set_config('hrms_sync_user_id', (int) get_admin()->id, 'local_sentientia_users');
+        unset_config('hrms_sync_last_run', 'local_sentientia_users');
+
+        // A task whose importer fails with $e.
+        $failing = fn(\moodle_exception $e) => new class($e) extends task\hrms_sync {
+            /** @var \moodle_exception */
+            private $failure;
+            public function __construct(\moodle_exception $failure) {
+                $this->failure = $failure;
+            }
+            protected function import(string $csv, int $runner_userid, string $filename): int {
+                throw $this->failure;
+            }
+        };
+        $run = function(task\hrms_sync $task): string {
+            ob_start();
+            try {
+                $task->execute();
+            } finally {
+                $output = ob_get_clean();
+            }
+            return $output;
+        };
+
+        // The tenant refusal: logged, and the task ends normally.
+        $output = $run($failing(new \moodle_exception('invalidtenant', 'local_sentientia_users')));
+        $this->assertStringContainsString('refused for runner user', $output);
+        $this->assertFalse(get_config('local_sentientia_users', 'hrms_sync_last_run'),
+            'A refused run is not recorded as a success.');
+
+        // Anything else fails the task, so the task API reports and retries it.
+        foreach ([new \dml_read_exception('connection lost'),
+                new \moodle_exception('error_csv_header_missing', 'local_sentientia_users')] as $failure) {
+            try {
+                $run($failing($failure));
+                $this->fail(get_class($failure) . ' ' . $failure->errorcode . ' must not be swallowed.');
+            } catch (\moodle_exception $e) {
+                $this->assertSame($failure, $e);
+            }
+            $this->assertFalse(get_config('local_sentientia_users', 'hrms_sync_last_run'));
+        }
     }
 }
