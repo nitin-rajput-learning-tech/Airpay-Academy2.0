@@ -135,7 +135,12 @@ final class signup_service_test extends \advanced_testcase {
         $user = $DB->get_record('user', ['id' => $newid], '*', MUST_EXIST);
         $this->assertSame('/77', $user->open_path,
             'New signups must land in the Public tenant per config');
-        $this->assertSame(77, (int) $user->open_costcenterid);
+        // The tenant is whatever open_path resolves to. There is no
+        // open_costcenterid column on the production user table (CLAUDE.md:
+        // tenant detection uses open_path), so asserting that property read
+        // an undefined field and failed as 0 !== 77.
+        $this->assertSame(77, \local_sentientia_platform\tenant::root_for_user($user),
+            'The stored open_path must resolve to the Public tenant root');
     }
 
     public function test_register_falls_back_to_public_tenant_when_config_empty(): void {

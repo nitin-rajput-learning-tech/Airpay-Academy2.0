@@ -187,5 +187,33 @@ function xmldb_local_sentientia_learningpath_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026092500, 'local', 'sentientia_learningpath');
     }
 
+    if ($oldversion < 2026092501) {
+        // local_sentientia_lp_adaptive_log.quiz_score and .velocity_score were
+        // created NUMBER(6) with 0 decimals, both in install.xml and in the
+        // 2026061600 step above (no setDecimals). quiz_signal_reader rounds the
+        // percent to 2dp and velocity_calculator returns an index in 0.0-2.0,
+        // so every stored score was rounded to a whole number: 72.5 became 73,
+        // and a velocity of 0.85 or 1.35 became 1. Widen both to NUMBER(6,2),
+        // which is what install.xml now declares, so a fresh install and an
+        // upgraded site end with the same column. Rows already written keep
+        // their rounded value; the lost decimals cannot be recovered.
+        // Neither column is indexed, so no index has to be dropped first.
+        $table = new xmldb_table('local_sentientia_lp_adaptive_log');
+        if ($dbman->table_exists($table)) {
+            $field = new xmldb_field('quiz_score', XMLDB_TYPE_NUMBER, '6, 2',
+                null, null, null, null, 'target_courseid');
+            if ($dbman->field_exists($table, $field)) {
+                $dbman->change_field_precision($table, $field);
+            }
+
+            $field = new xmldb_field('velocity_score', XMLDB_TYPE_NUMBER, '6, 2',
+                null, null, null, null, 'quiz_score');
+            if ($dbman->field_exists($table, $field)) {
+                $dbman->change_field_precision($table, $field);
+            }
+        }
+        upgrade_plugin_savepoint(true, 2026092501, 'local', 'sentientia_learningpath');
+    }
+
     return true;
 }

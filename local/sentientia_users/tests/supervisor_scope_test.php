@@ -63,16 +63,26 @@ final class supervisor_scope_test extends \advanced_testcase {
         $this->resetAfterTest();
         global $DB;
 
+        // The caller is a tenant admin as ADR-031 defines one: a
+        // manager-archetype role at system context, which carries
+        // local/sentientia_users:view (the WS capability) but NOT
+        // local/sentientia_platform:crosstenant. Until 2026-09-25 this user
+        // held no role at all, so the WS refused it at require_capability()
+        // and the tenant filter below was never reached.
         $airpay_admin = $this->seed_user('Bravo', '/1');
-        // Move admin into tenant /1, log them in.
-        $DB->set_field('user', 'open_path', '/1', ['id' => $airpay_admin->id]);
+        $managerroleid = (int) $DB->get_field('role', 'id', ['shortname' => 'manager'], MUST_EXIST);
+        role_assign($managerroleid, $airpay_admin->id, \context_system::instance()->id);
         $this->setUser($airpay_admin);
+        $this->assertFalse(\local_sentientia_platform\tenant::is_cross_tenant((int) $airpay_admin->id),
+            'Precondition: a tenant admin is not cross-tenant');
 
-        // Seed: 2 users in /1, 2 in /77.
-        $this->seed_user('Bravo-A', '/1');
-        $this->seed_user('Bravo-B', '/1');
+        // Seed: 2 users in /1, 2 in /77, and a ZEEA /177 decoy whose path
+        // shares the '/1' prefix (the path-boundary defect class).
+        $a = $this->seed_user('Bravo-A', '/1');
+        $b = $this->seed_user('Bravo-B', '/1');
         $this->seed_user('Bravo-C', '/77');
         $this->seed_user('Bravo-D', '/77');
+        $this->seed_user('Bravo-E', '/177');
 
         $result = \local_sentientia_users\external\search_supervisors::execute('Bravo', 0);
 
@@ -84,6 +94,15 @@ final class supervisor_scope_test extends \advanced_testcase {
             $this->assertStringStartsWith('/1', $u->open_path,
                 'Non-siteadmin must NEVER see /77 results: ' . $row['email']);
         }
+
+        // Exactly the caller's tenant: without this the loop above passes
+        // vacuously on an empty result, and '/177' would satisfy '/1'.
+        $expected = [(int) $airpay_admin->id, (int) $a->id, (int) $b->id];
+        sort($expected);
+        $actual = array_map('intval', array_column($result['rows'], 'id'));
+        sort($actual);
+        $this->assertSame($expected, $actual,
+            'Tenant admin at /1 must see exactly the /1 users, got: ' . implode(', ', $emails));
     }
 
     public function test_guard_blocks_cross_tenant_supervisor(): void {

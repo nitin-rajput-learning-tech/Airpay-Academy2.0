@@ -39,7 +39,6 @@ CONTENT sentientia_learningpath/lang/hi/local_sentientia_learningpath.php
 CONTENT sentientia_learningpath/tests/audience_enroller_test.php
 CONTENT sentientia_learningpath/tests/crud_test.php
 CONTENT sentientia_learningpath/tests/enrolment_window_test.php
-CONTENT sentientia_learningpath/tests/path_assignment_test.php
 CONTENT sentientia_learningpath/version.php
 CONTENT sentientia_notifications/classes/rule_engine.php
 CONTENT sentientia_notifications/templates/prefs.mustache

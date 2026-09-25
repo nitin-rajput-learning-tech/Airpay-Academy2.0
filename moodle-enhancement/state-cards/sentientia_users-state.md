@@ -337,3 +337,38 @@ now decides WHERE via `local_sentientia_platform\tenant`.
   generic HRMS and bulk-CSV refusals; the supervisor guard; the hrms_sync rethrow.
 - Still open: the `emailtaken` validation is a cross-tenant email-existence oracle; `filterstoolong`
   has no string.
+
+## 2026-09-25 - PHPUnit test debt: 6 pre-existing failures (1 code, 2 test, 1 already fixed)
+
+From the users suite run against the older deployed copy (1 error, 5 failures). Each was traced to
+the side that was wrong; nothing a test proves was weakened.
+
+- **CODE - welcome email never sent** (`welcome_mailer_test`, 3 tests). `welcome_mailer::send()` set
+  `notification = 0`. `message_send()` treats that as a personal message and refuses every provider
+  except `moodle/instantmessage` ("Attempt to send msg from a provider ... inactive or not allowed"),
+  returning false before any processor or PHPUnit sink runs. So since P1 #7 (2026-05-16) ticking
+  "send welcome email" on create-user sent nothing. Now `notification = 1`, like every other
+  Sentientia sender; it goes through the `welcome_email` provider in db/messages.php and the email
+  processor. `$CFG->noemailever` was not the cause: these tests use `redirectMessages()`, which
+  intercepts inside `message_send()` before any processor (noemailever only short-circuits
+  `email_to_user()`, lib/moodlelib.php). Version 2026092501 / 2.8.1, both trees.
+  **Open for Nitin:** as a notification, the body (which includes the `[employee_password]` token)
+  is stored in `mdl_notifications` until messaging cleanup removes it. The password is one-time
+  (`auth_forcepasswordchange` is set), but it is plaintext at rest. The alternative is
+  `email_to_user()` directly, like core's `setnew_password_and_mail()` which this replaced.
+- **TEST - `supervisor_scope_test::test_non_siteadmin_only_sees_own_tenant`**. The "tenant admin" was
+  a bare user with no role, so `search_supervisors` refused it at `require_capability(
+  'local/sentientia_users:view')` ("View user profiles" is that capability's string, not
+  `moodle/user:viewdetails`). The WS capability is right: the callers are tenant admins on the
+  edit-user form, who hold a manager-archetype role at system context (ADR-031), and the manager
+  archetype carries `:view`. The test now assigns the manager role, asserts the caller is not
+  cross-tenant, adds a ZEEA `/177` decoy, and asserts the exact set of `/1` ids returned (the old
+  per-row `startsWith('/1')` loop passed vacuously on an empty result and would accept `/177`).
+- **TEST - `signup_service_test::test_register_pins_to_configured_tenant_path`** read
+  `$user->open_costcenterid`, a column the production user table does not have. It now asserts
+  `tenant::root_for_user($user) === 77` from `open_path`. `signup_service` still passes
+  `open_costcenterid` to `user_create_user()`: `insert_record()` drops unknown columns, so on
+  production it is a no-op, and it matches `user_manager` / `hrms_importer`, which write the same
+  compatibility field for databases that carry the legacy BizLMS column. Left as is.
+- **ALREADY FIXED at d782a2d79 - `chip_filters_test`** passes `open_designation` (d58168132).
+- Tests written, not run (shared PHPUnit DB).

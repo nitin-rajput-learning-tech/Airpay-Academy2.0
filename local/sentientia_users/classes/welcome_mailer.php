@@ -100,7 +100,15 @@ TEMPLATE;
             // want HTML, they should send a Wave-3 PR adding format_html mode.
             $msg->fullmessagehtml   = nl2br(s($body));
             $msg->smallmessage      = $subject;
-            $msg->notification      = 0;  // direct user mail, not a notification
+            // Must be 1. message_send() treats notification=0 as a personal
+            // message between two users and refuses every provider except
+            // moodle/instantmessage (lib/messagelib.php: "Attempt to send msg
+            // from a provider ... that is inactive or not allowed"), returning
+            // false before any processor runs. With 0 this mailer never sent
+            // a single welcome email; with 1 it goes through the provider in
+            // db/messages.php and the email processor like every other
+            // Sentientia notification (2026-09-25).
+            $msg->notification      = 1;
 
             return (bool) message_send($msg);
         } catch (\Throwable $e) {

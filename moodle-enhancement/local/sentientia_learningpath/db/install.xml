@@ -96,8 +96,10 @@
                COMMENT="quiz_score|velocity|skills_gap|combined"/>
         <FIELD NAME="source_courseid" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="target_courseid" TYPE="int"  LENGTH="10" NOTNULL="false" DEFAULT="0"/>
-        <FIELD NAME="quiz_score"      TYPE="number" LENGTH="6" DECIMALS="0" NOTNULL="false"/>
-        <FIELD NAME="velocity_score"  TYPE="number" LENGTH="6" DECIMALS="0" NOTNULL="false"/>
+        <FIELD NAME="quiz_score"      TYPE="number" LENGTH="6" DECIMALS="2" NOTNULL="false"
+               COMMENT="Quiz percent 0-100, 2dp (was DECIMALS=0 until 2026092501, which rounded 72.5 to 73)"/>
+        <FIELD NAME="velocity_score"  TYPE="number" LENGTH="6" DECIMALS="2" NOTNULL="false"
+               COMMENT="Completion velocity index 0.0-2.0, 2dp (was DECIMALS=0 until 2026092501, which stored only 0, 1 or 2)"/>
         <FIELD NAME="skills_gap_json" TYPE="text" NOTNULL="false"/>
         <FIELD NAME="decision_notes"  TYPE="text" NOTNULL="false"/>
         <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>

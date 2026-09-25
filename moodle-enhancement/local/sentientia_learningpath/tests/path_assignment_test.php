@@ -30,6 +30,15 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class path_assignment_test extends \advanced_testcase {
 
+    // Vanilla PHPUnit sites lack the BizLMS user/course columns this plugin
+    // queries (open_path etc.) - provision them per-test via the shared trait.
+    use \local_sentientia_org\test\bizlms_fixture;
+
+    protected function setUp(): void {
+        parent::setUp();
+        $this->ensure_bizlms_schema();
+    }
+
     private function seed_path(string $name = 'Test Path'): int {
         global $DB;
         $now = time();
@@ -192,13 +201,16 @@ final class path_assignment_test extends \advanced_testcase {
         // Pass outsider id in the array — should be silently ignored.
         path_manager::reorder_courses($pid, [(int) $c_outsider->id, (int) $c2->id, (int) $c1->id]);
 
-        // c2 should now be at sortorder 1, c1 at 2 (the outsider shifted indexes).
+        // Sortorder is 0-based (assign_courses appends from COALESCE(MAX,-1)+1)
+        // and the ignored outsider does NOT consume an index — reorder skips it
+        // before incrementing, so a garbage id can't create a sortorder gap.
+        // c2 → 0, c1 → 1.
         $c2sort = (int) $DB->get_field('local_sentientia_learningpath_courses', 'sortorder',
             ['pathid' => $pid, 'courseid' => $c2->id]);
         $c1sort = (int) $DB->get_field('local_sentientia_learningpath_courses', 'sortorder',
             ['pathid' => $pid, 'courseid' => $c1->id]);
-        $this->assertSame(1, $c2sort);
-        $this->assertSame(2, $c1sort);
+        $this->assertSame(0, $c2sort);
+        $this->assertSame(1, $c1sort);
         // Outsider was not added.
         $this->assertFalse($DB->record_exists('local_sentientia_learningpath_courses',
             ['pathid' => $pid, 'courseid' => $c_outsider->id]));

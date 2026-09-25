@@ -188,3 +188,31 @@ Cross-tenant authority sweep (docs/audits/CROSS-TENANT-AUTHORITY-SWEEP-2026-09-2
 - **A tenant admin could not remove such a learner from their own path** (wave-1 deviation 7). `unenrol_user` now calls `path_manager::require_unenrol_target()`. That check passes for anyone already on the (in-tenant) roster, and otherwise keeps the `require_same_tenant_user()` refusal. UAT note: the Users tab no longer shows those learners to a tenant admin, so today the removal is reachable only through the web service; a site admin still sees and removes them.
 - Still open, and outside this plugin: `local_sentientia_request` request_manager and `local_sentientia_manager` approval_manager call `path_manager::enrol_users()` without checking the tenant of the target path, because the guards sit only at this plugin's own entry points.
 - No version bump (already 2026092500; no upgrade step). Tests: `tests/tenant_scope_test.php` adds two tests, for the roster, the export query and the legacy unenrol. Written, not run. Both trees.
+
+## 2026-09-25 - PHPUnit test debt: 3 pre-existing failures (1 code, 2 test)
+
+From the learningpath suite run against the older deployed copy (UAT serves this plugin from the ME tree).
+
+- **CODE - adaptive log scores rounded to whole numbers** (`adaptive_journey_test::
+  test_log_row_carries_correct_costcenterid`, 73.0 !== 72.5). `local_sentientia_lp_adaptive_log.
+  quiz_score` and `.velocity_score` were NUMBER(6) with 0 decimals in install.xml AND in the
+  2026061600 create-table step (no `setDecimals`). `quiz_signal_reader` rounds the percent to 2dp and
+  `velocity_calculator` returns 0.0-2.0, so a velocity of 0.85 or 1.35 was stored as 1. Both are now
+  NUMBER(6,2): install.xml (fresh install) and a new upgrade step 2026092501 that
+  `change_field_precision()`s both columns (guarded by table_exists / field_exists; neither column is
+  indexed). Fresh install and upgrade now end with the same columns. Existing rows keep their
+  rounded values. ME only: the top-level tree has no adaptive table. ME version 2026092501 / 1.8.2;
+  the top tree stays 2026092500 (no code change there; version.php was already baselined-different).
+- **TEST - `external/list_paths_test::test_json_filter_rejects_oversized_payload`** matched the
+  exception message against `/filterstoolong/`, but the message is the localised string ("Filter
+  payload too long."). It now catches the exception and asserts `$e->errorcode === 'filterstoolong'`,
+  as `local_sentientia_evaluation`'s list_evaluations_test does. Both trees.
+- **TEST - `path_assignment_test::test_reorder_courses_ignores_non_member_courses`** (0 !== 1).
+  `reorder_courses()` skips an id that is not on the path before incrementing, so sortorder stays
+  0-based and gap-free (c2 then 0, c1 then 1). The ME copy expected 1 and 2, as if the ignored outsider
+  took index 0. The top-level copy was already corrected on 2026-06-11 (35b9cca3c, which also adopted the
+  bizlms_fixture setUp); the ME copy is now that file, byte-identical, and
+  `CONTENT sentientia_learningpath/tests/path_assignment_test.php` has left
+  tools/tree-drift-baseline.txt. The `reorder_courses()` docblock says "set to its index in the
+  array", which is true only when every id is a member.
+- Tests written, not run (shared PHPUnit DB).
