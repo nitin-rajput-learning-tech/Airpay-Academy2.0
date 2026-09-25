@@ -48,6 +48,13 @@ final class token_vault_test extends \advanced_testcase {
     public function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);
+        // Same static-state trap as the HTTP handler below: feature_flags
+        // memoises override rows in a process-lifetime static that
+        // resetAfterTest() does not clear, so an OAuth flag switched ON by
+        // an earlier test (or test class) would still read ON here.
+        if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+            \local_sentientia_platform\feature_flags::invalidate_caches();
+        }
         $user = $this->getDataGenerator()->create_user();
         $this->userid = (int) $user->id;
     }
@@ -204,6 +211,8 @@ final class token_vault_test extends \advanced_testcase {
 
     public function test_build_authorize_url_blocked_when_flag_off(): void {
         // Default in db/feature_flags.php is OFF — no override set.
+        $this->assertFalse(oauth_base::is_flag_enabled(),
+            'Precondition: the OAuth flag must be at its default (OFF)');
         $this->expectException(\moodle_exception::class);
         $this->expectExceptionMessageMatches('/Calendar sync is not currently enabled|Phase 2/');
         m365_oauth::build_authorize_url($this->userid);
@@ -331,8 +340,8 @@ final class token_vault_test extends \advanced_testcase {
             'a', 'r', time() + 3600, 'openid');
 
         $contextlist = privacy\provider::get_contexts_for_userid($this->userid);
-        $contexts = iterator_to_array($contextlist->get_iterator());
-        $this->assertNotEmpty($contexts,
+        // contextlist is itself an \Iterator (no get_iterator()); read the ids.
+        $this->assertNotEmpty($contextlist->get_contextids(),
             'User with an OAuth row must surface a context');
         $found = false;
         foreach ($contextlist as $ctx) {

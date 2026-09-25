@@ -48,6 +48,13 @@ final class oauth_flow_test extends \advanced_testcase {
     public function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);
+        // feature_flags memoises every override row in a process-lifetime
+        // static. resetAfterTest() rolls the DB back but not that static, so
+        // the OAuth flag an earlier test switched ON would still read ON in
+        // the flag-OFF tests below. Start every test from the DB state.
+        if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+            \local_sentientia_platform\feature_flags::invalidate_caches();
+        }
         $this->userid = (int) $this->getDataGenerator()->create_user()->id;
     }
 
@@ -382,6 +389,8 @@ final class oauth_flow_test extends \advanced_testcase {
 
     public function test_callback_blocked_when_flag_off(): void {
         // Flag default OFF — handler must never fire.
+        $this->assertFalse(oauth_base::is_flag_enabled(),
+            'Precondition: the OAuth flag must be at its default (OFF)');
         oauth_base::set_http_handler_for_testing(function (): array {
             $this->fail('No HTTP may occur while the flag is OFF');
         });
@@ -393,6 +402,8 @@ final class oauth_flow_test extends \advanced_testcase {
     public function test_refresh_blocked_when_flag_off(): void {
         token_vault::store_tokens($this->userid, 1, 'm365',
             'a', 'r', time() - 5, 'openid');
+        $this->assertFalse(oauth_base::is_flag_enabled(),
+            'Precondition: the OAuth flag must be at its default (OFF)');
         oauth_base::set_http_handler_for_testing(function (): array {
             $this->fail('No HTTP may occur while the flag is OFF');
         });
@@ -407,10 +418,19 @@ final class oauth_flow_test extends \advanced_testcase {
         // skipped (no point hitting a provider for a disabled feature).
         token_vault::store_tokens($this->userid, 1, 'google',
             'a', 'r', time() + 3600, 'scope');
-        oauth_base::set_http_handler_for_testing(function (): array {
-            $this->fail('Provider revoke must be skipped while the flag is OFF');
+        $this->assertFalse(oauth_base::is_flag_enabled(),
+            'Precondition: the OAuth flag must be at its default (OFF)');
+        // revoke() swallows every Throwable from the provider call, so a
+        // $this->fail() inside the handler would be caught and the test
+        // would pass anyway. Record the call and assert on it afterwards.
+        $providercalled = false;
+        oauth_base::set_http_handler_for_testing(function () use (&$providercalled): array {
+            $providercalled = true;
+            return ['http_code' => 200, 'body' => ''];
         });
         $this->assertTrue(google_oauth::revoke($this->userid));
+        $this->assertFalse($providercalled,
+            'Provider revoke must be skipped while the flag is OFF');
         $this->assertNull(token_vault::get_tokens($this->userid, 'google'));
     }
 

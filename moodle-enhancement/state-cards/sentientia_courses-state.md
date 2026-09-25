@@ -430,3 +430,26 @@ in-tenant functions, so the manager defaults stay and the code scopes them.
 
 Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`). 1.11.8 / 2026092500 (no
 upgrade step; now depends on local_sentientia_platform 2026092500). Both trees.
+
+## 2026-09-25 - Test debt: enrol_deeplink_test brought up to the Phase F.5 modal
+
+`external/enrol_deeplink_test::test_enrol_link_present_for_capable_caller` still asserted the G-06
+(2026-05-07) new-tab deep-link (`target="_blank"`, `rel="noopener"`). Phase F.5 (2026-05-08,
+71f42bceb "native enrol modal (replaces deep-link)") replaced that link on purpose with the in-page
+modal: `data-action="enrol-users-modal"` is handled in `amd/src/course_actions.js` and opens
+`core_form/modalform` on `form\enrol_users_modal`, with `/enrol/users.php?id=` kept as the fallback
+href. The test was never updated. So the test was wrong, not the code.
+
+The test now isolates the enrol trigger anchor and checks that there is exactly one, that it has
+`data-courseid=<id>` and the `/enrol/users.php?id=<id>` fallback href, and that the modal form class
+exists. The old check searched the whole actions HTML for `id=<courseid>`, which the enrolled-users
+and share links also contain. The view-only test also asserts that the modal trigger is absent.
+Tests only: no class change, no version bump (still 2026092500). Both trees. Not re-run here (the
+shared PHPUnit DB was in use).
+
+Observation, not changed: `form\enrol_users_modal` and `enrol_csv_processor` enrol with
+`timestart = 0`. Completion deadlines (reminder task, overdue digest,
+`get_completion_deadline()`, and the calendar ICS feed) all require `ue.timestart > 0`, so learners
+enrolled through the modal or the CSV path never get a deadline. This needs a product decision
+before anyone changes it: the fix could stamp `time()` on enrol, or fall back to
+`ue.timecreated`. Either way, reminders would start firing for existing enrolments.
