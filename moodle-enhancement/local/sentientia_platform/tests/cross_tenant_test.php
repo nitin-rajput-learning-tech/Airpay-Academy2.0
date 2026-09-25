@@ -135,4 +135,77 @@ final class cross_tenant_test extends \advanced_testcase {
         $this->setUser($platform);
         $this->assertTrue(tenant::viewer_can_access(177));
     }
+
+    /**
+     * ADR-031 fix-forward (2026-09-25): viewer_can_access() compared roots
+     * only, so a non-cross-tenant viewer with no tenant (root 0) matched
+     * 0 === 0 and require_access() let them through on every global
+     * (costcenterid 0) resource - writes included. Such a viewer now gets
+     * nothing, on both the current-user and the explicit-viewer path.
+     */
+    public function test_a_viewer_with_no_tenant_is_refused_even_a_global_resource(): void {
+        global $DB;
+        $managerid = (int) $DB->get_field('role', 'id', ['shortname' => 'manager'], MUST_EXIST);
+        foreach (['', 'garbage', '/abc'] as $path) {
+            // A manager-archetype holder, as every tenant admin is: the capability says WHAT, not WHERE.
+            $nobody = $this->user_at($path);
+            role_assign($managerid, $nobody->id, \context_system::instance()->id);
+            accesslib_clear_all_caches_for_unit_testing();
+
+            $this->setUser($nobody);
+            foreach ([0, 1, 77, 177] as $resourcetenant) {
+                $this->assertFalse(tenant::viewer_can_access($resourcetenant),
+                    "open_path '{$path}' (current user) must not reach tenant {$resourcetenant}.");
+                $this->assertFalse(tenant::viewer_can_access($resourcetenant, (int) $nobody->id),
+                    "open_path '{$path}' (current user, id given) must not reach tenant {$resourcetenant}.");
+            }
+            try {
+                tenant::require_access(0);
+                $this->fail("require_access(0) must refuse open_path '{$path}'.");
+            } catch (\moodle_exception $e) {
+                $this->assertSame('error_outoftenant', $e->errorcode);
+            }
+
+            // The explicit-viewer (DB-loading) path, asked while somebody else is logged in.
+            $this->setAdminUser();
+            $this->assertFalse(tenant::viewer_can_access(0, (int) $nobody->id),
+                "open_path '{$path}' (explicit viewer) must not reach the global bucket.");
+            try {
+                tenant::require_access(0, (int) $nobody->id);
+                $this->fail("require_access(0, viewer) must refuse open_path '{$path}'.");
+            } catch (\moodle_exception $e) {
+                $this->assertSame('error_outoftenant', $e->errorcode);
+            }
+        }
+
+        // Nobody logged in, and a viewer id that does not exist.
+        $this->setUser(null);
+        $this->assertFalse(tenant::viewer_can_access(0));
+        $this->assertFalse(tenant::viewer_can_access(0, 999999));
+    }
+
+    public function test_tenant_users_and_cross_tenant_viewers_keep_their_access(): void {
+        // A tenant user: their own tenant yes; the global bucket and other tenants no (as before).
+        $tenantuser = $this->user_at('/1/2');
+        $this->setUser($tenantuser);
+        $this->assertTrue(tenant::viewer_can_access(1));
+        $this->assertFalse(tenant::viewer_can_access(0));
+        $this->assertFalse(tenant::viewer_can_access(177));
+        tenant::require_access(1);
+        $this->setAdminUser();
+        $this->assertTrue(tenant::viewer_can_access(1, (int) $tenantuser->id));
+        $this->assertFalse(tenant::viewer_can_access(0, (int) $tenantuser->id));
+
+        // Cross-tenant viewers pass everywhere, the global bucket included, even with no open_path.
+        $this->assertTrue(tenant::viewer_can_access(0));
+        $this->assertTrue(tenant::viewer_can_access(177));
+        $platform = $this->user_at('');
+        $this->grant($platform, tenant::CROSS_TENANT_CAPABILITY);
+        $this->assertTrue(tenant::viewer_can_access(0, (int) $platform->id));
+        $this->setUser($platform);
+        foreach ([0, 1, 77, 177] as $resourcetenant) {
+            $this->assertTrue(tenant::viewer_can_access($resourcetenant));
+        }
+        tenant::require_access(0);
+    }
 }

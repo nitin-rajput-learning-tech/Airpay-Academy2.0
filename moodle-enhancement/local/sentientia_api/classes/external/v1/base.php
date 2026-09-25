@@ -27,9 +27,16 @@ use local_sentientia_platform\tenant;
  *      the capability declared in db/services.php is enforced by core before
  *      execute() even runs).
  *   3. Rate limit    — per-user fixed-window budget, else 'ratelimited' (429).
- *   4. Tenant scope  — resolves the caller's tenant root from open_path and
- *      returns it so the endpoint scopes every query. Site admins get 0
- *      (all tenants), matching the platform tenant helper contract.
+ *   4. Tenant scope  — ADR-031: a caller who is not tenant::is_cross_tenant()
+ *      (site admin or local/sentientia_platform:crosstenant holder) must have
+ *      a resolvable tenant, else 'error_notenant'. Returns the caller's own
+ *      tenant root, for the request log. Endpoints scope their queries with
+ *      the platform helpers (path_filter / require_path_access /
+ *      require_same_tenant_user), which make the same cross-tenant decision -
+ *      never with this number alone and never with is_siteadmin(). Until
+ *      2026-09-25 this gate and the endpoints branched on is_siteadmin(), so
+ *      a non-admin :crosstenant holder was scoped here (narrower than
+ *      ADR-031, not a leak).
  *
  * The capability check itself is declared per-function in db/services.php
  * (local/sentientia_api:read|write) and enforced by Moodle's WS dispatcher.
@@ -47,7 +54,7 @@ abstract class base extends external_api {
      * @param string $capability Capability to require (read|write|manage)
      * @param bool   $write      Require the write sub-flag too
      * @param string $method     Logical method for the log row
-     * @return int Tenant root (0 = site admin / all tenants)
+     * @return int The caller's own tenant root (0 only for a cross-tenant caller with no open_path)
      * @throws \moodle_exception
      */
     protected static function open_v1(string $endpoint, string $capability,
@@ -79,9 +86,9 @@ abstract class base extends external_api {
             throw $e;
         }
 
-        // 4. Tenant scope.
+        // 4. Tenant scope (ADR-031: is_cross_tenant() decides, not is_siteadmin()).
         $tenantroot = tenant::root_for_current_user();
-        if (!is_siteadmin() && $tenantroot <= 0) {
+        if ($tenantroot <= 0 && !tenant::is_cross_tenant()) {
             self::safe_log($endpoint, $method, 403);
             throw new \moodle_exception('error_notenant', 'local_sentientia_api');
         }
@@ -92,7 +99,7 @@ abstract class base extends external_api {
 
     /**
      * Build the tenant WHERE-clause for a course query, scoping by the
-     * course's open_path. Site admins (root 0) get an unrestricted filter.
+     * course's open_path. Cross-tenant callers get an unrestricted filter.
      *
      * @param string $alias Course table alias
      * @return array{0:string,1:array}

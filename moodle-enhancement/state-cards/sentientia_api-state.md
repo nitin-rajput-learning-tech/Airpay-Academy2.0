@@ -4,11 +4,58 @@
 **Roadmap gap:** P2.3 — Public API + LTI (GAP-ANALYSIS-INVINCE-LXP-2026-06-16 §6)
 **Branch:** `claude/gap-api-lti`
 **Created:** 2026-06-16
-**Status:** 1.3.1 — ADR-031 tenant-scoped admin pages (2026-09-25). 1.3.0 — ADR-030 complete: Wave A outbound webhooks (2026-08-29), Wave B SCIM 2.0 Users (2026-08-29), Wave C SCIM Groups + attestation (2026-09-02); all feature-flagged OFF; full suite 60/60 on a fresh phpunit DB.
-**Version:** 2026092500 (1.3.1) - ADR-031 tenant scoping of the webhooks + SCIM admin pages (2026-09-25)
+**Status:** 1.3.2 — ADR-031 fix-forward: SCIM never touches cross-tenant principals, v1 scoping via is_cross_tenant(), create_enrolment target/role checks, LTI unique-registration match (2026-09-25). 1.3.1 — ADR-031 tenant-scoped admin pages (2026-09-25). 1.3.0 — ADR-030 complete: Wave A outbound webhooks (2026-08-29), Wave B SCIM 2.0 Users (2026-08-29), Wave C SCIM Groups + attestation (2026-09-02); all feature-flagged OFF; full suite 60/60 on a fresh phpunit DB.
+**Version:** 2026092501 (1.3.2) - ADR-031 fix-forward, review S1-S4 (2026-09-25)
 **Depends on:** `local_sentientia_platform` (feature_flags + tenant helpers)
 
 ---
+
+## 2026-09-25 - ADR-031 fix-forward: adversarial review S1-S4 + LTI (1.3.2, 2026092501)
+
+Wave-1 review of the integration group. Version bumped because `db/access.php` changed (comment
+only); there is no upgrade step.
+
+- **S1, SCIM account takeover (serious, latent).** A client with costcenterid N > 0 could PATCH
+  the email or userName of, suspend, or re-provision ANY live user under /N, including a site
+  admin or a `local/sentientia_platform:crosstenant` holder placed there (Airpay platform staff
+  are expected to sit under /1). A scoped `:scim_manage` holder could therefore mint a /N token,
+  re-email a platform admin, reset the password and take the account over. `scim\handler` now
+  keeps every cross-tenant principal out of a scoped client's reach, exactly like another
+  tenant's user: `tenant_where()` excludes `tenant::cross_tenant_userids()`, `find_user()`
+  re-checks `tenant::is_cross_tenant()` for the one target (404 on GET/PUT/PATCH/DELETE, 409 on a
+  re-provision by userName or externalId, 400 as a group member), and `group_resource::members()`
+  hides them. Site-level clients (costcenterid 0, creatable only by a cross-tenant caller) are
+  unchanged.
+- **Wording corrected.** The 2026092500 entry, the upgrade step and `db/access.php` described a
+  scoped `:scim_manage` holder as "confined to their tenant by admin_scope". That is true of the
+  tenant boundary only: admin_scope bounds which clients they manage, not what a token they mint
+  may do. Inside their tenant such a token can still create, rename, re-email, suspend and move
+  every ORDINARY account, peer tenant admins included. Grant `:scim_manage` only to someone
+  trusted with every account in that tenant (comments in access.php, upgrade.php, admin_scope.php).
+- **S2, v1 `create_enrolment`.** The target now goes through `tenant::require_same_tenant_user()`,
+  which refuses a target with no tenant. `require_path_access()` had let an empty or NULL
+  open_path through, so a scoped caller could enrol a no-tenant account (a site admin without an
+  open_path, say). A scoped caller is also refused an unscoped course. An explicit roleid must be
+  in `get_assignable_roles()` for the course (every caller except a site admin). A scoped caller
+  never gives a manager-archetype role, even as the site default. New string
+  `error_role_not_assignable` (en + hi). OpenAPI text updated.
+- **S3, v1 scoping.** `base::open_v1`, `create_enrolment`, `list_completions` and
+  `list_enrolments` branch on `tenant::is_cross_tenant()` (via `path_filter()` /
+  `require_same_tenant_user()`), not `is_siteadmin()`, so a non-admin `:crosstenant` holder is
+  unscoped as ADR-031 intends. The `email` column of `list_enrolments` stays site-admin only,
+  exactly as before: exposing it to `:crosstenant` holders is an open product decision.
+- **LTI (implementer note 3).** `registration::find()` and the no-client_id branch of
+  `lti/login.php` return a registration only when exactly one matches. With costcenterid 0 (the
+  normal pre-auth case) the lookup spans every tenant, and when two tenants had registered the
+  same issuer (+ client_id), `get_record()` bound the launch to whichever row came first. That
+  ambiguity now fails closed (`lti_no_registration`). A unique registration still resolves.
+- **Tests (`@group tenant_isolation`):** new `tests/scim_cross_tenant_principal_test.php` (GET,
+  list and filters, PATCH email/userName/active, PUT, DELETE, re-provision, group membership,
+  ordinary users and site-level clients unchanged, `cross_tenant_userids()` agreeing with
+  `is_cross_tenant()`); new `tests/external/v1_tenant_scope_test.php` (S2 + S3);
+  `tests/lti_registration_test.php` gains the ambiguity cases. Existing create_enrolment tests
+  still hold: their targets carry /1 or /77. PHPUnit NOT run (shared test DB). Run the
+  tenant_isolation group on a fresh init before merge.
 
 ## 2026-09-25 - ADR-031: webhooks + SCIM admin surfaces are tenant-bounded (1.3.1, 2026092500)
 

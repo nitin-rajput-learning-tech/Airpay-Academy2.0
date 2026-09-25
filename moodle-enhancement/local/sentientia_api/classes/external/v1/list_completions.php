@@ -39,7 +39,7 @@ class list_completions extends base {
         $params = self::validate_parameters(self::execute_parameters(),
             compact('courseid', 'page', 'perpage'));
 
-        $callerroot = self::open_v1('local_sentientia_api_v1_list_completions', 'local/sentientia_api:read');
+        self::open_v1('local_sentientia_api_v1_list_completions', 'local/sentientia_api:read');
 
         $page = max(0, $params['page']);
         $perpage = min(200, max(1, $params['perpage']));
@@ -48,19 +48,19 @@ class list_completions extends base {
             'id, open_path', MUST_EXIST);
         tenant::require_path_access((string) ($course->open_path ?? ''));
 
-        $userwhere = '';
-        $userargs = [];
-        if (!is_siteadmin() && $callerroot > 0) {
-            $userwhere = ' AND (u.open_path = :pexact OR ' . $DB->sql_like('u.open_path', ':pprefix') . ')';
-            $userargs = ['pexact' => '/' . $callerroot, 'pprefix' => '/' . $callerroot . '/%'];
-        }
+        // Completing users in the caller's tenant tree. ADR-031: the platform
+        // helper decides - '1=1' for a cross-tenant caller (site admin or
+        // :crosstenant holder), '/N' exact-or-descendant for everyone else, and
+        // '1=0' for a caller with no tenant (open_v1 has refused those already).
+        // Until 2026-09-25 this branched on is_siteadmin().
+        [$userwhere, $userargs] = tenant::path_filter('u', 'open_path');
 
         $sql = "SELECT cc.id, cc.userid, cc.timecompleted, u.firstname, u.lastname
                   FROM {course_completions} cc
                   JOIN {user} u ON u.id = cc.userid
                  WHERE cc.course = :cid
                    AND u.deleted = 0
-                   $userwhere
+                   AND $userwhere
               ORDER BY cc.timecompleted DESC, cc.id ASC";
         $args = array_merge(['cid' => $params['courseid']], $userargs);
 

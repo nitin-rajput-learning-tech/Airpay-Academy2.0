@@ -7,6 +7,7 @@ namespace local_sentientia_api\scim;
 defined('MOODLE_INTERNAL') || die();
 
 use local_sentientia_api\request_log;
+use local_sentientia_platform\tenant;
 use local_sentientia_users\user_manager;
 
 /**
@@ -22,6 +23,17 @@ use local_sentientia_users\user_manager;
  * scope is a 404 (existence is never leaked). All writes delegate to the
  * user_manager facade so events fire and the open_* field discipline holds.
  * DELETE is a soft deactivation (suspend + kill sessions), never a hard delete.
+ *
+ * ADR-031 (2026-09-25): a tenant-scoped client (costcenterid N > 0) never sees
+ * or changes a cross-tenant principal - a site admin or a holder of
+ * local/sentientia_platform:crosstenant - even one whose open_path sits under
+ * /N (Airpay platform staff are expected to sit under /1). Such a user is
+ * outside the client's scope exactly like another tenant's user: 404 on
+ * GET/PUT/PATCH/DELETE, absent from lists and filters, refused as a group
+ * member. Before this, a scoped :scim_manage holder could mint a /N token,
+ * PATCH a platform admin's email or username, reset the password through it
+ * and take the account over. Site-level clients (costcenterid 0, which only a
+ * cross-tenant caller can create) are unchanged.
  *
  * @package local_sentientia_api
  */
@@ -42,6 +54,9 @@ class handler {
     /** @var bool|null */
     private static ?bool $hasopenpath = null;
 
+    /** @var int[]|null Cross-tenant principals' ids, resolved once per handle() call (ADR-031). */
+    private ?array $crosstenantids = null;
+
     /**
      * @param string $baseurl Absolute URL of scim/v2.php (no trailing slash)
      */
@@ -61,6 +76,7 @@ class handler {
         $method = strtoupper($method);
         $path   = '/' . trim($path, '/');
         $tenant = 0;
+        $this->crosstenantids = null;   // Never reuse a previous request's set.
         try {
             $client = authenticator::authenticate($authheader);
             if (!$client) {
@@ -181,7 +197,7 @@ class handler {
         }
         switch ($method) {
             case 'GET':
-                return response::ok(200, group_resource::to_scim($org, $this->baseurl));
+                return response::ok(200, group_resource::to_scim($org, $this->baseurl, true, $this->hidden_ids($client)));
             case 'PATCH':
                 return $this->patch_group($client, $org, $this->json($rawbody));
             case 'PUT':
@@ -235,7 +251,7 @@ class handler {
                     mapper::externalid_for((int) $client->id, (int) $user->id), 'to ' . $rootpath);
             }
         }
-        return response::ok(200, group_resource::to_scim($org, $this->baseurl));
+        return response::ok(200, group_resource::to_scim($org, $this->baseurl, true, $this->hidden_ids($client)));
     }
 
     // ── Operations ──────────────────────────────────────────────────────
@@ -459,21 +475,45 @@ class handler {
     /**
      * Tenant WHERE fragment for the client's scope (no $USER involved).
      *
+     * A tenant-scoped client (costcenterid N > 0) sees the users under /N,
+     * MINUS every cross-tenant principal (ADR-031): a site admin or
+     * :crosstenant holder is never one of tenant N's users to provision, even
+     * when their own open_path sits under /N. A site-level client
+     * (costcenterid 0, creatable only by a cross-tenant caller) is unscoped,
+     * as before.
+     *
      * @param \stdClass $client
      * @param string    $alias
      * @return array{0:string,1:array}
      */
     private function tenant_where(\stdClass $client, string $alias): array {
+        global $DB;
         $root = (int) $client->costcenterid;
-        if ($root <= 0 || !self::has_open_path()) {
+        if ($root <= 0) {
             return ['1=1', []];
         }
-        $col = "$alias.open_path";
-        return ["($col = :tpe OR $col LIKE :tpp)", ['tpe' => '/' . $root, 'tpp' => '/' . $root . '/%']];
+        $where  = [];
+        $params = [];
+        if (self::has_open_path()) {
+            $col = "$alias.open_path";
+            $where[] = "($col = :tpe OR $col LIKE :tpp)";
+            $params  = ['tpe' => '/' . $root, 'tpp' => '/' . $root . '/%'];
+        }
+        $protected = $this->cross_tenant_ids();
+        if ($protected) {
+            [$insql, $inparams] = $DB->get_in_or_equal($protected, SQL_PARAMS_NAMED, 'scimxt', false);
+            $where[] = "$alias.id $insql";
+            $params += $inparams;
+        }
+        return [$where ? implode(' AND ', $where) : '1=1', $params];
     }
 
     /**
      * Fetch a live user inside the client's tenant scope, or null.
+     *
+     * Every per-user operation (GET, PUT, PATCH, DELETE, re-provision, group
+     * membership) resolves its target here, so a null is what keeps a scoped
+     * client off a user it may not touch.
      *
      * @param \stdClass $client
      * @param int       $id
@@ -488,7 +528,38 @@ class handler {
         $rec = $DB->get_record_sql(
             "SELECT u.* FROM {user} u WHERE u.id = :id AND u.deleted = 0 AND u.mnethostid = :mnet AND $tsql",
             ['id' => $id, 'mnet' => $CFG->mnet_localhost_id] + $tparams);
-        return $rec ?: null;
+        if (!$rec) {
+            return null;
+        }
+        // ADR-031, belt and braces: the SQL set above is the bulk form; this is
+        // the exact decision, asked for the one user about to be read or changed.
+        if ((int) $client->costcenterid > 0 && tenant::is_cross_tenant((int) $rec->id)) {
+            return null;
+        }
+        return $rec;
+    }
+
+    /**
+     * Users this client must never be shown: every cross-tenant principal for a
+     * tenant-scoped client, nobody for a site-level one (ADR-031).
+     *
+     * @param \stdClass $client
+     * @return int[]
+     */
+    private function hidden_ids(\stdClass $client): array {
+        return (int) $client->costcenterid > 0 ? $this->cross_tenant_ids() : [];
+    }
+
+    /**
+     * Cross-tenant principals' ids (ADR-031), resolved once per handle() call.
+     *
+     * @return int[]
+     */
+    private function cross_tenant_ids(): array {
+        if ($this->crosstenantids === null) {
+            $this->crosstenantids = tenant::cross_tenant_userids();
+        }
+        return $this->crosstenantids;
     }
 
     /**

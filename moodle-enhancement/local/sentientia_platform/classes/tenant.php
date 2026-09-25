@@ -76,6 +76,48 @@ class tenant {
     }
 
     /**
+     * ADR-031: the ids of every user is_cross_tenant() is true for.
+     *
+     * The bulk form of the same decision, for SQL that must EXCLUDE
+     * cross-tenant principals from what a scoped caller may see or change: a
+     * SCIM client provisioning its own tenant, or a tenant admin reading their
+     * tenant's audit trail. A site admin or :crosstenant holder whose own
+     * open_path happens to sit under /N is still not one of tenant N's users
+     * to manage. Calling is_cross_tenant() row by row would break counts and
+     * paging, hence a set.
+     *
+     * Contents: every id in $CFG->siteadmins (what is_siteadmin() reads), plus
+     * every user holding local/sentientia_platform:crosstenant at system
+     * context, with roles, overrides and prohibits resolved by core's
+     * get_users_by_capability(). The guest account is never included.
+     *
+     * A caller that then acts on ONE user should still ask is_cross_tenant()
+     * for that user: that is the exact decision, this is its bulk form.
+     *
+     * @return int[] unique, ascending (never empty on a site that has an admin)
+     */
+    public static function cross_tenant_userids(): array {
+        global $CFG;
+        $ids = [];
+        foreach (explode(',', (string) ($CFG->siteadmins ?? '')) as $id) {
+            if ((int) $id > 0) {
+                $ids[(int) $id] = true;
+            }
+        }
+        if (get_capability_info(self::CROSS_TENANT_CAPABILITY)) {
+            $holders = get_users_by_capability(\context_system::instance(),
+                self::CROSS_TENANT_CAPABILITY, 'u.id', 'u.id ASC');
+            foreach ($holders as $holder) {
+                $ids[(int) $holder->id] = true;
+            }
+        }
+        unset($ids[(int) ($CFG->siteguest ?? 0)]);
+        $ids = array_keys($ids);
+        sort($ids);
+        return $ids;
+    }
+
+    /**
      * ADR-031: the org path a user is scoped to - FAIL CLOSED.
      *
      *   ''    cross-tenant (see is_cross_tenant()): no restriction
@@ -160,7 +202,20 @@ class tenant {
      * Can the given viewer see/operate on resources of the given tenant?
      *
      * Cross-tenant users (site admins and :crosstenant holders, ADR-031) always pass.
-     * Other users: viewer's tenant root must match resource tenant exactly.
+     * Other users: the viewer's own tenant root must be a real tenant (> 0)
+     * AND match the resource tenant exactly.
+     *
+     * FAIL CLOSED (ADR-031 decision 4, 2026-09-25): a viewer who is not
+     * cross-tenant and whose own tenant does not resolve (root 0) is refused
+     * everything, including a global or unscoped resource (costcenterid 0).
+     * Until 2026-09-25 this compared roots only, so such a viewer matched
+     * 0 === 0 and passed require_access() on every costcenterid-0 row, writes
+     * included. Tenant users never matched a 0 row and still do not.
+     *
+     * A caller that must let tenant users READ global (costcenterid 0) rows
+     * decides that itself, before or instead of calling this - as
+     * local_sentientia_emails\tenant_scope::require_can_view_rule() does.
+     * This helper answers only "is this resource in the viewer's tenant?".
      *
      * Use this AFTER `require_capability()`. The capability check answers
      * "do they hold the right?", this answers "for the right tenant?".
@@ -171,14 +226,23 @@ class tenant {
      */
     public static function viewer_can_access(int $resource_tenant, ?int $viewerid = null): bool {
         global $DB, $USER;
-        if ($viewerid === null || $viewerid === $USER->id) {
-            if (self::is_cross_tenant()) return true;
-            return self::root_for_user($USER) === $resource_tenant;
+        if ($viewerid === null || $viewerid === (int) ($USER->id ?? 0)) {
+            if (self::is_cross_tenant()) {
+                return true;
+            }
+            $viewerroot = self::root_for_user($USER);
+        } else {
+            if (self::is_cross_tenant($viewerid)) {
+                return true;
+            }
+            $viewer = $DB->get_record('user', ['id' => $viewerid], 'id, open_path');
+            if (!$viewer) {
+                return false;
+            }
+            $viewerroot = self::root_for_user($viewer);
         }
-        if (self::is_cross_tenant($viewerid)) return true;
-        $viewer = $DB->get_record('user', ['id' => $viewerid], 'id, open_path');
-        if (!$viewer) return false;
-        return self::root_for_user($viewer) === $resource_tenant;
+        // ADR-031: no tenant of one's own means no tenant's resources - not every 0 row.
+        return $viewerroot > 0 && $viewerroot === $resource_tenant;
     }
 
     /**

@@ -33,8 +33,12 @@ $targetlinkuri  = required_param('target_link_uri', PARAM_URL);
 $clientid       = optional_param('client_id', '', PARAM_RAW_TRIMMED);
 
 // Resolve the tenant from the current session if any; LTI login is pre-auth,
-// so admins must scope registrations per tenant. We attempt a global match
-// (costcenterid 0 = any) and let registration::find narrow by client id.
+// so admins must scope registrations per tenant. With no tenant (costcenterid
+// 0: a browser not signed in here, or a user with no tenant) the registration
+// itself decides whose launch this is, and only when it is UNIQUE: both
+// registration::find() and the no-client_id branch below refuse an issuer
+// (+ client_id) that two tenants have registered, rather than bind the
+// launch to whichever row comes first (ADR-031, 2026-09-25).
 $costcenterid = 0;
 if (!empty($USER->id)) {
     $costcenterid = \local_sentientia_platform\tenant::root_for_current_user();

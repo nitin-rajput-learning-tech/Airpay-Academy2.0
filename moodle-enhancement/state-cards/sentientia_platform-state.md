@@ -310,3 +310,35 @@ archetype that every tenant admin holds at system context. `actions_by_user()` h
 - Tests: new `tests/audit_log_tenant_scope_test.php` (`@group tenant_isolation`); the
   `actions_by_user` unknown-user case in `audit_log_test.php` now runs as the site admin.
   PHPUnit NOT run (shared test DB); verified by reading. Both trees identical.
+
+## 2026-09-25 - ADR-031 fix-forward: viewer_can_access() fails closed; cross-tenant principals protected (no version bump)
+
+Wave-1 adversarial review of the integration group (S1, S4) plus one helper defect found alongside it.
+
+- **`tenant::viewer_can_access()` / `require_access()` fail closed.** They compared tenant roots
+  only, so a viewer who is not cross-tenant and whose own open_path does not resolve (root 0)
+  matched `0 === 0` and passed on every global / unscoped resource (costcenterid 0), writes
+  included. Now such a viewer is refused everything; cross-tenant viewers still pass
+  everywhere, and tenant users are unchanged (a 0 row never matched them). Callers checked in
+  `moodle-enhancement/local`, none of which loses an in-tenant or global-read function:
+  - `sentientia_emails\tenant_scope`: global rules are readable to everyone because
+    `require_can_view_rule()` returns before `require_access()`; global writes were already refused.
+  - `sentientia_courses\featured_manager`, `sentientia_proctoring\session_manager`,
+    `sentientia_cart::require_order_tenant()`, `sentientia_recompletion\rule_access` and
+    `skillsai/taxonomy.php` already refused a no-tenant caller before or instead of this helper.
+  - `sentientia_talent\talent_manager`, `sentientia_request::decide()` (override route),
+    `skillsai/review.php` and `sentientia_assistant` tool gate: only a no-tenant, non-cross-tenant
+    caller is affected, and they now get nothing, which is ADR-031 decision 4. The assistant's
+    tenant-neutral tools resolve 0 to the caller's own root, so tenant users are unchanged.
+- **New `tenant::cross_tenant_userids()`**: the bulk form of `is_cross_tenant()` (every
+  `$CFG->siteadmins` id plus every `:crosstenant` holder, prohibits resolved, never the guest), for
+  SQL that must exclude cross-tenant principals from what a scoped caller sees or changes. Used
+  by the SCIM handler (sentientia_api) and `audit_log::tenant_actions()`.
+- **`audit_log` (review S4).** `actions_by_user()` refuses a non-cross-tenant caller when the
+  target is a site admin or `:crosstenant` holder, even one whose open_path sits under the
+  caller's tenant. `tenant_actions()` keeps a cross-tenant actor's row for a scoped caller only
+  when its related user is in that tenant, so what platform staff did elsewhere no longer shows.
+- **Tests (`@group tenant_isolation`):** `cross_tenant_test.php` gains the no-tenant refusal on
+  both the current-user and the explicit-viewer path, and the unchanged tenant and cross-tenant
+  access; `audit_log_tenant_scope_test.php` gains the S4 cases. PHPUnit NOT run (shared test DB;
+  run the tenant_isolation group on a fresh init before merge). Both trees identical.

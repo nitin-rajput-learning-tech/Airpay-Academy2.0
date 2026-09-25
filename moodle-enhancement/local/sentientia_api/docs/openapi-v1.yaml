@@ -213,11 +213,14 @@ paths:
       description: >
         Capability local/sentientia_api:write AND feature flags
         sentientia.api.enabled + sentientia.api.write.enabled (both default OFF).
-        Both course and target user must be in the caller's tenant.
+        Both course and target user must be in the caller's tenant (a target or
+        course with no tenant is refused unless the caller is cross-tenant). A
+        non-zero roleid must be a role the caller could assign in the course;
+        a tenant-scoped caller can never give a manager-archetype role.
       parameters:
         - { name: courseid, in: query, required: true, schema: { type: integer } }
         - { name: userid,   in: query, required: true, schema: { type: integer } }
-        - { name: roleid,   in: query, schema: { type: integer, default: 0, description: 0 = course default student role } }
+        - { name: roleid,   in: query, schema: { type: integer, default: 0, description: 0 = course default student role; otherwise a role assignable by the caller in the course } }
       responses:
         '200':
           description: Enrolment result

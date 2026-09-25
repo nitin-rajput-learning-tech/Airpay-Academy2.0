@@ -80,26 +80,35 @@ class group_resource {
      * Direct members of an org (users placed exactly at its path).
      *
      * @param \stdClass $org
+     * @param int[]     $excludeids users never shown to this client - a tenant-scoped
+     *                              client passes every cross-tenant principal (ADR-031)
      * @return \stdClass[] id, firstname, lastname
      */
-    public static function members(\stdClass $org): array {
+    public static function members(\stdClass $org, array $excludeids = []): array {
         global $DB, $CFG;
         if (!handler::has_open_path() || (string) $org->path === '') {
             return [];
         }
+        $exsql = '';
+        $exparams = [];
+        if ($excludeids) {
+            [$insql, $exparams] = $DB->get_in_or_equal(array_map('intval', $excludeids), SQL_PARAMS_NAMED, 'gmx', false);
+            $exsql = " AND u.id $insql";
+        }
         return $DB->get_records_sql(
             "SELECT u.id, u.firstname, u.lastname FROM {user} u
-              WHERE u.deleted = 0 AND u.mnethostid = :mnet AND u.open_path = :p ORDER BY u.id ASC",
-            ['mnet' => $CFG->mnet_localhost_id, 'p' => (string) $org->path]);
+              WHERE u.deleted = 0 AND u.mnethostid = :mnet AND u.open_path = :p$exsql ORDER BY u.id ASC",
+            ['mnet' => $CFG->mnet_localhost_id, 'p' => (string) $org->path] + $exparams);
     }
 
     /**
      * @param \stdClass $org
      * @param string    $baseurl
      * @param bool      $withmembers
+     * @param int[]     $excludeids passed to members()
      * @return array
      */
-    public static function to_scim(\stdClass $org, string $baseurl, bool $withmembers = true): array {
+    public static function to_scim(\stdClass $org, string $baseurl, bool $withmembers = true, array $excludeids = []): array {
         $out = [
             'schemas'     => [response::SCHEMA_GROUP],
             'id'          => (string) $org->id,
@@ -117,7 +126,7 @@ class group_resource {
         }
         if ($withmembers) {
             $out['members'] = [];
-            foreach (self::members($org) as $m) {
+            foreach (self::members($org, $excludeids) as $m) {
                 $out['members'][] = [
                     'value'   => (string) $m->id,
                     'display' => trim($m->firstname . ' ' . $m->lastname),

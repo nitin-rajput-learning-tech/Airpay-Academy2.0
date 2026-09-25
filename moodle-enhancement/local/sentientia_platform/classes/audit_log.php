@@ -149,8 +149,16 @@ class audit_log {
      * moodle/site:viewreports AND the target in the caller's tenant, unless the
      * caller is cross-tenant. Until 2026-09-25 this method had no gate at all.
      *
+     * A cross-tenant principal (site admin or :crosstenant holder) is never a
+     * scoped caller's to read, even when their own open_path sits under the
+     * caller's tenant (Airpay platform staff are expected to sit under /1):
+     * their trail spans every tenant, and its courseid, relateduserid and
+     * contextinstanceid values name other tenants' users and courses
+     * (adversarial review S4, 2026-09-25).
+     *
      * @throws \required_capability_exception without viewreports
-     * @throws \moodle_exception error_outoftenant for a user outside the caller's tenant
+     * @throws \moodle_exception error_outoftenant for a user outside the caller's tenant,
+     *                           or for a cross-tenant principal
      */
     public static function actions_by_user(int $userid, int $from, int $to): array {
         global $DB, $USER;
@@ -158,6 +166,9 @@ class audit_log {
         if (!$self && !tenant::is_cross_tenant()) {
             require_capability('moodle/site:viewreports', \context_system::instance());
             tenant::require_same_tenant_user($userid);
+            if (tenant::is_cross_tenant($userid)) {
+                throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+            }
         }
         $rows = $DB->get_records_sql(
             "SELECT l.id, l.eventname, l.action, l.target,
@@ -181,16 +192,32 @@ class audit_log {
      * 2026-09-25 holding viewreports (manager archetype, so every tenant admin)
      * was enough to read any tenant's trail.
      *
+     * Rows are selected by the ACTOR's open_path. For a scoped caller, a row
+     * whose actor is a cross-tenant principal (site admin or :crosstenant
+     * holder sitting under this tenant) is kept only when its related user is
+     * in this tenant too: what platform staff did to this tenant's people
+     * stays visible, what they did elsewhere does not (adversarial review S4,
+     * 2026-09-25). Cross-tenant callers see every row, as before.
+     *
      * @throws \required_capability_exception without viewreports
      * @throws \moodle_exception error_outoftenant for another tenant, or a caller with none
      */
     public static function tenant_actions(int $tenantroot, int $from, int $to): array {
         global $DB;
+        $actorscope = '';
+        $actorparams = [];
         if (!tenant::is_cross_tenant()) {
             require_capability('moodle/site:viewreports', \context_system::instance());
             $viewerroot = tenant::root_for_current_user();
             if ($viewerroot <= 0 || $viewerroot !== $tenantroot) {
                 throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+            }
+            $crossids = tenant::cross_tenant_userids();
+            if ($crossids) {
+                [$xsql, $xparams] = $DB->get_in_or_equal($crossids, SQL_PARAMS_NAMED, 'tnxt', false);
+                [$rsql, $rparams] = tenant::path_descendant_filter('/' . $tenantroot, 'ru', 'open_path', 'tnrel');
+                $actorscope = " AND (l.userid $xsql OR $rsql)";
+                $actorparams = $xparams + $rparams;
             }
         }
         $tenant_path_exact  = '/' . $tenantroot;
@@ -201,12 +228,14 @@ class audit_log {
                     l.relateduserid, l.contextlevel
                FROM {logstore_standard_log} l
                JOIN {user} u ON u.id = l.userid
+          LEFT JOIN {user} ru ON ru.id = l.relateduserid
               WHERE l.timecreated BETWEEN :f AND :t
                 AND (u.open_path = :tn_exact OR u.open_path LIKE :tn_prefix)
+                    $actorscope
            ORDER BY l.timecreated DESC",
-            ['f' => $from, 't' => $to,
+            array_merge(['f' => $from, 't' => $to,
              'tn_exact' => $tenant_path_exact,
-             'tn_prefix' => $tenant_path_prefix],
+             'tn_prefix' => $tenant_path_prefix], $actorparams),
             0, 1000);
         return array_values($rows);
     }
