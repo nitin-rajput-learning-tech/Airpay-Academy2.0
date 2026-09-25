@@ -133,7 +133,7 @@ final class welcome_mailer_test extends \advanced_testcase {
             'local_sentientia_users');
 
         global $DB;
-        $u = $this->getDataGenerator()->create_user(['firstname' => 'Carol']);
+        $u = $this->getDataGenerator()->create_user(['firstname' => 'Carol', 'lastname' => 'Kaur']);
         $DB->set_field('user', 'open_path', '/77', ['id' => $u->id]);
 
         $sink = $this->email_sink();
@@ -143,7 +143,7 @@ final class welcome_mailer_test extends \advanced_testcase {
         $this->assertSame(1, count($mails));
         $this->assertStringContainsString('Public-tenant subject for Carol',
             $mails[0]->subject);
-        $this->assertStringContainsString('Public body — welcome Carol!',
+        $this->assertStringContainsString('Public body — welcome Carol Kaur!',
             $this->email_text($mails[0]));
         $sink->close();
     }

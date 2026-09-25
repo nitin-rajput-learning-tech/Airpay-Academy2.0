@@ -389,3 +389,6 @@ the side that was wrong; nothing a test proves was weakened.
 - Operational: the "send welcome email" checkbox defaults to ticked on the create-user form, so from
   this deploy a manually created user with a password gets a real email (it silently failed since
   2026-05-16). UAT testers should use addresses they own.
+- 2026-09-25 (PHPUnit run): `test_send_uses_tenant_override_when_user_in_tenant` expected
+  "welcome Carol!" but [employee_name] is first + last name and the generator gives "Lastname1";
+  the test now names Carol Kaur. It never ran green before tonight because the mail never sent.
