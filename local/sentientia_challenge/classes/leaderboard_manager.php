@@ -159,9 +159,16 @@ class leaderboard_manager {
             "SELECT COUNT(*) FROM {local_sentientia_challenge_leaderboard} l WHERE $wheresql",
             $params);
 
+        // Select every name field core's fullname() reads (phonetic, middle,
+        // alternate as well as first/last). With only first+last it dropped
+        // the site's configured name format and raised a developer-mode
+        // debugging() "name fields are missing" on every row (2026-09-25).
+        // u.email was selected but never used, so it is no longer read.
+        $namefields = \core_user\fields::for_name()->get_sql('u', false, '', '', false)->selects;
+
         $rows = $DB->get_records_sql("
             SELECT l.id, l.userid, l.points, l.userrank, l.attemptscompleted,
-                   u.firstname, u.lastname, u.email
+                   $namefields
               FROM {local_sentientia_challenge_leaderboard} l
               JOIN {user} u ON u.id = l.userid
              WHERE $wheresql
@@ -173,7 +180,7 @@ class leaderboard_manager {
             $out[] = [
                 'rank'              => (int) $r->userrank,
                 'userid'            => (int) $r->userid,
-                'fullname'          => fullname((object) ['firstname' => $r->firstname, 'lastname' => $r->lastname]),
+                'fullname'          => fullname($r),
                 'points'            => (int) $r->points,
                 'attemptscompleted' => (int) $r->attemptscompleted,
             ];
