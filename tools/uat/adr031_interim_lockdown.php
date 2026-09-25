@@ -118,9 +118,23 @@ if ($mode === 'release' || $mode === 'release-preview') {
     if ($archetype === '') {
         cli_writeln("WARNING: role {$role->shortname} has no archetype; every saved ALLOW is treated as a manual grant and restored.");
     }
-    $restored = $cleared = 0;
+    // Grants ADR-031 keeps for the tenant-admin role although no archetype
+    // carries them (they come from the plugin's db/install.php).
+    $installkept = ['local/sentientia_recompletion:manage', 'local/sentientia_recompletion:view'];
+    $restored = $cleared = $left = 0;
     foreach ($saved as $cap => $previous) {
-        $stillallowed = $archetype === '' || (isset($defaults[$cap]) && (int) $defaults[$cap] === CAP_ALLOW);
+        // Only undo our own PROHIBIT. If the upgrade rewrote or removed the
+        // row (an ADR-031 grant or revoke step), its value wins.
+        $current = $DB->get_field('role_capabilities', 'permission',
+            ['roleid' => $role->id, 'contextid' => $sys->id, 'capability' => $cap]);
+        if ($current === false || (int) $current !== CAP_PROHIBIT) {
+            cli_writeln(sprintf('%-48s left as the upgrade set it (%s)', $cap,
+                $current === false ? 'no row' : 'now ' . $current));
+            $left++;
+            continue;
+        }
+        $stillallowed = $archetype === '' || in_array($cap, $installkept, true)
+            || (isset($defaults[$cap]) && (int) $defaults[$cap] === CAP_ALLOW);
         if ($previous === null || ((int) $previous === CAP_ALLOW && !$stillallowed)) {
             $why = $previous === null ? 'was inherit' : 'no longer an archetype default (ADR-031), not restored';
             cli_writeln(sprintf('%-48s clear (%s)', $cap, $why));
@@ -139,9 +153,9 @@ if ($mode === 'release' || $mode === 'release-preview') {
     if ($mode === 'release') {
         $sys->mark_dirty();
         rename($statefile, $statefile . '.released-' . date('Ymd-His'));
-        cli_writeln("Released the lockdown for role {$role->shortname}: {$restored} restored, {$cleared} cleared.");
+        cli_writeln("Released the lockdown for role {$role->shortname}: {$restored} restored, {$cleared} cleared, {$left} left as the upgrade set them.");
     } else {
-        cli_writeln("PREVIEW: {$restored} would be restored, {$cleared} cleared. Nothing changed.");
+        cli_writeln("PREVIEW: {$restored} would be restored, {$cleared} cleared, {$left} left as the upgrade set them. Nothing changed.");
     }
     exit(0);
 }

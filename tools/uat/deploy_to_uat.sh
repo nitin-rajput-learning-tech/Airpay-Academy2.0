@@ -140,7 +140,15 @@ ssh -o BatchMode=yes "$SSH_HOST" "set -e
 
 # ── remote: upgrade (version bumps) + purge ──────────────────────────────────
 if [ "$DO_UPGRADE" = 1 ]; then
-    ssh -o BatchMode=yes "$SSH_HOST" "sudo -u www-data php '$DIRROOT/admin/cli/upgrade.php' --non-interactive 2>&1 | tail -6"
+    # pipefail on the REMOTE side too: without it the exit status is tail's
+    # (always 0), so a failed upgrade used to print a green check with the
+    # error cut off. The full log stays on the box.
+    if ! ssh -o BatchMode=yes "$SSH_HOST" "set -o pipefail; sudo -u www-data php '$DIRROOT/admin/cli/upgrade.php' --non-interactive 2>&1 | tee /tmp/uat-upgrade-$TS.log | tail -40"; then
+        echo "" >&2
+        echo "❌ UPGRADE FAILED - full log on the box: /tmp/uat-upgrade-$TS.log" >&2
+        echo "   Files are deployed; restore from /tmp/uat-predeploy-backup-$TS.tgz if needed. Caches NOT purged." >&2
+        exit 4
+    fi
 fi
 ssh -o BatchMode=yes "$SSH_HOST" "sudo -u www-data php '$DIRROOT/admin/cli/purge_caches.php'"
 
