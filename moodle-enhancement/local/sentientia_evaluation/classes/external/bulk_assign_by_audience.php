@@ -44,6 +44,10 @@ class bulk_assign_by_audience extends external_api {
         self::validate_context($context);
         require_capability('local/sentientia_evaluation:manage', $context);
         require_sesskey();
+        // ADR-031: only into an evaluation in the caller's tenant (the
+        // audience itself is tenant-scoped by evaluation_audience_assigner).
+        \local_sentientia_evaluation\evaluation_manager::require_evaluation_access_by_id(
+            (int) $params['evaluationid']);
 
         $map = self::parse_filters($params['filters']);
 

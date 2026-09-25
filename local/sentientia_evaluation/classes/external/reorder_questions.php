@@ -30,6 +30,10 @@ class reorder_questions extends external_api {
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/sentientia_evaluation:manage', $context);
+        // ADR-031: only an evaluation in the caller's tenant (reorder_questions
+        // already ignores ids that are not this evaluation's questions).
+        \local_sentientia_evaluation\evaluation_manager::require_evaluation_access_by_id(
+            (int) $params['evaluationid']);
 
         $success = \local_sentientia_evaluation\evaluation_manager::reorder_questions(
             $params['evaluationid'], $params['questionids']);

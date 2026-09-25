@@ -101,5 +101,23 @@ function xmldb_local_sentientia_skills_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026061700, 'local', 'sentientia_skills');
     }
 
+    // 2026092500 - ADR-031: take :manage back from every role.
+    // :manage no longer defaults to the manager archetype (db/access.php):
+    // the catalogue it edits is shared by every tenant, and tenant admins hold
+    // manager-archetype roles. Changing archetypes never revokes what was
+    // already granted, so every existing grant would stay a cross-tenant
+    // write. Revoke them all; site admins are unaffected. A platform role that
+    // should curate the framework is granted it again deliberately.
+    if ($oldversion < 2026092500) {
+        $syscontext = \context_system::instance();
+        $roleids = $DB->get_fieldset_select('role_capabilities', 'DISTINCT roleid',
+            'capability = :cap', ['cap' => 'local/sentientia_skills:manage']);
+        foreach ($roleids as $roleid) {
+            unassign_capability('local/sentientia_skills:manage', (int) $roleid, $syscontext->id);
+        }
+        $syscontext->mark_dirty();
+        upgrade_plugin_savepoint(true, 2026092500, 'local', 'sentientia_skills');
+    }
+
     return true;
 }

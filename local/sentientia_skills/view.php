@@ -39,15 +39,30 @@ $PAGE->set_title('Skill: ' . format_string($skill->name));
 $PAGE->set_heading('Skill: ' . format_string($skill->name));
 require_capability('local/sentientia_skills:view', $ctx);
 
+// ADR-031: :view says WHAT, not WHERE. The skill itself is catalogue-wide,
+// but its learners and courses belong to tenants: a scoped viewer sees only
+// their own tenant's (plus legacy courses with no open_path, which every
+// tenant's course list shows), and a viewer with no tenant sees none. The
+// learners tab used to list up to 200 names + emails from every tenant to
+// every holder of :view - including the student archetype.
+[$csql, $cargs] = \local_sentientia_platform\tenant::path_filter('c', 'open_path', true);
+if (!\local_sentientia_platform\tenant::is_cross_tenant()
+        && \local_sentientia_platform\tenant::scope_path() !== null) {
+    $csql = "({$csql} OR c.open_path = '')";
+}
+
 // Counts for tab badges.
 $count_levels = (int) $DB->count_records('local_sentientia_skill_levels',
     ['skillid' => $skill->id]);
 $count_designations = (int) $DB->count_records('local_sentientia_role_skills',
     ['skillid' => $skill->id]);
-$count_courses = (int) $DB->count_records('local_sentientia_course_skills',
-    ['skillid' => $skill->id]);
-$count_learners = (int) $DB->count_records('local_sentientia_user_skills',
-    ['skillid' => $skill->id]);
+$count_courses = (int) $DB->count_records_sql(
+    "SELECT COUNT(cs.id)
+       FROM {local_sentientia_course_skills} cs
+       JOIN {course} c ON c.id = cs.courseid
+      WHERE cs.skillid = :sid AND {$csql}",
+    ['sid' => $skill->id] + $cargs);
+$count_learners = \local_sentientia_skills\skills_manager::count_skill_learners((int) $skill->id);
 
 // Per-tab data.
 $tab_data = [];
@@ -85,8 +100,8 @@ switch ($tab) {
             "SELECT cs.id, c.id AS courseid, c.fullname, c.shortname, c.visible
                FROM {local_sentientia_course_skills} cs
                JOIN {course} c ON c.id = cs.courseid
-              WHERE cs.skillid = :sid
-              ORDER BY c.fullname ASC", ['sid' => $skill->id]);
+              WHERE cs.skillid = :sid AND {$csql}
+              ORDER BY c.fullname ASC", ['sid' => $skill->id] + $cargs);
         $tab_data['courses'] = array_values(array_map(fn($r) => [
             'courseid'  => (int) $r->courseid,
             'fullname'  => format_string($r->fullname),
@@ -100,15 +115,7 @@ switch ($tab) {
         break;
 
     case 'learners':
-        $records = $DB->get_records_sql(
-            "SELECT us.id, us.userid, us.current_level, us.timemodified,
-                    u.firstname, u.lastname, u.email
-               FROM {local_sentientia_user_skills} us
-               JOIN {user} u ON u.id = us.userid
-              WHERE us.skillid = :sid
-                AND u.deleted = 0
-              ORDER BY u.lastname ASC, u.firstname ASC
-              LIMIT 200", ['sid' => $skill->id]);
+        $records = \local_sentientia_skills\skills_manager::skill_learners((int) $skill->id, 200);
         $tab_data['learners'] = array_values(array_map(fn($r) => [
             'userid'        => (int) $r->userid,
             'fullname'      => trim($r->firstname . ' ' . $r->lastname),

@@ -28,8 +28,10 @@ $dbman = $DB->get_manager();
 $total  = 0;
 $active = 0;
 if ($dbman->table_exists('local_sentientia_exams')) {
-    $total  = (int) $DB->count_records('local_sentientia_exams');
-    $active = (int) $DB->count_records('local_sentientia_exams', ['status' => 1]);
+    // ADR-031: the tiles count only what list_exams would show this caller.
+    $total  = \local_sentientia_exams\exam_manager::count_scoped();
+    $active = \local_sentientia_exams\exam_manager::count_scoped(
+        \local_sentientia_exams\exam_manager::STATUS_ACTIVE);
 }
 
 $columns = [

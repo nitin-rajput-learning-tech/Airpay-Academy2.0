@@ -15,7 +15,8 @@
  *                mappings. Manager-level curation of the canonical model.
  *   viewgaps   — view skills-gap feeds. Managers + reporting roles.
  *   manage_all — see + review every job/candidate across all owners and
- *                tenants. Manager only.
+ *                tenants. No default (ADR-031): only a cross-tenant caller
+ *                is unscoped by it.
  *
  * @package local_sentientia_skillsai
  */
@@ -60,11 +61,18 @@ $capabilities = [
         ],
     ],
 
+    // ADR-031 (2026-09-25): no archetype default. :manage_all existed only
+    // to reach across owners AND tenants, and tenant admins hold
+    // manager-archetype roles, so the old manager default gave every one of
+    // them every tenant's extraction jobs, review queue, taxonomy and
+    // per-user gap feeds. It now unscopes only a cross-tenant caller
+    // (taxonomy_manager::can_manage_all()); site admins keep it. Existing
+    // grants are revoked by db/upgrade.php step 2026092500, because
+    // changing archetypes never revokes.
     'local/sentientia_skillsai:manage_all' => [
+        'riskbitmask'  => RISK_PERSONAL | RISK_DATALOSS,
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes'   => [
-            'manager' => CAP_ALLOW,
-        ],
+        'archetypes'   => [],
     ],
 ];

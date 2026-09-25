@@ -27,7 +27,8 @@ class flag_session extends external_api {
         $s = $DB->get_record('local_sentientia_proctor_sessions',
             ['id' => $params['sessionid']], '*', MUST_EXIST);
         // ── B2 fix: tenant equality before flagging ─────────────────────
-        \local_sentientia_platform\tenant::require_access((int) $s->costcenterid);
+        // ADR-031: and a reviewer with no tenant flags nothing.
+        \local_sentientia_proctoring\session_manager::require_session_access((int) $s->costcenterid);
 
         $s->status = 'flagged';
         $s->timemodified = time();

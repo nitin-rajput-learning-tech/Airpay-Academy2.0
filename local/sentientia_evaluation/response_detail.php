@@ -29,6 +29,10 @@ $PAGE->set_pagelayout('admin');
 $PAGE->set_title('Response detail');
 $PAGE->set_heading('Response detail — ' . format_string($evaluation->name));
 require_capability('local/sentientia_evaluation:view', $ctx);
+// ADR-031: one respondent's answers only for an evaluation in the caller's
+// tenant (in place before this page is ever re-enabled - :view is not
+// declared, so today it is dead for everyone).
+\local_sentientia_evaluation\evaluation_manager::require_evaluation_access($evaluation);
 
 // Anonymous check — if evaluation is anonymous, don't reveal userid.
 $is_anonymous_eval = (int) ($evaluation->anonymous ?? 0) === 1;

@@ -41,8 +41,13 @@ $PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('gaps_page_title', 'local_sentientia_skillsai'));
 $PAGE->set_heading(get_string('gaps_page_heading', 'local_sentientia_skillsai'));
 
-$manageall = has_capability('local/sentientia_skillsai:manage_all', $context);
-$tenantroot = gap_engine::tenant_root_for($USER);
+// ADR-031: :manage_all unscopes only a cross-tenant caller (it used to
+// default to every tenant admin and open every tenant's per-user feeds and
+// summary). Everyone else is confined to their own tenant, resolved with the
+// platform helper (ctype_digit-checked), and a viewer with no tenant sees
+// and rebuilds nothing.
+$manageall = \local_sentientia_skillsai\taxonomy_manager::can_manage_all();
+$tenantroot = \local_sentientia_platform\tenant::root_for_user($USER);
 
 // ── POST: rebuild ───────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -50,10 +55,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = optional_param('action', '', PARAM_ALPHA);
     if ($action === 'rebuilduser') {
         $rbuser = required_param('rbuserid', PARAM_INT);
-        // Tenant access guard before touching another user's feed.
-        if (!$manageall && class_exists('\\local_sentientia_platform\\tenant')) {
-            $target = $DB->get_record('user', ['id' => $rbuser], 'id, open_path', MUST_EXIST);
-            \local_sentientia_platform\tenant::require_access(gap_engine::tenant_root_for($target));
+        // Tenant access guard before touching another user's feed (fails
+        // closed for a viewer or target with no tenant).
+        if (!$manageall) {
+            \local_sentientia_platform\tenant::require_same_tenant_user($rbuser);
         }
         $n = gap_engine::rebuild_for_user($rbuser);
         redirect(new moodle_url('/local/sentientia_skillsai/gaps.php', ['userid' => $rbuser]),
@@ -66,10 +71,9 @@ echo $OUTPUT->header();
 
 // Per-user feed.
 if ($userid > 0) {
-    // Tenant access guard.
-    if (!$manageall && class_exists('\\local_sentientia_platform\\tenant')) {
-        $target = $DB->get_record('user', ['id' => $userid], 'id, open_path', MUST_EXIST);
-        \local_sentientia_platform\tenant::require_access(gap_engine::tenant_root_for($target));
+    // Tenant access guard (fails closed for a viewer or target with no tenant).
+    if (!$manageall) {
+        \local_sentientia_platform\tenant::require_same_tenant_user($userid);
     }
     $targetuser = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
     echo $OUTPUT->heading(get_string('gaps_user_heading', 'local_sentientia_skillsai',
@@ -121,8 +125,10 @@ if ($userid > 0) {
 echo $OUTPUT->heading(get_string('gaps_summary_heading', 'local_sentientia_skillsai'));
 echo html_writer::div(get_string('gaps_summary_intro', 'local_sentientia_skillsai'), 'mb-3 text-muted');
 
-// Site admins (manage_all) see all tenants; others see their own.
-$summary = gap_engine::tenant_summary($manageall ? 0 : $tenantroot, 200);
+// Cross-tenant :manage_all holders see every tenant (null); others their own
+// tenant; a viewer with no tenant (root 0) gets an empty summary - 0 used to
+// mean "every tenant" here.
+$summary = gap_engine::tenant_summary($manageall ? null : $tenantroot, 200);
 
 if (empty($summary)) {
     echo html_writer::div(get_string('gaps_summary_none', 'local_sentientia_skillsai'),

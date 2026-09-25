@@ -50,6 +50,253 @@ class evaluation_manager {
         return $DB->get_record(self::TABLE, ['id' => $id]);
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // ADR-031 tenant scope (2026-09-25)
+    //
+    // :manage says WHAT a caller may do, never WHERE. Every holder is a
+    // tenant admin (a manager-archetype role at system context) unless
+    // tenant::is_cross_tenant() says otherwise. Until 2026-09-25 any holder
+    // could read any tenant's respondents, answers and aggregates by id,
+    // delete or re-scope any tenant's evaluation, and create a "global"
+    // (costcenterid 0) evaluation that evaluation_engine sends to every
+    // tenant's learners - then export their answers.
+    //
+    // Deliberately NOT inside create()/update()/delete(): the CLI smoke
+    // scripts drive those without a session user. Every web entry point
+    // (pages, web services, dynamic forms) calls the gates below.
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * ADR-031: may the current user manage (read results of, edit, delete)
+     * this evaluation?
+     *
+     * Cross-tenant callers always may. Anyone else only when the evaluation
+     * is bound to an org inside their own tenant. A global evaluation
+     * (costcenterid 0 - evaluation_engine matches it to every user in every
+     * tenant) or one with no open_path cannot be shown to be in anyone's
+     * tenant, so it is left to cross-tenant callers.
+     *
+     * @param \stdClass $evaluation record carrying costcenterid and open_path
+     * @return bool
+     */
+    public static function can_manage_evaluation(\stdClass $evaluation): bool {
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return true;
+        }
+        $path = rtrim(trim((string) ($evaluation->open_path ?? '')), '/');
+        if ((int) ($evaluation->costcenterid ?? 0) === 0 || $path === '') {
+            return false;
+        }
+        return self::path_in_root($path, \local_sentientia_platform\tenant::root_for_current_user());
+    }
+
+    /**
+     * ADR-031: refuse unless can_manage_evaluation().
+     *
+     * @param \stdClass $evaluation
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_evaluation_access(\stdClass $evaluation): void {
+        if (!self::can_manage_evaluation($evaluation)) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+    }
+
+    /**
+     * ADR-031: load an evaluation by id and refuse unless can_manage_evaluation().
+     *
+     * @param int $evaluationid
+     * @return \stdClass the evaluation record
+     * @throws \moodle_exception invalidevaluation / error_outoftenant
+     */
+    public static function require_evaluation_access_by_id(int $evaluationid): \stdClass {
+        $evaluation = self::get($evaluationid);
+        if (!$evaluation) {
+            throw new \moodle_exception('invalidevaluation', 'local_sentientia_evaluation');
+        }
+        self::require_evaluation_access($evaluation);
+        return $evaluation;
+    }
+
+    /**
+     * ADR-031: resolve a question to its evaluation and refuse unless the
+     * caller may manage that evaluation.
+     *
+     * @param int $questionid
+     * @return \stdClass the question record
+     * @throws \moodle_exception invalidquestion / error_outoftenant
+     */
+    public static function require_question_access(int $questionid): \stdClass {
+        $question = self::get_question($questionid);
+        if (!$question) {
+            throw new \moodle_exception('invalidquestion', 'local_sentientia_evaluation');
+        }
+        self::require_evaluation_access_by_id((int) $question->evaluationid);
+        return $question;
+    }
+
+    /**
+     * ADR-031: may this user RESPOND to this evaluation?
+     *
+     * A global evaluation (costcenterid 0) is sent to everyone, so anyone may
+     * answer it. A tenant-bound one only by a user of that tenant: a learner
+     * could otherwise post answers into (and trigger admin notifications on)
+     * another tenant's evaluation by id. Cross-tenant users always may.
+     *
+     * @param \stdClass $evaluation
+     * @param \stdClass $user carrying id and open_path
+     * @return bool
+     */
+    public static function can_respond(\stdClass $evaluation, \stdClass $user): bool {
+        if ((int) ($evaluation->costcenterid ?? 0) === 0
+                || \local_sentientia_platform\tenant::is_cross_tenant((int) ($user->id ?? 0))) {
+            return true;
+        }
+        $path = rtrim(trim((string) ($evaluation->open_path ?? '')), '/');
+        if ($path === '') {
+            // Tenant-bound but pathless: evaluation_engine treats it as '/<costcenterid>'.
+            $path = '/' . (int) $evaluation->costcenterid;
+        }
+        $evaluationroot = (int) (explode('/', trim($path, '/'))[0] ?? 0);
+        $userroot = \local_sentientia_platform\tenant::root_for_user($user);
+        return $userroot > 0 && $evaluationroot === $userroot;
+    }
+
+    /**
+     * ADR-031: the costcenterid (org id) a create/update/import may write.
+     *
+     * Cross-tenant callers keep the old behaviour, including 0 = a global
+     * evaluation. A scoped caller may only pick an org inside their own
+     * tenant, and 0 gives them their own tenant root org instead of a global
+     * evaluation delivered to every tenant. A scoped caller with no tenant,
+     * or whose tenant has no org row, writes nothing.
+     *
+     * @param int $orgid local_sentientia_org.id, or 0
+     * @return int
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function scoped_costcenterid(int $orgid): int {
+        global $DB;
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return $orgid;
+        }
+        $root = \local_sentientia_platform\tenant::root_for_current_user();
+        if ($root <= 0) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        if ($orgid <= 0) {
+            $rows = $DB->get_records('local_sentientia_org', ['path' => '/' . $root],
+                'depth ASC, id ASC', 'id, path', 0, 1);
+            $org = reset($rows);
+            if (!$org) {
+                throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+            }
+            return (int) $org->id;
+        }
+        $org = $DB->get_record('local_sentientia_org', ['id' => $orgid], 'id, path');
+        $path = $org ? rtrim(trim((string) $org->path), '/') : '';
+        if (!self::path_in_root($path, $root)) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        return $orgid;
+    }
+
+    /**
+     * ADR-031: org options for the evaluation form. Cross-tenant callers get
+     * every org plus "No specific organisation" (a global evaluation);
+     * anyone else only their own tenant's orgs (none without a tenant).
+     *
+     * @return array<int, string> org id => indented name
+     */
+    public static function org_options(): array {
+        global $DB;
+        $options = [];
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            $options[0] = '— No specific organisation —';
+            $orgs = $DB->get_records('local_sentientia_org', ['visible' => 1],
+                'depth ASC, fullname ASC', 'id, fullname, depth');
+        } else {
+            [$tsql, $targs] = \local_sentientia_platform\tenant::path_filter('', 'path');
+            $orgs = $DB->get_records_select('local_sentientia_org', "visible = 1 AND {$tsql}",
+                $targs, 'depth ASC, fullname ASC', 'id, fullname, depth');
+        }
+        foreach ($orgs as $o) {
+            $indent = str_repeat('— ', max(0, (int) $o->depth - 1));
+            $options[(int) $o->id] = $indent . format_string($o->fullname);
+        }
+        return $options;
+    }
+
+    /**
+     * ADR-031: evaluation count for the index KPI tiles, scoped like
+     * list_evaluations (the tiles used to count every tenant's forms).
+     *
+     * @param int|null $status STATUS_* filter, or null for all
+     * @return int
+     */
+    public static function count_evaluations_scoped(?int $status = null): int {
+        global $DB;
+        if (!$DB->get_manager()->table_exists(self::TABLE)) {
+            return 0;
+        }
+        [$tsql, $params] = self::scope_sql('e');
+        $where = $tsql;
+        if ($status !== null) {
+            $where .= ' AND e.status = :evstatus';
+            $params['evstatus'] = $status;
+        }
+        return (int) $DB->count_records_sql(
+            "SELECT COUNT(1) FROM {" . self::TABLE . "} e WHERE {$where}", $params);
+    }
+
+    /**
+     * ADR-031: response count for the index KPI tile, over the evaluations
+     * the caller may see.
+     *
+     * @return int
+     */
+    public static function count_responses_scoped(): int {
+        global $DB;
+        $dbman = $DB->get_manager();
+        if (!$dbman->table_exists(self::RESPONSES_TABLE) || !$dbman->table_exists(self::TABLE)) {
+            return 0;
+        }
+        [$tsql, $params] = self::scope_sql('e');
+        return (int) $DB->count_records_sql(
+            "SELECT COUNT(1)
+               FROM {" . self::RESPONSES_TABLE . "} r
+               JOIN {" . self::TABLE . "} e ON e.id = r.evaluationid
+              WHERE {$tsql}", $params);
+    }
+
+    /**
+     * ADR-031: WHERE fragment for the evaluations a caller may see, on
+     * evaluation alias $alias. Cross-tenant: 1=1. Anyone else: their own
+     * tenant's evaluations (tenant::path_filter, 1=0 without a tenant),
+     * never a global one - costcenterid 0 reaches every tenant's learners
+     * whatever its open_path says (evaluation_engine::is_user_in_eval_scope).
+     *
+     * @param string $alias evaluation table alias
+     * @return array{0: string, 1: array}
+     */
+    public static function scope_sql(string $alias): array {
+        [$tsql, $params] = \local_sentientia_platform\tenant::path_filter($alias);
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return [$tsql, $params];
+        }
+        return ["({$tsql} AND {$alias}.costcenterid <> 0)", $params];
+    }
+
+    /** Is $path tenant $root itself or inside it ('/N' or '/N/...')? */
+    private static function path_in_root(string $path, int $root): bool {
+        $path = rtrim(trim($path), '/');
+        if ($root <= 0 || $path === '') {
+            return false;
+        }
+        $exact = '/' . $root;
+        return $path === $exact || strpos($path, $exact . '/') === 0;
+    }
+
     public static function count_evaluations(?int $status = null): int {
         global $DB;
         $dbman = $DB->get_manager();
@@ -1678,11 +1925,17 @@ class evaluation_manager {
             ];
         }
 
-        // Count evaluations per level (no filter — these are top-level).
+        // ADR-031: both halves of the summary cover only the evaluations the
+        // current user may see (cross-tenant: all; tenant admin: their own
+        // tenant's; no tenant: none). This used to aggregate every tenant.
+        [$scopesql, $scopeparams] = self::scope_sql('e');
+
+        // Count evaluations per level (no response filter — these are top-level).
         $eval_counts = $DB->get_records_sql(
-            "SELECT kirkpatrick_level AS lvl, COUNT(*) AS c
-               FROM {" . self::TABLE . "}
-              GROUP BY kirkpatrick_level");
+            "SELECT e.kirkpatrick_level AS lvl, COUNT(*) AS c
+               FROM {" . self::TABLE . "} e
+              WHERE {$scopesql}
+              GROUP BY e.kirkpatrick_level", $scopeparams);
         foreach ($eval_counts as $row) {
             $lvl = (int) $row->lvl;
             if (isset($summary[$lvl])) {
@@ -1701,8 +1954,8 @@ class evaluation_manager {
         $sql = "SELECT r.id, r.response_data, e.kirkpatrick_level
                   FROM {" . self::RESPONSES_TABLE . "} r
                   JOIN {" . self::TABLE . "} e ON e.id = r.evaluationid
-                 WHERE $where";
-        $rs = $DB->get_recordset_sql($sql, $params);
+                 WHERE $where AND {$scopesql}";
+        $rs = $DB->get_recordset_sql($sql, array_merge($params, $scopeparams));
 
         // Cache question types per evaluation to avoid N+1 lookups.
         $qcache = [];

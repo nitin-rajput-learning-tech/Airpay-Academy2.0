@@ -20,6 +20,33 @@ defined('MOODLE_INTERNAL') || die();
  */
 class session_manager {
 
+    /**
+     * ADR-031: refuse unless the viewer may see / act on a session of this
+     * tenant.
+     *
+     * tenant::require_access() compares tenant roots, so a reviewer with no
+     * tenant (root 0) matched every session stamped costcenterid 0 - i.e.
+     * every other no-tenant candidate's recordings, identity checks and
+     * verdicts. A viewer who is not cross-tenant must now have a tenant of
+     * their own; cross-tenant viewers (site admin, :crosstenant) always pass.
+     *
+     * @param int $costcenterid the session's tenant root
+     * @param int|null $viewerid defaults to the current user
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_session_access(int $costcenterid, ?int $viewerid = null): void {
+        global $DB, $USER;
+        $viewerid = $viewerid ?? (int) ($USER->id ?? 0);
+        if (!\local_sentientia_platform\tenant::is_cross_tenant($viewerid)) {
+            $viewer = ($viewerid === (int) ($USER->id ?? 0)) ? $USER
+                : $DB->get_record('user', ['id' => $viewerid], 'id, open_path');
+            if (!$viewer || \local_sentientia_platform\tenant::root_for_user($viewer) <= 0) {
+                throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+            }
+        }
+        \local_sentientia_platform\tenant::require_access($costcenterid, $viewerid);
+    }
+
     /** Open a session — called when user clicks Start on a proctored quiz. */
     public static function start_session(int $userid, int $quizid): \stdClass {
         global $DB, $USER;

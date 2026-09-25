@@ -130,3 +130,16 @@ rather than an allowlist, so a new plugin with a copy-pasted `null_provider` fai
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+## 2026-09-25 - ADR-031: exams are tenant-scoped (1.6.3, 2026092500)
+
+Sweep hits `local/sentientia_exams:view` and `:manage` (both CONFIRMED). The capabilities keep their manager
+default: tenant admins legitimately need them. What changed is that every read or write that names an exam
+now checks the exam against the caller's tenant, unless `tenant::is_cross_tenant()`.
+
+- `exam_manager::require_exam_access()`: an exam with no `open_path` is cross-tenant only (`require_path_access('')` lets it through).
+- `require_quiz_in_scope()`: the exam's tenant and its quiz's course tenant are independent, so a quiz from another tenant's course is refused. Legacy courses with no path pass.
+- `delete()`, `toggle_status()` and `update()` check the exam inside the manager, which covers the web services, the form and any future caller. `create()` and `update()` accept only an org inside the caller's tenant; "No specific organisation" stamps the caller's tenant root.
+- `view.php`: the exam and its course must be in the caller's tenant. Every attempt, roster and analytics row is limited to the caller's tenant users.
+- `list_exams`: the tenant `path_filter` always applies. The org cascade only narrows it; it used to REPLACE the scope. The index KPI tiles use `count_scoped()`. The quiz and org pickers are scoped.
+- Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`). Depends on `local_sentientia_platform` 2026092500.

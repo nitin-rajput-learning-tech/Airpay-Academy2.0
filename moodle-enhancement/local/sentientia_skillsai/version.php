@@ -57,13 +57,14 @@ $plugin->component = 'local_sentientia_skillsai';
 // FRESH install (authoring installs alphabetically before skillsai and skips
 // these caps at its own install time). No-op on existing installs (authoring's
 // 2026090700 upgrade step already reconciles them). No schema/flag change.
-$plugin->version   = 2026092202;  // privacy provider now declares every user table it owns
+$plugin->version   = 2026092500;  // ADR-031: :manage_all no default (+ revoke step), cross-tenant only; no-tenant fails closed
 $plugin->requires  = 2022041900;        // Moodle 4.5+ (matches sibling plugins).
 $plugin->maturity  = MATURITY_ALPHA;    // MVP — needs prod sign-off before flag flips.
-$plugin->release   = '0.1.2-alpha';
+$plugin->release   = '0.1.3-alpha';
 $plugin->dependencies = [
     // Tenant helper + 5-level feature_flags resolver + per-customer config.
-    'local_sentientia_platform' => 2026051401,
+    // 2026092500: ADR-031 tenant::is_cross_tenant() / require_same_tenant_user().
+    'local_sentientia_platform' => 2026092500,
     // Skill schema (local_sentientia_skills + role_skills + user_skills) that
     // the gap engine reads and the taxonomy promotes candidates into.
     'local_sentientia_skills'   => 2026041000,
@@ -76,3 +77,6 @@ $plugin->dependencies = [
 //              taxonomy. Mock-mode demoable end-to-end with zero spend.
 // 0.1.1-alpha  Sentientia AI gateway migration (opt-in, dormant by default).
 //              All plugin-level gates unchanged.
+// 0.1.3-alpha  ADR-031: :manage_all has no archetype default and is revoked
+//              from every role; it unscopes only a cross-tenant caller. A
+//              viewer with no tenant gets no gap summary / feed / jobs of others.

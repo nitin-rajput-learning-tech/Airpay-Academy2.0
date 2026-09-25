@@ -43,5 +43,23 @@ function xmldb_local_sentientia_skillsai_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026061700, 'local', 'sentientia_skillsai');
     }
 
+    // 2026092500 - ADR-031: take :manage_all back from every role.
+    // It no longer defaults to the manager archetype (db/access.php), but
+    // changing archetypes never revokes what was already granted. Tenant
+    // admins hold manager-archetype roles, so every existing grant is a
+    // cross-tenant leak of jobs, candidates, taxonomy and gap feeds. Revoke
+    // them all; site admins are unaffected (and the code now also requires
+    // tenant::is_cross_tenant() before :manage_all unscopes anyone).
+    if ($oldversion < 2026092500) {
+        $syscontext = \context_system::instance();
+        $roleids = $DB->get_fieldset_select('role_capabilities', 'DISTINCT roleid',
+            'capability = :cap', ['cap' => 'local/sentientia_skillsai:manage_all']);
+        foreach ($roleids as $roleid) {
+            unassign_capability('local/sentientia_skillsai:manage_all', (int) $roleid, $syscontext->id);
+        }
+        $syscontext->mark_dirty();
+        upgrade_plugin_savepoint(true, 2026092500, 'local', 'sentientia_skillsai');
+    }
+
     return true;
 }

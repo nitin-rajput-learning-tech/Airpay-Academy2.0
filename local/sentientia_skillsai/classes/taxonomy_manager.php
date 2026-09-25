@@ -61,6 +61,25 @@ class taxonomy_manager {
         return (int)($parts[0] ?? 0);
     }
 
+    /**
+     * ADR-031: may the current user see and act on EVERY tenant's jobs,
+     * candidates, taxonomy and gap feeds?
+     *
+     * :manage_all says WHAT (every owner's work), never WHERE: it unscopes
+     * only a cross-tenant caller (site admin, or a holder of
+     * local/sentientia_platform:crosstenant). It used to default to the
+     * manager archetype every tenant admin holds, and on its own opened
+     * every tenant's extraction jobs, review queue, taxonomy and per-user
+     * gap feeds. The default is gone and existing grants are revoked
+     * (db/upgrade.php 2026092500); this keeps a stray grant from unscoping.
+     *
+     * @return bool
+     */
+    public static function can_manage_all(): bool {
+        return has_capability('local/sentientia_skillsai:manage_all', \context_system::instance())
+            && \local_sentientia_platform\tenant::is_cross_tenant();
+    }
+
     // ──────────────────────────────────────────────────────────────────
     //  JOBS
     // ──────────────────────────────────────────────────────────────────
@@ -416,8 +435,11 @@ class taxonomy_manager {
 
         $actorroot = self::tenant_root_for($actor);
         if (!$manageall) {
-            if ((int)$job->ownerid !== (int)$actor->id
-                && (int)$job->costcenterid !== $actorroot) {
+            // ADR-031: an actor with no tenant (root 0) reaches only their own
+            // jobs - costcenterid 0 is every other no-tenant owner's bucket.
+            $isowner = (int)$job->ownerid === (int)$actor->id;
+            $sametenant = $actorroot > 0 && (int)$job->costcenterid === $actorroot;
+            if (!$isowner && !$sametenant) {
                 return null;
             }
         }
@@ -444,6 +466,12 @@ class taxonomy_manager {
                 self::JOB_TABLE, [], 'timecreated DESC', '*', 0, $limit));
         }
         $tenant = self::tenant_root_for($actor);
+        if ($tenant <= 0) {
+            // ADR-031: no tenant - own jobs only, never the costcenterid-0
+            // bucket every other no-tenant owner's jobs land in.
+            return array_values($DB->get_records(self::JOB_TABLE,
+                ['ownerid' => (int)$actor->id], 'timecreated DESC', '*', 0, $limit));
+        }
         return array_values($DB->get_records_sql(
             "SELECT * FROM {" . self::JOB_TABLE . "}
               WHERE ownerid = :uid OR costcenterid = :cid

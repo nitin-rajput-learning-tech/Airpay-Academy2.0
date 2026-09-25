@@ -37,8 +37,11 @@ $PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('taxonomy_page_title', 'local_sentientia_skillsai'));
 $PAGE->set_heading(get_string('taxonomy_page_heading', 'local_sentientia_skillsai'));
 
-$manageall = has_capability('local/sentientia_skillsai:manage_all', $context);
-$tenantroot = taxonomy_manager::tenant_root_for($USER);
+// ADR-031: :manage_all unscopes only a cross-tenant caller; anyone else
+// works on their own tenant's taxonomy, and a caller with no tenant on none
+// (tenant root 0 is not a tenant: it is the bucket of pathless rows).
+$manageall = taxonomy_manager::can_manage_all();
+$tenantroot = \local_sentientia_platform\tenant::root_for_user($USER);
 
 $impacton = class_exists('\\local_sentientia_platform\\feature_flags')
     && \local_sentientia_platform\feature_flags::is_enabled('sentientia.skillsai.impact_map');
@@ -52,7 +55,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $impacton) {
 
         // Tenant access guard on the taxonomy node before mapping it.
         $node = $DB->get_record(taxonomy_manager::TAXONOMY_TABLE, ['id' => $taxonomyid], '*', MUST_EXIST);
-        if (!$manageall && class_exists('\\local_sentientia_platform\\tenant')) {
+        if (!$manageall) {
+            // ADR-031: a caller with no tenant (root 0) must not match the
+            // costcenterid-0 bucket via require_access(0).
+            if ($tenantroot <= 0) {
+                throw new moodle_exception('error_outoftenant', 'local_sentientia_platform');
+            }
             \local_sentientia_platform\tenant::require_access((int)$node->costcenterid);
         }
 
@@ -68,11 +76,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $impacton) {
     }
 }
 
-// Site admins see all tenants; others see their own.
-$nodes = $manageall
-    ? array_values($DB->get_records(taxonomy_manager::TAXONOMY_TABLE,
-        ['status' => taxonomy_manager::TAX_ACTIVE], 'costcenterid, category, name'))
-    : taxonomy_manager::list_taxonomy($tenantroot);
+// Cross-tenant :manage_all holders see all tenants; others see their own
+// (ADR-031: nothing at all without a tenant).
+if ($manageall) {
+    $nodes = array_values($DB->get_records(taxonomy_manager::TAXONOMY_TABLE,
+        ['status' => taxonomy_manager::TAX_ACTIVE], 'costcenterid, category, name'));
+} else if ($tenantroot > 0) {
+    $nodes = taxonomy_manager::list_taxonomy($tenantroot);
+} else {
+    $nodes = [];
+}
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('taxonomy_page_heading', 'local_sentientia_skillsai'));

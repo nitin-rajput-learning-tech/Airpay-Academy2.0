@@ -38,7 +38,10 @@ final class list_evaluations_test extends \advanced_testcase {
             'kirkpatrick_level' => 1,
             'trigger_event'    => 'manual',
             'days_after'       => 0,
-            'costcenterid'     => 0,
+            // ADR-031: tenant-bound (non-zero). costcenterid 0 is a GLOBAL
+            // evaluation that evaluation_engine sends to every tenant, and a
+            // tenant admin no longer lists those whatever the open_path says.
+            'costcenterid'     => (int) (explode('/', trim($path, '/'))[0] ?: 1),
             'open_path'        => $path,
             'status'           => $status,
             'anonymous'        => 0,

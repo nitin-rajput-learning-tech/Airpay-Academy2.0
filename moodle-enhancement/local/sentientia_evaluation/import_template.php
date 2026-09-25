@@ -61,6 +61,14 @@ if ($data = $form->get_data()) {
                 $parts = explode('/', trim($USER->open_path ?? '', '/'));
                 $costcenter = isset($parts[0]) && ctype_digit($parts[0])
                     ? (int) $parts[0] : 0;
+                // ADR-031: a scoped caller imports only into their own tenant
+                // root org (0 resolves to it by path; a caller with no tenant
+                // is refused). With no tenant this used to create a GLOBAL
+                // (costcenterid 0) evaluation, which evaluation_engine sends
+                // to every tenant. Cross-tenant callers: unchanged.
+                if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
+                    $costcenter = \local_sentientia_evaluation\evaluation_manager::scoped_costcenterid(0);
+                }
                 $result = \local_sentientia_evaluation\evaluation_manager::import_template(
                     $payload, $costcenter);
                 \core\notification::success(

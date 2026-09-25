@@ -68,6 +68,10 @@ class self_rate_skill extends external_api {
             $acting_userid = (int) $USER->id;
         } else {
             require_capability('local/sentientia_skills:manage', $context);
+            // ADR-031: :manage says WHAT, not WHERE - backfill only a user in
+            // the caller's own tenant (cross-tenant callers anywhere). This
+            // used to write any user id's level in any tenant.
+            \local_sentientia_platform\tenant::require_same_tenant_user($target_userid);
             // The acting user is the admin; the subject is whoever they
             // named. skills_manager records both so HR can see who
             // backfilled what.

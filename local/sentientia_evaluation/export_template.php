@@ -16,6 +16,8 @@ require_capability('local/sentientia_evaluation:manage', $context);
 $id = required_param('id', PARAM_INT);
 
 $eval = $DB->get_record('local_sentientia_evaluation', ['id' => $id], '*', MUST_EXIST);
+// ADR-031: only an evaluation in the caller's tenant.
+\local_sentientia_evaluation\evaluation_manager::require_evaluation_access($eval);
 
 $payload = \local_sentientia_evaluation\evaluation_manager::export_template($id);
 

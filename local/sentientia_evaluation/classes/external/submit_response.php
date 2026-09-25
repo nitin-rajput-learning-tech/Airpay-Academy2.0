@@ -40,6 +40,13 @@ class submit_response extends external_api {
         self::validate_context($sysctx);
         require_capability('local/sentientia_evaluation:respond', $sysctx);
 
+        // ADR-031: answer only a global evaluation or one of your own tenant.
+        $evaluation = \local_sentientia_evaluation\evaluation_manager::get((int) $params['evaluationid']);
+        if ($evaluation
+                && !\local_sentientia_evaluation\evaluation_manager::can_respond($evaluation, $USER)) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+
         $answers_decoded = json_decode($params['answers'], true);
         if (!is_array($answers_decoded)) {
             $answers_decoded = [];

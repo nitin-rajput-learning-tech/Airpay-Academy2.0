@@ -42,6 +42,18 @@ $PAGE->set_title('Exam: ' . format_string($exam->name));
 $PAGE->set_heading('Exam: ' . format_string($exam->name));
 require_capability('local/sentientia_exams:view', $ctx);
 
+// ADR-031: :view says WHAT, not WHERE. The exam must be in the caller's
+// tenant, and so must its quiz's course (the two are independent), before
+// any attempt or roster row is read. Every learner row below is then also
+// limited to the caller's tenant ($usql: 1=1 for a cross-tenant caller), so
+// a legacy course shared by every tenant shows each tenant only its own
+// people. Until 2026-09-25 any :view holder could open any exam by id.
+\local_sentientia_exams\exam_manager::require_exam_access($exam);
+if ($quiz) {
+    \local_sentientia_exams\exam_manager::require_quiz_in_scope((int) $quiz->id);
+}
+[$usql, $uargs] = \local_sentientia_platform\tenant::path_filter('u');
+
 $can_edit  = has_capability('local/sentientia_exams:update', $ctx);
 $can_enrol = has_capability('local/sentientia_exams:enrol', $ctx);
 
@@ -50,26 +62,33 @@ $count_attempts = 0;
 $count_enrolled = 0;
 $count_passed = 0;
 if ($quiz) {
-    $count_attempts = (int) $DB->count_records('quiz_attempts',
-        ['quiz' => $quiz->id, 'state' => 'finished']);
+    $count_attempts = (int) $DB->count_records_sql(
+        "SELECT COUNT(qa.id)
+           FROM {quiz_attempts} qa
+           JOIN {user} u ON u.id = qa.userid
+          WHERE qa.quiz = :qid AND qa.state = 'finished' AND {$usql}",
+        ['qid' => $quiz->id] + $uargs);
     if ($course) {
         $count_enrolled = (int) $DB->count_records_sql(
             "SELECT COUNT(DISTINCT ue.userid)
                FROM {user_enrolments} ue
                JOIN {enrol} e ON e.id = ue.enrolid
-              WHERE e.courseid = :cid",
-            ['cid' => $course->id]);
+               JOIN {user} u ON u.id = ue.userid
+              WHERE e.courseid = :cid AND {$usql}",
+            ['cid' => $course->id] + $uargs);
     }
     // Passed = attempts where sumgrades / grade >= passinggrade%.
     $pass_threshold = (float) ($exam->passinggrade ?: 50);
     $count_passed = (int) $DB->count_records_sql(
         "SELECT COUNT(DISTINCT qa.userid)
            FROM {quiz_attempts} qa
+           JOIN {user} u ON u.id = qa.userid
           WHERE qa.quiz = :qid
             AND qa.state = 'finished'
             AND qa.sumgrades IS NOT NULL
-            AND (qa.sumgrades * 100.0 / NULLIF((SELECT SUM(grade) FROM {quiz_grades} WHERE quiz = qa.quiz), 0)) >= :pg",
-        ['qid' => $quiz->id, 'pg' => $pass_threshold]);
+            AND (qa.sumgrades * 100.0 / NULLIF((SELECT SUM(grade) FROM {quiz_grades} WHERE quiz = qa.quiz), 0)) >= :pg
+            AND {$usql}",
+        ['qid' => $quiz->id, 'pg' => $pass_threshold] + $uargs);
 }
 
 // Per-tab data.
@@ -83,10 +102,10 @@ switch ($tab) {
                         u.firstname, u.lastname, u.email
                    FROM {quiz_attempts} qa
                    JOIN {user} u ON u.id = qa.userid
-                  WHERE qa.quiz = :qid AND qa.preview = 0
+                  WHERE qa.quiz = :qid AND qa.preview = 0 AND {$usql}
                   ORDER BY qa.timefinish DESC, qa.timestart DESC
                   LIMIT 200",
-                ['qid' => $quiz->id]);
+                ['qid' => $quiz->id] + $uargs);
             $tab_data['attempts'] = array_values(array_map(function($r) {
                 $duration = ($r->timefinish && $r->timestart)
                     ? gmdate('H:i:s', $r->timefinish - $r->timestart)
@@ -118,9 +137,10 @@ switch ($tab) {
                    JOIN {enrol} e ON e.id = ue.enrolid
                   WHERE e.courseid = :cid
                     AND u.deleted = 0
+                    AND {$usql}
                   ORDER BY u.lastname ASC, u.firstname ASC
                   LIMIT 200",
-                ['cid' => $course->id]);
+                ['cid' => $course->id] + $uargs);
             $tab_data['roster'] = array_values(array_map(fn($r) => [
                 'userid'      => (int) $r->id,
                 'fullname'    => trim($r->firstname . ' ' . $r->lastname),
@@ -147,8 +167,10 @@ switch ($tab) {
                     AVG(qa.timefinish - qa.timestart) AS avg_time_sec,
                     COUNT(*) AS total_attempts
                  FROM {quiz_attempts} qa
+                 JOIN {user} u ON u.id = qa.userid
                  WHERE qa.quiz = :qid AND qa.state = 'finished'
-                   AND qa.sumgrades IS NOT NULL", ['qid' => $quiz->id]);
+                   AND qa.sumgrades IS NOT NULL
+                   AND {$usql}", ['qid' => $quiz->id] + $uargs);
 
             $max_grade = (float) ($DB->get_field('quiz', 'grade',
                 ['id' => $quiz->id]) ?: 100);

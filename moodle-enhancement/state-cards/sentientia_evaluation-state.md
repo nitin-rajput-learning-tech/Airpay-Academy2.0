@@ -144,3 +144,18 @@ Found by a read-only audit of all 38 Sentientia privacy providers, run because `
 ## 2026-09-24 - Erasure review follow-up
 
 Test fixes from review: `trigger()` inserted 'pending' into an INT status column, and two seeded assign rows collided on UNIQUE(evaluationid, userid, trigger_event, source_id).
+
+## 2026-09-25 - ADR-031: evaluations are tenant-scoped (1.15.3, 2026092500)
+
+Sweep hits `local/sentientia_evaluation:manage` (default grant) and its exportcsv/audience fail-open (both
+CONFIRMED). `:manage` keeps its manager default. Every entry point now checks the evaluation's tenant, unless
+`tenant::is_cross_tenant()`.
+
+- `evaluation_manager::require_evaluation_access()` is called by exportcsv, responses, non_respondents, questions, export_template, response_list/detail, the four write web services, bulk_assign (WS + form), and the edit_evaluation/edit_question forms. A global evaluation (costcenterid 0) is cross-tenant only, because `evaluation_engine` sends it to every tenant's learners whatever its `open_path` says.
+- The gates sit at the entry points, not inside `create()`/`update()`/`delete()`, because the CLI smoke scripts drive those without a session user.
+- `scoped_costcenterid()` (edit form and import_template): a scoped caller binds only an org in their own tenant, and 0 maps to their tenant root org. They can no longer create global evaluations.
+- `evaluation_audience_assigner::resolve_audience()` uses `tenant::scope_path()`. A caller with no tenant gets nobody; that caller used to get every tenant's active users.
+- `list_evaluations`: the tenant scope always applies and the cascade only narrows it. `get_kirkpatrick_summary()` and the index KPI tiles are scoped with `scope_sql()`.
+- `respond.php` and `submit_response`: `:manage` previews only in-tenant evaluations. A respondent answers only a global evaluation or one in their own tenant.
+- Test data: `tests/external/list_evaluations_test.php` now seeds tenant-bound (non-zero costcenterid) evaluations.
+- Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`).

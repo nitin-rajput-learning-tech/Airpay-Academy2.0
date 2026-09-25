@@ -46,11 +46,20 @@ class evaluation_audience_assigner {
         $where  = ['u.deleted = 0', 'u.suspended = 0', 'u.id > 2'];
         $params = [];
 
-        $caller_top = self::caller_tenant_root($caller_userid);
-        if ($caller_top > 0) {
-            $where[] = '(u.open_path = :tnexact OR u.open_path LIKE :tnprefix)';
-            $params['tnexact']  = '/' . $caller_top;
-            $params['tnprefix'] = $DB->sql_like_escape('/' . $caller_top . '/') . '%';
+        // ADR-031: the caller's scope - '' only for a cross-tenant caller,
+        // '/N' for a tenant, null (nothing at all) for a caller who is
+        // neither. A non-admin with no open_path used to get NO filter here,
+        // i.e. every active user of every tenant.
+        $caller = $DB->get_record('user', ['id' => $caller_userid], 'id, open_path');
+        $scope = $caller ? \local_sentientia_platform\tenant::scope_path($caller) : null;
+        if ($scope === null) {
+            return [];
+        }
+        if ($scope !== '') {
+            [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+                $scope, 'u', 'open_path', 'tn');
+            $where[] = $tnsql;
+            $params = array_merge($params, $tnargs);
         }
 
         $allowed_exact = [
@@ -170,15 +179,5 @@ class evaluation_audience_assigner {
             'assigned' => $new_count,
             'capped'   => $count >= self::MAX_AUDIENCE_SIZE,
         ];
-    }
-
-    private static function caller_tenant_root(int $caller_userid): int {
-        if (is_siteadmin($caller_userid)) {
-            return 0;
-        }
-        global $DB;
-        $path = (string) ($DB->get_field('user', 'open_path', ['id' => $caller_userid]) ?? '');
-        $parts = explode('/', trim($path, '/'));
-        return isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
     }
 }

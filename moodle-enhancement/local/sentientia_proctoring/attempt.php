@@ -23,7 +23,8 @@ require_capability('local/sentientia_proctoring:viewattempts', $ctx);
 $session = $DB->get_record('local_sentientia_proctor_sessions',
     ['id' => $id], '*', MUST_EXIST);
 // ── B2 fix: tenant equality on attempt detail page ────────────────────
-\local_sentientia_platform\tenant::require_access((int) $session->costcenterid);
+// ADR-031: and a viewer with no tenant sees nothing.
+\local_sentientia_proctoring\session_manager::require_session_access((int) $session->costcenterid);
 
 $events = $DB->get_records('local_sentientia_proctor_events',
     ['sessionid' => $session->id], 'timecreated ASC');

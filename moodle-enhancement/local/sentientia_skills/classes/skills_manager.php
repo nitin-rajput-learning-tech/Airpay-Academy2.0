@@ -23,6 +23,82 @@ class skills_manager {
         5 => 'Expert',
     ];
 
+    // ═══════════════════════════════════════════════════════════════════
+    // ADR-031 tenant scope (2026-09-25)
+    //
+    // The skills catalogue (categories, skills, levels, designation
+    // matrix, course mappings) has no tenant column: it is ONE catalogue
+    // shared by every tenant. So :manage is a platform capability and no
+    // longer defaults to the manager archetype (db/access.php + the
+    // 2026092500 revoke step). What :manage still touches that DOES belong
+    // to a tenant - another user's skill level, a course, the user table -
+    // is checked against the caller's tenant here unless
+    // tenant::is_cross_tenant().
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * ADR-031: learners holding a skill, for view.php's learners tab -
+     * limited to the caller's tenant (every tenant for a cross-tenant
+     * caller, nobody without a tenant). The tab used to list up to 200
+     * names + emails from every tenant to every holder of :view.
+     *
+     * @param int $skillid
+     * @param int $limit
+     * @return \stdClass[] keyed by user_skills id: userid, current_level,
+     *         timemodified, firstname, lastname, email
+     */
+    public static function skill_learners(int $skillid, int $limit = 200): array {
+        global $DB;
+        [$usql, $uargs] = \local_sentientia_platform\tenant::path_filter('u');
+        return $DB->get_records_sql(
+            "SELECT us.id, us.userid, us.current_level, us.timemodified,
+                    u.firstname, u.lastname, u.email
+               FROM {" . self::USER_SKILL_TABLE . "} us
+               JOIN {user} u ON u.id = us.userid
+              WHERE us.skillid = :sid
+                AND u.deleted = 0
+                AND {$usql}
+           ORDER BY u.lastname ASC, u.firstname ASC",
+            ['sid' => $skillid] + $uargs, 0, $limit);
+    }
+
+    /**
+     * ADR-031: how many learners hold a skill, scoped like skill_learners().
+     *
+     * @param int $skillid
+     * @return int
+     */
+    public static function count_skill_learners(int $skillid): int {
+        global $DB;
+        [$usql, $uargs] = \local_sentientia_platform\tenant::path_filter('u');
+        return (int) $DB->count_records_sql(
+            "SELECT COUNT(us.id)
+               FROM {" . self::USER_SKILL_TABLE . "} us
+               JOIN {user} u ON u.id = us.userid
+              WHERE us.skillid = :sid AND u.deleted = 0 AND {$usql}",
+            ['sid' => $skillid] + $uargs);
+    }
+
+    /**
+     * ADR-031: refuse a course-skill mapping write on a course outside the
+     * caller's tenant. A legacy course with no open_path is listed for every
+     * tenant, so writing to it reaches every tenant: cross-tenant only.
+     *
+     * @param int $courseid
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_course_write_scope(int $courseid): void {
+        global $DB;
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return;
+        }
+        $path = rtrim(trim((string) $DB->get_field('course', 'open_path', ['id' => $courseid])), '/');
+        if ($path === '') {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        \local_sentientia_platform\tenant::require_path_access($path);
+    }
+
     /**
      * Get gap analysis for a user — compares current skills vs required for their role.
      *
@@ -742,14 +818,21 @@ class skills_manager {
             SELECT DISTINCT designation FROM {" . self::ROLE_SKILL_TABLE . "}
              WHERE designation IS NOT NULL AND designation <> ''");
         // Also pull distinct designations from user table (BizLMS field).
+        // ADR-031: only from the caller's own tenant's users (every tenant's
+        // for a cross-tenant caller, none without a tenant).
+        $scope = \local_sentientia_platform\tenant::scope_path();
         try {
-            if ($DB->get_manager()->field_exists('user',
+            if ($scope !== null && $DB->get_manager()->field_exists('user',
                     new \xmldb_field('open_designation', XMLDB_TYPE_CHAR, '200'))) {
+                [$tsql, $targs] = $scope === '' ? ['1=1', []]
+                    : \local_sentientia_platform\tenant::path_descendant_filter(
+                        $scope, '', 'open_path', 'skdes');
                 $userdesigs = $DB->get_fieldset_sql("
                     SELECT DISTINCT open_designation FROM {user}
                      WHERE open_designation IS NOT NULL AND open_designation <> ''
                        AND deleted = 0
-                  ORDER BY open_designation ASC");
+                       AND {$tsql}
+                  ORDER BY open_designation ASC", $targs);
                 $rows = array_unique(array_merge($rows, $userdesigs));
             }
         } catch (\Throwable $e) {
@@ -932,6 +1015,18 @@ class skills_manager {
         if ($q !== '') {
             $params['q1'] = $like;
             $params['q2'] = $like;
+        }
+        // ADR-031: a scoped caller finds only their own tenant's courses (the
+        // picker listed every tenant's course names); none without a tenant.
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === null) {
+            return [];
+        }
+        if ($scope !== '') {
+            [$tsql, $targs] = \local_sentientia_platform\tenant::path_descendant_filter(
+                $scope, 'c', 'open_path', 'skc');
+            $where .= " AND {$tsql}";
+            $params = array_merge($params, $targs);
         }
         $sql = "SELECT c.id, c.fullname, c.shortname,
                        (SELECT COUNT(*) FROM {" . self::COURSE_SKILL_TABLE . "} cs

@@ -15,7 +15,10 @@ $plugin->component = 'local_sentientia_skills';
 //                       translated, covering all P1 #22/#25 additions
 //                       plus the previously-missing admin CRUD + privacy
 //                       metadata. Was at 19/80; now 80/80.
-$plugin->version   = 2026080500;  // +feature_flags registry (dashboard skillsrecs flag)
+$plugin->version   = 2026092500;  // ADR-031: :manage has no default grant (+ revoke step); learners/backfill tenant-scoped
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.6.3'; // skillid gap-rec fix + flags registry
+$plugin->release   = '1.6.4'; // + ADR-031 tenant scope
+$plugin->dependencies = [
+    'local_sentientia_platform' => 2026092500,  // ADR-031 tenant::is_cross_tenant() / require_same_tenant_user()
+];

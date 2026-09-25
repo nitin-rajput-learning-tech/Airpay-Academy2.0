@@ -23,6 +23,9 @@ class change_status extends external_api {
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/sentientia_evaluation:manage', $context);
+        // ADR-031: only an evaluation in the caller's tenant.
+        \local_sentientia_evaluation\evaluation_manager::require_evaluation_access_by_id(
+            (int) $params['evaluationid']);
 
         $newstatus = \local_sentientia_evaluation\evaluation_manager::change_status(
             $params['evaluationid'], $params['status']);
