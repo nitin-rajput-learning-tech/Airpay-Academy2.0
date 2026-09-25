@@ -72,13 +72,17 @@ if ($mode === 'paths') {
     fputcsv($out, ['User ID', 'Name', 'Email', 'Employee ID', 'Enrolled',
                    'Courses in path', 'Completed in path', 'Completion %']);
     // Get users + their per-course completion within this path's courses.
+    // ADR-031: an in-tenant path can still hold other tenants' or pathless
+    // learners (site-admin, request/approval-flow or pre-fix enrolments); a
+    // scoped caller exports only their own tenant's ('1=1' cross-tenant).
+    [$rosql, $roparams] = \local_sentientia_learningpath\path_manager::roster_scope(true, 'u');
     $users = $DB->get_records_sql("
         SELECT u.id, u.firstname, u.lastname, u.email, u.open_employeeid,
                lpu.timecreated AS enrolled_on
           FROM {local_sentientia_learningpath_users} lpu
           JOIN {user} u ON u.id = lpu.userid
-         WHERE lpu.pathid = :pid AND u.deleted = 0
-      ORDER BY u.lastname ASC LIMIT 10000", ['pid' => $pathid]);
+         WHERE lpu.pathid = :pid AND u.deleted = 0 AND $rosql
+      ORDER BY u.lastname ASC", ['pid' => $pathid] + $roparams, 0, 10000);
     $path_courses = $DB->get_fieldset_select('local_sentientia_learningpath_courses',
         'courseid', 'pathid = :pid', ['pid' => $pathid]);
     $course_count = count($path_courses);

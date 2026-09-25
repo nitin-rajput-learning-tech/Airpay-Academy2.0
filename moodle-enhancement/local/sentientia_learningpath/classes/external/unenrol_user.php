@@ -39,9 +39,12 @@ class unenrol_user extends external_api {
         self::validate_context($context);
         require_capability('local/sentientia_learningpath:enrol', $context);
         // ADR-031: the capability says WHAT; the path must also be in the caller's tenant.
-        // The user being removed must be in it too.
+        // The user being removed must be in it too - or already on this
+        // (in-tenant) roster: removing a legacy out-of-tenant or pathless
+        // learner from your own path reaches into no other tenant.
         \local_sentientia_learningpath\path_manager::require_path_tenant($params['pathid']);
-        \local_sentientia_platform\tenant::require_same_tenant_user($params['userid']);
+        \local_sentientia_learningpath\path_manager::require_unenrol_target(
+            $params['pathid'], $params['userid']);
 
         $removed = \local_sentientia_learningpath\path_manager::unenrol_user(
             $params['pathid'], $params['userid']);

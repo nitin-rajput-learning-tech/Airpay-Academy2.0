@@ -15,7 +15,6 @@ defined('MOODLE_INTERNAL') || die();
 class enrol_program_cohort extends \core_form\dynamic_form {
 
     protected function definition() {
-        global $DB;
         $mform = $this->_form;
         $programid = (int) $this->optional_param('programid', 0, PARAM_INT);
 
@@ -26,19 +25,9 @@ class enrol_program_cohort extends \core_form\dynamic_form {
         // caller, only cohorts with members in their tenant, counting only
         // those members (the only ones process() will enrol); no tenant, no
         // cohorts. Until 2026-09-25 every cohort on the site was listed with
-        // its full member count, and all of its members were enrolled.
-        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('u');
-        $cohorts = $DB->get_records_sql(
-            "SELECT c.id, c.name, c.idnumber,
-                    (SELECT COUNT(*) FROM {cohort_members} cm
-                       JOIN {user} u ON u.id = cm.userid
-                      WHERE cm.cohortid = c.id AND $tnsql) AS member_count
-               FROM {cohort} c
-              WHERE c.visible = 1
-           ORDER BY c.name ASC", $tnargs, 0, 500);
-        if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
-            $cohorts = array_filter($cohorts, fn($c) => (int) $c->member_count > 0);
-        }
+        // its full member count, and all of its members were enrolled. The
+        // tenant test is in the SQL, before the 500 limit (cohort_options()).
+        $cohorts = \local_sentientia_programs\program_manager::cohort_options(500);
 
         $options = [];
         foreach ($cohorts as $c) {

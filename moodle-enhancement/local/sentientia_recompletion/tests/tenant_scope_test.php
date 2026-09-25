@@ -183,6 +183,77 @@ final class tenant_scope_test extends \advanced_testcase {
         $this->assert_refused(fn() => rule_access::require_course($foreign), 'another tenant\'s course');
     }
 
+    /** The ids edit.php's course picker would list for the current user. */
+    private function picker_courseids(): array {
+        $ids = array_map('intval', array_keys(rule_access::course_options()));
+        sort($ids);
+        return $ids;
+    }
+
+    /**
+     * edit.php's picker used to hand course_filter('c') to
+     * get_records_select('course', ...), which has no alias 'c': the query
+     * failed for every scoped caller, so no tenant admin could open the form.
+     * course_options() is the aliased query; running it at all proves the fix.
+     */
+    public function test_the_course_picker_renders_for_a_tenant_admin_and_lists_only_their_courses(): void {
+        global $DB;
+        $own = $this->course_at('/1/4');
+        $legacy = $this->course_at(null);
+        $foreign = $this->course_at('/177');
+        $lookalike = $this->course_at('/17');   // must not match a /1 prefix
+        $nocompletion = $this->course_at('/1');
+        $DB->set_field('course', 'enablecompletion', 0, ['id' => $nocompletion]);
+
+        $this->setUser($this->tenant_admin('/1'));
+        $expected = [$own, $legacy];
+        sort($expected);
+        $this->assertSame($expected, $this->picker_courseids(),
+            'A /1 tenant admin sees their own tree and legacy unpathed courses - never /177 or /17.');
+
+        $this->setUser($this->tenant_admin(''));
+        $this->assertSame([], $this->picker_courseids(), 'A caller with no tenant is offered no course.');
+
+        $this->setAdminUser();
+        $all = [$own, $legacy, $foreign, $lookalike];
+        sort($all);
+        $this->assertSame($all, $this->picker_courseids(),
+            'The site admin sees every completion-enabled course, as before (never the front page).');
+    }
+
+    /**
+     * A select drops a submitted value that is not one of its options, and
+     * edit.php cast the resulting null to 0 = "all courses": a tampered
+     * courseid silently widened the rule. It must be refused instead.
+     */
+    public function test_a_foreign_courseid_is_refused_not_widened_to_all_courses(): void {
+        global $DB;
+        $own = $this->course_at('/1/4');
+        $foreign = $this->course_at('/177');
+        $nocompletion = $this->course_at('/1');
+        $DB->set_field('course', 'enablecompletion', 0, ['id' => $nocompletion]);
+
+        $this->setUser($this->tenant_admin('/1'));
+        $this->assertSame($own, rule_access::require_course_option((string) $own));
+        $this->assertSame(0, rule_access::require_course_option('0'), '"All courses" is still a valid choice.');
+        $this->assert_refused(fn() => rule_access::require_course_option((string) $foreign),
+            'another tenant\'s course');
+        $this->assert_refused(fn() => rule_access::require_course_option(null),
+            'the null a select exports for an unlisted id');
+        $this->assert_refused(fn() => rule_access::require_course_option('abc'), 'a non-numeric id');
+        $this->assert_refused(fn() => rule_access::require_course_option([(string) $own]), 'an array');
+        $this->assert_refused(fn() => rule_access::require_course_option((string) $nocompletion),
+            'a course the picker does not list');
+        $this->assert_refused(fn() => rule_access::require_course_option((string) SITEID), 'the front page');
+
+        $this->setUser($this->tenant_admin('garbage'));
+        $this->assert_refused(fn() => rule_access::require_course_option('0'), 'a caller with no tenant');
+
+        $this->setAdminUser();
+        $this->assertSame($foreign, rule_access::require_course_option((string) $foreign),
+            'The site admin may still point a rule at any tenant\'s course.');
+    }
+
     public function test_a_caller_with_no_tenant_gets_nothing(): void {
         $this->rule(1);
         $this->rule(0);

@@ -49,15 +49,19 @@ class list_classroom_users extends external_api {
         // ADR-031: the capability says WHAT; the classroom must also be in the caller's tenant.
         \local_sentientia_classroom\session_manager::require_classroom_access($params['classroomid']);
 
+        // ADR-031: an in-tenant classroom can still hold other tenants' or
+        // pathless learners (site-admin, approval-flow or pre-fix enrolments);
+        // a scoped caller is shown only their own tenant's. Cross-tenant
+        // callers see the whole roster, as before.
         $total = \local_sentientia_classroom\session_manager::count_enrolled_filtered(
-            $params['classroomid'], $params['search']);
+            $params['classroomid'], $params['search'], true);
 
         $rows = [];
         if ($total > 0) {
             $records = \local_sentientia_classroom\session_manager::get_enrolled_users(
                 $params['classroomid'], $params['search'],
                 $params['sort'], $params['sortdir'],
-                $params['page'] * $params['perpage'], $params['perpage']);
+                $params['page'] * $params['perpage'], $params['perpage'], true);
 
             foreach ($records as $r) {
                 $fullname = trim(($r->firstname ?? '') . ' ' . ($r->lastname ?? ''));

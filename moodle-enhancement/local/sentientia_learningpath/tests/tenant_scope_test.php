@@ -243,6 +243,76 @@ final class tenant_scope_test extends \advanced_testcase {
         $this->assertSame(0, (int) list_path_users::execute($pathless)['total']);
     }
 
+    /**
+     * An own path whose roster also holds a learner from another tenant and
+     * one with no open_path - as a site admin, a request/approval flow or the
+     * pre-ADR-031 fail-open could leave it.
+     *
+     * @return array{0: int, 1: \stdClass, 2: \stdClass, 3: \stdClass} path, own, foreign, pathless
+     */
+    private function mixed_roster(): array {
+        $mine = $this->learning_path('/1', 'Airpay path');
+        $own = $this->user_at('/1/2');
+        $foreign = $this->user_at('/177/178');
+        $pathless = $this->user_at(null);
+        foreach ([$own, $foreign, $pathless] as $u) {
+            $this->put_user_on_path($mine, (int) $u->id);
+        }
+        return [$mine, $own, $foreign, $pathless];
+    }
+
+    /** The user ids exportcsv.php mode=path_users would write for the current user. */
+    private function export_userids(int $pathid): array {
+        global $DB;
+        [$rosql, $roparams] = path_manager::roster_scope(true, 'u');
+        $ids = array_map('intval', $DB->get_fieldset_sql(
+            "SELECT u.id
+               FROM {local_sentientia_learningpath_users} lpu
+               JOIN {user} u ON u.id = lpu.userid
+              WHERE lpu.pathid = :pid AND u.deleted = 0 AND $rosql", ['pid' => $pathid] + $roparams));
+        sort($ids);
+        return $ids;
+    }
+
+    public function test_the_roster_of_an_own_path_lists_only_the_callers_tenant(): void {
+        [$mine, $own, $foreign, $pathless] = $this->mixed_roster();
+
+        $this->setUser($this->tenant_admin('/1'));
+        $r = list_path_users::execute($mine);
+        $this->assertSame(1, (int) $r['total'], 'The roster total counts only the caller\'s tenant.');
+        $this->assertSame([(int) $own->id], array_map(fn($row) => (int) $row['id'], $r['rows']),
+            'No other tenant\'s (or pathless) name, email, employee id or designation.');
+        $this->assertSame([(int) $own->id], $this->export_userids($mine), 'exportcsv.php mode=path_users');
+
+        $this->setUser($this->tenant_admin('garbage'));
+        $this->assertSame(0, (int) path_manager::get_path_users($mine, '', 0, 25, true)['total']);
+        $this->assertSame([], $this->export_userids($mine));
+
+        // Cross-tenant callers, and library callers with no user, see everyone.
+        $all = [(int) $own->id, (int) $foreign->id, (int) $pathless->id];
+        sort($all);
+        $this->setAdminUser();
+        $this->assertSame(3, (int) list_path_users::execute($mine)['total']);
+        $this->assertSame($all, $this->export_userids($mine));
+        $this->setUser(null);
+        $this->assertSame(3, (int) path_manager::get_path_users($mine)['total']);
+    }
+
+    public function test_a_tenant_admin_can_remove_a_legacy_learner_from_their_own_path(): void {
+        global $DB;
+        [$mine, $own, $foreign, $pathless] = $this->mixed_roster();
+        $stranger = $this->user_at('/177');
+
+        $this->setUser($this->tenant_admin('/1'));
+        $this->assertTrue(unenrol_user::execute($mine, (int) $foreign->id)['removed'],
+            'Removing someone from your own path reaches into no other tenant.');
+        $this->assertTrue(unenrol_user::execute($mine, (int) $pathless->id)['removed']);
+        $this->assert_refused(fn() => unenrol_user::execute($mine, (int) $stranger->id),
+            'unenrol of a foreign user who is not on the roster');
+        $this->assertSame([(int) $own->id], array_map('intval', $DB->get_fieldset_select(
+            'local_sentientia_learningpath_users', 'userid', 'pathid = :p', ['p' => $mine])));
+    }
+
     public function test_the_site_admin_still_sees_every_tenant(): void {
         $a = $this->learning_path('/1', 'A');
         $z = $this->learning_path('/177', 'Z');

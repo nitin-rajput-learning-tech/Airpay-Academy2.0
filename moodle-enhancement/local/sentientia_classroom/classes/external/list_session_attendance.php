@@ -39,8 +39,9 @@ class list_session_attendance extends external_api {
         // ADR-031: the capability says WHAT; the classroom must also be in the caller's tenant.
         \local_sentientia_classroom\session_manager::require_session_access($params['sessionid']);
 
+        // ADR-031: only the caller's tenant's learners on this roster.
         $records = \local_sentientia_classroom\session_manager::get_session_attendance(
-            $params['sessionid']);
+            $params['sessionid'], true);
 
         $rows = [];
         foreach ($records as $r) {

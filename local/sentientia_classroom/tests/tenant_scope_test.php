@@ -13,6 +13,12 @@
  * the tenant filter; and a caller whose open_path did not resolve skipped the
  * page and picker checks altogether.
  *
+ * Wave-1 review follow-up (2026-09-25): roster reads of an OWN classroom
+ * (users, attendance, waitlist) still listed other tenants' and pathless
+ * learners; one such learner on the roster made the whole attendance Save
+ * fail; and a tenant admin could not remove such a learner from their own
+ * classroom.
+ *
  * @package    local_sentientia_classroom
  * @category   test
  * @copyright  2026 Airpay Payment Services
@@ -41,6 +47,11 @@ use local_sentientia_classroom\external\waitlist_join;
  * @covers \local_sentientia_classroom\external\list_classrooms
  * @covers \local_sentientia_classroom\external\list_classroom_users
  * @covers \local_sentientia_classroom\external\mark_session_attendance
+ * @covers \local_sentientia_classroom\external\bulk_mark_attendance
+ * @covers \local_sentientia_classroom\external\list_session_attendance
+ * @covers \local_sentientia_classroom\external\list_waitlist
+ * @covers \local_sentientia_classroom\external\unenrol_classroom_user
+ * @covers \local_sentientia_classroom\waitlist_manager
  * @group tenant_isolation
  */
 final class tenant_scope_test extends \advanced_testcase {
@@ -245,6 +256,122 @@ final class tenant_scope_test extends \advanced_testcase {
         $expected = [(int) $mine->id, (int) $theirs->id];
         sort($expected);
         $this->assertSame($expected, $all);
+    }
+
+    /**
+     * An own classroom whose roster also holds a learner from another tenant
+     * and one with no open_path - as a site admin, an approval flow or the
+     * pre-ADR-031 fail-open could leave it.
+     *
+     * @return array{0: int, 1: int, 2: \stdClass, 3: \stdClass, 4: \stdClass} classroom, session, own, foreign, pathless
+     */
+    private function mixed_roster(): array {
+        $mine = $this->classroom('/1', 'Airpay ILT');
+        $sid = $this->session($mine);
+        $own = $this->user_at('/1/2');
+        $foreign = $this->user_at('/177/178');
+        $pathless = $this->user_at(null);
+        session_manager::enrol_users($mine, [(int) $own->id, (int) $foreign->id, (int) $pathless->id]);
+        return [$mine, $sid, $own, $foreign, $pathless];
+    }
+
+    private function row_userids(array $rows, string $key = 'userid'): array {
+        $ids = array_map(fn($r) => (int) (is_array($r) ? $r[$key] : $r->$key), array_values($rows));
+        sort($ids);
+        return $ids;
+    }
+
+    public function test_an_out_of_tenant_learner_on_an_own_roster_does_not_block_the_attendance_save(): void {
+        global $DB;
+        [$mine, $sid, $own, $foreign, $pathless] = $this->mixed_roster();
+
+        $this->setUser($this->tenant_admin('/1'));
+        // What saveAttendance() sends from a grid that (pre-fix) rendered every roster row.
+        $r = bulk_mark_attendance::execute($sid, [
+            ['userid' => (int) $own->id, 'status' => session_manager::ATT_PRESENT, 'notes' => ''],
+            ['userid' => (int) $foreign->id, 'status' => session_manager::ATT_PRESENT, 'notes' => ''],
+            ['userid' => (int) $pathless->id, 'status' => session_manager::ATT_PRESENT, 'notes' => ''],
+        ]);
+
+        $this->assertSame(1, (int) $r['marked'], 'The in-tenant mark is saved.');
+        $this->assertSame(2, (int) $r['skipped'], 'The other two are skipped, not a reason to refuse the batch.');
+        $this->assertEquals(session_manager::ATT_PRESENT, $DB->get_field('local_sentientia_classroom_attendance',
+            'status', ['sessionid' => $sid, 'userid' => $own->id]));
+        $this->assertFalse($DB->record_exists('local_sentientia_classroom_attendance',
+            ['sessionid' => $sid, 'userid' => $foreign->id]), 'Never write another tenant\'s compliance evidence.');
+        $this->assertFalse($DB->record_exists('local_sentientia_classroom_attendance',
+            ['sessionid' => $sid, 'userid' => $pathless->id]));
+
+        // The single-mark endpoint still refuses to name them.
+        $this->assert_refused(fn() => mark_session_attendance::execute($sid, (int) $foreign->id, 1),
+            'mark_session_attendance (foreign learner on own roster)');
+
+        // A cross-tenant caller skips nothing.
+        $this->setAdminUser();
+        $r = bulk_mark_attendance::execute($sid, [
+            ['userid' => (int) $foreign->id, 'status' => session_manager::ATT_LATE, 'notes' => ''],
+        ]);
+        $this->assertSame(1, (int) $r['marked']);
+        $this->assertSame(0, (int) $r['skipped']);
+    }
+
+    public function test_roster_reads_of_an_own_classroom_list_only_the_callers_tenant(): void {
+        [$mine, $sid, $own, $foreign, $pathless] = $this->mixed_roster();
+        waitlist_manager::join($mine, (int) $this->user_at('/1/3')->id);
+        $foreignwaiter = $this->user_at('/177');
+        waitlist_manager::join($mine, (int) $foreignwaiter->id);
+
+        $this->setUser($this->tenant_admin('/1'));
+        $users = list_classroom_users::execute($mine);
+        $this->assertSame(1, (int) $users['total'], 'Roster total counts only the caller\'s tenant.');
+        $this->assertSame([(int) $own->id], $this->row_userids($users['rows']));
+        $att = list_session_attendance::execute($sid);
+        $this->assertSame(1, (int) $att['total']);
+        $this->assertSame([(int) $own->id], $this->row_userids($att['rows']));
+        $this->assertSame([(int) $own->id], $this->row_userids(session_manager::get_session_attendance($sid, true)),
+            'attendance.php renders (and so saves) only in-tenant rows.');
+        $wait = list_waitlist::execute($mine);
+        $this->assertSame(1, (int) $wait['total']);
+        $this->assertNotContains((int) $foreignwaiter->id, $this->row_userids($wait['rows']));
+
+        // No tenant: the roster read is empty even where the guard is bypassed.
+        $this->setUser($this->tenant_admin('garbage'));
+        $this->assertSame([], session_manager::get_enrolled_users($mine, '', 'lastname', 'ASC', 0, 100, true));
+        $this->assertSame(0, session_manager::count_enrolled_filtered($mine, '', true));
+
+        // Cross-tenant callers, and library callers with no user, see the whole roster.
+        $all = [(int) $own->id, (int) $foreign->id, (int) $pathless->id];
+        sort($all);
+        $this->setAdminUser();
+        $this->assertSame(3, (int) list_classroom_users::execute($mine)['total']);
+        $this->assertSame($all, $this->row_userids(list_session_attendance::execute($sid)['rows']));
+        $this->assertSame(2, (int) list_waitlist::execute($mine)['total']);
+        $this->setUser(null);
+        $this->assertSame($all, $this->row_userids(session_manager::get_session_attendance($sid)));
+        $this->assertSame(3, session_manager::count_enrolled_filtered($mine));
+    }
+
+    public function test_a_tenant_admin_can_remove_a_legacy_learner_from_their_own_classroom(): void {
+        global $DB;
+        [$mine, $sid, $own, $foreign, $pathless] = $this->mixed_roster();
+        $stranger = $this->user_at('/177');
+
+        $this->setUser($this->tenant_admin('/1'));
+        unenrol_classroom_user::execute($mine, (int) $foreign->id);
+        unenrol_classroom_user::execute($mine, (int) $pathless->id);
+        $this->assertFalse($DB->record_exists('local_sentientia_classroom_users',
+            ['classroomid' => $mine, 'userid' => $foreign->id]),
+            'Removing someone from your own classroom reaches into no other tenant.');
+        $this->assertFalse($DB->record_exists('local_sentientia_classroom_users',
+            ['classroomid' => $mine, 'userid' => $pathless->id]));
+
+        // Anyone not on the roster must still be in the caller's tenant.
+        $this->assert_refused(fn() => unenrol_classroom_user::execute($mine, (int) $stranger->id),
+            'unenrol of a foreign user who is not on the roster');
+        $this->assert_refused(fn() => session_manager::require_unenrol_target($mine, (int) $stranger->id),
+            'require_unenrol_target (stranger)');
+        $this->assertTrue($DB->record_exists('local_sentientia_classroom_users',
+            ['classroomid' => $mine, 'userid' => $own->id]));
     }
 
     public function test_the_site_admin_still_sees_every_tenant(): void {

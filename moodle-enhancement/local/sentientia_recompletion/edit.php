@@ -33,7 +33,6 @@ if ($id) {
 
 class local_sentientia_recompletion_edit_form extends moodleform {
     protected function definition() {
-        global $DB;
         $mform = $this->_form;
         $mform->addElement('hidden', 'id', $this->_customdata['id']);
         $mform->setType('id', PARAM_INT);
@@ -44,10 +43,12 @@ class local_sentientia_recompletion_edit_form extends moodleform {
         $mform->addRule('name', null, 'required');
 
         // Course selector — courses with completion enabled OR 0 = all.
-        // ADR-031: only courses the caller's tenant may use.
-        [$csql, $cparams] = \local_sentientia_recompletion\rule_access::course_filter('c');
-        $courses = $DB->get_records_select('course',
-            "id > 1 AND enablecompletion = 1 AND $csql", $cparams, 'fullname ASC', 'id, fullname, shortname');
+        // ADR-031: only courses the caller's tenant may use. course_options()
+        // runs the aliased query: the get_records_select('course', ...) that
+        // stood here gave course_filter('c') no alias to qualify, so the form
+        // failed with "Unknown column 'c.open_path'" for every scoped caller
+        // (2026-09-25).
+        $courses = \local_sentientia_recompletion\rule_access::course_options();
         $opts = [0 => '— All courses with completion enabled —'];
         foreach ($courses as $c) {
             $opts[$c->id] = format_string($c->fullname) . ' (' . $c->shortname . ')';
@@ -90,9 +91,13 @@ class local_sentientia_recompletion_edit_form extends moodleform {
 
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
-        // ADR-031: the course must be one the caller's tenant may use.
+        // ADR-031: the course must be one the caller's tenant may use. Check
+        // the RAW submitted value: the select drops an unlisted id, so
+        // $data['courseid'] arrives as null, which used to be saved as 0 =
+        // all courses - a tampered request silently widened the rule.
         try {
-            \local_sentientia_recompletion\rule_access::require_course((int) ($data['courseid'] ?? 0));
+            \local_sentientia_recompletion\rule_access::require_course_option(
+                $this->_form->getSubmitValue('courseid'));
         } catch (\moodle_exception $e) {
             $errors['courseid'] = get_string('error_outoftenant', 'local_sentientia_platform');
         }
@@ -109,9 +114,12 @@ if ($form->is_cancelled()) {
 
 if ($data = $form->get_data()) {
     require_sesskey();
+    // ADR-031: refuse, never coerce, a course that is not one of the options
+    // (validation() already did; this keeps the save honest on its own).
+    $courseid = \local_sentientia_recompletion\rule_access::require_course_option($data->courseid ?? null);
     $rec = (object) [
         'name'           => $data->name,
-        'courseid'       => (int) $data->courseid,
+        'courseid'       => $courseid,
         'period_days'    => (int) $data->period_days,
         'trigger_type'   => $data->trigger_type,
         'fixed_date'     => $data->fixed_date ?: null,
@@ -123,7 +131,6 @@ if ($data = $form->get_data()) {
     // ADR-031: a scoped caller's rule always carries their tenant - the
     // engine reads costcenterid 0 as EVERY tenant. Updates keep the stored
     // value; cross-tenant callers keep the old behaviour.
-    \local_sentientia_recompletion\rule_access::require_course((int) $rec->courseid);
     $costcenterid = \local_sentientia_recompletion\rule_access::costcenterid_for_save($rule->id ? $rule : null);
     if ($costcenterid !== null) {
         $rec->costcenterid = $costcenterid;

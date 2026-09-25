@@ -120,6 +120,50 @@ class path_manager {
     }
 
     /**
+     * Refuse removing $userid from a path the caller has already been proved
+     * to own (require_path_tenant()), unless the user is either in the
+     * caller's tenant or ALREADY on that path's roster.
+     *
+     * Removing someone from your own path does not reach into another
+     * tenant, so a scoped admin may clean a legacy out-of-tenant or pathless
+     * learner off their own roster (one a site admin, a request/approval flow
+     * or the pre-ADR-031 fail-open put there). Naming anyone else keeps the
+     * ADR-031 rule 5 refusal. Cross-tenant callers pass.
+     *
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_unenrol_target(int $pathid, int $userid): void {
+        global $DB;
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return;
+        }
+        if ($DB->record_exists(self::USERS_TABLE, ['pathid' => $pathid, 'userid' => $userid])) {
+            return;
+        }
+        \local_sentientia_platform\tenant::require_same_tenant_user($userid);
+    }
+
+    /**
+     * WHERE fragment over {user} $alias for a ROSTER READ (who is on a path:
+     * list_path_users, exportcsv.php mode=path_users).
+     *
+     * ADR-031 follow-up (2026-09-25): require_path_tenant() proves the path
+     * is the caller's, but its roster can still hold other tenants' or
+     * pathless learners - enrolled by a site admin, a request/approval flow
+     * or the pre-fix fail-open - and every roster read listed their names,
+     * emails, employee ids and designations to the tenant admin.
+     * $callerscope = true limits the read to the caller's tenant (path_filter:
+     * '1=1' cross-tenant, '1=0' no tenant). The web service and the export
+     * pass true; the default false keeps library callers (cron, privacy,
+     * unit tests with no user) unchanged.
+     *
+     * @return array{0: string, 1: array}
+     */
+    public static function roster_scope(bool $callerscope, string $alias = 'u'): array {
+        return $callerscope ? \local_sentientia_platform\tenant::path_filter($alias) : ['1=1', []];
+    }
+
+    /**
      * WHERE fragment for the courses the caller may put on a path.
      *
      * Cross-tenant: every course. Scoped: courses in their tenant tree,
@@ -834,14 +878,18 @@ class path_manager {
      * @param string $search    Term to filter by (LIKE-escaped)
      * @param int    $page      0-indexed
      * @param int    $perpage
+     * @param bool   $callerscope ADR-031: only learners in the caller's
+     *                            tenant (roster_scope()); the web service passes true
      * @return array  ['total' => int, 'rows' => array]
      */
     public static function get_path_users(int $pathid, string $search = '',
-                                           int $page = 0, int $perpage = 25): array {
+                                           int $page = 0, int $perpage = 25,
+                                           bool $callerscope = false): array {
         global $DB;
 
-        $where = ['lpu.pathid = :pid', 'u.deleted = 0'];
-        $params = ['pid' => $pathid];
+        [$scopesql, $scopeparams] = self::roster_scope($callerscope, 'u');
+        $where = ['lpu.pathid = :pid', 'u.deleted = 0', $scopesql];
+        $params = ['pid' => $pathid] + $scopeparams;
 
         if (!empty($search)) {
             $term = '%' . $DB->sql_like_escape($search) . '%';
