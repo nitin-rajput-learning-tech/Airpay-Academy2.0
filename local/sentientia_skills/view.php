@@ -45,11 +45,10 @@ require_capability('local/sentientia_skills:view', $ctx);
 // tenant's course list shows), and a viewer with no tenant sees none. The
 // learners tab used to list up to 200 names + emails from every tenant to
 // every holder of :view - including the student archetype.
-[$csql, $cargs] = \local_sentientia_platform\tenant::path_filter('c', 'open_path', true);
-if (!\local_sentientia_platform\tenant::is_cross_tenant()
-        && \local_sentientia_platform\tenant::scope_path() !== null) {
-    $csql = "({$csql} OR c.open_path = '')";
-}
+// 2026-09-25: the one course READ scope shared with skills_manager (legacy
+// NULL and '' paths alike), rather than a copy of it here.
+$cscope = \local_sentientia_skills\skills_manager::course_read_scope_sql('c', 'skview');
+[$csql, $cargs] = $cscope ?? ['1=0', []];
 
 // Counts for tab badges.
 $count_levels = (int) $DB->count_records('local_sentientia_skill_levels',

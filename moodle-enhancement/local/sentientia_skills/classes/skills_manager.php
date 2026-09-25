@@ -79,24 +79,102 @@ class skills_manager {
             ['sid' => $skillid] + $uargs);
     }
 
+    // ───────────────────────────────────────────────────────────────────
+    // ADR-031 course scope - ONE rule for legacy courses (2026-09-25)
+    //
+    // A legacy course has no open_path: NULL, or '' (both occur; they mean
+    // the same). Every tenant's course lists show it, so:
+    //   READ  (a course's name, its skill mappings, a recommendation, the
+    //         skill view's Courses tab): own tenant + legacy courses.
+    //   WRITE (mapping or unmapping a skill, and the mapping page's pickers,
+    //         which exist to choose what to map): own tenant only - a write
+    //         to a legacy course reaches every tenant.
+    // Cross-tenant callers: every course, both ways. No tenant: nothing.
+    // Until 2026-09-25 view.php read legacy courses, course_scope_sql()
+    // hid them from every read, and skillsai read NULL but not ''.
+    // ───────────────────────────────────────────────────────────────────
+
+    /**
+     * ADR-031: WHERE fragment for READING courses on alias $alias - the
+     * user's tenant path and its '/'-bounded descendants, plus legacy
+     * courses whose open_path is NULL or ''; '1=1' for a cross-tenant user;
+     * null (show nothing) for a user with no tenant.
+     *
+     * @param string         $alias course table alias
+     * @param string         $tag   unique parameter-name tag (several may share a query)
+     * @param \stdClass|null $user  whose scope (id + open_path); defaults to $USER
+     * @return array{0: string, 1: array}|null
+     */
+    public static function course_read_scope_sql(string $alias, string $tag = 'skcr',
+                                                 ?\stdClass $user = null): ?array {
+        $scope = \local_sentientia_platform\tenant::scope_path($user);
+        if ($scope === null) {
+            return null;
+        }
+        if ($scope === '') {
+            return ['1=1', []];
+        }
+        $col = $alias === '' ? 'open_path' : "{$alias}.open_path";
+        [$sql, $args] = \local_sentientia_platform\tenant::path_descendant_filter(
+            $scope, $alias, 'open_path', $tag, true);
+        return ["({$sql} OR {$col} = '')", $args];
+    }
+
+    /**
+     * ADR-031: WHERE fragment for courses the current user may WRITE to on
+     * alias $alias - their tenant path and its '/'-bounded descendants only
+     * (never a legacy course); '1=1' cross-tenant; null for no tenant.
+     *
+     * @param string $alias course table alias
+     * @param string $tag   unique parameter-name tag
+     * @return array{0: string, 1: array}|null
+     */
+    public static function course_write_scope_sql(string $alias, string $tag = 'skcw'): ?array {
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === null) {
+            return null;
+        }
+        if ($scope === '') {
+            return ['1=1', []];
+        }
+        return \local_sentientia_platform\tenant::path_descendant_filter(
+            $scope, $alias, 'open_path', $tag);
+    }
+
+    /**
+     * ADR-031: may the current user write a course-skill mapping on this
+     * course? {@see self::course_write_scope_sql()}.
+     *
+     * @param int $courseid
+     * @return bool
+     */
+    public static function can_write_course(int $courseid): bool {
+        global $DB;
+        $scope = self::course_write_scope_sql('c');
+        if ($scope === null || $courseid <= 0) {
+            return false;
+        }
+        [$tsql, $targs] = $scope;
+        return $DB->record_exists_sql(
+            "SELECT 1 FROM {course} c WHERE c.id = :skwcourseid AND {$tsql}",
+            ['skwcourseid' => $courseid] + $targs);
+    }
+
     /**
      * ADR-031: refuse a course-skill mapping write on a course outside the
-     * caller's tenant. A legacy course with no open_path is listed for every
-     * tenant, so writing to it reaches every tenant: cross-tenant only.
+     * caller's tenant. A legacy course (open_path NULL or '') is listed for
+     * every tenant, so writing to it reaches every tenant: cross-tenant only.
      *
      * @param int $courseid
      * @throws \moodle_exception error_outoftenant
      */
     public static function require_course_write_scope(int $courseid): void {
-        global $DB;
         if (\local_sentientia_platform\tenant::is_cross_tenant()) {
             return;
         }
-        $path = rtrim(trim((string) $DB->get_field('course', 'open_path', ['id' => $courseid])), '/');
-        if ($path === '') {
+        if (!self::can_write_course($courseid)) {
             throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
         }
-        \local_sentientia_platform\tenant::require_path_access($path);
     }
 
     /**
@@ -494,9 +572,33 @@ class skills_manager {
 
     /**
      * Get recommended courses to fill skill gaps.
+     *
+     * ADR-031 (2026-09-25): only courses the learner can take - their own
+     * tenant's and legacy no-path courses ({@see self::course_read_scope_sql()});
+     * every course for a cross-tenant learner, none for a learner with no
+     * tenant. When somebody else is looking (a manager on skills/index.php,
+     * a profile), the list is also held to the VIEWER's read scope, so it
+     * can never name a course they could not see. The query used to join
+     * course_skills to course with no tenant filter, recommending /177
+     * course names and links to a /1 learner.
      */
     public static function get_gap_courses(int $userid, int $limit = 5): array {
-        global $DB;
+        global $DB, $USER;
+
+        $learner = $DB->get_record('user', ['id' => $userid], 'id, open_path');
+        $scope = $learner ? self::course_read_scope_sql('c', 'skgapl', $learner) : null;
+        if ($scope === null) {
+            return [];
+        }
+        [$scopesql, $scopeargs] = $scope;
+        if ($userid !== (int) ($USER->id ?? 0)) {
+            $viewerscope = self::course_read_scope_sql('c', 'skgapv');
+            if ($viewerscope === null) {
+                return [];
+            }
+            $scopesql .= ' AND ' . $viewerscope[0];
+            $scopeargs += $viewerscope[1];
+        }
 
         $analysis = self::get_gap_analysis($userid);
         if (!$analysis['has_data']) {
@@ -517,6 +619,8 @@ class skills_manager {
         // Find courses that teach the gap skills and the user hasn't completed.
         $recommendations = [];
         foreach ($gap_skill_ids as $gap) {
+            // The tenant scope filters BEFORE the per-skill limit of 2, so
+            // out-of-tenant courses cannot crowd the learner's own out.
             $courses = $DB->get_records_sql(
                 "SELECT cs.courseid, c.fullname, c.shortname, cs.teaches_level, cs.skillid
                    FROM {local_sentientia_course_skills} cs
@@ -524,9 +628,11 @@ class skills_manager {
               LEFT JOIN {course_completions} cc ON cc.course = c.id AND cc.userid = :uid
                   WHERE cs.skillid = :sid AND cs.teaches_level >= :targetlvl
                     AND (cc.timecompleted IS NULL)
-               ORDER BY cs.teaches_level DESC
-                  LIMIT 2",
-                ['uid' => $userid, 'sid' => $gap['skillid'] ?? 0, 'targetlvl' => $gap['required_level'] ?? 1]);
+                    AND {$scopesql}
+               ORDER BY cs.teaches_level DESC, c.id ASC",
+                ['uid' => $userid, 'sid' => $gap['skillid'] ?? 0, 'targetlvl' => $gap['required_level'] ?? 1]
+                    + $scopeargs,
+                0, 2);
 
             foreach ($courses as $course) {
                 $recommendations[] = [
@@ -1024,7 +1130,10 @@ class skills_manager {
         }
         // ADR-031: a scoped caller finds only their own tenant's courses (the
         // picker listed every tenant's course names); none without a tenant.
-        $scope = self::course_scope_sql('c');
+        // The picker chooses what to MAP, so it uses the write scope: a legacy
+        // course (no open_path) is not offered to a scoped caller, who could
+        // not map it (require_course_write_scope()).
+        $scope = self::course_write_scope_sql('c');
         if ($scope === null) {
             return [];
         }
@@ -1042,9 +1151,9 @@ class skills_manager {
 
     /**
      * The course-mapping page's initial picker: the caller's visible courses
-     * with the most skills mapped first, scoped like search_courses(). It
-     * used to be an unscoped query in course_mapping.php listing the top 25
-     * of every tenant's courses.
+     * with the most skills mapped first, scoped like search_courses() (the
+     * WRITE scope - what the caller may map). It used to be an unscoped query
+     * in course_mapping.php listing the top 25 of every tenant's courses.
      *
      * @param int $limit
      * @return list<array{id:int, fullname:string, shortname:string,
@@ -1052,7 +1161,7 @@ class skills_manager {
      */
     public static function top_courses(int $limit = 25): array {
         global $DB;
-        $scope = self::course_scope_sql('c');
+        $scope = self::course_write_scope_sql('c');
         if ($scope === null) {
             return [];
         }
@@ -1069,16 +1178,18 @@ class skills_manager {
 
     /**
      * ADR-031: may the current user see this course in the mapping UI
-     * (its name and its skill mappings)? The same scope as search_courses():
-     * their own tenant's courses, every course for a cross-tenant caller,
-     * none without a tenant.
+     * (its name and its skill mappings)? The READ scope
+     * ({@see self::course_read_scope_sql()}): their own tenant's courses and
+     * legacy courses with no open_path, every course for a cross-tenant
+     * caller, none without a tenant. Mapping onto a legacy course is still
+     * refused to a scoped caller ({@see self::require_course_write_scope()}).
      *
      * @param int $courseid
      * @return bool
      */
     public static function can_view_course(int $courseid): bool {
         global $DB;
-        $scope = self::course_scope_sql('c');
+        $scope = self::course_read_scope_sql('c', 'skc');
         if ($scope === null || $courseid <= 0) {
             return false;
         }
@@ -1086,28 +1197,6 @@ class skills_manager {
         return $DB->record_exists_sql(
             "SELECT 1 FROM {course} c WHERE c.id = :skccourseid AND {$tsql}",
             ['skccourseid' => $courseid] + $targs);
-    }
-
-    /**
-     * ADR-031: WHERE fragment scoping a course query on alias $alias:
-     * '1=1' for a cross-tenant caller, the caller's tenant path and its
-     * '/'-bounded descendants otherwise (a legacy course with no open_path
-     * is not shown to a scoped caller), or null - show nothing - for a
-     * caller with no tenant.
-     *
-     * @param string $alias course table alias
-     * @return array{0: string, 1: array}|null
-     */
-    private static function course_scope_sql(string $alias): ?array {
-        $scope = \local_sentientia_platform\tenant::scope_path();
-        if ($scope === null) {
-            return null;
-        }
-        if ($scope === '') {
-            return ['1=1', []];
-        }
-        return \local_sentientia_platform\tenant::path_descendant_filter(
-            $scope, $alias, 'open_path', 'skc');
     }
 
     /** Shape course rows for the picker (search_courses / top_courses). */

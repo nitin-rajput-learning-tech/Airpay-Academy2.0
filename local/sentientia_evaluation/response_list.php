@@ -33,7 +33,12 @@ require_capability('local/sentientia_evaluation:view', $ctx);
 // not declared, so today it is dead for everyone).
 \local_sentientia_evaluation\evaluation_manager::require_evaluation_access($evaluation);
 
-$is_anonymous = (int) ($evaluation->anonymous ?? 0) === 1;
+// 2026-09-25: sticky - anonymous now, answered anonymously before, or with an
+// anonymous question (evaluation_manager::identity_protected()). Unticking
+// the evaluation's flag used to bring names, emails and employee ids back
+// here, each beside its minute-exact submission time; for these evaluations
+// the time is shown to the day only.
+$is_anonymous = \local_sentientia_evaluation\evaluation_manager::identity_protected($evaluation);
 
 // Pull all responses with associated user info.
 $rows = $DB->get_records_sql(
@@ -50,7 +55,8 @@ $shape = [];
 foreach ($rows as $r) {
     $shape[] = [
         'id'           => (int) $r->id,
-        'submitted_at' => userdate($r->timesubmitted, '%d %b %Y %H:%M'),
+        'submitted_at' => \local_sentientia_evaluation\evaluation_manager::submitted_label(
+            (int) $r->timesubmitted, $is_anonymous),
         'user_name'    => $is_anonymous ? '(anonymous)'
                                         : trim(($r->firstname ?? '') . ' ' . ($r->lastname ?? '')),
         'user_email'   => $is_anonymous ? '' : (string) ($r->email ?? ''),

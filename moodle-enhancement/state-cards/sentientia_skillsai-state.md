@@ -232,3 +232,12 @@ CONFIRMED.
 - **One tenant-root parser.** `taxonomy_manager::tenant_root_for()` and `gap_engine::tenant_root_for()` used a plain `(int)` cast, so `/1x` read as tenant 1 while gaps.php and taxonomy.php (`tenant::root_for_user()`, `ctype_digit`) read it as none. Both now delegate to `tenant::root_for_user()`, so `create_pending`, `load_for_actor`, `list_for_actor`, `compute_for_user` and `rebuild_for_user` agree with the pages.
 - **Tests:** `test_extract_course_picker_is_tenant_scoped` and `test_tenant_root_agrees_with_the_platform_helper` in `tests/tenant_scope_test.php`.
 - **Deploy note:** a `:crosstenant` holder without `:manage_all` stays tenant-scoped here, by design (ADR-031 decision 3). See the skills state card for the platform L&D role grants Nitin must make before UAT.
+
+## 2026-09-25 - ADR-031 fix-forward 2: tagging a job is a write (no version change; stays 2026092500)
+
+From the adversarial review of claude/adr031-assessment-ff.
+
+- **Legacy courses.** `course_options()` / `course_in_scope()` used `tenant::path_filter('c', 'open_path', true)`: a scoped caller could tag a job with a NULL-path legacy course but not a ''-path one. Tagging is a write, so both now use `course_tag_scope_sql()` (`tenant::scope_path()` + `path_descendant_filter()`): own tenant only for a scoped caller, every course cross-tenant, nothing without a tenant - the same rule as sentientia_skills' course mapping. The picker offers exactly what the submit accepts.
+- **`create_pending()`** refuses a `courseid` that fails `course_in_scope()` (`error_outoftenant`), so the gate no longer lives only in extract.php. `courseid` 0 (untagged) needs no scope.
+- **Tests:** `test_extract_course_picker_is_tenant_scoped` now asserts legacy NULL and '' courses are neither offered nor taggable by a scoped caller (it asserted NULL stayed pickable); new `test_tagging_a_job_with_a_course_is_a_scoped_write`.
+- **Not run here:** PHPUnit.

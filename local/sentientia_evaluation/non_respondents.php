@@ -42,7 +42,9 @@ $PAGE->set_heading(get_string('non_respondents_heading',
 $status = ($tab === 'responded') ? 'responded' : 'assigned';
 // 2026-09-25: an anonymous evaluation's 'responded' list (names, emails and
 // the minute each person responded) is withheld - the time could be matched
-// to the anonymous answer. The badge count stays.
+// to the anonymous answer. The badge count stays. Sticky: withheld too once
+// any response was collected anonymously or any question is anonymous, so
+// unticking "Collect responses anonymously" does not bring the list back.
 $responded_hidden = \local_sentientia_evaluation\evaluation_manager::respondents_hidden(
     $evaluation, $status);
 $rows = \local_sentientia_evaluation\evaluation_manager::list_assignments_for_view(

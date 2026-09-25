@@ -411,7 +411,20 @@ class evaluation_manager {
         if (isset($data->days_after))   $record->days_after = max(0, (int) $data->days_after);
         if (isset($data->costcenterid)) $record->costcenterid = (int) $data->costcenterid;
         if (isset($data->status))       $record->status = (int) $data->status;
-        if (isset($data->anonymous))    $record->anonymous = (int) $data->anonymous;
+        if (isset($data->anonymous)) {
+            // 2026-09-25: anonymity is a promise made to the people who have
+            // already answered. Once responses exist it cannot be withdrawn:
+            // unticking it used to reopen the Responded tab (names, emails
+            // and the minute each person responded) next to their anonymous
+            // answers. Every "=== 1" check reads any other value as "not
+            // anonymous", so the stored value is normalised to 0/1.
+            $anonymous = ((int) $data->anonymous === 1) ? 1 : 0;
+            if ($anonymous === 0 && (int) ($existing->anonymous ?? 0) === 1
+                    && self::has_submitted_responses($id)) {
+                throw new \moodle_exception('error_anonymity_locked', 'local_sentientia_evaluation');
+            }
+            $record->anonymous = $anonymous;
+        }
 
         // P1 #17 — time-window + multiple-submit fields.
         if (property_exists($data, 'timeopen')) {
@@ -798,7 +811,19 @@ class evaluation_manager {
         }
         if (isset($data->questiontext)) $record->questiontext = trim($data->questiontext);
         if (isset($data->required))     $record->required = (int) $data->required;
-        if (isset($data->anonymous))    $record->anonymous = (int) $data->anonymous;
+        if (isset($data->anonymous)) {
+            // 2026-09-25: the same promise per question. Unticking an
+            // anonymous question after responses are in used to put a name
+            // on every one of its answers (response_to_csv_row() hides the
+            // respondent only while some question is anonymous).
+            $anonymous = ((int) $data->anonymous === 1) ? 1 : 0;
+            if ($anonymous === 0 && (int) ($existing->anonymous ?? 0) === 1
+                    && self::has_submitted_responses((int) $existing->evaluationid)) {
+                throw new \moodle_exception('error_question_anonymity_locked',
+                    'local_sentientia_evaluation');
+            }
+            $record->anonymous = $anonymous;
+        }
         if (isset($data->sortorder))    $record->sortorder = (int) $data->sortorder;
 
         // P1 #18 — Re-derive the options JSON if the type or option
@@ -1219,6 +1244,82 @@ class evaluation_manager {
     }
 
     /**
+     * Must respondent identity stay hidden for this evaluation? STICKY.
+     *
+     * True when ANY of these holds:
+     *   - the evaluation is anonymous now;
+     *   - any stored response was collected anonymously - submit_response()
+     *     stores those with userid 0, and nothing else ever does, so the
+     *     rows remember the promise even if the flag was later switched off
+     *     (update() refuses that since 2026-09-25, but earlier data may
+     *     carry it);
+     *   - any question is anonymous (response_to_csv_row() already hides the
+     *     respondent for the whole row then).
+     *
+     * Until 2026-09-25 only the evaluation's CURRENT flag was read, so an
+     * admin could untick "Collect responses anonymously" after responses
+     * were in and read the Responded tab (names, emails, responded_at to the
+     * minute) against the anonymous answers.
+     *
+     * @param object $evaluation record carrying id and anonymous
+     * @return bool
+     */
+    public static function identity_protected(object $evaluation): bool {
+        global $DB;
+        if ((int) ($evaluation->anonymous ?? 0) === 1) {
+            return true;
+        }
+        $evaluationid = (int) ($evaluation->id ?? 0);
+        if ($evaluationid <= 0) {
+            return false;
+        }
+        return $DB->record_exists(self::RESPONSES_TABLE, ['evaluationid' => $evaluationid, 'userid' => 0])
+            || $DB->record_exists(self::QUESTIONS_TABLE, ['evaluationid' => $evaluationid, 'anonymous' => 1]);
+    }
+
+    /**
+     * Has anybody actually submitted this evaluation? The trigger queue's
+     * pending "shell" rows (timesubmitted 0, see evaluation_engine) are not
+     * responses.
+     *
+     * @param int $evaluationid
+     * @return bool
+     */
+    public static function has_submitted_responses(int $evaluationid): bool {
+        global $DB;
+        return $DB->record_exists_select(self::RESPONSES_TABLE,
+            'evaluationid = :eid AND timesubmitted > 0', ['eid' => $evaluationid]);
+    }
+
+    /**
+     * May this evaluation no longer be made non-anonymous? True when it is
+     * anonymous and somebody has already answered it (update() refuses the
+     * change; edit_evaluation shows the reason).
+     *
+     * @param int $evaluationid
+     * @return bool
+     */
+    public static function anonymity_locked(int $evaluationid): bool {
+        global $DB;
+        return (int) $DB->get_field(self::TABLE, 'anonymous', ['id' => $evaluationid]) === 1
+            && self::has_submitted_responses($evaluationid);
+    }
+
+    /**
+     * The same for one question: anonymous, and its evaluation already has
+     * responses (update_question() refuses; edit_question shows the reason).
+     *
+     * @param int $questionid
+     * @return bool
+     */
+    public static function question_anonymity_locked(int $questionid): bool {
+        global $DB;
+        $q = $DB->get_record(self::QUESTIONS_TABLE, ['id' => $questionid], 'id, evaluationid, anonymous');
+        return $q && (int) $q->anonymous === 1
+            && self::has_submitted_responses((int) $q->evaluationid);
+    }
+
+    /**
      * Is the list of who has responded withheld for this evaluation?
      *
      * An anonymous evaluation stores its responses with userid 0, but the
@@ -1226,14 +1327,62 @@ class evaluation_manager {
      * to the minute). Listing them next to the anonymous answers, whose
      * timesubmitted is the same moment, would let the admin put a name to
      * each answer. So the 'responded' list is withheld; the pending list
-     * (who still has to be chased) is not.
+     * (who still has to be chased) is not. Withheld whenever
+     * {@see self::identity_protected()} - not just while the evaluation's
+     * anonymous flag happens to be set.
      *
-     * @param \stdClass $evaluation record carrying anonymous
+     * @param \stdClass $evaluation record carrying id and anonymous
      * @param string    $status 'assigned' | 'responded' | 'expired'
      * @return bool
      */
     public static function respondents_hidden(\stdClass $evaluation, string $status): bool {
-        return $status === 'responded' && (int) ($evaluation->anonymous ?? 0) === 1;
+        return $status === 'responded' && self::identity_protected($evaluation);
+    }
+
+    /**
+     * How a submission time is shown next to a response: to the minute
+     * normally, to the DAY for an evaluation whose respondents are
+     * protected ({@see self::identity_protected()}) - a minute-exact time
+     * is what matches an anonymous answer to a named log line, notification
+     * or assignment row.
+     *
+     * @param int  $timestamp
+     * @param bool $identityprotected
+     * @param bool $iso true for the CSV's 'Y-m-d[ H:i]' form, false for the
+     *                  pages' 'd M Y[ H:i]' form
+     * @return string
+     */
+    public static function submitted_label(int $timestamp, bool $identityprotected, bool $iso = false): string {
+        if ($iso) {
+            return userdate($timestamp, $identityprotected ? '%Y-%m-%d' : '%Y-%m-%d %H:%M');
+        }
+        return userdate($timestamp, $identityprotected ? '%d %b %Y' : '%d %b %Y %H:%M');
+    }
+
+    /**
+     * The date_from / date_to filters of responses.php and exportcsv.php,
+     * snapped to whole days: date_from to the start of its day, date_to to
+     * 23:59:59 of its day (server time, as before).
+     *
+     * The filters are documented as YYYY-MM-DD, and for that input the
+     * result is unchanged. But they were parsed with a bare strtotime(), so
+     * '2026-09-25 14:31' filtered to the minute: narrowing the window until
+     * one response is left recovers the minute-exact submission time that
+     * submitted_label() withholds for a protected evaluation.
+     *
+     * @param string $datefrom raw date_from ('' = none)
+     * @param string $dateto   raw date_to ('' = none)
+     * @return array{date_from?: int, date_to?: int}
+     */
+    public static function response_filter_days(string $datefrom, string $dateto): array {
+        $out = [];
+        if (trim($datefrom) !== '' && ($ts = strtotime($datefrom)) !== false) {
+            $out['date_from'] = (int) strtotime(date('Y-m-d', $ts) . ' 00:00:00');
+        }
+        if (trim($dateto) !== '' && ($ts = strtotime($dateto)) !== false) {
+            $out['date_to'] = (int) strtotime(date('Y-m-d', $ts) . ' 23:59:59');
+        }
+        return $out;
     }
 
     /**
@@ -1373,8 +1522,11 @@ class evaluation_manager {
         // RESPONSES_TABLE stored userid=0, an admin who knows when the
         // response landed could still cross-reference logs. Best policy:
         // never expose responder identity in the notification when
-        // anonymous=1.
-        $is_anonymous = ((int) $eval->anonymous === 1);
+        // anonymous=1. 2026-09-25: nor when any question is anonymous, or
+        // earlier responses were collected anonymously - a named
+        // notification stamped with the submission minute would put a name
+        // on that anonymous answer ({@see self::identity_protected()}).
+        $is_anonymous = self::identity_protected($eval);
         if ($is_anonymous || $stored_userid === 0) {
             $responder_label = get_string('eval_response_responder_anonymous',
                 'local_sentientia_evaluation');
@@ -2057,17 +2209,23 @@ class evaluation_manager {
      * columns (Date, User, Email, Course, Program, Classroom).
      * Anonymous evaluations leave User/Email blank.
      *
-     * @param object $response  raw response row from DB
-     * @param array  $questions ordered question records (from get_questions)
-     * @param object $eval      parent evaluation record
+     * 2026-09-25: for an evaluation whose respondents are protected
+     * ({@see self::identity_protected()} - anonymous now, answered
+     * anonymously before, or with an anonymous question) every row hides
+     * the respondent, and the Submitted column is the DAY, not the minute:
+     * a minute-exact time is what matches an anonymous answer to a name.
+     *
+     * @param object    $response  raw response row from DB
+     * @param array     $questions ordered question records (from get_questions)
+     * @param object    $eval      parent evaluation record
+     * @param bool|null $identityprotected identity_protected($eval), when the
+     *                  caller has it already (exportcsv.php, once per export);
+     *                  null = work it out here
      * @return array  row of strings
      */
     public static function response_to_csv_row(object $response, array $questions,
-                                                object $eval): array {
+                                                object $eval, ?bool $identityprotected = null): array {
         global $DB;
-
-        $row = [];
-        $row[] = userdate((int) $response->timesubmitted, '%Y-%m-%d %H:%M');
 
         // Phase G.2 (2026-05-08) — when any question in the form is
         // anonymous, hide the responder identity for the whole row to
@@ -2080,12 +2238,23 @@ class evaluation_manager {
                 break;
             }
         }
+        $protected = $any_anonymous_q
+            || ($identityprotected ?? self::identity_protected($eval));
+
+        $row = [];
+        $row[] = self::submitted_label((int) $response->timesubmitted, $protected, true);
 
         if ((int) $eval->anonymous === 1 || (int) $response->userid === 0) {
             $row[] = '(anonymous)';
             $row[] = '';
         } else if ($any_anonymous_q) {
             $row[] = '(question-anonymous)';
+            $row[] = '';
+        } else if ($protected) {
+            // A named row in an evaluation that collected anonymous answers
+            // before its flag was switched off: naming it would single out
+            // the unnamed rows by elimination.
+            $row[] = '(anonymous)';
             $row[] = '';
         } else {
             $u = \core_user::get_user((int) $response->userid, 'id, firstname, lastname, email');

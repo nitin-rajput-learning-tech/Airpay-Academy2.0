@@ -39,15 +39,10 @@ $eval = $DB->get_record('local_sentientia_evaluation',
 \local_sentientia_evaluation\evaluation_manager::require_evaluation_access($eval);
 
 // Build the filter array. Date strings come in as YYYY-MM-DD; parse to ts.
-$filters = ['evaluationid' => $evaluationid];
-if (!empty($date_from)) {
-    $ts = strtotime($date_from);
-    if ($ts !== false) { $filters['date_from'] = $ts; }
-}
-if (!empty($date_to)) {
-    $ts = strtotime($date_to . ' 23:59:59');
-    if ($ts !== false) { $filters['date_to'] = $ts; }
-}
+// 2026-09-25: snapped to whole days - a time in date_from used to filter to
+// the minute and recover the submission time the CSV withholds.
+$filters = ['evaluationid' => $evaluationid]
+    + \local_sentientia_evaluation\evaluation_manager::response_filter_days($date_from, $date_to);
 if ($courseid    > 0) { $filters['courseid']    = $courseid; }
 if ($programid   > 0) { $filters['programid']   = $programid; }
 if ($classroomid > 0) { $filters['classroomid'] = $classroomid; }
@@ -72,10 +67,16 @@ $out = fopen('php://output', 'w');
 // UTF-8 BOM so Excel opens it with the right encoding.
 fwrite($out, "\xEF\xBB\xBF");
 
+// 2026-09-25: worked out once per export. For a protected evaluation (anonymous
+// now, answered anonymously before, or with an anonymous question) every row
+// hides the respondent and carries the day, not the minute, it was submitted.
+$identityprotected = \local_sentientia_evaluation\evaluation_manager::identity_protected($eval);
+
 fputcsv($out, \local_sentientia_evaluation\evaluation_manager::csv_header_row($questions));
 foreach ($responses as $r) {
     fputcsv($out,
-        \local_sentientia_evaluation\evaluation_manager::response_to_csv_row($r, $questions, $eval));
+        \local_sentientia_evaluation\evaluation_manager::response_to_csv_row($r, $questions, $eval,
+            $identityprotected));
 }
 fclose($out);
 

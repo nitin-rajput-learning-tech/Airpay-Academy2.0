@@ -35,7 +35,10 @@ require_capability('local/sentientia_evaluation:view', $ctx);
 \local_sentientia_evaluation\evaluation_manager::require_evaluation_access($evaluation);
 
 // Anonymous check — if evaluation is anonymous, don't reveal userid.
-$is_anonymous_eval = (int) ($evaluation->anonymous ?? 0) === 1;
+// 2026-09-25: sticky (evaluation_manager::identity_protected()) - anonymous
+// now, answered anonymously before, or with an anonymous question, whose
+// answer is on this very page. The submission time is then shown to the day.
+$is_anonymous_eval = \local_sentientia_evaluation\evaluation_manager::identity_protected($evaluation);
 $user = null;
 if (!$is_anonymous_eval && $response->userid) {
     $user = $DB->get_record('user', ['id' => $response->userid],
@@ -132,7 +135,10 @@ $data = [
     'response_id'   => (int) $response->id,
     'eval_name'     => format_string($evaluation->name),
     'eval_id'       => (int) $evaluation->id,
-    'submitted_at'  => userdate($response->timesubmitted),
+    'submitted_at'  => $is_anonymous_eval
+        ? \local_sentientia_evaluation\evaluation_manager::submitted_label(
+            (int) $response->timesubmitted, true)
+        : userdate($response->timesubmitted),
     'kirkpatrick'   => (string) ($evaluation->kirkpatrick_level ?? '—'),
 
     'is_anonymous'  => $is_anonymous_eval,

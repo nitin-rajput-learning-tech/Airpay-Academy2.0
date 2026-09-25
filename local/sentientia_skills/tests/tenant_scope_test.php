@@ -16,6 +16,11 @@ defined('MOODLE_INTERNAL') || die();
  * designations - is pinned here to the caller's tenant; a caller with no
  * tenant gets nothing; a site admin is unchanged.
  *
+ * 2026-09-25 fix-forward: gap-course recommendations are scoped for the
+ * learner (they named other tenants' courses), and a legacy course with no
+ * path (NULL or '') follows ONE rule - readable by every tenant, writable
+ * (mapped, unmapped, offered by the mapping pickers) only cross-tenant.
+ *
  * @package    local_sentientia_skills
  * @category   test
  * @copyright  2026 Airpay Payment Services
@@ -23,6 +28,7 @@ defined('MOODLE_INTERNAL') || die();
  * @covers     \local_sentientia_skills\skills_manager
  * @covers     \local_sentientia_skills\external\self_rate_skill
  * @covers     \local_sentientia_skills\external\save_course_skill
+ * @covers     \local_sentientia_skills\external\delete_course_skill
  * @covers     \local_sentientia_skills\external\delete_skill
  * @covers     \local_sentientia_skills\external\list_course_skills
  * @group      tenant_isolation
@@ -81,9 +87,10 @@ final class tenant_scope_test extends \advanced_testcase {
         return $u;
     }
 
-    private function course_at(string $path): int {
+    /** A course at $path; '' and null are the two shapes of a legacy course with no path. */
+    private function course_at(?string $path): int {
         global $DB;
-        $course = $this->getDataGenerator()->create_course(['fullname' => 'Course ' . $path]);
+        $course = $this->getDataGenerator()->create_course(['fullname' => 'Course ' . ($path ?? 'legacy')]);
         $DB->set_field('course', 'open_path', $path, ['id' => $course->id]);
         return (int) $course->id;
     }
@@ -187,19 +194,42 @@ final class tenant_scope_test extends \advanced_testcase {
         $own = $this->course_at('/1/2');
         $foreign = $this->course_at('/177');
         $legacy = $this->course_at('');
+        $legacynull = $this->course_at(null);
         $this->setUser($this->tenant_admin('/1', true));
         $_POST['sesskey'] = sesskey();
 
-        foreach ([$foreign, $legacy] as $courseid) {
+        foreach ([$foreign, $legacy, $legacynull] as $courseid) {
             $this->assert_outoftenant(fn() => external\save_course_skill::execute($courseid, $skillid, 2),
-                'A /1 :manage holder must not map skills onto a course outside /1.');
+                'A /1 :manage holder must not map skills onto a course outside /1 - nor onto a legacy '
+                . 'course with no path (NULL or \'\'), which every tenant\'s course list shows.');
             $this->assertFalse($DB->record_exists('local_sentientia_course_skills', ['courseid' => $courseid]));
+            $this->assertFalse(skills_manager::can_write_course($courseid));
         }
         $this->assertGreaterThan(0, external\save_course_skill::execute($own, $skillid, 2)['id']);
+        $this->assertTrue(skills_manager::can_write_course($own));
+
+        // Unmapping is a write too: mappings a cross-tenant admin made on the
+        // other-tenant and legacy courses stay put.
+        $this->setAdminUser();
+        $mappings = [];
+        foreach ([$foreign, $legacy, $legacynull] as $courseid) {
+            $mappings[$courseid] = skills_manager::save_course_skill($courseid, $skillid, 3);
+        }
+        $this->setUser($this->tenant_admin('/1', true));
+        $_POST['sesskey'] = sesskey();
+        foreach ($mappings as $courseid => $mappingid) {
+            $this->assert_outoftenant(fn() => external\delete_course_skill::execute($mappingid),
+                'A /1 :manage holder must not unmap skills from a course outside /1, legacy included.');
+            $this->assertTrue($DB->record_exists('local_sentientia_course_skills', ['id' => $mappingid]));
+        }
 
         $this->setAdminUser();
         $_POST['sesskey'] = sesskey();
         $this->assertGreaterThan(0, external\save_course_skill::execute($foreign, $skillid, 2)['id']);
+        $this->assertGreaterThan(0, external\save_course_skill::execute($legacynull, $skillid, 2)['id'],
+            'A cross-tenant caller may still map a legacy course.');
+        external\delete_course_skill::execute($mappings[$legacy]);
+        $this->assertFalse($DB->record_exists('local_sentientia_course_skills', ['id' => $mappings[$legacy]]));
     }
 
     public function test_deleting_a_skill_is_cross_tenant_only(): void {
@@ -252,5 +282,124 @@ final class tenant_scope_test extends \advanced_testcase {
         $this->assertContains($foreign, array_column(skills_manager::top_courses(), 'id'));
         $this->assertNotNull(skills_manager::get_course_summary($foreign));
         $this->assertCount(1, skills_manager::list_course_skills($foreign));
+    }
+
+    public function test_legacy_courses_are_readable_but_not_writable(): void {
+        global $DB;
+        $skillid = $this->seed_skill();
+        $own = $this->course_at('/1/2');
+        $foreign = $this->course_at('/177');
+        $legacy = $this->course_at('');
+        $legacynull = $this->course_at(null);
+        $this->setAdminUser();
+        foreach ([$own, $foreign, $legacy, $legacynull] as $courseid) {
+            skills_manager::save_course_skill($courseid, $skillid, 2);
+        }
+        // The read scope view.php's Courses tab and its count use.
+        $readable = function(): array {
+            global $DB;
+            [$sql, $args] = skills_manager::course_read_scope_sql('c', 'skt') ?? ['1=0', []];
+            return array_map('intval', array_keys($DB->get_records_sql(
+                "SELECT c.id FROM {course} c WHERE c.id <> :siteid AND {$sql}",
+                ['siteid' => SITEID] + $args)));
+        };
+
+        $this->setUser($this->tenant_admin('/1', true));
+        // READS: own tenant + legacy, NULL and '' alike (view.php's Courses
+        // tab, the mapping page's header and list, list_course_skills).
+        $ids = $readable();
+        foreach ([$own, $legacy, $legacynull] as $courseid) {
+            $this->assertContains($courseid, $ids);
+            $this->assertTrue(skills_manager::can_view_course($courseid));
+            $this->assertNotNull(skills_manager::get_course_summary($courseid));
+            $this->assertCount(1, skills_manager::list_course_skills($courseid));
+        }
+        $this->assertNotContains($foreign, $ids);
+        $this->assertFalse(skills_manager::can_view_course($foreign));
+        // WRITES: own tenant only - and the pickers, which choose what to
+        // map, offer nothing the mapping would refuse.
+        $picked = array_merge(array_column(skills_manager::top_courses(), 'id'),
+            array_column(skills_manager::search_courses('Course'), 'id'));
+        $this->assertContains($own, $picked);
+        foreach ([$legacy, $legacynull, $foreign] as $courseid) {
+            $this->assertNotContains($courseid, $picked);
+            $this->assertFalse(skills_manager::can_write_course($courseid));
+        }
+
+        $this->setUser($this->tenant_admin('', true));
+        $this->assertNull(skills_manager::course_read_scope_sql('c'), 'No tenant: no courses, legacy or not.');
+        $this->assertNull(skills_manager::course_write_scope_sql('c'));
+        $this->assertFalse(skills_manager::can_view_course($legacynull));
+        $this->assertFalse(skills_manager::can_write_course($own));
+
+        $this->setAdminUser();
+        $this->assertSame(['1=1', []], skills_manager::course_read_scope_sql('c'));
+        $picked = array_column(skills_manager::top_courses(), 'id');
+        foreach ([$own, $foreign, $legacy, $legacynull] as $courseid) {
+            $this->assertContains($courseid, $picked);
+            $this->assertTrue(skills_manager::can_write_course($courseid));
+        }
+        $this->assertCount(4, $DB->get_records('local_sentientia_course_skills', ['skillid' => $skillid]));
+    }
+
+    /** A skill required of $designation, and taught at level 3 by each course. */
+    private function require_skill_taught_by(string $designation, int ...$courseids): void {
+        global $DB;
+        foreach ($courseids as $courseid) {
+            $skillid = $this->seed_skill('Skill for ' . $courseid);
+            $DB->insert_record('local_sentientia_role_skills', (object) [
+                'designation' => $designation, 'skillid' => $skillid,
+                'required_level' => 3, 'timecreated' => time(),
+            ]);
+            $DB->insert_record('local_sentientia_course_skills', (object) [
+                'courseid' => $courseid, 'skillid' => $skillid,
+                'teaches_level' => 3, 'timecreated' => time(),
+            ]);
+        }
+    }
+
+    public function test_gap_courses_are_scoped_for_the_learner(): void {
+        global $DB;
+        $own = $this->course_at('/1/2');
+        $legacy = $this->course_at('');
+        $legacynull = $this->course_at(null);
+        $foreign = $this->course_at('/177');
+        $this->require_skill_taught_by('Teller', $own, $legacy, $legacynull, $foreign);
+        $learner = $this->user_at('/1/3', 'Teller');
+        $recommended = fn(int $userid) => array_map('intval',
+            array_column(skills_manager::get_gap_courses($userid, 10), 'courseid'));
+
+        $this->setUser($learner);
+        $ids = $recommended((int) $learner->id);
+        sort($ids);
+        $expected = [$own, $legacy, $legacynull];
+        sort($expected);
+        $this->assertSame($expected, $ids,
+            'A /1 learner is recommended their own tenant\'s courses and legacy courses - never a '
+            . '/177 course name and link (skills index.php, the dashboard, the profile).');
+
+        // Someone else looking: the LEARNER's tenant decides, and the list is
+        // also held to what the viewer may see.
+        $this->setAdminUser();
+        $ids = $recommended((int) $learner->id);
+        sort($ids);
+        $this->assertSame($expected, $ids, 'A cross-tenant viewer sees the learner\'s recommendations, '
+            . 'not every tenant\'s courses.');
+        $this->setUser($this->tenant_admin('/177'));
+        $ids = $recommended((int) $learner->id);
+        sort($ids);
+        $legacyonly = [$legacy, $legacynull];
+        sort($legacyonly);
+        $this->assertSame($legacyonly, $ids, 'A /177 viewer must not see the /1 learner\'s /1 courses.');
+
+        $nowhere = $this->user_at('', 'Teller');
+        $this->setUser($nowhere);
+        $this->assertSame([], skills_manager::get_gap_courses((int) $nowhere->id, 10),
+            'A learner with no tenant is recommended nothing.');
+
+        // A cross-tenant learner is unscoped.
+        $DB->set_field('user', 'open_designation', 'Teller', ['id' => get_admin()->id]);
+        $this->setAdminUser();
+        $this->assertCount(4, skills_manager::get_gap_courses((int) get_admin()->id, 10));
     }
 }

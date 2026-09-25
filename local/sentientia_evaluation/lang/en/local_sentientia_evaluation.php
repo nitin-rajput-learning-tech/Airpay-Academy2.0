@@ -41,7 +41,7 @@ $string['days_after'] = 'Days after trigger';
 $string['days_after_help'] = 'How many days to wait after the trigger event before sending the evaluation. 0 = send immediately. Common patterns: 0 (Level 1), 7 (Level 2), 30-60 (Level 3), 90-180 (Level 4).';
 $string['organisation'] = 'Organisation (tenant)';
 $string['anonymous'] = 'Collect responses anonymously';
-$string['anonymous_help'] = 'When checked, responses are not linked to a specific user. Reduces social desirability bias for sensitive topics like POSH or culture surveys, but prevents follow-up with individual respondents.';
+$string['anonymous_help'] = 'When checked, responses are not linked to a specific user. Reduces social desirability bias for sensitive topics like POSH or culture surveys, but prevents follow-up with individual respondents. Once anyone has responded, anonymity cannot be switched off.';
 $string['status'] = 'Status';
 $string['status_draft'] = 'Draft';
 $string['status_active'] = 'Active';
@@ -179,8 +179,11 @@ $string['non_respondents_empty_pending_body']      = 'Either every assigned lear
 $string['non_respondents_empty_responded_heading'] = 'No responses yet.';
 $string['non_respondents_empty_responded_body']    = 'Once assigned learners submit their responses, they will appear here.';
 // 2026-09-25 - anonymous evaluations withhold the responded list.
-$string['non_respondents_anonymous_heading'] = 'Responses to this evaluation are anonymous.';
+$string['non_respondents_anonymous_heading'] = 'Responses to this evaluation are anonymous, in whole or in part.';
 $string['non_respondents_anonymous_body']    = 'Who has responded, and when, is not listed: the time of a response could be matched to an individual answer. The count on this tab is still accurate, and the Pending tab lists who has not responded yet.';
+// 2026-09-25 - anonymity cannot be withdrawn once responses are in.
+$string['error_anonymity_locked'] = 'People have already answered this evaluation on the understanding that their responses are anonymous, so anonymity cannot be switched off. To collect named responses, create a new evaluation.';
+$string['error_question_anonymity_locked'] = 'People have already answered this evaluation while this question was anonymous, so it cannot be made named. To ask it with names attached, add a new question.';
 
 // P1 #39 (2026-05-20) — bulk-assign by audience. Pairs with P1 #37
 // (assignments table) + P1 #38 (non-respondents view).
