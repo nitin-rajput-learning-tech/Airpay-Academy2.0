@@ -228,3 +228,7 @@ Tests (`tenant_scope_test`, `@group tenant_isolation`): the depth-5 / 0 / other-
 parents are refused with no new root; an offered in-tenant parent still works; the site admin can
 still create a tenant but not via an unoffered parent; and a literal Airpay /1 vs ZEEA /177 (+ /10
 prefix trap) tree for `get_all_in_scope`, `list_children`, `path_in_scope` and `cascade_where_sql`.
+- 2026-09-26 (PHPUnit run): `tenant_scope_test::test_a_new_org_must_hang_under_a_parent_in_the_callers_scope`
+  errored because the dynamic form's access check (wave 1) throws `error_outoftenant` for a parent
+  outside the tenant, a missing one or none, before validation() runs. Both refusals are correct; the
+  test now accepts either and still asserts nothing is created.

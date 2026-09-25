@@ -220,8 +220,16 @@ final class tenant_scope_test extends \advanced_testcase {
                 0 => 'no parent at all (a new top-level tenant)',
                 (int) $this->orgbchild->id => 'another tenant\'s org',
                 999999 => 'a missing org'] as $parentid => $what) {
-            $form = $this->org_form(['parentid' => $parentid, 'fullname' => 'Sneaky ' . $parentid]);
-            $this->assertFalse($form->is_validated(), "Creating under {$what} must be refused.");
+            // Either refusal is correct: the access check (run by the dynamic
+            // form constructor) throws error_outoftenant for a parent outside
+            // the caller's tenant, a missing one or none; validation() refuses
+            // an in-tenant parent the select does not offer.
+            try {
+                $form = $this->org_form(['parentid' => $parentid, 'fullname' => 'Sneaky ' . $parentid]);
+                $this->assertFalse($form->is_validated(), "Creating under {$what} must be refused.");
+            } catch (\moodle_exception $e) {
+                $this->assertSame('error_outoftenant', $e->errorcode, "Creating under {$what} must be refused.");
+            }
         }
         $this->assertSame($roots, $DB->count_records('local_sentientia_org', ['parentid' => 0]),
             'A scoped :manage holder must never create a top-level tenant.');
