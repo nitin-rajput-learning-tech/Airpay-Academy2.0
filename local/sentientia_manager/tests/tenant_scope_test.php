@@ -163,15 +163,15 @@ final class tenant_scope_test extends \advanced_testcase {
             'error_outoftenant', 'Nor a /177 user into a /1 course.');
         $this->assert_refused(fn() => approval_manager::create_allocation((int) $admin->id,
             (int) $colleague->id, (int) $theircourse->id),
-            'notdirectreport', 'No reports is no longer "anybody": even an in-tenant colleague is refused.');
+            'error_outoftenant', 'Nor an in-tenant colleague into a /177 course.');
         $this->assert_refused(fn() => approval_manager::create_allocation((int) $admin->id,
             999999, (int) $mycourse->id),
             'error_outoftenant', 'A missing user is refused exactly like an out-of-tenant one.');
 
         $result = approval_manager::bulk_allocate((int) $admin->id,
-            [(int) $theirs->id, (int) $colleague->id], (int) $mycourse->id);
+            [(int) $theirs->id, 999999], (int) $mycourse->id);
         $this->assertSame([], $result['succeeded']);
-        $this->assertEqualsCanonicalizing(['error_outoftenant', 'notdirectreport'],
+        $this->assertSame(['error_outoftenant', 'error_outoftenant'],
             array_column($result['skipped'], 'reason'));
 
         // Through the web services, as the allocation page calls them.
@@ -187,6 +187,33 @@ final class tenant_scope_test extends \advanced_testcase {
         $this->assertFalse(is_enrolled(\context_course::instance($theircourse->id), $theirs));
         $this->assertFalse(is_enrolled(\context_course::instance($mycourse->id), $theirs));
         $this->assertSame(0, $sink->count(), 'Nobody was notified.');
+
+        // The in-tenant function Airpay has today survives: with no reports,
+        // a tenant admin still allocates any user of their own tenant.
+        $id = approval_manager::create_allocation((int) $admin->id,
+            (int) $colleague->id, (int) $mycourse->id);
+        $this->assertTrue($DB->record_exists('local_sentientia_mgr_allocations',
+            ['id' => $id, 'userid' => $colleague->id, 'courseid' => $mycourse->id]));
+        $this->assertTrue(is_enrolled(\context_course::instance($mycourse->id), $colleague));
+        $sink->close();
+    }
+
+    public function test_a_manager_with_reports_is_still_held_to_them(): void {
+        global $DB;
+        $mgr = $this->tenant_admin('/1');
+        $report = $this->report_of($mgr, '/1/2');
+        $colleague = $this->user_at('/1/3');
+        $mycourse = $this->course_at('/1');
+        $this->setUser($mgr);
+        $sink = $this->redirectMessages();
+
+        $this->assert_refused(fn() => approval_manager::create_allocation((int) $mgr->id,
+            (int) $colleague->id, (int) $mycourse->id),
+            'notdirectreport', 'A manager with reports allocates only to them, even in-tenant.');
+        $this->assertSame(0, $DB->count_records('local_sentientia_mgr_allocations'));
+        approval_manager::create_allocation((int) $mgr->id, (int) $report->id, (int) $mycourse->id);
+        $this->assertSame(1, $DB->count_records('local_sentientia_mgr_allocations',
+            ['userid' => $report->id]));
         $sink->close();
     }
 
@@ -269,6 +296,7 @@ final class tenant_scope_test extends \advanced_testcase {
     }
 
     public function test_the_allocation_pickers_offer_only_the_managers_tenant(): void {
+        global $DB;
         $admin = $this->tenant_admin('/1');
         $report = $this->report_of($admin, '/1/2');
         $driftedreport = $this->report_of($admin, '/177/178');
@@ -287,11 +315,22 @@ final class tenant_scope_test extends \advanced_testcase {
         $this->assertEqualsCanonicalizing([(int) $mine->id, (int) $mychild->id],
             array_keys(approval_manager::allocatable_course_options((int) $admin->id)));
 
-        // A tenant admin with no reports is offered nobody (it used to be 200
-        // users of every tenant).
+        // A tenant admin with no reports is offered their own tenant's active
+        // users (it used to be 200 users of every tenant) - never ZEEA's.
         $noreports = $this->tenant_admin('/1');
+        $suspended = $this->user_at('/1/4');
+        $DB->set_field('user', 'suspended', 1, ['id' => $suspended->id]);
         $this->setUser($noreports);
-        $this->assertSame([], approval_manager::allocatable_user_options((int) $noreports->id));
+        $offered = array_keys(approval_manager::allocatable_user_options((int) $noreports->id));
+        $this->assertContains((int) $report->id, $offered);
+        foreach ([$driftedreport, $zeea, $suspended] as $u) {
+            $this->assertNotContains((int) $u->id, $offered);
+        }
+        foreach ($offered as $uid) {
+            $path = (string) $DB->get_field('user', 'open_path', ['id' => $uid]);
+            $this->assertTrue($path === '/1' || strpos($path, '/1/') === 0,
+                "Offered user {$uid} at '{$path}' is outside /1.");
+        }
 
         // The site admin keeps the unscoped pickers.
         $this->setAdminUser();

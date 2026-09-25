@@ -22,8 +22,9 @@ class bulk_allocate_dynamic_form extends dynamic_form {
         $mform = $this->_form;
 
         // Multi-select user picker. ADR-031: the manager's direct reports inside
-        // their own tenant; only a cross-tenant manager with no reports falls
-        // back to any active user. bulk_allocate() enforces the same per row.
+        // their own tenant; a manager with no reports falls back to the active
+        // users of their own tenant (any tenant only when cross-tenant).
+        // bulk_allocate() enforces the same per row.
         $useropts = approval_manager::allocatable_user_options((int) $USER->id);
 
         $select = $mform->addElement('select', 'userids', 'Direct reports', $useropts);

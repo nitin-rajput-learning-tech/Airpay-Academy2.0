@@ -27,7 +27,9 @@ defined('MOODLE_INTERNAL') || die();
  * manager's tenant - the user (a direct report in the same tenant) and the
  * course / classroom / program / path (its open_path under the manager's
  * root). Only a cross-tenant manager (site admin or :crosstenant holder)
- * skips that, and keeps the legacy "no reports = anyone" behaviour.
+ * skips that. The legacy "no reports = anyone" rule survives for everyone
+ * else inside their own tenant only: a tenant admin with no reports can
+ * still allocate to any user of their tenant, never to another tenant's.
  *
  * @package    local_sentientia_manager
  */
@@ -415,10 +417,11 @@ class approval_manager {
                                                string $note = ''): int {
         global $DB;
 
-        // ADR-031: the target must be a direct report in the manager's own
-        // tenant. Until 2026-09-25 an empty report list skipped this check, so
-        // any :allocate holder with no reports - every tenant admin, by default
-        // - could enrol any user of any tenant and send them a notification.
+        // ADR-031: the target must be in the manager's own tenant, and one of
+        // their direct reports if they have any. Until 2026-09-25 an empty
+        // report list skipped every check, so any :allocate holder with no
+        // reports - every tenant admin, by default - could enrol any user of
+        // any tenant and send them a notification.
         self::guard_direct_report($managerid, $userid);
 
         // Course must exist and (ADR-031) sit inside the manager's tenant.
@@ -626,27 +629,24 @@ class approval_manager {
     /**
      * Shared: throw unless $managerid may allocate to $userid.
      *
-     * ADR-031. A cross-tenant manager (site admin or :crosstenant holder) is
-     * unchanged: restricted to their direct reports when they have any, free
-     * otherwise. Anyone else must pass BOTH checks:
-     *  - the target is in the manager's own tenant (tenant::require_same_tenant_user,
-     *    which refuses a missing id exactly like an out-of-tenant one), and
-     *  - the target is one of the manager's direct reports. An empty report
-     *    list is no longer a bypass: a tenant admin with no reports allocates
-     *    to nobody (it used to mean "anybody, in any tenant").
+     * ADR-031. The report rule is the same for everyone: a manager with
+     * direct reports may allocate only to them; one with no reports (a tenant
+     * admin, typically) is not restricted by it. What changed is WHERE: a
+     * manager who is not cross-tenant (site admin or :crosstenant holder)
+     * must also have the target in their own tenant
+     * (tenant::require_same_tenant_user, which refuses a missing id exactly
+     * like an out-of-tenant one). So "no reports" now means "anybody in my
+     * tenant" - Airpay's in-tenant behaviour - where it used to mean "anybody,
+     * in any tenant".
      *
      * @throws \moodle_exception error_outoftenant | notdirectreport
      */
     private static function guard_direct_report(int $managerid, int $userid): void {
-        $reports = self::direct_report_ids($managerid);
-        if (\local_sentientia_platform\tenant::is_cross_tenant($managerid)) {
-            if (!empty($reports) && !in_array($userid, $reports, true)) {
-                throw new \moodle_exception('notdirectreport', 'local_sentientia_manager');
-            }
-            return;
+        if (!\local_sentientia_platform\tenant::is_cross_tenant($managerid)) {
+            \local_sentientia_platform\tenant::require_same_tenant_user($userid, $managerid);
         }
-        \local_sentientia_platform\tenant::require_same_tenant_user($userid, $managerid);
-        if (!in_array($userid, $reports, true)) {
+        $reports = self::direct_report_ids($managerid);
+        if (!empty($reports) && !in_array($userid, $reports, true)) {
             throw new \moodle_exception('notdirectreport', 'local_sentientia_manager');
         }
     }
@@ -699,11 +699,11 @@ class approval_manager {
      * The users $managerid may allocate to, as id => "Name <email>", for the
      * allocation forms.
      *
-     * ADR-031: a manager's direct reports inside their own tenant. Only a
-     * cross-tenant manager with no reports keeps the legacy fallback (any
-     * active user, capped at 200). A scoped manager with no reports gets
-     * nobody; the fallback used to list 200 users of every tenant, emails
-     * included, to every tenant admin.
+     * ADR-031: a manager's direct reports inside their own tenant. A manager
+     * with no reports gets the legacy fallback (active users, capped at 200) -
+     * of their own tenant only, unless they are cross-tenant. The fallback
+     * used to list 200 users of every tenant, emails included, to every
+     * tenant admin.
      *
      * @return array<int, string>
      */
@@ -725,12 +725,16 @@ class approval_manager {
             }
             $users = $DB->get_records_select('user', $where, $params,
                 'lastname ASC, firstname ASC', 'id, firstname, lastname, email');
-        } else if ($scope === '') {
-            $users = $DB->get_records_select('user',
-                'deleted = 0 AND suspended = 0 AND id > 2', null,
-                'lastname ASC, firstname ASC', 'id, firstname, lastname, email', 0, 200);
         } else {
-            $users = [];
+            $where = 'deleted = 0 AND suspended = 0 AND id > 2';
+            $params = [];
+            if ($scope !== '') {
+                [$pathsql, $params] = \local_sentientia_platform\tenant::path_descendant_filter(
+                    $scope, '', 'open_path', 'allocuser');
+                $where .= " AND $pathsql";
+            }
+            $users = $DB->get_records_select('user', $where, $params,
+                'lastname ASC, firstname ASC', 'id, firstname, lastname, email', 0, 200);
         }
         $options = [];
         foreach ($users as $u) {

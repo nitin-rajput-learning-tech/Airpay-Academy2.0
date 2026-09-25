@@ -182,7 +182,7 @@ The course's tenant was never checked, reports or not.
 - The two allocation forms no longer list 200 users of every tenant (with emails) and every tenant's
   courses: `allocatable_user_options()` / `allocatable_course_options()` offer the manager's in-tenant
   reports and in-tenant courses; only a cross-tenant manager with no reports keeps the "any user"
-  fallback.
+  fallback. (Superseded the same day, see the next note: the no-reports fallback is kept in-tenant.)
 - Tests: `approval_manager_test` and the privacy `provider_test` now allocate as a /1 manager to a /1
   report of a /1 course (they relied on the removed leniency); `tenant_scope_test` adds the
   cross-tenant refusals (no-reports tenant admin vs a /177 user and /177 course, the WS paths, '' /
@@ -190,3 +190,17 @@ The course's tenant was never checked, reports or not.
   pickers) and the site admin still allocating anywhere.
 - Not changed: `delete_allocation` WS keeps its owner-or-siteadmin gate; the `idx_user_course` unique
   index means one user can hold only one non-course allocation (courseid = 0) - pre-existing.
+
+### 2026-09-25 (later) - no-reports allocation kept inside the tenant (1.3.5, same version)
+
+The fix-forward above made a tenant admin with no direct reports allocate to NOBODY, which removed
+an in-tenant function Airpay has today (L&D admins allocating to any learner of their tenant).
+`guard_direct_report()` now applies one rule to everyone: a manager with reports allocates only to
+them; one with no reports is not restricted by the report rule. What ADR-031 adds is WHERE: a caller
+who is not cross-tenant must also pass `tenant::require_same_tenant_user()`, so "no reports" means
+"anybody in my tenant", never another tenant's user. `allocatable_user_options()` offers such a
+manager their own tenant's active users (capped at 200, `path_descendant_filter`, suspended and
+deleted excluded). Tests: the no-reports tenant admin allocates an in-tenant colleague and is still
+refused a /177 user, a /177 course and a missing user; new `test_a_manager_with_reports_is_still_held_to_them`;
+the picker test asserts the no-reports list is /1-only. Tighten to "reports only" later if Nitin
+decides L&D admins should not allocate through the manager plugin.

@@ -9,11 +9,12 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Tests for approval_manager — request lifecycle + course allocation.
  *
- * ADR-031 (2026-09-25): an allocation is only ever made by a line manager to a
- * direct report in their own tenant, of a course in that tenant (the stock-DB
- * "no reports = allocate to anybody" leniency was a cross-tenant write). So
- * the allocation tests provision the BizLMS open_* columns and allocate as a
- * /1 manager to a /1 report of a /1 course. The cross-tenant refusals live in
+ * ADR-031 (2026-09-25): an allocation is only ever made inside the manager's
+ * own tenant, of a course in that tenant, and to a direct report when the
+ * manager has any (the old "no reports = allocate to anybody" leniency was a
+ * cross-tenant write; it now means anybody in the manager's tenant). So the
+ * allocation tests provision the BizLMS open_* columns and allocate as a /1
+ * manager to a /1 report of a /1 course. The cross-tenant refusals live in
  * tenant_scope_test.
  *
  * @package    local_sentientia_manager

@@ -18,10 +18,11 @@ class create_allocation_dynamic_form extends dynamic_form {
         global $USER;
         $mform = $this->_form;
 
-        // ADR-031: the manager's direct reports inside their own tenant (only a
-        // cross-tenant manager with no reports falls back to any active user),
-        // and only courses in that tenant. approval_manager::create_allocation()
-        // enforces the same bounds on submit.
+        // ADR-031: the manager's direct reports inside their own tenant (a
+        // manager with no reports falls back to the active users of their own
+        // tenant, of any tenant only when cross-tenant), and only courses in
+        // that tenant. approval_manager::create_allocation() enforces the same
+        // bounds on submit.
         $useropts = [0 => 'Select a direct report...']
             + approval_manager::allocatable_user_options((int) $USER->id);
 
