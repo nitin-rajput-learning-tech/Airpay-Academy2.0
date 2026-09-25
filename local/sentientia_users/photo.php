@@ -33,13 +33,13 @@ $PAGE->set_url(new moodle_url('/local/sentientia_users/photo.php',
 $user = \local_sentientia_users\profile_access::get_viewable_user(
     (int) $USER->id, (int) $userid);
 
-// Auth: self OR has edit cap.
-$is_self = ((int) $userid === (int) $USER->id);
-if (!$is_self && !has_capability('local/sentientia_users:edit', $context_sys)
-    && !is_siteadmin()) {
-    throw new \moodle_exception('nopermissions', 'error', '',
-        'change another user\'s photo');
-}
+// Auth: self, OR :edit plus the ADR-031 target check.
+// ADR-031 follow-up (2026-09-25): same-tenant (above) was the only target
+// rule here, so a tenant admin holding :edit could replace the picture of a
+// site admin or a :crosstenant account whose open_path sits in their tenant.
+// user_manager::require_can_change_photo() applies require_can_act_on(), the
+// rule suspend, delete and the edit form already use.
+\local_sentientia_users\user_manager::require_can_change_photo((int) $userid);
 
 $PAGE->set_context(context_user::instance($userid));
 $PAGE->set_pagelayout('standard');

@@ -484,6 +484,11 @@ class user_manager {
             $password = $data->password;
         }
 
+        // Build and check the open_* fields BEFORE the account exists, so a
+        // refused supervisor leaves no half-made account behind (ADR-031
+        // follow-up, 2026-09-25). Id 0: nobody yet, so any supervisor is new.
+        $custom = self::custom_fields_update(0, $data);
+
         // Create via core API (fires events, sets up filearea).
         $userid = user_create_user($user, false, true);
 
@@ -494,7 +499,7 @@ class user_manager {
         }
 
         // Apply custom open_* fields.
-        self::apply_custom_fields($userid, $data);
+        self::apply_custom_fields($userid, $custom);
 
         // Email welcome (if requested and password set).
         // P1 #7 (2026-05-16) — was `setnew_password_and_mail()` which sent
@@ -551,11 +556,17 @@ class user_manager {
             }
         }
 
+        // Build and check the open_* fields BEFORE any write (ADR-031
+        // follow-up, 2026-09-25). The supervisor guard ran after
+        // user_update_user(), so a refusal had already saved email, name and
+        // department and then lost the open_* fields and the password change.
+        $custom = self::custom_fields_update($userid, $data);
+
         // Update via core API (fires events).
         user_update_user($user, false, true);
 
         // Apply custom open_* fields.
-        self::apply_custom_fields($userid, $data);
+        self::apply_custom_fields($userid, $custom);
 
         // Password change (if provided).
         if (!empty($data->newpassword)) {
@@ -567,15 +578,21 @@ class user_manager {
     }
 
     /**
-     * Apply custom open_* fields directly to user record.
+     * Build the open_* column update for $userid from form data, and run the
+     * checks it needs. Writes nothing.
      *
-     * @param int $userid
+     * Kept apart from {@see self::apply_custom_fields()} so create() and
+     * update() can refuse BEFORE any write (ADR-031 follow-up, 2026-09-25).
+     *
+     * @param int $userid  The account being edited, or 0 for one being created
      * @param object $data  Form data
+     * @return array<string, mixed> column => value, without 'id'
+     * @throws \moodle_exception supervisor_wrong_tenant
      */
-    private static function apply_custom_fields(int $userid, object $data): void {
+    private static function custom_fields_update(int $userid, object $data): array {
         global $DB;
 
-        $update = ['id' => $userid];
+        $update = [];
         foreach (self::CUSTOM_FIELDS as $field) {
             if (property_exists($data, $field) && $data->$field !== null) {
                 $value = $data->$field;
@@ -610,16 +627,43 @@ class user_manager {
         // open_supervisorid. The new supervisor autocomplete WS is
         // tenant-scoped on the frontend, but anyone POSTing the form
         // directly could bypass that. Guard it here.
+        //
+        // ADR-031 follow-up (2026-09-25): only a NEWLY CHOSEN supervisor is
+        // checked. The edit form pre-fills the stored supervisor and posts it
+        // back on every save, so once the guard failed closed (ADR-031 wave 1)
+        // a user whose recorded manager had since been deleted, or had no
+        // open_path, could no longer be edited at all until someone cleared
+        // the field. Re-saving the stored value names nobody new; this is the
+        // same stored-value rule edit_classroom::stored_trainerid() uses. A
+        // new account (id 0) has no stored supervisor, so create() always
+        // checks.
         if (!empty($update['open_supervisorid'])) {
-            self::guard_supervisor_tenant_scope(
-                $userid,
-                (int) $update['open_supervisorid'],
-                $update['open_path'] ?? null
-            );
+            $stored = $userid > 0
+                ? (int) $DB->get_field('user', 'open_supervisorid', ['id' => $userid])
+                : 0;
+            if ((int) $update['open_supervisorid'] !== $stored) {
+                self::guard_supervisor_tenant_scope(
+                    $userid,
+                    (int) $update['open_supervisorid'],
+                    $update['open_path'] ?? null
+                );
+            }
         }
 
-        if (count($update) > 1) {
-            $DB->update_record('user', (object) $update);
+        return $update;
+    }
+
+    /**
+     * Write an open_* update built by {@see self::custom_fields_update()}.
+     *
+     * @param int $userid
+     * @param array<string, mixed> $update column => value, without 'id'
+     */
+    private static function apply_custom_fields(int $userid, array $update): void {
+        global $DB;
+
+        if (!empty($update)) {
+            $DB->update_record('user', (object) (['id' => $userid] + $update));
         }
     }
 
@@ -712,6 +756,30 @@ class user_manager {
                 || ($targetid !== $actorid && \local_sentientia_platform\tenant::is_cross_tenant($targetid))) {
             throw profile_access::not_available();
         }
+    }
+
+    /**
+     * ADR-031: refuse unless the current user may replace $targetid's profile
+     * photo (local/sentientia_users/photo.php).
+     *
+     * Your own photo: always. Anyone else's: local/sentientia_users:edit AND
+     * {@see self::require_can_act_on()}, so a tenant admin cannot change the
+     * picture of a site admin or a cross-tenant account, even one whose
+     * open_path sits in their tenant. A site admin passes both checks. Until
+     * 2026-09-25 photo.php checked only the same-tenant rule and :edit.
+     *
+     * @param int $targetid
+     * @throws \required_capability_exception without :edit
+     * @throws \moodle_exception error_profilenotavailable for a protected or out-of-tenant target
+     */
+    public static function require_can_change_photo(int $targetid): void {
+        global $USER;
+
+        if ($targetid > 0 && $targetid === (int) ($USER->id ?? 0)) {
+            return;
+        }
+        require_capability('local/sentientia_users:edit', \context_system::instance());
+        self::require_can_act_on($targetid);
     }
 
     /**

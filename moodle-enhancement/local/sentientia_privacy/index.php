@@ -3,8 +3,11 @@
  * DPDP Privacy Self-Service & Administration.
  *
  * ACCESS RULES:
- * - Siteadmin: Full admin panel — all requests, tenant DPDP configuration
- * - External tenant admin (DPDP-enabled tenant): Admin panel scoped to own tenant
+ * - Siteadmin, or a :manage holder who is also cross-tenant (ADR-031): Full admin
+ *   panel — all requests, tenant DPDP configuration
+ * - External tenant admin (DPDP-enabled tenant): planned, admin panel scoped to own
+ *   tenant. NOT built: :manage without :crosstenant gets the views below
+ *   (privacy_manager::can_administer())
  * - External/Public tenant user: Self-service data download + account deletion
  * - Internal employee (Airpay tenant 1): Policy notice ONLY — no download/deletion
  *   (governed by employment data retention laws, not consumer DPDP rights)
@@ -26,14 +29,17 @@ $userid = $USER->id;
 $manager = \local_sentientia_privacy\privacy_manager::class;
 
 // ════════════════════════════════════════════════════════════════
-// ADMIN VIEW — siteadmins see request management panel
+// ADMIN VIEW — cross-tenant callers see the request management panel
 // ════════════════════════════════════════════════════════════════
-// NOT TENANT-SCOPED: the request list below is every request on the site. That is
-// right for a site admin and wrong for anyone else. local/sentientia_privacy:manage
-// is declared with no archetypes and nobody holds it; granting it to a tenant admin
-// would show them every tenant's erasure requests (names, emails, reasons). Scope
-// the query with tenant::path_descendant_filter() before granting it to anyone.
-if (is_siteadmin() || has_capability('local/sentientia_privacy:manage', context_system::instance())) {
+// NOT TENANT-SCOPED: the request list below is every request on the site, and
+// Approve erases the requester's data for any request id. So only a cross-tenant
+// caller may open it (ADR-031, 2026-09-25): a site admin, or a holder of
+// local/sentientia_privacy:manage who ALSO holds local/sentientia_platform:crosstenant.
+// :manage alone used to open it; a tenant DPO granted :manage now gets the
+// self-service view below. A per-tenant DPO panel needs the list, Approve and
+// Reject scoped to the DPO's tenant first (tenant::path_descendant_filter() on
+// u.open_path, tenant::require_same_tenant_user() on the request's user).
+if ($manager::can_administer()) {
     $PAGE->set_heading(get_string('pluginname', 'local_sentientia_privacy') . ' — Administration');
     $panelurl = new moodle_url('/local/sentientia_privacy/index.php');
 

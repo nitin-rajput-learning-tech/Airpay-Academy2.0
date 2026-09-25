@@ -20,6 +20,11 @@
  *    tenant-less supervisor or subordinate through; :crosstenant holders who
  *    are not site admins were locked out of other tenants' users; and the
  *    HRMS cron swallowed every importer failure as a success.
+ *  - (second follow-up, 2026-09-25) photo.php let an :edit holder replace the
+ *    picture of a site admin or a :crosstenant account in their tenant; the
+ *    fail-closed supervisor guard also refused a re-save of the STORED
+ *    supervisor (deleted, or with no tenant), and ran after user_update_user(),
+ *    so a refusal left email, name and department saved and the rest lost.
  *
  * @package    local_sentientia_users
  * @category   test
@@ -487,6 +492,115 @@ final class tenant_scope_test extends \advanced_testcase {
         $this->setUser($this->cross_tenant_user('/1'));
         user_manager::update((int) $sub->id, (object) ['open_supervisorid' => (int) $zeea->id]);
         $this->assertSame((int) $zeea->id, (int) $DB->get_field('user', 'open_supervisorid', ['id' => $sub->id]));
+    }
+
+    public function test_an_edit_that_keeps_a_stale_stored_supervisor_still_saves(): void {
+        global $DB;
+        $caller = $this->tenant_admin('/1');
+        $gone = $this->user_at('/1/3');
+        $pathless = $this->user_at('');
+        $newboss = $this->user_at('/1/4');
+        $this->setUser($caller);
+        $DB->set_field('user', 'deleted', 1, ['id' => $gone->id]);  // the manager left
+
+        foreach ([(int) $gone->id => 'a deleted supervisor', (int) $pathless->id => 'a supervisor with no tenant']
+                as $staleid => $what) {
+            $sub = $this->user_at('/1/2', ['open_supervisorid' => $staleid, 'open_designation' => 'Analyst']);
+
+            // What the edit form posts: the stored supervisor, pre-filled, plus the real change.
+            user_manager::update((int) $sub->id, (object) [
+                'firstname' => 'Renamed', 'department' => 'Payments',
+                'open_designation' => 'Senior Analyst', 'open_supervisorid' => $staleid,
+            ]);
+            $saved = $DB->get_record('user', ['id' => $sub->id],
+                'id, firstname, department, open_designation, open_supervisorid');
+            $this->assertSame('Renamed', $saved->firstname, "Re-saving {$what} must not block the edit.");
+            $this->assertSame('Payments', $saved->department);
+            $this->assertSame('Senior Analyst', $saved->open_designation, "The open_* fields are saved too ({$what}).");
+            $this->assertSame($staleid, (int) $saved->open_supervisorid, 'The stored link is left as it was.');
+
+            // Choosing it again is not new; choosing anyone new is checked as before.
+            $this->assert_refused(fn() => user_manager::update((int) $sub->id,
+                (object) ['open_supervisorid' => (int) $this->user_at('/177/178')->id]),
+                'supervisor_wrong_tenant', "A NEW cross-tenant supervisor is still refused ({$what}).");
+            user_manager::update((int) $sub->id, (object) ['open_supervisorid' => (int) $newboss->id]);
+            $this->assertSame((int) $newboss->id, (int) $DB->get_field('user', 'open_supervisorid', ['id' => $sub->id]));
+
+            // Once replaced, the stale id is a new choice again, and refused.
+            $this->assert_refused(fn() => user_manager::update((int) $sub->id,
+                (object) ['open_supervisorid' => $staleid]),
+                'supervisor_wrong_tenant', "Switching back to {$what} is a new choice.");
+        }
+    }
+
+    public function test_a_refused_supervisor_saves_nothing(): void {
+        global $DB;
+        $caller = $this->tenant_admin('/1');
+        $zeea = $this->user_at('/177/178');
+        $sub = $this->user_at('/1/2', ['firstname' => 'Before', 'department' => 'Ops',
+            'open_designation' => 'Analyst']);
+        $this->setUser($caller);
+        $fields = 'id, firstname, email, department, password, open_designation, open_supervisorid, open_path';
+        $before = $DB->get_record('user', ['id' => $sub->id], $fields);
+
+        $this->assert_refused(fn() => user_manager::update((int) $sub->id, (object) [
+            'firstname' => 'After', 'email' => 'after-' . $sub->id . '@a.test', 'department' => 'Payments',
+            'open_designation' => 'Lead', 'open_supervisorid' => (int) $zeea->id,
+            'newpassword' => 'Changed-Pa55word!',
+        ]), 'supervisor_wrong_tenant', 'A cross-tenant supervisor is refused.');
+        $this->assertEquals($before, $DB->get_record('user', ['id' => $sub->id], $fields),
+            'The refusal must come before ANY write: no half-saved name, email, department or password.');
+
+        // create() refuses before the account exists, so no half-made account is left.
+        $this->assert_refused(fn() => user_manager::create((object) [
+            'username' => 'halfmade', 'email' => 'halfmade@a.test', 'firstname' => 'Half', 'lastname' => 'Made',
+            'open_path' => '/1/2', 'open_supervisorid' => (int) $zeea->id,
+        ]), 'supervisor_wrong_tenant', 'create() refuses a cross-tenant supervisor.');
+        $this->assertFalse($DB->record_exists('user', ['username' => 'halfmade']),
+            'A refused create leaves no account behind.');
+    }
+
+    // ── Profile photo ─────────────────────────────────────────────────────
+
+    public function test_a_tenant_admin_cannot_change_the_photo_of_a_site_admin_or_crosstenant_account(): void {
+        $caller = $this->tenant_admin($this->orga->path);
+        $siteadmin = $this->site_admin_in_a();
+        $platform = $this->cross_tenant_user($this->orga->path);
+        $colleague = $this->user_at($this->orgachild->path);
+        $theirs = $this->user_at($this->orgb->path);
+        $this->setUser($caller);
+        $this->assertTrue(has_capability('local/sentientia_users:edit', \context_system::instance()),
+            'Precondition: a tenant admin holds :edit.');
+
+        foreach ([[$siteadmin, 'a site admin'], [$platform, 'a :crosstenant account']] as [$target, $what]) {
+            $this->assertTrue(profile_access::can_view((int) $caller->id, (int) $target->id),
+                "Precondition: {$what} sits in the caller's tenant, so the tenant rule alone lets it through.");
+            $this->assert_refused(fn() => user_manager::require_can_change_photo((int) $target->id),
+                profile_access::ERROR_STRING, "No replacing the photo of {$what}.");
+        }
+        $this->assert_refused(fn() => user_manager::require_can_change_photo((int) $theirs->id),
+            profile_access::ERROR_STRING, 'Nor of another tenant\'s user.');
+
+        // The in-tenant function survives, and so does your own photo.
+        user_manager::require_can_change_photo((int) $colleague->id);
+        user_manager::require_can_change_photo((int) $caller->id);
+
+        // Without :edit: your own photo only.
+        $learner = $this->user_at($this->orga->path);
+        $this->setUser($learner);
+        user_manager::require_can_change_photo((int) $learner->id);
+        $this->assert_refused(fn() => user_manager::require_can_change_photo((int) $colleague->id),
+            'nopermissions', 'A learner cannot change a colleague\'s photo.');
+
+        // A :crosstenant holder may change anyone's but a site admin's; a site admin anyone's.
+        $this->setUser($platform);
+        user_manager::require_can_change_photo((int) $theirs->id);
+        $this->assert_refused(fn() => user_manager::require_can_change_photo((int) $siteadmin->id),
+            profile_access::ERROR_STRING, 'Nobody but a site admin acts on a site admin.');
+        $this->setUser($siteadmin);
+        foreach ([$platform, $theirs, $colleague, $caller] as $target) {
+            user_manager::require_can_change_photo((int) $target->id);
+        }
     }
 
     public function test_hrms_sync_swallows_only_the_tenant_refusal(): void {
