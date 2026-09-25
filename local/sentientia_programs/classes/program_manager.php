@@ -151,6 +151,51 @@ class program_manager {
     }
 
     /**
+     * Refuse removing $userid from a program the caller has already been
+     * proved to own (require_program_access()), unless the user is either in
+     * the caller's tenant or ALREADY on that program's roster.
+     *
+     * Removing someone from your own program does not reach into another
+     * tenant, so a scoped admin may clean a legacy out-of-tenant or pathless
+     * learner off their own roster (one a site admin, an approval flow, the
+     * pre-ADR-031 cohort path or fail-open put there). Naming anyone else
+     * keeps the ADR-031 rule 5 refusal. Cross-tenant callers pass.
+     *
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_unenrol_target(int $programid, int $userid): void {
+        global $DB;
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return;
+        }
+        if ($DB->get_manager()->table_exists(self::USERS_TABLE)
+                && $DB->record_exists(self::USERS_TABLE, ['programid' => $programid, 'userid' => $userid])) {
+            return;
+        }
+        \local_sentientia_platform\tenant::require_same_tenant_user($userid);
+    }
+
+    /**
+     * WHERE fragment over {user} $alias for a ROSTER READ (who is on a
+     * program).
+     *
+     * ADR-031 follow-up (2026-09-25): require_program_access() proves the
+     * program is the caller's, but its roster can still hold other tenants'
+     * or pathless learners - enrolled by a site admin, an approval flow, or
+     * the pre-fix cohort path and no-tenant fail-open - and list_program_users
+     * listed their names, emails, employee ids and designations to the
+     * tenant admin. $callerscope = true limits the read to the caller's
+     * tenant (path_filter: '1=1' cross-tenant, '1=0' no tenant). The web
+     * service passes true; the default false keeps library callers (cron,
+     * privacy, unit tests with no user) unchanged.
+     *
+     * @return array{0: string, 1: array}
+     */
+    public static function roster_scope(bool $callerscope, string $alias = 'u'): array {
+        return $callerscope ? \local_sentientia_platform\tenant::path_filter($alias) : ['1=1', []];
+    }
+
+    /**
      * WHERE fragment for the courses the caller may put on a level.
      *
      * Cross-tenant: every course. Scoped: courses in their tenant tree,
@@ -851,16 +896,21 @@ class program_manager {
 
     /**
      * Count enrolments matching a search filter (for paginated WS).
+     *
+     * @param bool $callerscope ADR-031: count only learners in the caller's
+     *                          tenant (roster_scope()), matching get_enrolled_users()
      */
-    public static function count_enrolled_filtered(int $programid, string $search = ''): int {
+    public static function count_enrolled_filtered(int $programid, string $search = '',
+                                                   bool $callerscope = false): int {
         global $DB;
         $dbman = $DB->get_manager();
         if (!$dbman->table_exists(self::USERS_TABLE)) {
             return 0;
         }
 
-        $where = ['pu.programid = :pid'];
-        $params = ['pid' => $programid];
+        [$scopesql, $scopeparams] = self::roster_scope($callerscope, 'u');
+        $where = ['pu.programid = :pid', $scopesql];
+        $params = ['pid' => $programid] + $scopeparams;
         if (!empty($search)) {
             $term = '%' . $DB->sql_like_escape($search) . '%';
             $where[] = '(' . $DB->sql_like('u.firstname', ':s1', false) . ' OR ' .
@@ -940,6 +990,53 @@ class program_manager {
     }
 
     /**
+     * The cohorts enrol_program_cohort offers the caller, with the number of
+     * members enrol_cohort() would actually take (the caller's tenant's).
+     *
+     * Cross-tenant: every visible cohort, full member count (as before).
+     * Scoped: only visible cohorts with at least one member in their tenant,
+     * counting only those members. No tenant: none.
+     *
+     * ADR-031 follow-up (2026-09-25): the "has a member in my tenant" test
+     * used to run in PHP AFTER the query's LIMIT, so on a site with more than
+     * $limit visible cohorts a tenant's own cohorts could fall off the picker
+     * behind other tenants' ones. It is now part of the WHERE clause, so the
+     * limit applies to the caller's cohorts only.
+     *
+     * @param int $limit most cohorts to list
+     * @return \stdClass[] id => {id, name, idnumber, member_count}, by name
+     */
+    public static function cohort_options(int $limit = 500): array {
+        global $DB;
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === null) {
+            return [];
+        }
+        // '' (cross-tenant) = no restriction; '/N' = members inside tenant N.
+        [$msql, $mparams] = \local_sentientia_platform\tenant::path_descendant_filter(
+            $scope, 'u', 'open_path', 'pcom');
+        $where = 'c.visible = 1';
+        $params = $mparams;
+        if ($scope !== '') {
+            [$esql, $eparams] = \local_sentientia_platform\tenant::path_descendant_filter(
+                $scope, 'eu', 'open_path', 'pcoe');
+            $where .= " AND EXISTS (SELECT 1
+                                      FROM {cohort_members} ecm
+                                      JOIN {user} eu ON eu.id = ecm.userid
+                                     WHERE ecm.cohortid = c.id AND $esql)";
+            $params += $eparams;
+        }
+        return $DB->get_records_sql(
+            "SELECT c.id, c.name, c.idnumber,
+                    (SELECT COUNT(*) FROM {cohort_members} cm
+                       JOIN {user} u ON u.id = cm.userid
+                      WHERE cm.cohortid = c.id AND $msql) AS member_count
+               FROM {cohort} c
+              WHERE $where
+           ORDER BY c.name ASC, c.id ASC", $params, 0, $limit);
+    }
+
+    /**
      * Enrol one or more users. Idempotent. Rejects deleted/system users.
      *
      * @return int Count newly enrolled.
@@ -1008,10 +1105,13 @@ class program_manager {
      * @return array  Each row: id, userid, firstname, lastname, email,
      *                status, currentlevelid, timecreated, timecompleted,
      *                optional open_employeeid/designation.
+     * @param bool $callerscope ADR-031: only learners in the caller's tenant
+     *                          (roster_scope()); the web service passes true
      */
     public static function get_enrolled_users(int $programid, string $search = '',
                                               string $sort = 'lastname', string $sortdir = 'ASC',
-                                              int $offset = 0, int $limit = 100): array {
+                                              int $offset = 0, int $limit = 100,
+                                              bool $callerscope = false): array {
         global $DB;
         $dbman = $DB->get_manager();
         if (!$dbman->table_exists(self::USERS_TABLE)) {
@@ -1023,8 +1123,9 @@ class program_manager {
         if (isset($cols['open_employeeid'])) { $extra .= ', u.open_employeeid'; }
         if (isset($cols['open_designation'])) { $extra .= ', u.open_designation'; }
 
-        $where = ['pu.programid = :pid'];
-        $params = ['pid' => $programid];
+        [$scopesql, $scopeparams] = self::roster_scope($callerscope, 'u');
+        $where = ['pu.programid = :pid', $scopesql];
+        $params = ['pid' => $programid] + $scopeparams;
         if (!empty($search)) {
             $term = '%' . $DB->sql_like_escape($search) . '%';
             $where[] = '(' . $DB->sql_like('u.firstname', ':s1', false) . ' OR ' .

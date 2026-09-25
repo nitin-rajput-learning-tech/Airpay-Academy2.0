@@ -28,9 +28,12 @@ class unenrol_program_user extends external_api {
         self::validate_context($context);
         require_capability('local/sentientia_programs:enrol', $context);
         // ADR-031: the capability says WHAT; the program must also be in the caller's tenant.
-        // The user being removed must be in it too.
+        // The user being removed must be in it too - or already on this
+        // (in-tenant) roster: removing a legacy out-of-tenant or pathless
+        // learner from your own program reaches into no other tenant.
         \local_sentientia_programs\program_manager::require_program_access($params['programid']);
-        \local_sentientia_platform\tenant::require_same_tenant_user($params['userid']);
+        \local_sentientia_programs\program_manager::require_unenrol_target(
+            $params['programid'], $params['userid']);
 
         \local_sentientia_programs\program_manager::unenrol_user(
             $params['programid'], $params['userid']);

@@ -159,20 +159,27 @@ class waitlist_manager {
 
     /**
      * List waitlist entries for a classroom (admin view).
+     *
+     * @param int  $classroomid
+     * @param bool $callerscope ADR-031: only learners in the caller's tenant
+     *                          (session_manager::roster_scope()); the web
+     *                          service passes true. Positions stay the
+     *                          classroom-wide queue positions.
      */
-    public static function list_waiting(int $classroomid): array {
+    public static function list_waiting(int $classroomid, bool $callerscope = false): array {
         global $DB;
+        [$scopesql, $scopeparams] = session_manager::roster_scope($callerscope, 'u');
         $rows = $DB->get_records_sql(
             "SELECT w.id, w.userid, w.position, w.status, w.reason,
                     w.timecreated, w.promoted_at, w.removed_at,
                     u.firstname, u.lastname, u.email, u.open_employeeid
                FROM {local_sentientia_classroom_waitlist} w
                JOIN {user} u ON u.id = w.userid
-              WHERE w.classroomid = :cid
+              WHERE w.classroomid = :cid AND $scopesql
               ORDER BY
                 CASE WHEN w.status = 'waiting' THEN 0 ELSE 1 END,
                 w.position ASC, w.id ASC",
-            ['cid' => $classroomid]);
+            ['cid' => $classroomid] + $scopeparams);
         return array_values($rows);
     }
 

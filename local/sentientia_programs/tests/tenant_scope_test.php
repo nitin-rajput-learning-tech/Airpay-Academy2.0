@@ -251,6 +251,100 @@ final class tenant_scope_test extends \advanced_testcase {
         $this->assertSame(0, (int) list_program_users::execute($pathless)['total']);
     }
 
+    /**
+     * An own program whose roster also holds a learner from another tenant
+     * and one with no open_path - as a site admin, an approval flow, the
+     * pre-fix cohort path or the no-tenant fail-open could leave it.
+     *
+     * @return array{0: int, 1: \stdClass, 2: \stdClass, 3: \stdClass} program, own, foreign, pathless
+     */
+    private function mixed_roster(): array {
+        $mine = $this->program('/1', 'Airpay certification');
+        $own = $this->user_at('/1/2');
+        $foreign = $this->user_at('/177/178');
+        $pathless = $this->user_at(null);
+        program_manager::enrol_users($mine, [(int) $own->id, (int) $foreign->id, (int) $pathless->id]);
+        return [$mine, $own, $foreign, $pathless];
+    }
+
+    public function test_the_roster_of_an_own_program_lists_only_the_callers_tenant(): void {
+        [$mine, $own, $foreign, $pathless] = $this->mixed_roster();
+
+        $this->setUser($this->tenant_admin('/1'));
+        $r = list_program_users::execute($mine);
+        $this->assertSame(1, (int) $r['total'], 'The roster total counts only the caller\'s tenant.');
+        $this->assertSame([(int) $own->id], array_map(fn($row) => (int) $row['userid'], $r['rows']),
+            'No other tenant\'s (or pathless) name, email, employee id or designation.');
+        $this->assertSame(0, (int) list_program_users::execute($mine, (string) $foreign->email)['total'],
+            'Searching for them by email finds nothing either.');
+
+        $this->setUser($this->tenant_admin('garbage'));
+        $this->assertSame([], program_manager::get_enrolled_users($mine, '', 'lastname', 'ASC', 0, 100, true));
+        $this->assertSame(0, program_manager::count_enrolled_filtered($mine, '', true));
+
+        // Cross-tenant callers, and library callers with no user, see everyone.
+        $this->setAdminUser();
+        $this->assertSame(3, (int) list_program_users::execute($mine)['total']);
+        $this->setUser(null);
+        $this->assertSame(3, program_manager::count_enrolled_filtered($mine));
+        $this->assertCount(3, program_manager::get_enrolled_users($mine));
+    }
+
+    public function test_a_tenant_admin_can_remove_a_legacy_learner_from_their_own_program(): void {
+        global $DB;
+        [$mine, $own, $foreign, $pathless] = $this->mixed_roster();
+        $stranger = $this->user_at('/177');
+
+        $this->setUser($this->tenant_admin('/1'));
+        unenrol_program_user::execute($mine, (int) $foreign->id);
+        unenrol_program_user::execute($mine, (int) $pathless->id);
+        $this->assertFalse($DB->record_exists('local_sentientia_programs_users',
+            ['programid' => $mine, 'userid' => $foreign->id]),
+            'Removing someone from your own program reaches into no other tenant.');
+        $this->assertFalse($DB->record_exists('local_sentientia_programs_users',
+            ['programid' => $mine, 'userid' => $pathless->id]));
+        $this->assert_refused(fn() => unenrol_program_user::execute($mine, (int) $stranger->id),
+            'unenrol of a foreign user who is not on the roster');
+        $this->assertTrue($DB->record_exists('local_sentientia_programs_users',
+            ['programid' => $mine, 'userid' => $own->id]));
+    }
+
+    /**
+     * The cohort picker applied "has a member in my tenant" in PHP after a
+     * LIMIT 500, so other tenants' cohorts could crowd a tenant's own ones
+     * off the list. cohort_options($limit) shows the fix with a small limit.
+     */
+    public function test_the_cohort_picker_limit_applies_after_the_tenant_filter(): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/cohort/lib.php');
+        $gen = $this->getDataGenerator();
+        foreach (['A1', 'A2', 'A3', 'A4'] as $name) {
+            $c = $gen->create_cohort(['name' => "{$name} ZEEA only"]);
+            cohort_add_member($c->id, $this->user_at('/177/178')->id);
+        }
+        $gen->create_cohort(['name' => 'B empty']);
+        $mixed = $gen->create_cohort(['name' => 'M mixed']);
+        cohort_add_member($mixed->id, $this->user_at('/1/2')->id);
+        cohort_add_member($mixed->id, $this->user_at('/177')->id);
+        $own = $gen->create_cohort(['name' => 'Z Airpay only']);
+        cohort_add_member($own->id, $this->user_at('/1/5')->id);
+
+        $this->setUser($this->tenant_admin('/1'));
+        $opts = program_manager::cohort_options(3);
+        $this->assertSame([(int) $mixed->id, (int) $own->id], array_map('intval', array_keys($opts)),
+            'Only cohorts with an Airpay member, and the limit counts only those.');
+        $this->assertSame(1, (int) $opts[$mixed->id]->member_count, 'Only the members enrol_cohort() takes.');
+
+        $this->setUser($this->tenant_admin(''));
+        $this->assertSame([], program_manager::cohort_options(3), 'No tenant, no cohorts.');
+
+        $this->setAdminUser();
+        $this->assertCount(3, program_manager::cohort_options(3));
+        $all = program_manager::cohort_options();
+        $this->assertCount(7, $all, 'The site admin sees every visible cohort, as before.');
+        $this->assertSame(2, (int) $all[$mixed->id]->member_count);
+    }
+
     public function test_the_site_admin_still_sees_every_tenant(): void {
         $this->program('/1', 'A');
         $z = $this->program('/177', 'Z');

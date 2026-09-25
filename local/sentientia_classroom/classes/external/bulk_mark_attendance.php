@@ -50,17 +50,39 @@ class bulk_mark_attendance extends external_api {
             throw new \moodle_exception('toomanymarks', 'local_sentientia_classroom');
         }
         // ADR-031: the capability says WHAT; the classroom must also be in the caller's tenant.
-        // Attendance is compliance evidence: every learner marked must be in it too.
+        // Attendance is compliance evidence: only learners in it are marked.
         \local_sentientia_classroom\session_manager::require_session_access($params['sessionid']);
-        \local_sentientia_classroom\session_manager::require_users_in_scope(array_column($params['marks'], 'userid'));
+
+        // A mark naming a learner outside the caller's tenant (or with no
+        // open_path) is SKIPPED, not a reason to refuse the batch: an
+        // in-tenant roster can legitimately hold such a learner (site-admin,
+        // approval-flow or pre-fix enrolments), and until 2026-09-25 one of
+        // them made the whole grid's Save fail. Cross-tenant callers skip
+        // nothing.
+        $inscope = array_flip(\local_sentientia_classroom\session_manager::users_in_scope(
+            array_column($params['marks'], 'userid')));
+        $marks = [];
+        $skipped = 0;
+        foreach ($params['marks'] as $m) {
+            if (isset($inscope[(int) $m['userid']])) {
+                $marks[] = $m;
+            } else if ((int) $m['userid'] > 0) {
+                $skipped++;   // (non-positive ids were never saved; not counted)
+            }
+        }
 
         $count = \local_sentientia_classroom\session_manager::bulk_mark_attendance(
-            $params['sessionid'], $params['marks']);
+            $params['sessionid'], $marks);
 
+        $message = $count . ' ' . ($count === 1 ? 'attendance' : 'attendances') . ' saved.';
+        if ($skipped > 0) {
+            $message .= ' ' . get_string('attendance_skipped_outoftenant', 'local_sentientia_classroom', $skipped);
+        }
         return [
             'sessionid' => $params['sessionid'],
             'marked'    => $count,
-            'message'   => $count . ' ' . ($count === 1 ? 'attendance' : 'attendances') . ' saved.',
+            'skipped'   => $skipped,
+            'message'   => $message,
         ];
     }
 
@@ -68,6 +90,8 @@ class bulk_mark_attendance extends external_api {
         return new external_single_structure([
             'sessionid' => new external_value(PARAM_INT,  'Session ID'),
             'marked'    => new external_value(PARAM_INT,  'Rows persisted'),
+            'skipped'   => new external_value(PARAM_INT,
+                'Marks not saved: the learner is outside the caller\'s tenant (ADR-031)'),
             'message'   => new external_value(PARAM_TEXT, 'Confirmation'),
         ]);
     }

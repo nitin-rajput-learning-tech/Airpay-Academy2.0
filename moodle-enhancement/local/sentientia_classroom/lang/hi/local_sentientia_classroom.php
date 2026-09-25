@@ -92,6 +92,7 @@ $string['invalidstatus']          = 'अमान्य स्थिति।';
 $string['invalidsessiontime']     = 'अमान्य सत्र समय।';
 $string['invalidattendancestatus'] = 'अमान्य उपस्थिति स्थिति।';
 $string['toomanymarks']           = 'एक अनुरोध में बहुत अधिक उपस्थिति अंक।';
+$string['attendance_skipped_outoftenant'] = 'आपके संगठन से बाहर के {$a} शिक्षार्थियों की उपस्थिति दर्ज नहीं की गई।';
 $string['confirmdelete']          = 'क्या आप वाकई "{$a}" हटाना चाहते हैं? इसे पूर्ववत नहीं किया जा सकता।';
 $string['confirmcancel']          = 'क्या आप वाकई "{$a}" रद्द करना चाहते हैं?';
 $string['confirmcomplete']        = 'क्या आप वाकई "{$a}" को पूर्ण के रूप में चिह्नित करना चाहते हैं?';

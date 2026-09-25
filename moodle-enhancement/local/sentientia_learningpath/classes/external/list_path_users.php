@@ -59,8 +59,11 @@ class list_path_users extends external_api {
         \local_sentientia_learningpath\path_manager::require_path_tenant($params['pathid']);
 
         // Delegate to path_manager — it already does the JOIN + status mapping.
+        // ADR-031: an in-tenant path can still hold other tenants' or pathless
+        // learners (site-admin, request/approval-flow or pre-fix enrolments);
+        // a scoped caller is shown only their own tenant's.
         $result = \local_sentientia_learningpath\path_manager::get_path_users(
-            $params['pathid'], $params['search'], $params['page'], $params['perpage']);
+            $params['pathid'], $params['search'], $params['page'], $params['perpage'], true);
 
         // Wrap each row with the action button (must be done here because
         // path_manager doesn't know about HTML actions).

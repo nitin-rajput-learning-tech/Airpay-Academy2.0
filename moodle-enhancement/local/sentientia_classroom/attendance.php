@@ -35,8 +35,12 @@ $PAGE->set_heading(format_string($classroom->name));
 $PAGE->set_pagelayout('standard');
 $PAGE->set_secondary_navigation(false);
 
-// Fetch roster + attendance.
-$rows_obj = \local_sentientia_classroom\session_manager::get_session_attendance($sessionid);
+// Fetch roster + attendance. ADR-031: a scoped caller sees only their own
+// tenant's learners - the roster of an in-tenant classroom can still hold
+// others (site-admin, approval-flow or pre-fix enrolments). The grid's Save
+// sends a mark for every row it renders, so this also keeps the save inside
+// the tenant; bulk_mark_attendance skips (never refuses) anything else.
+$rows_obj = \local_sentientia_classroom\session_manager::get_session_attendance($sessionid, true);
 
 // Build template rows with status flags for radio rendering.
 $rows = [];

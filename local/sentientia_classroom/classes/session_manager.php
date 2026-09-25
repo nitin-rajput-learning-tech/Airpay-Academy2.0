@@ -222,28 +222,94 @@ class session_manager {
      * @throws \moodle_exception error_outoftenant
      */
     public static function require_users_in_scope(array $userids): void {
-        global $DB;
-        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
-            return;
-        }
-        $userids = array_values(array_unique(array_filter(array_map('intval', $userids),
-            fn($id) => $id > 0)));
+        $userids = self::clean_userids($userids);
         if (empty($userids)) {
             return;
         }
+        if (count(self::users_in_scope($userids)) !== count($userids)) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+    }
+
+    /**
+     * The subset of $userids that lies in the caller's tenant (one query).
+     * Cross-tenant callers get every (positive, de-duplicated) id back; a
+     * caller with no tenant gets none. A user with no open_path is never in
+     * a scoped caller's tenant.
+     *
+     * For batch writes that must keep the in-tenant part of a request
+     * rather than refuse all of it (bulk_mark_attendance).
+     *
+     * @param int[] $userids
+     * @return int[]
+     */
+    public static function users_in_scope(array $userids): array {
+        global $DB;
+        $userids = self::clean_userids($userids);
+        if (empty($userids) || \local_sentientia_platform\tenant::is_cross_tenant()) {
+            return $userids;
+        }
         $scope = \local_sentientia_platform\tenant::scope_path();
         if ($scope === null || $scope === '') {
-            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+            return [];
         }
         [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'scu');
         [$tsql, $targs] = \local_sentientia_platform\tenant::path_descendant_filter(
             $scope, 'u', 'open_path', 'sct');
-        $inscope = (int) $DB->count_records_sql(
-            "SELECT COUNT(1) FROM {user} u WHERE u.id $insql AND $tsql",
-            $inparams + $targs);
-        if ($inscope !== count($userids)) {
-            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        return array_map('intval', $DB->get_fieldset_sql(
+            "SELECT u.id FROM {user} u WHERE u.id $insql AND $tsql",
+            $inparams + $targs));
+    }
+
+    /** @return int[] positive, de-duplicated, re-indexed */
+    private static function clean_userids(array $userids): array {
+        return array_values(array_unique(array_filter(array_map('intval', $userids),
+            fn($id) => $id > 0)));
+    }
+
+    /**
+     * Refuse removing $userid from a classroom the caller has already been
+     * proved to own (require_classroom_access()), unless the user is either
+     * in the caller's tenant or ALREADY on that classroom's roster.
+     *
+     * Removing someone from your own classroom does not reach into another
+     * tenant, so a scoped admin may clean a legacy out-of-tenant or pathless
+     * learner off their own roster (one a site admin, an approval flow or the
+     * pre-ADR-031 fail-open put there). Naming anyone else keeps the ADR-031
+     * rule 5 refusal. Cross-tenant callers pass.
+     *
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_unenrol_target(int $classroomid, int $userid): void {
+        global $DB;
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return;
         }
+        if ($DB->get_manager()->table_exists(self::USERS_TABLE)
+                && $DB->record_exists(self::USERS_TABLE, ['classroomid' => $classroomid, 'userid' => $userid])) {
+            return;
+        }
+        \local_sentientia_platform\tenant::require_same_tenant_user($userid);
+    }
+
+    /**
+     * WHERE fragment over {user} $alias for a ROSTER READ (who is on a
+     * classroom, its attendance, its waitlist).
+     *
+     * ADR-031 follow-up (2026-09-25): require_classroom_access() proves the
+     * classroom is the caller's, but its roster can still hold other tenants'
+     * or pathless learners - enrolled by a site admin, a request/approval
+     * flow, or the pre-ADR-031 fail-open - and every roster read listed their
+     * names, emails, employee ids and designations to the tenant admin.
+     * $callerscope = true limits the read to the caller's tenant (path_filter:
+     * '1=1' cross-tenant, '1=0' no tenant). The web services and pages pass
+     * true; the default false keeps library callers (cron, privacy, unit
+     * tests with no user) unchanged.
+     *
+     * @return array{0: string, 1: array}
+     */
+    public static function roster_scope(bool $callerscope, string $alias = 'u'): array {
+        return $callerscope ? \local_sentientia_platform\tenant::path_filter($alias) : ['1=1', []];
     }
 
     /**
@@ -712,12 +778,15 @@ class session_manager {
     /**
      * Get enrolled users for a classroom with optional search/sort/page.
      *
+     * @param bool $callerscope ADR-031: only learners in the caller's tenant
+     *                          (see roster_scope()); web services pass true
      * @return array  Each row: id (rosterid), userid, firstname, lastname,
      *                email, enrolled_at, optional open_employeeid/designation.
      */
     public static function get_enrolled_users(int $classroomid, string $search = '',
                                               string $sort = 'lastname', string $sortdir = 'ASC',
-                                              int $offset = 0, int $limit = 100): array {
+                                              int $offset = 0, int $limit = 100,
+                                              bool $callerscope = false): array {
         global $DB;
         $dbman = $DB->get_manager();
         if (!$dbman->table_exists(self::USERS_TABLE)) {
@@ -729,8 +798,9 @@ class session_manager {
         if (isset($cols['open_employeeid'])) { $extra .= ', u.open_employeeid'; }
         if (isset($cols['open_designation'])) { $extra .= ', u.open_designation'; }
 
-        $where = ['cu.classroomid = :cid'];
-        $params = ['cid' => $classroomid];
+        [$scopesql, $scopeparams] = self::roster_scope($callerscope, 'u');
+        $where = ['cu.classroomid = :cid', $scopesql];
+        $params = ['cid' => $classroomid] + $scopeparams;
         if (!empty($search)) {
             $term = '%' . $DB->sql_like_escape($search) . '%';
             $where[] = '(' . $DB->sql_like('u.firstname', ':s1', false) . ' OR ' .
@@ -758,16 +828,21 @@ class session_manager {
     /**
      * Count rows that match the same filter as get_enrolled_users — used by
      * the WS list endpoint for pagination "total".
+     *
+     * @param bool $callerscope ADR-031: count only learners in the caller's
+     *                          tenant, matching get_enrolled_users()
      */
-    public static function count_enrolled_filtered(int $classroomid, string $search = ''): int {
+    public static function count_enrolled_filtered(int $classroomid, string $search = '',
+                                                   bool $callerscope = false): int {
         global $DB;
         $dbman = $DB->get_manager();
         if (!$dbman->table_exists(self::USERS_TABLE)) {
             return 0;
         }
 
-        $where = ['cu.classroomid = :cid'];
-        $params = ['cid' => $classroomid];
+        [$scopesql, $scopeparams] = self::roster_scope($callerscope, 'u');
+        $where = ['cu.classroomid = :cid', $scopesql];
+        $params = ['cid' => $classroomid] + $scopeparams;
         if (!empty($search)) {
             $term = '%' . $DB->sql_like_escape($search) . '%';
             $where[] = '(' . $DB->sql_like('u.firstname', ':s1', false) . ' OR ' .
@@ -868,10 +943,16 @@ class session_manager {
      * Get attendance for a session — every roster member, joined with their
      * attendance row (or default ABSENT if not yet marked).
      *
+     * @param int  $sessionid
+     * @param bool $callerscope ADR-031: only learners in the caller's tenant
+     *                          (see roster_scope()); attendance.php and the
+     *                          web service pass true, so the grid - and the
+     *                          marks its Save sends - never name another
+     *                          tenant's learner
      * @return array  Each row: userid, firstname, lastname, email, status,
      *                status_label, marked_at, notes.
      */
-    public static function get_session_attendance(int $sessionid): array {
+    public static function get_session_attendance(int $sessionid, bool $callerscope = false): array {
         global $DB;
         $dbman = $DB->get_manager();
 
@@ -881,6 +962,7 @@ class session_manager {
             return [];
         }
 
+        [$scopesql, $scopeparams] = self::roster_scope($callerscope, 'u');
         $sql = "SELECT u.id AS userid, u.firstname, u.lastname, u.email,
                        COALESCE(a.status, 0) AS status,
                        a.timemodified AS marked_at,
@@ -889,12 +971,12 @@ class session_manager {
                   JOIN {user} u ON u.id = cu.userid
              LEFT JOIN {" . self::ATTENDANCE_TABLE . "} a
                        ON a.sessionid = :sid AND a.userid = cu.userid
-                 WHERE cu.classroomid = :cid
+                 WHERE cu.classroomid = :cid AND $scopesql
               ORDER BY u.lastname ASC, u.firstname ASC";
         $rows = $DB->get_records_sql($sql, [
             'sid' => $sessionid,
             'cid' => (int) $session->classroomid,
-        ]);
+        ] + $scopeparams);
 
         $labels = [
             self::ATT_ABSENT  => 'Absent',

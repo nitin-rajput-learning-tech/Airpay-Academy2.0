@@ -47,15 +47,19 @@ class list_program_users extends external_api {
         // (Returns names, emails and employee ids.)
         \local_sentientia_programs\program_manager::require_program_access($params['programid']);
 
+        // ADR-031: an in-tenant program can still hold other tenants' or
+        // pathless learners (site-admin, approval-flow or pre-fix cohort
+        // enrolments); a scoped caller is shown only their own tenant's.
+        // Cross-tenant callers see the whole roster, as before.
         $total = \local_sentientia_programs\program_manager::count_enrolled_filtered(
-            $params['programid'], $params['search']);
+            $params['programid'], $params['search'], true);
 
         $rows = [];
         if ($total > 0) {
             $records = \local_sentientia_programs\program_manager::get_enrolled_users(
                 $params['programid'], $params['search'],
                 $params['sort'], $params['sortdir'],
-                $params['page'] * $params['perpage'], $params['perpage']);
+                $params['page'] * $params['perpage'], $params['perpage'], true);
 
             $statusmap = [
                 \local_sentientia_programs\program_manager::ENROL_NEW         => 'Enrolled',

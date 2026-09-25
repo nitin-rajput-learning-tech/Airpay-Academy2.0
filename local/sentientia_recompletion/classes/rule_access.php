@@ -147,6 +147,83 @@ class rule_access {
     }
 
     /**
+     * WHERE fragment over {course} $alias for the courses the edit form lists:
+     * course_filter() plus "completion enabled, not the front page".
+     *
+     * @param string $alias course table alias
+     * @return array{0: string, 1: array}
+     */
+    private static function course_option_filter(string $alias = 'c'): array {
+        [$csql, $cparams] = self::course_filter($alias);
+        return [
+            "{$alias}.id <> :racsite AND {$alias}.enablecompletion = 1 AND $csql",
+            ['racsite' => SITEID] + $cparams,
+        ];
+    }
+
+    /**
+     * The courses the caller may point a rule at, for edit.php's picker:
+     * completion enabled, never the front page, limited by course_filter()
+     * (cross-tenant every course; scoped their tenant tree, legacy unpathed
+     * courses and courses shared to their tenant; no tenant none).
+     *
+     * ADR-031 follow-up (2026-09-25): wave 1 handed course_filter('c') to
+     * get_records_select('course', ...), which queries {course} WITHOUT an
+     * alias. Every scoped caller hit "Unknown column 'c.open_path'" (MySQL /
+     * MariaDB) or "missing FROM-clause entry for table c" (PostgreSQL), so no
+     * tenant admin could open edit.php to create or change their own rules.
+     * This is the aliased query, in one testable place.
+     *
+     * @return \stdClass[] id => {id, fullname, shortname}, ordered by fullname
+     */
+    public static function course_options(): array {
+        global $DB;
+        [$sql, $params] = self::course_option_filter('c');
+        return $DB->get_records_sql(
+            "SELECT c.id, c.fullname, c.shortname
+               FROM {course} c
+              WHERE $sql
+           ORDER BY c.fullname ASC, c.id ASC", $params);
+    }
+
+    /**
+     * The course id a submitted rule form may carry: 0 ("all courses") or one
+     * of course_options(). Anything else is refused, never coerced.
+     *
+     * The picker is a select, and a select element drops a submitted value
+     * that is not one of its options: exportValue() returns null, which
+     * edit.php used to cast to 0 = "all courses". So a tampered request
+     * naming another tenant's course silently became an all-courses rule.
+     * The engine still reset only the caller's own users, so nothing leaked,
+     * but the caller got a far wider rule than the one they asked for. Pass
+     * the RAW submitted value (MoodleQuickForm::getSubmitValue()), not the
+     * exported one.
+     *
+     * @param mixed $submitted raw submitted courseid
+     * @return int the course id; 0 = all courses
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_course_option($submitted): int {
+        global $DB;
+        if (is_array($submitted) || $submitted === null
+                || !preg_match('/^\d+$/', trim((string) $submitted))) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        // A caller with no tenant may not save any rule, "all courses" included.
+        self::caller_root();
+        $courseid = (int) trim((string) $submitted);
+        if ($courseid === 0) {
+            return 0;
+        }
+        [$sql, $params] = self::course_option_filter('c');
+        if (!$DB->record_exists_sql("SELECT 1 FROM {course} c WHERE c.id = :racoptid AND $sql",
+                ['racoptid' => $courseid] + $params)) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        return $courseid;
+    }
+
+    /**
      * Refuse unless $courseid (0 = "all courses") is one the caller may use.
      *
      * @throws \moodle_exception error_outoftenant

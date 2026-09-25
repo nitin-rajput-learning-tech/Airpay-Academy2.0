@@ -26,8 +26,10 @@ class list_waitlist extends external_api {
         // ADR-031: the capability says WHAT; the classroom must also be in the caller's tenant.
         \local_sentientia_classroom\session_manager::require_classroom_access((int) $params['classroomid']);
 
+        // ADR-031: the queue of an in-tenant classroom can still hold other
+        // tenants' learners (legacy rows); list only the caller's tenant.
         $rows = \local_sentientia_classroom\waitlist_manager::list_waiting(
-            (int) $params['classroomid']);
+            (int) $params['classroomid'], true);
         $out = [];
         foreach ($rows as $r) {
             $out[] = [
