@@ -31,8 +31,8 @@ if ($dbman->table_exists('local_sentientia_reports')) {
         \local_sentientia_reports\report_manager::STATUS_ACTIVE);
     $archived = (int) \local_sentientia_reports\report_manager::count_reports(
         \local_sentientia_reports\report_manager::STATUS_ARCHIVED);
-    $total_runs = (int) $DB->get_field_sql(
-        "SELECT COALESCE(SUM(runcount), 0) FROM {local_sentientia_reports}");
+    // ADR-031: the tiles count the caller's tenant's reports only.
+    $total_runs = \local_sentientia_reports\report_manager::total_runs();
 }
 
 $columns = [

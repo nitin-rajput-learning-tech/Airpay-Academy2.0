@@ -34,15 +34,9 @@ class toggle_status extends external_api {
             throw new \moodle_exception('invalidreport', 'local_sentientia_reports');
         }
 
-        // Empty open_path = "all-organisations" report → site-admin-only.
-        // Reject explicitly before the shared helper (which would tolerate
-        // empty as legacy unscoped).
-        if (empty($existing->open_path) && !is_siteadmin()) {
-            throw new \moodle_exception('outoftenant', 'local_sentientia_reports');
-        }
-
-        // Tenant guard for scoped reports.
-        \local_sentientia_platform\tenant::require_path_access((string) $existing->open_path);
+        // Empty open_path = "all-organisations" report → cross-tenant only;
+        // otherwise it must be in the caller's tenant (ADR-031 shared guard).
+        \local_sentientia_reports\report_manager::require_report_access($existing);
 
         $newstate = \local_sentientia_reports\report_manager::toggle_status($params['reportid']);
         return [

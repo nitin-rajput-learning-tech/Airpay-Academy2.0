@@ -36,18 +36,11 @@ class delete_report extends external_api {
         }
 
         // Reports-specific rule: a report with empty open_path is an
-        // "all-organisations" report — those are site-admin-only.
-        // The shared tenant helper would tolerate empty as a legacy
-        // unscoped row, so we explicitly reject it here BEFORE the
-        // helper short-circuits.
-        if (empty($existing->open_path) && !is_siteadmin()) {
-            throw new \moodle_exception('outoftenant', 'local_sentientia_reports');
-        }
-
-        // Standard tenant guard for scoped reports. Site admins pass
-        // through; tenant-bound managers can only delete reports inside
-        // their own top-level tree.
-        \local_sentientia_platform\tenant::require_path_access((string) $existing->open_path);
+        // "all-organisations" report — cross-tenant only. Tenant-bound
+        // managers can only delete reports inside their own top-level tree.
+        // ADR-031: one guard for every entry point (it used to be inlined
+        // here, with a lang string that did not exist).
+        \local_sentientia_reports\report_manager::require_report_access($existing);
 
         $success = \local_sentientia_reports\report_manager::delete($params['reportid']);
         return ['reportid' => $params['reportid'], 'success' => $success];

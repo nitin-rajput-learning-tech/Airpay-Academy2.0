@@ -43,15 +43,20 @@ class list_all extends external_api {
         $sort = in_array($params['sort'], $allowed, true) ? $params['sort'] : 'timecreated';
         $sortdir = strtolower($params['sortdir']) === 'asc' ? 'ASC' : 'DESC';
 
-        $where = '1=1';
-        $args = [];
+        // ADR-031: :viewall says the caller may see the tenant-wide list, not
+        // which tenant. It used to start from 1=1 and let the CLIENT pick the
+        // tenant. Now a scoped caller sees their own tenant's requests only
+        // (sql_filter gives 1=0 when their tenant does not resolve - rows
+        // stored with costcenterid 0 are NOT "every tenant"), and only a
+        // cross-tenant caller may choose one with filters.tenant.
+        [$where, $args] = \local_sentientia_platform\tenant::sql_filter('r');
 
         $client = json_decode($params['filters'] ?: '{}', true) ?: [];
         if (!empty($client['status'])) {
             $where .= ' AND r.status = :st';
             $args['st'] = $client['status'];
         }
-        if (!empty($client['tenant'])) {
+        if (!empty($client['tenant']) && \local_sentientia_platform\tenant::is_cross_tenant()) {
             $where .= ' AND r.costcenterid = :ten';
             $args['ten'] = (int) $client['tenant'];
         }

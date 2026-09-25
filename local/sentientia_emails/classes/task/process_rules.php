@@ -104,6 +104,26 @@ class process_rules extends \core\task\scheduled_task {
     }
 
     /**
+     * ADR-031: confine a tenant rule's recipients to that tenant.
+     *
+     * A rule's tenant_id used to be cosmetic: every query below matched
+     * enrolled users in every tenant, so a rule a tenant admin created for
+     * their own tenant emailed every tenant's learners. A global rule
+     * (tenant_id 0) is meant for everyone and stays unrestricted.
+     *
+     * @param object $rule
+     * @return array [sql, params] a fragment on u.open_path
+     */
+    private function rule_tenant_filter(object $rule): array {
+        $ruletenant = (int) ($rule->tenant_id ?? 0);
+        if ($ruletenant <= 0) {
+            return ['1=1', []];
+        }
+        return \local_sentientia_platform\tenant::path_descendant_filter(
+            '/' . $ruletenant, 'u', 'open_path', 'ruletenant');
+    }
+
+    /**
      * Find users enrolled in courses with 0% progress after X days.
      */
     private function process_course_not_started(object $rule): array {
@@ -111,6 +131,7 @@ class process_rules extends \core\task\scheduled_task {
 
         $triggerdays = (int)($rule->trigger_days ?? 10);
         $cutoff = time() - ($triggerdays * 86400);
+        [$tenantsql, $tenantparams] = $this->rule_tenant_filter($rule);
 
         $users = $DB->get_records_sql(
             "SELECT DISTINCT ue.userid, u.firstname, u.lastname, u.email, u.open_path,
@@ -122,6 +143,7 @@ class process_rules extends \core\task\scheduled_task {
           LEFT JOIN {course_completions} cc ON cc.userid = ue.userid AND cc.course = c.id
               WHERE ue.timestart > 0 AND ue.timestart < :cutoff
                 AND u.deleted = 0 AND u.suspended = 0
+                AND $tenantsql
                 AND (cc.id IS NULL OR cc.timecompleted IS NULL)
                 AND NOT EXISTS (
                     SELECT 1 FROM {local_sentientia_email_log} l
@@ -131,6 +153,7 @@ class process_rules extends \core\task\scheduled_task {
            ORDER BY ue.timestart ASC
               LIMIT 100",
             ['cutoff' => $cutoff, 'tkey' => $rule->template_key, 'dedup' => time() - 86400 * 7]
+                + $tenantparams
         );
 
         mtrace("  course_not_started: " . count($users) . " users matched.");
@@ -162,6 +185,7 @@ class process_rules extends \core\task\scheduled_task {
         $targetdate = time() + ($triggerdays * 86400);
         $windowstart = $targetdate - 43200; // 12 hour window.
         $windowend = $targetdate + 43200;
+        [$tenantsql, $tenantparams] = $this->rule_tenant_filter($rule);
 
         $users = $DB->get_records_sql(
             "SELECT DISTINCT ue.userid, u.firstname, u.lastname, u.email, u.open_path,
@@ -173,6 +197,7 @@ class process_rules extends \core\task\scheduled_task {
           LEFT JOIN {course_completions} cc ON cc.userid = ue.userid AND cc.course = c.id
               WHERE c.enddate BETWEEN :wstart AND :wend
                 AND u.deleted = 0 AND u.suspended = 0
+                AND $tenantsql
                 AND (cc.id IS NULL OR cc.timecompleted IS NULL)
                 AND NOT EXISTS (
                     SELECT 1 FROM {local_sentientia_email_log} l
@@ -181,7 +206,7 @@ class process_rules extends \core\task\scheduled_task {
                 )
               LIMIT 100",
             ['wstart' => $windowstart, 'wend' => $windowend,
-             'tkey' => $rule->template_key, 'dedup' => time() - 86400]
+             'tkey' => $rule->template_key, 'dedup' => time() - 86400] + $tenantparams
         );
 
         mtrace("  deadline_approaching: " . count($users) . " users matched.");
@@ -284,7 +309,8 @@ class process_rules extends \core\task\scheduled_task {
         $now = time();
         $oldest_enrol = $now - ($max_offset + 1) * 86400;
 
-        $params = ['oldest' => $oldest_enrol];
+        [$tenantsql, $tenantparams] = $this->rule_tenant_filter($rule);
+        $params = ['oldest' => $oldest_enrol] + $tenantparams;
         $auto_stop_join = '';
         $auto_stop_where = '';
         if ($auto_stop) {
@@ -303,6 +329,7 @@ class process_rules extends \core\task\scheduled_task {
               WHERE ue.timestart > :oldest
                 AND ue.timestart > 0
                 AND u.deleted = 0 AND u.suspended = 0
+                AND $tenantsql
                 $auto_stop_where
            ORDER BY ue.timestart ASC
               LIMIT 500",

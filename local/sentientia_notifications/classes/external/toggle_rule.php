@@ -23,8 +23,9 @@ class toggle_rule extends external_api {
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/sentientia_notifications:manage', $context);
+        \local_sentientia_notifications\rule_manager::require_rule_admin();
 
-        $newstate = \local_sentientia_notifications\rule_manager::toggle_enabled(
+        $newstate =\local_sentientia_notifications\rule_manager::toggle_enabled(
             $params['ruleid'], $params['enabled']);
         return ['ruleid' => $params['ruleid'], 'enabled' => $newstate];
     }

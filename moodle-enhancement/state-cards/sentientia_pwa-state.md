@@ -144,3 +144,13 @@ the doc are corrected in the same change, or it recurs on the next plugin.
 
 Found by the 2026-09-22 confidence audit. Both trees now agree on this file; the reconciliation is
 recorded as two entries drained from `tools/tree-drift-baseline.txt`.
+
+## 2026-09-25 - ADR-031 tenant scope (0.6.0-alpha, 2026092500)
+
+Sweep hit 59 (CROSS-TENANT-AUTHORITY-SWEEP-2026-09-25). `local/sentientia_pwa:manage` no longer
+defaults to the manager archetype, and upgrade step 2026092500 revokes every existing grant: the
+push log is a platform-operations view, and every tenant admin could page through every tenant's
+push recipients or type any user id into its filter. As defence in depth `push_logger::recent()`,
+`count()` and `stats_last_24h()` confine whoever holds `:manage` to the recipients in their own
+tenant (1=1 cross-tenant, 1=0 with no tenant), and `recent()` no longer selects the unused
+`u.email`. Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`).

@@ -18,11 +18,16 @@ class rule_manager {
     /**
      * Get all rules, optionally filtered by tenant.
      *
-     * @param int $tenantid 0 = all tenants
+     * @param int $tenantid 0 = all tenants (cross-tenant callers only)
      * @return array of rule objects
      */
     public static function get_rules(int $tenantid = 0): array {
         global $DB;
+        // ADR-031: "all tenants" is for cross-tenant callers only. A scoped
+        // caller reaching here with 0 has no resolvable tenant: nothing.
+        if ($tenantid <= 0 && !\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return [];
+        }
         $conditions = [];
         $params = [];
         if ($tenantid > 0) {
@@ -105,14 +110,30 @@ class rule_manager {
     /**
      * Get rule statistics for dashboard.
      *
+     * ADR-031: counts the rules that apply to $tenantid (its own plus the
+     * global ones). 0 = every rule, for cross-tenant callers only; a scoped
+     * caller with no tenant gets zeros.
+     *
+     * @param int $tenantid
      * @return object {total, enabled, disabled, by_type: [{type, count}]}
      */
-    public static function get_stats(): object {
+    public static function get_stats(int $tenantid = 0): object {
         global $DB;
-        $total = $DB->count_records(self::TABLE);
-        $enabled = $DB->count_records(self::TABLE, ['enabled' => 1]);
+        if ($tenantid > 0) {
+            $where = '(tenant_id = :tid OR tenant_id = 0)';
+            $params = ['tid' => $tenantid];
+        } else if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            $where = '1=1';
+            $params = [];
+        } else {
+            $where = '1=0';
+            $params = [];
+        }
+        $total = $DB->count_records_select(self::TABLE, $where, $params);
+        $enabled = $DB->count_records_select(self::TABLE, "$where AND enabled = 1", $params);
         $bytype = $DB->get_records_sql(
-            "SELECT rule_type, COUNT(*) AS cnt FROM {" . self::TABLE . "} GROUP BY rule_type ORDER BY cnt DESC"
+            "SELECT rule_type, COUNT(*) AS cnt FROM {" . self::TABLE . "} WHERE $where
+           GROUP BY rule_type ORDER BY cnt DESC", $params
         );
         return (object)[
             'total'    => $total,

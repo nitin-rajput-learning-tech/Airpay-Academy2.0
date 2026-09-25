@@ -55,15 +55,23 @@ class tenant_config {
      * @return array branding config
      */
     public static function get_for_user(int $userid): array {
+        return self::get(self::tenant_id_for_user($userid));
+    }
+
+    /**
+     * The tenant root a user belongs to, from their open_path; 0 if none.
+     *
+     * @param int $userid
+     * @return int
+     */
+    public static function tenant_id_for_user(int $userid): int {
         global $DB;
         try {
             $openpath = $DB->get_field('user', 'open_path', ['id' => $userid]);
-            $parts = explode('/', trim($openpath ?? '', '/'));
-            $costcenterid = (int)($parts[0] ?? 0);
+            return \local_sentientia_platform\tenant::root_for_user((object) ['open_path' => $openpath]);
         } catch (\Exception $e) {
-            $costcenterid = 0;
+            return 0;
         }
-        return self::get($costcenterid);
     }
 
     /**

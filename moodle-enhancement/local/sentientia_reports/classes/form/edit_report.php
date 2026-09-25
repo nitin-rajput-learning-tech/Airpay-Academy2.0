@@ -73,6 +73,12 @@ class edit_report extends \core_form\dynamic_form {
         if (!array_key_exists($data['report_type'] ?? '', report_manager::REPORT_TYPES)) {
             $errors['report_type'] = get_string('invalid_report_type', 'local_sentientia_reports');
         }
+        // ADR-031: "All organisations" is cross-tenant only. The option list
+        // is already limited to the caller's tenant; report_manager::create()
+        // / update() re-check the org server-side.
+        if (!\local_sentientia_platform\tenant::is_cross_tenant() && (int) ($data['costcenterid'] ?? 0) <= 0) {
+            $errors['costcenterid'] = get_string('error_outoftenant', 'local_sentientia_platform');
+        }
         return $errors;
     }
 
@@ -126,6 +132,20 @@ class edit_report extends \core_form\dynamic_form {
 
     protected function check_access_for_dynamic_submission(): void {
         require_capability('local/sentientia_reports:manage', $this->get_context_for_dynamic_submission());
+        // ADR-031: :manage says WHAT. A scoped caller must have a tenant, and
+        // may only open or save a report that is in it (this form used to
+        // load and rewrite any report id).
+        if (\local_sentientia_platform\tenant::scope_path() === null) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        $reportid = (int) $this->optional_param('reportid', 0, PARAM_INT);
+        if ($reportid > 0) {
+            $report = report_manager::get($reportid);
+            if (!$report) {
+                throw new \moodle_exception('invalidreport', 'local_sentientia_reports');
+            }
+            report_manager::require_report_access($report);
+        }
     }
 
     protected function get_context_for_dynamic_submission(): \context {
@@ -137,13 +157,19 @@ class edit_report extends \core_form\dynamic_form {
      */
     private function get_org_options(): array {
         global $DB;
-        $options = [0 => '— All organisations —'];
+        // ADR-031: a cross-tenant caller sees "All organisations" and every
+        // tenant's orgs. Anyone else sees only the orgs inside their own
+        // tenant (none at all when their tenant does not resolve).
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        $options = $scope === '' ? [0 => '— All organisations —'] : [];
         $dbman = $DB->get_manager();
-        if (!$dbman->table_exists('local_sentientia_org')) {
+        if ($scope === null || !$dbman->table_exists('local_sentientia_org')) {
             return $options;
         }
-        $orgs = $DB->get_records('local_sentientia_org', ['visible' => 1],
-            'depth ASC, fullname ASC', 'id, fullname, depth');
+        [$scopesql, $scopeparams] = \local_sentientia_platform\tenant::path_descendant_filter(
+            $scope, '', 'path', 'rptorg');
+        $orgs = $DB->get_records_select('local_sentientia_org', "visible = 1 AND $scopesql",
+            $scopeparams, 'depth ASC, fullname ASC', 'id, fullname, depth');
         foreach ($orgs as $o) {
             $indent = str_repeat('— ', max(0, $o->depth - 1));
             $options[$o->id] = $indent . format_string($o->fullname);

@@ -16,6 +16,9 @@ $report = \local_sentientia_reports\report_manager::get($reportid);
 if (!$report) {
     throw new moodle_exception('invalidreport', 'local_sentientia_reports');
 }
+// ADR-031: :export says WHAT; the report must be in the caller's tenant, and
+// an "All organisations" report is cross-tenant only. (run_report() checks too.)
+\local_sentientia_reports\report_manager::require_report_access($report);
 
 // Run the report (full result, no row limit applied).
 $result = \local_sentientia_reports\report_manager::run_report($reportid);

@@ -91,3 +91,13 @@ as part of the P1 state-card pass.
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+## 2026-09-25 - ADR-031 tenant scope (1.4.0, 2026092500)
+
+Sweep hit 54 (CROSS-TENANT-AUTHORITY-SWEEP-2026-09-25). `:viewall` keeps its manager default and
+the `db/install.php` grant to 'administrator': all.php is meant to be the tenant-wide admin view.
+`list_all` started from 1=1 and took the tenant from the client's filters JSON, so every holder
+saw every tenant's requesters, emails, reasons and decision notes. It now starts from
+`tenant::sql_filter('r')` (the caller's tenant; 1=0 when it does not resolve, so the
+costcenterid 0 rows are not "every tenant"), and only a cross-tenant caller may pick a tenant with
+`filters.tenant`. Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`).

@@ -42,14 +42,83 @@ class report_manager {
         return $DB->get_record(self::TABLE, ['id' => $id]);
     }
 
+    /**
+     * ADR-031: may the current user run, export, edit, archive or delete
+     * this saved report?
+     *
+     * :view / :export / :manage say WHAT a user may do; only
+     * tenant::is_cross_tenant() lets them reach another tenant's report.
+     * A report with no open_path is an "All organisations" report - it
+     * returns every tenant's users - so it is cross-tenant only. The empty
+     * check must come first: require_path_access('') lets anyone through.
+     *
+     * @param \stdClass $report a local_sentientia_reports row
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_report_access(\stdClass $report): void {
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return;
+        }
+        if (trim((string) ($report->open_path ?? '')) === '') {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        \local_sentientia_platform\tenant::require_path_access((string) $report->open_path);
+    }
+
+    /**
+     * ADR-031: the org a report is being saved against, checked against the
+     * caller's tenant. Cross-tenant callers may use any org, or 0 ("All
+     * organisations"); everyone else must name an existing org inside their
+     * own tenant.
+     *
+     * @param int $orgid local_sentientia_org.id (0 = all organisations)
+     * @return \stdClass|null the org row, or null for "all organisations"
+     * @throws \moodle_exception error_outoftenant
+     */
+    private static function org_for_save(int $orgid): ?\stdClass {
+        global $DB;
+        $org = $orgid > 0 ? $DB->get_record('local_sentientia_org', ['id' => $orgid]) : false;
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return $org ?: null;
+        }
+        if (!$org || trim((string) $org->path) === '') {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        \local_sentientia_platform\tenant::require_path_access((string) $org->path);
+        return $org;
+    }
+
+    /**
+     * ADR-031: WHERE fragment for the saved reports the current user may
+     * see (1=1 cross-tenant, 1=0 with no tenant; "All organisations"
+     * reports are cross-tenant only).
+     *
+     * @param string $alias table alias ('' for none)
+     * @return array{0: string, 1: array}
+     */
+    public static function visible_sql(string $alias = ''): array {
+        return \local_sentientia_platform\tenant::path_filter($alias);
+    }
+
     public static function count_reports(?int $status = null): int {
         global $DB;
         $dbman = $DB->get_manager();
         if (!$dbman->table_exists(self::TABLE)) return 0;
-        if ($status === null) {
-            return $DB->count_records(self::TABLE);
+        // ADR-031: the index KPI tiles count the caller's tenant's reports.
+        [$where, $params] = self::visible_sql();
+        if ($status !== null) {
+            $where .= ' AND status = :status';
+            $params['status'] = $status;
         }
-        return $DB->count_records(self::TABLE, ['status' => $status]);
+        return $DB->count_records_select(self::TABLE, $where, $params);
+    }
+
+    /** Total runs across the reports the current user may see. */
+    public static function total_runs(): int {
+        global $DB;
+        [$where, $params] = self::visible_sql();
+        return (int) $DB->get_field_sql(
+            "SELECT COALESCE(SUM(runcount), 0) FROM {" . self::TABLE . "} WHERE $where", $params);
     }
 
     /**
@@ -89,11 +158,11 @@ class report_manager {
             'timemodified'  => time(),
         ];
 
-        if ($record->costcenterid > 0) {
-            $org = $DB->get_record('local_sentientia_org', ['id' => $record->costcenterid]);
-            if ($org) {
-                $record->open_path = $org->path;
-            }
+        // ADR-031: a scoped caller must save against an org in their own
+        // tenant; "All organisations" (0, no open_path) is cross-tenant only.
+        $org = self::org_for_save($record->costcenterid);
+        if ($org) {
+            $record->open_path = $org->path;
         }
 
         return $DB->insert_record(self::TABLE, $record);
@@ -103,6 +172,8 @@ class report_manager {
         global $DB;
 
         $existing = $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
+        // ADR-031: the report being edited must be in the caller's tenant.
+        self::require_report_access($existing);
         $record = (object) ['id' => $id, 'timemodified' => time()];
 
         if (isset($data->name))         $record->name = trim($data->name);
@@ -125,7 +196,8 @@ class report_manager {
         if (isset($data->status))       $record->status = (int) $data->status;
 
         if (isset($record->costcenterid) && $record->costcenterid != $existing->costcenterid) {
-            $org = $DB->get_record('local_sentientia_org', ['id' => $record->costcenterid]);
+            // ADR-031: re-scoping it must stay inside the caller's tenant.
+            $org = self::org_for_save($record->costcenterid);
             $record->open_path = $org ? $org->path : '';
         }
 
@@ -160,6 +232,10 @@ class report_manager {
     public static function run_report(int $id): array {
         global $DB;
         $report = $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
+        // ADR-031: run.php / export.php ran ANY report id - including the
+        // "All organisations" ones, whose empty scope means every tenant's
+        // users. Guard here so no entry point can skip it.
+        self::require_report_access($report);
 
         $config = !empty($report->filter_config)
             ? (json_decode($report->filter_config, true) ?: [])

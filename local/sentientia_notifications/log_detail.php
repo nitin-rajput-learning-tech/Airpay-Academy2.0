@@ -22,7 +22,9 @@ $PAGE->set_title('Notification detail');
 $PAGE->set_heading('Notification detail');
 require_capability('local/sentientia_notifications:viewlogs', $ctx);
 
-$log = $DB->get_record('local_sentientia_notif_log', ['id' => $id], '*', MUST_EXIST);
+// ADR-031: only a row whose recipient is in the viewer's tenant (it used to
+// be any id). The timeline below is keyed on the same recipient.
+$log = \local_sentientia_notifications\log_access::get_visible_log($id);
 $rule = $log->ruleid
     ? $DB->get_record('local_sentientia_notif_rules', ['id' => $log->ruleid])
     : null;

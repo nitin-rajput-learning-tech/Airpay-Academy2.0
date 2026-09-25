@@ -111,6 +111,19 @@ class delivery_log {
     public static function get_logs(array $filters = [], int $page = 0, int $perpage = 50): object {
         global $DB;
 
+        // ADR-031: the tenant filter is mandatory for anyone who is not
+        // cross-tenant - whatever the caller passed. These rows carry
+        // recipients' names and email addresses. A reader with no
+        // resolvable tenant gets nothing (the tenant_id = 0 rows are the
+        // recipients who had no tenant, not "every tenant").
+        $readertenant = tenant_scope::reader_tenant();
+        if ($readertenant !== null) {
+            if ($readertenant <= 0) {
+                return (object)['records' => [], 'total' => 0];
+            }
+            $filters['tenant_id'] = $readertenant;
+        }
+
         $conditions = [];
         $params = [];
 
@@ -158,27 +171,48 @@ class delivery_log {
     /**
      * Get dashboard statistics.
      *
+     * ADR-031: scoped to $tenantid (0 = every tenant, cross-tenant callers
+     * only). A scoped reader is always confined to their own tenant.
+     *
+     * @param int $tenantid
      * @return object {total, sent_today, sent_week, failed, suppressed, by_status, by_channel}
      */
-    public static function get_stats(): object {
+    public static function get_stats(int $tenantid = 0): object {
         global $DB;
+
+        $readertenant = tenant_scope::reader_tenant();
+        if ($readertenant !== null) {
+            $tenantid = $readertenant;
+        }
+        if ($tenantid > 0) {
+            $where = 'tenant_id = :tid';
+            $params = ['tid' => $tenantid];
+        } else if ($readertenant === null) {
+            $where = '1=1';
+            $params = [];
+        } else {
+            $where = '1=0';
+            $params = [];
+        }
 
         $today = strtotime('today');
         $weekago = time() - (7 * 86400);
 
-        $total = $DB->count_records(self::TABLE);
-        $senttoday = $DB->count_records_select(self::TABLE, "status = 'sent' AND timecreated >= :today",
-            ['today' => $today]);
-        $sentweek = $DB->count_records_select(self::TABLE, "status = 'sent' AND timecreated >= :week",
-            ['week' => $weekago]);
-        $failed = $DB->count_records(self::TABLE, ['status' => 'failed']);
-        $suppressed = $DB->count_records(self::TABLE, ['status' => 'suppressed']);
+        $total = $DB->count_records_select(self::TABLE, $where, $params);
+        $senttoday = $DB->count_records_select(self::TABLE,
+            "$where AND status = 'sent' AND timecreated >= :today", $params + ['today' => $today]);
+        $sentweek = $DB->count_records_select(self::TABLE,
+            "$where AND status = 'sent' AND timecreated >= :week", $params + ['week' => $weekago]);
+        $failed = $DB->count_records_select(self::TABLE, "$where AND status = 'failed'", $params);
+        $suppressed = $DB->count_records_select(self::TABLE, "$where AND status = 'suppressed'", $params);
 
         $bystatus = $DB->get_records_sql(
-            "SELECT status, COUNT(*) AS cnt FROM {" . self::TABLE . "} GROUP BY status"
+            "SELECT status, COUNT(*) AS cnt FROM {" . self::TABLE . "} WHERE $where GROUP BY status",
+            $params
         );
         $bychannel = $DB->get_records_sql(
-            "SELECT channel, COUNT(*) AS cnt FROM {" . self::TABLE . "} GROUP BY channel"
+            "SELECT channel, COUNT(*) AS cnt FROM {" . self::TABLE . "} WHERE $where GROUP BY channel",
+            $params
         );
 
         return (object)[

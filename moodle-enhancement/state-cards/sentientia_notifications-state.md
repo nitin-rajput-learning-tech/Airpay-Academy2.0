@@ -161,3 +161,25 @@ supervisors. (Review pass: the first version of this note said no shipped plugin
 
 Version 2026092400. Guarded platform-wide by
 `local_sentientia_platform/tests/exception_strings_test.php`.
+
+## 2026-09-25 - ADR-031 tenant scope (1.5.0, 2026092500)
+
+Sweep hits 30 and 31 (CROSS-TENANT-AUTHORITY-SWEEP-2026-09-25).
+
+- `:manage` no longer defaults to the manager archetype, and upgrade step 2026092500 revokes every
+  existing grant. Rules have no tenant column, so every rule fires for every tenant: creating,
+  editing, toggling or deleting one is a cross-tenant write, and `rule_manager::require_rule_admin()`
+  now requires `tenant::is_cross_tenant()` on each of those paths too. Reading the rule list still
+  needs only the capability. Any role that was given `:manage` deliberately must be re-granted.
+- `:viewlogs` keeps its manager default (a tenant admin reading their own tenant's log is the
+  feature) but `logs.php`, its status badges and `log_detail.php` are confined to the recipient's
+  tenant through `classes/log_access.php`. A recipient with no tenant is visible cross-tenant only.
+- `test_send` and `preview_rule` refuse a target user outside the caller's tenant (they returned
+  any user's name and email, and test_send messaged them); the preview's sample course comes from
+  the caller's tenant.
+- `nudge.php`: the `local/courses:manage` branch now requires the target to share the caller's
+  tenant. The direct-supervisor branch is unchanged.
+- `rule_new_course` skips a course whose path has no tenant root (a path of exactly '/' used to
+  broadcast to every tenant).
+
+Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`).

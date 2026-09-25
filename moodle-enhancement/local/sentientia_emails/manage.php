@@ -20,15 +20,15 @@ if (!is_siteadmin() && !has_capability('local/sentientia_emails:manage', $contex
 }
 
 $tab      = optional_param('tab', 'dashboard', PARAM_ALPHA);
-$tenantid = optional_param('tenant', 0, PARAM_INT);
 $page     = optional_param('page', 0, PARAM_INT);
 $action   = optional_param('action', '', PARAM_ALPHA);
 
-// Determine user's tenant if not specified.
-if ($tenantid === 0 && !is_siteadmin()) {
-    $parts = explode('/', trim($USER->open_path ?? '', '/'));
-    $tenantid = (int)($parts[0] ?? 1);
-}
+// ADR-031: the capability says WHAT; tenant::is_cross_tenant() alone says
+// WHERE. A cross-tenant caller may pick any tenant (0 = all). Everyone else
+// is pinned to their own tenant root whatever ?tenant= says, and refused
+// when it does not resolve. (This used to honour any ?tenant= value, and an
+// empty open_path became 0 = "All Tenants".)
+$tenantid = \local_sentientia_emails\tenant_scope::resolve(optional_param('tenant', 0, PARAM_INT));
 
 // Handle actions (toggle rule, export CSV, CRUD rules).
 if ($action && confirm_sesskey()) {
@@ -36,6 +36,8 @@ if ($action && confirm_sesskey()) {
         case 'toggle':
             $ruleid = required_param('ruleid', PARAM_INT);
             $enabled = required_param('enabled', PARAM_INT);
+            // ADR-031: global rules and other tenants' rules are cross-tenant writes.
+            \local_sentientia_emails\tenant_scope::modifiable_rule($ruleid);
             \local_sentientia_emails\rule_manager::toggle_rule($ruleid, (bool)$enabled);
             redirect(new moodle_url('/local/sentientia_emails/manage.php', ['tab' => 'rules', 'tenant' => $tenantid]),
                 'Rule ' . ($enabled ? 'enabled' : 'disabled'), null, \core\output\notification::NOTIFY_SUCCESS);
@@ -56,8 +58,20 @@ if ($action && confirm_sesskey()) {
             ];
             $editid = optional_param('ruleid', 0, PARAM_INT);
             if ($editid > 0) {
+                // ADR-031: the rule being edited must be one the caller may change.
+                \local_sentientia_emails\tenant_scope::modifiable_rule($editid);
                 $ruledata->id = $editid;
             }
+            if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
+                // ADR-031: a scoped caller's rule is scoped to their own tenant.
+                // The form's default scope is "All Tenants (Global)" (0); that
+                // becomes their tenant. Naming any other tenant is refused.
+                if ((int) $ruledata->tenant_id !== 0 && (int) $ruledata->tenant_id !== $tenantid) {
+                    throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+                }
+                $ruledata->tenant_id = $tenantid;
+            }
+            \local_sentientia_emails\tenant_scope::require_can_write_tenant((int) $ruledata->tenant_id);
             \local_sentientia_emails\rule_manager::save_rule($ruledata);
             $msg = $editid ? 'Rule updated.' : 'Rule created.';
             redirect(new moodle_url('/local/sentientia_emails/manage.php', ['tab' => 'rules', 'tenant' => $tenantid]),
@@ -65,11 +79,14 @@ if ($action && confirm_sesskey()) {
             break;
         case 'deleterule':
             $ruleid = required_param('ruleid', PARAM_INT);
+            \local_sentientia_emails\tenant_scope::modifiable_rule($ruleid);
             \local_sentientia_emails\rule_manager::delete_rule($ruleid);
             redirect(new moodle_url('/local/sentientia_emails/manage.php', ['tab' => 'rules', 'tenant' => $tenantid]),
                 'Rule deleted.', null, \core\output\notification::NOTIFY_WARNING);
             break;
         case 'export':
+            // $tenantid is always > 0 for a scoped caller; delivery_log also
+            // forces the caller's tenant itself (ADR-031 defence in depth).
             $filters = $tenantid > 0 ? ['tenant_id' => $tenantid] : [];
             $csv = \local_sentientia_emails\delivery_log::export_csv($filters);
             header('Content-Type: text/csv');
@@ -84,6 +101,11 @@ $editruleid = optional_param('edit', 0, PARAM_INT);
 $editrule = null;
 if ($editruleid > 0 && $tab === 'rules') {
     $editrule = \local_sentientia_emails\rule_manager::get_rule($editruleid);
+    if ($editrule) {
+        // ADR-031: another tenant's rule is not readable; a global one is
+        // (it fires for this tenant too) but saving it is refused above.
+        \local_sentientia_emails\tenant_scope::require_can_view_rule($editrule);
+    }
 }
 
 $PAGE->set_url(new moodle_url('/local/sentientia_emails/manage.php', ['tab' => $tab, 'tenant' => $tenantid]));
@@ -120,7 +142,7 @@ $tenants = [
 $tabdata = [];
 switch ($tab) {
     case 'dashboard':
-        $tabdata = \local_sentientia_emails\manage_controller::get_dashboard_data();
+        $tabdata = \local_sentientia_emails\manage_controller::get_dashboard_data($tenantid);
         break;
     case 'templates':
         $tabdata = \local_sentientia_emails\manage_controller::get_templates_data($tenantid);
