@@ -199,3 +199,38 @@ Found by a read-only audit of all 38 Sentientia privacy providers, run because `
 ## 2026-09-24 - Erasure review follow-up
 
 `export_user_data()` had the same string-vs-int `===` as the delete path, so a calendar data export was always empty. `$userid` is now cast to int, as in `delete_data_for_user()`.
+
+## 2026-09-25 - Test debt: 9 pre-existing PHPUnit failures fixed (tests only)
+
+All nine failures were in the tests. No class, lang or version change (still 2026052700).
+
+- **ics_builder_test (4 course-deadline tests: no VEVENT at all).** The tests enrolled with the
+  data generator's default `timestart = 0`. Deadlines are anchored on `ue.timestart`, and
+  `collect_course_deadlines()` skips `timestart = 0` on purpose, the same as `course_reminder`,
+  `course_overdue` and `course_manager::get_completion_deadline()`. A timestart of 0 gives no
+  deadline that can be computed. The tests now enrol with a real timestart (`enrol_with_start()`).
+  `test_completed_course_omitted_from_feed` and `test_unique_vevent_uid_per_event` had been passing
+  vacuously (an empty feed): they now have real events to suppress or count, and the unique-UID
+  test asserts 2 UIDs. `test_course_deadline_appears_for_enrolled_user` also checks the DTSTART date
+  (timestart + 30 days, IST). The new `test_enrolment_without_timestart_has_no_deadline` locks in
+  the timestart-0 behaviour.
+- **ics_builder_test::test_url_property_included_for_classroom_session.** The URL line is 81
+  octets, so `fold_line()` correctly folds it (RFC 5545 section 3.1). The test's `.*` regex could
+  not match across the fold. It now unfolds the text first and anchors the whole `URL:` value.
+- **Flag-OFF tests (oauth_flow_test callback/refresh, token_vault_test build_authorize_url).**
+  The code order was already correct: `build_authorize_url()`, `handle_callback()`,
+  `refresh_token()` and `get_valid_access_token()` all call `assert_feature_flag_enabled()` before
+  any other check. The failures came from test isolation. `feature_flags` keeps override rows in a
+  process-lifetime static, and `resetAfterTest()` rolls back the DB but does not clear that static.
+  So the OAuth flag that earlier tests set ON still read as ON, even across test classes. The
+  3 test classes now call `feature_flags::invalidate_caches()` in `setUp()` (the platform's own
+  `feature_flags_test` does the same), and the flag-OFF tests assert the OFF precondition.
+  `test_revoke_skips_provider_call_when_flag_off_but_clears_local` had also passed vacuously:
+  `revoke()` swallows every Throwable, so its `$this->fail()` handler was caught, which is where
+  the run's second notice came from. It now records the call and asserts that none was made.
+- **token_vault_test::test_get_contexts_for_userid_picks_up_oauth_rows.** Moodle's `contextlist`
+  is itself an `\Iterator` and has no `get_iterator()`. The test now uses `get_contextids()`.
+
+Test inventory now: ics_builder 14, oauth_flow 23, token_manager 17, token_vault 28 (82 methods; the run
+that found these failures had 81).
+Both trees. Not re-run here (the shared PHPUnit DB was in use). Re-run the calendar suite to confirm.

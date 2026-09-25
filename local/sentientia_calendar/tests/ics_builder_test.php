@@ -19,6 +19,13 @@ defined('MOODLE_INTERNAL') || die();
  *   - CRLF line endings, RFC 5545 folding at 75 octets
  *   - User isolation: u1's feed does NOT contain u2's events
  *   - Feature flag scoping: events.courses=false → no course VEVENT
+ *   - An enrolment with no timestart has no computable deadline → no VEVENT
+ *
+ * Course deadlines are anchored on user_enrolments.timestart (the same
+ * contract as course_reminder, course_overdue and
+ * course_manager::get_completion_deadline()), so every deadline test
+ * enrols with an explicit timestart. The data generator's default is 0,
+ * which means "no deadline" and yields an empty feed.
  *
  * @package    local_sentientia_calendar
  * @category   test
@@ -30,6 +37,31 @@ final class ics_builder_test extends \advanced_testcase {
     public function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);
+        // feature_flags memoises the registry and every override row in
+        // process-lifetime statics. resetAfterTest() rolls the DB back but
+        // not those statics, so without this the events.courses=false set
+        // by test_feature_flag_disables_courses_category leaks into every
+        // later test in the process.
+        if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+            \local_sentientia_platform\feature_flags::invalidate_caches();
+        }
+    }
+
+    /**
+     * Enrol a user with a real enrolment start, so a deadline can be computed.
+     *
+     * @param int $userid
+     * @param int $courseid
+     * @param int|null $timestart Defaults to one day ago.
+     * @return int The timestart used.
+     */
+    private function enrol_with_start(int $userid, int $courseid, ?int $timestart = null): int {
+        $timestart = $timestart ?? (time() - DAYSECS);
+        $this->assertTrue(
+            $this->getDataGenerator()->enrol_user($userid, $courseid, null, 'manual', $timestart),
+            'manual enrolment must succeed'
+        );
+        return $timestart;
     }
 
     public function test_empty_user_returns_valid_calendar_shell(): void {
@@ -82,13 +114,41 @@ final class ics_builder_test extends \advanced_testcase {
         $DB->set_field('course', 'open_coursecompletiondays', 30,
             ['id' => $course->id]);
 
-        // Enrol the user via manual enrol.
-        $this->getDataGenerator()->enrol_user($user->id, $course->id);
+        // Enrol the user via manual enrol, with a real start date.
+        $timestart = $this->enrol_with_start((int) $user->id, (int) $course->id);
 
         $ics = ics_builder::build_for_user((int) $user->id);
         $this->assertStringContainsString('BEGIN:VEVENT', $ics);
         $this->assertStringContainsString('CATEGORIES:COURSE-DEADLINE', $ics);
         $this->assertStringContainsString('SUMMARY:[Course Deadline]', $ics);
+
+        // The all-day event sits on timestart + 30 days (IST calendar date).
+        $expected = (new \DateTimeImmutable('@' . ($timestart + 30 * DAYSECS)))
+            ->setTimezone(new \DateTimeZone(ics_builder::DEFAULT_TZID))
+            ->format('Ymd');
+        $this->assertStringContainsString('DTSTART;VALUE=DATE:' . $expected, $ics,
+            'Deadline must be enrolment timestart + open_coursecompletiondays');
+    }
+
+    public function test_enrolment_without_timestart_has_no_deadline(): void {
+        global $DB;
+        $user = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+
+        $columns = $DB->get_columns('course');
+        if (!isset($columns['open_coursecompletiondays'])) {
+            $this->markTestSkipped('open_coursecompletiondays column not present');
+        }
+        $DB->set_field('course', 'open_coursecompletiondays', 30,
+            ['id' => $course->id]);
+
+        // timestart = 0: no enrolment start, so no deadline can be computed.
+        // The reminder and overdue tasks skip these rows too; the feed must
+        // not invent a deadline they would never nudge for.
+        $this->getDataGenerator()->enrol_user($user->id, $course->id, null, 'manual', 0);
+
+        $ics = ics_builder::build_for_user((int) $user->id);
+        $this->assertStringNotContainsString('COURSE-DEADLINE', $ics);
     }
 
     public function test_completed_course_omitted_from_feed(): void {
@@ -103,7 +163,9 @@ final class ics_builder_test extends \advanced_testcase {
 
         $DB->set_field('course', 'open_coursecompletiondays', 30,
             ['id' => $course->id]);
-        $this->getDataGenerator()->enrol_user($user->id, $course->id);
+        // A real timestart, so the only thing suppressing the VEVENT is the
+        // completion (with timestart 0 this test would pass vacuously).
+        $this->enrol_with_start((int) $user->id, (int) $course->id);
 
         // Insert a course_completions row marking the course done.
         $DB->insert_record('course_completions', (object) [
@@ -134,7 +196,7 @@ final class ics_builder_test extends \advanced_testcase {
             ['id' => $course->id]);
 
         // Only u1 enrolled.
-        $this->getDataGenerator()->enrol_user($u1->id, $course->id);
+        $this->enrol_with_start((int) $u1->id, (int) $course->id);
 
         $ics_u1 = ics_builder::build_for_user((int) $u1->id);
         $ics_u2 = ics_builder::build_for_user((int) $u2->id);
@@ -262,7 +324,7 @@ final class ics_builder_test extends \advanced_testcase {
 
         $DB->set_field('course', 'open_coursecompletiondays', 30,
             ['id' => $course->id]);
-        $this->getDataGenerator()->enrol_user($user->id, $course->id);
+        $this->enrol_with_start((int) $user->id, (int) $course->id);
 
         // The events.courses flag must be registered before set() will
         // accept it — skip if the registry hasn't loaded it yet.
@@ -311,7 +373,7 @@ final class ics_builder_test extends \advanced_testcase {
         }
         $DB->set_field('course', 'open_coursecompletiondays', 30,
             ['id' => $course->id]);
-        $this->getDataGenerator()->enrol_user($user->id, $course->id);
+        $this->enrol_with_start((int) $user->id, (int) $course->id);
 
         $ics = ics_builder::build_for_user((int) $user->id);
         $this->assertStringContainsString('Risk\\, Compliance', $ics,
@@ -352,9 +414,13 @@ final class ics_builder_test extends \advanced_testcase {
         ]);
 
         $ics = ics_builder::build_for_user((int) $user->id);
+        // The URL line is longer than 75 octets, so it is folded (RFC 5545
+        // §3.1: CRLF + one space). Unfold before matching the logical line;
+        // the anchors make sure the whole value is the classroom URL.
+        $unfolded = str_replace("\r\n ", '', $ics);
         $this->assertMatchesRegularExpression(
-            '/URL:.*local\/sentientia_classroom\/index\.php\?id=' . $classroomid . '/',
-            $ics
+            '/^URL:\S*\/local\/sentientia_classroom\/index\.php\?id=' . $classroomid . '\r?$/m',
+            $unfolded
         );
     }
 
@@ -370,8 +436,8 @@ final class ics_builder_test extends \advanced_testcase {
         }
         $DB->set_field('course', 'open_coursecompletiondays', 30, ['id' => $c1->id]);
         $DB->set_field('course', 'open_coursecompletiondays', 45, ['id' => $c2->id]);
-        $this->getDataGenerator()->enrol_user($user->id, $c1->id);
-        $this->getDataGenerator()->enrol_user($user->id, $c2->id);
+        $this->enrol_with_start((int) $user->id, (int) $c1->id);
+        $this->enrol_with_start((int) $user->id, (int) $c2->id);
 
         $ics = ics_builder::build_for_user((int) $user->id);
 
@@ -379,6 +445,8 @@ final class ics_builder_test extends \advanced_testcase {
         $compact = str_replace("\r\n ", '', $ics);
         preg_match_all('/^UID:(.+)$/m', $compact, $matches);
         $uids = $matches[1] ?? [];
+        // Two deadlines expected; zero UIDs would make the check below vacuous.
+        $this->assertCount(2, $uids, 'One VEVENT per enrolled course with a deadline');
         $this->assertCount(count(array_unique($uids)), $uids,
             'Every VEVENT UID must be unique within the feed');
     }

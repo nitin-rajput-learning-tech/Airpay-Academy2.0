@@ -7,13 +7,21 @@ namespace local_sentientia_courses\external;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * G-06 — Verify the Enrol Users deep-link in the courses list datatable.
+ * Verify the Enrol Users action in the courses list datatable.
+ *
+ * G-06 (2026-05-07) shipped this as a new-tab deep-link to
+ * /enrol/users.php. Phase F.5 (2026-05-08) replaced it with the native
+ * in-page enrol modal (amd course_actions.js `enrol-users-modal` →
+ * core_form/modalform on \local_sentientia_courses\form\enrol_users_modal),
+ * keeping the /enrol/users.php href as the no-JS / new-tab fallback.
  *
  * Locks in:
  * - When the caller has local/sentientia_courses:enrol, the row's actions HTML
- *   contains a link to /enrol/users.php?id=<courseid>
- * - When the caller lacks :enrol, the link is NOT in the actions HTML
- * - The link opens in a new tab (target="_blank")
+ *   has exactly one enrol trigger: data-action="enrol-users-modal",
+ *   data-courseid="<courseid>", href fallback /enrol/users.php?id=<courseid>
+ * - The modal form class the trigger opens exists
+ * - When the caller lacks :enrol, neither the modal trigger nor the link is
+ *   in the actions HTML
  *
  * @package    local_sentientia_courses
  * @category   test
@@ -43,14 +51,21 @@ final class enrol_deeplink_test extends \advanced_testcase {
         }
         $this->assertNotNull($row, 'seeded course should be in the list');
 
-        $this->assertStringContainsString('/enrol/users.php', $row['actions'],
-            'enrol deep-link should be present for siteadmin');
-        $this->assertStringContainsString('id=' . $course->id, $row['actions'],
-            'enrol deep-link should reference the row courseid');
-        $this->assertStringContainsString('target="_blank"', $row['actions'],
-            'enrol deep-link should open in a new tab');
-        $this->assertStringContainsString('rel="noopener"', $row['actions'],
-            'enrol deep-link should set rel=noopener for security');
+        // Isolate the enrol trigger: other row actions (enrolled users, share)
+        // also carry id=<courseid>, so a whole-string search proves little.
+        $count = preg_match_all('/<a\s[^>]*data-action="enrol-users-modal"[^>]*>/',
+            $row['actions'], $matches);
+        $this->assertSame(1, $count,
+            'exactly one enrol-users-modal trigger should be present for siteadmin');
+        $anchor = $matches[0][0];
+
+        $this->assertStringContainsString('data-courseid="' . (int) $course->id . '"', $anchor,
+            'modal trigger should carry the row courseid for the JS handler');
+        $enrolurl = (new \moodle_url('/enrol/users.php', ['id' => (int) $course->id]))->out(false);
+        $this->assertStringContainsString('href="' . s($enrolurl) . '"', $anchor,
+            'modal trigger should keep /enrol/users.php?id=<courseid> as its fallback href');
+        $this->assertTrue(class_exists(\local_sentientia_courses\form\enrol_users_modal::class),
+            'the modal form the trigger opens must exist');
     }
 
     public function test_enrol_link_absent_for_view_only_caller(): void {
@@ -82,5 +97,7 @@ final class enrol_deeplink_test extends \advanced_testcase {
 
         $this->assertStringNotContainsString('/enrol/users.php', $row['actions'],
             'enrol deep-link must NOT appear when caller lacks :enrol capability');
+        $this->assertStringNotContainsString('enrol-users-modal', $row['actions'],
+            'enrol modal trigger must NOT appear when caller lacks :enrol capability');
     }
 }
