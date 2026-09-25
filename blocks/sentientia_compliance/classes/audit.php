@@ -126,9 +126,15 @@ final class audit {
      * Per-course compliance figures for a scope.
      *
      * For the unscoped (cross-tenant) scope the queries are exactly the
-     * block's original ones. For a tenant or team scope, a course appears only
-     * when someone in the scope is enrolled in it (so no other tenant's course
-     * names show), and both counts are over the scope's people only.
+     * block's original ones. For a tenant or team scope, a course appears when
+     * it belongs to the scope's tenant (its open_path is the tenant root or
+     * below), or when someone in the scope is enrolled in it (a course shared
+     * in, or a legacy one with no open_path) - so no other tenant's course
+     * names show - and both counts are over the scope's people only.
+     *
+     * ADR-031 follow-up (2026-09-25): wave 1 listed a course only when
+     * someone in scope was enrolled, so a tenant's OWN mandatory course with
+     * no enrolments yet vanished from its matrix instead of showing 0 of 0.
      *
      * @param string $path '' only for a cross-tenant viewer
      * @param int[]|null $userids
@@ -151,16 +157,25 @@ final class audit {
                 [], 'fullname ASC', 'id,shortname,fullname,enddate');
         } else {
             [$usql, $uparams] = self::population_sql($path, $userids);
+            // The tenant's own courses, whether or not anyone is enrolled yet.
+            // Only for a real path: path_descendant_filter('') is 1=1, which
+            // would list every tenant's courses.
+            $ownsql = '1=0';
+            $ownparams = [];
+            if ($path !== '' && array_key_exists('open_path', $DB->get_columns('course'))) {
+                [$ownsql, $ownparams] = tenant::path_descendant_filter($path, 'c', 'open_path', 'cmpc');
+            }
             $courses = $DB->get_records_sql(
                 "SELECT c.id, c.shortname, c.fullname, c.enddate
                    FROM {course} c
                   WHERE c.enddate > 0 AND c.visible = 1 AND c.id > 1
-                    AND EXISTS (SELECT 1
-                                  FROM {user_enrolments} ue
-                                  JOIN {enrol} e ON e.id = ue.enrolid
-                                  JOIN {user} u ON u.id = ue.userid
-                                 WHERE e.courseid = c.id AND {$usql})
-               ORDER BY c.fullname ASC", $uparams);
+                    AND ({$ownsql}
+                         OR EXISTS (SELECT 1
+                                      FROM {user_enrolments} ue
+                                      JOIN {enrol} e ON e.id = ue.enrolid
+                                      JOIN {user} u ON u.id = ue.userid
+                                     WHERE e.courseid = c.id AND {$usql}))
+               ORDER BY c.fullname ASC", $ownparams + $uparams);
         }
 
         $out = [];

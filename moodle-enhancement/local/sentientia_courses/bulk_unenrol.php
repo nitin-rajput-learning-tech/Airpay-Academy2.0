@@ -90,8 +90,20 @@ if ($data = $form->get_data()) {
                                  'msg' => 'Missing email or shortname'];
                     continue;
                 }
-                $user = $DB->get_record('user',
-                    ['email' => $email, 'deleted' => 0]);
+                // ADR-031 (follow-up): the email lookup is bounded to the
+                // caller's tenant BEFORE a row is picked. With
+                // allowaccountssameemail an address can exist in two tenants,
+                // and get_record() returned whichever came first - the foreign
+                // one made the caller's own user read "not found".
+                $matches = \local_sentientia_courses\course_manager::users_by_email_in_scope(
+                    $email, $enrolroot, 'id, open_path');
+                if (count($matches) > 1) {
+                    $failed++;
+                    $report[] = ['line' => $line, 'status' => 'failed',
+                                 'msg' => "Email matches more than one user: $email"];
+                    continue;
+                }
+                $user = $matches ? $matches[0] : false;
                 $course = $DB->get_record('course', ['shortname' => $shortname]);
                 // ADR-031: until 2026-09-25 this unenrolled any user of any
                 // tenant from any course. For a scoped caller an out-of-tenant

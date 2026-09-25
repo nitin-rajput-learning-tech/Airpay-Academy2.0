@@ -161,6 +161,17 @@ class edit_course extends \core_form\dynamic_form {
             $errors['enddate'] = get_string('enddatebeforestart', 'local_sentientia_courses');
         }
 
+        // ADR-031: the select drops a category that is not among the caller's
+        // options (another tenant's), and its 'required' rule is client-side
+        // only - so on create say so on the field rather than failing in
+        // create(). On edit an empty category leaves the course where it is
+        // (course_manager::update() skips it), exactly as before - e.g. a
+        // course in a hidden category keeps it.
+        if ($iscreate && (empty($data['category'])
+                || !array_key_exists((int) $data['category'], $this->get_category_options()))) {
+            $errors['category'] = get_string('required');
+        }
+
         // ADR-031: a scoped caller may only file a course under an org in
         // their own tenant. course_manager enforces it too; this puts the
         // message on the field instead of failing the whole submission.
@@ -287,17 +298,17 @@ class edit_course extends \core_form\dynamic_form {
 
     // ─── Helpers ──────────────────────────────────────────────────────
 
+    /**
+     * Category options (ADR-031 scoped - see course_manager::edit_category_options()).
+     *
+     * A tenant admin no longer sees categories that hold only other tenants'
+     * courses; empty categories (and, failing those, the default category)
+     * stay, so a new tenant can still create a course.
+     *
+     * @return array<int, string>
+     */
     private function get_category_options(): array {
-        global $DB;
-        $cats = $DB->get_records('course_categories', ['visible' => 1], 'sortorder ASC',
-            'id, name, depth, path');
-
-        $options = [];
-        foreach ($cats as $c) {
-            $indent = str_repeat('— ', max(0, $c->depth - 1));
-            $options[$c->id] = $indent . format_string($c->name);
-        }
-        return $options;
+        return \local_sentientia_courses\course_manager::edit_category_options();
     }
 
     /**

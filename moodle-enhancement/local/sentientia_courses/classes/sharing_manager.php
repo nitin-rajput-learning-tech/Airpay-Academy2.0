@@ -68,6 +68,37 @@ class sharing_manager {
     public const STATUS_WITHDRAWN = 'withdrawn';
 
     /**
+     * ADR-031 decision 3: sharing is cross-tenant by nature, so its entry
+     * points require a cross-tenant caller as well as their capability.
+     *
+     * :share_to_tenant and :approve_request have no archetype default, but a
+     * later grant of either to a tenant-admin role would otherwise let that
+     * tenant push any course into, or withdraw it from, every other tenant's
+     * catalogue, and decide every tenant's share requests. The web services
+     * (share / unshare / approve / reject) and the share.php and
+     * manage_requests.php pages call this; the data-layer methods do not, so
+     * the operator CLI (cli/manage_shares.php) keeps working.
+     *
+     * @throws \moodle_exception error_crosstenantonly
+     */
+    public static function require_cross_tenant(): void {
+        if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
+            throw new \moodle_exception('error_crosstenantonly', 'local_sentientia_courses');
+        }
+    }
+
+    /**
+     * May the current user share courses between tenants? The capability AND
+     * a cross-tenant caller (see require_cross_tenant()).
+     *
+     * @return bool
+     */
+    public static function can_share(): bool {
+        return \local_sentientia_platform\tenant::is_cross_tenant()
+            && has_capability('local/sentientia_courses:share_to_tenant', \context_system::instance());
+    }
+
+    /**
      * Share a course to one or more tenants.
      *
      * Idempotent: re-running on an already-shared (courseid, tenant_id)

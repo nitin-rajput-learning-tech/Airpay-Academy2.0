@@ -55,24 +55,31 @@ class enrol_csv_processor {
         ];
 
         // Caller's tenant scope. ADR-031: only a cross-tenant caller (site
-        // admin or :crosstenant holder) is unscoped.
-        $caller_tenant_top = 0;
-        if (!\local_sentientia_platform\tenant::is_cross_tenant($caller_userid)) {
-            $caller = $DB->get_record('user', ['id' => $caller_userid],
-                'id, open_path');
-            $parts = explode('/', trim((string) ($caller->open_path ?? ''), '/'));
-            $caller_tenant_top = isset($parts[0]) && ctype_digit($parts[0])
-                ? (int) $parts[0] : 0;
-            if ($caller_tenant_top === 0) {
-                throw new \moodle_exception('invalidtenant', 'local_sentientia_courses');
-            }
-        }
+        // admin or :crosstenant holder) is unscoped (null); a scoped caller
+        // whose tenant does not resolve gets invalidtenant.
+        $caller_root = course_manager::enrol_scope_root($caller_userid);
+        $caller_tenant_top = $caller_root ?? 0;
 
         // Pre-fetch role-shortname → roleid map.
         $role_map = [];
         foreach ($DB->get_records('role', null, '', 'id, shortname') as $r) {
             $role_map[strtolower($r->shortname)] = (int) $r->id;
         }
+
+        // ADR-031 (follow-up): the roles each course accepts - the very list
+        // the enrol modal offers (course_manager::enrol_role_choices()), so a
+        // CSV can no longer give a role the modal hides ('administrator',
+        // 'manager', ...). Cached per course.
+        $role_choices = [];
+        $get_role_choices = function(\stdClass $course)
+            use (&$role_choices, $caller_root, $caller_userid) {
+            $cid = (int) $course->id;
+            if (!isset($role_choices[$cid])) {
+                $role_choices[$cid] = course_manager::enrol_role_choices($course,
+                    $caller_root, $caller_userid);
+            }
+            return $role_choices[$cid];
+        };
 
         // Pre-fetch enrol_manual instance loader (cached per course).
         $manual_instances = [];
@@ -105,31 +112,40 @@ class enrol_csv_processor {
                 continue;
             }
 
-            // Lookup user.
-            $user = $DB->get_record('user',
-                ['email' => $email, 'deleted' => 0],
+            // Lookup user. ADR-031 (follow-up): bounded to the caller's
+            // tenant BEFORE a row is picked. With allowaccountssameemail an
+            // address can exist in two tenants, and get_record() used to hand
+            // back whichever came first - the foreign account made the
+            // caller's own user read "not found". Another tenant's user reads
+            // exactly like a missing one, so the summary is no oracle.
+            $matches = course_manager::users_by_email_in_scope($email, $caller_root,
                 'id, suspended, open_path');
-            if (!$user) {
+            if (!$matches) {
                 $summary['skipped'][] = [
                     'email' => $email, 'course' => $shortname,
                     'reason' => 'User not found.',
                 ];
                 continue;
             }
+            if (count($matches) > 1) {
+                // Only ever the caller's own tenant's accounts (or, for a
+                // cross-tenant caller, anyone's): never guess which one.
+                $summary['failed'][] = [
+                    'email' => $email, 'course' => $shortname,
+                    'error' => 'Email matches more than one user.',
+                ];
+                continue;
+            }
+            $user = $matches[0];
 
-            // Tenant guard. ADR-031: reported exactly like a missing user,
-            // so the summary cannot confirm who exists in another tenant.
-            if ($caller_tenant_top > 0) {
-                $u_parts = explode('/', trim((string) $user->open_path, '/'));
-                $u_top = isset($u_parts[0]) && ctype_digit($u_parts[0])
-                    ? (int) $u_parts[0] : 0;
-                if ($u_top !== $caller_tenant_top) {
-                    $summary['skipped'][] = [
-                        'email' => $email, 'course' => $shortname,
-                        'reason' => 'User not found.',
-                    ];
-                    continue;
-                }
+            // Tenant guard - defence in depth behind the bounded lookup.
+            if ($caller_tenant_top > 0
+                    && !course_manager::path_in_tenant((string) $user->open_path, $caller_tenant_top)) {
+                $summary['skipped'][] = [
+                    'email' => $email, 'course' => $shortname,
+                    'reason' => 'User not found.',
+                ];
+                continue;
             }
 
             // Lookup course. '*' because open_path is a BizLMS column a
@@ -177,15 +193,15 @@ class enrol_csv_processor {
             $roleid = $role_map[$resolved_role];
             $role = $resolved_role; // For the success log.
 
-            // ADR-031: in a course the caller's tenant does not own, learner
-            // roles only - a teacher or manager role there would let the
-            // caller's people edit another tenant's course.
-            $allowedroles = course_manager::enrol_allowed_role_ids($course,
-                $caller_tenant_top > 0 ? $caller_tenant_top : null);
-            if ($allowedroles !== null && !in_array($roleid, $allowedroles, true)) {
+            // ADR-031: only a role the enrol modal would offer for this
+            // course - never guest / user / frontpage / administrator; for a
+            // scoped caller only roles they may assign here, never manager,
+            // coursecreator or a site-level role, and learner roles only in a
+            // course their tenant does not own.
+            if (!array_key_exists($roleid, $get_role_choices($course))) {
                 $summary['failed'][] = [
                     'email' => $email, 'course' => $shortname,
-                    'error' => "Role '$role' cannot be given in a course another tenant owns.",
+                    'error' => "Role '$role' cannot be given in this course.",
                 ];
                 continue;
             }

@@ -29,6 +29,9 @@ require_login();
 $context = context_system::instance();
 $PAGE->set_context($context);
 require_capability('local/sentientia_courses:share_to_tenant', $context);
+// ADR-031 decision 3: sharing is cross-tenant by nature - the capability
+// alone does not unscope a tenant-admin role it is later granted to.
+\local_sentientia_courses\sharing_manager::require_cross_tenant();
 
 // Phase A0 (2026-05-14): Switchboard gate. When the flag is off,
 // even capability holders are blocked — graceful 403 with explanation

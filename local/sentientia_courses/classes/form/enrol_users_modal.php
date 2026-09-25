@@ -21,29 +21,26 @@ class enrol_users_modal extends \core_form\dynamic_form {
         $mform->addElement('hidden', 'courseid', $courseid);
         $mform->setType('courseid', PARAM_INT);
 
-        // ADR-031: the caller's tenant (null = cross-tenant) and, for a course
-        // their tenant does not own (shared in, or legacy with no open_path),
-        // learner roles only. check_access_for_dynamic_submission() has
-        // already refused a course outside the caller's scope.
+        // ADR-031: the caller's tenant (null = cross-tenant) and the roles
+        // they may give in this course - course_manager::enrol_role_choices(),
+        // the same list the enrol CSV checks: for a scoped caller only roles
+        // they may assign here, never manager / coursecreator / a site-level
+        // role, and learner roles only in a course their tenant does not own.
+        // check_access_for_dynamic_submission() has already refused a course
+        // outside the caller's scope.
         $root = \local_sentientia_courses\course_manager::enrol_scope_root();
         $course = $DB->get_record('course', ['id' => $courseid], '*', IGNORE_MISSING);
-        $allowedroles = $course
-            ? \local_sentientia_courses\course_manager::enrol_allowed_role_ids($course, $root)
-            : null;
+        $roles = $course
+            ? \local_sentientia_courses\course_manager::enrol_role_choices($course, $root)
+            : [];
 
-        // Role dropdown — load from {role} (BizLMS uses 'employee').
-        $roles = $DB->get_records('role', null, 'sortorder ASC',
-            'id, shortname, name');
+        // Role dropdown (BizLMS uses 'employee').
         $role_options = [];
         foreach ($roles as $r) {
-            // Hide system + admin from picker.
-            if (in_array($r->shortname, ['guest', 'frontpage', 'user',
-                'administrator'], true)) continue;
-            if ($allowedroles !== null && !in_array((int) $r->id, $allowedroles, true)) continue;
             $label = format_string($r->name) ?: $r->shortname;
             $role_options[(int) $r->id] = $label . ' (' . $r->shortname . ')';
         }
-        // Default = employee/student.
+        // Default = employee/student, among the roles actually offered.
         $default_roleid = 0;
         foreach ($roles as $r) {
             if (in_array($r->shortname, ['employee', 'student'], true)) {
@@ -138,8 +135,8 @@ class enrol_users_modal extends \core_form\dynamic_form {
         // the role must be one the caller may give in this course.
         $root = \local_sentientia_courses\course_manager::require_enrol_scope($courseid, $userids);
         $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
-        $allowedroles = \local_sentientia_courses\course_manager::enrol_allowed_role_ids($course, $root);
-        if ($allowedroles !== null && !in_array($roleid, $allowedroles, true)) {
+        $choices = \local_sentientia_courses\course_manager::enrol_role_choices($course, $root);
+        if (!array_key_exists($roleid, $choices)) {
             throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
         }
 

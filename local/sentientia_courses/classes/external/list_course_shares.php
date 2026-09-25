@@ -41,6 +41,22 @@ class list_course_shares extends external_api {
         // Read-only: any user who can view courses can see the share state.
         require_capability('local/sentientia_courses:view', $context);
 
+        // ADR-031 (follow-up, 2026-09-25): :view is a manager-archetype
+        // default, so every tenant admin holds it - and this returned the
+        // share state, shared_by user id and timestamps of ANY course id. A
+        // scoped caller now reads only a course in their own tenant (or a
+        // legacy course with no open_path, which every tenant's list shows);
+        // one with no tenant reads nothing. A missing course id is refused
+        // the same way, so the call is no existence oracle.
+        if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
+            $course = $DB->get_record('course', ['id' => (int) $params['courseid']], '*', IGNORE_MISSING);
+            if (!$course || \local_sentientia_platform\tenant::scope_path() === null) {
+                throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+            }
+            \local_sentientia_platform\tenant::require_path_access(
+                rtrim(trim((string) ($course->open_path ?? '')), '/'));
+        }
+
         $shares = sharing_manager::list_course_shares((int) $params['courseid']);
         $known = sharing_manager::known_tenants();
         $known_by_id = [];

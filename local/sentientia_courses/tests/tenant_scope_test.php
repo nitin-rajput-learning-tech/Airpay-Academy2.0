@@ -356,8 +356,17 @@ final class tenant_scope_test extends \advanced_testcase {
         $student = (int) $GLOBALS['DB']->get_field('role', 'id', ['shortname' => 'student']);
         $this->assertContains($student, $allowed);
         $this->assertNotContains($teacher, $allowed);
-        $this->assertNull(course_manager::enrol_allowed_role_ids($this->course_at('/1'), 1),
-            'own-tenant courses keep every role the picker offered before');
+        // Follow-up (decision 6): in an own-tenant course a scoped caller keeps
+        // the course roles they may assign - teacher roles included - but never
+        // manager, coursecreator or their own tenant-admin role.
+        $ownallowed = course_manager::enrol_allowed_role_ids($this->course_at('/1'), 1);
+        $this->assertContains($teacher, $ownallowed, 'own-tenant courses keep teacher roles');
+        $this->assertContains($student, $ownallowed);
+        foreach (['manager', 'coursecreator'] as $sn) {
+            $this->assertNotContains((int) $GLOBALS['DB']->get_field('role', 'id', ['shortname' => $sn]),
+                $ownallowed, "{$sn} is never given by a scoped caller");
+        }
+        $this->assertNotContains($this->tenantadminrole, $ownallowed);
         $this->assertNull(course_manager::enrol_allowed_role_ids($zeea, null), 'cross-tenant: unchanged');
     }
 
@@ -403,6 +412,17 @@ final class tenant_scope_test extends \advanced_testcase {
         $student = (int) $DB->get_field('role', 'id', ['shortname' => 'student']);
 
         $this->setUser($this->tenant_admin('/1'));
+
+        // The select below drops the foreign userid in exportValue() before
+        // process_dynamic_submission() runs, so it never reaches the server-side
+        // user check. Assert that check directly (review S7).
+        $this->assertSame('error_outoftenant', $this->errorcode(
+            fn() => course_manager::require_enrol_scope((int) $own->id, [(int) $theirs->id])));
+        $this->assertSame('error_outoftenant', $this->errorcode(
+            fn() => course_manager::require_enrol_scope((int) $own->id, [(int) $mine->id, (int) $theirs->id])),
+            'one foreign user refuses the whole batch');
+        $this->assertSame(1, course_manager::require_enrol_scope((int) $own->id, [(int) $mine->id]));
+
         $data = enrol_users_modal::mock_ajax_submit(['courseid' => (int) $own->id,
             'roleid' => $student, 'userids' => [(int) $mine->id, (int) $theirs->id]]);
         $form = new enrol_users_modal(null, null, 'post', '', null, true, $data, true);

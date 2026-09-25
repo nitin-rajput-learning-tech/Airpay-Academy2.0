@@ -39,6 +39,9 @@ class reject_request extends external_api {
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/sentientia_courses:approve_request', $context);
+        // ADR-031 decision 3: share requests come from every tenant, so
+        // deciding them is for a cross-tenant caller only.
+        \local_sentientia_courses\sharing_manager::require_cross_tenant();
         require_sesskey();
 
         $changed = request_manager::reject_request(

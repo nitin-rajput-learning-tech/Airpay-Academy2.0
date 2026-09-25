@@ -453,3 +453,58 @@ Observation, not changed: `form\enrol_users_modal` and `enrol_csv_processor` enr
 enrolled through the modal or the CSV path never get a deadline. This needs a product decision
 before anyone changes it: the fix could stamp `time()` on enrol, or fall back to
 `ue.timecreated`. Either way, reminders would start firing for existing enrolments.
+
+## 2026-09-25 - ADR-031 follow-up: wave-1 review should-fix items (branch claude/adr031-courses-ff)
+
+The adversarial reviewer of wave 1 left seven code items for this plugin. All seven are fixed in
+both trees:
+
+- **S1 category dropdown.** `edit_course::get_category_options()` listed every visible category, so
+  a tenant admin could read the names of categories that hold only other tenants' courses (the UAT
+  ZEEA #4 rule). It now calls the new `course_manager::edit_category_options()`. A cross-tenant
+  caller still sees every visible category. A scoped caller sees categories that hold a course in
+  their manage scope (which always includes the category of any course they can edit), plus empty
+  categories. If that leaves nothing, the site default category is offered, so a new tenant can
+  still create a course. `create()` and `update()` enforce the same list: a scoped caller cannot
+  move a course into a hidden category, but a course may stay where it is, for example in a hidden
+  category. The form reports `required` on the field for a create.
+- **S2 enrolment roles (decision 6).** `enrol_allowed_role_ids()` now covers courses the caller's
+  tenant owns as well. A scoped caller may give only roles that `get_assignable_roles()` allows in
+  the course context, minus `scoped_forbidden_role_ids()`: the manager and coursecreator
+  archetypes, the shortnames manager, coursecreator and administrator, guest/user/frontpage, and
+  any role whose definition allows a `SITE_LEVEL_CAPABILITIES` capability. In a course the tenant
+  does not own, learner roles only, as before. The modal and the enrol CSV now share one list,
+  `enrol_role_choices()`: `ENROL_HIDDEN_ROLE_SHORTNAMES` apply to everyone, so the CSV no longer
+  accepts 'administrator' from anyone. CSV error: "Role 'x' cannot be given in this course."
+- **S3 list_course_shares.** A scoped caller may read only a course in their own tenant, or a
+  legacy course with no open_path, through `require_path_access()`. A caller with no tenant, a
+  foreign course and a missing id all get `error_outoftenant`.
+- **S4 sharing is cross-tenant.** `share_course`, `unshare_course`, `approve_request`,
+  `reject_request`, `share.php` and `manage_requests.php` now call
+  `sharing_manager::require_cross_tenant()` (new string `error_crosstenantonly`, en and hi) after
+  their capability check. The list_courses Share icon uses `sharing_manager::can_share()`. The
+  data layer is not gated, so `cli/manage_shares.php` keeps working.
+- **S6 email lookups.** `enrol_csv_processor` and `bulk_unenrol.php` use the new
+  `course_manager::users_by_email_in_scope()`, which is bounded to the caller's tenant with
+  `path_descendant_filter` before any row is picked and returns at most two rows. With
+  allowaccountssameemail on, a foreign duplicate no longer makes the caller's own user read "not
+  found". An address that is ambiguous inside the caller's scope now fails with "Email matches
+  more than one user." instead of guessing. The CSV derives the caller's scope through
+  `enrol_scope_root()`.
+- **S7 test gap.** `test_enrol_modal_submission_cannot_enrol_another_tenants_user` now asserts
+  `require_enrol_scope($own, [$theirs])` directly.
+
+Tests:
+- New `tests/adr031_followup_test.php` (`@group tenant_isolation`).
+- `tenant_scope_test` changed: the assertion that own-tenant courses return `null` roles now
+  asserts that teacher roles stay while manager, coursecreator and the tenant-admin role are
+  refused, and the S7 assertion was added.
+- Not run here: no PHPUnit, as instructed.
+
+Version: no bump. The plugin is already at 2026092500, and no db/ file changed. The new lang
+string needs the deploy's cache purge.
+
+UAT note: if role 9 ('administrator') has no Allow role assignments entry for 'employee',
+tenant admins will no longer be offered 'employee' in the enrol modal or CSV. Core's own
+enrolment UI applies the same rule. To keep it, tick 'employee' under role 9's Allow role
+assignments.

@@ -221,3 +221,17 @@ viewers only - purge local_sentientia_catalog caches on deploy.
 
 Tests: `tests/tenant_gate_test.php` (`@group tenant_isolation`). 1.0.5-beta / 2026092500 (now
 depends on local_sentientia_platform 2026092500). Both trees.
+
+## 2026-09-25 - ADR-031 follow-up: no code change needed
+
+The wave-1 review listed no fix for this plugin. Its items for this group were in
+sentientia_courses and block_sentientia_compliance (see those cards). These behaviour changes from
+wave 1 still need to be carried to UAT:
+- Tenantless logged-in learners, including users created through core signup rather than
+  local_sentientia_users/signup.php, see an empty catalogue.
+- Guests are limited to /77.
+- Purge the local_sentientia_catalog caches on deploy, because the `cat_t0` key used to be shared
+  with tenantless viewers.
+
+The run of `tests/tenant_gate_test.php` in the tenant_isolation group on MariaDB and PostgreSQL
+has not happened yet.

@@ -40,6 +40,9 @@ class unshare_course extends external_api {
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/sentientia_courses:share_to_tenant', $context);
+        // ADR-031 decision 3: withdrawing a share changes another tenant's
+        // catalogue, so the caller must be cross-tenant as well.
+        sharing_manager::require_cross_tenant();
         require_sesskey();
 
         $changed = sharing_manager::unshare_course(

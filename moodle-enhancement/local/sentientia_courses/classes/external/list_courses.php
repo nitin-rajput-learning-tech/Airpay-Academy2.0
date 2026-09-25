@@ -53,7 +53,9 @@ class list_courses extends external_api {
         // toggles off (e.g. policy change, vendor incident), the icon
         // disappears from every row even for users who still hold the
         // capability. Capability + flag must BOTH be on to render.
-        $can_share  = has_capability('local/sentientia_courses:share_to_tenant', $context)
+        // ADR-031 decision 3 (follow-up): and only for a cross-tenant caller -
+        // share.php now refuses everyone else, so the icon would be a dead end.
+        $can_share  = \local_sentientia_courses\sharing_manager::can_share()
             && \local_sentientia_platform\feature_flags::is_enabled('commerce.crossTenantShare.enabled');
 
         // Sort whitelist.

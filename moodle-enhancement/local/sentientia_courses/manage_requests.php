@@ -23,6 +23,10 @@ require_login();
 $context = context_system::instance();
 $PAGE->set_context($context);
 require_capability('local/sentientia_courses:approve_request', $context);
+// ADR-031 decision 3: the inbox lists every tenant's requests (requester
+// name and email included) and approving shares into another tenant, so the
+// capability alone does not unscope a tenant-admin role it is later granted to.
+\local_sentientia_courses\sharing_manager::require_cross_tenant();
 
 // Phase A0 (2026-05-14): Switchboard gate.
 if (!\local_sentientia_platform\feature_flags::is_enabled('commerce.crossTenantRequest.enabled')) {
