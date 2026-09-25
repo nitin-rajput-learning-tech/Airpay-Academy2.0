@@ -50,6 +50,55 @@ class translate_engine {
     }
 
     /**
+     * ADR-031: may this actor see and act on translations in EVERY tenant?
+     *
+     * :manage_all says WHAT (every owner's rows, not only one's own);
+     * tenant::is_cross_tenant() says WHERE. Until 2026-09-25 holding
+     * :manage_all alone unscoped the caller, and it defaulted to the manager
+     * archetype that every tenant admin holds at system context.
+     *
+     * @param \stdClass $actor
+     * @param bool      $manageall Whether the actor holds :manage_all
+     * @return bool
+     */
+    public static function is_unscoped(\stdClass $actor, bool $manageall): bool {
+        $actorid = (int) ($actor->id ?? 0);
+        return $manageall && $actorid > 0
+            && \local_sentientia_platform\tenant::is_cross_tenant($actorid);
+    }
+
+    /**
+     * ADR-031: WHERE fragment for the rows this actor may see.
+     *
+     * '1=1' when is_unscoped(); otherwise the actor's own rows plus their
+     * tenant's. Tenant 0 is nobody's tenant, so a caller whose open_path does
+     * not resolve gets only their own rows, and a caller with id 0 nothing.
+     * Shared by list_for_actor() and admin/index.php so the queue's stats and
+     * table can never scope differently from the engine.
+     *
+     * @param \stdClass $actor
+     * @param bool      $manageall
+     * @return array{0: string, 1: array}
+     */
+    public static function scope_sql(\stdClass $actor, bool $manageall): array {
+        if (self::is_unscoped($actor, $manageall)) {
+            return ['1=1', []];
+        }
+        $uid = (int) ($actor->id ?? 0);
+        $tenant = self::tenant_root_for($actor);
+        if ($tenant > 0) {
+            // ownerid > 0: an anonymised row (ownerid 0) is listed by tenant
+            // only, never as "owned" by a caller whose id is 0.
+            return ['((ownerid = :trscopeuid AND ownerid > 0) OR costcenterid = :trscopecid)',
+                ['trscopeuid' => $uid, 'trscopecid' => $tenant]];
+        }
+        if ($uid > 0) {
+            return ['ownerid = :trscopeuid', ['trscopeuid' => $uid]];
+        }
+        return ['1=0', []];
+    }
+
+    /**
      * SHA-1 dedup / translation-memory key for (source, target).
      *
      * @param string $sourcetext
@@ -216,15 +265,38 @@ class translate_engine {
     }
 
     /**
+     * ADR-031: the row, if the actor (by id) may act on it; null otherwise.
+     *
+     * accept() and discard() used to update any row by bare id and left the
+     * tenant check to the caller.
+     *
+     * @param int  $rowid
+     * @param int  $actorid
+     * @param bool $manageall Whether the actor holds :manage_all
+     * @return \stdClass|null
+     */
+    private static function row_for_write(int $rowid, int $actorid, bool $manageall): ?\stdClass {
+        global $DB, $USER;
+        if ($actorid <= 0) {
+            return null;
+        }
+        $actor = ((int) ($USER->id ?? 0) === $actorid)
+            ? $USER
+            : $DB->get_record('user', ['id' => $actorid, 'deleted' => 0]);
+        return $actor ? self::load_for_actor($rowid, $actor, $manageall) : null;
+    }
+
+    /**
      * Accept a translated row (admin clicked "Save" after reviewing the diff).
      *
-     * @param int $rowid
-     * @param int $actorid Ownership / capability check happens at the UI.
+     * @param int  $rowid
+     * @param int  $actorid   Must own the row or share its tenant (ADR-031).
+     * @param bool $manageall Whether the actor holds :manage_all
      * @return bool
      */
-    public static function accept(int $rowid, int $actorid): bool {
+    public static function accept(int $rowid, int $actorid, bool $manageall = false): bool {
         global $DB;
-        $row = $DB->get_record(self::TABLE, ['id' => $rowid], 'id, status', IGNORE_MISSING);
+        $row = self::row_for_write($rowid, $actorid, $manageall);
         if (!$row || $row->status !== self::STATUS_TRANSLATED) {
             return false;
         }
@@ -239,13 +311,14 @@ class translate_engine {
     /**
      * Discard a translated row (admin rejected the diff).
      *
-     * @param int $rowid
-     * @param int $actorid
+     * @param int  $rowid
+     * @param int  $actorid   Must own the row or share its tenant (ADR-031).
+     * @param bool $manageall Whether the actor holds :manage_all
      * @return bool
      */
-    public static function discard(int $rowid, int $actorid): bool {
+    public static function discard(int $rowid, int $actorid, bool $manageall = false): bool {
         global $DB;
-        $row = $DB->get_record(self::TABLE, ['id' => $rowid], 'id, status', IGNORE_MISSING);
+        $row = self::row_for_write($rowid, $actorid, $manageall);
         if (!$row) {
             return false;
         }
@@ -260,8 +333,10 @@ class translate_engine {
     /**
      * Load a translation row scoped to the actor's tenant.
      *
-     * Returns null if the row doesn't exist OR the actor lacks access
-     * (different tenant AND no manage_all cap).
+     * Returns null if the row doesn't exist OR the actor lacks access: not
+     * the owner and not in the row's tenant, unless is_unscoped(). Tenant 0
+     * is nobody's tenant (ADR-031): a caller whose open_path does not
+     * resolve reaches only rows they own.
      *
      * @param int       $rowid
      * @param \stdClass $actor
@@ -274,13 +349,13 @@ class translate_engine {
         if (!$row) {
             return null;
         }
-        if (!$manageall) {
+        if (!self::is_unscoped($actor, $manageall)) {
             $actorroot = self::tenant_root_for($actor);
             // ownerid 0 is an erased (anonymised) author: it must never make a
             // caller whose id is 0 (CLI, not logged in) the owner (2026-09-24).
             $isowner = (int)$actor->id > 0 && (int)$row->ownerid === (int)$actor->id;
-            if (!$isowner
-                && (int)$row->costcenterid !== $actorroot) {
+            $sametenant = $actorroot > 0 && (int)$row->costcenterid === $actorroot;
+            if (!$isowner && !$sametenant) {
                 return null;
             }
         }
@@ -288,7 +363,7 @@ class translate_engine {
     }
 
     /**
-     * List recent translations for an actor (or all if manage_all).
+     * List recent translations the actor may see (see scope_sql()).
      *
      * @param \stdClass $actor
      * @param bool      $manageall
@@ -297,15 +372,12 @@ class translate_engine {
      */
     public static function list_for_actor(\stdClass $actor, bool $manageall, int $limit = 50): array {
         global $DB;
-        if ($manageall) {
-            return array_values($DB->get_records(self::TABLE, [], 'timecreated DESC', '*', 0, $limit));
-        }
-        $tenant = self::tenant_root_for($actor);
+        [$where, $params] = self::scope_sql($actor, $manageall);
         return array_values($DB->get_records_sql(
             "SELECT * FROM {" . self::TABLE . "}
-              WHERE (ownerid = :uid AND ownerid > 0) OR costcenterid = :cid
+              WHERE {$where}
            ORDER BY timecreated DESC",
-            ['uid' => (int)$actor->id, 'cid' => $tenant],
+            $params,
             0, $limit
         ));
     }

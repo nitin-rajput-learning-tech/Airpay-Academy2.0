@@ -99,7 +99,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
     }
 
-    if (!$DB->record_exists('user', ['id' => $prefill['targetuserid'], 'deleted' => 0])) {
+    // ADR-031: the learner must be in the caller's tenant (cross-tenant
+    // callers excepted) - this expires their live batch, writes a new one
+    // into their dashboard and, live, sends their history to Anthropic. The
+    // refusal reads exactly like a missing id, so it is no existence oracle.
+    if (!$DB->record_exists('user', ['id' => $prefill['targetuserid'], 'deleted' => 0])
+            || !recommendation_engine::can_target((int) $prefill['targetuserid'], (int) $USER->id)) {
         $errors[] = get_string('err_user_not_found', 'local_sentientia_recommendations');
     }
 

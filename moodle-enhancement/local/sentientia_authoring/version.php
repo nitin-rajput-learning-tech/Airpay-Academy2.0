@@ -68,12 +68,20 @@ $plugin->component = 'local_sentientia_authoring';
 // db/upgrade.php step 2026090700 (existing). Canonical author cap set now also
 // includes aiquiz:generate/review. Role stays archetype-less, CONTEXT_SYSTEM
 // only, no admin/tenant-admin caps. No new capability or flag.
-$plugin->version   = 2026090700;  // T-01 author-role fresh-install + upgrade parity
+// 2026092500 — ADR-031: :manage_all has no default grant (+ revoke step) and
+// reaches other tenants only for a cross-tenant caller; "shared" templates are
+// the built-ins (is_builtin), not every costcenterid-0 row; built-ins are
+// editable by cross-tenant callers only; a tenantless caller sees only their
+// own drafts/templates; publish (missing import) no longer fatals and stamps
+// the course with the draft's tenant.
+$plugin->version   = 2026092500;  // ADR-031 cross-tenant authority
 $plugin->requires  = 2022041900;          // Moodle 4.5+
 $plugin->maturity  = MATURITY_ALPHA;      // MVP — prod sign-off before any flag flips
-$plugin->release   = '0.2.1-alpha';
+$plugin->release   = '0.2.2-alpha';
 $plugin->dependencies = [
-    'local_sentientia_platform' => 2026051401,   // feature_flags resolver + tenant + customer scope
+    // feature_flags resolver + tenant + customer scope, and (2026092500) the
+    // ADR-031 tenant::is_cross_tenant() authority.
+    'local_sentientia_platform' => 2026092500,
 ];
 
 // Release history
@@ -82,3 +90,5 @@ $plugin->dependencies = [
 //              Mandatory human-review gate before publish.
 // 0.1.1-alpha  Sentientia AI gateway migration (opt-in, dormant by default).
 //              All plugin-level gates unchanged; TTS path untouched.
+// 0.2.2-alpha  ADR-031 (2026-09-25): drafts and templates stay inside the
+//              caller's tenant; :manage_all is no longer a manager default.

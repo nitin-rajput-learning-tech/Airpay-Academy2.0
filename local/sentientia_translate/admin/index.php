@@ -55,26 +55,25 @@ $PAGE->set_url('/local/sentientia_translate/admin/index.php');
 $PAGE->set_title(get_string('admin_index_title', 'local_sentientia_translate'));
 $PAGE->set_heading(get_string('admin_index_title', 'local_sentientia_translate'));
 
+// ADR-031 (2026-09-25): holding :manage_all (or site:config) says WHAT this
+// page may show; it reaches other tenants only for a cross-tenant caller -
+// translate_engine::scope_sql() decides, exactly as for list_for_actor().
 $manageall = has_capability('local/sentientia_translate:manage_all', $context)
     || has_capability('moodle/site:config', $context);
+[$scopesql, $scopeparams] = translate_engine::scope_sql($USER, $manageall);
 
 // ── Filter inputs ──────────────────────────────────────────────────
 $status_filter = optional_param('status', '', PARAM_ALPHANUMEXT);
 $lang_filter   = optional_param('lang', '', PARAM_ALPHA);
 
 // ── Stats snapshot ─────────────────────────────────────────────────
-// Scope: all customers if manage_all, otherwise actor's tenant +
-// own rows. Mirror translate_engine::list_for_actor() scoping rules
-// so the stats numbers match what the table can show.
+// Scope: every tenant only for an unscoped (cross-tenant) caller, otherwise
+// the actor's tenant + own rows. The same translate_engine::scope_sql() as
+// list_for_actor(), so the stats numbers match what the table can show.
 $TABLE = 'local_sentientia_tr_log';
 
-$base_where = '';
-$base_params = [];
-if (!$manageall) {
-    $tenant = translate_engine::tenant_root_for($USER);
-    $base_where = 'WHERE (ownerid = :uid OR costcenterid = :cid)';
-    $base_params = ['uid' => (int) $USER->id, 'cid' => $tenant];
-}
+$base_where = 'WHERE ' . $scopesql;
+$base_params = $scopeparams;
 
 $total = (int) $DB->get_field_sql(
     "SELECT COUNT(*) FROM {{$TABLE}} {$base_where}",
@@ -218,14 +217,8 @@ echo html_writer::end_tag('form');
 echo html_writer::end_div();
 
 // ── Queue table ────────────────────────────────────────────────────
-$where_parts = [];
-$params = [];
-if (!$manageall) {
-    $tenant = translate_engine::tenant_root_for($USER);
-    $where_parts[] = '(ownerid = :uid OR costcenterid = :cid)';
-    $params['uid'] = (int) $USER->id;
-    $params['cid'] = $tenant;
-}
+$where_parts = [$scopesql];
+$params = $scopeparams;
 if ($status_filter !== '') {
     $where_parts[] = 'status = :status';
     $params['status'] = $status_filter;

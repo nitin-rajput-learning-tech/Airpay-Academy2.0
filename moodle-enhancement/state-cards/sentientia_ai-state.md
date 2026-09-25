@@ -86,3 +86,13 @@ still pending). tts_client (ElevenLabs) out of scope by design.
 `delete_data_for_user()` deleted the user's rows from `local_sentientia_ai_ledger`, which is the spend and quota source of truth. Erasing a learner removed real spend from the customer's history and freed cap headroom mid-month. It now anonymises `userid` to 0 in both the single-user and bulk paths; `userid` is the only personal data on the row.
 
 Found by a read-only audit of all 38 Sentientia privacy providers, run because `local_sentientia_privacy\privacy_manager::process_deletion()` now calls every one of them. Class change only: no version bump. Covered by `local_sentientia_privacy\erasure_scope_test` / `privacy_manager_test`.
+
+## 2026-09-25 - ADR-031: the spend ledger is a cross-tenant view (0.1.1-alpha, 2026092500)
+
+`:viewledger` defaulted to the manager archetype, which every tenant admin holds at system context. `index.php` is gated only by the capability (the admin-tree link sits under `$hassiteconfig`, but the page opens by direct URL), and every figure on it is platform-wide: the 50 most recent calls of every tenant (user id, feature, purpose, tokens, cost, error text), plus the global token and USD totals.
+
+- `db/access.php`: `:viewledger` and `:manage` archetypes `[]`. `:manage` is never checked yet, but it is reserved for global controls. New `db/upgrade.php` step 2026092500 (`db/upgradelib.php::local_sentientia_ai_revoke_operator_caps()`) revokes both from every role at system context.
+- New `ledger::can_view()`: `:viewledger` AND `tenant::is_cross_tenant()`. `index.php` throws `error_outoftenant` otherwise. The ledger stays unfiltered because the quotas read the same global numbers; a tenant-scoped spend view would be a separate page.
+- Platform dependency raised from ANY_VERSION to 2026092500 (the ADR-031 helper).
+
+Site admins unchanged. Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`). Written, not executed (shared test DB). Both trees.

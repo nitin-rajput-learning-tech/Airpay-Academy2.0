@@ -42,12 +42,15 @@ $plugin->component = 'local_sentientia_aiquiz';
 // generate.php language picker + prompt preview + Devanagari-safe
 // response parser (mb_strlen/mb_substr). No live API in tests
 // (call_mock only). ADR-012 G.1 addendum. Hindi parity 125/125.
-$plugin->version   = 2026080500;  // Phase G.4: real mod_quiz publisher (gate #3) - quiz id 0 stub closed
+$plugin->version   = 2026092500;  // ADR-031: :manage_all no default grant (+ revoke step); drafts + push target stay in the caller's tenant
+// 2026080500: Phase G.4: real mod_quiz publisher (gate #3) - quiz id 0 stub closed
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;     // MVP — needs prod sign-off before flag flips
-$plugin->release   = '0.3.0-alpha';
+$plugin->release   = '0.3.1-alpha';
 $plugin->dependencies = [
-    'local_sentientia_platform' => 2026051401,   // feature_flags resolver + customer scope + get_customer_config
+    // feature_flags resolver + customer scope + get_customer_config, and
+    // (2026092500) the ADR-031 tenant::is_cross_tenant() authority.
+    'local_sentientia_platform' => 2026092500,
 ];
 
 // Release history
@@ -56,3 +59,9 @@ $plugin->dependencies = [
 // 0.2.0-alpha  Phase G.1: Hindi (v2-hindi) prompt + per-customer prompt
 //              template overrides. Mock-mode Hindi demoable end-to-end.
 //              Live API still gated by [CONFIRM] + live_api flag (OFF).
+// 0.3.1-alpha  ADR-031 (2026-09-25): :manage_all no longer defaults to the
+//              manager archetype (revoked by upgrade step 2026092500) and
+//              unscopes only a cross-tenant caller. A caller with no tenant
+//              sees only their own drafts. The draft course, the push target
+//              and both course pickers are bounded to the caller's tenant;
+//              review.php's push no longer fatals on a missing import.

@@ -177,6 +177,7 @@ $string['err_token_cap_reached'] = 'Daily token cap reached ({$a->used} of {$a->
 $string['err_api_failed'] = 'Generation call failed: {$a}';
 $string['err_template_not_found'] = 'Template not found or not accessible.';
 $string['err_template_builtin'] = 'Built-in templates cannot be archived or deleted.';
+$string['err_template_readonly'] = 'You can use this template but not change it. Built-in templates are shared by every tenant, so only a platform administrator can edit them.';
 $string['err_draft_not_found'] = 'Draft not found or not accessible.';
 $string['err_card_not_found'] = 'Card not found in this draft.';
 $string['err_publish_not_approved'] = 'A draft must be reviewed and approved before it can be published.';

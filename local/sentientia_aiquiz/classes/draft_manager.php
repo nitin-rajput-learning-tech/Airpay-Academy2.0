@@ -46,17 +46,37 @@ class draft_manager {
     /**
      * Resolve the BizLMS tenant root (1, 77, 177, ...) from a user's open_path.
      *
-     * Uses the production-compatible pattern from CLAUDE.md §rules/database.md.
+     * ADR-031 (2026-09-25): delegates to the platform resolver, which only
+     * accepts a numeric root ('/1abc' is no tenant, where the old local copy
+     * read it as tenant 1). A missing or empty open_path is 0 = no tenant.
      *
      * @param \stdClass|null $user A user record with `open_path` populated. NULL = global $USER.
      * @return int
      */
     public static function tenant_root_for(?\stdClass $user = null): int {
         global $USER;
-        $u = $user ?? $USER;
-        $path = isset($u->open_path) ? (string)$u->open_path : '';
-        $parts = explode('/', trim($path, '/'));
-        return (int)($parts[0] ?? 0);
+        return \local_sentientia_platform\tenant::root_for_user($user ?? $USER);
+    }
+
+    /**
+     * ADR-031: may this actor see and act on drafts in EVERY tenant?
+     *
+     * :manage_all says WHAT (every owner's drafts, not only one's own);
+     * tenant::is_cross_tenant() says WHERE. Until 2026-09-25 holding
+     * :manage_all alone unscoped the caller, and it defaulted to the manager
+     * archetype that every tenant admin holds at system context. Now it
+     * unscopes only a site admin or a :crosstenant holder; anyone else who
+     * holds it stays inside their own tenant (which the scoped branch already
+     * shows them in full).
+     *
+     * @param \stdClass $actor
+     * @param bool      $manageall Whether the actor holds :manage_all
+     * @return bool
+     */
+    public static function is_unscoped(\stdClass $actor, bool $manageall): bool {
+        $actorid = (int) ($actor->id ?? 0);
+        return $manageall && $actorid > 0
+            && \local_sentientia_platform\tenant::is_cross_tenant($actorid);
     }
 
     /**
@@ -317,8 +337,10 @@ class draft_manager {
     /**
      * Load a draft with its questions, scoped to the actor's customer + tenant.
      *
-     * Returns null if the draft doesn't exist OR the actor lacks access
-     * (different customer/tenant AND no manage_all cap).
+     * Returns null if the draft doesn't exist OR the actor lacks access:
+     * not the owner, and not in the draft's tenant, unless is_unscoped().
+     * Tenant 0 is nobody's tenant (ADR-031): a caller whose open_path does
+     * not resolve reaches only drafts they own.
      *
      * @param int           $draftid
      * @param \stdClass     $actor   User attempting access (typically $USER)
@@ -333,7 +355,7 @@ class draft_manager {
         }
 
         $actorroot = self::tenant_root_for($actor);
-        if (!$manageall) {
+        if (!self::is_unscoped($actor, $manageall)) {
             // Cast the DB side too (2026-08-04): Moodle DML returns integer
             // columns as STRINGS, so the original strict compares
             // ('5' !== 5) were always true — every non-manage_all actor,
@@ -343,8 +365,10 @@ class draft_manager {
             // ownerid 0 is an erased (anonymised) author: it must never make a
             // caller whose id is 0 (CLI, not logged in) the owner (2026-09-24).
             $isowner = (int)$actor->id > 0 && (int)$draft->ownerid === (int)$actor->id;
-            if (!$isowner
-                && (int)$draft->costcenterid !== $actorroot) {
+            // ADR-031: bucket 0 used to be shared by every tenantless caller,
+            // so one saw another's (and the site admin's) drafts.
+            $sametenant = $actorroot > 0 && (int)$draft->costcenterid === $actorroot;
+            if (!$isowner && !$sametenant) {
                 return null;
             }
         }
@@ -357,7 +381,9 @@ class draft_manager {
     }
 
     /**
-     * List recent drafts owned by an actor (or all drafts if manage_all).
+     * List recent drafts the actor may see: their own plus their tenant's,
+     * or every draft when is_unscoped() (ADR-031: :manage_all AND
+     * cross-tenant). A caller with no tenant sees only their own drafts.
      *
      * @param \stdClass $actor
      * @param bool      $manageall
@@ -366,16 +392,27 @@ class draft_manager {
      */
     public static function list_for_actor(\stdClass $actor, bool $manageall, int $limit = 50): array {
         global $DB;
-        if ($manageall) {
+        if (self::is_unscoped($actor, $manageall)) {
             return array_values($DB->get_records(
                 self::DRAFT_TABLE, [], 'timecreated DESC', '*', 0, $limit));
         }
+        $uid = (int)$actor->id;
         $tenant = self::tenant_root_for($actor);
+        if ($tenant > 0) {
+            $where = '(ownerid = :uid AND ownerid > 0) OR costcenterid = :cid';
+            $params = ['uid' => $uid, 'cid' => $tenant];
+        } else if ($uid > 0) {
+            // ADR-031: tenant 0 is nobody's tenant - own drafts only.
+            $where = 'ownerid = :uid';
+            $params = ['uid' => $uid];
+        } else {
+            return [];
+        }
         return array_values($DB->get_records_sql(
             "SELECT * FROM {" . self::DRAFT_TABLE . "}
-              WHERE (ownerid = :uid AND ownerid > 0) OR costcenterid = :cid
+              WHERE {$where}
            ORDER BY timecreated DESC",
-            ['uid' => (int)$actor->id, 'cid' => $tenant],
+            $params,
             0, $limit
         ));
     }

@@ -240,3 +240,16 @@ subject's reviewed_by, leave the other author's rows untouched; userlist never
 contains 0 or the erased author; id-0 actor gets no ownership) - written, NOT
 executed (shared test DB rebuild in progress). No schema, string or version
 change. Both trees.
+
+## 2026-09-25 - ADR-031: drafts and templates stay inside the caller's tenant (0.2.2-alpha, 2026092500)
+
+`:manage_all` defaulted to the manager archetype, which every tenant admin holds at system context (UAT's id-9 "administrator"). Holding it unscoped `draft_manager` and `template_manager`, so any tenant admin could review, edit, finalise and (once the import below existed) publish any tenant's course drafts, trigger voice-overs on them, and rewrite or archive any tenant's private templates.
+
+- `db/access.php`: `:manage_all` archetypes `[]` (+ `RISK_PERSONAL | RISK_DATALOSS`). Upgrade step 2026092500 (`db/upgradelib.php::local_sentientia_authoring_revoke_manage_all()`) revokes every existing system-context grant.
+- `draft_manager::is_unscoped()`: `:manage_all` AND `tenant::is_cross_tenant()`; used by draft and template load/list.
+- Templates: "shared" now means `is_builtin = 1`, not `costcenterid = 0`. A tenantless author's private template is also stamped 0 and used to reach every tenant's picker, edit form and archive button. New `template_manager::can_edit()` separates writing from reading: a built-in is editable by a cross-tenant caller only (any trainer in any tenant could rewrite the body every other tenant generates from); a tenant template by its owner or its tenant. `templates.php` enforces it on save, archive and the edit form, and hides the buttons. New string `err_template_readonly` (en + hi).
+- Fail closed: a caller with no tenant sees only their own drafts and templates.
+- Publish: `review.php` was missing `use ...\course_builder;` (publish fataled). Imported now that `load_for_actor()` is tenant-bounded. `course_builder::stamp_tenant()` files the new course under the draft's tenant (`open_path = '/N'`) instead of leaving it NULL, which tenant catalogues treat as legacy-visible to every tenant.
+- Behaviour to know: templates a site admin created in `templates.php` (costcenterid 0, `is_builtin` 0) are no longer visible to tenant authors. A template meant for every tenant must be a built-in.
+
+Site admins unchanged. Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`); `draft_manager_test` updated. Written, not executed (shared test DB). Both trees.

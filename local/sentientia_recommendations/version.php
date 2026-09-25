@@ -40,12 +40,18 @@ $plugin->component = 'local_sentientia_recommendations';
 // anthropic_client::generate() (ADR-028 Phase 2.3; routing switch
 // sentientia.ai.gateway.enabled default OFF = byte- and side-effect-
 // identical legacy path; mock passed down as callable; 'denied'→'failed').
-$plugin->version   = 2026080500;
+// 2026-09-25 — ADR-031: generate.php refuses a target learner outside the
+// caller's tenant, and candidate courses come from the learner's tenant
+// (they were every visible course on the site); :manage_all has no default
+// grant (new db/upgrade.php step revokes existing grants).
+$plugin->version   = 2026092500;  // ADR-031 cross-tenant authority
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;     // MVP — needs prod sign-off before flag flips
-$plugin->release   = '0.1.1-alpha';
+$plugin->release   = '0.1.2-alpha';
 $plugin->dependencies = [
-    'local_sentientia_platform'    => 2026051401,   // feature_flags resolver + customer scope
+    // feature_flags resolver + customer scope, and (2026092500) the ADR-031
+    // tenant::is_cross_tenant() / require_same_tenant_user() authority.
+    'local_sentientia_platform'    => 2026092500,
     'local_sentientia_courses' => 2026052003,   // course catalogue + completion
 ];
 
@@ -54,3 +60,5 @@ $plugin->dependencies = [
 //              No live API calls without explicit per-call [CONFIRM].
 // 0.1.1-alpha  Sentientia AI gateway migration (opt-in, dormant by default).
 //              All plugin-level gates unchanged.
+// 0.1.2-alpha  ADR-031 (2026-09-25): generation targets and candidate
+//              courses stay inside the tenant; :manage_all not a default.

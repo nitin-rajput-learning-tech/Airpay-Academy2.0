@@ -10,15 +10,20 @@ defined('MOODLE_INTERNAL') || die();
  * CRUD for editable instructional-design templates (P0.3 #2).
  *
  * A template captures the structure + tone a course should follow. Trainers
- * create / edit / archive their own; managers (manage_all) see all. Every
- * write populates customerid + costcenterid (from the actor's open_path) and
+ * create / edit / archive their own and their tenant's; a :manage_all holder
+ * who is also cross-tenant sees every tenant's (ADR-031). Every write
+ * populates customerid + costcenterid (from the actor's open_path) and
  * timecreated + timemodified, per .claude/rules/database.md.
  *
- * Built-in starter templates (is_builtin=1) are seeded on install. They are
- * editable but NOT deletable, so a trainer always has a working starting point.
+ * Built-in starter templates (is_builtin=1) are seeded on install and shared
+ * by every tenant. They are NOT deletable, so a trainer always has a working
+ * starting point, and since ADR-031 (2026-09-25) only a cross-tenant caller
+ * may edit one: a rewrite changes the template every tenant generates from.
  *
- * All reads are tenant-scoped: a non-manager only sees templates they own OR
- * that belong to their tenant root (plus shared built-ins at costcenterid 0).
+ * All reads are tenant-scoped: a scoped caller only sees templates they own,
+ * that belong to their tenant root, or that are built-in. "Shared" is decided
+ * by is_builtin, not costcenterid 0 - a tenantless author's private template
+ * is also stamped 0, and used to be published to every tenant that way.
  *
  * @package local_sentientia_authoring
  */
@@ -38,9 +43,8 @@ class template_manager {
      */
     public static function tenant_root_for(?\stdClass $user = null): int {
         global $USER;
-        $u = $user ?? $USER;
-        $parts = explode('/', trim((string) ($u->open_path ?? ''), '/'));
-        return (int) ($parts[0] ?? 0);
+        // ADR-031: the platform resolver (numeric root only; '' = 0 = none).
+        return \local_sentientia_platform\tenant::root_for_user($user ?? $USER);
     }
 
     /**
@@ -180,20 +184,53 @@ class template_manager {
         if (!$tpl) {
             return null;
         }
-        if ($manageall) {
+        if (draft_manager::is_unscoped($actor, $manageall)) {
             return $tpl;
         }
         $root = self::tenant_root_for($actor);
-        // Visible if: owned by actor, OR shared built-in (costcenterid 0), OR same tenant.
+        // Visible if: owned by actor, OR a shared built-in, OR same tenant.
         // ownerid 0 (built-in, or an author anonymised by a privacy erasure)
         // never makes anyone the owner - not even a caller whose id is 0.
+        // ADR-031: tenant 0 is nobody's tenant, so it matches no one.
         $isowner = (int) $actor->id > 0 && (int) $tpl->ownerid === (int) $actor->id;
         if ($isowner
-                || (int) $tpl->costcenterid === 0
-                || (int) $tpl->costcenterid === $root) {
+                || (int) $tpl->is_builtin === 1
+                || ($root > 0 && (int) $tpl->costcenterid === $root)) {
             return $tpl;
         }
         return null;
+    }
+
+    /**
+     * ADR-031: may the actor CHANGE (edit / archive) this template?
+     *
+     * Seeing a template is not licence to rewrite it. A built-in is shared by
+     * every tenant, so only a cross-tenant caller may edit it - before
+     * 2026-09-25 any trainer in any tenant could rewrite the body every other
+     * tenant generates from. A tenant template may be changed by its owner or
+     * within its tenant; any tenant's by an unscoped caller (is_unscoped()).
+     *
+     * @param \stdClass $tpl A template row (from load_for_actor())
+     * @param \stdClass $actor
+     * @param bool      $manageall Whether the actor holds :manage_all
+     * @return bool
+     */
+    public static function can_edit(\stdClass $tpl, \stdClass $actor, bool $manageall): bool {
+        $actorid = (int) ($actor->id ?? 0);
+        if ($actorid <= 0) {
+            return false;
+        }
+        if ((int) $tpl->is_builtin === 1) {
+            return \local_sentientia_platform\tenant::is_cross_tenant($actorid);
+        }
+        if (draft_manager::is_unscoped($actor, $manageall)) {
+            return true;
+        }
+        if ((int) $tpl->ownerid === $actorid) {
+            return true;
+        }
+        $root = self::tenant_root_for($actor);
+        return $root > 0 && (int) $tpl->costcenterid === $root;
     }
 
     /**
@@ -205,17 +242,25 @@ class template_manager {
      */
     public static function list_for_actor(\stdClass $actor, bool $manageall): array {
         global $DB;
-        if ($manageall) {
+        if (draft_manager::is_unscoped($actor, $manageall)) {
             return array_values($DB->get_records(self::TABLE, ['archived' => 0], 'is_builtin DESC, name ASC'));
         }
         $root = self::tenant_root_for($actor);
         // ownerid > 0: see load_for_actor() - ownerid 0 is nobody.
+        // ADR-031: built-ins are shared by is_builtin, and tenant 0 matches no
+        // one, so a tenantless author's template no longer reaches every tenant.
+        $params = ['uid' => (int) $actor->id];
+        $tenantsql = '';
+        if ($root > 0) {
+            $tenantsql = ' OR costcenterid = :cid';
+            $params['cid'] = $root;
+        }
         return array_values($DB->get_records_sql(
             "SELECT * FROM {" . self::TABLE . "}
               WHERE archived = 0
-                AND ((ownerid = :uid AND ownerid > 0) OR costcenterid = 0 OR costcenterid = :cid)
+                AND ((ownerid = :uid AND ownerid > 0) OR is_builtin = 1{$tenantsql})
            ORDER BY is_builtin DESC, name ASC",
-            ['uid' => (int) $actor->id, 'cid' => $root]
+            $params
         ));
     }
 

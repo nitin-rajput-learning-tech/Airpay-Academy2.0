@@ -59,5 +59,19 @@ function xmldb_local_sentientia_aiquiz_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026080400, 'local', 'sentientia_aiquiz');
     }
 
+    // ── ADR-031 (2026-09-25): take :manage_all back from every role ──
+    // db/access.php no longer grants it to the manager archetype, but changing
+    // archetypes never revokes what was already applied (install, or
+    // reset_role_capabilities() - which is how UAT's tenant-admin role 9 got
+    // it). Every existing grant let a tenant admin list, open, approve, edit
+    // and finalise other tenants' AI quiz drafts, so revoke them all. Site
+    // admins are unaffected; even a deliberate grant now unscopes only a
+    // cross-tenant caller (draft_manager::is_unscoped()).
+    if ($oldversion < 2026092500) {
+        require_once(__DIR__ . '/upgradelib.php');
+        local_sentientia_aiquiz_revoke_manage_all();
+        upgrade_plugin_savepoint(true, 2026092500, 'local', 'sentientia_aiquiz');
+    }
+
     return true;
 }

@@ -17,9 +17,11 @@
  *                                  (gated behind sentientia.aiquiz.auto_push)
  *
  * Multi-tenant safety: load_for_actor() refuses to return a draft that
- * belongs to a different customer/tenant unless the actor has
- * :manage_all. So a Public-tenant reviewer can't accidentally approve
- * an Airpay draft via URL guessing.
+ * belongs to a different customer/tenant unless the actor holds
+ * :manage_all AND is cross-tenant (ADR-031, 2026-09-25 - :manage_all alone
+ * used to be enough, and every tenant admin held it). So a Public-tenant
+ * reviewer can't approve an Airpay draft via URL guessing. The push target
+ * course is bounded to the reviewer's tenant too (quiz_publisher).
  *
  * @package local_sentientia_aiquiz
  */
@@ -27,6 +29,7 @@
 require(__DIR__ . '/../../config.php');
 
 use local_sentientia_aiquiz\draft_manager;
+use local_sentientia_aiquiz\quiz_publisher;
 
 require_login();
 $context = context_system::instance();
@@ -331,14 +334,11 @@ if ($draft->status === draft_manager::STATUS_APPROVED) {
     // offer the courses this reviewer can manage activities in. Drafts
     // that carry a courseid keep it (no selector).
     if ((int) $draft->courseid === 0) {
-        $targets = get_user_capability_course('moodle/course:manageactivities',
-            $USER->id, false, 'fullname', 'fullname ASC', 100);
+        // ADR-031: bounded to the reviewer's tenant - a system-context
+        // manager can manage activities in every course on the site.
         $options = [];
-        foreach ($targets as $t) {
-            if ((int) $t->id === SITEID) {
-                continue;
-            }
-            $options[(int) $t->id] = format_string($t->fullname);
+        foreach (quiz_publisher::target_courses($USER, 100) as $tid => $tname) {
+            $options[$tid] = format_string($tname);
         }
         echo html_writer::label(get_string('push_selectcourse', 'local_sentientia_aiquiz'),
             'aiquiz-pushcourse', true, ['class' => 'me-2']);

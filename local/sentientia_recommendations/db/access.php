@@ -9,10 +9,16 @@
  *                All authenticated users (the dashboard block enforces
  *                login + tenant scope).
  *   generate   — trigger a generation batch via the admin UI / cron.
- *                Manager only — cost-sensitive.
+ *                Manager only — cost-sensitive. A legitimate tenant-admin
+ *                function, so the manager default stays; since ADR-031
+ *                (2026-09-25) the target learner must be in the caller's
+ *                tenant and the candidate courses come from the learner's.
  *   manage_all — view + manage recommendation history across all
- *                learners (e.g. for cost analytics + auditing).
- *                Manager only.
+ *                learners (e.g. for cost analytics + auditing). Declared but
+ *                not yet checked anywhere. NO default grant (ADR-031): a
+ *                manager default under a cross-learner name would hand
+ *                every tenant admin every tenant's history the day code
+ *                starts checking it.
  *
  * @package local_sentientia_recommendations
  */
@@ -41,11 +47,12 @@ $capabilities = [
         ],
     ],
 
+    // No default grant (ADR-031, 2026-09-25). Upgrade step 2026092500
+    // revokes the existing grants (archetype changes never revoke).
     'local/sentientia_recommendations:manage_all' => [
+        'riskbitmask'  => RISK_PERSONAL,
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes'   => [
-            'manager' => CAP_ALLOW,
-        ],
+        'archetypes'   => [],
     ],
 ];

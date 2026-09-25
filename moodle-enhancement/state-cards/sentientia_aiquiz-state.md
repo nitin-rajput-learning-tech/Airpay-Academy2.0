@@ -284,3 +284,15 @@ Found by a read-only audit of all 38 Sentientia privacy providers, run because `
 ## 2026-09-24 - An anonymised author (ownerid 0) owns nothing
 
 Since this morning's erasure fix, erasing an author keeps their rows with ownerid 0. Two gaps followed from that and are now closed. (1) `load_for_actor()` / `list_for_actor()` matched `ownerid = actor id`, so a caller whose id is 0 (CLI, or not logged in) became the owner of every erased author's rows in every tenant; the owner match now requires an actor id above 0. The tenant (costcenterid) match still shows those rows to their own tenant. (2) The privacy provider reported the system context for EVERY user; it now does so only for people with rows, never for 0, and `get_users_in_context()` skips 0. Found by the authoring implementer while fixing the same pattern there. Covered by `tests/anonymised_owner_test.php`.
+
+## 2026-09-25 - ADR-031: drafts and push targets stay inside the caller's tenant (0.3.1-alpha, 2026092500)
+
+`:manage_all` defaulted to the manager archetype. Tenant admins hold manager-archetype roles at system context (UAT's id-9 "administrator"), so every tenant admin could list, open, approve, edit and finalise any tenant's AI quiz drafts (generated questions, answers, explanations, owner names) through `review.php`, by sequential draft id.
+
+- `db/access.php`: `:manage_all` archetypes `[]` (+ `RISK_PERSONAL | RISK_DATALOSS`). Upgrade step 2026092500 (`db/upgradelib.php::local_sentientia_aiquiz_revoke_manage_all()`) revokes every existing system-context grant; archetype changes never revoke.
+- `draft_manager::is_unscoped()`: `:manage_all` unscopes only a caller who is also `tenant::is_cross_tenant()` (site admin or `:crosstenant`). A deliberate grant to anyone else stays inside their tenant.
+- Fail closed: tenant 0 is nobody's tenant. A caller whose `open_path` does not resolve sees only their own drafts; bucket 0 used to be shared by every tenantless caller, site-admin drafts included. `tenant_root_for()` now delegates to the platform resolver (numeric root only).
+- Push: `review.php` was missing `use ...\quiz_publisher;`, so push fataled with Class not found. It is imported now that the draft is tenant-scoped. `quiz_publisher::publish()` also refuses a target course outside the actor's tenant (`require_course_in_scope()` -> `tenant::require_path_access()`), because a system-context manager passes `course:manageactivities` in every course.
+- Course pickers: `generate.php` listed every visible course on the site to anyone holding `:generate`, and accepted any posted `courseid` (the draft's course becomes the push target). Both pickers now use `quiz_publisher::course_scope_sql()` / `target_courses()`; the posted course is validated.
+
+Site admins unchanged. Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`); `draft_manager_test` updated (a non-cross-tenant `:manage_all` holder is now refused). Written, not executed (shared test DB). Both trees.

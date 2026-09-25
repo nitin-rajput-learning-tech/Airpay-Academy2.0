@@ -52,12 +52,50 @@ class recommendation_engine {
     }
 
     /**
+     * ADR-031: may the actor generate recommendations for this learner?
+     *
+     * :generate says WHAT; this says for WHOM. Generating expires the
+     * learner's live batch, writes a new one into their dashboard, and (when
+     * live_api is on) sends their completion history to Anthropic - a write
+     * naming another user, so the learner must be in the actor's tenant
+     * (tenant::require_same_tenant_user(); cross-tenant actors pass, a
+     * learner with no tenant is refused for a scoped actor). Anyone may
+     * target themselves. Until 2026-09-25 generate.php accepted any user id,
+     * and :generate defaults to the manager archetype every tenant admin holds.
+     *
+     * @param int      $targetuserid
+     * @param int|null $actorid defaults to the current user
+     * @return bool
+     */
+    public static function can_target(int $targetuserid, ?int $actorid = null): bool {
+        global $USER;
+        $actorid = $actorid ?? (int) ($USER->id ?? 0);
+        if ($targetuserid <= 0 || $actorid <= 0) {
+            return false;
+        }
+        if ($targetuserid === $actorid) {
+            return true;
+        }
+        try {
+            \local_sentientia_platform\tenant::require_same_tenant_user($targetuserid, $actorid);
+            return true;
+        } catch (\moodle_exception $e) {
+            return false;
+        }
+    }
+
+    /**
      * Build a learner-profile object from the user record + completion history.
      *
      * The output object is the input to {@see prompt_builder::build_user_message}.
      *
+     * ->catalogue (ADR-031) is the learner's catalogue scope for
+     * build_candidate_list(): tenant::scope_path() of the learner - '' for a
+     * cross-tenant learner, '/N' for a tenant learner, null for a learner
+     * with no tenant. It is not part of the prompt.
+     *
      * @param int $userid
-     * @return \stdClass {role, tenant, skills, completed}
+     * @return \stdClass {role, tenant, skills, completed, catalogue}
      */
     public static function build_profile(int $userid): \stdClass {
         global $DB;
@@ -67,6 +105,7 @@ class recommendation_engine {
         $profile->tenant    = 'unknown';
         $profile->skills    = [];
         $profile->completed = [];
+        $profile->catalogue = null;
 
         $user = $DB->get_record('user', ['id' => $userid], 'id, open_path', IGNORE_MISSING);
         if (!$user) {
@@ -74,6 +113,7 @@ class recommendation_engine {
         }
         $tenantroot = self::tenant_root_for($user);
         $profile->tenant = (string)$tenantroot;
+        $profile->catalogue = \local_sentientia_platform\tenant::scope_path($user);
 
         // Completed course IDs — capped at MAX_HISTORY_ITEMS by the prompt
         // builder, so we don't need to cap here, but we do bound the query.
@@ -101,7 +141,19 @@ class recommendation_engine {
      * Build a candidate-course list (a learner's visible catalog) with
      * already-completed courses filtered out.
      *
-     * @param \stdClass $profile  Learner profile (uses ->completed)
+     * ADR-031 (2026-09-25): the catalogue is the LEARNER's - their tenant's
+     * `/`-bounded open_path subtree plus legacy NULL-path courses. It used to
+     * be every visible course on the site, so one tenant's course names and
+     * summaries went into another tenant's learner's prompt and dashboard.
+     * Scoped to the learner, not the viewer: a site admin generating for a
+     * /77 learner must be offered /77 courses only. A cross-tenant learner
+     * (a site admin generating for themselves) keeps the whole catalogue; a
+     * learner with no tenant gets no candidates, never every tenant's.
+     *
+     * The scope is $profile->catalogue (build_profile()); a hand-built
+     * profile without it falls back to $profile->tenant.
+     *
+     * @param \stdClass $profile  Learner profile (uses ->completed, ->catalogue / ->tenant)
      * @param int       $maxitems Hard cap on candidates returned
      * @return array Array of objects with ->id, ->fullname, ->shortname, ->summary
      */
@@ -112,10 +164,27 @@ class recommendation_engine {
         $completed = isset($profile->completed) && is_array($profile->completed)
             ? array_map('intval', $profile->completed) : [];
 
+        if (property_exists($profile, 'catalogue')) {
+            $scope = $profile->catalogue;
+        } else {
+            $root = (int) ($profile->tenant ?? 0);
+            $scope = $root > 0 ? '/' . $root : null;
+        }
+        if ($scope === null) {
+            return [];
+        }
+        if ($scope === '') {
+            $tenantsql = '1=1';
+            $tenantargs = [];
+        } else {
+            [$tenantsql, $tenantargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+                (string) $scope, '', 'open_path', 'rectn', true);
+        }
+
         $candidates = $DB->get_records_select(
             'course',
-            'visible = 1 AND id > 1',
-            null,
+            "visible = 1 AND id > 1 AND {$tenantsql}",
+            $tenantargs,
             'fullname ASC',
             'id, fullname, shortname, summary',
             0,

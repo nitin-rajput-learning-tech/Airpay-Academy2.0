@@ -15,6 +15,11 @@ require(__DIR__ . '/../../config.php');
 require_login();
 $context = context_system::instance();
 require_capability('local/sentientia_ai:viewledger', $context);
+// ADR-031: every figure below is platform-wide (all tenants, all customers),
+// so the capability alone is not enough - the viewer must be cross-tenant.
+if (!\local_sentientia_ai\ledger::can_view()) {
+    throw new moodle_exception('error_outoftenant', 'local_sentientia_platform');
+}
 
 $PAGE->set_url('/local/sentientia_ai/index.php');
 $PAGE->set_context($context);
