@@ -20,6 +20,7 @@ defined('MOODLE_INTERNAL') || die();
  * @covers     \local_sentientia_notifications\log_access
  * @covers     \local_sentientia_notifications\rule_manager::require_rule_admin
  * @covers     \local_sentientia_notifications\external\preview_rule
+ * @covers     \local_sentientia_notifications\external\test_send
  * @covers     \local_sentientia_notifications\external\toggle_rule
  * @covers     \local_sentientia_notifications\external\delete_rule
  * @group      tenant_isolation
@@ -73,7 +74,7 @@ final class tenant_scope_test extends \advanced_testcase {
         ]);
     }
 
-    private function rule(): int {
+    private function rule(?string $template = null): int {
         global $DB;
         return (int) $DB->insert_record('local_sentientia_notif_rules', (object) [
             'name'         => 'Tenant test rule',
@@ -82,6 +83,7 @@ final class tenant_scope_test extends \advanced_testcase {
             'trigger_days' => 3,
             'audience'     => 'learner',
             'enabled'      => 1,
+            'template'     => $template,
             'timecreated'  => time(),
             'timemodified' => time(),
         ]);
@@ -184,5 +186,51 @@ final class tenant_scope_test extends \advanced_testcase {
 
         $this->setAdminUser();
         $this->assertArrayHasKey('message', external\preview_rule::execute($ruleid, (int) $foreign->id));
+    }
+
+    public function test_test_send_cannot_message_another_tenants_user(): void {
+        global $DB;
+        $ruleid = $this->rule('<p>Hello {{firstname}}</p>');
+        $colleague = $this->user_at('/1/7');
+        $foreign = $this->user_at('/177/178');
+        $this->setUser($this->tenant_admin('/1', true));
+        $_POST['sesskey'] = sesskey();
+        $sink = $this->redirectMessages();
+
+        $this->assert_refused(fn() => external\test_send::execute($ruleid, (int) $foreign->id),
+            'test_send must not deliver admin-written content to a user in another tenant.');
+        $this->assertSame(0, $sink->count(), 'Nothing may be sent before the refusal.');
+        $this->assertFalse($DB->record_exists('local_sentientia_notif_log', ['userid' => $foreign->id]));
+
+        // A colleague in the caller's own tenant is fine, and the summary
+        // names them without handing back their email address.
+        $result = external\test_send::execute($ruleid, (int) $colleague->id);
+        $this->assertSame(1, $sink->count());
+        $this->assertSame((int) $colleague->id, (int) $sink->get_messages()[0]->useridto);
+        $this->assertStringNotContainsString($colleague->email, $result['sent_to']);
+        $sink->close();
+    }
+
+    public function test_test_send_with_no_tenant_can_only_message_themselves(): void {
+        $ruleid = $this->rule();
+        $anyone = $this->user_at('/1/7');
+        $this->setUser($this->tenant_admin('', true));
+        $_POST['sesskey'] = sesskey();
+        $sink = $this->redirectMessages();
+
+        $this->assert_refused(fn() => external\test_send::execute($ruleid, (int) $anyone->id),
+            'A caller with no tenant cannot be shown to share one with the target.');
+        $this->assertSame(0, $sink->count());
+        $sink->close();
+    }
+
+    public function test_preview_cleans_the_admin_written_template(): void {
+        $ruleid = $this->rule('<p onclick="steal()">Hi {{firstname}}</p><script>steal()</script>');
+        $this->setAdminUser();
+
+        $message = external\preview_rule::execute($ruleid)['message'];
+        $this->assertStringContainsString('Hi ', $message);
+        $this->assertStringNotContainsString('<script', $message);
+        $this->assertStringNotContainsString('onclick', $message);
     }
 }

@@ -82,3 +82,7 @@ $string['cadence_error_empty']      = 'Cadence is empty — use the default by c
 $string['cadence_error_too_long']   = 'Cadence has too many entries — max is {$a}. More than that is spammy and learners will mute the sender.';
 $string['cadence_error_bad_value']  = 'Cadence contains a bad value: {$a}. Every entry must be a positive integer (1, 2, 3, …).';
 
+// ADR-031 follow-up (2026-09-25): rules a scoped tenant admin may see but not change.
+$string['rule_scope_global']         = 'All Tenants (Global)';
+$string['rule_readonly_crosstenant'] = 'This rule applies to every tenant. Only a cross-tenant administrator can change it.';
+$string['rule_locked']               = 'Read-only: only a cross-tenant administrator can change this rule.';

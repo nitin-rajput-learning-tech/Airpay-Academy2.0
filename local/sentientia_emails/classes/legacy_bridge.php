@@ -16,7 +16,13 @@ defined('MOODLE_INTERNAL') || die();
 class legacy_bridge {
 
     /**
-     * Get all BizLMS notification types with their latest template info.
+     * Get the BizLMS notification templates the current user may see.
+     *
+     * ADR-031: a cross-tenant caller sees every costcenter's templates; anyone
+     * else only their own tenant root's (ni.costcenterid = root), and a caller
+     * whose tenant does not resolve sees none. This used to list every
+     * costcenter's subjects and body previews to every tenant admin on the
+     * manage.php templates tab.
      *
      * @return array [{id, type_name, type_shortname, subject, has_body, costcenterid, active}]
      */
@@ -32,6 +38,8 @@ class legacy_bridge {
             return [];
         }
 
+        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::sql_filter('ni');
+
         try {
             $records = $DB->get_records_sql(
                 "SELECT ni.id, nt.name AS type_name, nt.shortname AS type_shortname,
@@ -40,7 +48,9 @@ class legacy_bridge {
                         ni.timemodified
                    FROM {local_notification_info} ni
                    JOIN {local_notification_type} nt ON nt.id = ni.notificationid
-               ORDER BY nt.name ASC, ni.costcenterid ASC"
+                  WHERE $tnsql
+               ORDER BY nt.name ASC, ni.costcenterid ASC",
+                $tnargs
             );
 
             foreach ($records as $r) {
@@ -72,11 +82,16 @@ class legacy_bridge {
      * Get a single BizLMS template by its notification_info ID.
      * Returns full subject and body for preview.
      *
+     * ADR-031: same tenant scope as get_bizlms_templates() - another
+     * costcenter's template reads as not found.
+     *
      * @param int $id local_notification_info.id
      * @return object|null {subject, body, type_name, type_shortname, costcenterid}
      */
     public static function get_bizlms_template(int $id): ?object {
         global $DB;
+
+        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::sql_filter('ni');
 
         try {
             return $DB->get_record_sql(
@@ -86,9 +101,9 @@ class legacy_bridge {
                         ni.timecreated, ni.timemodified
                    FROM {local_notification_info} ni
                    JOIN {local_notification_type} nt ON nt.id = ni.notificationid
-                  WHERE ni.id = :id",
-                ['id' => $id]
-            );
+                  WHERE ni.id = :id AND $tnsql",
+                ['id' => $id] + $tnargs
+            ) ?: null;
         } catch (\Exception $e) {
             return null;
         }

@@ -327,3 +327,73 @@ callers, but the server refuses them (no visual evidence could be captured in th
 Data review for Nitin: existing `local_sentientia_email_overrides` rows with `tenant_id = 0` written
 by non-admins are live cross-tenant bodies; rows with `tenant_id > 0` start delivering now.
 Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`).
+
+## 2026-09-25 - ADR-031 follow-up (1.2.1, 2026092501)
+
+Reviewer items on wave 1 (branch `claude/adr031-comms-ff`).
+
+- **The deploy gate is now enforced in code, so tenant overrides go live safely.** Wave 1 made
+  `email_renderer` deliver the recipient's TENANT override. Before that, only the global override
+  was ever sent, so every `tenant_id > 0` row sat unused. Any manager-archetype tenant admin could
+  also write those rows for any tenant. Upgrade step 2026092501 (`db/upgradelib.php`,
+  `local_sentientia_emails_deactivate_unentitled_overrides()`) sets `is_active = 0` on an active
+  tenant override when both of these hold:
+  - its `usermodified` is not cross-tenant (a site admin or a `:crosstenant` holder);
+  - that author's tenant root differs from the row's `tenant_id`.
+
+  Rows with no attributable author are switched off as well. Each switched-off row is `mtrace()`d
+  as `DEACTIVATED tenant override id=.. template_key=.. tenant_id=.. usermodified=..` for Nitin's
+  review. Rows are switched off, not deleted, so an entitled editor can re-save them. Global rows
+  are **left active**: they were already being delivered before ADR-031, and switching them off
+  would change the mail learners get. Each global row written by a non-cross-tenant author is
+  traced as `REVIEW (left active) global override ...`. The query below is a read-only preview of
+  what the step will touch. Site admins also appear in its results, but the step exempts them:
+
+  ```sql
+  SELECT o.id, o.template_key, o.tenant_id, o.usermodified, u.username, u.open_path
+    FROM mdl_local_sentientia_email_overrides o
+    LEFT JOIN mdl_user u ON u.id = o.usermodified
+   WHERE o.is_active = 1 AND o.tenant_id > 0
+     AND (u.id IS NULL OR u.open_path IS NULL
+          OR (u.open_path <> CONCAT('/', o.tenant_id)
+              AND u.open_path NOT LIKE CONCAT('/', o.tenant_id, '/%')));
+  ```
+- `legacy_bridge::get_bizlms_templates()` and `get_bizlms_template()`: the templates tab showed
+  every tenant admin the BizLMS legacy subjects and body previews of every costcenter. Both now
+  apply `tenant::sql_filter('ni')`. That means own costcenter only, nothing when the caller has no
+  tenant, and everything for a cross-tenant caller. `get_bizlms_template()` also returned `false`
+  through a `?object` return type, which is a TypeError; that is fixed.
+- Rules tab UI (hits 22/35, the UI half):
+  - A scoped admin viewing a rule they may not change (a global rule) now sees a disabled toggle
+    and a lock in place of edit and delete.
+  - The Tenant Scope select comes from `manage_controller::rule_scope_options()`. It offers a
+    scoped caller their own tenant only, and it pre-selects the scope of the rule being edited. The
+    old form pre-selected nothing, so re-saving a tenant rule turned it into a global one.
+  - Viewing a global rule is read-only (no Save button).
+  - manage.php no longer quietly rewrites a posted `rule_tenant=0` to the caller's own tenant
+    (deviation 4). It now refuses it.
+  - The page's tenant selector is shown to every cross-tenant caller (`is_crosstenant`), not only
+    to site admins.
+- `:manage_templates` now carries `RISK_XSS | RISK_SPAM` (hardening for hit 23).
+- Verified that wave 1's `:preview` requirement does not break the editor:
+  - The Design Studio's live preview posts to `preview_ajax.php`, which needs `:manage_templates`,
+    not `:preview`.
+  - The `template_editor` AMD module, which calls `preview_template`, is loaded nowhere.
+  - `:preview` defaults to the manager archetype, and a test pins that a tenant admin keeps
+    `preview_template`.
+
+  Still to check on UAT: that role 9 holds `:preview`, unless someone has removed it there.
+
+Not changed:
+- `legacy_bridge::get_email_stats()` dashboard counts stay site-wide. They are aggregates only,
+  and `local_emaillogs` has no tenant column that this code owns.
+- `email_renderer::render()` still reads the recipient's `open_path` twice per email. This costs
+  efficiency only.
+- Editing a rule does not pre-select its type, channel or audience. This bug predates this change:
+  saving an edit resets those three fields to their first option.
+- No screenshots could be captured in this session because there was no local Moodle access.
+  Before merge, visual evidence is still owed for the `manage.php` rules tab and for `editor.php`,
+  each as a scoped admin and as a site admin, on desktop and mobile.
+
+Tests: `tests/override_audit_test.php` (new) and `tests/tenant_scope_test.php` (legacy templates,
+rule UI, preview). Both are in `@group tenant_isolation`.

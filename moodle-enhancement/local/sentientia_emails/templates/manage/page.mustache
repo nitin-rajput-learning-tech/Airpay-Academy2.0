@@ -1,7 +1,9 @@
 {{!
     Notification Management Panel — main page layout with tab navigation.
-    Context: tabs, tenants, current_tab, is_siteadmin, manage_url, preview_url,
+    Context: tabs, tenants, current_tab, is_siteadmin, is_crosstenant, manage_url, preview_url,
              is_dashboard, is_templates, is_rules, is_logs, is_settings, tabdata
+    ADR-031: the tenant selector is for cross-tenant callers (site admins and
+    crosstenant-capability holders); everyone else is pinned to their own tenant.
 }}
 <div class="ap-manage-panel">
 
@@ -17,7 +19,7 @@
             </span>
         </div>
         <div class="ap-manage-header__right">
-            {{#is_siteadmin}}
+            {{#is_crosstenant}}
             <div class="ap-manage-tenant-select">
                 <label for="tenant-select">Tenant:</label>
                 <select id="tenant-select" onchange="window.location='{{manage_url}}?tab={{current_tab}}&tenant='+this.value">
@@ -26,7 +28,7 @@
                     {{/tenants}}
                 </select>
             </div>
-            {{/is_siteadmin}}
+            {{/is_crosstenant}}
             <a href="{{preview_url}}" class="ap-manage-btn ap-manage-btn--outline" target="_blank">
                 <i class="fa fa-eye" aria-hidden="true"></i> Preview Templates
             </a>

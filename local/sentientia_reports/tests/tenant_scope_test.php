@@ -177,4 +177,23 @@ final class tenant_scope_test extends \advanced_testcase {
         $id = report_manager::create((object) ['name' => 'All', 'report_type' => 'user_activity', 'costcenterid' => 0]);
         $this->assertNull($DB->get_field('local_sentientia_reports', 'open_path', ['id' => $id]));
     }
+
+    public function test_list_reports_page_size_is_bounded_and_stays_in_tenant(): void {
+        $own = [$this->report('/1', 'Own A'), $this->report('/1/5', 'Own B'), $this->report('/1', 'Own C')];
+        $foreign = $this->report('/177', 'ZEEA report');
+        $this->setUser($this->tenant_admin('/1'));
+
+        $all = external\list_reports::execute('', 'name', 'asc', 0, 100000);
+        $this->assertSame(external\list_reports::MAX_PERPAGE, $all['perpage']);
+        $this->assertSame(3, $all['total']);
+        $ids = array_column($all['rows'], 'id');
+        sort($ids);
+        $this->assertSame($own, $ids);
+        $this->assertNotContains($foreign, $ids);
+
+        $one = external\list_reports::execute('', 'name', 'asc', -5, 0);
+        $this->assertSame(1, $one['perpage'], 'perpage 0 or less is one row, not an unbounded or broken query.');
+        $this->assertSame(0, $one['page']);
+        $this->assertCount(1, $one['rows']);
+    }
 }

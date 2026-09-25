@@ -101,3 +101,25 @@ saw every tenant's requesters, emails, reasons and decision notes. It now starts
 `tenant::sql_filter('r')` (the caller's tenant; 1=0 when it does not resolve, so the
 costcenterid 0 rows are not "every tenant"), and only a cross-tenant caller may pick a tenant with
 `filters.tenant`. Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`).
+
+## 2026-09-25 - ADR-031 follow-up (still 1.4.0, 2026092500)
+
+Reviewer items on wave 1 (branch `claude/adr031-comms-ff`).
+
+- `request_manager::decide()` had a fail-open that the sweep missed. On the `:overrideroute` path
+  it called `tenant::require_access((int) $rec->costcenterid, $deciderid)`, and
+  `viewer_can_access()` compares tenant roots with `===`. A decider whose `open_path` does not
+  resolve has root 0, and 0 equals a costcenterid-0 request. `db/install.php` grants
+  `:overrideroute` to the 'administrator' tenant-admin role, so such a holder could approve or
+  reject every tenant-less request and enrol its requester. `decide()` now refuses a
+  costcenterid <= 0 request unless `tenant::is_cross_tenant($deciderid)`. The assigned-approver
+  path is unchanged. The same `0 === 0` pattern still lives in the platform helper
+  `viewer_can_access()` for any other caller. That fix belongs to local_sentientia_platform.
+- `list_all` clamps `perpage` to `1..list_all::MAX_PERPAGE` (100) and `page` to `>= 0` (hit 54
+  side item).
+
+Tests in `tests/tenant_scope_test.php`:
+- A no-tenant router cannot decide a tenant-less request, or any other.
+- A /1 router decides only /1 requests.
+- A site admin still decides tenant-less requests.
+- The page-size clamp holds.

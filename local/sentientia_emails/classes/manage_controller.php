@@ -160,9 +160,16 @@ class manage_controller {
     public static function get_rules_data(int $tenantid = 0): array {
         $rules = rule_manager::get_rules($tenantid);
 
+        // ADR-031: a scoped caller may see a global rule (it fires for their
+        // tenant too) but not toggle, edit or delete it - the server refuses
+        // that (tenant_scope::require_can_modify_rule), so do not offer it.
+        $crosstenant = \local_sentientia_platform\tenant::is_cross_tenant();
+        $ownroot = \local_sentientia_platform\tenant::root_for_current_user();
+
         // Enrich rules with readable labels.
         $enriched = [];
         foreach ($rules as $rule) {
+            $ruletenant = (int) $rule->tenant_id;
             $enriched[] = [
                 'id'            => $rule->id,
                 'rule_name'     => format_string($rule->rule_name),
@@ -175,11 +182,82 @@ class manage_controller {
                 'enabled'       => (bool)$rule->enabled,
                 'priority'      => $rule->priority,
                 'is_global'     => ($rule->tenant_id == 0),
+                'can_modify'    => $crosstenant || ($ruletenant > 0 && $ruletenant === $ownroot),
                 'timemodified'  => userdate($rule->timemodified),
             ];
         }
 
         return ['rules' => $enriched, 'rule_count' => count($enriched)];
+    }
+
+    /**
+     * Options for the page's tenant selector.
+     *
+     * ADR-031: a scoped caller is pinned to their own tenant whatever ?tenant=
+     * says (tenant_scope::resolve), so offering "All Tenants" or another
+     * tenant only led to a page that silently showed their own again.
+     *
+     * @param int $tenantid the page's resolved tenant (tenant_scope::resolve)
+     * @return array [{id, name, selected}]
+     */
+    public static function tenant_selector_options(int $tenantid): array {
+        $options = [
+            ['id' => 0,   'name' => 'All Tenants'],
+            ['id' => 1,   'name' => 'Airpay'],
+            ['id' => 77,  'name' => 'Public'],
+            ['id' => 177, 'name' => 'ZEEA'],
+        ];
+        return self::scope_options($options, $tenantid);
+    }
+
+    /**
+     * Options for the rule form's "Tenant Scope" select.
+     *
+     * ADR-031: only a cross-tenant caller may create a global rule or one for
+     * another tenant (the save is refused otherwise), so a scoped caller is
+     * offered their own tenant only. The option matching the rule being
+     * edited - or, for a new rule, the page's tenant - is pre-selected: the
+     * form used to pre-select nothing, so re-saving a tenant rule quietly
+     * turned it into "All Tenants (Global)", firing for every tenant.
+     *
+     * @param int $pagetenant the page's resolved tenant (0 = all, cross-tenant only)
+     * @param int|null $ruletenant tenant_id of the rule being edited; null for a new rule
+     * @return array [{id, name, selected}]
+     */
+    public static function rule_scope_options(int $pagetenant, ?int $ruletenant = null): array {
+        $options = [
+            ['id' => 0,   'name' => 'All Tenants (Global)'],
+            ['id' => 1,   'name' => 'Airpay Only'],
+            ['id' => 77,  'name' => 'Public Only'],
+            ['id' => 177, 'name' => 'ZEEA Only'],
+        ];
+        return self::scope_options($options, $ruletenant ?? $pagetenant);
+    }
+
+    /**
+     * Narrow a tenant option list to what the current user may choose, and
+     * mark the selected one. Cross-tenant callers keep every option; anyone
+     * else keeps their own tenant root only (none when it does not resolve).
+     *
+     * @param array $options [{id, name}]
+     * @param int $selected
+     * @return array [{id, name, selected}]
+     */
+    private static function scope_options(array $options, int $selected): array {
+        if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
+            $own = \local_sentientia_platform\tenant::root_for_current_user();
+            $mine = array_values(array_filter($options, fn($o) => $o['id'] === $own));
+            if (!$mine && $own > 0) {
+                $mine = [['id' => $own, 'name' => 'Tenant ' . $own]];
+            }
+            $options = $own > 0 ? $mine : [];
+            $selected = $own;
+        }
+        foreach ($options as &$option) {
+            $option['selected'] = ($option['id'] === $selected);
+        }
+        unset($option);
+        return $options;
     }
 
     /**

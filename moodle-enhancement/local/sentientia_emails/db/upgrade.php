@@ -1,6 +1,8 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
+require_once(__DIR__ . '/upgradelib.php');
+
 function xmldb_local_sentientia_emails_upgrade(int $oldversion): bool {
     global $DB;
     $dbman = $DB->get_manager();
@@ -257,6 +259,31 @@ function xmldb_local_sentientia_emails_upgrade(int $oldversion): bool {
         }
 
         upgrade_plugin_savepoint(true, 2026051302, 'local', 'sentientia_emails');
+    }
+
+    // ── ADR-031 follow-up (2026-09-25): tenant overrides go live here ──
+    //    2026092500 makes email_renderer deliver the recipient's TENANT
+    //    override; until then only the global one was ever sent, so every
+    //    tenant_id > 0 row was inert. Those rows were writable by any tenant
+    //    admin for any tenant, so switch off the ones whose author was not
+    //    entitled to that tenant BEFORE they reach learners. Each one is
+    //    traced for review; an entitled editor can re-save it. Global rows
+    //    are left as they are (already live) and traced for review only.
+    if ($oldversion < 2026092501) {
+        $switchedoff = local_sentientia_emails_deactivate_unentitled_overrides();
+        foreach ($switchedoff as $row) {
+            mtrace(sprintf('local_sentientia_emails: DEACTIVATED tenant override id=%d template_key=%s '
+                . 'tenant_id=%d usermodified=%d (author tenant root %d): author not entitled to that tenant.',
+                $row->id, $row->template_key, $row->tenant_id, $row->usermodified, $row->author_root));
+        }
+        mtrace(sprintf('local_sentientia_emails: %d tenant override(s) deactivated for review.',
+            count($switchedoff)));
+        foreach (local_sentientia_emails_global_overrides_for_review() as $row) {
+            mtrace(sprintf('local_sentientia_emails: REVIEW (left active) global override id=%d template_key=%s '
+                . 'usermodified=%d (author tenant root %d): author is not cross-tenant.',
+                $row->id, $row->template_key, $row->usermodified, $row->author_root));
+        }
+        upgrade_plugin_savepoint(true, 2026092501, 'local', 'sentientia_emails');
     }
 
     return true;

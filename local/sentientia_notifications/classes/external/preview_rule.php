@@ -61,8 +61,12 @@ class preview_rule extends external_api {
         $course_name = $course ? format_string($course->fullname) : '(no course)';
 
         $subject = 'Preview: ' . format_string($rule->name);
-        $message = self::render_template((string) ($rule->template ?? ''),
-            (string) ($rule->name ?? 'Notification'), (object) [
+        // Sweep hit 31: the rule template is admin-written HTML that test_send
+        // mails to a real user and the admin UI renders, so it goes through
+        // clean_text() (script, event handlers and similar stripped) - the
+        // placeholder values themselves are already s()-escaped.
+        $message = clean_text(self::render_template((string) ($rule->template ?? ''),
+            format_string((string) ($rule->name ?? 'Notification')), (object) [
             'firstname' => $user->firstname,
             'lastname'  => $user->lastname,
             'fullname'  => $user->firstname . ' ' . $user->lastname,
@@ -71,7 +75,7 @@ class preview_rule extends external_api {
                 ? (new \moodle_url('/course/view.php', ['id' => $course_id]))->out(false) : '',
             'rule_type' => $rule->rule_type,
             'channel'   => $rule->channel,
-        ]);
+        ]), FORMAT_HTML);
 
         return [
             'subject' => $subject,

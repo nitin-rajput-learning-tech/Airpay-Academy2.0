@@ -183,3 +183,32 @@ Sweep hits 30 and 31 (CROSS-TENANT-AUTHORITY-SWEEP-2026-09-25).
   broadcast to every tenant).
 
 Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`).
+
+## 2026-09-25 - ADR-031 follow-up (still 1.5.0, 2026092500)
+
+Reviewer items on wave 1 (branch `claude/adr031-comms-ff`). No schema or capability change, so
+the wave-1 version stands.
+
+- `test_send` (hit 31): `sent_to` now names the recipient and their user id, without their email
+  address.
+- `preview_rule` (hit 31): the admin-written rule template is passed through
+  `clean_text(FORMAT_HTML)` after placeholder substitution. `test_send` mails that same HTML, so
+  script tags and event handlers no longer reach an inbox or the admin UI.
+- New tests: a scoped `:manage` holder who targets a user in another tenant with `test_send` gets
+  `error_outoftenant`, and nothing is sent or logged (checked with a message sink). A caller with
+  no tenant can message nobody but themselves. A same-tenant colleague still receives the test.
+
+**Release note for Nitin (operational).** The notifications 2026092500 and pwa 2026092500 upgrades
+revoke `:manage` from EVERY role at system context. After deploy, tenant admins lose
+`notifications/index.php`, rule management, `test_send` / `preview_rule` and the push log. They
+keep `:viewlogs` (own tenant's log). If a platform L&D role must keep these, re-grant `:manage` to
+it after the upgrade. Rule writes also need `local/sentientia_platform:crosstenant` on that role.
+
+**Not fixed, needs Nitin's call:** `rule_engine::rule_course_not_started`, `rule_streak_broken`
+and `rule_new_course` build `"... LIMIT " . (int) get_config(...,'batch_limit') ?: 500`. That
+parses as `("... LIMIT 0") ?: ...` because `batch_limit` is defined nowhere. All three rules
+therefore run `LIMIT 0` and have never sent anything. `db/install.php` seeds "Course not started",
+"Streak at risk" and "New course available" as ENABLED rules on `inapp`, and the `smart_alert`
+provider defaults email and popup ON. Correcting the precedence would switch on up to 500
+messages per rule per hourly run on UAT's imported production users. So it is left as it is,
+pending a decision: disable those seeded rules first, or put the fix behind a flag.
