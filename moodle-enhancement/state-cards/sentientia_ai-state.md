@@ -96,3 +96,7 @@ Found by a read-only audit of all 38 Sentientia privacy providers, run because `
 - Platform dependency raised from ANY_VERSION to 2026092500 (the ADR-031 helper).
 
 Site admins unchanged. Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`). Written, not executed (shared test DB). Both trees.
+
+## 2026-09-25 - ADR-031 wave-1 review follow-up (no code change)
+
+- S6: `index.php` stays gated by `ledger::can_view()` (`:viewledger` AND `tenant::is_cross_tenant()`) without `admin_externalpage_setup()`. Deliberate: adding it would also block a `:crosstenant` + `:viewledger` holder who lacks `moodle/site:config`, and change the page chrome.

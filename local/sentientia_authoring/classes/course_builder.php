@@ -82,6 +82,8 @@ class course_builder {
                 && in_array($q->qtype, ['multichoice', 'mrq', 'match'], true);
         }));
 
+        self::require_publishable_tenant($draft, $actor);
+
         if ($categoryid <= 0) {
             $categoryid = (int) $DB->get_field_sql(
                 'SELECT MIN(id) FROM {course_categories} WHERE visible = 1');
@@ -153,13 +155,58 @@ class course_builder {
     }
 
     /**
+     * ADR-031: may $actor publish $draft as a course on this schema?
+     *
+     * The published course is filed under the draft's tenant (stamp_tenant()).
+     * A draft with costcenterid 0 would publish with a NULL open_path, and
+     * tenant catalogues read a NULL-path course as legacy and visible to EVERY
+     * tenant once someone unhides it - so a tenantless, non-cross-tenant author
+     * holding course:create could publish into all of them (wave-1 review S2,
+     * 2026-09-25). Refused for a scoped actor:
+     *
+     *  - a draft of no tenant (costcenterid 0): err_publish_notenant;
+     *  - a draft whose tenant is not the actor's own (an owner who has since
+     *    moved tenant, or an actor whose own tenant does not resolve): the
+     *    course would be created in a tenant the actor is not in.
+     *
+     * Cross-tenant actors pass (their tenantless drafts keep the NULL path,
+     * as before). A schema without course.open_path (vanilla / Customer-N) has
+     * no tenant catalogues for the course to leak into, so it is not refused.
+     *
+     * @param \stdClass $draft
+     * @param \stdClass $actor A user record carrying id and open_path
+     * @throws \moodle_exception err_publish_notenant | error_outoftenant
+     */
+    public static function require_publishable_tenant(\stdClass $draft, \stdClass $actor): void {
+        if (\local_sentientia_platform\tenant::is_cross_tenant((int) ($actor->id ?? 0))
+                || !self::course_has_tenant_column()) {
+            return;
+        }
+        $root = (int) $draft->costcenterid;
+        if ($root <= 0) {
+            throw new \moodle_exception('err_publish_notenant', 'local_sentientia_authoring');
+        }
+        if (\local_sentientia_platform\tenant::root_for_user($actor) !== $root) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+    }
+
+    /** Does {course} carry the BizLMS open_path column on this schema? */
+    protected static function course_has_tenant_column(): bool {
+        global $DB;
+        return array_key_exists('open_path', $DB->get_columns('course'));
+    }
+
+    /**
      * ADR-031: file the new course under the draft's tenant.
      *
      * create_course() leaves the BizLMS open_path NULL, and tenant catalogues
      * treat a NULL-path course as legacy and visible to EVERY tenant - so a
      * tenant's published draft would have leaked into the others' course
-     * lists. Stamp the draft's tenant root ('/N'). A tenantless draft (0), or
-     * a schema without the column (vanilla), keeps create_course()'s default.
+     * lists. Stamp the draft's tenant root ('/N'). A tenantless draft (0) -
+     * which only a cross-tenant actor may publish on a schema with the column,
+     * see require_publishable_tenant() - or a schema without the column
+     * (vanilla), keeps create_course()'s default.
      *
      * @param \stdClass $course The created course (updated in place)
      * @param \stdClass $draft
@@ -168,7 +215,7 @@ class course_builder {
     protected static function stamp_tenant(\stdClass $course, \stdClass $draft): void {
         global $DB;
         $root = (int) $draft->costcenterid;
-        if ($root <= 0 || !array_key_exists('open_path', $DB->get_columns('course'))) {
+        if ($root <= 0 || !self::course_has_tenant_column()) {
             return;
         }
         $DB->set_field('course', 'open_path', '/' . $root, ['id' => $course->id]);

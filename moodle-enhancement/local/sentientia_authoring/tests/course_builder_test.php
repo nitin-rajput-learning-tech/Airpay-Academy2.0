@@ -170,6 +170,11 @@ final class course_builder_test extends \advanced_testcase {
         $this->resetAfterTest();
 
         $user = $this->getDataGenerator()->create_user();
+        // Give the author a tenant, so the draft is filed under /1 and the
+        // ADR-031 tenant check passes: it is the CAPABILITY gate that must
+        // refuse here (a tenantless draft is refused before it, by design).
+        $DB->set_field('user', 'open_path', '/1', ['id' => $user->id]);
+        $user = $DB->get_record('user', ['id' => $user->id], '*', MUST_EXIST);
         $this->setUser($user);
         $did = $this->seed_approved_draft((int) $user->id);
         $before = (int) $DB->count_records('course', []);

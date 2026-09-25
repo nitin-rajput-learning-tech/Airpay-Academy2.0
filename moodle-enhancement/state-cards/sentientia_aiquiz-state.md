@@ -296,3 +296,14 @@ Since this morning's erasure fix, erasing an author keeps their rows with owneri
 - Course pickers: `generate.php` listed every visible course on the site to anyone holding `:generate`, and accepted any posted `courseid` (the draft's course becomes the push target). Both pickers now use `quiz_publisher::course_scope_sql()` / `target_courses()`; the posted course is validated.
 
 Site admins unchanged. Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`); `draft_manager_test` updated (a non-cross-tenant `:manage_all` holder is now refused). Written, not executed (shared test DB). Both trees.
+
+## 2026-09-25 - ADR-031 fix-forward: no push into a course of no tenant (wave-1 review S1)
+
+`quiz_publisher::require_course_in_scope()` delegated to `tenant::require_path_access()`, which returns early for a course whose `open_path` is NULL or '' (a readable legacy row). So a tenantless, non-cross-tenant reviewer holding `course:manageactivities` could push a quiz into, or bind a draft to, a legacy shared course with a crafted POST (`review.php` pushcourseid, `generate.php` courseid), although `course_scope_sql()` gave the same caller `1=0`.
+
+- `require_course_in_scope()` guards a WRITE, so it no longer tolerates legacy rows: a cross-tenant actor passes; an actor whose `scope_path()` is null is refused; a NULL/empty-path course is refused for every scoped actor (it belongs to no tenant, and every tenant's catalogue lists it, so a quiz pushed into it reaches all of them); otherwise `require_path_access()` as before.
+- `course_scope_sql()` no longer adds legacy NULL-path courses for a scoped actor (`allow_null` false), so the generate and push pickers do not offer a course the push would refuse.
+- Behaviour to know: a tenant admin or trainer can no longer push an AI quiz into a legacy NULL-path course. Site admins and `:crosstenant` holders can. `auto_push` stays OFF.
+- Behaviour to know (review S3): on a vanilla / Customer-N schema (no `open_path`) every non-admin is tenant 0, so reviewers see only their own drafts and the generate and push course pickers are empty for non-admins.
+
+Tests: `tests/tenant_scope_test.php` (+4: tenantless actor refused for NULL and '' courses, scoped admin refused and not offered a legacy course, `require_course_in_scope()` case table, site admin still pushes into a legacy course). `quiz_publisher_test::test_publish_denies_without_capability` now puts the student and course in tenant /1 so the capability gate, not the tenant check, is still what refuses. No schema/access change, version stays 2026092500. Written, not executed (shared test DB). Both trees.

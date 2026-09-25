@@ -149,6 +149,12 @@ final class quiz_publisher_test extends \advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        // Student and course share tenant /1, so the tenant check passes and
+        // it is the CAPABILITY gate that refuses (ADR-031 refuses a tenantless
+        // actor, or a NULL-path course, before the capability is consulted).
+        $DB->set_field('course', 'open_path', '/1', ['id' => $course->id]);
+        $DB->set_field('user', 'open_path', '/1', ['id' => $student->id]);
+        $student = $DB->get_record('user', ['id' => $student->id], '*', MUST_EXIST);
         $this->setUser($student);
 
         $did = $this->seed_approved_draft((int) $student->id, (int) $course->id, 1);

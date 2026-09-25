@@ -211,3 +211,7 @@ Since this morning's erasure fix, erasing an author keeps their rows with owneri
 - Fail closed: a caller with no tenant sees only their own rows; a caller with id 0 sees nothing.
 
 Site admins unchanged. Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`); `translate_engine_test` updated. Written, not executed (shared test DB). Both trees.
+
+## 2026-09-25 - ADR-031 wave-1 review follow-up (no code change)
+
+The wave-1 review raised no fix for translate. Still open: run `tenant_scope_test`, `translate_engine_test` and `anonymised_owner_test` once the shared test DB is free (component versions changed, so phpunit init rebuilds).

@@ -141,28 +141,49 @@ class quiz_publisher {
     /**
      * ADR-031: refuse unless $course is in $actor's tenant.
      *
-     * Delegates to tenant::require_path_access() on the course's open_path:
-     * cross-tenant actors pass, a course in another tenant (or any tenanted
-     * course, for an actor with no tenant) throws error_outoftenant. A legacy
-     * course with no open_path passes, the platform's documented tolerance.
-     * Schema-portable: a vanilla course row has no open_path at all.
+     * This guards a WRITE (a quiz pushed into the course, or a draft bound to
+     * it as its push target), so it is stricter than
+     * tenant::require_path_access(), which waves a course with no open_path
+     * through as a readable legacy row:
+     *
+     *  - a cross-tenant actor passes;
+     *  - an actor whose tenant does not resolve (scope_path() null) is
+     *    refused outright, whatever the course;
+     *  - a course with a NULL / empty open_path is refused for every scoped
+     *    actor. It belongs to no tenant, so it cannot be shown to be in the
+     *    actor's, and every tenant's catalogue lists it: a quiz pushed into it
+     *    reaches all of them (wave-1 review S1, 2026-09-25);
+     *  - otherwise the course must be the actor's tenant root or `/`-bounded
+     *    below it (tenant::require_path_access()).
+     *
+     * Schema-portable: a vanilla course row has no open_path at all, and on
+     * such a site only cross-tenant actors (site admins) can push.
      *
      * @param \stdClass $course A course record (get_course() / '*')
-     * @param \stdClass $actor
+     * @param \stdClass $actor  A user record carrying id and open_path
      * @throws \moodle_exception error_outoftenant
      */
     public static function require_course_in_scope(\stdClass $course, \stdClass $actor): void {
-        \local_sentientia_platform\tenant::require_path_access(
-            (string) ($course->open_path ?? ''), (int) $actor->id);
+        $scope = \local_sentientia_platform\tenant::scope_path($actor);
+        if ($scope === '') {
+            return;
+        }
+        $path = (string) ($course->open_path ?? '');
+        if ($scope === null || $path === '') {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        \local_sentientia_platform\tenant::require_path_access($path, (int) $actor->id);
     }
 
     /**
      * ADR-031: WHERE fragment bounding a {course} query to the actor's tenant.
      *
-     * '1=1' for a cross-tenant actor, the tenant's `/`-bounded subtree (plus
-     * legacy NULL-path courses) for a scoped one, and '1=0' - nothing - for
-     * an actor whose tenant does not resolve. Used by the generate and push
-     * course pickers, which listed every course on the site.
+     * '1=1' for a cross-tenant actor, the tenant's `/`-bounded subtree for a
+     * scoped one, and '1=0' - nothing - for an actor whose tenant does not
+     * resolve. Used by the generate and push course pickers, which listed
+     * every course on the site. Both pick a PUSH TARGET, so legacy NULL-path
+     * courses are left out for a scoped actor: require_course_in_scope()
+     * refuses them, and a picker must not offer what the write will refuse.
      *
      * @param \stdClass $actor
      * @param string    $alias {course} alias, '' for none
@@ -177,7 +198,7 @@ class quiz_publisher {
             return ['1=1', []];
         }
         return \local_sentientia_platform\tenant::path_descendant_filter(
-            $scope, $alias, 'open_path', 'aqcourse', true);
+            $scope, $alias, 'open_path', 'aqcourse', false);
     }
 
     /**
