@@ -130,6 +130,8 @@
 .ap-manage-card__value {
     font-size: 28px; font-weight: 700; color: #1a1a2e; line-height: 1.2;
 }
+/* Rule form wrapper: a plain box, so disabling it (read-only rule) changes no layout. */
+.ap-manage-fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 
 /* Stats grid */
 .ap-manage-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }

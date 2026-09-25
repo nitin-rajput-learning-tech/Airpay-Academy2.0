@@ -397,3 +397,91 @@ Not changed:
 
 Tests: `tests/override_audit_test.php` (new) and `tests/tenant_scope_test.php` (legacy templates,
 rule UI, preview). Both are in `@group tenant_isolation`.
+
+## 2026-09-25 - ADR-031 follow-up 2 (still 1.2.1, 2026092501)
+
+Adversarial-review items on `claude/adr031-comms-ff` (branch `claude/adr031-comms-ff2`). No upgrade
+step was added and access, install.xml, services and caches are unchanged, so the version stands.
+
+- **The templates tab now matches delivery.** `template_manager::get_templates_with_status()` let an
+  INACTIVE tenant row overwrite the global row in its override map. Once 2026092501 switched a
+  tenant override off, the tab showed "file / no override" while that tenant's learners were
+  receiving the active global override. Inactive tenant rows are now skipped, as
+  `get_override()` skips them. Side effect: with tenant 0 selected (the global scope), global rows
+  are no longer relabelled "tenant".
+- **The 2026092501 audit is persisted, not only printed.** The DEACTIVATED and REVIEW lines used to
+  exist only in the upgrade output. The step now runs `local_sentientia_emails_run_override_audit()`
+  (`db/upgradelib.php`). It prints the same lines and also stores them in two places, so Nitin can
+  review them after a web or CLI upgrade:
+  - **Config changes report:** Site administration > Reports > Config changes
+    (`/report/configlog/index.php`), plugin `local_sentientia_emails`, filtered by setting name.
+    - `adr031_override_deactivated`: one entry per switched-off row. The original value is
+      `is_active=1`, and the new value names the id, template key, tenant and the author's tenant
+      root.
+    - `adr031_override_review`: one entry per global override left active for review.
+    - `adr031_override_audit`: one summary entry with both id lists. It is written even when
+      nothing is found, so "found nothing" can be told apart from "never ran".
+  - **Plugin setting `local_sentientia_emails/adr031_override_audit`:** a JSON document
+    `{"recorded", "deactivated": [...], "review": [...]}`. Each entry holds `id`, `template_key`,
+    `tenant_id` and `author_root`. Read it with
+    `php admin/cli/cfg.php --component=local_sentientia_emails --name=adr031_override_audit`.
+  - **The author's user id is not stored.** No privacy provider covers a config value or
+    config-log text. The override row keeps `usermodified`, and the step changes only `is_active`
+    and `timemodified`, so the author can still be looked up by override id. The console lines
+    still print `usermodified`, as before.
+  - **Caveat:** the step body changed but its version did not. A database that ran 2026092501 on
+    the earlier code has only that run's console output. None is known: nothing from ADR-031 has
+    been deployed to UAT or production (PROJECT-STATE, 2026-09-25). On such a database, the
+    read-only query above with `o.is_active = 0` lists the candidates. It also lists any override
+    that was already switched off by hand.
+- **Tenant labels are localised and white-label.** `manage_controller::rule_scope_options()` and
+  `tenant_selector_options()` hardcoded English ("All Tenants (Global)", "Airpay Only",
+  "Tenant N"). "Airpay Only" also put a customer's name on every white-label deployment. The labels
+  now come from these strings, in en and hi:
+  - `rule_scope_global` (reused);
+  - `tenant_all`;
+  - `rule_scope_tenant` ("{$a} only");
+  - `tenant_n`.
+
+  The tenant name is the org registry's `fullname` for path `/N` (`local_sentientia_org`, falling
+  back to the legacy costcenter). When the registry has no name, "Tenant N" is used. The tenant
+  list comes from `tenant_registry::valid_roots()` instead of a hardcoded `[1, 77, 177]`, and in
+  legacy mode it is still those three.
+- **The read-only global-rule form (UI):**
+  - When `editrule_readonly` is set, every field sits inside `<fieldset disabled>`.
+  - The form no longer carries the `saverule` action, `sesskey` or `ruleid`. The server still
+    refuses the save regardless.
+  - Both lock icons have `aria-hidden="true"`.
+  - The disabled toggle has an `aria-label`, not only a `title`.
+  - The actions-column lock has screen-reader text (`sr-only visually-hidden`).
+- **Behaviour change to note:** a cross-tenant caller on `manage.php?tenant=N` now gets tenant N
+  pre-selected for a NEW rule. Before the first follow-up the form pre-selected nothing, so a new
+  rule defaulted to Global. A cross-tenant admin who wants a global rule from a tenant-filtered
+  page must now choose "All Tenants (Global)" explicitly. This is pinned in
+  `test_rule_ui_for_site_admin_keeps_every_scope_and_preselects_the_rule`.
+- **Deliberately NOT fixed (Nitin decides):** the `local_sentientia_notifications` `rule_engine`
+  precedence bug. `rule_course_not_started`, `rule_streak_broken` and `rule_new_course` build
+  `"... LIMIT " . (int) get_config(..., 'batch_limit') ?: 500`, which evaluates to `LIMIT 0`, so
+  those three seeded, enabled rules have never sent anything. Fixing the precedence would start
+  real sends to UAT's imported production users. The bug and the options (disable the seeded rules
+  first, or put the fix behind a flag) are written up in `sentientia_notifications-state.md`, in
+  the 2026-09-25 follow-up. The code is unchanged.
+
+Still open:
+- Visual evidence is still owed for the rules tab: a read-only global rule as a scoped admin and an
+  editable rule as a site admin, on desktop and mobile. No local Moodle was used in this session.
+- `editor.php` and `preview.php` still hardcode their tenant lists ("Global (all tenants)",
+  "Airpay", "Public", "ZEEA"), and the rules table still shows "Tenant {id}" in English. These were
+  not part of these items.
+
+Tests:
+- `tests/tenant_scope_test.php`: new tests
+  - `test_templates_tab_reports_the_override_the_tenant_actually_receives`
+  - `test_tenant_labels_come_from_the_org_registry_not_a_hardcoded_customer`
+  - `test_readonly_global_rule_form_cannot_be_submitted`
+- `tests/tenant_scope_test.php`: the scoped-admin scope assertion now expects the neutral
+  localised label instead of "Airpay Only".
+- `tests/override_audit_test.php`: new tests
+  - `test_the_audit_outlives_the_upgrade_output`
+  - `test_an_audit_that_finds_nothing_still_records_that_it_ran`
+- Both classes are `@group tenant_isolation`. PHPUnit was not run in this session.

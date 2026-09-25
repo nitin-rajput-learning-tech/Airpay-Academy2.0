@@ -27,11 +27,14 @@ require_once($CFG->dirroot . '/local/sentientia_emails/db/upgradelib.php');
  * tests pin: a tenant-177 override written by a /1 admin is switched off (and
  * the 177 learner falls back to what they received before), one written by a
  * /177 admin or a site admin stays active, and global overrides are reported
- * but not changed.
+ * but not changed. The report outlives the upgrade output: it is kept in the
+ * config changes log and in the adr031_override_audit plugin setting.
  *
  * @covers ::local_sentientia_emails_deactivate_unentitled_overrides
  * @covers ::local_sentientia_emails_global_overrides_for_review
  * @covers ::local_sentientia_emails_override_author_entitled
+ * @covers ::local_sentientia_emails_run_override_audit
+ * @covers ::local_sentientia_emails_record_override_audit
  * @group tenant_isolation
  */
 final class override_audit_test extends \advanced_testcase {
@@ -139,5 +142,69 @@ final class override_audit_test extends \advanced_testcase {
         $this->assertFalse(local_sentientia_emails_override_author_entitled((int) $notenant->id, 1));
         $this->assertTrue(local_sentientia_emails_override_author_entitled((int) get_admin()->id, 177));
         $this->assertTrue(local_sentientia_emails_override_author_entitled((int) get_admin()->id, 0));
+    }
+
+    /** config_log rows this plugin's audit wrote under $name. */
+    private function audit_log(string $name): array {
+        global $DB;
+        return array_values($DB->get_records('config_log',
+            ['plugin' => 'local_sentientia_emails', 'name' => $name], 'id ASC'));
+    }
+
+    public function test_the_audit_outlives_the_upgrade_output(): void {
+        $airpayadmin = $this->tenant_admin('/1');
+        $injected = $this->override(177, self::TPL_A, (int) $airpayadmin->id, '<p>Injected</p>');
+        $global = $this->override(0, self::TPL_B, (int) $airpayadmin->id, '<p>Global by a tenant admin</p>');
+        $this->override(177, self::TPL_C, (int) get_admin()->id, '<p>Entitled</p>');
+        // Both upgrade paths (web, admin/cli/upgrade.php) run as the admin.
+        $this->setAdminUser();
+
+        $lines = implode("\n", local_sentientia_emails_run_override_audit());
+
+        // The console trace is what it was.
+        $this->assertStringContainsString("DEACTIVATED tenant override id={$injected} template_key=" . self::TPL_A
+            . ' tenant_id=177 usermodified=' . $airpayadmin->id, $lines);
+        $this->assertStringContainsString("REVIEW (left active) global override id={$global} ", $lines);
+        $this->assertSame(0, $this->is_active($injected));
+
+        // Site administration > Reports > Config changes: one entry per row, plus a summary.
+        $deactivated = $this->audit_log('adr031_override_deactivated');
+        $this->assertCount(1, $deactivated, 'Only the switched-off row is logged as deactivated.');
+        $this->assertStringContainsString("tenant override id={$injected} ", $deactivated[0]->value);
+        $this->assertStringContainsString('tenant_id=177', $deactivated[0]->value);
+        $this->assertSame('is_active=1', $deactivated[0]->oldvalue);
+        $review = $this->audit_log('adr031_override_review');
+        $this->assertCount(1, $review);
+        $this->assertStringContainsString("global override id={$global} ", $review[0]->value);
+        $summary = $this->audit_log('adr031_override_audit');
+        $this->assertCount(1, $summary);
+        $this->assertStringContainsString("[ids: {$injected}]", $summary[0]->value);
+        $this->assertStringContainsString("[ids: {$global}]", $summary[0]->value);
+
+        // And the plugin setting, readable with admin/cli/cfg.php. It names the
+        // row and the author's tenant, not the author's user id (the override
+        // row keeps usermodified).
+        $audit = json_decode(get_config('local_sentientia_emails', 'adr031_override_audit'), true);
+        $this->assertSame([['id' => $injected, 'template_key' => self::TPL_A, 'tenant_id' => 177, 'author_root' => 1]],
+            $audit['deactivated']);
+        $this->assertSame([['id' => $global, 'template_key' => self::TPL_B, 'tenant_id' => 0, 'author_root' => 1]],
+            $audit['review']);
+        $this->assertIsInt($audit['recorded']);
+    }
+
+    public function test_an_audit_that_finds_nothing_still_records_that_it_ran(): void {
+        $this->setAdminUser();
+        $this->override(0, self::TPL_A, (int) get_admin()->id, '<p>By a site admin</p>');
+
+        $lines = local_sentientia_emails_run_override_audit();
+
+        $this->assertContains('0 tenant override(s) deactivated for review.', $lines);
+        $audit = json_decode(get_config('local_sentientia_emails', 'adr031_override_audit'), true);
+        $this->assertSame([], $audit['deactivated']);
+        $this->assertSame([], $audit['review']);
+        $this->assertSame([], $this->audit_log('adr031_override_deactivated'));
+        $this->assertSame([], $this->audit_log('adr031_override_review'));
+        $this->assertCount(1, $this->audit_log('adr031_override_audit'),
+            'An empty result is still recorded, so "nothing found" is distinguishable from "never ran".');
     }
 }

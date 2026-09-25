@@ -145,16 +145,22 @@ class template_manager {
         global $DB;
 
         $categories = email_renderer::get_template_list();
-        $overrides = $DB->get_records(self::TABLE, ['tenant_id' => $tenantid]);
-        $globaloverrides = $DB->get_records(self::TABLE, ['tenant_id' => 0]);
 
-        // Index overrides by template_key.
+        // Index overrides by template_key, resolving them the way get_override()
+        // does for a learner in $tenantid: an ACTIVE tenant row wins, otherwise
+        // the global row. An inactive tenant row must not shadow the global one
+        // (ADR-031 follow-up, 2026-09-25): once the 2026092501 upgrade switched
+        // a tenant override off, the tab showed "file / no override" while that
+        // tenant's learners were receiving the active global override. Tenant 0
+        // is the global scope itself, so its rows are not re-read as "tenant".
         $overridemap = [];
-        foreach ($globaloverrides as $o) {
-            $overridemap[$o->template_key] = ['id' => $o->id, 'source' => 'global', 'active' => $o->is_active];
+        foreach ($DB->get_records(self::TABLE, ['tenant_id' => 0]) as $o) {
+            $overridemap[$o->template_key] = ['id' => $o->id, 'source' => 'global', 'active' => (bool) $o->is_active];
         }
-        foreach ($overrides as $o) {
-            $overridemap[$o->template_key] = ['id' => $o->id, 'source' => 'tenant', 'active' => $o->is_active];
+        if ($tenantid > 0) {
+            foreach ($DB->get_records(self::TABLE, ['tenant_id' => $tenantid, 'is_active' => 1]) as $o) {
+                $overridemap[$o->template_key] = ['id' => $o->id, 'source' => 'tenant', 'active' => true];
+            }
         }
 
         $result = [];

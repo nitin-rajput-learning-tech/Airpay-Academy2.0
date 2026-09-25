@@ -197,17 +197,17 @@ class manage_controller {
      * says (tenant_scope::resolve), so offering "All Tenants" or another
      * tenant only led to a page that silently showed their own again.
      *
+     * Labels come from the tenant registry (see tenant_name()) and the
+     * language pack, never from a hardcoded customer name.
+     *
      * @param int $tenantid the page's resolved tenant (tenant_scope::resolve)
      * @return array [{id, name, selected}]
      */
     public static function tenant_selector_options(int $tenantid): array {
-        $options = [
-            ['id' => 0,   'name' => 'All Tenants'],
-            ['id' => 1,   'name' => 'Airpay'],
-            ['id' => 77,  'name' => 'Public'],
-            ['id' => 177, 'name' => 'ZEEA'],
-        ];
-        return self::scope_options($options, $tenantid);
+        return self::scope_options(
+            get_string('tenant_all', 'local_sentientia_emails'),
+            fn(int $root): string => self::tenant_name($root),
+            $tenantid);
     }
 
     /**
@@ -220,37 +220,77 @@ class manage_controller {
      * form used to pre-select nothing, so re-saving a tenant rule quietly
      * turned it into "All Tenants (Global)", firing for every tenant.
      *
+     * A cross-tenant caller on manage.php?tenant=N gets tenant N pre-selected
+     * for a new rule (it used to be Global for everyone).
+     *
      * @param int $pagetenant the page's resolved tenant (0 = all, cross-tenant only)
      * @param int|null $ruletenant tenant_id of the rule being edited; null for a new rule
      * @return array [{id, name, selected}]
      */
     public static function rule_scope_options(int $pagetenant, ?int $ruletenant = null): array {
-        $options = [
-            ['id' => 0,   'name' => 'All Tenants (Global)'],
-            ['id' => 1,   'name' => 'Airpay Only'],
-            ['id' => 77,  'name' => 'Public Only'],
-            ['id' => 177, 'name' => 'ZEEA Only'],
-        ];
-        return self::scope_options($options, $ruletenant ?? $pagetenant);
+        return self::scope_options(
+            get_string('rule_scope_global', 'local_sentientia_emails'),
+            fn(int $root): string => get_string('rule_scope_tenant', 'local_sentientia_emails',
+                self::tenant_name($root)),
+            $ruletenant ?? $pagetenant);
     }
 
     /**
-     * Narrow a tenant option list to what the current user may choose, and
-     * mark the selected one. Cross-tenant callers keep every option; anyone
-     * else keeps their own tenant root only (none when it does not resolve).
+     * The display name of a tenant root, from the org/tenant registry.
      *
-     * @param array $options [{id, name}]
+     * White-label: the name is the tenant's own org record (path '/N' in
+     * local_sentientia_org, or the legacy costcenter it falls back to), so a
+     * customer sees its own tenant names. It used to be hardcoded as
+     * "Airpay" / "Airpay Only" for every deployment. When the registry has no
+     * name for the root, a neutral "Tenant N" is used.
+     *
+     * @param int $root tenant root id
+     * @return string plain text (Mustache escapes it)
+     */
+    public static function tenant_name(int $root): string {
+        $name = '';
+        if ($root > 0 && class_exists('\local_sentientia_org\org_manager')) {
+            $name = trim((string) \local_sentientia_org\org_manager::get_name_by_path('/' . $root));
+        }
+        if ($name === '') {
+            return get_string('tenant_n', 'local_sentientia_emails', $root);
+        }
+        return format_string($name, true, ['context' => \context_system::instance(), 'escape' => false]);
+    }
+
+    /**
+     * The tenant roots a cross-tenant caller may choose from: the tenant
+     * registry's (ADR-021), which falls back to the legacy allow-list.
+     *
+     * @return int[]
+     */
+    private static function tenant_roots(): array {
+        if (class_exists('\local_sentientia_core\tenant_registry')) {
+            return \local_sentientia_core\tenant_registry::valid_roots();
+        }
+        return \local_sentientia_platform\tenant::VALID_TENANTS;
+    }
+
+    /**
+     * Build a tenant option list the current user may choose from, and mark
+     * the selected one. Cross-tenant callers get the "all/global" option and
+     * every registered tenant; anyone else gets their own tenant root only
+     * (nothing when it does not resolve), selected whatever was asked for.
+     *
+     * @param string $allname label of the id-0 option (all tenants / global)
+     * @param callable $label fn(int $root): string, label of a tenant option
      * @param int $selected
      * @return array [{id, name, selected}]
      */
-    private static function scope_options(array $options, int $selected): array {
-        if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
-            $own = \local_sentientia_platform\tenant::root_for_current_user();
-            $mine = array_values(array_filter($options, fn($o) => $o['id'] === $own));
-            if (!$mine && $own > 0) {
-                $mine = [['id' => $own, 'name' => 'Tenant ' . $own]];
+    private static function scope_options(string $allname, callable $label, int $selected): array {
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            $options = [['id' => 0, 'name' => $allname]];
+            foreach (self::tenant_roots() as $root) {
+                $options[] = ['id' => (int) $root, 'name' => $label((int) $root)];
             }
-            $options = $own > 0 ? $mine : [];
+        } else {
+            $own = \local_sentientia_platform\tenant::root_for_current_user();
+            $options = $own > 0 ? [['id' => $own, 'name' => $label($own)]] : [];
             $selected = $own;
         }
         foreach ($options as &$option) {

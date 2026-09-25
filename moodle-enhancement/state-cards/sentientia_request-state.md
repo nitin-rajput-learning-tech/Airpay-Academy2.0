@@ -123,3 +123,11 @@ Tests in `tests/tenant_scope_test.php`:
 - A /1 router decides only /1 requests.
 - A site admin still decides tenant-less requests.
 - The page-size clamp holds.
+
+## 2026-09-25 - ADR-031 follow-up 2 (still 1.4.0, 2026092500)
+
+Reviewer item on `claude/adr031-comms-ff`, fixed on branch `claude/adr031-comms-ff2`. This is a
+cosmetic, test-only change: no code, schema or capability changed, so there is no version bump.
+In `tests/tenant_scope_test.php`, the class docblock paragraph about `decide()` sat after the
+`@package` / `@category` tags, where PHPDoc reads it as part of the tag block. It now comes before
+the tags. Both trees were changed identically. The test class is still `@group tenant_isolation`.

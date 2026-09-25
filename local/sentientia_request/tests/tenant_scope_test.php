@@ -14,13 +14,13 @@ defined('MOODLE_INTERNAL') || die();
  * 2026-09-25 list_all started from 1=1 and took the tenant from the client's
  * filters JSON: every tenant's requesters, emails, reasons and decision notes.
  *
- * @package    local_sentientia_request
- * @category   test
  * It also pins decide(): an :overrideroute holder (db/install.php grants it
  * to the 'administrator' tenant-admin role) decides only their own tenant's
  * requests, and one whose tenant does not resolve decides nothing - root 0
  * used to equal a costcenterid-0 request and let them approve it.
  *
+ * @package    local_sentientia_request
+ * @category   test
  * @covers     \local_sentientia_request\external\list_all
  * @covers     \local_sentientia_request\request_manager::decide
  * @group      tenant_isolation

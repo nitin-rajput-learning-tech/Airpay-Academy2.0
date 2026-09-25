@@ -5,6 +5,9 @@
              rule_scope_options [id, name, selected], is_crosstenant
     ADR-031: a scoped caller gets their own tenant as the only scope, and no
     toggle, edit or delete on a rule they may not change (global rules).
+    A read-only rule (editrule_readonly) renders every field inside a disabled
+    fieldset and carries no saverule action, sesskey or ruleid, so the form
+    cannot be submitted; the server refuses the save anyway.
 }}
 
 {{! ═══ RULE FORM (Add New / Edit) ═══ }}
@@ -15,9 +18,12 @@
         {{#has_editrule}}Edit Rule{{/has_editrule}}{{^has_editrule}}Create New Rule{{/has_editrule}}
     </h3>
     <form method="post" action="{{manage_url}}?tab=rules&tenant={{tenant_id}}">
+        {{^editrule_readonly}}
         <input type="hidden" name="sesskey" value="{{sesskey}}">
         <input type="hidden" name="action" value="saverule">
         {{#has_editrule}}<input type="hidden" name="ruleid" value="{{editrule.id}}">{{/has_editrule}}
+        {{/editrule_readonly}}
+        <fieldset class="ap-manage-fieldset"{{#editrule_readonly}} disabled aria-describedby="ap-rule-readonly-note"{{/editrule_readonly}}>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
             <div>
@@ -110,8 +116,8 @@
         </div>
 
         {{#editrule_readonly}}
-        <p style="font-size:12px; color:#5a6070; margin:0 0 16px;">
-            <i class="fa fa-lock"></i> {{#str}}rule_readonly_crosstenant, local_sentientia_emails{{/str}}
+        <p id="ap-rule-readonly-note" style="font-size:12px; color:#5a6070; margin:0 0 16px;">
+            <i class="fa fa-lock" aria-hidden="true"></i> {{#str}}rule_readonly_crosstenant, local_sentientia_emails{{/str}}
         </p>
         {{/editrule_readonly}}
 
@@ -130,6 +136,7 @@
             </button>
             {{/editrule_readonly}}
         </div>
+        </fieldset>
     </form>
 </div>
 {{/show_form}}
@@ -171,6 +178,7 @@
                         {{/can_modify}}
                         {{^can_modify}}
                         <input type="checkbox" {{#enabled}}checked{{/enabled}} disabled
+                               aria-label="{{#str}}rule_locked, local_sentientia_emails{{/str}}"
                                title="{{#str}}rule_locked, local_sentientia_emails{{/str}}">
                         {{/can_modify}}
                         <span class="ap-toggle-slider"></span>
@@ -207,7 +215,8 @@
                     {{/can_modify}}
                     {{^can_modify}}
                     <span style="color:#8890a0;" title="{{#str}}rule_locked, local_sentientia_emails{{/str}}">
-                        <i class="fa fa-lock"></i>
+                        <i class="fa fa-lock" aria-hidden="true"></i>
+                        <span class="sr-only visually-hidden">{{#str}}rule_locked, local_sentientia_emails{{/str}}</span>
                     </span>
                     {{/can_modify}}
                 </td>

@@ -86,3 +86,7 @@ $string['cadence_error_bad_value']  = 'Cadence contains a bad value: {$a}. Every
 $string['rule_scope_global']         = 'All Tenants (Global)';
 $string['rule_readonly_crosstenant'] = 'This rule applies to every tenant. Only a cross-tenant administrator can change it.';
 $string['rule_locked']               = 'Read-only: only a cross-tenant administrator can change this rule.';
+// Tenant selector + rule scope labels. {$a} is the tenant's name from the org registry.
+$string['rule_scope_tenant']         = '{$a} only';
+$string['tenant_all']                = 'All Tenants';
+$string['tenant_n']                  = 'Tenant {$a}';
