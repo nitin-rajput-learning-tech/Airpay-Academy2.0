@@ -282,3 +282,46 @@ challenge survives in the same tenant; the erased person does not return after t
 rebuild). Written, not yet run (shared test DB being rebuilt). Comment + test only: no version
 bump. Both trees. If attempts are ever to be kept, make the leaderboard rebuild skip deleted
 users first.
+
+
+## 2026-09-25 - get_leaderboard test failures: stale test calls, plus a real fullname() defect
+
+**Failures (full run 2026-09-24, ME tree).** 3 errors + 1 failure in
+`tests/external/get_leaderboard_test.php`: `TypeError: get_leaderboard::execute(): Argument #2
+($challengeid) must be of type int, string given` (test_returns_top_for_challenge,
+test_aggregate_returns_zero_when_no_completions, test_ismine_flag_set_for_caller_row), and
+test_filterstoolong_rejected got the same TypeError instead of the `moodle_exception` it expects.
+
+**Root cause 1 - TEST was wrong.** On 2026-05-22 (Goal A Bug #10, commit 89fb2e713) `search`
+was put first in `execute()` and `execute_parameters()`, so the endpoint accepts the shared
+datatable client contract. The tests, written 2026-05-07, were not updated. They still passed
+arguments by position in the old order, so the challenge id went into `$search` and `'mine'` into
+`$challengeid`. The WS code is correct: `external_api::call_external_function()` passes
+`array_values()` of the validated params by position, and the signature matches the key order
+of `execute_parameters()`. The only PHP callers of `execute()` are these tests. Fix: the tests
+now use named arguments. test_view_capability_required (not failing, but `execute(0)` had put
+`'0'` into `$search`) now uses them too. test_filterstoolong_rejected now also pins the
+`err_filterstoolong` message, because `required_capability_exception` is also a
+`moodle_exception` and would otherwise satisfy the test. The new
+test_execute_signature_matches_parameter_order checks the positional contract the dispatcher
+relies on (6 methods now).
+
+**Root cause 2 - CODE was wrong. The TypeError hid it.** `leaderboard_manager::get_top()`
+called `fullname()` on an object with only firstname and lastname. In developer mode core raises
+`debugging('The following name fields are missing ...')` for every row, which appears as an
+"Unexpected debugging() call detected" notice in the tests that reach rows, including
+leaderboard_manager_test::test_get_top_returns_paginated. On a site whose `fullnamedisplay`
+uses middlename, alternatename or the phonetic fields, the leaderboard also showed the wrong
+name. Fix: select every name field with `\core_user\fields::for_name()->get_sql('u', false, '',
+'', false)->selects` and pass the row to `fullname()`. `u.email` was selected but never used, so
+it is no longer read. Return shape unchanged; no version bump needed (class-only change). Both
+trees.
+
+**Verification.** Traced by reading, not run (shared test DB is being rebuilt): php -l clean,
+check-tree-drift OK, lang-parity 0 failures (no lang change).
+
+**Open, not fixed (outside this task).** (a) `tenantmode=mine` for a caller with an empty or
+non-numeric `open_path` resolves to tenant 0, which `get_top()` treats as unscoped. Such a caller
+sees every tenant's leaderboard. This needs a product decision. (b) The class docblock says it
+"locks in tenant scoping (mine vs all)", but no test covers `all` vs `mine`, or cross-tenant
+isolation.

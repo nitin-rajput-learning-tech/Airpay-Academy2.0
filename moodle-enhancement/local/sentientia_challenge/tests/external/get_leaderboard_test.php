@@ -12,10 +12,35 @@ use local_sentientia_challenge\leaderboard_manager;
 /**
  * WS tests for get_leaderboard. Locks in tenant scoping (mine vs all).
  *
+ * execute() is called with NAMED arguments. On 2026-05-22 (Goal A Bug #10)
+ * `search` was prepended to the signature to match the shared datatable
+ * client contract; these tests still passed arguments positionally in the
+ * old order, so the challenge id landed in $search and 'mine' in
+ * $challengeid (TypeError). Named arguments bind the way the test means.
+ * The positional order that the WS dispatcher relies on is locked in
+ * separately by test_execute_signature_matches_parameter_order().
+ *
  * @package    local_sentientia_challenge
  * @category   test
  */
 final class get_leaderboard_test extends \advanced_testcase {
+
+    /**
+     * core_external\external_api::call_external_function() validates the
+     * request against execute_parameters() and then calls execute() with
+     * array_values() of the result, i.e. by POSITION. If the key order of
+     * execute_parameters() and the parameter order of execute() ever drift
+     * apart, every web-service call binds the wrong value to the wrong
+     * argument.
+     */
+    public function test_execute_signature_matches_parameter_order(): void {
+        $declared = array_keys(get_leaderboard::execute_parameters()->keys);
+        $signature = array_map(
+            static fn(\ReflectionParameter $p): string => $p->getName(),
+            (new \ReflectionMethod(get_leaderboard::class, 'execute'))->getParameters()
+        );
+        $this->assertSame($declared, $signature);
+    }
 
     private function complete_course_for(int $userid): int {
         global $DB;
@@ -43,7 +68,7 @@ final class get_leaderboard_test extends \advanced_testcase {
         $this->setUser($u);
 
         $this->expectException(\required_capability_exception::class);
-        get_leaderboard::execute(0);
+        get_leaderboard::execute(challengeid: 0);
     }
 
     public function test_returns_top_for_challenge(): void {
@@ -63,7 +88,8 @@ final class get_leaderboard_test extends \advanced_testcase {
 
         leaderboard_manager::recompute_challenge($cid);
 
-        $r = get_leaderboard::execute($cid, 'mine', 'points', 'desc', 0, 25);
+        $r = get_leaderboard::execute(challengeid: $cid, tenantmode: 'mine',
+            sort: 'points', sortdir: 'desc', page: 0, perpage: 25);
         $this->assertSame(2, $r['total']);
         // Each row has rank, points, fullname.
         foreach ($r['rows'] as $row) {
@@ -76,7 +102,8 @@ final class get_leaderboard_test extends \advanced_testcase {
     public function test_aggregate_returns_zero_when_no_completions(): void {
         $this->resetAfterTest();
         $this->setAdminUser();
-        $r = get_leaderboard::execute(0, 'mine', 'points', 'desc', 0, 25);
+        $r = get_leaderboard::execute(challengeid: 0, tenantmode: 'mine',
+            sort: 'points', sortdir: 'desc', page: 0, perpage: 25);
         $this->assertSame(0, $r['total']);
         $this->assertCount(0, $r['rows']);
     }
@@ -84,8 +111,13 @@ final class get_leaderboard_test extends \advanced_testcase {
     public function test_filterstoolong_rejected(): void {
         $this->resetAfterTest();
         $this->setAdminUser();
+        // required_capability_exception is also a moodle_exception, so pin the
+        // message too: this test must prove the filters guard fired.
         $this->expectException(\moodle_exception::class);
-        get_leaderboard::execute(0, 'mine', 'points', 'desc', 0, 25, str_repeat('x', 5000));
+        $this->expectExceptionMessage(get_string('err_filterstoolong', 'local_sentientia_challenge'));
+        get_leaderboard::execute(challengeid: 0, tenantmode: 'mine',
+            sort: 'points', sortdir: 'desc', page: 0, perpage: 25,
+            filters: str_repeat('x', 5000));
     }
 
     public function test_ismine_flag_set_for_caller_row(): void {
@@ -100,7 +132,8 @@ final class get_leaderboard_test extends \advanced_testcase {
         challenge_engine::join($cid, (int) $USER->id);
         leaderboard_manager::recompute_challenge($cid);
 
-        $r = get_leaderboard::execute($cid, 'mine', 'points', 'desc', 0, 25);
+        $r = get_leaderboard::execute(challengeid: $cid, tenantmode: 'mine',
+            sort: 'points', sortdir: 'desc', page: 0, perpage: 25);
         $found = false;
         foreach ($r['rows'] as $row) {
             if ($row['userid'] === (int) $USER->id) {
