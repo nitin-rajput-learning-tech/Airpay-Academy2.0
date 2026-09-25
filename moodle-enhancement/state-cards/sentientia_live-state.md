@@ -303,3 +303,22 @@ strings added at parity.
 `get_contexts_for_userid()` ignored `local_sentientia_live_sse`, so a manage_all streamer, or a logged-in user on a join token, was never erased from it. It now checks that table, and the bulk delete clears it too.
 
 Found by a read-only audit of all 38 Sentientia privacy providers, run because `local_sentientia_privacy\privacy_manager::process_deletion()` now calls every one of them. Class change only: no version bump. Covered by `local_sentientia_privacy\erasure_scope_test` / `privacy_manager_test`.
+
+## 2026-09-25 - ADR-031: :manage_all revoked and tenant-confined (0.2.4-alpha, 2026092500)
+
+`:manage_all` defaulted to the manager archetype (every tenant admin; UAT's role 9 via
+`reset_role_capabilities()`), and `session_manager::can_user_run()` never read the session's
+`tenantid`. Every trainer route (edit, run, start, end, set_current, slide add/edit/delete/move,
+delete, trainer SSE, export) gates on it, so any tenant admin could read participants' names and
+free-text answers on, or hard-delete, any tenant's session by sequential id.
+
+- `db/access.php`: `archetypes => []`. Upgrade step 2026092500
+  (`db/upgradelib.php::local_sentientia_live_revoke_manage_all()`) revokes existing grants.
+- `can_user_run()`: the owner, or `:manage_all` AND (cross-tenant, or the session's tenant equals the
+  holder's). Tenant-0 sessions are cross-tenant only (0 never matches a tenantless holder).
+- `trainer/export.php` checked the undeclared `local/sentientia_live:manage` (always false); it now
+  uses `can_user_run()` (site admins can now export any session, as they could already view it in
+  run.php).
+
+Audience join-by-code remains tenant-agnostic by design (Mentimeter model). Tests:
+`tests/tenant_scope_test.php` (`@group tenant_isolation`). Both trees.

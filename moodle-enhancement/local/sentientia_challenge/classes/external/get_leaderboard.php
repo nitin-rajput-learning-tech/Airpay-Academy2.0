@@ -52,16 +52,18 @@ class get_leaderboard extends external_api {
             throw new \moodle_exception('err_filterstoolong', 'local_sentientia_challenge');
         }
 
-        // Tenant scoping. 'all' requires :viewall.
+        // Tenant scoping. 'all' is honoured only for a cross-tenant caller
+        // (ADR-031: tenant::is_cross_tenant() decides WHERE; :viewall, which
+        // existed only to unscope, no longer does).
+        $crosstenant = \local_sentientia_platform\tenant::is_cross_tenant();
         $tenant = 0;
-        if ($params['tenantmode'] === 'mine'
-                || !has_capability('local/sentientia_challenge:viewall', $context)) {
+        if ($params['tenantmode'] === 'mine' || !$crosstenant) {
             $tenant = challenge_engine::tenant_from_path($USER->open_path ?? '');
             // Fail closed (2026-09-25): get_top() reads tenant 0 as "no scoping",
             // so a scoped caller whose open_path is empty or malformed used to
-            // see every tenant's leaderboard - names included. Only a site admin
-            // is unscoped without a tenant.
-            if ($tenant <= 0 && !is_siteadmin()) {
+            // see every tenant's leaderboard - names included. Only a
+            // cross-tenant caller is unscoped without a tenant.
+            if ($tenant <= 0 && !$crosstenant) {
                 return ['total' => 0, 'rows' => [],
                         'page' => (int) $params['page'], 'perpage' => (int) $params['perpage']];
             }

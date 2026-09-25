@@ -45,11 +45,8 @@ $PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('heading_index', 'local_sentientia_leaderboard'));
 $PAGE->set_heading(get_string('heading_index', 'local_sentientia_leaderboard'));
 
-$can_view_all = has_capability('local/sentientia_leaderboard:viewall', $context);
-$viewer_root = \local_sentientia_platform\tenant::root_for_current_user();
-
-$boards = \local_sentientia_leaderboard\board_manager::list_visible(
-    $viewer_root, $can_view_all);
+// ADR-031: scope decided by list_for_viewer(), not by :viewall.
+$boards = \local_sentientia_leaderboard\board_manager::list_for_viewer();
 
 // Render the boards list.
 $board_data = [];

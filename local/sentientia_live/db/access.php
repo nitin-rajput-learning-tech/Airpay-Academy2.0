@@ -17,7 +17,9 @@ defined('MOODLE_INTERNAL') || die();
  *                  per per-session setting — Phase E.2 gate)
  *   respond    — audience submits a response to a slide
  *                  (allowed for any user; same anonymous gate as join)
- *   manage_all — admin override; view/manage every session across tenants
+ *   manage_all — manage other trainers' sessions. No default grant; confined
+ *                  to the holder's own tenant unless they are cross-tenant
+ *                  (ADR-031, 2026-09-25)
  *
  * @package local_sentientia_live
  */
@@ -78,11 +80,18 @@ $capabilities = [
         ],
     ],
 
+    // No default grant (ADR-031, 2026-09-25). Tenant admins hold
+    // manager-archetype roles at system context (UAT's "administrator", id 9),
+    // and the manager default let every one of them edit, run, stream (with
+    // participants' names and free-text answers) and hard-delete any tenant's
+    // live session by its sequential id. Site admins pass anyway. Even when
+    // granted deliberately, session_manager::can_user_run() now confines a
+    // holder to their own tenant's sessions unless tenant::is_cross_tenant().
+    // Upgrade step 2026092500 revokes the existing grants (archetype changes
+    // never revoke).
     'local/sentientia_live:manage_all' => [
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes'   => [
-            'manager' => CAP_ALLOW,
-        ],
+        'archetypes'   => [],
     ],
 ];

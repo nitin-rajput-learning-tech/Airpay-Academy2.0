@@ -16,6 +16,8 @@ if (!in_array($tab, ['overview', 'participants', 'leaderboard'], true)) {
 
 $challenge = $DB->get_record('local_sentientia_challenge_challenges',
     ['id' => $id], '*', MUST_EXIST);
+// ADR-031: ids are sequential; only global and own-tenant challenges render.
+\local_sentientia_challenge\challenge_engine::require_visible($challenge);
 $challenge->participants = (int) $DB->count_records(
     'local_sentientia_challenge_attempts', ['challengeid' => $id]);
 $challenge->completed = (int) $DB->count_records(
@@ -36,7 +38,8 @@ $PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('heading_view', 'local_sentientia_challenge', $row['name']));
 $PAGE->set_heading(get_string('heading_view', 'local_sentientia_challenge', $row['name']));
 
-$can_manage = has_capability('local/sentientia_challenge:manage', $context);
+$can_manage = has_capability('local/sentientia_challenge:manage', $context)
+    && \local_sentientia_challenge\challenge_engine::user_can_manage($challenge);  // ADR-031
 $can_join   = has_capability('local/sentientia_challenge:participate', $context);
 
 // Leaderboard tab columns.

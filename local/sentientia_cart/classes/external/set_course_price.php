@@ -45,6 +45,12 @@ class set_course_price extends external_api {
         $coursectx = \context_course::instance($course->id);
         self::validate_context($coursectx);
         require_capability('local/sentientia_cart:manageprices', $coursectx);
+        // ADR-031: the course-context check above does NOT scope a tenant
+        // admin. Their manager-archetype role is assigned at system context,
+        // and a system-level grant is inherited by every course in every
+        // tenant, so they could disable, re-price or add a fee instance on any
+        // tenant's course. The course itself must be in the caller's tenant.
+        \local_sentientia_cart\cart_manager::require_course_in_tenant($course);
 
         $existing = $DB->get_record('enrol',
             ['courseid' => $course->id, 'enrol' => 'fee', 'status' => 0]);

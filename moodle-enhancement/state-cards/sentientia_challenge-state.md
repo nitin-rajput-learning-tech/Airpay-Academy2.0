@@ -334,3 +334,24 @@ Two leaks, closed together:
 - A scoped caller whose open_path did not resolve to a tenant got tenant 0, which `get_top()` and `list_challenges()` read as every tenant. Both web services now return nothing for such a caller; the site admin is unaffected.
 
 Found while the challenge test fixes were reviewed. Covered by `tests/external/tenant_scope_test.php` (`@group tenant_isolation`).
+
+## 2026-09-25 - ADR-031: challenge writes and by-id reads tenant-bounded (1.1.6-alpha, 2026092501)
+
+`:manage` stays on the manager archetype (per-tenant authoring is legitimate), but it no longer
+decides WHERE. `challenge_engine` gains `user_can_see()` / `require_visible()` and `user_can_manage()` /
+`require_manageable()`, all routed through `tenant::is_cross_tenant()`:
+
+- **P0** `update_challenge` / `delete_challenge` (and the dynamic form's access check and set_data)
+  acted on any id; delete also wiped the challenge's attempts and leaderboard rows. A scoped manager
+  now manages only their own tenant's challenges; global (costcenterid 0) challenges are
+  cross-tenant only. The list's Edit / Delete buttons follow the same rule.
+- `create_challenge` stamped a tenantless caller's challenge as costcenterid 0 = GLOBAL (live to every
+  tenant). It now refuses a scoped caller with no tenant, or one naming another tenant or 0.
+- `get_challenge`, `view.php` and `join()` loaded any id: they now require the challenge to be global
+  or the caller's tenant's (nothing for a tenantless caller). The `leaderboard.php` dropdown is scoped.
+- `list_challenges` and `get_leaderboard(tenantmode=all)` unscope only for `is_cross_tenant()`;
+  `:viewall` (no default grant since 2026092500) no longer unscopes on its own.
+
+`tests/privacy/provider_test.php` authored its challenge as a tenantless user; it now creates as the
+site admin and sets `createdby`. New `tests/tenant_isolation_test.php` (`@group tenant_isolation`).
+Declares a dependency on platform 2026092500. Both trees.

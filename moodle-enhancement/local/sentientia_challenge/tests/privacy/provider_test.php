@@ -101,11 +101,15 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $this->resetAfterTest();
 
         $u = $this->getDataGenerator()->create_user();
-        $this->setUser($u);
+        // ADR-031 (2026-09-25): create_challenge() now refuses a caller with
+        // no tenant (it used to publish a GLOBAL challenge). This test DB has
+        // no open_path, so create as the site admin and make $u the author.
+        $this->setAdminUser();
         $cid = challenge_engine::create_challenge([
             'name' => 'Mine', 'shortname' => 'priv4',
             'status' => challenge_engine::STATUS_DRAFT,
         ]);
+        $DB->set_field('local_sentientia_challenge_challenges', 'createdby', $u->id, ['id' => $cid]);
 
         // Confirm createdby is $u.
         $row_before = $DB->get_record('local_sentientia_challenge_challenges', ['id' => $cid]);

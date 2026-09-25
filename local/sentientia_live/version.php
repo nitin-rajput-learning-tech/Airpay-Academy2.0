@@ -35,12 +35,13 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_live';
-$plugin->version   = 2026092202;  // privacy provider now declares every user table it owns       // YYYYMMDDNN — H4 SSE concurrency-cap remediation (UAT-SECURITY-POSTURE-2026-09-03)
+$plugin->version   = 2026092500;  // ADR-031: :manage_all has no default grant (+ revoke step) and is tenant-confined
+// 2026092202: privacy provider now declares every user table it owns       // YYYYMMDDNN — H4 SSE concurrency-cap remediation (UAT-SECURITY-POSTURE-2026-09-03)
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;   // Phases E.4-E.9 — all 6 question types live + verified
-$plugin->release   = '0.2.3-alpha';
+$plugin->release   = '0.2.4-alpha';
 $plugin->dependencies = [
-    'local_sentientia_platform' => 2026051401,  // feature_flags resolver
+    'local_sentientia_platform' => 2026092500,  // feature_flags resolver + tenant::is_cross_tenant() (ADR-031)
 ];
 
 // Release history
@@ -221,3 +222,14 @@ $plugin->dependencies = [
 //              settings. +1 PHPUnit test class (sse_connection_registry_
 //              test) covering acquire/heartbeat/release/global cap/
 //              per-actor cap/prune.
+// 0.2.4-alpha  ADR-031 (2026-09-25) — :manage_all defaulted to the manager
+//              archetype, which every tenant admin holds at system context,
+//              and can_user_run() never read the session's tenantid: any
+//              tenant admin could edit, run, stream (participant names,
+//              free-text answers) and hard-delete any tenant's session by
+//              sequential id. No default grant now; upgrade step 2026092500
+//              revokes existing grants; can_user_run() confines a holder to
+//              their own tenant's sessions (tenant-0 sessions: cross-tenant
+//              only). trainer/export.php checked an undeclared
+//              `:manage` capability; it now uses can_user_run().
+//              Tests: tests/tenant_scope_test.php (@group tenant_isolation).

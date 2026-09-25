@@ -30,6 +30,9 @@ class get_challenge extends external_api {
 
         $challenge = $DB->get_record('local_sentientia_challenge_challenges',
             ['id' => $id], '*', MUST_EXIST);
+        // ADR-031: ids are sequential; :view is not licence to read another
+        // tenant's challenge (name, description, participant counts).
+        challenge_engine::require_visible($challenge);
         $myattempt = $DB->get_record('local_sentientia_challenge_attempts',
             ['challengeid' => $id, 'userid' => $USER->id]);
 

@@ -89,5 +89,20 @@ function xmldb_local_sentientia_live_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026090302, 'local', 'sentientia_live');
     }
 
+    // ── ADR-031 (2026-09-25): take :manage_all back from every role ──
+    // db/access.php no longer grants it to the manager archetype, but changing
+    // archetypes never revokes what was already applied (install, or
+    // reset_role_capabilities() - which is how UAT's tenant-admin role 9 got
+    // it). Every existing grant let a tenant admin edit, run, stream and
+    // hard-delete other tenants' live sessions, so revoke them all. Site
+    // admins are unaffected; grant it deliberately if a role needs to manage
+    // other trainers' sessions, and even then it stays inside the holder's
+    // tenant (session_manager::can_user_run()).
+    if ($oldversion < 2026092500) {
+        require_once(__DIR__ . '/upgradelib.php');
+        local_sentientia_live_revoke_manage_all();
+        upgrade_plugin_savepoint(true, 2026092500, 'local', 'sentientia_live');
+    }
+
     return true;
 }

@@ -16,9 +16,14 @@ $plugin->component = 'local_sentientia_challenge';
 // tables are empty on local + production. MATURITY_BETA was aspirational.
 // Promote back to BETA once the renderer ships its real implementation
 // and the challenge tables hold real attempt data.
-$plugin->version   = 2026092500;  // :viewall has no default grant (+ revoke step); scoped callers with no tenant fail closed
+$plugin->version   = 2026092501;  // ADR-031: :manage edits/deletes only own-tenant challenges; view/get/join/dropdown tenant-bounded; tenantless create refused
+// 2026092500: :viewall has no default grant (+ revoke step); scoped callers with no tenant fail closed
 // 2026052801 - D4 maturity stamp
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '1.1.5-alpha'; // cross-tenant leaderboard closed
+$plugin->release   = '1.1.6-alpha'; // ADR-031 cross-tenant writes + by-id reads closed
+// 1.1.5-alpha: cross-tenant leaderboard closed
 // 1.1.4-alpha: D4 maturity-stamp honesty
+$plugin->dependencies = [
+    'local_sentientia_platform' => 2026092500,  // tenant::is_cross_tenant() (ADR-031)
+];

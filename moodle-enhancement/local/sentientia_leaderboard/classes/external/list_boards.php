@@ -46,18 +46,16 @@ class list_boards extends external_api {
             }
         }
 
-        $can_view_all = has_capability(
-            'local/sentientia_leaderboard:viewall', $context);
-        $viewer_root = \local_sentientia_platform\tenant::root_for_current_user();
-
         $filters = [];
         if ($type !== '' && in_array($type,
                 \local_sentientia_leaderboard\board_manager::VALID_TYPES, true)) {
             $filters['type'] = $type;
         }
 
-        $rows = \local_sentientia_leaderboard\board_manager::list_visible(
-            $viewer_root, $can_view_all, $filters);
+        // ADR-031: the viewer's scope is decided by list_for_viewer()
+        // (cross-tenant: all; scoped: own tenant + customer-wide; no tenant:
+        // none), not by :viewall.
+        $rows = \local_sentientia_leaderboard\board_manager::list_for_viewer($filters);
 
         // Per-type ship gates: if a type's flag is OFF, hide boards of
         // that type from the listing.

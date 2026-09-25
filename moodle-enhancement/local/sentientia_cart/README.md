@@ -92,6 +92,7 @@ messages.
 - **B1** (CVSS 8.6): `cart_manager::get_order` + `refund_order` + `list_orders` + `daily_sums` all enforce tenant equality via `\local_sentientia_platform\tenant::require_access` / `::sql_filter`.
 - **B5** (CVSS 7.4): Invoice template addresses go through `html_writer::div(s($x), ['style' => 'white-space: pre-line'])` instead of the fragile `nl2br(s($x))+{{{ }}}` pattern.
 - **B9** (CVSS 7.1): `:manageprices` cap migrated `CONTEXT_SYSTEM → CONTEXT_COURSE`. Re-grant any custom-role assignments post-upgrade per `db/upgrade.php` comments.
+  **Correction (ADR-031, 2026-09-25):** the context move alone scoped nothing. A system-level grant (every tenant admin's manager-archetype role) is inherited by every course, so the tenant bound is now enforced in code: `set_course_price` refuses a course outside the caller's tenant (or with no `open_path`), and `set_price.php` lists only the caller's tenant's courses. `daily_sums_csv.php` and `invoice.php`, which skipped the tenant check, are scoped too.
 
 ## How to verify after install
 

@@ -207,3 +207,15 @@ array; the three other matches were initialised to `[]` immediately before.
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+## 2026-09-25 - ADR-031: leaderboard fails closed (1.0.5-beta, 2026092500)
+
+`leaderboard::get_global()` applied no tenant filter when the caller's tenant resolved to '' (the top
+users of every tenant, with names), trusted an explicit `$orgpath` as given, and `get_department()`
+fell back to it for a target without a tenant. Now: no tenant and not cross-tenant gives `[]`; an
+explicit `$orgpath` must be the caller's own tenant or under it; another tenant's department board is
+refused; `get_rank()` gives 0 instead of a site-wide rank for a non-cross-tenant user with no tenant.
+Site admins keep their previous results. Latent (no live caller of get_global/get_department), closed
+before one appears. `badge_manager`'s own-award checks still use site-wide scope on '' (not a
+disclosure; left as is). Depends on platform 2026092500. Tests: `tests/tenant_scope_test.php`
+(`@group tenant_isolation`). Both trees.

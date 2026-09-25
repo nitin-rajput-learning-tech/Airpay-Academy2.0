@@ -15,17 +15,36 @@ class leaderboard {
 
     /**
      * Get global leaderboard (top N users by total points).
+     *
+     * ADR-031 (2026-09-25): scoped to the caller's tenant, failing closed.
+     * A caller whose tenant did not resolve got '' here, which applied no
+     * filter at all - the top users of EVERY tenant, names included. Now:
+     *   - no $orgpath: the caller's own tenant; a caller with no tenant gets
+     *     [] unless they are cross-tenant (then the whole site, as before);
+     *   - an explicit $orgpath is honoured for a scoped caller only when it
+     *     is their own tenant or a node under it, never another tenant.
      */
     public static function get_global(int $limit = 10, string $orgpath = ''): array {
         global $DB, $USER;
 
-        // Scope to user's tenant unless explicit orgpath given.
+        $crosstenant = \local_sentientia_platform\tenant::is_cross_tenant();
+        $own = \local_sentientia_platform\tenant::root_for_current_user();
+        $orgpath = rtrim(trim($orgpath), '/');
+        if ($orgpath === '') {
+            $orgpath = $own > 0 ? '/' . $own : '';
+            if ($orgpath === '' && !$crosstenant) {
+                return [];  // fail closed
+            }
+        } else if (!$crosstenant) {
+            $ownpath = '/' . $own;
+            if ($own <= 0 || ($orgpath !== $ownpath && strpos($orgpath, $ownpath . '/') !== 0)) {
+                return [];
+            }
+        }
+
         $orgfilter = '';
         $params = [];
-        if (empty($orgpath)) {
-            $orgpath = \local_sentientia_org\tenant_manager::get_tenant_path();
-        }
-        if (!empty($orgpath)) {
+        if ($orgpath !== '') {
             // '/1' . '%' also matched '/177', putting another tenant's learners on
             // this tenant's leaderboard. Exact-or-descendant instead.
             [$orgsql, $params] = \local_sentientia_platform\tenant::path_descendant_filter(
@@ -52,14 +71,26 @@ class leaderboard {
         global $DB, $USER;
 
         // Get user's org path prefix (top-level org).
-        $user = $DB->get_record('user', ['id' => $userid], 'open_path');
+        $user = $DB->get_record('user', ['id' => $userid], 'id, open_path');
         if (!$user || empty($user->open_path)) {
-            return self::get_global($limit);
+            // ADR-031: this fell back to get_global(), which scoped on $USER
+            // rather than on $userid and could go unscoped. A user with no
+            // tenant has no department board.
+            return [];
         }
 
         // Extract top-level org path (e.g., /1 from /1/2/3).
-        $parts = explode('/', trim($user->open_path, '/'));
-        $orgpath = '/' . ($parts[0] ?? '');
+        $root = \local_sentientia_platform\tenant::root_for_user($user);
+        if ($root <= 0) {
+            return [];
+        }
+        // ADR-031: another user's board only for a caller in the same tenant.
+        if ((int) $userid !== (int) ($USER->id ?? 0)
+                && !\local_sentientia_platform\tenant::is_cross_tenant()
+                && \local_sentientia_platform\tenant::root_for_current_user() !== $root) {
+            return [];
+        }
+        $orgpath = '/' . $root;
         // '/1' . '%' also matched '/177': neighbour ranking spanned tenants.
         [$nboursql, $nbourargs] = \local_sentientia_platform\tenant::path_descendant_filter(
             $orgpath, 'u', 'open_path', 'nbour');
@@ -108,6 +139,12 @@ class leaderboard {
                 $orgfilter = "AND s.userid IN (SELECT id FROM {user} "
                     . "WHERE {$ranksql} AND deleted = 0)";
             }
+        }
+        // ADR-031: with no tenant the count above spans every tenant. A
+        // cross-tenant user (site admin) keeps that site-wide rank, as before;
+        // anyone else has no rank (0, as for a user without points).
+        if ($orgfilter === '' && !\local_sentientia_platform\tenant::is_cross_tenant($userid)) {
+            return 0;
         }
 
         $rank = $DB->count_records_sql(

@@ -17,9 +17,22 @@ $PAGE->set_title(get_string('heading_leaderboard', 'local_sentientia_challenge')
 $PAGE->set_heading(get_string('heading_leaderboard', 'local_sentientia_challenge'));
 
 // Active-challenge dropdown options.
-$active = $DB->get_records('local_sentientia_challenge_challenges',
-    ['status' => \local_sentientia_challenge\challenge_engine::STATUS_ACTIVE],
-    'name ASC', 'id, name, shortname');
+// ADR-031: only challenges the viewer can see - global and their own
+// tenant's, or all for a cross-tenant viewer, none for a viewer with no
+// tenant. This listed every tenant's active challenge names to anyone.
+$crosstenant = \local_sentientia_platform\tenant::is_cross_tenant();
+$viewertenant = \local_sentientia_challenge\challenge_engine::tenant_from_path($USER->open_path ?? '');
+$active = [];
+if ($crosstenant) {
+    $active = $DB->get_records('local_sentientia_challenge_challenges',
+        ['status' => \local_sentientia_challenge\challenge_engine::STATUS_ACTIVE],
+        'name ASC', 'id, name, shortname');
+} else if ($viewertenant > 0) {
+    $active = $DB->get_records_select('local_sentientia_challenge_challenges',
+        'status = :st AND (costcenterid = 0 OR costcenterid = :tn)',
+        ['st' => \local_sentientia_challenge\challenge_engine::STATUS_ACTIVE, 'tn' => $viewertenant],
+        'name ASC', 'id, name, shortname');
+}
 $challenges_options = [];
 foreach ($active as $c) {
     $challenges_options[] = ['value' => (int) $c->id,
@@ -33,7 +46,9 @@ $lb_columns = [
     ['key' => 'attemptscompleted', 'label' => get_string('lb_col_completed', 'local_sentientia_challenge'), 'sortable' => false],
 ];
 
-$can_view_all = has_capability('local/sentientia_challenge:viewall', $context);
+// The "all tenants" toggle: get_leaderboard honours it for a cross-tenant
+// caller only (ADR-031), so only offer it to one.
+$can_view_all = $crosstenant;
 
 $data = [
     'challenges_options' => $challenges_options,

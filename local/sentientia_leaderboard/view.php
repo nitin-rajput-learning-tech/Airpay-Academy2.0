@@ -34,14 +34,11 @@ if (class_exists('\\local_sentientia_platform\\feature_flags')) {
     }
 }
 
-// Tenant gate.
-$can_view_all = has_capability('local/sentientia_leaderboard:viewall', $context);
-if (!$can_view_all && (int) $board->tenantid > 0) {
-    $viewer_root = \local_sentientia_platform\tenant::root_for_current_user();
-    if ($viewer_root !== (int) $board->tenantid) {
-        throw new moodle_exception('error_outoftenant',
-            'local_sentientia_leaderboard');
-    }
+// Tenant gate (ADR-031): cross-tenant users, or the board's own tenant /
+// a customer-wide board; nothing for a viewer with no tenant.
+if (!\local_sentientia_leaderboard\board_manager::viewer_can_see($board)) {
+    throw new moodle_exception('error_outoftenant',
+        'local_sentientia_leaderboard');
 }
 
 $PAGE->set_url('/local/sentientia_leaderboard/view.php', ['id' => $boardid]);
@@ -50,8 +47,9 @@ $PAGE->set_pagelayout('standard');
 $PAGE->set_title(format_string($board->name));
 $PAGE->set_heading(format_string($board->name));
 
+// Opt-outs are honoured for everyone but a site admin (ADR-031).
 $result = \local_sentientia_leaderboard\ranking_engine::read_top(
-    $boardid, 25, $can_view_all);
+    $boardid, 25, \local_sentientia_leaderboard\board_manager::viewer_bypasses_optout());
 $my_rank = \local_sentientia_leaderboard\ranking_engine::read_my_rank(
     $boardid, (int) $USER->id);
 

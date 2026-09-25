@@ -24,12 +24,17 @@ function xmldb_local_sentientia_cart_upgrade(int $oldversion): bool {
     // new context level. So out-of-the-box archetype roles continue
     // to work after upgrade.
     //
-    // **However**: any CUSTOM role that was granted `:manageprices` at
-    // CONTEXT_SYSTEM by hand will now silently no-op — the cap is
-    // checked at CONTEXT_COURSE going forward. Per re-audit finding N4,
-    // ops should verify custom-role assignments post-upgrade and re-grant
-    // at the relevant CONTEXT_COURSECAT (typically the tenant root
-    // category) or CONTEXT_COURSE.
+    // **Correction (ADR-031, 2026-09-25):** this used to say that a
+    // `:manageprices` grant at CONTEXT_SYSTEM "silently no-ops" once the cap
+    // is checked at CONTEXT_COURSE. It does not: a system-level grant is
+    // inherited by EVERY course context on the site, so a tenant admin (a
+    // manager-archetype role assigned at system context) could price any
+    // tenant's course. Moving the check to course context scoped nothing.
+    // The tenant bound is now enforced in code instead
+    // (cart_manager::require_course_in_tenant() in set_course_price, and
+    // tenant::path_filter() on set_price.php). Per re-audit finding N4, ops
+    // may still prefer to grant custom roles at the tenant root
+    // CONTEXT_COURSECAT rather than at system context.
     //
     // The "Set capability cleanup checklist" entry in
     // PHASE-8-DEPLOYMENT-RUNBOOK.md §0 enforces the manual step.

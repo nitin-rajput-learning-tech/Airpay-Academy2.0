@@ -25,14 +25,9 @@ $PAGE->set_heading('Course pricing');
 require_capability('local/sentientia_cart:manageprices', $ctx);
 
 // Load courses + current price for each (LEFT JOIN enrol_fee).
-$rows = $DB->get_records_sql(
-    "SELECT c.id, c.fullname, c.shortname,
-            e.cost AS price, e.currency, e.status AS fee_status
-       FROM {course} c
-  LEFT JOIN {enrol} e ON e.courseid = c.id AND e.enrol = 'fee'
-      WHERE c.id > 1
-      ORDER BY c.fullname ASC
-      LIMIT 200");
+// ADR-031: only the caller's tenant's courses. This listed every tenant's
+// courses and prices to any :manageprices holder (every tenant admin).
+$rows = \local_sentientia_cart\cart_manager::list_course_prices(200);
 
 $tablerows = [];
 foreach ($rows as $r) {

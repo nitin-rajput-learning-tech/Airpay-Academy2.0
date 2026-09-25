@@ -31,7 +31,7 @@ class list_challenges extends external_api {
                                     string $sort = 'timecreated', string $sortdir = 'desc',
                                     int $page = 0, int $perpage = 25,
                                     string $filters = '{}'): array {
-        global $USER;
+        global $DB, $USER;
         $params = self::validate_parameters(self::execute_parameters(),
             compact('search', 'status', 'sort', 'sortdir', 'page', 'perpage', 'filters'));
 
@@ -43,8 +43,11 @@ class list_challenges extends external_api {
             throw new \moodle_exception('err_filterstoolong', 'local_sentientia_challenge');
         }
 
-        // Tenant scoping: callers without :viewall see only their tenant + global.
-        $unscoped = is_siteadmin() || has_capability('local/sentientia_challenge:viewall', $context);
+        // Tenant scoping: everyone but a cross-tenant caller sees only their
+        // tenant + global. ADR-031: tenant::is_cross_tenant() alone decides
+        // that; :viewall (which existed only to unscope, and no longer has a
+        // default grant) no longer does.
+        $unscoped = \local_sentientia_platform\tenant::is_cross_tenant();
         $tenant = $unscoped ? 0 : challenge_engine::tenant_from_path($USER->open_path ?? '');
         // Fail closed (2026-09-25): list_challenges() reads tenant 0 as "every
         // tenant", so a scoped caller with no resolvable tenant saw them all.
@@ -59,6 +62,18 @@ class list_challenges extends external_api {
 
         $can_manage = has_capability('local/sentientia_challenge:manage', $context);
         $can_join   = has_capability('local/sentientia_challenge:participate', $context);
+        // ADR-031: Edit / Delete only on rows the caller may manage - their
+        // own tenant's, or any for a cross-tenant caller. A scoped manager
+        // used to get working Delete buttons on every GLOBAL challenge, which
+        // wiped other tenants' learners' attempts and points.
+        $manageable = [];
+        if ($can_manage && !empty($result['rows'])) {
+            $scoperows = $DB->get_records_list('local_sentientia_challenge_challenges', 'id',
+                array_column($result['rows'], 'id'), '', 'id, costcenterid');
+            foreach ($scoperows as $sr) {
+                $manageable[(int) $sr->id] = challenge_engine::user_can_manage($sr);
+            }
+        }
         $viewbase   = new \moodle_url('/local/sentientia_challenge/view.php');
         $lbbase     = new \moodle_url('/local/sentientia_challenge/leaderboard.php');
 
@@ -90,8 +105,8 @@ class list_challenges extends external_api {
                 . 'class="btn btn-sm btn-link p-1" '
                 . 'title="' . s(get_string('btn_leaderboard', 'local_sentientia_challenge')) . '">'
                 . '<i class="fa fa-trophy"></i></a>';
-            // Edit / delete (manager only).
-            if ($can_manage) {
+            // Edit / delete (manager only, and only where they may manage).
+            if ($can_manage && !empty($manageable[(int) $row['id']])) {
                 $actions[] = '<button type="button" data-action="edit-challenge" '
                     . 'data-challengeid="' . (int) $row['id'] . '" '
                     . 'class="btn btn-sm btn-link text-muted p-1" title="Edit">'

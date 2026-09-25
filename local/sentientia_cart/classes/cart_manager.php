@@ -428,9 +428,152 @@ class cart_manager {
                 throw new \moodle_exception('error_outoftenant', 'local_sentientia_cart');
             }
             // ── B1 fix: tenant-equality even when cap held ──────────────
-            \local_sentientia_platform\tenant::require_access(
-                (int) $cart->costcenterid, $viewerid);
+            self::require_order_tenant((int) $cart->costcenterid, $viewerid);
         }
         return $cart;
+    }
+
+    /**
+     * ADR-031: refuse unless an order / invoice / ledger row of tenant
+     * $costcenterid is in the viewer's tenant.
+     *
+     * :viewallorders and :refund say WHAT the viewer may do; this says WHERE.
+     * Only a cross-tenant viewer (site admin or :crosstenant holder) is
+     * unscoped. tenant::require_access() alone is not enough: it lets a viewer
+     * whose own tenant does not resolve (0) through on every tenant-0 row, i.e.
+     * every order placed by another tenantless user. A scoped viewer must have
+     * a real tenant, and it must be the row's.
+     *
+     * @param int $costcenterid the row's tenant root
+     * @param int|null $viewerid defaults to the current user
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_order_tenant(int $costcenterid, ?int $viewerid = null): void {
+        global $DB, $USER;
+        $viewerid = $viewerid ?? (int) $USER->id;
+        if (\local_sentientia_platform\tenant::is_cross_tenant($viewerid)) {
+            return;
+        }
+        $viewer = ($viewerid === (int) $USER->id) ? $USER : $DB->get_record('user', ['id' => $viewerid]);
+        $root = $viewer ? self::get_tenant_root($viewer) : 0;
+        if ($root <= 0 || $root !== $costcenterid) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_cart');
+        }
+    }
+
+    /**
+     * ADR-031: refuse unless $course is in the current user's tenant.
+     *
+     * For writes that name a course (pricing). A course-context capability
+     * check does not scope anything for a tenant admin: their manager-archetype
+     * role sits at system context and is inherited by every course on the site.
+     * A course with no open_path cannot be shown to be in the caller's tenant,
+     * so it is refused too (tenant::require_path_access() lets '' through).
+     *
+     * @param \stdClass $course a course record carrying open_path (may be absent on vanilla Moodle)
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_course_in_tenant(\stdClass $course): void {
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return;
+        }
+        $path = (string) ($course->open_path ?? '');
+        if ($path === '') {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_cart');
+        }
+        \local_sentientia_platform\tenant::require_path_access($path);
+    }
+
+    /**
+     * Courses the current user may price, with their current fee (set_price.php).
+     *
+     * Tenant-scoped (ADR-031): tenant::path_filter() is '1=1' for a
+     * cross-tenant caller, the caller's own tenant tree otherwise, and '1=0'
+     * for a caller with no tenant. Until 2026-09-25 this listed every
+     * tenant's courses and prices to any :manageprices holder.
+     *
+     * @param int $limit maximum rows
+     * @return \stdClass[] keyed by course id: id, fullname, shortname, price, currency, fee_status
+     */
+    public static function list_course_prices(int $limit = 200): array {
+        global $DB;
+        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('c');
+        return $DB->get_records_sql(
+            "SELECT c.id, c.fullname, c.shortname,
+                    e.cost AS price, e.currency, e.status AS fee_status
+               FROM {course} c
+          LEFT JOIN {enrol} e ON e.courseid = c.id AND e.enrol = 'fee'
+              WHERE c.id > 1
+                AND $tnsql
+           ORDER BY c.fullname ASC",
+            $tnargs, 0, $limit);
+    }
+
+    /**
+     * Daily payment / refund sums from the immutable ledger, tenant-scoped.
+     *
+     * Single source for the daily_sums web service and daily_sums_csv.php.
+     * The CSV used to run its own copy of this query without the tenant join,
+     * so the scoped page's Export button handed every tenant admin every
+     * tenant's totals (ADR-031 sweep, 2026-09-25).
+     *
+     * Ledger rows carry no tenant; the parent history row does. Cross-tenant
+     * viewers get every tenant, scoped viewers their own, and a viewer with no
+     * tenant nothing (tenant::sql_filter() fails closed).
+     *
+     * Bucketed in PHP rather than with DATE(FROM_UNIXTIME()) in SQL: that is
+     * MySQL-only (the tenant_isolation CI gate runs on PostgreSQL), and it
+     * cut days in the database session's timezone while the from/to bounds
+     * are cut in PHP's. Amounts are summed in minor units so two-decimal
+     * money does not pick up float drift. The old query was also keyed on
+     * `day`, which get_records_sql() collapses when one day has two
+     * gateways or currencies.
+     *
+     * @param int $fromts inclusive unix timestamp
+     * @param int $tots   inclusive unix timestamp
+     * @return \stdClass[] rows with day, gateway, currency, inflow, outflow, payments, refunds;
+     *                     day DESC, then gateway, then currency
+     */
+    public static function daily_sums(int $fromts, int $tots): array {
+        global $DB;
+        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::sql_filter('h');
+        $rs = $DB->get_recordset_sql(
+            "SELECT l.id, l.timecreated, l.gateway, l.currency, l.event_type, l.amount
+               FROM {local_sentientia_cart_ledger} l
+               JOIN {local_sentientia_cart_history} h ON h.id = l.historyid
+              WHERE l.timecreated BETWEEN :f AND :t
+                AND $tnsql",
+            array_merge(['f' => $fromts, 't' => $tots], $tnargs));
+        $buckets = [];
+        foreach ($rs as $l) {
+            $day = date('Y-m-d', (int) $l->timecreated);
+            $key = $day . "\0" . $l->gateway . "\0" . $l->currency;
+            if (!isset($buckets[$key])) {
+                $buckets[$key] = ['day' => $day, 'gateway' => (string) $l->gateway,
+                    'currency' => (string) $l->currency, 'in' => 0, 'out' => 0,
+                    'payments' => 0, 'refunds' => 0];
+            }
+            $minor = (int) round((float) $l->amount * 100);
+            if ($l->event_type === 'payment_received') {
+                $buckets[$key]['in'] += $minor;
+                $buckets[$key]['payments']++;
+            } else if ($l->event_type === 'refund_full' || $l->event_type === 'refund_partial') {
+                $buckets[$key]['out'] += $minor;
+                $buckets[$key]['refunds']++;
+            }
+        }
+        $rs->close();
+
+        usort($buckets, fn($a, $b) => [$b['day'], $a['gateway'], $a['currency']]
+            <=> [$a['day'], $b['gateway'], $b['currency']]);
+        return array_map(fn($b) => (object) [
+            'day'      => $b['day'],
+            'gateway'  => $b['gateway'],
+            'currency' => $b['currency'],
+            'inflow'   => $b['in'] / 100,
+            'outflow'  => $b['out'] / 100,
+            'payments' => $b['payments'],
+            'refunds'  => $b['refunds'],
+        ], $buckets);
     }
 }

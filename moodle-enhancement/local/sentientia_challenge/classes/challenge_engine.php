@@ -61,6 +61,93 @@ class challenge_engine {
     }
 
     /**
+     * The tenant a user belongs to (0 = none). open_path is a BizLMS column
+     * that vanilla Moodle and the PHPUnit DB lack, so it is read defensively.
+     */
+    public static function user_tenant(int $userid): int {
+        global $DB, $USER;
+        if ($userid === (int) ($USER->id ?? 0)) {
+            return self::tenant_from_path($USER->open_path ?? '');
+        }
+        if (!$DB->get_manager()->field_exists('user',
+                new \xmldb_field('open_path', XMLDB_TYPE_CHAR, '255'))) {
+            return 0;
+        }
+        return self::tenant_from_path((string) ($DB->get_field('user', 'open_path', ['id' => $userid]) ?: ''));
+    }
+
+    /**
+     * ADR-031: may this user see (and so join) this challenge?
+     *
+     * A cross-tenant user (site admin or :crosstenant holder) sees every
+     * challenge. Anyone else sees global (costcenterid 0) challenges and their
+     * own tenant's - the rule list_challenges() applies - and a user whose
+     * tenant does not resolve sees nothing. Until 2026-09-25 get_challenge,
+     * view.php and join() loaded any challenge by its sequential id.
+     *
+     * @param \stdClass $c challenge row (needs costcenterid)
+     * @param int|null $userid defaults to the current user
+     */
+    public static function user_can_see(\stdClass $c, ?int $userid = null): bool {
+        global $USER;
+        $userid = $userid ?? (int) $USER->id;
+        if (\local_sentientia_platform\tenant::is_cross_tenant($userid)) {
+            return true;
+        }
+        $tenant = self::user_tenant($userid);
+        if ($tenant <= 0) {
+            return false;
+        }
+        $cc = (int) $c->costcenterid;
+        return $cc === 0 || $cc === $tenant;
+    }
+
+    /**
+     * Throwing form of {@see user_can_see()}.
+     *
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_visible(\stdClass $c, ?int $userid = null): void {
+        if (!self::user_can_see($c, $userid)) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+    }
+
+    /**
+     * ADR-031: may this user edit or delete this challenge?
+     *
+     * :manage says WHAT (author challenges); this says WHERE. Tenant admins
+     * hold :manage through their manager-archetype role, and update / delete
+     * used to act on any id - delete also wipes that challenge's attempts and
+     * leaderboard rows. A scoped manager now manages only their own tenant's
+     * challenges. A global challenge (costcenterid 0) reaches every tenant's
+     * learners, so only a cross-tenant user manages it.
+     *
+     * @param \stdClass $c challenge row (needs costcenterid)
+     * @param int|null $userid defaults to the current user
+     */
+    public static function user_can_manage(\stdClass $c, ?int $userid = null): bool {
+        global $USER;
+        $userid = $userid ?? (int) $USER->id;
+        if (\local_sentientia_platform\tenant::is_cross_tenant($userid)) {
+            return true;
+        }
+        $tenant = self::user_tenant($userid);
+        return $tenant > 0 && (int) $c->costcenterid === $tenant;
+    }
+
+    /**
+     * Throwing form of {@see user_can_manage()}, for the current user.
+     *
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_manageable(\stdClass $c): void {
+        if (!self::user_can_manage($c)) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+    }
+
+    /**
      * Create a challenge. Returns its new ID.
      *
      * @throws \invalid_parameter_exception on schema/validation failures
@@ -74,6 +161,20 @@ class challenge_engine {
                 $DB->record_exists('local_sentientia_challenge_challenges',
                     ['shortname' => $data['shortname']])) {
             throw new \moodle_exception('err_shortname_taken', 'local_sentientia_challenge', '', $data['shortname']);
+        }
+
+        // ADR-031: resolve the challenge's tenant, then check it. A caller
+        // whose open_path did not resolve used to stamp costcenterid 0, which
+        // is GLOBAL: the challenge went live to every tenant's learners. Only
+        // a cross-tenant user may create a global challenge or one for
+        // another tenant; everyone else creates in their own tenant or not
+        // at all.
+        $own = self::tenant_from_path($USER->open_path ?? '');
+        $costcenterid = (array_key_exists('costcenterid', $data) && $data['costcenterid'] !== null)
+            ? (int) $data['costcenterid'] : $own;
+        if (!\local_sentientia_platform\tenant::is_cross_tenant()
+                && ($own <= 0 || $costcenterid !== $own)) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
         }
 
         $now = time();
@@ -90,8 +191,7 @@ class challenge_engine {
             'status'       => (int) ($data['status'] ?? self::STATUS_DRAFT),
             'startdate'    => !empty($data['startdate']) ? (int) $data['startdate'] : null,
             'enddate'      => !empty($data['enddate']) ? (int) $data['enddate'] : null,
-            'costcenterid' => (int) ($data['costcenterid']
-                                ?? self::tenant_from_path($USER->open_path ?? '')),
+            'costcenterid' => $costcenterid,
             'open_path'    => (string) ($USER->open_path ?? ''),
             'createdby'    => (int) $USER->id,
             'timecreated'  => $now,
@@ -107,6 +207,8 @@ class challenge_engine {
         global $DB;
         $existing = $DB->get_record('local_sentientia_challenge_challenges',
             ['id' => $id], '*', MUST_EXIST);
+        // ADR-031: :manage is not licence to edit another tenant's challenge.
+        self::require_manageable($existing);
 
         $merged = array_merge((array) $existing, $data);
         // courseids stays JSON-encoded if not in $data.
@@ -141,7 +243,11 @@ class challenge_engine {
     public static function delete_challenge(int $id): void {
         global $DB;
         $existing = $DB->get_record('local_sentientia_challenge_challenges',
-            ['id' => $id], 'id', MUST_EXIST);
+            ['id' => $id], 'id, costcenterid', MUST_EXIST);
+        // ADR-031: deleting also wipes the challenge's attempts and
+        // leaderboard rows, i.e. every participant's progress and points.
+        // A scoped manager may do that only to their own tenant's challenges.
+        self::require_manageable($existing);
 
         $tx = $DB->start_delegated_transaction();
         try {
@@ -168,6 +274,14 @@ class challenge_engine {
         global $DB;
         $challenge = $DB->get_record('local_sentientia_challenge_challenges',
             ['id' => $challengeid], '*', MUST_EXIST);
+
+        // ADR-031: the joiner must be able to see the challenge (global or
+        // their own tenant's). join() used to accept any id, so a learner could
+        // add attempts to another tenant's challenge. A cross-tenant actor
+        // (site admin) enrolling someone is not restricted.
+        if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
+            self::require_visible($challenge, $userid);
+        }
 
         if ((int) $challenge->status !== self::STATUS_ACTIVE) {
             throw new \moodle_exception('err_challenge_not_active', 'local_sentientia_challenge');

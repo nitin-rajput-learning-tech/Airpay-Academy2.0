@@ -37,7 +37,9 @@ class refund_order extends external_api {
         // ZEEA orders. Fetch the order's tenant and gate by it.
         $order = $DB->get_record('local_sentientia_cart_history',
             ['id' => (int) $params['historyid']], 'id, costcenterid', MUST_EXIST);
-        \local_sentientia_platform\tenant::require_access(
+        // ADR-031: a refunder whose own tenant does not resolve must not be
+        // matched against tenant-0 orders either (require_access let 0 === 0).
+        \local_sentientia_cart\cart_manager::require_order_tenant(
             (int) $order->costcenterid, (int) $USER->id);
 
         $ok = \local_sentientia_cart\cart_manager::refund(

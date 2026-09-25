@@ -70,15 +70,12 @@ if ($board->status !== \local_sentientia_leaderboard\board_manager::STATUS_ACTIV
     exit('board not active');
 }
 
-// Tenant access — site admin + :viewall pass; everyone else must be in
-// the board's tenant OR the board must be customer-wide (tenantid=0).
-$can_view_all = has_capability('local/sentientia_leaderboard:viewall', $context);
-if (!$can_view_all && (int) $board->tenantid > 0) {
-    $viewer_root = \local_sentientia_platform\tenant::root_for_current_user();
-    if ($viewer_root !== (int) $board->tenantid) {
-        http_response_code(403);
-        exit('out of tenant');
-    }
+// Tenant access (ADR-031) — cross-tenant users pass; everyone else must be
+// in the board's tenant OR the board must be customer-wide (tenantid=0), and
+// a viewer with no tenant gets nothing. :viewall no longer skips this.
+if (!\local_sentientia_leaderboard\board_manager::viewer_can_see($board)) {
+    http_response_code(403);
+    exit('out of tenant');
 }
 
 // ── SSE headers ──

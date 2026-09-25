@@ -26,6 +26,32 @@ class invoicer {
     private const HQ_STATE_CODE = '27';  // Maharashtra GSTN prefix
 
     /**
+     * May $viewerid open this invoice? Throws if not.
+     *
+     * The owner always may. Anyone else needs :viewallorders AND the invoice
+     * must be in their tenant (ADR-031). invoice.php used to let any
+     * :viewallorders holder - every tenant admin - read every tenant's
+     * invoices (billing name, email, address, GSTIN, line items) by counting
+     * up through the sequential ?id=.
+     *
+     * @param \stdClass $invoice a local_sentientia_cart_invoices row
+     * @param int|null $viewerid defaults to the current user
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_view_access(\stdClass $invoice, ?int $viewerid = null): void {
+        global $USER;
+        $viewerid = $viewerid ?? (int) $USER->id;
+        if ((int) $invoice->userid === $viewerid) {
+            return;
+        }
+        if (!is_siteadmin($viewerid) && !has_capability('local/sentientia_cart:viewallorders',
+                \context_system::instance(), $viewerid)) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_cart');
+        }
+        cart_manager::require_order_tenant((int) $invoice->costcenterid, $viewerid);
+    }
+
+    /**
      * Issue an invoice for a paid order. Idempotent — returns existing
      * invoice if already issued.
      */

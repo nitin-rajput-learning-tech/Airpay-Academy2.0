@@ -406,7 +406,9 @@ class ranking_engine {
      *
      * @param int  $boardid
      * @param int  $top_n     1..200
-     * @param bool $can_view_all If true, opt-outs are NOT filtered (HR view).
+     * @param bool $can_view_all If true, opt-outs are NOT filtered. Web
+     *                           surfaces pass board_manager::viewer_bypasses_optout()
+     *                           (site admins only, ADR-031) - never a capability.
      * @param int  $customerid  Defaults to 1 (Airpay).
      * @return array{rows: array, total: int, optout_total: int}
      */

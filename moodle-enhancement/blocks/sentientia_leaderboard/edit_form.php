@@ -21,14 +21,11 @@ class block_sentientia_leaderboard_edit_form extends block_edit_form {
         $mform->addElement('header', 'configheader',
             get_string('blocksettings', 'block'));
 
-        // Build the list of boards visible to the current user.
-        $context = \context_system::instance();
-        $can_view_all = has_capability(
-            'local/sentientia_leaderboard:viewall', $context);
-        $viewer_root = class_exists('\\local_sentientia_platform\\tenant')
-            ? \local_sentientia_platform\tenant::root_for_current_user() : 0;
-        $boards = \local_sentientia_leaderboard\board_manager::list_visible(
-            $viewer_root, $can_view_all);
+        // Build the list of boards visible to the current user. ADR-031:
+        // list_for_viewer() decides the scope, not :viewall - which every
+        // tenant admin held, so the picker offered (and let them pin) every
+        // tenant's boards.
+        $boards = \local_sentientia_leaderboard\board_manager::list_for_viewer();
 
         $options = [
             0 => get_string('block_choose',
