@@ -187,6 +187,16 @@ class edit_question extends \core_form\dynamic_form {
             }
         }
 
+        // 2026-09-25: an anonymous question that already has answers cannot
+        // be made named (evaluation_manager::update_question() refuses too).
+        $questionid = (int) ($data['questionid'] ?? 0);
+        if ($questionid > 0 && array_key_exists('anonymous', $data)
+                && (int) $data['anonymous'] !== 1
+                && evaluation_manager::question_anonymity_locked($questionid)) {
+            $errors['anonymous'] = get_string('error_question_anonymity_locked',
+                'local_sentientia_evaluation');
+        }
+
         return $errors;
     }
 

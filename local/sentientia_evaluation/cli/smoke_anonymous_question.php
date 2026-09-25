@@ -102,21 +102,69 @@ if ((string) $csv_row[6] !== '5') {
 }
 echo "CSV row hides identity but keeps answers ✓\n";
 
-// Now flip Q2 to NOT anonymous → identity should be revealed.
-evaluation_manager::update_question($q2, (object) ['anonymous' => 0]);
+// 2026-09-25: Q2 now has an answer given anonymously, so its anonymity is
+// locked. Flipping it off used to put a name on "My manager is great".
+try {
+    evaluation_manager::update_question($q2, (object) ['anonymous' => 0]);
+    fwrite(STDERR, "FAIL: un-anonymising an answered question must be refused.\n");
+    exit(6);
+} catch (moodle_exception $e) {
+    if ($e->errorcode !== 'error_question_anonymity_locked') {
+        fwrite(STDERR, "FAIL: wrong refusal '" . $e->errorcode . "'\n");
+        exit(6);
+    }
+}
 $questions = evaluation_manager::get_questions($evalid);
 $csv_row = evaluation_manager::response_to_csv_row($response, $questions, $eval);
-if (strpos($csv_row[1], '(question-anonymous)') !== false) {
-    fwrite(STDERR, "FAIL: row should show identity when no anon-q, got '"
+if ($csv_row[1] !== '(question-anonymous)') {
+    fwrite(STDERR, "FAIL: an answered anonymous question must stay anonymous, got '"
         . $csv_row[1] . "'\n");
-    exit(6);
+    exit(7);
 }
-echo "Identity revealed when no anonymous question ✓\n";
+echo "Answered anonymous question stays anonymous ✓\n";
+
+// A fully named evaluation still shows who answered.
+$namedid = evaluation_manager::create((object) [
+    'name' => 'Smoke named-q test',
+    'description' => '',
+    'kirkpatrick_level' => 1,
+    'trigger_event' => 'manual',
+    'days_after' => 0,
+    'anonymous' => 0,
+    'costcenterid' => 0,
+    'status' => evaluation_manager::STATUS_DRAFT,
+]);
+$nq = evaluation_manager::create_question((object) [
+    'evaluationid' => $namedid,
+    'questiontype' => 'rating',
+    'questiontext' => 'Was the training useful?',
+    'options' => '',
+    'required' => 1,
+    'anonymous' => 0,
+    'sortorder' => 1,
+]);
+$named_resp_id = $DB->insert_record('local_sentientia_evaluation_responses', (object) [
+    'evaluationid'  => $namedid,
+    'userid'        => $user->id,
+    'response_data' => json_encode([$nq => 4]),
+    'timesubmitted' => time(),
+]);
+$csv_row = evaluation_manager::response_to_csv_row(
+    $DB->get_record('local_sentientia_evaluation_responses', ['id' => $named_resp_id]),
+    evaluation_manager::get_questions($namedid), evaluation_manager::get($namedid));
+if (strpos($csv_row[1], 'anonymous') !== false) {
+    fwrite(STDERR, "FAIL: row should show identity when nothing is anonymous, got '"
+        . $csv_row[1] . "'\n");
+    exit(8);
+}
+echo "Identity shown when nothing is anonymous ✓\n";
 
 // Cleanup.
-$DB->delete_records('local_sentientia_evaluation_responses',
-    ['evaluationid' => $evalid]);
-evaluation_manager::delete($evalid);
+foreach ([$evalid, $namedid] as $cleanupid) {
+    $DB->delete_records('local_sentientia_evaluation_responses',
+        ['evaluationid' => $cleanupid]);
+    evaluation_manager::delete($cleanupid);
+}
 echo "Cleanup ✓\n";
 
 echo "\nALL OK ✓\n";

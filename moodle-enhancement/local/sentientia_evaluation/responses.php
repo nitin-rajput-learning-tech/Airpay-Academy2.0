@@ -41,16 +41,11 @@ $PAGE->navbar->add('Responses');
 $questions = \local_sentientia_evaluation\evaluation_manager::get_questions($evaluationid);
 
 // Build the filter array (date strings → unix ts).
-$filters = ['evaluationid' => $evaluationid];
-$has_filter = false;
-if (!empty($date_from)) {
-    $ts = strtotime($date_from);
-    if ($ts !== false) { $filters['date_from'] = $ts; $has_filter = true; }
-}
-if (!empty($date_to)) {
-    $ts = strtotime($date_to . ' 23:59:59');
-    if ($ts !== false) { $filters['date_to'] = $ts; $has_filter = true; }
-}
+// 2026-09-25: snapped to whole days - a time in date_from used to filter to
+// the minute, narrowing an anonymous answer down to its submission time.
+$days = \local_sentientia_evaluation\evaluation_manager::response_filter_days($date_from, $date_to);
+$filters = ['evaluationid' => $evaluationid] + $days;
+$has_filter = !empty($days);
 if ($courseid    > 0) { $filters['courseid']    = $courseid;    $has_filter = true; }
 if ($programid   > 0) { $filters['programid']   = $programid;   $has_filter = true; }
 if ($classroomid > 0) { $filters['classroomid'] = $classroomid; $has_filter = true; }

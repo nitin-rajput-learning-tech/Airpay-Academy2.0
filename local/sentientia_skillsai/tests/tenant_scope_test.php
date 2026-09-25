@@ -16,6 +16,10 @@ defined('MOODLE_INTERNAL') || die();
  * "every tenant", and which matched the costcenterid-0 bucket of every other
  * no-tenant owner's jobs. These tests pin the fix.
  *
+ * 2026-09-25 fix-forward: tagging a job with a course is a write, so a
+ * legacy course with no path (NULL or '') is taggable - and offered by the
+ * picker - only to a cross-tenant caller, as in sentientia_skills.
+ *
  * @package    local_sentientia_skillsai
  * @category   test
  * @copyright  2026 Airpay Payment Services
@@ -156,26 +160,72 @@ final class tenant_scope_test extends \advanced_testcase {
         $own = $this->course_at('/1/4');
         $foreign = $this->course_at('/177');
         $legacy = $this->course_at(null);
+        $legacyempty = $this->course_at('');
 
         $this->setUser($this->tenant_admin('/1'));
         $ids = array_map('intval', array_keys(taxonomy_manager::course_options()));
         $this->assertContains($own, $ids);
-        $this->assertContains($legacy, $ids, 'A legacy course with no open_path stays pickable.');
         $this->assertNotContains($foreign, $ids,
             'extract.php\'s course picker must not list other tenants\' courses.');
         $this->assertTrue(taxonomy_manager::course_in_scope($own));
         $this->assertFalse(taxonomy_manager::course_in_scope($foreign),
             'extract.php refuses a posted courseid that fails this: no job tagged with a /177 course.');
+        // 2026-09-25: tagging a job is a WRITE, so a legacy course with no
+        // path - NULL or '', the same thing - is refused to a scoped caller
+        // (the rule sentientia_skills' course mapping applies), and the
+        // picker does not offer what the submit would refuse. Until then a
+        // NULL-path course was taggable and a ''-path one was not.
+        foreach ([$legacy, $legacyempty] as $courseid) {
+            $this->assertNotContains($courseid, $ids,
+                'The picker must offer only courses the job may be tagged with.');
+            $this->assertFalse(taxonomy_manager::course_in_scope($courseid),
+                'A scoped caller must not tag a job with a legacy course that belongs to no tenant.');
+        }
         $this->assertFalse(taxonomy_manager::course_in_scope(SITEID));
         $this->assertFalse(taxonomy_manager::course_in_scope(0));
 
         $this->setUser($this->tenant_admin(''));
         $this->assertSame([], taxonomy_manager::course_options(), 'No tenant: no courses.');
         $this->assertFalse(taxonomy_manager::course_in_scope($own));
+        $this->assertFalse(taxonomy_manager::course_in_scope($legacy));
 
         $this->setAdminUser();
-        $this->assertContains($foreign, array_map('intval', array_keys(taxonomy_manager::course_options())));
-        $this->assertTrue(taxonomy_manager::course_in_scope($foreign));
+        $ids = array_map('intval', array_keys(taxonomy_manager::course_options()));
+        foreach ([$own, $foreign, $legacy, $legacyempty] as $courseid) {
+            $this->assertContains($courseid, $ids, 'A cross-tenant caller may tag any course.');
+            $this->assertTrue(taxonomy_manager::course_in_scope($courseid));
+        }
+    }
+
+    public function test_tagging_a_job_with_a_course_is_a_scoped_write(): void {
+        global $DB;
+        $own = $this->course_at('/1/4');
+        $foreign = $this->course_at('/177');
+        $legacy = $this->course_at(null);
+        $legacyempty = $this->course_at('');
+        $admin1 = $this->tenant_admin('/1');
+        $this->setUser($admin1);
+        $tag = fn(int $courseid) => taxonomy_manager::create_pending((int) $admin1->id, $courseid, 'Job',
+            'sop', 'KYC SOP source text', anthropic_client::DEFAULT_MODEL, prompt_builder::VERSION_V1);
+
+        foreach ([$foreign, $legacy, $legacyempty] as $courseid) {
+            try {
+                $tag($courseid);
+                $this->fail('create_pending() must refuse a course the caller may not tag.');
+            } catch (\moodle_exception $e) {
+                $this->assertSame('error_outoftenant', $e->errorcode);
+            }
+            $this->assertFalse($DB->record_exists(taxonomy_manager::JOB_TABLE, ['courseid' => $courseid]));
+        }
+        $this->assertSame($own, (int) $DB->get_field(taxonomy_manager::JOB_TABLE, 'courseid',
+            ['id' => $tag($own)]));
+        $this->assertSame(0, (int) $DB->get_field(taxonomy_manager::JOB_TABLE, 'courseid',
+            ['id' => $tag(0)]), 'An untagged job needs no course scope.');
+
+        $this->setAdminUser();
+        $jobid = taxonomy_manager::create_pending((int) get_admin()->id, $legacy, 'Job', 'sop',
+            'KYC SOP source text', anthropic_client::DEFAULT_MODEL, prompt_builder::VERSION_V1);
+        $this->assertSame($legacy, (int) $DB->get_field(taxonomy_manager::JOB_TABLE, 'courseid', ['id' => $jobid]));
     }
 
     public function test_tenant_root_agrees_with_the_platform_helper(): void {

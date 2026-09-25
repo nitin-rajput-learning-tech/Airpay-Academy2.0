@@ -66,18 +66,50 @@ class taxonomy_manager {
     }
 
     /**
+     * ADR-031: WHERE fragment for the courses the current user may TAG a job
+     * with, on alias $alias: their tenant path and its '/'-bounded
+     * descendants; '1=1' for a cross-tenant caller; null (nothing) for a
+     * caller with no tenant.
+     *
+     * Tagging is a WRITE, so a legacy course (open_path NULL or '' - every
+     * tenant's lists show it) is refused to a scoped caller, the same rule as
+     * sentientia_skills' course mapping (skills_manager::course_write_scope_sql()).
+     * Until 2026-09-25 this used tenant::path_filter(..., true), which let a
+     * scoped caller tag a NULL-path course but not a ''-path one.
+     *
+     * @param string $alias course table alias
+     * @return array{0: string, 1: array}|null
+     */
+    private static function course_tag_scope_sql(string $alias): ?array {
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === null) {
+            return null;
+        }
+        if ($scope === '') {
+            return ['1=1', []];
+        }
+        return \local_sentientia_platform\tenant::path_descendant_filter(
+            $scope, $alias, 'open_path', 'skaitag');
+    }
+
+    /**
      * ADR-031: courses the current user may tag an extraction job with, for
-     * extract.php's picker: their own tenant's visible courses (and legacy
-     * courses with no open_path), every visible course for a cross-tenant
-     * caller, none without a tenant (tenant::path_filter fails closed). The
-     * picker used to list up to 200 courses from every tenant.
+     * extract.php's picker: exactly what course_in_scope() accepts - their
+     * own tenant's visible courses, every visible course for a cross-tenant
+     * caller, none without a tenant - so the picker never offers a course the
+     * submit would refuse. The picker used to list up to 200 courses from
+     * every tenant.
      *
      * @param int $limit
      * @return \stdClass[] keyed by course id: id, fullname, shortname
      */
     public static function course_options(int $limit = 200): array {
         global $DB;
-        [$tsql, $targs] = \local_sentientia_platform\tenant::path_filter('c', 'open_path', true);
+        $scope = self::course_tag_scope_sql('c');
+        if ($scope === null) {
+            return [];
+        }
+        [$tsql, $targs] = $scope;
         return $DB->get_records_sql(
             "SELECT c.id, c.fullname, c.shortname
                FROM {course} c
@@ -88,9 +120,10 @@ class taxonomy_manager {
 
     /**
      * ADR-031: may the current user tag a job with this course? The same
-     * tenant scope as course_options(). extract.php refuses a posted courseid
-     * that fails this, so a job can no longer be tagged with another
-     * tenant's course.
+     * scope as course_options() ({@see self::course_tag_scope_sql()}).
+     * extract.php refuses a posted courseid that fails this, so a job can no
+     * longer be tagged with another tenant's course, nor - by a scoped
+     * caller - with a legacy course that belongs to no tenant.
      *
      * @param int $courseid
      * @return bool
@@ -100,7 +133,11 @@ class taxonomy_manager {
         if ($courseid <= 0 || $courseid === (int) SITEID) {
             return false;
         }
-        [$tsql, $targs] = \local_sentientia_platform\tenant::path_filter('c', 'open_path', true);
+        $scope = self::course_tag_scope_sql('c');
+        if ($scope === null) {
+            return false;
+        }
+        [$tsql, $targs] = $scope;
         return $DB->record_exists_sql(
             "SELECT 1 FROM {course} c WHERE c.id = :skaicourseid AND {$tsql}",
             ['skaicourseid' => $courseid] + $targs);
@@ -151,6 +188,12 @@ class taxonomy_manager {
         string $prompt_version = prompt_builder::VERSION_V1
     ): int {
         global $DB;
+
+        // ADR-031: tagging a job with a course is a write on that course -
+        // the same gate extract.php applies before calling this.
+        if ($courseid > 0 && !self::course_in_scope($courseid)) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
 
         $owner = $DB->get_record('user', ['id' => $ownerid], 'id, open_path', MUST_EXIST);
         $now = time();

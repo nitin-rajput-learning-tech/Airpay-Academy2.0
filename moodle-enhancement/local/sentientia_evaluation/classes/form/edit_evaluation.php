@@ -138,6 +138,16 @@ class edit_evaluation extends \core_form\dynamic_form {
                 'local_sentientia_evaluation');
         }
 
+        // 2026-09-25: once responses have come in under anonymity, it cannot
+        // be switched off (evaluation_manager::update() refuses it too).
+        $evaluationid = (int) ($data['evaluationid'] ?? 0);
+        if ($evaluationid > 0 && array_key_exists('anonymous', $data)
+                && (int) $data['anonymous'] !== 1
+                && evaluation_manager::anonymity_locked($evaluationid)) {
+            $errors['anonymous'] = get_string('error_anonymity_locked',
+                'local_sentientia_evaluation');
+        }
+
         return $errors;
     }
 
