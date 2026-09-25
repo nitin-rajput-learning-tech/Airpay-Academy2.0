@@ -14,6 +14,15 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class crud_test extends \advanced_testcase {
 
+    // Vanilla PHPUnit sites lack the BizLMS user/course columns this plugin
+    // queries (open_path etc.) - provision them per-test via the shared trait.
+    use \local_sentientia_org\test\bizlms_fixture;
+
+    protected function setUp(): void {
+        parent::setUp();
+        $this->ensure_bizlms_schema();
+    }
+
     private function seed_path(string $name = 'Test Path'): int {
         global $DB;
         if (!$DB->get_manager()->table_exists('local_sentientia_learningpath')) {

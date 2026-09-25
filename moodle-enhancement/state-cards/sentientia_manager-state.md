@@ -204,3 +204,20 @@ deleted excluded). Tests: the no-reports tenant admin allocates an in-tenant col
 refused a /177 user, a /177 course and a missing user; new `test_a_manager_with_reports_is_still_held_to_them`;
 the picker test asserts the no-reports list is /1-only. Tighten to "reports only" later if Nitin
 decides L&D admins should not allocate through the manager plugin.
+
+## 2026-09-25 - Path allocation message links to My courses
+
+Branch `claude/adr031-learning3-ff`, from the learningpath review.
+
+- `approval_manager::notify_assignee_of_typed_allocation()` linked an ITEM_PATH allocation to
+  `/local/sentientia_learningpath/view.php?id=N`. That page is the path admin surface (rosters with
+  PII), and ADR-031 revoked its `:view` from learners, so every assignee got "required capability". It
+  now links to `/local/sentientia_catalog/mycourses.php`. `create_path_allocation()` enrols the learner
+  into the path's courses, and that page lists them.
+- No version bump (already 2026092501, no upgrade step). Test:
+  `tenant_scope_test::test_a_path_allocation_links_the_learner_to_their_courses_not_the_admin_page`.
+  Written, not run. Both trees.
+- **Still open (pre-existing, not ADR-031).** ITEM_CLASSROOM and ITEM_PROGRAM messages link to
+  `classroom/view.php` and `programs/view.php`. Their `:view` defaults only to the manager and
+  editingteacher archetypes, so a plain learner cannot open those links either. Deciding what learners
+  should see is a product call.

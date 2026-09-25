@@ -168,3 +168,29 @@ The wave-1 review found three gaps on classrooms that ARE the caller's. A roster
 - **One such learner blocked the whole attendance Save.** `bulk_mark_attendance` now skips any mark for a learner outside the caller's tenant and still saves the in-tenant marks. It no longer refuses the batch. The return gains `skipped`, and the message says how many were not marked (new string `attendance_skipped_outoftenant`, en + hi). The grid no longer renders those rows, so a normal save skips none. The single-mark `mark_session_attendance` still refuses them. New helper: `session_manager::users_in_scope()`; `require_users_in_scope()` is built on it, with the same semantics.
 - **A tenant admin could not remove such a learner from their own classroom** (wave-1 deviation 7). `unenrol_classroom_user` now calls `session_manager::require_unenrol_target()`. That check passes for anyone already on the (in-tenant) roster, and otherwise keeps the `require_same_tenant_user()` refusal. UAT note: the Users tab no longer shows those learners to a tenant admin, so today the removal is reachable only through the web service. A site admin still sees and removes them from the UI.
 - No version bump (already 2026092500 from wave 1; no upgrade step). The JS is unchanged (it reads only `message`). Tests: `tests/tenant_scope_test.php` adds three tests, for the save, the roster reads and the legacy unenrol. Written, not run. Both trees.
+
+## 2026-09-25 - Locations schema: fresh install and upgraded site now match
+
+Branch `claude/adr031-learning3-ff`. This closes the "Still open" item above about
+`local_sentientia_locations` and the `locationid` columns.
+
+- **The divergence.** Step 2026051160 was the only thing that created `local_sentientia_locations`
+  and `locationid` on `local_sentientia_classroom` / `_sessions`. install.xml never declared them, so
+  a site installed fresh after that step (PHPUnit init, UAT if it was installed fresh on 5.2, any new
+  customer) had none of them. An upgraded site had all of them. The same step passed the decimals as a
+  10th argument (`'equipment', null, '6'`) to `xmldb_table::add_field()`, which takes 8, so latitude
+  and longitude were created NUMBER(10,0).
+- **The fix.** install.xml now declares the table (latitude / longitude NUMBER(10,6)) and `locationid`
+  (int 10, nullable) on both classroom tables. Step 2026051160 passes `'10, 6'`. New step
+  **2026092501** calls `db/upgradelib.php` `local_sentientia_classroom_ensure_location_schema()`.
+  It creates the table where it is missing, adds `locationid` where missing, and widens latitude /
+  longitude where their scale is below 6. Nothing is dropped and no row is touched. No code reads or
+  writes these yet.
+- **Why keep rather than drop** (the verifier's smaller option). ENTERPRISE-GRADE-PLAN.md A.5 plans
+  this table: a session-form dropdown, a Leaflet map and capacity validation. Dropping it would be a
+  product decision and a DROP on live. Keeping it is additive.
+- 1.10.5 / 2026092501. Tests: new `tests/location_schema_test.php` (`@group tenant_isolation`). It
+  covers fresh-install parity, a "fresh before the fix" site (table and columns dropped, then
+  recreated), and a replay of `xmldb_local_sentientia_classroom_upgrade(2026092500)` on NUMBER(10,0)
+  columns, with a coordinate round trip. The tests run DDL, and `tearDown` restores the table and
+  columns independently of the helper. Written, not run. Both trees.
