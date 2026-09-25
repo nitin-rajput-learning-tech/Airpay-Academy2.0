@@ -179,7 +179,17 @@ class feature_flags_test extends \advanced_testcase {
         $this->assertTrue($for_global['ai.assistant.enabled']['resolved']);
         // Tenant 1 view: OFF (override active).
         $this->assertFalse($for_tenant_1['ai.assistant.enabled']['resolved']);
-        $this->assertTrue($for_tenant_1['ai.assistant.enabled']['has_tenant_override']);
+        // The row set() wrote is (customer 0, tenant 1): a legacy tenant
+        // override, resolution step 3. Session 2 / ADR-002 split the
+        // all() summary: that row is reported as has_legacy_tenant_override,
+        // and has_tenant_override now means the customer-scoped
+        // (customer C, tenant T) row of step 1, which needs a customer id.
+        // The Switchboard badges and tri-state read the keys this way.
+        // This assertion was not updated with that change (2026-09-25).
+        $this->assertTrue($for_tenant_1['ai.assistant.enabled']['has_legacy_tenant_override']);
+        $this->assertFalse($for_tenant_1['ai.assistant.enabled']['has_tenant_override']);
+        // The global view must not report tenant 1's override.
+        $this->assertFalse($for_global['ai.assistant.enabled']['has_legacy_tenant_override']);
     }
 
     public function test_recent_audit_filters_by_key_prefix(): void {

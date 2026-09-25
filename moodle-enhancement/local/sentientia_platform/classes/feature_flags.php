@@ -40,7 +40,9 @@ defined('MOODLE_INTERNAL') || die();
  * -----------------------
  * Every existing override row gets customer_id=0 via the Session 2
  * migration's column default. They continue to match at step (3) or (4)
- * exactly as before. All Phase A0 PHPUnit tests pass unchanged.
+ * exactly as before. Resolution is unchanged. The all() summary is not:
+ * a legacy (customer 0, tenant T) row is reported as
+ * has_legacy_tenant_override, not has_tenant_override (see all()).
  *
  * Registry discovery
  * -------------------
@@ -197,6 +199,16 @@ class feature_flags {
     /**
      * Get the merged registry + current resolved values for every
      * known flag. Used by the Switchboard to render the toggle list.
+     *
+     * Override keys, one per resolution step:
+     *   has_tenant_override        (customer C, tenant T) row, step 1.
+     *                              Only when both ids are > 0.
+     *   has_customer_override      (customer C, tenant 0) row, step 2.
+     *   has_legacy_tenant_override (customer 0, tenant T) row, step 3.
+     *                              A set($key, $tenant, ...) call without a
+     *                              customer id writes this row. Phase A0
+     *                              reported it as has_tenant_override.
+     *   has_global_override        (customer 0, tenant 0) row, step 4.
      *
      * @param int $tenant_id   View under this tenant (0 = customer-wide view)
      * @param int $customer_id View under this customer (0 = global view).

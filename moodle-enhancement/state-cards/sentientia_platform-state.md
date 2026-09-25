@@ -229,3 +229,52 @@ run yet.
 Still open (outside this change): `db/install.xml` differs between the trees. The top-level
 `local/` copy declares the five tables and the moodle-enhancement copy does not. This is baselined
 drift. `db/install.php`'s docblock describes only the moodle-enhancement version.
+
+## 2026-09-25 - Two pre-existing PHPUnit failures: one code defect, one stale test
+
+The 2026-09-24 full run had two failures in this plugin. Neither test file had changed. The
+2026-06-08 rename audit (`docs/audits/PHPUNIT-RENAME-VERIFICATION-2026-06-08.md`, F2 and F3) put
+them down to "case assertion drift" and "needs BizLMS tenant data". The second explanation was
+wrong: nothing in that test depends on BizLMS data.
+
+**`backup_filename_test::test_configured_template_is_used_when_no_override`: the code was wrong.**
+`resolve()` sanitised the token values but not the template's own literal text. The template is an
+admin setting (`PARAM_TEXT`), so its text went into the filename as typed. `{type}-AUDIT-{id}` gave
+`course-AUDIT-99.mbz`. A typo'd `{notatoken}` kept its braces. The P0 #11 spec says the braces are
+stripped, leaving `notatoken`. `{type} AUDIT: {id} *?"<>|` gave `course AUDIT: 99 *?"<>|.mbz`,
+which is not a legal filename on Windows. A template of `***` gave `***.mbz` and never reached the
+`sentientia-export-<time>` fallback. This broke the documented contract: `@return` promises
+"Sanitised filename", and core's own `get_default_backup_filename()` lowercases every part. Fix:
+`resolve()` now passes the whole assembled stem through `sanitise_token()`. Path separators become
+dashes first. The stem is always lowercase `[a-z0-9-]`. Token values were already in that
+character set, so the fix does not change them. No production code calls `resolve()` today; only
+`settings.php` uses `token_help()`. So no filename that was already generated changes. The failing
+assertion was not changed. `test_unrecognised_tokens_are_left_as_literal` had been passing with
+the braces still in the name. It now pins `export-notatoken-11.mbz` and asserts there are no braces.
+The new test `test_template_literal_text_is_sanitised` covers capitals, spaces and the characters
+`: * ? " < > |`.
+
+**`feature_flags_test::test_all_reflects_tenant_override_in_resolved`: the test was stale.**
+`set($key, 1, false)` writes a (customer 0, tenant 1) row, which is resolution step 3. Session 2
+(ADR-002, `41f9f113b`) split the `all()` summary on purpose. `has_legacy_tenant_override` reports
+that row. `has_tenant_override` now means the customer-scoped (customer C, tenant T) row of step 1,
+and is true only when both ids are above 0. The Switchboard, which is the only consumer, reads the
+keys this way: see the tri-state, the inherits-from logic and the "legacy tenant override" badge in
+`templates/switchboard.mustache`. Changing the code to match the old test would put the
+"tenant-within-customer" badge on legacy rows. Under the customer gate it would also show a
+customer-wide value as if the tenant had set it. The Phase A0 assertion was never updated, and
+the class docblock said "All Phase A0 PHPUnit tests pass unchanged". The test now asserts
+`has_legacy_tenant_override` true and `has_tenant_override` false for tenant 1, and
+`has_legacy_tenant_override` false for the global view. The `resolved` assertions are unchanged.
+The `all()` docblock now maps each `has_*` key to its resolution step. The false "pass unchanged"
+claim has been corrected.
+
+Verified without PHPUnit, because the shared test DB is being rebuilt. Two stub harnesses in the
+session scratchpad ran the real classes. The first used core's `PARAM_FILE` cleaner, copied
+verbatim. The second used an in-memory `$DB`. Both reproduced the reported failures exactly
+(`course-AUDIT-99.mbz`, and false at the `has_tenant_override` line). In both trees, the fixed code
+passes every `resolve()` assertion in `backup_filename_test` and every assertion in the rewritten
+feature-flags test. The PHPUnit suite itself has NOT been run. Class comments, class logic and tests only. No lang or schema change, and no version bump.
+
+Still open: `resolve()` trims the caller's `extension` of dots but does not sanitise it. Today every
+caller is code, not admin input, so this was left alone.

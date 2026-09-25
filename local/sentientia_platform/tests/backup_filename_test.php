@@ -158,5 +158,24 @@ class backup_filename_test extends \advanced_testcase {
         // Curly braces get stripped by sanitise — survives as "notatoken".
         $this->assertStringContainsString('notatoken', $name);
         $this->assertStringContainsString('11', $name);
+        // 2026-09-25: this used to pass with the braces still in the name
+        // ('export-{notatoken}-11.mbz') because only token values were
+        // sanitised. Pin the exact result so the literal is provably clean.
+        $this->assertStringNotContainsString('{', $name);
+        $this->assertStringNotContainsString('}', $name);
+        $this->assertSame('export-notatoken-11.mbz', $name);
+    }
+
+    public function test_template_literal_text_is_sanitised(): void {
+        // The template is an admin setting (PARAM_TEXT). Its literal text
+        // must get the same treatment as token values: capitals lowered,
+        // spaces to dashes, and characters that are illegal in Windows
+        // filenames or special to shells (: * ? " < > |) removed.
+        $name = backup_filename::resolve([
+            'template' => '{type} AUDIT: {id} *?"<>|',
+            'type'     => 'course',
+            'id'       => 99,
+        ]);
+        $this->assertSame('course-audit-99.mbz', $name);
     }
 }
