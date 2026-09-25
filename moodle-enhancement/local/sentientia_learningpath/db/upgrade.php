@@ -215,5 +215,28 @@ function xmldb_local_sentientia_learningpath_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026092501, 'local', 'sentientia_learningpath');
     }
 
+    if ($oldversion < 2026092502) {
+        // ADR-031 follow-up (2026-09-25 review): step 2026092500 revoked :view
+        // only from roles whose archetype is 'student'. A learner role cloned
+        // from Student without its archetype, set to archetype None later, or
+        // the BizLMS 'employee' role created without one, kept :view and with
+        // it the path rosters (names, emails, employee ids) and the CSV export.
+        // Revoke it from every learner role (archetype 'student', or shortname
+        // 'student' / 'employee'). Every other holder keeps it on purpose and
+        // is printed here so an admin can review it. See db/upgradelib.php.
+        require_once(__DIR__ . '/upgradelib.php');
+        $result = local_sentientia_learningpath_revoke_learner_view();
+        if ($result['revoked']) {
+            mtrace('local_sentientia_learningpath: :view revoked from learner role(s): '
+                . implode(', ', $result['revoked']));
+        }
+        if ($result['kept']) {
+            mtrace('local_sentientia_learningpath: :view still held at system context by: '
+                . implode(', ', $result['kept'])
+                . ' - review under Site administration > Users > Define roles.');
+        }
+        upgrade_plugin_savepoint(true, 2026092502, 'local', 'sentientia_learningpath');
+    }
+
     return true;
 }

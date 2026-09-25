@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/sentientia_classroom/db" VERSION="20260924"
+<XMLDB PATH="local/sentientia_classroom/db" VERSION="20260925"
        COMMENT="Airpay Classroom Training — replaces BizLMS local_classroom">
   <TABLES>
     <TABLE NAME="local_sentientia_classroom" COMMENT="Classroom/ILT sessions (fork of local_classroom)">
@@ -14,6 +14,8 @@
         <FIELD NAME="trainerid"       TYPE="int"  LENGTH="10" NOTNULL="false"
                COMMENT="FK to mdl_user.id — primary trainer"/>
         <FIELD NAME="location"        TYPE="char" LENGTH="254" NOTNULL="false"/>
+        <FIELD NAME="locationid"      TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="Phase 5 A.5: local_sentientia_locations.id. Added by step 2026051160; declared here 2026-09-25 (step 2026092501 adds it where missing)"/>
         <FIELD NAME="capacity"        TYPE="int"  LENGTH="6"  NOTNULL="true" DEFAULT="30"/>
         <FIELD NAME="status"          TYPE="int"  LENGTH="2"  NOTNULL="true" DEFAULT="1"
                COMMENT="1=active, 0=cancelled, 2=completed"/>
@@ -44,6 +46,8 @@
         <FIELD NAME="starttime"       TYPE="int"  LENGTH="10" NOTNULL="true"/>
         <FIELD NAME="endtime"         TYPE="int"  LENGTH="10" NOTNULL="true"/>
         <FIELD NAME="location"        TYPE="char" LENGTH="254" NOTNULL="false"/>
+        <FIELD NAME="locationid"      TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="Phase 5 A.5: local_sentientia_locations.id. Added by step 2026051160; declared here 2026-09-25 (step 2026092501 adds it where missing)"/>
         <FIELD NAME="trainerid"       TYPE="int"  LENGTH="10" NOTNULL="false"
                COMMENT="Override classroom trainer for this specific session"/>
         <FIELD NAME="notes"           TYPE="text" NOTNULL="false"/>
@@ -131,6 +135,34 @@
       <INDEXES>
         <INDEX NAME="idx_classroom_status" UNIQUE="false" FIELDS="classroomid, status"/>
         <INDEX NAME="idx_user_status"      UNIQUE="false" FIELDS="userid, status"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_locations" COMMENT="Phase 5 A.5 (ENTERPRISE-GRADE-PLAN.md): training venues for classroom sessions. Created by upgrade step 2026051160; declared here 2026-09-25 so a fresh install has it too, and step 2026092501 adds it where missing. Must stay identical to db/upgradelib.php.">
+      <FIELDS>
+        <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name"            TYPE="char" LENGTH="200" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="city"            TYPE="char" LENGTH="100" NOTNULL="false" DEFAULT="" SEQUENCE="false"/>
+        <FIELD NAME="address"         TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="capacity"        TYPE="int"  LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="equipment"       TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="latitude"        TYPE="number" LENGTH="10" DECIMALS="6" NOTNULL="false" SEQUENCE="false"
+               COMMENT="Decimal degrees, NUMBER(10,6). Step 2026051160 created it NUMBER(10,0) until 2026-09-25"/>
+        <FIELD NAME="longitude"       TYPE="number" LENGTH="10" DECIMALS="6" NOTNULL="false" SEQUENCE="false"
+               COMMENT="Decimal degrees, NUMBER(10,6). Step 2026051160 created it NUMBER(10,0) until 2026-09-25"/>
+        <FIELD NAME="costcenterid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
+               COMMENT="Tenant org ID"/>
+        <FIELD NAME="active"          TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_active"     UNIQUE="false" FIELDS="active"/>
+        <INDEX NAME="idx_costcenter" UNIQUE="false" FIELDS="costcenterid"/>
+        <INDEX NAME="idx_city"       UNIQUE="false" FIELDS="city"/>
       </INDEXES>
     </TABLE>
   </TABLES>

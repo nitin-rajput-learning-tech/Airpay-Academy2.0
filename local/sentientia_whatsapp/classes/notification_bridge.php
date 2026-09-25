@@ -377,7 +377,11 @@ class notification_bridge {
      *   {{firstname}}        user's first name
      *   {{path_name}}        format_string'd path name
      *   {{milestone_label}}  the milestone string, as passed in
-     *   {{path_url}}         absolute URL to /local/sentientia_learningpath/view.php?id=$pathid
+     *   {{path_url}}         absolute URL to the learner's My courses page
+     *                        (/local/sentientia_catalog/mycourses.php), which lists
+     *                        the path's courses. Not learningpath/view.php: that
+     *                        is the admin surface and learners hold no :view
+     *                        (ADR-031). The template key keeps its name.
      *
      * @param int $userid
      * @param int $pathid
@@ -414,8 +418,10 @@ class notification_bridge {
             return 'throttled';
         }
 
-        $path_url = (new \moodle_url('/local/sentientia_learningpath/view.php',
-            ['id' => $pathid]))->out(false);
+        // The learner's own course list, not learningpath/view.php: that page
+        // is the admin surface (rosters with PII) and ADR-031 took :view away
+        // from learners, so the old link refused every recipient.
+        $path_url = (new \moodle_url('/local/sentientia_catalog/mycourses.php'))->out(false);
 
         return self::dispatch(
             $user,

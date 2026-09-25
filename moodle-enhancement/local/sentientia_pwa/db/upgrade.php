@@ -83,27 +83,18 @@ function xmldb_local_sentientia_pwa_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026052103, 'local', 'sentientia_pwa');
     }
 
-    // ── 2026052105 — Phase B.3.c: register retention scheduled task ──
-    // db/tasks.php declares push_log_retention; this savepoint triggers
-    // Moodle to re-read tasks.php and create the row in
-    // mdl_task_scheduled. No schema change otherwise.
-    if ($oldversion < 2026052105) {
-        upgrade_plugin_savepoint(true, 2026052105, 'local', 'sentientia_pwa');
-    }
-
-    // ── 2026052106 — Phase B.3.d: iOS install hint (no schema change) ──
-    // Adds amd/build/ios_install_hint.min.js + lang strings. No DB change.
-    // Bump exists to force Moodle to re-run plugin install hooks (which
-    // re-read db/tasks.php — the previous savepoint didn't pick up the
-    // task because the file landed after that upgrade ran).
-    if ($oldversion < 2026052106) {
-        upgrade_plugin_savepoint(true, 2026052106, 'local', 'sentientia_pwa');
-    }
-
     // ── 2026052104 — Phase B.3.c: push delivery log table ──
     // local_sentientia_push_log — one row per push delivery attempt.
     // Written by push_sender::deliver_one(). Daily retention cron purges
     // rows older than retention_days (admin setting, default 90).
+    //
+    // Steps must run in ascending version order. This one used to sit after
+    // 2026052105 and 2026052106, so a site at 2026052103 or older ran those
+    // two savepoints first and then hit upgrade_plugin_savepoint(2026052104)
+    // with the stored version already at 2026052106: downgrade_exception,
+    // which aborted the whole CLI upgrade (2026-09-25 review). Moved here
+    // unchanged; a site past 2026052106 skips all three either way, so no
+    // version bump.
     if ($oldversion < 2026052104) {
         $table = new xmldb_table('local_sentientia_push_log');
 
@@ -134,6 +125,23 @@ function xmldb_local_sentientia_pwa_upgrade(int $oldversion): bool {
         }
 
         upgrade_plugin_savepoint(true, 2026052104, 'local', 'sentientia_pwa');
+    }
+
+    // ── 2026052105 — Phase B.3.c: register retention scheduled task ──
+    // db/tasks.php declares push_log_retention; this savepoint triggers
+    // Moodle to re-read tasks.php and create the row in
+    // mdl_task_scheduled. No schema change otherwise.
+    if ($oldversion < 2026052105) {
+        upgrade_plugin_savepoint(true, 2026052105, 'local', 'sentientia_pwa');
+    }
+
+    // ── 2026052106 — Phase B.3.d: iOS install hint (no schema change) ──
+    // Adds amd/build/ios_install_hint.min.js + lang strings. No DB change.
+    // Bump exists to force Moodle to re-run plugin install hooks (which
+    // re-read db/tasks.php — the previous savepoint didn't pick up the
+    // task because the file landed after that upgrade ran).
+    if ($oldversion < 2026052106) {
+        upgrade_plugin_savepoint(true, 2026052106, 'local', 'sentientia_pwa');
     }
 
     if ($oldversion < 2026092500) {

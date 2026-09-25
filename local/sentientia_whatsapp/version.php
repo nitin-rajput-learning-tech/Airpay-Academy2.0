@@ -17,10 +17,11 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_whatsapp';
-$plugin->version   = 2026092202;  // privacy provider now declares every user table it owns
+$plugin->version   = 2026092500;  // path milestone link goes to My courses, not the admin path page (ADR-031)
+// 2026092202: privacy provider now declares every user table it owns
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;   // mock-mode only — [CONFIRM] required before live
-$plugin->release   = '0.4.0-alpha';    // Stream F / Wave E2 P4 — content notifications
+$plugin->release   = '0.4.1-alpha';    // milestone link fix (0.4.0: Stream F / Wave E2 P4 — content notifications)
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026051401,  // feature_flags resolver
 ];
@@ -64,3 +65,7 @@ $plugin->dependencies = [
 //                  duplicate sends.
 //                + tests/notification_bridge_content_test.php
 //                + Hi lang strings appended.
+// 0.4.1-alpha  2026-09-25 — {{path_url}} in content_path_milestone now points
+//                at /local/sentientia_catalog/mycourses.php. It pointed at
+//                learningpath/view.php, the admin roster page, which ADR-031
+//                closed to learners, so every milestone link was refused.

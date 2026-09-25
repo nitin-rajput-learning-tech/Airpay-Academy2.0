@@ -269,3 +269,15 @@ change only: no version bump, no schema change, no lang change.
 
 Both trees were changed identically. PHPUnit was not run here because it is on hold while the
 shared test DB is rebuilt. The next suite run will confirm these fixes.
+
+## 2026-09-25 - Path milestone link goes to My courses
+
+Branch `claude/adr031-learning3-ff`, from the learningpath review.
+
+- `notification_bridge::send_path_milestone()` rendered `{{path_url}}` as
+  `/local/sentientia_learningpath/view.php?id=N`. That is the path admin page, which ADR-031 closed to
+  learners, so every milestone link was refused. It is now `/local/sentientia_catalog/mycourses.php`.
+  The template key, the seeded DLT body and the lang strings are unchanged ("Keep going: {path_url}").
+- Version 2026092202 -> 2026092500, release 0.4.1-alpha. Tests: `notification_bridge_content_test`
+  asserts the link, and a new `tests/path_milestone_link_test.php` (`@group tenant_isolation`) does too.
+  Written, not run. Both trees.

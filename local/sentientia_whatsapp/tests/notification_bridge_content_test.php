@@ -257,6 +257,12 @@ class notification_bridge_content_test extends \advanced_testcase {
         // {{path_name}} + {{milestone_label}} substitution.
         $this->assertStringContainsString('Onboarding Path', $log->failure_reason);
         $this->assertStringContainsString('50%', $log->failure_reason);
+        // {{path_url}} is the learner's course list, not the admin path page
+        // that ADR-031 closed to learners (2026-09-25).
+        $this->assertStringContainsString('/local/sentientia_catalog/mycourses.php',
+            $log->failure_reason);
+        $this->assertStringNotContainsString('sentientia_learningpath/view.php',
+            $log->failure_reason);
     }
 
     public function test_path_milestone_returns_flag_off_when_content_master_off(): void {

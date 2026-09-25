@@ -216,3 +216,37 @@ From the learningpath suite run against the older deployed copy (UAT serves this
   tools/tree-drift-baseline.txt. The `reorder_courses()` docblock says "set to its index in the
   array", which is true only when every id is a member.
 - Tests written, not run (shared PHPUnit DB).
+
+## 2026-09-25 - ADR-031 wave-1 fix-forward: learner :view revoke, dead links, top tree = ME copy
+
+Branch `claude/adr031-learning3-ff`, from the cross-cutting review of the merged ADR-031 range.
+
+- **The :view revoke missed learner roles without the student archetype.** Step 2026092500 revoked
+  `local/sentientia_learningpath:view` only from `role.archetype = 'student'`. A learner role cloned
+  from Student with the archetype option unticked, one set to archetype None later, or the BizLMS
+  `employee` role created without an archetype kept the path rosters (names, emails, employee ids) and
+  `exportcsv.php`. New step **2026092502** calls `db/upgradelib.php`
+  `local_sentientia_learningpath_revoke_learner_view()`. It removes the CAP_ALLOW row at system context
+  from every learner role, using the `course_manager::learner_role_ids()` rule (archetype `student`, or
+  shortname `student` / `employee`), repeated here so the upgrade does not depend on another plugin.
+  CAP_PREVENT / CAP_PROHIBIT rows are left alone. Manager-archetype and every other holder keep `:view`
+  on purpose, and the step `mtrace()`s them for review. The reviewer's "every holder that is not the
+  manager archetype" version was not taken: it would also strip deliberate grants to L&D or auditor
+  roles, which `:view` is still meant to allow.
+- **Learner notification links dead-ended.** The student grant stays revoked, because view.php is the
+  admin surface. The two links that sent learners to `view.php?id=N` now go to
+  `/local/sentientia_catalog/mycourses.php`, which lists the path's courses (path enrolment enrols the
+  learner into them). The links are `sentientia_manager` `approval_manager` (ITEM_PATH allocation
+  message) and `sentientia_whatsapp` `notification_bridge::send_path_milestone()` (`{{path_url}}`).
+  There is no learner-facing path page yet (open item, product call).
+- **The top-level tree is now the ME copy.** `local/sentientia_learningpath` was at 2026092500 with none
+  of the 2026061600 adaptive schema (columns, `local_sentientia_lp_adaptive_log`, events, tasks,
+  feature flag), so a site moving from it to the ME tree would have skipped that step for good. The whole
+  ME plugin was copied over it. Two tests went the other way first: the top copies of `crud_test.php` and
+  `enrolment_window_test.php` were the corrected ones (bizlms_fixture setUp; `assertSame((int) FORMAT_HTML,
+  ...)`), so ME took them. The 20 learningpath lines left `tools/tree-drift-baseline.txt` and the plugin
+  no longer drifts. Both trees are at 2026092502 / 1.8.3.
+- Tests: new `tests/learner_view_revoke_test.php` (`@group tenant_isolation`). It covers an archetype-less
+  `employee` role, student-archetype clones, manager and deliberate grants kept and reported, prohibit
+  left alone, idempotence, and a replay of `xmldb_local_sentientia_learningpath_upgrade(2026092501)`.
+  Written, not run (shared PHPUnit DB). Both trees.

@@ -122,6 +122,12 @@ function xmldb_local_sentientia_classroom_upgrade(int $oldversion): bool {
     // ─── 2026051160: Phase 5 A.5 — locations table (Airpay-owned). ─────
     // Replaces the dropped BizLMS local_location plugin. Locations are
     // a property of classroom sessions, not a top-level concept.
+    //
+    // latitude / longitude: until 2026-09-25 the decimals were passed as a
+    // 10th argument (`'equipment', null, '6'`) that add_field() does not take,
+    // so they were created NUMBER(10,0). The precision is now '10, 6', which
+    // is what install.xml declares; step 2026092501 widens the columns on the
+    // sites that already ran this step.
     if ($oldversion < 2026051160) {
         $table = new \xmldb_table('local_sentientia_locations');
         $table->add_field('id',          XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
@@ -130,10 +136,10 @@ function xmldb_local_sentientia_classroom_upgrade(int $oldversion): bool {
         $table->add_field('address',     XMLDB_TYPE_TEXT,    null,  null, null, null, null,  'city');
         $table->add_field('capacity',    XMLDB_TYPE_INTEGER, '10', null, null, null, '0',    'address');
         $table->add_field('equipment',   XMLDB_TYPE_TEXT,    null,  null, null, null, null,  'capacity');
-        $table->add_field('latitude',    XMLDB_TYPE_NUMBER,  '10', null, null, null, null,
-            'equipment', null, '6');
-        $table->add_field('longitude',   XMLDB_TYPE_NUMBER,  '10', null, null, null, null,
-            'latitude',  null, '6');
+        $table->add_field('latitude',    XMLDB_TYPE_NUMBER,  '10, 6', null, null, null, null,
+            'equipment');
+        $table->add_field('longitude',   XMLDB_TYPE_NUMBER,  '10, 6', null, null, null, null,
+            'latitude');
         $table->add_field('costcenterid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0',
             'longitude');
         $table->add_field('active',      XMLDB_TYPE_INTEGER, '1',  null, XMLDB_NOTNULL, null, '1');
@@ -246,6 +252,20 @@ function xmldb_local_sentientia_classroom_upgrade(int $oldversion): bool {
         }
 
         upgrade_plugin_savepoint(true, 2026092400, 'local', 'sentientia_classroom');
+    }
+
+    // 2026092501 — the locations schema only ever came from step 2026051160,
+    // never from install.xml, so a site installed fresh after that step had no
+    // local_sentientia_locations table and no locationid columns, while an
+    // upgraded site had them with latitude / longitude at NUMBER(10,0).
+    // install.xml declares all of it from this version; this step brings both
+    // kinds of site to that schema. Nothing is dropped. See db/upgradelib.php.
+    if ($oldversion < 2026092501) {
+        require_once(__DIR__ . '/upgradelib.php');
+        foreach (local_sentientia_classroom_ensure_location_schema($dbman) as $line) {
+            mtrace('local_sentientia_classroom: ' . $line);
+        }
+        upgrade_plugin_savepoint(true, 2026092501, 'local', 'sentientia_classroom');
     }
 
     return true;

@@ -165,3 +165,18 @@ tenant admins lose the push log. If a platform-operations role needs the push lo
 `:manage` to that role after the upgrade. The same holds for notification rule management, which
 also needs `local/sentientia_platform:crosstenant` to write. For the details, see
 `sentientia_notifications-state.md`.
+
+## 2026-09-25 - Upgrade steps back in ascending order
+
+Branch `claude/adr031-learning3-ff`.
+
+- The `$oldversion < 2026052104` step (push_log table) sat after 2026052105 and 2026052106. A site at
+  2026052103 or older ran those two savepoints first. It then hit `upgrade_plugin_savepoint(2026052104)`
+  with the stored version already at 2026052106, which throws `downgrade_exception` and aborts the whole
+  CLI upgrade. Every plugin after pwa stayed un-upgraded, including the ADR-031 capability revokes in the
+  same release. The block now sits before 2026052105. The step body is unchanged in both trees.
+- No version bump. A site past 2026052106 skips all three steps either way, and UAT (2026080401+) is
+  unaffected.
+- Tests: new `tests/upgrade_order_test.php` (`@group tenant_isolation`). It checks that the steps
+  are in ascending order with no duplicates, and replays `xmldb_local_sentientia_pwa_upgrade(2026052103)`
+  through to the last savepoint. Written, not run. Both trees.

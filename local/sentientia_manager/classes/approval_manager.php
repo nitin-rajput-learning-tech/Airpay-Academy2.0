@@ -834,8 +834,14 @@ class approval_manager {
                     '/local/sentientia_classroom/view.php', ['id' => $itemid]),
                 self::ITEM_PROGRAM   => new \moodle_url(
                     '/local/sentientia_programs/view.php', ['id' => $itemid]),
+                // Not /local/sentientia_learningpath/view.php: that is the
+                // admin surface (path rosters with PII, CSV export) and ADR-031
+                // took its :view away from learners, so the link refused every
+                // assignee. The path's courses are what the learner was
+                // enrolled into (create_path_allocation), and My courses lists
+                // them. There is no learner-facing path page yet.
                 self::ITEM_PATH      => new \moodle_url(
-                    '/local/sentientia_learningpath/view.php', ['id' => $itemid]),
+                    '/local/sentientia_catalog/mycourses.php'),
                 default              => new \moodle_url('/my/'),
             };
             $type_label = match ($item_type) {

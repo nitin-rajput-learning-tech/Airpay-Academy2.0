@@ -322,6 +322,42 @@ final class tenant_scope_test extends \advanced_testcase {
         $sink->close();
     }
 
+    public function test_a_path_allocation_links_the_learner_to_their_courses_not_the_admin_page(): void {
+        global $DB;
+        if (!$DB->get_manager()->table_exists('local_sentientia_learningpath')) {
+            $this->markTestSkipped('local_sentientia_learningpath is not installed.');
+        }
+        // 2026-09-25 review: ADR-031 took learningpath:view away from learners
+        // because learningpath/view.php lists path rosters with PII. The
+        // allocation message still linked there, so every assignee got
+        // "required capability". It now links to My courses.
+        $mgr = $this->user_at('/1/2');
+        $report = $this->report_of($mgr, '/1/2');
+        $now = time();
+        $pathid = (int) $DB->insert_record('local_sentientia_learningpath', (object) [
+            'name' => 'Onboarding', 'description' => '', 'descriptionformat' => 1,
+            'costcenterid' => 1, 'open_path' => '/1', 'status' => 1, 'visible' => 1,
+            'timecreated' => $now, 'timemodified' => $now,
+        ]);
+        $this->setUser($mgr);
+        $this->preventResetByRollback();
+        $sink = $this->redirectMessages();
+
+        approval_manager::create_path_allocation((int) $mgr->id, (int) $report->id, $pathid);
+
+        $messages = array_values(array_filter($sink->get_messages(),
+            fn($m) => (int) $m->useridto === (int) $report->id));
+        $sink->close();
+        $this->assertCount(1, $messages, 'The assignee is told about the allocation.');
+        $this->assertStringContainsString('/local/sentientia_catalog/mycourses.php',
+            (string) $messages[0]->contexturl);
+        $this->assertStringNotContainsString('sentientia_learningpath/view.php',
+            (string) $messages[0]->contexturl . (string) $messages[0]->fullmessagehtml);
+        // Why the old link was dead: a learner holds no :view on the admin page.
+        $this->assertFalse(has_capability('local/sentientia_learningpath:view',
+            \context_system::instance(), $report->id));
+    }
+
     public function test_a_manager_with_no_tenant_allocates_nothing(): void {
         global $DB;
         $course = $this->course_at('/1');
