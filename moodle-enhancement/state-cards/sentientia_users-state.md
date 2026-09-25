@@ -372,3 +372,20 @@ the side that was wrong; nothing a test proves was weakened.
   compatibility field for databases that carry the legacy BizLMS column. Left as is.
 - **ALREADY FIXED at d782a2d79 - `chip_filters_test`** passes `open_designation` (d58168132).
 - Tests written, not run (shared PHPUnit DB).
+
+### 2026-09-25 (later) - welcome email sent by email_to_user; white-label token restored (2.8.1, same version)
+
+- `welcome_mailer::send()` now calls `email_to_user()` (as core's `setnew_password_and_mail()` did)
+  instead of `message_send()`. The notification=1 fix above would have made it send, but
+  `message_send()` also writes every message to `{notifications}`, keeping the plaintext first-login
+  password in the database until messaging cleanup. `email_to_user()` sends the same email and stores
+  nothing. The `db/messages.php` provider stays declared (no preference or upgrade churn); users can no
+  longer switch this one email off in their message preferences, same as core's account email.
+- Restored the white-label `[support_email]` token and the "The [employee_organization] team" sign-off
+  in `DEFAULT_BODY` (9f292bc99, 2026-06-10), which the H1/H3 security commit 29d25542c silently
+  reverted. Customer-zero default stays academy@airpay.co.in (config `local_sentientia_users/support_email`).
+- Tests: `welcome_mailer_test` uses `redirectEmails()` with `$CFG->noemailever = false`, asserts no
+  `{notifications}` row, and a new `test_default_body_is_white_label`.
+- Operational: the "send welcome email" checkbox defaults to ticked on the create-user form, so from
+  this deploy a manually created user with a password gets a real email (it silently failed since
+  2026-05-16). UAT testers should use addresses they own.

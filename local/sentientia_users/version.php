@@ -72,7 +72,7 @@ $plugin->component = 'local_sentientia_users';
 // With notification=0, message_send() refused the local_sentientia_users
 // provider outright (only moodle/instantmessage may send a personal
 // message), so the welcome email had never been delivered.
-$plugin->version   = 2026092501;  // welcome email actually sends
+$plugin->version   = 2026092501;  // welcome email actually sends (email_to_user, white-label token restored)
 // 2026092500: ADR-031: target-tenant checks on every write.
 // 2026092401: N1 review: supervisor label + list fail-closed.
 // 2026092400: Profile reads are tenant-bounded (N1).

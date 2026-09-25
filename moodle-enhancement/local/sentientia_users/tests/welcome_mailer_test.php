@@ -15,7 +15,10 @@ defined('MOODLE_INTERNAL') || die();
  *   - send() uses configured default subject+body when set
  *   - send() uses tenant-specific override when configured for that tenant
  *   - send() falls back to DEFAULT_* constants when nothing configured
- *   - send() sends through message_send (caught via redirectMessages())
+ *   - send() sends by email_to_user (caught via redirectEmails()) and stores
+ *     nothing in {notifications}, so the plaintext password never lands in
+ *     the database
+ *   - the default body carries the white-label [support_email] token
  *   - send() returns false (not throw) on missing user
  *
  * @package    local_sentientia_users
@@ -24,6 +27,22 @@ defined('MOODLE_INTERNAL') || die();
  * @group tenant_isolation
  */
 final class welcome_mailer_test extends \advanced_testcase {
+
+    /**
+     * Capture outgoing email. Local and CI configs may set noemailever,
+     * which makes email_to_user() return before the PHPUnit sink; the test
+     * clears it (resetAfterTest restores $CFG).
+     */
+    private function email_sink(): \phpunit_phpmailer_sink {
+        global $CFG;
+        $CFG->noemailever = false;
+        return $this->redirectEmails();
+    }
+
+    /** The decoded text of a captured email (headers + all MIME parts). */
+    private function email_text(\stdClass $mail): string {
+        return quoted_printable_decode($mail->header . "\n" . $mail->body);
+    }
 
     public function test_substitute_tokens_case_insensitive(): void {
         $out = welcome_mailer::substitute_tokens(
@@ -54,18 +73,26 @@ final class welcome_mailer_test extends \advanced_testcase {
             'firstname' => 'Alice', 'lastname' => 'Anderson',
             'email' => 'alice_' . uniqid() . '@example.org',
         ]);
-        $sink = $this->redirectMessages();
+        global $DB;
+        $sink = $this->email_sink();
 
         $sent = welcome_mailer::send((int) $u->id, 'TempPass!23');
         $this->assertTrue($sent);
 
-        $msgs = $sink->get_messages();
-        $this->assertCount(1, $msgs);
-        $msg = $msgs[0];
-        $this->assertStringContainsString('Alice Anderson', $msg->fullmessage);
-        $this->assertStringContainsString('TempPass!23',   $msg->fullmessage);
-        $this->assertStringContainsString($u->username,     $msg->fullmessage);
-        $this->assertStringContainsString($u->email,        $msg->fullmessage);
+        $mails = $sink->get_messages();
+        $this->assertCount(1, $mails);
+        $text = $this->email_text($mails[0]);
+        $this->assertSame($u->email, $mails[0]->to);
+        $this->assertStringContainsString('Alice Anderson', $text);
+        $this->assertStringContainsString('TempPass!23',   $text);
+        $this->assertStringContainsString($u->username,     $text);
+        $this->assertStringContainsString($u->email,        $text);
+        // White-label: the support line comes from the token, whose
+        // customer-zero default is the Airpay Academy address.
+        $this->assertStringContainsString('Need help? Email academy@airpay.co.in.', $text);
+        $this->assertStringNotContainsString('[support_email]', $text);
+        // The plaintext password is never stored.
+        $this->assertSame(0, $DB->count_records('notifications', ['useridto' => $u->id]));
         $sink->close();
     }
 
@@ -81,18 +108,17 @@ final class welcome_mailer_test extends \advanced_testcase {
             'firstname' => 'Bob', 'lastname' => 'Brown',
             'username' => 'bob_' . uniqid(),
         ]);
-        $sink = $this->redirectMessages();
+        $sink = $this->email_sink();
 
         welcome_mailer::send((int) $u->id, 'SecretPw!1');
 
-        $msgs = $sink->get_messages();
-        $this->assertCount(1, $msgs);
+        $mails = $sink->get_messages();
+        $this->assertCount(1, $mails);
         $this->assertStringContainsString('Custom subject for Bob Brown',
-            $msgs[0]->subject);
-        $this->assertStringContainsString('User: ' . $u->username,
-            $msgs[0]->fullmessage);
-        $this->assertStringContainsString('Pass: SecretPw!1',
-            $msgs[0]->fullmessage);
+            $mails[0]->subject);
+        $text = $this->email_text($mails[0]);
+        $this->assertStringContainsString('User: ' . $u->username, $text);
+        $this->assertStringContainsString('Pass: SecretPw!1', $text);
         $sink->close();
     }
 
@@ -110,15 +136,30 @@ final class welcome_mailer_test extends \advanced_testcase {
         $u = $this->getDataGenerator()->create_user(['firstname' => 'Carol']);
         $DB->set_field('user', 'open_path', '/77', ['id' => $u->id]);
 
-        $sink = $this->redirectMessages();
+        $sink = $this->email_sink();
         welcome_mailer::send((int) $u->id, 'CarolPw!1');
 
-        $msgs = $sink->get_messages();
-        $this->assertSame(1, count($msgs));
+        $mails = $sink->get_messages();
+        $this->assertSame(1, count($mails));
         $this->assertStringContainsString('Public-tenant subject for Carol',
-            $msgs[0]->subject);
+            $mails[0]->subject);
         $this->assertStringContainsString('Public body — welcome Carol!',
-            $msgs[0]->fullmessage);
+            $this->email_text($mails[0]));
+        $sink->close();
+    }
+
+    public function test_default_body_is_white_label(): void {
+        $this->resetAfterTest();
+        set_config('support_email', 'help@customer-n.example', 'local_sentientia_users');
+        $u = $this->getDataGenerator()->create_user(['firstname' => 'Dev']);
+        $sink = $this->email_sink();
+        welcome_mailer::send((int) $u->id, 'DevPw!1');
+        $mails = $sink->get_messages();
+        $this->assertCount(1, $mails);
+        $text = $this->email_text($mails[0]);
+        $this->assertStringContainsString('Need help? Email help@customer-n.example.', $text);
+        $this->assertStringNotContainsString('academy@airpay.co.in', $text);
+        $this->assertStringNotContainsString('Airpay Academy account', welcome_mailer::DEFAULT_BODY);
         $sink->close();
     }
 

@@ -17,8 +17,10 @@ defined('MOODLE_INTERNAL') || die();
  *      id, with fallback to the default)
  *   3. Replaces tokens: [employee_name], [employee_email],
  *      [employee_username], [employee_password], [employee_organization]
- *   4. Sends via Moodle's message API so it honours users' message
- *      preferences + queues + delivery channels
+ *   4. Sends by email_to_user(), as core's setnew_password_and_mail()
+ *      did. Not message_send(): that stores every message in
+ *      {notifications}, which would keep the plaintext first-login
+ *      password in the database until messaging cleanup (2026-09-25).
  *
  * Token semantics — tokens are substituted CASE-INSENSITIVELY with the
  * actual user values; if a token has no value (empty / null), it falls
@@ -42,7 +44,7 @@ class welcome_mailer {
     public const DEFAULT_BODY = <<<TEMPLATE
 Hi [employee_name],
 
-Welcome to [employee_organization]. Your Airpay Academy account has been created.
+Welcome to [employee_organization]. Your account has been created.
 
 Username:  [employee_username]
 Email:     [employee_email]
@@ -50,9 +52,9 @@ Password:  [employee_password]
 
 Please log in at the link below and change your password on first use.
 
-Need help? Email academy@airpay.co.in.
+Need help? Email [support_email].
 
-— Airpay Academy team
+— The [employee_organization] team
 TEMPLATE;
 
     /**
@@ -64,8 +66,7 @@ TEMPLATE;
      * @return bool  True on send-attempt success; false on error (logged via debugging())
      */
     public static function send(int $userid, string $plain_password): bool {
-        global $DB, $CFG;
-        require_once($CFG->libdir . '/messagelib.php');
+        global $DB;
 
         try {
             $user = $DB->get_record('user',
@@ -80,37 +81,33 @@ TEMPLATE;
                 'employee_username'     => (string) $user->username,
                 'employee_password'     => $plain_password,
                 'employee_organization' => $org_name,
+                // White-label (D3, 2026-06-10; restored 2026-09-25 after
+                // 29d25542c reverted it): the support contact is config-backed
+                // and the customer-zero address stays the default.
+                'support_email'         => (string) (get_config('local_sentientia_users',
+                    'support_email') ?: 'academy@airpay.co.in'),
             ];
 
             [$subject_template, $body_template] = self::load_templates($tenantid);
             $subject = self::substitute_tokens($subject_template, $tokens);
             $body    = self::substitute_tokens($body_template, $tokens);
 
-            $msg = new \core\message\message();
-            $msg->component         = 'local_sentientia_users';
-            $msg->name              = 'welcome_email';
-            $msg->userfrom          = \core_user::get_noreply_user();
-            $msg->userto            = $user;
-            $msg->subject           = $subject;
-            $msg->fullmessage       = $body;
-            $msg->fullmessageformat = FORMAT_PLAIN;
-            // HTML version: nl2br + s() on the substituted plain body — the
+            // HTML version: nl2br + s() on the substituted plain body - the
             // template authors are admins, but defence-in-depth says don't
             // assume their HTML is safe. They get s()-escaped here; if they
             // want HTML, they should send a Wave-3 PR adding format_html mode.
-            $msg->fullmessagehtml   = nl2br(s($body));
-            $msg->smallmessage      = $subject;
-            // Must be 1. message_send() treats notification=0 as a personal
-            // message between two users and refuses every provider except
-            // moodle/instantmessage (lib/messagelib.php: "Attempt to send msg
-            // from a provider ... that is inactive or not allowed"), returning
-            // false before any processor runs. With 0 this mailer never sent
-            // a single welcome email; with 1 it goes through the provider in
-            // db/messages.php and the email processor like every other
-            // Sentientia notification (2026-09-25).
-            $msg->notification      = 1;
-
-            return (bool) message_send($msg);
+            //
+            // email_to_user(), not message_send() (2026-09-25). Until today
+            // this built a message with notification = 0, which message_send()
+            // treats as a personal message and refuses for every provider but
+            // moodle/instantmessage, so no welcome email was ever sent. A
+            // notification would send, but message_send() also writes it to
+            // {notifications}, keeping the plaintext password in the database.
+            // email_to_user() sends the same email and stores nothing. The
+            // db/messages.php provider stays declared so existing message
+            // preferences and upgrades are unaffected.
+            return (bool) email_to_user($user, \core_user::get_noreply_user(),
+                $subject, $body, nl2br(s($body)));
         } catch (\Throwable $e) {
             debugging('local_sentientia_users welcome_mailer failed for user '
                 . $userid . ': ' . $e->getMessage(), DEBUG_DEVELOPER);
