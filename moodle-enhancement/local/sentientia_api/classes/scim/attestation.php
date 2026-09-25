@@ -63,14 +63,26 @@ class attestation {
     /**
      * Recent events joined with user + client labels for display/export.
      *
-     * @param int $limit
-     * @param int $cliid 0 = all clients
+     * @param int      $limit
+     * @param int      $cliid        0 = all clients
+     * @param int|null $costcenterid null = every client's events (cross-tenant caller); N = only
+     *                               events of clients stored for tenant N (ADR-031; events of a
+     *                               deleted client, or of a site-level client, are excluded)
      * @return \stdClass[] id, action, externalid, detail, timecreated, userid, username, firstname, lastname, clientname
      */
-    public static function recent(int $limit = 100, int $cliid = 0): array {
+    public static function recent(int $limit = 100, int $cliid = 0, ?int $costcenterid = null): array {
         global $DB;
-        $where = $cliid > 0 ? 'WHERE e.cliid = :cli' : '';
-        $params = $cliid > 0 ? ['cli' => $cliid] : [];
+        $conds = [];
+        $params = [];
+        if ($cliid > 0) {
+            $conds[] = 'e.cliid = :cli';
+            $params['cli'] = $cliid;
+        }
+        if ($costcenterid !== null) {
+            $conds[] = 'c.costcenterid = :ccid';
+            $params['ccid'] = $costcenterid;
+        }
+        $where = $conds ? 'WHERE ' . implode(' AND ', $conds) : '';
         return $DB->get_records_sql(
             "SELECT e.id, e.cliid, e.userid, e.action, e.externalid, e.detail, e.timecreated,
                     u.username, u.firstname, u.lastname, c.name AS clientname
@@ -85,13 +97,14 @@ class attestation {
     /**
      * CSV body (header + rows) for the attestation export.
      *
-     * @param int $limit
+     * @param int      $limit
+     * @param int|null $costcenterid null = every client; N = tenant N's clients only (ADR-031)
      * @return string
      */
-    public static function to_csv(int $limit = 5000): string {
+    public static function to_csv(int $limit = 5000, ?int $costcenterid = null): string {
         $out = fopen('php://temp', 'r+');
         fputcsv($out, ['time_utc', 'action', 'client', 'userid', 'username', 'externalid', 'detail']);
-        foreach (self::recent($limit) as $r) {
+        foreach (self::recent($limit, 0, $costcenterid) as $r) {
             fputcsv($out, [
                 gmdate('Y-m-d\TH:i:s\Z', (int) $r->timecreated),
                 $r->action,

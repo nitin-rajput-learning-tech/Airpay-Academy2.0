@@ -128,5 +128,29 @@ function xmldb_local_sentientia_api_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026090200, 'local', 'sentientia_api');
     }
 
+    // 2026092500 - ADR-031: take :webhooks_manage and :scim_manage back from every role.
+    //
+    // Both defaulted to the manager archetype, which every tenant admin holds at
+    // system context (UAT role 9 "administrator"; two /1 tenant admins on the
+    // production import). Holding either let the caller manage every tenant's
+    // subscriptions or SCIM clients, including all-tenant (costcenterid 0) ones;
+    // only the $hassiteconfig admin-tree gate kept the pages out of reach.
+    // db/access.php now has no default, but changing an archetype never revokes
+    // grants Moodle already applied -- hence this explicit revoke. Site admins
+    // still pass by the admin bypass; anyone who needs the pages is granted the
+    // capability on purpose, and is then confined to their tenant by admin_scope.
+    if ($oldversion < 2026092500) {
+        $syscontext = \context_system::instance();
+        foreach (['local/sentientia_api:webhooks_manage', 'local/sentientia_api:scim_manage'] as $cap) {
+            $roleids = $DB->get_fieldset_select('role_capabilities', 'DISTINCT roleid',
+                'capability = :cap', ['cap' => $cap]);
+            foreach ($roleids as $roleid) {
+                unassign_capability($cap, (int) $roleid, $syscontext->id);
+            }
+        }
+        $syscontext->mark_dirty();
+        upgrade_plugin_savepoint(true, 2026092500, 'local', 'sentientia_api');
+    }
+
     return true;
 }

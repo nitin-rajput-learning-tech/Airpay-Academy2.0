@@ -145,11 +145,17 @@ class subscription {
     }
 
     /**
-     * @return \stdClass[] All subscriptions, newest first.
+     * Subscriptions, newest first.
+     *
+     * @param int|null $costcenterid null = every row (cross-tenant caller); N = only
+     *                               rows stored for tenant N (ADR-031 scoped caller;
+     *                               excludes the "every tenant" rows with 0)
+     * @return \stdClass[]
      */
-    public static function list_all(): array {
+    public static function list_all(?int $costcenterid = null): array {
         global $DB;
-        return $DB->get_records(self::TABLE, null, 'timecreated DESC');
+        $conditions = $costcenterid === null ? null : ['costcenterid' => $costcenterid];
+        return $DB->get_records(self::TABLE, $conditions, 'timecreated DESC');
     }
 
     /**

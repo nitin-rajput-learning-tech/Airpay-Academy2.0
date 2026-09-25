@@ -35,10 +35,23 @@ class subscription_form extends \moodleform {
             $mform->setDefault($key, 1);
         }
 
-        $mform->addElement('text', 'costcenterid', get_string('webhook_tenant', 'local_sentientia_api'), ['size' => 8]);
-        $mform->setType('costcenterid', PARAM_INT);
-        $mform->setDefault('costcenterid', 0);
-        $mform->addHelpButton('costcenterid', 'webhook_tenant', 'local_sentientia_api');
+        // ADR-031: only a cross-tenant caller (scoperoot null) chooses the tenant,
+        // including 0 = every tenant. A scoped caller's subscription is pinned to
+        // their own tenant; setConstant() overrides anything the browser sends,
+        // and webhooks.php forces it again via admin_scope::costcenter_for_create().
+        $scoperoot = $this->_customdata['scoperoot'] ?? null;
+        if ($scoperoot === null) {
+            $mform->addElement('text', 'costcenterid', get_string('webhook_tenant', 'local_sentientia_api'), ['size' => 8]);
+            $mform->setType('costcenterid', PARAM_INT);
+            $mform->setDefault('costcenterid', 0);
+            $mform->addHelpButton('costcenterid', 'webhook_tenant', 'local_sentientia_api');
+        } else {
+            $mform->addElement('static', 'costcenterid_fixed', get_string('webhook_tenant', 'local_sentientia_api'),
+                (string) (int) $scoperoot);
+            $mform->addElement('hidden', 'costcenterid');
+            $mform->setType('costcenterid', PARAM_INT);
+            $mform->setConstant('costcenterid', (int) $scoperoot);
+        }
 
         $mform->addElement('advcheckbox', 'enabled', get_string('webhook_enabled', 'local_sentientia_api'));
         $mform->setDefault('enabled', 1);

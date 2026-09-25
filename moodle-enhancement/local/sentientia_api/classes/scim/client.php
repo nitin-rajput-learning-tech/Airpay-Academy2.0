@@ -111,11 +111,15 @@ class client {
     }
 
     /**
+     * @param int|null $costcenterid null = every client (cross-tenant caller); N = only
+     *                               clients stored for tenant N (ADR-031 scoped caller;
+     *                               excludes site-level clients with 0)
      * @return \stdClass[]
      */
-    public static function list_all(): array {
+    public static function list_all(?int $costcenterid = null): array {
         global $DB;
-        return $DB->get_records(self::TABLE, null, 'timecreated DESC');
+        $conditions = $costcenterid === null ? null : ['costcenterid' => $costcenterid];
+        return $DB->get_records(self::TABLE, $conditions, 'timecreated DESC');
     }
 
     /**

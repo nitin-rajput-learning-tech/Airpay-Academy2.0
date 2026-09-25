@@ -4,11 +4,42 @@
 **Roadmap gap:** P2.3 — Public API + LTI (GAP-ANALYSIS-INVINCE-LXP-2026-06-16 §6)
 **Branch:** `claude/gap-api-lti`
 **Created:** 2026-06-16
-**Status:** 1.3.0 — ADR-030 complete: Wave A outbound webhooks (2026-08-29), Wave B SCIM 2.0 Users (2026-08-29), Wave C SCIM Groups + attestation (2026-09-02); all feature-flagged OFF; full suite 60/60 on a fresh phpunit DB.
-**Version:** 2026090200 (1.3.0)
+**Status:** 1.3.1 — ADR-031 tenant-scoped admin pages (2026-09-25). 1.3.0 — ADR-030 complete: Wave A outbound webhooks (2026-08-29), Wave B SCIM 2.0 Users (2026-08-29), Wave C SCIM Groups + attestation (2026-09-02); all feature-flagged OFF; full suite 60/60 on a fresh phpunit DB.
+**Version:** 2026092500 (1.3.1) - ADR-031 tenant scoping of the webhooks + SCIM admin pages (2026-09-25)
 **Depends on:** `local_sentientia_platform` (feature_flags + tenant helpers)
 
 ---
+
+## 2026-09-25 - ADR-031: webhooks + SCIM admin surfaces are tenant-bounded (1.3.1, 2026092500)
+
+Sweep hit #9 (`:webhooks_manage`, CONFIRMED, latent) and its sibling #10 (`:scim_manage`,
+REFUTED as exploitable today, hardening recommended). Both capabilities defaulted to the
+manager archetype (roles 1 and 9 held them on the production import; two /1 tenant admins
+had role 9). The pages listed, created, rotated, disabled and deleted every tenant's
+subscriptions / SCIM clients, took a free-text costcenterid defaulting to 0 (= every
+tenant), and exported every tenant's SCIM attestation CSV. Only the `$hassiteconfig`
+admin-tree gate kept them out of a tenant admin's reach.
+
+- **Capabilities:** `db/access.php` archetypes `[]` for both; upgrade step `2026092500`
+  `unassign_capability()`s every existing system-context grant (analytics/challenge pattern).
+- **Scope:** new `classes/admin_scope.php` - `tenant_root()` returns null for a cross-tenant
+  caller (site admin / `local/sentientia_platform:crosstenant`; behaviour unchanged) or the
+  caller's tenant root, and throws `error_outoftenant` for a scoped caller with no tenant.
+  `require_subscription` / `require_delivery` / `require_client` check the TARGET row before
+  every enable/disable/delete/rotate/retry; rows with costcenterid 0 are cross-tenant only.
+  `costcenter_for_create()` pins a scoped caller's new row to their own tenant.
+- **Lists:** `subscription::list_all()`, `queue::recent()`, `queue::counts()`,
+  `client::list_all()`, `attestation::recent()` / `to_csv()` take an optional `?int
+  $costcenterid` (null = unchanged unfiltered behaviour); the pages pass the caller's scope.
+- **Forms:** `subscription_form` / `scim_client_form` take customdata `scoperoot`; when scoped
+  the tenant field is a static label + `setConstant()` hidden value (tamper-proof).
+- **Tests:** `tests/tenant_scope_test.php` (`@group tenant_isolation`) - no default holder,
+  /1 tenant admin confined (lists, target checks, create pinning, CSV), tampered form value
+  overridden, no-tenant caller refused, site admin + :crosstenant holder unscoped.
+- Not changed: the v1 REST endpoints (already fail closed for a no-tenant non-admin in
+  `base::open_v1`) still use `is_siteadmin()` for their unscoped branch, so a non-admin
+  `:crosstenant` holder is treated as scoped there (narrower, not a leak). PHPUnit NOT run
+  (shared test DB); verified by reading.
 
 ## ADR-030 Wave A — outbound webhooks (2026-08-28)
 

@@ -74,6 +74,9 @@ class audit_log_test extends \advanced_testcase {
 
     public function test_actions_by_user_returns_empty_for_unknown_user(): void {
         $this->resetAfterTest(true);
+        // ADR-031: reading another user's trail is gated now, so ask as the
+        // cross-tenant site admin. The scoped cases are in audit_log_tenant_scope_test.
+        $this->setAdminUser();
         // Userid 99999 should have no log rows in a fresh fixture.
         $rows = audit_log::actions_by_user(99999, 0, time());
         $this->assertSame([], $rows);

@@ -11,6 +11,7 @@
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 
+use local_sentientia_api\admin_scope;
 use local_sentientia_api\webhooks\dispatcher;
 use local_sentientia_api\webhooks\queue;
 use local_sentientia_api\webhooks\subscription;
@@ -19,6 +20,11 @@ admin_externalpage_setup('local_sentientia_api_webhooks');
 $context = context_system::instance();
 require_capability('local/sentientia_api:webhooks_manage', $context);
 
+// ADR-031: the capability says WHAT; this says WHERE. null = cross-tenant
+// (unchanged behaviour); N = confined to tenant N. Throws for a scoped caller
+// with no tenant, before anything is listed or changed.
+$scoperoot = admin_scope::tenant_root();
+
 $action = optional_param('action', '', PARAM_ALPHA);
 $id     = optional_param('id', 0, PARAM_INT);
 $pageurl = new moodle_url('/local/sentientia_api/webhooks.php');
@@ -26,6 +32,12 @@ $pageurl = new moodle_url('/local/sentientia_api/webhooks.php');
 // ── Actions (sesskey-guarded) ────────────────────────────────────────────
 if ($action !== '' && $id > 0) {
     require_sesskey();
+    // Every id-named action checks the TARGET row's tenant first.
+    if ($action === 'retry') {
+        admin_scope::require_delivery($id, $scoperoot);
+    } else {
+        admin_scope::require_subscription($id, $scoperoot);
+    }
     switch ($action) {
         case 'enable':
             subscription::set_enabled($id, true);
@@ -48,14 +60,15 @@ if ($action !== '' && $id > 0) {
 }
 
 // ── Add form ─────────────────────────────────────────────────────────────
-$form = new \local_sentientia_api\form\subscription_form($pageurl);
+$form = new \local_sentientia_api\form\subscription_form($pageurl, ['scoperoot' => $scoperoot]);
 if ($data = $form->get_data()) {
+    $costcenterid = admin_scope::costcenter_for_create((int) $data->costcenterid, $scoperoot);
     $newid = subscription::create((object) [
         'name'         => $data->name,
         'url'          => $data->url,
         'events'       => \local_sentientia_api\form\subscription_form::selected_events($data),
-        'costcenterid' => (int) $data->costcenterid,
-        'customerid'   => dispatcher::customer_of((int) $data->costcenterid),
+        'costcenterid' => $costcenterid,
+        'customerid'   => dispatcher::customer_of($costcenterid),
         'enabled'      => (int) $data->enabled,
     ]);
     $sub = subscription::get($newid);
@@ -70,16 +83,16 @@ echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('webhooks_title', 'local_sentientia_api'));
 echo html_writer::tag('p', get_string('webhooks_intro', 'local_sentientia_api'));
 
-if (!dispatcher::enabled_for(0)) {
+if (!dispatcher::enabled_for($scoperoot ?? 0)) {
     echo $OUTPUT->notification(get_string('webhook_flag_off_notice', 'local_sentientia_api'), 'info');
 }
 
-$counts = queue::counts();
+$counts = queue::counts($scoperoot);
 echo html_writer::tag('p', get_string('webhook_counts', 'local_sentientia_api', (object) $counts), ['class' => 'text-muted']);
 
 // Subscriptions table.
 echo $OUTPUT->heading(get_string('webhooks_subscriptions', 'local_sentientia_api'), 3);
-$subs = subscription::list_all();
+$subs = subscription::list_all($scoperoot);
 if (!$subs) {
     echo html_writer::tag('p', get_string('webhooks_none', 'local_sentientia_api'));
 } else {
@@ -125,7 +138,7 @@ $form->display();
 
 // Recent deliveries.
 echo $OUTPUT->heading(get_string('webhooks_deliveries', 'local_sentientia_api'), 3);
-$rows = queue::recent(50);
+$rows = queue::recent(50, $scoperoot);
 if (!$rows) {
     echo html_writer::tag('p', get_string('webhooks_nodeliveries', 'local_sentientia_api'));
 } else {
