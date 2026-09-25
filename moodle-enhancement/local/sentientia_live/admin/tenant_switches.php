@@ -42,49 +42,21 @@ $PAGE->set_heading(get_string('tenant_switches_title', 'local_sentientia_live'))
 // ── Handle a flip submission ────────────────────────────────────────
 $action = optional_param('action', '', PARAM_ALPHA);
 if ($action === 'flip' && confirm_sesskey()) {
-    $flag_key    = required_param('flag_key', PARAM_ALPHANUMEXT . '.');
+    // 2026-09-25: this read PARAM_ALPHANUMEXT . '.', which is not a param
+    // type, so every flip died here. PARAM_TEXT is safe: the key is only
+    // ever compared against tenant_switches::FLAGS, the real validation.
+    $flag_key    = required_param('flag_key', PARAM_TEXT);
     $customer_id = required_param('customer_id', PARAM_INT);
     $tenant_id   = required_param('tenant_id', PARAM_INT);
     $new_value   = required_param('new_value', PARAM_INT);
 
-    // Whitelist of flags this UI can touch — defence-in-depth.
-    $allowed_flags = ['live.enabled', 'live.realtime.enabled',
-                      'live.allow_anonymous', 'live.questiontype.multichoice',
-                      'live.questiontype.openended', 'live.questiontype.wordcloud',
-                      'live.questiontype.quiz', 'live.questiontype.rating',
-                      'live.questiontype.scale'];
-    if (!in_array($flag_key, $allowed_flags, true)) {
-        throw new \moodle_exception('invalidflag', 'local_sentientia_live');
-    }
-
-    // Upsert the override row.
-    $existing = $DB->get_record('local_sentientia_feature_flags', [
-        'flag_key'    => $flag_key,
-        'customer_id' => $customer_id,
-        'tenant_id'   => $tenant_id,
-    ]);
-
-    $now = time();
-    if ($existing) {
-        $existing->is_enabled   = $new_value;
-        $existing->modified_by  = $USER->id;
-        $existing->timemodified = $now;
-        $DB->update_record('local_sentientia_feature_flags', $existing);
-    } else {
-        $DB->insert_record('local_sentientia_feature_flags', (object) [
-            'flag_key'     => $flag_key,
-            'customer_id'  => $customer_id,
-            'tenant_id'    => $tenant_id,
-            'is_enabled'   => $new_value,
-            'modified_by'  => $USER->id,
-            'timecreated'  => $now,
-            'timemodified' => $now,
-        ]);
-    }
-
-    // Invalidate feature_flags cache so the change is visible immediately.
-    if (class_exists('\\local_sentientia_platform\\feature_flags')) {
-        \local_sentientia_platform\feature_flags::invalidate_cache();
+    // The whitelist, the write, its audit row and the cache invalidation
+    // all live in tenant_switches::flip() -> feature_flags::set().
+    try {
+        \local_sentientia_live\tenant_switches::flip($flag_key, $customer_id, $tenant_id,
+            (bool) $new_value);
+    } catch (\moodle_exception $e) {
+        redirect($PAGE->url, s($e->getMessage()), null, \core\output\notification::NOTIFY_ERROR);
     }
 
     redirect($PAGE->url,

@@ -273,10 +273,53 @@ final class tenant_scope_test extends \advanced_testcase {
             (int) $report->id, $unscoped),
             'error_outoftenant', 'Nor a classroom with no path.');
         $this->assertSame(0, $DB->count_records('local_sentientia_mgr_allocations'));
+        $this->assertSame(0, $DB->count_records('local_sentientia_classroom_users'),
+            'A refused allocation puts nobody on any roster.');
 
+        $sink = $this->redirectMessages();
         $id = approval_manager::create_classroom_allocation((int) $mgr->id, (int) $report->id, $mine);
         $this->assertTrue($DB->record_exists('local_sentientia_mgr_allocations',
             ['id' => $id, 'item_type' => approval_manager::ITEM_CLASSROOM, 'itemid' => $mine]));
+        // The allocation also puts the learner on the classroom roster. It
+        // used to call a session_manager method that never existed, so the
+        // learner was told they were allocated and never enrolled.
+        $this->assertTrue($DB->record_exists('local_sentientia_classroom_users',
+            ['classroomid' => $mine, 'userid' => $report->id]),
+            'The allocated learner is on the in-tenant classroom\'s roster.');
+        $this->assertSame(1, $DB->count_records('local_sentientia_classroom_users'),
+            'And on no other classroom\'s.');
+        $sink->close();
+    }
+
+    public function test_a_classroom_allocation_puts_the_learner_on_the_roster_once(): void {
+        global $DB;
+        if (!$DB->get_manager()->table_exists('local_sentientia_classroom')) {
+            $this->markTestSkipped('local_sentientia_classroom is not installed.');
+        }
+        // Any tenant, not just Airpay: a ZEEA manager and their ZEEA report.
+        $mgr = $this->user_at('/177/178');
+        $report = $this->report_of($mgr, '/177/178');
+        $now = time();
+        $classroomid = (int) $DB->insert_record('local_sentientia_classroom', (object) [
+            'name' => 'ZEEA ILT', 'costcenterid' => 177, 'open_path' => '/177',
+            'timecreated' => $now, 'timemodified' => $now,
+        ]);
+        $this->setUser($mgr);
+        $sink = $this->redirectMessages();
+
+        approval_manager::create_classroom_allocation((int) $mgr->id, (int) $report->id, $classroomid);
+        $roster = $DB->get_records('local_sentientia_classroom_users', ['classroomid' => $classroomid]);
+        $this->assertCount(1, $roster);
+        $row = reset($roster);
+        $this->assertSame((int) $report->id, (int) $row->userid);
+        $this->assertSame((int) $mgr->id, (int) $row->enrolledby, 'Recorded as enrolled by the allocating manager.');
+
+        $this->assert_refused(fn() => approval_manager::create_classroom_allocation((int) $mgr->id,
+            (int) $report->id, $classroomid),
+            'duplicateallocation', 'A second allocation of the same classroom is refused.');
+        $this->assertSame(1, $DB->count_records('local_sentientia_classroom_users',
+            ['classroomid' => $classroomid]), 'And the roster still holds one row.');
+        $sink->close();
     }
 
     public function test_a_manager_with_no_tenant_allocates_nothing(): void {

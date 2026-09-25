@@ -322,3 +322,32 @@ free-text answers on, or hard-delete, any tenant's session by sequential id.
 
 Audience join-by-code remains tenant-agnostic by design (Mentimeter model). Tests:
 `tests/tenant_scope_test.php` (`@group tenant_isolation`). Both trees.
+
+## 2026-09-25 - Tenant kill switches can flip again (0.2.4-alpha, 2026092500, no bump)
+
+Reviewer item (P2, CONFIRMED, pre-existing) on branch `claude/adr031-comms3-ff`. Both trees identical.
+
+`admin/tenant_switches.php` could not flip anything. `required_param('flag_key', PARAM_ALPHANUMEXT . '.')`
+passes the type string 'alphanumext.', which `\core\param::from_type()` rejects, so every flip POST
+died before the whitelist. Past that, the page upserted `local_sentientia_feature_flags` by hand
+(no audit row) and called `feature_flags::invalidate_cache()`, which does not exist (the method is
+`invalidate_caches()`). Its whitelist named the unregistered `live.questiontype.scale` and left out
+the registered `live.questiontype.ranking`.
+
+- New `classes/tenant_switches.php`: `FLAGS` is exactly the nine registered `live.*` keys, and
+  `flip($key, $customerid, $tenantid, $enabled)` requires `moodle/site:config`, refuses keys outside
+  `FLAGS` (`invalidflag`) and negative ids, then writes through
+  `feature_flags::set($key, $tenantid, $enabled, $USER->id, 'live tenant_switches', $customerid)`.
+  That brings the registry check, the customer-layer guard, the audit row and the cache
+  invalidation.
+- The page reads `flag_key` as `PARAM_TEXT` (the whitelist is the validation), calls `flip()`, and
+  redirects with the error as a notification if the write is refused (for example
+  `customer_layer_disabled` on a customer-scoped row while that layer is off).
+- A new class file with no version bump: the deploy's cache purge picks it up (standard deploy step).
+
+Tests: new `tests/tenant_switches_test.php` (`@group tenant_isolation`). A flip for tenant 77 is
+visible on the next read and leaves tenants 1 and 177, and the global default, unchanged. It writes
+one override row and one audit row, and the flip back is audited too. The whitelist equals the
+registered `live.*` keys: ranking flips, and scale, a non-Live key and '' are refused. A /77 tenant
+admin cannot flip any tenant, their own included. A customer-scoped flip is refused while the
+customer layer is off.

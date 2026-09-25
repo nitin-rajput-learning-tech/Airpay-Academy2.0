@@ -51,6 +51,11 @@ class request_manager {
             ? $USER
             : $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
 
+        // ADR-031: the course must be one this requester may be enrolled in.
+        // Checked before context_course::instance() so a missing course id
+        // is refused exactly like a forbidden one (no existence oracle).
+        self::require_course_requestable($user, $courseid);
+
         // Already enrolled?
         $context = \context_course::instance($courseid);
         if (is_enrolled($context, $userid)) {
@@ -142,9 +147,16 @@ class request_manager {
             ? $USER
             : $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
 
-        // Path must exist + be active.
+        // Path must exist, (ADR-031) sit in the requester's tenant, and be
+        // active. A missing path is refused like a foreign one, and the
+        // tenant check runs before the status check so another tenant's
+        // path does not reveal whether it is active.
         $path = $DB->get_record('local_sentientia_learningpath',
-            ['id' => $pathid], 'id, name, status', MUST_EXIST);
+            ['id' => $pathid], 'id, name, status, open_path', IGNORE_MISSING);
+        if (!$path) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        \local_sentientia_learningpath\path_manager::assert_path_in_scope($path, $userid);
         if ((int) $path->status !== \local_sentientia_learningpath\path_manager::STATUS_ACTIVE) {
             throw new \moodle_exception('error_path_inactive', 'local_sentientia_request');
         }
@@ -339,6 +351,29 @@ class request_manager {
                 (int) $rec->costcenterid, $deciderid);
         }
 
+        // ADR-031 decision 5: a decision is a write that names the requester,
+        // and an approval enrols them. Until 2026-09-25 the assigned approver
+        // skipped every tenant check, and nothing compared the COURSE (or
+        // path) with anyone's tenant: a tenant admin holding :request,
+        // :approve and :overrideroute could request another tenant's course
+        // and approve it themselves, and an in-tenant supervisor could approve
+        // a report into another tenant's course. So, for every decider who is
+        // not cross-tenant (the assigned approver included):
+        //   - the requester must be in the decider's tenant;
+        //   - on approval, the item must still be one the requester may be
+        //     enrolled in (this also covers rows submitted before submit()
+        //     checked it, and a share withdrawn since).
+        // Both run before the status row changes, so a refusal leaves the
+        // request pending. A rejection enrols nobody, so it skips the item
+        // check: an out-of-scope request can still be turned down.
+        if (!\local_sentientia_platform\tenant::is_cross_tenant($deciderid)) {
+            \local_sentientia_platform\tenant::require_same_tenant_user(
+                (int) $rec->userid, $deciderid);
+            if ($decision === 'approved') {
+                self::require_item_requestable($rec);
+            }
+        }
+
         // Reject requires a note.
         if ($decision === 'rejected' && trim($note) === '') {
             throw new \moodle_exception('error_invalidstate', 'local_sentientia_request',
@@ -498,6 +533,83 @@ class request_manager {
             $expired++;
         }
         return $expired;
+    }
+
+    /**
+     * ADR-031: refuse unless the requester may be enrolled in this course.
+     *
+     * A cross-tenant requester (site admin, :crosstenant holder) passes. A
+     * requester with no resolvable tenant is refused everything (fail closed).
+     * Anyone else needs a VISIBLE course that is in their tenant's tree,
+     * shared to their tenant, or a legacy course with no open_path - the
+     * same enrolment scope course_manager::course_in_enrol_scope() applies to
+     * every other enrolment write. A missing course gets the same
+     * error_outoftenant, so the check is not an existence oracle.
+     *
+     * @param \stdClass $requester a user record carrying id and open_path
+     * @param int $courseid
+     * @throws \moodle_exception error_outoftenant
+     */
+    private static function require_course_requestable(\stdClass $requester, int $courseid): void {
+        global $DB;
+        $scope = \local_sentientia_platform\tenant::scope_path($requester);
+        if ($scope === null) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        if ($scope === '') {
+            return;
+        }
+        $root = (int) substr($scope, 1);
+        $course = $DB->get_record('course', ['id' => $courseid], '*', IGNORE_MISSING);
+        if (!$course || (int) $course->visible !== 1 || !self::course_in_scope($course, $root)) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+    }
+
+    /**
+     * Is this course in the enrolment scope of tenant $root?
+     *
+     * Delegates to local_sentientia_courses when it is installed (tree, share
+     * or legacy). Without it there are no shares, so the course must be in
+     * the tenant's tree or carry no open_path.
+     *
+     * @param \stdClass $course a course record
+     * @param int $root tenant root (> 0)
+     * @return bool
+     */
+    private static function course_in_scope(\stdClass $course, int $root): bool {
+        if (class_exists('\\local_sentientia_courses\\course_manager')) {
+            return \local_sentientia_courses\course_manager::course_in_enrol_scope($course, $root);
+        }
+        $path = rtrim(trim((string) ($course->open_path ?? '')), '/');
+        return $path === '' || $path === '/' . $root || strpos($path, '/' . $root . '/') === 0;
+    }
+
+    /**
+     * ADR-031: refuse to approve a request whose item the requester may not
+     * be enrolled in (re-checked at decision time, against the REQUESTER).
+     *
+     * @param \stdClass $rec the local_sentientia_request row
+     * @throws \moodle_exception error_outoftenant
+     */
+    private static function require_item_requestable(\stdClass $rec): void {
+        global $DB;
+        $requester = $DB->get_record('user', ['id' => (int) $rec->userid, 'deleted' => 0],
+            'id, open_path', IGNORE_MISSING);
+        if (!$requester) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        if (($rec->item_type ?? self::ITEM_COURSE) === self::ITEM_PATH) {
+            $path = $DB->get_record('local_sentientia_learningpath',
+                ['id' => (int) $rec->itemid], 'id, open_path', IGNORE_MISSING);
+            if (!$path) {
+                throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+            }
+            \local_sentientia_learningpath\path_manager::assert_path_in_scope($path,
+                (int) $requester->id);
+            return;
+        }
+        self::require_course_requestable($requester, (int) $rec->courseid);
     }
 
     /**

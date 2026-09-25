@@ -212,3 +212,34 @@ therefore run `LIMIT 0` and have never sent anything. `db/install.php` seeds "Co
 provider defaults email and popup ON. Correcting the precedence would switch on up to 500
 messages per rule per hourly run on UAT's imported production users. So it is left as it is,
 pending a decision: disable those seeded rules first, or put the fix behind a flag.
+
+## 2026-09-25 - ADR-031 follow-up 3: learning-path-stalled rule reads the real table (still 1.5.0, 2026092500)
+
+Reviewer item (P2, CONFIRMED, pre-existing drift) on branch `claude/adr031-comms3-ff`. No schema or
+capability change, no version bump.
+
+- The moodle-enhancement copy of `rule_engine::rule_learning_path_stalled()` (the one UAT serves)
+  checked and queried `local_airpay_lp_users`, which no install.xml defines, and filtered on
+  `lu.timemodified`. `table_exists()` was false, so the rule silently sent nothing on UAT. Both
+  copies also compared the integer `status` with `'enrolled'` / `'in_progress'`: an error on
+  PostgreSQL, and on MySQL both strings cast to 0, so in-progress learners never matched.
+- Now: `local_sentientia_learningpath_users`, `lu.timecreated`, and
+  `lu.status IN (:stnew, :stprog)` bound to `path_manager::ENROL_NEW` / `ENROL_INPROGRESS`. Docblock
+  corrected.
+- The top-level copy was made the source and copied over the ME copy, so `rule_engine.php` is now
+  identical in both trees and its line is drained from `tools/tree-drift-baseline.txt`. That also
+  brings the top tree's white-label change (W-A batch 3) to the ME copy: the inactive-user subject is
+  `'We miss you on ' . format_string(get_site()->fullname)` instead of the hard-coded
+  'We miss you on Airpay Academy'. `templates/prefs.mustache` is still drifted and stays baselined.
+
+Tests: new `tests/learning_path_stalled_test.php` (`@group tenant_isolation`). A not-started /1
+learner and an in-progress /177 learner past the window are nudged, and each message names only
+their own path. A completed learner and one who joined today are not nudged. A roster with nobody
+stalled sends and logs nothing. `rule_engine_phase_c_test::test_learning_path_stalled_skips_when_table_missing`
+still holds: the table now exists, but it has no rows.
+
+**Deploy note:** once the ME tree ships, any enabled `learning_path_stalled` rule on UAT starts
+sending, for the first time, to learners who joined an incomplete path more than `trigger_days` ago.
+Each run is capped by `batch_limit` (default 500). The send dedup allows one message per learner
+per 24 hours, so a stalled learner is nudged about once a day until they complete. Check that the
+rule is enabled on purpose before deploying.

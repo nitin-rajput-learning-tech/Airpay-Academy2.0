@@ -22,6 +22,16 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class path_request_test extends \advanced_testcase {
 
+    use \local_sentientia_org\test\bizlms_fixture;
+
+    protected function setUp(): void {
+        parent::setUp();
+        $this->resetAfterTest();
+        // The requester's open_path decides whether a path is in their
+        // tenant (ADR-031), so the BizLMS user columns must exist.
+        $this->ensure_bizlms_schema();
+    }
+
     /** Helper — seed a path + courses + assign courses. */
     private function seed_path_with_courses(int $course_count = 2): int {
         global $DB;
@@ -83,15 +93,23 @@ final class path_request_test extends \advanced_testcase {
     public function test_submit_path_rejects_duplicate(): void {
         $this->resetAfterTest();
         $this->setAdminUser();
+        global $DB;
 
+        // ADR-031: the requester must sit in the path's tenant (/1) for the
+        // first request to go through, so the second is refused as a duplicate.
         $u = $this->getDataGenerator()->create_user();
+        $DB->set_field('user', 'open_path', '/1', ['id' => $u->id]);
         $pid = $this->seed_path_with_courses(1);
         request_manager::submit_path((int) $u->id, $pid,
             'Initial well-formed request reason for the path.');
 
-        $this->expectException(\moodle_exception::class);
-        request_manager::submit_path((int) $u->id, $pid,
-            'Second well-formed request reason for the path.');
+        try {
+            request_manager::submit_path((int) $u->id, $pid,
+                'Second well-formed request reason for the path.');
+            $this->fail('A second pending request for the same path must be refused.');
+        } catch (\moodle_exception $e) {
+            $this->assertSame('error_alreadyrequested', $e->errorcode);
+        }
     }
 
     public function test_submit_path_rejects_inactive_path(): void {
@@ -99,14 +117,21 @@ final class path_request_test extends \advanced_testcase {
         $this->setAdminUser();
         global $DB;
 
+        // ADR-031: an in-tenant requester, so what refuses them is the status
+        // (a requester outside /1 is refused earlier, as out of tenant).
         $u = $this->getDataGenerator()->create_user();
+        $DB->set_field('user', 'open_path', '/1', ['id' => $u->id]);
         $pid = $this->seed_path_with_courses(1);
         // Archive the path.
         $DB->set_field('local_sentientia_learningpath', 'status', 0, ['id' => $pid]);
 
-        $this->expectException(\moodle_exception::class);
-        request_manager::submit_path((int) $u->id, $pid,
-            'I would like to enrol in this learning path please.');
+        try {
+            request_manager::submit_path((int) $u->id, $pid,
+                'I would like to enrol in this learning path please.');
+            $this->fail('An archived path must not be requestable.');
+        } catch (\moodle_exception $e) {
+            $this->assertSame('error_path_inactive', $e->errorcode);
+        }
     }
 
     public function test_decide_approve_path_enrols_user(): void {

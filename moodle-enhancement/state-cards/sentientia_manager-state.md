@@ -204,3 +204,21 @@ deleted excluded). Tests: the no-reports tenant admin allocates an in-tenant col
 refused a /177 user, a /177 course and a missing user; new `test_a_manager_with_reports_is_still_held_to_them`;
 the picker test asserts the no-reports list is /1-only. Tighten to "reports only" later if Nitin
 decides L&D admins should not allocate through the manager plugin.
+
+### 2026-09-25 (follow-up 3) - classroom allocation actually enrols (1.3.5, same version)
+
+Reviewer item (P2, CONFIRMED, latent: no UI caller) on branch `claude/adr031-comms3-ff`.
+`create_classroom_allocation()` delegated to `session_manager::add_users_to_classroom()`, which has
+never existed in either tree. The `method_exists()` guard was always false, so the allocation row was
+written and the learner told they were allocated, but no `local_sentientia_classroom_users` row was
+created. It now calls `\local_sentientia_classroom\session_manager::enrol_users($classroomid,
+[$userid])` inside the existing try/catch; `guard_direct_report()` and `require_item_in_tenant()`
+have already bounded the user and the classroom to the manager's tenant. No schema or capability
+change, no version bump. Both trees identical.
+
+Tests (`tests/tenant_scope_test.php`, `@group tenant_isolation`): the typed-allocation test now also
+asserts that refused allocations put nobody on any roster and the in-tenant allocation puts the
+report on that classroom's roster only; new
+`test_a_classroom_allocation_puts_the_learner_on_the_roster_once` (a ZEEA manager and report: one
+roster row, `enrolledby` = the manager, a second allocation refused as `duplicateallocation` and the
+roster unchanged).
