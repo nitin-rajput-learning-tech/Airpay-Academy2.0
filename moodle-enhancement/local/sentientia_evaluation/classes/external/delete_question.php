@@ -21,6 +21,8 @@ class delete_question extends external_api {
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/sentientia_evaluation:manage', $context);
+        // ADR-031: only a question of an evaluation in the caller's tenant.
+        \local_sentientia_evaluation\evaluation_manager::require_question_access((int) $params['questionid']);
 
         $success = \local_sentientia_evaluation\evaluation_manager::delete_question($params['questionid']);
         return ['questionid' => $params['questionid'], 'success' => $success];

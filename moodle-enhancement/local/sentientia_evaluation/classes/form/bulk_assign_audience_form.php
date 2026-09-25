@@ -127,6 +127,9 @@ class bulk_assign_audience_form extends \core_form\dynamic_form {
     protected function check_access_for_dynamic_submission(): void {
         require_capability('local/sentientia_evaluation:manage',
             $this->get_context_for_dynamic_submission());
+        // ADR-031: assign only into an evaluation in the caller's tenant.
+        \local_sentientia_evaluation\evaluation_manager::require_evaluation_access_by_id(
+            (int) $this->optional_param('evaluationid', 0, PARAM_INT));
     }
 
     protected function get_context_for_dynamic_submission(): \context {

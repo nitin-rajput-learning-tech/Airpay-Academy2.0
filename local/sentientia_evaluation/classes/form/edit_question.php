@@ -259,6 +259,16 @@ class edit_question extends \core_form\dynamic_form {
 
     protected function check_access_for_dynamic_submission(): void {
         require_capability('local/sentientia_evaluation:manage', $this->get_context_for_dynamic_submission());
+        // ADR-031: both the question being edited (via its evaluation) and
+        // the evaluation posted with it must be in the caller's tenant.
+        $questionid = (int) $this->optional_param('questionid', 0, PARAM_INT);
+        if ($questionid > 0) {
+            evaluation_manager::require_question_access($questionid);
+        }
+        $evaluationid = (int) $this->optional_param('evaluationid', 0, PARAM_INT);
+        if ($evaluationid > 0) {
+            evaluation_manager::require_evaluation_access_by_id($evaluationid);
+        }
     }
 
     protected function get_context_for_dynamic_submission(): \context {

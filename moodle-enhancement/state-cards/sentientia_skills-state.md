@@ -99,3 +99,15 @@ data source for the `local_sentientia_leaderboard` skill board type.
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+## 2026-09-25 - ADR-031: :manage is a platform capability (1.6.4, 2026092500)
+
+Sweep hits `local/sentientia_skills:manage` and `:view` (both CONFIRMED).
+
+- **`:manage`:** the skills catalogue has no tenant column; it is one catalogue shared by every tenant. So `:manage` no longer defaults to the manager archetype (`archetypes => []`, `RISK_DATALOSS` added). Upgrade step 2026092500 `unassign_capability()`s it from every role. Site admins keep it. **Action for Nitin:** grant it deliberately to the platform L&D role, alongside `:crosstenant`.
+- **Backfill:** backfilling another user's level (`self_rate_skill`) requires `tenant::require_same_tenant_user()`.
+- **Writes and pickers:** course-skill mapping writes check the course's tenant; legacy courses with no path are cross-tenant only. `delete_skill` is cross-tenant only, because it erases every tenant's learners' levels. `search_courses()` and `list_designations()` are scoped.
+- **`:view`:** its student default is kept, because learners use view.php to self-rate. The learners tab (`skill_learners()` / `count_skill_learners()`) and the courses tab are tenant-scoped; the learners tab used to show up to 200 names and emails from every tenant.
+- **`index.php`:** the `local/courses:manage` path to another user's gap analysis is limited to users in the caller's tenant.
+- **CLI:** `cli/smoke_course_mapping.php` now runs as the site admin, because `search_courses()` is session-scoped.
+- **Tests:** `tests/tenant_scope_test.php` (`@group tenant_isolation`).

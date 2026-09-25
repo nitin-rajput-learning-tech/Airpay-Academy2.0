@@ -9,6 +9,10 @@ require_once(__DIR__ . '/../../../config.php');
 
 global $DB;
 
+// ADR-031: search_courses() is scoped to the session user's tenant and a CLI
+// session has no user; run the smoke as the site admin (unscoped, as before).
+\core\session\manager::set_user(get_admin());
+
 // Pick a real, visible course + a real skill to round-trip with.
 $course = $DB->get_record_sql(
     "SELECT id, fullname FROM {course} WHERE id <> :siteid AND visible = 1

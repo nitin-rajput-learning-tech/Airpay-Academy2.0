@@ -238,16 +238,25 @@ class gap_engine {
      * the count of users who have a gap on it, ordered by business
      * priority.
      *
-     * @param int $costcenterid Tenant root (0 = all, admin only)
+     * ADR-031: "every tenant" is an explicit null the CALLER decides on
+     * (gaps.php: a cross-tenant :manage_all holder). A tenant root of 0 or
+     * less - a caller whose open_path does not resolve - returns nothing:
+     * it used to mean "all tenants", so any viewer without a tenant got
+     * every tenant's summary.
+     *
+     * @param int|null $costcenterid Tenant root; null = every tenant
      * @param int $limit
      * @return \stdClass[]
      */
-    public static function tenant_summary(int $costcenterid, int $limit = 100): array {
+    public static function tenant_summary(?int $costcenterid, int $limit = 100): array {
         global $DB;
 
         $where = '';
         $params = [];
-        if ($costcenterid > 0) {
+        if ($costcenterid !== null) {
+            if ($costcenterid <= 0) {
+                return [];
+            }
             $where = 'WHERE g.costcenterid = :cid';
             $params['cid'] = $costcenterid;
         }

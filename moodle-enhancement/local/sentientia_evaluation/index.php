@@ -27,12 +27,13 @@ $dbman = $DB->get_manager();
 $total = $active = $draft = $total_responses = 0;
 
 if ($dbman->table_exists('local_sentientia_evaluation')) {
-    $total  = (int) \local_sentientia_evaluation\evaluation_manager::count_evaluations();
-    $active = (int) \local_sentientia_evaluation\evaluation_manager::count_evaluations(
+    // ADR-031: the tiles count only what list_evaluations shows this caller.
+    $total  = \local_sentientia_evaluation\evaluation_manager::count_evaluations_scoped();
+    $active = \local_sentientia_evaluation\evaluation_manager::count_evaluations_scoped(
         \local_sentientia_evaluation\evaluation_manager::STATUS_ACTIVE);
-    $draft  = (int) \local_sentientia_evaluation\evaluation_manager::count_evaluations(
+    $draft  = \local_sentientia_evaluation\evaluation_manager::count_evaluations_scoped(
         \local_sentientia_evaluation\evaluation_manager::STATUS_DRAFT);
-    $total_responses = (int) \local_sentientia_evaluation\evaluation_manager::count_responses();
+    $total_responses = \local_sentientia_evaluation\evaluation_manager::count_responses_scoped();
 }
 
 $columns = [

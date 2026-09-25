@@ -33,7 +33,8 @@ if (class_exists('\\local_sentientia_platform\\feature_flags')
 require_capability('local/sentientia_skillsai:review', $context);
 
 $jobid = required_param('jobid', PARAM_INT);
-$manageall = has_capability('local/sentientia_skillsai:manage_all', $context);
+// ADR-031: :manage_all unscopes only a cross-tenant caller.
+$manageall = taxonomy_manager::can_manage_all();
 
 $loaded = taxonomy_manager::load_for_actor($jobid, $USER, $manageall);
 if ($loaded === null) {

@@ -22,7 +22,14 @@ if (!$evaluation) {
 }
 
 // Block access to non-active evaluations (unless admin).
-$is_admin = is_siteadmin() || has_capability('local/sentientia_evaluation:manage', $context);
+// ADR-031: :manage previews only an evaluation in the manager's own tenant
+// (it used to preview any tenant's draft or archived form), and anyone else
+// answers only a global evaluation or one of their own tenant.
+$is_admin = has_capability('local/sentientia_evaluation:manage', $context)
+    && \local_sentientia_evaluation\evaluation_manager::can_manage_evaluation($evaluation);
+if (!$is_admin && !\local_sentientia_evaluation\evaluation_manager::can_respond($evaluation, $USER)) {
+    throw new moodle_exception('error_outoftenant', 'local_sentientia_platform');
+}
 if ((int) $evaluation->status !== \local_sentientia_evaluation\evaluation_manager::STATUS_ACTIVE && !$is_admin) {
     throw new moodle_exception('evaluationnotactive', 'local_sentientia_evaluation');
 }

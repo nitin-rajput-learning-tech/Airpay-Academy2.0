@@ -37,7 +37,8 @@ $PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('queue_page_title', 'local_sentientia_skillsai'));
 $PAGE->set_heading(get_string('queue_page_heading', 'local_sentientia_skillsai'));
 
-$manageall = has_capability('local/sentientia_skillsai:manage_all', $context);
+// ADR-031: :manage_all unscopes only a cross-tenant caller.
+$manageall = taxonomy_manager::can_manage_all();
 $jobs = taxonomy_manager::list_for_actor($USER, $manageall, 100);
 
 echo $OUTPUT->header();

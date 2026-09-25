@@ -21,6 +21,10 @@ class delete_evaluation extends external_api {
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/sentientia_evaluation:manage', $context);
+        // ADR-031: deleting cascades through the responses - only an
+        // evaluation in the caller's tenant.
+        \local_sentientia_evaluation\evaluation_manager::require_evaluation_access_by_id(
+            (int) $params['evaluationid']);
 
         $success = \local_sentientia_evaluation\evaluation_manager::delete($params['evaluationid']);
         return ['evaluationid' => $params['evaluationid'], 'success' => $success];

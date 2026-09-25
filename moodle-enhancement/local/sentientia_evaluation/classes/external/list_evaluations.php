@@ -43,19 +43,20 @@ class list_evaluations extends external_api {
         $where = ['1=1'];
         $sqlparams = [];
 
-        // W1-1 BizLMS parity: 5-level org cascade overrides default
-        // tenant scope.
+        // ADR-031: the tenant scope ALWAYS applies (cross-tenant: 1=1;
+        // otherwise the caller's tenant, never a global costcenterid-0
+        // evaluation; no tenant: 1=0). The W1-1 5-level org cascade only
+        // narrows it: it used to REPLACE the scope, so a tenant admin who
+        // sent another tenant's org id in filters.org_lN listed that
+        // tenant's evaluations and response counts.
+        [$tnsql, $tnargs] = \local_sentientia_evaluation\evaluation_manager::scope_sql('e');
+        $where[] = $tnsql;
+        $sqlparams = array_merge($sqlparams, $tnargs);
         [$cascadesql, $cascadeargs] =
             \local_sentientia_org\org_manager::cascade_where_sql($f, 'e');
         if ($cascadesql !== '') {
             $where[] = $cascadesql;
             $sqlparams = array_merge($sqlparams, $cascadeargs);
-        } else {
-            // Phase 9.6: back-ported from inline open_path pattern to the
-            // shared `\local_sentientia_platform\tenant::path_filter()` helper.
-            [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('e');
-            $where[] = $tnsql;
-            $sqlparams = array_merge($sqlparams, $tnargs);
         }
 
         $status_filter = (string) ($f['status'] ?? 'all');

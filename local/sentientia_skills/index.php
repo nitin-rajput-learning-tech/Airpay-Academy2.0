@@ -39,6 +39,12 @@ if ($userid !== $USER->id && !is_siteadmin()) {
         throw new moodle_exception('nopermission', 'error', '',
             null, 'You do not have permission to view this user\'s skills.');
     }
+    // ADR-031: local/courses:manage says WHAT, not WHERE - a course manager
+    // may open the gap analysis of users in their own tenant only (it used to
+    // be any user id in any tenant). A direct report is theirs by definition.
+    if ($hasmanagecap) {
+        \local_sentientia_platform\tenant::require_same_tenant_user($userid);
+    }
 }
 
 $manager = \local_sentientia_skills\skills_manager::class;

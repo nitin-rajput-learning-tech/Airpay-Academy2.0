@@ -133,6 +133,8 @@ class edit_exam extends \core_form\dynamic_form {
         }
 
         $e = $DB->get_record('local_sentientia_exams', ['id' => $examid], '*', MUST_EXIST);
+        // ADR-031: never pre-fill another tenant's exam.
+        \local_sentientia_exams\exam_manager::require_exam_access($e);
         $this->set_data((object) [
             'examid'       => $e->id,
             'name'         => $e->name,
@@ -151,17 +153,37 @@ class edit_exam extends \core_form\dynamic_form {
     }
 
     protected function check_access_for_dynamic_submission(): void {
+        global $DB;
         require_capability('local/sentientia_exams:manage', $this->get_context_for_dynamic_submission());
+        // ADR-031: :manage says WHAT, not WHERE - an existing exam must be in
+        // the caller's tenant (exam_manager::update() checks again).
+        $examid = (int) $this->optional_param('examid', 0, PARAM_INT);
+        if ($examid > 0) {
+            $exam = $DB->get_record('local_sentientia_exams', ['id' => $examid], 'id, open_path', MUST_EXIST);
+            \local_sentientia_exams\exam_manager::require_exam_access($exam);
+        }
     }
 
     protected function get_context_for_dynamic_submission(): \context {
         return \context_system::instance();
     }
 
+    /**
+     * ADR-031: a cross-tenant caller keeps every org; anyone else gets only
+     * their own tenant's orgs (none at all without a tenant). The dropdown
+     * used to list every tenant's org structure. "No specific organisation"
+     * gives a scoped caller's exam their own tenant root (exam_manager).
+     */
     private function get_org_options(): array {
         global $DB;
-        $orgs = $DB->get_records('local_sentientia_org', ['visible' => 1],
-            'depth ASC, fullname ASC', 'id, fullname, depth');
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            $orgs = $DB->get_records('local_sentientia_org', ['visible' => 1],
+                'depth ASC, fullname ASC', 'id, fullname, depth');
+        } else {
+            [$tsql, $targs] = \local_sentientia_platform\tenant::path_filter('', 'path');
+            $orgs = $DB->get_records_select('local_sentientia_org', "visible = 1 AND {$tsql}",
+                $targs, 'depth ASC, fullname ASC', 'id, fullname, depth');
+        }
         $options = [0 => '— No specific organisation —'];
         foreach ($orgs as $o) {
             $indent = str_repeat('— ', max(0, $o->depth - 1));

@@ -212,3 +212,16 @@ Both are shared skill configuration, so both are anonymised rather than deleted 
 
 Version bumped to 2026092202 so the cached privacy registry picks up the new declarations. en + hi
 strings added at parity.
+
+## 2026-09-25 - ADR-031: :manage_all is cross-tenant only (0.1.3-alpha, 2026092500)
+
+Sweep hits `local/sentientia_skillsai:manage_all` (default grant) and `:viewgaps` (tenant-0 fail-open), both
+CONFIRMED.
+
+- **Default grant removed:** `:manage_all` now has `archetypes => []` (risk: personal + dataloss). Upgrade step 2026092500 revokes it from every role.
+- **Caller must also be cross-tenant:** `taxonomy_manager::can_manage_all()` requires `:manage_all` AND `tenant::is_cross_tenant()`, so a stray grant cannot unscope anyone. It is used by gaps, index, review and taxonomy.
+- **`gap_engine::tenant_summary(?int)`:** null means every tenant, and only the caller decides that. A tenant root of 0 or less returns nothing; 0 used to mean every tenant.
+- **gaps.php:** it resolves the tenant with `tenant::root_for_user()`, and the per-user feed and rebuild use `tenant::require_same_tenant_user()`.
+- **No-tenant callers:** `list_for_actor()` and `load_for_actor()` give an actor with no tenant only their own jobs, not the costcenterid-0 bucket. taxonomy.php shows and maps nothing for a caller with no tenant.
+- **Still dormant:** all four skillsai flags stay default OFF.
+- **Tests:** `tests/tenant_scope_test.php` (`@group tenant_isolation`).

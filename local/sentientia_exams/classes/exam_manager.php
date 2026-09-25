@@ -33,6 +33,26 @@ class exam_manager {
     }
 
     /**
+     * ADR-031: exam counts for the index KPI tiles, scoped exactly like
+     * list_exams (cross-tenant: every exam; scoped: the caller's tenant;
+     * no tenant: none). The tiles used to count every tenant's exams.
+     *
+     * @param int|null $status STATUS_* filter, or null for all
+     * @return int
+     */
+    public static function count_scoped(?int $status = null): int {
+        global $DB;
+        [$tsql, $params] = \local_sentientia_platform\tenant::path_filter('e');
+        $where = $tsql;
+        if ($status !== null) {
+            $where .= ' AND e.status = :exstatus';
+            $params['exstatus'] = $status;
+        }
+        return (int) $DB->count_records_sql(
+            "SELECT COUNT(1) FROM {" . self::TABLE . "} e WHERE {$where}", $params);
+    }
+
+    /**
      * Get exam record by course module ID.
      *
      * Replaces core_renderer.php line 1719:
@@ -104,8 +124,107 @@ class exam_manager {
     public const STATUS_INACTIVE = 0;
     public const STATUS_ACTIVE   = 1;
 
+    // ═══════════════════════════════════════════════════════════════════
+    // ADR-031 tenant scope (2026-09-25)
+    //
+    // :view, :manage and :enrol say WHAT a caller may do, never WHERE.
+    // Every holder is a tenant admin (a manager-archetype role at system
+    // context) unless tenant::is_cross_tenant() says otherwise, so every
+    // read or write that names an exam checks the exam against the
+    // caller's tenant here. Until 2026-09-25 any holder could open, edit,
+    // deactivate or delete any tenant's exam by id.
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * ADR-031: refuse unless the current user may act on this exam.
+     *
+     * Cross-tenant callers (site admin, :crosstenant) always may. Anyone
+     * else only when the exam's open_path lies in their own tenant. An exam
+     * with no open_path ("No specific organisation", or an org that has
+     * gone) cannot be shown to be in anyone's tenant, so it is left to
+     * cross-tenant callers: tenant::require_path_access() alone lets an
+     * empty path through.
+     *
+     * @param \stdClass $exam exam record carrying open_path
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_exam_access(\stdClass $exam): void {
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return;
+        }
+        $path = rtrim(trim((string) ($exam->open_path ?? '')), '/');
+        if ($path === '') {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        \local_sentientia_platform\tenant::require_path_access($path);
+    }
+
+    /**
+     * ADR-031: refuse a quiz whose course belongs to another tenant.
+     *
+     * The exam's tenant and its quiz's course tenant are independent, so a
+     * tenant admin could otherwise wrap another tenant's quiz in an exam of
+     * their own and read its attempts. A legacy course with no open_path
+     * (listed for every tenant) passes: view.php scopes every learner row to
+     * the caller's tenant regardless.
+     *
+     * @param int $quizid
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_quiz_in_scope(int $quizid): void {
+        global $DB;
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return;
+        }
+        $path = (string) $DB->get_field_sql(
+            "SELECT c.open_path
+               FROM {quiz} q
+               JOIN {course} c ON c.id = q.course
+              WHERE q.id = :qid",
+            ['qid' => $quizid]);
+        $path = rtrim(trim($path), '/');
+        if ($path !== '') {
+            \local_sentientia_platform\tenant::require_path_access($path);
+        }
+    }
+
+    /**
+     * ADR-031: the [costcenterid, open_path] a scoped caller may write.
+     *
+     * Only for callers who are NOT cross-tenant (they keep the old
+     * behaviour). The organisation must be inside the caller's own tenant;
+     * "No specific organisation" (0) gives the exam the caller's tenant
+     * root instead of the no-open_path exam their own list could never
+     * show. A caller with no resolvable tenant writes nothing.
+     *
+     * @param int $orgid local_sentientia_org.id, or 0
+     * @return array{0: int, 1: string} [costcenterid, open_path]
+     * @throws \moodle_exception error_outoftenant
+     */
+    private static function scoped_org(int $orgid): array {
+        global $DB;
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === null || $scope === '') {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        if ($orgid <= 0) {
+            return [0, $scope];
+        }
+        $org = $DB->get_record('local_sentientia_org', ['id' => $orgid], 'id, path');
+        $path = $org ? rtrim(trim((string) $org->path), '/') : '';
+        if ($path === '') {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        \local_sentientia_platform\tenant::require_path_access($path);
+        return [(int) $org->id, (string) $org->path];
+    }
+
     /**
      * Get all quizzes available for picker, formatted as 'Quiz Name (Course Name)'.
+     *
+     * ADR-031: a scoped caller sees only quizzes in their own tenant's
+     * courses (plus legacy courses with no open_path); the picker used to
+     * list every tenant's quizzes and course names.
      */
     public static function get_quiz_options(array $exclude_quizids = []): array {
         global $DB;
@@ -116,6 +235,17 @@ class exam_manager {
             [$insql, $inparams] = $DB->get_in_or_equal($exclude_quizids, SQL_PARAMS_NAMED, 'qid', false);
             $where .= " AND q.id $insql";
             $params = $inparams;
+        }
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === null) {
+            // Scoped caller with no tenant: offer nothing (fail closed).
+            return [0 => '— Select a quiz to register as exam —'];
+        }
+        if ($scope !== '') {
+            [$tsql, $targs] = \local_sentientia_platform\tenant::path_descendant_filter(
+                $scope, 'c', 'open_path', 'exq');
+            $where .= " AND (c.open_path IS NULL OR c.open_path = '' OR {$tsql})";
+            $params = array_merge($params, $targs);
         }
 
         $rows = $DB->get_records_sql(
@@ -180,7 +310,12 @@ class exam_manager {
             'timemodified' => time(),
         ];
 
-        if ($record->costcenterid > 0) {
+        if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
+            // ADR-031: a scoped caller creates only inside their own tenant,
+            // around a quiz from their own tenant's courses.
+            self::require_quiz_in_scope($record->quizid);
+            [$record->costcenterid, $record->open_path] = self::scoped_org($record->costcenterid);
+        } else if ($record->costcenterid > 0) {
             $org = $DB->get_record('local_sentientia_org', ['id' => $record->costcenterid]);
             if ($org) {
                 $record->open_path = $org->path;
@@ -197,6 +332,9 @@ class exam_manager {
         global $DB;
 
         $existing = $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
+        // ADR-031: the exam being edited must be in the caller's tenant.
+        self::require_exam_access($existing);
+        $crosstenant = \local_sentientia_platform\tenant::is_cross_tenant();
 
         $record = (object) ['id' => $id, 'timemodified' => time()];
 
@@ -205,6 +343,7 @@ class exam_manager {
             if (!$DB->record_exists('quiz', ['id' => $data->quizid])) {
                 throw new \moodle_exception('invalidquiz', 'local_sentientia_exams');
             }
+            self::require_quiz_in_scope((int) $data->quizid);
             if ($DB->record_exists_select(self::TABLE,
                 'quizid = :qid AND id != :id', ['qid' => $data->quizid, 'id' => $id])) {
                 throw new \moodle_exception('quizalreadyregistered', 'local_sentientia_exams');
@@ -227,8 +366,13 @@ class exam_manager {
         }
 
         if (isset($record->costcenterid) && $record->costcenterid != $existing->costcenterid) {
-            $org = $DB->get_record('local_sentientia_org', ['id' => $record->costcenterid]);
-            $record->open_path = $org ? $org->path : '';
+            if (!$crosstenant) {
+                // ADR-031: a scoped caller may only re-home inside their tenant.
+                [$record->costcenterid, $record->open_path] = self::scoped_org($record->costcenterid);
+            } else {
+                $org = $DB->get_record('local_sentientia_org', ['id' => $record->costcenterid]);
+                $record->open_path = $org ? $org->path : '';
+            }
         }
 
         $DB->update_record(self::TABLE, $record);
@@ -238,7 +382,9 @@ class exam_manager {
     /** Toggle exam active/inactive. */
     public static function toggle_status(int $id, ?bool $active = null): bool {
         global $DB;
-        $existing = $DB->get_record(self::TABLE, ['id' => $id], 'id, status', MUST_EXIST);
+        $existing = $DB->get_record(self::TABLE, ['id' => $id], 'id, status, open_path', MUST_EXIST);
+        // ADR-031: only an exam in the caller's tenant.
+        self::require_exam_access($existing);
         $newstate = $active ?? !((bool) $existing->status);
         $DB->update_record(self::TABLE, (object) [
             'id' => $id,
@@ -251,7 +397,9 @@ class exam_manager {
     /** Delete wrapper record (does NOT touch the underlying Moodle quiz). */
     public static function delete(int $id): bool {
         global $DB;
-        $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
+        $existing = $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
+        // ADR-031: only an exam in the caller's tenant.
+        self::require_exam_access($existing);
         $DB->delete_records(self::TABLE, ['id' => $id]);
         return true;
     }

@@ -21,6 +21,12 @@ class delete_skill extends external_api {
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/sentientia_skills:manage', $context);
+        // ADR-031: deleting a skill also deletes every tenant's learners'
+        // levels for it (skills_manager::delete_skill) - a destructive write
+        // across tenants, so cross-tenant callers only, whoever holds :manage.
+        if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
 
         $success = \local_sentientia_skills\skills_manager::delete_skill($params['skillid']);
         return ['skillid' => $params['skillid'], 'success' => $success];

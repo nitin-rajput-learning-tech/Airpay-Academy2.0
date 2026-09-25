@@ -145,6 +145,13 @@ class edit_evaluation extends \core_form\dynamic_form {
         $data = $this->get_data();
         $evaluationid = (int) $data->evaluationid;
 
+        // ADR-031: a scoped caller may only bind the evaluation to an org in
+        // their own tenant; "no organisation" (a global evaluation sent to
+        // every tenant) becomes their tenant root. Cross-tenant: unchanged.
+        if (isset($data->costcenterid)) {
+            $data->costcenterid = evaluation_manager::scoped_costcenterid((int) $data->costcenterid);
+        }
+
         if ($evaluationid === 0) {
             $newid = evaluation_manager::create($data);
             return ['evaluationid' => $newid, 'message' => get_string('evaluationcreated', 'local_sentientia_evaluation')];
@@ -164,6 +171,8 @@ class edit_evaluation extends \core_form\dynamic_form {
         }
 
         $e = $DB->get_record('local_sentientia_evaluation', ['id' => $evaluationid], '*', MUST_EXIST);
+        // ADR-031: never pre-fill another tenant's evaluation.
+        evaluation_manager::require_evaluation_access($e);
         $this->set_data((object) [
             'evaluationid'      => $e->id,
             'name'              => $e->name,
@@ -190,21 +199,24 @@ class edit_evaluation extends \core_form\dynamic_form {
 
     protected function check_access_for_dynamic_submission(): void {
         require_capability('local/sentientia_evaluation:manage', $this->get_context_for_dynamic_submission());
+        // ADR-031: :manage says WHAT, not WHERE - editing an existing
+        // evaluation needs it to be in the caller's tenant.
+        $evaluationid = (int) $this->optional_param('evaluationid', 0, PARAM_INT);
+        if ($evaluationid > 0) {
+            evaluation_manager::require_evaluation_access_by_id($evaluationid);
+        }
     }
 
     protected function get_context_for_dynamic_submission(): \context {
         return \context_system::instance();
     }
 
+    /**
+     * ADR-031: every org (plus "No specific organisation") for a
+     * cross-tenant caller; the caller's own tenant's orgs otherwise. The
+     * dropdown used to list every tenant's org structure to every manager.
+     */
     private function get_org_options(): array {
-        global $DB;
-        $orgs = $DB->get_records('local_sentientia_org', ['visible' => 1],
-            'depth ASC, fullname ASC', 'id, fullname, depth');
-        $options = [0 => '— No specific organisation —'];
-        foreach ($orgs as $o) {
-            $indent = str_repeat('— ', max(0, $o->depth - 1));
-            $options[$o->id] = $indent . format_string($o->fullname);
-        }
-        return $options;
+        return evaluation_manager::org_options();
     }
 }

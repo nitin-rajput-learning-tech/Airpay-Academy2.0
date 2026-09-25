@@ -28,7 +28,8 @@ class get_attempt extends external_api {
         $s = $DB->get_record('local_sentientia_proctor_sessions',
             ['id' => $params['sessionid']], '*', MUST_EXIST);
         // ── B2 fix: tenant equality required ────────────────────────────
-        \local_sentientia_platform\tenant::require_access((int) $s->costcenterid);
+        // ADR-031: and a viewer with no tenant sees nothing.
+        \local_sentientia_proctoring\session_manager::require_session_access((int) $s->costcenterid);
 
         $events = $DB->get_records('local_sentientia_proctor_events',
             ['sessionid' => $s->id], 'timecreated ASC');

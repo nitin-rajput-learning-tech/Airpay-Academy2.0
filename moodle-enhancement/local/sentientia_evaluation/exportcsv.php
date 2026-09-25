@@ -32,19 +32,11 @@ $classroomid = optional_param('classroomid', 0,  PARAM_INT);
 $eval = $DB->get_record('local_sentientia_evaluation',
     ['id' => $evaluationid], '*', MUST_EXIST);
 
-// Tenant scope: non-siteadmin only sees evaluations in their org tree.
-if (!is_siteadmin()) {
-    $parts = explode('/', trim($USER->open_path ?? '', '/'));
-    $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
-    if ($top > 0 && !empty($eval->open_path)) {
-        $epath = trim($eval->open_path, '/');
-        $eparts = explode('/', $epath);
-        $etop = isset($eparts[0]) && ctype_digit($eparts[0]) ? (int) $eparts[0] : 0;
-        if ($etop !== $top) {
-            throw new \moodle_exception('nopermissions', 'error');
-        }
-    }
-}
+// ADR-031: only an evaluation in the caller's tenant. The inline check this
+// replaces was skipped whenever the caller had no tenant or the evaluation no
+// open_path - which is every global (costcenterid 0) evaluation, the one kind
+// that collects answers from every tenant.
+\local_sentientia_evaluation\evaluation_manager::require_evaluation_access($eval);
 
 // Build the filter array. Date strings come in as YYYY-MM-DD; parse to ts.
 $filters = ['evaluationid' => $evaluationid];

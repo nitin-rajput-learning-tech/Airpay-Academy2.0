@@ -111,3 +111,17 @@ Found by a read-only audit of all 38 Sentientia privacy providers, run because `
 ## 2026-09-24 - Erasure review follow-up
 
 (1) `anonymise_data_for_user()` no longer nulls `consent_given_at` on kept sessions: it is the lawful-basis record for the kept exam-integrity verdict. (2) A REVIEWER's data was never found: `get_contexts_for_userid()` and `get_users_in_context()` now include `reviews.reviewer_userid`, and both erasure paths anonymise it to 0 while keeping the candidate's review.
+
+## 2026-09-25 - ADR-031: badge scoped, no-tenant reviewers fail closed (1.0.4, 2026092500)
+
+Sweep hit `local/sentientia_proctoring:review` (CONFIRMED, low). The "Review queue (N)" badge in `lib.php`
+counted every tenant's flagged sessions. It now uses `tenant::sql_filter()`, so it equals the queue the
+reviewer actually sees.
+
+`session_manager::require_session_access()` now backs flag_session, submit_review, get_attempt and
+`attempt.php`. A viewer who is not cross-tenant must have a tenant of their own. `tenant::require_access(0)`
+used to match a no-tenant reviewer to every session stamped costcenterid 0.
+
+The `:review` default grant is unchanged: it is a tenant-scoped reviewer capability by design.
+
+Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`).

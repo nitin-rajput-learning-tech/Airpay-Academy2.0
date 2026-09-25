@@ -26,6 +26,9 @@ $evaluation = \local_sentientia_evaluation\evaluation_manager::get($evaluationid
 if (!$evaluation) {
     throw new moodle_exception('invalidevaluation', 'local_sentientia_evaluation');
 }
+// ADR-031: names and emails of assignees only for an evaluation in the
+// caller's tenant.
+\local_sentientia_evaluation\evaluation_manager::require_evaluation_access($evaluation);
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/sentientia_evaluation/non_respondents.php',
