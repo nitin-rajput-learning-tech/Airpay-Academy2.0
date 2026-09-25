@@ -148,3 +148,16 @@ Found by a read-only audit of all 38 Sentientia privacy providers, run because `
 ## 2026-09-24 - Erasure review follow-up
 
 `form\decide_request_dynamic_form::check_access_for_dynamic_submission()` checked only the `:approve` capability, so any approver could decide any request by id. It now applies the same ownership gate as `external\decide_request` and `bulk_decide`: the assigned manager, or a site admin.
+
+## 2026-09-25 - ADR-031: member drill-down bounded to the viewer's tenant (1.3.3 -> 1.3.4, 2026092500)
+
+`team_manager::can_view_member()` returned true for any target once the viewer held
+`local/sentientia_users:view` - which every tenant admin does (manager archetype) - so member.php
+showed any tenant's user (name, email, employee id, org, courses, progress, certificate codes). The
+capability branch now also requires `team_manager::same_tenant()` (integer tenant roots, fail closed
+for an unresolvable viewer or target); a refused holder still falls through to the supervisor-chain
+walk. Only `tenant::is_cross_tenant()` sees anyone. index.php's `?manager=` pick (for
+`local/courses:manage` holders) is bounded the same way for callers who are not cross-tenant.
+`local_sentientia_platform` declared as a dependency. Tests: `tests/tenant_scope_test.php`
+(`@group tenant_isolation`). The supervisor chain itself is not tenant-bounded (supervisor links are
+already guarded against crossing tenants when set).

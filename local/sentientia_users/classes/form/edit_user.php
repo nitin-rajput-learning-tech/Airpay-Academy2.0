@@ -245,6 +245,13 @@ class edit_user extends \core_form\dynamic_form {
             $errors['password'] = get_string('required');
         }
 
+        // ADR-031: the organisation decides the account's tenant, so check it
+        // server side; the option list alone is no security boundary.
+        $orgerror = self::org_choice_error((int) ($data['open_costcenterid'] ?? 0));
+        if ($orgerror !== null) {
+            $errors['open_costcenterid'] = $orgerror;
+        }
+
         return $errors;
     }
 
@@ -254,10 +261,23 @@ class edit_user extends \core_form\dynamic_form {
      * @return array  Response data sent back to JS (e.g. {userid: X, message: "..."})
      */
     public function process_dynamic_submission() {
+        global $DB;
         $data = $this->get_data();
         $userid = (int) $data->userid;
 
         if ($userid === 0) {
+            // ADR-031: a scoped caller who picks no organisation creates the
+            // account at their own tenant root, never outside every tenant
+            // (the same rule bulk_import_processor applies).
+            $scope = \local_sentientia_platform\tenant::scope_path();
+            if ($scope !== '' && empty($data->open_costcenterid)) {
+                $rootorgid = $scope === null ? false
+                    : $DB->get_field('local_sentientia_org', 'id', ['path' => $scope]);
+                if (!$rootorgid) {
+                    throw new \moodle_exception('invalidtenant', 'local_sentientia_users');
+                }
+                $data->open_costcenterid = (int) $rootorgid;
+            }
             // Create.
             $newid = \local_sentientia_users\user_manager::create($data);
             return [
@@ -289,6 +309,8 @@ class edit_user extends \core_form\dynamic_form {
         // N1: same rule as check_access_for_dynamic_submission(), repeated
         // here because this is the method that actually reads the record,
         // and it must not depend on the constructor having run the check.
+        // ADR-031: and the stricter "may act on" rule, before the load.
+        \local_sentientia_users\user_manager::require_can_act_on($userid);
         $user = \local_sentientia_users\profile_access::get_viewable_user(
             (int) $USER->id, $userid);
 
@@ -349,6 +371,10 @@ class edit_user extends \core_form\dynamic_form {
         } else {
             require_capability('local/sentientia_users:edit', $context);
             \local_sentientia_users\profile_access::require_can_view((int) $USER->id, $userid);
+            // ADR-031: never a site admin or a cross-tenant account for a
+            // scoped editor, even one in their own tenant - this form resets
+            // passwords, so that would be a takeover of wider authority.
+            \local_sentientia_users\user_manager::require_can_act_on($userid);
         }
     }
 
@@ -365,16 +391,74 @@ class edit_user extends \core_form\dynamic_form {
      * Get organisation options for dropdown.
      */
     private function get_org_options(): array {
+        return self::org_options_for_current_user();
+    }
+
+    /**
+     * ADR-031: the organisations the current user may put an account in.
+     *
+     * A cross-tenant caller gets every visible organisation, as before. Anyone
+     * else gets their own tenant's subtree only, and a caller with no
+     * resolvable tenant gets none (the placeholder only). This list used to
+     * offer - and so leak the names of - every tenant's organisations.
+     *
+     * @return array<int, string> org id => indented label
+     */
+    public static function org_options_for_current_user(): array {
         global $DB;
-        $orgs = $DB->get_records('local_sentientia_org', ['visible' => 1],
-            'depth ASC, fullname ASC', 'id, fullname, depth');
 
         $options = [0 => '— Select organisation —'];
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === null) {
+            return $options;
+        }
+        $where = 'visible = 1';
+        $params = [];
+        if ($scope !== '') {
+            [$scopesql, $params] = \local_sentientia_platform\tenant::path_descendant_filter(
+                $scope, '', 'path', 'orgopt');
+            $where .= ' AND ' . $scopesql;
+        }
+        $orgs = $DB->get_records_select('local_sentientia_org', $where, $params,
+            'depth ASC, fullname ASC', 'id, fullname, depth');
         foreach ($orgs as $o) {
             // Indent by depth for visual hierarchy.
             $indent = str_repeat('— ', max(0, $o->depth - 1));
             $options[$o->id] = $indent . format_string($o->fullname);
         }
         return $options;
+    }
+
+    /**
+     * ADR-031: may the current user place an account in organisation $orgid?
+     *
+     * A cross-tenant caller may pick any. Anyone else only an organisation whose
+     * path is their tenant root or '/'-bounded beneath it (so /1 never admits
+     * /10 or /177); a caller with no resolvable tenant may pick none. 0 is
+     * allowed: on edit it leaves the tenant unchanged, and on create
+     * process_dynamic_submission() puts the account at the caller's own root.
+     *
+     * @param int $orgid chosen open_costcenterid
+     * @return string|null the error to show, or null when the choice is allowed
+     */
+    public static function org_choice_error(int $orgid): ?string {
+        global $DB;
+
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === '') {
+            return null;
+        }
+        if ($scope === null) {
+            return get_string('invalidtenant', 'local_sentientia_users');
+        }
+        if ($orgid <= 0) {
+            return null;
+        }
+        $org = $DB->get_record('local_sentientia_org', ['id' => $orgid], 'id, path');
+        $path = $org ? rtrim(trim((string) $org->path), '/') : '';
+        if ($path === '' || ($path !== $scope && strpos($path, $scope . '/') !== 0)) {
+            return get_string('outoftenant', 'local_sentientia_users');
+        }
+        return null;
     }
 }

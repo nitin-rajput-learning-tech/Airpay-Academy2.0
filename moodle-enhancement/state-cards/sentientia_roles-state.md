@@ -256,3 +256,32 @@ admin-only role-management surface).
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+## 2026-09-25 - ADR-031: role authority is cross-tenant only (1.1.3-beta -> 1.2.0-beta, 2026092500)
+
+Tenant admins hold a manager-archetype role at system context, and `:manage`, `:assign`, `:view`,
+`:audit` and `:export` all defaulted to that archetype while `role_manager` never looked at a tenant.
+So any tenant admin could rewrite the role definitions every tenant shares (including re-granting
+themselves the cross-tenant capabilities revoked elsewhere, or `moodle/site:config`), assign any system
+role to anyone in any tenant, and read every tenant's role holders and audit log.
+
+- `update_capability()` / `bulk_update_capability()` and the edit-capability form now require
+  `tenant::is_cross_tenant()`; `:manage` holders who are not cross-tenant get
+  `err_definitions_crosstenant`. The edit buttons are shown only to cross-tenant `:manage` holders.
+- `:manage` and `:assign`: archetypes `[]` (+ `RISK_MANAGETRUST`); upgrade step 2026092500
+  `unassign_capability()`s both from every role at system context.
+- `assign_user_to_role()` / `unassign_user_from_role()`: a caller who is not cross-tenant may only
+  act on somebody else in their own tenant (never a site admin or cross-tenant account), only with a
+  role they hold at system context themselves, and only if `get_assignable_roles()` (the allow-assign
+  matrix) permits it. The tenant check runs before the existence check (no id oracle).
+- `list_role_assignments()`, the counts in `list_roles()` / `get_role()`, and `list_audit()` are
+  tenant-bounded (audit: entries made by, or made to, someone in the caller's tenant) and return
+  nothing for a caller with no resolvable tenant. `:view`/`:audit`/`:export` keep their manager
+  default (+ `RISK_PERSONAL`).
+- Audit CSV export pages through the whole (scoped) log via `audit_rows_all()`; it had been silently
+  truncated to 100 rows by `list_audit()`'s clamp.
+- Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`).
+- Action for Nitin: a platform (cross-tenant) role that should edit role definitions or assign roles
+  must be granted `:manage` / `:assign` (and `local/sentientia_platform:crosstenant`) deliberately.
+  Core `moodle/role:manage` / `:override` on the tenant-admin role still reach `/admin/roles/` - that
+  root cause is outside this plugin.

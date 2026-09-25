@@ -17,7 +17,8 @@ use core_external\external_value;
  * dropdowns: designation, location, hrmsrole, employmenttype.
  *
  * Tenant-scoped so a Public-tenant admin only sees designations that exist
- * in Public-tenant users. Cached for 5 minutes via Moodle application cache.
+ * in Public-tenant users. Not cached (a tenant-agnostic cache key would leak
+ * across tenants).
  *
  * Returns a {field: [value1, value2, ...]} dict so the client can populate
  * all four dropdowns in a single roundtrip.
@@ -63,8 +64,8 @@ class list_filter_options extends external_api {
             $requested = array_values(array_intersect($requested, self::ALLOWED_FIELDS));
         }
 
-        // Tenant scope clause for non-siteadmin.
-        [$tenant_sql, $tenant_args] = self::tenant_filter($USER);
+        // Tenant scope clause for non-cross-tenant callers.
+        [$tenant_sql, $tenant_args] = self::tenant_filter();
 
         $result = [];
         foreach ($requested as $field) {
@@ -96,22 +97,15 @@ class list_filter_options extends external_api {
     }
 
     /**
-     * Build the tenant-scope WHERE fragment for non-siteadmin callers.
-     * Returns ['', []] for siteadmin (no extra filter).
+     * Build the tenant-scope WHERE fragment for the current user.
+     *
+     * ADR-031: tenant::path_filter() - unbounded ('1=1') only for a
+     * cross-tenant caller, the '/'-bounded tenant otherwise, and '1=0' for a
+     * caller with no resolvable tenant, who used to get every tenant's values.
      */
-    private static function tenant_filter(\stdClass $user): array {
-        if (is_siteadmin($user)) {
-            return ['', []];
-        }
-        $parts = explode('/', trim((string) ($user->open_path ?? ''), '/'));
-        $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
-        if ($top === 0) {
-            return ['', []];
-        }
-        return [
-            'AND (open_path = :tnexact OR open_path LIKE :tnprefix)',
-            ['tnexact' => '/' . $top, 'tnprefix' => '/' . $top . '/%'],
-        ];
+    private static function tenant_filter(): array {
+        [$sql, $args] = \local_sentientia_platform\tenant::path_filter('', 'open_path');
+        return ['AND ' . $sql, $args];
     }
 
     public static function execute_returns(): external_single_structure {

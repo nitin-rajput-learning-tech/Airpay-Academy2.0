@@ -185,6 +185,23 @@ class edit_org extends \core_form\dynamic_form {
 
     protected function check_access_for_dynamic_submission(): void {
         require_capability('local/sentientia_org:manage', $this->get_context_for_dynamic_submission());
+
+        // ADR-031: :manage says WHAT, not WHERE. A caller who is not
+        // cross-tenant edits only nodes inside their own tenant, and creates
+        // only beneath one - a new top-level tenant is cross-tenant only.
+        // delete_org / toggle_visibility already bound their target; this form
+        // did not, so any :manage holder could rename or re-brand any tenant.
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return;
+        }
+        $orgid = (int) $this->optional_param('orgid', 0, PARAM_INT);
+        $target = $orgid > 0
+            ? org_manager::get($orgid)
+            : org_manager::get((int) $this->optional_param('parentid', 0, PARAM_INT));
+        if (!$target) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        org_manager::require_in_scope($target);
     }
 
     protected function get_context_for_dynamic_submission(): \context {
@@ -197,9 +214,23 @@ class edit_org extends \core_form\dynamic_form {
      */
     private function get_parent_options(): array {
         global $DB;
-        $options = [0 => get_string('top_level_tenant', 'local_sentientia_org')];
+        // ADR-031: a new top-level tenant, and parents in other tenants, are
+        // offered to a cross-tenant caller only.
+        $options = [];
+        $where = 'depth <= 4';
+        $params = [];
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === '') {
+            $options[0] = get_string('top_level_tenant', 'local_sentientia_org');
+        } else if ($scope === null) {
+            $where .= ' AND 1=0';
+        } else {
+            [$scopesql, $params] = \local_sentientia_platform\tenant::path_descendant_filter(
+                $scope, '', 'path', 'orgparent');
+            $where .= ' AND ' . $scopesql;
+        }
         $orgs = $DB->get_records_select('local_sentientia_org',
-            'depth <= 4', null, 'depth ASC, fullname ASC',
+            $where, $params, 'depth ASC, fullname ASC',
             'id, fullname, depth');
         foreach ($orgs as $o) {
             $indent = str_repeat('— ', max(0, $o->depth - 1));

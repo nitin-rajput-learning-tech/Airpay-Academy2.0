@@ -15,8 +15,9 @@ require_capability('local/sentientia_users:create', $context);
 
 $run = $DB->get_record('local_sentientia_users_sync_runs', ['id' => $run_id], '*', MUST_EXIST);
 
-// Tenant scoping: non-siteadmin can only view runs in their tenant.
-if (!is_siteadmin()) {
+// Tenant scoping: only a cross-tenant caller (ADR-031) sees any tenant's run;
+// anyone else only runs in their own tenant, and nothing without one.
+if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
     $caller_path = (string) ($USER->open_path ?? '');
     $parts = explode('/', trim($caller_path, '/'));
     $tenant = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;

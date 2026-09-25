@@ -26,7 +26,9 @@ $PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('heading_view', 'local_sentientia_roles', $role['name']));
 $PAGE->set_heading(get_string('heading_view', 'local_sentientia_roles', $role['name']));
 
-$can_manage = has_capability('local/sentientia_roles:manage', $context);
+// ADR-031: editing a role definition is cross-tenant only.
+$can_manage = has_capability('local/sentientia_roles:manage', $context)
+    && \local_sentientia_platform\tenant::is_cross_tenant();
 
 // Capabilities tab columns.
 $caps_columns = [

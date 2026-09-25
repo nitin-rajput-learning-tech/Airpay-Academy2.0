@@ -258,6 +258,17 @@ class org_manager {
             return ['', []];
         }
 
+        // ADR-031: every list_* web service that calls this uses the fragment
+        // INSTEAD of the caller's tenant filter, and the org id comes from the
+        // client. So a caller who is not cross-tenant may only cascade into
+        // their own tenant: another tenant's org - or any org at all when the
+        // caller's own tenant does not resolve - yields a fragment that matches
+        // nothing. (Passing {"org_l1": <other tenant's root>} used to list that
+        // tenant's programs, reports, classrooms, evaluations, exams and paths.)
+        if (!self::path_in_scope((string) $org->path)) {
+            return ['1=0', []];
+        }
+
         // Use unique param names so callers can pass alongside theirs.
         $exactkey  = 'orgcascade_exact_' . $tablealias;
         $prefixkey = 'orgcascade_prefix_' . $tablealias;
@@ -268,6 +279,54 @@ class org_manager {
             $prefixkey => $DB->sql_like_escape(rtrim($org->path, '/') . '/') . '%',
         ];
         return [$sql, $args];
+    }
+
+    /**
+     * ADR-031: every org node the current user may see - the whole forest for
+     * a cross-tenant caller, their own tenant's tree otherwise, and nothing
+     * for a caller whose tenant does not resolve (tenant::path_filter()).
+     *
+     * @return array org records keyed by id, tenants first
+     */
+    public static function get_all_in_scope(): array {
+        global $DB;
+        [$sql, $params] = \local_sentientia_platform\tenant::path_filter('', 'path');
+        return $DB->get_records_select(self::TABLE, $sql, $params,
+            'depth ASC, sortorder ASC, fullname ASC');
+    }
+
+    /**
+     * ADR-031: may the current user see/act on an org at $path?
+     *
+     * A cross-tenant caller (site admin or :crosstenant): always. Anyone else
+     * only when the path is their tenant root or '/'-bounded beneath it, so
+     * /1 never admits /10 or /177; an empty path (a legacy row that belongs to
+     * no tenant) and a caller with no resolvable tenant are both refused.
+     *
+     * @param string $path the org's path
+     * @return bool
+     */
+    public static function path_in_scope(string $path): bool {
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === '') {
+            return true;
+        }
+        $path = rtrim(trim($path), '/');
+        return $scope !== null && $path !== ''
+            && ($path === $scope || strpos($path, $scope . '/') === 0);
+    }
+
+    /**
+     * ADR-031: throw unless the current user may act on $org
+     * ({@see self::path_in_scope()}). For every write that names an org.
+     *
+     * @param \stdClass $org an org record carrying path
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_in_scope(\stdClass $org): void {
+        if (!self::path_in_scope((string) ($org->path ?? ''))) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════

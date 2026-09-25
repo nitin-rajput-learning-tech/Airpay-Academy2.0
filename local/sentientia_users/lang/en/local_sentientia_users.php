@@ -86,6 +86,11 @@ $string['cannotdeletesystemuser'] = 'System users cannot be deleted.';
 // N1 (2026-09-24): the one refusal for another user's profile. Shown alike for
 // an out-of-tenant id and an id that does not exist, so it never confirms either.
 $string['error_profilenotavailable'] = 'This profile is not available to you.';
+// ADR-031 (2026-09-25). invalidtenant/outoftenant were thrown by the importers,
+// bulk actions and list_users without a string, so they rendered as [[key]].
+$string['invalidtenant'] = 'Your account is not linked to an organisation, so this action is not available to you.';
+$string['outoftenant'] = 'That organisation is outside your own tenant.';
+$string['cannotsuspendself'] = 'You cannot suspend your own account.';
 $string['confirmdelete'] = 'Are you sure you want to delete {$a}? This cannot be undone.';
 $string['confirmsuspend'] = 'Are you sure you want to suspend {$a}? They will be unable to log in.';
 $string['confirmactivate'] = 'Are you sure you want to reactivate {$a}?';

@@ -49,7 +49,9 @@ class get_role_caps extends external_api {
             $params['perm'], (int) $params['page'], (int) $params['perpage']);
 
         // Build a permission-select cell + reset action for each row.
-        $can_manage = has_capability('local/sentientia_roles:manage', $context);
+        // ADR-031: editing a role definition is cross-tenant only.
+        $can_manage = has_capability('local/sentientia_roles:manage', $context)
+            && \local_sentientia_platform\tenant::is_cross_tenant();
         foreach ($result['rows'] as &$row) {
             $perm = (int) $row['permission'];
             $row['perm_inherit']  = $perm === CAP_INHERIT;

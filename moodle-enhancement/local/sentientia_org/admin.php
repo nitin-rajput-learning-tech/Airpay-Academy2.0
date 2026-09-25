@@ -20,8 +20,12 @@ $PAGE->set_heading('Organisation Management');
 $PAGE->set_pagelayout('standard');
 $PAGE->set_secondary_navigation(false);
 
-// Get all org nodes once.
-$all_orgs = $DB->get_records('local_sentientia_org', null, 'depth ASC, sortorder ASC, fullname ASC');
+// Get all org nodes once. ADR-031: :view says WHAT, not WHERE - only a
+// cross-tenant caller sees every tenant's tree; a tenant admin sees their own,
+// and a caller whose tenant does not resolve sees none. (This page used to
+// load every tenant's hierarchy and headcounts for any :view holder.)
+$all_orgs = \local_sentientia_org\org_manager::get_all_in_scope();
+[$usersql, $userargs] = \local_sentientia_platform\tenant::path_filter('', 'open_path');
 
 // Group by parentid for fast tree assembly.
 $by_parent = [];
@@ -37,7 +41,9 @@ $path_count_rows = $DB->get_records_sql(
     "SELECT open_path AS p, COUNT(*) AS cnt
        FROM {user}
       WHERE deleted = 0 AND open_path IS NOT NULL AND open_path <> ''
-   GROUP BY open_path"
+        AND $usersql
+   GROUP BY open_path",
+    $userargs
 );
 foreach ($path_count_rows as $row) {
     // A user at '/1/2/3' counts toward '/1/2/3', '/1/2', and '/1'.
@@ -93,7 +99,8 @@ foreach ($tenant_records as $t) {
 }
 
 $total_orgs = count($all_orgs);
-$total_users = $DB->count_records_select('user', 'deleted = 0 AND suspended = 0 AND id > 2');
+$total_users = $DB->count_records_select('user', "deleted = 0 AND suspended = 0 AND id > 2 AND $usersql",
+    $userargs);
 
 // Phase B0+ — stat_card-compatible tiles.
 $kpi_tiles = [

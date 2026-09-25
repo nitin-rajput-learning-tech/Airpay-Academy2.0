@@ -30,8 +30,10 @@ fwrite($out, "\xEF\xBB\xBF");
 if ($scope === 'audit') {
     fputcsv($out, ['When', 'Who (user ID)', 'Role ID', 'Role shortname',
                    'Action', 'Capability', 'Old', 'New', 'Reason']);
-    $entries = \local_sentientia_roles\role_manager::list_audit(0, '', '', 0, 100000);
-    foreach ($entries['rows'] as $r) {
+    // ADR-031: audit_rows_all() is tenant-scoped (a caller with no tenant gets
+    // nothing) and pages the whole log; list_audit() clamps a page to 100 rows,
+    // which silently truncated this export.
+    foreach (\local_sentientia_roles\role_manager::audit_rows_all() as $r) {
         fputcsv($out, [
             $r['when'], $r['changedby'], $r['roleid'], $r['roleshortname'],
             $r['action'], $r['capability'], $r['oldlabel'], $r['newlabel'], $r['reason'],

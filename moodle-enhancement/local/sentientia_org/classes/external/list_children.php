@@ -27,9 +27,11 @@ use core_external\external_value;
  *   - input:  parentid (int, 0 = list root tenants), visible_only (bool)
  *   - output: rows[{id, name, path, depth, has_children}]
  *
- * Tenant scoping: non-siteadmins only see children whose path is inside
- * or equal to their own caller path (USER->open_path tree). Siteadmins
- * see everything.
+ * Tenant scoping: callers who are not cross-tenant only see children whose
+ * path is inside, equal to, or an ancestor of their own caller path
+ * (USER->open_path tree). Cross-tenant callers (ADR-031: site admin or
+ * :crosstenant) see everything. A caller whose tenant does not resolve sees
+ * nothing.
  */
 class list_children extends external_api {
 
@@ -52,17 +54,24 @@ class list_children extends external_api {
         self::validate_context($context);
         require_capability('local/sentientia_users:view', $context);
 
+        // Scoping: only return children that live under the caller's own org
+        // path. This matches BizLMS behaviour where a department admin couldn't
+        // see other departments. ADR-031: decided up front, and FAIL CLOSED -
+        // for a caller with no resolvable tenant the path used to be '', and
+        // strpos($orgpath, '' . '/') === 0 is true for every org path, so every
+        // tenant's tree came back.
+        $crosstenant = \local_sentientia_platform\tenant::is_cross_tenant();
+        $caller_path = '';
+        if (!$crosstenant) {
+            $trimmed = trim((string) ($USER->open_path ?? ''), '/');
+            if ($trimmed === '' || \local_sentientia_platform\tenant::root_for_user($USER) <= 0) {
+                return ['rows' => []];
+            }
+            $caller_path = '/' . $trimmed;
+        }
+
         $children = \local_sentientia_org\org_manager::get_children(
             $params['parentid'], $params['visible_only']);
-
-        // Non-siteadmin scoping: only return children that live under the
-        // caller's own org path. This matches BizLMS behaviour where a
-        // department admin couldn't see other departments.
-        $caller_path = '';
-        if (!is_siteadmin()) {
-            $caller_path = trim($USER->open_path ?? '', '/');
-            $caller_path = $caller_path ? '/' . $caller_path : '';
-        }
 
         // Pre-compute has_children for every row in one query — saves N+1
         // round-trips when the cascade renders deep trees.
@@ -83,9 +92,12 @@ class list_children extends external_api {
 
         $rows = [];
         foreach ($children as $org) {
-            // Apply non-siteadmin tenant filter.
-            if (!is_siteadmin()) {
-                $orgpath = $org->path ?? '';
+            // Apply the tenant filter to callers who are not cross-tenant.
+            if (!$crosstenant) {
+                $orgpath = rtrim((string) ($org->path ?? ''), '/');
+                if ($orgpath === '') {
+                    continue;  // A path-less legacy row belongs to no tenant.
+                }
                 $inside = ($orgpath === $caller_path)
                     || (strpos($orgpath, $caller_path . '/') === 0)
                     || (strpos($caller_path, $orgpath . '/') === 0);

@@ -51,8 +51,10 @@ class bulk_csv_processor {
         ];
 
         // Determine caller's tenant scope (mirrors bulk_action.php logic).
+        // ADR-031: only a cross-tenant caller (site admin or :crosstenant) is
+        // unscoped.
         $caller_tenant_top = 0;
-        if (!is_siteadmin($caller_userid)) {
+        if (!\local_sentientia_platform\tenant::is_cross_tenant($caller_userid)) {
             $caller = $DB->get_record('user', ['id' => $caller_userid],
                 'id, open_path');
             if ($caller) {
@@ -125,6 +127,18 @@ class bulk_csv_processor {
                     ];
                     continue;
                 }
+            }
+
+            // ADR-031: only a site admin may suspend a site admin, and a scoped
+            // caller never a cross-tenant account, even one in their tenant.
+            if (!is_siteadmin($caller_userid) && (is_siteadmin((int) $user->id)
+                    || ($caller_tenant_top > 0
+                        && \local_sentientia_platform\tenant::is_cross_tenant((int) $user->id)))) {
+                $summary['skipped'][] = [
+                    'email' => $email, 'action' => $action,
+                    'reason' => 'Cannot act on self/guest/site admin.',
+                ];
+                continue;
             }
 
             // Already in target state? — Skip without DB write.

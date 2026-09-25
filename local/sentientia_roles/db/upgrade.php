@@ -36,5 +36,29 @@ function xmldb_local_sentientia_roles_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026050700, 'local', 'sentientia_roles');
     }
 
+    // 2026092500 - ADR-031: take :manage and :assign back from every role.
+    //
+    // Both defaulted to the manager archetype. Tenant admins hold
+    // manager-archetype roles at system context (UAT's "administrator", id 9),
+    // so every tenant admin could rewrite the role definitions all tenants share
+    // (and re-grant themselves the cross-tenant capabilities revoked elsewhere),
+    // and assign any system role to anyone in any tenant. db/access.php now has
+    // no default for either, but changing an archetype never revokes what Moodle
+    // already applied - hence this explicit revoke. Site admins keep access by
+    // the admin bypass; a platform (cross-tenant) role that genuinely needs
+    // either must be granted it again, deliberately.
+    if ($oldversion < 2026092500) {
+        $syscontext = \context_system::instance();
+        foreach (['local/sentientia_roles:manage', 'local/sentientia_roles:assign'] as $cap) {
+            $roleids = $DB->get_fieldset_select('role_capabilities', 'DISTINCT roleid',
+                'capability = :cap', ['cap' => $cap]);
+            foreach ($roleids as $roleid) {
+                unassign_capability($cap, (int) $roleid, $syscontext->id);
+            }
+        }
+        $syscontext->mark_dirty();
+        upgrade_plugin_savepoint(true, 2026092500, 'local', 'sentientia_roles');
+    }
+
     return true;
 }

@@ -139,9 +139,15 @@ final class list_users_test extends \advanced_testcase {
         $this->grant_cap($caller, 'local/sentientia_users:view');
         $this->setUser($caller);
 
-        $this->expectException(\moodle_exception::class);
-        $this->expectExceptionMessage('outoftenant');
-        $this->call(['filters' => json_encode(['orgid' => 8002, 'status' => 'all'])]);
+        // Assert the error code, not the message: since ADR-031 (2026-09-25)
+        // 'outoftenant' has a lang string, so the message is its text rather
+        // than the raw "local_sentientia_users/outoftenant" key.
+        try {
+            $this->call(['filters' => json_encode(['orgid' => 8002, 'status' => 'all'])]);
+            $this->fail('An org outside the caller\'s tenant must be refused.');
+        } catch (\moodle_exception $e) {
+            $this->assertSame('outoftenant', $e->errorcode);
+        }
     }
 
     /**

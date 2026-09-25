@@ -61,13 +61,21 @@ $plugin->component = 'local_sentientia_users';
 // posted id); list_users and exportcsv fail closed for an unresolvable
 // caller and for a missing org filter; local_sentientia_platform, whose
 // tenant class this plugin already calls unconditionally, is declared.
-$plugin->version   = 2026092401;  // N1 review: supervisor label + list fail-closed
+// 2026-09-25 — ADR-031: :create/:edit say WHAT, never WHERE. HRMS import
+// refuses a row matching an account outside the caller's tenant (or a site
+// admin / cross-tenant account) and fails closed for a tenant-less caller;
+// single suspend/delete, the edit form and bulk actions check the target
+// (user_manager::require_can_act_on); the edit form offers and accepts only
+// the caller's own tenant's orgs; index KPIs, filter chips and HRMS run
+// history fail closed; invalidtenant/outoftenant strings added (en + hi).
+$plugin->version   = 2026092500;  // ADR-031: target-tenant checks on every write
+// 2026092401: N1 review: supervisor label + list fail-closed.
 // 2026092400: Profile reads are tenant-bounded (N1).
 // 2026092200: Manage Users counts are tenant-bounded.
 // 2026090302: H1, signup no longer reveals whether an email exists.
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '2.7.9';
+$plugin->release   = '2.8.0';  // ADR-031
 $plugin->dependencies = [
     'local_sentientia_org' => 2026051501,
     'local_sentientia_platform' => ANY_VERSION,

@@ -61,11 +61,9 @@ class role_manager {
              WHERE permission != ?
           GROUP BY roleid", [CAP_INHERIT]);
 
-        // Pull assignment counts the same way.
-        $assigncounts = $DB->get_records_sql_menu("
-            SELECT roleid, COUNT(DISTINCT userid) AS cnt
-              FROM {role_assignments}
-          GROUP BY roleid");
+        // Pull assignment counts the same way. ADR-031: a scoped caller counts
+        // only the holders inside their own tenant.
+        $assigncounts = self::assignment_counts();
 
         $rows = [];
         foreach ($allroles as $role) {
@@ -118,8 +116,12 @@ class role_manager {
              WHERE roleid = :rid
           GROUP BY permission", ['rid' => $roleid]);
 
-        $assigncount = (int) $DB->count_records('role_assignments', ['roleid' => $roleid]);
-        $auditcount  = (int) $DB->count_records('local_sentientia_roles_auditlog', ['roleid' => $roleid]);
+        // ADR-031: both counts are bounded to the caller's tenant (a
+        // cross-tenant caller keeps the unbounded row count it always had).
+        $assigncount = \local_sentientia_platform\tenant::scope_path() === ''
+            ? (int) $DB->count_records('role_assignments', ['roleid' => $roleid])
+            : (int) (self::assignment_counts($roleid)[$roleid] ?? 0);
+        $auditcount  = (int) self::list_audit($roleid, '', '', 0, 10)['total'];
 
         return [
             'id'          => (int) $role->id,
@@ -237,6 +239,12 @@ class role_manager {
                                               string $permission, string $reason = ''): array {
         global $DB, $USER;
 
+        // ADR-031: a role definition is shared by every tenant, so changing one
+        // is a cross-tenant act. A tenant admin who could edit it could also give
+        // their own role any capability (the cross-tenant ones included) and
+        // strip other tenants' roles. :manage says WHAT; this says WHERE.
+        self::require_cross_tenant();
+
         $context = \context_system::instance();
         $allroles = get_all_roles($context);
         if (!isset($allroles[$roleid])) {
@@ -321,6 +329,9 @@ class role_manager {
     public static function bulk_update_capability(array $roleids, string $capability,
                                                     string $permission,
                                                     string $reason = ''): array {
+        // ADR-031: refuse up front rather than bucket every row as "skipped".
+        self::require_cross_tenant();
+
         $succeeded = [];
         $skipped   = [];
         $failed    = [];
@@ -360,8 +371,21 @@ class role_manager {
         $perpage = max(5, min(100, $perpage));
         $page    = max(0, $page);
 
+        // ADR-031: a scoped caller sees only the holders inside their own tenant;
+        // a caller with no resolvable tenant sees nobody.
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === null) {
+            return ['total' => 0, 'rows' => [], 'page' => $page, 'perpage' => $perpage];
+        }
+
         $where = ['ra.roleid = :rid', 'ra.contextid = :cid', 'u.deleted = 0'];
         $params = ['rid' => $roleid, 'cid' => $context->id];
+        if ($scope !== '') {
+            [$scopesql, $scopeargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+                $scope, 'u', 'open_path', 'rascope');
+            $where[] = $scopesql;
+            $params += $scopeargs;
+        }
 
         if ($search !== '') {
             $term = '%' . $DB->sql_like_escape($search) . '%';
@@ -418,6 +442,9 @@ class role_manager {
             throw new \moodle_exception('err_role_not_found', 'local_sentientia_roles');
         }
         $role = $allroles[$roleid];
+        // ADR-031: before the existence check, so a scoped caller cannot tell a
+        // missing id from another tenant's user.
+        self::require_assignable($roleid, $userid);
         if (!$DB->record_exists('user', ['id' => $userid, 'deleted' => 0])) {
             throw new \moodle_exception('err_user_not_found', 'local_sentientia_roles');
         }
@@ -459,6 +486,8 @@ class role_manager {
             throw new \moodle_exception('err_role_not_found', 'local_sentientia_roles');
         }
         $role = $allroles[$roleid];
+        // ADR-031: the same bounds as assigning.
+        self::require_assignable($roleid, $userid);
 
         $tx = $DB->start_delegated_transaction();
         try {
@@ -502,20 +531,39 @@ class role_manager {
         $perpage = max(10, min(100, $perpage));
         $page    = max(0, $page);
 
+        // ADR-031: a scoped caller sees the entries made by someone in their
+        // tenant (a.open_path is the actor's path at the time) or made to a user
+        // in their tenant; a caller with no resolvable tenant sees none.
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === null) {
+            return ['total' => 0, 'rows' => [], 'page' => $page, 'perpage' => $perpage];
+        }
+
         $where = ['1=1'];
         $params = [];
         if ($roleid > 0)     { $where[] = 'a.roleid = :rid';        $params['rid'] = $roleid; }
         if ($action !== '')  { $where[] = 'a.action = :act';         $params['act'] = $action; }
         if ($capability!=='') { $where[] = 'a.capability = :cap';    $params['cap'] = $capability; }
+        if ($scope !== '') {
+            [$actorsql, $actorargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+                $scope, 'a', 'open_path', 'rauactor');
+            [$targetsql, $targetargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+                $scope, 'tu', 'open_path', 'rautarget');
+            $where[] = "($actorsql OR $targetsql)";
+            $params += $actorargs + $targetargs;
+        }
         $wheresql = implode(' AND ', $where);
 
         $total = (int) $DB->count_records_sql(
-            "SELECT COUNT(*) FROM {local_sentientia_roles_auditlog} a WHERE $wheresql", $params);
+            "SELECT COUNT(*) FROM {local_sentientia_roles_auditlog} a
+          LEFT JOIN {user} tu ON tu.id = a.targetuserid
+              WHERE $wheresql", $params);
 
         $records = $DB->get_records_sql("
             SELECT a.*, u.firstname, u.lastname, u.email
               FROM {local_sentientia_roles_auditlog} a
          LEFT JOIN {user} u ON u.id = a.changedby
+         LEFT JOIN {user} tu ON tu.id = a.targetuserid
              WHERE $wheresql
           ORDER BY a.timecreated DESC, a.id DESC",
             $params, $page * $perpage, $perpage);
@@ -586,6 +634,115 @@ class role_manager {
                     self::permission_to_string((int) $perm),
                 ];
             }
+        }
+    }
+
+    /**
+     * Every audit entry the caller may see, newest first, for the CSV export.
+     *
+     * list_audit() clamps a page to 100 rows, so the export used to stop
+     * silently at the latest 100. This pages through the (tenant-scoped) log.
+     *
+     * @return \Generator yields list_audit() row arrays
+     */
+    public static function audit_rows_all(): \Generator {
+        $page = 0;
+        do {
+            $batch = self::list_audit(0, '', '', $page, 100);
+            foreach ($batch['rows'] as $row) {
+                yield $row;
+            }
+            $page++;
+        } while ($page * 100 < $batch['total'] && !empty($batch['rows']));
+    }
+
+    /**
+     * ADR-031: role assignment counts per role, bounded to the caller's tenant.
+     *
+     * A cross-tenant caller counts every holder, as before. A scoped caller
+     * counts only holders inside their own tenant, and a caller with no
+     * resolvable tenant counts nobody.
+     *
+     * @param int $roleid 0 = every role
+     * @return array<int, int> roleid => distinct holder count
+     */
+    private static function assignment_counts(int $roleid = 0): array {
+        global $DB;
+
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === null) {
+            return [];
+        }
+        $where = ['1=1'];
+        $params = [];
+        if ($roleid > 0) {
+            $where[] = 'ra.roleid = :rid';
+            $params['rid'] = $roleid;
+        }
+        $join = '';
+        if ($scope !== '') {
+            [$scopesql, $scopeargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+                $scope, 'u', 'open_path', 'racount');
+            $join = 'JOIN {user} u ON u.id = ra.userid';
+            $where[] = $scopesql;
+            $params += $scopeargs;
+        }
+        $wheresql = implode(' AND ', $where);
+        return array_map('intval', $DB->get_records_sql_menu("
+            SELECT ra.roleid, COUNT(DISTINCT ra.userid) AS cnt
+              FROM {role_assignments} ra
+              $join
+             WHERE $wheresql
+          GROUP BY ra.roleid", $params));
+    }
+
+    /**
+     * ADR-031: refuse unless the current user is cross-tenant (a site admin or a
+     * holder of local/sentientia_platform:crosstenant).
+     *
+     * @throws \moodle_exception err_definitions_crosstenant
+     */
+    private static function require_cross_tenant(): void {
+        if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
+            throw new \moodle_exception('err_definitions_crosstenant', 'local_sentientia_roles');
+        }
+    }
+
+    /**
+     * ADR-031: may the current user assign (or unassign) $roleid to (or from)
+     * $userid at system context?
+     *
+     * A cross-tenant caller may, as before. Anyone else only when ALL hold:
+     *  - the target is somebody else, in the caller's own tenant, and is not
+     *    a site admin or a cross-tenant account;
+     *  - the caller holds that role at system context themselves, so the
+     *    target can never end up with a capability the caller lacks;
+     *  - Moodle's allow-assign matrix lets the caller assign it (the check
+     *    core admin/roles/assign.php makes and role_assign() does not).
+     *
+     * The tenant check runs first and refuses a missing id exactly like an
+     * out-of-tenant one, so the call is no existence oracle.
+     *
+     * @param int $roleid
+     * @param int $userid
+     * @throws \moodle_exception error_outoftenant | err_role_not_assignable
+     */
+    private static function require_assignable(int $roleid, int $userid): void {
+        global $USER;
+
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return;
+        }
+        $actorid = (int) $USER->id;
+        \local_sentientia_platform\tenant::require_same_tenant_user($userid, $actorid);
+
+        $syscontext = \context_system::instance();
+        if ($userid === $actorid
+                || \local_sentientia_platform\tenant::is_cross_tenant($userid)
+                || !user_has_role_assignment($actorid, $roleid, $syscontext->id)
+                || !array_key_exists($roleid,
+                    get_assignable_roles($syscontext, ROLENAME_ORIGINAL, false, $actorid))) {
+            throw new \moodle_exception('err_role_not_assignable', 'local_sentientia_roles');
         }
     }
 }

@@ -77,6 +77,12 @@ class edit_capability_dynamic_form extends dynamic_form {
 
     protected function check_access_for_dynamic_submission(): void {
         require_capability('local/sentientia_roles:manage', $this->get_context_for_dynamic_submission());
+        // ADR-031: role definitions are shared by every tenant; only a
+        // cross-tenant caller may open this form (update_capability() refuses
+        // anyone else as well).
+        if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
+            throw new \moodle_exception('err_definitions_crosstenant', 'local_sentientia_roles');
+        }
     }
 
     public function process_dynamic_submission() {

@@ -62,8 +62,17 @@ class hrms_sync extends \core\task\scheduled_task {
             ?: 2);
         $filename = 'hrms_' . date('Ymd_His') . '.csv';
 
-        $run_id = \local_sentientia_users\hrms_importer::import_csv(
-            $csv, $runner_userid, $filename, 'cron');
+        // ADR-031: a configured runner that is neither cross-tenant nor in a
+        // tenant is refused by the importer (invalidtenant) before any run row
+        // is written; say so in the cron log instead of failing the task.
+        try {
+            $run_id = \local_sentientia_users\hrms_importer::import_csv(
+                $csv, $runner_userid, $filename, 'cron');
+        } catch (\moodle_exception $e) {
+            mtrace('local_sentientia_users hrms_sync: refused for runner user '
+                . $runner_userid . ': ' . $e->getMessage());
+            return;
+        }
 
         // Record last-success timestamp for the admin UI.
         set_config('hrms_sync_last_run',    time(),   'local_sentientia_users');

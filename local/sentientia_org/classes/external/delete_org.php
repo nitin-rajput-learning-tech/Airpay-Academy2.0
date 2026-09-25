@@ -43,6 +43,10 @@ class delete_org extends external_api {
         // logic short-circuited on `empty($caller_top)` AFTER computing
         // it. The helper throws on empty viewer root, closing the bug.
         \local_sentientia_platform\tenant::require_path_access((string) $existing->path);
+        // ADR-031: require_path_access() lets an empty path through (legacy
+        // rows); a caller who is not cross-tenant may not act on a node that
+        // belongs to no tenant either.
+        \local_sentientia_org\org_manager::require_in_scope($existing);
 
         $success = \local_sentientia_org\org_manager::delete($params['orgid']);
         return ['orgid' => $params['orgid'], 'success' => $success];

@@ -106,6 +106,9 @@ $string['err_capability_not_found'] = 'Capability "{$a}" is not registered in th
 $string['err_invalid_permission']  = 'Permission must be one of: inherit, allow, prevent, prohibit.';
 $string['err_cannot_modify_admin'] = 'Cannot modify capabilities on the site administrator role.';
 $string['err_filterstoolong']      = 'Filter blob exceeds limit.';
+// ADR-031 (2026-09-25).
+$string['err_definitions_crosstenant'] = 'Role definitions are shared by every tenant, so only a platform (cross-tenant) administrator can change them.';
+$string['err_role_not_assignable'] = 'You can only assign a role that you hold yourself and are allowed to assign, to someone else in your own organisation.';
 
 // Privacy provider strings.
 $string['privacy:metadata:auditlog']               = 'Append-only audit log of role and capability mutations made through the airpay role-management UI.';
