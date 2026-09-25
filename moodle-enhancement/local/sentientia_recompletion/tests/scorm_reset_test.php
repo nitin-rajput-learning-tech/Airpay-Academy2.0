@@ -25,6 +25,25 @@ defined('MOODLE_INTERNAL') || die();
 final class scorm_reset_test extends \advanced_testcase {
 
     /**
+     * 2026-09-25: mod_scorm's generator stages its package (by default
+     * tests/packages/singlescobasic.zip) in the CURRENT user's draft file
+     * area, and throws "Scorm generator requires a current user" when nobody
+     * is logged in (mod/scorm/tests/generator/lib.php:88). Core's own
+     * mod_scorm tests call setAdminUser() first; this suite never did, so all
+     * five tests that create a SCORM died in setup, before the engine ran.
+     *
+     * Acting as admin changes nothing the tests measure:
+     * recompletion_engine::reset_user_in_course() never reads $USER (its
+     * event names the reset user explicitly), and every assertion is keyed
+     * to the learner's userid, not the author's.
+     */
+    protected function setUp(): void {
+        parent::setUp();
+        $this->resetAfterTest();
+        $this->setAdminUser();
+    }
+
+    /**
      * Seed a SCORM attempt + a couple of CMI values for a user in a course.
      * Returns ['course' => ..., 'scormid' => ..., 'attemptid' => ...].
      */
@@ -39,8 +58,9 @@ final class scorm_reset_test extends \advanced_testcase {
             'course' => $courseid,
             'name'   => 'Compliance test SCORM',
         ]);
-        // Insert a SCO row (mod_scorm's create_module typically does, but be defensive).
-        if (!$DB->record_exists('scorm_scoes', ['scorm' => $scorm->id])) {
+        // Insert a SCO row (mod_scorm's create_module parses the package and
+        // does this, but be defensive).
+        if (!$DB->record_exists('scorm_scoes', ['scorm' => $scorm->id, 'scormtype' => 'sco'])) {
             $DB->insert_record('scorm_scoes', (object) [
                 'scorm'      => $scorm->id,
                 'manifest'   => '',
@@ -53,9 +73,13 @@ final class scorm_reset_test extends \advanced_testcase {
                 'sortorder'  => 0,
             ]);
         }
-        $scoid = (int) $DB->get_field_sql(
-            "SELECT id FROM {scorm_scoes} WHERE scorm = :sid ORDER BY id ASC",
-            ['sid' => $scorm->id]);
+        // The parsed package yields TWO scorm_scoes rows: the <organization>
+        // (scormtype '') and item_1 (scormtype 'sco'). An unfiltered lookup
+        // took the organization row as the SCO and, matching two rows, fired
+        // get_record_sql()'s "found more than one record" debugging() notice.
+        // Tracking values belong to the SCO, so select exactly that row.
+        $scoid = (int) $DB->get_field('scorm_scoes', 'id',
+            ['scorm' => $scorm->id, 'scormtype' => 'sco'], MUST_EXIST);
 
         // Insert one attempt + a CMI value for completion_status='completed'.
         $attemptid = $DB->insert_record('scorm_attempt', (object) [
