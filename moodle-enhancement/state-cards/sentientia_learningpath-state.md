@@ -250,3 +250,7 @@ Branch `claude/adr031-learning3-ff`, from the cross-cutting review of the merged
   `employee` role, student-archetype clones, manager and deliberate grants kept and reported, prohibit
   left alone, idempotence, and a replay of `xmldb_local_sentientia_learningpath_upgrade(2026092501)`.
   Written, not run (shared PHPUnit DB). Both trees.
+- 2026-09-26 (review should-fix, same class): step 2026092501 widens quiz_score / velocity_score with a
+  direct ALTER COLUMN ... TYPE NUMERIC(6,2) on PostgreSQL, where change_field_precision() is a no-op
+  for a 0 -> 2 decimals change; MySQL/MariaDB keep the DDL API. Same version (not yet deployed anywhere
+  on PostgreSQL).

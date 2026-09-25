@@ -198,18 +198,29 @@ function xmldb_local_sentientia_learningpath_upgrade(int $oldversion): bool {
         // upgraded site end with the same column. Rows already written keep
         // their rounded value; the lost decimals cannot be recovered.
         // Neither column is indexed, so no index has to be dropped first.
+        //
+        // PostgreSQL: change_field_precision() emits no SQL when the column has
+        // 0 decimals (postgres_sql_generator treats an empty old scale as
+        // "unchanged"), so the type is altered directly there.
         $table = new xmldb_table('local_sentientia_lp_adaptive_log');
         if ($dbman->table_exists($table)) {
-            $field = new xmldb_field('quiz_score', XMLDB_TYPE_NUMBER, '6, 2',
-                null, null, null, null, 'target_courseid');
-            if ($dbman->field_exists($table, $field)) {
-                $dbman->change_field_precision($table, $field);
-            }
-
-            $field = new xmldb_field('velocity_score', XMLDB_TYPE_NUMBER, '6, 2',
-                null, null, null, null, 'quiz_score');
-            if ($dbman->field_exists($table, $field)) {
-                $dbman->change_field_precision($table, $field);
+            $fields = [
+                new xmldb_field('quiz_score', XMLDB_TYPE_NUMBER, '6, 2',
+                    null, null, null, null, 'target_courseid'),
+                new xmldb_field('velocity_score', XMLDB_TYPE_NUMBER, '6, 2',
+                    null, null, null, null, 'quiz_score'),
+            ];
+            foreach ($fields as $field) {
+                if (!$dbman->field_exists($table, $field)) {
+                    continue;
+                }
+                if ($DB->get_dbfamily() === 'postgres') {
+                    $DB->change_database_structure('ALTER TABLE ' . $DB->get_prefix()
+                        . 'local_sentientia_lp_adaptive_log ALTER COLUMN ' . $field->getName()
+                        . ' TYPE NUMERIC(6,2)');
+                } else {
+                    $dbman->change_field_precision($table, $field);
+                }
             }
         }
         upgrade_plugin_savepoint(true, 2026092501, 'local', 'sentientia_learningpath');

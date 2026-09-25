@@ -68,7 +68,7 @@ function local_sentientia_classroom_ensure_location_schema(database_manager $dbm
             if (!isset($columns[$name]) || (int) $columns[$name]->scale >= 6) {
                 continue;
             }
-            $dbman->change_field_precision($table,
+            local_sentientia_classroom_widen_decimals($dbman, $table,
                 new xmldb_field($name, XMLDB_TYPE_NUMBER, '10, 6', null, null, null, null, $previous));
             $changed[] = "widened local_sentientia_locations.{$name} to NUMBER(10,6)";
         }
@@ -84,4 +84,29 @@ function local_sentientia_classroom_ensure_location_schema(database_manager $dbm
     }
 
     return $changed;
+}
+
+/**
+ * Widen a NUMBER column's decimals on any supported database.
+ *
+ * database_manager::change_field_precision() emits no SQL on PostgreSQL when
+ * the column currently has 0 decimals: postgres_sql_generator::getAlterFieldSQL()
+ * treats an empty old scale as "decimals unchanged". So on the postgres family
+ * the column type is altered directly; elsewhere the DDL API is used. Existing
+ * values are cast, which is safe for a widening that keeps enough integer digits.
+ *
+ * @param database_manager $dbman
+ * @param xmldb_table $table
+ * @param xmldb_field $field the target definition (TYPE_NUMBER with decimals)
+ */
+function local_sentientia_classroom_widen_decimals(database_manager $dbman, xmldb_table $table,
+        xmldb_field $field): void {
+    global $DB;
+    if ($DB->get_dbfamily() === 'postgres') {
+        $DB->change_database_structure('ALTER TABLE ' . $DB->get_prefix() . $table->getName()
+            . ' ALTER COLUMN ' . $field->getName()
+            . ' TYPE NUMERIC(' . (int) $field->getLength() . ',' . (int) $field->getDecimals() . ')');
+        return;
+    }
+    $dbman->change_field_precision($table, $field);
 }

@@ -194,3 +194,8 @@ Branch `claude/adr031-learning3-ff`. This closes the "Still open" item above abo
   recreated), and a replay of `xmldb_local_sentientia_classroom_upgrade(2026092500)` on NUMBER(10,0)
   columns, with a coordinate round trip. The tests run DDL, and `tearDown` restores the table and
   columns independently of the helper. Written, not run. Both trees.
+- 2026-09-26 (review must-fix): `local_sentientia_classroom_widen_decimals()` in db/upgradelib.php.
+  On PostgreSQL `change_field_precision()` emits no SQL for a 0 -> 6 decimals change
+  (postgres_sql_generator treats an empty old scale as unchanged), so latitude/longitude stayed
+  NUMBER(10,0) there and location_schema_test failed on the PG CI gate. The helper alters the type
+  directly on the postgres family and keeps the DDL API elsewhere.
