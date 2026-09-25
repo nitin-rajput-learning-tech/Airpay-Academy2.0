@@ -50,6 +50,9 @@ class share_course extends external_api {
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/sentientia_courses:share_to_tenant', $context);
+        // ADR-031 decision 3: sharing reaches other tenants' catalogues, so
+        // the capability alone is not enough - the caller must be cross-tenant.
+        sharing_manager::require_cross_tenant();
         require_sesskey();
 
         $out = sharing_manager::share_course(

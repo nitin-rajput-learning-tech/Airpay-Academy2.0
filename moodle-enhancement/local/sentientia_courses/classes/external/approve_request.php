@@ -38,6 +38,9 @@ class approve_request extends external_api {
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/sentientia_courses:approve_request', $context);
+        // ADR-031 decision 3: approving shares a course into the requesting
+        // tenant, so the caller must be cross-tenant as well.
+        \local_sentientia_courses\sharing_manager::require_cross_tenant();
         require_sesskey();
 
         $changed = request_manager::approve_request((int) $params['requestid']);

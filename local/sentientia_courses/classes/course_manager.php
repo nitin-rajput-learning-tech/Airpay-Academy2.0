@@ -210,6 +210,58 @@ class course_manager {
     }
 
     /**
+     * Category options for the create / edit course form.
+     *
+     * ADR-031 (follow-up, 2026-09-25): a cross-tenant caller keeps every
+     * visible category, as before. For anyone else a category is listed
+     * unless every course in it belongs to another tenant, because such a
+     * category name is that tenant's data (the rule manage_category_options()
+     * already applies to the Manage Courses filter - UAT ZEEA #4). So a scoped
+     * caller sees:
+     *   - categories holding at least one course in their manage scope (their
+     *     own tenant's courses, plus legacy no-open_path ones) - which always
+     *     includes the category of any course they can edit;
+     *   - empty categories, which carry no tenant's data.
+     * If that leaves nothing (every category holds another tenant's courses),
+     * the site default category is offered, so a new tenant can still create
+     * a course.
+     *
+     * @return array<int, string> category id => depth-indented name
+     */
+    public static function edit_category_options(): array {
+        global $DB;
+
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            $cats = $DB->get_records('course_categories', ['visible' => 1], 'sortorder ASC',
+                'id, name, depth, sortorder');
+        } else {
+            [$scopesql, $params] = self::manage_scope_sql('c');
+            $cats = $DB->get_records_sql(
+                "SELECT cat.id, cat.name, cat.depth, cat.sortorder
+                   FROM {course_categories} cat
+                  WHERE cat.visible = 1
+                    AND (NOT EXISTS (SELECT 1 FROM {course} c0
+                                      WHERE c0.category = cat.id AND c0.id > 1)
+                         OR EXISTS (SELECT 1 FROM {course} c
+                                     WHERE c.category = cat.id AND c.id > 1 AND {$scopesql}))
+               ORDER BY cat.sortorder ASC",
+                $params);
+            if (!$cats) {
+                $default = \core_course_category::get_default();
+                $cats = [(int) $default->id => (object) ['id' => (int) $default->id,
+                    'name' => $default->name, 'depth' => (int) $default->depth]];
+            }
+        }
+
+        $options = [];
+        foreach ($cats as $c) {
+            $options[(int) $c->id] = str_repeat('— ', max(0, ((int) $c->depth) - 1))
+                . format_string($c->name);
+        }
+        return $options;
+    }
+
+    /**
      * Check if user has course management capability (L&D admin detection).
      *
      * Checks BOTH old (local/courses:manage) and new (local/sentientia_courses:manage)
@@ -426,6 +478,103 @@ class course_manager {
     }
 
     /**
+     * ADR-031 (follow-up): look up users by email inside an enrolment scope.
+     *
+     * With allowaccountssameemail on, one address can belong to accounts in
+     * two tenants. get_record('user', ['email' => ...]) then returned whichever
+     * row came first - possibly the foreign one, so the in-tenant user read as
+     * "not found" (and core raised a debugging notice). The lookup is now
+     * bounded to the caller's tenant before any row is picked.
+     *
+     * At most two rows are returned, oldest first, so a caller can tell "one
+     * match" from "ambiguous" without loading every duplicate.
+     *
+     * @param string $email exact address, as the CSV gives it
+     * @param int|null $root the caller's tenant root; null = cross-tenant (every tenant)
+     * @param string $fields user columns to fetch; must include id
+     * @return \stdClass[] 0, 1 or 2 non-deleted users
+     */
+    public static function users_by_email_in_scope(string $email, ?int $root,
+                                                   string $fields = 'id, open_path, suspended'): array {
+        global $DB;
+        $email = trim($email);
+        if ($email === '' || ($root !== null && $root <= 0)) {
+            return [];
+        }
+        [$tsql, $targs] = \local_sentientia_platform\tenant::path_descendant_filter(
+            $root === null ? '' : '/' . $root, '', 'open_path', 'uemscope');
+        return array_values($DB->get_records_select('user',
+            "deleted = 0 AND email = :uemail AND {$tsql}",
+            ['uemail' => $email] + $targs, 'id ASC', $fields, 0, 2));
+    }
+
+    /**
+     * Role shortnames the enrol picker never offers and the enrol CSV never
+     * accepts, for any caller. 'administrator' is the BizLMS tenant-admin
+     * role (manager archetype, UAT role 9).
+     */
+    public const ENROL_HIDDEN_ROLE_SHORTNAMES = ['guest', 'frontpage', 'user', 'administrator'];
+
+    /**
+     * ADR-031 decision 6: archetypes a scoped caller may never give.
+     */
+    private const SCOPED_FORBIDDEN_ARCHETYPES = ['manager', 'coursecreator', 'guest', 'user', 'frontpage'];
+
+    /**
+     * ADR-031 decision 6: shortnames a scoped caller may never give (whatever
+     * archetype a site has recorded for them).
+     */
+    private const SCOPED_FORBIDDEN_SHORTNAMES = ['manager', 'coursecreator', 'administrator',
+        'guest', 'user', 'frontpage'];
+
+    /**
+     * Site-administration capabilities. A role whose definition allows any of
+     * these is a site-level role, and a scoped caller may never give it, even
+     * in a course context: holding it through an enrolment would reach beyond
+     * the course. Course-level roles (editingteacher, teacher, student, the
+     * BizLMS employee role) hold none of them.
+     */
+    public const SITE_LEVEL_CAPABILITIES = [
+        'moodle/site:config',
+        'moodle/role:manage',
+        'moodle/role:override',
+        'moodle/user:create',
+        'moodle/user:update',
+        'moodle/user:delete',
+        'moodle/course:create',
+        'moodle/category:manage',
+        'local/sentientia_platform:crosstenant',
+    ];
+
+    /**
+     * Roles a scoped caller may never give by enrolment: the manager and
+     * coursecreator archetypes (UAT's tenant-admin role 9 is one), the core
+     * non-course roles, and any site-level role (SITE_LEVEL_CAPABILITIES).
+     *
+     * @return int[] role ids
+     */
+    public static function scoped_forbidden_role_ids(): array {
+        global $DB;
+        $ids = [];
+        foreach ($DB->get_records('role', null, 'sortorder ASC', 'id, shortname, archetype') as $r) {
+            if (in_array((string) $r->archetype, self::SCOPED_FORBIDDEN_ARCHETYPES, true)
+                    || in_array((string) $r->shortname, self::SCOPED_FORBIDDEN_SHORTNAMES, true)) {
+                $ids[(int) $r->id] = (int) $r->id;
+            }
+        }
+        [$capsql, $capparams] = $DB->get_in_or_equal(self::SITE_LEVEL_CAPABILITIES, SQL_PARAMS_NAMED, 'slcap');
+        $sitelevel = $DB->get_fieldset_sql(
+            "SELECT DISTINCT rc.roleid
+               FROM {role_capabilities} rc
+              WHERE rc.contextid = :sysctx AND rc.permission = :allow AND rc.capability {$capsql}",
+            ['sysctx' => \context_system::instance()->id, 'allow' => CAP_ALLOW] + $capparams);
+        foreach ($sitelevel as $rid) {
+            $ids[(int) $rid] = (int) $rid;
+        }
+        return array_values($ids);
+    }
+
+    /**
      * Learner roles: archetype student, plus the BizLMS 'employee' role.
      *
      * @return int[] role ids
@@ -444,21 +593,71 @@ class course_manager {
     /**
      * ADR-031: which course roles may this enrolment grant?
      *
-     * null = no extra restriction: a cross-tenant caller, or a scoped caller
-     * enrolling into a course their own tenant owns (unchanged behaviour).
-     * Otherwise - a course shared in from another tenant, or a legacy course
-     * with no open_path - learner roles only: a teacher or manager role there
-     * would let the enroller's people edit a course another tenant owns.
+     * null = no extra restriction: a cross-tenant caller (the picker and the
+     * CSV still drop ENROL_HIDDEN_ROLE_SHORTNAMES for everyone).
      *
-     * @param \stdClass $course record carrying open_path
+     * A scoped caller (decision 6, follow-up 2026-09-25): only roles Moodle's
+     * allow-assign matrix lets them assign in THIS course's context
+     * (get_assignable_roles(), the check core's own enrolment UI makes and
+     * enrol_user() does not), minus scoped_forbidden_role_ids() - never
+     * manager, coursecreator, the tenant-admin role or any site-level role.
+     * Until this date a tenant admin could enrol anyone in their tenant as
+     * manager or coursecreator in their own tenant's courses, and the CSV took
+     * any role shortname, 'administrator' included.
+     *
+     * In a course their tenant does not own - shared in from another tenant,
+     * or a legacy course with no open_path - learner roles only on top of
+     * that: a teacher role there would let the enroller's people edit a course
+     * another tenant owns.
+     *
+     * @param \stdClass $course record carrying id and open_path
      * @param int|null $root the caller's tenant root; null = cross-tenant
+     * @param int|null $actorid the enrolling user; defaults to the current user
      * @return int[]|null
      */
-    public static function enrol_allowed_role_ids(\stdClass $course, ?int $root): ?array {
-        if ($root === null || self::path_in_tenant((string) ($course->open_path ?? ''), $root)) {
+    public static function enrol_allowed_role_ids(\stdClass $course, ?int $root,
+                                                  ?int $actorid = null): ?array {
+        global $USER;
+        if ($root === null) {
             return null;
         }
-        return self::learner_role_ids();
+        $actorid = $actorid ?? (int) ($USER->id ?? 0);
+        $assignable = array_map('intval', array_keys(get_assignable_roles(
+            \context_course::instance((int) $course->id), ROLENAME_SHORT, false, $actorid)));
+        $ids = array_values(array_diff($assignable, self::scoped_forbidden_role_ids()));
+        if (!self::path_in_tenant((string) ($course->open_path ?? ''), $root)) {
+            $ids = array_values(array_intersect($ids, self::learner_role_ids()));
+        }
+        return $ids;
+    }
+
+    /**
+     * The role picker for an enrolment into $course: role id => label.
+     *
+     * One list for the enrol modal and the enrol CSV, so the two can never
+     * disagree (ADR-031 follow-up): ENROL_HIDDEN_ROLE_SHORTNAMES for everyone,
+     * then enrol_allowed_role_ids() for a scoped caller.
+     *
+     * @param \stdClass $course record carrying id and open_path
+     * @param int|null $root the caller's tenant root; null = cross-tenant
+     * @param int|null $actorid the enrolling user; defaults to the current user
+     * @return array<int, \stdClass> role id => role record (id, shortname, name)
+     */
+    public static function enrol_role_choices(\stdClass $course, ?int $root,
+                                              ?int $actorid = null): array {
+        global $DB;
+        $allowed = self::enrol_allowed_role_ids($course, $root, $actorid);
+        $out = [];
+        foreach ($DB->get_records('role', null, 'sortorder ASC', 'id, shortname, name') as $r) {
+            if (in_array((string) $r->shortname, self::ENROL_HIDDEN_ROLE_SHORTNAMES, true)) {
+                continue;
+            }
+            if ($allowed !== null && !in_array((int) $r->id, $allowed, true)) {
+                continue;
+            }
+            $out[(int) $r->id] = $r;
+        }
+        return $out;
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -490,6 +689,11 @@ class course_manager {
         $scopepath = $crosstenant ? '' : \local_sentientia_platform\tenant::scope_path();
         if ($scopepath === null) {
             throw new \moodle_exception('invalidtenant', 'local_sentientia_courses');
+        }
+        // ADR-031 (follow-up): the form offers a scoped caller only the
+        // categories edit_category_options() lists; hold the data layer to it.
+        if (!$crosstenant && !array_key_exists((int) $data->category, self::edit_category_options())) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
         }
 
         // Check shortname uniqueness.
@@ -570,6 +774,15 @@ class course_manager {
             if (isset($data->$field)) {
                 $course->$field = $data->$field;
             }
+        }
+
+        // ADR-031 (follow-up): a scoped caller may move a course only into a
+        // category edit_category_options() offers them. Leaving it where it
+        // is stays allowed (a course in a hidden category keeps it).
+        if (isset($course->category) && (int) $course->category !== (int) $existing->category
+                && !\local_sentientia_platform\tenant::is_cross_tenant()
+                && !array_key_exists((int) $course->category, self::edit_category_options())) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
         }
 
         // Shortname uniqueness check.

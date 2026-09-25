@@ -36,9 +36,9 @@ lives in `local_sentientia_catalog`.
 | Cap | Granted to | Purpose |
 |-----|------------|---------|
 | `:create`, `:update`, `:delete`, `:enrol`, `:manage`, `:view`, `:visibility` | manager + editingteacher | day-to-day course admin |
-| `:share_to_tenant` | siteadmin only | Sprint C — push a course to another tenant's catalog |
+| `:share_to_tenant` | siteadmin only | Sprint C — push a course to another tenant's catalog. ADR-031: also requires a cross-tenant caller (`tenant::is_cross_tenant()`) |
 | `:request_course` | manager | Sprint D — request another tenant's course be added to mine |
-| `:approve_request` | siteadmin only | Sprint D — approve/reject pending requests |
+| `:approve_request` | siteadmin only | Sprint D — approve/reject pending requests. ADR-031: also requires a cross-tenant caller |
 
 ## Tables
 

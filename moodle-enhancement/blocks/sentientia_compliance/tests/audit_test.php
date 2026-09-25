@@ -126,6 +126,48 @@ final class audit_test extends \advanced_testcase {
         $this->assertSame([], audit::course_stats('', null));
     }
 
+    public function test_tenant_matrix_keeps_its_own_courses_with_no_enrolments(): void {
+        // ADR-031 follow-up (review S5): wave 1 listed a course only when
+        // someone in scope was enrolled, so a tenant's own mandatory course
+        // with no enrolments yet disappeared instead of showing 0 of 0.
+        $own = $this->mandatory_course('/1');
+        $ownunit = $this->mandatory_course('/1/2');
+        $zeea = $this->mandatory_course('/177');
+        $sibling = $this->mandatory_course('/10');   // '/1' must not prefix-match '/10'
+        $legacy = $this->mandatory_course(null);
+        $this->enrol($this->user_at('/177'), $zeea);
+        $this->enrol($this->user_at('/10'), $sibling);
+
+        $this->setUser($this->tenant_admin('/1'));
+        $stats = $this->stats_by_course(audit::course_stats('/1', null));
+        foreach ([$own, $ownunit] as $c) {
+            $this->assertArrayHasKey((int) $c->id, $stats, 'an own-tenant course with no enrolments still shows');
+            $this->assertSame(0, $stats[(int) $c->id]['enrolled']);
+            $this->assertSame(0, $stats[(int) $c->id]['completed']);
+        }
+        $this->assertArrayNotHasKey((int) $zeea->id, $stats, 'no /177 course name in a /1 matrix');
+        $this->assertArrayNotHasKey((int) $sibling->id, $stats, 'no /10 course name in a /1 matrix');
+        $this->assertArrayNotHasKey((int) $legacy->id, $stats,
+            'a legacy course is listed only when someone in scope is enrolled, as before');
+
+        // A line manager's matrix is bounded the same way.
+        $manager = $this->user_at('/1');
+        $this->user_at('/1/2', (int) $manager->id);
+        $this->setUser($manager);
+        $scope = audit::viewer_scope($manager);
+        $stats = $this->stats_by_course(audit::course_stats($scope['path'], $scope['userids']));
+        $this->assertArrayHasKey((int) $own->id, $stats);
+        $this->assertSame(0, $stats[(int) $own->id]['enrolled']);
+        $this->assertArrayNotHasKey((int) $zeea->id, $stats);
+
+        // The site admin's matrix is unchanged: every mandatory course.
+        $this->setAdminUser();
+        $stats = $this->stats_by_course(audit::course_stats('', null));
+        foreach ([$own, $ownunit, $zeea, $sibling, $legacy] as $c) {
+            $this->assertArrayHasKey((int) $c->id, $stats);
+        }
+    }
+
     public function test_team_matrix_counts_only_the_team(): void {
         $own = $this->mandatory_course('/1');
         $manager = $this->user_at('/1');
