@@ -23,6 +23,8 @@ class waitlist_join extends external_api {
         $ctx = \context_system::instance();
         self::validate_context($ctx);
         require_capability('local/sentientia_classroom:view', $ctx);
+        // ADR-031: the capability says WHAT; the classroom must also be in the caller's tenant.
+        \local_sentientia_classroom\session_manager::require_classroom_access((int) $params['classroomid']);
 
         $row = \local_sentientia_classroom\waitlist_manager::join(
             (int) $params['classroomid'], (int) $USER->id);

@@ -25,18 +25,29 @@ class program_audience_enroller {
 
     public const MAX_AUDIENCE_SIZE = 2000;
 
-    /** Resolve filter map → matching user ids. Tenant-scoped if caller isn't siteadmin. */
+    /**
+     * Resolve filter map → matching user ids, inside the caller's tenant.
+     *
+     * ADR-031: cross-tenant callers (site admin, :crosstenant) are unscoped;
+     * a scoped caller gets their own tenant; a caller whose tenant does not
+     * resolve gets NOBODY. Until 2026-09-25 that last case skipped the
+     * tenant clause and matched every tenant's users (up to the cap).
+     */
     public static function resolve_audience(array $filters, int $caller_userid): array {
         global $DB;
 
         $where  = ['u.deleted = 0', 'u.suspended = 0', 'u.id > 2'];
         $params = [];
 
-        $caller_top = self::caller_tenant_root($caller_userid);
-        if ($caller_top > 0) {
-            $where[] = '(u.open_path = :tnexact OR u.open_path LIKE :tnprefix)';
-            $params['tnexact']  = '/' . $caller_top;
-            $params['tnprefix'] = $DB->sql_like_escape('/' . $caller_top . '/') . '%';
+        $scope = self::caller_scope($caller_userid);
+        if ($scope === null) {
+            return [];
+        }
+        if ($scope !== '') {
+            [$tsql, $targs] = \local_sentientia_platform\tenant::path_descendant_filter(
+                $scope, 'u', 'open_path', 'tn');
+            $where[] = $tsql;
+            $params = array_merge($params, $targs);
         }
 
         $allowed_exact = [
@@ -114,9 +125,8 @@ class program_audience_enroller {
     /** Resolve filter + enrol every matching user. Returns ['matched','enrolled','capped']. */
     public static function enrol_by_filter(int $programid, array $filters,
                                               int $caller_userid): array {
-        global $DB;
-        $DB->get_record('local_sentientia_programs', ['id' => $programid],
-            'id, status', MUST_EXIST);
+        // ADR-031: the target program must be in the caller's tenant.
+        program_manager::require_program_access($programid, $caller_userid);
 
         $userids = self::resolve_audience($filters, $caller_userid);
         $count = count($userids);
@@ -135,13 +145,18 @@ class program_audience_enroller {
         ];
     }
 
-    private static function caller_tenant_root(int $caller_userid): int {
-        if (is_siteadmin($caller_userid)) {
-            return 0;
-        }
+    /**
+     * The caller's tenant scope (ADR-031, tenant::scope_path()): '' for a
+     * cross-tenant caller, '/N' for a scoped one, null = no tenant (nothing).
+     * Replaces caller_tenant_root(), which returned 0 both for a site admin
+     * and for a caller with no tenant - and 0 meant "no constraint".
+     */
+    private static function caller_scope(int $caller_userid): ?string {
         global $DB;
-        $path = (string) ($DB->get_field('user', 'open_path', ['id' => $caller_userid]) ?? '');
-        $parts = explode('/', trim($path, '/'));
-        return isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
+        $caller = $DB->get_record('user', ['id' => $caller_userid], 'id, open_path');
+        if (!$caller) {
+            return null;
+        }
+        return \local_sentientia_platform\tenant::scope_path($caller);
     }
 }

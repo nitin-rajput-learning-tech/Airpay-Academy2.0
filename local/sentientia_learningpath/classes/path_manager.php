@@ -29,6 +29,192 @@ class path_manager {
         return $DB->get_record(self::TABLE, ['id' => $pathid]);
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // ADR-031 (2026-09-25) — tenant guard for everything named by id
+    // ═══════════════════════════════════════════════════════════════════
+    //
+    // :view, :enrol, :update and :create default to the manager archetype,
+    // and every tenant admin holds a manager-archetype role at system
+    // context. Until 2026-09-25 the web services, forms, view.php and
+    // exportcsv.php checked only the capability and then acted on whatever
+    // pathid the client sent: any tenant admin could read every tenant's
+    // path rosters (names, emails, employee ids) and enrol, unenrol or
+    // restructure every tenant's paths. A capability says WHAT; these say
+    // WHERE. Call one after require_capability() wherever an id comes in.
+
+    /**
+     * Refuse unless the path is in the caller's tenant.
+     *
+     * Cross-tenant callers (site admin, local/sentientia_platform:crosstenant)
+     * pass. Anyone else needs a resolvable tenant AND a path whose open_path
+     * lies inside it. A path with no open_path is cross-tenant-only: every
+     * tenant's list hides it (path_filter never matches NULL), so it must not
+     * open by id either - tenant::require_path_access() on its own lets ''
+     * through.
+     *
+     * @param \stdClass $path    a record carrying open_path
+     * @param int|null  $userid  the caller; defaults to $USER
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function assert_path_in_scope(\stdClass $path, ?int $userid = null): void {
+        global $DB, $USER;
+        $current = (int) ($USER->id ?? 0);
+        $userid = $userid ?? $current;
+        if (\local_sentientia_platform\tenant::is_cross_tenant($userid)) {
+            return;
+        }
+        $caller = ($userid === $current) ? $USER
+            : $DB->get_record('user', ['id' => $userid], 'id, open_path');
+        $openpath = trim((string) ($path->open_path ?? ''));
+        if ($openpath === '' || !$caller
+                || \local_sentientia_platform\tenant::scope_path($caller) === null) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        \local_sentientia_platform\tenant::require_path_access($openpath,
+            $userid === $current ? null : $userid);
+    }
+
+    /**
+     * Load a path by id and refuse unless it is in the caller's tenant.
+     *
+     * @throws \moodle_exception error_outoftenant (or dml_missing_record_exception)
+     */
+    public static function require_path_tenant(int $pathid, ?int $userid = null): \stdClass {
+        global $DB;
+        $path = $DB->get_record(self::TABLE, ['id' => $pathid], '*', MUST_EXIST);
+        self::assert_path_in_scope($path, $userid);
+        return $path;
+    }
+
+    /**
+     * Refuse unless every named user is in the caller's tenant (ADR-031: a
+     * write that names a user checks the target). One query for any number
+     * of ids. Cross-tenant callers pass.
+     *
+     * @param int[] $userids
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_users_in_scope(array $userids): void {
+        global $DB;
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return;
+        }
+        $userids = array_values(array_unique(array_filter(array_map('intval', $userids),
+            fn($id) => $id > 0)));
+        if (empty($userids)) {
+            return;
+        }
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === null || $scope === '') {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'lpsu');
+        [$tsql, $targs] = \local_sentientia_platform\tenant::path_descendant_filter(
+            $scope, 'u', 'open_path', 'lpst');
+        $inscope = (int) $DB->count_records_sql(
+            "SELECT COUNT(1) FROM {user} u WHERE u.id $insql AND $tsql",
+            $inparams + $targs);
+        if ($inscope !== count($userids)) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+    }
+
+    /**
+     * WHERE fragment for the courses the caller may put on a path.
+     *
+     * Cross-tenant: every course. Scoped: courses in their tenant tree,
+     * legacy courses with no open_path (the same tolerance
+     * local_sentientia_courses' own list applies), and courses shared to
+     * their tenant. No tenant: nothing. Assigning a course back-fills every
+     * path learner into it, so a foreign course here was a cross-tenant
+     * write into another tenant's course.
+     *
+     * @param string $alias course table alias
+     * @return array{0: string, 1: array}
+     */
+    public static function course_scope_sql(string $alias = 'c'): array {
+        global $DB;
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return ['1=1', []];
+        }
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === null || $scope === '') {
+            return ['1=0', []];
+        }
+        [$sql, $params] = \local_sentientia_platform\tenant::path_descendant_filter(
+            $scope, $alias, 'open_path', 'lpcs', true);
+        if ($DB->get_manager()->table_exists('local_sentientia_courses_tenant_share')) {
+            $sql = "($sql OR EXISTS (SELECT 1 FROM {local_sentientia_courses_tenant_share} lpsh
+                                     WHERE lpsh.courseid = {$alias}.id
+                                       AND lpsh.tenant_id = :lpcstenant
+                                       AND lpsh.status = :lpcsstatus))";
+            $params['lpcstenant'] = (int) substr($scope, 1);
+            $params['lpcsstatus'] = 'active';
+        }
+        return [$sql, $params];
+    }
+
+    /**
+     * Refuse unless every named course is one course_scope_sql() allows.
+     *
+     * @param int[] $courseids
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_courses_in_scope(array $courseids): void {
+        global $DB;
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return;
+        }
+        $courseids = array_values(array_unique(array_filter(array_map('intval', $courseids),
+            fn($id) => $id > 0)));
+        if (empty($courseids)) {
+            return;
+        }
+        [$insql, $inparams] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED, 'lpcc');
+        [$csql, $cparams] = self::course_scope_sql('c');
+        $inscope = (int) $DB->count_records_sql(
+            "SELECT COUNT(1) FROM {course} c WHERE c.id $insql AND $csql",
+            $inparams + $cparams);
+        if ($inscope !== count($courseids)) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+    }
+
+    /**
+     * The open_path a path should carry when the CALLER saves it with org
+     * $costcenterid, refusing an org outside their tenant.
+     *
+     * Cross-tenant callers keep the old behaviour: the org's path, or null
+     * for "no specific organisation". A scoped caller may only pick an org in
+     * their own tenant, and "no specific organisation" stamps their tenant
+     * root - so no tenant user can create a path no tenant owns, or move one
+     * into another tenant.
+     *
+     * @return string|null  null = no path (cross-tenant callers only)
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function org_path_for_caller(int $costcenterid): ?string {
+        global $DB;
+        $org = $costcenterid > 0
+            ? $DB->get_record('local_sentientia_org', ['id' => $costcenterid], 'id, path')
+            : false;
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return ($org && (string) $org->path !== '') ? (string) $org->path : null;
+        }
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === null || $scope === '') {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        if ($costcenterid <= 0) {
+            return $scope;
+        }
+        $orgpath = $org ? rtrim((string) $org->path, '/') : '';
+        if ($orgpath === '' || ($orgpath !== $scope && strpos($orgpath, $scope . '/') !== 0)) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        return (string) $org->path;
+    }
+
     /**
      * Get all courses in a learning path (ordered).
      *
@@ -145,7 +331,7 @@ class path_manager {
      * @return int  New path ID
      * @throws \moodle_exception
      */
-    public static function create(object $data): int {
+    public static function create(object $data, ?string $fallbackpath = null): int {
         global $DB;
 
         if (empty($data->name)) {
@@ -172,6 +358,12 @@ class path_manager {
                 $record->open_path = $org->path;
             }
         }
+        // ADR-031: a scoped caller's "no specific organisation" still belongs
+        // to their tenant (see org_path_for_caller()); null keeps the old
+        // behaviour for cross-tenant and internal callers.
+        if (empty($record->open_path) && $fallbackpath !== null && $fallbackpath !== '') {
+            $record->open_path = $fallbackpath;
+        }
 
         return $DB->insert_record(self::TABLE, $record);
     }
@@ -179,7 +371,7 @@ class path_manager {
     /**
      * Update an existing learning path.
      */
-    public static function update(int $id, object $data): bool {
+    public static function update(int $id, object $data, ?string $fallbackpath = null): bool {
         global $DB;
 
         $existing = $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
@@ -205,7 +397,8 @@ class path_manager {
 
         if (isset($record->costcenterid) && $record->costcenterid != $existing->costcenterid) {
             $org = $DB->get_record('local_sentientia_org', ['id' => $record->costcenterid]);
-            $record->open_path = $org ? $org->path : '';
+            // ADR-031: see create() - a scoped caller never leaves a path unowned.
+            $record->open_path = $org ? $org->path : ($fallbackpath ?? '');
         }
 
         $DB->update_record(self::TABLE, $record);

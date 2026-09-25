@@ -49,5 +49,20 @@ function xmldb_local_sentientia_learningpath_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051600, 'local', 'sentientia_learningpath');
     }
 
+    if ($oldversion < 2026092500) {
+        // ADR-031 (2026-09-25): :view gates the ADMIN surface - path rosters
+        // with names, emails and employee ids, and the CSV export - so it no
+        // longer defaults to the student archetype (db/access.php). Changing
+        // archetypes never revokes what was already granted: revoke it from
+        // every student-archetype role at system context. Manager-archetype
+        // grants stay; the code now scopes them to the holder's tenant.
+        $syscontext = \context_system::instance();
+        foreach ($DB->get_records('role', ['archetype' => 'student'], '', 'id') as $role) {
+            unassign_capability('local/sentientia_learningpath:view', (int) $role->id, $syscontext->id);
+        }
+        $syscontext->mark_dirty();
+        upgrade_plugin_savepoint(true, 2026092500, 'local', 'sentientia_learningpath');
+    }
+
     return true;
 }

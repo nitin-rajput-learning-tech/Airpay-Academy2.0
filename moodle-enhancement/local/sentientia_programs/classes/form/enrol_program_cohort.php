@@ -22,14 +22,23 @@ class enrol_program_cohort extends \core_form\dynamic_form {
         $mform->addElement('hidden', 'programid', $programid);
         $mform->setType('programid', PARAM_INT);
 
-        // Cohort options — show name + member count.
+        // Cohort options — show name + member count. ADR-031: for a scoped
+        // caller, only cohorts with members in their tenant, counting only
+        // those members (the only ones process() will enrol); no tenant, no
+        // cohorts. Until 2026-09-25 every cohort on the site was listed with
+        // its full member count, and all of its members were enrolled.
+        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('u');
         $cohorts = $DB->get_records_sql(
             "SELECT c.id, c.name, c.idnumber,
                     (SELECT COUNT(*) FROM {cohort_members} cm
-                      WHERE cm.cohortid = c.id) AS member_count
+                       JOIN {user} u ON u.id = cm.userid
+                      WHERE cm.cohortid = c.id AND $tnsql) AS member_count
                FROM {cohort} c
               WHERE c.visible = 1
-           ORDER BY c.name ASC", null, 0, 500);
+           ORDER BY c.name ASC", $tnargs, 0, 500);
+        if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
+            $cohorts = array_filter($cohorts, fn($c) => (int) $c->member_count > 0);
+        }
 
         $options = [];
         foreach ($cohorts as $c) {
@@ -64,8 +73,14 @@ class enrol_program_cohort extends \core_form\dynamic_form {
         $programid = (int) $data->programid;
         $cohortid = (int) ($data->cohortid ?? 0);
 
+        // ADR-031: a scoped caller only enrols the cohort's members from their
+        // own tenant ('' = cross-tenant = every member; null = no tenant).
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === null) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
         $result = \local_sentientia_programs\program_manager::enrol_cohort(
-            $programid, $cohortid);
+            $programid, $cohortid, $scope);
 
         return [
             'programid'        => $programid,
@@ -86,6 +101,9 @@ class enrol_program_cohort extends \core_form\dynamic_form {
     protected function check_access_for_dynamic_submission(): void {
         require_capability('local/sentientia_programs:enrol',
             $this->get_context_for_dynamic_submission());
+        // ADR-031: the program must be in the caller's tenant (this also
+        // refuses a caller with no tenant, so scope_path() is non-null below).
+        \local_sentientia_programs\program_manager::require_program_access((int) $this->optional_param('programid', 0, PARAM_INT));
     }
 
     protected function get_context_for_dynamic_submission(): \context {

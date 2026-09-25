@@ -95,6 +95,13 @@ class edit_program extends \core_form\dynamic_form {
             $errors['enddate'] = get_string('enddate_before_start',
                 'local_sentientia_programs');
         }
+        // ADR-031: a scoped caller may only file a program under an org in
+        // their own tenant.
+        try {
+            \local_sentientia_programs\program_manager::org_path_for_caller((int) ($data['costcenterid'] ?? 0));
+        } catch (\moodle_exception $e) {
+            $errors['costcenterid'] = get_string('error_outoftenant', 'local_sentientia_platform');
+        }
         return $errors;
     }
 
@@ -110,11 +117,16 @@ class edit_program extends \core_form\dynamic_form {
                 (int) ($data->description_editor['format'] ?? FORMAT_HTML);
         }
 
+        // ADR-031: refuses an org outside a scoped caller's tenant, and gives
+        // their "no specific organisation" the tenant root instead of no path.
+        // Cross-tenant callers get null, which keeps the old behaviour.
+        $orgpath = \local_sentientia_programs\program_manager::org_path_for_caller((int) ($data->costcenterid ?? 0));
+
         if ($programid === 0) {
-            $newid = \local_sentientia_programs\program_manager::create($data);
+            $newid = \local_sentientia_programs\program_manager::create($data, $orgpath);
             return ['programid' => $newid, 'message' => get_string('programcreated', 'local_sentientia_programs')];
         } else {
-            \local_sentientia_programs\program_manager::update($programid, $data);
+            \local_sentientia_programs\program_manager::update($programid, $data, $orgpath);
             return ['programid' => $programid, 'message' => get_string('programupdated', 'local_sentientia_programs')];
         }
     }
@@ -160,8 +172,14 @@ class edit_program extends \core_form\dynamic_form {
         $programid = (int) ($this->optional_param('programid', 0, PARAM_INT));
         if ($programid === 0) {
             require_capability('local/sentientia_programs:create', $context);
+            // ADR-031: a caller with no tenant creates nothing.
+            if (\local_sentientia_platform\tenant::scope_path() === null) {
+                throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+            }
         } else {
             require_capability('local/sentientia_programs:update', $context);
+            // ADR-031: guards set_data (reads it) and process (rewrites it) too.
+            \local_sentientia_programs\program_manager::require_program_access($programid);
         }
     }
 
@@ -171,7 +189,11 @@ class edit_program extends \core_form\dynamic_form {
 
     private function get_org_options(): array {
         global $DB;
-        $orgs = $DB->get_records('local_sentientia_org', ['visible' => 1],
+        // ADR-031: a scoped caller sees only their own tenant's orgs ('1=0'
+        // with no tenant); for them option 0 means their tenant root (see
+        // program_manager::org_path_for_caller()).
+        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('', 'path');
+        $orgs = $DB->get_records_select('local_sentientia_org', "visible = 1 AND $tnsql", $tnargs,
             'depth ASC, fullname ASC', 'id, fullname, depth');
         $options = [0 => '— No specific organisation —'];
         foreach ($orgs as $o) {

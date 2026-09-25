@@ -21,6 +21,8 @@ class delete_program extends external_api {
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/sentientia_programs:delete', $context);
+        // ADR-031: the capability says WHAT; the program must also be in the caller's tenant.
+        \local_sentientia_programs\program_manager::require_program_access($params['programid']);
 
         $success = \local_sentientia_programs\program_manager::delete($params['programid']);
         return ['programid' => $params['programid'], 'success' => $success];

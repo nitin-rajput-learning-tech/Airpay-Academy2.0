@@ -35,6 +35,8 @@ class bulk_enrol_by_audience extends external_api {
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/sentientia_programs:enrol', $context);
+        // ADR-031: the capability says WHAT; the program must also be in the caller's tenant.
+        \local_sentientia_programs\program_manager::require_program_access((int) $params['programid']);
 
         $map = self::parse_filters($params['filters']);
         return \local_sentientia_programs\program_audience_enroller::enrol_by_filter(

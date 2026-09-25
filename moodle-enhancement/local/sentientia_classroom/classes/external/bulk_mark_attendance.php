@@ -49,6 +49,10 @@ class bulk_mark_attendance extends external_api {
         if (count($params['marks']) > self::MAX_MARKS) {
             throw new \moodle_exception('toomanymarks', 'local_sentientia_classroom');
         }
+        // ADR-031: the capability says WHAT; the classroom must also be in the caller's tenant.
+        // Attendance is compliance evidence: every learner marked must be in it too.
+        \local_sentientia_classroom\session_manager::require_session_access($params['sessionid']);
+        \local_sentientia_classroom\session_manager::require_users_in_scope(array_column($params['marks'], 'userid'));
 
         $count = \local_sentientia_classroom\session_manager::bulk_mark_attendance(
             $params['sessionid'], $params['marks']);

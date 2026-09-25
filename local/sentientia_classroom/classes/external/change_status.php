@@ -38,6 +38,8 @@ class change_status extends external_api {
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/sentientia_classroom:update', $context);
+        // ADR-031: the capability says WHAT; the classroom must also be in the caller's tenant.
+        \local_sentientia_classroom\session_manager::require_classroom_access($params['classroomid']);
 
         $newstatus = \local_sentientia_classroom\session_manager::change_status(
             $params['classroomid'], $params['status']);

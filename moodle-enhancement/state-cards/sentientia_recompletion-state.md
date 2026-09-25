@@ -169,3 +169,13 @@ ends a bulk reset part-way through with no `['reset','failed']` result for the c
 already reset keep their history rows; users after the bad one are never processed. The
 docblock's "rolls back atomically on a downstream failure" has no test. Needs a decision on the
 contract (catch and return false, or let it throw and fix the callers) plus a rollback test.
+
+## 2026-09-25 - ADR-031: rules and history tenant-scoped; tenant rules never reset other tenants
+
+Cross-tenant authority sweep (docs/audits/CROSS-TENANT-AUTHORITY-SWEEP-2026-09-25.md), 2 confirmed hits, one P0 destructive. The plugin resolved no tenant at all. `:view` (manager archetype) listed every tenant's rules and reset history (names, emails, compliance dates). `:manage` (granted by db/install.php to the tenant-admin role "administrator") opened any rule by id and saved every new rule with `costcenterid` 0, which `recompletion_engine` reads as EVERY tenant: a tenant admin's rule deleted every tenant's completions, SCORM tracking, grades and quiz attempts on the daily cron.
+
+- New `classes/rule_access.php`: `caller_root()` (refuses no tenant), `require_rule()` (a scoped caller opens only their tenant's rules, never a global one), `costcenterid_for_save()` (a scoped caller's new rule carries their tenant; updates keep the stored value; cross-tenant callers unchanged, so site-admin rules stay global), `rules_filter()`, `history_user_filter()`, `course_filter()` / `require_course()`.
+- edit.php, index.php and history.php use them; the course picker lists only the caller's tenant's courses (own tree, legacy unpathed, shared to the tenant).
+- `:reset` (checked nowhere; bulk_reset.php was never built) is no longer granted by install.php and upgrade step 2026092500 (new db/upgrade.php) revokes every existing grant. `:view` / `:manage` grants stay, now scoped.
+- The engine is unchanged: tenant rules already reset only the rule tenant's users (B6). Before deploy, audit existing enabled `costcenterid = 0` rules on UAT/production - they may have been made by a tenant admin through the UI before this fix, and there is no column recording who created them.
+- 1.1.2 / 2026092500, depends on local_sentientia_platform 2026092500. Tests: `tests/tenant_scope_test.php` (@group tenant_isolation). Written, not run (shared PHPUnit DB). Both trees.

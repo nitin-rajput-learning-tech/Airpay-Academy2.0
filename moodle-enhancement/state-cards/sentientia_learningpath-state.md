@@ -168,3 +168,16 @@ white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after
 New `anonymise_data_for_user()` for the DPDP flow. It keeps `learningpath_users` (the path enrolment and completion record) and the adaptive log, keyed to the anonymised user, and clears only `decision_notes`. Core's full erasure is unchanged.
 
 Found by a read-only audit of all 38 Sentientia privacy providers, run because `local_sentientia_privacy\privacy_manager::process_deletion()` now calls every one of them. Class change only: no version bump. Covered by `local_sentientia_privacy\erasure_scope_test` / `privacy_manager_test`.
+
+## 2026-09-25 - ADR-031: learning paths tenant-scoped; :view student default revoked
+
+Cross-tenant authority sweep (docs/audits/CROSS-TENANT-AUTHORITY-SWEEP-2026-09-25.md), 3 confirmed hits. `:view`, `:enrol`, `:update` and `:create` default to the manager archetype (tenant admins hold one at system context), and every pathid-keyed endpoint checked only the capability: any tenant admin could export or list every tenant's path rosters (names, emails, employee ids, completion) and enrol any user into, unenrol from, archive or restructure any tenant's path (enrolment also enrols into every course on the path).
+
+- New guards in `path_manager`: `require_path_tenant()`, `assert_path_in_scope()` (fails closed for no tenant and for a path with no `open_path`), `require_users_in_scope()`, `course_scope_sql()` / `require_courses_in_scope()` (own tenant tree + legacy unpathed courses + courses shared to the tenant), `org_path_for_caller()`.
+- Called in every pathid web service (list_path_users/courses, enrol_users, unenrol_user, toggle_status, assign/unassign/reorder courses, delete_path, bulk_enrol_by_audience), every dynamic form's access check, view.php and exportcsv.php (before any CSV header). `exportcsv.php?mode=paths` and the index KPI tiles are tenant-filtered.
+- Writes check their targets: enrolled/unenrolled users and assigned courses must be the caller's tenant's. Assign-courses picker lists only those courses (was every course on the site, hidden ones included).
+- `list_paths`: tenant filter always applies; the org cascade only narrows it.
+- Edit form: org picker limited to the caller's tenant; scoped "No specific organisation" stamps the tenant root.
+- Enrol picker and `path_audience_enroller`: a caller with no tenant gets nobody (was: everyone). Cohort options limited to cohorts with members in the caller's tenant.
+- `:view` no longer defaults to the student archetype (it gates only the admin surface with PII); upgrade step 2026092500 revokes it from student-archetype roles at system context (the local mirror had 5 system-level employee assignments holding it). Manager grants stay, now scoped.
+- ME 1.8.1 / top 1.7.2, both 2026092500; depends on local_sentientia_platform 2026092500. Tests: `tests/tenant_scope_test.php` (@group tenant_isolation). Written, not run (shared PHPUnit DB). Both trees (upgrade.php and version.php stay baselined-different).

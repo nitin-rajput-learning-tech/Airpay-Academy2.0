@@ -11,11 +11,14 @@ function xmldb_local_sentientia_recompletion_install(): void {
     update_capabilities('local_sentientia_recompletion');
 
     $context = \context_system::instance();
+    // ADR-031 (2026-09-25): :view and :manage are tenant-scoped in code
+    // (classes/rule_access.php), so the tenant-admin role keeps them. :reset
+    // is NOT granted: nothing checks it yet, and a future bulk-reset page
+    // must not inherit a tenant-admin grant before it is tenant-scoped.
     $rolemap = [
         'administrator' => [
             ['local/sentientia_recompletion:view',   CAP_ALLOW],
             ['local/sentientia_recompletion:manage', CAP_ALLOW],
-            ['local/sentientia_recompletion:reset',  CAP_ALLOW],
         ],
     ];
     foreach ($rolemap as $shortname => $caps) {

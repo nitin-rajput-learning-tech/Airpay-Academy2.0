@@ -48,6 +48,11 @@ class assign_courses extends external_api {
         if (count($params['courseids']) > 100) {
             throw new \moodle_exception('toomanycourses', 'local_sentientia_learningpath');
         }
+        // ADR-031: the capability says WHAT; the path must also be in the caller's tenant.
+        // Every course added must be one the caller's tenant may use: assigning
+        // back-fills every path learner into it.
+        \local_sentientia_learningpath\path_manager::require_path_tenant($params['pathid']);
+        \local_sentientia_learningpath\path_manager::require_courses_in_scope($params['courseids']);
 
         $count = \local_sentientia_learningpath\path_manager::assign_courses(
             $params['pathid'], $params['courseids']);

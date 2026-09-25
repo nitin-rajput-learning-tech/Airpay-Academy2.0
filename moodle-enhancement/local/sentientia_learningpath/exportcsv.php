@@ -25,6 +25,11 @@ require_capability('local/sentientia_learningpath:view', $ctx);
 $mode = optional_param('mode', 'paths', PARAM_ALPHA);
 $pathid = optional_param('id', 0, PARAM_INT);
 
+// ADR-031: refuse another tenant's path BEFORE any CSV header goes out.
+if ($mode === 'path_users' && $pathid > 0) {
+    \local_sentientia_learningpath\path_manager::require_path_tenant($pathid);
+}
+
 $filename = 'sentientia_learningpath_' . $mode
           . ($pathid ? "_$pathid" : '')
           . '_' . date('Y-m-d_His') . '.csv';
@@ -38,6 +43,9 @@ fwrite($out, "\xEF\xBB\xBF");
 
 if ($mode === 'paths') {
     fputcsv($out, ['Path ID', 'Name', 'Status', 'Courses', 'Users', 'Created']);
+    // ADR-031: the caller's tenant only ('1=1' cross-tenant, '1=0' no tenant).
+    // Until 2026-09-25 this exported every tenant's paths.
+    [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('lp');
     $rows = $DB->get_records_sql("
         SELECT lp.id, lp.name, lp.status, lp.timecreated,
                (SELECT COUNT(*) FROM {local_sentientia_learningpath_courses}
@@ -45,7 +53,8 @@ if ($mode === 'paths') {
                (SELECT COUNT(*) FROM {local_sentientia_learningpath_users}
                  WHERE pathid = lp.id) AS user_count
           FROM {local_sentientia_learningpath} lp
-      ORDER BY lp.name ASC LIMIT 10000");
+         WHERE $tnsql
+      ORDER BY lp.name ASC", $tnargs, 0, 10000);
     foreach ($rows as $r) {
         fputcsv($out, [
             $r->id,
@@ -57,7 +66,7 @@ if ($mode === 'paths') {
         ]);
     }
 } else if ($mode === 'path_users' && $pathid > 0) {
-    $path = $DB->get_record('local_sentientia_learningpath', ['id' => $pathid], '*', MUST_EXIST);
+    $path = \local_sentientia_learningpath\path_manager::require_path_tenant($pathid);
     fputcsv($out, ['Path', $path->name]);
     fputcsv($out, []);
     fputcsv($out, ['User ID', 'Name', 'Email', 'Employee ID', 'Enrolled',

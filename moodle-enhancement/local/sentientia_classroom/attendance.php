@@ -17,24 +17,10 @@ require_login();
 $context = context_system::instance();
 require_capability('local/sentientia_classroom:view', $context);
 
-$session = $DB->get_record('local_sentientia_classroom_sessions',
-    ['id' => $sessionid], '*', MUST_EXIST);
-$classroom = $DB->get_record('local_sentientia_classroom',
-    ['id' => $session->classroomid], '*', MUST_EXIST);
-
-// Tenant scope — same logic as view.php.
-if (!is_siteadmin()) {
-    $parts = explode('/', trim($USER->open_path ?? '', '/'));
-    $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
-    if ($top > 0 && !empty($classroom->open_path)) {
-        $cpath = trim($classroom->open_path, '/');
-        $cparts = explode('/', $cpath);
-        $ctop = isset($cparts[0]) && ctype_digit($cparts[0]) ? (int) $cparts[0] : 0;
-        if ($ctop !== $top) {
-            throw new \moodle_exception('nopermissions', 'error');
-        }
-    }
-}
+// Tenant scope (ADR-031) — same guard as view.php; it fails closed for a
+// viewer with no tenant and for a classroom with no path.
+[$session, $classroom] =
+    \local_sentientia_classroom\session_manager::require_session_access($sessionid);
 
 $can_attend = has_capability('local/sentientia_classroom:attendance', $context);
 

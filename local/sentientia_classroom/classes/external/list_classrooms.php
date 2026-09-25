@@ -56,19 +56,20 @@ class list_classrooms extends external_api {
         $where = ['1=1'];
         $sqlparams = [];
 
-        // W1-1 BizLMS parity: 5-level org cascade overrides default
-        // tenant scope. If the user picked a specific org (any level
-        // 1..5), filter to that subtree. Otherwise apply the default
-        // path_filter (caller's own tenant tree).
+        // Tenant scope ALWAYS applies (ADR-031): '1=1' for cross-tenant
+        // callers, the caller's own tree otherwise, '1=0' for a caller with
+        // no tenant. The W1-1 5-level org cascade only NARROWS it. Until
+        // 2026-09-25 a client-chosen org REPLACED this filter, and
+        // cascade_where_sql() resolves any org id, so filters={"org_l1":77}
+        // listed another tenant's classrooms.
+        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('c');
+        $where[] = $tnsql;
+        $sqlparams = array_merge($sqlparams, $tnargs);
         [$cascadesql, $cascadeargs] =
             \local_sentientia_org\org_manager::cascade_where_sql($client_filters, 'c');
         if ($cascadesql !== '') {
             $where[] = $cascadesql;
             $sqlparams = array_merge($sqlparams, $cascadeargs);
-        } else {
-            [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('c');
-            $where[] = $tnsql;
-            $sqlparams = array_merge($sqlparams, $tnargs);
         }
 
         // Status filter.

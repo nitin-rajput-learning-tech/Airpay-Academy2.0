@@ -35,6 +35,10 @@ class unenrol_classroom_user extends external_api {
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/sentientia_classroom:update', $context);
+        // ADR-031: the capability says WHAT; the classroom must also be in the caller's tenant.
+        // The user being removed must be in it too.
+        \local_sentientia_classroom\session_manager::require_classroom_access($params['classroomid']);
+        \local_sentientia_platform\tenant::require_same_tenant_user($params['userid']);
 
         \local_sentientia_classroom\session_manager::unenrol_user(
             $params['classroomid'], $params['userid']);

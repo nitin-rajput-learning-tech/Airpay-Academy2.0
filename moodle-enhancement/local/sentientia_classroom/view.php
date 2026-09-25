@@ -21,23 +21,11 @@ require_login();
 $context = context_system::instance();
 require_capability('local/sentientia_classroom:view', $context);
 
-// Load classroom — must exist.
-$classroom = $DB->get_record('local_sentientia_classroom', ['id' => $classroomid], '*', MUST_EXIST);
-
-// Tenant scope: non-siteadmin only sees classrooms in their org tree.
-if (!is_siteadmin()) {
-    $parts = explode('/', trim($USER->open_path ?? '', '/'));
-    $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
-    if ($top > 0 && !empty($classroom->open_path)) {
-        $cpath = trim($classroom->open_path, '/');
-        $cparts = explode('/', $cpath);
-        $ctop = isset($cparts[0]) && ctype_digit($cparts[0]) ? (int) $cparts[0] : 0;
-        if ($ctop !== $top) {
-            throw new \moodle_exception('nopermissions', 'error', '',
-                get_string('view_classroom_title', 'local_sentientia_classroom', $classroom->name));
-        }
-    }
-}
+// Load classroom — must exist — and refuse unless it is in the caller's
+// tenant (ADR-031). The inline check this replaces skipped itself when the
+// viewer had no tenant or the classroom had no path, so either opened any
+// classroom by id.
+$classroom = \local_sentientia_classroom\session_manager::require_classroom_access($classroomid);
 
 $can_update = is_siteadmin() || has_capability('local/sentientia_classroom:update', $context)
     || has_capability('local/sentientia_classroom:manage', $context);

@@ -52,9 +52,10 @@ class list_path_courses extends external_api {
             throw new \moodle_exception('filterstoolong', 'local_sentientia_learningpath');
         }
 
-        // Verify the path exists. (No tenant boundary check on read here — listing
-        // a path's courses is information the path's :view permission already gates.)
-        $DB->get_record('local_sentientia_learningpath', ['id' => $params['pathid']], 'id', MUST_EXIST);
+        // Verify the path exists AND is in the caller's tenant (ADR-031). Until
+        // 2026-09-25 this deliberately skipped the tenant check, so :view -
+        // which every tenant admin holds - listed any tenant's path.
+        \local_sentientia_learningpath\path_manager::require_path_tenant($params['pathid']);
 
         // Sort whitelist — anything outside falls back to sortorder.
         $allowed = ['sortorder', 'fullname', 'mandatory', 'timecreated'];
