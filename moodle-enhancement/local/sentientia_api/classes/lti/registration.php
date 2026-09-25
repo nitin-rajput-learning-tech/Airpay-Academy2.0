@@ -25,9 +25,19 @@ class registration {
     /**
      * Resolve an enabled registration by issuer + client_id, scoped to a tenant.
      *
+     * Exactly one match, or nothing (ADR-031, 2026-09-25). With costcenterid 0
+     * - the normal case for an LTI login, which arrives from a browser that is
+     * not signed in here, and also a signed-in user with no tenant - the
+     * lookup spans every tenant, and the registration itself says whose it
+     * is. The old get_record() returned whichever row came first when two
+     * tenants had registered the same platform (issuer + client_id), binding
+     * the launch's nonce, key and redirect to an arbitrary tenant's
+     * registration. Such an ambiguity now resolves to null: the launch fails
+     * closed instead of guessing. A single registration still resolves.
+     *
      * @param string $issuer
      * @param string $clientid
-     * @param int    $costcenterid Tenant root (0 = any, admin only)
+     * @param int    $costcenterid Tenant root; 0 = the one registration for this issuer + client_id, if unique
      * @return \stdClass|null
      */
     public static function find(string $issuer, string $clientid, int $costcenterid): ?\stdClass {
@@ -40,8 +50,8 @@ class registration {
         if ($costcenterid > 0) {
             $conditions['costcenterid'] = $costcenterid;
         }
-        $rec = $DB->get_record('local_sentientia_api_lti_reg', $conditions);
-        return $rec ?: null;
+        $recs = $DB->get_records('local_sentientia_api_lti_reg', $conditions, 'id ASC', '*', 0, 2);
+        return count($recs) === 1 ? reset($recs) : null;
     }
 
     /**

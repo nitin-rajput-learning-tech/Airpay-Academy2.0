@@ -44,7 +44,7 @@ class list_enrolments extends base {
         $params = self::validate_parameters(self::execute_parameters(),
             compact('courseid', 'page', 'perpage'));
 
-        $callerroot = self::open_v1('local_sentientia_api_v1_list_enrolments', 'local/sentientia_api:read');
+        self::open_v1('local_sentientia_api_v1_list_enrolments', 'local/sentientia_api:read');
 
         $page = max(0, $params['page']);
         $perpage = min(200, max(1, $params['perpage']));
@@ -54,17 +54,17 @@ class list_enrolments extends base {
             'id, open_path', MUST_EXIST);
         tenant::require_path_access((string) ($course->open_path ?? ''));
 
-        $isadmin = is_siteadmin();
+        // Email stays SITE-ADMIN ONLY, exactly as before ADR-031. Whether a
+        // non-admin :crosstenant holder should also see it is an open product
+        // decision (2026-09-25), so it is deliberately NOT is_cross_tenant().
+        $showemail = is_siteadmin();
 
-        // Scope enrolled users to the caller's tenant tree (unless admin).
-        $userwhere = '';
-        $userargs = [];
-        if (!$isadmin && $callerroot > 0) {
-            $exact = '/' . $callerroot;
-            $prefix = '/' . $callerroot . '/%';
-            $userwhere = ' AND (u.open_path = :pexact OR ' . $DB->sql_like('u.open_path', ':pprefix') . ')';
-            $userargs = ['pexact' => $exact, 'pprefix' => $prefix];
-        }
+        // Scope enrolled users to the caller's tenant tree. ADR-031: the
+        // platform helper decides WHERE ('1=1' for a cross-tenant caller,
+        // '/N' exact-or-descendant otherwise, '1=0' for no tenant - which
+        // open_v1 has refused already). Until 2026-09-25 this branched on
+        // is_siteadmin(), so a :crosstenant holder was scoped here.
+        [$userwhere, $userargs] = tenant::path_filter('u', 'open_path');
 
         $sql = "SELECT DISTINCT u.id, u.firstname, u.lastname, u.email, ue.timestart, ue.status
                   FROM {user_enrolments} ue
@@ -72,7 +72,7 @@ class list_enrolments extends base {
                   JOIN {user} u ON u.id = ue.userid
                  WHERE e.courseid = :cid
                    AND u.deleted = 0
-                   $userwhere
+                   AND $userwhere
               ORDER BY u.lastname ASC, u.firstname ASC, u.id ASC";
         $args = array_merge(['cid' => $params['courseid']], $userargs);
 
@@ -83,7 +83,7 @@ class list_enrolments extends base {
             $rows[] = [
                 'userid'    => (int) $r->id,
                 'fullname'  => format_string(fullname($r)),
-                'email'     => $isadmin ? \core_user::clean_field($r->email, 'email') : '',
+                'email'     => $showemail ? \core_user::clean_field($r->email, 'email') : '',
                 'timestart' => (int) $r->timestart,
                 'active'    => ((int) $r->status === ENROL_USER_ACTIVE),
             ];

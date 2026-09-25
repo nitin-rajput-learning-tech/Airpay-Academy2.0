@@ -138,7 +138,10 @@ function xmldb_local_sentientia_api_upgrade(int $oldversion): bool {
     // db/access.php now has no default, but changing an archetype never revokes
     // grants Moodle already applied -- hence this explicit revoke. Site admins
     // still pass by the admin bypass; anyone who needs the pages is granted the
-    // capability on purpose, and is then confined to their tenant by admin_scope.
+    // capability on purpose. admin_scope then limits WHICH subscriptions or
+    // SCIM clients a scoped holder manages (their own tenant's). It does not
+    // limit what a SCIM token they mint may do inside that tenant: see the
+    // :scim_manage note in db/access.php (corrected 2026-09-25, review S1).
     if ($oldversion < 2026092500) {
         $syscontext = \context_system::instance();
         foreach (['local/sentientia_api:webhooks_manage', 'local/sentientia_api:scim_manage'] as $cap) {

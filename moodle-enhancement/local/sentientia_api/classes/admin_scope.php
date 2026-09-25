@@ -28,6 +28,15 @@ use local_sentientia_platform\tenant;
  *     only a cross-tenant caller may touch them;
  *   - a scoped caller whose tenant does not resolve is refused outright.
  *
+ * What this does NOT bound (corrected 2026-09-25, adversarial review S1): it
+ * decides which ROWS a caller manages, not what those rows can do. A SCIM
+ * client a scoped caller creates or rotates carries a bearer token that can
+ * create, rename, re-email, suspend and move every ordinary account in the
+ * tenant. \local_sentientia_api\scim\handler keeps every cross-tenant
+ * principal (site admin, :crosstenant holder) out of a scoped client's reach
+ * even when their open_path sits under that tenant; everyone else in the
+ * tenant is within it by design.
+ *
  * @package local_sentientia_api
  */
 final class admin_scope {

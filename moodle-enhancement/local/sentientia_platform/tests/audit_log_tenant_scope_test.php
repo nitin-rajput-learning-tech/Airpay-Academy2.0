@@ -215,4 +215,103 @@ final class audit_log_tenant_scope_test extends \advanced_testcase {
         $this->assertSame([$b],
             self::ids(audit_log::actions_by_user((int) $foreign->id, self::FROM, self::TO)));
     }
+
+    /**
+     * The site admin and a deliberate :crosstenant holder, both sitting under
+     * /1 as Airpay platform staff are expected to.
+     *
+     * @return \stdClass[] label => user record
+     */
+    private function principals_under_tenant_one(): array {
+        global $DB;
+        $admin = get_admin();
+        $DB->set_field('user', 'open_path', '/1', ['id' => $admin->id]);
+        $platform = $this->user_at('/1/5');
+        $roleid = $this->getDataGenerator()->create_role();
+        assign_capability(tenant::CROSS_TENANT_CAPABILITY, CAP_ALLOW, $roleid,
+            \context_system::instance()->id);
+        role_assign($roleid, $platform->id, \context_system::instance()->id);
+        accesslib_clear_all_caches_for_unit_testing();
+        return [
+            'site admin'          => $DB->get_record('user', ['id' => $admin->id], '*', MUST_EXIST),
+            ':crosstenant holder' => $platform,
+        ];
+    }
+
+    /**
+     * Adversarial review S4 (2026-09-25): a cross-tenant principal whose
+     * open_path sits under /1 used to pass require_same_tenant_user() for a
+     * /1 tenant admin, whose viewreports then read that principal's whole
+     * trail - courseid, relateduserid and contextinstanceid values from every
+     * other tenant.
+     */
+    public function test_a_tenant_admin_cannot_read_a_cross_tenant_principals_trail(): void {
+        $principals = $this->principals_under_tenant_one();
+        $colleague = $this->user_at('/1/2');
+        $foreign = $this->user_at('/177/178');
+        $rows = [];
+        foreach ($principals as $label => $p) {
+            $rows[$label] = $this->log_row((int) $p->id, (int) $foreign->id, self::FROM + 10);
+        }
+        $c = $this->log_row((int) $colleague->id, null, self::FROM + 20);
+
+        $this->setUser($this->tenant_admin_at('/1'));
+        foreach ($principals as $label => $p) {
+            $this->assert_out_of_tenant(
+                static fn() => audit_log::actions_by_user((int) $p->id, self::FROM, self::TO),
+                "A /1 tenant admin must not read the {$label}'s trail, though it sits under /1.");
+        }
+        $this->assertSame([$c],
+            self::ids(audit_log::actions_by_user((int) $colleague->id, self::FROM, self::TO)),
+            'An ordinary colleague\'s trail stays readable to the tenant admin.');
+
+        // Each principal still reads their own trail; cross-tenant callers read anyone's.
+        foreach ($principals as $label => $p) {
+            $this->setUser($p);
+            $this->assertSame([$rows[$label]],
+                self::ids(audit_log::actions_by_user((int) $p->id, self::FROM, self::TO)),
+                "The {$label} reads their own trail.");
+        }
+        $this->setAdminUser();
+        $platform = $principals[':crosstenant holder'];
+        $this->assertSame([$rows[':crosstenant holder']],
+            self::ids(audit_log::actions_by_user((int) $platform->id, self::FROM, self::TO)));
+    }
+
+    /**
+     * S4, tenant_actions(): rows are picked by the ACTOR's open_path, so
+     * platform staff sitting under /1 put everything they did in every tenant
+     * into tenant 1's trail. A scoped reader now sees what they did to tenant
+     * 1's own people only.
+     */
+    public function test_tenant_trail_hides_what_platform_staff_did_elsewhere(): void {
+        $principals = $this->principals_under_tenant_one();
+        $colleague = $this->user_at('/1/2');
+        $foreign = $this->user_at('/177/178');
+        $ordinary = $this->log_row((int) $colleague->id, null, self::FROM + 5);
+        $inside = $elsewhere = $unrelated = [];
+        foreach ($principals as $label => $p) {
+            $inside[$label]    = $this->log_row((int) $p->id, (int) $colleague->id, self::FROM + 10);
+            $elsewhere[$label] = $this->log_row((int) $p->id, (int) $foreign->id, self::FROM + 20);
+            $unrelated[$label] = $this->log_row((int) $p->id, null, self::FROM + 30);
+        }
+
+        $this->setUser($this->tenant_admin_at('/1'));
+        $ids = self::ids(audit_log::tenant_actions(1, self::FROM, self::TO));
+        $this->assertContains($ordinary, $ids, 'Ordinary tenant users\' rows are unchanged.');
+        foreach ($principals as $label => $p) {
+            $this->assertContains($inside[$label], $ids,
+                "What the {$label} did to a /1 user stays visible to tenant 1.");
+            $this->assertNotContains($elsewhere[$label], $ids,
+                "What the {$label} did to a /177 user must not show in tenant 1's trail.");
+            $this->assertNotContains($unrelated[$label], $ids,
+                "A platform-level row of the {$label} (no related user) is cross-tenant only.");
+        }
+
+        $this->setAdminUser();
+        $ids = self::ids(audit_log::tenant_actions(1, self::FROM, self::TO));
+        foreach (array_merge([$ordinary], $inside, $elsewhere, $unrelated) as $id) {
+            $this->assertContains($id, $ids, 'A cross-tenant reader still sees every row.');
+        }
+    }
 }

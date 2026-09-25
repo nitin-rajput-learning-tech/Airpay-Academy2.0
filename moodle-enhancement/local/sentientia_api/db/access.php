@@ -83,6 +83,17 @@ $capabilities = [
     // ADR-031 (2026-09-25): NO archetype default, for the same reason as
     // :webhooks_manage (a site-level client with costcenterid 0 provisions
     // into every tenant). Upgrade step 2026092500 revokes existing grants.
+    //
+    // What a scoped holder can still do (corrected 2026-09-25, adversarial
+    // review S1): admin_scope limits WHICH clients they manage (their own
+    // tenant's), but a client token they mint may create, rename, re-email,
+    // suspend and move every ORDINARY account under their tenant root -
+    // including peer tenant admins - which is an account takeover of any of
+    // them. The SCIM handler keeps site admins and :crosstenant holders out of
+    // every scoped client's reach, even when their open_path sits under that
+    // tenant. So "confined to their tenant" is true of the tenant boundary,
+    // not of the power inside it: grant this only to someone trusted with
+    // every account in that tenant.
     'local/sentientia_api:scim_manage' => [
         'riskbitmask'  => RISK_CONFIG | RISK_PERSONAL,
         'captype'      => 'write',

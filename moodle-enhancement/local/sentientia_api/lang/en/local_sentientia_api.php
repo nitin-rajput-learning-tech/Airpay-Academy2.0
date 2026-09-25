@@ -26,6 +26,7 @@ $string['ratelimited']        = 'Rate limit exceeded. The budget is {$a} request
 $string['error_notenant']     = 'Your account is not associated with a valid tenant; API access is denied.';
 $string['error_notauthenticated'] = 'Authentication is required to call the Sentientia public API.';
 $string['error_no_manual_enrol'] = 'Manual enrolment is not available on this course.';
+$string['error_role_not_assignable'] = 'You cannot give this role in this course.';
 
 // Landing page.
 $string['rest_base']    = 'REST base URL';

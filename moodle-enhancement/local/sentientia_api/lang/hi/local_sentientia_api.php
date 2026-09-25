@@ -26,6 +26,7 @@ $string['ratelimited']        = 'दर सीमा पार हो गई। 
 $string['error_notenant']     = 'आपका खाता किसी मान्य टेनेंट से संबद्ध नहीं है; एपीआई पहुँच अस्वीकृत।';
 $string['error_notauthenticated'] = 'सेंटिएंशिया सार्वजनिक एपीआई को कॉल करने के लिए प्रमाणीकरण आवश्यक है।';
 $string['error_no_manual_enrol'] = 'इस कोर्स पर मैन्युअल नामांकन उपलब्ध नहीं है।';
+$string['error_role_not_assignable'] = 'आप इस कोर्स में यह भूमिका नहीं दे सकते।';
 
 // Landing page.
 $string['rest_base']    = 'REST बेस URL';
