@@ -32,7 +32,9 @@ class preference_manager_test extends \advanced_testcase {
         $prefs = preference_manager::get($user->id);
 
         $this->assertNull($prefs->id);
-        $this->assertSame($user->id, (int) $prefs->userid);
+        // create_user() hands back the row re-read from {user}, so its id
+        // is the driver's string; cast it to compare the value, not the type.
+        $this->assertSame((int) $user->id, (int) $prefs->userid);
         $this->assertSame('', $prefs->mobile_number);
         $this->assertSame(0, (int) $prefs->whatsapp_optin);
         $this->assertSame(0, (int) $prefs->sms_optin);

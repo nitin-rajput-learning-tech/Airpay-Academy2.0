@@ -150,4 +150,39 @@ class channel_router_test extends \advanced_testcase {
         $this->assertSame(100, $mix['totals']['mocked_pct'],
             'In mock-only environment, every send should be mocked.');
     }
+
+    /**
+     * 2026-09-25 regression. channel_mix() read its GROUP BY through
+     * get_records_sql(), which keys rows by the first column (channel),
+     * so a channel with two statuses in the window kept only one of them
+     * and the other group's count dropped out of the totals too.
+     */
+    public function test_analytics_channel_mix_counts_every_status_of_a_channel(): void {
+        $user = $this->getDataGenerator()->create_user();
+
+        foreach (['mocked', 'mocked', 'opted_out'] as $status) {
+            send_log::record([
+                'userid'       => $user->id,
+                'channel'      => 'whatsapp',
+                'template_key' => 'test_msg',
+                'status'       => $status,
+            ]);
+        }
+        send_log::record([
+            'userid'       => $user->id,
+            'channel'      => 'sms',
+            'template_key' => 'test_msg',
+            'status'       => send_log::STATUS_FAILED,
+        ]);
+
+        $mix = analytics::channel_mix(time() - 86400);
+
+        $this->assertSame(2, $mix['whatsapp']['mocked'] ?? null);
+        $this->assertSame(1, $mix['whatsapp']['opted_out'] ?? null);
+        $this->assertSame(1, $mix['sms']['failed'] ?? null);
+        $this->assertSame(4, $mix['totals']['attempted']);
+        $this->assertSame(2, $mix['totals']['successful']);
+        $this->assertSame(50, $mix['totals']['mocked_pct']);
+        $this->assertSame(50, $mix['totals']['success_pct']);
+    }
 }

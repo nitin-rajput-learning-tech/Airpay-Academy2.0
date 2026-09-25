@@ -34,7 +34,14 @@ class analytics {
 
         $since = $since ?? (time() - 30 * 86400);
 
-        $rows = $DB->get_records_sql(
+        // A recordset, not get_records_sql(). get_records_sql() keys its
+        // result by the FIRST column, and here that is `channel`, which
+        // repeats once per status. Until 2026-09-25 a channel with more
+        // than one status in the window (whatsapp: mocked + opted_out)
+        // kept only the last group the DB returned: the other groups'
+        // counts vanished from both the per-channel figures and the
+        // totals, and DEBUG_DEVELOPER raised "Duplicate value" on it.
+        $rs = $DB->get_recordset_sql(
             "SELECT channel, status, COUNT(*) as n
                FROM {local_sentientia_send_log}
               WHERE timecreated >= :since
@@ -51,7 +58,7 @@ class analytics {
         $successful = 0;
         $mocked = 0;
 
-        foreach ($rows as $r) {
+        foreach ($rs as $r) {
             if (!isset($result[$r->channel])) {
                 $result[$r->channel] = [];
             }
@@ -64,12 +71,17 @@ class analytics {
                 $mocked += (int) $r->n;
             }
         }
+        $rs->close();
 
+        // Whole-number percentages, typed int. round() returns a float in
+        // PHP 8, so these used to come back as 100.0, and the dashboard's
+        // `mocked_pct === 100` test (admin/analytics.php) was never true:
+        // a fully-mocked install painted its "Mocked" tile as a warning.
         $result['totals'] = [
             'attempted'   => $total,
             'successful'  => $successful,
-            'mocked_pct'  => $total > 0 ? round(100 * $mocked / $total) : 0,
-            'success_pct' => $total > 0 ? round(100 * $successful / $total) : 0,
+            'mocked_pct'  => $total > 0 ? (int) round(100 * $mocked / $total) : 0,
+            'success_pct' => $total > 0 ? (int) round(100 * $successful / $total) : 0,
         ];
 
         return $result;

@@ -243,3 +243,29 @@ send-log row with no preference.
 `preference_manager::delete_user_data()` deleted every channel-audit row where the subject was `changed_by`. Those are OTHER employees' consent-provenance records, which DPDP requires us to keep (an admin editing someone else's opt-in). The actor is now anonymised (`changed_by` and `ip_address` set to NULL) and those rows survive.
 
 Found by a read-only audit of all 38 Sentientia privacy providers, run because `local_sentientia_privacy\privacy_manager::process_deletion()` now calls every one of them. Class change only: no version bump. Covered by `local_sentientia_privacy\erasure_scope_test` / `privacy_manager_test`.
+
+## 2026-09-25 - Two pre-existing PHPUnit failures fixed (one was a real analytics defect)
+
+The full suite run on 2026-09-24 against the deployed ME tree failed two tests. Class and test
+change only: no version bump, no schema change, no lang change.
+
+- `channel_router_test::test_analytics_channel_mix_aggregates` (100.0 vs 100). **The code was
+  wrong.** `analytics::channel_mix()` built `mocked_pct` and `success_pct` with a bare `round()`,
+  which returns a float in PHP 8. `admin/analytics.php` colours the "Mocked" tile with
+  `mocked_pct === 100 ? 'info' : 'warning'`. That comparison was never true, so a fully-mocked
+  install always showed the tile as a warning. Both percentages are now `(int) round(...)`, which
+  also matches the method's docblock (`'mocked_pct' => 87`). The test's assertion is unchanged.
+- **A second defect, found while fixing the first.** `channel_mix()` read its
+  `GROUP BY channel, status` through `get_records_sql()`, which keys rows by the first column.
+  That column was `channel`, which repeats once per status. A channel with two statuses in the
+  window (for example whatsapp mocked plus opted_out) kept only the last group. The dashboard
+  under-counted the per-channel figures and the totals, and DEBUG_DEVELOPER raised "Duplicate
+  value". The method now uses `get_recordset_sql()`. New regression test:
+  `test_analytics_channel_mix_counts_every_status_of_a_channel`.
+- `preference_manager_test::test_get_returns_defaults_when_user_has_no_row` (132000 vs '132000').
+  **The test was wrong.** `create_user()` re-reads the row from `{user}`, so `$user->id` is the
+  driver's string. The expected side is now cast to int. The assertion still proves the no-row
+  default carries the requested user's id.
+
+Both trees were changed identically. PHPUnit was not run here because it is on hold while the
+shared test DB is rebuilt. The next suite run will confirm these fixes.
