@@ -44,25 +44,10 @@ class daily_sums extends external_api {
 
         // ── B1 fix: tenant scoping on the sums query ────────────────────
         // Ledger rows don't carry costcenterid themselves — the parent
-        // history row does. JOIN through and apply the tenant filter.
-        // Site admins see the global view; tenant-bound managers see
-        // only their tenant's ledger.
-        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::sql_filter('h');
-        $rows = $DB->get_records_sql(
-            "SELECT DATE(FROM_UNIXTIME(l.timecreated)) AS day,
-                    l.gateway,
-                    l.currency,
-                    SUM(CASE WHEN l.event_type = 'payment_received' THEN l.amount ELSE 0 END) AS inflow,
-                    SUM(CASE WHEN l.event_type IN ('refund_full','refund_partial') THEN l.amount ELSE 0 END) AS outflow,
-                    COUNT(CASE WHEN l.event_type = 'payment_received' THEN 1 END) AS payments,
-                    COUNT(CASE WHEN l.event_type IN ('refund_full','refund_partial') THEN 1 END) AS refunds
-               FROM {local_sentientia_cart_ledger} l
-               JOIN {local_sentientia_cart_history} h ON h.id = l.historyid
-              WHERE l.timecreated BETWEEN :f AND :t
-                AND $tnsql
-           GROUP BY day, l.gateway, l.currency
-           ORDER BY day DESC, l.gateway, l.currency",
-            array_merge(['f' => $fromts, 't' => $tots], $tnargs));
+        // history row does. cart_manager::daily_sums() joins through and
+        // applies the tenant filter; daily_sums_csv.php shares it (ADR-031:
+        // the CSV used to run an unscoped copy of this query).
+        $rows = \local_sentientia_cart\cart_manager::daily_sums($fromts, $tots);
 
         $out = [];
         foreach ($rows as $r) {

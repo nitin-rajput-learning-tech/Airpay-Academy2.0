@@ -84,5 +84,19 @@ function xmldb_local_sentientia_leaderboard_upgrade(int $oldversion): bool {
             'sentientia_leaderboard');
     }
 
+    // ── ADR-031 (2026-09-25): revoke :viewall and :promoteboard ──
+    // db/access.php no longer grants them to the manager archetype, which every
+    // tenant admin holds at system context: :viewall listed and opened every
+    // tenant's boards (ranked learner names, opted-out learners included), and
+    // :promoteboard is the customer-wide (every tenant) board right. Archetype
+    // changes never revoke what was already applied, so take every existing
+    // system-level grant back. Site admins are unaffected.
+    if ($oldversion < 2026092500) {
+        require_once(__DIR__ . '/upgradelib.php');
+        local_sentientia_leaderboard_revoke_cross_tenant_caps();
+        upgrade_plugin_savepoint(true, 2026092500, 'local',
+            'sentientia_leaderboard');
+    }
+
     return true;
 }

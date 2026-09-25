@@ -331,3 +331,24 @@ A leaderboard belongs to everyone on it, so erasing its creator anonymises `owne
 
 Version bumped to 2026092202 so the cached privacy registry picks up the new declarations. en + hi
 strings added at parity.
+
+## 2026-09-25 - ADR-031: boards scoped by is_cross_tenant(); :viewall/:promoteboard revoked (0.2.2-alpha, 2026092500)
+
+`:viewall` and `:promoteboard` defaulted to the manager archetype, i.e. every tenant admin. `:viewall`
+unscoped index.php, list_boards, get_board, view.php, stream.php and the block (every tenant's boards,
+with ranked learner names) and also bypassed learners' opt-outs.
+
+- Both capabilities now have `archetypes => []`; upgrade step 2026092500
+  (`db/upgradelib.php::local_sentientia_leaderboard_revoke_cross_tenant_caps()`) revokes existing
+  system-level grants.
+- Scope lives in `board_manager::list_for_viewer()` and `viewer_can_see()`: cross-tenant sees all;
+  scoped sees own tenant + customer-wide; a viewer with no tenant sees nothing (was: customer-wide).
+- The opt-out bypass is `board_manager::viewer_bypasses_optout()` = site admin only (unchanged for
+  them); tenant admins no longer see opted-out learners.
+- `board_manager::create()` no longer silently makes a customer-wide board for a tenantless owner, and
+  a scoped actor may create only in their own tenant (`error_cantpromote` for tenantid 0). The stale
+  docblock claiming an index.php `:promoteboard` check is corrected; `cli/seed_demo_boards.php` now
+  runs as the site admin.
+
+Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`). Both trees (the externals keep the
+baselined import drift).

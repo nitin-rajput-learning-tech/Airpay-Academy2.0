@@ -165,3 +165,27 @@ strings added at parity.
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+## 2026-09-25 - ADR-031: admin surfaces scoped to the caller's tenant (1.0.4, 2026092500)
+
+Tenant admins hold a manager-archetype role at system context, so they hold `:viewallorders` and
+`:manageprices` (both kept: they are legitimate in-tenant functions). Four surfaces let those
+capabilities decide WHERE as well as WHAT:
+
+- `daily_sums_csv.php` ran its own copy of the daily-sums query with no tenant join: every tenant's
+  payment and refund totals. It now shares `cart_manager::daily_sums()` with the web service
+  (tenant-scoped, fails closed; read through a recordset so two gateways on one day are both kept).
+- `invoice.php` let any `:viewallorders` holder open any tenant's invoice (billing name, email,
+  address, GSTIN) by sequential id. Now `invoicer::require_view_access()`: the owner, or a holder in
+  the invoice's tenant.
+- `set_course_price` checked the cap at course context, which a system-level grant satisfies for every
+  course in every tenant, so a tenant admin could disable, re-price or add a fee on any tenant's
+  course. Now `cart_manager::require_course_in_tenant()` (a course with no `open_path` is refused for a
+  scoped caller). `set_price.php` lists only the caller's tenant (`cart_manager::list_course_prices()`).
+- `tenant::require_access()` matched a tenantless viewer against every tenant-0 order. `get_order`,
+  `refund_order` and invoices use `cart_manager::require_order_tenant()`, which refuses that.
+
+The false "system-level grants silently no-op" comment in `db/upgrade.php` and the README B9 note are
+corrected. Site admins (and `local/sentientia_platform:crosstenant` holders) are unchanged. No
+capability change, so no revoke step. Depends on platform 2026092500. Tests:
+`tests/tenant_scope_test.php` (`@group tenant_isolation`). Both trees.

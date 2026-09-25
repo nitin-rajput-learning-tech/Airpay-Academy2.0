@@ -280,13 +280,24 @@ class session_manager {
     }
 
     /**
-     * Can $userid run (start/advance/end) the given session?
+     * Can $userid run (start/advance/end/edit/delete/stream/export) the given session?
      *
      * Allowed when:
      *   1. The user owns the session, OR
-     *   2. The user has local/sentientia_live:manage_all capability.
+     *   2. The user holds local/sentientia_live:manage_all AND the session is
+     *      in their tenant - or they are cross-tenant (site admin or
+     *      local/sentientia_platform:crosstenant holder).
+     *
+     * ADR-031 (2026-09-25): (2) used to be the capability alone. It defaulted
+     * to the manager archetype, which every tenant admin holds at system
+     * context, and the session's tenantid was never read, so any tenant admin
+     * could run or hard-delete any tenant's session by its sequential id. A
+     * session with tenantid 0 (created by an owner with no tenant) belongs to
+     * no tenant, so only a cross-tenant user may manage it: 0 must not match a
+     * manager whose own tenant does not resolve.
      */
     public static function can_user_run(int $userid, int $sessionid): bool {
+        global $DB;
         $sess = self::get($sessionid);
         if (!$sess) {
             return false;
@@ -295,8 +306,23 @@ class session_manager {
             return true;
         }
         $context = \context_system::instance();
-        return has_capability(
-            'local/sentientia_live:manage_all', $context, $userid);
+        if (!has_capability('local/sentientia_live:manage_all', $context, $userid)) {
+            return false;
+        }
+        if (\local_sentientia_platform\tenant::is_cross_tenant($userid)) {
+            return true;
+        }
+        $sesstenant = (int) $sess->tenantid;
+        if ($sesstenant <= 0) {
+            return false;
+        }
+        // open_path is BizLMS-only; read it defensively, as create() does.
+        $usercolumns = $DB->get_columns('user');
+        if (!isset($usercolumns['open_path'])) {
+            return false;
+        }
+        $user = $DB->get_record('user', ['id' => $userid], 'id, open_path');
+        return $user && \local_sentientia_platform\tenant::root_for_user($user) === $sesstenant;
     }
 
     /**

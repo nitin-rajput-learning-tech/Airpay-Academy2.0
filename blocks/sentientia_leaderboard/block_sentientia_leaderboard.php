@@ -84,14 +84,12 @@ class block_sentientia_leaderboard extends block_base {
         $boardid = isset($this->config->boardid)
             ? (int) $this->config->boardid : 0;
 
-        $can_view_all = has_capability(
-            'local/sentientia_leaderboard:viewall', $context);
-        $viewer_root = class_exists('\\local_sentientia_platform\\tenant')
-            ? \local_sentientia_platform\tenant::root_for_current_user() : 0;
-
+        // ADR-031: board scope comes from board_manager::list_for_viewer() /
+        // viewer_can_see() (tenant::is_cross_tenant(); a viewer with no
+        // tenant sees nothing), not from :viewall - which every tenant admin
+        // held, so an unconfigured block auto-picked any tenant's board.
         if ($boardid <= 0) {
-            $boards = \local_sentientia_leaderboard\board_manager::list_visible(
-                $viewer_root, $can_view_all);
+            $boards = \local_sentientia_leaderboard\board_manager::list_for_viewer();
             if (empty($boards)) {
                 $this->content->text = $OUTPUT->notification(
                     get_string('block_none',
@@ -108,15 +106,16 @@ class block_sentientia_leaderboard extends block_base {
             return $this->content;
         }
 
-        // Tenant gate.
-        if (!$can_view_all && (int) $board->tenantid > 0
-                && $viewer_root !== (int) $board->tenantid) {
+        // Tenant gate - also for a configured board: a block pinned to
+        // another tenant's board renders nothing for this viewer.
+        if (!\local_sentientia_leaderboard\board_manager::viewer_can_see($board)) {
             $this->content->text = '';
             return $this->content;
         }
 
+        // Opt-outs are honoured for everyone but a site admin (ADR-031).
         $result = \local_sentientia_leaderboard\ranking_engine::read_top(
-            $boardid, 5, $can_view_all);
+            $boardid, 5, \local_sentientia_leaderboard\board_manager::viewer_bypasses_optout());
         $my_rank = \local_sentientia_leaderboard\ranking_engine::read_my_rank(
             $boardid, (int) $USER->id);
 

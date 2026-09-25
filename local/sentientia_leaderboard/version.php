@@ -27,12 +27,13 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_leaderboard';
-$plugin->version   = 2026092202;  // privacy provider now declares every user table it owns  // T-01 cap back-fill: teacher archetype on manageboard
+$plugin->version   = 2026092500;  // ADR-031: :viewall/:promoteboard no default grant (+ revoke step); board scope = tenant::is_cross_tenant()
+// 2026092202: privacy provider now declares every user table it owns  // T-01 cap back-fill: teacher archetype on manageboard
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '0.2.1-alpha';
+$plugin->release   = '0.2.2-alpha';
 $plugin->dependencies = [
-    'local_sentientia_platform' => 2026051401,
+    'local_sentientia_platform' => 2026092500,  // tenant::is_cross_tenant() (ADR-031)
 ];
 
 // Release history
@@ -43,3 +44,11 @@ $plugin->dependencies = [
 //              `rankings_updated` event + observer + message_helper +
 //              `local_sentientia_lb_notify_log` throttle table. Default
 //              OFF behind sentientia.leaderboards.notifications.enabled.
+// 0.2.2-alpha  ADR-031 (2026-09-25): :viewall and :promoteboard defaulted to
+//              the manager archetype (every tenant admin), and :viewall
+//              unscoped every listing and board gate and bypassed opt-outs.
+//              No default grant now; upgrade step 2026092500 revokes both.
+//              Scope is board_manager::list_for_viewer() / viewer_can_see()
+//              (tenant::is_cross_tenant(); no tenant = nothing); the opt-out
+//              bypass is site-admin only; create() refuses tenantless and
+//              cross-tenant boards for scoped actors.

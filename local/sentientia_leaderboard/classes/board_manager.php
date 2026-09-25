@@ -120,17 +120,36 @@ class board_manager {
             throw new \moodle_exception('invaliduser');
         }
 
-        // tenantid derivation: explicit > resolve from owner. Validate
-        // siteadmin can pass 0 (customer-wide) but a tenant-bound caller
-        // cannot. Promote check is the caller's responsibility (the
-        // index.php form runs require_capability(:promoteboard) when the
-        // submitted tenantid is 0).
+        // tenantid derivation: explicit > resolve from owner.
+        //
+        // ADR-031 (2026-09-25). This used to say "the index.php form runs
+        // require_capability(:promoteboard)" - there is no such form, and
+        // nothing checked it. Now create() enforces it itself:
+        //   - an owner whose open_path does not resolve no longer yields a
+        //     silent customer-wide (tenantid 0) board: pass tenantid 0
+        //     explicitly to make one;
+        //   - a tenantid 0 board ranks users from EVERY tenant and is shown
+        //     to every tenant, so only a cross-tenant actor may create one;
+        //   - anyone else creates boards in their own tenant only.
+        // CLI callers (seed_demo_boards.php) run as the site admin.
         if (array_key_exists('tenantid', $data)) {
             $tenantid = (int) $data['tenantid'];
         } else {
             $owner = $DB->get_record('user', ['id' => $ownerid],
                 'id, open_path', MUST_EXIST);
             $tenantid = self::resolve_tenant_from_open_path((string) ($owner->open_path ?? ''));
+            if ($tenantid <= 0) {
+                throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+            }
+        }
+        if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
+            if ($tenantid <= 0) {
+                throw new \moodle_exception('error_cantpromote', 'local_sentientia_leaderboard');
+            }
+            $own = \local_sentientia_platform\tenant::root_for_current_user();
+            if ($own <= 0 || $tenantid !== $own) {
+                throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+            }
         }
 
         $skill_ids = $data['skill_ids'] ?? null;
@@ -173,11 +192,12 @@ class board_manager {
     }
 
     /**
-     * List boards visible to the caller. Tenant-scoped unless the caller
-     * has :viewall.
+     * List boards for a given tenant scope. Web surfaces call
+     * {@see list_for_viewer()}, which decides the scope (ADR-031); this is
+     * the query underneath it.
      *
-     * @param int $viewer_tenant The viewer's tenant root (0 = global view).
-     * @param bool $can_view_all Whether the viewer has :viewall (skips tenant filter).
+     * @param int $viewer_tenant The viewer's tenant root (0 = customer-wide boards only).
+     * @param bool $can_view_all True only for a cross-tenant viewer (skips the tenant filter).
      * @param array $filters Optional: ['type' => 'quiz', 'status' => 'active', ...]
      * @return \stdClass[]
      */
@@ -209,6 +229,65 @@ class board_manager {
         $sql .= ' ORDER BY b.timemodified DESC';
         $rows = $DB->get_records_sql($sql, $params, 0, 500);
         return array_values($rows);
+    }
+
+    /**
+     * ADR-031: the boards the CURRENT user may see.
+     *
+     * The single entry point for every listing surface (index.php, the
+     * list_boards web service, the block and its board picker). A
+     * cross-tenant user (site admin or local/sentientia_platform:crosstenant
+     * holder) sees every tenant's boards. Anyone else sees their own tenant's
+     * boards plus customer-wide (tenantid 0) ones; a user whose tenant does
+     * not resolve sees none. Until 2026-09-25 the callers passed
+     * has_capability(:viewall) as list_visible()'s $can_view_all, and
+     * :viewall defaulted to the manager archetype that every tenant admin
+     * holds.
+     *
+     * @param array $filters as list_visible()
+     * @return \stdClass[]
+     */
+    public static function list_for_viewer(array $filters = []): array {
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return self::list_visible(0, true, $filters);
+        }
+        $root = \local_sentientia_platform\tenant::root_for_current_user();
+        if ($root <= 0) {
+            return [];
+        }
+        return self::list_visible($root, false, $filters);
+    }
+
+    /**
+     * ADR-031: may the CURRENT user see this board?
+     *
+     * The single board gate for view.php, get_board, stream.php and the
+     * block. Cross-tenant users see any board; anyone else a board of their
+     * own tenant or a customer-wide (tenantid 0) one, and nothing when their
+     * own tenant does not resolve.
+     */
+    public static function viewer_can_see(\stdClass $board): bool {
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return true;
+        }
+        $root = \local_sentientia_platform\tenant::root_for_current_user();
+        if ($root <= 0) {
+            return false;
+        }
+        $boardtenant = (int) $board->tenantid;
+        return $boardtenant === 0 || $boardtenant === $root;
+    }
+
+    /**
+     * ADR-031: does the CURRENT user see learners who opted out of leaderboards?
+     *
+     * Site admins only - the behaviour they had before. This used to ride on
+     * :viewall, so every tenant admin also saw opted-out learners on every
+     * rendered board, their own tenant's included. Cross-tenant reach and the
+     * opt-out bypass are different permissions; this is not the former.
+     */
+    public static function viewer_bypasses_optout(): bool {
+        return is_siteadmin();
     }
 
     /**

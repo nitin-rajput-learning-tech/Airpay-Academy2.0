@@ -44,11 +44,12 @@ if (!$sess) {
     throw new \moodle_exception('invalidsession', 'local_sentientia_live');
 }
 
-// Ownership gate — only the session owner OR a user with :manage can
-// download the responses. Mirrors session_manager::can_user_run().
-$is_owner = ((int) $sess->ownerid === (int) $USER->id);
-$can_manage = has_capability('local/sentientia_live:manage', $context);
-if (!$is_owner && !$can_manage) {
+// Ownership gate — the session owner, or a :manage_all holder in the
+// session's tenant (a cross-tenant user anywhere). ADR-031 (2026-09-25): this
+// checked `local/sentientia_live:manage`, a capability that is not declared,
+// so has_capability() was always false; it now asks can_user_run() directly
+// instead of mirroring it.
+if (!\local_sentientia_live\session_manager::can_user_run((int) $USER->id, (int) $sess->id)) {
     throw new \moodle_exception('nopermissions', 'error', '',
         get_string('export_session_label', 'local_sentientia_live'));
 }

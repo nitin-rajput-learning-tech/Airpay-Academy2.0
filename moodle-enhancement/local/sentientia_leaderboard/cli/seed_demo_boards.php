@@ -75,6 +75,12 @@ EOT;
 
 global $DB, $CFG;
 
+// ADR-031 (2026-09-25): board_manager::create() now refuses a customer-wide
+// (tenantid 0) board, or one outside the actor's tenant, unless the actor is
+// cross-tenant. A CLI run has no logged-in user, so act as the site admin -
+// seeding is an operator action, and board 2 below is customer-wide.
+\core\session\manager::set_user(get_admin());
+
 // ── Owner: site-admin if available, else any non-deleted user. ────
 $owner = $DB->get_record_sql(
     "SELECT id, firstname, lastname FROM {user}
@@ -170,7 +176,7 @@ $board2_id = board_manager::create([
     'name'              => '[DEMO] Customer-wide — top skill scores',
     'type'              => board_manager::TYPE_SKILL,
     'scope'             => board_manager::SCOPE_CUSTOMER,
-    'tenantid'          => 0,  // customer-wide (requires promoteboard cap, but seed bypasses)
+    'tenantid'          => 0,  // customer-wide: create() allows it only for a cross-tenant actor (the site admin set above)
     'recompute_seconds' => 1800,
     'ownerid'           => (int) $owner->id,
     'settings'          => [

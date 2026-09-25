@@ -56,21 +56,19 @@ class get_board extends external_api {
                 'local_sentientia_leaderboard');
         }
 
-        $can_view_all = has_capability(
-            'local/sentientia_leaderboard:viewall', $context);
-
-        // Tenant gate — site admin + :viewall pass; everyone else must be
-        // in the board's tenant OR the board must be customer-wide.
-        if (!$can_view_all && (int) $board->tenantid > 0) {
-            $viewer_root = \local_sentientia_platform\tenant::root_for_current_user();
-            if ($viewer_root !== (int) $board->tenantid) {
-                throw new \moodle_exception('error_outoftenant',
-                    'local_sentientia_leaderboard');
-            }
+        // Tenant gate (ADR-031) — cross-tenant users pass; everyone else must
+        // be in the board's tenant OR the board must be customer-wide, and a
+        // viewer with no tenant sees nothing. :viewall no longer skips it.
+        if (!\local_sentientia_leaderboard\board_manager::viewer_can_see($board)) {
+            throw new \moodle_exception('error_outoftenant',
+                'local_sentientia_leaderboard');
         }
 
+        // Opt-outs are honoured for everyone but a site admin (ADR-031: the
+        // bypass used to ride on :viewall, i.e. on every tenant admin).
         $result = \local_sentientia_leaderboard\ranking_engine::read_top(
-            $boardid, $topn, $can_view_all);
+            $boardid, $topn,
+            \local_sentientia_leaderboard\board_manager::viewer_bypasses_optout());
 
         $my_rank = \local_sentientia_leaderboard\ranking_engine::read_my_rank(
             $boardid, (int) $USER->id);

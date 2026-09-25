@@ -24,18 +24,11 @@ if (!$fromts || !$tots || $fromts > $tots) {
     throw new \moodle_exception('error_invalidstate', 'local_sentientia_cart');
 }
 
-$rows = $DB->get_records_sql(
-    "SELECT DATE(FROM_UNIXTIME(timecreated)) AS day,
-            gateway, currency,
-            SUM(CASE WHEN event_type = 'payment_received' THEN amount ELSE 0 END) AS inflow,
-            SUM(CASE WHEN event_type IN ('refund_full','refund_partial') THEN amount ELSE 0 END) AS outflow,
-            COUNT(CASE WHEN event_type = 'payment_received' THEN 1 END) AS payments,
-            COUNT(CASE WHEN event_type IN ('refund_full','refund_partial') THEN 1 END) AS refunds
-       FROM {local_sentientia_cart_ledger}
-      WHERE timecreated BETWEEN :f AND :t
-   GROUP BY day, gateway, currency
-   ORDER BY day DESC, gateway, currency",
-    ['f' => $fromts, 't' => $tots]);
+// ADR-031 (2026-09-25): this query used to be a private copy of the web
+// service's, without the tenant join, so any :viewallorders holder (every
+// tenant admin) downloaded every tenant's daily totals. Both now share
+// cart_manager::daily_sums(), which is tenant-scoped and fails closed.
+$rows = \local_sentientia_cart\cart_manager::daily_sums($fromts, $tots);
 
 $filename = sprintf('sentientia_cart_daily_sums_%s_to_%s.csv', $from, $to);
 header('Content-Type: text/csv; charset=utf-8');

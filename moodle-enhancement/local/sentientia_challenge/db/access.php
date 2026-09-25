@@ -48,6 +48,11 @@ $capabilities = [
     // local_sentientia_analytics:viewallorgs had until 2026-09-24. Site admins
     // are unscoped anyway; grant this deliberately to a cross-tenant role if one
     // is ever needed. Upgrade step 2026092500 revokes the existing grants.
+    //
+    // ADR-031 (2026-09-25): holding this no longer unscopes anything on its
+    // own. Only tenant::is_cross_tenant() (site admin or
+    // local/sentientia_platform:crosstenant) does; the capability is kept
+    // declared so existing role definitions and exports stay valid.
     'local/sentientia_challenge:viewall' => [
         'riskbitmask'  => RISK_PERSONAL,
         'captype'      => 'read',

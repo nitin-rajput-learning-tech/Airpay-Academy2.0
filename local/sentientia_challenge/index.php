@@ -26,7 +26,11 @@ $columns = [
     ['key' => 'actions',        'label' => get_string('col_actions',      'local_sentientia_challenge'), 'sortable' => false, 'format' => 'html'],
 ];
 
-$can_manage = has_capability('local/sentientia_challenge:manage', $context);
+// ADR-031: a manager whose tenant does not resolve cannot create a challenge
+// (create_challenge() refuses it), so do not offer the button.
+$can_manage = has_capability('local/sentientia_challenge:manage', $context)
+    && (\local_sentientia_platform\tenant::is_cross_tenant()
+        || \local_sentientia_challenge\challenge_engine::tenant_from_path($USER->open_path ?? '') > 0);
 
 $data = [
     'columns_json'    => json_encode($columns),

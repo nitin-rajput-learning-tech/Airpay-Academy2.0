@@ -17,13 +17,9 @@ $id = required_param('id', PARAM_INT);
 $invoice = $DB->get_record('local_sentientia_cart_invoices',
     ['id' => $id], '*', MUST_EXIST);
 
-// Owner or admin only.
+// Owner, or a :viewallorders holder in the invoice's tenant (ADR-031).
 $ctx = context_system::instance();
-if ((int) $invoice->userid !== (int) $USER->id
-    && !is_siteadmin()
-    && !has_capability('local/sentientia_cart:viewallorders', $ctx)) {
-    throw new \moodle_exception('error_outoftenant', 'local_sentientia_cart');
-}
+\local_sentientia_cart\invoicer::require_view_access($invoice, (int) $USER->id);
 
 $PAGE->set_context($ctx);
 $PAGE->set_url(new moodle_url('/local/sentientia_cart/invoice.php', ['id' => $id]));

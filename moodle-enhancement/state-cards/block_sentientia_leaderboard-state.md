@@ -138,3 +138,13 @@ dashboard, opt-out toggle, two-browser SSE liveness test).
 
 Initial card for the block-plugin half of the leaderboards feature.
 Companion to `local_sentientia_leaderboard-state.md`.
+
+## 2026-09-25 - ADR-031: board list and gate from board_manager (0.1.1-alpha, 2026092500)
+
+The block and its board picker used `has_capability(local/sentientia_leaderboard:viewall)` as the
+cross-tenant switch. That capability defaulted to every tenant admin, so an unconfigured block
+auto-picked any tenant's most recent board, the tenant gate was skipped, and the picker offered every
+tenant's boards. Now `board_manager::list_for_viewer()` / `viewer_can_see()` (ADR-031:
+`tenant::is_cross_tenant()`; nothing for a viewer with no tenant), and the opt-out bypass is
+site-admin only. Depends on local_sentientia_leaderboard 2026092500. Covered by the local plugin's
+`tests/tenant_scope_test.php`. Both trees.

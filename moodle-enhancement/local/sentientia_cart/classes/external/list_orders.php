@@ -72,8 +72,9 @@ class list_orders extends external_api {
             $where[] = 'status = :st';
             $sqlparams['st'] = $status_filter;
         }
-        if ($tenant_filter > 0 && $can_view_all && is_siteadmin()) {
-            // Only site admins get the "filter to specific tenant" knob;
+        if ($tenant_filter > 0 && $can_view_all
+                && \local_sentientia_platform\tenant::is_cross_tenant()) {
+            // Only cross-tenant viewers (ADR-031) get the "filter to specific tenant" knob;
             // tenant-bound managers are already scoped above and can't
             // override that.
             $where[] = 'costcenterid = :tn';
