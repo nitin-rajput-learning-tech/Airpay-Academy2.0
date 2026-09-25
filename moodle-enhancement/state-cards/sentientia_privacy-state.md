@@ -125,3 +125,18 @@ reaches (xapi, evaluation, WhatsApp, manager, courses, aiquiz), each fixed in it
 ## 2026-09-24 - Erasure review follow-up
 
 Review follow-ups. Approve on a request that is not an account deletion, or whose user row is gone, now says nothing changed (`erasurenotapplicable`, en + hi) instead of reporting an erasure. Only a stored status of 'partial' gives the 'some data could not be erased' message. The Step 0 comment no longer claims the coverage test sees tables created at runtime or only in upgrade.php. Test fixes: the partial-erasure test expects its `debugging()` call. `erasure_scope_test` adds a proctoring reviewer case and a courses decider case.
+
+## 2026-09-25 - ADR-031: the admin panel needs a cross-tenant caller (1.0.3, 2026092500)
+
+The DPDP admin panel in `index.php` lists every tenant's requests (names, emails, reasons) with no tenant
+filter, and Approve erases the requester's data for any request id. It opened for site admins OR any holder of
+`local/sentientia_privacy:manage`. `:manage` has no archetype default, so nobody else reached it, but a per-tenant
+DPO grant would have let one tenant's DPO erase another tenant's people (ADR-031 decision 3). The gate is now
+`privacy_manager::can_administer()`: a site admin, or a `:manage` holder who is also cross-tenant
+(`local/sentientia_platform:crosstenant`). No behaviour change today: no role holds `:manage`. `version.php` now
+declares the `local_sentientia_platform` dependency. Tests: `tests/admin_scope_test.php` (@group tenant_isolation),
+written, not run.
+
+Open (product decision, not built): a per-tenant DPO panel. It needs the request list scoped with
+`tenant::path_descendant_filter()` on `u.open_path` (fail closed on a null `scope_path()`) and
+`tenant::require_same_tenant_user()` before Approve and Reject. The index.php header still lists it as planned.

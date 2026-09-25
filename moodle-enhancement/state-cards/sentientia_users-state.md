@@ -392,3 +392,24 @@ the side that was wrong; nothing a test proves was weakened.
 - 2026-09-25 (PHPUnit run): `test_send_uses_tenant_override_when_user_in_tenant` expected
   "welcome Carol!" but [employee_name] is first + last name and the generator gives "Lastname1";
   the test now names Carol Kaur. It never ran green before tonight because the mail never sent.
+
+### 2026-09-25 (ADR-031 fix-forward, identity3) - photo target check; stored supervisor re-save; no partial save (2.8.1, same version)
+
+- `photo.php` now calls `user_manager::require_can_change_photo()`: your own photo always; anyone
+  else's needs `:edit` AND `require_can_act_on()`. It checked only the same-tenant rule and `:edit`,
+  so a tenant admin (role 9 holds `:edit` by the manager archetype) could replace the picture of a
+  site admin or a `:crosstenant` account whose open_path sits in their tenant (UAT's `admin` is at /1).
+  Site admins still pass both checks.
+- The supervisor guard runs only for a NEWLY CHOSEN supervisor (posted value != stored
+  open_supervisorid), the edit_classroom stored-trainer rule. The edit form pre-fills and posts back
+  the stored supervisor, so after wave 1 made the guard fail closed a user whose recorded manager was
+  deleted or pathless could not be edited until someone cleared the field. create() has no stored
+  value, so it always checks.
+- `apply_custom_fields()` is split: `custom_fields_update()` builds and checks the open_* update and
+  writes nothing; `apply_custom_fields()` writes it. update() and create() build it BEFORE
+  user_update_user()/user_create_user(), so a refusal saves nothing (it used to leave email, name and
+  department saved and lose the open_* fields and the password) and a refused create leaves no account.
+- Tests (`tenant_scope_test`, @group tenant_isolation): stale stored supervisor (deleted, pathless)
+  still saves, a new cross-tenant supervisor is still refused, a refusal saves nothing on update or
+  create, and the photo rule for tenant admin / learner / `:crosstenant` / site admin.
+- Version not bumped: already 2026092501 from wave 1 and no db/ file changed. Tests written, not run.

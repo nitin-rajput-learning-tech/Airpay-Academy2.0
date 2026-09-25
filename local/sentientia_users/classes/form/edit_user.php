@@ -110,7 +110,7 @@ class edit_user extends \core_form\dynamic_form {
         // every other core field on the same page (a confusing detour).
         //
         // Both fields are optional (date_selector ?optional=true) and
-        // empty input is stored as NULL by user_manager::apply_custom_fields()
+        // empty input is stored as NULL by user_manager::custom_fields_update()
         // so we don't end up with users born on 1970-01-01.
         $mform->addElement('date_selector', 'open_dateofbirth',
             get_string('open_dateofbirth', 'local_sentientia_users'),

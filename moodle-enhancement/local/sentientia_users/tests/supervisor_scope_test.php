@@ -119,8 +119,8 @@ final class supervisor_scope_test extends \advanced_testcase {
         // Supervisor is in /1 (different tenant).
         $sup = $this->seed_user('Sup', '/1');
 
-        // Apply via user_manager::update (which calls apply_custom_fields,
-        // which calls guard_supervisor_tenant_scope).
+        // Apply via user_manager::update (which calls custom_fields_update,
+        // which calls guard_supervisor_tenant_scope for a new supervisor).
         $this->expectException(\moodle_exception::class);
         $this->expectExceptionMessageMatches('/supervisor.+tenant/i');
 

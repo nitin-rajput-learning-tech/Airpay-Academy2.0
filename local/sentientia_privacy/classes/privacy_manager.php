@@ -16,6 +16,40 @@ defined('MOODLE_INTERNAL') || die();
 
 class privacy_manager {
 
+    /** @var string The capability that opens the DPDP administration panel. */
+    public const MANAGE_CAPABILITY = 'local/sentientia_privacy:manage';
+
+    /**
+     * ADR-031: may this user open the DPDP administration panel (index.php)?
+     *
+     * The panel lists EVERY tenant's requests (names, emails, reasons), and
+     * Approve erases the requester's data, for any request id. So it is for
+     * cross-tenant callers only: a site admin, or a holder of
+     * local/sentientia_privacy:manage who is ALSO cross-tenant
+     * (local/sentientia_platform:crosstenant). :manage says WHAT (run DPDP
+     * requests), never WHERE (ADR-031 decision 3). Until 2026-09-25 holding
+     * :manage alone opened the unscoped panel; it has no archetype default, so
+     * nobody but site admins reached it, but a per-tenant DPO grant, the
+     * obvious one to make, would have let e.g. a ZEEA DPO erase Airpay
+     * employees. A per-tenant DPO panel needs the list and both actions
+     * scoped first; see the state card.
+     *
+     * @param int|null $userid defaults to the current user
+     * @return bool
+     */
+    public static function can_administer(?int $userid = null): bool {
+        global $USER;
+        $userid = $userid ?? (int) ($USER->id ?? 0);
+        if ($userid <= 0 || isguestuser($userid)) {
+            return false;
+        }
+        if (is_siteadmin($userid)) {
+            return true;
+        }
+        return has_capability(self::MANAGE_CAPABILITY, \context_system::instance(), $userid)
+            && \local_sentientia_platform\tenant::is_cross_tenant($userid);
+    }
+
     /**
      * Create a data download request.
      * Generates a JSON file with all user data within 72 hours.

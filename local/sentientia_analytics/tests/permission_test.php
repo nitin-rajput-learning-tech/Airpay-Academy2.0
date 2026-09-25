@@ -37,6 +37,13 @@ defined('MOODLE_INTERNAL') || die();
  *     test_course_drilldown_query_executes() and
  *     test_course_drilldown_is_tenant_scoped().
  *
+ *  5. (ADR-031, 2026-09-25) :viewallorgs unscoped on its own, and was honoured
+ *     at any category where the user held a role - which a tenant admin can
+ *     arrange for themselves with the role:assign / role:override they hold.
+ *     It now needs is_cross_tenant() and a system-context grant.
+ *     test_viewallorgs_unscopes_only_a_cross_tenant_holder() and
+ *     test_a_self_granted_category_override_of_viewallorgs_does_not_unscope().
+ *
  * @package    local_sentientia_analytics
  * @category   test
  *
@@ -152,24 +159,96 @@ final class permission_test extends \advanced_testcase {
         $this->assertSame('/177', permission::visible_org_path());
     }
 
-    public function test_viewallorgs_holder_is_unrestricted(): void {
+    public function test_viewallorgs_unscopes_only_a_cross_tenant_holder(): void {
         $this->resetAfterTest();
         $this->ensure_bizlms_schema();
         global $DB;
 
         // :viewallorgs has no archetype default (2026-09-24), so grant it
         // deliberately, the only way a site should ever get it.
+        $syscontext = \context_system::instance();
         $roleid = (int) $DB->get_field('role', 'id', ['shortname' => 'manager']);
-        assign_capability(permission::VIEWALL_CAPABILITY, CAP_ALLOW, $roleid,
-            \context_system::instance()->id, true);
+        assign_capability(permission::VIEWALL_CAPABILITY, CAP_ALLOW, $roleid, $syscontext->id, true);
 
         $u = $this->user_at_path('/1/2');
         $this->give_system_role((int) $u->id, 'manager');
         $this->setUser($u);
 
+        // ADR-031 (2026-09-25): the capability says WHAT, never WHERE. Held
+        // at system context by a tenant admin, it no longer unscopes.
+        $this->assertTrue(has_capability(permission::VIEWALL_CAPABILITY, $syscontext),
+            'Precondition: the grant is live at system context.');
+        $this->assertFalse(permission::can_view_all_orgs(),
+            ':viewallorgs alone must not lift the tenant clamp');
+        $this->assertSame('/1', permission::visible_org_path());
+
+        // Cross-tenant as well (local/sentientia_platform:crosstenant): unrestricted.
+        $crossrole = $this->getDataGenerator()->create_role();
+        assign_capability(\local_sentientia_platform\tenant::CROSS_TENANT_CAPABILITY, CAP_ALLOW,
+            $crossrole, $syscontext->id, true);
+        role_assign($crossrole, $u->id, $syscontext->id);
+        accesslib_clear_all_caches_for_unit_testing();
+
         $this->assertTrue(permission::can_view_all_orgs());
         $this->assertSame('', permission::visible_org_path(),
-            'empty string means site-wide, which only :viewallorgs grants');
+            'empty string means site-wide, which only a cross-tenant :viewallorgs holder gets');
+        $this->assertSame('/177', permission::clamp_org_path('/177'),
+            'and they may pick any org');
+
+        // :crosstenant without :viewallorgs: WHERE, but not the function.
+        $other = $this->user_at_path('/1/3');
+        role_assign($crossrole, $other->id, $syscontext->id);
+        accesslib_clear_all_caches_for_unit_testing();
+        $this->assertFalse(permission::can_view_all_orgs((int) $other->id));
+        $this->assertSame('/1', permission::visible_org_path((int) $other->id));
+    }
+
+    public function test_the_site_admin_is_unrestricted_without_any_grant(): void {
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+
+        $this->setAdminUser();
+        $this->assertTrue(permission::can_view_all_orgs());
+        $this->assertSame('', permission::visible_org_path());
+    }
+
+    public function test_a_self_granted_category_override_of_viewallorgs_does_not_unscope(): void {
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+        global $DB;
+
+        // The route a tenant admin had (ADR-031 review, 2026-09-25): role:assign
+        // and role:override are inherited in every category, so they assign
+        // themselves a role at their own tenant's category and override it to
+        // ALLOW :viewallorgs there. has_cap_anywhere() then answered true.
+        $u = $this->user_at_path('/1/2');
+        $this->give_system_role((int) $u->id, 'manager');
+        $category = $this->getDataGenerator()->create_category();
+        $catcontext = \context_coursecat::instance($category->id);
+        $roleid = (int) $DB->get_field('role', 'id', ['shortname' => 'coursecreator'], MUST_EXIST);
+        role_assign($roleid, $u->id, $catcontext->id);
+        assign_capability(permission::VIEWALL_CAPABILITY, CAP_ALLOW, $roleid, $catcontext->id, true);
+        accesslib_clear_all_caches_for_unit_testing();
+        $this->setUser($u);
+
+        $this->assertTrue(has_capability(permission::VIEWALL_CAPABILITY, $catcontext),
+            'Precondition: the self-granted override is live at the category.');
+        $this->assertFalse(permission::can_view_all_orgs());
+        $this->assertSame('/1', permission::visible_org_path(),
+            'a category override must never lift the tenant clamp');
+        $this->assertSame('/1', permission::clamp_org_path('/177'),
+            'nor let ?orgid= reach another tenant');
+
+        // Even a cross-tenant user needs :viewallorgs at SYSTEM context: the
+        // category grant is the one a tenant admin can make, so it never counts.
+        $crossrole = $this->getDataGenerator()->create_role();
+        assign_capability(\local_sentientia_platform\tenant::CROSS_TENANT_CAPABILITY, CAP_ALLOW,
+            $crossrole, \context_system::instance()->id, true);
+        role_assign($crossrole, $u->id, \context_system::instance()->id);
+        accesslib_clear_all_caches_for_unit_testing();
+        $this->assertTrue(\local_sentientia_platform\tenant::is_cross_tenant((int) $u->id));
+        $this->assertFalse(permission::can_view_all_orgs(),
+            ':viewallorgs is read at system context only');
     }
 
     public function test_a_manager_archetype_tenant_admin_stays_in_their_tenant(): void {

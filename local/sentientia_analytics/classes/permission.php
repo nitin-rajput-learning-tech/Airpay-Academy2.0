@@ -34,12 +34,18 @@ defined('MOODLE_INTERNAL') || die();
  * raised an error; the numbers were simply somebody else's. This method
  * returns null for "no scope could be established", and callers refuse.
  *
- * WHY EVERY CHECK IS TWO-STEP
- * ---------------------------
+ * WHY :view AND :export ARE TWO-STEP
+ * ----------------------------------
  * Moodle capabilities flow DOWN the context tree, never up. The BizLMS
  * org-admin shell is assigned at CONTEXT_COURSECAT, so a system-context
  * has_capability() alone never sees it. Mirrors
- * local_sentientia_compliance_report\permission::can_export().
+ * local_sentientia_compliance_report\permission::can_export(). Both stay
+ * clamped to the caller's tenant by visible_org_path().
+ *
+ * :viewallorgs is NOT two-step (ADR-031, 2026-09-25): it is the one check
+ * that lifts the tenant clamp, so it needs is_cross_tenant() and a
+ * system-context grant. A category grant is exactly what a tenant admin can
+ * give themselves.
  *
  * @package    local_sentientia_analytics
  * @copyright  2026 Airpay Payment Services
@@ -69,11 +75,26 @@ class permission {
     /**
      * Whether the user may see every org rather than only their own subtree.
      *
+     * ADR-031 (2026-09-25): :viewallorgs says WHAT, never WHERE. It unscopes
+     * only a caller who is cross-tenant as well (site admin or
+     * local/sentientia_platform:crosstenant), and it is checked at SYSTEM
+     * context only - never through has_cap_anywhere(). Until 2026-09-25 it
+     * was has_cap_anywhere() alone, so a tenant admin, who holds
+     * moodle/role:assign and moodle/role:override inherited in every
+     * category, could assign themselves a role at their own tenant category,
+     * override that role to ALLOW :viewallorgs there (the single-capability
+     * form of admin/roles/permissions.php accepts any capability name), and
+     * get '' from visible_org_path(): every tenant's KPIs and per-learner CSV.
+     *
      * @param int|null $userid User to test, or null for the current $USER.
      * @return bool
      */
     public static function can_view_all_orgs(?int $userid = null): bool {
-        return self::has_cap_anywhere(self::VIEWALL_CAPABILITY, $userid);
+        global $USER;
+
+        $userid = $userid ?: (int) ($USER->id ?? 0);
+        return \local_sentientia_platform\tenant::is_cross_tenant($userid)
+            && has_capability(self::VIEWALL_CAPABILITY, \context_system::instance(), $userid);
     }
 
     /**
@@ -127,9 +148,10 @@ class permission {
     /**
      * Restrict a requested org path to what this user is allowed to see.
      *
-     * Used for the ?orgid= selector: a :viewallorgs holder may pick any org,
-     * anyone else is pinned to their own tenant regardless of what they ask
-     * for, so hand-editing the query string cannot widen the scope.
+     * Used for the ?orgid= selector: a cross-tenant :viewallorgs holder (see
+     * can_view_all_orgs()) may pick any org, anyone else is pinned to their
+     * own tenant regardless of what they ask for, so hand-editing the query
+     * string cannot widen the scope.
      *
      * @param string $requested Org path from the request, empty for none.
      * @param int|null $userid User to test, or null for the current $USER.

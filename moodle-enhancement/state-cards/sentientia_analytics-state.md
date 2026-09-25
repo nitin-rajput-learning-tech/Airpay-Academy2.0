@@ -231,3 +231,21 @@ across tenants, and `MUST_EXIST` tells an existing course id from a missing one.
 
 Covered by version 2026092401 (unreleased). Visual evidence for the "Learner" header and the four
 refusal messages is still owed from the UAT browser pass.
+
+### 2026-09-25 - ADR-031: `:viewallorgs` unscopes only a cross-tenant caller (1.2.3-beta, 2026092500)
+
+`permission::can_view_all_orgs()` was `has_cap_anywhere(':viewallorgs')`: no `is_cross_tenant()`, and honoured at
+any course-category context where the user held a role. A tenant admin holds `moodle/role:assign` and
+`moodle/role:override` inherited in every category, so they could assign themselves a role at their tenant's
+category, override it to ALLOW `:viewallorgs` there (the single-capability form of admin/roles/permissions.php
+accepts any capability name), and get `''` from `visible_org_path()`: every tenant's KPIs, drill-down and
+per-learner CSV. It is now `tenant::is_cross_tenant($userid) && has_capability(':viewallorgs', system)`, never via
+`has_cap_anywhere()`. `:view` and `:export` stay two-step and stay clamped to the caller's tenant. Site admins are
+unchanged (both halves true). Since the 2026-09-24 revoke step nobody else holds `:viewallorgs`, so no current
+user loses scope; a future platform role needs `:viewallorgs` AND `:crosstenant` at system context.
+
+Tests (`permission_test`, @group tenant_isolation): `test_viewallorgs_holder_is_unrestricted` became
+`test_viewallorgs_unscopes_only_a_cross_tenant_holder` (the grant alone now gives '/1'; with `:crosstenant` it
+gives ''; `:crosstenant` alone gives '/1'); new tests for the site admin and for the self-granted category
+override (still '/1', even for a cross-tenant user). `version.php` declares the `local_sentientia_platform`
+dependency. Written, not run.
