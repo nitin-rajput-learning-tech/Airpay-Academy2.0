@@ -290,3 +290,23 @@ The foundation for the platform-wide fix of the cross-tenant sweep (`docs/audits
   - `tenant::require_same_tenant_user()`: target check for writes that name a user.
 - **Existing helpers:** `viewer_can_access`, `require_path_access`, `sql_filter` and `path_filter` now route through `is_cross_tenant()`. `sql_filter` fails closed (`1=0`) for a user with no tenant; it used to match `costcenterid = 0`.
 - **Tests:** `tests/cross_tenant_test.php` (`@group tenant_isolation`). en and hi strings.
+
+## 2026-09-25 - ADR-031 follow-up: audit_log readers are tenant-bounded (no version bump)
+
+Sweep hit #66 (CONFIRMED, latent: no non-test caller). `audit_log::tenant_actions()` accepted any
+`$tenantroot` from any holder of core `moodle/site:viewreports`, which defaults to the manager
+archetype that every tenant admin holds at system context. `actions_by_user()` had no gate at all.
+
+- `tenant_actions()`: unless `tenant::is_cross_tenant()`, requires viewreports AND
+  `$tenantroot === root_for_current_user()`; a caller whose tenant resolves to 0 is refused
+  (`error_outoftenant`). Site admins unchanged.
+- `actions_by_user()`: a user may read their own trail; anyone else needs viewreports plus
+  `tenant::require_same_tenant_user()` (cross-tenant callers pass).
+- `sensitive_actions()`: now also requires viewreports for non-cross-tenant callers (it had no
+  gate); `filter_by_viewer_tenant()` unscopes on `is_cross_tenant()` instead of `is_siteadmin()`,
+  and the unused `sql_filter()` call was removed.
+- The core capability keeps its archetypes (the fix is in code; core defaults are not ours to
+  revoke). Docblocks no longer promise a non-existent `:audit_all` capability.
+- Tests: new `tests/audit_log_tenant_scope_test.php` (`@group tenant_isolation`); the
+  `actions_by_user` unknown-user case in `audit_log_test.php` now runs as the site admin.
+  PHPUnit NOT run (shared test DB); verified by reading. Both trees identical.

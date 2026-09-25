@@ -24,10 +24,23 @@ class scim_client_form extends \moodleform {
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
 
-        $mform->addElement('text', 'costcenterid', get_string('scim_client_tenant', 'local_sentientia_api'), ['size' => 8]);
-        $mform->setType('costcenterid', PARAM_INT);
-        $mform->setDefault('costcenterid', 0);
-        $mform->addHelpButton('costcenterid', 'scim_client_tenant', 'local_sentientia_api');
+        // ADR-031: only a cross-tenant caller (scoperoot null) chooses the tenant,
+        // including 0 = a site-level client for every tenant. A scoped caller's
+        // client is pinned to their own tenant; setConstant() overrides anything
+        // the browser sends, and scim.php forces it again.
+        $scoperoot = $this->_customdata['scoperoot'] ?? null;
+        if ($scoperoot === null) {
+            $mform->addElement('text', 'costcenterid', get_string('scim_client_tenant', 'local_sentientia_api'), ['size' => 8]);
+            $mform->setType('costcenterid', PARAM_INT);
+            $mform->setDefault('costcenterid', 0);
+            $mform->addHelpButton('costcenterid', 'scim_client_tenant', 'local_sentientia_api');
+        } else {
+            $mform->addElement('static', 'costcenterid_fixed', get_string('scim_client_tenant', 'local_sentientia_api'),
+                (string) (int) $scoperoot);
+            $mform->addElement('hidden', 'costcenterid');
+            $mform->setType('costcenterid', PARAM_INT);
+            $mform->setConstant('costcenterid', (int) $scoperoot);
+        }
 
         $auths = array_combine(client::ALLOWED_AUTH, client::ALLOWED_AUTH);
         $mform->addElement('select', 'auth', get_string('scim_client_auth', 'local_sentientia_api'), $auths);

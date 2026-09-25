@@ -11,6 +11,7 @@
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 
+use local_sentientia_api\admin_scope;
 use local_sentientia_api\scim\attestation;
 use local_sentientia_api\scim\client;
 use local_sentientia_api\scim\handler;
@@ -21,15 +22,20 @@ admin_externalpage_setup('local_sentientia_api_scim');
 $context = context_system::instance();
 require_capability('local/sentientia_api:scim_manage', $context);
 
+// ADR-031: the capability says WHAT; this says WHERE. null = cross-tenant
+// (unchanged behaviour); N = confined to tenant N. Throws for a scoped caller
+// with no tenant, before anything is listed, exported or changed.
+$scoperoot = admin_scope::tenant_root();
+
 $action  = optional_param('action', '', PARAM_ALPHA);
 $id      = optional_param('id', 0, PARAM_INT);
 $export  = optional_param('export', '', PARAM_ALPHA);
 $pageurl = new moodle_url('/local/sentientia_api/scim.php');
 
-// Attestation CSV export (sesskey-guarded, admin-only).
+// Attestation CSV export (sesskey-guarded; a scoped caller gets their tenant's clients only).
 if ($export === 'csv') {
     require_sesskey();
-    $csv = attestation::to_csv();
+    $csv = attestation::to_csv(5000, $scoperoot);
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="sentientia-scim-attestation-' . gmdate('Ymd-His') . '.csv"');
     header('Cache-Control: private, must-revalidate');
@@ -39,6 +45,8 @@ if ($export === 'csv') {
 
 if ($action !== '' && $id > 0) {
     require_sesskey();
+    // Every id-named action checks the TARGET client's tenant first.
+    admin_scope::require_client($id, $scoperoot);
     switch ($action) {
         case 'enable':
             client::set_enabled($id, true);
@@ -57,12 +65,13 @@ if ($action !== '' && $id > 0) {
     }
 }
 
-$form = new \local_sentientia_api\form\scim_client_form($pageurl);
+$form = new \local_sentientia_api\form\scim_client_form($pageurl, ['scoperoot' => $scoperoot]);
 if ($data = $form->get_data()) {
+    $costcenterid = admin_scope::costcenter_for_create((int) $data->costcenterid, $scoperoot);
     $made = client::create((object) [
         'name'         => $data->name,
-        'costcenterid' => (int) $data->costcenterid,
-        'customerid'   => dispatcher::customer_of((int) $data->costcenterid),
+        'costcenterid' => $costcenterid,
+        'customerid'   => dispatcher::customer_of($costcenterid),
         'auth'         => $data->auth,
         'ratelimit'    => (int) $data->ratelimit,
         'enabled'      => (int) $data->enabled,
@@ -90,7 +99,7 @@ if (!$flagson) {
 }
 
 echo $OUTPUT->heading(get_string('scim_clients', 'local_sentientia_api'), 3);
-$clients = client::list_all();
+$clients = client::list_all($scoperoot);
 if (!$clients) {
     echo html_writer::tag('p', get_string('scim_none', 'local_sentientia_api'));
 } else {
@@ -134,7 +143,7 @@ $form->display();
 // Attestation log (ADR-030 Wave C).
 echo $OUTPUT->heading(get_string('scim_events', 'local_sentientia_api'), 3);
 echo html_writer::tag('p', get_string('scim_events_intro', 'local_sentientia_api'));
-$events = attestation::recent(100);
+$events = attestation::recent(100, 0, $scoperoot);
 if (!$events) {
     echo html_writer::tag('p', get_string('scim_events_none', 'local_sentientia_api'));
 } else {

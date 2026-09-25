@@ -62,24 +62,31 @@ $capabilities = [
     // Manage outbound webhook subscriptions + view/retry the delivery log
     // (ADR-030 Wave A). RISK_CONFIG: a subscription points platform events at
     // an external URL — misconfiguration leaks event metadata off-platform.
+    //
+    // ADR-031 (2026-09-25): NO archetype default. Tenant admins hold
+    // manager-archetype roles at system context, and until today the page
+    // this gates listed, created and deleted every tenant's subscriptions.
+    // The page now confines a non-cross-tenant holder to their own tenant
+    // (classes/admin_scope.php), but the grant stays deliberate: give it to a
+    // named role on purpose. Upgrade step 2026092500 revokes existing grants.
     'local/sentientia_api:webhooks_manage' => [
         'riskbitmask'  => RISK_CONFIG,
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes'   => [
-            'manager' => CAP_ALLOW,
-        ],
+        'archetypes'   => [],
     ],
 
     // Manage SCIM provisioning clients (ADR-030 Wave B). RISK_CONFIG +
     // RISK_PERSONAL: a client token lets an external IdP create/suspend users
     // in its tenant.
+    //
+    // ADR-031 (2026-09-25): NO archetype default, for the same reason as
+    // :webhooks_manage (a site-level client with costcenterid 0 provisions
+    // into every tenant). Upgrade step 2026092500 revokes existing grants.
     'local/sentientia_api:scim_manage' => [
         'riskbitmask'  => RISK_CONFIG | RISK_PERSONAL,
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes'   => [
-            'manager' => CAP_ALLOW,
-        ],
+        'archetypes'   => [],
     ],
 ];

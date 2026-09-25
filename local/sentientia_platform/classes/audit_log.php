@@ -32,9 +32,14 @@ defined('MOODLE_INTERNAL') || die();
  *   - Eventnames are filtered against a whitelist of audit-worthy
  *     events. Adding a new event class to the whitelist is the right
  *     way to extend coverage.
- *   - Tenant scoping uses `\local_sentientia_platform\tenant` for siteadmin /
- *     same-tenant gating. Cross-tenant audit queries require either
- *     siteadmin or a future `local/sentientia_platform:audit_all` cap.
+ *   - Tenant scoping (ADR-031, 2026-09-25): moodle/site:viewreports says a
+ *     caller may read audit trails; it never says WHICH tenant's. Every
+ *     query is confined to the caller's own tenant unless
+ *     `tenant::is_cross_tenant()` (a site admin or a holder of
+ *     local/sentientia_platform:crosstenant). A caller with no resolvable
+ *     tenant gets nothing. viewreports is a core capability that defaults
+ *     to the manager archetype, and tenant admins hold manager-archetype
+ *     roles at system context, so it must never unscope on its own.
  */
 class audit_log {
 
@@ -109,10 +114,14 @@ class audit_log {
      */
     public static function sensitive_actions(int $hours = 24): array {
         global $DB;
+        // ADR-031: the capability is WHAT (may read audit trails);
+        // filter_by_viewer_tenant() below is WHERE.
+        if (!tenant::is_cross_tenant()) {
+            require_capability('moodle/site:viewreports', \context_system::instance());
+        }
         $since = time() - ($hours * 3600);
         [$evsql, $evparams] = $DB->get_in_or_equal(self::SENSITIVE_EVENTS,
             SQL_PARAMS_NAMED, 'ev');
-        [$tnsql, $tnparams] = tenant::sql_filter();
         // Build a synthetic tenant column from related-user open_path —
         // gives the audit query a one-column tenant filter for free.
         $rows = $DB->get_records_sql(
@@ -135,9 +144,21 @@ class audit_log {
 
     /**
      * Everything a single user did between two timestamps.
+     *
+     * ADR-031: anyone may read their own trail. Reading somebody else's needs
+     * moodle/site:viewreports AND the target in the caller's tenant, unless the
+     * caller is cross-tenant. Until 2026-09-25 this method had no gate at all.
+     *
+     * @throws \required_capability_exception without viewreports
+     * @throws \moodle_exception error_outoftenant for a user outside the caller's tenant
      */
     public static function actions_by_user(int $userid, int $from, int $to): array {
-        global $DB;
+        global $DB, $USER;
+        $self = isloggedin() && !isguestuser() && (int) $USER->id === $userid;
+        if (!$self && !tenant::is_cross_tenant()) {
+            require_capability('moodle/site:viewreports', \context_system::instance());
+            tenant::require_same_tenant_user($userid);
+        }
         $rows = $DB->get_records_sql(
             "SELECT l.id, l.eventname, l.action, l.target,
                     l.timecreated, l.userid AS actor_userid,
@@ -155,15 +176,22 @@ class audit_log {
     /**
      * Everything that happened inside one tenant between two timestamps.
      *
-     * Requires siteadmin or the audit_all capability — there is no
-     * legitimate cross-tenant filter for a tenant-bound user.
+     * ADR-031: a cross-tenant caller may name any tenant. Anyone else needs
+     * moodle/site:viewreports and may name only their OWN tenant. Until
+     * 2026-09-25 holding viewreports (manager archetype, so every tenant admin)
+     * was enough to read any tenant's trail.
+     *
+     * @throws \required_capability_exception without viewreports
+     * @throws \moodle_exception error_outoftenant for another tenant, or a caller with none
      */
     public static function tenant_actions(int $tenantroot, int $from, int $to): array {
         global $DB;
-        if (!is_siteadmin()
-                && !has_capability('moodle/site:viewreports',
-                    \context_system::instance())) {
-            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        if (!tenant::is_cross_tenant()) {
+            require_capability('moodle/site:viewreports', \context_system::instance());
+            $viewerroot = tenant::root_for_current_user();
+            if ($viewerroot <= 0 || $viewerroot !== $tenantroot) {
+                throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+            }
         }
         $tenant_path_exact  = '/' . $tenantroot;
         $tenant_path_prefix = '/' . $tenantroot . '/%';
@@ -185,13 +213,14 @@ class audit_log {
 
     /**
      * Filter a row-set down to rows that belong to the current viewer's
-     * tenant (or every row if the viewer is a site administrator). The
+     * tenant (or every row if the viewer is cross-tenant, ADR-031). The
      * row's tenant is derived from the related user's open_path when
      * available; rows without a related-user fall through as
-     * cross-tenant administrative actions and are only shown to admins.
+     * cross-tenant administrative actions and are only shown to
+     * cross-tenant viewers.
      */
     private static function filter_by_viewer_tenant(array $rows): array {
-        if (is_siteadmin()) {
+        if (tenant::is_cross_tenant()) {
             return array_values($rows);
         }
         $viewer_tenant = tenant::root_for_current_user();

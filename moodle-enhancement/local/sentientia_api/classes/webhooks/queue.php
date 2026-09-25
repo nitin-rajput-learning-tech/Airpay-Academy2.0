@@ -141,23 +141,45 @@ class queue {
     /**
      * Most recent deliveries for the admin log view.
      *
-     * @param int $limit
+     * @param int      $limit
+     * @param int|null $costcenterid null = every delivery (cross-tenant caller); N = only
+     *                               deliveries of subscriptions stored for tenant N (ADR-031)
      * @return \stdClass[]
      */
-    public static function recent(int $limit = 50): array {
+    public static function recent(int $limit = 50, ?int $costcenterid = null): array {
         global $DB;
-        return $DB->get_records(self::TABLE, null, 'timecreated DESC', '*', 0, $limit);
+        if ($costcenterid === null) {
+            return $DB->get_records(self::TABLE, null, 'timecreated DESC', '*', 0, $limit);
+        }
+        return $DB->get_records_sql(
+            "SELECT d.*
+               FROM {" . self::TABLE . "} d
+               JOIN {" . subscription::TABLE . "} s ON s.id = d.subid
+              WHERE s.costcenterid = :cid
+           ORDER BY d.timecreated DESC",
+            ['cid' => $costcenterid], 0, $limit);
     }
 
     /**
      * Row counts per status.
      *
+     * @param int|null $costcenterid null = every delivery; N = tenant N's subscriptions only (ADR-031)
      * @return array<string,int>
      */
-    public static function counts(): array {
+    public static function counts(?int $costcenterid = null): array {
         global $DB;
         $out = [self::STATUS_QUEUED => 0, self::STATUS_SENT => 0, self::STATUS_FAILED => 0, self::STATUS_DEAD => 0];
-        $rows = $DB->get_records_sql("SELECT status, COUNT(1) AS n FROM {" . self::TABLE . "} GROUP BY status");
+        if ($costcenterid === null) {
+            $rows = $DB->get_records_sql("SELECT status, COUNT(1) AS n FROM {" . self::TABLE . "} GROUP BY status");
+        } else {
+            $rows = $DB->get_records_sql(
+                "SELECT d.status, COUNT(1) AS n
+                   FROM {" . self::TABLE . "} d
+                   JOIN {" . subscription::TABLE . "} s ON s.id = d.subid
+                  WHERE s.costcenterid = :cid
+               GROUP BY d.status",
+                ['cid' => $costcenterid]);
+        }
         foreach ($rows as $r) {
             $out[$r->status] = (int) $r->n;
         }
