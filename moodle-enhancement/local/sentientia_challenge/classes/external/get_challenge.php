@@ -28,11 +28,10 @@ class get_challenge extends external_api {
         self::validate_context($context);
         require_capability('local/sentientia_challenge:view', $context);
 
-        $challenge = $DB->get_record('local_sentientia_challenge_challenges',
-            ['id' => $id], '*', MUST_EXIST);
         // ADR-031: ids are sequential; :view is not licence to read another
-        // tenant's challenge (name, description, participant counts).
-        challenge_engine::require_visible($challenge);
+        // tenant's challenge (name, description, participant counts). A hidden
+        // id fails exactly as a missing one does - no existence oracle.
+        $challenge = challenge_engine::get_visible($id);
         $myattempt = $DB->get_record('local_sentientia_challenge_attempts',
             ['challengeid' => $id, 'userid' => $USER->id]);
 

@@ -14,10 +14,9 @@ if (!in_array($tab, ['overview', 'participants', 'leaderboard'], true)) {
     $tab = 'overview';
 }
 
-$challenge = $DB->get_record('local_sentientia_challenge_challenges',
-    ['id' => $id], '*', MUST_EXIST);
-// ADR-031: ids are sequential; only global and own-tenant challenges render.
-\local_sentientia_challenge\challenge_engine::require_visible($challenge);
+// ADR-031: ids are sequential; only global and own-tenant challenges render,
+// and a hidden id fails exactly as a missing one does.
+$challenge = \local_sentientia_challenge\challenge_engine::get_visible($id);
 $challenge->participants = (int) $DB->count_records(
     'local_sentientia_challenge_attempts', ['challengeid' => $id]);
 $challenge->completed = (int) $DB->count_records(

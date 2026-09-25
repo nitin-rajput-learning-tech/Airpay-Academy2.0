@@ -103,13 +103,45 @@ class challenge_engine {
     }
 
     /**
-     * Throwing form of {@see user_can_see()}.
+     * ADR-031: the one "no such challenge" error.
      *
-     * @throws \moodle_exception error_outoftenant
+     * Raised for an id that does not exist AND for one the caller may not
+     * see, so the two cannot be told apart. Until 2026-09-25 a hidden id
+     * answered error_outoftenant while a missing one answered invalidrecord:
+     * walking the sequential ids told any learner which ones belong to other
+     * tenants. This is the error $DB->get_record(..., MUST_EXIST) raises for
+     * this table (errorcode 'invalidrecord'), built the same way for both
+     * cases so even the debug info matches.
+     */
+    public static function not_found(): \dml_missing_record_exception {
+        return new \dml_missing_record_exception('local_sentientia_challenge_challenges');
+    }
+
+    /**
+     * ADR-031: load a challenge the user may see, or fail as a missing id does.
+     *
+     * @param int $id challenge id
+     * @param int|null $userid defaults to the current user
+     * @throws \dml_missing_record_exception {@see not_found()}
+     */
+    public static function get_visible(int $id, ?int $userid = null): \stdClass {
+        global $DB;
+        $c = $DB->get_record('local_sentientia_challenge_challenges', ['id' => $id]);
+        if (!$c || !self::user_can_see($c, $userid)) {
+            throw self::not_found();
+        }
+        return $c;
+    }
+
+    /**
+     * Throwing form of {@see user_can_see()}, for a row already loaded.
+     *
+     * @throws \dml_missing_record_exception {@see not_found()} - never a
+     *         tenant error, which would confirm the id exists
      */
     public static function require_visible(\stdClass $c, ?int $userid = null): void {
         if (!self::user_can_see($c, $userid)) {
-            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+            throw self::not_found();
         }
     }
 
@@ -139,12 +171,40 @@ class challenge_engine {
     /**
      * Throwing form of {@see user_can_manage()}, for the current user.
      *
-     * @throws \moodle_exception error_outoftenant
+     * A challenge the caller cannot even see (another tenant's) fails as a
+     * missing id does, so update / delete are no existence oracle either. One
+     * the caller can see but not manage (a global challenge, for a scoped
+     * manager) is refused as out of tenant: its existence is no secret, it is
+     * in their list.
+     *
+     * @throws \dml_missing_record_exception {@see not_found()} for a hidden challenge
+     * @throws \moodle_exception error_outoftenant for a visible, unmanageable one
      */
     public static function require_manageable(\stdClass $c): void {
+        if (!self::user_can_see($c)) {
+            throw self::not_found();
+        }
         if (!self::user_can_manage($c)) {
             throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
         }
+    }
+
+    /**
+     * ADR-031: load a challenge the current user may manage.
+     *
+     * @param int $id challenge id
+     * @param string $fields columns to load; must include id and costcenterid
+     * @throws \dml_missing_record_exception missing, or hidden from the caller
+     * @throws \moodle_exception error_outoftenant visible but not manageable
+     */
+    public static function get_manageable(int $id, string $fields = '*'): \stdClass {
+        global $DB;
+        $c = $DB->get_record('local_sentientia_challenge_challenges', ['id' => $id], $fields);
+        if (!$c) {
+            throw self::not_found();
+        }
+        self::require_manageable($c);
+        return $c;
     }
 
     /**
@@ -205,10 +265,9 @@ class challenge_engine {
      */
     public static function update_challenge(int $id, array $data): void {
         global $DB;
-        $existing = $DB->get_record('local_sentientia_challenge_challenges',
-            ['id' => $id], '*', MUST_EXIST);
-        // ADR-031: :manage is not licence to edit another tenant's challenge.
-        self::require_manageable($existing);
+        // ADR-031: :manage is not licence to edit another tenant's challenge,
+        // and a hidden id fails exactly as a missing one does.
+        $existing = self::get_manageable($id);
 
         $merged = array_merge((array) $existing, $data);
         // courseids stays JSON-encoded if not in $data.
@@ -242,12 +301,10 @@ class challenge_engine {
      */
     public static function delete_challenge(int $id): void {
         global $DB;
-        $existing = $DB->get_record('local_sentientia_challenge_challenges',
-            ['id' => $id], 'id, costcenterid', MUST_EXIST);
         // ADR-031: deleting also wipes the challenge's attempts and
         // leaderboard rows, i.e. every participant's progress and points.
         // A scoped manager may do that only to their own tenant's challenges.
-        self::require_manageable($existing);
+        self::get_manageable($id, 'id, costcenterid');
 
         $tx = $DB->start_delegated_transaction();
         try {
@@ -273,14 +330,16 @@ class challenge_engine {
     public static function join(int $challengeid, int $userid): int {
         global $DB;
         $challenge = $DB->get_record('local_sentientia_challenge_challenges',
-            ['id' => $challengeid], '*', MUST_EXIST);
+            ['id' => $challengeid]);
 
         // ADR-031: the joiner must be able to see the challenge (global or
         // their own tenant's). join() used to accept any id, so a learner could
         // add attempts to another tenant's challenge. A cross-tenant actor
-        // (site admin) enrolling someone is not restricted.
-        if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
-            self::require_visible($challenge, $userid);
+        // (site admin) enrolling someone is not restricted. A hidden id fails
+        // exactly as a missing one does.
+        if (!$challenge || (!\local_sentientia_platform\tenant::is_cross_tenant()
+                && !self::user_can_see($challenge, $userid))) {
+            throw self::not_found();
         }
 
         if ((int) $challenge->status !== self::STATUS_ACTIVE) {
