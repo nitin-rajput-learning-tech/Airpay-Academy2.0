@@ -32,8 +32,12 @@ defined('MOODLE_INTERNAL') || die();
  *   {iso}         ISO-8601 datetime (compact, no separators)
  *
  * Every token is sanitised through {@see clean_filename()} before
- * substitution. Empty tokens collapse to empty string — the resulting
- * filename always ends in `.mbz` (or the caller-provided extension).
+ * substitution, and the assembled name (the template's literal text
+ * included) goes through the same pass afterwards, so the stem is
+ * always lowercase `[a-z0-9-]`. An unrecognised `{token}` survives as
+ * its sanitised literal (`token`). Empty tokens collapse to empty
+ * string — the resulting filename always ends in `.mbz` (or the
+ * caller-provided extension).
  *
  * Maximum filename length: 200 chars (excluding extension). Truncated
  * with `…` mid-string when too long, never truncated to break the
@@ -93,13 +97,23 @@ class backup_filename {
         // Substitute. Tokens not in the template are simply absent — no error.
         $name = strtr($template, $tokens);
 
-        // Belt-and-braces — strip any path traversal artefacts that survived
-        // sanitise_token() if a future contributor adds a less-strict token.
+        // Path separators and traversal runs become word breaks, so 'a/b'
+        // reads 'a-b' rather than 'ab' after the pass below.
         $name = str_replace(['/', '\\', '..'], '-', $name);
 
-        // Collapse runs of dashes / underscores left over from empty tokens.
-        $name = preg_replace('/[-_]{2,}/', '-', $name);
-        $name = trim($name, '-_');
+        // 2026-09-25: sanitise the WHOLE assembled stem, not just the token
+        // values. The template's literal text comes from an admin setting
+        // (PARAM_TEXT, so anything goes) and used to reach the filename
+        // untouched: '{type}-AUDIT-{id}' kept its capitals, a typo'd
+        // '{notatoken}' kept its braces (the P0 #11 spec says it becomes
+        // 'notatoken'), and ':' '*' '?' or spaces in the template produced
+        // names that are illegal on Windows or hostile to shells and URLs.
+        // Same rules as the tokens, and the same lowercase output as core's
+        // backup_plan_dbops::get_default_backup_filename(). Token values are
+        // already [a-z0-9-], so this is a no-op for them. sanitise_token()
+        // also turns '_' into '-', collapses dash runs left by empty tokens
+        // and trims leading/trailing dashes.
+        $name = self::sanitise_token($name);
 
         // Never empty.
         if ($name === '') {
