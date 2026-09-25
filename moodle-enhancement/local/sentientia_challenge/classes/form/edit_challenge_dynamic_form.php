@@ -90,16 +90,15 @@ class edit_challenge_dynamic_form extends dynamic_form {
     }
 
     protected function check_access_for_dynamic_submission(): void {
-        global $DB;
         require_capability('local/sentientia_challenge:manage',
             $this->get_context_for_dynamic_submission());
         // ADR-031: refuse to open (or submit) the modal for a challenge the
         // caller may not manage - another tenant's, or a global one for a
-        // scoped manager. set_data used to load any challenge by id.
+        // scoped manager; a hidden id fails as a missing one does. set_data
+        // used to load any challenge by id.
         $challengeid = $this->optional_param('challengeid', 0, PARAM_INT);
         if ($challengeid > 0) {
-            challenge_engine::require_manageable($DB->get_record('local_sentientia_challenge_challenges',
-                ['id' => $challengeid], 'id, costcenterid', MUST_EXIST));
+            challenge_engine::get_manageable($challengeid, 'id, costcenterid');
         }
     }
 
@@ -126,12 +125,9 @@ class edit_challenge_dynamic_form extends dynamic_form {
     }
 
     public function set_data_for_dynamic_submission(): void {
-        global $DB;
         $challengeid = $this->optional_param('challengeid', 0, PARAM_INT);
         if ($challengeid > 0) {
-            $row = $DB->get_record('local_sentientia_challenge_challenges',
-                ['id' => $challengeid], '*', MUST_EXIST);
-            challenge_engine::require_manageable($row);
+            $row = challenge_engine::get_manageable($challengeid);
             $this->set_data((object) [
                 'challengeid'  => $challengeid,
                 'name'         => $row->name,

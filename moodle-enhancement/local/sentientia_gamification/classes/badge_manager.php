@@ -87,6 +87,13 @@ class badge_manager {
                         '/' . $org, '', 'open_path', 'badgeorg');
                     $orgfilter = ' AND ' . $orgsql;
                 }
+                // ADR-031 rule 4 (2026-09-25): with no tenant to scope to, the
+                // counts below span EVERY tenant's courses. Only a cross-tenant
+                // user (site admin, :crosstenant) keeps that site-wide scope;
+                // anyone else earns no tenant-scoped badge.
+                if ($orgfilter === '' && !\local_sentientia_platform\tenant::is_cross_tenant($userid)) {
+                    return false;
+                }
                 $mandatory = $DB->count_records_sql(
                     "SELECT COUNT(*) FROM {course}
                      WHERE enddate > 0 AND visible = 1 AND id > 1" . $orgfilter,
@@ -115,6 +122,13 @@ class badge_manager {
                     $tenantfilter = "AND s2.userid IN (SELECT id FROM {user} "
                         . "WHERE {$ranksql} AND deleted = 0)";
                     $tenantparams += $rankargs;
+                }
+                // ADR-031 rule 4 (2026-09-25): with no tenant the rank below is
+                // counted across every tenant - the same fallback
+                // leaderboard::get_rank() already refuses. Cross-tenant users
+                // keep the site-wide rank; anyone else earns no top-10 badge.
+                if ($tenantfilter === '' && !\local_sentientia_platform\tenant::is_cross_tenant($userid)) {
+                    return false;
                 }
                 $rank = $DB->count_records_sql(
                     "SELECT COUNT(*) FROM {local_sentientia_streaks} s2
@@ -148,7 +162,12 @@ class badge_manager {
     /**
      * BizLMS tenant (costcenter) segment of a user's open_path — '/1/2/3'
      * yields '1' — or '' when the schema or the user carries no tenant.
-     * Callers drop the tenant filter (site-wide scope) on ''.
+     *
+     * On '' the tenant-scoped criteria refuse the award unless the user is
+     * cross-tenant (ADR-031, 2026-09-25); until then they fell back to
+     * site-wide scope. The root is parsed as tenant::root_for_user() parses
+     * it, so a malformed path ('garbage', '/abc') is no tenant rather than a
+     * made-up one.
      */
     private static function get_user_tenant(int $userid): string {
         global $DB;
@@ -159,9 +178,8 @@ class badge_manager {
         if (empty($path)) {
             return '';
         }
-        $parts = explode('/', (string) $path);
-        $org = $parts[1] ?? '';
-        return empty($org) ? '' : (string) $org;
+        $root = \local_sentientia_platform\tenant::root_for_user((object) ['open_path' => (string) $path]);
+        return $root > 0 ? (string) $root : '';
     }
 
     /**

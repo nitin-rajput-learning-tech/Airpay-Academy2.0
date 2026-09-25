@@ -52,6 +52,14 @@ class get_leaderboard extends external_api {
             throw new \moodle_exception('err_filterstoolong', 'local_sentientia_challenge');
         }
 
+        // ADR-031 (2026-09-25): a per-challenge board is for a challenge the
+        // caller can see, as in get_challenge and view.php. The rows below are
+        // tenant-bounded either way, so this discloses nothing new; it makes a
+        // hidden challenge id fail exactly as a missing one does here too.
+        if ((int) $params['challengeid'] > 0) {
+            challenge_engine::get_visible((int) $params['challengeid']);
+        }
+
         // Tenant scoping. 'all' is honoured only for a cross-tenant caller
         // (ADR-031: tenant::is_cross_tenant() decides WHERE; :viewall, which
         // existed only to unscope, no longer does).

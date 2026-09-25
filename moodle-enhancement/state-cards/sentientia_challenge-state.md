@@ -355,3 +355,36 @@ decides WHERE. `challenge_engine` gains `user_can_see()` / `require_visible()` a
 `tests/privacy/provider_test.php` authored its challenge as a tenantless user; it now creates as the
 site admin and sets `createdby`. New `tests/tenant_isolation_test.php` (`@group tenant_isolation`).
 Declares a dependency on platform 2026092500. Both trees.
+
+## 2026-09-25 - ADR-031 fix-forward: hidden ids look missing; board checks visibility (no version change)
+
+Review items S4 and S5 on wave 1. Code only (no db/, lang or capability change), so the version stays
+2026092501.
+
+- **S4, existence oracle closed.** Wave 1 refused a hidden challenge with `error_outoftenant` and a
+  missing one with `invalidrecord`, so walking the sequential ids told any learner which belonged to
+  other tenants. `challenge_engine::not_found()` is now the one "no such challenge" error for both:
+  a `dml_missing_record_exception` on the challenges table, built the same way either way, so the
+  errorcode, message and debug info match. New loaders `get_visible()` (get_challenge, view.php,
+  get_leaderboard) and `get_manageable()` (update, delete, the edit modal's check_access and
+  set_data) load with IGNORE_MISSING and raise it for a missing row and for a hidden one; `join()`
+  does the same for a non-cross-tenant actor. `require_visible()` raises it too.
+  `require_manageable()` raises it for a challenge the caller cannot see (another tenant's), and still
+  raises `error_outoftenant` for one they can see but not manage (a global challenge, for a scoped
+  manager): that one is in their list, so its existence is no secret.
+- **S5.** `get_leaderboard` with `challengeid > 0` now calls `get_visible()` first, as get_challenge
+  and view.php do. It leaked nothing before (rows were tenant-bounded), but a caller could not tell a
+  hidden id from a missing one. A missing id now raises `invalidrecord` for everyone, where it used to
+  return an empty page. A caller with no tenant now gets that error for a per-challenge board, and
+  still gets an empty aggregate board (`challengeid` 0).
+
+Tests: `tests/tenant_isolation_test.php` now asserts that every hidden-id refusal (update, delete,
+get_challenge, join, get_leaderboard, and the edit modal opened as the dynamic-form web service opens
+it) is identical to the missing-id refusal. The global-challenge refusals still expect
+`error_outoftenant`. `tests/external/tenant_scope_test.php`'s no-tenant case now expects the
+per-challenge board to be refused and the aggregate one to be empty. Not executed here (no PHPUnit
+run, per the task). Both trees.
+
+Still open, out of scope: `create_challenge` / `update_challenge` answer `err_shortname_taken` for a
+shortname used in another tenant, which is a small existence oracle on shortnames. The schema comment
+says "unique per tenant", but the check is site-wide.

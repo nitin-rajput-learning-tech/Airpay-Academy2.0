@@ -40,16 +40,17 @@ final class tenant_scope_test extends \advanced_testcase {
         return $DB->get_record('user', ['id' => $u->id], '*', MUST_EXIST);
     }
 
-    private function board_row(int $userid, int $costcenterid, int $points): void {
+    /** @param int|null $challengeid the board: null = this test's challenge, 0 = the aggregate board */
+    private function board_row(int $userid, int $costcenterid, int $points, ?int $challengeid = null): void {
         global $DB;
         $DB->insert_record('local_sentientia_challenge_leaderboard', (object) [
-            'challengeid' => $this->cid, 'userid' => $userid, 'costcenterid' => $costcenterid,
+            'challengeid' => $challengeid ?? $this->cid, 'userid' => $userid, 'costcenterid' => $costcenterid,
             'points' => $points, 'userrank' => 1, 'attemptscompleted' => 1, 'lastrecomputed' => time(),
         ]);
     }
 
-    private function leaderboard_ids(): array {
-        $r = get_leaderboard::execute(challengeid: $this->cid, tenantmode: 'all');
+    private function leaderboard_ids(?int $challengeid = null): array {
+        $r = get_leaderboard::execute(challengeid: $challengeid ?? $this->cid, tenantmode: 'all');
         $ids = array_map('intval', array_column($r['rows'], 'userid'));
         sort($ids);
         return $ids;
@@ -92,13 +93,25 @@ final class tenant_scope_test extends \advanced_testcase {
     public function test_a_caller_with_no_tenant_gets_nothing(): void {
         $a = $this->user_at('/1/2');
         $b = $this->user_at('/177/178');
-        $this->board_row((int) $a->id, 1, 50);
-        $this->board_row((int) $b->id, 177, 90);
+        foreach ([$this->cid, 0] as $board) {  // this challenge's board, and the aggregate one
+            $this->board_row((int) $a->id, 1, 50, $board);
+            $this->board_row((int) $b->id, 177, 90, $board);
+        }
 
         foreach (['', 'garbage'] as $path) {
             $nobody = $this->user_at($path);
             $this->setUser($nobody);
-            $this->assertSame([], $this->leaderboard_ids(), "open_path '{$path}' must not unlock every tenant.");
+            $this->assertSame([], $this->leaderboard_ids(0), "open_path '{$path}' must not unlock every tenant.");
+            // 2026-09-25: a caller with no tenant cannot see the challenge
+            // itself (not even a global one), so its board now fails as a
+            // missing id does instead of returning an empty page: still
+            // nothing, and no hint that the id exists.
+            try {
+                $this->leaderboard_ids();
+                $this->fail("open_path '{$path}': the board of a challenge the caller cannot see must be refused.");
+            } catch (\dml_missing_record_exception $e) {
+                $this->assertSame('invalidrecord', $e->errorcode);
+            }
             $list = list_challenges::execute('', 'all', 'timecreated', 'desc', 0, 25);
             $this->assertSame(0, $list['total']);
         }

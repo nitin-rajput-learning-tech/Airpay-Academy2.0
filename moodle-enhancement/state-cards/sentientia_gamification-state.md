@@ -219,3 +219,24 @@ Site admins keep their previous results. Latent (no live caller of get_global/ge
 before one appears. `badge_manager`'s own-award checks still use site-wide scope on '' (not a
 disclosure; left as is). Depends on platform 2026092500. Tests: `tests/tenant_scope_test.php`
 (`@group tenant_isolation`). Both trees.
+
+## 2026-09-25 - ADR-031 fix-forward: tenant-scoped badges fail closed (no version change)
+
+Review item S6 on wave 1. `badge_manager`'s `compliance_complete` and `leaderboard_top10` criteria fell
+back to SITE-WIDE scope when the learner's tenant was '': the mandatory count covered every tenant's
+courses, and the top-10 rank was counted across every tenant. This was not a disclosure, since the
+award is the learner's own, but it broke ADR-031 rule 4, and `leaderboard::get_rank()` already refused
+the same fallback. Both criteria now return false when no tenant filter could be applied, unless
+`tenant::is_cross_tenant($userid)` is true. Site admins and `:crosstenant` holders keep site-wide
+scope. `get_user_tenant()` now parses the root the way `tenant::root_for_user()` does. So `'garbage'`
+and `'/abc'` count as no tenant instead of a made-up one, and `'1/2'` reads as tenant 1 (it used to
+read 2).
+
+Visible effect: a learner with no resolvable tenant no longer earns "Compliance Champion" or "Team
+Player". On a vanilla schema with no BizLMS `open_path`, only cross-tenant users can earn them.
+`tests/badge_manager_test.php`'s vanilla-schema case now expects `['first_course']`, where it used to
+expect `['first_course', 'leaderboard_top10']`. That is the award this change removes; the chain still
+runs to the end. New `tests/badge_scope_test.php` (`@group tenant_isolation`) covers: no-tenant
+learners ('', 'garbage', '/abc') earn neither; a tenant learner earns both inside their tenant; the
+site admin and a `:crosstenant` holder keep site-wide scope. Code only (no db/ or lang change), so the
+version stays 2026092500. Not executed here. Both trees.

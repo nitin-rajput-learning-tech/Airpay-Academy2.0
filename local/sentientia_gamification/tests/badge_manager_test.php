@@ -124,10 +124,14 @@ final class badge_manager_test extends \advanced_testcase {
             $this->assertSame(250, (int) $DB->get_field('local_sentientia_streaks', 'total_points',
                 ['userid' => $user->id]));
 
-            // Both tenant-reading criteria were evaluated site-wide: first_course
-            // earned, leaderboard_top10 earned (sole scorer), compliance_complete
-            // not (no mandatory courses exist).
-            $this->assertSame(['first_course', 'leaderboard_top10'], $this->earned_types((int) $user->id));
+            // The chain ran to the end: first_course earned. The two
+            // tenant-reading criteria have no tenant to scope to here and the
+            // learner is not cross-tenant, so since 2026-09-25 (ADR-031 rule 4)
+            // they are refused instead of evaluated site-wide: leaderboard_top10
+            // used to be earned (sole scorer across every tenant) and is not;
+            // compliance_complete is not (it never was: no mandatory courses).
+            // badge_scope_test covers the same refusal on a BizLMS schema.
+            $this->assertSame(['first_course'], $this->earned_types((int) $user->id));
         } finally {
             if ($restore) {
                 $this->ensure_bizlms_schema();
