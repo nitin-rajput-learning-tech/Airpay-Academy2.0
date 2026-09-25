@@ -132,9 +132,15 @@ final class list_paths_test extends \advanced_testcase {
 
         $bigjson = '{' . str_repeat('"key":"' . str_repeat('x', 100) . '",', 50) . '"end":1}';
 
-        $this->expectException(\moodle_exception::class);
-        $this->expectExceptionMessageMatches('/filterstoolong/');
-        list_paths::execute('', 'name', 'asc', 0, 25, $bigjson);
+        // Assert the error CODE: the message is the localised string ("Filter
+        // payload too long."), which never contains the key, so matching the
+        // message against 'filterstoolong' failed whenever the string resolved.
+        try {
+            list_paths::execute('', 'name', 'asc', 0, 25, $bigjson);
+            $this->fail('An oversized filter payload must be refused.');
+        } catch (\moodle_exception $e) {
+            $this->assertSame('filterstoolong', $e->errorcode);
+        }
     }
 
     /**

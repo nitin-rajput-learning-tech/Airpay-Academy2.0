@@ -68,14 +68,19 @@ $plugin->component = 'local_sentientia_users';
 // (user_manager::require_can_act_on); the edit form offers and accepts only
 // the caller's own tenant's orgs; index KPIs, filter chips and HRMS run
 // history fail closed; invalidtenant/outoftenant strings added (en + hi).
-$plugin->version   = 2026092500;  // ADR-031: target-tenant checks on every write
+// 2026-09-25 — welcome_mailer sends as a notification (notification=1).
+// With notification=0, message_send() refused the local_sentientia_users
+// provider outright (only moodle/instantmessage may send a personal
+// message), so the welcome email had never been delivered.
+$plugin->version   = 2026092501;  // welcome email actually sends
+// 2026092500: ADR-031: target-tenant checks on every write.
 // 2026092401: N1 review: supervisor label + list fail-closed.
 // 2026092400: Profile reads are tenant-bounded (N1).
 // 2026092200: Manage Users counts are tenant-bounded.
 // 2026090302: H1, signup no longer reveals whether an email exists.
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '2.8.0';  // ADR-031
+$plugin->release   = '2.8.1';  // welcome email fix (2.8.0: ADR-031)
 $plugin->dependencies = [
     'local_sentientia_org' => 2026051501,
     'local_sentientia_platform' => ANY_VERSION,
