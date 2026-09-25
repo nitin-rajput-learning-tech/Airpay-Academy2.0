@@ -218,6 +218,9 @@ $string['non_respondents_empty_pending_heading']   = 'सभी ने उत्
 $string['non_respondents_empty_pending_body']      = 'या तो हर नियुक्त सीखने वाले ने यह मूल्यांकन भर दिया है, या अभी तक कोई नियुक्ति दर्ज नहीं हुई है।';
 $string['non_respondents_empty_responded_heading'] = 'अभी तक कोई उत्तर नहीं।';
 $string['non_respondents_empty_responded_body']    = 'जब नियुक्त सीखने वाले अपनी प्रतिक्रियाएँ सबमिट करेंगे, वे यहाँ दिखाई देंगे।';
+// 2026-09-25 - anonymous evaluations withhold the responded list.
+$string['non_respondents_anonymous_heading'] = 'इस मूल्यांकन की प्रतिक्रियाएँ गुमनाम हैं।';
+$string['non_respondents_anonymous_body']    = 'किसने और कब उत्तर दिया, इसकी सूची नहीं दिखाई जाती: किसी प्रतिक्रिया के समय को किसी एक उत्तर से मिलाया जा सकता है। इस टैब की गिनती फिर भी सही है, और "लंबित" टैब उन लोगों को दिखाता है जिन्होंने अभी तक उत्तर नहीं दिया है।';
 
 // P1 #39 (2026-05-20) — bulk-assign by audience.
 $string['filterstoolong']             = 'फ़िल्टर payload बहुत लंबा है।';

@@ -928,6 +928,12 @@ class skills_manager {
      */
     public static function list_course_skills(int $courseid): array {
         global $DB;
+        // ADR-031: another tenant's course (or any course, without a tenant)
+        // lists nothing - the mapping page and the list_course_skills web
+        // service used to show any course's mappings by id.
+        if (!self::can_view_course($courseid)) {
+            return [];
+        }
         $rows = $DB->get_records_sql("
             SELECT cs.id, cs.courseid, cs.skillid, cs.teaches_level,
                    s.name AS skill_name, s.max_level,
@@ -1018,23 +1024,94 @@ class skills_manager {
         }
         // ADR-031: a scoped caller finds only their own tenant's courses (the
         // picker listed every tenant's course names); none without a tenant.
-        $scope = \local_sentientia_platform\tenant::scope_path();
+        $scope = self::course_scope_sql('c');
         if ($scope === null) {
             return [];
         }
-        if ($scope !== '') {
-            [$tsql, $targs] = \local_sentientia_platform\tenant::path_descendant_filter(
-                $scope, 'c', 'open_path', 'skc');
-            $where .= " AND {$tsql}";
-            $params = array_merge($params, $targs);
-        }
+        [$tsql, $targs] = $scope;
+        $where .= " AND {$tsql}";
+        $params = array_merge($params, $targs);
         $sql = "SELECT c.id, c.fullname, c.shortname,
                        (SELECT COUNT(*) FROM {" . self::COURSE_SKILL_TABLE . "} cs
                          WHERE cs.courseid = c.id) AS mapped_count
                   FROM {course} c
                  WHERE c.id <> :siteid AND c.visible = 1 $where
               ORDER BY c.fullname ASC";
-        $rows = $DB->get_records_sql($sql, $params, 0, $limit);
+        return self::course_picker_rows($DB->get_records_sql($sql, $params, 0, $limit));
+    }
+
+    /**
+     * The course-mapping page's initial picker: the caller's visible courses
+     * with the most skills mapped first, scoped like search_courses(). It
+     * used to be an unscoped query in course_mapping.php listing the top 25
+     * of every tenant's courses.
+     *
+     * @param int $limit
+     * @return list<array{id:int, fullname:string, shortname:string,
+     *                    mapped_count:int}>
+     */
+    public static function top_courses(int $limit = 25): array {
+        global $DB;
+        $scope = self::course_scope_sql('c');
+        if ($scope === null) {
+            return [];
+        }
+        [$tsql, $targs] = $scope;
+        $sql = "SELECT c.id, c.fullname, c.shortname,
+                       (SELECT COUNT(*) FROM {" . self::COURSE_SKILL_TABLE . "} cs
+                         WHERE cs.courseid = c.id) AS mapped_count
+                  FROM {course} c
+                 WHERE c.id <> :siteid AND c.visible = 1 AND {$tsql}
+              ORDER BY mapped_count DESC, c.fullname ASC";
+        return self::course_picker_rows(
+            $DB->get_records_sql($sql, ['siteid' => SITEID] + $targs, 0, $limit));
+    }
+
+    /**
+     * ADR-031: may the current user see this course in the mapping UI
+     * (its name and its skill mappings)? The same scope as search_courses():
+     * their own tenant's courses, every course for a cross-tenant caller,
+     * none without a tenant.
+     *
+     * @param int $courseid
+     * @return bool
+     */
+    public static function can_view_course(int $courseid): bool {
+        global $DB;
+        $scope = self::course_scope_sql('c');
+        if ($scope === null || $courseid <= 0) {
+            return false;
+        }
+        [$tsql, $targs] = $scope;
+        return $DB->record_exists_sql(
+            "SELECT 1 FROM {course} c WHERE c.id = :skccourseid AND {$tsql}",
+            ['skccourseid' => $courseid] + $targs);
+    }
+
+    /**
+     * ADR-031: WHERE fragment scoping a course query on alias $alias:
+     * '1=1' for a cross-tenant caller, the caller's tenant path and its
+     * '/'-bounded descendants otherwise (a legacy course with no open_path
+     * is not shown to a scoped caller), or null - show nothing - for a
+     * caller with no tenant.
+     *
+     * @param string $alias course table alias
+     * @return array{0: string, 1: array}|null
+     */
+    private static function course_scope_sql(string $alias): ?array {
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === null) {
+            return null;
+        }
+        if ($scope === '') {
+            return ['1=1', []];
+        }
+        return \local_sentientia_platform\tenant::path_descendant_filter(
+            $scope, $alias, 'open_path', 'skc');
+    }
+
+    /** Shape course rows for the picker (search_courses / top_courses). */
+    private static function course_picker_rows(array $rows): array {
         $out = [];
         foreach ($rows as $r) {
             $out[] = [
@@ -1049,9 +1126,15 @@ class skills_manager {
 
     /**
      * Fetch a single course's basic info for header rendering.
+     *
+     * ADR-031: null for a course the caller may not see
+     * ({@see self::can_view_course()}), as for one that does not exist.
      */
     public static function get_course_summary(int $courseid): ?array {
         global $DB;
+        if (!self::can_view_course($courseid)) {
+            return null;
+        }
         $c = $DB->get_record('course', ['id' => $courseid],
             'id, fullname, shortname, summary');
         if (!$c) {

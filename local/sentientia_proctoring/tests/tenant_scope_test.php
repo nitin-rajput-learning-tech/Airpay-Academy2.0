@@ -131,4 +131,33 @@ final class tenant_scope_test extends \advanced_testcase {
         session_manager::require_session_access(0);
         $this->assertTrue(external\flag_session::execute($foreign)['success']);
     }
+
+    public function test_flag_notification_goes_only_to_a_reviewer_of_that_tenant(): void {
+        global $DB;
+        $session = fn(int $tenant) => $DB->get_record('local_sentientia_proctor_sessions',
+            ['id' => $this->seed_session($tenant)], '*', MUST_EXIST);
+        $own = $session(1);
+        $foreign = $session(177);
+        $orphan = $session(0);
+
+        $reviewer1 = $this->tenant_admin('/1');
+        set_config('default_reviewer', $reviewer1->id, 'local_sentientia_proctoring');
+        $this->assertSame((int) $reviewer1->id, session_manager::flag_recipient($own));
+        $this->assertSame(0, session_manager::flag_recipient($foreign),
+            'A /1 default reviewer must not be told about a /177 candidate\'s flagged session.');
+        $this->assertSame(0, session_manager::flag_recipient($orphan));
+
+        set_config('default_reviewer', $this->tenant_admin('')->id, 'local_sentientia_proctoring');
+        $this->assertSame(0, session_manager::flag_recipient($own), 'A reviewer with no tenant reaches no session.');
+        $this->assertSame(0, session_manager::flag_recipient($orphan));
+
+        set_config('default_reviewer', 999999, 'local_sentientia_proctoring');
+        $this->assertSame(0, session_manager::flag_recipient($own), 'A reviewer id that is nobody gets nothing.');
+
+        // The shipped default (userid 2, the site admin) still hears about every tenant.
+        unset_config('default_reviewer', 'local_sentientia_proctoring');
+        $this->assertSame(2, (int) get_admin()->id);
+        $this->assertSame(2, session_manager::flag_recipient($foreign));
+        $this->assertSame(2, session_manager::flag_recipient($orphan));
+    }
 }

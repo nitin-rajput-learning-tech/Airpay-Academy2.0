@@ -47,23 +47,11 @@ foreach ($all_skills as $s) {
 }
 
 // Recent / popular courses for the initial picker (top 25 by skill count).
-$top_courses_rows = $DB->get_records_sql(
-    "SELECT c.id, c.fullname, c.shortname,
-            (SELECT COUNT(*) FROM {local_sentientia_course_skills} cs
-              WHERE cs.courseid = c.id) AS mapped_count
-       FROM {course} c
-      WHERE c.id <> :siteid AND c.visible = 1
-   ORDER BY mapped_count DESC, c.fullname ASC",
-    ['siteid' => SITEID], 0, 25);
-$top_courses = [];
-foreach ($top_courses_rows as $c) {
-    $top_courses[] = [
-        'id'           => (int) $c->id,
-        'fullname'     => format_string($c->fullname),
-        'shortname'    => format_string($c->shortname),
-        'mapped_count' => (int) $c->mapped_count,
-    ];
-}
+// ADR-031: the caller's own tenant's courses only (every course for a
+// cross-tenant caller, none without a tenant) - this list used to name the
+// top 25 of every tenant's courses. The selected course's header and
+// mappings below are scoped the same way.
+$top_courses = \local_sentientia_skills\skills_manager::top_courses(25);
 
 $selected_course = $courseid
     ? \local_sentientia_skills\skills_manager::get_course_summary($courseid) : null;

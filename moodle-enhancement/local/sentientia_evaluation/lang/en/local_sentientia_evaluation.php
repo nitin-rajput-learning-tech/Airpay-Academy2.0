@@ -178,6 +178,9 @@ $string['non_respondents_empty_pending_heading']   = 'Everyone has responded.';
 $string['non_respondents_empty_pending_body']      = 'Either every assigned learner has filled in this evaluation, or no assignments have been recorded yet. Trigger-based evaluations auto-assign learners as they complete the qualifying activity.';
 $string['non_respondents_empty_responded_heading'] = 'No responses yet.';
 $string['non_respondents_empty_responded_body']    = 'Once assigned learners submit their responses, they will appear here.';
+// 2026-09-25 - anonymous evaluations withhold the responded list.
+$string['non_respondents_anonymous_heading'] = 'Responses to this evaluation are anonymous.';
+$string['non_respondents_anonymous_body']    = 'Who has responded, and when, is not listed: the time of a response could be matched to an individual answer. The count on this tab is still accurate, and the Pending tab lists who has not responded yet.';
 
 // P1 #39 (2026-05-20) — bulk-assign by audience. Pairs with P1 #37
 // (assignments table) + P1 #38 (non-respondents view).

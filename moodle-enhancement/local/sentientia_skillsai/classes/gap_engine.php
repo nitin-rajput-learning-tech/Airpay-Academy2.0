@@ -37,15 +37,18 @@ class gap_engine {
     /**
      * Resolve the BizLMS tenant root from a user's open_path.
      *
+     * ADR-031 (2026-09-25): delegates to tenant::root_for_user() - see
+     * taxonomy_manager::tenant_root_for(). '/1x' is 0 (no tenant), not 1, so
+     * a malformed path no longer stamps a gap row or scopes a taxonomy
+     * lookup as tenant 1.
+     *
      * @param \stdClass|null $user
      * @return int
      */
     public static function tenant_root_for(?\stdClass $user = null): int {
         global $USER;
         $u = $user ?? $USER;
-        $path = isset($u->open_path) ? (string)$u->open_path : '';
-        $parts = explode('/', trim($path, '/'));
-        return (int)($parts[0] ?? 0);
+        return $u ? \local_sentientia_platform\tenant::root_for_user($u) : 0;
     }
 
     /**

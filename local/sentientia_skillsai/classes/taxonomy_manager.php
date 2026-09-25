@@ -50,15 +50,60 @@ class taxonomy_manager {
     /**
      * Resolve the BizLMS tenant root from a user's open_path.
      *
+     * ADR-031 (2026-09-25): delegates to tenant::root_for_user(), so a
+     * malformed root segment is 0 (no tenant) here exactly as in gaps.php and
+     * taxonomy.php. The plain (int) cast this replaced read '/1x' as tenant 1,
+     * so the page and the job scope (create_pending, load_for_actor,
+     * list_for_actor) could disagree about the same user's tenant.
+     *
      * @param \stdClass|null $user
      * @return int
      */
     public static function tenant_root_for(?\stdClass $user = null): int {
         global $USER;
         $u = $user ?? $USER;
-        $path = isset($u->open_path) ? (string)$u->open_path : '';
-        $parts = explode('/', trim($path, '/'));
-        return (int)($parts[0] ?? 0);
+        return $u ? \local_sentientia_platform\tenant::root_for_user($u) : 0;
+    }
+
+    /**
+     * ADR-031: courses the current user may tag an extraction job with, for
+     * extract.php's picker: their own tenant's visible courses (and legacy
+     * courses with no open_path), every visible course for a cross-tenant
+     * caller, none without a tenant (tenant::path_filter fails closed). The
+     * picker used to list up to 200 courses from every tenant.
+     *
+     * @param int $limit
+     * @return \stdClass[] keyed by course id: id, fullname, shortname
+     */
+    public static function course_options(int $limit = 200): array {
+        global $DB;
+        [$tsql, $targs] = \local_sentientia_platform\tenant::path_filter('c', 'open_path', true);
+        return $DB->get_records_sql(
+            "SELECT c.id, c.fullname, c.shortname
+               FROM {course} c
+              WHERE c.visible = 1 AND c.id <> :skaisiteid AND {$tsql}
+           ORDER BY c.fullname ASC",
+            ['skaisiteid' => SITEID] + $targs, 0, $limit);
+    }
+
+    /**
+     * ADR-031: may the current user tag a job with this course? The same
+     * tenant scope as course_options(). extract.php refuses a posted courseid
+     * that fails this, so a job can no longer be tagged with another
+     * tenant's course.
+     *
+     * @param int $courseid
+     * @return bool
+     */
+    public static function course_in_scope(int $courseid): bool {
+        global $DB;
+        if ($courseid <= 0 || $courseid === (int) SITEID) {
+            return false;
+        }
+        [$tsql, $targs] = \local_sentientia_platform\tenant::path_filter('c', 'open_path', true);
+        return $DB->record_exists_sql(
+            "SELECT 1 FROM {course} c WHERE c.id = :skaicourseid AND {$tsql}",
+            ['skaicourseid' => $courseid] + $targs);
     }
 
     /**

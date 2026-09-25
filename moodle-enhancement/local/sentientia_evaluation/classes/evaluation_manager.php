@@ -1218,6 +1218,41 @@ class evaluation_manager {
         ]);
     }
 
+    /**
+     * Is the list of who has responded withheld for this evaluation?
+     *
+     * An anonymous evaluation stores its responses with userid 0, but the
+     * assignment rows still record WHO responded and WHEN (responded_at,
+     * to the minute). Listing them next to the anonymous answers, whose
+     * timesubmitted is the same moment, would let the admin put a name to
+     * each answer. So the 'responded' list is withheld; the pending list
+     * (who still has to be chased) is not.
+     *
+     * @param \stdClass $evaluation record carrying anonymous
+     * @param string    $status 'assigned' | 'responded' | 'expired'
+     * @return bool
+     */
+    public static function respondents_hidden(\stdClass $evaluation, string $status): bool {
+        return $status === 'responded' && (int) ($evaluation->anonymous ?? 0) === 1;
+    }
+
+    /**
+     * Assignment rows the non_respondents page may show: list_assignments(),
+     * except that an anonymous evaluation's 'responded' list is empty
+     * ({@see self::respondents_hidden()}). Callers must already have passed
+     * require_evaluation_access().
+     *
+     * @param \stdClass $evaluation
+     * @param string    $status
+     * @return array<int, \stdClass>
+     */
+    public static function list_assignments_for_view(\stdClass $evaluation, string $status): array {
+        if (self::respondents_hidden($evaluation, $status)) {
+            return [];
+        }
+        return self::list_assignments((int) $evaluation->id, $status);
+    }
+
     // ═══════════════════════════════════════════════════════════════════
     // P1 #41 (2026-05-20) — DB-backed template library.
     // ═══════════════════════════════════════════════════════════════════

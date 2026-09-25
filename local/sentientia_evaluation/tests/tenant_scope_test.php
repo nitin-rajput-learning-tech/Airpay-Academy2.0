@@ -31,6 +31,7 @@ defined('MOODLE_INTERNAL') || die();
  * @covers     \local_sentientia_evaluation\external\reorder_questions
  * @covers     \local_sentientia_evaluation\external\preview_audience
  * @covers     \local_sentientia_evaluation\external\submit_response
+ * @covers     \local_sentientia_evaluation\form\edit_evaluation
  * @group      tenant_isolation
  */
 final class tenant_scope_test extends \advanced_testcase {
@@ -318,5 +319,142 @@ final class tenant_scope_test extends \advanced_testcase {
             'A /1 learner must not post answers into a /177 evaluation.');
         $this->assertSame(0, $DB->count_records('local_sentientia_evaluation_responses',
             ['evaluationid' => $foreign->id]));
+    }
+
+    /**
+     * Drive edit_evaluation the way the dynamic-form web service does. The
+     * two optional date_time_selectors are posted unticked (0), as a browser
+     * posts them.
+     */
+    private function submit_edit_form(array $formdata): array {
+        $unticked = ['day' => 1, 'month' => 1, 'year' => 2026, 'hour' => 0, 'minute' => 0];
+        $data = form\edit_evaluation::mock_ajax_submit($formdata + [
+            'timeopen' => $unticked, 'timeclose' => $unticked,
+        ]);
+        $form = new form\edit_evaluation(null, null, 'post', '', null, true, $data, true);
+        $form->set_data_for_dynamic_submission();
+        return $form->process_dynamic_submission();
+    }
+
+    /** The fields of a new evaluation, less its organisation. */
+    private function new_evaluation_fields(string $name): array {
+        return ['evaluationid' => 0, 'name' => $name, 'kirkpatrick_level' => 1,
+            'trigger_event' => 'manual', 'status' => evaluation_manager::STATUS_ACTIVE];
+    }
+
+    public function test_create_form_never_makes_a_global_evaluation_for_a_scoped_caller(): void {
+        global $DB;
+        $this->setUser($this->tenant_admin('/1'));
+
+        // The org select drops a value that is missing or not among its
+        // options, and a /1 caller's options are /1 orgs only. So the first
+        // three reach process_dynamic_submission() with costcenterid unset;
+        // create() used to stamp that 0 - a GLOBAL evaluation, which
+        // evaluation_engine delivers to every tenant's learners.
+        $cases = [
+            'Omitted'        => [],
+            'Another tenant' => ['costcenterid' => $this->org177],
+            'No org (0)'     => ['costcenterid' => 0],
+            'Own org'        => ['costcenterid' => $this->org1],
+        ];
+        foreach ($cases as $name => $org) {
+            $result = $this->submit_edit_form($this->new_evaluation_fields($name) + $org);
+            $row = $DB->get_record('local_sentientia_evaluation', ['id' => $result['evaluationid']],
+                '*', MUST_EXIST);
+            $this->assertSame($this->org1, (int) $row->costcenterid,
+                "{$name}: a /1 tenant admin's new evaluation must be bound to /1, never global (0).");
+            $this->assertSame('/1', $row->open_path, $name);
+            $this->assertTrue(evaluation_manager::can_manage_evaluation($row),
+                "{$name}: the creator must still be able to manage what they made.");
+        }
+        $this->assertSame(0, $DB->count_records('local_sentientia_evaluation', ['costcenterid' => 0]));
+        $this->assertSame(0, $DB->count_records('local_sentientia_evaluation',
+            ['costcenterid' => $this->org177]));
+    }
+
+    public function test_create_form_refuses_a_caller_with_no_tenant(): void {
+        global $DB;
+        $this->setUser($this->tenant_admin(''));
+        $this->assert_outoftenant(
+            fn() => $this->submit_edit_form($this->new_evaluation_fields('Nowhere')),
+            'A caller with no tenant must not create an evaluation - and never a global one.');
+        $this->assert_outoftenant(
+            fn() => $this->submit_edit_form($this->new_evaluation_fields('Nowhere 177')
+                + ['costcenterid' => $this->org177]),
+            'A caller with no tenant must not bind an evaluation to any tenant\'s org.');
+        $this->assertSame(0, $DB->count_records('local_sentientia_evaluation'));
+    }
+
+    public function test_create_form_keeps_global_evaluations_for_cross_tenant_callers(): void {
+        global $DB;
+        $this->setAdminUser();
+        $global = $this->submit_edit_form($this->new_evaluation_fields('Everyone'));
+        $this->assertSame(0, (int) $DB->get_field('local_sentientia_evaluation', 'costcenterid',
+            ['id' => $global['evaluationid']]), 'A cross-tenant caller may still make a global evaluation.');
+        $zeea = $this->submit_edit_form($this->new_evaluation_fields('ZEEA')
+            + ['costcenterid' => $this->org177]);
+        $this->assertSame($this->org177, (int) $DB->get_field('local_sentientia_evaluation', 'costcenterid',
+            ['id' => $zeea['evaluationid']]));
+    }
+
+    public function test_edit_form_update_keeps_the_binding_when_the_org_is_dropped(): void {
+        global $DB;
+        $own = $this->seed_evaluation('Airpay POSH', $this->org1, '/1');
+        $this->setUser($this->tenant_admin('/1'));
+        $this->submit_edit_form(['evaluationid' => $own, 'name' => 'Renamed', 'kirkpatrick_level' => 1,
+            'trigger_event' => 'manual', 'status' => evaluation_manager::STATUS_ACTIVE,
+            'costcenterid' => $this->org177]);
+        $row = $DB->get_record('local_sentientia_evaluation', ['id' => $own], '*', MUST_EXIST);
+        $this->assertSame('Renamed', $row->name);
+        $this->assertSame($this->org1, (int) $row->costcenterid,
+            'An edit must not move a /1 evaluation to /177 or make it global.');
+        $this->assertSame('/1', $row->open_path);
+    }
+
+    private function seed_assignment(int $evaluationid, int $userid, string $status): void {
+        global $DB;
+        $now = time();
+        $DB->insert_record('local_sentientia_evaluation_assign', (object) [
+            'evaluationid'  => $evaluationid,
+            'userid'        => $userid,
+            'trigger_event' => 'manual',
+            'source_id'     => 0,
+            'status'        => $status,
+            'responded_at'  => $status === 'responded' ? $now : null,
+            'timecreated'   => $now,
+            'timemodified'  => $now,
+        ]);
+    }
+
+    public function test_anonymous_evaluation_withholds_who_responded(): void {
+        global $DB;
+        $anonid = $this->seed_evaluation('Culture pulse', $this->org1, '/1');
+        $DB->set_field('local_sentientia_evaluation', 'anonymous', 1, ['id' => $anonid]);
+        $namedid = $this->seed_evaluation('POSH feedback', $this->org1, '/1');
+        $responded = $this->user_at('/1/5');
+        $pending = $this->user_at('/1/6');
+        foreach ([$anonid, $namedid] as $eid) {
+            $this->seed_assignment($eid, (int) $responded->id, 'responded');
+            $this->seed_assignment($eid, (int) $pending->id, 'assigned');
+        }
+        $this->setUser($this->tenant_admin('/1'));
+        $anon = $DB->get_record('local_sentientia_evaluation', ['id' => $anonid], '*', MUST_EXIST);
+        $named = $DB->get_record('local_sentientia_evaluation', ['id' => $namedid], '*', MUST_EXIST);
+        $userids = fn(array $rows) => array_values(array_map('intval', array_column($rows, 'userid')));
+
+        $this->assertTrue(evaluation_manager::respondents_hidden($anon, 'responded'));
+        $this->assertSame([], evaluation_manager::list_assignments_for_view($anon, 'responded'),
+            'non_respondents.php: the names and response times of an anonymous evaluation\'s '
+            . 'respondents could be matched to their answers.');
+        $this->assertCount(1, evaluation_manager::list_assignments($anonid, 'responded'),
+            'The tab badge still counts them.');
+        $this->assertFalse(evaluation_manager::respondents_hidden($anon, 'assigned'));
+        $this->assertSame([(int) $pending->id],
+            $userids(evaluation_manager::list_assignments_for_view($anon, 'assigned')),
+            'Who still has to respond stays visible, so they can be chased.');
+
+        $this->assertFalse(evaluation_manager::respondents_hidden($named, 'responded'));
+        $this->assertSame([(int) $responded->id],
+            $userids(evaluation_manager::list_assignments_for_view($named, 'responded')));
     }
 }

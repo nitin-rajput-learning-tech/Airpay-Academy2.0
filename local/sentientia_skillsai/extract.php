@@ -90,6 +90,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $prefill['title']      = trim(optional_param('title', '', PARAM_TEXT));
     $prefill['courseid']   = optional_param('courseid', 0, PARAM_INT);
+    // ADR-031: a job may be tagged only with a course in the caller's tenant
+    // (any course for a cross-tenant caller) - the same scope as the picker.
+    if ($prefill['courseid'] > 0 && !taxonomy_manager::course_in_scope((int)$prefill['courseid'])) {
+        throw new moodle_exception('error_outoftenant', 'local_sentientia_platform');
+    }
     $prefill['sourcekind'] = optional_param('sourcekind', 'manual', PARAM_ALPHA);
     if (!in_array($prefill['sourcekind'], taxonomy_manager::SOURCE_KINDS, true)) {
         $prefill['sourcekind'] = 'manual';
@@ -208,8 +213,9 @@ if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
     }
 }
 
-$courses = $DB->get_records_select('course',
-    'visible = 1 AND id > 1', null, 'fullname ASC', 'id, fullname, shortname', 0, 200);
+// ADR-031: the caller's own tenant's courses only (every tenant's for a
+// cross-tenant caller) - this picker used to list 200 courses from every tenant.
+$courses = taxonomy_manager::course_options(200);
 $courseoptions = [0 => get_string('extract_form_course_none', 'local_sentientia_skillsai')];
 foreach ($courses as $c) {
     $courseoptions[(int)$c->id] = format_string($c->fullname) . ' (' . format_string($c->shortname) . ')';
