@@ -269,19 +269,12 @@ function xmldb_local_sentientia_emails_upgrade(int $oldversion): bool {
     //    entitled to that tenant BEFORE they reach learners. Each one is
     //    traced for review; an entitled editor can re-save it. Global rows
     //    are left as they are (already live) and traced for review only.
+    //    The trace is also persisted (config changes log + the setting
+    //    local_sentientia_emails/adr031_override_audit), so it can be read
+    //    after a web upgrade; see local_sentientia_emails_run_override_audit().
     if ($oldversion < 2026092501) {
-        $switchedoff = local_sentientia_emails_deactivate_unentitled_overrides();
-        foreach ($switchedoff as $row) {
-            mtrace(sprintf('local_sentientia_emails: DEACTIVATED tenant override id=%d template_key=%s '
-                . 'tenant_id=%d usermodified=%d (author tenant root %d): author not entitled to that tenant.',
-                $row->id, $row->template_key, $row->tenant_id, $row->usermodified, $row->author_root));
-        }
-        mtrace(sprintf('local_sentientia_emails: %d tenant override(s) deactivated for review.',
-            count($switchedoff)));
-        foreach (local_sentientia_emails_global_overrides_for_review() as $row) {
-            mtrace(sprintf('local_sentientia_emails: REVIEW (left active) global override id=%d template_key=%s '
-                . 'usermodified=%d (author tenant root %d): author is not cross-tenant.',
-                $row->id, $row->template_key, $row->usermodified, $row->author_root));
+        foreach (local_sentientia_emails_run_override_audit() as $line) {
+            mtrace('local_sentientia_emails: ' . $line);
         }
         upgrade_plugin_savepoint(true, 2026092501, 'local', 'sentientia_emails');
     }

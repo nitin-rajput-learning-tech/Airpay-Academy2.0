@@ -22,8 +22,13 @@ defined('MOODLE_INTERNAL') || die();
  * rewrite global rules and the global template override. These tests pin:
  * a /1 tenant admin sees and changes nothing of tenant 177 or the global
  * scope; a caller with no tenant gets nothing; a site admin is unchanged.
+ * They also pin the rules and templates tabs to what the server does: the
+ * templates tab reports the override a tenant actually receives, tenant labels
+ * come from the org registry rather than a hardcoded customer, and a read-only
+ * global rule renders a form that cannot be submitted.
  *
  * @covers \local_sentientia_emails\tenant_scope
+ * @covers \local_sentientia_emails\template_manager
  * @covers \local_sentientia_emails\delivery_log
  * @covers \local_sentientia_emails\rule_manager
  * @covers \local_sentientia_emails\external\template_api
@@ -181,17 +186,38 @@ final class tenant_scope_test extends \advanced_testcase {
         ]);
     }
 
-    private function override(int $tenant, string $body): void {
+    /** One override of self::TPL; (tenant_id, template_key) is a unique index. */
+    private function override(int $tenant, string $body, int $active = 1): int {
         global $DB;
-        $DB->insert_record('local_sentientia_email_overrides', (object) [
+        return (int) $DB->insert_record('local_sentientia_email_overrides', (object) [
             'tenant_id'    => $tenant,
             'template_key' => self::TPL,
             'subject'      => 'S',
             'body_html'    => $body,
-            'is_active'    => 1,
+            'is_active'    => $active,
             'timecreated'  => time(),
             'timemodified' => time(),
         ]);
+    }
+
+    /** A tenant root in the org registry (local_sentientia_org), as the migration seeds it. */
+    private function org_root(int $root, string $name): void {
+        global $DB;
+        $DB->insert_record('local_sentientia_org', (object) [
+            'fullname'     => $name,
+            'shortname'    => 'org' . $root,
+            'parentid'     => 0,
+            'path'         => '/' . $root,
+            'depth'        => 1,
+            'visible'      => 1,
+            'sortorder'    => $root,
+            'timecreated'  => time(),
+            'timemodified' => time(),
+        ]);
+    }
+
+    private static function str(string $identifier, $a = null): string {
+        return get_string($identifier, 'local_sentientia_emails', $a);
     }
 
     private function assert_refused(callable $fn, string $why): void {
@@ -391,8 +417,10 @@ final class tenant_scope_test extends \advanced_testcase {
 
         // The scope select holds their own tenant only, pre-selected - even
         // when editing a global rule - so "All Tenants (Global)" is never offered.
+        // (No org registry row for tenant 1 here, so it carries the neutral label.)
+        $own = self::str('rule_scope_tenant', self::str('tenant_n', 1));
         foreach ([null, 0, 177, 1] as $ruletenant) {
-            $this->assertSame([['id' => 1, 'name' => 'Airpay Only', 'selected' => true]],
+            $this->assertSame([['id' => 1, 'name' => $own, 'selected' => true]],
                 manage_controller::rule_scope_options(1, $ruletenant));
         }
         $this->assertSame([1], array_column(manage_controller::tenant_selector_options(1), 'id'));
@@ -418,6 +446,9 @@ final class tenant_scope_test extends \advanced_testcase {
             'Editing a tenant rule must not default its scope to Global.');
         $this->assertSame([0], array_column(array_filter(manage_controller::rule_scope_options(0),
             fn($o) => $o['selected']), 'id'));
+        // A new rule from manage.php?tenant=177 starts scoped to 177, not Global.
+        $this->assertSame([177], array_column(array_filter(manage_controller::rule_scope_options(177),
+            fn($o) => $o['selected']), 'id'));
         $this->assertSame([0, 1, 77, 177], array_column(manage_controller::tenant_selector_options(0), 'id'));
         foreach (manage_controller::get_rules_data(0)['rules'] as $row) {
             $this->assertTrue($row['can_modify']);
@@ -436,5 +467,103 @@ final class tenant_scope_test extends \advanced_testcase {
         $this->setUser($this->getDataGenerator()->create_user());
         $this->expectException(\required_capability_exception::class);
         external\template_api::preview_template(self::TPL, 1, '<p>x</p>', 'Hi');
+    }
+
+    public function test_templates_tab_reports_the_override_the_tenant_actually_receives(): void {
+        global $DB;
+        // The 2026092501 upgrade switched tenant 177's override off; the
+        // global one is still active, so 177's learners receive the global.
+        $global = $this->override(0, 'GLOBAL');
+        $tenantrow = $this->override(177, 'SWITCHED-OFF', 0);
+        $status = fn(int $tenant): array =>
+            array_column(template_manager::get_templates_with_status($tenant), null, 'key')[self::TPL];
+
+        $this->assertSame('global_override', template_manager::get_override(self::TPL, 177)->source);
+        $row = $status(177);
+        $this->assertTrue($row['has_override'],
+            'An inactive tenant row must not make the tab say "no override" while the global one is delivered.');
+        $this->assertSame('global', $row['source']);
+        $this->assertSame($global, (int) $row['override_id']);
+
+        // An active tenant row wins, exactly as it does for delivery.
+        $DB->set_field('local_sentientia_email_overrides', 'is_active', 1, ['id' => $tenantrow]);
+        $this->assertSame('tenant_override', template_manager::get_override(self::TPL, 177)->source);
+        $row = $status(177);
+        $this->assertSame('tenant', $row['source']);
+        $this->assertSame($tenantrow, (int) $row['override_id']);
+
+        // The global scope's own rows are labelled global, not tenant.
+        $this->assertSame('global', $status(0)['source']);
+        $this->assertSame($global, (int) $status(0)['override_id']);
+    }
+
+    public function test_tenant_labels_come_from_the_org_registry_not_a_hardcoded_customer(): void {
+        $this->org_root(1, 'Northwind Learning');
+        $this->org_root(77, 'Contoso Partners');
+        // Tenant 177 has no registry row: it gets the neutral "Tenant N" label.
+        $fallback = self::str('tenant_n', 177);
+
+        $this->setAdminUser();
+        $selector = manage_controller::tenant_selector_options(0);
+        $scopes = manage_controller::rule_scope_options(0);
+        $this->assertSame([self::str('tenant_all'), 'Northwind Learning', 'Contoso Partners', $fallback],
+            array_column($selector, 'name'));
+        $this->assertSame([self::str('rule_scope_global'), self::str('rule_scope_tenant', 'Northwind Learning'),
+            self::str('rule_scope_tenant', 'Contoso Partners'), self::str('rule_scope_tenant', $fallback)],
+            array_column($scopes, 'name'));
+        foreach (array_merge($selector, $scopes) as $option) {
+            $this->assertStringNotContainsString('Airpay', $option['name'],
+                'A white-label deployment must not show another customer\'s name as a tenant label.');
+        }
+
+        // A scoped caller is offered their own tenant, under its registry name.
+        $this->setUser($this->tenant_admin('/77/80'));
+        $this->assertSame([['id' => 77, 'name' => self::str('rule_scope_tenant', 'Contoso Partners'), 'selected' => true]],
+            manage_controller::rule_scope_options(77));
+        $this->assertSame([['id' => 77, 'name' => 'Contoso Partners', 'selected' => true]],
+            manage_controller::tenant_selector_options(0));
+    }
+
+    public function test_readonly_global_rule_form_cannot_be_submitted(): void {
+        global $OUTPUT;
+        $this->setUser($this->tenant_admin('/1'));
+        $context = fn(bool $readonly): array => [
+            'show_form'          => true,
+            'has_editrule'       => true,
+            'editrule_readonly'  => $readonly,
+            'editrule'           => ['id' => 42, 'rule_name' => 'Global reminder', 'enabled' => true,
+                                     'trigger_days' => 7, 'priority' => 50],
+            'rule_scope_options' => [['id' => 1, 'name' => 'Own tenant', 'selected' => true]],
+            'template_options'   => [],
+            'tabdata'            => ['rule_count' => 1, 'rules' => [[
+                'id' => 42, 'rule_name' => 'Global reminder', 'rule_type' => 'custom', 'channel' => 'email',
+                'audience' => 'Learner', 'trigger_days' => 7, 'priority' => 50, 'template_key' => '',
+                'tenant_id' => 0, 'enabled' => true, 'is_global' => true, 'can_modify' => !$readonly,
+            ]]],
+            'sesskey'            => sesskey(),
+            'manage_url'         => 'https://example.invalid/local/sentientia_emails/manage.php',
+            'tenant_id'          => 1,
+        ];
+
+        // Read-only (a global rule seen by a scoped admin): nothing is editable or postable.
+        $html = $OUTPUT->render_from_template('local_sentientia_emails/manage/tab_rules', $context(true));
+        $this->assertStringContainsString('<fieldset class="ap-manage-fieldset" disabled', $html,
+            'Every field of a read-only rule sits in a disabled fieldset.');
+        $this->assertStringNotContainsString('value="saverule"', $html, 'A read-only form carries no save action.');
+        $this->assertStringNotContainsString('name="sesskey"', $html);
+        $this->assertStringNotContainsString('name="ruleid"', $html);
+        $this->assertStringNotContainsString('type="submit"', $html);
+        $locked = get_string('rule_locked', 'local_sentientia_emails');
+        $this->assertStringContainsString('aria-label="' . s($locked) . '"', $html,
+            'The disabled toggle has an accessible name, not only a title.');
+        $this->assertSame(2, substr_count($html, 'class="fa fa-lock" aria-hidden="true"'),
+            'Both lock icons are decorative; the text beside them carries the meaning.');
+        $this->assertStringNotContainsString('<i class="fa fa-lock"></i>', $html);
+
+        // The editable form still posts saverule with its sesskey.
+        $html = $OUTPUT->render_from_template('local_sentientia_emails/manage/tab_rules', $context(false));
+        $this->assertStringContainsString('<fieldset class="ap-manage-fieldset">', $html);
+        $this->assertStringContainsString('name="action" value="saverule"', $html);
+        $this->assertStringContainsString('name="ruleid" value="42"', $html);
     }
 }

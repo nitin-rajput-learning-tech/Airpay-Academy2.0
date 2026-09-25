@@ -123,3 +123,91 @@ function local_sentientia_emails_global_overrides_for_review(): array {
     }
     return $review;
 }
+
+/**
+ * The 2026092501 audit: switch off unentitled tenant overrides, list the
+ * global ones for review, and keep a record of both that outlives the
+ * upgrade output.
+ *
+ * Until 2026-09-25 the DEACTIVATED and REVIEW lines were only mtrace()d, so
+ * after a web upgrade, or a CLI run nobody captured, nothing said which
+ * overrides had been switched off or which global ones needed a look. They
+ * are now also written to:
+ *
+ *  - the config changes log (Site administration > Reports > Config changes,
+ *    /report/configlog/index.php), plugin local_sentientia_emails: one
+ *    'adr031_override_deactivated' or 'adr031_override_review' entry per row,
+ *    and one 'adr031_override_audit' summary entry;
+ *  - the plugin setting local_sentientia_emails/adr031_override_audit, a JSON
+ *    document {"recorded", "deactivated": [...], "review": [...]} (read it with
+ *    admin/cli/cfg.php --component=local_sentientia_emails --name=adr031_override_audit).
+ *
+ * The persisted record names the override id, template key, tenant and the
+ * author's tenant root, but not the author's user id: no privacy provider
+ * covers a config value or the config log's text, and the override row
+ * itself keeps usermodified (the step changes only is_active and
+ * timemodified). The console lines still name usermodified, as before.
+ *
+ * @return string[] the lines for the upgrade step to mtrace()
+ */
+function local_sentientia_emails_run_override_audit(): array {
+    $switchedoff = local_sentientia_emails_deactivate_unentitled_overrides();
+    $review = local_sentientia_emails_global_overrides_for_review();
+    return local_sentientia_emails_record_override_audit($switchedoff, $review);
+}
+
+/**
+ * Persist an override audit (see local_sentientia_emails_run_override_audit())
+ * and return its console lines.
+ *
+ * @param stdClass[] $switchedoff from local_sentientia_emails_deactivate_unentitled_overrides()
+ * @param stdClass[] $review from local_sentientia_emails_global_overrides_for_review()
+ * @return string[] the lines for the upgrade step to mtrace()
+ */
+function local_sentientia_emails_record_override_audit(array $switchedoff, array $review): array {
+    $plugin = 'local_sentientia_emails';
+    $entry = fn(stdClass $row): array => [
+        'id'           => (int) $row->id,
+        'template_key' => (string) $row->template_key,
+        'tenant_id'    => (int) $row->tenant_id,
+        'author_root'  => (int) $row->author_root,
+    ];
+    $lines = [];
+
+    foreach ($switchedoff as $row) {
+        $lines[] = sprintf('DEACTIVATED tenant override id=%d template_key=%s tenant_id=%d usermodified=%d '
+            . '(author tenant root %d): author not entitled to that tenant.',
+            $row->id, $row->template_key, $row->tenant_id, $row->usermodified, $row->author_root);
+        add_to_config_log('adr031_override_deactivated', 'is_active=1',
+            sprintf('is_active=0: tenant override id=%d template_key=%s tenant_id=%d, author tenant root %d '
+                . '(not entitled to that tenant). Re-save it as an entitled editor to restore it.',
+                $row->id, $row->template_key, $row->tenant_id, $row->author_root),
+            $plugin);
+    }
+    $lines[] = sprintf('%d tenant override(s) deactivated for review.', count($switchedoff));
+
+    foreach ($review as $row) {
+        $lines[] = sprintf('REVIEW (left active) global override id=%d template_key=%s '
+            . 'usermodified=%d (author tenant root %d): author is not cross-tenant.',
+            $row->id, $row->template_key, $row->usermodified, $row->author_root);
+        add_to_config_log('adr031_override_review', null,
+            sprintf('left active: global override id=%d template_key=%s, author tenant root %d '
+                . '(not cross-tenant). Every tenant\'s learners receive it; review its content.',
+                $row->id, $row->template_key, $row->author_root),
+            $plugin);
+    }
+
+    $summary = sprintf('%d tenant override(s) deactivated [ids: %s]; %d global override(s) to review [ids: %s].',
+        count($switchedoff), implode(',', array_map(fn($r) => (int) $r->id, $switchedoff)) ?: '-',
+        count($review), implode(',', array_map(fn($r) => (int) $r->id, $review)) ?: '-');
+    add_to_config_log('adr031_override_audit', null, $summary, $plugin);
+    set_config('adr031_override_audit', json_encode([
+        'recorded'    => time(),
+        'deactivated' => array_map($entry, array_values($switchedoff)),
+        'review'      => array_map($entry, array_values($review)),
+    ]), $plugin);
+    $lines[] = 'Recorded in Site administration > Reports > Config changes (plugin ' . $plugin
+        . ') and in the setting ' . $plugin . '/adr031_override_audit.';
+
+    return $lines;
+}
