@@ -33,18 +33,34 @@ class enrol_single extends external_api {
         self::validate_context($ctx);
         require_capability('local/sentientia_courses:enrol', $ctx);
 
+        // ADR-031: the course must be owned by, shared to, or (legacy, no
+        // open_path) listed for the caller's tenant; a scoped caller with no
+        // tenant gets invalidtenant. Cross-tenant callers: $root = null.
+        // Until 2026-09-25 this enrolled anyone into any course by id.
+        $root = \local_sentientia_courses\course_manager::require_enrol_scope(
+            (int) $params['courseid']);
+
         // Resolve user — try email first, then employee_id, then username.
+        // ADR-031: a scoped caller only finds users in their own tenant, so
+        // another tenant's email or employee id reads "not found" (this call
+        // used to confirm whether an identifier existed anywhere).
         $id = trim($params['identifier']);
+        [$tusql, $tuargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+            $root === null ? '' : '/' . $root, '', 'open_path', 'enrsgl');
         $user = $DB->get_record_sql(
             "SELECT * FROM {user}
               WHERE deleted = 0 AND suspended = 0
                 AND (email = :e OR open_employeeid = :emp OR username = :un)
+                AND {$tusql}
               LIMIT 1",
-            ['e' => $id, 'emp' => $id, 'un' => $id]);
+            ['e' => $id, 'emp' => $id, 'un' => $id] + $tuargs);
         if (!$user) {
             return ['success' => false, 'enrolled' => false,
                     'reason' => 'User not found: ' . $id, 'userid' => 0];
         }
+        // Defence in depth - the lookup above is already tenant-bounded.
+        \local_sentientia_courses\course_manager::require_enrol_scope(
+            (int) $params['courseid'], [(int) $user->id]);
 
         // Already enrolled?
         $context = \context_course::instance($params['courseid']);

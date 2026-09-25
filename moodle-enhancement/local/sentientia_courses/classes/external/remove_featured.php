@@ -27,6 +27,8 @@ class remove_featured extends external_api {
         self::validate_context($context);
         require_capability('local/sentientia_courses:manage', $context);
         require_sesskey();
+        // ADR-031: a tenant admin removes rows from their own tenant's list only.
+        featured_manager::assert_can_edit_rows([(int) $params['id']]);
 
         featured_manager::remove((int) $params['id']);
         return ['ok' => true];

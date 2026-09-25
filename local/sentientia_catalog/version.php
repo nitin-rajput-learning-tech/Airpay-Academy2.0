@@ -22,7 +22,14 @@ $plugin->component = 'local_sentientia_catalog';
 // course lookup, commerce::add_to_cart(), and enrolment::enrol_now() before
 // any enrolment write. Degrades to visible=1-only when course.open_path is
 // absent (vanilla schema). No new lang strings (uses core 'nopermissions').
-$plugin->version   = 2026090400;
+// ADR-031 (2026-09-25) — tenant resolution fails closed: only a cross-tenant
+// viewer is unscoped; guests are the Public tenant; an unresolved tenant sees
+// and enrols in nothing. Purge local_sentientia_catalog caches on deploy.
+$plugin->version   = 2026092500;  // ADR-031: catalog tenant gate fails closed (no schema/cap change)
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.4-beta';
+$plugin->release   = '1.0.5-beta';
+// tenant::is_cross_tenant() arrived in platform 2026092500 (ADR-031).
+$plugin->dependencies = [
+    'local_sentientia_platform' => 2026092500,
+];

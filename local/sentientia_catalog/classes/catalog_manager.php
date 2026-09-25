@@ -14,58 +14,75 @@ defined('MOODLE_INTERNAL') || die();
 class catalog_manager {
 
     /**
-     * Derive the viewer's top-level tenant root from $USER->open_path.
+     * ADR-031: "no tenant restriction". ONLY a cross-tenant viewer (site
+     * admin or :crosstenant holder, tenant::is_cross_tenant()) gets it.
+     */
+    public const TENANT_ALL = 0;
+
+    /**
+     * ADR-031: a logged-in viewer who is not cross-tenant and whose
+     * open_path does not resolve to a tenant. Sees and enrols in NOTHING.
      *
-     * Returns 0 for site admins (so every tenant-scoped query gets the
-     * "no filter" 1=1 from sharing_manager::build_catalog_filter_sql).
-     * Returns the integer tenant root for normal tenant-bound users.
+     * Until 2026-09-25 such a viewer got 0, the same value as a site admin,
+     * so they browsed - and could self-enrol into - every tenant's courses.
+     */
+    public const TENANT_UNRESOLVED = -1;
+
+    /**
+     * The catalog tenant for the current viewer.
+     *
+     *   TENANT_ALL (0)          cross-tenant viewer: every course
+     *   public tenant root      not logged in, or the guest user: exactly the
+     *                           Public storefront (/77), as
+     *                           commerce::get_public_catalog() shows it
+     *   N (> 0)                 the viewer's tenant root
+     *   TENANT_UNRESOLVED (-1)  anyone else: nothing
      *
      * Sprint C addition — exposed as a single helper so all four
      * catalog query methods compute the tenant the same way.
      *
-     * @return int Tenant root (0 = unscoped / site admin)
+     * @return int
      */
     private static function viewer_tenant_root(): int {
         global $USER;
-        if (function_exists('is_siteadmin') && is_siteadmin()) {
-            return 0;
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return self::TENANT_ALL;
         }
-        $path = $USER->open_path ?? '';
-        if ($path === '') {
-            return 0;
+        if (empty($USER->id) || isguestuser()) {
+            return enrolment::public_tenant_id();
         }
-        $parts = explode('/', trim($path, '/'));
-        $first = $parts[0] ?? '';
-        return ctype_digit($first) ? (int) $first : 0;
+        $root = \local_sentientia_platform\tenant::root_for_user($USER);
+        return $root > 0 ? $root : self::TENANT_UNRESOLVED;
     }
 
     /**
-     * Same tenant-root derivation as {@see viewer_tenant_root()}, but for
-     * an arbitrary user id rather than the current $USER.
+     * Same tenant derivation as {@see viewer_tenant_root()}, but for an
+     * arbitrary user id rather than the current $USER.
      *
      * Needed by {@see assert_course_visible_to_viewer()} because
      * `enrolment::enrol_now()` accepts an explicit target `$userid` that
      * can differ from the acting session user (PHPUnit tests call it
      * directly with a specific user id; a future admin-initiated
-     * enrolment could too). Falls back to 0 (unscoped) when the
-     * `user.open_path` column doesn't exist — same vanilla-schema
-     * degrade as the rest of this guard.
+     * enrolment could too). Keeps the vanilla-schema degrade: with no
+     * `user.open_path` column there are no tenants to scope by.
      *
      * @param int $userid
-     * @return int Tenant root (0 = unscoped)
+     * @return int see viewer_tenant_root()
      */
     private static function tenant_root_for_user(int $userid): int {
         global $DB;
-        if ($userid <= 0 || !$DB->get_manager()->field_exists('user', 'open_path')) {
-            return 0;
+        if ($userid <= 0 || isguestuser($userid)) {
+            return enrolment::public_tenant_id();
+        }
+        if (\local_sentientia_platform\tenant::is_cross_tenant($userid)) {
+            return self::TENANT_ALL;
+        }
+        if (!$DB->get_manager()->field_exists('user', 'open_path')) {
+            return self::TENANT_ALL;
         }
         $path = (string) ($DB->get_field('user', 'open_path', ['id' => $userid]) ?: '');
-        if ($path === '') {
-            return 0;
-        }
-        $parts = explode('/', trim($path, '/'));
-        $first = $parts[0] ?? '';
-        return ctype_digit($first) ? (int) $first : 0;
+        $root = \local_sentientia_platform\tenant::root_for_user((object) ['open_path' => $path]);
+        return $root > 0 ? $root : self::TENANT_UNRESOLVED;
     }
 
     /**
@@ -94,12 +111,11 @@ class catalog_manager {
      *   2. If `course.open_path` doesn't exist (vanilla, non-BizLMS
      *      schema) — degrade to rule 1 only. There is no tenant column to
      *      gate on, so behave exactly as this code did before the fix.
-     *   3. Site admins, and any viewer/user with no real tenant root
-     *      (tenant root <= 0 — e.g. an unauthenticated guest browsing the
-     *      public catalog with no `open_path`) pass with no further
-     *      check. This matches the "no filter" pass-through
-     *      `sharing_manager::build_catalog_filter_sql()` already applies
-     *      for `viewer_tenant <= 0` on every browse query in this class.
+     *   3. ADR-031 (2026-09-25): cross-tenant viewers (site admins and
+     *      :crosstenant holders) pass with no further check. A logged-in
+     *      viewer with no resolvable tenant is REFUSED - until this date
+     *      they passed exactly like a site admin. A guest or not-logged-in
+     *      visitor is checked as the Public tenant (rule 4 with /77).
      *   4. Otherwise the course must be owned by the viewer's tenant tree
      *      (`open_path` equal to or nested under `/<tenant>`) OR have an
      *      active `local_sentientia_courses_tenant_share` row for that
@@ -140,8 +156,14 @@ class catalog_manager {
             ? self::viewer_tenant_root()
             : self::tenant_root_for_user($userid);
 
-        if ($viewer_tenant <= 0) {
+        // ADR-031: only a cross-tenant viewer passes unscoped. An unresolved
+        // tenant is refused (it used to pass exactly like a site admin), and a
+        // guest / not-logged-in visitor is checked as the Public tenant.
+        if ($viewer_tenant === self::TENANT_ALL) {
             return $course;
+        }
+        if ($viewer_tenant < 0) {
+            throw new \moodle_exception('nopermissions', 'error', '', 'view this course');
         }
 
         $course_path = $course->open_path ?? '';
@@ -282,6 +304,9 @@ class catalog_manager {
         // gets a different cached list from an Airpay learner (the share
         // table membership can differ per tenant).
         $viewer_tenant = self::viewer_tenant_root();
+        if ($viewer_tenant < 0) {
+            return [];  // ADR-031: no resolvable tenant -> nothing (and no '-' in a simple cache key).
+        }
         $cachekey = "tr_{$userid}_{$limit}_t{$viewer_tenant}";
         $cached = $cache->get($cachekey);
         if ($cached !== false) { return $cached; }
@@ -320,6 +345,9 @@ class catalog_manager {
         $cache = \cache::make('local_sentientia_catalog', 'new_courses');
         // Sprint C: cache key tenant-suffixed (share state varies per tenant).
         $viewer_tenant = self::viewer_tenant_root();
+        if ($viewer_tenant < 0) {
+            return [];  // ADR-031: no resolvable tenant -> nothing.
+        }
         $cachekey = "new_{$userid}_{$limit}_t{$viewer_tenant}";
         $cached = $cache->get($cachekey);
         if ($cached !== false) { return $cached; }
@@ -397,7 +425,12 @@ class catalog_manager {
         // whose courses have been shared to Public). Cache key suffixed
         // by viewer_tenant so per-tenant caches stay distinct.
         $viewer_tenant = self::viewer_tenant_root();
+        if ($viewer_tenant < 0) {
+            return [];  // ADR-031: no resolvable tenant -> nothing.
+        }
         $cache = \cache::make('local_sentientia_catalog', 'categories');
+        // 't0' is now cross-tenant viewers only; it used to be shared with
+        // tenantless viewers, who got the same unscoped list.
         $cachekey = 'cat_t' . $viewer_tenant;
         $cached = $cache->get($cachekey);
         if ($cached !== false) { return $cached; }

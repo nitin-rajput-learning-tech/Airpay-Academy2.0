@@ -391,3 +391,42 @@ Found by a read-only audit of all 38 Sentientia privacy providers, run because `
 ## 2026-09-24 - Erasure review follow-up
 
 When the DECIDER of a course-share request is erased, their `decision_reason` text is now cleared together with `decided_by`, in one UPDATE, as the manager provider does. `decided_by` stays 0 because NULL means 'pending' in this schema.
+
+## 2026-09-25 - ADR-031: every write checks the target's tenant
+
+The course engine's capabilities (`:create`, `:update`, `:visibility`, `:delete`, `:enrol`,
+`:manage`, `:view`) now say WHAT a caller may do, never WHERE. Every tenant admin holds a
+manager-archetype role at system context, so until this date each of them could reach every
+tenant. Only `tenant::is_cross_tenant()` (site admin or `local/sentientia_platform:crosstenant`)
+unscopes a caller now. No capability, archetype or schema change: all these caps are legitimate
+in-tenant functions, so the manager defaults stay and the code scopes them.
+
+- **Course writes** (`course_manager::require_course_write_access()`, used by update,
+  toggle_visibility, delete and the edit form's access check, which runs before the pre-fill):
+  the course must be in the caller's tree. A legacy course with no open_path is cross-tenant
+  only, because every tenant lists it (its edit / hide / delete icons are no longer offered to
+  tenant admins). `create()` / `update()` accept an org only inside the caller's tenant
+  (`org_path_for_write()`), and a scoped caller's "No specific organisation" create lands at their
+  tenant root instead of producing a course every tenant lists. The org dropdown lists only the
+  caller's tenant (`course_manager::org_options()`); the form validates the org
+  (`error_orgoutoftenant`, en + hi). Categories stay global (a taxonomy with no tenant).
+- **Enrolment** (`require_enrol_scope()`): enrol_single, unenrol_single, the enrol modal (load
+  and submit), bulk_unenrol.php and enrol_csv_processor require the course to be owned by, shared
+  to, or (legacy) listed for the caller's tenant, and every target user to be in it. Out-of-tenant
+  users and courses read as "not found" (the old responses were an existence oracle). In a course
+  the caller's tenant does not own, only learner roles (`learner_role_ids()`) may be given. A
+  scoped caller with no tenant gets `invalidtenant` everywhere, including the modal picker, which
+  used to list up to 2000 users of every tenant.
+- **Featured courses** (`featured_manager::curation_root()` / `assert_can_add()` /
+  `assert_can_edit_rows()`): a tenant admin curates only their own tenant's list, never the
+  global (0) list, and picks only from the Manage Courses scope. The CLI smoke script is not gated.
+- **Reads**: list_courses always applies the tenant scope and ANDs the org cascade (a foreign or
+  unknown org id used to replace, or drop, the scope). exportcsv.php uses `manage_scope_sql()` and
+  refuses a caller with no tenant (it exported every tenant). enrolledusers.php checks the
+  course's tenant before rendering; its KPI counts and list_course_enrolments list only the
+  viewer's tenant's enrolees.
+- `sharing_manager::build_catalog_filter_sql()`: only exactly 0 unscopes; a negative tenant gets
+  `1=0` (see sentientia_catalog).
+
+Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`). 1.11.8 / 2026092500 (no
+upgrade step; now depends on local_sentientia_platform 2026092500). Both trees.

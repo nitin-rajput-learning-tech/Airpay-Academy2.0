@@ -23,6 +23,13 @@ $context = context_system::instance();
 require_capability('local/sentientia_courses:manage', $context);
 require_sesskey();
 
+// ADR-031 (2026-09-25): :manage says WHAT (export the audit), not WHERE.
+// Every tenant admin holds it, and until this date this file streamed every
+// tenant's employees - employee id, name, email, per-course status. Now:
+// '' for a cross-tenant caller (site admin / :crosstenant), the caller's
+// tenant root otherwise; a caller with no tenant is refused (error_outoftenant).
+$scopepath = \block_sentientia_compliance\audit::export_scope_path();
+
 $format = optional_param('format', 'csv', PARAM_ALPHA);
 // Defensive: fall back to CSV if the requested dataformat writer is not installed
 // (download_data() would otherwise throw a coding_exception).
@@ -37,10 +44,10 @@ $mandatorycourses = $DB->get_records_select('course',
     'enddate > 0 AND visible = 1 AND id > 1',
     [], 'fullname ASC', 'id,shortname,fullname,enddate');
 
-// Get all non-admin users.
-$users = $DB->get_records_select('user',
-    'deleted = 0 AND suspended = 0 AND id > 1',
-    [], 'lastname ASC', 'id,firstname,lastname,email,open_employeeid,open_departmentid');
+// Non-admin users in the caller's scope. Rows are emitted only for enrolled
+// user x course pairs, so scoping the people keeps other tenants' personal
+// data out - including for courses shared across tenants.
+$users = \block_sentientia_compliance\audit::export_users($scopepath);
 
 // Build data rows. Values are RAW: the dataformat CSV writer handles all
 // CSV escaping + formula-injection escaping, so HTML-encoding here (s())

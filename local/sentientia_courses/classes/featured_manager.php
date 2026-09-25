@@ -20,6 +20,70 @@ class featured_manager {
     private const TABLE = 'local_sentientia_featured_courses';
 
     /**
+     * ADR-031: which featured list may the current curator touch?
+     *
+     * :manage says a caller may curate; it does not say which tenant's list.
+     * Until 2026-09-25 every :manage holder (every tenant admin) could read,
+     * pin to, delete from and reorder every tenant's list and the global
+     * (costcenterid = 0) list.
+     *
+     * @return int|null null = cross-tenant (any list, including global);
+     *                  otherwise the caller's tenant root
+     * @throws \moodle_exception error_outoftenant for a scoped caller with no tenant
+     */
+    public static function curation_root(): ?int {
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return null;
+        }
+        $root = \local_sentientia_platform\tenant::root_for_current_user();
+        if ($root <= 0) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        return $root;
+    }
+
+    /**
+     * ADR-031: may the current curator pin this course to this list?
+     *
+     * A scoped curator pins only to their own tenant's list (never the
+     * global 0 list), and only a course from their own tree or a legacy
+     * course with no open_path - the same set featured.php offers them.
+     *
+     * @param int $courseid
+     * @param int $costcenterid target list (0 = global)
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function assert_can_add(int $courseid, int $costcenterid): void {
+        global $DB;
+        $root = self::curation_root();
+        if ($root === null) {
+            return;
+        }
+        if ($costcenterid !== $root) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
+        \local_sentientia_platform\tenant::require_path_access((string) ($course->open_path ?? ''));
+    }
+
+    /**
+     * ADR-031: may the current curator remove / reorder these featured rows?
+     *
+     * @param int[] $ids featured row ids
+     * @throws \moodle_exception error_outoftenant (a global or foreign row)
+     */
+    public static function assert_can_edit_rows(array $ids): void {
+        global $DB;
+        if (self::curation_root() === null) {
+            return;
+        }
+        foreach ($ids as $id) {
+            $row = $DB->get_record(self::TABLE, ['id' => (int) $id], 'id, costcenterid', MUST_EXIST);
+            \local_sentientia_platform\tenant::require_access((int) $row->costcenterid);
+        }
+    }
+
+    /**
      * Add a course to the featured list. Idempotent — if the
      * (courseid, costcenterid) pair already exists, the row is left
      * alone (returns the existing ID).

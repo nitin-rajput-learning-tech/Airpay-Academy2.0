@@ -30,6 +30,8 @@ class reorder_featured extends external_api {
         self::validate_context($context);
         require_capability('local/sentientia_courses:manage', $context);
         require_sesskey();
+        // ADR-031: a tenant admin reorders their own tenant's list only.
+        featured_manager::assert_can_edit_rows(array_map('intval', $params['ids']));
 
         $changed = featured_manager::reorder(array_map('intval', $params['ids']));
         return ['changed' => $changed];

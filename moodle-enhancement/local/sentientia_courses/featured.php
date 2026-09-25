@@ -21,10 +21,22 @@ $PAGE->navbar->add('Featured');
 
 global $DB;
 
+// ADR-031 (2026-09-25): null = cross-tenant curator (every list, including
+// the global "All tenants" one); otherwise the curator's tenant root. A scoped
+// curator with no tenant is refused (error_outoftenant). Until this date every
+// :manage holder was offered "All tenants", picked from every tenant's courses
+// and saw every tenant's featured rows.
+$curationroot = \local_sentientia_courses\featured_manager::curation_root();
+
 // Tenant options for the picker (admins of one tenant only see their own).
-$tenant_options = [['value' => 0, 'label' => 'All tenants',
-    'selected' => true]];
-if (is_siteadmin()) {
+if ($curationroot !== null) {
+    $ownorg = $DB->get_record('local_sentientia_org', ['id' => $curationroot], 'id, fullname');
+    $tenant_options = [['value' => $curationroot,
+        'label' => $ownorg ? format_string($ownorg->fullname) : (string) $curationroot,
+        'selected' => true]];
+} else {
+    $tenant_options = [['value' => 0, 'label' => 'All tenants',
+        'selected' => true]];
     // Bug-fix 2026-05-09 (UAT-T1.1.c): local_sentientia_org has 'fullname',
     // not 'name'. Caught by UAT — the original query 500'd the whole
     // page, hiding the admin form.
@@ -41,11 +53,13 @@ if (is_siteadmin()) {
     }
 }
 
-// All visible courses for the picker.
+// Visible courses for the picker - ADR-031: the same scope as the Manage
+// Courses table (own tree + legacy NULL-path courses; 1=1 cross-tenant).
+[$pickersql, $pickerargs] = \local_sentientia_courses\course_manager::manage_scope_sql('c');
 $courses_for_picker = $DB->get_records_sql(
-    "SELECT id, fullname, shortname FROM {course}
-      WHERE id <> :siteid AND visible = 1
-   ORDER BY fullname ASC", ['siteid' => SITEID], 0, 500);
+    "SELECT c.id, c.fullname, c.shortname FROM {course} c
+      WHERE c.id <> :siteid AND c.visible = 1 AND {$pickersql}
+   ORDER BY c.fullname ASC", ['siteid' => SITEID] + $pickerargs, 0, 500);
 $course_options = [];
 foreach ($courses_for_picker as $c) {
     $course_options[] = [
@@ -55,7 +69,9 @@ foreach ($courses_for_picker as $c) {
     ];
 }
 
-$rows = \local_sentientia_courses\featured_manager::list_all();
+$rows = $curationroot === null
+    ? \local_sentientia_courses\featured_manager::list_all()
+    : \local_sentientia_courses\featured_manager::list_all($curationroot);
 
 $data = [
     'sesskey'         => sesskey(),

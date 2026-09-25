@@ -266,19 +266,27 @@ class sharing_manager {
      * The catalog manager substitutes <alias> (usually 'c') and uses
      * the returned params alongside its own param array.
      *
-     * Site admins (passed `$viewer_tenant === 0`) get a permissive
+     * Cross-tenant viewers (passed `$viewer_tenant === 0`) get a permissive
      * '1=1' so they see every course regardless of share state.
      *
+     * ADR-031 (2026-09-25): ONLY exactly 0 unscopes. A negative tenant (the
+     * catalog's TENANT_UNRESOLVED: a viewer whose open_path does not resolve)
+     * gets '1=0'. Until this date every value <= 0 returned '1=1', so a
+     * tenantless learner browsed every tenant's catalogue.
+     *
      * @param string $alias    Course table alias (e.g. 'c')
-     * @param int    $viewer_tenant Tenant root for the viewer (0 = siteadmin / unscoped)
+     * @param int    $viewer_tenant Tenant root for the viewer (0 = cross-tenant / unscoped, < 0 = nothing)
      * @return array{0: string, 1: array} sql fragment + named params
      */
     public static function build_catalog_filter_sql(string $alias,
                                                       int $viewer_tenant): array {
         global $DB;
 
-        if ($viewer_tenant <= 0) {
+        if ($viewer_tenant === 0) {
             return ['1=1', []];
+        }
+        if ($viewer_tenant < 0) {
+            return ['1=0', []];
         }
 
         $col_open_path = $alias === '' ? 'open_path' : "$alias.open_path";
