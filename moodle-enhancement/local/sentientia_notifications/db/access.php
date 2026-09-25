@@ -17,13 +17,21 @@ $capabilities = [
             'editingteacher' => CAP_ALLOW,
         ],
     ],
+    // ADR-031 (2026-09-25): no archetype default. Notification rules carry no
+    // tenant - every rule fires for every tenant - so managing them is a
+    // cross-tenant function, and every tenant admin holds a manager-archetype
+    // role at system context. Writes also require tenant::is_cross_tenant()
+    // (rule_manager::require_rule_admin). db/upgrade.php 2026092500 revokes
+    // the grants the old default left behind.
     'local/sentientia_notifications:manage' => [
         'riskbitmask'  => RISK_CONFIG | RISK_SPAM,
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes'   => ['manager' => CAP_ALLOW],
+        'archetypes'   => [],
     ],
     // Phase 4 B.8 (2026-05-11) — notification log viewer access.
+    // ADR-031: kept for tenant admins, but confined to the viewer's tenant
+    // (classes/log_access.php).
     'local/sentientia_notifications:viewlogs' => [
         'riskbitmask'  => RISK_PERSONAL,
         'captype'      => 'read',

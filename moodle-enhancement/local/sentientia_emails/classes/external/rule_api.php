@@ -36,6 +36,9 @@ class rule_api extends external_api {
             self::validate_context($context);
             require_capability('local/sentientia_emails:manage_rules', $context);
         }
+        // ADR-031: toggling a global rule, or another tenant's, is a
+        // cross-tenant write. This used to act on any rule id.
+        \local_sentientia_emails\tenant_scope::modifiable_rule($params['ruleid']);
 
         \local_sentientia_emails\rule_manager::toggle_rule($params['ruleid'], (bool)$params['enabled']);
 

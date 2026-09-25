@@ -119,6 +119,8 @@ class edit_rule extends \core_form\dynamic_form {
 
     protected function check_access_for_dynamic_submission(): void {
         require_capability('local/sentientia_notifications:manage', $this->get_context_for_dynamic_submission());
+        // ADR-031: rules are platform-wide; writing one is cross-tenant.
+        rule_manager::require_rule_admin();
     }
 
     protected function get_context_for_dynamic_submission(): \context {

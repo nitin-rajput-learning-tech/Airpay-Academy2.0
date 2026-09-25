@@ -55,6 +55,20 @@ class rule_manager {
         'all'     => 'All users',
     ];
 
+    /**
+     * ADR-031: rules have no tenant column - every rule fires for every
+     * tenant - so creating, editing, toggling or deleting one is a
+     * cross-tenant write. :manage says a user may manage rules; this says
+     * only a cross-tenant caller may. Call after require_capability().
+     *
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_rule_admin(): void {
+        if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+    }
+
     public static function get(int $id) {
         global $DB;
         return $DB->get_record(self::TABLE, ['id' => $id]);

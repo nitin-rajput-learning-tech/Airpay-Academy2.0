@@ -38,7 +38,12 @@ class template_api extends external_api {
         $context = \context_system::instance();
         if (!is_siteadmin()) {
             self::validate_context($context);
+            // services.php 'capabilities' is informational, not enforced:
+            // this read had no capability check at all.
+            require_capability('local/sentientia_emails:manage_templates', $context);
         }
+        // ADR-031: a scoped caller reads their own tenant's override only.
+        $params['tenantid'] = \local_sentientia_emails\tenant_scope::resolve($params['tenantid']);
 
         $override = \local_sentientia_emails\template_manager::get_override($params['templatekey'], $params['tenantid']);
 
@@ -97,6 +102,9 @@ class template_api extends external_api {
             self::validate_context($context);
             require_capability('local/sentientia_emails:manage_templates', $context);
         }
+        // ADR-031: the TARGET tenant must be the caller's own. Tenant 0 is
+        // the global override every tenant's learners receive: cross-tenant only.
+        \local_sentientia_emails\tenant_scope::require_can_write_tenant($params['tenantid']);
 
         $id = \local_sentientia_emails\template_manager::save_override(
             $params['templatekey'], $params['tenantid'], $params['subject'], $params['bodyhtml']
@@ -133,6 +141,8 @@ class template_api extends external_api {
             self::validate_context($context);
             require_capability('local/sentientia_emails:manage_templates', $context);
         }
+        // ADR-031: reverting deletes that tenant's override - same rule as save.
+        \local_sentientia_emails\tenant_scope::require_can_write_tenant($params['tenantid']);
 
         $DB->delete_records('local_sentientia_email_overrides', [
             'template_key' => $params['templatekey'],
@@ -173,6 +183,9 @@ class template_api extends external_api {
         $context = \context_system::instance();
         if (!is_siteadmin()) {
             self::validate_context($context);
+            // Was reachable by any logged-in user (services.php 'capabilities'
+            // is not enforced for AJAX calls).
+            require_capability('local/sentientia_emails:preview', $context);
         }
 
         $samplecontext = \local_sentientia_emails\email_context::get_sample($params['templatekey']);

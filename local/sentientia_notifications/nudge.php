@@ -23,15 +23,30 @@ $PAGE->set_context($context);
 $PAGE->set_url('/local/sentientia_notifications/nudge.php', ['userid' => $targetid, 'type' => $type]);
 
 // Permission: must be manager of this user OR admin.
+// ADR-031: the BizLMS local/courses:manage capability says the caller may
+// nudge learners, not WHICH tenant's: it used to reach (and show the email
+// of) any user in any tenant. Only a cross-tenant caller is unscoped; a
+// capability holder must share the target's tenant. The direct-supervisor
+// relationship is unchanged.
 $ismanager = false;
 if (is_siteadmin()) {
     $ismanager = true;
-} elseif (has_capability('local/courses:manage', $context)) {
-    $ismanager = true;
 } else {
-    $ismanager = $DB->record_exists_select('user',
-        'id = :uid AND open_supervisorid = :mgr AND deleted = 0',
-        ['uid' => $targetid, 'mgr' => $USER->id]);
+    if (has_capability('local/courses:manage', $context)) {
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            $ismanager = true;
+        } else {
+            $targetpath = $DB->get_field('user', 'open_path', ['id' => $targetid, 'deleted' => 0]);
+            $myroot = \local_sentientia_platform\tenant::root_for_current_user();
+            $ismanager = $myroot > 0 && $targetpath !== false
+                && \local_sentientia_platform\tenant::root_for_user((object) ['open_path' => $targetpath]) === $myroot;
+        }
+    }
+    if (!$ismanager) {
+        $ismanager = $DB->record_exists_select('user',
+            'id = :uid AND open_supervisorid = :mgr AND deleted = 0',
+            ['uid' => $targetid, 'mgr' => $USER->id]);
+    }
 }
 
 if (!$ismanager) {

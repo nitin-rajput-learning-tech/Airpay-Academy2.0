@@ -909,9 +909,15 @@ class rule_engine {
                 continue;
             }
 
-            // Notify users in the same tenant.
-            $parts = explode('/', trim($course->open_path, '/'));
-            $orgpath = '/' . ($parts[0] ?? '');
+            // Notify users in the same tenant. ADR-031: a course whose path
+            // has no tenant root (e.g. exactly '/') used to become '/', which
+            // path_descendant_filter() reads as "no restriction" - a notice
+            // to every tenant. Skip it instead.
+            $courseroot = \local_sentientia_platform\tenant::root_for_user($course);
+            if ($courseroot <= 0) {
+                continue;
+            }
+            $orgpath = '/' . $courseroot;
 
             // '/1' . '%' also matched '/177': a new Airpay course notified the ZEEA tenant too.
 

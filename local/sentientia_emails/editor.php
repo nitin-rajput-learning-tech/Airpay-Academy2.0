@@ -26,7 +26,12 @@ if (!is_siteadmin() && !has_capability('local/sentientia_emails:manage_templates
 
 $templatekey = optional_param('template', '', PARAM_RAW);
 $templatekey = preg_replace('/[^a-zA-Z0-9_\/]/', '', $templatekey);
-$tenantid    = optional_param('tenant', 0, PARAM_INT);
+// ADR-031: only a cross-tenant caller may pick the tenant, and only they
+// may edit the global override (tenant 0), which every tenant's learners
+// receive. Everyone else edits their own tenant's override, whatever
+// ?tenant= says, and is refused when their tenant does not resolve.
+$tenantid    = \local_sentientia_emails\tenant_scope::resolve(optional_param('tenant', 0, PARAM_INT));
+$crosstenant = \local_sentientia_platform\tenant::is_cross_tenant();
 
 if (empty($templatekey)) {
     redirect(new moodle_url('/local/sentientia_emails/manage.php', ['tab' => 'templates']));
@@ -42,6 +47,7 @@ $PAGE->set_title('Email Design Studio');
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
     $subject = required_param('subject', PARAM_RAW);
     $bodyhtml = required_param('bodyhtml', PARAM_RAW);
+    \local_sentientia_emails\tenant_scope::require_can_write_tenant($tenantid);
     \local_sentientia_emails\template_manager::save_override($templatekey, $tenantid, $subject, $bodyhtml);
     redirect(new moodle_url('/local/sentientia_emails/editor.php',
         ['template' => $templatekey, 'tenant' => $tenantid, 'saved' => 1]));
@@ -50,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
 // Handle revert action.
 if (optional_param('revert', 0, PARAM_INT) && confirm_sesskey()) {
     global $DB;
+    \local_sentientia_emails\tenant_scope::require_can_write_tenant($tenantid);
     $DB->delete_records('local_sentientia_email_overrides', [
         'template_key' => $templatekey, 'tenant_id' => $tenantid]);
     redirect(new moodle_url('/local/sentientia_emails/editor.php',
@@ -181,10 +188,17 @@ $tenants = [
     ['id' => 77,  'name' => 'Public',                'selected' => ($tenantid == 77)],
     ['id' => 177, 'name' => 'ZEEA',                  'selected' => ($tenantid == 177)],
 ];
+// ADR-031: a scoped caller sees only their own tenant, and the global
+// override (it applies to them) as read-only context in the summary.
+$summarytenants = [0, 1, 77, 177];
+if (!$crosstenant) {
+    $tenants = array_values(array_filter($tenants, fn($t) => $t['id'] === $tenantid));
+    $summarytenants = [0, $tenantid];
+}
 
 // Check for existing overrides across tenants.
 $overridesummary = [];
-foreach ([0, 1, 77, 177] as $tid) {
+foreach ($summarytenants as $tid) {
     $ov = \local_sentientia_emails\template_manager::get_override($templatekey, $tid);
     if ($ov) {
         $tname = match($tid) { 0 => 'Global', 1 => 'Airpay', 77 => 'Public', 177 => 'ZEEA', default => 'Tenant ' . $tid };

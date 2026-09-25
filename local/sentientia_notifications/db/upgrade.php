@@ -32,5 +32,24 @@ function xmldb_local_sentientia_notifications_upgrade(int $oldversion): bool {
             'local', 'sentientia_notifications');
     }
 
+    if ($oldversion < 2026092500) {
+        // ADR-031: :manage no longer defaults to the manager archetype
+        // (db/access.php), but changing archetypes never revokes what was
+        // already granted. Rules are platform-wide, and tenant admins hold
+        // manager-archetype roles, so every existing grant lets a tenant
+        // admin rewrite, disable or delete every tenant's notifications:
+        // revoke them all. Site admins are unaffected. Roles that were given
+        // :manage deliberately must be re-granted, and those holders also
+        // need local/sentientia_platform:crosstenant to write rules.
+        $syscontext = \context_system::instance();
+        $roleids = $DB->get_fieldset_select('role_capabilities', 'DISTINCT roleid',
+            'capability = :cap', ['cap' => 'local/sentientia_notifications:manage']);
+        foreach ($roleids as $roleid) {
+            unassign_capability('local/sentientia_notifications:manage', (int) $roleid, $syscontext->id);
+        }
+        $syscontext->mark_dirty();
+        upgrade_plugin_savepoint(true, 2026092500, 'local', 'sentientia_notifications');
+    }
+
     return true;
 }

@@ -50,11 +50,12 @@ class email_renderer {
         // Check for DB override before using Mustache file.
         // Strip the 'local_sentientia_emails/' prefix to get the template key.
         $templatekey = str_replace('local_sentientia_emails/', '', $templatename);
-        $tenantid = 0;
-        if ($userid > 0) {
-            $parts = explode('/', trim($tenant['open_path'] ?? '', '/'));
-            $tenantid = (int)($parts[0] ?? 0);
-        }
+        // ADR-031 (2026-09-25): resolve the RECIPIENT's tenant. tenant_config
+        // never returned an 'open_path' key, so this was always 0 and only the
+        // global override was ever delivered - which is why a tenant admin's
+        // "own" template edit had to be a global one. Tenant editors are now
+        // confined to their own tenant's override, so it has to reach them.
+        $tenantid = $userid > 0 ? tenant_config::tenant_id_for_user($userid) : 0;
 
         $override = template_manager::get_override($templatekey, $tenantid);
         if ($override && !empty($override->body_html)) {

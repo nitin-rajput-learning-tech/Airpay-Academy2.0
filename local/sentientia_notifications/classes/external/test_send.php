@@ -39,6 +39,12 @@ class test_send extends external_api {
             ['id' => $params['ruleid']], '*', MUST_EXIST);
 
         $targetid = (int) ($params['userid'] ?: $USER->id);
+        // ADR-031: this sends admin-written content to the target and returns
+        // their name and email. Anyone but yourself must be in your tenant
+        // (it used to be any user id in any tenant).
+        if ($targetid !== (int) $USER->id) {
+            \local_sentientia_platform\tenant::require_same_tenant_user($targetid);
+        }
         $target = $DB->get_record('user',
             ['id' => $targetid, 'deleted' => 0], 'id, firstname, lastname, email');
         if (!$target) {

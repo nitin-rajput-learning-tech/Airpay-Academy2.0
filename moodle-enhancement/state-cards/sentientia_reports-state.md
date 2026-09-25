@@ -89,3 +89,24 @@ as part of the P1 state-card pass.
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+## 2026-09-25 - ADR-031 tenant scope (1.2.0, 2026092500)
+
+Sweep hits 47, 48, 49 and the reports half of 67 (CROSS-TENANT-AUTHORITY-SWEEP-2026-09-25).
+`:view`, `:export` and `:manage` keep their manager defaults; the missing guards are added.
+
+- `report_manager::require_report_access()` is the one guard: cross-tenant callers pass; for
+  anyone else an "All organisations" report (empty open_path) is refused, then
+  `tenant::require_path_access()`. It runs in `run_report()` itself, in `run.php` and `export.php`
+  (which ran ANY report id), in `update()`, the edit form, `delete_report` and `toggle_status`
+  (whose inline copies threw a lang string that did not exist; they now throw
+  `local_sentientia_platform/error_outoftenant`).
+- `create()` / `update()` refuse an org outside the caller's tenant, and "All organisations", for
+  scoped callers. The edit form lists only the caller's tenant's orgs and drops "All organisations".
+- `list_reports`: the org cascade now narrows the tenant filter instead of replacing it.
+- The index KPI tiles count the caller's tenant's reports only.
+
+`local_sentientia_org\org_manager::cascade_where_sql()` itself still does not clamp to the caller's
+tenant; that fix belongs to the org plugin (the other five callers share it).
+Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`); `delete_report_test` now expects
+the platform string.

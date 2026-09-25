@@ -295,3 +295,35 @@ PROJECT-STATE).
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+## 2026-09-25 - ADR-031 tenant scope (1.2.0, 2026092500)
+
+Sweep hits 22, 23 and 35 (CROSS-TENANT-AUTHORITY-SWEEP-2026-09-25). `:manage`, `:manage_templates`
+and `:manage_rules` keep their manager default: managing your own tenant's notifications is the
+feature. What changed is WHERE, now decided only by `tenant::is_cross_tenant()` through the new
+`classes/tenant_scope.php`:
+
+- `manage.php` and `editor.php` pin a scoped caller to their own tenant root whatever `?tenant=`
+  says, and refuse a caller whose tenant does not resolve. `?tenant=77`, `?tenant=-1` and an empty
+  open_path used to mean another tenant or "All Tenants".
+- The delivery log, its CSV export and the dashboard counts are forced to the reader's tenant
+  inside `delivery_log` itself; a reader with no tenant gets nothing.
+- Rule toggle, save, edit and delete, and the `toggle_rule` web service, check the rule. Global rules
+  (tenant 0) and other tenants' rules are cross-tenant writes; a global rule stays readable. A scoped
+  save lands on the caller's tenant (the form's default "All Tenants" becomes their tenant); naming
+  another tenant is refused.
+- `save_template` / `revert_template` / `editor.php` refuse the global override (tenant 0) and
+  other tenants for scoped callers. `get_template` had no capability check; it now needs
+  `:manage_templates` and reads the caller's own tenant. `preview_template` needs `:preview`.
+- `email_renderer::render()` now resolves the RECIPIENT's tenant. It never did (tenant_config had
+  no open_path key), so only the global override was ever delivered, which is why tenant admins
+  edited the global one. Tenant overrides now reach their tenant.
+- `process_rules` confines a tenant rule's recipients to that tenant. A rule marked "Airpay Only"
+  used to email every tenant's learners. Global rules are unchanged.
+
+Not changed: the BizLMS legacy email counts on the dashboard stay site-wide (aggregate counts, no
+tenant column); the tab templates still show the scope selector and toggle/delete buttons to scoped
+callers, but the server refuses them (no visual evidence could be captured in this session).
+Data review for Nitin: existing `local_sentientia_email_overrides` rows with `tenant_id = 0` written
+by non-admins are live cross-tenant bodies; rows with `tenant_id > 0` start delivering now.
+Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`).

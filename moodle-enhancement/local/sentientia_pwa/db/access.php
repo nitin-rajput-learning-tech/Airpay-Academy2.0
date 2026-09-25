@@ -21,11 +21,14 @@ $capabilities = [
 
     // Admin capability to view subscription metrics + manually send test
     // pushes. Phase B.2 only — Phase B.3 ships the admin dashboard.
+    // ADR-031 (2026-09-25): no archetype default. The push log is a
+    // platform-operations view (VAPID keys, provider health), linked only
+    // from site config, and every tenant admin holds a manager-archetype
+    // role at system context. push_logger also confines any holder to
+    // their own tenant. db/upgrade.php 2026092500 revokes existing grants.
     'local/sentientia_pwa:manage' => [
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes'   => [
-            'manager' => CAP_ALLOW,
-        ],
+        'archetypes'   => [],
     ],
 ];

@@ -38,17 +38,25 @@ class preview_rule extends external_api {
 
         // Default the preview user to the admin themselves.
         $targetid = (int) ($params['userid'] ?: $USER->id);
+        // ADR-031: rendering against another user is a name / existence
+        // oracle. Anyone but yourself must be in your tenant.
+        if ($targetid !== (int) $USER->id) {
+            \local_sentientia_platform\tenant::require_same_tenant_user($targetid);
+        }
         $user = $DB->get_record('user',
             ['id' => $targetid, 'deleted' => 0], 'id, firstname, lastname, email');
         if (!$user) {
             throw new \moodle_exception('invaliduser');
         }
 
-        // Pick a sample course for placeholder rendering.
+        // Pick a sample course for placeholder rendering - from the caller's
+        // own tenant (ADR-031: 1=1 for a cross-tenant caller, 1=0 for none).
+        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('c');
         $course = $DB->get_record_sql(
-            "SELECT id, fullname FROM {course} WHERE id <> :siteid AND visible = 1
-               ORDER BY id DESC LIMIT 1",
-            ['siteid' => SITEID]);
+            "SELECT c.id, c.fullname FROM {course} c
+              WHERE c.id <> :siteid AND c.visible = 1 AND $tnsql
+           ORDER BY c.id DESC LIMIT 1",
+            ['siteid' => SITEID] + $tnargs);
         $course_id = $course ? (int) $course->id : 0;
         $course_name = $course ? format_string($course->fullname) : '(no course)';
 

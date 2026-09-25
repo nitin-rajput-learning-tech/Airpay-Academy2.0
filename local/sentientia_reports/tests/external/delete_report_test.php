@@ -62,8 +62,10 @@ final class delete_report_test extends \advanced_testcase {
         $caller = $this->manager_at_path('/8001');
         $this->setUser($caller);
 
+        // ADR-031: the shared guard throws local_sentientia_platform's
+        // error_outoftenant (the old 'outoftenant' string never existed here).
         $this->expectException(\moodle_exception::class);
-        $this->expectExceptionMessage('outoftenant');
+        $this->expectExceptionMessage(get_string('error_outoftenant', 'local_sentientia_platform'));
         delete_report::execute($other_report);
     }
 
@@ -81,7 +83,7 @@ final class delete_report_test extends \advanced_testcase {
         $this->setUser($caller);
 
         $this->expectException(\moodle_exception::class);
-        $this->expectExceptionMessage('outoftenant');
+        $this->expectExceptionMessage(get_string('error_outoftenant', 'local_sentientia_platform'));
         delete_report::execute($sitewide);
     }
 

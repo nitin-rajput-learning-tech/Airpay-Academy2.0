@@ -43,25 +43,22 @@ class list_reports extends external_api {
         $sort = in_array($params['sort'], $allowed, true) ? $params['sort'] : 'name';
         $sortdir = strtolower($params['sortdir']) === 'desc' ? 'DESC' : 'ASC';
 
-        $where = ['1=1'];
-        $sqlparams = [];
+        // Tenant scope ALWAYS applies. Reports without open_path remain
+        // cross-tenant only (the helper returns 1=1 for a cross-tenant
+        // caller; tenant users get the path filter without the IS-NULL
+        // clause, and a caller with no tenant gets 1=0).
+        [$tnsql, $tnargs] = \local_sentientia_reports\report_manager::visible_sql('r');
+        $where = [$tnsql];
+        $sqlparams = $tnargs;
 
-        // W1-1 BizLMS parity: 5-level org cascade overrides default
-        // tenant scope.
+        // W1-1 BizLMS parity: the 5-level org cascade NARROWS the tenant
+        // scope. ADR-031: it used to REPLACE it, so {"org_l1": <another
+        // tenant's root org>} listed that tenant's reports.
         [$cascadesql, $cascadeargs] =
             \local_sentientia_org\org_manager::cascade_where_sql($f, 'r');
         if ($cascadesql !== '') {
             $where[] = $cascadesql;
             $sqlparams = array_merge($sqlparams, $cascadeargs);
-        } else {
-            // Phase 9.6: back-ported to shared tenant helper. Reports
-            // without open_path remain siteadmin-only (helper returns 1=1
-            // for siteadmin, which matches; tenant users get the path
-            // filter without the IS-NULL clause so unscoped reports
-            // are not visible to them — same contract as before).
-            [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('r');
-            $where[] = $tnsql;
-            $sqlparams = array_merge($sqlparams, $tnargs);
         }
 
         $status_filter = (string) ($f['status'] ?? 'all');

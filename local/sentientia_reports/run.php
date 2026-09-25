@@ -16,6 +16,9 @@ $report = \local_sentientia_reports\report_manager::get($reportid);
 if (!$report) {
     throw new moodle_exception('invalidreport', 'local_sentientia_reports');
 }
+// ADR-031: :view says WHAT; the report must be in the caller's tenant, and an
+// "All organisations" report is cross-tenant only. (run_report() checks too.)
+\local_sentientia_reports\report_manager::require_report_access($report);
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/sentientia_reports/run.php', ['id' => $reportid]));

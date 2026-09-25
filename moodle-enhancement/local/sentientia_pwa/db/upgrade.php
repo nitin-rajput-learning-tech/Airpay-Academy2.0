@@ -136,5 +136,21 @@ function xmldb_local_sentientia_pwa_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026052104, 'local', 'sentientia_pwa');
     }
 
+    if ($oldversion < 2026092500) {
+        // ADR-031: :manage no longer defaults to the manager archetype
+        // (db/access.php), but changing archetypes never revokes what was
+        // already granted. Tenant admins hold manager-archetype roles, so
+        // every existing grant showed them every tenant's push log: revoke
+        // them all. Site admins are unaffected.
+        $syscontext = \context_system::instance();
+        $roleids = $DB->get_fieldset_select('role_capabilities', 'DISTINCT roleid',
+            'capability = :cap', ['cap' => 'local/sentientia_pwa:manage']);
+        foreach ($roleids as $roleid) {
+            unassign_capability('local/sentientia_pwa:manage', (int) $roleid, $syscontext->id);
+        }
+        $syscontext->mark_dirty();
+        upgrade_plugin_savepoint(true, 2026092500, 'local', 'sentientia_pwa');
+    }
+
     return true;
 }

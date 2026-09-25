@@ -16,20 +16,22 @@ class manage_controller {
     /**
      * Get dashboard tab data.
      *
+     * @param int $tenantid the page's resolved tenant (tenant_scope::resolve); 0 = all, cross-tenant only
      * @return array context for tab_dashboard.mustache
      */
-    public static function get_dashboard_data(): array {
+    public static function get_dashboard_data(int $tenantid = 0): array {
         $templatelist = email_renderer::get_template_list();
         $templatecount = 0;
         foreach ($templatelist as $cat) {
             $templatecount += count($cat['templates']);
         }
 
-        $rulestats = rule_manager::get_stats();
+        // ADR-031: the rule and delivery counts are the tenant's own.
+        $rulestats = rule_manager::get_stats($tenantid);
 
         // Delivery log stats (graceful if table empty).
         try {
-            $logstats = delivery_log::get_stats();
+            $logstats = delivery_log::get_stats($tenantid);
         } catch (\Exception $e) {
             $logstats = (object)['total' => 0, 'sent_today' => 0, 'sent_week' => 0, 'failed' => 0, 'suppressed' => 0];
         }

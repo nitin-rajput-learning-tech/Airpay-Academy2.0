@@ -39,13 +39,15 @@ $plugin->component = 'local_sentientia_request';
 // decision modal used the invalid 5.2 API core/modal Modal.create({modalType})
 // → empty-footer base modal (no Save) → decision unsubmittable. Both fixed
 // (datatable hasActionsColumn guard in theme; core/modal_save_cancel here).
-$plugin->version   = 2026061502;
+// ADR-031 (2026-09-25) — list_all (All requests) is confined to the caller's
+// tenant; only a cross-tenant caller may pick a tenant with filters.tenant.
+$plugin->version   = 2026092500;
 $plugin->requires  = 2024042200;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.3.3';  // +WF-024 core/modal_save_cancel (5.2 modal API)
+$plugin->release   = '1.4.0';  // +ADR-031 tenant scope (was 1.3.3 +WF-024 core/modal_save_cancel)
 $plugin->dependencies = [
     'local_sentientia_org'         => 2026040100,
     'local_sentientia_manager'     => 2026040100,  // Approval workflow patterns reused
-    'local_sentientia_platform'        => 2026051200,  // Shared tenant helper
+    'local_sentientia_platform'        => 2026092500,  // Shared tenant helper (ADR-031 is_cross_tenant)
     'local_sentientia_learningpath' => 2026051600,  // P1 #6: path enrolment on approve
 ];

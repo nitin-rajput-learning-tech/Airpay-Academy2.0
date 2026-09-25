@@ -118,23 +118,10 @@ class push_logger {
                                     array $filters = []): array {
         global $DB;
 
-        $where = ['1=1'];
-        $params = [];
+        [$where, $params] = self::viewer_where($filters);
 
-        if (!empty($filters['userid'])) {
-            $where[] = 'l.userid = :userid';
-            $params['userid'] = (int) $filters['userid'];
-        }
-        if (!empty($filters['result'])) {
-            $where[] = 'l.result = :result';
-            $params['result'] = $filters['result'];
-        }
-        if (!empty($filters['since'])) {
-            $where[] = 'l.sent_at >= :since';
-            $params['since'] = (int) $filters['since'];
-        }
-
-        $sql = "SELECT l.*, u.firstname, u.lastname, u.email
+        // u.email dropped from the SELECT: the viewer never shows it.
+        $sql = "SELECT l.*, u.firstname, u.lastname
                   FROM {local_sentientia_push_log} l
              LEFT JOIN {user} u ON u.id = l.userid
                  WHERE " . implode(' AND ', $where) . "
@@ -148,24 +135,44 @@ class push_logger {
      */
     public static function count(array $filters = []): int {
         global $DB;
-        $where = ['1=1'];
-        $params = [];
+        [$where, $params] = self::viewer_where($filters);
+        $sql = "SELECT COUNT(*)
+                  FROM {local_sentientia_push_log} l
+             LEFT JOIN {user} u ON u.id = l.userid
+                 WHERE " . implode(' AND ', $where);
+        return (int) $DB->count_records_sql($sql, $params);
+    }
+
+    /**
+     * WHERE terms for the admin viewer (log aliased l, recipient joined as u).
+     *
+     * ADR-031: the log has no tenant column; a row belongs to its
+     * recipient's tenant. :manage no longer has an archetype default, but
+     * whoever holds it is still confined to their own tenant unless
+     * tenant::is_cross_tenant() - the ?userid= filter used to reach any
+     * tenant's user. 1=1 cross-tenant, 1=0 with no resolvable tenant.
+     *
+     * @param array $filters ['userid' => int, 'result' => string, 'since' => int]
+     * @return array{0: string[], 1: array}
+     */
+    private static function viewer_where(array $filters): array {
+        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('u');
+        $where = [$tnsql];
+        $params = $tnargs;
 
         if (!empty($filters['userid'])) {
-            $where[] = 'userid = :userid';
+            $where[] = 'l.userid = :userid';
             $params['userid'] = (int) $filters['userid'];
         }
         if (!empty($filters['result'])) {
-            $where[] = 'result = :result';
+            $where[] = 'l.result = :result';
             $params['result'] = $filters['result'];
         }
         if (!empty($filters['since'])) {
-            $where[] = 'sent_at >= :since';
+            $where[] = 'l.sent_at >= :since';
             $params['since'] = (int) $filters['since'];
         }
-        $sql = "SELECT COUNT(*) FROM {local_sentientia_push_log}
-                 WHERE " . implode(' AND ', $where);
-        return (int) $DB->count_records_sql($sql, $params);
+        return [$where, $params];
     }
 
     /**
@@ -178,15 +185,18 @@ class push_logger {
     public static function stats_last_24h(): array {
         global $DB;
         $cutoff = time() - 86400;
+        // ADR-031: the viewer's tenant only (see viewer_where()).
+        [$where, $params] = self::viewer_where(['since' => $cutoff]);
         $row = $DB->get_record_sql(
             "SELECT COUNT(*) AS total,
-                    SUM(CASE WHEN result = 'sent'   THEN 1 ELSE 0 END) AS sent,
-                    SUM(CASE WHEN result = 'failed' THEN 1 ELSE 0 END) AS failed,
-                    SUM(CASE WHEN result = 'gone'   THEN 1 ELSE 0 END) AS gone,
-                    COUNT(DISTINCT userid) AS unique_users
-               FROM {local_sentientia_push_log}
-              WHERE sent_at >= :cutoff",
-            ['cutoff' => $cutoff]
+                    SUM(CASE WHEN l.result = 'sent'   THEN 1 ELSE 0 END) AS sent,
+                    SUM(CASE WHEN l.result = 'failed' THEN 1 ELSE 0 END) AS failed,
+                    SUM(CASE WHEN l.result = 'gone'   THEN 1 ELSE 0 END) AS gone,
+                    COUNT(DISTINCT l.userid) AS unique_users
+               FROM {local_sentientia_push_log} l
+          LEFT JOIN {user} u ON u.id = l.userid
+              WHERE " . implode(' AND ', $where),
+            $params
         );
         return [
             'total_24h'        => (int) ($row->total ?? 0),

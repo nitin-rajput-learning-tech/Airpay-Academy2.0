@@ -31,8 +31,12 @@ $search  = optional_param('q',       '', PARAM_TEXT);
 $page    = optional_param('p', 0, PARAM_INT);
 $perpage = 50;
 
-$where = ['1=1'];
-$args  = [];
+// ADR-031: :viewlogs says the viewer may read notification logs; only
+// tenant::is_cross_tenant() lets them read other tenants'. This page used
+// to list every tenant's recipients (and search them by email).
+[$tnsql, $tnargs] = \local_sentientia_notifications\log_access::scope_sql();
+$where = [$tnsql];
+$args  = $tnargs;
 
 if ($status !== '') {
     $where[] = 'l.status = :status';
@@ -82,9 +86,7 @@ $rows = $DB->get_records_sql(
     $args);
 
 // Status counts for the filter UI badges.
-$status_counts = $DB->get_records_sql(
-    "SELECT status, COUNT(*) AS n FROM {local_sentientia_notif_log}
-       GROUP BY status ORDER BY n DESC");
+$status_counts = \local_sentientia_notifications\log_access::status_counts();
 
 $status_options = ['' => 'All'];
 foreach ($status_counts as $sc) {
