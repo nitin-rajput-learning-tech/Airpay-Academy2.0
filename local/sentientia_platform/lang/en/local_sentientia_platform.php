@@ -161,3 +161,6 @@ $string['privacy:metadata:operator_profile:userid']                 = 'The opera
 $string['privacy:metadata:operator_profile:operator_role']          = 'The operator\'s role';
 $string['privacy:metadata:operator_profile:contact_phone']          = 'The operator\'s contact phone number';
 $string['privacy:metadata:operator_profile:oncall_for_customer_id'] = 'The customer organisation the operator is on call for';
+
+// ADR-031 (2026-09-25): the single cross-tenant authority.
+$string['sentientia_platform:crosstenant'] = 'Act across all tenants (Sentientia platform)';

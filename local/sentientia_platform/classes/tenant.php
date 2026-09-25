@@ -46,6 +46,85 @@ class tenant {
         return (int) $parts[0];
     }
 
+    /** The capability that, besides site admin, makes a caller cross-tenant (ADR-031). */
+    public const CROSS_TENANT_CAPABILITY = 'local/sentientia_platform:crosstenant';
+
+    /**
+     * ADR-031: may this user see and act across ALL tenants?
+     *
+     * The single authority decision. True for a site admin, or for a holder of
+     * local/sentientia_platform:crosstenant (which has no archetype default -
+     * see db/access.php). Nothing else. In particular a plugin capability
+     * such as :manage_all or :viewall no longer unscopes a caller on its own:
+     * it says WHAT a user may do; this says WHERE. Until 2026-09-25 about 30
+     * plugins let their own manager-archetype capabilities decide "where", and
+     * every tenant admin holds those at system context.
+     *
+     * @param int|null $userid defaults to the current user
+     */
+    public static function is_cross_tenant(?int $userid = null): bool {
+        global $USER;
+        $userid = $userid ?? (int) ($USER->id ?? 0);
+        if ($userid <= 0 || isguestuser($userid)) {
+            return false;
+        }
+        if (is_siteadmin($userid)) {
+            return true;
+        }
+        return get_capability_info(self::CROSS_TENANT_CAPABILITY)
+            && has_capability(self::CROSS_TENANT_CAPABILITY, \context_system::instance(), $userid);
+    }
+
+    /**
+     * ADR-031: the org path a user is scoped to - FAIL CLOSED.
+     *
+     *   ''    cross-tenant (see is_cross_tenant()): no restriction
+     *   '/N'  the user's tenant root
+     *   null  the user is not cross-tenant and has no resolvable tenant
+     *
+     * Callers MUST treat null as "nothing": every engine that reads '' as the
+     * whole site used to hand an unresolvable user every tenant.
+     *
+     * @param \stdClass|null $user a user record carrying id and open_path; defaults to $USER
+     */
+    public static function scope_path(?\stdClass $user = null): ?string {
+        global $USER;
+        $user = $user ?? $USER;
+        if (self::is_cross_tenant((int) ($user->id ?? 0))) {
+            return '';
+        }
+        $root = self::root_for_user($user);
+        return $root > 0 ? '/' . $root : null;
+    }
+
+    /**
+     * ADR-031: refuse unless the TARGET user is in the actor's tenant.
+     *
+     * For every write that names another user (create, edit, suspend, enrol,
+     * assign a role, reset completions): the capability check says the actor
+     * may do this kind of thing; this says they may do it to THIS person.
+     * Cross-tenant actors pass. A target with no resolvable tenant is refused
+     * for a scoped actor - they cannot be shown to be in the actor's tenant.
+     *
+     * @param int $targetuserid
+     * @param int|null $actorid defaults to the current user
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_same_tenant_user(int $targetuserid, ?int $actorid = null): void {
+        global $DB, $USER;
+        $actorid = $actorid ?? (int) ($USER->id ?? 0);
+        if (self::is_cross_tenant($actorid)) {
+            return;
+        }
+        $actor = ($actorid === (int) ($USER->id ?? 0)) ? $USER
+            : $DB->get_record('user', ['id' => $actorid], 'id, open_path');
+        $target = $DB->get_record('user', ['id' => $targetuserid], 'id, open_path');
+        $actorroot = $actor ? self::root_for_user($actor) : 0;
+        if ($actorroot <= 0 || !$target || self::root_for_user($target) !== $actorroot) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+    }
+
     /**
      * Same, but for the current $USER global. Returns 0 if not logged
      * in or path missing.
@@ -80,7 +159,7 @@ class tenant {
     /**
      * Can the given viewer see/operate on resources of the given tenant?
      *
-     * Site admins always pass.
+     * Cross-tenant users (site admins and :crosstenant holders, ADR-031) always pass.
      * Other users: viewer's tenant root must match resource tenant exactly.
      *
      * Use this AFTER `require_capability()`. The capability check answers
@@ -93,10 +172,10 @@ class tenant {
     public static function viewer_can_access(int $resource_tenant, ?int $viewerid = null): bool {
         global $DB, $USER;
         if ($viewerid === null || $viewerid === $USER->id) {
-            if (is_siteadmin()) return true;
+            if (self::is_cross_tenant()) return true;
             return self::root_for_user($USER) === $resource_tenant;
         }
-        if (is_siteadmin($viewerid)) return true;
+        if (self::is_cross_tenant($viewerid)) return true;
         $viewer = $DB->get_record('user', ['id' => $viewerid], 'id, open_path');
         if (!$viewer) return false;
         return self::root_for_user($viewer) === $resource_tenant;
@@ -150,8 +229,8 @@ class tenant {
         }
         global $DB, $USER;
         $is_admin = ($viewerid === null || $viewerid === ($USER->id ?? 0))
-            ? is_siteadmin()
-            : is_siteadmin($viewerid);
+            ? self::is_cross_tenant()
+            : self::is_cross_tenant($viewerid);
         if ($is_admin) {
             return;
         }
@@ -191,12 +270,18 @@ class tenant {
      */
     public static function sql_filter(string $alias = ''): array {
         $col = $alias === '' ? 'costcenterid' : "{$alias}.costcenterid";
-        if (is_siteadmin()) {
+        if (self::is_cross_tenant()) {
             return ['1=1', []];
+        }
+        $root = self::root_for_current_user();
+        if ($root <= 0) {
+            // ADR-031: fail closed. 'costcenterid = 0' used to match every
+            // unscoped row for a user with no tenant.
+            return ['1=0', []];
         }
         return [
             "$col = :aptenantroot",
-            ['aptenantroot' => self::root_for_current_user()],
+            ['aptenantroot' => $root],
         ];
     }
 
@@ -232,7 +317,7 @@ class tenant {
                                         string $column = 'open_path',
                                         bool $allow_null = false): array {
         $col = $alias === '' ? $column : "{$alias}.{$column}";
-        if (is_siteadmin()) {
+        if (self::is_cross_tenant()) {
             return ['1=1', []];
         }
         $root = self::root_for_current_user();

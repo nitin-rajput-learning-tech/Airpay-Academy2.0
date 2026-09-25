@@ -155,3 +155,6 @@ $string['privacy:metadata:operator_profile:userid']                 = 'वह �
 $string['privacy:metadata:operator_profile:operator_role']          = 'ऑपरेटर की भूमिका';
 $string['privacy:metadata:operator_profile:contact_phone']          = 'ऑपरेटर का संपर्क फ़ोन नंबर';
 $string['privacy:metadata:operator_profile:oncall_for_customer_id'] = 'वह ग्राहक संगठन जिसके लिए ऑपरेटर ऑन-कॉल है';
+
+// ADR-031 (2026-09-25): the single cross-tenant authority.
+$string['sentientia_platform:crosstenant'] = 'सभी टेनेंट में कार्य करें (सेंटिएंटिया प्लेटफ़ॉर्म)';

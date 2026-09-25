@@ -278,3 +278,15 @@ feature-flags test. The PHPUnit suite itself has NOT been run. Class comments, c
 
 Still open: `resolve()` trims the caller's `extension` of dots but does not sanitise it. Today every
 caller is code, not admin input, so this was left alone.
+
+## 2026-09-25 - ADR-031: one cross-tenant authority (1.9.0, 2026092500)
+
+The foundation for the platform-wide fix of the cross-tenant sweep (`docs/audits/CROSS-TENANT-AUTHORITY-SWEEP-2026-09-25.md`).
+
+- **New capability:** `local/sentientia_platform:crosstenant` (new `db/access.php`), with NO archetype default. Grant it deliberately.
+- **New helpers:**
+  - `tenant::is_cross_tenant()`: true only for a site admin or a holder of the new capability.
+  - `tenant::scope_path()`: returns '' (cross-tenant), '/N' (tenant) or **null (nothing, fail closed)**.
+  - `tenant::require_same_tenant_user()`: target check for writes that name a user.
+- **Existing helpers:** `viewer_can_access`, `require_path_access`, `sql_filter` and `path_filter` now route through `is_cross_tenant()`. `sql_filter` fails closed (`1=0`) for a user with no tenant; it used to match `costcenterid = 0`.
+- **Tests:** `tests/cross_tenant_test.php` (`@group tenant_isolation`). en and hi strings.
