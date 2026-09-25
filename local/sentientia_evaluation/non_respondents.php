@@ -40,8 +40,13 @@ $PAGE->set_heading(get_string('non_respondents_heading',
     'local_sentientia_evaluation', format_string($evaluation->name)));
 
 $status = ($tab === 'responded') ? 'responded' : 'assigned';
-$rows = \local_sentientia_evaluation\evaluation_manager::list_assignments(
-    $evaluationid, $status);
+// 2026-09-25: an anonymous evaluation's 'responded' list (names, emails and
+// the minute each person responded) is withheld - the time could be matched
+// to the anonymous answer. The badge count stays.
+$responded_hidden = \local_sentientia_evaluation\evaluation_manager::respondents_hidden(
+    $evaluation, $status);
+$rows = \local_sentientia_evaluation\evaluation_manager::list_assignments_for_view(
+    $evaluation, $status);
 
 // Counts for tab badges.
 $count_pending = count(\local_sentientia_evaluation\evaluation_manager::list_assignments(
@@ -95,6 +100,7 @@ $data = [
     'back_url' => (new moodle_url('/local/sentientia_evaluation/index.php'))->out(false),
     'rows'     => $table_rows,
     'has_rows' => !empty($table_rows),
+    'responded_hidden' => $responded_hidden,
     'is_pending_tab'   => $tab === 'pending',
     'is_responded_tab' => $tab === 'responded',
 ];

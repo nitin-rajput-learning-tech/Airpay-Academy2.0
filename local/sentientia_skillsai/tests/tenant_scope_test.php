@@ -144,4 +144,59 @@ final class tenant_scope_test extends \advanced_testcase {
         $this->assertContains($shared, $ids);
         $this->assertNotContains($foreign, $ids);
     }
+
+    private function course_at(?string $path): int {
+        global $DB;
+        $course = $this->getDataGenerator()->create_course(['fullname' => 'Course ' . ($path ?? 'legacy')]);
+        $DB->set_field('course', 'open_path', $path, ['id' => $course->id]);
+        return (int) $course->id;
+    }
+
+    public function test_extract_course_picker_is_tenant_scoped(): void {
+        $own = $this->course_at('/1/4');
+        $foreign = $this->course_at('/177');
+        $legacy = $this->course_at(null);
+
+        $this->setUser($this->tenant_admin('/1'));
+        $ids = array_map('intval', array_keys(taxonomy_manager::course_options()));
+        $this->assertContains($own, $ids);
+        $this->assertContains($legacy, $ids, 'A legacy course with no open_path stays pickable.');
+        $this->assertNotContains($foreign, $ids,
+            'extract.php\'s course picker must not list other tenants\' courses.');
+        $this->assertTrue(taxonomy_manager::course_in_scope($own));
+        $this->assertFalse(taxonomy_manager::course_in_scope($foreign),
+            'extract.php refuses a posted courseid that fails this: no job tagged with a /177 course.');
+        $this->assertFalse(taxonomy_manager::course_in_scope(SITEID));
+        $this->assertFalse(taxonomy_manager::course_in_scope(0));
+
+        $this->setUser($this->tenant_admin(''));
+        $this->assertSame([], taxonomy_manager::course_options(), 'No tenant: no courses.');
+        $this->assertFalse(taxonomy_manager::course_in_scope($own));
+
+        $this->setAdminUser();
+        $this->assertContains($foreign, array_map('intval', array_keys(taxonomy_manager::course_options())));
+        $this->assertTrue(taxonomy_manager::course_in_scope($foreign));
+    }
+
+    public function test_tenant_root_agrees_with_the_platform_helper(): void {
+        global $DB;
+        foreach (['/1x/2' => 0, '/x' => 0, '' => 0, '/1/2/3' => 1, '/177' => 177] as $path => $root) {
+            $u = (object) ['id' => 0, 'open_path' => $path];
+            $this->assertSame($root, taxonomy_manager::tenant_root_for($u), "taxonomy_manager: '{$path}'");
+            $this->assertSame($root, gap_engine::tenant_root_for($u), "gap_engine: '{$path}'");
+            $this->assertSame(\local_sentientia_platform\tenant::root_for_user($u),
+                taxonomy_manager::tenant_root_for($u), "'{$path}' must agree with gaps.php / taxonomy.php.");
+        }
+
+        // A malformed '/1x' owner is not tenant 1: their job is not stamped
+        // costcenterid 1, and they reach none of tenant 1's jobs.
+        $malformed = $this->user_at('/1x');
+        $theirs = $this->job_for($malformed);
+        $airpay = $this->job_for($this->user_at('/1/2'));
+        $this->assertSame(0, (int) $DB->get_field(taxonomy_manager::JOB_TABLE, 'costcenterid', ['id' => $theirs]));
+        $ids = array_map(fn($j) => (int) $j->id, taxonomy_manager::list_for_actor($malformed, false));
+        $this->assertSame([$theirs], $ids);
+        $this->assertNull(taxonomy_manager::load_for_actor($airpay, $malformed, false),
+            "'/1x' used to read as tenant 1 and open tenant 1's jobs.");
+    }
 }

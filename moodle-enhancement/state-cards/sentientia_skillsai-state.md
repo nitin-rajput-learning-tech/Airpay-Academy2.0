@@ -225,3 +225,10 @@ CONFIRMED.
 - **No-tenant callers:** `list_for_actor()` and `load_for_actor()` give an actor with no tenant only their own jobs, not the costcenterid-0 bucket. taxonomy.php shows and maps nothing for a caller with no tenant.
 - **Still dormant:** all four skillsai flags stay default OFF.
 - **Tests:** `tests/tenant_scope_test.php` (`@group tenant_isolation`).
+
+## 2026-09-25 - ADR-031 wave-1 review follow-up (no version change; stays 2026092500)
+
+- **Extract course picker.** `extract.php` listed up to 200 visible courses from every tenant, and a job could be tagged with another tenant's `courseid`. The picker now uses `taxonomy_manager::course_options()` (`tenant::path_filter('c', 'open_path', true)`: own tenant plus legacy NULL-path courses; every course cross-tenant; none without a tenant), and a posted `courseid` that fails `course_in_scope()` is refused with `error_outoftenant`.
+- **One tenant-root parser.** `taxonomy_manager::tenant_root_for()` and `gap_engine::tenant_root_for()` used a plain `(int)` cast, so `/1x` read as tenant 1 while gaps.php and taxonomy.php (`tenant::root_for_user()`, `ctype_digit`) read it as none. Both now delegate to `tenant::root_for_user()`, so `create_pending`, `load_for_actor`, `list_for_actor`, `compute_for_user` and `rebuild_for_user` agree with the pages.
+- **Tests:** `test_extract_course_picker_is_tenant_scoped` and `test_tenant_root_agrees_with_the_platform_helper` in `tests/tenant_scope_test.php`.
+- **Deploy note:** a `:crosstenant` holder without `:manage_all` stays tenant-scoped here, by design (ADR-031 decision 3). See the skills state card for the platform L&D role grants Nitin must make before UAT.

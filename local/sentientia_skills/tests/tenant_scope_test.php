@@ -24,6 +24,7 @@ defined('MOODLE_INTERNAL') || die();
  * @covers     \local_sentientia_skills\external\self_rate_skill
  * @covers     \local_sentientia_skills\external\save_course_skill
  * @covers     \local_sentientia_skills\external\delete_skill
+ * @covers     \local_sentientia_skills\external\list_course_skills
  * @group      tenant_isolation
  */
 final class tenant_scope_test extends \advanced_testcase {
@@ -215,5 +216,41 @@ final class tenant_scope_test extends \advanced_testcase {
         $this->setAdminUser();
         external\delete_skill::execute($skillid);
         $this->assertFalse($DB->record_exists('local_sentientia_skills', ['id' => $skillid]));
+    }
+
+    public function test_course_mapping_reads_are_tenant_scoped(): void {
+        $skillid = $this->seed_skill();
+        $own = $this->course_at('/1/2');
+        $foreign = $this->course_at('/177');
+        $this->setAdminUser();
+        skills_manager::save_course_skill($own, $skillid, 2);
+        skills_manager::save_course_skill($foreign, $skillid, 3);
+
+        // A genuine in-tenant :manage holder (the default grant is revoked).
+        $this->setUser($this->tenant_admin('/1', true));
+        $top = array_column(skills_manager::top_courses(), 'id');
+        $this->assertContains($own, $top);
+        $this->assertNotContains($foreign, $top,
+            'course_mapping.php\'s initial list must not name other tenants\' courses.');
+        $this->assertTrue(skills_manager::can_view_course($own));
+        $this->assertFalse(skills_manager::can_view_course($foreign));
+        $this->assertNotNull(skills_manager::get_course_summary($own));
+        $this->assertNull(skills_manager::get_course_summary($foreign),
+            'course_mapping.php?courseid=<a /177 course> must not show its name.');
+        $this->assertCount(1, skills_manager::list_course_skills($own));
+        $this->assertSame([], skills_manager::list_course_skills($foreign),
+            'Another tenant\'s course mappings must not be listed by id.');
+        $this->assertSame([], external\list_course_skills::execute($foreign)['rows']);
+        $this->assertCount(1, external\list_course_skills::execute($own)['rows']);
+
+        $this->setUser($this->tenant_admin('', true));
+        $this->assertSame([], skills_manager::top_courses(), 'No tenant: no courses.');
+        $this->assertNull(skills_manager::get_course_summary($own));
+        $this->assertSame([], skills_manager::list_course_skills($own));
+
+        $this->setAdminUser();
+        $this->assertContains($foreign, array_column(skills_manager::top_courses(), 'id'));
+        $this->assertNotNull(skills_manager::get_course_summary($foreign));
+        $this->assertCount(1, skills_manager::list_course_skills($foreign));
     }
 }

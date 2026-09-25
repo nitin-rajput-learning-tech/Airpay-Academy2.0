@@ -111,3 +111,12 @@ Sweep hits `local/sentientia_skills:manage` and `:view` (both CONFIRMED).
 - **`index.php`:** the `local/courses:manage` path to another user's gap analysis is limited to users in the caller's tenant.
 - **CLI:** `cli/smoke_course_mapping.php` now runs as the site admin, because `search_courses()` is session-scoped.
 - **Tests:** `tests/tenant_scope_test.php` (`@group tenant_isolation`).
+
+## 2026-09-25 - ADR-031 wave-1 review follow-up (no version change; stays 2026092500)
+
+- **Course picker was half-scoped.** `search_courses()` was tenant-scoped, but `course_mapping.php`'s initial top-25 list, `get_course_summary()` and `list_course_skills()` (page and web service) still named, and listed the mappings of, any tenant's course by id. All four now share one scope, `course_scope_sql()` (`tenant::scope_path()` + `path_descendant_filter()`): new `skills_manager::top_courses()` and `can_view_course()`. A foreign course reads as not found (null / no rows); a caller with no tenant sees none; a cross-tenant caller sees all.
+- **Tests:** `test_course_mapping_reads_are_tenant_scoped` in `tests/tenant_scope_test.php`.
+
+**Deploy note (deviation, from the wave-1 review).** Revoking the `:manage` default also takes genuine in-tenant functions away from tenant admins: mapping skills onto their own courses and backfilling their own users' levels. Before this reaches UAT, Nitin must grant `local/sentientia_skills:manage` and `local/sentientia_platform:crosstenant` (and, if wanted, `local/sentientia_skillsai:manage_all`) to the platform L&D role. A tenant admin who should keep in-tenant mapping needs `:manage` granted explicitly; the tenant checks above then keep them in their tenant.
+
+**Still open (in-tenant):** the `:view` student archetype still shows same-tenant learners' names and emails on view.php's learners tab.

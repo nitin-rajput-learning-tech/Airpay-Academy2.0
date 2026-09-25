@@ -220,4 +220,19 @@ final class tenant_scope_test extends \advanced_testcase {
         external\delete_exam::execute($id);
         $this->assertFalse($DB->record_exists('local_sentientia_exams', ['id' => $id]));
     }
+
+    public function test_view_page_checks_only_declared_capabilities(): void {
+        // view.php checked the never-declared :update, so its edit flag was
+        // always false. Every capability it asks about must exist; the page
+        // is a script, so read its source.
+        $source = file_get_contents(__DIR__ . '/../view.php');
+        preg_match_all("~has_capability\\(\\s*'(local/sentientia_exams:[a-z_]+)'~", $source, $m);
+        $this->assertNotEmpty($m[1]);
+        foreach (array_unique($m[1]) as $capability) {
+            $this->assertNotEmpty(get_capability_info($capability),
+                "view.php asks about {$capability}, which db/access.php does not declare.");
+        }
+        $this->assertContains('local/sentientia_exams:manage', $m[1],
+            'The edit flag follows :manage, as edit_exam, delete and toggle_status do.');
+    }
 }

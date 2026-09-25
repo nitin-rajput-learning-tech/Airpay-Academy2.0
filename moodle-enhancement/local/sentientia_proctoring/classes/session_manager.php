@@ -47,6 +47,34 @@ class session_manager {
         \local_sentientia_platform\tenant::require_access($costcenterid, $viewerid);
     }
 
+    /**
+     * ADR-031: who is told that this session was flagged.
+     *
+     * There is one site-wide default_reviewer setting. The flag notification
+     * names the candidate's user id, the quiz and the risk score, and it went
+     * to that reviewer whatever the session's tenant - so a reviewer in one
+     * tenant was told about another tenant's candidates, whose session they
+     * cannot then open (every reviewer page and web service checks
+     * require_session_access()). The notification now goes to the default
+     * reviewer only if they pass that same check; otherwise to nobody (0).
+     * The default (userid 2, the site admin, cross-tenant) is unaffected.
+     *
+     * @param \stdClass $session carrying costcenterid
+     * @return int reviewer user id, or 0
+     */
+    public static function flag_recipient(\stdClass $session): int {
+        $reviewerid = (int) (get_config('local_sentientia_proctoring', 'default_reviewer') ?: 2);
+        if ($reviewerid <= 0) {
+            return 0;
+        }
+        try {
+            self::require_session_access((int) ($session->costcenterid ?? 0), $reviewerid);
+        } catch (\moodle_exception $e) {
+            return 0;
+        }
+        return $reviewerid;
+    }
+
     /** Open a session — called when user clicks Start on a proctored quiz. */
     public static function start_session(int $userid, int $quizid): \stdClass {
         global $DB, $USER;
@@ -283,9 +311,9 @@ class session_manager {
             $session->status = 'finished';
         } else {
             $session->status = 'flagged';
-            // Notify default reviewer.
-            $reviewerid = (int) (get_config('local_sentientia_proctoring', 'default_reviewer') ?: 2);
-            notifier::session_flagged($session, $reviewerid);
+            // Notify the default reviewer - only one who may open this
+            // session's tenant (ADR-031, see flag_recipient()).
+            notifier::session_flagged($session, self::flag_recipient($session));
         }
 
         $DB->update_record('local_sentientia_proctor_sessions', $session);

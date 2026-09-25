@@ -54,7 +54,11 @@ if ($quiz) {
 }
 [$usql, $uargs] = \local_sentientia_platform\tenant::path_filter('u');
 
-$can_edit  = has_capability('local/sentientia_exams:update', $ctx);
+// 2026-09-25: :update was never declared in db/access.php, so this was always
+// false (with a "capability not found" debugging notice). Editing an exam is
+// gated by :manage everywhere else (edit_exam form, delete, toggle_status), and
+// require_exam_access() above has already put this exam in the caller's tenant.
+$can_edit  = has_capability('local/sentientia_exams:manage', $ctx);
 $can_enrol = has_capability('local/sentientia_exams:enrol', $ctx);
 
 // Counts.

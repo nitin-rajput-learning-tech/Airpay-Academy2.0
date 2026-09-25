@@ -21,6 +21,8 @@
       has_rows               bool
       is_pending_tab         bool
       is_responded_tab       bool
+      responded_hidden       bool — anonymous evaluation, responded tab:
+                                    the list is withheld (2026-09-25)
 }}
 <div class="container" data-region="airpay-eval-non-respondents">
 
@@ -112,6 +114,17 @@
     </div>
     {{/ has_rows }}
 
+    {{# responded_hidden }}
+    <div class="card border-0 shadow-sm" data-region="airpay-eval-respondents-hidden">
+        <div class="card-body text-center py-5">
+            <i class="fa fa-user-secret fa-4x text-muted mb-3 d-block" aria-hidden="true"></i>
+            <h4 class="mb-2">{{# str }}non_respondents_anonymous_heading, local_sentientia_evaluation{{/ str }}</h4>
+            <p class="text-muted">{{# str }}non_respondents_anonymous_body, local_sentientia_evaluation{{/ str }}</p>
+        </div>
+    </div>
+    {{/ responded_hidden }}
+
+    {{^ responded_hidden }}
     {{^ has_rows }}
     <div class="card border-0 shadow-sm">
         <div class="card-body text-center py-5">
@@ -128,5 +141,6 @@
         </div>
     </div>
     {{/ has_rows }}
+    {{/ responded_hidden }}
 
 </div>

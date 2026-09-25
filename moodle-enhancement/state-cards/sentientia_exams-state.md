@@ -143,3 +143,7 @@ now checks the exam against the caller's tenant, unless `tenant::is_cross_tenant
 - `view.php`: the exam and its course must be in the caller's tenant. Every attempt, roster and analytics row is limited to the caller's tenant users.
 - `list_exams`: the tenant `path_filter` always applies. The org cascade only narrows it; it used to REPLACE the scope. The index KPI tiles use `count_scoped()`. The quiz and org pickers are scoped.
 - Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`). Depends on `local_sentientia_platform` 2026092500.
+
+## 2026-09-25 - Wave-1 review follow-up (no version change; stays 2026092500)
+
+`view.php` computed `can_edit` from `local/sentientia_exams:update`, which `db/access.php` never declared, so it was always false (and raised a "capability not found" debugging notice on every view). It now uses `:manage`, as the edit form, delete and toggle_status do; `require_exam_access()` has already put the exam in the caller's tenant. The flag is passed to the template but `view.mustache` does not render it yet. Test: `test_view_page_checks_only_declared_capabilities` in `tests/tenant_scope_test.php`.

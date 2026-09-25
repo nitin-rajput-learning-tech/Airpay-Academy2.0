@@ -148,7 +148,23 @@ class edit_evaluation extends \core_form\dynamic_form {
         // ADR-031: a scoped caller may only bind the evaluation to an org in
         // their own tenant; "no organisation" (a global evaluation sent to
         // every tenant) becomes their tenant root. Cross-tenant: unchanged.
-        if (isset($data->costcenterid)) {
+        //
+        // On CREATE this must run even when costcenterid did not survive
+        // get_data(): the select drops a value that is missing or not among
+        // its options, and a scoped caller's options are only their own
+        // tenant's orgs (no 0). An omitted, 0 or other-tenant org id used to
+        // arrive unset, and create() then stamped costcenterid 0 - a GLOBAL
+        // evaluation delivered to every tenant's learners. The same happened
+        // through the normal UI when the caller's tenant had no visible org
+        // rows (an empty select). scoped_costcenterid(0) gives a scoped
+        // caller their tenant root org (or refuses), and returns 0 unchanged
+        // for a cross-tenant caller, so their global evaluations still work.
+        // On UPDATE an unset costcenterid leaves the existing binding alone:
+        // check_access_for_dynamic_submission() has already shown it is in
+        // the caller's tenant.
+        if ($evaluationid === 0) {
+            $data->costcenterid = evaluation_manager::scoped_costcenterid((int) ($data->costcenterid ?? 0));
+        } else if (isset($data->costcenterid)) {
             $data->costcenterid = evaluation_manager::scoped_costcenterid((int) $data->costcenterid);
         }
 

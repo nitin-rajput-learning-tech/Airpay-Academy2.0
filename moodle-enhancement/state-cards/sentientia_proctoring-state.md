@@ -125,3 +125,7 @@ used to match a no-tenant reviewer to every session stamped costcenterid 0.
 The `:review` default grant is unchanged: it is a tenant-scoped reviewer capability by design.
 
 Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`).
+
+## 2026-09-25 - ADR-031 wave-1 review follow-up (no version change; stays 2026092500)
+
+The flag notification (candidate user id, quiz id, risk score) went to the one site-wide `default_reviewer` whatever the session's tenant, so a reviewer in one tenant was told about another tenant's candidates, whose sessions they cannot open. `session_manager::flag_recipient()` now sends it only when the default reviewer passes `require_session_access()` for that session; otherwise nobody is notified. The shipped default (userid 2, the site admin) is unchanged. Per-tenant reviewer routing, so that other tenants' flags reach someone, is still open and needs a settings design. Test: `test_flag_notification_goes_only_to_a_reviewer_of_that_tenant`.
