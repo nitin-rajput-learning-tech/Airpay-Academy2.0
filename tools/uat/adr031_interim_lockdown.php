@@ -20,6 +20,12 @@
  *   sudo -u www-data php adr031_interim_lockdown.php --i-am-uat --apply
  *   sudo -u www-data php adr031_interim_lockdown.php --i-am-uat --revert
  *
+ * After the ADR-031 deploy + upgrade, use --release (preview with
+ * --release-preview) instead of --revert: it does not restore grants the
+ * ADR-031 upgrade steps removed from the role's archetype.
+ *   sudo -u www-data php adr031_interim_lockdown.php --i-am-uat --release-preview
+ *   sudo -u www-data php adr031_interim_lockdown.php --i-am-uat --release
+ *
  * Options: --role=<shortname> (default: administrator, UAT's id-9 tenant-admin role).
  */
 
@@ -29,7 +35,8 @@ require_once($CFG->libdir . '/clilib.php');
 require_once($CFG->libdir . '/accesslib.php');
 
 [$options] = cli_get_params(
-    ['i-am-uat' => false, 'dry-run' => false, 'apply' => false, 'revert' => false, 'role' => 'administrator'], []);
+    ['i-am-uat' => false, 'dry-run' => false, 'apply' => false, 'revert' => false,
+     'release' => false, 'release-preview' => false, 'role' => 'administrator'], []);
 if (empty($options['i-am-uat'])) {
     cli_error('Refusing to run without --i-am-uat.');
 }
@@ -37,9 +44,10 @@ if (strpos($CFG->wwwroot, 'academy2.airpay.ninja') === false) {
     cli_error("Refusing: wwwroot is {$CFG->wwwroot}, not the UAT instance.");
 }
 $modes = array_filter([$options['dry-run'] ? 'dry-run' : null, $options['apply'] ? 'apply' : null,
-    $options['revert'] ? 'revert' : null]);
+    $options['revert'] ? 'revert' : null, $options['release'] ? 'release' : null,
+    $options['release-preview'] ? 'release-preview' : null]);
 if (count($modes) !== 1) {
-    cli_error('Pass exactly one of --dry-run, --apply, --revert.');
+    cli_error('Pass exactly one of --dry-run, --apply, --revert, --release-preview, --release.');
 }
 $mode = reset($modes);
 
@@ -88,6 +96,53 @@ if ($mode === 'revert') {
     $sys->mark_dirty();
     rename($statefile, $statefile . '.reverted-' . date('Ymd-His'));
     cli_writeln('Reverted ' . count($saved) . ' capabilities for role ' . $role->shortname . '.');
+    exit(0);
+}
+
+if ($mode === 'release' || $mode === 'release-preview') {
+    // After the ADR-031 code is deployed and upgrade.php has run. A plain
+    // --revert would restore every saved ALLOW, including grants the ADR-031
+    // upgrade steps deliberately removed from tenant-admin roles (the pure
+    // cross-tenant switches such as leaderboard:viewall or live:manage_all,
+    // whose archetypes are now empty). So a saved ALLOW is restored only when
+    // the upgraded capability definitions still give it to this role's
+    // archetype; otherwise the lock is simply cleared and the role inherits
+    // (no grant). Saved PREVENT/PROHIBIT values and 'inherit' are restored as
+    // they were.
+    if (!is_readable($statefile)) {
+        cli_error("No saved state at {$statefile}; nothing to release.");
+    }
+    $saved = json_decode(file_get_contents($statefile), true);
+    $archetype = (string) ($role->archetype ?? '');
+    $defaults = $archetype !== '' ? get_default_capabilities($archetype) : [];
+    if ($archetype === '') {
+        cli_writeln("WARNING: role {$role->shortname} has no archetype; every saved ALLOW is treated as a manual grant and restored.");
+    }
+    $restored = $cleared = 0;
+    foreach ($saved as $cap => $previous) {
+        $stillallowed = $archetype === '' || (isset($defaults[$cap]) && (int) $defaults[$cap] === CAP_ALLOW);
+        if ($previous === null || ((int) $previous === CAP_ALLOW && !$stillallowed)) {
+            $why = $previous === null ? 'was inherit' : 'no longer an archetype default (ADR-031), not restored';
+            cli_writeln(sprintf('%-48s clear (%s)', $cap, $why));
+            if ($mode === 'release') {
+                unassign_capability($cap, $role->id, $sys->id);
+            }
+            $cleared++;
+        } else {
+            cli_writeln(sprintf('%-48s restore %d', $cap, (int) $previous));
+            if ($mode === 'release') {
+                assign_capability($cap, (int) $previous, $role->id, $sys->id, true);
+            }
+            $restored++;
+        }
+    }
+    if ($mode === 'release') {
+        $sys->mark_dirty();
+        rename($statefile, $statefile . '.released-' . date('Ymd-His'));
+        cli_writeln("Released the lockdown for role {$role->shortname}: {$restored} restored, {$cleared} cleared.");
+    } else {
+        cli_writeln("PREVIEW: {$restored} would be restored, {$cleared} cleared. Nothing changed.");
+    }
     exit(0);
 }
 
