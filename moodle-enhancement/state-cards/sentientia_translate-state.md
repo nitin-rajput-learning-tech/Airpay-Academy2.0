@@ -200,3 +200,14 @@ Found by a read-only audit of all 38 Sentientia privacy providers, run because `
 ## 2026-09-24 - An anonymised author (ownerid 0) owns nothing
 
 Since this morning's erasure fix, erasing an author keeps their rows with ownerid 0. Two gaps followed from that and are now closed. (1) `load_for_actor()` / `list_for_actor()` matched `ownerid = actor id`, so a caller whose id is 0 (CLI, or not logged in) became the owner of every erased author's rows in every tenant; the owner match now requires an actor id above 0. The tenant (costcenterid) match still shows those rows to their own tenant. (2) The privacy provider reported the system context for EVERY user; it now does so only for people with rows, never for 0, and `get_users_in_context()` skips 0. Found by the authoring implementer while fixing the same pattern there. Covered by `tests/anonymised_owner_test.php`.
+
+## 2026-09-25 - ADR-031: translations stay inside the caller's tenant (0.2.2-alpha, 2026092500)
+
+`:manage_all` (and `:translate`) defaulted to the manager archetype, which every tenant admin holds at system context. Holding `:manage_all` made `translate_engine::load_for_actor()` skip the tenant check, so `translate.php?rowid=N` showed any tenant's source and translated course / compliance text, and `accept()` / `discard()` then updated that row by bare id.
+
+- `db/access.php`: `:manage_all` archetypes `[]` (+ `RISK_PERSONAL`). New `db/upgrade.php` step 2026092500 (`db/upgradelib.php::local_sentientia_translate_revoke_manage_all()`) revokes every existing system-context grant. `:translate` keeps its manager default (a legitimate in-tenant function).
+- `translate_engine::is_unscoped()`: `:manage_all` AND `tenant::is_cross_tenant()`. New `scope_sql()` is the one scoping rule for `list_for_actor()` and `admin/index.php` (which also unscoped on `moodle/site:config` alone).
+- `accept()` / `discard()` now re-check the row through `load_for_actor()` for the acting user (new optional `$manageall` argument); `translate.php` passes it.
+- Fail closed: a caller with no tenant sees only their own rows; a caller with id 0 sees nothing.
+
+Site admins unchanged. Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`); `translate_engine_test` updated. Written, not executed (shared test DB). Both trees.

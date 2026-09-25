@@ -168,3 +168,13 @@ callable; `'legacy_component'` key fallback wired; gateway `denied` maps to
 local/ + webroot; also closed pre-existing top-level drift on
 `recommendation_engine.php` (ME's ADR-018 tenant_identity seam version is
 canonical → copied over the stale open_path parse).
+
+## 2026-09-25 - ADR-031: generation targets and candidates stay inside the tenant (0.1.2-alpha, 2026092500)
+
+`:generate` defaults to the manager archetype (kept: generating for one's own learners is a legitimate tenant-admin action), but `generate.php` accepted any `targetuserid` and only checked that the user existed. Any tenant admin could expire and replace any tenant's learner's dashboard recommendations, spend tokens, and (live) send that learner's completion history to Anthropic. The candidate list was every visible course on the site, so other tenants' course names and summaries went into the prompt and onto the learner's dashboard.
+
+- New `recommendation_engine::can_target()` (`tenant::require_same_tenant_user()`, self always allowed). `generate.php` refuses an out-of-tenant or tenantless target with the same `err_user_not_found` as a missing id (no existence oracle).
+- `build_candidate_list()` is scoped to the LEARNER, via the new `$profile->catalogue` (`tenant::scope_path()` of the learner, set by `build_profile()`, not part of the prompt): `tenant::path_descendant_filter('/N', ..., allow_null)` for a tenant learner, so a site admin generating for a /77 learner is offered /77 courses only; the whole catalogue for a cross-tenant learner (a site admin generating for themselves, the form's default); nothing for a learner with no tenant.
+- `:manage_all` (declared, never checked) archetypes `[]`; new `db/upgrade.php` step 2026092500 revokes existing grants.
+
+Site admins unchanged. Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`); `recommendation_engine_test::test_build_candidate_list_excludes_completed` now sets the learner's tenant. Written, not executed (shared test DB). Both trees.

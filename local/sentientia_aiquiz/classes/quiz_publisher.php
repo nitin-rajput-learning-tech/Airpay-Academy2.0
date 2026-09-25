@@ -77,6 +77,12 @@ class quiz_publisher {
         }
 
         $course = get_course($courseid);
+        // ADR-031: the target course must sit in the actor's tenant. A
+        // manager-archetype role at system context (every tenant admin)
+        // satisfies course:manageactivities in EVERY course, and the target
+        // can be any course id the reviewer posts, so the capability check
+        // below cannot answer WHERE. Cross-tenant actors pass.
+        self::require_course_in_scope($course, $actor);
         $coursecontext = \context_course::instance($course->id);
         require_capability('moodle/course:manageactivities', $coursecontext, $actor);
 
@@ -130,6 +136,80 @@ class quiz_publisher {
             'count'    => count($questionids),
             'quizname' => $quizname,
         ];
+    }
+
+    /**
+     * ADR-031: refuse unless $course is in $actor's tenant.
+     *
+     * Delegates to tenant::require_path_access() on the course's open_path:
+     * cross-tenant actors pass, a course in another tenant (or any tenanted
+     * course, for an actor with no tenant) throws error_outoftenant. A legacy
+     * course with no open_path passes, the platform's documented tolerance.
+     * Schema-portable: a vanilla course row has no open_path at all.
+     *
+     * @param \stdClass $course A course record (get_course() / '*')
+     * @param \stdClass $actor
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_course_in_scope(\stdClass $course, \stdClass $actor): void {
+        \local_sentientia_platform\tenant::require_path_access(
+            (string) ($course->open_path ?? ''), (int) $actor->id);
+    }
+
+    /**
+     * ADR-031: WHERE fragment bounding a {course} query to the actor's tenant.
+     *
+     * '1=1' for a cross-tenant actor, the tenant's `/`-bounded subtree (plus
+     * legacy NULL-path courses) for a scoped one, and '1=0' - nothing - for
+     * an actor whose tenant does not resolve. Used by the generate and push
+     * course pickers, which listed every course on the site.
+     *
+     * @param \stdClass $actor
+     * @param string    $alias {course} alias, '' for none
+     * @return array{0: string, 1: array}
+     */
+    public static function course_scope_sql(\stdClass $actor, string $alias = ''): array {
+        $scope = \local_sentientia_platform\tenant::scope_path($actor);
+        if ($scope === null) {
+            return ['1=0', []];
+        }
+        if ($scope === '') {
+            return ['1=1', []];
+        }
+        return \local_sentientia_platform\tenant::path_descendant_filter(
+            $scope, $alias, 'open_path', 'aqcourse', true);
+    }
+
+    /**
+     * Courses the actor may push a draft into: those where they hold
+     * course:manageactivities, bounded to their tenant (ADR-031).
+     *
+     * @param \stdClass $actor
+     * @param int       $limit
+     * @return array<int, string> course id => fullname (unformatted)
+     */
+    public static function target_courses(\stdClass $actor, int $limit = 100): array {
+        global $DB;
+        $capable = get_user_capability_course('moodle/course:manageactivities',
+            (int) $actor->id, false, 'fullname', 'fullname ASC', $limit);
+        $ids = [];
+        foreach ($capable ?: [] as $c) {
+            if ((int) $c->id !== SITEID) {
+                $ids[] = (int) $c->id;
+            }
+        }
+        if (empty($ids)) {
+            return [];
+        }
+        [$insql, $inparams] = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'aqtc');
+        [$tsql, $targs] = self::course_scope_sql($actor);
+        $rows = $DB->get_records_select('course', "id {$insql} AND {$tsql}",
+            $inparams + $targs, 'fullname ASC', 'id, fullname');
+        $out = [];
+        foreach ($rows as $r) {
+            $out[(int) $r->id] = (string) $r->fullname;
+        }
+        return $out;
     }
 
     /**

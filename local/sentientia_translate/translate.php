@@ -74,13 +74,15 @@ if ($rowid > 0) {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         require_sesskey();
         $action = optional_param('action', '', PARAM_ALPHANUMEXT);
+        // ADR-031: accept()/discard() re-check the row against the actor's
+        // tenant themselves (they used to update any row by bare id).
         if ($action === 'save') {
-            translate_engine::accept($rowid, (int)$USER->id);
+            translate_engine::accept($rowid, (int)$USER->id, $manageall);
             redirect(new moodle_url('/local/sentientia_translate/translate.php', ['rowid' => $rowid]),
                 get_string('saved_notice', 'local_sentientia_translate'),
                 null, \core\output\notification::NOTIFY_SUCCESS);
         } else if ($action === 'discard') {
-            translate_engine::discard($rowid, (int)$USER->id);
+            translate_engine::discard($rowid, (int)$USER->id, $manageall);
             redirect(new moodle_url('/local/sentientia_translate/translate.php'),
                 get_string('discarded_notice', 'local_sentientia_translate'),
                 null, \core\output\notification::NOTIFY_INFO);

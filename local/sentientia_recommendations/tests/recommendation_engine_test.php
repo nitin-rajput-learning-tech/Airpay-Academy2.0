@@ -19,6 +19,9 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class recommendation_engine_test extends \advanced_testcase {
 
+    // course.open_path for the tenant-scoped candidate list (ADR-031).
+    use \local_sentientia_org\test\bizlms_fixture;
+
     private function parsed_recs(array $cids): array {
         $out = [];
         $score = 90;
@@ -193,13 +196,20 @@ final class recommendation_engine_test extends \advanced_testcase {
     }
 
     public function test_build_candidate_list_excludes_completed(): void {
+        global $DB;
         $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
         $gen = $this->getDataGenerator();
         $c1 = $gen->create_course();
         $c2 = $gen->create_course();
         $c3 = $gen->create_course();
+        foreach ([$c1, $c2, $c3] as $c) {
+            $DB->set_field('course', 'open_path', '/1', ['id' => $c->id]);
+        }
 
+        // ADR-031: candidates come from the learner's tenant.
         $profile = new \stdClass();
+        $profile->tenant = '1';
         $profile->completed = [(int)$c2->id];
 
         $candidates = recommendation_engine::build_candidate_list($profile, 100);

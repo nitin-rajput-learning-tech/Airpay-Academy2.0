@@ -20,6 +20,11 @@
 
 require(__DIR__ . '/../../config.php');
 
+// course_builder was never imported, so publish resolved to \course_builder
+// and fataled. Imported only now that load_for_actor() stays inside the
+// caller's tenant (ADR-031): with the old :manage_all bypass this line would
+// have opened cross-tenant publishing.
+use local_sentientia_authoring\course_builder;
 use local_sentientia_authoring\draft_manager;
 use local_sentientia_authoring\question_type;
 

@@ -154,8 +154,11 @@ final class translate_engine_test extends \advanced_testcase {
 
         // Intruder (tenant 77, not owner, no manage_all) cannot load.
         $this->assertNull(translate_engine::load_for_actor($id, $intruder, false));
-        // With manage_all they can.
-        $this->assertNotNull(translate_engine::load_for_actor($id, $intruder, true));
+        // ADR-031 (2026-09-25): :manage_all says WHAT, not WHERE - the /77
+        // intruder holding it is not cross-tenant, so still refused.
+        $this->assertNull(translate_engine::load_for_actor($id, $intruder, true));
+        // The site admin (cross-tenant) holding it can.
+        $this->assertNotNull(translate_engine::load_for_actor($id, get_admin(), true));
     }
 
     public function test_load_for_actor_returns_own_row(): void {

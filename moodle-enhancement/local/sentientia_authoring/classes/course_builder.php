@@ -92,6 +92,7 @@ class course_builder {
         $transaction = $DB->start_delegated_transaction();
         try {
             $course = self::create_hidden_course($draft, $categoryid);
+            self::stamp_tenant($course, $draft);
             $bookinfo = self::create_book($course, $draft, $cards);
 
             $quizid = 0;
@@ -149,6 +150,29 @@ class course_builder {
             'summaryformat' => FORMAT_HTML,
             'lang'          => ($draft->targetlang === 'hi') ? 'hi' : '',
         ]);
+    }
+
+    /**
+     * ADR-031: file the new course under the draft's tenant.
+     *
+     * create_course() leaves the BizLMS open_path NULL, and tenant catalogues
+     * treat a NULL-path course as legacy and visible to EVERY tenant - so a
+     * tenant's published draft would have leaked into the others' course
+     * lists. Stamp the draft's tenant root ('/N'). A tenantless draft (0), or
+     * a schema without the column (vanilla), keeps create_course()'s default.
+     *
+     * @param \stdClass $course The created course (updated in place)
+     * @param \stdClass $draft
+     * @return void
+     */
+    protected static function stamp_tenant(\stdClass $course, \stdClass $draft): void {
+        global $DB;
+        $root = (int) $draft->costcenterid;
+        if ($root <= 0 || !array_key_exists('open_path', $DB->get_columns('course'))) {
+            return;
+        }
+        $DB->set_field('course', 'open_path', '/' . $root, ['id' => $course->id]);
+        $course->open_path = '/' . $root;
     }
 
     /**

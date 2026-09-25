@@ -133,13 +133,15 @@ final class draft_manager_test extends \advanced_testcase {
         $this->assertSame($did, (int) $loaded->draft->id);
     }
 
-    public function test_manage_all_sees_cross_tenant_draft(): void {
+    public function test_manage_all_sees_cross_tenant_draft_only_when_cross_tenant(): void {
         $owner = $this->tenant_user('/1');
-        $admin = $this->tenant_user('/77');
+        $tenantadmin = $this->tenant_user('/77');
         $did = draft_manager::create_pending((int) $owner->id, 'D', 'src', 'prompt', 'en', 'm', 70);
-        // manage_all=true bypasses tenant scoping.
-        $loaded = draft_manager::load_for_actor($did, $admin, true);
-        $this->assertNotNull($loaded);
+        // ADR-031 (2026-09-25): :manage_all says WHAT, not WHERE - a /77 holder
+        // who is not cross-tenant stays inside /77.
+        $this->assertNull(draft_manager::load_for_actor($did, $tenantadmin, true));
+        // The site admin (cross-tenant) holding it still bypasses tenant scoping.
+        $this->assertNotNull(draft_manager::load_for_actor($did, get_admin(), true));
     }
 
     public function test_list_for_actor_scopes_to_tenant(): void {

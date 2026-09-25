@@ -117,6 +117,20 @@ function xmldb_local_sentientia_authoring_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026090700, 'local', 'sentientia_authoring');
     }
 
+    // 2026092500 — ADR-031: take :manage_all back from every role. db/access.php
+    // no longer grants it to the manager archetype, but changing archetypes
+    // never revokes what was already applied (install, or
+    // reset_role_capabilities() - which is how UAT's tenant-admin role 9 got
+    // it). Every existing grant let a tenant admin review, edit, finalise and
+    // publish other tenants' course drafts and rewrite or archive their
+    // templates, so revoke them all. Site admins are unaffected; even a
+    // deliberate grant now reaches other tenants only for a cross-tenant caller.
+    if ($oldversion < 2026092500) {
+        require_once(__DIR__ . '/upgradelib.php');
+        local_sentientia_authoring_revoke_manage_all();
+        upgrade_plugin_savepoint(true, 2026092500, 'local', 'sentientia_authoring');
+    }
+
     unset($dbman);
 
     return true;

@@ -6,8 +6,11 @@
  * Authoring Studio — instructional-design template CRUD.
  *
  * Lists templates visible to the actor; lets them create / edit / archive
- * their own (built-ins are editable but not archivable). All writes go through
- * template_manager so tenant scope + timestamps are enforced.
+ * their own and their tenant's (built-ins are not archivable, and since
+ * ADR-031 only a cross-tenant caller may edit one - they are shared by every
+ * tenant). All writes go through template_manager so tenant scope +
+ * timestamps are enforced; template_manager::can_edit() decides writes,
+ * load_for_actor() only decides what may be seen.
  *
  * @package local_sentientia_authoring
  */
@@ -53,6 +56,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$existing) {
                 throw new moodle_exception('err_template_not_found', 'local_sentientia_authoring');
             }
+            if (!template_manager::can_edit($existing, $USER, $manageall)) {
+                throw new moodle_exception('err_template_readonly', 'local_sentientia_authoring');
+            }
             template_manager::update($editid, ['name' => $name, 'body' => $body, 'description' => $desc]);
             redirect($baseurl, get_string('templates_saved', 'local_sentientia_authoring'));
         }
@@ -65,6 +71,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $existing = template_manager::load_for_actor($archiveid, $USER, $manageall);
         if (!$existing) {
             throw new moodle_exception('err_template_not_found', 'local_sentientia_authoring');
+        }
+        if (!template_manager::can_edit($existing, $USER, $manageall)) {
+            throw new moodle_exception('err_template_readonly', 'local_sentientia_authoring');
         }
         template_manager::archive($archiveid);
         redirect($baseurl, get_string('templates_archived', 'local_sentientia_authoring'));
@@ -85,6 +94,9 @@ if ($action === 'edit' || $action === 'new') {
         $editing = template_manager::load_for_actor($id, $USER, $manageall);
         if (!$editing) {
             throw new moodle_exception('err_template_not_found', 'local_sentientia_authoring');
+        }
+        if (!template_manager::can_edit($editing, $USER, $manageall)) {
+            throw new moodle_exception('err_template_readonly', 'local_sentientia_authoring');
         }
     }
     echo $OUTPUT->heading($editing
@@ -151,9 +163,13 @@ if (empty($templates)) {
                 get_string('template_builtin_suffix', 'local_sentientia_authoring'),
                 ['class' => 'badge bg-info text-dark']);
         }
-        $actions = html_writer::link(new moodle_url($baseurl, ['action' => 'edit', 'id' => (int) $t->id]),
-            get_string('edit'), ['class' => 'btn btn-sm btn-outline-secondary me-1']);
-        if ((int) $t->is_builtin === 0) {
+        $caneditthis = template_manager::can_edit($t, $USER, $manageall);
+        $actions = '';
+        if ($caneditthis) {
+            $actions = html_writer::link(new moodle_url($baseurl, ['action' => 'edit', 'id' => (int) $t->id]),
+                get_string('edit'), ['class' => 'btn btn-sm btn-outline-secondary me-1']);
+        }
+        if ($caneditthis && (int) $t->is_builtin === 0) {
             $archiveform = html_writer::start_tag('form',
                 ['method' => 'post', 'action' => $baseurl->out(false), 'class' => 'd-inline']);
             $archiveform .= html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);

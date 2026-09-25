@@ -20,6 +20,29 @@ defined('MOODLE_INTERNAL') || die();
 class ledger {
 
     /**
+     * ADR-031: may this user open the spend-ledger page (index.php)?
+     *
+     * The page is a platform-operator view: its aggregates and recent-call
+     * rows are every tenant's and every customer's (the quota checks read the
+     * same global numbers). So :viewledger says WHAT, and
+     * tenant::is_cross_tenant() says WHERE - both are required. Until
+     * 2026-09-25 :viewledger alone opened it, by direct URL, and it defaulted
+     * to the manager archetype that every tenant admin holds.
+     *
+     * @param int|null $userid defaults to the current user
+     * @return bool
+     */
+    public static function can_view(?int $userid = null): bool {
+        global $USER;
+        $userid = $userid ?? (int) ($USER->id ?? 0);
+        if ($userid <= 0) {
+            return false;
+        }
+        return has_capability('local/sentientia_ai:viewledger', \context_system::instance(), $userid)
+            && \local_sentientia_platform\tenant::is_cross_tenant($userid);
+    }
+
+    /**
      * Record one gateway call.
      *
      * @param array $req Normalised request (client::normalise()).

@@ -39,6 +39,7 @@ require(__DIR__ . '/../../config.php');
 use local_sentientia_aiquiz\anthropic_client;
 use local_sentientia_aiquiz\draft_manager;
 use local_sentientia_aiquiz\prompt_builder;
+use local_sentientia_aiquiz\quiz_publisher;
 use local_sentientia_aiquiz\response_parser;
 
 require_login();
@@ -137,6 +138,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'min' => prompt_builder::MIN_QUESTIONS,
             'max' => $maxquestions,
         ]);
+    }
+
+    // ADR-031: the draft's course becomes the push target, so it must sit in
+    // the caller's tenant (the picker below only offers those; this refuses
+    // a crafted POST naming another tenant's course).
+    if ($prefill['courseid'] > 0) {
+        $draftcourse = $DB->get_record('course', ['id' => $prefill['courseid']]);
+        if (!$draftcourse || (int) $draftcourse->id === SITEID) {
+            $errors[] = get_string('invalidcourseid', 'error');
+        } else {
+            try {
+                quiz_publisher::require_course_in_scope($draftcourse, $USER);
+            } catch (\moodle_exception $e) {
+                $errors[] = get_string('error_outoftenant', 'local_sentientia_platform');
+            }
+        }
     }
 
     // Validate confirm checkbox — the [CONFIRM] gate.
@@ -242,9 +259,12 @@ if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
     }
 }
 
-// Course picker — courses the user can manage.
+// Course picker — visible courses in the caller's tenant (ADR-031: this
+// listed every tenant's course names to anyone holding :generate).
+[$coursescopesql, $coursescopeargs] = quiz_publisher::course_scope_sql($USER);
 $courses = $DB->get_records_select('course',
-    'visible = 1 AND id > 1', null, 'fullname ASC', 'id, fullname, shortname', 0, 200);
+    "visible = 1 AND id > 1 AND {$coursescopesql}", $coursescopeargs,
+    'fullname ASC', 'id, fullname, shortname', 0, 200);
 $courseoptions = [0 => get_string('generate_form_course_none', 'local_sentientia_aiquiz')];
 foreach ($courses as $c) {
     $courseoptions[(int)$c->id] = format_string($c->fullname) . ' (' . format_string($c->shortname) . ')';

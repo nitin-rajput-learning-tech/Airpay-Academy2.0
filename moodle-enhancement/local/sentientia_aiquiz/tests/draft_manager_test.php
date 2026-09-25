@@ -226,8 +226,12 @@ final class draft_manager_test extends \advanced_testcase {
         $loaded = draft_manager::load_for_actor($did, $intruder, false);
         $this->assertNull($loaded);
 
-        // Intruder WITH manage_all cap should see it.
-        $loaded2 = draft_manager::load_for_actor($did, $intruder, true);
+        // ADR-031 (2026-09-25): :manage_all says WHAT, not WHERE. The
+        // intruder holding it is still not cross-tenant, so still refused.
+        $this->assertNull(draft_manager::load_for_actor($did, $intruder, true));
+
+        // A site admin (cross-tenant) holding it does see the draft.
+        $loaded2 = draft_manager::load_for_actor($did, get_admin(), true);
         $this->assertNotNull($loaded2);
         $this->assertSame($did, (int)$loaded2->draft->id);
     }

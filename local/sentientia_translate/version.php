@@ -44,12 +44,18 @@ $plugin->component = 'local_sentientia_translate';
 // anthropic_client::generate() (ADR-028 Phase 2.3; routing switch
 // sentientia.ai.gateway.enabled default OFF = byte- and side-effect-
 // identical legacy path; mock passed down as callable; 'denied'→'failed').
-$plugin->version   = 2026080500;
+// 2026-09-25 — ADR-031: :manage_all has no default grant (new db/upgrade.php
+// step revokes existing grants) and reaches other tenants only for a
+// cross-tenant caller; save/discard re-check the row's tenant; a caller with
+// no tenant sees only their own translations.
+$plugin->version   = 2026092500;  // ADR-031 cross-tenant authority
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;     // MVP — needs prod sign-off before flag flips
-$plugin->release   = '0.2.1-alpha';
+$plugin->release   = '0.2.2-alpha';
 $plugin->dependencies = [
-    'local_sentientia_platform' => 2026051401,   // feature_flags resolver + customer scope
+    // feature_flags resolver + customer scope, and (2026092500) the ADR-031
+    // tenant::is_cross_tenant() authority.
+    'local_sentientia_platform' => 2026092500,
 ];
 
 // Release history
@@ -57,3 +63,5 @@ $plugin->dependencies = [
 //              No live API calls without explicit per-call [CONFIRM].
 // 0.2.1-alpha  Sentientia AI gateway migration (opt-in, dormant by default).
 //              All plugin-level gates unchanged.
+// 0.2.2-alpha  ADR-031 (2026-09-25): translations stay inside the caller's
+//              tenant; :manage_all is no longer a manager default.
