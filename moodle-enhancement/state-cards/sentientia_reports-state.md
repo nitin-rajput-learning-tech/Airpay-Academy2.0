@@ -110,3 +110,14 @@ Sweep hits 47, 48, 49 and the reports half of 67 (CROSS-TENANT-AUTHORITY-SWEEP-2
 tenant; that fix belongs to the org plugin (the other five callers share it).
 Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`); `delete_report_test` now expects
 the platform string.
+
+## 2026-09-25 - ADR-031 follow-up (still 1.2.0, 2026092500)
+
+Reviewer item on wave 1 (branch `claude/adr031-comms-ff`). `list_reports` now clamps the
+client-chosen `perpage` to `1..list_reports::MAX_PERPAGE` (100) and `page` to `>= 0`. The page
+size used to be unbounded, and 0 or a negative value broke the offset. The datatable asks for 25.
+The test runs as a tenant admin and checks the clamp and that the rows stay in the caller's tenant.
+Still open, because the fix belongs to the org plugin: sweep hit 67.
+`org_manager::cascade_where_sql()` does not clamp to the caller's tenant, and the programs,
+classroom, evaluation, exams and learningpath callers still let it REPLACE the tenant filter.
+Only this plugin's caller narrows it.

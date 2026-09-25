@@ -28,6 +28,8 @@ defined('MOODLE_INTERNAL') || die();
  * @covers \local_sentientia_emails\rule_manager
  * @covers \local_sentientia_emails\external\template_api
  * @covers \local_sentientia_emails\external\rule_api
+ * @covers \local_sentientia_emails\manage_controller
+ * @covers \local_sentientia_emails\legacy_bridge
  * @group tenant_isolation
  */
 final class tenant_scope_test extends \advanced_testcase {
@@ -36,10 +38,102 @@ final class tenant_scope_test extends \advanced_testcase {
 
     private const TPL = 'compliance/deadline_warning';
 
+    /** @var \xmldb_table[] temporary BizLMS tables this test created; dropped in tearDown(). */
+    private array $temptables = [];
+
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest();
         $this->ensure_bizlms_schema();
+    }
+
+    protected function tearDown(): void {
+        global $DB;
+        foreach ($this->temptables as $table) {
+            $DB->get_manager()->drop_table($table);
+        }
+        $this->temptables = [];
+        parent::tearDown();
+    }
+
+    /**
+     * The read-only BizLMS notification tables legacy_bridge reads. They are
+     * not part of this codebase; when the test site does not have them, stand
+     * in temporary tables with the columns legacy_bridge selects.
+     */
+    private function ensure_legacy_tables(): void {
+        global $DB;
+        $dbman = $DB->get_manager();
+        $type = new \xmldb_table('local_notification_type');
+        if (!$dbman->table_exists($type)) {
+            $type->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $type->add_field('name', XMLDB_TYPE_CHAR, '255');
+            $type->add_field('shortname', XMLDB_TYPE_CHAR, '255');
+            $type->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $dbman->create_temp_table($type);
+            $this->temptables[] = $type;
+        }
+        $info = new \xmldb_table('local_notification_info');
+        if (!$dbman->table_exists($info)) {
+            $info->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $info->add_field('notificationid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $info->add_field('subject', XMLDB_TYPE_CHAR, '255');
+            $info->add_field('body', XMLDB_TYPE_TEXT);
+            $info->add_field('adminbody', XMLDB_TYPE_TEXT);
+            $info->add_field('costcenterid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $info->add_field('active', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1');
+            $info->add_field('completiondays', XMLDB_TYPE_INTEGER, '10');
+            $info->add_field('reminderdays', XMLDB_TYPE_INTEGER, '10');
+            $info->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $info->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $info->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $dbman->create_temp_table($info);
+            $this->temptables[] = $info;
+        }
+    }
+
+    /**
+     * Insert into a BizLMS table whose real schema this codebase does not
+     * own: fill every NOT NULL column that has no default with a neutral value.
+     */
+    private function legacy_row(string $table, array $data): int {
+        global $DB;
+        $row = [];
+        foreach ($DB->get_columns($table, false) as $name => $column) {
+            if ($name === 'id') {
+                continue;
+            }
+            if (array_key_exists($name, $data)) {
+                $row[$name] = $data[$name];
+            } else if ($column->not_null && !$column->has_default) {
+                $row[$name] = in_array($column->meta_type, ['I', 'N', 'F', 'R', 'L'], true) ? 0 : '';
+            }
+        }
+        return (int) $DB->insert_record($table, (object) $row);
+    }
+
+    /** One BizLMS legacy template per costcenter; returns [costcenterid => info id]. */
+    private function seed_legacy_templates(): array {
+        $this->ensure_legacy_tables();
+        $typeid = $this->legacy_row('local_notification_type',
+            ['name' => 'Course enrolment', 'shortname' => 'course_enrol']);
+        $ids = [];
+        foreach ([1 => 'AIRPAY-LEGACY', 177 => 'ZEEA-LEGACY-SECRET', 0 => 'SITE-LEGACY'] as $cc => $subject) {
+            $ids[$cc] = $this->legacy_row('local_notification_info', [
+                'notificationid' => $typeid,
+                'subject'        => $subject,
+                'body'           => '<p>Body of ' . $subject . '</p>',
+                'costcenterid'   => $cc,
+                'active'         => 1,
+                'timecreated'    => time(),
+                'timemodified'   => time(),
+            ]);
+        }
+        return $ids;
+    }
+
+    private function legacy_subjects(): array {
+        return array_column(legacy_bridge::get_bizlms_templates(), 'subject');
     }
 
     /** A user at $path holding the manager role at system context (a tenant admin). */
@@ -251,5 +345,96 @@ final class tenant_scope_test extends \advanced_testcase {
 
         // A global rule stays unrestricted.
         $this->assertSame(['1=1', []], $method->invoke(new task\process_rules(), (object) ['tenant_id' => 0]));
+    }
+
+    public function test_tenant_admin_sees_only_their_tenants_legacy_templates(): void {
+        $ids = $this->seed_legacy_templates();
+        $this->setUser($this->tenant_admin('/1'));
+
+        $this->assertSame(['AIRPAY-LEGACY'], $this->legacy_subjects(),
+            'The templates tab must not list another costcenter\'s legacy subjects or bodies.');
+        $this->assertSame(1, manage_controller::get_templates_data(1)['total_bizlms']);
+        $this->assertNull(legacy_bridge::get_bizlms_template($ids[177]));
+        $this->assertSame('AIRPAY-LEGACY', legacy_bridge::get_bizlms_template($ids[1])->subject);
+    }
+
+    public function test_caller_with_no_tenant_sees_no_legacy_templates(): void {
+        $this->seed_legacy_templates();
+        $this->setUser($this->tenant_admin(''));
+
+        $this->assertSame([], $this->legacy_subjects());
+    }
+
+    public function test_site_admin_still_sees_every_legacy_template(): void {
+        $this->seed_legacy_templates();
+        $this->setAdminUser();
+
+        $subjects = $this->legacy_subjects();
+        sort($subjects);
+        $this->assertSame(['AIRPAY-LEGACY', 'SITE-LEGACY', 'ZEEA-LEGACY-SECRET'], $subjects);
+    }
+
+    public function test_rule_ui_offers_a_scoped_admin_only_what_the_server_accepts(): void {
+        $global = $this->rule(0);
+        $own = $this->rule(1);
+        $foreign = $this->rule(177);
+        $this->setUser($this->tenant_admin('/1'));
+
+        $rows = [];
+        foreach (manage_controller::get_rules_data(tenant_scope::resolve(0))['rules'] as $row) {
+            $rows[(int) $row['id']] = $row;
+        }
+        $this->assertArrayNotHasKey($foreign, $rows);
+        $this->assertFalse($rows[$global]['can_modify'],
+            'No toggle/edit/delete on a global rule: the server refuses it.');
+        $this->assertTrue($rows[$own]['can_modify']);
+
+        // The scope select holds their own tenant only, pre-selected - even
+        // when editing a global rule - so "All Tenants (Global)" is never offered.
+        foreach ([null, 0, 177, 1] as $ruletenant) {
+            $this->assertSame([['id' => 1, 'name' => 'Airpay Only', 'selected' => true]],
+                manage_controller::rule_scope_options(1, $ruletenant));
+        }
+        $this->assertSame([1], array_column(manage_controller::tenant_selector_options(1), 'id'));
+
+        // And the save refuses what the form no longer offers.
+        $this->assert_refused(fn() => tenant_scope::require_can_write_tenant(0),
+            'A posted rule_tenant=0 is refused, no longer rewritten to the caller\'s tenant.');
+    }
+
+    public function test_rule_ui_for_a_caller_with_no_tenant_offers_nothing(): void {
+        $this->setUser($this->tenant_admin(''));
+        $this->assertSame([], manage_controller::rule_scope_options(0));
+        $this->assertSame([], manage_controller::tenant_selector_options(0));
+    }
+
+    public function test_rule_ui_for_site_admin_keeps_every_scope_and_preselects_the_rule(): void {
+        $foreign = $this->rule(177);
+        $this->setAdminUser();
+
+        $options = manage_controller::rule_scope_options(0, 177);
+        $this->assertSame([0, 1, 77, 177], array_column($options, 'id'));
+        $this->assertSame([177], array_column(array_filter($options, fn($o) => $o['selected']), 'id'),
+            'Editing a tenant rule must not default its scope to Global.');
+        $this->assertSame([0], array_column(array_filter(manage_controller::rule_scope_options(0),
+            fn($o) => $o['selected']), 'id'));
+        $this->assertSame([0, 1, 77, 177], array_column(manage_controller::tenant_selector_options(0), 'id'));
+        foreach (manage_controller::get_rules_data(0)['rules'] as $row) {
+            $this->assertTrue($row['can_modify']);
+        }
+        $this->assertContains($foreign, array_map(fn($r) => (int) $r['id'],
+            manage_controller::get_rules_data(0)['rules']));
+    }
+
+    public function test_tenant_admin_keeps_the_template_preview(): void {
+        // template_api::preview_template now requires :preview. It defaults to
+        // the manager archetype, which is what a tenant admin's role is.
+        $this->setUser($this->tenant_admin('/1'));
+        $html = external\template_api::preview_template(self::TPL, 1, '<p>Hello {{firstname}}</p>', 'Hi')['html'];
+        $this->assertStringContainsString('Hello', $html);
+
+        $this->setUser($this->getDataGenerator()->create_user());
+        $this->expectException(\required_capability_exception::class);
+        external\template_api::preview_template(self::TPL, 1, '<p>x</p>', 'Hi');
     }
 }

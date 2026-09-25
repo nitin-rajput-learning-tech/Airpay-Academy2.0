@@ -10,6 +10,9 @@ use core_external\external_value;
 
 class list_reports extends external_api {
 
+    /** Largest page a client may ask for. */
+    public const MAX_PERPAGE = 100;
+
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
             'search'  => new external_value(PARAM_TEXT,     '', VALUE_DEFAULT, ''),
@@ -42,6 +45,10 @@ class list_reports extends external_api {
         $allowed = ['name', 'report_type', 'status', 'lastrun', 'runcount', 'timemodified'];
         $sort = in_array($params['sort'], $allowed, true) ? $params['sort'] : 'name';
         $sortdir = strtolower($params['sortdir']) === 'desc' ? 'DESC' : 'ASC';
+        // A client-chosen page size used to be unbounded (and 0 or a negative
+        // value broke the offset). The datatable asks for 25.
+        $params['perpage'] = max(1, min(self::MAX_PERPAGE, (int) $params['perpage']));
+        $params['page'] = max(0, (int) $params['page']);
 
         // Tenant scope ALWAYS applies. Reports without open_path remain
         // cross-tenant only (the helper returns 1=1 for a cross-tenant

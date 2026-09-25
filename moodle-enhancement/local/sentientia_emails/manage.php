@@ -62,15 +62,10 @@ if ($action && confirm_sesskey()) {
                 \local_sentientia_emails\tenant_scope::modifiable_rule($editid);
                 $ruledata->id = $editid;
             }
-            if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
-                // ADR-031: a scoped caller's rule is scoped to their own tenant.
-                // The form's default scope is "All Tenants (Global)" (0); that
-                // becomes their tenant. Naming any other tenant is refused.
-                if ((int) $ruledata->tenant_id !== 0 && (int) $ruledata->tenant_id !== $tenantid) {
-                    throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
-                }
-                $ruledata->tenant_id = $tenantid;
-            }
+            // ADR-031: the scope the caller chose is the scope saved. A scoped
+            // caller's form offers their own tenant only (and pre-selects it),
+            // so global (0) or another tenant from them is refused here -
+            // no longer quietly rewritten to their own tenant.
             \local_sentientia_emails\tenant_scope::require_can_write_tenant((int) $ruledata->tenant_id);
             \local_sentientia_emails\rule_manager::save_rule($ruledata);
             $msg = $editid ? 'Rule updated.' : 'Rule created.';
@@ -130,13 +125,9 @@ foreach ($tabs as &$t) {
 }
 unset($t);
 
-// Tenant selector data.
-$tenants = [
-    ['id' => 0,   'name' => 'All Tenants',  'selected' => ($tenantid == 0)],
-    ['id' => 1,   'name' => 'Airpay',       'selected' => ($tenantid == 1)],
-    ['id' => 77,  'name' => 'Public',        'selected' => ($tenantid == 77)],
-    ['id' => 177, 'name' => 'ZEEA',          'selected' => ($tenantid == 177)],
-];
+// Tenant selector data. ADR-031: a scoped caller is offered their own tenant only.
+$tenants = \local_sentientia_emails\manage_controller::tenant_selector_options($tenantid);
+$crosstenant = \local_sentientia_platform\tenant::is_cross_tenant();
 
 // Prepare tab-specific data.
 $tabdata = [];
@@ -200,6 +191,14 @@ $pagecontext = [
         'conditions_json' => $editrule->conditions_json ?? '',
     ] : null,
     'has_editrule' => !empty($editrule),
+    // ADR-031: scoped callers see a read-only global rule (no save) and a
+    // Tenant Scope select holding their own tenant only.
+    'is_crosstenant'     => $crosstenant,
+    'editrule_readonly'  => $editrule && !$crosstenant
+        && ((int) $editrule->tenant_id <= 0
+            || (int) $editrule->tenant_id !== \local_sentientia_platform\tenant::root_for_current_user()),
+    'rule_scope_options' => \local_sentientia_emails\manage_controller::rule_scope_options(
+        $tenantid, $editrule ? (int) $editrule->tenant_id : null),
     'show_form'    => ($tab === 'rules' && (optional_param('new', 0, PARAM_INT) || $editruleid > 0)),
     // Available templates for the rule form dropdown.
     'template_options' => array_map(function($cat) {

@@ -1,7 +1,10 @@
 {{!
     Rules tab — CRUD for notification rules.
-    Context: tabdata {rules, rule_count}, sesskey, manage_url, tenant_id,
-             show_form, has_editrule, editrule, template_options
+    Context: tabdata {rules [each with can_modify], rule_count}, sesskey, manage_url, tenant_id,
+             show_form, has_editrule, editrule, editrule_readonly, template_options,
+             rule_scope_options [id, name, selected], is_crosstenant
+    ADR-031: a scoped caller gets their own tenant as the only scope, and no
+    toggle, edit or delete on a rule they may not change (global rules).
 }}
 
 {{! ═══ RULE FORM (Add New / Edit) ═══ }}
@@ -93,14 +96,24 @@
             </div>
             <div>
                 <label style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">Tenant Scope</label>
+                {{#editrule_readonly}}
+                <span class="ap-manage-badge ap-manage-badge--bizlms">{{#str}}rule_scope_global, local_sentientia_emails{{/str}}</span>
+                {{/editrule_readonly}}
+                {{^editrule_readonly}}
                 <select name="rule_tenant" style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
-                    <option value="0">All Tenants (Global)</option>
-                    <option value="1">Airpay Only</option>
-                    <option value="77">Public Only</option>
-                    <option value="177">ZEEA Only</option>
+                    {{#rule_scope_options}}
+                    <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+                    {{/rule_scope_options}}
                 </select>
+                {{/editrule_readonly}}
             </div>
         </div>
+
+        {{#editrule_readonly}}
+        <p style="font-size:12px; color:#5a6070; margin:0 0 16px;">
+            <i class="fa fa-lock"></i> {{#str}}rule_readonly_crosstenant, local_sentientia_emails{{/str}}
+        </p>
+        {{/editrule_readonly}}
 
         <div style="display:flex; gap:8px; align-items:center;">
             <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#5a6070; cursor:pointer;">
@@ -111,9 +124,11 @@
             </label>
             <div style="flex:1;"></div>
             <a href="{{manage_url}}?tab=rules&tenant={{tenant_id}}" class="ap-manage-btn ap-manage-btn--outline ap-manage-btn--sm">Cancel</a>
+            {{^editrule_readonly}}
             <button type="submit" class="ap-manage-btn ap-manage-btn--primary ap-manage-btn--sm">
                 <i class="fa fa-save"></i> {{#has_editrule}}Update Rule{{/has_editrule}}{{^has_editrule}}Create Rule{{/has_editrule}}
             </button>
+            {{/editrule_readonly}}
         </div>
     </form>
 </div>
@@ -150,8 +165,14 @@
             <tr style="{{^enabled}}opacity:0.5;{{/enabled}}">
                 <td>
                     <label class="ap-toggle">
+                        {{#can_modify}}
                         <input type="checkbox" {{#enabled}}checked{{/enabled}}
                                onchange="window.location='{{manage_url}}?tab=rules&tenant={{tenant_id}}&action=toggle&ruleid={{id}}&enabled='+(this.checked?1:0)+'&sesskey={{sesskey}}'">
+                        {{/can_modify}}
+                        {{^can_modify}}
+                        <input type="checkbox" {{#enabled}}checked{{/enabled}} disabled
+                               title="{{#str}}rule_locked, local_sentientia_emails{{/str}}">
+                        {{/can_modify}}
                         <span class="ap-toggle-slider"></span>
                     </label>
                 </td>
@@ -173,6 +194,7 @@
                     {{^is_global}}<span class="ap-manage-badge ap-manage-badge--override">Tenant {{tenant_id}}</span>{{/is_global}}
                 </td>
                 <td style="text-align:right;">
+                    {{#can_modify}}
                     <a href="{{manage_url}}?tab=rules&tenant={{tenant_id}}&edit={{id}}"
                        class="ap-manage-btn ap-manage-btn--outline ap-manage-btn--sm" title="Edit">
                         <i class="fa fa-pencil"></i>
@@ -182,6 +204,12 @@
                        onclick="return confirm('Delete this rule permanently?');">
                         <i class="fa fa-trash"></i>
                     </a>
+                    {{/can_modify}}
+                    {{^can_modify}}
+                    <span style="color:#8890a0;" title="{{#str}}rule_locked, local_sentientia_emails{{/str}}">
+                        <i class="fa fa-lock"></i>
+                    </span>
+                    {{/can_modify}}
                 </td>
             </tr>
             {{/tabdata.rules}}

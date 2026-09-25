@@ -18,6 +18,9 @@ use core_external\external_value;
  */
 class list_all extends external_api {
 
+    /** Largest page a client may ask for. */
+    public const MAX_PERPAGE = 100;
+
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
             'search'  => new external_value(PARAM_TEXT, '', VALUE_DEFAULT, ''),
@@ -42,6 +45,11 @@ class list_all extends external_api {
         $allowed = ['timecreated', 'status', 'timedecided', 'timedue'];
         $sort = in_array($params['sort'], $allowed, true) ? $params['sort'] : 'timecreated';
         $sortdir = strtolower($params['sortdir']) === 'asc' ? 'ASC' : 'DESC';
+        // Sweep hit 54 (side item): a client-chosen page size used to be
+        // unbounded (perpage=100000 pulled the whole tenant in one call, and 0
+        // or a negative value broke the offset). The datatable asks for 25.
+        $params['perpage'] = max(1, min(self::MAX_PERPAGE, (int) $params['perpage']));
+        $params['page'] = max(0, (int) $params['page']);
 
         // ADR-031: :viewall says the caller may see the tenant-wide list, not
         // which tenant. It used to start from 1=1 and let the CLIENT pick the

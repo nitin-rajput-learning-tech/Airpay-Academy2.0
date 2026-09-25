@@ -323,6 +323,18 @@ class request_manager {
             if (!$has_override) {
                 throw new \moodle_exception('error_outoftenant', 'local_sentientia_request');
             }
+            // ADR-031 fail closed: require_access() compares the decider's
+            // tenant root with costcenterid, and a decider whose open_path
+            // does not resolve has root 0 - which EQUALS a costcenterid-0
+            // request. db/install.php grants :overrideroute to the
+            // 'administrator' (tenant-admin) role, so such a holder could
+            // approve every tenant-less request and enrol its requester. A
+            // request with no tenant belongs to nobody's tenant: only a
+            // cross-tenant decider may override-route it.
+            if ((int) $rec->costcenterid <= 0
+                    && !\local_sentientia_platform\tenant::is_cross_tenant($deciderid)) {
+                throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+            }
             \local_sentientia_platform\tenant::require_access(
                 (int) $rec->costcenterid, $deciderid);
         }

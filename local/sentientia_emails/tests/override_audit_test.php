@@ -1,0 +1,143 @@
+<?php
+// This file is part of Sentientia LMS.
+
+/**
+ * ADR-031 follow-up: the 2026092501 upgrade step switches off tenant template
+ * overrides whose author was not entitled to that tenant.
+ *
+ * @package    local_sentientia_emails
+ * @category   test
+ * @copyright  2026 Airpay Payment Services
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+namespace local_sentientia_emails;
+
+defined('MOODLE_INTERNAL') || die();
+
+global $CFG;
+require_once($CFG->dirroot . '/local/sentientia_emails/db/upgradelib.php');
+
+/**
+ * Until 2026-09-25 tenant overrides (tenant_id > 0) were never delivered -
+ * email_renderer only ever resolved tenant 0 - and any manager-archetype
+ * tenant admin could write one for any tenant. ADR-031 makes the renderer
+ * deliver them, so the upgrade must switch off the ones a tenant admin wrote
+ * for somebody else's tenant before they reach that tenant's learners. These
+ * tests pin: a tenant-177 override written by a /1 admin is switched off (and
+ * the 177 learner falls back to what they received before), one written by a
+ * /177 admin or a site admin stays active, and global overrides are reported
+ * but not changed.
+ *
+ * @covers ::local_sentientia_emails_deactivate_unentitled_overrides
+ * @covers ::local_sentientia_emails_global_overrides_for_review
+ * @covers ::local_sentientia_emails_override_author_entitled
+ * @group tenant_isolation
+ */
+final class override_audit_test extends \advanced_testcase {
+
+    use \local_sentientia_org\test\bizlms_fixture;
+
+    private const TPL_A = 'compliance/overdue_alert';
+    private const TPL_B = 'compliance/deadline_warning';
+    private const TPL_C = 'compliance/reminder_start';
+    private const TPL_D = 'compliance/reminder_halfway';
+
+    protected function setUp(): void {
+        parent::setUp();
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+    }
+
+    /** A user at $path holding the manager role at system context (a tenant admin). */
+    private function tenant_admin(string $path): \stdClass {
+        global $DB;
+        $u = $this->getDataGenerator()->create_user();
+        $DB->set_field('user', 'open_path', $path, ['id' => $u->id]);
+        $managerid = (int) $DB->get_field('role', 'id', ['shortname' => 'manager'], MUST_EXIST);
+        role_assign($managerid, $u->id, \context_system::instance()->id);
+        accesslib_clear_all_caches_for_unit_testing();
+        return $DB->get_record('user', ['id' => $u->id], '*', MUST_EXIST);
+    }
+
+    /** One override row; (tenant_id, template_key) is a unique index. */
+    private function override(int $tenant, string $key, int $authorid, string $body, int $active = 1): int {
+        global $DB;
+        return (int) $DB->insert_record('local_sentientia_email_overrides', (object) [
+            'tenant_id'    => $tenant,
+            'template_key' => $key,
+            'subject'      => 'S',
+            'body_html'    => $body,
+            'is_active'    => $active,
+            'usermodified' => $authorid,
+            'timecreated'  => time(),
+            'timemodified' => time(),
+        ]);
+    }
+
+    private function is_active(int $id): int {
+        global $DB;
+        return (int) $DB->get_field('local_sentientia_email_overrides', 'is_active', ['id' => $id], MUST_EXIST);
+    }
+
+    public function test_override_written_for_another_tenant_is_switched_off(): void {
+        $airpayadmin = $this->tenant_admin('/1');
+        $zeeaadmin = $this->tenant_admin('/177/178');
+        $siteadmin = get_admin();
+
+        $injected = $this->override(177, self::TPL_A, (int) $airpayadmin->id,
+            '<a href="https://phish.example">Verify your account</a>');
+        $zeeaown = $this->override(177, self::TPL_B, (int) $zeeaadmin->id, '<p>ZEEA own</p>');
+        $byadmin = $this->override(177, self::TPL_C, (int) $siteadmin->id, '<p>By site admin</p>');
+        $airpayown = $this->override(1, self::TPL_A, (int) $airpayadmin->id, '<p>Airpay own</p>');
+        $noauthor = $this->override(77, self::TPL_B, 0, '<p>Unknown author</p>');
+        $alreadyoff = $this->override(177, self::TPL_D, (int) $airpayadmin->id, '<p>Already off</p>', 0);
+        $global = $this->override(0, self::TPL_A, (int) $airpayadmin->id, '<p>GLOBAL</p>');
+
+        $switchedoff = local_sentientia_emails_deactivate_unentitled_overrides();
+
+        $this->assertSame([$injected, $noauthor], array_map(fn($r) => (int) $r->id, $switchedoff),
+            'Only the rows whose author was not entitled to that tenant are switched off.');
+        $this->assertSame(1, (int) $switchedoff[0]->author_root, 'The trace names the author\'s own tenant.');
+        $this->assertSame(0, $this->is_active($injected),
+            'A /1 admin\'s tenant-177 override must not go live for ZEEA learners.');
+        $this->assertSame(0, $this->is_active($noauthor), 'An unattributable override cannot be shown to be entitled.');
+        $this->assertSame(1, $this->is_active($zeeaown), 'A /177 admin\'s own-tenant override stays active.');
+        $this->assertSame(1, $this->is_active($byadmin), 'A site admin may write any tenant; it stays active.');
+        $this->assertSame(1, $this->is_active($airpayown), 'A /1 admin\'s own-tenant override stays active.');
+        $this->assertSame(0, $this->is_active($alreadyoff));
+        $this->assertSame(1, $this->is_active($global),
+            'Global overrides were already delivered before ADR-031: left active, reported instead.');
+
+        // A ZEEA learner now gets what they got before this release: the global override.
+        $this->assertSame('<p>GLOBAL</p>', template_manager::get_override(self::TPL_A, 177)->body_html);
+        $this->assertSame('<p>ZEEA own</p>', template_manager::get_override(self::TPL_B, 177)->body_html);
+
+        // Idempotent.
+        $this->assertSame([], local_sentientia_emails_deactivate_unentitled_overrides());
+    }
+
+    public function test_global_override_by_a_scoped_author_is_reported_not_changed(): void {
+        $airpayadmin = $this->tenant_admin('/1');
+        $scoped = $this->override(0, self::TPL_A, (int) $airpayadmin->id, '<p>By a tenant admin</p>');
+        $this->override(0, self::TPL_B, (int) get_admin()->id, '<p>By a site admin</p>');
+
+        $review = local_sentientia_emails_global_overrides_for_review();
+
+        $this->assertSame([$scoped], array_map(fn($r) => (int) $r->id, $review));
+        $this->assertSame(1, $this->is_active($scoped));
+    }
+
+    public function test_entitlement_rule_matches_the_write_rule(): void {
+        $airpayadmin = $this->tenant_admin('/1/5');
+        $notenant = $this->tenant_admin('');
+
+        $this->assertTrue(local_sentientia_emails_override_author_entitled((int) $airpayadmin->id, 1));
+        $this->assertFalse(local_sentientia_emails_override_author_entitled((int) $airpayadmin->id, 177));
+        $this->assertFalse(local_sentientia_emails_override_author_entitled((int) $airpayadmin->id, 0),
+            'The manager archetype alone does not make a tenant admin cross-tenant.');
+        $this->assertFalse(local_sentientia_emails_override_author_entitled((int) $notenant->id, 1));
+        $this->assertTrue(local_sentientia_emails_override_author_entitled((int) get_admin()->id, 177));
+        $this->assertTrue(local_sentientia_emails_override_author_entitled((int) get_admin()->id, 0));
+    }
+}

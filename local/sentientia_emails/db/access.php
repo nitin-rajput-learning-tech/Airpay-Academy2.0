@@ -16,7 +16,12 @@ $capabilities = [
             'manager' => CAP_ALLOW,
         ],
     ],
+    // ADR-031 follow-up (sweep hit 23): the holder writes the HTML body that
+    // is emailed to learners - a link/markup injection and spam vector - so
+    // the role UI must flag it. The tenant half (own tenant only) is enforced
+    // in tenant_scope::require_can_write_tenant().
     'local/sentientia_emails:manage_templates' => [
+        'riskbitmask'  => RISK_XSS | RISK_SPAM,
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [

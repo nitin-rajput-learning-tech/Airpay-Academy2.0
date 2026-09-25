@@ -154,3 +154,14 @@ push recipients or type any user id into its filter. As defence in depth `push_l
 `count()` and `stats_last_24h()` confine whoever holds `:manage` to the recipients in their own
 tenant (1=1 cross-tenant, 1=0 with no tenant), and `recent()` no longer selects the unused
 `u.email`. Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`).
+
+## 2026-09-25 - ADR-031 follow-up: release note (no code change)
+
+This note comes from the review of wave 1 (branch `claude/adr031-comms-ff`).
+
+**Operational, for Nitin.** The pwa upgrade 2026092500 revokes `local/sentientia_pwa:manage` from
+every role at system context, and so does the notifications upgrade 2026092500. After deploy,
+tenant admins lose the push log. If a platform-operations role needs the push log, re-grant
+`:manage` to that role after the upgrade. The same holds for notification rule management, which
+also needs `local/sentientia_platform:crosstenant` to write. For the details, see
+`sentientia_notifications-state.md`.

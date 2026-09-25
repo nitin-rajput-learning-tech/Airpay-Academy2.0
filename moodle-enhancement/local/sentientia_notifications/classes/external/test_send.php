@@ -82,11 +82,12 @@ class test_send extends external_api {
             'timecreated' => time(),
         ]);
 
+        // Sweep hit 31: the summary names the recipient but no longer returns
+        // their email address - the caller only needs to know who it went to.
         return [
             'ok'      => $sent_id > 0,
             'message_id' => $sent_id,
-            'sent_to' => $target->firstname . ' ' . $target->lastname
-                . ' <' . $target->email . '>',
+            'sent_to' => trim($target->firstname . ' ' . $target->lastname) . ' (id ' . (int) $target->id . ')',
         ];
     }
 
