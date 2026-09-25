@@ -69,6 +69,15 @@ class list_course_enrolments extends external_api {
         $where = ['u.deleted = 0', 'e.courseid = :cid'];
         $args  = ['cid' => $courseid];
 
+        // ADR-031: a scoped viewer lists only their own tenant's enrolees.
+        // A legacy course with no open_path passes the check above for every
+        // tenant and is enrolled into by every tenant, so without this a
+        // tenant admin read other tenants' learners (names, emails, employee
+        // ids). Cross-tenant viewers get 1=1; a viewer with no tenant, 1=0.
+        [$tusql, $tuargs] = \local_sentientia_platform\tenant::path_filter('u');
+        $where[] = $tusql;
+        $args = array_merge($args, $tuargs);
+
         if (!empty($params['search'])) {
             $term = '%' . $DB->sql_like_escape($params['search']) . '%';
             $where[] = '(' . $DB->sql_like('u.firstname', ':s1', false) . ' OR '

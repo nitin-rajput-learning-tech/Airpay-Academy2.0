@@ -37,14 +37,17 @@ $plugin->component = 'local_sentientia_courses';
 // from course_reminder for the <48h urgent surface. No schema change.
 // UAT #3/#4 (2026-09-08) — Manage Courses KPI tiles + category filter now
 // tenant-scoped to the datatable's row set (course_manager::manage_*).
-$plugin->version   = 2026092201;  // real privacy provider: requests + remind_sent (was null_provider)
+$plugin->version   = 2026092500;  // ADR-031: course writes, enrolment, featured, list/export tenant-scoped (no schema/cap change)
+// 2026092201:  // real privacy provider: requests + remind_sent (was null_provider)
 // 2026091700:  // Browse Airpay Library: F-12 (format_string'd slots rendered once) + page copy via lang strings (en+hi)
 // 2026090800:
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.11.7';  // tenant-scoped Manage Courses KPI + category filter
+$plugin->release   = '1.11.8';  // ADR-031 cross-tenant authority: every write checks the target's tenant
 $plugin->dependencies = [
     'local_sentientia_org' => 2026041600,
+    // tenant::is_cross_tenant() / scope_path() / require_same_tenant_user() (ADR-031).
+    'local_sentientia_platform' => 2026092500,
 ];
 // Release history:
 // 1.6.0  Phase F.5 — native enrol modal (replaces deep-link)

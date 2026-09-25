@@ -92,21 +92,29 @@ class list_courses extends external_api {
         // Tenant scope — Phase 9.5 trait back-port. Replaces the M3 inline
         // explode('/', $USER->open_path) pattern. `allow_null=true` keeps
         // the legacy-courses tolerance the M3 fix intentionally added.
+        //
+        // ADR-031 (2026-09-25): the tenant scope ALWAYS applies. The org
+        // cascade used to REPLACE it and the org id was never checked, so any
+        // :view holder (every tenant admin) could pass another tenant's org
+        // id - or an id that does not exist, which dropped the scope
+        // altogether - and list that tenant's courses. The cascade now
+        // narrows the tenant scope (AND): a foreign org yields nothing.
+        // Cross-tenant callers get 1=1 from path_filter and can still filter
+        // by any org.
+        $crosstenant = \local_sentientia_platform\tenant::is_cross_tenant();
+        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('c',
+            'open_path', true);
+        $where[] = $tnsql;
+        $sqlparams = array_merge($sqlparams, $tnargs);
         if ($deepest_orgid > 0) {
-            // Cascade-filter overrides the implicit tenant scope: scope to
-            // the selected org's full subtree.
+            // Cascade filter: the selected org's full subtree.
             $org = $DB->get_record('local_sentientia_org', ['id' => $deepest_orgid], 'path');
-            if ($org && !empty($org->path)) {
-                $where[] = '(c.open_path = :ocascadeexact OR c.open_path LIKE :ocascadeprefix)';
-                $sqlparams['ocascadeexact']  = rtrim($org->path, '/');
-                $sqlparams['ocascadeprefix'] =
-                    $DB->sql_like_escape(rtrim($org->path, '/') . '/') . '%';
+            if ($org && trim((string) $org->path, '/') !== '') {
+                [$ocsql, $ocargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+                    (string) $org->path, 'c', 'open_path', 'ocascade');
+                $where[] = $ocsql;
+                $sqlparams = array_merge($sqlparams, $ocargs);
             }
-        } else {
-            [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('c',
-                'open_path', true);
-            $where[] = $tnsql;
-            $sqlparams = array_merge($sqlparams, $tnargs);
         }
 
         if ($categoryid > 0) {
@@ -140,8 +148,11 @@ class list_courses extends external_api {
 
         // Page.
         $records = [];
+        // A scoped caller's WHERE already reads c.open_path, so the column
+        // exists; a cross-tenant caller's does not (vanilla schemas lack it).
+        $pathcol = $crosstenant ? '' : ' c.open_path,';
         if ($total > 0) {
-            $sql = "SELECT c.id, c.fullname, c.shortname, c.idnumber, c.category, c.visible,
+            $sql = "SELECT c.id, c.fullname, c.shortname, c.idnumber, c.category, c.visible,{$pathcol}
                            c.timecreated, cat.name AS catname,
                            (SELECT COUNT(*) FROM {user_enrolments} ue
                               JOIN {enrol} e ON e.id = ue.enrolid
@@ -156,6 +167,11 @@ class list_courses extends external_api {
 
         $rows = [];
         foreach ($records as $c) {
+            // ADR-031: course_manager refuses a scoped caller's edit / hide /
+            // delete of a legacy course with no open_path (every tenant lists
+            // it), so the row does not offer those actions.
+            $canwritehere = $crosstenant || trim((string) ($c->open_path ?? '')) !== '';
+
             $statuslabel = $c->visible ? 'Visible' : 'Hidden';
             $statuscss = $c->visible ? 'badge-success' : 'badge-secondary';
 
@@ -183,12 +199,12 @@ class list_courses extends external_api {
                     . 'class="btn btn-sm btn-link text-muted p-1" '
                     . 'title="Enrol users"><i class="fa fa-user-plus"></i></a>';
             }
-            if ($can_edit) {
+            if ($can_edit && $canwritehere) {
                 $actions[] = '<a href="#" class="btn btn-sm btn-link text-muted p-1" '
                     . 'data-action="edit-course" data-courseid="' . (int) $c->id . '" '
                     . 'data-name="' . s($c->fullname) . '" title="Edit"><i class="fa fa-pencil"></i></a>';
             }
-            if ($can_visibility) {
+            if ($can_visibility && $canwritehere) {
                 $verb = $c->visible ? 'hide' : 'show';
                 $icon = $c->visible ? 'fa-eye-slash text-warning' : 'fa-eye text-success';
                 $actions[] = '<a href="#" class="btn btn-sm btn-link text-muted p-1" '
@@ -205,7 +221,7 @@ class list_courses extends external_api {
                     . 'class="btn btn-sm btn-link text-muted p-1" '
                     . 'title="Share to other tenants"><i class="fa fa-handshake-o text-primary"></i></a>';
             }
-            if ($can_delete) {
+            if ($can_delete && $canwritehere) {
                 $actions[] = '<a href="#" class="btn btn-sm btn-link text-muted p-1" '
                     . 'data-action="delete-course" data-courseid="' . (int) $c->id . '" '
                     . 'data-name="' . s($c->fullname) . '" title="Delete"><i class="fa fa-trash text-danger"></i></a>';

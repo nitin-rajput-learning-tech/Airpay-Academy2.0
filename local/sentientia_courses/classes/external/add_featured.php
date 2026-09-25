@@ -32,6 +32,9 @@ class add_featured extends external_api {
         self::validate_context($context);
         require_capability('local/sentientia_courses:manage', $context);
         require_sesskey();
+        // ADR-031: a tenant admin pins only their own tenant's courses to
+        // their own tenant's list.
+        featured_manager::assert_can_add((int) $params['courseid'], (int) $params['costcenterid']);
 
         $id = featured_manager::add(
             (int) $params['courseid'],

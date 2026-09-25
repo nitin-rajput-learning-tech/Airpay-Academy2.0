@@ -17,6 +17,9 @@ require_once($CFG->libdir . '/formslib.php');
 require_login();
 $context = context_system::instance();
 require_capability('local/sentientia_courses:enrol', $context);
+// ADR-031: null = cross-tenant; otherwise the caller's tenant root. A scoped
+// caller with no resolvable tenant is refused here (invalidtenant).
+$enrolroot = \local_sentientia_courses\course_manager::enrol_scope_root();
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/sentientia_courses/bulk_unenrol.php'));
@@ -90,6 +93,19 @@ if ($data = $form->get_data()) {
                 $user = $DB->get_record('user',
                     ['email' => $email, 'deleted' => 0]);
                 $course = $DB->get_record('course', ['shortname' => $shortname]);
+                // ADR-031: until 2026-09-25 this unenrolled any user of any
+                // tenant from any course. For a scoped caller an out-of-tenant
+                // user or course reads exactly like a missing one, so the
+                // report cannot be used to probe other tenants.
+                if ($enrolroot !== null) {
+                    if ($user && \local_sentientia_platform\tenant::root_for_user($user) !== $enrolroot) {
+                        $user = false;
+                    }
+                    if ($course && !\local_sentientia_courses\course_manager::course_in_enrol_scope(
+                            $course, $enrolroot)) {
+                        $course = false;
+                    }
+                }
                 if (!$user || !$course) {
                     $failed++;
                     $report[] = ['line' => $line, 'status' => 'failed',

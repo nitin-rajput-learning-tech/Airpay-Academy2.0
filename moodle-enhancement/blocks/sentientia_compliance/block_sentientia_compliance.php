@@ -32,26 +32,20 @@ class block_sentientia_compliance extends block_base {
         $this->content->text = '';
         $this->content->footer = '';
 
-        $systemcontext = \context_system::instance();
-        $isadmin = is_siteadmin() || has_capability('local/courses:manage', $systemcontext);
-        $ismanager = has_capability('moodle/site:viewreports', $systemcontext);
-
-        // Fallback: BizLMS managers have direct reports via open_supervisorid but no capability role.
-        if (!$ismanager && !$isadmin) {
-            $directreports = $DB->count_records_select('user',
-                'open_supervisorid = :uid AND deleted = 0 AND suspended = 0',
-                ['uid' => $USER->id]);
-            $ismanager = ($directreports > 0);
-        }
-
-        if (!$isadmin && !$ismanager) {
-            // Regular users see their own compliance status.
+        // ADR-031 (2026-09-25): the matrix is scoped. Cross-tenant viewers see
+        // every tenant; tenant-level viewers (moodle/site:viewreports, BizLMS
+        // local/courses:manage) their own tenant; line managers their
+        // reporting tree. Until this date all of them - and any user with a
+        // direct report - saw every tenant's matrix. See classes/audit.php.
+        $scope = \block_sentientia_compliance\audit::viewer_scope($USER);
+        if ($scope === null) {
+            // Regular users, and anyone whose tenant does not resolve, see
+            // their own compliance status.
             $this->content->text = $this->get_learner_compliance($USER->id);
             return $this->content;
         }
 
-        // Admin/Manager: show org-wide compliance matrix.
-        $this->content->text = $this->get_admin_compliance();
+        $this->content->text = $this->get_admin_compliance($scope['path'], $scope['userids']);
         return $this->content;
     }
 
@@ -134,30 +128,23 @@ class block_sentientia_compliance extends block_base {
     }
 
     /**
-     * Get organization-wide compliance matrix for admins/managers.
+     * Compliance matrix for admins/managers, for one scope.
+     *
+     * @param string $path '' (cross-tenant viewer only) or the tenant root '/N'
+     * @param int[]|null $userids null = the whole path; otherwise a line manager's team
      */
-    private function get_admin_compliance(): string {
-        global $DB;
-
+    private function get_admin_compliance(string $path, ?array $userids): string {
         $now = time();
 
-        // Get all courses with deadlines (mandatory courses).
-        $mandatorycourses = $DB->get_records_select('course',
-            'enddate > 0 AND visible = 1 AND id > 1',
-            [], 'fullname ASC', 'id,shortname,fullname,enddate');
+        // Mandatory courses (with deadlines) and their per-course figures,
+        // scoped by audit::course_stats().
+        $mandatorycourses = \block_sentientia_compliance\audit::course_stats($path, $userids);
 
         if (empty($mandatorycourses)) {
             return '<p class="text-muted">No mandatory courses with deadlines configured.</p>';
         }
 
-        // Get all non-admin, non-guest users.
-        $users = $DB->get_records_select('user',
-            'deleted = 0 AND suspended = 0 AND id > 1 AND username != :admin',
-            ['admin' => 'superadmin'],
-            'lastname ASC', 'id,firstname,lastname,username');
-
         // Build compliance matrix.
-        $totalusers = count($users);
         $totalcourses = count($mandatorycourses);
         $totalcompleted = 0;
         $totaloverdue = 0;
@@ -165,18 +152,9 @@ class block_sentientia_compliance extends block_base {
 
         $coursestats = [];
         foreach ($mandatorycourses as $course) {
-            $enrolled = $DB->count_records_sql(
-                "SELECT COUNT(DISTINCT ue.userid)
-                   FROM {user_enrolments} ue
-                   JOIN {enrol} e ON e.id = ue.enrolid
-                  WHERE e.courseid = :cid",
-                ['cid' => $course->id]);
-
-            $completed = $DB->count_records_sql(
-                "SELECT COUNT(cc.id)
-                   FROM {course_completions} cc
-                  WHERE cc.course = :cid AND cc.timecompleted IS NOT NULL",
-                ['cid' => $course->id]);
+            $course = (object) $course;
+            $enrolled = $course->enrolled;
+            $completed = $course->completed;
 
             $overdue = ($course->enddate < $now) ? ($enrolled - $completed) : 0;
             $rate = ($enrolled > 0) ? round(($completed / $enrolled) * 100) : 0;
@@ -244,7 +222,10 @@ class block_sentientia_compliance extends block_base {
         // Auditor CSV export. Only render the link for users who actually hold the
         // export capability (export.php enforces the same gate) so it never 403s on click.
         // The sesskey makes the GET download CSRF-safe — export.php calls require_sesskey().
-        if (has_capability('local/sentientia_courses:manage', \context_system::instance())) {
+        // ADR-031: export.php hands over the caller's whole tenant, so a line
+        // manager seeing only their team is not offered it.
+        if ($userids === null
+                && has_capability('local/sentientia_courses:manage', \context_system::instance())) {
             $exporturl = new \moodle_url('/blocks/sentientia_compliance/export.php', ['sesskey' => sesskey()]);
             $html .= '<div class="airpay-compliance-admin__actions">';
             $html .= '<a class="btn btn-outline-secondary btn-sm" role="button" download href="'

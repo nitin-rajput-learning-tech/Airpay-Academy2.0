@@ -54,9 +54,10 @@ class enrol_csv_processor {
             'failed'    => [],
         ];
 
-        // Caller's tenant scope.
+        // Caller's tenant scope. ADR-031: only a cross-tenant caller (site
+        // admin or :crosstenant holder) is unscoped.
         $caller_tenant_top = 0;
-        if (!is_siteadmin($caller_userid)) {
+        if (!\local_sentientia_platform\tenant::is_cross_tenant($caller_userid)) {
             $caller = $DB->get_record('user', ['id' => $caller_userid],
                 'id, open_path');
             $parts = explode('/', trim((string) ($caller->open_path ?? ''), '/'));
@@ -116,7 +117,8 @@ class enrol_csv_processor {
                 continue;
             }
 
-            // Tenant guard.
+            // Tenant guard. ADR-031: reported exactly like a missing user,
+            // so the summary cannot confirm who exists in another tenant.
             if ($caller_tenant_top > 0) {
                 $u_parts = explode('/', trim((string) $user->open_path, '/'));
                 $u_top = isset($u_parts[0]) && ctype_digit($u_parts[0])
@@ -124,15 +126,24 @@ class enrol_csv_processor {
                 if ($u_top !== $caller_tenant_top) {
                     $summary['skipped'][] = [
                         'email' => $email, 'course' => $shortname,
-                        'reason' => 'User in another tenant.',
+                        'reason' => 'User not found.',
                     ];
                     continue;
                 }
             }
 
-            // Lookup course.
+            // Lookup course. '*' because open_path is a BizLMS column a
+            // vanilla schema does not have.
             $course = $DB->get_record('course',
-                ['shortname' => $shortname], 'id, fullname, visible');
+                ['shortname' => $shortname], '*');
+            // ADR-031: until 2026-09-25 any visible course of any tenant was
+            // accepted. A scoped caller may only enrol into a course owned by,
+            // shared to, or (legacy, no open_path) listed for their tenant;
+            // anything else reads as not found.
+            if ($course && $caller_tenant_top > 0
+                    && !course_manager::course_in_enrol_scope($course, $caller_tenant_top)) {
+                $course = false;
+            }
             if (!$course) {
                 $summary['skipped'][] = [
                     'email' => $email, 'course' => $shortname,
@@ -165,6 +176,19 @@ class enrol_csv_processor {
             }
             $roleid = $role_map[$resolved_role];
             $role = $resolved_role; // For the success log.
+
+            // ADR-031: in a course the caller's tenant does not own, learner
+            // roles only - a teacher or manager role there would let the
+            // caller's people edit another tenant's course.
+            $allowedroles = course_manager::enrol_allowed_role_ids($course,
+                $caller_tenant_top > 0 ? $caller_tenant_top : null);
+            if ($allowedroles !== null && !in_array($roleid, $allowedroles, true)) {
+                $summary['failed'][] = [
+                    'email' => $email, 'course' => $shortname,
+                    'error' => "Role '$role' cannot be given in a course another tenant owns.",
+                ];
+                continue;
+            }
 
             // Lookup or create-skip the manual enrol instance.
             $instance = $get_manual_instance((int) $course->id);

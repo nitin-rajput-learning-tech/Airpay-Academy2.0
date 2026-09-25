@@ -128,7 +128,10 @@ class enrolment {
         global $DB, $USER;
 
         $userid = $userid ?? (int) $USER->id;
-        if ($userid <= 0) {
+        if ($userid <= 0 || isguestuser($userid)) {
+            // ADR-031: the guest account is never enrolled; it is checked as
+            // the Public tenant by the visibility gate below, so without this
+            // a direct call could enrol it into any free Public course.
             return false;
         }
 

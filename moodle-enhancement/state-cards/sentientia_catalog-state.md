@@ -202,3 +202,22 @@ queued dark-mode opt-in + btn-close fixes. **Not yet visually re-verified on UAT
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+## 2026-09-25 - ADR-031: tenant resolution fails closed
+
+`catalog_manager::viewer_tenant_root()` returned 0 - the site admin's "no filter" value - for an
+empty or malformed open_path and for anonymous visitors. A tenantless logged-in learner therefore
+browsed every tenant's catalogue and could self-enrol into any tenant's free course through the
+cart's "Enrol in all (free)"; a guest could open any tenant's course detail by id.
+
+Now: `TENANT_ALL` (0) only for `tenant::is_cross_tenant()`; a guest or not-logged-in visitor is the
+Public tenant (`enrolment::public_tenant_id()`, as `commerce::get_public_catalog()`); anyone else
+with no resolvable tenant is `TENANT_UNRESOLVED` (-1) and sees, carts and enrols in nothing
+(`assert_course_visible_to_viewer()` refuses; `build_catalog_filter_sql()` gives `1=0`; trending,
+new and categories return empty). `enrolment::enrol_now()` never enrols the guest account. cart.php
+needs no change: its enrol path goes through the same gate (gating it on `should_offer_oneclick()`
+would break the Public /77 free funnel). The categories cache key `cat_t0` is now cross-tenant
+viewers only - purge local_sentientia_catalog caches on deploy.
+
+Tests: `tests/tenant_gate_test.php` (`@group tenant_isolation`). 1.0.5-beta / 2026092500 (now
+depends on local_sentientia_platform 2026092500). Both trees.

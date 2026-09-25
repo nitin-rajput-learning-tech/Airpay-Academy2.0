@@ -238,4 +238,114 @@ final class tenant_gate_test extends \advanced_testcase {
         $this->assertTrue($ok, 'A shared course must remain enrollable by the tenant it was shared to');
         $this->assertTrue(is_enrolled($context, $public->id));
     }
+
+    // ── ADR-031 (2026-09-25): tenant resolution fails closed ─────────────
+    //
+    // viewer_tenant_root() used to return 0 - the site admin's "no filter"
+    // value - for an empty or malformed open_path and for anonymous visitors,
+    // so they browsed, carted and self-enrolled across every tenant.
+
+    /** A logged-in user whose open_path does not resolve to a tenant. */
+    private function make_tenantless_user(string $path): \stdClass {
+        global $DB;
+        $u = $this->getDataGenerator()->create_user();
+        $DB->set_field('user', 'open_path', $path, ['id' => $u->id]);
+        return $DB->get_record('user', ['id' => $u->id]);
+    }
+
+    private function course_ids(array $result): array {
+        return array_map('intval', array_column($result['courses'], 'id'));
+    }
+
+    public function test_tenantless_user_cannot_open_cart_or_enrol_any_tenants_course(): void {
+        $airpay = $this->make_tenant_course(1, 'Airpay tenantless probe');
+        $zeea = $this->make_tenant_course(177, 'ZEEA tenantless probe');
+
+        foreach (['', 'garbage'] as $path) {
+            $u = $this->make_tenantless_user($path);
+            $this->setUser($u);
+            foreach ([$airpay, $zeea] as $course) {
+                try {
+                    catalog_manager::assert_course_visible_to_viewer((int) $course->id);
+                    $this->fail("open_path '{$path}' must not open course {$course->id}");
+                } catch (\moodle_exception $e) {
+                    $this->assertSame('nopermissions', $e->errorcode);
+                }
+                $this->assertFalse(commerce::add_to_cart((int) $course->id));
+                // cart.php 'enrollfree' calls enrol_now() for the session user.
+                $this->assertFalse(enrolment::enrol_now((int) $course->id));
+                $this->assertFalse(is_enrolled(\context_course::instance($course->id), $u->id));
+            }
+            $this->assertSame([], $this->course_ids(catalog_manager::get_courses((int) $u->id)),
+                "open_path '{$path}' must list no course");
+            $this->assertSame([], catalog_manager::get_categories());
+            $this->assertSame([], catalog_manager::get_new((int) $u->id));
+            $this->assertSame([], catalog_manager::get_trending((int) $u->id));
+        }
+    }
+
+    public function test_enrol_now_for_an_explicit_tenantless_user_is_refused(): void {
+        $airpay = $this->make_tenant_course(1, 'Airpay explicit tenantless');
+        $u = $this->make_tenantless_user('');
+        $this->setAdminUser();  // the acting user is cross-tenant; the TARGET is not
+        $this->assertFalse(enrolment::enrol_now((int) $airpay->id, (int) $u->id));
+        $this->assertFalse(is_enrolled(\context_course::instance($airpay->id), $u->id));
+    }
+
+    public function test_anonymous_and_guest_visitors_see_only_the_public_tenant(): void {
+        $public = $this->make_tenant_course(77, 'Public storefront probe');
+        $airpay = $this->make_tenant_course(1, 'Airpay internal probe');
+
+        foreach (['anonymous', 'guest'] as $who) {
+            if ($who === 'guest') {
+                $this->setGuestUser();
+            } else {
+                $this->setUser(null);
+            }
+            $course = catalog_manager::assert_course_visible_to_viewer((int) $public->id);
+            $this->assertEquals((int) $public->id, (int) $course->id, "{$who} opens a /77 course");
+            try {
+                catalog_manager::assert_course_visible_to_viewer((int) $airpay->id);
+                $this->fail("{$who} must not open a /1 course by id");
+            } catch (\moodle_exception $e) {
+                $this->assertSame('nopermissions', $e->errorcode);
+            }
+            $this->assertFalse(commerce::add_to_cart((int) $airpay->id));
+        }
+
+        $this->setGuestUser();
+        $ids = $this->course_ids(catalog_manager::get_courses((int) $GLOBALS['USER']->id));
+        $this->assertContains((int) $public->id, $ids);
+        $this->assertNotContains((int) $airpay->id, $ids, 'guest login must not list internal courses');
+    }
+
+    public function test_guest_account_is_never_enrolled(): void {
+        $public = $this->make_tenant_course(77, 'Public free probe');
+        $this->setGuestUser();
+        $this->assertFalse(enrolment::enrol_now((int) $public->id));
+        $this->assertFalse(enrolment::enrol_now((int) $public->id, (int) $GLOBALS['USER']->id));
+    }
+
+    public function test_manager_archetype_tenant_admin_is_not_cross_tenant(): void {
+        global $DB;
+        $zeea = $this->make_tenant_course(177, 'ZEEA vs tenant admin');
+        $admin = $this->make_tenant_user(1);
+        $roleid = $this->getDataGenerator()->create_role(['archetype' => 'manager']);
+        role_assign($roleid, $admin->id, \context_system::instance()->id);
+        $this->setUser($admin);
+
+        $this->assertNotContains((int) $zeea->id,
+            $this->course_ids(catalog_manager::get_courses((int) $admin->id)));
+        $this->expectException(\moodle_exception::class);
+        catalog_manager::assert_course_visible_to_viewer((int) $zeea->id);
+    }
+
+    public function test_site_admin_still_lists_every_tenant(): void {
+        $airpay = $this->make_tenant_course(1, 'Airpay admin list');
+        $zeea = $this->make_tenant_course(177, 'ZEEA admin list');
+        $this->setAdminUser();
+        $ids = $this->course_ids(catalog_manager::get_courses(2, '', [], 'newest', 0, 100));
+        $this->assertContains((int) $airpay->id, $ids);
+        $this->assertContains((int) $zeea->id, $ids);
+    }
 }

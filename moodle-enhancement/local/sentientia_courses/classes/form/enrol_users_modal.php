@@ -21,6 +21,16 @@ class enrol_users_modal extends \core_form\dynamic_form {
         $mform->addElement('hidden', 'courseid', $courseid);
         $mform->setType('courseid', PARAM_INT);
 
+        // ADR-031: the caller's tenant (null = cross-tenant) and, for a course
+        // their tenant does not own (shared in, or legacy with no open_path),
+        // learner roles only. check_access_for_dynamic_submission() has
+        // already refused a course outside the caller's scope.
+        $root = \local_sentientia_courses\course_manager::enrol_scope_root();
+        $course = $DB->get_record('course', ['id' => $courseid], '*', IGNORE_MISSING);
+        $allowedroles = $course
+            ? \local_sentientia_courses\course_manager::enrol_allowed_role_ids($course, $root)
+            : null;
+
         // Role dropdown — load from {role} (BizLMS uses 'employee').
         $roles = $DB->get_records('role', null, 'sortorder ASC',
             'id, shortname, name');
@@ -29,6 +39,7 @@ class enrol_users_modal extends \core_form\dynamic_form {
             // Hide system + admin from picker.
             if (in_array($r->shortname, ['guest', 'frontpage', 'user',
                 'administrator'], true)) continue;
+            if ($allowedroles !== null && !in_array((int) $r->id, $allowedroles, true)) continue;
             $label = format_string($r->name) ?: $r->shortname;
             $role_options[(int) $r->id] = $label . ' (' . $r->shortname . ')';
         }
@@ -51,16 +62,13 @@ class enrol_users_modal extends \core_form\dynamic_form {
         $where = ['u.deleted = 0', 'u.suspended = 0', 'u.id > 2'];
         $params = ['cid' => $courseid];
 
-        if (!is_siteadmin()) {
-            $parts = explode('/', trim($USER->open_path ?? '', '/'));
-            $top = isset($parts[0]) && ctype_digit($parts[0])
-                ? (int) $parts[0] : 0;
-            if ($top > 0) {
-                $where[] = '(u.open_path = :ox OR u.open_path LIKE :op)';
-                $params['ox'] = '/' . $top;
-                $params['op'] = $DB->sql_like_escape('/' . $top . '/') . '%';
-            }
-        }
+        // ADR-031: path_filter() is 1=1 for a cross-tenant caller and 1=0 for
+        // one with no tenant. The inline version added no clause at all when
+        // the caller's open_path did not resolve, which listed (and let the
+        // caller enrol) up to 2000 users from every tenant.
+        [$tusql, $tuargs] = \local_sentientia_platform\tenant::path_filter('u');
+        $where[] = $tusql;
+        $params = array_merge($params, $tuargs);
 
         // Already enrolled in this course?
         $already = $DB->get_fieldset_sql(
@@ -125,6 +133,16 @@ class enrol_users_modal extends \core_form\dynamic_form {
         $userids = is_array($data->userids ?? null)
             ? array_map('intval', $data->userids) : [];
 
+        // ADR-031: second line of defence behind the picker's options - the
+        // course and EVERY submitted user must be in the caller's scope, and
+        // the role must be one the caller may give in this course.
+        $root = \local_sentientia_courses\course_manager::require_enrol_scope($courseid, $userids);
+        $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
+        $allowedroles = \local_sentientia_courses\course_manager::enrol_allowed_role_ids($course, $root);
+        if ($allowedroles !== null && !in_array($roleid, $allowedroles, true)) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+
         $instance = $DB->get_record('enrol',
             ['courseid' => $courseid, 'enrol' => 'manual', 'status' => 0]);
         if (!$instance) {
@@ -160,6 +178,11 @@ class enrol_users_modal extends \core_form\dynamic_form {
     protected function check_access_for_dynamic_submission(): void {
         require_capability('local/sentientia_courses:enrol',
             $this->get_context_for_dynamic_submission());
+        // ADR-031: runs before definition() on load AND on submit. Refuses a
+        // scoped caller with no tenant (invalidtenant) and a course outside
+        // the caller's tenant (error_outoftenant); cross-tenant callers pass.
+        $courseid = (int) $this->optional_param('courseid', 0, PARAM_INT);
+        \local_sentientia_courses\course_manager::require_enrol_scope($courseid);
     }
 
     protected function get_context_for_dynamic_submission(): \context {

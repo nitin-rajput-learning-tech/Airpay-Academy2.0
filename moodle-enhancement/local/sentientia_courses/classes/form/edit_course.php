@@ -161,6 +161,18 @@ class edit_course extends \core_form\dynamic_form {
             $errors['enddate'] = get_string('enddatebeforestart', 'local_sentientia_courses');
         }
 
+        // ADR-031: a scoped caller may only file a course under an org in
+        // their own tenant. course_manager enforces it too; this puts the
+        // message on the field instead of failing the whole submission.
+        $orgid = (int) ($data['open_costcenterid'] ?? 0);
+        if ($orgid > 0) {
+            try {
+                \local_sentientia_courses\course_manager::org_path_for_write($orgid);
+            } catch (\moodle_exception $e) {
+                $errors['open_costcenterid'] = get_string('error_orgoutoftenant', 'local_sentientia_courses');
+            }
+        }
+
         return $errors;
     }
 
@@ -245,13 +257,24 @@ class edit_course extends \core_form\dynamic_form {
      * Capability check.
      */
     protected function check_access_for_dynamic_submission(): void {
+        global $DB;
         $context = $this->get_context_for_dynamic_submission();
         $courseid = (int) ($this->optional_param('courseid', 0, PARAM_INT));
 
         if ($courseid === 0) {
             require_capability('local/sentientia_courses:create', $context);
+            // ADR-031: a scoped caller with no resolvable tenant creates nothing.
+            if (!\local_sentientia_platform\tenant::is_cross_tenant()
+                    && \local_sentientia_platform\tenant::scope_path() === null) {
+                throw new \moodle_exception('invalidtenant', 'local_sentientia_courses');
+            }
         } else {
             require_capability('local/sentientia_courses:update', $context);
+            // ADR-031: core runs this check before set_data_for_dynamic_submission(),
+            // so it stops both the pre-fill (which returned any tenant's course
+            // record) and the submit (which overwrote it).
+            $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
+            \local_sentientia_courses\course_manager::require_course_write_access($course);
         }
     }
 
@@ -277,16 +300,12 @@ class edit_course extends \core_form\dynamic_form {
         return $options;
     }
 
+    /**
+     * Organisation options (ADR-031 scoped - see course_manager::org_options()).
+     *
+     * @return array<int, string>
+     */
     private function get_org_options(): array {
-        global $DB;
-        $orgs = $DB->get_records('local_sentientia_org', ['visible' => 1],
-            'depth ASC, fullname ASC', 'id, fullname, depth');
-
-        $options = [0 => '— No specific organisation —'];
-        foreach ($orgs as $o) {
-            $indent = str_repeat('— ', max(0, $o->depth - 1));
-            $options[$o->id] = $indent . format_string($o->fullname);
-        }
-        return $options;
+        return \local_sentientia_courses\course_manager::org_options();
     }
 }

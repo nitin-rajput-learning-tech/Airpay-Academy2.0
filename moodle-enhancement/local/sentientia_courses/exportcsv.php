@@ -50,16 +50,21 @@ $orderby = "c.{$sort} {$sortdir}, c.id ASC";
 $where = ['c.id > 1']; // Exclude site course.
 $sqlparams = [];
 
-// Tenant scope: non-siteadmin only sees their org tree (+ legacy NULL paths).
-if (!is_siteadmin()) {
-    $parts = explode('/', trim($USER->open_path ?? '', '/'));
-    $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
-    if ($top > 0) {
-        $where[] = '(c.open_path = :corgexact OR c.open_path LIKE :corgprefix OR c.open_path IS NULL)';
-        $sqlparams['corgexact']  = '/' . $top;
-        $sqlparams['corgprefix'] = $DB->sql_like_escape('/' . $top . '/') . '%';
-    }
+// Tenant scope: identical to external\list_courses and the Manage Courses KPI
+// tiles (course_manager::manage_scope_sql). Cross-tenant caller -> 1=1;
+// tenant user -> own tree + legacy NULL-path rows.
+//
+// ADR-031 (2026-09-25): a non-siteadmin whose open_path did not resolve used
+// to get NO tenant clause here - every tenant's courses with enrolment and
+// completion counts - while the on-screen table showed them nothing. Such a
+// caller is now refused outright rather than handed an empty or full file.
+if (!\local_sentientia_platform\tenant::is_cross_tenant()
+        && \local_sentientia_platform\tenant::scope_path() === null) {
+    throw new moodle_exception('invalidtenant', 'local_sentientia_courses');
 }
+[$tnsql, $tnargs] = \local_sentientia_courses\course_manager::manage_scope_sql('c');
+$where[] = $tnsql;
+$sqlparams = array_merge($sqlparams, $tnargs);
 
 if ($categoryid > 0) {
     $where[] = 'c.category = :catid';

@@ -107,6 +107,7 @@ $string['request_filed'] = 'Your request has been filed. An Airpay administrator
 $string['request_approved'] = 'Request approved. The course is now in the requesting tenant\'s catalogue.';
 $string['request_rejected'] = 'Request rejected. The requester will see the decision in their outbox.';
 $string['invalidtenant'] = 'Could not determine your tenant — your user account has no organisation path.';
+$string['error_orgoutoftenant'] = 'Choose an organisation in your own tenant.';
 $string['invaliduser']  = 'The requesting user account is no longer active.';
 $string['invalidcourse'] = 'No such course.';
 $string['cannotrequestowncourse'] = 'You cannot request a course your tenant already owns.';

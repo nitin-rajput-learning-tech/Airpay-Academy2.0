@@ -24,22 +24,34 @@ $PAGE->set_context($ctx);
 $PAGE->set_url(new moodle_url('/local/sentientia_courses/enrolledusers.php',
     ['id' => $courseid]));
 $PAGE->set_pagelayout('admin');
+require_capability('local/sentientia_courses:view', $ctx);
+// ADR-031: the course must be in the viewer's tenant tree, exactly as
+// external\list_course_enrolments (this page's datatable) already requires.
+// Checked before the course name is rendered or anything is counted: until
+// 2026-09-25 any :view holder could read any tenant's course name and
+// enrolment / completion figures by id.
+\local_sentientia_platform\tenant::require_path_access((string) ($course->open_path ?? ''));
 $PAGE->set_title('Enrolled users — ' . format_string($course->fullname));
 $PAGE->set_heading('Enrolled users — ' . format_string($course->fullname));
-require_capability('local/sentientia_courses:view', $ctx);
 
 $can_enrol = has_capability('local/sentientia_courses:enrol', $ctx);
 
-// Counts for KPI strip.
+// Counts for KPI strip - over the same people the datatable lists: every
+// enrolee for a cross-tenant viewer, the viewer's own tenant otherwise
+// (a legacy no-open_path course is enrolled into by every tenant).
+[$kusql, $kuargs] = \local_sentientia_platform\tenant::path_filter('u');
 $total_enrolled = (int) $DB->count_records_sql(
     "SELECT COUNT(DISTINCT ue.userid)
        FROM {user_enrolments} ue
        JOIN {enrol} e ON e.id = ue.enrolid
-      WHERE e.courseid = :cid", ['cid' => $courseid]);
+       JOIN {user} u ON u.id = ue.userid
+      WHERE e.courseid = :cid AND {$kusql}", ['cid' => $courseid] + $kuargs);
 $total_completed = (int) $DB->count_records_sql(
-    "SELECT COUNT(*) FROM {course_completions}
-      WHERE course = :cid AND timecompleted IS NOT NULL AND timecompleted > 0",
-    ['cid' => $courseid]);
+    "SELECT COUNT(*) FROM {course_completions} cc
+       JOIN {user} u ON u.id = cc.userid
+      WHERE cc.course = :cid AND cc.timecompleted IS NOT NULL AND cc.timecompleted > 0
+        AND {$kusql}",
+    ['cid' => $courseid] + $kuargs);
 $completion_pct = $total_enrolled > 0
     ? round(100 * $total_completed / $total_enrolled, 1)
     : 0;

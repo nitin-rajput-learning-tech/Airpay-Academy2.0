@@ -183,7 +183,8 @@ class course_manager {
     public static function manage_category_options(): array {
         global $DB;
 
-        if (is_siteadmin()) {
+        // ADR-031: only a cross-tenant caller (site admin or :crosstenant) sees every category.
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
             $categories = $DB->get_records('course_categories', null, 'sortorder ASC',
                 'id, name, depth');
         } else {
@@ -240,6 +241,227 @@ class course_manager {
     }
 
     // ═══════════════════════════════════════════════════════════════════
+    // ADR-031 tenant scope (2026-09-25)
+    //
+    // A plugin capability says WHAT a caller may do, never WHERE. Every
+    // :create / :update / :visibility / :delete / :enrol holder is a tenant
+    // admin (a manager-archetype role at system context) unless
+    // tenant::is_cross_tenant() says otherwise, so every write that names a
+    // course or a user checks the TARGET against the caller's tenant here.
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * Is a course path inside tenant $root's tree ('/N' or '/N/...')?
+     *
+     * @param string $path course.open_path (may be empty)
+     * @param int $root tenant root
+     * @return bool
+     */
+    public static function path_in_tenant(string $path, int $root): bool {
+        $path = rtrim(trim($path), '/');
+        if ($root <= 0 || $path === '') {
+            return false;
+        }
+        $exact = '/' . $root;
+        return $path === $exact || strpos($path, $exact . '/') === 0;
+    }
+
+    /**
+     * ADR-031: refuse a WRITE to a course outside the caller's tenant.
+     *
+     * Stricter than tenant::require_path_access(), which lets an empty
+     * open_path through for reads. A legacy course with no open_path is
+     * listed for every tenant, so hiding, editing, re-homing or deleting it
+     * reaches every tenant: that is left to cross-tenant callers.
+     *
+     * @param \stdClass $course a course record (open_path may be missing or null)
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_course_write_access(\stdClass $course): void {
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return;
+        }
+        $path = rtrim(trim((string) ($course->open_path ?? '')), '/');
+        if ($path === '') {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        \local_sentientia_platform\tenant::require_path_access($path);
+    }
+
+    /**
+     * ADR-031: the open_path a create/update may write for an organisation id.
+     *
+     * Cross-tenant callers keep the old behaviour (an unknown org id is
+     * ignored). A scoped caller may only pick an org inside their own tenant:
+     * until 2026-09-25 any tenant admin could move a course into, or plant one
+     * inside, another tenant by choosing that tenant's org.
+     *
+     * @param int $orgid local_sentientia_org.id (> 0)
+     * @return string|null|false the org's path exactly as stored (null only
+     *         for a cross-tenant caller's org with no path), or false when the
+     *         org does not exist (cross-tenant only: ignored, as before)
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function org_path_for_write(int $orgid) {
+        global $DB;
+        $org = $DB->get_record('local_sentientia_org', ['id' => $orgid], 'id, path');
+        $crosstenant = \local_sentientia_platform\tenant::is_cross_tenant();
+        if (!$org) {
+            if ($crosstenant) {
+                return false;
+            }
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        if (!$crosstenant) {
+            $path = rtrim(trim((string) $org->path), '/');
+            if ($path === '') {
+                throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+            }
+            \local_sentientia_platform\tenant::require_path_access($path);
+        }
+        return $org->path;
+    }
+
+    /**
+     * Organisation options for the create / edit course form.
+     *
+     * ADR-031: a cross-tenant caller keeps every org. A tenant admin gets
+     * only their own tenant's orgs - the dropdown used to list every
+     * tenant's org structure. A scoped caller with no tenant gets no org
+     * (path_filter is 1=0).
+     *
+     * Everyone keeps "No specific organisation" (0): on edit it leaves
+     * open_path unchanged, so a course whose path matches no org row is not
+     * silently re-homed to the first option; on create, create() gives a
+     * scoped caller's course their own tenant root instead of the
+     * no-open_path course every tenant's list used to show.
+     *
+     * @return array<int, string> org id => indented name
+     */
+    public static function org_options(): array {
+        global $DB;
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            $orgs = $DB->get_records('local_sentientia_org', ['visible' => 1],
+                'depth ASC, fullname ASC', 'id, fullname, depth');
+        } else {
+            [$tsql, $targs] = \local_sentientia_platform\tenant::path_filter('', 'path');
+            $orgs = $DB->get_records_select('local_sentientia_org', "visible = 1 AND {$tsql}",
+                $targs, 'depth ASC, fullname ASC', 'id, fullname, depth');
+        }
+        $options = [0 => '— No specific organisation —'];
+        foreach ($orgs as $o) {
+            $indent = str_repeat('— ', max(0, (int) $o->depth - 1));
+            $options[(int) $o->id] = $indent . format_string($o->fullname);
+        }
+        return $options;
+    }
+
+    /**
+     * ADR-031: the caller's enrolment scope.
+     *
+     * @param int|null $actorid defaults to the current user
+     * @return int|null null = cross-tenant (no restriction), otherwise the tenant root
+     * @throws \moodle_exception invalidtenant for a scoped caller whose tenant does not resolve
+     */
+    public static function enrol_scope_root(?int $actorid = null): ?int {
+        global $DB, $USER;
+        $actorid = $actorid ?? (int) ($USER->id ?? 0);
+        if (\local_sentientia_platform\tenant::is_cross_tenant($actorid)) {
+            return null;
+        }
+        $actor = ($actorid === (int) ($USER->id ?? 0)) ? $USER
+            : $DB->get_record('user', ['id' => $actorid], 'id, open_path');
+        $root = $actor ? \local_sentientia_platform\tenant::root_for_user($actor) : 0;
+        if ($root <= 0) {
+            throw new \moodle_exception('invalidtenant', 'local_sentientia_courses');
+        }
+        return $root;
+    }
+
+    /**
+     * ADR-031: may a caller scoped to $root manage enrolments in this course?
+     *
+     * True when the course is in the tenant's tree, has been shared to the
+     * tenant (Sprint C sharing), or is a legacy course with no open_path (the
+     * Manage Courses list shows those to every tenant; the users enrolled or
+     * unenrolled are still checked separately against the tenant).
+     *
+     * @param \stdClass $course record carrying id and open_path
+     * @param int $root tenant root (> 0)
+     * @return bool
+     */
+    public static function course_in_enrol_scope(\stdClass $course, int $root): bool {
+        $path = rtrim(trim((string) ($course->open_path ?? '')), '/');
+        if ($path === '' || self::path_in_tenant($path, $root)) {
+            return true;
+        }
+        return sharing_manager::is_course_shared_to((int) $course->id, $root);
+    }
+
+    /**
+     * ADR-031: refuse an enrol / unenrol unless the course and every target
+     * user are in the caller's tenant. Cross-tenant callers pass.
+     *
+     * @param int $courseid
+     * @param int[] $userids target users
+     * @param int|null $actorid defaults to the current user
+     * @return int|null the caller's tenant root, or null when cross-tenant
+     * @throws \moodle_exception invalidtenant / error_outoftenant
+     */
+    public static function require_enrol_scope(int $courseid, array $userids = [],
+                                               ?int $actorid = null): ?int {
+        global $DB;
+        $root = self::enrol_scope_root($actorid);
+        if ($root === null) {
+            return null;
+        }
+        $course = $DB->get_record('course', ['id' => $courseid], '*', IGNORE_MISSING);
+        if (!$course || !self::course_in_enrol_scope($course, $root)) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        foreach ($userids as $uid) {
+            \local_sentientia_platform\tenant::require_same_tenant_user((int) $uid, $actorid);
+        }
+        return $root;
+    }
+
+    /**
+     * Learner roles: archetype student, plus the BizLMS 'employee' role.
+     *
+     * @return int[] role ids
+     */
+    public static function learner_role_ids(): array {
+        global $DB;
+        $ids = [];
+        foreach ($DB->get_records('role', null, 'sortorder ASC', 'id, shortname, archetype') as $r) {
+            if ($r->archetype === 'student' || in_array($r->shortname, ['student', 'employee'], true)) {
+                $ids[] = (int) $r->id;
+            }
+        }
+        return $ids;
+    }
+
+    /**
+     * ADR-031: which course roles may this enrolment grant?
+     *
+     * null = no extra restriction: a cross-tenant caller, or a scoped caller
+     * enrolling into a course their own tenant owns (unchanged behaviour).
+     * Otherwise - a course shared in from another tenant, or a legacy course
+     * with no open_path - learner roles only: a teacher or manager role there
+     * would let the enroller's people edit a course another tenant owns.
+     *
+     * @param \stdClass $course record carrying open_path
+     * @param int|null $root the caller's tenant root; null = cross-tenant
+     * @return int[]|null
+     */
+    public static function enrol_allowed_role_ids(\stdClass $course, ?int $root): ?array {
+        if ($root === null || self::path_in_tenant((string) ($course->open_path ?? ''), $root)) {
+            return null;
+        }
+        return self::learner_role_ids();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
     // CRUD operations
     // ═══════════════════════════════════════════════════════════════════
 
@@ -261,6 +483,13 @@ class course_manager {
         // Validate required fields.
         if (empty($data->fullname) || empty($data->shortname) || empty($data->category)) {
             throw new \moodle_exception('missingrequiredfields', 'local_sentientia_courses');
+        }
+
+        // ADR-031: a scoped caller with no resolvable tenant creates nothing.
+        $crosstenant = \local_sentientia_platform\tenant::is_cross_tenant();
+        $scopepath = $crosstenant ? '' : \local_sentientia_platform\tenant::scope_path();
+        if ($scopepath === null) {
+            throw new \moodle_exception('invalidtenant', 'local_sentientia_courses');
         }
 
         // Check shortname uniqueness.
@@ -285,11 +514,18 @@ class course_manager {
 
         // Tenant scoping — derive open_path from organisation.
         // (open_costcenterid column does not exist on production — only open_path.)
+        // ADR-031: the org must be inside a scoped caller's tenant.
         if (!empty($data->open_costcenterid)) {
-            $org = $DB->get_record('local_sentientia_org', ['id' => $data->open_costcenterid]);
-            if ($org) {
-                $course->open_path = $org->path;
+            $orgpath = self::org_path_for_write((int) $data->open_costcenterid);
+            if ($orgpath !== false) {
+                $course->open_path = $orgpath;
             }
+        }
+        // ADR-031: a scoped caller may not create a course with no open_path -
+        // the Manage Courses list shows those to every tenant. "No specific
+        // organisation" means the caller's own tenant root.
+        if (!$crosstenant && empty($course->open_path)) {
+            $course->open_path = $scopepath;
         }
 
         // P1 #21 (2026-05-16) — open_coursecompletiondays. Closes audit
@@ -320,6 +556,8 @@ class course_manager {
         require_once($CFG->dirroot . '/course/lib.php');
 
         $existing = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
+        // ADR-031: the course being edited must be in the caller's tenant.
+        self::require_course_write_access($existing);
 
         // Build update record.
         $course = new \stdClass();
@@ -344,10 +582,13 @@ class course_manager {
         }
 
         // Tenant scoping update — open_path is the canonical store.
-        if (isset($data->open_costcenterid)) {
-            $org = $DB->get_record('local_sentientia_org', ['id' => $data->open_costcenterid]);
-            if ($org) {
-                $course->open_path = $org->path;
+        // ADR-031: re-homing is limited to orgs inside a scoped caller's
+        // tenant. 0 ("No specific organisation") leaves open_path unchanged,
+        // exactly as before.
+        if (!empty($data->open_costcenterid)) {
+            $orgpath = self::org_path_for_write((int) $data->open_costcenterid);
+            if ($orgpath !== false) {
+                $course->open_path = $orgpath;
             }
         }
 
@@ -373,7 +614,12 @@ class course_manager {
         global $DB, $CFG;
         require_once($CFG->dirroot . '/course/lib.php');
 
-        $course = $DB->get_record('course', ['id' => $courseid], 'id, visible', MUST_EXIST);
+        // '*' rather than 'id, visible, open_path': open_path is a BizLMS
+        // column that a vanilla schema does not have.
+        $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
+        // ADR-031: until 2026-09-25 any :visibility holder (every tenant
+        // admin) could hide any tenant's course by id.
+        self::require_course_write_access($course);
 
         $newstate = $visible ?? !((bool) $course->visible);
 
@@ -405,6 +651,9 @@ class course_manager {
         }
 
         $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
+        // ADR-031 defence in depth: :delete is site-admin-only by default,
+        // but a role it is granted to stays inside its own tenant.
+        self::require_course_write_access($course);
         return delete_course($course, false);
     }
 }
