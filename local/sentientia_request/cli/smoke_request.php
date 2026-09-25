@@ -36,14 +36,20 @@ if (!$user) {
     exit(1);
 }
 
+// ADR-031: submit() refuses a course outside the requester's tenant, so pick
+// one inside the test user's tenant tree (or a legacy course with no path).
+$userroot = \local_sentientia_platform\tenant::root_for_user($user);
+[$tenantsql, $tenantargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+    $userroot > 0 ? '/' . $userroot : '', 'c', 'open_path', 'smoke', true);
 $course = $DB->get_record_sql(
     "SELECT c.id, c.fullname FROM {course} c
       WHERE c.id > 1 AND c.visible = 1
+        AND ({$tenantsql} OR c.open_path = '')
         AND c.id NOT IN (
             SELECT e.courseid FROM {enrol} e
             JOIN {user_enrolments} ue ON ue.enrolid = e.id
             WHERE ue.userid = :uid)
-      ORDER BY c.id LIMIT 1", ['uid' => $user->id]);
+      ORDER BY c.id LIMIT 1", ['uid' => $user->id] + $tenantargs);
 echo "Test user: $user->username (id=$user->id)\n";
 echo "Test course: $course->fullname (id=$course->id)\n\n";
 

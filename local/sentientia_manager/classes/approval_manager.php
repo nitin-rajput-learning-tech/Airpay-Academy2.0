@@ -522,14 +522,19 @@ class approval_manager {
         $id = self::insert_allocation_row($managerid, $userid,
             self::ITEM_CLASSROOM, $classroomid, $due_date, $note);
 
-        // Enrol via sentientia_classroom session_manager — that handles the
-        // local_sentientia_classroom_users row insert + cancels duplicates.
-        if (class_exists('\\local_sentientia_classroom\\session_manager')
-            && method_exists('\\local_sentientia_classroom\\session_manager',
-                'add_users_to_classroom')) {
+        // Enrol via sentientia_classroom session_manager::enrol_users(), which
+        // inserts the local_sentientia_classroom_users roster row and skips a
+        // user already on it. Until 2026-09-25 this called
+        // add_users_to_classroom(), a method that has never existed: the
+        // method_exists() guard was always false, so the allocation row was
+        // written and the learner told they were allocated, but they were
+        // never put on the roster. guard_direct_report() and
+        // require_item_in_tenant() above have already bounded the user and
+        // the classroom to the manager's tenant (ADR-031).
+        if (class_exists('\\local_sentientia_classroom\\session_manager')) {
             try {
-                \local_sentientia_classroom\session_manager::add_users_to_classroom(
-                    $classroomid, [$userid], $managerid);
+                \local_sentientia_classroom\session_manager::enrol_users(
+                    $classroomid, [$userid]);
             } catch (\Throwable $e) {
                 debugging('Classroom allocation ' . $id . ' enrol failed: '
                     . $e->getMessage(), DEBUG_DEVELOPER);

@@ -69,10 +69,17 @@ if ($stale > 0) {
 
 // 4. Pick a visible course qa_employee is NOT enrolled in and has no other
 //    pending request for, then submit through the real product API.
+//    ADR-031: submit() refuses a course outside the requester's tenant, so
+//    the pick is bounded to qa_employee's tenant tree (or a legacy course
+//    with no open_path).
+$employeeroot = \local_sentientia_platform\tenant::root_for_user($employee);
+[$tenantsql, $tenantargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+    $employeeroot > 0 ? '/' . $employeeroot : '', 'c', 'open_path', 'qaseed', true);
 $course = $DB->get_record_sql(
     "SELECT c.id, c.fullname
        FROM {course} c
       WHERE c.id > 1 AND c.visible = 1
+        AND ({$tenantsql} OR c.open_path = '')
         AND c.id NOT IN (
             SELECT e.courseid FROM {enrol} e
             JOIN {user_enrolments} ue ON ue.enrolid = e.id
@@ -82,7 +89,7 @@ $course = $DB->get_record_sql(
             WHERE r.userid = :uid2 AND r.status = 'pending')
    ORDER BY c.id
       LIMIT 1",
-    ['uid' => $employee->id, 'uid2' => $employee->id]);
+    ['uid' => $employee->id, 'uid2' => $employee->id] + $tenantargs);
 if (!$course) {
     cli_error('No eligible course found (qa_employee enrolled everywhere?)');
 }

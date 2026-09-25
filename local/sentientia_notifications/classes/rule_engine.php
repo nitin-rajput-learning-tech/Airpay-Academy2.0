@@ -480,9 +480,17 @@ class rule_engine {
     /**
      * Rule: Learning path stalled.
      *
-     * Notifies a learner who joined a learning path and made no progress
-     * in the last `trigger_days` days. Reads from local_sentientia_learningpath_users
-     * (the sentientia_learningpath user-assignments table).
+     * Notifies a learner who joined a learning path more than `trigger_days`
+     * days ago and has not completed it. Reads local_sentientia_learningpath_users
+     * (the sentientia_learningpath user-assignments table: status is an
+     * integer, path_manager::ENROL_NEW = 0 / ENROL_INPROGRESS = 1 /
+     * 2 = completed; the table has timecreated, no timemodified).
+     *
+     * 2026-09-25: the moodle-enhancement copy still read the retired
+     * local_airpay_lp_users table (so the rule sent nothing on UAT), and both
+     * copies compared that integer status with the strings 'enrolled' and
+     * 'in_progress' - an error on PostgreSQL, and on MySQL both strings cast
+     * to 0 so in-progress learners were never matched.
      */
     private static function rule_learning_path_stalled(\stdClass $rule): array {
         global $DB;
@@ -502,11 +510,15 @@ class rule_engine {
               JOIN {user} u ON u.id = lu.userid
               JOIN {local_sentientia_learningpath} lp ON lp.id = lu.pathid
              WHERE lu.timecreated < :cutoff
-               AND lu.status IN ('enrolled', 'in_progress')
+               AND lu.status IN (:stnew, :stprog)
                AND u.deleted = 0 AND u.suspended = 0
           ORDER BY lu.timecreated ASC
              LIMIT $batchlimit",
-            ['cutoff' => $cutoff]);
+            [
+                'cutoff' => $cutoff,
+                'stnew'  => \local_sentientia_learningpath\path_manager::ENROL_NEW,
+                'stprog' => \local_sentientia_learningpath\path_manager::ENROL_INPROGRESS,
+            ]);
 
         foreach ($rows as $r) {
             $sent = self::send($rule, (int) $r->userid, null,

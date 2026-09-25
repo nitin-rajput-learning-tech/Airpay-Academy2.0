@@ -131,3 +131,51 @@ cosmetic, test-only change: no code, schema or capability changed, so there is n
 In `tests/tenant_scope_test.php`, the class docblock paragraph about `decide()` sat after the
 `@package` / `@category` tags, where PHPDoc reads it as part of the tag block. It now comes before
 the tags. Both trees were changed identically. The test class is still `@group tenant_isolation`.
+
+## 2026-09-25 - ADR-031 follow-up 3: the requested item is tenant-checked (still 1.4.0, 2026092500)
+
+Reviewer item (P1, CONFIRMED) on the merged wave 1, fixed on branch `claude/adr031-comms3-ff`.
+No schema, capability or service change, so the wave-1 version stands. Both trees identical.
+
+The request flow never compared the COURSE or PATH with anyone's tenant. `submit()` took any
+course id through `local_sentientia_request_submit` (`:request` goes to every authenticated user),
+and `decide()` only checked the override-route decider against `costcenterid` (the requester's own
+tenant). A /77 tenant admin (the 'administrator' role holds `:request`, `:approve` and
+`:overrideroute`) could request a /1 course and approve it themselves; an in-tenant supervisor, as
+the assigned approver, could approve a report into another tenant's course with no check at all.
+
+- `submit()`: `require_course_requestable()` runs before `context_course::instance()`. A requester
+  with no tenant (`scope_path()` null) is refused everything. A scoped requester needs a visible
+  course in their tenant's tree, shared to their tenant, or a legacy course with no open_path
+  (`course_manager::course_in_enrol_scope()`, with an inline tree-or-legacy fallback when
+  local_sentientia_courses is absent). A missing id gets the same `error_outoftenant`.
+- `submit_path()`: fetches `open_path` and calls `path_manager::assert_path_in_scope($path, $userid)`
+  before the status check. A missing path is `error_outoftenant` (it was a dml exception), so a
+  foreign path no longer reveals that it exists or is archived.
+- `decide()`: for every decider who is not cross-tenant, the assigned approver included,
+  `tenant::require_same_tenant_user($rec->userid, $deciderid)`; on approval,
+  `require_item_requestable()` re-runs the course check (or `assert_path_in_scope`) against the
+  REQUESTER. Both run before the status row changes, so a refusal leaves the request pending. A
+  rejection skips the item check, so an out-of-scope request can still be turned down. Site admins
+  and `:crosstenant` holders are not scoped.
+- `cli/seed_qa_pending_request.php` and `cli/smoke_request.php` now pick a course inside the test
+  user's tenant (`path_descendant_filter`, legacy rows allowed), since `submit()` refuses others.
+
+Tests (`@group tenant_isolation`, `tests/tenant_scope_test.php`): a /77 learner is refused a /1
+course, the /770 prefix trap, a hidden own-tenant course and a missing id, and nothing is inserted or
+notified; own-tenant, legacy and shared courses still go through; a no-tenant requester requests
+nothing; `submit_path` refuses /1, pathless and missing paths (an archived foreign one included);
+the UAT repro (a /77 router approving their own /1 request) is refused and not enrolled; an assigned
+supervisor cannot approve a report into a /1 course or path but can reject it; a /1 approver
+decides nothing for a /77 learner; in-tenant submit -> supervisor approve -> enrolled still works,
+and the site admin still approves across tenants. Updated: the `request()` helper gives its
+requester the tenant the row claims (the scoped decider now checks the requester), and
+`path_request_test` gives the duplicate and inactive cases an in-tenant requester and asserts the
+exact error code.
+
+**Behaviour to note (needs Nitin's awareness, not a code change):** a request routed to an approver
+outside the requester's tenant can now only be decided by a cross-tenant user. That covers the
+'courseowner' route when the owner of a /1 course shared to /77 decides a /77 learner's request, and
+a `default_approver` set to a tenant-scoped user. Courseowner rows escalate to the default approver
+after the SLA; 'admin' rows do not escalate. Keep `default_approver` a site admin or `:crosstenant`
+holder (the default, user 2, is).
