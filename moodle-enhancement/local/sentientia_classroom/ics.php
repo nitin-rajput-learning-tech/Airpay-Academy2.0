@@ -16,15 +16,18 @@ $session = $DB->get_record('local_sentientia_classroom_sessions',
 $classroom = $DB->get_record('local_sentientia_classroom',
     ['id' => $session->classroomid], '*', MUST_EXIST);
 
-// Access guard: site admin OR enrolled in the classroom OR has view cap.
+// Access guard: site admin OR enrolled in the classroom OR has view cap
+// for a classroom in the viewer's own tenant (ADR-031: :view says WHAT,
+// not WHERE - it used to hand out every tenant's session invites).
 $context = context_system::instance();
 $is_member = $DB->record_exists('local_sentientia_classroom_users', [
     'classroomid' => $session->classroomid, 'userid' => $USER->id,
 ]);
-$can_view = is_siteadmin() || $is_member
-    || has_capability('local/sentientia_classroom:view', $context);
-if (!$can_view) {
-    throw new \moodle_exception('nopermissions', 'error', '', 'classroom session calendar invite');
+if (!is_siteadmin() && !$is_member) {
+    if (!has_capability('local/sentientia_classroom:view', $context)) {
+        throw new \moodle_exception('nopermissions', 'error', '', 'classroom session calendar invite');
+    }
+    \local_sentientia_classroom\session_manager::assert_classroom_in_scope($classroom);
 }
 
 $organizer = !empty($CFG->supportemail) ? (string) $CFG->supportemail

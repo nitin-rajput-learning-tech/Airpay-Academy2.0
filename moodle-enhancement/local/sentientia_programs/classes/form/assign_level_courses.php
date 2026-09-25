@@ -33,8 +33,12 @@ class assign_level_courses extends \core_form\dynamic_form {
         $assigned = $DB->get_fieldset_select('local_sentientia_programs_courses',
             'courseid', 'levelid = :l', ['l' => $levelid]);
 
-        $where = ['c.id > 1'];
-        $params = [];
+        // ADR-031: only courses the caller's tenant may use (its own tree,
+        // legacy unpathed courses, courses shared to it). Until 2026-09-25
+        // this listed up to 5000 courses from every tenant, hidden ones too.
+        [$csql, $cparams] = \local_sentientia_programs\program_manager::course_scope_sql('c');
+        $where = ['c.id > 1', $csql];
+        $params = $cparams;
         if (!empty($assigned)) {
             [$insql, $inparams] = $DB->get_in_or_equal($assigned, SQL_PARAMS_NAMED, 'aid', false);
             $where[] = "c.id $insql";
@@ -80,6 +84,8 @@ class assign_level_courses extends \core_form\dynamic_form {
         $data = $this->get_data();
         $levelid = (int) $data->levelid;
         $courseids = is_array($data->courseids ?? null) ? array_map('intval', $data->courseids) : [];
+        // ADR-031: every course added must be one the caller's tenant may use.
+        \local_sentientia_programs\program_manager::require_courses_in_scope($courseids);
 
         $count = \local_sentientia_programs\program_manager::assign_courses_to_level($levelid, $courseids);
 
@@ -96,6 +102,8 @@ class assign_level_courses extends \core_form\dynamic_form {
 
     protected function check_access_for_dynamic_submission(): void {
         require_capability('local/sentientia_programs:update', $this->get_context_for_dynamic_submission());
+        // ADR-031: the level's program must be in the caller's tenant.
+        \local_sentientia_programs\program_manager::require_level_access((int) $this->optional_param('levelid', 0, PARAM_INT));
     }
 
     protected function get_context_for_dynamic_submission(): \context {

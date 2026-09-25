@@ -21,8 +21,15 @@ $PAGE->set_title($id ? 'Edit recompletion rule' : 'New recompletion rule');
 $PAGE->set_heading($id ? 'Edit recompletion rule' : 'New recompletion rule');
 require_capability('local/sentientia_recompletion:manage', $ctx);
 
-$rule = $id ? $DB->get_record('local_sentientia_recompletion_rules', ['id' => $id], '*', MUST_EXIST)
-            : (object) ['id' => 0];
+// ADR-031: :manage says WHAT, not WHERE. A scoped caller may only open their
+// own tenant's rules (never a global one), and a caller with no tenant
+// nothing. Until 2026-09-25 any rule id loaded here for any holder.
+if ($id) {
+    $rule = \local_sentientia_recompletion\rule_access::require_rule($id);
+} else {
+    \local_sentientia_recompletion\rule_access::caller_root();
+    $rule = (object) ['id' => 0];
+}
 
 class local_sentientia_recompletion_edit_form extends moodleform {
     protected function definition() {
@@ -37,8 +44,10 @@ class local_sentientia_recompletion_edit_form extends moodleform {
         $mform->addRule('name', null, 'required');
 
         // Course selector — courses with completion enabled OR 0 = all.
+        // ADR-031: only courses the caller's tenant may use.
+        [$csql, $cparams] = \local_sentientia_recompletion\rule_access::course_filter('c');
         $courses = $DB->get_records_select('course',
-            'id > 1 AND enablecompletion = 1', null, 'fullname ASC', 'id, fullname, shortname');
+            "id > 1 AND enablecompletion = 1 AND $csql", $cparams, 'fullname ASC', 'id, fullname, shortname');
         $opts = [0 => '— All courses with completion enabled —'];
         foreach ($courses as $c) {
             $opts[$c->id] = format_string($c->fullname) . ' (' . $c->shortname . ')';
@@ -78,6 +87,17 @@ class local_sentientia_recompletion_edit_form extends moodleform {
         $this->add_action_buttons(true, $this->_customdata['id']
             ? 'Save changes' : 'Create rule');
     }
+
+    public function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+        // ADR-031: the course must be one the caller's tenant may use.
+        try {
+            \local_sentientia_recompletion\rule_access::require_course((int) ($data['courseid'] ?? 0));
+        } catch (\moodle_exception $e) {
+            $errors['courseid'] = get_string('error_outoftenant', 'local_sentientia_platform');
+        }
+        return $errors;
+    }
 }
 
 $form = new local_sentientia_recompletion_edit_form(null, ['id' => $rule->id]);
@@ -100,6 +120,14 @@ if ($data = $form->get_data()) {
         'enabled'        => !empty($data->enabled) ? 1 : 0,
         'timemodified'   => time(),
     ];
+    // ADR-031: a scoped caller's rule always carries their tenant - the
+    // engine reads costcenterid 0 as EVERY tenant. Updates keep the stored
+    // value; cross-tenant callers keep the old behaviour.
+    \local_sentientia_recompletion\rule_access::require_course((int) $rec->courseid);
+    $costcenterid = \local_sentientia_recompletion\rule_access::costcenterid_for_save($rule->id ? $rule : null);
+    if ($costcenterid !== null) {
+        $rec->costcenterid = $costcenterid;
+    }
     if ($rule->id) {
         $rec->id = $rule->id;
         $DB->update_record('local_sentientia_recompletion_rules', $rec);

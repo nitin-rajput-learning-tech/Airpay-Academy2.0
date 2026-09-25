@@ -35,6 +35,8 @@ class bulk_enrol_by_audience extends external_api {
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/sentientia_classroom:enrol', $context);
+        // ADR-031: the capability says WHAT; the classroom must also be in the caller's tenant.
+        \local_sentientia_classroom\session_manager::require_classroom_access((int) $params['classroomid']);
 
         $map = self::parse_filters($params['filters']);
         return \local_sentientia_classroom\classroom_audience_enroller::enrol_by_filter(

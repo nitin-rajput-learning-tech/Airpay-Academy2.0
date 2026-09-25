@@ -41,16 +41,13 @@ class enrol_classroom_users extends \core_form\dynamic_form {
         $where = ['u.deleted = 0', 'u.suspended = 0', 'u.id > 2'];
         $params = [];
 
-        // Tenant-scope: non-siteadmin only sees users in their tenant tree.
-        if (!is_siteadmin()) {
-            $parts = explode('/', trim($USER->open_path ?? '', '/'));
-            $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
-            if ($top > 0) {
-                $where[] = '(u.open_path = :orgexact OR u.open_path LIKE :orgprefix)';
-                $params['orgexact']  = '/' . $top;
-                $params['orgprefix'] = $DB->sql_like_escape('/' . $top . '/') . '%';
-            }
-        }
+        // Tenant scope (ADR-031): cross-tenant callers see everyone, a scoped
+        // caller their own tenant, and a caller with NO tenant nobody. The
+        // hand-rolled check this replaces skipped the filter when the
+        // caller's tenant did not resolve, listing every tenant's users.
+        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('u');
+        $where[] = $tnsql;
+        $params = array_merge($params, $tnargs);
 
         if (!empty($already)) {
             [$insql, $inparams] = $DB->get_in_or_equal($already, SQL_PARAMS_NAMED, 'aid', false);
@@ -100,6 +97,8 @@ class enrol_classroom_users extends \core_form\dynamic_form {
         $data = $this->get_data();
         $classroomid = (int) $data->classroomid;
         $userids = is_array($data->userids ?? null) ? array_map('intval', $data->userids) : [];
+        // ADR-031: every user named must be in the caller's tenant.
+        \local_sentientia_classroom\session_manager::require_users_in_scope($userids);
 
         $count = \local_sentientia_classroom\session_manager::enrol_users($classroomid, $userids);
 
@@ -116,6 +115,8 @@ class enrol_classroom_users extends \core_form\dynamic_form {
 
     protected function check_access_for_dynamic_submission(): void {
         require_capability('local/sentientia_classroom:update', $this->get_context_for_dynamic_submission());
+        // ADR-031: the classroom being enrolled into must be in the caller's tenant.
+        \local_sentientia_classroom\session_manager::require_classroom_access((int) $this->optional_param('classroomid', 0, PARAM_INT));
     }
 
     protected function get_context_for_dynamic_submission(): \context {

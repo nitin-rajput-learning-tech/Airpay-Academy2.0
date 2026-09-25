@@ -131,3 +131,15 @@ the delete. `delete_data_for_user()` is unchanged and stays core's full erasure.
 level) survive `anonymise_data_for_user()`; `delete_data_for_user()` still erases them and only
 them. Written, not yet run (shared test DB being rebuilt). No version bump (class change only).
 Both trees.
+
+## 2026-09-25 - ADR-031: programs tenant-scoped; cohort enrol takes only the caller's tenant
+
+Cross-tenant authority sweep (docs/audits/CROSS-TENANT-AUTHORITY-SWEEP-2026-09-25.md), 5 confirmed hits. `:view`, `:enrol`, `:update` and `:create` default to the manager archetype (tenant admins hold one at system context), and every programid/levelid-keyed endpoint checked only the capability: any tenant admin could list any tenant's program roster (names, emails, employee ids) and archive, restructure, enrol into or unenrol from any tenant's program. The cohort form enrolled every member of any site cohort, so another tenant's users could be pulled into a program.
+
+- New guards in `program_manager`: `require_program_access()`, `require_level_access()`, `assert_program_in_scope()` (fails closed for no tenant and for a program with no `open_path`), `require_users_in_scope()`, `course_scope_sql()` / `require_courses_in_scope()`, `org_path_for_caller()`. `enrol_cohort()` takes an optional scope path (the form passes the caller's tenant; CLI and internal callers unchanged).
+- Called in every id-keyed web service (list_program_users/levels, list_level_courses, change_status, delete_program, delete_level, reorder_levels, unassign_level_course, unenrol_program_user, bulk_enrol_by_audience), every dynamic form's access check, view.php and levelcourses.php (the inline `$top > 0` checks are gone). Index KPI tiles count the caller's tenant.
+- Writes check their targets: enrolled/unenrolled users and level courses must be the caller's tenant's; the course picker lists only those (was up to 5000 courses from every tenant).
+- `list_programs`: tenant filter always applies; the org cascade only narrows it.
+- Edit form: org picker limited to the caller's tenant; scoped "No specific organisation" stamps the tenant root.
+- Enrol picker, cohort pickers and `program_audience_enroller`: a caller with no tenant gets nobody (was: everyone).
+- Capabilities unchanged (legitimate in-tenant functions). 1.8.2 / 2026092500, depends on local_sentientia_platform 2026092500. Tests: `tests/tenant_scope_test.php` (@group tenant_isolation). Written, not run (shared PHPUnit DB). Both trees.

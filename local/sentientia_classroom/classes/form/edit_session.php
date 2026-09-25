@@ -108,6 +108,21 @@ class edit_session extends \core_form\dynamic_form {
         if ($start > 0 && $end > 0 && $end <= $start) {
             $errors['endtime'] = get_string('endbeforestart', 'local_sentientia_classroom');
         }
+        // ADR-031: a scoped caller may only name a trainer from their own
+        // tenant. An unchanged trainer is not re-checked (legacy rows still save).
+        global $DB;
+        $trainerid = (int) ($data['trainerid'] ?? 0);
+        $sessionid = (int) ($data['sessionid'] ?? 0);
+        $stored = $sessionid > 0
+            ? (int) $DB->get_field('local_sentientia_classroom_sessions', 'trainerid', ['id' => $sessionid])
+            : 0;
+        if ($trainerid > 0 && $trainerid !== $stored) {
+            try {
+                \local_sentientia_platform\tenant::require_same_tenant_user($trainerid);
+            } catch (\moodle_exception $e) {
+                $errors['trainerid'] = get_string('error_outoftenant', 'local_sentientia_platform');
+            }
+        }
         return $errors;
     }
 
@@ -172,6 +187,17 @@ class edit_session extends \core_form\dynamic_form {
 
     protected function check_access_for_dynamic_submission(): void {
         require_capability('local/sentientia_classroom:update', $this->get_context_for_dynamic_submission());
+        // ADR-031: the session (edit) or classroom (create) must be in the
+        // caller's tenant. Runs before set_data and process, so it guards
+        // both reading and writing.
+        $sessionid   = (int) $this->optional_param('sessionid', 0, PARAM_INT);
+        $classroomid = (int) $this->optional_param('classroomid', 0, PARAM_INT);
+        if ($sessionid > 0) {
+            \local_sentientia_classroom\session_manager::require_session_access($sessionid);
+        }
+        if ($sessionid === 0 || $classroomid > 0) {
+            \local_sentientia_classroom\session_manager::require_classroom_access($classroomid);
+        }
     }
 
     protected function get_context_for_dynamic_submission(): \context {

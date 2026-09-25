@@ -97,6 +97,17 @@ class edit_level extends \core_form\dynamic_form {
 
     protected function check_access_for_dynamic_submission(): void {
         require_capability('local/sentientia_programs:update', $this->get_context_for_dynamic_submission());
+        // ADR-031: the level (edit) or program (create) must be in the
+        // caller's tenant. Runs before set_data and process, so it guards
+        // both reading and writing.
+        $levelid   = (int) $this->optional_param('levelid', 0, PARAM_INT);
+        $programid = (int) $this->optional_param('programid', 0, PARAM_INT);
+        if ($levelid > 0) {
+            \local_sentientia_programs\program_manager::require_level_access($levelid);
+        }
+        if ($levelid === 0 || $programid > 0) {
+            \local_sentientia_programs\program_manager::require_program_access($programid);
+        }
     }
 
     protected function get_context_for_dynamic_submission(): \context {

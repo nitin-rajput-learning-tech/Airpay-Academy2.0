@@ -53,6 +53,11 @@ class enrol_users extends external_api {
         if (count($params['userids']) > 500) {
             throw new \moodle_exception('toomanyusers', 'local_sentientia_learningpath');
         }
+        // ADR-031: the capability says WHAT; the path must also be in the caller's tenant.
+        // Every user enrolled must be in it too (enrolment also enrols them
+        // into every course on the path).
+        \local_sentientia_learningpath\path_manager::require_path_tenant($params['pathid']);
+        \local_sentientia_learningpath\path_manager::require_users_in_scope($params['userids']);
 
         $count = \local_sentientia_learningpath\path_manager::enrol_users(
             $params['pathid'], $params['userids']);

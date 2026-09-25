@@ -24,7 +24,24 @@ require_capability('local/sentientia_recompletion:view', $ctx);
 $page = optional_param('p', 0, PARAM_INT);
 $perpage = 50;
 
-$total = (int) $DB->count_records('local_sentientia_recompletion_history');
+// ADR-031: :view says WHAT, not WHERE. Cross-tenant callers see every row
+// (the LEFT JOIN keeps redacted userid-0 rows); a scoped caller only rows
+// about their own tenant's users; a caller with no tenant nothing. Until
+// 2026-09-25 every tenant admin saw every tenant's reset history with names
+// and emails.
+if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+    $userjoin = 'LEFT JOIN {user} u ON u.id = h.userid';
+    $usersql = '1=1';
+    $userparams = [];
+} else {
+    $userjoin = 'JOIN {user} u ON u.id = h.userid';
+    [$usersql, $userparams] = \local_sentientia_recompletion\rule_access::history_user_filter('u');
+}
+$total = (int) $DB->count_records_sql(
+    "SELECT COUNT(1)
+       FROM {local_sentientia_recompletion_history} h
+       $userjoin
+      WHERE $usersql", $userparams);
 // B8 fix: LIMIT $perpage OFFSET ... was interpolated into the SQL string.
 // $perpage is a constant 50 here but the pattern is dangerous (one
 // refactor away from accepting user input). Use the 5th/6th args of
@@ -33,10 +50,11 @@ $rows = $DB->get_records_sql(
     "SELECT h.*, u.firstname, u.lastname, u.email,
             c.fullname AS course_name
        FROM {local_sentientia_recompletion_history} h
-  LEFT JOIN {user}   u ON u.id = h.userid
+       $userjoin
   LEFT JOIN {course} c ON c.id = h.courseid
+      WHERE $usersql
       ORDER BY h.timecreated DESC",
-    [], (int) ($page * $perpage), (int) $perpage);
+    $userparams, (int) ($page * $perpage), (int) $perpage);
 
 $shape = [];
 foreach ($rows as $r) {

@@ -43,17 +43,20 @@ class list_programs extends external_api {
         $where = ['1=1'];
         $sqlparams = [];
 
-        // W1-1 BizLMS parity: 5-level org cascade overrides default
-        // tenant scope.
+        // Tenant scope ALWAYS applies (ADR-031): '1=1' for cross-tenant
+        // callers, the caller's own tree otherwise, '1=0' for a caller with
+        // no tenant. The W1-1 5-level org cascade only NARROWS it. Until
+        // 2026-09-25 a client-chosen org REPLACED this filter, and
+        // cascade_where_sql() resolves any org id, so filters={"org_l1":77}
+        // listed another tenant's programs.
+        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('p');
+        $where[] = $tnsql;
+        $sqlparams = array_merge($sqlparams, $tnargs);
         [$cascadesql, $cascadeargs] =
             \local_sentientia_org\org_manager::cascade_where_sql($f, 'p');
         if ($cascadesql !== '') {
             $where[] = $cascadesql;
             $sqlparams = array_merge($sqlparams, $cascadeargs);
-        } else {
-            [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('p');
-            $where[] = $tnsql;
-            $sqlparams = array_merge($sqlparams, $tnargs);
         }
 
         $status_filter = (string) ($f['status'] ?? 'all');

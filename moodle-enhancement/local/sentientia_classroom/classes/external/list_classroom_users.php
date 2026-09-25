@@ -46,8 +46,8 @@ class list_classroom_users extends external_api {
         $can_update = has_capability('local/sentientia_classroom:update', $context)
             || has_capability('local/sentientia_classroom:manage', $context);
 
-        $DB->get_record('local_sentientia_classroom', ['id' => $params['classroomid']],
-            'id', MUST_EXIST);
+        // ADR-031: the capability says WHAT; the classroom must also be in the caller's tenant.
+        \local_sentientia_classroom\session_manager::require_classroom_access($params['classroomid']);
 
         $total = \local_sentientia_classroom\session_manager::count_enrolled_filtered(
             $params['classroomid'], $params['search']);

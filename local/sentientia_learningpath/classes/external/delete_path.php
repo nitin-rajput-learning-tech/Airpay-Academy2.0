@@ -33,6 +33,8 @@ class delete_path extends external_api {
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/sentientia_learningpath:delete', $context);
+        // ADR-031: the capability says WHAT; the path must also be in the caller's tenant.
+        \local_sentientia_learningpath\path_manager::require_path_tenant($params['pathid']);
 
         $success = \local_sentientia_learningpath\path_manager::delete($params['pathid']);
         return ['pathid' => $params['pathid'], 'success' => $success];

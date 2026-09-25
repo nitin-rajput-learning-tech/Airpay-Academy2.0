@@ -46,6 +46,205 @@ class program_manager {
         return $DB->get_record(self::TABLE, ['id' => $id]);
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // ADR-031 (2026-09-25) — tenant guard for everything named by id
+    // ═══════════════════════════════════════════════════════════════════
+    //
+    // :view, :enrol, :update and :create default to the manager archetype,
+    // and every tenant admin holds a manager-archetype role at system
+    // context. Until 2026-09-25 the web services and forms checked only the
+    // capability and then acted on whatever programid/levelid the client
+    // sent: any tenant admin could read every tenant's program rosters
+    // (names, emails, employee ids) and archive, restructure, enrol into or
+    // unenrol from every tenant's programs. A capability says WHAT; these
+    // say WHERE. Call one after require_capability() wherever an id comes in.
+
+    /**
+     * Refuse unless the program is in the caller's tenant.
+     *
+     * Cross-tenant callers (site admin, local/sentientia_platform:crosstenant)
+     * pass. Anyone else needs a resolvable tenant AND a program whose
+     * open_path lies inside it. A program with no open_path is
+     * cross-tenant-only: every tenant's list hides it (path_filter never
+     * matches NULL), so it must not open by id either -
+     * tenant::require_path_access() on its own lets '' through.
+     *
+     * @param \stdClass $program a record carrying open_path
+     * @param int|null  $userid  the caller; defaults to $USER
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function assert_program_in_scope(\stdClass $program, ?int $userid = null): void {
+        global $DB, $USER;
+        $current = (int) ($USER->id ?? 0);
+        $userid = $userid ?? $current;
+        if (\local_sentientia_platform\tenant::is_cross_tenant($userid)) {
+            return;
+        }
+        $caller = ($userid === $current) ? $USER
+            : $DB->get_record('user', ['id' => $userid], 'id, open_path');
+        $path = trim((string) ($program->open_path ?? ''));
+        if ($path === '' || !$caller
+                || \local_sentientia_platform\tenant::scope_path($caller) === null) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        \local_sentientia_platform\tenant::require_path_access($path,
+            $userid === $current ? null : $userid);
+    }
+
+    /**
+     * Load a program by id and refuse unless it is in the caller's tenant.
+     *
+     * @throws \moodle_exception error_outoftenant (or dml_missing_record_exception)
+     */
+    public static function require_program_access(int $programid, ?int $userid = null): \stdClass {
+        global $DB;
+        $program = $DB->get_record(self::TABLE, ['id' => $programid], '*', MUST_EXIST);
+        self::assert_program_in_scope($program, $userid);
+        return $program;
+    }
+
+    /**
+     * Load a level and its program; refuse unless the program is in the
+     * caller's tenant.
+     *
+     * @return \stdClass[] [$level, $program]
+     * @throws \moodle_exception error_outoftenant (or dml_missing_record_exception)
+     */
+    public static function require_level_access(int $levelid): array {
+        global $DB;
+        $level = $DB->get_record(self::LEVELS_TABLE, ['id' => $levelid], '*', MUST_EXIST);
+        $program = self::require_program_access((int) $level->programid);
+        return [$level, $program];
+    }
+
+    /**
+     * Refuse unless every named user is in the caller's tenant (ADR-031: a
+     * write that names a user checks the target). One query for any number
+     * of ids. Cross-tenant callers pass.
+     *
+     * @param int[] $userids
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_users_in_scope(array $userids): void {
+        global $DB;
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return;
+        }
+        $userids = array_values(array_unique(array_filter(array_map('intval', $userids),
+            fn($id) => $id > 0)));
+        if (empty($userids)) {
+            return;
+        }
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === null || $scope === '') {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'prsu');
+        [$tsql, $targs] = \local_sentientia_platform\tenant::path_descendant_filter(
+            $scope, 'u', 'open_path', 'prst');
+        $inscope = (int) $DB->count_records_sql(
+            "SELECT COUNT(1) FROM {user} u WHERE u.id $insql AND $tsql",
+            $inparams + $targs);
+        if ($inscope !== count($userids)) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+    }
+
+    /**
+     * WHERE fragment for the courses the caller may put on a level.
+     *
+     * Cross-tenant: every course. Scoped: courses in their tenant tree,
+     * legacy courses with no open_path (the same tolerance
+     * local_sentientia_courses' own list applies), and courses shared to
+     * their tenant. No tenant: nothing. Until 2026-09-25 the picker listed
+     * up to 5000 courses from every tenant, hidden ones included.
+     *
+     * @param string $alias course table alias
+     * @return array{0: string, 1: array}
+     */
+    public static function course_scope_sql(string $alias = 'c'): array {
+        global $DB;
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return ['1=1', []];
+        }
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === null || $scope === '') {
+            return ['1=0', []];
+        }
+        [$sql, $params] = \local_sentientia_platform\tenant::path_descendant_filter(
+            $scope, $alias, 'open_path', 'prcs', true);
+        if ($DB->get_manager()->table_exists('local_sentientia_courses_tenant_share')) {
+            $sql = "($sql OR EXISTS (SELECT 1 FROM {local_sentientia_courses_tenant_share} prsh
+                                     WHERE prsh.courseid = {$alias}.id
+                                       AND prsh.tenant_id = :prcstenant
+                                       AND prsh.status = :prcsstatus))";
+            $params['prcstenant'] = (int) substr($scope, 1);
+            $params['prcsstatus'] = 'active';
+        }
+        return [$sql, $params];
+    }
+
+    /**
+     * Refuse unless every named course is one course_scope_sql() allows.
+     *
+     * @param int[] $courseids
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_courses_in_scope(array $courseids): void {
+        global $DB;
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return;
+        }
+        $courseids = array_values(array_unique(array_filter(array_map('intval', $courseids),
+            fn($id) => $id > 0)));
+        if (empty($courseids)) {
+            return;
+        }
+        [$insql, $inparams] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED, 'prcc');
+        [$csql, $cparams] = self::course_scope_sql('c');
+        $inscope = (int) $DB->count_records_sql(
+            "SELECT COUNT(1) FROM {course} c WHERE c.id $insql AND $csql",
+            $inparams + $cparams);
+        if ($inscope !== count($courseids)) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+    }
+
+    /**
+     * The open_path a program should carry when the CALLER saves it with org
+     * $costcenterid, refusing an org outside their tenant.
+     *
+     * Cross-tenant callers keep the old behaviour: the org's path, or null
+     * for "no specific organisation". A scoped caller may only pick an org in
+     * their own tenant, and "no specific organisation" stamps their tenant
+     * root - so no tenant user can create a program no tenant owns (which
+     * every tenant could then open by id), or move one into another tenant.
+     *
+     * @return string|null  null = no path (cross-tenant callers only)
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function org_path_for_caller(int $costcenterid): ?string {
+        global $DB;
+        $org = $costcenterid > 0
+            ? $DB->get_record('local_sentientia_org', ['id' => $costcenterid], 'id, path')
+            : false;
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return ($org && (string) $org->path !== '') ? (string) $org->path : null;
+        }
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === null || $scope === '') {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        if ($costcenterid <= 0) {
+            return $scope;
+        }
+        $orgpath = $org ? rtrim((string) $org->path, '/') : '';
+        if ($orgpath === '' || ($orgpath !== $scope && strpos($orgpath, $scope . '/') !== 0)) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        return (string) $org->path;
+    }
+
     /**
      * Count programs, optionally tenant-scoped.
      */
@@ -80,7 +279,7 @@ class program_manager {
      * @return int  New program ID
      * @throws \moodle_exception
      */
-    public static function create(object $data): int {
+    public static function create(object $data, ?string $fallbackpath = null): int {
         global $DB;
 
         if (empty($data->name)) {
@@ -107,6 +306,12 @@ class program_manager {
                 $record->open_path = $org->path;
             }
         }
+        // ADR-031: a scoped caller's "no specific organisation" still belongs
+        // to their tenant (see org_path_for_caller()); null keeps the old
+        // behaviour for cross-tenant and internal callers.
+        if (empty($record->open_path) && $fallbackpath !== null && $fallbackpath !== '') {
+            $record->open_path = $fallbackpath;
+        }
 
         return $DB->insert_record(self::TABLE, $record);
     }
@@ -114,7 +319,7 @@ class program_manager {
     /**
      * Update an existing program.
      */
-    public static function update(int $id, object $data): bool {
+    public static function update(int $id, object $data, ?string $fallbackpath = null): bool {
         global $DB;
 
         $existing = $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
@@ -137,7 +342,8 @@ class program_manager {
 
         if (isset($record->costcenterid) && $record->costcenterid != $existing->costcenterid) {
             $org = $DB->get_record('local_sentientia_org', ['id' => $record->costcenterid]);
-            $record->open_path = $org ? $org->path : '';
+            // ADR-031: see create() - a scoped caller never leaves a program unowned.
+            $record->open_path = $org ? $org->path : ($fallbackpath ?? '');
         }
 
         $DB->update_record(self::TABLE, $record);
@@ -674,20 +880,40 @@ class program_manager {
      * Phase F.3 (2026-05-08) — mass-enrol all members of a Moodle cohort.
      *
      * Pulls cohort_members → user IDs → delegates to enrol_users() for
-     * the existing idempotent + tenant-scope safe pathway.
+     * the existing idempotent pathway.
      *
-     * @param int $programid  Target program
-     * @param int $cohortid   Source cohort
+     * Cohorts are site-wide and may mix tenants. enrol_users() does NOT
+     * scope users by tenant, so a caller acting for one tenant must pass
+     * $scopepath (their tenant root, tenant::scope_path()): only members
+     * inside it are counted and enrolled (ADR-031). Until 2026-09-25 the
+     * cohort form enrolled every member, so a tenant admin could pull
+     * another tenant's users into their program. Null/'' = every member
+     * (cross-tenant and internal callers).
+     *
+     * @param int         $programid  Target program
+     * @param int         $cohortid   Source cohort
+     * @param string|null $scopepath  only enrol members under this path
      * @return array{cohort_size:int, newly_enrolled:int, already_enrolled:int}
      */
-    public static function enrol_cohort(int $programid, int $cohortid): array {
+    public static function enrol_cohort(int $programid, int $cohortid, ?string $scopepath = null): array {
         global $DB;
 
         $DB->get_record(self::TABLE, ['id' => $programid], 'id', MUST_EXIST);
         $DB->get_record('cohort', ['id' => $cohortid], 'id', MUST_EXIST);
 
-        $member_ids = $DB->get_fieldset_select('cohort_members', 'userid',
-            'cohortid = :cid', ['cid' => $cohortid]);
+        if ($scopepath !== null && $scopepath !== '') {
+            [$tsql, $targs] = \local_sentientia_platform\tenant::path_descendant_filter(
+                $scopepath, 'u', 'open_path', 'ecs');
+            $member_ids = $DB->get_fieldset_sql(
+                "SELECT cm.userid
+                   FROM {cohort_members} cm
+                   JOIN {user} u ON u.id = cm.userid
+                  WHERE cm.cohortid = :cid AND $tsql",
+                ['cid' => $cohortid] + $targs);
+        } else {
+            $member_ids = $DB->get_fieldset_select('cohort_members', 'userid',
+                'cohortid = :cid', ['cid' => $cohortid]);
+        }
         $cohort_size = count($member_ids);
         if ($cohort_size === 0) {
             return [

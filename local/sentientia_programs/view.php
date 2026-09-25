@@ -21,22 +21,10 @@ require_login();
 $context = context_system::instance();
 require_capability('local/sentientia_programs:view', $context);
 
-$program = $DB->get_record('local_sentientia_programs', ['id' => $programid], '*', MUST_EXIST);
-
-// Tenant scope: non-siteadmin only sees programs in their org tree.
-if (!is_siteadmin()) {
-    $parts = explode('/', trim($USER->open_path ?? '', '/'));
-    $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
-    if ($top > 0 && !empty($program->open_path)) {
-        $ppath = trim($program->open_path, '/');
-        $pparts = explode('/', $ppath);
-        $ptop = isset($pparts[0]) && ctype_digit($pparts[0]) ? (int) $pparts[0] : 0;
-        if ($ptop !== $top) {
-            throw new \moodle_exception('nopermissions', 'error', '',
-                get_string('view_program_title', 'local_sentientia_programs', $program->name));
-        }
-    }
-}
+// Tenant scope (ADR-031): the program must be in the caller's tenant. The
+// inline check this replaces skipped itself when the viewer had no tenant
+// or the program had no path, so either opened any program by id.
+$program = \local_sentientia_programs\program_manager::require_program_access($programid);
 
 $can_update = is_siteadmin() || has_capability('local/sentientia_programs:update', $context)
     || has_capability('local/sentientia_programs:manage', $context);

@@ -125,18 +125,53 @@ class edit_classroom extends \core_form\dynamic_form {
             $errors['enddate'] = get_string('enddate_before_start',
                 'local_sentientia_classroom');
         }
+        // ADR-031: a scoped caller may only file a classroom under an org in
+        // their own tenant, and may only name a trainer from it.
+        try {
+            \local_sentientia_classroom\session_manager::org_path_for_caller(
+                (int) ($data['costcenterid'] ?? 0));
+        } catch (\moodle_exception $e) {
+            $errors['costcenterid'] = get_string('error_outoftenant', 'local_sentientia_platform');
+        }
+        $trainerid = (int) ($data['trainerid'] ?? 0);
+        if ($trainerid > 0 && $trainerid !== $this->stored_trainerid()) {
+            try {
+                \local_sentientia_platform\tenant::require_same_tenant_user($trainerid);
+            } catch (\moodle_exception $e) {
+                $errors['trainerid'] = get_string('error_outoftenant', 'local_sentientia_platform');
+            }
+        }
         return $errors;
+    }
+
+    /**
+     * The trainer already on the classroom being edited (0 on create). An
+     * unchanged trainer is not re-checked, so a legacy row still saves.
+     */
+    private function stored_trainerid(): int {
+        global $DB;
+        $classroomid = (int) $this->optional_param('classroomid', 0, PARAM_INT);
+        if ($classroomid <= 0) {
+            return 0;
+        }
+        return (int) $DB->get_field('local_sentientia_classroom', 'trainerid', ['id' => $classroomid]);
     }
 
     public function process_dynamic_submission() {
         $data = $this->get_data();
         $classroomid = (int) $data->classroomid;
 
+        // ADR-031: refuses an org outside a scoped caller's tenant, and gives
+        // their "no specific organisation" the tenant root instead of no path.
+        // Cross-tenant callers get null, which keeps the old behaviour.
+        $path = \local_sentientia_classroom\session_manager::org_path_for_caller(
+            (int) ($data->costcenterid ?? 0));
+
         if ($classroomid === 0) {
-            $newid = \local_sentientia_classroom\session_manager::create($data);
+            $newid = \local_sentientia_classroom\session_manager::create($data, $path);
             return ['classroomid' => $newid, 'message' => get_string('classroomcreated', 'local_sentientia_classroom')];
         } else {
-            \local_sentientia_classroom\session_manager::update($classroomid, $data);
+            \local_sentientia_classroom\session_manager::update($classroomid, $data, $path);
             return ['classroomid' => $classroomid, 'message' => get_string('classroomupdated', 'local_sentientia_classroom')];
         }
     }
@@ -175,8 +210,14 @@ class edit_classroom extends \core_form\dynamic_form {
         $classroomid = (int) ($this->optional_param('classroomid', 0, PARAM_INT));
         if ($classroomid === 0) {
             require_capability('local/sentientia_classroom:create', $context);
+            // ADR-031: a caller with no tenant creates nothing.
+            if (\local_sentientia_platform\tenant::scope_path() === null) {
+                throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+            }
         } else {
             require_capability('local/sentientia_classroom:update', $context);
+            // ADR-031: guards set_data (reads it) and process (rewrites it) too.
+            \local_sentientia_classroom\session_manager::require_classroom_access($classroomid);
         }
     }
 
@@ -186,7 +227,11 @@ class edit_classroom extends \core_form\dynamic_form {
 
     private function get_org_options(): array {
         global $DB;
-        $orgs = $DB->get_records('local_sentientia_org', ['visible' => 1],
+        // ADR-031: a scoped caller sees only their own tenant's orgs ('1=0'
+        // with no tenant); for them option 0 means their tenant root (see
+        // session_manager::org_path_for_caller()).
+        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('', 'path');
+        $orgs = $DB->get_records_select('local_sentientia_org', "visible = 1 AND $tnsql", $tnargs,
             'depth ASC, fullname ASC', 'id, fullname, depth');
         $options = [0 => '— No specific organisation —'];
         foreach ($orgs as $o) {

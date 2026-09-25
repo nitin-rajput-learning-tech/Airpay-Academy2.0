@@ -53,8 +53,8 @@ class list_classroom_sessions extends external_api {
             || has_capability('local/sentientia_classroom:manage', $context);
         $can_attend = has_capability('local/sentientia_classroom:attendance', $context);
 
-        $DB->get_record('local_sentientia_classroom', ['id' => $params['classroomid']],
-            'id', MUST_EXIST);
+        // ADR-031: the capability says WHAT; the classroom must also be in the caller's tenant.
+        \local_sentientia_classroom\session_manager::require_classroom_access($params['classroomid']);
 
         $allowed = ['title', 'sessiondate', 'starttime', 'endtime', 'location', 'timecreated'];
         $sort = in_array($params['sort'], $allowed, true) ? $params['sort'] : 'sessiondate';

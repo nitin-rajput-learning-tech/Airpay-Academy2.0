@@ -99,6 +99,13 @@ class edit_path extends \core_form\dynamic_form {
             $errors['enddate'] = get_string('enddate_before_start',
                 'local_sentientia_learningpath');
         }
+        // ADR-031: a scoped caller may only file a path under an org in their
+        // own tenant.
+        try {
+            \local_sentientia_learningpath\path_manager::org_path_for_caller((int) ($data['costcenterid'] ?? 0));
+        } catch (\moodle_exception $e) {
+            $errors['costcenterid'] = get_string('error_outoftenant', 'local_sentientia_platform');
+        }
         return $errors;
     }
 
@@ -115,11 +122,16 @@ class edit_path extends \core_form\dynamic_form {
                 (int) ($data->description_editor['format'] ?? FORMAT_HTML);
         }
 
+        // ADR-031: refuses an org outside a scoped caller's tenant, and gives
+        // their "no specific organisation" the tenant root instead of no path.
+        // Cross-tenant callers get null, which keeps the old behaviour.
+        $orgpath = \local_sentientia_learningpath\path_manager::org_path_for_caller((int) ($data->costcenterid ?? 0));
+
         if ($pathid === 0) {
-            $newid = \local_sentientia_learningpath\path_manager::create($data);
+            $newid = \local_sentientia_learningpath\path_manager::create($data, $orgpath);
             return ['pathid' => $newid, 'message' => get_string('pathcreated', 'local_sentientia_learningpath')];
         } else {
-            \local_sentientia_learningpath\path_manager::update($pathid, $data);
+            \local_sentientia_learningpath\path_manager::update($pathid, $data, $orgpath);
             return ['pathid' => $pathid, 'message' => get_string('pathupdated', 'local_sentientia_learningpath')];
         }
     }
@@ -164,8 +176,14 @@ class edit_path extends \core_form\dynamic_form {
         $pathid = (int) ($this->optional_param('pathid', 0, PARAM_INT));
         if ($pathid === 0) {
             require_capability('local/sentientia_learningpath:create', $context);
+            // ADR-031: a caller with no tenant creates nothing.
+            if (\local_sentientia_platform\tenant::scope_path() === null) {
+                throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+            }
         } else {
             require_capability('local/sentientia_learningpath:update', $context);
+            // ADR-031: guards set_data (reads it) and process (rewrites it) too.
+            \local_sentientia_learningpath\path_manager::require_path_tenant($pathid);
         }
     }
 
@@ -175,7 +193,11 @@ class edit_path extends \core_form\dynamic_form {
 
     private function get_org_options(): array {
         global $DB;
-        $orgs = $DB->get_records('local_sentientia_org', ['visible' => 1],
+        // ADR-031: a scoped caller sees only their own tenant's orgs ('1=0'
+        // with no tenant); for them option 0 means their tenant root (see
+        // path_manager::org_path_for_caller()).
+        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('', 'path');
+        $orgs = $DB->get_records_select('local_sentientia_org', "visible = 1 AND $tnsql", $tnargs,
             'depth ASC, fullname ASC', 'id, fullname, depth');
         $options = [0 => '— No specific organisation —'];
         foreach ($orgs as $o) {

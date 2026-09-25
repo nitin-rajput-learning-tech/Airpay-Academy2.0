@@ -135,6 +135,8 @@ class bulk_enrol_audience_form extends \core_form\dynamic_form {
     protected function check_access_for_dynamic_submission(): void {
         require_capability('local/sentientia_learningpath:enrol',
             $this->get_context_for_dynamic_submission());
+        // ADR-031: the path must be in the caller's tenant.
+        \local_sentientia_learningpath\path_manager::require_path_tenant((int) $this->optional_param('pathid', 0, PARAM_INT));
     }
 
     protected function get_context_for_dynamic_submission(): \context {
@@ -154,13 +156,23 @@ class bulk_enrol_audience_form extends \core_form\dynamic_form {
     private function get_cohort_options(): array {
         global $DB;
         $options = [0 => get_string('audience_any_cohort', 'local_sentientia_learningpath')];
-        // System-level cohorts are visible to all tenants. We don't try
-        // to be too clever here — admins should see every cohort their
-        // context can see.
-        $rows = $DB->get_records('cohort',
-            ['visible' => 1],
-            'name ASC',
-            'id, name');
+        // ADR-031: a scoped caller sees only cohorts with members in their own
+        // tenant (the audience itself is tenant-scoped anyway); no tenant,
+        // none. Until 2026-09-25 every cohort on the site was listed.
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            $rows = $DB->get_records('cohort', ['visible' => 1], 'name ASC', 'id, name');
+        } else {
+            [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('u');
+            $rows = $DB->get_records_sql(
+                "SELECT c.id, c.name
+                   FROM {cohort} c
+                  WHERE c.visible = 1
+                    AND EXISTS (SELECT 1
+                                  FROM {cohort_members} cm
+                                  JOIN {user} u ON u.id = cm.userid
+                                 WHERE cm.cohortid = c.id AND $tnsql)
+               ORDER BY c.name ASC", $tnargs);
+        }
         foreach ($rows as $r) {
             $options[(int) $r->id] = format_string($r->name);
         }

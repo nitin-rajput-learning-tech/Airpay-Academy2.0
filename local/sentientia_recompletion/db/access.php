@@ -4,6 +4,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+// ADR-031 (2026-09-25): :view and :manage are tenant-scoped in code
+// (classes/rule_access.php) - they say WHAT, never WHERE. :reset has no
+// consumer yet; its install-time grant is revoked by upgrade step 2026092500.
 $capabilities = [
     'local/sentientia_recompletion:view' => [
         'captype'      => 'read',

@@ -18,24 +18,9 @@ require_login();
 $context = context_system::instance();
 require_capability('local/sentientia_programs:view', $context);
 
-$level = $DB->get_record('local_sentientia_programs_levels',
-    ['id' => $levelid], '*', MUST_EXIST);
-$program = $DB->get_record('local_sentientia_programs',
-    ['id' => $level->programid], '*', MUST_EXIST);
-
-// Tenant scope (mirrors view.php).
-if (!is_siteadmin()) {
-    $parts = explode('/', trim($USER->open_path ?? '', '/'));
-    $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
-    if ($top > 0 && !empty($program->open_path)) {
-        $ppath = trim($program->open_path, '/');
-        $pparts = explode('/', $ppath);
-        $ptop = isset($pparts[0]) && ctype_digit($pparts[0]) ? (int) $pparts[0] : 0;
-        if ($ptop !== $top) {
-            throw new \moodle_exception('nopermissions', 'error');
-        }
-    }
-}
+// Tenant scope (ADR-031) — same guard as view.php; it fails closed for a
+// viewer with no tenant and for a program with no path.
+[$level, $program] = \local_sentientia_programs\program_manager::require_level_access($levelid);
 
 $can_update = is_siteadmin() || has_capability('local/sentientia_programs:update', $context)
     || has_capability('local/sentientia_programs:manage', $context);

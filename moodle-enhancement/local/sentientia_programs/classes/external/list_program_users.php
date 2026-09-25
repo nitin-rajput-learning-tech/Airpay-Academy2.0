@@ -43,8 +43,9 @@ class list_program_users extends external_api {
         $can_enrol = has_capability('local/sentientia_programs:enrol', $context)
             || has_capability('local/sentientia_programs:manage', $context);
 
-        $DB->get_record('local_sentientia_programs', ['id' => $params['programid']],
-            'id', MUST_EXIST);
+        // ADR-031: the capability says WHAT; the program must also be in the caller's tenant.
+        // (Returns names, emails and employee ids.)
+        \local_sentientia_programs\program_manager::require_program_access($params['programid']);
 
         $total = \local_sentientia_programs\program_manager::count_enrolled_filtered(
             $params['programid'], $params['search']);

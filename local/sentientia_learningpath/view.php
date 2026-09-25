@@ -20,7 +20,9 @@ require_capability('local/sentientia_learningpath:view', $context);
 
 global $DB, $OUTPUT;
 
-$path = $DB->get_record('local_sentientia_learningpath', ['id' => $pathid], '*', MUST_EXIST);
+// ADR-031: the path must be in the caller's tenant (fails closed for a
+// caller with no tenant and for a path with no org).
+$path = \local_sentientia_learningpath\path_manager::require_path_tenant($pathid);
 
 // Page chrome.
 $PAGE->set_url(new moodle_url('/local/sentientia_learningpath/view.php',

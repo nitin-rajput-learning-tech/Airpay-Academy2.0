@@ -23,7 +23,11 @@ require_capability('local/sentientia_recompletion:view', $ctx);
 
 $can_manage = has_capability('local/sentientia_recompletion:manage', $ctx);
 
-$rules = $DB->get_records('local_sentientia_recompletion_rules', null, 'enabled DESC, name ASC');
+// ADR-031: a scoped caller lists only their tenant's rules (not global ones);
+// a caller with no tenant, none. Until 2026-09-25 every tenant's rules showed.
+[$rulesql, $ruleparams] = \local_sentientia_recompletion\rule_access::rules_filter();
+$rules = $DB->get_records_select('local_sentientia_recompletion_rules', $rulesql, $ruleparams,
+    'enabled DESC, name ASC');
 $rows = [];
 foreach ($rules as $r) {
     $course_name = '— all courses with completion —';

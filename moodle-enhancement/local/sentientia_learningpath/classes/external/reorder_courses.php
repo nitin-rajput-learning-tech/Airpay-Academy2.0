@@ -46,6 +46,8 @@ class reorder_courses extends external_api {
         if (count($params['ordered_course_ids']) > 200) {
             throw new \moodle_exception('toomanycourses', 'local_sentientia_learningpath');
         }
+        // ADR-031: the capability says WHAT; the path must also be in the caller's tenant.
+        \local_sentientia_learningpath\path_manager::require_path_tenant($params['pathid']);
 
         $updated = \local_sentientia_learningpath\path_manager::reorder_courses(
             $params['pathid'], $params['ordered_course_ids']);

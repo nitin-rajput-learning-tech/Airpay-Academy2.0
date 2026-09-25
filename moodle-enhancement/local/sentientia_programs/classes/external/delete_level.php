@@ -25,6 +25,8 @@ class delete_level extends external_api {
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/sentientia_programs:update', $context);
+        // ADR-031: the capability says WHAT; the program must also be in the caller's tenant.
+        \local_sentientia_programs\program_manager::require_level_access($params['levelid']);
 
         \local_sentientia_programs\program_manager::delete_level($params['levelid']);
 

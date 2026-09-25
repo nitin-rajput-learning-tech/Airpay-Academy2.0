@@ -26,9 +26,14 @@ $total = 0;
 $active = 0;
 $completed = 0;
 if ($dbman->table_exists('local_sentientia_classroom')) {
-    $total     = (int) $DB->count_records('local_sentientia_classroom');
-    $active    = (int) $DB->count_records('local_sentientia_classroom', ['status' => 1]);
-    $completed = (int) $DB->count_records('local_sentientia_classroom', ['status' => 2]);
+    // ADR-031: the tiles count the caller's tenant, the same set the list
+    // shows ('1=1' cross-tenant, '1=0' for a caller with no tenant).
+    [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter();
+    $total     = (int) $DB->count_records_select('local_sentientia_classroom', $tnsql, $tnargs);
+    $active    = (int) $DB->count_records_select('local_sentientia_classroom',
+        "$tnsql AND status = 1", $tnargs);
+    $completed = (int) $DB->count_records_select('local_sentientia_classroom',
+        "$tnsql AND status = 2", $tnargs);
 }
 
 $columns = [

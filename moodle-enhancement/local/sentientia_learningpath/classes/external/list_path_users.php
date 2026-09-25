@@ -54,8 +54,9 @@ class list_path_users extends external_api {
             throw new \moodle_exception('filterstoolong', 'local_sentientia_learningpath');
         }
 
-        // Verify path exists.
-        $DB->get_record('local_sentientia_learningpath', ['id' => $params['pathid']], 'id', MUST_EXIST);
+        // ADR-031: the capability says WHAT; the path must also be in the caller's tenant.
+        // (Returns names, emails and employee ids.)
+        \local_sentientia_learningpath\path_manager::require_path_tenant($params['pathid']);
 
         // Delegate to path_manager — it already does the JOIN + status mapping.
         $result = \local_sentientia_learningpath\path_manager::get_path_users(

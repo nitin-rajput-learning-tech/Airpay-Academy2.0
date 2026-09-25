@@ -9,11 +9,11 @@ $plugin->component = 'local_sentientia_learningpath';
 // P0.2 (2026-06-16) — Adaptive Learning Journeys: branch/accelerate/remediate
 // on quiz scores, completion velocity, and skills-gap feed. Feature-flagged
 // behind sentientia.learningpath.adaptive.enabled (default OFF).
-$plugin->version   = 2026061600;
+$plugin->version   = 2026092500;  // ADR-031: every pathid/userid/courseid tenant-checked; :view student default revoked
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.8.0';  // +P0.2 Adaptive Learning Journeys
+$plugin->release   = '1.8.1';  // ADR-031 tenant scope (1.8.0: +P0.2 Adaptive Learning Journeys)
 $plugin->dependencies = [
     'local_sentientia_org'      => 2026041600,
-    'local_sentientia_platform' => 2026051401,
+    'local_sentientia_platform' => 2026092500,  // tenant::is_cross_tenant / scope_path
 ];

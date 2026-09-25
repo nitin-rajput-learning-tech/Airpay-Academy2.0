@@ -42,6 +42,8 @@ class reorder_levels extends external_api {
         if (count($params['levelids']) > self::MAX_LEVELS) {
             throw new \moodle_exception('toomanylevels', 'local_sentientia_programs');
         }
+        // ADR-031: the capability says WHAT; the program must also be in the caller's tenant.
+        \local_sentientia_programs\program_manager::require_program_access($params['programid']);
 
         $count = \local_sentientia_programs\program_manager::reorder_levels(
             $params['programid'], $params['levelids']);

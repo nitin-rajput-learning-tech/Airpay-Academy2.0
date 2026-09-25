@@ -48,8 +48,8 @@ class list_program_levels extends external_api {
         $can_update = has_capability('local/sentientia_programs:update', $context)
             || has_capability('local/sentientia_programs:manage', $context);
 
-        $DB->get_record('local_sentientia_programs', ['id' => $params['programid']],
-            'id', MUST_EXIST);
+        // ADR-031: the capability says WHAT; the program must also be in the caller's tenant.
+        \local_sentientia_programs\program_manager::require_program_access($params['programid']);
 
         $allowed = ['name', 'sortorder', 'timecreated'];
         $sort = in_array($params['sort'], $allowed, true) ? $params['sort'] : 'sortorder';
