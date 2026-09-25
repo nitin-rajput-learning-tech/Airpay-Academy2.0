@@ -325,3 +325,12 @@ non-numeric `open_path` resolves to tenant 0, which `get_top()` treats as unscop
 sees every tenant's leaderboard. This needs a product decision. (b) The class docblock says it
 "locks in tenant scoping (mine vs all)", but no test covers `all` vs `mine`, or cross-tenant
 isolation.
+
+## 2026-09-25 - Cross-tenant leaderboard closed (1.1.5-alpha, 2026092500)
+
+Two leaks, closed together:
+
+- `:viewall` defaulted to the manager archetype. Tenant admins hold manager-archetype roles (UAT's id-9 "administrator"), so every tenant admin could call `get_leaderboard(tenantmode=all)` and read every tenant's leaderboard, names included. This is the defect `local_sentientia_analytics:viewallorgs` had until 2026-09-24. It now has no default grant, and upgrade step 2026092500 revokes every existing grant. Site admins are unscoped anyway.
+- A scoped caller whose open_path did not resolve to a tenant got tenant 0, which `get_top()` and `list_challenges()` read as every tenant. Both web services now return nothing for such a caller; the site admin is unaffected.
+
+Found while the challenge test fixes were reviewed. Covered by `tests/external/tenant_scope_test.php` (`@group tenant_isolation`).

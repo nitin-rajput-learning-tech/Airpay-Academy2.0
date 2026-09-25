@@ -57,6 +57,14 @@ class get_leaderboard extends external_api {
         if ($params['tenantmode'] === 'mine'
                 || !has_capability('local/sentientia_challenge:viewall', $context)) {
             $tenant = challenge_engine::tenant_from_path($USER->open_path ?? '');
+            // Fail closed (2026-09-25): get_top() reads tenant 0 as "no scoping",
+            // so a scoped caller whose open_path is empty or malformed used to
+            // see every tenant's leaderboard - names included. Only a site admin
+            // is unscoped without a tenant.
+            if ($tenant <= 0 && !is_siteadmin()) {
+                return ['total' => 0, 'rows' => [],
+                        'page' => (int) $params['page'], 'perpage' => (int) $params['perpage']];
+            }
         }
 
         $result = leaderboard_manager::get_top(

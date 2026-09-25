@@ -16,7 +16,9 @@ $plugin->component = 'local_sentientia_challenge';
 // tables are empty on local + production. MATURITY_BETA was aspirational.
 // Promote back to BETA once the renderer ships its real implementation
 // and the challenge tables hold real attempt data.
-$plugin->version   = 2026052801;
+$plugin->version   = 2026092500;  // :viewall has no default grant (+ revoke step); scoped callers with no tenant fail closed
+// 2026052801 - D4 maturity stamp
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '1.1.4-alpha'; // +D4 maturity-stamp honesty
+$plugin->release   = '1.1.5-alpha'; // cross-tenant leaderboard closed
+// 1.1.4-alpha: D4 maturity-stamp honesty

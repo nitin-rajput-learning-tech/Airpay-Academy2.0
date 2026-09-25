@@ -41,10 +41,17 @@ $capabilities = [
 
     // View leaderboards across tenants (compliance / HR analytics).
     // Without this cap, the leaderboard auto-scopes to the caller's tenant.
+    //
+    // No default grant (2026-09-25). Tenant admins hold manager-archetype roles
+    // (UAT's "administrator", id 9, is one), so a manager default gave every
+    // tenant admin every tenant's leaderboard, names included - the defect
+    // local_sentientia_analytics:viewallorgs had until 2026-09-24. Site admins
+    // are unscoped anyway; grant this deliberately to a cross-tenant role if one
+    // is ever needed. Upgrade step 2026092500 revokes the existing grants.
     'local/sentientia_challenge:viewall' => [
         'riskbitmask'  => RISK_PERSONAL,
         'captype'      => 'read',
         'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes'   => ['manager' => CAP_ALLOW],
+        'archetypes'   => [],
     ],
 ];

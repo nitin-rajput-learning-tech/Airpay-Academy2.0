@@ -44,9 +44,14 @@ class list_challenges extends external_api {
         }
 
         // Tenant scoping: callers without :viewall see only their tenant + global.
-        $tenant = is_siteadmin() || has_capability('local/sentientia_challenge:viewall', $context)
-            ? 0
-            : challenge_engine::tenant_from_path($USER->open_path ?? '');
+        $unscoped = is_siteadmin() || has_capability('local/sentientia_challenge:viewall', $context);
+        $tenant = $unscoped ? 0 : challenge_engine::tenant_from_path($USER->open_path ?? '');
+        // Fail closed (2026-09-25): list_challenges() reads tenant 0 as "every
+        // tenant", so a scoped caller with no resolvable tenant saw them all.
+        if (!$unscoped && $tenant <= 0) {
+            return ['total' => 0, 'rows' => [],
+                    'page' => (int) $params['page'], 'perpage' => (int) $params['perpage']];
+        }
 
         $result = challenge_engine::list_challenges(
             $tenant, $params['status'], $params['search'], (int) $USER->id,
