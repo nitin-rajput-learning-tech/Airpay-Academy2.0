@@ -20,7 +20,9 @@ class delete_category extends external_api {
         $params = self::validate_parameters(self::execute_parameters(), ['categoryid' => $categoryid]);
         $context = \context_system::instance();
         self::validate_context($context);
-        require_capability('local/sentientia_skills:manage', $context);
+        // ADR-031: categories are catalogue-wide - :manage AND cross-tenant
+        // (skills_manager::require_catalogue_write()).
+        \local_sentientia_skills\skills_manager::require_catalogue_write($context);
 
         $success = \local_sentientia_skills\skills_manager::delete_category($params['categoryid']);
         return ['categoryid' => $params['categoryid'], 'success' => $success];

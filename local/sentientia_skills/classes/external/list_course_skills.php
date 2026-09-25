@@ -26,7 +26,8 @@ class list_course_skills extends external_api {
             ['courseid' => $courseid]);
         $context = \context_system::instance();
         self::validate_context($context);
-        require_capability('local/sentientia_skills:manage', $context);
+        // ADR-031 follow-up: :mapcourses (or :manage); the course is scoped below.
+        skills_manager::require_map_courses($context);
 
         return ['rows' => skills_manager::list_course_skills((int) $params['courseid'])];
     }

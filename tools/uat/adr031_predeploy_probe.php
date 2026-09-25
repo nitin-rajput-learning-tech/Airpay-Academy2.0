@@ -12,6 +12,8 @@
  *  - recompletion rules with costcenterid 0 (a tenant admin's rule made before
  *    the fix resets every tenant on cron);
  *  - global (tenant 0) challenges and leaderboard boards;
+ *  - featured course rows with costcenterid 0 (what the courses 2026092501
+ *    upgrade step will rehome or leave global);
  *  - tenantless users and site admins' open_path (SCIM / write targets);
  *  - courses / classrooms / programs / paths with no open_path;
  *  - whether the org after_config hook and the BizLMS learnerscript block are
@@ -61,6 +63,25 @@ if ($has('local_sentientia_lb_boards') && $col('local_sentientia_lb_boards', 'te
     echo '  boards tenantid=0: ',
         implode(',', array_keys($DB->get_records('local_sentientia_lb_boards', ['tenantid' => 0], '', 'id'))),
         ' of ', $DB->count_records('local_sentientia_lb_boards'), "\n";
+}
+
+$h('featured course rows with costcenterid 0');
+// A tenant admin could only pin to "All tenants" before ADR-031. Upgrade step
+// local_sentientia_courses 2026092501 moves each such row to its course's
+// tenant; the shared, legacy and duplicate ones stay global (see its config log).
+if ($has('local_sentientia_featured_courses')) {
+    $pathsel = $col('course', 'open_path') ? 'c.open_path' : 'NULL';
+    $shared = $has('local_sentientia_courses_tenant_share')
+        ? "(SELECT COUNT(1) FROM {local_sentientia_courses_tenant_share} s
+             WHERE s.courseid = f.courseid AND s.status = 'active')" : '0';
+    foreach ($DB->get_records_sql("SELECT f.id, f.courseid, {$pathsel} AS open_path, {$shared} AS shares
+            FROM {local_sentientia_featured_courses} f LEFT JOIN {course} c ON c.id = f.courseid
+           WHERE f.costcenterid = 0 ORDER BY f.id") as $f) {
+        $seg = explode('/', trim((string) $f->open_path, '/'))[0];
+        echo "  id={$f->id} courseid={$f->courseid} course_tenant=" . ($seg === '' ? 'none' : $seg)
+            . " active_shares={$f->shares}\n";
+    }
+    echo '  total featured rows: ', $DB->count_records('local_sentientia_featured_courses'), "\n";
 }
 
 $h('users');

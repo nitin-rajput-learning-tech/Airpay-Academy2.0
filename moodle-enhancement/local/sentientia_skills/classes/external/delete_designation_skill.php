@@ -24,7 +24,9 @@ class delete_designation_skill extends external_api {
         $params = self::validate_parameters(self::execute_parameters(), compact('id'));
         $context = \context_system::instance();
         self::validate_context($context);
-        require_capability('local/sentientia_skills:manage', $context);
+        // ADR-031: the designation matrix is shared by every tenant - :manage
+        // AND cross-tenant (skills_manager::require_catalogue_write()).
+        skills_manager::require_catalogue_write($context);
         require_sesskey();
 
         skills_manager::delete_designation_skill((int) $params['id']);

@@ -26,7 +26,9 @@ class copy_designation extends external_api {
             compact('fromdesignation', 'todesignation'));
         $context = \context_system::instance();
         self::validate_context($context);
-        require_capability('local/sentientia_skills:manage', $context);
+        // ADR-031: the designation matrix is shared by every tenant - :manage
+        // AND cross-tenant (skills_manager::require_catalogue_write()).
+        skills_manager::require_catalogue_write($context);
         require_sesskey();
 
         $copied = skills_manager::copy_designation(

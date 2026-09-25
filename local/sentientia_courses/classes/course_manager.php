@@ -509,6 +509,104 @@ class course_manager {
     }
 
     /**
+     * Does $userid hold any enrolment (any method, any status) in this course?
+     *
+     * @param int $courseid
+     * @param int $userid
+     * @return bool
+     */
+    public static function is_on_course_roster(int $courseid, int $userid): bool {
+        global $DB;
+        if ($courseid <= 0 || $userid <= 0) {
+            return false;
+        }
+        return $DB->record_exists_sql(
+            "SELECT 1
+               FROM {user_enrolments} ue
+               JOIN {enrol} e ON e.id = ue.enrolid
+              WHERE e.courseid = :rcid AND ue.userid = :ruid",
+            ['rcid' => $courseid, 'ruid' => $userid]);
+    }
+
+    /**
+     * ADR-031 (follow-up, 2026-09-25): may a caller scoped to $root remove
+     * $userid from this course?
+     *
+     * Call it after require_enrol_scope($courseid, []) has cleared the course.
+     * The rule is the one classrooms, programs and learning paths already
+     * apply (their require_unenrol_target()). Taking someone off your own
+     * roster does not reach into another tenant. So a scoped admin may remove
+     * a user who is out of tenant, has no open_path, or is a site admin, when
+     * two things hold:
+     *   - the course is their tenant's own (path_in_tenant()): not one shared
+     *     in from another tenant, and not a legacy course with no open_path
+     *     that every tenant lists;
+     *   - the user already holds an enrolment in it.
+     * A site admin, an approval flow or the pre-ADR-031 fail-open may have
+     * put such a user there. For any other target, rule 5 still applies:
+     * require_same_tenant_user(). So naming a stranger still reads
+     * error_outoftenant, and the unenrol is not an existence oracle.
+     * Cross-tenant callers ($root null) pass.
+     *
+     * @param int $courseid
+     * @param int|null $root the caller's tenant root from require_enrol_scope(); null = cross-tenant
+     * @param int $userid the user to remove
+     * @param int|null $actorid defaults to the current user
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_unenrol_target(int $courseid, ?int $root, int $userid,
+                                                  ?int $actorid = null): void {
+        global $DB;
+        if ($root === null) {
+            return;
+        }
+        $path = (string) ($DB->get_field('course', 'open_path', ['id' => $courseid]) ?: '');
+        if (self::path_in_tenant($path, $root) && self::is_on_course_roster($courseid, $userid)) {
+            return;
+        }
+        \local_sentientia_platform\tenant::require_same_tenant_user($userid, $actorid);
+    }
+
+    /**
+     * ADR-031 (follow-up, 2026-09-25): find the users a bulk-unenrol CSV row names.
+     *
+     * The first lookup is users_by_email_in_scope(). If that finds nobody and
+     * the course is the caller's tenant's own (path_in_tenant()), a second
+     * lookup runs over that course's enrolees, whatever their tenant: the
+     * same exception require_unenrol_target() makes. So an out-of-tenant or
+     * pathless learner can be cleaned off the caller's own roster by email,
+     * but an address that is not on that roster still reads "not found". A
+     * shared-in course or a legacy course gets the first lookup only.
+     *
+     * As users_by_email_in_scope(), at most two rows (oldest first), so the
+     * caller can refuse an ambiguous address.
+     *
+     * @param string $email exact address, as the CSV gives it
+     * @param \stdClass $course record carrying id and open_path, already in the caller's enrolment scope
+     * @param int|null $root the caller's tenant root; null = cross-tenant
+     * @return \stdClass[] 0, 1 or 2 non-deleted users (id, open_path)
+     */
+    public static function unenrol_users_by_email(string $email, \stdClass $course, ?int $root): array {
+        global $DB;
+        $matches = self::users_by_email_in_scope($email, $root, 'id, open_path');
+        $email = trim($email);
+        if ($matches || $root === null || $email === ''
+                || !self::path_in_tenant((string) ($course->open_path ?? ''), $root)) {
+            return $matches;
+        }
+        return array_values($DB->get_records_sql(
+            "SELECT u.id, u.open_path
+               FROM {user} u
+              WHERE u.deleted = 0 AND u.email = :uremail
+                AND EXISTS (SELECT 1
+                              FROM {user_enrolments} ue
+                              JOIN {enrol} e ON e.id = ue.enrolid
+                             WHERE e.courseid = :urcid AND ue.userid = u.id)
+           ORDER BY u.id ASC",
+            ['uremail' => $email, 'urcid' => (int) $course->id], 0, 2));
+    }
+
+    /**
      * Role shortnames the enrol picker never offers and the enrol CSV never
      * accepts, for any caller. 'administrator' is the BizLMS tenant-admin
      * role (manager archetype, UAT role 9).

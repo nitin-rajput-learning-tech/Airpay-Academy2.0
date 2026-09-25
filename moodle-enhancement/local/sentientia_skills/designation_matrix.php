@@ -6,7 +6,9 @@ require_once(__DIR__ . '/../../config.php');
 
 require_login();
 $context = context_system::instance();
-require_capability('local/sentientia_skills:manage', $context);
+// ADR-031: the designation matrix is shared by every tenant - :manage AND
+// cross-tenant (skills_manager::require_catalogue_write()).
+\local_sentientia_skills\skills_manager::require_catalogue_write($context);
 
 $designation = optional_param('designation', '', PARAM_TEXT);
 

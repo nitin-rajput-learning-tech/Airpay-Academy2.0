@@ -52,7 +52,8 @@ class edit_skill_level_dynamic_form extends dynamic_form {
     }
 
     protected function check_access_for_dynamic_submission(): void {
-        require_capability('local/sentientia_skills:manage',
+        // ADR-031: level definitions are catalogue-wide - :manage AND cross-tenant.
+        \local_sentientia_skills\skills_manager::require_catalogue_write(
             $this->get_context_for_dynamic_submission());
     }
 

@@ -1,6 +1,8 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
+require_once(__DIR__ . '/upgradelib.php');
+
 function xmldb_local_sentientia_courses_upgrade(int $oldversion): bool {
     global $DB;
     $dbman = $DB->get_manager();
@@ -169,6 +171,23 @@ function xmldb_local_sentientia_courses_upgrade(int $oldversion): bool {
             $dbman->create_table($table);
         }
         upgrade_plugin_savepoint(true, 2026052001, 'local', 'sentientia_courses');
+    }
+
+    // 2026092501 - ADR-031 follow-up: tenant admins' "All tenants" featured rows.
+    //
+    // Until 2026-09-25 featured.php offered non-site-admins only "All tenants"
+    // (costcenterid 0), so every course a tenant admin pinned is a 0 row. Wave 1
+    // confined a tenant curator to their own list, which hid those rows from the
+    // curator who pinned them (they could not remove or reorder them), while the
+    // learner widget kept showing 0 rows to EVERY tenant. Each 0 row whose course
+    // belongs to one tenant (open_path) and is not shared is moved to that
+    // tenant's list; legacy, shared and duplicate rows stay global. Every row is
+    // recorded in the config changes log for review. Re-tags only; deletes nothing.
+    if ($oldversion < 2026092501) {
+        foreach (local_sentientia_courses_run_featured_rehome() as $line) {
+            mtrace('  sentientia_courses: ' . $line);
+        }
+        upgrade_plugin_savepoint(true, 2026092501, 'local', 'sentientia_courses');
     }
 
     return true;

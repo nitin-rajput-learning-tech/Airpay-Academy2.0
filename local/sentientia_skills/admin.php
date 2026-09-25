@@ -9,7 +9,9 @@ require_once(__DIR__ . '/../../config.php');
 require_login();
 
 $context = context_system::instance();
-require_capability('local/sentientia_skills:manage', $context);
+// ADR-031: the catalogue editor - :manage AND cross-tenant (one catalogue,
+// shared by every tenant). Course mapping has its own page and capability.
+\local_sentientia_skills\skills_manager::require_catalogue_write($context);
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/sentientia_skills/admin.php'));

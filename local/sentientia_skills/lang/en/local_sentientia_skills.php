@@ -8,6 +8,8 @@ $string['privacy:metadata'] = 'The skills plugin stores skill level data linked 
 // Capabilities.
 $string['sentientia_skills:view'] = 'View skill matrix and gap analysis';
 $string['sentientia_skills:manage'] = 'Manage skill categories and definitions';
+$string['sentientia_skills:mapcourses'] = 'Map skills onto courses in their own tenant';
+$string['error_catalogueplatformonly'] = 'The skills catalogue is shared by every tenant, so only a cross-tenant administrator can change it.';
 $string['sentientia_skills:self_rate'] = 'Self-attest a proficiency level for a skill (the user\'s own profile only)';
 
 // CRUD strings.

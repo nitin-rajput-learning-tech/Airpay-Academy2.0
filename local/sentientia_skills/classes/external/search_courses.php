@@ -27,7 +27,8 @@ class search_courses extends external_api {
             ['q' => $q, 'limit' => $limit]);
         $context = \context_system::instance();
         self::validate_context($context);
-        require_capability('local/sentientia_skills:manage', $context);
+        // ADR-031 follow-up: :mapcourses (or :manage); results are tenant-scoped.
+        skills_manager::require_map_courses($context);
 
         return [
             'rows' => skills_manager::search_courses(

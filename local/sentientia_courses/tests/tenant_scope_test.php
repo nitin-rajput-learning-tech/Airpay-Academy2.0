@@ -375,20 +375,25 @@ final class tenant_scope_test extends \advanced_testcase {
         $zeea = $this->course_at('/177');
         $mine = $this->user_at('/1');
         $theirs = $this->user_at('/177');
-        $this->enrol($theirs, $own);
+        $this->enrol($theirs, $zeea);
         $this->enrol($mine, $zeea);
 
         $this->setUser($this->tenant_admin('/1'));
+        // Follow-up (2026-09-25): a /177 user already on the roster of a /1
+        // course may be removed from it (adr031_followup2_test). Naming one who
+        // is NOT on the caller's own roster is still refused - no oracle.
         $this->assertSame('error_outoftenant',
             $this->errorcode(fn() => unenrol_single::execute((int) $own->id, (int) $theirs->id)));
         $this->assertSame('error_outoftenant',
             $this->errorcode(fn() => unenrol_single::execute((int) $zeea->id, (int) $mine->id)));
-        $this->assertTrue(is_enrolled(\context_course::instance($own->id), $theirs->id));
+        $this->assertSame('error_outoftenant',
+            $this->errorcode(fn() => unenrol_single::execute((int) $zeea->id, (int) $theirs->id)));
+        $this->assertTrue(is_enrolled(\context_course::instance($zeea->id), $theirs->id));
         $this->assertTrue(is_enrolled(\context_course::instance($zeea->id), $mine->id));
 
         $this->setAdminUser();
-        unenrol_single::execute((int) $own->id, (int) $theirs->id);
-        $this->assertFalse(is_enrolled(\context_course::instance($own->id), $theirs->id));
+        unenrol_single::execute((int) $zeea->id, (int) $theirs->id);
+        $this->assertFalse(is_enrolled(\context_course::instance($zeea->id), $theirs->id));
     }
 
     public function test_enrol_modal_refuses_foreign_courses_and_no_tenant_callers(): void {

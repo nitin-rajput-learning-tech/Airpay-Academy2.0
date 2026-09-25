@@ -24,9 +24,10 @@ class delete_course_skill extends external_api {
         $params = self::validate_parameters(self::execute_parameters(), ['id' => $id]);
         $context = \context_system::instance();
         self::validate_context($context);
-        require_capability('local/sentientia_skills:manage', $context);
+        // ADR-031 follow-up: :mapcourses (or :manage) says WHAT...
+        skills_manager::require_map_courses($context);
         require_sesskey();
-        // ADR-031: unmap only on a course in the caller's tenant.
+        // ...and WHERE: unmap only on a course in the caller's tenant.
         global $DB;
         $courseid = (int) $DB->get_field('local_sentientia_course_skills', 'courseid',
             ['id' => (int) $params['id']]);

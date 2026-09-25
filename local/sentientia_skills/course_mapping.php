@@ -13,7 +13,10 @@ require_once(__DIR__ . '/../../config.php');
 
 require_login();
 $context = context_system::instance();
-require_capability('local/sentientia_skills:manage', $context);
+// ADR-031 follow-up (2026-09-25): :mapcourses (manager default) or :manage.
+// Tenant admins lost this page when wave 1 revoked :manage; every course it
+// lists or maps is still held to their own tenant (skills_manager scope).
+\local_sentientia_skills\skills_manager::require_map_courses($context);
 
 $courseid = optional_param('courseid', 0, PARAM_INT);
 

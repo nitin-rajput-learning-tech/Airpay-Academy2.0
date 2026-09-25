@@ -130,3 +130,45 @@ From the adversarial review of claude/adr031-assessment-ff.
 - **Tests:** `tests/tenant_scope_test.php`: writes refuse NULL and '' legacy courses (save and delete), `test_legacy_courses_are_readable_but_not_writable`, `test_gap_courses_are_scoped_for_the_learner`.
 - **Found, not fixed (pre-existing, UI):** skills `index.php` reads `get_gap_courses()` rows as objects (`$r->coursename`, `$r->teaches_level`) but they are arrays with `fullname`, so its recommendations render blank. Needs a UI fix with screenshots.
 - **Not run here:** PHPUnit.
+
+## 2026-09-25 - ADR-031 follow-up: course mapping is a tenant function, the catalogue is not (1.6.5, 2026092501)
+
+From the cross-cutting review of the merged wave (P1, CONFIRMED): revoking `:manage` also took
+skill mapping of their OWN courses away from tenant admins. The documented remedy, "grant `:manage`
+explicitly", would have reopened global writes, because only `delete_skill` checked
+`is_cross_tenant()`.
+
+- **New capability `local/sentientia_skills:mapcourses`** (manager archetype default, `RISK_CONFIG`,
+  en + hi strings). It gates `course_mapping.php` and the `list_course_skills`, `save_course_skill`,
+  `delete_course_skill` and `search_courses` web services, through
+  `skills_manager::require_map_courses()`, which accepts `:mapcourses` or `:manage`. Every course
+  those surfaces touch is still held to the caller's tenant (`require_course_write_scope()`,
+  `can_view_course()`, the scoped pickers). Moodle grants the archetype default when the capability
+  is installed on upgrade, so manager-archetype tenant admins (UAT role 9) can map their own
+  tenant's courses again. db/services.php names `:mapcourses` for those four functions.
+- **Catalogue writes are cross-tenant only, in code.** The new
+  `skills_manager::require_catalogue_write()` checks `:manage` and then `tenant::is_cross_tenant()`
+  (new string `error_catalogueplatformonly`, en + hi). It gates `copy_designation`,
+  `delete_category`, `save_designation_skill`, `delete_designation_skill`, `save_skill_level`, the
+  four dynamic forms (`edit_skill`, `edit_category`, `edit_skill_level_dynamic_form`,
+  `edit_designation_skill_dynamic_form`) and the pages `admin.php`, `designation_matrix.php` and
+  `level_definitions.php`. `delete_skill` keeps its own check (`error_outoftenant`). `:manage` stays
+  revoked (step 2026092500 is unchanged). Reads of the global catalogue (`list_skills`,
+  `get_skill_levels`, `list_designation_skills`) still need `:manage` only.
+
+**Deploy note (corrects the 2026-09-25 one above).** Do NOT grant `:manage` to tenant admins to
+restore course mapping. They get it from `:mapcourses` on upgrade. Granting `:manage` to a
+tenant-admin role no longer opens catalogue writes (they need `:crosstenant`), but it does open the
+catalogue read web services and backfilling another same-tenant user's level (`self_rate_skill`
+with a userid). The platform L&D role that curates the framework needs `:manage` AND
+`local/sentientia_platform:crosstenant`.
+
+**Still open (UI, not changed here):** course_mapping.php's "Skills Management" back link and
+breadcrumb, and theme_sentientia's sidebar "Skills" entry, point at admin.php, which tenant admins
+cannot open. A follow-up needs screenshots: hide the link, or point tenant admins at
+course_mapping.php. Backfill for tenant admins (`self_rate_skill` for another user) still needs
+`:manage`. This is a product decision: it could get its own capability or stay platform-only.
+
+Tests: new `tests/mapcourses_scope_test.php` (`@group tenant_isolation`). The existing
+`tenant_scope_test` needs no change (its `:manage` holders also pass `require_map_courses()`). Not
+run here (no PHPUnit, as instructed).

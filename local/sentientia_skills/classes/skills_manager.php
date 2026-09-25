@@ -177,6 +177,96 @@ class skills_manager {
         }
     }
 
+    // ───────────────────────────────────────────────────────────────────
+    // ADR-031 follow-up (2026-09-25): WHAT a caller may do with skills
+    //
+    // Two functions, two capabilities:
+    //   :mapcourses  map skills onto courses. A tenant function: every
+    //                mapping write is held to the caller's tenant by
+    //                require_course_write_scope(). Defaults to the manager
+    //                archetype, as :manage did before ADR-031, so tenant
+    //                admins keep mapping their own courses.
+    //   :manage      edit the skills catalogue itself (categories, skills,
+    //                levels, the designation matrix). There is one catalogue
+    //                with no tenant column, shared by every tenant, so
+    //                writing it is cross-tenant only
+    //                (require_catalogue_write()), whoever holds :manage.
+    // Until this date the mapping pages required :manage. Wave 1 revoked
+    // :manage from every role, so tenant admins could no longer map their
+    // own courses. Granting :manage back, as the deploy note said, would have
+    // let them rewrite every tenant's catalogue.
+    // ───────────────────────────────────────────────────────────────────
+
+    /** Capability to map skills onto courses (tenant-scoped). */
+    public const CAP_MAP_COURSES = 'local/sentientia_skills:mapcourses';
+
+    /** Capability to edit the shared skills catalogue (cross-tenant only). */
+    public const CAP_MANAGE = 'local/sentientia_skills:manage';
+
+    /**
+     * May the current user use the course-skill mapping functions?
+     *
+     * :mapcourses, or :manage (a catalogue curator has always been able to
+     * map courses). This decides only WHAT. WHERE is decided by
+     * require_course_write_scope() / can_view_course().
+     *
+     * @param \context|null $context defaults to system
+     * @return bool
+     */
+    public static function can_map_courses(?\context $context = null): bool {
+        return has_any_capability([self::CAP_MAP_COURSES, self::CAP_MANAGE],
+            $context ?? \context_system::instance());
+    }
+
+    /**
+     * Refuse unless can_map_courses().
+     *
+     * @param \context|null $context defaults to system
+     * @throws \required_capability_exception naming :mapcourses
+     */
+    public static function require_map_courses(?\context $context = null): void {
+        $context = $context ?? \context_system::instance();
+        if (!self::can_map_courses($context)) {
+            throw new \required_capability_exception($context, self::CAP_MAP_COURSES,
+                'nopermissions', '');
+        }
+    }
+
+    /**
+     * May the current user write the shared skills catalogue: :manage AND
+     * tenant::is_cross_tenant() (ADR-031 decision 3)?
+     *
+     * @param \context|null $context defaults to system
+     * @return bool
+     */
+    public static function can_write_catalogue(?\context $context = null): bool {
+        return has_capability(self::CAP_MANAGE, $context ?? \context_system::instance())
+            && \local_sentientia_platform\tenant::is_cross_tenant();
+    }
+
+    /**
+     * Refuse a write to the shared skills catalogue unless the caller holds
+     * :manage AND is cross-tenant. The catalogue covers categories, skills,
+     * level definitions and the designation matrix.
+     *
+     * A capability says WHAT, never WHERE (ADR-031 decision 3). None of these
+     * tables has a tenant column, so any write here reaches every tenant.
+     * Only delete_skill used to check is_cross_tenant(). Every other catalogue
+     * write checked :manage alone, so a :manage grant to a tenant-admin role
+     * reopened global writes.
+     *
+     * @param \context|null $context defaults to system
+     * @throws \required_capability_exception without :manage
+     * @throws \moodle_exception error_catalogueplatformonly when not cross-tenant
+     */
+    public static function require_catalogue_write(?\context $context = null): void {
+        $context = $context ?? \context_system::instance();
+        require_capability(self::CAP_MANAGE, $context);
+        if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
+            throw new \moodle_exception('error_catalogueplatformonly', 'local_sentientia_skills');
+        }
+    }
+
     /**
      * Get gap analysis for a user — compares current skills vs required for their role.
      *
