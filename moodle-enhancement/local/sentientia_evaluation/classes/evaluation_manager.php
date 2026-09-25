@@ -935,6 +935,13 @@ class evaluation_manager {
     public static function delete_question(int $id): bool {
         global $DB;
         $DB->get_record(self::QUESTIONS_TABLE, ['id' => $id], '*', MUST_EXIST);
+        // Deleting an answered anonymous question would undo the anonymity
+        // lock: identity_protected() keeps a named evaluation's respondents
+        // hidden only while such a question exists (2026-09-25).
+        if (self::question_anonymity_locked($id)) {
+            throw new \moodle_exception('error_question_anonymity_delete_locked',
+                'local_sentientia_evaluation');
+        }
         $DB->delete_records(self::QUESTIONS_TABLE, ['id' => $id]);
         return true;
     }
@@ -1354,7 +1361,10 @@ class evaluation_manager {
      */
     public static function submitted_label(int $timestamp, bool $identityprotected, bool $iso = false): string {
         if ($iso) {
-            return userdate($timestamp, $identityprotected ? '%Y-%m-%d' : '%Y-%m-%d %H:%M');
+            // $fixday = false: userdate() otherwise strips the leading zero
+            // from %d ('2026-10-5'), which is not the ISO date the CSV promises.
+            return userdate($timestamp, $identityprotected ? '%Y-%m-%d' : '%Y-%m-%d %H:%M',
+                99, false);
         }
         return userdate($timestamp, $identityprotected ? '%d %b %Y' : '%d %b %Y %H:%M');
     }

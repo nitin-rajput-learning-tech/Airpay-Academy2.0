@@ -180,3 +180,13 @@ From the adversarial review of claude/adr031-assessment-ff.
 - **CLI:** `cli/smoke_anonymous_question.php` no longer flips an answered anonymous question off (that was the bypass); it asserts the refusal, and proves the named path on a second, fully named evaluation.
 - **Tests:** new `tests/anonymity_sticky_test.php` (`@group tenant_isolation`): unticked flag with userid-0 rows, update/form refusal, shell rows do not lock, per-question lock + form, named evaluation unchanged (minute precision kept), day-snapped filters, notification anonymised.
 - **Not run here:** PHPUnit.
+
+### 2026-09-25 (latest) - review must-fixes on the sticky-anonymity work
+
+- `delete_question()` refuses an answered anonymous question (`error_question_anonymity_delete_locked`,
+  en + hi). Without it, deleting the question dropped a named evaluation out of `identity_protected()`
+  and brought the Responded tab (names, minute-exact times) back.
+- `submitted_label(..., $iso = true)` passes `$fixday = false` to `userdate()`, so the CSV column is a
+  real zero-padded ISO date; on days 1-9 it was '2026-10-5' and the new tests failed ~30% of the month.
+- Tests: the delete refusal in `test_anonymous_question_keeps_respondents_hidden`, and
+  `test_iso_submitted_label_is_zero_padded` on a fixed day-5 timestamp.

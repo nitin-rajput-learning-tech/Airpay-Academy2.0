@@ -183,6 +183,7 @@ $string['non_respondents_anonymous_heading'] = 'Responses to this evaluation are
 $string['non_respondents_anonymous_body']    = 'Who has responded, and when, is not listed: the time of a response could be matched to an individual answer. The count on this tab is still accurate, and the Pending tab lists who has not responded yet.';
 // 2026-09-25 - anonymity cannot be withdrawn once responses are in.
 $string['error_anonymity_locked'] = 'People have already answered this evaluation on the understanding that their responses are anonymous, so anonymity cannot be switched off. To collect named responses, create a new evaluation.';
+$string['error_question_anonymity_delete_locked'] = 'People have already answered this evaluation while this question was anonymous, so it cannot be deleted.';
 $string['error_question_anonymity_locked'] = 'People have already answered this evaluation while this question was anonymous, so it cannot be made named. To ask it with names attached, add a new question.';
 
 // P1 #39 (2026-05-20) — bulk-assign by audience. Pairs with P1 #37

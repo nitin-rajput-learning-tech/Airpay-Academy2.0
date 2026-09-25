@@ -280,6 +280,14 @@ final class anonymity_sticky_test extends \advanced_testcase {
             'Unticking the question would put a name on every one of its answers.');
         $this->assertSame(1, (int) $DB->get_field('local_sentientia_evaluation_questions', 'anonymous',
             ['id' => $anonq]));
+        // ...and it cannot be deleted either: that would drop the evaluation
+        // out of identity_protected() and bring the Responded tab back.
+        $this->assert_refused(
+            fn() => evaluation_manager::delete_question($anonq),
+            'error_question_anonymity_delete_locked',
+            'Deleting the answered anonymous question would undo the lock.');
+        $this->assertTrue($DB->record_exists('local_sentientia_evaluation_questions', ['id' => $anonq]));
+        $this->assertTrue(evaluation_manager::identity_protected($this->evaluation($eid)));
         // ...but its text and the named question stay editable.
         evaluation_manager::update_question($anonq, (object) ['questiontext' => 'Reworded', 'anonymous' => 1]);
         $this->assertSame('Reworded', $DB->get_field('local_sentientia_evaluation_questions', 'questiontext',
@@ -300,6 +308,14 @@ final class anonymity_sticky_test extends \advanced_testcase {
         evaluation_manager::update_question($otherq, (object) ['anonymous' => 0]);
         $this->assertSame(0, (int) $DB->get_field('local_sentientia_evaluation_questions', 'anonymous',
             ['id' => $otherq]));
+    }
+
+    public function test_iso_submitted_label_is_zero_padded(): void {
+        // A single-digit day: userdate() with its default $fixday strips the
+        // zero ('2026-10-5'), which broke the ISO CSV column on days 1-9.
+        $ts = make_timestamp(2026, 10, 5, 14, 31);
+        $this->assertSame('2026-10-05', evaluation_manager::submitted_label($ts, true, true));
+        $this->assertSame('2026-10-05 14:31', evaluation_manager::submitted_label($ts, false, true));
     }
 
     public function test_named_evaluation_is_unchanged(): void {
