@@ -222,6 +222,83 @@ final class tenant_scope_test extends \advanced_testcase {
         }
     }
 
+    /**
+     * Wave-1 review S2: a costcenterid-0 draft publishes with a NULL
+     * open_path, which every tenant catalogue lists as legacy once unhidden.
+     */
+    public function test_a_tenantless_author_cannot_publish_a_tenantless_draft(): void {
+        global $DB;
+        $nobody = $this->tenant_admin_at('');
+        $this->setUser($nobody);
+        $did = $this->approved_draft_by($nobody);
+        $this->assertSame(0, (int) $DB->get_field(draft_manager::DRAFT_TABLE, 'costcenterid', ['id' => $did]));
+        $this->assertTrue(has_capability('moodle/course:create', \context_system::instance(), $nobody),
+            'Fixture: the capability alone would allow the publish.');
+        $before = $DB->count_records('course');
+
+        try {
+            course_builder::build($did, $nobody, true);
+            $this->fail('A tenantless draft must not become a course every tenant lists.');
+        } catch (\moodle_exception $e) {
+            $this->assertSame('err_publish_notenant', $e->errorcode);
+        }
+        $this->assertSame($before, $DB->count_records('course'));
+        $this->assertSame(draft_manager::STATUS_APPROVED,
+            $DB->get_field(draft_manager::DRAFT_TABLE, 'status', ['id' => $did]));
+    }
+
+    /** An owner who has moved tenant cannot publish into the tenant they left. */
+    public function test_an_author_cannot_publish_a_draft_filed_under_another_tenant(): void {
+        global $DB;
+        $author = $this->tenant_admin_at('/1');
+        $did = $this->approved_draft_by($author);
+        $DB->set_field('user', 'open_path', '/77', ['id' => $author->id]);
+        $author = $DB->get_record('user', ['id' => $author->id], '*', MUST_EXIST);
+        $this->setUser($author);
+        $this->assertNotNull(draft_manager::load_for_actor($did, $author, true),
+            'Fixture: the owner can still load their own draft.');
+        $before = $DB->count_records('course');
+
+        try {
+            course_builder::build($did, $author, true);
+            $this->fail('A /77 author must not create a course filed under tenant 1.');
+        } catch (\moodle_exception $e) {
+            $this->assertSame('error_outoftenant', $e->errorcode);
+        }
+        $this->assertSame($before, $DB->count_records('course'));
+    }
+
+    public function test_a_scoped_author_still_publishes_their_tenants_draft(): void {
+        global $DB;
+        $author = $this->tenant_admin_at('/1/2');
+        $this->setUser($author);
+        $did = $this->approved_draft_by($author);
+
+        $result = course_builder::build($did, $author, true);
+        $this->assertSame('/1', get_course($result->courseid)->open_path);
+        $this->assertSame(draft_manager::STATUS_PUBLISHED,
+            $DB->get_field(draft_manager::DRAFT_TABLE, 'status', ['id' => $did]));
+    }
+
+    public function test_cross_tenant_callers_still_publish_a_tenantless_draft(): void {
+        global $DB, $USER;
+        $this->setAdminUser();
+        $did = $this->approved_draft_by($USER);
+        $result = course_builder::build($did, $USER, true);
+        $this->assertEmpty(get_course($result->courseid)->open_path,
+            'A cross-tenant actor\'s tenantless draft keeps the NULL path, as before.');
+
+        $platform = $this->user_at('');
+        $roleid = $this->getDataGenerator()->create_role();
+        assign_capability(\local_sentientia_platform\tenant::CROSS_TENANT_CAPABILITY, CAP_ALLOW,
+            $roleid, \context_system::instance()->id);
+        role_assign($roleid, $platform->id, \context_system::instance()->id);
+        accesslib_clear_all_caches_for_unit_testing();
+        $draft = $DB->get_record(draft_manager::DRAFT_TABLE, ['id' => $this->draft_by($platform)], '*', MUST_EXIST);
+        course_builder::require_publishable_tenant($draft, $platform);
+        $this->assertSame(0, (int) $draft->costcenterid, 'A :crosstenant holder passes the tenant check.');
+    }
+
     public function test_the_upgrade_revoke_removes_existing_grants(): void {
         global $CFG, $DB;
         require_once($CFG->dirroot . '/local/sentientia_authoring/db/upgradelib.php');

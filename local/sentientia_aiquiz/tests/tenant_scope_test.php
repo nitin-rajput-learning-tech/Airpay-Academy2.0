@@ -190,6 +190,114 @@ final class tenant_scope_test extends \advanced_testcase {
             'The site admin is not tenant-bounded.');
     }
 
+    /** An APPROVED draft owned by $owner, ready to push. */
+    private function approved_draft_by(\stdClass $owner): int {
+        global $DB;
+        $did = $this->draft_by($owner, 'Own draft');
+        $mock = anthropic_client::call_mock('Source text.', 1);
+        draft_manager::persist_questions($did, response_parser::parse($mock['body']), 0, 0, 'mock');
+        $DB->set_field(draft_manager::QUESTION_TABLE, 'status',
+            draft_manager::Q_STATUS_APPROVED, ['draftid' => $did]);
+        $this->assertSame(draft_manager::STATUS_APPROVED,
+            draft_manager::finalise_review($did, (int) $owner->id));
+        return $did;
+    }
+
+    /**
+     * Wave-1 review S1: require_path_access() waves a NULL-path course through
+     * (a readable legacy row), so a tenantless actor holding
+     * course:manageactivities could push a quiz into a legacy shared course.
+     */
+    public function test_a_tenantless_actor_cannot_push_into_a_legacy_course(): void {
+        global $DB;
+        $nobody = $this->tenant_admin_at('');
+        $this->setUser($nobody);
+        $did = $this->approved_draft_by($nobody);
+
+        foreach ([null, ''] as $path) {
+            $legacy = $this->course_at($path);
+            $this->assertTrue(has_capability('moodle/course:manageactivities',
+                \context_course::instance($legacy->id), $nobody),
+                'Fixture: the capability alone would allow the push.');
+            try {
+                quiz_publisher::publish($did, (int) $legacy->id, $nobody, true);
+                $this->fail('A caller with no tenant must not push into a legacy course.');
+            } catch (\moodle_exception $e) {
+                $this->assertSame('error_outoftenant', $e->errorcode);
+            }
+            $this->assertSame(0, $DB->count_records('quiz', ['course' => $legacy->id]));
+        }
+        $this->assertSame(draft_manager::STATUS_APPROVED,
+            $DB->get_field(draft_manager::DRAFT_TABLE, 'status', ['id' => $did]),
+            'The refused push leaves the draft untouched.');
+    }
+
+    /**
+     * A legacy NULL-path course belongs to no tenant and every tenant's
+     * catalogue lists it, so a tenant admin writing into it writes into all
+     * of them: refused for any scoped actor, and not offered by the pickers.
+     */
+    public function test_a_scoped_admin_cannot_push_into_a_legacy_shared_course(): void {
+        global $DB;
+        $admin = $this->tenant_admin_at('/1');
+        $this->setUser($admin);
+        $did = $this->approved_draft_by($admin);
+        $legacy = $this->course_at(null);
+
+        try {
+            quiz_publisher::publish($did, (int) $legacy->id, $admin, true);
+            $this->fail('A scoped actor must not push into a course of no tenant.');
+        } catch (\moodle_exception $e) {
+            $this->assertSame('error_outoftenant', $e->errorcode);
+        }
+        $this->assertSame(0, $DB->count_records('quiz', ['course' => $legacy->id]));
+
+        $this->assertArrayNotHasKey((int) $legacy->id, quiz_publisher::target_courses($admin),
+            'The push picker does not offer a course the push would refuse.');
+        [$sql, $args] = quiz_publisher::course_scope_sql($admin);
+        $offered = $DB->get_fieldset_select('course', 'id', "id > 1 AND {$sql}", $args);
+        $this->assertNotContains((string) $legacy->id, array_map('strval', $offered),
+            'Nor does the generate picker.');
+    }
+
+    public function test_require_course_in_scope_decides_each_case(): void {
+        $own = $this->course_at('/1/2');
+        $root = $this->course_at('/1');
+        $foreign = $this->course_at('/177');
+        $sibling = $this->course_at('/10');
+        $legacy = $this->course_at(null);
+        $scoped = $this->user_at('/1/5');
+        $nobody = $this->user_at('');
+
+        quiz_publisher::require_course_in_scope($own, $scoped);
+        quiz_publisher::require_course_in_scope($root, $scoped);
+        foreach ([[$foreign, $scoped], [$sibling, $scoped], [$legacy, $scoped],
+                  [$own, $nobody], [$legacy, $nobody]] as [$course, $actor]) {
+            try {
+                quiz_publisher::require_course_in_scope($course, $actor);
+                $this->fail("Course {$course->id} must be refused for user {$actor->id}.");
+            } catch (\moodle_exception $e) {
+                $this->assertSame('error_outoftenant', $e->errorcode);
+            }
+        }
+
+        // Cross-tenant actors still reach every course, legacy ones included.
+        foreach ([$own, $foreign, $legacy] as $course) {
+            quiz_publisher::require_course_in_scope($course, get_admin());
+        }
+    }
+
+    public function test_the_site_admin_still_pushes_into_a_legacy_course(): void {
+        global $DB, $USER;
+        $this->setAdminUser();
+        $did = $this->approved_draft_by($USER);
+        $legacy = $this->course_at(null);
+
+        $result = quiz_publisher::publish($did, (int) $legacy->id, $USER, true);
+        $this->assertGreaterThan(0, $result->quizid);
+        $this->assertSame(1, $DB->count_records('quiz', ['course' => $legacy->id]));
+    }
+
     public function test_the_upgrade_revoke_removes_existing_grants(): void {
         global $CFG, $DB;
         require_once($CFG->dirroot . '/local/sentientia_aiquiz/db/upgradelib.php');

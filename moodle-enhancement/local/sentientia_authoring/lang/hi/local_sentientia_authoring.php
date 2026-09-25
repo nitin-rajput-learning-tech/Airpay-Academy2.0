@@ -242,3 +242,4 @@ $string['err_publish_badoptions']  = 'प्रश्न {$a} में दो �
 $string['err_publish_badanswer']   = 'प्रश्न {$a} का सही-उत्तर index विकल्पों से बाहर है।';
 $string['err_publish_tempfile']    = 'Import कार्य-फ़ाइल नहीं लिखी जा सकी।';
 $string['err_publish_import']      = 'प्रश्न import विफल रहा। कुछ भी प्रकाशित नहीं हुआ।';
+$string['err_publish_notenant']    = 'यह ड्राफ्ट किसी tenant के अंतर्गत दर्ज नहीं है, इसलिए इसे प्रकाशित नहीं किया जा सकता: कोर्स हर tenant के कैटलॉग में दिखाई देगा। इसे प्रकाशित करने के लिए किसी प्लेटफ़ॉर्म व्यवस्थापक से कहें।';

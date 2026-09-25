@@ -178,3 +178,8 @@ canonical → copied over the stale open_path parse).
 - `:manage_all` (declared, never checked) archetypes `[]`; new `db/upgrade.php` step 2026092500 revokes existing grants.
 
 Site admins unchanged. Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`); `recommendation_engine_test::test_build_candidate_list_excludes_completed` now sets the learner's tenant. Written, not executed (shared test DB). Both trees.
+
+## 2026-09-25 - ADR-031 wave-1 review follow-up (no code change)
+
+- S5: `generate.php` shows every `:generate` holder the customer-wide daily token total (`tokens_used_today_for_customer(1)`). Left as is: it is the figure the per-customer cost cap enforces, it is an aggregate with no PII, and no tenant-scoped helper exists (rows carry `customerid` 1 for every tenant). A per-tenant cap would be a product decision.
+- S3 behaviour to know: when a site admin generates for another learner, the candidate list is now that learner's tenant catalogue, not the whole site; on a vanilla schema the candidate list is empty for non-admins.

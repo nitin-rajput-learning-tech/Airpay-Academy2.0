@@ -240,3 +240,4 @@ $string['err_publish_badoptions']  = 'Question {$a} has fewer than two answer op
 $string['err_publish_badanswer']   = 'Question {$a} has a correct-answer index outside its options.';
 $string['err_publish_tempfile']    = 'Could not write the import work file.';
 $string['err_publish_import']      = 'The question import failed. Nothing was published.';
+$string['err_publish_notenant']    = 'This draft is not filed under a tenant, so it cannot be published: the course would appear in every tenant\'s catalogue. Ask a platform administrator to publish it.';

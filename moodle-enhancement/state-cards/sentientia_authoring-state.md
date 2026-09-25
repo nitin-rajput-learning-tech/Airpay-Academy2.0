@@ -253,3 +253,13 @@ change. Both trees.
 - Behaviour to know: templates a site admin created in `templates.php` (costcenterid 0, `is_builtin` 0) are no longer visible to tenant authors. A template meant for every tenant must be a built-in.
 
 Site admins unchanged. Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`); `draft_manager_test` updated. Written, not executed (shared test DB). Both trees.
+
+## 2026-09-25 - ADR-031 fix-forward: a tenantless draft is not published (wave-1 review S2)
+
+A draft with `costcenterid` 0 (a tenantless, non-cross-tenant author) published with a NULL course `open_path`, which tenant catalogues read as legacy and visible to every tenant once unhidden. The author only needed `course:create`.
+
+- New `course_builder::require_publishable_tenant()`, called by `build()` before the category/capability check: on a schema with `course.open_path`, a non-cross-tenant actor is refused a `costcenterid` 0 draft (new string `err_publish_notenant`, en + hi) and a draft whose tenant is not their own (`error_outoftenant`: an owner who has moved tenant, or an actor with no tenant). Cross-tenant actors and vanilla / Customer-N schemas (no `open_path` column) are unchanged.
+- Not changed (outside ADR-031 here): the posted `categoryid` is not tenant-bounded, because course categories are not tenant-scoped on this platform. The course itself is filed under the draft's tenant.
+- Behaviour to know (review S3): tenant authors no longer see site-admin-created non-built-in templates (costcenterid 0); tenant trainers can no longer edit the 3 built-ins; courses a site admin publishes from a tenant's draft are stamped `/N` instead of NULL; the studio.php picker for a site admin no longer lists other tenantless authors' non-built-in templates.
+
+Tests: `tests/tenant_scope_test.php` (+4: tenantless author refused and nothing created, moved-tenant owner refused, scoped author still publishes and the course is `/1`, site admin and `:crosstenant` holder still pass). `course_builder_test::test_build_denies_without_capability` now gives the author tenant /1 so the capability gate is still what refuses. No schema/access change, version stays 2026092500. Written, not executed (shared test DB). Both trees.
