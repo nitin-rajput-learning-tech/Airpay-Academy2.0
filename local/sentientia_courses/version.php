@@ -37,13 +37,14 @@ $plugin->component = 'local_sentientia_courses';
 // from course_reminder for the <48h urgent surface. No schema change.
 // UAT #3/#4 (2026-09-08) — Manage Courses KPI tiles + category filter now
 // tenant-scoped to the datatable's row set (course_manager::manage_*).
-$plugin->version   = 2026092500;  // ADR-031: course writes, enrolment, featured, list/export tenant-scoped (no schema/cap change)
+$plugin->version   = 2026092501;  // ADR-031 follow-up: upgrade step rehomes tenant admins' 'All tenants' featured rows; own-roster unenrol; scoped Enrolled column
+// 2026092500:  // ADR-031: course writes, enrolment, featured, list/export tenant-scoped (no schema/cap change)
 // 2026092201:  // real privacy provider: requests + remind_sent (was null_provider)
 // 2026091700:  // Browse Airpay Library: F-12 (format_string'd slots rendered once) + page copy via lang strings (en+hi)
 // 2026090800:
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.11.8';  // ADR-031 cross-tenant authority: every write checks the target's tenant
+$plugin->release   = '1.11.9';  // ADR-031 follow-up: featured rows rehomed, own-roster unenrol, tenant-scoped Enrolled count
 $plugin->dependencies = [
     'local_sentientia_org' => 2026041600,
     // tenant::is_cross_tenant() / scope_path() / require_same_tenant_user() (ADR-031).

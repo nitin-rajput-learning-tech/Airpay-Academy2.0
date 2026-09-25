@@ -154,16 +154,36 @@ class list_courses extends external_api {
         // exists; a cross-tenant caller's does not (vanilla schemas lack it).
         $pathcol = $crosstenant ? '' : ' c.open_path,';
         if ($total > 0) {
+            // ADR-031 follow-up (2026-09-25): the Enrolled column counts what
+            // the course's Enrolled users page counts (enrolledusers.php KPI,
+            // list_course_enrolments): distinct users, and for a scoped caller
+            // their own tenant's users only. It used to count every
+            // user_enrolments row of every tenant, so a tenant admin saw a
+            // bigger number here than on that page, and read other tenants'
+            // enrolment totals on legacy courses. path_filter() cannot be
+            // reused inside the subquery: its placeholders are fixed and the
+            // WHERE above already binds them, hence the tagged filter.
+            if ($crosstenant) {
+                [$eusql, $euargs] = ['1=1', []];
+            } else {
+                $viewerroot = \local_sentientia_platform\tenant::root_for_current_user();
+                [$eusql, $euargs] = $viewerroot > 0
+                    ? \local_sentientia_platform\tenant::path_descendant_filter(
+                        '/' . $viewerroot, 'eu', 'open_path', 'lcenr')
+                    : ['1=0', []];
+            }
             $sql = "SELECT c.id, c.fullname, c.shortname, c.idnumber, c.category, c.visible,{$pathcol}
                            c.timecreated, cat.name AS catname,
-                           (SELECT COUNT(*) FROM {user_enrolments} ue
+                           (SELECT COUNT(DISTINCT ue.userid)
+                              FROM {user_enrolments} ue
                               JOIN {enrol} e ON e.id = ue.enrolid
-                             WHERE e.courseid = c.id) AS enrolled_count
+                              JOIN {user} eu ON eu.id = ue.userid
+                             WHERE e.courseid = c.id AND {$eusql}) AS enrolled_count
                       FROM {course} c
                  LEFT JOIN {course_categories} cat ON cat.id = c.category
                      WHERE $wheresql
                   ORDER BY $orderby";
-            $records = $DB->get_records_sql($sql, $sqlparams,
+            $records = $DB->get_records_sql($sql, $sqlparams + $euargs,
                 $params['page'] * $params['perpage'], $params['perpage']);
         }
 

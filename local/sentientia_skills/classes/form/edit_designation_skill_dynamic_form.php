@@ -60,7 +60,9 @@ class edit_designation_skill_dynamic_form extends dynamic_form {
     }
 
     protected function check_access_for_dynamic_submission(): void {
-        require_capability('local/sentientia_skills:manage',
+        // ADR-031: the designation matrix is shared by every tenant - :manage
+        // AND cross-tenant.
+        \local_sentientia_skills\skills_manager::require_catalogue_write(
             $this->get_context_for_dynamic_submission());
     }
 

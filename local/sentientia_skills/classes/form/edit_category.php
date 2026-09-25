@@ -107,7 +107,9 @@ class edit_category extends \core_form\dynamic_form {
     }
 
     protected function check_access_for_dynamic_submission(): void {
-        require_capability('local/sentientia_skills:manage', $this->get_context_for_dynamic_submission());
+        // ADR-031: categories are catalogue-wide - :manage AND cross-tenant.
+        \local_sentientia_skills\skills_manager::require_catalogue_write(
+            $this->get_context_for_dynamic_submission());
     }
 
     protected function get_context_for_dynamic_submission(): \context {

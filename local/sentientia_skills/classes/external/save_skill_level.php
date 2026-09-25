@@ -29,7 +29,9 @@ class save_skill_level extends external_api {
             compact('skillid', 'level', 'label', 'description'));
         $context = \context_system::instance();
         self::validate_context($context);
-        require_capability('local/sentientia_skills:manage', $context);
+        // ADR-031: level definitions are catalogue-wide - :manage AND
+        // cross-tenant (skills_manager::require_catalogue_write()).
+        skills_manager::require_catalogue_write($context);
         require_sesskey();
 
         $id = skills_manager::save_skill_level(

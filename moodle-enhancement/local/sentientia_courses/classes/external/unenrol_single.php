@@ -37,8 +37,14 @@ class unenrol_single extends external_api {
         // ADR-031: the course must be in the caller's enrolment scope and the
         // user in the caller's tenant. Until 2026-09-25 any :enrol holder could
         // remove anybody's manual enrolment from any course.
-        \local_sentientia_courses\course_manager::require_enrol_scope(
-            (int) $params['courseid'], [(int) $params['userid']]);
+        // Follow-up (2026-09-25): as for classrooms, programs and paths, a user
+        // already enrolled in a course the caller's tenant OWNS may be removed
+        // whatever their tenant (pathless, out-of-tenant, a site admin):
+        // cleaning your own roster reaches no other tenant.
+        $root = \local_sentientia_courses\course_manager::require_enrol_scope(
+            (int) $params['courseid'], []);
+        \local_sentientia_courses\course_manager::require_unenrol_target(
+            (int) $params['courseid'], $root, (int) $params['userid']);
 
         $instance = $DB->get_record('enrol',
             ['courseid' => $params['courseid'], 'enrol' => 'manual', 'status' => 0]);

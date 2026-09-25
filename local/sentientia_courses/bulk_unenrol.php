@@ -90,13 +90,31 @@ if ($data = $form->get_data()) {
                                  'msg' => 'Missing email or shortname'];
                     continue;
                 }
+                $course = $DB->get_record('course', ['shortname' => $shortname]);
+                // ADR-031: until 2026-09-25 this unenrolled any user of any
+                // tenant from any course. For a scoped caller an out-of-tenant
+                // user or course reads exactly like a missing one, so the
+                // report cannot be used to probe other tenants.
+                if ($enrolroot !== null && $course
+                        && !\local_sentientia_courses\course_manager::course_in_enrol_scope(
+                            $course, $enrolroot)) {
+                    $course = false;
+                }
                 // ADR-031 (follow-up): the email lookup is bounded to the
                 // caller's tenant BEFORE a row is picked. With
                 // allowaccountssameemail an address can exist in two tenants,
                 // and get_record() returned whichever came first - the foreign
-                // one made the caller's own user read "not found".
-                $matches = \local_sentientia_courses\course_manager::users_by_email_in_scope(
-                    $email, $enrolroot, 'id, open_path');
+                // one made the caller's own user read "not found". In a course
+                // the caller's tenant owns, an address not found in the tenant
+                // is then looked up among that course's enrolees only, so an
+                // out-of-tenant or pathless learner can be cleaned off the
+                // caller's own roster (as unenrol_single allows); anyone not on
+                // it still reads "not found".
+                $matches = $course
+                    ? \local_sentientia_courses\course_manager::unenrol_users_by_email(
+                        $email, $course, $enrolroot)
+                    : \local_sentientia_courses\course_manager::users_by_email_in_scope(
+                        $email, $enrolroot, 'id, open_path');
                 if (count($matches) > 1) {
                     $failed++;
                     $report[] = ['line' => $line, 'status' => 'failed',
@@ -104,20 +122,6 @@ if ($data = $form->get_data()) {
                     continue;
                 }
                 $user = $matches ? $matches[0] : false;
-                $course = $DB->get_record('course', ['shortname' => $shortname]);
-                // ADR-031: until 2026-09-25 this unenrolled any user of any
-                // tenant from any course. For a scoped caller an out-of-tenant
-                // user or course reads exactly like a missing one, so the
-                // report cannot be used to probe other tenants.
-                if ($enrolroot !== null) {
-                    if ($user && \local_sentientia_platform\tenant::root_for_user($user) !== $enrolroot) {
-                        $user = false;
-                    }
-                    if ($course && !\local_sentientia_courses\course_manager::course_in_enrol_scope(
-                            $course, $enrolroot)) {
-                        $course = false;
-                    }
-                }
                 if (!$user || !$course) {
                     $failed++;
                     $report[] = ['line' => $line, 'status' => 'failed',

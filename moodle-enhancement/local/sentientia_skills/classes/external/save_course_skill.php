@@ -28,9 +28,10 @@ class save_course_skill extends external_api {
             compact('courseid', 'skillid', 'teaches_level'));
         $context = \context_system::instance();
         self::validate_context($context);
-        require_capability('local/sentientia_skills:manage', $context);
+        // ADR-031 follow-up: :mapcourses (or :manage) says WHAT...
+        skills_manager::require_map_courses($context);
         require_sesskey();
-        // ADR-031: map skills only onto a course in the caller's tenant.
+        // ...and WHERE: map skills only onto a course in the caller's tenant.
         skills_manager::require_course_write_scope((int) $params['courseid']);
 
         $id = skills_manager::save_course_skill(

@@ -508,3 +508,53 @@ UAT note: if role 9 ('administrator') has no Allow role assignments entry for 'e
 tenant admins will no longer be offered 'employee' in the enrol modal or CSV. Core's own
 enrolment UI applies the same rule. To keep it, tick 'employee' under role 9's Allow role
 assignments.
+
+## 2026-09-25 - ADR-031 follow-up 2: cross-cutting review should-fix items (branch claude/adr031-courses3-ff)
+
+The review of the merged wave left three SHOULD items for this plugin. All three are fixed in both
+trees.
+
+- **Featured rows a tenant admin pinned are rehomed (P1).** Before ADR-031, featured.php offered anyone
+  who was not a site admin only "All tenants", so every course a tenant curator pinned became a
+  `costcenterid = 0` row. Wave 1 confined curators to their own list. They could no longer see,
+  remove or reorder those rows, and `get_widget_for_user()` kept showing them to every tenant's
+  learners. New upgrade step **2026092501** (`db/upgradelib.php`,
+  `local_sentientia_courses_run_featured_rehome()`) handles each 0 row. If the course's
+  `open_path` names a known tenant N (first segment, `tenant::assert_valid()`) and the course has no
+  active share, the row becomes `costcenterid = N`. Rows stay global when the course is legacy (no
+  path), names no known tenant, is actively shared, is already pinned on tenant N's list (moving it
+  would duplicate the pair), or no longer exists. Every row goes to the config changes log
+  (`adr031_featured_rehomed` / `adr031_featured_review`, plus one `adr031_featured_audit`
+  summary). The log holds ids and tenant roots only. The step re-tags rows and deletes nothing.
+  Running it twice changes nothing. **Product note:** the table has no creator column, so a site
+  admin's deliberate "All tenants" pin of a tenant-owned, unshared course is rehomed too. The log
+  entry says how to restore it: pin it again under "All tenants" as a cross-tenant admin. The UAT
+  pre-deploy probe (`tools/uat/adr031_predeploy_probe.php`) now lists the 0 rows, each with its
+  course's tenant and active share count.
+- **Own-roster unenrol (P2).** `unenrol_single` now calls `require_enrol_scope($courseid, [])` and
+  then the new `course_manager::require_unenrol_target()`. This is the rule classrooms, programs and
+  paths already use. A user already enrolled in a course the caller's tenant OWNS (`path_in_tenant()`:
+  not shared in, not legacy) may be removed whatever their tenant: pathless, out of tenant, or a site
+  admin. Anyone else must pass `require_same_tenant_user()`, so naming a stranger still reads
+  `error_outoftenant` and the unenrol is not an existence oracle. `bulk_unenrol.php` looks the course
+  up first, then calls the new `course_manager::unenrol_users_by_email()`. That runs the in-tenant
+  lookup, and only for an owned course falls back to that course's own enrolees (at most two rows,
+  so an ambiguous address still fails). The Enrolled users page and `list_course_enrolments` still
+  list the viewer's tenant only, so such users are reachable by id (web service) or by email (bulk
+  CSV), not from a list row.
+- **Enrolled column (P2).** In `list_courses` the column now counts `COUNT(DISTINCT ue.userid)`
+  over `{user}`, bounded for a scoped caller by `path_descendant_filter('/root', 'eu', ..., 'lcenr')`.
+  That is the same figure as the enrolledusers.php KPI and `list_course_enrolments`. It used to
+  count every `user_enrolments` row of every tenant: users with two methods counted twice, and
+  legacy courses showed other tenants' totals. A tagged filter is needed because `path_filter()`'s
+  fixed placeholders are already bound by the WHERE clause.
+
+Tests: new `tests/adr031_followup2_test.php` (`@group tenant_isolation`). One `tenant_scope_test`
+case changed: `test_unenrol_single_is_confined_to_the_callers_tenant` now names a /177 user who is
+NOT on the /1 course's roster (still refused). It also asserts both the foreign-course refusal and
+the site admin's unenrol. The on-roster case is the new behaviour and is tested in the new file.
+Not run here (no PHPUnit, as instructed).
+
+Version: 1.11.9 / **2026092501** (new upgrade step). Deploy: the upgrade step runs on
+Notifications; read Site administration > Reports > Config changes (plugin local_sentientia_courses)
+afterwards.

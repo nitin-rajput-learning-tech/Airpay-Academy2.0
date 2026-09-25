@@ -18,6 +18,8 @@ $string['privacy:metadata'] = 'कौशल प्लगइन उपयोग�
 // Capabilities.
 $string['sentientia_skills:view']      = 'कौशल मैट्रिक्स और गैप विश्लेषण देखें';
 $string['sentientia_skills:manage']    = 'कौशल श्रेणियाँ और परिभाषाएँ प्रबंधित करें';
+$string['sentientia_skills:mapcourses'] = 'अपने टेनेंट के कोर्स पर कौशल मैप करें';
+$string['error_catalogueplatformonly'] = 'कौशल कैटलॉग सभी टेनेंट साझा करते हैं, इसलिए केवल क्रॉस-टेनेंट व्यवस्थापक ही इसे बदल सकते हैं।';
 $string['sentientia_skills:self_rate'] = 'किसी कौशल के लिए स्व-घोषित प्रवीणता स्तर निर्धारित करें (केवल अपनी प्रोफ़ाइल पर)';
 
 // CRUD strings.
