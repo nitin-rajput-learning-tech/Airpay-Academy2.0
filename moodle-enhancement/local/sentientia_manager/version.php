@@ -15,11 +15,17 @@ $plugin->component = 'local_sentientia_manager';
 // ADR-031 (2026-09-25) — can_view_member(): local/sentientia_users:view opens
 // member pages in the viewer's OWN tenant only (it opened every tenant's);
 // index.php's ?manager= pick is tenant-bounded for non-cross-tenant callers.
-$plugin->version   = 2026092500;  // ADR-031: team member pages tenant-bounded
+// ADR-031 follow-up (2026-09-25) — create_allocation / bulk_allocate / typed
+// allocations: a scoped manager may allocate only to a direct report in their
+// own tenant, and only an item (course, classroom, program, path) whose
+// open_path is in that tenant. An empty report list no longer means anybody.
+$plugin->version   = 2026092501;  // ADR-031: allocation targets tenant-bounded
+// 2026092500: ADR-031 team member pages tenant-bounded.
 // 2026060200: ADR-020 W3.4 org-seam migration.
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.3.4';  // ADR-031 tenant bound on member drill-down
+$plugin->release   = '1.3.5';  // ADR-031 tenant bound on allocations
+// 1.3.4: ADR-031 tenant bound on member drill-down
 // 1.3.3: +ADR-020 W3.4 org-seam migration of team_manager
 // team_manager calls local_sentientia_platform\tenant (ADR-031).
 $plugin->dependencies = [

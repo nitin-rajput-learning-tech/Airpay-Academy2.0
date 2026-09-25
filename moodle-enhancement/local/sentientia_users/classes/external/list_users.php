@@ -127,8 +127,11 @@ class list_users extends external_api {
                 $org = null;
             }
         }
+        // ADR-031: only a cross-tenant caller (site admin or :crosstenant) is
+        // unscoped here, the same authority profile_access and the edit form use.
+        $crosstenant = \local_sentientia_platform\tenant::is_cross_tenant();
         if ($org) {
-            if (!is_siteadmin()) {
+            if (!$crosstenant) {
                 $caller_parts = explode('/', trim($USER->open_path ?? '', '/'));
                 $caller_top = isset($caller_parts[0]) && ctype_digit($caller_parts[0])
                     ? '/' . (int) $caller_parts[0] : '';
@@ -145,7 +148,7 @@ class list_users extends external_api {
             $sqlparams['orgexact']  = rtrim($org->path, '/');
             $sqlparams['orgprefix'] =
                 $DB->sql_like_escape(rtrim($org->path, '/') . '/') . '%';
-        } else if (!is_siteadmin()) {
+        } else if (!$crosstenant) {
             $parts = explode('/', trim($USER->open_path ?? '', '/'));
             $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
             if ($top > 0) {

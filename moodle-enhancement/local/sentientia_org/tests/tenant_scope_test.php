@@ -10,7 +10,9 @@
  *    checking the org was in the caller's tenant;
  *  - list_children matched every org path for a caller whose open_path was
  *    empty ('' . '/' prefixes everything);
- *  - admin.php loaded every tenant's tree and headcounts for any :view holder.
+ *  - admin.php loaded every tenant's tree and headcounts for any :view holder;
+ *  - edit_org scope-checked the RAW posted parentid, but a value not on the
+ *    parent select was exported as null and created a new top-level tenant.
  *
  * @package    local_sentientia_org
  * @category   test
@@ -26,6 +28,7 @@ defined('MOODLE_INTERNAL') || die();
  * @covers \local_sentientia_org\org_manager
  * @covers \local_sentientia_org\external\list_children
  * @covers \local_sentientia_org\external\toggle_visibility
+ * @covers \local_sentientia_org\form\edit_org
  * @group tenant_isolation
  */
 final class tenant_scope_test extends \advanced_testcase {
@@ -181,5 +184,112 @@ final class tenant_scope_test extends \advanced_testcase {
 
         $this->setAdminUser();
         $this->assertFalse(external\toggle_visibility::execute((int) $this->orgbchild->id)['visible']);
+    }
+
+    /**
+     * Build an edit_org submission as the current user, the way the modal posts it.
+     *
+     * @param array $formdata overrides for a new-org submission
+     */
+    private function org_form(array $formdata): form\edit_org {
+        $data = form\edit_org::mock_ajax_submit($formdata + [
+            'orgid' => 0, 'fullname' => 'New node', 'shortname' => '', 'description' => '',
+            'visible' => 1, 'sortorder' => 0,
+        ]);
+        $form = new form\edit_org(null, null, 'post', '', null, true, $data, true);
+        $form->set_data_for_dynamic_submission();
+        return $form;
+    }
+
+    public function test_a_new_org_must_hang_under_a_parent_in_the_callers_scope(): void {
+        global $DB;
+        $managerroleid = (int) $DB->get_field('role', 'id', ['shortname' => 'manager'], MUST_EXIST);
+        // :manage has no default; even a deliberate grant stays inside the tenant.
+        assign_capability('local/sentientia_org:manage', CAP_ALLOW, $managerroleid,
+            \context_system::instance()->id, true);
+        // A depth-5 node of tenant A's own. The parent select offers depth <= 4
+        // only, so posting it was exported as null - and created a new TENANT.
+        $d3 = $this->make_org('TSA_D3', $this->orgachild);
+        $d4 = $this->make_org('TSA_D4', $d3);
+        $d5 = $this->make_org('TSA_D5', $d4);
+        $this->assertSame(5, (int) $d5->depth, 'Precondition: a depth-5 org.');
+        $this->setUser($this->tenant_admin($this->orga->path));
+        $roots = $DB->count_records('local_sentientia_org', ['parentid' => 0]);
+
+        foreach ([(int) $d5->id => 'a depth-5 org of their own (not on offer)',
+                0 => 'no parent at all (a new top-level tenant)',
+                (int) $this->orgbchild->id => 'another tenant\'s org',
+                999999 => 'a missing org'] as $parentid => $what) {
+            $form = $this->org_form(['parentid' => $parentid, 'fullname' => 'Sneaky ' . $parentid]);
+            $this->assertFalse($form->is_validated(), "Creating under {$what} must be refused.");
+        }
+        $this->assertSame($roots, $DB->count_records('local_sentientia_org', ['parentid' => 0]),
+            'A scoped :manage holder must never create a top-level tenant.');
+        $this->assertFalse($DB->record_exists_select('local_sentientia_org',
+            $DB->sql_like('fullname', ':name'), ['name' => 'Sneaky%']));
+
+        // The in-scope function survives: an offered parent in their own tenant.
+        $form = $this->org_form(['parentid' => (int) $this->orgachild->id, 'fullname' => 'Legit dept']);
+        $this->assertTrue($form->is_validated());
+        $newid = (int) $form->process_dynamic_submission()['orgid'];
+        $new = $DB->get_record('local_sentientia_org', ['id' => $newid], '*', MUST_EXIST);
+        $this->assertSame((int) $this->orgachild->id, (int) $new->parentid);
+        $this->assertSame($this->orgachild->path . '/' . $newid, $new->path);
+
+        // A cross-tenant caller may still create a new top-level tenant.
+        $this->setAdminUser();
+        $form = $this->org_form(['parentid' => 0, 'fullname' => 'Brand new tenant']);
+        $this->assertTrue($form->is_validated());
+        $tenantid = (int) $form->process_dynamic_submission()['orgid'];
+        $tenant = $DB->get_record('local_sentientia_org', ['id' => $tenantid], '*', MUST_EXIST);
+        $this->assertSame(0, (int) $tenant->parentid);
+        $this->assertSame('/' . $tenantid, $tenant->path);
+        // ...but not by posting a parent the select does not offer.
+        $form = $this->org_form(['parentid' => (int) $d5->id, 'fullname' => 'Too deep']);
+        $this->assertFalse($form->is_validated(),
+            'An unoffered parent is an error for everyone, not a silent new tenant.');
+    }
+
+    /** An org at a literal path, as UAT has them: Airpay /1, Public /77, ZEEA /177. */
+    private function org_at(string $path, int $parentid = 0): \stdClass {
+        global $DB;
+        $id = (int) $DB->insert_record('local_sentientia_org', (object) [
+            'fullname' => 'Org ' . $path, 'shortname' => 'ORG' . str_replace('/', '_', $path),
+            'parentid' => $parentid, 'path' => $path,
+            'depth' => substr_count($path, '/'), 'visible' => 1,
+            'sortorder' => 0, 'timecreated' => time(), 'timemodified' => time(),
+        ]);
+        return $DB->get_record('local_sentientia_org', ['id' => $id], '*', MUST_EXIST);
+    }
+
+    public function test_the_airpay_tenant_admin_is_held_to_slash_1_not_zeea_177(): void {
+        global $DB;
+        // The literal UAT tenants, without setUp's synthetic ones (whose
+        // id-derived paths could collide with /1).
+        $DB->delete_records('local_sentientia_org');
+        $airpay = $this->org_at('/1');
+        $airpaydept = $this->org_at('/1/2', (int) $airpay->id);
+        $zeea = $this->org_at('/177');
+        $zeeadept = $this->org_at('/177/178', (int) $zeea->id);
+        $trap = $this->org_at('/10');   // '/1' . '%' used to match it.
+
+        $this->setUser($this->tenant_admin('/1'));
+        $ids = array_map('intval', array_keys(org_manager::get_all_in_scope()));
+        sort($ids);
+        $this->assertSame([(int) $airpay->id, (int) $airpaydept->id], $ids,
+            'The Airpay admin\'s tree is /1 only: never ZEEA /177 or the /10 prefix trap.');
+        $this->assertSame([(int) $airpay->id], $this->child_ids(0));
+        $this->assertSame([], $this->child_ids((int) $zeea->id));
+        foreach ([$zeea, $zeeadept, $trap] as $org) {
+            $this->assertFalse(org_manager::path_in_scope($org->path), "{$org->path} is not /1's.");
+            $this->assertSame(['1=0', []], org_manager::cascade_where_sql(['org_l1' => (int) $org->id], 'p'));
+        }
+        $this->assertTrue(org_manager::path_in_scope($airpaydept->path));
+
+        $this->setAdminUser();
+        $all = org_manager::get_all_in_scope();
+        foreach ([$airpay, $airpaydept, $zeea, $zeeadept, $trap] as $org) {
+            $this->assertArrayHasKey((int) $org->id, $all, 'The site admin still sees every tenant.');
+        }
     }
 }

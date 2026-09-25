@@ -18,6 +18,26 @@ use local_sentientia_manager\approval_manager;
  */
 final class provider_test extends \core_privacy\tests\provider_testcase {
 
+    use \local_sentientia_org\test\bizlms_fixture;
+
+    /**
+     * ADR-031: an allocation needs the target to be the manager's direct report
+     * in the same tenant, and the course to be in that tenant. Returns [manager, report].
+     *
+     * @return \stdClass[]
+     */
+    private function manager_and_report(): array {
+        global $DB;
+        $this->ensure_bizlms_schema();
+        $mgr = $this->getDataGenerator()->create_user();
+        $u = $this->getDataGenerator()->create_user();
+        $DB->set_field('user', 'open_path', '/1/2', ['id' => $mgr->id]);
+        $DB->set_field('user', 'open_path', '/1/2', ['id' => $u->id]);
+        $DB->set_field('user', 'open_supervisorid', $mgr->id, ['id' => $u->id]);
+        return [$DB->get_record('user', ['id' => $mgr->id], '*', MUST_EXIST),
+                $DB->get_record('user', ['id' => $u->id], '*', MUST_EXIST)];
+    }
+
     private function seed_course(): \stdClass {
         global $DB;
         $course = $this->getDataGenerator()->create_course();
@@ -120,9 +140,9 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $this->resetAfterTest();
         $this->setAdminUser();
 
-        $u = $this->getDataGenerator()->create_user();
-        $mgr = $this->getDataGenerator()->create_user();
+        [$mgr, $u] = $this->manager_and_report();
         $course = $this->seed_course();
+        $DB->set_field('course', 'open_path', '/1', ['id' => $course->id]);
         approval_manager::create_allocation((int) $mgr->id, (int) $u->id,
             (int) $course->id);
 

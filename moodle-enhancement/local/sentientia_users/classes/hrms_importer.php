@@ -90,6 +90,15 @@ class hrms_importer {
     ];
 
     /**
+     * ADR-031: the one row error for a match the caller may not overwrite (an
+     * account in another tenant, a site admin, a cross-tenant account, or a
+     * multi-account clash seen by a scoped caller). Deliberately says nothing
+     * about where the matched account lives.
+     */
+    public const ROW_CONFLICT_ERROR =
+        'Row conflicts with an existing account that you cannot update (email, username or employee code already in use).';
+
+    /**
      * Run a full import on the given CSV content. Caller is the admin who
      * triggered the run (recorded for audit). Returns the run_id of the
      * inserted sync_runs row — caller can render success/error summary
@@ -227,8 +236,20 @@ class hrms_importer {
         // Index by employee_code for O(1) lookup. If the same employee_code
         // exists in multiple rows, last-write-wins (shouldn't happen — it's
         // supposed to be unique, but be defensive).
+        //
+        // ADR-031: a scoped caller only ever links a manager inside their own
+        // tenant, so only those are indexed. An employee code that exists only
+        // in another tenant is then "not found", exactly like one that exists
+        // nowhere: the warning used to say "outside caller tenant scope", which
+        // told a tenant admin which employee codes other tenants use. It also
+        // stops another tenant's row winning the last-write race over the
+        // caller's own manager with the same code.
         $by_empid = [];
         foreach ($manager_rows as $m) {
+            if ($caller_costcenterid > 0
+                    && !self::path_starts_with_tenant($m->open_path, $caller_costcenterid)) {
+                continue;
+            }
             if (!empty($m->open_employeeid)) {
                 $by_empid[$m->open_employeeid] = $m;
             }
@@ -251,23 +272,7 @@ class hrms_importer {
                 $warning_count++;
                 continue;
             }
-            // Tenant-scope check: caller (non-siteadmin) can only link
-            // managers within their tenant tree.
-            if ($caller_costcenterid > 0
-                && !self::path_starts_with_tenant($manager->open_path, $caller_costcenterid)) {
-                self::write_log_row($run_id, $q['csv_line_number'], [
-                    'email'         => $q['email'],
-                    'employee_code' => $q['employee_code'],
-                    'firstname'     => '',
-                    'lastname'      => '',
-                    'username'      => '-',
-                ], [
-                    'Manager (employee_code=' . $q['manager_empid']
-                        . ') is outside caller tenant scope. open_supervisorid left NULL.',
-                ], [], 'warning', $caller_userid);
-                $warning_count++;
-                continue;
-            }
+            // (Tenant scope: $by_empid holds only managers the caller may link.)
             // SET the supervisor link.
             $DB->set_field('user', 'open_supervisorid', (int) $manager->id,
                 ['id' => $q['userid']]);
@@ -345,7 +350,11 @@ class hrms_importer {
         // ── 5. Existing-user lookup (3-way: email, username, employee_code) ─
         $existing = self::find_existing_user($email, $username, $employee_code);
         if ($existing === 'multiple') {
-            $errors[] = 'Multiple existing users match this row (email/username/employee_code clash).';
+            // ADR-031: the lookup is site-wide, so for a scoped caller a clash
+            // may be with other tenants' accounts; give them the one refusal
+            // (step 5b) rather than confirm that several accounts exist.
+            $errors[] = $caller_costcenterid > 0 ? self::ROW_CONFLICT_ERROR
+                : 'Multiple existing users match this row (email/username/employee_code clash).';
         }
 
         // ── 5b. ADR-031: the MATCHED account must be in scope too ─────────
@@ -357,14 +366,16 @@ class hrms_importer {
         // that account's password, move it into their tenant and overwrite or
         // suspend it. Only a site admin may overwrite a site admin; a scoped
         // caller only an account inside their own tenant that is not itself
-        // cross-tenant. The row fails and the account is left untouched.
+        // cross-tenant. The row fails and the account is left untouched, with
+        // the one generic refusal: it must not tell a tenant admin that the
+        // email or username belongs to another tenant (or to a site admin).
         if (is_object($existing) && !is_siteadmin($caller_userid)) {
             $existingid = (int) $existing->id;
             if (is_siteadmin($existingid)
                     || ($caller_costcenterid > 0
                         && (!self::path_starts_with_tenant($existing->open_path, $caller_costcenterid)
                             || \local_sentientia_platform\tenant::is_cross_tenant($existingid)))) {
-                $errors[] = 'Row matches an existing account outside your tenant scope.';
+                $errors[] = self::ROW_CONFLICT_ERROR;
             }
         }
 

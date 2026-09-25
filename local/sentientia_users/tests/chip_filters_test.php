@@ -81,8 +81,9 @@ final class chip_filters_test extends \advanced_testcase {
             'open_hrmsrole'    => 'Senior',
         ], 1);
 
-        // Request only `designation` — the others should be empty arrays.
-        $result = \local_sentientia_users\external\list_filter_options::execute('designation');
+        // Request only `open_designation` (the WS allow-list takes column
+        // names) — the others should be empty arrays.
+        $result = \local_sentientia_users\external\list_filter_options::execute('open_designation');
         $this->assertNotEmpty($result['designation']);
         $this->assertSame([], $result['location'],
             'Unrequested fields must return an empty array, not data');

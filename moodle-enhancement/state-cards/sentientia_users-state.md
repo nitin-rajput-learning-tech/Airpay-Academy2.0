@@ -311,3 +311,29 @@ now decides WHERE via `local_sentientia_platform\tenant`.
 - Still open (not in the ADR-031 sweep): `guard_supervisor_tenant_scope()` lets a tenant-less
   supervisor through; the `emailtaken` validation is a cross-tenant email-existence oracle;
   `filterstoolong` still has no string.
+
+## 2026-09-25 - ADR-031 follow-up (no version bump; still 2026092500)
+
+- `task\hrms_sync`: only the importer's `invalidtenant` refusal is logged-and-returned; every other
+  exception (a `dml_exception` is a `moodle_exception` too) is rethrown so the task API reports and
+  retries it instead of the cron reporting success. The import call is a protected `import()` seam.
+- `:crosstenant` holders who are not site admins: `profile_access::can_view()` rule 2,
+  `list_users`, `exportcsv.php`, `bulk_import_processor` and `search_supervisors` now key on
+  `tenant::is_cross_tenant()` (they keyed on `is_siteadmin()`, so the edit form refused them even
+  though it offered them every tenant's orgs). Acting on a site admin is still site-admin only.
+- One refusal that says nothing about other tenants: HRMS step 5b (and, for a scoped caller, the
+  multi-account clash) is `hrms_importer::ROW_CONFLICT_ERROR`; pass 2 indexes only in-tenant managers
+  for a scoped caller, so a manager code used only by another tenant reads "not found" (the "outside
+  caller tenant scope" warning is gone); `bulk_csv_processor` answers `NOT_FOUND_REASON` for an
+  out-of-tenant email, and runs the tenant check before the self/guest/admin guard.
+- `guard_supervisor_tenant_scope()`: bypass is `is_cross_tenant()`; for anyone else a supervisor or
+  subordinate with no resolvable tenant, or a supervisor id that is nobody, is refused
+  (`supervisor_wrong_tenant`, whose en + hi text no longer names either tenant id). Closes the
+  2026-09-25 open item.
+- `chip_filters_test::test_filter_options_only_returns_requested_fields` passed 'designation' (not in
+  the allow-list, so it failed before ADR-031); it now passes 'open_designation'.
+- Tests (`tenant_scope_test`): a literal Airpay /1 vs ZEEA /177 / Public /77 / `/10` scenario across
+  list_users, can_view, suspend, bulk_action and the filter chips; the `:crosstenant` holder; the
+  generic HRMS and bulk-CSV refusals; the supervisor guard; the hrms_sync rethrow.
+- Still open: the `emailtaken` validation is a cross-tenant email-existence oracle; `filterstoolong`
+  has no string.

@@ -9,20 +9,53 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Tests for approval_manager — request lifecycle + course allocation.
  *
- * Tests are written against stock Moodle (no open_supervisorid field), so
- * direct_report_ids() returns []. The defensive guards in
- * approval_manager allow allocation in that mode without enforcing the
- * direct-report constraint.
+ * ADR-031 (2026-09-25): an allocation is only ever made by a line manager to a
+ * direct report in their own tenant, of a course in that tenant (the stock-DB
+ * "no reports = allocate to anybody" leniency was a cross-tenant write). So
+ * the allocation tests provision the BizLMS open_* columns and allocate as a
+ * /1 manager to a /1 report of a /1 course. The cross-tenant refusals live in
+ * tenant_scope_test.
  *
  * @package    local_sentientia_manager
  * @category   test
  */
 final class approval_manager_test extends \advanced_testcase {
 
+    use \local_sentientia_org\test\bizlms_fixture;
+
+    protected function setUp(): void {
+        parent::setUp();
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+    }
+
+    /** A user at $path, reloaded so the record carries open_path. */
+    private function user_at(string $path): \stdClass {
+        global $DB;
+        $u = $this->getDataGenerator()->create_user();
+        $DB->set_field('user', 'open_path', $path, ['id' => $u->id]);
+        return $DB->get_record('user', ['id' => $u->id], '*', MUST_EXIST);
+    }
+
+    /** A line manager inside tenant /1 (not cross-tenant). */
+    private function manager(): \stdClass {
+        return $this->user_at('/1/2');
+    }
+
+    /** A direct report of $mgr (open_supervisorid), in the same tenant. */
+    private function report_of(\stdClass $mgr): \stdClass {
+        global $DB;
+        $u = $this->user_at('/1/2');
+        $DB->set_field('user', 'open_supervisorid', $mgr->id, ['id' => $u->id]);
+        return $DB->get_record('user', ['id' => $u->id], '*', MUST_EXIST);
+    }
+
     private function seed_course(): \stdClass {
         $course = $this->getDataGenerator()->create_course();
         // Enable manual enrol on the course.
         global $DB;
+        // ADR-031: in the managers' tenant, so it may be allocated.
+        $DB->set_field('course', 'open_path', '/1', ['id' => $course->id]);
         if (!$DB->record_exists('enrol',
                 ['courseid' => $course->id, 'enrol' => 'manual'])) {
             $DB->insert_record('enrol', (object) [
@@ -144,8 +177,8 @@ final class approval_manager_test extends \advanced_testcase {
         $this->resetAfterTest();
         $this->setAdminUser();
 
-        $u = $this->getDataGenerator()->create_user();
-        $mgr = $this->getDataGenerator()->create_user();
+        $mgr = $this->manager();
+        $u = $this->report_of($mgr);
         $course = $this->seed_course();
 
         $id = approval_manager::create_allocation((int) $mgr->id, (int) $u->id,
@@ -162,8 +195,8 @@ final class approval_manager_test extends \advanced_testcase {
         $this->resetAfterTest();
         $this->setAdminUser();
 
-        $u = $this->getDataGenerator()->create_user();
-        $mgr = $this->getDataGenerator()->create_user();
+        $mgr = $this->manager();
+        $u = $this->report_of($mgr);
         $course = $this->seed_course();
 
         approval_manager::create_allocation((int) $mgr->id, (int) $u->id, (int) $course->id);
@@ -230,8 +263,8 @@ final class approval_manager_test extends \advanced_testcase {
         $this->resetAfterTest();
         $this->setAdminUser();
 
-        $u = $this->getDataGenerator()->create_user();
-        $mgr = $this->getDataGenerator()->create_user();
+        $mgr = $this->manager();
+        $u = $this->report_of($mgr);
         $course = $this->seed_course();
         $id = approval_manager::create_allocation((int) $mgr->id, (int) $u->id,
             (int) $course->id);
@@ -318,8 +351,8 @@ final class approval_manager_test extends \advanced_testcase {
         $this->preventResetByRollback();
         $sink = $this->redirectMessages();
 
-        $u = $this->getDataGenerator()->create_user();
-        $mgr = $this->getDataGenerator()->create_user();
+        $mgr = $this->manager();
+        $u = $this->report_of($mgr);
         $course = $this->seed_course();
 
         approval_manager::create_allocation((int) $mgr->id, (int) $u->id,
@@ -350,10 +383,10 @@ final class approval_manager_test extends \advanced_testcase {
         $this->resetAfterTest();
         $this->setAdminUser();
 
-        $u1 = $this->getDataGenerator()->create_user();
-        $u2 = $this->getDataGenerator()->create_user();
-        $u3 = $this->getDataGenerator()->create_user();
-        $mgr = $this->getDataGenerator()->create_user();
+        $mgr = $this->manager();
+        $u1 = $this->report_of($mgr);
+        $u2 = $this->report_of($mgr);
+        $u3 = $this->report_of($mgr);
         $course = $this->seed_course();
 
         // u3 already has an allocation — should be skipped.
@@ -378,8 +411,8 @@ final class approval_manager_test extends \advanced_testcase {
     public function test_bulk_allocate_dedupes_userid_array(): void {
         $this->resetAfterTest();
         $this->setAdminUser();
-        $u = $this->getDataGenerator()->create_user();
-        $mgr = $this->getDataGenerator()->create_user();
+        $mgr = $this->manager();
+        $u = $this->report_of($mgr);
         $course = $this->seed_course();
 
         $result = approval_manager::bulk_allocate((int) $mgr->id,
@@ -394,9 +427,9 @@ final class approval_manager_test extends \advanced_testcase {
         $this->resetAfterTest();
         $this->setAdminUser();
 
-        $u  = $this->getDataGenerator()->create_user();
-        $u2 = $this->getDataGenerator()->create_user();
-        $mgr = $this->getDataGenerator()->create_user();
+        $mgr = $this->manager();
+        $u  = $this->report_of($mgr);
+        $u2 = $this->report_of($mgr);
         $course = $this->seed_course();
 
         $reqid = approval_manager::create_request((int) $u->id, (int) $course->id,

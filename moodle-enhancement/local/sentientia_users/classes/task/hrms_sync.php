@@ -65,10 +65,15 @@ class hrms_sync extends \core\task\scheduled_task {
         // ADR-031: a configured runner that is neither cross-tenant nor in a
         // tenant is refused by the importer (invalidtenant) before any run row
         // is written; say so in the cron log instead of failing the task.
+        // Only that refusal: a dml_exception (also a moodle_exception) or any
+        // other importer failure must still fail the task, so the task API
+        // logs it and retries it, rather than the cron reporting success.
         try {
-            $run_id = \local_sentientia_users\hrms_importer::import_csv(
-                $csv, $runner_userid, $filename, 'cron');
+            $run_id = $this->import($csv, $runner_userid, $filename);
         } catch (\moodle_exception $e) {
+            if ($e->errorcode !== 'invalidtenant') {
+                throw $e;
+            }
             mtrace('local_sentientia_users hrms_sync: refused for runner user '
                 . $runner_userid . ': ' . $e->getMessage());
             return;
@@ -92,6 +97,17 @@ class hrms_sync extends \core\task\scheduled_task {
                 (int) $run->warningcount
             ));
         }
+    }
+
+    /**
+     * Run the import as $runner_userid. A seam so tests can make the importer
+     * fail in a way it does not on a healthy site.
+     *
+     * @return int the sync run id
+     */
+    protected function import(string $csv, int $runner_userid, string $filename): int {
+        return \local_sentientia_users\hrms_importer::import_csv(
+            $csv, $runner_userid, $filename, 'cron');
     }
 
     /**

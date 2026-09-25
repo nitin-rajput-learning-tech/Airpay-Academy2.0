@@ -33,16 +33,19 @@ defined('MOODLE_INTERNAL') || die();
  * THE RULE, in order
  * ------------------
  *   1. Your own profile: allowed.
- *   2. Site admin: allowed.
+ *   2. A cross-tenant viewer (ADR-031: site admin, or holder of
+ *      local/sentientia_platform:crosstenant): allowed. Until 2026-09-25 this
+ *      was site admin only, so a :crosstenant holder - offered every tenant's
+ *      organisations by the edit form - could not open another tenant's user.
  *   3. Otherwise viewer and target must resolve to the SAME tenant root, the
  *      leading numeric segment of open_path (/1/2/3 -> 1). Different root:
  *      refused. Same root keeps today's behaviour, so colleague links from
  *      the leaderboard and the manager views still work.
  *   4. A viewer whose tenant cannot be resolved (null, '', '/', non-numeric)
- *      and who is not a site admin sees nothing but their own profile. Fail
+ *      and who is not cross-tenant sees nothing but their own profile. Fail
  *      closed; never guess a tenant.
  *   5. A target whose tenant cannot be resolved is refused to everyone but a
- *      site admin (and the target themselves, by rule 1).
+ *      cross-tenant viewer (and the target themselves, by rule 1).
  *
  * A deleted account counts as unresolvable for rules 3-5: a peer gets the
  * same answer for a deleted colleague as for an id that never existed.
@@ -91,8 +94,8 @@ final class profile_access {
             return true;
         }
 
-        // Rule 2: site admin.
-        if (is_siteadmin($viewerid)) {
+        // Rule 2: a cross-tenant viewer (site admin or :crosstenant, ADR-031).
+        if (\local_sentientia_platform\tenant::is_cross_tenant($viewerid)) {
             return true;
         }
 
@@ -132,14 +135,14 @@ final class profile_access {
      * Check access, THEN load the target user. The order is the point.
      *
      * Refused and missing come back as the same exception. The only viewer
-     * who can reach the "passed the check but no record" branch is a site
-     * admin (a same-tenant peer has already had the record found by
-     * can_view()), and they get the same exception too.
+     * who can reach the "passed the check but no record" branch is a
+     * cross-tenant one (a same-tenant peer has already had the record found
+     * by can_view()), and they get the same exception too.
      *
      * @param int $viewerid
      * @param int $targetid
      * @param bool $includedeleted Load a deleted account as well. Only
-     *                             reachable by a site admin: can_view()
+     *                             reachable by a cross-tenant viewer: can_view()
      *                             treats a deleted target as unresolvable.
      * @param string $fields Columns to fetch.
      * @return \stdClass The target user record.

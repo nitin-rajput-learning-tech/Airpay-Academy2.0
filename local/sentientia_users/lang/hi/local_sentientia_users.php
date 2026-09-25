@@ -59,7 +59,7 @@ $string['welcome_email_body']         = 'डिफ़ॉल्ट स्वा�
 // P1 chip filters + supervisor.
 $string['supervisor']            = 'रिपोर्टिंग मैनेजर';
 $string['supervisor_help']       = 'सुपरवाइज़र का नाम, ईमेल या एम्प्लॉयी कोड टाइप करें। केवल आपके टेनेंट के यूज़र दिखते हैं।';
-$string['supervisor_wrong_tenant'] = 'सुपरवाइज़र ({$a->supervisor_tenant} टेनेंट) इस यूज़र ({$a->subordinate_tenant} टेनेंट) के समान टेनेंट में नहीं है। उसी टेनेंट से सुपरवाइज़र चुनें।';
+$string['supervisor_wrong_tenant'] = 'इस यूज़र के ही टेनेंट से सुपरवाइज़र चुनें। चुना गया सुपरवाइज़र उसमें नहीं है, या नहीं मिला।';
 
 // Common labels.
 $string['back_to_users'] = 'यूज़र सूची पर वापस जाएँ';

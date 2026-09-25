@@ -200,7 +200,7 @@ $string['tos_heading']       = 'Terms of Use';
 
 // P1 batch (2026-05-16) — tenant-scoped supervisor autocomplete.
 $string['supervisor_help'] = 'Start typing the supervisor\'s name, email, or employee code. Only users from the same tenant tree are shown — you cannot pick a supervisor from a different tenant.';
-$string['supervisor_wrong_tenant'] = 'Supervisor (tenant {$a->supervisor_tenant}) does not belong to the same tenant as this user (tenant {$a->subordinate_tenant}). Pick a supervisor from the same tenant tree.';
+$string['supervisor_wrong_tenant'] = 'Pick a supervisor from the same tenant tree as this user. The one chosen is not in it, or cannot be found.';
 
 // P1 batch (2026-05-16) — DOB + DOJ on admin edit form.
 $string['open_dateofbirth']      = 'Date of birth';

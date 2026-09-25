@@ -335,10 +335,15 @@ final class role_manager_test extends \advanced_testcase {
             $DB->set_field('user', 'open_path', '/1/2', ['id' => $u->id]);
             $u->open_path = '/1/2';
         }
-        // Grant the user the manage cap so role_manager will accept their write.
+        // ADR-031: role_manager lets only a cross-tenant caller edit a role
+        // definition; the manager role every tenant admin holds is not enough.
+        // A dedicated role with only :crosstenant keeps changedby = $u.
         $context = \context_system::instance();
-        $managerroleid = (int) $DB->get_field('role', 'id', ['shortname' => 'manager'], MUST_EXIST);
-        role_assign($managerroleid, $u->id, $context->id);
+        $crossroleid = $this->getDataGenerator()->create_role();
+        assign_capability('local/sentientia_platform:crosstenant', CAP_ALLOW, $crossroleid,
+            $context->id, true);
+        role_assign($crossroleid, $u->id, $context->id);
+        accesslib_clear_all_caches_for_unit_testing();
         $this->setUser($u);
 
         $roleid = create_role('Path Test', 'pathtest', '');

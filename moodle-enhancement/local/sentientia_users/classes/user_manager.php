@@ -628,41 +628,39 @@ class user_manager {
      * same tenant tree as the subordinate. Throws moodle_exception on
      * cross-tenant attempts.
      *
-     * Siteadmin bypasses the check.
+     * ADR-031 (2026-09-25): a cross-tenant caller (site admin or
+     * :crosstenant) bypasses the check; it keyed on is_siteadmin() alone.
+     * For anyone else it fails closed: a supervisor or subordinate with no
+     * resolvable tenant (or a supervisor id that is nobody) used to be let
+     * through as "legacy data", so a scoped caller could link anybody whose
+     * path was blank. Both must now resolve to the same tenant root.
      *
      * @param int $subordinate_userid     User being edited / created
      * @param int $supervisor_userid      Picked supervisor
      * @param string|null $new_subord_path open_path being applied (if any)
-     * @throws \moodle_exception
+     * @throws \moodle_exception supervisor_wrong_tenant
      */
     private static function guard_supervisor_tenant_scope(int $subordinate_userid,
                                                             int $supervisor_userid,
                                                             ?string $new_subord_path = null): void {
         global $DB;
-        if (is_siteadmin()) {
-            return;  // siteadmin can cross tenants
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return;  // cross-tenant callers can link across tenants
         }
         if ($supervisor_userid <= 1) {
             return;  // 0/null/guest — nothing to validate
         }
         $supervisor = $DB->get_record('user',
             ['id' => $supervisor_userid, 'deleted' => 0], 'id, open_path');
-        if (!$supervisor || empty($supervisor->open_path)) {
-            // Supervisor has no tenant — let it through (legacy data).
-            return;
-        }
         // Subordinate's effective open_path = new path (if being set) OR
         // existing path from DB.
         $subord_path = $new_subord_path
             ?: (string) $DB->get_field('user', 'open_path',
                 ['id' => $subordinate_userid]);
-        if ($subord_path === '') {
-            return;  // no tenant on subordinate — allow
-        }
 
-        $sup_top = self::parse_tenant_root($supervisor->open_path);
-        $sub_top = self::parse_tenant_root($subord_path);
-        if ($sup_top > 0 && $sub_top > 0 && $sup_top !== $sub_top) {
+        $sup_top = $supervisor ? self::parse_tenant_root((string) $supervisor->open_path) : 0;
+        $sub_top = self::parse_tenant_root((string) $subord_path);
+        if ($sup_top <= 0 || $sub_top <= 0 || $sup_top !== $sub_top) {
             throw new \moodle_exception('supervisor_wrong_tenant',
                 'local_sentientia_users', '', (object) [
                     'supervisor_tenant'  => $sup_top,
