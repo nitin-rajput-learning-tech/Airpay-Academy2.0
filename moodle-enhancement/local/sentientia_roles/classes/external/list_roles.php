@@ -65,7 +65,9 @@ class list_roles extends external_api {
         $rows = array_slice($rows, $page * $perpage, $perpage);
 
         // Render datatable-friendly action HTML.
-        $can_manage = has_capability('local/sentientia_roles:manage', $context);
+        // ADR-031: editing a role definition is cross-tenant only.
+        $can_manage = has_capability('local/sentientia_roles:manage', $context)
+            && \local_sentientia_platform\tenant::is_cross_tenant();
         $can_audit  = has_capability('local/sentientia_roles:audit', $context);
         $viewbase   = new \moodle_url('/local/sentientia_roles/view.php');
         $auditbase  = new \moodle_url('/local/sentientia_roles/view.php');

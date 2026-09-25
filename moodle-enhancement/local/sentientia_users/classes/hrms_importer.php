@@ -108,7 +108,8 @@ class hrms_importer {
         require_once($CFG->dirroot . '/user/lib.php');
 
         // Compute caller tenant scope. Non-siteadmins can only create users
-        // under their own tenant root.
+        // under their own tenant root. ADR-031: throws invalidtenant for a
+        // scoped caller with no resolvable tenant, BEFORE the run row exists.
         $caller_costcenterid = self::caller_tenant_root($caller_userid);
 
         $now = time();
@@ -347,6 +348,26 @@ class hrms_importer {
             $errors[] = 'Multiple existing users match this row (email/username/employee_code clash).';
         }
 
+        // ── 5b. ADR-031: the MATCHED account must be in scope too ─────────
+        // The lookup is site-wide on purpose (a clash must never become a
+        // duplicate account), and step 4 only checks where the row is headed.
+        // Without this a tenant admin could upload one row carrying another
+        // tenant's user's email - or the site admin's username - with their
+        // own company_code and a password, and the update below would reset
+        // that account's password, move it into their tenant and overwrite or
+        // suspend it. Only a site admin may overwrite a site admin; a scoped
+        // caller only an account inside their own tenant that is not itself
+        // cross-tenant. The row fails and the account is left untouched.
+        if (is_object($existing) && !is_siteadmin($caller_userid)) {
+            $existingid = (int) $existing->id;
+            if (is_siteadmin($existingid)
+                    || ($caller_costcenterid > 0
+                        && (!self::path_starts_with_tenant($existing->open_path, $caller_costcenterid)
+                            || \local_sentientia_platform\tenant::is_cross_tenant($existingid)))) {
+                $errors[] = 'Row matches an existing account outside your tenant scope.';
+            }
+        }
+
         // Fail early if any errors so far.
         if (!empty($errors)) {
             self::write_log_row($run_id, $line_num, [
@@ -554,16 +575,27 @@ class hrms_importer {
 
     /**
      * Return the top-level org id (= costcenterid) for the caller from their
-     * open_path. 0 for siteadmin (= no restriction).
+     * open_path. 0 = no restriction, for a cross-tenant caller only.
+     *
+     * ADR-031: 0 used to mean BOTH "site admin" and "a caller whose open_path
+     * does not resolve", and 0 switches every tenant guard in this class off,
+     * so a tenant-less holder of :create was an unscoped site-wide importer.
+     * Now only tenant::is_cross_tenant() (site admin or :crosstenant) gets 0;
+     * anyone else without a tenant is refused, as bulk_import_processor does.
+     *
+     * @throws \moodle_exception invalidtenant
      */
     private static function caller_tenant_root(int $userid): int {
-        if (is_siteadmin($userid)) {
+        global $DB;
+        if (\local_sentientia_platform\tenant::is_cross_tenant($userid)) {
             return 0;
         }
-        global $DB;
-        $path = (string) ($DB->get_field('user', 'open_path', ['id' => $userid]) ?? '');
-        $parts = explode('/', trim($path, '/'));
-        return isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
+        $caller = $DB->get_record('user', ['id' => $userid], 'id, open_path');
+        $root = $caller ? \local_sentientia_platform\tenant::root_for_user($caller) : 0;
+        if ($root <= 0) {
+            throw new \moodle_exception('invalidtenant', 'local_sentientia_users');
+        }
+        return $root;
     }
 
     /** True iff $path starts with /$tenant_root or equals /$tenant_root. */

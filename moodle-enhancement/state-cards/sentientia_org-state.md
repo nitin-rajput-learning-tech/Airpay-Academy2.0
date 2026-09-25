@@ -190,3 +190,26 @@ returning by `tools/check-path-boundary.php` - pre-commit CHECK 18 and the `path
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+## 2026-09-25 - ADR-031: org tree bounded to the caller's tenant, fails closed (no version bump)
+
+- `org_manager::cascade_where_sql()`: six list_* web services (programs, reports, classroom,
+  evaluation, exams, learningpath) use its fragment INSTEAD of their tenant filter, and the org id
+  comes from the client. A caller who is not cross-tenant now gets `1=0` for an org outside their
+  tenant, or for any org when their own tenant does not resolve. (The callers still replace rather
+  than AND the tenant filter; hardening them belongs to those plugins' groups.)
+- New `org_manager::path_in_scope()` / `require_in_scope()` / `get_all_in_scope()` ('/'-bounded,
+  empty path refused for scoped callers).
+- admin.php: the tree, per-node headcounts and the active-user tile are the caller's tenant only
+  (everything for a cross-tenant caller, nothing without a tenant). `:view` keeps its manager default
+  (tenant_settings.php needs it).
+- `list_children` WS: fails closed for a caller with no resolvable tenant (an empty caller path
+  matched every org path) and skips path-less rows; unscoped only for `is_cross_tenant()`.
+- Writes: `delete_org` / `toggle_visibility` also refuse a path-less org for scoped callers
+  (`require_path_access()` lets '' through); the edit-org form (`:manage`, no default grant) now
+  bounds the edited node or the new node's parent to the caller's tenant, and offers "top-level
+  tenant" and other tenants' parents to cross-tenant callers only.
+- PHP-class and page changes only, no upgrade step: version.php is left alone (it is baselined
+  cross-tree drift). Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`);
+  `delete_org_test` now asserts the `error_outoftenant` code (its message never contained
+  'outoftenant').

@@ -278,3 +278,36 @@ nobody. Written, not run (shared PHPUnit DB).
 
 Both trees byte-identical. Deploy pending: run `upgrade.php` and purge straight after copying,
 because `profile_access` is a new autoloaded class and peer views fatal until the class map is rebuilt.
+
+## 2026-09-25 - ADR-031: every user write checks the TARGET's tenant (2.7.9 -> 2.8.0, 2026092500)
+
+`:create`, `:edit` and `:view` keep their manager default (they are in-tenant functions); the code
+now decides WHERE via `local_sentientia_platform\tenant`.
+
+- HRMS import (P0, account takeover): the site-wide existing-user match is now checked too. A row
+  matching a site admin (for any non-siteadmin caller), or - for a scoped caller - an account outside
+  their tenant, with no tenant, or cross-tenant, fails with "Row matches an existing account outside
+  your tenant scope." and the account is untouched (password, open_path, suspended, names).
+  `caller_tenant_root()` returns 0 only for `tenant::is_cross_tenant()` and throws `invalidtenant`
+  for anyone else without a tenant, before the run row exists; the cron task logs that refusal.
+- `user_manager::require_can_act_on()`: site admin -> anyone; nobody else -> a site admin; a
+  cross-tenant caller -> anyone else; a scoped caller -> only a same-tenant account that is not
+  cross-tenant (refusal `error_profilenotavailable`, same for a missing id). Used by the
+  `suspend_user` WS (P0: any id in any tenant, site admins included; self-suspend now
+  `cannotsuspendself`), `delete_user`, and the edit form (closes the same-tenant `newpassword` on a
+  site admin noted 2026-09-24). Not inside `suspend()`/`update()` themselves: the SCIM handler calls
+  those with no session user and scopes by its client's tenant.
+- Bulk suspend (WS and CSV): site admins are skipped unless the caller is one; scoped callers also
+  skip cross-tenant accounts; `invalidtenant` now keys on `is_cross_tenant()`.
+- Edit form (P0): organisations offered are the caller's tenant subtree only (none without a
+  tenant); `validation()` re-checks the posted org server side ('/'-bounded); a scoped create with no
+  org lands at the caller's tenant root, never outside every tenant.
+- Fail-closed reads: index.php KPI counts and org dropdown, `list_filter_options`, and
+  `sync_runs.php` return nothing for a caller with no resolvable tenant (they returned every
+  tenant's); `sync_run_detail.php` keys on `is_cross_tenant()`.
+- `invalidtenant`, `outoftenant`, `cannotsuspendself` strings added (en + hi); they rendered as raw
+  keys. `list_users_test` now asserts the `outoftenant` error code instead of the message.
+- Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`).
+- Still open (not in the ADR-031 sweep): `guard_supervisor_tenant_scope()` lets a tenant-less
+  supervisor through; the `emailtaken` validation is a cross-tenant email-existence oracle;
+  `filterstoolong` still has no string.

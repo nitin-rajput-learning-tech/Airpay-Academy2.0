@@ -27,26 +27,23 @@ $can_bulkstatus = has_capability('local/sentientia_users:bulkstatuschange', $con
 $dbman = $DB->get_manager();
 $base_where = 'deleted = 0 AND id > 2';
 $base_params = [];
-if (!is_siteadmin()) {
-    global $USER;
-    $parts = explode('/', trim($USER->open_path ?? '', '/'));
-    $top = $parts[0] ?? '';
-    if (!empty($top)) {
-        // '/1' . '%' also matched '/177', so an Airpay admin's user counts silently
-        // included the ZEEA tenant. Exact-or-descendant instead.
-        [$orgsql, $orgargs] = \local_sentientia_platform\tenant::path_descendant_filter(
-            '/' . $top, '', 'open_path', 'userorg');
-        $base_where .= ' AND ' . $orgsql;
-        $base_params += $orgargs;
-    }
-}
+// ADR-031: tenant::path_filter() is unbounded only for a cross-tenant caller,
+// '/'-bounded to the caller's tenant otherwise ('/1' never counts '/177'), and
+// '1=0' for a caller with no resolvable tenant - who used to get the counts of
+// every tenant, because an empty root skipped the filter.
+[$orgsql, $orgargs] = \local_sentientia_platform\tenant::path_filter('', 'open_path');
+$base_where .= ' AND ' . $orgsql;
+$base_params += $orgargs;
 $total_count   = (int) $DB->count_records_select('user', $base_where, $base_params);
 $active_count  = (int) $DB->count_records_select('user', "$base_where AND suspended = 0", $base_params);
 $suspended_count = $total_count - $active_count;
 
 // ── Org dropdown options ──
-$orgs = $DB->get_records('local_sentientia_org', ['depth' => 1, 'visible' => 1], 'fullname ASC',
-    'id, fullname');
+// ADR-031: only the caller's own tenant root (every root for a cross-tenant
+// caller, none without a tenant); this listed every tenant's name to anyone.
+[$rootsql, $rootargs] = \local_sentientia_platform\tenant::path_filter('', 'path');
+$orgs = $DB->get_records_select('local_sentientia_org', "depth = 1 AND visible = 1 AND $rootsql",
+    $rootargs, 'fullname ASC', 'id, fullname');
 $org_options = [];
 foreach ($orgs as $o) {
     $org_options[] = [

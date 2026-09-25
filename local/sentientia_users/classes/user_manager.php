@@ -678,7 +678,49 @@ class user_manager {
     }
 
     /**
+     * ADR-031: refuse unless the current user may act on (edit, suspend,
+     * delete) the account $targetid.
+     *
+     *  - a site admin may act on anyone, as before;
+     *  - nobody else may act on a site admin;
+     *  - a cross-tenant caller (local/sentientia_platform:crosstenant) may act
+     *    on anyone else;
+     *  - anyone else only on an account inside their own tenant that is not
+     *    itself cross-tenant - never on somebody with more reach than they have.
+     *
+     * The tenant rule is profile_access::can_view(), so a missing, deleted or
+     * out-of-tenant id all raise the one refusal: the call is no existence
+     * oracle. Kept out of suspend()/delete()/update() themselves because the
+     * SCIM handler (local_sentientia_api) calls those with no session user and
+     * scopes by the SCIM client's tenant instead.
+     *
+     * @param int $targetid
+     * @throws \moodle_exception error_profilenotavailable
+     */
+    public static function require_can_act_on(int $targetid): void {
+        global $USER;
+
+        $actorid = (int) ($USER->id ?? 0);
+        if (is_siteadmin($actorid)) {
+            return;
+        }
+        if ($targetid <= 0 || is_siteadmin($targetid)) {
+            throw profile_access::not_available();
+        }
+        if (\local_sentientia_platform\tenant::is_cross_tenant($actorid)) {
+            return;
+        }
+        if (!profile_access::can_view($actorid, $targetid)
+                || ($targetid !== $actorid && \local_sentientia_platform\tenant::is_cross_tenant($targetid))) {
+            throw profile_access::not_available();
+        }
+    }
+
+    /**
      * Toggle suspended status of a user.
+     *
+     * Callers acting for a session user must call require_can_act_on() first
+     * (the suspend_user web service does).
      *
      * @param int $userid
      * @param bool|null $suspended  null = toggle current state

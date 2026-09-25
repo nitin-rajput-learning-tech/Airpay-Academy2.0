@@ -39,6 +39,10 @@ class toggle_visibility extends external_api {
         // orgs inside their own top-level tree. Replaces the bespoke
         // inline pattern that had a silent-pass bug on empty open_path.
         \local_sentientia_platform\tenant::require_path_access((string) $existing->path);
+        // ADR-031: require_path_access() lets an empty path through (legacy
+        // rows); a caller who is not cross-tenant may not act on a node that
+        // belongs to no tenant either.
+        \local_sentientia_org\org_manager::require_in_scope($existing);
 
         $newstate = \local_sentientia_org\org_manager::toggle_visibility($params['orgid']);
         return [

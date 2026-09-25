@@ -311,12 +311,22 @@ class team_manager {
      * Verify the requesting user can view the target user's data.
      * Allows: admins, the target user themselves, the target's supervisor,
      * and the supervisor's supervisor (skip-level managers).
+     *
+     * ADR-031: a holder of local/sentientia_users:view (every tenant admin -
+     * it defaults to the manager archetype) sees members of their OWN tenant
+     * only; that capability is tenant-scoped everywhere in local_sentientia_users
+     * and was the one thing here that opened every tenant's member pages. Only a
+     * cross-tenant viewer (site admin or :crosstenant) sees anyone. A refused
+     * holder still falls through to the supervisor-chain walk.
      */
     public static function can_view_member(int $viewerid, int $targetid): bool {
         global $DB;
         if ($viewerid === $targetid) return true;
-        if (is_siteadmin($viewerid)) return true;
-        if (has_capability('local/sentientia_users:view', \context_system::instance(), $viewerid)) return true;
+        if (\local_sentientia_platform\tenant::is_cross_tenant($viewerid)) return true;
+        if (has_capability('local/sentientia_users:view', \context_system::instance(), $viewerid)
+                && self::same_tenant($viewerid, $targetid)) {
+            return true;
+        }
 
         // Walk up the supervisor chain from target via the org seam (ADR-020):
         // org_legacy ON resolves each manager from open_supervisorid as before;
@@ -332,5 +342,26 @@ class team_manager {
             $current = (int) $sup;
         }
         return false;
+    }
+
+    /**
+     * ADR-031: are both users live accounts in the same tenant root?
+     *
+     * Roots are compared as integers ('/1' never matches '/10' or '/177'), and
+     * an unresolvable viewer or target is never "the same tenant" as anyone.
+     *
+     * @param int $viewerid
+     * @param int $targetid
+     * @return bool
+     */
+    public static function same_tenant(int $viewerid, int $targetid): bool {
+        global $DB;
+        $viewer = $DB->get_record('user', ['id' => $viewerid, 'deleted' => 0], 'id, open_path');
+        $target = $DB->get_record('user', ['id' => $targetid, 'deleted' => 0], 'id, open_path');
+        if (!$viewer || !$target) {
+            return false;
+        }
+        $root = \local_sentientia_platform\tenant::root_for_user($viewer);
+        return $root > 0 && $root === \local_sentientia_platform\tenant::root_for_user($target);
     }
 }

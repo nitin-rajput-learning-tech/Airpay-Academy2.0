@@ -22,9 +22,16 @@ $PAGE->set_pagelayout('standard');
 $isadmin = is_siteadmin() || has_capability('local/courses:manage', $context);
 
 // Admin can pick which manager's team to view.
+// ADR-031: local/courses:manage says WHAT, not WHERE - a holder who is not
+// cross-tenant may only pick a manager inside their own tenant; anything else
+// falls back to their own team, as for a non-admin.
 $viewuserid = optional_param('manager', $USER->id, PARAM_INT);
-if ($viewuserid !== $USER->id && !$isadmin) {
-    $viewuserid = $USER->id;
+if ($viewuserid !== (int) $USER->id) {
+    $maypick = $isadmin && (\local_sentientia_platform\tenant::is_cross_tenant()
+        || \local_sentientia_manager\team_manager::same_tenant((int) $USER->id, $viewuserid));
+    if (!$maypick) {
+        $viewuserid = (int) $USER->id;
+    }
 }
 
 // Fetch team + summary in two batched queries (no N+1).

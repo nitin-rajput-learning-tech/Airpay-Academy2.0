@@ -111,6 +111,9 @@ $string['err_capability_not_found'] = 'क्षमता "{$a}" इस Sentient
 $string['err_invalid_permission']   = 'अनुमति इनमें से एक होनी चाहिए: inherit, allow, prevent, prohibit।';
 $string['err_cannot_modify_admin']  = 'साइट एडमिनिस्ट्रेटर रोल पर क्षमताएँ संशोधित नहीं कर सकते।';
 $string['err_filterstoolong']       = 'फ़िल्टर ब्लॉब सीमा से अधिक है।';
+// ADR-031 (2026-09-25).
+$string['err_definitions_crosstenant'] = 'रोल परिभाषाएँ सभी टेनेंट साझा करते हैं, इसलिए केवल प्लेटफ़ॉर्म (क्रॉस-टेनेंट) एडमिनिस्ट्रेटर ही इन्हें बदल सकता है।';
+$string['err_role_not_assignable'] = 'आप केवल वही रोल असाइन कर सकते हैं जो आपके पास स्वयं है और जिसे असाइन करने की आपको अनुमति है, और केवल अपने संगठन के किसी अन्य व्यक्ति को।';
 
 // Privacy provider strings.
 $string['privacy:metadata:auditlog']               = 'एयरपे रोल-प्रबंधन UI के माध्यम से किए गए रोल और क्षमता परिवर्तनों का केवल-जोड़ें ऑडिट लॉग।';

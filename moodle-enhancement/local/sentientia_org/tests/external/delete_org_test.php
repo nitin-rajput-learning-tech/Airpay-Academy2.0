@@ -58,9 +58,15 @@ final class delete_org_test extends \advanced_testcase {
         $caller = $this->manager_at_path('/8002');
         $this->setUser($caller);
 
-        $this->expectException(\moodle_exception::class);
-        $this->expectExceptionMessage('outoftenant');
-        delete_org::execute($leaf);
+        // Assert the error code: the refusal is local_sentientia_platform's
+        // error_outoftenant, whose message ("You do not have access to this
+        // tenant.") never contained the text 'outoftenant'.
+        try {
+            delete_org::execute($leaf);
+            $this->fail('Deleting another tenant\'s org must be refused.');
+        } catch (\moodle_exception $e) {
+            $this->assertSame('error_outoftenant', $e->errorcode);
+        }
     }
 
     /**

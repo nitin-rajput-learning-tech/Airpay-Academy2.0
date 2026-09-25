@@ -45,6 +45,11 @@ class delete_user extends external_api {
         self::validate_context($context);
         require_capability('local/sentientia_users:delete', $context);
 
+        // ADR-031: :delete has no archetype default today, but whoever is given
+        // it deletes only inside their own tenant, never a site admin or a
+        // cross-tenant account.
+        \local_sentientia_users\user_manager::require_can_act_on((int) $params['userid']);
+
         $success = \local_sentientia_users\user_manager::delete($params['userid']);
 
         return [

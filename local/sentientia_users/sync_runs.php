@@ -19,16 +19,20 @@ $PAGE->navbar->add(get_string('manage_users', 'local_sentientia_users'),
     new moodle_url('/local/sentientia_users/index.php'));
 $PAGE->navbar->add(get_string('hrms_history_breadcrumb', 'local_sentientia_users'));
 
-// Tenant scoping — non-siteadmins see only their own runs.
+// Tenant scoping — only a cross-tenant caller (ADR-031: site admin or
+// :crosstenant) sees every run; anyone else only their own tenant's. A caller
+// with no resolvable tenant sees none: this used to stay '1=1' for them, i.e.
+// every tenant's runs. (Not "costcenterid = 0" either: that is exactly the
+// cross-tenant and cron runs.)
 $where = '1=1';
 $params = [];
-if (!is_siteadmin()) {
-    $caller_path = (string) ($USER->open_path ?? '');
-    $parts = explode('/', trim($caller_path, '/'));
-    $tenant = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
+if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
+    $tenant = \local_sentientia_platform\tenant::root_for_current_user();
     if ($tenant > 0) {
-        $where = 'costcenterid = :cc';
+        $where = 'r.costcenterid = :cc';
         $params['cc'] = $tenant;
+    } else {
+        $where = '1=0';
     }
 }
 

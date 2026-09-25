@@ -77,7 +77,7 @@ class bulk_action extends external_api {
         // no tenant root — path_filter would return '1=0' (silently skip
         // everything) but the bulk-action UX expects a hard error so the
         // caller knows their request was denied.
-        if (!is_siteadmin()) {
+        if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
             if (\local_sentientia_platform\tenant::root_for_current_user() <= 0) {
                 throw new \moodle_exception('invalidtenant', 'local_sentientia_users');
             }
@@ -93,6 +93,15 @@ class bulk_action extends external_api {
         $clean_ids = array_values(array_intersect(
             array_map('intval', $clean_ids),
             array_map('intval', $in_scope)));
+        // ADR-031: only a site admin may suspend a site admin, and a scoped
+        // caller never touches a cross-tenant account (somebody with more reach
+        // than they have), even one sitting in their own tenant.
+        if (!is_siteadmin()) {
+            $scoped = !\local_sentientia_platform\tenant::is_cross_tenant();
+            $clean_ids = array_values(array_filter($clean_ids,
+                fn(int $id): bool => !is_siteadmin($id)
+                    && (!$scoped || !\local_sentientia_platform\tenant::is_cross_tenant($id))));
+        }
         if (empty($clean_ids)) {
             return [
                 'action'  => $params['action'],

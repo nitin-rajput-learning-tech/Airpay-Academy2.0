@@ -40,12 +40,24 @@ class suspend_user extends external_api {
     }
 
     public static function execute(int $userid, bool $suspended): array {
+        global $USER;
+
         $params = self::validate_parameters(self::execute_parameters(),
             ['userid' => $userid, 'suspended' => $suspended]);
 
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/sentientia_users:edit', $context);
+
+        // ADR-031: :edit says WHAT, not WHERE. The target must be in the
+        // caller's own tenant and must not be a site admin or cross-tenant
+        // account; checked before the record is loaded, so a missing id and an
+        // out-of-tenant id give the same refusal. Without this any tenant admin
+        // could suspend (and end the sessions of) anyone, site admins included.
+        \local_sentientia_users\user_manager::require_can_act_on((int) $params['userid']);
+        if (!is_siteadmin() && (int) $params['userid'] === (int) $USER->id) {
+            throw new \moodle_exception('cannotsuspendself', 'local_sentientia_users');
+        }
 
         $newstate = \local_sentientia_users\user_manager::suspend(
             $params['userid'], $params['suspended']);
