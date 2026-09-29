@@ -44,9 +44,25 @@
  *     switched-to role there, so the role's PROHIBITs do not apply. Switching
  *     to a manager-type role would bring "Log in as" and overrides back in that
  *     course. Allow-switch rows to the same forbidden set are removed, except
- *     guest / authenticated user / frontpage, which only lower rights. The
- *     manager-archetype default (editingteacher, teacher, student, guest) loses
- *     nothing.
+ *     guest / authenticated user / frontpage, which only lower rights - and
+ *     only while that role ALLOWs none of course_manager::SITE_LEVEL_CAPABILITIES
+ *     at system context (a customised one that does is removed like the rest).
+ *     The manager-archetype default (editingteacher, teacher, student, guest)
+ *     loses nothing.
+ *   - PART 2 needs local_sentientia_courses (ADR-031). Without it --dry-run
+ *     warns and --apply REFUSES: PART 1 alone can be bypassed by assigning
+ *     'manager' through core.
+ *
+ * Holders below system context (2026-09-29): the PROHIBITs and the trimmed
+ * allow rows are part of the role's DEFINITION, so they apply wherever the
+ * role is assigned, not only at system context. A holder at a course category
+ * or course loses, inside that category or course: "Log in as" its course
+ * participants, role overrides, and assigning (or switching to)
+ * manager / coursecreator / administrator or any other site-level role
+ * through core. Before the plan the script prints the role's assignments by
+ * context level with user counts, and a WARNING when any is below system
+ * context. --apply then refuses unless --accept-nonsystem-holders is passed:
+ * that is a decision for the site owner (Nitin), not for the operator.
  *
  * moodle/role:safeoverride cannot reach system-context definitions and is not
  * a manager-archetype default, so it is prohibited only when the role
@@ -58,14 +74,19 @@
  *
  * Every prior value (permissions and removed allow rows) is saved to a JSON
  * file in $CFG->dataroot BEFORE anything changes, and --revert restores
- * exactly that.
+ * exactly that. --revert gives moodle/role:manage back, and with it the way
+ * to undo the platform-role guarantee: re-run adr031_crosstenant_role.php
+ * --dry-run afterwards.
  *
  * USAGE (on the UAT box):
  *   sudo -u www-data php adr031_role9_core_caps.php --i-am-uat --dry-run
- *   sudo -u www-data php adr031_role9_core_caps.php --i-am-uat --apply
+ *   sudo -u www-data php adr031_role9_core_caps.php --i-am-uat --apply [--accept-nonsystem-holders]
  *   sudo -u www-data php adr031_role9_core_caps.php --i-am-uat --revert
  *
  * Options: --role=<shortname> (default: administrator, UAT's id-9 tenant-admin role).
+ *          --accept-nonsystem-holders: let --apply proceed although the role is
+ *          assigned below system context (read the WARNING first).
+ * Exit codes: 0 done / clean dry run; 1 refused or error; 2 dry run with WARNINGs.
  */
 
 define('CLI_SCRIPT', true);
@@ -75,7 +96,7 @@ require_once($CFG->libdir . '/accesslib.php');
 
 [$options] = cli_get_params(
     ['i-am-uat' => false, 'dry-run' => false, 'apply' => false, 'revert' => false,
-     'role' => 'administrator'], []);
+     'role' => 'administrator', 'accept-nonsystem-holders' => false], []);
 if (empty($options['i-am-uat'])) {
     cli_error('Refusing to run without --i-am-uat.');
 }
@@ -163,6 +184,54 @@ function adr031_role9_allow_event(string $eventclass, int $fromroleid, int $targ
     }
 }
 
+/**
+ * The role's assignments grouped by context level: system, coursecat, course
+ * and other (user, activity, block, or a context row that no longer exists).
+ *
+ * @param int $roleid
+ * @return array<string, array{assignments: int, users: int[], contexts: array<int, int[]>}>
+ *         contexts maps context id => the user ids assigned there
+ */
+function adr031_role9_assignments_by_level(int $roleid): array {
+    global $DB;
+    $groups = [];
+    foreach (['system', 'coursecat', 'course', 'other'] as $group) {
+        $groups[$group] = ['assignments' => 0, 'users' => [], 'contexts' => []];
+    }
+    $rows = $DB->get_records_sql(
+        'SELECT ra.id, ra.userid, ra.contextid, ctx.contextlevel
+           FROM {role_assignments} ra
+      LEFT JOIN {context} ctx ON ctx.id = ra.contextid
+          WHERE ra.roleid = :roleid
+       ORDER BY ra.contextid ASC, ra.userid ASC', ['roleid' => $roleid]);
+    foreach ($rows as $ra) {
+        $group = match ((int) ($ra->contextlevel ?? 0)) {
+            CONTEXT_SYSTEM => 'system',
+            CONTEXT_COURSECAT => 'coursecat',
+            CONTEXT_COURSE => 'course',
+            default => 'other',
+        };
+        $groups[$group]['assignments']++;
+        $groups[$group]['users'][(int) $ra->userid] = (int) $ra->userid;
+        $groups[$group]['contexts'][(int) $ra->contextid][] = (int) $ra->userid;
+    }
+    return $groups;
+}
+
+/**
+ * A context by id, as a short label for the operator.
+ *
+ * @param int $contextid
+ * @return string
+ */
+function adr031_role9_context_label(int $contextid): string {
+    $context = context::instance_by_id($contextid, IGNORE_MISSING);
+    if (!$context) {
+        return "context {$contextid} (missing)";
+    }
+    return $context->get_context_name(true, true, false) . " (context {$contextid}, level {$context->contextlevel})";
+}
+
 global $DB;
 $role = $DB->get_record('role', ['shortname' => $options['role']], '*', MUST_EXIST);
 // Guard: a role every user holds would prohibit these for everybody.
@@ -231,12 +300,71 @@ if ($mode === 'revert') {
     rename($statefile, $statefile . '.reverted-' . date('Ymd-His'));
     cli_writeln('');
     cli_writeln('Reverted ' . count($state['caps']) . " capabilities and {$restored} allow row(s) for role {$role->shortname}.");
+    if (array_key_exists('moodle/role:manage', $state['caps'])) {
+        cli_writeln("WARNING: role {$role->shortname} has moodle/role:manage back: its holders can again edit every"
+            . ' role definition and the allow matrices, so they could give their own role'
+            . ' local/sentientia_platform:crosstenant or let it assign the platform role. Re-run'
+            . ' adr031_crosstenant_role.php --i-am-uat --dry-run now.');
+    }
     exit(0);
 }
 
 if ($mode === 'apply' && is_readable($statefile)) {
     cli_error("Already applied (state at {$statefile}); revert it first.");
 }
+
+$warnings = 0;
+
+// Where the role is assigned. The changes below are made to the role's
+// definition, so they reach every holder, at whatever context they hold it.
+cli_writeln("Assignments of role {$role->shortname}, by context level:");
+$bylevel = adr031_role9_assignments_by_level((int) $role->id);
+$labels = ['system' => 'system', 'coursecat' => 'course category', 'course' => 'course',
+    'other' => 'other (user, activity, block, missing)'];
+foreach ($bylevel as $group => $g) {
+    $admins = count(array_intersect($g['users'], $siteadmins));
+    cli_writeln(sprintf('  %-40s %d assignment(s), %d user(s)%s', $labels[$group], $g['assignments'], count($g['users']),
+        $admins ? ", {$admins} of them site admin(s)" : ''));
+    if ($group === 'system') {
+        continue;
+    }
+    $shown = 0;
+    foreach ($g['contexts'] as $contextid => $userids) {
+        if (++$shown > 20) {
+            cli_writeln('      ... and ' . (count($g['contexts']) - 20) . ' more context(s)');
+            break;
+        }
+        cli_writeln('      ' . adr031_role9_context_label((int) $contextid) . ': user(s) ' . implode(', ', $userids));
+    }
+}
+$nonsystem = $bylevel['coursecat']['assignments'] + $bylevel['course']['assignments'] + $bylevel['other']['assignments'];
+$nonsystemusers = array_unique(array_merge($bylevel['coursecat']['users'], $bylevel['course']['users'],
+    $bylevel['other']['users']));
+if ($nonsystem > 0) {
+    $warnings++;
+    cli_writeln('');
+    cli_writeln("WARNING: role {$role->shortname} is assigned {$nonsystem} time(s) BELOW system context"
+        . " (course category: {$bylevel['coursecat']['assignments']}, course: {$bylevel['course']['assignments']},"
+        . " other: {$bylevel['other']['assignments']}; " . count($nonsystemusers) . ' user(s), '
+        . count(array_intersect($nonsystemusers, $siteadmins)) . ' of them site admin(s), not affected).');
+    cli_writeln('  The PROHIBITs and the allow-row trim change the role\'s DEFINITION, so they apply wherever the'
+        . ' role is assigned. Inside the category or course they hold it in, those holders lose:');
+    cli_writeln('  - "Log in as" for the participants of the courses there (moodle/user:loginas, checked at'
+        . ' course context);');
+    cli_writeln('  - role overrides in that category or course, its courses and their activities'
+        . ' (moodle/role:override);');
+    cli_writeln('  - assigning manager, coursecreator, administrator or any other site-level role there through core'
+        . ' /admin/roles/assign.php (the allow-assign trim), and core "Switch role to" such a role (the'
+        . ' allow-switch trim);');
+    cli_writeln('  - and there a PROHIBIT also beats an ALLOW from any other role they hold (a manager role in one'
+        . ' of those courses, say).');
+    cli_writeln('  An assignment at another level loses whichever of these is checked there (moodle/user:editprofile'
+        . ' in a user context, for example). The rest of PART 1 is checked at system context, which a category or'
+        . ' course assignment never reached.');
+    cli_writeln('  Whether those holders should lose this is the site owner\'s decision. --apply refuses unless'
+        . ' --accept-nonsystem-holders is passed.');
+}
+cli_writeln('');
 
 // Plan first; nothing changes until the prior values are safely on disk.
 cli_writeln('PART 1 - capabilities at system context');
@@ -268,19 +396,37 @@ cli_writeln('');
 
 cli_writeln('PART 2 - roles it may give (/admin/roles/assign.php) or switch to (course "Switch role to"), no tenant check');
 $trim = ['assign' => [], 'switch' => []];
-if (!class_exists('\local_sentientia_courses\course_manager')
-        || !method_exists('\local_sentientia_courses\course_manager', 'scoped_forbidden_role_ids')) {
-    cli_writeln('WARNING: local_sentientia_courses (ADR-031) is not deployed here, so the forbidden set is unknown;'
-        . ' part 2 skipped. Nothing in part 2 changes.');
+$part2ok = class_exists('\local_sentientia_courses\course_manager')
+    && method_exists('\local_sentientia_courses\course_manager', 'scoped_forbidden_role_ids')
+    && defined('local_sentientia_courses\course_manager::SITE_LEVEL_CAPABILITIES');
+if (!$part2ok) {
+    $warnings++;
+    cli_writeln('WARNING: local_sentientia_courses (ADR-031) is not deployed here, so the forbidden set is unknown'
+        . ' and part 2 cannot be computed. ' . ($mode === 'apply' ? '--apply refuses (below).'
+        : '--apply will refuse until it is deployed: PART 1 alone can be bypassed by assigning manager through core.'));
 } else {
     $forbidden = array_map('intval', \local_sentientia_courses\course_manager::scoped_forbidden_role_ids());
     $forbidden[] = (int) $role->id;
-    // Switching into one of these only lowers rights, so they stay switchable.
+    // Roles that ALLOW a site-level capability at system context: switching
+    // into one of them never only lowers rights, whatever it is called.
+    [$capsql, $capparams] = $DB->get_in_or_equal(
+        \local_sentientia_courses\course_manager::SITE_LEVEL_CAPABILITIES, SQL_PARAMS_NAMED, 'slcap');
+    $sitelevel = array_map('intval', $DB->get_fieldset_sql(
+        "SELECT DISTINCT roleid
+           FROM {role_capabilities}
+          WHERE contextid = :sysctx AND permission = :allow AND capability {$capsql}",
+        ['sysctx' => $sys->id, 'allow' => CAP_ALLOW] + $capparams));
+    // Switching into a guest / authenticated-user / frontpage role only lowers
+    // rights, so it stays switchable - unless it is also site-level.
     $lowering = [];
+    $lowlooking = [];
     foreach ($DB->get_records('role', null, '', 'id, shortname, archetype') as $r) {
         if (in_array((string) $r->archetype, ['guest', 'user', 'frontpage'], true)
                 || in_array((string) $r->shortname, ['guest', 'user', 'frontpage'], true)) {
-            $lowering[] = (int) $r->id;
+            $lowlooking[] = (int) $r->id;
+            if (!in_array((int) $r->id, $sitelevel, true)) {
+                $lowering[] = (int) $r->id;
+            }
         }
     }
     adr031_role9_row('allow row', 'now', 'action', '');
@@ -292,6 +438,10 @@ if (!class_exists('\local_sentientia_courses\course_manager')
             $label = "may {$kind}" . ($kind === 'switch' ? ' to ' : ' ') . ($shortnames[$targetid] ?? "role {$targetid}");
             if ($kind === 'switch' && in_array($targetid, $lowering, true)) {
                 adr031_role9_row($label, 'yes', 'leave', 'switching to it only lowers rights');
+            } else if ($kind === 'switch' && in_array($targetid, $lowlooking, true)) {
+                $trim[$kind][] = $targetid;
+                adr031_role9_row($label, 'yes', 'remove',
+                    'guest/user/frontpage type, but it ALLOWs a site-level capability at system context');
             } else if (in_array($targetid, $forbidden, true)) {
                 $trim[$kind][] = $targetid;
                 adr031_role9_row($label, 'yes', 'remove', 'site-level role: a scoped caller may never get it this way');
@@ -309,8 +459,28 @@ $trimcount = count($trim['assign']) + count($trim['switch']);
 
 if ($mode === 'dry-run') {
     cli_writeln('DRY RUN: ' . count($plan) . " capabilities would be prohibited ({$already} already are) and "
-        . "{$trimcount} allow row(s) removed for role {$role->shortname}. Nothing changed.");
-    exit(0);
+        . ($part2ok ? "{$trimcount}" : 'an unknown number of') . " allow row(s) removed for role {$role->shortname}."
+        . ' Nothing changed.');
+    if ($warnings) {
+        cli_writeln("{$warnings} WARNING(s) above; read them before --apply.");
+    }
+    exit($warnings ? 2 : 0);
+}
+
+// --apply: refuse before anything is written.
+if (!$part2ok) {
+    cli_error('Refusing --apply: PART 2 cannot be computed because local_sentientia_courses (ADR-031) is not'
+        . ' deployed. PART 1 alone can be bypassed: a tenant admin could still make a second account a site-wide'
+        . ' manager through core /admin/roles/assign.php. Deploy it first. Nothing changed.');
+}
+if ($nonsystem > 0) {
+    if (empty($options['accept-nonsystem-holders'])) {
+        cli_error("Refusing --apply: role {$role->shortname} is assigned {$nonsystem} time(s) below system context"
+            . ' (WARNING above). Pass --accept-nonsystem-holders once it is agreed that those holders lose what the'
+            . ' WARNING lists. Nothing changed.');
+    }
+    cli_writeln("--accept-nonsystem-holders given: proceeding although {$nonsystem} assignment(s) are below system"
+        . ' context.');
 }
 
 if (!$plan && $trimcount === 0) {
@@ -320,7 +490,10 @@ if (!$plan && $trimcount === 0) {
 }
 
 $state = ['role' => $role->shortname, 'roleid' => (int) $role->id, 'applied' => date('c'),
-    'caps' => $plan, 'allowassign_removed' => $trim['assign'], 'allowswitch_removed' => $trim['switch']];
+    'caps' => $plan, 'allowassign_removed' => $trim['assign'], 'allowswitch_removed' => $trim['switch'],
+    'assignments_by_level' => array_map(fn($g) => ['assignments' => $g['assignments'], 'users' => count($g['users'])],
+        $bylevel),
+    'accepted_nonsystem_holders' => $nonsystem > 0];
 if (file_put_contents($statefile, json_encode($state, JSON_PRETTY_PRINT)) === false) {
     cli_error("Could not write {$statefile}; nothing changed.");
 }

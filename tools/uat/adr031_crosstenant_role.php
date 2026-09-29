@@ -25,7 +25,14 @@
  * every role definition), so the script reports that too:
  * tools/uat/adr031_role9_core_caps.php prohibits it. It also reports, read-only,
  * any OTHER role that ALLOWs the capability (every holder of such a role is
- * cross-tenant) and what the tenant-admin role may still assign through core.
+ * cross-tenant), every user other than a site admin who holds
+ * moodle/role:manage at system context through any role (each could grant
+ * themselves the capability), and what the tenant-admin role may still assign
+ * through core.
+ *
+ * Editing role definitions through Sentientia (local/sentientia_roles:manage,
+ * no default grant since ADR-031) stays with the site admins unless Nitin
+ * grants that capability to the platform role; this script never does.
  *
  * Idempotent: a second --apply changes nothing. It never removes capabilities,
  * assignments or allow rows it did not make, except the tenant-admin role's
@@ -197,6 +204,34 @@ if ($manage !== false && (int) $manage === CAP_ALLOW) {
 } else {
     cli_writeln("role {$tenantadmin->shortname}: moodle/role:manage is "
         . ($manage === false ? 'not granted' : ((int) $manage === CAP_PROHIBIT ? 'PROHIBIT' : $manage)) . ' (ok)');
+}
+
+// 7b. The same power through ANY role (read-only, 2026-09-29): every user who
+// is not a site admin and holds moodle/role:manage at system context can edit
+// every role definition, their own included, and so give themselves the
+// cross-tenant capability. get_users_by_capability() applies PROHIBITs, so a
+// role-9 holder who also holds another role that ALLOWs it is not listed once
+// adr031_role9_core_caps.php has run. Reported, never changed.
+$siteadminids = array_filter(array_map('intval', explode(',', (string) ($CFG->siteadmins ?? ''))));
+$managers = get_users_by_capability($sys, 'moodle/role:manage', 'u.id, u.username', 'u.id ASC');
+$nonadminmanagers = array_values(array_filter($managers,
+    fn($u) => !in_array((int) $u->id, $siteadminids, true)));
+if ($nonadminmanagers) {
+    $grantors = $DB->get_records_sql(
+        'SELECT r.id, r.shortname
+           FROM {role_capabilities} rc
+           JOIN {role} r ON r.id = rc.roleid
+          WHERE rc.capability = :cap AND rc.contextid = :sysctx AND rc.permission = :allow
+       ORDER BY r.id ASC', ['cap' => 'moodle/role:manage', 'sysctx' => $sys->id, 'allow' => CAP_ALLOW]);
+    $users = array_map(fn($u) => "{$u->username} (id {$u->id})", array_slice($nonadminmanagers, 0, 20));
+    $warnings[] = count($nonadminmanagers) . ' user(s) who are not site admins hold moodle/role:manage at system'
+        . ' context: ' . implode(', ', $users) . (count($nonadminmanagers) > 20 ? ', ...' : '')
+        . '. Roles that ALLOW it there: '
+        . (implode(', ', array_map(fn($r) => "{$r->shortname} (id {$r->id})", $grantors)) ?: 'none (check overrides)')
+        . '. Not changed: each can edit every role definition, including giving their own role '
+        . ADR031_CROSSTENANT_CAP . '. Check each was deliberate.';
+} else {
+    cli_writeln('users other than site admins with moodle/role:manage at system context: none (ok)');
 }
 
 // 8. For review (read-only): what the tenant-admin role CAN assign through core

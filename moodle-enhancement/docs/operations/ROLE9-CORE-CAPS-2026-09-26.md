@@ -11,6 +11,24 @@ yet.** The operator runs them (see "How to run on UAT" below). Production needs 
 cutover. (Drafted 2026-09-26; a network outage cut that session off, and the draft was reviewed and
 finished on 2026-09-29.)
 
+**Update 2026-09-29 (later), after Nitin's decisions and a read-only UAT probe:**
+- Nitin decided: tenant admins lose core "Log in as"; site admins keep it (they bypass capability
+  checks). That is what 1d below already does.
+- The UAT probe found role 9 with **2 system-context and 2 course-category-context (level 40)
+  assignments**. The PROHIBITs are part of the role's definition, so they reach the category holders
+  too (section 6, "Holders below system context"). `adr031_role9_core_caps.php` now prints the
+  assignments by context level, WARNs, and refuses `--apply` without `--accept-nonsystem-holders`. So
+  on UAT, `--apply` refuses until that decision is taken.
+- `--apply` now also refuses when PART 2 cannot be computed; the allow-switch "only lowers rights"
+  exception is narrower; `--revert` warns that `moodle/role:manage` is back;
+  `adr031_crosstenant_role.php` also reports non-site-admin holders of `moodle/role:manage`.
+- The Sentientia profile pencil no longer links tenant admins to core `/user/editadvanced.php`
+  (section 6).
+- The new script paths were exercised against the same kind of in-memory stand-in: dry run with
+  category holders (WARNING, exit 2); `--apply` refused without the flag, nothing written; `--apply`
+  with it; a refused second apply; `--revert` restoring the exact prior state plus its warning; PART 2
+  missing (dry run warns, `--apply` refuses); the narrowed switch exception. Still nothing run on UAT.
+
 ---
 
 ## 1. The problem in one paragraph
@@ -38,7 +56,7 @@ Each of these defeats ADR-031.
 | 1e | `moodle/user:editprofile`, `moodle/site:uploadusers` | **PROHIBIT**. *Added beyond the brief.* They take over accounts the same way through other core pages. See section 5. |
 | 1f | `moodle/role:assign` | **KEPT.** The course enrol modal, the Sentientia roles code and the API call `get_assignable_roles()`. |
 | 1g | Role 9's allow-assign rows to site-level roles | **REMOVED.** *Added beyond the brief.* Without this, 1a to 1e can be bypassed. See section 5. |
-| 1h | Role 9's allow-switch rows to site-level roles | **REMOVED** (guest, authenticated user and frontpage stay switchable). *Added beyond the brief.* The manager-archetype default loses nothing. See section 5. |
+| 1h | Role 9's allow-switch rows to site-level roles | **REMOVED** (guest, authenticated user and frontpage stay switchable, as long as they ALLOW none of the site-level capabilities at system context). *Added beyond the brief.* The manager-archetype default loses nothing. See section 5. |
 | 2 | Platform role | **Created by the script**, assigned to nobody. Shortname `sentientiaplatform`, name "Sentientia platform administrator". It has no archetype, can be assigned only at system context, and holds ONLY `local/sentientia_platform:crosstenant` ALLOW. Role 9 cannot assign it. |
 
 **Site admins are unaffected.** They bypass capability checks and the allow matrices, whatever
@@ -83,7 +101,7 @@ Sentientia code calls a core user or role web service (`core_user_*`, `core_role
 | Core capability | Core pages that need it | Sentientia references | Verdict |
 |---|---|---|---|
 | `moodle/user:create` | `/user/editadvanced.php?id=-1` ("Add a new user"); `/admin/user.php` add button | `local_sentientia_courses\course_manager::SITE_LEVEL_CAPABILITIES`. This list marks roles that must never be enrolled; it is not a check on the actor. | Not needed → PROHIBIT |
-| `moodle/user:update` | `/user/editadvanced.php?id=N`, `/admin/user.php` (Browse users), `/admin/user/user_bulk.php` (Bulk actions). All run with no tenant check, on any account. | `SITE_LEVEL_CAPABILITIES` (as above); a test fixture | Not needed → PROHIBIT. *One UI consequence*, see section 6. |
+| `moodle/user:update` | `/user/editadvanced.php?id=N`, `/admin/user.php` (Browse users), `/admin/user/user_bulk.php` (Bulk actions). All run with no tenant check, on any account. | `SITE_LEVEL_CAPABILITIES` (as above); a test fixture | Not needed → PROHIBIT. *One UI consequence* (the profile pencil), fixed 2026-09-29; see section 6. |
 | `moodle/user:delete` | `/admin/user.php`, `/admin/user/user_bulk.php` | `SITE_LEVEL_CAPABILITIES` | Not needed → PROHIBIT |
 | `moodle/user:loginas` | `/course/loginas.php` | `local_sentientia_users\user_manager::build_profile_context()`. It shows a "Log in as" icon on the Sentientia profile *only if* the viewer has the capability, and links to core `/course/loginas.php`. That core page does no tenant check. | Not needed → PROHIBIT. The icon disappears for tenant admins, cleanly. |
 | `moodle/role:manage` | `/admin/roles/define.php`, `manage.php`, `allow.php` | `SITE_LEVEL_CAPABILITIES`. A `local_sentientia_roles` tenant-scope test asserts that only manager-archetype roles ALLOW it, "pending the tenant-admin decision". A PROHIBIT is not an ALLOW, so the test's rule still holds; its comment can now point here. | Not needed → PROHIBIT |
@@ -157,7 +175,9 @@ editing teacher. So the script leaves it alone, unless role 9 carries an **expli
      token user holding role 9 could until now enrol someone as `coursecreator` (or another
      forbidden, non-manager role) through the API. After the trim it cannot, which is what the enrol
      modal and ADR-031 decision 6 already required.
-   - If `local_sentientia_courses` is not deployed, the script skips this part with a warning.
+   - If `local_sentientia_courses` is not deployed, the forbidden set is unknown. `--dry-run` then
+     warns, and `--apply` **refuses** (2026-09-29; it used to skip this part with a warning). PART 1
+     on its own can be bypassed through core, as the bullets above show.
 4. **Role 9's allow-switch rows to site-level roles.**
    - Core "Switch role to..." inside a course evaluates only the switched-to role (plus the
      authenticated-user role) in that course; the user's real roles, and so role 9's PROHIBITs, do
@@ -165,7 +185,9 @@ editing teacher. So the script leaves it alone, unless role 9 carries an **expli
    - If role 9 were allowed to switch to `manager`, a tenant admin could switch in any tenant's
      course and get "Log in as" (for that course's participants) and overrides back there.
    - The script removes allow-switch rows from role 9 to the same forbidden set, except guest,
-     authenticated user and frontpage, which only lower rights.
+     authenticated user and frontpage, which only lower rights. That exception holds only while the
+     role ALLOWs none of `course_manager::SITE_LEVEL_CAPABILITIES` at system context (2026-09-29). A
+     customised guest-type role that does is removed like the rest.
    - The manager-archetype default allow-switch (editingteacher, teacher, student, guest) loses
      nothing, so on a default-configured site this step changes nothing. It closes a customised one.
    - The theme's own role switcher does not use this matrix (section 3, last paragraph).
@@ -174,12 +196,28 @@ editing teacher. So the script leaves it alone, unless role 9 carries an **expli
 
 **They lose these core pages:**
 - **"Log in as"** (`/course/loginas.php`), in the core UI and from the Sentientia profile icon.
-  **Site admins keep it.** Testers log in as personas from a site-admin account. The persona
-  screen-check list (`docs/visual-evidence/2026-09-25/README.md`) already says this.
+  **Site admins keep it** (Nitin's decision, 2026-09-29). Testers log in as personas from a
+  site-admin account. The persona screen-check list (`docs/visual-evidence/2026-09-25/README.md`)
+  already says this.
 - Browse list of users, Bulk user actions, Add a new user, Upload users, and editing another user
   through `/user/editadvanced.php` or `/user/edit.php`.
+- With `moodle/user:update` (and `:delete`) gone, the whole core `/admin/user.php` page is refused:
+  its page entry needs one of the two. So these core account powers go with it:
+  - unlock an account locked after too many failed logins;
+  - confirm an unconfirmed (self-registered) account by hand, and resend its confirmation email;
+  - change an existing account's authentication method (manual, email, OAuth2, LDAP): core offers
+    it on `/user/editadvanced.php` and in Upload users, and both are gone;
+  - suspend or unsuspend from the core list (the Sentientia suspend action still does this).
+
+  **Site admins keep all of them.** The Sentientia user pages have no unlock, manual confirmation or
+  auth-method change on edit today. A tenant admin whose user is locked out, stuck unconfirmed or on
+  the wrong authentication method asks a site admin.
 - Define roles, the allow-assign/override/switch matrices, and permission overrides in categories,
-  courses and modules. Check permissions (`moodle/role:review`) still works.
+  courses and modules. Check permissions (`moodle/role:review`) still works. Editing role definitions
+  through Sentientia (`/local/sentientia_roles/`, `local/sentientia_roles:manage`) also stays with the
+  site admins: since ADR-031 that capability has no default grant, and it also requires
+  `tenant::is_cross_tenant()`. That holds unless Nitin grants `local/sentientia_roles:manage` to the
+  platform role.
 - Assigning `manager`, `coursecreator`, `administrator` or any site-level role through core, or
   through the v1 API `create_enrolment`.
 - Core "Switch role to" a manager-type role inside a course (no such row on a default site).
@@ -199,15 +237,46 @@ from any other role. `:crosstenant` says WHERE, not WHAT (ADR-031 decision 3). S
 their Sentientia scope to every tenant, but does not give back the core user and role pages. Anyone who
 needs those as well must be a site admin.
 
-**One UI consequence to fix (follow-up, plugin code, not in this change).** The pencil icon on the
-Sentientia profile header links to core `/user/editadvanced.php`. It is shown to holders of
-`local/sentientia_users:edit`, and that page requires `moodle/user:update`. After the PROHIBIT, a
-tenant admin who clicks it gets a core "no permission" page. Two fixes are possible:
-- point it at the Sentientia edit modal;
-- show it only when `has_capability('moodle/user:update')`.
+**Holders below system context (2026-09-29).** The PROHIBITs and the trimmed allow rows are part
+of the role's **definition**. They therefore apply wherever role 9 is assigned, not only at system
+context. The UAT probe of 2026-09-29 found 2 system-context and **2 course-category-context**
+assignments. A holder at a category or course context loses, inside that category or course:
+- "Log in as" for the participants of the courses there (`moodle/user:loginas` is checked at course
+  context for course participants, so a category assignment did reach it);
+- role overrides in that category, its courses and their activities (`moodle/role:override`);
+- assigning `manager`, `coursecreator`, `administrator` or any other site-level role there through
+  core `/admin/roles/assign.php` (the allow-assign trim), and core "Switch role to" such a role (the
+  allow-switch trim);
+- in that subtree, a PROHIBIT also beats an ALLOW from any other role they hold there, such as a
+  `manager` role in one of those courses.
 
-This is `local_sentientia_users\user_manager::build_profile_context()` (`editprofile`) together with
-`templates/profile.mustache`.
+The rest of PART 1 (`role:manage`, `user:create`, `:update`, `:delete`, `:editprofile`,
+`site:uploadusers`) is checked at system or user context, which a category or course assignment never
+reached. So for those holders nothing changes there. An assignment at another level (user, activity,
+block) loses whichever of these is checked at that level, for example `moodle/user:editprofile` in a
+user context.
+
+Whether category-level holders should lose these powers is the site owner's decision, not the
+operator's. So `adr031_role9_core_caps.php` prints the role's assignments by context level with user
+counts before the plan. It prints this WARNING in `--dry-run` and `--apply` whenever any assignment is
+below system context, and `--apply` refuses unless `--accept-nonsystem-holders` is passed. If
+category-level tenant admins should keep course-level "Log in as" or overrides, that needs a separate
+role for them (the category-context direction in section 7), not a flag.
+
+**The profile pencil (fixed 2026-09-29, `local_sentientia_users`).** The pencil on the Sentientia
+profile header used to link every holder of `local/sentientia_users:edit` to core
+`/user/editadvanced.php`. That page requires `moodle/user:update` and has no tenant check, so after
+the PROHIBIT it was a dead button for tenant admins. Now
+`user_manager::profile_edit_action()` (used by `build_profile_context()`, rendered by
+`templates/profile.mustache`) decides it:
+- a site admin keeps the core editor link;
+- anyone else with `:edit` who may act on the target (`require_can_act_on()`: same tenant, not a site
+  admin, not a cross-tenant account) gets the **Sentientia edit modal** (`form\edit_user`, the one
+  on the Manage users page). The modal runs the same checks itself;
+- anyone else gets no pencil and no camera.
+
+A non-site-admin is never linked to `/user/editadvanced.php`, even while they still hold
+`moodle/user:update`. `tests/profile_edit_action_test.php` (`@group tenant_isolation`) covers it.
 
 ## 7. What this does NOT close
 
@@ -240,8 +309,12 @@ These are recorded for Nitin; nothing here was changed.
 
 ```bash
 # 1. Role 9: preview, then apply. Prior values go to $CFG->dataroot/adr031_role9_core_caps_administrator.json
+#    (dry run: exit 0 = clean, 2 = WARNINGs to read)
 sudo -u www-data php adr031_role9_core_caps.php --i-am-uat --dry-run
 sudo -u www-data php adr031_role9_core_caps.php --i-am-uat --apply
+#    UAT today the --apply above refuses: role 9 has 2 course-category assignments. Only once Nitin
+#    has decided those holders lose what section 6 lists:
+# sudo -u www-data php adr031_role9_core_caps.php --i-am-uat --apply --accept-nonsystem-holders
 
 # 2. The platform role: preview, then apply (idempotent; exit 0 = clean, 2 = WARNINGs to read)
 sudo -u www-data php adr031_crosstenant_role.php --i-am-uat --dry-run
@@ -251,13 +324,24 @@ sudo -u www-data php adr031_crosstenant_role.php --i-am-uat --apply
 Run step 1 first. Step 2 warns, and exits 2, while role 9 still holds `moodle/role:manage`: with it a
 tenant admin could add the allow-assign row back, or grant `:crosstenant` to their own role.
 
+Step 1's dry run prints role 9's assignments by context level (system, course category, course,
+other) with user counts, before the plan. It exits 2 when it printed a WARNING. **On UAT it will**:
+the 2026-09-29 probe found 2 course-category assignments. `--apply` then refuses (exit 1, nothing
+written) until `--accept-nonsystem-holders` is added. Add it only once Nitin has agreed that those
+holders lose what section 6 ("Holders below system context") lists. `--apply` also refuses if
+`local_sentientia_courses` is not deployed.
+
 Step 2 also prints, read-only, which roles role 9 may still assign through core. After step 1 that
 list should contain only course-level roles. It warns (exit 2) if any other role ALLOWs
 `:crosstenant`, if the platform role is assigned to anyone, or if any other role may assign it. It
-reports these but never changes them.
+also warns about every user who is not a site admin and holds `moodle/role:manage` at system context
+through any role: each could edit role definitions and give themselves `:crosstenant`. It reports
+these but never changes them.
 
 **Smoke test afterwards:**
-1. As tenant admin /1, `/local/sentientia_users/`: create, edit and suspend work.
+1. As tenant admin /1, `/local/sentientia_users/`: create, edit and suspend work. On a colleague's
+   Sentientia profile the pencil opens the edit modal, not a core page. (Needs the
+   `local_sentientia_users` change of 2026-09-29 deployed and caches purged.)
 2. The enrol modal offers employee, student, trainer, teacher and editingteacher.
 3. `/admin/user.php`, `/admin/roles/define.php`, `/admin/tool/uploaduser/` and
    `/course/loginas.php?id=1&user=<any>` are refused.
@@ -272,6 +356,13 @@ sudo -u www-data php adr031_role9_core_caps.php --i-am-uat --revert
 This restores every saved permission exactly, puts `inherit` back where there was no row, and
 re-inserts the removed allow-assign and allow-switch rows. The state file is renamed
 `*.reverted-<timestamp>`. An `--apply` that finds nothing to change writes no state file.
+
+**A revert gives `moodle/role:manage` back to role 9** (and override, "Log in as" and the core user
+pages). With it every tenant admin can again edit every role definition and the allow matrices. So
+they can give their own role `local/sentientia_platform:crosstenant`, or let role 9 assign the
+platform role: the step-2 guarantee no longer holds. The script prints this as a WARNING. Afterwards,
+run `adr031_crosstenant_role.php --i-am-uat --dry-run` again. It will warn, and exit 2, until step 1
+is re-applied.
 
 The platform role has no revert: it holds one capability and is assigned to nobody. To remove it, a
 site admin deletes it at `/admin/roles/manage.php`.
@@ -288,6 +379,20 @@ The scripts refuse to run anywhere but `academy2.airpay.ninja`. That guard is de
 production run needs:
 - a reviewed copy with the production guard;
 - the production tenant-admin role's shortname and id confirmed;
+- **the production tenant-admin role's assignments below system context counted, and Nitin's
+  decision on them, before anything is applied.** Holders at a course category or course lose
+  course-level "Log in as", overrides, and the core assignment of site-level roles there (section 6,
+  "Holders below system context"). The script's dry run prints the count. Before a copy exists, this
+  read-only query gives it (`<roleid>` = the production tenant-admin role):
+  ```sql
+  SELECT ctx.contextlevel, COUNT(*) AS assignments, COUNT(DISTINCT ra.userid) AS users
+    FROM mdl_role_assignments ra
+    LEFT JOIN mdl_context ctx ON ctx.id = ra.contextid
+   WHERE ra.roleid = <roleid>
+   GROUP BY ctx.contextlevel;
+  ```
+  Level 10 is system, 40 course category, 50 course. Pass `--accept-nonsystem-holders` there only on
+  Nitin's decision;
 - Nitin's [CONFIRM], as for any production change.
 
 Add it to the cutover runbook as a post-upgrade step, before tenant admins are let in.
