@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/sentientia_manager/db" VERSION="20260515"
+<XMLDB PATH="local/sentientia_manager/db" VERSION="20260926"
        COMMENT="Airpay Manager — approval workflow + multi-type allocation">
   <TABLES>
     <TABLE NAME="local_sentientia_mgr_requests"
@@ -68,10 +68,10 @@
       <INDEXES>
         <INDEX NAME="idx_managerid"   UNIQUE="false" FIELDS="managerid"
                COMMENT="Manager dashboard query"/>
-        <INDEX NAME="idx_user_course" UNIQUE="true"  FIELDS="userid, courseid"
-               COMMENT="One allocation per user-course pair (legacy)"/>
+        <INDEX NAME="idx_user_course" UNIQUE="false" FIELDS="userid, courseid"
+               COMMENT="Lookup by user and legacy course column. Not unique since 2026092600: every typed allocation carries courseid 0, so a unique index let a user hold only one of them. The uniqueness rule is idx_user_item."/>
         <INDEX NAME="idx_user_item"   UNIQUE="true"  FIELDS="userid, item_type, itemid"
-               COMMENT="W1-10: One allocation per (user, item_type, itemid)"/>
+               COMMENT="W1-10: One allocation per (user, item_type, itemid), for every type. Covers courses too, because a course row carries itemid = courseid."/>
         <INDEX NAME="idx_status"      UNIQUE="false" FIELDS="status"/>
         <INDEX NAME="idx_item_type"   UNIQUE="false" FIELDS="item_type"
                COMMENT="Filter by allocation type"/>
