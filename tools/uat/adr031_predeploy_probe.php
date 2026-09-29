@@ -105,6 +105,26 @@ if (get_capability_info('local/sentientia_platform:crosstenant')) {
     echo "  local/sentientia_platform:crosstenant not installed yet\n";
 }
 
+$h('role assignments of the tenant-admin role by context level');
+if ($roleid) {
+    foreach ($DB->get_records_sql("SELECT ctx.contextlevel, COUNT(1) AS n, COUNT(DISTINCT ra.userid) AS users
+            FROM {role_assignments} ra JOIN {context} ctx ON ctx.id = ra.contextid
+           WHERE ra.roleid = :r GROUP BY ctx.contextlevel ORDER BY ctx.contextlevel", ['r' => $roleid]) as $r) {
+        echo "  contextlevel {$r->contextlevel}: {$r->n} assignment(s), {$r->users} user(s)\n";
+    }
+}
+
+$h('feature-flag overrides for the PWA');
+if ($has('local_sentientia_feature_flags')) {
+    $rows = $DB->get_records_select('local_sentientia_feature_flags',
+        $DB->sql_like('flag_key', ':k'), ['k' => 'sentientia.pwa%'], 'flag_key, customer_id, tenant_id',
+        'id, flag_key, customer_id, tenant_id, is_enabled');
+    foreach ($rows as $r) {
+        echo "  {$r->flag_key} customer={$r->customer_id} tenant={$r->tenant_id} enabled={$r->is_enabled}\n";
+    }
+    echo '  override rows: ', count($rows), "\n";
+}
+
 $h('items with no open_path');
 foreach (['course' => 'id > 1', 'local_sentientia_classroom' => '1=1', 'local_sentientia_programs' => '1=1',
         'local_sentientia_learningpath' => '1=1'] as $t => $base) {
