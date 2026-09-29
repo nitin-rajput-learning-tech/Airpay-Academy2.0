@@ -342,6 +342,29 @@ final class purchase_gate_test extends \advanced_testcase {
         $this->assertStringContainsString("course id(s) {$theirs->id} -", $asadmin['notes'],
             'An order admin sees the refund-due note (get_order, and the admin_orders.php list via list_orders).');
         $this->assertStringContainsString('Refund due.', $asadmin['notes']);
+        $this->assertStringContainsString('order #' . (900000 + (int) $buyer->id) . ':', $asadmin['notes'],
+            'The note names the order, so an admin can tie it to a row.');
+    }
+
+    public function test_a_gateway_failure_note_with_markup_does_not_break_the_order_lists(): void {
+        global $DB;
+        $buyer = $this->user_at('/1/4');
+        $mine = $this->priced_course_at('/1');
+        $historyid = $this->pending_order($buyer, [(int) $mine->id => 'Airpay Onboarding']);
+        $note = 'Gateway reported failure: {"MESSAGE":"Declined <br>by bank"}' . "\n"
+            . 'ADR-031: order #1: payment recorded, enrolment withheld for course id(s) 5 - x. Refund due.';
+        $DB->set_field('local_sentientia_cart_history', 'notes', $note, ['id' => $historyid]);
+        $this->setAdminUser();
+
+        $one = \core_external\external_api::clean_returnvalue(external\get_order::execute_returns(),
+            external\get_order::execute($historyid));
+        $this->assertSame($note, $one['notes'], 'get_order returns the note unchanged (PARAM_RAW).');
+
+        $list = \core_external\external_api::clean_returnvalue(external\list_orders::execute_returns(),
+            external\list_orders::execute());
+        $row = array_values(array_filter($list['rows'], fn($r) => (int) $r['id'] === $historyid));
+        $this->assertCount(1, $row, 'list_orders still returns the order (it used to throw invalid_response).');
+        $this->assertSame($note, $row[0]['notes']);
     }
 
     public function test_the_in_tenant_purchase_flow_is_unchanged_end_to_end(): void {

@@ -150,7 +150,11 @@ class list_orders extends external_api {
                     'billing_email' => new external_value(PARAM_TEXT, ''),
                     'placed_on'    => new external_value(PARAM_TEXT, ''),
                     'paid_on'      => new external_value(PARAM_TEXT, ''),
-                    'notes'        => new external_value(PARAM_TEXT,
+                    // PARAM_RAW: mark_failed() stores the raw gateway payload
+                    // here; PARAM_TEXT would strip tags, clean_param() would change
+                    // the value and validate_param() would throw, breaking the
+                    // whole list. The datatable escapes plain columns.
+                    'notes'        => new external_value(PARAM_RAW,
                         'Staff notes, e.g. an ADR-031 refund due; empty unless the viewer holds :viewallorders'),
                 ])),
             'page'    => new external_value(PARAM_INT, ''),

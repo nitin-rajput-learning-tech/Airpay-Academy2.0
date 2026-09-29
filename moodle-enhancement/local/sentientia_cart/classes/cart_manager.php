@@ -451,7 +451,8 @@ class cart_manager {
             $cart->gateway_ref  = $gateway_ref;
             if ($withheld) {
                 $cart->notes = trim(($cart->notes ?? '') . "\n"
-                    . 'ADR-031: payment recorded, enrolment withheld for course id(s) '
+                    . 'ADR-031: order #' . (int) ($cart->orderid ?? 0)
+                    . ': payment recorded, enrolment withheld for course id(s) '
                     . implode(', ', $withheld)
                     . ' - not purchasable by this buyer at payment time. Refund due.');
             }

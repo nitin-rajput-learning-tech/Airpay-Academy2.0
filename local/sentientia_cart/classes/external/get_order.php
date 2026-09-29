@@ -82,7 +82,8 @@ class get_order extends external_api {
             'billing_gstn'   => new external_value(PARAM_TEXT, ''),
             'placed_on'      => new external_value(PARAM_TEXT, ''),
             'paid_on'        => new external_value(PARAM_TEXT, ''),
-            'notes'          => new external_value(PARAM_TEXT,
+            // PARAM_RAW: may hold a raw gateway payload (see list_orders); callers s() it.
+            'notes'          => new external_value(PARAM_RAW,
                 'Staff notes, e.g. an ADR-031 refund due; empty unless the viewer holds :viewallorders'),
         ]);
     }

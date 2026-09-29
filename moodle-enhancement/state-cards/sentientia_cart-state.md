@@ -272,3 +272,15 @@ withheld course; the in-tenant end-to-end test asserts no refund line; new
 `test_the_refund_due_note_reaches_order_admins_not_the_buyer` (get_order notes). NOT run locally
 (low-CPU mode) - CI to run. Screenshots of the new admin_orders column pending (see
 `docs/visual-evidence/2026-09-29/README.md`). Both trees.
+
+### 2026-09-29 (later) - review must-fixes: notes PARAM_RAW, admin orders columns, order # in the note
+
+- `list_orders` / `get_order` declare `notes` as PARAM_RAW: `mark_failed()` stores the raw gateway payload
+  there, and PARAM_TEXT made `clean_returnvalue()` throw invalid_response for any note with markup, taking
+  the whole order list down. The datatable escapes plain columns; `get_order` callers s() the value.
+- `admin_orders.php`: the #, User, Total and Status columns read keys list_orders never returned
+  (orderid_link, user_link, total_str, statuslabel) and rendered empty (pre-existing); they now read
+  orderid, billing_email, total_amount, status. The empty "actions" column is dropped.
+- The ADR-031 refund-due note names the order: "ADR-031: order #N: payment recorded, ...".
+- Test: `test_a_gateway_failure_note_with_markup_does_not_break_the_order_lists`; the refund-note test
+  asserts the order number.
