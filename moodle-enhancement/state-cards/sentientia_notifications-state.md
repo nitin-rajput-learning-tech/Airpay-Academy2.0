@@ -34,8 +34,13 @@ read cap is split so compliance can see delivery without edit rights.
 
 ## Feature flags
 
-None registered directly. Consumes channel-master flags from
-`local_airpay_core`:
+Registers one (`db/feature_flags.php`, since 2026-09-26, see the note at the end):
+- `sentientia.notifications.smart_rules.enabled` (default OFF): lets the course_not_started,
+  streak_broken and new_course rules send, per tenant.
+
+This card used to say the plugin consumes the channel-master flags below, from
+`local_airpay_core`. It does not: no file in the plugin reads them (checked 2026-09-26).
+They are registered by `local_sentientia_platform`:
 - `engagement.whatsapp.enabled`
 - `engagement.sms.enabled`
 - `engagement.whatsapp.reminders` (Phase C.1)
@@ -212,6 +217,7 @@ therefore run `LIMIT 0` and have never sent anything. `db/install.php` seeds "Co
 provider defaults email and popup ON. Correcting the precedence would switch on up to 500
 messages per rule per hourly run on UAT's imported production users. So it is left as it is,
 pending a decision: disable those seeded rules first, or put the fix behind a flag.
+(Decided and fixed 2026-09-26, behind a flag: see the last section.)
 
 ## 2026-09-25 - ADR-031 follow-up 3: learning-path-stalled rule reads the real table (still 1.5.0, 2026092500)
 
@@ -243,3 +249,70 @@ sending, for the first time, to learners who joined an incomplete path more than
 Each run is capped by `batch_limit` (default 500). The send dedup allows one message per learner
 per 24 hours, so a stalled learner is nudged about once a day until they complete. Check that the
 rule is enabled on purpose before deploying.
+
+## 2026-09-26 - Decision 4: smart-rule LIMIT fixed, sending behind a default-OFF flag (still 1.5.0, 2026092500)
+
+Branch `claude/notifications-limit-flag`. Nitin delegated the call ("take the decision as needed,
+recommended"). The recommended option was taken: fix the precedence bug, and gate sending behind a
+new flag, so nothing is sent until Nitin flips it.
+
+**Decided, and why**
+
+- Fix the LIMIT, don't leave the rules dead. `rule_course_not_started`, `rule_streak_broken` and
+  `rule_new_course` now pass the cap to the DB API as `limitnum`, not as concatenated SQL.
+  `rule_engine::batch_limit()` reads `local_sentientia_notifications/batch_limit`. Unset, zero,
+  negative or non-numeric falls back to 500. Anything higher is capped at 5000. A limitnum of 0
+  would mean "no limit", so 0 is never passed.
+- Gate the sending, don't disable the seeded rules. Disabling them would have meant a data change
+  on every site, and it would hide rules an admin had deliberately enabled. The new flag
+  `sentientia.notifications.smart_rules.enabled` (`db/feature_flags.php`, default OFF) keeps the
+  rules and their rows as they are. With the flag OFF, each of the three rules returns
+  `['sent' => 0, 'skipped' => 0]` before any query. No message goes out and no log row is written,
+  not even the `sending` claim. That matches what users saw before (the rules sent nothing).
+- The flag resolves per tenant root, with an explicit scope, because cron has no meaningful `$USER`.
+  The rules message only users whose `open_path` is under a root where it is ON, using
+  `tenant::path_descendant_filter()`, so the boundary is correct. A user with no recognised root is
+  never messaged (ADR-031 fail closed). `new_course` announces a course only when the course's own
+  tenant is ON, and only to that tenant. A tenant-level OFF override beats a global ON.
+- `rule_course_not_started` was keyed on `ue.userid`. So a learner who had not started two courses
+  got one nudge, plus a duplicate-key debugging notice. It is now keyed on a `userid_courseid` pair
+  built with `sql_concat()`, which is portable to MySQL and PostgreSQL. An unused `$yesterday` was
+  removed from `rule_streak_broken`.
+- No version bump. `db/feature_flags.php` is not an upgrade step, install.xml, access.php or
+  services.php. `feature_flags::load_registry()` reads it at runtime, behind a 60-second MUC cache
+  that the deploy's cache purge clears. The version is already 2026092500.
+
+**Other rules checked for the same bug:** none have it. `cert_expired`, `peer_completion_celebration`
+(default 100), `compliance_overdue`, `certificate_expiring`, `ilt_feedback_pending`,
+`learning_path_stalled`, `enrolment_anniversary`, `inactive_user`, `quiz_low_score`, `manager_nudge`
+and `monthly_summary` all write `(int) (get_config(...) ?: N)`, with the parentheses in the right
+place. They are unchanged. They still interpolate the int into `LIMIT $batchlimit`, and a negative
+`batch_limit` would make their SQL invalid. That is latent, because the key is set nowhere.
+
+**Tests:** new `tests/smart_rules_flag_test.php` (`@group tenant_isolation`), in both trees:
+- The flag is registered, and OFF by default in every tenant.
+- With the flag OFF and matching data, all three rules send nothing and log nothing. With the flag
+  ON and `batch_limit` unset, the same data does send.
+- ON for tenant 1 only: only tenant 1 users are messaged. A 177 user or a user with no tenant gets
+  nothing, and the 177 course is not announced.
+- ON globally: each new course reaches only its own tenant.
+- A tenant-level OFF beats a global ON.
+- `batch_limit = 2` caps each rule at 2 per run, and all of those are in-tenant.
+- `batch_limit()` bounds.
+- Two not-started courses produce two nudges.
+
+Not run locally (low-CPU mode). The CI `tenant_isolation` group runs them.
+
+**Before flipping the flag (Nitin's call; never flipped here):**
+- Cadence. `send()` dedups the same rule, user and course for 24 hours only. So a learner who has
+  not started a course is nudged about once a day until they start it. A lapsed streak (3 or more,
+  last counted 2 or more days ago) gets "at risk" every day until the user logs in again. The
+  streak row is not reset in between.
+- Starvation above the cap. The queries do not exclude rows already notified. With more than
+  `batch_limit` matches, the same arbitrary 500 can be picked every hour and skipped as
+  duplicates, so the rest are never reached. On UAT, `new_course` for a large tenant hits this.
+  Fix before flipping: exclude recently logged pairs in the SQL, or raise `batch_limit`.
+- The `smart_alert` provider defaults popup and email ON. Flip for one tenant first, for example
+  `feature_flags::set('sentientia.notifications.smart_rules.enabled', 1, true)` on UAT, and watch
+  `logs.php`. To change the cap:
+  `php admin/cli/cfg.php --component=local_sentientia_notifications --name=batch_limit --set=200`.
