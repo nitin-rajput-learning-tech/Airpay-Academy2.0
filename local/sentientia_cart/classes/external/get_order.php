@@ -30,6 +30,15 @@ class get_order extends external_api {
         $order = \local_sentientia_cart\cart_manager::get_order(
             (int) $params['historyid'], (int) $USER->id);
 
+        // history.notes are staff notes (install.xml): gateway failure reasons
+        // from mark_failed() and, since ADR-031 decision 3, the "Refund due"
+        // line mark_paid() writes when it withholds a line. Returned to an
+        // order admin (:viewallorders; get_order() has already held them to the
+        // order's tenant); the buyer gets ''. The buyer hears about a withheld
+        // line from the payment_received message instead.
+        $notes = has_capability('local/sentientia_cart:viewallorders', $ctx)
+            ? (string) ($order->notes ?? '') : '';
+
         return [
             'id'             => (int) $order->id,
             'orderid'        => (int) ($order->orderid ?? 0),
@@ -49,6 +58,7 @@ class get_order extends external_api {
             'billing_gstn'   => $order->billing_gstn ?? '',
             'placed_on'      => userdate($order->timecreated),
             'paid_on'        => $order->timepaid ? userdate($order->timepaid) : '',
+            'notes'          => $notes,
         ];
     }
 
@@ -72,6 +82,9 @@ class get_order extends external_api {
             'billing_gstn'   => new external_value(PARAM_TEXT, ''),
             'placed_on'      => new external_value(PARAM_TEXT, ''),
             'paid_on'        => new external_value(PARAM_TEXT, ''),
+            // PARAM_RAW: may hold a raw gateway payload (see list_orders); callers s() it.
+            'notes'          => new external_value(PARAM_RAW,
+                'Staff notes, e.g. an ADR-031 refund due; empty unless the viewer holds :viewallorders'),
         ]);
     }
 }

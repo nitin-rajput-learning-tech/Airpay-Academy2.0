@@ -5,6 +5,21 @@
 /**
  * CLI smoke test for sentientia_cart.
  *
+ * !!! LOCAL DEVELOPMENT SITES ONLY. NEVER RUN ON UAT OR PRODUCTION. !!!
+ *
+ * This is not a read-only probe. It WRITES real data to whatever site
+ * config.php points at, and does not undo it:
+ *   - overwrites the enrol_fee cost of a real course with 1500.00 INR
+ *     (or adds a fee instance to it), i.e. re-prices that course for everyone;
+ *   - places a real order, consuming an order number and a sequential
+ *     GST invoice number (a gap in the invoice series on a live site);
+ *   - writes ledger rows (a payment and a refund) that show in daily sums;
+ *   - enrols and unenrols a real learner;
+ *   - messages the learner (payment, refund) and every site admin (new order).
+ * It therefore refuses to run unless $CFG->wwwroot is a local development
+ * host (localhost, 127.0.0.1, [::1], *.localhost or *.test). There is no
+ * override flag, on purpose (2026-09-29, ADR-031 decision 3 review).
+ *
  * Exercises end-to-end: set price → add to cart → checkout → mark paid →
  * verify enrolment → invoice issued → refund → verify unenrolment.
  *
@@ -16,9 +31,19 @@
 
 define('CLI_SCRIPT', true);
 require_once(__DIR__ . '/../../../config.php');
+require_once($CFG->libdir . '/clilib.php');
 require_once(__DIR__ . '/../lib.php');  // For local_sentientia_cart_get_course_price()
 
-global $DB;
+global $CFG, $DB;
+
+// Local development sites only: see the header.
+$smokehost = strtolower((string) parse_url($CFG->wwwroot, PHP_URL_HOST));
+$smokehost = trim($smokehost, '[]');
+if (!in_array($smokehost, ['localhost', '127.0.0.1', '::1'], true)
+        && !preg_match('/\.(localhost|test)$/', $smokehost)) {
+    cli_error("REFUSED: smoke_cart.php writes real orders, invoices, prices and enrolments.\n"
+        . "It runs only on a local development site; this site's wwwroot host is '{$smokehost}'.");
+}
 
 echo "=== sentientia_cart smoke test ===\n\n";
 
@@ -34,15 +59,25 @@ if (!$user) {
 }
 echo "Test user: $user->username (id=$user->id, path=$user->open_path)\n";
 
-// Pick a course that this user is NOT already enrolled in.
-$course = $DB->get_record_sql(
+// Pick a course that this user is NOT already enrolled in, and may buy:
+// ADR-031 decision 3 (2026-09-26) refuses add_item() for a course the
+// catalogue does not show the buyer, so the first visible course on the site
+// (often another tenant's) no longer works as a test course.
+$candidates = $DB->get_records_sql(
     "SELECT c.id, c.fullname, c.shortname FROM {course} c
       WHERE c.id > 1 AND c.visible = 1
         AND c.id NOT IN (
             SELECT e.courseid FROM {enrol} e
             JOIN {user_enrolments} ue ON ue.enrolid = e.id
             WHERE ue.userid = :uid)
-      ORDER BY c.id ASC LIMIT 1", ['uid' => $user->id]);
+      ORDER BY c.id ASC", ['uid' => $user->id], 0, 500);
+$course = null;
+foreach ($candidates as $candidate) {
+    if (\local_sentientia_cart\cart_manager::can_buy_course((int) $candidate->id, (int) $user->id)) {
+        $course = $candidate;
+        break;
+    }
+}
 if (!$course) {
     echo "FAIL: No suitable test course.\n";
     exit(1);
