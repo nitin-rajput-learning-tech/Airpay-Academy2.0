@@ -16,6 +16,97 @@ defined('MOODLE_INTERNAL') || die();
 class rule_engine {
 
     /**
+     * Feature flag that lets the three "smart" learner rules send
+     * (course_not_started, streak_broken, new_course). Registered in
+     * db/feature_flags.php, default OFF.
+     *
+     * Until 2026-09-26 those three rules built their LIMIT as
+     * `"... LIMIT " . (int) get_config(..., 'batch_limit') ?: 500`, which
+     * PHP reads as `("... LIMIT 0") ?: ...` because batch_limit is set
+     * nowhere, so they never selected anyone. db/install.php seeds all three
+     * ENABLED, so fixing the LIMIT alone would have started messaging every
+     * matching user on the next hourly run. They now send only for tenants
+     * where this flag resolves ON; with it OFF they do nothing and log nothing.
+     */
+    public const SMART_RULES_FLAG = 'sentientia.notifications.smart_rules.enabled';
+
+    /** Rows a rule run selects when batch_limit is unset or not a positive integer. */
+    public const DEFAULT_BATCH_LIMIT = 500;
+
+    /** Ceiling on batch_limit, so a mistyped value cannot make one run huge. */
+    public const MAX_BATCH_LIMIT = 5000;
+
+    /**
+     * The per-run row cap for the smart rules: config
+     * local_sentientia_notifications/batch_limit, else DEFAULT_BATCH_LIMIT.
+     *
+     * Always 1..MAX_BATCH_LIMIT. It is passed to the DB API as limitnum, where
+     * 0 means "no limit", so a missing, zero, negative or non-numeric value
+     * falls back to the default instead of lifting the cap.
+     *
+     * @return int
+     */
+    public static function batch_limit(): int {
+        $raw = get_config('local_sentientia_notifications', 'batch_limit');
+        $value = (is_numeric($raw) && (int) $raw > 0) ? (int) $raw : self::DEFAULT_BATCH_LIMIT;
+        return min($value, self::MAX_BATCH_LIMIT);
+    }
+
+    /**
+     * Tenant roots whose users the smart rules may message: the recognised
+     * roots for which SMART_RULES_FLAG resolves ON. Empty means off everywhere.
+     *
+     * Resolved per tenant with an explicit scope, because cron has no
+     * meaningful $USER (the same shape as local_sentientia_api's webhook
+     * dispatcher), so a Switchboard override at global or at tenant level
+     * both take effect. A recipient whose open_path has no recognised root
+     * is never in any of these tenants, so is never messaged (ADR-031).
+     *
+     * @return int[]
+     */
+    public static function smart_rules_roots(): array {
+        if (!class_exists('\local_sentientia_platform\feature_flags')) {
+            return [];
+        }
+        $registry = class_exists('\local_sentientia_core\tenant_registry');
+        $roots = $registry ? \local_sentientia_core\tenant_registry::valid_roots()
+            : \local_sentientia_platform\tenant::VALID_TENANTS;
+        $on = [];
+        foreach ($roots as $root) {
+            $root = (int) $root;
+            if ($root <= 0) {
+                continue;
+            }
+            $customer = $registry ? (int) \local_sentientia_core\tenant_registry::customer_of($root) : 0;
+            if (\local_sentientia_platform\feature_flags::is_enabled_for(
+                    self::SMART_RULES_FLAG, $customer, $root)) {
+                $on[] = $root;
+            }
+        }
+        return $on;
+    }
+
+    /**
+     * WHERE fragment: {$alias}.open_path is one of $roots or below it
+     * ('/N' or '/N/...', never '/N0...'). $roots must not be empty.
+     *
+     * @param int[] $roots
+     * @param string $alias
+     * @return array{0: string, 1: array}
+     */
+    private static function in_roots_filter(array $roots, string $alias): array {
+        $sql = [];
+        $params = [];
+        foreach (array_values($roots) as $i => $root) {
+            [$one, $args] = \local_sentientia_platform\tenant::path_descendant_filter(
+                '/' . (int) $root, $alias, 'open_path', 'smartroot' . $i);
+            $sql[] = $one;
+            $params += $args;
+        }
+        return ['(' . implode(' OR ', $sql) . ')', $params];
+    }
+
+    /**
      * Process all active notification rules.
      * Called by scheduled task every hour.
      */
@@ -759,15 +850,30 @@ class rule_engine {
 
     /**
      * Rule: Course not started — notify learners who enrolled X days ago but 0% progress.
+     *
+     * Gated by SMART_RULES_FLAG (see there): only users in a tenant where it
+     * is ON, at most batch_limit() rows per run.
      */
     private static function rule_course_not_started(\stdClass $rule): array {
         global $DB;
         $result = ['sent' => 0, 'skipped' => 0];
 
+        // Flag OFF (the default): no query, no message, no log row.
+        $roots = self::smart_rules_roots();
+        if (empty($roots)) {
+            return $result;
+        }
+        [$tnsql, $tnargs] = self::in_roots_filter($roots, 'u');
+
         $cutoff = time() - ($rule->trigger_days * 86400);
 
+        // get_records_sql() keys on the first column, so it needs one unique
+        // per row: a learner in two not-started courses is two rows. Keyed on
+        // ue.userid it kept only one of them (and raised a debugging notice).
+        $pairkey = $DB->sql_concat('ue.userid', "'_'", 'c.id');
         $users = $DB->get_records_sql(
-            "SELECT DISTINCT ue.userid, u.firstname, u.lastname, c.id as courseid, c.fullname
+            "SELECT DISTINCT {$pairkey} AS pairkey, ue.userid, u.firstname, u.lastname,
+                    c.id AS courseid, c.fullname
                FROM {user_enrolments} ue
                JOIN {enrol} e ON e.id = ue.enrolid
                JOIN {course} c ON c.id = e.courseid
@@ -777,8 +883,8 @@ class rule_engine {
                 AND u.deleted = 0 AND u.suspended = 0
                 AND c.visible = 1
                 AND (cc.id IS NULL OR cc.timecompleted IS NULL)
-              LIMIT " . (int)get_config('local_sentientia_notifications', 'batch_limit') ?: 500 . "",
-            ['cutoff' => $cutoff]);
+                AND {$tnsql}",
+            ['cutoff' => $cutoff] + $tnargs, 0, self::batch_limit());
 
         foreach ($users as $row) {
             // Check if there's any activity at all.
@@ -800,16 +906,25 @@ class rule_engine {
 
     /**
      * Rule: Streak broken — notify users who had an active streak but missed login.
+     *
+     * Gated by SMART_RULES_FLAG (see there): only users in a tenant where it
+     * is ON, at most batch_limit() rows per run.
      */
     private static function rule_streak_broken(\stdClass $rule): array {
         global $DB;
         $result = ['sent' => 0, 'skipped' => 0];
 
-        if (!$DB->get_manager()->table_exists('local_sentientia_streaks')) {
+        // Flag OFF (the default): no query, no message, no log row.
+        $roots = self::smart_rules_roots();
+        if (empty($roots)) {
             return $result;
         }
 
-        $yesterday = date('Y-m-d', strtotime('-1 day'));
+        if (!$DB->get_manager()->table_exists('local_sentientia_streaks')) {
+            return $result;
+        }
+        [$tnsql, $tnargs] = self::in_roots_filter($roots, 'u');
+
         $twodaysago = date('Y-m-d', strtotime('-2 days'));
 
         // Users whose last login was 2+ days ago but had a streak >= 3.
@@ -820,8 +935,8 @@ class rule_engine {
               WHERE s.last_login_date <= :cutoff
                 AND s.current_streak >= 3
                 AND u.deleted = 0 AND u.suspended = 0
-              LIMIT " . (int)get_config('local_sentientia_notifications', 'batch_limit') ?: 500 . "",
-            ['cutoff' => $twodaysago]);
+                AND {$tnsql}",
+            ['cutoff' => $twodaysago] + $tnargs, 0, self::batch_limit());
 
         foreach ($users as $row) {
             $sent = self::send($rule, $row->userid, null,
@@ -905,10 +1020,20 @@ class rule_engine {
 
     /**
      * Rule: New course available — notify learners when a course is created in their category.
+     *
+     * Gated by SMART_RULES_FLAG (see there): only a course whose tenant has
+     * it ON, only to users of that tenant, at most batch_limit() of them per
+     * course per run.
      */
     private static function rule_new_course(\stdClass $rule): array {
         global $DB;
         $result = ['sent' => 0, 'skipped' => 0];
+
+        // Flag OFF (the default): no query, no message, no log row.
+        $roots = self::smart_rules_roots();
+        if (empty($roots)) {
+            return $result;
+        }
 
         $since = time() - (24 * 3600); // Last 24 hours.
 
@@ -929,6 +1054,10 @@ class rule_engine {
             if ($courseroot <= 0) {
                 continue;
             }
+            // The flag is OFF for this course's tenant: its users hear nothing.
+            if (!in_array($courseroot, $roots, true)) {
+                continue;
+            }
             $orgpath = '/' . $courseroot;
 
             // '/1' . '%' also matched '/177': a new Airpay course notified the ZEEA tenant too.
@@ -940,9 +1069,8 @@ class rule_engine {
             $users = $DB->get_records_sql(
                 "SELECT id, firstname FROM {user}
                   WHERE deleted = 0 AND suspended = 0
-                    AND {$orgsql}
-                  LIMIT " . (int)get_config('local_sentientia_notifications', 'batch_limit') ?: 500 . "",
-                $orgargs);
+                    AND {$orgsql}",
+                $orgargs, 0, self::batch_limit());
 
             foreach ($users as $user) {
                 $sent = self::send($rule, $user->id, $course->id,
