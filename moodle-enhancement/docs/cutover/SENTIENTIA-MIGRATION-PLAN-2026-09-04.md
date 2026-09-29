@@ -174,7 +174,9 @@ Extends `UAT-SENTIENTIA-DEPLOY-CHECKLIST.md §1, §6` and `UAT-ASKS-2026-09-03.m
      `local_sentientia_classroom_attendance`. After cutover, new attendance would land where Sentientia
      does not read it; on a fresh install (UAT) the table does not exist.
 
-  **Decision needed (Nitin), before the rehearsal:** per feature, **import** into the Sentientia tables
+  **Decided (Nitin, 2026-09-29): IMPORT.** The BizLMS history is imported into the Sentientia tables
+  (design: ADR-032 and `BIZLMS-IMPORT-MAPPING-2026-09-29.md`, in progress). The options that were on
+  the table: per feature, **import** into the Sentientia tables
   (a CLI per feature, run after both hops, with before/after counts in the parity gate), or **archive**
   (keep the BizLMS tables read-only plus a read-only history report for admins), or both. Size it with
   production row counts first: a new input **I-20**, read-only on live:

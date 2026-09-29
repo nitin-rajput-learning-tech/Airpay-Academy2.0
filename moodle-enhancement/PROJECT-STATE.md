@@ -54,8 +54,9 @@ admin has no Log in as; plus the cart screen checks in `docs/visual-evidence/202
    plugins are neither read nor copied by Sentientia code: classroom enrolments and completions,
    programs, learning-plan courses and progress, evaluations, cart orders/ledger/invoices,
    recompletion archives, requests, skills, transcripts. The local prod copy lost these tables
-   (uninstalled plugins), so the 06-10 parity rehearsal never contained them. **Blocker: Nitin decides
-   import vs archive per feature; production row counts (input I-20) size it.**
+   (uninstalled plugins), so the 06-10 parity rehearsal never contained them. **Nitin decided
+   2026-09-29: IMPORT.** Mapping + framework design (ADR-032) in progress; production row counts
+   (input I-20) still wanted to size the run.
 3. Uninstalling a missing-from-disk BizLMS plugin on the target drops its tables — never do it before
    the data is imported/archived.
 4. Defect: `sentientia_pages/qr_scan.php` writes QR attendance to the retired

@@ -19,7 +19,7 @@ namespace theme_sentientia;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Scans every airpay-plugin mustache for data-region="airpay-datatable"
+ * Scans every local/sentientia_* (and legacy local/airpay_*) plugin mustache for data-region="airpay-datatable"
  * references, resolves each to its WS endpoint, and verifies the WS
  * accepts the full shared-client contract.
  *
@@ -53,6 +53,16 @@ final class ws_contract_scanner {
     ];
 
     /**
+     * Plugin directory prefixes under local/ that are scanned.
+     *
+     * 2026-09-29: this was 'airpay_' only. The plugins were renamed to
+     * local_sentientia_* (ADR-022/025), so the scan found no consumer and
+     * the gate checked nothing. The data-region value stays
+     * "airpay-datatable" - that is the AMD client's selector, not a name.
+     */
+    public const PLUGIN_PREFIXES = ['sentientia_', 'airpay_'];
+
+    /**
      * Walk every airpay-plugin mustache, find every element with
      * data-region="airpay-datatable" AND data-ws-name="X", return
      * X => [list of source files].
@@ -66,9 +76,16 @@ final class ws_contract_scanner {
         $consumers = [];
 
         foreach ($templates as $path) {
-            // Limit scope to airpay plugins.
+            // Limit scope to our own plugins.
             $normalised = str_replace('\\', '/', $path);
-            if (!str_contains($normalised, '/local/airpay_')) {
+            $ours = false;
+            foreach (self::PLUGIN_PREFIXES as $prefix) {
+                if (str_contains($normalised, '/local/' . $prefix)) {
+                    $ours = true;
+                    break;
+                }
+            }
+            if (!$ours) {
                 continue;
             }
             $content = file_get_contents($path);
@@ -145,9 +162,13 @@ final class ws_contract_scanner {
      */
     public static function resolve_class(string $wsname): ?array {
         global $CFG;
-        $servicefiles = glob($CFG->dirroot . '/local/airpay_*/db/services.php');
-        if (!is_array($servicefiles)) {
-            return null;
+        // One glob per prefix: GLOB_BRACE is missing on some platforms (Alpine, Solaris).
+        $servicefiles = [];
+        foreach (self::PLUGIN_PREFIXES as $prefix) {
+            $found = glob($CFG->dirroot . '/local/' . $prefix . '*/db/services.php');
+            if (is_array($found)) {
+                $servicefiles = array_merge($servicefiles, $found);
+            }
         }
         foreach ($servicefiles as $servicefile) {
             $functions = self::load_services_file($servicefile);
