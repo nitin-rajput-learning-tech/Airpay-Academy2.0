@@ -74,15 +74,21 @@ if (data_submitted() && confirm_sesskey()) {
         }
     } catch (\moodle_exception $e) {
         \core\notification::error($e->getMessage());
-        // ADR-031 decision 3: checkout() may have dropped lines this buyer can
-        // no longer buy. Re-read the cart so the page shows the basket and
-        // total that the next submit will actually charge, not the one loaded
-        // before the attempt. Nothing left: back to the cart, where the
-        // notification queued above is shown.
-        $cart = \local_sentientia_cart\cart_manager::get_or_open_cart((int) $USER->id);
-        $items = json_decode($cart->items_json ?: '[]', true) ?: [];
-        if (empty($items)) {
-            redirect(new moodle_url('/local/sentientia_cart/index.php'));
+        // ADR-031 decision 3: on error_itemsunavailable, checkout() dropped
+        // lines this buyer can no longer buy and left the cart open. Re-read it
+        // so the page shows the basket and total that the next submit will
+        // actually charge, not the one loaded before the attempt. Nothing
+        // left: back to the cart, where the notification queued above is shown.
+        // ONLY for that refusal: any other error (a gateway failure after
+        // checkout() moved the order to 'pending', a billing error) keeps the
+        // page as it was, since re-reading would open a fresh empty cart and
+        // bury the real error behind "your cart is empty".
+        if ($e->module === 'local_sentientia_cart' && $e->errorcode === 'error_itemsunavailable') {
+            $cart = \local_sentientia_cart\cart_manager::get_or_open_cart((int) $USER->id);
+            $items = json_decode($cart->items_json ?: '[]', true) ?: [];
+            if (empty($items)) {
+                redirect(new moodle_url('/local/sentientia_cart/index.php'));
+            }
         }
     }
 }

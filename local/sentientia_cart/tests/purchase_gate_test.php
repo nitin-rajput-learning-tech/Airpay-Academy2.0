@@ -19,6 +19,11 @@ defined('MOODLE_INTERNAL') || die();
  * tenant; a buyer with no tenant buys nothing; a cross-tenant buyer (site
  * admin, :crosstenant) is unchanged.
  *
+ * 2026-09-29: a line mark_paid() withholds is told to the buyer (not listed as
+ * theirs; "cannot be accessed, will be refunded") and to the site admins (a
+ * refund-due line naming the order and the course id), and history.notes reach
+ * order admins through get_order / list_orders.
+ *
  * @package    local_sentientia_cart
  * @category   test
  * @copyright  2026 Airpay Payment Services
@@ -28,6 +33,8 @@ defined('MOODLE_INTERNAL') || die();
  * @covers     \local_sentientia_cart\cart_manager::add_item
  * @covers     \local_sentientia_cart\cart_manager::checkout
  * @covers     \local_sentientia_cart\cart_manager::mark_paid
+ * @covers     \local_sentientia_cart\notifier::order_paid
+ * @covers     \local_sentientia_cart\external\get_order
  * @group      tenant_isolation
  */
 final class purchase_gate_test extends \advanced_testcase {
@@ -89,11 +96,20 @@ final class purchase_gate_test extends \advanced_testcase {
         return array_map(fn($i) => (int) $i['courseid'], json_decode($cart->items_json ?: '[]', true) ?: []);
     }
 
-    /** A pending order (as checkout() leaves it) holding $courseids, for $buyer. */
-    private function pending_order(\stdClass $buyer, array $courseids): int {
+    /**
+     * A pending order (as checkout() leaves it) for $buyer.
+     *
+     * @param \stdClass $buyer
+     * @param string[] $lines course id => line name (distinct names, so a test can
+     *                        tell which lines a message lists)
+     * @return int history id
+     */
+    private function pending_order(\stdClass $buyer, array $lines): int {
         global $DB;
-        $items = array_map(fn($id) => ['courseid' => (int) $id, 'name' => 'Course', 'price' => 1000.00],
-            $courseids);
+        $items = [];
+        foreach ($lines as $id => $name) {
+            $items[] = ['courseid' => (int) $id, 'name' => (string) $name, 'price' => 1000.00];
+        }
         $now = time();
         return (int) $DB->insert_record('local_sentientia_cart_history', (object) [
             'orderid' => 900000 + (int) $buyer->id, 'userid' => $buyer->id,
@@ -258,9 +274,15 @@ final class purchase_gate_test extends \advanced_testcase {
         $buyer = $this->user_at('/1/4');
         $mine = $this->priced_course_at('/1/9');
         $theirs = $this->priced_course_at('/177');
-        $historyid = $this->pending_order($buyer, [(int) $mine->id, (int) $theirs->id]);
+        $historyid = $this->pending_order($buyer, [
+            (int) $mine->id => 'Payments Basics In Tenant',
+            (int) $theirs->id => 'Zeea Onboarding Elsewhere',
+        ]);
 
+        $sink = $this->redirectMessages();
         $this->assertTrue(cart_manager::mark_paid($historyid, 'TXN-GATE', []));
+        $messages = $sink->get_messages();
+        $sink->close();
 
         $this->assertTrue(is_enrolled(\context_course::instance($mine->id), $buyer->id),
             'The in-tenant line is fulfilled as before.');
@@ -274,6 +296,52 @@ final class purchase_gate_test extends \advanced_testcase {
         $this->assertSame(1, $DB->count_records('local_sentientia_cart_ledger',
             ['historyid' => $historyid, 'event_type' => 'payment_received']));
         $this->assertStringContainsString("course id(s) {$theirs->id} -", (string) $order->notes);
+
+        // The buyer is told the truth: only the granted course is listed as
+        // theirs, and the withheld one is said to be inaccessible and refunded.
+        $tobuyer = array_values(array_filter($messages, fn($m) =>
+            (int) $m->useridto === (int) $buyer->id && $m->eventtype === 'payment_received'));
+        $this->assertCount(1, $tobuyer, 'The buyer gets one payment_received message.');
+        $body = (string) $tobuyer[0]->fullmessage;
+        $this->assertStringContainsString('Payments Basics In Tenant', $body,
+            'The course the buyer was enrolled in is listed.');
+        $this->assertStringNotContainsString('Zeea Onboarding Elsewhere', $body,
+            'The withheld course must not be listed as one the buyer can now access.');
+        $this->assertStringContainsString(get_string('paid_withheld', 'local_sentientia_cart', 1), $body,
+            'The buyer is told a course in the order cannot be accessed and will be refunded.');
+
+        // The site admins (get_admins(), the admin_new_order recipients) get an
+        // explicit refund-due line naming the order and the withheld course id.
+        $toadmins = array_values(array_filter($messages, fn($m) => $m->eventtype === 'admin_new_order'));
+        $this->assertCount(count(get_admins()), $toadmins, 'Every site admin is told about the order.');
+        $refundline = get_string('admin_withheld', 'local_sentientia_cart', (object) [
+            'orderid' => (int) $order->orderid, 'courseids' => (string) $theirs->id]);
+        foreach ($toadmins as $m) {
+            $this->assertStringContainsString($refundline, (string) $m->fullmessage,
+                'The admin message names the order and ONLY the withheld course id, with "refund due".');
+            $this->assertStringContainsString(get_string('refunddue', 'local_sentientia_cart'), (string) $m->subject);
+        }
+    }
+
+    public function test_the_refund_due_note_reaches_order_admins_not_the_buyer(): void {
+        $buyer = $this->user_at('/1/4');
+        $theirs = $this->priced_course_at('/177');
+        $historyid = $this->pending_order($buyer, [(int) $theirs->id => 'Zeea Onboarding Elsewhere']);
+        $sink = $this->redirectMessages();
+        cart_manager::mark_paid($historyid, 'TXN-NOTE', []);
+        $sink->close();
+
+        $this->setUser($buyer);
+        $asbuyer = \core_external\external_api::clean_returnvalue(external\get_order::execute_returns(),
+            external\get_order::execute($historyid));
+        $this->assertSame('', $asbuyer['notes'], 'history.notes are staff notes; the buyer hears via the message.');
+
+        $this->setAdminUser();
+        $asadmin = \core_external\external_api::clean_returnvalue(external\get_order::execute_returns(),
+            external\get_order::execute($historyid));
+        $this->assertStringContainsString("course id(s) {$theirs->id} -", $asadmin['notes'],
+            'An order admin sees the refund-due note (get_order, and the admin_orders.php list via list_orders).');
+        $this->assertStringContainsString('Refund due.', $asadmin['notes']);
     }
 
     public function test_the_in_tenant_purchase_flow_is_unchanged_end_to_end(): void {
@@ -286,10 +354,26 @@ final class purchase_gate_test extends \advanced_testcase {
         cart_manager::add_item((int) $buyer->id, (int) $mine->id);
         cart_manager::add_item((int) $buyer->id, (int) $shared->id);
         $order = cart_manager::checkout((int) $buyer->id, self::BILLING, 'manual');
+        $sink = $this->redirectMessages();
         $this->assertTrue(cart_manager::mark_paid((int) $order->id, 'TXN-OK', []));
+        $messages = $sink->get_messages();
+        $sink->close();
 
         $this->assertTrue(is_enrolled(\context_course::instance($mine->id), $buyer->id));
         $this->assertTrue(is_enrolled(\context_course::instance($shared->id), $buyer->id));
+
+        // Nothing withheld: the messages read as they always did.
+        $tobuyer = array_values(array_filter($messages, fn($m) =>
+            (int) $m->useridto === (int) $buyer->id && $m->eventtype === 'payment_received'));
+        $this->assertCount(1, $tobuyer);
+        $this->assertStringContainsString($mine->fullname, (string) $tobuyer[0]->fullmessage);
+        $this->assertStringContainsString($shared->fullname, (string) $tobuyer[0]->fullmessage);
+        $this->assertStringNotContainsString(get_string('paid_withheld', 'local_sentientia_cart', 1),
+            (string) $tobuyer[0]->fullmessage);
+        foreach (array_filter($messages, fn($m) => $m->eventtype === 'admin_new_order') as $m) {
+            $this->assertStringNotContainsString(get_string('refunddue', 'local_sentientia_cart'),
+                (string) $m->subject . (string) $m->fullmessage, 'No refund is due on a fully granted order.');
+        }
     }
 
     // ── cross-tenant callers are unchanged ───────────────────────────────

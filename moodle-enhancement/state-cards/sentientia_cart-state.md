@@ -216,12 +216,16 @@ Security fix under ADR-031, so NOT feature-flagged. Enforced at every entry poin
 - `checkout()`: re-checks every line (`prune_unavailable_items()`): lines no longer buyable (added
   before the gate, or a share withdrawn since) are dropped, totals recomputed, and the checkout is
   REFUSED once with the new `error_itemsunavailable` so the buyer sees the new basket before paying.
-  `checkout.php` re-reads the cart after a refused attempt so the page shows what the next submit
-  charges.
+  `checkout.php` re-reads the cart after that refusal (and only that one, since 2026-09-29) so the
+  page shows what the next submit charges.
 - `mark_paid()` (payment callback): enrols only lines `can_buy_course()` allows. The money has been
   taken by then, so the payment is still recorded, invoiced and marked paid; withheld course ids go
-  in the order `notes` for a refund. Only reachable for an order that never passed the new checkout
-  check, or a share withdrawn between checkout and payment.
+  in the order `notes` for a refund, and (since 2026-09-29, below) the buyer and the site admins are
+  told. Reachable whenever checkout's check never ran or its answer changed before the gateway
+  called back: an order placed before the gate shipped (pending at deploy); a pre-deploy order that
+  failed and is retried failed -> paid; a share withdrawn between checkout and payment; the course
+  hidden during the gateway window; the buyer's `open_path` changed by the HRMS sync during the
+  window.
 
 Airpay's in-tenant flow is unchanged for own-tenant and shared-in courses
 (`test_the_in_tenant_purchase_flow_is_unchanged_end_to_end`). Two narrow changes follow from "what
@@ -232,3 +236,39 @@ enrol path already refuses both). Worth a check on UAT that no priced Airpay cou
 No db/ change, so no version bump (already 2026092500). New lang string `error_itemsunavailable`
 (en + hi). Tests: `tests/purchase_gate_test.php` (`@group tenant_isolation`), NOT run locally
 (low-CPU mode) - CI to run. Both trees.
+
+## 2026-09-29 - ADR-031 decision 3 follow-up: a withheld line is told, not buried (1.0.4, 2026092500)
+
+**Defect (review of the 2026-09-26 change).** When `mark_paid()` withheld enrolment for a line
+`can_buy_course()` refused, the only trace was "Refund due" in `history.notes`, which nothing
+displayed, and `notifier::order_paid()` still told the buyer every course was accessible.
+
+- `notifier::order_paid($cart, $withheld)`: `mark_paid()` passes the withheld course ids.
+  (1) The buyer's `payment_received` message lists only the granted courses; a withheld one is not
+  listed, and the new `paid_withheld` line says N course(s) cannot be accessed, were not enrolled and
+  will be refunded (no "you can now access your courses" line when nothing was granted).
+  (2) The `admin_new_order` message to the site admins (`get_admins()`) gets " - Refund due" in the
+  subject and the new `admin_withheld` line naming the order number and the withheld course id(s),
+  with the refund instruction (partial refund; a full refund also unenrols the granted courses).
+  The admin body no longer dereferences a missing buyer record.
+  (3) `get_order` and `list_orders` return `notes`, to `:viewallorders` holders only (the buyer gets
+  ''; the buyer is told through the message); `admin_orders.php` shows it in a new "Staff notes"
+  column (plain text, escaped by the datatable; no template or AMD change).
+- `checkout.php`: the catch that re-reads the cart now fires ONLY for `error_itemsunavailable`. Any
+  other `moodle_exception` (a gateway error after `checkout()` moved the order to 'pending', a billing
+  error) keeps the page and shows that error, instead of opening a fresh empty cart and redirecting to
+  "your cart is empty".
+- `cli/smoke_cart.php`: loud header (it re-prices a real course, consumes order and GST invoice
+  numbers, writes ledger rows, enrols/unenrols a learner, messages the site admins) and a hard
+  refusal unless `$CFG->wwwroot` is a local development host (localhost, 127.0.0.1, [::1],
+  *.localhost, *.test). No override flag.
+- `mark_paid()` docblock and the reachability text above corrected.
+
+New lang strings `refunddue`, `paid_withheld`, `admin_withheld`, `ordernotes` (en + hi). No db/
+change, no version bump (2026092500). Tests (`tests/purchase_gate_test.php`, `@group
+tenant_isolation`): the withheld-line test now captures messages (`redirectMessages()`) and asserts
+the admin message names the withheld id with "Refund due" and the buyer message does not list the
+withheld course; the in-tenant end-to-end test asserts no refund line; new
+`test_the_refund_due_note_reaches_order_admins_not_the_buyer` (get_order notes). NOT run locally
+(low-CPU mode) - CI to run. Screenshots of the new admin_orders column pending (see
+`docs/visual-evidence/2026-09-29/README.md`). Both trees.

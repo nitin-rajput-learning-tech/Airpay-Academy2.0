@@ -122,6 +122,12 @@ $string['messageprovider:order_failed']     = 'ऑर्डर विफल';
 $string['messageprovider:refund_processed'] = 'रिफ़ंड प्रोसेस किया गया';
 $string['messageprovider:admin_new_order']  = 'नया ऑर्डर (एडमिन)';
 
+// ADR-031 decision 3 (2026-09-29): a paid line mark_paid() did not enrol.
+$string['refunddue']      = 'रिफ़ंड देय';
+$string['paid_withheld']  = 'इस ऑर्डर में {$a} ऐसे कोर्स भी थे जो अब आपके लिए उपलब्ध नहीं हैं। आप उन्हें एक्सेस नहीं कर सकते और आपको उनमें नामांकित नहीं किया गया है। उनकी राशि आपको रिफ़ंड की जाएगी।';
+$string['admin_withheld'] = 'रिफ़ंड देय: ऑर्डर #{$a->orderid} का भुगतान हो गया, लेकिन खरीदार को कोर्स ID {$a->courseids} में नामांकित नहीं किया गया, क्योंकि वे अब उन्हें नहीं खरीद सकते (ADR-031)। उन लाइनों का आंशिक रिफ़ंड करें; पूर्ण रिफ़ंड खरीदार को दिए गए कोर्स से भी अनामांकित कर देता है।';
+$string['ordernotes']     = 'स्टाफ़ नोट्स';
+
 // Errors.
 $string['error_courseunavailable'] = 'यह कोर्स अब खरीद के लिए उपलब्ध नहीं है।';
 $string['error_alreadyenrolled']   = 'आप इस कोर्स में पहले से नामांकित हैं।';

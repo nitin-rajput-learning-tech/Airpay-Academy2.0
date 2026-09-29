@@ -369,11 +369,19 @@ class cart_manager {
      * Mark an order as paid. Called by gateway webhook OR by manual approval.
      *
      * 1. Inserts ledger row (payment_received)
-     * 2. Updates history.status → 'paid', timepaid
-     * 3. Enrols user in every course item they may buy (can_buy_course(),
-     *    ADR-031 decision 3); any other item is withheld and noted
-     * 4. Issues invoice
-     * 5. Sends order_placed + payment_received messages
+     * 2. Updates history.status → 'paid', timepaid; a withheld line (step 3)
+     *    is written to history.notes as "Refund due"
+     * 3. Enrols the buyer in every course line they may buy (can_buy_course(),
+     *    ADR-031 decision 3); a line they may not buy is paid for but NOT
+     *    enrolled ("withheld")
+     * 4. Issues invoice (for the whole order, withheld lines included)
+     * 5. Sends payment_received to the buyer, listing only the enrolled
+     *    courses and saying any withheld one cannot be accessed and will be
+     *    refunded; and admin_new_order to the site admins (get_admins()), with
+     *    a refund-due line naming the order and the withheld course ids
+     *
+     * The refund itself is manual (refund(), a PARTIAL refund of the withheld
+     * lines: a full refund also unenrols the buyer from the granted ones).
      *
      * Idempotent — re-calling on an already-paid order is a no-op.
      */
@@ -391,14 +399,22 @@ class cart_manager {
         }
 
         // ADR-031 decision 3: the enrolment this payment grants goes through the
-        // same gate as add_item() and checkout(). checkout() already re-checked
-        // every line, so this only bites on an order that never went through
-        // that check (pending or failed before the gate shipped) or one whose
-        // share was withdrawn between checkout and payment. The money has been
-        // taken by then, so the payment is still recorded, invoiced and marked
-        // paid (refusing here would lose the only record of it), but no
-        // enrolment is granted in a course this buyer may not buy. The withheld
-        // course ids go in the order notes for the tenant's admins to refund.
+        // same gate as add_item() and checkout(). checkout() re-checked every
+        // line, but checkout either never asked or its answer can change
+        // before the gateway calls back:
+        //   - an order placed before the gate shipped (pending at deploy);
+        //   - a pre-deploy order that failed and is retried failed -> paid;
+        //   - a share withdrawn between checkout and payment;
+        //   - the course hidden during the gateway window;
+        //   - the buyer's open_path changed by the HRMS sync during the window.
+        // The money has been taken by then, so the payment is still recorded,
+        // invoiced and marked paid (refusing here would lose the only record of
+        // it), but no enrolment is granted in a course this buyer may not buy.
+        // The withheld course ids go in the order notes (returned to order
+        // admins by get_order and list_orders, shown on admin_orders.php), the
+        // buyer is told those courses cannot be accessed and will be refunded,
+        // and the site admins (get_admins(), the admin_new_order recipients) get
+        // a refund-due line naming the order and the ids (notifier::order_paid()).
         $items = json_decode($cart->items_json ?: '[]', true) ?: [];
         $grant = [];
         $withheld = [];
@@ -449,8 +465,9 @@ class cart_manager {
             // 4. Issue invoice.
             invoicer::issue_for_order($cart);
 
-            // 5. Send notifications.
-            notifier::order_paid($cart);
+            // 5. Send notifications: the buyer is told what was withheld, and
+            // the site admins that it is a refund due.
+            notifier::order_paid($cart, $withheld);
 
             $transaction->allow_commit();
             return true;

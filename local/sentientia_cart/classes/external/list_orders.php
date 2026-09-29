@@ -100,7 +100,7 @@ class list_orders extends external_api {
             $records = $DB->get_records_sql(
                 "SELECT id, orderid, userid, costcenterid, total_amount, currency,
                         status, gateway, billing_name, billing_email,
-                        timecreated, timepaid
+                        timecreated, timepaid, notes
                    FROM {local_sentientia_cart_history}
                   WHERE $wheresql
                ORDER BY $sort $sortdir, id DESC",
@@ -119,6 +119,10 @@ class list_orders extends external_api {
                     'billing_email' => $r->billing_email ?? '',
                     'placed_on'    => userdate($r->timecreated, '%d %b %Y'),
                     'paid_on'      => $r->timepaid ? userdate($r->timepaid, '%d %b %Y') : '',
+                    // Staff notes (the ADR-031 "Refund due" line, gateway
+                    // failure reasons): order admins only, as get_order.
+                    // Shown in the admin_orders.php "Staff notes" column.
+                    'notes'        => $can_view_all ? (string) ($r->notes ?? '') : '',
                 ];
             }
         }
@@ -146,6 +150,8 @@ class list_orders extends external_api {
                     'billing_email' => new external_value(PARAM_TEXT, ''),
                     'placed_on'    => new external_value(PARAM_TEXT, ''),
                     'paid_on'      => new external_value(PARAM_TEXT, ''),
+                    'notes'        => new external_value(PARAM_TEXT,
+                        'Staff notes, e.g. an ADR-031 refund due; empty unless the viewer holds :viewallorders'),
                 ])),
             'page'    => new external_value(PARAM_INT, ''),
             'perpage' => new external_value(PARAM_INT, ''),

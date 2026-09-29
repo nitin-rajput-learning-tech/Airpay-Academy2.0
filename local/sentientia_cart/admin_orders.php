@@ -28,6 +28,11 @@ $columns = [
     ['key' => 'total_str',    'label' => 'Total',   'sortable' => true,  'sortkey' => 'total_amount'],
     ['key' => 'gateway',      'label' => 'Gateway', 'sortable' => false],
     ['key' => 'statuslabel',  'label' => 'Status',  'sortable' => true,  'sortkey' => 'status', 'format' => 'badge'],
+    // ADR-031 decision 3 (2026-09-29): history.notes, from list_orders, which
+    // returns it to :viewallorders holders only. Carries the "Refund due" line
+    // mark_paid() writes when it withholds an enrolment, and gateway failure
+    // reasons. Plain text: the datatable escapes it.
+    ['key' => 'notes',        'label' => get_string('ordernotes', 'local_sentientia_cart'), 'sortable' => false],
     ['key' => 'actions',      'label' => '',        'sortable' => false, 'format' => 'html'],
 ];
 

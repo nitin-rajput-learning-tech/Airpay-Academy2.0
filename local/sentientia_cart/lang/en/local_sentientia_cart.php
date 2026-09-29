@@ -117,6 +117,12 @@ $string['messageprovider:order_failed']    = 'Order failed';
 $string['messageprovider:refund_processed'] = 'Refund processed';
 $string['messageprovider:admin_new_order']  = 'New order (admin)';
 
+// ADR-031 decision 3 (2026-09-29): a paid line mark_paid() did not enrol.
+$string['refunddue']      = 'Refund due';
+$string['paid_withheld']  = 'This order also included {$a} course(s) that are no longer available to you. You cannot access them and you have not been enrolled in them. They will be refunded to you.';
+$string['admin_withheld'] = 'Refund due: order #{$a->orderid} was paid, but the buyer was NOT enrolled in course id(s) {$a->courseids}, which they may no longer buy (ADR-031). Refund those lines with a partial refund; a full refund also unenrols the buyer from the courses they were granted.';
+$string['ordernotes']     = 'Staff notes';
+
 // Errors.
 $string['error_courseunavailable'] = 'This course is no longer available for purchase.';
 $string['error_alreadyenrolled']    = 'You are already enrolled in this course.';
