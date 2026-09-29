@@ -121,6 +121,7 @@ $string['messageprovider:admin_new_order']  = 'New order (admin)';
 $string['error_courseunavailable'] = 'This course is no longer available for purchase.';
 $string['error_alreadyenrolled']    = 'You are already enrolled in this course.';
 $string['error_emptycart']          = 'Your cart is empty.';
+$string['error_itemsunavailable']   = 'Some courses in your cart are no longer available to you and have been removed. Please check your new total before you pay.';
 $string['error_gatewaydown']        = 'Payment gateway is currently unavailable. Please try again.';
 $string['error_invalidsignature']    = 'Payment verification failed.';
 $string['error_invalidstate']        = 'Invalid order state for this action.';

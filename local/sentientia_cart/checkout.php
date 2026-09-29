@@ -74,6 +74,16 @@ if (data_submitted() && confirm_sesskey()) {
         }
     } catch (\moodle_exception $e) {
         \core\notification::error($e->getMessage());
+        // ADR-031 decision 3: checkout() may have dropped lines this buyer can
+        // no longer buy. Re-read the cart so the page shows the basket and
+        // total that the next submit will actually charge, not the one loaded
+        // before the attempt. Nothing left: back to the cart, where the
+        // notification queued above is shown.
+        $cart = \local_sentientia_cart\cart_manager::get_or_open_cart((int) $USER->id);
+        $items = json_decode($cart->items_json ?: '[]', true) ?: [];
+        if (empty($items)) {
+            redirect(new moodle_url('/local/sentientia_cart/index.php'));
+        }
     }
 }
 

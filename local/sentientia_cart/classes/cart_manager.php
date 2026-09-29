@@ -80,6 +80,149 @@ class cart_manager {
     }
 
     /**
+     * ADR-031 decision 3 (2026-09-26): may $buyerid buy $courseid?
+     *
+     * A learner may buy only a course the catalogue shows THEM. Until this
+     * date add_item(), checkout() and mark_paid() never looked at the course's
+     * tenant, so a /1 learner could put a /177 priced course in their cart by
+     * id, pay, and be enrolled in a course their catalogue does not list.
+     * Buying what you cannot see is a tenant bypass, so this is a security fix
+     * and is not feature-flagged.
+     *
+     * The rule is the catalogue's own:
+     * \local_sentientia_catalog\catalog_manager::assert_course_visible_to_viewer()
+     * - the course is visible, and is owned by the buyer's tenant tree or
+     * actively shared to it; a guest is judged as the Public tenant; a buyer
+     * whose open_path does not resolve gets nothing. It is called, not copied,
+     * so the cart cannot drift from what the catalogue shows. If the catalogue
+     * plugin is not installed, tenant_rule_allows() applies the same rule.
+     *
+     * Cross-tenant buyers (site admin, local/sentientia_platform:crosstenant)
+     * return true before any check, exactly as before: the catalogue would
+     * also refuse them a hidden course, which the cart never did.
+     *
+     * @param int $courseid
+     * @param int $buyerid the user who is buying (not necessarily $USER)
+     * @return bool
+     */
+    public static function can_buy_course(int $courseid, int $buyerid): bool {
+        if (\local_sentientia_platform\tenant::is_cross_tenant($buyerid)) {
+            return true;
+        }
+        if (method_exists(\local_sentientia_catalog\catalog_manager::class, 'assert_course_visible_to_viewer')) {
+            try {
+                \local_sentientia_catalog\catalog_manager::assert_course_visible_to_viewer($courseid, $buyerid);
+                return true;
+            } catch (\moodle_exception $e) {
+                return false;
+            }
+        }
+        return self::tenant_rule_allows($courseid, $buyerid);
+    }
+
+    /**
+     * Refuse unless can_buy_course(). The same error as a course with no price,
+     * so a probe cannot tell a course in another tenant from a missing one.
+     *
+     * @param int $courseid
+     * @param int $buyerid
+     * @throws \moodle_exception error_courseunavailable
+     */
+    public static function require_course_purchasable(int $courseid, int $buyerid): void {
+        if (!self::can_buy_course($courseid, $buyerid)) {
+            throw new \moodle_exception('error_courseunavailable', 'local_sentientia_cart');
+        }
+    }
+
+    /**
+     * The catalogue's visibility rule, for a site without local_sentientia_catalog.
+     *
+     * Deliberately the same answer as
+     * catalog_manager::assert_course_visible_to_viewer(), check for check, so
+     * which plugins are installed never changes what a learner may buy:
+     *   1. the course exists and is visible;
+     *   2. no course.open_path column (vanilla schema): nothing to scope by;
+     *   3. a cross-tenant buyer passes;
+     *   4. a guest (or no user) is the Public tenant; with no user.open_path
+     *      column there are no tenants; otherwise the buyer's tenant root, and
+     *      a buyer whose root does not resolve is refused;
+     *   5. the course's open_path is that root or under it (/-bounded), or an
+     *      active local_sentientia_courses_tenant_share row shares it there.
+     * A course with no open_path is NOT treated as everyone's: the catalogue
+     * does not list it to a scoped learner, so the cart does not sell it.
+     *
+     * Public so the tests can hold it to the catalogue's answers.
+     *
+     * @param int $courseid
+     * @param int $buyerid
+     * @return bool
+     */
+    public static function tenant_rule_allows(int $courseid, int $buyerid): bool {
+        global $DB;
+        $dbman = $DB->get_manager();
+        $haspath = $dbman->field_exists('course', 'open_path');
+        $course = $DB->get_record('course', ['id' => $courseid, 'visible' => 1],
+            $haspath ? 'id, open_path' : 'id', IGNORE_MISSING);
+        if (!$course) {
+            return false;
+        }
+        if (!$haspath) {
+            return true;
+        }
+        if (\local_sentientia_platform\tenant::is_cross_tenant($buyerid)) {
+            return true;
+        }
+        if ($buyerid <= 0 || isguestuser($buyerid)) {
+            $root = (int) (get_config('local_sentientia_pages', 'public_tenant_id') ?: 77);
+        } else if (!$dbman->field_exists('user', 'open_path')) {
+            return true;
+        } else {
+            $path = (string) ($DB->get_field('user', 'open_path', ['id' => $buyerid]) ?: '');
+            $root = \local_sentientia_platform\tenant::root_for_user((object) ['open_path' => $path]);
+        }
+        if ($root <= 0) {
+            return false;
+        }
+        $coursepath = (string) ($course->open_path ?? '');
+        $own = '/' . $root;
+        if ($coursepath === $own || strpos($coursepath, $own . '/') === 0) {
+            return true;
+        }
+        return $dbman->table_exists('local_sentientia_courses_tenant_share')
+            && $DB->record_exists('local_sentientia_courses_tenant_share',
+                ['courseid' => $courseid, 'tenant_id' => $root, 'status' => 'active']);
+    }
+
+    /**
+     * Drop every line of an OPEN cart that its owner may no longer buy
+     * (can_buy_course()), and persist the new totals.
+     *
+     * checkout() calls this so a line added before the ADR-031 gate, or one
+     * whose share was withdrawn since it was added, is never charged for.
+     *
+     * @param \stdClass $cart an open cart row
+     * @return int[] course ids removed (empty when nothing changed)
+     */
+    public static function prune_unavailable_items(\stdClass $cart): array {
+        $items = json_decode($cart->items_json ?: '[]', true) ?: [];
+        $kept = [];
+        $removed = [];
+        foreach ($items as $item) {
+            $courseid = (int) ($item['courseid'] ?? 0);
+            if (self::can_buy_course($courseid, (int) $cart->userid)) {
+                $kept[] = $item;
+            } else {
+                $removed[] = $courseid;
+            }
+        }
+        if ($removed) {
+            $cart->items_json = json_encode($kept);
+            self::recompute_totals($cart);
+        }
+        return $removed;
+    }
+
+    /**
      * Add a course to the user's cart.
      *
      * @throws \moodle_exception if course not available for purchase
@@ -87,6 +230,10 @@ class cart_manager {
      */
     public static function add_item(int $userid, int $courseid): \stdClass {
         global $DB;
+
+        // ADR-031 decision 3: only a course the catalogue shows this buyer.
+        // First, and with the same error as "no price", so a probe learns nothing.
+        self::require_course_purchasable($courseid, $userid);
 
         // Validate course is purchaseable.
         $price = local_sentientia_cart_get_course_price($courseid);
@@ -177,6 +324,16 @@ class cart_manager {
     public static function checkout(int $userid, array $billing, string $gateway): \stdClass {
         global $DB;
         $cart = self::get_or_open_cart($userid);
+
+        // ADR-031 decision 3: re-check every line now, not only when it was
+        // added. A line the buyer may no longer buy (added before the gate, or
+        // its share withdrawn since) is dropped and the totals recomputed; the
+        // checkout is then refused so the buyer sees the new basket and total
+        // before paying, instead of being charged for a basket they never saw.
+        // Checked before "empty" so a basket pruned to nothing says why.
+        if (self::prune_unavailable_items($cart)) {
+            throw new \moodle_exception('error_itemsunavailable', 'local_sentientia_cart');
+        }
         $items = json_decode($cart->items_json ?: '[]', true) ?: [];
         if (empty($items)) {
             throw new \moodle_exception('error_emptycart', 'local_sentientia_cart');
@@ -213,7 +370,8 @@ class cart_manager {
      *
      * 1. Inserts ledger row (payment_received)
      * 2. Updates history.status → 'paid', timepaid
-     * 3. Enrols user in all course items
+     * 3. Enrols user in every course item they may buy (can_buy_course(),
+     *    ADR-031 decision 3); any other item is withheld and noted
      * 4. Issues invoice
      * 5. Sends order_placed + payment_received messages
      *
@@ -230,6 +388,27 @@ class cart_manager {
         }
         if (!in_array($cart->status, ['pending', 'failed'], true)) {
             throw new \moodle_exception('error_invalidstate', 'local_sentientia_cart');
+        }
+
+        // ADR-031 decision 3: the enrolment this payment grants goes through the
+        // same gate as add_item() and checkout(). checkout() already re-checked
+        // every line, so this only bites on an order that never went through
+        // that check (pending or failed before the gate shipped) or one whose
+        // share was withdrawn between checkout and payment. The money has been
+        // taken by then, so the payment is still recorded, invoiced and marked
+        // paid (refusing here would lose the only record of it), but no
+        // enrolment is granted in a course this buyer may not buy. The withheld
+        // course ids go in the order notes for the tenant's admins to refund.
+        $items = json_decode($cart->items_json ?: '[]', true) ?: [];
+        $grant = [];
+        $withheld = [];
+        foreach ($items as $item) {
+            $courseid = (int) ($item['courseid'] ?? 0);
+            if (self::can_buy_course($courseid, (int) $cart->userid)) {
+                $grant[] = $courseid;
+            } else {
+                $withheld[] = $courseid;
+            }
         }
 
         $transaction = $DB->start_delegated_transaction();
@@ -254,13 +433,17 @@ class cart_manager {
             $cart->timepaid     = $now;
             $cart->timemodified = $now;
             $cart->gateway_ref  = $gateway_ref;
+            if ($withheld) {
+                $cart->notes = trim(($cart->notes ?? '') . "\n"
+                    . 'ADR-031: payment recorded, enrolment withheld for course id(s) '
+                    . implode(', ', $withheld)
+                    . ' - not purchasable by this buyer at payment time. Refund due.');
+            }
             $DB->update_record('local_sentientia_cart_history', $cart);
 
-            // 3. Enrol user in each course.
-            $items = json_decode($cart->items_json ?: '[]', true) ?: [];
-            foreach ($items as $item) {
-                self::enrol_user_in_course((int) $cart->userid,
-                    (int) $item['courseid']);
+            // 3. Enrol user in each course they may buy (see above).
+            foreach ($grant as $courseid) {
+                self::enrol_user_in_course((int) $cart->userid, $courseid);
             }
 
             // 4. Issue invoice.

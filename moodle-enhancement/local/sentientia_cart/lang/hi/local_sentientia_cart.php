@@ -126,6 +126,7 @@ $string['messageprovider:admin_new_order']  = 'नया ऑर्डर (एड
 $string['error_courseunavailable'] = 'यह कोर्स अब खरीद के लिए उपलब्ध नहीं है।';
 $string['error_alreadyenrolled']   = 'आप इस कोर्स में पहले से नामांकित हैं।';
 $string['error_emptycart']         = 'आपका कार्ट खाली है।';
+$string['error_itemsunavailable']  = 'आपके कार्ट के कुछ कोर्स अब आपके लिए उपलब्ध नहीं हैं और हटा दिए गए हैं। भुगतान करने से पहले कृपया अपनी नई कुल राशि देखें।';
 $string['error_gatewaydown']       = 'भुगतान गेटवे वर्तमान में अनुपलब्ध है। कृपया फिर से प्रयास करें।';
 $string['error_invalidsignature']  = 'भुगतान सत्यापन विफल।';
 $string['error_invalidstate']      = 'इस कार्रवाई के लिए अमान्य ऑर्डर स्थिति।';

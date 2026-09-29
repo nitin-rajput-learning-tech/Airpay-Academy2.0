@@ -34,15 +34,25 @@ if (!$user) {
 }
 echo "Test user: $user->username (id=$user->id, path=$user->open_path)\n";
 
-// Pick a course that this user is NOT already enrolled in.
-$course = $DB->get_record_sql(
+// Pick a course that this user is NOT already enrolled in, and may buy:
+// ADR-031 decision 3 (2026-09-26) refuses add_item() for a course the
+// catalogue does not show the buyer, so the first visible course on the site
+// (often another tenant's) no longer works as a test course.
+$candidates = $DB->get_records_sql(
     "SELECT c.id, c.fullname, c.shortname FROM {course} c
       WHERE c.id > 1 AND c.visible = 1
         AND c.id NOT IN (
             SELECT e.courseid FROM {enrol} e
             JOIN {user_enrolments} ue ON ue.enrolid = e.id
             WHERE ue.userid = :uid)
-      ORDER BY c.id ASC LIMIT 1", ['uid' => $user->id]);
+      ORDER BY c.id ASC", ['uid' => $user->id], 0, 500);
+$course = null;
+foreach ($candidates as $candidate) {
+    if (\local_sentientia_cart\cart_manager::can_buy_course((int) $candidate->id, (int) $user->id)) {
+        $course = $candidate;
+        break;
+    }
+}
 if (!$course) {
     echo "FAIL: No suitable test course.\n";
     exit(1);

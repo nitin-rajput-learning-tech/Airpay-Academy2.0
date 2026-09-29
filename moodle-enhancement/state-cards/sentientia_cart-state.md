@@ -189,3 +189,46 @@ The false "system-level grants silently no-op" comment in `db/upgrade.php` and t
 corrected. Site admins (and `local/sentientia_platform:crosstenant` holders) are unchanged. No
 capability change, so no revoke step. Depends on platform 2026092500. Tests:
 `tests/tenant_scope_test.php` (`@group tenant_isolation`). Both trees.
+
+## 2026-09-26 - ADR-031 decision 3: a learner buys only what the catalogue shows them (1.0.4, 2026092500)
+
+**Defect.** `add_item()`, `checkout()` and `mark_paid()` never looked at the purchased course's
+tenant. A /1 learner could post a /177 priced course id to `local_sentientia_cart_add_item`, pay,
+and be enrolled in a course their catalogue does not list (and a /77 self-registered learner could
+buy an internal Airpay course the same way).
+
+**Decision** (delegated by Nitin, recommended option): the cart sells a buyer only a course the
+catalogue shows them. `cart_manager::can_buy_course($courseid, $buyerid)` CALLS
+`\local_sentientia_catalog\catalog_manager::assert_course_visible_to_viewer()` rather than copying
+it, so the cart cannot drift from the catalogue: visible, and owned by the buyer's tenant tree
+(`/`-bounded) or actively shared to it (`local_sentientia_courses_tenant_share`); a guest is the
+Public tenant; a buyer with no resolvable tenant buys nothing; a course with no `open_path` is not
+sold to a scoped buyer (the catalogue does not list it to them). Cross-tenant buyers (site admin,
+`:crosstenant`) return true before any check, exactly as before. The cart does not declare a hard
+dependency on the catalogue: without it, `tenant_rule_allows()` applies the same rule check for
+check (a test holds the two to the same answers). NOT the looser `tenant::path_filter(..., true)`
+NULL-path tolerance: that would sell tenantless courses the catalogue never shows.
+
+Security fix under ADR-031, so NOT feature-flagged. Enforced at every entry point:
+
+- `add_item()`: first, with the same `error_courseunavailable` as "not for sale", so a probe cannot
+  tell another tenant's course from a missing one.
+- `checkout()`: re-checks every line (`prune_unavailable_items()`): lines no longer buyable (added
+  before the gate, or a share withdrawn since) are dropped, totals recomputed, and the checkout is
+  REFUSED once with the new `error_itemsunavailable` so the buyer sees the new basket before paying.
+  `checkout.php` re-reads the cart after a refused attempt so the page shows what the next submit
+  charges.
+- `mark_paid()` (payment callback): enrols only lines `can_buy_course()` allows. The money has been
+  taken by then, so the payment is still recorded, invoiced and marked paid; withheld course ids go
+  in the order `notes` for a refund. Only reachable for an order that never passed the new checkout
+  check, or a share withdrawn between checkout and payment.
+
+Airpay's in-tenant flow is unchanged for own-tenant and shared-in courses
+(`test_the_in_tenant_purchase_flow_is_unchanged_end_to_end`). Two narrow changes follow from "what
+the catalogue shows" and are deliberate: a hidden (`visible = 0`) course and a course with no
+`open_path` are no longer sold to a scoped learner (neither is listed to them, and the catalogue's own
+enrol path already refuses both). Worth a check on UAT that no priced Airpay course has a NULL
+`open_path`. `cli/smoke_cart.php` now picks a test course its /77 user may buy.
+No db/ change, so no version bump (already 2026092500). New lang string `error_itemsunavailable`
+(en + hi). Tests: `tests/purchase_gate_test.php` (`@group tenant_isolation`), NOT run locally
+(low-CPU mode) - CI to run. Both trees.
