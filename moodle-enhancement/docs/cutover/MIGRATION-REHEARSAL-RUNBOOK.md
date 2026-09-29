@@ -1,5 +1,8 @@
 # Ninja-Sandbox Migration Rehearsal Runbook (rollout-gate Phase 2)
 
+> **2026-09-29:** live is Moodle 4.1.2 (not 5.1), so the upgrade is two hops (4.1.2 → 4.5 → 5.2);
+> the Sentientia migration plan §0 has the details. Steps 3 and 4e below were updated for it.
+
 **Owner:** Nitin Rajput · **Status:** kit READY, locally rehearsed 2026-06-10 · **Executes:** on the
 ninja sandbox when Nitin provides server access + a fresh live backup. **Nothing here touches live.**
 
@@ -42,6 +45,10 @@ ninja sandbox when Nitin provides server access + a fresh live backup. **Nothing
 3. **Upgrade:** `php admin/cli/upgrade.php --non-interactive` (locally proven: 2,057 steps, 5.1→5.2,
    zero errors — if the sandbox starts from the live 5.1-era stack the same path applies; for the
    5.2 jump confirm the PHP pre-checks first).
+   **Corrected 2026-09-29: live is Moodle 4.1.2, not 5.1.** 5.2 requires 4.4 or later
+   (`admin/environment.xml`), so the rehearsal upgrades twice: 4.1.2 → 4.5.x on the 4.5 core, then
+   4.5 → 5.2 with the Sentientia package. See `SENTIENTIA-MIGRATION-PLAN-2026-09-04.md` §0.
+   Time both hops, run hop 1 on the target engine (MySQL 8.4), and capture parity after each hop.
 4. **Post-restore repairs (MANDATORY, in order — all idempotent, dry-run first):**
    a. `php local/sentientia_platform/cli/repair_task_registrations.php --apply`
       (re-registers renamed plugins' crons, purges orphan task rows, fixes stale brand-row URL paths,
@@ -55,6 +62,9 @@ ninja sandbox when Nitin provides server access + a fresh live backup. **Nothing
    c. `php local/sentientia_core/cli/parity_check_org.php` (expect **100% PARITY**).
    d. `php local/sentientia_catalog/cli/enable_oneclick_enrol.php --dry-run` then `--apply`
       (SW-1; tenants 1+177).
+   e. **ADR-031 role configuration (added 2026-09-29):** the role-9 core-cap script and the
+      platform-role script, dry run first, then the read-only WS smoke — migration plan §4f-f.
+      These scripts are UAT-locked today; they need a target guard first.
 5. **Purge caches**, then **data-intact gate:**
    `php local/sentientia_platform/cli/migration_parity_check.php --compare=/path/live-baseline.json`
    → **must print `RESULT: 100% PARITY — data intact.`** Any DRIFT line = stop + investigate.

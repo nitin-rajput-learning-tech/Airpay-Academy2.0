@@ -9,6 +9,53 @@
 
 ---
 
+## 0. Correction 2026-09-29 — the source is Moodle 4.1.2, so the upgrade is TWO hops
+
+This plan (v1.1) says production runs "Moodle 5.1.x". It does not. The production code snapshot
+(`D:/Claude Local/Moodle Backup/01-production-codebase/html/version.php`, the tree the 2026-09-25
+production audit was verified against) reads `$version = 2022112802.06`, `$release = '4.1.2+ (Build:
+20230401)'`, `$branch = '401'`: **Moodle 4.1.2 + the eAbyas BizLMS plugins, theme epsilon, no
+Sentientia plugin**. The "5.1" came from the local XAMPP copy, whose DB had already been upgraded.
+
+**Moodle refuses the one-hop upgrade.** The 5.2 `admin/environment.xml` declares
+`<MOODLE version="5.2" requires="4.4">` (5.0 and 5.1 require 4.2.3; 4.5 requires 4.1.2), so
+`admin/cli/upgrade.php` on the 5.2 code stops at the environment check for a 4.1.2 database. The path
+is **4.1.2 → 4.5.x (LTS) → 5.2**:
+
+| Hop | Code on disk | Engine limits (from `environment.xml`) | Evidence it works |
+|---|---|---|---|
+| 1. 4.1.2 → 4.5.x | Moodle 4.5.x core (+ a decision on the BizLMS plugin code, below) | PHP 8.1–8.3 (8.4 refused); MySQL ≥ 8.0 / MariaDB ≥ 10.6.7 | Done once locally (April 2026 import: 3.5 GB prod dump → `C:/xampp/htdocs/moodle-4.5-archive`, 4.5.10) on MariaDB 10.11, never on MySQL 8.4, never timed |
+| 2. 4.5.x → 5.2 | the Sentientia 5.2 package (§4d) | PHP 8.3; MySQL ≥ 8.4 / MariaDB ≥ 10.11 | The 2026-06-10 rehearsal ran 5.1→5.2 (2,057 steps); 4.5→5.2 itself is unrehearsed |
+
+What changes in this plan:
+- **§4e runs twice**: swap in the 4.5 core, `upgrade.php --non-interactive`, verify, RDS snapshot; then
+  deploy the 5.2 package and run it again. §4d's Sentientia deploy belongs to hop 2 only. Moodle
+  expects the new code in a clean directory for each hop (do not unpack 5.2 over 4.5).
+- **Rehearse hop 1 on MySQL 8.4** (the target engine, PHP 8.3.6): the target RDS is 8.4 before hop 1
+  runs, and 4.5's support for 8.4 is not proven here. If 4.5 refuses 8.4, hop 1 needs an 8.0 staging
+  database and a dump/restore between the hops, which lengthens the window.
+- **Decide the BizLMS plugin code for hop 1.** Either (a) leave it off disk: the plugins show as
+  "missing from disk" and their tables stay untouched; or (b) deploy the 4.1.2-era BizLMS code
+  (Moodle 3.3/3.4 vintage) so its own upgrade steps run on PHP 8.3, with a risk of PHP fatals. Record
+  what the April import did (it reported 53 upgraded / 30 installed / 21 deleted plugins) and rehearse
+  the chosen option. Either way, the BizLMS tables have to still exist after both hops.
+- **I-4 (RTO) = restore + both hops + repairs.** The 06-10 timing covers the second hop only.
+- **§6's "the only genuine data transform"** becomes the two core hops (4.1.2→4.5 carries two years of
+  core upgrade steps that the 06-10 rehearsal never ran on this data; time them). Capture the parity
+  metrics after hop 1 too (a fourth diff point: LIVE → restored → after 4.5 → after 5.2).
+- **I-9** asks for the exact production release. The snapshot says 4.1.2+; confirm on live
+  (`SELECT value FROM mdl_config WHERE name IN ('release','version')`, read-only), since production
+  may have been patched after the snapshot.
+- **The data carried by the 22 BizLMS plugins** (classroom, programs, online exams, evaluations,
+  learning plans, cart orders, skills, recompletion, requests, ratings, ...): the restore carries
+  their tables, but their code is not in the 5.2 package. Which Sentientia plugin reads or imports
+  each table decides whether that history is visible after cutover. An audit is in progress; findings
+  go in §3.3.
+
+Where the sections below say "5.1", read "4.1.2 (via 4.5)" until the plan is re-issued as v1.2.
+
+---
+
 ## 1. Objective and the continuity guarantee
 
 ### 1.1 Objective
@@ -245,7 +292,29 @@ Do NOT run any independence flag-flip (Gates B/C/D stay legacy/dormant — §6).
    php local/sentientia_catalog/cli/enable_oneclick_enrol.php --apply
    ```
    **VERIFY:** idempotent apply reports the expected tenants.
-6. **Purge + confirm cache/MUC endpoints are box-local:**
+6. **4f-f — ADR-031 role configuration (added 2026-09-29).** On the install path the ADR-031 upgrade
+   steps that changed role 9 on UAT do not fire, and BizLMS role 9 "administrator" arrives from live
+   holding core `moodle/role:manage`, `moodle/user:loginas|update|delete|create` at system context. Run
+   the same two scripts UAT runs, dry-run first (`docs/operations/ROLE9-CORE-CAPS-2026-09-26.md`):
+   ```bash
+   php tools/uat/adr031_predeploy_probe.php ...        # role 9 assignments by context level
+   php tools/uat/adr031_role9_core_caps.php ... --dry-run
+   php tools/uat/adr031_role9_core_caps.php ... --apply [--accept-nonsystem-holders]
+   php tools/uat/adr031_crosstenant_role.php ... --dry-run
+   php tools/uat/adr031_crosstenant_role.php ... --apply
+   php tools/uat/adr031_ws_smoke.php ...               # read web services as real personas: 0 errors
+   ```
+   **Precondition:** count production's role-9 assignments below system context (UAT had 2 at
+   category level) and get Nitin's decision before `--accept-nonsystem-holders`. Tenant admins lose
+   core "Log in as" (Nitin, 2026-09-29: site admins only).
+   **Tooling gap to close before the rehearsal:** these scripts refuse to run unless `--i-am-uat` is
+   given and `wwwroot` is `academy2.airpay.ninja`, and they `require` the UAT config path. The
+   migration target has `wwwroot = https://www.airpay.academy` (§4d), so each needs an explicit
+   target guard (`--target=<wwwroot>`, which must equal `$CFG->wwwroot`, plus the config path as an
+   argument) before it can run there.
+   **VERIFY:** the dry-run plan matches ROLE9-CORE-CAPS §2 (and §10 for production); after apply, a tenant admin gets no core
+   editadvanced/loginas link and the Sentientia edit modal still works; WS smoke `ERROR=0`.
+7. **Purge + confirm cache/MUC endpoints are box-local:**
    ```bash
    # confirm /var/sentientiadata/muc/config.php references localhost/new endpoints, not a live hostname, THEN:
    php admin/cli/purge_caches.php
