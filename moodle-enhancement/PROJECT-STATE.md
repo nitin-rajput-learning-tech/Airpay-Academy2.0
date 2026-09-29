@@ -47,6 +47,22 @@ then `--apply --accept-nonsystem-holders` → platform role dry-run, then apply 
 probe. Then (VPN off) Nitin's real-Chrome check: service worker gone, "Browse Library" shown, tenant
 admin has no Log in as; plus the cart screen checks in `docs/visual-evidence/2026-09-29/README.md`.
 
+**Stage B findings today (docs/cutover/SENTIENTIA-MIGRATION-PLAN-2026-09-04.md §0 + §3.3):**
+1. **Production is Moodle 4.1.2+, not 5.1** (snapshot `version.php` 2022112802.06). 5.2 requires 4.4, so
+   the upgrade is two hops: 4.1.2 → 4.5.x → 5.2. The 06-10 rehearsal covered only 5.1 → 5.2.
+2. **BizLMS feature data is not carried into the product.** 82 of the 93 tables of the 22 BizLMS
+   plugins are neither read nor copied by Sentientia code: classroom enrolments and completions,
+   programs, learning-plan courses and progress, evaluations, cart orders/ledger/invoices,
+   recompletion archives, requests, skills, transcripts. The local prod copy lost these tables
+   (uninstalled plugins), so the 06-10 parity rehearsal never contained them. **Blocker: Nitin decides
+   import vs archive per feature; production row counts (input I-20) size it.**
+3. Uninstalling a missing-from-disk BizLMS plugin on the target drops its tables — never do it before
+   the data is imported/archived.
+4. Defect: `sentientia_pages/qr_scan.php` writes QR attendance to the retired
+   `local_classroom_attendance` table.
+5. The `tools/uat/adr031_*` scripts are UAT-locked (wwwroot guard); they need a target guard for the
+   rehearsal and cutover.
+
 **Next — Stage B (the replacement path):** rebuild the 5.2 package with every fix since 09-10; extend
 `MIGRATION-REHEARSAL-RUNBOOK.md` with the ADR-031 post-upgrade steps (role-9 script, platform role, WS
 smoke, erasure probe) and parity counts for the tables these upgrades touch; IT asks (LB allowlist, live

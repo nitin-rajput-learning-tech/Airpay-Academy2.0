@@ -49,8 +49,9 @@ What changes in this plan:
 - **The data carried by the 22 BizLMS plugins** (classroom, programs, online exams, evaluations,
   learning plans, cart orders, skills, recompletion, requests, ratings, ...): the restore carries
   their tables, but their code is not in the 5.2 package. Which Sentientia plugin reads or imports
-  each table decides whether that history is visible after cutover. An audit is in progress; findings
-  go in §3.3.
+  each table decides whether that history is visible after cutover. **Audited 2026-09-29: 82 of the 93
+  tables are neither read nor copied by Sentientia — see §3.3. This is a Stage B blocker until Nitin
+  decides import vs archive per feature.**
 
 Where the sections below say "5.1", read "4.1.2 (via 4.5)" until the plan is re-issued as v1.2.
 
@@ -132,6 +133,58 @@ Extends `UAT-SENTIENTIA-DEPLOY-CHECKLIST.md §1, §6` and `UAT-ASKS-2026-09-03.m
 
 ### 3.3 What carries in the restore vs what is reconfigured
 - **Carries (same DB / moodledata):** all 618 tables incl. every history-bearing table in §1.2, password hashes, BizLMS `open_*` + `local_costcenter`, BizLMS roles (administrator id 9, employee id 5 [renamed student], trainer id 10, sentientiaauthor), `oauth2_*` issuer rows + `auth_oauth2_linked_login`, **the restored SMTP config and the queued `task_adhoc`/`task_scheduled` rows** (a hazard, neutralised in §4f), the restored `config.php` values (wwwroot excepted), theme/branding DB rows, and — via the filedir copy — every file, SCORM package, and certificate PDF.
+- **NOT carried into the product (found 2026-09-29) — the BizLMS feature data.** The restore carries the
+  93 tables of production's 22 eAbyas BizLMS plugins, but their code is not in the 5.2 package, and
+  **82 of the 93 are neither read nor copied by any Sentientia code** (read-only code audit of
+  `moodle-enhancement/local/sentientia_*` against each plugin's `db/install.xml` in the production
+  snapshot; spot-checked with a repo-wide search). No install or upgrade step copies a BizLMS row.
+  Three manual CLIs copy parts of it: `sentientia_org/data_migration.php` and
+  `sentientia_core/cli/backfill_org.php` (the org tree), and `sentientia_org/cli/migrate_all.php`
+  (headers only). Unless something is built, after cutover these are **on disk but invisible**:
+  - classroom enrolments, completions, trainers, feedback, test scores, waitlist (`local_classroom_*`);
+  - program enrolments, levels, level completions, criteria (`local_program*`, `local_bc_*`);
+  - learning-plan courses, per-user progress, approvals (`local_learningplan_*`, `local_plan_course_status`);
+  - evaluation definitions and submitted responses (`local_evaluation*`, `local_eval_*`);
+  - cart orders, ledger, credits, invoices (`local_biz_cart_*`) — financial records;
+  - recompletion archives of past completions, quiz/SCORM/LTI attempts (`local_recompletion_*`) —
+    compliance evidence;
+  - requests, skills catalogue and matrix, transcripts history, HR-sync data, locations/rooms, comments,
+    likes, tags, department roles, costcenter satellites.
+
+  The 11 tables Sentientia does read include `local_costcenter` (org/tenant), `local_custom_category`
+  (catalogue), the notification templates and email-log totals, and four fallbacks (`local_classroom`,
+  `_sessions`, `local_learningplan`, `local_rating`) that go silent as soon as the Sentientia table has
+  one row. Running `migrate_all.php` would trigger that switch, because it copies the classroom and
+  learning-plan headers without their sessions, courses or learners.
+
+  **Three more facts from the same check:**
+  1. **The local copy of production has none of these tables.** The April 2026 import brought 94
+     `mdl_local_*` BizLMS tables. Today schemas `moodle`, `moodle52_cut1` and `moodle5_2` hold only 39
+     minor ones: no `local_costcenter`, classroom, program, cart, evaluation, learning-plan or
+     recompletion tables, and their `config_plugins` rows are gone. That is what uninstalling a
+     missing-from-disk plugin does. So the 2026-06-10 "100% parity" rehearsal never contained this data,
+     and `migration_parity_check.php` does not count it.
+  2. **Uninstalling drops the history.** On the 5.2 target every BizLMS plugin shows as "missing from
+     disk". Uninstalling one (plugins page, or core `admin/cli/uninstall_plugins.php --purge-missing`)
+     drops its tables. **Never uninstall a BizLMS plugin on the target** until its data is imported
+     or archived. Add this to the go-live config (§8), plus an RDS snapshot before anyone touches the
+     plugins page.
+  3. **A live-code defect of the same class:** `local/sentientia_pages/qr_scan.php:43,62` checks and
+     writes QR attendance in the retired `local_classroom_attendance`, not
+     `local_sentientia_classroom_attendance`. After cutover, new attendance would land where Sentientia
+     does not read it; on a fresh install (UAT) the table does not exist.
+
+  **Decision needed (Nitin), before the rehearsal:** per feature, **import** into the Sentientia tables
+  (a CLI per feature, run after both hops, with before/after counts in the parity gate), or **archive**
+  (keep the BizLMS tables read-only plus a read-only history report for admins), or both. Size it with
+  production row counts first: a new input **I-20**, read-only on live:
+  ```sql
+  SELECT TABLE_NAME, TABLE_ROWS FROM information_schema.TABLES
+   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME LIKE 'mdl\_local\_%'
+     AND TABLE_NAME NOT LIKE 'mdl\_local\_sentientia%' ORDER BY TABLE_ROWS DESC;
+  ```
+  (InnoDB estimates; follow up with exact `COUNT(*)` for the tables that decide it.) Local rehearsal of
+  an import needs the April dump restored into a separate schema, because the local DB lost these tables.
 - **Reconfigured on the new box (infra/config, not data):** wwwroot, app-scoped DB user, `sslproxy`/proxy, `flushpackets`, htaccess/headers, MUC/cache endpoints, search index, outbound mail (creds wiped + XOAUTH2 rewired), cron, MFA/SSO token state, reCAPTCHA (only if self-reg on), CloudWatch alarms.
 
 ---
