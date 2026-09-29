@@ -71,6 +71,14 @@ evaluation, notifications, skills, cart, ratings, forum, report blocks): see bel
    concept). Options: PROHIBIT those for role 9 (breaks "Log in as" from the L&D admin — use the site
    admin for that) or move tenant admins to category-context assignments. Recommendation: prohibit
    `moodle/role:manage` + `moodle/role:override` now; decide `loginas` with the test team.
+   **→ Decided 2026-09-26 under Nitin's delegation (items 1 and 2; tools finished 2026-09-29, NOT yet
+   run on UAT):** `docs/operations/ROLE9-CORE-CAPS-2026-09-26.md`. PROHIBIT for role 9 at system:
+   role:manage, role:override, user:create/update/delete/loginas, plus user:editprofile and
+   site:uploadusers (same takeover through other core pages); role:assign kept (enrol modal). Role 9's
+   allow-assign/allow-switch rows to site-level roles removed. Platform role `sentientiaplatform`
+   (`:crosstenant` only, assigned to nobody). Run `tools/uat/adr031_role9_core_caps.php` then
+   `tools/uat/adr031_crosstenant_role.php` (dry-run first; `--revert` exists). Same change at production
+   cutover.
 2. **Create the platform role** that holds `local/sentientia_platform:crosstenant` (nobody but site
    admins crosses tenants until then — that is the safe default).
 3. **Cart**: can a learner buy (and be enrolled in) another tenant's priced course? Today yes; ADR-031
