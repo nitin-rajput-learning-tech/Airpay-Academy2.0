@@ -76,6 +76,12 @@ featured.php rows pinned before the deploy, the skills mapping pages for tenant 
 learning-path view link, unenrolling a legacy/pathless enrolee, the Manage Courses "Enrolled" count,
 request approval into another tenant's course/path (now refused).
 
+Added 2026-09-29 (ADR-031 decision 1, `local_sentientia_users` profile pencil). Run after
+`tools/uat/adr031_role9_core_caps.php --apply` and a cache purge:
+
+49. [ ] [Tenant admin /1, role 9 after the role-9 script] /local/sentientia_users/profile.php?id=<a /1 colleague>: the header pencil opens the Sentientia "Edit user" modal (no page load, no core "no permission" page), and saving it reloads the profile with the change. The "Log in as" icon is gone. On a site admin's profile that sits in /1 (233 or 3417) there is no pencil and no camera.
+50. [ ] [Site admin id 2] Same page: the pencil still opens core /user/editadvanced.php, and "Log in as" is still offered.
+
 ## Capture
 
 Desktop (1440) and mobile (590px) per surface, light mode; filenames `NN-<persona>-<page>.png`.

@@ -8,9 +8,18 @@
                    class="ap-profile__edit-btn" title="Change photo">
                     <i class="fa fa-camera"></i>
                 </a>
+                {{! ADR-031 2026-09-29: a site admin gets the core editor link; anyone else the Sentientia edit modal. See user_manager::profile_edit_action. }}
+                {{#editprofile}}
                 <a href="{{{editprofile}}}" class="ap-profile__edit-btn" title="{{#str}}editprofile, local_sentientia_users{{/str}}">
                     <i class="fa fa-pencil"></i>
                 </a>
+                {{/editprofile}}
+                {{#editmodal}}
+                <a href="#" role="button" class="ap-profile__edit-btn" data-action="edit-user" data-userid="{{userid}}"
+                   title="{{#str}}editprofile, local_sentientia_users{{/str}}">
+                    <i class="fa fa-pencil"></i>
+                </a>
+                {{/editmodal}}
                 {{/capabilityedit}}
                 {{#loginasurl}}
                 <a href="{{{loginasurl}}}" class="ap-profile__edit-btn" title="{{#str}}loginas{{/str}}">
@@ -350,6 +359,14 @@
     {{{html}}}
 </div>
 {{/usercontent}}
+
+{{#editmodal}}
+{{#js}}
+require(['local_sentientia_users/user_actions'], function(UserActions) {
+    UserActions.init();
+});
+{{/js}}
+{{/editmodal}}
 
 <style>
 .ap-profile__enrichment {

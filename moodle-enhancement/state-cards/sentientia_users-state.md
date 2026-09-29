@@ -413,3 +413,27 @@ the side that was wrong; nothing a test proves was weakened.
   still saves, a new cross-tenant supervisor is still refused, a refusal saves nothing on update or
   create, and the photo rule for tenant admin / learner / `:crosstenant` / site admin.
 - Version not bumped: already 2026092501 from wave 1 and no db/ file changed. Tests written, not run.
+
+### 2026-09-29 - profile pencil opens the Sentientia edit modal for tenant admins (2.8.1, same version)
+
+- ADR-031 decision 1 (`tools/uat/adr031_role9_core_caps.php`) PROHIBITs `moodle/user:update` for the
+  tenant-admin role. The profile header's pencil linked every `:edit` holder to core
+  `/user/editadvanced.php`, which needs that capability and has no tenant check, so for tenant admins it
+  became a dead button.
+- New `user_manager::profile_edit_action($targetid)`, used by `build_profile_context()`, returns
+  `capabilityedit`, `editprofile` and `editmodal`:
+  - a site admin keeps the core editor link;
+  - any other `:edit` holder who passes `require_can_act_on()` gets the Sentientia edit modal
+    (`form\edit_user`, via `user_actions.js` `data-action="edit-user"`; `profile.mustache` loads the
+    module in a `{{#js}}` block only then);
+  - everyone else gets neither pencil nor camera.
+  A non-site-admin is never sent to `/user/editadvanced.php`, even while still holding
+  `moodle/user:update`. The camera now shows only when `photo.php` would accept the change, so a
+  tenant admin viewing a site admin's or a cross-tenant account's profile no longer sees a dead one.
+- Tests: `tests/profile_edit_action_test.php` (`@group tenant_isolation`). It covers the tenant admin
+  after the PROHIBITs (modal, and the modal really opens), three kinds of non-site-admin editors
+  against own / colleague / other tenant / look-alike /10 / site admin / cross-tenant targets (never
+  the core link; the pencil is shown exactly when the modal opens), site admins (core link), and
+  learners (no pencil).
+- Version not bumped: already 2026092501 and no db/ file changed. Tests written, not run (low-CPU
+  session). Deploy needs a cache purge (template). Both trees are identical.

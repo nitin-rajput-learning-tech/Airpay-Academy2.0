@@ -176,8 +176,8 @@ class user_manager {
             'prefix'          => user_fields::prefix_label((int) ($user->open_prefix ?? 0)),
             'joindate'        => user_fields::format_date((int) ($user->open_joindate ?? 0)),
             'dateofbirth'     => user_fields::format_date((int) ($user->open_dateofbirth ?? 0)),
-            'editprofile'     => new \moodle_url('/user/editadvanced.php',
-                                    ['id' => $user->id, 'returnto' => 'profile']),
+            // 'editprofile' / 'editmodal' / 'capabilityedit' come from
+            // profile_edit_action() below (ADR-031, 2026-09-29).
             // UAT fix 2026-05-09: route through moodle_url so the link
             // resolves correctly on installs not rooted at /.
             'photo_url'       => (new \moodle_url('/local/sentientia_users/photo.php',
@@ -233,8 +233,9 @@ class user_manager {
         // fallback — cap was never registered in any db/access.php and
         // logged a debug Notice on every profile render. The
         // sentientia_users-namespaced cap is the canonical one.
-        $context['capabilityedit'] = (is_siteadmin() ||
-            has_capability('local/sentientia_users:edit', $syscontext)) ? 1 : 0;
+        // ADR-031 (2026-09-29): the header's camera + pencil, and where the
+        // pencil points, are decided by profile_edit_action().
+        $context = array_merge($context, self::profile_edit_action((int) $user->id));
         $context['loginasurl'] = has_capability('moodle/user:loginas', $syscontext)
             ? new \moodle_url('/course/loginas.php', ['id' => 1, 'user' => $user->id, 'sesskey' => sesskey()])
             : false;
@@ -315,6 +316,54 @@ class user_manager {
         $context['existingplugin'] = array_values($existingplugin);
 
         return $context;
+    }
+
+    /**
+     * ADR-031 (2026-09-29): what the profile header offers the CURRENT user
+     * for editing $targetid, so that it never shows a button that fails.
+     *
+     * The pencil used to link every holder of local/sentientia_users:edit to
+     * core /user/editadvanced.php. That page needs moodle/user:update and has
+     * no tenant check. The tenant-admin role now has moodle/user:update
+     * PROHIBITed (tools/uat/adr031_role9_core_caps.php), so for a tenant admin
+     * it was a dead button. Now:
+     *  - a site admin keeps the core editor (they bypass capability checks);
+     *  - anyone else with :edit who may act on the target
+     *    (require_can_act_on(): same tenant, not a site admin, not a
+     *    cross-tenant account) gets the Sentientia edit modal
+     *    (form\edit_user), which runs those same checks itself;
+     *  - anyone else gets no pencil and no camera. photo.php applies the same
+     *    rule to another user's picture (require_can_change_photo()).
+     * A non-site-admin is never sent to /user/editadvanced.php, even while they
+     * still hold moodle/user:update: that page would edit the account with no
+     * tenant check.
+     *
+     * @param int $targetid the profile being viewed
+     * @return array{capabilityedit: int, editprofile: \moodle_url|false, editmodal: bool}
+     *         capabilityedit 1 shows the camera and the pencil; editprofile is the
+     *         core editor link (site admins only); editmodal true makes the pencil
+     *         open the Sentientia edit modal instead.
+     */
+    public static function profile_edit_action(int $targetid): array {
+        $none = ['capabilityedit' => 0, 'editprofile' => false, 'editmodal' => false];
+        if ($targetid <= 0) {
+            return $none;
+        }
+        if (is_siteadmin()) {
+            return ['capabilityedit' => 1,
+                'editprofile' => new \moodle_url('/user/editadvanced.php',
+                    ['id' => $targetid, 'returnto' => 'profile']),
+                'editmodal' => false];
+        }
+        if (!has_capability('local/sentientia_users:edit', \context_system::instance())) {
+            return $none;
+        }
+        try {
+            self::require_can_act_on($targetid);
+        } catch (\moodle_exception $e) {
+            return $none;
+        }
+        return ['capabilityedit' => 1, 'editprofile' => false, 'editmodal' => true];
     }
 
     /**
