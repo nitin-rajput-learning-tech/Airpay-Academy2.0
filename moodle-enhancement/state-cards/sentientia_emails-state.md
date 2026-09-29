@@ -485,3 +485,11 @@ Tests:
   - `test_the_audit_outlives_the_upgrade_output`
   - `test_an_audit_that_finds_nothing_still_records_that_it_ran`
 - Both classes are `@group tenant_isolation`. PHPUnit was not run in this session.
+
+### 2026-09-29 - legacy-queue totals shown to cross-tenant callers only
+
+The Playwright visual pass found the manage.php dashboard's "Legacy queue" card (BizLMS
+`local_emaillogs` totals) identical for the Airpay and the ZEEA tenant admin: that table has no tenant
+column, so the numbers were site-wide. `manage_controller` now fetches them only when
+`tenant::is_cross_tenant()` and passes `show_legacy`; `tab_dashboard.mustache` hides the card
+otherwise. Aggregate counts only (no PII). Evidence: docs/visual-evidence/2026-09-29/recheck-emails/.

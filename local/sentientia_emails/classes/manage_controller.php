@@ -36,8 +36,12 @@ class manage_controller {
             $logstats = (object)['total' => 0, 'sent_today' => 0, 'sent_week' => 0, 'failed' => 0, 'suppressed' => 0];
         }
 
-        // BizLMS stats (read-only).
-        $bizlmsstats = legacy_bridge::get_email_stats();
+        // BizLMS stats (read-only). local_emaillogs has no tenant column, so
+        // its totals are site-wide: only a cross-tenant caller sees them
+        // (2026-09-29 visual pass: a ZEEA tenant admin saw Airpay's queue totals).
+        $showlegacy = \local_sentientia_platform\tenant::is_cross_tenant();
+        $bizlmsstats = $showlegacy ? legacy_bridge::get_email_stats()
+            : (object) ['total' => 0, 'sent' => 0, 'pending' => 0];
 
         // Phase B0+ — stat_card-compatible tile array. Six tiles cover
         // the essential email-system metrics. Legacy flat fields preserved
@@ -101,6 +105,7 @@ class manage_controller {
             'log_suppressed'  => $logstats->suppressed,
             'kpi_tiles'       => $kpi_tiles,
             'has_kpi_tiles'   => !empty($kpi_tiles),
+            'show_legacy'     => $showlegacy,
             'bizlms_total'    => $bizlmsstats->total,
             'bizlms_sent'     => $bizlmsstats->sent,
             'bizlms_pending'  => $bizlmsstats->pending,

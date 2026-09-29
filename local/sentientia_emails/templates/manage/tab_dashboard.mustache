@@ -31,6 +31,7 @@
             <tr><td>Disabled</td><td style="text-align:right;font-weight:600;color:#8890a0;">{{tabdata.rule_disabled}}</td></tr>
         </table>
     </div>
+    {{#tabdata.show_legacy}}
     <div class="ap-manage-card">
         <div class="ap-manage-card__title">
             <i class="fa fa-database" aria-hidden="true"></i> Legacy queue
@@ -41,4 +42,5 @@
             <tr><td>Pending in queue</td><td style="text-align:right;font-weight:600;color:#d97706;">{{tabdata.bizlms_pending}}</td></tr>
         </table>
     </div>
+    {{/tabdata.show_legacy}}
 </div>

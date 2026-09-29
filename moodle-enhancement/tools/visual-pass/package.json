@@ -1,0 +1,9 @@
+{
+  "name": "sentientia-visual-pass",
+  "private": true,
+  "description": "Local-only Playwright screenshot pass (see visual_pass.mjs)",
+  "type": "module",
+  "dependencies": {
+    "playwright-core": "^1.63.0"
+  }
+}

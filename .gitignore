@@ -130,3 +130,7 @@ moodle-enhancement/docs/cutover/uat-credentials/
 
 # Session history written by the remember hook. Transcript notes, not code.
 .remember/
+
+# Local-only Playwright visual pass: generated test persona credentials and deps
+moodle-enhancement/tools/visual-pass/.personas.local.json
+moodle-enhancement/tools/visual-pass/node_modules/
