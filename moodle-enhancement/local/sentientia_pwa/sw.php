@@ -33,12 +33,12 @@ require_once(__DIR__ . '/../../config.php');
 
 // Honour the PWA feature flag — when OFF, serve a no-op SW that just
 // unregisters itself, so any previously-installed SW is cleaned up.
-$pwa_enabled = true;
+$pwa_enabled = false;
 if (class_exists('\\local_sentientia_platform\\feature_flags')) {
     try {
         $pwa_enabled = \local_sentientia_platform\feature_flags::is_enabled('sentientia.pwa.enabled');
     } catch (\Throwable $e) {
-        // Resolver hiccup — default ON. Don't break PWA over a flag bug.
+        // Resolver hiccup - stay OFF, the registry default (2026-09-29).
     }
 }
 

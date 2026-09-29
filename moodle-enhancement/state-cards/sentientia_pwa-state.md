@@ -180,3 +180,12 @@ Branch `claude/adr031-learning3-ff`.
 - Tests: new `tests/upgrade_order_test.php` (`@group tenant_isolation`). It checks that the steps
   are in ascending order with no duplicates, and replays `xmldb_local_sentientia_pwa_upgrade(2026052103)`
   through to the last savepoint. Written, not run. Both trees.
+
+### 2026-09-29 - PWA default OFF (Nitin's decision), 0.6.1-alpha / 2026092900
+
+`sentientia.pwa.enabled` defaulted to TRUE since the Phase B.1 scaffold (47df08ff1), contradicting the
+"PWA alpha ships OFF" rule in CLAUDE.md. Nitin decided: default OFF. `sw.php` also falls back to OFF
+when the flag resolver fails (it fell back to ON). With the flag OFF, `sw.php` serves a worker that
+unregisters itself, so browsers that already installed it clean up on the next visit. Found by the
+2026-09-29 Playwright pass: in headless Chrome the worker's post-login `/my/` request lost the session.
+Deploy check: any DB override row for `sentientia.pwa.enabled` on UAT wins over the default - list it.

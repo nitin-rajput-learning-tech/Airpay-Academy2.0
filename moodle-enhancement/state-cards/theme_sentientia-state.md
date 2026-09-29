@@ -586,3 +586,10 @@ fail-closed fallback, parameter-name collisions between fragments sharing one qu
 admin's null `open_path` not being mistaken for unresolvable.
 
 Theme version 2026092201 / 1.0.56-beta.
+
+### 2026-09-29 - "Browse Library" (Nitin's decision), 1.0.57-beta / 2026092900
+
+The cross-tenant library menu item read "Browse Airpay Library" for every tenant admin (seen as ZEEA's
+admin in the Playwright pass). Nitin: it just says "Browse Library". `nav_browseairpaylibrary` en
+"Browse Library", hi "लाइब्रेरी ब्राउज़ करें". The string id is unchanged; the page it opens was
+already white-label (`{$a->customer}`).

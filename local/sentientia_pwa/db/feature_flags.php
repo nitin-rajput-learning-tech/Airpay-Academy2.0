@@ -14,7 +14,11 @@ $flags = [
 
     // ─── Sentientia category — PWA + offline ─────────────────────
     'sentientia.pwa.enabled' => [
-        'default'     => true,
+        // Default OFF (Nitin, 2026-09-29). It had been ON since the PWA
+        // scaffold, which contradicted the "PWA alpha ships OFF" rule. With it
+        // OFF, sw.php serves a worker that unregisters itself, so browsers that
+        // already installed the service worker clean up on their next visit.
+        'default'     => false,
         'description' => 'Sentientia LMS Progressive Web App (PWA). When ON,
                           the service worker is registered on every page —
                           unlocks the manifest-driven install prompt
