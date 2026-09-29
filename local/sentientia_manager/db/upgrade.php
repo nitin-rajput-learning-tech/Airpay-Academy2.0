@@ -99,5 +99,23 @@ function xmldb_local_sentientia_manager_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051500, 'local', 'sentientia_manager');
     }
 
+    // 2026092600 - decision 5 (2026-09-26): one allocation per (userid,
+    // item_type, itemid), for every type. The UNIQUE (userid, courseid) index
+    // created at 2026050800 above was never relaxed when typed allocations
+    // arrived at 2026051500. Classroom, program and path allocations all carry
+    // courseid 0, so a user could hold only one of them, and the second failed
+    // with a duplicate-key error. idx_user_course becomes a plain lookup index.
+    // idx_user_item (UNIQUE, and covering courses since itemid = courseid)
+    // carries the rule. Duplicate rows are resolved first, keeping the oldest,
+    // and each one removed is reported. install.xml matches from this version.
+    // See db/upgradelib.php.
+    if ($oldversion < 2026092600) {
+        require_once(__DIR__ . '/upgradelib.php');
+        foreach (local_sentientia_manager_fix_allocation_keys($dbman) as $line) {
+            mtrace('local_sentientia_manager: ' . $line);
+        }
+        upgrade_plugin_savepoint(true, 2026092600, 'local', 'sentientia_manager');
+    }
+
     return true;
 }

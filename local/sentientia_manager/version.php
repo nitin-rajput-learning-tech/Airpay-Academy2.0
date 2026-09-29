@@ -19,12 +19,18 @@ $plugin->component = 'local_sentientia_manager';
 // allocations: a scoped manager may allocate only to a direct report in their
 // own tenant, and only an item (course, classroom, program, path) whose
 // open_path is in that tenant. An empty report list no longer means anybody.
-$plugin->version   = 2026092501;  // ADR-031: allocation targets tenant-bounded
+// Decision 5 (2026-09-26) - allocations unique index: the UNIQUE (userid,
+// courseid) index let a user hold only one classroom / program / path
+// allocation (all carry courseid 0). Step 2026092600 makes it a plain index;
+// idx_user_item (userid, item_type, itemid) stays the uniqueness rule.
+$plugin->version   = 2026092600;  // Decision 5: allocation unique key is (user, type, item)
+// 2026092501: ADR-031 allocation targets tenant-bounded.
 // 2026092500: ADR-031 team member pages tenant-bounded.
 // 2026060200: ADR-020 W3.4 org-seam migration.
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.3.5';  // ADR-031 tenant bound on allocations
+$plugin->release   = '1.3.6';  // Decision 5: typed allocations no longer collide
+// 1.3.5: ADR-031 tenant bound on allocations
 // 1.3.4: ADR-031 tenant bound on member drill-down
 // 1.3.3: +ADR-020 W3.4 org-seam migration of team_manager
 // team_manager calls local_sentientia_platform\tenant (ADR-031).
