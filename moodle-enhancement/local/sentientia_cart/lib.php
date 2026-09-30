@@ -28,19 +28,11 @@ function local_sentientia_cart_extend_navigation_user_settings(navigation_node $
 /**
  * Pricing helper — get price for a course.
  * Returns null if course is free / not for sale.
+ *
+ * A thin wrapper: the logic is \local_sentientia_cart\cart_manager::get_course_price(),
+ * which the add-to-cart path calls directly, because Moodle does not load this
+ * file for a caller that reaches the cart through the autoloader alone.
  */
 function local_sentientia_cart_get_course_price(int $courseid): ?float {
-    global $DB;
-    // Use Moodle's "enrol_fee" plugin record on the course if present.
-    // Fall back to a custom field "courseprice" if admin set one.
-    $instance = $DB->get_record_sql(
-        "SELECT cost, currency FROM {enrol}
-          WHERE courseid = :cid AND enrol = 'fee' AND status = 0
-          ORDER BY sortorder ASC LIMIT 1",
-        ['cid' => $courseid]
-    );
-    if ($instance && !empty($instance->cost) && (float) $instance->cost > 0) {
-        return (float) $instance->cost;
-    }
-    return null;  // free / not for sale
+    return \local_sentientia_cart\cart_manager::get_course_price($courseid);
 }

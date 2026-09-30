@@ -284,3 +284,81 @@ withheld course; the in-tenant end-to-end test asserts no refund line; new
 - The ADR-031 refund-due note names the order: "ADR-031: order #N: payment recorded, ...".
 - Test: `test_a_gateway_failure_note_with_markup_does_not_break_the_order_lists`; the refund-note test
   asserts the order number.
+
+### 2026-09-30 - persona pass D1: `:purchase` reaches the authenticated-user role (1.0.5 / 2026093001)
+
+Persona pass finding D1 (P0): a real public (/77) or ZEEA (/177) learner holds no system role but
+Authenticated user. The role held `local/sentientia_cart:view` (cart page and order history opened)
+and NOT `:purchase`, so add-to-cart, remove and checkout were refused with `nopermissions` while the
+cart looked enabled. `db/access.php` has listed the `user` archetype for `:purchase` since the plugin
+was first written (commit c44256473, then `local_airpay_cart`), so the archetype list did NOT change
+(the triage's "archetype list changed" is wrong; corrected in review round 1 below). The role still
+lacked the row: most likely the capability was first registered outside `update_capabilities()` (the
+earlier CLI patch, or the rename `--migrate-caps` path), and only `update_capabilities()` applies
+archetype defaults, and only when it inserts the capability itself. That is inferred from git history and
+the rename tooling, not confirmed on the affected database. `employee`-role users (e.g. `vp_learner177`)
+could buy, which is why the ZEEA cart step passed.
+
+- New `db/upgradelib.php::local_sentientia_cart_backfill_user_purchase()`: every role of archetype
+  `user` (plus the role with shortname `user`) gets ALLOW for `:purchase` at system context ONLY where it
+  has no setting yet. An existing ALLOW, and an administrator's PREVENT or PROHIBIT, are never touched;
+  idempotent; only `:purchase` is granted (`:viewallorders`, `:refund`, `:manageprices` are not); the
+  guest role, the student archetype and custom roles are left alone.
+- `db/upgrade.php` step `2026093001` calls it; `db/install.php` calls it after the rolemap so a fresh
+  install and an upgraded site end identically. Comment added to `db/access.php`; README updated.
+- Owner decision (Nitin, 2026-09-30, "as recommended"): buying stays gated exactly where it was -
+  `cart_manager::is_enabled_for_user()` (`enabled_tenants`) and the ADR-031 catalogue purchase gate
+  (`cart_manager::can_buy_course()`); holding the capability widens nothing.
+- New `tests/purchase_capability_backfill_test.php` (`@group tenant_isolation`, 13 tests): grant,
+  before/after `has_capability` for a /77 learner, idempotence, PREVENT and PROHIBIT stand, existing
+  ALLOW untouched, other archetypes and the other cart capabilities untouched, guest still refused, a
+  /77 learner can add their own course through the web service and is still refused a /1 or /177 course
+  (`error_courseunavailable`), `enabled_tenants` still refuses a tenant it is off for, refusal by
+  capability without the back-fill, access.php/upgrade/install/version wiring. NOT RUN (low-CPU
+  mode); PHPUnit needs a re-init first because the plugin version changed.
+- The storefront-basket to order-cart bridge that makes this reachable from `cart.php` lives in
+  `local_sentientia_catalog` (`classes/checkout_bridge.php`, flag
+  `sentientia.catalog.storefront_checkout.enabled`, default OFF). Commerce stays dark at go-live: keep the
+  flag OFF until the payment gateway has been verified in sandbox.
+- UAT: after upgrade, `local/sentientia_cart:purchase` on role `user` should read ALLOW under
+  Site administration > Users > Permissions > Define roles; re-run the public77 cart steps (#81-#83).
+  Both trees.
+
+### 2026-09-30 - persona pass D1 review round 1: add_item loads its own price lookup, back-fill hardened (1.0.6 / 2026093002)
+
+Adversarial review of the D1/D2 bundle returned fix-then-ship. Closed here:
+
+- MUST FIX (would have crashed the bridge and the web service): `cart_manager::add_item()` called the
+  GLOBAL `local_sentientia_cart_get_course_price()`, defined only in `lib.php`. Moodle loads a plugin's
+  `lib.php` only when a callback that plugin defines is looked up, and this one defines only
+  `extend_navigation_user_settings`, so on `POST cart.php?action=checkout` and on the
+  `local_sentientia_cart_add_item` web service (neither loads it) the call was an undefined function
+  (`\Error`, not a `moodle_exception`). Both new test files `require_once`d `lib.php`, which hid it. Fixed at
+  the source: the price logic is now `cart_manager::get_course_price()` (autoloaded), `add_item()` calls
+  `self::get_course_price()`, and the `lib.php` function is a thin wrapper so `cli/smoke_cart.php` and any
+  other caller keep working. Both pre-includes are removed from the tests; `purchase_capability_backfill_test`
+  and `storefront_checkout_test` each read `add_item()`'s source and assert it prices through the class (a
+  single PHPUnit process cannot prove "lib.php not loaded", because any earlier callback lookup includes
+  it). New tests for `get_course_price()` (class and wrapper agree; a disabled instance or zero cost is not a
+  price).
+- Back-fill: `local_sentientia_cart_backfill_user_purchase()` now also selects the role
+  `$CFG->defaultuserroleid` points at (how Moodle itself identifies Authenticated user), so a restored
+  BizLMS database that renamed the role and cleared its archetype is still covered. Same rules: only a
+  missing row is filled; an existing ALLOW, PREVENT or PROHIBIT is never touched. Two new tests (renamed
+  default role is granted and a non-default custom role is not; a PROHIBIT on the default role stands).
+- Test that proved nothing: `test_the_guest_role_does_not_gain_purchase` asserted `has_capability()` for the
+  guest user, which refuses every write capability whatever the roles say. Replaced by
+  `test_the_guest_role_gains_no_purchase_row`, which asserts the guest role has no `role_capabilities` row for
+  `:purchase` after the back-fill.
+- Wording: `db/access.php` header pointed at `local_sentientia_cart_after_install()`, a function that has
+  never existed; it now points at `xmldb_local_sentientia_cart_install()` (db/install.php) and
+  `local_sentientia_cart_backfill_user_purchase()`. The root cause in `db/access.php`, `db/upgrade.php`,
+  `db/upgradelib.php`, `db/install.php`, the README, the test docblock and the D1 entry above is corrected
+  (the `user` archetype was always in the list; see above).
+- VERSION BUMP 2026093001 -> 2026093002 / 1.0.6: the back-fill helper changed (default user role), so
+  `db/upgrade.php` gains step 2026093002, which runs the same idempotent helper again for any site that
+  already took 2026093001. PHPUnit needs a re-init before it runs (the lead re-inits once after the bundles
+  merge). Nothing was copied to the served tree.
+- UAT, when this is deployed: re-run the public77 cart steps (#81-#83, the `local_sentientia_cart_add_item`
+  web service) with a WARM cache, i.e. not straight after a cache purge, since the bug depended on which
+  plugins' `lib.php` the callback cache had loaded. Both trees.

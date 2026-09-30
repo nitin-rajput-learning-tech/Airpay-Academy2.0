@@ -66,9 +66,27 @@ if ($action === 'enrollfree' && isloggedin() && !isguestuser()) {
         \core\output\notification::NOTIFY_ERROR);
 }
 
+// D2 (persona pass 2026-09-30) - hand the basket's PAID lines to the order cart
+// (local_sentientia_cart), where billing, the gateway, the invoice and the enrolment
+// on payment live. Behind sentientia.catalog.storefront_checkout.enabled (default
+// OFF): with the flag off, or for a buyer who may not purchase, can_hand_off() is
+// false, this action is ignored exactly as an unknown action always was, and the page
+// below renders as before. The order cart re-applies its own purchase gate to each
+// line, so a course the buyer's catalogue does not show is refused there.
+if ($action === 'checkout' && isloggedin() && !isguestuser()
+        && \local_sentientia_catalog\checkout_bridge::can_hand_off($USER)) {
+    require_sesskey();
+    $handoff = \local_sentientia_catalog\checkout_bridge::hand_off((int) $USER->id);
+    \local_sentientia_catalog\checkout_bridge::notify($handoff);
+    redirect(\local_sentientia_catalog\checkout_bridge::next_url($handoff));
+}
+
 $cart = \local_sentientia_catalog\commerce::get_cart();
 $totals = \local_sentientia_catalog\commerce::get_cart_total();
 $is_loggedin = isloggedin() && !isguestuser();
+// Only a basket with a paid line can be handed off; with the flag off this stays false.
+$can_handoff = $is_loggedin && empty($totals['all_free']) && !empty($cart)
+    && \local_sentientia_catalog\checkout_bridge::can_hand_off($USER);
 
 echo $OUTPUT->header();
 ?>
@@ -156,6 +174,21 @@ echo $OUTPUT->header();
                 <i class="fa fa-check-circle"></i> Enroll in All (Free)
             </button>
         </form>
+
+        <?php elseif ($can_handoff): ?>
+        <!-- Has paid courses, storefront checkout enabled (D2): hand the basket to the order cart -->
+        <form method="post" action="<?php echo (new moodle_url('/local/sentientia_catalog/cart.php'))->out(false); ?>">
+            <input type="hidden" name="sesskey" value="<?php echo sesskey(); ?>">
+            <input type="hidden" name="action" value="checkout">
+            <button type="submit" style="display:flex; align-items:center; justify-content:center; gap:8px;
+                    padding:12px 24px; border-radius:10px; font-size:16px; font-weight:700;
+                    background:linear-gradient(135deg,#0066a7,#0d5da1); color:#fff; border:none; cursor:pointer; width:100%;">
+                <i class="fa fa-credit-card"></i> <?php echo s(get_string('storefront_checkout_button', 'local_sentientia_catalog')); ?>
+            </button>
+        </form>
+        <p style="text-align:center; font-size:12px; color:var(--ap-text-muted); margin:8px 0 0;">
+            <?php echo s(get_string('storefront_checkout_hint', 'local_sentientia_catalog')); ?>
+        </p>
 
         <?php else: ?>
         <!-- Has paid courses: checkout -->
