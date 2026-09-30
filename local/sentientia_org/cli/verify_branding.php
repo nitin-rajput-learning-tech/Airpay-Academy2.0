@@ -122,7 +122,7 @@ if ($dbman->table_exists('local_sentientia_org')) {
         cli_pass($check, "{$count} records");
         $pass++;
     } else {
-        cli_warn($check, 'empty — run php local/sentientia_org/cli/migrate_all.php');
+        cli_warn($check, 'empty — import with php local/sentientia_platform/cli/import_bizlms.php --feature=org (ADR-032; migrate_all.php is retired)');
         $warn++;
     }
 } else {
@@ -140,7 +140,7 @@ if ($airpay_caps > 0) {
     cli_pass($check, "{$airpay_caps} rows");
     $pass++;
 } else {
-    cli_warn($check, '0 rows — run migrate_all.php or assign capabilities manually');
+    cli_warn($check, '0 rows — assign capabilities manually (migrate_all.php is retired, ADR-032)');
     $warn++;
 }
 
