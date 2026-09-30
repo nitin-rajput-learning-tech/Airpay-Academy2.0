@@ -199,3 +199,34 @@ Branch `claude/adr031-learning3-ff`. This closes the "Still open" item above abo
   (postgres_sql_generator treats an empty old scale as unchanged), so latitude/longitude stayed
   NUMBER(10,0) there and location_schema_test failed on the PG CI gate. The helper alters the type
   directly on the postgres family and keeps the DDL API elsewhere.
+
+## 2026-09-30 - QR attendance scan records in the Sentientia table
+
+- **What.** New `session_manager::record_qr_attendance($sessionid, $userid)` returns one of
+  `SCAN_RECORDED`, `SCAN_ALREADY`, `SCAN_NO_SESSION`, `SCAN_NOT_ENROLLED`, or throws
+  `error_outoftenant`. `local_sentientia_pages/qr_scan.php` calls it instead of writing the BizLMS
+  `{local_classroom_attendance}` table, which a fresh Sentientia install does not have.
+- **The row it writes** is the one `get_session_attendance()` reads back: table
+  `local_sentientia_classroom_attendance`, key (`sessionid`, `userid`) (unique index
+  `idx_session_user`), `status` = `ATT_PRESENT` (1), `markedby` = the learner, `notes` =
+  "Marked by QR scan".
+- **Checks.** The session and its classroom must exist. The classroom must be in the scanning
+  learner's tenant (`assert_classroom_in_scope`, the same ADR-031 guard `attendance.php` and
+  `waitlist_join` use). The learner must be on `local_sentientia_classroom_users`, because the
+  attendance grid only lists roster members. Login and the hourly QR token stay in the page.
+- **Idempotent.** Any mark other than Absent (Present, Late, Excused) is left alone and reported as
+  already marked. An Absent row is what the grid saves for a learner nobody ticked, so a scan raises
+  it to Present (still one row). A double tap that loses the insert race is reported as already
+  marked.
+- **Not used on purpose:** `session_manager::get_session()`. It falls back to the legacy
+  `{local_classroom_sessions}` table, and an id from that table has no Sentientia session behind it,
+  so a row written against it would never show in the grid.
+- **No session-time window.** Neither the old scan page nor the Sentientia attendance API checks
+  the session's start and end time. The hourly token (this hour plus the last) is the only time
+  bound. Adding a window is a policy call (imported sessions may carry wrong times), so it is left
+  for a decision.
+- Tests: new `tests/qr_attendance_test.php` (`@group tenant_isolation`), 11 tests, 39 assertions,
+  green on local XAMPP (one scan writes one Present row and the grid reads it back; a second scan
+  does not duplicate; Late and Excused kept; Absent raised; not on roster; unknown session; deleted
+  classroom; other tenant, pathless classroom and tenant-less learner refused; legacy table
+  untouched). No version bump (no schema change). Both trees.

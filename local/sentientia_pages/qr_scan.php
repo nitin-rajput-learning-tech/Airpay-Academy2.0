@@ -39,39 +39,58 @@ if ($token !== $expectedtoken) {
     }
 }
 
-// Check if already marked.
-$alreadymarked = $DB->record_exists('local_classroom_attendance', [
-    'sessionid' => $sessionid,
-    'userid' => $USER->id,
-]);
+// Record the scan in the Sentientia classroom tables. session_manager checks that the
+// session exists, that its classroom is in this learner's tenant (ADR-031) and that
+// the learner is on the roster, then writes the row the attendance grid reads back
+// (local_sentientia_classroom_attendance, status Present). A repeat scan writes nothing.
+// This page used to write {local_classroom_attendance}, a BizLMS table that a
+// Sentientia install does not have.
+$manager = '\local_sentientia_classroom\session_manager';
+$result = null;
+$errortext = null;
+if (!class_exists($manager)) {
+    $errortext = 'Classroom attendance is not available on this site.';
+} else {
+    try {
+        $result = $manager::record_qr_attendance($sessionid, (int) $USER->id);
+    } catch (\moodle_exception $e) {
+        if ($e->errorcode === 'error_outoftenant') {
+            $errortext = 'This session belongs to a different organisation, so your attendance was not recorded.';
+        } else {
+            $errortext = 'Could not record attendance. Please contact your trainer.';
+        }
+    } catch (\Exception $e) {
+        $errortext = 'Could not record attendance. Please contact your trainer.';
+    }
+}
 
-if ($alreadymarked) {
+if ($errortext !== null) {
+    echo '<div class="alert alert-danger" style="text-align: center; margin: 40px auto; max-width: 500px;">';
+    echo '<h3><i class="fa fa-exclamation-triangle"></i> Error</h3>';
+    echo '<p>' . s($errortext) . '</p>';
+    echo '</div>';
+} else if ($result === $manager::SCAN_NO_SESSION) {
+    echo '<div class="alert alert-danger" style="text-align: center; margin: 40px auto; max-width: 500px;">';
+    echo '<h3><i class="fa fa-times-circle"></i> Session Not Found</h3>';
+    echo '<p>This session no longer exists. Please ask your trainer for a new QR code.</p>';
+    echo '</div>';
+} else if ($result === $manager::SCAN_NOT_ENROLLED) {
+    echo '<div class="alert alert-warning" style="text-align: center; margin: 40px auto; max-width: 500px;">';
+    echo '<h3><i class="fa fa-exclamation-circle"></i> Not Enrolled</h3>';
+    echo '<p>You are not enrolled in this classroom, so your attendance was not recorded. '
+        . 'Please contact your trainer.</p>';
+    echo '</div>';
+} else if ($result === $manager::SCAN_ALREADY) {
     echo '<div class="alert alert-info" style="text-align: center; margin: 40px auto; max-width: 500px;">';
     echo '<h3><i class="fa fa-check-circle"></i> Already Marked</h3>';
     echo '<p>Your attendance for this session has already been recorded.</p>';
     echo '</div>';
 } else {
-    // Mark attendance.
-    try {
-        $attendance = new stdClass();
-        $attendance->sessionid = $sessionid;
-        $attendance->userid = $USER->id;
-        $attendance->status = 1; // Present
-        $attendance->timecreated = time();
-        $attendance->timemodified = time();
-        $DB->insert_record('local_classroom_attendance', $attendance);
-
-        echo '<div class="alert alert-success" style="text-align: center; margin: 40px auto; max-width: 500px;">';
-        echo '<h3><i class="fa fa-check-circle"></i> Attendance Marked!</h3>';
-        echo '<p><strong>' . s($USER->firstname . ' ' . $USER->lastname) . '</strong></p>';
-        echo '<p>Your attendance has been successfully recorded at ' . userdate(time(), '%I:%M %p') . '.</p>';
-        echo '</div>';
-    } catch (\Exception $e) {
-        echo '<div class="alert alert-danger" style="text-align: center; margin: 40px auto; max-width: 500px;">';
-        echo '<h3><i class="fa fa-exclamation-triangle"></i> Error</h3>';
-        echo '<p>Could not record attendance. Please contact your trainer.</p>';
-        echo '</div>';
-    }
+    echo '<div class="alert alert-success" style="text-align: center; margin: 40px auto; max-width: 500px;">';
+    echo '<h3><i class="fa fa-check-circle"></i> Attendance Marked!</h3>';
+    echo '<p><strong>' . s($USER->firstname . ' ' . $USER->lastname) . '</strong></p>';
+    echo '<p>Your attendance has been successfully recorded at ' . userdate(time(), '%I:%M %p') . '.</p>';
+    echo '</div>';
 }
 
 echo '<div style="text-align: center; margin-top: 20px;">';

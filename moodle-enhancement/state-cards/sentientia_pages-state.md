@@ -180,3 +180,24 @@ should not be made on that premise.)
 
 Version 2026092400. Guarded platform-wide by
 `local_sentientia_platform/tests/exception_strings_test.php`.
+
+## 2026-09-30 - QR pages moved off the retired BizLMS tables
+
+- `qr_scan.php` checked and inserted in `{local_classroom_attendance}`; `qr_attendance.php` read
+  `{local_classroom_sessions}` / `{local_classroom}`. A fresh Sentientia install (UAT) has none of
+  them, and after the BizLMS import (ADR-032, in design) the history lives in the Sentientia tables.
+- `qr_scan.php` now calls `\local_sentientia_classroom\session_manager::record_qr_attendance()`
+  (see the classroom state card for the checks and the row it writes). It keeps the login and the
+  hourly rotating token check. New refusals it can show: "Session Not Found", "Not Enrolled", and
+  a different-organisation message (ADR-031). A duplicate scan shows "Already Marked" and writes
+  nothing. If `local_sentientia_classroom` is not installed the page says attendance is not
+  available instead of fataling.
+- `qr_attendance.php` gets the session and its classroom from
+  `session_manager::require_session_access()` (Sentientia tables plus the ADR-031 tenant guard). An
+  unknown session gives core `invalidaccess`, because a QR for it could never record anything. The
+  heading now reads "classroom name - session title", and is no longer double-escaped
+  (`s(format_string())`).
+- **Still open, unchanged:** the capability `qr_attendance.php` checks is the pre-ADR-025
+  `local/classroom:takesessionattendance` (see the 2026-09-24 note). Only site admins can display
+  the QR on a Sentientia-only install.
+- No version bump. Both trees. Test: `local_sentientia_classroom/tests/qr_attendance_test.php`.

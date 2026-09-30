@@ -909,6 +909,98 @@ class session_manager {
         return $status;
     }
 
+    /** record_qr_attendance(): a new Present row was written (or an Absent one raised to Present). */
+    public const SCAN_RECORDED = 'recorded';
+    /** record_qr_attendance(): the learner already has a mark for this session; nothing was written. */
+    public const SCAN_ALREADY = 'already';
+    /** record_qr_attendance(): no such session (or its classroom is gone) in the Sentientia tables. */
+    public const SCAN_NO_SESSION = 'nosession';
+    /** record_qr_attendance(): the learner is not on the classroom roster. */
+    public const SCAN_NOT_ENROLLED = 'notenrolled';
+
+    /** Note stored on a row the QR flow writes, so a trainer can tell it from a hand-marked one. */
+    private const QR_NOTE = 'Marked by QR scan';
+
+    /**
+     * Record a learner's own attendance from a QR scan (qr_scan.php).
+     *
+     * The page has already checked the login and the rotating QR token. This
+     * does the rest, against the Sentientia tables only: the session and its
+     * classroom must exist, the classroom must lie in the learner's tenant
+     * (ADR-031), and the learner must be on the classroom roster. The row it
+     * writes is the one get_session_attendance() reads back: same table, same
+     * (sessionid, userid) key, status ATT_PRESENT.
+     *
+     * Idempotent. Any mark other than Absent (Present, Late, Excused) is left
+     * as it is and reported as SCAN_ALREADY. An Absent row is what the
+     * attendance grid saves for everyone it did not tick, so it means "not
+     * marked yet" and a scan raises it to Present. Two scans landing together
+     * (a double tap) hit the unique (sessionid, userid) index; the loser is
+     * reported as SCAN_ALREADY.
+     *
+     * Deliberately does not use get_session(): that falls back to the legacy
+     * {local_classroom_sessions} table, and an id from that table has no
+     * Sentientia session behind it, so a row written against it would never
+     * show up in the attendance grid.
+     *
+     * @param int $sessionid
+     * @param int $userid    the learner who scanned (the current user)
+     * @return string one of the SCAN_* constants
+     * @throws \moodle_exception error_outoftenant when the classroom is outside the learner's tenant
+     */
+    public static function record_qr_attendance(int $sessionid, int $userid): string {
+        global $DB;
+
+        $session = $DB->get_record(self::SESSION_TABLE, ['id' => $sessionid]);
+        $classroom = $session ? $DB->get_record(self::TABLE, ['id' => $session->classroomid]) : false;
+        if (!$session || !$classroom) {
+            return self::SCAN_NO_SESSION;
+        }
+
+        // ADR-031: the classroom must be in the scanning learner's tenant.
+        self::assert_classroom_in_scope($classroom, $userid);
+
+        $dbman = $DB->get_manager();
+        if (!$dbman->table_exists(self::USERS_TABLE)
+                || !$DB->record_exists(self::USERS_TABLE,
+                    ['classroomid' => (int) $classroom->id, 'userid' => $userid])) {
+            return self::SCAN_NOT_ENROLLED;
+        }
+
+        $now = time();
+        $existing = $DB->get_record(self::ATTENDANCE_TABLE, ['sessionid' => $sessionid, 'userid' => $userid]);
+        if ($existing) {
+            if ((int) $existing->status !== self::ATT_ABSENT) {
+                return self::SCAN_ALREADY;
+            }
+            $existing->status       = self::ATT_PRESENT;
+            $existing->markedby     = $userid;
+            $existing->notes        = (string) $existing->notes !== '' ? $existing->notes : self::QR_NOTE;
+            $existing->timemodified = $now;
+            $DB->update_record(self::ATTENDANCE_TABLE, $existing);
+            return self::SCAN_RECORDED;
+        }
+
+        try {
+            $DB->insert_record(self::ATTENDANCE_TABLE, (object) [
+                'sessionid'    => $sessionid,
+                'userid'       => $userid,
+                'status'       => self::ATT_PRESENT,
+                'markedby'     => $userid,
+                'notes'        => self::QR_NOTE,
+                'timecreated'  => $now,
+                'timemodified' => $now,
+            ]);
+        } catch (\dml_write_exception $e) {
+            // The other half of a double tap got there first.
+            if ($DB->record_exists(self::ATTENDANCE_TABLE, ['sessionid' => $sessionid, 'userid' => $userid])) {
+                return self::SCAN_ALREADY;
+            }
+            throw $e;
+        }
+        return self::SCAN_RECORDED;
+    }
+
     /**
      * Bulk mark attendance for a session.
      *

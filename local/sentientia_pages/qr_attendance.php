@@ -50,12 +50,27 @@ $PAGE->set_title('QR Attendance');
 $PAGE->set_heading('QR Attendance');
 $PAGE->set_pagelayout('standard');
 
-// Get session info.
-$session = $DB->get_record('local_classroom_sessions', ['id' => $sessionid], '*', IGNORE_MISSING);
-if (!$session) {
-    $session = $DB->get_record('local_classroom', ['id' => $sessionid], '*', IGNORE_MISSING);
+// Get session info from the Sentientia classroom tables, the same ones qr_scan.php
+// records attendance in and the attendance grid reads. This page used to read the
+// BizLMS {local_classroom_sessions} / {local_classroom} tables, which a Sentientia
+// install does not have.
+//
+// require_session_access() also applies the ADR-031 tenant guard: a holder of the
+// capability above who is not a site admin can only show a QR for a classroom in
+// their own tenant. A session that does not exist (or whose classroom is gone) gets
+// core's 'invalidaccess', because a QR for it could never record anything.
+if (!class_exists('\local_sentientia_classroom\session_manager')) {
+    throw new moodle_exception('invalidaccess');
 }
-$sessionname = $session ? format_string($session->fullname ?? $session->name ?? 'Session #' . $sessionid) : 'Session #' . $sessionid;
+try {
+    [$session, $classroom] = \local_sentientia_classroom\session_manager::require_session_access($sessionid);
+} catch (\dml_missing_record_exception $e) {
+    throw new moodle_exception('invalidaccess');
+}
+$sessionname = format_string($classroom->name);
+if (trim((string) $session->title) !== '') {
+    $sessionname .= ' - ' . format_string($session->title);
+}
 
 // Generate a time-limited token (rotates hourly).
 $token = hash('sha256', $sessionid . '|' . date('Y-m-d-H') . '|' . $CFG->passwordsaltmain);
@@ -79,7 +94,7 @@ echo $OUTPUT->header();
 <div class="airpay-qr" id="airpay-qr-container">
     <div class="airpay-qr__header">
         <h2 class="airpay-qr__title"><i class="fa fa-qrcode"></i> Scan to Mark Attendance</h2>
-        <p class="airpay-qr__session"><?php echo s($sessionname); ?></p>
+        <p class="airpay-qr__session"><?php echo $sessionname; // Already escaped by format_string(). ?></p>
     </div>
 
     <div class="airpay-qr__code-wrap">
