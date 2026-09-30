@@ -16,6 +16,34 @@ defined('MOODLE_INTERNAL') || die();
 class legacy_bridge {
 
     /**
+     * The tenant filter over BizLMS notification templates.
+     *
+     * ADR-032 / mapping doc section 11, code fix 6: BizLMS writers since 2022 set local_notification_info.open_path
+     * and never costcenterid, so the costcenterid filter alone hid those templates from every tenant admin. The
+     * template is in a tenant when its open_path is /N or /N/..., where N is the caller's root. The costcenterid
+     * match stays as an alternative (rows written before 2022 set it), so nothing a caller could see before is lost.
+     * A database whose table has no open_path column keeps the costcenterid filter alone.
+     *
+     * The importer's preflight reports how many templates have an open_path without its leading slash, which
+     * this filter would not match (template_open_path_without_leading_slash).
+     *
+     * @param string $alias Alias of local_notification_info in the query.
+     * @return array{0: string, 1: array} [sql, params]
+     */
+    private static function template_tenant_filter(string $alias): array {
+        global $DB;
+        [$costsql, $costargs] = \local_sentientia_platform\tenant::sql_filter($alias);
+        if (!array_key_exists('open_path', $DB->get_columns('local_notification_info'))) {
+            return [$costsql, $costargs];
+        }
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return ['1=1', []];
+        }
+        [$pathsql, $pathargs] = \local_sentientia_platform\tenant::path_filter($alias, 'open_path');
+        return ["($pathsql OR $costsql)", $pathargs + $costargs];
+    }
+
+    /**
      * Get the BizLMS notification templates the current user may see.
      *
      * ADR-031: a cross-tenant caller sees every costcenter's templates; anyone
@@ -38,7 +66,7 @@ class legacy_bridge {
             return [];
         }
 
-        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::sql_filter('ni');
+        [$tnsql, $tnargs] = self::template_tenant_filter('ni');
 
         try {
             $records = $DB->get_records_sql(
@@ -91,7 +119,7 @@ class legacy_bridge {
     public static function get_bizlms_template(int $id): ?object {
         global $DB;
 
-        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::sql_filter('ni');
+        [$tnsql, $tnargs] = self::template_tenant_filter('ni');
 
         try {
             return $DB->get_record_sql(

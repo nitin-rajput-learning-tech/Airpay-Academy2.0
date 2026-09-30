@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_emails/tests/fixtures/bizlms" VERSION="20260930"
+       COMMENT="ADR-032 notifications importer tests. BizLMS declares NO install.xml for the e-mail log or the notification templates: local_notification_type, local_notification_info, local_notification_strings and local_emaillogs are created by PHP in db/install.php, so this file is built from them rather than copied (ADR-032 Test approach, edit c: install.php-only tables in production shape, with the production NOT NULL constraints). Sources, all under BZ = Moodle Backup/01-production-codebase/html/local/, dated 2026-09-30: classroom/db/install.php sha1 cd7c388fc1fb29aae0ed14339db3e52dab763cb3 (local_notification_type :40-53, local_notification_info :54-79, local_emaillogs :92-127, local_notification_strings :128-140); the columns the sender task and the queue writer read and write but no install file declares (courseid, batchid, ccto, user_created, time_created) from notifications/notification.php sha1 d6dd7a5c52f7dcb5f5f44032eae0fde443552e9b :55-85 and notifications/lib.php sha1 8651f8aa75b41fae8af4276725799c03cec01b0e :525-560; costcenterid on the templates from the index added by notifications/db/upgrade.php. local_email_logs is declared by NO install file at all: it is inferred from its two dead writers, notifications/lib.php :583-700 (same sha1), so every column but the recipient, sender, subject, body and sent date is optional there. Both timestamp dialects are present on local_emaillogs: timecreated from install.php and time_created from the code. TEXT columns carry no default (MySQL refuses one), so a test row must give every NOT NULL one a value.">
+  <TABLES>
+
+    <TABLE NAME="local_notification_type" COMMENT="BizLMS notification types. classroom/db/install.php :40-53. Read in place by the import to name the type and to recognise the users module.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name"          TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="shortname"     TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="parent_module" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="usercreated"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="usermodified"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"  TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="pluginname"    TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+
+    <TABLE NAME="local_notification_info" COMMENT="BizLMS notification templates. classroom/db/install.php :54-79, plus costcenterid (production-only, indexed by notifications/db/upgrade.php). Templates are edited in place and hard-deleted, so a row of the log can point at an id that is gone.">
+      <FIELDS>
+        <FIELD NAME="id"                  TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="open_path"           TYPE="char" LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="notificationid"      TYPE="int"  LENGTH="10"  NOTNULL="true"/>
+        <FIELD NAME="moduletype"          TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="moduleid"            TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="reminderdays"        TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="attach_certificate"  TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="completiondays"      TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="enable_cc"           TYPE="int"  LENGTH="1"   NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="active"              TYPE="int"  LENGTH="1"   NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="subject"             TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="body"                TYPE="text" NOTNULL="true"/>
+        <FIELD NAME="adminbody"           TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="attachment_filepath" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="costcenterid"        TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="usercreated"         TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated"         TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="usermodified"        TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"        TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+
+    <TABLE NAME="local_notification_strings" COMMENT="BizLMS placeholder list. classroom/db/install.php :128-140. Declined by the import: nothing reads it.">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name"         TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="module"       TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="usercreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="usermodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+
+    <TABLE NAME="local_emaillogs" COMMENT="BizLMS e-mail queue and sent log, PRODUCTION shape. classroom/db/install.php :92-127 with its NOT NULL columns, plus the columns the sender task reads and no install file declares.">
+      <FIELDS>
+        <FIELD NAME="id"                  TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="notification_infoid" TYPE="int"  LENGTH="10"  NOTNULL="true"/>
+        <FIELD NAME="from_userid"         TYPE="int"  LENGTH="10"  NOTNULL="true"/>
+        <FIELD NAME="to_userid"           TYPE="int"  LENGTH="10"  NOTNULL="true"/>
+        <FIELD NAME="from_emailid"        TYPE="char" LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="to_emailid"          TYPE="char" LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="moduletype"          TYPE="char" LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="moduleid"            TYPE="text" NOTNULL="true"/>
+        <FIELD NAME="teammemberid"        TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="reminderdays"        TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="enable_cc"           TYPE="int"  LENGTH="1"   NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="active"              TYPE="int"  LENGTH="1"   NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="subject"             TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="emailbody"           TYPE="text" NOTNULL="true"/>
+        <FIELD NAME="adminbody"           TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="attachment_filepath" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="status"              TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="usercreated"         TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated"         TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="usermodified"        TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"        TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="sent_date"           TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="sent_by"             TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="courseid"            TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="batchid"             TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="ccto"                TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="user_created"        TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="time_created"        TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="notification_infoid" UNIQUE="false" FIELDS="notification_infoid"/>
+        <INDEX NAME="from_userid"         UNIQUE="false" FIELDS="from_userid"/>
+        <INDEX NAME="to_userid"           UNIQUE="false" FIELDS="to_userid"/>
+        <INDEX NAME="courseid"            UNIQUE="false" FIELDS="courseid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_email_logs" COMMENT="Declared by no install file. Inferred from its two dead writers, notifications/lib.php :583-700: the ILT reminder and the custom e-mail. No status column: the writers set none, a row is delivered when sent_date is set.">
+      <FIELDS>
+        <FIELD NAME="id"                  TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="notification_infoid" TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="from_userid"         TYPE="int"  LENGTH="10"  NOTNULL="true"/>
+        <FIELD NAME="to_userid"           TYPE="int"  LENGTH="10"  NOTNULL="true"/>
+        <FIELD NAME="from_emailid"        TYPE="char" LENGTH="255" NOTNULL="false"/>
+        <FIELD NAME="to_emailid"          TYPE="char" LENGTH="255" NOTNULL="false"/>
+        <FIELD NAME="subject"             TYPE="char" LENGTH="255" NOTNULL="false"/>
+        <FIELD NAME="body_html"           TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="ccto"                TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="usercreated"         TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="sent_date"           TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="sentby_id"           TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="sentby_name"         TYPE="char" LENGTH="255" NOTNULL="false"/>
+        <FIELD NAME="courseid"            TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="batchid"             TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="created_date"        TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="time_created"        TYPE="int"  LENGTH="10"  NOTNULL="false" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>

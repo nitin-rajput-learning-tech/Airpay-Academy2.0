@@ -148,6 +148,7 @@ class process_rules extends \core\task\scheduled_task {
                 AND NOT EXISTS (
                     SELECT 1 FROM {local_sentientia_email_log} l
                     WHERE l.userid = u.id AND l.courseid = c.id
+                      AND l.legacy_source IS NULL
                       AND l.template_key = :tkey AND l.timecreated > :dedup
                 )
            ORDER BY ue.timestart ASC
@@ -202,6 +203,7 @@ class process_rules extends \core\task\scheduled_task {
                 AND NOT EXISTS (
                     SELECT 1 FROM {local_sentientia_email_log} l
                     WHERE l.userid = u.id AND l.courseid = c.id
+                      AND l.legacy_source IS NULL
                       AND l.template_key = :tkey AND l.timecreated > :dedup
                 )
               LIMIT 100",
@@ -354,6 +356,7 @@ class process_rules extends \core\task\scheduled_task {
                 $sent_count = $DB->count_records_select(
                     'local_sentientia_email_log',
                     "userid = :uid AND courseid = :cid AND template_key = :tkey
+                       AND legacy_source IS NULL
                        AND status IN ('sent', 'suppressed_completion')",
                     ['uid' => $cand->userid, 'cid' => $cand->courseid,
                      'tkey' => $rule->template_key]
@@ -369,6 +372,7 @@ class process_rules extends \core\task\scheduled_task {
             $already_today = $DB->record_exists_select(
                 'local_sentientia_email_log',
                 "userid = :uid AND courseid = :cid AND template_key = :tkey
+                   AND legacy_source IS NULL
                    AND timecreated >= :today",
                 ['uid' => $cand->userid, 'cid' => $cand->courseid,
                  'tkey' => $rule->template_key, 'today' => $today_floor]

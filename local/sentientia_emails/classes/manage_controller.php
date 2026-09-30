@@ -39,7 +39,12 @@ class manage_controller {
         // BizLMS stats (read-only). local_emaillogs has no tenant column, so
         // its totals are site-wide: only a cross-tenant caller sees them
         // (2026-09-29 visual pass: a ZEEA tenant admin saw Airpay's queue totals).
-        $showlegacy = \local_sentientia_platform\tenant::is_cross_tenant();
+        //
+        // ADR-032: once the BizLMS history is imported AND shown in the log (imported_history flag ON), the same
+        // emails are in the tiles above, so the separate BizLMS queue card is hidden rather than counting them
+        // twice. While the flag is OFF the imported rows are not in the tiles and the card stays.
+        $importedshown = imported_history::history_enabled() && imported_history::exist();
+        $showlegacy = \local_sentientia_platform\tenant::is_cross_tenant() && !$importedshown;
         $bizlmsstats = $showlegacy ? legacy_bridge::get_email_stats()
             : (object) ['total' => 0, 'sent' => 0, 'pending' => 0];
 
@@ -316,8 +321,17 @@ class manage_controller {
     public static function get_logs_data(array $filters = [], int $page = 0, int $perpage = 50): array {
         $result = delivery_log::get_logs($filters, $page, $perpage);
 
+        // ADR-032: the imported BizLMS columns and the View link appear only while their flags are ON. The
+        // records below only contain imported rows when the first one is.
+        $imported = imported_history::history_enabled();
+        $bodyenabled = imported_history::body_enabled();
+
         $logs = [];
         foreach ($result->records as $r) {
+            $isimported = $imported && !empty($r->legacy_source);
+            $templatekey = (string) ($r->template_key ?? '');
+            $sendername = trim(($r->sender_firstname ?? '') . ' ' . ($r->sender_lastname ?? ''));
+            $status = (string) $r->status;
             $logs[] = [
                 'id'            => $r->id,
                 'date'          => userdate($r->timecreated, '%d %b %Y %I:%M %p'),
@@ -326,11 +340,24 @@ class manage_controller {
                 'channel'       => $r->channel,
                 'subject'       => format_string($r->subject),
                 'template_key'  => $r->template_key,
-                'status'        => $r->status,
-                'status_sent'   => ($r->status === 'sent'),
-                'status_failed' => ($r->status === 'failed'),
-                'status_suppressed' => ($r->status === 'suppressed'),
+                // The native template key; for an imported row without one, the BizLMS notification type.
+                'template_label' => $templatekey !== '' ? $templatekey : ($isimported ? s($r->legacy_type ?? '') : ''),
+                'status'        => $status,
+                'status_sent'   => ($status === 'sent'),
+                'status_failed' => ($status === 'failed'),
+                'status_suppressed' => ($status === 'suppressed'),
+                // Every other status gets a badge too (not_sent, suppressed_completion, bounced, ...).
+                'status_other'  => !in_array($status, ['sent', 'failed', 'suppressed'], true),
+                'status_notsent' => ($status === 'not_sent'),
                 'error'         => s($r->error_message ?? ''),
+                'imported'      => $isimported,
+                'sender_name'   => $isimported && $sendername !== '' ? format_string($sendername) : '',
+                'sent_on'       => $isimported && !empty($r->timesent)
+                    ? userdate((int) $r->timesent, '%d %b %Y %I:%M %p') : '',
+                'can_view'      => $isimported && $bodyenabled,
+                'has_body'      => !empty($r->has_body),
+                'view_url'      => ($isimported && $bodyenabled)
+                    ? (new \moodle_url('/local/sentientia_emails/email_detail.php', ['id' => $r->id]))->out(false) : '',
             ];
         }
 
@@ -341,6 +368,7 @@ class manage_controller {
             'perpage'  => $perpage,
             'haspages' => ($result->total > $perpage),
             'pages'    => self::build_pagination($result->total, $page, $perpage),
+            'show_imported' => $imported,
         ];
     }
 

@@ -1,0 +1,56 @@
+{{!
+    One imported BizLMS e-mail (ADR-032). Context: subject, recipient, recipient_email, legacy_type, status,
+    created, has_sent_on, sent_on, has_sender, sender, has_error, error, has_body, body, back_url.
+
+    body is the output of format_text() in email_detail.php: cleaned HTML. It is the only triple-brace
+    variable in this template, and it is never built from raw database text.
+}}
+<div class="card mb-3">
+    <div class="card-body">
+        <h3 class="h5 mb-3">{{subject}}</h3>
+        <dl class="row mb-0">
+            <dt class="col-sm-3">{{#str}}email_detail_recipient, local_sentientia_emails{{/str}}</dt>
+            <dd class="col-sm-9">{{recipient}} &lt;{{recipient_email}}&gt;</dd>
+
+            <dt class="col-sm-3">{{#str}}email_detail_status, local_sentientia_emails{{/str}}</dt>
+            <dd class="col-sm-9">{{status}}</dd>
+
+            {{#legacy_type}}
+            <dt class="col-sm-3">{{#str}}email_detail_type, local_sentientia_emails{{/str}}</dt>
+            <dd class="col-sm-9"><code>{{legacy_type}}</code></dd>
+            {{/legacy_type}}
+
+            <dt class="col-sm-3">{{#str}}email_detail_created, local_sentientia_emails{{/str}}</dt>
+            <dd class="col-sm-9">{{created}}</dd>
+
+            {{#has_sent_on}}
+            <dt class="col-sm-3">{{#str}}log_col_senton, local_sentientia_emails{{/str}}</dt>
+            <dd class="col-sm-9">{{sent_on}}</dd>
+            {{/has_sent_on}}
+
+            {{#has_sender}}
+            <dt class="col-sm-3">{{#str}}log_col_sentfrom, local_sentientia_emails{{/str}}</dt>
+            <dd class="col-sm-9">{{sender}}</dd>
+            {{/has_sender}}
+
+            {{#has_error}}
+            <dt class="col-sm-3">{{#str}}email_detail_note, local_sentientia_emails{{/str}}</dt>
+            <dd class="col-sm-9">{{error}}</dd>
+            {{/has_error}}
+        </dl>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">{{#str}}email_detail_body, local_sentientia_emails{{/str}}</div>
+    <div class="card-body">
+        {{#has_body}}
+        {{{body}}}
+        {{/has_body}}
+        {{^has_body}}
+        <p class="text-muted mb-0">{{#str}}email_detail_no_body, local_sentientia_emails{{/str}}</p>
+        {{/has_body}}
+    </div>
+</div>
+
+<a class="btn btn-secondary" href="{{back_url}}">{{#str}}email_detail_back, local_sentientia_emails{{/str}}</a>
