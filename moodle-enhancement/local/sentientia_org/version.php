@@ -34,9 +34,10 @@ $plugin->component = 'local_sentientia_org';
 // write are bounded to the caller's tenant (fail closed on no tenant), and
 // edit_org refuses a parent outside the caller's scope instead of silently
 // creating a new top-level tenant.
-$plugin->version   = 2026092500;  // ADR-031 tenant-bounded org tree + parent pick
+$plugin->version   = 2026093002;  // ADR-032 cohort_scope: local_sentientia_cohort_scope + its BizLMS importer
+// 2026092500: ADR-031 tenant-bounded org tree + parent pick.
 // 2026092200: descendants-only access filter is /-bounded.
 // 2026052002:
 $plugin->requires  = 2022041900; // Moodle 4.0+
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.4.4'; // ADR-031 tenant scope. 1.4.3: +2026-09-08 cascade_* strings (org cascade filter i18n, en+hi) — this ME tree is what UAT runs
+$plugin->release   = '1.5.0'; // ADR-032 cohort_scope importer + cohort scope table + real privacy provider. 1.4.4: ADR-031 tenant scope. 1.4.3: +2026-09-08 cascade_* strings (org cascade filter i18n, en+hi) — this ME tree is what UAT runs

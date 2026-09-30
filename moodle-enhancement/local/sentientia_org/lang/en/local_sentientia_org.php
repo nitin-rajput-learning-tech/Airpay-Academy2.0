@@ -100,7 +100,12 @@ $string['orgdeleted']            = 'Organisation deleted.';
 $string['orgvisibilitychanged']  = 'Organisation visibility updated.';
 
 // Privacy.
-$string['privacy:metadata'] = 'The Airpay sentientia_org plugin does not store personal data in plugin-owned tables; user state lives on core Sentientia LMS tables exported by their respective providers.';
+$string['privacy:metadata'] = 'The Airpay sentientia_org plugin stores one personal reference in its own tables: the administrator who last changed the tenant scope of a cohort. The organisation tables hold no personal data; user state otherwise lives on core Sentientia LMS tables exported by their respective providers.';
+$string['privacy:metadata:cohort_scope'] = 'The tenant scope of each cohort: which organisation and departments the cohort belongs to, and who last changed that.';
+$string['privacy:metadata:cohort_scope:cohortid'] = 'The cohort this scope belongs to.';
+$string['privacy:metadata:cohort_scope:usermodified'] = 'The id of the user who last changed the scope. Erasing the user sets it to 0 and keeps the row.';
+$string['privacy:metadata:cohort_scope:timemodified'] = 'When the scope was last changed.';
+$string['privacy:subcontext:cohort_scope'] = 'Cohort tenant scopes you last changed';
 $string['org_logo'] = 'Organisation logo';
 
 // 2026-09-08 — 5-level org cascade filter (theme component + Manage Users / Manage Courses).

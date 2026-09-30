@@ -67,5 +67,31 @@
                COMMENT="Filter active orgs"/>
       </INDEXES>
     </TABLE>
+    <TABLE NAME="local_sentientia_cohort_scope"
+           COMMENT="Tenant scope of a core cohort: the satellite row BizLMS kept in local_groups. One row per cohort. Filled by the BizLMS import (ADR-032, feature cohort_scope) and by nothing else yet; no reader shows it.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"
+               COMMENT="Primary key"/>
+        <FIELD NAME="cohortid"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="cohort.id of the cohort this row scopes (core cohort table, id kept by the restored database)"/>
+        <FIELD NAME="open_path"     TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="Tenant path of the cohort, for example /1/5 (a normalised path whose root is a registered tenant). NULL = no tenant path: visible to cross-tenant callers only"/>
+        <FIELD NAME="departmentids" TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="Comma list of department (organisation) ids the cohort was offered to, for example 5,12. NULL = none"/>
+        <FIELD NAME="usermodified"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Id of the user who last changed the scope (an actor reference, declared in the privacy provider). 0 = unknown or erased"/>
+        <FIELD NAME="timemodified"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="When the scope was last changed (the local_groups value for imported rows)"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="uk_cohortid"   UNIQUE="true"  FIELDS="cohortid"
+               COMMENT="One scope row per cohort"/>
+        <INDEX NAME="idx_open_path" UNIQUE="false" FIELDS="open_path"
+               COMMENT="Tenant filtering: equality and boundary-bounded descendant matches"/>
+      </INDEXES>
+    </TABLE>
   </TABLES>
 </XMLDB>

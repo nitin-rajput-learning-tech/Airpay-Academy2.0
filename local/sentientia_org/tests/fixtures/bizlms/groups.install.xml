@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_org/tests/fixtures/bizlms" VERSION="20260930"
+       COMMENT="ADR-032 fixture copy for the cohort_scope importer test (local_sentientia_org). Verbatim copies of BizLMS install.xml tables, made 2026-09-30. Table local_groups: source D:/Claude Local/Moodle Backup/01-production-codebase/html/local/groups/db/install.xml, sha1 13e80375c21a711d967fc0de1449ba48d3da758e, no edits. Table local_costcenter (read for local_costcenter.category, the link from a course category to an organisation): source D:/Claude Local/Moodle Backup/01-production-codebase/html/local/costcenter/db/install.xml, sha1 ff65958deebf5dc133207d3f38e950169f8ae2fe, only this table of that file, edit (a) PREVIOUS and NEXT attributes stripped. Created once per test class by the legacy_schema_fixture trait and dropped afterwards.">
+  <TABLES>
+    <TABLE NAME="local_groups" COMMENT="lists groups mapping with cohort">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="cohortid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="costcenterid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="organization"/>
+        <FIELD NAME="departmentid" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="open_path" TYPE="char" LENGTH="200" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for onlinetests"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="cohortid" UNIQUE="false" FIELDS="cohortid"/>
+        <INDEX NAME="costcenterid" UNIQUE="false" FIELDS="costcenterid"/>
+        <INDEX NAME="departmentid" UNIQUE="false" FIELDS="departmentid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_costcenter" COMMENT="List of costcenters assigned">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true"/>
+        <FIELD NAME="fullname" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="shortname" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="parentid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="description" TYPE="text" LENGTH="big"  SEQUENCE="false"/>
+        <FIELD NAME="visible" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="1" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="path" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="depth" TYPE="int" LENGTH="20" NOTNULL="false" UNSIGNED="false" SEQUENCE="false"/>
+        <FIELD NAME="sortorder" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="childpermission" TYPE="int" LENGTH="2" DEFAULT="0" NOTNULL="false" SEQUENCE="false" />
+         <FIELD NAME="theme" TYPE="char" LENGTH="255"  NOTNULL="false" SEQUENCE="false"/>
+
+         <FIELD NAME="shell" TYPE="char" LENGTH="255"  NOTNULL="false" SEQUENCE="false"/>
+
+        <FIELD NAME="costcenter_logo" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME ="category" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME ="multipleorg" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" />
+
+        <FIELD NAME ="button_color" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME ="brand_color" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME ="hover_color" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" />
+        
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+       <INDEXES>
+        <INDEX NAME="parentid" UNIQUE="false" FIELDS="parentid"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

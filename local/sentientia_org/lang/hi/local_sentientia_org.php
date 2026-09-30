@@ -84,7 +84,12 @@ $string['orgdeleted']           = 'संगठन हटा दिया गय
 $string['orgvisibilitychanged'] = 'संगठन दृश्यता अपडेट की गई।';
 
 // Privacy.
-$string['privacy:metadata'] = 'एयरपे संगठन प्लगइन प्लगइन-स्वामित्व वाली तालिकाओं में व्यक्तिगत डेटा संग्रहीत नहीं करता है; यूज़र स्थिति संबंधित प्रदाताओं द्वारा निर्यात की गई कोर Sentientia LMS तालिकाओं पर रहती है।';
+$string['privacy:metadata'] = 'एयरपे संगठन प्लगइन अपनी तालिकाओं में एक व्यक्तिगत संदर्भ संग्रहीत करता है: वह प्रशासक जिसने किसी कोहोर्ट का टेनेंट स्कोप अंतिम बार बदला। संगठन की तालिकाओं में कोई व्यक्तिगत डेटा नहीं है; यूज़र स्थिति अन्यथा संबंधित प्रदाताओं द्वारा निर्यात की गई कोर Sentientia LMS तालिकाओं पर रहती है।';
+$string['privacy:metadata:cohort_scope'] = 'प्रत्येक कोहोर्ट का टेनेंट स्कोप: कोहोर्ट किस संगठन और किन विभागों का है, और इसे अंतिम बार किसने बदला।';
+$string['privacy:metadata:cohort_scope:cohortid'] = 'वह कोहोर्ट जिससे यह स्कोप जुड़ा है।';
+$string['privacy:metadata:cohort_scope:usermodified'] = 'उस यूज़र की आईडी जिसने स्कोप अंतिम बार बदला। यूज़र का डेटा मिटाने पर यह 0 हो जाती है और पंक्ति बनी रहती है।';
+$string['privacy:metadata:cohort_scope:timemodified'] = 'स्कोप अंतिम बार कब बदला गया।';
+$string['privacy:subcontext:cohort_scope'] = 'आपके द्वारा अंतिम बार बदले गए कोहोर्ट टेनेंट स्कोप';
 $string['org_logo'] = 'संगठन का लोगो';
 
 // 2026-09-08 — 5-level org cascade filter (theme component + Manage Users / Manage Courses).
