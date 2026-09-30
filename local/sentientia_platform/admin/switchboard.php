@@ -131,8 +131,7 @@ foreach ($all_flags as $key => $flag) {
     if (!isset($by_category[$cat])) {
         $by_category[$cat] = [
             'category' => $cat,
-            'category_label' => get_string('flag_category_' . $cat,
-                'local_sentientia_platform', null, true) ?: ucfirst($cat),
+            'category_label' => \local_sentientia_platform\feature_flags::category_label($cat),
             'flags' => [],
         ];
     }

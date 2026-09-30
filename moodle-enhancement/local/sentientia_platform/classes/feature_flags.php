@@ -260,6 +260,30 @@ class feature_flags {
     }
 
     /**
+     * Human label for a flag category, as shown on the Switchboard.
+     *
+     * The category is the first dotted segment of a flag key ('live' for
+     * 'live.enabled'; 'other' for a key with no dot). Labels live in the
+     * flag_category_<category> lang strings.
+     *
+     * The old inline lookup was get_string(id, component, null, true) ?: ucfirst()
+     * -- with lazyload=true get_string() returns a lang_string OBJECT, which is
+     * always truthy, so the ucfirst() fallback never ran and a category with no
+     * string rendered as "[[FLAG_CATEGORY_LIVE]]". Ask the string manager
+     * whether the string exists instead, and return a plain string either way.
+     *
+     * @param string $category First dotted segment of a flag key.
+     * @return string Localised label, or ucfirst($category) when no string exists.
+     */
+    public static function category_label(string $category): string {
+        $identifier = 'flag_category_' . $category;
+        if (get_string_manager()->string_exists($identifier, 'local_sentientia_platform')) {
+            return get_string($identifier, 'local_sentientia_platform');
+        }
+        return ucfirst($category);
+    }
+
+    /**
      * Set the flag's override for a (customer, tenant) pair.
      *
      * Three branches:

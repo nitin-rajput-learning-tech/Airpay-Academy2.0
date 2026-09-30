@@ -37,11 +37,11 @@ What each persona validates (details in the credentials doc):
 | Manager (with direct reports) | team dashboard, direct-report progress, compliance RAG, approvals/requests, notifications (in-app only — mail is off) |
 | Trainer | classroom sessions, live session (SSE), evaluations, gradebook, Sentientia Live in mock mode |
 | Course author | authoring drafts, AI quiz generation (mock), publish gate flags flipped ON on UAT only (checklist §5) |
-| Tenant / L&D admin | Manage Users, Manage Courses, org tree, reports + CSV exports, feature-flag switchboard, certificates admin |
+| Tenant / L&D admin | Manage Users, Manage Courses, org tree, reports + CSV exports, certificates admin. The feature-flag switchboard is NOT in this row: it is site-admin only by design (`moodle/site:config`), so the tenant admin is expected to be refused there (corrected 2026-09-30 after the persona pass). |
 | Compliance officer | compliance dashboard + report, mandatory-course enrolment via lifecycle tag, exports |
 | Public / external learner (/77) | storefront `public.php`, signup (honeypot + reCAPTCHA keys pending), cart flow with the payment gateway in sandbox mode, paid-course access |
 | ZEEA learner + ZEEA admin (/177) | tenant isolation both ways (no airpay data visible), Swahili/Hindi pack behaviour, branding per tenant |
-| Site admin | Environment, plugins, tasks, logs, switchboard, privacy tool (data export/erasure request end-to-end) |
+| Site admin | Environment, plugins, tasks, logs, feature-flag switchboard (site admin only, `moodle/site:config`), privacy tool (data export/erasure request end-to-end) |
 
 Cross-cutting validations run once per build by Claude, in parallel with the team:
 

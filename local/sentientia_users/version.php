@@ -72,7 +72,8 @@ $plugin->component = 'local_sentientia_users';
 // With notification=0, message_send() refused the local_sentientia_users
 // provider outright (only moodle/instantmessage may send a personal
 // message), so the welcome email had never been delivered.
-$plugin->version   = 2026092501;  // welcome email actually sends (email_to_user, white-label token restored)
+$plugin->version   = 2026093001;  // persona pass D14: supervisor + sync-run name lookups load every fullname() field (no developer notice)
+// 2026092501: welcome email actually sends (email_to_user, white-label token restored).
 // 2026092500: ADR-031: target-tenant checks on every write.
 // 2026092401: N1 review: supervisor label + list fail-closed.
 // 2026092400: Profile reads are tenant-bounded (N1).
@@ -80,7 +81,7 @@ $plugin->version   = 2026092501;  // welcome email actually sends (email_to_user
 // 2026090302: H1, signup no longer reveals whether an email exists.
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '2.8.1';  // welcome email fix (2.8.0: ADR-031)
+$plugin->release   = '2.8.2';  // name-field notice fix (2.8.1: welcome email fix; 2.8.0: ADR-031)
 $plugin->dependencies = [
     'local_sentientia_org' => 2026051501,
     'local_sentientia_platform' => ANY_VERSION,

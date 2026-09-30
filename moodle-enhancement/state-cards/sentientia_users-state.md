@@ -459,3 +459,21 @@ the side that was wrong; nothing a test proves was weakened.
   account in the same tenant), a cross-tenant holder (other tenant yes, site admin no), and
   `build_profile_context()` carrying the same decision.
 - No version bump, no db change. Both trees.
+
+## 2026-09-30 - Name-field notice on supervisor lookups (persona pass D14) (2.8.1 -> 2.8.2, 2026093001)
+
+- **Defect:** `user_manager::get_supervisor()` selected `id, firstname, lastname, open_employeeid` and then
+  called `fullname()`. With developer debugging on, core prints "The following name fields are missing from
+  the user object" (phonetic, middle and alternate names). It fired on every profile view that shows a
+  supervisor. It was also latent wrong output: a `fullnamedisplay` template that uses `middlename` or
+  `alternatename` printed the supervisor without them.
+- **Fix:** the select now uses `\core_user\fields::get_name_fields()`. `sync_runs.php` had the same shape (a
+  `{user}` join feeding `fullname($r)`) and is fixed the same way. The returned object keeps `id`,
+  `firstname`, `lastname`, `fullname`, `employeeid` and now also carries the other name fields.
+- No flag added (notice cleanup, not a feature). No DB change, no capability change.
+- Not in this bundle: the second half of D14, `local_sentientia_manager/member.php` calling
+  `get_member_detail()` before `$PAGE->set_context()`. That belongs to the manager bundle.
+- Tests: `tests/supervisor_name_fields_test.php` (5 tests). It turns on developer debugging and asserts
+  `assertDebuggingNotCalled()`, checks a middle/alternate-name template really renders, and guards the
+  `sync_runs.php` source. Written, not run (low-CPU session).
+- Deploy needs no purge beyond the normal upgrade. Both trees are identical.

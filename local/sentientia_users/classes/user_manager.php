@@ -80,8 +80,14 @@ class user_manager {
             return null;
         }
 
+        // fullname() reads all six name fields (phonetic, middle and alternate
+        // names as well as first/last). Selecting only firstname+lastname made
+        // core print "The following name fields are missing from the user
+        // object" on every profile view that shows a supervisor.
+        // Persona pass 2026-09-30 D14.
+        $namefields = implode(', ', \core_user\fields::get_name_fields());
         $mgr = $DB->get_record('user', ['id' => $supervisorid, 'deleted' => 0],
-            'id, firstname, lastname, open_employeeid');
+            'id, ' . $namefields . ', open_employeeid');
 
         if (!$mgr) {
             return null;
