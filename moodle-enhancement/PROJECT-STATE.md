@@ -42,10 +42,31 @@ callers only). Re-runnable: `tools/visual-pass/`.
 manager index), sha256-verified, upgrade OK, WS smoke ERROR=0 (= baseline). Probe: role 9 has 2 system +
 2 category assignments; the only PWA override row is `pwa.install.enabled=1`.
 
-**Pending — needs the tunnel:** deploy `f68619628..HEAD` (cart + users pencil) → role-9 script dry-run,
-then `--apply --accept-nonsystem-holders` → platform role dry-run, then apply → WS smoke + W2-02 erasure
-probe. Then (VPN off) Nitin's real-Chrome check: service worker gone, "Browse Library" shown, tenant
-admin has no Log in as; plus the cart screen checks in `docs/visual-evidence/2026-09-29/README.md`.
+**UAT window 2026-09-30 ~10:05 IST (done):**
+1. Pre-deploy probe clean; installed versions as expected.
+2. **Deploy `f68619628..HEAD`: 19 files**, all sha256-verified; upgrade no-op; caches purged.
+   - Contents: the cart gate and its messages, the users profile pencil, `message_pref_repair` with the
+     repair and parity CLIs, relabel, and the theme WS-contract scanner.
+   - Backup: `/tmp/uat-predeploy-backup-20260930-100537.tgz`.
+3. `repair_task_registrations.php` dry run: **message preferences check 0 problems** (fresh install, as
+   expected), nothing to write.
+4. **Role-9 core caps APPLIED** (`--accept-nonsystem-holders`):
+   - PROHIBITs: role:manage/override, user:create/update/delete/loginas/editprofile,
+     site:uploadusers. role:assign kept; 0 allow rows needed trimming.
+   - The 2 category-level assignments (users 4 and 13) are the same two tenant admins, so the change
+     follows Nitin's "Log in as for site admins only".
+   - Prior values: `/var/sentientiadata/adr031_role9_core_caps_administrator.json` (`--revert` exists).
+5. **Platform role created:** `sentientiaplatform` (id 15), `:crosstenant` only, system context, assigned
+   to nobody, not assignable by role 9. A re-run is a no-op.
+6. **WS smoke after the change:** 53 read functions × 4 personas, ok=51 refused=68 needs-args=93
+   **ERROR=0**. The tunnel dropped before the per-function diff against the 09-29 run (`/tmp/adr031_ws_smoke2.out`
+   vs `smoke3.out` on the box).
+
+**Still pending:**
+- **Tunnel:** the smoke diff and the W2-02 erasure probe.
+- **VPN off:** Nitin's real-Chrome check (service worker gone, "Browse Library" shown, a tenant admin has
+  no Log in as and no core editadvanced, and the pencil opens the Sentientia modal).
+- Cart screen checks 1-4 are captured locally (`docs/visual-evidence/2026-09-29/cart/`, PASS).
 
 **Stage B findings today (docs/cutover/SENTIENTIA-MIGRATION-PLAN-2026-09-04.md §0 + §3.3):**
 1. **Production is Moodle 4.1.2+, not 5.1** (snapshot `version.php` 2022112802.06). 5.2 requires 4.4, so
