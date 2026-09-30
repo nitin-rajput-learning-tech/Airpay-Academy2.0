@@ -88,9 +88,16 @@ Procedure per `MIGRATION-REHEARSAL-RUNBOOK.md`, each step with its verify and st
 
 1. Baseline counts on live (users, courses, enrolments, completions, certificates, files).
 2. Restore the dump + unpack `moodledata` (incl. `filedir`) into UAT.
-3. Deploy the Sentientia tree, run `upgrade.php` 5.1.3 → 5.2 (2,057 steps proven locally; watch the PHP pre-checks).
-4. Post-restore repairs (idempotent, dry-run first), purge caches.
-5. Data-intact gate: parity counts vs the baseline — 100% or stop.
+3. **Corrected 2026-09-29: live is Moodle 4.1.2, so the upgrade is two hops.** 5.2 requires 4.4 or
+   later. Run 4.1.2 → 4.5.x on the 4.5 core, then deploy the Sentientia tree and run 4.5 → 5.2. Time both
+   hops and take parity counts after each. See `SENTIENTIA-MIGRATION-PLAN-2026-09-04.md` §0.
+4. Post-restore repairs (idempotent, dry-run first), purge caches:
+   - `repair_task_registrations.php`, which now also checks message defaults and exits 1 on problems;
+   - the ADR-031 role-9 script and the platform-role script (migration plan §4f-f).
+4b. **BizLMS data import (added 2026-09-29, Nitin: IMPORT).** 82 of the 93 BizLMS tables are not read by
+   Sentientia. The importers (ADR-032, in design) run here, dry run first, with per-table counts. Never
+   uninstall a "missing from disk" BizLMS plugin: that drops its tables.
+5. Data-intact gate: parity counts vs the baseline, including the imported BizLMS feature data — 100% or stop.
 6. Workflow smoke: the FOOLPROOF matrix subset headless, then the persona walk with real accounts (Nitin + volunteers).
 7. Cutover gates rehearsed on this copy before live: Gate B tenant registry (parity 100%), Gate C org model per tenant (ZEEA → Public → Airpay with soak), Gate D rename batches.
 8. Report: parity output + smoke results + deviations → Nitin.
