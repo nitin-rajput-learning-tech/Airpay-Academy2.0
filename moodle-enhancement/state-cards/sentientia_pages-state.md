@@ -302,3 +302,8 @@ Owner decisions taken as recommended (Nitin, 2026-09-30). No version bump. Both 
   unaffected.
 - Visual evidence: `docs/visual-evidence/2026-09-30/qr-and-loginas/` (README there: 28 automatic checks,
   all pass; new screens 25 to 28, 18 re-captured).
+- **2026-09-30 (QR follow-up):** the discriminator in the `qr_attendance.php` bullet above is now
+  `local/sentientia_classroom:update`, not `:manage` (the local `trainer` role holds `:manage` but not
+  `:update`, so it is restricted to its own sessions). `qr_attendance.php` changed in its comment only; the
+  rule lives in `session_manager::may_run_session()`. See the classroom state card, section
+  "2026-09-30 (QR follow-up)".
