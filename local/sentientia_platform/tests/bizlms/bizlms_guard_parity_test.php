@@ -76,6 +76,7 @@ final class bizlms_guard_parity_test extends \advanced_testcase {
         set_config('bizlms_import_armed_until', time() + 3600, self::COMPONENT);
         set_config('bizlms_production', 0, self::COMPONENT);
         set_config('cron_enabled', 0);
+        set_config('enabled_stores', 'logstore_standard', 'tool_log');
         $this->cli_maintenance(true);
         $CFG->noemailever = true;
         return ['confirm' => fingerprint::install(), 'decisions_hash' => 'abc', 'expect_hash' => ''];
@@ -199,15 +200,66 @@ final class bizlms_guard_parity_test extends \advanced_testcase {
         $this->assertSame(0, $DB->count_records('local_sentientia_legacyrun'), 'nothing was written');
     }
 
-    public function test_only_the_guard_issues_a_permit_and_it_needs_no_refusals(): void {
+    public function test_only_the_guard_issues_a_permit_and_it_works_the_refusals_out_itself(): void {
+        $this->resetAfterTest();
         try {
             guard_permit::issue(guard_permit::APPLY);
             $this->fail('a test class issued a permit');
         } catch (\coding_exception $e) {
             $this->assertStringContainsString('only the guard issues', $e->getMessage());
         }
-        $this->expectException(guard_refused::class);
-        guard::permit(guard_permit::APPLY, ['guard_not_armed']);
+
+        // There is no way to hand the guard an empty list of refusals: it computes them.
+        $this->assertFalse(method_exists(guard::class, 'permit'), 'the caller-supplied refusals list is gone');
+        try {
+            guard::permit_apply([]);
+            $this->fail('a permit was issued with no confirm, no arming and no maintenance');
+        } catch (guard_refused $e) {
+            $this->assertStringContainsString('confirm_does_not_match', $e->getMessage());
+            $this->assertStringContainsString('guard_not_armed', $e->getMessage());
+        }
+        try {
+            guard::permit_purge([]);
+            $this->fail('a purge permit was issued with no confirm');
+        } catch (guard_refused $e) {
+            $this->assertStringContainsString('confirm_does_not_match', $e->getMessage());
+        }
+
+        $options = $this->guarded();
+        $permit = guard::permit_apply($options);
+        $this->assertSame(guard_permit::APPLY, $permit->kind);
+        $purge = guard::permit_purge(['confirm' => fingerprint::install(), 'understood' => true]);
+        $this->assertSame(guard_permit::PURGE, $purge->kind);
+    }
+
+    public function test_apply_is_refused_while_the_standard_log_store_is_off(): void {
+        $this->resetAfterTest();
+        $options = $this->guarded();
+        $this->assertSame([], guard::refusals_for_apply($options));
+
+        // The event tripwire reads logstore_standard_log. With the store off, or only a database store on, an event
+        // leaves no row in any watched table and the tripwire would say clean while blind.
+        foreach (['', 'logstore_database', 'logstore_standardx'] as $stores) {
+            set_config('enabled_stores', $stores, 'tool_log');
+            $this->assertFalse(guard::standard_log_enabled(), "'{$stores}'");
+            $this->assertStringContainsString('standard_log_store_is_not_enabled',
+                implode(' ', guard::refusals_for_apply($options)), "'{$stores}'");
+        }
+        set_config('enabled_stores', 'logstore_database, logstore_standard', 'tool_log');
+        $this->assertTrue(guard::standard_log_enabled());
+        $this->assertSame([], guard::refusals_for_apply($options));
+        $this->assertTrue(guard::state()['standard_log']);
+    }
+
+    public function test_a_tripwire_acknowledgement_is_refused_in_production(): void {
+        $this->resetAfterTest();
+        $options = $this->guarded() + ['acknowledge_tripwire' => 7];
+        $this->assertSame([], guard::refusals_for_apply($options), 'a rehearsal may acknowledge a trip');
+
+        set_config('bizlms_production', 1, self::COMPONENT);
+        $this->cli_maintenance(true);
+        $refusals = implode(' | ', guard::refusals_for_apply(['expect_hash' => 'abc'] + $options));
+        $this->assertStringContainsString('acknowledge_tripwire_is_refused_when_bizlms_production_is_1', $refusals);
     }
 
     public function test_repair_needs_the_fingerprint_and_maintenance(): void {

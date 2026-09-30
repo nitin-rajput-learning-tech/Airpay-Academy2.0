@@ -109,6 +109,18 @@ final class toy_importer implements importer, watches_tables {
     /** @var bool toy.dup (a MAP step) names the PRESERVE target of toy.org as its own: the registry must refuse. */
     public static bool $dupintoorg = false;
 
+    /** @var bool tenant_columns() is empty: the registry's tenant rule does not apply, so the run-time guard is what is tested. */
+    public static bool $notenantcolumns = false;
+
+    /** @var bool toy.fan reads the organisation table (has_orgs) in transform(). */
+    public static bool $readorgs = false;
+
+    /** @var bool finalise() writes a log row: the tripwire's look after finalise must trip. */
+    public static bool $finaliseleak = false;
+
+    /** @var bool toy.org writes a log row in transform(), which a dry run executes too. */
+    public static bool $dryleak = false;
+
     /** @var bool[] What verify() saw in $ctx->dryrun, one entry per call. */
     public static array $verifyseen = [];
 
@@ -147,6 +159,10 @@ final class toy_importer implements importer, watches_tables {
         self::$corewritetable = null;
         self::$extratarget = null;
         self::$dupintoorg = false;
+        self::$notenantcolumns = false;
+        self::$readorgs = false;
+        self::$finaliseleak = false;
+        self::$dryleak = false;
         self::$verifyseen = [];
         self::$finalised = [];
         self::$markerseen = [];
@@ -225,7 +241,7 @@ final class toy_importer implements importer, watches_tables {
     }
 
     public function tenant_columns(): array {
-        return ['local_sentientia_toy_item' => 'tenantpath'];
+        return self::$notenantcolumns ? [] : ['local_sentientia_toy_item' => 'tenantpath'];
     }
 
     public function reasons(): array {
@@ -288,18 +304,10 @@ final class toy_importer implements importer, watches_tables {
     }
 
     public function verify(context $ctx): array {
-        global $DB;
         $failures = [];
         self::$verifyseen[] = $ctx->dryrun;
         if (self::$leak) {
-            // Test-only: an append-only table the import must never write to.
-            $DB->insert_record('logstore_standard_log', (object) [
-                'eventname' => '\\core\\event\\toy_leak', 'component' => 'core', 'action' => 'leaked',
-                'target' => 'toy', 'objecttable' => null, 'objectid' => null, 'crud' => 'c', 'edulevel' => 0,
-                'contextid' => 1, 'contextlevel' => 10, 'contextinstanceid' => 0, 'userid' => 0, 'courseid' => 0,
-                'relateduserid' => null, 'anonymous' => 0, 'other' => null, 'timecreated' => time(),
-                'origin' => 'cli', 'ip' => null, 'realuserid' => null,
-            ]);
+            self::leak_log_row();
         }
         if (self::$requiredecision) {
             $ctx->decision('toy.mandatory');
@@ -310,7 +318,26 @@ final class toy_importer implements importer, watches_tables {
         return $failures;
     }
 
+    /**
+     * Test-only: write to an append-only table the import must never write to.
+     *
+     * @return void
+     */
+    public static function leak_log_row(): void {
+        global $DB;
+        $DB->insert_record('logstore_standard_log', (object) [
+            'eventname' => '\\core\\event\\toy_leak', 'component' => 'core', 'action' => 'leaked',
+            'target' => 'toy', 'objecttable' => null, 'objectid' => null, 'crud' => 'c', 'edulevel' => 0,
+            'contextid' => 1, 'contextlevel' => 10, 'contextinstanceid' => 0, 'userid' => 0, 'courseid' => 0,
+            'relateduserid' => null, 'anonymous' => 0, 'other' => null, 'timecreated' => time(),
+            'origin' => 'cli', 'ip' => null, 'realuserid' => null,
+        ]);
+    }
+
     public function finalise(context $ctx): void {
+        if (self::$finaliseleak) {
+            self::leak_log_row();
+        }
         self::$finalised[] = $this->feature;
         self::$markerseen[] = legacymap::feature_complete($this->feature) ? 'complete' : 'pending';
     }
@@ -346,6 +373,9 @@ final class toy_importer implements importer, watches_tables {
             }
 
             public function transform(array $rows, context $ctx): array {
+                if (toy_importer::$dryleak) {
+                    toy_importer::leak_log_row();
+                }
                 if (toy_importer::$fireevent) {
                     // A core API fires an event. Its non-internal observers (the standard log) run only after the
                     // outermost transaction commits, and the log store buffers what it gets.
@@ -583,6 +613,9 @@ final class toy_importer implements importer, watches_tables {
             }
 
             public function transform(array $rows, context $ctx): array {
+                if (toy_importer::$readorgs) {
+                    $ctx->lookups->has_orgs();
+                }
                 $out = [];
                 foreach ($rows as $row) {
                     $id = (int) $row->id;

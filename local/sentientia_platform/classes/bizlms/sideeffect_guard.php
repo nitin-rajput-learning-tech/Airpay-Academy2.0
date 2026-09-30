@@ -16,6 +16,12 @@ defined('MOODLE_INTERNAL') || die();
  * declared targets and reviewed core writes aborts the run before the next
  * feature.
  *
+ * The watched list covers what an event or a notification writes (the log, messages, tasks) and what a core
+ * API writes WITHOUT firing an event (a preference, a role capability, a context, a group or cohort member, a
+ * grade). One table is deliberately not watched: files. file_rehome copies an organisation logo in finalise()
+ * through the file API, which is a reviewed side effect of the org importer; watching the table needs a
+ * reviewed core_writes entry for it and changes what --purge-feature may do. Both belong with the org importer.
+ *
  * Two traps the snapshot has to know about. Events reach their non-internal
  * observers (the standard log among them) only after the outermost transaction
  * commits, so a feature that runs in one outer transaction is checked once inside
@@ -40,6 +46,9 @@ final class sideeffect_guard {
         'user_enrolments', 'role_assignments', 'course_completions', 'course_modules_completion',
         'quiz_attempts', 'badge_issued', 'tool_certificate_issues',
         'local_sentientia_evaluation_triggers', 'local_sentientia_notif_log', 'local_sentientia_email_log',
+        // Written by core APIs that fire no event.
+        'user_preferences', 'role_capabilities', 'context', 'grade_grades', 'grade_grades_history',
+        'groups_members', 'cohort_members',
     ];
 
     /**

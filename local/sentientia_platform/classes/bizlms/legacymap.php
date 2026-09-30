@@ -121,6 +121,17 @@ final class legacymap {
     }
 
     /**
+     * The run that tripped this feature's side-effect tripwire, or 0. A recorded fact like the completion marker:
+     * while it is set the feature does not start again (runner preflight).
+     *
+     * @param string $feature
+     * @return int
+     */
+    public static function tripped_run(string $feature): int {
+        return (int) get_config(self::MARKER_COMPONENT, 'bizlms_tripped_' . $feature);
+    }
+
+    /**
      * The full entry of a source row.
      *
      * @param string $sourcetable

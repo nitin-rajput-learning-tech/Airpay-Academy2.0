@@ -94,6 +94,12 @@ final class runner {
     /** @var array<string, array<string, bool>> Feature => every feature it depends on, directly or through others. */
     private array $dependencies = [];
 
+    /** @var string|null The feature that fills the organisation table (registry::TENANT_OWNER), when registered. */
+    private ?string $tenantowner = null;
+
+    /** @var string|null The feature whose importer code is running now; null while the runner itself works. */
+    private ?string $activefeature = null;
+
     /** @var array<string, bool> Features complete, not applicable, or finished earlier in this run. */
     private array $available = [];
 
@@ -117,8 +123,10 @@ final class runner {
 
     /**
      * @param array<string, mixed> $options apply (bool), permit (guard_permit: run() with apply needs the
-     *        APPLY permit and purge() the PURGE permit, both from guard::permit()), all (bool), batch,
+     *        APPLY permit and purge() the PURGE permit, from guard::permit_apply() and permit_purge()), all (bool), batch,
      *        atomic_threshold, max_group_scan,
+     *        acknowledge_tripwire (int run id of an earlier tripped run whose side effects the operator has looked
+     *        at; a rehearsal only, ignored when bizlms_production = 1),
      *        crc_max_rows (rows above which a source fingerprint skips its CRC; 0 = never skip),
      *        resume (bool), retry_reasons (string[]), decisions (decisions), report (report),
      *        failpoint (callable(string $stepkey, int $batchno): void, for tests).
@@ -132,6 +140,7 @@ final class runner {
             'max_group_scan' => 500000,
             'crc_max_rows' => fingerprint::CRC_MAX_ROWS,
             'resume' => false,
+            'acknowledge_tripwire' => 0,
             'retry_reasons' => [],
             'decisions' => null,
             'report' => null,
@@ -143,6 +152,9 @@ final class runner {
         $this->writer = new writer($this->dryrun);
         $this->map = new legacymap();
         $this->lookups = new lookups();
+        $this->lookups->guard_org_reads(function (): void {
+            $this->assert_org_read();
+        });
         $this->tenant = new tenant_resolver($this->lookups);
         $this->legacy = new legacy_reader();
         $this->text = new text();
@@ -260,7 +272,12 @@ final class runner {
             if (!legacymap::feature_complete($feature)) {
                 $failures[] = 'feature_not_complete';
             }
-            $failures = array_merge($failures, $this->verify_feature($importer, $ctx, false));
+            $this->activefeature = $feature;
+            try {
+                $failures = array_merge($failures, $this->verify_feature($importer, $ctx, false));
+            } finally {
+                $this->activefeature = null;
+            }
             $out['failures'][$feature] = $failures;
             if ($failures) {
                 $out['exit'] = 1;
@@ -340,6 +357,7 @@ final class runner {
             }
             $this->writer->delete_map_rows($feature);
             $this->writer->clear_marker($feature);
+            $this->writer->clear_tripped($feature);
             $tx->allow_commit();
         } catch (\Throwable $e) {
             try {
@@ -377,6 +395,7 @@ final class runner {
                 'sources' => count($importer->sources()),
                 'sources_present' => $present,
                 'complete_runid' => (int) get_config(writer::COMPONENT, 'bizlms_complete_' . $feature),
+                'tripped_runid' => legacymap::tripped_run($feature),
                 'started' => false,
                 'running_steps' => 0,
                 'last_heartbeat_age' => null,
@@ -421,7 +440,8 @@ final class runner {
     private function prepare(array $importers): void {
         $this->ownerof = [];
         $this->available = [];
-        $this->dependencies = self::dependency_closure($importers);
+        $this->dependencies = registry::dependency_closure($importers);
+        $this->tenantowner = isset($importers[registry::TENANT_OWNER]) ? registry::TENANT_OWNER : null;
         foreach ($importers as $feature => $importer) {
             foreach (array_keys($importer->sources()) as $table) {
                 $this->ownerof[$table] = $feature;
@@ -456,29 +476,24 @@ final class runner {
     }
 
     /**
-     * Every feature each feature depends on, directly or through others.
+     * The rule behind every read of the organisation table by importer code. Tenant resolution
+     * (tenant_resolver, lookups::orgs() and the calls built on it) reads what the org importer writes, so
+     * the running feature must depend on it, like a feature that reads another feature's map. Apply orders
+     * features by depends() with an alphabetical tie-break, so an undeclared reader can run first, find no
+     * organisation, and skip the check of every tenant path.
      *
-     * @param array<string, importer> $importers
-     * @return array<string, array<string, bool>>
+     * @return void
+     * @throws bizlms_exception When the running feature does not depend on the org feature.
      */
-    private static function dependency_closure(array $importers): array {
-        $out = [];
-        foreach ($importers as $feature => $importer) {
-            $seen = [];
-            $queue = $importer->depends();
-            while ($queue) {
-                $dependency = (string) array_shift($queue);
-                if (isset($seen[$dependency]) || !isset($importers[$dependency])) {
-                    continue;
-                }
-                $seen[$dependency] = true;
-                foreach ($importers[$dependency]->depends() as $next) {
-                    $queue[] = $next;
-                }
-            }
-            $out[$feature] = $seen;
+    private function assert_org_read(): void {
+        $feature = $this->activefeature;
+        $owner = $this->tenantowner;
+        if ($feature === null || $owner === null || $feature === $owner) {
+            return;
         }
-        return $out;
+        if (!isset($this->dependencies[$feature][$owner])) {
+            throw new bizlms_exception('undeclared_dependency:' . $feature . '->' . $owner . ':organisations');
+        }
     }
 
     /**
@@ -577,6 +592,20 @@ final class runner {
             $pf->block('missing_required_table:' . $table);
         }
 
+        // A tripped tripwire sticks. The rows a tripped feature wrote are committed (batch mode, or a trip after the
+        // outer commit) with every step 'done' and no marker, so a plain re-apply would find the tripwire clean
+        // against a fresh snapshot and complete the feature. Only a restore of the snapshot (the production way
+        // back), --purge-feature, or an operator's --acknowledge-tripwire=<run> in a rehearsal lets it run again.
+        $tripped = legacymap::tripped_run($feature);
+        if ($tripped > 0) {
+            if ((int) $this->options['acknowledge_tripwire'] === $tripped && !guard::is_production()) {
+                $pf->warn('tripwire_acknowledged:' . $feature . ':run ' . $tripped);
+            } else {
+                $pf->block('tripwire_tripped_earlier:' . $feature . ':run ' . $tripped
+                    . ' (rehearsal: --acknowledge-tripwire=' . $tripped . ' or --purge-feature; production: restore the snapshot)');
+            }
+        }
+
         foreach ($importer->decisions() as $decision) {
             $status = $this->decisions->status($decision->key);
             if ($status !== null && $status !== decisions::ACCEPTED) {
@@ -630,7 +659,12 @@ final class runner {
         }
         $pf->count('rows_total', $total);
 
-        $pf->merge($importer->preflight($this->context_for($importer)));
+        $this->activefeature = $feature;
+        try {
+            $pf->merge($importer->preflight($this->context_for($importer)));
+        } finally {
+            $this->activefeature = null;
+        }
         return $pf;
     }
 
@@ -908,6 +942,21 @@ final class runner {
      * @return string not_applicable, already_complete, complete or simulated.
      */
     private function run_feature(importer $importer, bool $implicit): string {
+        try {
+            return $this->run_feature_body($importer, $implicit);
+        } finally {
+            // Whatever ended the feature, the runner's own reads of the organisation table are not the feature's.
+            $this->activefeature = null;
+        }
+    }
+
+    /**
+     * @param importer $importer
+     * @param bool $implicit
+     * @return string
+     * @see run_feature()
+     */
+    private function run_feature_body(importer $importer, bool $implicit): string {
         global $DB;
         $feature = $importer->feature();
 
@@ -932,11 +981,16 @@ final class runner {
             $this->report->set_feature($feature, ['warning' => 'dry_run_does_not_check_tenant_paths_against_unwritten_orgs']);
         }
 
+        // From here the feature's code runs: its reads of the organisation table are checked against depends().
+        $this->activefeature = $feature;
         $ctx = $this->context_for($importer);
         $writer = $this->writer->for_importer($importer);
         $allowed = array_merge($importer->target_tables(), array_keys($importer->core_writes()));
         $extra = $importer instanceof watches_tables ? $importer->watched_tables() : [];
-        $before = $this->dryrun ? [] : sideeffect_guard::snapshot($extra);
+        // A dry run takes the snapshots too, without the log flush (a flush would write pending events, and a dry
+        // run writes nothing): it can only see direct writes, and it only reports them, because an online site
+        // has other writers.
+        $before = sideeffect_guard::snapshot($extra, !$this->dryrun);
 
         $total = $this->preflights[$feature]->counts()['rows_total'] ?? 0;
         $atomic = !$this->dryrun && $importer->atomic() && $total <= (int) $this->options['atomic_threshold'];
@@ -987,6 +1041,12 @@ final class runner {
                     $this->trip_on_violations($feature, $before, sideeffect_guard::snapshot($extra), $allowed);
                 }
             }
+            if (!$this->dryrun) {
+                $this->finalise_feature($importer, $ctx);
+                // finalise() and the sequence resets run after the last snapshot above, so their side effects
+                // (a cache purge that queues a task, a message a helper sent) get one more look before the marker.
+                $this->trip_on_violations($feature, $before, sideeffect_guard::snapshot($extra), $allowed);
+            }
         } catch (\Throwable $e) {
             if ($outer) {
                 try {
@@ -1002,14 +1062,22 @@ final class runner {
             if (!$this->dryrun) {
                 // An outer rollback undoes rows the cache believes exist.
                 $this->map->reset();
+                if ($e instanceof tripwire_tripped && !$DB->is_transaction_started()) {
+                    // After any rollback, so the fact outlives it: a plain re-apply must not complete this feature.
+                    $this->writer->set_tripped($feature, $this->runid);
+                }
             }
             $this->record_feature_failure($importer, $e);
             throw $e;
         }
 
         if (!$this->dryrun) {
-            $this->finalise_feature($importer, $ctx);
             $this->writer->set_marker($feature, $this->runid);
+            // A trip an operator acknowledged in a rehearsal (preflight_feature) ends with the completed feature.
+            $this->writer->clear_tripped($feature);
+        } else {
+            $changed = sideeffect_guard::violations($before, sideeffect_guard::snapshot($extra, false), []);
+            $this->report->set_feature($feature, ['dry_run_tripwire' => $changed ?: 'clean']);
         }
         $this->lookups->refresh();
         $this->available[$feature] = true;

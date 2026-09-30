@@ -25,6 +25,9 @@ defined('MOODLE_INTERNAL') || die();
  *  4. $CFG->noemailever is true;
  *  5. the scheduled-task runner is off (core cron_enabled = 0) and no task is
  *     running (the tripwire also detects a leak);
+ *  5b. the standard log store is enabled (tool_log/enabled_stores): the event side-effect tripwire reads
+ *     logstore_standard_log, and with the store off (or only a database store on) an event leaves no row in any
+ *     table the tripwire watches, so it would report clean while blind;
  *  6. the bizlms_import lock is taken through the core lock API;
  *  7. every target plugin is at or above requires_version() (registry);
  *  8. every decision the selected features need is present, and at cutover the
@@ -52,7 +55,8 @@ final class guard {
     /**
      * Conditions that refuse --apply (and --resume, --retry-skipped).
      *
-     * @param array{confirm?: string, allow_online?: bool, decisions_hash?: string, expect_hash?: string} $options
+     * @param array{confirm?: string, allow_online?: bool, decisions_hash?: string, expect_hash?: string,
+     *        acknowledge_tripwire?: int} $options
      * @return string[] Refusal reasons; empty means every checked condition holds.
      */
     public static function refusals_for_apply(array $options): array {
@@ -89,6 +93,13 @@ final class guard {
         }
         if (self::running_tasks() > 0) {
             $fails[] = 'a_scheduled_or_adhoc_task_is_running';
+        }
+        if (!self::standard_log_enabled()) {
+            $fails[] = 'standard_log_store_is_not_enabled (the event tripwire reads logstore_standard_log; '
+                . 'enable logstore_standard under Site administration > Plugins > Logging)';
+        }
+        if (!empty($options['acknowledge_tripwire']) && $production) {
+            $fails[] = 'acknowledge_tripwire_is_refused_when_bizlms_production_is_1 (restore the snapshot instead)';
         }
 
         $expect = trim((string) ($options['expect_hash'] ?? ''));
@@ -152,14 +163,34 @@ final class guard {
     }
 
     /**
-     * The permit the runner demands before it writes or deletes anything.
+     * The permit for an apply run (--apply, --resume, --retry-skipped). The guard works out the refusals itself:
+     * a caller cannot hand it a list, so it cannot hand it an empty one.
      *
-     * @param string $kind guard_permit::APPLY or guard_permit::PURGE.
-     * @param string[] $refusals What refusals_for_apply() or refusals_for_purge() returned for this call.
+     * @param array $options As for refusals_for_apply().
      * @return guard_permit
-     * @throws guard_refused When there is any refusal.
+     * @throws guard_refused When any condition fails.
      */
-    public static function permit(string $kind, array $refusals): guard_permit {
+    public static function permit_apply(array $options): guard_permit {
+        return self::issue_unless_refused(guard_permit::APPLY, self::refusals_for_apply($options));
+    }
+
+    /**
+     * The permit for a rehearsal purge (--purge-feature).
+     *
+     * @param array $options As for refusals_for_purge().
+     * @return guard_permit
+     * @throws guard_refused When any condition fails.
+     */
+    public static function permit_purge(array $options): guard_permit {
+        return self::issue_unless_refused(guard_permit::PURGE, self::refusals_for_purge($options));
+    }
+
+    /**
+     * @param string $kind
+     * @param string[] $refusals Computed by this class, never passed in by a caller.
+     * @return guard_permit
+     */
+    private static function issue_unless_refused(string $kind, array $refusals): guard_permit {
         if ($refusals) {
             throw new guard_refused(implode('; ', $refusals));
         }
@@ -229,6 +260,16 @@ final class guard {
     }
 
     /**
+     * Is the standard log store one of the enabled log stores? The tripwire's event check reads its table.
+     *
+     * @return bool
+     */
+    public static function standard_log_enabled(): bool {
+        $stores = array_map('trim', explode(',', (string) get_config('tool_log', 'enabled_stores')));
+        return in_array('logstore_standard', $stores, true);
+    }
+
+    /**
      * Is CLI maintenance mode on? Only climaintenance.html counts (admin/cli/maintenance.php --enable).
      *
      * $CFG->maintenance_enabled is the WEB maintenance mode: it lets administrators log in and edit the
@@ -266,6 +307,7 @@ final class guard {
             'production_open' => (int) get_config(self::COMPONENT, 'bizlms_production_open') > 0,
             'maintenance' => self::maintenance_on(),
             'noemailever' => !empty($CFG->noemailever),
+            'standard_log' => self::standard_log_enabled(),
             'cron_enabled' => (bool) get_config('core', 'cron_enabled'),
             'running_tasks' => self::running_tasks(),
         ];

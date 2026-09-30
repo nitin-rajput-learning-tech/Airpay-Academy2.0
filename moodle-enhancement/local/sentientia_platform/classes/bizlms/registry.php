@@ -30,7 +30,12 @@ defined('MOODLE_INTERNAL') || die();
  *    importer) or is a framework table: an importer never writes another feature's tables;
  *  - a core_writes() table is not on CORE_WRITES_ALLOWED, the list reviewed against ADR-032;
  *  - the importer or any of its steps is defined outside the plugin's classes/bizlms/
- *    (the static scan reads that directory and nothing else).
+ *    (the static scan reads that directory and nothing else);
+ *  - an importer that declares tenant_columns() does not have TENANT_OWNER (the org feature) in its
+ *    dependency closure. Tenant resolution reads the organisation table, which the org importer fills;
+ *    without the dependency the alphabetical tie-break can run the reader first, has_orgs() is false,
+ *    and resolve() then stores any path whose root is valid. Discovery from disk also refuses a
+ *    tenant importer when no org feature is registered; a test registry that has none is not checked.
  *
  * Tests register toy importers through set_testing_importers(), which replaces
  * disk discovery.
@@ -58,6 +63,9 @@ final class registry {
         'tag_instance' => 'course_tags: the in-place remap of tag instances (mapping doc, course_tags)',
         'user_enrolments' => 'gap.orphan_enrol_instances (G6): orphaned enrolments become manual enrolments',
     ];
+
+    /** Feature key of the importer that fills the organisation table that tenant resolution reads. */
+    public const TENANT_OWNER = 'org';
 
     /** @var importer[]|null Importers injected by a test; null means discover on disk. */
     private static ?array $testing = null;
@@ -181,6 +189,32 @@ final class registry {
             }
         }
         return $order;
+    }
+
+    /**
+     * Every feature each feature depends on, directly or through others.
+     *
+     * @param array<string, importer> $importers
+     * @return array<string, array<string, bool>> feature => set of features it (transitively) depends on
+     */
+    public static function dependency_closure(array $importers): array {
+        $out = [];
+        foreach ($importers as $feature => $importer) {
+            $seen = [];
+            $queue = $importer->depends();
+            while ($queue) {
+                $dependency = (string) array_shift($queue);
+                if (isset($seen[$dependency]) || !isset($importers[$dependency])) {
+                    continue;
+                }
+                $seen[$dependency] = true;
+                foreach ($importers[$dependency]->depends() as $next) {
+                    $queue[] = $next;
+                }
+            }
+            $out[$feature] = $seen;
+        }
+        return $out;
     }
 
     /**
@@ -375,6 +409,23 @@ final class registry {
                 if ($step instanceof step) {
                     self::validate_load_step($feature, $importer, $step, $problems);
                 }
+            }
+        }
+
+        // Tenant resolution reads the organisation table the org importer fills.
+        $closure = self::dependency_closure($importers);
+        foreach ($importers as $feature => $importer) {
+            if ($feature === self::TENANT_OWNER || !$importer->tenant_columns()) {
+                continue;
+            }
+            if (!isset($importers[self::TENANT_OWNER])) {
+                if (!$testing) {
+                    $problems[] = 'tenant_owner_not_registered:' . $feature . ':' . self::TENANT_OWNER;
+                }
+                continue;
+            }
+            if (!isset($closure[$feature][self::TENANT_OWNER])) {
+                $problems[] = 'tenant_resolution_needs_org:' . $feature . ':' . self::TENANT_OWNER;
             }
         }
 

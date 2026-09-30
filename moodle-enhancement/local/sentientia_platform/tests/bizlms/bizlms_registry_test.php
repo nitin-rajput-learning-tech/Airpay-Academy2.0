@@ -202,6 +202,50 @@ final class bizlms_registry_test extends \advanced_testcase {
         $this->assertSame('code_location_unknown', registry::code_location_problem($toy, 'local_nosuchplugin'));
     }
 
+    public function test_an_importer_with_tenant_columns_must_have_the_org_feature_in_its_dependency_closure(): void {
+        // Tenant resolution reads the organisation table the org importer fills. The toy declares a tenant column.
+        $problems = $this->problems([
+            new toy_importer('org', [], ['local_toy_org']),
+            new toy_importer('toyitem', [], ['local_toy_item']),
+        ]);
+        $this->assertContains('tenant_resolution_needs_org:toyitem:org', $problems);
+        $this->assertNotContains('tenant_resolution_needs_org:org:org', $problems, 'the owner itself is exempt');
+
+        // Declared directly.
+        $this->assertSame([], $this->problems([
+            new toy_importer('org', [], ['local_toy_org']),
+            new toy_importer('toyitem', ['org'], ['local_toy_item']),
+        ]));
+        // Declared through another feature: the closure counts.
+        $this->assertSame([], $this->problems([
+            new toy_importer('org', [], ['local_toy_org']),
+            new toy_importer('toyitem', ['org'], ['local_toy_item']),
+            new toy_importer('toyfan', ['toyitem'], ['local_toy_fan']),
+        ]));
+        // Not declared even though a sibling depends on it.
+        $problems = $this->problems([
+            new toy_importer('org', [], ['local_toy_org']),
+            new toy_importer('toyitem', ['org'], ['local_toy_item']),
+            new toy_importer('toyfan', [], ['local_toy_fan']),
+        ]);
+        $this->assertSame(['tenant_resolution_needs_org:toyfan:org'], $problems);
+    }
+
+    public function test_an_importer_without_tenant_columns_is_not_held_to_the_org_rule(): void {
+        toy_importer::$notenantcolumns = true;
+        $this->assertSame([], $this->problems([
+            new toy_importer('org', [], ['local_toy_org']),
+            new toy_importer('toyfan', [], ['local_toy_fan']),
+        ]));
+    }
+
+    public function test_a_test_registry_with_no_org_feature_is_not_held_to_the_org_rule(): void {
+        // A registry read from disk with no org importer refuses a tenant importer (tenant_owner_not_registered);
+        // a test registry that never registered one is testing something else.
+        $this->assertSame([], $this->problems([new toy_importer()]));
+        $this->assertSame('org', registry::TENANT_OWNER);
+    }
+
     public function test_disk_discovery_walks_the_installed_plugins_without_failing(): void {
         registry::set_testing_importers(null);
         // Whatever importers the installed plugins register through db/bizlms_import.php must validate.

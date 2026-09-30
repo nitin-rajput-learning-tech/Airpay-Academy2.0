@@ -388,6 +388,33 @@ final class writer {
     }
 
     /**
+     * Record that a feature tripped the side-effect tripwire in a run. It sticks until a purge, an operator's
+     * acknowledgement in a rehearsal, or a restore, because the rows the run committed would otherwise let a
+     * plain re-apply complete the feature.
+     *
+     * @param string $feature
+     * @param int $runid
+     * @return void
+     */
+    public function set_tripped(string $feature, int $runid): void {
+        $this->assert_live();
+        set_config('bizlms_tripped_' . $feature, max(1, $runid), self::COMPONENT);
+    }
+
+    /**
+     * Forget a recorded trip (a completed feature after an acknowledgement, or a rehearsal purge).
+     *
+     * @param string $feature
+     * @return void
+     */
+    public function clear_tripped(string $feature): void {
+        $this->assert_live();
+        if (get_config(self::COMPONENT, 'bizlms_tripped_' . $feature) !== false) {
+            unset_config('bizlms_tripped_' . $feature, self::COMPONENT);
+        }
+    }
+
+    /**
      * Set a framework config value (for example disarming the import guard).
      *
      * @param string $name

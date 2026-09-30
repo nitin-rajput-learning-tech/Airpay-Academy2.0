@@ -41,6 +41,21 @@ final class lookups {
     /** @var array<string, \stdClass>|null Organisation path => row. */
     private ?array $orgbypath = null;
 
+    /** @var \Closure|null function(): void, throws when the running feature may not read organisations. */
+    private ?\Closure $orgrule = null;
+
+    /**
+     * Set the rule every read of the organisation table goes through (the runner sets it once; it knows
+     * which feature is running). Organisations are the target of the org importer, so a feature that reads
+     * them without depending on it can run before them and see none.
+     *
+     * @param \Closure|null $rule function(): void that throws when the read is not allowed; null removes it.
+     * @return void
+     */
+    public function guard_org_reads(?\Closure $rule): void {
+        $this->orgrule = $rule;
+    }
+
     /**
      * Forget every loaded set. The runner calls this before each feature and after
      * it completes: an earlier feature (org) writes rows that later ones (tenant
@@ -127,6 +142,9 @@ final class lookups {
      * @return array<int, \stdClass>
      */
     public function orgs(): array {
+        if ($this->orgrule !== null) {
+            ($this->orgrule)();
+        }
         if ($this->orgs === null) {
             $this->orgs = [];
             $this->orgbypath = [];

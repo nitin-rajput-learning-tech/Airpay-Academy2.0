@@ -12,11 +12,12 @@ defined('MOODLE_INTERNAL') || die();
  * The guard conditions (confirm, arming, maintenance, noemailever, cron) used to be checked only
  * by cli/import_bizlms.php, so any other caller of the runner with apply = true skipped all of
  * them. The runner now refuses to write or delete without a permit, and only guard can issue one:
- * guard::permit() after the refusals came back empty, guard::test_permit() under PHPUnit.
+ * guard::permit_apply() and guard::permit_purge(), which work the refusals out themselves (a caller cannot
+ * pass an empty list), and guard::test_permit() under PHPUnit.
  *
  * It is a seam, not a lock: PHP has no friend visibility, and code that wants to forge a permit
  * can. The caller check stops the honest mistakes (a new CLI, a cron task, a test helper that
- * forgot the guard), and the static scan keeps importers away from the guard class.
+ * forgot the guard), and the static scan keeps importers away from the guard, the runner and the writer.
  *
  * @package    local_sentientia_platform
  * @copyright  2026 Airpay Payment Services

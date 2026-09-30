@@ -846,6 +846,162 @@ final class bizlms_runner_test extends \advanced_testcase {
         return ['batch mode' => [false], 'feature mode' => [true]];
     }
 
+    // Tenant resolution reads what the org importer writes.
+
+    public function test_a_feature_that_reads_organisations_must_depend_on_the_org_feature(): void {
+        $this->begin([
+            new toy_importer('org', [], ['local_toy_org']),
+            new toy_importer('toyfan', [], ['local_toy_fan']),
+        ]);
+        $this->seed_toy_data();
+        // No tenant column, so the registry's rule has nothing to see; the code still asks whether organisations
+        // exist. Ordered by name, org runs first here by luck: the rule is on the dependency, not on the order.
+        toy_importer::$notenantcolumns = true;
+        toy_importer::$readorgs = true;
+
+        foreach ([true, false] as $apply) {
+            [$result] = $this->execute(['all' => true], [], $apply);
+            $this->assertSame(1, $result['exit'], $apply ? 'apply' : 'dry run');
+            $this->assertStringContainsString('undeclared_dependency:toyfan->org:organisations', implode(' ', $result['blockers']));
+        }
+        $this->assertFalse(legacymap::feature_complete('toyfan'));
+    }
+
+    public function test_a_declared_dependency_on_the_org_feature_lets_the_reader_read_organisations(): void {
+        $this->begin([
+            new toy_importer('org', [], ['local_toy_org']),
+            new toy_importer('toyfan', ['org'], ['local_toy_fan']),
+        ]);
+        $this->seed_toy_data();
+        toy_importer::$notenantcolumns = true;
+        toy_importer::$readorgs = true;
+
+        [$result] = $this->execute();
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        $this->assertSame('complete', $result['features']['toyfan']);
+    }
+
+    // The tripwire sticks.
+
+    /**
+     * Trip the tripwire in run 1 with a leak in verify(), then make the leak go away.
+     *
+     * @param bool $atomic Feature mode (the trip is inside the outer transaction, which rolls back).
+     * @return int The run that tripped.
+     */
+    private function trip_once(bool $atomic = false): int {
+        $this->begin();
+        $this->seed_toy_data();
+        toy_importer::$atomic = $atomic;
+        toy_importer::$leak = true;
+        [$tripped] = $this->execute($atomic ? ['atomic_threshold' => 50000] : []);
+        $this->assertSame(1, $tripped['exit']);
+        $this->assertStringContainsString('write_outside_declared_tables', implode(' ', $tripped['blockers']));
+        toy_importer::$leak = false;
+        return (int) $tripped['runid'];
+    }
+
+    /**
+     * @dataProvider run_mode_provider
+     * @param bool $atomic Run the feature in one outer transaction.
+     */
+    public function test_a_tripped_tripwire_is_recorded_and_a_plain_reapply_is_refused(bool $atomic): void {
+        $runid = $this->trip_once($atomic);
+        $this->assertGreaterThan(0, $runid);
+        $this->assertSame($runid, legacymap::tripped_run('toy'), 'recorded after any rollback, so it outlives it');
+        $this->assertFalse(legacymap::feature_complete('toy'));
+
+        // The leak is gone. In batch mode every row the tripped run wrote is committed and mapped, so without the
+        // record a fresh snapshot would find the tripwire clean and the feature would be marked complete.
+        foreach (['a plain re-apply' => [], 'a resume' => ['resume' => true]] as $what => $options) {
+            [$again] = $this->execute($options);
+            $this->assertSame(1, $again['exit'], $what);
+            $this->assertSame('blocked', $again['status'], $what);
+            $this->assertStringContainsString("tripwire_tripped_earlier:toy:run {$runid}", implode(' ', $again['blockers']), $what);
+            $this->assertFalse(legacymap::feature_complete('toy'), $what);
+        }
+        // A dry run shows the block too, and still writes nothing.
+        [$dry] = $this->execute([], [], false);
+        $this->assertSame('blocked', $dry['status']);
+        $this->assertSame($runid, legacymap::tripped_run('toy'));
+    }
+
+    public function test_an_operator_can_acknowledge_a_trip_in_a_rehearsal_and_the_feature_then_completes(): void {
+        $runid = $this->trip_once();
+
+        [$wrong] = $this->execute(['acknowledge_tripwire' => $runid + 1]);
+        $this->assertSame('blocked', $wrong['status'], 'only the run that tripped can be acknowledged');
+
+        [$ok, $report] = $this->execute(['acknowledge_tripwire' => $runid]);
+        $this->assertContains($ok['exit'], [0, 2], implode('; ', $ok['blockers']));
+        $this->assertSame('complete', $ok['features']['toy']);
+        $this->assertTrue(legacymap::feature_complete('toy'));
+        $this->assertSame(0, legacymap::tripped_run('toy'), 'the trip ends with the completed feature');
+        $this->assertContains("tripwire_acknowledged:toy:run {$runid}",
+            $report->to_array()['features']['toy']['preflight']['warnings']);
+    }
+
+    public function test_a_trip_is_never_acknowledged_in_production(): void {
+        $runid = $this->trip_once();
+        set_config('bizlms_production', 1, 'local_sentientia_platform');
+
+        [$result] = $this->execute(['acknowledge_tripwire' => $runid]);
+        $this->assertSame('blocked', $result['status']);
+        $this->assertStringContainsString("tripwire_tripped_earlier:toy:run {$runid}", implode(' ', $result['blockers']));
+        $this->assertSame($runid, legacymap::tripped_run('toy'));
+    }
+
+    public function test_a_rehearsal_purge_clears_a_trip(): void {
+        $runid = $this->trip_once();
+        $this->assertSame($runid, legacymap::tripped_run('toy'));
+
+        (new runner(['apply' => true, 'permit' => guard::test_permit(guard_permit::PURGE)]))->purge('toy');
+        $this->assertSame(0, legacymap::tripped_run('toy'));
+
+        [$result] = $this->execute();
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        $this->assertSame('complete', $result['features']['toy']);
+    }
+
+    public function test_the_trip_shows_in_the_status_facts_and_the_status_check(): void {
+        $runid = $this->trip_once();
+        $states = runner::feature_states(registry::load());
+        $this->assertSame($runid, $states['toy']['tripped_runid']);
+        $this->assertSame(0, $states['toy']['complete_runid']);
+        // A feature that started and has no marker is unfinished, so the status check is critical.
+        $result = (new \local_sentientia_platform\check\bizlms_import())->get_result();
+        $this->assertSame(\core\check\result::CRITICAL, $result->get_status());
+    }
+
+    public function test_finalise_side_effects_are_checked_before_the_marker(): void {
+        $this->begin();
+        $this->seed_toy_data();
+        toy_importer::$finaliseleak = true;
+
+        [$result, $report] = $this->execute();
+        $this->assertSame(1, $result['exit']);
+        $this->assertStringContainsString('write_outside_declared_tables:logstore_standard_log', implode(' ', $result['blockers']));
+        $this->assertContains('logstore_standard_log', $report->to_array()['features']['toy']['tripwire']);
+        $this->assertFalse(legacymap::feature_complete('toy'), 'finalise ran, its leak was seen, and no marker was written');
+        $this->assertSame(['toy'], toy_importer::$finalised, 'finalise did run: this is the look after it');
+        $this->assertGreaterThan(0, legacymap::tripped_run('toy'));
+    }
+
+    public function test_a_dry_run_reports_what_changed_under_it_but_does_not_fail(): void {
+        $this->begin();
+        $this->seed_toy_data();
+        toy_importer::$dryleak = true;
+
+        [$leaky, $leakyreport] = $this->execute([], [], false);
+        // A row in the log table appeared during a dry run, which must write nothing: the dry run says so.
+        $this->assertContains('logstore_standard_log', $leakyreport->to_array()['features']['toy']['dry_run_tripwire']);
+        $this->assertSame(0, $leaky['exit'], 'reported, not fatal: an online site has other writers');
+
+        toy_importer::$dryleak = false;
+        [, $report] = $this->execute([], [], false);
+        $this->assertSame('clean', $report->to_array()['features']['toy']['dry_run_tripwire']);
+    }
+
     // Writer and steps.
 
     public function test_a_map_insert_into_a_table_a_preserve_step_owns_is_refused(): void {

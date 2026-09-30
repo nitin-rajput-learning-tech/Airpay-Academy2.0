@@ -29,6 +29,7 @@ use local_sentientia_platform\bizlms\unclaimed;
 use local_sentientia_platform\phpunit\legacy_schema_fixture;
 use local_sentientia_platform\tests\bizlms\toy_importer;
 use local_sentientia_platform\tests\bizlms\toy_seed;
+use local_sentientia_platform\bizlms\bizlms_exception;
 
 /**
  * The small collaborators of the BizLMS import: tenant resolver, text, decisions,
@@ -467,6 +468,52 @@ final class bizlms_support_test extends \advanced_testcase {
         $lookups->refresh();
         $this->assertTrue($lookups->has_orgs());
         $this->assertNotNull($lookups->org_by_path('/1'));
+    }
+
+    public function test_every_read_of_the_organisation_table_goes_through_the_rule_the_runner_sets(): void {
+        $this->resetAfterTest();
+        $lookups = new lookups();
+        $lookups->guard_org_reads(function (): void {
+            throw new bizlms_exception('org_read_not_allowed');
+        });
+        $reads = [
+            'orgs' => fn() => $lookups->orgs(),
+            'has_orgs' => fn() => $lookups->has_orgs(),
+            'org' => fn() => $lookups->org(1),
+            'org_by_path' => fn() => $lookups->org_by_path('/1'),
+            'the tenant resolver' => fn() => (new tenant_resolver($lookups))->org_for_path('/1'),
+        ];
+        foreach ($reads as $name => $read) {
+            try {
+                $read();
+                $this->fail("{$name} read organisations past the rule");
+            } catch (bizlms_exception $e) {
+                $this->assertSame('org_read_not_allowed', $e->getMessage(), $name);
+            }
+        }
+        // Users, courses and the rest are not organisations.
+        $this->assertIsBool($lookups->user_exists(2));
+
+        $lookups->guard_org_reads(null);
+        $this->assertIsBool($lookups->has_orgs());
+    }
+
+    public function test_the_tripwire_also_watches_tables_a_core_api_writes_without_an_event(): void {
+        global $DB;
+        $this->resetAfterTest();
+        foreach (['user_preferences', 'role_capabilities', 'context', 'grade_grades', 'grade_grades_history',
+                  'groups_members', 'cohort_members'] as $table) {
+            $this->assertContains($table, sideeffect_guard::TABLES);
+        }
+        // files is left out on purpose (file_rehome copies an organisation logo in finalise()).
+        $this->assertNotContains('files', sideeffect_guard::TABLES);
+
+        $roleid = $this->getDataGenerator()->create_role();
+        $before = sideeffect_guard::snapshot();
+        $this->assertArrayHasKey('role_capabilities', $before);
+        $DB->insert_record('role_capabilities', (object) ['contextid' => \context_system::instance()->id, 'roleid' => $roleid,
+            'capability' => 'local/blmtest:x', 'permission' => CAP_ALLOW, 'timemodified' => time(), 'modifierid' => 0]);
+        $this->assertSame(['role_capabilities'], sideeffect_guard::violations($before, sideeffect_guard::snapshot()));
     }
 
     public function test_the_database_group_count_is_what_the_grouped_scan_is_checked_against(): void {

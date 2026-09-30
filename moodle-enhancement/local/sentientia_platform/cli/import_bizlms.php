@@ -36,6 +36,10 @@
  *                                   (the CRC read took 2.5 minutes on a 2.6M-row table); 0 never skips
  *   --confirm=<fingerprint>         required with --apply and --purge-feature (printed by --status)
  *   --allow-online                  skip the maintenance requirement (rehearsal only)
+ *   --acknowledge-tripwire=<run>    rehearsal only: let a feature run again after its side-effect tripwire tripped
+ *                                   in run <run> (--status shows tripped=<run>). Look at the report and the tables
+ *                                   first. Refused when bizlms_production = 1: restore the snapshot instead.
+ *                                   --purge-feature also clears a trip.
  *   --purge-feature=<key> --i-understand-this-deletes
  *                                   rehearsal only; deletes only rows whose map outcome is imported
  *
@@ -73,7 +77,7 @@ use local_sentientia_platform\bizlms\unclaimed;
     'verify' => false,
     'decisions' => '', 'expect-decisions-hash' => '', 'report' => '',
     'batch' => '500', 'atomic-threshold' => '50000', 'max-group-scan' => '500000', 'crc-max-rows' => '2000000',
-    'confirm' => '', 'allow-online' => false,
+    'confirm' => '', 'allow-online' => false, 'acknowledge-tripwire' => '0',
     'purge-feature' => '', 'i-understand-this-deletes' => false,
     'help' => false,
 ], ['h' => 'help']);
@@ -133,7 +137,7 @@ try {
         if ($options['status']) {
             cli_writeln('Install fingerprint (pass as --confirm): ' . $state['fingerprint']);
             foreach (['armed_seconds_left', 'production', 'production_open', 'maintenance', 'noemailever',
-                      'cron_enabled', 'running_tasks'] as $fact) {
+                      'standard_log', 'cron_enabled', 'running_tasks'] as $fact) {
                 cli_writeln(sprintf('  %-20s %s', $fact, is_bool($state[$fact]) ? var_export($state[$fact], true) : $state[$fact]));
             }
         }
@@ -148,9 +152,9 @@ try {
         }
         cli_writeln(count($importers) . ' importer(s) registered');
         foreach (runner::feature_states($importers) as $feature => $s) {
-            cli_writeln(sprintf('  %-18s owner=%s deps=[%s] sources=%d/%d complete=%s started=%s running_steps=%d heartbeat_age=%s',
+            cli_writeln(sprintf('  %-18s owner=%s deps=[%s] sources=%d/%d complete=%s tripped=%s started=%s running_steps=%d heartbeat_age=%s',
                 $feature, $s['owner'], implode(',', $s['depends']), $s['sources_present'], $s['sources'],
-                $s['complete_runid'] ?: 'no', $s['started'] ? 'yes' : 'no', $s['running_steps'],
+                $s['complete_runid'] ?: 'no', $s['tripped_runid'] ?: 'no', $s['started'] ? 'yes' : 'no', $s['running_steps'],
                 $s['last_heartbeat_age'] === null ? '-' : $s['last_heartbeat_age'] . 's'));
         }
         if ($options['list']) {
@@ -168,16 +172,17 @@ try {
 
     // Rehearsal purge.
     if ($options['purge-feature'] !== '') {
-        $refusals = guard::refusals_for_purge([
+        $purgeoptions = [
             'confirm' => $options['confirm'], 'understood' => $options['i-understand-this-deletes'],
-        ]);
+        ];
+        $refusals = guard::refusals_for_purge($purgeoptions);
         if ($refusals) {
             foreach ($refusals as $line) {
                 cli_writeln('REFUSED: ' . $line);
             }
             exit(3);
         }
-        $permit = guard::permit(guard_permit::PURGE, $refusals);
+        $permit = guard::permit_purge($purgeoptions);
         $lock = guard::acquire_lock();
         $purged = (new runner(['apply' => true, 'decisions' => $decisions, 'permit' => $permit]))
             ->purge((string) $options['purge-feature']);
@@ -207,6 +212,7 @@ try {
         'apply' => $apply,
         'all' => (bool) $options['all'],
         'resume' => (bool) $options['resume'],
+        'acknowledge_tripwire' => max(0, (int) $options['acknowledge-tripwire']),
         'retry_reasons' => array_values(array_filter(array_map('trim', explode(',', (string) $options['retry-skipped'])))),
         'batch' => max(1, (int) $options['batch']),
         'atomic_threshold' => (int) $options['atomic-threshold'],
@@ -262,17 +268,19 @@ try {
 
     $lock = null;
     if ($apply) {
-        $refusals = guard::refusals_for_apply([
+        $applyoptions = [
             'confirm' => $options['confirm'], 'allow_online' => $options['allow-online'],
             'decisions_hash' => $decisions->hash(), 'expect_hash' => $expect,
-        ]);
+            'acknowledge_tripwire' => $runneroptions['acknowledge_tripwire'],
+        ];
+        $refusals = guard::refusals_for_apply($applyoptions);
         if ($refusals) {
             foreach ($refusals as $line) {
                 cli_writeln('REFUSED: ' . $line);
             }
             exit(3);
         }
-        $runneroptions['permit'] = guard::permit(guard_permit::APPLY, $refusals);
+        $runneroptions['permit'] = guard::permit_apply($applyoptions);
         $lock = guard::acquire_lock();
     }
 
