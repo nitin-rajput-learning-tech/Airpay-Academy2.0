@@ -228,7 +228,6 @@ class user_manager {
         }
 
         // Capability checks.
-        $syscontext = \context_system::instance();
         // Cap fix (F-080/F-088, 2026-05-28): dropped the `local/users:edit`
         // fallback — cap was never registered in any db/access.php and
         // logged a debug Notice on every profile render. The
@@ -236,9 +235,10 @@ class user_manager {
         // ADR-031 (2026-09-29): the header's camera + pencil, and where the
         // pencil points, are decided by profile_edit_action().
         $context = array_merge($context, self::profile_edit_action((int) $user->id));
-        $context['loginasurl'] = has_capability('moodle/user:loginas', $syscontext)
-            ? new \moodle_url('/course/loginas.php', ['id' => 1, 'user' => $user->id, 'sesskey' => sesskey()])
-            : false;
+        // 2026-09-30: the capability alone used to decide this, so the link showed
+        // for targets core refuses (site admins) and for accounts it makes no sense
+        // on (yourself, deleted, suspended, or one the viewer may not act on).
+        $context['loginasurl'] = self::profile_loginas_url((int) $user->id);
 
         // Inject gamification data.
         if (file_exists($CFG->dirroot . '/local/sentientia_gamification/lib.php')) {
@@ -364,6 +364,53 @@ class user_manager {
             return $none;
         }
         return ['capabilityedit' => 1, 'editprofile' => false, 'editmodal' => true];
+    }
+
+    /**
+     * 2026-09-30: the "Log in as" link the profile header offers the CURRENT
+     * user for $targetid, or false when it should not be shown.
+     *
+     * The link used to appear for every holder of moodle/user:loginas at
+     * system context. It is now hidden when clicking it could not work or
+     * would make no sense:
+     *  - the target is a site admin (course/loginas.php refuses with
+     *    'nologinas', even for another site admin);
+     *  - the target is the viewer (logging in as yourself);
+     *  - the target is deleted, suspended or does not exist;
+     *  - the viewer may not act on the target, by the same rule as
+     *    {@see self::require_can_act_on()} (same tenant, not a cross-tenant
+     *    account, unless the viewer is cross-tenant or a site admin). That call
+     *    is made here and its refusal is turned into "no link".
+     * course/loginas.php stays the authority: this only stops the profile
+     * offering a button that ends in an error page or a tenant leak.
+     *
+     * @param int $targetid the profile being viewed
+     * @return \moodle_url|false
+     */
+    public static function profile_loginas_url(int $targetid) {
+        global $DB, $USER;
+
+        $viewerid = (int) ($USER->id ?? 0);
+        if ($targetid <= 0 || $targetid === $viewerid) {
+            return false;
+        }
+        if (!has_capability('moodle/user:loginas', \context_system::instance())) {
+            return false;
+        }
+        if (is_siteadmin($targetid)) {
+            return false;
+        }
+        $target = $DB->get_record('user', ['id' => $targetid], 'id, deleted, suspended');
+        if (!$target || !empty($target->deleted) || !empty($target->suspended)) {
+            return false;
+        }
+        try {
+            self::require_can_act_on($targetid);
+        } catch (\moodle_exception $e) {
+            return false;
+        }
+        return new \moodle_url('/course/loginas.php',
+            ['id' => SITEID, 'user' => $targetid, 'sesskey' => sesskey()]);
     }
 
     /**
