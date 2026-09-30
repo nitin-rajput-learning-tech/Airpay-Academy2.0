@@ -5,6 +5,71 @@
 
 ---
 
+## 2026-09-30 - ADR-032 capability repair: divergent permissions no longer pass as "already held" (Sonnet 5.5)
+
+Branch `claude/bizlms-import-framework`. The round-3 re-review's one must-fix is closed in both plugin trees. The repair's exit
+0 is the Stage B gate, and it passed a legacy PROHIBIT/PREVENT whose Sentientia equivalent the install had granted as ALLOW
+(the row existed, so it was "held"). Now `held` means the SAME permission; a different one is `divergent`, counts as open
+(exit 2) until a decline names that role grant, and an approved grant against it is refused (exit 1). **Moodle PHPUnit not run**;
+`php -l`, the drift gate and an offline stub-`$DB` harness (75 checks) pass. Also: the org-read rule now covers
+`lookups::exists()` on the organisation table, a trip that cannot be recorded says so in the report, the CLI frees its lock in a
+`finally`. Recorded in the state card, not done: other features' target tables in `exists()`, block/module component declines
+for the draft allow-list, the missing-context preflight for the org_roles and G6 importers.
+Detail: `state-cards/sentientia_platform-state.md` (last section), ADR-032 "Capabilities".
+
+---
+
+## 2026-09-30 - ADR-032 BizLMS import framework: review round 3 closed (Sonnet 5.5)
+
+Branch `claude/bizlms-import-framework`. The re-review returned fix-then-ship with 1 must-fix; it and the correctness
+should-fix are closed in both plugin trees. **Moodle PHPUnit not run** (lead runs it after the re-init); ran: `php -l`, the drift,
+path-boundary, lang-parity and fixture-copy gates, and two offline harnesses (capability repair against a stub `$DB`, the static
+scanner against the real sources).
+
+- **Capability repair can now exit 0:** the owner-signed allow-list has a `declined` section (one role grant, or a whole missing
+  plugin, each with a reason). `docs/cutover/bizlms-capability-allowlist.json` is the **draft, unsigned**: it declines the 22
+  plugins and the two `manage_own*` organisation capabilities on roles `manager` and `administrator`; it holds no grant.
+  **Nitin signs it and decides `manageclassroom` overrides** from the Stage B inventory (a plugin decline never covers a mapped
+  capability, so those stay open on purpose).
+- **Tenant resolution needs `org`:** registry rule plus a run-time rule on every read of the organisation table.
+- **A tripped tripwire sticks:** recorded, blocks re-apply, resume and dry run; cleared by a restore, `--purge-feature`, or
+  `--acknowledge-tripwire=<run>` in a rehearsal (never in production).
+- **Tripwire hardening:** look after `finalise()`, dry-run report, more watched tables, `--apply` refused without the standard log store.
+- **Also:** permit computed by the guard, wider static scan, core writes limited by operation, signed files tested through
+  byte-identical copies, `CAST(... AS BINARY)`, CSV rebuilt from the map, subkeys never name a user, ADR "Stage B gates" list.
+- **Open:** run `--group bizlms_import`; sign the allow-list; P0.4; `qr_scan.php`; `legacy_cap()` removal and the `crosstenant`
+  grant with the org importer; MySQL 8.4 and MariaDB 10.11 runs; the finance answers.
+- Detail: `state-cards/sentientia_platform-state.md`, ADR-032 (Capabilities, Side-effect safety, Gating, Stage B gates).
+
+---
+
+## 2026-09-30 - ADR-032 BizLMS import framework: review round 2 closed (Sonnet 5.5)
+
+Branch `claude/bizlms-import-framework`. The independent review of the framework returned fix-then-ship: 4 must-fix and 15
+should-fix are closed, in code and tests, in both plugin trees (drift gate OK). **Moodle PHPUnit not run** (test-DB re-init);
+what ran: `php -l`, the drift gate, and an offline harness for the static scanner, the real decisions file and the report.
+
+- **Decisions:** the loader now reads the real file shape, so the owner's 109 values reach the importers (before, every
+  decision with a default silently used the importer's default). `finance-confirm` entries block a feature that declares
+  them (the cart importer must not).
+- **Deferral / dependencies:** an apply run refuses `deferred`; a feature that reads another feature's table must depend
+  on it (`undeclared_dependency`); steps get a read-only map view.
+- **Importer interface:** targets must be the plugin's own tables, never legacy; core writes limited to a reviewed
+  list; importer and step code must live in `classes/bizlms/`; the static scan recurses and catches aliases, dynamic
+  calls and the missing bans.
+- **Tripwire:** flushes the log buffer and rechecks after the feature-mode commit (events run after the commit).
+- **Also:** guard permit for the runner, CLI-only maintenance, report lines follow the commit, byte-exact enum
+  histograms, MAP-into-PRESERVE refused, unfiltered accounting, strict tenant paths, codes-only `detail`, resume newest run.
+- **Capability migration replaced:** `cli/repair_bizlms_capabilities.php` (inventory, owner-signed allow-list, never
+  `manage`, `manage_multiorganizations` or `crosstenant`). It is step 0 of the cutover slice. The old copy would have handed
+  role 9 organisation delete and cross-tenant visibility (ADR-031).
+- **Open (Nitin / next session):** run `--group bizlms_import` on MySQL 8 and MariaDB 10.11; P0.4 (wire `parity` into
+  `migration_parity_check.php`); the `qr_scan.php` freeze (user-visible, needs visual evidence, classroom code fix 1);
+  the `legacy_cap()` fallback removal ships with the org importer; the finance answers.
+- Detail: `state-cards/sentientia_platform-state.md`, ADR-032 (sections Capabilities, Gating, Side-effect safety, Build and run order).
+
+---
+
 ## 🧪 2026-09-29 — ADR-031 decisions closed; Playwright screen-check pass; PWA OFF, "Browse Library" (Opus 5.5)
 
 **Direction (Nitin, 2026-09-29):** no production hotfix. Production (airpay.academy, BizLMS 4.1.2) is

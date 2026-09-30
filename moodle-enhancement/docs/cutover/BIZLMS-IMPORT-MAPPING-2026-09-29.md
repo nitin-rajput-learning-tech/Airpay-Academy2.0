@@ -215,7 +215,27 @@ favicon, footer_text, email_*, support_email, help_url, hero_*, custom_css -> NU
 
 - Do not run `SE local/sentientia_org/cli/migrate_all.php`. It copies `local/costcenter:*` role
   capabilities to `local/sentientia_org:*` (`migrate_all.php:141-191`), which re-grants what ADR-031
-  decision 7 revokes.
+  decision 7 revokes. It copied ten BizLMS capabilities (the five `local/costcenter:*`,
+  `local/courses:manage` and `:enrol`, `local/classroom:manageclassroom`, `local/users:edit` and
+  `:bulkstatuschange`) with role, context and permission unchanged, and it never revoked anything.
+  Reading it as a copy of the ARCHETYPE grants was right for six of the targets and wrong for the rest:
+  - On production the grants sit on manager-archetype roles (core manager and the tenant-admin role 9).
+    Six targets (`sentientia_org:view`, `sentientia_courses:manage` and `:enrol`,
+    `sentientia_classroom:manage`, `sentientia_users:edit` and `:bulkstatuschange`) have a manager
+    archetype, so the plugin install grants them already. A copy adds nothing.
+  - Four have none on purpose (`sentientia_org:manage_multiorganizations`, `:manage`,
+    `:manage_ownorganization`, `:manage_owndepartments`). A copy would give role 9 cross-tenant
+    organisation delete, edit and visibility through `admin.php`, `delete_org`, `toggle_visibility` and
+    `edit_org`.
+  - `local/classroom:manageclassroom` has no archetype in BizLMS, so it exists only as overrides, and the
+    local copy cannot show which (0 legacy `role_capabilities` rows: BizLMS was uninstalled there). If the
+    trainer role held it, trainers lose classroom management with the BizLMS code.
+  **Replacement:** `SE local/sentientia_platform/cli/repair_bizlms_capabilities.php` (ADR-032
+  "Capabilities"), first step of the cutover slice. It lists the grants on capabilities of plugins missing
+  from disk per role and context, applies only an allow-list Nitin signs line by line, never grants
+  `sentientia_org:manage`, `sentientia_org:manage_multiorganizations` or `sentientia_platform:crosstenant`,
+  and never revokes. `crosstenant` goes by hand to the named platform role. If the Stage B inventory shows
+  only archetype-default grants on roles 1 and 9, the allow-list is empty.
 - Do not flip `org_legacy` or enable `org_dualwrite`; Gate C keeps legacy ON
   (`SE local/sentientia_core/classes/org.php:44-58`).
 - `SE local/sentientia_org/classes/task/sync_cohorts.php:51-101` adds cohort members with events; it
@@ -231,7 +251,16 @@ None required at cutover. Optional, for Enterprise N: `local_sentientia_org.cate
 1. `SE local/sentientia_org/data_migration.php`: refuse and point to the new CLI. The importer replaces
    it. Its defects: skip-if-populated (:47-53), non-existent `theme_scheme` source (:81), raw vancode
    into INT (:82), `timemodified` = now (:84), `reset_sequence` before commit (:93,:96).
-2. `SE local/sentientia_org/cli/migrate_all.php`: refuse; mark not-for-cutover.
+2. `SE local/sentientia_org/cli/migrate_all.php`: refuse; mark not-for-cutover. (Done in Phase 0; its header
+   now says what it copied and points to the capability repair. The earlier note that it was tied to the
+   retired `local_airpay_` names was wrong.)
+2b. `SE local/sentientia_org/classes/accesslib.php:315-394` (`legacy_cap()` and its callers in
+   `can_manage_multi`, `can_manage`, `is_org_head`, `is_dept_head`, `can_manage_classroom`): remove the
+   BizLMS fallbacks **in the org importer's release**, like the reader fallbacks. ADR-032 keeps the BizLMS
+   plugins installed, so their `capabilities` rows survive in the restored database and role 9 passes
+   `can_manage_multi()` through `local/costcenter:manage_multiorganizations` (an ADR-031 hole in the
+   navigation, used by `theme/sentientia`'s `core_renderer`). Not removed earlier: today they are what
+   keeps tenant admins working on a restored UAT database.
 3. `SE local/sentientia_core/classes/org_legacy_source.php:75,97`: query `local_costcenter.fullname`,
    not `.name`. As written, every backfilled unit is named "Unit <id>"
    (`SE local/sentientia_core/classes/org_reconciler.php:119-121`). Needed only before any
@@ -277,7 +306,7 @@ junk row skipped; long shortname truncated with a warning; pre-written row adopt
 
 | Source | Target | Key |
 |---|---|---|
-| local_costcenter_permissions (`BZ local/costcenter/db/install.xml:43-62`) | core `role_assignments` at `context_coursecat(local_costcenter.category)` + one audit row (`SE local/sentientia_roles/db/install.xml:5-48`) | map, subkey `user:<n>` per exploded user; target skipped when `(roleid, contextid, userid, component='', itemid=0)` exists (outcome `merged`) |
+| local_costcenter_permissions (`BZ local/costcenter/db/install.xml:43-62`) | core `role_assignments` at `context_coursecat(local_costcenter.category)` + one audit row (`SE local/sentientia_roles/db/install.xml:5-48`) | map, subkey `pos:<n>` per exploded user (n = the 1-based position in the comma list, never the user id: legacymap.subkey holds no personal data, and outcome::insert() refuses a `user:` subkey); target skipped when `(roleid, contextid, userid, component='', itemid=0)` exists (outcome `merged`) |
 | local_org_dept_roles (`BZ local/assignroles/db/install.xml:6-21`) | same | same |
 
 Both tables are expected to be empty. Current BizLMS code only deletes from

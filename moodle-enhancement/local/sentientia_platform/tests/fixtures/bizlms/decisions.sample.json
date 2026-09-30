@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "approved_by": "Test Owner",
+  "approved_on": "2026-09-30",
+  "basis": "fixture in the shape of docs/cutover/bizlms-import-decisions.json",
+  "decisions": {
+    "framework.reader_flags_default": {
+      "value": "off",
+      "why": "[proposed] every new surface ships behind a default-OFF flag.",
+      "source": "fixture",
+      "status": "accepted"
+    },
+    "toy.rounding": {
+      "value": "half_even",
+      "why": "[proposed] the owner chose a value that differs from the importer's default.",
+      "source": "fixture",
+      "status": "accepted"
+    },
+    "toy.credit": {
+      "value": "frozen_pending_finance",
+      "why": "[instruction] finance has not answered yet.",
+      "source": "fixture",
+      "status": "finance-confirm"
+    }
+  },
+  "accepted_reasons": ["toy:orphan_org"],
+  "enums": {
+    "local_toy_item.kind": {"z": "zeta"}
+  }
+}

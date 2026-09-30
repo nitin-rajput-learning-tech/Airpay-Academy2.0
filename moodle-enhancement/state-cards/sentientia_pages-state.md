@@ -180,3 +180,13 @@ should not be made on that premise.)
 
 Version 2026092400. Guarded platform-wide by
 `local_sentientia_platform/tests/exception_strings_test.php`.
+
+## 2026-09-30 - ADR-032 Phase 0 source freezing
+
+`cli/setup_costcenters.php`, `setup_bizlms_data.php` and `fix_all_bizlms_data.php` refuse to run (exit 3) on a
+database that holds any known BizLMS table (`local_sentientia_platform\bizlms\legacy_tables::holds_bizlms()`),
+because they insert into `local_costcenter` and rewrite user and course rows, and those tables are now the
+read-only archive of the import. `seed_production_data.php` and `fix_bizlms_columns.php` also write BizLMS
+tables but were not in the ADR's list and are unchanged. The QR pages (`qr_scan.php`, `qr_attendance.php`)
+still use `local_classroom_attendance`; moving them off the legacy tables is on another branch. Version
+unchanged; both trees identical.

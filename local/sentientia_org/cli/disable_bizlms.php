@@ -20,7 +20,8 @@
  * Does NOT delete files or tables — only disables the plugins so
  * Moodle stops loading them. Can be reversed by re-enabling.
  *
- * Run AFTER migrate_all.php succeeds and smoke test passes.
+ * Run AFTER the BizLMS import (local_sentientia_platform/cli/import_bizlms.php, ADR-032)
+ * succeeds and the smoke test passes.
  *
  * Usage:
  *   php local/sentientia_org/cli/disable_bizlms.php

@@ -12,6 +12,18 @@
 define('CLI_SCRIPT', true);
 require_once(dirname(dirname(dirname(dirname(__FILE__)))) . '/config.php');
 
+// ADR-032 (Phase 0 source freezing, 2026-09-30): this script INSERTS into local_costcenter and edits
+// user and course rows. On a database that holds BizLMS tables those are the read-only archive of the
+// import, so it refuses. It only ever made sense on a synthetic local database.
+$holdslegacy = class_exists('\local_sentientia_platform\bizlms\legacy_tables')
+    ? \local_sentientia_platform\bizlms\legacy_tables::holds_bizlms()
+    : $DB->get_manager()->table_exists('local_costcenter');
+if ($holdslegacy) {
+    fwrite(STDERR, "REFUSED: this database holds BizLMS legacy tables; this script would write to them (ADR-032).\n"
+        . "See local/sentientia_platform/cli/import_bizlms.php for the supported import.\n");
+    exit(3);
+}
+
 global $DB, $CFG;
 
 echo "=== airpay academy — BizLMS Synthetic Data Setup ===\n\n";

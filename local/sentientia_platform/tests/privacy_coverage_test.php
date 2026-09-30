@@ -60,6 +60,12 @@ final class privacy_coverage_test extends \advanced_testcase {
         // 2026-09-24: the ADR-017 employee / partner-employee profiles name
         // the person's manager. Only local_sentientia_platform uses them.
         'manager_userid', 'partner_manager_userid',
+        // 2026-09-30 (ADR-032): the actor columns the BizLMS import mapping
+        // introduces on feature target tables (classroom roster and attendance,
+        // cart ledger, notifications, user sync history). Listed before those
+        // tables exist so the guard sees them on the first CI run that carries
+        // them, instead of after a provider has been copied as a null_provider.
+        'enrolledby', 'markedby', 'initiatedby', 'sender_userid', 'subject_userid',
     ];
 
     /**

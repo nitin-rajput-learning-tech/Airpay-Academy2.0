@@ -1,0 +1,714 @@
+{
+  "version": 1,
+  "approved_by": "Nitin Rajput",
+  "approved_on": "2026-09-30",
+  "basis": "owner instruction: do everything as recommended",
+  "decisions": {
+    "framework.adr_accepted": {
+      "value": true,
+      "why": "[proposed] ADR-032 asks Nitin to accept the shared map, legacy tables as the archive, the id rule and a CLI guard instead of a feature flag. Owner instruction is to accept as recommended.",
+      "source": "ADR-032 line 640",
+      "status": "accepted"
+    },
+    "framework.reader_flags_default": {
+      "value": "off",
+      "why": "[proposed] CLAUDE.md sections 5 and 13: every new user-visible surface ships behind a default-OFF flag. The import never flips a flag.",
+      "source": "ADR-032 lines 474-477, 642",
+      "status": "accepted"
+    },
+    "framework.reader_flags_airpay_at_cutover": {
+      "value": "on_after_nitin_reviews_visual_evidence",
+      "why": "[instruction] The history readers are turned ON for the Airpay customer at cutover only after Nitin has reviewed the visual evidence. A flag flip is always Nitin's call, never the importer's or a script's.",
+      "source": "ADR-032 lines 642-643",
+      "status": "accepted"
+    },
+    "framework.decisions_file_owner": {
+      "value": "Nitin Rajput",
+      "why": "[instruction] Nitin owns and signs this file.",
+      "source": "ADR-032 line 644",
+      "status": "accepted"
+    },
+    "framework.decisions_change_after_rehearsal": {
+      "value": "re_approval_event",
+      "why": "[instruction] Any edit after the Stage B rehearsal changes the pinned sha256, so cutover cannot run until Nitin re-approves and the new hash is pinned.",
+      "source": "ADR-032 lines 470-471, 644-645",
+      "status": "accepted"
+    },
+    "framework.cutover_rollback": {
+      "value": "rds_snapshot_only",
+      "why": "[instruction] The RDS snapshot taken before the import is the only rollback at cutover. --purge-feature stays a rehearsal tool.",
+      "source": "ADR-032 lines 586, 646",
+      "status": "accepted"
+    },
+    "framework.purge_feature_on_production": {
+      "value": false,
+      "why": "[instruction] --purge-feature is not allowed on production (it is already refused when bizlms_production = 1).",
+      "source": "ADR-032 lines 463, 646",
+      "status": "accepted"
+    },
+    "framework.legacy_table_privacy": {
+      "value": "separate_adr_later",
+      "why": "[instruction] Not decided here. Export-and-anonymise versus drop-after-audit gets its own ADR after sign-off. Until then the legacy tables are untouched (ADR decision 2) and the privacy gap stays recorded.",
+      "source": "ADR-032 lines 531-534, 647-648",
+      "status": "accepted"
+    },
+    "framework.inline_key_mode": {
+      "value": "not_approved",
+      "why": "[proposed] The ADR keeps it off by default and needs an amendment to allow it. Revisit only if Stage B shows the window is too short.",
+      "source": "ADR-032 lines 652-654",
+      "status": "accepted"
+    },
+    "framework.protect_imported_history": {
+      "value": "block",
+      "why": "[rule 1] No recommendation on block versus soft-delete. Nothing is lost: delete and retype actions on imported rows are blocked (and cascade to the new tables), shipped with each importer.",
+      "source": "ADR-032 lines 608-609; mapping doc classroom fix 7, program fix 10, learningplan fix 9, evaluation fix 7",
+      "status": "accepted"
+    },
+    "tenant.unresolved.cohort_scope": {
+      "value": "pathless",
+      "why": "[proposed] Rows whose tenant cannot be resolved import with no tenant path: visible to cross-tenant callers only, and always reported.",
+      "source": "mapping doc section 23 line 2765",
+      "status": "accepted"
+    },
+    "tenant.unresolved.course_lookups": {
+      "value": "pathless",
+      "why": "[proposed] Rows whose tenant cannot be resolved import with no tenant path: visible to cross-tenant callers only, and always reported.",
+      "source": "mapping doc section 23 line 2765",
+      "status": "accepted"
+    },
+    "tenant.unresolved.legacy_logs": {
+      "value": "pathless",
+      "why": "[proposed] Rows whose tenant cannot be resolved import with no tenant path: visible to cross-tenant callers only, and always reported.",
+      "source": "mapping doc section 23 line 2765",
+      "status": "accepted"
+    },
+    "tenant.unresolved.exams": {
+      "value": "pathless",
+      "why": "[proposed] Rows whose tenant cannot be resolved import with no tenant path: visible to cross-tenant callers only, and always reported.",
+      "source": "mapping doc section 23 line 2765",
+      "status": "accepted"
+    },
+    "tenant.unresolved.users": {
+      "value": "pathless",
+      "why": "[proposed] Rows whose tenant cannot be resolved import with no tenant path: visible to cross-tenant callers only, and always reported.",
+      "source": "mapping doc section 23 line 2765",
+      "status": "accepted"
+    },
+    "tenant.unresolved.notifications": {
+      "value": "pathless",
+      "why": "[proposed] Rows whose tenant cannot be resolved import with no tenant path: visible to cross-tenant callers only, and always reported.",
+      "source": "mapping doc section 23 line 2765",
+      "status": "accepted"
+    },
+    "tenant.unresolved.cart": {
+      "value": "pathless",
+      "why": "[proposed] Rows whose tenant cannot be resolved import with no tenant path: visible to cross-tenant callers only, and always reported.",
+      "source": "mapping doc section 23 line 2765",
+      "status": "accepted"
+    },
+    "tenant.unresolved.skills": {
+      "value": "pathless",
+      "why": "[proposed] Rows whose tenant cannot be resolved import with no tenant path: visible to cross-tenant callers only, and always reported. For skills a null path means the shared platform catalogue (the skills tenant rule), which BizLMS hid; this is reported so it can be reviewed at rehearsal.",
+      "source": "mapping doc section 23 line 2765",
+      "status": "accepted"
+    },
+    "tenant.unresolved.classroom": {
+      "value": "pathless",
+      "why": "[proposed] Rows whose tenant cannot be resolved import with no tenant path: visible to cross-tenant callers only, and always reported.",
+      "source": "mapping doc section 23 line 2765",
+      "status": "accepted"
+    },
+    "tenant.unresolved.program": {
+      "value": "pathless",
+      "why": "[proposed] Rows whose tenant cannot be resolved import with no tenant path: visible to cross-tenant callers only, and always reported.",
+      "source": "mapping doc section 23 line 2765",
+      "status": "accepted"
+    },
+    "tenant.unresolved.learningplan": {
+      "value": "pathless",
+      "why": "[proposed] Rows whose tenant cannot be resolved import with no tenant path: visible to cross-tenant callers only, and always reported.",
+      "source": "mapping doc section 23 line 2765",
+      "status": "accepted"
+    },
+    "tenant.unresolved.evaluation": {
+      "value": "pathless",
+      "why": "[proposed] Rows whose tenant cannot be resolved import with no tenant path: visible to cross-tenant callers only, and always reported.",
+      "source": "mapping doc section 23 line 2765",
+      "status": "accepted"
+    },
+    "tenant.unresolved.request": {
+      "value": "pathless",
+      "why": "[proposed] Rows whose tenant cannot be resolved import with no tenant path: visible to cross-tenant callers only, and always reported.",
+      "source": "mapping doc section 23 line 2765",
+      "status": "accepted"
+    },
+    "org.unmapped_columns": {
+      "value": "not_copied",
+      "why": "[proposed] multipleorg, childpermission and shell are not copied (no Sentientia reader uses them). They stay in local_costcenter, which is kept and fingerprinted, so nothing is lost.",
+      "source": "mapping doc section 3 lines 196, 266-267",
+      "status": "accepted"
+    },
+    "org_roles.value_filter": {
+      "value": "value_1_only",
+      "why": "[proposed] Import only rows with value = 1, still to be confirmed against production data. Both source tables are expected to be empty.",
+      "source": "mapping doc section 4 lines 283-287, 297, 334",
+      "status": "accepted"
+    },
+    "course_lookups.featured_scope": {
+      "value": "rehome",
+      "why": "[proposed] Featured courses are re-homed per tenant by the course's path. BizLMS was global; per-tenant is the narrower scope.",
+      "source": "mapping doc section 23 line 2803",
+      "status": "accepted"
+    },
+    "course_lookups.coursedetails_unhomed_columns": {
+      "value": "leave_in_legacy_table",
+      "why": "[proposed] Enrolment dates, duration and prerequisites have no Sentientia column and stay in local_coursedetails. prerequisite_courses must never become completion criteria.",
+      "source": "mapping doc section 6 lines 445, 454, 493-494",
+      "status": "accepted"
+    },
+    "course_lookups.declined_config_tables": {
+      "value": "stay_in_place",
+      "why": "[proposed] local_moduleconfig and local_filters are configuration and stay where they are. local_certificate belongs to the certificates gap map (G1).",
+      "source": "mapping doc section 6 lines 496-497",
+      "status": "accepted"
+    },
+    "legacy_logs.retention": {
+      "value": "keep_no_purge",
+      "why": "[rule 1] No retention recommendation in the documents. Every row is imported and nothing is purged. A retention period comes with the later legacy-table privacy ADR.",
+      "source": "mapping doc section 8 lines 587-588",
+      "status": "accepted"
+    },
+    "legacy_logs.description_erasure": {
+      "value": "keep_row_scrub_name",
+      "why": "[rule 4] The description holds the actor's first name. The row is kept as history and the name is scrubbed on an erasure request under the DPDP design. The columns are declared in the core privacy provider.",
+      "source": "mapping doc section 8 lines 582, 587; ADR-032 line 534",
+      "status": "accepted"
+    },
+    "exams.multi_quiz": {
+      "value": "per_quiz",
+      "why": "[proposed] A multi-quiz exam course imports as one exam per quiz (flagged), not only the final quiz.",
+      "source": "mapping doc section 23 line 2802",
+      "status": "accepted"
+    },
+    "exams.forum_pseudocourses": {
+      "value": "exclude_from_catalog",
+      "why": "[rule 3] No recommendation. BizLMS listed only courses with open_coursetype 0 or NULL, so exam and forum pseudo-courses were not in its course list. Forum pseudo-courses stay ordinary courses and are kept out of the catalog.",
+      "source": "mapping doc section 9 lines 608, 644-646, 662",
+      "status": "accepted"
+    },
+    "users.transcript_status_map": {
+      "value": {
+        "normalise": "lower(trim(status_raw))",
+        "completed": [
+          "completed",
+          "complete",
+          "passed",
+          "pass",
+          "attended",
+          "yes"
+        ],
+        "inprogress": [
+          "in progress",
+          "inprogress",
+          "started",
+          "registered",
+          "enrolled"
+        ],
+        "failed": [
+          "failed",
+          "fail",
+          "not passed"
+        ],
+        "notstarted": [
+          "not started",
+          "pending",
+          "assigned"
+        ],
+        "cancelled": [
+          "cancelled",
+          "withdrawn",
+          "no show",
+          "absent"
+        ],
+        "otherwise": "unknown"
+      },
+      "why": "[proposed] The normalisation list in section 10 is approved. status_raw is always kept and shown. Applies only if production has transcript rows.",
+      "source": "mapping doc section 10 lines 792-796, 870, 2794",
+      "status": "accepted"
+    },
+    "users.admin_runs_tenant": {
+      "value": "zero",
+      "why": "[proposed] HRMS runs uploaded by a cross-tenant admin get tenant 0 (visible to cross-tenant callers only).",
+      "source": "mapping doc section 23 line 2795",
+      "status": "accepted"
+    },
+    "users.uniquelogins": {
+      "value": "import",
+      "why": "[rule 1] The documents leave it open (depends on logstore retention). Importing keeps the history. It is read only by an optional admin report (active days).",
+      "source": "mapping doc section 23 line 2796; section 10 lines 873-874",
+      "status": "accepted"
+    },
+    "users.transcript_counts_toward_totals": {
+      "value": false,
+      "why": "[proposed] Imported transcript rows do not count toward completion totals. They are shown separately as earlier training records (imported).",
+      "source": "mapping doc section 10 lines 832-834, 871",
+      "status": "accepted"
+    },
+    "users.erasure_treatment": {
+      "value": "anonymise",
+      "why": "[rule 4] No recommendation between anonymise and delete. Imported transcript and sync-error rows are kept and anonymised on an erasure request, as the DPDP design keeps records and anonymises actor columns.",
+      "source": "mapping doc section 10 line 875; ADR-032 line 534",
+      "status": "accepted"
+    },
+    "users.userdata_reconciliation": {
+      "value": "user_open_path_authoritative",
+      "why": "[proposed] local_userdata is a derived mirror of user.open_path and is declined. Mismatches are reported. Nothing is ever written back to user.open_path.",
+      "source": "mapping doc section 10 lines 687, 806, 876",
+      "status": "accepted"
+    },
+    "users.positions_domains_lookup_import": {
+      "value": true,
+      "why": "[proposed] Import local_positions and local_domains as lookup tables with ids kept, plus the profile label fix (gap G4). Preflight checks their columns first.",
+      "source": "mapping doc section 10 line 877; section 21 G4 line 2721",
+      "status": "accepted"
+    },
+    "notifications.import_bodies": {
+      "value": true,
+      "why": "[proposed] Email bodies are imported with credential redaction. Bodies and subjects of password-bearing rows are not imported.",
+      "source": "mapping doc section 23 line 2797; ADR-032 lines 529-530",
+      "status": "accepted"
+    },
+    "notifications.queue_status": {
+      "value": "not_sent",
+      "why": "[proposed] Status 0, NULL and any other value import as not_sent with a note. Never failed or suppressed. The queue is never sent.",
+      "source": "mapping doc section 11 lines 950-958, 1020",
+      "status": "accepted"
+    },
+    "notifications.keep_sender": {
+      "value": true,
+      "why": "[proposed] sender_userid is imported as in the column map and declared in the privacy provider (erasing a sender anonymises it).",
+      "source": "mapping doc section 11 lines 902, 992-993, 1022",
+      "status": "accepted"
+    },
+    "notifications.retention": {
+      "value": "keep_no_purge",
+      "why": "[rule 1] No retention recommendation in the documents. Imported rows are kept and not purged. A retention period comes with the later legacy-table privacy ADR.",
+      "source": "mapping doc section 11 line 1022",
+      "status": "accepted"
+    },
+    "notifications.deleted_recipient_sent": {
+      "value": "sent_with_note",
+      "why": "[proposed] Rows BizLMS marked sent for a deleted recipient stay sent, with a note that no delivery happened.",
+      "source": "mapping doc section 23 line 2798",
+      "status": "accepted"
+    },
+    "recompletion.rule_tenant": {
+      "value": "global",
+      "why": "[proposed] Imported rules keep costcenterid 0 (legacy meaning: every completer). Only cross-tenant callers see them.",
+      "source": "mapping doc section 23 line 2782",
+      "status": "accepted"
+    },
+    "recompletion.preview_attempts": {
+      "value": "skip",
+      "why": "[proposed] Teacher-preview quiz attempts are not imported. They stay in local_recompletion_qa.",
+      "source": "mapping doc section 23 line 2783",
+      "status": "accepted"
+    },
+    "recompletion.enable_imported_rules": {
+      "value": false,
+      "why": "[instruction] Imported recompletion rules are disabled (enabled = 0 always) and the daily run is gated behind a default-OFF flag. Enabling any rule needs the engine parity fixes first and is a separate decision.",
+      "source": "mapping doc section 12 lines 1057, 1166-1171, 1208",
+      "status": "accepted"
+    },
+    "recompletion.rebuild_legacy_behaviours": {
+      "value": "none_at_cutover",
+      "why": "[rule 2] No recommendation. Because every imported rule stays disabled, nothing is rebuilt at cutover. Custom email, extra attempts and LTI reset are kept in legacy_config for the day a rule is enabled.",
+      "source": "mapping doc section 12 lines 1071-1073, 1209",
+      "status": "accepted"
+    },
+    "recompletion.learner_history_surface": {
+      "value": "recompletion_evidence_view",
+      "why": "[proposed] Past cycles are shown in the recompletion plugin's history page and a new evidence view, behind a default-OFF flag.",
+      "source": "mapping doc section 12 lines 1159-1164, 1211",
+      "status": "accepted"
+    },
+    "recompletion.archive_shape": {
+      "value": "generic_json_payload",
+      "why": "[proposed] One generic archive table with a JSON payload, not mirror tables.",
+      "source": "mapping doc section 12 line 1212",
+      "status": "accepted"
+    },
+    "recompletion.engine_archive_before_delete": {
+      "value": true,
+      "why": "[proposed] The engine parity list requires archiving into the same table before anything is deleted. This is needed before anyone enables a rule.",
+      "source": "mapping doc section 12 lines 1166-1169, 1214",
+      "status": "accepted"
+    },
+    "recompletion.deploy_upstream_plugin": {
+      "value": false,
+      "why": "[proposed] Confirmed out of scope: BizLMS-era plugins, including local_recompletion, are not deployed on 5.2. local_recompletion is never uninstalled before sign-off.",
+      "source": "mapping doc section 12 lines 1138-1139, 1215; ADR-032 line 621",
+      "status": "accepted"
+    },
+    "cart.synthesize_ledger": {
+      "value": false,
+      "why": "[instruction] No synthesized rows. The ledger is imported 1:1 from local_biz_cart_ledger only. Daily sums will not show revenue for paid lines that BizLMS never wrote a ledger row for.",
+      "source": "mapping doc section 13 lines 1311-1314, 1415, 2779",
+      "status": "accepted"
+    },
+    "cart.order_tenant": {
+      "value": "buyer",
+      "why": "[proposed] An order's tenant is the buyer's current root, not the course's.",
+      "source": "mapping doc section 23 line 2780",
+      "status": "accepted"
+    },
+    "cart.abandoned": {
+      "value": "admin_only",
+      "why": "[proposed] Abandoned checkouts import as admin-only orders. Non-admin owners do not see them.",
+      "source": "mapping doc section 23 line 2781",
+      "status": "accepted"
+    },
+    "cart.imported_visibility": {
+      "value": "admin_only",
+      "why": "[instruction] Orders, ledger, credits and invoice references import as frozen, admin-only history. The current list_orders reader lets an owner see their own orders, so the cart reader must also hide legacy_source rows from non-admin owners.",
+      "source": "owner instruction 2026-09-30; mapping doc section 13 lines 1369, 1380-1381",
+      "status": "accepted"
+    },
+    "cart.admin_refund_imported_orders": {
+      "value": false,
+      "why": "[proposed] Admins cannot refund, mark paid or mark failed imported orders (mark_paid, mark_failed and refund refuse legacy_source rows).",
+      "source": "mapping doc section 13 lines 1367, 1419",
+      "status": "accepted"
+    },
+    "cart.credit_balances": {
+      "value": "frozen_pending_finance",
+      "why": "[instruction] Credit transactions and the derived balance import as frozen, admin-only history. Whether to honour, pay out or write off the balances, and who owns the liability, is a finance decision. Nothing acts on a balance until finance answers.",
+      "source": "mapping doc section 13 line 1418",
+      "status": "finance-confirm"
+    },
+    "cart.erpnext_invoices_legal": {
+      "value": "reference_only_pending_finance",
+      "why": "[instruction] Invoices import with status legacy_external and show as 'Issued in ERPNext as <number>' to admins. No link-out to ERPNext and no new invoice numbers until finance confirms whether the ERPNext invoices are the legal tax invoices.",
+      "source": "mapping doc section 13 lines 1321, 1374-1375, 1420",
+      "status": "finance-confirm"
+    },
+    "cart.cash_drawer_rows_without_order": {
+      "value": "import_admin_only",
+      "why": "[rule 1] No recommendation. Cash-drawer ledger rows with historyid 0 import with historyid 0 and, being unscoped, are visible to cross-tenant admins only.",
+      "source": "mapping doc section 13 lines 1296, 1339, 1422",
+      "status": "accepted"
+    },
+    "cart.stale_task_adhoc_rows": {
+      "value": "do_not_delete_here",
+      "why": "[rule 1] No recommendation. The importer never deletes any row. Deleting stale local_biz_cart rows from task_adhoc is a separate [CONFIRM] delete under CLAUDE.md that this file neither approves nor performs. Cron stays off for the import window.",
+      "source": "mapping doc section 13 line 1423; ADR-032 lines 464-466",
+      "status": "accepted"
+    },
+    "skills.catalogue_scope": {
+      "value": "shared",
+      "why": "[proposed] One shared skills catalogue (the ADR-031 status quo). Catalogue rows that carry a valid legacy path keep it.",
+      "source": "mapping doc section 23 line 2788; section 14 lines 1502-1504, 1586",
+      "status": "accepted"
+    },
+    "skills.merge_categories": {
+      "value": "exact_name",
+      "why": "[proposed] Categories merge into a seeded category only on an exact case-insensitive name match. Skills are never auto-merged.",
+      "source": "mapping doc section 23 line 2789",
+      "status": "accepted"
+    },
+    "skills.seed_rows": {
+      "value": "keep",
+      "why": "[rule 1] No recommendation. The invented 48-skill seed on production is not deleted. Deleting seed rows is a destructive [CONFIRM] action that this file does not approve. Imported skills are never merged into it.",
+      "source": "mapping doc section 14 lines 1441, 1587-1588",
+      "status": "accepted"
+    },
+    "skills.level_proficiency": {
+      "value": {
+        "method": "name_heuristic",
+        "rules": {
+          "awareness": 1,
+          "basic": 2,
+          "beginner": 2,
+          "foundation": 2,
+          "intermediate": 3,
+          "advanced": 4,
+          "expert": 5
+        },
+        "default": 1,
+        "csv": null
+      },
+      "why": "[proposed] The name heuristic from section 14 is approved as the rule. The concrete level-id to 1..5 CSV must be generated from the rehearsal preflight by this rule and written into csv before the skills feature can run. The level ids were not available when this file was drafted, so csv is null and the feature stays blocked until it is filled.",
+      "source": "mapping doc section 14 lines 1455-1456, 1589; section 23 line 2790",
+      "status": "accepted"
+    },
+    "skills.source_label": {
+      "value": "import",
+      "why": "[proposed] Migrated user_skills rows carry source 'import', not 'course'.",
+      "source": "mapping doc section 23 line 2791",
+      "status": "accepted"
+    },
+    "skills.history_from_archive": {
+      "value": true,
+      "why": "[rule 1] The documents leave it open. Skill history is also granted from the recompletion archive, so completions that were later reset are not lost. Levels are never downgraded.",
+      "source": "mapping doc section 23 line 2792; section 14 lines 1443, 1591",
+      "status": "accepted"
+    },
+    "skills.skillmatrix": {
+      "value": "decline",
+      "why": "[proposed] local_skillmatrix is not imported. It has no writer and BizLMS showed it only when a plugin directory that is absent from the snapshot existed.",
+      "source": "mapping doc section 14 lines 1545-1553, 1592; section 23 line 2793",
+      "status": "accepted"
+    },
+    "skills.interests": {
+      "value": "reader_behind_flag",
+      "why": "[proposed] Interests are imported and a reader (profile chips and the skills-recs rail) is built behind the existing default-OFF flag sentientia.dashboard.skillsrecs.enabled, rather than imported for the record only.",
+      "source": "mapping doc section 14 lines 1539, 1593",
+      "status": "accepted"
+    },
+    "classroom.status_new_hold": {
+      "value": "add_5_6",
+      "why": "[proposed] Add draft (5) and on-hold (6) classroom states rather than collapsing them to active. Codes 3 and 4 are not reused.",
+      "source": "mapping doc section 23 line 2767; section 15 lines 1729-1732",
+      "status": "accepted"
+    },
+    "classroom.waitlist_closed": {
+      "value": "removed",
+      "why": "[proposed] Waiting rows on completed or cancelled classrooms import as removed ('classroom closed before promotion').",
+      "source": "mapping doc section 23 line 2768; section 15 lines 1738-1739",
+      "status": "accepted"
+    },
+    "classroom.waitlist_open": {
+      "value": "waiting_after_guard_else_removed",
+      "why": "[rule 2] Waiting rows on active, draft or on-hold classrooms import as waiting only once the auto_promote status guard (classroom code fix 6) has shipped. Until then they import as removed, so nothing can be auto-promoted into an enrolment.",
+      "source": "mapping doc section 15 lines 1739-1741, 1781",
+      "status": "accepted"
+    },
+    "classroom.pathless": {
+      "value": "cross_tenant_only",
+      "why": "[proposed] A classroom whose path cannot be resolved imports with no path, visible to cross-tenant callers only, not assigned by cost centre or creator.",
+      "source": "mapping doc section 23 line 2769",
+      "status": "accepted"
+    },
+    "classroom.costs_as_columns": {
+      "value": false,
+      "why": "[proposed] Classroom cost columns (food, travel, other) stay in the legacy table.",
+      "source": "mapping doc section 15 lines 1658, 1849",
+      "status": "accepted"
+    },
+    "classroom.qr_checkin_requires_roster": {
+      "value": true,
+      "why": "[proposed] The fixed QR check-in loads the Sentientia session, requires a roster row, then marks attendance. A time window is not decided here.",
+      "source": "mapping doc section 15 lines 1770-1773, 1852",
+      "status": "accepted"
+    },
+    "program.completed_without_date": {
+      "value": "completed_flagged",
+      "why": "[proposed] A program user with completion_status 1 and no completion date imports as Completed, with a fallback date and a flag.",
+      "source": "mapping doc section 23 line 2770",
+      "status": "accepted"
+    },
+    "program.inactive": {
+      "value": "archived",
+      "why": "[proposed] Programs with visible = 0 or status 2 import as Archived, never Draft.",
+      "source": "mapping doc section 23 line 2771; section 16 lines 1965-1968",
+      "status": "accepted"
+    },
+    "program.inactive_history_to_learners": {
+      "value": false,
+      "why": "[rule 3] No recommendation. visible = 0 was BizLMS's off switch, so archived programs are not shown to learners. Admins can read them.",
+      "source": "mapping doc section 16 lines 1965-1967, 2044",
+      "status": "accepted"
+    },
+    "program.empty_levels": {
+      "value": "skip",
+      "why": "[proposed] Empty auto-created levels are skipped (reason empty_level) and removed from the required set.",
+      "source": "mapping doc section 23 line 2772",
+      "status": "accepted"
+    },
+    "program.deleted_users": {
+      "value": "import",
+      "why": "[proposed] Enrolments of deleted users are imported for audit. Readers hide them.",
+      "source": "mapping doc section 23 line 2773",
+      "status": "accepted"
+    },
+    "program.pathless": {
+      "value": "creator_root",
+      "why": "[proposed] A program with no usable path takes the root of its creator's path. If that also fails it imports with no path and is reported.",
+      "source": "mapping doc section 23 line 2774; section 16 lines 1958-1960",
+      "status": "accepted"
+    },
+    "program.bk_tables": {
+      "value": "archive_only",
+      "why": "[rule 1] No recommendation. Non-empty completions_bk, level_comp_bk and test_score tables stay archived in the legacy tables and keep the needs-owner blocker. There is no visible 'previous completion' history, because BizLMS never wrote or showed one (the writers are commented out).",
+      "source": "mapping doc section 16 lines 1881, 2048",
+      "status": "accepted"
+    },
+    "learningplan.not_completed": {
+      "value": "derive_in_progress",
+      "why": "[proposed] Non-completed learners are In progress when any course of the path is completed for them, otherwise Enrolled.",
+      "source": "mapping doc section 23 line 2775",
+      "status": "accepted"
+    },
+    "learningplan.enforce_rules": {
+      "value": "store_only",
+      "why": "[rule 2] No recommendation. approvalreqd, selfenrol and sequential are stored and not enforced by the import. Enforcing any of them later is a separate flagged decision.",
+      "source": "mapping doc section 17 lines 2085-2087, 2206",
+      "status": "accepted"
+    },
+    "learningplan.dates_as": {
+      "value": "enrolment_window",
+      "why": "[proposed] BizLMS start and end dates map to Sentientia's own dates (its enrolment window). BizLMS showed them for display only, so check the effect on self-enrolment at rehearsal.",
+      "source": "mapping doc section 17 lines 2080, 2207",
+      "status": "accepted"
+    },
+    "learningplan.history_on_archived_paths": {
+      "value": "hidden_from_learners",
+      "why": "[rule 3] No recommendation. BizLMS hid visible = 0 plans from learners, so completed history on archived paths is for admins only.",
+      "source": "mapping doc section 17 line 2208",
+      "status": "accepted"
+    },
+    "learningplan.tenant_fallback_order": {
+      "value": [
+        "costcenter_column_when_valid",
+        "root_shared_by_all_enrolled_users",
+        "creator_root",
+        "null_path_reported"
+      ],
+      "why": "[proposed] The fallback order for plans with an empty path is accepted as written.",
+      "source": "mapping doc section 17 lines 2125-2128, 2209",
+      "status": "accepted"
+    },
+    "evaluation.open_forms": {
+      "value": "archived",
+      "why": "[proposed] Still-open forms import as ARCHIVED and manual, so no observer can invite anyone and nobody can answer by accident.",
+      "source": "mapping doc section 23 line 2776",
+      "status": "accepted"
+    },
+    "evaluation.multichoicerated": {
+      "value": "multichoice",
+      "why": "[proposed] Weighted multichoice questions import as plain multichoice. The weights stay in the legacy tables.",
+      "source": "mapping doc section 23 line 2777",
+      "status": "accepted"
+    },
+    "evaluation.sp_anonymous_subject": {
+      "value": "hidden",
+      "why": "[proposed] Supervisor-evaluation forms that were anonymous hide the subject too.",
+      "source": "mapping doc section 23 line 2778",
+      "status": "accepted"
+    },
+    "evaluation.legacy_anonymous_linkage": {
+      "value": "untouched_pending_legacy_privacy_adr",
+      "why": "[instruction] Anonymous answers import anonymous (userid 0, no subject). The legacy tables still link them to people and are not altered or dropped here. That belongs to the separate legacy-table privacy ADR.",
+      "source": "mapping doc section 18 lines 2418-2419; ADR-032 lines 531-534",
+      "status": "accepted"
+    },
+    "evaluation.trainer_feedback_form_names": {
+      "value": "keep_bizlms_name",
+      "why": "[rule 3] No recommendation. Each trainer feedback form keeps its BizLMS name. The trainer link stays in local_classroom_trainers.feedback_id, so nothing is lost and no trainer name is added to an anonymous form.",
+      "source": "mapping doc section 18 line 2420",
+      "status": "accepted"
+    },
+    "evaluation.imported_forms_read_only": {
+      "value": true,
+      "why": "[rule 1] The documents call this an owner decision. Imported forms are read-only: delete and retype of answered questions are refused on them.",
+      "source": "mapping doc section 18 lines 2379-2381, 2421",
+      "status": "accepted"
+    },
+    "request.pending": {
+      "value": "actionable",
+      "why": "[proposed] Legacy pending course and path requests stay actionable in the approvals inbox (a person must still decide, and auto-expire and escalation skip imported rows). Classroom, program and certification requests are always read-only. Rule 2 would have closed them as history, but its own exception applies because the document says otherwise.",
+      "source": "mapping doc section 23 line 2784; section 19 lines 2525-2526, 2563",
+      "status": "accepted"
+    },
+    "request.pending_classroom_program": {
+      "value": "history_only",
+      "why": "[proposed] Pending classroom and program requests stay history. rm::decide refuses item types other than course and path.",
+      "source": "mapping doc section 19 lines 2521-2524, 2564",
+      "status": "accepted"
+    },
+    "request.certification": {
+      "value": "unmapped",
+      "why": "[proposed] Certification requests stay unmapped (item_type certification, legacy id kept) until an owner entity exists (gap G3).",
+      "source": "mapping doc section 23 line 2785; section 21 G3",
+      "status": "accepted"
+    },
+    "request.decided_route": {
+      "value": "admin",
+      "why": "[proposed] Decided legacy rows carry route 'admin', not a new 'legacy' value.",
+      "source": "mapping doc section 23 line 2786",
+      "status": "accepted"
+    },
+    "request.hidden_rows": {
+      "value": "show",
+      "why": "[proposed] Rows BizLMS hid (deleted components, deleted or suspended requesters) are shown to admins in Sentientia. Rule 3 would have filtered them, but the document proposes show.",
+      "source": "mapping doc section 23 line 2787; section 19 line 2567",
+      "status": "accepted"
+    },
+    "request.tenant_basis": {
+      "value": "requester_current_root",
+      "why": "[proposed] A request's tenant is the requester's current root. The source stores no tenant.",
+      "source": "mapping doc section 19 lines 2497-2502, 2568",
+      "status": "accepted"
+    },
+    "request.pending_approver": {
+      "value": "sentientia_routing",
+      "why": "[proposed] Legacy pending approvers come from Sentientia routing (supervisor, manager, default approver), not a named L&D admin.",
+      "source": "mapping doc section 19 lines 2459-2463, 2569",
+      "status": "accepted"
+    },
+    "request.comments": {
+      "value": "fold_into_decision_note",
+      "why": "[proposed] Request comments are folded into decision_note (the table is expected to be empty). A separate attributable comment table is built only if comments exist and Nitin asks for it.",
+      "source": "mapping doc section 19 lines 2481-2484, 2513-2514",
+      "status": "accepted"
+    },
+    "ratings.invalid_rows": {
+      "value": "skip",
+      "why": "[proposed] Invalid rating rows (NULL, 0, out of range, unknown area, missing item or user) are skipped and reported. They stay in the legacy table.",
+      "source": "mapping doc section 23 line 2799",
+      "status": "accepted"
+    },
+    "ratings.blank_reviews": {
+      "value": "import_hidden",
+      "why": "[proposed] Blank reviews import but are hidden by the reader.",
+      "source": "mapping doc section 23 line 2800",
+      "status": "accepted"
+    },
+    "ratings.deleted_users": {
+      "value": "keep",
+      "why": "[proposed] Ratings, reviews and reactions of deleted users are kept.",
+      "source": "mapping doc section 23 line 2801",
+      "status": "accepted"
+    },
+    "ratings.show_dislike_counts": {
+      "value": true,
+      "why": "[rule 3] No recommendation. BizLMS showed a dislike count beside the thumbs-down (local/ratings/lib.php lines 56-60), so the reader shows like and dislike counts (status 1 and 2 only), behind the default-OFF reaction flag.",
+      "source": "mapping doc section 20 lines 2663-2664, 2706; BizLMS local/ratings/lib.php lines 43-60",
+      "status": "accepted"
+    },
+    "ratings.certification_area": {
+      "value": "skip_and_report",
+      "why": "[proposed] Ratings under the certification area, and any unknown area, are skipped and reported (reason unknown_area) until a target entity exists.",
+      "source": "mapping doc section 20 lines 2597-2598, 2701",
+      "status": "accepted"
+    },
+    "gaps.other_tag_areas": {
+      "value": "left_in_place",
+      "why": "[proposed] Classroom, learning plan and evaluation tag instances are counted in preflight and left where they are. No BizLMS plugin is uninstalled (ADR decision 2), so they are not deleted.",
+      "source": "mapping doc section 21 G5 line 2722; section 7 lines 536-538",
+      "status": "accepted"
+    },
+    "gaps.classroom_program_skill_tags": {
+      "value": "stay_in_legacy_table",
+      "why": "[proposed] Skill and level tags on classrooms and programs stay in the legacy tables.",
+      "source": "mapping doc section 21 G8 line 2725",
+      "status": "accepted"
+    },
+    "gap.orphan_enrol_instances": {
+      "value": "convert_to_manual",
+      "why": "Without the BizLMS enrol_classroom/enrol_program/enrol_learningplan code the enrolments on those instances stop granting course access. Convert each such user_enrolments row to a manual enrolment in the same course, keeping status, timestart and timeend, and record the original instance in the legacy map. Verify at the Stage B rehearsal that every affected learner keeps access.",
+      "source": "ADR-032 open decision (gap G6); lead recommendation, owner instruction 2026-09-30",
+      "status": "accepted"
+    }
+  }
+}

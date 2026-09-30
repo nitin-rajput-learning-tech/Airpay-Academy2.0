@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/sentientia_platform/db" VERSION="20260520"
-       COMMENT="Airpay Core — feature flags + audit + shared infrastructure tables">
+<XMLDB PATH="local/sentientia_platform/db" VERSION="20260611"
+       COMMENT="Sentientia Platform — feature flags + audit + customer brand + ADR-017 user-type/profile tables">
   <TABLES>
 
     <TABLE NAME="local_sentientia_feature_flags"
@@ -128,6 +128,262 @@
         <KEY NAME="primary"      TYPE="primary" FIELDS="id"/>
         <KEY NAME="uk_customer"  TYPE="unique"  FIELDS="customerid"/>
       </KEYS>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_user_type"
+           COMMENT="ADR-017 — polymorphic user-type classification, 1:1 with
+                    mdl_user. Written once at provisioning (immutable per Q1
+                    ruling 2026-05-28); user_type_factory reads it on every
+                    type-aware surface. Fresh-install parity added 2026-06-11
+                    (D-prod): previously created only by the 2026052801
+                    upgrade step, so clean installs (sandbox, customer-N,
+                    PHPUnit) lacked it and the factory threw. Definitions
+                    mirror db/upgrade.php exactly; the upgrade step's
+                    table_exists guards make the two paths converge.">
+      <FIELDS>
+        <FIELD NAME="id"                  TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"              TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="user_type"           TYPE="char" LENGTH="20" NOTNULL="true"
+               COMMENT="employee | consumer | partner_employee | operator"/>
+        <FIELD NAME="provisioning_source" TYPE="char" LENGTH="40" NOTNULL="true" DEFAULT="unknown"
+               COMMENT="signup_public | hrms_sync | manual_admin | invite_paid | backfill_cli"/>
+        <FIELD NAME="provisioned_at"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated"         TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"        TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"   TYPE="primary" FIELDS="id"/>
+        <KEY NAME="uk_userid" TYPE="unique"  FIELDS="userid"/>
+        <KEY NAME="fk_userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_type" UNIQUE="false" FIELDS="user_type"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_employee_profile"
+           COMMENT="ADR-017 — employee-only profile shape (Airpay-customer
+                    staff). Fresh-install parity 2026-06-11; mirrors
+                    db/upgrade.php 2026052801.">
+      <FIELDS>
+        <FIELD NAME="id"               TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"           TYPE="int"  LENGTH="10"  NOTNULL="true"/>
+        <FIELD NAME="employee_id"      TYPE="char" LENGTH="40"  NOTNULL="false"/>
+        <FIELD NAME="department"       TYPE="char" LENGTH="80"  NOTNULL="false"/>
+        <FIELD NAME="job_title"        TYPE="char" LENGTH="80"  NOTNULL="false"/>
+        <FIELD NAME="manager_userid"   TYPE="int"  LENGTH="10"  NOTNULL="false"
+               COMMENT="FK to mdl_user.id — the supervisor"/>
+        <FIELD NAME="hire_date"        TYPE="int"  LENGTH="10"  NOTNULL="false"/>
+        <FIELD NAME="cost_center_path" TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="cached snapshot of mdl_user.open_path at provisioning"/>
+        <FIELD NAME="timecreated"      TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"    TYPE="primary" FIELDS="id"/>
+        <KEY NAME="uk_userid"  TYPE="unique"  FIELDS="userid"/>
+        <KEY NAME="fk_userid"  TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="fk_manager" TYPE="foreign" FIELDS="manager_userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_dept" UNIQUE="false" FIELDS="department"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_consumer_profile"
+           COMMENT="ADR-017 — consumer-only profile shape (public-signup
+                    learners). consent_leaderboard defaults OFF (DPDP).
+                    Fresh-install parity 2026-06-11; mirrors db/upgrade.php
+                    2026052801.">
+      <FIELDS>
+        <FIELD NAME="id"                  TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"              TYPE="int"  LENGTH="10"  NOTNULL="true"/>
+        <FIELD NAME="interests_json"      TYPE="text"              NOTNULL="false"/>
+        <FIELD NAME="weekly_goal"         TYPE="int"  LENGTH="2"   NOTNULL="false"/>
+        <FIELD NAME="referral_source"     TYPE="char" LENGTH="40"  NOTNULL="false"/>
+        <FIELD NAME="consent_marketing"   TYPE="int"  LENGTH="1"   NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="consent_leaderboard" TYPE="int"  LENGTH="1"   NOTNULL="true" DEFAULT="0"
+               COMMENT="opt-in to leaderboard visibility; defaults OFF (DPDP)"/>
+        <FIELD NAME="payment_history_url" TYPE="char" LENGTH="255" NOTNULL="false"/>
+        <FIELD NAME="timecreated"         TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"        TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"   TYPE="primary" FIELDS="id"/>
+        <KEY NAME="uk_userid" TYPE="unique"  FIELDS="userid"/>
+        <KEY NAME="fk_userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_partner_employee_profile"
+           COMMENT="ADR-017 — B2B partner-organisation staff profile shape.
+                    Fresh-install parity 2026-06-11; mirrors db/upgrade.php
+                    2026052801.">
+      <FIELDS>
+        <FIELD NAME="id"                     TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"                 TYPE="int"  LENGTH="10"  NOTNULL="true"/>
+        <FIELD NAME="customer_id"            TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="partner-org id in the customer registry"/>
+        <FIELD NAME="partner_employee_id"    TYPE="char" LENGTH="40"  NOTNULL="false"/>
+        <FIELD NAME="partner_department"     TYPE="char" LENGTH="80"  NOTNULL="false"/>
+        <FIELD NAME="partner_job_title"      TYPE="char" LENGTH="80"  NOTNULL="false"/>
+        <FIELD NAME="partner_manager_userid" TYPE="int"  LENGTH="10"  NOTNULL="false"/>
+        <FIELD NAME="partner_hire_date"      TYPE="int"  LENGTH="10"  NOTNULL="false"/>
+        <FIELD NAME="cost_center_path"       TYPE="char" LENGTH="255" NOTNULL="false"/>
+        <FIELD NAME="timecreated"            TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"           TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"    TYPE="primary" FIELDS="id"/>
+        <KEY NAME="uk_userid"  TYPE="unique"  FIELDS="userid"/>
+        <KEY NAME="fk_userid"  TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="fk_manager" TYPE="foreign" FIELDS="partner_manager_userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_customer" UNIQUE="false" FIELDS="customer_id"
+               COMMENT="every partner-scoped query hits this"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_operator_profile"
+           COMMENT="ADR-017 — platform-operator profile shape (Site Admins,
+                    Sentientia-side staff). Fresh-install parity 2026-06-11;
+                    mirrors db/upgrade.php 2026052801.">
+      <FIELDS>
+        <FIELD NAME="id"                     TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"                 TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="operator_role"          TYPE="char" LENGTH="40" NOTNULL="false"
+               COMMENT="siteadmin | support | sentientia_staff | dpdp_dpo"/>
+        <FIELD NAME="contact_phone"          TYPE="char" LENGTH="40" NOTNULL="false"/>
+        <FIELD NAME="oncall_for_customer_id" TYPE="int"  LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="timecreated"            TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"           TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"   TYPE="primary" FIELDS="id"/>
+        <KEY NAME="uk_userid" TYPE="unique"  FIELDS="userid"/>
+        <KEY NAME="fk_userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+
+    <!-- ADR-032 (2026-09-30): BizLMS import framework. Three tables hold the
+         idempotence map, the run log and the per-step progress of the import.
+         None has a person column (see USER_COLUMNS in
+         tests/privacy_coverage_test.php); keep it that way: personal data lands
+         only in the feature target tables, which declare it in their own
+         privacy providers. -->
+    <TABLE NAME="local_sentientia_legacymap"
+           COMMENT="ADR-032 - one primary row per BizLMS source row (subkey empty) plus one row per fan-out sub-row. The unique key is the only idempotence key of the import. Holds ids and codes only, never names, emails or free text.">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="feature"     TYPE="char" LENGTH="40" NOTNULL="true"
+               COMMENT="Importer feature key, for example classroom"/>
+        <FIELD NAME="sourcetable" TYPE="char" LENGTH="64" NOTNULL="true"
+               COMMENT="Legacy table without prefix. A derived group source carries a hash prefix, for example #local_biz_cart_history.identifier"/>
+        <FIELD NAME="sourceid"    TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="Legacy row id; for a derived group the non-personal integer key of the group, never a user id"/>
+        <FIELD NAME="subkey"      TYPE="char" LENGTH="64" NOTNULL="true" DEFAULT=""
+               COMMENT="Empty for the primary row; otherwise a fan-out sub-key such as quiz:17"/>
+        <FIELD NAME="targettable" TYPE="char" LENGTH="64" NOTNULL="true" DEFAULT=""
+               COMMENT="Empty for archived and skipped rows (NOT NULL so a re-run cannot create a duplicate NULL key)"/>
+        <FIELD NAME="targetid"    TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="Target row; for merged and folded rows the surviving target row"/>
+        <FIELD NAME="outcome"     TYPE="char" LENGTH="16" NOTNULL="true"
+               COMMENT="imported, adopted, merged, folded, archived or skipped"/>
+        <FIELD NAME="reason"      TYPE="char" LENGTH="40" NOTNULL="false"
+               COMMENT="Code from the importer reason vocabulary"/>
+        <FIELD NAME="detail"      TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="Codes only: lower-case words joined by colons, no ids, names or free text"/>
+        <FIELD NAME="runid"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="local_sentientia_legacyrun.id that wrote the row"/>
+        <FIELD NAME="timecreated" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="uk_src"  TYPE="unique"  FIELDS="sourcetable, sourceid, subkey"
+             COMMENT="Deliberately omits targettable so one source row has exactly one primary map row and the database enforces it"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_target"          UNIQUE="false" FIELDS="targettable, targetid"
+               COMMENT="Reverse lookup and the provenance guard"/>
+        <INDEX NAME="ix_feature_outcome" UNIQUE="false" FIELDS="feature, outcome, reason"
+               COMMENT="Accounting and reports per feature"/>
+        <INDEX NAME="ix_feature_table"   UNIQUE="false" FIELDS="feature, targettable"
+               COMMENT="Recompute steps and purge walk the rows a feature imported into one target table in id order"/>
+        <INDEX NAME="ix_runid"           UNIQUE="false" FIELDS="runid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_legacyrun"
+           COMMENT="ADR-032 - one row per import run (apply or purge). No operator user id is stored.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="runmode"       TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="apply"
+               COMMENT="apply or purge"/>
+        <FIELD NAME="status"        TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="running"
+               COMMENT="running, complete, failed or aborted"/>
+        <FIELD NAME="features"      TYPE="text" NOTNULL="false"
+               COMMENT="JSON list of the feature keys in the run"/>
+        <FIELD NAME="decisionshash" TYPE="char" LENGTH="64" NOTNULL="false"
+               COMMENT="sha256 of the decisions file used"/>
+        <FIELD NAME="codehash"      TYPE="char" LENGTH="64" NOTNULL="false"
+               COMMENT="sha256 over the plugin versions involved"/>
+        <FIELD NAME="fingerprint"   TYPE="char" LENGTH="12" NOTNULL="true" DEFAULT=""
+               COMMENT="Install fingerprint that was confirmed for the run"/>
+        <FIELD NAME="host"          TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="pid"           TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timestarted"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="heartbeat"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timefinished"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_status" UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_legacystep"
+           COMMENT="ADR-032 - progress and accounting of one step of one run. The error column holds a message only, never row data.">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="runid"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="feature"     TYPE="char" LENGTH="40" NOTNULL="true"/>
+        <FIELD NAME="stepkey"     TYPE="char" LENGTH="64" NOTNULL="true"
+               COMMENT="Step key, for example classroom.attendance"/>
+        <FIELD NAME="sourcetable" TYPE="char" LENGTH="64" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="status"      TYPE="char" LENGTH="16" NOTNULL="true" DEFAULT="pending"
+               COMMENT="pending, running, done, failed or not_applicable"/>
+        <FIELD NAME="watermark"   TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="Resume point: last source id processed, or for a grouped step the minimum source id of the last group"/>
+        <FIELD NAME="srccount"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Source rows at step start (with the step filter)"/>
+        <FIELD NAME="srcmaxid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="srccrc"      TYPE="char" LENGTH="20" NOTNULL="false"
+               COMMENT="CRC over all source columns; null on engines without CRC32"/>
+        <FIELD NAME="processed"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="imported"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="adopted"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="merged"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="folded"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="archived"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="skipped"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="updated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Target rows changed by a recompute step"/>
+        <FIELD NAME="error"       TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="timestarted"  TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Heartbeat: a stale value on a running step shows a crashed run"/>
+        <FIELD NAME="timefinished" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"     TYPE="primary" FIELDS="id"/>
+        <KEY NAME="uk_run_step" TYPE="unique"  FIELDS="runid, stepkey"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_feature_status" UNIQUE="false" FIELDS="feature, status"/>
+      </INDEXES>
     </TABLE>
 
   </TABLES>
