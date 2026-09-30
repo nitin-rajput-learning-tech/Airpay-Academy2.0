@@ -65,6 +65,33 @@ manager index), sha256-verified, upgrade OK, WS smoke ERROR=0 (= baseline). Prob
    tables. After erasure all 8 were empty, the account was anonymised, suspended and deleted, and
    request 2 was honestly `completed`.
 
+**Decisions 2026-09-30 (Nitin: "do everything as recommended"):**
+1. **Hop 1 (4.1.2 → 4.5):** BizLMS plugin code stays OFF disk. The plugins show as "missing from disk"
+   and their tables are left untouched for the ADR-032 importers. Never uninstall them. Rehearse to
+   prove the core upgrade runs with them missing.
+2. **Product follow-ups from the ADR-031 reviews:**
+   - Per-tenant DPO panel: after go-live (the site admin handles privacy requests).
+   - Tenant-scoped notification rules: after go-live (the smart rules stay behind their default-OFF
+     flag).
+   - Learner-facing learning-path page: **required**, built in the import track, because imported
+     BizLMS learning plans must be visible to learners.
+3. **Team persona testing is done by Claude:**
+   - a full local Playwright persona-journey pass on the prod-data copy (`tools/visual-pass/`), then
+   - a UAT confirmation in Nitin's Chrome with VPN off (the site admin uses core "Log in as" to take
+     each persona; Claude never types a password).
+4. **DPDP:** challenge attempts stay erased on a right-to-erasure request. They are engagement data, not
+   compliance records, so erasing is the privacy-preserving default.
+5. **Housekeeping:**
+   - Removed 4 clean, fully merged worktrees (branches kept).
+   - Moved `moodle-enhancement/production-hotfix/` (the no-longer-used patch packs) to
+     `D:\Claude Local\Moodle Backup\archive\production-hotfix-2026-09-26\`.
+   - Kept 8 worktrees that still hold UNCOMMITTED changes: t01-author-caps 24 files,
+     i18n-dashboard-hi 5, wave2-n1-profile-access 17, wave2-n5-refusal-strings 172,
+     zeea-courses-scope 9, wt-debrand 2, and two on gap-integration with 1 each. Nitin: keep or
+     discard.
+6. **Model allocation to spare the weekly limits:** Sonnet builds; Opus designs (ADR-032) and runs the
+   adversarial reviews; long test runs are plain scripts, with no model tokens while they run.
+
 **Still pending:**
 - **VPN off:** Nitin's real-Chrome check (service worker gone, "Browse Library" shown, a tenant admin has
   no Log in as and no core editadvanced, and the pencil opens the Sentientia modal).

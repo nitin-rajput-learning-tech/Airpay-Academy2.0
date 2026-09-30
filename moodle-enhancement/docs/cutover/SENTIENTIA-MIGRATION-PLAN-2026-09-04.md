@@ -34,11 +34,13 @@ What changes in this plan:
 - **Rehearse hop 1 on MySQL 8.4** (the target engine, PHP 8.3.6): the target RDS is 8.4 before hop 1
   runs, and 4.5's support for 8.4 is not proven here. If 4.5 refuses 8.4, hop 1 needs an 8.0 staging
   database and a dump/restore between the hops, which lengthens the window.
-- **Decide the BizLMS plugin code for hop 1.** Either (a) leave it off disk: the plugins show as
-  "missing from disk" and their tables stay untouched; or (b) deploy the 4.1.2-era BizLMS code
-  (Moodle 3.3/3.4 vintage) so its own upgrade steps run on PHP 8.3, with a risk of PHP fatals. Record
-  what the April import did (it reported 53 upgraded / 30 installed / 21 deleted plugins) and rehearse
-  the chosen option. Either way, the BizLMS tables have to still exist after both hops.
+- **BizLMS plugin code for hop 1: decided 2026-09-30 (Nitin, as recommended) — OFF disk.** The
+  plugins show as "missing from disk" and their tables stay untouched for the ADR-032 importers.
+  The alternative was to deploy the 4.1.2-era BizLMS code (Moodle 3.3/3.4 vintage) so its upgrade
+  steps run on PHP 8.3, which risked PHP fatals.
+  - Rehearse to prove `upgrade.php` runs with them missing.
+  - After both hops, count the BizLMS tables and rows against the LIVE baseline.
+  - Never uninstall a missing-from-disk plugin: that drops its tables.
 - **I-4 (RTO) = restore + both hops + repairs.** The 06-10 timing covers the second hop only.
 - **§6's "the only genuine data transform"** becomes the two core hops (4.1.2→4.5 carries two years of
   core upgrade steps that the 06-10 rehearsal never ran on this data; time them). Capture the parity
