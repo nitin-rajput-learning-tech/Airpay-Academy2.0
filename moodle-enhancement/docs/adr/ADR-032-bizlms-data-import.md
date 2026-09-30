@@ -697,19 +697,29 @@ does not watch it.
 **The declines are the answer for the archetype defaults.** BizLMS gives the manager archetype the grants
 of all 22 plugins, so the inventory on a restored database always lists them on roles 1 and 9 (the rows
 stay when the code goes). They are not "nothing to do": each is a reviewed decision, and the allow-list
-records it. `docs/cutover/bizlms-capability-allowlist.json` is the draft, unsigned: it declines the 22
-plugins by component and, for roles `manager` and `administrator` at system context,
+records it. `docs/cutover/bizlms-capability-allowlist.json` is **signed** (Nitin Rajput, 2026-09-30, from the
+Stage B inventory of the April 2026 production dump; see `docs/cutover/STAGE-B-CAPABILITY-INVENTORY-2026-09-30.md`).
+It declines the 33 missing plugins by component (the 22 BizLMS `local_*` plugins, eight BizLMS blocks and the
+three BizLMS enrol methods) and, for roles `manager` and `administrator` at system context,
 `local/costcenter:manage_ownorganization` and `:manage_owndepartments` by name, because their
-Sentientia equivalents have no archetype on purpose (ADR-031). It holds no grant. With it signed, the
-archetype-default inventory of roles 1 and 9 exits 0 and grants nothing; without the declines the same
-inventory exits 2 (both cases are tests).
+Sentientia equivalents have no archetype on purpose (ADR-031). Without the declines the archetype-default
+inventory of roles 1 and 9 exits 2 (a test).
 
-**What stays open for Nitin.** Only what the inventory shows beyond the archetype defaults:
-`local/classroom:manageclassroom` (no archetype, so it exists on production only as overrides, for
-example on trainers), and any of the ten mapped capabilities at a context other than system or with
-PREVENT or PROHIBIT. He adds one `grants` line, or one named `declined` line, per role and context. The
-draft records these as `open_decisions`. The signed file is checked in with its sha256 in the run log,
-and `tools/check-bizlms-fixture-copies.php` keeps the copy the tests read equal to it.
+**What Nitin decided (2026-09-30, "do everything as recommended").** The inventory of the April 2026 dump
+(520 role grants, all at system context) showed only two things beyond the archetype defaults, and both are
+decided in the signed file, which records them under `resolved_decisions` (`open_decisions` is empty):
+- `local/classroom:manageclassroom` is held by `administrator` (the Sentientia manager archetype already
+  carries the equivalent to it) and by `trainer`, the only non-archetype holder. **One grant:** `trainer`,
+  system context, `local/sentientia_classroom:manage`, ALLOW. BizLMS trainers manage classrooms on
+  production today, so dropping it would break current behaviour; their attendance stays limited to their
+  own sessions because the attendance rule keys on `local/sentientia_classroom:update` (merged 2026-09-30).
+- The only mapped capability with a PREVENT or PROHIBIT, or at a context other than system, is the trainer
+  PREVENT on `local/users:edit`. It is declined by name: trainers hold no `local/sentientia_users:edit`, so
+  the PREVENT has nothing to narrow.
+
+The file is tied to that dump. The Stage B rehearsal runs the inventory again on the real live backup and the
+file is re-signed if the result differs. The signed file is checked in with its sha256 in the run log, and
+`tools/check-bizlms-fixture-copies.php` keeps the copy the tests read equal to it.
 
 **Same release as the org importer.** `local_sentientia_org\accesslib::legacy_cap()` still honours the
 BizLMS grants in `can_manage_multi`, `can_manage`, `is_org_head`, `is_dept_head` and `can_manage_classroom`,
@@ -807,19 +817,21 @@ framework, CLI, tests, the copy scripts retired, the seed scripts guarded) are i
   (CLAUDE.md §5). Hard prerequisite for the classroom importer and for the Stage B baseline; not done in
   the review pass because it is a user-visible page.
 - The capability review (section "Capabilities") replaces the capability copy of the retired script; it
-  is built, and runs first in the cutover slice. Its allow-list (declines drafted, unsigned) needs
-  Nitin's signature and his decision on the classroom overrides before it can exit 0 on the real
-  inventory.
+  is built, and runs first in the cutover slice. Its allow-list is signed (2026-09-30) and exits 0 in check
+  mode on the rehearsal copy of the April 2026 dump with one grant (trainer, classroom manage); it is
+  re-checked against the real live backup at the Stage B rehearsal.
 
 **Stage B gates (each must close before an importer runs on the restored live copy).** They are all
 recorded above; this is the one list:
 1. `--group bizlms_import` passes on MySQL 8.4 and on MariaDB 10.11. None of the tests written in the
    review rounds (registry rules, event tripwire, sticky tripwire, permit, capability repair, report
    rebuild, subkey shape, core-write operations) has been run yet.
-2. The capability allow-list `docs/cutover/bizlms-capability-allowlist.json` is signed by Nitin with his
-   decision on `local/classroom:manageclassroom` overrides (and any mapped capability at a context other
-   than system, or with PREVENT or PROHIBIT), and `repair_bizlms_capabilities.php` exits 0 on the
-   restored database.
+2. The capability allow-list `docs/cutover/bizlms-capability-allowlist.json` is signed by Nitin (2026-09-30)
+   with his decisions on the `local/classroom:manageclassroom` overrides and the mapped capabilities at a
+   context other than system or with PREVENT or PROHIBIT, and `repair_bizlms_capabilities.php` exits 0 on
+   the restored database. Closed on the rehearsal copy of the April 2026 dump (check mode, exit 0, one
+   grant). **Still to do:** re-run the inventory on the real live backup at the Stage B rehearsal and
+   re-sign the file if it differs.
 3. `local_sentientia_org\accesslib::legacy_cap()` is removed in the same release as the org importer, and
    `local/sentientia_platform:crosstenant` is granted deliberately, by hand, to the platform role Nitin
    names. Until then role 9 passes `can_manage_multi()` on a restored database through

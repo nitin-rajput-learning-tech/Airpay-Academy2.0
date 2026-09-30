@@ -1,10 +1,19 @@
 {
   "version": 1,
-  "status": "DRAFT - prepared 2026-09-30 from the ADR-032 framework review. NOT SIGNED: approved_by and approved_on stay empty until Nitin signs, and repair_bizlms_capabilities.php refuses an unsigned file. Signing adds his grants (if any) and freezes the file: the sha256 of this file is what he approved.",
-  "approved_by": "",
-  "approved_on": "",
-  "basis": "ADR-032 section Capabilities. Declines only: nothing here is a grant. The BizLMS grants on roles 1 (manager) and 9 (administrator, the tenant-admin role) are the manager-archetype defaults of the 22 BizLMS plugins. Sentientia archetypes already grant the replacements to those roles, except the four organisation capabilities ADR-031 reserves for site administrators and holders of local/sentientia_platform:crosstenant.",
-  "grants": [],
+  "status": "SIGNED 2026-09-30 by Nitin Rajput, built from the Stage B inventory of the April 2026 production dump (rehearsal copy). Re-run the inventory on the real live backup at the Stage B rehearsal and re-sign this file if it differs: the sha256 of this file is what he approved, and repair_bizlms_capabilities.php prints it.",
+  "approved_by": "Nitin Rajput",
+  "approved_on": "2026-09-30",
+  "basis": "Owner instruction 2026-09-30 (Nitin Rajput): \"do everything as recommended\". Built from the Stage B inventory of the April 2026 production dump (Moodle 4.1.2 upgraded to 4.5.10 and 5.1.3 on a local rehearsal copy with the Sentientia plugins installed): 520 role grants, all at system context, on capabilities of 32 plugins that are not on disk (administrator 214, manager 110, trainer 79, editingteacher 39, employee 21, user 19, teacher 16, guest 11, coursecreator 10, frontpage 1); 421 ALLOW, 71 PREVENT, 28 PROHIBIT. Re-run the inventory on the real live backup at the Stage B rehearsal and re-sign if it differs. Decisions: (1) every missing plugin is declined by component (the 32 the inventory shows, plus local_myteam, one of the 22 BizLMS local plugins that holds no grant in this dump), which covers only its capabilities that have no Sentientia equivalent; (2) the ten mapped capabilities are decided per role: the manager-archetype holds are already carried by the Sentientia archetypes, local/costcenter:manage and :manage_multiorganizations are withheld by the script (ADR-031), local/costcenter:manage_ownorganization and :manage_owndepartments are declined by name for manager and administrator (ADR-031), local/classroom:manageclassroom is granted to the trainer role, and the one trainer PREVENT on local/users:edit is declined by name.",
+  "grants": [
+    {
+      "role": "trainer",
+      "context": "system",
+      "legacy": "local/classroom:manageclassroom",
+      "target": "local/sentientia_classroom:manage",
+      "permission": 1,
+      "reason": "BizLMS trainers manage classrooms on production today (CLAUDE.md: never break current production behaviour), and local/sentientia_classroom:manage reaches only the manager archetype, so without this grant trainers lose classroom management when the BizLMS code goes. Their attendance stays limited to their own sessions because the attendance rule keys on local/sentientia_classroom:update (merged 2026-09-30)."
+    }
+  ],
   "declined": [
     {
       "role": "manager",
@@ -30,10 +39,27 @@
       "legacy": "local/costcenter:manage_owndepartments",
       "reason": "ADR-031 withholds organisation create, edit and delete from tenant admins; local/sentientia_org:manage_owndepartments has no archetype on purpose. Not carried."
     },
+    {
+      "role": "trainer",
+      "context": "system",
+      "legacy": "local/users:edit",
+      "reason": "The trainer role holds a PREVENT on BizLMS local/users:edit. Trainers hold no local/sentientia_users:edit (no archetype reaches them), so the PREVENT has nothing to narrow. Not carried."
+    },
+    { "legacy_component": "block_achievements", "reason": "code not deployed; no Sentientia equivalent" },
+    { "legacy_component": "block_masterinfo", "reason": "code not deployed; no Sentientia equivalent" },
+    { "legacy_component": "block_myskills", "reason": "code not deployed; no Sentientia equivalent" },
+    { "legacy_component": "block_quick_navigation", "reason": "code not deployed; no Sentientia equivalent" },
+    { "legacy_component": "block_suggested_courses", "reason": "code not deployed; no Sentientia equivalent" },
+    { "legacy_component": "block_trainerdashboard", "reason": "code not deployed; no Sentientia equivalent" },
+    { "legacy_component": "block_trending_modules", "reason": "code not deployed; no Sentientia equivalent" },
+    { "legacy_component": "block_userdashboard", "reason": "code not deployed; no Sentientia equivalent" },
+    { "legacy_component": "enrol_classroom", "reason": "code not deployed; no Sentientia equivalent; enrolments on the three BizLMS enrol methods (enrol_program, enrol_learningplan, enrol_classroom) are converted to manual enrolments by the G6 import step" },
+    { "legacy_component": "enrol_learningplan", "reason": "code not deployed; no Sentientia equivalent; enrolments on the three BizLMS enrol methods (enrol_program, enrol_learningplan, enrol_classroom) are converted to manual enrolments by the G6 import step" },
+    { "legacy_component": "enrol_program", "reason": "code not deployed; no Sentientia equivalent; enrolments on the three BizLMS enrol methods (enrol_program, enrol_learningplan, enrol_classroom) are converted to manual enrolments by the G6 import step" },
     { "legacy_component": "local_assignroles", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
     { "legacy_component": "local_biz_cart", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
-    { "legacy_component": "local_classroom", "reason": "code not deployed; Sentientia archetypes grant the replacements. Covers only the capabilities with no Sentientia equivalent: local/classroom:manageclassroom stays an open decision (see open_decisions)." },
-    { "legacy_component": "local_costcenter", "reason": "code not deployed; Sentientia archetypes grant the replacements. Covers only the capabilities with no Sentientia equivalent: the five that have one are decided per role (the two manage_own* above, the rest held by archetype or withheld by ADR-031)." },
+    { "legacy_component": "local_classroom", "reason": "code not deployed; Sentientia archetypes grant the replacements. Covers only the capabilities with no Sentientia equivalent: local/classroom:manageclassroom is decided per role (granted to trainer above, already held by administrator)." },
+    { "legacy_component": "local_costcenter", "reason": "code not deployed; Sentientia archetypes grant the replacements. Covers only the capabilities with no Sentientia equivalent: the five that have one are decided per role (the two manage_own* above for manager and administrator, manage and manage_multiorganizations withheld by ADR-031, view held by archetype)." },
     { "legacy_component": "local_courses", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
     { "legacy_component": "local_custom_category", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
     { "legacy_component": "local_evaluation", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
@@ -51,17 +77,20 @@
     { "legacy_component": "local_search", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
     { "legacy_component": "local_skillrepository", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
     { "legacy_component": "local_tags", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
-    { "legacy_component": "local_users", "reason": "code not deployed; Sentientia archetypes grant the replacements. Covers only the capabilities with no Sentientia equivalent: local/users:edit and :bulkstatuschange are held by archetype." }
+    { "legacy_component": "local_users", "reason": "code not deployed; Sentientia archetypes grant the replacements. Covers only the capabilities with no Sentientia equivalent: local/users:edit and :bulkstatuschange are decided per role (held by archetype, and the one trainer PREVENT declined by name above)." }
   ],
-  "open_decisions": [
+  "open_decisions": [],
+  "resolved_decisions": [
     {
       "legacy": "local/classroom:manageclassroom",
       "target": "local/sentientia_classroom:manage",
-      "note": "OPEN, Nitin to decide from the Stage B inventory. BizLMS gives this no archetype, so on production it exists only as explicit overrides (for example on trainers or at category level). sentientia_classroom:manage reaches only the manager archetype, so every role that held it loses classroom management when the BizLMS code goes. Add one grants line per role, context and permission the inventory shows; or decline that role grant by name. A plugin decline never covers it."
+      "resolution": "Granted to role trainer at system context, permission 1 (see grants). The inventory shows two holders, both at system context: administrator, which already holds the equivalent through the manager archetype, and trainer, the only non-archetype holder. Nothing else holds it, at any context.",
+      "decided_by": "Nitin Rajput, 2026-09-30"
     },
     {
       "legacy": "any of the ten mapped capabilities (capability_repair::MAP), at a context other than system, or with PREVENT or PROHIBIT",
-      "note": "OPEN if the inventory shows any: an override on role 9 or 1 at category level, or a PREVENT or PROHIBIT. The archetype defaults are held at system context and need nothing. Anything else is decided per role and context, by a grants line or a declined line."
+      "resolution": "All 520 inventory rows are at system context. Among the mapped capabilities the only PREVENT or PROHIBIT is the trainer PREVENT on local/users:edit, declined by name above (trainers hold no local/sentientia_users:edit). There is no mapped-capability override at category or course context.",
+      "decided_by": "Nitin Rajput, 2026-09-30"
     }
   ]
 }

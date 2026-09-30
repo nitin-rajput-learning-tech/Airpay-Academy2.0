@@ -657,50 +657,216 @@ final class bizlms_capability_repair_test extends \advanced_testcase {
             capability_repair::load_allowlist($this->allowlist([], ['declined' => [$component, $row]]))['hash']);
     }
 
-    public function test_the_checked_in_draft_declines_the_22_plugins_and_grants_nothing(): void {
-        $path = __DIR__ . '/../fixtures/bizlms/bizlms-capability-allowlist.copy.json';
-        $this->assertFileExists($path);
+    // The signed allow-list (ADR-032, "Capabilities"): tested as checked in, from the copy under tests/fixtures/bizlms/.
 
-        // Unsigned as checked in: the owner signs it, and the loader refuses it until then.
-        try {
-            capability_repair::load_allowlist($path);
-            $this->fail('an unsigned allow-list was accepted');
-        } catch (blocked $e) {
-            $this->assertStringContainsString('capability_allowlist_is_not_signed', $e->getMessage());
-        }
-
-        $data = json_decode((string) file_get_contents($path), true);
-        $signed = make_request_directory() . '/signed.json';
-        file_put_contents($signed, json_encode(array_merge($data, ['approved_by' => 'Test Owner', 'approved_on' => '2026-09-30'])));
-        $loaded = capability_repair::load_allowlist($signed);
-
-        $this->assertSame([], $loaded['grants'], 'the draft carries no grant: those are the owner\'s to add');
-        $components = array_column(array_filter($loaded['declines'], fn(array $d): bool => $d['kind'] === 'component'), 'component');
-        $plugins = ['local_assignroles', 'local_biz_cart', 'local_classroom', 'local_costcenter', 'local_courses',
-            'local_custom_category', 'local_evaluation', 'local_forum', 'local_groups', 'local_learningplan', 'local_location',
-            'local_myteam', 'local_notifications', 'local_onlineexams', 'local_program', 'local_ratings', 'local_recompletion',
-            'local_request', 'local_search', 'local_skillrepository', 'local_tags', 'local_users'];
-        $this->assertEqualsCanonicalizing($plugins, $components, 'the 22 BizLMS plugins of the production snapshot');
-
-        // Roles 1 and 9 (manager, administrator): the two organisation capabilities ADR-031 withholds.
-        $rows = array_values(array_filter($loaded['declines'], fn(array $d): bool => $d['kind'] === 'row'));
-        $this->assertCount(4, $rows);
-        foreach ($rows as $decline) {
-            $this->assertContains($decline['role'], ['manager', 'administrator']);
-            $this->assertSame('system', $decline['context']);
-            $this->assertContains($decline['legacy'],
-                ['local/costcenter:manage_ownorganization', 'local/costcenter:manage_owndepartments']);
-            $this->assertContains(capability_repair::MAP[$decline['legacy']], [
-                'local/sentientia_org:manage_ownorganization', 'local/sentientia_org:manage_owndepartments',
-            ]);
-        }
-
-        // manageclassroom is an open decision: nothing names it as a decline.
-        $this->assertNotContains('local/classroom:manageclassroom', array_column($rows, 'legacy'));
-        $this->assertSame('local/classroom:manageclassroom', $data['open_decisions'][0]['legacy']);
+    /**
+     * @return string Path of the test copy of docs/cutover/bizlms-capability-allowlist.json.
+     */
+    private function signed_allowlist_path(): string {
+        return __DIR__ . '/../fixtures/bizlms/bizlms-capability-allowlist.copy.json';
     }
 
-    public function test_the_test_copy_of_the_draft_is_the_checked_in_file_wherever_the_checkout_has_both(): void {
+    public function test_the_checked_in_allowlist_is_signed_and_carries_the_owners_decisions(): void {
+        $path = $this->signed_allowlist_path();
+        $this->assertFileExists($path);
+
+        // Signed as checked in: the loader accepts it as it is, with the owner's name, date and a hash.
+        $loaded = capability_repair::load_allowlist($path);
+        $this->assertSame('Nitin Rajput', $loaded['approved_by']);
+        $this->assertSame('2026-09-30', $loaded['approved_on']);
+        $this->assertSame(64, strlen($loaded['hash']));
+
+        $data = json_decode((string) file_get_contents($path), true);
+        $this->assertStringStartsWith('SIGNED', $data['status']);
+        $this->assertStringContainsString('do everything as recommended', $data['basis']);
+        $this->assertStringContainsString('Re-run the inventory on the real live backup', $data['basis']);
+        $this->assertSame([], $data['open_decisions'], 'both open decisions of the draft are resolved');
+        $this->assertCount(2, $data['resolved_decisions']);
+        $this->assertSame('local/classroom:manageclassroom', $data['resolved_decisions'][0]['legacy']);
+
+        // Exactly one grant: trainers keep classroom management (BizLMS trainers manage classrooms on production).
+        $this->assertSame([[
+            'role' => 'trainer', 'context' => 'system', 'legacy' => 'local/classroom:manageclassroom',
+            'target' => 'local/sentientia_classroom:manage', 'permission' => CAP_ALLOW,
+        ]], $loaded['grants']);
+        $this->assertSame('local/sentientia_classroom:manage', capability_repair::MAP['local/classroom:manageclassroom']);
+        $this->assertNotContains($loaded['grants'][0]['target'], capability_repair::NEVER_GRANT);
+
+        // Every missing plugin is declined by component: the 22 BizLMS local plugins of the production snapshot, eight
+        // BizLMS blocks and the three BizLMS enrol methods.
+        $components = array_column(array_filter($loaded['declines'], fn(array $d): bool => $d['kind'] === 'component'), 'component');
+        $plugins = [
+            'local_assignroles', 'local_biz_cart', 'local_classroom', 'local_costcenter', 'local_courses',
+            'local_custom_category', 'local_evaluation', 'local_forum', 'local_groups', 'local_learningplan', 'local_location',
+            'local_myteam', 'local_notifications', 'local_onlineexams', 'local_program', 'local_ratings', 'local_recompletion',
+            'local_request', 'local_search', 'local_skillrepository', 'local_tags', 'local_users',
+            'block_userdashboard', 'block_quick_navigation', 'block_trainerdashboard', 'block_myskills', 'block_masterinfo',
+            'block_trending_modules', 'block_achievements', 'block_suggested_courses',
+            'enrol_program', 'enrol_learningplan', 'enrol_classroom',
+        ];
+        $this->assertCount(33, $plugins);
+        $this->assertEqualsCanonicalizing($plugins, $components);
+        $this->assertSame(count($components), count(array_unique($components)), 'no plugin is declined twice');
+
+        // Five named role grants: the four organisation grants ADR-031 withholds from tenant admins, on manager and
+        // administrator, and the trainer PREVENT on local/users:edit (trainers hold no Sentientia users:edit).
+        $rows = array_values(array_filter($loaded['declines'], fn(array $d): bool => $d['kind'] === 'row'));
+        $this->assertEqualsCanonicalizing([
+            'manager|system|local/costcenter:manage_ownorganization',
+            'manager|system|local/costcenter:manage_owndepartments',
+            'administrator|system|local/costcenter:manage_ownorganization',
+            'administrator|system|local/costcenter:manage_owndepartments',
+            'trainer|system|local/users:edit',
+        ], array_map(fn(array $d): string => $d['role'] . '|' . $d['context'] . '|' . $d['legacy'], $rows));
+        foreach ($rows as $decline) {
+            $this->assertArrayHasKey($decline['legacy'], capability_repair::MAP, 'a row decline names a mapped capability');
+            $this->assertNotSame('', trim($decline['reason']));
+        }
+
+        // A line that is both granted and declined would be refused: the granted role grant is not declined by name.
+        $this->assertNotContains('local/classroom:manageclassroom', array_column($rows, 'legacy'));
+    }
+
+    /**
+     * The inventory shape of the April 2026 production dump, reduced to one role per decision the signed file makes:
+     * the real capability names, the real map, and the roles manager, administrator and trainer at system context.
+     *
+     * - manager: every archetype-default hold of the ten mapped capabilities (held, withheld or declined by name).
+     * - administrator: the same, without manage_owndepartments and multiorganizations (it holds neither on production),
+     *   plus manageclassroom, which the Sentientia manager archetype carries to it.
+     * - trainer: manageclassroom (ALLOW, the one grant), local/users:edit as PREVENT (declined by name), and two grants on
+     *   capabilities with no equivalent (declined by plugin).
+     *
+     * @return array{0: int[], 1: capability_repair, 2: int} The three role ids, a repair with the real map, the trainer id.
+     */
+    private function signed_scenario(): array {
+        global $DB;
+        $this->resetAfterTest();
+        $component = static function (string $capability): string {
+            preg_match('~^([a-z]+)/([a-z0-9_]+):~', $capability, $m);
+            return $m[1] . '_' . $m[2];
+        };
+        $insertcapability = function (string $name) use ($DB, $component): void {
+            if (!$DB->record_exists('capabilities', ['name' => $name])) {
+                $DB->insert_record('capabilities', (object) ['name' => $name, 'captype' => 'write',
+                    'contextlevel' => CONTEXT_SYSTEM, 'component' => $component($name), 'riskbitmask' => 0]);
+            }
+        };
+        // Legacy capabilities of plugins that are on no disk (two without an equivalent), and the ten equivalents.
+        foreach ([...array_keys(capability_repair::MAP), 'local/request:viewrecord', 'block/userdashboard:view',
+                  ...array_values(capability_repair::MAP)] as $name) {
+            $insertcapability($name);
+        }
+        \cache::make('core', 'capabilities')->delete('core_capabilities');
+
+        $system = \context_system::instance();
+        $role = function (string $shortname) use ($DB): int {
+            $id = $DB->get_field('role', 'id', ['shortname' => $shortname], IGNORE_MISSING);
+            return $id ? (int) $id : (int) $this->getDataGenerator()->create_role(['shortname' => $shortname]);
+        };
+        $hold = function (int $roleid, string $capability, int $permission) use ($DB, $system): void {
+            $DB->insert_record('role_capabilities', (object) ['contextid' => $system->id, 'roleid' => $roleid,
+                'capability' => $capability, 'permission' => $permission, 'timemodified' => time(), 'modifierid' => 0]);
+        };
+        // What the Sentientia install's manager archetype gives the roles that held the legacy capability.
+        $carried = function (int $roleid, string $legacy) use ($system): void {
+            assign_capability(capability_repair::MAP[$legacy], CAP_ALLOW, $roleid, $system->id, true);
+        };
+
+        $manager = $role('manager');
+        $administrator = $role('administrator');
+        $trainer = $role('trainer');
+
+        foreach (array_keys(capability_repair::MAP) as $legacy) {
+            if (str_starts_with($legacy, 'local/classroom:')) {
+                continue;
+            }
+            $hold($manager, $legacy, CAP_ALLOW);
+            $archetypeheld = !in_array($legacy, ['local/costcenter:manage_multiorganizations', 'local/costcenter:manage',
+                'local/costcenter:manage_ownorganization', 'local/costcenter:manage_owndepartments'], true);
+            if ($archetypeheld) {
+                $carried($manager, $legacy);
+            }
+            if (!in_array($legacy, ['local/costcenter:manage_multiorganizations', 'local/costcenter:manage_owndepartments'], true)) {
+                $hold($administrator, $legacy, CAP_ALLOW);
+                if ($archetypeheld) {
+                    $carried($administrator, $legacy);
+                }
+            }
+        }
+        $hold($administrator, 'local/classroom:manageclassroom', CAP_ALLOW);
+        $carried($administrator, 'local/classroom:manageclassroom');
+
+        $hold($trainer, 'local/classroom:manageclassroom', CAP_ALLOW);
+        $hold($trainer, 'local/users:edit', CAP_PREVENT);
+        $hold($trainer, 'local/request:viewrecord', CAP_ALLOW);
+        $hold($trainer, 'block/userdashboard:view', CAP_PROHIBIT);
+
+        return [[$manager, $administrator, $trainer], new capability_repair(), $trainer];
+    }
+
+    public function test_the_signed_allowlist_plans_exactly_one_grant_against_the_production_shape_inventory(): void {
+        global $DB;
+        [$roleids, $repair, $trainerid] = $this->signed_scenario();
+        $system = \context_system::instance();
+        $inventory = $this->only_roles($roleids, $repair->inventory());
+        // Manager 9 (every mapped capability but manageclassroom), administrator 8 (those 9 less manage_owndepartments and
+        // manage_multiorganizations, plus manageclassroom), trainer 4.
+        $this->assertCount(21, $inventory);
+        $before = $DB->count_records('role_capabilities');
+
+        $loaded = capability_repair::load_allowlist($this->signed_allowlist_path());
+        $plan = $repair->plan($loaded['grants'], $inventory, $loaded['declines']);
+
+        $this->assertSame([], $plan['refused']);
+        $this->assertSame([], $plan['uncovered']);
+        $this->assertSame([], $plan['unmapped']);
+        $this->assertSame([], $plan['divergent']);
+        $this->assertSame([], $plan['held'], 'no approved grant is already carried');
+        $this->assertCount(1, $plan['apply'], 'exactly one grant');
+        $this->assertSame('trainer', $plan['apply'][0]['role']);
+        $this->assertSame($trainerid, $plan['apply'][0]['roleid']);
+        $this->assertSame((int) $system->id, $plan['apply'][0]['contextid']);
+        $this->assertSame('local/classroom:manageclassroom', $plan['apply'][0]['legacy']);
+        $this->assertSame('local/sentientia_classroom:manage', $plan['apply'][0]['target']);
+        $this->assertSame(CAP_ALLOW, $plan['apply'][0]['permission']);
+
+        // The two ADR-031 capabilities the script never grants, on the roles that hold them: reported, not granted.
+        $this->assertCount(3, $plan['withheld'], 'manager manage and manage_multiorganizations, administrator manage');
+        // The organisation grants ADR-031 reserves, the trainer PREVENT, and the two capabilities with no equivalent.
+        $declined = implode("\n", $plan['declined']);
+        foreach (['manager', 'administrator'] as $role) {
+            $this->assertStringContainsString("{$role} in context {$system->id}: local/costcenter:manage_ownorganization", $declined);
+        }
+        $this->assertStringContainsString("manager in context {$system->id}: local/costcenter:manage_owndepartments", $declined);
+        $this->assertStringContainsString("trainer in context {$system->id}: local/users:edit", $declined);
+        $this->assertStringContainsString("trainer in context {$system->id}: local/request:viewrecord", $declined);
+        $this->assertStringContainsString("trainer in context {$system->id}: block/userdashboard:view", $declined);
+        // Administrator holds no manage_owndepartments on production, so that decline is a note and changes nothing.
+        $this->assertStringContainsString('administrator local/costcenter:manage_owndepartments',
+            implode("\n", $plan['unused_declines']));
+
+        $this->assertSame(0, capability_repair::open_count($plan));
+        $this->assertSame(0, capability_repair::exit_code($plan), 'every grant is decided');
+        $this->assertSame($before, $DB->count_records('role_capabilities'), 'planning wrote nothing');
+
+        // Apply makes that one grant and nothing else; a second plan finds it held.
+        $this->assertSame(1, $repair->apply($plan['apply']));
+        $this->assertSame($before + 1, $DB->count_records('role_capabilities'));
+        $granted = $DB->get_record('role_capabilities',
+            ['roleid' => $trainerid, 'capability' => 'local/sentientia_classroom:manage'], '*', MUST_EXIST);
+        $this->assertEquals(CAP_ALLOW, $granted->permission);
+        $this->assertEquals($system->id, $granted->contextid);
+        $this->assertFalse($DB->record_exists('role_capabilities',
+            ['roleid' => $trainerid, 'capability' => 'local/sentientia_users:edit']), 'the trainer PREVENT is not carried');
+
+        $again = $repair->plan($loaded['grants'], $this->only_roles($roleids, $repair->inventory()), $loaded['declines']);
+        $this->assertSame([], $again['apply']);
+        $this->assertCount(1, $again['held']);
+        $this->assertSame(0, capability_repair::exit_code($again));
+    }
+
+    public function test_the_test_copy_of_the_signed_allowlist_is_the_checked_in_file_wherever_the_checkout_has_both(): void {
         $signed = __DIR__ . '/../../../../docs/cutover/bizlms-capability-allowlist.json';
         if (!is_readable($signed)) {
             $this->markTestSkipped('docs/ is not deployed with the plugin; tools/check-bizlms-fixture-copies.php checks this in CI');
