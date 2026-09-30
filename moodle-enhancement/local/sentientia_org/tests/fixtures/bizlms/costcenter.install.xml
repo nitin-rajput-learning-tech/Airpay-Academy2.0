@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_org/tests/fixtures/bizlms" VERSION="20260930"
+       COMMENT="ADR-032 org importer tests. Copy of the BizLMS table local_costcenter. Source: D:/Claude Local/Moodle Backup/01-production-codebase/html/local/costcenter/db/install.xml, sha1 ff65958deebf5dc133207d3f38e950169f8ae2fe, copied 2026-09-30. Only the local_costcenter table is kept: the other tables of that file belong to other features (org_roles, course_lookups, certificates) and to their own fixtures. Edits, all three allowed by ADR-032 Test approach 2: (a) the PREVIOUS and NEXT attributes are removed from the TABLE and every FIELD (XMLDB no longer reads them); (b) no type is replaced; (c) no production-only column is added, because local_costcenter has none beyond this file (the columns multipleorg, costcenter_logo, shell, button_color, brand_color and hover_color were added by BizLMS upgrade steps 2017051505 to 2022101300 and are all in this file). Created once per test class by the legacy_schema_fixture trait and dropped afterwards.">
+  <TABLES>
+    <TABLE NAME="local_costcenter" COMMENT="List of costcenters assigned">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true"/>
+        <FIELD NAME="fullname" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="shortname" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="parentid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="description" TYPE="text" LENGTH="big"  SEQUENCE="false"/>
+        <FIELD NAME="visible" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="path" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="depth" TYPE="int" LENGTH="20" NOTNULL="false" UNSIGNED="false" SEQUENCE="false"/>
+        <FIELD NAME="sortorder" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="childpermission" TYPE="int" LENGTH="2" DEFAULT="0" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="theme" TYPE="char" LENGTH="255"  NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="shell" TYPE="char" LENGTH="255"  NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="costcenter_logo" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="category" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="multipleorg" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="button_color" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="brand_color" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="hover_color" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="parentid" UNIQUE="false" FIELDS="parentid"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

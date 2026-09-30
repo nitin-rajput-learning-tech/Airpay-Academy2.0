@@ -296,8 +296,38 @@ class accesslib {
     }
 
     /**
+     * has_capability() for a LEGACY BizLMS cap that may no longer be registered.
+     *
+     * DEPRECATED (ADR-032 gate 3, 2026-09-30): the org and classroom checks below no
+     * longer call this. They kept a fallback to the pre-rename local/costcenter:* and
+     * local/classroom:* caps, and because the BizLMS plugins stay installed after the
+     * cutover (their tables are the archive), their `capabilities` rows survive in the
+     * restored database: the tenant-admin role passed can_manage_multi() through
+     * local/costcenter:manage_multiorganizations, an ADR-031 hole (cross-tenant
+     * organisation visibility). Grants are now carried over, line by line, by
+     * cli/repair_bizlms_capabilities.php in local_sentientia_platform.
+     *
+     * What is left is a guarded has_capability() (false, and no "Capability was not
+     * found" debug notice, when the cap row is absent) for ONE remaining caller that is
+     * not an org check: theme/sentientia core_renderer, for block/trainerdashboard:
+     * viewtrainerslist. Delete this method when that caller goes.
+     *
+     * @param string $capability
+     * @param \context $context
+     * @return bool
+     */
+    public static function legacy_cap(string $capability, \context $context): bool {
+        static $known = [];
+        if (!array_key_exists($capability, $known)) {
+            $known[$capability] = (bool) \get_capability_info($capability);
+        }
+        return $known[$capability] && has_capability($capability, $context);
+    }
+
+    /**
      * Check if user can manage multiple organizations (siteadmin-tier).
-     * Checks both old (local/costcenter:*) and new (local/sentientia_org:*) caps.
+     * Only the local/sentientia_org:* cap counts (ADR-031, ADR-032 gate 3): a BizLMS
+     * local/costcenter:* grant left in a restored database does not.
      *
      * @param \context|null $context
      * @return bool
@@ -305,8 +335,7 @@ class accesslib {
     public static function can_manage_multi(?\context $context = null): bool {
         $context = $context ?? \context_system::instance();
         return is_siteadmin()
-            || has_capability('local/sentientia_org:manage_multiorganizations', $context)
-            || has_capability('local/costcenter:manage_multiorganizations', $context);
+            || has_capability('local/sentientia_org:manage_multiorganizations', $context);
     }
 
     /**
@@ -317,8 +346,7 @@ class accesslib {
      */
     public static function can_view(?\context $context = null): bool {
         $context = $context ?? \context_system::instance();
-        return has_capability('local/sentientia_org:view', $context)
-            || has_capability('local/costcenter:view', $context);
+        return has_capability('local/sentientia_org:view', $context);
     }
 
     /**
@@ -329,8 +357,7 @@ class accesslib {
      */
     public static function can_manage(?\context $context = null): bool {
         $context = $context ?? \context_system::instance();
-        return has_capability('local/sentientia_org:manage', $context)
-            || has_capability('local/costcenter:manage', $context);
+        return has_capability('local/sentientia_org:manage', $context);
     }
 
     /**
@@ -341,8 +368,7 @@ class accesslib {
      */
     public static function is_org_head(?\context $context = null): bool {
         $context = $context ?? \context_system::instance();
-        return has_capability('local/sentientia_org:manage_ownorganization', $context)
-            || has_capability('local/costcenter:manage_ownorganization', $context);
+        return has_capability('local/sentientia_org:manage_ownorganization', $context);
     }
 
     /**
@@ -353,8 +379,7 @@ class accesslib {
      */
     public static function is_dept_head(?\context $context = null): bool {
         $context = $context ?? \context_system::instance();
-        return has_capability('local/sentientia_org:manage_owndepartments', $context)
-            || has_capability('local/costcenter:manage_owndepartments', $context);
+        return has_capability('local/sentientia_org:manage_owndepartments', $context);
     }
 
     /**
@@ -365,8 +390,7 @@ class accesslib {
      */
     public static function can_manage_classroom(?\context $context = null): bool {
         $context = $context ?? \context_system::instance();
-        return has_capability('local/sentientia_classroom:manage', $context)
-            || has_capability('local/classroom:manageclassroom', $context);
+        return has_capability('local/sentientia_classroom:manage', $context);
     }
 
     /**

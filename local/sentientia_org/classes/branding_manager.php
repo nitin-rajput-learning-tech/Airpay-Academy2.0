@@ -35,8 +35,11 @@ class branding_manager {
      *
      * Replaces: costcenter_logo($logoid) from local/costcenter/lib.php
      *
-     * Checks files with component='local_sentientia_org' first, then falls
-     * back to 'local_costcenter' for transition compatibility.
+     * Checks files with component='local_sentientia_org' first (system context, file area
+     * org_logo: where the ADR-032 org importer copies every BizLMS logo in finalise(), keeping
+     * the item id). Falls back to the BizLMS component only while the local_costcenter plugin
+     * is still on disk to serve the URL it builds; on Moodle 5.2 it is not, and a link to it
+     * is a dead image.
      *
      * @param int $itemid  The file item ID (stored in org_logo / costcenter_logo field)
      * @return string  Logo URL or empty string
@@ -54,10 +57,12 @@ class branding_manager {
             return $url;
         }
 
-        // Fallback: BizLMS component (logos uploaded before fork).
-        $url = self::resolve_logo_file($itemid, 'local_costcenter', 'costcenter_logo');
-        if (!empty($url)) {
-            return $url;
+        // Fallback: BizLMS component (logos uploaded before fork), only while its plugin can serve them.
+        if (!empty(\core_component::get_component_directory('local_costcenter'))) {
+            $url = self::resolve_logo_file($itemid, 'local_costcenter', 'costcenter_logo');
+            if (!empty($url)) {
+                return $url;
+            }
         }
 
         return '';
