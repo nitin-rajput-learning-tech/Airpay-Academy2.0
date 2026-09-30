@@ -628,21 +628,47 @@ does not watch it.
 1. Inventory (default, writes nothing): every `role_capabilities` row on a capability of a plugin that is
    missing from disk, per role and context, next to the Sentientia equivalent and whether the role already
    holds it.
-2. `--allowlist=FILE` (signed JSON, one line per grant the owner approves) is checked against the inventory:
-   the role must really hold that legacy grant with that permission there, the target must be the
-   equivalent of the legacy capability and be installed. Anything else is refused.
+2. `--allowlist=FILE` (JSON, signed as a whole: `approved_by`, `approved_on`, sha256 printed) holds the
+   owner's two kinds of decision, and every inventory row must end up in one of them or the run does not
+   finish clean:
+   - `grants`: one line per grant to carry (`{role, context, legacy, target, permission}`). It is checked
+     against the inventory: the role must really hold that legacy grant with that permission there, the
+     target must be the equivalent of the legacy capability and be installed. Anything else is refused.
+   - `declined`: what the owner reviewed and does not carry, each with a `reason`. Either one role grant
+     (`{role, context, legacy, reason}`) or a whole missing plugin (`{legacy_component, reason}`). A plugin
+     decline covers only the grants on capabilities that have **no** Sentientia equivalent. It never covers
+     one of the ten in the map: that is where a real override hides (`local/classroom:manageclassroom` on
+     trainers), so each of those is granted, already held (an archetype default at system context),
+     withheld (item 4) or declined by name for that role and context. A line that is both granted and
+     declined is refused, and both lines are named. A decline that matches no row is reported as a note
+     and changes nothing (a typo leaves the row open, so it shows).
 3. `--apply --confirm=<fingerprint>` (maintenance on unless `--allow-online`, refused in production) makes
-   exactly the approved grants with `assign_capability()`: it never overwrites a row that exists, never
-   revokes, and marks the context dirty.
+   exactly the approved grants with `assign_capability()`: it never overwrites a row that exists and never
+   revokes. In 5.1 `assign_capability()` clears the role cache and fires `capability_assigned`; it does
+   not mark a context dirty.
 4. It **never grants** `local/sentientia_org:manage`, `local/sentientia_org:manage_multiorganizations` or
    `local/sentientia_platform:crosstenant`, whatever the allow-list says. The cross-tenant capability goes
    by hand to the platform role Nitin names.
-5. Exit 0 when every grant is decided; 1 when an allow-list line was refused; 2 when grants remain that
-   nobody approved or that have no known equivalent; 3 when a guard refused.
+5. Exit 0 when every grant is decided (granted, already held, withheld by item 4, or declined); 1 when an
+   allow-list line was refused; 2 when grants remain that nobody approved or declined; 3 when a guard
+   refused. The exit code is `capability_repair::exit_code()`, tested on both outcomes.
 
-**Stage B inventory decides the rest.** If it shows only archetype-default grants on roles 1 and 9, the
-allow-list is empty and nothing more needs replacing. Otherwise Nitin signs the allow-list line by line
-(the likely case is `manageclassroom` for the roles production actually granted).
+**The declines are the answer for the archetype defaults.** BizLMS gives the manager archetype the grants
+of all 22 plugins, so the inventory on a restored database always lists them on roles 1 and 9 (the rows
+stay when the code goes). They are not "nothing to do": each is a reviewed decision, and the allow-list
+records it. `docs/cutover/bizlms-capability-allowlist.json` is the draft, unsigned: it declines the 22
+plugins by component and, for roles `manager` and `administrator` at system context,
+`local/costcenter:manage_ownorganization` and `:manage_owndepartments` by name, because their
+Sentientia equivalents have no archetype on purpose (ADR-031). It holds no grant. With it signed, the
+archetype-default inventory of roles 1 and 9 exits 0 and grants nothing; without the declines the same
+inventory exits 2 (both cases are tests).
+
+**What stays open for Nitin.** Only what the inventory shows beyond the archetype defaults:
+`local/classroom:manageclassroom` (no archetype, so it exists on production only as overrides, for
+example on trainers), and any of the ten mapped capabilities at a context other than system or with
+PREVENT or PROHIBIT. He adds one `grants` line, or one named `declined` line, per role and context. The
+draft records these as `open_decisions`. The signed file is checked in with its sha256 in the run log,
+and `tools/check-bizlms-fixture-copies.php` keeps the copy the tests read equal to it.
 
 **Same release as the org importer.** `local_sentientia_org\accesslib::legacy_cap()` still honours the
 BizLMS grants in `can_manage_multi`, `can_manage`, `is_org_head`, `is_dept_head` and `can_manage_classroom`,
@@ -737,7 +763,9 @@ framework, CLI, tests, the copy scripts retired, the seed scripts guarded) are i
   (CLAUDE.md §5). Hard prerequisite for the classroom importer and for the Stage B baseline; not done in
   the review pass because it is a user-visible page.
 - The capability review (section "Capabilities") replaces the capability copy of the retired script; it
-  is built, and runs first in the cutover slice.
+  is built, and runs first in the cutover slice. Its allow-list (declines drafted, unsigned) needs
+  Nitin's signature and his decision on the classroom overrides before it can exit 0 on the real
+  inventory.
 
 **Phase 0 source freezing:** move `SE local/sentientia_pages/qr_scan.php` and `qr_attendance.php` off
 the legacy tables (they check and write `local_classroom_attendance`, migration plan :174-177); make

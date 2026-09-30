@@ -16,13 +16,21 @@
  *   php local/sentientia_platform/cli/repair_bizlms_capabilities.php --allowlist=FILE
  *       checks the owner's allow-list against the inventory and says what --apply would do. Writes nothing.
  *   php local/sentientia_platform/cli/repair_bizlms_capabilities.php --allowlist=FILE --apply --confirm=<fingerprint>
- *       makes the approved grants. Never overwrites a grant that exists, never revokes, marks contexts dirty.
+ *       makes the approved grants. Never overwrites a grant that exists and never revokes.
  *
  * The allow-list is JSON: {"version": 1, "approved_by": "...", "approved_on": "YYYY-MM-DD", "basis": "...",
  * "grants": [{"role": "trainer", "context": "system", "legacy": "local/classroom:manageclassroom",
- * "target": "local/sentientia_classroom:manage", "permission": 1}]}. role is a shortname, context is "system"
- * or a context id, permission is 1, -1 or -1000. A grant is refused unless the role really holds that legacy
- * grant, the target is the equivalent of the legacy capability and the target is installed.
+ * "target": "local/sentientia_classroom:manage", "permission": 1}],
+ * "declined": [{"role": "manager", "context": "system", "legacy": "local/costcenter:manage_ownorganization",
+ * "reason": "..."}, {"legacy_component": "local_forum", "reason": "..."}]}. role is a shortname, context is
+ * "system" or a context id, permission is 1, -1 or -1000. A grant is refused unless the role really holds that
+ * legacy grant, the target is the equivalent of the legacy capability and the target is installed.
+ *
+ * "declined" records what the owner reviewed and does not carry, each with a reason. A line names one role
+ * grant, or a whole missing plugin (legacy_component). A plugin decline covers only the grants on capabilities
+ * that have no Sentientia equivalent; the ten that do (capability_repair::MAP) are decided per role and
+ * context, because that is where a real override hides. A line that is both granted and declined is refused.
+ * Declined grants count as decided. The file is signed as a whole (approved_by, approved_on).
  *
  * It never grants local/sentientia_org:manage, local/sentientia_org:manage_multiorganizations or
  * local/sentientia_platform:crosstenant, whatever the allow-list says. The cross-tenant capability goes to the
@@ -34,9 +42,8 @@
  *   --confirm=<fingerprint> required with --apply (php import_bizlms.php --status prints it)
  *   --allow-online         skip the maintenance requirement (rehearsal only; refused when bizlms_production = 1)
  *
- * Exit codes: 0 nothing left to decide; 1 an allow-list line was refused or a guard refused (3 for a guard);
- * 2 done, but grants remain that nobody approved or that have no known equivalent. 0, 1 and 2 match
- * import_bizlms.php.
+ * Exit codes: 0 nothing left to decide; 1 an allow-list line was refused; 3 a guard refused;
+ * 2 done, but grants remain that nobody approved or declined. 0, 1 and 2 match import_bizlms.php.
  *
  * @package    local_sentientia_platform
  * @copyright  2026 Airpay Payment Services
@@ -80,14 +87,17 @@ try {
     }
 
     $grants = [];
+    $declines = [];
     $allowlist = null;
     if ($options['allowlist'] !== '') {
         $allowlist = capability_repair::load_allowlist((string) $options['allowlist']);
         $grants = $allowlist['grants'];
-        cli_writeln(sprintf('Allow-list %s approved by %s on %s (sha256 %s), %d grant(s)', basename((string) $options['allowlist']),
-            $allowlist['approved_by'], $allowlist['approved_on'], $allowlist['hash'], count($grants)));
+        $declines = $allowlist['declines'];
+        cli_writeln(sprintf('Allow-list %s approved by %s on %s (sha256 %s), %d grant(s), %d decline(s)',
+            basename((string) $options['allowlist']), $allowlist['approved_by'], $allowlist['approved_on'],
+            $allowlist['hash'], count($grants), count($declines)));
     }
-    $plan = $repair->plan($grants, $inventory);
+    $plan = $repair->plan($grants, $inventory, $declines);
 
     foreach ($plan['refused'] as $line) {
         cli_writeln('REFUSED: ' . $line);
@@ -102,11 +112,17 @@ try {
     foreach ($plan['withheld'] as $line) {
         cli_writeln('  withheld (ADR-031, never granted here): ' . $line);
     }
+    foreach ($plan['declined_by'] as $label => $declined) {
+        cli_writeln(sprintf('  declined, %d grant(s): %s -- %s', $declined['rows'], $label, $declined['reason']));
+    }
+    foreach ($plan['unused_declines'] as $line) {
+        cli_writeln('  note (not an error): ' . $line);
+    }
     foreach ($plan['uncovered'] as $line) {
         cli_writeln('  UNAPPROVED: ' . $line);
     }
     foreach ($plan['unmapped'] as $line) {
-        cli_writeln('  NO EQUIVALENT: ' . $line);
+        cli_writeln('  NO EQUIVALENT, NOT DECLINED: ' . $line);
     }
 
     if ($options['apply']) {
@@ -130,17 +146,15 @@ try {
         cli_writeln("Granted {$made} capability grant(s).");
     }
 
-    if ($plan['refused']) {
+    $exitcode = capability_repair::exit_code($plan);
+    if ($exitcode === 1) {
         cli_writeln('RESULT: allow-list lines refused (exit 1)');
-        exit(1);
+    } else if ($exitcode === 2) {
+        cli_writeln('RESULT: ' . capability_repair::open_count($plan) . ' grant(s) still have no decision (exit 2)');
+    } else {
+        cli_writeln('RESULT: every grant is decided (exit 0)');
     }
-    $open = count($plan['uncovered']) + count($plan['unmapped']);
-    if ($open > 0) {
-        cli_writeln("RESULT: {$open} grant(s) still have no decision (exit 2)");
-        exit(2);
-    }
-    cli_writeln('RESULT: every grant is decided (exit 0)');
-    exit(0);
+    exit($exitcode);
 } catch (guard_refused $e) {
     cli_writeln('REFUSED: ' . $e->getMessage());
     exit(3);

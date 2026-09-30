@@ -325,6 +325,11 @@ jobs:
       # anything NEW.
       - name: Compare local/ against moodle-enhancement/local/
         run: php tools/check-tree-drift.php
+      # ADR-032: the PHPUnit tests read copies of the owner-signed files
+      # (docs/cutover/bizlms-*.json) because docs/ is not deployed with the
+      # plugin. A copy that drifts from the signed file proves nothing.
+      - name: BizLMS signed files equal their test copies
+        run: php tools/check-bizlms-fixture-copies.php
 
   lang-parity-check:
     name: en/hi lang-pack parity

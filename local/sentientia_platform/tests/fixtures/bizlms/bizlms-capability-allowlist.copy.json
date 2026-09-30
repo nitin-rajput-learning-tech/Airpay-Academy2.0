@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "status": "DRAFT - prepared 2026-09-30 from the ADR-032 framework review. NOT SIGNED: approved_by and approved_on stay empty until Nitin signs, and repair_bizlms_capabilities.php refuses an unsigned file. Signing adds his grants (if any) and freezes the file: the sha256 of this file is what he approved.",
+  "approved_by": "",
+  "approved_on": "",
+  "basis": "ADR-032 section Capabilities. Declines only: nothing here is a grant. The BizLMS grants on roles 1 (manager) and 9 (administrator, the tenant-admin role) are the manager-archetype defaults of the 22 BizLMS plugins. Sentientia archetypes already grant the replacements to those roles, except the four organisation capabilities ADR-031 reserves for site administrators and holders of local/sentientia_platform:crosstenant.",
+  "grants": [],
+  "declined": [
+    {
+      "role": "manager",
+      "context": "system",
+      "legacy": "local/costcenter:manage_ownorganization",
+      "reason": "ADR-031 withholds organisation create, edit and delete from tenant admins; local/sentientia_org:manage_ownorganization has no archetype on purpose. Not carried."
+    },
+    {
+      "role": "manager",
+      "context": "system",
+      "legacy": "local/costcenter:manage_owndepartments",
+      "reason": "ADR-031 withholds organisation create, edit and delete from tenant admins; local/sentientia_org:manage_owndepartments has no archetype on purpose. Not carried."
+    },
+    {
+      "role": "administrator",
+      "context": "system",
+      "legacy": "local/costcenter:manage_ownorganization",
+      "reason": "ADR-031 withholds organisation create, edit and delete from tenant admins; local/sentientia_org:manage_ownorganization has no archetype on purpose. Not carried."
+    },
+    {
+      "role": "administrator",
+      "context": "system",
+      "legacy": "local/costcenter:manage_owndepartments",
+      "reason": "ADR-031 withholds organisation create, edit and delete from tenant admins; local/sentientia_org:manage_owndepartments has no archetype on purpose. Not carried."
+    },
+    { "legacy_component": "local_assignroles", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
+    { "legacy_component": "local_biz_cart", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
+    { "legacy_component": "local_classroom", "reason": "code not deployed; Sentientia archetypes grant the replacements. Covers only the capabilities with no Sentientia equivalent: local/classroom:manageclassroom stays an open decision (see open_decisions)." },
+    { "legacy_component": "local_costcenter", "reason": "code not deployed; Sentientia archetypes grant the replacements. Covers only the capabilities with no Sentientia equivalent: the five that have one are decided per role (the two manage_own* above, the rest held by archetype or withheld by ADR-031)." },
+    { "legacy_component": "local_courses", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
+    { "legacy_component": "local_custom_category", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
+    { "legacy_component": "local_evaluation", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
+    { "legacy_component": "local_forum", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
+    { "legacy_component": "local_groups", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
+    { "legacy_component": "local_learningplan", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
+    { "legacy_component": "local_location", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
+    { "legacy_component": "local_myteam", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
+    { "legacy_component": "local_notifications", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
+    { "legacy_component": "local_onlineexams", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
+    { "legacy_component": "local_program", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
+    { "legacy_component": "local_ratings", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
+    { "legacy_component": "local_recompletion", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
+    { "legacy_component": "local_request", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
+    { "legacy_component": "local_search", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
+    { "legacy_component": "local_skillrepository", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
+    { "legacy_component": "local_tags", "reason": "code not deployed; Sentientia archetypes grant the replacements" },
+    { "legacy_component": "local_users", "reason": "code not deployed; Sentientia archetypes grant the replacements. Covers only the capabilities with no Sentientia equivalent: local/users:edit and :bulkstatuschange are held by archetype." }
+  ],
+  "open_decisions": [
+    {
+      "legacy": "local/classroom:manageclassroom",
+      "target": "local/sentientia_classroom:manage",
+      "note": "OPEN, Nitin to decide from the Stage B inventory. BizLMS gives this no archetype, so on production it exists only as explicit overrides (for example on trainers or at category level). sentientia_classroom:manage reaches only the manager archetype, so every role that held it loses classroom management when the BizLMS code goes. Add one grants line per role, context and permission the inventory shows; or decline that role grant by name. A plugin decline never covers it."
+    },
+    {
+      "legacy": "any of the ten mapped capabilities (capability_repair::MAP), at a context other than system, or with PREVENT or PROHIBIT",
+      "note": "OPEN if the inventory shows any: an override on role 9 or 1 at category level, or a PREVENT or PROHIBIT. The archetype defaults are held at system context and need nothing. Anything else is decided per role and context, by a grants line or a declined line."
+    }
+  ]
+}

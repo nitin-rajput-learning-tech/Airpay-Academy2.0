@@ -49,22 +49,20 @@ final class bizlms_decisions_test extends \advanced_testcase {
     }
 
     /**
-     * The checked-in decisions file, when this checkout has it. The plugin is deployed on its own to a Moodle tree,
-     * where docs/ does not exist; the checkout, and a path in BIZLMS_DECISIONS_FILE, do have it.
+     * The owner-signed decisions file. The plugin is deployed on its own to a Moodle tree, where docs/ does not
+     * exist, so the test reads the byte-identical copy under tests/fixtures/bizlms/ that ships with the plugin.
+     * tools/check-bizlms-fixture-copies.php (CI, tree-drift-check) fails when the copy differs from the signed
+     * file, and the last test below checks it again wherever docs/ is reachable. A path in
+     * BIZLMS_DECISIONS_FILE overrides both.
      *
-     * @return string|null
+     * @return string
      */
-    private function real_decisions_file(): ?string {
-        $candidates = [
-            getenv('BIZLMS_DECISIONS_FILE') ?: '',
-            __DIR__ . '/../../../../docs/cutover/bizlms-import-decisions.json',
-        ];
-        foreach ($candidates as $path) {
-            if ($path !== '' && is_readable($path)) {
-                return $path;
-            }
+    private function real_decisions_file(): string {
+        $env = getenv('BIZLMS_DECISIONS_FILE') ?: '';
+        if ($env !== '' && is_readable($env)) {
+            return $env;
         }
-        return null;
+        return __DIR__ . '/../fixtures/bizlms/bizlms-import-decisions.copy.json';
     }
 
     public function test_the_loader_reads_the_shape_of_the_real_file(): void {
@@ -117,9 +115,7 @@ final class bizlms_decisions_test extends \advanced_testcase {
 
     public function test_the_checked_in_file_loads_and_its_finance_items_block(): void {
         $path = $this->real_decisions_file();
-        if ($path === null) {
-            $this->markTestSkipped('docs/cutover/bizlms-import-decisions.json is not reachable from this deployment');
-        }
+        $this->assertFileExists($path, 'the plugin ships a copy of the signed file; a missing copy must not skip the test');
         $decisions = decisions::load($path);
 
         $this->assertGreaterThan(100, count($decisions->all()), 'the owner signed 109 decisions; an empty read proves nothing');
@@ -143,5 +139,17 @@ final class bizlms_decisions_test extends \advanced_testcase {
 
         $lf = str_replace("\r\n", "\n", (string) file_get_contents($path));
         $this->assertSame(hash('sha256', $lf), $decisions->hash(), 'the pinned hash is over the LF bytes');
+    }
+
+    public function test_the_test_copy_is_the_signed_file_wherever_the_checkout_has_both(): void {
+        $signed = __DIR__ . '/../../../../docs/cutover/bizlms-import-decisions.json';
+        if (!is_readable($signed)) {
+            $this->markTestSkipped('docs/ is not deployed with the plugin; tools/check-bizlms-fixture-copies.php checks this in CI');
+        }
+        $this->assertSame(
+            str_replace("\r\n", "\n", (string) file_get_contents($signed)),
+            str_replace("\r\n", "\n", (string) file_get_contents(__DIR__ . '/../fixtures/bizlms/bizlms-import-decisions.copy.json')),
+            'copy the signed file over tests/fixtures/bizlms/bizlms-import-decisions.copy.json in both trees'
+        );
     }
 }

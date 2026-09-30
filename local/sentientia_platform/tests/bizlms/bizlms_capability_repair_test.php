@@ -111,6 +111,7 @@ final class bizlms_capability_repair_test extends \advanced_testcase {
         $classroom = $rows[array_search(self::OLD, array_column($rows, 'legacy'), true)];
         $this->assertSame('blmtrainer', $classroom['role']);
         $this->assertSame(CAP_ALLOW, $classroom['permission']);
+        $this->assertSame('local_blmlegacy', $classroom['component']);
         $this->assertSame(self::NEW, $classroom['target']);
         $this->assertTrue($classroom['target_exists']);
         $this->assertFalse($classroom['held']);
@@ -256,5 +257,293 @@ final class bizlms_capability_repair_test extends \advanced_testcase {
         }
         $this->expectException(blocked::class);
         capability_repair::load_allowlist('/nonexistent/allowlist.json');
+    }
+
+    // The declined section (the owner's "reviewed, not carried" decisions), ADR-032 "Capabilities".
+
+    private const ARCH_ROLES = ['blmmanager', 'blmadmin'];
+
+    /**
+     * BizLMS's manager-archetype grants on the two roles that hold them on production (the core manager role and the
+     * tenant-admin role 9), with fake plugin names so the test does not depend on which plugins are on disk.
+     *
+     * Seven legacy capabilities on each role: view (its Sentientia equivalent has a manager archetype, so the
+     * install already grants it to both roles), manage (the equivalent is never granted), manage_ownorganization and
+     * manage_owndepartments (equivalents with no archetype, on purpose), and three with no equivalent at all.
+     *
+     * @return array{0: int[], 1: capability_repair} The two role ids and a repair with the injected map.
+     */
+    private function archetype_scenario(): array {
+        global $DB;
+        $this->resetAfterTest();
+        $legacy = [
+            'local/blmcost:view' => 'local/blmtarget:view',
+            'local/blmcost:manage' => 'local/blmtarget:admin',
+            'local/blmcost:manage_ownorganization' => 'local/blmtarget:ownorg',
+            'local/blmcost:manage_owndepartments' => 'local/blmtarget:owndept',
+            'local/blmcost:create' => null,
+            'local/blmforum:view' => null,
+            'local/blmforum:post' => null,
+        ];
+        foreach (array_keys($legacy) as $name) {
+            $DB->insert_record('capabilities', (object) ['name' => $name, 'captype' => 'write',
+                'contextlevel' => CONTEXT_SYSTEM, 'riskbitmask' => 0,
+                'component' => str_starts_with($name, 'local/blmcost') ? 'local_blmcost' : 'local_blmforum']);
+        }
+        foreach (array_filter($legacy) as $target) {
+            $DB->insert_record('capabilities', (object) ['name' => $target, 'captype' => 'write',
+                'contextlevel' => CONTEXT_SYSTEM, 'component' => 'local_sentientia_platform', 'riskbitmask' => 0]);
+        }
+        \cache::make('core', 'capabilities')->delete('core_capabilities');
+
+        $system = \context_system::instance();
+        $roleids = [];
+        foreach (self::ARCH_ROLES as $shortname) {
+            $roleid = $this->getDataGenerator()->create_role(['shortname' => $shortname]);
+            $roleids[] = $roleid;
+            foreach ([...array_keys($legacy), 'local/blmtarget:view'] as $name) {
+                $DB->insert_record('role_capabilities', (object) ['contextid' => $system->id, 'roleid' => $roleid,
+                    'capability' => $name, 'permission' => CAP_ALLOW, 'timemodified' => time(), 'modifierid' => 0]);
+            }
+        }
+        return [$roleids, new capability_repair(array_filter($legacy), ['local/blmtarget:admin'])];
+    }
+
+    /**
+     * @param int[] $roleids
+     * @param array[] $inventory
+     * @return array[] The inventory rows of those roles (the test database may hold other roles' rows).
+     */
+    private function only_roles(array $roleids, array $inventory): array {
+        return array_values(array_filter($inventory, fn(array $row): bool => in_array($row['roleid'], $roleids, true)));
+    }
+
+    /**
+     * The declines the owner would sign for the archetype scenario: the two organisation capabilities ADR-031
+     * withholds, on both roles, and both plugins by component.
+     *
+     * @return array[]
+     */
+    private function archetype_declines(): array {
+        $declined = [];
+        foreach (self::ARCH_ROLES as $role) {
+            foreach (['manage_ownorganization', 'manage_owndepartments'] as $capability) {
+                $declined[] = ['role' => $role, 'context' => 'system', 'legacy' => 'local/blmcost:' . $capability,
+                    'reason' => 'ADR-031 withholds it from tenant admins'];
+            }
+        }
+        $declined[] = ['legacy_component' => 'local_blmcost', 'reason' => 'code not deployed; Sentientia archetypes grant the replacements'];
+        $declined[] = ['legacy_component' => 'local_blmforum', 'reason' => 'code not deployed; Sentientia archetypes grant the replacements'];
+        return $declined;
+    }
+
+    public function test_the_manager_archetype_set_with_the_owners_declines_finishes_clean_and_grants_nothing(): void {
+        global $DB;
+        [$roleids, $repair] = $this->archetype_scenario();
+        $inventory = $this->only_roles($roleids, $repair->inventory());
+        $this->assertCount(14, $inventory, 'seven legacy capabilities on each of two roles');
+        $before = $DB->count_records('role_capabilities');
+
+        $loaded = capability_repair::load_allowlist($this->allowlist([], ['declined' => $this->archetype_declines()]));
+        $this->assertCount(6, $loaded['declines']);
+        $plan = $repair->plan($loaded['grants'], $inventory, $loaded['declines']);
+
+        $this->assertSame([], $plan['refused']);
+        $this->assertSame([], $plan['apply'], 'nothing is granted');
+        $this->assertSame([], $plan['uncovered']);
+        $this->assertSame([], $plan['unmapped']);
+        $this->assertSame([], $plan['unused_declines']);
+        $this->assertCount(2, $plan['withheld'], 'the never-granted equivalent, on both roles');
+        // Per role: ownorg, owndept, create and the two forum capabilities are declined; view is held; manage is withheld.
+        $this->assertCount(10, $plan['declined']);
+        $this->assertSame(2, $plan['declined_by']['decline 5 (local_blmcost)']['rows']);
+        $this->assertSame(4, $plan['declined_by']['decline 6 (local_blmforum)']['rows']);
+        $this->assertSame('ADR-031 withholds it from tenant admins',
+            $plan['declined_by']['decline 1 (blmmanager local/blmcost:manage_ownorganization)']['reason']);
+
+        $this->assertSame(0, capability_repair::open_count($plan));
+        $this->assertSame(0, capability_repair::exit_code($plan), 'every grant is decided');
+        $this->assertSame(0, $repair->apply($plan['apply']));
+        $this->assertSame($before, $DB->count_records('role_capabilities'), 'the review wrote nothing');
+    }
+
+    public function test_the_same_review_without_the_declines_exits_2(): void {
+        [$roleids, $repair] = $this->archetype_scenario();
+        $inventory = $this->only_roles($roleids, $repair->inventory());
+
+        $plan = $repair->plan([], $inventory);
+        $this->assertCount(4, $plan['uncovered'], 'ownorg and owndept, on both roles');
+        $this->assertCount(6, $plan['unmapped'], 'create and the two forum capabilities, on both roles');
+        $this->assertSame([], $plan['declined']);
+        $this->assertSame(10, capability_repair::open_count($plan));
+        $this->assertSame(2, capability_repair::exit_code($plan));
+    }
+
+    public function test_a_plugin_decline_covers_only_capabilities_with_no_equivalent(): void {
+        [$roleids, $repair] = $this->archetype_scenario();
+        $inventory = $this->only_roles($roleids, $repair->inventory());
+        $plugins = array_slice($this->archetype_declines(), 4);
+        $loaded = capability_repair::load_allowlist($this->allowlist([], ['declined' => $plugins]));
+
+        $plan = $repair->plan([], $inventory, $loaded['declines']);
+        $this->assertSame([], $plan['unmapped'], 'no equivalent: the plugin decline covers them');
+        $this->assertCount(6, $plan['declined']);
+        $this->assertCount(4, $plan['uncovered'], 'the two that have an equivalent are decided per role, never by plugin');
+        $this->assertSame(2, capability_repair::exit_code($plan));
+    }
+
+    public function test_a_row_decline_names_one_role_and_one_context(): void {
+        [$roleids, $repair] = $this->archetype_scenario();
+        $inventory = $this->only_roles($roleids, $repair->inventory());
+        $decline = ['role' => 'blmmanager', 'context' => 'system', 'legacy' => 'local/blmcost:manage_ownorganization',
+            'reason' => 'ADR-031'];
+        $loaded = capability_repair::load_allowlist($this->allowlist([], ['declined' => [$decline]]));
+
+        $plan = $repair->plan([], $inventory, $loaded['declines']);
+        $this->assertCount(1, $plan['declined']);
+        $this->assertCount(3, $plan['uncovered'], 'the other role, and the other capability, are still open');
+        $this->assertStringContainsString('blmadmin', implode(' ', $plan['uncovered']));
+
+        // The same role in a context the role holds nothing in: it names no row, so it changes nothing and is noted.
+        $elsewhere = ['context' => '999999999'] + $decline;
+        $loaded = capability_repair::load_allowlist($this->allowlist([], ['declined' => [$elsewhere]]));
+        $plan = $repair->plan([], $inventory, $loaded['declines']);
+        $this->assertSame([], $plan['declined']);
+        $this->assertCount(4, $plan['uncovered']);
+        $this->assertCount(1, $plan['unused_declines']);
+        $this->assertStringContainsString('matches no grant in the inventory', $plan['unused_declines'][0]);
+    }
+
+    public function test_a_line_that_is_both_granted_and_declined_is_refused(): void {
+        global $DB;
+        [$roleids, $repair] = $this->archetype_scenario();
+        $inventory = $this->only_roles($roleids, $repair->inventory());
+        $legacy = 'local/blmcost:manage_ownorganization';
+        $grant = ['role' => 'blmmanager', 'context' => (string) \context_system::instance()->id, 'legacy' => $legacy,
+            'target' => 'local/blmtarget:ownorg', 'permission' => CAP_ALLOW];
+        // "system" in the decline and the context id in the grant are the same context.
+        $decline = ['role' => 'blmmanager', 'context' => 'system', 'legacy' => $legacy, 'reason' => 'ADR-031'];
+        $loaded = capability_repair::load_allowlist($this->allowlist([$grant], ['declined' => [$decline]]));
+
+        $plan = $repair->plan($loaded['grants'], $inventory, $loaded['declines']);
+        $this->assertCount(2, $plan['refused'], 'both lines are refused');
+        $this->assertStringContainsString('is_also_declined_by:decline 1', implode("\n", $plan['refused']));
+        $this->assertStringContainsString('is_also_granted_by:grant 1', implode("\n", $plan['refused']));
+        $this->assertSame([], $plan['apply'], 'a refused grant is not made');
+        $this->assertSame([], $plan['declined'], 'and the decline is not honoured either');
+        $this->assertSame(1, capability_repair::exit_code($plan));
+        $this->assertFalse($DB->record_exists('role_capabilities', ['capability' => 'local/blmtarget:ownorg']));
+
+        // The same grant on the other role is not in conflict and is made.
+        $other = ['role' => 'blmadmin'] + $grant;
+        $loaded = capability_repair::load_allowlist($this->allowlist([$other], ['declined' => [$decline]]));
+        $plan = $repair->plan($loaded['grants'], $inventory, $loaded['declines']);
+        $this->assertSame([], $plan['refused']);
+        $this->assertCount(1, $plan['apply']);
+        $this->assertCount(1, $plan['declined']);
+    }
+
+    public function test_a_decline_does_not_lift_the_never_granted_rule(): void {
+        [$roleids, $repair] = $this->archetype_scenario();
+        $inventory = $this->only_roles($roleids, $repair->inventory());
+        $grant = ['role' => 'blmmanager', 'context' => 'system', 'legacy' => 'local/blmcost:manage',
+            'target' => 'local/blmtarget:admin', 'permission' => CAP_ALLOW];
+        $declined = $this->archetype_declines();
+
+        $loaded = capability_repair::load_allowlist($this->allowlist([$grant], ['declined' => $declined]));
+        $plan = $repair->plan($loaded['grants'], $inventory, $loaded['declines']);
+        $this->assertStringContainsString('target_is_never_granted:local/blmtarget:admin', $plan['refused'][0]);
+        $this->assertSame([], $plan['apply']);
+        $this->assertSame(1, capability_repair::exit_code($plan));
+    }
+
+    public function test_the_declined_section_must_be_well_formed(): void {
+        $component = ['legacy_component' => 'local_forum', 'reason' => 'gone'];
+        $row = ['role' => 'manager', 'context' => 'system', 'legacy' => 'local/costcenter:view', 'reason' => 'gone'];
+        $bad = [
+            ['capability_allowlist_declined_is_not_a_list', ['declined' => 'all']],
+            ['capability_allowlist_declined_is_not_a_list', ['declined' => ['a' => $component]]],
+            ['capability_allowlist_decline_invalid:0:entry', ['declined' => ['local_forum']]],
+            ['capability_allowlist_decline_invalid:0:reason', ['declined' => [['reason' => ''] + $component]]],
+            ['capability_allowlist_decline_invalid:0:reason', ['declined' => [['reason' => '   '] + $row]]],
+            ['capability_allowlist_decline_invalid:0:reason', ['declined' => [['legacy_component' => 'local_forum']]]],
+            ['capability_allowlist_decline_invalid:0:shape', ['declined' => [['reason' => 'gone']]]],
+            ['capability_allowlist_decline_invalid:0:shape', ['declined' => [['role' => 'manager'] + $component]]],
+            ['capability_allowlist_decline_invalid:0:legacy_component', ['declined' => [['legacy_component' => 'Local Forum'] + $component]]],
+            ['capability_allowlist_decline_invalid:0:legacy_component', ['declined' => [['legacy_component' => 'forum'] + $component]]],
+            ['capability_allowlist_decline_invalid:0:role', ['declined' => [array_diff_key($row, ['role' => 1])]]],
+            ['capability_allowlist_decline_invalid:0:context', ['declined' => [['context' => ''] + $row]]],
+            ['capability_allowlist_decline_invalid:0:legacy', ['declined' => [['legacy' => 'not a capability'] + $row]]],
+            ['capability_allowlist_decline_invalid:1:entry', ['declined' => [$component, 5]]],
+        ];
+        foreach ($bad as [$expected, $header]) {
+            try {
+                capability_repair::load_allowlist($this->allowlist([], $header));
+                $this->fail("accepted: {$expected}");
+            } catch (blocked $e) {
+                $this->assertStringContainsString($expected, $e->getMessage());
+            }
+        }
+
+        // An allow-list with no declined section (the shape before this section existed) still loads.
+        $this->assertSame([], capability_repair::load_allowlist($this->allowlist([]))['declines']);
+        // A decline is part of what was signed: it changes the hash.
+        $this->assertNotSame(capability_repair::load_allowlist($this->allowlist([]))['hash'],
+            capability_repair::load_allowlist($this->allowlist([], ['declined' => [$component, $row]]))['hash']);
+    }
+
+    public function test_the_checked_in_draft_declines_the_22_plugins_and_grants_nothing(): void {
+        $path = __DIR__ . '/../fixtures/bizlms/bizlms-capability-allowlist.copy.json';
+        $this->assertFileExists($path);
+
+        // Unsigned as checked in: the owner signs it, and the loader refuses it until then.
+        try {
+            capability_repair::load_allowlist($path);
+            $this->fail('an unsigned allow-list was accepted');
+        } catch (blocked $e) {
+            $this->assertStringContainsString('capability_allowlist_is_not_signed', $e->getMessage());
+        }
+
+        $data = json_decode((string) file_get_contents($path), true);
+        $signed = make_request_directory() . '/signed.json';
+        file_put_contents($signed, json_encode(array_merge($data, ['approved_by' => 'Test Owner', 'approved_on' => '2026-09-30'])));
+        $loaded = capability_repair::load_allowlist($signed);
+
+        $this->assertSame([], $loaded['grants'], 'the draft carries no grant: those are the owner\'s to add');
+        $components = array_column(array_filter($loaded['declines'], fn(array $d): bool => $d['kind'] === 'component'), 'component');
+        $plugins = ['local_assignroles', 'local_biz_cart', 'local_classroom', 'local_costcenter', 'local_courses',
+            'local_custom_category', 'local_evaluation', 'local_forum', 'local_groups', 'local_learningplan', 'local_location',
+            'local_myteam', 'local_notifications', 'local_onlineexams', 'local_program', 'local_ratings', 'local_recompletion',
+            'local_request', 'local_search', 'local_skillrepository', 'local_tags', 'local_users'];
+        $this->assertEqualsCanonicalizing($plugins, $components, 'the 22 BizLMS plugins of the production snapshot');
+
+        // Roles 1 and 9 (manager, administrator): the two organisation capabilities ADR-031 withholds.
+        $rows = array_values(array_filter($loaded['declines'], fn(array $d): bool => $d['kind'] === 'row'));
+        $this->assertCount(4, $rows);
+        foreach ($rows as $decline) {
+            $this->assertContains($decline['role'], ['manager', 'administrator']);
+            $this->assertSame('system', $decline['context']);
+            $this->assertContains($decline['legacy'],
+                ['local/costcenter:manage_ownorganization', 'local/costcenter:manage_owndepartments']);
+            $this->assertContains(capability_repair::MAP[$decline['legacy']], [
+                'local/sentientia_org:manage_ownorganization', 'local/sentientia_org:manage_owndepartments',
+            ]);
+        }
+
+        // manageclassroom is an open decision: nothing names it as a decline.
+        $this->assertNotContains('local/classroom:manageclassroom', array_column($rows, 'legacy'));
+        $this->assertStringContainsString('local/classroom:manageclassroom', json_encode($data['open_decisions']));
+    }
+
+    public function test_the_test_copy_of_the_draft_is_the_checked_in_file_wherever_the_checkout_has_both(): void {
+        $signed = __DIR__ . '/../../../../docs/cutover/bizlms-capability-allowlist.json';
+        if (!is_readable($signed)) {
+            $this->markTestSkipped('docs/ is not deployed with the plugin; tools/check-bizlms-fixture-copies.php checks this in CI');
+        }
+        $this->assertSame(
+            str_replace("\r\n", "\n", (string) file_get_contents($signed)),
+            str_replace("\r\n", "\n", (string) file_get_contents(__DIR__ . '/../fixtures/bizlms/bizlms-capability-allowlist.copy.json')),
+            'copy the checked-in file over tests/fixtures/bizlms/bizlms-capability-allowlist.copy.json in both trees'
+        );
     }
 }

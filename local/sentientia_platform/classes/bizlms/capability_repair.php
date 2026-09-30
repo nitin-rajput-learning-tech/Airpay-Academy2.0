@@ -30,9 +30,21 @@ defined('MOODLE_INTERNAL') || die();
  *
  * WHAT IT DOES. inventory() lists every role_capabilities row on a capability whose plugin is missing from
  * disk, per role and context, next to the Sentientia equivalent and whether the role already holds it. plan()
- * checks an allow-list the owner approved, one line per grant, and refuses anything else. apply() gives exactly
- * those grants (assign_capability, which never overwrites an existing row and marks the context dirty). Nothing
- * is revoked, and the three NEVER_GRANT capabilities cannot be granted whatever the allow-list says.
+ * checks an allow-list the owner signed. The allow-list holds two kinds of decision, and every grant in the
+ * inventory must end up in one of them or the run does not finish clean:
+ *
+ * - grants: one line per grant to carry ({role, context, legacy, target, permission}). apply() gives exactly
+ *   those (assign_capability, which never overwrites an existing row, fires capability_assigned and clears the
+ *   role cache; it does not mark a context dirty in 5.1). Nothing is revoked.
+ * - declined: what the owner reviewed and does NOT carry, each with a reason. Either one role grant
+ *   ({role, context, legacy, reason}) or every grant on capabilities of one missing plugin that has no
+ *   Sentientia equivalent ({legacy_component, reason}). A component decline never covers one of the ten
+ *   capabilities in MAP: those are where a real override hides (local/classroom:manageclassroom is held by
+ *   trainers on production only as an override), so each of them is granted, held already, withheld, or
+ *   declined by name for that role and context.
+ *
+ * A line that is both granted and declined is refused. The three NEVER_GRANT capabilities cannot be granted
+ * whatever the allow-list says.
  *
  * It is not an importer: role_capabilities is permission configuration, not BizLMS history.
  *
@@ -67,6 +79,12 @@ final class capability_repair {
         'local/sentientia_platform:crosstenant',
     ];
 
+    /** A frankenstyle component name (local_classroom, block_trending_modules). */
+    private const COMPONENT_PATTERN = '~^[a-z][a-z0-9]*_[a-z0-9_]+$~';
+
+    /** A capability name (local/classroom:manageclassroom, moodle/role:manage). */
+    private const CAPABILITY_PATTERN = '~^[a-z][a-z0-9_]*/[a-z0-9_]+:[a-z0-9_]+$~';
+
     /** @var array<string, string> */
     private array $map;
 
@@ -85,12 +103,16 @@ final class capability_repair {
     /**
      * Read and validate an allow-list file.
      *
-     * The file is JSON: version, approved_by, approved_on, basis and grants, a list of
-     * {role, context, legacy, target, permission}. role is a shortname, context is "system" or a
-     * context id, permission is 1 (allow), -1 (prevent) or -1000 (prohibit).
+     * The file is JSON: version, approved_by, approved_on, basis, grants and declined. grants is a list of
+     * {role, context, legacy, target, permission}. role is a shortname, context is "system" or a context id,
+     * permission is 1 (allow), -1 (prevent) or -1000 (prohibit). declined is optional and is a list of
+     * {role, context, legacy, reason} (one role grant) or {legacy_component, reason} (every grant on a
+     * capability of that missing plugin that has no Sentientia equivalent). Other keys (a status, notes on
+     * decisions still open) are allowed and are part of the hash.
      *
      * @param string $path
-     * @return array{grants: array<int, array>, hash: string, approved_by: string, approved_on: string}
+     * @return array{grants: array<int, array>, declines: array<int, array>, hash: string, approved_by: string,
+     *         approved_on: string}
      * @throws blocked When the file is missing, malformed or not signed.
      */
     public static function load_allowlist(string $path): array {
@@ -122,18 +144,69 @@ final class capability_repair {
             ];
         }
         return [
-            'grants' => $grants, 'hash' => hash('sha256', $normalised),
+            'grants' => $grants, 'declines' => self::load_declines($data['declined'] ?? []),
+            'hash' => hash('sha256', $normalised),
             'approved_by' => (string) $data['approved_by'], 'approved_on' => (string) $data['approved_on'],
         ];
+    }
+
+    /**
+     * Validate the "declined" section of an allow-list.
+     *
+     * @param mixed $declined The decoded section (absent means none).
+     * @return array<int, array> Each {kind: 'component', component, reason} or {kind: 'row', role, context, legacy,
+     *         reason}.
+     * @throws blocked When an entry is not one of the two shapes, has no reason, or names a malformed target.
+     */
+    private static function load_declines(mixed $declined): array {
+        if (!is_array($declined) || ($declined !== [] && !array_is_list($declined))) {
+            throw new blocked('capability_allowlist_declined_is_not_a_list');
+        }
+        $out = [];
+        foreach ($declined as $i => $decline) {
+            if (!is_array($decline)) {
+                throw new blocked('capability_allowlist_decline_invalid:' . $i . ':entry');
+            }
+            if (!isset($decline['reason']) || !is_string($decline['reason']) || trim($decline['reason']) === '') {
+                throw new blocked('capability_allowlist_decline_invalid:' . $i . ':reason');
+            }
+            $reason = trim($decline['reason']);
+            $iscomponent = array_key_exists('legacy_component', $decline);
+            $isrow = array_key_exists('role', $decline) || array_key_exists('context', $decline)
+                || array_key_exists('legacy', $decline);
+            if ($iscomponent === $isrow) {
+                // Neither shape, or both mixed: a whole-plugin decline must not also name one grant.
+                throw new blocked('capability_allowlist_decline_invalid:' . $i . ':shape');
+            }
+            if ($iscomponent) {
+                if (!is_string($decline['legacy_component']) || !preg_match(self::COMPONENT_PATTERN, $decline['legacy_component'])) {
+                    throw new blocked('capability_allowlist_decline_invalid:' . $i . ':legacy_component');
+                }
+                $out[] = ['kind' => 'component', 'component' => $decline['legacy_component'], 'reason' => $reason];
+                continue;
+            }
+            foreach (['role', 'context', 'legacy'] as $field) {
+                if (!isset($decline[$field]) || !is_scalar($decline[$field]) || trim((string) $decline[$field]) === '') {
+                    throw new blocked('capability_allowlist_decline_invalid:' . $i . ':' . $field);
+                }
+            }
+            if (!preg_match(self::CAPABILITY_PATTERN, (string) $decline['legacy'])) {
+                throw new blocked('capability_allowlist_decline_invalid:' . $i . ':legacy');
+            }
+            $out[] = ['kind' => 'row', 'role' => (string) $decline['role'], 'context' => (string) $decline['context'],
+                'legacy' => (string) $decline['legacy'], 'reason' => $reason];
+        }
+        return $out;
     }
 
     /**
      * Every role grant on a capability of a plugin that is missing from disk.
      *
      * @return array<int, array{roleid: int, role: string, contextid: int, contextlevel: int, legacy: string,
-     *         permission: int, target: ?string, target_exists: bool, held: bool, withheld: bool}>
-     *         target is the Sentientia equivalent (null when the map has none), held says the role already has a
-     *         row for it in that context, withheld says the target is one this repair never grants.
+     *         component: string, permission: int, target: ?string, target_exists: bool, held: bool, withheld: bool}>
+     *         component is the missing plugin the capability belongs to, target is the Sentientia equivalent (null
+     *         when the map has none), held says the role already has a row for it in that context, withheld says
+     *         the target is one this repair never grants.
      */
     public function inventory(): array {
         global $DB;
@@ -153,7 +226,8 @@ final class capability_repair {
         }
         [$insql, $params] = $DB->get_in_or_equal($missing, SQL_PARAMS_NAMED, 'blmcomp');
         $rows = $DB->get_records_sql(
-            "SELECT rc.id, rc.roleid, r.shortname, rc.contextid, ctx.contextlevel, rc.capability, rc.permission
+            "SELECT rc.id, rc.roleid, r.shortname, rc.contextid, ctx.contextlevel, rc.capability, rc.permission,
+                    c.component
                FROM {role_capabilities} rc
                JOIN {capabilities} c ON c.name = rc.capability
                JOIN {role} r ON r.id = rc.roleid
@@ -174,6 +248,7 @@ final class capability_repair {
             $out[] = [
                 'roleid' => (int) $row->roleid, 'role' => (string) $row->shortname, 'contextid' => (int) $row->contextid,
                 'contextlevel' => (int) $row->contextlevel, 'legacy' => (string) $row->capability,
+                'component' => (string) $row->component,
                 'permission' => (int) $row->permission, 'target' => $target, 'target_exists' => $exists, 'held' => $held,
                 'withheld' => $target !== null && in_array($target, $this->never, true),
             ];
@@ -186,22 +261,48 @@ final class capability_repair {
      *
      * @param array<int, array> $grants As returned by load_allowlist().
      * @param array<int, array>|null $inventory Defaults to inventory().
+     * @param array<int, array> $declines The "declines" of load_allowlist(): what the owner reviewed and does not carry.
      * @return array{apply: array<int, array>, held: array<int, array>, refused: string[], uncovered: string[],
-     *         withheld: string[], unmapped: string[]}
+     *         withheld: string[], unmapped: string[], declined: string[],
+     *         declined_by: array<string, array{rows: int, reason: string}>, unused_declines: string[]}
      *         apply are the grants to make; held are approved grants the role already has; refused are the
      *         allow-list lines that were rejected, with the reason; uncovered are inventory rows with a known
-     *         target that nobody approved; withheld are rows whose target this repair never grants; unmapped are
-     *         legacy capabilities with grants and no known equivalent.
+     *         target that nobody approved or declined; withheld are rows whose target this repair never grants;
+     *         unmapped are legacy capabilities with grants, no known equivalent and no component decline;
+     *         declined are the rows the owner declined (they count as decided), declined_by counts them per
+     *         decline with its reason, and unused_declines are decline lines that matched no row.
      */
-    public function plan(array $grants, ?array $inventory = null): array {
+    public function plan(array $grants, ?array $inventory = null, array $declines = []): array {
         global $DB;
         $inventory ??= $this->inventory();
-        $plan = ['apply' => [], 'held' => [], 'refused' => [], 'uncovered' => [], 'withheld' => [], 'unmapped' => []];
+        $declines = array_values($declines);
+        $plan = ['apply' => [], 'held' => [], 'refused' => [], 'uncovered' => [], 'withheld' => [], 'unmapped' => [],
+            'declined' => [], 'declined_by' => [], 'unused_declines' => []];
 
         $index = [];
         foreach ($inventory as $row) {
             $index[$row['roleid'] . '|' . $row['contextid'] . '|' . $row['legacy']] = $row;
         }
+
+        // Declines. A row decline names one role grant; a component decline covers the grants on capabilities of one
+        // missing plugin that have no Sentientia equivalent, and never one of the ten in MAP (see the class comment).
+        $rowdeclines = [];
+        $componentdeclines = [];
+        $labels = [];
+        foreach ($declines as $n => $decline) {
+            $labels[$n] = self::decline_label($n, $decline);
+            if ($decline['kind'] === 'component') {
+                $componentdeclines[$decline['component']] ??= $n;
+                continue;
+            }
+            $roleid = (int) $DB->get_field('role', 'id', ['shortname' => $decline['role']], IGNORE_MISSING);
+            $contextid = $this->context_id($decline['context']);
+            if ($roleid && $contextid !== null) {
+                $rowdeclines[$roleid . '|' . $contextid . '|' . $decline['legacy']] ??= $n;
+            }
+        }
+        $used = [];
+        $conflicts = [];
 
         $approved = [];
         foreach ($grants as $n => $grant) {
@@ -224,7 +325,17 @@ final class capability_repair {
                 $plan['refused'][] = "{$label}: context_not_found";
                 continue;
             }
-            $row = $index[$roleid . '|' . $contextid . '|' . $grant['legacy']] ?? null;
+            $key = $roleid . '|' . $contextid . '|' . $grant['legacy'];
+            if (isset($rowdeclines[$key])) {
+                // Both a grant and a decline of the same role grant: neither is honoured and the run is refused.
+                $declinenumber = $rowdeclines[$key];
+                $plan['refused'][] = "{$label}: is_also_declined_by:{$labels[$declinenumber]}";
+                $plan['refused'][] = "{$labels[$declinenumber]}: is_also_granted_by:grant " . ($n + 1);
+                $conflicts[$key] = true;
+                $used[$declinenumber] = true;
+                continue;
+            }
+            $row = $index[$key] ?? null;
             if ($row === null || $row['permission'] !== $grant['permission']) {
                 $plan['refused'][] = "{$label}: the role does not hold that legacy grant with that permission there";
                 continue;
@@ -233,7 +344,7 @@ final class capability_repair {
                 $plan['refused'][] = "{$label}: target_capability_is_not_installed";
                 continue;
             }
-            $approved[$roleid . '|' . $contextid . '|' . $grant['legacy']] = true;
+            $approved[$key] = true;
             $entry = $grant + ['roleid' => $roleid, 'contextid' => $contextid];
             if ($row['held']) {
                 $plan['held'][] = $entry;
@@ -244,20 +355,75 @@ final class capability_repair {
 
         foreach ($inventory as $row) {
             $key = $row['roleid'] . '|' . $row['contextid'] . '|' . $row['legacy'];
+            if (isset($approved[$key])) {
+                continue;
+            }
             $where = "{$row['role']} in context {$row['contextid']}: {$row['legacy']}";
+            $declinenumber = isset($conflicts[$key]) ? null : ($rowdeclines[$key] ?? null);
+            if ($declinenumber === null && $row['target'] === null) {
+                $declinenumber = $componentdeclines[$row['component'] ?? ''] ?? null;
+            }
+            if ($declinenumber !== null) {
+                $label = $labels[$declinenumber];
+                $plan['declined'][] = $where;
+                $plan['declined_by'][$label] ??= ['rows' => 0, 'reason' => $declines[$declinenumber]['reason']];
+                $plan['declined_by'][$label]['rows']++;
+                $used[$declinenumber] = true;
+                continue;
+            }
             if ($row['target'] === null) {
                 $plan['unmapped'][] = $where;
             } else if ($row['withheld']) {
                 $plan['withheld'][] = $where . " -> {$row['target']}";
-            } else if (!$row['held'] && !isset($approved[$key])) {
+            } else if (!$row['held']) {
                 $plan['uncovered'][] = $where . " -> {$row['target']}";
+            }
+        }
+        foreach ($labels as $n => $label) {
+            if (!isset($used[$n])) {
+                $plan['unused_declines'][] = "{$label}: matches no grant in the inventory";
             }
         }
         return $plan;
     }
 
     /**
-     * Give the approved grants. Never overwrites a row that exists, never revokes, and marks each context dirty.
+     * Grants that still have no decision: neither approved, held already, withheld nor declined.
+     *
+     * @param array $plan As returned by plan().
+     * @return int
+     */
+    public static function open_count(array $plan): int {
+        return count($plan['uncovered']) + count($plan['unmapped']);
+    }
+
+    /**
+     * The exit code of a review: 1 when an allow-list line was refused, 2 when grants remain undecided, else 0.
+     * (The CLI's 3 is a guard refusal and comes from elsewhere.)
+     *
+     * @param array $plan As returned by plan().
+     * @return int
+     */
+    public static function exit_code(array $plan): int {
+        if ($plan['refused']) {
+            return 1;
+        }
+        return self::open_count($plan) > 0 ? 2 : 0;
+    }
+
+    /**
+     * @param int $n Zero-based position in the declined section.
+     * @param array $decline
+     * @return string
+     */
+    private static function decline_label(int $n, array $decline): string {
+        $what = $decline['kind'] === 'component' ? $decline['component'] : $decline['role'] . ' ' . $decline['legacy'];
+        return 'decline ' . ($n + 1) . ' (' . $what . ')';
+    }
+
+    /**
+     * Give the approved grants. Never overwrites a row that exists and never revokes. assign_capability() fires
+     * capability_assigned and clears the role cache; in 5.1 it does not mark the context dirty.
      *
      * @param array<int, array> $entries The plan's apply list.
      * @return int Grants made.
