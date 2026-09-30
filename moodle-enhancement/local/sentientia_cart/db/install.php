@@ -53,9 +53,10 @@ function xmldb_local_sentientia_cart_install(): void {
 
     // D1 (persona pass 2026-09-30): a public-storefront or ZEEA learner holds no
     // role but Authenticated user, so that role must hold :purchase for them to
-    // buy. db/access.php lists the `user` archetype, but archetype defaults are
-    // applied only when a capability is first registered, and the upgrade path
-    // has its own back-fill (step 2026093001). Fresh installs go through the
+    // buy. db/access.php lists the `user` archetype, but a site whose capability
+    // row was registered outside update_capabilities() (a CLI patch, the rename
+    // --migrate-caps path) never received the archetype default, and the upgrade
+    // path has its own back-fill (step 2026093001). Fresh installs go through the
     // same helper so both paths end identically; it never overrides an
     // administrator's PREVENT / PROHIBIT and only fills a missing grant.
     require_once(__DIR__ . '/upgradelib.php');

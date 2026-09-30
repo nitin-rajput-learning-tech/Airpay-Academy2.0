@@ -56,3 +56,5 @@ $string['storefront_checkout_moved'] = '{$a} course(s) moved to checkout.';
 $string['storefront_checkout_refused'] = '{$a} course(s) could not be moved to checkout and are still in your basket. They may not be on sale online yet, or may not be available to your account.';
 $string['storefront_checkout_redundant'] = '{$a} course(s) were removed from your basket because you are already enrolled.';
 $string['storefront_checkout_nothing'] = 'None of the paid courses in your basket could be moved to checkout.';
+$string['storefront_checkout_pricediffers'] = '{$a} course(s) are priced differently at checkout than in your basket. Check the amounts on this page before you pay.';
+$string['storefront_checkout_freeleft'] = 'Your basket still holds {$a} free course(s). They do not go through checkout: open your basket to enrol in them.';

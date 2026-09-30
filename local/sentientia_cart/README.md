@@ -37,11 +37,14 @@ Custom roles `employee` + `administrator` get grants via the
 
 `:purchase` on the `user` archetype (Authenticated user) is what lets a real
 public-storefront (/77) or ZEEA (/177) learner, who holds no other system role,
-add to cart and check out. Moodle applies archetype defaults only when a
-capability is first registered, so upgrade step `2026093001` back-fills the
-grant onto existing sites (`db/upgradelib.php`,
-`local_sentientia_cart_backfill_user_purchase()`): idempotent, fills a missing
-grant only, and never overrides an administrator's PREVENT or PROHIBIT. Holding
+add to cart and check out. `db/access.php` has listed the `user` archetype since
+the plugin was written, but the role still lacked the row on the persona-pass
+site (most likely the capability was first registered outside
+`update_capabilities()`, the only thing that applies archetype defaults), so
+upgrade step `2026093001` and the install hook back-fill the grant
+(`db/upgradelib.php`, `local_sentientia_cart_backfill_user_purchase()`, which
+also covers the role `$CFG->defaultuserroleid` points at): idempotent, fills a
+missing grant only, and never overrides an administrator's PREVENT or PROHIBIT. Holding
 the capability does not widen what anyone can buy: the cart still has to be
 switched on for the buyer's tenant (`enabled_tenants`) and the course must be one
 the buyer's own catalogue shows (`cart_manager::can_buy_course()`, ADR-031).

@@ -17,11 +17,15 @@ defined('MOODLE_INTERNAL') || die();
  * local/sentientia_cart:purchase.
  *
  * db/access.php has listed the `user` archetype for :purchase since the plugin
- * was written (and the README says so), but Moodle applies archetype defaults
- * only when a capability is FIRST registered. On a site where the capability
- * was registered before the archetype list was final, the grant never landed:
- * the role held :view, so the cart page and order history opened, and :purchase
- * was held only by the custom `employee` and `administrator` roles. A real
+ * was written (and the README says so), so the archetype list did not change.
+ * The role still lacked the row on the persona-pass site. Moodle applies
+ * archetype defaults only in update_capabilities(), and only when it inserts
+ * the capability itself; the likeliest cause (from the git history and the
+ * rename tooling, not confirmed on that database) is that the capability was
+ * first registered outside it - an earlier CLI patch or the rename
+ * --migrate-caps path - so no upgrade could repair it. The role held :view, so
+ * the cart page and order history opened, and :purchase was held only by the
+ * custom `employee` and `administrator` roles. A real
  * public-storefront (/77) or ZEEA (/177) learner holds no system role except
  * Authenticated user, so add-to-cart, remove and checkout were all refused
  * with "nopermissions" while the cart page looked enabled.
@@ -34,8 +38,10 @@ defined('MOODLE_INTERNAL') || die();
  * them, in a tenant the cart is switched on for.
  *
  * "The authenticated-user role" is every role of archetype `user`, plus the role
- * with shortname `user` in case a site cleared the archetype. The guest role, the
- * student archetype and every custom role are not touched.
+ * with shortname `user` and the role $CFG->defaultuserroleid points at (how
+ * Moodle itself identifies Authenticated user) in case a restored BizLMS
+ * database renamed the role and cleared its archetype. The guest role, the
+ * student archetype and every other custom role are not touched.
  *
  * Idempotent, and it only fills a gap: a role that already has ANY setting for
  * the capability at system context (ALLOW already, or an administrator's PREVENT
@@ -50,7 +56,7 @@ defined('MOODLE_INTERNAL') || die();
  * @return int number of grants made (0 when every such role already had a setting)
  */
 function local_sentientia_cart_backfill_user_purchase(): int {
-    global $DB;
+    global $CFG, $DB;
 
     $cap = 'local/sentientia_cart:purchase';
     if (!$DB->record_exists('capabilities', ['name' => $cap])) {
@@ -60,8 +66,14 @@ function local_sentientia_cart_backfill_user_purchase(): int {
     $syscontext = \context_system::instance();
     $granted = 0;
 
-    $roles = $DB->get_records_select('role', 'archetype = :archetype OR shortname = :shortname',
-        ['archetype' => 'user', 'shortname' => 'user'], 'id ASC', 'id');
+    $select = 'archetype = :archetype OR shortname = :shortname';
+    $params = ['archetype' => 'user', 'shortname' => 'user'];
+    $defaultuserroleid = (int) ($CFG->defaultuserroleid ?? 0);
+    if ($defaultuserroleid > 0) {
+        $select .= ' OR id = :defaultuserroleid';
+        $params['defaultuserroleid'] = $defaultuserroleid;
+    }
+    $roles = $DB->get_records_select('role', $select, $params, 'id ASC', 'id');
     foreach ($roles as $role) {
         if ($DB->record_exists('role_capabilities',
                 ['roleid' => $role->id, 'capability' => $cap, 'contextid' => $syscontext->id])) {

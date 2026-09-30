@@ -42,7 +42,13 @@ Coming Soon" button. With `sentientia.catalog.storefront_checkout.enabled` ON
   `checkout()` and `mark_paid()` repeat the purchase gate later.
 - A refused line stays in the basket and the buyer is told how many. A line for a
   course the buyer is already enrolled in is dropped from the basket. Free lines
-  are never touched (they enrol through "Enroll in All (Free)").
+  are never touched (they enrol through "Enroll in All (Free)"); after a hand-off
+  the buyer is told how many free lines are still in the basket. An unexpected
+  error on one line (not only a `moodle_exception`) refuses just that line.
+- Two price sources, not unified yet: the basket shows `course_price_<id>`, the
+  order cart charges the `enrol_fee` cost. If they differ for a moved line the
+  buyer gets a warning to check the amounts on the checkout page. Decide which is
+  authoritative before turning the flag on.
 - Flag OFF, a guest, a buyer without `:purchase`, or a tenant the cart is off
   for: `cart.php` renders exactly as before.
 - Keep it OFF until the payment gateway has been verified in sandbox.

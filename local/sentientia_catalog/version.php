@@ -28,7 +28,8 @@ $plugin->component = 'local_sentientia_catalog';
 // Persona pass D2 (2026-09-30) — storefront basket -> order cart hand-off: new
 // classes/checkout_bridge.php, flag sentientia.catalog.storefront_checkout.enabled
 // (default OFF, db/feature_flags.php), cart.php "Proceed to checkout" branch and
-// action, +6 lang strings (en + hi). OFF: cart.php is unchanged. No schema/cap change.
+// action, +8 lang strings (en + hi; 2 of them are review-round notices: price differs at
+// checkout, free lines left in the basket). OFF: cart.php is unchanged. No schema/cap change.
 // Purge local_sentientia_catalog caches and the string cache on deploy.
 $plugin->version   = 2026093001;  // D2: storefront checkout bridge behind a default-OFF flag (no schema/cap change)
 $plugin->requires  = 2024100700;

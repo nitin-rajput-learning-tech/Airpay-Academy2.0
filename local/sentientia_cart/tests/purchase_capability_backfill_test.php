@@ -8,27 +8,29 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 require_once($CFG->dirroot . '/local/sentientia_cart/db/upgradelib.php');
-// local_sentientia_cart_get_course_price(), which cart_manager::add_item() calls.
-require_once($CFG->dirroot . '/local/sentientia_cart/lib.php');
+// Deliberately NO require_once of lib.php: cart_manager::add_item() (and so the web service) must
+// price a line without it. Moodle loads a plugin's lib.php only for that plugin's callbacks, so a
+// test that pre-included it hid a fatal ("Call to undefined function") that the web service hit.
 
 /**
  * D1 (persona pass 2026-09-30): a real public (/77) or ZEEA (/177) learner can buy.
  *
  * Such a learner holds no system role except Authenticated user. db/access.php
- * listed the `user` archetype for local/sentientia_cart:purchase, but Moodle
- * applies archetype defaults only when a capability is first registered, so on a
- * site that registered it earlier the role held :view (the cart page and order
- * history opened) and not :purchase (add-to-cart, remove and checkout were all
- * refused with nopermissions). Upgrade step 2026093001 calls
- * local_sentientia_cart_backfill_user_purchase().
+ * has listed the `user` archetype for local/sentientia_cart:purchase since the
+ * plugin was written, so the list did not change; the role still lacked the row
+ * (most likely the capability was first registered outside update_capabilities(),
+ * the only thing that applies archetype defaults). The role held :view (the cart
+ * page and order history opened) and not :purchase (add-to-cart, remove and
+ * checkout were all refused with nopermissions). Upgrade step 2026093001 and the
+ * install hook call local_sentientia_cart_backfill_user_purchase().
  *
  * Owner decision 2026-09-30: buying stays gated by cart_manager::is_enabled_for_user()
  * (enabled_tenants) and the ADR-031 catalogue purchase gate
  * (cart_manager::can_buy_course()). The last tests hold that: the capability lets a
  * learner buy their own tenant's course and still refuses another tenant's.
  *
- * NOTE for the lead: the plugin version was bumped with this (2026093001), so PHPUnit
- * must be re-initialised before it runs.
+ * NOTE for the lead: the plugin version was bumped with this (2026093001, then 2026093002 in
+ * review round 1), so PHPUnit must be re-initialised before it runs.
  *
  * @package    local_sentientia_cart
  * @category   test
@@ -37,6 +39,7 @@ require_once($CFG->dirroot . '/local/sentientia_cart/lib.php');
  * @covers     ::local_sentientia_cart_backfill_user_purchase
  * @covers     \local_sentientia_cart\external\add_item
  * @covers     \local_sentientia_cart\cart_manager::can_buy_course
+ * @covers     \local_sentientia_cart\cart_manager::get_course_price
  * @group      tenant_isolation
  */
 final class purchase_capability_backfill_test extends \advanced_testcase {
@@ -186,14 +189,49 @@ final class purchase_capability_backfill_test extends \advanced_testcase {
         }
     }
 
-    public function test_the_guest_role_does_not_gain_purchase(): void {
+    public function test_the_guest_role_gains_no_purchase_row(): void {
+        global $DB;
         $this->drop_user_purchase();
         local_sentientia_cart_backfill_user_purchase();
-        accesslib_clear_all_caches_for_unit_testing();
 
-        $this->setGuestUser();
-        $this->assertFalse(has_capability(self::PURCHASE, \context_system::instance()),
-            'A guest holds the guest role, not Authenticated user, and cannot buy.');
+        // Asserted on the role's own rows: has_capability() denies every write capability to the
+        // guest user whatever the roles say, so a has_capability() check would pass even if the
+        // back-fill had wrongly granted the guest role.
+        $guestroleid = (int) $DB->get_field('role', 'id', ['shortname' => 'guest'], MUST_EXIST);
+        $this->assertFalse($DB->record_exists('role_capabilities',
+            ['roleid' => $guestroleid, 'capability' => self::PURCHASE]),
+            'The guest role has no :purchase row after the back-fill, at any context.');
+        $this->assertNull($this->permission($guestroleid, self::PURCHASE));
+    }
+
+    public function test_the_role_moodle_calls_the_default_user_role_is_back_filled_even_if_renamed(): void {
+        // A restored BizLMS database can rename Authenticated user and clear its archetype; Moodle
+        // still identifies it by $CFG->defaultuserroleid.
+        $this->drop_user_purchase();
+        $renamed = create_role('Renamed authenticated', 'renamedauth', '', '');
+        $other = create_role('Some other custom role', 'someothercustom', '', '');
+        $syscontextid = \context_system::instance()->id;
+        unassign_capability(self::PURCHASE, $renamed, $syscontextid);
+        unassign_capability(self::PURCHASE, $other, $syscontextid);
+        set_config('defaultuserroleid', $renamed);
+
+        local_sentientia_cart_backfill_user_purchase();
+
+        $this->assertSame(CAP_ALLOW, $this->permission($renamed, self::PURCHASE),
+            'The role the site treats as Authenticated user gets the grant.');
+        $this->assertNull($this->permission($other, self::PURCHASE),
+            'A custom role that is not the default user role is still left alone.');
+    }
+
+    public function test_an_administrators_prohibit_on_the_default_user_role_stands(): void {
+        $renamed = create_role('Renamed authenticated', 'renamedauth', '', '');
+        $syscontextid = \context_system::instance()->id;
+        assign_capability(self::PURCHASE, CAP_PROHIBIT, $renamed, $syscontextid, true);
+        set_config('defaultuserroleid', $renamed);
+
+        local_sentientia_cart_backfill_user_purchase();
+
+        $this->assertSame(CAP_PROHIBIT, $this->permission($renamed, self::PURCHASE));
     }
 
     // ── Buying is still gated, not widened ───────────────────────────────
@@ -265,6 +303,42 @@ final class purchase_capability_backfill_test extends \advanced_testcase {
 
     // ── Wiring ───────────────────────────────────────────────────────────
 
+    public function test_add_item_prices_a_line_without_lib_php_being_loaded(): void {
+        // The web service local_sentientia_cart_add_item reaches cart_manager through the autoloader
+        // alone. A run inside one PHPUnit process cannot prove "lib.php not loaded" (any earlier
+        // callback lookup includes it), so hold the source: add_item() must price through the class.
+        $method = new \ReflectionMethod(cart_manager::class, 'add_item');
+        $lines = file($method->getFileName());
+        $body = implode('', array_slice($lines, $method->getStartLine() - 1,
+            $method->getEndLine() - $method->getStartLine() + 1));
+
+        $this->assertStringContainsString('self::get_course_price(', $body);
+        $this->assertStringNotContainsString('local_sentientia_cart_get_course_price(', $body);
+    }
+
+    public function test_the_price_lookup_is_one_thing_through_the_class_and_the_lib_wrapper(): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/local/sentientia_cart/lib.php');   // Here on purpose: it tests the wrapper.
+        $priced = $this->priced_course_at('/77', 420.00);
+        $free = $this->getDataGenerator()->create_course(['visible' => 1]);
+
+        $this->assertEqualsWithDelta(420.00, cart_manager::get_course_price((int) $priced->id), 0.001);
+        $this->assertEqualsWithDelta(420.00, \local_sentientia_cart_get_course_price((int) $priced->id), 0.001);
+        $this->assertNull(cart_manager::get_course_price((int) $free->id), 'No enrol_fee instance: not for sale.');
+        $this->assertNull(\local_sentientia_cart_get_course_price((int) $free->id));
+    }
+
+    public function test_a_disabled_fee_instance_or_a_zero_cost_is_not_a_price(): void {
+        global $DB;
+        $course = $this->priced_course_at('/77', 300.00);
+        $DB->set_field('enrol', 'status', ENROL_INSTANCE_DISABLED, ['courseid' => $course->id, 'enrol' => 'fee']);
+        $this->assertNull(cart_manager::get_course_price((int) $course->id), 'A disabled instance is not for sale.');
+
+        $DB->set_field('enrol', 'status', ENROL_INSTANCE_ENABLED, ['courseid' => $course->id, 'enrol' => 'fee']);
+        $DB->set_field('enrol', 'cost', '0.00', ['courseid' => $course->id, 'enrol' => 'fee']);
+        $this->assertNull(cart_manager::get_course_price((int) $course->id), 'A zero cost is free.');
+    }
+
     public function test_access_php_lists_the_user_archetype_for_a_fresh_install(): void {
         global $CFG;
         $capabilities = [];
@@ -285,12 +359,23 @@ final class purchase_capability_backfill_test extends \advanced_testcase {
         $this->assertStringContainsString('local_sentientia_cart_backfill_user_purchase()', $upgrade);
         $this->assertStringContainsString("upgrade_plugin_savepoint(true, 2026093001, 'local', 'sentientia_cart')",
             $upgrade);
+        // Review round 1: the helper grew the default-user-role lookup, so it runs once more on any site
+        // that already took 2026093001.
+        $this->assertStringContainsString('if ($oldversion < 2026093002)', $upgrade);
+        $this->assertStringContainsString("upgrade_plugin_savepoint(true, 2026093002, 'local', 'sentientia_cart')",
+            $upgrade);
 
         $install = file_get_contents($CFG->dirroot . '/local/sentientia_cart/db/install.php');
         $this->assertStringContainsString('local_sentientia_cart_backfill_user_purchase()', $install);
 
+        // access.php must not point at a function that does not exist.
+        $access = file_get_contents($CFG->dirroot . '/local/sentientia_cart/db/access.php');
+        $this->assertStringNotContainsString('local_sentientia_cart_after_install', $access);
+        $this->assertStringContainsString('xmldb_local_sentientia_cart_install()', $access);
+        $this->assertStringContainsString('function xmldb_local_sentientia_cart_install', $install);
+
         $plugin = new \stdClass();
         include($CFG->dirroot . '/local/sentientia_cart/version.php');
-        $this->assertGreaterThanOrEqual(2026093001, $plugin->version);
+        $this->assertGreaterThanOrEqual(2026093002, $plugin->version);
     }
 }

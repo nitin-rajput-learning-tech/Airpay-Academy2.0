@@ -223,6 +223,32 @@ class cart_manager {
     }
 
     /**
+     * The order-cart price of a course: the cost of its first enabled enrol_fee
+     * instance, or null when the course is free / not for sale.
+     *
+     * The logic lives here so any caller that reaches cart_manager through the
+     * autoloader gets it without lib.php being included; the lib.php function
+     * local_sentientia_cart_get_course_price() is a thin wrapper over this.
+     *
+     * @param int $courseid
+     * @return float|null the price, or null if free / not for sale
+     */
+    public static function get_course_price(int $courseid): ?float {
+        global $DB;
+        // Use Moodle's "enrol_fee" plugin record on the course if present.
+        $instance = $DB->get_record_sql(
+            "SELECT cost, currency FROM {enrol}
+              WHERE courseid = :cid AND enrol = 'fee' AND status = 0
+              ORDER BY sortorder ASC LIMIT 1",
+            ['cid' => $courseid]
+        );
+        if ($instance && !empty($instance->cost) && (float) $instance->cost > 0) {
+            return (float) $instance->cost;
+        }
+        return null;  // free / not for sale
+    }
+
+    /**
      * Add a course to the user's cart.
      *
      * @throws \moodle_exception if course not available for purchase
@@ -235,8 +261,12 @@ class cart_manager {
         // First, and with the same error as "no price", so a probe learns nothing.
         self::require_course_purchasable($courseid, $userid);
 
-        // Validate course is purchaseable.
-        $price = local_sentientia_cart_get_course_price($courseid);
+        // Validate course is purchaseable. self::get_course_price(), not the lib.php
+        // helper of the same name: Moodle loads a plugin's lib.php only when a callback
+        // that plugin defines is looked up, so a caller that reaches this class through
+        // the autoloader alone (the local_sentientia_cart_add_item web service, the
+        // storefront checkout bridge) would fatal on an undefined function.
+        $price = self::get_course_price($courseid);
         if ($price === null) {
             throw new \moodle_exception('error_courseunavailable', 'local_sentientia_cart');
         }

@@ -6,9 +6,10 @@ namespace local_sentientia_catalog;
 
 defined('MOODLE_INTERNAL') || die();
 
-global $CFG;
-// local_sentientia_cart_get_course_price(), which cart_manager::add_item() calls.
-require_once($CFG->dirroot . '/local/sentientia_cart/lib.php');
+// Deliberately NO require_once of local_sentientia_cart/lib.php here. cart_manager::add_item() used
+// to call the global local_sentientia_cart_get_course_price() from that file, which Moodle loads only
+// for a plugin's callbacks, so the bridge fataled on the web while a test that pre-included the file
+// passed. add_item() now prices through cart_manager::get_course_price(); the wiring test below holds it.
 
 /**
  * D2 (persona pass 2026-09-30): the storefront basket hands its paid lines to the order cart.
@@ -27,6 +28,9 @@ require_once($CFG->dirroot . '/local/sentientia_cart/lib.php');
  *      still refuses another tenant's course (whatever the session basket holds), a course with no
  *      order-cart price is refused rather than priced, and refused lines stay in the basket.
  *   4. The result is what cart_manager::checkout() consumes.
+ *   5. Review round 1 (2026-09-30): a price that differs between the basket and the order cart is
+ *      reported, a Throwable on one line refuses only that line, the free lines a buyer leaves behind
+ *      are announced, and add_item() loads its own price lookup.
  *
  * NOTE for the lead: the catalog version was bumped with this (2026093001), so PHPUnit must be
  * re-initialised before it runs.
@@ -62,9 +66,11 @@ final class storefront_checkout_test extends \advanced_testcase {
     /**
      * A course owned by tenant $root. Priced when $fee is set: BOTH the storefront price the basket
      * shows (course_price_<id> config) and the order cart's price (an enabled enrol_fee instance),
-     * because those are two sources. $fee = null leaves it free.
+     * because those are two sources. $fee = null leaves it free. $orderfee overrides the enrol_fee
+     * cost alone, so the two sources can disagree.
      */
-    private function make_course(int $root, ?float $fee = null, bool $storefrontonly = false): \stdClass {
+    private function make_course(int $root, ?float $fee = null, bool $storefrontonly = false,
+            ?float $orderfee = null): \stdClass {
         global $DB;
         $c = $this->getDataGenerator()->create_course(['visible' => 1]);
         $DB->set_field('course', 'open_path', '/' . $root, ['id' => $c->id]);
@@ -73,7 +79,7 @@ final class storefront_checkout_test extends \advanced_testcase {
             if (!$storefrontonly) {
                 $DB->insert_record('enrol', (object) [
                     'enrol' => 'fee', 'status' => ENROL_INSTANCE_ENABLED, 'courseid' => $c->id,
-                    'sortorder' => 9, 'cost' => number_format($fee, 2, '.', ''), 'currency' => 'INR',
+                    'sortorder' => 9, 'cost' => number_format($orderfee ?? $fee, 2, '.', ''), 'currency' => 'INR',
                     'roleid' => (int) $DB->get_field('role', 'id', ['shortname' => 'student']),
                     'timecreated' => time(), 'timemodified' => time(),
                 ]);
@@ -157,11 +163,16 @@ final class storefront_checkout_test extends \advanced_testcase {
     public function test_the_flag_is_per_tenant(): void {
         $this->require_order_cart();
         $this->set_user_role_purchase(CAP_ALLOW);
-        $this->enable_flag(1);
+        // The cart's own enabled_tenants setting (settings.php default '77,177', applied by the PHPUnit
+        // install) is a second gate: pin it, and use two tenants it is ON for, so the only thing that
+        // differs between the two buyers is this flag. (With /1 the assertTrue below would fail on
+        // enabled_tenants, not on the flag.)
+        set_config('enabled_tenants', '77,177', 'local_sentientia_cart');
+        $this->enable_flag(177);
 
-        $this->assertTrue(checkout_bridge::can_hand_off($this->make_user(1)));
+        $this->assertTrue(checkout_bridge::can_hand_off($this->make_user(177)));
         $this->assertFalse(checkout_bridge::can_hand_off($this->make_user(77)),
-            'Switched on for /1 only: the Public storefront tenant keeps the disabled button.');
+            'Switched on for /177 only: the Public storefront tenant keeps the disabled button.');
     }
 
     public function test_a_buyer_without_the_purchase_capability_cannot_hand_off(): void {
@@ -216,6 +227,7 @@ final class storefront_checkout_test extends \advanced_testcase {
         $this->assertEqualsCanonicalizing([(int) $paid1->id, (int) $paid2->id], $result['added']);
         $this->assertSame([], $result['refused']);
         $this->assertSame([], $result['redundant']);
+        $this->assertSame([], $result['pricediffers'], 'Both sources say the same, so nothing is flagged.');
         $this->assertEqualsCanonicalizing([(int) $paid1->id, (int) $paid2->id],
             $this->order_cart_courseids((int) $buyer->id));
         $this->assertSame([(int) $free->id], $this->basket_courseids(),
@@ -324,13 +336,14 @@ final class storefront_checkout_test extends \advanced_testcase {
         $this->require_order_cart();
         $buyer = $this->make_user(77);
         $this->setUser($buyer);
-        $this->assertSame(['added' => [], 'redundant' => [], 'refused' => []], checkout_bridge::hand_off((int) $buyer->id));
+        $none = ['added' => [], 'redundant' => [], 'refused' => [], 'pricediffers' => []];
+        $this->assertSame($none, checkout_bridge::hand_off((int) $buyer->id));
 
         $free = $this->make_course(77);
         commerce::add_to_cart((int) $free->id);
         $result = checkout_bridge::hand_off((int) $buyer->id);
 
-        $this->assertSame(['added' => [], 'redundant' => [], 'refused' => []], $result);
+        $this->assertSame($none, $result);
         $this->assertSame([(int) $free->id], $this->basket_courseids());
     }
 
@@ -351,14 +364,83 @@ final class storefront_checkout_test extends \advanced_testcase {
             array_map(fn($i) => (int) $i['courseid'], json_decode($order->items_json, true)));
     }
 
+    public function test_a_price_that_differs_between_basket_and_order_cart_is_flagged_but_still_moved(): void {
+        $this->require_order_cart();
+        $buyer = $this->make_user(77);
+        $this->setUser($buyer);
+        $agrees = $this->make_course(77, 500.0);
+        $differs = $this->make_course(77, 500.0, false, 650.0);   // basket says 500, the order cart charges 650
+        commerce::add_to_cart((int) $agrees->id);
+        commerce::add_to_cart((int) $differs->id);
+
+        $result = checkout_bridge::hand_off((int) $buyer->id);
+
+        $this->assertEqualsCanonicalizing([(int) $agrees->id, (int) $differs->id], $result['added'],
+            'A difference is reported, not refused: the checkout page shows what will be charged.');
+        $this->assertSame([(int) $differs->id], $result['pricediffers']);
+        $cart = \local_sentientia_cart\cart_manager::get_or_open_cart((int) $buyer->id);
+        $this->assertEqualsWithDelta(1150.00, (float) $cart->subtotal, 0.001,
+            'The order cart charges its own price (the enrol_fee instance) for both lines.');
+    }
+
+    public function test_a_throwable_on_one_line_refuses_only_that_line(): void {
+        $this->require_order_cart();
+        $buyer = $this->make_user(77);
+        $this->setUser($buyer);
+        $first = $this->make_course(77, 500.0);
+        $boom = $this->make_course(77, 600.0);
+        $last = $this->make_course(77, 700.0);
+        foreach ([$first, $boom, $last] as $c) {
+            commerce::add_to_cart((int) $c->id);
+        }
+        // Not a moodle_exception: a database error or an undefined function on one odd line.
+        $adder = function (int $userid, int $courseid) use ($boom) {
+            if ($courseid === (int) $boom->id) {
+                throw new \RuntimeException('simulated failure');
+            }
+            return \local_sentientia_cart\cart_manager::add_item($userid, $courseid);
+        };
+
+        $result = checkout_bridge::hand_off((int) $buyer->id, $adder);
+
+        $this->assertDebuggingCalled();
+        $this->assertEqualsCanonicalizing([(int) $first->id, (int) $last->id], $result['added'],
+            'The lines before AND after the failing one are still moved.');
+        $this->assertSame([(int) $boom->id], $result['refused']);
+        $this->assertSame([(int) $boom->id], $this->basket_courseids(), 'The failing line stays in the basket.');
+        $this->assertEqualsCanonicalizing([(int) $first->id, (int) $last->id],
+            $this->order_cart_courseids((int) $buyer->id));
+    }
+
+    public function test_an_error_on_one_line_is_also_refused_not_fatal(): void {
+        $this->require_order_cart();
+        $buyer = $this->make_user(77);
+        $this->setUser($buyer);
+        $paid = $this->make_course(77, 500.0);
+        commerce::add_to_cart((int) $paid->id);
+        // An \Error (not an \Exception), which is exactly what an undefined function raises.
+        $adder = function (int $userid, int $courseid) {
+            throw new \Error('Call to undefined function');
+        };
+
+        $result = checkout_bridge::hand_off((int) $buyer->id, $adder);
+
+        $this->assertDebuggingCalled();
+        $this->assertSame([(int) $paid->id], $result['refused']);
+        $this->assertSame([], $result['added']);
+        $this->assertSame([(int) $paid->id], $this->basket_courseids());
+    }
+
     // ── Where the buyer goes and what they are told ──────────────────────
 
     public function test_next_url_is_checkout_when_something_arrived_and_the_basket_otherwise(): void {
         $moved = checkout_bridge::next_url(['added' => [5], 'redundant' => [], 'refused' => [6]]);
         $stayed = checkout_bridge::next_url(['added' => [], 'redundant' => [], 'refused' => [6]]);
 
-        $this->assertSame('/local/sentientia_cart/checkout.php', $moved->get_path());
-        $this->assertSame('/local/sentientia_catalog/cart.php', $stayed->get_path());
+        // out_as_local_url(), not get_path(): PHPUnit's wwwroot is https://www.example.com/moodle, so
+        // get_path() carries the '/moodle' prefix; the local URL is relative to wwwroot.
+        $this->assertSame('/local/sentientia_cart/checkout.php', $moved->out_as_local_url(false));
+        $this->assertSame('/local/sentientia_catalog/cart.php', $stayed->out_as_local_url(false));
     }
 
     public function test_notify_says_what_moved_what_did_not_and_what_was_dropped(): void {
@@ -372,6 +454,46 @@ final class storefront_checkout_test extends \advanced_testcase {
         $this->assertContains(get_string('storefront_checkout_refused', 'local_sentientia_catalog', 1), $messages);
         $this->assertNotContains(get_string('storefront_checkout_nothing', 'local_sentientia_catalog'), $messages,
             'Something arrived, so there is no "nothing" error.');
+    }
+
+    public function test_notify_warns_when_a_price_differs(): void {
+        \core\notification::fetch();
+
+        checkout_bridge::notify(['added' => [1, 2], 'redundant' => [], 'refused' => [], 'pricediffers' => [2]]);
+        $messages = array_map(fn($n) => $n->get_message(), \core\notification::fetch());
+
+        $this->assertContains(get_string('storefront_checkout_pricediffers', 'local_sentientia_catalog', 1), $messages);
+    }
+
+    public function test_notify_says_where_the_free_lines_went(): void {
+        $buyer = $this->make_user(77);
+        $this->setUser($buyer);
+        $free1 = $this->make_course(77);
+        $free2 = $this->make_course(77);
+        commerce::add_to_cart((int) $free1->id);
+        commerce::add_to_cart((int) $free2->id);
+        $this->assertSame(2, checkout_bridge::free_lines_left());
+        \core\notification::fetch();
+
+        checkout_bridge::notify(['added' => [9], 'redundant' => [], 'refused' => [], 'pricediffers' => []]);
+        $messages = array_map(fn($n) => $n->get_message(), \core\notification::fetch());
+
+        $this->assertContains(get_string('storefront_checkout_freeleft', 'local_sentientia_catalog', 2), $messages,
+            'The buyer lands on the order cart checkout page: tell them their free courses are still in the basket.');
+    }
+
+    public function test_notify_does_not_mention_free_lines_when_the_buyer_stays_on_the_basket(): void {
+        $buyer = $this->make_user(77);
+        $this->setUser($buyer);
+        $free = $this->make_course(77);
+        commerce::add_to_cart((int) $free->id);
+        \core\notification::fetch();
+
+        checkout_bridge::notify(['added' => [], 'redundant' => [], 'refused' => [4], 'pricediffers' => []]);
+        $messages = array_map(fn($n) => $n->get_message(), \core\notification::fetch());
+
+        $this->assertNotContains(get_string('storefront_checkout_freeleft', 'local_sentientia_catalog', 1), $messages,
+            'Nothing moved, so the buyer is still looking at the basket.');
     }
 
     public function test_notify_errors_when_nothing_reached_the_order_cart(): void {
@@ -401,10 +523,27 @@ final class storefront_checkout_test extends \advanced_testcase {
         $this->assertStringContainsString('Payment Coming Soon', $source);
     }
 
+    public function test_the_order_cart_prices_a_line_without_lib_php_being_loaded(): void {
+        // Moodle includes a plugin's lib.php only when a callback that plugin defines is looked up, so
+        // add_item() must not depend on a function that lives there: through the autoloader alone
+        // (the bridge, the local_sentientia_cart_add_item web service) it fataled with "Call to undefined
+        // function". A run in one PHPUnit process cannot prove "not loaded" (any earlier callback lookup
+        // includes it), so hold the source: add_item() prices through the class.
+        $method = new \ReflectionMethod(\local_sentientia_cart\cart_manager::class, 'add_item');
+        $lines = file($method->getFileName());
+        $body = implode('', array_slice($lines, $method->getStartLine() - 1,
+            $method->getEndLine() - $method->getStartLine() + 1));
+
+        $this->assertStringContainsString('self::get_course_price(', $body);
+        $this->assertStringNotContainsString('local_sentientia_cart_get_course_price(', $body);
+        $this->assertTrue(method_exists(\local_sentientia_cart\cart_manager::class, 'get_course_price'));
+    }
+
     public function test_the_new_strings_exist_in_english_and_hindi(): void {
         global $CFG;
         $keys = ['storefront_checkout_button', 'storefront_checkout_hint', 'storefront_checkout_moved',
-            'storefront_checkout_refused', 'storefront_checkout_redundant', 'storefront_checkout_nothing'];
+            'storefront_checkout_refused', 'storefront_checkout_redundant', 'storefront_checkout_nothing',
+            'storefront_checkout_pricediffers', 'storefront_checkout_freeleft'];
         foreach (['en', 'hi'] as $lang) {
             $string = [];
             include($CFG->dirroot . "/local/sentientia_catalog/lang/{$lang}/local_sentientia_catalog.php");

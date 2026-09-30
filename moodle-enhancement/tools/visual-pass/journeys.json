@@ -197,7 +197,7 @@
         { "id": "cart-add-ui", "name": "Add to Cart (storefront session cart)", "handler": "cartAddSession",
           "expect": { "finalUrl": "added=1" } },
         { "id": "cart-page-ui", "name": "Storefront cart page", "url": "/local/sentientia_catalog/cart.php",
-          "expect": { "text": ["{{re:courses.publicPriced.fullname}}"], "softText": ["Proceed to|Checkout"] } },
+          "expect": { "text": ["{{re:courses.publicPriced.fullname}}"], "softText": ["Proceed to|Checkout|Payment Coming Soon"] } },
         { "id": "cart-db-add", "name": "Add the priced course to the order cart (local_sentientia_cart)", "handler": "cartAddDb",
           "expect": { "heading": "My Cart", "text": ["{{re:courses.publicPriced.fullname}}"], "selectors": [".airpay-cart__item"] } },
         { "id": "checkout", "name": "Checkout page reached (not submitted, nothing paid)", "url": "/local/sentientia_cart/checkout.php",

@@ -271,3 +271,43 @@ disabled "Payment Coming Soon" button; nothing carried its lines to the order ca
   (button, hint, and the notifications on the checkout page) needs desktop + 590 px screenshots to
   `docs/visual-evidence/<date>/` before the flag is ever flipped; flag OFF is unchanged.
 - Deploy: purge caches (string cache and the feature-flag registry). Both trees.
+
+### 2026-09-30 - persona pass D2 review round 1 (1.0.6-beta / 2026093001, version unchanged)
+
+Adversarial review of the D1/D2 bundle returned fix-then-ship. Closed here:
+
+- MUST FIX, cross-plugin: `hand_off()` reaches `cart_manager::add_item()`, which fataled on an undefined
+  function when `local_sentientia_cart/lib.php` was not loaded (only a test pre-include loaded it). Fixed in
+  `local_sentientia_cart` (price lookup is now `cart_manager::get_course_price()`; see that card). The
+  pre-include is removed from `tests/storefront_checkout_test.php` and a source-level wiring test holds it.
+- MUST FIX, test: `test_the_flag_is_per_tenant` asserted `can_hand_off()` for a /1 buyer, but the PHPUnit
+  install applies the cart's `enabled_tenants` default ('77,177'), so the cart is off for /1 and the assertion
+  failed on the wrong gate. It now pins `enabled_tenants` and uses /177 (flag on) against /77 (flag off).
+- MUST FIX, test: `test_next_url_is_checkout_...` compared `moodle_url::get_path()`, which carries the
+  wwwroot path (`/moodle/...` under PHPUnit). It now compares `out_as_local_url(false)`.
+- `hand_off()`: any `\Throwable` (not only `moodle_exception`) from `add_item()` now refuses THAT line, is
+  logged with `debugging()` and the loop carries on, so lines already moved never leave the buyer without a
+  message. Test seam: optional `?callable $adder` (defaults to `cart_manager::add_item`); two tests (a
+  `RuntimeException` on the middle line, an `\Error`).
+- Two price sources (the open item in the D2 entry above): `hand_off()` now compares, for each line it moves, the
+  price the basket showed with the price the order cart holds, and reports the difference as
+  `pricediffers`; `notify()` adds a warning telling the buyer to check the amounts on the checkout page. The
+  line is still moved (the order cart charges its `enrol_fee` price, which the checkout page shows). The
+  result array gained that fourth key. NOT unified: which source is authoritative is still an open decision
+  to close before the flag is turned on.
+- Mixed basket with the flag ON: the free lines stay in the basket and the buyer is sent to the order cart
+  checkout page. `notify()` now adds an info notice with the number of free lines left ("open your basket to
+  enrol in them"), because "Enroll in All (Free)" is on the basket page. +2 lang strings
+  (`storefront_checkout_pricediffers`, `storefront_checkout_freeleft`; en + hi; 8 in total for the bridge).
+- Harness: `moodle-enhancement/tools/visual-pass/journeys.json` step #80 (`cart-page-ui`, public77) soft
+  check now accepts "Payment Coming Soon" as well as "Proceed to|Checkout", so it passes while the flag is OFF.
+- Still open before the flag is ever turned on: desktop + 590 px screenshots of the flag-ON basket (button,
+  hint) and of the notifications on the order cart checkout page (CLAUDE.md UI rule); the price-source
+  decision above.
+- Merge order: this plugin's version 2026093001 collides with the Catalog mobile bundle (D8/D12/D10). The
+  merged value must be strictly greater than both.
+- New tests: `test_a_price_that_differs_...`, `test_a_throwable_on_one_line_refuses_only_that_line`,
+  `test_an_error_on_one_line_is_also_refused_not_fatal`, `test_notify_warns_when_a_price_differs`,
+  `test_notify_says_where_the_free_lines_went`, `test_notify_does_not_mention_free_lines_when_...`,
+  `test_the_order_cart_prices_a_line_without_lib_php_being_loaded`. NOT RUN (low-CPU mode); the lead re-inits
+  PHPUnit once after the bundles merge. Both trees.
