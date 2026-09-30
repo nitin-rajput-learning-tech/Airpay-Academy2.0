@@ -59,11 +59,13 @@ manager index), sha256-verified, upgrade OK, WS smoke ERROR=0 (= baseline). Prob
 5. **Platform role created:** `sentientiaplatform` (id 15), `:crosstenant` only, system context, assigned
    to nobody, not assignable by role 9. A re-run is a no-op.
 6. **WS smoke after the change:** 53 read functions × 4 personas, ok=51 refused=68 needs-args=93
-   **ERROR=0**. The tunnel dropped before the per-function diff against the 09-29 run (`/tmp/adr031_ws_smoke2.out`
-   vs `smoke3.out` on the box).
+   **ERROR=0**. Per persona and per function it is **identical** to the 09-29 run (row counts ignored),
+   so the role-9 PROHIBITs broke no Sentientia read web service.
+7. **W2-02 erasure probe PASS** (second tunnel window): a throwaway account (id 16) was seeded in 8
+   tables. After erasure all 8 were empty, the account was anonymised, suspended and deleted, and
+   request 2 was honestly `completed`.
 
 **Still pending:**
-- **Tunnel:** the smoke diff and the W2-02 erasure probe.
 - **VPN off:** Nitin's real-Chrome check (service worker gone, "Browse Library" shown, a tenant admin has
   no Log in as and no core editadvanced, and the pencil opens the Sentientia modal).
 - Cart screen checks 1-4 are captured locally (`docs/visual-evidence/2026-09-29/cart/`, PASS).
