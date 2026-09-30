@@ -551,7 +551,9 @@ final class runner {
                 $pf->block('missing_enum_column:' . $table . '.' . $column);
                 continue;
             }
-            $allowed = array_map('strval', array_keys($values));
+            // Values the importer declared, plus values the owner mapped in the decisions file.
+            $allowed = array_merge(array_map('strval', array_keys($values)),
+                $this->decisions->mapped_enum_values($table, $column));
             $histogram = [];
             // A GROUP BY on an enum column returns a handful of rows. MIN(id) is the unique first column
             // get_records_sql() keys by, so a NULL and an empty value cannot collide.
@@ -744,6 +746,7 @@ final class runner {
         $this->report->meta('runid', $this->runid);
         $this->report->meta('dryrun', $this->dryrun);
         $this->report->meta('decisions_hash', $this->decisions->hash());
+        $this->report->meta('decisions', $this->decisions->all());
         $this->report->meta('unproven', $result['unproven']);
         $this->report->meta('blockers', $result['blockers']);
         $this->report->close();

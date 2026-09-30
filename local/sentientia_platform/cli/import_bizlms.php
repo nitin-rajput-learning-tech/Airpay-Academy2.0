@@ -94,6 +94,9 @@ function import_bizlms_print(array $result, report $report): int {
     $data = $report->to_array();
     foreach ($data['features'] as $feature => $section) {
         cli_writeln(sprintf('%-18s %s', $feature, $section['status'] ?? '-'));
+        if (!empty($section['note'])) {
+            cli_writeln('  NOTE: ' . $section['note']);
+        }
         foreach ($section['steps'] ?? [] as $key => $step) {
             $c = $step['counters'] ?? [];
             cli_writeln(sprintf('  %-34s %-9s src=%-8s imp=%-7s adopt=%-5s merge=%-5s fold=%-5s arch=%-5s skip=%-5s %s rows/s',

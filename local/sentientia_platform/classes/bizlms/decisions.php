@@ -91,6 +91,30 @@ final class decisions {
     }
 
     /**
+     * Every decision, for the report ("the decisions used").
+     *
+     * @return array<string, mixed>
+     */
+    public function all(): array {
+        return $this->data;
+    }
+
+    /**
+     * Enum values the owner has mapped for a legacy column, so preflight no
+     * longer blocks on them. The file carries them under the key
+     * enums.<table>.<column> as an object of value => meaning; the importer's
+     * own code decides what a mapped value becomes.
+     *
+     * @param string $table Legacy table without prefix.
+     * @param string $column
+     * @return string[] The mapped values.
+     */
+    public function mapped_enum_values(string $table, string $column): array {
+        $mapped = $this->data['enums.' . $table . '.' . $column] ?? [];
+        return is_array($mapped) ? array_map('strval', array_keys($mapped)) : [];
+    }
+
+    /**
      * @param string $key
      * @return bool
      */
