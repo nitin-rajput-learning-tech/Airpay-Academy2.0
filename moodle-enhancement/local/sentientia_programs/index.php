@@ -22,7 +22,7 @@ $can_create = is_siteadmin() || has_capability('local/sentientia_programs:create
     || has_capability('local/sentientia_programs:manage', $context);
 
 $dbman = $DB->get_manager();
-$total = $active = $completed = 0;
+$total = $active = $archived = 0;
 if ($dbman->table_exists('local_sentientia_programs')) {
     // ADR-031: the tiles count the caller's tenant, the same set the list
     // shows ('1=1' cross-tenant, '1=0' for a caller with no tenant).
@@ -30,7 +30,9 @@ if ($dbman->table_exists('local_sentientia_programs')) {
     $total     = (int) $DB->count_records_select('local_sentientia_programs', $tnsql, $tnargs);
     $active    = (int) $DB->count_records_select('local_sentientia_programs',
         "$tnsql AND status = 1", $tnargs);
-    $completed = (int) $DB->count_records_select('local_sentientia_programs',
+    // Status 2 is Archived (program_manager::STATUS_ARCHIVED), not Completed: the tile said "Completed" until
+    // ADR-032, when imported BizLMS programs made the mislabel visible (status 2 = switched off).
+    $archived  = (int) $DB->count_records_select('local_sentientia_programs',
         "$tnsql AND status = 2", $tnargs);
 }
 
@@ -57,9 +59,9 @@ $kpi_tiles = [
         'color' => 'success',
     ],
     [
-        'label' => 'Completed',
-        'value' => number_format($completed),
-        'icon'  => 'check-circle',
+        'label' => get_string('status_archived', 'local_sentientia_programs'),
+        'value' => number_format($archived),
+        'icon'  => 'archive',
         'color' => 'info',
     ],
 ];
@@ -67,7 +69,7 @@ $kpi_tiles = [
 $data = [
     'total_count'     => number_format($total),
     'active_count'    => number_format($active),
-    'completed_count' => number_format($completed),
+    'archived_count'  => number_format($archived),
     'kpi_tiles'       => $kpi_tiles,
     'has_kpi_tiles'   => !empty($kpi_tiles),
     'can_create'      => $can_create,

@@ -68,6 +68,13 @@ class list_program_users extends external_api {
             ];
             $cssmap = [0 => 'badge-secondary', 1 => 'badge-primary', 2 => 'badge-success'];
 
+            // ADR-032: enrolments the BizLMS import carried are history and cannot be removed here, so they get
+            // no trash action; "Completed on" is an imported-history reader and sits behind its own flag.
+            $imported = \local_sentientia_programs\program_manager::imported_enrolment_ids(
+                array_map(static fn($rec) => (int) $rec->id, $records));
+            $showcompleted = \local_sentientia_platform\feature_flags::is_enabled(
+                'sentientia.programs.history.enabled');
+
             foreach ($records as $r) {
                 $fullname = trim(($r->firstname ?? '') . ' ' . ($r->lastname ?? ''));
                 if (empty($fullname)) { $fullname = $r->email; }
@@ -83,7 +90,7 @@ class list_program_users extends external_api {
                 $statuscss   = $cssmap[(int) $r->status] ?? 'badge-secondary';
 
                 $actions = '';
-                if ($can_update || $can_enrol) {
+                if (($can_update || $can_enrol) && empty($imported[(int) $r->id])) {
                     $actions = '<a href="#" class="btn btn-sm btn-link text-muted p-1" '
                         . 'data-action="unenrol-program-user" '
                         . 'data-userid="' . (int) $r->userid . '" '
@@ -99,6 +106,10 @@ class list_program_users extends external_api {
                     'employeeid'   => s($employeeid),
                     'designation'  => s($designation),
                     'enrolled_at'  => $r->enrolled_at ? userdate((int) $r->enrolled_at, '%d %b %Y') : '—',
+                    'completed_at' => $showcompleted
+                        ? (((int) $r->status === \local_sentientia_programs\program_manager::ENROL_COMPLETED
+                            && $r->timecompleted) ? userdate((int) $r->timecompleted, '%d %b %Y') : '—')
+                        : '',
                     'statuslabel'  => $statuslabel,
                     'statuscss'    => $statuscss,
                     'actions'      => $actions,
@@ -122,6 +133,7 @@ class list_program_users extends external_api {
                     'employeeid'   => new external_value(PARAM_TEXT, ''),
                     'designation'  => new external_value(PARAM_TEXT, ''),
                     'enrolled_at'  => new external_value(PARAM_TEXT, ''),
+                    'completed_at' => new external_value(PARAM_TEXT, ''),
                     'statuslabel'  => new external_value(PARAM_TEXT, ''),
                     'statuscss'    => new external_value(PARAM_TEXT, ''),
                     'actions'      => new external_value(PARAM_RAW, ''),

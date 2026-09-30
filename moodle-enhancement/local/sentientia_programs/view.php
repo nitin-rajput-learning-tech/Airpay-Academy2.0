@@ -81,6 +81,16 @@ $users_columns = [
     ['key' => 'statuslabel',  'label' => 'Status',      'sortable' => true,  'sortkey' => 'status', 'format' => 'badge'],
 ];
 
+// ADR-032: the imported-history readers of this page sit behind their own default-OFF flag - the "Completed on"
+// column of the roster and the program logo. With the flag OFF the page is what it was before the import.
+$show_history = \local_sentientia_platform\feature_flags::is_enabled(
+    \local_sentientia_programs\learner_view::FLAG_HISTORY);
+if ($show_history) {
+    $users_columns[] = ['key' => 'completed_at', 'label' => get_string('completed_on', 'local_sentientia_programs'),
+        'sortable' => false];
+}
+$logo_url = $show_history ? \local_sentientia_programs\program_manager::program_logo_url($programid) : null;
+
 $status_int   = (int) $program->status;
 $status_label = $status_map[$status_int] ?? 'Draft';
 $status_css   = $status_css_map[$status_int] ?? 'badge-secondary';
@@ -93,8 +103,8 @@ $user_enrolled = $DB->record_exists('local_sentientia_programs_users',
 if ($user_enrolled || !$can_update) {
     // For learners + enrolled users, build their progress view so the
     // levels tab can show locked / unlocked / completed state.
-    $user_state = \local_sentientia_programs\program_manager::get_user_program_state(
-        (int) $programid, (int) $USER->id);
+    $user_state = \local_sentientia_programs\learner_view::decorate_state(
+        \local_sentientia_programs\program_manager::get_user_program_state((int) $programid, (int) $USER->id));
 }
 
 $data = [
@@ -102,6 +112,8 @@ $data = [
     'name'                => format_string($program->name),
     'description'         => format_text($program->description ?? '', FORMAT_HTML),
     'has_description'     => !empty(trim((string) ($program->description ?? ''))),
+    'has_logo'            => $logo_url !== null,
+    'logo_url'            => $logo_url ? $logo_url->out(false) : '',
     'completion_rule'     => $completion_rule,
     'status_label'        => $status_label,
     'status_css'          => $status_css,

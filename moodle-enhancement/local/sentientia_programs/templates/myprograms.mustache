@@ -1,0 +1,150 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_sentientia_programs/myprograms
+
+    Learner "My programs" page (ADR-032). One card per program the learner is enrolled in.
+
+    Example context (json):
+    {
+        "has_programs": true,
+        "programs": [{
+            "id": 7,
+            "name": "Payments Certification",
+            "description": "<p>From basics to expert.</p>",
+            "has_description": true,
+            "has_logo": false,
+            "logo_url": "",
+            "completed": false,
+            "inprogress": true,
+            "enrolled_human": "12 Jan 2024",
+            "completed_human": "",
+            "overall_pct": 50,
+            "completed_levels": 1,
+            "total_levels": 2,
+            "has_levels": true,
+            "levels": [{
+                "name": "Foundation",
+                "completed": true,
+                "locked": false,
+                "completion_required": true,
+                "rule_any": false,
+                "mandatory_total": 2,
+                "mandatory_completed": 2,
+                "mandatory_needed": 2,
+                "has_counter": false,
+                "pct": 100,
+                "timecompleted_human": "3 Feb 2024"
+            }]
+        }]
+    }
+}}
+<div class="ap-myprograms" data-region="airpay-myprograms">
+
+    {{^ has_programs }}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center text-muted py-5">
+            <i class="fa fa-graduation-cap fa-2x mb-2" aria-hidden="true"></i>
+            <p class="mb-0">{{# str }}myprograms_none, local_sentientia_programs{{/ str }}</p>
+        </div>
+    </div>
+    {{/ has_programs }}
+
+    {{# programs }}
+    <section class="card border-0 shadow-sm mb-4" aria-labelledby="ap-myprogram-{{ id }}">
+        <div class="card-body">
+            <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-3">
+                <div class="d-flex align-items-start gap-3">
+                    {{# has_logo }}
+                    <img src="{{{ logo_url }}}" alt="" class="img-fluid rounded" style="max-height: 56px;">
+                    {{/ has_logo }}
+                    <div>
+                        <h2 class="h4 mb-1" id="ap-myprogram-{{ id }}">{{ name }}</h2>
+                        <div class="small text-muted">
+                            {{# completed }}
+                            <span class="badge bg-success">{{# str }}status_completed, local_sentientia_programs{{/ str }}</span>
+                            {{# completed_human }}
+                            <span>{{# str }}completed_on_date, local_sentientia_programs, {{ completed_human }}{{/ str }}</span>
+                            {{/ completed_human }}
+                            {{/ completed }}
+                            {{^ completed }}
+                            {{# inprogress }}<span class="badge bg-primary">{{# str }}status_inprogress, local_sentientia_programs{{/ str }}</span>{{/ inprogress }}
+                            {{^ inprogress }}<span class="badge bg-secondary">{{# str }}status_enrolled, local_sentientia_programs{{/ str }}</span>{{/ inprogress }}
+                            {{/ completed }}
+                            <span class="ms-2">{{# str }}enrolled_on_date, local_sentientia_programs, {{ enrolled_human }}{{/ str }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <div class="fw-semibold">{{ overall_pct }}%</div>
+                    <div class="small text-muted">
+                        {{# str }}levels_progress, local_sentientia_programs, { "done": {{ completed_levels }}, "total": {{ total_levels }} }{{/ str }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="progress mb-3" role="progressbar" aria-valuenow="{{ overall_pct }}"
+                 aria-valuemin="0" aria-valuemax="100" aria-label="{{# str }}overall_progress, local_sentientia_programs{{/ str }}">
+                <div class="progress-bar bg-primary" style="width: {{ overall_pct }}%;"></div>
+            </div>
+
+            {{# has_description }}
+            <div class="mb-3">{{{ description }}}</div>
+            {{/ has_description }}
+
+            {{# has_levels }}
+            <ul class="list-group list-group-flush">
+                {{# levels }}
+                <li class="list-group-item d-flex align-items-start {{# locked }}opacity-50{{/ locked }}">
+                    <div class="me-2 pt-1">
+                        {{# completed }}<i class="fa fa-check-circle text-success" aria-hidden="true"></i><span class="visually-hidden">{{# str }}status_completed, local_sentientia_programs{{/ str }}</span>{{/ completed }}
+                        {{^ completed }}{{# locked }}<i class="fa fa-lock text-muted" aria-hidden="true"></i><span class="visually-hidden">{{# str }}level_locked, local_sentientia_programs{{/ str }}</span>{{/ locked }}{{/ completed }}
+                        {{^ completed }}{{^ locked }}<i class="fa fa-circle text-primary" aria-hidden="true"></i><span class="visually-hidden">{{# str }}status_inprogress, local_sentientia_programs{{/ str }}</span>{{/ locked }}{{/ completed }}
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">
+                            {{ name }}
+                            {{# completion_required }}<span class="badge bg-light text-muted small ms-1">{{# str }}badge_required, local_sentientia_programs{{/ str }}</span>{{/ completion_required }}
+                            {{^ completion_required }}<span class="badge bg-light text-muted small ms-1">{{# str }}badge_optional, local_sentientia_programs{{/ str }}</span>{{/ completion_required }}
+                        </div>
+                        {{# completed }}
+                        <div class="small text-muted mt-1">
+                            {{# timecompleted_human }}{{# str }}completed_on_date, local_sentientia_programs, {{ timecompleted_human }}{{/ str }}{{/ timecompleted_human }}
+                            {{^ timecompleted_human }}{{# str }}status_completed, local_sentientia_programs{{/ str }}{{/ timecompleted_human }}
+                        </div>
+                        {{/ completed }}
+                        {{^ completed }}
+                        {{# locked }}
+                        <div class="small text-muted mt-1">{{# str }}level_locked_hint, local_sentientia_programs{{/ str }}</div>
+                        {{/ locked }}
+                        {{^ locked }}{{# has_counter }}
+                        <div class="small text-muted mt-1">
+                            {{# rule_any }}{{# str }}courses_progress_any, local_sentientia_programs, { "done": {{ mandatory_completed }}, "total": {{ mandatory_total }} }{{/ str }}{{/ rule_any }}
+                            {{^ rule_any }}{{# str }}courses_progress, local_sentientia_programs, { "done": {{ mandatory_completed }}, "total": {{ mandatory_total }} }{{/ str }}{{/ rule_any }}
+                            ({{ pct }}%)
+                        </div>
+                        {{/ has_counter }}{{/ locked }}
+                        {{/ completed }}
+                    </div>
+                </li>
+                {{/ levels }}
+            </ul>
+            {{/ has_levels }}
+        </div>
+    </section>
+    {{/ programs }}
+</div>

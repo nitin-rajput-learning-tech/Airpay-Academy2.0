@@ -127,5 +127,42 @@ function xmldb_local_sentientia_programs_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051600, 'local', 'sentientia_programs');
     }
 
+    // 2026093001 - ADR-032 BizLMS program import: the columns and tables the import lands in.
+    // Idempotent: every change is guarded by field_exists / table_exists, so a re-run is a no-op.
+    if ($oldversion < 2026093001) {
+        // A level completes on every mandatory course (all) or on any one of them (BizLMS coursetracking OR).
+        $table = new xmldb_table('local_sentientia_programs_levels');
+        $field = new xmldb_field('completion_rule', XMLDB_TYPE_CHAR, '10', null, XMLDB_NOTNULL, null, 'all',
+            'completion_required');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Who enrolled the learner (an actor column: anonymised when that user is erased) and when the row changed.
+        $table = new xmldb_table('local_sentientia_programs_users');
+        $field = new xmldb_field('enrolledby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0',
+            'timecompleted');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        $field = new xmldb_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0',
+            'enrolledby');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+            // Existing rows were last touched when they were created.
+            $DB->execute('UPDATE {local_sentientia_programs_users} SET timemodified = timecreated WHERE timemodified = 0');
+        }
+
+        // The three new tables come from install.xml, the single source of their definition.
+        foreach (['local_sentientia_programs_lvlcomp', 'local_sentientia_programs_trainers',
+                  'local_sentientia_programs_trainerfb'] as $name) {
+            if (!$dbman->table_exists($name)) {
+                $dbman->install_one_table_from_xmldb_file(__DIR__ . '/install.xml', $name);
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026093001, 'local', 'sentientia_programs');
+    }
+
     return true;
 }

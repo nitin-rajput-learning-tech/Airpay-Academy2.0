@@ -11,17 +11,35 @@ defined('MOODLE_INTERNAL') || die();
  *
  * Hooks into `\core\event\course_completed` to detect whether the course
  * completion brings the user to full program-complete state for any program
- * containing that course. If yes, emits `program_completed`.
+ * containing that course. If yes, stores the completion and emits
+ * `program_completed`.
  *
  * Algorithm:
  *   1. Find every program that has the just-completed course on any level.
- *   2. For each such program, check if the user has now finished every
- *      `completion_required = 1` level.
+ *   2. For each such program the user is enrolled in and has not completed,
+ *      check if the user has now finished every `completion_required = 1`
+ *      level (any ONE of them when the program's completion_required is 0).
  *   3. If yes AND we haven't already emitted `program_completed` for this
- *      user × program in the past 24h (dedupe via cache), emit it.
+ *      user × program in the past 24h (dedupe via cache), store the
+ *      completion (status 2, timecompleted) and emit it.
  *
  * Cache dedupe prevents spamming the event when a user re-completes the
  * same final-level course (e.g., recompletion → re-complete same day).
+ *
+ * ADR-032 (2026-09-30), what changed:
+ *   - A learner with no enrolment in the program is skipped. Before, the
+ *     event fired for anyone who completed the last course, enrolled or not.
+ *   - A learner whose enrolment is already completed is skipped: the state is
+ *     never downgraded and the event is not fired a second time.
+ *   - The completion is stored (status 2, timecompleted, last level as the
+ *     current one). Before it only fired the event and the roster never showed
+ *     the learner as completed.
+ *   - A program with completion_required = 0 is complete when any required
+ *     level is (BizLMS "OR" tracking). A level with no courses is not a
+ *     required level.
+ *
+ * The BizLMS import never reaches this code: it writes no course completion
+ * and fires no event.
  *
  * @package local_sentientia_programs
  */
@@ -56,11 +74,26 @@ class observer {
     }
 
     /**
-     * Fire `program_completed` if the user has completed every required level
-     * of the given program AND we haven't already fired it for this combo
-     * in the past 24h.
+     * Complete the learner's program enrolment and fire `program_completed`
+     * when the program is now done.
+     *
+     * @param int $userid
+     * @param int $programid
      */
     private static function maybe_fire_program_completed(int $userid, int $programid): void {
+        global $DB;
+
+        $program = $DB->get_record('local_sentientia_programs', ['id' => $programid], 'id, completion_required');
+        if (!$program) {
+            return;
+        }
+        // Not enrolled: not in the program. Already completed: nothing to do, nothing to downgrade.
+        $enrolment = $DB->get_record('local_sentientia_programs_users',
+            ['programid' => $programid, 'userid' => $userid], 'id, status');
+        if (!$enrolment || (int) $enrolment->status === program_manager::ENROL_COMPLETED) {
+            return;
+        }
+
         // Dedupe cache.
         $cache = \cache::make_from_params(
             \cache_store::MODE_APPLICATION,
@@ -73,22 +106,39 @@ class observer {
         }
 
         $state = program_manager::get_user_program_state($programid, $userid);
-        $total_required = 0;
-        $completed_required = 0;
+        $required = 0;
+        $done = 0;
+        $lastlevel = null;
         foreach ($state['levels'] as $lvl) {
+            if (!empty($lvl['empty'])) {
+                continue;
+            }
+            $lastlevel = (int) $lvl['id'];
             if (!empty($lvl['completion_required'])) {
-                $total_required++;
+                $required++;
                 if (!empty($lvl['completed'])) {
-                    $completed_required++;
+                    $done++;
                 }
             }
         }
 
-        // If there are no required levels OR not all of them are done yet,
-        // don't fire.
-        if ($total_required === 0 || $completed_required < $total_required) {
+        // No required level: nothing can complete the program.
+        if ($required === 0) {
             return;
         }
+        $complete = ((int) $program->completion_required === 0) ? ($done >= 1) : ($done === $required);
+        if (!$complete) {
+            return;
+        }
+
+        $now = time();
+        $DB->update_record('local_sentientia_programs_users', (object) [
+            'id'             => (int) $enrolment->id,
+            'status'         => program_manager::ENROL_COMPLETED,
+            'timecompleted'  => $now,
+            'currentlevelid' => $lastlevel,
+            'timemodified'   => $now,
+        ]);
 
         event\program_completed::create([
             'context'       => \context_system::instance(),

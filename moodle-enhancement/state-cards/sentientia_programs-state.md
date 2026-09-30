@@ -151,3 +151,74 @@ Cross-tenant authority sweep (docs/audits/CROSS-TENANT-AUTHORITY-SWEEP-2026-09-2
 - **A tenant admin could not remove a legacy out-of-tenant or pathless learner from their own program** (wave-1 deviation 7). `unenrol_program_user` now calls `program_manager::require_unenrol_target()`. That check passes for anyone already on the (in-tenant) roster, and otherwise keeps the `require_same_tenant_user()` refusal. UAT note: those learners no longer show on the Users tab for a tenant admin, so today the removal is reachable only through the web service.
 - Still open, and outside this plugin: `local_sentientia_manager` approval_manager calls `program_manager::enrol_users()` without checking the tenant of the target program.
 - No version bump (already 2026092500; no upgrade step). Tests: `tests/tenant_scope_test.php` adds three tests, for the roster, the cohort limit and the legacy unenrol. Written, not run. Both trees.
+
+## 2026-09-30 - ADR-032: BizLMS program import (mapping doc section 16), schema, engine fixes, learner page
+
+The `program` importer, the schema it lands in, the engine and reader fixes the map lists, a learner "My programs"
+page and the program logo. 1.9.0 / 2026093001, depends on local_sentientia_platform 2026093001 (the import framework).
+Branch `claude/bizlms-import-program`. Tests written, not run (shared PHPUnit DB; the lead re-inits once for all
+version bumps). Both trees.
+
+**Importer** (`classes/bizlms/`, registered in `db/bizlms_import.php`, feature key `program`, depends `org`, atomic).
+Twelve BizLMS `local_program` tables, one owner, one feature:
+- `local_program` -> `local_sentientia_programs`, **PRESERVE** (ids stored by certificates, enrol instances, requests,
+  e-mail log rows, ratings). A taken id blocks; an identical header copy is adopted. Status: visible 0 or status 2 is
+  Archived, never Draft. Tenant: the program's own path, else the root of its creator, else no path (cross-tenant only).
+- `local_program_levels` -> `_levels` (MAP, grouped by program). `sortorder` is the dense rank by id (BizLMS
+  ordered by id and overwrote `position` on edit). Empty levels (no valid course, no completed completion row) are
+  skipped (`empty_level`) and dropped from the required set. `completion_required` and `completion_rule` come from the
+  two criteria tables.
+- `local_program_level_courses` -> `_courses` (grouped by level; dedupe on the target's unique key; `mandatory` from the
+  level criteria).
+- `local_program_users` -> `_users` (grouped by program and user; completed row wins; `timecompleted` from the stored
+  date, else the latest level completion, never `timemodified`; `enrolledby` from `usercreated`).
+- `local_bc_level_completions` -> NEW `_lvlcomp` (completed rows only). The level date is the first qualifying course
+  completion for an any-course level, the last for an all-course level, capped at the stored date.
+- `local_bcl_cmplt_criteria`, `local_bc_completion_criteria` are **folded** (lowest id wins; the rest are merged).
+- `local_program_trainers`, `local_program_trainerfb` -> NEW `_trainers`, `_trainerfb` (conditional; expected empty).
+- `local_program_completions_bk`, `local_bc_level_comp_bk`, `local_program_test_score` are **archived** with the needs-owner
+  reason `bk_rows_archived` (decision `program.bk_tables`).
+- `currentlevelid` is a recompute step after the completions load. The logo is copied in `finalise()` (BizLMS category
+  context, draft item id -> system context, item id = program id); the originals stay.
+- Nothing is enrolled, completed, certified, messaged or fired: no `program_completed`, no calendar entry, no
+  audience enrolment. The static scan (`tests/classes/bizlms/static_scanner.php`) is clean over `classes/bizlms/`.
+
+**Schema** (`db/install.xml`, `db/upgrade.php` step 2026093001, idempotent, `field_exists`/`table_exists` guarded):
+`levels.completion_rule`, `users.enrolledby`, `users.timemodified`, tables `_lvlcomp`, `_trainers`, `_trainerfb`.
+
+**Engine and reader fixes** (mapping doc "Code fixes"):
+1. Learner page `myprograms.php` + `classes/learner_view.php`, flag `sentientia.programs.learner.enabled` (default OFF).
+   Shows only the learner's own enrolments in ACTIVE, VISIBLE programs of the learner's own tenant (decision
+   `program.inactive_history_to_learners` = false).
+2. Rule `any` in `is_level_completed_by_user`. 3. A level with no course is not completed and gates nothing (a level with
+   courses, none mandatory, still asks for nothing). Empty levels are out of `total_levels`, the gates and the observer's
+   required set.
+4-5. Observer: skips learners with no enrolment and completed enrolments, honours `completion_required = 0` (any
+   required level), stores status 2 + `timecompleted` + last level, never downgrades.
+6. `get_user_program_state` counts a stored completion and a completed enrolment (100%, nothing locked).
+7. Roster reads (`count_enrolled`, `count_enrolled_filtered`, `get_enrolled_users`) exclude deleted users.
+8. The status-2 tile and pill say "Archived" (they said "Completed").
+9. "Completed on" roster column, flag `sentientia.programs.history.enabled` (default OFF), with the program logo on
+   `view.php`.
+10. Protect history (decision `framework.protect_imported_history` = block): an imported enrolment is not unenrolled,
+    a program with imported history or stored completions is not deleted (archive instead), a level with a stored
+    completion is not deleted; the roster hides the trash action on imported rows. Native rows behave as before;
+    `delete()` and a native `unenrol_user()` cascade to the ADR-032 tables.
+11. Privacy: `_lvlcomp`, `_trainers`, `_trainerfb`, `enrolledby`, `assignedby` declared, exported, erased (core path) and
+    anonymised (DPDP path keeps the certification record, clears only references). en + hi strings.
+12. `delete_level`: refuses a level with stored completions, so there is nothing to clean. `unassign_course_from_level`
+    deliberately does NOT touch `_lvlcomp`: a stored completion is history, not a function of the level's current
+    course list (doc correction reported to the lead).
+13. `lib.php` `local_sentientia_programs_pluginfile` serves `programlogo` (system context, item id = program id) to an
+    admin of the program's tenant (history flag) or to an enrolled learner of an active program (learner flag).
+
+**Readers of legacy program tables:** none existed (no fallback to remove). Grep of `moodle-enhancement/local`, `blocks`,
+`theme/airpayux/layout` and `classes`: only the importer reads `local_program*`.
+
+**Tests** (`tests/`): `bizlms_import_test.php` (importer contract + the world of the mapping doc's fixture section, reader
+checks after the import, `@group bizlms_import`, `tenant_isolation`), `program_engine_test.php`, `privacy_history_test.php`,
+`bizlms_rules_test.php` (pure; executed with a shim, 9/9). Fixture `tests/fixtures/bizlms/program.install.xml` (12 tables
++ `certificateid`), stub `tests/classes/bizlms/org_stub_importer.php` (the org feature is a separate deliverable).
+
+**Open (not built here):** certificate re-link (`certificateid`, gap G1); orphaned `enrol = 'program'` instances (gap G6);
+production counts for all 12 tables (I-20); the non-empty `_bk` tables (archived, needs Nitin's written acceptance).

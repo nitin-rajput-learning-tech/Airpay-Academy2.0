@@ -32,11 +32,21 @@ class program_manager {
     private const LEVELS_TABLE   = 'local_sentientia_programs_levels';
     private const COURSES_TABLE  = 'local_sentientia_programs_courses';
     private const USERS_TABLE    = 'local_sentientia_programs_users';
+    /** ADR-032: stored level completions (the BizLMS history the import carries). */
+    private const LVLCOMP_TABLE  = 'local_sentientia_programs_lvlcomp';
+    /** ADR-032: conditional trainer tables (no Sentientia writer yet; filled only by the import). */
+    private const TRAINERS_TABLE = 'local_sentientia_programs_trainers';
+    private const TRAINERFB_TABLE = 'local_sentientia_programs_trainerfb';
 
     /** Status values matching install.xml. */
     public const STATUS_DRAFT    = 0;
     public const STATUS_ACTIVE   = 1;
     public const STATUS_ARCHIVED = 2;
+
+    /** Level completion rule: every mandatory course completes the level. */
+    public const RULE_ALL = 'all';
+    /** Level completion rule: one mandatory course is enough (BizLMS coursetracking OR). */
+    public const RULE_ANY = 'any';
 
     /**
      * Get a program by ID.
@@ -44,6 +54,84 @@ class program_manager {
     public static function get(int $id) {
         global $DB;
         return $DB->get_record(self::TABLE, ['id' => $id]);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ADR-032 (2026-09-30) - imported history is protected
+    // ═══════════════════════════════════════════════════════════════════
+    //
+    // The BizLMS import carries certification history: who was enrolled, who
+    // completed which level and when. Decision framework.protect_imported_history
+    // is "block": an admin action that would delete that history is refused,
+    // with a way out (archive the program instead). Programs, levels and
+    // enrolments the import did not create are unchanged.
+
+    /**
+     * Did the BizLMS import create or adopt this row of one of the program tables?
+     *
+     * @param string $table  a local_sentientia_programs* table
+     * @param int    $id
+     */
+    public static function is_imported_row(string $table, int $id): bool {
+        global $DB;
+        if ($id <= 0 || !$DB->get_manager()->table_exists('local_sentientia_legacymap')) {
+            return false;
+        }
+        return \local_sentientia_platform\bizlms\provenance::is_imported($table, $id);
+    }
+
+    /**
+     * Which of these enrolment rows did the import create or adopt?
+     *
+     * One query for a page of a roster.
+     *
+     * @param int[] $enrolmentids  ids of local_sentientia_programs_users
+     * @return array<int, true>    the imported ones, keyed by id
+     */
+    public static function imported_enrolment_ids(array $enrolmentids): array {
+        global $DB;
+        $enrolmentids = array_values(array_unique(array_filter(array_map('intval', $enrolmentids),
+            fn($id) => $id > 0)));
+        if (!$enrolmentids || !$DB->get_manager()->table_exists('local_sentientia_legacymap')) {
+            return [];
+        }
+        [$insql, $params] = $DB->get_in_or_equal($enrolmentids, SQL_PARAMS_NAMED, 'pie');
+        $params['pit'] = self::USERS_TABLE;
+        $ids = $DB->get_fieldset_select('local_sentientia_legacymap', 'DISTINCT targetid',
+            "targettable = :pit AND outcome IN ('imported', 'adopted') AND targetid $insql", $params);
+        return array_fill_keys(array_map('intval', $ids), true);
+    }
+
+    /**
+     * Does the program hold history the import carried (an imported enrolment, or a stored level completion)?
+     */
+    public static function program_has_imported_history(int $programid): bool {
+        global $DB;
+        if (self::table_present(self::LVLCOMP_TABLE)
+                && $DB->record_exists(self::LVLCOMP_TABLE, ['programid' => $programid])) {
+            return true;
+        }
+        if (!$DB->get_manager()->table_exists('local_sentientia_legacymap')) {
+            return false;
+        }
+        [$notsql, $notparams] = \local_sentientia_platform\bizlms\provenance::not_imported_sql(
+            'pu', self::USERS_TABLE, 'phi');
+        // Rows of this program that ARE imported = rows minus the not-imported ones.
+        $all = (int) $DB->count_records(self::USERS_TABLE, ['programid' => $programid]);
+        if ($all === 0) {
+            return false;
+        }
+        $native = (int) $DB->count_records_sql(
+            "SELECT COUNT(1) FROM {" . self::USERS_TABLE . "} pu
+              WHERE pu.programid = :phpid AND $notsql",
+            ['phpid' => $programid] + $notparams);
+        return $native < $all;
+    }
+
+    /** Is the optional ADR-032 table there? (A fresh plugin upgrade creates them all.) */
+    private static function table_present(string $table): bool {
+        global $DB;
+        return $DB->get_manager()->table_exists($table);
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -415,11 +503,21 @@ class program_manager {
 
     /**
      * Delete a program and all its levels, course assignments, enrollments.
+     *
+     * ADR-032: a program that holds imported history (an imported enrolment, or a stored level completion) is
+     * not deleted - archive it instead (decision framework.protect_imported_history). Everything the
+     * program owns in the ADR-032 tables goes with a program that is deleted.
+     *
+     * @throws \moodle_exception error_history_protected
      */
     public static function delete(int $id): bool {
         global $DB;
 
         $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
+
+        if (self::program_has_imported_history($id)) {
+            throw new \moodle_exception('error_history_protected', 'local_sentientia_programs');
+        }
 
         $transaction = $DB->start_delegated_transaction();
         try {
@@ -438,6 +536,13 @@ class program_manager {
 
             // Delete enrollments.
             $DB->delete_records(self::USERS_TABLE, ['programid' => $id]);
+
+            // ADR-032 tables (empty for a program the import did not touch).
+            foreach ([self::LVLCOMP_TABLE, self::TRAINERS_TABLE, self::TRAINERFB_TABLE] as $table) {
+                if (self::table_present($table)) {
+                    $DB->delete_records($table, ['programid' => $id]);
+                }
+            }
 
             // Delete program.
             $DB->delete_records(self::TABLE, ['id' => $id]);
@@ -528,12 +633,22 @@ class program_manager {
     /**
      * Delete a level. Cascades to its course assignments.
      * Reflows sortorder of remaining sibling levels to remove gaps.
+     *
+     * ADR-032: a level somebody has a stored completion for (BizLMS history) is not deleted, because the
+     * completion would go with it (decision framework.protect_imported_history).
+     *
+     * @throws \moodle_exception error_history_protected
      */
     public static function delete_level(int $levelid): bool {
         global $DB;
 
         $level = $DB->get_record(self::LEVELS_TABLE, ['id' => $levelid], '*', MUST_EXIST);
         $programid = (int) $level->programid;
+
+        if (self::table_present(self::LVLCOMP_TABLE)
+                && $DB->record_exists(self::LVLCOMP_TABLE, ['levelid' => $levelid])) {
+            throw new \moodle_exception('error_history_protected', 'local_sentientia_programs');
+        }
 
         $tx = $DB->start_delegated_transaction();
         try {
@@ -615,19 +730,33 @@ class program_manager {
     // ═══════════════════════════════════════════════════════════════════
 
     /**
-     * Has the user completed every mandatory course in this level?
+     * Has the user completed this level?
      *
-     * A level is considered "completed" if every course with mandatory=1
-     * has a course_completions row with timecompleted > 0 for this user.
+     * Three ways to be done, checked in this order:
+     *   1. A stored completion (ADR-032): BizLMS recorded the level as completed and the import carried the
+     *      record. History stands even when the level's courses have since changed.
+     *   2. The level's rule over its mandatory courses, read from course_completions: rule 'all' (default)
+     *      needs every mandatory course, rule 'any' (BizLMS coursetracking OR) needs one.
+     *   3. Nothing else. A level with NO courses is not completed (ADR-032 code fix 3): before, "no mandatory
+     *      courses" counted as completed, so the seven empty levels BizLMS auto-creates inflated the
+     *      completed-level count and let a program complete vacuously. A level that has courses, none of them
+     *      mandatory, still asks for nothing and counts as completed.
      */
     public static function is_level_completed_by_user(int $levelid,
                                                        int $userid): bool {
         global $DB;
+        if (self::has_stored_completion($levelid, $userid)) {
+            return true;
+        }
+        $level = $DB->get_record(self::LEVELS_TABLE, ['id' => $levelid], 'id, completion_rule');
+        if (!$level || self::count_level_courses($levelid) === 0) {
+            return false;
+        }
         $mandatory_courseids = $DB->get_fieldset_select(self::COURSES_TABLE,
             'courseid', 'levelid = :lid AND mandatory = 1',
             ['lid' => $levelid]);
         if (empty($mandatory_courseids)) {
-            // Level has no mandatory courses — treat as completed.
+            // Courses, but none required: the level asks for nothing.
             return true;
         }
         [$insql, $inparams] = $DB->get_in_or_equal($mandatory_courseids,
@@ -638,7 +767,53 @@ class program_manager {
                FROM {course_completions}
               WHERE userid = :uid AND timecompleted > 0
                 AND course $insql", $params);
-        return $completed >= count($mandatory_courseids);
+        return $completed >= self::mandatory_needed((string) ($level->completion_rule ?? ''),
+            count(array_unique($mandatory_courseids)));
+    }
+
+    /**
+     * How many mandatory courses complete a level: one for rule 'any', all of them otherwise.
+     */
+    private static function mandatory_needed(string $rule, int $mandatorytotal): int {
+        return ($rule === self::RULE_ANY && $mandatorytotal > 0) ? 1 : $mandatorytotal;
+    }
+
+    /**
+     * Does a stored (imported) completion say this user completed this level?
+     */
+    private static function has_stored_completion(int $levelid, int $userid): bool {
+        global $DB;
+        return self::table_present(self::LVLCOMP_TABLE)
+            && $DB->record_exists(self::LVLCOMP_TABLE,
+                ['levelid' => $levelid, 'userid' => $userid, 'status' => 1]);
+    }
+
+    /**
+     * A learner's stored level completions in one program.
+     *
+     * @return array<int, int|null> levelid => when it was completed (null = the source never recorded it)
+     */
+    private static function stored_level_completions(int $programid, int $userid): array {
+        global $DB;
+        if (!self::table_present(self::LVLCOMP_TABLE)) {
+            return [];
+        }
+        $out = [];
+        $rows = $DB->get_records(self::LVLCOMP_TABLE,
+            ['programid' => $programid, 'userid' => $userid, 'status' => 1], 'id ASC', 'id, levelid, timecompleted');
+        foreach ($rows as $row) {
+            $out[(int) $row->levelid] = $row->timecompleted === null ? null : (int) $row->timecompleted;
+        }
+        return $out;
+    }
+
+    /**
+     * Has the user's enrolment in the program been marked completed?
+     */
+    private static function enrolment_completed(int $programid, int $userid): bool {
+        global $DB;
+        return $DB->record_exists(self::USERS_TABLE,
+            ['programid' => $programid, 'userid' => $userid, 'status' => self::ENROL_COMPLETED]);
     }
 
     /**
@@ -646,7 +821,9 @@ class program_manager {
      *
      * Returns true iff every preceding level (lower sortorder) marked as
      * completion_required = 1 has been completed by the user. The first
-     * level (smallest sortorder) is always unlocked.
+     * level (smallest sortorder) is always unlocked. A level with no courses
+     * gates nothing (ADR-032: it is neither completed nor required). A learner
+     * whose enrolment is completed has every level open.
      */
     public static function is_level_unlocked_for_user(int $levelid,
                                                        int $userid): bool {
@@ -654,6 +831,9 @@ class program_manager {
         $level = $DB->get_record(self::LEVELS_TABLE, ['id' => $levelid]);
         if (!$level) {
             return false;
+        }
+        if (self::enrolment_completed((int) $level->programid, $userid)) {
+            return true;
         }
         $earlier = $DB->get_records_sql(
             "SELECT id, completion_required
@@ -663,6 +843,7 @@ class program_manager {
             ['pid' => $level->programid, 'so' => $level->sortorder]);
         foreach ($earlier as $prev) {
             if ((int) $prev->completion_required === 1
+                && self::count_level_courses((int) $prev->id) > 0
                 && !self::is_level_completed_by_user((int) $prev->id, $userid)) {
                 return false;
             }
@@ -676,41 +857,53 @@ class program_manager {
      *
      * Returns:
      *   ['levels' => [
-     *       'id', 'name', 'sortorder', 'completion_required',
-     *       'locked', 'completed', 'in_progress',
-     *       'mandatory_total', 'mandatory_completed',
-     *       'pct',
+     *       'id', 'name', 'sortorder', 'completion_required', 'completion_rule',
+     *       'locked', 'completed', 'in_progress', 'empty',
+     *       'mandatory_total', 'mandatory_completed', 'mandatory_needed',
+     *       'pct', 'timecompleted' (int|null), 'stored' (bool: the completion is imported history),
      *       'courses' => [{courseid, fullname, completed, mandatory}]
      *     ],
      *    'current_level_id' => int|null,
      *    'overall_pct'      => 0..100,
      *    'completed_levels' => int,
-     *    'total_levels'     => int]
+     *    'total_levels'     => int,          levels that have courses (empty levels are not counted)
+     *    'completed'        => bool,         the enrolment is marked completed (ADR-032)
+     *    'timecompleted'    => int|null]
+     *
+     * ADR-032: a stored level completion counts as completed; an enrolment marked completed makes the program
+     * complete (100%, no current level, nothing locked) even when the live course data alone would not say so.
      */
     public static function get_user_program_state(int $programid,
                                                    int $userid): array {
+        global $DB;
         $levels_raw = self::get_levels($programid);
         $levels = [];
         $first_unlocked_in_progress = null;
         $completed_levels = 0;
-        $total_levels = count($levels_raw);
+        $total_levels = 0;
+
+        $enrolment = $DB->get_record(self::USERS_TABLE, ['programid' => $programid, 'userid' => $userid],
+            'id, status, timecompleted');
+        $programdone = $enrolment && (int) $enrolment->status === self::ENROL_COMPLETED;
+        $stored = self::stored_level_completions($programid, $userid);
+        // Levels already passed in this loop that gate the next ones, by sortorder.
+        $gates = [];
 
         foreach ($levels_raw as $lvl) {
             $courses = self::get_level_courses((int) $lvl->id);
+            $is_stored = array_key_exists((int) $lvl->id, $stored);
+            // A level with no courses is out of the picture - unless this learner has a stored completion for it.
+            $is_empty = self::count_level_courses((int) $lvl->id) === 0 && !$is_stored;
             $mandatory_total = 0;
             $mandatory_completed = 0;
             $course_rows = [];
             foreach ($courses as $c) {
                 $is_mandatory = (int) $c->mandatory === 1;
-                $is_done = false;
+                $is_done = self::user_completed_course((int) $userid,
+                    (int) $c->courseid);
                 if ($is_mandatory) {
                     $mandatory_total++;
-                    $is_done = self::user_completed_course((int) $userid,
-                        (int) $c->courseid);
                     if ($is_done) $mandatory_completed++;
-                } else {
-                    $is_done = self::user_completed_course((int) $userid,
-                        (int) $c->courseid);
                 }
                 $course_rows[] = [
                     'courseid'  => (int) $c->courseid,
@@ -722,30 +915,60 @@ class program_manager {
                 ];
             }
 
-            $level_completed = self::is_level_completed_by_user((int) $lvl->id,
-                $userid);
-            $level_unlocked = self::is_level_unlocked_for_user((int) $lvl->id,
-                $userid);
-            if ($level_completed) $completed_levels++;
+            $level_completed = $is_stored
+                || self::is_level_completed_by_user((int) $lvl->id, $userid);
+            $needed = self::mandatory_needed((string) ($lvl->completion_rule ?? ''), $mandatory_total);
+
+            // Locked when an earlier level that is required, has courses and is not done is still open.
+            $level_unlocked = true;
+            if (!$programdone) {
+                foreach ($gates as $gate) {
+                    if ($gate['sortorder'] < (int) $lvl->sortorder && !$gate['completed']) {
+                        $level_unlocked = false;
+                        break;
+                    }
+                }
+            }
+
+            if (!$is_empty) {
+                $total_levels++;
+                if ($level_completed) {
+                    $completed_levels++;
+                }
+            }
+            if ((int) $lvl->completion_required === 1 && !$is_empty) {
+                $gates[] = ['sortorder' => (int) $lvl->sortorder, 'completed' => $level_completed];
+            }
+
             $in_progress = $level_unlocked && !$level_completed
                 && $mandatory_completed > 0;
             if ($in_progress && $first_unlocked_in_progress === null) {
                 $first_unlocked_in_progress = (int) $lvl->id;
             }
 
-            $pct = $mandatory_total > 0
-                ? (int) round(($mandatory_completed / $mandatory_total) * 100) : 0;
+            if ($level_completed) {
+                $pct = 100;
+            } else {
+                $pct = $needed > 0
+                    ? (int) min(100, round(($mandatory_completed / $needed) * 100)) : 0;
+            }
             $levels[] = [
                 'id'                  => (int) $lvl->id,
                 'name'                => format_string($lvl->name),
                 'sortorder'           => (int) $lvl->sortorder,
                 'completion_required' => (int) $lvl->completion_required === 1,
+                'completion_rule'     => (string) ($lvl->completion_rule ?? self::RULE_ALL),
+                'rule_any'            => ($lvl->completion_rule ?? '') === self::RULE_ANY,
                 'locked'              => !$level_unlocked,
                 'completed'           => $level_completed,
                 'in_progress'         => $in_progress,
+                'empty'               => $is_empty,
                 'mandatory_total'     => $mandatory_total,
                 'mandatory_completed' => $mandatory_completed,
+                'mandatory_needed'    => $needed,
                 'pct'                 => $pct,
+                'timecompleted'       => $is_stored ? $stored[(int) $lvl->id] : null,
+                'stored'              => $is_stored,
                 'courses'             => $course_rows,
             ];
         }
@@ -753,7 +976,7 @@ class program_manager {
         // current_level_id = first in-progress, or first unlocked-not-completed.
         if ($first_unlocked_in_progress === null) {
             foreach ($levels as $l) {
-                if (!$l['locked'] && !$l['completed']) {
+                if (!$l['locked'] && !$l['completed'] && !$l['empty']) {
                     $first_unlocked_in_progress = $l['id'];
                     break;
                 }
@@ -762,6 +985,11 @@ class program_manager {
 
         $overall_pct = $total_levels > 0
             ? (int) round(($completed_levels / $total_levels) * 100) : 0;
+        if ($programdone) {
+            // The enrolment says completed: the program is, whatever the live course data shows.
+            $overall_pct = 100;
+            $first_unlocked_in_progress = null;
+        }
 
         return [
             'levels'           => $levels,
@@ -769,6 +997,9 @@ class program_manager {
             'overall_pct'      => $overall_pct,
             'completed_levels' => $completed_levels,
             'total_levels'     => $total_levels,
+            'completed'        => $programdone,
+            'timecompleted'    => ($programdone && $enrolment->timecompleted !== null)
+                ? (int) $enrolment->timecompleted : null,
         ];
     }
 
@@ -891,7 +1122,13 @@ class program_manager {
         if (!$dbman->table_exists(self::USERS_TABLE)) {
             return 0;
         }
-        return (int) $DB->count_records(self::USERS_TABLE, ['programid' => $programid]);
+        // ADR-032: enrolments of deleted users are imported history (decision program.deleted_users = import);
+        // the readers do not count them.
+        return (int) $DB->count_records_sql(
+            "SELECT COUNT(1)
+               FROM {" . self::USERS_TABLE . "} pu
+               JOIN {user} u ON u.id = pu.userid
+              WHERE pu.programid = :pid AND u.deleted = 0", ['pid' => $programid]);
     }
 
     /**
@@ -909,7 +1146,7 @@ class program_manager {
         }
 
         [$scopesql, $scopeparams] = self::roster_scope($callerscope, 'u');
-        $where = ['pu.programid = :pid', $scopesql];
+        $where = ['pu.programid = :pid', 'u.deleted = 0', $scopesql];
         $params = ['pid' => $programid] + $scopeparams;
         if (!empty($search)) {
             $term = '%' . $DB->sql_like_escape($search) . '%';
@@ -1042,7 +1279,7 @@ class program_manager {
      * @return int Count newly enrolled.
      */
     public static function enrol_users(int $programid, array $userids): int {
-        global $DB;
+        global $DB, $USER;
 
         $DB->get_record(self::TABLE, ['id' => $programid], 'id', MUST_EXIST);
 
@@ -1070,6 +1307,8 @@ class program_manager {
         }
 
         $now = time();
+        // ADR-032: who enrolled the learner (0 from cron, CLI or a test with no user).
+        $actor = (int) ($USER->id ?? 0);
         $tx = $DB->start_delegated_transaction();
         try {
             foreach ($to_add as $uid) {
@@ -1080,6 +1319,8 @@ class program_manager {
                     'status'         => self::ENROL_NEW,
                     'timecreated'    => $now,
                     'timecompleted'  => null,
+                    'enrolledby'     => max(0, $actor),
+                    'timemodified'   => $now,
                 ]);
             }
             $tx->allow_commit();
@@ -1091,11 +1332,26 @@ class program_manager {
 
     /**
      * Unenrol a user from a program. No-op if not enrolled.
+     *
+     * ADR-032: an enrolment the BizLMS import carried is history and is not removed (decision
+     * framework.protect_imported_history); a program can be archived instead. Removing any other enrolment
+     * also removes the learner's stored level completions in that program, so none is left without an
+     * enrolment.
+     *
+     * @throws \moodle_exception error_history_protected
      */
     public static function unenrol_user(int $programid, int $userid): bool {
         global $DB;
+        $rows = $DB->get_records(self::USERS_TABLE,
+            ['programid' => $programid, 'userid' => $userid], '', 'id');
+        if ($rows && self::imported_enrolment_ids(array_keys($rows))) {
+            throw new \moodle_exception('error_history_protected', 'local_sentientia_programs');
+        }
         $DB->delete_records(self::USERS_TABLE,
             ['programid' => $programid, 'userid' => $userid]);
+        if (self::table_present(self::LVLCOMP_TABLE)) {
+            $DB->delete_records(self::LVLCOMP_TABLE, ['programid' => $programid, 'userid' => $userid]);
+        }
         return true;
     }
 
@@ -1124,7 +1380,7 @@ class program_manager {
         if (isset($cols['open_designation'])) { $extra .= ', u.open_designation'; }
 
         [$scopesql, $scopeparams] = self::roster_scope($callerscope, 'u');
-        $where = ['pu.programid = :pid', $scopesql];
+        $where = ['pu.programid = :pid', 'u.deleted = 0', $scopesql];
         $params = ['pid' => $programid] + $scopeparams;
         if (!empty($search)) {
             $term = '%' . $DB->sql_like_escape($search) . '%';
@@ -1155,5 +1411,71 @@ class program_manager {
               ORDER BY $sortcol $dir, pu.id ASC";
 
         return $DB->get_records_sql($sql, $params, $offset, $limit);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ADR-032 - program logo
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * The program's logo file: system context, component local_sentientia_programs, file area programlogo, item
+     * id = the program id. BizLMS kept it under a category context; the import copies it here.
+     *
+     * @return \stored_file|null
+     */
+    public static function program_logo_file(int $programid): ?\stored_file {
+        $files = get_file_storage()->get_area_files(\context_system::instance()->id,
+            'local_sentientia_programs', 'programlogo', $programid, 'filepath, filename', false);
+        $file = reset($files);
+        return $file ?: null;
+    }
+
+    /**
+     * URL of the program's logo, or null when it has none.
+     */
+    public static function program_logo_url(int $programid): ?\moodle_url {
+        $file = self::program_logo_file($programid);
+        if (!$file) {
+            return null;
+        }
+        return \moodle_url::make_pluginfile_url($file->get_contextid(), 'local_sentientia_programs',
+            'programlogo', $programid, $file->get_filepath(), $file->get_filename());
+    }
+
+    /**
+     * May the signed-in user fetch this program's logo?
+     *
+     * Two readers, each behind its own flag:
+     *   - an admin (local/sentientia_programs:view) whose tenant holds the program, with the history flag on;
+     *   - a learner enrolled in the program, which must be active, visible and in their own tenant, with
+     *     the learner flag on.
+     * A program with no tenant path is cross-tenant-only (ADR-031), so a tenant user gets nothing for it.
+     */
+    public static function can_view_program_logo(int $programid): bool {
+        global $DB, $USER;
+        $program = $DB->get_record(self::TABLE, ['id' => $programid], 'id, open_path, status, visible');
+        if (!$program || empty($USER->id) || isguestuser()) {
+            return false;
+        }
+
+        if (\local_sentientia_platform\feature_flags::is_enabled('sentientia.programs.history.enabled')
+                && has_capability('local/sentientia_programs:view', \context_system::instance())) {
+            try {
+                self::assert_program_in_scope($program);
+                return true;
+            } catch (\moodle_exception $e) {
+                // Not this tenant's program: fall through to the learner rule.
+                unset($e);
+            }
+        }
+
+        if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.programs.learner.enabled')
+                || (int) $program->status !== self::STATUS_ACTIVE || (int) $program->visible !== 1
+                || !$DB->record_exists(self::USERS_TABLE, ['programid' => $programid, 'userid' => (int) $USER->id])) {
+            return false;
+        }
+        [$tsql, $tparams] = \local_sentientia_platform\tenant::path_filter('p');
+        return $DB->record_exists_sql(
+            "SELECT 1 FROM {" . self::TABLE . "} p WHERE p.id = :pid AND $tsql", ['pid' => $programid] + $tparams);
     }
 }

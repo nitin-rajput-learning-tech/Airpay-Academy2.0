@@ -7,7 +7,7 @@ in order. Replacement for BizLMS `local_program`.
 | Field | Value |
 |---|---|
 | Component | `local_sentientia_programs` |
-| Version | 1.4.0 |
+| Version | 1.9.0 |
 | Depends on | `local_sentientia_org`, `local_sentientia_courses` |
 
 ## What it does
@@ -19,12 +19,22 @@ in order. Replacement for BizLMS `local_program`.
 - Status workflow: `new → active → (hold ↔ active) → completed / cancelled`.
 - Cohort-enrolment (enrol a whole cohort into a programme in one action).
 
-## Tables (4)
+## Tables (7)
 
 - `local_sentientia_programs` — programme containers.
-- `local_sentientia_programs_levels` — sequential levels.
+- `local_sentientia_programs_levels` — sequential levels (`completion_rule`: `all` or `any`).
 - `local_sentientia_programs_courses` — courses assigned per level.
-- `local_sentientia_programs_users` — user-to-programme enrolment.
+- `local_sentientia_programs_users` — user-to-programme enrolment (`enrolledby` names who enrolled the learner).
+- `local_sentientia_programs_lvlcomp` — stored level completions (BizLMS history, ADR-032).
+- `local_sentientia_programs_trainers`, `_trainerfb` — trainers and feedback on them (carried by the import; no writer yet).
+
+## BizLMS import (ADR-032)
+
+`classes/bizlms/` holds the `program` importer for the 12 tables of BizLMS `local_program`, registered in
+`db/bizlms_import.php` and run by `local_sentientia_platform/cli/import_bizlms.php`. See the state card
+(2026-09-30) and mapping doc section 16. Two default-OFF flags cover the readers of imported history:
+`sentientia.programs.learner.enabled` (the learner page `myprograms.php`) and
+`sentientia.programs.history.enabled` ("Completed on" column and program logo on the admin pages).
 
 ## Capabilities (6)
 
