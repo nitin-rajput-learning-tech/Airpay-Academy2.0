@@ -158,3 +158,10 @@ $string['privacy:metadata:operator_profile:oncall_for_customer_id'] = 'वह �
 
 // ADR-031 (2026-09-25): the single cross-tenant authority.
 $string['sentientia_platform:crosstenant'] = 'सभी टेनेंट में कार्य करें (सेंटिएंटिया प्लेटफ़ॉर्म)';
+
+// ADR-032 (2026-09-30): the BizLMS import status check.
+$string['checkbizlms_import'] = 'BizLMS डेटा आयात';
+$string['checkbizlms_import_na'] = 'BizLMS आयात में कोई आयातक पंजीकृत नहीं है, या उसकी तालिकाएँ स्थापित नहीं हैं।';
+$string['checkbizlms_import_ok'] = 'कोई भी BizLMS आयात अधूरा नहीं है।';
+$string['checkbizlms_import_critical'] = 'इन के लिए BizLMS आयात शुरू हुआ पर पूरा नहीं हुआ: {$a}। इसे जारी रखने या हटाने से पहले साइट न खोलें।';
+$string['checkbizlms_import_unknown'] = 'BizLMS आयातक रजिस्ट्री पढ़ी नहीं जा सकी।';

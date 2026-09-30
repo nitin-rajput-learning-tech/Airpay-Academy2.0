@@ -164,3 +164,10 @@ $string['privacy:metadata:operator_profile:oncall_for_customer_id'] = 'The custo
 
 // ADR-031 (2026-09-25): the single cross-tenant authority.
 $string['sentientia_platform:crosstenant'] = 'Act across all tenants (Sentientia platform)';
+
+// ADR-032 (2026-09-30): the BizLMS import status check.
+$string['checkbizlms_import'] = 'BizLMS data import';
+$string['checkbizlms_import_na'] = 'The BizLMS import has no importers registered, or its tables are not installed.';
+$string['checkbizlms_import_ok'] = 'No BizLMS import is half done.';
+$string['checkbizlms_import_critical'] = 'A BizLMS import has started but not finished for: {$a}. Do not open the site until it is resumed or purged.';
+$string['checkbizlms_import_unknown'] = 'The BizLMS importer registry could not be read.';
