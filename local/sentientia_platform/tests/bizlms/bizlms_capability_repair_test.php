@@ -114,7 +114,9 @@ final class bizlms_capability_repair_test extends \advanced_testcase {
         $this->assertSame('local_blmlegacy', $classroom['component']);
         $this->assertSame(self::NEW, $classroom['target']);
         $this->assertTrue($classroom['target_exists']);
+        $this->assertNull($classroom['target_permission'], 'the role holds no row for the equivalent');
         $this->assertFalse($classroom['held']);
+        $this->assertFalse($classroom['divergent']);
         $this->assertFalse($classroom['withheld']);
 
         $admin = $rows[array_search(self::OLD_ADMIN, array_column($rows, 'legacy'), true)];
@@ -176,6 +178,131 @@ final class bizlms_capability_repair_test extends \advanced_testcase {
         $repair->apply($plan['apply']);
         $this->assertEquals(CAP_PROHIBIT, $DB->get_field('role_capabilities', 'permission',
             ['roleid' => $roleid, 'capability' => self::NEW]));
+    }
+
+    /**
+     * Give a role a row on a capability in the system context, as the plugin install's archetype grants do.
+     *
+     * @param int $roleid
+     * @param string $capability
+     * @param int $permission
+     * @return void
+     */
+    private function hold(int $roleid, string $capability, int $permission): void {
+        global $DB;
+        $DB->insert_record('role_capabilities', (object) ['contextid' => \context_system::instance()->id,
+            'roleid' => $roleid, 'capability' => $capability, 'permission' => $permission, 'timemodified' => time(),
+            'modifierid' => 0]);
+    }
+
+    public function test_a_target_held_with_the_same_permission_is_already_carried(): void {
+        global $DB;
+        // ALLOW against ALLOW, the manager-archetype case: nothing to decide, nothing to grant.
+        [$roleid, $repair] = $this->scenario(CAP_ALLOW);
+        $this->hold($roleid, self::NEW, CAP_ALLOW);
+        $rows = $this->rows_of($roleid, $repair->inventory());
+        $row = $rows[array_search(self::OLD, array_column($rows, 'legacy'), true)];
+        $this->assertSame(CAP_ALLOW, $row['target_permission']);
+        $this->assertTrue($row['held']);
+        $this->assertFalse($row['divergent']);
+
+        $plan = $repair->plan([], $rows);
+        $this->assertSame([], $plan['uncovered']);
+        $this->assertSame([], $plan['divergent']);
+        $this->assertSame(0, capability_repair::open_count($plan));
+        $this->assertSame(0, capability_repair::exit_code($plan), 'the archetype already gives what BizLMS had');
+
+        // An approved grant against it is "already held", not refused and not made again.
+        $plan = $repair->plan([$this->grant()], $rows);
+        $this->assertSame([], $plan['refused']);
+        $this->assertSame([], $plan['apply']);
+        $this->assertCount(1, $plan['held']);
+        $this->assertSame(0, capability_repair::exit_code($plan));
+        $this->assertSame(1, $DB->count_records('role_capabilities', ['roleid' => $roleid, 'capability' => self::NEW]));
+    }
+
+    public function test_a_legacy_prohibit_against_a_target_held_as_allow_stays_open_until_a_named_decline(): void {
+        global $DB;
+        [$roleid, $repair] = $this->scenario(CAP_PROHIBIT);
+        // The install's manager archetype gave the equivalent ALLOW to a role that BizLMS restricted.
+        $this->hold($roleid, self::NEW, CAP_ALLOW);
+
+        $rows = $this->rows_of($roleid, $repair->inventory());
+        $row = $rows[array_search(self::OLD, array_column($rows, 'legacy'), true)];
+        $this->assertSame(CAP_ALLOW, $row['target_permission']);
+        $this->assertFalse($row['held'], 'a row with another permission is not a grant that is carried');
+        $this->assertTrue($row['divergent']);
+
+        $plan = $repair->plan([], $rows);
+        $this->assertCount(1, $plan['divergent']);
+        $this->assertStringContainsString(self::OLD . ' -> ' . self::NEW, $plan['divergent'][0]);
+        $this->assertStringContainsString('legacy PROHIBIT', $plan['divergent'][0]);
+        $this->assertStringContainsString('holds the target as ALLOW', $plan['divergent'][0]);
+        $this->assertSame([], $plan['uncovered']);
+        $this->assertSame([], $plan['held']);
+        $this->assertSame(1, capability_repair::open_count($plan));
+        $this->assertSame(2, capability_repair::exit_code($plan), 'nobody decided that the restriction may widen');
+
+        // A decline that names another role or another capability decides nothing here.
+        foreach ([['role' => 'manager'], ['legacy' => self::OLD_ADMIN]] as $change) {
+            $elsewhere = $change + ['role' => 'blmtrainer', 'context' => 'system', 'legacy' => self::OLD,
+                'reason' => 'not this row'];
+            $loaded = capability_repair::load_allowlist($this->allowlist([], ['declined' => [$elsewhere]]));
+            $plan = $repair->plan($loaded['grants'], $rows, $loaded['declines']);
+            $this->assertCount(1, $plan['divergent']);
+            $this->assertSame(2, capability_repair::exit_code($plan));
+        }
+
+        // A decline that names this role grant closes it, and writes nothing.
+        $decline = ['role' => 'blmtrainer', 'context' => 'system', 'legacy' => self::OLD,
+            'reason' => 'the restriction is lifted on purpose'];
+        $loaded = capability_repair::load_allowlist($this->allowlist([], ['declined' => [$decline]]));
+        $plan = $repair->plan($loaded['grants'], $rows, $loaded['declines']);
+        $this->assertSame([], $plan['divergent']);
+        $this->assertCount(1, $plan['declined']);
+        $this->assertSame('the restriction is lifted on purpose',
+            $plan['declined_by']['decline 1 (blmtrainer ' . self::OLD . ')']['reason']);
+        $this->assertSame(0, capability_repair::exit_code($plan));
+        $this->assertSame(0, $repair->apply($plan['apply']));
+        $this->assertEquals(CAP_ALLOW, $DB->get_field('role_capabilities', 'permission',
+            ['roleid' => $roleid, 'capability' => self::NEW]), 'the repair overwrote nothing');
+    }
+
+    /**
+     * @dataProvider divergent_permission_provider
+     * @param int $legacy What the role holds on the BizLMS capability.
+     * @param int $target What the role holds on the Sentientia equivalent.
+     */
+    public function test_an_approved_grant_whose_target_is_held_with_another_permission_is_refused(int $legacy, int $target): void {
+        global $DB;
+        [$roleid, $repair] = $this->scenario($legacy);
+        $this->hold($roleid, self::NEW, $target);
+        $rows = $this->rows_of($roleid, $repair->inventory());
+
+        $plan = $repair->plan([$this->grant(self::OLD, self::NEW, $legacy)], $rows);
+        $this->assertCount(1, $plan['refused']);
+        $this->assertStringContainsString('target_held_with_a_different_permission', $plan['refused'][0]);
+        $this->assertStringContainsString('never overwrites', $plan['refused'][0]);
+        $this->assertSame([], $plan['apply']);
+        $this->assertSame([], $plan['held'], 'not "already held": the role holds the target as something else');
+        $this->assertCount(1, $plan['divergent'], 'and the row is still undecided');
+        $this->assertSame(1, capability_repair::exit_code($plan));
+
+        $this->assertSame(0, $repair->apply($plan['apply']));
+        $this->assertEquals($target, $DB->get_field('role_capabilities', 'permission',
+            ['roleid' => $roleid, 'capability' => self::NEW]));
+    }
+
+    /**
+     * @return array<string, array{0: int, 1: int}> Legacy permission, then the permission the target is held with.
+     */
+    public static function divergent_permission_provider(): array {
+        return [
+            'PROHIBIT widened to ALLOW' => [CAP_PROHIBIT, CAP_ALLOW],
+            'PREVENT widened to ALLOW' => [CAP_PREVENT, CAP_ALLOW],
+            'ALLOW narrowed to PROHIBIT' => [CAP_ALLOW, CAP_PROHIBIT],
+            'ALLOW narrowed to PREVENT' => [CAP_ALLOW, CAP_PREVENT],
+        ];
     }
 
     public function test_the_capabilities_that_belong_to_site_admins_cannot_be_allow_listed(): void {
@@ -377,6 +504,44 @@ final class bizlms_capability_repair_test extends \advanced_testcase {
         $this->assertSame([], $plan['declined']);
         $this->assertSame(10, capability_repair::open_count($plan));
         $this->assertSame(2, capability_repair::exit_code($plan));
+    }
+
+    public function test_a_prohibit_override_on_a_mapped_capability_keeps_the_signed_review_at_exit_2(): void {
+        global $DB;
+        [$roleids, $repair] = $this->archetype_scenario();
+        // BizLMS restricted the tenant-admin role on local/blmcost:view (PROHIBIT at system); the Sentientia install
+        // then gave that role the equivalent as ALLOW through the manager archetype.
+        $DB->set_field('role_capabilities', 'permission', CAP_PROHIBIT,
+            ['roleid' => $roleids[1], 'capability' => 'local/blmcost:view']);
+        $inventory = $this->only_roles($roleids, $repair->inventory());
+
+        // Everything the owner signed in the archetype review, and nothing about that override.
+        $loaded = capability_repair::load_allowlist($this->allowlist([], ['declined' => $this->archetype_declines()]));
+        $plan = $repair->plan($loaded['grants'], $inventory, $loaded['declines']);
+        $this->assertSame([], $plan['refused']);
+        $this->assertSame([], $plan['uncovered']);
+        $this->assertSame([], $plan['unmapped']);
+        $this->assertCount(1, $plan['divergent']);
+        $this->assertStringContainsString('blmadmin', $plan['divergent'][0]);
+        $this->assertStringContainsString('local/blmcost:view -> local/blmtarget:view', $plan['divergent'][0]);
+        $this->assertSame(1, capability_repair::open_count($plan));
+        $this->assertSame(2, capability_repair::exit_code($plan), 'the signed declines do not cover the override');
+        $this->assertSame([], $plan['apply'], 'and nothing is granted or overwritten');
+
+        // The owner names that role grant in a decline, with a reason: the review finishes clean.
+        $declined = $this->archetype_declines();
+        $declined[] = ['role' => 'blmadmin', 'context' => 'system', 'legacy' => 'local/blmcost:view',
+            'reason' => 'tenant admins may see organisations; the PROHIBIT was a BizLMS quirk'];
+        $loaded = capability_repair::load_allowlist($this->allowlist([], ['declined' => $declined]));
+        $plan = $repair->plan($loaded['grants'], $inventory, $loaded['declines']);
+        $this->assertSame([], $plan['divergent']);
+        $this->assertSame([], $plan['unused_declines']);
+        $this->assertCount(11, $plan['declined']);
+        $this->assertSame(0, capability_repair::exit_code($plan));
+
+        // The core manager role, whose legacy view is ALLOW against the archetype's ALLOW, was never affected.
+        $this->assertEquals(CAP_ALLOW, $DB->get_field('role_capabilities', 'permission',
+            ['roleid' => $roleids[0], 'capability' => 'local/blmtarget:view']));
     }
 
     public function test_a_plugin_decline_covers_only_capabilities_with_no_equivalent(): void {

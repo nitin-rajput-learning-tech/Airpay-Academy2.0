@@ -32,6 +32,12 @@
  * context, because that is where a real override hides. A line that is both granted and declined is refused.
  * Declined grants count as decided. The file is signed as a whole (approved_by, approved_on).
  *
+ * "Already held" means the role holds the equivalent with the SAME permission. A role that holds it with a
+ * different one (a BizLMS PROHIBIT at system context against an ALLOW the Sentientia manager archetype gave the
+ * equivalent) is DIVERGENT: the script never overwrites a row, so it cannot carry the restriction, and the grant stays
+ * undecided (exit 2) until a decline names that role grant. An approved grant against such a target is refused
+ * (exit 1, target_held_with_a_different_permission).
+ *
  * It never grants local/sentientia_org:manage, local/sentientia_org:manage_multiorganizations or
  * local/sentientia_platform:crosstenant, whatever the allow-list says. The cross-tenant capability goes to the
  * platform role Nitin names, by hand, in the cutover runbook.
@@ -80,8 +86,10 @@ try {
     cli_writeln(count($inventory) . ' role grant(s) on capabilities of plugins that are missing from disk');
     foreach ($inventory as $row) {
         $state = $row['target'] === null ? 'no known equivalent'
+            : ($row['divergent'] ? 'equivalent held as ' . capability_repair::permission_name((int) $row['target_permission'])
+                . ', DIFFERENT from the legacy grant'
             : ($row['withheld'] ? 'equivalent is never granted by this script'
-            : ($row['held'] ? 'equivalent already held' : 'equivalent not held'));
+            : ($row['held'] ? 'equivalent already held' : 'equivalent not held')));
         cli_writeln(sprintf('  %-22s ctx %-6s level %-3s %-48s perm %-5s -> %s (%s)', $row['role'], $row['contextid'],
             $row['contextlevel'], $row['legacy'], $row['permission'], $row['target'] ?? '-', $state));
     }
@@ -121,6 +129,9 @@ try {
     foreach ($plan['uncovered'] as $line) {
         cli_writeln('  UNAPPROVED: ' . $line);
     }
+    foreach ($plan['divergent'] as $line) {
+        cli_writeln('  DIVERGENT, NOT DECLINED (the repair never overwrites; decline this role grant by name): ' . $line);
+    }
     foreach ($plan['unmapped'] as $line) {
         cli_writeln('  NO EQUIVALENT, NOT DECLINED: ' . $line);
     }
@@ -141,8 +152,12 @@ try {
             exit(3);
         }
         $lock = guard::acquire_lock();
-        $made = $repair->apply($plan['apply']);
-        $lock->release();
+        try {
+            $made = $repair->apply($plan['apply']);
+        } finally {
+            // A lock kept by a failed apply() would block the next run (the db_record factory holds it for hours).
+            $lock->release();
+        }
         cli_writeln("Granted {$made} capability grant(s).");
     }
 

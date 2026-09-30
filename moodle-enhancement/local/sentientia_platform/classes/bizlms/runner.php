@@ -1103,6 +1103,12 @@ final class runner {
                 if ($e instanceof tripwire_tripped && !$DB->is_transaction_started()) {
                     // After any rollback, so the fact outlives it: a plain re-apply must not complete this feature.
                     $this->writer->set_tripped($feature, $this->runid);
+                } else if ($e instanceof tripwire_tripped) {
+                    // A caller's transaction is still open (the CLI never holds one): the record would roll back
+                    // with it, so it is not written and the trip would not stick. Say so in the report.
+                    $this->report->set_feature($feature, ['tripwire_not_recorded' => 'a transaction was still open after the'
+                        . ' rollback, so this trip is not remembered: do not re-apply this feature without restoring the snapshot'
+                        . ' or purging it']);
                 }
             }
             $this->record_feature_failure($importer, $e);

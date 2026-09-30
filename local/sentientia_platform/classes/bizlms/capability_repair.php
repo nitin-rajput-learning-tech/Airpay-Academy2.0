@@ -46,6 +46,12 @@ defined('MOODLE_INTERNAL') || die();
  * A line that is both granted and declined is refused. The three NEVER_GRANT capabilities cannot be granted
  * whatever the allow-list says.
  *
+ * "Already held" means held with the SAME permission. A role that holds the Sentientia equivalent with a different
+ * permission than the BizLMS grant (a legacy PROHIBIT at system context that the install's manager archetype turned
+ * into an ALLOW on the equivalent) is divergent: the repair never overwrites a row, so it cannot carry the
+ * restriction, and it will not call the grant decided. It stays open (exit 2) until the owner declines that role
+ * grant by name; an approved grant against such a target is refused (exit 1).
+ *
  * It is not an importer: role_capabilities is permission configuration, not BizLMS history.
  *
  * @package    local_sentientia_platform
@@ -203,10 +209,15 @@ final class capability_repair {
      * Every role grant on a capability of a plugin that is missing from disk.
      *
      * @return array<int, array{roleid: int, role: string, contextid: int, contextlevel: int, legacy: string,
-     *         component: string, permission: int, target: ?string, target_exists: bool, held: bool, withheld: bool}>
+     *         component: string, permission: int, target: ?string, target_exists: bool, target_permission: ?int,
+     *         held: bool, divergent: bool, withheld: bool}>
      *         component is the missing plugin the capability belongs to, target is the Sentientia equivalent (null
-     *         when the map has none), held says the role already has a row for it in that context, withheld says
-     *         the target is one this repair never grants.
+     *         when the map has none). target_permission is what the role holds on the target in that context
+     *         (null when it holds no row). held says it holds the target there with the SAME permission as the
+     *         legacy grant, so there is nothing to carry. divergent says it holds the target there with a
+     *         DIFFERENT permission: a legacy PROHIBIT that the install's archetype grants widened to ALLOW is the
+     *         case that matters, and the repair never overwrites a row, so only the owner can decide it.
+     *         withheld says the target is one this repair never grants.
      */
     public function inventory(): array {
         global $DB;
@@ -238,18 +249,24 @@ final class capability_repair {
         $out = [];
         foreach ($rows as $row) {
             $target = $this->map[$row->capability] ?? null;
-            $held = false;
             $exists = false;
+            $targetpermission = null;
             if ($target !== null) {
                 $exists = (bool) \get_capability_info($target, false);
-                $held = $DB->record_exists('role_capabilities',
-                    ['roleid' => $row->roleid, 'contextid' => $row->contextid, 'capability' => $target]);
+                // The row's permission, not only whether a row exists: a target held with another permission is
+                // not a grant that is already carried (a legacy PROHIBIT against an archetype ALLOW).
+                $found = $DB->get_field('role_capabilities', 'permission',
+                    ['roleid' => $row->roleid, 'contextid' => $row->contextid, 'capability' => $target], IGNORE_MISSING);
+                $targetpermission = $found === false ? null : (int) $found;
             }
             $out[] = [
                 'roleid' => (int) $row->roleid, 'role' => (string) $row->shortname, 'contextid' => (int) $row->contextid,
                 'contextlevel' => (int) $row->contextlevel, 'legacy' => (string) $row->capability,
                 'component' => (string) $row->component,
-                'permission' => (int) $row->permission, 'target' => $target, 'target_exists' => $exists, 'held' => $held,
+                'permission' => (int) $row->permission, 'target' => $target, 'target_exists' => $exists,
+                'target_permission' => $targetpermission,
+                'held' => $targetpermission !== null && $targetpermission === (int) $row->permission,
+                'divergent' => $targetpermission !== null && $targetpermission !== (int) $row->permission,
                 'withheld' => $target !== null && in_array($target, $this->never, true),
             ];
         }
@@ -263,21 +280,25 @@ final class capability_repair {
      * @param array<int, array>|null $inventory Defaults to inventory().
      * @param array<int, array> $declines The "declines" of load_allowlist(): what the owner reviewed and does not carry.
      * @return array{apply: array<int, array>, held: array<int, array>, refused: string[], uncovered: string[],
-     *         withheld: string[], unmapped: string[], declined: string[],
+     *         divergent: string[], withheld: string[], unmapped: string[], declined: string[],
      *         declined_by: array<string, array{rows: int, reason: string}>, unused_declines: string[]}
-     *         apply are the grants to make; held are approved grants the role already has; refused are the
-     *         allow-list lines that were rejected, with the reason; uncovered are inventory rows with a known
-     *         target that nobody approved or declined; withheld are rows whose target this repair never grants;
-     *         unmapped are legacy capabilities with grants, no known equivalent and no component decline;
-     *         declined are the rows the owner declined (they count as decided), declined_by counts them per
-     *         decline with its reason, and unused_declines are decline lines that matched no row.
+     *         apply are the grants to make; held are approved grants the role already has with that permission;
+     *         refused are the allow-list lines that were rejected, with the reason (an approved grant whose target
+     *         the role holds with a different permission is refused: the repair never overwrites); uncovered are
+     *         inventory rows with a known target that nobody approved or declined; divergent are inventory rows
+     *         whose target the role already holds with a permission that differs from the legacy grant (a legacy
+     *         PROHIBIT against an archetype ALLOW) and that no row decline covers, they count as open;
+     *         withheld are rows whose target this repair never grants; unmapped are legacy capabilities with
+     *         grants, no known equivalent and no component decline; declined are the rows the owner declined
+     *         (they count as decided), declined_by counts them per decline with its reason, and unused_declines
+     *         are decline lines that matched no row.
      */
     public function plan(array $grants, ?array $inventory = null, array $declines = []): array {
         global $DB;
         $inventory ??= $this->inventory();
         $declines = array_values($declines);
-        $plan = ['apply' => [], 'held' => [], 'refused' => [], 'uncovered' => [], 'withheld' => [], 'unmapped' => [],
-            'declined' => [], 'declined_by' => [], 'unused_declines' => []];
+        $plan = ['apply' => [], 'held' => [], 'refused' => [], 'uncovered' => [], 'divergent' => [], 'withheld' => [],
+            'unmapped' => [], 'declined' => [], 'declined_by' => [], 'unused_declines' => []];
 
         $index = [];
         foreach ($inventory as $row) {
@@ -344,6 +365,14 @@ final class capability_repair {
                 $plan['refused'][] = "{$label}: target_capability_is_not_installed";
                 continue;
             }
+            if (!empty($row['divergent'])) {
+                // assign_capability() never overwrites, so this grant would not be carried, and calling the target
+                // "already held" would hide that the role holds it with another permission.
+                $plan['refused'][] = "{$label}: target_held_with_a_different_permission (the role holds the target as "
+                    . self::permission_name((int) $row['target_permission']) . ", the grant carries "
+                    . self::permission_name($grant['permission']) . "; the repair never overwrites a row)";
+                continue;
+            }
             $approved[$key] = true;
             $entry = $grant + ['roleid' => $roleid, 'contextid' => $contextid];
             if ($row['held']) {
@@ -373,6 +402,10 @@ final class capability_repair {
             }
             if ($row['target'] === null) {
                 $plan['unmapped'][] = $where;
+            } else if (!empty($row['divergent'])) {
+                // Held with another permission: not carried, not decided. Only a named row decline closes it.
+                $plan['divergent'][] = $where . " -> {$row['target']} (legacy " . self::permission_name($row['permission'])
+                    . ", the role holds the target as " . self::permission_name((int) $row['target_permission']) . ')';
             } else if ($row['withheld']) {
                 $plan['withheld'][] = $where . " -> {$row['target']}";
             } else if (!$row['held']) {
@@ -388,13 +421,28 @@ final class capability_repair {
     }
 
     /**
-     * Grants that still have no decision: neither approved, held already, withheld nor declined.
+     * Grants that still have no decision: neither approved, held already (with the same permission), withheld nor
+     * declined. A grant whose target the role holds with a different permission is open too (divergent): the
+     * install's archetype grants would silently widen or narrow what BizLMS had.
      *
      * @param array $plan As returned by plan().
      * @return int
      */
     public static function open_count(array $plan): int {
-        return count($plan['uncovered']) + count($plan['unmapped']);
+        return count($plan['uncovered']) + count($plan['unmapped']) + count($plan['divergent'] ?? []);
+    }
+
+    /**
+     * @param int $permission CAP_ALLOW, CAP_PREVENT, CAP_PROHIBIT or CAP_INHERIT.
+     * @return string ALLOW, PREVENT, PROHIBIT, or the number for anything else.
+     */
+    public static function permission_name(int $permission): string {
+        return match ($permission) {
+            CAP_ALLOW => 'ALLOW',
+            CAP_PREVENT => 'PREVENT',
+            CAP_PROHIBIT => 'PROHIBIT',
+            default => (string) $permission,
+        };
     }
 
     /**

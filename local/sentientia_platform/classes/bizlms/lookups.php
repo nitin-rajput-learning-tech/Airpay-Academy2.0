@@ -79,6 +79,11 @@ final class lookups {
      * @return bool
      */
     public function exists(string $table, int $id): bool {
+        if ($table === self::ORG_TABLE && $this->orgrule !== null) {
+            // The same rule as orgs(): an importer that asks whether an organisation id exists is reading what the
+            // org importer writes, so it must depend on it (and not run first and see none).
+            ($this->orgrule)();
+        }
         if ($table === 'user') {
             return isset($this->users()[$id]);
         }

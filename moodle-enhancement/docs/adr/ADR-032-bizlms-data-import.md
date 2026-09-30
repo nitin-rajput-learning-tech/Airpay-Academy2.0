@@ -663,7 +663,7 @@ does not watch it.
 
 1. Inventory (default, writes nothing): every `role_capabilities` row on a capability of a plugin that is
    missing from disk, per role and context, next to the Sentientia equivalent and whether the role already
-   holds it.
+   holds it, and with which permission.
 2. `--allowlist=FILE` (JSON, signed as a whole: `approved_by`, `approved_on`, sha256 printed) holds the
    owner's two kinds of decision, and every inventory row must end up in one of them or the run does not
    finish clean:
@@ -685,9 +685,14 @@ does not watch it.
 4. It **never grants** `local/sentientia_org:manage`, `local/sentientia_org:manage_multiorganizations` or
    `local/sentientia_platform:crosstenant`, whatever the allow-list says. The cross-tenant capability goes
    by hand to the platform role Nitin names.
-5. Exit 0 when every grant is decided (granted, already held, withheld by item 4, or declined); 1 when an
-   allow-list line was refused; 2 when grants remain that nobody approved or declined; 3 when a guard
-   refused. The exit code is `capability_repair::exit_code()`, tested on both outcomes.
+5. Exit 0 when every grant is decided (granted, already held with the same permission, withheld by item 4,
+   or declined); 1 when an allow-list line was refused; 2 when grants remain that nobody approved or
+   declined; 3 when a guard refused. The exit code is `capability_repair::exit_code()`, tested on both
+   outcomes. "Already held" compares the permission. A role that holds the equivalent with a different
+   one than BizLMS gave it (a legacy PROHIBIT at system context that the install's manager archetype
+   turned into an ALLOW) is **divergent**: the repair never overwrites a row, so it cannot carry the
+   restriction and the grant stays open (exit 2) until a decline names that role grant. An approved
+   grant against such a target is refused (`target_held_with_a_different_permission`, exit 1).
 
 **The declines are the answer for the archetype defaults.** BizLMS gives the manager archetype the grants
 of all 22 plugins, so the inventory on a restored database always lists them on roles 1 and 9 (the rows

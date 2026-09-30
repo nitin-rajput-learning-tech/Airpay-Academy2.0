@@ -623,3 +623,68 @@ at exit 2 until Nitin adds a grant or a named decline. That is the intent.
 
 **Next:** the lead runs `--group bizlms_import` (and `tenant_isolation`) from the moodle5 dirroot after the re-init; Nitin signs
 the capability allow-list from the Stage B inventory; then P0.4 and the org importer (with the `legacy_cap()` removal).
+
+
+## 2026-09-30 - ADR-032 capability repair: a target held with a different permission is not "already held" (round-3 re-review must-fix)
+
+Same branch, same version, no schema change. Both plugin trees byte-identical. **Moodle PHPUnit was not run** (low-CPU mode; the
+lead runs `--group bizlms_import`). What ran: `php -l` on every changed file, `tools/check-tree-drift.php`, and an offline
+harness with a stub `$DB` and no Moodle (7 legacy/target permission pairs x inventory, plan without and with a grant, with a
+matching and a non-matching row decline: 75 checks, all pass).
+
+**The defect.** The repair can exit 0 and that exit is the Stage B gate, but `inventory()` set `held` from whether the target row
+EXISTS and ignored its permission. A legacy PROHIBIT (or PREVENT) at system context on a mapped capability, with the target
+ALLOW from the manager archetype, was "held", never counted open, and the CLI printed "every grant is decided (exit 0)" while
+the restriction was silently widened. The second symptom: an approved PROHIBIT grant whose target was already ALLOW went to
+`held` and was reported "already held" (`assign_capability()` never overwrites).
+
+**The fix** (`capability_repair.php`, `cli/repair_bizlms_capabilities.php`, both trees):
+- `inventory()` reads the target row's permission. `held` = the row exists with the SAME permission as the legacy grant. New
+  keys: `target_permission` (int or null) and `divergent` (the row exists with a different permission).
+- `plan()` has a new `divergent` bucket. A divergent row that no row decline covers goes there and `open_count()` counts it, so
+  the exit is 2. An approved grant whose target is held with a different permission is refused,
+  `target_held_with_a_different_permission` (exit 1), and its row also stays in `divergent`. The CLI prints the bucket and the
+  per-row state ("equivalent held as ALLOW, DIFFERENT from the legacy grant").
+- Any difference counts, in both directions: PROHIBIT/PREVENT widened to ALLOW, and ALLOW narrowed to PROHIBIT/PREVENT. Only a
+  row decline naming role, context and legacy capability closes it (a plugin decline cannot: the row has a mapped target).
+- Decision made here: a divergent row whose target is on `NEVER_GRANT` goes to `divergent`, not `withheld`. A never-granted
+  target that is held at all is an anomaly (nothing in the install gives it), so it needs a decision. An ordinary withheld row
+  (target not held) is unchanged and still exits 0.
+- ALLOW against ALLOW (the archetype case) is unchanged: held, exit 0. The ADR, the draft's `open_decisions` and the round-3
+  section already described this behaviour; ADR-032 "Capabilities" items 1 and 5 got one clause each.
+
+**Tests (unexecuted):** `bizlms_capability_repair_test.php`: same permission is carried (exit 0, an approved grant is "already
+held"); legacy PROHIBIT against a held ALLOW exits 2 without a decline, still 2 with a decline for another role or another
+capability, 0 with the named row decline, and nothing is overwritten; an approved grant against a target held with another
+permission is refused for PROHIBIT/PREVENT widened and ALLOW narrowed (data provider); a PROHIBIT override on the tenant-admin
+role inside the signed archetype review keeps it at exit 2 and a named decline makes it exit 0; the inventory test asserts the
+new keys. Likeliest first failures: none expected beyond the fake-capability inserts the older tests already rely on.
+
+**Other should-fix from the same review**
+- Done: `lookups::exists()` on the organisation table now goes through the org-read rule (test added to the rule test).
+- Done: a tripwire trip that cannot be recorded because a caller's transaction is still open now says so in the report
+  (`tripwire_not_recorded`) instead of passing silently. No test: it needs a harness that holds an outer transaction across a
+  failing feature; the CLI never does.
+- Done: the capability CLI releases its lock in a `finally`.
+- Not a defect any more: the duplicated `@return` in `sideeffect_guard::snapshot()` is not in the tree.
+- Not done, recorded: `lookups::exists($table)` for another feature's `target_tables()` entry is not routed through a rule (the
+  runner has no target-table owner map; only the org table matters for tenant resolution today). Add it with the first importer
+  that reads another feature's target table by id.
+- Not done, recorded: the draft allow-list declines the 22 `local_*` components only. BizLMS blocks and themes named in the
+  mapping doc (`block_suggested_courses`, `block_trending_modules`, `block_request_records`) or any module plugin with
+  capabilities, if they are not on the Sentientia disk, list as "NO EQUIVALENT, NOT DECLINED" and keep the real run at exit 2. The
+  draft also assumes role 9's shortname is `administrator`; if production differs the two row declines show as unused notes and
+  those rows stay open (fails safe). Add the component declines the Stage B inventory shows before Nitin signs.
+- Not done, recorded: `context_coursecat::instance()` and `context_course::instance()` INSERT a missing context row (even with
+  IGNORE_MISSING, when the category or course exists). The org_roles importer (contexts at `local_costcenter.category`) and the G6
+  enrolment conversion must report a missing context as a preflight blocker, or the tripwire (now sticky) trips mid-run.
+- Left as is: `import_bizlms.php` computes `refusals_for_apply()` twice (harmless while the guard has no side effects; keep it so).
+- Ruling on round 3's deviation (a plugin decline covers only capabilities with no Sentientia equivalent): ACCEPTED by the
+  reviewer as safer than the wording; Nitin should confirm.
+- Confirm at the PHPUnit run (unchanged from the reviewer's list): sticky-tripwire provider and the acknowledge/purge/status
+  tests; the finalise-leak and dry-run-report tests; the org-read tests; the capability tests that insert fake capabilities
+  (cache key `core_capabilities`); the CSV rewrite (`rename()` over an existing file on Windows); the scanner's `new $class` and
+  variable-call counts; the core-write-by-operation test (`update_core` on course id 1). Then MySQL 8.4 and MariaDB 10.11.
+
+**Next:** unchanged. The lead runs `--group bizlms_import` and `tenant_isolation`; Nitin signs the allow-list from the Stage B
+inventory; then P0.4 and the org importer.

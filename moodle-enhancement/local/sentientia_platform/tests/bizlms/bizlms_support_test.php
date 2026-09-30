@@ -482,6 +482,7 @@ final class bizlms_support_test extends \advanced_testcase {
             'org' => fn() => $lookups->org(1),
             'org_by_path' => fn() => $lookups->org_by_path('/1'),
             'the tenant resolver' => fn() => (new tenant_resolver($lookups))->org_for_path('/1'),
+            'exists() on the organisation table' => fn() => $lookups->exists('local_sentientia_org', 1),
         ];
         foreach ($reads as $name => $read) {
             try {
@@ -493,9 +494,11 @@ final class bizlms_support_test extends \advanced_testcase {
         }
         // Users, courses and the rest are not organisations.
         $this->assertIsBool($lookups->user_exists(2));
+        $this->assertIsBool($lookups->exists('course', 1));
 
         $lookups->guard_org_reads(null);
         $this->assertIsBool($lookups->has_orgs());
+        $this->assertFalse($lookups->exists('local_sentientia_org', 1), 'with no rule, and no organisation, nothing exists');
     }
 
     public function test_the_tripwire_also_watches_tables_a_core_api_writes_without_an_event(): void {

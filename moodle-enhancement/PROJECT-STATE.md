@@ -5,6 +5,20 @@
 
 ---
 
+## 2026-09-30 - ADR-032 capability repair: divergent permissions no longer pass as "already held" (Sonnet 5.5)
+
+Branch `claude/bizlms-import-framework`. The round-3 re-review's one must-fix is closed in both plugin trees. The repair's exit
+0 is the Stage B gate, and it passed a legacy PROHIBIT/PREVENT whose Sentientia equivalent the install had granted as ALLOW
+(the row existed, so it was "held"). Now `held` means the SAME permission; a different one is `divergent`, counts as open
+(exit 2) until a decline names that role grant, and an approved grant against it is refused (exit 1). **Moodle PHPUnit not run**;
+`php -l`, the drift gate and an offline stub-`$DB` harness (75 checks) pass. Also: the org-read rule now covers
+`lookups::exists()` on the organisation table, a trip that cannot be recorded says so in the report, the CLI frees its lock in a
+`finally`. Recorded in the state card, not done: other features' target tables in `exists()`, block/module component declines
+for the draft allow-list, the missing-context preflight for the org_roles and G6 importers.
+Detail: `state-cards/sentientia_platform-state.md` (last section), ADR-032 "Capabilities".
+
+---
+
 ## 2026-09-30 - ADR-032 BizLMS import framework: review round 3 closed (Sonnet 5.5)
 
 Branch `claude/bizlms-import-framework`. The re-review returned fix-then-ship with 1 must-fix; it and the correctness
