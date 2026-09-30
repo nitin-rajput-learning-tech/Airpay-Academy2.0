@@ -375,10 +375,47 @@ BizLMS 4.1.2 on airpay.academy:
 - the allow-assign and allow-switch trim;
 - the platform role.
 
-The scripts refuse to run anywhere but `academy2.airpay.ninja`. That guard is deliberate. A
-production run needs:
-- a reviewed copy with the production guard;
-- the production tenant-admin role's shortname and id confirmed;
+With `--i-am-uat` the scripts still refuse to run anywhere but `academy2.airpay.ninja`. That guard is
+deliberate and unchanged. Since 2026-09-30 the four `adr031_*` scripts have a second, explicit way
+in for the migration target (production at cutover, or the rehearsal box):
+
+```bash
+# Read-only first: the role-9 assignments by context level, then each script's dry run.
+sudo -u www-data php tools/uat/adr031_predeploy_probe.php \
+    --target=https://www.airpay.academy --config=<absolute path of the target's config.php>
+sudo -u www-data php tools/uat/adr031_role9_core_caps.php \
+    --target=https://www.airpay.academy --config=<absolute path of the target's config.php> \
+    --role=<tenant-admin role shortname> --dry-run
+sudo -u www-data php tools/uat/adr031_crosstenant_role.php \
+    --target=https://www.airpay.academy --config=<absolute path of the target's config.php> \
+    --tenant-admin-role=<tenant-admin role shortname> --dry-run
+
+# After the review and Nitin's decision on the below-system holders, the same commands with
+#   role9:        --apply [--accept-nonsystem-holders]      (or --revert)
+#   crosstenant:  --apply
+# then the post-deploy smoke, which must report 0 errors:
+sudo -u www-data php tools/uat/adr031_ws_smoke.php \
+    --target=https://www.airpay.academy --config=<absolute path of the target's config.php>
+```
+
+How the guard works, so an operator is not surprised:
+- `--target=<wwwroot>` and `--config=<absolute path to config.php>` go together, and are read from the
+  command line BEFORE Moodle loads (`cli_get_params()` needs Moodle). `--config` must be an absolute
+  path to a readable file named `config.php`.
+- After that config loads, the script refuses unless `$CFG->wwwroot` equals `--target` exactly (a
+  trailing `/` on either is ignored), and prints `TARGET MODE: wwwroot <wwwroot> (config <path>)`.
+  Point `--config` at the box you mean, and `--target` at the site you mean to change: a mismatch
+  refuses before anything is read or written.
+- `--i-am-uat` and `--target` are mutually exclusive. With neither, the script refuses. The
+  `--i-am-uat` behaviour is exactly what it was: the UAT config path and the
+  `academy2.airpay.ninja` check.
+- `w202_erasure_probe.php` has NO target mode. It creates and erases accounts, so it runs on UAT only.
+- `tools/uat/` is not part of the deployed package: copy the four scripts to the target.
+
+A production run also needs:
+- the dry-run output reviewed (the target guard is not a substitute for that);
+- the production tenant-admin role's shortname and id confirmed (pass it as `--role=` /
+  `--tenant-admin-role=` if it is not `administrator`);
 - **the production tenant-admin role's assignments below system context counted, and Nitin's
   decision on them, before anything is applied.** Holders at a course category or course lose
   course-level "Log in as", overrides, and the core assignment of site-level roles there (section 6,

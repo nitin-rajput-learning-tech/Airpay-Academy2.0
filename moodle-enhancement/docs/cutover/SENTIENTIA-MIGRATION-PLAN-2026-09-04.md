@@ -272,7 +272,7 @@ The largest procedural hole in the corpus is that a point-in-time restore with l
 
 ### 4d. Deploy the current Sentientia layer + write config.php
 
-1. **Deploy the current git HEAD layer, built from the top-level `local/` tree** (closes gap G1 — the mandatory parity/repair/enrol CLIs live ONLY in top-level `local/sentientia_platform/cli/` and `local/sentientia_catalog/cli/`, not under `moodle-enhancement/`; a package built from the wrong tree ships without them). Deploy over the 5.2 core webroot per `ROLLOUT-PACKET-2026-06-10.md` step 1: `theme/sentientia`, all `local/sentientia_*` (incl. `sentientia_api`), `payment/gateway/airpay`, `blocks`, `enrol/sentientiasub`, `quizaccess/*`, **plus the WF-010 core-adjacent files** (`my/dashboard.php`, `my/switchrole.php`, `my/templates/dropdown.mustache`, root `.htaccess`) — omitting them = hard 404s on every dashboard/role-switch link.
+1. **Deploy the current git HEAD layer, built from the top-level `local/` tree** (closes gap G1 — `local/sentientia_catalog/cli/enable_oneclick_enrol.php` still lives ONLY in the top-level tree, not under `moodle-enhancement/`, and so do `local_sentientia_org`'s `db/hooks.php` and `classes/hook_callbacks.php`; `migration_parity_check.php` and `repair_task_registrations.php` ship in BOTH trees since 2026-09-30, but build from the top-level tree anyway: a package built from the wrong tree ships without the rest). Deploy over the 5.2 core webroot per `ROLLOUT-PACKET-2026-06-10.md` step 1: `theme/sentientia`, all `local/sentientia_*` (incl. `sentientia_api`), `payment/gateway/airpay`, `blocks`, `enrol/sentientiasub`, `quizaccess/*`, **plus the WF-010 core-adjacent files** (`my/dashboard.php`, `my/switchrole.php`, `my/templates/dropdown.mustache`, root `.htaccess`) — omitting them = hard 404s on every dashboard/role-switch link.
    Pin and record the package identity (closes gap G8):
    ```bash
    git -C "D:/Claude Local/airpay-ld-os" rev-parse HEAD   # expect 9dddfdaf7… (or newer, recorded)
@@ -331,7 +331,7 @@ Do NOT run any independence flag-flip (Gates B/C/D stay legacy/dormant — §6).
    php local/sentientia_platform/cli/repair_task_registrations.php            # dry-run
    php local/sentientia_platform/cli/repair_task_registrations.php --apply
    ```
-   **VERIFY:** sentientia=23 / stale=0; brand 20/20; 15 cap strings rewritten. **STOP** if brand rows or task counts are wrong (without this, reminder/escalation/digest/recompletion crons stay silently dead, and logos/colours point at the old path shape).
+   **VERIFY:** sentientia=23 / stale=0; brand 20/20; 15 cap strings rewritten. **Message preferences check: 0 problems, exit 0; exit 1 = STOP** (the last line of the `--apply` run; exit 1 means a message provider is still missing a default, so `message_send()` throws for it: do not continue, run the dry-run output past review; the repair copies legacy keys and never deletes them). **STOP** if brand rows or task counts are wrong (without this, reminder/escalation/digest/recompletion crons stay silently dead, and logos/colours point at the old path shape).
 3. **4f-c — tenants (seed + parity, registry stays DORMANT — does NOT flip Gate B):**
    ```bash
    php local/sentientia_platform/cli/seed_tenants.php
@@ -353,22 +353,37 @@ Do NOT run any independence flag-flip (Gates B/C/D stay legacy/dormant — §6).
    steps that changed role 9 on UAT do not fire, and BizLMS role 9 "administrator" arrives from live
    holding core `moodle/role:manage`, `moodle/user:loginas|update|delete|create` at system context. Run
    the same two scripts UAT runs, dry-run first (`docs/operations/ROLE9-CORE-CAPS-2026-09-26.md`):
+   Copy the four scripts from `tools/uat/` to the target first (`tools/uat/` is not in the deployed
+   package). Every command names the target explicitly (`<cfg>` = the absolute path of the target's
+   `config.php`, the file the web server loads):
    ```bash
-   php tools/uat/adr031_predeploy_probe.php ...        # role 9 assignments by context level
-   php tools/uat/adr031_role9_core_caps.php ... --dry-run
-   php tools/uat/adr031_role9_core_caps.php ... --apply [--accept-nonsystem-holders]
-   php tools/uat/adr031_crosstenant_role.php ... --dry-run
-   php tools/uat/adr031_crosstenant_role.php ... --apply
-   php tools/uat/adr031_ws_smoke.php ...               # read web services as real personas: 0 errors
+   sudo -u www-data php tools/uat/adr031_predeploy_probe.php \
+       --target=https://www.airpay.academy --config=<cfg>            # role 9 assignments by context level
+   sudo -u www-data php tools/uat/adr031_role9_core_caps.php \
+       --target=https://www.airpay.academy --config=<cfg> --role=<tenant-admin role shortname> --dry-run
+   sudo -u www-data php tools/uat/adr031_role9_core_caps.php \
+       --target=https://www.airpay.academy --config=<cfg> --role=<tenant-admin role shortname> \
+       --apply [--accept-nonsystem-holders]
+   sudo -u www-data php tools/uat/adr031_crosstenant_role.php \
+       --target=https://www.airpay.academy --config=<cfg> --tenant-admin-role=<tenant-admin role shortname> --dry-run
+   sudo -u www-data php tools/uat/adr031_crosstenant_role.php \
+       --target=https://www.airpay.academy --config=<cfg> --tenant-admin-role=<tenant-admin role shortname> --apply
+   sudo -u www-data php tools/uat/adr031_ws_smoke.php \
+       --target=https://www.airpay.academy --config=<cfg>            # read web services as real personas: 0 errors
    ```
+   (`--role` and `--tenant-admin-role` default to `administrator`; drop them only if the live
+   tenant-admin role has that shortname.)
    **Precondition:** count production's role-9 assignments below system context (UAT had 2 at
    category level) and get Nitin's decision before `--accept-nonsystem-holders`. Tenant admins lose
    core "Log in as" (Nitin, 2026-09-29: site admins only).
-   **Tooling gap to close before the rehearsal:** these scripts refuse to run unless `--i-am-uat` is
-   given and `wwwroot` is `academy2.airpay.ninja`, and they `require` the UAT config path. The
-   migration target has `wwwroot = https://www.airpay.academy` (§4d), so each needs an explicit
-   target guard (`--target=<wwwroot>`, which must equal `$CFG->wwwroot`, plus the config path as an
-   argument) before it can run there.
+   **Target mode (2026-09-30; the tooling gap noted on 2026-09-29 is closed):** the four `adr031_*`
+   scripts take `--target=<wwwroot> --config=<absolute path to config.php>` as the alternative to
+   `--i-am-uat`. Both are read from the command line before Moodle loads; after the config loads the
+   script refuses unless `$CFG->wwwroot` equals `--target` exactly (a trailing `/` is ignored) and
+   prints `TARGET MODE: wwwroot <wwwroot> (config <path>)`. `--i-am-uat` and `--target` are mutually
+   exclusive and, with neither, the script refuses; `--i-am-uat` behaves exactly as before on UAT.
+   `w202_erasure_probe.php` has no target mode (it creates and erases accounts: UAT only). Details:
+   `docs/operations/ROLE9-CORE-CAPS-2026-09-26.md` §10.
    **VERIFY:** the dry-run plan matches ROLE9-CORE-CAPS §2 (and §10 for production); after apply, a tenant admin gets no core
    editadvanced/loginas link and the Sentientia edit modal still works; WS smoke `ERROR=0`.
 7. **Purge + confirm cache/MUC endpoints are box-local:**
