@@ -185,7 +185,7 @@ await asPersona(['01', '02', '03', '04', '05', '12', '13', '14', '15', '18'], 'v
     await shots(page, '18-scan-already-marked-hindi');
     record({
       check: '18 the same scan in Hindi: the text comes from the new lang/hi pack', heading: t.heading, body: t.body,
-      pass: t.heading === 'पहले से दर्ज है' && t.body.includes('पहले ही दर्ज'),
+      pass: t.heading === 'पहले से चिह्नित है' && t.body.includes('पहले ही चिह्नित'),   // chihnit = marked, not darj = recorded
     });
   }
 });
@@ -304,7 +304,8 @@ if (want('19')) {
     await learnerCtx.close();
     learnerCtx = null;
 
-    // The trainer saves the grid as it is.
+    // The trainer sets Absent on that learner (the grid only sends rows the trainer touched), then saves.
+    await t.page.click(`tr[data-userid="${DATA.users.learner1}"] input[data-status="0"]`);
     await t.page.click('[data-action="save-attendance"]');
     await t.page.waitForFunction(() => /marked by someone else/.test(document.body.innerText), null, { timeout: 120000 });
     const after = await presentChecked(DATA.users.learner1);

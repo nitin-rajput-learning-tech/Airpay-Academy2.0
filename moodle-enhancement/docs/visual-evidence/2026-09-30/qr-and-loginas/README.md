@@ -2,9 +2,10 @@
 
 Visual evidence for the screen changes on `claude/fixes-0930`, for Nitin to review before merge
 (CLAUDE.md sections 5 and 13). Captured on local XAMPP (Moodle 5.1.3, `http://localhost:8080`, the
-prod-data import) with the local test personas `vp_*`. Every screen has a desktop (1440 px) and a
-mobile (590 px) shot: `<name>-desktop.png`, `<name>-mobile.png`. `results.json` holds the automatic
-checks made on each page: 20 of 20 pass.
+prod-data import) with the local test personas `vp_*` (screens 01 to 17 and 20) and, for the final
+review pass, throwaway `vpqr_*` accounts (screens 18, 19 and 21 to 24). Every screen has a desktop
+(1440 px) and a mobile (590 px) shot: `<name>-desktop.png`, `<name>-mobile.png`. `results.json` holds
+the automatic checks made on each page: 24 of 24 pass.
 
 This folder is separate from `../personas/` (the persona-journey pass) so the two do not collide.
 
@@ -20,6 +21,31 @@ QR screens were captured again:
   and the trainer's grid Save keeping a newer QR mark (19).
 - 09 to 11 (profile "Log in as") are NOT re-run: nothing on the profile page changed in this pass.
 - The data for every shot is seeded fresh; the database read-back is below.
+
+## Final review pass (same day): what was re-captured
+
+The final review said fix-then-ship with two must-fix items and two decisions. All are built (owner
+decisions as recommended); this folder shows them:
+
+- **18 re-captured (desktop and mobile).** The Hindi "already marked" page used the word for
+  "recorded" (*darj*), the same as the success page, so a learner the trainer had marked Absent was told
+  their attendance was already recorded. It now says "marked" (*chihnit*): title "पहले से चिह्नित है".
+  Captured with `vpqr_learner1`, whom the trainer (`vpqr_admin1`) had marked Absent.
+- **19 re-run with the new grid flow.** The grid now sends only the learners the trainer touched, so the
+  trainer chooses Absent for the learner and saves. The scan still stands and the page says so. The check
+  then does a second Save (Present, then Absent again) and the correction is written, because the page
+  takes the server's save time as its new load time (before, the same warning came back every time).
+- **New 21 and 22: the QR entry point.** With the flag `sentientia.classroom.qr_attendance` ON, the
+  attendance page has a "Show QR for this session" button (21); with it OFF, the default, there is no
+  button (22). The flag was switched on for tenant /1 for the one capture and off again afterwards.
+- **New 23 and 24: untouched learners.** The trainer marks one learner and saves: the other learner gets
+  no Absent row and can still scan afterwards (23). A Save with nothing changed says "Nothing to save"
+  and writes nothing (24). The grid pages in 21, 22 and 23 show the new one-line hint under the
+  counters ("Only the marks you change are saved ...").
+- The `trainer` role fix (archetype teacher gets `:view` and `:attendance`) is an upgrade step and needs
+  the plugin version bump, so there is no screen for it here: it is proved by
+  `trainer_caps_backfill_test`, which runs after the PHPUnit re-init, and it needs a look on UAT.
+- 01 to 17 and 20 are not re-run: nothing on those pages changed in this pass.
 
 ## What changed on screen
 
@@ -38,6 +64,9 @@ QR screens were captured again:
   `lib/phpqrcode`).
 - **The attendance grid's Save** no longer turns a mark that someone else made after the page was
   loaded (a QR scan) back to Absent: it keeps it, says so in a warning and shows the real mark (19).
+  It now sends only the learners the trainer touched, so a learner nobody touched keeps no row and can
+  still scan (23), and a Save with nothing changed says so (24).
+- **The attendance page** has a "Show QR for this session" button behind a default-OFF flag (21, 22).
 - **Profile header** (`local_sentientia_users/profile.php`): the "Log in as" button is hidden where
   clicking it could not work: the target is a site admin, yourself, deleted, suspended, or someone the
   viewer may not act on (other tenant). Unchanged in this pass.
@@ -63,9 +92,13 @@ QR screens were captured again:
 | 15 | `15-scan-old-saltfree-token` | `vp_learner1`, the old salt-free sha256 token for a live session | "QR Code Expired" | PASS |
 | 16 | `16-qr-attendance-tenant-admin` | `vp_admin1` (tenant /1, role `administrator`, not a site admin) | the QR page opens: the capability now works without being a site admin | PASS |
 | 17 | `17-qr-attendance-other-tenant-admin-refused` | `vp_admin177` (holds the capability, tenant /177) | refused, "You do not have access to this tenant", no QR for a /1 classroom | PASS |
-| 18 | `18-scan-already-marked-hindi` | `vp_learner1`, `?lang=hi` | the same screen as 02 in Hindi, from the new `lang/hi` pack | PASS |
-| 19 | `19-grid-save-keeps-qr-mark` | `vp_admin1` saving a grid loaded before `vp_learner1` scanned | warning "0 attendances saved. 1 learner(s) were marked by someone else ...", the learner's Present radio is set | PASS |
+| 18 | `18-scan-already-marked-hindi` | `vpqr_learner1`, `?lang=hi`, marked Absent by the trainer | the same screen as 02 in Hindi, now saying "marked" (*chihnit*), not "recorded" (*darj*) | PASS |
+| 19 | `19-grid-save-keeps-qr-mark` | `vpqr_admin1` saving a grid loaded before `vpqr_learner1` scanned | warning "0 attendances saved. 1 learner(s) were marked by someone else ...", the learner's Present radio is set; a second Save then writes the correction | PASS |
 | 20 | `20-qr-attendance-learner-refused` | `vp_learner177` (no `:attendance`) | "Sorry, but you do not currently have permissions to do that (Manage attendance)", no QR | PASS |
+| 21 | `21-attendance-show-qr-link-flag-on` | `vpqr_admin1`, flag ON | the attendance page with a "Show QR for this session" button linking to the QR page of that session, and the hint line | PASS |
+| 22 | `22-attendance-no-qr-link-flag-off` | `vpqr_admin1`, flag OFF (default) | the same page with no button | PASS |
+| 23 | `23-untouched-learner-keeps-no-row` | `vpqr_admin1` marks `vpqr_learner1` Present and saves; `vpqr_learner2` is not touched | "1 attendance saved"; learner 2 stays Absent on screen with no row, and their scan afterwards says "Attendance Marked!". The "Nothing to save" message of step 24 is still on screen above it, because 23 and 24 are one browser session | PASS |
+| 24 | `24-save-with-nothing-changed` | `vpqr_admin1` presses Save without changing anything | "Nothing to save: you have not changed any learner's mark." | PASS |
 
 ## Rows written (read back from the database after the run)
 
@@ -78,13 +111,25 @@ QR screens were captured again:
 | E (trainer marked Absent) | 1 | `vp_learner1`, still **Absent**, marked by the trainer (user 3429), untouched by the scan |
 | F (grid versus scan) | 1 | `vp_learner1`, **Present**, still marked by the learner: the trainer's Save did not overwrite it |
 
+Final review pass (throwaway `vpqr_*` accounts, own classroom "VPQR recheck classroom", read back with
+`seed_qr_recheck.php --report`):
+
+| Session | Rows | What |
+|---------|------|------|
+| A (18) | 1 | `vpqr_learner1`, **Absent**, marked by the trainer; the Hindi scan changed nothing |
+| F (19), first run | 1 | `vpqr_learner1`: the scan (Present) survived the first Save; the second Save wrote **Absent**, marked by the trainer |
+| G (23) | 2 | `vpqr_learner1` **Present** by the trainer; `vpqr_learner2` **Present** by their own scan ("Marked by QR scan"). Before the scan, learner 2 had no row |
+| G (21 / 22 / 24) | 0 | pages only |
+
 ## Things to know when reviewing
 
 - **Who can show the QR now:** managers, editing teachers and the `administrator` role (check 16),
-  and site admins. The Sentientia `trainer` role (archetype teacher) holds only `:manage` on the
-  classroom plugin, not `:view` or `:attendance`, so a user with only that role still cannot open the
-  QR page or the attendance grid. That is an access decision for its own change (it needs a version
-  bump), not taken here. No link in the Sentientia classroom UI points to `qr_attendance.php` either.
+  and site admins. The Sentientia `trainer` role (archetype teacher) held only `:manage` on the
+  classroom plugin, not `:view` or `:attendance`; the final review pass grants those two to the teacher
+  archetype (`db/access.php`) and back-fills existing roles in upgrade step 2026093001. **That step has
+  not run on this box** (the bumped version was not deployed to the local Moodle), so a `trainer` user
+  here still cannot open the page until the upgrade runs; check it on UAT. The attendance page now links
+  to `qr_attendance.php` when `sentientia.classroom.qr_attendance` is ON (21).
 - **The refusal pages (17, 20) show a stack trace** under the message because this local box runs
   with Moodle debugging at developer level. On UAT and in production that part is hidden.
 - **Date format in 12 and 13** is Moodle's short format (`1/10/26, 14:39` is 1 October 2026), the same
@@ -112,6 +157,21 @@ php <repo>/moodle-enhancement/tools/visual-pass/seed_qr_evidence.php --out=<file
 node qr_loginas_checks.mjs --data <that file>.json
 php <repo>/moodle-enhancement/tools/visual-pass/seed_qr_evidence.php --report=<that file>.json
 ```
+
+The final-review screens (18, 19, 21 to 24) come from two other scripts that use only new `vpqr_*`
+accounts and never touch the `vp_*` personas:
+
+```
+php <repo>/moodle-enhancement/tools/visual-pass/seed_qr_recheck.php --out=<file outside the repo>.json
+node qr_recheck_checks.mjs --data <that file>.json --only 18,19,22,23,24
+# turn sentientia.classroom.qr_attendance ON for tenant /1, then:
+node qr_recheck_checks.mjs --data <that file>.json --only 21     # and switch it OFF again
+php <repo>/moodle-enhancement/tools/visual-pass/seed_qr_recheck.php --report=<that file>.json
+```
+
+`seed_qr_recheck.php` writes the accounts' generated passwords to `.personas.local.json` next to it
+(gitignored, never printed); a new seed run makes new sessions and new passwords, so run the checks
+against the newest seed. 21 needs the flag ON and 22 needs it OFF; the checks assert the state.
 
 Both scripts refuse to run unless the site is on localhost. `PLAYWRIGHT_CORE_DIR` and `PERSONAS_FILE`
 (see the head of `qr_loginas_checks.mjs`) point at the playwright-core package and the personas file

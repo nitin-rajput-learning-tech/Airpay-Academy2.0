@@ -102,23 +102,58 @@
   "pass": true
  },
  {
-  "check": "18 the same scan in Hindi: the text comes from the new lang/hi pack",
-  "heading": "पहले से दर्ज है",
-  "body": "इस सत्र के लिए आपकी उपस्थिति पहले ही दर्ज की जा चुकी है, इसलिए इस स्कैन से उसमें कोई बदलाव नहीं हुआ। यदि आपको लगता है कि आपकी उपस्थिति गलत दर्ज है, तो कृपया अपने ट्रेनर से कहें।",
+  "check": "18 the trainer marked this learner Absent; the same scan in Hindi says \"already marked\" (chihnit), not \"recorded\" (darj)",
+  "heading": "पहले से चिह्नित है",
+  "body": "इस सत्र के लिए आपकी उपस्थिति पहले ही चिह्नित की जा चुकी है, इसलिए इस स्कैन से उसमें कोई बदलाव नहीं हुआ। यदि आपको लगता है कि यह गलत है, तो कृपया अपने ट्रेनर से कहें।",
   "pass": true
  },
  {
-  "check": "19 trainer saves a grid loaded before a QR scan: the learner stays Present and the grid says so",
+  "check": "19 trainer sets Absent from a grid loaded before a QR scan: the scan stays and the grid says so; a second Save then writes the correction",
   "scanHeading": "Attendance Marked!",
   "presentBeforeSave": false,
-  "presentAfterSave": true,
+  "presentAfterFirstSave": true,
   "notification": "0 attendances saved. 1 learner(s) were marked by someone else (for example by scanning the QR code) after you opened this page, so their marks were left as they are and are now shown in the grid. Dismiss this notification",
+  "absentAfterSecondSave": true,
   "pass": true
  },
  {
   "check": "20 learner (no :attendance): refused, no QR",
   "qrRendered": false,
   "pageText": "Sorry, but you do not currently have permissions to do that (Manage attendance). More information about this error Debug info: Error code: nopermissions Dismiss this notification Stack trace: line 875 of \\public\\lib\\accesslib.php: core\\exce",
+  "pass": true
+ },
+ {
+  "check": "21 flag ON: the attendance page offers \"Show QR for this session\" for a user holding :attendance",
+  "link": {
+   "present": true,
+   "href": "http://localhost:8080/local/sentientia_pages/qr_attendance.php?sessionid=26",
+   "text": "Show QR for this session"
+  },
+  "hint": true,
+  "pass": true
+ },
+ {
+  "check": "22 flag OFF (default): no QR link on the attendance page, everything else unchanged",
+  "link": {
+   "present": false,
+   "href": "",
+   "text": ""
+  },
+  "hint": true,
+  "pass": true
+ },
+ {
+  "check": "23 the trainer marks learner1 only: learner2 is not written as Absent, and their scan is recorded afterwards",
+  "notification": "1 attendance saved. Dismiss this notification",
+  "learner1Status": 1,
+  "learner2Status": 0,
+  "learner2ScanHeading": "Attendance Marked!",
+  "note": "Rows in the database are listed by seed_qr_recheck.php --report (learner2 has one row, written by the scan).",
+  "pass": true
+ },
+ {
+  "check": "24 a Save with nothing changed says so and writes nothing",
+  "notification": "Nothing to save: you have not changed any learner's mark. Dismiss this notification",
   "pass": true
  }
 ]
