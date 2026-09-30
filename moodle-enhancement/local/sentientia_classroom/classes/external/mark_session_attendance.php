@@ -39,8 +39,10 @@ class mark_session_attendance extends external_api {
         self::validate_context($context);
         require_capability('local/sentientia_classroom:attendance', $context);
         // ADR-031: the capability says WHAT; the classroom must also be in the caller's tenant.
-        // Attendance is compliance evidence: the learner must be in it too.
-        \local_sentientia_classroom\session_manager::require_session_access($params['sessionid']);
+        // Attendance is compliance evidence: the learner must be in it too. Without :manage the
+        // caller must also be the session's or classroom's assigned trainer (owner decision
+        // 2026-09-30, session_manager::may_run_session()).
+        \local_sentientia_classroom\session_manager::require_attendance_access($params['sessionid']);
         \local_sentientia_classroom\session_manager::require_users_in_scope([$params['userid']]);
 
         $persisted = \local_sentientia_classroom\session_manager::mark_attendance(

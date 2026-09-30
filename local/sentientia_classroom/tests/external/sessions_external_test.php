@@ -288,4 +288,61 @@ final class sessions_external_test extends \advanced_testcase {
             'local_sentientia_classroom_attendance', 'status',
             ['sessionid' => $ids['sessionid'], 'userid' => $scanner->id]));
     }
+
+    public function test_bulk_mark_attendance_returns_the_marks_others_made_since_the_grid_loaded(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $ids = $this->seed_classroom_and_session();
+        $ticked = $this->getDataGenerator()->create_user();
+        $scanner = $this->getDataGenerator()->create_user();
+        $oldscan = $this->getDataGenerator()->create_user();
+        $late = $this->getDataGenerator()->create_user();
+        session_manager::enrol_users($ids['classroomid'],
+            [(int) $ticked->id, (int) $scanner->id, (int) $oldscan->id, (int) $late->id]);
+        $now = time();
+        $scan = function (int $userid, int $time) use ($DB, $ids): void {
+            $DB->insert_record('local_sentientia_classroom_attendance', (object) [
+                'sessionid' => $ids['sessionid'], 'userid' => $userid,
+                'status' => session_manager::ATT_PRESENT, 'markedby' => $userid,
+                'notes' => 'Marked by QR scan', 'timecreated' => $time, 'timemodified' => $time,
+            ]);
+        };
+        $scan((int) $oldscan->id, $now - 500);   // before the grid loaded: the trainer saw it
+        $scan((int) $scanner->id, $now - 50);    // after: the trainer did not
+
+        // Save 1: the grid, loaded 100 seconds ago, sends only the learner the trainer ticked.
+        $resp = bulk_mark_attendance::execute($ids['sessionid'], [
+            ['userid' => (int) $ticked->id, 'status' => session_manager::ATT_PRESENT, 'notes' => ''],
+        ], $now - 100);
+        $this->assertSame(1, $resp['marked']);
+        $this->assertSame(0, $resp['kept']);
+        $this->assertSame([], $resp['keptmarks']);
+        $this->assertSame([['userid' => (int) $scanner->id, 'status' => session_manager::ATT_PRESENT]],
+            $resp['newermarks'], 'The scan after the load is handed back; the older one and the trainer\'s own are not.');
+        $this->assertStringContainsString(
+            get_string('attendance_newer_shown', 'local_sentientia_classroom', 1), $resp['message']);
+        $this->assertStringNotContainsString(
+            get_string('attendance_kept_newer', 'local_sentientia_classroom', 1), $resp['message']);
+
+        // Save 2, on the grid that now shows the scan (load time = savedat 1): the trainer sets the
+        // scanner Absent on purpose and it is written; a learner who scans only after savedat 1
+        // is still kept, and handed back.
+        $scan((int) $late->id, (int) $resp['savedat']);
+        $resp = bulk_mark_attendance::execute($ids['sessionid'], [
+            ['userid' => (int) $scanner->id, 'status' => session_manager::ATT_ABSENT, 'notes' => ''],
+            ['userid' => (int) $late->id, 'status' => session_manager::ATT_ABSENT, 'notes' => ''],
+        ], (int) $resp['savedat']);
+        $this->assertSame(1, $resp['marked'], 'The seen scan is corrected.');
+        $this->assertSame(1, $resp['kept'], 'The unseen scan stands.');
+        $this->assertSame([['userid' => (int) $late->id, 'status' => session_manager::ATT_PRESENT]], $resp['keptmarks']);
+        $this->assertSame([['userid' => (int) $late->id, 'status' => session_manager::ATT_PRESENT]], $resp['newermarks']);
+        $this->assertStringNotContainsString(
+            get_string('attendance_newer_shown', 'local_sentientia_classroom', 1), $resp['message'],
+            'A kept row is announced once, by its own sentence.');
+        $this->assertSame(session_manager::ATT_ABSENT, (int) $DB->get_field('local_sentientia_classroom_attendance',
+            'status', ['sessionid' => $ids['sessionid'], 'userid' => $scanner->id]));
+        $this->assertSame(session_manager::ATT_PRESENT, (int) $DB->get_field('local_sentientia_classroom_attendance',
+            'status', ['sessionid' => $ids['sessionid'], 'userid' => $late->id]));
+    }
 }

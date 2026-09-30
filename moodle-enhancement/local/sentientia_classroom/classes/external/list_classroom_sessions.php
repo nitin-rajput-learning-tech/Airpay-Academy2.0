@@ -54,7 +54,7 @@ class list_classroom_sessions extends external_api {
         $can_attend = has_capability('local/sentientia_classroom:attendance', $context);
 
         // ADR-031: the capability says WHAT; the classroom must also be in the caller's tenant.
-        \local_sentientia_classroom\session_manager::require_classroom_access($params['classroomid']);
+        $classroom = \local_sentientia_classroom\session_manager::require_classroom_access($params['classroomid']);
 
         $allowed = ['title', 'sessiondate', 'starttime', 'endtime', 'location', 'timecreated'];
         $sort = in_array($params['sort'], $allowed, true) ? $params['sort'] : 'sessiondate';
@@ -95,8 +95,14 @@ class list_classroom_sessions extends external_api {
             if (empty($title)) {
                 $title = 'Session on ' . userdate((int) $s->sessiondate, '%d %b %Y');
             }
-            $title_html = '<a href="' . s($atturl) . '" class="text-reset fw-semibold text-decoration-none">'
-                . s($title) . '</a>';
+            // The attendance page and the QR page are open to managers and to the session's or
+            // classroom's assigned trainer only (session_manager::may_run_session()): no link
+            // to a page that would refuse the viewer.
+            $can_open = \local_sentientia_classroom\session_manager::may_run_session($s, $classroom);
+            $title_html = $can_open
+                ? '<a href="' . s($atturl) . '" class="text-reset fw-semibold text-decoration-none">'
+                    . s($title) . '</a>'
+                : '<span class="fw-semibold">' . s($title) . '</span>';
 
             $actions = [];
             // W1-7 (2026-05-15) — virtual meeting + recording URLs.
@@ -113,7 +119,7 @@ class list_classroom_sessions extends external_api {
                     . ' rel="noopener noreferrer" class="btn btn-sm btn-link text-info p-1"'
                     . ' title="Watch recording"><i class="fa fa-play-circle-o"></i></a>';
             }
-            if ($can_attend) {
+            if ($can_attend && $can_open) {
                 $actions[] = '<a href="' . s($atturl) . '" class="btn btn-sm btn-link p-1" '
                     . 'title="Mark attendance"><i class="fa fa-check-square-o"></i></a>';
             }

@@ -57,8 +57,10 @@ class bulk_mark_attendance extends external_api {
             throw new \moodle_exception('toomanymarks', 'local_sentientia_classroom');
         }
         // ADR-031: the capability says WHAT; the classroom must also be in the caller's tenant.
-        // Attendance is compliance evidence: only learners in it are marked.
-        \local_sentientia_classroom\session_manager::require_session_access($params['sessionid']);
+        // Attendance is compliance evidence: only learners in it are marked. Without :manage the
+        // caller must also be the session's or classroom's assigned trainer (owner decision
+        // 2026-09-30, session_manager::may_run_session()).
+        \local_sentientia_classroom\session_manager::require_attendance_access($params['sessionid']);
 
         // A mark naming a learner outside the caller's tenant (or with no
         // open_path) is SKIPPED, not a reason to refuse the batch: an
@@ -83,8 +85,11 @@ class bulk_mark_attendance extends external_api {
         // never saw the newer mark, so the Save must not wipe it out. $kept counts them.
         $kept = 0;
         $keptusers = [];
+        $newerusers = [];
+        // $newerusers: every mark somebody else made since the grid was loaded, read in the
+        // same transaction as the writes and limited to the caller's roster scope (ADR-031).
         $count = \local_sentientia_classroom\session_manager::bulk_mark_attendance(
-            $params['sessionid'], $marks, $params['loadedat'], $kept, $keptusers);
+            $params['sessionid'], $marks, $params['loadedat'], $kept, $keptusers, $newerusers, true);
 
         $message = $count . ' ' . ($count === 1 ? 'attendance' : 'attendances') . ' saved.';
         if ($skipped > 0) {
@@ -97,12 +102,26 @@ class bulk_mark_attendance extends external_api {
         foreach ($keptusers as $userid => $status) {
             $keptmarks[] = ['userid' => (int) $userid, 'status' => (int) $status];
         }
+        // The grid shows these too. Those already reported as kept are not counted twice in the
+        // message (their own sentence above covers them).
+        $newermarks = [];
+        $unreported = 0;
+        foreach ($newerusers as $userid => $status) {
+            $newermarks[] = ['userid' => (int) $userid, 'status' => (int) $status];
+            if (!isset($keptusers[$userid])) {
+                $unreported++;
+            }
+        }
+        if ($unreported > 0) {
+            $message .= ' ' . get_string('attendance_newer_shown', 'local_sentientia_classroom', $unreported);
+        }
         return [
             'sessionid' => $params['sessionid'],
             'marked'    => $count,
             'skipped'   => $skipped,
             'kept'      => $kept,
             'keptmarks' => $keptmarks,
+            'newermarks' => $newermarks,
             'savedat'   => $savedat,
             'message'   => $message,
         ];
@@ -124,9 +143,21 @@ class bulk_mark_attendance extends external_api {
                 'The learners whose newer mark was kept, with the mark that stands',
                 VALUE_DEFAULT, []
             ),
+            'newermarks' => new external_multiple_structure(
+                new external_single_structure([
+                    'userid' => new external_value(PARAM_INT, 'User ID'),
+                    'status' => new external_value(PARAM_INT, 'The mark that stands: 0=absent 1=present 2=late 3=excused'),
+                ]),
+                'Every mark somebody else made at or after the grid load time (a QR scan, another '
+                . 'trainer), including the kept ones, read in the same transaction as the writes and '
+                . 'limited to the caller\'s roster scope. The grid shows them before it moves its '
+                . 'load time to savedat',
+                VALUE_DEFAULT, []
+            ),
             'savedat'   => new external_value(PARAM_INT,
                 'Server time this save started. The grid uses it as its new load time, so the next '
-                . 'Save only protects marks made after this one (the trainer has seen every earlier mark)',
+                . 'Save only protects marks made after this one (the trainer has seen every earlier '
+                . 'mark: the ones this save wrote, and keptmarks and newermarks)',
                 VALUE_DEFAULT, 0),
             'message'   => new external_value(PARAM_TEXT, 'Confirmation'),
         ]);

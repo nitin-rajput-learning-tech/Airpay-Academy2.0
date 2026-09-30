@@ -37,6 +37,7 @@ defined('MOODLE_INTERNAL') || die();
  * @covers \local_sentientia_classroom\session_manager::qr_token_is_valid
  * @covers \local_sentientia_classroom\session_manager::bulk_mark_attendance
  * @covers \local_sentientia_classroom\session_manager::mark_attendance
+ * @covers \local_sentientia_classroom\session_manager::get_marks_by_others_since
  * @group tenant_isolation
  */
 final class qr_attendance_test extends \advanced_testcase {
@@ -1002,5 +1003,142 @@ final class qr_attendance_test extends \advanced_testcase {
         $this->assertMatchesRegularExpression(
             '/<tr data-userid="' . (int) $empty->id . '" data-original="0" data-hasmark="0">/', $html);
         $this->assertStringContainsString('data-region="untouched-hint"', $html);
+        // Firefox restores radio choices on a normal reload unless told not to: the grid opts out
+        // on the form and on every radio (4 per learner).
+        $this->assertStringContainsString('<form autocomplete="off"', $html);
+        $this->assertSame(8, substr_count($html, 'type="radio"'));
+        $this->assertSame(8, substr_count($html, 'autocomplete="off"') - 1);
+    }
+
+    // ═══ Marks made by someone else since the grid loaded are handed back ('newermarks') ═══
+
+    public function test_a_scan_by_an_untouched_learner_is_reported_and_the_next_save_may_correct_it(): void {
+        global $DB;
+        $classroomid = $this->classroom('/1');
+        $sessionid = $this->session($classroomid);
+        $trainer = $this->user_at('/1/2');
+        $ticked = $this->enrolled_learner($classroomid);
+        $scanner = $this->enrolled_learner($classroomid);
+
+        // The grid loads at T0. The scanner, whom the trainer never touches, scans after it.
+        $loadedat = time() - 100;
+        $this->assertSame(session_manager::SCAN_RECORDED,
+            session_manager::record_qr_attendance($sessionid, (int) $scanner->id));
+        $DB->set_field('local_sentientia_classroom_attendance', 'timemodified', time() - 50,
+            ['sessionid' => $sessionid, 'userid' => $scanner->id]);
+
+        // Save 1 sends only the learner the trainer ticked. The scanner is not sent, so nothing
+        // is kept, but the scan is reported back so the grid can show it.
+        $this->setUser($trainer);
+        $kept = null;
+        $keptusers = null;
+        $newer = null;
+        $count = session_manager::bulk_mark_attendance($sessionid, [
+            ['userid' => (int) $ticked->id, 'status' => session_manager::ATT_PRESENT],
+        ], $loadedat, $kept, $keptusers, $newer, true);
+        $this->assertSame(1, $count);
+        $this->assertSame(0, $kept);
+        $this->assertSame([(int) $scanner->id => session_manager::ATT_PRESENT], $newer,
+            'The scan made after the grid loaded is handed back; the trainer\'s own mark is not.');
+
+        // The grid shows the scan and moves its load time to the save time, which is later than
+        // the scan. Save 2 now sets the scanner Absent on purpose (Mark all present, then the
+        // absentees back to Absent): the trainer has seen the scan, so the correction is written.
+        $savedat1 = time() - 10;
+        $count = session_manager::bulk_mark_attendance($sessionid, [
+            ['userid' => (int) $scanner->id, 'status' => session_manager::ATT_ABSENT],
+        ], $savedat1, $kept, $keptusers, $newer, true);
+        $this->assertSame(1, $count);
+        $this->assertSame(0, $kept, 'A scan the trainer has seen is not protected from a deliberate correction.');
+        $this->assertSame([], $newer, 'The scanner\'s row is now the trainer\'s, so it is not reported again.');
+        $this->assertEquals([   // (assertEquals: the rows come back in insert order, not this order)
+            (int) $ticked->id => session_manager::ATT_PRESENT,
+            (int) $scanner->id => session_manager::ATT_ABSENT,
+        ], $this->statuses($sessionid));
+    }
+
+    public function test_a_scan_after_the_first_save_is_still_kept_by_the_second(): void {
+        global $DB;
+        $classroomid = $this->classroom('/1');
+        $sessionid = $this->session($classroomid);
+        $trainer = $this->user_at('/1/2');
+        $early = $this->enrolled_learner($classroomid);
+        $late = $this->enrolled_learner($classroomid);
+
+        // Save 1 (loaded at savedat0): the early scanner is reported.
+        $savedat0 = time() - 100;
+        session_manager::record_qr_attendance($sessionid, (int) $early->id);
+        $DB->set_field('local_sentientia_classroom_attendance', 'timemodified', time() - 50,
+            ['sessionid' => $sessionid, 'userid' => $early->id]);
+        $this->setUser($trainer);
+        $newer = null;
+        session_manager::bulk_mark_attendance($sessionid, [], $savedat0, $kept, $keptusers, $newer, true);
+        $this->assertSame([(int) $early->id => session_manager::ATT_PRESENT], $newer);
+
+        // Then a different learner scans, after the save time the grid now holds...
+        $savedat1 = time() - 10;
+        $this->assertSame(session_manager::SCAN_RECORDED,
+            session_manager::record_qr_attendance($sessionid, (int) $late->id));
+
+        // ...and the trainer's Save 2 (explicit Absent for both) keeps that scan, and hands it back.
+        $count = session_manager::bulk_mark_attendance($sessionid, [
+            ['userid' => (int) $early->id, 'status' => session_manager::ATT_ABSENT],
+            ['userid' => (int) $late->id, 'status' => session_manager::ATT_ABSENT],
+        ], $savedat1, $kept, $keptusers, $newer, true);
+        $this->assertSame(1, $count, 'The early scan was seen, so the correction is written.');
+        $this->assertSame(1, $kept, 'The late scan was not seen, so it stands.');
+        $this->assertSame([(int) $late->id => session_manager::ATT_PRESENT], $keptusers);
+        $this->assertSame([(int) $late->id => session_manager::ATT_PRESENT], $newer,
+            'The kept row is reported as a newer mark as well, so the grid shows what stands.');
+        $this->assertSame([
+            (int) $early->id => session_manager::ATT_ABSENT,
+            (int) $late->id => session_manager::ATT_PRESENT,
+        ], $this->statuses($sessionid));
+    }
+
+    public function test_newer_marks_are_empty_without_a_load_time_and_ignore_the_savers_own_rows(): void {
+        $classroomid = $this->classroom('/1');
+        $sessionid = $this->session($classroomid);
+        $trainer = $this->user_at('/1/2');
+        $scanner = $this->enrolled_learner($classroomid);
+        $mine = $this->enrolled_learner($classroomid);
+        session_manager::record_qr_attendance($sessionid, (int) $scanner->id);
+
+        $this->setUser($trainer);
+        $newer = ['unchanged?'];
+        session_manager::bulk_mark_attendance($sessionid, [
+            ['userid' => (int) $mine->id, 'status' => session_manager::ATT_LATE],
+        ], 0, $kept, $keptusers, $newer, true);
+        $this->assertSame([], $newer, 'No load time, no guard and nothing to report.');
+
+        session_manager::bulk_mark_attendance($sessionid, [
+            ['userid' => (int) $mine->id, 'status' => session_manager::ATT_LATE],
+        ], time() - 100, $kept, $keptusers, $newer, true);
+        $this->assertSame([(int) $scanner->id => session_manager::ATT_PRESENT], $newer,
+            'The saver\'s own row (Late, marked by the trainer) is not "newer": only the scan is.');
+    }
+
+    public function test_newer_marks_are_limited_to_the_callers_tenant_roster(): void {
+        $classroomid = $this->classroom('/1');
+        $sessionid = $this->session($classroomid);
+        $trainer = $this->user_at('/1/2');
+        $inside = $this->enrolled_learner($classroomid);
+        $outside = $this->user_at('/77/5');   // on the roster (a site-admin enrolment), in another tenant
+        session_manager::enrol_users($classroomid, [(int) $outside->id]);
+        $stranger = $this->user_at('/1/2');   // has a row but is not on the roster
+        $loadedat = time() - 100;
+        foreach ([$inside, $outside, $stranger] as $u) {
+            $this->setUser($u);
+            session_manager::mark_attendance($sessionid, (int) $u->id, session_manager::ATT_PRESENT);
+        }
+
+        $this->setUser($trainer);
+        $this->assertSame([(int) $inside->id => session_manager::ATT_PRESENT],
+            session_manager::get_marks_by_others_since($sessionid, $loadedat, true),
+            'A scoped caller sees only their tenant\'s learners, and only those on the roster.');
+        $this->assertSame([(int) $inside->id => session_manager::ATT_PRESENT, (int) $outside->id => session_manager::ATT_PRESENT],
+            session_manager::get_marks_by_others_since($sessionid, $loadedat, false),
+            'Without the caller scope every roster learner is included (library callers).');
+        $this->assertSame([], session_manager::get_marks_by_others_since($sessionid, 0, true));
     }
 }

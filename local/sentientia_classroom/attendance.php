@@ -18,9 +18,11 @@ $context = context_system::instance();
 require_capability('local/sentientia_classroom:view', $context);
 
 // Tenant scope (ADR-031) — same guard as view.php; it fails closed for a
-// viewer with no tenant and for a classroom with no path.
+// viewer with no tenant and for a classroom with no path. Then the trainer rule (owner
+// decision 2026-09-30): without :manage, only the session's or classroom's assigned trainer
+// opens the grid (session_manager::may_run_session()).
 [$session, $classroom] =
-    \local_sentientia_classroom\session_manager::require_session_access($sessionid);
+    \local_sentientia_classroom\session_manager::require_attendance_access($sessionid);
 
 $can_attend = has_capability('local/sentientia_classroom:attendance', $context);
 
@@ -45,16 +47,20 @@ $PAGE->set_secondary_navigation(false);
 // Fetch roster + attendance. ADR-031: a scoped caller sees only their own
 // tenant's learners - the roster of an in-tenant classroom can still hold
 // others (site-admin, approval-flow or pre-fix enrolments). The grid's Save
-// sends a mark for every row it renders, so this also keeps the save inside
-// the tenant; bulk_mark_attendance skips (never refuses) anything else.
+// sends a mark only for the rows the trainer set (see below), and only rows of
+// this tenant's learners are rendered, so the save stays inside the tenant;
+// bulk_mark_attendance skips (never refuses) anything else.
 //
 // $loadedat is taken BEFORE the rows are read, and travels with the Save: a learner who
 // scans the QR code after this moment keeps their mark when the trainer saves an Absent for
 // them from a grid that was loaded before the scan (session_manager::bulk_mark_attendance()).
+// The Save's answer also lists every mark made by someone else since $loadedat (newermarks),
+// which the grid shows before it moves $loadedat forward to the save time.
 //
 // A learner with no stored row is shown as Absent (has_mark false), but the grid only sends a
-// row the trainer changed or touched (amd/src/attendance.js), so a learner nobody touched
-// keeps no row and can still scan. An Absent exists only because the trainer set it.
+// row the trainer set (amd/src/attendance.js: a status other than Absent, an explicit Absent,
+// or a change from the stored mark), so a learner nobody touched keeps no row and can still
+// scan. An Absent exists only because the trainer set it.
 $loadedat = time();
 $rows_obj = \local_sentientia_classroom\session_manager::get_session_attendance($sessionid, true);
 

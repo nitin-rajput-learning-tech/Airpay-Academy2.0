@@ -97,8 +97,10 @@ if ($errortext !== null) {
     local_sentientia_pages_qr_box('warning', 'exclamation-circle', get_string('qr_notenrolled_title', 'local_sentientia_pages'),
         [local_sentientia_pages_qr_p(get_string('qr_notenrolled_body', 'local_sentientia_pages'))]);
 } else if ($result === $manager::SCAN_ALREADY) {
-    // Says "marked", not "recorded": the mark may be the trainer's, and it may be Absent.
-    local_sentientia_pages_qr_box('info', 'check-circle', get_string('qr_already_title', 'local_sentientia_pages'),
+    // Says "marked", not "recorded": the mark may be the trainer's, and it may be Absent. So it
+    // carries an info icon, not the success page's check-circle: at a glance a learner the
+    // trainer marked Absent must not read this as a tick.
+    local_sentientia_pages_qr_box('info', 'info-circle', get_string('qr_already_title', 'local_sentientia_pages'),
         [local_sentientia_pages_qr_p(get_string('qr_already_body', 'local_sentientia_pages'))]);
 } else if ($result === $manager::SCAN_TOO_EARLY || $result === $manager::SCAN_TOO_LATE) {
     // The window's own times (with the 30 minute allowance), so the learner knows when to come back.

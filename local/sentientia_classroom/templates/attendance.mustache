@@ -109,7 +109,11 @@
     </div>
     {{/ can_attend }}
 
-    {{! ── Roster ───────────────────────────────────────────────────── }}
+    {{! ── Roster ─────────────────────────────────────────────────────
+        A form only so that autocomplete="off" reaches the radios: on a normal reload Firefox
+        restores radio selections the page never saw being made, which would show a mark the
+        trainer did not set on this load. Nothing is submitted (amd/src/attendance.js stops it). }}
+    <form autocomplete="off" action="#" data-region="attendance-form">
     <div class="card border-0 shadow-sm">
         <div class="table-responsive">
         <table class="table table-hover mb-0 align-middle" data-region="attendance-grid">
@@ -131,25 +135,25 @@
                         <div class="small text-muted">{{ email }}</div>
                     </td>
                     <td class="text-center">
-                        <input type="radio" name="att_{{ userid }}" value="0" data-userid="{{ userid }}" data-status="0"
+                        <input type="radio" name="att_{{ userid }}" value="0" data-userid="{{ userid }}" data-status="0" autocomplete="off"
                             {{# is_absent }}checked{{/ is_absent }}
                             {{^ can_attend }}disabled{{/ can_attend }}
                             aria-label="Mark absent">
                     </td>
                     <td class="text-center">
-                        <input type="radio" name="att_{{ userid }}" value="1" data-userid="{{ userid }}" data-status="1"
+                        <input type="radio" name="att_{{ userid }}" value="1" data-userid="{{ userid }}" data-status="1" autocomplete="off"
                             {{# is_present }}checked{{/ is_present }}
                             {{^ can_attend }}disabled{{/ can_attend }}
                             aria-label="Mark present">
                     </td>
                     <td class="text-center">
-                        <input type="radio" name="att_{{ userid }}" value="2" data-userid="{{ userid }}" data-status="2"
+                        <input type="radio" name="att_{{ userid }}" value="2" data-userid="{{ userid }}" data-status="2" autocomplete="off"
                             {{# is_late }}checked{{/ is_late }}
                             {{^ can_attend }}disabled{{/ can_attend }}
                             aria-label="Mark late">
                     </td>
                     <td class="text-center">
-                        <input type="radio" name="att_{{ userid }}" value="3" data-userid="{{ userid }}" data-status="3"
+                        <input type="radio" name="att_{{ userid }}" value="3" data-userid="{{ userid }}" data-status="3" autocomplete="off"
                             {{# is_excused }}checked{{/ is_excused }}
                             {{^ can_attend }}disabled{{/ can_attend }}
                             aria-label="Mark excused">
@@ -161,6 +165,7 @@
         </table>
         </div>
     </div>
+    </form>
     {{/ has_rows }}
 
     {{^ has_rows }}

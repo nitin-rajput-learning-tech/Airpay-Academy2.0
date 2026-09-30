@@ -214,6 +214,56 @@ class session_manager {
     }
 
     /**
+     * May $userid open and take attendance for this session?
+     *
+     * Owner decision 2026-09-30: the Sentientia/BizLMS `trainer` role is archetype `teacher`,
+     * and :view / :attendance are granted at system context, so on the capability alone a
+     * trainer could open and mark EVERY classroom session in their tenant. Now anyone who
+     * does not hold local/sentientia_classroom:manage (the manager archetype, which the
+     * tenant administrator role is; site admins always pass) may do so only for a session
+     * they are the assigned trainer of: the user in the session's own `trainerid`
+     * ({local_sentientia_classroom_sessions}.trainerid, nullable) or in its classroom's
+     * `trainerid` ({local_sentientia_classroom}.trainerid, nullable). A classroom and session
+     * with no trainer are therefore open to managers only.
+     *
+     * This is about WHO within the tenant. It does not replace the ADR-031 tenant guard:
+     * call it after require_session_access(), which proves the classroom is in the caller's
+     * tenant; require_attendance_access() does both.
+     *
+     * @param \stdClass $session   a row of the sessions table
+     * @param \stdClass $classroom a row of the classrooms table
+     * @param int|null $userid     defaults to the current user
+     */
+    public static function may_run_session(\stdClass $session, \stdClass $classroom, ?int $userid = null): bool {
+        global $USER;
+        $userid = $userid ?? (int) ($USER->id ?? 0);
+        if ($userid <= 0) {
+            return false;
+        }
+        if (has_capability('local/sentientia_classroom:manage', \context_system::instance(), $userid)) {
+            return true;
+        }
+        return $userid === (int) ($session->trainerid ?? 0)
+            || $userid === (int) ($classroom->trainerid ?? 0);
+    }
+
+    /**
+     * The guard for every attendance entry point (the grid page, the QR page and the
+     * attendance web services): the ADR-031 tenant guard, then the assigned-trainer rule.
+     *
+     * @return \stdClass[] [$session, $classroom]
+     * @throws \moodle_exception error_outoftenant, or error_nottrainer when the caller holds
+     *                           no :manage and is not the session's or classroom's trainer
+     */
+    public static function require_attendance_access(int $sessionid): array {
+        [$session, $classroom] = self::require_session_access($sessionid);
+        if (!self::may_run_session($session, $classroom)) {
+            throw new \moodle_exception('error_nottrainer', 'local_sentientia_classroom');
+        }
+        return [$session, $classroom];
+    }
+
+    /**
      * Refuse unless every named user is in the caller's tenant (ADR-031
      * rule 5: a write that names a user checks the target). One query for
      * any number of ids. Cross-tenant callers pass.
@@ -1236,10 +1286,20 @@ class session_manager {
      * @param int|null $kept set to how many marks were NOT written because a newer mark stood
      * @param int[]|null $keptusers set to [userid => status] of the rows that were kept, so
      *                      the caller can show the learner's real mark
+     * @param array|null $newermarks set to [userid => status] of every row of the session that
+     *                      somebody other than the current user wrote at or after $loadedat,
+     *                      read inside the same transaction as the writes (see
+     *                      get_marks_by_others_since()). The grid shows these before it takes
+     *                      the save time as its new load time, so a learner who scanned while
+     *                      the trainer was ticking other rows is not silently overwritten by a
+     *                      later Save. It includes the kept rows.
+     * @param bool $callerscope ADR-031: limit $newermarks to learners in the caller's tenant
+     *                      (the web service passes true, like the grid page)
      * @return int Count of rows upserted.
      */
     public static function bulk_mark_attendance(int $sessionid, array $marks, int $loadedat = 0,
-                                                 ?int &$kept = null, ?array &$keptusers = null): int {
+                                                 ?int &$kept = null, ?array &$keptusers = null,
+                                                 ?array &$newermarks = null, bool $callerscope = false): int {
         global $DB;
 
         $DB->get_record(self::SESSION_TABLE, ['id' => $sessionid], 'id', MUST_EXIST);
@@ -1247,6 +1307,7 @@ class session_manager {
         $count = 0;
         $kept = 0;
         $keptusers = [];
+        $newermarks = [];
         $tx = $DB->start_delegated_transaction();
         try {
             foreach ($marks as $m) {
@@ -1263,11 +1324,59 @@ class session_manager {
                         ['sessionid' => $sessionid, 'userid' => $uid]);
                 }
             }
+            // After the writes, in the same transaction: whatever anyone else marked since the
+            // grid was loaded is now known, and about to be shown to the trainer.
+            $newermarks = self::get_marks_by_others_since($sessionid, $loadedat, $callerscope);
             $tx->allow_commit();
         } catch (\Throwable $e) {
+            $newermarks = [];
             $tx->rollback($e);
         }
         return $count;
+    }
+
+    /**
+     * The rows of a session that somebody other than the current user wrote at or after $since.
+     *
+     * A grid Save sends only the rows the trainer touched, so a learner the trainer did not
+     * touch can scan the QR code between the grid load and the Save without the Save ever
+     * seeing them. Returning them lets the grid show them (and take the save time as its new
+     * load time) with the trainer having actually seen every mark made before it; without
+     * this, the next Save would treat the scan as old news and could overwrite it. Only
+     * learners on the classroom roster count, like the grid.
+     *
+     * @param int $since unix time (normally the grid's load time); 0 or less returns nothing
+     * @param bool $callerscope ADR-031: only learners in the caller's tenant (roster_scope())
+     * @return int[] [userid => status]
+     */
+    public static function get_marks_by_others_since(int $sessionid, int $since, bool $callerscope = false): array {
+        global $DB, $USER;
+
+        if ($since <= 0 || !$DB->get_manager()->table_exists(self::USERS_TABLE)) {
+            return [];
+        }
+        $session = $DB->get_record(self::SESSION_TABLE, ['id' => $sessionid], 'id, classroomid', MUST_EXIST);
+
+        [$scopesql, $scopeparams] = self::roster_scope($callerscope, 'u');
+        $sql = "SELECT a.userid, a.status
+                  FROM {" . self::ATTENDANCE_TABLE . "} a
+                  JOIN {" . self::USERS_TABLE . "} cu ON cu.userid = a.userid AND cu.classroomid = :cid
+                  JOIN {user} u ON u.id = a.userid
+                 WHERE a.sessionid = :sid AND a.timemodified >= :since AND a.markedby <> :me
+                   AND $scopesql
+              ORDER BY a.userid ASC";
+        $rows = $DB->get_records_sql($sql, [
+            'cid' => (int) $session->classroomid,
+            'sid' => $sessionid,
+            'since' => $since,
+            'me' => (int) ($USER->id ?? 0),
+        ] + $scopeparams);
+
+        $out = [];
+        foreach ($rows as $r) {
+            $out[(int) $r->userid] = (int) $r->status;
+        }
+        return $out;
     }
 
     /**

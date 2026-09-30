@@ -84,18 +84,24 @@ const rowStatus = (row) => {
 /**
  * Has the trainer set this learner's mark since the grid was loaded (or last saved)?
  *
- * A learner with no stored row (data-hasmark="0") shows as Absent, but that is only what
- * an empty row looks like: it is sent only when the trainer touched it (an explicit Absent
- * included), so a learner nobody touched keeps no row and can still scan the QR code. A
- * learner who already has a row is sent only when their status differs from the stored one.
+ * The rule reads the radios, not just whether a click was seen, so a mark the page did not see
+ * being made (a radio the browser restored on a reload) is still saved:
+ *  - A learner who has a stored row (data-hasmark="1") is sent whenever the radio differs from
+ *    the stored status (data-original).
+ *  - A learner with no stored row (data-hasmark="0") shows as Absent, but that is only what an
+ *    empty row looks like. Any other status is the trainer's, touched or not. Absent is sent
+ *    only when the trainer chose it (click or change), so a learner nobody touched keeps no
+ *    row and can still scan the QR code.
  *
  * @param {HTMLElement} row
  * @returns {Boolean}
  */
 const isSetByTrainer = (row) => {
-    if (row.dataset.touched !== '1') { return false; }
-    if (row.dataset.hasmark !== '1') { return true; }
-    return rowStatus(row) !== parseInt(row.dataset.original, 10);
+    const status = rowStatus(row);
+    if (row.dataset.hasmark === '1') {
+        return status !== parseInt(row.dataset.original, 10);
+    }
+    return status !== 0 || row.dataset.touched === '1';
 };
 
 /**
@@ -108,6 +114,23 @@ const markRowStored = (row, status) => {
     row.dataset.hasmark = '1';
     row.dataset.original = String(status);
     row.dataset.touched = '0';
+};
+
+/**
+ * Show the mark that is stored for a learner: check that status and record it as the row's
+ * stored state, so the next Save does not resend it.
+ *
+ * @param {HTMLElement} root
+ * @param {Number} userid
+ * @param {Number} status
+ */
+const showStoredMark = (root, userid, status) => {
+    const radio = root.querySelector('tr[data-userid="' + userid + '"] input[type=radio][data-status="'
+        + status + '"]');
+    if (radio) {
+        radio.checked = true;
+        markRowStored(radio.closest('tr[data-userid]'), status);
+    }
 };
 
 const saveAttendance = async (sessionid, root) => {
@@ -145,12 +168,14 @@ const saveAttendance = async (sessionid, root) => {
         });
         // ...except the learners whose newer mark was kept: show the mark that stands.
         (response.keptmarks || []).forEach((kept) => {
-            const radio = root.querySelector('tr[data-userid="' + kept.userid + '"] input[type=radio][data-status="'
-                + kept.status + '"]');
-            if (radio) {
-                radio.checked = true;
-                markRowStored(radio.closest('tr[data-userid]'), kept.status);
-            }
+            showStoredMark(root, kept.userid, kept.status);
+        });
+        // Every mark somebody else made since the grid was loaded, including a learner the
+        // trainer never touched (so was never sent) who scanned the QR code meanwhile. It must
+        // be on screen BEFORE the load time moves forward: only then is "the trainer has seen
+        // it" true, and a later Save may replace it with a deliberate correction.
+        (response.newermarks || []).forEach((newer) => {
+            showStoredMark(root, newer.userid, newer.status);
         });
         // The server's time is the grid's new load time: the trainer has now seen every mark
         // made before it, so a later Save must not keep one of those against a correction.
@@ -197,6 +222,8 @@ export const init = (sessionid) => {
 
     root.addEventListener('change', handleRadioChange(root));
     root.addEventListener('click', handleClick(sessionid, root));
+    // The grid sits in a form only for its autocomplete="off": never submit it.
+    root.addEventListener('submit', (event) => { event.preventDefault(); });
 
     // Warn before nav-away if dirty.
     window.addEventListener('beforeunload', (e) => {
