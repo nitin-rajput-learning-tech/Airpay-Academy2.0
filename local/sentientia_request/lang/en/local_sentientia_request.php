@@ -93,6 +93,18 @@ $string['privacy:metadata:local_sentientia_request:approver_userid']   = 'The us
 $string['privacy:metadata:local_sentientia_request:status']            = 'Pending / approved / rejected / etc.';
 $string['privacy:metadata:local_sentientia_request:timecreated']       = 'When the request was placed';
 
+// ADR-032 (2026-09-30) - requests imported from BizLMS, and requests for items that are not courses.
+$string['col_item']             = 'Item';
+$string['item_deleted_course']  = '(deleted course)';
+$string['item_deleted']         = '(deleted item)';
+$string['item_certification']   = 'Certification (previous system, id {$a})';
+$string['reason_imported']      = 'Imported from the previous system - no reason was recorded.';
+$string['sla_none']             = 'No deadline';
+$string['route_legacy']         = 'Imported from the previous system';
+$string['privacy:metadata:local_sentientia_request:item_type']        = 'The kind of item requested: course, learning path, classroom, program or certification';
+$string['privacy:metadata:local_sentientia_request:itemid']           = 'The id of the requested item';
+$string['privacy:metadata:local_sentientia_request:decided_by_userid'] = 'The user who actually decided the request';
+
 // W1-9 (2026-05-15) — event names.
 $string['event_request_submitted'] = 'Access request submitted';
 $string['event_request_approved']  = 'Access request approved';

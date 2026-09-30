@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/sentientia_request/db" VERSION="20260516"
+<XMLDB PATH="local/sentientia_request/db" VERSION="20260930"
        COMMENT="Airpay Requests — self-service enrolment workflow for courses, paths, classrooms, programs.">
 
   <TABLES>
@@ -36,6 +36,8 @@
         <FIELD NAME="timedecided"  TYPE="int"  LENGTH="10" NOTNULL="false"/>
         <FIELD NAME="timeescalated" TYPE="int" LENGTH="10" NOTNULL="false"/>
         <FIELD NAME="timemodified" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="legacy_source" TYPE="char" LENGTH="40" NOTNULL="false"
+               COMMENT="ADR-032: bizlms on a row the BizLMS import wrote, NULL on every native row. Cron leaves marked rows alone and the lists show them only with the imported_history flag."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

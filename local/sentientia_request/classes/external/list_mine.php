@@ -49,6 +49,10 @@ class list_mine extends external_api {
 
         $where = 'r.userid = :uid';
         $args  = ['uid' => (int) $USER->id];
+        // BizLMS import (ADR-032): imported history shows only while sentientia.request.imported_history is ON.
+        $where .= \local_sentientia_request\imported_history::filter_sql('r');
+        // The name of a path, classroom or program request comes from its own table (code fix 1).
+        $items = \local_sentientia_request\item_label::sql();
 
         $client = json_decode($params['filters'] ?: '{}', true) ?: [];
         if (!empty($client['status'])) {
@@ -56,19 +60,24 @@ class list_mine extends external_api {
             $args['st'] = $client['status'];
         }
 
-        // Free-text search over course name + reason + decision note.
+        // Free-text search over item name + reason + decision note.
         // sql_like_escape() escapes the user's wildcards so '%' / '_' typed
         // by the learner search as literals, not LIKE operators.
         if (trim($params['search']) !== '') {
             $term = '%' . $DB->sql_like_escape(trim($params['search'])) . '%';
-            $where .= ' AND ('
-                . $DB->sql_like('c.fullname',     ':s1', false) . ' OR '
-                . $DB->sql_like('r.reason',       ':s2', false) . ' OR '
-                . $DB->sql_like('r.decision_note', ':s3', false)
-                . ')';
+            $clauses = [
+                $DB->sql_like('c.fullname',     ':s1', false),
+                $DB->sql_like('r.reason',       ':s2', false),
+                $DB->sql_like('r.decision_note', ':s3', false),
+            ];
             $args['s1'] = $term;
             $args['s2'] = $term;
             $args['s3'] = $term;
+            foreach ($items['search'] as $i => $column) {
+                $clauses[] = $DB->sql_like($column, ':si' . $i, false);
+                $args['si' . $i] = $term;
+            }
+            $where .= ' AND (' . implode(' OR ', $clauses) . ')';
         }
 
         // The count query needs the same JOIN now because the WHERE may
@@ -76,15 +85,15 @@ class list_mine extends external_api {
         // (typical learner has <50 requests).
         $total = (int) $DB->count_records_sql(
             "SELECT COUNT(*) FROM {local_sentientia_request} r
-        LEFT JOIN {course} c ON c.id = r.courseid
+        LEFT JOIN {course} c ON c.id = r.courseid{$items['joins']}
              WHERE $where", $args);
 
         $rows = [];
         if ($total > 0) {
             $records = $DB->get_records_sql(
-                "SELECT r.*, c.fullname AS course_name
+                "SELECT r.*, c.fullname AS course_name{$items['select']}
                    FROM {local_sentientia_request} r
-              LEFT JOIN {course} c ON c.id = r.courseid
+              LEFT JOIN {course} c ON c.id = r.courseid{$items['joins']}
                   WHERE $where
                ORDER BY r.$sort $sortdir, r.id DESC",
                 $args,
@@ -115,7 +124,9 @@ class list_mine extends external_api {
         // is the per-row Cancel button (rendered only for own pending rows).
         return new external_single_structure([
             'id'                 => new external_value(PARAM_INT, ''),
+            // The name of the requested item, whatever its type (the key keeps its old name for the datatable).
             'course_name'        => new external_value(PARAM_TEXT, ''),
+            'item_type'          => new external_value(PARAM_ALPHANUMEXT, ''),
             'courseid'           => new external_value(PARAM_INT, ''),
             'status'             => new external_value(PARAM_ALPHANUMEXT, ''),
             'status_badge'       => new external_value(PARAM_TEXT, ''),
@@ -126,6 +137,7 @@ class list_mine extends external_api {
             // surfaced on the approvals inbox, which lists pending-only rows.
             'status_badge_class' => new external_value(PARAM_TEXT, ''),
             'route'              => new external_value(PARAM_ALPHANUMEXT, ''),
+            'route_label'        => new external_value(PARAM_TEXT, ''),
             'reason'             => new external_value(PARAM_TEXT, ''),
             'decision_note'      => new external_value(PARAM_TEXT, ''),
             'placed_on'          => new external_value(PARAM_TEXT, ''),
@@ -134,6 +146,20 @@ class list_mine extends external_api {
             'is_overdue'         => new external_value(PARAM_BOOL, ''),
             'actions'            => new external_value(PARAM_RAW, ''),
         ]);
+    }
+
+    /**
+     * The route as words (lang strings route_*), falling back to the stored code for one that has no string.
+     *
+     * @param string $route manager | courseowner | admin | legacy
+     * @return string
+     */
+    public static function route_label(string $route): string {
+        $key = 'route_' . $route;
+        if ($route !== '' && get_string_manager()->string_exists($key, 'local_sentientia_request')) {
+            return get_string($key, 'local_sentientia_request');
+        }
+        return $route;
     }
 
     /**
@@ -183,15 +209,25 @@ class list_mine extends external_api {
                 . '</button>';
         }
 
+        // A request imported from BizLMS carries no reason (the old system did not record one); say so
+        // instead of showing an empty cell (code fix 5).
+        $reason = (string) ($r->reason ?? '');
+        if ($reason === '' && !empty($r->legacy_source)) {
+            $reason = get_string('reason_imported', 'local_sentientia_request');
+        }
+
         return [
             'id'                 => (int) $r->id,
-            'course_name'        => format_string($r->course_name ?? '(deleted course)'),
+            // The item's own name for every type (code fix 1); a course still reads (deleted course) if it is gone.
+            'course_name'        => format_string(\local_sentientia_request\item_label::name($r)),
+            'item_type'          => (string) ($r->item_type ?? 'course'),
             'courseid'           => (int) ($r->courseid ?? 0),
             'status'             => $status,
             'status_badge'       => $badge['label'],
             'status_badge_class' => $badge['class'],
             'route'              => (string) ($r->route ?? ''),
-            'reason'             => (string) ($r->reason ?? ''),
+            'route_label'        => self::route_label((string) ($r->route ?? '')),
+            'reason'             => $reason,
             'decision_note'      => (string) ($r->decision_note ?? ''),
             'placed_on'          => !empty($r->timecreated) ? userdate($r->timecreated, '%d %b %Y %H:%M') : '',
             'decided_on'         => !empty($r->timedecided) ? userdate($r->timedecided, '%d %b %Y %H:%M') : '',

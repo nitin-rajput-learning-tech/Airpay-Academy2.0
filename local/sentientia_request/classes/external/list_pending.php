@@ -45,6 +45,10 @@ class list_pending extends external_api {
         // Pending requests where I am the assigned approver.
         $where = 'r.status = :s AND r.approver_userid = :uid';
         $args  = ['s' => 'pending', 'uid' => (int) $USER->id];
+        // BizLMS import (ADR-032): imported history shows only while sentientia.request.imported_history is ON.
+        $where .= \local_sentientia_request\imported_history::filter_sql('r');
+        // The name of a path, classroom or program request comes from its own table (code fix 1).
+        $items = \local_sentientia_request\item_label::sql();
 
         // Status filter from client.
         $client = json_decode($params['filters'] ?: '{}', true) ?: [];
@@ -53,43 +57,52 @@ class list_pending extends external_api {
             $args['st'] = $client['status'];
         }
 
-        // Free-text search across requester name/email + course name + reason.
-        // Approvers care most about "who asked for what" so name + course
+        // Free-text search across requester name/email + item name + reason.
+        // Approvers care most about "who asked for what" so name + item
         // are the high-signal fields.
         if (trim($params['search']) !== '') {
             $term = '%' . $DB->sql_like_escape(trim($params['search'])) . '%';
-            $where .= ' AND ('
-                . $DB->sql_like('u.firstname', ':s1', false) . ' OR '
-                . $DB->sql_like('u.lastname',  ':s2', false) . ' OR '
-                . $DB->sql_like('u.email',     ':s3', false) . ' OR '
-                . $DB->sql_like('c.fullname',  ':s4', false) . ' OR '
-                . $DB->sql_like('r.reason',    ':s5', false)
-                . ')';
+            $clauses = [
+                $DB->sql_like('u.firstname', ':s1', false),
+                $DB->sql_like('u.lastname',  ':s2', false),
+                $DB->sql_like('u.email',     ':s3', false),
+                $DB->sql_like('c.fullname',  ':s4', false),
+                $DB->sql_like('r.reason',    ':s5', false),
+            ];
             $args['s1'] = $term;
             $args['s2'] = $term;
             $args['s3'] = $term;
             $args['s4'] = $term;
             $args['s5'] = $term;
+            foreach ($items['search'] as $i => $column) {
+                $clauses[] = $DB->sql_like($column, ':si' . $i, false);
+                $args['si' . $i] = $term;
+            }
+            $where .= ' AND (' . implode(' OR ', $clauses) . ')';
         }
 
         // Count and list both need the JOIN now (used by search WHERE).
         $total = (int) $DB->count_records_sql(
             "SELECT COUNT(*) FROM {local_sentientia_request} r
         LEFT JOIN {course} c ON c.id = r.courseid
-        LEFT JOIN {user}   u ON u.id = r.userid
+        LEFT JOIN {user}   u ON u.id = r.userid{$items['joins']}
              WHERE $where", $args);
+
+        // Code fix 8: a row with no deadline (every imported one) sorts LAST by timedue in either direction.
+        // MySQL sorts NULL first in ascending order, which put the imported history above every live SLA.
+        $nullslast = $sort === 'timedue' ? '(CASE WHEN r.timedue IS NULL THEN 1 ELSE 0 END) ASC, ' : '';
 
         $rows = [];
         if ($total > 0) {
             $records = $DB->get_records_sql(
-                "SELECT r.*, c.fullname AS course_name,
+                "SELECT r.*, c.fullname AS course_name{$items['select']},
                         u.firstname AS req_firstname, u.lastname AS req_lastname,
                         u.email AS req_email
                    FROM {local_sentientia_request} r
               LEFT JOIN {course} c ON c.id = r.courseid
-              LEFT JOIN {user}   u ON u.id = r.userid
+              LEFT JOIN {user}   u ON u.id = r.userid{$items['joins']}
                   WHERE $where
-               ORDER BY r.$sort $sortdir, r.id DESC",
+               ORDER BY {$nullslast}r.$sort $sortdir, r.id DESC",
                 $args,
                 $params['page'] * $params['perpage'], $params['perpage']);
             foreach ($records as $r) {
@@ -103,6 +116,8 @@ class list_pending extends external_api {
                 // decide.js contract; before this override nothing on the
                 // platform ever rendered [data-action="decide-request"].
                 $shape['actions'] = self::approver_actions($r, $shape['requester_name']);
+                // Code fix 7: approvals.php declares a due_badge column that nothing returned.
+                [$shape['due_badge'], $shape['due_badge_class']] = self::due_badge($r);
                 $rows[] = $shape;
             }
         }
@@ -121,15 +136,38 @@ class list_pending extends external_api {
         if (($r->status ?? '') !== 'pending') {
             return '';
         }
+        // Code fix 3: only a course or a learning-path request can be decided (request_manager::decide refuses the
+        // rest), so no buttons for an imported classroom, program or certification request.
+        if (!in_array($r->item_type ?? 'course', ['course', 'path'], true)) {
+            return '';
+        }
         $common = 'data-action="decide-request" data-requestid="' . (int) $r->id . '" '
             . 'data-requester="' . s($requestername) . '" '
-            . 'data-course="' . s(format_string($r->course_name ?? '')) . '"';
+            . 'data-course="' . s(format_string(\local_sentientia_request\item_label::name($r))) . '"';
         return '<button type="button" class="btn btn-success btn-sm me-1" '
             . $common . ' data-decision="approved">'
             . s(get_string('approve', 'local_sentientia_request')) . '</button>'
             . '<button type="button" class="btn btn-outline-danger btn-sm" '
             . $common . ' data-decision="rejected">'
             . s(get_string('reject', 'local_sentientia_request')) . '</button>';
+    }
+
+    /**
+     * The SLA cell: how long the approver has, or that the request is overdue or has no deadline.
+     *
+     * @param \stdClass $r A request row.
+     * @return array{0: string, 1: string} [label, bootstrap badge classes]
+     */
+    private static function due_badge(\stdClass $r): array {
+        if (empty($r->timedue)) {
+            // Imported history has no SLA clock.
+            return [get_string('sla_none', 'local_sentientia_request'), 'bg-secondary'];
+        }
+        $left = (int) $r->timedue - time();
+        if ($left < 0) {
+            return [get_string('sla_overdue', 'local_sentientia_request'), 'bg-danger'];
+        }
+        return [get_string('sla_due_in', 'local_sentientia_request', format_time($left)), 'bg-info text-dark'];
     }
 
     public static function execute_returns(): external_single_structure {
@@ -141,6 +179,7 @@ class list_pending extends external_api {
             'rows'  => new external_multiple_structure(new external_single_structure([
                 'id'                 => new external_value(PARAM_INT, ''),
                 'course_name'        => new external_value(PARAM_TEXT, ''),
+                'item_type'          => new external_value(PARAM_ALPHANUMEXT, ''),
                 'courseid'           => new external_value(PARAM_INT, ''),
                 'status'             => new external_value(PARAM_ALPHANUMEXT, ''),
                 'status_badge'       => new external_value(PARAM_TEXT, ''),
@@ -151,12 +190,15 @@ class list_pending extends external_api {
                 // hung on "Loading...". See list_mine.php for the full note.
                 'status_badge_class' => new external_value(PARAM_TEXT, ''),
                 'route'              => new external_value(PARAM_ALPHANUMEXT, ''),
+                'route_label'        => new external_value(PARAM_TEXT, ''),
                 'reason'             => new external_value(PARAM_TEXT, ''),
                 'decision_note'      => new external_value(PARAM_TEXT, ''),
                 'placed_on'          => new external_value(PARAM_TEXT, ''),
                 'decided_on'         => new external_value(PARAM_TEXT, ''),
                 'due_on'             => new external_value(PARAM_TEXT, ''),
                 'is_overdue'         => new external_value(PARAM_BOOL, ''),
+                'due_badge'          => new external_value(PARAM_TEXT, ''),
+                'due_badge_class'    => new external_value(PARAM_TEXT, ''),
                 'actions'            => new external_value(PARAM_RAW, ''),
                 'requester_name'     => new external_value(PARAM_TEXT, ''),
                 'requester_email'    => new external_value(PARAM_TEXT, ''),

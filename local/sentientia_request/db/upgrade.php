@@ -61,5 +61,20 @@ function xmldb_local_sentientia_request_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051600, 'local', 'sentientia_request');
     }
 
+    // 2026093001 - ADR-032 (BizLMS import, request feature): mark the rows the import writes.
+    //
+    // legacy_source is NULL on every native row and 'bizlms' on an imported one. request_manager's two cron
+    // jobs (escalate_overdue, auto_expire) select only rows where it IS NULL, so the first cron run after the
+    // import does not flip imported pending history to expired; the request lists show imported rows only
+    // while the sentientia.request.imported_history flag is on. No index: the column is only ever tested
+    // alongside status, which is indexed. Idempotent - a site that installed from the new install.xml
+    // already has the column. See db/upgradelib.php.
+    if ($oldversion < 2026093001) {
+        require_once(__DIR__ . '/upgradelib.php');
+        local_sentientia_request_ensure_legacy_source($dbman);
+
+        upgrade_plugin_savepoint(true, 2026093001, 'local', 'sentientia_request');
+    }
+
     return true;
 }

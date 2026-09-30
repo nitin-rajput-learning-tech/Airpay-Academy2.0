@@ -23,7 +23,7 @@ require_capability('local/sentientia_request:approve', $ctx);
 
 $columns = [
     ['key' => 'requester_name', 'label' => 'Requester', 'sortable' => false],
-    ['key' => 'course_name',    'label' => 'Course',    'sortable' => false],
+    ['key' => 'course_name',    'label' => get_string('col_item', 'local_sentientia_request'), 'sortable' => false],
     ['key' => 'reason',         'label' => 'Reason',    'sortable' => false],
     ['key' => 'due_badge',      'label' => 'SLA',       'sortable' => true, 'sortkey' => 'timedue', 'format' => 'badge'],
     ['key' => 'actions',        'label' => '',          'sortable' => false, 'format' => 'html'],

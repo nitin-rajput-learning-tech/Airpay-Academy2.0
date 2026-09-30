@@ -58,6 +58,10 @@ class list_all extends external_api {
         // stored with costcenterid 0 are NOT "every tenant"), and only a
         // cross-tenant caller may choose one with filters.tenant.
         [$where, $args] = \local_sentientia_platform\tenant::sql_filter('r');
+        // BizLMS import (ADR-032): imported history shows only while sentientia.request.imported_history is ON.
+        $where .= \local_sentientia_request\imported_history::filter_sql('r');
+        // The name of a path, classroom or program request comes from its own table (code fix 1).
+        $items = \local_sentientia_request\item_label::sql();
 
         $client = json_decode($params['filters'] ?: '{}', true) ?: [];
         if (!empty($client['status'])) {
@@ -70,27 +74,34 @@ class list_all extends external_api {
         }
         if (!empty($params['search'])) {
             $term = '%' . $DB->sql_like_escape($params['search']) . '%';
-            $where .= ' AND (' . $DB->sql_like('u.email', ':s1', false) . ' OR '
-                . $DB->sql_like('c.fullname', ':s2', false) . ' OR '
-                . $DB->sql_like('r.reason', ':s3', false) . ')';
+            $clauses = [
+                $DB->sql_like('u.email', ':s1', false),
+                $DB->sql_like('c.fullname', ':s2', false),
+                $DB->sql_like('r.reason', ':s3', false),
+            ];
             $args['s1'] = $term; $args['s2'] = $term; $args['s3'] = $term;
+            foreach ($items['search'] as $i => $column) {
+                $clauses[] = $DB->sql_like($column, ':si' . $i, false);
+                $args['si' . $i] = $term;
+            }
+            $where .= ' AND (' . implode(' OR ', $clauses) . ')';
         }
 
         $total = (int) $DB->count_records_sql(
             "SELECT COUNT(*) FROM {local_sentientia_request} r
         LEFT JOIN {course} c ON c.id = r.courseid
-        LEFT JOIN {user}   u ON u.id = r.userid
+        LEFT JOIN {user}   u ON u.id = r.userid{$items['joins']}
              WHERE $where", $args);
 
         $rows = [];
         if ($total > 0) {
             $records = $DB->get_records_sql(
-                "SELECT r.*, c.fullname AS course_name,
+                "SELECT r.*, c.fullname AS course_name{$items['select']},
                         u.firstname AS req_firstname, u.lastname AS req_lastname,
                         u.email AS req_email
                    FROM {local_sentientia_request} r
               LEFT JOIN {course} c ON c.id = r.courseid
-              LEFT JOIN {user}   u ON u.id = r.userid
+              LEFT JOIN {user}   u ON u.id = r.userid{$items['joins']}
                   WHERE $where
                ORDER BY r.$sort $sortdir, r.id DESC",
                 $args,
@@ -113,9 +124,14 @@ class list_all extends external_api {
             'rows'  => new external_multiple_structure(new external_single_structure([
                 'id'              => new external_value(PARAM_INT, ''),
                 'course_name'     => new external_value(PARAM_TEXT, ''),
+                'item_type'       => new external_value(PARAM_ALPHANUMEXT, ''),
                 'courseid'        => new external_value(PARAM_INT, ''),
                 'status'          => new external_value(PARAM_ALPHANUMEXT, ''),
+                // all.php renders these two (format 'badge'); without them the Status column was blank.
+                'status_badge'       => new external_value(PARAM_TEXT, ''),
+                'status_badge_class' => new external_value(PARAM_TEXT, ''),
                 'route'           => new external_value(PARAM_ALPHANUMEXT, ''),
+                'route_label'     => new external_value(PARAM_TEXT, ''),
                 'reason'          => new external_value(PARAM_TEXT, ''),
                 'decision_note'   => new external_value(PARAM_TEXT, ''),
                 'placed_on'       => new external_value(PARAM_TEXT, ''),

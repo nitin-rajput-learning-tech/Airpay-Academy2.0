@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Fixture copy of a BizLMS install.xml for the ADR-032 import tests (local_sentientia_request).
+  Source : D:/Claude Local/Moodle Backup/01-production-codebase/html/local/request/db/install.xml
+  sha1   : 25e439e150f8a0ae947df54178074a250c32bb1e (of the source file)
+  Copied : 2026-09-30
+  Tables : local_request_comments, local_request_config, local_request_records (the tables this importer claims or declines; the rest of the file is left out)
+  Edits  : (a) PREVIOUS and NEXT attributes stripped (they name tables left out of this copy);
+           (b) TYPE="datetime" replaced by TYPE="char" LENGTH="20" (XMLDB has no datetime type; the
+               source line is local/request/db/install.xml:13, field local_request_comments.dt).
+           (c) none: no production-only column or install.php-only table is known for these tables.
+  The action and column notes of the source stay with the source.
+  Everything else is verbatim, including the odd whitespace and the ignored UNSIGNED attributes.
+-->
+<XMLDB PATH="local/sentientia_request/tests/fixtures/bizlms" VERSION="20060905" COMMENT="Fixture copy of the BizLMS request tables (see the comment above)">
+  <TABLES>
+
+<TABLE NAME="local_request_comments" COMMENT="local_request_comments table retrofitted from MySQL">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true"/>
+        <FIELD NAME="instanceid" TYPE="char" LENGTH="20" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="createdbyid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="dt" TYPE="char" LENGTH="20" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="message" TYPE="text" LENGTH="medium" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="instanceid" UNIQUE="false" FIELDS="instanceid"/>
+        <INDEX NAME="createdbyid" UNIQUE="false" FIELDS="createdbyid"/>
+      </INDEXES>
+    </TABLE>
+
+ <TABLE NAME="local_request_config" COMMENT="local_request_config table retrofitted from MySQL">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true"/>
+        <FIELD NAME="varname" TYPE="char" LENGTH="200" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="value" TYPE="text" LENGTH="medium" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+
+<TABLE NAME="local_request_records" COMMENT="local_request_records table retrofitted from MySQL">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" />
+        <FIELD NAME="createdbyid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false"  />
+        <FIELD NAME="compname" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"  />
+        <FIELD NAME="compcode" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"  />  
+		    <FIELD NAME="compkey" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"  />
+        <FIELD NAME="module_id" TYPE="int" LENGTH="20" NOTNULL="true" SEQUENCE="false"  />
+        <FIELD NAME="componentid" TYPE="int" LENGTH="20" NOTNULL="true" SEQUENCE="false"  />
+        <FIELD NAME="status" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false"  />
+        <FIELD NAME="req_type" TYPE="char" LENGTH="200" NOTNULL="false" SEQUENCE="false"  />
+        <FIELD NAME="req_values" TYPE="char" LENGTH="20" NOTNULL="false" SEQUENCE="false"  />
+       <FIELD NAME="responder" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false"  />
+       <FIELD NAME="respondeddate" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false"  />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false"  />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false"  />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false"  />
+        <FIELD NAME="c1" TYPE="char" LENGTH="300" NOTNULL="false" SEQUENCE="false"  />
+        <FIELD NAME="c2" TYPE="char" LENGTH="300" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="c3" TYPE="char" LENGTH="300" NOTNULL="false" SEQUENCE="false" />
+        
+       
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="module_id" UNIQUE="false" FIELDS="module_id"/>
+        <INDEX NAME="componentid" UNIQUE="false" FIELDS="componentid"/>
+    </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>

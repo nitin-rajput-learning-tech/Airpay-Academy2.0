@@ -62,9 +62,11 @@ class request_manager {
             throw new \moodle_exception('error_alreadyenrolled', 'local_sentientia_request');
         }
 
-        // Already pending request for same course?
-        if ($DB->record_exists('local_sentientia_request',
-            ['userid' => $userid, 'courseid' => $courseid, 'status' => 'pending'])) {
+        // Already pending request for same course? A request imported from BizLMS counts only where the lists
+        // show it (imported_history flag): a learner must not be refused for a pending request they cannot see.
+        if ($DB->record_exists_select('local_sentientia_request',
+            'userid = :u AND courseid = :c AND status = :s' . imported_history::filter_sql(''),
+            ['u' => $userid, 'c' => $courseid, 's' => 'pending'])) {
             throw new \moodle_exception('error_alreadyrequested', 'local_sentientia_request');
         }
 
@@ -167,13 +169,10 @@ class request_manager {
             throw new \moodle_exception('error_alreadyenrolled', 'local_sentientia_request');
         }
 
-        // Already pending path request?
-        if ($DB->record_exists('local_sentientia_request', [
-            'userid'    => $userid,
-            'item_type' => self::ITEM_PATH,
-            'itemid'    => $pathid,
-            'status'    => 'pending',
-        ])) {
+        // Already pending path request? (Imported rows count only where the lists show them, as for a course.)
+        if ($DB->record_exists_select('local_sentientia_request',
+            'userid = :u AND item_type = :t AND itemid = :i AND status = :s' . imported_history::filter_sql(''),
+            ['u' => $userid, 't' => self::ITEM_PATH, 'i' => $pathid, 's' => 'pending'])) {
             throw new \moodle_exception('error_alreadyrequested', 'local_sentientia_request');
         }
 
@@ -244,67 +243,20 @@ class request_manager {
      * @return array{0:string, 1:int}  [route_label, approver_userid]
      */
     public static function route_approver_for_path(\stdClass $user, int $pathid): array {
-        // 1. Direct supervisor.
-        $supervisorid = self::resolve_supervisor($user);
-        if ($supervisorid > 0) {
-            return ['manager', $supervisorid];
-        }
-        // 2. Default approver.
-        $default = (int) (get_config('local_sentientia_request', 'default_approver') ?: 2);
-        return ['admin', $default];
-    }
-
-    /**
-     * Resolve the requester's direct supervisor (BizLMS convention).
-     *
-     * WF-018 (2026-06-11): the production mdl_user schema carries
-     * open_supervisorid — open_managerid does NOT exist on BizLMS, so the
-     * original lookup never matched and every request silently fell through
-     * to the course-owner / default-approver routes. open_supervisorid is
-     * authoritative; open_managerid stays as a secondary lookup for
-     * deployments that add that column.
-     *
-     * @return int approver userid, or 0 when no live supervisor is set.
-     */
-    private static function resolve_supervisor(\stdClass $user): int {
-        global $DB;
-        foreach (['open_supervisorid', 'open_managerid'] as $field) {
-            if (empty($user->{$field})) {
-                continue;
-            }
-            $supervisor = $DB->get_record('user',
-                ['id' => $user->{$field}, 'deleted' => 0, 'suspended' => 0]);
-            if ($supervisor) {
-                return (int) $supervisor->id;
-            }
-        }
-        return 0;
+        return approver_routing::for_path($user, $pathid);
     }
 
     /**
      * Route a request to the right approver.
      *
+     * The rules (supervisor, course owner, default approver) live in
+     * approver_routing so the BizLMS import can route legacy pending
+     * requests the same way without calling this manager.
+     *
      * Returns [route_label, approver_userid].
      */
     public static function route_approver(\stdClass $user, int $courseid): array {
-        global $DB;
-
-        // 1. Direct supervisor via open_supervisorid (BizLMS convention).
-        $supervisorid = self::resolve_supervisor($user);
-        if ($supervisorid > 0) {
-            return ['manager', $supervisorid];
-        }
-
-        // 2. Course owner — custom field `course_owner_userid`.
-        // (Falls through silently if not configured.)
-        $ownerid = self::get_course_owner_userid($courseid);
-        if ($ownerid > 0) {
-            return ['courseowner', $ownerid];
-        }
-
-        // 3. Default approver — typically site admin.
-        $default = (int) (get_config('local_sentientia_request', 'default_approver') ?: 2);
-        return ['admin', $default];
+        return approver_routing::for_course($user, $courseid);
     }
 
     /**
@@ -320,6 +272,13 @@ class request_manager {
         }
         $rec = $DB->get_record('local_sentientia_request', ['id' => $requestid], '*', MUST_EXIST);
         if ($rec->status !== 'pending') {
+            throw new \moodle_exception('error_invalidstate', 'local_sentientia_request');
+        }
+
+        // BizLMS import (ADR-032, request feature code fix 3): only a course or a learning path can be decided.
+        // Approving any other item type (classroom, program, certification - imported history) would mark the
+        // row approved while the enrolment below silently does nothing.
+        if (!in_array($rec->item_type ?? self::ITEM_COURSE, [self::ITEM_COURSE, self::ITEM_PATH], true)) {
             throw new \moodle_exception('error_invalidstate', 'local_sentientia_request');
         }
 
@@ -487,8 +446,10 @@ class request_manager {
     /** Get count of pending requests for the current approver (for a badge). */
     public static function pending_count_for_approver(int $userid): int {
         global $DB;
-        return (int) $DB->count_records('local_sentientia_request',
-            ['approver_userid' => $userid, 'status' => 'pending']);
+        // Imported BizLMS rows count only where the lists show them (imported_history flag).
+        return (int) $DB->count_records_select('local_sentientia_request',
+            'approver_userid = :u AND status = :s' . imported_history::filter_sql(''),
+            ['u' => $userid, 's' => 'pending']);
     }
 
     /** Cron: escalate overdue pending requests to next tier. */
@@ -496,7 +457,10 @@ class request_manager {
         global $DB;
         $now = time();
         $rows = $DB->get_records_select('local_sentientia_request',
-            "status = :s AND timedue < :now AND (timeescalated IS NULL OR timeescalated < timedue)",
+            // legacy_source IS NULL: a request imported from BizLMS (ADR-032) is history. Its timedue is NULL
+            // already; the filter keeps it out even if a later change gives it a deadline.
+            "status = :s AND timedue < :now AND (timeescalated IS NULL OR timeescalated < timedue)"
+            . " AND legacy_source IS NULL",
             ['s' => 'pending', 'now' => $now]);
         $escalated = 0;
         foreach ($rows as $r) {
@@ -523,7 +487,9 @@ class request_manager {
         if ($days <= 0) return 0;
         $cutoff = time() - ($days * 86400);
         $rows = $DB->get_records_select('local_sentientia_request',
-            "status = :s AND timecreated < :cut",
+            // legacy_source IS NULL: the first cron run after the import must not flip the imported pending
+            // history (months old) to expired (BizLMS import code fix 4).
+            "status = :s AND timecreated < :cut AND legacy_source IS NULL",
             ['s' => 'pending', 'cut' => $cutoff]);
         $expired = 0;
         foreach ($rows as $r) {
