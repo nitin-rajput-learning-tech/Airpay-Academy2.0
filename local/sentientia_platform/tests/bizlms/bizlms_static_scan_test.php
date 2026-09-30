@@ -172,7 +172,45 @@ final class bizlms_static_scan_test extends \advanced_testcase {
             'DDL add_field' => ['$dbman->add_field($t, $f);', 'add_field'],
             'DDL create_table' => ['$DB->get_manager()->create_table($t);', 'create_table'],
             'reset_sequence outside finalise' => ['$dbman->reset_sequence("t");', 'reset_sequence'],
+            // Added after the second review: ways round the scan that it had let through.
+            'send_message' => ['\\core\\message\\manager::send_message($m);', 'send_message'],
+            'send_message_to_conversation' => ['$manager->send_message_to_conversation(1, $m);', 'send_message_to_conversation'],
+            'message_post_message' => ['message_post_message($a, $b, "x", FORMAT_HTML);', 'message_post_message'],
+            'set_user_preference' => ['set_user_preference("x", 1);', 'set_user_preference'],
+            'unset_user_preference' => ['unset_user_preference("x");', 'unset_user_preference'],
+            'DB replace_all_text' => ['$DB->replace_all_text("a", "b");', 'replace_all_text'],
+            'DB change_database_structure is raw DDL' => ['$DB->change_database_structure("ALTER TABLE x");', 'change_database_structure'],
+            'a call through a variable' => ['$f = "message" . "_send"; $f($m);', 'call through a variable'],
+            'new through a variable' => ['$c = new $class($x);', 'hides the class'],
+            'static call through a variable' => ['$class::create($x);', 'through a variable'],
+            'a banned name as a callable string' => ['array_map("role_assign", $x);', 'role_assign as a callable string'],
+            'a banned name in a callable array' => ['$cb = [$DB, "insert_record"];', 'insert_record as a callable string'],
+            'a banned static method as a callable string' => ['$cb = "core\\message\\manager::send_message";', 'send_message as a callable string'],
+            'a grade function as a callable string' => ['$cb = "grade_update";', 'grade_update as a callable string'],
+            'execute on the database returned by a method' => ['$this->db()->execute("x");', 'execute'],
+            'execute on the database returned by a static method' => ['self::database()->execute("x");', 'execute'],
+            'the framework guard' => ['guard::permit_apply([]);', 'guard is the framework'],
+            'the framework runner' => ['$r = new \\local_sentientia_platform\\bizlms\\runner(["apply" => true]);', 'runner is the framework'],
+            'the framework writer' => ['$w = new writer(false);', 'writer is the framework'],
+            'the framework registry' => ['registry::load();', 'registry is the framework'],
         ];
+    }
+
+    public function test_scanner_finds_a_framework_class_in_a_use_statement(): void {
+        $code = "<?php\nuse local_sentientia_platform\\bizlms\\runner;\nclass x {\n}\n";
+        $findings = static_scanner::scan($code, false, false);
+        $this->assertCount(1, $findings);
+        $this->assertStringContainsString('runner is the framework', $findings[0]);
+    }
+
+    public function test_the_hidden_callee_rules_are_for_importer_code_and_the_framework_may_use_closures(): void {
+        $code = "<?php\nclass x {\n    public function go() {\n        \$each = \$this->rule;\n        \$each(1);\n"
+            . "        (\$this->access)('t');\n        \$cls = 'x';\n        return new \$cls();\n    }\n}\n";
+        $this->assertSame([], static_scanner::scan($code, true, false), 'the framework passes closures around');
+        $findings = static_scanner::scan($code, false, false);
+        $this->assertCount(2, $findings, 'an importer may not: the variable call and new $cls');
+        $this->assertStringContainsString('line 5', $findings[0]);
+        $this->assertStringContainsString('line 8', $findings[1]);
     }
 
     public function test_scanner_allows_reset_sequence_only_inside_finalise(): void {

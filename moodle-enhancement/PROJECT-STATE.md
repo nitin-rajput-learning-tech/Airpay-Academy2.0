@@ -5,6 +5,30 @@
 
 ---
 
+## 2026-09-30 - ADR-032 BizLMS import framework: review round 3 closed (Sonnet 5.5)
+
+Branch `claude/bizlms-import-framework`. The re-review returned fix-then-ship with 1 must-fix; it and the correctness
+should-fix are closed in both plugin trees. **Moodle PHPUnit not run** (lead runs it after the re-init); ran: `php -l`, the drift,
+path-boundary, lang-parity and fixture-copy gates, and two offline harnesses (capability repair against a stub `$DB`, the static
+scanner against the real sources).
+
+- **Capability repair can now exit 0:** the owner-signed allow-list has a `declined` section (one role grant, or a whole missing
+  plugin, each with a reason). `docs/cutover/bizlms-capability-allowlist.json` is the **draft, unsigned**: it declines the 22
+  plugins and the two `manage_own*` organisation capabilities on roles `manager` and `administrator`; it holds no grant.
+  **Nitin signs it and decides `manageclassroom` overrides** from the Stage B inventory (a plugin decline never covers a mapped
+  capability, so those stay open on purpose).
+- **Tenant resolution needs `org`:** registry rule plus a run-time rule on every read of the organisation table.
+- **A tripped tripwire sticks:** recorded, blocks re-apply, resume and dry run; cleared by a restore, `--purge-feature`, or
+  `--acknowledge-tripwire=<run>` in a rehearsal (never in production).
+- **Tripwire hardening:** look after `finalise()`, dry-run report, more watched tables, `--apply` refused without the standard log store.
+- **Also:** permit computed by the guard, wider static scan, core writes limited by operation, signed files tested through
+  byte-identical copies, `CAST(... AS BINARY)`, CSV rebuilt from the map, subkeys never name a user, ADR "Stage B gates" list.
+- **Open:** run `--group bizlms_import`; sign the allow-list; P0.4; `qr_scan.php`; `legacy_cap()` removal and the `crosstenant`
+  grant with the org importer; MySQL 8.4 and MariaDB 10.11 runs; the finance answers.
+- Detail: `state-cards/sentientia_platform-state.md`, ADR-032 (Capabilities, Side-effect safety, Gating, Stage B gates).
+
+---
+
 ## 2026-09-30 - ADR-032 BizLMS import framework: review round 2 closed (Sonnet 5.5)
 
 Branch `claude/bizlms-import-framework`. The independent review of the framework returned fix-then-ship: 4 must-fix and 15

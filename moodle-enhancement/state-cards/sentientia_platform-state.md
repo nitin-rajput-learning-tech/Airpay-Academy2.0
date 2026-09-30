@@ -534,3 +534,92 @@ revoke. Test `bizlms_capability_repair_test`. The `legacy_cap()` fallback remova
 
 **Next:** run `--group bizlms_import` then `--group tenant_isolation` from the moodle5 dirroot; then P0.4; then the org importer
 (with the `legacy_cap()` removal), then the rest in dependency order.
+
+
+## 2026-09-30 - ADR-032 framework, review round 3 (re-review "fix-then-ship"): 1 must-fix and the correctness should-fix closed
+
+Same branch, same version (no schema change: two install.xml COMMENT attributes only). Both plugin trees byte-identical,
+drift gate OK. **Moodle PHPUnit was not run** (lead runs it after a re-init; low-CPU mode). What ran: `php -l` on every
+changed file; `tools/check-tree-drift.php`; `tools/check-path-boundary.php`; `tools/check-lang-parity.php`;
+`tools/check-bizlms-fixture-copies.php`; and two offline harnesses with no Moodle and no DB: (1) `capability_repair`
+`load_allowlist()` and `plan()` against a stub `$DB` (39 checks: the manager-archetype set exits 0 with the declines and 2
+without, every malformed-decline shape, grant-and-decline refused, the checked-in draft), and (2) the static scanner against
+all 40 real `classes/bizlms/` files plus every provider snippet and scanner test (199 assertions, all pass). **Every new
+PHPUnit test is unexecuted**; they are listed in ADR-032 "Stage B gates" item 1.
+
+**Must-fix: the capability repair could never exit 0.** `plan()` treated every inventory row as open unless it was granted,
+held or on `NEVER_GRANT`, so the archetype defaults of all 22 plugins stayed UNAPPROVED, and the only way to shrink the
+list was to grant powers ADR-031 withholds. The allow-list now has a signed `declined` section:
+`{role, context, legacy, reason}` for one role grant, `{legacy_component, reason}` for a missing plugin. `plan()` returns
+`declined` (rows, counted as decided), `declined_by` (per decline, with its reason) and `unused_declines` (a note, not an
+error: a typo leaves the row open, so it shows). A line that is both granted and declined is refused (both lines named, neither
+honoured). `capability_repair::exit_code()` is what the CLI uses. `NEVER_GRANT` is unchanged. Tests: manager and
+administrator with the archetype set and the declines exit 0 and write nothing; the same without the declines exit 2; the
+draft file. **`docs/cutover/bizlms-capability-allowlist.json` is a DRAFT and is NOT SIGNED** (`approved_by` and
+`approved_on` empty; the CLI refuses it): it declines the 22 plugins by component and `manage_ownorganization` and
+`manage_owndepartments` on roles `manager` and `administrator`, holds no grant, and lists the open decisions.
+
+**Deviation from the review's wording, on purpose.** The review said a plugin decline moves matching "uncovered and unmapped"
+rows. Here a plugin decline covers only capabilities with NO Sentientia equivalent. The ten in `MAP` are decided per role and
+context (granted, held, withheld, or declined by name). Otherwise declining `local_classroom` would swallow the
+`local/classroom:manageclassroom` overrides that the review says need an explicit grant (trainers hold it only as an
+override). Consequence for the real database: with the draft signed as it stands, roles 1 and 9 at system context exit 0;
+any `manageclassroom` override, and any mapped capability at a category context or with PREVENT or PROHIBIT, keeps the run
+at exit 2 until Nitin adds a grant or a named decline. That is the intent.
+
+**Should-fix that were correctness issues, done**
+- **Tenant resolution needs org.** Registry: an importer with `tenant_columns()` must have `registry::TENANT_OWNER` (`org`) in
+  its dependency closure (`tenant_resolution_needs_org`); discovery from disk also refuses one when no `org` feature is
+  registered; a test registry without one is not checked (the toy tests register none). Run time: `lookups::orgs()` (so
+  `has_orgs()`, `org()`, `org_by_path()` and the resolver) calls a rule the runner sets, so a feature whose code reads
+  organisations without depending on `org` gets `undeclared_dependency:<f>->org:organisations` in preflight, steps, verify
+  and finalise, dry runs too. This also covers an importer that reads organisations with no tenant column.
+- **A tripped tripwire sticks.** Recorded after any rollback (`bizlms_tripped_<feature>` = run id;
+  `legacymap::tripped_run()`); preflight blocks the feature for a plain apply, `--resume` and a dry run
+  (`tripwire_tripped_earlier`). Cleared by: a snapshot restore (production), `--purge-feature`, or `--acknowledge-tripwire=<run>`
+  in a rehearsal (must name the run that tripped; refused when `bizlms_production = 1`, in the guard and in the runner); a
+  completed feature clears it. `--status` shows `tripped=<run>`; the status check is critical for it. Note: `--purge-feature`
+  is refused for a feature with `core_writes`, so such a feature can only be acknowledged or restored.
+- **Tripwire blind spots.** Third snapshot after `finalise()` and the sequence resets, before the marker (finalise moved
+  inside the feature's try, so a finalise failure is now recorded like any other); dry runs snapshot without the log flush
+  and report `dry_run_tripwire`; watched tables gain `user_preferences`, `role_capabilities`, `context`, `grade_grades`,
+  `grade_grades_history`, `groups_members`, `cohort_members`.
+- **Log store.** `--apply` is refused unless `logstore_standard` is enabled (`tool_log/enabled_stores`); `--status` shows it.
+- **Permit.** `guard::permit($kind, $refusals)` trusted the caller's list; replaced by `permit_apply()` and `permit_purge()`, which
+  compute the refusals. The scanner bans `guard`, `runner`, `writer`, `guard_permit`, `sideeffect_guard`, `registry` and
+  `capability_repair` in importer code. **Breaking for any caller of `guard::permit`; there is none left in the tree.**
+- **Scan bypasses.** Added `send_message`, `send_message_to_conversation`, `message_post_message`, `set_user_preference`,
+  `unset_user_preference`, `$DB->replace_all_text`, `$DB->change_database_structure`; in importer code: a call through a
+  variable, `new $class`, `$class::method()`, a banned name as a callable string, `execute()` on a `db()` accessor.
+- **Core writes are limited by operation.** `CORE_WRITES_ALLOWED` is `table => {operations, why}` (`course`, `tag_instance`:
+  update; `enrol`, `role_assignments`, `user_enrolments`: insert and update). The writer refuses any other operation on a
+  core table, and any adopt, update-own or purge on one.
+- **The real decisions file is tested where PHPUnit runs.** Both signed files have a byte-identical copy under
+  `tests/fixtures/bizlms/` (both trees); the tests read the copy; `tools/check-bizlms-fixture-copies.php` runs in CI
+  (`tree-drift-check`) and a test compares the copy to `docs/` wherever both exist.
+- **`GROUP BY BINARY t.col`** is now `GROUP BY CAST(t.col AS BINARY)` (the BINARY operator is deprecated since MySQL 8.0.27).
+- **The not-imported CSV** is rewritten from `legacymap` when an apply run ends (a crash between a commit and its write lost
+  lines that `--resume` never writes). A dry run keeps what it streamed.
+- **`legacymap.subkey`** may not name a person: `outcome::insert()` takes `code` or `code:id` and refuses `user:`, `email:`,
+  `trainer:` and the like. The mapping doc's org_roles row said `user:<n>`; it is now `pos:<n>` (position in the list).
+- **Stale comments:** install.xml `runmode` and `detail`; the `assign_capability` docblocks (it clears the role cache and fires
+  `capability_assigned`; it does not mark a context dirty in 5.1).
+- **ADR-032** amended: Capabilities, Side-effect safety (tripwire, scan), Gating (5b, acknowledgement), core writes, tests, and
+  a single **Stage B gates** list.
+
+**Should-fix not done, and why**
+- **Allow-list scan.** Only an allow-list of the namespaces importer code may call is sound; the deny-list stays a tripwire for
+  honest mistakes. It needs a reviewed list of pure helpers, which cannot be written before the first real importer exists.
+- **`files` is not watched by the tripwire.** `file_rehome` copies an organisation logo in `finalise()` through the file API,
+  a reviewed side effect. Watching the table needs `files` on `CORE_WRITES_ALLOWED` and a change to what `--purge-feature`
+  may do. Decide both with the org importer.
+- **The dry-run tripwire reports and does not fail.** An online site has other writers (log rows from other users), so a
+  failing dry run would be noise. It also cannot see events (no flush without a write). It shows direct-write leaks.
+- **`guard_permit` is still a seam**, not a lock (PHP has no friend visibility); the scan keeps honest code away from it.
+- **Other stage gates** are unchanged and listed in ADR "Stage B gates": `legacy_cap()` removal with the org importer, the
+  deliberate `crosstenant` grant, P0.4, the `qr_scan.php` freeze, the MySQL 8.4 and MariaDB 10.11 runs.
+- **The two finance-confirm keys** (`cart.credit_balances`, `cart.erpnext_invoices_legal`): the ruling accepts that the cart
+  importer must not declare them. Nitin should confirm that reading.
+
+**Next:** the lead runs `--group bizlms_import` (and `tenant_isolation`) from the moodle5 dirroot after the re-init; Nitin signs
+the capability allow-list from the Stage B inventory; then P0.4 and the org importer (with the `legacy_cap()` removal).

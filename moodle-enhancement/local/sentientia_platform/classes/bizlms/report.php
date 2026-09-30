@@ -17,7 +17,10 @@ defined('MOODLE_INTERNAL') || die();
  * imported (merged, folded, archived, skipped) by source table, id, outcome and
  * reason code.
  *
- * The CSV is the evidence the owner accepts, so a line must mean a row is in the map. The
+ * The CSV is the evidence the owner accepts, and legacymap is what it is the evidence of. It is streamed as the
+ * batches commit, and rewritten from the map when an apply run ends (rewrite_csv()): a crash between a commit and
+ * the line's write loses a line that --resume would never write, because that row is mapped already. A line must
+ * mean a row is in the map. The
  * per-row counters and CSV lines are therefore HELD while a batch (or, in feature mode, a whole
  * feature) is in its transaction: release() writes them after the commit, discard() drops them
  * with the rollback. Without that, a rolled-back batch leaves phantom lines and --resume
@@ -34,6 +37,9 @@ final class report {
 
     /** @var resource|null */
     private $csv = null;
+
+    /** @var string Path of the open CSV. */
+    private string $csvpath = '';
 
     /**
      * @var array<int, array<int, array{0: string, 1: array}>> Stack of held calls, one list per open transaction
@@ -200,10 +206,53 @@ final class report {
             throw new blocked('report_csv_unwritable');
         }
         $this->csv = $handle;
+        $this->csvpath = $path;
         if (!$exists) {
             fputcsv($this->csv, ['feature', 'sourcetable', 'sourceid', 'subkey', 'outcome', 'reason', 'detail'],
                 ',', '"', '\\');
         }
+    }
+
+    /**
+     * @return bool A CSV of non-imported rows is open.
+     */
+    public function csv_is_open(): bool {
+        return $this->csv !== null;
+    }
+
+    /**
+     * Replace the CSV with these lines (the rows of legacymap that were not imported). Written beside the file and
+     * moved over it, so an interrupted rewrite leaves the streamed file, not half of a new one.
+     *
+     * @param iterable $lines Each [feature, sourcetable, sourceid, subkey, outcome, reason, detail].
+     * @return void
+     * @throws blocked When the file cannot be written.
+     */
+    public function rewrite_csv(iterable $lines): void {
+        if ($this->csv === null || $this->csvpath === '') {
+            return;
+        }
+        $temp = $this->csvpath . '.rebuild';
+        $handle = fopen($temp, 'wb');
+        if ($handle === false) {
+            throw new blocked('report_csv_unwritable');
+        }
+        fputcsv($handle, ['feature', 'sourcetable', 'sourceid', 'subkey', 'outcome', 'reason', 'detail'], ',', '"', '\\');
+        foreach ($lines as $line) {
+            fputcsv($handle, $line, ',', '"', '\\');
+        }
+        fclose($handle);
+        fclose($this->csv);
+        $this->csv = null;
+        if (!rename($temp, $this->csvpath)) {
+            @unlink($temp);
+            throw new blocked('report_csv_unwritable');
+        }
+        $reopened = fopen($this->csvpath, 'ab');
+        if ($reopened === false) {
+            throw new blocked('report_csv_unwritable');
+        }
+        $this->csv = $reopened;
     }
 
     /**

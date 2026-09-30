@@ -49,6 +49,9 @@ final class runner {
     /** Most distinct values a declared enum column may show before preflight blocks (it is not an enum). */
     private const ENUM_MAX_VALUES = 1000;
 
+    /** Rows per page when the CSV is rebuilt from the map. */
+    private const CSV_PAGE = 5000;
+
     /** Rows per page when preflight pages the legacy ids against a PRESERVE target. */
     private const PRESERVE_PAGE = 2000;
 
@@ -886,6 +889,10 @@ final class runner {
             }
         }
 
+        if (!$this->dryrun && $this->runid && $order) {
+            $this->rebuild_csv($order);
+        }
+
         $this->report->meta('exit', $result['exit']);
         $this->report->meta('status', $result['status']);
         $this->report->meta('runid', $this->runid);
@@ -898,6 +905,37 @@ final class runner {
         $this->report->meta('blockers', $result['blockers']);
         $this->report->close();
         return $result;
+    }
+
+    /**
+     * Rewrite the CSV of rows that were not imported from legacymap, the source of truth. The lines were streamed
+     * after each commit; a crash between a commit and its write lost lines that --resume never writes again,
+     * because the rows are mapped already. Runs for a failed run too: the map holds what committed.
+     *
+     * @param string[] $order Features of the run.
+     * @return void
+     */
+    private function rebuild_csv(array $order): void {
+        global $DB;
+        if (!$this->report->csv_is_open()) {
+            return;
+        }
+        [$insql, $params] = $DB->get_in_or_equal($order, SQL_PARAMS_NAMED, 'blmcsv');
+        $lines = (function () use ($DB, $insql, $params): \Generator {
+            $after = 0;
+            do {
+                $rows = $DB->get_records_select(legacymap::TABLE,
+                    "feature {$insql} AND outcome <> 'imported' AND outcome <> 'adopted' AND id > :blmafter",
+                    $params + ['blmafter' => $after], 'id ASC',
+                    'id, feature, sourcetable, sourceid, subkey, outcome, reason, detail', 0, self::CSV_PAGE);
+                foreach ($rows as $row) {
+                    $after = (int) $row->id;
+                    yield [$row->feature, $row->sourcetable, (int) $row->sourceid, (string) $row->subkey, $row->outcome,
+                        (string) $row->reason, (string) $row->detail];
+                }
+            } while (count($rows) === self::CSV_PAGE);
+        })();
+        $this->report->rewrite_csv($lines);
     }
 
     /**

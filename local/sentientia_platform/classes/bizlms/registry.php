@@ -47,25 +47,56 @@ defined('MOODLE_INTERNAL') || die();
 final class registry {
 
     /**
-     * Core tables an importer may declare in core_writes(), each with the ADR-032 decision or the
-     * mapping-doc section that reviewed it. A table that is not listed cannot be declared: adding one
-     * is an amendment to the ADR and a change to this constant, never a line in an importer.
+     * Core tables an importer may declare in core_writes(), each with the operations reviewed for it and the
+     * ADR-032 decision or mapping-doc section that reviewed them. A table that is not listed cannot be declared,
+     * and a listed table can be written only in the listed ways: adding a table or an operation is an amendment
+     * to the ADR and a change to this constant, never a line in an importer. The writer enforces the operations,
+     * so an importer that declares course (for the open_* backfill UPDATE) cannot raw-insert course rows with no
+     * context or sections, and one that declares tag_instance (for a remap) cannot insert tag instances.
+     *
+     * 'insert' is a new row, 'update' a change of an existing row (writer::update_core()). Nothing here may be
+     * adopted, purged or updated as "the import's own row": those are for the importer's target tables.
      *
      * The import never writes course completions, grades, logs, messages or any other history table
      * of core (ADR decision 1 and the rejected alternative "import into core tables").
      *
-     * @var array<string, string>
+     * @var array<string, array{operations: string[], why: string}>
      */
     public const CORE_WRITES_ALLOWED = [
-        'course' => 'course_lookups: the open_* backfill (mapping doc, course_lookups)',
-        'enrol' => 'gap.orphan_enrol_instances (G6): a manual instance for a course that has none',
-        'role_assignments' => 'org_roles: the role assignments of the org role tables (mapping doc, org_roles)',
-        'tag_instance' => 'course_tags: the in-place remap of tag instances (mapping doc, course_tags)',
-        'user_enrolments' => 'gap.orphan_enrol_instances (G6): orphaned enrolments become manual enrolments',
+        'course' => [
+            'operations' => ['update'],
+            'why' => 'course_lookups: the open_* backfill (mapping doc, course_lookups)',
+        ],
+        'enrol' => [
+            'operations' => ['insert', 'update'],
+            'why' => 'gap.orphan_enrol_instances (G6): a manual instance for a course that has none',
+        ],
+        'role_assignments' => [
+            'operations' => ['insert', 'update'],
+            'why' => 'org_roles: the role assignments of the org role tables (mapping doc, org_roles)',
+        ],
+        'tag_instance' => [
+            'operations' => ['update'],
+            'why' => 'course_tags: the in-place remap of tag instances (mapping doc, course_tags)',
+        ],
+        'user_enrolments' => [
+            'operations' => ['insert', 'update'],
+            'why' => 'gap.orphan_enrol_instances (G6): orphaned enrolments become manual enrolments',
+        ],
     ];
 
     /** Feature key of the importer that fills the organisation table that tenant resolution reads. */
     public const TENANT_OWNER = 'org';
+
+    /**
+     * The operations reviewed for a core table.
+     *
+     * @param string $table
+     * @return string[] Empty for a table that is not on CORE_WRITES_ALLOWED.
+     */
+    public static function core_write_operations(string $table): array {
+        return self::CORE_WRITES_ALLOWED[$table]['operations'] ?? [];
+    }
 
     /** @var importer[]|null Importers injected by a test; null means discover on disk. */
     private static ?array $testing = null;

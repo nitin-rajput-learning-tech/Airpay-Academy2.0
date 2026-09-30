@@ -1088,6 +1088,50 @@ final class bizlms_runner_test extends \advanced_testcase {
         $this->assertSame(1, count(array_keys($lines, 'toy,local_toy_org,3,,skipped,no_name,')), 'and no row twice');
     }
 
+    public function test_the_csv_is_rewritten_from_the_map_when_an_apply_run_ends(): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+        $csv = make_request_directory() . '/notimported.csv';
+        // A crash between a commit and the write of its lines: whatever the streamed file holds, the map is the truth.
+        $damage = function (string $key, int $batch) use ($csv): void {
+            if ($key === 'toy.org' && $batch === 1) {
+                file_put_contents($csv, "not a line of the report\n");
+            }
+        };
+        $report = new report();
+        $report->open_csv($csv);
+        $result = (new runner(['apply' => true, 'permit' => guard::test_permit(), 'report' => $report, 'batch' => 2,
+            'atomic_threshold' => 0, 'failpoint' => $damage]))->run([]);
+        $report->close();
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+
+        $lines = file($csv, FILE_IGNORE_NEW_LINES);
+        $this->assertSame('feature,sourcetable,sourceid,subkey,outcome,reason,detail', $lines[0]);
+        $this->assertNotContains('not a line of the report', $lines);
+        $expected = [];
+        foreach ($DB->get_records_select('local_sentientia_legacymap', "outcome <> 'imported' AND outcome <> 'adopted'",
+                null, 'id') as $row) {
+            $expected[] = [$row->feature, $row->sourcetable, (string) $row->sourceid, (string) $row->subkey, $row->outcome,
+                (string) $row->reason, (string) $row->detail];
+        }
+        $this->assertNotEmpty($expected, 'the toy data has rows that are not imported');
+        $this->assertSame($expected, array_map('str_getcsv', array_slice($lines, 1)),
+            'one line per map row that was not imported, in the order the map was written');
+        $this->assertSame(1, count(array_keys($lines, 'toy,local_toy_org,3,,skipped,no_name,')));
+    }
+
+    public function test_a_dry_run_keeps_the_csv_it_streamed(): void {
+        $this->begin();
+        $this->seed_toy_data();
+        $dry = make_request_directory() . '/dry.csv';
+        $report = new report();
+        $report->open_csv($dry);
+        (new runner(['apply' => false, 'report' => $report, 'batch' => 2]))->run([]);
+        $report->close();
+        $this->assertGreaterThan(1, count(file($dry)), 'a dry run has no map to rebuild from, so it keeps its lines');
+    }
+
     public function test_feature_mode_lists_nothing_for_a_feature_that_rolled_back(): void {
         $this->begin();
         $this->seed_toy_data();

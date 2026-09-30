@@ -375,10 +375,14 @@ The writer is the only code that writes. It enforces:
    importer component's own `db/install.xml` (or `classes/schema` `TABLES`), that is a legacy table
    (known, detected in the database, or claimed or declined by any importer) or that is a framework
    table. `core_writes()` accepts only `registry::CORE_WRITES_ALLOWED` (`course`, `enrol`,
-   `role_assignments`, `tag_instance`, `user_enrolments`, each with the section that reviewed it);
-   history and configuration tables of core (`course_completions`, `grade_*`, `logstore_standard_log`,
-   `role_capabilities`, messages, notifications) can never be declared. Adding a table to the list is
-   an amendment to this ADR.
+   `role_assignments`, `tag_instance`, `user_enrolments`), each with the operations reviewed for it and the
+   section that reviewed them: `course` and `tag_instance` are UPDATE only; `enrol`, `role_assignments` and
+   `user_enrolments` are insert and update. The writer enforces the operation: an importer that declares
+   `course` for the open_* backfill cannot raw-insert course rows (no context, no sections), and one that
+   declares `tag_instance` for a remap cannot insert tag instances. A core table is never adopted, purged
+   or updated as "the import's own row". History and configuration tables of core
+   (`course_completions`, `grade_*`, `logstore_standard_log`, `role_capabilities`, messages,
+   notifications) can never be declared. Adding a table or an operation is an amendment to this ADR.
 9. **Where the code lives.** The registry refuses an importer or a step whose class is defined outside
    the plugin's `classes/bizlms/`, because the static scan reads that directory and nothing else.
 
@@ -429,7 +433,11 @@ The writer is the only code that writes. It enforces:
    `role_assignments`, `course_completions`, `course_modules_completion`, `quiz_attempts`,
    `badge_issued`, `tool_certificate_issues` (if present), `local_sentientia_evaluation_triggers`,
    `local_sentientia_notif_log`, `local_sentientia_email_log` (except for the feature that targets it),
-   plus the importer's own extra list. Any change outside declared targets and core writes aborts the
+   and the tables core APIs write WITHOUT an event: `user_preferences`, `role_capabilities`, `context`,
+   `grade_grades`, `grade_grades_history`, `groups_members`, `cohort_members`, plus the importer's own
+   extra list. `files` is deliberately not watched: `file_rehome` copies an organisation logo in
+   `finalise()`, a reviewed side effect that needs a `core_writes` entry and a purge rule, both decided with
+   the org importer. Any change outside declared targets and core writes aborts the
    run before the next feature. `MAX(id)` is O(1) and catches inserts; updates to state tables are
    caught by the existing parity checksums at the end (`migration_parity_check.php:116-133`).
    **Events are not writes at the moment they fire.** The standard log is an observer with
@@ -439,7 +447,22 @@ The writer is the only code that writes. It enforces:
    manager first (`get_log_manager(true)`), and a feature that runs in one outer transaction is checked
    twice: inside it (a direct write rolls back with the feature) and again after the commit and before
    `finalise()` and the marker (an event side effect). The second violation fails the feature with no
-   marker, as in batch mode; its rows are committed, so the RDS snapshot is the way back.
+   marker, as in batch mode; its rows are committed, so the RDS snapshot is the way back. A third look
+   comes after `finalise()` and the sequence resets, before the marker, so their side effects are checked
+   too, and `finalise()` runs inside the feature's try so its failure is recorded like any other.
+   **A trip sticks.** The rows a tripped feature committed are all mapped and every step is done, so a
+   plain re-apply would take a fresh `before` snapshot, find the tripwire clean and write the marker.
+   The runner therefore records the trip after any rollback (`bizlms_tripped_<feature>` = run id,
+   `legacymap::tripped_run()`), and preflight blocks that feature (`tripwire_tripped_earlier`) for a plain
+   apply, `--resume` and a dry run. It runs again only after a restore of the snapshot (the production
+   way back), `--purge-feature`, or, in a rehearsal, `--acknowledge-tripwire=<run>` naming the run that
+   tripped (refused when `bizlms_production = 1`, in the guard and in the runner). The completed feature
+   clears the record. `--status` shows `tripped=<run>` and the status check is critical for it.
+   **The standard log store must be on.** With `logstore_standard` off, or only a database store on, an
+   event leaves no row in any watched table and the tripwire would report clean while blind, so `--apply`
+   is refused (gating item 5b). **Dry runs** take snapshots too, without the log flush (a dry run writes
+   nothing), and report `dry_run_tripwire`; it is reported and not fatal, because an online site has other
+   writers.
 4. **Static scan.** A test tokenises every PHP file below `*/classes/bizlms/` of every plugin type
    (sub-directories included) and fails on: `message_send`, `email_to_user`, `->trigger(`,
    `role_assign(`, `role_unassign*(`, `enrol_user`, `unenrol_user`, `enrol_try_internal_enrol`,
@@ -452,7 +475,16 @@ The writer is the only code that writes. It enforces:
    (`session_manager::`, `waitlist_manager::`, `path_manager::`, `program_manager::`,
    `request_manager::`, `cart_manager::`, `invoicer::`, `notifier::`, `delivery_log::log`,
    `evaluation_manager::submit_response`, `recompletion_engine::`, `skills_manager::`,
-   `rating_manager::submit_rating`).
+   `rating_manager::submit_rating`), and also `message_post_message`, `send_message`,
+   `send_message_to_conversation`, `set_user_preference`, `unset_user_preference`,
+   `$DB->replace_all_text()` and `$DB->change_database_structure()` (raw DDL). In importer code (not the
+   framework) it also fails on a call through a variable (`$f(...)`), `new $class`, `$class::method()`, a
+   banned name passed as a callable string (`'role_assign'`, `[$DB, 'insert_record']`,
+   `'manager::send_message'`), `execute()` on the value a `db()`/`database()` accessor returns, and the
+   framework's own `runner`, `writer`, `guard`, `guard_permit`, `sideeffect_guard`, `registry` and
+   `capability_repair`. This is a deny-list and stays a tripwire for honest mistakes: only an allow-list
+   of the namespaces importer code may call would be sound (an open follow-up), and core writes that fire
+   no event (`file_storage`, preferences) are what the runtime tripwire's extra tables are for.
    A `$DB` write method that only the database object has (`insert_record`, `update_record`,
    `delete_records`, `set_field`, `delete_records_subquery` and the like) is a finding on ANY receiver;
    `execute()` counts when the receiver is `$DB`, an alias of it, `->db`, `$GLOBALS['DB']`, a
@@ -460,8 +492,10 @@ The writer is the only code that writes. It enforces:
 5. **Environment:** `$CFG->noemailever`, the task runner off, and tests that wrap every import in
    `redirectEvents()`, `redirectMessages()` and `redirectEmails()` and assert all three are empty.
 6. **Permit.** The runner refuses to write or delete without a `guard_permit`, which only `guard`
-   issues (`guard::permit()` after the refusals came back empty; `guard::test_permit()` under
-   PHPUnit). The guard conditions are therefore not a courtesy of one CLI script.
+   issues: `guard::permit_apply()` and `guard::permit_purge()`, which work the refusals out themselves (a
+   caller cannot pass an empty list), and `guard::test_permit()` under PHPUnit. The guard conditions are
+   therefore not a courtesy of one CLI script. The permit is a seam, not a lock; the static scan keeps
+   importer code away from the guard, the runner and the writer.
 
 ## CLI
 
@@ -533,6 +567,8 @@ tenant and customer scopes mean nothing here, an admin can flip a flag from a we
 4. `$CFG->noemailever` is true.
 5. The scheduled-task runner is off (`cron_enabled` = 0; confirm the setting name on 5.2) and no task
    lock is held. The tripwire also detects a leak.
+5b. `logstore_standard` is enabled (`tool_log/enabled_stores`): the event tripwire reads its table.
+    `--acknowledge-tripwire` is refused when `bizlms_production = 1`.
 6. The lock `bizlms_import` is taken through the core lock API. With the file lock factory it goes when
    the process dies. With `$CFG->lock_factory = db_record_lock_factory` a run killed with SIGKILL keeps
    it for `LOCK_LIFETIME` (12 hours); the refusal then quotes the newest running run's heartbeat age, and
@@ -732,9 +768,11 @@ today they are what keeps tenant admins working on a restored UAT database.
    **Not yet run:** the CRC32 SQL, `insert_records`, `import_record`, `reset_sequence`, the lock factory
    and the fixture lifecycle have only run in the SQLite stand-in used while the framework was written.
    `--group bizlms_import` must pass on MySQL 8 and on MariaDB 10.11 before Stage B (gating item for the
-   first feature importer). Two tests skip themselves when the environment cannot show what they test:
-   the event-tripwire test (standard log store not writing) and the checked-in decisions file test
-   (`docs/` not deployed with the plugin).
+   first feature importer). The event-tripwire test skips itself when the environment cannot show what it
+   tests (standard log store not writing). The owner-signed files (`docs/cutover/bizlms-import-decisions.json`,
+   `bizlms-capability-allowlist.json`) are tested through byte-identical copies under
+   `tests/fixtures/bizlms/`, because `docs/` is not deployed with the plugin;
+   `tools/check-bizlms-fixture-copies.php` (CI, `tree-drift-check`) fails when a copy differs.
    **Open:** the `importer_contract` trait checks that a privacy provider is declared; the privacy
    export and erase check for every new person column (approach 4) is not in the trait yet. It lands
    with the first feature importer that adds a person column.
@@ -766,6 +804,25 @@ framework, CLI, tests, the copy scripts retired, the seed scripts guarded) are i
   is built, and runs first in the cutover slice. Its allow-list (declines drafted, unsigned) needs
   Nitin's signature and his decision on the classroom overrides before it can exit 0 on the real
   inventory.
+
+**Stage B gates (each must close before an importer runs on the restored live copy).** They are all
+recorded above; this is the one list:
+1. `--group bizlms_import` passes on MySQL 8.4 and on MariaDB 10.11. None of the tests written in the
+   review rounds (registry rules, event tripwire, sticky tripwire, permit, capability repair, report
+   rebuild, subkey shape, core-write operations) has been run yet.
+2. The capability allow-list `docs/cutover/bizlms-capability-allowlist.json` is signed by Nitin with his
+   decision on `local/classroom:manageclassroom` overrides (and any mapped capability at a context other
+   than system, or with PREVENT or PROHIBIT), and `repair_bizlms_capabilities.php` exits 0 on the
+   restored database.
+3. `local_sentientia_org\accesslib::legacy_cap()` is removed in the same release as the org importer, and
+   `local/sentientia_platform:crosstenant` is granted deliberately, by hand, to the platform role Nitin
+   names. Until then role 9 passes `can_manage_multi()` on a restored database through
+   `local/costcenter:manage_multiorganizations`.
+4. P0.4: `migration_parity_check.php` calls `parity::comparison_problems()`, with the baseline taken with
+   no CRC cap.
+5. `local/sentientia_pages/qr_scan.php` stops reading and inserting `local_classroom_attendance`
+   (classroom code fix 1, with visual evidence).
+6. The standard log store is enabled on the database the run is on (gating item 5b).
 
 **Phase 0 source freezing:** move `SE local/sentientia_pages/qr_scan.php` and `qr_attendance.php` off
 the legacy tables (they check and write `local_classroom_attendance`, migration plan :174-177); make

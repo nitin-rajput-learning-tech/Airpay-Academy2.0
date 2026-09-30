@@ -172,6 +172,16 @@ final class bizlms_registry_test extends \advanced_testcase {
 
         $this->assertSame(['course', 'enrol', 'role_assignments', 'tag_instance', 'user_enrolments'],
             array_keys(registry::CORE_WRITES_ALLOWED));
+        // Each table is reviewed for named operations only, and every entry says why.
+        foreach (registry::CORE_WRITES_ALLOWED as $table => $entry) {
+            $this->assertNotEmpty($entry['operations'], $table);
+            $this->assertEmpty(array_diff($entry['operations'], ['insert', 'update']), $table);
+            $this->assertNotSame('', trim($entry['why']), $table);
+        }
+        $this->assertSame(['update'], registry::core_write_operations('course'));
+        $this->assertSame(['update'], registry::core_write_operations('tag_instance'));
+        $this->assertSame(['insert', 'update'], registry::core_write_operations('user_enrolments'));
+        $this->assertSame([], registry::core_write_operations('grade_grades'));
         foreach (['course_completions', 'course_modules_completion', 'grade_grades', 'grade_items', 'logstore_standard_log',
                   'role_capabilities', 'messages', 'notifications', 'quiz_attempts', 'badge_issued'] as $history) {
             $this->assertArrayNotHasKey($history, registry::CORE_WRITES_ALLOWED,

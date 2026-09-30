@@ -49,6 +49,19 @@ final class outcome {
     /** What legacymap.detail may hold: up to four lower-case words joined by colons. */
     private const DETAIL_PATTERN = '/^[a-z][a-z0-9_]{0,63}(:[a-z][a-z0-9_]{0,63}){0,3}$/';
 
+    /** What legacymap.subkey may hold: a code, optionally followed by a colon and an id or code (course:17, part:a). */
+    private const SUBKEY_PATTERN = '/^[a-z][a-z0-9_]{0,30}(:[a-z0-9_]{1,30})?$/';
+
+    /**
+     * Subkey prefixes that would carry a person's id. legacymap holds no personal data, and an id such as user:55 is
+     * one (the same reason outcome::skip() takes no id in its detail). A row exploded from a list of users takes its
+     * position in the list (pos:2), never the user.
+     */
+    private const PERSON_PREFIXES = [
+        'user', 'userid', 'uid', 'usr', 'person', 'people', 'employee', 'learner', 'student', 'teacher', 'trainer',
+        'manager', 'member', 'owner', 'author', 'trainee', 'participant', 'username', 'email', 'name', 'account',
+    ];
+
     /** @var string[] Warning codes, for example truncated:name, derived_timestamp, url_sanitised. */
     public array $warnings = [];
 
@@ -80,12 +93,21 @@ final class outcome {
      * @param int $sourceid Legacy id (or the derived group's key).
      * @param string $table Target table, declared by the importer.
      * @param \stdClass $row Every column to write, including all time* columns.
-     * @param string $subkey Empty for the primary row; a fan-out sub-key otherwise.
+     * @param string $subkey Empty for the primary row; a fan-out sub-key otherwise: a lower-case code, optionally
+     *        with a non-person id after a colon (course:17, part:a). It is stored in legacymap.subkey, a framework
+     *        table that holds no personal data, so it never names a user.
      * @return self
      */
     public static function insert(int $sourceid, string $table, \stdClass $row, string $subkey = ''): self {
         if ($table === '') {
             throw new \coding_exception('outcome::insert() needs a target table');
+        }
+        if ($subkey !== '') {
+            $prefix = explode(':', $subkey)[0];
+            if (!preg_match(self::SUBKEY_PATTERN, $subkey) || in_array($prefix, self::PERSON_PREFIXES, true)) {
+                throw new \coding_exception('outcome::insert() subkey must be a code with an optional non-person id '
+                    . '(course:17, part:a), never a user or free text');
+            }
         }
         return new self(self::INSERT, $sourceid, $table, null, $row, $subkey, '', '', 0);
     }

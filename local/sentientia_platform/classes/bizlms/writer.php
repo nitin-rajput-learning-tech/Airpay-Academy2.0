@@ -13,7 +13,8 @@ defined('MOODLE_INTERNAL') || die();
  * those to this class, which enforces:
  *
  * 1. Declared tables only: the importer's target_tables() plus its reviewed
- *    core_writes(). A legacy table is never writable.
+ *    core_writes(), and a core table only in the ways registry::CORE_WRITES_ALLOWED
+ *    reviewed for it. A legacy table is never writable.
  * 2. No silent column loss: a field that is not a column of the target is
  *    refused. (import_record() would silently skip it, which is how
  *    migrate_all.php lost columns.)
@@ -105,6 +106,7 @@ final class writer {
      */
     public function check(string $table, \stdClass $row, bool $partial = false, bool $mapinsert = false): void {
         $this->assert_declared($table);
+        $this->assert_operation($table, $mapinsert ? 'insert' : ($partial ? 'update' : 'adopt'));
         if ($mapinsert && property_exists($row, 'id')) {
             throw new writer_refused("id_not_allowed_for_map_insert:{$table}");
         }
@@ -139,6 +141,7 @@ final class writer {
         global $DB;
         $this->assert_live();
         $this->assert_declared($table);
+        $this->assert_operation($table, 'insert');
         if (property_exists($row, 'id')) {
             throw new writer_refused("id_not_allowed_for_map_insert:{$table}");
         }
@@ -189,6 +192,7 @@ final class writer {
         global $DB;
         $this->assert_live();
         $this->assert_declared($table);
+        $this->assert_operation($table, 'adopt');
         $this->validate($table, $row, false, true);
         $row->id = $targetid;
         $DB->update_record($table, $row);
@@ -206,6 +210,7 @@ final class writer {
         global $DB;
         $this->assert_live();
         $this->assert_declared($table);
+        $this->assert_operation($table, 'update_own');
         if (!provenance::is_imported($table, $targetid)) {
             throw new writer_refused("update_of_a_row_the_import_did_not_create:{$table}");
         }
@@ -229,6 +234,7 @@ final class writer {
             throw new writer_refused("not_a_reviewed_core_write:{$table}");
         }
         $this->assert_declared($table);
+        $this->assert_operation($table, 'update');
         $this->validate($table, $fields, true, true);
         $fields->id = $targetid;
         $DB->update_record($table, $fields);
@@ -264,6 +270,7 @@ final class writer {
         global $DB;
         $this->assert_live();
         $this->assert_declared($table);
+        $this->assert_operation($table, 'purge');
         foreach (array_chunk(array_values($ids), 1000) as $chunk) {
             $DB->delete_records_list($table, 'id', $chunk);
         }
@@ -451,6 +458,24 @@ final class writer {
         }
         if (!isset($this->targets[$table]) && !isset($this->core[$table])) {
             throw new writer_refused("undeclared_table:{$table}");
+        }
+    }
+
+    /**
+     * Refuse an operation on a core table that registry::CORE_WRITES_ALLOWED did not review for it. The importer's
+     * own target tables take every operation; a core table is declared only for the operations listed, so declaring
+     * one (for an UPDATE, say) is not a licence to insert, adopt or purge rows in it.
+     *
+     * @param string $table
+     * @param string $operation insert, update, adopt, update_own or purge.
+     * @return void
+     */
+    private function assert_operation(string $table, string $operation): void {
+        if (isset($this->targets[$table])) {
+            return;
+        }
+        if (!in_array($operation, registry::core_write_operations($table), true)) {
+            throw new writer_refused("core_write_operation_not_reviewed:{$table}:{$operation}");
         }
     }
 

@@ -188,6 +188,49 @@ final class bizlms_writer_test extends \advanced_testcase {
             fn() => $writer->update_core('course', 1, (object) ['shortname' => 'x']));
     }
 
+    public function test_a_core_table_is_writable_only_in_the_ways_it_was_reviewed_for(): void {
+        global $DB;
+        $this->resetAfterTest();
+        toy_importer::reset();
+        toy_importer::$corewrites = true;
+        $writer = (new writer(false))->for_importer(new toy_importer());
+
+        // course is declared for the open_* backfill UPDATE, and for nothing else.
+        $this->assert_refused('core_write_operation_not_reviewed:course:insert',
+            fn() => $writer->insert('course', (object) ['fullname' => 'x', 'shortname' => 'blmx']));
+        $this->assert_refused('core_write_operation_not_reviewed:course:adopt',
+            fn() => $writer->adopt('course', 1, (object) ['summary' => 'x']));
+        $this->assert_refused('core_write_operation_not_reviewed:course:update_own',
+            fn() => $writer->update_own('course', 1, (object) ['summary' => 'x']));
+        $this->assert_refused('core_write_operation_not_reviewed:course:purge', fn() => $writer->purge_rows('course', [1]));
+        $this->assertSame(0, $DB->count_records('course', ['shortname' => 'blmx']), 'the refused insert wrote nothing');
+
+        // The dry run applies the same rule: a row the writer would refuse in an apply run fails there too.
+        $dry = (new writer(true))->for_importer(new toy_importer());
+        $this->assert_refused('core_write_operation_not_reviewed:course:insert',
+            fn() => $dry->check('course', (object) ['fullname' => 'x'], false, true));
+        $this->assert_refused('core_write_operation_not_reviewed:course:adopt',
+            fn() => $dry->check('course', (object) ['summary' => 'x']));
+        $dry->check('course', (object) ['summary' => 'x'], true);
+
+        // The reviewed operation works.
+        $writer->update_core('course', 1, (object) ['summary' => 'reviewed']);
+        $this->assertSame('reviewed', $DB->get_field('course', 'summary', ['id' => 1]));
+    }
+
+    public function test_a_core_table_that_allows_an_insert_still_takes_no_adopt(): void {
+        $this->resetAfterTest();
+        toy_importer::reset();
+        toy_importer::$corewritetable = 'user_enrolments';
+        $writer = (new writer(false))->for_importer(new toy_importer());
+        // user_enrolments is reviewed for insert and update (orphaned enrolments become manual), never for adopting
+        // a row as if it were the importer's own.
+        $this->assert_refused('core_write_operation_not_reviewed:user_enrolments:adopt',
+            fn() => $writer->adopt('user_enrolments', 1, (object) ['status' => 0]));
+        $this->assert_refused('core_write_operation_not_reviewed:user_enrolments:update_own',
+            fn() => $writer->update_own('user_enrolments', 1, (object) ['status' => 0]));
+    }
+
     public function test_a_dry_run_writer_refuses_every_write_but_still_checks_rows(): void {
         $writer = $this->writer(true);
         $this->assert_refused('write_during_a_dry_run', fn() => $writer->insert('local_sentientia_toy_item', $this->item()));

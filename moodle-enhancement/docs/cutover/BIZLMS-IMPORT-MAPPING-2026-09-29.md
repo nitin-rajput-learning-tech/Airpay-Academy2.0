@@ -306,7 +306,7 @@ junk row skipped; long shortname truncated with a warning; pre-written row adopt
 
 | Source | Target | Key |
 |---|---|---|
-| local_costcenter_permissions (`BZ local/costcenter/db/install.xml:43-62`) | core `role_assignments` at `context_coursecat(local_costcenter.category)` + one audit row (`SE local/sentientia_roles/db/install.xml:5-48`) | map, subkey `user:<n>` per exploded user; target skipped when `(roleid, contextid, userid, component='', itemid=0)` exists (outcome `merged`) |
+| local_costcenter_permissions (`BZ local/costcenter/db/install.xml:43-62`) | core `role_assignments` at `context_coursecat(local_costcenter.category)` + one audit row (`SE local/sentientia_roles/db/install.xml:5-48`) | map, subkey `pos:<n>` per exploded user (n = the 1-based position in the comma list, never the user id: legacymap.subkey holds no personal data, and outcome::insert() refuses a `user:` subkey); target skipped when `(roleid, contextid, userid, component='', itemid=0)` exists (outcome `merged`) |
 | local_org_dept_roles (`BZ local/assignroles/db/install.xml:6-21`) | same | same |
 
 Both tables are expected to be empty. Current BizLMS code only deletes from

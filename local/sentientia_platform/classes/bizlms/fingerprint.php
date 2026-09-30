@@ -92,9 +92,11 @@ final class fingerprint {
      *
      * A plain GROUP BY on MySQL and MariaDB compares with the column's collation. Under a *_ci collation
      * 'ACTIVE' and 'active' fall into one group, and so do values that differ only in trailing spaces, so a
-     * histogram (or a check of every stored path) would show one of them and pass the other. BINARY compares
-     * the bytes. MIN(id) is the unique first column get_records_sql() keys the rows by, so a NULL and an
-     * empty value cannot collide; MIN(value) is exact because the bytes inside a group are identical.
+     * histogram (or a check of every stored path) would show one of them and pass the other. CAST(... AS BINARY)
+     * compares the bytes (the BINARY operator does the same but MySQL has deprecated it since 8.0.27, and 8.4 is
+     * the 5.2 target; MariaDB accepts both). Trailing spaces stay distinct, which utf8mb4_bin would pad away.
+     * MIN(id) is the unique first column get_records_sql() keys the rows by, so a NULL and an empty value cannot
+     * collide; MIN(value) is exact because the bytes inside a group are identical.
      *
      * @param string $table Table name without prefix.
      * @param string $column
@@ -105,7 +107,7 @@ final class fingerprint {
         global $DB;
         self::assert_identifier($table);
         self::assert_identifier($column);
-        $group = $DB->get_dbfamily() === 'mysql' ? 'BINARY t.' . $column : 't.' . $column;
+        $group = $DB->get_dbfamily() === 'mysql' ? 'CAST(t.' . $column . ' AS BINARY)' : 't.' . $column;
         $where = $skipnull ? ' WHERE t.' . $column . ' IS NOT NULL' : '';
         return 'SELECT MIN(t.id) AS k, MIN(t.' . $column . ') AS v, COUNT(1) AS n FROM {' . $table . '} t'
             . $where . ' GROUP BY ' . $group;

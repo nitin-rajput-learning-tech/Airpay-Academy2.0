@@ -581,6 +581,23 @@ final class bizlms_support_test extends \advanced_testcase {
         }
     }
 
+    public function test_a_fan_out_subkey_is_a_code_and_never_names_a_user(): void {
+        $row = (object) ['x' => 1];
+        foreach (['', 'part:a', 'course:17', 'quiz:17', 'history', 'synth_payment', 'skill:9', 'pos:2', 'org:extra'] as $good) {
+            $this->assertSame($good, outcome::insert(1, 'local_sentientia_toy_fanout', $row, $good)->subkey);
+        }
+        // legacymap.subkey lives in a framework table that holds no personal data: an id that names a person is one.
+        foreach (['user:55', 'userid:55', 'email:a', 'trainer:9', 'name', 'Part:a', 'part:', ':a', 'a:b:c', 'part a',
+                  'jane@example.com', 'x:' . str_repeat('1', 31), str_repeat('a', 32)] as $bad) {
+            try {
+                outcome::insert(1, 'local_sentientia_toy_fanout', $row, $bad);
+                $this->fail("accepted the subkey '{$bad}'");
+            } catch (\coding_exception $e) {
+                $this->assertStringContainsString('subkey must be a code', $e->getMessage());
+            }
+        }
+    }
+
     public function test_report_holds_per_row_lines_until_the_transaction_commits(): void {
         $report = new report();
         $csv = make_request_directory() . '/lines.csv';

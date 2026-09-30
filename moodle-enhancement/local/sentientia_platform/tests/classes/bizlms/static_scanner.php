@@ -14,7 +14,8 @@ defined('MOODLE_INTERNAL') || die();
  * set_config and the cache purges are only allowed inside finalise().
  *
  * Banned everywhere in classes/bizlms/ (framework and importers):
- *   message_send, email_to_user, ->trigger(, role_assign(, role_unassign*(, enrol_user(,
+ *   message_send, message_post_message, send_message, send_message_to_conversation, email_to_user,
+ *   set_user_preference, unset_user_preference, ->trigger(, role_assign(, role_unassign*(, enrol_user(,
  *   ->unenrol_user(, enrol_try_internal_enrol(, delete_user(, groups_add_member(,
  *   groups_remove_member(, completion_completion, completion_info, ->update_state(,
  *   mark_complete(, cohort_add_member(, core_tag_tag::, update_course(, calendar_event::create,
@@ -25,6 +26,13 @@ defined('MOODLE_INTERNAL') || die();
  *   request_manager::, cart_manager::, invoicer::, notifier::, delivery_log::log,
  *   evaluation_manager::submit_response, recompletion_engine::, skills_manager::,
  *   rating_manager::submit_rating.
+ *
+ * Banned in importer code (not the framework) because they hide the callee or reach around the context:
+ *   a call through a variable ($f(...)), new $class, $class::method(), a banned name as a callable string
+ *   ('role_assign', [$DB, 'insert_record'], 'manager::send_message'), and the framework's own runner, writer,
+ *   guard, guard_permit, sideeffect_guard, registry and capability_repair classes. An allow-list of the
+ *   namespaces importer code may call would be sound where this deny-list is not; until then this is a
+ *   tripwire for honest mistakes, and the runtime tripwire is what catches the rest.
  *
  * Banned outside writer.php: every $DB write method and every DDL call, because
  * the writer is the only code that writes. A write method whose name only $DB has
@@ -48,7 +56,8 @@ final class static_scanner {
 
     /** @var string[] Names banned wherever they are called: a function, a method or a static method. */
     private const BANNED_CALLS = [
-        'message_send', 'email_to_user', 'role_assign', 'role_unassign', 'role_unassign_all', 'enrol_user',
+        'message_send', 'message_post_message', 'send_message', 'send_message_to_conversation', 'email_to_user',
+        'set_user_preference', 'unset_user_preference', 'role_assign', 'role_unassign', 'role_unassign_all', 'enrol_user',
         'unenrol_user', 'enrol_try_internal_enrol', 'mark_complete', 'update_state', 'cohort_add_member',
         'update_course', 'delete_user', 'groups_add_member', 'groups_remove_member', 'queue_adhoc_task',
         'reschedule_or_queue_adhoc_task', 'call_user_func', 'call_user_func_array', 'forward_static_call',
@@ -59,6 +68,16 @@ final class static_scanner {
     private const BANNED_CLASSES = [
         'completion_completion', 'completion_info', 'grade_item', 'grade_grade', 'grade_category', 'grade_scale',
         'grade_outcome',
+    ];
+
+    /**
+     * Framework classes importer code has no business with: it reaches the database, the run and the permit only
+     * through its context. Matched on a static call, on new and on a use import, in importer code only.
+     *
+     * @var string[]
+     */
+    private const FRAMEWORK_ONLY_CLASSES = [
+        'runner', 'writer', 'guard', 'guard_permit', 'sideeffect_guard', 'registry', 'capability_repair',
     ];
 
     /** @var string Prefix of the grade functions (grade_update, grade_regrade_final_grades, ...). */
@@ -105,7 +124,7 @@ final class static_scanner {
     private const DB_WRITES = [
         'insert_record', 'insert_records', 'insert_record_raw', 'import_record', 'update_record',
         'update_record_raw', 'set_field', 'set_field_select', 'delete_records', 'delete_records_select',
-        'delete_records_list', 'delete_records_subquery',
+        'delete_records_list', 'delete_records_subquery', 'replace_all_text',
     ];
 
     /** @var string[] $DB methods whose name is generic: a finding only on a receiver that holds the database. */
@@ -117,10 +136,14 @@ final class static_scanner {
         'change_field_type', 'change_field_precision', 'change_field_notnull', 'change_field_default',
         'add_key', 'drop_key', 'add_index', 'drop_index', 'install_from_xmldb_file',
         'install_one_table_from_xmldb_file', 'install_from_xmldb_structure', 'create_temp_table',
+        'change_database_structure',
     ];
 
     /** @var string[] Variables that hold the database object by convention. */
     private const DB_VARIABLES = ['$DB', '$db'];
+
+    /** @var string[] Methods that, by convention, return the database object: $this->db()->execute(...). */
+    private const DB_ACCESSORS = ['db', 'database', 'get_db', 'get_database', 'getdb', 'getdatabase'];
 
     /**
      * Every PHP file below a directory, sub-directories included, in a stable order.
@@ -219,6 +242,11 @@ final class static_scanner {
             if ($name !== null && in_array($name, self::BANNED_CLASSES, true)) {
                 $findings[] = "line {$line}: {$name}";
             }
+            if (!$framework) {
+                foreach (self::importer_only_findings($tokens, $i, $name, $line) as $finding) {
+                    $findings[] = $finding;
+                }
+            }
             // The grade_* functions.
             if (!$declaration && $name !== null && strncmp($name, self::GRADE_PREFIX, strlen(self::GRADE_PREFIX)) === 0
                     && $next[1] === '(') {
@@ -277,6 +305,52 @@ final class static_scanner {
     }
 
     /**
+     * Constructs that hide the callee, and the framework's own classes, in importer code.
+     *
+     * @param array $tokens
+     * @param int $i Index of the current token.
+     * @param string|null $name Last segment of the current token when it is a name.
+     * @param int $line
+     * @return string[]
+     */
+    private static function importer_only_findings(array $tokens, int $i, ?string $name, int $line): array {
+        [$id, $text] = $tokens[$i];
+        $next = $tokens[$i + 1] ?? [null, '', 0];
+        $previous = $tokens[$i - 1] ?? [null, '', 0];
+        $out = [];
+
+        // $f(...): the name of the function is not in the source.
+        if ($id === T_VARIABLE && $next[1] === '(' && $previous[0] !== T_NEW) {
+            $out[] = "line {$line}: call through a variable ({$text}(...)) hides the callee";
+        }
+        // $class::method(...) and new $class(...).
+        if ($id === T_VARIABLE && $next[0] === T_DOUBLE_COLON) {
+            $out[] = "line {$line}: static call through a variable ({$text}::) hides the class";
+        }
+        if ($id === T_NEW && $next[0] === T_VARIABLE) {
+            $out[] = "line {$line}: new {$next[1]} hides the class";
+        }
+        // A banned name passed as a callable: array_map('role_assign', ...), [$DB, 'insert_record'], 'manager::send_message'.
+        if ($id === T_CONSTANT_ENCAPSED_STRING) {
+            $value = trim($text, '\'"');
+            $parts = explode('::', $value);
+            $value = end($parts);
+            $banned = in_array($value, self::BANNED_CALLS, true) || in_array($value, self::DB_WRITES, true)
+                || in_array($value, self::DDL, true) || in_array($value, self::FINALISE_ONLY_CALLS, true)
+                || preg_match('/^grade_[a-z_]+$/', $value);
+            if ($banned) {
+                $out[] = "line {$line}: {$value} as a callable string hides the call";
+            }
+        }
+        // The framework's own classes.
+        if ($name !== null && in_array($name, self::FRAMEWORK_ONLY_CLASSES, true)
+                && ($next[0] === T_DOUBLE_COLON || $previous[0] === T_NEW || $previous[0] === T_USE)) {
+            $out[] = "line {$line}: {$name} is the framework's, importer code reaches it through its context";
+        }
+        return $out;
+    }
+
+    /**
      * The last segment of a name token (handles PHP 8 qualified names).
      *
      * @param int|null $id
@@ -311,6 +385,27 @@ final class static_scanner {
         if ($before[0] === T_STRING && in_array(strtolower($before[1]), ['db', 'database'], true)) {
             $operator = $tokens[$index - 2] ?? [null, '', 0];
             return in_array($operator[0], [T_OBJECT_OPERATOR, T_NULLSAFE_OBJECT_OPERATOR, T_DOUBLE_COLON], true);
+        }
+        if ($before[1] === ')') {
+            // $this->db()->, self::database()->: the method that returns the database object.
+            $depth = 0;
+            for ($j = $index - 1; $j >= 0; $j--) {
+                if ($tokens[$j][1] === ')') {
+                    $depth++;
+                } else if ($tokens[$j][1] === '(') {
+                    $depth--;
+                    if ($depth === 0) {
+                        break;
+                    }
+                }
+            }
+            if ($j < 2) {
+                return false;
+            }
+            $method = $tokens[$j - 1];
+            $operator = $tokens[$j - 2];
+            return $method[0] === T_STRING && in_array(strtolower($method[1]), self::DB_ACCESSORS, true)
+                && in_array($operator[0], [T_OBJECT_OPERATOR, T_NULLSAFE_OBJECT_OPERATOR, T_DOUBLE_COLON], true);
         }
         if ($before[1] === ']') {
             // $GLOBALS['DB']->
