@@ -307,10 +307,10 @@ class message_pref_repair {
         if (!$writable) {
             return;
         }
-        // A default written for a provider that is not Sentientia's own (core, or a
-        // bundled plugin such as tool_certificate) is tagged, so the cutover change
-        // record shows which writes reached outside the Sentientia plugins.
-        $tag = stripos($p->component, 'sentientia') === false ? '(non-Sentientia) ' : '';
+        // A default written for a provider that is not Sentientia's own is tagged
+        // (see origin_tag()), so the cutover change record shows which writes reached
+        // outside the Sentientia plugins.
+        $tag = self::origin_tag($p->component);
         $out(($apply ? '  wrote defaults ' : '  would write defaults ') . "{$tag}{$label} ("
             . implode(', ', $writable) . ') from db/messages.php');
         if (!$apply) {
@@ -410,6 +410,32 @@ class message_pref_repair {
             return $m[1];
         }
         return null;
+    }
+
+    /**
+     * Where a provider's component comes from, as a tag for the output line of a
+     * default that repair() writes.
+     *
+     *  - '' for Sentientia's own plugins (the name has "sentientia" in it);
+     *  - '(Moodle core) ' for core and the plugins Moodle ships with, taken from
+     *    core_plugin_manager::standard_plugins_list(), not guessed from the name;
+     *  - '(other plugin) ' for everything else: a third-party plugin such as
+     *    tool_certificate, or an Airpay plugin that is not Sentientia's such as
+     *    paygw_airpay.
+     *
+     * @param string $component frankenstyle component of the provider row
+     * @return string the tag with a trailing space, or ''
+     */
+    public static function origin_tag(string $component): string {
+        if (stripos($component, 'sentientia') !== false) {
+            return '';
+        }
+        [$type, $name] = \core_component::normalize_component($component);
+        if ($type === 'core') {
+            return '(Moodle core) ';
+        }
+        $standard = \core_plugin_manager::standard_plugins_list($type);
+        return ($standard !== false && in_array($name, $standard, true)) ? '(Moodle core) ' : '(other plugin) ';
     }
 
     /**

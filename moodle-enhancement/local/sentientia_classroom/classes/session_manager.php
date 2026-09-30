@@ -917,6 +917,8 @@ class session_manager {
     public const SCAN_NO_SESSION = 'nosession';
     /** record_qr_attendance(): the learner is not on the classroom roster. */
     public const SCAN_NOT_ENROLLED = 'notenrolled';
+    /** record_qr_attendance(): the classroom is cancelled; nothing was written. */
+    public const SCAN_CANCELLED = 'cancelled';
 
     /** Note stored on a row the QR flow writes, so a trainer can tell it from a hand-marked one. */
     private const QR_NOTE = 'Marked by QR scan';
@@ -931,12 +933,21 @@ class session_manager {
      * writes is the one get_session_attendance() reads back: same table, same
      * (sessionid, userid) key, status ATT_PRESENT.
      *
+     * A cancelled classroom (STATUS_CANCELLED) takes no attendance: SCAN_CANCELLED,
+     * nothing written. There is no check on the session's start and end time.
+     * The hourly QR token is the only time limit, because imported sessions can
+     * carry wrong times; adding a window is a policy decision for Nitin.
+     *
      * Idempotent. Any mark other than Absent (Present, Late, Excused) is left
      * as it is and reported as SCAN_ALREADY. An Absent row is what the
      * attendance grid saves for everyone it did not tick, so it means "not
-     * marked yet" and a scan raises it to Present. Two scans landing together
-     * (a double tap) hit the unique (sessionid, userid) index; the loser is
-     * reported as SCAN_ALREADY.
+     * marked yet" and a scan raises it to Present (it cannot tell an unticked
+     * learner from one the trainer deliberately marked Absent; see the
+     * sentientia_classroom state card, open decision). Two writers landing
+     * together (a double tap, or a trainer grid save) hit the unique
+     * (sessionid, userid) index; the loser reads the row that won and treats it
+     * like any other existing row: an Absent one is raised to Present, anything
+     * else is SCAN_ALREADY.
      *
      * Deliberately does not use get_session(): that falls back to the legacy
      * {local_classroom_sessions} table, and an id from that table has no
@@ -967,18 +978,14 @@ class session_manager {
             return self::SCAN_NOT_ENROLLED;
         }
 
+        if ((int) $classroom->status === self::STATUS_CANCELLED) {
+            return self::SCAN_CANCELLED;
+        }
+
         $now = time();
         $existing = $DB->get_record(self::ATTENDANCE_TABLE, ['sessionid' => $sessionid, 'userid' => $userid]);
         if ($existing) {
-            if ((int) $existing->status !== self::ATT_ABSENT) {
-                return self::SCAN_ALREADY;
-            }
-            $existing->status       = self::ATT_PRESENT;
-            $existing->markedby     = $userid;
-            $existing->notes        = (string) $existing->notes !== '' ? $existing->notes : self::QR_NOTE;
-            $existing->timemodified = $now;
-            $DB->update_record(self::ATTENDANCE_TABLE, $existing);
-            return self::SCAN_RECORDED;
+            return self::apply_scan_to_existing_row($existing, $userid, $now);
         }
 
         try {
@@ -992,12 +999,39 @@ class session_manager {
                 'timemodified' => $now,
             ]);
         } catch (\dml_write_exception $e) {
-            // The other half of a double tap got there first.
-            if ($DB->record_exists(self::ATTENDANCE_TABLE, ['sessionid' => $sessionid, 'userid' => $userid])) {
-                return self::SCAN_ALREADY;
+            // The other half of a double tap, or a trainer grid save, got there first.
+            // Read what it wrote: if that row is Absent this scan still raises it to Present.
+            $winner = $DB->get_record(self::ATTENDANCE_TABLE, ['sessionid' => $sessionid, 'userid' => $userid]);
+            if ($winner) {
+                return self::apply_scan_to_existing_row($winner, $userid, time());
             }
             throw $e;
         }
+        return self::SCAN_RECORDED;
+    }
+
+    /**
+     * The scan rules for a learner who already has an attendance row.
+     *
+     * Absent is raised to Present (marked by the learner, with the QR note unless
+     * the row already has one). Any other mark is left alone.
+     *
+     * @param \stdClass $existing the row in the attendance table
+     * @param int $userid the scanning learner
+     * @param int $now
+     * @return string SCAN_RECORDED or SCAN_ALREADY
+     */
+    private static function apply_scan_to_existing_row(\stdClass $existing, int $userid, int $now): string {
+        global $DB;
+
+        if ((int) $existing->status !== self::ATT_ABSENT) {
+            return self::SCAN_ALREADY;
+        }
+        $existing->status       = self::ATT_PRESENT;
+        $existing->markedby     = $userid;
+        $existing->notes        = (string) $existing->notes !== '' ? $existing->notes : self::QR_NOTE;
+        $existing->timemodified = $now;
+        $DB->update_record(self::ATTENDANCE_TABLE, $existing);
         return self::SCAN_RECORDED;
     }
 

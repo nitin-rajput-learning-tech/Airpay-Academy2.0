@@ -403,10 +403,17 @@ How the guard works, so an operator is not surprised:
   command line BEFORE Moodle loads (`cli_get_params()` needs Moodle). `--config` must be an absolute
   path to a readable file named `config.php`.
 - After that config loads, the script refuses unless `$CFG->wwwroot` equals `--target` exactly (a
-  trailing `/` on either is ignored), and prints `TARGET MODE: wwwroot <wwwroot> (config <path>)`.
+  trailing `/` on either is ignored), and refuses unless `local_sentientia_platform` is on disk for that
+  config: before the repoint the migration target and the live BizLMS box can both answer to
+  `https://www.airpay.academy`, and only a Sentientia install has that plugin. It then prints
+  `TARGET MODE: wwwroot <wwwroot> (config <path>)` and a second line with the database host and name,
+  the table prefix and the Moodle release. Read that second line before anything is applied: it is the
+  only output that says which database the script is about to touch.
   Point `--config` at the box you mean, and `--target` at the site you mean to change: a mismatch
   refuses before anything is read or written.
-- `--i-am-uat` and `--target` are mutually exclusive. With neither, the script refuses. The
+- `--i-am-uat` and `--target` are mutually exclusive. With neither, the script refuses. `--i-am-uat`
+  and `--i-am-uat=1` both count as the flag; any other spelling (for example `--i-am-uat=yes`) is not
+  read, so the script refuses. The
   `--i-am-uat` behaviour is exactly what it was: the UAT config path and the
   `academy2.airpay.ninja` check.
 - `w202_erasure_probe.php` has NO target mode. It creates and erases accounts, so it runs on UAT only.

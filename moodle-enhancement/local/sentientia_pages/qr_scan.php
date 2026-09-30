@@ -41,8 +41,9 @@ if ($token !== $expectedtoken) {
 
 // Record the scan in the Sentientia classroom tables. session_manager checks that the
 // session exists, that its classroom is in this learner's tenant (ADR-031) and that
-// the learner is on the roster, then writes the row the attendance grid reads back
-// (local_sentientia_classroom_attendance, status Present). A repeat scan writes nothing.
+// the learner is on the roster and that the classroom is not cancelled, then writes the
+// row the attendance grid reads back (local_sentientia_classroom_attendance, status
+// Present). A repeat scan writes nothing.
 // This page used to write {local_classroom_attendance}, a BizLMS table that a
 // Sentientia install does not have.
 $manager = '\local_sentientia_classroom\session_manager';
@@ -73,6 +74,12 @@ if ($errortext !== null) {
     echo '<div class="alert alert-danger" style="text-align: center; margin: 40px auto; max-width: 500px;">';
     echo '<h3><i class="fa fa-times-circle"></i> Session Not Found</h3>';
     echo '<p>This session no longer exists. Please ask your trainer for a new QR code.</p>';
+    echo '</div>';
+} else if ($result === $manager::SCAN_CANCELLED) {
+    echo '<div class="alert alert-warning" style="text-align: center; margin: 40px auto; max-width: 500px;">';
+    echo '<h3><i class="fa fa-ban"></i> Classroom Cancelled</h3>';
+    echo '<p>This classroom has been cancelled, so your attendance was not recorded. '
+        . 'Please contact your trainer.</p>';
     echo '</div>';
 } else if ($result === $manager::SCAN_NOT_ENROLLED) {
     echo '<div class="alert alert-warning" style="text-align: center; margin: 40px auto; max-width: 500px;">';

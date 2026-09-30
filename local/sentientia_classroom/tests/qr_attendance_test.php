@@ -170,6 +170,53 @@ final class qr_attendance_test extends \advanced_testcase {
         $this->assertCount(0, $this->rows($sessionid));
     }
 
+    public function test_a_scan_into_a_cancelled_classroom_is_refused_and_nothing_is_written(): void {
+        global $DB;
+        $classroomid = $this->classroom('/1');
+        $sessionid = $this->session($classroomid);
+        $learner = $this->user_at('/1/2');
+        session_manager::enrol_users($classroomid, [(int) $learner->id]);
+        $this->setUser($learner);
+        $DB->set_field('local_sentientia_classroom', 'status', session_manager::STATUS_CANCELLED,
+            ['id' => $classroomid]);
+
+        $this->assertSame(session_manager::SCAN_CANCELLED,
+            session_manager::record_qr_attendance($sessionid, (int) $learner->id));
+        $this->assertCount(0, $this->rows($sessionid));
+    }
+
+    public function test_a_cancelled_classroom_does_not_overturn_an_existing_mark(): void {
+        global $DB;
+        $classroomid = $this->classroom('/1');
+        $sessionid = $this->session($classroomid);
+        $learner = $this->user_at('/1/2');
+        session_manager::enrol_users($classroomid, [(int) $learner->id]);
+        $this->setUser($learner);
+        session_manager::mark_attendance($sessionid, (int) $learner->id, session_manager::ATT_ABSENT);
+        $DB->set_field('local_sentientia_classroom', 'status', session_manager::STATUS_CANCELLED,
+            ['id' => $classroomid]);
+
+        $this->assertSame(session_manager::SCAN_CANCELLED,
+            session_manager::record_qr_attendance($sessionid, (int) $learner->id));
+        $rows = $this->rows($sessionid);
+        $this->assertCount(1, $rows);
+        $this->assertSame(session_manager::ATT_ABSENT, (int) reset($rows)->status,
+            'A cancelled classroom takes no attendance, so the Absent row must stay Absent.');
+    }
+
+    public function test_a_learner_not_on_the_roster_is_not_told_the_classroom_is_cancelled(): void {
+        global $DB;
+        $classroomid = $this->classroom('/1');
+        $sessionid = $this->session($classroomid);
+        $stranger = $this->user_at('/1/2');
+        $this->setUser($stranger);
+        $DB->set_field('local_sentientia_classroom', 'status', session_manager::STATUS_CANCELLED,
+            ['id' => $classroomid]);
+
+        $this->assertSame(session_manager::SCAN_NOT_ENROLLED,
+            session_manager::record_qr_attendance($sessionid, (int) $stranger->id));
+    }
+
     public function test_an_unknown_session_is_reported_and_nothing_is_written(): void {
         global $DB;
         $learner = $this->user_at('/1/2');

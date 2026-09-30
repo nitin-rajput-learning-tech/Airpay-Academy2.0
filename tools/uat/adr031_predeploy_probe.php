@@ -34,7 +34,7 @@ $adr031uat = false;
 $adr031target = null;
 $adr031config = null;
 foreach (array_slice($argv, 1) as $adr031arg) {
-    if ($adr031arg === '--i-am-uat') {
+    if ($adr031arg === '--i-am-uat' || $adr031arg === '--i-am-uat=1') {
         $adr031uat = true;
     } else if ($adr031arg === '--target' || $adr031arg === '--config') {
         fwrite(STDERR, "Refusing: {$adr031arg} needs a value, as {$adr031arg}=<value>.\n");
@@ -82,7 +82,17 @@ if ($adr031uat) {
     if (rtrim($CFG->wwwroot, '/') !== $adr031target) {
         cli_error("Refusing: wwwroot is {$CFG->wwwroot}, not the requested target {$adr031target}.");
     }
+    // The wwwroot is not enough on its own: the migration target and the live
+    // BizLMS box can answer to the same name before the repoint. A Sentientia
+    // install has local_sentientia_platform on disk; the live BizLMS box does not.
+    if (core_component::get_component_directory('local_sentientia_platform') === null) {
+        cli_error('Refusing: local_sentientia_platform is not on disk for this config, '
+            . 'so it is not a Sentientia install (is it the live BizLMS box?).');
+    }
+    // Print which database this is, so the operator can see it before anything runs.
     cli_writeln("TARGET MODE: wwwroot {$CFG->wwwroot} (config {$adr031config})");
+    cli_writeln("  database {$CFG->dbhost} / {$CFG->dbname}, prefix {$CFG->prefix}, "
+        . "Moodle {$CFG->release} (branch {$CFG->branch})");
 }
 
 global $DB;

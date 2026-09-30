@@ -76,12 +76,14 @@ if (trim((string) $session->title) !== '') {
 $token = hash('sha256', $sessionid . '|' . date('Y-m-d-H') . '|' . $CFG->passwordsaltmain);
 $scanurl = $CFG->wwwroot . '/local/sentientia_pages/qr_scan.php?sessionid=' . $sessionid . '&token=' . $token;
 
-// Generate QR using Moodle's built-in library (no Google Charts dependency).
-require_once($CFG->libdir . '/phpqrcode/qrlib.php');
-$tmpfile = tempnam($CFG->tempdir, 'qr_') . '.png';
-QRcode::png($scanurl, $tmpfile, QR_ECLEVEL_M, 10, 2);
-$qrbase64 = base64_encode(file_get_contents($tmpfile));
-@unlink($tmpfile);
+// Generate the QR with core_qrcode (TCPDF's 2D barcode, in Moodle core since 3.9; no
+// Google Charts dependency). This page used to require lib/phpqrcode/qrlib.php, a
+// library Moodle 5.x no longer ships, so on a Sentientia install it stopped with a
+// missing-file error before it showed anything (found 2026-09-30 while taking the
+// screenshots for this page). getBarcodePngData() returns false when PHP has
+// neither the GD nor the Imagick extension.
+$qrpng = (new \core_qrcode($scanurl))->getBarcodePngData(8, 8);
+$qrbase64 = ($qrpng === false || $qrpng === null || $qrpng === '') ? '' : base64_encode($qrpng);
 
 // Calculate minutes until token expires (top of next hour).
 $now = time();
@@ -98,7 +100,11 @@ echo $OUTPUT->header();
     </div>
 
     <div class="airpay-qr__code-wrap">
+        <?php if ($qrbase64 !== '') { ?>
         <img src="data:image/png;base64,<?php echo $qrbase64; ?>" alt="QR Code" class="airpay-qr__code" width="400" height="400">
+        <?php } else { ?>
+        <p class="alert alert-danger">The QR code could not be generated. Ask your administrator to check that the PHP GD extension is enabled.</p>
+        <?php } ?>
     </div>
 
     <div class="airpay-qr__timer" id="airpay-qr-timer">

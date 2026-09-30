@@ -473,16 +473,31 @@ final class message_pref_repair_test extends \advanced_testcase {
         $lines = [];
         message_pref_repair::repair(false, self::collector($lines));
         $text = implode("\n", $lines);
-        $this->assertStringContainsString('would write defaults (non-Sentientia) moodle/instantmessage', $text);
+        $this->assertStringContainsString('would write defaults (Moodle core) moodle/instantmessage', $text);
         $this->assertStringContainsString("would write defaults local_sentientia_courses/{$ours}", $text);
-        $this->assertStringNotContainsString('(non-Sentientia) local_sentientia_courses', $text);
+        $this->assertStringNotContainsString(') local_sentientia_courses', $text);
 
         $lines = [];
         message_pref_repair::repair(true, self::collector($lines));
         $text = implode("\n", $lines);
-        $this->assertStringContainsString('wrote defaults (non-Sentientia) moodle/instantmessage', $text);
+        $this->assertStringContainsString('wrote defaults (Moodle core) moodle/instantmessage', $text);
         $this->assertStringContainsString("wrote defaults local_sentientia_courses/{$ours}", $text);
         $this->assertSame([], message_pref_repair::check());
+    }
+
+    /**
+     * The origin tag comes from Moodle's own list of standard plugins, not from
+     * the name: an Airpay plugin that is not Sentientia's is "other", not core.
+     */
+    public function test_origin_tag_uses_the_standard_plugin_list(): void {
+        $this->assertSame('', message_pref_repair::origin_tag('local_sentientia_cart'));
+        $this->assertSame('', message_pref_repair::origin_tag('local_sentientia_platform'));
+        $this->assertSame('(Moodle core) ', message_pref_repair::origin_tag('moodle'));
+        $this->assertSame('(Moodle core) ', message_pref_repair::origin_tag('core_message'));
+        $this->assertSame('(Moodle core) ', message_pref_repair::origin_tag('mod_forum'));
+        $this->assertSame('(other plugin) ', message_pref_repair::origin_tag('paygw_airpay'));
+        $this->assertSame('(other plugin) ', message_pref_repair::origin_tag('local_zzthirdparty'));
+        $this->assertSame('(other plugin) ', message_pref_repair::origin_tag('zzunknowntype_thing'));
     }
 
     /**
