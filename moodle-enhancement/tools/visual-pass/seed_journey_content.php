@@ -13,9 +13,14 @@
  *                      vp_author1 is enrolled as its trainer (gradebook step).
  *   vp_journey_zeea    "VP Journey ZEEA Course"    /177  free (ZEEA one-click enrol).
  *   vp_journey_priced  "VP Journey Public Priced"  /77   Rs 500 - an enrol_fee
- *                      instance (what local_sentientia_cart reads) AND the
- *                      local_sentientia_catalog course_price_<id> setting (what the
- *                      public storefront reads), so both cart paths see a priced course.
+ *                      instance (what local_sentientia_cart reads; grants the
+ *                      "employee" role) AND the local_sentientia_catalog
+ *                      course_price_<id> setting (what the public storefront
+ *                      reads), so both cart paths see a priced course.
+ *   The Page activity in the free course carries a stored body (content +
+ *   contentformat; an empty one from an earlier run is filled in), and one mock
+ *   authoring draft "VP Journey Draft" is created for vp_courseauthor1 through the
+ *   plugin's draft_manager (static text, no AI call) for the review-queue step.
  *
  * The context file holds, for the harness:
  *   - the seeded course ids / names / Page cmid;
@@ -77,16 +82,27 @@ $priced = $mkcourse('vp_journey_priced', 'VP Journey Public Priced', '/77');
 
 // A free course carries no fee instance and no catalog price (a fresh course has
 // neither); the priced one gets both.
-if (!$DB->record_exists('enrol', ['enrol' => 'fee', 'courseid' => $priced->id])) {
+// The role a fee enrolment grants. "employee" is the learner role on this platform
+// (there is no "student" shortname here, which used to leave roleid at 0); "student" is
+// only the fallback for a vanilla Moodle role set.
+$learnerrole = (int) ($DB->get_field('role', 'id', ['shortname' => 'employee'])
+    ?: $DB->get_field('role', 'id', ['shortname' => 'student']) ?: 0);
+$fee = $DB->get_record('enrol', ['enrol' => 'fee', 'courseid' => $priced->id], '*', IGNORE_MULTIPLE);
+if (!$fee) {
     $DB->insert_record('enrol', (object) [
         'enrol' => 'fee', 'status' => ENROL_INSTANCE_ENABLED, 'courseid' => $priced->id, 'sortorder' => 9,
-        'cost' => '500.00', 'currency' => 'INR', 'roleid' => (int) $DB->get_field('role', 'id', ['shortname' => 'student']),
+        'cost' => '500.00', 'currency' => 'INR', 'roleid' => $learnerrole,
         'timecreated' => time(), 'timemodified' => time(),
     ]);
+} else if ((int) $fee->roleid === 0 && $learnerrole) {
+    // An earlier run stored the instance with roleid 0: repair it, nothing else about it changes.
+    $DB->set_field('enrol', 'roleid', $learnerrole, ['id' => $fee->id]);
+    echo "fee enrolment instance {$fee->id}: roleid 0 -> {$learnerrole} (employee)\n";
 }
 set_config('course_price_' . $priced->id, '500', 'local_sentientia_catalog');
 
 // One Page activity in the free /1 course.
+$pagebody = '<p>VP journey page body text</p>';
 $pagemodule = $DB->get_record('modules', ['name' => 'page'], '*', MUST_EXIST);
 $pagecm = $DB->get_record_sql(
     "SELECT cm.id FROM {course_modules} cm
@@ -104,7 +120,12 @@ if (!$pagecm) {
     $mi->name = 'VP Journey Page';
     $mi->intro = '<p>Persona-journey harness page.</p>';
     $mi->introformat = FORMAT_HTML;
-    $mi->page = ['text' => '<p>VP journey page body text</p>', 'format' => FORMAT_HTML, 'itemid' => 0];
+    // page_add_instance() only reads ->page when it is given a form object, and add_moduleinfo()
+    // passes none, so the body would be saved as NULL. Set the stored columns directly; ->page
+    // stays for callers that do pass a form.
+    $mi->content = $pagebody;
+    $mi->contentformat = FORMAT_HTML;
+    $mi->page = ['text' => $pagebody, 'format' => FORMAT_HTML, 'itemid' => 0];
     $mi->display = RESOURCELIB_DISPLAY_OPEN;
     $mi->printheading = 1;
     $mi->printintro = 0;
@@ -121,6 +142,15 @@ if (!$pagecm) {
 } else {
     $pagecmid = (int) $pagecm->id;
     echo "Page activity cm {$pagecmid} already exists\n";
+    // An earlier run saved the body as NULL (see above): fill it in, only when it is empty.
+    $pageid = (int) $DB->get_field('course_modules', 'instance', ['id' => $pagecmid]);
+    $pagerow = $pageid ? $DB->get_record('page', ['id' => $pageid], 'id, content, contentformat') : false;
+    if ($pagerow && ($pagerow->content === null || trim((string) $pagerow->content) === '')) {
+        $DB->update_record('page', (object) [
+            'id' => $pagerow->id, 'content' => $pagebody, 'contentformat' => FORMAT_HTML, 'timemodified' => time(),
+        ]);
+        echo "Page {$pagerow->id}: empty content filled in\n";
+    }
 }
 
 // vp_author1 is the trainer of the free /1 course: the gradebook step needs a
@@ -135,6 +165,39 @@ if ($author && $trainerrole) {
         $manual->enrol_user($instance, $author->id, (int) $trainerrole);
         echo "enrolled vp_author1 as trainer in {$free1->shortname}\n";
     }
+}
+
+// One mock authoring draft owned by vp_courseauthor1 (/1). review.php needs ?draftid= and the
+// authoring index only links drafts that exist, so the "review queue" step needs one. It is
+// built through the plugin's own draft_manager (create_pending + persist_generation) from
+// static text: no AI call, no spend; status "generated", i.e. waiting for a human review.
+// Reused by title on re-runs; never deleted.
+$draftid = 0;
+$courseauthor = $DB->get_record('user', ['username' => 'vp_courseauthor1', 'deleted' => 0]);
+if ($courseauthor && $dbman->table_exists('local_sentientia_auth_draft')
+        && class_exists('\\local_sentientia_authoring\\draft_manager')) {
+    $existingdraft = $DB->get_record('local_sentientia_auth_draft',
+        ['ownerid' => $courseauthor->id, 'title' => 'VP Journey Draft'], 'id', IGNORE_MULTIPLE);
+    if ($existingdraft) {
+        $draftid = (int) $existingdraft->id;
+        echo "Authoring draft {$draftid} already exists\n";
+    } else {
+        $draftid = \local_sentientia_authoring\draft_manager::create_pending(
+            (int) $courseauthor->id, 'VP Journey Draft', 'Static text for the persona-journey harness (no AI call).',
+            'prompt', 'en', 'mock', 70);
+        \local_sentientia_authoring\draft_manager::persist_generation($draftid, [
+            (object) ['cardtype' => 'concept', 'heading' => 'VP journey card',
+                'body' => 'Static card body for the persona-journey harness.'],
+        ], [
+            (object) ['qtype' => 'multichoice', 'qtext' => 'Which option is correct in the VP journey question?',
+                'qoptions_json' => json_encode(['The first option', 'The second option', 'The third option', 'The fourth option']),
+                'qanswer' => '0', 'qfeedback_correct' => 'Correct.', 'qfeedback_incorrect' => 'Not quite.',
+                'qexplanation' => 'Static explanation for the persona-journey harness.'],
+        ], 0, 0, 'mock');
+        echo "created mock authoring draft {$draftid} for vp_courseauthor1\n";
+    }
+} else {
+    echo "authoring draft not seeded (vp_courseauthor1 or the authoring plugin tables are missing)\n";
 }
 
 // Feature-flag state per tenant, for the journeys that gate on a flag.
@@ -201,10 +264,12 @@ $ctx = [
         'zeeaFree' => ['id' => (int) $zeea->id, 'fullname' => $zeea->fullname],
         'publicPriced' => ['id' => (int) $priced->id, 'fullname' => $priced->fullname, 'price' => 500],
     ],
+    'authoring' => ['draftid' => $draftid, 'title' => 'VP Journey Draft', 'owner' => 'vp_courseauthor1'],
     'flags' => $flags,
     'oneOnlyCourseNames' => $oneonly,
 ];
 $file = __DIR__ . '/.journey-context.local.json';
 file_put_contents($file, json_encode($ctx, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 echo 'Context written to ' . basename($file) . ' (gitignored): free1=' . $free1->id . ' zeeaFree=' . $zeea->id
-    . ' publicPriced=' . $priced->id . ' pagecm=' . $pagecmid . ' oneOnlyCourseNames=' . count($oneonly) . "\n";
+    . ' publicPriced=' . $priced->id . ' pagecm=' . $pagecmid . ' authoringDraft=' . $draftid
+    . ' oneOnlyCourseNames=' . count($oneonly) . "\n";

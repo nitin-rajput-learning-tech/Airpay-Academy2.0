@@ -8,7 +8,7 @@
 //
 //   node persona_journeys.mjs [--persona learner,manager] [--from [persona:]step]
 //                             [--steps a,b] [--limit N] [--retry-failed] [--fresh]
-//                             [--no-shots] [--out <dir>]
+//                             [--allow-new-creds] [--no-shots] [--out <dir>]
 //   node persona_journeys.mjs --list [--check-files]      (no browser, no logins)
 //
 // Prerequisites (both LOCAL, run with cwd = C:/xampp/htdocs/moodle5/public):
@@ -32,9 +32,16 @@
 // <out>/NN-<persona>-<step>-{desktop,mobile}.png (NN = the step's position in
 // the full journey, stable when a run is filtered).
 //
+// Login safety (H8): a login that ends in "Your session has timed out", or whose
+// session does not survive a first request to /my/ (bounced back to /login/), is
+// retried in a brand-new browser context (no cookies), up to 3 tries. The run
+// refuses to start when .personas.local.json is newer than the last stored login
+// (the personas were re-provisioned, so stored results come from other
+// passwords); pass --fresh (new results set) or --allow-new-creds (merge anyway).
+//
 // Status: FAIL = a hard assertion failed | CHECK = hard assertions passed but a
 // soft expectation missed / console errors / a redirect worth a look |
-// SKIP = flag off, context missing or login failed | PASS.
+// SKIP = flag off, context missing, login failed or nothing to act on | PASS.
 // results.json + results.md are rewritten after every step and merged across
 // runs (a resumed or filtered run only replaces the steps it re-ran).
 
@@ -150,7 +157,8 @@ if (has('--list')) {
 
 // ---------------------------------------------------------------- context
 const readJson = f => (fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null);
-const creds = readJson(path.join(HERE, '.personas.local.json'));
+const CREDS_FILE = path.join(HERE, '.personas.local.json');
+const creds = readJson(CREDS_FILE);
 if (!creds) {
   console.error('.personas.local.json missing - run provision_local_personas.php first (cwd = moodle5/public).');
   process.exit(2);
@@ -248,19 +256,67 @@ const DEVANAGARI = /[\u0900-\u097F]{2,}/;
 // Self-inflicted (we abort every non-local request) or harmless browser noise.
 const IGNORE_CONSOLE = [/ERR_FAILED/i, /ERR_BLOCKED_BY_CLIENT/i, /ERR_NETWORK_CHANGED/i, /favicon/i, /Download the React DevTools/i];
 
+// Runs inside the page (serialised by page.evaluate), so it must stay self-contained.
+//   doc       page-level horizontal overflow in px (scrollWidth - clientWidth)
+//   culprits  (H3) only when doc > 1: the topmost elements whose right edge is past
+//             the viewport and that no ancestor scrolls or clips (so they really
+//             widen the page), top 3 by right edge, each with the widest element
+//             inside it. Fixed-position and zero-size elements are ignored.
+//   offenders scroll containers (overflow-x auto/scroll, taller than half the
+//             viewport) wider than their box that are NOT a known table wrapper
+//   known     the same, for the known table wrappers (.table-responsive,
+//             .gradeparent, [class*="table-wrap"], .airpay-datatable): scrolling
+//             inside their own box is by design, so they are only a note
 function measureOverflow() {
   const de = document.documentElement;
+  const vw = de.clientWidth;
   const vh = window.innerHeight;
+  const KNOWN = '.table-responsive, .gradeparent, [class*="table-wrap"], .airpay-datatable';
+  const label = el => {
+    const cls = (el.getAttribute('class') || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).join('.');
+    return el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (cls ? '.' + cls : '');
+  };
+  const doc = de.scrollWidth - de.clientWidth;
+
   const offenders = [];
+  const known = [];
   for (const el of document.querySelectorAll('body *')) {
     if (el.scrollWidth <= el.clientWidth + 1) continue;
-    const cs = getComputedStyle(el);
-    if (!/(auto|scroll)/.test(cs.overflowX)) continue;
+    if (!/(auto|scroll)/.test(getComputedStyle(el).overflowX)) continue;
     if (el.clientHeight < vh * 0.5) continue;
-    offenders.push((el.id ? '#' + el.id : el.tagName.toLowerCase() + '.' + String(el.className).split(' ')[0]) + ` (${el.scrollWidth}>${el.clientWidth})`);
-    if (offenders.length >= 3) break;
+    const list = el.closest(KNOWN) ? known : offenders;
+    if (list.length < 3) list.push(`${label(el)} (${el.scrollWidth}>${el.clientWidth})`);
   }
-  return { doc: de.scrollWidth - de.clientWidth, sw: de.scrollWidth, cw: de.clientWidth, offenders };
+
+  const culprits = [];
+  if (doc > 1) {
+    const fixedOrClipped = el => {
+      for (let p = el; p && p !== de; p = p.parentElement) {
+        const cs = getComputedStyle(p);
+        if (cs.position === 'fixed') return true;
+        // An ancestor (below <body>) that scrolls or clips horizontally contains the overflow.
+        if (p !== el && p !== document.body && /(auto|scroll|hidden|clip)/.test(cs.overflowX)) return true;
+      }
+      return false;
+    };
+    const cands = [];
+    for (const el of document.querySelectorAll('body *')) {
+      const r = el.getBoundingClientRect();
+      if (r.width < 1 || r.height < 1 || r.right <= vw + 1) continue;
+      if (fixedOrClipped(el)) continue;
+      cands.push({ el, right: Math.round(r.right), width: Math.round(r.width) });
+      if (cands.length >= 400) break;
+    }
+    const set = new Set(cands.map(c => c.el));
+    const tops = cands.filter(c => !set.has(c.el.parentElement)).sort((a, b) => b.right - a.right).slice(0, 3);
+    for (const c of tops) {
+      let widest = c;
+      for (const d of cands) if (d !== c && c.el.contains(d.el) && d.right > widest.right) widest = d;
+      culprits.push(`${label(c.el)} (right ${c.right} > ${vw}px, width ${c.width})`
+        + (widest !== c ? ` > widest inside: ${label(widest.el)} (right ${widest.right}, width ${widest.width})` : ''));
+    }
+  }
+  return { doc, sw: de.scrollWidth, cw: de.clientWidth, culprits, offenders, known };
 }
 
 function gatherPage() {
@@ -313,6 +369,13 @@ async function waitForServer(maxMs = 240000) {
 function makeEnv(context, e, me, S) {
   const env = {
     context, e, me, S, pkey: e.pkey, persona: e.persona, ctx: CTX, page: null, blocked: new Set(),
+    // Every console error as {t: text, url: the resource it is about}. It is the single source
+    // for rec.consoleErrors, filled in runStep after the H1 filter; a failed first navigation
+    // attempt is discarded when the retry succeeds (H7).
+    consoleMeta: [],
+    mainPath: '',        // path of the last main-frame document response
+    refusalPage: false,  // set by checkPage: the page was judged a permission refusal
+    skipReason: '',      // set by a handler through env.skip(): record SKIP instead of checking the page
     rec: {
       persona: e.pkey, username: e.persona.username, step: e.step.id, name: e.step.name, index: e.index,
       url: '', status: 'PASS', fails: [], softs: [], notes: [], http: 0, finalUrl: '', title: '',
@@ -320,7 +383,8 @@ function makeEnv(context, e, me, S) {
     },
     fail(msg) { this.rec.fails.push(String(msg).slice(0, 400)); },
     soft(msg) { this.rec.softs.push(String(msg).slice(0, 400)); },
-    note(msg) { this.rec.notes.push(String(msg).slice(0, 200)); },
+    note(msg) { this.rec.notes.push(String(msg).slice(0, 300)); },
+    skip(msg) { this.skipReason = String(msg).slice(0, 300); },
   };
   env.nav = url => gotoRetry(env, url);
   env.settle = () => settle(env);
@@ -331,13 +395,35 @@ async function gotoRetry(env, url) {
   const abs = /^https?:/i.test(url) ? url : BASE + url;
   if (!LOCAL.test(abs)) throw new Error('refusing a non-local URL');
   if (!env.rec.url) env.rec.url = url.replace(BASE, '');
+  // H7: the console errors and bad sub-resources gathered while a first attempt failed
+  // (a 120 s PHP timeout, a dropped connection) belong to that attempt. They are parked
+  // before the retry and thrown away when the retry works; if the retry fails as well they
+  // are put back, so a page that is really broken keeps all its evidence.
+  let parked = null;
+  const park = () => {
+    parked = { meta: env.consoleMeta.splice(0), bad: env.rec.badResources.splice(0) };
+  };
+  const unpark = () => {
+    if (!parked) return;
+    env.consoleMeta.unshift(...parked.meta);
+    env.rec.badResources.unshift(...parked.bad);
+    parked = null;
+  };
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
       await env.page.goto(abs, { waitUntil: 'domcontentloaded', timeout: 240000 });
       if (env.rec.http >= 500 && attempt === 1) {
         env.note(`HTTP ${env.rec.http} on first try, retried once`);
+        park();
         await env.page.waitForTimeout(10000);
         continue;
+      }
+      if (parked) {
+        if (env.rec.http >= 500) unpark();
+        else {
+          env.note(`retry worked: ${parked.meta.length} console error(s) and ${parked.bad.length} bad resource(s) from the failed first attempt were dropped`);
+          parked = null;
+        }
       }
       return;
     } catch (err) {
@@ -346,7 +432,11 @@ async function gotoRetry(env, url) {
         env.rec.download = true;
         return;
       }
-      if (attempt === 2) throw err;
+      if (attempt === 2) {
+        unpark();
+        throw err;
+      }
+      park();
       if (CONN_ERR.test(msg)) {
         env.note('connection dropped (Apache restart?) - waited for port 8080, retried once');
         await waitForServer();
@@ -443,19 +533,74 @@ const HANDLERS = {
     await env.nav(target);
   },
 
-  // A datatable page: load it, type into the table search box, wait for the AJAX reply.
+  // A datatable page: load it, search, wait for the AJAX reply (H4). The theme hides the
+  // datatable's own search box by design (dashboard.mustache mirrors the topbar search
+  // into it on input), so the visible topbar box is typed into. If that fires no table
+  // request within 10 s, or the topbar box is missing, the hidden box is set directly and
+  // an input event dispatched: the same event the mirror sends.
   async tableSearch(env) {
+    const { page } = env;
     await env.nav(env.S.url);
     await env.settle();
-    const input = env.page.locator('[data-airpay-table-search]').first();
-    if (!(await input.count())) {
-      env.fail('no table search box on the page');
+    const term = env.S.args.search;
+    const isService = r => /lib\/ajax\/service\.php/.test(r.url());
+    const topbar = page.locator('.ap-topbar__search-input').first();
+    const hidden = page.locator('[data-airpay-table-search]').first();
+    const hasHidden = (await hidden.count()) > 0;
+    const hasTopbar = (await topbar.count()) > 0 && await topbar.isVisible().catch(() => false);
+    if (!hasTopbar && !hasHidden) {
+      env.fail('no table search box on the page (neither the topbar search nor the datatable input)');
       return;
     }
-    const reply = env.page.waitForResponse(r => /lib\/ajax\/service\.php/.test(r.url()), { timeout: 120000 }).catch(() => null);
-    await input.fill(env.S.args.search);
-    await reply;
-    await env.page.waitForTimeout(1500);
+    const reply = page.waitForResponse(isService, { timeout: 120000 }).catch(() => null);
+    let fired = false;
+    if (hasTopbar) {
+      const request = page.waitForRequest(isService, { timeout: 10000 }).then(() => true).catch(() => false);
+      await topbar.fill(term);
+      fired = await request;
+      if (fired) env.note('typed into the topbar search (the datatable box is hidden by design)');
+    }
+    if (!fired && hasHidden) {
+      await hidden.evaluate((el, v) => {
+        el.value = v;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }, term);
+      env.note(hasTopbar ? 'the topbar search fired no table request - set the hidden datatable input and dispatched input'
+        : 'no visible topbar search - set the hidden datatable input and dispatched input');
+    } else if (!fired) {
+      env.fail('the topbar search fired no table request and there is no datatable input to drive');
+      return;
+    }
+    if (!(await reply)) env.soft('no table AJAX reply within 120 s after searching');
+    // The table repaints after the reply; aria-busy goes back to false when it has.
+    await page.waitForFunction(() => {
+      const t = document.querySelector('[data-airpay-table]');
+      return !t || t.getAttribute('aria-busy') !== 'true';
+    }, null, { timeout: 30000 }).catch(() => {});
+    await page.waitForTimeout(1500);
+  },
+
+  // Authoring review queue (H6): review.php needs ?draftid=, so open the landing page
+  // and follow the first "Review" link in the drafts table. No draft -> SKIP, not FAIL.
+  async authoringReview(env) {
+    const { page } = env;
+    await env.nav('/local/sentientia_authoring/index.php');
+    await page.waitForLoadState('load', { timeout: 60000 }).catch(() => {});
+    const link = page.locator('a[href*="/local/sentientia_authoring/review.php?draftid="]').first();
+    if (!(await link.count())) {
+      env.skip('no draft seeded: the authoring index lists none (run seed_journey_content.php, which seeds one mock draft)');
+      return;
+    }
+    const href = new URL(await link.getAttribute('href'), BASE).toString();
+    if (!LOCAL.test(href)) {
+      env.fail('review link points off-host: ' + href);
+      return;
+    }
+    await link.click({ noWaitAfter: true });
+    await page.waitForURL(u => /review\.php\?.*draftid=\d+/.test(String(u)), { timeout: 240000 });
+    const at = new URL(page.url());
+    env.rec.url = at.pathname + at.search;
+    env.note('followed the first "Review" link on the drafts table');
   },
 
   // A CSV endpoint fetched with the browser session (no page, no download dialog).
@@ -602,6 +747,7 @@ async function checkPage(env) {
   }
   const errtext = `${info.errBox} ${info.alerts}`;
   const refused = REFUSAL.test(errtext) || (info.text.length < 6000 && REFUSAL.test(info.text)) || [401, 403].includes(rec.http);
+  env.refusalPage = refused;
   const phperr = (info.text.match(PHPERR) || [])[0];
   if (phperr) env.fail(`PHP/Moodle error text on the page: ${phperr.slice(0, 120)}`);
   const dbg = (info.text.match(DEBUGTXT) || [])[0];
@@ -670,17 +816,44 @@ async function capture(env) {
   if (!NOSHOTS) {
     await page.screenshot({ path: path.join(OUT, `${base}-desktop.png`) }).then(() => rec.shots.push(`${base}-desktop.png`)).catch(() => {});
   }
+  // H2: on a page judged a permission refusal that this journey step expected (access
+  // refused / either), the wide thing is the local developer-debug stack trace: unbroken
+  // <li> lines of class::method names that production never prints (debug is off there).
+  // Let li/pre wrap before measuring, and treat whatever still overflows as a note.
+  const refusalPage = env.refusalPage && (S.access || 'ok') !== 'ok';
+  let wrapped = false;
+  let notedKnown = false;
+  let notedRefusal = false;
   for (const w of [590, 390]) {
     await page.setViewportSize({ width: w, height: 1000 });
     await page.waitForTimeout(700);
     if (w === 590 && !NOSHOTS) {
       await page.screenshot({ path: path.join(OUT, `${base}-mobile.png`) }).then(() => rec.shots.push(`${base}-mobile.png`)).catch(() => {});
     }
+    // After the 590 px screenshot, so the evidence shows the page as it really renders.
+    if (refusalPage && !wrapped) {
+      wrapped = await page.addStyleTag({ content: 'li, pre { overflow-wrap: anywhere; }' }).then(() => true).catch(() => false);
+      if (wrapped) await page.waitForTimeout(300);
+    }
     const m = await page.evaluate(measureOverflow).catch(() => null);
     if (!m) continue;
     rec.overflow[w] = m;
-    if (m.doc > 1) env.fail(`horizontal scroll at ${w}px (page ${m.sw}px wide in a ${m.cw}px viewport)`);
-    else if (m.offenders.length) env.soft(`scroll container wider than the viewport at ${w}px: ${m.offenders.join(', ')}`);
+    const culprits = m.culprits && m.culprits.length ? `; sticking out: ${m.culprits.join(' | ')}` : '';
+    if (m.doc > 1) {
+      const why = `horizontal scroll at ${w}px (page ${m.sw}px wide in a ${m.cw}px viewport)${culprits}`;
+      if (!refusalPage) env.fail(why);
+      else if (!notedRefusal) {
+        notedRefusal = true;
+        env.note(`${why} [refusal page, local debug output - not counted]`);
+      }
+    } else if (m.offenders.length) {
+      env.soft(`scroll container wider than the viewport at ${w}px: ${m.offenders.join(', ')}`);
+    }
+    // Known table wrappers scroll inside their own box on purpose (B4/B5): a note, never a CHECK.
+    if (m.known && m.known.length && !notedKnown) {
+      notedKnown = true;
+      env.note(`table wrapper scrolls inside its own box at ${w}px: ${m.known.join(', ')}`);
+    }
   }
   await page.setViewportSize({ width: 1440, height: 900 });
 }
@@ -722,15 +895,20 @@ async function runStep(context, e, me) {
       page.on('console', m => {
         if (m.type() !== 'error') return;
         const t = m.text().slice(0, 220);
-        if (!IGNORE_CONSOLE.some(r => r.test(t))) rec.consoleErrors.push(t);
+        if (IGNORE_CONSOLE.some(r => r.test(t))) return;
+        let url = '';
+        try { url = m.location().url || ''; } catch (err) { /* no location */ }
+        env.consoleMeta.push({ t, url });
       });
       page.on('pageerror', err => {
-        if (!IGNORE_CONSOLE.some(r => r.test(err.message))) rec.consoleErrors.push(('pageerror: ' + err.message).slice(0, 220));
+        if (!IGNORE_CONSOLE.some(r => r.test(err.message))) env.consoleMeta.push({ t: ('pageerror: ' + err.message).slice(0, 220), url: '' });
       });
       page.on('response', r => {
         try {
-          if (r.request().isNavigationRequest() && r.frame() === page.mainFrame()) rec.http = r.status();
-          else if (r.status() >= 400 && rec.badResources.length < 5) rec.badResources.push(`${r.status()} ${new URL(r.url()).pathname}`);
+          if (r.request().isNavigationRequest() && r.frame() === page.mainFrame()) {
+            rec.http = r.status();
+            env.mainPath = new URL(r.url()).pathname;
+          } else if (r.status() >= 400 && rec.badResources.length < 5) rec.badResources.push(`${r.status()} ${new URL(r.url()).pathname}`);
         } catch (err) { /* response without a frame (worker) */ }
       });
     }
@@ -741,7 +919,8 @@ async function runStep(context, e, me) {
     } else if (S.url && usePage) {
       await env.nav(S.url);
     }
-    if (usePage) {
+    // A handler that found nothing to act on (env.skip) is recorded as SKIP without page checks.
+    if (usePage && !env.skipReason) {
       await settle(env);
       await checkPage(env);
       await capture(env);
@@ -754,7 +933,36 @@ async function runStep(context, e, me) {
   }
 
   rec.blocked = [...env.blocked].slice(0, 6);
-  rec.consoleErrors = rec.consoleErrors.slice(0, 6);
+  if (env.skipReason && !rec.fails.length) {
+    rec.status = 'SKIP';
+    rec.skipReason = env.skipReason;
+    rec.ms = Date.now() - t0;
+    return rec;
+  }
+  // H1: on a step that expects a refusal (access refused / either) the server answers the
+  // refusal page itself with HTTP 404 (core sends 404 for every uncaught exception) and
+  // Chrome logs the failed main document as a console error, "Failed to load resource ...
+  // status of 404". That is the page, not a missing file: drop it. Sub-resource failures
+  // are kept (badResources lists them; a message with a URL is only dropped when the URL is
+  // the main document, one without a URL only when no sub-resource failed with that status).
+  let consoleEntries = env.consoleMeta;
+  if ((S.access === 'refused' || S.access === 'either') && rec.http >= 400) {
+    const subSameStatus = rec.badResources.some(b => b.startsWith(`${rec.http} `));
+    let dropped = 0;
+    consoleEntries = consoleEntries.filter(c => {
+      const m = c.t.match(/Failed to load resource:.*status of (\d{3})/i);
+      if (!m || Number(m[1]) !== rec.http) return true;
+      let isDocument = !subSameStatus;
+      if (c.url) {
+        try { isDocument = new URL(c.url).pathname === env.mainPath; } catch (err) { isDocument = false; }
+      }
+      if (!isDocument) return true;
+      dropped += 1;
+      return false;
+    });
+    if (dropped) env.note(`ignored ${dropped} console error(s): the HTTP ${rec.http} is the refusal page itself`);
+  }
+  rec.consoleErrors = consoleEntries.map(c => c.t).slice(0, 6);
   if (rec.consoleErrors.length) {
     const bad = rec.badResources.length ? ` [${rec.badResources.join(', ')}]` : '';
     if (S.landing) env.fail(`${rec.consoleErrors.length} JS console error(s) on a landing page: ${rec.consoleErrors[0]}${bad}`);
@@ -766,53 +974,122 @@ async function runStep(context, e, me) {
 }
 
 // ---------------------------------------------------------------- login
+// A browser context with the local-only guarantee: every non-local request except the
+// font hosts is aborted (the host is recorded and attached to the step). Used for the
+// persona's working context and for every fresh login context, so a retry can never
+// weaken the guard.
+let blockedHosts = new Set();
+async function newLocalContext(browser) {
+  // serviceWorkers 'block': the PWA worker loses the session on post-login navigations in headless Chrome.
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: 'block' });
+  await context.route(u => /^https?:$/.test(u.protocol) && !LOCAL.test(u.href) && !ALLOWED_EXTERNAL.test(u.href), route => {
+    try { blockedHosts.add(new URL(route.request().url()).host); } catch (err) { /* ignore */ }
+    route.abort('blockedbyclient').catch(() => {});
+  });
+  return context;
+}
+
+// One login attempt in the given context. Reports timedOut when Moodle answered "Your
+// session has timed out" (a login token that no longer matches its session: seen on this
+// slow box, not reproducible); the caller retries that in a fresh context.
 async function login(context, username) {
   const page = await context.newPage();
   page.setDefaultTimeout(240000);
   try {
-    // One retry from a fresh login page when Moodle answers "Your session has
-    // timed out" (a login token that no longer matches its session - seen once
-    // on this slow box, not reproducible).
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      for (let g = 1; g <= 2; g++) {
-        try {
-          await page.goto(BASE + '/login/index.php', { waitUntil: 'domcontentloaded', timeout: 240000 });
-          break;
-        } catch (err) {
-          if (g === 2) throw err;
-          if (CONN_ERR.test(String(err.message))) await waitForServer();
-          else await page.waitForTimeout(10000);
-        }
+    for (let g = 1; g <= 2; g++) {
+      try {
+        await page.goto(BASE + '/login/index.php', { waitUntil: 'domcontentloaded', timeout: 240000 });
+        break;
+      } catch (err) {
+        if (g === 2) throw err;
+        if (CONN_ERR.test(String(err.message))) await waitForServer();
+        else await page.waitForTimeout(10000);
       }
-      await page.fill('#username', username);
-      await page.fill('#password', creds[username].password);
-      // The login POST can take minutes on a cold cache: wait for the redirect
-      // away from the login page, or for the login page to come back with an error.
-      await page.click('#loginbtn', { noWaitAfter: true });
-      const outcome = await Promise.race([
-        page.waitForURL(u => !/\/login\/index\.php/.test(String(u)), { timeout: 240000 }).then(() => 'ok'),
-        page.waitForFunction(() => location.pathname.includes('/login/')
-          && /session has timed out|invalid login|account has been locked|too many/i.test(document.body ? document.body.innerText : ''),
-        null, { timeout: 240000, polling: 1000 }).then(() => 'error'),
-      ]);
-      if (outcome === 'ok') {
-        const p = new URL(page.url()).pathname;
-        if (/change_password|\/admin\/tool\/policy|\/user\/policy/.test(p)) {
-          return { ok: false, reason: `interstitial after login: ${p}` };
-        }
-        return { ok: true };
-      }
-      const why = (await page.locator('.alert, .loginerrors, #loginerrormessage').allInnerTexts().catch(() => [])).join(' | ');
-      if (attempt === 1 && /session has timed out/i.test(why)) continue;
-      return { ok: false, reason: `login refused: ${why.slice(0, 200)}` };
     }
-    return { ok: false, reason: 'login did not complete' };
+    await page.fill('#username', username);
+    await page.fill('#password', creds[username].password);
+    // The login POST can take minutes on a cold cache: wait for the redirect
+    // away from the login page, or for the login page to come back with an error.
+    await page.click('#loginbtn', { noWaitAfter: true });
+    const outcome = await Promise.race([
+      page.waitForURL(u => !/\/login\/index\.php/.test(String(u)), { timeout: 240000 }).then(() => 'ok'),
+      page.waitForFunction(() => location.pathname.includes('/login/')
+        && /session has timed out|invalid login|account has been locked|too many/i.test(document.body ? document.body.innerText : ''),
+      null, { timeout: 240000, polling: 1000 }).then(() => 'error'),
+    ]);
+    if (outcome === 'ok') {
+      const p = new URL(page.url()).pathname;
+      if (/change_password|\/admin\/tool\/policy|\/user\/policy/.test(p)) {
+        return { ok: false, reason: `interstitial after login: ${p}` };
+      }
+      return { ok: true };
+    }
+    const why = (await page.locator('.alert, .loginerrors, #loginerrormessage').allInnerTexts().catch(() => [])).join(' | ');
+    return { ok: false, timedOut: /session has timed out/i.test(why), reason: `login refused: ${why.slice(0, 200)}` };
   } catch (err) {
     const why = await page.locator('.alert, .loginerrors, #loginerrormessage').allInnerTexts().catch(() => []);
     return { ok: false, reason: `login did not complete: ${String(err.message).split('\n')[0].slice(0, 120)} ${why.join(' | ').slice(0, 160)}` };
   } finally {
     await page.close().catch(() => {});
   }
+}
+
+// H8: prove the session survived the login. E1 (zeea-admin): Moodle accepted the password
+// twice, then the next request found no session and answered "Your session has timed out".
+// A first request to /my/ must not bounce to /login/. An inconclusive load (slow box) is
+// not a bounce: the steps' own "redirected to the login page" check still guards them.
+async function verifySession(context) {
+  const page = await context.newPage();
+  page.setDefaultTimeout(240000);
+  try {
+    for (let g = 1; g <= 2; g++) {
+      try {
+        await page.goto(BASE + '/my/', { waitUntil: 'domcontentloaded', timeout: 240000 });
+        break;
+      } catch (err) {
+        if (g === 2) throw err;
+        if (CONN_ERR.test(String(err.message))) await waitForServer();
+        else await page.waitForTimeout(10000);
+      }
+    }
+    const p = new URL(page.url()).pathname;
+    if (p.startsWith('/login/')) return { ok: false, bounced: true, reason: `session did not persist after login: /my/ redirected to ${p}` };
+    return { ok: true };
+  } catch (err) {
+    return { ok: true, note: `post-login /my/ check inconclusive (${String(err.message).split('\n')[0].slice(0, 90)})` };
+  } finally {
+    await page.close().catch(() => {});
+  }
+}
+
+// Log a persona in, retrying in a FRESH browser context (no cookies) when the login ended
+// in "session has timed out" or the session did not survive a first /my/ request. Up to 3
+// tries. On success returns the logged-in context (the caller closes it); on failure every
+// context has been closed.
+async function loginPersona(browser, username) {
+  const notes = [];
+  let last = { ok: false, reason: 'login did not complete' };
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const context = await newLocalContext(browser);
+    let r = await login(context, username);
+    let retriable = !!r.timedOut;
+    if (r.ok) {
+      const v = await verifySession(context);
+      if (v.note) notes.push(v.note);
+      if (v.ok) {
+        if (attempt > 1) notes.push(`logged in on try ${attempt}, each retry in a fresh browser context`);
+        return { ok: true, context, notes };
+      }
+      r = v;
+      retriable = !!v.bounced;
+    }
+    await context.close().catch(() => {});
+    last = r;
+    if (!retriable) break;
+    notes.push(`try ${attempt}: ${String(r.reason).slice(0, 110)} - retrying in a fresh browser context`);
+    await new Promise(res => setTimeout(res, 5000));
+  }
+  return { ok: false, reason: last.reason, notes };
 }
 
 // ---------------------------------------------------------------- main
@@ -857,6 +1134,22 @@ for (const e of plan) {
 }
 console.log(`Running ${plan.length} step(s) across ${groups.length} persona(s) on ${BASE}; output ${OUT}`);
 
+// H8: refuse to start on stale results. .personas.local.json is rewritten (and every
+// persona password reset) by provision_local_personas.php; if that happened after the last
+// stored login, the stored results were taken with other accounts. --fresh starts a new
+// results set, --allow-new-creds merges into the stored one anyway.
+if (!FRESH && !has('--allow-new-creds')) {
+  const stamps = results.filter(r => r.step === 'login' && r.at).map(r => Date.parse(r.at)).filter(Number.isFinite);
+  const lastLogin = stamps.length ? Math.max(...stamps) : 0;
+  const credsAt = fs.statSync(CREDS_FILE).mtimeMs;
+  if (lastLogin && credsAt > lastLogin) {
+    console.error(`Refusing to start: .personas.local.json was written ${new Date(credsAt).toISOString()}, after the last stored login (${new Date(lastLogin).toISOString()}).\n`
+      + 'The personas were re-provisioned, so the stored results in ' + RES_JSON + ' come from other accounts and passwords.\n'
+      + 'Re-run with --fresh to start a new results set, or with --allow-new-creds to merge into the stored results anyway.');
+    process.exit(2);
+  }
+}
+
 const browser = await chromium.launch({
   channel: 'chrome', headless: true,
   args: ['--disable-gpu', '--disable-extensions', '--disable-background-networking', '--disable-dev-shm-usage'],
@@ -865,27 +1158,21 @@ let exitCode = 0;
 try {
   for (const g of groups) {
     const p = personaMeta[g.pkey];
-    // serviceWorkers 'block': the PWA worker loses the session on post-login navigations in headless Chrome.
-    const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: 'block' });
-    // Local-only guarantee: every non-local request except the font hosts is aborted (its host is recorded on the step).
-    let blockedHosts = new Set();
-    await context.route(u => /^https?:$/.test(u.protocol) && !LOCAL.test(u.href) && !ALLOWED_EXTERNAL.test(u.href), route => {
-      try { blockedHosts.add(new URL(route.request().url()).host); } catch (err) { /* ignore */ }
-      route.abort('blockedbyclient').catch(() => {});
-    });
+    let context;
     let me = '';
     if (p.username) {
       me = creds[p.username] ? creds[p.username].id : '';
       const t0 = Date.now();
-      const lg = creds[p.username] ? await login(context, p.username) : { ok: false, reason: `no credentials for ${p.username} - run provision_local_personas.php` };
+      // H8: each try (and each retry after a timed-out or non-persisting session) runs in its own fresh context.
+      const lg = creds[p.username] ? await loginPersona(browser, p.username) : { ok: false, reason: `no credentials for ${p.username} - run provision_local_personas.php` };
       const rec = {
         persona: g.pkey, username: p.username, step: 'login', name: 'Log in', index: 0, url: '/login/index.php',
-        status: lg.ok ? 'PASS' : 'FAIL', fails: lg.ok ? [] : [lg.reason], softs: [], notes: [], consoleErrors: [], shots: [],
+        status: lg.ok ? 'PASS' : 'FAIL', fails: lg.ok ? [] : [lg.reason], softs: [], notes: lg.notes || [], consoleErrors: [], shots: [],
         overflow: {}, ms: Date.now() - t0, at: new Date().toISOString(),
       };
       upsert(rec);
       writeResults();
-      console.log(`${g.pkey}/login: ${rec.status}${lg.ok ? '' : ' - ' + lg.reason}`);
+      console.log(`${g.pkey}/login: ${rec.status}${lg.ok ? '' : ' - ' + lg.reason}${rec.notes.length ? ' (' + rec.notes.join('; ').slice(0, 160) + ')' : ''}`);
       if (!lg.ok) {
         exitCode = 1;
         for (const e of g.entries) {
@@ -893,9 +1180,11 @@ try {
             status: 'SKIP', skipReason: 'login failed', fails: [], softs: [], notes: [], consoleErrors: [], shots: [], overflow: {}, at: new Date().toISOString() });
         }
         writeResults();
-        await context.close();
         continue;
       }
+      context = lg.context;
+    } else {
+      context = await newLocalContext(browser);
     }
     for (const e of g.entries) {
       blockedHosts = new Set();
