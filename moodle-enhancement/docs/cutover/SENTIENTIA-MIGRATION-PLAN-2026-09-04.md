@@ -48,6 +48,19 @@ What changes in this plan:
   - Log: `D:\Claude Local\rehearsal\hop1_45.log` and `hop1_upgrade_output.log`. Still to rehearse:
     hop 1 on MySQL 8.4 (the target engine) and hop 2 to 5.2 on PHP 8.3; neither is available on this
     machine.
+- **Hop 2 rehearsed locally too (2026-10-01, PASS).** The same `bizlms_april` data went 4.5.10 → 5.1.3+
+  (the local dev line; this machine's PHP 8.2 cannot run 5.2).
+  - Setup: a copy of the local 5.1 codebase with the repo's Sentientia tree overlaid, excluding the
+    legacy `airpay_ratings` duplicate as `build-5.2-standalone.sh` does.
+  - Result: "Command line upgrade from 4.5.10 (2024100710) to 5.1.3+ (2025100603.13) completed
+    successfully". **All 47 Sentientia plugins installed on the restored BizLMS database** (the
+    production install path), in about 38 min.
+  - Step 4f-b (`repair_task_registrations.php`), dry run then apply: 0 problems, message preferences
+    clean.
+  - The only noise: XMLDB notices about CHAR NOT NULL columns declared with DEFAULT="" (auto-corrected;
+    source clean-up queued).
+  - Capability inventory on this copy: `STAGE-B-CAPABILITY-INVENTORY-2026-09-30.md`.
+  - Log: `D:\Claude Local\rehearsal\hop2_51.log`.
 - **BizLMS plugin code for hop 1: decided 2026-09-30 (Nitin, as recommended) — OFF disk.** The
   plugins show as "missing from disk" and their tables stay untouched for the ADR-032 importers.
   The alternative was to deploy the 4.1.2-era BizLMS code (Moodle 3.3/3.4 vintage) so its upgrade
