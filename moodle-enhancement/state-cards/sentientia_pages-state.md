@@ -257,3 +257,19 @@ token, window and "trainer's mark wins" rules live in `local_sentientia_classroo
 - **Not changed:** the footer and certificate-template strings' English, `version.php`.
 - Visual evidence: `docs/visual-evidence/2026-09-30/qr-and-loginas/` (README there: 20 automatic
   checks, all pass, 40 screenshots; checks 01-08 re-captured, 12-20 new).
+
+
+## 2026-09-30 (final review) - Hindi "already marked" wording; QR entry point lives in the classroom plugin
+
+- **Hindi.** `lang/hi` `qr_already_title` / `qr_already_body` said the attendance was *darj* (recorded),
+  the same verb the success page and every refusal use, so a Hindi-UI learner whom the trainer had
+  marked Absent was told "already recorded" in the words of the success page. They now say *chihnit*
+  (marked): title "पहले से चिह्नित है", body "... उपस्थिति पहले ही चिह्नित की जा चुकी है ...", which keeps the English
+  distinction ("Attendance Marked!" / "recorded at" for the success, "already been marked" for the
+  repeat). Both trees identical; screenshot 18 re-captured with a throwaway `vpqr_*` account.
+- **No PHP change** in this plugin (the version is untouched). The link to `qr_attendance.php` is on the classroom attendance
+  page, behind the default-OFF flag `sentientia.classroom.qr_attendance` registered in
+  `local_sentientia_classroom` (see that state card). The QR page and the scan page are unchanged and
+  are reachable by URL exactly as before whether the flag is on or off. The `trainer` role gets
+  `local/sentientia_classroom:attendance` from the classroom plugin's upgrade step 2026093001, which is
+  what lets a trainer open `qr_attendance.php`.

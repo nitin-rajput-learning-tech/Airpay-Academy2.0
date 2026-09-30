@@ -169,6 +169,14 @@ const saveAttendance = async (sessionid, root) => {
 };
 
 const handleClick = (sessionid, root) => (event) => {
+    // Choosing a status the learner already shows (Absent on an unmarked learner, say) fires
+    // no "change" event, but it is still the trainer setting that mark on purpose: an explicit
+    // Absent is written and stands against a later scan.
+    if (event.target.matches('input[type=radio][data-userid]') && !event.target.disabled) {
+        const row = event.target.closest('tr[data-userid]');
+        if (row) { row.dataset.touched = '1'; }
+        setDirty(root, true);
+    }
     const trigger = event.target.closest('[data-action]');
     if (!trigger) { return; }
     const action = trigger.dataset.action;

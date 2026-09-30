@@ -268,5 +268,18 @@ function xmldb_local_sentientia_classroom_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026092501, 'local', 'sentientia_classroom');
     }
 
+    // 2026093001 — T-01 back-fill (2026-09-30 QR attendance review): the Sentientia `trainer` role
+    // is archetype `teacher` and held neither :view nor :attendance, so the trainers this feature
+    // is for could not open attendance.php or the QR page. db/access.php now lists `teacher` for
+    // :view and :attendance; existing roles get the grant here (roles that already have any
+    // setting for them are left alone). See db/upgradelib.php.
+    if ($oldversion < 2026093001) {
+        require_once(__DIR__ . '/upgradelib.php');
+        $granted = local_sentientia_classroom_backfill_teacher_caps();
+        mtrace('local_sentientia_classroom: granted ' . $granted
+            . ' view/attendance capability setting(s) to teacher-archetype roles.');
+        upgrade_plugin_savepoint(true, 2026093001, 'local', 'sentientia_classroom');
+    }
+
     return true;
 }

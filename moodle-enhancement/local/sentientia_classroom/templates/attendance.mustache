@@ -20,6 +20,8 @@
       roster_size        int
       count_*            int — present|late|excused|absent
       can_attend         bool
+      show_qr            bool  the QR entry point flag is on and the viewer holds :attendance
+      qr_url             URL of the trainer's QR page for this session
       back_url           URL back to view.php?id=N&tab=sessions
 }}
 <div data-region="airpay-attendance"
@@ -43,6 +45,13 @@
                 <span>{{ roster_size }} on roster</span>
             </div>
         </div>
+        {{# show_qr }}
+        <div>
+            <a href="{{{ qr_url }}}" class="btn btn-outline-primary btn-sm" data-region="show-qr">
+                <i class="fa fa-qrcode fa-fw"></i> {{# str }}attendance_show_qr, local_sentientia_classroom{{/ str }}
+            </a>
+        </div>
+        {{/ show_qr }}
     </div>
 
     {{! ── Live counts strip ──────────────────────────────────────────── }}

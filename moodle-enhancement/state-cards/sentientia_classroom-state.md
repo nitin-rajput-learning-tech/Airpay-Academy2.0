@@ -323,3 +323,74 @@ Owner decisions taken as recommended (Nitin, 2026-09-30). No schema change, no v
   `trainer` (an archetype line in `db/access.php` with an upgrade back-fill, or a role permission
   on the box) is an access decision for its own change; it needs a version bump, which this pass
   did not make.
+
+
+## 2026-09-30 (final review) - QR attendance: insert race, untouched learners, trainer role, QR entry point
+
+Owner decisions taken as recommended (Nitin, 2026-09-30). Both trees. **Version bump: `2026093001` /
+`1.10.6`** (was `2026092501` / `1.10.5`). **The bump needs a PHPUnit re-init before any PHPUnit file
+runs, and an upgrade step on UAT** (see "Deploy" below). The bumped `version.php` was NOT copied into the
+local XAMPP Moodle, so its web pages did not go to "upgrade needed" while a persona pass was running.
+
+- **Insert race no longer overwrites a scan.** When the grid Save's insert lost the race to a learner's QR
+  scan, `write_attendance_row()` re-read the winning row and updated it with the trainer's Absent (the
+  keep-the-newer-mark rule ran only on the row read *before* the insert). The rule is now one private
+  helper, `keeps_newer_mark(?stdClass $row, int $status, int $loadedat): bool`, applied to the row read
+  before the write AND to the re-read row in the fallback. `write_attendance_row(..., ?stdClass
+  $existing, int $loadedat = 0)` returns `bool` (`false` = kept), `write_mark()` returns it, so
+  `bulk_mark_attendance()` counts the race in `kept` / `keptmarks` and the trainer is warned. Tests:
+  scan writes Present, trainer path via reflection with `ATT_ABSENT`, stale `null` row, `loadedat` before
+  the scan, inside a delegated transaction -> row still Present, `markedby` the learner, reported kept;
+  a deliberate Excused over the same row is still written.
+- **The grid no longer writes an implicit Absent.** Before, Save sent an Absent for every learner the
+  trainer did not tick, so a trainer who saved before the room had scanned made every later scan
+  `SCAN_ALREADY`. Now `attendance.php` renders each row with `data-original` (status) and `data-hasmark`
+  (a stored row exists; `get_session_attendance()` returns `has_mark`), and `attendance.js` sends only
+  rows the trainer *touched*: a learner with no row is sent when touched (choosing any radio, Absent
+  included, or "Mark all present"), so an explicit Absent is written and still wins over later scans;
+  a learner with a stored row is sent only when the status changed. A learner nobody touched keeps no
+  row (still shown as Absent, counted as Absent) and can still scan inside the window. A Save with
+  nothing to send says so ("Nothing to save", `attendance_nothing_to_save`) and writes nothing. A short
+  hint (`attendance_untouched_hint`) explains it on the page. The stale comment in
+  `record_qr_attendance()` that said an implicit and a deliberate Absent look the same is corrected.
+- **Stale `loadedat` after a Save.** `bulk_mark_attendance` returns `savedat` (server `time()`, taken
+  before anything is read or written); the AMD module sets `root.dataset.loadedat` to it after every
+  successful Save and marks the sent rows as stored, so a trainer who saw a kept scan and corrects it
+  is no longer refused a second time. A scan in the same second as a Save still counts as newer.
+- **The `trainer` role can take attendance (T-01 class).** `db/access.php` lists the `teacher` archetype
+  (the Sentientia/BizLMS `trainer`) beside `manager` and `editingteacher` for `:view` and `:attendance`
+  only; `:manage`, `:create`, `:update`, `:delete` are unchanged. Upgrade step `2026093001` calls
+  `local_sentientia_classroom_backfill_teacher_caps()` (`db/upgradelib.php`): for every role with
+  archetype `teacher` or `editingteacher`, grant ALLOW at system context only where the role has no
+  setting yet (`assign_capability(..., overwrite false)`), so an administrator's PREVENT or PROHIBIT and
+  an existing ALLOW are never touched; idempotent. ADR-031 still confines a trainer to classrooms in
+  their own tenant (`require_session_access`).
+- **QR entry point, behind a flag.** New `db/feature_flags.php` registers
+  `sentientia.classroom.qr_attendance`, default OFF. With it ON, `attendance.php` shows "Show QR for
+  this session" (`attendance_show_qr`, en + hi) linking to
+  `/local/sentientia_pages/qr_attendance.php?sessionid=N` for users holding `:attendance`, only where
+  `local_sentientia_pages` is installed. The flag controls the link only; the QR page's own checks
+  (capability, tenant scope, window, signed token) are unchanged. OFF: the page is as it was (apart
+  from the hint above).
+- **Strings (en + hi, parity gate 0 failures):** `attendance_nothing_to_save`, `attendance_untouched_hint`,
+  `attendance_show_qr`. The Hindi "already marked" scan page (in `local_sentientia_pages`) now says
+  *chihnit* (marked) instead of *darj* (recorded).
+- **Tests (local XAMPP MariaDB, before the version bump):** `qr_attendance_test` 47 tests / 167
+  assertions OK (6 new: race keeps the scan, race still writes a deliberate change, untouched learner
+  keeps no row and can still scan, explicit Absent wins over a later scan, second Save after a kept
+  mark writes the correction, grid template carries `data-original` / `data-hasmark`);
+  `sessions_external_test` 15 / 33 OK (`savedat`); `qr_entry_point_test` 4 / 24 OK (flag registered and
+  OFF, can be set and unset, link only when `show_qr`, strings in en + hi); `sessions_test` 18 / 40 and
+  `tenant_scope_test` 13 / 72 still OK. **Not yet run:** `trainer_caps_backfill_test` (8 tests: teacher
+  and editingteacher roles get the two caps, idempotent, PREVENT / PROHIBIT kept, other archetypes and
+  the other four caps untouched, a user with the role can take attendance, `access.php` lists `teacher`,
+  the upgrade step and version are wired). It runs after the lead's PHPUnit re-init.
+- **Deploy:** copy the plugin, then Admin > Notifications (runs step 2026093001, which grants the two
+  caps to teacher-archetype roles), then `php admin/cli/purge_caches.php --lang --js`. Turning the QR
+  link on is a separate step: set `sentientia.classroom.qr_attendance` in the Switchboard, per tenant.
+  On UAT check the `trainer` role afterwards (a trainer opens `attendance.php` and `qr_attendance.php`
+  for a classroom in their tenant, and is refused for another tenant's).
+- **Open:** `qr_secret()` still creates the secret lazily on first use (two simultaneous first requests
+  can race; negligible). Creating it in an install / upgrade step would remove that; not done in this
+  round. `qr_attendance.php` calls `require_capability()` before `$PAGE->set_context()` (stack noise on
+  the refusal pages at developer debug level).

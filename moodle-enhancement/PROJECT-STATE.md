@@ -69,6 +69,40 @@ no schema change and no version bump, both trees byte-identical:
   `tenant_scope_test` (their code is unchanged by this pass). Gates: `check-tree-drift` OK,
   `check-path-boundary` exit 0, `php -l` clean.
 
+### Final review pass (same day): race, untouched learners, trainer role, QR entry point
+
+The final review said fix-then-ship (two must-fix, two decisions). All closed, owner decisions as
+recommended. Both trees. **The classroom plugin version is bumped to `2026093001` / `1.10.6`: PHPUnit must
+be re-initialised before any PHPUnit file runs, and UAT needs an upgrade.**
+
+- **Must-fix: insert race overwrote a scan.** When the grid Save's insert lost the race to a QR scan, the
+  fallback updated the winning row with the trainer's Absent (the keep-the-newer-mark rule ran only on the
+  row read before the insert). The rule is now `keeps_newer_mark()`, applied to the re-read row too;
+  `write_attendance_row()` returns bool and the race counts in `kept` / `keptmarks`.
+- **Must-fix: Hindi "already marked".** The Hindi page used *darj* (recorded) for both success and
+  already-marked; it now says *chihnit* (marked) for already-marked, like the English.
+- **Decision: the grid writes only what the trainer touched.** No more implicit Absent for a learner
+  nobody touched; that learner keeps no row and can still scan inside the window. An Absent the trainer
+  sets is written and still wins over later scans. `Save` with nothing changed says "Nothing to save".
+- **Stale load time:** `bulk_mark_attendance` returns `savedat`; the page uses it as the new load time, so
+  a correction after a kept scan is written on the second Save.
+- **Decision (T-01 class): the `trainer` role (archetype teacher) can take attendance.** `db/access.php`
+  lists `teacher` for `:view` and `:attendance` only; upgrade step 2026093001 back-fills existing
+  teacher / editingteacher roles that have no setting yet (a PREVENT or PROHIBIT is never overridden).
+- **Decision: QR entry point** on the attendance page, "Show QR for this session", behind the new
+  default-OFF flag `sentientia.classroom.qr_attendance` (registered in the classroom plugin). OFF: nothing
+  links to the QR page.
+- **Evidence.** `docs/visual-evidence/2026-09-30/qr-and-loginas/`: 18 re-captured; 19 re-run with the
+  new grid flow; new 21 to 24. Captured with throwaway `vpqr_*` accounts, never the `vp_*` personas.
+- **Tests (local XAMPP, before the version bump was deployed):** `qr_attendance_test` 47 / 167,
+  `sessions_external_test` 15 / 33, `qr_entry_point_test` 4 / 24, `sessions_test` 18 / 40,
+  `tenant_scope_test` 13 / 72, all OK. **Not run:** `trainer_caps_backfill_test` (8 tests) waits for
+  the PHPUnit re-init. Gates: `check-tree-drift` OK, `check-lang-parity` 0 failures,
+  `check-path-boundary` OK, AMD src/build parity OK, `php -l` clean.
+- **Side effect on the local box:** the bumped `version.php` was not copied into the local XAMPP Moodle
+  (its web pages would have asked for an upgrade during a running persona pass); a `--lang --js` cache
+  purge was run. The QR flag was switched on for tenant /1 for one capture and switched off again.
+
 ## 🧪 2026-09-29 — ADR-031 decisions closed; Playwright screen-check pass; PWA OFF, "Browse Library" (Opus 5.5)
 
 **Direction (Nitin, 2026-09-29):** no production hotfix. Production (airpay.academy, BizLMS 4.1.2) is

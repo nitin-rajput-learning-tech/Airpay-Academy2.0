@@ -24,6 +24,13 @@ require_capability('local/sentientia_classroom:view', $context);
 
 $can_attend = has_capability('local/sentientia_classroom:attendance', $context);
 
+// Entry point to the QR page (local_sentientia_pages/qr_attendance.php). Behind a default-OFF
+// flag: with it off, this page renders exactly as before. The link only appears for someone
+// who could open the QR page anyway (:attendance), and only where that plugin is installed.
+$show_qr = $can_attend
+    && \core_component::get_component_directory('local_sentientia_pages') !== null
+    && \local_sentientia_platform\feature_flags::is_enabled('sentientia.classroom.qr_attendance');
+
 $page_url = new moodle_url('/local/sentientia_classroom/attendance.php',
     ['sessionid' => $sessionid]);
 $PAGE->set_context($context);
@@ -107,6 +114,9 @@ $data = [
     'count_excused'     => $counts['excused'],
     'count_absent'      => $counts['absent'],
     'can_attend'        => $can_attend,
+    'show_qr'           => $show_qr,
+    'qr_url'            => (new moodle_url('/local/sentientia_pages/qr_attendance.php',
+        ['sessionid' => $sessionid]))->out(false),
     'back_url'          => (new moodle_url('/local/sentientia_classroom/view.php',
         ['id' => (int) $session->classroomid, 'tab' => 'sessions']))->out(false),
 ];
