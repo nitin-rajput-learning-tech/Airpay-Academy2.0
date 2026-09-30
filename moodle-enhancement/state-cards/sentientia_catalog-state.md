@@ -235,3 +235,32 @@ wave 1 still need to be carried to UAT:
 
 The run of `tests/tenant_gate_test.php` in the tenant_isolation group on MariaDB and PostgreSQL
 has not happened yet.
+
+## 2026-09-30 - Persona pass: catalog mobile fixes (D8, D10, D12)
+
+Bundle "Catalog mobile" from `docs/visual-evidence/2026-09-30/personas/TRIAGE.md`. Fixes to broken
+behaviour, so no feature flag and no schema, capability or lang change. 1.0.6-beta / 2026093001.
+Both trees.
+
+- D8: `templates/catalog.mustache`. The "Filters & Sort" `<details>` (now `id="ap-catalog-filter-details"`)
+  still ships `open`, because on desktop the summary is `display:none` and a closed disclosure would
+  hide the filters. At 590px and below an open `<details>` is a fixed bottom sheet, so it covered the
+  bottom of the phone on load. An inline script straight after the element sets `open = !matches` for
+  `(max-width: 590px)` before first paint and follows the breakpoint on resize and rotation. It must not
+  move into the `DOMContentLoaded` block (the sheet would paint open first).
+- D12: `templates/course_card.mustache` + `styles.css`. The NEW and completed badges take
+  `airpay-catalog__badge--beside-heart`, which offsets them left of the bookmark heart by one heart width
+  (`--airpay-catalog-heart-size`, 30px, shared by the heart and the offset). The public storefront badge
+  in `public.php` has no heart and keeps the corner.
+- D10: `styles.css`. Root cause of the 400px-at-390px overflow: the category tile is a grid item with a
+  `nowrap` name, so `min-width:auto` made the single mobile column as wide as the longest category name
+  ("AIRPAY PAYMENT SERVICES PRIVATE LIMITED", 338px of text, visible only to the /1 learner). The shell's
+  16px gutter at <=768px plus that 372px tile is 400px, and catalog pages set `.ap-shell__content` to
+  `overflow: visible`, so nothing clips it. Fix: `min-width:0` on the tile, `minmax(0, 1fr)` category
+  tracks at 768px and 590px, and the name wraps at 590px and below (ellipsis stays on desktop).
+  Reproduced and cleared in a fixture; the in-app confirmation is the persona re-run of the learner
+  `catalog` step at 390px.
+
+Tests: `tests/catalog_mobile_layout_test.php` (7; renders the real templates, reads the real CSS).
+Not run under PHPUnit in this pass. Purge the plugin CSS and template caches on deploy (the version
+bump does it on upgrade). Evidence: `docs/visual-evidence/2026-09-30/persona-fix-catalog/`.

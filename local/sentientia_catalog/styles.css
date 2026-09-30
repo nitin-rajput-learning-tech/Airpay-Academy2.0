@@ -131,6 +131,9 @@
     transition: transform var(--ap-transition-quick),
                 box-shadow var(--ap-transition-quick);
     position: relative;
+    /* Bookmark heart diameter, shared by the heart itself and by the badge
+       offset below so the two cannot drift apart (persona pass D12). */
+    --airpay-catalog-heart-size: 30px;
 }
 .airpay-catalog__card:hover {
     transform: translateY(-2px);
@@ -217,6 +220,19 @@
 .airpay-catalog__badge--done {
     background: var(--ap-color-success);
     color: var(--ap-color-text-inverse);
+}
+/* Persona pass D12 (2026-09-30): course_card.mustache renders the bookmark
+   heart (top: space-2, right: space-2, one heart wide) in the very corner the
+   NEW / completed badge occupies, so the heart sat on top of the pill on
+   every Trending / New card. Slide the pill left of the heart by one heart
+   width plus a gap. The type pill is top-left, so the free space is the
+   strip between the two. Scoped to a modifier because the public storefront
+   (public.php) renders the same badge with no heart and keeps the corner. */
+.airpay-catalog__badge--beside-heart {
+    right: calc(var(--ap-space-2) + var(--airpay-catalog-heart-size, 30px) + var(--ap-space-2));
+    /* Centre the pill on the heart's mid-line rather than its top edge. */
+    top: calc(var(--ap-space-2) + var(--airpay-catalog-heart-size, 30px) / 2);
+    transform: translateY(-50%);
 }
 
 .airpay-catalog__card-body { padding: var(--ap-space-3) var(--ap-space-4) var(--ap-space-4); }
@@ -351,6 +367,14 @@ body.dark-mode .airpay-catalog__btn--continue:hover {
     gap: var(--ap-space-3);
 }
 .airpay-catalog__category-card {
+    /* Persona pass D10 (2026-09-30): this is a grid item whose name is
+       white-space:nowrap, so the automatic minimum size (min-width:auto) made
+       the single mobile column as wide as the longest category name. The
+       learner catalog's "AIRPAY PAYMENT SERVICES PRIVATE LIMITED" tile is
+       338px of text, which pushed the whole page 10px past a 390px viewport
+       (400px scrollWidth). min-width:0 lets the track shrink to the
+       container; the name then truncates (desktop) or wraps (<=590px). */
+    min-width: 0;
     padding: var(--ap-space-4);
     background: var(--ap-color-bg-surface-alt);
     border-radius: var(--ap-radius-md);
@@ -415,8 +439,8 @@ body.dark-mode .airpay-catalog__btn--continue:hover {
     position: absolute;
     top: var(--ap-space-2);
     right: var(--ap-space-2);
-    width: 30px;
-    height: 30px;
+    width: var(--airpay-catalog-heart-size, 30px);
+    height: var(--airpay-catalog-heart-size, 30px);
     border-radius: var(--ap-radius-full);
     background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(4px);
@@ -747,7 +771,7 @@ body.dark-mode .airpay-catalog__card-level {
         min-width: 240px;
     }
     .airpay-catalog__categories {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .airpay-catalog__carousel-nav { display: none; }
 }
@@ -758,7 +782,15 @@ body.dark-mode .airpay-catalog__card-level {
         flex: 0 0 85vw;
         min-width: 85vw;
     }
-    .airpay-catalog__categories { grid-template-columns: 1fr; }
+    /* minmax(0, 1fr), not 1fr: see the D10 note on .airpay-catalog__category-card. */
+    .airpay-catalog__categories { grid-template-columns: minmax(0, 1fr); }
+    /* A single full-width tile has room to show the whole category name, so
+       wrap it here instead of cutting it off with an ellipsis that a touch
+       user cannot hover to read. */
+    .airpay-catalog__category-card strong {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
     .airpay-catalog__section-header {
         flex-direction: column;
         gap: var(--ap-space-2);

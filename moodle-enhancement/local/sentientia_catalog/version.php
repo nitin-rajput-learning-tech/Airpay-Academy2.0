@@ -25,10 +25,17 @@ $plugin->component = 'local_sentientia_catalog';
 // ADR-031 (2026-09-25) — tenant resolution fails closed: only a cross-tenant
 // viewer is unscoped; guests are the Public tenant; an unresolved tenant sees
 // and enrols in nothing. Purge local_sentientia_catalog caches on deploy.
-$plugin->version   = 2026092500;  // ADR-031: catalog tenant gate fails closed (no schema/cap change)
+// Persona pass 2026-09-30 (TRIAGE bundle "Catalog mobile", D8/D10/D12) -- fixes
+// only, no flag, no schema/cap change: (D8) the mobile filter bottom sheet no
+// longer opens on load (catalog.mustache closes the <details> at <=590px);
+// (D12) the NEW/completed badge sits left of the bookmark heart instead of
+// under it (course_card.mustache + styles.css); (D10) the category grid item
+// gets min-width:0 so a long category name no longer pushes the page 10px past
+// a 390px viewport. Bump so the upgrade purges the plugin CSS + template cache.
+$plugin->version   = 2026093001;  // Persona pass: catalog mobile fixes (D8/D10/D12); no schema/cap change
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.5-beta';
+$plugin->release   = '1.0.6-beta';
 // tenant::is_cross_tenant() arrived in platform 2026092500 (ADR-031).
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026092500,
