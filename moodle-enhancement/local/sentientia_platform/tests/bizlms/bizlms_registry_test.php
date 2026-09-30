@@ -141,6 +141,67 @@ final class bizlms_registry_test extends \advanced_testcase {
         $this->assertContains('preserve_step_without_external_refs:toy.org', $problems);
     }
 
+    public function test_a_target_that_the_plugins_own_schema_does_not_define_is_refused(): void {
+        // user_enrolments is a core history table: an importer never writes it as a target, and never another
+        // plugin's table.
+        toy_importer::$extratarget = 'user_enrolments';
+        $this->assertContains('target_not_in_the_plugin_schema:toy:user_enrolments', $this->problems([new toy_importer()]));
+    }
+
+    public function test_a_legacy_table_cannot_be_a_target_however_it_is_found(): void {
+        // Declined by the importer itself: still a legacy table.
+        toy_importer::$extratarget = 'local_toy_unused';
+        $this->assertContains('target_is_read_only:toy:local_toy_unused', $this->problems([new toy_importer()]));
+
+        // Claimed by another importer.
+        toy_importer::$extratarget = 'local_toy_fan';
+        $problems = $this->problems([
+            new toy_importer('one', [], ['local_toy_org']),
+            new toy_importer('two', [], ['local_toy_fan']),
+        ]);
+        $this->assertContains('target_is_read_only:one:local_toy_fan', $problems);
+    }
+
+    public function test_a_core_write_must_be_on_the_list_reviewed_against_the_adr(): void {
+        toy_importer::$corewritetable = 'grade_grades';
+        $this->assertContains('core_write_not_reviewed:toy:grade_grades', $this->problems([new toy_importer()]));
+
+        toy_importer::$corewritetable = null;
+        toy_importer::$corewrites = true;
+        $this->assertSame([], $this->problems([new toy_importer()]), 'course is on the list (the open_* backfill)');
+
+        $this->assertSame(['course', 'enrol', 'role_assignments', 'tag_instance', 'user_enrolments'],
+            array_keys(registry::CORE_WRITES_ALLOWED));
+        foreach (['course_completions', 'course_modules_completion', 'grade_grades', 'grade_items', 'logstore_standard_log',
+                  'role_capabilities', 'messages', 'notifications', 'quiz_attempts', 'badge_issued'] as $history) {
+            $this->assertArrayNotHasKey($history, registry::CORE_WRITES_ALLOWED,
+                "{$history} is history or configuration, never an import target");
+        }
+    }
+
+    public function test_a_map_step_may_not_write_the_table_a_preserve_step_owns(): void {
+        toy_importer::$dupintoorg = true;
+        $this->assertContains('map_step_targets_a_preserve_table:toy.dup:local_sentientia_toy_org',
+            $this->problems([new toy_importer()]));
+    }
+
+    public function test_importer_and_step_code_must_live_where_the_static_scan_reads(): void {
+        $toy = new toy_importer();
+        // The toy is test scaffolding and lives in tests/classes/bizlms: a test registry accepts that, a real one does not.
+        $this->assertNull(registry::code_location_problem($toy, 'local_sentientia_platform', true));
+        $this->assertSame('code_outside_classes_bizlms', registry::code_location_problem($toy, 'local_sentientia_platform', false));
+        foreach ($toy->steps() as $step) {
+            $this->assertNull(registry::code_location_problem($step, 'local_sentientia_platform', true), 'an anonymous step is judged where it is written');
+            $this->assertSame('code_outside_classes_bizlms', registry::code_location_problem($step, 'local_sentientia_platform'));
+        }
+
+        // Code in classes/bizlms/ is fine; anything else is not scanned.
+        $this->assertNull(registry::code_location_problem(new \local_sentientia_platform\bizlms\text(), 'local_sentientia_platform'));
+        $this->assertSame('code_outside_classes_bizlms', registry::code_location_problem($this, 'local_sentientia_platform'));
+        $this->assertSame('code_location_unknown', registry::code_location_problem(new \stdClass(), 'local_sentientia_platform'));
+        $this->assertSame('code_location_unknown', registry::code_location_problem($toy, 'local_nosuchplugin'));
+    }
+
     public function test_disk_discovery_walks_the_installed_plugins_without_failing(): void {
         registry::set_testing_importers(null);
         // Whatever importers the installed plugins register through db/bizlms_import.php must validate.

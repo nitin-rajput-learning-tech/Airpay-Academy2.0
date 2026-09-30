@@ -24,8 +24,9 @@
  *   --feature=a[,b] | --all         dependencies are added and sorted for --apply and for --all
  *   (default)                       dry run: writes nothing, not even bookkeeping
  *   --apply                         needs every guard of ADR-032 "Gating"
- *   --resume                        continue the latest incomplete apply run from its watermarks
- *   --retry-skipped=reason[,..]     re-process rows skipped with a retryable reason
+ *   --resume                        continue the NEWEST apply run from its watermarks, if it did not complete
+ *   --retry-skipped=reason[,..]     re-process rows skipped with a retryable reason (single-row steps only:
+ *                                   a grouped or derived step that has such rows is refused, not skipped)
  *   --verify                        run verify and the framework checks only
  *   --decisions=FILE                owner choices; its sha256 is stored on the run
  *   --expect-decisions-hash=SHA256  cutover must use the rehearsed decisions
@@ -56,6 +57,7 @@ use local_sentientia_platform\bizlms\bizlms_exception;
 use local_sentientia_platform\bizlms\decisions;
 use local_sentientia_platform\bizlms\fingerprint;
 use local_sentientia_platform\bizlms\guard;
+use local_sentientia_platform\bizlms\guard_permit;
 use local_sentientia_platform\bizlms\guard_refused;
 use local_sentientia_platform\bizlms\parity;
 use local_sentientia_platform\bizlms\registry;
@@ -175,8 +177,10 @@ try {
             }
             exit(3);
         }
+        $permit = guard::permit(guard_permit::PURGE, $refusals);
         $lock = guard::acquire_lock();
-        $purged = (new runner(['apply' => true, 'decisions' => $decisions]))->purge((string) $options['purge-feature']);
+        $purged = (new runner(['apply' => true, 'decisions' => $decisions, 'permit' => $permit]))
+            ->purge((string) $options['purge-feature']);
         $lock->release();
         foreach ($purged['deleted'] as $table => $n) {
             cli_writeln(sprintf('  deleted %-40s %d', $table, $n));
@@ -268,6 +272,7 @@ try {
             }
             exit(3);
         }
+        $runneroptions['permit'] = guard::permit(guard_permit::APPLY, $refusals);
         $lock = guard::acquire_lock();
     }
 

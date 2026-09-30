@@ -9,6 +9,7 @@ defined('MOODLE_INTERNAL') || die();
 use core\check\result;
 use local_sentientia_platform\bizlms\fingerprint;
 use local_sentientia_platform\bizlms\guard;
+use local_sentientia_platform\bizlms\guard_permit;
 use local_sentientia_platform\bizlms\guard_refused;
 use local_sentientia_platform\bizlms\legacy_tables;
 use local_sentientia_platform\bizlms\parity;
@@ -45,7 +46,24 @@ final class bizlms_guard_parity_test extends \advanced_testcase {
     protected function tearDown(): void {
         registry::set_testing_importers(null);
         toy_importer::reset();
+        $this->cli_maintenance(false);
         parent::tearDown();
+    }
+
+    /**
+     * Turn CLI maintenance mode (admin/cli/maintenance.php --enable) on or off: the climaintenance.html file.
+     *
+     * @param bool $on
+     * @return void
+     */
+    private function cli_maintenance(bool $on): void {
+        global $CFG;
+        $file = $CFG->dataroot . '/climaintenance.html';
+        if ($on) {
+            file_put_contents($file, 'maintenance');
+        } else if (file_exists($file)) {
+            unlink($file);
+        }
     }
 
     /**
@@ -58,7 +76,7 @@ final class bizlms_guard_parity_test extends \advanced_testcase {
         set_config('bizlms_import_armed_until', time() + 3600, self::COMPONENT);
         set_config('bizlms_production', 0, self::COMPONENT);
         set_config('cron_enabled', 0);
-        $CFG->maintenance_enabled = 1;
+        $this->cli_maintenance(true);
         $CFG->noemailever = true;
         return ['confirm' => fingerprint::install(), 'decisions_hash' => 'abc', 'expect_hash' => ''];
     }
@@ -70,7 +88,7 @@ final class bizlms_guard_parity_test extends \advanced_testcase {
      */
     private function imported_toy(): void {
         registry::set_testing_importers([new toy_importer()]);
-        $result = (new runner(['apply' => true, 'batch' => 2, 'atomic_threshold' => 0]))->run([]);
+        $result = (new runner(['apply' => true, 'permit' => guard::test_permit(), 'batch' => 2, 'atomic_threshold' => 0]))->run([]);
         $this->assertContains($result['exit'], [0, 2]);
     }
 
@@ -79,7 +97,7 @@ final class bizlms_guard_parity_test extends \advanced_testcase {
     public function test_apply_is_refused_until_every_guard_holds(): void {
         global $CFG;
         $this->resetAfterTest();
-        $CFG->maintenance_enabled = 0;
+        $this->cli_maintenance(false);
         $CFG->noemailever = false;
         set_config('cron_enabled', 1);
 
@@ -122,7 +140,7 @@ final class bizlms_guard_parity_test extends \advanced_testcase {
         $this->resetAfterTest();
         global $CFG;
         $options = $this->guarded();
-        $CFG->maintenance_enabled = 0;
+        $this->cli_maintenance(false);
         $this->assertStringContainsString('maintenance_mode_is_off', implode(' ', guard::refusals_for_apply($options)));
         $this->assertSame([], guard::refusals_for_apply($options + ['allow_online' => true]), 'rehearsal may run online');
 
@@ -131,11 +149,82 @@ final class bizlms_guard_parity_test extends \advanced_testcase {
         $this->assertStringContainsString('allow_online_is_refused_when_bizlms_production_is_1', $refusals);
         $this->assertStringContainsString('expect_decisions_hash_is_required', $refusals);
 
-        $CFG->maintenance_enabled = 1;
+        $this->cli_maintenance(true);
         $production = ['decisions_hash' => 'abc', 'expect_hash' => 'abc'] + $options;
         $this->assertSame([], guard::refusals_for_apply($production));
         $production['expect_hash'] = 'different';
         $this->assertStringContainsString('decisions_hash_differs', implode(' ', guard::refusals_for_apply($production)));
+    }
+
+    public function test_web_maintenance_mode_is_not_the_maintenance_the_import_needs(): void {
+        global $CFG;
+        $this->resetAfterTest();
+        $options = $this->guarded();
+        $this->cli_maintenance(false);
+        // Web maintenance still lets administrators log in and edit the tables the import is writing.
+        $CFG->maintenance_enabled = 1;
+        $this->assertFalse(guard::maintenance_on());
+        $this->assertStringContainsString('maintenance_mode_is_off', implode(' ', guard::refusals_for_apply($options)));
+
+        $CFG->maintenance_enabled = 0;
+        $this->cli_maintenance(true);
+        $this->assertTrue(guard::maintenance_on());
+        $this->assertSame([], guard::refusals_for_apply($options));
+    }
+
+    public function test_the_runner_writes_nothing_without_a_guard_permit(): void {
+        global $DB;
+        $this->resetAfterTest();
+        registry::set_testing_importers([new toy_importer()]);
+        $this->seed_toy_data();
+        try {
+            (new runner(['apply' => true]))->run([]);
+            $this->fail('an apply run started without a permit');
+        } catch (guard_refused $e) {
+            $this->assertStringContainsString('runner_needs_a_guard_permit:apply', $e->getMessage());
+        }
+        // A purge permit does not open an apply run, and an apply permit does not open a purge.
+        try {
+            (new runner(['apply' => true, 'permit' => guard::test_permit(guard_permit::PURGE)]))->run([]);
+            $this->fail('a purge permit started an apply run');
+        } catch (guard_refused $e) {
+            $this->assertStringContainsString('runner_needs_a_guard_permit:apply', $e->getMessage());
+        }
+        try {
+            (new runner(['apply' => true, 'permit' => guard::test_permit()]))->purge('toy');
+            $this->fail('an apply permit started a purge');
+        } catch (guard_refused $e) {
+            $this->assertStringContainsString('runner_needs_a_guard_permit:purge', $e->getMessage());
+        }
+        $this->assertSame(0, $DB->count_records('local_sentientia_legacyrun'), 'nothing was written');
+    }
+
+    public function test_only_the_guard_issues_a_permit_and_it_needs_no_refusals(): void {
+        try {
+            guard_permit::issue(guard_permit::APPLY);
+            $this->fail('a test class issued a permit');
+        } catch (\coding_exception $e) {
+            $this->assertStringContainsString('only the guard issues', $e->getMessage());
+        }
+        $this->expectException(guard_refused::class);
+        guard::permit(guard_permit::APPLY, ['guard_not_armed']);
+    }
+
+    public function test_repair_needs_the_fingerprint_and_maintenance(): void {
+        $this->resetAfterTest();
+        $this->guarded();
+        $this->cli_maintenance(false);
+        $refusals = implode(' | ', guard::refusals_for_repair([]));
+        $this->assertStringContainsString('confirm_does_not_match', $refusals);
+        $this->assertStringContainsString('maintenance_mode_is_off', $refusals);
+
+        $ok = ['confirm' => fingerprint::install(), 'allow_online' => true];
+        $this->assertSame([], guard::refusals_for_repair($ok), 'a rehearsal may run online');
+        set_config('bizlms_production', 1, self::COMPONENT);
+        $this->assertStringContainsString('allow_online_is_refused_when_bizlms_production_is_1',
+            implode(' ', guard::refusals_for_repair($ok)));
+        $this->cli_maintenance(true);
+        $this->assertSame([], guard::refusals_for_repair(['allow_online' => false] + $ok));
     }
 
     public function test_purge_is_a_rehearsal_operation(): void {
@@ -275,12 +364,12 @@ final class bizlms_guard_parity_test extends \advanced_testcase {
                 throw new \RuntimeException('injected failure');
             }
         };
-        (new runner(['apply' => true, 'batch' => 2, 'atomic_threshold' => 0, 'failpoint' => $failpoint]))->run([]);
+        (new runner(['apply' => true, 'permit' => guard::test_permit(), 'batch' => 2, 'atomic_threshold' => 0, 'failpoint' => $failpoint]))->run([]);
         $check = new bizlms_import();
         $this->assertSame(result::CRITICAL, $check->get_result()->get_status());
         $this->assertStringContainsString('toy', $check->get_result()->get_summary());
 
-        (new runner(['apply' => true, 'resume' => true, 'batch' => 2, 'atomic_threshold' => 0]))->run([]);
+        (new runner(['apply' => true, 'permit' => guard::test_permit(), 'resume' => true, 'batch' => 2, 'atomic_threshold' => 0]))->run([]);
         $this->assertSame(result::OK, (new bizlms_import())->get_result()->get_status(), 'the marker makes it clean');
     }
 
@@ -295,7 +384,7 @@ final class bizlms_guard_parity_test extends \advanced_testcase {
                 throw new \RuntimeException('injected failure');
             }
         };
-        (new runner(['apply' => true, 'batch' => 2, 'atomic_threshold' => 50000, 'failpoint' => $failpoint]))->run([]);
+        (new runner(['apply' => true, 'permit' => guard::test_permit(), 'batch' => 2, 'atomic_threshold' => 50000, 'failpoint' => $failpoint]))->run([]);
         $this->assertSame(result::CRITICAL, (new bizlms_import())->get_result()->get_status(),
             'feature mode rolled every step row back, but the failure marker keeps the check red');
     }
@@ -317,7 +406,7 @@ final class bizlms_guard_parity_test extends \advanced_testcase {
         registry::set_testing_importers([new toy_importer()]);
         $this->seed_toy_data();
         $decisions = \local_sentientia_platform\bizlms\decisions::from_array(['toy.mandatory' => 'yes']);
-        $result = (new runner(['apply' => true, 'batch' => 2, 'atomic_threshold' => 0, 'decisions' => $decisions]))->run([]);
+        $result = (new runner(['apply' => true, 'permit' => guard::test_permit(), 'batch' => 2, 'atomic_threshold' => 0, 'decisions' => $decisions]))->run([]);
         $this->assertContains($result['exit'], [0, 2]);
 
         $this->assertSame([], parity::invariant_problems($decisions));

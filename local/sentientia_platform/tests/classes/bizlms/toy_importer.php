@@ -82,6 +82,36 @@ final class toy_importer implements importer, watches_tables {
     /** @var bool The importer declares a reviewed core write (so a purge must refuse). */
     public static bool $corewrites = false;
 
+    /** @var decision[] Extra owner choices the importer declares, so a test can read them through a context. */
+    public static array $extradecisions = [];
+
+    /** @var bool toy.org triggers a core event in transform(): its log row is written after the commit, out of sight of the row counters. */
+    public static bool $fireevent = false;
+
+    /** @var bool toy.item (a MAP step) also inserts a sub-row into the PRESERVE target toy.org: the writer must refuse. */
+    public static bool $mappreserve = false;
+
+    /** @var bool toy.item answers every row with the reserved reason deferred: an apply run must refuse it. */
+    public static bool $forcedeferred = false;
+
+    /** @var bool toy.dup skips every row with a retryable reason: --retry-skipped must refuse a grouped step. */
+    public static bool $dupunclear = false;
+
+    /** @var bool toy.item filters kind c out of its source without archiving it: the unfiltered accounting must fail. */
+    public static bool $itemfilter = false;
+
+    /** @var string|null A core table declared in core_writes() that is not on the reviewed list: the registry must refuse it. */
+    public static ?string $corewritetable = null;
+
+    /** @var string|null A table added to target_tables(): another plugin's table or a legacy table the registry must refuse. */
+    public static ?string $extratarget = null;
+
+    /** @var bool toy.dup (a MAP step) names the PRESERVE target of toy.org as its own: the registry must refuse. */
+    public static bool $dupintoorg = false;
+
+    /** @var bool[] What verify() saw in $ctx->dryrun, one entry per call. */
+    public static array $verifyseen = [];
+
     /** @var string[] Lifecycle log: what finalise() saw. */
     public static array $finalised = [];
 
@@ -108,6 +138,16 @@ final class toy_importer implements importer, watches_tables {
         self::$skipwinner = false;
         self::$foldto = null;
         self::$corewrites = false;
+        self::$extradecisions = [];
+        self::$fireevent = false;
+        self::$mappreserve = false;
+        self::$forcedeferred = false;
+        self::$dupunclear = false;
+        self::$itemfilter = false;
+        self::$corewritetable = null;
+        self::$extratarget = null;
+        self::$dupintoorg = false;
+        self::$verifyseen = [];
         self::$finalised = [];
         self::$markerseen = [];
     }
@@ -171,10 +211,16 @@ final class toy_importer implements importer, watches_tables {
         if (self::$legacytarget) {
             $tables[] = 'local_costcenter';
         }
+        if (self::$extratarget !== null) {
+            $tables[] = self::$extratarget;
+        }
         return $tables;
     }
 
     public function core_writes(): array {
+        if (self::$corewritetable !== null) {
+            return [self::$corewritetable => 'toy: a table nobody reviewed'];
+        }
         return self::$corewrites ? ['course' => 'toy: a reviewed remap'] : [];
     }
 
@@ -189,6 +235,7 @@ final class toy_importer implements importer, watches_tables {
             new reason('orphan_org', false, true),
             new reason('orphan_user', true, true),
             new reason('dup_natural_key', false, false),
+            new reason('dup_unclear', true, false),
         ];
     }
 
@@ -196,6 +243,9 @@ final class toy_importer implements importer, watches_tables {
         $decisions = [new decision('toy.rounding', 'How amounts are rounded', true, 'half_up')];
         if (self::$requiredecision) {
             $decisions[] = new decision('toy.mandatory', 'A choice only the owner can make');
+        }
+        foreach (self::$extradecisions as $extra) {
+            $decisions[] = $extra;
         }
         return $decisions;
     }
@@ -240,6 +290,7 @@ final class toy_importer implements importer, watches_tables {
     public function verify(context $ctx): array {
         global $DB;
         $failures = [];
+        self::$verifyseen[] = $ctx->dryrun;
         if (self::$leak) {
             // Test-only: an append-only table the import must never write to.
             $DB->insert_record('logstore_standard_log', (object) [
@@ -295,6 +346,11 @@ final class toy_importer implements importer, watches_tables {
             }
 
             public function transform(array $rows, context $ctx): array {
+                if (toy_importer::$fireevent) {
+                    // A core API fires an event. Its non-internal observers (the standard log) run only after the
+                    // outermost transaction commits, and the log store buffers what it gets.
+                    \core\event\dashboard_viewed::create(['context' => \context_system::instance()])->trigger();
+                }
                 $out = [];
                 foreach ($rows as $row) {
                     $id = (int) $row->id;
@@ -353,6 +409,10 @@ final class toy_importer implements importer, watches_tables {
                 return [['local_toy_org', '']];
             }
 
+            public function source_filter(): array {
+                return toy_importer::$itemfilter ? ['t.kind <> :blmkind', ['blmkind' => 'c']] : ['', []];
+            }
+
             public function external_refs(): array {
                 return toy_importer::$maprefs ? [['local_toy_unused', 'note']] : [];
             }
@@ -361,6 +421,10 @@ final class toy_importer implements importer, watches_tables {
                 $out = [];
                 foreach ($rows as $row) {
                     $id = (int) $row->id;
+                    if (toy_importer::$forcedeferred) {
+                        $out[] = outcome::skip($id, 'deferred');
+                        continue;
+                    }
                     $orgid = $ctx->map->resolve('local_toy_org', (int) $row->orgid);
                     if ($orgid === null) {
                         $out[] = outcome::skip($id, $ctx->is_deferred('local_toy_org') ? 'deferred' : 'orphan_org');
@@ -386,6 +450,13 @@ final class toy_importer implements importer, watches_tables {
                         'timecreated' => (int) $row->timecreated,
                         'timemodified' => (int) $row->timemodified,
                     ])->tenant_method($method);
+                    if (toy_importer::$mappreserve) {
+                        // A MAP insert into a table a PRESERVE step owns would take a legacy id the next batch needs.
+                        $out[] = outcome::insert($id, 'local_sentientia_toy_org', (object) [
+                            'name' => 'Sub-row', 'path' => null, 'visible' => 0,
+                            'timecreated' => (int) $row->timecreated, 'timemodified' => (int) $row->timemodified,
+                        ], 'org:extra');
+                    }
                 }
                 return $out;
             }
@@ -411,7 +482,7 @@ final class toy_importer implements importer, watches_tables {
             }
 
             public function targettable(): string {
-                return 'local_sentientia_toy_dup';
+                return toy_importer::$dupintoorg ? 'local_sentientia_toy_org' : 'local_sentientia_toy_dup';
             }
 
             public function group_by(): array {
@@ -419,6 +490,13 @@ final class toy_importer implements importer, watches_tables {
             }
 
             public function transform(array $rows, context $ctx): array {
+                if (toy_importer::$dupunclear) {
+                    $out = [];
+                    foreach ($rows as $row) {
+                        $out[] = outcome::skip((int) $row->id, 'dup_unclear');
+                    }
+                    return $out;
+                }
                 $winner = $rows[0];
                 if (toy_importer::$skipwinner) {
                     $out = [outcome::skip((int) $winner->id, 'no_name')];

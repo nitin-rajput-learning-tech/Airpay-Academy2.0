@@ -10,25 +10,34 @@ defined('MOODLE_INTERNAL') || die();
  * The static scan of every classes/bizlms/ file (ADR-032, "Side-effect safety" 4).
  *
  * It tokenises the source, so a banned name in a comment, a docblock or a string
- * is never a finding, and it tracks the enclosing function so that reset_sequence
- * is only allowed inside finalise().
+ * is never a finding, and it tracks the enclosing function so that reset_sequence,
+ * set_config and the cache purges are only allowed inside finalise().
  *
  * Banned everywhere in classes/bizlms/ (framework and importers):
- *   message_send, email_to_user, ->trigger(, role_assign(, enrol_user(,
- *   enrol_try_internal_enrol(, completion_completion, mark_complete(,
- *   cohort_add_member(, core_tag_tag::, update_course(, calendar_event::create,
- *   any get_recordset*, and the managers the mapping forbids:
+ *   message_send, email_to_user, ->trigger(, role_assign(, role_unassign*(, enrol_user(,
+ *   ->unenrol_user(, enrol_try_internal_enrol(, delete_user(, groups_add_member(,
+ *   groups_remove_member(, completion_completion, completion_info, ->update_state(,
+ *   mark_complete(, cohort_add_member(, core_tag_tag::, update_course(, calendar_event::create,
+ *   every grade_* function and class, ::queue_adhoc_task( and ::reschedule_or_queue_adhoc_task(,
+ *   feature_flags:: (the import never flips a flag), call_user_func* and forward_static_call*
+ *   (they hide a call from this scan), any get_recordset*, and the managers the mapping forbids:
  *   session_manager::, waitlist_manager::, path_manager::, program_manager::,
  *   request_manager::, cart_manager::, invoicer::, notifier::, delivery_log::log,
  *   evaluation_manager::submit_response, recompletion_engine::, skills_manager::,
  *   rating_manager::submit_rating.
  *
  * Banned outside writer.php: every $DB write method and every DDL call, because
- * the writer is the only code that writes.
+ * the writer is the only code that writes. A write method whose name only $DB has
+ * (insert_record, update_record, delete_records and the like) is a finding on ANY
+ * receiver, so an alias, a property, $GLOBALS['DB'], ?-> and a moodle_database
+ * parameter cannot hide it. execute() is a generic name, so it counts on a receiver
+ * that is $DB, holds it (alias, ->db, $GLOBALS['DB'], a moodle_database parameter)
+ * or is called dynamically.
  *
- * reset_sequence is allowed only inside finalise() (the runner calls it from
- * finalise_feature()) and in writer.php. ->get_records( is banned outside the
- * framework (local_sentientia_platform).
+ * Allowed only inside finalise() and finalise_feature(), and in writer.php:
+ * reset_sequence, set_config, unset_config, purge_all_caches, purge_caches,
+ * purge_other_caches, rebuild_course_cache and cache_helper::.
+ * ->get_records( is banned outside the framework (local_sentientia_platform).
  *
  * @package    local_sentientia_platform
  * @category   test
@@ -37,14 +46,23 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class static_scanner {
 
-    /** @var string[] Function calls banned everywhere. */
+    /** @var string[] Names banned wherever they are called: a function, a method or a static method. */
     private const BANNED_CALLS = [
-        'message_send', 'email_to_user', 'role_assign', 'enrol_user', 'enrol_try_internal_enrol',
-        'mark_complete', 'cohort_add_member', 'update_course',
+        'message_send', 'email_to_user', 'role_assign', 'role_unassign', 'role_unassign_all', 'enrol_user',
+        'unenrol_user', 'enrol_try_internal_enrol', 'mark_complete', 'update_state', 'cohort_add_member',
+        'update_course', 'delete_user', 'groups_add_member', 'groups_remove_member', 'queue_adhoc_task',
+        'reschedule_or_queue_adhoc_task', 'call_user_func', 'call_user_func_array', 'forward_static_call',
+        'forward_static_call_array',
     ];
 
     /** @var string[] Classes that may not be instantiated or called statically. */
-    private const BANNED_CLASSES = ['completion_completion'];
+    private const BANNED_CLASSES = [
+        'completion_completion', 'completion_info', 'grade_item', 'grade_grade', 'grade_category', 'grade_scale',
+        'grade_outcome',
+    ];
+
+    /** @var string Prefix of the grade functions (grade_update, grade_regrade_final_grades, ...). */
+    private const GRADE_PREFIX = 'grade_';
 
     /**
      * Static calls banned on a class: class => methods ('*' = any).
@@ -54,6 +72,7 @@ final class static_scanner {
     private const BANNED_STATIC = [
         'core_tag_tag' => ['*'],
         'calendar_event' => ['create'],
+        'feature_flags' => ['*'],
         'session_manager' => ['*'], 'waitlist_manager' => ['*'], 'path_manager' => ['*'],
         'program_manager' => ['*'], 'request_manager' => ['*'], 'cart_manager' => ['*'],
         'invoicer' => ['*'], 'notifier' => ['*'],
@@ -65,20 +84,32 @@ final class static_scanner {
     ];
 
     /**
-     * Functions that may call reset_sequence: an importer's finalise(), and the runner's
-     * finalise_feature(), which resets every PRESERVE target through the writer after the
-     * last commit. writer.php itself is always allowed.
+     * Functions that may hold the finalise-only calls: an importer's finalise(), and the runner's
+     * finalise_feature(), which resets every PRESERVE target through the writer after the last
+     * commit. writer.php itself is always allowed.
      *
      * @var string[]
      */
     private const FINALISE_FUNCTIONS = ['finalise', 'finalise_feature'];
 
-    /** @var string[] $DB methods that write. */
+    /** @var string[] Calls (function or method) allowed only where FINALISE_FUNCTIONS says. */
+    private const FINALISE_ONLY_CALLS = [
+        'reset_sequence', 'set_config', 'unset_config', 'purge_all_caches', 'purge_caches', 'purge_other_caches',
+        'rebuild_course_cache',
+    ];
+
+    /** @var string[] Classes whose static calls are allowed only where FINALISE_FUNCTIONS says. */
+    private const FINALISE_ONLY_STATIC = ['cache_helper'];
+
+    /** @var string[] $DB write methods only the database object has: a finding on any receiver. */
     private const DB_WRITES = [
         'insert_record', 'insert_records', 'insert_record_raw', 'import_record', 'update_record',
         'update_record_raw', 'set_field', 'set_field_select', 'delete_records', 'delete_records_select',
-        'delete_records_list', 'execute',
+        'delete_records_list', 'delete_records_subquery',
     ];
+
+    /** @var string[] $DB methods whose name is generic: a finding only on a receiver that holds the database. */
+    private const DB_WRITES_ON_DB = ['execute'];
 
     /** @var string[] database_manager methods that change the schema. */
     private const DDL = [
@@ -87,6 +118,30 @@ final class static_scanner {
         'add_key', 'drop_key', 'add_index', 'drop_index', 'install_from_xmldb_file',
         'install_one_table_from_xmldb_file', 'install_from_xmldb_structure', 'create_temp_table',
     ];
+
+    /** @var string[] Variables that hold the database object by convention. */
+    private const DB_VARIABLES = ['$DB', '$db'];
+
+    /**
+     * Every PHP file below a directory, sub-directories included, in a stable order.
+     *
+     * @param string $dir
+     * @return string[] Paths; empty when the directory does not exist.
+     */
+    public static function php_files(string $dir): array {
+        if (!is_dir($dir)) {
+            return [];
+        }
+        $files = [];
+        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS));
+        foreach ($iterator as $file) {
+            if ($file->isFile() && $file->getExtension() === 'php') {
+                $files[] = $file->getPathname();
+            }
+        }
+        sort($files);
+        return $files;
+    }
 
     /**
      * Scan one file's source.
@@ -109,6 +164,7 @@ final class static_scanner {
         $stack = [];
         $depth = 0;
         $pending = null;
+        $aliases = [];
         $count = count($tokens);
 
         for ($i = 0; $i < $count; $i++) {
@@ -136,33 +192,65 @@ final class static_scanner {
                 $depth--;
             }
             $function = $stack ? end($stack)[0] : '';
+            $infinalise = $iswriter || in_array($function, self::FINALISE_FUNCTIONS, true);
+
+            // A variable that holds the database: $x = $DB; $x =& $GLOBALS['DB']; $x = $this->db;
+            // or a parameter typed moodle_database.
+            if ($id === T_VARIABLE) {
+                if (self::is_alias_assignment($tokens, $i, $aliases)) {
+                    $aliases[$text] = true;
+                }
+                $type = $tokens[$i - 1] ?? [null, '', 0];
+                if (($type[0] === T_STRING || $type[0] === T_NAME_QUALIFIED || $type[0] === T_NAME_FULLY_QUALIFIED)
+                        && self::last_segment($type[0], $type[1]) === 'moodle_database') {
+                    $aliases[$text] = true;
+                }
+            }
 
             $name = self::last_segment($id, $text);
             $next = $tokens[$i + 1] ?? [null, '', 0];
+            $previous = $tokens[$i - 1] ?? [null, '', 0];
+            $declaration = $previous[0] === T_FUNCTION;
 
             // A banned function called by name.
-            if ($name !== null && in_array($name, self::BANNED_CALLS, true) && $next[1] === '(') {
+            if (!$declaration && $name !== null && in_array($name, self::BANNED_CALLS, true) && $next[1] === '(') {
                 $findings[] = "line {$line}: {$name}()";
             }
             if ($name !== null && in_array($name, self::BANNED_CLASSES, true)) {
                 $findings[] = "line {$line}: {$name}";
+            }
+            // The grade_* functions.
+            if (!$declaration && $name !== null && strncmp($name, self::GRADE_PREFIX, strlen(self::GRADE_PREFIX)) === 0
+                    && $next[1] === '(') {
+                $findings[] = "line {$line}: {$name}()";
+            }
+            // set_config and the cache purges outside finalise().
+            if (!$declaration && !$infinalise && $name !== null && in_array($name, self::FINALISE_ONLY_CALLS, true)
+                    && $next[1] === '(') {
+                $findings[] = "line {$line}: {$name}() outside finalise()";
             }
             // get_recordset*: an object method or a function.
             if ($id === T_STRING && strncmp($text, 'get_recordset', 13) === 0) {
                 $findings[] = "line {$line}: {$text}";
             }
             // Banned static calls.
-            if ($name !== null && isset(self::BANNED_STATIC[$name]) && $next[0] === T_DOUBLE_COLON) {
+            if ($name !== null && $next[0] === T_DOUBLE_COLON) {
                 $method = $tokens[$i + 2][1] ?? '';
-                $rules = self::BANNED_STATIC[$name];
-                if (in_array('*', $rules, true) || in_array($method, $rules, true)) {
-                    $findings[] = "line {$line}: {$name}::{$method}";
+                if (isset(self::BANNED_STATIC[$name])) {
+                    $rules = self::BANNED_STATIC[$name];
+                    if (in_array('*', $rules, true) || in_array($method, $rules, true)) {
+                        $findings[] = "line {$line}: {$name}::{$method}";
+                    }
+                }
+                if (!$infinalise && in_array($name, self::FINALISE_ONLY_STATIC, true)) {
+                    $findings[] = "line {$line}: {$name}::{$method} outside finalise()";
                 }
             }
             // ->trigger(, ->get_records(, $DB write methods and DDL.
-            if ($id === T_OBJECT_OPERATOR) {
+            if ($id === T_OBJECT_OPERATOR || $id === T_NULLSAFE_OBJECT_OPERATOR) {
                 $method = $next[1];
                 $after = $tokens[$i + 2][1] ?? '';
+                $receiverisdb = self::receiver_is_db($tokens, $i, $aliases);
                 if ($next[0] === T_STRING && $after === '(') {
                     if ($method === 'trigger') {
                         $findings[] = "line {$line}: ->trigger()";
@@ -170,16 +258,18 @@ final class static_scanner {
                     if ($method === 'get_records' && !$framework) {
                         $findings[] = "line {$line}: ->get_records() outside the framework";
                     }
-                    if (!$iswriter && in_array($method, self::DB_WRITES, true) && self::receiver_is_db($tokens, $i)) {
+                    if (!$iswriter && in_array($method, self::DB_WRITES, true)) {
+                        $findings[] = "line {$line}: \$DB->{$method}() outside writer.php";
+                    }
+                    if (!$iswriter && $receiverisdb && in_array($method, self::DB_WRITES_ON_DB, true)) {
                         $findings[] = "line {$line}: \$DB->{$method}() outside writer.php";
                     }
                     if (!$iswriter && in_array($method, self::DDL, true)) {
                         $findings[] = "line {$line}: DDL {$method}() outside writer.php";
                     }
-                    if ($method === 'reset_sequence' && !$iswriter
-                            && !in_array($function, self::FINALISE_FUNCTIONS, true)) {
-                        $findings[] = "line {$line}: reset_sequence() outside finalise()";
-                    }
+                } else if ($receiverisdb && !$iswriter && ($next[0] === T_VARIABLE || $next[1] === '{')) {
+                    // $DB->$method(...) or $DB->{$name}(...): the name is not in the source.
+                    $findings[] = "line {$line}: dynamic method call on \$DB outside writer.php";
                 }
             }
         }
@@ -205,14 +295,71 @@ final class static_scanner {
     }
 
     /**
-     * Is the object before ->method the global $DB (or a variable clearly holding it)?
+     * Does the expression that ends at $end (an index of the token before -> or ?->) hold the database?
+     * $DB, $db, an alias, ->db, ->DB, ->database and $GLOBALS['DB'].
      *
      * @param array $tokens
-     * @param int $index Index of the T_OBJECT_OPERATOR token.
+     * @param int $index Index of the T_OBJECT_OPERATOR (or nullsafe) token.
+     * @param array<string, bool> $aliases Variables known to hold the database.
      * @return bool
      */
-    private static function receiver_is_db(array $tokens, int $index): bool {
+    private static function receiver_is_db(array $tokens, int $index, array $aliases): bool {
         $before = $tokens[$index - 1] ?? [null, '', 0];
-        return $before[0] === T_VARIABLE && in_array($before[1], ['$DB', '$db'], true);
+        if ($before[0] === T_VARIABLE) {
+            return in_array($before[1], self::DB_VARIABLES, true) || isset($aliases[$before[1]]);
+        }
+        if ($before[0] === T_STRING && in_array(strtolower($before[1]), ['db', 'database'], true)) {
+            $operator = $tokens[$index - 2] ?? [null, '', 0];
+            return in_array($operator[0], [T_OBJECT_OPERATOR, T_NULLSAFE_OBJECT_OPERATOR, T_DOUBLE_COLON], true);
+        }
+        if ($before[1] === ']') {
+            // $GLOBALS['DB']->
+            $key = $tokens[$index - 2] ?? [null, '', 0];
+            $bracket = $tokens[$index - 3] ?? [null, '', 0];
+            $globals = $tokens[$index - 4] ?? [null, '', 0];
+            return $globals[1] === '$GLOBALS' && $bracket[1] === '[' && $key[0] === T_CONSTANT_ENCAPSED_STRING
+                && in_array(trim($key[1], '\'"'), ['DB', 'db'], true);
+        }
+        return false;
+    }
+
+    /**
+     * Is the variable at $index assigned the database object itself ($x = $DB;)?
+     *
+     * @param array $tokens
+     * @param int $index Index of the T_VARIABLE token.
+     * @param array<string, bool> $aliases
+     * @return bool
+     */
+    private static function is_alias_assignment(array $tokens, int $index, array $aliases): bool {
+        if (($tokens[$index + 1][1] ?? '') !== '=') {
+            return false;
+        }
+        $at = $index + 2;
+        if (($tokens[$at][1] ?? '') === '&') {
+            $at++;
+        }
+        $first = $tokens[$at] ?? [null, '', 0];
+        $end = [';', ',', ')'];
+        if ($first[0] === T_VARIABLE) {
+            if (in_array($first[1], self::DB_VARIABLES, true) || isset($aliases[$first[1]])) {
+                return in_array($tokens[$at + 1][1] ?? '', $end, true);
+            }
+            if ($first[1] === '$this') {
+                // $x = $this->db;
+                $arrow = $tokens[$at + 1] ?? [null, '', 0];
+                $property = $tokens[$at + 2] ?? [null, '', 0];
+                return in_array($arrow[0], [T_OBJECT_OPERATOR, T_NULLSAFE_OBJECT_OPERATOR], true)
+                    && $property[0] === T_STRING && in_array(strtolower($property[1]), ['db', 'database'], true)
+                    && in_array($tokens[$at + 3][1] ?? '', $end, true);
+            }
+            if ($first[1] === '$GLOBALS') {
+                $key = $tokens[$at + 2] ?? [null, '', 0];
+                return ($tokens[$at + 1][1] ?? '') === '[' && $key[0] === T_CONSTANT_ENCAPSED_STRING
+                    && in_array(trim($key[1], '\'"'), ['DB', 'db'], true) && ($tokens[$at + 3][1] ?? '') === ']'
+                    && in_array($tokens[$at + 4][1] ?? '', $end, true);
+            }
+        }
+        return false;
     }
 }

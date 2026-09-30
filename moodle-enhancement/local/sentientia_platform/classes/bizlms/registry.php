@@ -22,7 +22,15 @@ defined('MOODLE_INTERNAL') || die();
  *  - a class does not implement importer;
  *  - an installed plugin is below requires_version();
  *  - a step breaks the id-policy rule: a MAP step must not declare
- *    external_refs(), a PRESERVE step must.
+ *    external_refs(), a PRESERVE step must;
+ *  - a MAP step writes into a table a PRESERVE step of the feature owns (a MAP insert
+ *    can take a legacy id in the middle of a run, and the next batch then collides);
+ *  - a target table is not defined by the importer component's own schema (db/install.xml or
+ *    classes/schema TABLES), is a legacy table (known, detected, or claimed or declined by any
+ *    importer) or is a framework table: an importer never writes another feature's tables;
+ *  - a core_writes() table is not on CORE_WRITES_ALLOWED, the list reviewed against ADR-032;
+ *  - the importer or any of its steps is defined outside the plugin's classes/bizlms/
+ *    (the static scan reads that directory and nothing else).
  *
  * Tests register toy importers through set_testing_importers(), which replaces
  * disk discovery.
@@ -32,6 +40,24 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class registry {
+
+    /**
+     * Core tables an importer may declare in core_writes(), each with the ADR-032 decision or the
+     * mapping-doc section that reviewed it. A table that is not listed cannot be declared: adding one
+     * is an amendment to the ADR and a change to this constant, never a line in an importer.
+     *
+     * The import never writes course completions, grades, logs, messages or any other history table
+     * of core (ADR decision 1 and the rejected alternative "import into core tables").
+     *
+     * @var array<string, string>
+     */
+    public const CORE_WRITES_ALLOWED = [
+        'course' => 'course_lookups: the open_* backfill (mapping doc, course_lookups)',
+        'enrol' => 'gap.orphan_enrol_instances (G6): a manual instance for a course that has none',
+        'role_assignments' => 'org_roles: the role assignments of the org role tables (mapping doc, org_roles)',
+        'tag_instance' => 'course_tags: the in-place remap of tag instances (mapping doc, course_tags)',
+        'user_enrolments' => 'gap.orphan_enrol_instances (G6): orphaned enrolments become manual enrolments',
+    ];
 
     /** @var importer[]|null Importers injected by a test; null means discover on disk. */
     private static ?array $testing = null;
@@ -209,6 +235,16 @@ final class registry {
     private static function validate(array $importers, array &$problems): void {
         $tableowner = [];
         $stepkeys = [];
+        $testing = self::$testing !== null;
+
+        // Every legacy table any importer claims or declines, and every legacy table in the database: a target
+        // is never one of them.
+        $legacy = array_flip(legacy_tables::detect());
+        foreach ($importers as $importer) {
+            foreach (array_merge(array_keys($importer->sources()), array_keys($importer->declined_tables())) as $table) {
+                $legacy[$table] = true;
+            }
+        }
 
         foreach ($importers as $feature => $importer) {
             // What goes into the framework tables must fit their columns, or the failure comes mid-run.
@@ -254,11 +290,16 @@ final class registry {
                 }
             }
 
-            // Declared tables: a legacy table or a framework table is never a target.
+            // Declared tables: a legacy table or a framework table is never a target, and a target belongs
+            // to the importer's own plugin.
             $targets = $importer->target_tables();
+            $own = self::own_tables($importer->component(), $testing);
             foreach ($targets as $table) {
-                if (in_array($table, legacy_tables::KNOWN, true) || strncmp($table, 'local_sentientia_legacy', 23) === 0) {
+                if (in_array($table, legacy_tables::KNOWN, true) || isset($legacy[$table])
+                        || strncmp($table, 'local_sentientia_legacy', 23) === 0) {
                     $problems[] = "target_is_read_only:{$feature}:{$table}";
+                } else if (!isset($own[$table])) {
+                    $problems[] = "target_not_in_the_plugin_schema:{$feature}:{$table}";
                 }
             }
             foreach ($importer->tenant_columns() as $table => $column) {
@@ -270,6 +311,13 @@ final class registry {
                 if (trim((string) $why) === '') {
                     $problems[] = "core_write_without_reason:{$feature}:{$table}";
                 }
+                if (!isset(self::CORE_WRITES_ALLOWED[$table])) {
+                    $problems[] = "core_write_not_reviewed:{$feature}:{$table}";
+                }
+            }
+            $location = self::code_location_problem($importer, $importer->component(), $testing);
+            if ($location !== null) {
+                $problems[] = "importer_{$location}:{$feature}:" . self::class_name($importer);
             }
             foreach ($importer->reasons() as $reason) {
                 if (!($reason instanceof reason)) {
@@ -287,12 +335,30 @@ final class registry {
             if (!$steps) {
                 $problems[] = "no_steps:{$feature}";
             }
+            $preserve = [];
+            foreach ($steps as $step) {
+                if ($step instanceof step && $step->idpolicy() === idpolicy::PRESERVE) {
+                    if (isset($preserve[$step->targettable()])) {
+                        $problems[] = "preserve_steps_share_a_target:{$preserve[$step->targettable()]},{$step->key()}";
+                    }
+                    $preserve[$step->targettable()] = $step->key();
+                }
+            }
             foreach ($steps as $step) {
                 if (!($step instanceof step) && !($step instanceof recompute_step)) {
                     $problems[] = "not_a_step:{$feature}";
                     continue;
                 }
                 $key = $step->key();
+                $location = self::code_location_problem($step, $importer->component(), $testing);
+                if ($location !== null) {
+                    $problems[] = "step_{$location}:{$key}:" . self::class_name($step);
+                }
+                if ($step instanceof step && $step->idpolicy() === idpolicy::MAP && isset($preserve[$step->targettable()])) {
+                    // A MAP insert takes max(id)+1, which on MySQL is the next legacy id the PRESERVE step is
+                    // about to write.
+                    $problems[] = "map_step_targets_a_preserve_table:{$key}:{$step->targettable()}";
+                }
                 if (strncmp($key, $feature . '.', strlen($feature) + 1) !== 0) {
                     $problems[] = "step_key_without_feature_prefix:{$key}";
                 }
@@ -321,6 +387,90 @@ final class registry {
     }
 
     /**
+     * Why an object's class is not where the static scan reads: null when it is under the plugin's
+     * classes/bizlms/ (and, for test importers, tests/classes/bizlms/).
+     *
+     * The scan walks classes/bizlms/ and nothing else, and a db/bizlms_import.php may name any class
+     * while steps() may return objects of any class, so the location of the code is checked here.
+     * The file is read from the class, so an anonymous class is judged where it is written.
+     *
+     * @param object $object An importer or a step.
+     * @param string $component Owning plugin of the importer.
+     * @param bool $testing Also accept tests/classes/bizlms/ (the toy importer lives there).
+     * @return string|null Problem code, or null when the class is where it should be.
+     */
+    public static function code_location_problem(object $object, string $component, bool $testing = false): ?string {
+        $dir = \core_component::get_component_directory($component);
+        $file = (new \ReflectionClass($object))->getFileName();
+        if (!$dir || $file === false || realpath($dir) === false || realpath($file) === false) {
+            return 'code_location_unknown';
+        }
+        $dir = str_replace('\\', '/', (string) realpath($dir));
+        $file = str_replace('\\', '/', (string) realpath($file));
+        $allowed = [$dir . '/classes/bizlms/'];
+        if ($testing) {
+            $allowed[] = $dir . '/tests/classes/bizlms/';
+        }
+        foreach ($allowed as $prefix) {
+            if (strncmp($file, $prefix, strlen($prefix)) === 0) {
+                return null;
+            }
+        }
+        return 'code_outside_classes_bizlms';
+    }
+
+    /**
+     * Tables a plugin defines itself: its db/install.xml and the TABLES constants of its classes/schema
+     * (the convention privacy_coverage_test reads). A test registry also gets the tables of the
+     * checked-in fixture copies under tests/fixtures/bizlms/.
+     *
+     * @param string $component
+     * @param bool $testing
+     * @return array<string, bool>
+     */
+    private static function own_tables(string $component, bool $testing): array {
+        $dir = \core_component::get_component_directory($component);
+        if (!$dir) {
+            return [];
+        }
+        $files = [$dir . '/db/install.xml'];
+        if ($testing) {
+            $files = array_merge($files, glob($dir . '/tests/fixtures/bizlms/*.install.xml') ?: []);
+        }
+        $tables = [];
+        foreach ($files as $file) {
+            $raw = is_readable($file) ? file_get_contents($file) : false;
+            if ($raw !== false && preg_match_all('/<TABLE\s+NAME="([^"]+)"/', $raw, $m)) {
+                foreach ($m[1] as $table) {
+                    $tables[$table] = true;
+                }
+            }
+        }
+        foreach (glob($dir . '/classes/schema/*.php') ?: [] as $file) {
+            $class = '\\' . $component . '\\schema\\' . basename($file, '.php');
+            if (!class_exists($class) || !(new \ReflectionClass($class))->hasConstant('TABLES')) {
+                continue;
+            }
+            foreach ((array) (new \ReflectionClass($class))->getConstant('TABLES') as $table) {
+                if (is_string($table)) {
+                    $tables[$table] = true;
+                }
+            }
+        }
+        return $tables;
+    }
+
+    /**
+     * A class name that is safe to put in a problem line: an anonymous class name carries a NUL and a path.
+     *
+     * @param object $object
+     * @return string
+     */
+    private static function class_name(object $object): string {
+        return explode("\0", get_class($object))[0];
+    }
+
+    /**
      * @param string $feature
      * @param importer $importer
      * @param step $step
@@ -329,6 +479,9 @@ final class registry {
      */
     private static function validate_load_step(string $feature, importer $importer, step $step, array &$problems): void {
         $key = $step->key();
+        if (strlen($step->sourcetable()) > 64) {
+            $problems[] = "sourcetable_too_long:{$key}";
+        }
         if (!array_key_exists($step->physical_table(), $importer->sources())) {
             $problems[] = "step_source_not_claimed:{$key}:{$step->physical_table()}";
         }

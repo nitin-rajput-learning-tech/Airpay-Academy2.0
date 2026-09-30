@@ -91,6 +91,9 @@ final class runner {
     /** @var array<string, string> Legacy table => feature that owns it. */
     private array $ownerof = [];
 
+    /** @var array<string, array<string, bool>> Feature => every feature it depends on, directly or through others. */
+    private array $dependencies = [];
+
     /** @var array<string, bool> Features complete, not applicable, or finished earlier in this run. */
     private array $available = [];
 
@@ -113,7 +116,9 @@ final class runner {
     private array $acctnew = [];
 
     /**
-     * @param array<string, mixed> $options apply (bool), all (bool), batch, atomic_threshold, max_group_scan,
+     * @param array<string, mixed> $options apply (bool), permit (guard_permit: run() with apply needs the
+     *        APPLY permit and purge() the PURGE permit, both from guard::permit()), all (bool), batch,
+     *        atomic_threshold, max_group_scan,
      *        crc_max_rows (rows above which a source fingerprint skips its CRC; 0 = never skip),
      *        resume (bool), retry_reasons (string[]), decisions (decisions), report (report),
      *        failpoint (callable(string $stepkey, int $batchno): void, for tests).
@@ -174,6 +179,9 @@ final class runner {
      *               unproven: string[]}
      */
     public function run(array $features): array {
+        if (!$this->dryrun) {
+            $this->require_permit(guard_permit::APPLY);
+        }
         $result = ['exit' => 0, 'status' => 'complete', 'features' => [], 'blockers' => [], 'runid' => 0,
             'unproven' => []];
 
@@ -247,7 +255,7 @@ final class runner {
             if (!$this->feature_applicable($importer)) {
                 continue;
             }
-            $ctx = $this->context_for($importer, 0);
+            $ctx = $this->context_for($importer, 0, false);
             $failures = [];
             if (!legacymap::feature_complete($feature)) {
                 $failures[] = 'feature_not_complete';
@@ -273,6 +281,7 @@ final class runner {
      */
     public function purge(string $feature): array {
         global $DB;
+        $this->require_permit(guard_permit::PURGE);
         $importers = registry::load();
         if (!isset($importers[$feature])) {
             throw new blocked('unknown_feature:' . $feature);
@@ -412,6 +421,7 @@ final class runner {
     private function prepare(array $importers): void {
         $this->ownerof = [];
         $this->available = [];
+        $this->dependencies = self::dependency_closure($importers);
         foreach ($importers as $feature => $importer) {
             foreach (array_keys($importer->sources()) as $table) {
                 $this->ownerof[$table] = $feature;
@@ -428,6 +438,72 @@ final class runner {
             }
             $this->reasons[$feature] = $vocabulary;
         }
+    }
+
+    /**
+     * Refuse to write or delete without the permit the CLI guard issues. The guard's conditions (confirm,
+     * arming, maintenance, noemailever, cron off) are otherwise checked only by one CLI script.
+     *
+     * @param string $kind guard_permit::APPLY or guard_permit::PURGE.
+     * @return void
+     * @throws guard_refused
+     */
+    private function require_permit(string $kind): void {
+        $permit = $this->options['permit'] ?? null;
+        if (!($permit instanceof guard_permit) || $permit->kind !== $kind) {
+            throw new guard_refused('runner_needs_a_guard_permit:' . $kind);
+        }
+    }
+
+    /**
+     * Every feature each feature depends on, directly or through others.
+     *
+     * @param array<string, importer> $importers
+     * @return array<string, array<string, bool>>
+     */
+    private static function dependency_closure(array $importers): array {
+        $out = [];
+        foreach ($importers as $feature => $importer) {
+            $seen = [];
+            $queue = $importer->depends();
+            while ($queue) {
+                $dependency = (string) array_shift($queue);
+                if (isset($seen[$dependency]) || !isset($importers[$dependency])) {
+                    continue;
+                }
+                $seen[$dependency] = true;
+                foreach ($importers[$dependency]->depends() as $next) {
+                    $queue[] = $next;
+                }
+            }
+            $out[$feature] = $seen;
+        }
+        return $out;
+    }
+
+    /**
+     * The feature that owns a legacy table another feature reads, after checking that the reader
+     * declared it: a feature that reads the map or the state of a table it does not own must list
+     * the owner in depends(). Apply orders features by depends(), with an alphabetical tie-break, so
+     * an undeclared reader can run before the owner and see every parent as missing.
+     *
+     * @param string $feature The reading feature.
+     * @param string $sourcetable Legacy table, or a #table.column derived name.
+     * @return string|null The owning feature; null when the reader owns the table or nobody does.
+     * @throws bizlms_exception When the owner is not among the reader's dependencies.
+     */
+    private function foreign_owner(string $feature, string $sourcetable): ?string {
+        $name = ltrim($sourcetable, '#');
+        $dot = strpos($name, '.');
+        $table = $dot === false ? $name : substr($name, 0, $dot);
+        $owner = $this->ownerof[$table] ?? null;
+        if ($owner === null || $owner === $feature) {
+            return null;
+        }
+        if (!isset($this->dependencies[$feature][$owner])) {
+            throw new bizlms_exception('undeclared_dependency:' . $feature . '->' . $owner . ':' . $table);
+        }
+        return $owner;
     }
 
     /**
@@ -448,19 +524,24 @@ final class runner {
      *
      * @param importer $importer
      * @param int|null $runid Defaults to the run in progress.
+     * @param bool|null $dryrun Defaults to the run's own mode. verify() passes false: it reads what a finished
+     *        import left, and the parity check builds its contexts that way too.
      * @return context
      */
-    private function context_for(importer $importer, ?int $runid = null): context {
+    private function context_for(importer $importer, ?int $runid = null, ?bool $dryrun = null): context {
         $feature = $importer->feature();
-        return context::build($importer, $this->dryrun, $runid ?? $this->runid, $this->decisions, [
+        return context::build($importer, $dryrun ?? $this->dryrun, $runid ?? $this->runid, $this->decisions, [
             'map' => $this->map,
             'lookups' => $this->lookups,
             'tenant' => $this->tenant,
             'legacy' => $this->legacy,
             'text' => $this->text,
+            'access' => function (string $sourcetable) use ($feature): void {
+                $this->foreign_owner($feature, $sourcetable);
+            },
             'deferred' => function (string $sourcetable) use ($feature): bool {
-                $owner = $this->ownerof[$sourcetable] ?? null;
-                return $owner !== null && $owner !== $feature && empty($this->available[$owner]);
+                $owner = $this->foreign_owner($feature, $sourcetable);
+                return $owner !== null && empty($this->available[$owner]);
             },
         ]);
     }
@@ -497,6 +578,13 @@ final class runner {
         }
 
         foreach ($importer->decisions() as $decision) {
+            $status = $this->decisions->status($decision->key);
+            if ($status !== null && $status !== decisions::ACCEPTED) {
+                // The owner has not finished deciding (finance-confirm). Neither the file's value nor the
+                // importer's default may stand in for it.
+                $pf->block('decision_not_accepted:' . $decision->key . ':' . $status);
+                continue;
+            }
             $has = $this->decisions->has($decision->key);
             if ($decision->required && $decision->default === null && !$has) {
                 $pf->block('missing_decision:' . $decision->key);
@@ -566,12 +654,11 @@ final class runner {
             $allowed = array_merge(array_map('strval', array_keys($values)),
                 $this->decisions->mapped_enum_values($table, $column));
             $histogram = [];
-            // A GROUP BY on an enum column returns a handful of rows. MIN(id) is the unique first column
-            // get_records_sql() keys by, so a NULL and an empty value cannot collide.
+            // A GROUP BY on an enum column returns a handful of rows, and it compares bytes, so a case or
+            // trailing-space variant of an allowed value is a value of its own (see value_histogram_sql()).
             // One more than the cap, so "too many" is seen without reading the whole result.
-            $rows = $DB->get_records_sql(
-                "SELECT MIN(t.id) AS k, t.{$column} AS v, COUNT(1) AS n FROM {" . $table . "} t GROUP BY t.{$column}",
-                null, 0, self::ENUM_MAX_VALUES + 1);
+            $rows = $DB->get_records_sql(fingerprint::value_histogram_sql($table, $column), null, 0,
+                self::ENUM_MAX_VALUES + 1);
             if (count($rows) > self::ENUM_MAX_VALUES) {
                 $pf->block('too_many_distinct_values:' . $table . '.' . $column);
                 continue;
@@ -661,9 +748,10 @@ final class runner {
     private function open_run(array $importers, array $order): void {
         global $DB;
         if ($this->options['resume']) {
-            $runs = $DB->get_records_select(self::RUN_TABLE, "runmode = 'apply' AND status <> 'complete'",
-                [], 'id DESC', '*', 0, 1);
-            if (!$runs) {
+            // The newest apply run, and only if it did not complete. An older interrupted run behind a later
+            // completed one is history: its watermarks no longer describe the tables.
+            $runs = $DB->get_records_select(self::RUN_TABLE, "runmode = 'apply'", [], 'id DESC', '*', 0, 1);
+            if (!$runs || reset($runs)->status === 'complete') {
                 throw new blocked('nothing_to_resume');
             }
             $run = reset($runs);
@@ -770,6 +858,8 @@ final class runner {
         $this->report->meta('dryrun', $this->dryrun);
         $this->report->meta('decisions_hash', $this->decisions->hash());
         $this->report->meta('decisions', $this->decisions->all());
+        $this->report->meta('decisions_not_accepted', $this->decisions->not_accepted());
+        $this->report->meta('decisions_approval', $this->decisions->approval());
         $this->report->meta('unproven', $result['unproven']);
         $this->report->meta('blockers', $result['blockers']);
         $this->report->close();
@@ -857,9 +947,14 @@ final class runner {
         $this->report->set_feature($feature, $fields);
 
         $outer = null;
+        $holding = false;
         try {
             if ($atomic) {
                 $outer = $DB->start_delegated_transaction();
+                // A batch's commit is not durable inside the outer transaction, so the report's per-row lines
+                // wait for the outer commit as well.
+                $this->report->hold();
+                $holding = true;
             }
             foreach ($importer->steps() as $step) {
                 if ($step instanceof step) {
@@ -876,15 +971,21 @@ final class runner {
             }
 
             if (!$this->dryrun) {
-                $violations = sideeffect_guard::violations($before, sideeffect_guard::snapshot($extra), $allowed);
-                $this->report->set_feature($feature, ['tripwire' => $violations ? $violations : 'clean']);
-                if ($violations) {
-                    throw new tripwire_tripped('write_outside_declared_tables:' . implode(',', $violations));
-                }
+                // Direct writes. In feature mode this runs inside the outer transaction, so a violation rolls
+                // back with the feature, and nothing is flushed into a transaction that may be rolled back.
+                $this->trip_on_violations($feature, $before, sideeffect_guard::snapshot($extra, !$atomic), $allowed);
             }
             if ($outer) {
                 $outer->allow_commit();
                 $outer = null;
+                $holding = false;
+                $this->report->release();
+                if (!$this->dryrun) {
+                    // Event side effects. Non-internal observers (the standard log) run only at the commit that
+                    // just happened, so the check above cannot have seen them. A violation fails the feature with
+                    // no marker, as in batch mode; its rows are committed, so the RDS snapshot is the way back.
+                    $this->trip_on_violations($feature, $before, sideeffect_guard::snapshot($extra), $allowed);
+                }
             }
         } catch (\Throwable $e) {
             if ($outer) {
@@ -894,6 +995,9 @@ final class runner {
                     // The rollback rethrows the original exception; the failure is recorded below.
                     unset($rethrown);
                 }
+            }
+            if ($holding) {
+                $this->report->discard();
             }
             if (!$this->dryrun) {
                 // An outer rollback undoes rows the cache believes exist.
@@ -911,6 +1015,24 @@ final class runner {
         $this->available[$feature] = true;
         $this->report->set_feature($feature, ['status' => $this->dryrun ? 'simulated' : 'complete']);
         return $this->dryrun ? 'simulated' : 'complete';
+    }
+
+    /**
+     * Compare two side-effect snapshots and stop the run on a write outside the declared tables.
+     *
+     * @param string $feature
+     * @param array<string, int> $before
+     * @param array<string, int> $after
+     * @param string[] $allowed Declared targets and reviewed core writes.
+     * @return void
+     * @throws tripwire_tripped
+     */
+    private function trip_on_violations(string $feature, array $before, array $after, array $allowed): void {
+        $violations = sideeffect_guard::violations($before, $after, $allowed);
+        $this->report->set_feature($feature, ['tripwire' => $violations ? $violations : 'clean']);
+        if ($violations) {
+            throw new tripwire_tripped('write_outside_declared_tables:' . implode(',', $violations));
+        }
     }
 
     /**
@@ -998,6 +1120,14 @@ final class runner {
             if ($count !== $mapped) {
                 $failures[] = "accounting:{$name}: source={$count} mapped={$mapped}";
             }
+            // ADR-032 id strategy 1: every source row gets exactly one primary map row. The identity above
+            // counts with the step filters, so a filter that leaves rows out passes it while those rows have
+            // no map row and no report line. Count the whole table: a row a step does not want is archived
+            // with a reason, never filtered away.
+            $all = $this->legacy->count($name);
+            if ($all !== $mapped && $all !== $count) {
+                $failures[] = "unmapped_rows:{$name}: table={$all} mapped={$mapped} (a source_filter leaves rows out)";
+            }
         }
         if ($dryrun) {
             return $failures;
@@ -1006,9 +1136,7 @@ final class runner {
         // Generic tenant verify.
         foreach ($importer->tenant_columns() as $table => $column) {
             fingerprint::assert_identifier($column);
-            $rows = $DB->get_records_sql(
-                "SELECT MIN(t.id) AS k, t.{$column} AS v, COUNT(1) AS n FROM {" . $table . "} t
-                  WHERE t.{$column} IS NOT NULL GROUP BY t.{$column}");
+            $rows = $DB->get_records_sql(fingerprint::value_histogram_sql($table, $column, true));
             foreach ($rows as $row) {
                 if (!self::is_valid_tenant_value((string) $row->v)) {
                     $failures[] = "invalid_tenant_value:{$table}.{$column}=" . \core_text::substr((string) $row->v, 0, 60)
@@ -1024,14 +1152,17 @@ final class runner {
     }
 
     /**
-     * A tenant value is valid when it normalises to a path whose root is registered.
+     * A tenant value is valid when it IS a normalised path whose root is registered. A value that only
+     * normalises to one ('//1//5', ' /1/5') is not valid: the readers scope with
+     * tenant::path_descendant_filter(), which compares the stored text, so such a row would be scoped wrong
+     * (the path-boundary defect class).
      *
      * @param string $value
      * @return bool
      */
     public static function is_valid_tenant_value(string $value): bool {
         $path = tenant_resolver::normalise($value);
-        if ($path === null) {
+        if ($path === null || $path !== $value) {
             return false;
         }
         try {
@@ -1082,6 +1213,7 @@ final class runner {
         }
 
         foreach ($step->preload() as $pair) {
+            $this->foreign_owner($feature, (string) $pair[0]);
             $this->map->preload((string) $pair[0], (string) ($pair[1] ?? ''));
         }
         if ($this->dryrun && !isset($this->acctbase[$name])) {
@@ -1089,6 +1221,12 @@ final class runner {
         }
 
         $onlyids = $this->options['retry_reasons'] ? $this->retry_ids($feature, $name) : null;
+        if ($onlyids && ($step->is_derived() || $step->group_by())) {
+            // A retry re-processes single source rows. A group with one retryable row and other rows already
+            // mapped cannot be re-transformed (partial_group_already_mapped), and the keys of a derived step
+            // are group keys, not the physical ids the reader would fetch. Refuse instead of skipping silently.
+            throw new blocked('retry_skipped_is_not_supported_for_a_grouped_or_derived_step:' . $key);
+        }
         $columns = $this->read_columns($step);
         $reader = new batch_source($this->legacy, $step, (int) $state['watermark'], (int) $this->options['batch'],
             (int) $this->options['max_group_scan'], $onlyids, $columns);
@@ -1283,6 +1421,9 @@ final class runner {
         global $DB;
         $tx = $this->dryrun ? null : $DB->start_delegated_transaction();
         $this->map->begin_batch();
+        // The report's per-row lines wait for the commit (see report).
+        $this->report->hold();
+        $held = true;
         try {
             $maprows = [];
             $mapupdates = [];
@@ -1329,6 +1470,8 @@ final class runner {
                 $tx->allow_commit();
             }
             $this->map->commit_batch();
+            $held = false;
+            $this->report->release();
             if (!$this->dryrun) {
                 // The rows are in the database now; keep memory bounded on a table of unknown size.
                 $this->map->forget($step->sourcetable());
@@ -1338,6 +1481,9 @@ final class runner {
             $state['already'] += $already;
         } catch (\Throwable $e) {
             $this->map->rollback_batch();
+            if ($held) {
+                $this->report->discard();
+            }
             if ($tx) {
                 try {
                     $tx->rollback($e);
@@ -1459,6 +1605,12 @@ final class runner {
             }
             if (!$derived && !isset($rows[$o->sourceid])) {
                 throw new bizlms_exception('outcome_for_a_row_outside_the_group:' . $key . ':' . $o->sourceid);
+            }
+            if (!$this->dryrun && $o->reason === reason::DEFERRED) {
+                // Deferred means "my parent's feature has not run in this simulation". In an apply run every
+                // dependency has run or the feature would not start, so a deferred row would be stored as skipped
+                // for good: balanced in the accounting, invisible to parity and out of reach of --retry-skipped.
+                throw new bizlms_exception('deferred_outcome_in_apply:' . $key . ':' . $o->sourceid);
             }
             if (in_array($o->kind, [outcome::MERGE, outcome::FOLD, outcome::ARCHIVE, outcome::SKIP], true)
                     && !isset($vocabulary[$o->reason])) {

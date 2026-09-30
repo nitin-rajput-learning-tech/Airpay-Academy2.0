@@ -26,8 +26,11 @@ final class context {
     /** @var int Run id; 0 in a dry run. */
     public readonly int $runid;
 
-    /** @var legacymap Resolves legacy ids; in a dry run an in-memory overlay sits over it. */
-    public readonly legacymap $map;
+    /**
+     * @var legacymap_view Resolves legacy ids (four reads); in a dry run an in-memory overlay sits under it.
+     *      The runner keeps the legacymap itself: a step must not be able to remember, forget or roll back.
+     */
+    public readonly legacymap_view $map;
 
     /** @var tenant_resolver */
     public readonly tenant_resolver $tenant;
@@ -59,7 +62,7 @@ final class context {
      * @param string $feature
      * @param bool $dryrun
      * @param int $runid
-     * @param legacymap $map
+     * @param legacymap_view $map
      * @param tenant_resolver $tenant
      * @param lookups $lookups
      * @param legacy_reader $legacy
@@ -68,7 +71,7 @@ final class context {
      * @param array<string, decision> $declared
      * @param \Closure $deferred
      */
-    public function __construct(string $feature, bool $dryrun, int $runid, legacymap $map, tenant_resolver $tenant,
+    public function __construct(string $feature, bool $dryrun, int $runid, legacymap_view $map, tenant_resolver $tenant,
                                 lookups $lookups, legacy_reader $legacy, text $text, decisions $decisions,
                                 array $declared, \Closure $deferred) {
         $this->feature = $feature;
@@ -91,7 +94,8 @@ final class context {
      * @param bool $dryrun
      * @param int $runid
      * @param decisions $decisions
-     * @param array $shared Optional map, lookups, tenant, legacy, text, deferred to reuse.
+     * @param array $shared Optional map, access, lookups, tenant, legacy, text, deferred to reuse. access is the
+     *        rule every map read goes through (see legacymap_view).
      * @return self
      */
     public static function build(importer $importer, bool $dryrun, int $runid, decisions $decisions,
@@ -105,7 +109,7 @@ final class context {
             $importer->feature(),
             $dryrun,
             $runid,
-            $shared['map'] ?? new legacymap(),
+            new legacymap_view($shared['map'] ?? new legacymap(), $shared['access'] ?? null),
             $shared['tenant'] ?? new tenant_resolver($lookups),
             $lookups,
             $shared['legacy'] ?? new legacy_reader(),
@@ -121,11 +125,17 @@ final class context {
      *
      * @param string $key A key the importer declared in decisions().
      * @return mixed The file's value, else the declared default.
-     * @throws blocked When the decision is required, unset and has no default.
+     * @throws blocked When the file carries the key but the owner has not accepted it, or when the
+     *         decision is required, unset and has no default.
      */
     public function decision(string $key): mixed {
         if (!isset($this->declared[$key])) {
             throw new \coding_exception("decision {$key} is not declared by the {$this->feature} importer");
+        }
+        // A decision the owner has not finished (finance-confirm) is never replaced by the importer's default.
+        $status = $this->decisions->status($key);
+        if ($status !== null && $status !== decisions::ACCEPTED) {
+            throw new blocked('decision_not_accepted:' . $key . ':' . $status);
         }
         if ($this->decisions->has($key)) {
             return $this->decisions->get($key);

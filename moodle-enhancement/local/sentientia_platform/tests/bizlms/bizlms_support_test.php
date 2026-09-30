@@ -10,12 +10,16 @@ use local_sentientia_platform\bizlms\batch_source;
 use local_sentientia_platform\bizlms\blocked;
 use local_sentientia_platform\bizlms\decisions;
 use local_sentientia_platform\bizlms\fingerprint;
+use local_sentientia_platform\bizlms\guard;
 use local_sentientia_platform\bizlms\legacy_reader;
 use local_sentientia_platform\bizlms\legacy_tables;
 use local_sentientia_platform\bizlms\legacymap;
 use local_sentientia_platform\bizlms\lookups;
+use local_sentientia_platform\bizlms\outcome;
+use local_sentientia_platform\bizlms\parity;
 use local_sentientia_platform\bizlms\provenance;
 use local_sentientia_platform\bizlms\registry;
+use local_sentientia_platform\bizlms\report;
 use local_sentientia_platform\bizlms\runner;
 use local_sentientia_platform\bizlms\sideeffect_guard;
 use local_sentientia_platform\bizlms\step;
@@ -172,33 +176,47 @@ final class bizlms_support_test extends \advanced_testcase {
     }
 
     public function test_decisions_hash_is_stable_across_line_endings_and_key_order(): void {
+        $body = '{"version": 1, "approved_by": "x", "approved_on": "2026-09-30", "decisions": '
+            . '{"toy.rounding": {"value": "half_even", "why": "w", "source": "s", "status": "accepted"}}, '
+            . '"accepted_reasons": ["toy:orphan_org"]}';
         $lf = tempnam(sys_get_temp_dir(), 'dec');
         $crlf = tempnam(sys_get_temp_dir(), 'dec');
-        file_put_contents($lf, "{\n  \"a\": 1,\n  \"accepted_reasons\": [\"toy:orphan_org\"]\n}\n");
-        file_put_contents($crlf, "{\r\n  \"a\": 1,\r\n  \"accepted_reasons\": [\"toy:orphan_org\"]\r\n}\r\n");
+        file_put_contents($lf, str_replace(', ', ",\n  ", $body) . "\n");
+        file_put_contents($crlf, str_replace(', ', ",\r\n  ", $body) . "\r\n");
         $this->assertSame(decisions::load($lf)->hash(), decisions::load($crlf)->hash(), 'a checkout on Windows hashes the same');
         $this->assertSame(64, strlen(decisions::load($lf)->hash()));
         $this->assertSame(decisions::from_array(['a' => 1, 'b' => 2])->hash(), decisions::from_array(['b' => 2, 'a' => 1])->hash());
 
         $loaded = decisions::load($lf);
-        $this->assertSame(1, $loaded->get('a'));
+        $this->assertSame('half_even', $loaded->get('toy.rounding'));
         $this->assertTrue($loaded->accepts('toy', 'orphan_org'));
         $this->assertFalse($loaded->accepts('toy', 'orphan_user'));
         unlink($lf);
         unlink($crlf);
     }
 
-    public function test_decisions_file_must_be_a_json_object(): void {
+    public function test_decisions_file_must_be_a_json_object_with_a_decisions_object(): void {
         $file = tempnam(sys_get_temp_dir(), 'dec');
-        file_put_contents($file, '[1, 2, 3]');
-        try {
-            decisions::load($file);
-            $this->fail('a list is not a decisions file');
-        } catch (blocked $e) {
-            $this->assertStringContainsString('decisions_file_not_a_json_object', $e->getMessage());
-        } finally {
-            unlink($file);
+        foreach ([
+            '[1, 2, 3]' => 'decisions_file_not_a_json_object',
+            '{"toy.rounding": "half_even"}' => 'decisions_file_has_no_decisions_object',
+            '{"decisions": [1, 2]}' => 'decisions_file_has_no_decisions_object',
+            '{"decisions": {"toy.x": {"value": 1}}}' => 'decisions_file_entry_invalid:toy.x',
+            '{"decisions": {"toy.x": {"status": "accepted"}}}' => 'decisions_file_entry_invalid:toy.x',
+            '{"decisions": {"toy.x": "accepted"}}' => 'decisions_file_entry_invalid:toy.x',
+            '{"decisions": {"nodot": {"value": 1, "status": "accepted"}}}' => 'decisions_file_invalid_key:nodot',
+            '{"decisions": {}, "accepted_reasons": ["Toy:X"]}' => 'decisions_file_invalid_accepted_reason',
+            '{"decisions": {}, "enums": {"nodot": {}}}' => 'decisions_file_invalid_enums:nodot',
+        ] as $content => $expected) {
+            file_put_contents($file, $content);
+            try {
+                decisions::load($file);
+                $this->fail("accepted: {$content}");
+            } catch (blocked $e) {
+                $this->assertStringContainsString($expected, $e->getMessage(), $content);
+            }
         }
+        unlink($file);
         $this->expectException(blocked::class);
         decisions::load($file . '.missing');
     }
@@ -300,7 +318,7 @@ final class bizlms_support_test extends \advanced_testcase {
         $this->seed_toy_data();
         $DB->import_record('local_sentientia_toy_org', (object) ['id' => 500, 'name' => 'Hand made', 'path' => null,
             'visible' => 1, 'timecreated' => 1, 'timemodified' => 1]);
-        (new runner(['apply' => true, 'batch' => 2, 'atomic_threshold' => 0]))->run([]);
+        (new runner(['apply' => true, 'permit' => guard::test_permit(), 'batch' => 2, 'atomic_threshold' => 0]))->run([]);
 
         $this->assertTrue(provenance::is_imported('local_sentientia_toy_org', 1));
         $this->assertFalse(provenance::is_imported('local_sentientia_toy_org', 500));
@@ -497,5 +515,94 @@ final class bizlms_support_test extends \advanced_testcase {
         $this->assertTrue($lookups->course_exists((int) $courseid));
         $this->assertFalse($lookups->course_exists(987654));
         $this->assertTrue($lookups->exists('course', (int) $courseid));
+    }
+
+    // Outcome detail, report, parity comparison, map view.
+
+    public function test_a_skip_detail_is_codes_only(): void {
+        $this->assertSame('', outcome::skip(1, 'orphan_user')->detail);
+        $this->assertSame('user_not_found', outcome::skip(1, 'orphan_user', 'user_not_found')->detail);
+        $this->assertSame('truncated:title', outcome::skip(1, 'orphan_user', 'truncated:title')->detail);
+        // legacymap.detail lives in a framework table that holds no personal data: no id, no name, no text.
+        foreach (['orphan_user:123', '123', 'Jane Doe', 'jane@example.com', 'user not found', 'UserNotFound', 'a:b:c:d:e'] as $bad) {
+            try {
+                outcome::skip(1, 'orphan_user', $bad);
+                $this->fail("accepted the detail '{$bad}'");
+            } catch (\coding_exception $e) {
+                $this->assertStringContainsString('codes only', $e->getMessage());
+            }
+        }
+    }
+
+    public function test_report_holds_per_row_lines_until_the_transaction_commits(): void {
+        $report = new report();
+        $csv = make_request_directory() . '/lines.csv';
+        $report->open_csv($csv);
+
+        // A batch that commits.
+        $report->hold();
+        $report->count_reason('f', 'f.s', 'a_reason');
+        $report->non_imported('f', 't', 1, '', 'skipped', 'a_reason', '');
+        $this->assertArrayNotHasKey('steps', $report->to_array()['features']['f'] ?? [], 'nothing is reported before the commit');
+        $report->release();
+        $this->assertSame(1, $report->to_array()['features']['f']['steps']['f.s']['skipped_by_reason']['a_reason']);
+
+        // A batch that rolls back leaves nothing behind.
+        $report->hold();
+        $report->count_reason('f', 'f.s', 'a_reason');
+        $report->non_imported('f', 't', 2, '', 'skipped', 'a_reason', '');
+        $report->discard();
+
+        // A batch inside a feature-mode transaction is not durable until the outer commit.
+        $report->hold();
+        $report->hold();
+        $report->non_imported('f', 't', 3, '', 'skipped', 'a_reason', '');
+        $report->release();
+        $report->close();
+        $this->assertCount(2, file($csv), 'header and row 1 only: the inner commit is not durable yet');
+        $report->open_csv($csv, true);
+        $report->release();
+        $report->close();
+        $this->assertCount(3, file($csv), 'the outer commit lists row 3');
+
+        // An outer rollback drops what the inner commit had handed up.
+        $report->hold();
+        $report->hold();
+        $report->non_imported('f', 't', 4, '', 'skipped', 'a_reason', '');
+        $report->release();
+        $report->discard();
+        $report->open_csv($csv, true);
+        $report->close();
+        $this->assertCount(3, file($csv));
+        $this->assertSame(1, $report->to_array()['features']['f']['steps']['f.s']['skipped_by_reason']['a_reason'],
+            'only the committed batch was counted');
+    }
+
+    public function test_a_comparison_never_reads_a_skipped_crc_as_a_pass(): void {
+        $problems = parity::comparison_problems([
+            'drift' => ['local_x rows 3->4 maxid 3->4'], 'missing' => ['local_y'], 'skipped' => ['local_z'], 'new' => ['local_new'],
+        ]);
+        $this->assertSame(['legacy_table_changed:local_x rows 3->4 maxid 3->4', 'legacy_table_missing:local_y'], $problems['hard']);
+        $this->assertSame(['legacy_table_crc_skipped:local_z', 'legacy_table_not_in_the_baseline:local_new'], $problems['unproven']);
+        $clean = parity::comparison_problems(['drift' => [], 'missing' => [], 'skipped' => [], 'new' => []]);
+        $this->assertSame(['hard' => [], 'unproven' => []], $clean);
+
+        // The comparison itself: a null CRC on either side is skipped, never equal.
+        $fp = ['count' => 2, 'maxid' => 2, 'columns' => ['id'], 'crc' => null];
+        $cmp = parity::compare_fingerprints(['local_z' => $fp], ['local_z' => $fp]);
+        $this->assertSame(['local_z'], $cmp['skipped']);
+        $this->assertSame([], parity::comparison_problems($cmp)['hard']);
+        $this->assertNotSame([], parity::comparison_problems($cmp)['unproven']);
+    }
+
+    public function test_a_step_gets_a_read_only_view_of_the_map(): void {
+        $this->resetAfterTest();
+        $ctx = \local_sentientia_platform\bizlms\context::build(new toy_importer(), true, 0, decisions::none());
+        foreach (['remember', 'reset', 'forget', 'begin_batch', 'commit_batch', 'rollback_batch', 'preload'] as $method) {
+            $this->assertFalse(method_exists($ctx->map, $method), "the view must not expose {$method}()");
+        }
+        foreach (['resolve', 'resolve_many', 'entry', 'entries'] as $method) {
+            $this->assertTrue(method_exists($ctx->map, $method));
+        }
     }
 }

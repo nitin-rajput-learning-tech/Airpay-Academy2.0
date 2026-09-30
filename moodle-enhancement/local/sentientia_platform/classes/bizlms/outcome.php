@@ -46,6 +46,9 @@ final class outcome {
         self::SKIP => 'skipped',
     ];
 
+    /** What legacymap.detail may hold: up to four lower-case words joined by colons. */
+    private const DETAIL_PATTERN = '/^[a-z][a-z0-9_]{0,63}(:[a-z][a-z0-9_]{0,63}){0,3}$/';
+
     /** @var string[] Warning codes, for example truncated:name, derived_timestamp, url_sanitised. */
     public array $warnings = [];
 
@@ -142,10 +145,15 @@ final class outcome {
      *
      * @param int $sourceid
      * @param string $reason Code from the importer's vocabulary.
-     * @param string $detail Codes and ids only; never names, emails or free text.
+     * @param string $detail Codes only: lower-case words joined by colons (user_not_found, truncated:title).
+     *        Never a number, a name, an e-mail address or free text. It is stored in legacymap.detail, a
+     *        framework table that holds no personal data, and an id such as orphan_user:123 is one.
      * @return self
      */
     public static function skip(int $sourceid, string $reason, string $detail = ''): self {
+        if ($detail !== '' && !preg_match(self::DETAIL_PATTERN, $detail)) {
+            throw new \coding_exception('outcome::skip() detail must be codes only (words joined by colons), no ids or text');
+        }
         return new self(self::SKIP, $sourceid, '', null, null, '', $reason, $detail, 0);
     }
 

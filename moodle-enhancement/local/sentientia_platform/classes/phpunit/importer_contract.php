@@ -12,6 +12,7 @@ use local_sentientia_platform\bizlms\importer;
 use local_sentientia_platform\bizlms\legacymap;
 use local_sentientia_platform\bizlms\registry;
 use local_sentientia_platform\bizlms\report;
+use local_sentientia_platform\bizlms\guard;
 use local_sentientia_platform\bizlms\runner;
 use local_sentientia_platform\bizlms\sideeffect_guard;
 use local_sentientia_platform\bizlms\step;
@@ -144,7 +145,7 @@ trait importer_contract {
      */
     protected function contract_run(bool $apply, array $options = []): array {
         $report = new report();
-        $runner = new runner($options + [
+        $runner = new runner($options + ($apply ? ['permit' => guard::test_permit()] : []) + [
             'apply' => $apply,
             'decisions' => $this->contract_decisions(),
             'report' => $report,

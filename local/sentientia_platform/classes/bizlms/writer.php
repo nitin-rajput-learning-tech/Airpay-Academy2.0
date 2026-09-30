@@ -52,6 +52,9 @@ final class writer {
     /** @var array<string, string> Declared core tables => reviewed reason. */
     private array $core = [];
 
+    /** @var array<string, bool> Tables a PRESERVE step of the importer writes: only import_preserved() adds rows to them. */
+    private array $preserve = [];
+
     /** @var array<string, \database_column_info[]> */
     private array $columns = [];
 
@@ -72,6 +75,12 @@ final class writer {
         $clone = clone $this;
         $clone->targets = array_fill_keys($importer->target_tables(), true);
         $clone->core = $importer->core_writes();
+        $clone->preserve = [];
+        foreach ($importer->steps() as $step) {
+            if ($step instanceof step && $step->idpolicy() === idpolicy::PRESERVE) {
+                $clone->preserve[$step->targettable()] = true;
+            }
+        }
         return $clone;
     }
 
@@ -98,6 +107,9 @@ final class writer {
         $this->assert_declared($table);
         if ($mapinsert && property_exists($row, 'id')) {
             throw new writer_refused("id_not_allowed_for_map_insert:{$table}");
+        }
+        if ($mapinsert) {
+            $this->assert_not_preserved($table);
         }
         $this->validate($table, $row, $partial, true);
     }
@@ -130,6 +142,7 @@ final class writer {
         if (property_exists($row, 'id')) {
             throw new writer_refused("id_not_allowed_for_map_insert:{$table}");
         }
+        $this->assert_not_preserved($table);
         $this->validate($table, $row, false);
         return (int) $DB->insert_record($table, $row);
     }
@@ -411,6 +424,20 @@ final class writer {
         }
         if (!isset($this->targets[$table]) && !isset($this->core[$table])) {
             throw new writer_refused("undeclared_table:{$table}");
+        }
+    }
+
+    /**
+     * Refuse a MAP insert into a table a PRESERVE step of the importer owns. On MySQL and MariaDB an insert with
+     * an explicit id raises AUTO_INCREMENT, and insert_record() takes max(id)+1: a MAP row would take a legacy id
+     * the PRESERVE step has not written yet, and its import_record() would fail on the duplicate key.
+     *
+     * @param string $table
+     * @return void
+     */
+    private function assert_not_preserved(string $table): void {
+        if (isset($this->preserve[$table])) {
+            throw new writer_refused("map_insert_into_a_preserve_table:{$table}");
         }
     }
 

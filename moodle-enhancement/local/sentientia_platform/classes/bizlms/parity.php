@@ -15,7 +15,8 @@ defined('MOODLE_INTERNAL') || die();
  *    the restored 4.1.2 copy before the core hops; on --compare every legacy table
  *    must be present and identical, which proves the hops and the import left the
  *    archive untouched. A column change counts as drift; a missing table is drift.
- *    The CRC is null on engines without CRC32 and is then reported as skipped.
+ *    The CRC is null on engines without CRC32 and is then reported as skipped; comparison_problems()
+ *    turns skipped into an unproven item (exit 2), never a pass.
  * 2. invariant_problems(): the bizlms_import invariant. Returns an empty list when
  *    the database holds no legacy tables (a fresh install). Every problem is a hard
  *    failure (exit 1).
@@ -78,6 +79,37 @@ final class parity {
             $out['new'][] = $table;
         }
         return $out;
+    }
+
+    /**
+     * Sort a comparison into hard failures (exit 1) and unproven items (exit 2). The caller
+     * (cli/migration_parity_check.php, P0.4) prints both and takes the worse exit code.
+     *
+     * A table whose CRC was skipped (no CRC32 on the engine, or more rows than --crc-max-rows) matched on
+     * count, max id and columns only. That is not proof the archive is untouched: an UPDATE changes neither,
+     * so it is unproven and never a pass. A table that is not in the baseline is unproven too: something
+     * created it after the baseline was taken. The baseline itself must be taken with no CRC cap
+     * (legacy_fingerprints() default), or every comparison against it is unproven.
+     *
+     * @param array{drift: string[], missing: string[], skipped: string[], new: string[]} $comparison
+     * @return array{hard: string[], unproven: string[]}
+     */
+    public static function comparison_problems(array $comparison): array {
+        $hard = [];
+        $unproven = [];
+        foreach ($comparison['drift'] as $line) {
+            $hard[] = 'legacy_table_changed:' . $line;
+        }
+        foreach ($comparison['missing'] as $table) {
+            $hard[] = 'legacy_table_missing:' . $table;
+        }
+        foreach ($comparison['skipped'] as $table) {
+            $unproven[] = 'legacy_table_crc_skipped:' . $table;
+        }
+        foreach ($comparison['new'] as $table) {
+            $unproven[] = 'legacy_table_not_in_the_baseline:' . $table;
+        }
+        return ['hard' => $hard, 'unproven' => $unproven];
     }
 
     /**
@@ -168,6 +200,12 @@ final class parity {
             if ($source !== $mapped) {
                 $problems[] = "accounting:{$feature}:{$name}: source={$source} mapped={$mapped}";
             }
+            // Every source row has exactly one primary map row (ADR-032 id strategy 1). The count above applies
+            // the step filters, so a filter that leaves rows out would pass it.
+            $all = $reader->count($group[0]->physical_table());
+            if ($all !== $mapped && $all !== $source) {
+                $problems[] = "unmapped_rows:{$feature}:{$name}: table={$all} mapped={$mapped} (a source_filter leaves rows out)";
+            }
             foreach ($group as $step) {
                 [$and, $params] = self::filter_clause($step);
                 $params['st'] = $name;
@@ -222,9 +260,7 @@ final class parity {
         $problems = [];
         foreach ($importer->tenant_columns() as $table => $column) {
             fingerprint::assert_identifier($column);
-            $rows = $DB->get_records_sql(
-                "SELECT MIN(t.id) AS k, t.{$column} AS v, COUNT(1) AS n FROM {" . $table . "} t
-                  WHERE t.{$column} IS NOT NULL GROUP BY t.{$column}");
+            $rows = $DB->get_records_sql(fingerprint::value_histogram_sql($table, $column, true));
             foreach ($rows as $row) {
                 if (!runner::is_valid_tenant_value((string) $row->v)) {
                     $problems[] = "invalid_tenant_value:{$feature}:{$table}.{$column}="

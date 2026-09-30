@@ -187,16 +187,25 @@ final class legacy_reader {
     /**
      * Build the SELECT list, always starting with id.
      *
+     * get_records_sql() keys its result by the FIRST column. A production-only table can list its columns in
+     * any order, so t.* alone could key the rows by something else and silently merge rows that share that
+     * value, before by_id() ever sees them. The id goes first, explicitly; the repeated id column inside t.*
+     * carries the same value.
+     *
      * @param string $table
      * @param string[] $columns
      * @return string
+     * @throws blocked When the table has no id column.
      */
     private function select_list(string $table, array $columns): string {
         fingerprint::assert_identifier($table);
-        if ($columns === ['*'] || $columns === []) {
-            return 't.*';
-        }
         $have = $this->columns($table);
+        if (!in_array('id', $have, true)) {
+            throw new blocked('no_id_column:' . $table);
+        }
+        if ($columns === ['*'] || $columns === []) {
+            return 't.id, t.*';
+        }
         $list = ['t.id'];
         foreach ($columns as $column) {
             fingerprint::assert_identifier($column);

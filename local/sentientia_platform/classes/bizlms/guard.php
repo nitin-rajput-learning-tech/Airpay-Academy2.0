@@ -19,8 +19,9 @@ defined('MOODLE_INTERNAL') || die();
  *     --status, so a command copied from a rehearsal cannot run on production;
  *  2. local_sentientia_platform/bizlms_import_armed_until is later than now
  *     (the operator sets it with admin/cli/cfg.php; it expires on its own);
- *  3. CLI maintenance mode is on, unless --allow-online is given, which is
- *     refused when bizlms_production = 1 (the cutover runbook sets it);
+ *  3. CLI maintenance mode is on (climaintenance.html; web maintenance does not count), unless
+ *     --allow-online is given, which is refused when bizlms_production = 1 (the cutover
+ *     runbook sets it);
  *  4. $CFG->noemailever is true;
  *  5. the scheduled-task runner is off (core cron_enabled = 0) and no task is
  *     running (the tripwire also detects a leak);
@@ -30,7 +31,8 @@ defined('MOODLE_INTERNAL') || die();
  *     decisions hash equals --expect-decisions-hash (runner preflight);
  *  9. preflight found no blocker (runner).
  *
- * This class covers 1 to 6 and the hash part of 8.
+ * This class covers 1 to 6 and the hash part of 8. It also issues the guard_permit the runner
+ * demands: the conditions are not only a CLI courtesy, nothing writes without the permit.
  *
  * @package    local_sentientia_platform
  * @copyright  2026 Airpay Payment Services
@@ -125,7 +127,67 @@ final class guard {
     }
 
     /**
-     * Take the import lock. Released automatically if the process dies.
+     * Conditions that refuse the capability repair's --apply (it changes who may do what).
+     *
+     * @param array{confirm?: string, allow_online?: bool} $options
+     * @return string[]
+     */
+    public static function refusals_for_repair(array $options): array {
+        $fails = [];
+        if (!defined('CLI_SCRIPT') || !CLI_SCRIPT) {
+            $fails[] = 'not_a_cli_script';
+        }
+        $confirm = trim((string) ($options['confirm'] ?? ''));
+        if ($confirm === '' || !hash_equals(fingerprint::install(), $confirm)) {
+            $fails[] = 'confirm_does_not_match_the_install_fingerprint (see import_bizlms.php --status)';
+        }
+        if (!empty($options['allow_online'])) {
+            if (self::is_production()) {
+                $fails[] = 'allow_online_is_refused_when_bizlms_production_is_1';
+            }
+        } else if (!self::maintenance_on()) {
+            $fails[] = 'maintenance_mode_is_off (admin/cli/maintenance.php --enable)';
+        }
+        return $fails;
+    }
+
+    /**
+     * The permit the runner demands before it writes or deletes anything.
+     *
+     * @param string $kind guard_permit::APPLY or guard_permit::PURGE.
+     * @param string[] $refusals What refusals_for_apply() or refusals_for_purge() returned for this call.
+     * @return guard_permit
+     * @throws guard_refused When there is any refusal.
+     */
+    public static function permit(string $kind, array $refusals): guard_permit {
+        if ($refusals) {
+            throw new guard_refused(implode('; ', $refusals));
+        }
+        return guard_permit::issue($kind);
+    }
+
+    /**
+     * A permit for a PHPUnit test, which exercises the runner without the guard's site state.
+     *
+     * @param string $kind guard_permit::APPLY or guard_permit::PURGE.
+     * @return guard_permit
+     * @throws \coding_exception Outside PHPUnit.
+     */
+    public static function test_permit(string $kind = guard_permit::APPLY): guard_permit {
+        if (!defined('PHPUNIT_TEST') || !PHPUNIT_TEST) {
+            throw new \coding_exception('guard::test_permit() is for PHPUnit only');
+        }
+        return guard_permit::issue($kind);
+    }
+
+    /**
+     * Take the import lock.
+     *
+     * With the default file or session-backed lock factories the lock goes when the process dies. With
+     * $CFG->lock_factory = \core\lock\db_record_lock_factory it does not: a run killed with SIGKILL leaves
+     * the row behind until LOCK_LIFETIME (12 hours) passes. The refusal then says how old the newest
+     * running run's heartbeat is; a heartbeat that stopped long ago, or no running run at all, means the
+     * holder is dead. Release the row only after confirming that no import process is alive (ps on the host).
      *
      * @return \core\lock\lock
      * @throws guard_refused When another import holds it.
@@ -134,9 +196,27 @@ final class guard {
         $factory = \core\lock\lock_config::get_lock_factory(self::COMPONENT);
         $lock = $factory->get_lock(self::LOCK, 0, self::LOCK_LIFETIME);
         if (!$lock) {
-            throw new guard_refused('another_bizlms_import_holds_the_lock');
+            throw new guard_refused('another_bizlms_import_holds_the_lock' . self::stale_lock_hint());
         }
         return $lock;
+    }
+
+    /**
+     * What the operator needs to tell a live import from a dead one that still holds the lock.
+     *
+     * @return string A parenthesised hint, or an empty string when the run table is not there.
+     */
+    private static function stale_lock_hint(): string {
+        global $DB;
+        if (!$DB->get_manager()->table_exists('local_sentientia_legacyrun')) {
+            return '';
+        }
+        $runs = $DB->get_records_select('local_sentientia_legacyrun', "status = 'running'", [], 'heartbeat DESC',
+            'id, heartbeat', 0, 1);
+        if (!$runs) {
+            return ' (no run is marked running, so the holder is probably a killed process; see acquire_lock())';
+        }
+        return ' (newest running run: heartbeat ' . max(0, time() - (int) reset($runs)->heartbeat) . 's ago)';
     }
 
     /**
@@ -149,13 +229,17 @@ final class guard {
     }
 
     /**
-     * Is CLI maintenance mode on?
+     * Is CLI maintenance mode on? Only climaintenance.html counts (admin/cli/maintenance.php --enable).
+     *
+     * $CFG->maintenance_enabled is the WEB maintenance mode: it lets administrators log in and edit the
+     * very tables the import is writing. ADR-032 gating item 3 names CLI maintenance, which shuts the site
+     * for everyone.
      *
      * @return bool
      */
     public static function maintenance_on(): bool {
         global $CFG;
-        return !empty($CFG->maintenance_enabled) || file_exists($CFG->dataroot . '/climaintenance.html');
+        return file_exists($CFG->dataroot . '/climaintenance.html');
     }
 
     /**

@@ -16,6 +16,13 @@ defined('MOODLE_INTERNAL') || die();
  * declared targets and reviewed core writes aborts the run before the next
  * feature.
  *
+ * Two traps the snapshot has to know about. Events reach their non-internal
+ * observers (the standard log among them) only after the outermost transaction
+ * commits, so a feature that runs in one outer transaction is checked once inside
+ * it (direct writes roll back with the feature) and again after the commit (event
+ * side effects). And the standard log buffers its rows, so every snapshot flushes
+ * the log manager first.
+ *
  * @package    local_sentientia_platform
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -36,13 +43,33 @@ final class sideeffect_guard {
     ];
 
     /**
+     * Write out the events the log store is still holding.
+     *
+     * Event side effects do not happen when the event is triggered. The standard log is an observer
+     * with 'internal' => false, so it runs only after the outermost transaction has COMMITTED, and its
+     * buffered writer then flushes once 50 events are waiting or at shutdown. MAX(id) of the log table
+     * therefore stays still while an event fired by a core API sits in the buffer. Disposing the log
+     * manager flushes every store; get_log_manager(true) makes the next event start a fresh one.
+     *
+     * @return void
+     */
+    public static function flush_event_buffers(): void {
+        get_log_manager(true);
+    }
+
+    /**
      * MAX(id) of every watched table that exists.
      *
      * @param string[] $extra The importer's own extra tables.
+     * @param bool $flush Flush buffered events first. Never while a transaction the caller may still roll
+     *        back is open: the flushed rows would be part of it.
      * @return array<string, int> table => highest id (0 when empty)
      */
-    public static function snapshot(array $extra = []): array {
+    public static function snapshot(array $extra = [], bool $flush = true): array {
         global $DB;
+        if ($flush) {
+            self::flush_event_buffers();
+        }
         $dbman = $DB->get_manager();
         $out = [];
         foreach (array_unique(array_merge(self::TABLES, $extra)) as $table) {

@@ -22,6 +22,16 @@ defined('MOODLE_INTERNAL') || die();
  * transaction: setUp() calls preventResetByRollback(), because on PostgreSQL
  * Moodle wraps a whole test in a transaction unless told not to.
  *
+ * What "create once" really does. After every test that called resetAfterTest(), which this
+ * trait's setUp() does, testing_util::reset_database() drops every table that is not in the
+ * install snapshot. The fixture tables are not, so they are gone before the next test and
+ * truncate_legacy_tables() recreates them through its "table is missing" branch
+ * (recreate_legacy_table()). The lifecycle is therefore correct but not fast: each test pays
+ * a CREATE TABLE per fixture table, and the local MariaDB (default XAMPP settings) makes that
+ * the dominant cost of a bizlms_import run. Budget for it, and do not "optimise" the trait by
+ * dropping resetAfterTest(): without it Moodle flags every test as an unexpected database
+ * modification.
+ *
  * Safety: it refuses to run unless PHPUNIT_TEST is set and $CFG->prefix equals
  * $CFG->phpunit_prefix, so it can never create or drop a table in a real database.
  *

@@ -7,7 +7,10 @@ namespace local_sentientia_platform;
 defined('MOODLE_INTERNAL') || die();
 
 use local_sentientia_platform\bizlms\blocked;
+use local_sentientia_platform\bizlms\decision;
 use local_sentientia_platform\bizlms\decisions;
+use local_sentientia_platform\bizlms\guard;
+use local_sentientia_platform\bizlms\guard_permit;
 use local_sentientia_platform\bizlms\legacymap;
 use local_sentientia_platform\bizlms\registry;
 use local_sentientia_platform\bizlms\report;
@@ -66,7 +69,8 @@ final class bizlms_runner_test extends \advanced_testcase {
      */
     private function execute(array $options = [], array $features = [], bool $apply = true): array {
         $report = new report();
-        $runner = new runner($options + ['apply' => $apply, 'report' => $report, 'batch' => 2, 'atomic_threshold' => 0]);
+        $permit = $apply ? ['permit' => guard::test_permit()] : [];
+        $runner = new runner($options + $permit + ['apply' => $apply, 'report' => $report, 'batch' => 2, 'atomic_threshold' => 0]);
         return [$runner->run($features), $report];
     }
 
@@ -212,10 +216,12 @@ final class bizlms_runner_test extends \advanced_testcase {
         $DB->import_record('local_toy_item', (object) ['id' => 9, 'orgid' => 1, 'userid' => 1, 'title' => 'Odd', 'kind' => 'z',
             'path' => null, 'timecreated' => 1, 'timemodified' => 1]);
 
-        $mapping = ['enums.local_toy_item.kind' => ['z' => 'zeta']];
+        $mapping = ['enums.local_toy_item.kind' => ['z' => 'zeta'], 'toy.rounding' => 'half_even'];
         [$result, $report] = $this->execute(['decisions' => decisions::from_array($mapping)]);
         $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
-        $this->assertSame($mapping, $report->to_array()['meta']['decisions'], 'the report lists the decisions used');
+        $this->assertSame(['toy.rounding' => ['value' => 'half_even', 'status' => 'accepted']],
+            $report->to_array()['meta']['decisions'], 'the report lists the decisions used, with their status');
+        $this->assertSame([], $report->to_array()['meta']['decisions_not_accepted']);
     }
 
     public function test_required_decision_blocks_when_missing(): void {
@@ -486,7 +492,7 @@ final class bizlms_runner_test extends \advanced_testcase {
         $this->begin();
         $this->seed_toy_data();
         $this->execute();
-        $runner = new runner(['apply' => true]);
+        $runner = new runner(['apply' => true, 'permit' => guard::test_permit(guard_permit::PURGE)]);
         $purged = $runner->purge('toy');
         $this->assertSame(0, $purged['exit']);
         foreach (['local_sentientia_toy_org', 'local_sentientia_toy_item', 'local_sentientia_legacymap'] as $table) {
@@ -501,7 +507,7 @@ final class bizlms_runner_test extends \advanced_testcase {
         $this->execute();
         $this->expectException(blocked::class);
         $this->expectExceptionMessage('purge_refused_feature_has_adopted_rows');
-        (new runner(['apply' => true]))->purge('toy');
+        (new runner(['apply' => true, 'permit' => guard::test_permit(guard_permit::PURGE)]))->purge('toy');
     }
 
     public function test_verify_finds_a_source_row_without_a_map_row(): void {
@@ -602,7 +608,7 @@ final class bizlms_runner_test extends \advanced_testcase {
         toy_importer::$corewrites = true;
         $this->expectException(blocked::class);
         $this->expectExceptionMessage('purge_refused_feature_writes_core:course');
-        (new runner(['apply' => true]))->purge('toy');
+        (new runner(['apply' => true, 'permit' => guard::test_permit(guard_permit::PURGE)]))->purge('toy');
     }
 
     public function test_resume_refuses_when_the_source_of_a_finished_step_changed(): void {
@@ -703,5 +709,278 @@ final class bizlms_runner_test extends \advanced_testcase {
         [$resumed] = $this->execute(['resume' => true]);
         $this->assertSame(1, $resumed['exit']);
         $this->assertStringContainsString('source_changed_since_the_run_started:toy.org', implode(' ', $resumed['blockers']));
+    }
+
+    public function test_a_decision_the_owner_has_not_accepted_blocks_the_feature_that_declares_it(): void {
+        $this->begin();
+        $this->seed_toy_data();
+        toy_importer::$extradecisions = [new decision('toy.credit', 'How a legacy balance is honoured')];
+
+        // The importer's default must not stand in for a choice that is still open. This one has no default,
+        // and would only block as "missing" if the file did not carry it at all.
+        $open = decisions::from_array(['toy.credit' => 'frozen_pending_finance'], ['toy.credit' => 'finance-confirm']);
+        [$result, $report] = $this->execute(['decisions' => $open]);
+        $this->assertSame(1, $result['exit']);
+        $this->assertStringContainsString('decision_not_accepted:toy.credit:finance-confirm', implode(' ', $result['blockers']));
+        $this->assertStringNotContainsString('missing_decision', implode(' ', $result['blockers']));
+        $this->assertSame(['toy.credit' => 'finance-confirm'], $report->to_array()['meta']['decisions_not_accepted']);
+
+        // The same key accepted lets the run go.
+        [$result] = $this->execute(['decisions' => decisions::from_array(['toy.credit' => 'frozen_pending_finance'])]);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+    }
+
+    public function test_the_owners_value_wins_over_the_importers_default(): void {
+        $this->begin();
+        $ctx = \local_sentientia_platform\bizlms\context::build(new toy_importer(), true, 0, decisions::none());
+        $this->assertSame('half_up', $ctx->decision('toy.rounding'), 'no decision: the importer default');
+
+        $ctx = \local_sentientia_platform\bizlms\context::build(new toy_importer(), true, 0,
+            decisions::from_array(['toy.rounding' => 'half_even']));
+        $this->assertSame('half_even', $ctx->decision('toy.rounding'), 'the owner chose otherwise');
+
+        $ctx = \local_sentientia_platform\bizlms\context::build(new toy_importer(), true, 0,
+            decisions::from_array(['toy.rounding' => 'half_even'], ['toy.rounding' => 'finance-confirm']));
+        $this->expectException(blocked::class);
+        $this->expectExceptionMessage('decision_not_accepted:toy.rounding:finance-confirm');
+        $ctx->decision('toy.rounding');
+    }
+
+    public function test_enum_values_that_differ_only_in_case_are_different_values(): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+        // A *_ci collation would fold this into the allowed value 'a' and the histogram would show one group.
+        $DB->import_record('local_toy_item', (object) ['id' => 9, 'orgid' => 1, 'userid' => 1, 'title' => 'Shouting',
+            'kind' => 'A', 'path' => null, 'timecreated' => 1, 'timemodified' => 1]);
+        [$result, $report] = $this->execute();
+        $this->assertSame(1, $result['exit']);
+        $this->assertStringContainsString('unknown_enum:local_toy_item.kind=A', implode(' ', $result['blockers']));
+        $histogram = $report->to_array()['features']['toy']['preflight']['histograms']['local_toy_item.kind'];
+        $this->assertSame(1, $histogram['A']);
+        $this->assertSame(3, $histogram['a'], 'the three seeded a items are not merged with the variant');
+    }
+
+    // Deferral, dependencies.
+
+    public function test_deferred_is_a_dry_run_reason_and_an_apply_run_refuses_it(): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+        toy_importer::$forcedeferred = true;
+
+        [$dry] = $this->execute([], [], false);
+        $this->assertSame(0, $dry['exit'], 'a dry run may report a row as deferred');
+
+        [$apply] = $this->execute();
+        $this->assertSame(1, $apply['exit'], 'an apply run stores no row as deferred for good');
+        $this->assertStringContainsString('deferred_outcome_in_apply:toy.item:1', implode(' ', $apply['blockers']));
+        $this->assertFalse(legacymap::feature_complete('toy'));
+        $this->assertSame(0, $DB->count_records('local_sentientia_legacymap', ['reason' => 'deferred']));
+    }
+
+    public function test_a_feature_that_reads_another_features_table_must_depend_on_it(): void {
+        $this->begin([
+            new toy_importer('toyitem', [], ['local_toy_item']),
+            new toy_importer('toyorg', [], ['local_toy_org']),
+        ]);
+        $this->seed_toy_data();
+
+        // toyitem resolves ids of local_toy_org, which toyorg owns, and does not depend on it. The alphabetical
+        // tie-break runs toyitem first, so every parent would be missing and every row an orphan.
+        foreach ([true, false] as $apply) {
+            [$result] = $this->execute(['all' => true], [], $apply);
+            $this->assertSame(1, $result['exit'], $apply ? 'apply' : 'dry run');
+            $this->assertStringContainsString('undeclared_dependency:toyitem->toyorg:local_toy_org',
+                implode(' ', $result['blockers']));
+        }
+        $this->assertFalse(legacymap::feature_complete('toyitem'));
+    }
+
+    public function test_a_declared_dependency_lets_the_reader_run(): void {
+        $this->begin([
+            new toy_importer('toyitem', ['toyorg'], ['local_toy_item']),
+            new toy_importer('toyorg', [], ['local_toy_org']),
+        ]);
+        $this->seed_toy_data();
+        [$result] = $this->execute();
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        $this->assertSame('complete', $result['features']['toyitem']);
+    }
+
+    // Side effects.
+
+    /**
+     * @dataProvider run_mode_provider
+     * @param bool $atomic Run the feature in one outer transaction.
+     */
+    public function test_tripwire_catches_an_event_fired_through_a_core_api(bool $atomic): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+        // The standard log is an observer that runs after the outermost commit and buffers its rows.
+        set_config('enabled_stores', 'logstore_standard', 'tool_log');
+        get_log_manager(true);
+        \core\event\dashboard_viewed::create(['context' => \context_system::instance()])->trigger();
+        get_log_manager(true);
+        if (!$DB->record_exists('logstore_standard_log', ['eventname' => '\\core\\event\\dashboard_viewed'])) {
+            $this->markTestSkipped('the standard log store does not write in this environment, so the tripwire has nothing to see');
+        }
+        $DB->delete_records('logstore_standard_log');
+
+        toy_importer::$fireevent = true;
+        toy_importer::$atomic = $atomic;
+        [$result, $report] = $this->execute($atomic ? ['atomic_threshold' => 50000] : []);
+        $this->assertSame($atomic ? 'feature' : 'batch', $report->to_array()['features']['toy']['mode']);
+        $this->assertSame(1, $result['exit'], 'an event fired through a core API is a side effect');
+        $this->assertStringContainsString('write_outside_declared_tables:logstore_standard_log', implode(' ', $result['blockers']));
+        $this->assertContains('logstore_standard_log', $report->to_array()['features']['toy']['tripwire']);
+        $this->assertFalse(legacymap::feature_complete('toy'), 'a tripped feature never gets a marker');
+        $this->assertSame([], toy_importer::$finalised);
+    }
+
+    /**
+     * @return array<string, array{bool}>
+     */
+    public static function run_mode_provider(): array {
+        return ['batch mode' => [false], 'feature mode' => [true]];
+    }
+
+    // Writer and steps.
+
+    public function test_a_map_insert_into_a_table_a_preserve_step_owns_is_refused(): void {
+        $this->begin();
+        $this->seed_toy_data();
+        toy_importer::$mappreserve = true;
+
+        foreach ([true, false] as $apply) {
+            [$result] = $this->execute([], [], $apply);
+            $this->assertSame(1, $result['exit'], $apply ? 'apply' : 'dry run');
+            $this->assertStringContainsString('map_insert_into_a_preserve_table:local_sentientia_toy_org',
+                implode(' ', $result['blockers']));
+        }
+        $this->assertFalse(legacymap::feature_complete('toy'));
+    }
+
+    public function test_retry_skipped_refuses_a_grouped_step_instead_of_skipping_it_silently(): void {
+        $this->begin();
+        $this->seed_toy_data();
+        toy_importer::$dupunclear = true;
+        [$first] = $this->execute();
+        $this->assertContains($first['exit'], [0, 2], implode('; ', $first['blockers']));
+
+        [$retry] = $this->execute(['retry_reasons' => ['dup_unclear']]);
+        $this->assertSame(1, $retry['exit']);
+        $this->assertStringContainsString('retry_skipped_is_not_supported_for_a_grouped_or_derived_step:toy.dup',
+            implode(' ', $retry['blockers']));
+    }
+
+    public function test_a_source_filter_that_leaves_rows_out_fails_the_accounting(): void {
+        $this->begin();
+        $this->seed_toy_data();
+        toy_importer::$itemfilter = true;
+        [$result, $report] = $this->execute();
+        $this->assertSame(1, $result['exit']);
+        $this->assertStringContainsString('verify_failed', implode(' ', $result['blockers']));
+        $this->assertStringContainsString('unmapped_rows:local_toy_item: table=5 mapped=4',
+            implode(' ', $report->to_array()['features']['toy']['verify_failures']),
+            'the filtered identity balances (4 = 4); the row it filtered away has no map row');
+        $this->assertFalse(legacymap::feature_complete('toy'));
+    }
+
+    public function test_verify_hands_the_importer_a_context_that_is_not_a_dry_run(): void {
+        $this->begin();
+        $this->seed_toy_data();
+        $this->execute();
+        toy_importer::$verifyseen = [];
+        (new runner(['apply' => false]))->verify(['toy']);
+        $this->assertSame([false], toy_importer::$verifyseen,
+            'parity builds its contexts with dryrun = false, so --verify must as well');
+    }
+
+    // Report.
+
+    public function test_a_rolled_back_batch_leaves_no_line_in_the_csv_and_resume_lists_each_row_once(): void {
+        $this->begin();
+        $this->seed_toy_data();
+        $csv = make_request_directory() . '/notimported.csv';
+        $failpoint = function (string $key, int $batch): void {
+            if ($key === 'toy.item' && $batch === 2) {
+                throw new \RuntimeException('injected failure');
+            }
+        };
+        $report = new report();
+        $report->open_csv($csv);
+        $failed = (new runner(['apply' => true, 'permit' => guard::test_permit(), 'report' => $report, 'batch' => 2,
+            'atomic_threshold' => 0, 'failpoint' => $failpoint]))->run([]);
+        $report->close();
+        $this->assertSame(1, $failed['exit']);
+        $lines = file($csv, FILE_IGNORE_NEW_LINES);
+        $this->assertNotContains('toy,local_toy_item,4,,skipped,orphan_org,', $lines,
+            'batch 2 (items 3 and 4) rolled back, so item 4 was not skipped by anything');
+        $this->assertContains('toy,local_toy_org,3,,skipped,no_name,', $lines, 'batch 2 of toy.org committed');
+
+        $report = new report();
+        $report->open_csv($csv, true);
+        $resumed = (new runner(['apply' => true, 'permit' => guard::test_permit(), 'resume' => true, 'report' => $report,
+            'batch' => 2, 'atomic_threshold' => 0]))->run([]);
+        $report->close();
+        $this->assertContains($resumed['exit'], [0, 2], implode('; ', $resumed['blockers']));
+        $lines = file($csv, FILE_IGNORE_NEW_LINES);
+        $this->assertSame(1, count(array_keys($lines, 'toy,local_toy_item,4,,skipped,orphan_org,')),
+            'the resumed run listed the row once');
+        $this->assertSame(1, count(array_keys($lines, 'toy,local_toy_org,3,,skipped,no_name,')), 'and no row twice');
+    }
+
+    public function test_feature_mode_lists_nothing_for_a_feature_that_rolled_back(): void {
+        $this->begin();
+        $this->seed_toy_data();
+        toy_importer::$atomic = true;
+        toy_importer::$failverify = true;
+        $csv = make_request_directory() . '/notimported.csv';
+        $report = new report();
+        $report->open_csv($csv);
+        $result = (new runner(['apply' => true, 'permit' => guard::test_permit(), 'report' => $report, 'batch' => 2,
+            'atomic_threshold' => 50000]))->run([]);
+        $report->close();
+        $this->assertSame(1, $result['exit']);
+        $this->assertCount(1, file($csv), 'only the header: nothing the rolled-back feature did was listed');
+        $this->assertSame([], $report->to_array()['features']['toy']['steps']['toy.org']['skipped_by_reason'] ?? []);
+    }
+
+    // Resume.
+
+    public function test_resume_continues_only_the_newest_apply_run(): void {
+        $this->begin();
+        $this->seed_toy_data();
+        $failpoint = function (string $key, int $batch): void {
+            if ($key === 'toy.org' && $batch === 2) {
+                throw new \RuntimeException('injected failure');
+            }
+        };
+        [$failed] = $this->execute(['failpoint' => $failpoint]);
+        $this->assertSame(1, $failed['exit']);
+
+        // A later run completes. The interrupted one is history, and its watermarks no longer describe the tables.
+        [$later] = $this->execute();
+        $this->assertContains($later['exit'], [0, 2], implode('; ', $later['blockers']));
+
+        [$resume] = $this->execute(['resume' => true]);
+        $this->assertSame(1, $resume['exit']);
+        $this->assertStringContainsString('nothing_to_resume', implode(' ', $resume['blockers']));
+    }
+
+    // Reading.
+
+    public function test_the_legacy_reader_keys_rows_by_id_whatever_the_column_order(): void {
+        $this->begin();
+        $this->seed_toy_data();
+        $reader = new \local_sentientia_platform\bizlms\legacy_reader();
+        $all = $reader->page('local_toy_org', 0, 10);
+        $this->assertSame([1, 2, 3, 4, 7], array_keys($all));
+        foreach ($all as $id => $row) {
+            $this->assertSame($id, (int) $row->id);
+        }
+        $this->assertSame([2, 7], array_keys($reader->fetch('local_toy_org', [7, 2, 99])));
     }
 }

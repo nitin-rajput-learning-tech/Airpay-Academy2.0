@@ -17,6 +17,12 @@ defined('MOODLE_INTERNAL') || die();
  * imported (merged, folded, archived, skipped) by source table, id, outcome and
  * reason code.
  *
+ * The CSV is the evidence the owner accepts, so a line must mean a row is in the map. The
+ * per-row counters and CSV lines are therefore HELD while a batch (or, in feature mode, a whole
+ * feature) is in its transaction: release() writes them after the commit, discard() drops them
+ * with the rollback. Without that, a rolled-back batch leaves phantom lines and --resume
+ * appends the same rows again.
+ *
  * @package    local_sentientia_platform
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -28,6 +34,12 @@ final class report {
 
     /** @var resource|null */
     private $csv = null;
+
+    /**
+     * @var array<int, array<int, array{0: string, 1: array}>> Stack of held calls, one list per open transaction
+     *      level. While it is not empty the per-row methods queue instead of writing.
+     */
+    private array $held = [];
 
     /**
      * @param array $meta Run-level facts (mode, fingerprint, decisions hash, ...).
@@ -77,6 +89,9 @@ final class report {
      * @return void
      */
     public function count_warning(string $feature, string $stepkey, string $code, int $n = 1): void {
+        if ($this->hold_call(__FUNCTION__, func_get_args())) {
+            return;
+        }
         $this->bump($feature, $stepkey, 'warnings', $code, $n);
     }
 
@@ -87,6 +102,9 @@ final class report {
      * @return void
      */
     public function count_tenant_method(string $feature, string $stepkey, string $method): void {
+        if ($this->hold_call(__FUNCTION__, func_get_args())) {
+            return;
+        }
         $this->bump($feature, $stepkey, 'tenant_methods', $method, 1);
     }
 
@@ -97,6 +115,9 @@ final class report {
      * @return void
      */
     public function count_reason(string $feature, string $stepkey, string $reason): void {
+        if ($this->hold_call(__FUNCTION__, func_get_args())) {
+            return;
+        }
         $this->bump($feature, $stepkey, 'skipped_by_reason', $reason, 1);
     }
 
@@ -114,10 +135,52 @@ final class report {
      */
     public function non_imported(string $feature, string $sourcetable, int $sourceid, string $subkey,
                                  string $outcome, string $reason, string $detail): void {
+        if ($this->hold_call(__FUNCTION__, func_get_args())) {
+            return;
+        }
         if ($this->csv !== null) {
             fputcsv($this->csv, [$feature, $sourcetable, $sourceid, $subkey, $outcome, $reason, $detail],
                 ',', '"', '\\');
         }
+    }
+
+    /**
+     * Start holding the per-row counters and CSV lines: a transaction level has begun. Calls nest.
+     *
+     * @return void
+     */
+    public function hold(): void {
+        $this->held[] = [];
+    }
+
+    /**
+     * The transaction level committed: its lines go to the enclosing level if there is one (a batch inside
+     * a feature-mode transaction is not durable yet), else to the report and the CSV.
+     *
+     * @return void
+     */
+    public function release(): void {
+        $calls = array_pop($this->held);
+        if ($calls === null) {
+            return;
+        }
+        if ($this->held) {
+            $parent = count($this->held) - 1;
+            $this->held[$parent] = array_merge($this->held[$parent], $calls);
+            return;
+        }
+        foreach ($calls as [$method, $args]) {
+            $this->{$method}(...$args);
+        }
+    }
+
+    /**
+     * The transaction level rolled back: its lines never happened.
+     *
+     * @return void
+     */
+    public function discard(): void {
+        array_pop($this->held);
     }
 
     /**
@@ -173,6 +236,21 @@ final class report {
             fclose($this->csv);
             $this->csv = null;
         }
+    }
+
+    /**
+     * Queue a per-row call while a transaction level is held.
+     *
+     * @param string $method
+     * @param array $args
+     * @return bool True when the call was queued.
+     */
+    private function hold_call(string $method, array $args): bool {
+        if (!$this->held) {
+            return false;
+        }
+        $this->held[count($this->held) - 1][] = [$method, $args];
+        return true;
     }
 
     /**
