@@ -123,17 +123,24 @@ final class report {
     /**
      * Start the CSV of non-imported rows.
      *
+     * A resumed run only sees the rows left to do, so it appends to the file the
+     * interrupted run began instead of truncating what that run already listed.
+     *
      * @param string $path
+     * @param bool $append Continue an existing file (and keep its header).
      * @return void
      */
-    public function open_csv(string $path): void {
-        $handle = fopen($path, 'wb');
+    public function open_csv(string $path, bool $append = false): void {
+        $exists = $append && is_file($path) && filesize($path) > 0;
+        $handle = fopen($path, $exists ? 'ab' : 'wb');
         if ($handle === false) {
             throw new blocked('report_csv_unwritable');
         }
         $this->csv = $handle;
-        fputcsv($this->csv, ['feature', 'sourcetable', 'sourceid', 'subkey', 'outcome', 'reason', 'detail'],
-            ',', '"', '\\');
+        if (!$exists) {
+            fputcsv($this->csv, ['feature', 'sourcetable', 'sourceid', 'subkey', 'outcome', 'reason', 'detail'],
+                ',', '"', '\\');
+        }
     }
 
     /**

@@ -93,6 +93,16 @@ final class bizlms_guard_parity_test extends \advanced_testcase {
         $this->assertSame([], guard::refusals_for_apply($options), 'every guard satisfied');
     }
 
+    public function test_the_cron_guard_fails_closed_when_the_setting_was_never_written(): void {
+        $this->resetAfterTest();
+        $options = $this->guarded();
+        unset_config('cron_enabled');
+        // The admin setting defaults to ON, so an absent row means cron is running.
+        $this->assertStringContainsString('explicitly 0', implode(' ', guard::refusals_for_apply($options)));
+        set_config('cron_enabled', 0);
+        $this->assertSame([], guard::refusals_for_apply($options));
+    }
+
     public function test_a_command_copied_from_a_rehearsal_cannot_run_on_production(): void {
         $this->resetAfterTest();
         $options = $this->guarded();
@@ -272,6 +282,47 @@ final class bizlms_guard_parity_test extends \advanced_testcase {
 
         (new runner(['apply' => true, 'resume' => true, 'batch' => 2, 'atomic_threshold' => 0]))->run([]);
         $this->assertSame(result::OK, (new bizlms_import())->get_result()->get_status(), 'the marker makes it clean');
+    }
+
+    public function test_status_check_sees_a_feature_mode_failure_whose_step_rows_were_rolled_back(): void {
+        $this->resetAfterTest();
+        toy_importer::reset();
+        toy_importer::$atomic = true;
+        registry::set_testing_importers([new toy_importer()]);
+        $this->seed_toy_data();
+        $failpoint = function (string $key, int $batch): void {
+            if ($batch === 2) {
+                throw new \RuntimeException('injected failure');
+            }
+        };
+        (new runner(['apply' => true, 'batch' => 2, 'atomic_threshold' => 50000, 'failpoint' => $failpoint]))->run([]);
+        $this->assertSame(result::CRITICAL, (new bizlms_import())->get_result()->get_status(),
+            'feature mode rolled every step row back, but the failure marker keeps the check red');
+    }
+
+    public function test_once_the_runbook_declares_production_an_unimported_feature_is_critical(): void {
+        $this->resetAfterTest();
+        registry::set_testing_importers([new toy_importer()]);
+        $this->seed_toy_data();
+        $this->assertSame(result::OK, (new bizlms_import())->get_result()->get_status());
+        set_config('bizlms_production', 1, self::COMPONENT);
+        $this->assertSame(result::CRITICAL, (new bizlms_import())->get_result()->get_status(),
+            'the site must not open on legacy history nobody imported');
+    }
+
+    public function test_parity_hands_the_run_decisions_to_each_importers_verify(): void {
+        $this->resetAfterTest();
+        toy_importer::reset();
+        toy_importer::$requiredecision = true;
+        registry::set_testing_importers([new toy_importer()]);
+        $this->seed_toy_data();
+        $decisions = \local_sentientia_platform\bizlms\decisions::from_array(['toy.mandatory' => 'yes']);
+        $result = (new runner(['apply' => true, 'batch' => 2, 'atomic_threshold' => 0, 'decisions' => $decisions]))->run([]);
+        $this->assertContains($result['exit'], [0, 2]);
+
+        $this->assertSame([], parity::invariant_problems($decisions));
+        $this->assertStringContainsString('verify_error:toy:missing_decision:toy.mandatory',
+            implode(' ', parity::invariant_problems()), 'without the decisions verify() cannot run, and says so');
     }
 
     public function test_status_check_is_registered_through_lib_php(): void {

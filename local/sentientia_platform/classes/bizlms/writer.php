@@ -89,12 +89,29 @@ final class writer {
      * @param string $table
      * @param \stdClass $row
      * @param bool $partial True for an update: only the given fields are checked.
+     * @param bool $mapinsert True when the row is a MAP insert, which may not carry an id
+     *        (insert() refuses it, so the dry run must too).
      * @return void
      * @throws writer_refused
      */
-    public function check(string $table, \stdClass $row, bool $partial = false): void {
+    public function check(string $table, \stdClass $row, bool $partial = false, bool $mapinsert = false): void {
         $this->assert_declared($table);
+        if ($mapinsert && property_exists($row, 'id')) {
+            throw new writer_refused("id_not_allowed_for_map_insert:{$table}");
+        }
         $this->validate($table, $row, $partial, true);
+    }
+
+    /**
+     * Refuse a table the importer did not declare. The runner calls it for a fold
+     * target, which no write ever touches.
+     *
+     * @param string $table
+     * @return void
+     * @throws writer_refused
+     */
+    public function check_table(string $table): void {
+        $this->assert_declared($table);
     }
 
     // Target rows, for the importer that declared the tables.
@@ -457,7 +474,7 @@ final class writer {
                         || !preg_match('/^-?[0-9]+$/', (string) $value)) {
                     throw new writer_refused("not_an_integer:{$where}");
                 }
-                $limit = self::int_limit((int) $column->max_length);
+                $limit = self::limit_for($column);
                 if ($limit !== null && abs((int) $value) > $limit) {
                     throw new writer_refused("integer_out_of_range:{$where}");
                 }
@@ -475,12 +492,52 @@ final class writer {
                 if (\core_text::strlen((string) $value) > (int) $column->max_length) {
                     throw new writer_refused("too_long:{$where}");
                 }
+                if (!mb_check_encoding((string) $value, 'UTF-8')) {
+                    throw new writer_refused("invalid_utf8:{$where}");
+                }
                 break;
             default:
                 if (!is_scalar($value) || is_bool($value)) {
                     throw new writer_refused("not_a_string:{$where}");
                 }
+                if ($column->meta_type === 'X' && !mb_check_encoding((string) $value, 'UTF-8')) {
+                    throw new writer_refused("invalid_utf8:{$where}");
+                }
         }
+    }
+
+    /**
+     * Largest absolute value an integer column is sure to hold, read from its
+     * native type where the driver reports one.
+     *
+     * MySQL 8.0.19 and later report tinyint, smallint and int WITHOUT a display
+     * width, so max_length is then numeric_precision (3, 5, 10) and no longer says
+     * how wide the column is. The type name is the reliable signal; the width
+     * buckets are the fallback for drivers that only report a width.
+     *
+     * @param \database_column_info $column
+     * @return int|null Null when the column is a bigint and the check cannot matter.
+     */
+    private static function limit_for(\database_column_info $column): ?int {
+        $type = strtolower((string) preg_replace('/\(.*$/', '', (string) $column->type));
+        switch ($type) {
+            case 'tinyint':
+            case 'int1':
+                return 127;
+            case 'smallint':
+            case 'int2':
+                return 32767;
+            case 'mediumint':
+                return 8388607;
+            case 'int':
+            case 'integer':
+            case 'int4':
+                return 2147483647;
+            case 'bigint':
+            case 'int8':
+                return null;
+        }
+        return self::int_limit((int) $column->max_length);
     }
 
     /**

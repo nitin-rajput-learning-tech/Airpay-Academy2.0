@@ -127,6 +127,32 @@ final class bizlms_writer_test extends \advanced_testcase {
                 'visible' => 500, 'timecreated' => 1, 'timemodified' => 1]));
     }
 
+    public function test_the_integer_limit_follows_the_native_type_not_the_display_width(): void {
+        // MySQL 8.0.19+ reports tinyint, smallint and int without a display width, so max_length is the
+        // numeric precision (3, 5, 10) and cannot say how wide the column is. visible is a tinyint.
+        $writer = $this->writer();
+        $org = fn(int $visible) => (object) ['name' => 'n', 'path' => null, 'visible' => $visible,
+            'timecreated' => 1, 'timemodified' => 1];
+        $writer->insert('local_sentientia_toy_org', $org(127));
+        $this->assert_refused('integer_out_of_range:local_sentientia_toy_org.visible',
+            fn() => $writer->insert('local_sentientia_toy_org', $org(200)));
+        $this->assert_refused('integer_out_of_range:local_sentientia_toy_org.visible',
+            fn() => $writer->insert('local_sentientia_toy_org', $org(-200)));
+    }
+
+    public function test_a_dry_run_refuses_a_map_row_that_carries_an_id_like_apply_does(): void {
+        $writer = $this->writer(true);
+        $withid = $this->item(['id' => 5]);
+        $this->assert_refused('id_not_allowed_for_map_insert', fn() => $writer->check('local_sentientia_toy_item', $withid, false, true));
+        $writer->check('local_sentientia_toy_item', $withid);
+    }
+
+    public function test_bytes_that_are_not_utf8_are_refused_with_the_column_named(): void {
+        $writer = $this->writer();
+        $this->assert_refused('invalid_utf8:local_sentientia_toy_item.title',
+            fn() => $writer->insert('local_sentientia_toy_item', $this->item(['title' => "bad \xC3\x28 byte"])));
+    }
+
     public function test_preserve_writes_the_legacy_id_and_asserts_it(): void {
         global $DB;
         $writer = $this->writer();

@@ -30,7 +30,9 @@
  *   --decisions=FILE                owner choices; its sha256 is stored on the run
  *   --expect-decisions-hash=SHA256  cutover must use the rehearsed decisions
  *   --report=FILE                   JSON, plus FILE.csv of the rows that were not imported
- *   --batch=500 --atomic-threshold=50000 --max-group-scan=2000000
+ *   --batch=500 --atomic-threshold=50000 --max-group-scan=500000 --crc-max-rows=2000000
+ *                                   --crc-max-rows: a source fingerprint skips its CRC above this many rows
+ *                                   (the CRC read took 2.5 minutes on a 2.6M-row table); 0 never skips
  *   --confirm=<fingerprint>         required with --apply and --purge-feature (printed by --status)
  *   --allow-online                  skip the maintenance requirement (rehearsal only)
  *   --purge-feature=<key> --i-understand-this-deletes
@@ -55,6 +57,7 @@ use local_sentientia_platform\bizlms\decisions;
 use local_sentientia_platform\bizlms\fingerprint;
 use local_sentientia_platform\bizlms\guard;
 use local_sentientia_platform\bizlms\guard_refused;
+use local_sentientia_platform\bizlms\parity;
 use local_sentientia_platform\bizlms\registry;
 use local_sentientia_platform\bizlms\registry_error;
 use local_sentientia_platform\bizlms\report;
@@ -67,7 +70,7 @@ use local_sentientia_platform\bizlms\unclaimed;
     'apply' => false, 'resume' => false, 'retry-skipped' => '',
     'verify' => false,
     'decisions' => '', 'expect-decisions-hash' => '', 'report' => '',
-    'batch' => '500', 'atomic-threshold' => '50000', 'max-group-scan' => '2000000',
+    'batch' => '500', 'atomic-threshold' => '50000', 'max-group-scan' => '500000', 'crc-max-rows' => '2000000',
     'confirm' => '', 'allow-online' => false,
     'purge-feature' => '', 'i-understand-this-deletes' => false,
     'help' => false,
@@ -194,7 +197,7 @@ try {
         'features' => $selected ?: 'all',
     ]);
     if ($options['report'] !== '') {
-        $report->open_csv($options['report'] . '.csv');
+        $report->open_csv($options['report'] . '.csv', (bool) $options['resume']);
     }
     $runneroptions = [
         'apply' => $apply,
@@ -204,6 +207,7 @@ try {
         'batch' => max(1, (int) $options['batch']),
         'atomic_threshold' => (int) $options['atomic-threshold'],
         'max_group_scan' => (int) $options['max-group-scan'],
+        'crc_max_rows' => (int) $options['crc-max-rows'],
         'decisions' => $decisions,
         'report' => $report,
     ];
@@ -240,8 +244,16 @@ try {
                 cli_writeln('  ' . $line);
             }
         }
-        cli_writeln('RESULT: ' . ($out['exit'] ? 'verify failed (exit 1)' : 'verified (exit 0)'));
-        exit($out['exit']);
+        // The parity invariant the cutover runs (ADR-032 "Parity hooks"): accounting, missing targets, tenant
+        // values, mutated sources and every importer verify, across the whole registry.
+        $problems = parity::invariant_problems($decisions);
+        cli_writeln('parity invariant bizlms_import: ' . ($problems ? count($problems) . ' problem(s)' : '0'));
+        foreach ($problems as $line) {
+            cli_writeln('  ' . $line);
+        }
+        $failed = $out['exit'] !== 0 || $problems;
+        cli_writeln('RESULT: ' . ($failed ? 'verify failed (exit 1)' : 'verified (exit 0)'));
+        exit($failed ? 1 : 0);
     }
 
     $lock = null;

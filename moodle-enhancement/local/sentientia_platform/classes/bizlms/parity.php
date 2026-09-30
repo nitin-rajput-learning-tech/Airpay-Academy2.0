@@ -34,12 +34,14 @@ final class parity {
     /**
      * Fingerprint every legacy table.
      *
+     * @param int $crcmaxrows Skip a table's CRC above this many rows. The default reads every row: the
+     *        archive proof is taken once on the restored copy and once after the import, not per step.
      * @return array<string, array{count: int, maxid: int, crc: ?string, columns: string[]}> table => fingerprint
      */
-    public static function legacy_fingerprints(): array {
+    public static function legacy_fingerprints(int $crcmaxrows = PHP_INT_MAX): array {
         $out = [];
         foreach (legacy_tables::detect() as $table) {
-            $out[$table] = fingerprint::table($table);
+            $out[$table] = fingerprint::table($table, ['', []], $crcmaxrows);
         }
         return $out;
     }
@@ -92,12 +94,15 @@ final class parity {
      *
      * @return string[]
      */
-    public static function invariant_problems(): array {
+    public static function invariant_problems(?decisions $decisions = null): array {
         global $DB;
         $dbman = $DB->get_manager();
-        if (!legacy_tables::detect()) {
+        $legacy = legacy_tables::detect();
+        if (!$legacy) {
             return [];
         }
+        $legacy = array_flip($legacy);
+        $decisions ??= decisions::none();
         if (!$dbman->table_exists(legacymap::TABLE)) {
             return ['framework_tables_missing'];
         }
@@ -131,8 +136,8 @@ final class parity {
                 array_push($problems, ...self::missing_target_problems($feature, $importer));
             }
             array_push($problems, ...self::tenant_problems($feature, $importer));
-            array_push($problems, ...self::mutation_problems($feature, $importer, $reader));
-            array_push($problems, ...self::verify_problems($feature, $importer));
+            array_push($problems, ...self::mutation_problems($feature, $importer, $reader, $legacy));
+            array_push($problems, ...self::verify_problems($feature, $importer, $decisions));
         }
         return $problems;
     }
@@ -167,9 +172,9 @@ final class parity {
                 [$and, $params] = self::filter_clause($step);
                 $params['st'] = $name;
                 $missing = $DB->get_records_sql(
-                    'SELECT s.id FROM {' . $step->physical_table() . '} s
+                    'SELECT t.id FROM {' . $step->physical_table() . '} t
                       WHERE NOT EXISTS (SELECT 1 FROM {' . legacymap::TABLE . "} m
-                                         WHERE m.sourcetable = :st AND m.subkey = '' AND m.sourceid = s.id) {$and}",
+                                         WHERE m.sourcetable = :st AND m.subkey = '' AND m.sourceid = t.id) {$and}",
                     $params, 0, self::SAMPLE);
                 if ($missing) {
                     $problems[] = "unmapped_source_rows:{$feature}:{$name}: ids=" . implode(',', array_keys($missing));
@@ -236,13 +241,17 @@ final class parity {
      * @param string $feature
      * @param importer $importer
      * @param legacy_reader $reader
+     * @param array<string, int> $legacy Legacy tables, as keys. A core source (logstore_standard_log) is live
+     *        data that changes once the site opens, so only legacy tables are compared.
      * @return string[]
      */
-    private static function mutation_problems(string $feature, importer $importer, legacy_reader $reader): array {
+    private static function mutation_problems(string $feature, importer $importer, legacy_reader $reader,
+                                              array $legacy): array {
         global $DB;
         $problems = [];
         foreach ($importer->steps() as $step) {
-            if (!($step instanceof step) || !$reader->exists($step->physical_table())) {
+            if (!($step instanceof step) || !$reader->exists($step->physical_table())
+                    || !isset($legacy[$step->physical_table()])) {
                 continue;
             }
             $stored = $DB->get_records_select('local_sentientia_legacystep',
@@ -267,11 +276,12 @@ final class parity {
      *
      * @param string $feature
      * @param importer $importer
+     * @param decisions $decisions The run's decisions; a verify() that reads one needs them.
      * @return string[]
      */
-    private static function verify_problems(string $feature, importer $importer): array {
+    private static function verify_problems(string $feature, importer $importer, decisions $decisions): array {
         try {
-            $ctx = context::build($importer, false, 0, decisions::none());
+            $ctx = context::build($importer, false, 0, $decisions);
             return array_map(fn($line): string => "verify:{$feature}:" . $line, $importer->verify($ctx));
         } catch (\Throwable $e) {
             return ["verify_error:{$feature}:" . runner::safe_message($e)];
@@ -279,7 +289,8 @@ final class parity {
     }
 
     /**
-     * A step filter as an AND clause on the aliased source table s.
+     * A step filter as an AND clause. Every framework query aliases the source table as t,
+     * so a filter written t.col = ... works in the reader, the fingerprint and here.
      *
      * @param step $step
      * @return array{0: string, 1: array}

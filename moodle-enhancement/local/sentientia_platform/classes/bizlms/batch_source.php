@@ -185,6 +185,7 @@ final class batch_source {
         $filter = $this->step->source_filter();
         $only = $this->onlyids === null ? null : array_flip($this->onlyids);
 
+        $memorylimit = self::memory_limit_bytes();
         $groups = [];
         $scanned = 0;
         $after = 0;
@@ -195,19 +196,37 @@ final class batch_source {
                 if ($scanned > $this->maxgroupscan) {
                     throw new blocked('max_group_scan_exceeded:' . $table);
                 }
+                if (($scanned & 0xFFFF) === 0 && $memorylimit > 0 && memory_get_usage(true) > 0.8 * $memorylimit) {
+                    // --max-group-scan caps rows, not bytes; stop before PHP dies mid-batch.
+                    throw new blocked('group_scan_memory_exhausted:' . $table);
+                }
                 $parts = [];
                 foreach ($columns as $column) {
                     $parts[] = $row->{$column} === null ? "\0NULL" : (string) $row->{$column};
                 }
                 $hash = md5(implode("\x1f", $parts), true);
-                $groups[$hash][] = $id;
+                if (!isset($groups[$hash])) {
+                    $groups[$hash] = $id;
+                } else {
+                    // A group of one stays a bare integer; it becomes a list when a second row arrives.
+                    $groups[$hash] = is_array($groups[$hash]) ? $groups[$hash] : [$groups[$hash]];
+                    $groups[$hash][] = $id;
+                }
                 $after = $id;
             }
         } while (count($rows) === self::SCAN_PAGE);
 
+        // The database groups with the column's collation. If PHP (exact bytes) found MORE groups than the
+        // database does, two rows the target's unique key treats as one would land in different groups and
+        // every batch containing them would roll back on that key.
+        if (count($groups) > $this->reader->count_groups($table, $columns, $filter)) {
+            throw new blocked('group_key_differs_from_db_collation:' . $table);
+        }
+
         // Groups come out in first-seen order, which is ascending minimum id.
         $queue = [];
         foreach ($groups as $ids) {
+            $ids = (array) $ids;
             if ($only !== null && !array_intersect_key(array_flip($ids), $only)) {
                 continue;
             }
@@ -220,5 +239,27 @@ final class batch_source {
         $this->queue = $queue;
         $this->order = array_keys($queue);
         $this->cursor = 0;
+    }
+
+    /**
+     * The PHP memory limit in bytes; 0 when there is none.
+     *
+     * @return int
+     */
+    private static function memory_limit_bytes(): int {
+        $limit = trim((string) ini_get('memory_limit'));
+        if ($limit === '' || $limit === '-1') {
+            return 0;
+        }
+        $number = (int) $limit;
+        switch (strtolower(substr($limit, -1))) {
+            case 'g':
+                return $number * 1024 * 1024 * 1024;
+            case 'm':
+                return $number * 1024 * 1024;
+            case 'k':
+                return $number * 1024;
+        }
+        return $number;
     }
 }

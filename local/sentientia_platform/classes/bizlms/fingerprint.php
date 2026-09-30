@@ -23,6 +23,9 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class fingerprint {
 
+    /** Default cap on the rows a CRC may read (see table()). */
+    public const CRC_MAX_ROWS = 2000000;
+
     /** Identifier pattern accepted in table and column names (prefix-less). */
     private const IDENTIFIER = '/^[A-Za-z][A-Za-z0-9_]*$/';
 
@@ -46,11 +49,17 @@ final class fingerprint {
      * migration_parity_check.php reports them, so a comparison on such an
      * engine cannot read as a clean pass.
      *
+     * The CRC reads every row, so on a table larger than $crcmaxrows it is skipped
+     * (null, like an engine without CRC32) and count plus max id stand alone. The
+     * exact query took 2m28s on a 2.6M-row logstore on MariaDB 10.11, and a step
+     * pays it on every dry run, apply and resume. Pass PHP_INT_MAX for no cap.
+     *
      * @param string $table Table name without prefix.
      * @param array{0: string, 1: array} $filter [sql, params] restricting the rows.
+     * @param int $crcmaxrows Skip the CRC above this many rows.
      * @return array{count: int, maxid: int, crc: ?string, columns: string[]}
      */
-    public static function table(string $table, array $filter = ['', []]): array {
+    public static function table(string $table, array $filter = ['', []], int $crcmaxrows = self::CRC_MAX_ROWS): array {
         global $DB;
 
         self::assert_identifier($table);
@@ -64,7 +73,7 @@ final class fingerprint {
         sort($columns);
 
         $crc = null;
-        if ($DB->get_dbfamily() === 'mysql' && $columns) {
+        if ($DB->get_dbfamily() === 'mysql' && $columns && $count <= $crcmaxrows) {
             $parts = [];
             foreach ($columns as $column) {
                 self::assert_identifier($column);

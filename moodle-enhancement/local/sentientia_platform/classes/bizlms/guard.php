@@ -80,8 +80,10 @@ final class guard {
         if (empty($CFG->noemailever)) {
             $fails[] = 'noemailever_is_off';
         }
-        if (get_config('core', 'cron_enabled')) {
-            $fails[] = 'scheduled_task_runner_is_on (cron_enabled must be 0)';
+        // Fail closed: an absent row means the admin setting's default, which is ON.
+        $cron = get_config('core', 'cron_enabled');
+        if ($cron === false || $cron === null || (int) $cron !== 0) {
+            $fails[] = 'scheduled_task_runner_is_on (cron_enabled must be explicitly 0)';
         }
         if (self::running_tasks() > 0) {
             $fails[] = 'a_scheduled_or_adhoc_task_is_running';

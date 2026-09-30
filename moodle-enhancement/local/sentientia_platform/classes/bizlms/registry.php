@@ -211,6 +211,21 @@ final class registry {
         $stepkeys = [];
 
         foreach ($importers as $feature => $importer) {
+            // What goes into the framework tables must fit their columns, or the failure comes mid-run.
+            if (strlen($feature) > 40) {
+                $problems[] = "feature_key_too_long:{$feature}";
+            }
+            foreach (array_merge(array_keys($importer->sources()), array_keys($importer->declined_tables())) as $table) {
+                if (strlen($table) > 64) {
+                    $problems[] = "source_table_name_too_long:{$feature}:{$table}";
+                }
+            }
+            foreach ($importer->reasons() as $reason) {
+                if ($reason instanceof reason && strlen($reason->code) > 40) {
+                    $problems[] = "reason_code_too_long:{$feature}:{$reason->code}";
+                }
+            }
+
             // Installed plugin version.
             $installed = (int) get_config($importer->component(), 'version');
             if ($installed < $importer->requires_version()) {
@@ -280,6 +295,9 @@ final class registry {
                 $key = $step->key();
                 if (strncmp($key, $feature . '.', strlen($feature) + 1) !== 0) {
                     $problems[] = "step_key_without_feature_prefix:{$key}";
+                }
+                if (strlen($key) > 64) {
+                    $problems[] = "step_key_too_long:{$key}";
                 }
                 if (isset($stepkeys[$key])) {
                     $problems[] = "duplicate_step_key:{$key}";

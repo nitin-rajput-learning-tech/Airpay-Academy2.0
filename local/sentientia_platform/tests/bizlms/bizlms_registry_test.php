@@ -125,6 +125,14 @@ final class bizlms_registry_test extends \advanced_testcase {
         $this->assertContains('target_is_read_only:toy:local_costcenter', $this->problems([new toy_importer()]));
     }
 
+    public function test_names_that_do_not_fit_the_framework_columns_are_refused_up_front(): void {
+        $long = str_repeat('a', 41);
+        $problems = $this->problems([new toy_importer($long, [], ['local_toy_org'])]);
+        $this->assertContains("feature_key_too_long:{$long}", $problems);
+        // A feature of exactly 40 characters is fine: its step keys stay well under the 64-character column.
+        $this->assertSame([], $this->problems([new toy_importer(str_repeat('b', 40), [], ['local_toy_org'])]));
+    }
+
     public function test_every_problem_is_reported_at_once(): void {
         toy_importer::$maprefs = true;
         toy_importer::$preservenorefs = true;

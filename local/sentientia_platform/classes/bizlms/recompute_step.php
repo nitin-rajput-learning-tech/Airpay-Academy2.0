@@ -12,6 +12,12 @@ defined('MOODLE_INTERNAL') || die();
  *
  * It may only return update outcomes for rows the import created or adopted.
  *
+ * It must be IDEMPOTENT. The runner hands it every such row of the feature,
+ * not only the rows this run imported: a fresh apply after a failed run finds
+ * all the load steps already done, and scoping the second pass by run would
+ * skip it while the feature was still marked complete. (Only --retry-skipped
+ * narrows it, to the rows that run moved to a new outcome.)
+ *
  * @package    local_sentientia_platform
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later

@@ -95,7 +95,9 @@ abstract class step {
     }
 
     /**
-     * Extra WHERE on the source, as portable SQL with named parameters.
+     * Extra WHERE on the source, as portable SQL with named parameters. Every
+     * framework query aliases the source table as t, so columns may be written
+     * bare (status = 1) or qualified (t.status = 1).
      *
      * @return array{0: string, 1: array} [sql, params]
      */

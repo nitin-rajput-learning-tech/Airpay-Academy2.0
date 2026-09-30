@@ -73,6 +73,15 @@ final class toy_importer implements importer, watches_tables {
     /** @var bool Declares a BizLMS legacy table as a target: the registry must refuse it. */
     public static bool $legacytarget = false;
 
+    /** @var bool toy.dup skips the group winner but still merges the duplicates into it: the runner must refuse. */
+    public static bool $skipwinner = false;
+
+    /** @var array|null [table, id]: toy.fan folds into this row instead of inserting. */
+    public static ?array $foldto = null;
+
+    /** @var bool The importer declares a reviewed core write (so a purge must refuse). */
+    public static bool $corewrites = false;
+
     /** @var string[] Lifecycle log: what finalise() saw. */
     public static array $finalised = [];
 
@@ -96,6 +105,9 @@ final class toy_importer implements importer, watches_tables {
         self::$requiredecision = false;
         self::$requiresversion = 0;
         self::$legacytarget = false;
+        self::$skipwinner = false;
+        self::$foldto = null;
+        self::$corewrites = false;
         self::$finalised = [];
         self::$markerseen = [];
     }
@@ -163,7 +175,7 @@ final class toy_importer implements importer, watches_tables {
     }
 
     public function core_writes(): array {
-        return [];
+        return self::$corewrites ? ['course' => 'toy: a reviewed remap'] : [];
     }
 
     public function tenant_columns(): array {
@@ -238,6 +250,9 @@ final class toy_importer implements importer, watches_tables {
                 'origin' => 'cli', 'ip' => null, 'realuserid' => null,
             ]);
         }
+        if (self::$requiredecision) {
+            $ctx->decision('toy.mandatory');
+        }
         if (self::$failverify) {
             $failures[] = 'toy_verify_failed';
         }
@@ -294,7 +309,8 @@ final class toy_importer implements importer, watches_tables {
                     $fields = (object) [
                         'name' => $row->name,
                         'path' => tenant_resolver::normalise($row->path),
-                        'visible' => (int) $row->status === 1 ? 1 : 0,
+                        // Derived in the recompute step, like a program's current level: 0 until then.
+                        'visible' => 0,
                         'timecreated' => (int) $row->timecreated,
                     ];
                     if (!toy_importer::$omittimestamp) {
@@ -404,6 +420,13 @@ final class toy_importer implements importer, watches_tables {
 
             public function transform(array $rows, context $ctx): array {
                 $winner = $rows[0];
+                if (toy_importer::$skipwinner) {
+                    $out = [outcome::skip((int) $winner->id, 'no_name')];
+                    foreach (array_slice($rows, 1) as $row) {
+                        $out[] = outcome::merge((int) $row->id, (int) $winner->id, 'dup_natural_key');
+                    }
+                    return $out;
+                }
                 $out = [outcome::insert((int) $winner->id, 'local_sentientia_toy_dup', (object) [
                     'natkey' => $winner->natkey,
                     'label' => $winner->label,
@@ -486,6 +509,10 @@ final class toy_importer implements importer, watches_tables {
                 foreach ($rows as $row) {
                     $id = (int) $row->id;
                     $created = (int) $row->timecreated;
+                    if (toy_importer::$foldto !== null) {
+                        $out[] = outcome::fold($id, toy_importer::$foldto[0], toy_importer::$foldto[1], 'dup_natural_key');
+                        continue;
+                    }
                     $out[] = outcome::insert($id, 'local_sentientia_toy_fan', (object) [
                         'title' => $row->title, 'timecreated' => $created, 'timemodified' => $created,
                     ]);

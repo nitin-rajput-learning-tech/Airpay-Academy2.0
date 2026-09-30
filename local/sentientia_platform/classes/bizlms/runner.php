@@ -46,6 +46,9 @@ final class runner {
     /** Counters kept on the step row. */
     private const COUNTERS = ['processed', 'imported', 'adopted', 'merged', 'folded', 'archived', 'skipped', 'updated'];
 
+    /** Most distinct values a declared enum column may show before preflight blocks (it is not an enum). */
+    private const ENUM_MAX_VALUES = 1000;
+
     /** Rows per page when preflight pages the legacy ids against a PRESERVE target. */
     private const PRESERVE_PAGE = 2000;
 
@@ -111,6 +114,7 @@ final class runner {
 
     /**
      * @param array<string, mixed> $options apply (bool), all (bool), batch, atomic_threshold, max_group_scan,
+     *        crc_max_rows (rows above which a source fingerprint skips its CRC; 0 = never skip),
      *        resume (bool), retry_reasons (string[]), decisions (decisions), report (report),
      *        failpoint (callable(string $stepkey, int $batchno): void, for tests).
      */
@@ -120,7 +124,8 @@ final class runner {
             'all' => false,
             'batch' => 500,
             'atomic_threshold' => 50000,
-            'max_group_scan' => 2000000,
+            'max_group_scan' => 500000,
+            'crc_max_rows' => fingerprint::CRC_MAX_ROWS,
             'resume' => false,
             'retry_reasons' => [],
             'decisions' => null,
@@ -282,6 +287,12 @@ final class runner {
         }
         if ($DB->record_exists(legacymap::TABLE, ['feature' => $feature, 'outcome' => 'adopted'])) {
             throw new blocked('purge_refused_feature_has_adopted_rows');
+        }
+        if ($importer->core_writes()) {
+            // Core writes are in-place updates of rows that existed before the import. A purge deletes only
+            // rows the import created and cannot put those back, so a re-import would meet an already-changed
+            // source. The RDS snapshot is the rollback for such a feature.
+            throw new blocked('purge_refused_feature_writes_core:' . implode(',', array_keys($importer->core_writes())));
         }
         foreach ($importer->target_tables() as $table) {
             if (!$DB->get_manager()->table_exists($table)
@@ -557,8 +568,14 @@ final class runner {
             $histogram = [];
             // A GROUP BY on an enum column returns a handful of rows. MIN(id) is the unique first column
             // get_records_sql() keys by, so a NULL and an empty value cannot collide.
+            // One more than the cap, so "too many" is seen without reading the whole result.
             $rows = $DB->get_records_sql(
-                "SELECT MIN(t.id) AS k, t.{$column} AS v, COUNT(1) AS n FROM {" . $table . "} t GROUP BY t.{$column}");
+                "SELECT MIN(t.id) AS k, t.{$column} AS v, COUNT(1) AS n FROM {" . $table . "} t GROUP BY t.{$column}",
+                null, 0, self::ENUM_MAX_VALUES + 1);
+            if (count($rows) > self::ENUM_MAX_VALUES) {
+                $pf->block('too_many_distinct_values:' . $table . '.' . $column);
+                continue;
+            }
             foreach ($rows as $row) {
                 $value = $row->v === null ? '' : (string) $row->v;
                 $histogram[$value] = (int) $row->n;
@@ -656,6 +673,12 @@ final class runner {
             }
             if ((string) $run->decisionshash !== $this->decisions->hash()) {
                 throw new blocked('decisions_changed_since_the_interrupted_run');
+            }
+            // The run stored the plugin versions it ran with; a deployment in between changes the code
+            // the watermarks were written for.
+            $known = array_values(array_intersect($runfeatures, array_keys($importers)));
+            if ($known !== $runfeatures || (string) $run->codehash !== $this->code_hash($importers, $runfeatures)) {
+                throw new blocked('plugin_versions_changed_since_the_interrupted_run');
             }
             $this->runid = (int) $run->id;
             $this->writer->update_run($this->runid, (object) [
@@ -811,6 +834,14 @@ final class runner {
             return 'already_complete';
         }
 
+        // An earlier feature (org) writes rows this one reads (tenant resolution), and a preflight may have
+        // cached an empty set before any of it existed.
+        $this->lookups->refresh();
+        if ($this->dryrun && $importer->tenant_columns() && !$this->lookups->has_orgs()) {
+            // A dry run writes no organisation, so tenant paths are not checked against the org tree.
+            $this->report->set_feature($feature, ['warning' => 'dry_run_does_not_check_tenant_paths_against_unwritten_orgs']);
+        }
+
         $ctx = $this->context_for($importer);
         $writer = $this->writer->for_importer($importer);
         $allowed = array_merge($importer->target_tables(), array_keys($importer->core_writes()));
@@ -864,6 +895,10 @@ final class runner {
                     unset($rethrown);
                 }
             }
+            if (!$this->dryrun) {
+                // An outer rollback undoes rows the cache believes exist.
+                $this->map->reset();
+            }
             $this->record_feature_failure($importer, $e);
             throw $e;
         }
@@ -872,6 +907,7 @@ final class runner {
             $this->finalise_feature($importer, $ctx);
             $this->writer->set_marker($feature, $this->runid);
         }
+        $this->lookups->refresh();
         $this->available[$feature] = true;
         $this->report->set_feature($feature, ['status' => $this->dryrun ? 'simulated' : 'complete']);
         return $this->dryrun ? 'simulated' : 'complete';
@@ -922,6 +958,13 @@ final class runner {
             $this->writer->update_step((int) $row->id, (object) [
                 'status' => 'failed', 'error' => $message, 'timemodified' => time(),
             ]);
+        }
+        if (!$steps && !$DB->record_exists(self::STEP_TABLE, ['runid' => $this->runid, 'feature' => $feature])) {
+            // Feature mode rolled back every step row with the rest, so nothing durable says this feature
+            // started and failed, and the status check would stay green. Leave a row that does.
+            $row = self::new_step_row($this->runid, $feature, $feature . '.__feature', '', 'failed', 0, 0, null);
+            $row['error'] = $message;
+            $this->writer->create_step((object) $row);
         }
     }
 
@@ -1031,7 +1074,7 @@ final class runner {
             return;
         }
 
-        $fingerprint = fingerprint::table($source, $step->source_filter());
+        $fingerprint = fingerprint::table($source, $step->source_filter(), $this->crc_cap());
         $state = $this->open_step($feature, $key, $name, $fingerprint);
         if ($state['status'] === 'done') {
             $this->report->set_step($feature, $key, ['status' => 'done', 'note' => 'finished_in_the_interrupted_run']);
@@ -1059,6 +1102,16 @@ final class runner {
 
         $elapsed = max(0.001, microtime(true) - $started);
         $this->finish_step($feature, $key, $state, $fingerprint, $batchno, $elapsed, $reader->group_count());
+    }
+
+    /**
+     * Rows above which a source fingerprint skips its CRC (0 or less: never skip).
+     *
+     * @return int
+     */
+    private function crc_cap(): int {
+        $cap = (int) $this->options['crc_max_rows'];
+        return $cap > 0 ? $cap : PHP_INT_MAX;
     }
 
     /**
@@ -1146,13 +1199,15 @@ final class runner {
         }
 
         $state['id'] = (int) $existing->id;
-        if ($existing->status === 'done') {
-            $state['status'] = 'done';
-            return $state;
-        }
+        // A source that changed since the run started makes resume refuse, for a finished step too: the rows
+        // it imported no longer match the source it saw.
         $samecrc = $existing->srccrc === null || $fp['crc'] === null || (string) $existing->srccrc === (string) $fp['crc'];
         if ((int) $existing->srccount !== $fp['count'] || (int) $existing->srcmaxid !== $fp['maxid'] || !$samecrc) {
             throw new source_drift('source_changed_since_the_run_started:' . $key);
+        }
+        if ($existing->status === 'done') {
+            $state['status'] = 'done';
+            return $state;
         }
         $state['watermark'] = (int) ($existing->watermark ?? 0);
         foreach (self::COUNTERS as $counter) {
@@ -1464,17 +1519,19 @@ final class runner {
             $winner = $written[$o->winnersourceid] ?? null;
             if ($winner === null) {
                 $entry = $this->map->entry($name, $o->winnersourceid);
-                if ($entry === null || $entry['targetid'] === null) {
-                    throw new bizlms_exception('merge_winner_has_no_target:' . $key . ':' . $o->winnersourceid);
-                }
-                $winner = [$entry['targettable'], $entry['targetid']];
+                $winner = $entry === null ? null : [$entry['targettable'], $entry['targetid']];
+            }
+            // A winner that was itself skipped or archived has no target ('' and null): the duplicate's data
+            // would be in no target table while the accounting identity still balanced.
+            if ($winner === null || $winner[1] === null || $winner[0] === '') {
+                throw new bizlms_exception('merge_winner_has_no_target:' . $key . ':' . $o->winnersourceid);
             }
             $this->record($feature, $step, $sid, '', 'merged', $winner[0], $winner[1], $o, $retry[$sid] ?? null,
                 $maprows, $mapupdates, $counts);
         }
         foreach ($subs as $o) {
             if ($this->dryrun) {
-                $writer->check($o->table, $o->row);
+                $writer->check($o->table, $o->row, false, true);
                 $targetid = $this->virtual_id();
             } else {
                 $targetid = $writer->insert($o->table, $o->row);
@@ -1498,6 +1555,12 @@ final class runner {
         global $DB;
         switch ($o->kind) {
             case outcome::FOLD:
+                // A fold writes nothing, so nothing else would notice an undeclared table or a target that is
+                // not there. A virtual (negative) id only exists in a dry run.
+                $writer->check_table($o->table);
+                if ((int) $o->targetid > 0 && !$DB->record_exists($o->table, ['id' => $o->targetid])) {
+                    throw new blocked('fold_target_missing:' . $o->table . ':' . $o->targetid);
+                }
                 return ['folded', $o->table, $o->targetid];
             case outcome::ARCHIVE:
                 return ['archived', '', null];
@@ -1532,7 +1595,7 @@ final class runner {
             return ['imported', $o->table, $id];
         }
         if ($this->dryrun) {
-            $writer->check($o->table, $o->row);
+            $writer->check($o->table, $o->row, false, true);
             return ['imported', $o->table, $this->virtual_id()];
         }
         return ['imported', $o->table, $writer->insert($o->table, $o->row)];
@@ -1633,11 +1696,20 @@ final class runner {
         $batch = max(1, (int) $this->options['batch']);
         $after = (int) $state['watermark'];
         $batchno = 0;
+        // A recompute step is idempotent by contract, so it runs over EVERY row of the feature that the import
+        // created or adopted, not only this run's. Scoping by run would make a fresh apply after a failed run
+        // find nothing, finish "done" and let the feature be marked complete with its second pass never run.
+        // Only --retry-skipped is scoped to its own run: it touches just the rows it moved to a new outcome.
+        $scope = $this->options['retry_reasons'] ? ' AND runid = :r' : '';
         do {
+            // Moodle refuses a named parameter the SQL does not use, so :r is passed only when it is in the SQL.
+            $params = ['f' => $feature, 't' => $table, 'after' => $after];
+            if ($scope !== '') {
+                $params['r'] = $this->runid;
+            }
             $rows = $DB->get_records_select(legacymap::TABLE,
-                'feature = :f AND targettable = :t AND runid = :r AND id > :after AND outcome IN (\'imported\', \'adopted\')',
-                ['f' => $feature, 't' => $table, 'r' => $this->runid, 'after' => $after],
-                'id ASC', 'id, targetid', 0, $batch);
+                'feature = :f AND targettable = :t AND id > :after AND outcome IN (\'imported\', \'adopted\')' . $scope,
+                $params, 'id ASC', 'id, targetid', 0, $batch);
             if (!$rows) {
                 break;
             }

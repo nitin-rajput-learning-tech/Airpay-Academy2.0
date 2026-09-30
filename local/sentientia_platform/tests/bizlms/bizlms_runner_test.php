@@ -307,9 +307,23 @@ final class bizlms_runner_test extends \advanced_testcase {
         [$result] = $this->execute(['atomic_threshold' => 50000]);
         $this->assertSame(1, $result['exit']);
         foreach (['local_sentientia_toy_org', 'local_sentientia_toy_item', 'local_sentientia_legacymap',
-                  'local_sentientia_legacystep', 'logstore_standard_log'] as $table) {
+                  'logstore_standard_log'] as $table) {
             $this->assertSame(0, $DB->count_records($table), "{$table} was rolled back with the feature");
         }
+        $this->assert_only_a_failure_marker_survives();
+    }
+
+    /**
+     * Feature mode rolls every step row back with the rest, so the runner leaves ONE durable failed row:
+     * without it nothing says the feature started, and the status check would stay green.
+     */
+    private function assert_only_a_failure_marker_survives(): void {
+        global $DB;
+        $rows = $DB->get_records('local_sentientia_legacystep');
+        $this->assertCount(1, $rows);
+        $row = reset($rows);
+        $this->assertSame('toy.__feature', $row->stepkey);
+        $this->assertSame('failed', $row->status);
     }
 
     public function test_marker_is_set_only_after_verify_and_finalise(): void {
@@ -343,9 +357,10 @@ final class bizlms_runner_test extends \advanced_testcase {
         [$failed, $report] = $this->execute(['atomic_threshold' => 50000, 'failpoint' => $failpoint]);
         $this->assertSame(1, $failed['exit']);
         $this->assertSame('feature', $report->to_array()['features']['toy']['mode']);
-        foreach (['local_sentientia_toy_org', 'local_sentientia_legacymap', 'local_sentientia_legacystep'] as $table) {
+        foreach (['local_sentientia_toy_org', 'local_sentientia_legacymap'] as $table) {
             $this->assertSame(0, $DB->count_records($table), "{$table} holds nothing after a crash in feature mode");
         }
+        $this->assert_only_a_failure_marker_survives();
         $this->assertSame('failed', $DB->get_field('local_sentientia_legacyrun', 'status', ['id' => $failed['runid']]));
 
         [$clean] = $this->execute(['atomic_threshold' => 50000]);
@@ -518,6 +533,128 @@ final class bizlms_runner_test extends \advanced_testcase {
         }
         $this->assertFileExists($csv);
         unlink($csv);
+    }
+
+    public function test_a_fresh_apply_after_a_failed_one_still_runs_the_recompute_step(): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+        $failpoint = function (string $key, int $batch): void {
+            if ($key === 'toy.recompute' && $batch === 1) {
+                throw new \RuntimeException('injected failure');
+            }
+        };
+        [$failed] = $this->execute(['failpoint' => $failpoint]);
+        $this->assertSame(1, $failed['exit']);
+        $this->assertSame('0', (string) $DB->get_field('local_sentientia_toy_org', 'visible', ['id' => 1]),
+            'the second pass has not run: visible is derived there');
+
+        // NOT --resume: a new run. Every load step finds its rows already mapped; the recompute step must
+        // still see them, or the feature is marked complete with its second pass never run.
+        [$fresh] = $this->execute();
+        $this->assertContains($fresh['exit'], [0, 2], implode('; ', $fresh['blockers']));
+        $this->assertNotSame($failed['runid'], $fresh['runid']);
+        foreach ([1, 2, 7] as $id) {
+            $this->assertSame('1', (string) $DB->get_field('local_sentientia_toy_org', 'visible', ['id' => $id]),
+                "org {$id} was recomputed by the fresh run");
+        }
+        $this->assertTrue(legacymap::feature_complete('toy'));
+    }
+
+    public function test_a_merge_into_a_skipped_winner_is_refused(): void {
+        $this->begin();
+        $this->seed_toy_data();
+        toy_importer::$skipwinner = true;
+        [$result] = $this->execute();
+        $this->assertSame(1, $result['exit']);
+        $this->assertStringContainsString('merge_winner_has_no_target:toy.dup:1', implode(' ', $result['blockers']),
+            'the duplicates would have had their data in no target table while the accounting balanced');
+    }
+
+    public function test_a_fold_needs_a_declared_table_and_an_existing_target(): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+
+        toy_importer::$foldto = ['user', 1];
+        [$result] = $this->execute([], [], false);
+        $this->assertSame(1, $result['exit']);
+        $this->assertStringContainsString('undeclared_table:user', implode(' ', $result['blockers']));
+
+        toy_importer::$foldto = ['local_sentientia_toy_dup', 999];
+        [$result] = $this->execute();
+        $this->assertSame(1, $result['exit']);
+        $this->assertStringContainsString('fold_target_missing:local_sentientia_toy_dup:999', implode(' ', $result['blockers']));
+
+        $DB->import_record('local_sentientia_toy_dup', (object) ['id' => 999, 'natkey' => 'x', 'label' => 'x',
+            'timecreated' => 1, 'timemodified' => 1]);
+        [$result] = $this->execute();
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        $fold = $DB->get_record('local_sentientia_legacymap', ['sourcetable' => 'local_toy_fan', 'sourceid' => 1, 'subkey' => '']);
+        $this->assertSame('folded', $fold->outcome);
+        $this->assertSame('999', (string) $fold->targetid);
+    }
+
+    public function test_purge_refuses_a_feature_that_writes_core_tables(): void {
+        $this->begin();
+        $this->seed_toy_data();
+        $this->execute();
+        toy_importer::$corewrites = true;
+        $this->expectException(blocked::class);
+        $this->expectExceptionMessage('purge_refused_feature_writes_core:course');
+        (new runner(['apply' => true]))->purge('toy');
+    }
+
+    public function test_resume_refuses_when_the_source_of_a_finished_step_changed(): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+        $failpoint = function (string $key, int $batch): void {
+            if ($key === 'toy.item' && $batch === 2) {
+                throw new \RuntimeException('injected failure');
+            }
+        };
+        [$failed] = $this->execute(['failpoint' => $failpoint]);
+        $this->assertSame(1, $failed['exit']);
+        $this->assertSame('done', $DB->get_field('local_sentientia_legacystep', 'status', ['stepkey' => 'toy.org']));
+
+        $DB->import_record('local_toy_org', (object) ['id' => 60, 'name' => 'New', 'parentid' => 0, 'path' => '/1',
+            'status' => 1, 'timecreated' => 1, 'timemodified' => 1]);
+        [$resumed] = $this->execute(['resume' => true]);
+        $this->assertSame(1, $resumed['exit']);
+        $this->assertStringContainsString('source_changed_since_the_run_started:toy.org', implode(' ', $resumed['blockers']),
+            'toy.org had finished before the crash, and its source still must not have changed');
+    }
+
+    public function test_resume_refuses_after_the_plugin_versions_changed(): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+        $failpoint = function (string $key, int $batch): void {
+            if ($key === 'toy.org' && $batch === 2) {
+                throw new \RuntimeException('injected failure');
+            }
+        };
+        [$failed] = $this->execute(['failpoint' => $failpoint]);
+        $DB->set_field('local_sentientia_legacyrun', 'codehash', str_repeat('0', 64), ['id' => $failed['runid']]);
+        [$resumed] = $this->execute(['resume' => true]);
+        $this->assertSame(1, $resumed['exit']);
+        $this->assertStringContainsString('plugin_versions_changed_since_the_interrupted_run', implode(' ', $resumed['blockers']));
+    }
+
+    public function test_a_declared_enum_with_too_many_distinct_values_blocks(): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+        $rows = [];
+        for ($i = 100; $i < 1101; $i++) {
+            $rows[] = (object) ['id' => $i, 'orgid' => 1, 'userid' => 1, 'title' => 't', 'kind' => 'k' . $i, 'path' => null,
+                'timecreated' => 1, 'timemodified' => 1];
+        }
+        $DB->insert_records('local_toy_item', $rows);
+        [$result] = $this->execute();
+        $this->assertSame(1, $result['exit']);
+        $this->assertStringContainsString('too_many_distinct_values:local_toy_item.kind', implode(' ', $result['blockers']));
     }
 
     public function test_resume_meets_the_step_rows_of_a_feature_that_was_not_applicable(): void {

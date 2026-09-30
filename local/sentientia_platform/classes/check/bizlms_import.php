@@ -59,8 +59,11 @@ class bizlms_import extends check {
             if (!$applicable || legacymap::feature_complete($feature)) {
                 continue;
             }
-            $started = $DB->record_exists_select('local_sentientia_legacystep',
-                "feature = :f AND status <> 'not_applicable'", ['f' => $feature]);
+            // Once the runbook has declared production, an applicable feature with no marker is unfinished
+            // even if nothing ever started it: the site must not open on legacy history nobody imported.
+            $started = \local_sentientia_platform\bizlms\guard::is_production()
+                || $DB->record_exists_select('local_sentientia_legacystep',
+                    "feature = :f AND status <> 'not_applicable'", ['f' => $feature]);
             if ($started) {
                 $unfinished[] = $feature;
             }

@@ -92,16 +92,18 @@ final class legacymap {
         if (!empty($this->loaded[$sourcetable][$subkey])) {
             return;
         }
+        // Page on sourceid, in the order of the unique key (sourcetable, sourceid, subkey): for one subkey
+        // it is strictly increasing, and paging on id would let MySQL re-scan the whole table per page.
         $after = 0;
         do {
             $rows = $DB->get_records_sql(
                 'SELECT id, sourceid, targettable, targetid, outcome, reason FROM {' . self::TABLE . '}
-                  WHERE sourcetable = :st AND subkey = :sk AND id > :after
-               ORDER BY id',
+                  WHERE sourcetable = :st AND sourceid > :after AND subkey = :sk
+               ORDER BY sourceid',
                 ['st' => $sourcetable, 'sk' => $subkey, 'after' => $after], 0, self::CHUNK * 5);
             foreach ($rows as $row) {
                 $this->cache[$sourcetable][$subkey][(int) $row->sourceid] = self::to_entry($row);
-                $after = (int) $row->id;
+                $after = (int) $row->sourceid;
             }
         } while (count($rows) === self::CHUNK * 5);
         $this->loaded[$sourcetable][$subkey] = true;
@@ -198,15 +200,34 @@ final class legacymap {
     }
 
     /**
-     * Drop everything cached for a source table, so a long step does not hold one
-     * entry per row it has imported. Only safe for rows that are in the database:
-     * the dry-run overlay is memory only and must never be forgotten.
+     * Drop what was cached for a source table while it was being imported, so a long
+     * step does not hold one entry per row it has imported. A subkey that a step
+     * declared in preload() is kept: it is a complete, deliberate load and dropping
+     * it would turn every later resolve() into a query. Only safe for rows that are
+     * in the database: the dry-run overlay is memory only and must never be forgotten.
      *
      * @param string $sourcetable
      * @return void
      */
     public function forget(string $sourcetable): void {
-        unset($this->cache[$sourcetable], $this->loaded[$sourcetable]);
+        foreach (array_keys($this->cache[$sourcetable] ?? []) as $subkey) {
+            if (empty($this->loaded[$sourcetable][$subkey])) {
+                unset($this->cache[$sourcetable][$subkey]);
+            }
+        }
+    }
+
+    /**
+     * Forget everything, including the open batch. Used after a feature failed and
+     * its transaction rolled back, so the cache cannot claim rows that are gone.
+     *
+     * @return void
+     */
+    public function reset(): void {
+        $this->cache = [];
+        $this->loaded = [];
+        $this->pending = [];
+        $this->inbatch = false;
     }
 
     /**

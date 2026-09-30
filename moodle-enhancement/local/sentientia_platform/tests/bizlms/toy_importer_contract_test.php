@@ -37,6 +37,9 @@ final class toy_importer_contract_test extends \advanced_testcase {
 
     protected function contract_importer(): importer {
         toy_importer::reset();
+        // Atomic, so the contract's feature-mode test runs; every other contract test passes
+        // atomic_threshold 0 and so stays in batch mode.
+        toy_importer::$atomic = true;
         return new toy_importer();
     }
 

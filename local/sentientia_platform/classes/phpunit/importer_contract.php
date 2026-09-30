@@ -287,6 +287,41 @@ trait importer_contract {
         $this->assertSame(1, $DB->count_records('local_sentientia_legacyrun'), 'resume continues the same run');
     }
 
+    public function test_contract_feature_mode_reconciles_and_a_crash_leaves_nothing(): void {
+        global $DB;
+        $importer = $this->contract_begin();
+        if (!$importer->atomic()) {
+            $this->markTestSkipped('the importer is not atomic(), so it never runs in feature mode');
+        }
+        $this->contract_seed();
+        $feature = ['atomic_threshold' => 50000];
+
+        [$clean] = $this->contract_run(true, $feature);
+        $this->assertContains($clean['exit'], [0, 2], implode('; ', $clean['blockers']));
+        $expected = $this->contract_signature($importer);
+        $this->contract_clear_import($importer);
+
+        $thrown = false;
+        $failpoint = function (string $stepkey, int $batchno) use (&$thrown): void {
+            if (!$thrown && $batchno === 2) {
+                $thrown = true;
+                throw new \RuntimeException('injected failure');
+            }
+        };
+        [$failed] = $this->contract_run(true, $feature + ['failpoint' => $failpoint]);
+        $this->assertTrue($thrown, 'the seed must give some step at least two batches');
+        $this->assertSame(1, $failed['exit']);
+        foreach ($importer->target_tables() as $table) {
+            $this->assertSame(0, $DB->count_records($table), "{$table}: a crash in feature mode leaves nothing");
+        }
+        $this->assertSame(0, $DB->count_records(legacymap::TABLE));
+        $this->assertFalse(legacymap::feature_complete($importer->feature()));
+
+        [$again] = $this->contract_run(true, $feature);
+        $this->assertContains($again['exit'], [0, 2], implode('; ', $again['blockers']));
+        $this->assertSame($expected, $this->contract_signature($importer), 'the rerun gives the rows of a clean run');
+    }
+
     public function test_contract_source_change_is_detected(): void {
         $importer = $this->contract_begin();
         $this->contract_seed();

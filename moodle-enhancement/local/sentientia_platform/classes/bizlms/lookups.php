@@ -42,6 +42,21 @@ final class lookups {
     private ?array $orgbypath = null;
 
     /**
+     * Forget every loaded set. The runner calls this before each feature and after
+     * it completes: an earlier feature (org) writes rows that later ones (tenant
+     * resolution) read, and an empty set cached by a preflight must not outlive it.
+     *
+     * @return void
+     */
+    public function refresh(): void {
+        $this->idsets = [];
+        $this->users = null;
+        $this->userpaths = null;
+        $this->orgs = null;
+        $this->orgbypath = null;
+    }
+
+    /**
      * Does a row with this id exist in a core (or any) table?
      *
      * @param string $table Table name without prefix, for example course or course_modules.

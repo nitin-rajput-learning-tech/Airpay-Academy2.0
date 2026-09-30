@@ -413,6 +413,73 @@ final class bizlms_support_test extends \advanced_testcase {
         $reader->page('local_toy_org; DROP TABLE x', 0, 1);
     }
 
+    public function test_forget_drops_what_a_step_cached_but_keeps_a_declared_preload(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $rows = [];
+        foreach ([['local_toy_org', 1, 11], ['local_toy_item', 1, 21]] as [$table, $sourceid, $targetid]) {
+            $rows[] = (object) ['feature' => 'toy', 'sourcetable' => $table, 'sourceid' => $sourceid, 'subkey' => '',
+                'targettable' => 't', 'targetid' => $targetid, 'outcome' => 'imported', 'reason' => null, 'detail' => null,
+                'runid' => 1, 'timecreated' => 1];
+        }
+        $DB->insert_records(legacymap::TABLE, $rows);
+
+        $map = new legacymap();
+        $map->preload('local_toy_org');
+        $this->assertSame(21, $map->resolve('local_toy_item', 1), 'a lookup caches its answer');
+        $DB->delete_records(legacymap::TABLE);
+
+        $map->forget('local_toy_org');
+        $map->forget('local_toy_item');
+        $this->assertSame(11, $map->resolve('local_toy_org', 1), 'a declared preload survives forget(): no per-row queries');
+        $this->assertNull($map->resolve('local_toy_item', 1), 'what a step cached on the way is dropped');
+
+        $map->reset();
+        $this->assertNull($map->resolve('local_toy_org', 1), 'reset() forgets everything');
+    }
+
+    public function test_lookups_refresh_picks_up_rows_an_earlier_feature_wrote(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $lookups = new lookups();
+        $this->assertFalse($lookups->has_orgs(), 'nothing yet: the empty answer is now cached');
+        $DB->insert_record('local_sentientia_org', (object) ['fullname' => 'Root', 'shortname' => 'r', 'parentid' => 0,
+            'path' => '/1', 'depth' => 1, 'visible' => 1, 'sortorder' => 0, 'timecreated' => 1, 'timemodified' => 1]);
+        $this->assertFalse($lookups->has_orgs(), 'a cached set does not see the new row by itself');
+        $lookups->refresh();
+        $this->assertTrue($lookups->has_orgs());
+        $this->assertNotNull($lookups->org_by_path('/1'));
+    }
+
+    public function test_the_database_group_count_is_what_the_grouped_scan_is_checked_against(): void {
+        $this->resetAfterTest();
+        $this->seed_toy_data();
+        $reader = new legacy_reader();
+        $this->assertSame(2, $reader->count_groups('local_toy_dup', ['natkey']));
+        $this->assertSame(1, $reader->count_groups('local_toy_dup', ['natkey'], ['natkey = :k', ['k' => 'k1']]));
+        $this->assertSame(3, $reader->count_groups('local_toy_event', ['cartid']));
+    }
+
+    public function test_a_resumed_report_continues_the_csv_instead_of_truncating_it(): void {
+        $path = tempnam(sys_get_temp_dir(), 'csv');
+        $first = new bizlms\report();
+        $first->open_csv($path);
+        $first->non_imported('toy', 'local_toy_org', 3, '', 'skipped', 'no_name', '');
+        $first->close();
+
+        $second = new bizlms\report();
+        $second->open_csv($path, true);
+        $second->non_imported('toy', 'local_toy_org', 4, '', 'archived', 'not_history', '');
+        $second->close();
+
+        $lines = array_values(array_filter(array_map('trim', file($path))));
+        $this->assertCount(3, $lines, 'one header and both rows');
+        $this->assertStringStartsWith('feature,', $lines[0]);
+        $this->assertStringContainsString('local_toy_org,3', $lines[1]);
+        $this->assertStringContainsString('local_toy_org,4', $lines[2]);
+        unlink($path);
+    }
+
     public function test_lookups_load_each_id_set_once_and_tell_deleted_users_apart(): void {
         global $DB;
         $this->resetAfterTest();

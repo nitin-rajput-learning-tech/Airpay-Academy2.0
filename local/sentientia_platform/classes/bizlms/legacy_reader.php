@@ -82,6 +82,30 @@ final class legacy_reader {
     }
 
     /**
+     * How many groups the DATABASE sees when it groups on these columns. The
+     * database compares with the column's collation (case, accents and trailing
+     * spaces may not count), so a grouped step checks that its PHP grouping found
+     * no more groups than this.
+     *
+     * @param string $table
+     * @param string[] $groupcolumns
+     * @param array{0: string, 1: array} $filter
+     * @return int
+     */
+    public function count_groups(string $table, array $groupcolumns, array $filter = ['', []]): int {
+        global $DB;
+        fingerprint::assert_identifier($table);
+        $columns = [];
+        foreach ($groupcolumns as $column) {
+            fingerprint::assert_identifier($column);
+            $columns[] = 't.' . $column;
+        }
+        [$where, $params] = fingerprint::where($filter);
+        return (int) $DB->get_field_sql('SELECT COUNT(1) FROM (SELECT 1 AS g FROM {' . $table . "} t {$where} GROUP BY "
+            . implode(', ', $columns) . ') gcnt', $params);
+    }
+
+    /**
      * Highest id, optionally restricted by a step filter.
      *
      * @param string $table

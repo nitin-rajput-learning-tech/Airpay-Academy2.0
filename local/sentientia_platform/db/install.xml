@@ -308,6 +308,8 @@
                COMMENT="Reverse lookup and the provenance guard"/>
         <INDEX NAME="ix_feature_outcome" UNIQUE="false" FIELDS="feature, outcome, reason"
                COMMENT="Accounting and reports per feature"/>
+        <INDEX NAME="ix_feature_table"   UNIQUE="false" FIELDS="feature, targettable"
+               COMMENT="Recompute steps and purge walk the rows a feature imported into one target table in id order"/>
         <INDEX NAME="ix_runid"           UNIQUE="false" FIELDS="runid"/>
       </INDEXES>
     </TABLE>

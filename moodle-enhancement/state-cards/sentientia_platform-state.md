@@ -369,3 +369,84 @@ Wave-1 adversarial review of the integration group (S1, S4) plus one helper defe
   - tag the default writes for non-Sentientia providers;
   - exact-name delete in step 2c.
 - Local copy repaired: 136 legacy keys copied, 5 providers defaulted, 0 problems left.
+
+## 2026-09-30 - ADR-032 BizLMS import framework, Phase 0 (P0.1, P0.2, P0.3, P0.5, P0.6 non-QR)
+
+Branch `claude/bizlms-import-framework` (from `claude/gap-integration` 70996708a). Version 2026093001,
+release 1.10.0. Everything below is identical in `local/` and `moodle-enhancement/local/`; the drift gate
+passes and the `sentientia_platform/db/install.xml` baseline line is gone.
+
+- **P0.1** `db/install.xml` reconciled: the top-level copy was a strict superset (it also declared the five
+  ADR-017 user-type tables), so it replaced the ME copy. `db/install.php` `user_type_tables::ensure()` is
+  `table_exists`-guarded, so a fresh install converges either way.
+- **P0.2** Tables `local_sentientia_legacymap` (unique key sourcetable, sourceid, subkey), `local_sentientia_legacyrun`,
+  `local_sentientia_legacystep`. The upgrade step (2026093001) creates them from `install.xml` itself, so there is
+  one definition. The run column is `runmode`, not `mode` (MODE is reserved on Oracle). `legacystep` also has an
+  `updated` counter for recompute steps. No table has a `USER_COLUMNS` column. `privacy_coverage_test::USER_COLUMNS`
+  gained `enrolledby`, `markedby`, `initiatedby`, `sender_userid`, `subject_userid`; the existing tables that carry
+  them (classroom roster/attendance, cart ledger) are already declared by their providers.
+- **P0.3** `classes/bizlms/` (contracts, writer, runner, registry, guard, parity and helpers), `classes/check/bizlms_import.php`
+  with `lib.php` `local_sentientia_platform_status_checks()`, `cli/import_bizlms.php`, en and hi strings. Nothing
+  registers an importer yet: a feature plugin adds `db/bizlms_import.php` (`$imports = ['feature' => class::class]`).
+  `parity` is written but NOT wired into `cli/migration_parity_check.php` (that is step P0.4, after the branch that
+  edits it merges).
+- **P0.5** `classes/phpunit/legacy_schema_fixture.php` and `importer_contract.php`; `tests/bizlms/` (7 test classes),
+  `tests/classes/bizlms/` (toy importer, toy seed, static scanner), `tests/fixtures/bizlms/toy.install.xml`.
+  The static scan test reads every `local/*/classes/bizlms/*.php` and is the gate for the banned-call list.
+- **P0.6 (non-QR)** `sentientia_org/cli/migrate_all.php` and `data_migration.php` now refuse (exit 3) and point to the
+  new CLI; `data_migration.php` also no longer defines CLI_SCRIPT or loads Moodle for a web request (it sat in the
+  plugin root). `sentientia_pages/cli/setup_costcenters.php`, `setup_bizlms_data.php`, `fix_all_bizlms_data.php` refuse
+  on a database that holds any known BizLMS table (`legacy_tables::holds_bizlms()`). `verify_branding.php` and
+  `disable_bizlms.php` no longer tell the operator to run the retired script. The QR pages are untouched.
+
+### Verification status (be precise)
+
+- `php -l` clean on every file; `php tools/check-tree-drift.php` OK; `tools/check-lang-parity.php` 0 failures;
+  `tools/check-path-boundary.php` clean; the install.xml loads through Moodle's XMLDB classes.
+- **Moodle PHPUnit has NOT been run.** The 172 tests were run under the real PHPUnit 11.5 against a scratch SQLite
+  shim of `$DB` (outside the repo): 171 pass, 1 skipped by design (no person column on the toy importer). That proves
+  the framework logic, SQL shape and transaction behaviour, not MySQL/MariaDB behaviour. First real gate:
+  `vendor/bin/phpunit --group bizlms_import` from the moodle5 dirroot, then `--group tenant_isolation`
+  (privacy_coverage_test). Not exercised anywhere: the MySQL CRC32 fingerprint SQL, `insert_records` bulk path,
+  real lock factory, the real status-check page.
+- The CLI was exercised end to end on the same shim (status, list, preflight, dry run with report and CSV, refused
+  apply, armed apply, verify, refused and real purge).
+
+### Independent review (2026-09-30) and what it changed
+
+A read-only review of the framework against the Moodle 5.1.3 DML source and the local MariaDB returned BLOCK.
+Fixed, each with a test: a fresh apply after a failed run skipped the recompute step (it was scoped by run id) and
+still marked the feature complete; a merge into a skipped or archived winner was accepted; `lookups` kept an empty
+org set across features; the writer's integer range read `max_length`, which MySQL 8.0.19+ reports as numeric
+precision (now keyed on the native type); a fold target was never checked; purge ignored core writes; feature-mode
+failures left no durable trace for the status check (now a `<feature>.__feature` failed step row, and CRITICAL once
+`bizlms_production` is 1 and an applicable feature has no marker); resume ignored drift in finished steps and never
+compared the plugin versions (`codehash`); preload paged on `id` instead of the unique key; `forget()` dropped
+declared preloads; the CSV was truncated on resume; the cron guard failed open when the setting was never written;
+CRC on a 2.6M-row table took 2m28s (now skipped above `--crc-max-rows`, default 2,000,000); the grouped scan
+compared groups by exact bytes (now checked against the DB's own group count) and had a 2M-row cap that is ~500 MB
+(now 500,000 plus a memory check); parity used alias `s` where every other query uses `t`, ignored the run's
+decisions and compared core-table sources. Not done, recorded: the dry-run overlay grows with every outcome (a 5M-row
+leaf table needs about 2 GB in a rehearsal); the tripwire runs once per feature, not per N batches; preflight
+histograms collapse case variants under a case-insensitive collation; the map cache holds 5-key arrays rather than
+compact tuples.
+
+### Decisions made where ADR-032 was ambiguous
+
+- Completion marker: written by the runner AFTER `finalise()` returns (Decision 6 says after verify and finalise,
+  "Transactions" says in finalise after verify). Verify and the tripwire run before finalise.
+- Sequences: the runner resets every PRESERVE target's sequence itself, after the last commit and before
+  `finalise()`, so an importer cannot forget; an importer's `finalise()` may also call it.
+- The importer contract is frozen, so the tripwire's "importer's own extra list" is the optional
+  `watches_tables` interface, not a new `importer` method.
+- Reserved reason `deferred` is accepted from every importer (single-feature dry run, unapplied parent).
+- Dry run of `--feature=x` does not add dependencies (their rows report `deferred`); `--all` dry run simulates them
+  through the in-memory overlay (negative virtual ids). `--apply` always adds and orders dependencies, and skips an
+  implicit dependency that already has its marker.
+- `get_recordset*` is banned in every `classes/bizlms` file including the framework (literal reading of the ADR);
+  the framework reads small GROUP BY results with `get_records_sql` keyed on `MIN(id)`.
+
+### Next
+
+P0.4 (wire `parity` into `migration_parity_check.php`), the QR pages (other branch), then the feature importers in
+dependency order, each with its `db/bizlms_import.php`, `importer_contract` test and fixture copy.

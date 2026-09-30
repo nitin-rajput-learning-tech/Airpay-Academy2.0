@@ -232,3 +232,13 @@ prefix trap) tree for `get_all_in_scope`, `list_children`, `path_in_scope` and `
   errored because the dynamic form's access check (wave 1) throws `error_outoftenant` for a parent
   outside the tenant, a missing one or none, before validation() runs. Both refusals are correct; the
   test now accepts either and still asserts nothing is created.
+
+## 2026-09-30 - ADR-032 Phase 0 source freezing
+
+`cli/migrate_all.php` and `data_migration.php` are RETIRED: they refuse to run (exit 3) and point to
+`local_sentientia_platform/cli/import_bizlms.php` (the org feature is a PRESERVE import of `local_costcenter`
+into `local_sentientia_org`). Both copied the BizLMS tables with skip-if-populated, silent column loss and a
+sequence reset inside the transaction. `data_migration.php` sits in the plugin root and no longer defines
+CLI_SCRIPT or loads Moodle for a web request. `verify_branding.php` and `disable_bizlms.php` no longer tell the
+operator to run the retired script. The capability migration that lived in `migrate_all.php` is not part of the
+import. Version unchanged; both trees identical.
