@@ -520,6 +520,31 @@ final class bizlms_runner_test extends \advanced_testcase {
         unlink($csv);
     }
 
+    public function test_resume_meets_the_step_rows_of_a_feature_that_was_not_applicable(): void {
+        global $DB;
+        $this->begin([
+            new toy_importer('toyfan', [], ['local_toy_fan']),
+            new toy_importer('toyorg', [], ['local_toy_org']),
+        ]);
+        $this->seed_toy_data();
+        self::drop_legacy_table('local_toy_fan');
+        $failpoint = function (string $key, int $batch): void {
+            if ($key === 'toyorg.org' && $batch === 2) {
+                throw new \RuntimeException('injected failure');
+            }
+        };
+        [$failed] = $this->execute(['failpoint' => $failpoint]);
+        $this->assertSame(1, $failed['exit']);
+        $this->assertSame('not_applicable', $DB->get_field('local_sentientia_legacystep', 'status', ['stepkey' => 'toyfan.fan']));
+
+        [$resumed] = $this->execute(['resume' => true]);
+        $this->assertContains($resumed['exit'], [0, 2], implode('; ', $resumed['blockers']));
+        $this->assertSame('not_applicable', $resumed['features']['toyfan']);
+        $this->assertSame('complete', $resumed['features']['toyorg']);
+        $this->assertSame(1, $DB->count_records('local_sentientia_legacystep', ['stepkey' => 'toyfan.fan']),
+            'the not_applicable row is written once, not once per attempt');
+    }
+
     public function test_source_change_after_a_crash_makes_resume_refuse(): void {
         global $DB;
         $this->begin();

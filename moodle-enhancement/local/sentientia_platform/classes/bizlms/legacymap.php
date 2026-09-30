@@ -198,6 +198,18 @@ final class legacymap {
     }
 
     /**
+     * Drop everything cached for a source table, so a long step does not hold one
+     * entry per row it has imported. Only safe for rows that are in the database:
+     * the dry-run overlay is memory only and must never be forgotten.
+     *
+     * @param string $sourcetable
+     * @return void
+     */
+    public function forget(string $sourcetable): void {
+        unset($this->cache[$sourcetable], $this->loaded[$sourcetable]);
+    }
+
+    /**
      * Start collecting entries of one batch.
      *
      * @return void

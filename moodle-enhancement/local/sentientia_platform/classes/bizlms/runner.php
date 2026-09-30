@@ -801,11 +801,8 @@ final class runner {
         if (!$this->applicable[$feature]) {
             $this->report->set_feature($feature, ['status' => 'not_applicable']);
             $this->available[$feature] = true;
-            if (!$this->dryrun) {
-                foreach ($importer->steps() as $step) {
-                    $this->writer->create_step((object) self::new_step_row($this->runid, $feature, $step->key(),
-                        $step instanceof step ? $step->sourcetable() : '', 'not_applicable', 0, 0, null));
-                }
+            foreach ($importer->steps() as $step) {
+                $this->record_not_applicable_step($feature, $step->key(), $step instanceof step ? $step->sourcetable() : '');
             }
             return 'not_applicable';
         }
@@ -1029,10 +1026,7 @@ final class runner {
         $name = $step->sourcetable();
 
         if (!$this->legacy->exists($source)) {
-            if (!$this->dryrun) {
-                $this->writer->create_step((object) self::new_step_row($this->runid, $feature, $key, $name,
-                    'not_applicable', 0, 0, null));
-            }
+            $this->record_not_applicable_step($feature, $key, $name);
             $this->report->set_step($feature, $key, ['status' => 'not_applicable']);
             return;
         }
@@ -1065,6 +1059,24 @@ final class runner {
 
         $elapsed = max(0.001, microtime(true) - $started);
         $this->finish_step($feature, $key, $state, $fingerprint, $batchno, $elapsed, $reader->group_count());
+    }
+
+    /**
+     * Record that a step has nothing to do. Idempotent: a resumed run meets the
+     * row it wrote the first time, and (runid, stepkey) is unique.
+     *
+     * @param string $feature
+     * @param string $key
+     * @param string $sourcetable
+     * @return void
+     */
+    private function record_not_applicable_step(string $feature, string $key, string $sourcetable): void {
+        global $DB;
+        if ($this->dryrun || $DB->record_exists(self::STEP_TABLE, ['runid' => $this->runid, 'stepkey' => $key])) {
+            return;
+        }
+        $this->writer->create_step((object) self::new_step_row($this->runid, $feature, $key, $sourcetable,
+            'not_applicable', 0, 0, null));
     }
 
     /**
@@ -1262,6 +1274,10 @@ final class runner {
                 $tx->allow_commit();
             }
             $this->map->commit_batch();
+            if (!$this->dryrun) {
+                // The rows are in the database now; keep memory bounded on a table of unknown size.
+                $this->map->forget($step->sourcetable());
+            }
             $state['counters'] = $newcounters;
             $state['watermark'] = $watermark;
             $state['already'] += $already;

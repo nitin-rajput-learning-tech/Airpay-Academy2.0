@@ -80,6 +80,9 @@ trait legacy_schema_fixture {
      */
     protected function setUp(): void {
         parent::setUp();
+        // Truncating is a database write, so every test of a class that uses this trait is a writing test:
+        // without this Moodle flags the ones that only read as an unexpected database modification.
+        $this->resetAfterTest();
         $this->preventResetByRollback();
         self::truncate_legacy_tables();
     }
