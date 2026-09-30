@@ -68,15 +68,20 @@ $status_css   = ((int) $path->status === 1) ? 'badge-success' : 'badge-secondary
 $course_count = (int) $DB->count_records('local_sentientia_learningpath_courses', ['pathid' => $pathid]);
 $user_count   = (int) $DB->count_records('local_sentientia_learningpath_users',   ['pathid' => $pathid]);
 
+// The cover image the BizLMS import copied (code fix 8, mapping doc section 17).
+$cover = \local_sentientia_learningpath\path_manager::cover_url((int) $path->id);
+
 $data = [
     'pathid'         => (int) $path->id,
     'name'           => format_string($path->name),
     'description'    => format_text($path->description ?? '', FORMAT_HTML),
     'has_description' => !empty(trim($path->description ?? '')),
+    'has_cover'      => $cover !== null,
+    'cover_url'      => $cover === null ? '' : $cover->out(false),
     'status_label'   => $status_label,
     'status_css'     => $status_css,
-    'created_human'  => userdate($path->timecreated, '%d %b %Y'),
-    'modified_human' => userdate($path->timemodified, '%d %b %Y %H:%M'),
+    'created_human'  => $path->timecreated ? userdate($path->timecreated, '%d %b %Y') : '—',
+    'modified_human' => $path->timemodified ? userdate($path->timemodified, '%d %b %Y %H:%M') : '—',
     'course_count'   => $course_count,
     'user_count'     => $user_count,
     'back_url'       => (new moodle_url('/local/sentientia_learningpath/index.php'))->out(false),

@@ -30,8 +30,14 @@ if ($dbman->table_exists('local_sentientia_learningpath')) {
     $total     = (int) $DB->count_records_select('local_sentientia_learningpath', $tnsql, $tnargs);
     $active    = (int) $DB->count_records_select('local_sentientia_learningpath',
         "$tnsql AND status = 1", $tnargs);
-    $completed = (int) $DB->count_records_select('local_sentientia_learningpath',
-        "$tnsql AND status = 2", $tnargs);
+    // ADR-032: a path is never "completed" (its status is 1 active or 0 archived); this tile used to count
+    // paths with status 2, which is always zero. It counts learners who completed a path in the caller's tenant.
+    [$lpsql, $lpargs] = \local_sentientia_platform\tenant::path_filter('lp');
+    $completed = (int) $DB->count_records_sql(
+        "SELECT COUNT(1)
+           FROM {local_sentientia_learningpath_users} lpu
+           JOIN {local_sentientia_learningpath} lp ON lp.id = lpu.pathid
+          WHERE lpu.status = 2 AND $lpsql", $lpargs);
 }
 
 $columns = [
@@ -57,7 +63,7 @@ $kpi_tiles = [
         'color' => 'success',
     ],
     [
-        'label' => 'Completed',
+        'label' => 'Learners completed',
         'value' => number_format($completed),
         'icon'  => 'check-circle',
         'color' => 'info',

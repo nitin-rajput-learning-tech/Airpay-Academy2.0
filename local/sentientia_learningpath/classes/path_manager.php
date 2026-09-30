@@ -17,6 +17,7 @@ class path_manager {
     private const TABLE = 'local_sentientia_learningpath';
     private const COURSES_TABLE = 'local_sentientia_learningpath_courses';
     private const USERS_TABLE = 'local_sentientia_learningpath_users';
+    private const STATUS_TABLE = 'local_sentientia_lp_course_status';
 
     /**
      * Get a learning path by ID.
@@ -288,21 +289,11 @@ class path_manager {
     public static function is_enrolled(int $pathid, int $userid): bool {
         global $DB;
 
-        // Check Airpay table first.
-        if ($DB->record_exists(self::USERS_TABLE, ['pathid' => $pathid, 'userid' => $userid])) {
-            return true;
-        }
-
-        // Fallback: check BizLMS table.
-        $dbman = $DB->get_manager();
-        if ($dbman->table_exists('local_learningplan_user')) {
-            return $DB->record_exists('local_learningplan_user', [
-                'planid' => $pathid,
-                'userid' => $userid,
-            ]);
-        }
-
-        return false;
+        // ADR-032 (2026-09-30): this used to fall back to the BizLMS local_learningplan_user table
+        // (matching planid = pathid) when the Sentientia row was missing. The learningplan importer
+        // copies those rows into the Sentientia table with the same path ids, and the fallback made a
+        // learner who was removed from a path still look enrolled while the legacy row existed.
+        return $DB->record_exists(self::USERS_TABLE, ['pathid' => $pathid, 'userid' => $userid]);
     }
 
     /**
@@ -335,29 +326,25 @@ class path_manager {
     }
 
     /**
-     * Count learning paths for a tenant.
+     * Count learning paths, optionally inside one tenant path.
      *
-     * @param string $pathfilter  e.g. "/1/%" or empty for all
+     * ADR-032 (2026-09-30): the BizLMS fallback is gone. While the Sentientia table was empty this
+     * returned the count of local_learningplan, every tenant's plans. The prefix match is /-bounded
+     * (tenant::path_descendant_filter): "/1" matches /1 and /1/..., never /10 or /177.
+     *
+     * @param string $pathfilter  A tenant path such as "/1" or "/1/5", or the older "/1/%" form; empty for all paths
      * @return int
      */
     public static function count_paths(string $pathfilter = ''): int {
         global $DB;
 
-        $dbman = $DB->get_manager();
-
-        if ($dbman->table_exists(self::TABLE) && $DB->count_records(self::TABLE) > 0) {
-            if (!empty($pathfilter)) {
-                return $DB->count_records_select(self::TABLE, "open_path LIKE :p", ['p' => $pathfilter]);
-            }
+        $scope = rtrim(preg_replace('#/?%$#', '', trim($pathfilter)), '/');
+        if ($scope === '') {
             return $DB->count_records(self::TABLE);
         }
-
-        // Fallback to BizLMS.
-        if ($dbman->table_exists('local_learningplan')) {
-            return $DB->count_records('local_learningplan');
-        }
-
-        return 0;
+        [$sql, $params] = \local_sentientia_platform\tenant::path_descendant_filter(
+            $scope, '', 'open_path', 'lpcount');
+        return $DB->count_records_select(self::TABLE, $sql, $params);
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -376,7 +363,7 @@ class path_manager {
      * @throws \moodle_exception
      */
     public static function create(object $data, ?string $fallbackpath = null): int {
-        global $DB;
+        global $DB, $USER;
 
         if (empty($data->name)) {
             throw new \moodle_exception('missingrequiredfields', 'local_sentientia_learningpath');
@@ -395,6 +382,9 @@ class path_manager {
         $record->enddate      = !empty($data->enddate)   ? (int) $data->enddate   : null;
         $record->timecreated  = time();
         $record->timemodified = time();
+        // ADR-032: who made the path (0 when there is no acting user, e.g. cron or CLI).
+        $record->usercreated  = (int) ($USER->id ?? 0);
+        $record->usermodified = (int) ($USER->id ?? 0);
 
         if ($record->costcenterid > 0) {
             $org = $DB->get_record('local_sentientia_org', ['id' => $record->costcenterid]);
@@ -416,11 +406,11 @@ class path_manager {
      * Update an existing learning path.
      */
     public static function update(int $id, object $data, ?string $fallbackpath = null): bool {
-        global $DB;
+        global $DB, $USER;
 
         $existing = $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
 
-        $record = (object) ['id' => $id, 'timemodified' => time()];
+        $record = (object) ['id' => $id, 'timemodified' => time(), 'usermodified' => (int) ($USER->id ?? 0)];
 
         // P1 batch (2026-05-16) — startdate/enddate/descriptionformat added.
         $fields = ['name', 'description', 'descriptionformat',
@@ -476,17 +466,79 @@ class path_manager {
 
         $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
 
+        // ADR-032 (decision framework.protect_imported_history = block): a path the BizLMS import
+        // created, or that holds an imported course or learner row, is history. Deleting it would
+        // cascade over the learners' completion records. Archive it instead (toggle_status).
+        if (self::has_imported_rows($id)) {
+            throw new \moodle_exception('imported_history_protected', 'local_sentientia_learningpath');
+        }
+
         $transaction = $DB->start_delegated_transaction();
         try {
             $DB->delete_records(self::COURSES_TABLE, ['pathid' => $id]);
             $DB->delete_records(self::USERS_TABLE, ['pathid' => $id]);
+            // ADR-032: the cascade used to stop at courses and learners, and leave the per-course status
+            // rows of the import behind, pointing at a path that no longer exists.
+            $DB->delete_records(self::STATUS_TABLE, ['pathid' => $id]);
             $DB->delete_records(self::TABLE, ['id' => $id]);
             $transaction->allow_commit();
         } catch (\Throwable $e) {
             $transaction->rollback($e);
         }
 
+        // The cover image the import copied (component/filearea of this plugin, item id = path id).
+        get_file_storage()->delete_area_files(\context_system::instance()->id,
+            'local_sentientia_learningpath', 'summaryfile', $id);
+
         return true;
+    }
+
+    /**
+     * The URL of a path's cover image, if it has one.
+     *
+     * BizLMS kept a plan's cover in a file area (summaryfile); the learningplan import copies it to this
+     * plugin's own file area (system context, item id = path id) so it survives the BizLMS code going away.
+     *
+     * @param int $pathid
+     * @return \moodle_url|null
+     */
+    public static function cover_url(int $pathid): ?\moodle_url {
+        $context = \context_system::instance();
+        $files = get_file_storage()->get_area_files($context->id, 'local_sentientia_learningpath',
+            'summaryfile', $pathid, 'filename', false);
+        foreach ($files as $file) {
+            if ($file->is_valid_image()) {
+                return \moodle_url::make_pluginfile_url($context->id, 'local_sentientia_learningpath',
+                    'summaryfile', $pathid, $file->get_filepath(), $file->get_filename());
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Did the BizLMS import create this path, or any course, learner or status row of it?
+     *
+     * Reads the import's map. A site that never ran the import has no map rows, so this is false.
+     *
+     * @param int $pathid
+     * @return bool
+     */
+    public static function has_imported_rows(int $pathid): bool {
+        global $DB;
+        $map = '{' . \local_sentientia_platform\bizlms\legacymap::TABLE . '}';
+        if (\local_sentientia_platform\bizlms\provenance::is_imported(self::TABLE, $pathid)) {
+            return true;
+        }
+        foreach ([self::COURSES_TABLE, self::USERS_TABLE, self::STATUS_TABLE] as $table) {
+            if ($DB->record_exists_sql(
+                    "SELECT 1
+                       FROM {" . $table . "} x
+                       JOIN {$map} m ON m.targettable = :mt AND m.targetid = x.id AND m.outcome IN ('imported', 'adopted')
+                      WHERE x.pathid = :pid", ['mt' => $table, 'pid' => $pathid])) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -513,7 +565,7 @@ class path_manager {
      * @throws \moodle_exception  If path doesn't exist.
      */
     public static function assign_courses(int $pathid, array $courseids): int {
-        global $DB, $CFG;
+        global $DB, $CFG, $USER;
         require_once($CFG->libdir . '/enrollib.php');
 
         $DB->get_record(self::TABLE, ['id' => $pathid], 'id', MUST_EXIST);
@@ -562,11 +614,14 @@ class path_manager {
                     continue;
                 }
                 $DB->insert_record(self::COURSES_TABLE, (object) [
-                    'pathid'      => $pathid,
-                    'courseid'    => $cid,
-                    'sortorder'   => $sortorder++,
-                    'mandatory'   => 1,
-                    'timecreated' => $now,
+                    'pathid'       => $pathid,
+                    'courseid'     => $cid,
+                    'sortorder'    => $sortorder++,
+                    'mandatory'    => 1,
+                    'usercreated'  => (int) ($USER->id ?? 0),
+                    'usermodified' => (int) ($USER->id ?? 0),
+                    'timecreated'  => $now,
+                    'timemodified' => $now,
                 ]);
                 $inserted++;
                 $newcourseids[] = $cid;
@@ -712,7 +767,7 @@ class path_manager {
      * @throws \moodle_exception  If path doesn't exist.
      */
     public static function enrol_users(int $pathid, array $userids): int {
-        global $DB, $CFG;
+        global $DB, $CFG, $USER;
         require_once($CFG->libdir . '/enrollib.php');
 
         $DB->get_record(self::TABLE, ['id' => $pathid], 'id', MUST_EXIST);
@@ -762,10 +817,13 @@ class path_manager {
                     continue;
                 }
                 $DB->insert_record(self::USERS_TABLE, (object) [
-                    'pathid'      => $pathid,
-                    'userid'      => $uid,
-                    'status'      => self::ENROL_NEW,
-                    'timecreated' => $now,
+                    'pathid'       => $pathid,
+                    'userid'       => $uid,
+                    'status'       => self::ENROL_NEW,
+                    // ADR-032: who enrolled the learner; their own id means self-enrolled, 0 is unknown.
+                    'enrolledby'   => (int) ($USER->id ?? 0),
+                    'timecreated'  => $now,
+                    'timemodified' => $now,
                 ]);
                 $enrolled++;
             }
@@ -854,11 +912,18 @@ class path_manager {
 
         $DB->get_record(self::TABLE, ['id' => $pathid], 'id', MUST_EXIST);
 
-        $existed = $DB->record_exists(self::USERS_TABLE,
-            ['pathid' => $pathid, 'userid' => $userid]);
+        $row = $DB->get_record(self::USERS_TABLE,
+            ['pathid' => $pathid, 'userid' => $userid], 'id');
 
-        if (!$existed) {
+        if (!$row) {
             return false;
+        }
+
+        // ADR-032 (decision framework.protect_imported_history = block): an enrolment the BizLMS import
+        // created is the learner's history on this path, including any completion. Admin unenrol is
+        // refused; archive the path instead. Privacy erasure removes rows through the privacy provider.
+        if (\local_sentientia_platform\bizlms\provenance::is_imported(self::USERS_TABLE, (int) $row->id)) {
+            throw new \moodle_exception('imported_history_protected', 'local_sentientia_learningpath');
         }
 
         $DB->delete_records(self::USERS_TABLE,
@@ -939,7 +1004,7 @@ class path_manager {
                     'employeeid'  => $r->open_employeeid ?: '—',
                     'email'       => $r->email,
                     'designation' => $r->open_designation ?: '—',
-                    'enrolled'    => userdate($r->timecreated, '%d %b %Y'),
+                    'enrolled'    => $r->timecreated ? userdate($r->timecreated, '%d %b %Y') : '—',
                     'completed'   => $r->timecompleted ? userdate($r->timecompleted, '%d %b %Y') : '—',
                     'statuslabel' => $statusmap[(int) $r->status] ?? 'Unknown',
                     'statuscss'   => $cssmap[(int) $r->status] ?? 'badge-secondary',

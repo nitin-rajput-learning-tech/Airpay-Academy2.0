@@ -69,7 +69,12 @@ if ($mode === 'paths') {
     $path = \local_sentientia_learningpath\path_manager::require_path_tenant($pathid);
     fputcsv($out, ['Path', $path->name]);
     fputcsv($out, []);
-    fputcsv($out, ['User ID', 'Name', 'Email', 'Employee ID', 'Enrolled',
+    // ADR-032 (2026-09-30): Status and Completed on columns added, and the percentage is over the
+    // MANDATORY courses (every course when none is mandatory), or 100 for a learner whose path
+    // status is Completed. It used to be completed/all courses, so a learner who finished every
+    // mandatory course and skipped an optional one showed under 100 %, and an imported learner
+    // marked Completed whose course completions were not in this site showed 0 %.
+    fputcsv($out, ['User ID', 'Name', 'Email', 'Employee ID', 'Enrolled', 'Status', 'Completed on',
                    'Courses in path', 'Completed in path', 'Completion %']);
     // Get users + their per-course completion within this path's courses.
     // ADR-031: an in-tenant path can still hold other tenants' or pathless
@@ -78,28 +83,59 @@ if ($mode === 'paths') {
     [$rosql, $roparams] = \local_sentientia_learningpath\path_manager::roster_scope(true, 'u');
     $users = $DB->get_records_sql("
         SELECT u.id, u.firstname, u.lastname, u.email, u.open_employeeid,
-               lpu.timecreated AS enrolled_on
+               lpu.timecreated AS enrolled_on, lpu.status AS pathstatus, lpu.timecompleted AS completed_on
           FROM {local_sentientia_learningpath_users} lpu
           JOIN {user} u ON u.id = lpu.userid
          WHERE lpu.pathid = :pid AND u.deleted = 0 AND $rosql
       ORDER BY u.lastname ASC", ['pid' => $pathid] + $roparams, 0, 10000);
-    $path_courses = $DB->get_fieldset_select('local_sentientia_learningpath_courses',
-        'courseid', 'pathid = :pid', ['pid' => $pathid]);
-    $course_count = count($path_courses);
-    foreach ($users as $u) {
-        $completed = 0;
-        foreach ($path_courses as $cid) {
-            $cc = $DB->get_record('course_completions',
-                ['userid' => $u->id, 'course' => $cid]);
-            if ($cc && $cc->timecompleted) $completed++;
+    $pathcourses = $DB->get_records('local_sentientia_learningpath_courses', ['pathid' => $pathid], '',
+        'courseid, mandatory');
+    $course_count = count($pathcourses);
+    $mandatoryids = [];
+    foreach ($pathcourses as $pc) {
+        if ((int) $pc->mandatory === 1) {
+            $mandatoryids[(int) $pc->courseid] = true;
         }
-        $pct = $course_count > 0 ? round(100 * $completed / $course_count, 1) : 0;
+    }
+    if (!$mandatoryids) {
+        $mandatoryids = array_fill_keys(array_map('intval', array_keys($pathcourses)), true);
+    }
+    // One query for every learner's completions in this path's courses.
+    $completedby = [];
+    if ($users && $pathcourses) {
+        [$cin, $cparams] = $DB->get_in_or_equal(array_keys($pathcourses), SQL_PARAMS_NAMED, 'lpex');
+        foreach (array_chunk(array_keys($users), 1000) as $userchunk) {
+            [$uin, $uparams] = $DB->get_in_or_equal($userchunk, SQL_PARAMS_NAMED, 'lpeu');
+            $completions = $DB->get_recordset_select('course_completions',
+                "timecompleted > 0 AND course $cin AND userid $uin", $cparams + $uparams, '', 'id, userid, course');
+            foreach ($completions as $cc) {
+                $completedby[(int) $cc->userid][(int) $cc->course] = true;
+            }
+            $completions->close();
+        }
+    }
+    $statuslabels = [
+        \local_sentientia_learningpath\path_manager::ENROL_NEW => 'Enrolled',
+        \local_sentientia_learningpath\path_manager::ENROL_INPROGRESS => 'In progress',
+        \local_sentientia_learningpath\path_manager::ENROL_COMPLETED => 'Completed',
+    ];
+    foreach ($users as $u) {
+        $done = $completedby[(int) $u->id] ?? [];
+        $completed = count($done);
+        if ((int) $u->pathstatus === \local_sentientia_learningpath\path_manager::ENROL_COMPLETED) {
+            $pct = 100;
+        } else {
+            $mandatorydone = count(array_intersect_key($done, $mandatoryids));
+            $pct = count($mandatoryids) > 0 ? round(100 * $mandatorydone / count($mandatoryids), 1) : 0;
+        }
         fputcsv($out, [
             $u->id,
             trim($u->firstname . ' ' . $u->lastname),
             $u->email,
             $u->open_employeeid ?? '',
             $u->enrolled_on ? userdate($u->enrolled_on, '%Y-%m-%d') : '',
+            $statuslabels[(int) $u->pathstatus] ?? '',
+            $u->completed_on ? userdate($u->completed_on, '%Y-%m-%d') : '',
             $course_count,
             $completed,
             $pct . '%',
