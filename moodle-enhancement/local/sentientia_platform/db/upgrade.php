@@ -397,5 +397,24 @@ function xmldb_local_sentientia_platform_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026052801, 'local', 'sentientia_platform');
     }
 
+    // ── ADR-032 (2026-09-30) — BizLMS import framework tables.
+    // local_sentientia_legacymap (idempotence map), local_sentientia_legacyrun
+    // (run log) and local_sentientia_legacystep (per-step progress). The tables
+    // are created FROM db/install.xml rather than from a second hand-written
+    // definition, so a fresh install and an upgraded site cannot diverge, and a
+    // broken install.xml fails this step instead of being masked by it (the
+    // 2026-08-29 install.xml trap). Every table is table_exists-guarded, so the
+    // step is safe to re-run.
+    if ($oldversion < 2026093001) {
+        foreach (['local_sentientia_legacymap', 'local_sentientia_legacyrun',
+                  'local_sentientia_legacystep'] as $legacytable) {
+            if (!$dbman->table_exists($legacytable)) {
+                $dbman->install_one_table_from_xmldb_file(__DIR__ . '/install.xml', $legacytable);
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026093001, 'local', 'sentientia_platform');
+    }
+
     return true;
 }
