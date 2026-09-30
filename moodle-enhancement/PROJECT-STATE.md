@@ -92,10 +92,39 @@ manager index), sha256-verified, upgrade OK, WS smoke ERROR=0 (= baseline). Prob
 6. **Model allocation to spare the weekly limits:** Sonnet builds; Opus designs (ADR-032) and runs the
    adversarial reviews; long test runs are plain scripts, with no model tokens while they run.
 
+**Persona testing by Claude (2026-09-30), local Playwright on the prod-data copy:**
+- Coverage: 11 personas, 126 steps; tally PASS 82, FAIL 21, CHECK 22, SKIP 11.
+- Triage (`docs/visual-evidence/2026-09-30/personas/TRIAGE.md`): **14 product defects (3 P0, 6 P1, 5 P2)**;
+  the rest are harness (15), environment (15), by design (8) and seed gaps (4). Tenant isolation held
+  at the service level.
+- **P0:**
+  - Public (/77) and ZEEA learners cannot buy: `local/sentientia_cart:purchase` is held only by
+    employee/administrator, and 681 of 683 /77 users have no system role.
+  - The storefront cart dead-ends at "Payment Coming Soon".
+  - Trainers cannot open classrooms (fixed on claude/fixes-0930).
+- **P1:**
+  - Manager team-performance: wrong gate, and a non-existent `open_managerid` column.
+  - Gradebook JS crash: no core/sticky_footer template in the theme.
+  - Certificates admin: page gated on site:config.
+  - No language switcher.
+  - Mobile catalog filter sheet opens on load.
+  - Retired `local/courses:*` capability checks.
+- Decisions as recommended:
+  - purchase goes to the authenticated-user archetype, with a back-fill;
+  - the storefront-to-order bridge is built behind a default-OFF flag and stays off until the gateway
+    sandbox is verified (commerce dark at go-live);
+  - the language switcher ships behind a default-OFF flag, and Nitin flips it after the screenshots;
+  - the switchboard stays site-admin only (UAT plan corrected);
+  - trainer evaluation results come after go-live.
+- Fix bundles in flight: commerce, manager, theme, admin gates, catalog, small fixes, and the harness.
+  After they merge: one PHPUnit re-init for all version bumps, then a full persona re-run as the
+  regression check and the evidence.
+
 **Still pending:**
 - **VPN off:** Nitin's real-Chrome check (service worker gone, "Browse Library" shown, a tenant admin has
   no Log in as and no core editadvanced, and the pencil opens the Sentientia modal).
 - Cart screen checks 1-4 are captured locally (`docs/visual-evidence/2026-09-29/cart/`, PASS).
+- **Finance:** legacy credit balances, and whether the ERPNext invoices are the legal tax invoices.
 
 **Stage B findings today (docs/cutover/SENTIENTIA-MIGRATION-PLAN-2026-09-04.md §0 + §3.3):**
 1. **Production is Moodle 4.1.2+, not 5.1** (snapshot `version.php` 2022112802.06). 5.2 requires 4.4, so
