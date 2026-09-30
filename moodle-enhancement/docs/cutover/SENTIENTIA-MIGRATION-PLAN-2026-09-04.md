@@ -176,6 +176,20 @@ Extends `UAT-SENTIENTIA-DEPLOY-CHECKLIST.md §1, §6` and `UAT-ASKS-2026-09-03.m
      `local_sentientia_classroom_attendance`. After cutover, new attendance would land where Sentientia
      does not read it; on a fresh install (UAT) the table does not exist.
 
+  **Measured 2026-09-30 on the April 2026 production dump** (`backups/airpayprod-mariadb-ready.sql`, restored
+  into a separate local schema `bizlms_april`; release 4.1.2+, version 2022112802.06; active users /1 2,187,
+  /77 676, /177 6):
+  - **BizLMS feature data is small:** 94 `local_*` tables, 34 non-empty, 25,310 rows in total. The largest are
+    email logs 14,202, HR sync errors 4,874, **learning-plan users 2,071**, user data 1,560, HR sync data 749,
+    ratings 600 / rating likes 288 / likes 227, costcenters 213, learning-plan courses 126, custom categories 82.
+    Classroom, recompletion, requests and transcripts hold **0** rows. Programs hold 1 program / 14 levels /
+    3 users, evaluations 3 forms / 1 response, the cart 5 orders.
+  - **Course access continuity is the real risk (gap G6):** 16,830 enrolments (1,609 learners) sit on
+    `enrol_learningplan` instances, and **7,673 learner-course pairs are enrolled ONLY through a BizLMS enrol
+    method**. With that code off disk they lose course access at cutover unless the G6 conversion (to a
+    manual enrolment, status and dates kept; decided 2026-09-30) runs. It is a cutover-blocking step.
+  - Live has grown since April: run the I-20 query on live before sizing the window.
+
   **Decided (Nitin, 2026-09-29): IMPORT.** The BizLMS history is imported into the Sentientia tables
   (design: ADR-032 and `BIZLMS-IMPORT-MAPPING-2026-09-29.md`, in progress). The options that were on
   the table: per feature, **import** into the Sentientia tables
