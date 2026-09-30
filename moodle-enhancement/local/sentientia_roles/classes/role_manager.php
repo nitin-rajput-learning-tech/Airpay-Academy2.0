@@ -359,9 +359,21 @@ class role_manager {
         ];
     }
 
+    /** Feature flag: list the holders at organisation level too (ADR-032 org_roles). Default OFF. */
+    public const FLAG_ORG_ASSIGNMENTS = 'sentientia.roles.org_assignments';
+
     /**
      * Phase 2 — list users assigned to a role at the system context, with
      * pagination + search.
+     *
+     * With the flag sentientia.roles.org_assignments ON the list also holds the
+     * assignments at the course category of each organisation (where BizLMS org
+     * roles live, and where the ADR-032 import puts them). Those rows carry
+     * scope 'org' and the organisation's name; the system rows carry scope
+     * 'system'. They are read-only here: unassign_user_from_role() works on the
+     * system context only. A caller who is not cross-tenant sees only holders in
+     * their own tenant, at organisations inside their own tenant (same
+     * path-bounded rule, ADR-031). With the flag OFF nothing changes.
      */
     public static function list_role_assignments(int $roleid, string $search = '',
                                                    int $page = 0, int $perpage = 25): array {
@@ -378,8 +390,28 @@ class role_manager {
             return ['total' => 0, 'rows' => [], 'page' => $page, 'perpage' => $perpage];
         }
 
+        $includeorg = self::org_assignments_listed();
+
         $where = ['ra.roleid = :rid', 'ra.contextid = :cid', 'u.deleted = 0'];
         $params = ['rid' => $roleid, 'cid' => $context->id];
+        if ($includeorg) {
+            // The system context, or the category context of an organisation. The organisation's own path must
+            // be inside the caller's tenant, so a holder of one tenant cannot expose another tenant's organisation.
+            $orgwhere = 'orgcc.category > 0';
+            $orgparams = ['orgctxlevel' => CONTEXT_COURSECAT];
+            if ($scope !== '') {
+                [$orgscopesql, $orgscopeargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+                    $scope, 'orgcc', 'path', 'rauorg');
+                $orgwhere .= ' AND ' . $orgscopesql;
+                $orgparams += $orgscopeargs;
+            }
+            $where[1] = '(ra.contextid = :cid OR ra.contextid IN (
+                SELECT orgctx.id
+                  FROM {context} orgctx
+                  JOIN {local_costcenter} orgcc ON orgcc.category = orgctx.instanceid
+                 WHERE orgctx.contextlevel = :orgctxlevel AND ' . $orgwhere . '))';
+            $params += $orgparams;
+        }
         if ($scope !== '') {
             [$scopesql, $scopeargs] = \local_sentientia_platform\tenant::path_descendant_filter(
                 $scope, 'u', 'open_path', 'rascope');
@@ -402,18 +434,34 @@ class role_manager {
             SELECT COUNT(DISTINCT ra.id) FROM {role_assignments} ra
               JOIN {user} u ON u.id = ra.userid WHERE $wheresql", $params);
 
+        // Flag OFF: the query is exactly what it was. Flag ON adds the context of each row and, for the rows at an
+        // organisation, its name (a scalar subquery, so an organisation cannot multiply the rows), and breaks ties
+        // on the assignment id because one user can now hold the same role at several contexts.
+        $extra = '';
+        $orgjoin = '';
+        $tiebreak = '';
+        if ($includeorg) {
+            $extra = ', ra.contextid,
+                   (SELECT MIN(orgname.fullname) FROM {local_costcenter} orgname
+                     WHERE orgname.category = orgnamectx.instanceid) AS orgfullname';
+            $orgjoin = 'LEFT JOIN {context} orgnamectx ON orgnamectx.id = ra.contextid
+                               AND orgnamectx.contextlevel = :orgnamelevel';
+            $tiebreak = ', ra.id ASC';
+            $params['orgnamelevel'] = CONTEXT_COURSECAT;
+        }
         $rows = $DB->get_records_sql("
             SELECT ra.id, ra.userid, ra.timemodified,
-                   u.firstname, u.lastname, u.email, u.suspended
+                   u.firstname, u.lastname, u.email, u.suspended{$extra}
               FROM {role_assignments} ra
               JOIN {user} u ON u.id = ra.userid
+              {$orgjoin}
              WHERE $wheresql
-          ORDER BY u.lastname ASC, u.firstname ASC, u.id ASC",
+          ORDER BY u.lastname ASC, u.firstname ASC, u.id ASC{$tiebreak}",
             $params, $page * $perpage, $perpage);
 
         $out = [];
         foreach ($rows as $r) {
-            $out[] = [
+            $row = [
                 'id'         => (int) $r->id,
                 'userid'     => (int) $r->userid,
                 'fullname'   => fullname((object) ['firstname' => $r->firstname,
@@ -423,8 +471,37 @@ class role_manager {
                 'assigned_at' => userdate((int) $r->timemodified,
                     get_string('strftimedatetimeshort', 'core_langconfig')),
             ];
+            if ($includeorg) {
+                $isorg = (int) $r->contextid !== (int) $context->id;
+                $row['scope'] = $isorg ? 'org' : 'system';
+                $row['scopename'] = $isorg
+                    ? format_string((string) ($r->orgfullname ?? ''), true, ['context' => $context])
+                    : get_string('assignment_scope_system', 'local_sentientia_roles');
+            }
+            $out[] = $row;
         }
         return ['total' => $total, 'rows' => $out, 'page' => $page, 'perpage' => $perpage];
+    }
+
+    /**
+     * Does the role-holder list also show the assignments at organisation level?
+     *
+     * The flag is on, and the organisation table that links an organisation to its course category (BizLMS
+     * local_costcenter, kept in place by ADR-032) is there with its category column. Without the link there is
+     * nothing to list, so the flag then changes nothing.
+     *
+     * @return bool
+     */
+    private static function org_assignments_listed(): bool {
+        global $DB;
+        if (!\local_sentientia_platform\feature_flags::is_enabled(self::FLAG_ORG_ASSIGNMENTS)) {
+            return false;
+        }
+        if (!$DB->get_manager()->table_exists('local_costcenter')) {
+            return false;
+        }
+        return array_key_exists('category', $DB->get_columns('local_costcenter'))
+            && array_key_exists('path', $DB->get_columns('local_costcenter'));
     }
 
     /**

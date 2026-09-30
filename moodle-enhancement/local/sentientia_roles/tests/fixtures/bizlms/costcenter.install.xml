@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  ADR-032 org_roles importer tests: the BizLMS tables the org_roles feature reads, as production 4.1.2 declares them.
+
+  Sources (BZ = D:/Claude Local/Moodle Backup/01-production-codebase/html/):
+    BZ local/costcenter/db/install.xml   sha1 ff65958deebf5dc133207d3f38e950169f8ae2fe   tables local_costcenter, local_costcenter_permissions
+    BZ local/assignroles/db/install.xml  sha1 db960ba47da8aa1ebdb6fd01edf7796ff61e67f3   table  local_org_dept_roles
+  Copied 2026-09-30. The legacy_schema_fixture trait loads ONE file, so the two plugins' tables sit in one.
+
+  Edits (ADR-032 "Test approach" 2, the only ones allowed):
+    (a) PREVIOUS and NEXT attributes stripped (the BizLMS files chain tables with them).
+    Nothing else: no type replaced (b), no production-only column or install.php-only table added (c).
+  Note: local_costcenter.category is how an organisation is linked to its course category; the importer reads it in
+  place. Production may carry more columns than this snapshot install file; the importer names only the ones below.
+-->
+<XMLDB PATH="local/sentientia_roles/tests/fixtures/bizlms" VERSION="20260930"
+       COMMENT="ADR-032 org_roles tests: verbatim BizLMS tables local_costcenter, local_costcenter_permissions and local_org_dept_roles">
+  <TABLES>
+    <TABLE NAME="local_costcenter" COMMENT="List of costcenters assigned">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true"/>
+        <FIELD NAME="fullname" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="shortname" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="parentid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="description" TYPE="text" LENGTH="big"  SEQUENCE="false"/>
+        <FIELD NAME="visible" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="1" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="path" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="depth" TYPE="int" LENGTH="20" NOTNULL="false" UNSIGNED="false" SEQUENCE="false"/>
+        <FIELD NAME="sortorder" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="childpermission" TYPE="int" LENGTH="2" DEFAULT="0" NOTNULL="false" SEQUENCE="false" />
+         <FIELD NAME="theme" TYPE="char" LENGTH="255"  NOTNULL="false" SEQUENCE="false"/>
+
+         <FIELD NAME="shell" TYPE="char" LENGTH="255"  NOTNULL="false" SEQUENCE="false"/>
+
+        <FIELD NAME="costcenter_logo" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME ="category" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME ="multipleorg" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" />
+
+        <FIELD NAME ="button_color" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME ="brand_color" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME ="hover_color" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" />
+        
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+       <INDEXES>
+        <INDEX NAME="parentid" UNIQUE="false" FIELDS="parentid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_costcenter_permissions" COMMENT="Assigned managers for cost center">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="costcenterid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="roleid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="value" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="1" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"  />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+       <INDEXES>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
+        <INDEX NAME="costcenterid" UNIQUE="false" FIELDS="costcenterid"/>
+        <INDEX NAME="roleid" UNIQUE="false" FIELDS="roleid"/>
+       </INDEXES>
+    </TABLE>
+
+<TABLE NAME="local_org_dept_roles" COMMENT="department and roles">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="costcenterid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="departmentid"  TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="roleid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="user_created" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="user_modified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+  </TABLES>
+</XMLDB>

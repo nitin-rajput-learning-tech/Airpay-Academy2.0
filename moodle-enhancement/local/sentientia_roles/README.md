@@ -39,6 +39,26 @@ Reclassified Tier-2 → built (commit `739af7f87` on 7 May 2026).
 # Expected: list of roles with the cross-tab assignment view
 ```
 
+## BizLMS org-role import (ADR-032, feature `org_roles`)
+
+`classes/bizlms/` holds the importer for the two BizLMS org-role tables, discovered through `db/bizlms_import.php`:
+
+- `local_costcenter_permissions` (local/costcenter) and `local_org_dept_roles` (local/assignroles), both expected to be
+  empty on production. A row is never lost silently: each one gets a primary row in `local_sentientia_legacymap`.
+- Each assignment is **inserted directly** into core `role_assignments` at the course category context of the
+  organisation (`local_costcenter.category`), never through `role_assign()` (that fires `role_assigned`). A manual
+  assignment that already exists is not duplicated: the row folds into it (`already_assigned`).
+- Each assignment the import makes gets one `role_assigned` row in `local_sentientia_roles_auditlog`
+  (reason `bizlms_import:<table>`, `open_path` = the actor's path).
+- The category context must exist. A missing one is a **preflight blocker** (`org_context_missing`): the importer
+  never calls `context_coursecat::instance()`.
+- Depends on the `org` feature. Only `value = 1` counts (decision `org_roles.value_filter`).
+- `finalise()` marks the touched contexts dirty and resets the category caches `role_assign()` would.
+
+Reader: the flag `sentientia.roles.org_assignments` (default **OFF**) makes `role_manager::list_role_assignments()`
+(and its web service) also list the holders at organisation level, read-only and tenant-bounded. OFF, the list is
+system context only, as before.
+
 ## Privacy / GDPR
 
 Role changes touch user-id references (who-was-assigned-by-whom). The

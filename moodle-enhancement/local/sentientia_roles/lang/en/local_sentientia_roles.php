@@ -110,9 +110,11 @@ $string['err_filterstoolong']      = 'Filter blob exceeds limit.';
 $string['err_definitions_crosstenant'] = 'Role definitions are shared by every tenant, so only a platform (cross-tenant) administrator can change them.';
 $string['err_role_not_assignable'] = 'You can only assign a role that you hold yourself and are allowed to assign, to someone else in your own organisation.';
 $string['err_assignment_not_found'] = 'That user does not hold this role at site level, so there is nothing to remove.';
+// ADR-032 org_roles (2026-09-30): the holder list can also show the assignments at organisation level.
+$string['assignment_scope_system'] = 'Whole platform';
 
 // Privacy provider strings.
-$string['privacy:metadata:auditlog']               = 'Append-only audit log of role and capability mutations made through the airpay role-management UI.';
+$string['privacy:metadata:auditlog']               = 'Append-only audit log of role and capability mutations made through the role-management UI, and of the role assignments imported from BizLMS.';
 $string['privacy:metadata:auditlog:roleid']        = 'The role being modified.';
 $string['privacy:metadata:auditlog:capability']    = 'The capability whose permission was changed.';
 $string['privacy:metadata:auditlog:oldpermission'] = 'The capability permission before the change.';

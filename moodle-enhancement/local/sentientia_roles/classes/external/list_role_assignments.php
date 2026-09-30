@@ -47,7 +47,9 @@ class list_role_assignments extends external_api {
 
         $can_assign = has_capability('local/sentientia_roles:assign', $context);
         foreach ($result['rows'] as &$row) {
-            $row['actions'] = $can_assign
+            // A row at an organisation (flag sentientia.roles.org_assignments) is read-only here: unassigning
+            // works on the system context only, and would otherwise remove the user's SYSTEM assignment.
+            $row['actions'] = ($can_assign && ($row['scope'] ?? 'system') === 'system')
                 ? '<button type="button" class="btn btn-sm btn-link text-danger p-1" '
                   . 'data-action="unassign-user" data-roleid="' . (int) $params['roleid'] . '" '
                   . 'data-userid="' . (int) $row['userid'] . '" '
@@ -76,6 +78,10 @@ class list_role_assignments extends external_api {
                     'statuscss'   => new external_value(PARAM_TEXT, 'Status badge CSS'),
                     'assigned_at' => new external_value(PARAM_TEXT, 'When assigned'),
                     'actions'     => new external_value(PARAM_RAW,  'Actions HTML'),
+                    'scope'       => new external_value(PARAM_ALPHA, 'system or org (only with the org flag)',
+                        VALUE_OPTIONAL),
+                    'scopename'   => new external_value(PARAM_TEXT, 'Organisation name, or the system label',
+                        VALUE_OPTIONAL),
                 ])
             ),
             'page'    => new external_value(PARAM_INT, 'Page'),

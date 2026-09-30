@@ -60,5 +60,14 @@ function xmldb_local_sentientia_roles_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026092500, 'local', 'sentientia_roles');
     }
 
+    // 2026093001 - ADR-032: the org_roles importer and the org-level holder list flag.
+    //
+    // No schema change: the importer writes the existing audit table and core role_assignments, and the flag
+    // (sentientia.roles.org_assignments, default OFF) comes from db/feature_flags.php. The bump makes Moodle's
+    // upgrade purge the class map so classes/bizlms/ is found, and is what importer::requires_version() names.
+    if ($oldversion < 2026093001) {
+        upgrade_plugin_savepoint(true, 2026093001, 'local', 'sentientia_roles');
+    }
+
     return true;
 }
