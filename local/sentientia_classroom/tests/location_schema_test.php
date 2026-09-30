@@ -130,7 +130,9 @@ final class location_schema_test extends \advanced_testcase {
         $this->assertStringContainsString('widened local_sentientia_locations.latitude', $out);
         $this->assertStringContainsString('widened local_sentientia_locations.longitude', $out);
         $this->assert_install_xml_schema();
-        $this->assertEquals(2026092501, get_config('local_sentientia_classroom', 'version'));
+        // upgrade_plugin_savepoint() leaves the version at the LAST step that ran: replaying from 2026092500 also
+        // runs the steps that came after 2026092501 (teacher caps, the ADR-032 import schema).
+        $this->assertGreaterThanOrEqual(2026092501, (int) get_config('local_sentientia_classroom', 'version'));
 
         // A coordinate now survives the round trip instead of becoming 19 / 73.
         $id = $DB->insert_record(self::LOCATIONS, (object) [

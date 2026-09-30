@@ -24,10 +24,22 @@ trainer assignments. Replacement for BizLMS `local_classroom`.
 
 `:view`, `:create`, `:update`, `:delete`, `:manage`, `:attendance`.
 
-## Tables (4)
+## Tables
 
 `local_sentientia_classroom`, `local_sentientia_classroom_sessions`,
-`local_sentientia_classroom_attendance`, `local_sentientia_classroom_users`.
+`local_sentientia_classroom_attendance`, `local_sentientia_classroom_users`,
+`local_sentientia_classroom_waitlist`, `local_sentientia_locations`, and, since 2026093002 (ADR-032, the
+BizLMS import), `local_sentientia_classroom_trainers` and `local_sentientia_classroom_courses`.
+
+## BizLMS import (ADR-032)
+
+`db/bizlms_import.php` registers the `classroom` importer (`classes/bizlms/`). It moves the history held in
+BizLMS `local_classroom_*` and `local_location_*` into these tables and is run only by
+`local/sentientia_platform/cli/import_bizlms.php` behind its CLI guard. Classroom and session ids are kept;
+the trainer of each classroom and session is carried so trainers keep their attendance access. A classroom or
+session the import brought in cannot be deleted, and its learners cannot be unenrolled, from the pages
+(`error_protected_history`). The readers of the imported history (overview, roster completion, "My
+classrooms" at `my.php`, the logo) are behind the default-OFF flag `sentientia.classroom.import_history`.
 
 ## Web services (~15)
 

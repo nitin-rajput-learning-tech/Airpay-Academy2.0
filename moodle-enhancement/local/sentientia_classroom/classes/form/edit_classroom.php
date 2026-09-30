@@ -58,6 +58,7 @@ class edit_classroom extends \core_form\dynamic_form {
             ['size' => 5, 'placeholder' => '30']);
         $mform->setType('capacity', PARAM_INT);
         $mform->setDefault('capacity', 30);
+        $mform->addHelpButton('capacity', 'capacity', 'local_sentientia_classroom');
 
         // Trainer autocomplete using Moodle's user selector.
         $trainer_options = [
@@ -107,6 +108,9 @@ class edit_classroom extends \core_form\dynamic_form {
                 \local_sentientia_classroom\session_manager::STATUS_ACTIVE    => get_string('status_active', 'local_sentientia_classroom'),
                 \local_sentientia_classroom\session_manager::STATUS_COMPLETED => get_string('status_completed', 'local_sentientia_classroom'),
                 \local_sentientia_classroom\session_manager::STATUS_CANCELLED => get_string('status_cancelled', 'local_sentientia_classroom'),
+                // ADR-032: BizLMS had both states, and the import brings classrooms in that are in them.
+                \local_sentientia_classroom\session_manager::STATUS_DRAFT     => get_string('status_draft', 'local_sentientia_classroom'),
+                \local_sentientia_classroom\session_manager::STATUS_ON_HOLD   => get_string('status_onhold', 'local_sentientia_classroom'),
             ];
             $mform->addElement('select', 'status', get_string('status', 'local_sentientia_classroom'), $statusoptions);
             $mform->setType('status', PARAM_INT);
@@ -115,7 +119,8 @@ class edit_classroom extends \core_form\dynamic_form {
 
     public function validation($data, $files) {
         $errors = [];
-        if (isset($data['capacity']) && $data['capacity'] < 1) {
+        // 0 means no limit (classroom code fix 5): BizLMS allowed it, and so does the waiting list.
+        if (isset($data['capacity']) && $data['capacity'] < 0) {
             $errors['capacity'] = get_string('capacityinvalid', 'local_sentientia_classroom');
         }
         // P1 batch (2026-05-16) — enddate must be >= startdate when both set.

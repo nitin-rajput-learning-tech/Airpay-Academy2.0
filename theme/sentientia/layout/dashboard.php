@@ -516,8 +516,15 @@ if (isloggedin() && !isguestuser()) {
             $classroomcount = 0;
             $examcount = 0;
             try {
-                $classroomcount = $DB->count_records_select('local_classroom',
-                    '1=1' . $tenantfilter_course, $tenantparams_course);
+                // The Sentientia classroom table, scoped to the admin's tenant (ADR-031: no tenant, no count).
+                // This used to read the BizLMS {local_classroom} table.
+                if (class_exists('\\local_sentientia_classroom\\session_manager')) {
+                    $classroomcount = $scope->is_unrestricted()
+                        ? \local_sentientia_classroom\session_manager::count_classrooms('')
+                        : ($scope->is_unresolved()
+                            ? 0
+                            : \local_sentientia_classroom\session_manager::count_classrooms($scope->root()));
+                }
             } catch (Exception $e) {}
             try { $examcount = $DB->count_records('local_onlineexams'); } catch (Exception $e) {}
 

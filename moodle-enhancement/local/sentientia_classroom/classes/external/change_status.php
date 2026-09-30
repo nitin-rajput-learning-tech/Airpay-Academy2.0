@@ -28,7 +28,7 @@ class change_status extends external_api {
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
             'classroomid' => new external_value(PARAM_INT, 'Classroom ID'),
-            'status'      => new external_value(PARAM_INT, '0=cancelled, 1=active, 2=completed'),
+            'status'      => new external_value(PARAM_INT, '0=cancelled, 1=active, 2=completed, 5=draft, 6=on hold'),
         ]);
     }
 

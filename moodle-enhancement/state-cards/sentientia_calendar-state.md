@@ -234,3 +234,11 @@ All nine failures were in the tests. No class, lang or version change (still 202
 Test inventory now: ics_builder 14, oauth_flow 23, token_manager 17, token_vault 28 (82 methods; the run
 that found these failures had 81).
 Both trees. Not re-run here (the shared PHPUnit DB was in use). Re-run the calendar suite to confirm.
+
+## 2026-09-30 (ADR-032, classroom code fix 9) - classroom events: status filter and text notes
+
+`ics_builder::collect_classroom_sessions()` now selects `cl.status IN (1, 2)` (was `<> 0`): a draft (5) or
+on-hold (6) classroom, which the BizLMS classroom import brings in, never reaches a learner's calendar, and a
+cancelled one (0) still does not. Session `notes` that hold a tag (an imported BizLMS description is HTML) go
+through `html_to_text()`; plain text is left alone. Tests: `ics_builder_test` +2. Code only, no version bump.
+Both trees. Not run here.

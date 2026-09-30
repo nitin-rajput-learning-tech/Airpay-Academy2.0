@@ -175,7 +175,9 @@ class ics_builder {
      * Collect classroom (ILT) sessions the user is enrolled in.
      *
      * Sourced from local_sentientia_classroom_sessions joined to
-     * local_sentientia_classroom_users (the roster). Both past and future
+     * local_sentientia_classroom_users (the roster). Only active (1) and completed (2)
+     * classrooms reach the calendar: a cancelled, draft or on-hold one does not (ADR-032 adds
+     * the last two, and the import brings classrooms in that are in them). Both past and future
      * sessions are included — past sessions are useful for the user's
      * own training history in their calendar app's archive view.
      *
@@ -209,7 +211,7 @@ class ics_builder {
                   JOIN {local_sentientia_classroom_users} u ON u.classroomid = s.classroomid
                  WHERE u.userid = :uid
                    AND cl.visible = 1
-                   AND cl.status <> 0
+                   AND cl.status IN (1, 2)
               ORDER BY s.starttime ASC";
 
         $rs = $DB->get_recordset_sql($sql, ['uid' => $userid]);
@@ -226,8 +228,15 @@ class ics_builder {
             $desc_parts = [
                 'Classroom: ' . trim((string) $row->classroomname),
             ];
-            if (!empty($row->notes)) {
-                $desc_parts[] = trim((string) $row->notes);
+            // An imported session's notes are the BizLMS session description, which is HTML; a calendar
+            // description is plain text (ADR-032, classroom code fix 9). Text that holds no tag is left alone.
+            $notes = (string) $row->notes;
+            if (preg_match('/<[a-z!\/][^>]*>/i', $notes)) {
+                $notes = html_to_text($notes, 0, false);
+            }
+            $notes = trim($notes);
+            if ($notes !== '') {
+                $desc_parts[] = $notes;
             }
             if (!empty($row->meeting_url)) {
                 $desc_parts[] = 'Join: ' . (string) $row->meeting_url;

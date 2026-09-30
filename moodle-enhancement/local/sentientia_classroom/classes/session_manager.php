@@ -21,9 +21,18 @@ class session_manager {
     private const ATTENDANCE_TABLE = 'local_sentientia_classroom_attendance';
     private const USERS_TABLE = 'local_sentientia_classroom_users';
 
-    /** @var string Legacy BizLMS table. */
-    private const LEGACY_TABLE = 'local_classroom';
-    private const LEGACY_SESSION_TABLE = 'local_classroom_sessions';
+    /** @var string Trainers of a classroom, one row each (ADR-032: BizLMS local_classroom_trainers). */
+    private const TRAINERS_TABLE = 'local_sentientia_classroom_trainers';
+    /** @var string Courses linked to a classroom (ADR-032: BizLMS local_classroom_courses). */
+    private const COURSES_TABLE = 'local_sentientia_classroom_courses';
+    /** @var string Waiting list. */
+    private const WAITLIST_TABLE = 'local_sentientia_classroom_waitlist';
+
+    // The BizLMS fallbacks that used to live here (a whole-table fallback to {local_classroom} and
+    // {local_classroom_sessions} while the Sentientia table was empty, and a per-id fallback) are gone
+    // (ADR-032, classroom code fix 3). The BizLMS classroom importer moves that history into the
+    // Sentientia tables, so nothing reads a legacy table any more; the fallbacks also sorted the legacy
+    // sessions table by a column it does not have.
 
     /**
      * Count classrooms, optionally scoped by tenant path.
@@ -37,15 +46,31 @@ class session_manager {
     public static function count_classrooms(string $pathfilter = ''): int {
         global $DB;
 
-        $table = self::resolve_table();
-
         if (!empty($pathfilter)) {
             [$psql, $pargs] = \local_sentientia_platform\tenant::path_descendant_filter(
                 $pathfilter, '', 'open_path', 'cc');
-            return $DB->count_records_select($table, $psql, $pargs);
+            return $DB->count_records_select(self::TABLE, $psql, $pargs);
         }
 
-        return $DB->count_records($table);
+        return $DB->count_records(self::TABLE);
+    }
+
+    /**
+     * Count the classrooms the CALLER may see: all of them for a cross-tenant caller, their own tenant's
+     * for anyone else, none for a caller with no tenant (ADR-031: fail closed). The dashboards use this
+     * instead of an unscoped count of a legacy table (classroom code fix 11).
+     *
+     * @return int
+     */
+    public static function count_classrooms_for_caller(): int {
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return self::count_classrooms('');
+        }
+        $scope = \local_sentientia_platform\tenant::scope_path();
+        if ($scope === null || $scope === '') {
+            return 0;
+        }
+        return self::count_classrooms($scope);
     }
 
     /**
@@ -57,12 +82,7 @@ class session_manager {
     public static function get(int $id) {
         global $DB;
 
-        $record = $DB->get_record(self::TABLE, ['id' => $id]);
-        if ($record) {
-            return $record;
-        }
-
-        return self::legacy_get($id);
+        return $DB->get_record(self::TABLE, ['id' => $id]);
     }
 
     /**
@@ -74,14 +94,12 @@ class session_manager {
     public static function get_sessions(int $classroomid): array {
         global $DB;
 
-        $table = self::resolve_session_table();
-        return $DB->get_records($table, ['classroomid' => $classroomid], 'sessiondate ASC');
+        return $DB->get_records(self::SESSION_TABLE, ['classroomid' => $classroomid],
+            'sessiondate ASC, starttime ASC, id ASC');
     }
 
     /**
      * Get a session by ID (for QR attendance).
-     *
-     * Replaces qr_attendance.php query against {local_classroom_sessions}.
      *
      * @param int $sessionid
      * @return object|false
@@ -89,57 +107,7 @@ class session_manager {
     public static function get_session(int $sessionid) {
         global $DB;
 
-        $record = $DB->get_record(self::SESSION_TABLE, ['id' => $sessionid]);
-        if ($record) {
-            return $record;
-        }
-
-        $dbman = $DB->get_manager();
-        if ($dbman->table_exists(self::LEGACY_SESSION_TABLE)) {
-            return $DB->get_record(self::LEGACY_SESSION_TABLE, ['id' => $sessionid]);
-        }
-
-        return false;
-    }
-
-    /**
-     * Determine which table to use (prefers Airpay, falls back to BizLMS).
-     *
-     * @return string
-     */
-    private static function resolve_table(): string {
-        global $DB;
-        $dbman = $DB->get_manager();
-
-        if ($dbman->table_exists(self::TABLE) && $DB->count_records(self::TABLE) > 0) {
-            return self::TABLE;
-        }
-        if ($dbman->table_exists(self::LEGACY_TABLE)) {
-            return self::LEGACY_TABLE;
-        }
-        return self::TABLE;
-    }
-
-    private static function resolve_session_table(): string {
-        global $DB;
-        $dbman = $DB->get_manager();
-
-        if ($dbman->table_exists(self::SESSION_TABLE) && $DB->count_records(self::SESSION_TABLE) > 0) {
-            return self::SESSION_TABLE;
-        }
-        if ($dbman->table_exists(self::LEGACY_SESSION_TABLE)) {
-            return self::LEGACY_SESSION_TABLE;
-        }
-        return self::SESSION_TABLE;
-    }
-
-    private static function legacy_get(int $id) {
-        global $DB;
-        $dbman = $DB->get_manager();
-        if (!$dbman->table_exists(self::LEGACY_TABLE)) {
-            return false;
-        }
-        return $DB->get_record(self::LEGACY_TABLE, ['id' => $id]);
+        return $DB->get_record(self::SESSION_TABLE, ['id' => $sessionid]);
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -413,6 +381,99 @@ class session_manager {
     public const STATUS_CANCELLED = 0;
     public const STATUS_ACTIVE    = 1;
     public const STATUS_COMPLETED = 2;
+    /** Draft: BizLMS "new", a classroom not started yet (ADR-032). 3 and 4 are never used for it. */
+    public const STATUS_DRAFT     = 5;
+    /** On hold (ADR-032). 3 and 4 are never used for it: BizLMS used them for other meanings. */
+    public const STATUS_ON_HOLD   = 6;
+
+    /** Language string of each status. */
+    private const STATUS_STRINGS = [
+        self::STATUS_CANCELLED => 'status_cancelled',
+        self::STATUS_ACTIVE    => 'status_active',
+        self::STATUS_COMPLETED => 'status_completed',
+        self::STATUS_DRAFT     => 'status_draft',
+        self::STATUS_ON_HOLD   => 'status_onhold',
+    ];
+
+    /** Badge class of each status. */
+    private const STATUS_BADGES = [
+        self::STATUS_CANCELLED => 'badge-secondary',
+        self::STATUS_ACTIVE    => 'badge-success',
+        self::STATUS_COMPLETED => 'badge-info',
+        self::STATUS_DRAFT     => 'badge-light',
+        self::STATUS_ON_HOLD   => 'badge-warning',
+    ];
+
+    /**
+     * Every status a classroom may have, in the order the pages list them.
+     *
+     * @return int[]
+     */
+    public static function statuses(): array {
+        return [self::STATUS_ACTIVE, self::STATUS_COMPLETED, self::STATUS_CANCELLED,
+            self::STATUS_DRAFT, self::STATUS_ON_HOLD];
+    }
+
+    /**
+     * The name of a status, in the user's language.
+     *
+     * @param int $status
+     * @return string 'Unknown' for a value no page offers
+     */
+    public static function status_label(int $status): string {
+        return get_string(self::STATUS_STRINGS[$status] ?? 'status_unknown', 'local_sentientia_classroom');
+    }
+
+    /**
+     * The badge class of a status.
+     *
+     * @param int $status
+     * @return string
+     */
+    public static function status_badge(int $status): string {
+        return self::STATUS_BADGES[$status] ?? 'badge-secondary';
+    }
+
+    /**
+     * Has a classroom in this status ended (cancelled or completed)?
+     *
+     * @param int $status
+     * @return bool
+     */
+    public static function is_final(int $status): bool {
+        return $status === self::STATUS_CANCELLED || $status === self::STATUS_COMPLETED;
+    }
+
+    /**
+     * Did the BizLMS import create or adopt this row? Such a row is history (ADR-032,
+     * framework.protect_imported_history): the pages that delete or unenrol refuse it.
+     *
+     * A site whose platform plugin has no import map yet has nothing imported.
+     *
+     * @param string $table Target table name without prefix.
+     * @param int $id
+     * @return bool
+     */
+    public static function is_imported(string $table, int $id): bool {
+        global $DB;
+        if (!class_exists('\local_sentientia_platform\bizlms\provenance')
+                || !$DB->get_manager()->table_exists(\local_sentientia_platform\bizlms\legacymap::TABLE)) {
+            return false;
+        }
+        return \local_sentientia_platform\bizlms\provenance::is_imported($table, $id);
+    }
+
+    /**
+     * Is the reader surface for imported history switched on (default OFF)? It covers the overview's
+     * training dates, linked courses, trainers and logo, the roster's completion columns and the learner's
+     * "My classrooms" page. The flag only controls what is SHOWN; the import, the tenant rules and the
+     * history protection do not depend on it.
+     *
+     * @return bool
+     */
+    public static function history_enabled(): bool {
+        return \local_sentientia_platform\feature_flags::is_enabled('sentientia.classroom.import_history');
+    }
 
     /**
      * Create a new classroom.
@@ -435,7 +496,8 @@ class session_manager {
         $record->departmentid = (int) ($data->departmentid ?? 0);
         $record->trainerid    = (int) ($data->trainerid ?? 0);
         $record->location     = $data->location ?? '';
-        $record->capacity     = max(1, (int) ($data->capacity ?? 30));
+        // 0 is unlimited, as it is in BizLMS and in waitlist_manager::auto_promote() (classroom code fix 5).
+        $record->capacity     = max(0, (int) ($data->capacity ?? 30));
         $record->status       = (int) ($data->status ?? self::STATUS_ACTIVE);
         $record->visible      = isset($data->visible) ? (int) $data->visible : 1;
         // P1 batch (2026-05-16) — enrolment-window dates. Empty input → NULL.
@@ -515,7 +577,7 @@ class session_manager {
     public static function change_status(int $id, int $status): int {
         global $DB, $USER;
 
-        if (!in_array($status, [self::STATUS_CANCELLED, self::STATUS_ACTIVE, self::STATUS_COMPLETED], true)) {
+        if (!in_array($status, self::statuses(), true)) {
             throw new \moodle_exception('invalidstatus', 'local_sentientia_classroom');
         }
 
@@ -561,6 +623,12 @@ class session_manager {
 
         $classroom = $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
 
+        // ADR-032 (framework.protect_imported_history): a classroom the BizLMS import brought in, with its
+        // sessions, roster, attendance and waiting list, is history. Nothing deletes it from here.
+        if (self::is_imported(self::TABLE, $id)) {
+            throw new \moodle_exception('error_protected_history', 'local_sentientia_classroom');
+        }
+
         $transaction = $DB->start_delegated_transaction();
         try {
             // Delete attendance records for all sessions.
@@ -576,6 +644,13 @@ class session_manager {
             $dbman = $DB->get_manager();
             if ($dbman->table_exists(self::USERS_TABLE)) {
                 $DB->delete_records(self::USERS_TABLE, ['classroomid' => $id]);
+            }
+            // The waiting list and the two tables the BizLMS import added (trainers, linked courses) hold
+            // nothing without their classroom. Guarded like the roster: a site may not have them yet.
+            foreach ([self::WAITLIST_TABLE, self::TRAINERS_TABLE, self::COURSES_TABLE] as $child) {
+                if ($dbman->table_exists($child)) {
+                    $DB->delete_records($child, ['classroomid' => $id]);
+                }
             }
             // Delete classroom.
             $DB->delete_records(self::TABLE, ['id' => $id]);
@@ -650,24 +725,10 @@ class session_manager {
      * `javascript:` or `data:` URI silently fails so the column never
      * stores a click-through XSS payload.
      */
-    private static function sanitize_url(?string $url): ?string {
-        if ($url === null) {
-            return null;
-        }
-        $url = trim($url);
-        if ($url === '') {
-            return null;
-        }
-        $parts = parse_url($url);
-        if (!$parts || !isset($parts['scheme']) || !isset($parts['host'])) {
-            return null;
-        }
-        $scheme = strtolower($parts['scheme']);
-        if ($scheme !== 'http' && $scheme !== 'https') {
-            return null;
-        }
-        // Cap length to schema (1024 chars).
-        return mb_substr($url, 0, 1024);
+    public static function sanitize_url(?string $url): ?string {
+        // The rule lives in url_rule so the BizLMS importer (whose static scan bans session_manager) applies
+        // exactly the same one to the links BizLMS stored (ADR-032, classroom code fix 13).
+        return url_rule::sanitize($url);
     }
 
     /**
@@ -711,6 +772,11 @@ class session_manager {
         global $DB;
         $DB->get_record(self::SESSION_TABLE, ['id' => $sessionid], 'id', MUST_EXIST);
 
+        // ADR-032: an imported session and the attendance recorded for it are history.
+        if (self::is_imported(self::SESSION_TABLE, $sessionid)) {
+            throw new \moodle_exception('error_protected_history', 'local_sentientia_classroom');
+        }
+
         $tx = $DB->start_delegated_transaction();
         try {
             $DB->delete_records(self::ATTENDANCE_TABLE, ['sessionid' => $sessionid]);
@@ -735,7 +801,13 @@ class session_manager {
         if (!$dbman->table_exists(self::USERS_TABLE)) {
             return 0;
         }
-        return (int) $DB->count_records(self::USERS_TABLE, ['classroomid' => $classroomid]);
+        // Same set the roster lists: the import keeps the rows of deleted users as history, and they are not
+        // shown (a count that included them would not match the list).
+        return (int) $DB->count_records_sql(
+            "SELECT COUNT(1)
+               FROM {" . self::USERS_TABLE . "} cu
+               JOIN {user} u ON u.id = cu.userid
+              WHERE cu.classroomid = :cid AND u.deleted = 0", ['cid' => $classroomid]);
     }
 
     /**
@@ -801,6 +873,14 @@ class session_manager {
     public static function unenrol_user(int $classroomid, int $userid): bool {
         global $DB;
 
+        // ADR-032 (framework.protect_imported_history): removing an imported learner would also delete the
+        // attendance the import brought in, and a completed learner's completion goes with the roster row.
+        $roster = $DB->get_record(self::USERS_TABLE, ['classroomid' => $classroomid, 'userid' => $userid]);
+        if ($roster && ((int) ($roster->completion_status ?? 0) === 1
+                || self::is_imported(self::USERS_TABLE, (int) $roster->id))) {
+            throw new \moodle_exception('error_protected_history', 'local_sentientia_classroom');
+        }
+
         $tx = $DB->start_delegated_transaction();
         try {
             // Remove attendance for this user across all sessions of this classroom.
@@ -857,7 +937,7 @@ class session_manager {
         if (isset($cols['open_designation'])) { $extra .= ', u.open_designation'; }
 
         [$scopesql, $scopeparams] = self::roster_scope($callerscope, 'u');
-        $where = ['cu.classroomid = :cid', $scopesql];
+        $where = ['cu.classroomid = :cid', 'u.deleted = 0', $scopesql];
         $params = ['cid' => $classroomid] + $scopeparams;
         if (!empty($search)) {
             $term = '%' . $DB->sql_like_escape($search) . '%';
@@ -874,6 +954,7 @@ class session_manager {
         $dir = strtoupper($sortdir) === 'DESC' ? 'DESC' : 'ASC';
 
         $sql = "SELECT cu.id, cu.userid, cu.timecreated AS enrolled_at,
+                       cu.completion_status, cu.timecompleted AS completed_at, cu.hours,
                        u.firstname, u.lastname, u.email{$extra}
                   FROM {" . self::USERS_TABLE . "} cu
                   JOIN {user} u ON u.id = cu.userid
@@ -899,7 +980,7 @@ class session_manager {
         }
 
         [$scopesql, $scopeparams] = self::roster_scope($callerscope, 'u');
-        $where = ['cu.classroomid = :cid', $scopesql];
+        $where = ['cu.classroomid = :cid', 'u.deleted = 0', $scopesql];
         $params = ['cid' => $classroomid] + $scopeparams;
         if (!empty($search)) {
             $term = '%' . $DB->sql_like_escape($search) . '%';
@@ -914,6 +995,130 @@ class session_manager {
             "SELECT COUNT(*) FROM {" . self::USERS_TABLE . "} cu
                 JOIN {user} u ON u.id = cu.userid
               WHERE $wheresql", $params);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Imported history readers (ADR-032, classroom code fix 12)
+    // ═══════════════════════════════════════════════════════════════════
+    //
+    // What the BizLMS import brought in that no page showed: every trainer of a
+    // classroom, the courses it is linked to, and a learner's own classrooms. The
+    // pages that show them sit behind sentientia.classroom.import_history (default
+    // OFF); these functions only read.
+
+    /**
+     * Every trainer of a classroom: the primary trainer first, then the others (the classroom's trainers
+     * table). Users that no longer exist or are deleted are left out.
+     *
+     * @param int $classroomid
+     * @return \stdClass[] user rows, the primary trainer first
+     */
+    public static function get_trainers(int $classroomid): array {
+        global $DB;
+
+        $userids = [];
+        $primary = (int) $DB->get_field(self::TABLE, 'trainerid', ['id' => $classroomid]);
+        if ($primary > 0) {
+            $userids[] = $primary;
+        }
+        if ($DB->get_manager()->table_exists(self::TRAINERS_TABLE)) {
+            $others = $DB->get_records_select(self::TRAINERS_TABLE, 'classroomid = :cid',
+                ['cid' => $classroomid], 'id ASC', 'id, trainerid');
+            foreach ($others as $other) {
+                $userids[] = (int) $other->trainerid;
+            }
+        }
+        $userids = array_values(array_unique(array_filter($userids)));
+        if (!$userids) {
+            return [];
+        }
+        $users = $DB->get_records_list('user', 'id', $userids);
+        $out = [];
+        foreach ($userids as $userid) {
+            if (isset($users[$userid]) && empty($users[$userid]->deleted)) {
+                $out[] = $users[$userid];
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * The courses a classroom is linked to.
+     *
+     * @param int $classroomid
+     * @return \stdClass[] rows with id, fullname and visible of each course, by name
+     */
+    public static function get_linked_courses(int $classroomid): array {
+        global $DB;
+
+        if (!$DB->get_manager()->table_exists(self::COURSES_TABLE)) {
+            return [];
+        }
+        return array_values($DB->get_records_sql(
+            "SELECT c.id, c.fullname, c.visible
+               FROM {" . self::COURSES_TABLE . "} cc
+               JOIN {course} c ON c.id = cc.courseid
+              WHERE cc.classroomid = :cid
+           ORDER BY c.fullname ASC, c.id ASC", ['cid' => $classroomid]));
+    }
+
+    /**
+     * The classrooms a learner is on the roster of, newest training first.
+     *
+     * This is the learner's OWN data, so it is not tenant-scoped: a person sees where they were enrolled. A
+     * draft classroom and a hidden one are not shown to the people on it.
+     *
+     * @param int $userid
+     * @return \stdClass[] id, name, location, status, trainingstart, trainingend, completion_status,
+     *         completed_at, hours and enrolled_at of each
+     */
+    public static function get_user_classrooms(int $userid): array {
+        global $DB;
+
+        if (!$DB->get_manager()->table_exists(self::USERS_TABLE)) {
+            return [];
+        }
+        [$insql, $inparams] = $DB->get_in_or_equal(
+            [self::STATUS_CANCELLED, self::STATUS_ACTIVE, self::STATUS_COMPLETED, self::STATUS_ON_HOLD],
+            SQL_PARAMS_NAMED, 'ucst');
+        return array_values($DB->get_records_sql(
+            "SELECT c.id, c.name, c.location, c.status, c.trainingstart, c.trainingend,
+                    cu.completion_status, cu.timecompleted AS completed_at, cu.hours,
+                    cu.timecreated AS enrolled_at
+               FROM {" . self::USERS_TABLE . "} cu
+               JOIN {" . self::TABLE . "} c ON c.id = cu.classroomid
+              WHERE cu.userid = :uid AND c.visible = 1 AND c.status $insql
+           ORDER BY COALESCE(c.trainingstart, c.timecreated) DESC, c.id DESC",
+            ['uid' => $userid] + $inparams));
+    }
+
+    /**
+     * The sessions of some classrooms with one learner's attendance at each.
+     *
+     * @param int $userid
+     * @param int[] $classroomids
+     * @return array<int, \stdClass[]> classroom id => sessions (id, title, starttime, endtime, location,
+     *         attendance), oldest first; attendance is null when nobody marked the learner
+     */
+    public static function get_user_sessions(int $userid, array $classroomids): array {
+        global $DB;
+
+        $classroomids = array_values(array_unique(array_filter(array_map('intval', $classroomids))));
+        if (!$classroomids) {
+            return [];
+        }
+        [$insql, $inparams] = $DB->get_in_or_equal($classroomids, SQL_PARAMS_NAMED, 'usc');
+        $rows = $DB->get_records_sql(
+            "SELECT s.id, s.classroomid, s.title, s.starttime, s.endtime, s.location, a.status AS attendance
+               FROM {" . self::SESSION_TABLE . "} s
+          LEFT JOIN {" . self::ATTENDANCE_TABLE . "} a ON a.sessionid = s.id AND a.userid = :uid
+              WHERE s.classroomid $insql
+           ORDER BY s.starttime ASC, s.id ASC", ['uid' => $userid] + $inparams);
+        $out = [];
+        foreach ($rows as $row) {
+            $out[(int) $row->classroomid][] = $row;
+        }
+        return $out;
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -1433,7 +1638,7 @@ class session_manager {
                   JOIN {user} u ON u.id = cu.userid
              LEFT JOIN {" . self::ATTENDANCE_TABLE . "} a
                        ON a.sessionid = :sid AND a.userid = cu.userid
-                 WHERE cu.classroomid = :cid AND $scopesql
+                 WHERE cu.classroomid = :cid AND u.deleted = 0 AND $scopesql
               ORDER BY u.lastname ASC, u.firstname ASC";
         $rows = $DB->get_records_sql($sql, [
             'sid' => $sessionid,

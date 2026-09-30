@@ -252,6 +252,76 @@ final class ics_builder_test extends \advanced_testcase {
         $this->assertStringContainsString('LOCATION:Mumbai HQ', $ics);
     }
 
+    /**
+     * A classroom with one session and the user on its roster.
+     *
+     * @param int $userid
+     * @param int $status Classroom status.
+     * @param string $title Session title.
+     * @param string $notes Session notes.
+     * @return void
+     */
+    private function classroom_session_for(int $userid, int $status, string $title, string $notes = ''): void {
+        global $DB;
+        $now = time();
+        $classroomid = $DB->insert_record('local_sentientia_classroom', (object) [
+            'name' => 'Classroom ' . $title, 'description' => '', 'costcenterid' => 1, 'open_path' => '/1',
+            'capacity' => 30, 'status' => $status, 'visible' => 1, 'timecreated' => $now, 'timemodified' => $now,
+        ]);
+        $DB->insert_record('local_sentientia_classroom_sessions', (object) [
+            'classroomid' => $classroomid, 'title' => $title, 'sessiondate' => $now + 86400,
+            'starttime' => $now + 86400, 'endtime' => $now + 86400 + 3600, 'notes' => $notes,
+            'timecreated' => $now, 'timemodified' => $now,
+        ]);
+        $DB->insert_record('local_sentientia_classroom_users', (object) [
+            'classroomid' => $classroomid, 'userid' => $userid, 'timecreated' => $now, 'timemodified' => $now,
+        ]);
+    }
+
+    /**
+     * ADR-032 (classroom code fix 9): only active (1) and completed (2) classrooms reach a learner's calendar.
+     * The BizLMS import brings classrooms in that are draft (5) or on hold (6); a cancelled one (0) never did.
+     */
+    public function test_draft_on_hold_and_cancelled_classrooms_stay_out_of_the_calendar(): void {
+        global $DB;
+        if (!$DB->get_manager()->table_exists('local_sentientia_classroom_sessions')) {
+            $this->markTestSkipped('local_sentientia_classroom not installed');
+        }
+        $user = $this->getDataGenerator()->create_user();
+        $this->classroom_session_for((int) $user->id, 1, 'Active session');
+        $this->classroom_session_for((int) $user->id, 2, 'Completed session');
+        $this->classroom_session_for((int) $user->id, 5, 'Draft session');
+        $this->classroom_session_for((int) $user->id, 6, 'Held session');
+        $this->classroom_session_for((int) $user->id, 0, 'Cancelled session');
+
+        $ics = ics_builder::build_for_user((int) $user->id);
+        $this->assertStringContainsString('Active session', $ics);
+        $this->assertStringContainsString('Completed session', $ics);
+        $this->assertStringNotContainsString('Draft session', $ics);
+        $this->assertStringNotContainsString('Held session', $ics);
+        $this->assertStringNotContainsString('Cancelled session', $ics);
+    }
+
+    /**
+     * ADR-032 (classroom code fix 9): an imported session's notes are the BizLMS description, which is HTML.
+     */
+    public function test_html_session_notes_become_plain_text_in_the_event(): void {
+        global $DB;
+        if (!$DB->get_manager()->table_exists('local_sentientia_classroom_sessions')) {
+            $this->markTestSkipped('local_sentientia_classroom not installed');
+        }
+        $user = $this->getDataGenerator()->create_user();
+        $this->classroom_session_for((int) $user->id, 1, 'Html notes', '<p>Bring <strong>your ID</strong></p><script>x()</script>');
+        $this->classroom_session_for((int) $user->id, 1, 'Plain notes', 'Bring ID & laptop if a < b');
+
+        $unfolded = preg_replace("/\r\n[ \t]/", '', ics_builder::build_for_user((int) $user->id));
+        $this->assertStringContainsString('Bring your ID', $unfolded);
+        $this->assertStringNotContainsString('<strong>', $unfolded);
+        $this->assertStringNotContainsString('<p>', $unfolded);
+        // Text that holds no tag is left alone.
+        $this->assertStringContainsString('Bring ID & laptop if a < b', $unfolded);
+    }
+
     public function test_classroom_session_isolation(): void {
         global $DB;
         if (!$DB->get_manager()->table_exists('local_sentientia_classroom_sessions')) {

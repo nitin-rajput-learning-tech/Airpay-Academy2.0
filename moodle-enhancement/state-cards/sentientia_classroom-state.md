@@ -520,3 +520,78 @@ language change (plugin stays 2026093001 / 1.10.6); deploying the JS needs a JS-
 - **Gates:** php -l on every changed PHP file; `tools/check-tree-drift.php` 0 new; `tools/check-lang-parity.php`
   0 failures (no string changed); `tools/check-path-boundary.php` clean; `scan_amd_build_parity.php` 0 missing.
   Both trees byte-identical for every file touched.
+
+## 2026-09-30 (ADR-032) - BizLMS classroom importer, schema, reader and engine fixes
+
+Branch `claude/bizlms-import-classroom`. Plugin **2026093002 / 1.11.0** (was 2026093001 / 1.10.6). Both trees
+byte-identical for every file touched. The importer has NOT been run and none of the tests below has been run
+(the lead re-inits PHPUnit once for all version bumps and runs `--group bizlms_import`); everything was checked by
+`php -l`, the framework static scan (`tests/classes/bizlms/static_scanner.php`, 0 findings over
+`classes/bizlms/`), `tools/check-tree-drift.php`, `tools/check-lang-parity.php` and by reading against the
+framework, ADR-032 and mapping doc section 15.
+
+- **Importer** (`db/bizlms_import.php`, `classes/bizlms/`): feature `classroom`, depends on `org`, atomic.
+  Eleven steps in order: institutes and rooms -> `local_sentientia_locations` (MAP, one hierarchy); classrooms
+  -> `local_sentientia_classroom` and sessions -> `local_sentientia_classroom_sessions` (PRESERVE: ids are held by
+  certificates, `{event}` rows, enrol `customint1`, evaluations, ratings; a migrate_all header copy is adopted);
+  trainers and linked courses -> the two new tables (MAP, duplicates merged); roster, attendance and waiting
+  list (MAP, grouped: duplicates merged, waiting places renumbered 1..N); trainer feedback and completion rules
+  archived. `local_classroom_test_score` with rows is a blocker; `local_classroom_categories` is declined.
+  Decisions read from the signed file: `status_new_hold`, `waitlist_closed`, `waitlist_open`, `pathless`,
+  `costs_as_columns` (the costs stay in the legacy table: `true` blocks), `tenant.unresolved.classroom`. The
+  tenant path is the only tenant key readers use: an unusable path imports as NULL (cross-tenant only), never
+  guessed from the cost centre unless the owner chose `by_costcenter`.
+- **Trainers are not locked out.** `local_sentientia_classroom.trainerid` = the lowest `local_classroom_trainers`
+  row whose user still exists; `sessions.trainerid` = the session's own trainer (0 -> NULL). The attendance pages
+  (QR fix, 2026-09-30) let a non-`:update` user in only through those two columns. Second and later trainers of a
+  classroom reach sessions that carry their own `trainerid` (BizLMS sessions always do); they are NOT let into
+  every session of the classroom, because `may_run_session()` was not widened (owner's rule).
+- **Schema (install.xml + upgrade step 2026093002, `db/upgradelib.php::local_sentientia_classroom_ensure_import_schema`,
+  idempotent, no row touched):** classroom + `shortname`, `trainingstart`, `trainingend`, `timecompleted`,
+  `createdby`; roster + `completion_status` (default 0), `timecompleted`, `hours`; locations + `parentid`,
+  `venue_type`, `building`; new tables `local_sentientia_classroom_trainers` and `_courses` (unique
+  `(classroomid, trainerid)` and `(classroomid, courseid)`). Status 5 = draft and 6 = on hold (3 and 4 are never
+  reused: raw BizLMS values).
+- **Code fixes of the map:** 3 legacy fallbacks removed from `session_manager` (and `get_sessions()` sorts by
+  columns it has); 4 draft and on-hold in the labels, the change-status whitelist, the edit form, the list, the
+  overview and the status filter, en + hi; 5 capacity 0 = unlimited (form validation, `create()`, help text);
+  6 `auto_promote()` promotes only on an active classroom and never a deleted user (a deleted user is not the
+  head of the queue and does not hold a place); 7 an imported classroom, session or roster row (and any completed
+  roster row) cannot be deleted or unenrolled (`error_protected_history`), and `delete()` also clears the
+  waiting list and the two new tables; 8 DPDP `anonymise_data_for_user()` keeps the roster row (there is no free
+  text on it), full erasure clears `trainerid` / `createdby` and the trainer rows; 9 (calendar plugin) only
+  status 1 and 2 reach a learner's calendar and session notes that hold HTML become text; 10 (trainer block)
+  reads the trainers table and loses its `local_classroom` fallback; 11 the dashboards (`theme/airpayux` and
+  `theme/sentientia`) count `session_manager::count_classrooms_for_caller()` (tenant-scoped, none without a
+  tenant) instead of the unscoped legacy table, and the airpayux quick link points at the Sentientia page;
+  13 `session_manager::sanitize_url()` is public and delegates to the new `url_rule` (the importer applies the
+  same rule); 14 `local_sentientia_classroom_pluginfile()` serves `classroomlogo`.
+- **Readers of imported history, flag `sentientia.classroom.import_history` (default OFF, registered in
+  `db/feature_flags.php`):** overview shows training dates, completed date, every trainer, linked courses and the
+  logo; the roster table gains Completion, Completed on and Hours; learners get `my.php` (their OWN classrooms,
+  sessions, attendance, completion; data built by `classes/my_classrooms.php`; the page does not exist with the
+  flag off); the logo file is served only with the flag on. Roster, waiting-list and attendance reads now leave
+  out deleted users (not flagged: the import keeps their rows as history, and the count matches the list).
+- **Privacy:** the provider now declares `trainerid` and `createdby` (classroom), `trainerid` (sessions), the
+  trainers table, and `enrolledby`, `completion_status`, `timecompleted`, `hours` on the roster, plus attendance
+  `notes`; export adds trainer rows, classrooms led or created and sessions led; en + hi strings.
+- **Extra plugin touched:** `local_sentientia_notifications` `rule_ilt_feedback_pending` has no upper age limit,
+  so after import a rule switched on would ask everyone who ever sat a session for feedback. It now skips
+  sessions the import brought in (`provenance::not_imported_sql`). Code only, no version bump there.
+- **Tests (written, NOT run):** `bizlms_import_test` (contract trait + the feature tests from the fixture section
+  of the map; fixtures `tests/fixtures/bizlms/local_classroom.install.xml` and `local_location.install.xml` are
+  verbatim BizLMS copies with the production-shape edits listed in their headers; `tests/classes/bizlms/` holds
+  `fixture_xml` (joins the two files) and `org_stub` (the registry refuses `depends() = ['org']` when no org
+  importer is registered)); `bizlms_mapping_test` (pure rules); `import_schema_test` (install.xml and the upgrade
+  helper agree, idempotent, no row touched, step 2026093002); `import_readers_test` (states, capacity 0,
+  auto-promote guard, deleted users, the flag, the roster service, the overview and my-classrooms templates,
+  dashboard scope, the logo callback); in other plugins `ics_builder_test` +2, `rule_engine_phase_c_test` +1,
+  `block_sentientia_trainer/tests/trainer_block_test` (3). `location_schema_test` had a stale assertion (the
+  version after replaying the steps is the LAST step's, not 2026092501); it is now `>=`.
+- **Open:** visual evidence (CLAUDE.md section 5) for the changed pages is NOT in this branch: the work was
+  done without a running Moodle. Needed before the flag is flipped or this merges: classroom list with the
+  Draft / On hold filter buttons, the edit form (status select, capacity help), the overview with the flag on
+  (training dates, trainers, courses, logo), the roster with completion columns, `my.php` desktop and mobile.
+  The privacy coverage guard (`privacy_coverage_test::USER_COLUMNS`) does not list `trainerid`; the provider
+  declares it anyway. No navigation link to `my.php` was added (the theme owns the navbar). `moduleid` and the
+  calendar `{event}` rows (gap G7) are untouched.
