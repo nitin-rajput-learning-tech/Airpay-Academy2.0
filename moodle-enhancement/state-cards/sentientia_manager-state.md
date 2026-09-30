@@ -1,10 +1,10 @@
 # State Card — `local_airpay_manager`
 
 **Component:** `local_airpay_manager`
-**Version:** `2026060200` / `1.3.3`  (+ADR-020 W3.4 org-seam migration of team_manager)
+**Version:** `2026093001` / `1.3.7`  (persona pass D4: team_performance gate + team query; see the 2026-09-30 note)
 **Maturity:** `MATURITY_STABLE`
 **Status:** Live on airpay.academy. Manager (line-manager) dashboard + team workflows.
-**Last refreshed:** 2026-05-29 (QA Walk T-03 — empty-state handling)
+**Last refreshed:** 2026-09-30 (persona pass D4 / D14 - Team performance for a line manager)
 
 ---
 
@@ -276,3 +276,59 @@ recommended"); the recommended option, implemented conservatively.
   the smaller id) and back-fills a never-filled course row. The two schema tests alter the table's
   indexes and restore them in `finally`. Written, NOT run (low-CPU session: no PHPUnit). Both trees
   identical.
+
+## 2026-09-30 - Persona pass D4: Team performance works for a line manager
+
+Branch `claude/persona-fix-manager` (bundle 3 of the persona triage,
+`docs/visual-evidence/2026-09-30/personas/TRIAGE.md`). Fix to broken behaviour, so no feature flag.
+
+- **Defect (D4).** `/local/sentientia_manager/performance.php` opened for a line manager
+  (`team_manager::require_manage()`), then showed "Failed to load data": its web service
+  `local_sentientia_manager_team_performance` (`classes/external/team_performance.php`) had two faults.
+  (1) It called `require_capability('local/sentientia_manager:view')`. A supervisor who was never given
+  the Moodle `manager` role does not hold that capability (`vp_manager1` on the local box:
+  `can_manage()` true, capability false), so the people the page is for were refused. The 2026-05-22
+  fix (Goal A audit Bug #9b) moved `list_requests` and `list_allocations` to `require_manage()` and
+  missed this service. (2) Past the gate it selected `u.open_managerid`, a column that has never
+  existed on production, and returned "team detection unavailable".
+- **Fix.** The service calls `team_manager::require_manage()` (site admin, or `:view`, or has direct
+  reports) and reads the team with `team_manager::get_team()`. The reporting-line column is
+  `user.open_supervisorid`: `approval_manager::direct_report_ids()` reads it directly, and `get_team()`
+  reaches it through `local_sentientia_core\org::direct_reports()` (`org.php`, `legacy_direct_reports`,
+  under the default `org_legacy` ON). So the performance page and the My Team dashboard (`index.php`)
+  list exactly the same people. "Own team only unless site admin" is unchanged: a manager cannot pass
+  another manager's id, so a manager in one tenant cannot read another tenant's team. The per-member
+  metric queries are unchanged (still four small queries per direct report - a team of direct
+  reports, not a tenant; batching them like `summarize_team()` is a follow-up if teams grow).
+- **Page.** `performance.php` passes the My Team empty-state strings (`emptyteam_title`,
+  `emptyteam_message`) to `templates/performance.mustache`, which renders them as text nodes. The old
+  hard-coded copy told the manager that "team relationships are based on the `user.open_managerid`
+  column".
+- **Part of D14 (`member.php`).** `$PAGE->set_context()` now runs before `get_member_detail()` (which
+  calls `format_string()`), which removes the developer notice logged on every drill-down. The
+  refusal threw `moodle_exception('nopermission', 'error')`, a core string that does not exist, so the
+  page rendered `[[nopermission]]`; it now throws the new plugin string `error_cannotviewmember`
+  (en + hi; the wording keeps the "Sorry, but you do not ..." prefix the persona harness recognises
+  as a refusal). The gate itself stays `team_manager::can_view_member()` (self, cross-tenant viewer,
+  same-tenant `local/sentientia_users:view` holder, or the supervisor chain): a drill-down asks "may
+  this person see THAT person", which `require_manage()` cannot answer.
+- Version 2026092600 -> **2026093001**, release 1.3.7. No schema, capability, service-definition or
+  flag change; no upgrade step. Both trees identical.
+- Tests: new `tests/team_performance_test.php` (`@group tenant_isolation`, 10 methods): a line manager
+  sees their active direct reports only (not suspended/deleted, colleagues, or another manager's
+  reports); a supervisor with no manager role is admitted (with the precondition that they hold no
+  `:view`); a user who manages nobody, and a mere report, are refused, also when naming a manager; a
+  manager of another tenant sees only their own team, cannot name the other tenant's manager, nor can
+  a tenant admin; the site admin still reads any manager's team; the service works with no
+  `open_managerid` column; the row carries the learning numbers and satisfies `execute_returns()`;
+  the period bounds recent completions only; the legacy `open_supervisorid` path; the new lang string
+  exists in en and hi. Most tests build the reporting line as org-model edges (`org_legacy` OFF)
+  because the org seam caches "is `open_supervisorid` queryable" for the whole PHP process and
+  `local_sentientia_core` tests run on the vanilla schema; the legacy-path test skips itself if that
+  cache was primed. Written, NOT run (low-CPU session: no PHPUnit; `php -l`, tree-drift, lang-parity and
+  path-boundary gates pass).
+- **Not in this bundle.** `index.php:22` still asks `has_capability('local/courses:manage')` (retired
+  name, triage D9, bundle 5); the write services (`decide_request`, `bulk_decide`, `create_allocation`,
+  `delete_allocation`, `bulk_allocate`) still require `:approve` / `:allocate`, which a supervisor
+  without the manager role does not hold - the same class as D4 but a product decision about who may
+  approve, not part of the persona rows.

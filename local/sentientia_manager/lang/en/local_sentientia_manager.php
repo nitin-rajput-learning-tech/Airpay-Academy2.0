@@ -27,6 +27,7 @@ $string['notdirectreport']        = 'The selected user is not your direct report
 $string['duplicateallocation']    = 'This user already has an allocation for that course.';
 $string['manualenrolnotavailable'] = 'The course does not have manual enrolment enabled. Configure it in the course\'s enrolment methods.';
 $string['filterstoolong']         = 'Filter blob exceeds 4 KB limit.';
+$string['error_cannotviewmember'] = 'Sorry, but you do not currently have permission to view this team member. You can only view your direct reports and the people who report up to you.';
 
 // Privacy provider strings.
 $string['privacy:metadata:requests']             = 'Enrolment requests from learners awaiting manager approval.';

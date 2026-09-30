@@ -13,7 +13,8 @@
         </div>
     </div>
 
-    <div data-region="team-performance-table" data-period="{{ period_days }}">
+    <div data-region="team-performance-table" data-period="{{ period_days }}"
+         data-emptytitle="{{ emptytitle }}" data-emptymessage="{{ emptymessage }}">
         <div class="text-center text-muted py-5">Loading...</div>
     </div>
 </div>
@@ -33,9 +34,18 @@ require(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             return;
         }
         if (team.length === 0) {
-            region.innerHTML = '<div class="alert alert-info">'
-                + 'No direct reports assigned to you. (Team relationships are based on '
-                + 'the <code>user.open_managerid</code> column.)</div>';
+            // Text nodes only: the copy comes from the language pack.
+            var empty = document.createElement('div');
+            empty.className = 'alert alert-info';
+            var emptyTitle = document.createElement('strong');
+            emptyTitle.textContent = region.dataset.emptytitle || '';
+            empty.appendChild(emptyTitle);
+            empty.appendChild(document.createElement('br'));
+            empty.appendChild(document.createTextNode(region.dataset.emptymessage || ''));
+            while (region.firstChild) {
+                region.removeChild(region.firstChild);
+            }
+            region.appendChild(empty);
             return;
         }
         var totalCompletions = team.reduce(function(s, m) { return s + m.completions; }, 0);

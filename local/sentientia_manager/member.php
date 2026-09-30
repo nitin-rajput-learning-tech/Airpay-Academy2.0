@@ -18,16 +18,26 @@ global $DB, $USER, $OUTPUT, $PAGE;
 
 $userid = required_param('id', PARAM_INT);
 $context = context_system::instance();
+// Persona pass D14 (2026-09-30): the page context is set BEFORE anything renders
+// text. get_member_detail() runs format_string() over every course name, and
+// format_string() reads $PAGE->context; with it unset core logged a developer
+// notice on every drill-down.
+$PAGE->set_context($context);
 
+// The gate is can_view_member(): the user themselves, a cross-tenant viewer, a
+// same-tenant local/sentientia_users:view holder (ADR-031), or somebody in the
+// member's supervisor chain (up to five levels). It is deliberately not
+// team_manager::require_manage(): that says "this person manages somebody",
+// this says "this person may see THAT person". The refusal used to name the
+// error string 'nopermission', which core does not define, so the page showed
+// the literal placeholder [[nopermission]] instead of a message.
 if (!\local_sentientia_manager\team_manager::can_view_member((int) $USER->id, $userid)) {
-    throw new \moodle_exception('nopermission', 'error', '', null,
-        'You can only view direct reports or skip-level reports under you.');
+    throw new \moodle_exception('error_cannotviewmember', 'local_sentientia_manager');
 }
 
 $detail = \local_sentientia_manager\team_manager::get_member_detail($userid);
 $user = $detail['user'];
 
-$PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/sentientia_manager/member.php', ['id' => $userid]));
 $PAGE->set_title('Team Member — ' . fullname($user));
 $PAGE->set_heading('Team Member — ' . fullname($user));

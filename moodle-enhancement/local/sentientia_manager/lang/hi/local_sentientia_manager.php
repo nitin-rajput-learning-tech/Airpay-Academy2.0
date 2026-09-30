@@ -33,6 +33,7 @@ $string['notdirectreport']         = 'चुना गया यूज़र आ
 $string['duplicateallocation']     = 'इस यूज़र के लिए उस कोर्स का आवंटन पहले से मौजूद है।';
 $string['manualenrolnotavailable'] = 'इस कोर्स में मैनुअल नामांकन सक्षम नहीं है। कोर्स की नामांकन विधियों में इसे कॉन्फ़िगर करें।';
 $string['filterstoolong']          = 'फ़िल्टर ब्लॉब 4 KB सीमा से अधिक है।';
+$string['error_cannotviewmember']  = 'क्षमा करें, आपको इस टीम सदस्य को देखने की अनुमति नहीं है। आप केवल अपने प्रत्यक्ष अधीनस्थों और अपनी रिपोर्टिंग लाइन में आने वाले लोगों को देख सकते हैं।';
 
 // Privacy provider strings — requests.
 $string['privacy:metadata:requests']                 = 'मैनेजर अनुमोदन की प्रतीक्षा में शिक्षार्थियों से नामांकन अनुरोध।';
