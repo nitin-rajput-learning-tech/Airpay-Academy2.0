@@ -18,6 +18,21 @@
  * of /1 and /177 (role 'administrator', manager archetype, system context as
  * on UAT), a /1 line manager with two direct reports, learners in /1 and /177
  * (role 'employee' at system context) and a /1 trainer/author ('trainer').
+ *
+ * Added 2026-09-30 for the persona-journey harness (persona_journeys.mjs), which
+ * replaces the manual UAT persona testing of UAT-VALIDATION-PLAN-2026-09-03.md
+ * (Phase 1 table). Three more personas, each created only if its role exists
+ * locally (a missing role is reported and the persona skipped, never invented):
+ *   vp_compliance1   /1   Compliance officer. No 'complianceofficer' role exists
+ *                         locally; the compliance report's own definition of the
+ *                         BizLMS compliance officer is "role id 9 assigned at a
+ *                         course-category context" (viewer_scope / permission),
+ *                         so the persona holds role 9 ('administrator') at the
+ *                         Airpay category ONLY - no system-level role.
+ *   vp_courseauthor1 /1   Course author: role 'sentientiaauthor' at system
+ *                         context (how the one real author on the box holds it).
+ *   vp_public77      /77  Public / external learner: no system role, just the
+ *                         authenticated-user default a signup gets.
  */
 
 define('CLI_SCRIPT', true);
@@ -32,6 +47,22 @@ if (!preg_match('~^https?://(localhost|127\.0\.0\.1)(:\d+)?(/|$)~', $CFG->wwwroo
 global $DB;
 $sys = context_system::instance();
 $roleid = fn(string $short): int => (int) $DB->get_field('role', 'id', ['shortname' => $short], MUST_EXIST);
+$roleexists = fn(string $short): bool => $DB->record_exists('role', ['shortname' => $short]);
+
+// The course category that carries a tenant root: the top-level category whose
+// idnumber is the tenant's (AirPay for /1). Falls back to the lowest non-default
+// top-level category so a re-imported clone still resolves something.
+$tenantcategory = function (string $tenantroot) use ($DB): ?int {
+    $byroot = ['/1' => 'AirPay', '/77' => 'external', '/177' => 'ZEEA01'];
+    if (isset($byroot[$tenantroot])) {
+        $id = $DB->get_field('course_categories', 'id', ['idnumber' => $byroot[$tenantroot], 'parent' => 0]);
+        if ($id) {
+            return (int) $id;
+        }
+    }
+    $id = $DB->get_field_sql('SELECT MIN(id) FROM {course_categories} WHERE parent = 0 AND id > 1');
+    return $id ? (int) $id : null;
+};
 
 $personas = [
     'vp_siteadmin'  => ['path' => null,    'roles' => [],                 'siteadmin' => true,  'label' => 'Site admin'],
@@ -44,6 +75,11 @@ $personas = [
                         'supervisor' => 'vp_manager1'],
     'vp_learner177' => ['path' => '/177',  'roles' => ['employee'],       'siteadmin' => false, 'label' => 'Learner /177'],
     'vp_author1'    => ['path' => '/1',    'roles' => ['trainer'],        'siteadmin' => false, 'label' => 'Trainer / author /1'],
+    // Added 2026-09-30 (persona-journey harness).
+    'vp_compliance1'   => ['path' => '/1',  'roles' => [], 'siteadmin' => false, 'label' => 'Compliance officer /1',
+                           'catroles' => [['role' => 'administrator', 'tenantroot' => '/1']]],
+    'vp_courseauthor1' => ['path' => '/1',  'roles' => ['sentientiaauthor'], 'siteadmin' => false, 'label' => 'Course author /1'],
+    'vp_public77'      => ['path' => '/77', 'roles' => [], 'siteadmin' => false, 'label' => 'Public learner /77'],
 ];
 
 $gen = function (): string {
@@ -61,7 +97,15 @@ $gen = function (): string {
 
 $out = [];
 $ids = [];
+$skipped = [];
 foreach ($personas as $username => $p) {
+    $needed = array_merge($p['roles'], array_column($p['catroles'] ?? [], 'role'));
+    $missing = array_filter($needed, fn($r) => !$roleexists($r));
+    if ($missing) {
+        $skipped[$username] = 'role ' . implode(',', $missing) . ' does not exist locally';
+        unset($personas[$username]);
+        continue;
+    }
     $pw = $gen();
     $user = $DB->get_record('user', ['username' => $username, 'mnethostid' => $CFG->mnet_localhost_id]);
     if (!$user) {
@@ -82,6 +126,16 @@ foreach ($personas as $username => $p) {
     }
     foreach ($p['roles'] as $short) {
         role_assign($roleid($short), $user->id, $sys->id);
+    }
+    // Roles held at a course-category context only (the BizLMS compliance officer
+    // shape). role_assign() is idempotent for an identical assignment.
+    foreach ($p['catroles'] ?? [] as $cr) {
+        $catid = $tenantcategory($cr['tenantroot']);
+        if ($catid) {
+            role_assign($roleid($cr['role']), $user->id, context_coursecat::instance($catid)->id);
+        } else {
+            $skipped[$username . ' (category role)'] = 'no category found for ' . $cr['tenantroot'];
+        }
     }
     $ids[$username] = (int) $user->id;
     $out[$username] = ['id' => (int) $user->id, 'password' => $pw, 'label' => $p['label'], 'path' => $p['path']];
@@ -105,3 +159,6 @@ $file = __DIR__ . '/.personas.local.json';
 file_put_contents($file, json_encode($out, JSON_PRETTY_PRINT));
 echo 'Provisioned ' . count($out) . " local personas (ids " . implode(',', $ids) . "); credentials written to "
     . basename($file) . " (gitignored, not printed).\n";
+foreach ($skipped as $who => $why) {
+    echo "SKIPPED {$who}: {$why}\n";
+}

@@ -1,0 +1,4 @@
+# Local-only harness state: never commit (credentials / imported course titles).
+.personas.local.json
+.journey-context.local.json
+node_modules/

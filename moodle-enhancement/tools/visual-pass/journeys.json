@@ -1,0 +1,305 @@
+{
+  "version": 1,
+  "about": "Persona journeys for persona_journeys.mjs (LOCAL XAMPP ONLY). One entry per persona in the Phase 1 table of docs/cutover/UAT-VALIDATION-PLAN-2026-09-03.md. Personas come from provision_local_personas.php; {{...}} placeholders resolve from .journey-context.local.json (seed_journey_content.php) and .personas.local.json (user ids only). {{re:...}} is the same value regex-escaped. Every step also gets the cross-cutting checks (HTTP < 400, no error box / debug text / [[missing]] strings / Coding error, console errors, no horizontal scroll at 590 and 390 px, desktop + mobile screenshot).",
+  "fields": {
+    "id": "step slug (used in file names, --from, --steps)",
+    "url": "path to open; omit when a handler navigates",
+    "handler": "named handler in persona_journeys.mjs (enrolFree, langToggle, tableSearch, csvExport, cartAddSession, cartAddDb, cartCleanup)",
+    "landing": "true = console errors on this page FAIL the step (UAT plan: zero JS errors on every persona landing page); otherwise they only turn PASS into CHECK",
+    "access": "ok (default): page must render for this persona | refused: page must refuse (error box / permission text / redirect to dashboard) | either: record which happened",
+    "flag": "feature flag key; the step is SKIPped with 'flag off' when the flag is off for the persona's tenant",
+    "waitFor": "CSS selector that must appear (AJAX tables)",
+    "page": "false = no browser page (CSV download via the session)",
+    "isolation": "oneOnlyCourseNames: the page text must not contain any /1-only course name",
+    "expect.heading": "regex vs document title + h1/h2 text (hard)",
+    "expect.text / selectors": "arrays; every entry must match / exist (hard, polled up to 15 s)",
+    "expect.softText / softSelectors": "a miss gives CHECK, not FAIL",
+    "expect.denyText / denySelectors": "none may match / exist (hard)",
+    "expect.finalUrl": "regex vs final path+query (hard); without it a silent redirect elsewhere gives CHECK",
+    "expect.lang / devanagari": "html lang attribute prefix / Devanagari text present (hard)",
+    "macro": "langPair: expands to lang-<to> steps (langs) then lang-en; back:false omits the final lang-en (the journey switches back itself). url = the page the toggle starts from"
+  },
+  "personas": {
+    "learner": {
+      "username": "vp_learner1",
+      "tenant": 1,
+      "label": "Learner / employee (Airpay /1)",
+      "validates": "onboarding, dashboard, catalog + one-click enrol, course player (Page), my courses, certificates, EN <-> HI, profile/privacy pages",
+      "steps": [
+        { "id": "onboarding", "name": "Onboarding wizard (or redirect once completed)", "url": "/local/sentientia_pages/onboarding.php", "access": "either" },
+        { "macro": "onboard" },
+        { "id": "dashboard", "name": "Dashboard", "url": "/my/dashboard.php", "landing": true },
+        { "id": "catalog", "name": "Course catalog", "url": "/local/sentientia_catalog/index.php",
+          "expect": { "heading": "Course Catalog|Catalog", "softSelectors": ["[class*='airpay-catalog']"] } },
+        { "id": "catalog-search", "name": "Catalog search finds the seeded free course", "url": "/local/sentientia_catalog/index.php?q=VP+Journey+Free",
+          "expect": { "text": ["{{re:courses.free1.fullname}}"] } },
+        { "id": "enrol-free", "name": "One-click enrol into a free course", "handler": "enrolFree", "args": { "course": "free1" },
+          "expect": { "finalUrl": "/course/view\\.php\\?id={{courses.free1.id}}", "text": ["{{re:courses.free1.fullname}}"] } },
+        { "id": "course-open", "name": "Open the course", "url": "/course/view.php?id={{courses.free1.id}}",
+          "expect": { "text": ["{{re:courses.free1.fullname}}", "VP Journey Page"] } },
+        { "id": "page-activity", "name": "Open a Page activity", "url": "/mod/page/view.php?id={{courses.free1.pagecmid}}",
+          "expect": { "text": ["VP journey page body text"] } },
+        { "id": "my-courses", "name": "My courses lists the enrolled course", "url": "/local/sentientia_catalog/mycourses.php",
+          "expect": { "text": ["{{re:courses.free1.fullname}}"] } },
+        { "id": "certificates", "name": "My certificates", "url": "/local/sentientia_pages/certificates.php",
+          "expect": { "heading": "My Certificates" } },
+        { "id": "profile", "name": "Own profile", "url": "/local/sentientia_users/profile.php?id={{me}}",
+          "expect": { "text": ["VP\\s+Learner"] } },
+        { "id": "privacy", "name": "My privacy & data", "url": "/local/sentientia_privacy/index.php",
+          "expect": { "heading": "Privacy" } },
+        { "id": "privacy-policy", "name": "Privacy policy", "url": "/local/sentientia_users/privacypolicy.php",
+          "expect": { "heading": "Privacy Policy" } },
+        { "id": "notifications", "name": "In-app notifications", "url": "/message/output/popup/notifications.php" },
+        { "macro": "langPair", "url": "/my/dashboard.php", "langs": ["hi"], "back": false },
+        { "id": "lang-hi-catalog", "name": "Catalog stays in Hindi", "url": "/local/sentientia_catalog/index.php",
+          "expect": { "lang": "hi", "devanagari": true } },
+        { "id": "lang-en-back", "name": "Back to English (session)", "handler": "langToggle", "args": { "to": "en", "url": "/local/sentientia_catalog/index.php" } },
+        { "id": "deny-manage-users", "name": "Learner cannot open Manage Users", "url": "/local/sentientia_users/index.php", "access": "refused" },
+        { "id": "deny-compliance", "name": "Learner cannot open the compliance report", "url": "/local/sentientia_compliance_report/index.php", "access": "refused" }
+      ]
+    },
+
+    "manager": {
+      "username": "vp_manager1",
+      "tenant": 1,
+      "label": "Line manager with two direct reports (/1)",
+      "validates": "team dashboard, direct-report progress, compliance RAG, approvals/requests, notifications (in-app only)",
+      "steps": [
+        { "id": "dashboard", "name": "Dashboard", "url": "/my/dashboard.php", "landing": true },
+        { "id": "my-team", "name": "My Team lists both direct reports", "url": "/local/sentientia_manager/index.php",
+          "expect": { "heading": "My Team", "text": ["VP\\s+Learner /1(?!\\d)", "VP\\s+Second report /1"] } },
+        { "id": "direct-report", "name": "A direct report's progress", "url": "/local/sentientia_manager/member.php?id={{users.vp_learner1}}",
+          "expect": { "heading": "Team Member", "text": ["VP\\s+Learner"] } },
+        { "id": "team-performance", "name": "Team performance", "url": "/local/sentientia_manager/performance.php",
+          "expect": { "heading": "Team performance" } },
+        { "id": "compliance-rag", "name": "Compliance report (team scope) with RAG status", "url": "/local/sentientia_compliance_report/index.php",
+          "expect": { "heading": "Compliance", "softText": ["Compliant|Overdue|At risk|Not started|In progress|On track"] } },
+        { "id": "requests", "name": "Enrolment requests / approvals", "url": "/local/sentientia_manager/requests.php",
+          "expect": { "heading": "Enrolment Requests" } },
+        { "id": "notifications", "name": "In-app notifications", "url": "/message/output/popup/notifications.php" },
+        { "macro": "langPair", "url": "/my/dashboard.php", "langs": ["hi"] },
+        { "id": "deny-manage-users", "name": "Manager cannot open Manage Users", "url": "/local/sentientia_users/index.php", "access": "refused" },
+        { "id": "deny-compliance-export", "name": "Manager cannot export the compliance matrix", "handler": "csvExport", "page": false,
+          "url": "/local/sentientia_compliance_report/export.php?format=csv", "args": { "expect": "denied" } }
+      ]
+    },
+
+    "trainer": {
+      "username": "vp_author1",
+      "tenant": 1,
+      "label": "Trainer (/1, role trainer; trainer of the seeded free course)",
+      "validates": "classroom sessions, Sentientia Live (dashboard; SSE audience needs a live session), evaluations, gradebook",
+      "steps": [
+        { "macro": "onboard" },
+        { "id": "dashboard", "name": "Dashboard", "url": "/my/dashboard.php", "landing": true },
+        { "id": "classroom", "name": "Classroom sessions", "url": "/local/sentientia_classroom/index.php",
+          "expect": { "heading": "Classroom Training" } },
+        { "id": "live", "name": "Sentientia Live (routes to the trainer dashboard)", "url": "/local/sentientia_live/index.php", "flag": "live.enabled",
+          "expect": { "finalUrl": "sentientia_live/trainer/" } },
+        { "id": "evaluations", "name": "Evaluations", "url": "/local/sentientia_evaluation/index.php", "access": "either" },
+        { "id": "course-open", "name": "Own course", "url": "/course/view.php?id={{courses.free1.id}}",
+          "expect": { "text": ["{{re:courses.free1.fullname}}"] } },
+        { "id": "gradebook", "name": "Gradebook (grader report)", "url": "/grade/report/grader/index.php?id={{courses.free1.id}}",
+          "expect": { "heading": "Grader report|Gradebook|Grades" } },
+        { "id": "authoring", "name": "Authoring studio (trainer holds authoring:generate)", "url": "/local/sentientia_authoring/index.php", "access": "either" },
+        { "macro": "langPair", "url": "/my/dashboard.php", "langs": ["hi"] },
+        { "id": "deny-manage-users", "name": "Trainer cannot open Manage Users", "url": "/local/sentientia_users/index.php", "access": "refused" }
+      ]
+    },
+
+    "author": {
+      "username": "vp_courseauthor1",
+      "tenant": 1,
+      "label": "Course author (/1, role sentientiaauthor)",
+      "validates": "authoring drafts, AI quiz generation (mock) - recorded as 'flag off' while sentientia.aiquiz.enabled is off",
+      "steps": [
+        { "macro": "onboard" },
+        { "id": "dashboard", "name": "Dashboard", "url": "/my/dashboard.php", "landing": true },
+        { "id": "authoring-drafts", "name": "Authoring drafts", "url": "/local/sentientia_authoring/index.php", "flag": "sentientia.authoring.enabled",
+          "expect": { "heading": "Authoring Studio" } },
+        { "id": "authoring-studio", "name": "Authoring studio (generate)", "url": "/local/sentientia_authoring/studio.php", "flag": "sentientia.authoring.enabled",
+          "expect": { "heading": "Authoring Studio" } },
+        { "id": "authoring-templates", "name": "Design templates", "url": "/local/sentientia_authoring/templates.php", "flag": "sentientia.authoring.enabled",
+          "expect": { "heading": "Authoring Studio" } },
+        { "id": "authoring-review", "name": "Review queue", "url": "/local/sentientia_authoring/review.php", "flag": "sentientia.authoring.enabled",
+          "expect": { "heading": "Authoring Studio|Review" } },
+        { "id": "aiquiz-generate", "name": "AI quiz generation (mock mode)", "url": "/local/sentientia_aiquiz/generate.php", "flag": "sentientia.aiquiz.enabled",
+          "expect": { "heading": "Generate AI quiz" } },
+        { "id": "aiquiz-drafts", "name": "AI quiz drafts", "url": "/local/sentientia_aiquiz/review.php", "flag": "sentientia.aiquiz.enabled",
+          "expect": { "heading": "AI quiz" } },
+        { "macro": "langPair", "url": "/my/dashboard.php", "langs": ["hi"] },
+        { "id": "deny-manage-users", "name": "Author cannot open Manage Users", "url": "/local/sentientia_users/index.php", "access": "refused" },
+        { "id": "deny-featured-courses", "name": "Author cannot open Featured courses (courses:manage)", "url": "/local/sentientia_courses/featured.php", "access": "refused" }
+      ]
+    },
+
+    "admin1": {
+      "username": "vp_admin1",
+      "tenant": 1,
+      "label": "Tenant / L&D admin (/1, role administrator)",
+      "validates": "Manage Users, Manage Courses, org tree, reports + CSV export, feature switchboard, certificates admin, tenant scoping",
+      "steps": [
+        { "id": "dashboard", "name": "Dashboard", "url": "/my/dashboard.php", "landing": true },
+        { "id": "manage-users", "name": "Manage Users", "url": "/local/sentientia_users/index.php", "waitFor": "table tbody tr",
+          "expect": { "heading": "Manage Users" } },
+        { "id": "users-isolation", "name": "Manage Users shows no /177 accounts", "handler": "tableSearch", "url": "/local/sentientia_users/index.php",
+          "args": { "search": "VP " }, "waitFor": "table tbody tr",
+          "expect": { "softText": ["VP\\s+Learner /1(?!\\d)"], "denyText": ["VP\\s+Learner /177", "VP\\s+Tenant admin /177"] } },
+        { "id": "manage-courses", "name": "Manage Courses", "url": "/local/sentientia_courses/index.php", "waitFor": "table tbody tr",
+          "expect": { "heading": "Course Engine|Courses" } },
+        { "id": "org-tree", "name": "Organisation tree", "url": "/local/sentientia_org/admin.php",
+          "expect": { "heading": "Organisation Management" } },
+        { "id": "reports", "name": "Reports", "url": "/local/sentientia_reports/index.php",
+          "expect": { "heading": "Reports" } },
+        { "id": "csv-export", "name": "CSV export (courses) returns 200 text/csv", "handler": "csvExport", "page": false,
+          "url": "/local/sentientia_courses/exportcsv.php" },
+        { "id": "roles", "name": "Role management", "url": "/local/sentientia_roles/index.php",
+          "expect": { "heading": "Role Management" } },
+        { "id": "switchboard", "name": "Feature switchboard (site:config; tenant admin may be refused)", "url": "/local/sentientia_platform/admin/switchboard.php", "access": "either" },
+        { "id": "certificates-admin", "name": "Certificate templates admin (tenant admin may be refused)", "url": "/local/sentientia_pages/certificate_templates.php", "access": "either" },
+        { "id": "requests-all", "name": "All course requests", "url": "/local/sentientia_request/all.php", "access": "either" },
+        { "macro": "langPair", "url": "/my/dashboard.php", "langs": ["hi"] },
+        { "id": "deny-environment", "name": "Tenant admin cannot open Moodle Environment", "url": "/admin/environment.php", "access": "refused" }
+      ]
+    },
+
+    "compliance": {
+      "username": "vp_compliance1",
+      "tenant": 1,
+      "label": "Compliance officer (/1, role 9 at the Airpay category)",
+      "validates": "compliance dashboard + report, exports (mandatory-course lifecycle tag needs the lifecycle flag, off locally)",
+      "steps": [
+        { "id": "dashboard", "name": "Dashboard", "url": "/my/dashboard.php", "landing": true },
+        { "id": "compliance-report", "name": "Compliance report (tenant scope)", "url": "/local/sentientia_compliance_report/index.php",
+          "expect": { "heading": "Compliance" } },
+        { "id": "csv-export", "name": "Compliance CSV export returns 200 text/csv", "handler": "csvExport", "page": false,
+          "url": "/local/sentientia_compliance_report/export.php?format=csv" },
+        { "macro": "langPair", "url": "/my/dashboard.php", "langs": ["hi"] },
+        { "id": "deny-manage-users", "name": "Compliance officer cannot open Manage Users", "url": "/local/sentientia_users/index.php", "access": "refused" }
+      ]
+    },
+
+    "public77": {
+      "username": "vp_public77",
+      "tenant": 77,
+      "label": "Public / external learner (/77)",
+      "validates": "public storefront, catalog isolation, cart with a priced course, checkout reached (never paid)",
+      "steps": [
+        { "macro": "onboard" },
+        { "id": "dashboard", "name": "Dashboard", "url": "/my/dashboard.php", "landing": true },
+        { "id": "storefront", "name": "Public storefront lists the priced course", "url": "/local/sentientia_catalog/public.php", "isolation": "oneOnlyCourseNames",
+          "expect": { "heading": "Course Catalog|Catalog", "text": ["{{re:courses.publicPriced.fullname}}"] } },
+        { "id": "catalog", "name": "Logged-in catalog shows no /1-only course", "url": "/local/sentientia_catalog/index.php", "isolation": "oneOnlyCourseNames" },
+        { "id": "priced-detail", "name": "Priced course detail offers Add to Cart", "url": "/local/sentientia_catalog/course.php?id={{courses.publicPriced.id}}",
+          "expect": { "text": ["{{re:courses.publicPriced.fullname}}", "Add to Cart"] } },
+        { "id": "cart-add-ui", "name": "Add to Cart (storefront session cart)", "handler": "cartAddSession",
+          "expect": { "finalUrl": "added=1" } },
+        { "id": "cart-page-ui", "name": "Storefront cart page", "url": "/local/sentientia_catalog/cart.php",
+          "expect": { "text": ["{{re:courses.publicPriced.fullname}}"], "softText": ["Proceed to|Checkout"] } },
+        { "id": "cart-db-add", "name": "Add the priced course to the order cart (local_sentientia_cart)", "handler": "cartAddDb",
+          "expect": { "heading": "My Cart", "text": ["{{re:courses.publicPriced.fullname}}"], "selectors": [".airpay-cart__item"] } },
+        { "id": "checkout", "name": "Checkout page reached (not submitted, nothing paid)", "url": "/local/sentientia_cart/checkout.php",
+          "expect": { "heading": "Checkout", "selectors": ["input[name='billing_name']", "input[name='billing_email']"], "softSelectors": ["input[name='gateway']"] } },
+        { "id": "cart-cleanup", "name": "Remove the item again (keeps re-runs idempotent)", "handler": "cartCleanup",
+          "expect": { "text": ["Your cart is empty"] } },
+        { "id": "order-history", "name": "Order history", "url": "/local/sentientia_cart/history.php",
+          "expect": { "heading": "Order history" } },
+        { "id": "deny-internal-course", "name": "Cannot open a /1 course by id", "url": "/local/sentientia_catalog/course.php?id={{courses.free1.id}}", "access": "refused" },
+        { "macro": "langPair", "url": "/my/dashboard.php", "langs": ["hi"] }
+      ]
+    },
+
+    "guest": {
+      "username": null,
+      "tenant": 77,
+      "label": "Anonymous visitor (no login)",
+      "validates": "public storefront, signup page, login page, guest is sent to login for private pages",
+      "steps": [
+        { "id": "storefront", "name": "Public storefront (guest)", "url": "/local/sentientia_catalog/public.php", "landing": true, "isolation": "oneOnlyCourseNames",
+          "expect": { "heading": "Course Catalog|Catalog", "text": ["{{re:courses.publicPriced.fullname}}"] } },
+        { "id": "priced-detail", "name": "Priced course detail (guest sees Add to Cart + login)", "url": "/local/sentientia_catalog/course.php?id={{courses.publicPriced.id}}",
+          "expect": { "text": ["Add to Cart", "Login to Access"] } },
+        { "id": "signup", "name": "Signup page renders", "url": "/local/sentientia_users/signup.php",
+          "expect": { "heading": "Create your Airpay Academy account|account", "selectors": ["form"] } },
+        { "id": "login", "name": "Login page renders", "url": "/login/index.php",
+          "expect": { "selectors": ["#username", "#password", "#loginbtn"] } },
+        { "id": "deny-dashboard", "name": "Guest is sent to login for the dashboard", "url": "/my/dashboard.php", "access": "refused" },
+        { "id": "deny-internal-course", "name": "Guest cannot open a /1 course by id", "url": "/local/sentientia_catalog/course.php?id={{courses.free1.id}}", "access": "refused" }
+      ]
+    },
+
+    "zeea-learner": {
+      "username": "vp_learner177",
+      "tenant": 177,
+      "label": "ZEEA learner (/177)",
+      "validates": "tenant isolation (no /1 courses), Swahili/Hindi pack behaviour, one-click enrol, ZEEA cart",
+      "steps": [
+        { "macro": "onboard" },
+        { "id": "dashboard", "name": "Dashboard", "url": "/my/dashboard.php", "landing": true },
+        { "id": "catalog", "name": "Catalog shows no /1-only course", "url": "/local/sentientia_catalog/index.php", "isolation": "oneOnlyCourseNames",
+          "expect": { "heading": "Course Catalog|Catalog" } },
+        { "id": "catalog-search", "name": "Catalog search finds the seeded ZEEA course", "url": "/local/sentientia_catalog/index.php?q=VP+Journey+ZEEA", "isolation": "oneOnlyCourseNames",
+          "expect": { "text": ["{{re:courses.zeeaFree.fullname}}"], "denyText": ["{{re:courses.free1.fullname}}"] } },
+        { "id": "catalog-search-tenant1", "name": "Searching a /1 course name finds nothing", "url": "/local/sentientia_catalog/index.php?q=VP+Journey+Free", "isolation": "oneOnlyCourseNames",
+          "expect": { "denyText": ["{{re:courses.free1.fullname}}"] } },
+        { "id": "enrol-free", "name": "One-click enrol into a free ZEEA course", "handler": "enrolFree", "args": { "course": "zeeaFree" },
+          "expect": { "finalUrl": "/course/view\\.php\\?id={{courses.zeeaFree.id}}", "text": ["{{re:courses.zeeaFree.fullname}}"] } },
+        { "id": "my-courses", "name": "My courses (only ZEEA content)", "url": "/local/sentientia_catalog/mycourses.php", "isolation": "oneOnlyCourseNames",
+          "expect": { "text": ["{{re:courses.zeeaFree.fullname}}"] } },
+        { "id": "cart", "name": "Order cart is enabled for /177", "url": "/local/sentientia_cart/index.php",
+          "expect": { "heading": "My Cart" } },
+        { "id": "deny-tenant1-course", "name": "Cannot open a /1 course by id", "url": "/local/sentientia_catalog/course.php?id={{courses.free1.id}}", "access": "refused" },
+        { "id": "deny-manage-users", "name": "ZEEA learner cannot open Manage Users", "url": "/local/sentientia_users/index.php", "access": "refused" },
+        { "macro": "langPair", "url": "/my/dashboard.php", "langs": ["sw", "hi"] }
+      ]
+    },
+
+    "zeea-admin": {
+      "username": "vp_admin177",
+      "tenant": 177,
+      "label": "ZEEA tenant admin (/177, role administrator)",
+      "validates": "tenant isolation both ways (no /1 data), org tree, branding per tenant",
+      "steps": [
+        { "id": "dashboard", "name": "Dashboard", "url": "/my/dashboard.php", "landing": true },
+        { "id": "manage-courses", "name": "Manage Courses shows no /1-only course", "url": "/local/sentientia_courses/index.php", "waitFor": "table tbody tr", "isolation": "oneOnlyCourseNames",
+          "expect": { "heading": "Course Engine|Courses" } },
+        { "id": "csv-export", "name": "Courses CSV holds no /1-only course", "handler": "csvExport", "page": false, "isolation": "oneOnlyCourseNames",
+          "url": "/local/sentientia_courses/exportcsv.php" },
+        { "id": "users-isolation", "name": "Manage Users shows no /1 accounts", "handler": "tableSearch", "url": "/local/sentientia_users/index.php",
+          "args": { "search": "VP " }, "waitFor": "table tbody tr",
+          "expect": { "softText": ["VP\\s+Learner /177"], "denyText": ["VP\\s+Learner /1(?!\\d)", "VP\\s+Line manager /1", "VP\\s+Second report /1", "VP\\s+Tenant admin /1(?!\\d)"] } },
+        { "id": "org-tree", "name": "Organisation tree", "url": "/local/sentientia_org/admin.php",
+          "expect": { "heading": "Organisation Management" } },
+        { "id": "deny-tenant1-course", "name": "Cannot open a /1 course by id", "url": "/local/sentientia_catalog/course.php?id={{courses.free1.id}}", "access": "refused" },
+        { "macro": "langPair", "url": "/my/dashboard.php", "langs": ["sw", "hi"] }
+      ]
+    },
+
+    "siteadmin": {
+      "username": "vp_siteadmin",
+      "tenant": 1,
+      "label": "Site admin (Moodle administrator)",
+      "validates": "Environment, plugins overview, scheduled tasks, switchboard, privacy tools, cross-tenant lists",
+      "steps": [
+        { "id": "dashboard", "name": "Dashboard", "url": "/my/dashboard.php", "landing": true },
+        { "id": "environment", "name": "Environment", "url": "/admin/environment.php",
+          "expect": { "heading": "Environment" } },
+        { "id": "plugins-overview", "name": "Plugins overview", "url": "/admin/plugins.php",
+          "expect": { "heading": "Plugins overview" } },
+        { "id": "scheduled-tasks", "name": "Scheduled tasks", "url": "/admin/tool/task/scheduledtasks.php",
+          "expect": { "heading": "Scheduled tasks" } },
+        { "id": "switchboard", "name": "Feature switchboard", "url": "/local/sentientia_platform/admin/switchboard.php",
+          "expect": { "heading": "Switchboard|feature flags" } },
+        { "id": "privacy-requests", "name": "Privacy data requests", "url": "/admin/tool/dataprivacy/datarequests.php",
+          "expect": { "heading": "Data requests" } },
+        { "id": "dpdp", "name": "DPDP privacy administration", "url": "/local/sentientia_privacy/index.php",
+          "expect": { "heading": "Privacy" } },
+        { "id": "manage-users", "name": "Manage Users (cross-tenant)", "url": "/local/sentientia_users/index.php", "waitFor": "table tbody tr",
+          "expect": { "heading": "Manage Users" } },
+        { "id": "manage-courses", "name": "Manage Courses (cross-tenant)", "url": "/local/sentientia_courses/index.php", "waitFor": "table tbody tr",
+          "expect": { "heading": "Course Engine|Courses" } },
+        { "macro": "langPair", "url": "/my/dashboard.php", "langs": ["hi"] }
+      ]
+    }
+  }
+}
