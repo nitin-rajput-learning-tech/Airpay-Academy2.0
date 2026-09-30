@@ -22,6 +22,24 @@ use core_external\external_value;
  *   - allocated courses count + completion %
  *
  * Phase 4 B.10 (2026-05-11).
+ *
+ * Persona pass D4 (2026-09-30): the page (performance.php) opened for a line
+ * manager but this service refused them, and would have returned nothing even
+ * if it had not. Two defects, both fixed here:
+ *
+ *   1. Gate. It called require_capability('local/sentientia_manager:view'),
+ *      which a supervisor who was never given the Moodle `manager` role does not
+ *      hold. The 2026-05-22 fix (Goal A audit Bug #9b) moved list_requests and
+ *      list_allocations to team_manager::require_manage() and missed this one.
+ *      It now uses the same supervisor-aware gate as the page and its siblings.
+ *   2. Team query. It read `user.open_managerid`, a column that has never
+ *      existed on production (it is not in the BizLMS schema), and returned
+ *      "team detection unavailable" whenever it was absent. The reporting line
+ *      is `user.open_supervisorid` (the column approval_manager::direct_report_ids()
+ *      reads, and the one local_sentientia_core\org::direct_reports() resolves
+ *      under the default org_legacy flag). The team now comes from
+ *      team_manager::get_team(), which is what the My Team dashboard (index.php)
+ *      lists, so the two pages cannot disagree about who is on a team.
  */
 class team_performance extends external_api {
 
@@ -39,9 +57,14 @@ class team_performance extends external_api {
 
         $context = \context_system::instance();
         self::validate_context($context);
-        require_capability('local/sentientia_manager:view', $context);
+        // D4: supervisor-or-capability, exactly as performance.php, list_requests
+        // and list_allocations gate. Site admins, holders of :view, and anyone
+        // who is somebody's supervisor pass; everybody else is refused.
+        \local_sentientia_manager\team_manager::require_manage();
 
-        // Default to current user; siteadmin can specify any manager.
+        // Default to current user; siteadmin can specify any manager. Nobody
+        // else may read another manager's team, so a manager in one tenant can
+        // never ask for a manager in another tenant.
         $target_mid = $params['managerid'] ?: (int) $USER->id;
         if ($target_mid !== (int) $USER->id && !is_siteadmin()) {
             throw new \moodle_exception('nopermissions', 'error',
@@ -50,26 +73,12 @@ class team_performance extends external_api {
 
         $cutoff = time() - ($params['period_days'] * 86400);
 
-        // Defensive: open_managerid may not exist on production Moodle 5.
-        $cols = $DB->get_columns('user');
-        if (!isset($cols['open_managerid'])) {
-            return [
-                'period_days' => $params['period_days'],
-                'managerid'   => $target_mid,
-                'team'        => [],
-                'message'     => 'open_managerid column missing — team detection unavailable',
-            ];
-        }
-
-        // Get team members.
-        $team = $DB->get_records_sql(
-            "SELECT u.id, u.firstname, u.lastname, u.email,
-                    u.open_employeeid, u.open_designation, u.lastaccess
-               FROM {user} u
-              WHERE u.open_managerid = :mid
-                AND u.deleted = 0 AND u.suspended = 0
-              ORDER BY u.lastname ASC",
-            ['mid' => $target_mid]);
+        // The team: direct reports through the org seam (open_supervisorid under
+        // org_legacy ON), active and not deleted, ordered by name. It is the list
+        // the My Team dashboard shows. On a database with no reporting-line column
+        // at all the seam degrades to an empty team, which the page renders as its
+        // "no direct reports" empty state.
+        $team = \local_sentientia_manager\team_manager::get_team((int) $target_mid);
 
         $rows = [];
         foreach ($team as $member) {

@@ -23,13 +23,22 @@ $plugin->component = 'local_sentientia_manager';
 // courseid) index let a user hold only one classroom / program / path
 // allocation (all carry courseid 0). Step 2026092600 makes it a plain index;
 // idx_user_item (userid, item_type, itemid) stays the uniqueness rule.
-$plugin->version   = 2026092600;  // Decision 5: allocation unique key is (user, type, item)
+// Persona pass D4 + D14 (2026-09-30) - Team performance for a line manager.
+// The team_performance web service demanded local/sentientia_manager:view (which a
+// supervisor with no Moodle manager role does not hold) and then selected
+// user.open_managerid, a column that does not exist. It now uses the same
+// supervisor-aware team_manager::require_manage() gate as the page and reads the
+// team through team_manager::get_team() (open_supervisorid via the org seam).
+// member.php sets its page context before rendering text and refuses with a
+// string this plugin defines. No schema change, no capability change, no flag.
+$plugin->version   = 2026093001;  // D4: team_performance gate + team query
 // 2026092501: ADR-031 allocation targets tenant-bounded.
 // 2026092500: ADR-031 team member pages tenant-bounded.
 // 2026060200: ADR-020 W3.4 org-seam migration.
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.3.6';  // Decision 5: typed allocations no longer collide
+$plugin->release   = '1.3.7';  // D4/D14: team performance works for line managers
+// 1.3.6: Decision 5 - typed allocations no longer collide
 // 1.3.5: ADR-031 tenant bound on allocations
 // 1.3.4: ADR-031 tenant bound on member drill-down
 // 1.3.3: +ADR-020 W3.4 org-seam migration of team_manager
