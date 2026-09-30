@@ -381,7 +381,7 @@ passes and the `sentientia_platform/db/install.xml` baseline line is gone.
   `table_exists`-guarded, so a fresh install converges either way.
 - **P0.2** Tables `local_sentientia_legacymap` (unique key sourcetable, sourceid, subkey), `local_sentientia_legacyrun`,
   `local_sentientia_legacystep`. The upgrade step (2026093001) creates them from `install.xml` itself, so there is
-  one definition. The run column is `runmode`, not `mode` (MODE is reserved on Oracle). `legacystep` also has an
+  one definition. The run column is `runmode`, not `mode` (a naming choice: `mode` is reserved on none of the supported engines). `legacystep` also has an
   `updated` counter for recompute steps. No table has a `USER_COLUMNS` column. `privacy_coverage_test::USER_COLUMNS`
   gained `enrolledby`, `markedby`, `initiatedby`, `sender_userid`, `subject_userid`; the existing tables that carry
   them (classroom roster/attendance, cart ledger) are already declared by their providers.
@@ -428,7 +428,7 @@ compared groups by exact bytes (now checked against the DB's own group count) an
 (now 500,000 plus a memory check); parity used alias `s` where every other query uses `t`, ignored the run's
 decisions and compared core-table sources. Not done, recorded: the dry-run overlay grows with every outcome (a 5M-row
 leaf table needs about 2 GB in a rehearsal); the tripwire runs once per feature, not per N batches; preflight
-histograms collapse case variants under a case-insensitive collation; the map cache holds 5-key arrays rather than
+histograms collapse case variants under a case-insensitive collation (fixed in round 2); the map cache holds 5-key arrays rather than
 compact tuples.
 
 ### Decisions made where ADR-032 was ambiguous
@@ -450,3 +450,87 @@ compact tuples.
 
 P0.4 (wire `parity` into `migration_parity_check.php`), the QR pages (other branch), then the feature importers in
 dependency order, each with its `db/bizlms_import.php`, `importer_contract` test and fixture copy.
+
+## 2026-09-30 - ADR-032 framework, review round 2 ("fix-then-ship"): 4 must-fix and 15 should-fix closed
+
+Same branch, same version (no upgrade step: no schema change). The plugin trees are byte-identical and the drift
+gate passes. **Moodle PHPUnit was not run** (the new tables force a 50-minute re-init; the lead runs it). What ran
+instead, all outside the shared test DB: `php -l` on every changed file; `tools/check-tree-drift.php`; an offline
+harness that runs the static scanner against the real `classes/bizlms/` and every provider snippet, and loads the
+REAL `docs/cutover/bizlms-import-decisions.json` through `decisions::load()` and drives `report`'s hold, release and
+discard (both under a stub of `core_text`, no Moodle).
+
+**Must-fix**
+
+1. **Decisions loader read a shape the file does not have.** The checked-in file is
+   `{version, approved_by, approved_on, basis, decisions: {"<feature>.<key>": {value, why, source, status}}}`; the
+   loader treated the top-level keys as decision keys, so it found none of the 109. A required decision with no
+   default blocked (safe), but every decision with a default silently used the importer's default instead of the
+   owner's value (unsafe, breaks ADR decision 9), and the two `finance-confirm` entries counted like accepted ones.
+   Now: `decisions::load()` parses the real shape; only `status: accepted` is a decision; a declared key carried with
+   another status blocks at preflight (`decision_not_accepted:<key>:<status>`) and in `context::decision()`, and
+   neither the file value nor the default stands in; `accepted_reasons` and `enums` are optional top-level sections
+   (absent in the signed file today: each feature importer adds its reasons when it exists, so the owner's file was
+   not edited); the hash is still over the LF bytes. The report lists decisions with status, the ones not accepted and
+   who approved. The cart importer must NOT declare the two finance keys (ADR text amended). Tests: a fixture in the
+   real shape, the real file when reachable (`BIZLMS_DECISIONS_FILE`, or the checkout), `reader_flags_default` returns
+   `off` even when the importer's default is `on`, a finance-confirm key blocks.
+2. **`deferred` was accepted in apply runs.** It is stored as skipped for good, balanced in the accounting, ignored by
+   parity (`needsowner` false) and out of reach of `--retry-skipped`; the alphabetical tie-break runs an undeclared
+   reader before its owner (classroom before org). Now an apply run throws `deferred_outcome_in_apply`; a dry run keeps
+   the behaviour. `context::$map` is a read-only `legacymap_view` (also review item "context exposes remember, reset,
+   forget and batches") and every read of a table another feature owns, `is_deferred()` and `preload()` go through one
+   rule: the owner must be in the reader's transitive `depends()`, else `undeclared_dependency` (exit 1, dry runs too).
+3. **The importer interface could get around the side-effect controls.** Registry now refuses: a target not defined by
+   the importer component's own `db/install.xml` or `classes/schema` `TABLES`; a target that is a known, detected or
+   claimed/declined legacy table; a `core_writes()` table outside `registry::CORE_WRITES_ALLOWED` (`course`, `enrol`,
+   `role_assignments`, `tag_instance`, `user_enrolments`, each traced to the ADR or mapping doc); an importer or step
+   whose class file is outside the plugin's `classes/bizlms/` (anonymous classes judged where written; a test registry
+   also accepts `tests/classes/bizlms/`). The static scan now walks `classes/bizlms/**` of every plugin type, and
+   catches writes through an alias of `$DB`, `->db`, `$GLOBALS['DB']`, `?->`, a `moodle_database` parameter, a dynamic
+   method name and `call_user_func*`; `delete_records_subquery`; `grade_*`, `completion_info`, `update_state`,
+   `unenrol_user`, `role_unassign*`, `delete_user`, `groups_add_member`, `queue_adhoc_task`, `feature_flags::`;
+   `set_config`, `unset_config` and the cache purges outside `finalise()`.
+4. **The tripwire could not see event side effects.** The standard log observer runs only after the outermost commit
+   and buffers 50 rows, so `MAX(id)` did not move. Every snapshot flushes the log manager first
+   (`get_log_manager(true)`); a feature-mode run is checked inside the transaction (a direct write still rolls back with
+   the feature) and again after the commit, before `finalise()` and the marker. A test fires `dashboard_viewed` from a
+   step in batch and feature mode without `redirectEvents()`; it skips itself if the log store does not write there.
+   Not fixed, recorded: a feature that tripped after its commit has rows and no marker, and a plain re-apply (not
+   `--resume`) can complete it, because the "before" snapshot is retaken. The way back is the RDS snapshot (rehearsal:
+   `--purge-feature`).
+
+**Should-fix, done:** MAP inserts into a PRESERVE table refused (registry: MAP step targeting one, two PRESERVE steps on one
+table; writer: step rows and sub-rows); report lines held until the commit (batch and feature level); `maintenance_on()`
+checks `climaintenance.html` only; `--retry-skipped` refuses a grouped or derived step that has retryable rows; the
+unfiltered count of each claimed table must equal its primary map rows (`unmapped_rows`, verify and parity); tenant values
+must BE normalised (`//1//5` fails); enum and tenant histograms group by BYTES on MySQL family (`fingerprint::value_histogram_sql`);
+a `guard_permit` from `guard::permit()` is required by `runner->run()` (apply) and `purge()`, `guard::test_permit()` for tests;
+`--verify` builds its contexts with `dryrun = false` like parity; the legacy reader selects `t.id` first; `--resume` takes the
+newest apply run only; `skip()` details are codes only (no `orphan_user:123`); derived `sourcetable` length checked; a stale
+`db_record_lock_factory` lock is diagnosed from the heartbeat; `parity::comparison_problems()` turns a skipped CRC into an
+unproven item; fixture lifecycle documented; `runmode` ruling recorded; `migrate_all.php` header corrected.
+
+**Rulings accepted:** `runmode`; marker after verify, tripwire and finalise; sequence reset after the last commit with an
+`is_transaction_started()` check (paired with the MAP-into-PRESERVE refusal); `watches_tables`; `get_recordset*` banned;
+dependency order. **Rejected:** `deferred` in apply.
+
+**Capability migration (was in the retired `migrate_all.php`):** replaced by `cli/repair_bizlms_capabilities.php` and
+`bizlms\capability_repair` (not an importer): inventory per role and context, an owner-signed allow-list, `assign_capability`
+without overwrite, never `sentientia_org:manage`, `:manage_multiorganizations` or `sentientia_platform:crosstenant`, never a
+revoke. Test `bizlms_capability_repair_test`. The `legacy_cap()` fallback removal is in the org importer's release (ADR
+"Capabilities", mapping doc org 2b). Reason and what production really holds: ADR-032 "Capabilities".
+
+**Not done, and why**
+- P0.4: `migration_parity_check.php` still does not call `parity::`. Own deliverable; the helper it needs for exit codes exists.
+- `qr_scan.php:43,62` (both trees) still reads and inserts `local_classroom_attendance`. Every scan ends in the catch today
+  (the insert omits two NOT NULL columns), so the archive is not changed, but this is a user-visible page, CLAUDE.md wants
+  visual evidence for a UI change, and the real fix is classroom code fix 1. Hard prerequisite for the classroom importer
+  and the Stage B baseline (ADR "Phase 0 status").
+- The `importer_contract` privacy export/erase check per new person column (ADR test approach 4) is not in the trait yet.
+- **MySQL 8 and MariaDB 10.11 runs of `--group bizlms_import`** (CRC32 SQL, `insert_records`, `import_record`, `reset_sequence`,
+  lock factory, the fixture lifecycle, `GROUP BY BINARY`) have never happened. Gate before Stage B.
+- Finance items stay open by design.
+
+**Next:** run `--group bizlms_import` then `--group tenant_isolation` from the moodle5 dirroot; then P0.4; then the org importer
+(with the `legacy_cap()` removal), then the rest in dependency order.

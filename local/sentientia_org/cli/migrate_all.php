@@ -33,8 +33,17 @@
  *   php local/sentientia_platform/cli/import_bizlms.php --all                      (dry run, writes nothing)
  *   php local/sentientia_platform/cli/import_bizlms.php --all --apply --confirm=<fingerprint> --decisions=FILE
  *
- * The capability migration that used to live here is not part of the import; it was tied
- * to the retired local_airpay_ capability names.
+ * The capability migration that used to live here is not part of the import, and it must not be
+ * replayed. It copied every role_capabilities row of ten BizLMS capabilities (local/costcenter:*,
+ * local/courses:manage and :enrol, local/classroom:manageclassroom, local/users:edit and
+ * :bulkstatuschange) to the Sentientia capability that replaced it. On a restored production database
+ * that re-grants what ADR-031 decision 7 revokes (organisation delete, edit and cross-tenant visibility
+ * for the tenant-admin role) and still misses grants that exist only as overrides. Review and repair
+ * the grants with the reviewed, allow-list-driven script instead:
+ *
+ *   php local/sentientia_platform/cli/repair_bizlms_capabilities.php --help
+ *
+ * (the cutover slice in ADR-032 runs it first; see "Capabilities" there).
  *
  * @package    local_sentientia_org
  * @copyright  2026 Airpay Payment Services

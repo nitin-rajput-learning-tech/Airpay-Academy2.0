@@ -83,11 +83,16 @@ local/sentientia_platform/                        (both trees)
     runner.php, registry.php                       lifecycle, discovery, dependency sort, locking
     tenant_resolver.php, text.php, file_rehome.php helpers
     sideeffect_guard.php, fingerprint.php          tripwire and source fingerprints
+    legacymap_view.php                             the four map reads a step may make (resolve, resolve_many, entry, entries)
+    decisions.php                                  the decisions file (shape in "Owner decisions")
+    guard.php, guard_permit.php                    CLI guard, and the permit the runner demands before it writes
+    capability_repair.php                          review and repair of role grants (section "Capabilities")
     report.php, parity.php, unclaimed.php
   classes/check/bizlms_import.php                  core status check
   classes/phpunit/legacy_schema_fixture.php        test trait
   classes/phpunit/importer_contract.php            test trait
   cli/import_bizlms.php                            new
+  cli/repair_bizlms_capabilities.php               new (section "Capabilities")
   cli/migration_parity_check.php                   extended (both copies)
   lib.php                                          new in the ME tree: local_sentientia_platform_status_checks()
   db/install.xml + db/upgrade.php + version.php    three framework tables
@@ -120,7 +125,7 @@ Names are 27 characters or fewer (Moodle 4.5+ allows 53, `TOP lib/xmldb/xmldb_ta
 | targetid | int(10) NULL | for merged and folded rows, the surviving target row |
 | outcome | char(16) NN | `imported`, `adopted`, `merged`, `folded`, `archived`, `skipped` |
 | reason | char(40) NULL | a code from the importer's reason vocabulary |
-| detail | char(255) NULL | codes and ids only; never names, emails or free text |
+| detail | char(255) NULL | codes only: up to four lower-case words joined by colons (`user_not_found`, `truncated:title`). Never an id, a name, an e-mail address or free text; `outcome::skip()` refuses anything else. The row already names its source table and id, and an id such as `orphan_user:123` is personal data in a table that must hold none. |
 | runid | int(10) NN | |
 | timecreated | int(10) NN | |
 
@@ -131,7 +136,8 @@ the provenance guard; `INDEX (feature, outcome, reason)`; `INDEX (runid)`.
 The key deliberately leaves out `targettable`. So one source row has exactly one primary map row, and
 the database enforces it. Accounting is exact: source rows = primary map rows.
 
-**`local_sentientia_legacyrun`**: id, mode (`apply`|`purge`), status (`running`|`complete`|`failed`|`aborted`),
+**`local_sentientia_legacyrun`**: id, runmode (`apply`|`purge`; named `runmode`, not `mode`, for readability next to the step
+`mode`; it is not a reserved-word workaround, `mode` is reserved on none of the supported engines), status (`running`|`complete`|`failed`|`aborted`),
 features (text, JSON), decisionshash char(64), codehash char(64) (plugin versions involved),
 fingerprint char(12), host char(100), pid int, timestarted, heartbeat, timefinished.
 No operator user id.
@@ -286,7 +292,7 @@ final class outcome {
 final class context {
     public readonly bool $dryrun;
     public readonly int $runid;                 // 0 in dry run
-    public readonly legacymap $map;             // in dry run, an in-memory overlay
+    public readonly legacymap_view $map;        // four reads; in dry run, an in-memory overlay sits under it
     public readonly tenant_resolver $tenant;
     public readonly lookups $lookups;           // users, courses, orgs: bulk-loaded, read-only
     public readonly legacy_reader $legacy;      // bounded, read-only access to other legacy tables
@@ -295,11 +301,16 @@ final class context {
     public function servertz(): \DateTimeZone;      // Moodle's effective server timezone
 }
 
-final class legacymap {
+/** What a step sees of the map: reads only. The runner keeps the legacymap (remember, reset, forget, batches, preload). */
+final class legacymap_view {
     public function resolve(string $sourcetable, int $sourceid, string $subkey = ''): ?int;
     /** @return array<int, int|null> chunked at 1000 ids per query */
     public function resolve_many(string $sourcetable, array $sourceids, string $subkey = ''): array;
-    public function preload(string $sourcetable, string $subkey = ''): void;
+    public function entry(string $sourcetable, int $sourceid, string $subkey = ''): ?array;
+    public function entries(string $sourcetable, array $sourceids, string $subkey = ''): array;
+}
+
+final class legacymap {   // the runner's own; static feature_complete(string $feature): bool is public
     public static function feature_complete(string $feature): bool;
 }
 
@@ -352,13 +363,33 @@ The writer is the only code that writes. It enforces:
    TEXT bodies or JSON are written row by row.
 6. **Unknown enum values never reach a target.** Preflight prints a histogram of every declared enum
    column. A value missing from `source_spec::enums` blocks the feature until the decisions file maps it.
+   The histogram groups by BYTES (`GROUP BY BINARY` on MySQL and MariaDB): under a `*_ci` collation
+   `ACTIVE` and `active`, or a value with a trailing space, would fall into one group and pass.
+7. **A MAP insert never targets a table a PRESERVE step of the same feature owns.** On MySQL and
+   MariaDB an insert with an explicit id raises AUTO_INCREMENT, so `insert_record` would take the next
+   batch's legacy id and the next `import_record` would fail on the duplicate key, after which
+   preflight reports the occupant as a collision and the feature is stuck. The registry refuses a MAP
+   step whose target is a PRESERVE target, and the writer refuses any MAP insert (a step's primary row
+   or a sub-row) into one.
+8. **Targets are the importer's own.** The registry refuses a target that is not defined by the
+   importer component's own `db/install.xml` (or `classes/schema` `TABLES`), that is a legacy table
+   (known, detected in the database, or claimed or declined by any importer) or that is a framework
+   table. `core_writes()` accepts only `registry::CORE_WRITES_ALLOWED` (`course`, `enrol`,
+   `role_assignments`, `tag_instance`, `user_enrolments`, each with the section that reviewed it);
+   history and configuration tables of core (`course_completions`, `grade_*`, `logstore_standard_log`,
+   `role_capabilities`, messages, notifications) can never be declared. Adding a table to the list is
+   an amendment to this ADR.
+9. **Where the code lives.** The registry refuses an importer or a step whose class is defined outside
+   the plugin's `classes/bizlms/`, because the static scan reads that directory and nothing else.
 
 ## Reading and performance
 
 - `get_recordset_sql()` on MySQL buffers the whole result (`MYSQLI_STORE_RESULT`,
   `TOP lib/dml/mysqli_native_moodle_database.php:1301-1302`). So the framework owns every source read
   and pages it by keyset: `WHERE id > :watermark ORDER BY id`, with a LIMIT. Steps never open
-  recordsets.
+  recordsets. Every page selects `t.id` FIRST, explicitly: `get_records_sql()` keys its result by the first
+  column, and a production-only table can list its columns in any order, so `SELECT t.*` alone could merge
+  rows that share the value of some other first column before the reader ever saw them.
 - **Grouped steps** (dedupe and fold units) run in two phases, because legacy tables cannot be given
   new indexes: (1) scan `id` plus the group columns in PK pages and build `group -> [ids]` in memory;
   (2) process groups ordered by their **minimum source id**, fetching each batch by `id IN (...)`.
@@ -377,6 +408,9 @@ The writer is the only code that writes. It enforces:
   delegated transaction. A crash leaves nothing. Features expected to be small declare `atomic()`
   (list in the mapping doc, section 2). Above the threshold they run in batch mode and the operator is
   told.
+- **Report lines follow the commit.** The per-row counters and the CSV of non-imported rows are held while
+  a batch (and, in feature mode, the whole feature) is inside its transaction, and written after the
+  commit. A rolled-back batch leaves no phantom line, and `--resume` never lists a row twice.
 - **No DDL inside a transaction.** `reset_sequence()` issues `ALTER TABLE ... AUTO_INCREMENT` on
   MySQL (`BZ lib/ddl/mysql_sql_generator.php:109-111`), which commits implicitly. It runs only in
   `finalise()`, after the outermost commit. The runner asserts `!$DB->is_transaction_started()` first.
@@ -398,17 +432,36 @@ The writer is the only code that writes. It enforces:
    plus the importer's own extra list. Any change outside declared targets and core writes aborts the
    run before the next feature. `MAX(id)` is O(1) and catches inserts; updates to state tables are
    caught by the existing parity checksums at the end (`migration_parity_check.php:116-133`).
-4. **Static scan.** A test tokenises every `*/classes/bizlms/*.php` and fails on: `message_send`,
-   `email_to_user`, `->trigger(`, `role_assign(`, `enrol_user`, `enrol_try_internal_enrol`,
-   `completion_completion`, `mark_complete`, `cohort_add_member`, `core_tag_tag::`, `update_course(`,
-   `calendar_event::create`, `get_recordset`, `get_records(` outside the framework, `reset_sequence`
+   **Events are not writes at the moment they fire.** The standard log is an observer with
+   `'internal' => false` (`admin/tool/log/db/events.php`): it runs only after the outermost transaction
+   commits, and its buffered writer flushes every 50 events or at shutdown, so `MAX(id)` does not move
+   while an event fired by a core API waits in the buffer. Every snapshot therefore flushes the log
+   manager first (`get_log_manager(true)`), and a feature that runs in one outer transaction is checked
+   twice: inside it (a direct write rolls back with the feature) and again after the commit and before
+   `finalise()` and the marker (an event side effect). The second violation fails the feature with no
+   marker, as in batch mode; its rows are committed, so the RDS snapshot is the way back.
+4. **Static scan.** A test tokenises every PHP file below `*/classes/bizlms/` of every plugin type
+   (sub-directories included) and fails on: `message_send`, `email_to_user`, `->trigger(`,
+   `role_assign(`, `role_unassign*(`, `enrol_user`, `unenrol_user`, `enrol_try_internal_enrol`,
+   `delete_user(`, `groups_add_member(`, `completion_completion`, `completion_info`, `update_state(`,
+   `mark_complete`, `cohort_add_member`, `core_tag_tag::`, `update_course(`, `calendar_event::create`,
+   every `grade_*` function and class, `queue_adhoc_task`, `feature_flags::` (the import never flips a
+   flag), `call_user_func*` (it hides a call from the scan), `get_recordset`, `get_records(` outside
+   the framework, `reset_sequence`, `set_config`, `unset_config`, the cache purges and `cache_helper::`
    outside `finalise()`, any `$DB->` write method, and the managers the maps forbid
    (`session_manager::`, `waitlist_manager::`, `path_manager::`, `program_manager::`,
    `request_manager::`, `cart_manager::`, `invoicer::`, `notifier::`, `delivery_log::log`,
    `evaluation_manager::submit_response`, `recompletion_engine::`, `skills_manager::`,
    `rating_manager::submit_rating`).
+   A `$DB` write method that only the database object has (`insert_record`, `update_record`,
+   `delete_records`, `set_field`, `delete_records_subquery` and the like) is a finding on ANY receiver;
+   `execute()` counts when the receiver is `$DB`, an alias of it, `->db`, `$GLOBALS['DB']`, a
+   `moodle_database` parameter, or when the method name is dynamic. `?->` is treated like `->`.
 5. **Environment:** `$CFG->noemailever`, the task runner off, and tests that wrap every import in
    `redirectEvents()`, `redirectMessages()` and `redirectEmails()` and assert all three are empty.
+6. **Permit.** The runner refuses to write or delete without a `guard_permit`, which only `guard`
+   issues (`guard::permit()` after the refusals came back empty; `guard::test_permit()` under
+   PHPUnit). The guard conditions are therefore not a courtesy of one CLI script.
 
 ## CLI
 
@@ -420,8 +473,9 @@ php local/sentientia_platform/cli/import_bizlms.php
     --feature=a[,b] | --all          dependencies are added and sorted automatically
     (default) dry run                writes nothing to the database, not even bookkeeping
     --apply                          needs every guard below
-    --resume                         continue the latest incomplete apply run from its watermarks
-    --retry-skipped=<reason>[,..]    re-process rows skipped with a retryable reason
+    --resume                         continue the NEWEST apply run from its watermarks, if it did not complete
+    --retry-skipped=<reason>[,..]    re-process rows skipped with a retryable reason (single-row steps;
+                                     a grouped or derived step with such rows is refused, not skipped)
     --verify                         run verify and parity checks only
     --decisions=FILE                 owner choices; its sha256 is stored on the run
     --expect-decisions-hash=SHA256   cutover must use the rehearsed decisions
@@ -437,7 +491,20 @@ php local/sentientia_platform/cli/import_bizlms.php
 
 - In a `--all` dry run, upstream features fill an in-memory map overlay (MAP steps get negative
   virtual ids), so dependents resolve against it. A single-feature dry run whose dependencies were not
-  applied reports those rows as `deferred`, not as failures.
+  applied reports those rows as `deferred`, not as failures. `deferred` exists **only in dry runs**: an
+  apply run refuses an outcome with that reason (`deferred_outcome_in_apply`), because in an apply run
+  every dependency has run and a deferred row would be stored as skipped for good.
+- **Undeclared dependencies fail loudly.** A feature that resolves an id of, or reads the state of, a
+  table another feature owns must list that feature in `depends()`, directly or through others. The map
+  view the steps get, `is_deferred()` and `preload()` check it and throw `undeclared_dependency`
+  (exit 1) otherwise; the alphabetical tie-break of the feature order would otherwise run the reader
+  first.
+- **Accounting.** Beyond `source rows (with the step filter) = primary map rows`, the unfiltered count of
+  each claimed table must equal its primary map rows (`unmapped_rows`, in verify and in parity): a
+  `source_filter()` may not make rows disappear, ADR id strategy 1 says every source row gets exactly
+  one primary map row. A row a step does not want is archived with a reason.
+- **Tenant values** in `tenant_columns()` must BE a normalised path, not merely normalise to one:
+  `//1//5` and ` /1/5` fail verify and parity (the path-boundary defect class).
 - **Exit codes:** 0 = done, or nothing applicable; 1 = blocker, failure, collision or source drift;
   2 = done but unproven (needs-owner reasons not accepted, or unclaimed legacy tables holding rows);
   3 = a guard refused. 0, 1 and 2 match `migration_parity_check.php:19-25`.
@@ -459,16 +526,22 @@ tenant and customer scopes mean nothing here, an admin can flip a flag from a we
    copied from a rehearsal cannot run on production.
 2. `local_sentientia_platform/bizlms_import_armed_until` is later than now. The operator sets it with
    `admin/cli/cfg.php` (runbook: now + 4 hours). It expires on its own. A clean `--all` run clears it.
-3. CLI maintenance mode is on, unless `--allow-online` is given. `--allow-online` and `--purge-feature`
+3. CLI maintenance mode is on (`climaintenance.html`, `admin/cli/maintenance.php --enable`; web
+   maintenance mode, `$CFG->maintenance_enabled`, does not count: it lets administrators log in and edit
+   the tables being written), unless `--allow-online` is given. `--allow-online` and `--purge-feature`
    are refused when `local_sentientia_platform/bizlms_production = 1`, which the cutover runbook sets.
 4. `$CFG->noemailever` is true.
 5. The scheduled-task runner is off (`cron_enabled` = 0; confirm the setting name on 5.2) and no task
    lock is held. The tripwire also detects a leak.
-6. The lock `bizlms_import` is taken through the core lock API. It is released if the process dies;
-   heartbeats in `legacystep` show a crashed run.
+6. The lock `bizlms_import` is taken through the core lock API. With the file lock factory it goes when
+   the process dies. With `$CFG->lock_factory = db_record_lock_factory` a run killed with SIGKILL keeps
+   it for `LOCK_LIFETIME` (12 hours); the refusal then quotes the newest running run's heartbeat age, and
+   the operator releases the row only after confirming no import process is alive. Heartbeats in
+   `legacystep` show a crashed run.
 7. Every target plugin is at or above `requires_version()`.
-8. Every decision the selected features need is present in `--decisions`; at cutover, its hash equals
-   `--expect-decisions-hash`.
+8. Every decision the selected features need is present in `--decisions` with status `accepted` (a
+   declared key carried as `finance-confirm` blocks that feature; see "Owner decisions"); at cutover,
+   its hash equals `--expect-decisions-hash`.
 9. Preflight found no blocker.
 
 **Reader surfaces.** Each feature's new or changed reader surface (learner history pages, evidence
@@ -516,10 +589,72 @@ All in `local/sentientia_platform/cli/migration_parity_check.php`, in both trees
    (`local_challenge`, `local_positions`, `local_domains`, `block_request_*`).
 4. The existing core counts and checksums (:52-76, :116-133) stay the proof that the import had no
    side effects on users, enrolments, completions, attempts, badges and grades.
+5. **A skipped CRC is never a pass.** A legacy table whose CRC was skipped (no CRC32 on the engine, or
+   more rows than `--crc-max-rows`) matched on count, max id and columns only, and an UPDATE changes
+   none of those. `parity::comparison_problems()` turns it into an unproven item (exit 2), like a
+   table that is not in the baseline. The baseline is taken with no CRC cap (`legacy_fingerprints()`
+   default), or every comparison against it is unproven.
+
+## Capabilities
+
+The retired `migrate_all.php` copied every `role_capabilities` row of ten BizLMS capabilities to the
+Sentientia capability that replaced it (`local/costcenter:manage_multiorganizations`, `:view`, `:manage`,
+`:manage_ownorganization`, `:manage_owndepartments`; `local/courses:manage`, `:enrol`;
+`local/classroom:manageclassroom`; `local/users:edit`, `:bulkstatuschange`), keeping role, context,
+permission and modifier, skipping a row that already existed, and never revoking. It is not part of the
+import and **must not be replayed** on a restored production database:
+
+- In the production snapshot every capability of the ten except `local/classroom:manageclassroom` has a
+  manager archetype, so the grants sit on the manager-archetype roles: core manager and the BizLMS
+  tenant-admin role 9. Six of the Sentientia targets also have a manager archetype and the plugin install
+  grants them to those roles itself.
+- Four targets have none on purpose (`sentientia_org:manage_multiorganizations`, `:manage`,
+  `:manage_ownorganization`, `:manage_owndepartments`). ADR-031 reserves creating, editing and deleting
+  organisations and the multi-organisation scope for site administrators and holders of
+  `local/sentientia_platform:crosstenant`. Replaying the BizLMS grants would give the tenant-admin role
+  cross-tenant organisation delete, edit and visibility through `admin.php`, `delete_org`,
+  `toggle_visibility` and `edit_org`.
+- `local/classroom:manageclassroom` has no archetype in BizLMS, so on production it exists only as
+  explicit overrides, and nobody knows which roles hold them (the local copy has none: BizLMS was
+  uninstalled there). If trainers or a category-level org role held it, those users lose classroom
+  management when the BizLMS code goes, because `sentientia_classroom:manage` reaches only the manager
+  archetype. The same goes for any non-default override: PREVENT or PROHIBIT on role 9, or a grant at a
+  category context.
+
+**Replacement (built).** `cli/repair_bizlms_capabilities.php`, class `bizlms\capability_repair`. It is not a
+feature importer: `role_capabilities` is permission configuration, not BizLMS history, and the tripwire
+does not watch it.
+
+1. Inventory (default, writes nothing): every `role_capabilities` row on a capability of a plugin that is
+   missing from disk, per role and context, next to the Sentientia equivalent and whether the role already
+   holds it.
+2. `--allowlist=FILE` (signed JSON, one line per grant the owner approves) is checked against the inventory:
+   the role must really hold that legacy grant with that permission there, the target must be the
+   equivalent of the legacy capability and be installed. Anything else is refused.
+3. `--apply --confirm=<fingerprint>` (maintenance on unless `--allow-online`, refused in production) makes
+   exactly the approved grants with `assign_capability()`: it never overwrites a row that exists, never
+   revokes, and marks the context dirty.
+4. It **never grants** `local/sentientia_org:manage`, `local/sentientia_org:manage_multiorganizations` or
+   `local/sentientia_platform:crosstenant`, whatever the allow-list says. The cross-tenant capability goes
+   by hand to the platform role Nitin names.
+5. Exit 0 when every grant is decided; 1 when an allow-list line was refused; 2 when grants remain that
+   nobody approved or that have no known equivalent; 3 when a guard refused.
+
+**Stage B inventory decides the rest.** If it shows only archetype-default grants on roles 1 and 9, the
+allow-list is empty and nothing more needs replacing. Otherwise Nitin signs the allow-list line by line
+(the likely case is `manageclassroom` for the roles production actually granted).
+
+**Same release as the org importer.** `local_sentientia_org\accesslib::legacy_cap()` still honours the
+BizLMS grants in `can_manage_multi`, `can_manage`, `is_org_head`, `is_dept_head` and `can_manage_classroom`,
+which `theme/sentientia`'s `core_renderer` uses. Because the BizLMS plugins are not uninstalled, their
+`capabilities` rows stay in the restored database, so on it role 9 passes `can_manage_multi()` through
+`local/costcenter:manage_multiorganizations`: an ADR-031 hole in the navigation. The fallbacks are removed
+in the same release as the org importer, the way the reader fallbacks are, and not before, because
+today they are what keeps tenant admins working on a restored UAT database.
 
 ## Privacy
 
-- The framework tables hold no personal data. `detail` holds codes and ids only. Reports hold ids
+- The framework tables hold no personal data. `detail` holds codes only (no ids). Reports hold ids
   and codes only.
 - Every new target column that names a person is declared in its plugin's privacy provider, with en
   and hi strings. `USER_COLUMNS` (`privacy_coverage_test.php:52-63`) gains every actor-column name the
@@ -541,7 +676,10 @@ All in `local/sentientia_platform/cli/migration_parity_check.php`, in both trees
    `$CFG->prefix === $CFG->phpunit_prefix`. It loads a checked-in XMLDB copy and creates tables one at a
    time, dropping a leftover from a killed run first. Lifecycle (graft from Design A, for speed on the
    slow local MariaDB): create once in `setUpBeforeClass()`, truncate in `setUp()`, drop in
-   `tearDownAfterClass()` inside `try/finally`. DDL is never run inside a transaction.
+   `tearDownAfterClass()` inside `try/finally`. DDL is never run inside a transaction. On a real Moodle
+   `testing_util::reset_database()` drops every table that is not in the install snapshot after each
+   test that called `resetAfterTest()`, so "create once" really recreates the tables in every `setUp()`
+   through the truncate path. That is correct and slow on the local MariaDB; budget for it.
 2. **Fixture copies** `tests/fixtures/bizlms/<plugin>.install.xml`: verbatim copies of the BZ file with a
    header giving source path, sha1 and date. Only three edits are allowed, each commented with the
    source line: (a) strip PREVIOUS/NEXT; (b) replace types XMLDB rejects (e.g. `local_request_comments.dt`
@@ -565,6 +703,15 @@ All in `local/sentientia_platform/cli/migration_parity_check.php`, in both trees
    checks as a tenant admin in `@group tenant_isolation` (ADR-031 decision 8). All import tests are
    `@group bizlms_import` and run from the moodle5 dirroot, not `public/`.
 6. MySQL 8 and MariaDB are the gating engines; production is MySQL 8.0.44 on RDS (CLAUDE.md §2).
+   **Not yet run:** the CRC32 SQL, `insert_records`, `import_record`, `reset_sequence`, the lock factory
+   and the fixture lifecycle have only run in the SQLite stand-in used while the framework was written.
+   `--group bizlms_import` must pass on MySQL 8 and on MariaDB 10.11 before Stage B (gating item for the
+   first feature importer). Two tests skip themselves when the environment cannot show what they test:
+   the event-tripwire test (standard log store not writing) and the checked-in decisions file test
+   (`docs/` not deployed with the plugin).
+   **Open:** the `importer_contract` trait checks that a privacy provider is declared; the privacy
+   export and erase check for every new person column (approach 4) is not in the trait yet. It lands
+   with the first feature importer that adds a person column.
    Import SQL must still be portable `$DB` API SQL (no `GROUP_CONCAT`, `FIND_IN_SET`, `REGEXP`,
    `INSERT IGNORE`, `ON DUPLICATE KEY`; CSVs are split in PHP). A PostgreSQL run is not a gate.
 
@@ -576,6 +723,22 @@ in dependency order: org; then org_roles, cohort_scope, course_lookups, course_t
 exams, users, notifications, recompletion, cart (parallel); skills; classroom and program; learningplan;
 evaluation, request and ratings; then the gap maps.
 
+**Phase 0 status (2026-09-30, after the framework review).** P0.1 to P0.3 and P0.5 to P0.6 (schema,
+framework, CLI, tests, the copy scripts retired, the seed scripts guarded) are in. **Still open:**
+- P0.4: `migration_parity_check.php` does not call `parity::` yet (`legacy_fingerprints()` and
+  `compare_fingerprints()` for the baseline and `--compare`, `invariant_problems()` as the
+  `bizlms_import` invariant, and `comparison_problems()` for the exit codes). Without it the archive
+  proof in the cutover slice, steps 3 and 6, has no script behind it.
+- The `qr_scan.php` freeze below. `qr_scan.php:43,62` (both trees) still reads and inserts
+  `local_classroom_attendance`. Today every scan ends in the catch because the insert omits two NOT NULL
+  columns, so the archive is not changed by it, but a fix that made the insert work would change the
+  archive after the baseline. It is classroom code fix 1 (mapping doc), which needs the new session
+  tables and `session_manager::mark_attendance()`, and a page change needs visual evidence
+  (CLAUDE.md §5). Hard prerequisite for the classroom importer and for the Stage B baseline; not done in
+  the review pass because it is a user-visible page.
+- The capability review (section "Capabilities") replaces the capability copy of the retired script; it
+  is built, and runs first in the cutover slice.
+
 **Phase 0 source freezing:** move `SE local/sentientia_pages/qr_scan.php` and `qr_attendance.php` off
 the legacy tables (they check and write `local_classroom_attendance`, migration plan :174-177); make
 `migrate_all.php` and `data_migration.php` refuse and point to the new CLI; block
@@ -583,6 +746,8 @@ the legacy tables (they check and write `local_classroom_attendance`, migration 
 `fix_all_bizlms_data.php` on a database that holds legacy tables.
 
 **Cutover slice** (after the two core hops):
+0. `repair_bizlms_capabilities.php` (inventory, then the owner's allow-list; section "Capabilities"),
+   before anything else reads a role. Dry by default.
 1. RDS snapshot. This is the rollback point for the whole import. `--purge-feature` is for rehearsals.
 2. Maintenance on, cron off, `noemailever` on, `bizlms_production = 1`, arm the guard.
 3. `migration_parity_check.php --compare=<source baseline>`: the legacy tables must be intact.
@@ -667,10 +832,33 @@ have chosen are marked in their lines: `request.pending` and `request.hidden_row
 Stage B rehearsal and must match at cutover (`--expect-decisions-hash`). Nitin signs it. Any change after the
 rehearsal is a re-approval event. If the two ever disagree, the JSON is what runs.
 
+**File shape** (read by `bizlms\decisions::load()`; the first loader read it as a flat map and so found none of
+these keys, which is the defect the framework review recorded):
+
+```
+{ "version": 1, "approved_by": "...", "approved_on": "YYYY-MM-DD", "basis": "...",
+  "decisions": { "<feature>.<key>": {"value": ..., "why": "...", "source": "...", "status": "accepted"} },
+  "accepted_reasons": ["<feature>:<code>", ...],            optional, absent today
+  "enums": { "<legacy table>.<column>": {"<value>": "<meaning>"} } }   optional, absent today
+```
+
+- Only an entry whose `status` is `accepted` is a decision. `has()` and `get()` ignore any other, and a
+  selected feature that declares such a key is blocked at preflight (`decision_not_accepted:<key>:<status>`);
+  `context::decision()` throws the same. The importer's default never stands in for an open choice.
+- `accepted_reasons` lists needs-owner reasons the owner accepts; parity exits 2 for any needs-owner reason
+  not listed. `enums` maps values of a declared enum column so preflight stops blocking on them. Both are
+  filled in by each feature importer's build, when its reasons and enum columns exist; there is nothing to
+  accept before that, so the signed file does not carry them yet.
+- The report lists the decisions used with their status, the ones not accepted, and who approved the file.
+
 **FINANCE-CONFIRM (two items).** The import is not blocked, but nothing acts on these until finance answers:
 `cart.credit_balances` (honour, pay out or write off, and who owns the liability) and
 `cart.erpnext_invoices_legal` (are the ERPNext invoices the legal tax invoices). A finance answer changes the
-file, so it counts as a change for the hash rule above.
+file, so it counts as a change for the hash rule above. Their status is `finance-confirm`, so an importer that
+DECLARES either key is blocked until finance answers. The cart importer therefore does not declare them: what
+the import does with credits and invoices (frozen, admin-only history; "Issued in ERPNext as <number>", no
+link-out, no new numbers) is fixed by the recorded value and does not depend on the answer. The report shows
+both as not accepted.
 
 **Framework (ADR open decisions)**
 

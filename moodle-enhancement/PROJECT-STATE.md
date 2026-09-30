@@ -5,6 +5,33 @@
 
 ---
 
+## 2026-09-30 - ADR-032 BizLMS import framework: review round 2 closed (Sonnet 5.5)
+
+Branch `claude/bizlms-import-framework`. The independent review of the framework returned fix-then-ship: 4 must-fix and 15
+should-fix are closed, in code and tests, in both plugin trees (drift gate OK). **Moodle PHPUnit not run** (test-DB re-init);
+what ran: `php -l`, the drift gate, and an offline harness for the static scanner, the real decisions file and the report.
+
+- **Decisions:** the loader now reads the real file shape, so the owner's 109 values reach the importers (before, every
+  decision with a default silently used the importer's default). `finance-confirm` entries block a feature that declares
+  them (the cart importer must not).
+- **Deferral / dependencies:** an apply run refuses `deferred`; a feature that reads another feature's table must depend
+  on it (`undeclared_dependency`); steps get a read-only map view.
+- **Importer interface:** targets must be the plugin's own tables, never legacy; core writes limited to a reviewed
+  list; importer and step code must live in `classes/bizlms/`; the static scan recurses and catches aliases, dynamic
+  calls and the missing bans.
+- **Tripwire:** flushes the log buffer and rechecks after the feature-mode commit (events run after the commit).
+- **Also:** guard permit for the runner, CLI-only maintenance, report lines follow the commit, byte-exact enum
+  histograms, MAP-into-PRESERVE refused, unfiltered accounting, strict tenant paths, codes-only `detail`, resume newest run.
+- **Capability migration replaced:** `cli/repair_bizlms_capabilities.php` (inventory, owner-signed allow-list, never
+  `manage`, `manage_multiorganizations` or `crosstenant`). It is step 0 of the cutover slice. The old copy would have handed
+  role 9 organisation delete and cross-tenant visibility (ADR-031).
+- **Open (Nitin / next session):** run `--group bizlms_import` on MySQL 8 and MariaDB 10.11; P0.4 (wire `parity` into
+  `migration_parity_check.php`); the `qr_scan.php` freeze (user-visible, needs visual evidence, classroom code fix 1);
+  the `legacy_cap()` fallback removal ships with the org importer; the finance answers.
+- Detail: `state-cards/sentientia_platform-state.md`, ADR-032 (sections Capabilities, Gating, Side-effect safety, Build and run order).
+
+---
+
 ## 🧪 2026-09-29 — ADR-031 decisions closed; Playwright screen-check pass; PWA OFF, "Browse Library" (Opus 5.5)
 
 **Direction (Nitin, 2026-09-29):** no production hotfix. Production (airpay.academy, BizLMS 4.1.2) is
