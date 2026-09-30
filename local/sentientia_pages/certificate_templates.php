@@ -38,21 +38,24 @@ require_login();
 $context = context_system::instance();
 
 // Gate: site admins, or holders of the certificate-manage capability.
-$can_view = is_siteadmin()
-    || has_capability('moodle/site:config', $context)
-    || has_capability('tool/certificate:manage', $context);
-if (!$can_view) {
+if (!\local_sentientia_pages\cert_templates_access::can_view($context)) {
     throw new \required_capability_exception($context,
         'tool/certificate:manage', 'nopermissions', '');
 }
 
-admin_externalpage_setup('local_sentientia_pages_cert_templates',
-    '', null, '', ['pagelayout' => 'admin']);
-
+// Page setup (persona pass 2026-09-30, D6). The admin_externalpage for this page
+// is registered in settings.php only for moodle/site:config holders, so calling
+// admin_externalpage_setup() for a tool/certificate:manage holder who lacks
+// site:config made core throw `accessdenied` AFTER the gate above had let them
+// in. setup_page() uses the admin tree for site:config holders (unchanged for
+// them) and an ordinary system-context page for everyone else.
 global $DB, $OUTPUT, $PAGE, $USER, $CFG;
-$PAGE->set_url('/local/sentientia_pages/certificate_templates.php');
-$PAGE->set_title(get_string('cert_templates_title', 'local_sentientia_pages'));
-$PAGE->set_heading(get_string('cert_templates_title', 'local_sentientia_pages'));
+$pageurl = new moodle_url('/local/sentientia_pages/certificate_templates.php');
+$pagetitle = get_string('cert_templates_title', 'local_sentientia_pages');
+\local_sentientia_pages\cert_templates_access::setup_page($context, $pageurl, $pagetitle);
+$PAGE->set_url($pageurl);
+$PAGE->set_title($pagetitle);
+$PAGE->set_heading($pagetitle);
 
 // ── Known tenants (BizLMS roots) ───────────────────────────────────
 $tenant_labels = [

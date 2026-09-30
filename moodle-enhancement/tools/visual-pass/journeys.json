@@ -157,8 +157,7 @@
         { "id": "roles", "name": "Role management", "url": "/local/sentientia_roles/index.php",
           "expect": { "heading": "Role Management" } },
         { "id": "switchboard", "name": "Feature switchboard (site admin only, moodle/site:config: refused for the tenant admin, B2)", "url": "/local/sentientia_platform/admin/switchboard.php", "access": "refused" },
-        { "id": "certificates-admin", "name": "Certificate templates admin (tenant admin may be refused)", "url": "/local/sentientia_pages/certificate_templates.php", "access": "either",
-          "todo": "D6: once certificate_templates.php no longer calls admin_externalpage_setup(), the tenant admin (tool/certificate:manage) gets in: change access to ok" },
+        { "id": "certificates-admin", "name": "Certificate templates admin (tenant admin holds tool/certificate:manage, D6 fixed on claude/persona-fix-admingates)", "url": "/local/sentientia_pages/certificate_templates.php", "access": "ok" },
         { "id": "requests-all", "name": "All course requests", "url": "/local/sentientia_request/all.php", "access": "either" },
         { "macro": "langPair", "url": "/my/dashboard.php", "langs": ["hi"] },
         { "id": "deny-environment", "name": "Tenant admin cannot open Moodle Environment", "url": "/admin/environment.php", "access": "refused" }

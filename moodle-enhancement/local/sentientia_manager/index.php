@@ -19,10 +19,14 @@ $PAGE->set_title('My Team — Learning Dashboard');
 $PAGE->set_heading('My Team — Learning Dashboard');
 $PAGE->set_pagelayout('standard');
 
-$isadmin = is_siteadmin() || has_capability('local/courses:manage', $context);
+// D9 (persona pass 2026-09-30): was the retired BizLMS name local/courses:manage,
+// which no Sentientia install declares, so a tenant admin holding only the
+// ADR-025 successor was never treated as an admin here and could not pick a
+// manager's team.
+$isadmin = is_siteadmin() || has_capability('local/sentientia_courses:manage', $context);
 
 // Admin can pick which manager's team to view.
-// ADR-031: local/courses:manage says WHAT, not WHERE - a holder who is not
+// ADR-031: local/sentientia_courses:manage says WHAT, not WHERE - a holder who is not
 // cross-tenant may only pick a manager inside their own tenant; anything else
 // falls back to their own team, as for a non-admin.
 $viewuserid = optional_param('manager', $USER->id, PARAM_INT);

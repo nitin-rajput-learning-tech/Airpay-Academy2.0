@@ -332,3 +332,13 @@ Branch `claude/persona-fix-manager` (bundle 3 of the persona triage,
   `delete_allocation`, `bulk_allocate`) still require `:approve` / `:allocate`, which a supervisor
   without the manager role does not hold - the same class as D4 but a product decision about who may
   approve, not part of the persona rows.
+
+## 2026-09-30 - persona pass bundle "Admin gates" (D9)
+
+Branch `claude/persona-fix-admingates`. `index.php` (My Team): `$isadmin` used the retired BizLMS
+`local/courses:manage`, so a tenant admin holding only its ADR-025 successor
+`local/sentientia_courses:manage` was never treated as an admin and could not pick a manager's team.
+Now checks the successor. The ADR-031 tenant bound after the gate (`same_tenant()` unless
+cross-tenant) is unchanged. Covered by `local_sentientia_courses` `tests/capability_gates_test.php`
+(tenant bound) and the platform guard `local_sentientia_platform` `tests/capability_names_test.php`.
+No version bump.

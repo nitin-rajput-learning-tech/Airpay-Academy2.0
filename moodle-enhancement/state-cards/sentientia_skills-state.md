@@ -172,3 +172,11 @@ course_mapping.php. Backfill for tenant admins (`self_rate_skill` for another us
 Tests: new `tests/mapcourses_scope_test.php` (`@group tenant_isolation`). The existing
 `tenant_scope_test` needs no change (its `:manage` holders also pass `require_map_courses()`). Not
 run here (no PHPUnit, as instructed).
+
+## 2026-09-30 - persona pass bundle "Admin gates" (D9)
+
+Branch `claude/persona-fix-admingates`. `index.php` (My Skills, viewing another user's gap analysis):
+`$hasmanagecap` used the retired BizLMS `local/courses:manage`; now `local/sentientia_courses:manage`
+(ADR-025 successor). The ADR-031 `tenant::require_same_tenant_user()` after the gate is unchanged, so a
+holder still cannot open a user in another tenant. Guard: `local_sentientia_platform`
+`tests/capability_names_test.php`. No version bump.

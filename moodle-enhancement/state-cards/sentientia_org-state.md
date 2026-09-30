@@ -242,3 +242,14 @@ sequence reset inside the transaction. `data_migration.php` sits in the plugin r
 CLI_SCRIPT or loads Moodle for a web request. `verify_branding.php` and `disable_bizlms.php` no longer tell the
 operator to run the retired script. The capability migration that lived in `migrate_all.php` is not part of the
 import. Version unchanged; both trees identical.
+
+## 2026-09-30 - persona pass bundle "Admin gates" (D9)
+
+Branch `claude/persona-fix-admingates`. `classes/accesslib.php` (top-level `local/` tree) is now
+byte-identical to the moodle-enhancement copy, which has carried `accesslib::legacy_cap()` since
+2026-06-18: the `can_*` / `is_*_head` helpers ask the BizLMS `local/costcenter:*` and
+`local/classroom:manageclassroom` fallbacks through `get_capability_info()` first, so an undeclared
+legacy name is false without a debugging notice. The top-level copy still called `has_capability()`
+on them directly (debugging notice on every nav render) and lacked `legacy_cap()`, which
+`theme_sentientia` `core_renderer` already calls (a fatal on that tree). The file leaves
+`tools/tree-drift-baseline.txt`. New test `tests/accesslib_legacy_cap_test.php`. No version bump.

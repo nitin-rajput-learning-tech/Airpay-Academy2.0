@@ -24,7 +24,9 @@ $userid = optional_param('userid', $USER->id, PARAM_INT);
 
 // Only admins/managers can view other users' skills.
 if ($userid !== $USER->id && !is_siteadmin()) {
-    $hasmanagecap = has_capability('local/courses:manage', context_system::instance());
+    // D9 (persona pass 2026-09-30): the retired BizLMS local/courses:manage became
+    // local/sentientia_courses:manage under ADR-025; the old name is declared nowhere.
+    $hasmanagecap = has_capability('local/sentientia_courses:manage', context_system::instance());
     $isdirectreport = false;
     if (!$hasmanagecap) {
         try {
@@ -39,7 +41,7 @@ if ($userid !== $USER->id && !is_siteadmin()) {
         throw new moodle_exception('nopermission', 'error', '',
             null, 'You do not have permission to view this user\'s skills.');
     }
-    // ADR-031: local/courses:manage says WHAT, not WHERE - a course manager
+    // ADR-031: local/sentientia_courses:manage says WHAT, not WHERE - a course manager
     // may open the gap analysis of users in their own tenant only (it used to
     // be any user id in any tenant). A direct report is theirs by definition.
     if ($hasmanagecap) {

@@ -264,8 +264,12 @@ class course_manager {
     /**
      * Check if user has course management capability (L&D admin detection).
      *
-     * Checks BOTH old (local/courses:manage) and new (local/sentientia_courses:manage)
-     * capabilities during transition.
+     * Checks local/sentientia_courses:manage. The BizLMS name it replaced,
+     * local/courses:manage, was renamed by ADR-025 (relabel map in
+     * local_sentientia_org cli/migrate_all.php) and is declared by no db/access.php
+     * on a Sentientia install, so asking has_capability() about it always
+     * returned false and logged a "Capability was not found" debugging notice on
+     * every course view (persona pass 2026-09-30, D9). The dead branch is gone.
      *
      * @param \context|null $context  (null = system context)
      * @return bool
@@ -274,12 +278,14 @@ class course_manager {
         $context = $context ?? \context_system::instance();
 
         return is_siteadmin()
-            || has_capability('local/sentientia_courses:manage', $context)
-            || has_capability('local/courses:manage', $context);
+            || has_capability('local/sentientia_courses:manage', $context);
     }
 
     /**
      * Check if user can enrol others.
+     *
+     * Checks local/sentientia_courses:enrol (the ADR-025 successor of the retired
+     * BizLMS local/courses:enrol; see {@see self::can_manage()}).
      *
      * @param \context|null $context
      * @return bool
@@ -288,8 +294,7 @@ class course_manager {
         $context = $context ?? \context_system::instance();
 
         return is_siteadmin()
-            || has_capability('local/sentientia_courses:enrol', $context)
-            || has_capability('local/courses:enrol', $context);
+            || has_capability('local/sentientia_courses:enrol', $context);
     }
 
     // ═══════════════════════════════════════════════════════════════════

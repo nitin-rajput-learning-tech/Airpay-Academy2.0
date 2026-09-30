@@ -769,3 +769,17 @@ The five "open should-fixes" above are done, plus the relabel one (see the senti
 - Also in this bundle: `moodle-enhancement/docs/cutover/UAT-VALIDATION-PLAN-2026-09-03.md` no longer lists
   the feature switchboard in the tenant/L&D admin row. The page is site-admin only by design
   (`moodle/site:config`, `admin/switchboard.php`), so a tenant admin being refused there is correct.
+
+## 2026-09-30 - persona pass bundle "Admin gates" (D9)
+
+Branch `claude/persona-fix-admingates`. New structural guard `tests/capability_names_test.php`: every
+`has_capability('<literal>')`, `require_capability('<literal>')` and `db/services.php` `capabilities`
+entry in a Sentientia plugin must name a capability `get_capability_info()` knows (a file that itself
+probes the same name with `get_capability_info()` is exempt: that is the accepted legacy guard). Core
+answers an unknown name with false plus a debugging notice for EVERY caller, site admins included, so
+nothing errors when a rename leaves a site behind. Its BASELINE lists the two plugins' real defects the
+first scan found: `local/sentientia_classroom:enrol` (5 sites: page, form, two web services; declared
+nowhere) and `local/sentientia_evaluation:view` (`response_list.php`, `response_detail.php`; declared
+nowhere). `PENDING_ELSEWHERE` holds `qr_attendance.php` (fixed on `claude/fixes-0930`); delete that entry
+once the branch has landed. Runs only in the full PHPUnit run (same as `exception_strings_test`). No
+version bump.

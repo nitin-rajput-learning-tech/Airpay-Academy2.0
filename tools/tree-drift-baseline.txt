@@ -32,7 +32,6 @@ CONTENT sentientia_leaderboard/classes/external/list_boards.php
 CONTENT sentientia_leaderboard/classes/external/set_optout.php
 CONTENT sentientia_leaderboard/db/feature_flags.php
 CONTENT sentientia_notifications/templates/prefs.mustache
-CONTENT sentientia_org/classes/accesslib.php
 CONTENT sentientia_org/classes/test/bizlms_fixture.php
 CONTENT sentientia_org/cli/seed_badges.php
 CONTENT sentientia_org/db/upgrade.php
