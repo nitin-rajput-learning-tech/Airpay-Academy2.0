@@ -22,7 +22,8 @@
  *          message_provider_defaults - providers missing message defaults
  *          must be 0, or message_send() throws for them).
  * Exit 2 = counts match but values could not be checked, so the data is
- *          NOT proven intact (old baseline, or a non-MySQL engine).
+ *          NOT proven intact (old baseline, a non-MySQL engine, or an
+ *          invariant that could not run: printed as SKIPPED with the reason).
  * No flags = print current counts and checksums.
  *
  * @package local_sentientia_platform
@@ -188,13 +189,25 @@ function sentientia_parity_checksums(): array {
  * 2026-09-29: 28 of 30 Sentientia providers on a relabelled copy; a count-only
  * parity check could not see it. Repair: repair_task_registrations.php --apply.
  *
- * @return array<string,string[]|null> null = check not available here
+ * The check never stops the run. On a BizLMS source box that has the plugin
+ * directory but not the tables, or on any DB error, check() can throw; that must
+ * not stop --baseline from writing its file. The error is caught and the
+ * invariant is reported as SKIPPED with its message (--compare then exits 2,
+ * "not proven", never a pass).
+ *
+ * @return array<string,string[]|string|null> a list of problems (empty = OK);
+ *         null = check not available here; a string = the check could not run,
+ *         and the string says why
  */
 function sentientia_parity_invariants(): array {
     if (!class_exists('\local_sentientia_platform\message_pref_repair')) {
         return ['message_provider_defaults' => null];
     }
-    return ['message_provider_defaults' => \local_sentientia_platform\message_pref_repair::check()];
+    try {
+        return ['message_provider_defaults' => \local_sentientia_platform\message_pref_repair::check()];
+    } catch (\Throwable $e) {
+        return ['message_provider_defaults' => 'check could not run: ' . $e->getMessage()];
+    }
 }
 
 /** Print the invariants; returns [failed, skipped]. */
@@ -206,6 +219,9 @@ function sentientia_parity_print_invariants(array $invariants): array {
     foreach ($invariants as $k => $problems) {
         if ($problems === null) {
             cli_writeln(sprintf('  SKIPPED %-26s (check not available on this deployment)', $k));
+            $skipped++;
+        } else if (is_string($problems)) {
+            cli_writeln(sprintf('  SKIPPED %-26s (%s)', $k, $problems));
             $skipped++;
         } else if ($problems) {
             cli_writeln(sprintf('  FAIL    %-26s %d problem(s) - must be 0', $k, count($problems)));

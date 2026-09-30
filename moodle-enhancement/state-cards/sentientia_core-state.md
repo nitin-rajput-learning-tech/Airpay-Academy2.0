@@ -196,3 +196,18 @@ A key that already exists under the new name is kept, and the processors of the 
 into it. The cache is invalidated narrowly instead of with purge_all. The DONE message requires running
 `local/sentientia_platform/cli/repair_task_registrations.php --apply` afterwards. See the
 sentientia_platform state card, same date.
+
+## 2026-09-30 - relabel_plugin.php step 1b: `_enabled` carries only the processors whose lock moved
+
+When the new `message_provider_<to>_<name>_enabled` key is absent, step 1b used to rename the whole
+legacy `_enabled`. That could put a processor into the enabled list next to a `_locked` key it did not
+come with (a lock that was already set under the new name, or a processor with no legacy lock), which
+broke the rule "a lock and its enabled membership travel together" that the merge branch and
+`message_pref_repair` already follow. Now:
+- every legacy member's lock moved: the old key is renamed, as before;
+- only some moved: just those processors are written under the new name and the old key is left;
+- none moved: nothing is written and the old key is left (the line says so).
+Checked on the local dev DB with four fake `zzrelabel` providers (dry run and `--run`; the fake rows
+were removed afterwards): whole-key rename, partial carry where the legacy list had a processor with no
+lock, partial carry where the new popup lock already existed, and "none moved". No version bump. Both
+trees.

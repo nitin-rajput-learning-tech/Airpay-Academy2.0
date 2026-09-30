@@ -272,6 +272,220 @@ final class message_pref_repair_test extends \advanced_testcase {
     }
 
     /**
+     * (v) An otherwise healthy provider (every new _locked key present, as on a
+     * fresh install or after the first-cut key copy) that still has its legacy
+     * _disable switch and a legacy user row: both are reported, both are carried
+     * over, and nothing else is written.
+     */
+    public function test_healthy_provider_with_stranded_disable_and_user_row_is_repaired(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $name = $this->first_provider('local_sentientia_cart');
+        $base = "local_sentientia_cart_{$name}";
+        $oldbase = "local_airpay_cart_{$name}";
+        $olduser = "message_provider_{$oldbase}_enabled";
+        $newuser = "message_provider_{$base}_enabled";
+
+        $this->assertSame([], message_pref_repair::check(), 'Precondition: a fresh install is healthy');
+        unset_config("{$base}_disable", 'message');
+        set_config("{$oldbase}_disable", '1', 'message');
+        $user = $this->getDataGenerator()->create_user();
+        $DB->insert_record('user_preferences', (object) ['userid' => $user->id, 'name' => $olduser, 'value' => 'email']);
+
+        $joined = implode("\n", message_pref_repair::check());
+        $this->assertStringContainsString("{$oldbase}_disable", $joined);
+        $this->assertStringContainsString("not carried to {$base}_disable", $joined);
+        $this->assertStringContainsString("1 user choice(s) still under {$olduser}", $joined);
+
+        $lines = [];
+        $done = message_pref_repair::repair(true, self::collector($lines));
+        $this->assertSame(1, $done['copied'], 'only _disable is copied: ' . implode("\n", $lines));
+        $this->assertSame(1, $done['moved']);
+        $this->assertSame(0, $done['shadowed']);
+        $this->assertSame(0, $done['defaulted'], 'every lock was already there');
+        $this->assertSame(0, $done['unresolved']);
+        $this->assertSame(0, $done['errors']);
+
+        $this->assertSame('1', get_config('message', "{$base}_disable"));
+        $this->assertSame('1', get_config('message', "{$oldbase}_disable"), 'copy-only: the legacy key stays');
+        $this->assertSame('email', $DB->get_field('user_preferences', 'value',
+            ['userid' => $user->id, 'name' => $newuser]));
+        $this->assertFalse($DB->record_exists('user_preferences', ['userid' => $user->id, 'name' => $olduser]));
+
+        $this->assertSame([], message_pref_repair::check());
+        $again = message_pref_repair::repair(true, function (string $line): void {
+        });
+        $this->assertSame(0, $again['copied']);
+        $this->assertSame(0, $again['moved']);
+    }
+
+    /**
+     * (vi) local_sentientia_platform was local_airpay_core, not local_airpay_platform:
+     * a repair copies from the local_airpay_core_* keys and writes nothing under
+     * a local_airpay_platform name.
+     */
+    public function test_platform_provider_is_repaired_from_the_local_airpay_core_keys(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $procs = self::procs();
+        // The platform declares no message provider of its own today, so add a row.
+        $DB->insert_record('message_providers', (object) [
+            'name' => 'zzplatformtest', 'component' => 'local_sentientia_platform', 'capability' => null]);
+        $base = 'local_sentientia_platform_zzplatformtest';
+        $oldbase = 'local_airpay_core_zzplatformtest';
+        foreach ($procs as $proc) {
+            set_config("{$proc}_provider_{$oldbase}_locked", $proc === 'email' ? '1' : '0', 'message');
+        }
+        set_config("message_provider_{$oldbase}_enabled", 'email', 'message');
+        set_config("{$oldbase}_disable", '1', 'message');
+        $this->assertNotEmpty(message_pref_repair::check());
+
+        $lines = [];
+        $done = message_pref_repair::repair(true, self::collector($lines));
+        $this->assertSame(count($procs) + 2, $done['copied'], implode("\n", $lines)); // locks + _enabled + _disable
+        $this->assertSame(0, $done['defaulted']);
+        $this->assertSame(0, $done['unresolved']);
+        $this->assertSame(0, $done['unmapped'], implode("\n", $lines));
+        $this->assertSame(0, $done['errors']);
+
+        foreach ($procs as $proc) {
+            $this->assertSame($proc === 'email' ? '1' : '0',
+                get_config('message', "{$proc}_provider_{$base}_locked"), "{$proc} lock");
+            $this->assertFalse(get_config('message', "{$proc}_provider_local_airpay_platform_zzplatformtest_locked"),
+                "{$proc}: nothing is written under a local_airpay_platform name");
+        }
+        $this->assertSame('email', get_config('message', "message_provider_{$base}_enabled"));
+        $this->assertSame('1', get_config('message', "{$base}_disable"));
+        $this->assertSame([], message_pref_repair::check());
+    }
+
+    /**
+     * (vii) A local_airpay_* message key or user preference that matches no
+     * provider is counted and REPORTed, and left exactly as it is.
+     */
+    public function test_unmapped_legacy_keys_are_reported_and_left_alone(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $lockkey = 'email_provider_local_airpay_zzgone_thing_locked';
+        $prefname = 'message_provider_local_airpay_zzgone_thing_enabled';
+        set_config($lockkey, '0', 'message');
+        $user = $this->getDataGenerator()->create_user();
+        $DB->insert_record('user_preferences', (object) ['userid' => $user->id, 'name' => $prefname, 'value' => 'email']);
+
+        $this->assertSame([], message_pref_repair::check(), 'report-only: not a defect check() fails on');
+
+        foreach ([false, true] as $apply) {
+            $lines = [];
+            $counts = message_pref_repair::repair($apply, self::collector($lines));
+            $text = implode("\n", $lines);
+            $this->assertSame(2, $counts['unmapped'], $text);
+            $this->assertStringContainsString($lockkey, $text);
+            $this->assertStringContainsString($prefname, $text);
+            foreach (['copied', 'moved', 'shadowed', 'defaulted', 'unresolved', 'errors'] as $k) {
+                $this->assertSame(0, $counts[$k], "{$k}: {$text}");
+            }
+        }
+        $this->assertSame('0', get_config('message', $lockkey));
+        $this->assertTrue($DB->record_exists('user_preferences', ['userid' => $user->id, 'name' => $prefname]));
+    }
+
+    /**
+     * (viii) Legacy locks but no legacy _enabled (the admin turned every
+     * processor off, so core had unset it): the locks are copied and the new
+     * _enabled stays absent.
+     */
+    public function test_legacy_locks_without_legacy_enabled_leave_enabled_unset(): void {
+        $this->resetAfterTest();
+
+        $procs = self::procs();
+        $name = $this->first_provider('local_sentientia_cart');
+        $base = "local_sentientia_cart_{$name}";
+        $oldbase = "local_airpay_cart_{$name}";
+        foreach ($procs as $proc) {
+            unset_config("{$proc}_provider_{$base}_locked", 'message');
+            set_config("{$proc}_provider_{$oldbase}_locked", '0', 'message');
+        }
+        unset_config("message_provider_{$base}_enabled", 'message');
+        unset_config("message_provider_{$oldbase}_enabled", 'message');
+        unset_config("{$base}_disable", 'message');
+        $this->assertNotEmpty(message_pref_repair::check());
+
+        $lines = [];
+        $done = message_pref_repair::repair(true, self::collector($lines));
+        $this->assertSame(count($procs), $done['copied'], implode("\n", $lines)); // the locks, nothing else
+        $this->assertSame(0, $done['defaulted'], 'legacy locks cover every processor, so no file default is needed');
+        $this->assertSame(0, $done['errors']);
+        foreach ($procs as $proc) {
+            $this->assertSame('0', get_config('message', "{$proc}_provider_{$base}_locked"), $proc);
+        }
+        $this->assertFalse(get_config('message', "message_provider_{$base}_enabled"),
+            'no legacy _enabled, so no new _enabled is invented');
+        $this->assertSame([], message_pref_repair::check());
+    }
+
+    /**
+     * (ix) A provider row its component no longer declares cannot be repaired;
+     * check() and repair() both say what to do about it.
+     */
+    public function test_a_stale_provider_row_gets_an_explicit_remedy(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $DB->insert_record('message_providers', (object) [
+            'name' => 'zzstalerow', 'component' => 'local_sentientia_cart', 'capability' => null]);
+
+        $joined = implode("\n", message_pref_repair::check());
+        $this->assertStringContainsString('local_sentientia_cart/zzstalerow', $joined);
+        $this->assertStringContainsString('message_send() throws', $joined);
+        $this->assertStringContainsString('stale provider row', $joined);
+        $this->assertStringContainsString('{message_providers}', $joined);
+        $this->assertStringContainsString('admin/cli/upgrade.php', $joined);
+
+        $lines = [];
+        $done = message_pref_repair::repair(true, self::collector($lines));
+        $text = implode("\n", $lines);
+        $this->assertSame(1, $done['unresolved'], $text);
+        $this->assertSame(0, $done['defaulted']);
+        $this->assertStringContainsString('no entry in db/messages.php', $text);
+        $this->assertStringContainsString('stale provider row', $text);
+        $this->assertNotEmpty(message_pref_repair::check(), 'repair cannot fix a stale row, so check() still fails');
+    }
+
+    /**
+     * (x) A db/messages.php default written for a provider outside the
+     * Sentientia plugins is tagged in the output; one of ours is not.
+     */
+    public function test_defaults_written_outside_sentientia_plugins_are_tagged(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $procs = self::procs();
+        $this->assertTrue($DB->record_exists('message_providers', ['component' => 'moodle', 'name' => 'instantmessage']));
+        $ours = $this->first_provider('local_sentientia_courses');
+        foreach ($procs as $proc) {
+            unset_config("{$proc}_provider_moodle_instantmessage_locked", 'message');
+            unset_config("{$proc}_provider_local_sentientia_courses_{$ours}_locked", 'message');
+        }
+
+        $lines = [];
+        message_pref_repair::repair(false, self::collector($lines));
+        $text = implode("\n", $lines);
+        $this->assertStringContainsString('would write defaults (non-Sentientia) moodle/instantmessage', $text);
+        $this->assertStringContainsString("would write defaults local_sentientia_courses/{$ours}", $text);
+        $this->assertStringNotContainsString('(non-Sentientia) local_sentientia_courses', $text);
+
+        $lines = [];
+        message_pref_repair::repair(true, self::collector($lines));
+        $text = implode("\n", $lines);
+        $this->assertStringContainsString('wrote defaults (non-Sentientia) moodle/instantmessage', $text);
+        $this->assertStringContainsString("wrote defaults local_sentientia_courses/{$ours}", $text);
+        $this->assertSame([], message_pref_repair::check());
+    }
+
+    /**
      * Legacy names: explicit map first, then local_airpay_<suffix>.
      */
     public function test_legacy_component_names(): void {

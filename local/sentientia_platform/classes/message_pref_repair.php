@@ -115,10 +115,13 @@ class message_pref_repair {
 
         foreach (self::providers() as $p) {
             $base = $p->component . '_' . $p->name;
+            $stale = null;  // looked up once, and only for a provider that is missing a lock
             foreach ($ready as $proc) {
                 $key = "{$proc}_provider_{$base}_locked";
                 if (!isset($config->{$key})) {
-                    $problems[] = "{$p->component}/{$p->name}: no {$proc} default ({$key}) - message_send() throws";
+                    $stale = $stale ?? !self::declared_in_file($p);
+                    $problems[] = "{$p->component}/{$p->name}: no {$proc} default ({$key}) - message_send() throws"
+                        . ($stale ? '; ' . self::stale_remedy($p) : '');
                 }
             }
             $legacy = self::legacy_component($p->component);
@@ -287,7 +290,7 @@ class message_pref_repair {
         $file = message_get_providers_from_file($p->component);
         if (!isset($file[$p->name])) {
             $out("  REPORT: {$label} has no default for " . implode(', ', $lockmissing)
-                . ' and no entry in db/messages.php - left as-is');
+                . ' and no entry in db/messages.php - left as-is; ' . self::stale_remedy($p));
             $counts['unresolved']++;
             return;
         }
@@ -304,7 +307,11 @@ class message_pref_repair {
         if (!$writable) {
             return;
         }
-        $out(($apply ? '  wrote defaults ' : '  would write defaults ') . "{$label} ("
+        // A default written for a provider that is not Sentientia's own (core, or a
+        // bundled plugin such as tool_certificate) is tagged, so the cutover change
+        // record shows which writes reached outside the Sentientia plugins.
+        $tag = stripos($p->component, 'sentientia') === false ? '(non-Sentientia) ' : '';
+        $out(($apply ? '  wrote defaults ' : '  would write defaults ') . "{$tag}{$label} ("
             . implode(', ', $writable) . ') from db/messages.php');
         if (!$apply) {
             $counts['defaulted']++;
@@ -403,6 +410,27 @@ class message_pref_repair {
             return $m[1];
         }
         return null;
+    }
+
+    /**
+     * Does the provider's component still declare it in db/messages.php?
+     *
+     * @param \stdClass $p provider row (component, name)
+     */
+    private static function declared_in_file(\stdClass $p): bool {
+        return isset(message_get_providers_from_file($p->component)[$p->name]);
+    }
+
+    /**
+     * What an operator does about a provider row its component no longer
+     * declares (a stale row: nothing can give it defaults, and message_send()
+     * throws for it). Kept in one place so check() and repair() say the same.
+     *
+     * @param \stdClass $p provider row (component, name)
+     */
+    private static function stale_remedy(\stdClass $p): string {
+        return "stale provider row: {$p->component} has no '{$p->name}' in db/messages.php. Delete that"
+            . ' {message_providers} row, or run admin/cli/upgrade.php if the component has an upgrade pending';
     }
 
     /**

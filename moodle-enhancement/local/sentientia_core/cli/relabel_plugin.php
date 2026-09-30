@@ -86,9 +86,11 @@ if ($options['tables'] !== '') {
 //   <component>_<name>_disable                       (admin's site-wide off switch)
 // Rename the exact keys of this component's providers (never by prefix:
 // local_airpay_X_ is also the start of local_airpay_X_Y_...). An existing key
-// under the new name is kept and the old one left. When the new _enabled already
-// exists, the legacy processors whose _locked key this run moves are merged into
-// it (their locked value and enabled membership travel together). A user who
+// under the new name is kept and the old one left. Only the legacy processors
+// whose _locked key this run moves are carried into the new _enabled (their locked
+// value and enabled membership travel together): merged into it when it exists;
+// when it does not, the old key is renamed if that is every member, else just
+// those processors are written under the new name and the old key is left. A user who
 // already has the new name keeps it; their legacy row is left and reported.
 // This step can only rename what exists. Afterwards,
 // local/sentientia_platform/cli/repair_task_registrations.php --apply is REQUIRED:
@@ -131,21 +133,40 @@ if ($dbman->table_exists(new xmldb_table('message_providers'))) {
                 $movedlocks[] = (string) $proc;
             }
         }
-        // _enabled after the _locked keys: a merge takes only what they moved.
+        // _enabled after the _locked keys: it carries only the processors whose
+        // _locked key this run moved, so a lock and its enabled membership always
+        // travel together (a processor whose new _locked key was already there, or
+        // has no legacy one, is not put into the enabled list by this step).
         $oldkey = "message_provider_{$from}_{$pname}_enabled";
         $newkey = "message_provider_{$to}_{$pname}_enabled";
         $oldval = $DB->get_field('config_plugins', 'value', ['plugin' => 'message', 'name' => $oldkey]);
         if ($oldval !== false) {
             $newval = $DB->get_field('config_plugins', 'value', ['plugin' => 'message', 'name' => $newkey]);
+            $oldlist = $split($oldval);
+            $add = array_values(array_intersect($oldlist, $movedlocks));
             if ($newval === false) {
-                echo "  message default {$oldkey} -> {$newkey}\n";
-                if ($run) {
-                    $DB->set_field('config_plugins', 'name', $newkey, ['plugin' => 'message', 'name' => $oldkey]);
+                if ($add === $oldlist) {
+                    // Every legacy member's lock moved: the whole key goes across.
+                    echo "  message default {$oldkey} -> {$newkey}\n";
+                    if ($run) {
+                        $DB->set_field('config_plugins', 'name', $newkey, ['plugin' => 'message', 'name' => $oldkey]);
+                    }
+                    $configmoved++;
+                } else if ($add) {
+                    // Only some did: write just those and leave the old key alone.
+                    $value = implode(',', $add);
+                    echo "  message default {$newkey}: new '{$value}' (legacy " . implode(',', $add)
+                        . " only, the processors whose lock moved; {$oldkey} left)\n";
+                    if ($run) {
+                        $DB->insert_record('config_plugins',
+                            (object) ['plugin' => 'message', 'name' => $newkey, 'value' => $value]);
+                    }
+                    $configmoved++;
+                } else {
+                    echo "  message default {$oldkey}: none of its processors had a lock moved (left)\n";
                 }
-                $configmoved++;
             } else {
                 $current = $split($newval);
-                $add = array_values(array_intersect($split($oldval), $movedlocks));
                 $merged = array_values(array_unique(array_merge($current, $add)));
                 if ($merged !== $current) {
                     $value = implode(',', $merged);
