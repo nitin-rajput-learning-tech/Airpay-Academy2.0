@@ -47,6 +47,11 @@ final class toy_importer_contract_test extends \advanced_testcase {
         $this->seed_toy_data();
     }
 
+    protected function contract_requires_direct_org_dependency(): bool {
+        // The toy has a tenant column and no org feature to depend on; the registry tests cover the rule with one.
+        return false;
+    }
+
     protected function contract_mutate_source(): void {
         global $DB;
         // A new row changes the count and the max id on every engine, so detection does not depend on the CRC.

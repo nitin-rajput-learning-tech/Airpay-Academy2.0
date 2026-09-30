@@ -532,7 +532,7 @@ final class bizlms_capability_repair_test extends \advanced_testcase {
 
         // manageclassroom is an open decision: nothing names it as a decline.
         $this->assertNotContains('local/classroom:manageclassroom', array_column($rows, 'legacy'));
-        $this->assertStringContainsString('local/classroom:manageclassroom', json_encode($data['open_decisions']));
+        $this->assertSame('local/classroom:manageclassroom', $data['open_decisions'][0]['legacy']);
     }
 
     public function test_the_test_copy_of_the_draft_is_the_checked_in_file_wherever_the_checkout_has_both(): void {

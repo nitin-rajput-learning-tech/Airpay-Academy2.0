@@ -193,6 +193,32 @@ trait importer_contract {
         $DB->delete_records('local_sentientia_legacystep');
         $DB->delete_records('local_sentientia_legacyrun');
         unset_config('bizlms_complete_' . $importer->feature(), 'local_sentientia_platform');
+        unset_config('bizlms_tripped_' . $importer->feature(), 'local_sentientia_platform');
+    }
+
+    /**
+     * Must the importer list the org feature in its own depends()? True for a real importer with a tenant column.
+     * Override to false for a test importer that has no org feature to depend on, or for an importer that reaches
+     * org only through another feature it depends on (the registry checks the whole closure).
+     *
+     * @return bool
+     */
+    protected function contract_requires_direct_org_dependency(): bool {
+        return true;
+    }
+
+    public function test_contract_an_importer_with_tenant_columns_depends_on_the_org_feature(): void {
+        $importer = $this->contract_importer();
+        if (!$importer->tenant_columns() || $importer->feature() === registry::TENANT_OWNER) {
+            $this->markTestSkipped('the importer declares no tenant column, or is the org feature');
+        }
+        if (!$this->contract_requires_direct_org_dependency()) {
+            $this->markTestSkipped('the test importer has no org feature to depend on, or reaches it through another feature');
+        }
+        // Tenant resolution reads the organisation table the org importer fills. The registry refuses the importer
+        // when org is not in its dependency closure; this test says so before the registry is loaded with it.
+        $this->assertContains(registry::TENANT_OWNER, $importer->depends(),
+            'tenant_columns() without depends() on org: the alphabetical order can run this importer first');
     }
 
     public function test_contract_not_applicable_without_tables(): void {

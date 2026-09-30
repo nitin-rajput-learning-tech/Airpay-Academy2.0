@@ -759,7 +759,8 @@ today they are what keeps tenant admins working on a restored UAT database.
 4. **Contract trait** `importer_contract` (graft from Design A), used by every feature test with that
    feature's seed: not applicable without tables; dry run writes nothing; apply reconciles; second
    apply is a no-op; resume after an injected failure; source change detected; collision blocks and
-   header row is adopted; preserved ids; no side effects (sinks and tripwire); privacy export and erase
+   header row is adopted; preserved ids; an importer with a tenant column lists `org` in `depends()`;
+   no side effects (sinks and tripwire); privacy export and erase
    for every new user column.
 5. **Feature tests** follow the fixture section of each feature in the mapping doc, including reader
    checks as a tenant admin in `@group tenant_isolation` (ADR-031 decision 8). All import tests are

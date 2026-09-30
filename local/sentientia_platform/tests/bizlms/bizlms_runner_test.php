@@ -995,7 +995,7 @@ final class bizlms_runner_test extends \advanced_testcase {
         [$leaky, $leakyreport] = $this->execute([], [], false);
         // A row in the log table appeared during a dry run, which must write nothing: the dry run says so.
         $this->assertContains('logstore_standard_log', $leakyreport->to_array()['features']['toy']['dry_run_tripwire']);
-        $this->assertSame(0, $leaky['exit'], 'reported, not fatal: an online site has other writers');
+        $this->assertContains($leaky['exit'], [0, 2], 'reported, not fatal (2 is the orphan rows nobody accepted): an online site has other writers');
 
         toy_importer::$dryleak = false;
         [, $report] = $this->execute([], [], false);
