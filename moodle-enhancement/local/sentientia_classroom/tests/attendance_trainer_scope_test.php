@@ -6,10 +6,14 @@
  *
  * The Sentientia/BizLMS `trainer` role is archetype `teacher`; :view and :attendance are granted at
  * system context, so on the capability alone a trainer could open and mark every classroom session
- * in their tenant. Without local/sentientia_classroom:manage (the manager archetype, which the
+ * in their tenant. Without local/sentientia_classroom:update (the manager archetype, which the
  * tenant administrator role is, and which a site admin always has) the caller must now be the
  * assigned trainer of the session ({local_sentientia_classroom_sessions}.trainerid) or of its
  * classroom ({local_sentientia_classroom}.trainerid). ADR-031 still bounds all of it to the tenant.
+ *
+ * The discriminator is :update, not :manage (follow-up 2026-09-30): on the prod-data copy the
+ * BizLMS trainer role holds :manage but neither :create nor :update, so keyed on :manage it would
+ * have been exempt. A role with :manage and no :update is restricted to its own sessions.
  *
  * @package    local_sentientia_classroom
  * @category   test
@@ -63,10 +67,36 @@ final class attendance_trainer_scope_test extends \advanced_testcase {
         ], $path);
     }
 
-    /** A manager-archetype holder (the tenant administrator role is one): manage on top. */
+    /**
+     * A manager-archetype holder (the tenant administrator role is one): manage, create and
+     * update on top. :update is what frees them from the assigned-trainer rule.
+     */
     private function manager(string $path = '/1/2'): \stdClass {
         return $this->user_with([
             'local/sentientia_classroom:manage',
+            'local/sentientia_classroom:create',
+            'local/sentientia_classroom:update',
+            'local/sentientia_classroom:view',
+            'local/sentientia_classroom:attendance',
+        ], $path);
+    }
+
+    /**
+     * The BizLMS trainer role as the prod-data copy has it: the legacy manageclassroom grant
+     * became :manage, but it never held :create or :update.
+     */
+    private function trainer_with_manage(string $path = '/1/2'): \stdClass {
+        return $this->user_with([
+            'local/sentientia_classroom:manage',
+            'local/sentientia_classroom:view',
+            'local/sentientia_classroom:attendance',
+        ], $path);
+    }
+
+    /** A role that holds :update and nothing of :manage: :update alone is the discriminator. */
+    private function updater(string $path = '/1/2'): \stdClass {
+        return $this->user_with([
+            'local/sentientia_classroom:update',
             'local/sentientia_classroom:view',
             'local/sentientia_classroom:attendance',
         ], $path);
@@ -159,6 +189,49 @@ final class attendance_trainer_scope_test extends \advanced_testcase {
         session_manager::require_attendance_access($sessionid);
     }
 
+    public function test_a_role_holding_manage_without_update_is_restricted_to_its_own_sessions(): void {
+        $lead = $this->trainer_with_manage();
+        $other = $this->trainer_with_manage();
+        $classroomid = $this->classroom();
+        $own = $this->session($classroomid, (int) $lead->id, 'Own');
+        $notmine = $this->session($classroomid, (int) $other->id, 'Not mine');
+        $nobody = $this->session($classroomid, 0, 'Nobody');
+
+        $this->setUser($lead);
+        [$session] = session_manager::require_attendance_access($own);
+        $this->assertSame($own, (int) $session->id, ':manage does not stop the assigned trainer opening their session.');
+        $this->assert_refused(fn() => session_manager::require_attendance_access($notmine), 'error_nottrainer');
+        $this->assert_refused(fn() => session_manager::require_attendance_access($nobody), 'error_nottrainer');
+
+        // The web services and the session list apply the same rule.
+        $this->assertSame(0, external\list_session_attendance::execute($own)['total']);
+        $this->assert_refused(fn() => external\list_session_attendance::execute($notmine), 'error_nottrainer');
+        $rows = [];
+        foreach (external\list_classroom_sessions::execute($classroomid)['rows'] as $row) {
+            $rows[(int) $row['id']] = $row;
+        }
+        $this->assertStringContainsString('attendance.php?sessionid=' . $own, $rows[$own]['title']);
+        $this->assertStringNotContainsString('attendance.php', $rows[$notmine]['title']);
+        $this->assertStringNotContainsString('attendance.php', $rows[$nobody]['title']);
+    }
+
+    public function test_a_role_holding_update_is_not_restricted_whether_or_not_it_holds_manage(): void {
+        $updater = $this->updater();
+        $someoneelse = $this->trainer();
+        $assigned = $this->session($this->classroom((int) $someoneelse->id), (int) $someoneelse->id);
+        $nobody = $this->session($this->classroom(), 0, 'Nobody');
+
+        // :update alone (no :manage) frees the holder, on a session someone else runs and on one nobody runs.
+        $this->setUser($updater);
+        session_manager::require_attendance_access($assigned);
+        session_manager::require_attendance_access($nobody);
+
+        // ...and so does :update together with :manage, the manager archetype's pair.
+        $this->setUser($this->manager());
+        session_manager::require_attendance_access($assigned);
+        session_manager::require_attendance_access($nobody);
+    }
+
     public function test_the_tenant_guard_still_comes_first(): void {
         $trainer = $this->trainer('/1/2');
         $manager = $this->manager('/1/2');
@@ -184,6 +257,10 @@ final class attendance_trainer_scope_test extends \advanced_testcase {
         $this->assertTrue(session_manager::may_run_session($session, $classroom, (int) $trainer->id));
         $this->assertFalse(session_manager::may_run_session($session, $classroom, (int) $other->id));
         $this->assertTrue(session_manager::may_run_session($session, $classroom, (int) $manager->id));
+        // :manage without :update is not enough; :update without :manage is.
+        $this->assertFalse(session_manager::may_run_session($session, $classroom,
+            (int) $this->trainer_with_manage()->id));
+        $this->assertTrue(session_manager::may_run_session($session, $classroom, (int) $this->updater()->id));
         $this->setUser(null);
         $this->assertFalse(session_manager::may_run_session($session, $classroom), 'Nobody logged in: refused.');
     }

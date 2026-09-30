@@ -219,12 +219,20 @@ class session_manager {
      * Owner decision 2026-09-30: the Sentientia/BizLMS `trainer` role is archetype `teacher`,
      * and :view / :attendance are granted at system context, so on the capability alone a
      * trainer could open and mark EVERY classroom session in their tenant. Now anyone who
-     * does not hold local/sentientia_classroom:manage (the manager archetype, which the
+     * does not hold local/sentientia_classroom:update (the manager archetype, which the
      * tenant administrator role is; site admins always pass) may do so only for a session
      * they are the assigned trainer of: the user in the session's own `trainerid`
      * ({local_sentientia_classroom_sessions}.trainerid, nullable) or in its classroom's
      * `trainerid` ({local_sentientia_classroom}.trainerid, nullable). A classroom and session
      * with no trainer are therefore open to managers only.
+     *
+     * Why :update and not :manage (follow-up 2026-09-30): the BizLMS `trainer` role (id 10 on
+     * the local prod-data copy, archetype teacher) holds :manage there - the import maps the
+     * legacy local/classroom:manageclassroom grant onto it - but neither :create nor :update.
+     * Keyed on :manage, that role would be exempt from this rule on real data. The roles that
+     * are meant to run every session (the manager archetype, the tenant administrator role 9)
+     * hold :update, so :update tells them apart; a role holding :manage without :update is
+     * restricted to its own sessions.
      *
      * This is about WHO within the tenant. It does not replace the ADR-031 tenant guard:
      * call it after require_session_access(), which proves the classroom is in the caller's
@@ -240,7 +248,7 @@ class session_manager {
         if ($userid <= 0) {
             return false;
         }
-        if (has_capability('local/sentientia_classroom:manage', \context_system::instance(), $userid)) {
+        if (has_capability('local/sentientia_classroom:update', \context_system::instance(), $userid)) {
             return true;
         }
         return $userid === (int) ($session->trainerid ?? 0)
@@ -253,7 +261,7 @@ class session_manager {
      *
      * @return \stdClass[] [$session, $classroom]
      * @throws \moodle_exception error_outoftenant, or error_nottrainer when the caller holds
-     *                           no :manage and is not the session's or classroom's trainer
+     *                           no :update and is not the session's or classroom's trainer
      */
     public static function require_attendance_access(int $sessionid): array {
         [$session, $classroom] = self::require_session_access($sessionid);
@@ -1335,6 +1343,9 @@ class session_manager {
         return $count;
     }
 
+    /** Seconds before the grid's load time from which get_marks_by_others_since() reads. */
+    public const NEWER_MARK_SLACK = 2;
+
     /**
      * The rows of a session that somebody other than the current user wrote at or after $since.
      *
@@ -1344,6 +1355,14 @@ class session_manager {
      * load time) with the trainer having actually seen every mark made before it; without
      * this, the next Save would treat the scan as old news and could overwrite it. Only
      * learners on the classroom roster count, like the grid.
+     *
+     * The read starts NEWER_MARK_SLACK seconds before $since. A scan stamps its
+     * `timemodified` with time() when it begins and commits a moment later; on a slow
+     * request that commit can land after the grid (or the previous Save) read the table, with
+     * a stamp a second or two older than the load time the page then holds. Read strictly from
+     * $since, that scan would be neither on screen nor reported by any later Save. With the
+     * slack it is reported on the next Save. The price is that a mark the grid already showed
+     * can be handed back once more; the grid then shows the status it already shows.
      *
      * @param int $since unix time (normally the grid's load time); 0 or less returns nothing
      * @param bool $callerscope ADR-031: only learners in the caller's tenant (roster_scope())
@@ -1368,7 +1387,7 @@ class session_manager {
         $rows = $DB->get_records_sql($sql, [
             'cid' => (int) $session->classroomid,
             'sid' => $sessionid,
-            'since' => $since,
+            'since' => $since - self::NEWER_MARK_SLACK,
             'me' => (int) ($USER->id ?? 0),
         ] + $scopeparams);
 
