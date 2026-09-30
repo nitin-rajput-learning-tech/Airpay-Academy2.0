@@ -39,9 +39,56 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
     public function test_get_metadata_declares_user_skills_table(): void {
         $collection = new \core_privacy\local\metadata\collection('local_sentientia_skills');
         $collection = provider::get_metadata($collection);
-        $items = $collection->get_collection();
-        $this->assertCount(1, $items);
-        $this->assertSame('local_sentientia_user_skills', $items[0]->get_name());
+        $names = array_map(static fn($item): string => $item->get_name(), $collection->get_collection());
+        sort($names);
+        // The levels, their audit log and (ADR-032, BizLMS import) the skills a learner is interested in.
+        $this->assertSame(['local_sentientia_skill_interest', 'local_sentientia_user_skill_hist',
+            'local_sentientia_user_skills'], $names);
+    }
+
+    /**
+     * ADR-032: the skills a learner said they are interested in are exported and erased with the rest.
+     */
+    public function test_skill_interests_are_found_exported_and_erased(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $u = $this->getDataGenerator()->create_user();
+        $other = $this->getDataGenerator()->create_user();
+        $seeded = $this->seed_user_skill((int) $u->id);
+        foreach ([$u, $other] as $user) {
+            $DB->insert_record('local_sentientia_skill_interest', (object) [
+                'userid' => $user->id, 'skillid' => $seeded['skillid'], 'timecreated' => 10, 'timemodified' => 20,
+            ]);
+        }
+        // A learner who has only an interest, and nothing else, is still a data subject.
+        $onlyinterest = $this->getDataGenerator()->create_user();
+        $DB->insert_record('local_sentientia_skill_interest', (object) [
+            'userid' => $onlyinterest->id, 'skillid' => $seeded['skillid'], 'timecreated' => 10, 'timemodified' => 20,
+        ]);
+        $userlist = new \core_privacy\local\request\userlist(\context_system::instance(), 'local_sentientia_skills');
+        provider::get_users_in_context($userlist);
+        $this->assertContains((int) $onlyinterest->id, $userlist->get_userids());
+
+        $sysctx = \context_system::instance();
+        provider::export_user_data(new approved_contextlist($u, 'local_sentientia_skills', [$sysctx->id]));
+        $exported = writer::with_context($sysctx)->get_data(['Airpay Skills — skills I am interested in']);
+        $this->assertCount(1, $exported->interests);
+
+        provider::delete_data_for_user(new approved_contextlist($u, 'local_sentientia_skills', [$sysctx->id]));
+        $this->assertFalse($DB->record_exists('local_sentientia_skill_interest', ['userid' => $u->id]));
+        $this->assertTrue($DB->record_exists('local_sentientia_skill_interest', ['userid' => $other->id]),
+            'erasing one learner leaves the others');
+
+        $approved = new \core_privacy\local\request\approved_userlist($sysctx, 'local_sentientia_skills',
+            [$other->id]);
+        provider::delete_data_for_users($approved);
+        $this->assertFalse($DB->record_exists('local_sentientia_skill_interest', ['userid' => $other->id]));
+        $this->assertTrue($DB->record_exists('local_sentientia_skill_interest', ['userid' => $onlyinterest->id]));
+
+        provider::delete_data_for_all_users_in_context($sysctx);
+        $this->assertSame(0, $DB->count_records('local_sentientia_skill_interest'));
     }
 
     public function test_get_users_in_context(): void {

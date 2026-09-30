@@ -7,7 +7,11 @@
       self_rate_has_current    bool — has the user previously rated?
       self_rate_current_level  int  — 0 if never rated, else 1..max_level
       self_rate_source         str  — 'course'|'self'|'manual'|'import'|''
+      self_rate_source_label   str  — the source code as words, from the lang pack
       self_rate_level_options  array of {value, label, selected}
+
+    Levels tab (tab_levels_active): levels is an array of {level, label, description}, the
+    columns of local_sentientia_skill_levels.
 }}
 <div class="container" data-region="airpay-skills" data-skill-view-skillid="{{ skillid }}">
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -34,7 +38,7 @@
                 </div>
                 <div class="text-muted small">
                     <i class="fa fa-info-circle fa-fw" aria-hidden="true"></i>
-                    Source: <code>{{ self_rate_source }}</code>
+                    {{# str }}self_rate_source, local_sentientia_skills, {{ self_rate_source_label }}{{/ str }}
                 </div>
                 {{/ self_rate_has_current }}
                 {{^ self_rate_has_current }}
@@ -113,8 +117,8 @@
         <tbody>
             {{#levels}}
             <tr>
-                <td><span class="badge bg-primary">L{{ level_index }}</span></td>
-                <td><strong>{{ name }}</strong></td>
+                <td><span class="badge bg-primary">L{{ level }}</span></td>
+                <td><strong>{{ label }}</strong></td>
                 <td>{{{ description }}}</td>
             </tr>
             {{/levels}}

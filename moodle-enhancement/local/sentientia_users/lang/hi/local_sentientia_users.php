@@ -236,3 +236,6 @@ $string['hrms_sync_path_empty']        = 'स्रोत मोड फ़ाइ
 $string['hrms_sync_path_not_absolute'] = 'HRMS फ़ाइलसिस्टम पथ पूर्ण होना चाहिए। मिला: {$a}';
 $string['hrms_sync_path_not_readable'] = 'HRMS फ़ाइलसिस्टम पथ वेब सर्वर द्वारा पठनीय नहीं है: {$a}';
 $string['hrms_sync_path_read_failed']  = 'HRMS फ़ाइलसिस्टम पथ पढ़ा नहीं जा सका: {$a}';
+
+// ADR-032 (BizLMS import, skills): the skills a user said they are interested in, on the skill profile.
+$string['skillprofile_interests']      = 'रुचि के कौशल';

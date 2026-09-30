@@ -45,7 +45,6 @@ CONTENT sentientia_pages/templates/onboarding.mustache
 CONTENT sentientia_platform/cli/mint_session.php
 CONTENT sentientia_pwa/mock_receiver.php
 CONTENT sentientia_skills/amd/src/skill_actions.js
-CONTENT sentientia_skills/db/upgrade.php
 CONTENT sentientia_whatsapp/lang/en/local_sentientia_whatsapp.php
 CONTENT sentientia_whatsapp/lang/hi/local_sentientia_whatsapp.php
 CONTENT sentientia_whatsapp/lang/kn/local_sentientia_whatsapp.php

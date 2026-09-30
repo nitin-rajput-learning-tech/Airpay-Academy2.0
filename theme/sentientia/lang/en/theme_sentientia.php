@@ -302,6 +302,7 @@ $string['a11y_openmenu'] = 'Open menu';
 $string['a11y_togglecoursesidebar'] = 'Toggle course sidebar';
 $string['a11y_togglesidebar'] = 'Toggle sidebar';
 $string['recommend_closesgap'] = 'Closes your {$a} skill gap';
+$string['recommend_interest'] = 'Matches your interest in {$a}';
 $string['course_content'] = 'Course Content';
 $string['course_next'] = 'Next: {$a}';
 $string['course_percentcomplete'] = '{$a}% complete';

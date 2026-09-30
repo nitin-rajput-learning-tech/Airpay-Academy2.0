@@ -452,6 +452,37 @@ class catalog_manager {
     }
 
     /**
+     * The name of a course difficulty level, by the id course.open_level stores.
+     *
+     * ADR-032 (BizLMS import, mapping doc section 14, code fix 1). The catalog used to read a hard-coded
+     * 1 = Beginner, 2 = Intermediate, 3 = Advanced map, but open_level holds the id of a row of
+     * local_sentientia_course_levels (the BizLMS ids are kept by the import, so level 9 is whatever the
+     * organisation called level 9). An id with no row, or a site without the table, has no label.
+     *
+     * @param int $levelid course.open_level.
+     * @return string The level's name, formatted; '' when there is none.
+     */
+    public static function course_level_label(int $levelid): string {
+        global $DB;
+        if ($levelid <= 0) {
+            return '';
+        }
+        // One read per request, not one per course card.
+        $cache = \cache::make_from_params(\cache_store::MODE_REQUEST, 'local_sentientia_catalog', 'courselevelnames');
+        $names = $cache->get('all');
+        if ($names === false) {
+            $names = [];
+            if ($DB->get_manager()->table_exists('local_sentientia_course_levels')) {
+                foreach ($DB->get_records('local_sentientia_course_levels', null, '', 'id, name') as $row) {
+                    $names[(int) $row->id] = format_string($row->name);
+                }
+            }
+            $cache->set('all', $names);
+        }
+        return $names[$levelid] ?? '';
+    }
+
+    /**
      * Format a course record for Mustache template.
      */
     private static function format_course(\stdClass $course, int $userid): array {
@@ -468,9 +499,8 @@ class catalog_manager {
             'course = :cid AND userid = :uid AND timecompleted IS NOT NULL',
             ['cid' => $course->id, 'uid' => $userid]);
 
-        // Difficulty level.
-        $levels = [1 => 'Beginner', 2 => 'Intermediate', 3 => 'Advanced'];
-        $level = $levels[$course->open_level ?? 0] ?? '';
+        // Difficulty level: the name of the level the course points at (ADR-032, BizLMS import).
+        $level = self::course_level_label((int) ($course->open_level ?? 0));
 
         // Course type.
         $types = [0 => 'E-Learning', 1 => 'E-Learning', 2 => 'Classroom', 3 => 'Exam'];

@@ -249,3 +249,6 @@ $string['hrms_sync_path_empty']          = 'Source mode is filesystem but no pat
 $string['hrms_sync_path_not_absolute']   = 'HRMS filesystem path must be absolute. Got: {$a}';
 $string['hrms_sync_path_not_readable']   = 'HRMS filesystem path is not readable by the web server: {$a}';
 $string['hrms_sync_path_read_failed']    = 'HRMS filesystem path could not be read: {$a}';
+
+// ADR-032 (BizLMS import, skills): the skills a user said they are interested in, on the skill profile.
+$string['skillprofile_interests']        = 'Interested in';

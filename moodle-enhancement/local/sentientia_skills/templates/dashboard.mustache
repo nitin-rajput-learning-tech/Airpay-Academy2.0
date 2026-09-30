@@ -74,10 +74,25 @@
     </div>
     {{/has_data}}
 
+    {{! Skills the learner said they are interested in (ADR-032; only with the skillsrecs flag ON) }}
+    {{#has_interests}}
+    <div class="ap-skills__section" data-region="ap-skills-interests">
+        <h3 class="ap-skills__section-title"><i class="fa fa-heart-o"></i> {{# str }}interests_title, local_sentientia_skills{{/ str }}</h3>
+        <div class="d-flex flex-wrap gap-2">
+            {{#interests}}
+            <a class="badge rounded-pill bg-light text-dark border" href="{{{viewurl}}}">{{name}}</a>
+            {{/interests}}
+        </div>
+    </div>
+    {{/has_interests}}
+
     {{! Recommended Courses }}
     {{#has_recommendations}}
     <div class="ap-skills__section">
-        <h3 class="ap-skills__section-title"><i class="fa fa-graduation-cap"></i> Recommended to Close Gaps</h3>
+        <h3 class="ap-skills__section-title"><i class="fa fa-graduation-cap"></i>
+            {{#has_interest_recs}}{{# str }}recommended_for_you, local_sentientia_skills{{/ str }}{{/has_interest_recs}}
+            {{^has_interest_recs}}Recommended to Close Gaps{{/has_interest_recs}}
+        </h3>
         <div class="ap-skills__recs">
             {{#recommendations}}
             <a href="{{detailurl}}" class="ap-skills__rec-card">
@@ -96,11 +111,37 @@
     {{/has_recommendations}}
 
     {{^has_data}}
+    {{! ADR-032: what the learner already holds, when the designation has no role skills to compare against
+        (only with the heldskills flag ON; imported BizLMS completions show here as source "import"). }}
+    {{#has_held_skills}}
+    <div class="ap-skills__section" data-region="ap-skills-held">
+        <h3 class="ap-skills__section-title"><i class="fa fa-certificate"></i> {{# str }}heldskills_title, local_sentientia_skills{{/ str }}</h3>
+        <p class="text-muted small">{{# str }}heldskills_intro, local_sentientia_skills{{/ str }}</p>
+        <div class="ap-skills__gap-list">
+            {{#held_skills}}
+            <div class="ap-skills__gap-item ap-skills__gap-item--met">
+                <div class="ap-skills__gap-info">
+                    <a class="ap-skills__gap-name" href="{{{viewurl}}}">{{skill_name}}</a>
+                    <span class="ap-skills__gap-category" {{#category_color}}style="background:{{category_color}}20; color:{{category_color}};"{{/category_color}}>
+                        {{category_name}}
+                    </span>
+                </div>
+                <div class="ap-skills__gap-levels">
+                    <span class="ap-skills__gap-current">{{current_label}}</span>
+                    <span class="small text-muted">{{source_label}}{{#updated_on}} · {{updated_on}}{{/updated_on}}</span>
+                </div>
+            </div>
+            {{/held_skills}}
+        </div>
+    </div>
+    {{/has_held_skills}}
+    {{^has_held_skills}}
     <div class="ap-empty-state">
         <i class="fa fa-line-chart ap-empty-state__icon"></i>
         <h4 class="ap-empty-state__title">No skills data yet</h4>
         <p class="ap-empty-state__message">Skills are mapped to your role. Contact your L&D team if your designation isn't set.</p>
     </div>
+    {{/has_held_skills}}
     {{/has_data}}
 </div>
 

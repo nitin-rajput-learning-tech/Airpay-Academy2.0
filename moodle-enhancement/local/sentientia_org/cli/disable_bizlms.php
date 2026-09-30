@@ -43,6 +43,11 @@ if ($dryrun) {
 }
 cli_writeln('');
 
+// ADR-032 (mapping doc section 14, code fix 9): local_skillrepository is "merged into sentientia_skills" only once
+// the skills import has finished (its completion marker). Before that the message must not claim a merge.
+$skillsimported = class_exists('\local_sentientia_platform\bizlms\legacymap')
+    && \local_sentientia_platform\bizlms\legacymap::feature_complete('skills');
+
 // BizLMS plugins to disable — grouped by replacement status.
 $plugins = [
     // Replaced by Airpay (Phase 1-5).
@@ -68,7 +73,9 @@ $plugins = [
     // BizLMS support plugins.
     'local_ratings'         => 'Optional — guarded by file_exists()',
     'local_challenge'       => 'Optional — guarded by core_component check',
-    'local_skillrepository' => 'Merged into sentientia_skills',
+    'local_skillrepository' => $skillsimported
+        ? 'Merged into sentientia_skills (skills import complete)'
+        : 'NOT merged: the skills import has not completed (import_bizlms.php --apply --feature=skills)',
     'local_evaluation'      => 'Not actively used',
     'local_assignroles'     => 'Not actively used',
     'local_program'         => 'Not actively used',

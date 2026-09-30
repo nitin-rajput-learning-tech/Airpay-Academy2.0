@@ -103,3 +103,22 @@ $string['self_rate_submit']        = 'Save my level';
 $string['self_rate_saved']         = 'Your level has been saved.';
 $string['self_rate_level_invalid'] = 'Level {$a->level} is outside the allowed range (1..{$a->max}).';
 $string['self_rate_pick_level']    = 'Please pick a level first.';
+
+// ADR-032 (BizLMS import, 2026-09-30) - skill interests, privacy metadata, source words, held skills.
+$string['privacy:metadata:skill_interest']              = 'The skills a learner said they are interested in. Imported from the previous platform\'s interests list; read by the skills recommendations.';
+$string['privacy:metadata:skill_interest:userid']       = 'The learner who named the skills.';
+$string['privacy:metadata:skill_interest:skillid']      = 'The skill the learner is interested in.';
+$string['privacy:metadata:skill_interest:timecreated']  = 'When the interest was first recorded.';
+$string['privacy:metadata:skill_interest:timemodified'] = 'When the learner last changed their list.';
+
+$string['self_rate_source']      = 'Source: {$a}';
+$string['source_course']         = 'Course completion';
+$string['source_assessment']     = 'Assessment';
+$string['source_manual']         = 'Added by a manager';
+$string['source_self']           = 'Self-rating';
+$string['source_import']         = 'Imported from the previous platform';
+
+$string['heldskills_title']      = 'Skills you hold';
+$string['heldskills_intro']      = 'No skills are mapped to your designation yet, so there is nothing to compare against. This is what you already hold.';
+$string['interests_title']       = 'Skills you are interested in';
+$string['recommended_for_you']   = 'Recommended for you';
