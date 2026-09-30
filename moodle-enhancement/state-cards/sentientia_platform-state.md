@@ -342,3 +342,30 @@ Wave-1 adversarial review of the integration group (S1, S4) plus one helper defe
   both the current-user and the explicit-viewer path, and the unchanged tenant and cross-tenant
   access; `audit_log_tenant_scope_test.php` gains the S4 cases. PHPUnit NOT run (shared test DB;
   run the tenant_isolation group on a fresh init before merge). Both trees identical.
+
+## 2026-09-29/30 - message-provider default preferences (message_pref_repair)
+
+- **Defect:** the ADR-025 relabel renamed `message_providers.component` in place. But each provider's
+  default preferences (`config_plugins` plugin `message`, keys `<proc>_provider_<component>_<name>_locked`,
+  `message_provider_<component>_<name>_enabled`, `<component>_<name>_disable`) and the users' own
+  `message_provider_..._enabled` rows still carry the old component in their NAME. Moodle writes defaults
+  only for NEW providers, so `message_send()` threw `coding_exception` for 28 of 30 Sentientia providers on
+  the local copy, and cart `mark_paid()` rolled back. Fresh installs (UAT, the production install path)
+  are not affected.
+- **New:** `classes/message_pref_repair.php` with `check()` (read-only) and `repair($apply, $out)`. A
+  provider is broken when a `_locked` key is missing. The repair copies each legacy processor setting as
+  a unit (lock + `_enabled` membership), copies `_disable` (copy only), and moves users' legacy rows one by
+  one; a newer choice by the user wins. It falls back to db/messages.php defaults only for locks that are
+  still missing. It never deletes or overwrites.
+- `cli/repair_task_registrations.php`: step 2e calls the repair BEFORE step 2c. Step 4 prints `check()`
+  and exits 1 after `--apply` if anything remains, which halts cutover step 4f-b. The script is now in
+  BOTH trees (the ONLY-TOP baseline line is removed). `cli/migration_parity_check.php --compare`
+  hard-fails on `check()`.
+- Tests: `tests/message_pref_repair_test.php` (5 tests, 202 assertions, PASS locally). Two adversarial
+  reviews; the second said ship. Open should-fixes:
+  - a test case for a healthy provider that has a legacy `_disable` key or user row;
+  - try/catch around the parity invariant on the source box;
+  - remedy text for stale provider rows;
+  - tag the default writes for non-Sentientia providers;
+  - exact-name delete in step 2c.
+- Local copy repaired: 136 legacy keys copied, 5 providers defaulted, 0 problems left.

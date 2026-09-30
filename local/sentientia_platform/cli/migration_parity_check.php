@@ -17,7 +17,10 @@
  *   php migration_parity_check.php --compare=/path/baseline.json
  *
  * Exit 0 = counts AND value checksums match the baseline.
- * Exit 1 = drift, listed per metric and per table.
+ * Exit 1 = drift, listed per metric and per table, OR a hard invariant
+ *          failed on this deployment whatever the baseline says (today:
+ *          message_provider_defaults - providers missing message defaults
+ *          must be 0, or message_send() throws for them).
  * Exit 2 = counts match but values could not be checked, so the data is
  *          NOT proven intact (old baseline, or a non-MySQL engine).
  * No flags = print current counts and checksums.
@@ -173,8 +176,53 @@ function sentientia_parity_checksums(): array {
     return $out;
 }
 
+/**
+ * Invariants that must hold on the deployment being checked, whatever the
+ * baseline says. They are not compared with the baseline (the source is
+ * BizLMS, where they do not apply); any problem is a hard failure.
+ *
+ * message_provider_defaults: \local_sentientia_platform\message_pref_repair::check()
+ * - providers missing a <processor>_provider_<component>_<name>_locked default
+ * (message_send() throws for them), legacy site-wide disable switches not
+ * carried over, and users' choices stranded under pre-rename names. Found
+ * 2026-09-29: 28 of 30 Sentientia providers on a relabelled copy; a count-only
+ * parity check could not see it. Repair: repair_task_registrations.php --apply.
+ *
+ * @return array<string,string[]|null> null = check not available here
+ */
+function sentientia_parity_invariants(): array {
+    if (!class_exists('\local_sentientia_platform\message_pref_repair')) {
+        return ['message_provider_defaults' => null];
+    }
+    return ['message_provider_defaults' => \local_sentientia_platform\message_pref_repair::check()];
+}
+
+/** Print the invariants; returns [failed, skipped]. */
+function sentientia_parity_print_invariants(array $invariants): array {
+    $failed = 0;
+    $skipped = 0;
+    cli_writeln('');
+    cli_writeln('Invariants (must hold whatever the baseline says):');
+    foreach ($invariants as $k => $problems) {
+        if ($problems === null) {
+            cli_writeln(sprintf('  SKIPPED %-26s (check not available on this deployment)', $k));
+            $skipped++;
+        } else if ($problems) {
+            cli_writeln(sprintf('  FAIL    %-26s %d problem(s) - must be 0', $k, count($problems)));
+            foreach ($problems as $line) {
+                cli_writeln('          ' . $line);
+            }
+            $failed++;
+        } else {
+            cli_writeln(sprintf('  OK      %-26s 0', $k));
+        }
+    }
+    return [$failed, $skipped];
+}
+
 $counts = sentientia_parity_counts();
 $checksums = sentientia_parity_checksums();
+$invariants = sentientia_parity_invariants();
 
 if ($options['baseline'] !== '') {
     file_put_contents($options['baseline'], json_encode([
@@ -195,6 +243,8 @@ if ($options['baseline'] !== '') {
         cli_writeln(sprintf('  %-28s rows=%-9d crc=%s', $t, $cs['rows'],
             $cs['crc'] ?? '(unsupported on this engine)'));
     }
+    // Informational on the source side; enforced by --compare on the target.
+    sentientia_parity_print_invariants($invariants);
     exit(0);
 }
 
@@ -259,18 +309,27 @@ if ($options['compare'] !== '') {
         }
     }
 
+    [$hardfail, $invskipped] = sentientia_parity_print_invariants($invariants);
+    $skipped += $invskipped;
+
     cli_writeln('');
-    if ($drift > 0) {
-        cli_writeln("RESULT: $drift metric(s) DRIFTED - investigate before proceeding.");
+    if ($drift > 0 || $hardfail > 0) {
+        if ($drift > 0) {
+            cli_writeln("RESULT: $drift metric(s) DRIFTED - investigate before proceeding.");
+        }
+        if ($hardfail > 0) {
+            cli_writeln("RESULT: $hardfail invariant(s) FAILED - run "
+                . 'local/sentientia_platform/cli/repair_task_registrations.php --apply, then re-check.');
+        }
         exit(1);
     }
     if ($skipped > 0) {
         // Deliberately NOT "100% parity". Saying so here would be the same
         // defect as the rest of this file's history: a success message the
         // evidence does not support.
-        cli_writeln("RESULT: counts match, but $skipped table(s) could not be "
-            . 'value-checked. Data is NOT proven intact - re-run with a '
-            . 'checksum-capable baseline on MySQL or MariaDB.');
+        cli_writeln("RESULT: counts match, but $skipped table(s)/invariant(s) could not be "
+            . 'checked. Data is NOT proven intact - re-run with a '
+            . 'checksum-capable baseline on MySQL or MariaDB, on the Sentientia target.');
         exit(2);
     }
     cli_writeln('RESULT: 100% PARITY - counts AND value checksums match.');
@@ -286,4 +345,6 @@ foreach ($checksums as $t => $cs) {
     cli_writeln(sprintf('  %-28s rows=%-9d crc=%s', $t, $cs['rows'],
         $cs['crc'] ?? '(unsupported on this engine)'));
 }
+// Print mode stays exit 0; --compare is the gate that fails on an invariant.
+sentientia_parity_print_invariants($invariants);
 exit(0);

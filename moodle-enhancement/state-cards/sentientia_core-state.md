@@ -184,3 +184,15 @@ first time: same flag true for Airpay, false for Meridian). New
 `customer_resolution_test.php` in the platform plugin (4 tests: dormant
 identity, live resolution, unscoped fallback, suspended-tenant fallback).
 Evidence: docs/visual-evidence/2026-08-20/.
+
+## 2026-09-29/30 - relabel_plugin.php moves message preference keys (step 1b)
+
+`cli/relabel_plugin.php` (both trees) now renames, along with `message_providers.component`:
+- each provider's `_locked`, `_enabled` and `_disable` keys, matched by exact provider name, never by
+  prefix;
+- users' `message_provider_..._enabled` rows.
+
+A key that already exists under the new name is kept, and the processors of the moved locks are merged
+into it. The cache is invalidated narrowly instead of with purge_all. The DONE message requires running
+`local/sentientia_platform/cli/repair_task_registrations.php --apply` afterwards. See the
+sentientia_platform state card, same date.
