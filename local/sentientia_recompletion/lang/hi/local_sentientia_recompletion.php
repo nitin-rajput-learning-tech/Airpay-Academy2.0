@@ -82,6 +82,7 @@ $string['hcol_attempts']        = 'प्रयास रीसेट?';
 $string['badge_dryrun']         = 'ड्राई-रन';
 $string['badge_legacy']         = 'पुराना';
 $string['badge_self']           = 'स्वयं';
+$string['badge_deleted_user']   = 'हटाया गया यूज़र';
 $string['badge_inferred']       = 'अनुमानित';
 $string['badge_inferred_title'] = 'इस रीसेट की लॉग पंक्ति नहीं मिली, इसलिए इसका समय उस पूर्णता से निकाला गया है जिसे इसने समाप्त किया।';
 $string['link_evidence']        = 'साक्ष्य';

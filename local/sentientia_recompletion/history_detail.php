@@ -58,7 +58,7 @@ if ($id > 0) {
         throw new moodle_exception('evidence_not_found', $component, $historyurl->out(false));
     }
     $header = [
-        'learner' => trim(($pair->firstname ?? '') . ' ' . ($pair->lastname ?? '')),
+        'learner' => \local_sentientia_recompletion\evidence_report::learner_name($pair),
         'course' => $pair->coursename !== null ? format_string($pair->coursename)
             : get_string('evidence_course_gone', $component),
     ];

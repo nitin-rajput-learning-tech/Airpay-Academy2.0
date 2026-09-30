@@ -65,7 +65,7 @@ final class evidence_report {
             [$where, $params] = rule_access::history_user_filter('u');
         }
         $row = $DB->get_record_sql(
-            "SELECT h.*, u.firstname, u.lastname, c.fullname AS coursename
+            "SELECT h.*, u.firstname, u.lastname, u.deleted AS user_deleted, c.fullname AS coursename
                FROM {local_sentientia_recompletion_history} h
                $join
           LEFT JOIN {course} c ON c.id = h.courseid
@@ -88,7 +88,7 @@ final class evidence_report {
         }
         [$where, $params] = tenant::is_cross_tenant() ? ['1 = 1', []] : rule_access::history_user_filter('u');
         $row = $DB->get_record_sql(
-            "SELECT u.id AS userid, u.firstname, u.lastname, c.fullname AS coursename
+            "SELECT u.id AS userid, u.firstname, u.lastname, u.deleted AS user_deleted, c.fullname AS coursename
                FROM {user} u
           LEFT JOIN {course} c ON c.id = :evcid
               WHERE u.id = :evuid AND $where",
@@ -124,7 +124,7 @@ final class evidence_report {
         }
 
         return [
-            'learner' => $userid > 0 ? trim(($history->firstname ?? '') . ' ' . ($history->lastname ?? ''))
+            'learner' => $userid > 0 ? self::learner_name($history)
                 : get_string('evidence_redacted', $component),
             'course' => $history->coursename !== null ? format_string($history->coursename)
                 : get_string('evidence_course_gone', $component),
@@ -138,6 +138,21 @@ final class evidence_report {
             'grades_reset' => (bool) $history->reset_grades,
             'attempts_reset' => (bool) $history->reset_attempts,
         ];
+    }
+
+    /**
+     * A learner's name as the page shows it: a user who has since been deleted keeps their history (ADR-032), and
+     * is marked.
+     *
+     * @param \stdClass $row A row that carries firstname, lastname and user_deleted.
+     * @return string
+     */
+    public static function learner_name(\stdClass $row): string {
+        $name = trim(($row->firstname ?? '') . ' ' . ($row->lastname ?? ''));
+        if (!empty($row->user_deleted)) {
+            $name = trim($name . ' (' . get_string('badge_deleted_user', 'local_sentientia_recompletion') . ')');
+        }
+        return $name;
     }
 
     /**

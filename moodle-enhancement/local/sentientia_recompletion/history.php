@@ -68,7 +68,7 @@ $total = (int) $DB->count_records_sql(
 // refactor away from accepting user input). Use the 5th/6th args of
 // get_records_sql() for limitfrom + limitnum.
 $rows = $DB->get_records_sql(
-    "SELECT h.*, u.firstname, u.lastname, u.email,
+    "SELECT h.*, u.firstname, u.lastname, u.email, u.deleted AS user_deleted,
             c.fullname AS course_name
        FROM {local_sentientia_recompletion_history} h
        $userjoin
@@ -88,6 +88,8 @@ foreach ($rows as $r) {
             ? trim(($r->firstname ?? '') . ' ' . ($r->lastname ?? ''))
             : get_string('evidence_redacted', $component),
         'user_email' => (string) ($r->email ?? ''),
+        // ADR-032: the import keeps the history of users who have since been deleted; say so.
+        'user_deleted' => !empty($r->user_deleted),
         'course_name' => format_string($r->course_name ?? get_string('evidence_course_gone', $component)),
         'reason'    => $r->reason,
         'self'      => $selfreset,

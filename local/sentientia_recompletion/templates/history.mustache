@@ -4,14 +4,14 @@
     The reset history (ADR-032 additions: legacy and self badges, "~" on an estimated time, evidence link).
 
     Context variables required for this template:
-    * rows - [{id, user_name, user_email, course_name, reason, self, legacy, inferred, reset_at, previous,
-               dryrun, grades, attempts, evidence_url}]
+    * rows - [{id, user_name, user_email, user_deleted, course_name, reason, self, legacy, inferred, reset_at,
+               previous, dryrun, grades, attempts, evidence_url}]
     * has_rows, total, has_prev, has_next, prev_url, next_url, rules_url
     * filtered, clear_url, show_evidence
 
     Example context (json):
     {
-        "rows": [{"id": 1, "user_name": "Asha Rao", "user_email": "asha@example.test", "course_name": "AML",
+        "rows": [{"id": 1, "user_name": "Asha Rao", "user_email": "asha@example.test", "user_deleted": false, "course_name": "AML",
             "reason": "manual", "self": true, "legacy": true, "inferred": false, "reset_at": "06 Mar 2025 03:15",
             "previous": "01 Mar 2024", "dryrun": false, "grades": true, "attempts": false,
             "evidence_url": "#"}],
@@ -50,7 +50,7 @@
             {{#rows}}
             <tr {{#dryrun}}class="table-secondary"{{/dryrun}}>
                 <td class="small">{{ reset_at }}{{#inferred}} <span class="badge bg-warning text-dark" title="{{#str}}badge_inferred_title, local_sentientia_recompletion{{/str}}">{{#str}}badge_inferred, local_sentientia_recompletion{{/str}}</span>{{/inferred}}</td>
-                <td>{{ user_name }}{{#user_email}}<br><code class="small">{{ user_email }}</code>{{/user_email}}</td>
+                <td>{{ user_name }}{{#user_deleted}} <span class="badge bg-secondary">{{#str}}badge_deleted_user, local_sentientia_recompletion{{/str}}</span>{{/user_deleted}}{{#user_email}}<br><code class="small">{{ user_email }}</code>{{/user_email}}</td>
                 <td>{{ course_name }}</td>
                 <td><span class="badge bg-light text-dark">{{ reason }}</span>
                     {{#self}}<span class="badge bg-info">{{#str}}badge_self, local_sentientia_recompletion{{/str}}</span>{{/self}}

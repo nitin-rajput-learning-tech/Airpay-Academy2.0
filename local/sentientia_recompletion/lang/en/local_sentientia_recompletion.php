@@ -78,6 +78,7 @@ $string['hcol_attempts']        = 'Attempts reset?';
 $string['badge_dryrun']         = 'dry-run';
 $string['badge_legacy']         = 'Legacy';
 $string['badge_self']           = 'self';
+$string['badge_deleted_user']   = 'Deleted user';
 $string['badge_inferred']       = 'estimated';
 $string['badge_inferred_title'] = 'The log row of this reset was not found, so its time is worked out from the completion it ended.';
 $string['link_evidence']        = 'Evidence';

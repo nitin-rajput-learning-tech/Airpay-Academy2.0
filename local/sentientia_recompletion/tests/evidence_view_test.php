@@ -184,6 +184,22 @@ final class evidence_view_test extends \advanced_testcase {
         $this->assertSame(get_string('evidence_admin', 'local_sentientia_recompletion'), $header['reset_by']);
     }
 
+    public function test_a_learner_who_was_deleted_since_keeps_their_history_and_is_marked(): void {
+        global $DB;
+        $this->setAdminUser();
+        $plain = evidence_report::header(evidence_report::visible_history($this->minehistory))['learner'];
+        $this->assertStringContainsString($this->mine->firstname, $plain);
+        $this->assertStringNotContainsString(get_string('badge_deleted_user', 'local_sentientia_recompletion'), $plain);
+
+        $DB->set_field('user', 'deleted', 1, ['id' => $this->mine->id]);
+        $marked = evidence_report::header(evidence_report::visible_history($this->minehistory))['learner'];
+        $this->assertStringContainsString($this->mine->firstname, $marked, 'the history is kept');
+        $this->assertStringContainsString(get_string('badge_deleted_user', 'local_sentientia_recompletion'), $marked);
+        $pair = evidence_report::visible_pair((int) $this->mine->id, $this->courseid);
+        $this->assertStringContainsString(get_string('badge_deleted_user', 'local_sentientia_recompletion'),
+            evidence_report::learner_name($pair));
+    }
+
     public function test_the_sections_list_each_kind_of_evidence_with_the_quiz_marks_scaled(): void {
         $this->setAdminUser();
         $sections = evidence_report::sections_for_history($this->minehistory);
