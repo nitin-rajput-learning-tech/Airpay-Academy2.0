@@ -36,8 +36,15 @@ defined('MOODLE_INTERNAL') || die();
  *   - the flag resolves per tenant (tenant isolation): a user of tenant /77 sees
  *     the switcher while a user of tenant /1 does not.
  *
- * The languages list is injected so the tests do not depend on which language
- * packs the PHPUnit site has installed.
+ * The languages list is injected, and setUp() also installs a stub language
+ * pack (just a langconfig.php) for every non-English code in LANGS. The stubs
+ * are needed because the parts of core that switch_to() and the html lang
+ * attribute go through check the INSTALLED packs, not the injected list:
+ * core_user validates the profile 'lang' against get_list_of_translations(),
+ * and get_html_lang_attribute_value() cleans its argument with PARAM_LANG.
+ * A fresh PHPUnit dataroot has only 'en', so without the stubs the profile
+ * save was cleaned back to the default with a debugging notice, and the html
+ * lang value came back 'en'. PHPUnit wipes the dataroot between tests.
  *
  * @package    theme_sentientia
  * @copyright  2026 Airpay Payment Services
@@ -59,7 +66,30 @@ final class language_switcher_test extends \advanced_testcase {
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest();
+        $this->install_language_stubs();
         \local_sentientia_platform\feature_flags::invalidate_caches();
+    }
+
+    /**
+     * Install a stub language pack for every non-English code in LANGS, so that
+     * every language the tests offer is also installed for real.
+     */
+    private function install_language_stubs(): void {
+        global $CFG;
+        foreach (array_keys(self::LANGS) as $code) {
+            if ($code === 'en') {
+                continue;
+            }
+            $dir = make_writable_directory($CFG->dataroot . '/lang/' . $code);
+            $config = "<?php\n"
+                . "defined('MOODLE_INTERNAL') || die();\n"
+                . '$string[\'thislanguage\'] = \'Stub ' . $code . "';\n"
+                . '$string[\'iso6391\'] = \'' . $code . "';\n";
+            file_put_contents($dir . '/langconfig.php', $config);
+        }
+        get_string_manager()->reset_caches(true);
+        // core_user caches the list of valid 'lang' values with the property definitions.
+        \core_user::reset_caches();
     }
 
     /**
@@ -73,13 +103,13 @@ final class language_switcher_test extends \advanced_testcase {
     }
 
     /**
-     * A page on a deep url that already carries a lang parameter.
+     * A page on a deep url that already carries a lang parameter and a sesskey.
      *
      * @return \moodle_page
      */
     private function page(): \moodle_page {
         $page = new \moodle_page();
-        $page->set_url('/grade/report/grader/index.php', ['id' => 5, 'lang' => 'hi']);
+        $page->set_url('/grade/report/grader/index.php', ['id' => 5, 'lang' => 'hi', 'sesskey' => 'abc123abc1']);
         $page->set_context(\context_system::instance());
         return $page;
     }
@@ -151,9 +181,13 @@ final class language_switcher_test extends \advanced_testcase {
         // Every other option goes through the sesskey-checked endpoint.
         $url = new \moodle_url($byCode['hi']['url']);
         $this->assertSame($CFG->wwwroot . language_switcher::ENDPOINT, $url->out_omit_querystring());
-        $this->assertSame('hi', $url->get_param('lang'));
+        $this->assertSame('hi', $url->get_param('code'));
+        // Never a 'lang' parameter: core applies any GET lang to the session while config.php
+        // loads, before the endpoint can check the flag or the sesskey.
+        $this->assertNull($url->get_param('lang'));
         $this->assertSame(sesskey(), $url->get_param('sesskey'));
-        // The return url is local, keeps the page's own parameters and drops lang.
+        // The return url is local, keeps the page's own parameters and drops lang and sesskey
+        // (returning after a switch must not replay a state-changing page with a valid key).
         $this->assertSame('/grade/report/grader/index.php?id=5', $url->get_param('returnurl'));
         // Each option carries the html lang attribute value for its own language.
         $this->assertSame('hi', $byCode['hi']['htmllang']);
@@ -222,6 +256,23 @@ final class language_switcher_test extends \advanced_testcase {
         // Only this user's profile changed.
         $other = $this->getDataGenerator()->create_user(['lang' => 'en']);
         $this->assertSame('en', $DB->get_field('user', 'lang', ['id' => $other->id]));
+    }
+
+    public function test_switch_to_leaves_the_profile_alone_when_logged_in_as_someone_else(): void {
+        global $DB;
+        $this->enable();
+        $user = $this->getDataGenerator()->create_user(['lang' => 'en']);
+        $this->setAdminUser();
+        \core\session\manager::loginas($user->id, \context_system::instance());
+        $this->assertTrue(\core\session\manager::is_loggedinas());
+
+        $this->assertTrue(language_switcher::switch_to('hi', self::LANGS));
+
+        // Read the globals afresh: loginas() swaps in a new $SESSION object.
+        $this->assertSame('hi', $GLOBALS['SESSION']->lang);
+        $this->assertSame('en', $DB->get_field('user', 'lang', ['id' => $user->id]),
+            'the session is not the impersonated user\'s to change, so their profile stays as it was');
+        $this->assertSame('en', $GLOBALS['USER']->lang);
     }
 
     public function test_switch_to_stays_in_the_session_when_profile_edit_is_taken_away(): void {

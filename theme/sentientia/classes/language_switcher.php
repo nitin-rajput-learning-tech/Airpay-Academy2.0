@@ -138,8 +138,12 @@ class language_switcher {
                 'htmllang' => get_html_lang_attribute_value($code),
                 'active'   => $active,
                 // The active language is a non-clickable marker, like the role switcher.
+                // The parameter is 'code', not 'lang': core's lib/setup.php applies any
+                // GET 'lang' to $SESSION->lang before the endpoint runs, so a link that
+                // carried 'lang' would change the session even while the flag is OFF or
+                // the sesskey check fails.
                 'url'      => $active ? '' : (new \moodle_url(self::ENDPOINT, [
-                    'lang'      => $code,
+                    'code'      => $code,
                     'sesskey'   => sesskey(),
                     'returnurl' => $returnurl,
                 ]))->out(false),
@@ -202,8 +206,10 @@ class language_switcher {
     }
 
     /**
-     * Local url of the current page without any lang parameter, for the
-     * redirect back after a switch. Empty when the page url cannot be made local.
+     * Local url of the current page for the redirect back after a switch, without
+     * a lang parameter (core would re-apply it to the session on the way back) and
+     * without a sesskey (returning must not replay a state-changing GET page with a
+     * valid key). Empty when the page url cannot be made local.
      *
      * @param \moodle_page $page
      * @return string
@@ -211,7 +217,7 @@ class language_switcher {
     private static function return_url(\moodle_page $page): string {
         try {
             $url = new \moodle_url($page->url);
-            $url->remove_params('lang');
+            $url->remove_params(['lang', 'sesskey']);
             return $url->out_as_local_url(false);
         } catch (\Throwable $e) {
             return '';

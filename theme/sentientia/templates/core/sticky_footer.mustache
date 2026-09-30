@@ -31,7 +31,15 @@
     the hook that core/sticky-footer and the grader JS look for. It adds no
     positioning: the footer stays the in-flow card that the grade report
     styling in _surface-grade-report.scss already gives it (and core's
-    v-hidden class hides it when a page asks for a disabled sticky footer).
+    v-hidden class hides it when a page asks for a disabled sticky footer;
+    see sticky-footer.scss, which removes it from the layout).
+
+    The "extradata" block is required, not optional. Core's default template
+    has no such block, and callers such as core_courseformat
+    local/content/bulkedittools pass their JS hook (data-for="bulkedittools")
+    through it. Without the block the hook is dropped, the component never
+    finds its element, never calls enableStickyFooter() and the toolbar stays
+    hidden for good. Boost declares the same block.
 
     Classes required for JS:
     * stickyfooter - the element the sticky footer JS looks up
@@ -60,9 +68,11 @@
     {{$ disable }}
         {{#disable}} data-disable="true" {{/disable}}
     {{/ disable }}
-    {{#extras}}
-    {{attribute}}="{{value}}"
-    {{/extras}}
+    {{$ extradata }}
+        {{#extras}}
+        {{attribute}}="{{value}}"
+        {{/extras}}
+    {{/ extradata }}
 >
     {{$ stickycontent }}
         {{{stickycontent}}}

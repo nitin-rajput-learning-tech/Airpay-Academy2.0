@@ -18,7 +18,7 @@
  * Apply a choice from the sidebar language switcher (persona-pass fix D7).
  *
  * Reached from the links that theme_sentientia\language_switcher::get_context()
- * builds: /theme/sentientia/switchlang.php?lang=hi&sesskey=...&returnurl=...
+ * builds: /theme/sentientia/switchlang.php?code=hi&sesskey=...&returnurl=...
  *
  * Why an endpoint and not core's ?lang=xx: core only sets $SESSION->lang, so
  * the choice was lost at the next login and, being a GET that changes state,
@@ -28,6 +28,11 @@
  * Behind the default-OFF flag ux.languageSwitcher.enabled: while it is off this
  * page refuses, so nothing changes for a site that has not turned it on.
  *
+ * The choice travels in the 'code' parameter, never 'lang': core's lib/setup.php
+ * applies any GET 'lang' to $SESSION->lang while config.php loads, before this
+ * script can check the flag or the sesskey, so a 'lang' link would change the
+ * session language even when this page then refuses.
+ *
  * @package    theme_sentientia
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -36,19 +41,21 @@
 require_once(__DIR__ . '/../../config.php');
 
 require_login(null, false);
-require_sesskey();
 
+// Set the page up before the sesskey check so that its error page renders with a context.
 $PAGE->set_url(new moodle_url('/theme/sentientia/switchlang.php'));
 $PAGE->set_context(context_system::instance());
+
+require_sesskey();
 
 if (!\theme_sentientia\language_switcher::is_enabled()) {
     throw new \moodle_exception('langswitch_disabled', 'theme_sentientia');
 }
 
-$lang = required_param('lang', PARAM_SAFEDIR);
+$code = required_param('code', PARAM_SAFEDIR);
 $returnurl = optional_param('returnurl', '', PARAM_LOCALURL);
 
-if (!\theme_sentientia\language_switcher::switch_to($lang)) {
+if (!\theme_sentientia\language_switcher::switch_to($code)) {
     throw new \moodle_exception('langswitch_invalid', 'theme_sentientia');
 }
 

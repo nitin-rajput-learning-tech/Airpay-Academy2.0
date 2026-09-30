@@ -420,7 +420,14 @@ defined('MOODLE_INTERNAL') || die();
 // grader report JS finds .stickyfooter; (D5b) grader #region-main un-floated so
 // the page no longer overflows at 390px; (D13) course.mustache now closes
 // body/html. Bump ships the new themerev for the templates and recompiled CSS.
-$plugin->version   = 2026093001;  // persona-pass theme shell: language switcher (flag OFF), grader 390px, sticky footer, course closing tags
+// 2026093002 - review fix-up to the same bundle (2026-09-30): sticky_footer.mustache
+// now declares the {{$ extradata }} block (core's bulkedittools passes its
+// data-for hook through it; without the block Bulk edit never enabled its
+// toolbar) and .stickyfooter.v-hidden is display:none, not visibility:hidden
+// (the in-flow footer left a blank band); the switcher endpoint takes the choice
+// as 'code', not 'lang' (core applies any GET lang to the session during config.php),
+// sets the page up before the sesskey check, and its return url drops sesskey.
+$plugin->version   = 2026093002;  // persona-pass theme shell + review fix-up: sticky-footer extradata/display:none, switcher 'code' param
 // 2026090806:  // login/OTP placeholders + SSO title + block aria-label: {{#quote}} JSON-escaped Hindi into \uXXXX → attribute-safe cleanstr/escaped values (core 5.2 pattern)
 // 2026090805:  footer: GPL badge -> private Airpay notice; sidebar literals localised; scoped-admin subtitle
 // 2026090804:  // admin dashboard: exact-or-child tenant scope on EVERY widget (was LIKE /1% and several unscoped), compliance widget table names fixed, localised chart months, system health = site admins only, core card aria overrides
@@ -442,7 +449,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.58-beta';  // dashboard i18n complete (body + template fragments) + F-12 residue pass
+$plugin->release   = '1.0.58-beta';  // persona-pass theme shell bundle (language switcher OFF, grader 390px, sticky footer, course closing tags)
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to
