@@ -133,7 +133,54 @@ const showStoredMark = (root, userid, status) => {
     }
 };
 
+/**
+ * Does any row still differ from what is stored for its learner?
+ *
+ * The page is clean only when none does. This reads the radios against the stored state
+ * (isSetByTrainer()), not a flag set by a click, so a row changed while a Save was in flight
+ * keeps the page dirty even though the Save that returned did not carry it.
+ *
+ * @param {HTMLElement} root
+ * @returns {Boolean}
+ */
+const hasUnsavedRows = (root) => {
+    return Array.from(root.querySelectorAll('[data-region="attendance-grid"] tr[data-userid]'))
+        .some((row) => isSetByTrainer(row));
+};
+
+/**
+ * Lock the grid while a Save is in flight: Save and "Mark all present" are disabled, and so are
+ * the radios, so the trainer cannot change a row between the moment its status was read for the
+ * request and the moment the answer arrives. A radio that was already disabled (attendance not
+ * allowed) is left alone, and stays disabled when the lock is lifted.
+ *
+ * @param {HTMLElement} root
+ * @param {Boolean} saving
+ */
+const setSaving = (root, saving) => {
+    root.dataset.saving = saving ? '1' : '0';
+    root.setAttribute('aria-busy', saving ? 'true' : 'false');
+    root.querySelectorAll('[data-action="save-attendance"], [data-action="mark-all-present"]').forEach((button) => {
+        button.disabled = saving;
+    });
+    root.querySelectorAll('[data-region="attendance-grid"] input[type=radio][data-userid]').forEach((radio) => {
+        if (saving) {
+            if (!radio.disabled) {
+                radio.disabled = true;
+                radio.dataset.savelocked = '1';
+            }
+        } else if (radio.dataset.savelocked === '1') {
+            radio.disabled = false;
+            delete radio.dataset.savelocked;
+        }
+    });
+};
+
 const saveAttendance = async (sessionid, root) => {
+    if (root.dataset.saving === '1') {
+        // A Save is already on its way; its answer decides what the rows show.
+        return;
+    }
     const marks = [];
     const sentRows = {};
     root.querySelectorAll('[data-region="attendance-grid"] tr[data-userid]').forEach((row) => {
@@ -149,10 +196,11 @@ const saveAttendance = async (sessionid, root) => {
         // learner they did not touch).
         const nothing = await getString('attendance_nothing_to_save', 'local_sentientia_classroom');
         Notification.addNotification({message: nothing, type: 'info'});
-        setDirty(root, false);
+        setDirty(root, hasUnsavedRows(root));
         return;
     }
 
+    setSaving(root, true);
     try {
         // The time this grid was loaded: a learner who scanned the QR code after it keeps
         // that mark instead of being saved back to Absent (the server decides, see
@@ -162,9 +210,12 @@ const saveAttendance = async (sessionid, root) => {
             methodname: 'local_sentientia_classroom_bulk_mark_attendance',
             args: {sessionid: sessionid, marks: marks, loadedat: loadedat},
         }])[0];
-        // Every row that was sent now matches what is stored...
-        Object.keys(sentRows).forEach((userid) => {
-            markRowStored(sentRows[userid], rowStatus(sentRows[userid]));
+        // Every row that was sent now matches what is stored. What is stored is what was SENT
+        // (the status in the payload), never what the radio shows when the answer arrives: a
+        // row that changed in the meantime was not saved by this call and must stay different
+        // from its stored value, so the next Save carries it.
+        marks.forEach((mark) => {
+            markRowStored(sentRows[mark.userid], mark.status);
         });
         // ...except the learners whose newer mark was kept: show the mark that stands.
         (response.keptmarks || []).forEach((kept) => {
@@ -187,13 +238,24 @@ const saveAttendance = async (sessionid, root) => {
             message: response.message || 'Attendance saved.',
             type: response.kept > 0 ? 'warning' : 'success',
         });
-        setDirty(root, false);
+        // Clean only if every row now matches what is stored. A row that still differs (changed
+        // while the call was in flight, however that came about) keeps the hint and the
+        // leave-page warning.
+        setDirty(root, hasUnsavedRows(root));
     } catch (e) {
         Notification.exception(e);
+    } finally {
+        setSaving(root, false);
     }
 };
 
 const handleClick = (sessionid, root) => (event) => {
+    // While a Save is in flight the grid is locked (setSaving()): a click that still gets
+    // through (a child of a disabled button, say) changes nothing.
+    if (root.dataset.saving === '1') {
+        if (event.target.closest('[data-action]')) { event.preventDefault(); }
+        return;
+    }
     // Choosing a status the learner already shows (Absent on an unmarked learner, say) fires
     // no "change" event, but it is still the trainer setting that mark on purpose: an explicit
     // Absent is written and stands against a later scan.

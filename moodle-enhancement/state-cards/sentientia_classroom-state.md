@@ -475,3 +475,48 @@ Both trees. **No schema change and no version bump in this round** (`version.php
   `require_capability()` before `$PAGE->set_context()`; hard-coded English remains in the bulk WS
   message "N attendances saved.", the JS fallback "Attendance saved." and the status labels in
   `get_session_attendance()`.
+
+## 2026-09-30 (QR follow-up) - :update decides who is unrestricted; Save race closed; slow scans reported
+
+Branch `claude/qr-followup-0930`, three items from the round-4 review. No version bump: no DB, capability or
+language change (plugin stays 2026093001 / 1.10.6); deploying the JS needs a JS-cache purge.
+
+- **Discriminator is `:update`, not `:manage`.** `session_manager::may_run_session()` (and so
+  `require_attendance_access()`, the grid, the three attendance web services, the session list links and
+  `local_sentientia_pages/qr_attendance.php`) now lets through, tenant-wide, only a holder of
+  `local/sentientia_classroom:update` (manager archetype, tenant administrator role 9, site admins);
+  everyone else must be the session's or classroom's assigned trainer. Why: on the local prod-data copy the
+  BizLMS `trainer` role (id 10, archetype teacher) holds `:manage` but neither `:create` nor `:update`, so
+  keyed on `:manage` it was exempt from the rule on real data (the "Data finding" in the round-4 section
+  above). **That paragraph's `:manage` wording is superseded by this one**, as is the matching paragraph in
+  the pages state card. `view.php` / `index.php` / `list_*` still use `:manage` (or `:update || :manage`) for
+  the management UI; that is unchanged, so a `:manage`-only role still sees the classroom management pages
+  and Add-session controls but cannot open another trainer's attendance grid or QR page.
+- **Grid Save race (`amd/src/attendance.js`, bundle rebuilt).** The Save used to record each sent row as
+  stored from the radio as it stood when the answer arrived, so a row changed while the call was in flight
+  was taken as saved and the page went clean. Now: the stored status is the one that was SENT (read from the
+  `marks[]` payload); Save, "Mark all present" and every radio are disabled while the call is in flight
+  (`setSaving()`; a radio that was disabled from the start stays disabled; a second Save is ignored); and
+  after the answer `setDirty(root, hasUnsavedRows(root))` keeps the hint and the `beforeunload` warning on
+  while any row still differs from its stored value (the rule `isSetByTrainer()` already uses). A failed call
+  unlocks the grid and leaves it dirty. Checked in a real browser with a throwaway harness (fake `core/ajax`,
+  the built bundle, 31 checks: normal flow, the race, originally-disabled radios, failure, kept/newer marks,
+  nothing to save); the same harness against the previous bundle fails the race checks.
+- **`get_marks_by_others_since()` reads 2 seconds early** (`session_manager::NEWER_MARK_SLACK`,
+  `timemodified >= $since - 2`). A scan stamps `time()` when it starts and commits later; on a slow request it
+  can commit after the grid or the previous Save read the table with a stamp a second or two older than the
+  load time the page then holds, and so was never reported. The price is that a mark the grid already showed
+  can be handed back once more (the grid then shows the status it already shows, and the "newer marks" count
+  in the Save message can include it). `keeps_newer_mark()` (the write-side guard against an explicit Absent)
+  still compares with `>= $loadedat`, without slack: a scan in that 2-second window is reported on Save but is
+  not protected from an Absent the trainer sends for that same learner in the same Save.
+- **Tests (written, NOT run: the lead re-inits PHPUnit and runs them):** `attendance_trainer_scope_test` +2
+  (`:manage` without `:update` is restricted to its own sessions, across `require_attendance_access`,
+  `list_session_attendance` and the session list links; `:update` without `:manage` and the manager pair are
+  unrestricted) and `test_may_run_session_answers_for_a_named_user...` extended; its `manager()` helper now
+  holds `:create` + `:update` as the manager archetype does. `qr_attendance_test` +1
+  (`test_newer_marks_are_read_with_two_seconds_of_slack`: stamps at +1, 0, -1, -2 reported, -3 and -60 not,
+  also through a Save; no load time still reports nothing).
+- **Gates:** php -l on every changed PHP file; `tools/check-tree-drift.php` 0 new; `tools/check-lang-parity.php`
+  0 failures (no string changed); `tools/check-path-boundary.php` clean; `scan_amd_build_parity.php` 0 missing.
+  Both trees byte-identical for every file touched.

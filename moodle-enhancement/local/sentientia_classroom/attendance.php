@@ -19,7 +19,7 @@ require_capability('local/sentientia_classroom:view', $context);
 
 // Tenant scope (ADR-031) — same guard as view.php; it fails closed for a
 // viewer with no tenant and for a classroom with no path. Then the trainer rule (owner
-// decision 2026-09-30): without :manage, only the session's or classroom's assigned trainer
+// decision 2026-09-30): without :update, only the session's or classroom's assigned trainer
 // opens the grid (session_manager::may_run_session()).
 [$session, $classroom] =
     \local_sentientia_classroom\session_manager::require_attendance_access($sessionid);

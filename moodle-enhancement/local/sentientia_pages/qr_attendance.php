@@ -53,7 +53,7 @@ $PAGE->set_pagelayout('standard');
 // their own tenant. A session that does not exist (or whose classroom is gone) gets
 // core's 'invalidaccess', because a QR for it could never record anything.
 try {
-    // ...and, for someone without local/sentientia_classroom:manage, only the session's or
+    // ...and, for someone without local/sentientia_classroom:update, only the session's or
     // classroom's assigned trainer (owner decision 2026-09-30: may_run_session()).
     [$session, $classroom] = \local_sentientia_classroom\session_manager::require_attendance_access($sessionid);
 } catch (\dml_missing_record_exception $e) {

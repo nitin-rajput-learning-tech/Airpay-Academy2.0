@@ -1118,6 +1118,51 @@ final class qr_attendance_test extends \advanced_testcase {
             'The saver\'s own row (Late, marked by the trainer) is not "newer": only the scan is.');
     }
 
+    public function test_newer_marks_are_read_with_two_seconds_of_slack(): void {
+        global $DB;
+        $classroomid = $this->classroom('/1');
+        $sessionid = $this->session($classroomid);
+        $trainer = $this->user_at('/1/2');
+        $this->assertSame(2, session_manager::NEWER_MARK_SLACK);
+
+        // A scan stamps time() when it starts and commits later. On a slow request the stamp can
+        // be a second or two OLDER than the load time the grid then holds, because the commit
+        // landed after the grid read the table. Stamps are set to loadedat minus N seconds.
+        $loadedat = time() - 100;
+        $stamps = ['after' => +1, 'atload' => 0, 'one' => -1, 'edge' => -2, 'beyond' => -3, 'old' => -60];
+        $learners = [];
+        foreach ($stamps as $key => $offset) {
+            $learners[$key] = $this->enrolled_learner($classroomid);
+            $this->assertSame(session_manager::SCAN_RECORDED,
+                session_manager::record_qr_attendance($sessionid, (int) $learners[$key]->id));
+            $DB->set_field('local_sentientia_classroom_attendance', 'timemodified', $loadedat + $offset,
+                ['sessionid' => $sessionid, 'userid' => $learners[$key]->id]);
+        }
+
+        $this->setUser($trainer);
+        $reported = session_manager::get_marks_by_others_since($sessionid, $loadedat, true);
+        $this->assertEqualsCanonicalizing(
+            [(int) $learners['after']->id, (int) $learners['atload']->id, (int) $learners['one']->id,
+                (int) $learners['edge']->id],
+            array_keys($reported),
+            'Scans stamped up to two seconds before the load time are reported; older ones are not.');
+        $this->assertArrayNotHasKey((int) $learners['beyond']->id, $reported);
+        $this->assertArrayNotHasKey((int) $learners['old']->id, $reported);
+
+        // The same through a Save: the slow scan that committed after the read is handed back.
+        $kept = null;
+        $keptusers = null;
+        $newer = null;
+        session_manager::bulk_mark_attendance($sessionid, [], $loadedat, $kept, $keptusers, $newer, true);
+        $this->assertSame(0, $kept);
+        $this->assertArrayHasKey((int) $learners['edge']->id, $newer);
+        $this->assertArrayNotHasKey((int) $learners['beyond']->id, $newer);
+
+        // No load time still means nothing to report, whatever the slack.
+        $this->assertSame([], session_manager::get_marks_by_others_since($sessionid, 0, true));
+        $this->assertSame([], session_manager::get_marks_by_others_since($sessionid, -5, true));
+    }
+
     public function test_newer_marks_are_limited_to_the_callers_tenant_roster(): void {
         $classroomid = $this->classroom('/1');
         $sessionid = $this->session($classroomid);
