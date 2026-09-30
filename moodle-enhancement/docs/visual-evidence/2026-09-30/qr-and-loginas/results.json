@@ -1,0 +1,68 @@
+[
+ {
+  "check": "01 learner on the roster, valid token: recorded",
+  "heading": "Attendance Marked!",
+  "body": "VP Learner /1 | Your attendance has been successfully recorded at 1:28 PM.",
+  "pass": true
+ },
+ {
+  "check": "02 same learner scans again: already marked, nothing written",
+  "heading": "Already Marked",
+  "body": "Your attendance for this session has already been recorded.",
+  "pass": true
+ },
+ {
+  "check": "03 old or forged token: QR code expired",
+  "heading": "QR Code Expired",
+  "body": "This QR code has expired. Please scan the current QR code displayed by your trainer.",
+  "pass": true
+ },
+ {
+  "check": "04 classroom is cancelled: refused, nothing written",
+  "heading": "Classroom Cancelled",
+  "body": "This classroom has been cancelled, so your attendance was not recorded. Please contact your trainer.",
+  "pass": true
+ },
+ {
+  "check": "05 session id with no session (valid token for that id)",
+  "heading": "Session Not Found",
+  "body": "This session no longer exists. Please ask your trainer for a new QR code.",
+  "pass": true
+ },
+ {
+  "check": "06 not on the roster: not enrolled, nothing written",
+  "heading": "Not Enrolled",
+  "body": "You are not enrolled in this classroom, so your attendance was not recorded. Please contact your trainer.",
+  "pass": true
+ },
+ {
+  "check": "07 learner from another tenant: different-organisation error",
+  "heading": "Error",
+  "body": "This session belongs to a different organisation, so your attendance was not recorded.",
+  "pass": true
+ },
+ {
+  "check": "08 trainer QR page: heading is \"classroom - session title\" and the QR image renders",
+  "session": "VP Evidence QR classroom - Day 1 (30 Sept 13:26)",
+  "qrRendered": true,
+  "pass": true
+ },
+ {
+  "check": "09 site admin viewing a learner: \"Log in as\" is offered",
+  "loginas": true,
+  "profileShown": true,
+  "pass": true
+ },
+ {
+  "check": "10 site admin viewing another site admin: no \"Log in as\"",
+  "loginas": false,
+  "profileShown": true,
+  "pass": true
+ },
+ {
+  "check": "11 site admin viewing a suspended user: no \"Log in as\"",
+  "loginas": false,
+  "profileShown": true,
+  "pass": true
+ }
+]

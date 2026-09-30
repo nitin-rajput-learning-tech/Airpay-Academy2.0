@@ -211,3 +211,20 @@ Checked on the local dev DB with four fake `zzrelabel` providers (dry run and `-
 were removed afterwards): whole-key rename, partial carry where the legacy list had a processor with no
 lock, partial carry where the new popup lock already existed, and "none moved". No version bump. Both
 trees.
+
+## 2026-09-30 (review follow-up) - relabel step 1b moved into a class, one transaction per provider
+
+- Step 1b of `cli/relabel_plugin.php` (message-provider preference keys) now lives in
+  `classes/message_pref_relabel.php` (`message_pref_relabel::relabel($from, $to, $run, $out)`). The
+  rules and the report lines are unchanged; the CLI just calls it.
+- **Why:** the partial-carry logic (rename all / carry only the processors whose lock moved / none
+  moved) had no automated test, only a manual check on the dev DB. It is now covered.
+- **Transaction.** Each provider is handled in one delegated transaction. Before, the `_locked` keys
+  were renamed before the `_enabled` key was written, so a run killed between the two lost the enabled
+  membership (it erred towards "off", never "on"). Now that half-done state rolls back, and a rerun
+  does the provider again. (The table renames in step 1 are DDL and are not part of this.)
+- Tests: `tests/message_pref_relabel_test.php`, 9 tests, 60 assertions, green on local XAMPP: whole
+  `_enabled` key renamed when every member's lock moved; partial carry; none moved; merge into an
+  existing new `_enabled`; existing new lock kept; `_disable` key; dry run writes nothing and counts
+  what a run would do; user rows move unless the user already has the new name; a failure part-way
+  through a provider rolls it back. No version bump. Both trees.

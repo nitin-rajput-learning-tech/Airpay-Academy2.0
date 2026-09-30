@@ -230,3 +230,30 @@ Branch `claude/adr031-learning3-ff`. This closes the "Still open" item above abo
   does not duplicate; Late and Excused kept; Absent raised; not on roster; unknown session; deleted
   classroom; other tenant, pathless classroom and tenant-less learner refused; legacy table
   untouched). No version bump (no schema change). Both trees.
+
+## 2026-09-30 (review follow-up) - QR scan: cancelled classroom, status-aware race
+
+- **Cancelled classroom.** `record_qr_attendance()` returns the new `SCAN_CANCELLED` when the
+  classroom's `status` is `STATUS_CANCELLED` (0). Nothing is written, and an existing row (even an
+  Absent one) is left as it is. The check runs after the tenant and roster checks, so someone who is
+  not on the roster is told "not enrolled", not that the classroom is cancelled. The schema default
+  for `status` is 1 (active), so a classroom nobody cancelled is unaffected.
+- **Insert race.** Before, a scan that lost the insert to a trainer's grid Save (or to its own double
+  tap) always answered "already recorded", even when the row that won was Absent. Now the loser reads
+  the row that won and applies the same rule as for any existing row: Absent is raised to Present,
+  anything else is `SCAN_ALREADY`. That rule is one private helper, `apply_scan_to_existing_row()`,
+  used by both paths. The race branch itself has no test (PHPUnit cannot interleave two writers); the
+  helper is covered by the Absent tests.
+- Tests: `qr_attendance_test.php` is now 14 tests, 45 assertions, green on local XAMPP (new: a
+  cancelled classroom refuses and writes nothing; it leaves an Absent row Absent; a learner not on the
+  roster is not told the classroom is cancelled). No version bump. Both trees.
+- **Open decisions for Nitin, NOT taken here:**
+  1. *A scan can overturn the trainer's Absent.* The grid saves an explicit Absent and an unticked
+     learner the same way, so the table cannot tell them apart, and a scan raises either to Present
+     (while the hourly token is valid, this hour plus the last). If the trainer's mark must win, return
+     `SCAN_ALREADY` for Absent too and change the page text, which today says "already been
+     recorded". The cost: a trainer who saves the grid before the learners scan would then lock every
+     unticked learner out of the QR flow.
+  2. *No time window.* Nothing checks the session's start and end time, so a QR shown for tomorrow's
+     session records Present today. A window such as [start - grace, end + grace] is easy to add, but
+     imported sessions may carry wrong times.

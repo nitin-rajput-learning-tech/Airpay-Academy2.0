@@ -201,3 +201,24 @@ Version 2026092400. Guarded platform-wide by
   `local/classroom:takesessionattendance` (see the 2026-09-24 note). Only site admins can display
   the QR on a Sentientia-only install.
 - No version bump. Both trees. Test: `local_sentientia_classroom/tests/qr_attendance_test.php`.
+
+## 2026-09-30 (review follow-up) - QR pages: "Classroom Cancelled" state, QR image on Moodle 5
+
+- `qr_scan.php` shows a new refusal, "Classroom Cancelled", for `SCAN_CANCELLED` (see the classroom
+  state card). The page's result states are now: Attendance Marked, Already Marked, Not Enrolled,
+  Classroom Cancelled, Session Not Found, QR Code Expired, and the different-organisation error.
+- **`qr_attendance.php` could not show a QR on Moodle 5.** It did
+  `require_once($CFG->libdir . '/phpqrcode/qrlib.php')`; Moodle 5.x does not ship `lib/phpqrcode`
+  (checked on the local 5.1.3 tree), so on a Sentientia install the page stopped with a missing-file
+  error before it showed anything. Found while taking the screenshots for this change. It now uses
+  `core_qrcode` (TCPDF's 2D barcode, in Moodle core since 3.9, so also on the 4.1 BizLMS box), at
+  error-correction level L and 8 px per module. When PHP has neither GD nor Imagick the page says the
+  QR could not be generated instead of showing a broken image.
+- The new wording on these pages is still hard-coded English, like the rest of both pages. It moves to
+  lang strings, with the Hindi pack, when this plugin gets one.
+- Visual evidence: `docs/visual-evidence/2026-09-30/qr-and-loginas/` (README there).
+- **Still open, unchanged:** the capability `qr_attendance.php` checks is the pre-ADR-025
+  `local/classroom:takesessionattendance`, so only site admins can display the QR on a Sentientia-only
+  install (2026-09-24 note). Take that access decision before the trainer persona is tested, or the
+  trainer persona cannot use the feature.
+- No version bump. Both trees.

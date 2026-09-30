@@ -5,6 +5,43 @@
 
 ---
 
+## 2026-09-30 - Review follow-ups on claude/fixes-0930 (not merged)
+
+An adversarial review of the four commits on `claude/fixes-0930` said fix-then-ship. This pass closes
+its must-fix and the small, safe should-fixes.
+
+- **Visual evidence (the must-fix).** `docs/visual-evidence/2026-09-30/qr-and-loginas/`: desktop and
+  590px screenshots of the seven `qr_scan.php` result states, the trainer's `qr_attendance.php` page
+  with the new heading, and the profile header with and without "Log in as". The README there says
+  what each one shows; the 11 automatic checks all pass. Local XAMPP only. Nitin reviews before merge.
+- **Found while taking them.** `qr_attendance.php` required `lib/phpqrcode/qrlib.php`, which Moodle
+  5.x does not ship, so the trainer's QR page could not show a QR on any Sentientia install. Fixed
+  (`core_qrcode`).
+- **QR scan.** A cancelled classroom now refuses ("Classroom Cancelled"), and a scan that loses the
+  insert race to a trainer's grid Save is handled like any other existing row instead of always
+  saying "already recorded".
+- **Message-preference repair.** Relabel step 1b is now a class (`message_pref_relabel`) with 9 tests
+  and one transaction per provider, so a run killed half way no longer strands the enabled list. The
+  "(non-Sentientia)" output tag is replaced by `(Moodle core)` / `(other plugin)`, decided from
+  Moodle's own standard-plugin list, not from the name.
+- **ADR-031 target guard.** In target mode the four `tools/uat/adr031_*.php` scripts also refuse
+  unless `local_sentientia_platform` is on disk (the live BizLMS box has the same wwwroot as the
+  pre-repoint target and does not have it) and print the database host/name, prefix and release.
+  `--i-am-uat=1` is accepted again.
+- **Docs.** Migration plan 4g: parity exit 2 is a STOP. 4d: the tree/date note for the two CLIs is
+  corrected. ROLE9 section 10: the new guard behaviour.
+- **Decisions still open for Nitin (nothing in this pass takes them):** (1) a QR scan can raise a
+  trainer's deliberate Absent to Present; (2) there is no session time window on QR scans; (3) the
+  capability `qr_attendance.php` checks is undeclared on a Sentientia-only install, so only site
+  admins can show the QR: take this before the trainer persona is tested. Details in the
+  `sentientia_classroom` and `sentientia_pages` state cards.
+- **Not done:** lang strings and Hindi for the new `qr_scan.php` wording (waits for a pages Hindi
+  pack); a test for the insert-race branch itself (PHPUnit cannot interleave two writers).
+- **Tests (local XAMPP, targeted files only):** `qr_attendance_test` 14/14, `message_pref_repair_test`
+  12/12, `message_pref_relabel_test` 9/9. Not re-run: `profile_loginas_test`, classroom
+  `tenant_scope_test` (their code is unchanged by this pass). Gates: `check-tree-drift` OK,
+  `check-path-boundary` exit 0, `php -l` clean.
+
 ## 🧪 2026-09-29 — ADR-031 decisions closed; Playwright screen-check pass; PWA OFF, "Browse Library" (Opus 5.5)
 
 **Direction (Nitin, 2026-09-29):** no production hotfix. Production (airpay.academy, BizLMS 4.1.2) is
