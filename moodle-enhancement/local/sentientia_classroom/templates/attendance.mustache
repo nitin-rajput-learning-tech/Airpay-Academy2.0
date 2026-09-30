@@ -6,21 +6,27 @@
 
     Context vars:
       sessionid          int
+      loadedat           int unix time this grid was read; sent back with Save so a QR scan made after it is kept
       classroomid        int
       classroom_name     string format_string'd
       session_title      string format_string'd
       session_time       string e.g. "Mon, 06 May 2026 · 09:00 – 13:00"
       session_location   string
       has_location       bool
-      rows               array of {userid, fullname, email, is_absent, is_present, is_late, is_excused, marked_at}
+      rows               array of {userid, status, has_mark, fullname, email, is_absent, is_present, is_late,
+                         is_excused, marked_at}; has_mark = a row is stored (an unmarked learner shows as
+                         Absent but is saved only once the trainer touches them)
       has_rows           bool
       roster_size        int
       count_*            int — present|late|excused|absent
       can_attend         bool
+      show_qr            bool  the QR entry point flag is on and the viewer holds :attendance
+      qr_url             URL of the trainer's QR page for this session
       back_url           URL back to view.php?id=N&tab=sessions
 }}
 <div data-region="airpay-attendance"
      data-sessionid="{{ sessionid }}"
+     data-loadedat="{{ loadedat }}"
      data-classroomid="{{ classroomid }}">
 
     <div class="ap-page-header d-flex justify-content-between align-items-start mb-3">
@@ -39,6 +45,13 @@
                 <span>{{ roster_size }} on roster</span>
             </div>
         </div>
+        {{# show_qr }}
+        <div>
+            <a href="{{{ qr_url }}}" class="btn btn-outline-primary btn-sm" data-region="show-qr">
+                <i class="fa fa-qrcode fa-fw"></i> {{# str }}attendance_show_qr, local_sentientia_classroom{{/ str }}
+            </a>
+        </div>
+        {{/ show_qr }}
     </div>
 
     {{! ── Live counts strip ──────────────────────────────────────────── }}
@@ -76,6 +89,9 @@
     {{# has_rows }}
     {{! ── Bulk actions ─────────────────────────────────────────────── }}
     {{# can_attend }}
+    <p class="small text-muted mb-2" data-region="untouched-hint">
+        <i class="fa fa-info-circle fa-fw"></i> {{# str }}attendance_untouched_hint, local_sentientia_classroom{{/ str }}
+    </p>
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
         <div>
             <button type="button" class="btn btn-outline-success btn-sm" data-action="mark-all-present">
@@ -93,7 +109,11 @@
     </div>
     {{/ can_attend }}
 
-    {{! ── Roster ───────────────────────────────────────────────────── }}
+    {{! ── Roster ─────────────────────────────────────────────────────
+        A form only so that autocomplete="off" reaches the radios: on a normal reload Firefox
+        restores radio selections the page never saw being made, which would show a mark the
+        trainer did not set on this load. Nothing is submitted (amd/src/attendance.js stops it). }}
+    <form autocomplete="off" action="#" data-region="attendance-form">
     <div class="card border-0 shadow-sm">
         <div class="table-responsive">
         <table class="table table-hover mb-0 align-middle" data-region="attendance-grid">
@@ -109,31 +129,31 @@
             </thead>
             <tbody>
                 {{# rows }}
-                <tr data-userid="{{ userid }}">
+                <tr data-userid="{{ userid }}" data-original="{{ status }}" data-hasmark="{{# has_mark }}1{{/ has_mark }}{{^ has_mark }}0{{/ has_mark }}">
                     <td>
                         <div class="fw-semibold">{{ fullname }}</div>
                         <div class="small text-muted">{{ email }}</div>
                     </td>
                     <td class="text-center">
-                        <input type="radio" name="att_{{ userid }}" value="0" data-userid="{{ userid }}" data-status="0"
+                        <input type="radio" name="att_{{ userid }}" value="0" data-userid="{{ userid }}" data-status="0" autocomplete="off"
                             {{# is_absent }}checked{{/ is_absent }}
                             {{^ can_attend }}disabled{{/ can_attend }}
                             aria-label="Mark absent">
                     </td>
                     <td class="text-center">
-                        <input type="radio" name="att_{{ userid }}" value="1" data-userid="{{ userid }}" data-status="1"
+                        <input type="radio" name="att_{{ userid }}" value="1" data-userid="{{ userid }}" data-status="1" autocomplete="off"
                             {{# is_present }}checked{{/ is_present }}
                             {{^ can_attend }}disabled{{/ can_attend }}
                             aria-label="Mark present">
                     </td>
                     <td class="text-center">
-                        <input type="radio" name="att_{{ userid }}" value="2" data-userid="{{ userid }}" data-status="2"
+                        <input type="radio" name="att_{{ userid }}" value="2" data-userid="{{ userid }}" data-status="2" autocomplete="off"
                             {{# is_late }}checked{{/ is_late }}
                             {{^ can_attend }}disabled{{/ can_attend }}
                             aria-label="Mark late">
                     </td>
                     <td class="text-center">
-                        <input type="radio" name="att_{{ userid }}" value="3" data-userid="{{ userid }}" data-status="3"
+                        <input type="radio" name="att_{{ userid }}" value="3" data-userid="{{ userid }}" data-status="3" autocomplete="off"
                             {{# is_excused }}checked{{/ is_excused }}
                             {{^ can_attend }}disabled{{/ can_attend }}
                             aria-label="Mark excused">
@@ -145,6 +165,7 @@
         </table>
         </div>
     </div>
+    </form>
     {{/ has_rows }}
 
     {{^ has_rows }}

@@ -8,6 +8,12 @@
  *
  *   sudo -u www-data php adr031_predeploy_probe.php --i-am-uat
  *
+ * On the migration target (any box that is not UAT) name it instead of
+ * --i-am-uat; the two are mutually exclusive, and the script refuses unless
+ * the config's $CFG->wwwroot equals --target exactly:
+ *   sudo -u www-data php adr031_predeploy_probe.php --target=https://<wwwroot> \
+ *       --config=/absolute/path/to/config.php
+ *
  * Answers the deploy gates in the ADR-031 notes:
  *  - recompletion rules with costcenterid 0 (a tenant admin's rule made before
  *    the fix resets every tenant on cron);
@@ -21,16 +27,72 @@
  *  - every local_sentientia_* / block_sentientia_* installed version.
  */
 
+// Which box is this for? Exactly one of --i-am-uat, or --target + --config.
+// cli_get_params() needs Moodle, so these are read from $argv before config.php
+// is loaded. (Same block in the four adr031_* UAT scripts.)
+$adr031uat = false;
+$adr031target = null;
+$adr031config = null;
+foreach (array_slice($argv, 1) as $adr031arg) {
+    if ($adr031arg === '--i-am-uat' || $adr031arg === '--i-am-uat=1') {
+        $adr031uat = true;
+    } else if ($adr031arg === '--target' || $adr031arg === '--config') {
+        fwrite(STDERR, "Refusing: {$adr031arg} needs a value, as {$adr031arg}=<value>.\n");
+        exit(1);
+    } else if (strpos($adr031arg, '--target=') === 0) {
+        $adr031target = rtrim(substr($adr031arg, strlen('--target=')), '/');
+    } else if (strpos($adr031arg, '--config=') === 0) {
+        $adr031config = substr($adr031arg, strlen('--config='));
+    }
+}
+if ($adr031uat) {
+    if ($adr031target !== null || $adr031config !== null) {
+        fwrite(STDERR, "Refusing: --i-am-uat and --target/--config are mutually exclusive.\n");
+        exit(1);
+    }
+    $adr031configpath = '/var/www/html/moodle5.2/public/config.php';
+} else if ($adr031target !== null || $adr031config !== null) {
+    if ($adr031target === null || $adr031target === '' || $adr031config === null || $adr031config === '') {
+        fwrite(STDERR, "Refusing: --target=<wwwroot> and --config=<absolute path to config.php> go together.\n");
+        exit(1);
+    }
+    if (!preg_match('~^(?:/|[A-Za-z]:[\\\\/]|\\\\\\\\)~', $adr031config)
+            || basename(str_replace('\\', '/', $adr031config)) !== 'config.php'
+            || !is_readable($adr031config)) {
+        fwrite(STDERR, "Refusing: --config must be the absolute path of a readable config.php.\n");
+        exit(1);
+    }
+    $adr031configpath = $adr031config;
+} else {
+    fwrite(STDERR, "Refusing to run without --i-am-uat (UAT) or --target=<wwwroot> "
+        . "--config=<absolute path to config.php> (migration target).\n");
+    exit(1);
+}
+
 define('CLI_SCRIPT', true);
-require('/var/www/html/moodle5.2/public/config.php');
+require($adr031configpath);
 require_once($CFG->libdir . '/clilib.php');
 
-[$options] = cli_get_params(['i-am-uat' => false], []);
-if (empty($options['i-am-uat'])) {
-    cli_error('Refusing to run without --i-am-uat.');
-}
-if (strpos($CFG->wwwroot, 'academy2.airpay.ninja') === false) {
-    cli_error("Refusing: wwwroot is {$CFG->wwwroot}, not the UAT instance.");
+[$options] = cli_get_params(['i-am-uat' => false, 'target' => '', 'config' => ''], []);
+if ($adr031uat) {
+    if (strpos($CFG->wwwroot, 'academy2.airpay.ninja') === false) {
+        cli_error("Refusing: wwwroot is {$CFG->wwwroot}, not the UAT instance.");
+    }
+} else {
+    if (rtrim($CFG->wwwroot, '/') !== $adr031target) {
+        cli_error("Refusing: wwwroot is {$CFG->wwwroot}, not the requested target {$adr031target}.");
+    }
+    // The wwwroot is not enough on its own: the migration target and the live
+    // BizLMS box can answer to the same name before the repoint. A Sentientia
+    // install has local_sentientia_platform on disk; the live BizLMS box does not.
+    if (core_component::get_component_directory('local_sentientia_platform') === null) {
+        cli_error('Refusing: local_sentientia_platform is not on disk for this config, '
+            . 'so it is not a Sentientia install (is it the live BizLMS box?).');
+    }
+    // Print which database this is, so the operator can see it before anything runs.
+    cli_writeln("TARGET MODE: wwwroot {$CFG->wwwroot} (config {$adr031config})");
+    cli_writeln("  database {$CFG->dbhost} / {$CFG->dbname}, prefix {$CFG->prefix}, "
+        . "Moodle {$CFG->release} (branch {$CFG->branch})");
 }
 
 global $DB;

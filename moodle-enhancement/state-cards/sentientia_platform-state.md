@@ -688,3 +688,60 @@ new keys. Likeliest first failures: none expected beyond the fake-capability ins
 
 **Next:** unchanged. The lead runs `--group bizlms_import` and `tenant_isolation`; Nitin signs the allow-list from the Stage B
 inventory; then P0.4 and the org importer.
+
+## 2026-09-30 - message-preference repair: the review's should-fixes closed
+
+The five "open should-fixes" above are done, plus the relabel one (see the sentientia_core card):
+- **Tests** (`tests/message_pref_repair_test.php`, now 11 tests, 287 assertions, PASS locally): an
+  otherwise healthy provider with a legacy `_disable` and a movable user row (reported, copied,
+  moved, `check()` empty after); a provider under the `local_sentientia_platform` ->
+  `local_airpay_core` mapping (copies from `local_airpay_core_*`, nothing under a
+  `local_airpay_platform` name); the unmapped REPORT count (config key + user preference, left
+  alone, `check()` still empty); legacy locks with no legacy `_enabled` (locks copied, new
+  `_enabled` stays absent); a stale provider row (remedy text); the `(non-Sentientia)` tag.
+- **`cli/migration_parity_check.php`**: the `message_provider_defaults` invariant is wrapped in
+  try/catch. If `check()` throws (a BizLMS source box that has the plugin directory but not the
+  tables, or a DB error) it prints `SKIPPED ... (check could not run: <message>)` and
+  `--baseline` still writes its file; `--compare` counts it as skipped (exit 2, not proven),
+  never a pass. php -l only: running it means CRC scans over whole tables.
+- **`message_pref_repair::check()`** gives a provider row its component no longer declares (no
+  entry in `db/messages.php`) an explicit remedy: delete that `{message_providers}` row, or run
+  `admin/cli/upgrade.php` if the component has an upgrade pending. `repair()` prints the same
+  remedy on its REPORT line (it still counts the provider as unresolved).
+- **Output tag**: a `db/messages.php` default written for a component with no "sentientia" in its
+  name (core `moodle`, `tool_certificate`) prints `wrote defaults (non-Sentientia) ...` (dry run:
+  `would write defaults (non-Sentientia) ...`), so the cutover change record shows which writes
+  reached outside the Sentientia plugins.
+- **`cli/repair_task_registrations.php` step 2c** deletes a purged provider's user rows by exact
+  name (`message_provider_<comp>_<name>_enabled`) instead of the unescaped
+  `LIKE 'message_provider_<comp>_<name>%'`, which could take a sibling provider's rows
+  ('order' also matched 'order_paid'). The old prefix delete also removed the deprecated
+  `_loggedin` / `_loggedoff` rows of a purged provider; those are now left (harmless, unread).
+- Local dry run of `repair_task_registrations.php` after the change: exit 0, 0 problems.
+- No version bump. Both trees.
+
+## 2026-09-30 (review follow-up) - message_pref_repair output tag; parity exit code; target guard
+
+- **Output tag.** The "(non-Sentientia)" tag was chosen by name, so an Airpay plugin that is not
+  Sentientia's (for example `paygw_airpay`) was tagged as if it were a Moodle or third-party default.
+  `message_pref_repair::origin_tag()` now says: no tag for a Sentientia plugin; `(Moodle core) ` for
+  core and the plugins Moodle ships with (from `core_plugin_manager::standard_plugins_list()`, not from
+  the name); `(other plugin) ` for everything else (a third-party plugin such as `tool_certificate`, or
+  an Airpay plugin that is not Sentientia's). Tests: `message_pref_repair_test.php` 12 tests, 295
+  assertions, green on local XAMPP (new `test_origin_tag_uses_the_standard_plugin_list`; the tag test
+  now expects `(Moodle core) moodle/instantmessage`).
+- **`cli/migration_parity_check.php --compare` exit codes.** A check that throws reports SKIPPED and the
+  run exits 2. The migration plan section 4g now says that exit 2 is a STOP (not proven), and only
+  exit 0 with the `100% PARITY` line lets the cutover go on. The plan's 4d note on which tree ships the
+  two CLIs had the wrong date for `migration_parity_check.php` (it has been in both trees since
+  2026-09-22, `b50147995`); fixed.
+- **ADR-031 target guard (`tools/uat/adr031_*.php`, all four).** wwwroot alone cannot tell the
+  pre-repoint migration target from the live BizLMS box (both are `https://www.airpay.academy`), and
+  the probe and ws_smoke had no other protection. In target mode the scripts now also refuse unless
+  `local_sentientia_platform` is on disk for the given config (the live BizLMS box does not have it),
+  and print a second banner line with the database host and name, the table prefix and the Moodle
+  release. `--i-am-uat=1` is accepted again (cli_get_params accepted it before the guard was added).
+  Documented in `ROLE9-CORE-CAPS-2026-09-26.md` section 10 and the migration plan section 4d.
+  A `$CFG->branch >= 502` check was not added: the plugin check already rejects the 4.1.2 live box,
+  and a 5.1 rehearsal box should not be locked out; the release is in the banner for the operator to
+  read.

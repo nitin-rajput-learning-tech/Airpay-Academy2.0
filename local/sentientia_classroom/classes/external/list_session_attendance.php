@@ -37,7 +37,9 @@ class list_session_attendance extends external_api {
         self::validate_context($context);
         require_capability('local/sentientia_classroom:view', $context);
         // ADR-031: the capability says WHAT; the classroom must also be in the caller's tenant.
-        \local_sentientia_classroom\session_manager::require_session_access($params['sessionid']);
+        // Without :manage the caller must also be the session's or classroom's assigned trainer
+        // (owner decision 2026-09-30, session_manager::may_run_session()).
+        \local_sentientia_classroom\session_manager::require_attendance_access($params['sessionid']);
 
         // ADR-031: only the caller's tenant's learners on this roster.
         $records = \local_sentientia_classroom\session_manager::get_session_attendance(

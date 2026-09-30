@@ -190,3 +190,115 @@ read-only archive of the import. `seed_production_data.php` and `fix_bizlms_colu
 tables but were not in the ADR's list and are unchanged. The QR pages (`qr_scan.php`, `qr_attendance.php`)
 still use `local_classroom_attendance`; moving them off the legacy tables is on another branch. Version
 unchanged; both trees identical.
+
+## 2026-09-30 - QR pages moved off the retired BizLMS tables
+
+- `qr_scan.php` checked and inserted in `{local_classroom_attendance}`; `qr_attendance.php` read
+  `{local_classroom_sessions}` / `{local_classroom}`. A fresh Sentientia install (UAT) has none of
+  them, and after the BizLMS import (ADR-032, in design) the history lives in the Sentientia tables.
+- `qr_scan.php` now calls `\local_sentientia_classroom\session_manager::record_qr_attendance()`
+  (see the classroom state card for the checks and the row it writes). It keeps the login and the
+  hourly rotating token check. New refusals it can show: "Session Not Found", "Not Enrolled", and
+  a different-organisation message (ADR-031). A duplicate scan shows "Already Marked" and writes
+  nothing. If `local_sentientia_classroom` is not installed the page says attendance is not
+  available instead of fataling.
+- `qr_attendance.php` gets the session and its classroom from
+  `session_manager::require_session_access()` (Sentientia tables plus the ADR-031 tenant guard). An
+  unknown session gives core `invalidaccess`, because a QR for it could never record anything. The
+  heading now reads "classroom name - session title", and is no longer double-escaped
+  (`s(format_string())`).
+- **Still open, unchanged:** the capability `qr_attendance.php` checks is the pre-ADR-025
+  `local/classroom:takesessionattendance` (see the 2026-09-24 note). Only site admins can display
+  the QR on a Sentientia-only install.
+- No version bump. Both trees. Test: `local_sentientia_classroom/tests/qr_attendance_test.php`.
+
+## 2026-09-30 (review follow-up) - QR pages: "Classroom Cancelled" state, QR image on Moodle 5
+
+- `qr_scan.php` shows a new refusal, "Classroom Cancelled", for `SCAN_CANCELLED` (see the classroom
+  state card). The page's result states are now: Attendance Marked, Already Marked, Not Enrolled,
+  Classroom Cancelled, Session Not Found, QR Code Expired, and the different-organisation error.
+- **`qr_attendance.php` could not show a QR on Moodle 5.** It did
+  `require_once($CFG->libdir . '/phpqrcode/qrlib.php')`; Moodle 5.x does not ship `lib/phpqrcode`
+  (checked on the local 5.1.3 tree), so on a Sentientia install the page stopped with a missing-file
+  error before it showed anything. Found while taking the screenshots for this change. It now uses
+  `core_qrcode` (TCPDF's 2D barcode, in Moodle core since 3.9, so also on the 4.1 BizLMS box), at
+  error-correction level L and 8 px per module. When PHP has neither GD nor Imagick the page says the
+  QR could not be generated instead of showing a broken image.
+- The new wording on these pages is still hard-coded English, like the rest of both pages. It moves to
+  lang strings, with the Hindi pack, when this plugin gets one.
+- Visual evidence: `docs/visual-evidence/2026-09-30/qr-and-loginas/` (README there).
+- **Still open, unchanged:** the capability `qr_attendance.php` checks is the pre-ADR-025
+  `local/classroom:takesessionattendance`, so only site admins can display the QR on a Sentientia-only
+  install (2026-09-24 note). Take that access decision before the trainer persona is tested, or the
+  trainer persona cannot use the feature. (Taken in the second review, below.)
+- No version bump. Both trees.
+
+## 2026-09-30 (second review) - QR pages: signed token, new refusals, lang/en + lang/hi, real capability
+
+Owner decisions taken as recommended (Nitin, 2026-09-30). No version bump. Both trees. The
+token, window and "trainer's mark wins" rules live in `local_sentientia_classroom`
+(`session_manager`, see its state card); this card is about what the two pages do with them.
+
+- **Token.** Neither page reads `$CFG->passwordsaltmain` any more. `qr_attendance.php` shows
+  `session_manager::qr_token($sessionid, time())`; `qr_scan.php` checks
+  `session_manager::qr_token_is_valid()` (HMAC with a per-site secret, current and previous hour).
+  The old salt-free sha256 token is refused as "QR Code Expired".
+- **Capability.** `qr_attendance.php` now requires `local/sentientia_classroom:attendance` (the
+  capability `attendance.php` and the bulk-mark web service use; manager, editingteacher and the
+  `administrator` role hold it; site admins always pass), then applies the ADR-031 tenant check in
+  `require_session_access()` as before. The undeclared BizLMS `local/classroom:takesessionattendance`
+  check is gone, together with the code comment that explained why the refusal was a plain string:
+  a declared capability gives the normal "no permission" page. The classroom plugin is checked
+  first, because it declares the capability. **Still open:** the `trainer` role (archetype teacher)
+  holds only `local/sentientia_classroom:manage`, so a user with only that role still cannot open
+  this page; see the classroom state card. Nothing in the Sentientia classroom UI links to
+  `qr_attendance.php` either, so trainers need the URL.
+- **New result states on `qr_scan.php`.** "Attendance Not Open Yet" (before the window, shows when it
+  opens), "Attendance Closed" (after it, shows when it closed; or, for a session with no time at all,
+  that it has no start time), and "Already Marked" now says the attendance was already *marked* (not
+  recorded) and that the scan changed nothing. Full list: Attendance Marked, Already Marked, Not
+  Enrolled, Classroom Cancelled, Attendance Not Open Yet, Attendance Closed, Session Not Found, QR
+  Code Expired, and the different-organisation and generic errors.
+- **Lang strings.** Every visible text on both pages is now a string of this plugin, `qr_*` keys in
+  `lang/en/local_sentientia_pages.php`. This plugin gets its **Hindi pack**
+  (`lang/hi/local_sentientia_pages.php`, 57 keys, all the existing ones translated too, so the
+  parity gate has 0 failures and this plugin no longer warns "no-hi-pack"). The kn/mr/sw packs are
+  still the small footer-only stubs.
+- **Not changed:** the footer and certificate-template strings' English, `version.php`.
+- Visual evidence: `docs/visual-evidence/2026-09-30/qr-and-loginas/` (README there: 20 automatic
+  checks, all pass, 40 screenshots; checks 01-08 re-captured, 12-20 new).
+
+
+## 2026-09-30 (final review) - Hindi "already marked" wording; QR entry point lives in the classroom plugin
+
+- **Hindi.** `lang/hi` `qr_already_title` / `qr_already_body` said the attendance was *darj* (recorded),
+  the same verb the success page and every refusal use, so a Hindi-UI learner whom the trainer had
+  marked Absent was told "already recorded" in the words of the success page. They now say *chihnit*
+  (marked): title "पहले से चिह्नित है", body "... उपस्थिति पहले ही चिह्नित की जा चुकी है ...", which keeps the English
+  distinction ("Attendance Marked!" / "recorded at" for the success, "already been marked" for the
+  repeat). Both trees identical; screenshot 18 re-captured with a throwaway `vpqr_*` account.
+- **No PHP change** in this plugin (the version is untouched). The link to `qr_attendance.php` is on the classroom attendance
+  page, behind the default-OFF flag `sentientia.classroom.qr_attendance` registered in
+  `local_sentientia_classroom` (see that state card). The QR page and the scan page are unchanged and
+  are reachable by URL exactly as before whether the flag is on or off. The `trainer` role gets
+  `local/sentientia_classroom:attendance` from the classroom plugin's upgrade step 2026093001, which is
+  what lets a trainer open `qr_attendance.php`.
+
+## 2026-09-30 (round 4 review) - "already marked" icon; QR page needs the assigned trainer
+
+Owner decisions taken as recommended (Nitin, 2026-09-30). No version bump. Both trees.
+
+- **`qr_scan.php`:** the SCAN_ALREADY box ("Already Marked") uses the `info-circle` icon instead of the
+  success page's `check-circle`. A learner whom the trainer marked Absent no longer sees a tick-like cue
+  at a glance (screenshot 18 re-captured; the check asserts the icon class). Title, body and Hindi wording
+  are unchanged.
+- **`qr_attendance.php`:** calls `session_manager::require_attendance_access()` instead of
+  `require_session_access()`. After the ADR-031 tenant guard, a user WITHOUT
+  `local/sentientia_classroom:manage` may show the QR only for a session they are the assigned trainer of
+  (`local_sentientia_classroom_sessions.trainerid` or the classroom's `trainerid`); managers (which the
+  tenant `administrator` role is) and site admins are unchanged; otherwise `error_nottrainer` (string in
+  `local_sentientia_classroom`, en + hi). See the classroom state card for the rule, the data finding
+  (the local `trainer` role holds `:manage`) and the tests. The scan page (the learner's side) is
+  unaffected.
+- Visual evidence: `docs/visual-evidence/2026-09-30/qr-and-loginas/` (README there: 28 automatic checks,
+  all pass; new screens 25 to 28, 18 re-captured).

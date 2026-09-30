@@ -110,3 +110,49 @@ function local_sentientia_classroom_widen_decimals(database_manager $dbman, xmld
     }
     $dbman->change_field_precision($table, $field);
 }
+
+/**
+ * T-01 back-fill: let the teacher and editingteacher archetype roles view classrooms and take
+ * attendance.
+ *
+ * db/access.php now lists the `teacher` archetype (the Sentientia `trainer` role) for
+ * local/sentientia_classroom:view and :attendance. Moodle applies archetype defaults only when a
+ * capability is first registered, so a site that already has these capabilities never gives them
+ * to existing roles; this grants them explicitly, as a fresh install now would.
+ *
+ * Idempotent, and it only fills a gap: a role that already has ANY setting for the capability at
+ * system context (ALLOW already, or an administrator's PREVENT or PROHIBIT) is left as it is, so
+ * nothing is ever downgraded or overridden. A capability that is not registered is skipped.
+ * Roles of other archetypes (manager, student, none) are not touched. No other capability is
+ * granted: :manage, :create, :update and :delete stay with the manager archetype.
+ *
+ * Used by upgrade step 2026093001; a function so tests/trainer_caps_backfill_test.php can prove it
+ * without replaying the upgrade.
+ *
+ * @return int number of grants made (0 when every role already had a setting)
+ */
+function local_sentientia_classroom_backfill_teacher_caps(): int {
+    global $DB;
+
+    $syscontext = \context_system::instance();
+    $caps = ['local/sentientia_classroom:view', 'local/sentientia_classroom:attendance'];
+    $granted = 0;
+
+    $roles = $DB->get_records_list('role', 'archetype', ['teacher', 'editingteacher'], 'id ASC', 'id');
+    foreach ($roles as $role) {
+        foreach ($caps as $cap) {
+            if (!$DB->record_exists('capabilities', ['name' => $cap])) {
+                continue;
+            }
+            if ($DB->record_exists('role_capabilities',
+                    ['roleid' => $role->id, 'capability' => $cap, 'contextid' => $syscontext->id])) {
+                continue;   // An explicit setting stands, whatever it is.
+            }
+            assign_capability($cap, CAP_ALLOW, $role->id, $syscontext->id, false);
+            $granted++;
+        }
+    }
+    $syscontext->mark_dirty();
+
+    return $granted;
+}

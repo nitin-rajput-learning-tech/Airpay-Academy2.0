@@ -160,8 +160,11 @@ if ($DB->get_manager()->table_exists('message_providers')) {
             . "{$prov->component}/{$prov->name} (id {$prov->id})");
         if ($apply) {
             // Clean dependent preference rows first, then the provider row.
-            $DB->delete_records_select('user_preferences',
-                $DB->sql_like('name', ':p'), ['p' => 'message_provider_' . $prov->component . '_' . $prov->name . '%']);
+            // Exact name, not a prefix: a LIKE 'message_provider_<comp>_<name>%'
+            // treats '_' as a wildcard and matches a sibling provider whose name
+            // starts the same ('order' would also take 'order_paid').
+            $DB->delete_records('user_preferences',
+                ['name' => 'message_provider_' . $prov->component . '_' . $prov->name . '_enabled']);
             $DB->delete_records('config_plugins', ['plugin' => 'message',
                 'name' => 'message_provider_' . $prov->component . '_' . $prov->name . '_enabled']);
             $DB->delete_records('message_providers', ['id' => $prov->id]);

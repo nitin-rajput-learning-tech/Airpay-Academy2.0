@@ -437,3 +437,25 @@ the side that was wrong; nothing a test proves was weakened.
   learners (no pencil).
 - Version not bumped: already 2026092501 and no db/ file changed. Tests written, not run (low-CPU
   session). Deploy needs a cache purge (template). Both trees are identical.
+
+## 2026-09-30 - "Log in as" link hidden where it cannot work
+
+- The profile's "Log in as" link showed for every holder of `moodle/user:loginas` at system context.
+  New `user_manager::profile_loginas_url($targetid)` (used by `build_profile_context()` for
+  `loginasurl`) also hides it when:
+  - the target is a site admin (`course/loginas.php` throws `nologinas`, even for another site admin);
+  - the target is the viewer;
+  - the target is deleted, suspended or missing;
+  - the viewer may not act on the target: `require_can_act_on()` is called and its refusal becomes
+    "no link" (another tenant, a look-alike tenant, a cross-tenant account; site admins and
+    `:crosstenant` holders pass).
+  The URL is unchanged (`/course/loginas.php?id=1&user=N&sesskey=...`) and core stays the authority.
+  Tenant admins normally cannot see it anyway: the role-9 PROHIBIT covers `moodle/user:loginas`.
+- Tests: new `tests/profile_loginas_test.php` (`@group tenant_isolation`), 10 tests, all green on
+  local XAMPP (nine on the first run; the tenth after a wwwroot-path assertion fix): link shape, template render with and without the link, another site admin,
+  own profile, deleted / suspended / missing / zero id, viewers without the capability (learner,
+  `:edit` alone), a tenant admin with `moodle/user:loginas` PROHIBITed, a tenant admin held to their own
+  tenant (colleague, root colleague, /177, /177/178, look-alike /10, site admin and cross-tenant
+  account in the same tenant), a cross-tenant holder (other tenant yes, site admin no), and
+  `build_profile_context()` carrying the same decision.
+- No version bump, no db change. Both trees.

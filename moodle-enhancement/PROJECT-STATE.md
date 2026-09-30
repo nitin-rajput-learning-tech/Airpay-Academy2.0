@@ -70,6 +70,104 @@ what ran: `php -l`, the drift gate, and an offline harness for the static scanne
 
 ---
 
+## 2026-09-30 - Review follow-ups on claude/fixes-0930 (not merged)
+
+An adversarial review of the four commits on `claude/fixes-0930` said fix-then-ship. This pass closes
+its must-fix and the small, safe should-fixes.
+
+- **Visual evidence (the must-fix).** `docs/visual-evidence/2026-09-30/qr-and-loginas/`: desktop and
+  590px screenshots of the seven `qr_scan.php` result states, the trainer's `qr_attendance.php` page
+  with the new heading, and the profile header with and without "Log in as". The README there says
+  what each one shows; the 11 automatic checks all pass. Local XAMPP only. Nitin reviews before merge.
+- **Found while taking them.** `qr_attendance.php` required `lib/phpqrcode/qrlib.php`, which Moodle
+  5.x does not ship, so the trainer's QR page could not show a QR on any Sentientia install. Fixed
+  (`core_qrcode`).
+- **QR scan.** A cancelled classroom now refuses ("Classroom Cancelled"), and a scan that loses the
+  insert race to a trainer's grid Save is handled like any other existing row instead of always
+  saying "already recorded".
+- **Message-preference repair.** Relabel step 1b is now a class (`message_pref_relabel`) with 9 tests
+  and one transaction per provider, so a run killed half way no longer strands the enabled list. The
+  "(non-Sentientia)" output tag is replaced by `(Moodle core)` / `(other plugin)`, decided from
+  Moodle's own standard-plugin list, not from the name.
+- **ADR-031 target guard.** In target mode the four `tools/uat/adr031_*.php` scripts also refuse
+  unless `local_sentientia_platform` is on disk (the live BizLMS box has the same wwwroot as the
+  pre-repoint target and does not have it) and print the database host/name, prefix and release.
+  `--i-am-uat=1` is accepted again.
+- **Docs.** Migration plan 4g: parity exit 2 is a STOP. 4d: the tree/date note for the two CLIs is
+  corrected. ROLE9 section 10: the new guard behaviour.
+- **Decisions that were open here, now taken (Nitin, as recommended) and built: see "Second review
+  pass" below.**
+
+### Second review pass (same day): QR attendance closed out
+
+A second review said fix-then-ship with one must-fix (the QR token) and four decisions. All closed,
+no schema change and no version bump, both trees byte-identical:
+
+- **Must-fix: QR token was forgeable.** Both pages hashed with `$CFG->passwordsaltmain`, which a new
+  Moodle install does not have, so the token was a plain `sha256("<sessionid>|<Y-m-d-H>|")`. Now
+  `session_manager::qr_token()` / `qr_token_is_valid()`: HMAC-SHA256 with a per-site random secret
+  (`get_config('local_sentientia_classroom','qrsecret')`, made on first use), current and previous
+  hour, `hash_equals()`. The old salt-free token is refused. Tokens shown before this are refused too.
+- **The trainer's mark wins.** A scan never changes an existing attendance row, Absent included
+  (`SCAN_ALREADY`); the page says "already marked", not "recorded".
+- **Session window.** A scan counts from 30 minutes before the session starts to 30 minutes after it
+  ends (`SCAN_TOO_EARLY` / `SCAN_TOO_LATE`, with the time shown); a cancelled classroom
+  (`STATUS_CANCELLED`) is refused. Sessions have no status of their own in the schema.
+- **Trainer grid Save vs a newer QR mark.** The grid sends the time it was loaded; a Save no longer
+  turns a mark someone else made after that back to Absent (deliberate edits still apply), and tells
+  the trainer which learners it kept. A QR insert landing mid-Save no longer rolls the whole Save back.
+- **Who can show the QR.** `qr_attendance.php` checks `local/sentientia_classroom:attendance` (plus the
+  same ADR-031 tenant check). **Still open:** the `trainer` role holds only `:manage` on that plugin,
+  not `:view`/`:attendance`, so a user with only that role still cannot open the QR page or the
+  attendance grid (a role-permission / archetype decision, needs a version bump).
+- **Lang.** Every text on both pages is a `local_sentientia_pages` string, English and Hindi; the plugin
+  now has a full Hindi pack (57 keys).
+- **Evidence.** `docs/visual-evidence/2026-09-30/qr-and-loginas/` re-captured for the changed states
+  plus the new ones; README updated. Local XAMPP only. Nitin reviews before merge.
+- **Tests (local XAMPP, targeted files):** `qr_attendance_test` 41/41, `sessions_external_test` 15/15,
+  `sessions_test` 18/18, `tenant_scope_test` 13/13. Gates: `check-tree-drift` OK, `check-lang-parity` 0
+  failures, `check-path-boundary` exit 0, `php -l` clean.
+- **Side effect on the local box:** the local Apache stopped once during this pass (the watchdog
+  brought it back); nothing was restarted by hand.
+- **Tests (local XAMPP, targeted files only):** `qr_attendance_test` 14/14, `message_pref_repair_test`
+  12/12, `message_pref_relabel_test` 9/9. Not re-run: `profile_loginas_test`, classroom
+  `tenant_scope_test` (their code is unchanged by this pass). Gates: `check-tree-drift` OK,
+  `check-path-boundary` exit 0, `php -l` clean.
+
+### Final review pass (same day): race, untouched learners, trainer role, QR entry point
+
+The final review said fix-then-ship (two must-fix, two decisions). All closed, owner decisions as
+recommended. Both trees. **The classroom plugin version is bumped to `2026093001` / `1.10.6`: PHPUnit must
+be re-initialised before any PHPUnit file runs, and UAT needs an upgrade.**
+
+- **Must-fix: insert race overwrote a scan.** When the grid Save's insert lost the race to a QR scan, the
+  fallback updated the winning row with the trainer's Absent (the keep-the-newer-mark rule ran only on the
+  row read before the insert). The rule is now `keeps_newer_mark()`, applied to the re-read row too;
+  `write_attendance_row()` returns bool and the race counts in `kept` / `keptmarks`.
+- **Must-fix: Hindi "already marked".** The Hindi page used *darj* (recorded) for both success and
+  already-marked; it now says *chihnit* (marked) for already-marked, like the English.
+- **Decision: the grid writes only what the trainer touched.** No more implicit Absent for a learner
+  nobody touched; that learner keeps no row and can still scan inside the window. An Absent the trainer
+  sets is written and still wins over later scans. `Save` with nothing changed says "Nothing to save".
+- **Stale load time:** `bulk_mark_attendance` returns `savedat`; the page uses it as the new load time, so
+  a correction after a kept scan is written on the second Save.
+- **Decision (T-01 class): the `trainer` role (archetype teacher) can take attendance.** `db/access.php`
+  lists `teacher` for `:view` and `:attendance` only; upgrade step 2026093001 back-fills existing
+  teacher / editingteacher roles that have no setting yet (a PREVENT or PROHIBIT is never overridden).
+- **Decision: QR entry point** on the attendance page, "Show QR for this session", behind the new
+  default-OFF flag `sentientia.classroom.qr_attendance` (registered in the classroom plugin). OFF: nothing
+  links to the QR page.
+- **Evidence.** `docs/visual-evidence/2026-09-30/qr-and-loginas/`: 18 re-captured; 19 re-run with the
+  new grid flow; new 21 to 24. Captured with throwaway `vpqr_*` accounts, never the `vp_*` personas.
+- **Tests (local XAMPP, before the version bump was deployed):** `qr_attendance_test` 47 / 167,
+  `sessions_external_test` 15 / 33, `qr_entry_point_test` 4 / 24, `sessions_test` 18 / 40,
+  `tenant_scope_test` 13 / 72, all OK. **Not run:** `trainer_caps_backfill_test` (8 tests) waits for
+  the PHPUnit re-init. Gates: `check-tree-drift` OK, `check-lang-parity` 0 failures,
+  `check-path-boundary` OK, AMD src/build parity OK, `php -l` clean.
+- **Side effect on the local box:** the bumped `version.php` was not copied into the local XAMPP Moodle
+  (its web pages would have asked for an upgrade during a running persona pass); a `--lang --js` cache
+  purge was run. The QR flag was switched on for tenant /1 for one capture and switched off again.
+
 ## 🧪 2026-09-29 — ADR-031 decisions closed; Playwright screen-check pass; PWA OFF, "Browse Library" (Opus 5.5)
 
 **Direction (Nitin, 2026-09-29):** no production hotfix. Production (airpay.academy, BizLMS 4.1.2) is

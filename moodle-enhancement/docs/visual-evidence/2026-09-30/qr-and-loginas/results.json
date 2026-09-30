@@ -1,0 +1,197 @@
+[
+ {
+  "check": "01 learner on the roster, valid token, inside the window: recorded",
+  "heading": "Attendance Marked!",
+  "body": "VP Learner /1 | Your attendance has been successfully recorded at 3:33 PM.",
+  "pass": true
+ },
+ {
+  "check": "02 same learner scans again: already marked (info icon), nothing written",
+  "firstScan": "Attendance Marked!",
+  "heading": "Already Marked",
+  "body": "Your attendance for this session has already been marked, so this scan did not change it. If you think your mark is wrong, please ask your trainer.",
+  "icon": "fa fa-info-circle",
+  "pass": true
+ },
+ {
+  "check": "03 old or forged token: QR code expired",
+  "heading": "QR Code Expired",
+  "body": "This QR code has expired. Please scan the current QR code displayed by your trainer.",
+  "pass": true
+ },
+ {
+  "check": "04 classroom is cancelled: refused, nothing written",
+  "heading": "Classroom Cancelled",
+  "body": "This classroom has been cancelled, so your attendance was not recorded. Please contact your trainer.",
+  "pass": true
+ },
+ {
+  "check": "05 session id with no session (valid token for that id)",
+  "heading": "Session Not Found",
+  "body": "This session no longer exists. Please ask your trainer for a new QR code.",
+  "pass": true
+ },
+ {
+  "check": "06 not on the roster: not enrolled, nothing written",
+  "heading": "Not Enrolled",
+  "body": "You are not enrolled in this classroom, so your attendance was not recorded. Please contact your trainer.",
+  "pass": true
+ },
+ {
+  "check": "07 learner from another tenant: different-organisation error",
+  "heading": "Error",
+  "body": "This session belongs to a different organisation, so your attendance was not recorded.",
+  "pass": true
+ },
+ {
+  "check": "08 trainer QR page: heading is \"classroom - session title\" and the QR image renders",
+  "session": "VP Evidence QR classroom - Day 1 (30 Sept 15:09)",
+  "qrRendered": true,
+  "pass": true
+ },
+ {
+  "check": "09 site admin viewing a learner: \"Log in as\" is offered",
+  "loginas": true,
+  "profileShown": true,
+  "pass": true
+ },
+ {
+  "check": "10 site admin viewing another site admin: no \"Log in as\"",
+  "loginas": false,
+  "profileShown": true,
+  "pass": true
+ },
+ {
+  "check": "11 site admin viewing a suspended user: no \"Log in as\"",
+  "loginas": false,
+  "profileShown": true,
+  "pass": true
+ },
+ {
+  "check": "12 QR code for a session that starts tomorrow: not open yet, nothing written",
+  "heading": "Attendance Not Open Yet",
+  "body": "Attendance for this session opens at 1/10/26, 14:39, so your attendance was not recorded. Please scan the QR code again from then.",
+  "pass": true
+ },
+ {
+  "check": "13 QR code for yesterday's session: closed, nothing written",
+  "heading": "Attendance Closed",
+  "body": "Attendance for this session closed at 29/09/26, 16:39, so your attendance was not recorded. Please contact your trainer.",
+  "pass": true
+ },
+ {
+  "check": "14 the trainer marked this learner Absent: a scan changes nothing (info icon)",
+  "heading": "Already Marked",
+  "body": "Your attendance for this session has already been marked, so this scan did not change it. If you think your mark is wrong, please ask your trainer.",
+  "icon": "fa fa-info-circle",
+  "pass": true
+ },
+ {
+  "check": "15 the old salt-free sha256 token: refused as expired",
+  "heading": "QR Code Expired",
+  "body": "This QR code has expired. Please scan the current QR code displayed by your trainer.",
+  "pass": true
+ },
+ {
+  "check": "16 tenant admin /1 (holds :attendance, is not a site admin): the QR page opens for a /1 classroom",
+  "session": "VP Evidence QR classroom - Day 1 (30 Sept 15:09)",
+  "qrRendered": true,
+  "pass": true
+ },
+ {
+  "check": "17 tenant admin /177 (holds :attendance, wrong tenant): refused, no QR for a /1 classroom",
+  "qrRendered": false,
+  "pageText": "You do not have access to this tenant. More information about this error Debug info: Error code: error_outoftenant Dismiss this notification Stack trace: line 315 of \\public\\local\\sentientia_platform\\classes\\tenant.php: core\\exception\\moodl",
+  "pass": true
+ },
+ {
+  "check": "18 the trainer marked this learner Absent; the same scan in Hindi says \"already marked\" (chihnit), not \"recorded\" (darj)",
+  "heading": "पहले से चिह्नित है",
+  "body": "इस सत्र के लिए आपकी उपस्थिति पहले ही चिह्नित की जा चुकी है, इसलिए इस स्कैन से उसमें कोई बदलाव नहीं हुआ। यदि आपको लगता है कि यह गलत है, तो कृपया अपने ट्रेनर से कहें।",
+  "icon": "fa fa-info-circle",
+  "pass": true
+ },
+ {
+  "check": "19 trainer sets Absent from a grid loaded before a QR scan: the scan stays and the grid says so; a second Save then writes the correction",
+  "scanHeading": "Attendance Marked!",
+  "presentBeforeSave": false,
+  "presentAfterFirstSave": true,
+  "notification": "0 attendances saved. 1 learner(s) were marked by someone else (for example by scanning the QR code) after you opened this page, so their marks were left as they are and are now shown in the grid. Dismiss this notification",
+  "absentAfterSecondSave": true,
+  "pass": true
+ },
+ {
+  "check": "20 learner (no :attendance): refused, no QR",
+  "qrRendered": false,
+  "pageText": "Sorry, but you do not currently have permissions to do that (Manage attendance). More information about this error Debug info: Error code: nopermissions Dismiss this notification Stack trace: line 875 of \\public\\lib\\accesslib.php: core\\exce",
+  "pass": true
+ },
+ {
+  "check": "21 flag ON: the attendance page offers \"Show QR for this session\" for a user holding :attendance",
+  "link": {
+   "present": true,
+   "href": "http://localhost:8080/local/sentientia_pages/qr_attendance.php?sessionid=26",
+   "text": "Show QR for this session"
+  },
+  "hint": true,
+  "pass": true
+ },
+ {
+  "check": "22 flag OFF (default): no QR link on the attendance page, everything else unchanged",
+  "link": {
+   "present": false,
+   "href": "",
+   "text": ""
+  },
+  "hint": true,
+  "pass": true
+ },
+ {
+  "check": "23 the trainer marks learner1 only: learner2 is not written as Absent, and their scan is recorded afterwards",
+  "notification": "1 attendance saved. Dismiss this notification",
+  "learner1Status": 1,
+  "learner2Status": 0,
+  "learner2ScanHeading": "Attendance Marked!",
+  "note": "Rows in the database are listed by seed_qr_recheck.php --report (learner2 has one row, written by the scan).",
+  "pass": true
+ },
+ {
+  "check": "24 a Save with nothing changed says so and writes nothing",
+  "notification": "Nothing to save: you have not changed any learner's mark. Dismiss this notification",
+  "pass": true
+ },
+ {
+  "check": "25 an untouched learner scans mid-edit: the Save shows the scan; a second Save (Absent on purpose) then writes the correction",
+  "scanHeading": "Attendance Marked!",
+  "learner2BeforeSave": 0,
+  "learner2AfterFirstSave": 1,
+  "notification": "1 attendance saved. 1 more learner(s) were marked by someone else (for example by scanning the QR code) after you opened this page, and are now shown in the grid. Dismiss this notification",
+  "rowAfterFirstSave": {
+   "hasmark": "1",
+   "original": "1"
+  },
+  "presentCounter": "2",
+  "secondSaveNotification": "1 attendance saved. Dismiss this notification",
+  "learner2AfterSecondSave": 0,
+  "pass": true
+ },
+ {
+  "check": "26 the same trainer is refused on a session that has no trainer / is not theirs",
+  "grid": false,
+  "refusal": true,
+  "pass": true
+ },
+ {
+  "check": "27 the trainer opens the attendance grid of the session assigned to them",
+  "grid": true,
+  "heading": "Attendance for: Assigned to trainer (30 Sept 20:27)",
+  "pass": true
+ },
+ {
+  "check": "28 the classroom session list links attendance only for the session that trainer may open",
+  "ownLinked": true,
+  "otherLinked": false,
+  "otherShown": true,
+  "pass": true
+ }
+]
