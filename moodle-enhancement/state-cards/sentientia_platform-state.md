@@ -369,3 +369,17 @@ Wave-1 adversarial review of the integration group (S1, S4) plus one helper defe
   - tag the default writes for non-Sentientia providers;
   - exact-name delete in step 2c.
 - Local copy repaired: 136 legacy keys copied, 5 providers defaulted, 0 problems left.
+
+## 2026-09-30 - persona pass bundle "Admin gates" (D9)
+
+Branch `claude/persona-fix-admingates`. New structural guard `tests/capability_names_test.php`: every
+`has_capability('<literal>')`, `require_capability('<literal>')` and `db/services.php` `capabilities`
+entry in a Sentientia plugin must name a capability `get_capability_info()` knows (a file that itself
+probes the same name with `get_capability_info()` is exempt: that is the accepted legacy guard). Core
+answers an unknown name with false plus a debugging notice for EVERY caller, site admins included, so
+nothing errors when a rename leaves a site behind. Its BASELINE lists the two plugins' real defects the
+first scan found: `local/sentientia_classroom:enrol` (5 sites: page, form, two web services; declared
+nowhere) and `local/sentientia_evaluation:view` (`response_list.php`, `response_detail.php`; declared
+nowhere). `PENDING_ELSEWHERE` holds `qr_attendance.php` (fixed on `claude/fixes-0930`); delete that entry
+once the branch has landed. Runs only in the full PHPUnit run (same as `exception_strings_test`). No
+version bump.

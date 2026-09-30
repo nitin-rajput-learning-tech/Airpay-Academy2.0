@@ -316,3 +316,10 @@ Not run locally (low-CPU mode). The CI `tenant_isolation` group runs them.
   `feature_flags::set('sentientia.notifications.smart_rules.enabled', 1, true)` on UAT, and watch
   `logs.php`. To change the cap:
   `php admin/cli/cfg.php --component=local_sentientia_notifications --name=batch_limit --set=200`.
+
+## 2026-09-30 - persona pass bundle "Admin gates" (D9)
+
+Branch `claude/persona-fix-admingates`. `nudge.php`: the capability branch used the retired BizLMS
+`local/courses:manage`; now `local/sentientia_courses:manage` (ADR-025 successor). The ADR-031 tenant
+match after the gate and the direct-supervisor rule are unchanged. Guard: `local_sentientia_platform`
+`tests/capability_names_test.php`. No version bump.

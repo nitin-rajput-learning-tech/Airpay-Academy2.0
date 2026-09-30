@@ -180,3 +180,31 @@ should not be made on that premise.)
 
 Version 2026092400. Guarded platform-wide by
 `local_sentientia_platform/tests/exception_strings_test.php`.
+
+## 2026-09-30 - persona pass bundle "Admin gates" (D6, D9)
+
+Branch `claude/persona-fix-admingates`. Source: `docs/visual-evidence/2026-09-30/personas/TRIAGE.md`.
+
+- **D6 - certificate templates page** (`certificate_templates.php`). The page admitted holders of
+  `tool/certificate:manage` and then called `admin_externalpage_setup('local_sentientia_pages_cert_templates')`.
+  That external page is registered in `settings.php` only inside `if ($hassiteconfig)` and with
+  `moodle/site:config`, so for a tenant admin without `site:config` core threw `accessdenied` after the
+  page's own gate had said yes (the persona harness recorded it as "access refused"). New
+  `classes/cert_templates_access.php` (`can_view()`, `uses_admin_tree()`, `setup_page()`): a user who
+  holds `moodle/site:config` still gets the admin-tree page exactly as before; everyone else the gate
+  admits gets an ordinary system-context page (`admin` layout, title/heading, one breadcrumb node).
+  Test: `tests/cert_templates_access_test.php` (incl. a test that pins the core refusal).
+  **Same defect class, not changed here:** `local_sentientia_translate` `admin/index.php` and
+  `brands.php` (gate wider than the registered capability, registered under `$hassiteconfig`) and
+  `local_sentientia_core` `manage_tenants.php` - a holder of only the plugin capability would get
+  `accessdenied` the same way. Flag for the next admin-gates pass.
+- **D9 - retired capability names, this plugin.** `cli/seed_users.php` and `cli/create_hrbp_role.php`
+  named BizLMS `local/courses:*`, `local/users:*`, `local/costcenter:*`, `local/classroom:takesessionattendance`;
+  they now name the ADR-025 successors (`local/sentientia_courses:*`, `local/sentientia_users:*`,
+  `local/sentientia_org:*`, `local/sentientia_classroom:attendance`). Names with no recorded successor
+  (search, myteam, request, notifications, ratings, skillrepository, tags, biz_cart, onlineexams) are
+  unchanged and skipped at runtime by the script's own "not found" handler.
+  `qr_attendance.php:41` still names `local/classroom:takesessionattendance` on this branch; it is
+  replaced by `local/sentientia_classroom:attendance` on `claude/fixes-0930` (77e7fd0a9, c7b6cecb4) and is
+  deliberately NOT touched here to avoid a conflicting edit.
+- No version bump (no DB, capability or archetype change; the new class autoloads).

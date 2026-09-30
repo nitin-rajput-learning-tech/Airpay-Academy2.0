@@ -232,3 +232,14 @@ prefix trap) tree for `get_all_in_scope`, `list_children`, `path_in_scope` and `
   errored because the dynamic form's access check (wave 1) throws `error_outoftenant` for a parent
   outside the tenant, a missing one or none, before validation() runs. Both refusals are correct; the
   test now accepts either and still asserts nothing is created.
+
+## 2026-09-30 - persona pass bundle "Admin gates" (D9)
+
+Branch `claude/persona-fix-admingates`. `classes/accesslib.php` (top-level `local/` tree) is now
+byte-identical to the moodle-enhancement copy, which has carried `accesslib::legacy_cap()` since
+2026-06-18: the `can_*` / `is_*_head` helpers ask the BizLMS `local/costcenter:*` and
+`local/classroom:manageclassroom` fallbacks through `get_capability_info()` first, so an undeclared
+legacy name is false without a debugging notice. The top-level copy still called `has_capability()`
+on them directly (debugging notice on every nav render) and lacked `legacy_cap()`, which
+`theme_sentientia` `core_renderer` already calls (a fatal on that tree). The file leaves
+`tools/tree-drift-baseline.txt`. New test `tests/accesslib_legacy_cap_test.php`. No version bump.

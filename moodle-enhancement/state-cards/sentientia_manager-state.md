@@ -276,3 +276,13 @@ recommended"); the recommended option, implemented conservatively.
   the smaller id) and back-fills a never-filled course row. The two schema tests alter the table's
   indexes and restore them in `finally`. Written, NOT run (low-CPU session: no PHPUnit). Both trees
   identical.
+
+## 2026-09-30 - persona pass bundle "Admin gates" (D9)
+
+Branch `claude/persona-fix-admingates`. `index.php` (My Team): `$isadmin` used the retired BizLMS
+`local/courses:manage`, so a tenant admin holding only its ADR-025 successor
+`local/sentientia_courses:manage` was never treated as an admin and could not pick a manager's team.
+Now checks the successor. The ADR-031 tenant bound after the gate (`same_tenant()` unless
+cross-tenant) is unchanged. Covered by `local_sentientia_courses` `tests/capability_gates_test.php`
+(tenant bound) and the platform guard `local_sentientia_platform` `tests/capability_names_test.php`.
+No version bump.

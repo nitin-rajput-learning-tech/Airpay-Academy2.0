@@ -27,9 +27,15 @@ echo "Created role: HRBP (id=$roleid)\n";
 $systemcontext = context_system::instance();
 $capabilities = [
     // View capabilities
+    // D9 (persona pass 2026-09-30): the BizLMS local/costcenter|courses|users|classroom
+    // names that have an ADR-025 successor now use it (relabel map: local_sentientia_org
+    // cli/migrate_all.php). Names with no recorded successor (search, myteam, request,
+    // notifications, ratings, skillrepository, tags, biz_cart, onlineexams,
+    // courses:report_view, classroom:viewusers) are unchanged and are skipped at runtime
+    // by the "not found" handler below.
     'moodle/site:viewreports' => CAP_ALLOW,
-    'local/costcenter:view' => CAP_ALLOW,
-    'local/courses:view' => CAP_ALLOW,
+    'local/sentientia_org:view' => CAP_ALLOW,
+    'local/sentientia_courses:view' => CAP_ALLOW,
     'local/courses:report_view' => CAP_ALLOW,
     'local/search:viewcatalog' => CAP_ALLOW,
 
@@ -43,7 +49,7 @@ $capabilities = [
 
     // Classrooms (view + attendance)
     'local/classroom:viewusers' => CAP_ALLOW,
-    'local/classroom:takesessionattendance' => CAP_ALLOW,
+    'local/sentientia_classroom:attendance' => CAP_ALLOW,
 
     // Notifications
     'local/notifications:view' => CAP_ALLOW,
@@ -63,13 +69,13 @@ $capabilities = [
     'local/biz_cart:history' => CAP_ALLOW,
 
     // DENY admin capabilities explicitly
-    'local/courses:manage' => CAP_PREVENT,
-    'local/courses:create' => CAP_PREVENT,
-    'local/courses:delete' => CAP_PREVENT,
-    'local/users:manage' => CAP_PREVENT,
-    'local/users:create' => CAP_PREVENT,
-    'local/users:delete' => CAP_PREVENT,
-    'local/costcenter:manage' => CAP_PREVENT,
+    'local/sentientia_courses:manage' => CAP_PREVENT,
+    'local/sentientia_courses:create' => CAP_PREVENT,
+    'local/sentientia_courses:delete' => CAP_PREVENT,
+    'local/sentientia_users:manage' => CAP_PREVENT,
+    'local/sentientia_users:create' => CAP_PREVENT,
+    'local/sentientia_users:delete' => CAP_PREVENT,
+    'local/sentientia_org:manage' => CAP_PREVENT,
     'local/onlineexams:manage' => CAP_PREVENT,
 ];
 

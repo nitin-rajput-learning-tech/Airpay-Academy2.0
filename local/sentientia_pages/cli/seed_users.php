@@ -86,10 +86,13 @@ foreach ($users as $udata) {
     $systemcontext = context_system::instance();
     if ($udata['role'] === 'admin') {
         role_assign(1, $userid, $systemcontext->id); // manager at system level
-        // Also assign local/courses:manage capability
-        assign_capability('local/courses:manage', CAP_ALLOW, 1, $systemcontext->id, true);
-        assign_capability('local/users:manage', CAP_ALLOW, 1, $systemcontext->id, true);
-        echo "  Assigned admin capabilities (local/courses:manage, local/users:manage)\n";
+        // Also assign the course/user management capabilities. D9 (persona pass
+        // 2026-09-30): these were the retired BizLMS names local/courses:manage and
+        // local/users:manage; assign_capability() throws on a capability nobody
+        // declares, so this seed aborted on any Sentientia install. ADR-025 successors.
+        assign_capability('local/sentientia_courses:manage', CAP_ALLOW, 1, $systemcontext->id, true);
+        assign_capability('local/sentientia_users:manage', CAP_ALLOW, 1, $systemcontext->id, true);
+        echo "  Assigned admin capabilities (local/sentientia_courses:manage, local/sentientia_users:manage)\n";
     } else if ($udata['role'] === 'manager') {
         role_assign(1, $userid, $systemcontext->id); // manager at system level
         echo "  Assigned manager role at system level\n";

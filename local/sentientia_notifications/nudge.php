@@ -23,16 +23,17 @@ $PAGE->set_context($context);
 $PAGE->set_url('/local/sentientia_notifications/nudge.php', ['userid' => $targetid, 'type' => $type]);
 
 // Permission: must be manager of this user OR admin.
-// ADR-031: the BizLMS local/courses:manage capability says the caller may
-// nudge learners, not WHICH tenant's: it used to reach (and show the email
-// of) any user in any tenant. Only a cross-tenant caller is unscoped; a
-// capability holder must share the target's tenant. The direct-supervisor
-// relationship is unchanged.
+// ADR-031: the local/sentientia_courses:manage capability (ADR-025 successor of
+// the retired BizLMS local/courses:manage, which no Sentientia install declares)
+// says the caller may nudge learners, not WHICH tenant's: it used to reach (and
+// show the email of) any user in any tenant. Only a cross-tenant caller is
+// unscoped; a capability holder must share the target's tenant. The
+// direct-supervisor relationship is unchanged.
 $ismanager = false;
 if (is_siteadmin()) {
     $ismanager = true;
 } else {
-    if (has_capability('local/courses:manage', $context)) {
+    if (has_capability('local/sentientia_courses:manage', $context)) {
         if (\local_sentientia_platform\tenant::is_cross_tenant()) {
             $ismanager = true;
         } else {

@@ -558,3 +558,14 @@ Not run here (no PHPUnit, as instructed).
 Version: 1.11.9 / **2026092501** (new upgrade step). Deploy: the upgrade step runs on
 Notifications; read Site administration > Reports > Config changes (plugin local_sentientia_courses)
 afterwards.
+
+## 2026-09-30 - persona pass bundle "Admin gates" (D9)
+
+Branch `claude/persona-fix-admingates`. `classes/course_manager.php`: `can_manage()` and `can_enrol()`
+also asked `has_capability('local/courses:manage' | 'local/courses:enrol')`. Those are the BizLMS names
+ADR-025 renamed to `local/sentientia_courses:manage|enrol` (relabel map in `local_sentientia_org`
+`cli/migrate_all.php`); no `db/access.php` declares them, so the branch was always false and logged a
+"Capability was not found" debugging notice on every course view (the theme calls both helpers). The
+dead branch is removed; behaviour is otherwise identical. Test: `tests/capability_gates_test.php`
+(no debugging notice; new-capability holder passes; ADR-031 tenant bound still holds after the gate;
+`@group tenant_isolation`). No version bump (no DB, capability or archetype change).
