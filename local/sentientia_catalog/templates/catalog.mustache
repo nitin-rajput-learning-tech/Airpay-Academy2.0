@@ -138,8 +138,16 @@
                 disclosure is always open (CSS); on mobile <590px the
                 summary becomes a tap target that toggles the sheet.
                 Native <details> is keyboard-accessible (Enter to toggle)
-                and screen-reader-friendly (announces expand/collapse). }}
-            <details class="airpay-catalog__filter-details" open>
+                and screen-reader-friendly (announces expand/collapse).
+
+                Persona pass D8 (2026-09-30): the markup keeps `open` (desktop
+                needs it, the summary is display:none there and a closed
+                disclosure would hide the filters), but at <=590px an open
+                <details> is a fixed bottom sheet, so it covered the bottom
+                quarter of the screen on load. The inline script right after
+                the element closes it on mobile before first paint and keeps
+                it in step with the breakpoint on resize / rotation. }}
+            <details class="airpay-catalog__filter-details" id="ap-catalog-filter-details" open>
                 <summary class="airpay-catalog__filter-summary">
                     <i class="fa fa-sliders-h" aria-hidden="true"></i>
                     <span>Filters &amp; Sort</span>
@@ -154,6 +162,18 @@
                     {{> local_sentientia_catalog/partials/sort_tabs }}
                 </div>
             </details>
+            <script>
+            (function() {
+                var sheet = document.getElementById('ap-catalog-filter-details');
+                if (!sheet || !window.matchMedia) { return; }
+                // Same breakpoint as the bottom-sheet CSS (max-width: 590px).
+                var mobile = window.matchMedia('(max-width: 590px)');
+                var sync = function() { sheet.open = !mobile.matches; };
+                sync();
+                if (mobile.addEventListener) { mobile.addEventListener('change', sync); }
+                else if (mobile.addListener) { mobile.addListener(sync); }
+            })();
+            </script>
         </div>
 
         {{#has_courses}}

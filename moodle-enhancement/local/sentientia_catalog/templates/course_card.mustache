@@ -19,12 +19,15 @@
             {{^has_image}}
             <span class="airpay-catalog__card-code" aria-hidden="true">{{{shortname}}}</span>
             {{/has_image}}
+            {{! Persona pass D12 (2026-09-30): badge--beside-heart moves the
+                pill left of the bookmark heart, which sits in the same
+                top-right corner of the card (see styles.css). }}
             {{#is_new}}
-            <span class="airpay-catalog__badge airpay-catalog__badge--new"
+            <span class="airpay-catalog__badge airpay-catalog__badge--new airpay-catalog__badge--beside-heart"
                   aria-label="New course">NEW</span>
             {{/is_new}}
             {{#is_completed}}
-            <span class="airpay-catalog__badge airpay-catalog__badge--done"
+            <span class="airpay-catalog__badge airpay-catalog__badge--done airpay-catalog__badge--beside-heart"
                   aria-label="Completed">
                 <i class="fa fa-check" aria-hidden="true"></i>
             </span>
