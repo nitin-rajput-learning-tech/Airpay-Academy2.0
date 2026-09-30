@@ -271,3 +271,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+{{! Persona-pass fix D13 (2026-09-30): close the document. Without body and html
+    end tags in the template output, core_renderer::footer() cannot find them
+    to hand to the shutdown handler and logs four "Undefined array key 0"
+    warnings on every course view. The end-of-body output is emitted by the
+    footer partial above. }}
+</body>
+</html>

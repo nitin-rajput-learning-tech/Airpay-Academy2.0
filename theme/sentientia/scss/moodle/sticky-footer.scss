@@ -59,3 +59,11 @@ body {
         }
     }
 }
+
+/* Persona-pass fix D5a (2026-09-30): templates/core/sticky_footer.mustache now
+   gives the sticky footer element the "stickyfooter" class that core/sticky-footer
+   looks for. Core adds v-hidden to it when a page asks for the footer to be
+   disabled; only Boost defined that class, so define it for the same element. */
+.stickyfooter.v-hidden {
+    visibility: hidden;
+}

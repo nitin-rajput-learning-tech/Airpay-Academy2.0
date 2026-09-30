@@ -369,3 +369,10 @@ Wave-1 adversarial review of the integration group (S1, S4) plus one helper defe
   - tag the default writes for non-Sentientia providers;
   - exact-name delete in step 2c.
 - Local copy repaired: 136 legacy keys copied, 5 providers defaulted, 0 problems left.
+
+## 2026-09-30 - Flag `ux.languageSwitcher.enabled` registered (no version bump)
+
+Persona-pass fix D7 (theme shell bundle). New default-OFF flag in `db/feature_flags.php` (both trees, byte
+identical), category `ux`. Consumer: `theme_sentientia` `language_switcher` (sidebar language switcher). The
+registry cache has a 60 s TTL, so no purge is needed. See `theme_sentientia-state.md` for the owner notes
+(the switcher ignores `$CFG->langmenu`).

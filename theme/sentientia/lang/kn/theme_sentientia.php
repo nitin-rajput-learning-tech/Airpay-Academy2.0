@@ -216,3 +216,8 @@ $string['dash_overall_completion'] = 'ಒಟ್ಟಾರೆ ಪೂರ್ಣಗ�
 $string['dash_continue_learning']  = 'ಕಲಿಕೆಯನ್ನು ಮುಂದುವರಿಸಿ';
 $string['dash_view_all']           = 'ಎಲ್ಲವನ್ನು ವೀಕ್ಷಿಸಿ';
 $string['dash_explore']            = 'ಅನ್ವೇಷಿಸಿ';
+
+// Language switcher in the app-shell sidebar (persona-pass fix D7, 2026-09-30).
+$string['langswitch_label'] = 'ಭಾಷೆ';
+$string['langswitch_disabled'] = 'ಭಾಷೆ ಬದಲಾಯಿಸುವ ಸೌಲಭ್ಯ ಆನ್ ಆಗಿಲ್ಲ.';
+$string['langswitch_invalid'] = 'ಈ ಭಾಷೆ ಲಭ್ಯವಿಲ್ಲ.';

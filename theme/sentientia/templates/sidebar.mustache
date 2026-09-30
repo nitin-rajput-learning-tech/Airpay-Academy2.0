@@ -13,6 +13,10 @@
     * issiteadmin, isldadmin, ismanager - role flags
     * userfullname, useravatar, userinitials
     * profileurl, logouturl
+    * roleswitch - multi-role switcher data (hasoptions false for most users)
+    * langswitch - language switcher data; hasoptions is false while the
+      default-OFF flag ux.languageSwitcher.enabled is off (see the
+      sidebar_langswitch partial)
 }}
 <aside class="ap-sidebar" id="ap-sidebar" data-collapsed="{{#collapsed}}true{{/collapsed}}{{^collapsed}}false{{/collapsed}}">
     <div class="ap-sidebar__header">
@@ -64,6 +68,7 @@
     </div>
     {{/roleswitch.hasoptions}}
     <div class="ap-sidebar__footer-actions">
+        {{> theme_sentientia/sidebar_langswitch }}
         <button class="ap-sidebar__theme-btn" id="ap-dark-toggle" title="{{#str}}dash_toggle_theme, theme_sentientia{{/str}}">
             <i class="fa fa-moon"></i>
             <span class="ap-sidebar__theme-label">{{#str}}dash_dark_mode_label, theme_sentientia{{/str}}</span>

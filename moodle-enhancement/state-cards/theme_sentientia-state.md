@@ -593,3 +593,49 @@ The cross-tenant library menu item read "Browse Airpay Library" for every tenant
 admin in the Playwright pass). Nitin: it just says "Browse Library". `nav_browseairpaylibrary` en
 "Browse Library", hi "लाइब्रेरी ब्राउज़ करें". The string id is unchanged; the page it opens was
 already white-label (`{$a->customer}`).
+
+### 2026-09-30 - Persona-pass theme shell bundle (D5, D7, D13), 1.0.58-beta / 2026093001
+
+From `docs/visual-evidence/2026-09-30/personas/TRIAGE.md` (bundle 4, "Theme shell").
+
+**D7 - language switcher (NEW, flag `ux.languageSwitcher.enabled`, default OFF).** The shell had no language
+control: `custom_language_menu()` had no caller and core's own menu needs `$CFG->langmenu` (0 locally).
+- New `classes/language_switcher.php`: `is_enabled()` (flag; fails closed), `get_context($page, $languages)`
+  (data only; empty for guests, flag off, one language, a course or activity that forces its language),
+  `switch_to($lang, $languages)` (validates against the offered list, sets `$SESSION->lang` at once, saves
+  `$USER->lang` through `user_update_user()` unless logged in as someone else or the site removed
+  `moodle/user:editownprofile`).
+- `get_language_switch_options()` in the `user_menu` trait (beside `get_role_switch_options()`); wired into
+  `airpay_shell_start()` (context key `langswitch`) and `layout/dashboard.php` (the dashboard paints its own
+  sidebar copy).
+- New partial `templates/sidebar_langswitch.mustache`, included from `sidebar.mustache` and `dashboard.mustache`
+  inside `.ap-sidebar__footer-actions`, above the dark-mode toggle. A native `<details>`; items reuse the
+  role-switcher item classes. SCSS in `_layout-shell.scss` (hidden when the sidebar is collapsed).
+- New sesskey-checked endpoint `switchlang.php` (refuses while the flag is OFF; redirects back through a
+  `PARAM_LOCALURL` return url with `lang` stripped). Strings `langswitch_label/disabled/invalid` in en, hi, mr, kn, sw.
+- Flag registered in `local_sentientia_platform/db/feature_flags.php` (both trees), category `ux`.
+- **Owner config:** nothing in core. Turn the flag ON in the Switchboard (per customer or tenant). The switcher
+  ignores `$CFG->langmenu` on purpose, so leave that as it is. Languages shown = installed language packs
+  (Site admin > Language > Language packs), narrowed by `$CFG->langlist` if set. The login page and the front
+  page have no switcher in this change.
+
+**D5a - sticky footer.** New `templates/core/sticky_footer.mustache` = core's markup plus the `stickyfooter`
+class. The theme is standalone, so nothing added that class and `gradereport_grader/stickycolspan` threw
+"Cannot read properties of null (reading 'offsetHeight')" on every gradebook view. No positioning added (the
+footer stays the in-flow card `_surface-grade-report.scss` styles). `sticky-footer.scss` gains
+`.stickyfooter.v-hidden` (a Boost-only class that core uses to hide it).
+
+**D5b - grader at 390px.** Root cause was not the table: `_moodle-overrides.scss` floats `#region-main`
+(`float:left; width:100%`) and a later grader override sets `width: inherit` (= auto), so the floated region
+shrink-wrapped to the table's min-content (677px on a 358px column; 815px instead of full width on desktop).
+`_surface-grade-report.scss` now sets `float:none; width:100%; min-width:0; display:block` for
+`body.path-grade-report-grader #region-main`. Measured live on the local trainer gradebook with the CSS
+injected: `scrollWidth` 415 -> 390 at 390px, and the desktop card now spans the column. Evidence in
+`docs/visual-evidence/2026-09-30/theme-shell/`.
+
+**D13 - `course.mustache`** now ends with body and html end tags (the footer partial already emits the
+end-of-body output). Removes the four `Undefined array key 0` warnings core's `footer()` logged per course view.
+
+Tests: `tests/language_switcher_test.php` (11 tests incl. `@group tenant_isolation`). Not yet run (the lead
+re-inits PHPUnit once after all bundles merge). Gates run: php -l, lang parity, tree drift, path boundary,
+mustache comment-leak and end-of-body scanners, scssphp compile of the touched partials.

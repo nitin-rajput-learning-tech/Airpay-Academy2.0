@@ -645,4 +645,23 @@ trait user_menu {
 
         return $result;
     }
+
+    /**
+     * Data for the sidebar language switcher (persona-pass fix D7, 2026-09-30).
+     *
+     * Data-only sibling of get_role_switch_options(): the shell sidebar
+     * (sidebar.mustache, via airpay_shell_start()) and the dashboard's own
+     * sidebar copy (dashboard.mustache, via layout/dashboard.php) paint a
+     * native control from it. Independent of $CFG->langmenu, which core's
+     * language menu needs and which is 0 on the local copy.
+     *
+     * Backwards-compat: while the flag ux.languageSwitcher.enabled is OFF
+     * (the default), hasoptions is false and the sidebar is unchanged.
+     *
+     * @return array hasoptions, currentlabel, currentcode and options[]; see
+     *               \theme_sentientia\language_switcher::get_context().
+     */
+    public function get_language_switch_options(): array {
+        return \theme_sentientia\language_switcher::get_context($this->page);
+    }
 }

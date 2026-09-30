@@ -205,3 +205,8 @@ $string['dash_overall_completion'] = 'Ukamilifu wa Jumla';
 $string['dash_continue_learning']  = 'Endelea Kujifunza';
 $string['dash_view_all']           = 'Tazama zote';
 $string['dash_explore']            = 'Chunguza';
+
+// Language switcher in the app-shell sidebar (persona-pass fix D7, 2026-09-30).
+$string['langswitch_label'] = 'Lugha';
+$string['langswitch_disabled'] = 'Kibadilishaji cha lugha hakijawashwa.';
+$string['langswitch_invalid'] = 'Lugha hiyo haipatikani.';
