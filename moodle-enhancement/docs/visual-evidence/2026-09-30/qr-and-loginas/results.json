@@ -6,9 +6,11 @@
   "pass": true
  },
  {
-  "check": "02 same learner scans again: already marked, nothing written",
+  "check": "02 same learner scans again: already marked (info icon), nothing written",
+  "firstScan": "Attendance Marked!",
   "heading": "Already Marked",
   "body": "Your attendance for this session has already been marked, so this scan did not change it. If you think your mark is wrong, please ask your trainer.",
+  "icon": "fa fa-info-circle",
   "pass": true
  },
  {
@@ -78,9 +80,10 @@
   "pass": true
  },
  {
-  "check": "14 the trainer marked this learner Absent: a scan changes nothing",
+  "check": "14 the trainer marked this learner Absent: a scan changes nothing (info icon)",
   "heading": "Already Marked",
   "body": "Your attendance for this session has already been marked, so this scan did not change it. If you think your mark is wrong, please ask your trainer.",
+  "icon": "fa fa-info-circle",
   "pass": true
  },
  {
@@ -105,6 +108,7 @@
   "check": "18 the trainer marked this learner Absent; the same scan in Hindi says \"already marked\" (chihnit), not \"recorded\" (darj)",
   "heading": "पहले से चिह्नित है",
   "body": "इस सत्र के लिए आपकी उपस्थिति पहले ही चिह्नित की जा चुकी है, इसलिए इस स्कैन से उसमें कोई बदलाव नहीं हुआ। यदि आपको लगता है कि यह गलत है, तो कृपया अपने ट्रेनर से कहें।",
+  "icon": "fa fa-info-circle",
   "pass": true
  },
  {
@@ -154,6 +158,40 @@
  {
   "check": "24 a Save with nothing changed says so and writes nothing",
   "notification": "Nothing to save: you have not changed any learner's mark. Dismiss this notification",
+  "pass": true
+ },
+ {
+  "check": "25 an untouched learner scans mid-edit: the Save shows the scan; a second Save (Absent on purpose) then writes the correction",
+  "scanHeading": "Attendance Marked!",
+  "learner2BeforeSave": 0,
+  "learner2AfterFirstSave": 1,
+  "notification": "1 attendance saved. 1 more learner(s) were marked by someone else (for example by scanning the QR code) after you opened this page, and are now shown in the grid. Dismiss this notification",
+  "rowAfterFirstSave": {
+   "hasmark": "1",
+   "original": "1"
+  },
+  "presentCounter": "2",
+  "secondSaveNotification": "1 attendance saved. Dismiss this notification",
+  "learner2AfterSecondSave": 0,
+  "pass": true
+ },
+ {
+  "check": "26 the same trainer is refused on a session that has no trainer / is not theirs",
+  "grid": false,
+  "refusal": true,
+  "pass": true
+ },
+ {
+  "check": "27 the trainer opens the attendance grid of the session assigned to them",
+  "grid": true,
+  "heading": "Attendance for: Assigned to trainer (30 Sept 20:27)",
+  "pass": true
+ },
+ {
+  "check": "28 the classroom session list links attendance only for the session that trainer may open",
+  "ownLinked": true,
+  "otherLinked": false,
+  "otherShown": true,
   "pass": true
  }
 ]

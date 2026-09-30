@@ -8,6 +8,14 @@
 //   22  attendance page, flag OFF: no link, the page as it was
 //   23  the grid writes only what the trainer touched: an untouched learner has no row and can still scan
 //   24  a Save with nothing changed says so and writes nothing
+//   25  a learner the trainer never touched scans while the trainer ticks another: the Save shows that
+//       scan, and a later Save may correct it (the trainer has seen it)
+//   26  a trainer (holds :view and :attendance, no :manage) is refused on a session they are not assigned to
+//   27  the same trainer opens the session they ARE assigned to
+//   28  the classroom's session list links attendance only for the session that trainer may open
+//   (18 also asserts the info icon: the already-marked box no longer wears the success check-circle.)
+//   02, 14  the English "Already Marked" box, re-captured for the same icon change with the vpqr_* accounts
+//           (the original 02 and 14 used the vp_* personas, which this pass does not log in as)
 //
 // Uses only the throwaway vpqr_* accounts that seed_qr_recheck.php creates (never the vp_* personas).
 //
@@ -124,6 +132,7 @@ async function alertText(page) {
     const box = a ? a.closest('.alert') : null;
     return {
       heading: a ? a.textContent.trim() : '',
+      icon: a && a.querySelector('i') ? a.querySelector('i').className : '',
       body: box ? [...box.querySelectorAll('p')].map(p => p.textContent.trim()).join(' | ') : '',
     };
   });
@@ -141,9 +150,10 @@ await asPersona(['18'], 'vpqr_learner1', async page => {
   await shots(page, '18-scan-already-marked-hindi');
   record({
     check: '18 the trainer marked this learner Absent; the same scan in Hindi says "already marked" (chihnit), not "recorded" (darj)',
-    heading: t.heading, body: t.body,
+    heading: t.heading, body: t.body, icon: t.icon,
     pass: t.heading === 'पहले से चिह्नित है' && t.body.includes('पहले ही चिह्नित')
-      && !t.body.includes('दर्ज') && !t.heading.includes('दर्ज'),
+      && !t.body.includes('दर्ज') && !t.heading.includes('दर्ज')
+      && t.icon.includes('fa-info-circle') && !t.icon.includes('fa-check-circle'),
   });
 });
 
@@ -157,6 +167,13 @@ const notice = page => page.evaluate(() => {
   const n = document.querySelector('#user-notifications .alert, [data-region="notifications"] .alert, .toast-message');
   return n ? n.textContent.replace(/\s+/g, ' ').trim() : '';
 });
+// Moodle puts a new notification ABOVE the older ones: the newest is the first in the DOM.
+const lastNotice = page => page.evaluate(() => {
+  const all = [...document.querySelectorAll('#user-notifications .alert, [data-region="notifications"] .alert, .toast-message')];
+  const n = all[0];
+  return n ? n.textContent.replace(/\s+/g, ' ').trim() : '';
+});
+const countSaved = page => page.evaluate(() => (document.body.innerText.match(/attendance saved/g) || []).length);
 const linkState = page => page.evaluate(() => {
   const a = document.querySelector('[data-region="show-qr"]');
   return { present: !!a, href: a ? a.getAttribute('href') : '', text: a ? a.textContent.replace(/\s+/g, ' ').trim() : '' };
@@ -283,6 +300,129 @@ if (want('19')) {
     if (trainerCtx) await trainerCtx.close();
   }
 }
+
+// 02 and 14 (round 4): the English "Already Marked" box now has the info icon.
+const ALREADY_BODY = 'Your attendance for this session has already been marked, so this scan did not change it.';
+await asPersona(['02'], 'vpqr_learner2', async page => {
+  await open(page, scanUrl(DATA.sessionT));
+  const first = (await alertText(page)).heading;
+  await open(page, scanUrl(DATA.sessionT));
+  const t = await alertText(page);
+  await shots(page, '02-scan-already-marked');
+  record({
+    check: '02 same learner scans again: already marked (info icon), nothing written',
+    firstScan: first, heading: t.heading, body: t.body, icon: t.icon,
+    pass: first === 'Attendance Marked!' && t.heading === 'Already Marked' && t.body.includes(ALREADY_BODY)
+      && t.icon.includes('fa-info-circle') && !t.icon.includes('fa-check-circle'),
+  });
+});
+await asPersona(['14'], 'vpqr_learner1', async page => {
+  await open(page, scanUrl(DATA.sessionA));
+  const t = await alertText(page);
+  await shots(page, '14-scan-trainer-marked-absent');
+  record({
+    check: '14 the trainer marked this learner Absent: a scan changes nothing (info icon)',
+    heading: t.heading, body: t.body, icon: t.icon,
+    pass: t.heading === 'Already Marked' && t.body.includes(ALREADY_BODY)
+      && t.icon.includes('fa-info-circle') && !t.icon.includes('fa-check-circle'),
+  });
+});
+
+// 25: a learner the trainer never touches scans while the trainer ticks somebody else.
+if (want('25')) {
+  let trainerCtx = null;
+  let learnerCtx = null;
+  try {
+    const t = await session('vpqr_admin1');
+    trainerCtx = t.context;
+    await open(t.page, gridUrl(DATA.sessionH));
+    const before = await checkedStatus(t.page, L2);
+
+    const l = await session('vpqr_learner2');
+    learnerCtx = l.context;
+    await open(l.page, scanUrl(DATA.sessionH));
+    const scanHeading = (await alertText(l.page)).heading;
+    await learnerCtx.close();
+    learnerCtx = null;
+
+    // Two seconds on, so the scan is older than the Save (a scan in the same second as a Save counts as newer).
+    // The trainer touches learner1 only. Learner2's scan is not sent, but the Save answers with it.
+    await t.page.waitForTimeout(2500);
+    await t.page.click(radio(L1, 1));
+    await t.page.click('[data-action="save-attendance"]');
+    await t.page.waitForFunction(() => /marked by someone else/.test(document.body.innerText), null, { timeout: 120000 });
+    const l2after = await checkedStatus(t.page, L2);
+    const note = await lastNotice(t.page);
+    const row = await t.page.evaluate(id => {
+      const r = document.querySelector(`tr[data-userid="${id}"]`);
+      return { hasmark: r.dataset.hasmark, original: r.dataset.original };
+    }, L2);
+    const presentCount = await t.page.evaluate(() => document.querySelector('[data-counter="present"]').textContent.trim());
+    await shots(t.page, '25-grid-save-shows-scan-of-untouched-learner');
+
+    // The trainer has seen the scan now, so setting learner2 Absent on purpose is written, not kept.
+    const saved1 = await countSaved(t.page);
+    await t.page.click(radio(L2, 0));
+    await t.page.click('[data-action="save-attendance"]');
+    await t.page.waitForFunction(n => (document.body.innerText.match(/attendance saved/g) || []).length > n, saved1, { timeout: 120000 });
+    const note2 = await lastNotice(t.page);
+    const l2corrected = await checkedStatus(t.page, L2);
+    record({
+      check: '25 an untouched learner scans mid-edit: the Save shows the scan; a second Save (Absent on purpose) then writes the correction',
+      scanHeading, learner2BeforeSave: before, learner2AfterFirstSave: l2after, notification: note,
+      rowAfterFirstSave: row, presentCounter: presentCount, secondSaveNotification: note2, learner2AfterSecondSave: l2corrected,
+      pass: scanHeading === 'Attendance Marked!' && before === 0 && l2after === 1
+        && /1 attendance saved/.test(note) && /marked by someone else/.test(note) && !/kept|left as they are/.test(note)
+        && row.hasmark === '1' && row.original === '1' && presentCount === '2'
+        && /1 attendance saved/.test(note2) && !/marked by someone else/.test(note2) && l2corrected === 0,
+    });
+  } catch (e) {
+    record({ check: '25 (untouched learner scan shown by a Save)', pass: false, error: String(e).split('\n')[0].slice(0, 300) });
+  } finally {
+    if (learnerCtx) await learnerCtx.close();
+    if (trainerCtx) await trainerCtx.close();
+  }
+}
+
+// 26, 27, 28: a trainer without :manage opens only the session they are assigned to.
+const TRAINER_REFUSAL = 'You can open and take attendance only for sessions you are the assigned trainer of.';
+await asPersona(['26', '27', '28'], 'vpqr_trainer1', async page => {
+  if (want('27')) {
+    await open(page, gridUrl(DATA.sessionT));
+    const grid = await page.evaluate(() => !!document.querySelector('[data-region="airpay-attendance"]'));
+    const heading = await page.evaluate(() => (document.querySelector('h2') || {}).textContent || '');
+    await shots(page, '27-attendance-assigned-trainer-opens');
+    record({
+      check: '27 the trainer opens the attendance grid of the session assigned to them',
+      grid, heading: heading.trim().slice(0, 120), pass: grid && /Assigned to trainer/.test(heading),
+    });
+  }
+  if (want('26')) {
+    await open(page, gridUrl(DATA.sessionU));
+    const grid = await page.evaluate(() => !!document.querySelector('[data-region="airpay-attendance"]'));
+    const text = await page.evaluate(() => document.body.innerText.replace(/\s+/g, ' '));
+    await shots(page, '26-attendance-unassigned-trainer-refused');
+    record({
+      check: '26 the same trainer is refused on a session that has no trainer / is not theirs',
+      grid, refusal: text.includes(TRAINER_REFUSAL), pass: !grid && text.includes(TRAINER_REFUSAL),
+    });
+  }
+  if (want('28')) {
+    await open(page, `/local/sentientia_classroom/view.php?id=${DATA.classroomid}&tab=sessions`);
+    await page.waitForFunction(id => !!document.querySelector(`a[href*="attendance.php?sessionid=${id}"]`), DATA.sessionT.id,
+      { timeout: 120000 }).catch(() => {});
+    const state = await page.evaluate(([own, other]) => ({
+      ownLinked: !!document.querySelector(`a[href*="attendance.php?sessionid=${own}"]`),
+      otherLinked: !!document.querySelector(`a[href*="attendance.php?sessionid=${other}"]`),
+      otherShown: /No trainer assigned/.test(document.body.innerText),
+    }), [DATA.sessionT.id, DATA.sessionU.id]);
+    await shots(page, '28-session-list-links-only-assigned-session');
+    record({
+      check: '28 the classroom session list links attendance only for the session that trainer may open',
+      ...state, pass: state.ownLinked && !state.otherLinked && state.otherShown,
+    });
+  }
+});
 
 await browser.close();
 const failed = results.filter(r => !r.pass).length;

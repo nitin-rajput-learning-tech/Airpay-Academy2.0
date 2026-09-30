@@ -394,3 +394,84 @@ local XAMPP Moodle, so its web pages did not go to "upgrade needed" while a pers
   can race; negligible). Creating it in an install / upgrade step would remove that; not done in this
   round. `qr_attendance.php` calls `require_capability()` before `$PAGE->set_context()` (stack noise on
   the refusal pages at developer debug level).
+
+
+## 2026-09-30 (round 4 review) - newer marks handed back on Save, radios, assigned-trainer rule
+
+Owner decisions taken as recommended (Nitin, 2026-09-30) on the round-4 review ("fix-then-ship", one must-fix).
+Both trees. **No schema change and no version bump in this round** (`version.php` stays `2026093001` /
+`1.10.6`, already bumped; it is still not copied into the local XAMPP Moodle).
+
+- **Must-fix: a Save now hands back every mark somebody else made since the grid loaded (`newermarks`).**
+  Since the grid sends only the rows the trainer touched, a learner the trainer never touched could scan
+  between the load and a Save, the Save never saw them, and `loadedat` still moved forward to `savedat`;
+  a second Save with an explicit Absent for that learner then overwrote the scan silently (mixed
+  hand-and-QR workflow: mark the early arrivals, save, project the QR, correct the absentees). Now
+  `session_manager::bulk_mark_attendance(..., &$kept, &$keptusers, &$newermarks, bool $callerscope)`
+  reads, after the writes and inside the same transaction, every attendance row of the session with
+  `timemodified >= loadedat` and `markedby <> current user`, joined to the classroom roster and (with
+  `$callerscope`) to the caller's tenant (`roster_scope()`); new public reader
+  `get_marks_by_others_since($sessionid, $since, $callerscope)` (`$since <= 0` returns nothing). The
+  `bulk_mark_attendance` web service passes `true` and returns `newermarks` `[{userid, status}]`
+  (`VALUE_DEFAULT []`). It is a superset of `keptmarks` (a kept row is also a newer mark). The message
+  gets a second sentence, `attendance_newer_shown`, counting the newer marks that were not already
+  announced as kept. `attendance.js` applies `keptmarks` and `newermarks` the same way (radio +
+  `markRowStored()`, so `data-hasmark=1`, `data-original`) BEFORE it sets `loadedat = savedat`, which
+  makes "the trainer has seen every mark made before `savedat`" true again. A scan that lands in the
+  same second as a Save still counts as newer (`>=`); that is the only residual window and it errs on
+  the side of keeping the scan.
+- **Radios (Firefox restores a selection the page never saw made).** The grid table sits in
+  `<form autocomplete="off" action="#">` and every radio carries `autocomplete="off"`; the form is never
+  submitted (`attendance.js` prevents it). `isSetByTrainer()` no longer depends on the click flag alone: a
+  row with no stored mark (`data-hasmark=0`) is sent whenever its radio is not Absent, touched or not (only
+  an explicit Absent on an unmarked learner needs the click); a row with a stored mark is sent whenever its
+  radio differs from `data-original`.
+- **Assigned-trainer rule (owner decision).** A user who does NOT hold `local/sentientia_classroom:manage`
+  may open and take attendance only for a session they are the assigned trainer of:
+  `{local_sentientia_classroom_sessions}.trainerid` (nullable) OR the classroom's
+  `{local_sentientia_classroom}.trainerid` (nullable). A session and classroom with no trainer are for
+  `:manage` holders only. Managers (manager archetype, which the tenant `administrator` role is), any role
+  that holds `:manage`, and site admins keep tenant-wide access; ADR-031 still bounds all of it to the
+  tenant and runs first. New `session_manager::may_run_session($session, $classroom, ?$userid)` and
+  `require_attendance_access($sessionid)` (throws `error_nottrainer`, en + hi); used by `attendance.php`,
+  `bulk_mark_attendance`, `mark_session_attendance`, `list_session_attendance` and, in
+  `local_sentientia_pages`, `qr_attendance.php`. `require_session_access()` itself is unchanged (it still
+  serves edit / delete, which need `:update` / `:delete` anyway). `list_classroom_sessions` no longer
+  links the title or the "Mark attendance" action for a session the viewer may not open.
+  **Data finding (read-only probe of the local prod-data copy, 2026-09-30):** role 10 `trainer`
+  (archetype teacher) holds `:manage` at system context there (and not `:create` / `:update`); roles
+  1 `manager` and 9 `administrator` hold all of `:manage`, `:create`, `:update`; `access.php` grants
+  `:manage` to the manager archetype only. On that data a trainer is therefore exempt from the new rule
+  until the `:manage` grant is removed from role 10 (the same grant lets that role edit any session in the
+  UI, see `can_update = update || manage`). Check the live `role_capabilities` before cutover; if
+  trainers must be restricted whatever they hold, change the discriminator in `may_run_session()` (for
+  example to `:update`) in one place. None of the 5 local classrooms and none of their sessions carries a
+  `trainerid`, so the rule locks a real trainer out of a session until it is assigned: the BizLMS import
+  (ADR-032) must carry the trainer.
+- **Data meaning (stated for reports).** A roster learner with no attendance row now means "not marked,
+  shown and counted as Absent"; before this pass every Save wrote a row per learner. Only
+  `get_session_attendance()` reads the table today (LEFT JOIN from the roster, default Absent); nothing in
+  `sentientia_reports`, `sentientia_analytics` or `sentientia_compliance_report` reads it. **Any future
+  report or export must LEFT JOIN the roster and treat "no row" as Absent, or attendance rates are
+  inflated.**
+- **Also:** the stale comment in `attendance.php` ("the Save sends a mark for every row it renders") is
+  reworded; the "already marked" scan box in `local_sentientia_pages/qr_scan.php` uses the info icon
+  (`fa-info-circle`), not the success page's check-circle.
+- **Strings (en + hi, lang parity 0 failures):** `attendance_newer_shown`, `error_nottrainer`.
+- **Tests (local XAMPP MariaDB; only the changed non-version files copied):**
+  `attendance_trainer_scope_test` (new) 8 tests / 29 assertions OK (own session allowed and another
+  trainer's refused; classroom trainer opens all its sessions; no trainer = managers only; manager and
+  site admin open any in tenant; the tenant guard still comes first; the three web services refuse an
+  unassigned trainer and change nothing; the session list links only the openable session);
+  `qr_attendance_test` +4 (untouched scanner reported on Save 1 and the correction written on Save 2;
+  a scan after `savedat1` still kept by Save 2 and reported; own rows and no-load-time report nothing;
+  tenant / roster scoping of the reader) and the template test asserts `autocomplete="off"`;
+  `sessions_external_test` 16 / 46 OK (new: WS `newermarks` and message); `tenant_scope_test` 13 / 72 and
+  `qr_entry_point_test` 4 / 24 still OK.
+- **Visual evidence:** `docs/visual-evidence/2026-09-30/qr-and-loginas/` screens 18 (info icon), 25 (grid
+  after Save shows the untouched learner's scan), 26 to 28 (assigned-trainer rule, with a throwaway
+  `vpqr_trainer1` holding the `editingteacher` role: `:view` + `:attendance`, no `:manage`).
+- **Open (carried over):** `qr_secret()` is still created lazily on first use; `qr_attendance.php` calls
+  `require_capability()` before `$PAGE->set_context()`; hard-coded English remains in the bulk WS
+  message "N attendances saved.", the JS fallback "Attendance saved." and the status labels in
+  `get_session_attendance()`.

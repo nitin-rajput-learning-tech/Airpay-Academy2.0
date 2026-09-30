@@ -273,3 +273,22 @@ token, window and "trainer's mark wins" rules live in `local_sentientia_classroo
   are reachable by URL exactly as before whether the flag is on or off. The `trainer` role gets
   `local/sentientia_classroom:attendance` from the classroom plugin's upgrade step 2026093001, which is
   what lets a trainer open `qr_attendance.php`.
+
+## 2026-09-30 (round 4 review) - "already marked" icon; QR page needs the assigned trainer
+
+Owner decisions taken as recommended (Nitin, 2026-09-30). No version bump. Both trees.
+
+- **`qr_scan.php`:** the SCAN_ALREADY box ("Already Marked") uses the `info-circle` icon instead of the
+  success page's `check-circle`. A learner whom the trainer marked Absent no longer sees a tick-like cue
+  at a glance (screenshot 18 re-captured; the check asserts the icon class). Title, body and Hindi wording
+  are unchanged.
+- **`qr_attendance.php`:** calls `session_manager::require_attendance_access()` instead of
+  `require_session_access()`. After the ADR-031 tenant guard, a user WITHOUT
+  `local/sentientia_classroom:manage` may show the QR only for a session they are the assigned trainer of
+  (`local_sentientia_classroom_sessions.trainerid` or the classroom's `trainerid`); managers (which the
+  tenant `administrator` role is) and site admins are unchanged; otherwise `error_nottrainer` (string in
+  `local_sentientia_classroom`, en + hi). See the classroom state card for the rule, the data finding
+  (the local `trainer` role holds `:manage`) and the tests. The scan page (the learner's side) is
+  unaffected.
+- Visual evidence: `docs/visual-evidence/2026-09-30/qr-and-loginas/` (README there: 28 automatic checks,
+  all pass; new screens 25 to 28, 18 re-captured).

@@ -4,7 +4,7 @@
 
 /**
  * LOCAL-ONLY: throwaway accounts and classroom data for the QR-attendance re-check of the
- * final review (docs/visual-evidence/2026-09-30/qr-and-loginas/README.md, screens 18, 19, 21-24).
+ * final reviews (docs/visual-evidence/2026-09-30/qr-and-loginas/README.md, screens 18, 19, 21-28).
  * Refuses unless wwwroot is localhost, so it can never touch UAT or production.
  *
  * It exists so this pass does not touch the vp_* personas a Playwright persona pass may be
@@ -13,6 +13,10 @@
  *   vpqr_admin1    tenant admin /1 (role 'administrator': holds :view and :attendance)
  *   vpqr_learner1  learner /1, on the roster
  *   vpqr_learner2  learner /1, on the roster
+ *   vpqr_trainer1  /1, system role 'editingteacher': holds :view and :attendance but NOT :manage, exactly
+ *                  what the Sentientia 'trainer' role (archetype teacher) holds after upgrade step
+ *                  2026093001. (The local prod-data copy's own 'trainer' role also holds :manage, which
+ *                  would exempt it from the assigned-trainer rule, so it cannot show that rule here.)
  *
  * Passwords are generated here and written only to --creds (default .personas.local.json next to
  * this script, gitignored); they are never printed. The data file (--out, keep it OUTSIDE the
@@ -21,6 +25,9 @@
  *   sessionA  running now, vpqr_learner1 already marked ABSENT by the trainer (Hindi "already marked")
  *   sessionF  running now, no rows: the trainer's grid Save versus a scan that lands after the grid loaded
  *   sessionG  running now, no rows: the trainer marks learner1 only; learner2 is never touched and can still scan
+ *   sessionH  running now, no rows: learner2 scans while the trainer ticks learner1; the Save shows learner2's scan
+ *   sessionT  running now, assigned to vpqr_trainer1 (session trainerid): the trainer may open it
+ *   sessionU  running now, no trainer: only a manager may open it, vpqr_trainer1 is refused
  *
  *   php seed_qr_recheck.php --out=<file.json> [--creds=<file.json>]     (cwd = moodle5/public)
  *   php seed_qr_recheck.php --report=<file.json>                        print the attendance rows
@@ -47,7 +54,7 @@ global $DB;
 
 if ($options['report'] !== '') {
     $data = json_decode(file_get_contents($options['report']), true);
-    foreach (['sessionA', 'sessionF', 'sessionG'] as $key) {
+    foreach (['sessionA', 'sessionF', 'sessionG', 'sessionH', 'sessionT', 'sessionU'] as $key) {
         $rows = $DB->get_records_sql(
             "SELECT a.id, u.username, a.status, a.markedby, a.notes
                FROM {local_sentientia_classroom_attendance} a
@@ -84,6 +91,7 @@ $accounts = [
     'vpqr_admin1'   => ['role' => 'administrator', 'label' => 'QR check tenant admin /1'],
     'vpqr_learner1' => ['role' => 'employee',      'label' => 'QR check learner 1 /1'],
     'vpqr_learner2' => ['role' => 'employee',      'label' => 'QR check learner 2 /1'],
+    'vpqr_trainer1' => ['role' => 'editingteacher', 'label' => 'QR check trainer /1'],
 ];
 $ids = [];
 foreach ($accounts as $username => $a) {
@@ -122,12 +130,16 @@ if (!$classroomid) {
 session_manager::enrol_users($classroomid, [$ids['vpqr_learner1'], $ids['vpqr_learner2']]);
 
 $run = userdate(time(), '%d %b %H:%M');
-$newsession = fn(string $title): int => (int) session_manager::create_session($classroomid, (object) [
+$newsession = fn(string $title, int $trainerid = 0): int => (int) session_manager::create_session($classroomid, (object) [
     'title' => $title . " ({$run})", 'starttime' => time(), 'endtime' => time() + HOURSECS,
+    'trainerid' => $trainerid,
 ]);
 $sa = $newsession('Marked Absent by trainer');
 $sf = $newsession('Grid vs scan');
 $sg = $newsession('Untouched learner');
+$sh = $newsession('Scan while ticking');
+$st = $newsession('Assigned to trainer', $ids['vpqr_trainer1']);
+$su = $newsession('No trainer assigned');
 
 // The trainer (the tenant admin) marks learner1 Absent on session A, on purpose.
 \core\session\manager::set_user($DB->get_record('user', ['id' => $ids['vpqr_admin1']], '*', MUST_EXIST));
@@ -140,8 +152,11 @@ $out = [
     'sessionA' => ['id' => $sa, 'token' => $token($sa)],
     'sessionF' => ['id' => $sf, 'token' => $token($sf)],
     'sessionG' => ['id' => $sg, 'token' => $token($sg)],
+    'sessionH' => ['id' => $sh, 'token' => $token($sh)],
+    'sessionT' => ['id' => $st, 'token' => $token($st)],
+    'sessionU' => ['id' => $su, 'token' => $token($su)],
     'users' => $ids,
 ];
 file_put_contents($options['out'], json_encode($out, JSON_PRETTY_PRINT));
-echo "seeded: classroom {$classroomid}, sessions A {$sa}, F {$sf}, G {$sg}; accounts " . implode(', ', array_keys($ids))
+echo "seeded: classroom {$classroomid}, sessions A {$sa}, F {$sf}, G {$sg}, H {$sh}, T {$st}, U {$su}; accounts " . implode(', ', array_keys($ids))
     . ". Data written to {$options['out']}; credentials written to " . basename($options['creds']) . " (not printed).\n";
