@@ -35,12 +35,16 @@ class bulk_mark_attendance extends external_api {
                 ]),
                 'Attendance marks'
             ),
+            'loadedat'  => new external_value(PARAM_INT,
+                'Unix time the attendance grid was loaded. A learner marked by someone else (a QR '
+                . 'scan, another trainer) at or after this time is not turned back to Absent by '
+                . 'this save. 0 = no guard.', VALUE_DEFAULT, 0),
         ]);
     }
 
-    public static function execute(int $sessionid, array $marks): array {
+    public static function execute(int $sessionid, array $marks, int $loadedat = 0): array {
         $params = self::validate_parameters(self::execute_parameters(),
-            ['sessionid' => $sessionid, 'marks' => $marks]);
+            ['sessionid' => $sessionid, 'marks' => $marks, 'loadedat' => $loadedat]);
 
         $context = \context_system::instance();
         self::validate_context($context);
@@ -71,17 +75,31 @@ class bulk_mark_attendance extends external_api {
             }
         }
 
+        // A learner who scanned the QR code (or was marked by someone else) after the grid was
+        // loaded keeps that mark: the grid sends Absent for everyone it did not tick, and
+        // the trainer's Save must not wipe the newer mark out. $kept counts them.
+        $kept = 0;
+        $keptusers = [];
         $count = \local_sentientia_classroom\session_manager::bulk_mark_attendance(
-            $params['sessionid'], $marks);
+            $params['sessionid'], $marks, $params['loadedat'], $kept, $keptusers);
 
         $message = $count . ' ' . ($count === 1 ? 'attendance' : 'attendances') . ' saved.';
         if ($skipped > 0) {
             $message .= ' ' . get_string('attendance_skipped_outoftenant', 'local_sentientia_classroom', $skipped);
         }
+        if ($kept > 0) {
+            $message .= ' ' . get_string('attendance_kept_newer', 'local_sentientia_classroom', $kept);
+        }
+        $keptmarks = [];
+        foreach ($keptusers as $userid => $status) {
+            $keptmarks[] = ['userid' => (int) $userid, 'status' => (int) $status];
+        }
         return [
             'sessionid' => $params['sessionid'],
             'marked'    => $count,
             'skipped'   => $skipped,
+            'kept'      => $kept,
+            'keptmarks' => $keptmarks,
             'message'   => $message,
         ];
     }
@@ -92,6 +110,16 @@ class bulk_mark_attendance extends external_api {
             'marked'    => new external_value(PARAM_INT,  'Rows persisted'),
             'skipped'   => new external_value(PARAM_INT,
                 'Marks not saved: the learner is outside the caller\'s tenant (ADR-031)'),
+            'kept'      => new external_value(PARAM_INT,
+                'Marks not saved because the learner was marked by someone else after the grid was loaded'),
+            'keptmarks' => new external_multiple_structure(
+                new external_single_structure([
+                    'userid' => new external_value(PARAM_INT, 'User ID'),
+                    'status' => new external_value(PARAM_INT, 'The mark that stands: 0=absent 1=present 2=late 3=excused'),
+                ]),
+                'The learners whose newer mark was kept, with the mark that stands',
+                VALUE_DEFAULT, []
+            ),
             'message'   => new external_value(PARAM_TEXT, 'Confirmation'),
         ]);
     }

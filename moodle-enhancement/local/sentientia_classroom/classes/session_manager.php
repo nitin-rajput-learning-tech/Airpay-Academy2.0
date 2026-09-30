@@ -875,43 +875,107 @@ class session_manager {
      */
     public static function mark_attendance(int $sessionid, int $userid, int $status,
                                             string $notes = ''): int {
-        global $DB, $USER;
+        global $DB;
 
+        self::assert_valid_attendance_status($status);
+        $DB->get_record(self::SESSION_TABLE, ['id' => $sessionid], 'id', MUST_EXIST);
+
+        self::write_mark($sessionid, $userid, $status, $notes, 0);
+        return $status;
+    }
+
+    /**
+     * @throws \moodle_exception invalidattendancestatus
+     */
+    private static function assert_valid_attendance_status(int $status): void {
         $valid = [self::ATT_ABSENT, self::ATT_PRESENT, self::ATT_LATE, self::ATT_EXCUSED];
         if (!in_array($status, $valid, true)) {
             throw new \moodle_exception('invalidattendancestatus', 'local_sentientia_classroom');
         }
-
-        $DB->get_record(self::SESSION_TABLE, ['id' => $sessionid], 'id', MUST_EXIST);
-
-        $now = time();
-        $existing = $DB->get_record(self::ATTENDANCE_TABLE,
-            ['sessionid' => $sessionid, 'userid' => $userid]);
-
-        if ($existing) {
-            $existing->status       = $status;
-            $existing->markedby     = (int) ($USER->id ?? 0);
-            $existing->notes        = $notes;
-            $existing->timemodified = $now;
-            $DB->update_record(self::ATTENDANCE_TABLE, $existing);
-        } else {
-            $DB->insert_record(self::ATTENDANCE_TABLE, (object) [
-                'sessionid'    => $sessionid,
-                'userid'       => $userid,
-                'status'       => $status,
-                'markedby'     => (int) ($USER->id ?? 0),
-                'notes'        => $notes,
-                'timecreated'  => $now,
-                'timemodified' => $now,
-            ]);
-        }
-
-        return $status;
     }
 
-    /** record_qr_attendance(): a new Present row was written (or an Absent one raised to Present). */
+    /**
+     * Write one trainer mark, unless it would wipe out a newer mark somebody else made.
+     *
+     * The attendance grid saves an explicit Absent for every learner the trainer did not
+     * tick. If a learner scanned the QR code (or another trainer marked them) after the
+     * grid was loaded, that Save must not turn the newer mark back into Absent, so
+     * $loadedat is the time the grid was loaded. A mark is kept, not overwritten, when ALL
+     * of these hold: $loadedat is set, the trainer is sending Absent, the stored row is
+     * not Absent, it was written at or after $loadedat, and it was written by somebody
+     * other than the current user (the trainer's own earlier Save is never "newer").
+     * Any other change, a deliberate Late or Excused over a newer row included, is written.
+     * The row is read immediately before it is written, so the window for another writer
+     * to slip in between is one statement, not the length of the whole grid Save.
+     *
+     * @param int $loadedat unix time the grid was loaded; 0 turns the guard off
+     * @return bool true when the row was written, false when a newer mark was kept
+     */
+    private static function write_mark(int $sessionid, int $userid, int $status, string $notes,
+                                        int $loadedat): bool {
+        global $DB, $USER;
+
+        $existing = $DB->get_record(self::ATTENDANCE_TABLE, ['sessionid' => $sessionid, 'userid' => $userid]);
+        if ($existing && $loadedat > 0 && $status === self::ATT_ABSENT
+                && (int) $existing->status !== self::ATT_ABSENT
+                && (int) $existing->timemodified >= $loadedat
+                && (int) $existing->markedby !== (int) ($USER->id ?? 0)) {
+            return false;
+        }
+        self::write_attendance_row($sessionid, $userid, $status, $notes, $existing ?: null);
+        return true;
+    }
+
+    /**
+     * Upsert the attendance row, given the row the caller just read (null = none).
+     *
+     * A QR scan can insert the row between the caller's read and this insert. The unique
+     * (sessionid, userid) index then refuses the insert. That must not fail the save (and,
+     * inside bulk_mark_attendance()'s transaction, roll back every other mark in it), so
+     * the row that won is updated instead. Moodle's database layer rolls a failed
+     * statement back on its own, so the surrounding transaction stays usable.
+     *
+     * @param \stdClass|null $existing the stored row, or null when the caller found none
+     * @throws \dml_write_exception when the insert fails and no row exists (not the index race)
+     */
+    private static function write_attendance_row(int $sessionid, int $userid, int $status,
+                                                  string $notes, ?\stdClass $existing): void {
+        global $DB, $USER;
+
+        $now = time();
+        $markedby = (int) ($USER->id ?? 0);
+
+        if (!$existing) {
+            try {
+                $DB->insert_record(self::ATTENDANCE_TABLE, (object) [
+                    'sessionid'    => $sessionid,
+                    'userid'       => $userid,
+                    'status'       => $status,
+                    'markedby'     => $markedby,
+                    'notes'        => $notes,
+                    'timecreated'  => $now,
+                    'timemodified' => $now,
+                ]);
+                return;
+            } catch (\dml_write_exception $e) {
+                $existing = $DB->get_record(self::ATTENDANCE_TABLE,
+                    ['sessionid' => $sessionid, 'userid' => $userid]);
+                if (!$existing) {
+                    throw $e;   // not the unique-index race: a real write failure.
+                }
+            }
+        }
+
+        $existing->status       = $status;
+        $existing->markedby     = $markedby;
+        $existing->notes        = $notes;
+        $existing->timemodified = $now;
+        $DB->update_record(self::ATTENDANCE_TABLE, $existing);
+    }
+
+    /** record_qr_attendance(): a new Present row was written. */
     public const SCAN_RECORDED = 'recorded';
-    /** record_qr_attendance(): the learner already has a mark for this session; nothing was written. */
+    /** record_qr_attendance(): the learner already has a mark (any status) for this session; nothing was written. */
     public const SCAN_ALREADY = 'already';
     /** record_qr_attendance(): no such session (or its classroom is gone) in the Sentientia tables. */
     public const SCAN_NO_SESSION = 'nosession';
@@ -919,9 +983,112 @@ class session_manager {
     public const SCAN_NOT_ENROLLED = 'notenrolled';
     /** record_qr_attendance(): the classroom is cancelled; nothing was written. */
     public const SCAN_CANCELLED = 'cancelled';
+    /** record_qr_attendance(): the scan came before the window opened; nothing was written. */
+    public const SCAN_TOO_EARLY = 'tooearly';
+    /** record_qr_attendance(): the scan came after the window closed (or the session has no usable time); nothing was written. */
+    public const SCAN_TOO_LATE = 'toolate';
 
     /** Note stored on a row the QR flow writes, so a trainer can tell it from a hand-marked one. */
     private const QR_NOTE = 'Marked by QR scan';
+
+    /** How long before a session starts, and after it ends, a QR scan still counts: 30 minutes. */
+    public const SCAN_GRACE = 30 * MINSECS;
+
+    /** Config (plugin) name and key of the per-site secret the QR tokens are signed with. */
+    private const QR_SECRET_COMPONENT = 'local_sentientia_classroom';
+    private const QR_SECRET_KEY = 'qrsecret';
+
+    /**
+     * The per-site secret QR tokens are signed with, created on first use.
+     *
+     * It is a random 64-character value kept in the plugin's config (no schema, no
+     * version bump) and never shown in any setting. It replaces $CFG->passwordsaltmain,
+     * which Moodle does not create on a new install (config-dist.php: "no longer used in
+     * new installations"), where the old token was a plain sha256 of the session id and
+     * the hour that anyone could work out. To rotate it, delete the config row: every
+     * QR code on screen stops working and the next page view makes a new secret.
+     */
+    private static function qr_secret(): string {
+        $secret = (string) get_config(self::QR_SECRET_COMPONENT, self::QR_SECRET_KEY);
+        if ($secret === '') {
+            set_config(self::QR_SECRET_KEY, random_string(64), self::QR_SECRET_COMPONENT);
+            $secret = (string) get_config(self::QR_SECRET_COMPONENT, self::QR_SECRET_KEY);
+        }
+        return $secret;
+    }
+
+    /**
+     * The QR token for a session, for the hour that contains $time (rotates hourly, in the
+     * server's PHP timezone, which is also the clock the trainer page's countdown uses).
+     *
+     * @param int $sessionid
+     * @param int $time a unix time; time() for the token to show now
+     * @return string 64 hex characters
+     */
+    public static function qr_token(int $sessionid, int $time): string {
+        return hash_hmac('sha256', $sessionid . '|' . date('Y-m-d-H', $time), self::qr_secret());
+    }
+
+    /**
+     * Whether $token is this session's token for the current hour or the previous one (the
+     * grace period that lets a scan started just before the hour finish just after it).
+     * A token for another session, an older hour, or one signed without the site secret
+     * is refused.
+     *
+     * @param int $sessionid
+     * @param string $token what the learner's scan URL carried
+     * @param int|null $now unix time to check against (tests); null = now
+     */
+    public static function qr_token_is_valid(int $sessionid, string $token, ?int $now = null): bool {
+        if ($token === '') {
+            return false;
+        }
+        $now = $now ?? time();
+        // Compare both hours (no early exit) so the answer does not depend on which one matched.
+        $current = hash_equals(self::qr_token($sessionid, $now), $token);
+        $previous = hash_equals(self::qr_token($sessionid, $now - HOURSECS), $token);
+        return $current || $previous;
+    }
+
+    /**
+     * When a QR scan counts for a session: from SCAN_GRACE before it starts to SCAN_GRACE
+     * after it ends.
+     *
+     * The end is the session's endtime. A session without a usable one (none, or not after
+     * the start) ends at the end of the day it starts on (the table keeps no duration).
+     * One with no start either uses its sessiondate, and then the whole day counts.
+     *
+     * @param \stdClass $session a row of the Sentientia sessions table
+     * @return int[]|null [opens, closes] as unix times, or null when the session has no
+     *                    time at all (no start and no date): nothing can be scanned for it
+     */
+    public static function scan_window_for(\stdClass $session): ?array {
+        $start = (int) ($session->starttime ?? 0);
+        $end = (int) ($session->endtime ?? 0);
+        $day = $start > 0 ? $start : (int) ($session->sessiondate ?? 0);
+        if ($day <= 0) {
+            return null;
+        }
+        $endofday = usergetmidnight($day) + DAYSECS - 1;
+        if ($start <= 0) {
+            $start = usergetmidnight($day);
+            $end = $endofday;
+        } else if ($end <= $start) {
+            $end = $endofday;
+        }
+        return [$start - self::SCAN_GRACE, $end + self::SCAN_GRACE];
+    }
+
+    /**
+     * scan_window_for() for a session id (qr_scan.php shows the times when it refuses a scan).
+     *
+     * @return int[]|null [opens, closes], or null when the session does not exist or has no time
+     */
+    public static function get_scan_window(int $sessionid): ?array {
+        global $DB;
+        $session = $DB->get_record(self::SESSION_TABLE, ['id' => $sessionid]);
+        return $session ? self::scan_window_for($session) : null;
+    }
 
     /**
      * Record a learner's own attendance from a QR scan (qr_scan.php).
@@ -933,21 +1100,24 @@ class session_manager {
      * writes is the one get_session_attendance() reads back: same table, same
      * (sessionid, userid) key, status ATT_PRESENT.
      *
-     * A cancelled classroom (STATUS_CANCELLED) takes no attendance: SCAN_CANCELLED,
-     * nothing written. There is no check on the session's start and end time.
-     * The hourly QR token is the only time limit, because imported sessions can
-     * carry wrong times; adding a window is a policy decision for Nitin.
+     * The checks run in this order, and the first that fails decides the answer:
+     *  1. no such session or classroom: SCAN_NO_SESSION;
+     *  2. the classroom is in another tenant: error_outoftenant (an exception);
+     *  3. the learner is not on the roster: SCAN_NOT_ENROLLED;
+     *  4. the classroom is cancelled (STATUS_CANCELLED): SCAN_CANCELLED. A session has no
+     *     status of its own in the schema, so the classroom's is the only cancel flag;
+     *  5. the learner already has a mark of ANY status: SCAN_ALREADY;
+     *  6. the scan time is outside scan_window_for(): SCAN_TOO_EARLY or SCAN_TOO_LATE.
+     * Only then is a Present row written. A stranger is therefore never told the classroom
+     * is cancelled, and a learner who already has a mark is told so whatever the time.
      *
-     * Idempotent. Any mark other than Absent (Present, Late, Excused) is left
-     * as it is and reported as SCAN_ALREADY. An Absent row is what the
-     * attendance grid saves for everyone it did not tick, so it means "not
-     * marked yet" and a scan raises it to Present (it cannot tell an unticked
-     * learner from one the trainer deliberately marked Absent; see the
-     * sentientia_classroom state card, open decision). Two writers landing
-     * together (a double tap, or a trainer grid save) hit the unique
-     * (sessionid, userid) index; the loser reads the row that won and treats it
-     * like any other existing row: an Absent one is raised to Present, anything
-     * else is SCAN_ALREADY.
+     * The trainer's mark wins (owner decision 2026-09-30): a scan never changes an existing
+     * attendance row, whatever its status, Absent included. A deliberate Absent and the
+     * Absent the attendance grid saves for a learner nobody ticked look the same, and a
+     * learner must not be able to overturn either by opening a forwarded QR link. The
+     * learner's own repeat scan is SCAN_ALREADY too. Two writers landing together (a double
+     * tap, or a trainer grid save) hit the unique (sessionid, userid) index; the loser
+     * reads the row that won and answers SCAN_ALREADY.
      *
      * Deliberately does not use get_session(): that falls back to the legacy
      * {local_classroom_sessions} table, and an id from that table has no
@@ -956,11 +1126,14 @@ class session_manager {
      *
      * @param int $sessionid
      * @param int $userid    the learner who scanned (the current user)
+     * @param int|null $now  unix time of the scan (tests); null = now
      * @return string one of the SCAN_* constants
      * @throws \moodle_exception error_outoftenant when the classroom is outside the learner's tenant
      */
-    public static function record_qr_attendance(int $sessionid, int $userid): string {
+    public static function record_qr_attendance(int $sessionid, int $userid, ?int $now = null): string {
         global $DB;
+
+        $now = $now ?? time();
 
         $session = $DB->get_record(self::SESSION_TABLE, ['id' => $sessionid]);
         $classroom = $session ? $DB->get_record(self::TABLE, ['id' => $session->classroomid]) : false;
@@ -982,10 +1155,17 @@ class session_manager {
             return self::SCAN_CANCELLED;
         }
 
-        $now = time();
-        $existing = $DB->get_record(self::ATTENDANCE_TABLE, ['sessionid' => $sessionid, 'userid' => $userid]);
-        if ($existing) {
-            return self::apply_scan_to_existing_row($existing, $userid, $now);
+        // Any existing mark, of any status, stands: the trainer's mark wins.
+        if ($DB->record_exists(self::ATTENDANCE_TABLE, ['sessionid' => $sessionid, 'userid' => $userid])) {
+            return self::SCAN_ALREADY;
+        }
+
+        $window = self::scan_window_for($session);
+        if ($window === null || $now > $window[1]) {
+            return self::SCAN_TOO_LATE;
+        }
+        if ($now < $window[0]) {
+            return self::SCAN_TOO_EARLY;
         }
 
         try {
@@ -1000,10 +1180,9 @@ class session_manager {
             ]);
         } catch (\dml_write_exception $e) {
             // The other half of a double tap, or a trainer grid save, got there first.
-            // Read what it wrote: if that row is Absent this scan still raises it to Present.
-            $winner = $DB->get_record(self::ATTENDANCE_TABLE, ['sessionid' => $sessionid, 'userid' => $userid]);
-            if ($winner) {
-                return self::apply_scan_to_existing_row($winner, $userid, time());
+            // Whatever it wrote stands.
+            if ($DB->record_exists(self::ATTENDANCE_TABLE, ['sessionid' => $sessionid, 'userid' => $userid])) {
+                return self::SCAN_ALREADY;
             }
             throw $e;
         }
@@ -1011,43 +1190,27 @@ class session_manager {
     }
 
     /**
-     * The scan rules for a learner who already has an attendance row.
-     *
-     * Absent is raised to Present (marked by the learner, with the QR note unless
-     * the row already has one). Any other mark is left alone.
-     *
-     * @param \stdClass $existing the row in the attendance table
-     * @param int $userid the scanning learner
-     * @param int $now
-     * @return string SCAN_RECORDED or SCAN_ALREADY
-     */
-    private static function apply_scan_to_existing_row(\stdClass $existing, int $userid, int $now): string {
-        global $DB;
-
-        if ((int) $existing->status !== self::ATT_ABSENT) {
-            return self::SCAN_ALREADY;
-        }
-        $existing->status       = self::ATT_PRESENT;
-        $existing->markedby     = $userid;
-        $existing->notes        = (string) $existing->notes !== '' ? $existing->notes : self::QR_NOTE;
-        $existing->timemodified = $now;
-        $DB->update_record(self::ATTENDANCE_TABLE, $existing);
-        return self::SCAN_RECORDED;
-    }
-
-    /**
-     * Bulk mark attendance for a session.
+     * Bulk mark attendance for a session (the attendance grid's Save).
      *
      * @param int $sessionid
      * @param array $marks  [['userid' => int, 'status' => int, 'notes' => string], ...]
+     * @param int $loadedat unix time the grid was loaded, so a Save cannot wipe out a mark made
+     *                      after that (a QR scan, another trainer): see write_mark(). 0 = no
+     *                      guard, every mark is written (what this method did before).
+     * @param int|null $kept set to how many marks were NOT written because a newer mark stood
+     * @param int[]|null $keptusers set to [userid => status] of the rows that were kept, so
+     *                      the caller can show the learner's real mark
      * @return int Count of rows upserted.
      */
-    public static function bulk_mark_attendance(int $sessionid, array $marks): int {
+    public static function bulk_mark_attendance(int $sessionid, array $marks, int $loadedat = 0,
+                                                 ?int &$kept = null, ?array &$keptusers = null): int {
         global $DB;
 
         $DB->get_record(self::SESSION_TABLE, ['id' => $sessionid], 'id', MUST_EXIST);
 
         $count = 0;
+        $kept = 0;
+        $keptusers = [];
         $tx = $DB->start_delegated_transaction();
         try {
             foreach ($marks as $m) {
@@ -1055,8 +1218,14 @@ class session_manager {
                 $st  = (int) ($m['status'] ?? self::ATT_ABSENT);
                 $notes = (string) ($m['notes'] ?? '');
                 if ($uid <= 0) { continue; }
-                self::mark_attendance($sessionid, $uid, $st, $notes);
-                $count++;
+                self::assert_valid_attendance_status($st);
+                if (self::write_mark($sessionid, $uid, $st, $notes, $loadedat)) {
+                    $count++;
+                } else {
+                    $kept++;
+                    $keptusers[$uid] = (int) $DB->get_field(self::ATTENDANCE_TABLE, 'status',
+                        ['sessionid' => $sessionid, 'userid' => $uid]);
+                }
             }
             $tx->allow_commit();
         } catch (\Throwable $e) {

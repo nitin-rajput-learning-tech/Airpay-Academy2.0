@@ -84,13 +84,24 @@ const saveAttendance = async (sessionid, root) => {
     }
 
     try {
+        // The time this grid was loaded: a learner who scanned the QR code after it keeps
+        // that mark instead of being saved back to Absent (the server decides, see
+        // session_manager::bulk_mark_attendance()).
+        const loadedat = parseInt(root.dataset.loadedat, 10) || 0;
         const response = await Ajax.call([{
             methodname: 'local_sentientia_classroom_bulk_mark_attendance',
-            args: {sessionid: sessionid, marks: marks},
+            args: {sessionid: sessionid, marks: marks, loadedat: loadedat},
         }])[0];
+        // Show the mark that stands for the learners whose newer mark was kept.
+        (response.keptmarks || []).forEach((kept) => {
+            const radio = root.querySelector('tr[data-userid="' + kept.userid + '"] input[type=radio][data-status="'
+                + kept.status + '"]');
+            if (radio) { radio.checked = true; }
+        });
+        recountFromGrid(root);
         Notification.addNotification({
             message: response.message || 'Attendance saved.',
-            type: 'success',
+            type: response.kept > 0 ? 'warning' : 'success',
         });
         setDirty(root, false);
     } catch (e) {

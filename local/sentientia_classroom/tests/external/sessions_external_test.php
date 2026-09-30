@@ -239,5 +239,49 @@ final class sessions_external_test extends \advanced_testcase {
             ['userid' => (int) $b->id, 'status' => 2, 'notes' => 'Late'],
         ]);
         $this->assertSame(2, $resp['marked']);
+        $this->assertSame(0, $resp['kept']);
+        $this->assertSame([], $resp['keptmarks']);
+    }
+
+    public function test_bulk_mark_attendance_keeps_a_mark_made_after_the_grid_was_loaded(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $ids = $this->seed_classroom_and_session();
+        $scanner = $this->getDataGenerator()->create_user();
+        $other = $this->getDataGenerator()->create_user();
+        session_manager::enrol_users($ids['classroomid'], [(int) $scanner->id, (int) $other->id]);
+        // The row a QR scan writes: Present, marked by the learner, after the grid was loaded.
+        $now = time();
+        $DB->insert_record('local_sentientia_classroom_attendance', (object) [
+            'sessionid' => $ids['sessionid'], 'userid' => (int) $scanner->id,
+            'status' => session_manager::ATT_PRESENT, 'markedby' => (int) $scanner->id,
+            'notes' => 'Marked by QR scan', 'timecreated' => $now, 'timemodified' => $now,
+        ]);
+
+        // The grid, loaded 100 seconds ago, shows both learners as Absent and is saved as it is.
+        $marks = [
+            ['userid' => (int) $scanner->id, 'status' => session_manager::ATT_ABSENT, 'notes' => ''],
+            ['userid' => (int) $other->id, 'status' => session_manager::ATT_ABSENT, 'notes' => ''],
+        ];
+        $resp = bulk_mark_attendance::execute($ids['sessionid'], $marks, $now - 100);
+
+        $this->assertSame(1, $resp['marked']);
+        $this->assertSame(1, $resp['kept']);
+        $this->assertSame([['userid' => (int) $scanner->id, 'status' => session_manager::ATT_PRESENT]],
+            $resp['keptmarks']);
+        $this->assertStringContainsString(
+            get_string('attendance_kept_newer', 'local_sentientia_classroom', 1), $resp['message']);
+        $this->assertSame(session_manager::ATT_PRESENT, (int) $DB->get_field(
+            'local_sentientia_classroom_attendance', 'status',
+            ['sessionid' => $ids['sessionid'], 'userid' => $scanner->id]));
+
+        // Older clients send no load time and keep the old behaviour: every mark is written.
+        $resp = bulk_mark_attendance::execute($ids['sessionid'], $marks);
+        $this->assertSame(2, $resp['marked']);
+        $this->assertSame(0, $resp['kept']);
+        $this->assertSame(session_manager::ATT_ABSENT, (int) $DB->get_field(
+            'local_sentientia_classroom_attendance', 'status',
+            ['sessionid' => $ids['sessionid'], 'userid' => $scanner->id]));
     }
 }

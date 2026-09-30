@@ -18,36 +18,29 @@ require_login();
 $sessionid = required_param('sessionid', PARAM_INT);
 $context = context_system::instance();
 
-// Only trainers and admins can generate QR codes.
-//
-// KNOWN GAP (recorded 2026-09-24, deliberately not fixed here): the
-// capability below is the pre-ADR-025 BizLMS name. BizLMS local_classroom
-// declares it (db/access.php: CONTEXT_COURSECAT, no archetype defaults), so on
-// a site that also runs BizLMS, as the current airpay.academy stack does, it
-// passes for whoever was explicitly granted it at system context. Sentientia
-// does not ship local_classroom, so on UAT and on a fresh Sentientia install
-// it is undeclared: has_capability() answers false with a debugging notice
-// and only site admins get past this check. The likely successor is
-// local/sentientia_classroom:attendance; choosing it is an access decision for
-// its own change, not a side effect of a message fix.
-//
-// That is also why the refusal is a plain lang string rather than
-// required_capability_exception: where the capability is undeclared, naming it
-// to the user would send them to ask for a permission nobody can grant. Core's
-// 'nopermissiontoaccesspage' is used rather than a new plugin string because
-// this plugin has no Hindi pack yet, and core's string is already translated.
-// N5: this used to be moodle_exception('nopermission'), a key core does not
-// have, which rendered as the bare identifier "error/nopermission".
-if (!has_capability('local/classroom:takesessionattendance', $context) && !is_siteadmin()) {
-    throw new moodle_exception('nopermissiontoaccesspage');
+// The classroom plugin owns the QR token and the session/tenant rules; without it this
+// page could not show a QR that records anything. (Checked before the capability below
+// because that capability is declared by the same plugin.)
+if (!class_exists('\local_sentientia_classroom\session_manager')) {
+    throw new moodle_exception('invalidaccess');
 }
+
+// Who may show the QR: whoever may take attendance in the Sentientia classroom UI
+// (attendance.php and the bulk_mark_attendance web service check the same capability).
+// It is declared by local_sentientia_classroom (manager and editingteacher by default) and
+// site admins always pass. This used to be the pre-ADR-025 BizLMS capability
+// local/classroom:takesessionattendance, which a Sentientia-only install does not
+// declare, so there only site admins could open this page. The tenant scope is checked
+// below by require_session_access() (ADR-031): holding the capability is not enough to
+// show a QR for another tenant's classroom.
+require_capability('local/sentientia_classroom:attendance', $context);
 
 global $DB, $CFG, $OUTPUT, $PAGE;
 
 $PAGE->set_context($context);
 $PAGE->set_url('/local/sentientia_pages/qr_attendance.php', ['sessionid' => $sessionid]);
-$PAGE->set_title('QR Attendance');
-$PAGE->set_heading('QR Attendance');
+$PAGE->set_title(get_string('qr_show_title', 'local_sentientia_pages'));
+$PAGE->set_heading(get_string('qr_show_title', 'local_sentientia_pages'));
 $PAGE->set_pagelayout('standard');
 
 // Get session info from the Sentientia classroom tables, the same ones qr_scan.php
@@ -59,9 +52,6 @@ $PAGE->set_pagelayout('standard');
 // capability above who is not a site admin can only show a QR for a classroom in
 // their own tenant. A session that does not exist (or whose classroom is gone) gets
 // core's 'invalidaccess', because a QR for it could never record anything.
-if (!class_exists('\local_sentientia_classroom\session_manager')) {
-    throw new moodle_exception('invalidaccess');
-}
 try {
     [$session, $classroom] = \local_sentientia_classroom\session_manager::require_session_access($sessionid);
 } catch (\dml_missing_record_exception $e) {
@@ -72,8 +62,10 @@ if (trim((string) $session->title) !== '') {
     $sessionname .= ' - ' . format_string($session->title);
 }
 
-// Generate a time-limited token (rotates hourly).
-$token = hash('sha256', $sessionid . '|' . date('Y-m-d-H') . '|' . $CFG->passwordsaltmain);
+// Generate a time-limited token (rotates hourly). session_manager signs it with a per-site
+// secret; this page never reads $CFG->passwordsaltmain (a new Moodle install has none, and
+// the token was then guessable).
+$token = \local_sentientia_classroom\session_manager::qr_token($sessionid, time());
 $scanurl = $CFG->wwwroot . '/local/sentientia_pages/qr_scan.php?sessionid=' . $sessionid . '&token=' . $token;
 
 // Generate the QR with core_qrcode (TCPDF's 2D barcode, in Moodle core since 3.9; no
@@ -95,35 +87,39 @@ echo $OUTPUT->header();
 
 <div class="airpay-qr" id="airpay-qr-container">
     <div class="airpay-qr__header">
-        <h2 class="airpay-qr__title"><i class="fa fa-qrcode"></i> Scan to Mark Attendance</h2>
+        <h2 class="airpay-qr__title"><i class="fa fa-qrcode"></i> <?php echo s(get_string('qr_show_heading', 'local_sentientia_pages')); ?></h2>
         <p class="airpay-qr__session"><?php echo $sessionname; // Already escaped by format_string(). ?></p>
     </div>
 
     <div class="airpay-qr__code-wrap">
         <?php if ($qrbase64 !== '') { ?>
-        <img src="data:image/png;base64,<?php echo $qrbase64; ?>" alt="QR Code" class="airpay-qr__code" width="400" height="400">
+        <img src="data:image/png;base64,<?php echo $qrbase64; ?>" alt="<?php echo s(get_string('qr_show_alt', 'local_sentientia_pages')); ?>" class="airpay-qr__code" width="400" height="400">
         <?php } else { ?>
-        <p class="alert alert-danger">The QR code could not be generated. Ask your administrator to check that the PHP GD extension is enabled.</p>
+        <p class="alert alert-danger"><?php echo s(get_string('qr_show_nogd', 'local_sentientia_pages')); ?></p>
         <?php } ?>
     </div>
 
     <div class="airpay-qr__timer" id="airpay-qr-timer">
         <i class="fa fa-clock-o"></i>
-        Refreshes in <strong id="ap-qr-countdown"><?php echo $minutesremaining; ?></strong> minutes
+        <?php // The lang string has no HTML; the number is wrapped here so the countdown script can update it. ?>
+        <?php echo get_string('qr_show_refreshes', 'local_sentientia_pages',
+            '<strong id="ap-qr-countdown">' . (int) $minutesremaining . '</strong>'); ?>
     </div>
 
     <div class="airpay-qr__actions">
-        <button onclick="toggleFullscreen()" class="airpay-qr__btn" title="Fullscreen for projector">
-            <i class="fa fa-expand"></i> Fullscreen
+        <button onclick="toggleFullscreen()" class="airpay-qr__btn" title="<?php echo s(get_string('qr_show_fullscreen_hint', 'local_sentientia_pages')); ?>">
+            <i class="fa fa-expand"></i> <?php echo s(get_string('qr_show_fullscreen', 'local_sentientia_pages')); ?>
         </button>
         <button onclick="window.location.reload()" class="airpay-qr__btn airpay-qr__btn--refresh">
-            <i class="fa fa-refresh"></i> Refresh Now
+            <i class="fa fa-refresh"></i> <?php echo s(get_string('qr_show_refresh', 'local_sentientia_pages')); ?>
         </button>
     </div>
 
     <p class="airpay-qr__meta">
-        Session ID: <?php echo $sessionid; ?> &middot;
-        Generated: <?php echo userdate(time(), '%d %b %Y %I:%M %p'); ?>
+        <?php echo s(get_string('qr_show_meta', 'local_sentientia_pages', (object) [
+            'id' => $sessionid,
+            'time' => userdate(time(), '%d %b %Y %I:%M %p'),
+        ])); ?>
     </p>
 </div>
 

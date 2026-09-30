@@ -142,6 +142,7 @@ $string['no_attendance_yet']         = 'Roster is empty — enrol users first to
 $string['invalidattendancestatus']   = 'Invalid attendance status.';
 $string['toomanymarks']              = 'Too many attendance records in one request (limit 1000).';
 $string['attendance_skipped_outoftenant'] = '{$a} learner(s) outside your organisation were not marked.';
+$string['attendance_kept_newer'] = '{$a} learner(s) were marked by someone else (for example by scanning the QR code) after you opened this page, so their marks were left as they are and are now shown in the grid.';
 
 // Bounds — note: do NOT add a `filterstoolong` translation here; existing
 // list_classrooms_test::test_json_filter_rejects_oversized_payload greps

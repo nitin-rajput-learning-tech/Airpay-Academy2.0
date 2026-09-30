@@ -40,6 +40,11 @@ $PAGE->set_secondary_navigation(false);
 // others (site-admin, approval-flow or pre-fix enrolments). The grid's Save
 // sends a mark for every row it renders, so this also keeps the save inside
 // the tenant; bulk_mark_attendance skips (never refuses) anything else.
+//
+// $loadedat is taken BEFORE the rows are read, and travels with the Save: a learner who
+// scans the QR code after this moment keeps their mark when the trainer saves a grid that
+// still shows them as Absent (session_manager::bulk_mark_attendance()).
+$loadedat = time();
 $rows_obj = \local_sentientia_classroom\session_manager::get_session_attendance($sessionid, true);
 
 // Build template rows with status flags for radio rendering.
@@ -79,6 +84,7 @@ $session_time = userdate((int) $session->starttime, '%a, %d %b %Y · %H:%M')
 
 $data = [
     'sessionid'         => $sessionid,
+    'loadedat'          => $loadedat,
     'classroomid'       => (int) $session->classroomid,
     'classroom_name'    => format_string($classroom->name),
     'session_title'     => format_string($session_title),

@@ -6,6 +6,7 @@
 
     Context vars:
       sessionid          int
+      loadedat           int unix time this grid was read; sent back with Save so a QR scan made after it is kept
       classroomid        int
       classroom_name     string format_string'd
       session_title      string format_string'd
@@ -21,6 +22,7 @@
 }}
 <div data-region="airpay-attendance"
      data-sessionid="{{ sessionid }}"
+     data-loadedat="{{ loadedat }}"
      data-classroomid="{{ classroomid }}">
 
     <div class="ap-page-header d-flex justify-content-between align-items-start mb-3">
