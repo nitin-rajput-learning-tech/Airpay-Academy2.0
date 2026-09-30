@@ -783,3 +783,10 @@ nowhere) and `local/sentientia_evaluation:view` (`response_list.php`, `response_
 nowhere). `PENDING_ELSEWHERE` holds `qr_attendance.php` (fixed on `claude/fixes-0930`); delete that entry
 once the branch has landed. Runs only in the full PHPUnit run (same as `exception_strings_test`). No
 version bump.
+
+## 2026-09-30 - Flag `ux.languageSwitcher.enabled` registered (no version bump)
+
+Persona-pass fix D7 (theme shell bundle). New default-OFF flag in `db/feature_flags.php` (both trees, byte
+identical), category `ux`. Consumer: `theme_sentientia` `language_switcher` (sidebar language switcher). The
+registry cache has a 60 s TTL, so no purge is needed. See `theme_sentientia-state.md` for the owner notes
+(the switcher ignores `$CFG->langmenu`).

@@ -140,6 +140,30 @@ body.path-grade-report-grader {
         max-width: 1280px;     // wider than overview (1080) — grader has more cols
         margin: 0 auto;
         padding: 16px 0 32px;
+
+        /* Persona-pass fix D5b (2026-09-30): stop the grader pushing the page
+           past the viewport. The cause was a float, not the table.
+           - The site-wide rule "#region-main { float: left; width: 100% }"
+             (_moodle-overrides.scss) is the only reason the region has a width.
+           - A legacy override further down that file then sets "width: inherit"
+             for this page, which resolves to "auto" and throws that width
+             away. A floated box with width:auto shrink-wraps its
+             content and cannot go narrower than the table's min-content, so the
+             region measured 677px on a 358px column at a 390px viewport (and
+             815px instead of the full width on desktop). The 25px of page
+             overflow was that region leaking out of the shell.
+           Un-float it and give it the full column back, so the .gradeparent card
+           (overflow-x: auto) scrolls the wide table inside itself. min-width:0
+           lets it shrink below the table; display:block undoes the grade.scss
+           flex column (the table scroller needs no flex parent). Selector
+           specificity beats the two legacy rules above, so neither is touched.
+           Measured on the local trainer gradebook: scrollWidth 415 -> 390 at
+           390px, no change to the desktop layout except the card now spans the
+           column. */
+        float: none;
+        width: 100%;
+        min-width: 0;
+        display: block;
     }
 
     /* Tertiary navigation row (Gradebook nav combobox + Search users + Filter)

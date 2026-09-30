@@ -383,3 +383,9 @@ $string['login_privacy'] = 'प्राइवेसी पॉलिसी';
 $string['login_terms'] = 'उपयोग की शर्तें';
 $string['login_support'] = 'सहायता';
 $string['login_contact'] = 'संपर्क करें';
+
+// Language switcher in the app-shell sidebar (persona-pass fix D7, 2026-09-30).
+// Behind the default-OFF flag ux.languageSwitcher.enabled.
+$string['langswitch_label'] = 'भाषा';
+$string['langswitch_disabled'] = 'भाषा बदलने की सुविधा चालू नहीं है।';
+$string['langswitch_invalid'] = 'यह भाषा उपलब्ध नहीं है।';

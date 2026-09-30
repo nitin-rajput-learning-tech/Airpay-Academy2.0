@@ -275,6 +275,11 @@ class core_renderer extends \core_renderer {
         // hasoptions=false so the block renders nothing (sidebar unchanged).
         $context['roleswitch'] = $this->get_role_switch_options();
 
+        // Language switcher (persona-pass fix D7, 2026-09-30) - behind the
+        // default-OFF flag ux.languageSwitcher.enabled. hasoptions is false
+        // while the flag is off, so the sidebar renders exactly as before.
+        $context['langswitch'] = $this->get_language_switch_options();
+
         // Render the sidebar partial.
         $sidebarhtml = $this->render_from_template('theme_sentientia/sidebar', $context);
 

@@ -593,3 +593,98 @@ The cross-tenant library menu item read "Browse Airpay Library" for every tenant
 admin in the Playwright pass). Nitin: it just says "Browse Library". `nav_browseairpaylibrary` en
 "Browse Library", hi "लाइब्रेरी ब्राउज़ करें". The string id is unchanged; the page it opens was
 already white-label (`{$a->customer}`).
+
+### 2026-09-30 - Persona-pass theme shell bundle (D5, D7, D13), 1.0.58-beta / 2026093001
+
+From `docs/visual-evidence/2026-09-30/personas/TRIAGE.md` (bundle 4, "Theme shell").
+
+**D7 - language switcher (NEW, flag `ux.languageSwitcher.enabled`, default OFF).** The shell had no language
+control: `custom_language_menu()` had no caller and core's own menu needs `$CFG->langmenu` (0 locally).
+- New `classes/language_switcher.php`: `is_enabled()` (flag; fails closed), `get_context($page, $languages)`
+  (data only; empty for guests, flag off, one language, a course or activity that forces its language),
+  `switch_to($lang, $languages)` (validates against the offered list, sets `$SESSION->lang` at once, saves
+  `$USER->lang` through `user_update_user()` unless logged in as someone else or the site removed
+  `moodle/user:editownprofile`).
+- `get_language_switch_options()` in the `user_menu` trait (beside `get_role_switch_options()`); wired into
+  `airpay_shell_start()` (context key `langswitch`) and `layout/dashboard.php` (the dashboard paints its own
+  sidebar copy).
+- New partial `templates/sidebar_langswitch.mustache`, included from `sidebar.mustache` and `dashboard.mustache`
+  inside `.ap-sidebar__footer-actions`, above the dark-mode toggle. A native `<details>`; items reuse the
+  role-switcher item classes. SCSS in `_layout-shell.scss` (hidden when the sidebar is collapsed).
+- New sesskey-checked endpoint `switchlang.php` (refuses while the flag is OFF; redirects back through a
+  `PARAM_LOCALURL` return url with `lang` and `sesskey` stripped; see the review fix-up below, the choice parameter is `code`). Strings `langswitch_label/disabled/invalid` in en, hi, mr, kn, sw.
+- Flag registered in `local_sentientia_platform/db/feature_flags.php` (both trees), category `ux`.
+- **Owner config:** nothing in core. Turn the flag ON in the Switchboard (per customer or tenant). The switcher
+  ignores `$CFG->langmenu` on purpose, so leave that as it is. Languages shown = installed language packs
+  (Site admin > Language > Language packs), narrowed by `$CFG->langlist` if set. The login page and the front
+  page have no switcher in this change.
+
+**D5a - sticky footer.** New `templates/core/sticky_footer.mustache` = core's markup plus the `stickyfooter`
+class. The theme is standalone, so nothing added that class and `gradereport_grader/stickycolspan` threw
+"Cannot read properties of null (reading 'offsetHeight')" on every gradebook view. No positioning added (the
+footer stays the in-flow card `_surface-grade-report.scss` styles). `sticky-footer.scss` gains
+`.stickyfooter.v-hidden` (a Boost-only class that core uses to hide it).
+
+**D5b - grader at 390px.** Root cause was not the table: `_moodle-overrides.scss` floats `#region-main`
+(`float:left; width:100%`) and a later grader override sets `width: inherit` (= auto), so the floated region
+shrink-wrapped to the table's min-content (677px on a 358px column; 815px instead of full width on desktop).
+`_surface-grade-report.scss` now sets `float:none; width:100%; min-width:0; display:block` for
+`body.path-grade-report-grader #region-main`. Measured live on the local trainer gradebook with the CSS
+injected: `scrollWidth` 415 -> 390 at 390px, and the desktop card now spans the column. Evidence in
+`docs/visual-evidence/2026-09-30/theme-shell/`.
+
+**D13 - `course.mustache`** now ends with body and html end tags (the footer partial already emits the
+end-of-body output). Removes the four `Undefined array key 0` warnings core's `footer()` logged per course view.
+
+Tests: `tests/language_switcher_test.php` (11 tests incl. `@group tenant_isolation`). Not yet run (the lead
+re-inits PHPUnit once after all bundles merge). Gates run: php -l, lang parity, tree drift, path boundary,
+mustache comment-leak and end-of-body scanners, scssphp compile of the touched partials.
+
+### 2026-09-30 - Review fix-up to the theme shell bundle, 1.0.58-beta / 2026093002
+
+Closes the must-fix and should-fix items from the bundle review (verdict fix-then-ship).
+
+**Sticky footer regression (was uncommitted in the worktree).** `templates/core/sticky_footer.mustache` now wraps
+the extras loop in `{{$ extradata }}`, as Boost does. Core's `course/format/templates/local/content/bulkedittools`
+extends `core/sticky_footer` with `{{$ disable }} data-disable="true"` and `{{$ extradata }} data-for="bulkedittools"`,
+then calls `component.init('[data-for="bulkedittools"]')`. Without the block the hook was dropped, the component
+never found its element and never called `enableStickyFooter()`, while `core/sticky-footer` found the
+`.stickyfooter` element by class and added `v-hidden`: Bulk edit never showed. `sticky-footer.scss` now has
+`.stickyfooter.v-hidden { display: none; }`, because this theme keeps the footer in normal flow and
+`visibility: hidden` left a blank band the height of the toolbar on every course page in edit mode. **Check after
+deploy:** turn editing on in a course, click Bulk edit, confirm the toolbar appears; with it off, no blank band.
+
+**Language switcher hardening.**
+- The endpoint parameter is now `code`, not `lang`. Core's `lib/setup.php` applies any GET `lang` to
+  `$SESSION->lang` while `config.php` loads, before `switchlang.php` runs, so a `lang` link changed the session
+  language even while the flag was OFF or the sesskey check failed. With `code`, a refused request changes nothing.
+  (Core's own `?lang=xx` on other pages is untouched.)
+- `switchlang.php` sets the page url and system context before `require_sesskey()`, so a sesskey failure renders
+  its error page with a context.
+- `language_switcher::return_url()` also drops `sesskey`, so returning after a switch does not replay a
+  state-changing GET page with a valid key (core's own language menu does replay; this is hardening).
+- Release comment in `version.php` corrected; version bumped to 2026093002 (templates and SCSS changed).
+
+**Tests.** `tests/language_switcher_test.php` (now 12) installs a stub language pack for every non-English code
+in its injected list (`hi`, `sw`) in `setUp()`: a `langconfig.php` under `$CFG->dataroot/lang/<code>`, then
+`get_string_manager()->reset_caches(true)` and `core_user::reset_caches()`. Two tests had relied on an installed
+Hindi pack: `switch_to('hi')` goes through `user_update_user()`, whose `core_user::validate()` accepts `lang` only
+from `get_list_of_translations(false)` (otherwise it logs a debugging notice and cleans `lang` back to the
+default), and `get_html_lang_attribute_value('hi')` runs `clean_param(PARAM_LANG)`. A fresh CI or UAT PHPUnit
+init has only `en`. New cases: the logged-in-as branch of `switch_to()` (session only, profile untouched), and
+assertions that the endpoint link carries `code` and never `lang` and that the return url drops `lang` and
+`sesskey`. Not run here (the lead re-inits PHPUnit once after all bundles merge).
+
+**Owner go-live notes (language switcher).** Install the `hi` language pack on UAT and production (Site admin >
+Language > Language packs); with only `en` installed the switcher hides itself. Optionally narrow the list with
+`$CFG->langlist`. Turn `ux.languageSwitcher.enabled` ON per tenant in the Switchboard. `$CFG->langmenu` is
+ignored on purpose, so it can stay 0.
+
+**Follow-up logged (TRIAGE D7 is not fully closed).** The switcher is in the signed-in shell sidebar only. The
+login page (guest template) and the front page (`layout/frontpage.php`) have none, so a logged-out visitor cannot
+pick a language there. Not done in this bundle.
+
+**Visual evidence still owed after deploy and cache purge** (list in `docs/visual-evidence/2026-09-30/theme-shell/README.md`):
+`grader-after-1440.png`; the trainer gradebook at 390 px (`scrollWidth` 390, no `offsetHeight` console error); a course
+page in edit mode with Bulk edit; the language switcher with the flag ON for a test tenant (desktop, 590 px
+drawer, dashboard plus one other shell page, sidebar expanded and collapsed).

@@ -1182,4 +1182,10 @@ $templatecontext['topbar'] = [
 // a native control. hasoptions is false for single-role users (no UI change).
 $templatecontext['roleswitch'] = $OUTPUT->get_role_switch_options();
 
+// Language switcher (persona-pass fix D7, 2026-09-30) - the dashboard paints
+// its own sidebar copy, so it needs the same data as airpay_shell_start().
+// Behind the default-OFF flag ux.languageSwitcher.enabled (hasoptions false
+// while off, so nothing renders).
+$templatecontext['langswitch'] = $OUTPUT->get_language_switch_options();
+
 echo $OUTPUT->render_from_template('theme_sentientia/dashboard', $templatecontext);

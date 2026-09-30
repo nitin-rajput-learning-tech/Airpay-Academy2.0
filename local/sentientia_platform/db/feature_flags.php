@@ -145,6 +145,25 @@ $flags = [
                           toggle is hidden and everyone sees the light theme.',
     ],
 
+    // Persona-pass fix D7 (2026-09-30): the app shell had no language
+    // control at all (custom_language_menu() had no caller, and core's own
+    // menu is gated on $CFG->langmenu, which is 0 on the local copy).
+    // theme_sentientia\language_switcher reads THIS flag and deliberately
+    // ignores $CFG->langmenu, so the switch is one Switchboard toggle.
+    'ux.languageSwitcher.enabled' => [
+        'default'     => false,
+        'description' => 'Language switcher in the app-shell sidebar (above the
+                          dark-mode toggle). When ON, every logged-in user sees
+                          the installed languages (Site admin > Language packs,
+                          optionally narrowed by "Display language menu" list
+                          $CFG->langlist) and a choice applies at once and is
+                          saved to the user\'s profile language. Independent of
+                          core "Display language menu" ($CFG->langmenu), which
+                          stays as configured. When OFF (default) the sidebar
+                          is unchanged and users keep the language from their
+                          profile or ?lang=xx.',
+    ],
+
     // ─── Sentientia (product-level) category ───────────────────────
     // Session 2 / ADR-002 (2026-05-20) — meta-flag that gates the
     // customer-level resolution layer added for the Sentientia LMS

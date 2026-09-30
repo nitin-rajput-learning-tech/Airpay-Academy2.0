@@ -458,3 +458,9 @@ $string['login_privacy'] = 'Privacy Policy';
 $string['login_terms'] = 'Terms of Use';
 $string['login_support'] = 'Support';
 $string['login_contact'] = 'Contact us';
+
+// Language switcher in the app-shell sidebar (persona-pass fix D7, 2026-09-30).
+// Behind the default-OFF flag ux.languageSwitcher.enabled.
+$string['langswitch_label'] = 'Language';
+$string['langswitch_disabled'] = 'The language switcher is not turned on.';
+$string['langswitch_invalid'] = 'That language is not available.';

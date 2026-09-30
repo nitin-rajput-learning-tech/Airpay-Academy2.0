@@ -59,3 +59,16 @@ body {
         }
     }
 }
+
+/* Persona-pass fix D5a (2026-09-30): templates/core/sticky_footer.mustache now
+   gives the sticky footer element the "stickyfooter" class that core/sticky-footer
+   looks for. Core adds v-hidden to it when a page asks for the footer to be
+   disabled; only Boost defined that class, so define it for the same element. */
+.stickyfooter.v-hidden {
+    /* display:none, not visibility:hidden. Boost can get away with hiding it
+       because its footer is fixed-position and out of flow. This theme keeps the
+       footer in normal flow, so a merely invisible one would leave a blank band
+       the height of the toolbar at the foot of the page (seen on every course
+       page in edit mode, where core passes data-disable until Bulk edit is used). */
+    display: none;
+}

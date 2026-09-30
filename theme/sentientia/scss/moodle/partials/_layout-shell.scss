@@ -334,6 +334,85 @@ a.ap-sidebar__roleswitch-item:hover {
     flex-shrink: 0;
 }
 
+/* ── Language switcher in sidebar footer (persona-pass fix D7) ──────────
+   A native <details> disclosure sitting above the dark-mode toggle inside
+   .ap-sidebar__footer-actions: a summary row that looks like the theme
+   button, and a list that reuses the role-switcher item styles. Only
+   rendered while the default-OFF flag ux.languageSwitcher.enabled is ON
+   (sidebar_langswitch.mustache). Motion uses the reduced-motion-aware
+   tokens. Hidden when the sidebar is collapsed, like the role switcher. */
+.ap-sidebar__langswitch {
+    margin-bottom: 6px;
+}
+
+.ap-sidebar__langswitch-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    list-style: none;
+    transition: background-color var(--ap-transition-quick),
+                color var(--ap-transition-quick);
+}
+.ap-sidebar__langswitch-toggle::-webkit-details-marker {
+    display: none;
+}
+.ap-sidebar__langswitch-toggle::marker {
+    content: "";
+}
+.ap-sidebar__langswitch-toggle:hover,
+.ap-sidebar__langswitch[open] > .ap-sidebar__langswitch-toggle {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.8);
+}
+.ap-sidebar__langswitch-toggle:focus-visible {
+    outline: 2px solid var(--ap-color-primary, #0066a7);
+    outline-offset: 2px;
+}
+
+.ap-sidebar__langswitch-icon {
+    font-size: 14px;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.ap-sidebar__langswitch-current {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ap-sidebar__langswitch-caret {
+    font-size: 10px;
+    flex-shrink: 0;
+    transition: transform var(--ap-transition-quick);
+}
+.ap-sidebar__langswitch[open] .ap-sidebar__langswitch-caret {
+    transform: rotate(180deg);
+}
+
+.ap-sidebar__langswitch-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 6px;
+}
+
+.ap-sidebar[data-collapsed="true"] .ap-sidebar__langswitch {
+    display: none;
+}
+
 /* ── User Footer ───────────────────────────────── */
 .ap-sidebar__user {
     border-top: 1px solid rgba(255, 255, 255, 0.06);
