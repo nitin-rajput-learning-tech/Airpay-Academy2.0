@@ -284,3 +284,38 @@ withheld course; the in-tenant end-to-end test asserts no refund line; new
 - The ADR-031 refund-due note names the order: "ADR-031: order #N: payment recorded, ...".
 - Test: `test_a_gateway_failure_note_with_markup_does_not_break_the_order_lists`; the refund-note test
   asserts the order number.
+
+### 2026-09-30 - persona pass D1: `:purchase` reaches the authenticated-user role (1.0.5 / 2026093001)
+
+Persona pass finding D1 (P0): a real public (/77) or ZEEA (/177) learner holds no system role but
+Authenticated user. The role held `local/sentientia_cart:view` (cart page and order history opened)
+and NOT `:purchase`, so add-to-cart, remove and checkout were refused with `nopermissions` while the
+cart looked enabled. `db/access.php` already listed the `user` archetype (and the README said so), but
+Moodle applies archetype defaults only when a capability is FIRST registered, so a site that registered
+it earlier never got the grant. `employee`-role users (e.g. `vp_learner177`) could buy, which is why
+the ZEEA cart step passed.
+
+- New `db/upgradelib.php::local_sentientia_cart_backfill_user_purchase()`: every role of archetype
+  `user` (plus the role with shortname `user`) gets ALLOW for `:purchase` at system context ONLY where it
+  has no setting yet. An existing ALLOW, and an administrator's PREVENT or PROHIBIT, are never touched;
+  idempotent; only `:purchase` is granted (`:viewallorders`, `:refund`, `:manageprices` are not); the
+  guest role, the student archetype and custom roles are left alone.
+- `db/upgrade.php` step `2026093001` calls it; `db/install.php` calls it after the rolemap so a fresh
+  install and an upgraded site end identically. Comment added to `db/access.php`; README updated.
+- Owner decision (Nitin, 2026-09-30, "as recommended"): buying stays gated exactly where it was -
+  `cart_manager::is_enabled_for_user()` (`enabled_tenants`) and the ADR-031 catalogue purchase gate
+  (`cart_manager::can_buy_course()`); holding the capability widens nothing.
+- New `tests/purchase_capability_backfill_test.php` (`@group tenant_isolation`, 13 tests): grant,
+  before/after `has_capability` for a /77 learner, idempotence, PREVENT and PROHIBIT stand, existing
+  ALLOW untouched, other archetypes and the other cart capabilities untouched, guest still refused, a
+  /77 learner can add their own course through the web service and is still refused a /1 or /177 course
+  (`error_courseunavailable`), `enabled_tenants` still refuses a tenant it is off for, refusal by
+  capability without the back-fill, access.php/upgrade/install/version wiring. NOT RUN (low-CPU
+  mode); PHPUnit needs a re-init first because the plugin version changed.
+- The storefront-basket to order-cart bridge that makes this reachable from `cart.php` lives in
+  `local_sentientia_catalog` (`classes/checkout_bridge.php`, flag
+  `sentientia.catalog.storefront_checkout.enabled`, default OFF). Commerce stays dark at go-live: keep the
+  flag OFF until the payment gateway has been verified in sandbox.
+- UAT: after upgrade, `local/sentientia_cart:purchase` on role `user` should read ALLOW under
+  Site administration > Users > Permissions > Define roles; re-run the public77 cart steps (#81-#83).
+  Both trees.

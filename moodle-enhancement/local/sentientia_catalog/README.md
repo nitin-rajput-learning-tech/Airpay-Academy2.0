@@ -22,6 +22,31 @@ for non-logged-in browsing.
 - Commerce overlay: courses with a price tag show a "Add to cart"
   button when viewed by a cart-enabled tenant.
 
+## Storefront basket to order cart (flag, default OFF)
+
+The storefront basket (`cart.php`, kept in the session) holds courses before
+anyone logs in. For a paid course it has always ended in a disabled "Payment
+Coming Soon" button. With `sentientia.catalog.storefront_checkout.enabled` ON
+(per tenant or customer-wide from the Switchboard), a logged-in buyer who holds
+`local/sentientia_cart:purchase`, in a tenant the cart is enabled for
+(`enabled_tenants`), sees "Proceed to checkout" instead.
+`classes/checkout_bridge.php` hands each PAID line to
+`\local_sentientia_cart\cart_manager::add_item()` and redirects to
+`/local/sentientia_cart/checkout.php`:
+
+- The order cart decides, not the storefront. `add_item()` applies the ADR-031
+  catalogue purchase gate (a course the buyer's own catalogue does not show is
+  refused), the price (the enabled `enrol_fee` instance; the storefront's
+  `course_price_<id>` setting is only what the basket displayed, so a course
+  priced only there is refused, never given a price) and "not already enrolled".
+  `checkout()` and `mark_paid()` repeat the purchase gate later.
+- A refused line stays in the basket and the buyer is told how many. A line for a
+  course the buyer is already enrolled in is dropped from the basket. Free lines
+  are never touched (they enrol through "Enroll in All (Free)").
+- Flag OFF, a guest, a buyer without `:purchase`, or a tenant the cart is off
+  for: `cart.php` renders exactly as before.
+- Keep it OFF until the payment gateway has been verified in sandbox.
+
 ## Tables
 
 None of its own — reads from `mdl_course`, `mdl_tag`, plus the airpay

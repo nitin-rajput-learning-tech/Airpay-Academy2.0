@@ -25,10 +25,15 @@ $plugin->component = 'local_sentientia_catalog';
 // ADR-031 (2026-09-25) — tenant resolution fails closed: only a cross-tenant
 // viewer is unscoped; guests are the Public tenant; an unresolved tenant sees
 // and enrols in nothing. Purge local_sentientia_catalog caches on deploy.
-$plugin->version   = 2026092500;  // ADR-031: catalog tenant gate fails closed (no schema/cap change)
+// Persona pass D2 (2026-09-30) — storefront basket -> order cart hand-off: new
+// classes/checkout_bridge.php, flag sentientia.catalog.storefront_checkout.enabled
+// (default OFF, db/feature_flags.php), cart.php "Proceed to checkout" branch and
+// action, +6 lang strings (en + hi). OFF: cart.php is unchanged. No schema/cap change.
+// Purge local_sentientia_catalog caches and the string cache on deploy.
+$plugin->version   = 2026093001;  // D2: storefront checkout bridge behind a default-OFF flag (no schema/cap change)
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.5-beta';
+$plugin->release   = '1.0.6-beta';
 // tenant::is_cross_tenant() arrived in platform 2026092500 (ADR-031).
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026092500,

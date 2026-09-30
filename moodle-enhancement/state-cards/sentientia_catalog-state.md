@@ -235,3 +235,39 @@ wave 1 still need to be carried to UAT:
 
 The run of `tests/tenant_gate_test.php` in the tenant_isolation group on MariaDB and PostgreSQL
 has not happened yet.
+
+## 2026-09-30 - persona pass D2: storefront basket hands its paid lines to the order cart (1.0.6-beta / 2026093001)
+
+Persona pass finding D2 (P0): the storefront session basket (`cart.php`) ended every paid course in a
+disabled "Payment Coming Soon" button; nothing carried its lines to the order cart
+(`local_sentientia_cart`), where billing, the gateway, the invoice and the enrolment on payment live.
+
+- New `classes/checkout_bridge.php`, behind the new default-OFF flag
+  `sentientia.catalog.storefront_checkout.enabled` (registered in `db/feature_flags.php`; per tenant or
+  customer-wide). `can_hand_off($user)`: real login (never the guest), flag ON for the user's tenant, the
+  order cart installed, `local/sentientia_cart:purchase`, and `cart_manager::is_enabled_for_user()`.
+  `hand_off($userid)`: each PAID basket line goes through `cart_manager::add_item()`, so the ADR-031
+  purchase gate still refuses a course the buyer's catalogue does not show, a course with no enabled
+  `enrol_fee` instance is refused rather than priced, and an already-enrolled course is dropped. Added and
+  already-enrolled lines leave the basket; refused lines stay. Free lines are never touched.
+- `cart.php`: a `checkout` action (sesskey-checked, ignored unless `can_hand_off()`) and a "Proceed to
+  checkout" branch that replaces the disabled button only when `can_hand_off()`; the buyer lands on
+  `/local/sentientia_cart/checkout.php` with notifications for what moved, what stayed and what was dropped.
+  Flag OFF, a guest, a buyer without `:purchase`, or a tenant the cart is off for: `cart.php` renders
+  exactly as before (the flag-off path adds one flag lookup for a logged-in buyer with a paid line).
+- Two price sources, unchanged: the basket DISPLAYS `course_price_<id>` (catalog config) while the order
+  cart CHARGES the `enrol_fee` instance. The buyer sees the order cart's price on the checkout page before
+  paying; a course priced only on the storefront is refused. Worth unifying when commerce goes live.
+- +6 lang strings (`storefront_checkout_*`, en + hi). README section added. Owner decision (Nitin,
+  2026-09-30): bridge built now, stays OFF until the payment gateway sandbox is verified.
+- New `tests/storefront_checkout_test.php` (`@group tenant_isolation`, 21 tests): flag registered and
+  default OFF, OFF means nobody can hand off, per-tenant scope, capability and `enabled_tenants` gates,
+  guest refused, paid lines move and free lines stay, another tenant's course (/1, /177) still refused
+  from a /77 basket, a guest-built /77 basket refused for a /1 learner, storefront-only price refused,
+  already-enrolled dropped, idempotent, empty/all-free basket, the handed-over cart checks out,
+  `next_url()`, `notify()`, `cart.php` wiring, en/hi strings, version. NOT RUN (low-CPU mode); PHPUnit
+  needs a re-init first because the plugin version changed.
+- Visual evidence NOT captured: the served tree was not touched (low-CPU mode). The flag-ON basket
+  (button, hint, and the notifications on the checkout page) needs desktop + 590 px screenshots to
+  `docs/visual-evidence/<date>/` before the flag is ever flipped; flag OFF is unchanged.
+- Deploy: purge caches (string cache and the feature-flag registry). Both trees.

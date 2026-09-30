@@ -23,6 +23,12 @@ $capabilities = [
     ],
 
     // Add to cart, place orders.
+    // The `user` archetype (Authenticated user) is the only role a real public
+    // (/77) or ZEEA (/177) learner holds. Archetype defaults apply only on a
+    // capability's FIRST registration, so a site that registered it earlier is
+    // given the grant by upgrade step 2026093001 (db/upgradelib.php). Buying is
+    // still gated by the enabled_tenants setting and the ADR-031 catalogue
+    // purchase gate (cart_manager::can_buy_course()), not by this capability.
     'local/sentientia_cart:purchase' => [
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,

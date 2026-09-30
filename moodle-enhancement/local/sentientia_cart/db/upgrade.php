@@ -42,5 +42,20 @@ function xmldb_local_sentientia_cart_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051201, 'local', 'sentientia_cart');
     }
 
+    // ── 2026093001 — D1 (persona pass 2026-09-30): purchase for the user role ──
+    //
+    // db/access.php lists the `user` archetype for :purchase, but a site that
+    // registered the capability earlier never got the grant (archetype defaults
+    // apply on first registration only), so a real public (/77) or ZEEA (/177)
+    // learner - who holds no system role but Authenticated user - could open the
+    // cart and was refused at add-to-cart and checkout. Fill the gap; buying is
+    // still gated by enabled_tenants and the ADR-031 catalogue purchase gate.
+    // Never overrides a PREVENT / PROHIBIT; idempotent. See db/upgradelib.php.
+    if ($oldversion < 2026093001) {
+        require_once(__DIR__ . '/upgradelib.php');
+        local_sentientia_cart_backfill_user_purchase();
+        upgrade_plugin_savepoint(true, 2026093001, 'local', 'sentientia_cart');
+    }
+
     return true;
 }

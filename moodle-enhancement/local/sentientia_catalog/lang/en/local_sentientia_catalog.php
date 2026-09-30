@@ -47,3 +47,12 @@ $string['enrol_now_free'] = 'Enrol now — free';
 $string['enrolled_welcome'] = 'You\'re enrolled — welcome to the course!';
 $string['enrolled_count'] = 'Enrolled in {$a} free course(s)!';
 $string['enrolled_none'] = 'We couldn\'t complete your free enrolment. Please try again or contact your administrator.';
+
+// Persona pass D2 (2026-09-30) — storefront basket to order cart hand-off
+// (flag sentientia.catalog.storefront_checkout.enabled, default OFF).
+$string['storefront_checkout_button'] = 'Proceed to checkout';
+$string['storefront_checkout_hint'] = 'Your paid courses move to your order cart, where you confirm your billing details and choose how to pay.';
+$string['storefront_checkout_moved'] = '{$a} course(s) moved to checkout.';
+$string['storefront_checkout_refused'] = '{$a} course(s) could not be moved to checkout and are still in your basket. They may not be on sale online yet, or may not be available to your account.';
+$string['storefront_checkout_redundant'] = '{$a} course(s) were removed from your basket because you are already enrolled.';
+$string['storefront_checkout_nothing'] = 'None of the paid courses in your basket could be moved to checkout.';

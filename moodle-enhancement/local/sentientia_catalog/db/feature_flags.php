@@ -50,4 +50,24 @@ $flags = [
                           unblock employees. See classes/enrolment.php.',
     ],
 
+    'sentientia.catalog.storefront_checkout.enabled' => [
+        'default'     => false,
+        'description' => 'Storefront basket to order cart hand-off (persona
+                          pass D2, 2026-09-30). When OFF (default) a basket
+                          holding a paid course ends in a disabled "Payment
+                          Coming Soon" button on cart.php - exactly today\'s
+                          behaviour. When ON, a logged-in buyer who holds
+                          local/sentientia_cart:purchase, in a tenant the
+                          cart is enabled for (enabled_tenants), sees
+                          "Proceed to checkout" instead: the basket\'s paid
+                          lines are added to the order cart
+                          (cart_manager::add_item(), which applies the
+                          ADR-031 catalogue purchase gate and the enrol_fee
+                          price) and the buyer lands on the order cart\'s
+                          checkout page. A line the buyer may not buy stays
+                          in the basket. Leave OFF until the payment gateway
+                          has been verified in sandbox. See
+                          classes/checkout_bridge.php.',
+    ],
+
 ];

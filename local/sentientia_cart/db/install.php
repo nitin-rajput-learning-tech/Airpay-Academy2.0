@@ -6,7 +6,8 @@ defined('MOODLE_INTERNAL') || die();
 
 /**
  * Post-install hook. Grants capabilities to Airpay custom roles
- * (`employee`, `administrator`) that aren't Moodle archetypes.
+ * (`employee`, `administrator`) that aren't Moodle archetypes, then makes sure
+ * the authenticated-user role holds :purchase (see the end of this function).
  */
 function xmldb_local_sentientia_cart_install(): void {
     global $DB;
@@ -49,4 +50,14 @@ function xmldb_local_sentientia_cart_install(): void {
             assign_capability($cap, $permission, $role->id, $context->id, true);
         }
     }
+
+    // D1 (persona pass 2026-09-30): a public-storefront or ZEEA learner holds no
+    // role but Authenticated user, so that role must hold :purchase for them to
+    // buy. db/access.php lists the `user` archetype, but archetype defaults are
+    // applied only when a capability is first registered, and the upgrade path
+    // has its own back-fill (step 2026093001). Fresh installs go through the
+    // same helper so both paths end identically; it never overrides an
+    // administrator's PREVENT / PROHIBIT and only fills a missing grant.
+    require_once(__DIR__ . '/upgradelib.php');
+    local_sentientia_cart_backfill_user_purchase();
 }
