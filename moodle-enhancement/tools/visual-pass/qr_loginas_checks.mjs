@@ -5,6 +5,9 @@
 //   qr_scan.php        the result states a learner can land on
 //   qr_attendance.php  the trainer's QR page with the "classroom - session title" heading
 //   profile header     "Log in as" shown for a learner, hidden for a site admin and a suspended user
+// Second review pass added 12-20: the session window (12, 13), the trainer's mark winning (14),
+// the old salt-free token refused (15), who may show the QR (16, 17, 20), the Hindi pack (18) and
+// the trainer's grid Save keeping a newer QR mark (19, two browser sessions).
 //
 // Needs the data file written by seed_qr_evidence.php (session ids, tokens, user ids).
 //
@@ -72,15 +75,25 @@ async function goto(page, url) {
 }
 
 async function session(persona) {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: 'block' });
-  const page = await context.newPage();
-  page.setDefaultTimeout(240000);
-  await goto(page, '/login/index.php');
-  await page.fill('#username', persona);
-  await page.fill('#password', creds[persona].password);
-  await page.click('#loginbtn', { noWaitAfter: true });
-  await page.waitForURL(u => !/\/login\/index\.php/.test(String(u)), { timeout: 240000 });
-  return { context, page };
+  // The local Apache is restarted by its watchdog now and then (and answers with a reset while
+  // it does), so a failed login is tried again a few times before the persona is given up.
+  for (let attempt = 1; ; attempt++) {
+    const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: 'block' });
+    try {
+      const page = await context.newPage();
+      page.setDefaultTimeout(240000);
+      await goto(page, '/login/index.php');
+      await page.fill('#username', persona);
+      await page.fill('#password', creds[persona].password);
+      await page.click('#loginbtn', { noWaitAfter: true });
+      await page.waitForURL(u => !/\/login\/index\.php/.test(String(u)), { timeout: 240000 });
+      return { context, page };
+    } catch (e) {
+      await context.close();
+      if (attempt >= 4) throw e;
+      await new Promise(r => setTimeout(r, 45000));
+    }
+  }
 }
 
 // Log in as a persona, run fn(page), and never let one persona's failure stop the others.
@@ -141,17 +154,40 @@ async function scan(page, name, label, url, expectHeading, expectBodyPart) {
 }
 
 // Learner in /1 (on the roster of the active classroom and the cancelled one).
-await asPersona(['01', '02', '03', '04', '05'], 'vp_learner1', async page => {
-  await scan(page, '01-scan-recorded', '01 learner on the roster, valid token: recorded',
+await asPersona(['01', '02', '03', '04', '05', '12', '13', '14', '15', '18'], 'vp_learner1', async page => {
+  await scan(page, '01-scan-recorded', '01 learner on the roster, valid token, inside the window: recorded',
     scanUrl(DATA.sessionA), 'Attendance Marked!', 'successfully recorded');
   await scan(page, '02-scan-already-marked', '02 same learner scans again: already marked, nothing written',
-    scanUrl(DATA.sessionA), 'Already Marked', 'already been recorded');
+    scanUrl(DATA.sessionA), 'Already Marked', 'already been marked');
+  // The wording must not claim the attendance was recorded (the mark may be the trainer's, or Absent).
+  if (want('02')) {
+    const again = results.find(r => num(r) === '02');
+    if (again && /recorded/.test(again.body)) { again.pass = false; record(again); }
+  }
+  await scan(page, '12-scan-before-window', '12 QR code for a session that starts tomorrow: not open yet, nothing written',
+    scanUrl(DATA.sessionC), 'Attendance Not Open Yet', 'opens at');
+  await scan(page, '13-scan-after-window', '13 QR code for yesterday\'s session: closed, nothing written',
+    scanUrl(DATA.sessionD), 'Attendance Closed', 'closed at');
+  await scan(page, '14-scan-trainer-marked-absent', '14 the trainer marked this learner Absent: a scan changes nothing',
+    scanUrl(DATA.sessionE), 'Already Marked', 'already been marked');
+  await scan(page, '15-scan-old-saltfree-token', '15 the old salt-free sha256 token: refused as expired',
+    scanUrl(DATA.sessionA, DATA.sessionA.saltfreetoken), 'QR Code Expired', 'has expired');
   await scan(page, '03-scan-expired-token', '03 old or forged token: QR code expired',
     scanUrl(DATA.sessionA, DATA.expiredtoken), 'QR Code Expired', 'has expired');
   await scan(page, '04-scan-classroom-cancelled', '04 classroom is cancelled: refused, nothing written',
     scanUrl(DATA.sessionB), 'Classroom Cancelled', 'has been cancelled');
   await scan(page, '05-scan-session-not-found', '05 session id with no session (valid token for that id)',
     scanUrl(DATA.missing), 'Session Not Found', 'no longer exists');
+  // Last on purpose: ?lang=hi switches the language for the rest of this browser session.
+  if (want('18')) {
+    await open(page, scanUrl(DATA.sessionA) + '&lang=hi');
+    const t = await alertText(page);
+    await shots(page, '18-scan-already-marked-hindi');
+    record({
+      check: '18 the same scan in Hindi: the text comes from the new lang/hi pack', heading: t.heading, body: t.body,
+      pass: t.heading === 'पहले से दर्ज है' && t.body.includes('पहले ही दर्ज'),
+    });
+  }
 });
 
 // /1 user who is not on the roster.
@@ -200,6 +236,96 @@ await asPersona(['08', '09', '10', '11'], 'vp_siteadmin', async page => {
   await loginasInfo(DATA.users.suspended, '11-profile-loginas-hidden-for-suspended',
     '11 site admin viewing a suspended user: no "Log in as"', false);
 });
+
+// What the trainer's QR page shows, or why it refused.
+async function qrPageState(page) {
+  return page.evaluate(() => {
+    const img = document.querySelector('img.airpay-qr__code');
+    const s = document.querySelector('.airpay-qr__session');
+    const main = document.querySelector('#region-main, [role=main]') || document.body;
+    return {
+      session: s ? s.textContent.trim() : '',
+      qrRendered: !!(img && img.complete && img.naturalWidth > 0),
+      pageText: (main.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 240),
+    };
+  });
+}
+
+// Who may show the QR: local/sentientia_classroom:attendance, inside the caller's tenant (ADR-031).
+await asPersona(['16'], 'vp_admin1', async page => {
+  await open(page, `/local/sentientia_pages/qr_attendance.php?sessionid=${DATA.sessionA.id}`);
+  const st = await qrPageState(page);
+  await shots(page, '16-qr-attendance-tenant-admin');
+  record({
+    check: '16 tenant admin /1 (holds :attendance, is not a site admin): the QR page opens for a /1 classroom',
+    session: st.session, qrRendered: st.qrRendered,
+    pass: st.qrRendered && /^VP Evidence QR classroom - Day 1/.test(st.session),
+  });
+});
+await asPersona(['17'], 'vp_admin177', async page => {
+  await open(page, `/local/sentientia_pages/qr_attendance.php?sessionid=${DATA.sessionA.id}`);
+  const st = await qrPageState(page);
+  await shots(page, '17-qr-attendance-other-tenant-admin-refused');
+  record({
+    check: '17 tenant admin /177 (holds :attendance, wrong tenant): refused, no QR for a /1 classroom',
+    qrRendered: st.qrRendered, pageText: st.pageText, pass: !st.qrRendered && st.pageText.length > 0,
+  });
+});
+await asPersona(['20'], 'vp_learner177', async page => {
+  await open(page, `/local/sentientia_pages/qr_attendance.php?sessionid=${DATA.sessionA.id}`);
+  const st = await qrPageState(page);
+  await shots(page, '20-qr-attendance-learner-refused');
+  record({
+    check: '20 learner (no :attendance): refused, no QR',
+    qrRendered: st.qrRendered, pageText: st.pageText,
+    pass: !st.qrRendered && /permission/i.test(st.pageText),
+  });
+});
+
+// 19: the trainer's grid Save against a QR scan that landed after the grid was loaded.
+if (want('19')) {
+  let trainerCtx = null;
+  let learnerCtx = null;
+  try {
+    const t = await session('vp_admin1');
+    trainerCtx = t.context;
+    await open(t.page, `/local/sentientia_classroom/attendance.php?sessionid=${DATA.sessionF.id}`);
+    const presentChecked = uid => t.page.evaluate(id => {
+      const r = document.querySelector(`tr[data-userid="${id}"] input[data-status="1"]`);
+      return r ? r.checked : null;
+    }, uid);
+    const before = await presentChecked(DATA.users.learner1);
+
+    // The learner scans AFTER the trainer's grid was loaded (it still shows them as Absent).
+    const l = await session('vp_learner1');
+    learnerCtx = l.context;
+    await open(l.page, scanUrl(DATA.sessionF));
+    const scanHeading = (await alertText(l.page)).heading;
+    await learnerCtx.close();
+    learnerCtx = null;
+
+    // The trainer saves the grid as it is.
+    await t.page.click('[data-action="save-attendance"]');
+    await t.page.waitForFunction(() => /marked by someone else/.test(document.body.innerText), null, { timeout: 120000 });
+    const after = await presentChecked(DATA.users.learner1);
+    const note = await t.page.evaluate(() => {
+      const n = document.querySelector('#user-notifications .alert, [data-region="notifications"] .alert');
+      return n ? n.textContent.replace(/\s+/g, ' ').trim() : '';
+    });
+    await shots(t.page, '19-grid-save-keeps-qr-mark');
+    record({
+      check: '19 trainer saves a grid loaded before a QR scan: the learner stays Present and the grid says so',
+      scanHeading, presentBeforeSave: before, presentAfterSave: after, notification: note,
+      pass: scanHeading === 'Attendance Marked!' && before === false && after === true
+        && /marked by someone else/.test(note),
+    });
+  } catch (e) {
+    record({ check: '19 (grid save versus scan)', pass: false, error: String(e).split('\n')[0].slice(0, 300) });
+  } finally {
+    if (learnerCtx) await learnerCtx.close();
+    if (trainerCtx) await trainerCtx.close();
+  }
+}
 
 await browser.close();
 const failed = results.filter(r => !r.pass).length;

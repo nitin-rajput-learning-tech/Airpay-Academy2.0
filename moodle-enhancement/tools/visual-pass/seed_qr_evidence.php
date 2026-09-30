@@ -7,16 +7,25 @@
  * checks need (docs/visual-evidence/2026-09-30/qr-and-loginas/README.md).
  * Refuses unless wwwroot is localhost, so it can never touch UAT or production.
  *
- * Creates (or reuses) two classrooms in tenant /1 and adds a NEW session to each on
- * every run, so every run starts with no attendance rows:
+ * Creates (or reuses) two classrooms in tenant /1 and adds NEW sessions to them on
+ * every run, so every run starts with no attendance rows (except the one seeded on
+ * purpose, sessionE):
  *   - "VP Evidence QR classroom"            active; roster vp_learner1 + vp_learner177
+ *       sessionA  running now (the window is open)
+ *       sessionC  tomorrow (the window has not opened)
+ *       sessionD  yesterday (the window has closed)
+ *       sessionE  running now, with vp_learner1 already marked ABSENT by the trainer
+ *       sessionF  running now, for the trainer-grid-versus-QR-scan check
  *   - "VP Evidence QR cancelled classroom"  cancelled; roster vp_learner1
+ *       sessionB  running now
  * and, if missing, one suspended account, vp_suspended1 (a new test account that
  * is never logged in to; its password is random and is not kept).
  *
  * Writes a JSON file (--out=<path>, put it OUTSIDE the repo: it holds valid scan
  * tokens) with the session ids, their hourly QR tokens, an id that has no session,
- * and the user ids qr_loginas_checks.mjs needs.
+ * and the user ids qr_loginas_checks.mjs needs. The tokens come from
+ * session_manager::qr_token(), which signs with the per-site secret (it is created on
+ * first use); the file also holds the OLD salt-free sha256 token, which must be refused.
  *
  *   php seed_qr_evidence.php --out=<file.json>        (cwd = moodle5/public)
  *   php seed_qr_evidence.php --report=<file.json>     print the attendance rows of those sessions
@@ -45,7 +54,10 @@ global $DB;
 
 if ($options['report'] !== '') {
     $data = json_decode(file_get_contents($options['report']), true);
-    foreach (['sessionA', 'sessionB'] as $key) {
+    foreach (['sessionA', 'sessionB', 'sessionC', 'sessionD', 'sessionE', 'sessionF'] as $key) {
+        if (empty($data[$key]['id'])) {
+            continue;
+        }
         $rows = $DB->get_records_sql(
             "SELECT a.id, a.userid, u.username, a.status, a.markedby, a.notes
                FROM {local_sentientia_classroom_attendance} a
@@ -114,8 +126,8 @@ $classroom = function (string $name, int $status) use ($DB): int {
         'timecreated' => time(), 'timemodified' => time(),
     ]);
 };
-$newsession = function (int $classroomid, string $title): int {
-    $start = time();
+$newsession = function (int $classroomid, string $title, int $offset = 0): int {
+    $start = time() + $offset;
     return (int) session_manager::create_session($classroomid, (object) [
         'title' => $title, 'starttime' => $start, 'endtime' => $start + HOURSECS,
     ]);
@@ -129,14 +141,31 @@ session_manager::enrol_users($cancelled, [(int) $learner->id]);
 $run = userdate(time(), '%d %b %H:%M');
 $sa = $newsession($active, "Day 1 ({$run})");
 $sb = $newsession($cancelled, "Day 1 ({$run})");
+$sc = $newsession($active, "Tomorrow ({$run})", DAYSECS);
+$sd = $newsession($active, "Yesterday ({$run})", -DAYSECS);
+$se = $newsession($active, "Marked Absent by trainer ({$run})");
+$sf = $newsession($active, "Grid vs scan ({$run})");
 $missing = (int) $DB->get_field_sql('SELECT MAX(id) FROM {local_sentientia_classroom_sessions}') + 100000;
 
-$salt = $CFG->passwordsaltmain ?? '';
-$token = fn(int $sid): string => hash('sha256', $sid . '|' . date('Y-m-d-H') . '|' . $salt);
+// The trainer (vp_manager1 stands in) marks vp_learner1 Absent on session E, the way the
+// attendance grid does for a learner nobody ticked. The owner decision: a scan never changes it.
+\core\session\manager::set_user($manager);
+session_manager::mark_attendance($se, (int) $learner->id, session_manager::ATT_ABSENT);
+\core\session\manager::set_user(get_admin());
+
+// The same token the trainer's QR page shows (per-site secret, current hour).
+$token = fn(int $sid): string => session_manager::qr_token($sid, time());
+// What the page accepted before 2026-09-30 on an install with no $CFG->passwordsaltmain:
+// a plain sha256 anybody could compute. It must now be refused.
+$saltfree = fn(int $sid): string => hash('sha256', $sid . '|' . date('Y-m-d-H') . '|');
 
 $out = [
-    'sessionA' => ['id' => $sa, 'token' => $token($sa)],
+    'sessionA' => ['id' => $sa, 'token' => $token($sa), 'saltfreetoken' => $saltfree($sa)],
     'sessionB' => ['id' => $sb, 'token' => $token($sb)],
+    'sessionC' => ['id' => $sc, 'token' => $token($sc)],
+    'sessionD' => ['id' => $sd, 'token' => $token($sd)],
+    'sessionE' => ['id' => $se, 'token' => $token($se)],
+    'sessionF' => ['id' => $sf, 'token' => $token($sf)],
     'missing' => ['id' => $missing, 'token' => $token($missing)],
     'expiredtoken' => hash('sha256', 'not-a-current-token'),
     'users' => [
@@ -146,5 +175,6 @@ $out = [
     ],
 ];
 file_put_contents($options['out'], json_encode($out, JSON_PRETTY_PRINT));
-echo "seeded: classroom {$active} (session {$sa}), cancelled classroom {$cancelled} (session {$sb}), "
-    . "missing session id {$missing}. Wrote {$options['out']}\n";
+echo "seeded: classroom {$active} (sessions A {$sa}, C {$sc}, D {$sd}, E {$se}, F {$sf}), "
+    . "cancelled classroom {$cancelled} (session {$sb}), missing session id {$missing}. "
+    . "Wrote {$options['out']}\n";

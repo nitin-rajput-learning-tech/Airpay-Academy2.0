@@ -1,14 +1,14 @@
 [
  {
-  "check": "01 learner on the roster, valid token: recorded",
+  "check": "01 learner on the roster, valid token, inside the window: recorded",
   "heading": "Attendance Marked!",
-  "body": "VP Learner /1 | Your attendance has been successfully recorded at 1:28 PM.",
+  "body": "VP Learner /1 | Your attendance has been successfully recorded at 3:33 PM.",
   "pass": true
  },
  {
   "check": "02 same learner scans again: already marked, nothing written",
   "heading": "Already Marked",
-  "body": "Your attendance for this session has already been recorded.",
+  "body": "Your attendance for this session has already been marked, so this scan did not change it. If you think your mark is wrong, please ask your trainer.",
   "pass": true
  },
  {
@@ -43,7 +43,7 @@
  },
  {
   "check": "08 trainer QR page: heading is \"classroom - session title\" and the QR image renders",
-  "session": "VP Evidence QR classroom - Day 1 (30 Sept 13:26)",
+  "session": "VP Evidence QR classroom - Day 1 (30 Sept 15:09)",
   "qrRendered": true,
   "pass": true
  },
@@ -63,6 +63,62 @@
   "check": "11 site admin viewing a suspended user: no \"Log in as\"",
   "loginas": false,
   "profileShown": true,
+  "pass": true
+ },
+ {
+  "check": "12 QR code for a session that starts tomorrow: not open yet, nothing written",
+  "heading": "Attendance Not Open Yet",
+  "body": "Attendance for this session opens at 1/10/26, 14:39, so your attendance was not recorded. Please scan the QR code again from then.",
+  "pass": true
+ },
+ {
+  "check": "13 QR code for yesterday's session: closed, nothing written",
+  "heading": "Attendance Closed",
+  "body": "Attendance for this session closed at 29/09/26, 16:39, so your attendance was not recorded. Please contact your trainer.",
+  "pass": true
+ },
+ {
+  "check": "14 the trainer marked this learner Absent: a scan changes nothing",
+  "heading": "Already Marked",
+  "body": "Your attendance for this session has already been marked, so this scan did not change it. If you think your mark is wrong, please ask your trainer.",
+  "pass": true
+ },
+ {
+  "check": "15 the old salt-free sha256 token: refused as expired",
+  "heading": "QR Code Expired",
+  "body": "This QR code has expired. Please scan the current QR code displayed by your trainer.",
+  "pass": true
+ },
+ {
+  "check": "16 tenant admin /1 (holds :attendance, is not a site admin): the QR page opens for a /1 classroom",
+  "session": "VP Evidence QR classroom - Day 1 (30 Sept 15:09)",
+  "qrRendered": true,
+  "pass": true
+ },
+ {
+  "check": "17 tenant admin /177 (holds :attendance, wrong tenant): refused, no QR for a /1 classroom",
+  "qrRendered": false,
+  "pageText": "You do not have access to this tenant. More information about this error Debug info: Error code: error_outoftenant Dismiss this notification Stack trace: line 315 of \\public\\local\\sentientia_platform\\classes\\tenant.php: core\\exception\\moodl",
+  "pass": true
+ },
+ {
+  "check": "18 the same scan in Hindi: the text comes from the new lang/hi pack",
+  "heading": "पहले से दर्ज है",
+  "body": "इस सत्र के लिए आपकी उपस्थिति पहले ही दर्ज की जा चुकी है, इसलिए इस स्कैन से उसमें कोई बदलाव नहीं हुआ। यदि आपको लगता है कि आपकी उपस्थिति गलत दर्ज है, तो कृपया अपने ट्रेनर से कहें।",
+  "pass": true
+ },
+ {
+  "check": "19 trainer saves a grid loaded before a QR scan: the learner stays Present and the grid says so",
+  "scanHeading": "Attendance Marked!",
+  "presentBeforeSave": false,
+  "presentAfterSave": true,
+  "notification": "0 attendances saved. 1 learner(s) were marked by someone else (for example by scanning the QR code) after you opened this page, so their marks were left as they are and are now shown in the grid. Dismiss this notification",
+  "pass": true
+ },
+ {
+  "check": "20 learner (no :attendance): refused, no QR",
+  "qrRendered": false,
+  "pageText": "Sorry, but you do not currently have permissions to do that (Manage attendance). More information about this error Debug info: Error code: nopermissions Dismiss this notification Stack trace: line 875 of \\public\\lib\\accesslib.php: core\\exce",
   "pass": true
  }
 ]

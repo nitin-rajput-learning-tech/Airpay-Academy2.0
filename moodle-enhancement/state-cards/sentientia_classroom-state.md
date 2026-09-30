@@ -247,7 +247,8 @@ Branch `claude/adr031-learning3-ff`. This closes the "Still open" item above abo
 - Tests: `qr_attendance_test.php` is now 14 tests, 45 assertions, green on local XAMPP (new: a
   cancelled classroom refuses and writes nothing; it leaves an Absent row Absent; a learner not on the
   roster is not told the classroom is cancelled). No version bump. Both trees.
-- **Open decisions for Nitin, NOT taken here:**
+- **Open decisions for Nitin, NOT taken here (both decided later the same day, as recommended: see
+  the "second review" section below):**
   1. *A scan can overturn the trainer's Absent.* The grid saves an explicit Absent and an unticked
      learner the same way, so the table cannot tell them apart, and a scan raises either to Present
      (while the hourly token is valid, this hour plus the last). If the trainer's mark must win, return
@@ -257,3 +258,68 @@ Branch `claude/adr031-learning3-ff`. This closes the "Still open" item above abo
   2. *No time window.* Nothing checks the session's start and end time, so a QR shown for tomorrow's
      session records Present today. A window such as [start - grace, end + grace] is easy to add, but
      imported sessions may carry wrong times.
+
+## 2026-09-30 (second review) - QR attendance: token secret, trainer's mark wins, session window, grid vs scan
+
+Owner decisions taken as recommended (Nitin, 2026-09-30). No schema change, no version bump. Both trees.
+
+- **QR token (was forgeable).** `qr_scan.php` and `qr_attendance.php` hashed the session id and the
+  hour with `$CFG->passwordsaltmain`, which Moodle does not create on a new install, so on UAT and on
+  any fresh customer the token was a plain `sha256("<sessionid>|<Y-m-d-H>|")` that anyone could work
+  out. Now `session_manager::qr_token($sessionid, $time)` is
+  `hash_hmac('sha256', "<sessionid>|<Y-m-d-H>", secret)` and
+  `qr_token_is_valid($sessionid, $token, $now = null)` accepts the current and the previous hour with
+  `hash_equals()`. The secret is 64 random characters in `get_config('local_sentientia_classroom',
+  'qrsecret')`, created once on first use (a config row; shown in no setting). Both pages call the
+  helper and never read `passwordsaltmain`. Rotate it by deleting that config row: every QR on screen
+  stops working and the next page view makes a new secret. Every QR code shown before this change is
+  refused after it (they were salt-free sha256), which is intended.
+- **The trainer's mark wins.** `record_qr_attendance()` never changes an existing attendance row, of
+  any status, Absent included: `SCAN_ALREADY`. `apply_scan_to_existing_row()` is gone. The page says
+  "Your attendance for this session has already been marked", not "recorded", because the mark may be
+  the trainer's and may be Absent. A learner who scans twice gets the same text.
+- **Session window.** A scan counts from `SCAN_GRACE` (30 minutes) before the session's `starttime`
+  to 30 minutes after its `endtime`. Before: `SCAN_TOO_EARLY`; after: `SCAN_TOO_LATE`; nothing
+  written; the page shows when the window opens or closed. Order of checks: no session, other tenant
+  (exception), not on roster, classroom cancelled (`STATUS_CANCELLED`), an existing mark, then the
+  window. A session has no status of its own in the schema, so the classroom's cancelled status is the
+  only cancel flag; a completed classroom (`STATUS_COMPLETED`) still takes scans inside the window.
+  `endtime` is NOT NULL in the schema and `create_session()` refuses a session without a usable one,
+  but imported rows may have none: an `endtime` that is 0 or not after the start falls back to the end
+  of the start's day (the table keeps no duration); a session with no start uses `sessiondate` and the
+  whole day counts; a session with neither cannot be scanned (`SCAN_TOO_LATE`, "no start time").
+  Helpers: `scan_window_for($session)` and `get_scan_window($sessionid)`.
+- **Grid Save vs a newer QR mark.** The attendance grid saves an explicit Absent for every learner the
+  trainer did not tick, so a Save of a grid loaded before a learner scanned turned that learner back to
+  Absent. `attendance.php` now passes `loadedat` (server time, taken before the roster is read) to the
+  grid, the AMD module sends it with the Save, and `bulk_mark_attendance($sessionid, $marks,
+  $loadedat, &$kept, &$keptusers)` keeps a row that is: not Absent, written at or after `loadedat`, by
+  somebody other than the saving user, when the incoming mark is Absent. A deliberate Late/Excused/
+  Present over a newer row is written; the trainer's own earlier Save is never "newer"; `loadedat = 0`
+  (older clients) writes every mark as before. The web service `local_sentientia_classroom_bulk_mark_
+  attendance` takes an optional `loadedat` and returns `kept` and `keptmarks`; the page shows the
+  kept learners' real mark and a warning instead of "saved". The row is read right before it is
+  written, so the window left is one statement, not the whole Save. Built `amd/build/attendance.min.js`
+  with grunt (+ `.map`), replacing the hand-written ES5 file.
+- **Insert race.** `mark_attendance()` read then inserted with no catch: a QR insert between the two
+  hit `idx_session_user` and `bulk_mark_attendance()`'s transaction rolled the whole grid Save back.
+  The insert now lives in private `write_attendance_row()`, which catches `dml_write_exception`,
+  re-reads the row that won and updates it (Moodle's pgsql driver rolls a failed statement back to a
+  savepoint and the MySQL family keeps the transaction, so the Save carries on).
+- **Tests** (`@group tenant_isolation`): `qr_attendance_test` 41 tests, 138 assertions green on local
+  MariaDB (token: current and previous hour accepted, two hours ago and next hour refused, old
+  salt-free token refused with and without a salt, session A token refused for B, tamper cases,
+  secret made once and independent of `passwordsaltmain`, rotation; window: before, inside incl. both
+  exact edges, after, cancelled, completed, existing mark, stranger, default clock, the no-end / date-
+  only / no-time cases; Absent stays Absent; grid keeps a newer QR mark, deliberate change written,
+  older mark overwritten, own earlier Save, another trainer's mark, no `loadedat`, invalid status
+  rolls back, insert-race fallback inside a transaction). `sessions_external_test` 15/15 (new: the WS
+  keeps a newer mark and reports it). `sessions_test` 18/18 and `tenant_scope_test` 13/13 still green.
+- **Not tested, by design:** two real writers interleaving (PHPUnit cannot); the race is exercised by
+  calling the private writer with the stale "no row" it would have read.
+- **Open:** the `trainer` role (archetype teacher) holds only `manage` on this plugin, not `view` or
+  `attendance`, so a user with only that role still cannot open the attendance grid or the QR page.
+  Managers, editing teachers and the `administrator` role can. Granting `view` + `attendance` to
+  `trainer` (an archetype line in `db/access.php` with an upgrade back-fill, or a role permission
+  on the box) is an access decision for its own change; it needs a version bump, which this pass
+  did not make.

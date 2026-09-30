@@ -30,13 +30,40 @@ its must-fix and the small, safe should-fixes.
   `--i-am-uat=1` is accepted again.
 - **Docs.** Migration plan 4g: parity exit 2 is a STOP. 4d: the tree/date note for the two CLIs is
   corrected. ROLE9 section 10: the new guard behaviour.
-- **Decisions still open for Nitin (nothing in this pass takes them):** (1) a QR scan can raise a
-  trainer's deliberate Absent to Present; (2) there is no session time window on QR scans; (3) the
-  capability `qr_attendance.php` checks is undeclared on a Sentientia-only install, so only site
-  admins can show the QR: take this before the trainer persona is tested. Details in the
-  `sentientia_classroom` and `sentientia_pages` state cards.
-- **Not done:** lang strings and Hindi for the new `qr_scan.php` wording (waits for a pages Hindi
-  pack); a test for the insert-race branch itself (PHPUnit cannot interleave two writers).
+- **Decisions that were open here, now taken (Nitin, as recommended) and built: see "Second review
+  pass" below.**
+
+### Second review pass (same day): QR attendance closed out
+
+A second review said fix-then-ship with one must-fix (the QR token) and four decisions. All closed,
+no schema change and no version bump, both trees byte-identical:
+
+- **Must-fix: QR token was forgeable.** Both pages hashed with `$CFG->passwordsaltmain`, which a new
+  Moodle install does not have, so the token was a plain `sha256("<sessionid>|<Y-m-d-H>|")`. Now
+  `session_manager::qr_token()` / `qr_token_is_valid()`: HMAC-SHA256 with a per-site random secret
+  (`get_config('local_sentientia_classroom','qrsecret')`, made on first use), current and previous
+  hour, `hash_equals()`. The old salt-free token is refused. Tokens shown before this are refused too.
+- **The trainer's mark wins.** A scan never changes an existing attendance row, Absent included
+  (`SCAN_ALREADY`); the page says "already marked", not "recorded".
+- **Session window.** A scan counts from 30 minutes before the session starts to 30 minutes after it
+  ends (`SCAN_TOO_EARLY` / `SCAN_TOO_LATE`, with the time shown); a cancelled classroom
+  (`STATUS_CANCELLED`) is refused. Sessions have no status of their own in the schema.
+- **Trainer grid Save vs a newer QR mark.** The grid sends the time it was loaded; a Save no longer
+  turns a mark someone else made after that back to Absent (deliberate edits still apply), and tells
+  the trainer which learners it kept. A QR insert landing mid-Save no longer rolls the whole Save back.
+- **Who can show the QR.** `qr_attendance.php` checks `local/sentientia_classroom:attendance` (plus the
+  same ADR-031 tenant check). **Still open:** the `trainer` role holds only `:manage` on that plugin,
+  not `:view`/`:attendance`, so a user with only that role still cannot open the QR page or the
+  attendance grid (a role-permission / archetype decision, needs a version bump).
+- **Lang.** Every text on both pages is a `local_sentientia_pages` string, English and Hindi; the plugin
+  now has a full Hindi pack (57 keys).
+- **Evidence.** `docs/visual-evidence/2026-09-30/qr-and-loginas/` re-captured for the changed states
+  plus the new ones; README updated. Local XAMPP only. Nitin reviews before merge.
+- **Tests (local XAMPP, targeted files):** `qr_attendance_test` 41/41, `sessions_external_test` 15/15,
+  `sessions_test` 18/18, `tenant_scope_test` 13/13. Gates: `check-tree-drift` OK, `check-lang-parity` 0
+  failures, `check-path-boundary` exit 0, `php -l` clean.
+- **Side effect on the local box:** the local Apache stopped once during this pass (the watchdog
+  brought it back); nothing was restarted by hand.
 - **Tests (local XAMPP, targeted files only):** `qr_attendance_test` 14/14, `message_pref_repair_test`
   12/12, `message_pref_relabel_test` 9/9. Not re-run: `profile_loginas_test`, classroom
   `tenant_scope_test` (their code is unchanged by this pass). Gates: `check-tree-drift` OK,
