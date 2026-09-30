@@ -895,35 +895,58 @@ class session_manager {
     }
 
     /**
+     * Would writing $status over $row wipe out a newer mark somebody else made?
+     *
+     * The attendance grid sends an Absent only for a learner the trainer touched. If a
+     * learner scanned the QR code (or another trainer marked them) after the grid was
+     * loaded, that Save must not turn the newer mark back into Absent, so $loadedat is the
+     * time the grid was loaded. A mark is kept, not overwritten, when ALL of these hold:
+     * $loadedat is set, the trainer is sending Absent, the stored row is not Absent, it
+     * was written at or after $loadedat, and it was written by somebody other than the
+     * current user (the trainer's own earlier Save is never "newer"). Any other change, a
+     * deliberate Late or Excused over a newer row included, is written.
+     *
+     * Used twice per write: on the row read just before the write, and again on the row
+     * that won when the insert lost the race to a QR scan (write_attendance_row()).
+     *
+     * @param \stdClass|null $row the stored row, or null when there is none
+     * @param int $status the status the trainer is sending
+     * @param int $loadedat unix time the grid was loaded; 0 turns the guard off
+     * @return bool true when the stored row must be kept as it is
+     */
+    private static function keeps_newer_mark(?\stdClass $row, int $status, int $loadedat): bool {
+        global $USER;
+
+        return $row !== null
+            && $loadedat > 0
+            && $status === self::ATT_ABSENT
+            && (int) $row->status !== self::ATT_ABSENT
+            && (int) $row->timemodified >= $loadedat
+            && (int) $row->markedby !== (int) ($USER->id ?? 0);
+    }
+
+    /**
      * Write one trainer mark, unless it would wipe out a newer mark somebody else made.
      *
-     * The attendance grid saves an explicit Absent for every learner the trainer did not
-     * tick. If a learner scanned the QR code (or another trainer marked them) after the
-     * grid was loaded, that Save must not turn the newer mark back into Absent, so
-     * $loadedat is the time the grid was loaded. A mark is kept, not overwritten, when ALL
-     * of these hold: $loadedat is set, the trainer is sending Absent, the stored row is
-     * not Absent, it was written at or after $loadedat, and it was written by somebody
-     * other than the current user (the trainer's own earlier Save is never "newer").
-     * Any other change, a deliberate Late or Excused over a newer row included, is written.
-     * The row is read immediately before it is written, so the window for another writer
-     * to slip in between is one statement, not the length of the whole grid Save.
+     * See keeps_newer_mark() for the rule. The row is read immediately before it is
+     * written, so the window for another writer to slip in between is one statement, not
+     * the length of the whole grid Save; and the rule is applied again to the row that
+     * wins if the insert is refused (write_attendance_row()), so even that window cannot
+     * turn a learner's scan back into Absent.
      *
      * @param int $loadedat unix time the grid was loaded; 0 turns the guard off
      * @return bool true when the row was written, false when a newer mark was kept
      */
     private static function write_mark(int $sessionid, int $userid, int $status, string $notes,
                                         int $loadedat): bool {
-        global $DB, $USER;
+        global $DB;
 
         $existing = $DB->get_record(self::ATTENDANCE_TABLE, ['sessionid' => $sessionid, 'userid' => $userid]);
-        if ($existing && $loadedat > 0 && $status === self::ATT_ABSENT
-                && (int) $existing->status !== self::ATT_ABSENT
-                && (int) $existing->timemodified >= $loadedat
-                && (int) $existing->markedby !== (int) ($USER->id ?? 0)) {
+        $existing = $existing ?: null;
+        if (self::keeps_newer_mark($existing, $status, $loadedat)) {
             return false;
         }
-        self::write_attendance_row($sessionid, $userid, $status, $notes, $existing ?: null);
-        return true;
+        return self::write_attendance_row($sessionid, $userid, $status, $notes, $existing, $loadedat);
     }
 
     /**
@@ -932,14 +955,21 @@ class session_manager {
      * A QR scan can insert the row between the caller's read and this insert. The unique
      * (sessionid, userid) index then refuses the insert. That must not fail the save (and,
      * inside bulk_mark_attendance()'s transaction, roll back every other mark in it), so
-     * the row that won is updated instead. Moodle's database layer rolls a failed
-     * statement back on its own, so the surrounding transaction stays usable.
+     * the row that won is read again. The keep-the-newer-mark rule is applied to THAT row:
+     * if it is the learner's scan and the trainer is sending Absent for a grid that was
+     * loaded before it, the scan stands and false is returned; otherwise the row is
+     * updated. Moodle's database layer rolls a failed statement back on its own (and the
+     * mysqli layer runs transactions at READ COMMITTED, so the re-read sees the row that
+     * won), so the surrounding transaction stays usable.
      *
      * @param \stdClass|null $existing the stored row, or null when the caller found none
+     * @param int $loadedat unix time the grid was loaded; 0 turns the keep rule off
+     * @return bool true when the row was written, false when a newer mark was kept
      * @throws \dml_write_exception when the insert fails and no row exists (not the index race)
      */
     private static function write_attendance_row(int $sessionid, int $userid, int $status,
-                                                  string $notes, ?\stdClass $existing): void {
+                                                  string $notes, ?\stdClass $existing,
+                                                  int $loadedat = 0): bool {
         global $DB, $USER;
 
         $now = time();
@@ -956,12 +986,16 @@ class session_manager {
                     'timecreated'  => $now,
                     'timemodified' => $now,
                 ]);
-                return;
+                return true;
             } catch (\dml_write_exception $e) {
                 $existing = $DB->get_record(self::ATTENDANCE_TABLE,
                     ['sessionid' => $sessionid, 'userid' => $userid]);
                 if (!$existing) {
                     throw $e;   // not the unique-index race: a real write failure.
+                }
+                // The row that won may be a learner's scan the trainer's grid never saw.
+                if (self::keeps_newer_mark($existing, $status, $loadedat)) {
+                    return false;
                 }
             }
         }
@@ -971,6 +1005,7 @@ class session_manager {
         $existing->notes        = $notes;
         $existing->timemodified = $now;
         $DB->update_record(self::ATTENDANCE_TABLE, $existing);
+        return true;
     }
 
     /** record_qr_attendance(): a new Present row was written. */
@@ -1112,12 +1147,13 @@ class session_manager {
      * is cancelled, and a learner who already has a mark is told so whatever the time.
      *
      * The trainer's mark wins (owner decision 2026-09-30): a scan never changes an existing
-     * attendance row, whatever its status, Absent included. A deliberate Absent and the
-     * Absent the attendance grid saves for a learner nobody ticked look the same, and a
-     * learner must not be able to overturn either by opening a forwarded QR link. The
-     * learner's own repeat scan is SCAN_ALREADY too. Two writers landing together (a double
-     * tap, or a trainer grid save) hit the unique (sessionid, userid) index; the loser
-     * reads the row that won and answers SCAN_ALREADY.
+     * attendance row, whatever its status, Absent included. An Absent only exists because the
+     * trainer set it (the attendance grid sends a mark only for a learner the trainer touched,
+     * so a learner nobody touched has no row and can still scan), and a learner must not be
+     * able to overturn it by opening a forwarded QR link. The learner's own repeat scan is
+     * SCAN_ALREADY too. Two writers landing together (a double tap, or a trainer grid save)
+     * hit the unique (sessionid, userid) index; the loser reads the row that won and answers
+     * SCAN_ALREADY.
      *
      * Deliberately does not use get_session(): that falls back to the legacy
      * {local_classroom_sessions} table, and an id from that table has no
@@ -1245,7 +1281,10 @@ class session_manager {
      *                          marks its Save sends - never name another
      *                          tenant's learner
      * @return array  Each row: userid, firstname, lastname, email, status,
-     *                status_label, marked_at, notes.
+     *                status_label, marked_at, notes, has_mark. A learner with no
+     *                stored row reads as status Absent with has_mark false: the grid
+     *                shows them as Absent but only writes a row once the trainer
+     *                changes them.
      */
     public static function get_session_attendance(int $sessionid, bool $callerscope = false): array {
         global $DB;
@@ -1280,6 +1319,7 @@ class session_manager {
             self::ATT_EXCUSED => 'Excused',
         ];
         foreach ($rows as $r) {
+            $r->has_mark = $r->marked_at !== null;
             $r->status_label = $labels[(int) $r->status] ?? 'Absent';
             $r->marked_at_human = $r->marked_at
                 ? userdate((int) $r->marked_at, '%d %b %Y %H:%M')

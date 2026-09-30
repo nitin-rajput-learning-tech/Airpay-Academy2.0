@@ -234,6 +234,7 @@ final class sessions_external_test extends \advanced_testcase {
         $b = $this->getDataGenerator()->create_user();
         session_manager::enrol_users($ids['classroomid'], [(int) $a->id, (int) $b->id]);
 
+        $before = time();
         $resp = bulk_mark_attendance::execute($ids['sessionid'], [
             ['userid' => (int) $a->id, 'status' => 1, 'notes' => ''],
             ['userid' => (int) $b->id, 'status' => 2, 'notes' => 'Late'],
@@ -241,6 +242,9 @@ final class sessions_external_test extends \advanced_testcase {
         $this->assertSame(2, $resp['marked']);
         $this->assertSame(0, $resp['kept']);
         $this->assertSame([], $resp['keptmarks']);
+        // The grid takes this as its new load time, so it must be this save's time.
+        $this->assertGreaterThanOrEqual($before, $resp['savedat']);
+        $this->assertLessThanOrEqual(time(), $resp['savedat']);
     }
 
     public function test_bulk_mark_attendance_keeps_a_mark_made_after_the_grid_was_loaded(): void {

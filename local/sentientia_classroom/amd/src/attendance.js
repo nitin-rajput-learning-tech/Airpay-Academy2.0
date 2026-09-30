@@ -51,6 +51,9 @@ const setDirty = (root, dirty) => {
 const handleRadioChange = (root) => (event) => {
     const t = event.target;
     if (!t.matches('input[type=radio][data-userid]')) { return; }
+    // The trainer acted on this learner: their row is sent on the next Save.
+    const row = t.closest('tr[data-userid]');
+    if (row) { row.dataset.touched = '1'; }
     setDirty(root, true);
     recountFromGrid(root);
 };
@@ -60,26 +63,70 @@ const markAllPresent = (root) => {
         const presentRadio = row.querySelector('input[type=radio][data-status="1"]');
         if (presentRadio && !presentRadio.disabled) {
             presentRadio.checked = true;
+            row.dataset.touched = '1';
         }
     });
     setDirty(root, true);
     recountFromGrid(root);
 };
 
+/**
+ * The status the radios of a grid row currently show.
+ *
+ * @param {HTMLElement} row
+ * @returns {Number}
+ */
+const rowStatus = (row) => {
+    const checked = row.querySelector('input[type=radio]:checked');
+    return checked ? parseInt(checked.dataset.status, 10) : 0;
+};
+
+/**
+ * Has the trainer set this learner's mark since the grid was loaded (or last saved)?
+ *
+ * A learner with no stored row (data-hasmark="0") shows as Absent, but that is only what
+ * an empty row looks like: it is sent only when the trainer touched it (an explicit Absent
+ * included), so a learner nobody touched keeps no row and can still scan the QR code. A
+ * learner who already has a row is sent only when their status differs from the stored one.
+ *
+ * @param {HTMLElement} row
+ * @returns {Boolean}
+ */
+const isSetByTrainer = (row) => {
+    if (row.dataset.touched !== '1') { return false; }
+    if (row.dataset.hasmark !== '1') { return true; }
+    return rowStatus(row) !== parseInt(row.dataset.original, 10);
+};
+
+/**
+ * Record that a row now matches what is stored, so the next Save does not resend it.
+ *
+ * @param {HTMLElement} row
+ * @param {Number} status the status that is stored for the learner
+ */
+const markRowStored = (row, status) => {
+    row.dataset.hasmark = '1';
+    row.dataset.original = String(status);
+    row.dataset.touched = '0';
+};
+
 const saveAttendance = async (sessionid, root) => {
     const marks = [];
+    const sentRows = {};
     root.querySelectorAll('[data-region="attendance-grid"] tr[data-userid]').forEach((row) => {
         const userid = parseInt(row.dataset.userid, 10);
-        const checked = row.querySelector('input[type=radio]:checked');
-        const status = checked ? parseInt(checked.dataset.status, 10) : 0;
-        if (userid > 0) {
-            marks.push({userid: userid, status: status, notes: ''});
+        if (userid > 0 && isSetByTrainer(row)) {
+            marks.push({userid: userid, status: rowStatus(row), notes: ''});
+            sentRows[userid] = row;
         }
     });
 
     if (marks.length === 0) {
-        const empty = await getString('no_attendance_yet', 'local_sentientia_classroom');
-        Notification.addNotification({message: empty, type: 'warning'});
+        // Nothing the trainer changed: nothing to write (and no row is created for a
+        // learner they did not touch).
+        const nothing = await getString('attendance_nothing_to_save', 'local_sentientia_classroom');
+        Notification.addNotification({message: nothing, type: 'info'});
+        setDirty(root, false);
         return;
     }
 
@@ -92,12 +139,24 @@ const saveAttendance = async (sessionid, root) => {
             methodname: 'local_sentientia_classroom_bulk_mark_attendance',
             args: {sessionid: sessionid, marks: marks, loadedat: loadedat},
         }])[0];
-        // Show the mark that stands for the learners whose newer mark was kept.
+        // Every row that was sent now matches what is stored...
+        Object.keys(sentRows).forEach((userid) => {
+            markRowStored(sentRows[userid], rowStatus(sentRows[userid]));
+        });
+        // ...except the learners whose newer mark was kept: show the mark that stands.
         (response.keptmarks || []).forEach((kept) => {
             const radio = root.querySelector('tr[data-userid="' + kept.userid + '"] input[type=radio][data-status="'
                 + kept.status + '"]');
-            if (radio) { radio.checked = true; }
+            if (radio) {
+                radio.checked = true;
+                markRowStored(radio.closest('tr[data-userid]'), kept.status);
+            }
         });
+        // The server's time is the grid's new load time: the trainer has now seen every mark
+        // made before it, so a later Save must not keep one of those against a correction.
+        if (response.savedat > 0) {
+            root.dataset.loadedat = String(response.savedat);
+        }
         recountFromGrid(root);
         Notification.addNotification({
             message: response.message || 'Attendance saved.',

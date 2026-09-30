@@ -43,6 +43,9 @@ class bulk_mark_attendance extends external_api {
     }
 
     public static function execute(int $sessionid, array $marks, int $loadedat = 0): array {
+        // Taken before anything is read or written: it becomes the grid's new load time
+        // (see 'savedat' below), so a scan that lands during this save is still "newer".
+        $savedat = time();
         $params = self::validate_parameters(self::execute_parameters(),
             ['sessionid' => $sessionid, 'marks' => $marks, 'loadedat' => $loadedat]);
 
@@ -76,8 +79,8 @@ class bulk_mark_attendance extends external_api {
         }
 
         // A learner who scanned the QR code (or was marked by someone else) after the grid was
-        // loaded keeps that mark: the grid sends Absent for everyone it did not tick, and
-        // the trainer's Save must not wipe the newer mark out. $kept counts them.
+        // loaded keeps that mark when the trainer's Save sends Absent for them: the trainer
+        // never saw the newer mark, so the Save must not wipe it out. $kept counts them.
         $kept = 0;
         $keptusers = [];
         $count = \local_sentientia_classroom\session_manager::bulk_mark_attendance(
@@ -100,6 +103,7 @@ class bulk_mark_attendance extends external_api {
             'skipped'   => $skipped,
             'kept'      => $kept,
             'keptmarks' => $keptmarks,
+            'savedat'   => $savedat,
             'message'   => $message,
         ];
     }
@@ -120,6 +124,10 @@ class bulk_mark_attendance extends external_api {
                 'The learners whose newer mark was kept, with the mark that stands',
                 VALUE_DEFAULT, []
             ),
+            'savedat'   => new external_value(PARAM_INT,
+                'Server time this save started. The grid uses it as its new load time, so the next '
+                . 'Save only protects marks made after this one (the trainer has seen every earlier mark)',
+                VALUE_DEFAULT, 0),
             'message'   => new external_value(PARAM_TEXT, 'Confirmation'),
         ]);
     }

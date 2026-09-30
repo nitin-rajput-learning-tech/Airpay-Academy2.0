@@ -13,7 +13,9 @@
       session_time       string e.g. "Mon, 06 May 2026 · 09:00 – 13:00"
       session_location   string
       has_location       bool
-      rows               array of {userid, fullname, email, is_absent, is_present, is_late, is_excused, marked_at}
+      rows               array of {userid, status, has_mark, fullname, email, is_absent, is_present, is_late,
+                         is_excused, marked_at}; has_mark = a row is stored (an unmarked learner shows as
+                         Absent but is saved only once the trainer touches them)
       has_rows           bool
       roster_size        int
       count_*            int — present|late|excused|absent
@@ -78,6 +80,9 @@
     {{# has_rows }}
     {{! ── Bulk actions ─────────────────────────────────────────────── }}
     {{# can_attend }}
+    <p class="small text-muted mb-2" data-region="untouched-hint">
+        <i class="fa fa-info-circle fa-fw"></i> {{# str }}attendance_untouched_hint, local_sentientia_classroom{{/ str }}
+    </p>
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
         <div>
             <button type="button" class="btn btn-outline-success btn-sm" data-action="mark-all-present">
@@ -111,7 +116,7 @@
             </thead>
             <tbody>
                 {{# rows }}
-                <tr data-userid="{{ userid }}">
+                <tr data-userid="{{ userid }}" data-original="{{ status }}" data-hasmark="{{# has_mark }}1{{/ has_mark }}{{^ has_mark }}0{{/ has_mark }}">
                     <td>
                         <div class="fw-semibold">{{ fullname }}</div>
                         <div class="small text-muted">{{ email }}</div>

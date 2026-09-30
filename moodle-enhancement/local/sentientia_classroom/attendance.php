@@ -42,8 +42,12 @@ $PAGE->set_secondary_navigation(false);
 // the tenant; bulk_mark_attendance skips (never refuses) anything else.
 //
 // $loadedat is taken BEFORE the rows are read, and travels with the Save: a learner who
-// scans the QR code after this moment keeps their mark when the trainer saves a grid that
-// still shows them as Absent (session_manager::bulk_mark_attendance()).
+// scans the QR code after this moment keeps their mark when the trainer saves an Absent for
+// them from a grid that was loaded before the scan (session_manager::bulk_mark_attendance()).
+//
+// A learner with no stored row is shown as Absent (has_mark false), but the grid only sends a
+// row the trainer changed or touched (amd/src/attendance.js), so a learner nobody touched
+// keeps no row and can still scan. An Absent exists only because the trainer set it.
 $loadedat = time();
 $rows_obj = \local_sentientia_classroom\session_manager::get_session_attendance($sessionid, true);
 
@@ -67,6 +71,8 @@ foreach ($rows_obj as $r) {
 
     $rows[] = [
         'userid'      => (int) $r->userid,
+        'status'      => $is_absent ? \local_sentientia_classroom\session_manager::ATT_ABSENT : $status,
+        'has_mark'    => !empty($r->has_mark),
         'fullname'    => format_string($fullname),
         'email'       => s($r->email),
         'is_absent'   => $is_absent,

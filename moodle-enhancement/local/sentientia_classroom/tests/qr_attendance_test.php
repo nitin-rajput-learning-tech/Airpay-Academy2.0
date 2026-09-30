@@ -13,9 +13,11 @@
  *
  * Owner decisions of 2026-09-30, all covered here: the trainer's mark wins (a scan never
  * changes an existing row); a scan counts only from 30 minutes before the session starts to
- * 30 minutes after it ends; the trainer's grid Save does not overwrite a newer QR mark and
- * a QR insert that lands mid-save does not roll the save back; the QR token is an HMAC
- * signed with a per-site secret, not a hash of $CFG->passwordsaltmain.
+ * 30 minutes after it ends; the trainer's grid Save does not overwrite a newer QR mark (also
+ * when its insert loses the race to a scan) and a QR insert that lands mid-save does not roll
+ * the save back; the grid writes only the rows the trainer touched, so a learner nobody
+ * touched keeps no row and can still scan, while an Absent the trainer sets stands; the QR
+ * token is an HMAC signed with a per-site secret, not a hash of $CFG->passwordsaltmain.
  *
  * @package    local_sentientia_classroom
  * @category   test
@@ -633,7 +635,6 @@ final class qr_attendance_test extends \advanced_testcase {
         $sessionid = $this->session($classroomid);
         $trainer = $this->user_at('/1/2');
         $scanner = $this->enrolled_learner($classroomid);
-        $untouched = $this->enrolled_learner($classroomid);
         $ticked = $this->enrolled_learner($classroomid);
 
         // The trainer opened the grid; a moment later one learner scanned the QR code.
@@ -641,22 +642,21 @@ final class qr_attendance_test extends \advanced_testcase {
         $this->assertSame(session_manager::SCAN_RECORDED,
             session_manager::record_qr_attendance($sessionid, (int) $scanner->id));
 
-        // The grid still shows everyone as Absent, and the trainer ticks one learner and saves.
+        // The grid still shows the scanner as Absent. The trainer ticks one learner and, for
+        // the scanner, sets Absent explicitly (touched the row) before saving.
         $this->setUser($trainer);
         $kept = null;
         $keptusers = null;
         $count = session_manager::bulk_mark_attendance($sessionid, [
             ['userid' => (int) $scanner->id, 'status' => session_manager::ATT_ABSENT],
-            ['userid' => (int) $untouched->id, 'status' => session_manager::ATT_ABSENT],
             ['userid' => (int) $ticked->id, 'status' => session_manager::ATT_PRESENT],
         ], $loadedat, $kept, $keptusers);
 
-        $this->assertSame(2, $count, 'Two marks were written; the scanner\'s was kept.');
+        $this->assertSame(1, $count, 'One mark was written; the scanner\'s was kept.');
         $this->assertSame(1, $kept);
         $this->assertSame([(int) $scanner->id => session_manager::ATT_PRESENT], $keptusers);
         $this->assertSame([
             (int) $scanner->id => session_manager::ATT_PRESENT,
-            (int) $untouched->id => session_manager::ATT_ABSENT,
             (int) $ticked->id => session_manager::ATT_PRESENT,
         ], $this->statuses($sessionid));
         foreach ($this->rows($sessionid) as $row) {
@@ -813,9 +813,10 @@ final class qr_attendance_test extends \advanced_testcase {
         $write = new \ReflectionMethod(session_manager::class, 'write_attendance_row');
         $this->setUser($trainer);
         $tx = $DB->start_delegated_transaction();
-        $write->invoke(null, $sessionid, (int) $scanner->id, session_manager::ATT_LATE, 'Late by trainer', null);
+        $this->assertTrue($write->invoke(null, $sessionid, (int) $scanner->id, session_manager::ATT_LATE,
+            'Late by trainer', null), 'A deliberate Late over the scan is written, and reported as written.');
         // The refused insert must not have broken the transaction: the next mark still saves.
-        $write->invoke(null, $sessionid, (int) $other->id, session_manager::ATT_PRESENT, '', null);
+        $this->assertTrue($write->invoke(null, $sessionid, (int) $other->id, session_manager::ATT_PRESENT, '', null));
         $tx->allow_commit();
 
         $rows = $this->rows($sessionid);
@@ -830,5 +831,176 @@ final class qr_attendance_test extends \advanced_testcase {
                 $this->assertSame('Late by trainer', $row->notes);
             }
         }
+    }
+
+    public function test_an_insert_that_loses_the_race_keeps_the_scan_against_a_stale_absent(): void {
+        global $DB;
+        $classroomid = $this->classroom('/1');
+        $sessionid = $this->session($classroomid);
+        $trainer = $this->user_at('/1/2');
+        $scanner = $this->enrolled_learner($classroomid);
+
+        // The trainer's Save read "no row" for a learner it is sending Absent for, the grid having
+        // been loaded before the scan; then the learner's QR scan committed Present, and the
+        // Save's insert was refused by the unique (sessionid, userid) index.
+        $loadedat = time() - 100;
+        $this->assertSame(session_manager::SCAN_RECORDED,
+            session_manager::record_qr_attendance($sessionid, (int) $scanner->id));
+
+        $write = new \ReflectionMethod(session_manager::class, 'write_attendance_row');
+        $this->setUser($trainer);
+        $tx = $DB->start_delegated_transaction();
+        $written = $write->invoke(null, $sessionid, (int) $scanner->id, session_manager::ATT_ABSENT,
+            '', null, $loadedat);
+        $tx->allow_commit();
+
+        $this->assertFalse($written, 'The fallback reports the scan as kept, not written.');
+        $rows = $this->rows($sessionid);
+        $this->assertCount(1, $rows);
+        $row = reset($rows);
+        $this->assertSame(session_manager::ATT_PRESENT, (int) $row->status, 'The scan must survive the race.');
+        $this->assertSame((int) $scanner->id, (int) $row->markedby);
+        $this->assertSame('Marked by QR scan', $row->notes);
+    }
+
+    public function test_the_race_fallback_still_writes_a_deliberate_change_over_a_newer_row(): void {
+        global $DB;
+        $classroomid = $this->classroom('/1');
+        $sessionid = $this->session($classroomid);
+        $trainer = $this->user_at('/1/2');
+        $scanner = $this->enrolled_learner($classroomid);
+        $loadedat = time() - 100;
+        session_manager::record_qr_attendance($sessionid, (int) $scanner->id);
+
+        $write = new \ReflectionMethod(session_manager::class, 'write_attendance_row');
+        $this->setUser($trainer);
+        $tx = $DB->start_delegated_transaction();
+        // Excused, not Absent: the keep rule is only for an Absent over a newer mark.
+        $this->assertTrue($write->invoke(null, $sessionid, (int) $scanner->id, session_manager::ATT_EXCUSED,
+            'Leave', null, $loadedat));
+        $tx->allow_commit();
+
+        $this->assertSame([(int) $scanner->id => session_manager::ATT_EXCUSED], $this->statuses($sessionid));
+    }
+
+    public function test_a_learner_the_trainer_did_not_touch_keeps_no_row_and_can_still_scan(): void {
+        $classroomid = $this->classroom('/1');
+        $sessionid = $this->session($classroomid);
+        $trainer = $this->user_at('/1/2');
+        $ticked = $this->enrolled_learner($classroomid);
+        $untouched = $this->enrolled_learner($classroomid);
+
+        // The grid sends only what the trainer changed: the ticked learner, not the untouched one.
+        $this->setUser($trainer);
+        $kept = null;
+        $count = session_manager::bulk_mark_attendance($sessionid, [
+            ['userid' => (int) $ticked->id, 'status' => session_manager::ATT_PRESENT],
+        ], time() - 100, $kept);
+        $this->assertSame(1, $count);
+        $this->assertSame([(int) $ticked->id => session_manager::ATT_PRESENT], $this->statuses($sessionid),
+            'No Absent row is written for a learner nobody touched.');
+
+        // The grid still shows the untouched learner as Absent, but they have no row,
+        $attendance = session_manager::get_session_attendance($sessionid);
+        $this->assertFalse($attendance[(int) $untouched->id]->has_mark);
+        $this->assertSame(session_manager::ATT_ABSENT, (int) $attendance[(int) $untouched->id]->status);
+        $this->assertTrue($attendance[(int) $ticked->id]->has_mark);
+
+        // so their scan, inside the window, records Present.
+        $this->setUser($untouched);
+        $this->assertSame(session_manager::SCAN_RECORDED,
+            session_manager::record_qr_attendance($sessionid, (int) $untouched->id));
+        $this->assertSame([
+            (int) $ticked->id => session_manager::ATT_PRESENT,
+            (int) $untouched->id => session_manager::ATT_PRESENT,
+        ], $this->statuses($sessionid));
+    }
+
+    public function test_an_absent_the_trainer_sets_is_written_and_wins_over_a_later_scan(): void {
+        $classroomid = $this->classroom('/1');
+        $sessionid = $this->session($classroomid);
+        $trainer = $this->user_at('/1/2');
+        $learner = $this->enrolled_learner($classroomid);
+
+        // The trainer deliberately marks the learner Absent (a touched row is sent, Absent included).
+        $this->setUser($trainer);
+        $kept = null;
+        $count = session_manager::bulk_mark_attendance($sessionid, [
+            ['userid' => (int) $learner->id, 'status' => session_manager::ATT_ABSENT, 'notes' => 'Left early'],
+        ], time() - 100, $kept);
+        $this->assertSame(1, $count);
+        $this->assertSame(0, $kept);
+        $this->assertSame([(int) $learner->id => session_manager::ATT_ABSENT], $this->statuses($sessionid));
+
+        // A later scan does not overturn it.
+        $this->setUser($learner);
+        $this->assertSame(session_manager::SCAN_ALREADY,
+            session_manager::record_qr_attendance($sessionid, (int) $learner->id));
+        $this->assertSame([(int) $learner->id => session_manager::ATT_ABSENT], $this->statuses($sessionid));
+    }
+
+    public function test_a_second_save_after_seeing_a_kept_mark_writes_the_correction(): void {
+        global $DB;
+        $classroomid = $this->classroom('/1');
+        $sessionid = $this->session($classroomid);
+        $trainer = $this->user_at('/1/2');
+        $scanner = $this->enrolled_learner($classroomid);
+        $loadedat = time() - 100;
+        session_manager::record_qr_attendance($sessionid, (int) $scanner->id);
+
+        // First Save: the scan is newer than the grid, so it is kept and shown to the trainer.
+        $this->setUser($trainer);
+        $kept = null;
+        session_manager::bulk_mark_attendance($sessionid, [
+            ['userid' => (int) $scanner->id, 'status' => session_manager::ATT_ABSENT],
+        ], $loadedat, $kept);
+        $this->assertSame(1, $kept);
+
+        // The page takes the server's save time as the grid's new load time ('savedat'). The scan
+        // is older than that, so the trainer's correction is now written.
+        $savedat = time();
+        $DB->set_field('local_sentientia_classroom_attendance', 'timemodified', $savedat - 5,
+            ['sessionid' => $sessionid, 'userid' => $scanner->id]);
+        $count = session_manager::bulk_mark_attendance($sessionid, [
+            ['userid' => (int) $scanner->id, 'status' => session_manager::ATT_ABSENT],
+        ], $savedat, $kept);
+        $this->assertSame(1, $count);
+        $this->assertSame(0, $kept);
+        $this->assertSame([(int) $scanner->id => session_manager::ATT_ABSENT], $this->statuses($sessionid));
+    }
+
+    public function test_the_grid_marks_which_rows_are_stored_so_only_touched_ones_are_sent(): void {
+        global $OUTPUT, $PAGE;
+        $classroomid = $this->classroom('/1');
+        $sessionid = $this->session($classroomid);
+        $stored = $this->enrolled_learner($classroomid);
+        $empty = $this->enrolled_learner($classroomid);
+        session_manager::mark_attendance($sessionid, (int) $stored->id, session_manager::ATT_LATE);
+
+        $attendance = session_manager::get_session_attendance($sessionid);
+        $rows = [];
+        foreach ($attendance as $r) {
+            $rows[] = [
+                'userid' => (int) $r->userid, 'status' => (int) $r->status, 'has_mark' => $r->has_mark,
+                'fullname' => 'L', 'email' => 'l@example.com',
+                'is_absent' => (int) $r->status === session_manager::ATT_ABSENT,
+                'is_present' => false, 'is_late' => (int) $r->status === session_manager::ATT_LATE,
+                'is_excused' => false, 'marked_at' => '',
+            ];
+        }
+        $PAGE->set_url('/local/sentientia_classroom/attendance.php', ['sessionid' => $sessionid]);
+        $html = $OUTPUT->render_from_template('local_sentientia_classroom/attendance', [
+            'sessionid' => $sessionid, 'loadedat' => time(), 'classroomid' => $classroomid,
+            'classroom_name' => 'C', 'session_title' => 'S', 'page_heading' => 'H', 'session_time' => 'T',
+            'rows' => $rows, 'has_rows' => true, 'roster_size' => count($rows),
+            'count_present' => 0, 'count_late' => 1, 'count_excused' => 0, 'count_absent' => 1,
+            'can_attend' => true, 'back_url' => '/x',
+        ]);
+
+        $this->assertMatchesRegularExpression(
+            '/<tr data-userid="' . (int) $stored->id . '" data-original="2" data-hasmark="1">/', $html);
+        $this->assertMatchesRegularExpression(
+            '/<tr data-userid="' . (int) $empty->id . '" data-original="0" data-hasmark="0">/', $html);
+        $this->assertStringContainsString('data-region="untouched-hint"', $html);
     }
 }
