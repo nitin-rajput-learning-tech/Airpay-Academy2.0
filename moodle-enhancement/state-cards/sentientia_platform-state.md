@@ -369,3 +369,27 @@ Wave-1 adversarial review of the integration group (S1, S4) plus one helper defe
   - tag the default writes for non-Sentientia providers;
   - exact-name delete in step 2c.
 - Local copy repaired: 136 legacy keys copied, 5 providers defaulted, 0 problems left.
+
+## 2026-09-30 - Switchboard category labels (persona pass D11) (1.9.0 -> 1.9.1, 2026093001)
+
+- **Defect:** the Switchboard grouped flags by the first dotted segment of their key, and two groups had
+  no label string. The page printed `[[FLAG_CATEGORY_LIVE]]` (the nine `live.*` keys from
+  `local_sentientia_live`) and `[[FLAG_CATEGORY_OTHER]]` (keys with no dot: `sentientia_m365_enabled`,
+  `sentientia_whatsapp_content_notifications`).
+- **Root cause of the missing fallback:** `admin/switchboard.php` had
+  `get_string('flag_category_' . $cat, ..., null, true) ?: ucfirst($cat)`. With `lazyload = true`
+  `get_string()` returns a `lang_string` object, which is always truthy, so the `ucfirst()` fallback was
+  dead code.
+- **Fix:** new `feature_flags::category_label(string $category): string` asks
+  `get_string_manager()->string_exists()` and returns a plain string, falling back to `ucfirst()`.
+  `switchboard.php` calls it. New strings `flag_category_live` ("Live Engagement") and
+  `flag_category_other` ("Other") in en and hi (hi: the two labels are new, the pack has no other change).
+- No flag added (this repairs a broken heading, not a feature). No DB change.
+- Tests: `tests/feature_flag_category_label_test.php` (8 tests). It also walks the live flag registry and
+  fails if a future flag introduces a category with no en or hi label, and guards the page source against
+  going back to the inline lookup. Written, not run (low-CPU session; the lead runs them after the merge).
+- Version bumped only so the upgrade purges the lang-string cache on deploy. Both trees identical (the two
+  baseline drift files `cli/mint_session.php` and `db/install.xml` are untouched).
+- Also in this bundle: `moodle-enhancement/docs/cutover/UAT-VALIDATION-PLAN-2026-09-03.md` no longer lists
+  the feature switchboard in the tenant/L&D admin row. The page is site-admin only by design
+  (`moodle/site:config`, `admin/switchboard.php`), so a tenant admin being refused there is correct.

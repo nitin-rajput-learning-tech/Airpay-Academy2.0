@@ -42,6 +42,9 @@ $string['flag_category_search']     = 'सर्च';
 $string['flag_category_obs']        = 'ऑब्ज़र्वेबिलिटी';
 $string['flag_category_ux']         = 'यूज़र अनुभव';
 $string['flag_category_sentientia'] = 'Sentientia प्लेटफ़ॉर्म';
+// 2026-09-30 persona pass D11: see the English pack.
+$string['flag_category_live']       = 'लाइव एंगेजमेंट';
+$string['flag_category_other']      = 'अन्य';
 
 // Session 2 / ADR-002 (2026-05-20) — customer-level feature flag scope.
 $string['customer_default_label']     = 'सभी कस्टमर (वैश्विक डिफ़ॉल्ट)';

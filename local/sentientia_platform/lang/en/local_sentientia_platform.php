@@ -42,6 +42,11 @@ $string['flag_category_search']     = 'Search';
 $string['flag_category_obs']        = 'Observability';
 $string['flag_category_ux']         = 'User Experience';
 $string['flag_category_sentientia'] = 'Sentientia Platform';
+// 2026-09-30 persona pass D11: 'live' (live.* keys) and 'other' (keys with no
+// dot) are real categories but had no label, so the Switchboard showed
+// [[FLAG_CATEGORY_LIVE]] / [[FLAG_CATEGORY_OTHER]].
+$string['flag_category_live']       = 'Live Engagement';
+$string['flag_category_other']      = 'Other';
 
 // Session 2 / ADR-002 (2026-05-20) — customer-level feature flag scope.
 $string['customer_default_label']   = 'All customers (global default)';

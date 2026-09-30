@@ -36,8 +36,14 @@ if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
     }
 }
 
+// fullname($r) below needs every name field, not just firstname+lastname
+// (same defect class as user_manager::get_supervisor(), persona pass D14).
+$unamefields = implode(', ', array_map(
+    fn($f) => 'u.' . $f,
+    \core_user\fields::get_name_fields()
+));
 $runs = $DB->get_records_sql(
-    "SELECT r.*, u.firstname, u.lastname, u.email AS user_email
+    "SELECT r.*, $unamefields, u.email AS user_email
        FROM {local_sentientia_users_sync_runs} r
   LEFT JOIN {user} u ON u.id = r.usercreated
       WHERE $where
