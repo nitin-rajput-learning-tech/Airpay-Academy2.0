@@ -43,7 +43,6 @@ CONTENT sentientia_pages/pages/dpdp.html
 CONTENT sentientia_pages/templates/certificate_celebration.mustache
 CONTENT sentientia_pages/templates/onboarding.mustache
 CONTENT sentientia_platform/cli/mint_session.php
-CONTENT sentientia_platform/db/install.xml
 CONTENT sentientia_pwa/mock_receiver.php
 CONTENT sentientia_skills/amd/src/skill_actions.js
 CONTENT sentientia_skills/db/upgrade.php
