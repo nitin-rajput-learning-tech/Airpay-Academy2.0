@@ -34,6 +34,20 @@ What changes in this plan:
 - **Rehearse hop 1 on MySQL 8.4** (the target engine, PHP 8.3.6): the target RDS is 8.4 before hop 1
   runs, and 4.5's support for 8.4 is not proven here. If 4.5 refuses 8.4, hop 1 needs an 8.0 staging
   database and a dump/restore between the hops, which lengthens the window.
+- **Hop 1 rehearsed locally on real data (2026-09-30, PASS).**
+  - Setup: the April 2026 production dump was restored into the separate schema `bizlms_april`. A clean
+    4.5.10 core (`backups/moodle-4.5.10.zip`) ran CLI-only under `D:\Claude Local\rehearsal\moodle45`,
+    with a config that refuses any other database (`rehearsal/make_config.py`). PHP 8.2, MariaDB
+    10.11. 50 plugins were missing from disk: the BizLMS plugins, the epsilon theme, BizLMS blocks
+    and enrol methods.
+  - `admin/cli/upgrade.php --non-interactive`: "Command line upgrade from 4.1.2+ (Build: 20230401)
+    (2022112802.06) to 4.5.10 (Build: 20260216) (2024100710) completed successfully". It took
+    **1,235 s (20.6 min)** on this machine.
+  - The only notice: the missing epsilon theme falls back to boost. Upgrading with the BizLMS code off
+    disk works.
+  - Log: `D:\Claude Local\rehearsal\hop1_45.log` and `hop1_upgrade_output.log`. Still to rehearse:
+    hop 1 on MySQL 8.4 (the target engine) and hop 2 to 5.2 on PHP 8.3; neither is available on this
+    machine.
 - **BizLMS plugin code for hop 1: decided 2026-09-30 (Nitin, as recommended) — OFF disk.** The
   plugins show as "missing from disk" and their tables stay untouched for the ADR-032 importers.
   The alternative was to deploy the 4.1.2-era BizLMS code (Moodle 3.3/3.4 vintage) so its upgrade
