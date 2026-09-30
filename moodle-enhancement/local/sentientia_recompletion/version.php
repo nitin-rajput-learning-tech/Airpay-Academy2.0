@@ -14,10 +14,14 @@ $plugin->component = 'local_sentientia_recompletion';
 // ADR-031 (2026-09-25) — rules, courses and history tenant-scoped
 // (classes/rule_access.php); a tenant admin's rule is stamped with their
 // tenant instead of 0 = every tenant; :reset grant revoked (step 2026092500).
-$plugin->version   = 2026092500;  // ADR-031: tenant-scoped rules/history; :reset grant revoked
+// ADR-032 (2026-09-30) - BizLMS import: history.source / time_inferred, rules.legacy_config and the
+// local_sentientia_recompletion_archive table (upgrade step 2026093001); the importer under classes/bizlms/
+// is declared in db/bizlms_import.php; the evidence view and the daily task sit behind two default-OFF
+// flags (db/feature_flags.php).
+$plugin->version   = 2026093001;  // ADR-032: BizLMS import schema + importer; evidence view + run_rules behind flags
 $plugin->requires  = 2024042200;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.1.2';     // ADR-031 tenant scope (1.1.1: +P1 #53 Hindi pack)
+$plugin->release   = '1.2.0';     // ADR-032 BizLMS import (1.1.2: ADR-031 tenant scope; 1.1.1: +P1 #53 Hindi pack)
 $plugin->dependencies = [
     'local_sentientia_org'      => 2026040100,
     'local_sentientia_platform' => 2026092500,  // tenant::is_cross_tenant / scope_path

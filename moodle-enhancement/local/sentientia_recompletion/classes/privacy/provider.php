@@ -10,6 +10,7 @@ use core_privacy\local\request\approved_userlist;
 use core_privacy\local\request\contextlist;
 use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
+use local_sentientia_recompletion\archive_privacy;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -42,6 +43,23 @@ defined('MOODLE_INTERNAL') || die();
  *           anonymised to 0 by both erasures. Never used to delete a row,
  *           because the row is the other person's record.
  *       No free-text column: `reason` is a cron|manual|bulk code.
+ *
+ *   local_sentientia_recompletion_archive  (ADR-032, 2026-09-30)
+ *       What a reset deleted (course completion, criteria, activity
+ *       completions, quiz attempts and grades, SCORM tracking, LTI grades,
+ *       questionnaire answers), copied by the BizLMS import and by the
+ *       engine, one row each with the whole source row as JSON in payload.
+ *       It is the same kind of compliance record as the history row.
+ *       - Subject column `userid`, and the payload's own userid:
+ *           core erasure redacts the column to 0 and scrubs the payload
+ *           (userid and the overriding administrator to 0, the free text of a
+ *           questionnaire answer emptied); the row survives, attributable to
+ *           nobody.
+ *           DPDP erasure KEEPS the subject's rows as they are, for the reason
+ *           given for the history row.
+ *       - Actor: an administrator who overrode SOMEBODY ELSE's activity
+ *           completion is named in that row's payload (overrideby). Both
+ *           erasures change it to 0 and leave the row.
  */
 class provider implements
     \core_privacy\local\metadata\provider,
@@ -50,6 +68,12 @@ class provider implements
 
     /** The reset audit log. */
     private const TABLE_HISTORY = 'local_sentientia_recompletion_history';
+
+    /** The evidence the resets deleted. */
+    private const TABLE_ARCHIVE = 'local_sentientia_recompletion_archive';
+
+    /** Rows of a payload scan handled per pass. */
+    private const SCAN_LIMIT = 500;
 
     public static function get_metadata(collection $collection): collection {
         $collection->add_database_table('local_sentientia_recompletion_rules', [],
@@ -64,7 +88,22 @@ class provider implements
                 => 'privacy:metadata:local_sentientia_recompletion_history:previous_timecompleted',
             'timecreated'
                 => 'privacy:metadata:local_sentientia_recompletion_history:timecreated',
+            'source'
+                => 'privacy:metadata:local_sentientia_recompletion_history:source',
         ], 'privacy:metadata:local_sentientia_recompletion_history');
+        $collection->add_database_table(self::TABLE_ARCHIVE, [
+            'userid'     => 'privacy:metadata:local_sentientia_recompletion_archive:userid',
+            'courseid'   => 'privacy:metadata:local_sentientia_recompletion_archive:courseid',
+            'itemtype'   => 'privacy:metadata:local_sentientia_recompletion_archive:itemtype',
+            'cmid'       => 'privacy:metadata:local_sentientia_recompletion_archive:cmid',
+            'instanceid' => 'privacy:metadata:local_sentientia_recompletion_archive:instanceid',
+            'itemkey'    => 'privacy:metadata:local_sentientia_recompletion_archive:itemkey',
+            'state'      => 'privacy:metadata:local_sentientia_recompletion_archive:state',
+            'grade'      => 'privacy:metadata:local_sentientia_recompletion_archive:grade',
+            'timeevent'  => 'privacy:metadata:local_sentientia_recompletion_archive:timeevent',
+            'payload'    => 'privacy:metadata:local_sentientia_recompletion_archive:payload',
+            'timecreated' => 'privacy:metadata:local_sentientia_recompletion_archive:timecreated',
+        ], 'privacy:metadata:local_sentientia_recompletion_archive');
         return $collection;
     }
 
@@ -74,7 +113,9 @@ class provider implements
         // An admin who only ever reset other people's completions holds data
         // here too (the actor column), and must be reachable by an erasure.
         if ($DB->record_exists(self::TABLE_HISTORY, ['userid' => $userid])
-                || $DB->record_exists(self::TABLE_HISTORY, ['reset_by_userid' => $userid])) {
+                || $DB->record_exists(self::TABLE_HISTORY, ['reset_by_userid' => $userid])
+                || $DB->record_exists(self::TABLE_ARCHIVE, ['userid' => $userid])
+                || self::actor_rows_exist($userid)) {
             $list->add_system_context();
         }
         return $list;
@@ -90,6 +131,10 @@ class provider implements
         $userlist->add_from_sql('reset_by_userid',
             "SELECT reset_by_userid FROM {local_sentientia_recompletion_history}
               WHERE reset_by_userid > 0", []);
+        $userlist->add_from_sql('userid',
+            "SELECT userid FROM {local_sentientia_recompletion_archive} WHERE userid > 0", []);
+        // The administrators named in a payload (overrideby) are not in a column: read them out of the JSON.
+        $userlist->add_users(self::all_actors());
     }
 
     public static function export_user_data(approved_contextlist $contextlist): void {
@@ -132,6 +177,28 @@ class provider implements
                 [$root, get_string('privacy:export:resets_performed', 'local_sentientia_recompletion')],
                 (object) ['resets_performed' => $acts]);
         }
+
+        // ADR-032: the evidence the resets deleted. The payload is the source row; it is exported decoded, as
+        // the person's own data, exactly as archived (their own answers included).
+        $evidence = [];
+        $archive = $DB->get_recordset(self::TABLE_ARCHIVE, ['userid' => $userid], 'timecreated DESC, id DESC');
+        foreach ($archive as $r) {
+            $evidence[] = [
+                'course_id'   => $r->courseid,
+                'item_type'   => $r->itemtype,
+                'state'       => $r->state,
+                'grade'       => $r->grade,
+                'happened_at' => $r->timeevent ? userdate($r->timeevent) : null,
+                'archived_at' => userdate($r->timecreated),
+                'data'        => json_decode((string) $r->payload, true),
+            ];
+        }
+        $archive->close();
+        if (!empty($evidence)) {
+            writer::with_context($context)->export_data(
+                [$root, get_string('privacy:export:evidence', 'local_sentientia_recompletion')],
+                (object) ['evidence' => $evidence]);
+        }
     }
 
     public static function delete_data_for_all_users_in_context(\context $context): void {
@@ -144,6 +211,9 @@ class provider implements
         // NULL means "the scheduled task", which is nobody: leave it NULL.
         $DB->set_field_select(self::TABLE_HISTORY, 'reset_by_userid', 0,
             'reset_by_userid IS NOT NULL', []);
+        // The evidence rows stay; nobody is named in them any more.
+        self::scrub_archive('1 = 1', []);
+        $DB->set_field(self::TABLE_ARCHIVE, 'userid', 0, []);
     }
 
     /**
@@ -179,6 +249,9 @@ class provider implements
         }
         $userid = (int) $contextlist->get_user()->id;
         $DB->set_field(self::TABLE_HISTORY, 'reset_by_userid', 0, ['reset_by_userid' => $userid]);
+        // The subject's evidence rows are kept exactly as they are; only an administrator named in a payload
+        // (overrideby) is anonymised.
+        self::scrub_actor_rows($userid);
     }
 
     private static function redact_for_user(int $userid): void {
@@ -188,6 +261,122 @@ class provider implements
         $DB->set_field(self::TABLE_HISTORY, 'userid', 0, ['userid' => $userid]);
         // Actor column: anonymise, never delete - the row is someone else's.
         $DB->set_field(self::TABLE_HISTORY, 'reset_by_userid', 0, ['reset_by_userid' => $userid]);
+        // The evidence the person's resets deleted: the rows stay, unattributable, with the person and what they
+        // typed taken out of the payload. Then the rows of other people that name this person as the actor.
+        self::scrub_archive('userid = :pvuser', ['pvuser' => $userid]);
+        $DB->set_field(self::TABLE_ARCHIVE, 'userid', 0, ['userid' => $userid]);
+        self::scrub_actor_rows($userid);
+    }
+
+    /**
+     * Take the person and the free text out of the payload of the archive rows a select matches.
+     *
+     * @param string $select WHERE fragment over the archive table.
+     * @param array $params
+     * @return void
+     */
+    private static function scrub_archive(string $select, array $params): void {
+        global $DB;
+        $after = 0;
+        do {
+            $rows = $DB->get_records_select(self::TABLE_ARCHIVE, "($select) AND id > :pvafter", $params + ['pvafter' => $after],
+                'id ASC', 'id, itemtype, payload', 0, self::SCAN_LIMIT);
+            foreach ($rows as $row) {
+                $after = (int) $row->id;
+                $scrubbed = archive_privacy::scrub_subject((string) $row->payload, (string) $row->itemtype);
+                if ($scrubbed !== (string) $row->payload) {
+                    $DB->set_field(self::TABLE_ARCHIVE, 'payload', $scrubbed, ['id' => $row->id]);
+                }
+            }
+        } while (count($rows) === self::SCAN_LIMIT);
+    }
+
+    /**
+     * Change the overriding administrator of every activity completion this person overrode to 0.
+     *
+     * @param int $userid
+     * @return void
+     */
+    private static function scrub_actor_rows(int $userid): void {
+        global $DB;
+        [$select, $params] = self::actor_select($userid);
+        $after = 0;
+        do {
+            $rows = $DB->get_records_select(self::TABLE_ARCHIVE, "($select) AND id > :pvafter", $params + ['pvafter' => $after],
+                'id ASC', 'id, payload', 0, self::SCAN_LIMIT);
+            foreach ($rows as $row) {
+                $after = (int) $row->id;
+                $scrubbed = archive_privacy::scrub_actor((string) $row->payload, $userid);
+                if ($scrubbed !== null) {
+                    $DB->set_field(self::TABLE_ARCHIVE, 'payload', $scrubbed, ['id' => $row->id]);
+                }
+            }
+        } while (count($rows) === self::SCAN_LIMIT);
+    }
+
+    /**
+     * Does any archive row name this person as the administrator who overrode it?
+     *
+     * @param int $userid
+     * @return bool
+     */
+    private static function actor_rows_exist(int $userid): bool {
+        global $DB;
+        [$select, $params] = self::actor_select($userid);
+        $after = 0;
+        do {
+            $rows = $DB->get_records_select(self::TABLE_ARCHIVE, "($select) AND id > :pvafter", $params + ['pvafter' => $after],
+                'id ASC', 'id, payload', 0, self::SCAN_LIMIT);
+            foreach ($rows as $row) {
+                $after = (int) $row->id;
+                if (archive_privacy::scrub_actor((string) $row->payload, $userid) !== null) {
+                    return true;
+                }
+            }
+        } while (count($rows) === self::SCAN_LIMIT);
+        return false;
+    }
+
+    /**
+     * Every administrator named as the overrider in an archive payload.
+     *
+     * @return int[]
+     */
+    private static function all_actors(): array {
+        global $DB;
+        $found = [];
+        $after = 0;
+        do {
+            $rows = $DB->get_records_select(self::TABLE_ARCHIVE,
+                'itemtype = :pvtype AND ' . $DB->sql_like('payload', ':pvlike', true) . ' AND id > :pvafter',
+                ['pvtype' => 'activity_completion', 'pvlike' => '%"overrideby":%', 'pvafter' => $after],
+                'id ASC', 'id, payload', 0, self::SCAN_LIMIT);
+            foreach ($rows as $row) {
+                $after = (int) $row->id;
+                foreach (archive_privacy::actors((string) $row->payload) as $actor) {
+                    $found[$actor] = $actor;
+                }
+            }
+        } while (count($rows) === self::SCAN_LIMIT);
+        return array_values($found);
+    }
+
+    /**
+     * The WHERE fragment that selects the archive rows that might name a person as the overrider. The rows it
+     * selects are decoded and compared exactly; the patterns only keep the scan small.
+     *
+     * @param int $userid
+     * @return array{0: string, 1: array}
+     */
+    private static function actor_select(int $userid): array {
+        global $DB;
+        $likes = [];
+        $params = ['pvtype' => 'activity_completion'];
+        foreach (archive_privacy::actor_patterns($userid) as $i => $pattern) {
+            $likes[] = $DB->sql_like('payload', ':pvp' . $i, true);
+            $params['pvp' . $i] = $pattern;
+        }
+        return ['itemtype = :pvtype AND (' . implode(' OR ', $likes) . ')', $params];
     }
 
     private static function has_system_context(approved_contextlist $contextlist): bool {

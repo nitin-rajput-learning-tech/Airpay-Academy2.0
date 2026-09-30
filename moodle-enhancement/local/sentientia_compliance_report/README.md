@@ -43,10 +43,16 @@ php "C:/xampp/htdocs/moodle5/admin/cli/scheduled_task.php" \
 
 ## Phase 8.1 dependency
 
-Reads from `local_sentientia_recompletion_history` for the audit trail of
-when a user moved from `completed_expired` back to `completed_current`.
-Phase 8.1 B6 made the recompletion engine tenant-aware; this dashboard
-inherits the correctness.
+**Corrected 2026-09-30 (ADR-032).** This README used to say the dashboard reads
+`local_sentientia_recompletion_history` for the audit trail of when a user moved
+from `completed_expired` back to `completed_current`. No code here has ever read
+that table: the status of a user and course comes from Moodle's own
+`course_completions` and the enrolment rows (`compliance_engine.php`). The reset audit trail lives in `local_sentientia_recompletion`
+(`history.php`, and for what each reset deleted `history_detail.php` behind the
+flag `sentientia.recompletion.evidence_view`, default OFF), tenant-scoped the
+same way as this dashboard. The two plugins are related only by the completion
+state that a reset clears. Reading the history here (a "last reset" column, or
+the earlier cycles of a learner) is a possible follow-up, not a feature.
 
 ## Privacy / GDPR
 

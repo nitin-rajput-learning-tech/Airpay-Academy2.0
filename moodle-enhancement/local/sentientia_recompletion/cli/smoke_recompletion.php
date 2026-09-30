@@ -13,6 +13,7 @@ require_once(__DIR__ . '/../../../config.php');
 
 global $DB;
 
+$started = time();
 echo "=== sentientia_recompletion smoke ===\n\n";
 
 $test = 0; $pass = 0;
@@ -138,6 +139,10 @@ $DB->delete_records('local_sentientia_recompletion_rules', ['id' => $rule->id]);
 $DB->delete_records('local_sentientia_recompletion_history', ['ruleid' => $rule->id]);
 $DB->delete_records('local_sentientia_recompletion_history', ['userid' => $user->id, 'reason' => 'bulk']);
 $DB->delete_records('course_completions', ['userid' => $user->id, 'course' => $course->id]);
+// ADR-032: the engine archives what it resets; remove only the evidence THIS run archived.
+$DB->delete_records_select('local_sentientia_recompletion_archive',
+    'userid = :u AND courseid = :c AND timecreated >= :t',
+    ['u' => $user->id, 'c' => $course->id, 't' => $started]);
 
 echo "\n" . str_repeat('=', 50) . "\n";
 echo sprintf("Smoke result: %d/%d cases pass\n", $pass, $test);

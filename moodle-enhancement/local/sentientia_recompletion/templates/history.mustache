@@ -1,39 +1,67 @@
 {{!
     @template local_sentientia_recompletion/history
+
+    The reset history (ADR-032 additions: legacy and self badges, "~" on an estimated time, evidence link).
+
+    Context variables required for this template:
+    * rows - [{id, user_name, user_email, course_name, reason, self, legacy, inferred, reset_at, previous,
+               dryrun, grades, attempts, evidence_url}]
+    * has_rows, total, has_prev, has_next, prev_url, next_url, rules_url
+    * filtered, clear_url, show_evidence
+
+    Example context (json):
+    {
+        "rows": [{"id": 1, "user_name": "Asha Rao", "user_email": "asha@example.test", "course_name": "AML",
+            "reason": "manual", "self": true, "legacy": true, "inferred": false, "reset_at": "06 Mar 2025 03:15",
+            "previous": "01 Mar 2024", "dryrun": false, "grades": true, "attempts": false,
+            "evidence_url": "#"}],
+        "has_rows": true, "total": 1, "has_prev": false, "has_next": false, "prev_url": "#", "next_url": "#",
+        "rules_url": "#", "filtered": false, "clear_url": "#", "show_evidence": true
+    }
 }}
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">Recompletion history <span class="badge bg-secondary">{{ total }}</span></h2>
+        <h2 class="mb-0">{{#str}}history_title, local_sentientia_recompletion{{/str}} <span class="badge bg-secondary">{{ total }}</span></h2>
         <a href="{{{ rules_url }}}" class="btn btn-link">
-            <i class="fa fa-arrow-left"></i> Back to rules
+            <i class="fa fa-arrow-left" aria-hidden="true"></i> {{#str}}history_back, local_sentientia_recompletion{{/str}}
         </a>
     </div>
+
+    {{#filtered}}
+    <div class="alert alert-secondary d-flex justify-content-between align-items-center">
+        <span>{{#str}}history_filtered, local_sentientia_recompletion{{/str}}</span>
+        <a href="{{{ clear_url }}}" class="alert-link">{{#str}}history_clear_filter, local_sentientia_recompletion{{/str}}</a>
+    </div>
+    {{/filtered}}
 
     {{#has_rows}}
     <table class="table table-sm">
         <thead><tr>
-            <th>When</th>
-            <th>User</th>
-            <th>Course</th>
-            <th>Reason</th>
-            <th>Previous completion</th>
-            <th>Grades reset?</th>
-            <th>Attempts reset?</th>
+            <th>{{#str}}hcol_when, local_sentientia_recompletion{{/str}}</th>
+            <th>{{#str}}hcol_user, local_sentientia_recompletion{{/str}}</th>
+            <th>{{#str}}hcol_course, local_sentientia_recompletion{{/str}}</th>
+            <th>{{#str}}hcol_reason, local_sentientia_recompletion{{/str}}</th>
+            <th>{{#str}}hcol_previous, local_sentientia_recompletion{{/str}}</th>
+            <th>{{#str}}hcol_grades, local_sentientia_recompletion{{/str}}</th>
+            <th>{{#str}}hcol_attempts, local_sentientia_recompletion{{/str}}</th>
             <th></th>
         </tr></thead>
         <tbody>
             {{#rows}}
             <tr {{#dryrun}}class="table-secondary"{{/dryrun}}>
-                <td class="small">{{ reset_at }}</td>
+                <td class="small">{{ reset_at }}{{#inferred}} <span class="badge bg-warning text-dark" title="{{#str}}badge_inferred_title, local_sentientia_recompletion{{/str}}">{{#str}}badge_inferred, local_sentientia_recompletion{{/str}}</span>{{/inferred}}</td>
                 <td>{{ user_name }}{{#user_email}}<br><code class="small">{{ user_email }}</code>{{/user_email}}</td>
                 <td>{{ course_name }}</td>
-                <td><span class="badge bg-light text-dark">{{ reason }}</span></td>
+                <td><span class="badge bg-light text-dark">{{ reason }}</span>
+                    {{#self}}<span class="badge bg-info">{{#str}}badge_self, local_sentientia_recompletion{{/str}}</span>{{/self}}
+                    {{#legacy}}<span class="badge bg-secondary">{{#str}}badge_legacy, local_sentientia_recompletion{{/str}}</span>{{/legacy}}</td>
                 <td class="small">{{ previous }}</td>
-                <td>{{#grades}}<i class="fa fa-check text-success"></i>{{/grades}}
-                    {{^grades}}<i class="fa fa-times text-muted"></i>{{/grades}}</td>
-                <td>{{#attempts}}<i class="fa fa-check text-success"></i>{{/attempts}}
-                    {{^attempts}}<i class="fa fa-times text-muted"></i>{{/attempts}}</td>
-                <td>{{#dryrun}}<span class="badge bg-info">dry-run</span>{{/dryrun}}</td>
+                <td>{{#grades}}<i class="fa fa-check text-success" aria-hidden="true"></i><span class="sr-only visually-hidden">{{#str}}yes, core{{/str}}</span>{{/grades}}
+                    {{^grades}}<i class="fa fa-times text-muted" aria-hidden="true"></i><span class="sr-only visually-hidden">{{#str}}no, core{{/str}}</span>{{/grades}}</td>
+                <td>{{#attempts}}<i class="fa fa-check text-success" aria-hidden="true"></i><span class="sr-only visually-hidden">{{#str}}yes, core{{/str}}</span>{{/attempts}}
+                    {{^attempts}}<i class="fa fa-times text-muted" aria-hidden="true"></i><span class="sr-only visually-hidden">{{#str}}no, core{{/str}}</span>{{/attempts}}</td>
+                <td>{{#dryrun}}<span class="badge bg-info">{{#str}}badge_dryrun, local_sentientia_recompletion{{/str}}</span>{{/dryrun}}
+                    {{#evidence_url}}<a href="{{{ evidence_url }}}" class="btn btn-sm btn-link">{{#str}}link_evidence, local_sentientia_recompletion{{/str}}</a>{{/evidence_url}}</td>
             </tr>
             {{/rows}}
         </tbody>
@@ -44,8 +72,8 @@
     {{/has_rows}}
 
     <nav class="d-flex justify-content-between mt-3">
-        {{#has_prev}}<a href="{{{ prev_url }}}" class="btn btn-link">← Prev</a>{{/has_prev}}
+        {{#has_prev}}<a href="{{{ prev_url }}}" class="btn btn-link">&larr; {{#str}}history_prev, local_sentientia_recompletion{{/str}}</a>{{/has_prev}}
         {{^has_prev}}<span></span>{{/has_prev}}
-        {{#has_next}}<a href="{{{ next_url }}}" class="btn btn-link">Next →</a>{{/has_next}}
+        {{#has_next}}<a href="{{{ next_url }}}" class="btn btn-link">{{#str}}history_next, local_sentientia_recompletion{{/str}} &rarr;</a>{{/has_next}}
     </nav>
 </div>
