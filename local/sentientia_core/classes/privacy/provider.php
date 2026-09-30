@@ -16,14 +16,23 @@ use core_privacy\local\request\writer;
 /**
  * Privacy provider — GDPR / DPDP metadata + export + delete.
  *
- * Table that carries user data:
+ * Tables that carry user data:
  *   - local_sentientia_org_member : a user's org-unit membership
  *                                   (unit, role, direct manager)
+ *   - local_sentientia_admin_log  : the imported BizLMS admin log and bulk
+ *                                   course upload errors (ADR-032 legacy_logs):
+ *                                   the actor (userid, usermodified) and a
+ *                                   description that names the actor by first name
  *
- * A user can appear in this table two ways: as the member (userid) and as
+ * A user can appear in org_member two ways: as the member (userid) and as
  * another member's manager (managerid). Deletion removes their own
  * membership rows and resets managerid to 0 on rows that reference them —
  * the remaining rows are the other members' data, not theirs.
+ *
+ * The admin log is history, so an erasure request KEEPS the row and removes
+ * the person (signed decision legacy_logs.description_erasure =
+ * keep_row_scrub_name): userid and usermodified are set to 0 and the first
+ * name in the description is replaced (admin_log::scrub_description()).
  *
  * customer / tenant / org_unit tables are org configuration (names, ids,
  * status) and carry no user data.
@@ -49,6 +58,23 @@ class provider implements
             'privacy:metadata:org_member'
         );
 
+        $collection->add_database_table(
+            'local_sentientia_admin_log',
+            [
+                'source'       => 'privacy:metadata:admin_log:source',
+                'event'        => 'privacy:metadata:admin_log:event',
+                'module'       => 'privacy:metadata:admin_log:module',
+                'description'  => 'privacy:metadata:admin_log:description',
+                'itemref'      => 'privacy:metadata:admin_log:itemref',
+                'userid'       => 'privacy:metadata:admin_log:userid',
+                'usermodified' => 'privacy:metadata:admin_log:usermodified',
+                'actor_path'   => 'privacy:metadata:admin_log:actor_path',
+                'timecreated'  => 'privacy:metadata:admin_log:timecreated',
+                'timemodified' => 'privacy:metadata:admin_log:timemodified',
+            ],
+            'privacy:metadata:admin_log'
+        );
+
         return $collection;
     }
 
@@ -69,6 +95,12 @@ class provider implements
         $userlist->add_from_sql('managerid',
             "SELECT managerid FROM {local_sentientia_org_member}
               WHERE managerid > 0", []);
+        $userlist->add_from_sql('userid',
+            "SELECT userid FROM {local_sentientia_admin_log}
+              WHERE userid > 0", []);
+        $userlist->add_from_sql('usermodified',
+            "SELECT usermodified FROM {local_sentientia_admin_log}
+              WHERE usermodified > 0", []);
     }
 
     public static function export_user_data(approved_contextlist $contextlist): void {
@@ -116,6 +148,32 @@ class provider implements
                     (object) ['members_managed' => $managed]
                 );
             }
+
+            // The imported admin log: entries where this user is the actor or
+            // the modifier. The description names the user, so it is exported.
+            // The user record's id is a string when it comes straight from the database, so compare as integers.
+            $entries = [];
+            $uid = (int) $userid;
+            foreach (\local_sentientia_core\admin_log::rows_for_user($uid) as $row) {
+                $entries[] = [
+                    'source'       => $row->source,
+                    'event'        => $row->event,
+                    'module'       => $row->module,
+                    'itemref'      => $row->itemref,
+                    'description'  => $row->description,
+                    'actor'        => (int) $row->userid === $uid,
+                    'modifier'     => (int) $row->usermodified === $uid,
+                    'timecreated'  => userdate((int) $row->timecreated),
+                    'timemodified' => userdate((int) $row->timemodified),
+                ];
+            }
+            if (!empty($entries)) {
+                writer::with_context($context)->export_data(
+                    [get_string('pluginname', 'local_sentientia_core'),
+                     'admin_log'],
+                    (object) ['entries' => $entries]
+                );
+            }
         }
     }
 
@@ -125,6 +183,8 @@ class provider implements
             return;
         }
         $DB->delete_records('local_sentientia_org_member', []);
+        // History is kept; only the people are removed from it.
+        \local_sentientia_core\admin_log::anonymise_all();
     }
 
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
@@ -140,6 +200,8 @@ class provider implements
             // members this user managed.
             $DB->set_field('local_sentientia_org_member', 'managerid', 0,
                 ['managerid' => $userid]);
+            // The admin log keeps the row and loses the person.
+            \local_sentientia_core\admin_log::anonymise_users([$userid]);
         }
     }
 
@@ -159,5 +221,6 @@ class provider implements
         [$insql2, $params2] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'mgr');
         $DB->set_field_select('local_sentientia_org_member', 'managerid', 0,
             "managerid $insql2", $params2);
+        \local_sentientia_core\admin_log::anonymise_users($userids);
     }
 }
