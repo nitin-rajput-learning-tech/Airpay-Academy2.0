@@ -5,3 +5,4 @@ lib/dml/oci_native_moodle_package.sql text eol=lf
 **-min.js -diff
 **.min.js -diff
 tools/uat/*.sh text eol=lf
+moodle-enhancement/docs/cutover/bizlms-import-decisions.json text eol=lf

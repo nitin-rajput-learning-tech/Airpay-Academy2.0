@@ -652,3 +652,194 @@ Framework-level (feature-level choices are in the mapping doc):
 7. If Stage B shows the window is too short: approve an "inline key" mode for unreferenced high-volume
    leaf tables (recompletion SCORM tracks, email logs) that records only non-imported outcomes in the
    map? It is off by default and needs an amendment to this ADR.
+
+## Owner decisions, 2026-09-30 (as recommended)
+
+Nitin's instruction on 2026-09-30 was to do everything as recommended. Each line below is one owner
+choice: question -> answer -> why. Where the ADR or the mapping doc proposed an answer, that answer is
+recorded. Where they offered options with no recommendation, the answer was chosen by the owner rules and
+the line ends with the rule in brackets: (rule 1) nothing is lost, (rule 2) nothing acts on its own,
+(rule 3) nothing is more visible than on BizLMS today, (rule 4) privacy-preserving where history is not
+lost, (rule 5) tenant-scoped when in doubt. Two recommended answers that differ from what a rule would
+have chosen are marked in their lines: `request.pending` and `request.hidden_rows`.
+
+`docs/cutover/bizlms-import-decisions.json` is the machine copy of this section. Its sha256 is pinned at the
+Stage B rehearsal and must match at cutover (`--expect-decisions-hash`). Nitin signs it. Any change after the
+rehearsal is a re-approval event. If the two ever disagree, the JSON is what runs.
+
+**FINANCE-CONFIRM (two items).** The import is not blocked, but nothing acts on these until finance answers:
+`cart.credit_balances` (honour, pay out or write off, and who owns the liability) and
+`cart.erpnext_invoices_legal` (are the ERPNext invoices the legal tax invoices). A finance answer changes the
+file, so it counts as a change for the hash rule above.
+
+**Framework (ADR open decisions)**
+
+- `framework.adr_accepted` Accept the ADR (shared map, legacy tables as the archive, id rule, CLI guard instead of a flag)? -> Yes -> it is the recommended design.
+- `framework.reader_flags_default` Reader flags default? -> OFF -> CLAUDE.md flag rule.
+- `framework.reader_flags_airpay_at_cutover` Flip reader flags ON for Airpay at cutover? -> Yes, but only after Nitin reviews the visual evidence, and the flip is his call -> BizLMS showed this history, but the flag rule stands.
+- `framework.decisions_file_owner` Who owns and signs this file? -> Nitin -> he is the owner of record.
+- `framework.decisions_change_after_rehearsal` Is a change after the rehearsal a re-approval event? -> Yes -> the rehearsed hash is what cutover must match.
+- `framework.cutover_rollback` Rollback at cutover? -> RDS snapshot only -> one clean restore point, no partial deletes on production.
+- `framework.purge_feature_on_production` May --purge-feature run at cutover? -> No -> it deletes rows, and production has no delete path.
+- `framework.legacy_table_privacy` Legacy-table privacy after sign-off? -> A separate ADR later, not decided here -> the legacy tables stay untouched until then.
+- `framework.inline_key_mode` Approve the 'inline key' mode for high-volume leaf tables? -> Not now -> off by default, revisit only if Stage B shows the window is too short.
+- `framework.protect_imported_history` Admin delete of imported history? -> Blocked on imported rows -> nothing is lost (rule 1).
+
+**Tenant attribution (all features)**
+
+- `tenant.unresolved.<feature>` (13 features: cohort_scope, course_lookups, legacy_logs, exams, users, notifications, cart, skills, classroom, program, learningplan, evaluation, request) Rows whose tenant cannot be resolved? -> Import with no tenant path, visible to cross-tenant callers only, always reported -> never global (ADR-031).
+
+**org**
+
+- `org.unmapped_columns` Copy multipleorg, childpermission, shell? -> No, they stay in local_costcenter -> nothing reads them and nothing is lost.
+
+**org_roles**
+
+- `org_roles.value_filter` Which org-role permission rows count? -> Only value = 1 (tables expected empty) -> the document's proposal, confirmed at rehearsal.
+
+**course_lookups**
+
+- `course_lookups.featured_scope` Featured courses scope? -> Re-homed per tenant -> narrower than BizLMS's global list (ADR-031).
+- `course_lookups.coursedetails_unhomed_columns` Add columns for enrolment dates, duration, prerequisites? -> No, leave them in the legacy table -> no reader needs them.
+- `course_lookups.declined_config_tables` local_moduleconfig and local_filters? -> Stay in place; local_certificate goes to the certificates map -> configuration, not history.
+
+**legacy_logs**
+
+- `legacy_logs.retention` Retention of imported admin logs? -> Keep, no purge -> nothing is lost (rule 1).
+- `legacy_logs.description_erasure` Erasure of first names in log descriptions? -> Keep the row, scrub the name -> privacy without losing history (rule 4).
+
+**exams**
+
+- `exams.multi_quiz` Multi-quiz exam course? -> One exam per quiz -> keeps every quiz's history.
+- `exams.forum_pseudocourses` Forum pseudo-courses in the catalog? -> Hidden -> BizLMS did not list them (rule 3).
+
+**users**
+
+- `users.transcript_status_map` Transcript status normalisation list? -> Approved as written, raw value always kept -> the document's list.
+- `users.admin_runs_tenant` HRMS runs uploaded by a site admin? -> Tenant 0, cross-tenant only -> the legacy costcenterid is not reliable.
+- `users.uniquelogins` Import local_uniquelogins? -> Yes -> nothing is lost (rule 1).
+- `users.transcript_counts_toward_totals` Do transcript rows count toward completion totals? -> No -> shown separately as imported history.
+- `users.erasure_treatment` On erasure, anonymise or delete imported transcript and sync-error rows? -> Anonymise -> keeps history, removes the person (rules 1 and 4).
+- `users.userdata_reconciliation` If local_userdata and user.open_path disagree? -> user.open_path wins, report only -> local_userdata is a derived mirror.
+- `users.positions_domains_lookup_import` Import local_positions and local_domains (G4)? -> Yes, ids kept -> the profile otherwise shows bare ids.
+
+**notifications**
+
+- `notifications.import_bodies` Import email bodies? -> Yes, with credentials redacted -> history without secrets.
+- `notifications.queue_status` Status for undelivered queue rows? -> not_sent, never sent -> nothing in the old queue is ever delivered.
+- `notifications.keep_sender` Keep sender identity? -> Yes -> the column map imports it and the provider covers it.
+- `notifications.retention` Retention of imported email rows? -> Keep, no purge -> nothing is lost (rule 1).
+- `notifications.deleted_recipient_sent` Status-1 rows to deleted recipients? -> sent, with a note -> that is what BizLMS recorded.
+
+**recompletion**
+
+- `recompletion.rule_tenant` Rule tenant? -> Global (tenant 0) -> same as BizLMS.
+- `recompletion.preview_attempts` Import teacher-preview attempts? -> No, they stay in the legacy table -> not learner history.
+- `recompletion.enable_imported_rules` Enable imported rules at cutover? -> No, all disabled -> nothing resets learners on its own.
+- `recompletion.rebuild_legacy_behaviours` Which legacy behaviours must be rebuilt? -> None at cutover -> all rules stay disabled (rule 2).
+- `recompletion.learner_history_surface` Where do learners see past cycles? -> The recompletion history page and evidence view, flag OFF -> per the code fixes.
+- `recompletion.archive_shape` Archive shape? -> One generic table with a JSON payload -> the document's proposal.
+- `recompletion.engine_archive_before_delete` Should the engine archive before it deletes? -> Yes -> required before any rule is enabled.
+- `recompletion.deploy_upstream_plugin` Deploy upstream local_recompletion on 5.2 instead? -> No, out of scope -> the ADR replaces BizLMS code, it does not run it.
+
+**cart**
+
+- `cart.synthesize_ledger` Synthesize missing ledger payment rows? -> No, import only what exists -> no invented money rows.
+- `cart.order_tenant` Order tenant? -> The buyer's current root -> the same as native Sentientia orders.
+- `cart.abandoned` Abandoned checkouts? -> Imported, admin-only -> nothing lost, not shown to learners.
+- `cart.imported_visibility` Who sees imported money history? -> Admins only, frozen -> Nitin's money rule; the cart reader must hide legacy rows from owners.
+- `cart.admin_refund_imported_orders` May admins refund imported orders? -> No, blocked -> no refund or payout from imported orders.
+- **FINANCE-CONFIRM.** Honour, pay out or write off legacy credit balances, and who owns the liability? -> Import is not blocked; balances are frozen history and nothing acts on them until finance answers.
+- **FINANCE-CONFIRM.** Are the ERPNext invoices the legal tax invoices (and link out)? -> Import is not blocked; shown as reference only, no link-out, until finance answers.
+- `cart.cash_drawer_rows_without_order` Cash-drawer rows with no order (historyid 0)? -> Import, cross-tenant admins only -> nothing lost, nothing more visible (rules 1, 3, 5).
+- `cart.stale_task_adhoc_rows` Delete stale BizLMS cart rows from task_adhoc? -> Not here; a separate [CONFIRM] if ever wanted -> nothing is deleted by this import (rule 1).
+
+**skills**
+
+- `skills.catalogue_scope` Skills catalogue scope? -> One shared catalogue -> the status quo the document proposes.
+- `skills.merge_categories` Merge policy? -> Categories by exact name, skills never -> the document's proposal.
+- `skills.seed_rows` Keep the 48-skill seed on production? -> Yes, never deleted here -> deleting is a separate [CONFIRM] (rule 1).
+- `skills.level_proficiency` Level-to-proficiency map? -> Name heuristic (awareness 1, basic/beginner/foundation 2, intermediate 3, advanced 4, expert 5, else 1) -> the document's proposal; the concrete CSV is still to be generated from the rehearsal preflight.
+- `skills.source_label` Source label on migrated skills? -> 'import' -> honest about where the row came from.
+- `skills.history_from_archive` Grant skill history from the recompletion archive too? -> Yes -> nothing is lost (rule 1).
+- `skills.skillmatrix` Import local_skillmatrix? -> No -> it had no writer and no live reader.
+- `skills.interests` Interests: build a consumer or import for the record? -> Build a reader behind the existing flag, OFF -> per code fix 7.
+
+**classroom**
+
+- `classroom.status_new_hold` Add draft and on-hold classroom states? -> Yes (codes 5 and 6) -> collapsing would show unstarted classes as active.
+- `classroom.waitlist_closed` Waiting rows on closed classrooms? -> removed -> nobody can be promoted into a closed class.
+- `classroom.waitlist_open` Waiting rows on open classrooms? -> waiting only after the auto-promote guard ships, otherwise removed -> nothing promotes anyone on its own (rule 2).
+- `classroom.pathless` Classroom with no usable path? -> Cross-tenant only -> never guess a tenant.
+- `classroom.costs_as_columns` Classroom costs as columns? -> No, legacy table only -> no finance or audit reader.
+- `classroom.qr_checkin_requires_roster` QR check-in requires the roster? -> Yes -> per code fix 1 (time window not decided).
+
+**program**
+
+- `program.completed_without_date` Completed but no completion date? -> Completed, flagged -> the certificate path treated it as completed.
+- `program.inactive` Inactive programs? -> Archived, not Draft -> BizLMS had no draft state.
+- `program.inactive_history_to_learners` Do learners see history in inactive programs? -> No, admins only -> BizLMS treated them as switched off (rule 3).
+- `program.empty_levels` Empty auto-created levels? -> Skip -> a kept empty level would count as completed.
+- `program.deleted_users` Enrolments of deleted users? -> Import for audit -> history is kept, readers filter.
+- `program.pathless` Program with no usable path? -> The creator's root, else no path -> the document's proposal.
+- `program.bk_tables` Non-empty _bk tables as a 'previous completion' history? -> No, archived in the legacy tables -> BizLMS never showed one (rules 1, 3).
+
+**learningplan**
+
+- `learningplan.not_completed` Learners who have not completed? -> In progress when a course is done, else Enrolled -> derived from real completions.
+- `learningplan.enforce_rules` Enforce approval, self-enrol and sequence rules? -> Store only -> nothing enforces or acts on its own (rule 2).
+- `learningplan.dates_as` Plan start and end dates? -> Sentientia's own dates (enrolment window) -> the document's proposal, to be checked at rehearsal.
+- `learningplan.history_on_archived_paths` Completed history on archived paths? -> Admins only -> BizLMS hid these plans from learners (rule 3).
+- `learningplan.tenant_fallback_order` Tenant fallback order for empty paths? -> Accepted as written (cost centre, enrolled users' shared root, creator's root, else none) -> the document's order.
+
+**evaluation**
+
+- `evaluation.open_forms` Still-open forms? -> Archived -> active would reopen answering with no assignment check.
+- `evaluation.multichoicerated` Weighted multichoice questions? -> Plain multichoice -> weights stay in the legacy tables.
+- `evaluation.sp_anonymous_subject` Anonymous supervisor forms? -> Hide the subject too -> the subject could identify the respondent.
+- `evaluation.legacy_anonymous_linkage` Anonymise or drop the legacy user links of anonymous answers? -> Neither here; the separate legacy-table privacy ADR decides -> anonymous answers stay anonymous in Sentientia.
+- `evaluation.trainer_feedback_form_names` Add the trainer's name to trainer feedback forms? -> No, keep the BizLMS name -> nothing more visible than BizLMS (rule 3).
+- `evaluation.imported_forms_read_only` Make imported forms read-only? -> Yes -> protects the answers (rule 1).
+
+**request**
+
+- `request.pending` Legacy pending requests? -> Course and path stay actionable, a person still decides; classroom, program and certification are read-only -> the document's proposal (rule 2 exception).
+- `request.pending_classroom_program` Pending classroom and program requests? -> History only -> deciding them would fail silently.
+- `request.certification` Certification requests? -> Unmapped, history only -> no owner entity exists yet.
+- `request.decided_route` Route label on decided legacy rows? -> admin -> no new value to maintain.
+- `request.hidden_rows` Rows BizLMS hid? -> Show -> the document's proposal (rule 3 would have filtered them).
+- `request.tenant_basis` Tenant of a request? -> The requester's current root -> the source has no tenant column.
+- `request.pending_approver` Approver of legacy pending requests? -> Sentientia routing -> the document's proposal.
+- `request.comments` Request comments? -> Folded into the decision note -> expected empty.
+
+**ratings**
+
+- `ratings.invalid_rows` Invalid rating rows? -> Skip and report -> they stay in the legacy table.
+- `ratings.blank_reviews` Blank reviews? -> Import, hidden -> nothing lost, nothing shown.
+- `ratings.deleted_users` Deleted users' ratings? -> Keep -> averages stay what BizLMS showed.
+- `ratings.show_dislike_counts` Show dislike counts? -> Yes, behind the reaction flag -> BizLMS showed them (rule 3).
+- `ratings.certification_area` Ratings under the certification area? -> Skip and report until a target exists -> no reader asks for that area.
+
+**gaps**
+
+- `gaps.other_tag_areas` Tag instances of classroom, learning plan and evaluation (G5)? -> Counted and left in place -> no plugin is uninstalled.
+- `gaps.classroom_program_skill_tags` Skill and level tags on classrooms and programs (G8)? -> Stay in the legacy tables -> no Sentientia reader needs them.
+
+**Left unanswered on purpose**
+
+- `accept_needsowner.<feature>.<reason>`: not pre-accepted. Each acceptance covers an actual rehearsal
+  outcome (a count of rows and a reason code), so it is added after Stage B, in writing, by Nitin. Until
+  then parity exits 2, which step 6 of the cutover slice allows only with Nitin's written acceptance.
+- `skills.level_proficiency.csv`: the rule is approved but the concrete level-id map needs the rehearsal
+  preflight. The skills feature stays blocked until it is filled.
+- Open decision 6 (maps for certificates, `local_challenge`, `local_certification`, core `{event}` rows,
+  non-course tag areas, orphaned BizLMS enrol instances; also gaps G7 and G9) is engineering work or a
+  Stage B check, not an owner choice. The
+  orphaned-enrol-instance choice (convert to manual at cutover, or keep a shim) had no recommendation and
+  the owner rules do not pick between them, so it needs Nitin and Stage B evidence.
+- Facts to collect, not decisions: production row counts (I-20), `SHOW COLUMNS` for the production-only
+  columns, server timezone, logstore retention, the `local_ratings/review_enable` setting, whether
+  `paygw_airpay` is deployed on 5.2, and whether the PayPal gateway was used for any cart order.
+- Classroom QR check-in time window, and which notification types have no Sentientia rule once BizLMS
+  stops sending: no recommendation and no rule applies.
+- Orphaned BizLMS enrol instances (gap G6) -> convert each enrolment to a manual enrolment in the same course (status, start and end kept; original instance in the legacy map) -> without the BizLMS enrol code these learners would lose course access. Verified at the rehearsal.
