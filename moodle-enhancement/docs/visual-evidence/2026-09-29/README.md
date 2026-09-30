@@ -80,16 +80,54 @@ Branch `claude/adr031-cart-gate`, plugin `local_sentientia_cart` (both trees). S
 4. `/local/sentientia_cart/checkout.php`: a gateway error after the order went to 'pending' is shown
    on the checkout page again (it was being replaced by a redirect to an empty cart).
 
-### Screen-check list (persona -> page -> expected)
+### Screen-check list (persona -> page -> expected) - captured 2026-09-29, `cart/`
 
-1. [ ] [Site admin] admin_orders.php: the Staff notes column is present; a paid order with a withheld
-   line reads "ADR-031: order #N: payment recorded, enrolment withheld for course id(s) N ... Refund due."
-2. [ ] [Tenant admin /1, :viewallorders] admin_orders.php: the column shows notes for /1 orders only.
-3. [ ] [Learner /1] Notifications popup after paying an order where one line was withheld: only the
-   granted course is listed, plus the "no longer available ... will be refunded" line.
-4. [ ] [Site admin] Notifications popup for the same order: "New order #N - Refund due" and the
-   refund-due line with the course id.
-5. [ ] [Learner] checkout.php with the gateway misconfigured: the gateway error is shown on the
-   checkout page, not "Your cart is empty".
+Data: `tools/visual-pass/seed_cart_evidence.php` (local-only; refuses without localhost + `noemailever`)
+ran the real code path. vp_learner1 (/1) had a pending order for "VP Cart In-Tenant" (/1) and "VP Cart
+Other Tenant" (/177, course 447) - an order from before the gate - and `cart_manager::mark_paid()`
+settled it as order #923430. A second order, #933430, went through `mark_failed()` with a gateway
+payload containing markup. Capture: `tools/visual-pass/cart_checks.mjs`.
 
-Filenames `NN-<persona>-<page>.png`, light mode.
+1. [x] **PASS** [Site admin] `01-siteadmin-admin-orders-*`: columns #, Placed, User, Total, Gateway,
+   Status, Staff notes. They are all filled now (they were empty before 5b43cb4e0). #923430 paid reads
+   "ADR-031: order #923430: payment recorded, enrolment withheld for course id(s) 447 - not purchasable
+   by this buyer at payment time. Refund due."
+2. [x] **PASS** [Tenant admin /1] `02-admin1-admin-orders-*`: "1-2 of 2" - only the two /1 orders (the
+   site admin sees 13). The failed order's note shows `<br>` as text: escaped, and the list no longer
+   breaks on a raw gateway payload (the PARAM_RAW fix; the same call through the web service class
+   returns both notes unchanged).
+3. [x] **PASS** [Learner /1] `03-learner1-notifications-*` lists "Your order has been placed
+   successfully." The body, read from `mdl_notifications`, lists only "VP Cart In-Tenant" and says "This
+   order also included 1 course(s) that are no longer available to you. You cannot access them and you
+   have not been enrolled in them. They will be refunded to you." Enrolled in the /1 course: yes; in
+   course 447: no.
+4. [x] **PASS** [Site admin] `04-siteadmin-notifications-*`: "New order #923430 - Refund due". The body
+   says "Refund due: order #923430 was paid, but the buyer was NOT enrolled in course id(s) 447 ...".
+   All 4 local site admins got it.
+5. [ ] **Not captured** [Learner] checkout.php with the gateway misconfigured. The narrowed catch
+   block is covered by the cart PHPUnit suite (37/37 pass); a screenshot needs a broken gateway
+   config on this box.
+
+### Found while capturing (fixed, separate commit)
+
+The first `mark_paid()` run threw `coding_exception` ("Could not load preference ...") and rolled back.
+On this copy, 28 of the 30 Sentientia message providers had no default preferences. The ADR-025
+relabel renamed `message_providers.component` but not the `config_plugins` keys that carry the
+component in their name. See `local/sentientia_platform/classes/message_pref_repair.php` and the
+PROJECT-STATE 2026-09-29 entry. A fresh install (UAT) and the production install path do not have it.
+
+### Profile pencil (ADR-031 role 9, checks 49-50) - `profile-pencil/`
+
+`tools/visual-pass/profile_checks.mjs`, local, before the role-9 cap script (UAT-only) has run:
+
+- 49 **PASS**: as a tenant admin /1, on a colleague the pencil is `data-action="edit-user"`, never
+  `editadvanced.php`. The Sentientia modal loads **19 form fields**, with no console or AJAX error. The
+  check now waits for fields; the first capture passed on an empty modal before the AJAX form arrived.
+- 49b **PASS**: a tenant admin /1 viewing a site admin sees no pencil and no camera.
+- 50 **PASS**: the site admin's pencil still links to `/user/editadvanced.php`.
+
+The "Log in as" link still shows for the tenant admin locally, because it follows
+`moodle/user:loginas`, which the role-9 script removes on UAT. It is also offered on a site admin's
+profile, where core refuses to log in as an admin anyway (a tidy-up for later).
+
+Filenames `NN-<persona>-<page>-{desktop,mobile}.png`, light mode.

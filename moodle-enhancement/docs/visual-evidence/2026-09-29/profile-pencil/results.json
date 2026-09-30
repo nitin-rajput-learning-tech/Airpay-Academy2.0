@@ -1,0 +1,40 @@
+[
+ {
+  "check": "49 tenant admin -> colleague",
+  "pencils": [
+   {
+    "tag": "A",
+    "href": "#",
+    "action": "edit-user"
+   }
+  ],
+  "loginas": true,
+  "camera": true,
+  "modalOpened": true,
+  "formFields": 19,
+  "consoleErrors": [],
+  "ajaxErrors": [],
+  "pass": true
+ },
+ {
+  "check": "49b tenant admin -> site admin in /1",
+  "pencils": [],
+  "loginas": true,
+  "camera": false,
+  "note": "profile shown",
+  "pass": true
+ },
+ {
+  "check": "50 site admin -> colleague",
+  "pencils": [
+   {
+    "tag": "A",
+    "href": "http://localhost:8080/user/editadvanced.php?id=3430&returnto=profile",
+    "action": ""
+   }
+  ],
+  "loginas": true,
+  "camera": true,
+  "pass": true
+ }
+]

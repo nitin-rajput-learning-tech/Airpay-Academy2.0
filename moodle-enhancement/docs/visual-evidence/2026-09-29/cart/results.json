@@ -1,0 +1,79 @@
+[
+ {
+  "check": "1 site admin admin_orders",
+  "persona": "vp_siteadmin",
+  "headers": [
+   "#",
+   "Placed",
+   "User",
+   "Total",
+   "Gateway",
+   "Status",
+   "Staff notes"
+  ],
+  "row": [
+   "923430",
+   "29 Sept 2026",
+   "vp_learner1@example.invalid",
+   "2000",
+   "airpay",
+   "paid",
+   "ADR-031: order #923430: payment recorded, enrolment withheld for course id(s) 447 - not purchasable by this buyer at payment time. Refund due."
+  ],
+  "failedRow": [
+   "933430",
+   "29 Sept 2026",
+   "vp_learner1@example.invalid",
+   "1000",
+   "airpay",
+   "failed",
+   "Gateway reported failure: {\"MESSAGE\":\"Declined <br>by bank\"}"
+  ],
+  "refused": false,
+  "pass": true
+ },
+ {
+  "check": "2 tenant admin /1 admin_orders",
+  "persona": "vp_admin1",
+  "headers": [
+   "#",
+   "Placed",
+   "User",
+   "Total",
+   "Gateway",
+   "Status",
+   "Staff notes"
+  ],
+  "row": [
+   "923430",
+   "29 Sept 2026",
+   "vp_learner1@example.invalid",
+   "2000",
+   "airpay",
+   "paid",
+   "ADR-031: order #923430: payment recorded, enrolment withheld for course id(s) 447 - not purchasable by this buyer at payment time. Refund due."
+  ],
+  "failedRow": [
+   "933430",
+   "29 Sept 2026",
+   "vp_learner1@example.invalid",
+   "1000",
+   "airpay",
+   "failed",
+   "Gateway reported failure: {\"MESSAGE\":\"Declined <br>by bank\"}"
+  ],
+  "refused": false
+ },
+ {
+  "check": "3 learner payment message",
+  "persona": "vp_learner1",
+  "found": true,
+  "excerpt": "Your order has been placed successfully.\n37 mins 28 secs ago\nOrder #933430 failed\n37 mins 59 secs ago\nSelect from the list of notifications on the side to view more details"
+ },
+ {
+  "check": "4 site admin refund due",
+  "persona": "vp_siteadmin",
+  "found": true,
+  "excerpt": "New order #923430 - Refund due\n39 mins 42 secs ago\nSelect from the list of notifications on the side to view more details"
+ }
+]
