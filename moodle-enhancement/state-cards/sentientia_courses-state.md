@@ -558,3 +558,82 @@ Not run here (no PHPUnit, as instructed).
 Version: 1.11.9 / **2026092501** (new upgrade step). Deploy: the upgrade step runs on
 Notifications; read Site administration > Reports > Config changes (plugin local_sentientia_courses)
 afterwards.
+
+
+---
+
+## 2026-09-30 - ADR-032 course_tags importer (BizLMS import, mapping doc section 7)
+
+**What shipped (version 2026093002, both trees):** the `course_tags` importer of the BizLMS data import.
+BizLMS tagged courses in its own tag area (`tag_instance.component = local_courses`, `itemtype = courses`).
+Sentientia reads `core` / `course`. Every instance of the old area is moved IN PLACE to the core area: the row
+keeps its id, tag, item, context, user, ordering and timestamps, and only `component` and `itemtype` change. It is
+a direct UPDATE (the only reviewed core write for `tag_instance`), never the `core_tag_tag` API, so no
+`tag_added`/`tag_removed` event fires.
+
+| Piece | File |
+|---|---|
+| Registry | `db/bizlms_import.php` (`course_tags`) |
+| Importer (sources, reasons, preflight, verify) | `classes/bizlms/course_tags_importer.php` |
+| Load step (decides what moves) | `classes/bizlms/course_tags_step.php` |
+| Recompute step (the UPDATE) | `classes/bizlms/course_tags_remap_step.php` |
+| Schema | `local_sentientia_courses_tagmove` in `db/install.xml` + `db/upgrade.php` step 2026093002 |
+| Tests | `tests/bizlms_import_test.php`, `tests/fixtures/bizlms/local_tags.install.xml` |
+
+**Outcomes per source row** (derived unit `#tag_instance.id`, one group per instance):
+
+- moves: `imported`, one trail row in `local_sentientia_courses_tagmove` (id of the instance + its two timestamps);
+- a twin already exists in `core/course` (same item, context, user, tag; two missing contexts count as equal):
+  `folded`, reason `duplicate_core_instance`, map target = the surviving core row. The legacy row is left
+  untouched and nothing is deleted (R13);
+- the tagged course is gone: `skipped`, reason `course_missing`; the tag is gone: `skipped`, reason `tag_missing`.
+  Both stay in the old area. No reason needs the owner, so parity does not go to exit 2 for them.
+
+`local_tags` and `local_tag_mapping` are declined. The tag areas of classroom, learning plan and evaluation are
+counted in preflight (`other_area_left_in_place:*`) and left alone (decision `gaps.other_tag_areas` = `left_in_place`,
+already accepted in the signed decisions file). No tenant column, no person column, no PRESERVE step, no flag, no
+reader change, no lang string: `depends()` is empty.
+
+**Preflight** blocks when a tag of the old area lives in another tag collection than the core course area
+(`tag_collection_mismatch:N`) or when the two area rows disagree (`tag_collection_differs:*`). It warns about
+instances outside the course context and a missing legacy area row, and counts what a run will do
+(`will_move`, `will_fold_duplicate_core_instance`, `will_skip_*`). It needs the feature's source below the default
+atomic threshold (50 000): see "resume" below.
+
+**Why a trail table and a derived unit (framework limits, reported to the lead).** The frozen ADR-032 contract has no
+shape for "update a row of a reviewed core table that is also the source row":
+
+1. `outcome::update` is refused in a load step, and `writer::update_core()` is reachable only from a recompute step,
+   which runs over the rows a load step imported into the importer's OWN tables. So each instance that moves gets a
+   row in a small trail table (ids and timestamps, no person). It is also what makes a rehearsal reversible, which
+   `--purge-feature` refuses for a feature that writes a core table. Rehearsal undo (a restore is the normal way back):
+   `UPDATE {tag_instance} SET component = 'local_courses', itemtype = 'courses' WHERE id IN (SELECT taginstanceid
+   FROM {local_sentientia_courses_tagmove})`, then clear the map rows of feature `course_tags` and its marker. Production
+   rollback stays the RDS snapshot.
+2. The generic accounting identity (source rows with the step filter = primary map rows) and the whole-table check
+   `unmapped_rows` cannot hold for a step that rewrites its own filter, nor for core `tag_instance`, which keeps
+   changing after go-live. The step is therefore a derived unit and the importer's `verify()` carries the real
+   identity: every instance still in the old area is recorded folded or skipped; the trail and the `imported` map rows
+   agree one to one; every trail row is in the core area (waived once `bizlms_production_open` is set, since an
+   administrator may delete a course's tags after go-live).
+3. Resume: a batch-mode run that dies after the remap started cannot resume (the source fingerprint of the finished
+   step has changed). The feature is `atomic()` and far below the threshold, so it runs in one transaction and a crash
+   leaves nothing. Rerun it.
+
+Suggested framework amendment (one change removes both workarounds): an in-place step kind that may return update
+outcomes against a reviewed core write from the load step, with accounting against `legacystep.srccount` and the
+`unmapped_rows` check waived for core sources. ADR-032 already describes it in the parity hooks ("for in-place core
+steps ... the preflight snapshot count is used"), but `parity::accounting_problems()` and `runner::verify_feature()`
+do not implement it.
+
+**Tests (not run: no PHPUnit in this pass).** Contract trait plus the feature cases: move keeps every other column and
+adds no row; twin folded and both rows untouched; orphans skipped and untouched; one primary map row per source row;
+other areas and `local_tags` never touched; no event; dry run moves nothing; second apply writes nothing; preflight
+counts; the two tag-collection blockers; the `gaps.other_tag_areas` decision; verify failures; static scan. Overridden
+contract cases, with the reason in the test file: `test_contract_not_applicable_without_tables` (the source is a core
+table that cannot be dropped) and `contract_clear_import` (a clean run rewrites its own source, so the moved rows are
+put back before the second run). Seed numbers: 8 legacy instances, 4 move, 2 folded, 2 skipped.
+
+**Deploy:** the upgrade step creates the trail table on Notifications. The registry refuses the importer until the
+installed plugin is at 2026093002, so re-run the PHPUnit init after merging. Shared files with the `course_lookups`
+importer (same plugin): `version.php`, `db/install.xml`, `db/upgrade.php`, `db/bizlms_import.php`, this card.

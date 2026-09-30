@@ -37,7 +37,9 @@ $plugin->component = 'local_sentientia_courses';
 // from course_reminder for the <48h urgent surface. No schema change.
 // UAT #3/#4 (2026-09-08) — Manage Courses KPI tiles + category filter now
 // tenant-scoped to the datatable's row set (course_manager::manage_*).
-$plugin->version   = 2026092501;  // ADR-031 follow-up: upgrade step rehomes tenant admins' 'All tenants' featured rows; own-roster unenrol; scoped Enrolled column
+// 2026093002:  // ADR-032 course_tags importer: trail table local_sentientia_courses_tagmove (ids only) + db/bizlms_import.php
+$plugin->version   = 2026093002;  // ADR-032 course_tags importer: trail table for the in-place tag remap (no user-visible change)
+// 2026092501:  // ADR-031 follow-up: upgrade step rehomes tenant admins' 'All tenants' featured rows; own-roster unenrol; scoped Enrolled column
 // 2026092500:  // ADR-031: course writes, enrolment, featured, list/export tenant-scoped (no schema/cap change)
 // 2026092201:  // real privacy provider: requests + remind_sent (was null_provider)
 // 2026091700:  // Browse Airpay Library: F-12 (format_string'd slots rendered once) + page copy via lang strings (en+hi)

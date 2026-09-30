@@ -190,5 +190,24 @@ function xmldb_local_sentientia_courses_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026092501, 'local', 'sentientia_courses');
     }
 
+    // 2026093002 - ADR-032 course_tags importer: the trail of tag instances moved in place.
+    //
+    // One row per tag_instance row the BizLMS import moves from the local_courses/courses tag area to
+    // core/course. Ids and timestamps only. Guarded, so a database that already has the table (created
+    // from install.xml) passes through untouched.
+    if ($oldversion < 2026093002) {
+        $table = new xmldb_table('local_sentientia_courses_tagmove');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('taginstanceid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('uk_taginstance', XMLDB_INDEX_UNIQUE, ['taginstanceid']);
+            $dbman->create_table($table);
+        }
+        upgrade_plugin_savepoint(true, 2026093002, 'local', 'sentientia_courses');
+    }
+
     return true;
 }
