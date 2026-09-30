@@ -178,7 +178,7 @@ final class course_tags_importer implements importer {
         // gaps.other_tag_areas is enforced by the runner before this runs (present, accepted, left_in_place). What it
         // decides is what the loop at the end of this method does: count the other areas and change nothing.
 
-        $legacy =[self::LEGACY_COMPONENT, self::LEGACY_ITEMTYPE];
+        $legacy = [self::LEGACY_COMPONENT, self::LEGACY_ITEMTYPE];
         $total = $DB->count_records(self::SOURCE_TABLE, ['component' => $legacy[0], 'itemtype' => $legacy[1]]);
         $pf->count('legacy_tag_instances', $total);
         if ($total > self::DEFAULT_ATOMIC_THRESHOLD) {

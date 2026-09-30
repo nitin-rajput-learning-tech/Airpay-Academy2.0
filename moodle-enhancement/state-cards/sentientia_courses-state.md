@@ -634,6 +634,7 @@ contract cases, with the reason in the test file: `test_contract_not_applicable_
 table that cannot be dropped) and `contract_clear_import` (a clean run rewrites its own source, so the moved rows are
 put back before the second run). Seed numbers: 8 legacy instances, 4 move, 2 folded, 2 skipped.
 
-**Deploy:** the upgrade step creates the trail table on Notifications. The registry refuses the importer until the
-installed plugin is at 2026093002, so re-run the PHPUnit init after merging. Shared files with the `course_lookups`
+**Deploy:** the upgrade step creates the trail table on Notifications. `version.php` now requires
+`local_sentientia_platform` 2026093001 (the framework the importer implements). The registry refuses the importer
+until the installed plugin is at 2026093002, so re-run the PHPUnit init after merging. Shared files with the `course_lookups`
 importer (same plugin): `version.php`, `db/install.xml`, `db/upgrade.php`, `db/bizlms_import.php`, this card.

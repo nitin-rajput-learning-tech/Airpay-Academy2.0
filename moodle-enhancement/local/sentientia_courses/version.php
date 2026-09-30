@@ -50,7 +50,7 @@ $plugin->release   = '1.11.9';  // ADR-031 follow-up: featured rows rehomed, own
 $plugin->dependencies = [
     'local_sentientia_org' => 2026041600,
     // tenant::is_cross_tenant() / scope_path() / require_same_tenant_user() (ADR-031).
-    'local_sentientia_platform' => 2026092500,
+    'local_sentientia_platform' => 2026093001,  // + the ADR-032 import framework (classes/bizlms) the importer implements
 ];
 // Release history:
 // 1.6.0  Phase F.5 — native enrol modal (replaces deep-link)

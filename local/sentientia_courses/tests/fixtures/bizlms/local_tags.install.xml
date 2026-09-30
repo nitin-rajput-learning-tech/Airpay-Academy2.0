@@ -1,16 +1,27 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
-  Verbatim copy of the BizLMS install file, for the ADR-032 course_tags importer tests.
+  ADR-032 course_tags test fixture: the two BizLMS tag tables, copied from the production snapshot.
+
   Source : D:/Claude Local/Moodle Backup/01-production-codebase/html/local/tags/db/install.xml
-  sha1   : bc38c903977df3f6eabccea750f1d7825d975d46 (of the source file as read)
-  Copied : 2026-09-30
-  Edits  : none. No PREVIOUS/NEXT attributes, no type XMLDB rejects, no production-only column added.
+  sha1   : bc38c903977df3f6eabccea750f1d7825d975d46 (of the whole source file, as read on 2026-09-30)
+  Date   : 2026-09-30
+
+  Edits to the source (every other byte is the source's; the ADR allows (a) to (c), the loader forces (d)):
+    (a) PREVIOUS / NEXT attributes stripped: the source has none, so nothing to strip.
+    (b) Types XMLDB rejects replaced: none needed, both tables load as they are.
+    (c) Production-only columns added: none. local/tags/db/upgrade.php (step 2022101800) only adds indexes,
+        no column, so the snapshot install file is the shape of both tables.
+    (d) The root element: PATH must equal the directory of this file relative to dirroot (xmldb_structure refuses
+        a file whose PATH differs), so it is local/sentientia_courses/tests/fixtures/bizlms instead of
+        local/tags/db, and the xsi schema location is the matching relative path. VERSION and COMMENT are the
+        source's.
+
   Only local_tags and local_tag_mapping live here. The tag instances the importer moves are rows of core
   tag_instance, which the PHPUnit database already has.
 -->
-<XMLDB PATH="local/tags/db" VERSION="20190805" COMMENT="XMLDB file for Moodle local/tags"
+<XMLDB PATH="local/sentientia_courses/tests/fixtures/bizlms" VERSION="20190805" COMMENT="XMLDB file for Moodle local/tags"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+    xsi:noNamespaceSchemaLocation="../../../../../lib/xmldb/xmldb.xsd"
 >
   <TABLES>
     <TABLE NAME="local_tags" COMMENT="local tags" >
