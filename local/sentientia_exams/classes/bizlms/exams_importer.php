@@ -205,6 +205,15 @@ final class exams_importer implements importer {
         global $DB;
         $failures = [];
 
+        // These checks prove the state the import left. The parity check runs verify() again for as long as the
+        // site is online, and its source is live core data (the quizzes of the exam courses) and its targets are
+        // rows admins may delete once the site is open (an exam, with its dedupe rows left behind). The runbook
+        // sets bizlms_production_open at go-live, as for the framework's own missing-target check, and from then
+        // on a changed quiz or a deleted exam is not a failed import.
+        if ((int) get_config('local_sentientia_platform', 'bizlms_production_open') > 0) {
+            return [];
+        }
+
         // The accounting identity of a derived step is not checked by the framework (its unit is a group, not a
         // table row), so the importer checks it: one primary map row per exam course that holds a quiz, in
         // each step.

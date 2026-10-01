@@ -16,6 +16,7 @@ use local_sentientia_platform\bizlms\importer as framework_importer;
 use local_sentientia_platform\bizlms\legacymap;
 use local_sentientia_platform\bizlms\registry;
 use local_sentientia_platform\bizlms\report;
+use local_sentientia_platform\bizlms\runner;
 use local_sentientia_platform\phpunit\importer_contract;
 use local_sentientia_platform\phpunit\legacy_schema_fixture;
 
@@ -762,6 +763,35 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertEquals($before, $snapshot(), 'courses, quizzes, attempts and enrolments are what they were');
         $this->assertSame(0, $events->count());
         $this->assertSame(0, $messages->count());
+    }
+
+    // Verify.
+
+    public function test_verify_proves_the_import_until_the_site_opens(): void {
+        global $DB;
+        $this->seed_and_apply();
+        $verify = fn(): array => (new runner(['decisions' => $this->contract_decisions()]))->verify(['exams']);
+
+        $clean = $verify();
+        $this->assertSame([], $clean['failures']['exams'], 'a clean import verifies');
+
+        // What happens on a live site: an exam course appears (the source is live core data) and an admin deletes
+        // an exam, leaving its dedupe rows behind.
+        $late = $this->make_course('Late exam course', '/1', exam_quiz_step::MODULE_EXAMS, 1);
+        $this->make_quiz($late, 'Late quiz');
+        $DB->delete_records('local_sentientia_exams', ['id' => $this->exam_of('basic')->id]);
+
+        $changed = $verify();
+        $this->assertSame(1, $changed['exit']);
+        $lines = implode(' ', $changed['failures']['exams']);
+        $this->assertStringContainsString('accounting:' . exam_step::SOURCE, $lines, 'the new exam course has no map row');
+        $this->assertStringContainsString('seeded_rows_without_an_exam', $lines);
+
+        // The runbook sets this at go-live; from then on neither is a failed import.
+        set_config('bizlms_production_open', 1, 'local_sentientia_platform');
+        $open = $verify();
+        $this->assertSame([], $open['failures']['exams']);
+        $this->assertSame(0, $open['exit']);
     }
 
     // The reader fixes shipped with the importer.

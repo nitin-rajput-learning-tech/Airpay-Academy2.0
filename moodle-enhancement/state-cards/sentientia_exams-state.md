@@ -183,6 +183,10 @@ core data read by quiz id and are never touched.
   rewrites `course.cacherev` on every course and would read as source drift on `--resume`); the dedupe rows are a
   load step, not `finalise()` (the framework's static scan bans every DB write there); a pathless exam stores
   `open_path` NULL, not an empty string (the generic tenant verify accepts only a valid path or NULL).
+- **verify():** one primary map row per exam course in each step, no quiz wrapped twice, pass marks in range, every
+  seeded dedupe row names an exam. It returns nothing once `local_sentientia_platform/bizlms_production_open` is
+  set (the parity check re-runs verify while the site is online, and the source is live core data), like the
+  framework's own missing-target check.
 - **Also in this change (other plugins):** `local_sentientia_catalog` 2026100100 lists ordinary courses only
   (exams code fix 3); `theme_airpayux` 2026100100 reads the exam row through `exam_manager` instead of SQL on
   `{local_onlinetests}` (exams code fix 4).

@@ -23,6 +23,23 @@ mastery score). Replacement for BizLMS `local_onlineexams`.
 
 `local_sentientia_exams` — exam metadata associated 1:1 with a Moodle quiz.
 
+`local_sentientia_exams_remind_sent` — dedupe log of the deadline-reminder and
+overdue-escalation tasks (one row per learner, exam, bucket and deadline; an
+overdue bucket is a negative number of days).
+
+## BizLMS import (ADR-032)
+
+A BizLMS online exam is a COURSE with `open_module = 'online_exams'` and
+`open_coursetype = 1` that holds a quiz; BizLMS has no exam table. At cutover
+`php local/sentientia_platform/cli/import_bizlms.php --feature=exams` wraps each
+quiz of such a course in an exam row (`classes/bizlms/`, registered in
+`db/bizlms_import.php`) and marks the overdue escalation of every deadline that
+passed before the import as already sent, so enabling `exam_overdue` later cannot
+message supervisors about it. Attempts, grades and completions are core data and are
+not touched. The legacy `local_onlinetests` table is not read by any reader; the
+import refuses to run if it exists with rows. The importer has no UI: the CLI guard
+gates it (no feature flag).
+
 ## Capabilities (3)
 
 `:view`, `:manage`, `:enrol`.
