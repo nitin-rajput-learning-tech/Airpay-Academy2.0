@@ -477,3 +477,141 @@ the side that was wrong; nothing a test proves was weakened.
   `assertDebuggingNotCalled()`, checks a middle/alternate-name template really renders, and guards the
   `sync_runs.php` source. Written, not run (low-CPU session).
 - Deploy needs no purge beyond the normal upgrade. Both trees are identical.
+
+## 2026-09-30 - BizLMS import, users feature (2.8.2 -> 2.9.0, 2026100101)
+
+Branch `claude/bizlms-import-users`. ADR-032 + mapping doc section 10. Built on `claude/gap-integration`
+(the framework is merged there). The version is stamped 2026100101: the framework's own bump to
+2026093001/2 is below it. Both trees are identical.
+
+**Importer** (`db/bizlms_import.php` registers `users`; code in `classes/bizlms/`, so the static scan reads it)
+- `depends()` = `org` (the transcript table has a tenant path column). Not atomic. No core table is written
+  (`core_writes()` is empty). Reasons: `no_unattached_errors`, `no_service_errors`, `duplicate_login_day`,
+  `declined_by_decision` (no owner needed) and `invalid_login_row` (needs the owner: parity exits 2 until
+  `accepted_reasons` lists `users:invalid_login_row`).
+- Steps, in order: `users.sync_runs` (MAP, `local_userssyncdata`), `users.orphan_runs` and `users.service_runs`
+  (derived, `#local_syncerrors.orphan_day` and `.service_day`), `users.sync_errors` (MAP), `users.transcript`
+  (MAP), `users.logindays` (MAP, grouped on user and day), `users.domains` and `users.positions` (PRESERVE,
+  ids kept because `user.open_positionid` and `open_domainid` hold them).
+- Run matching (`sync_index`): one pass over both source tables builds aggregates only. A service row never
+  matches a run; an error attaches to the uploader's run whose window contains its time (an hour before, up
+  to the run, after the previous run); a warning attaches to the uploader's first run that day; the rest goes
+  to a synthetic run per uploader and server-timezone day. Severity is the production `type` column when the
+  table has it, else "exact midnight in the server timezone" (preflight says which: `severity_inferred_from_midnight`).
+  Verified against the test seed with a standalone script (no Moodle) before the tests were written.
+- Tenant: a run's `costcenterid` is the uploader's tenant NOW, never the legacy column; a cross-tenant uploader
+  gets 0 (`users.admin_runs_tenant = zero`) or their root (`uploader_root`); an unresolved tenant is 0 (the
+  signed `tenant.unresolved.users = pathless`, the only value supported). A transcript row takes the matched
+  learner's current path; a row with no learner has none and is visible to cross-tenant callers only.
+- Transcript: the learner is the `userid` when it names an account, else the ONE live account the employee id
+  names (open_employeeid, then idnumber; none or two gives 0). Raw text of date, status, score and hours is kept
+  next to the parsed value; the status is normalised by the signed list; nothing reaches `course_completions`,
+  the log or xAPI.
+- Not written or called: the HRMS importer, `user_create_user`/`user_update_user` (no event, no welcome mail),
+  `hrms_sync_last_run*`, `{user}.open_path` (the declined `local_userdata` is only compared in preflight:
+  `userdata_path_mismatch`), sessions.
+
+**Schema** (`db/install.xml` + idempotent `db/upgrade.php` step 2026100101): `local_sentientia_users_transcript`,
+`_logindays` (UNIQUE user+day), `_position`, `_domain`. No `legacykey` columns (R6).
+
+**Privacy** (the null provider was false and is gone): real metadata, userlist and plugin provider for the two
+existing tables (e-mail, employee code, username, name on a rejected line; the uploader) and the two new ones.
+A person is found by id and by the identity on a rejected line. Export gives an uploader the count of rows
+their uploads produced, not other people's lines. Erasure keeps the history and removes the person
+(`users.erasure_treatment = anonymise`): ids set to 0, identity columns blanked, identifiers scrubbed out of
+messages. Login days are DELETED (a (user, day) row cannot stay unique without the user): not covered by the
+signed decision, see the note for the owner below.
+
+**Readers** (all default OFF, `db/feature_flags.php`, never flipped by the importer)
+- `sentientia.users.legacy_transcript`: "Earlier training records (imported)" on the profile
+  (`user_manager::get_transcript_history()`), never in a total.
+- `sentientia.users.position_labels`: Position and Domain lines in the employee detail grid (the profile showed
+  neither before; the map's "bare ids" wording was wrong).
+- Not flagged because they fix existing admin pages: `sync_runs.php` pages at 100 and says "Imported from
+  BizLMS" for source `bizlms`; `sync_run_detail.php` breaks ties by id, pages at 500 and shows a dash for line 0;
+  the settings link now points at `sync_runs.php` through `moodle_url` (it pointed at `hrms_history.php`, which
+  never existed).
+
+**Deviations from the map, and why**
+- The transcript and login-day tables are built unconditionally, not "only if production has rows": a fresh
+  install has no legacy tables and the readers must not have to ask.
+- No recompute step. Every number a run shows is a function of the source rows, so `sync_index` computes it
+  where the run is written.
+- The synthetic runs are two derived steps grouped by uploader (the framework groups on a raw column), keyed
+  by the uploader's lowest error id, with one run per day: the first is the group's primary row, the others
+  sub-rows `day:YYYYMMDD`. The map keyed one derived group per day by the lowest error id of that day.
+- `tenant.unresolved.users = skip` is refused at preflight; only `pathless` is implemented.
+- The imported-login-days report column counts all imported days (the map said a 90-day window): nothing in
+  Sentientia writes the table after cutover, so a window would empty out within three months.
+
+**Tests** (written, NOT run: the lead re-inits PHPUnit once for all version bumps)
+- `tests/bizlms_import_test.php`: the `importer_contract` trait plus column maps, run matching, synthetic runs,
+  tenant, transcript parsing and matching, login days, lookups and sequences, decisions, preflight, verify damage,
+  nothing written to the legacy tables or `{user}`. `tests/bizlms_import_prodshape_test.php`: the production
+  shape of `local_syncerrors` (type, sync_file_name, firstname, lastname). `tests/privacy_provider_test.php`,
+  `tests/legacy_history_test.php`, `tests/transcript_parser_test.php` (pure; also run standalone).
+- Fixture: `tests/fixtures/bizlms/users.install.xml` (the four install.xml tables copied with the source sha1,
+  `local_uniquelogins` from the upgrade code, `local_positions` and `local_domains` INFERRED from the code: the
+  snapshot has no install file for them) and `stub_org.install.xml`; the org importer is stubbed.
+
+**Open / not done**
+- No screenshots: the profile section, the two lines and the paging bar need a deploy to the local Moodle,
+  which this build did not do. Every new surface is behind a default-OFF flag. Capture visual evidence before
+  anyone turns a flag ON (ADR-032 gate, CLAUDE.md section 5).
+- `usercreated`, `usermodified` and `modified_by` are not in `privacy_coverage_test::USER_COLUMNS` (framework
+  test, not edited here), so the structural guard does not see them; the provider declares them anyway.
+- Owner note: login days are deleted on erasure (above). `users.logindays_erasure = delete` is not a key the
+  code reads; it is the choice to record next to `users.erasure_treatment`.
+- Stage B: `SHOW COLUMNS` of `mdl_local_syncerrors`, `local_positions`, `local_domains`; the row counts of
+  the five tables (I-20); production `$CFG->timezone` (the midnight inference and every day bucket use it).
+
+## 2026-10-01 - BizLMS import, users feature: review follow-up (fix-then-ship, no version bump)
+
+The review verdict was fix-then-ship. `2026100101` stands (this branch is unmerged; nothing here needs a schema
+change or a new string). Both trees are identical.
+
+**Closed**
+- MUST FIX, privacy user list: `get_users_in_context()` called `$DB->sql_lower()`, which moodle_database does not
+  have, so every user-list request for the system context died. `legacy_history::user_list_sql()` now returns
+  `[sql, params]` pairs built with `sql_equal(..., false)` (portable, takes a column as comparand), and covers the
+  same two routes `get_contexts_for_userid()` takes: the id a row carries, and the identity a row names (e-mail,
+  username, a claiming employee code against BOTH `idnumber` and `open_employeeid`, plus unmatched transcript
+  rows). The rendered SQL was run on MariaDB 10.11 against temp tables (ambiguous, deleted, empty and `-` codes
+  all behaved). `privacy_provider_test` now asserts the two halves agree for EVERY live account.
+- Ambiguous employee codes: an unmatched (userid 0) transcript row, and a rejected line named by code only, are
+  claimed for a person only when NO OTHER live account holds the code (either column, case-insensitive); for one
+  request naming several people, when every live holder is in the request (`legacy_history::claimable_codes()`,
+  `identity()['claimcodes']`). Export, erasure and the user list all use it. This is slightly stricter than
+  `user_identity_index` in one case (it lets `open_employeeid` beat `idnumber`; privacy refuses to guess).
+- Reconciliation reported: `sync_run_step` adds `legacy_error_count_differs` (errorscount vs error rows matched to
+  the run) and `legacy_warning_count_differs` (warnings + supervisor warnings vs warning rows matched), from
+  `sync_index::attached_errors()/attached_warnings()`. Reported, never corrected; expected on most real runs.
+- Privacy metadata now declares `transcript.objectref` and `logindays.timemodified`. A person who only created or
+  last changed transcript rows about somebody else now gets them as a count in the export
+  (`earlier_training_records_you_entered`), not the rows.
+- `run_training_transcript()` (local_sentientia_reports, 1.3.0): the summary (records, completed, hours) is
+  counted in the database over the whole scope; the table still lists the first 500.
+- `user_identity_index` documents its read of `{user}` as a known exception to "steps reach the database only
+  through the context" (see framework need below).
+
+**Needs the owner (not decided by this build)**
+- `users.logindays_erasure` (suggest `delete`): login days are DELETED on erasure, which `users.erasure_treatment`
+  (transcript and sync-error rows) does not cover. `(userid, logindate)` is unique, so a row cannot be anonymised
+  by zeroing the user. Deletion stays the default until the owner signs a value.
+- `users.sync_history_visibility`: `sync_runs.php` and `sync_run_detail.php` show every run of the tenant, with
+  the rejected lines' e-mail, code and name, to anyone with `local/sentientia_users:create` in that tenant. That
+  is Sentientia's existing rule for native runs, now also true for imported ones. BizLMS showed a non-admin only
+  the errors they caused. Either sign "tenant-wide" or filter non-admin viewers to their own uploads (a small
+  change in both pages). No cross-tenant leak either way.
+
+**Still open**
+- No screenshots (no deploy in this build; it may not copy into C:/xampp). To capture before any flag is ON,
+  desktop and mobile: the profile "Earlier training records (imported)" section and the Position/Domain lines
+  (`sentientia.users.legacy_transcript`, `sentientia.users.position_labels` ON); the Training Transcript report
+  and the login-days column (`sentientia.reports.training_transcript`, `sentientia.reports.login_days` ON); and,
+  flag-less because they are default-ON fixes, `sync_runs.php` (paging bar, "Imported from BizLMS") and
+  `sync_run_detail.php` (paging bar, dash for line 0).
+- Framework needs: an employee-id lookup in `lookups` (retire `user_identity_index`'s own read), and
+  `usercreated`/`usermodified`/`modified_by` in `privacy_coverage_test::USER_COLUMNS`.
+- Merge note: `claude/bizlms-import-skills` also appends to the end of this plugin's `lang/en` and `lang/hi`
+  (both trees): expect a trivial end-of-file conflict. That branch does not bump this plugin's version.

@@ -136,6 +136,9 @@
         <div class="ap-profile__detail"><label>Sub-department</label><span>{{subdepartment}}</span></div>
         <div class="ap-profile__detail"><label>{{#str}}reportingto, local_sentientia_users{{/str}}</label><span>{{supervisorname}}</span></div>
         <div class="ap-profile__detail"><label>Employee ID</label><span>{{empid}}</span></div>
+        {{! ADR-032 users: the position and domain, from the imported lookups; both lines exist only behind the flag sentientia.users.position_labels. }}
+        {{#ap_position}}<div class="ap-profile__detail"><label>{{#str}}position, local_sentientia_users{{/str}}</label><span>{{.}}</span></div>{{/ap_position}}
+        {{#ap_domain}}<div class="ap-profile__detail"><label>{{#str}}domain, local_sentientia_users{{/str}}</label><span>{{.}}</span></div>{{/ap_domain}}
         <div class="ap-profile__detail"><label>Location</label><span>{{location}}</span></div>
         <div class="ap-profile__detail"><label>Phone</label><span>{{phnumber}}</span></div>
         <div class="ap-profile__detail"><label>Join Date</label><span>{{joindate}}</span></div>
@@ -352,6 +355,42 @@
     </div>
 </div>
 {{/ap_has_grades}}
+
+{{! ADR-032 users: earlier training records the BizLMS import copied (history only, never in a total). Flag sentientia.users.legacy_transcript, default OFF. }}
+{{#ap_has_transcript}}
+<div class="ap-profile__transcript mt-4" data-region="ap-profile-transcript">
+    <h2 class="h5 mb-1">
+        <i class="fa fa-history text-primary me-2" aria-hidden="true"></i>{{#str}}transcript_heading, local_sentientia_users{{/str}}
+    </h2>
+    <p class="small text-muted mb-3">{{#str}}transcript_intro, local_sentientia_users{{/str}}</p>
+    <div class="table-responsive">
+        <table class="table table-sm ap-profile__transcript-table">
+            <thead>
+                <tr>
+                    <th scope="col">{{#str}}transcript_col_title, local_sentientia_users{{/str}}</th>
+                    <th scope="col">{{#str}}transcript_col_type, local_sentientia_users{{/str}}</th>
+                    <th scope="col">{{#str}}transcript_col_completed, local_sentientia_users{{/str}}</th>
+                    <th scope="col">{{#str}}transcript_col_status, local_sentientia_users{{/str}}</th>
+                    <th scope="col">{{#str}}transcript_col_score, local_sentientia_users{{/str}}</th>
+                    <th scope="col">{{#str}}transcript_col_hours, local_sentientia_users{{/str}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#ap_transcript}}
+                <tr>
+                    <td>{{title}}{{#location}}<div class="small text-muted">{{.}}</div>{{/location}}</td>
+                    <td>{{type}}</td>
+                    <td>{{completed}}</td>
+                    <td>{{status}}{{#statusraw}}<div class="small text-muted">{{.}}</div>{{/statusraw}}</td>
+                    <td>{{score}}</td>
+                    <td>{{hours}}</td>
+                </tr>
+                {{/ap_transcript}}
+            </tbody>
+        </table>
+    </div>
+</div>
+{{/ap_has_transcript}}
 
 {{! Plugin content tabs }}
 {{#usercontent}}

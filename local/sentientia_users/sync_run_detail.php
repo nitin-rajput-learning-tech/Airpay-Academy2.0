@@ -8,6 +8,10 @@
 require_once(__DIR__ . '/../../config.php');
 
 $run_id = required_param('id', PARAM_INT);
+// ADR-032 (users): the row list was a hard LIMIT 500 with an unstable order past the first page. A run the
+// BizLMS import made can hold more, so it pages.
+$page = max(0, optional_param('page', 0, PARAM_INT));
+$perpage = 500;
 
 require_login();
 $context = \context_system::instance();
@@ -50,7 +54,8 @@ echo html_writer::tag('h5',
     s($run->filename ?: '(no filename)'),
     ['class' => 'card-title']);
 echo html_writer::tag('p',
-    'Source: <code>' . s($run->source) . '</code>'
+    'Source: <code>' . ($run->source === 'bizlms'
+        ? s(get_string('hrms_source_bizlms', 'local_sentientia_users')) : s($run->source)) . '</code>'
     . ' &middot; '
     . userdate((int) $run->timecreated, '%d %b %Y, %H:%M:%S')
     . ' &middot; status <strong>' . s($run->status) . '</strong>'
@@ -83,10 +88,13 @@ echo html_writer::end_div();
 echo html_writer::end_div();
 
 // Errors + warnings detail.
+// id ASC last: BizLMS never stored the CSV line, so every imported row has line 0 and the order would otherwise
+// be whatever the database returns.
+$errortotal = $DB->count_records('local_sentientia_users_sync_errors', ['runid' => $run_id]);
 $errors = $DB->get_records('local_sentientia_users_sync_errors',
-    ['runid' => $run_id], 'severity ASC, csv_line_number ASC', '*', 0, 500);
+    ['runid' => $run_id], 'severity ASC, csv_line_number ASC, id ASC', '*', $page * $perpage, $perpage);
 
-if (empty($errors)) {
+if ($errortotal === 0) {
     echo $OUTPUT->notification(
         get_string('hrms_no_errors', 'local_sentientia_users'), 'success');
 } else {
@@ -99,7 +107,8 @@ if (empty($errors)) {
             ? '<span class="badge bg-warning text-dark">Warning</span>'
             : '<span class="badge bg-danger">Error</span>';
         $rows[] = [
-            (int) $e->csv_line_number,
+            // BizLMS did not store the line: 0 means unknown, shown as a dash.
+            (int) $e->csv_line_number > 0 ? (int) $e->csv_line_number : '-',
             $sev_badge,
             s($e->email),
             s($e->employee_code),
@@ -125,6 +134,7 @@ if (empty($errors)) {
     $table->attributes['class'] = 'generaltable table-sm';
     $table->data = $rows;
     echo html_writer::table($table);
+    echo $OUTPUT->paging_bar($errortotal, $page, $perpage, $PAGE->url);
 }
 
 echo html_writer::start_div('mt-4');

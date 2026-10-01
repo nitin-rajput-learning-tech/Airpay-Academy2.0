@@ -59,3 +59,25 @@ $string['privacy:metadata:reports:created_by']   = 'The user who created the rep
 $string['privacy:metadata:reports:name']         = 'The report name';
 $string['privacy:metadata:reports:report_type']  = 'The type of report';
 $string['privacy:metadata:reports:timecreated']  = 'When the report was created';
+
+// ADR-032 (2026-10-01) - users import: the earlier training records report and the imported login days column.
+$string['report_type_training_transcript'] = 'Training Transcript — earlier training records (imported)';
+$string['report_col_name'] = 'Name';
+$string['report_col_empid'] = 'Emp ID';
+$string['report_col_training'] = 'Training';
+$string['report_col_type'] = 'Type';
+$string['report_col_completed'] = 'Completed';
+$string['report_col_status'] = 'Status';
+$string['report_col_statusraw'] = 'Status as loaded';
+$string['report_col_score'] = 'Score';
+$string['report_col_hours'] = 'Hours';
+$string['report_col_logindays'] = 'Login days (imported)';
+$string['report_status_completed'] = 'Completed';
+$string['report_status_inprogress'] = 'In progress';
+$string['report_status_failed'] = 'Failed';
+$string['report_status_notstarted'] = 'Not started';
+$string['report_status_cancelled'] = 'Cancelled';
+$string['report_status_unknown'] = 'Unknown';
+$string['report_sum_records'] = 'Total Records';
+$string['report_sum_completed'] = 'Completed';
+$string['report_sum_hours'] = 'Total hours';

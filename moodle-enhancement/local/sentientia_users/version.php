@@ -72,7 +72,14 @@ $plugin->component = 'local_sentientia_users';
 // With notification=0, message_send() refused the local_sentientia_users
 // provider outright (only moodle/instantmessage may send a personal
 // message), so the welcome email had never been delivered.
-$plugin->version   = 2026093001;  // persona pass D14: supervisor + sync-run name lookups load every fullname() field (no developer notice)
+// 2026-10-01 — ADR-032 BizLMS import, users feature: importer (db/bizlms_import.php, classes/bizlms/), four
+// tables for the imported history (earlier training records, login days, position and domain lookups), a real
+// privacy provider (the null provider was false: sync runs and errors hold e-mail, employee code and names),
+// a paged sync-run list that labels BizLMS-imported runs, and two default-OFF readers: the earlier training
+// records on the profile (sentientia.users.legacy_transcript) and position/domain labels
+// (sentientia.users.position_labels).
+$plugin->version   = 2026100101;  // ADR-032 users importer + imported-history tables + real privacy provider
+// 2026093001: persona pass D14: supervisor + sync-run name lookups load every fullname() field (no developer notice)
 // 2026092501: welcome email actually sends (email_to_user, white-label token restored).
 // 2026092500: ADR-031: target-tenant checks on every write.
 // 2026092401: N1 review: supervisor label + list fail-closed.
@@ -81,8 +88,8 @@ $plugin->version   = 2026093001;  // persona pass D14: supervisor + sync-run nam
 // 2026090302: H1, signup no longer reveals whether an email exists.
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '2.8.2';  // name-field notice fix (2.8.1: welcome email fix; 2.8.0: ADR-031)
+$plugin->release   = '2.9.0';  // ADR-032 users import (2.8.2: name-field notice fix; 2.8.1: welcome email fix; 2.8.0: ADR-031)
 $plugin->dependencies = [
     'local_sentientia_org' => 2026051501,
-    'local_sentientia_platform' => ANY_VERSION,
+    'local_sentientia_platform' => 2026093001,  // ADR-032: the bizlms import framework the importer implements
 ];

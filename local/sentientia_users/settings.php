@@ -151,6 +151,9 @@ if ($hassiteconfig) {
         $statusbody = get_string('hrms_sync_last_run_value', 'local_sentientia_users', (object) [
             'time'  => userdate($lastrun),
             'runid' => $lastrunid,
+            // The string used to carry a relative link to hrms_history.php, a page that does not exist. The
+            // history is sync_runs.php; the link is built here so it follows the site's wwwroot.
+            'url'   => s((new moodle_url('/local/sentientia_users/sync_runs.php'))->out(false)),
         ]);
     } else {
         $statusbody = get_string('hrms_sync_last_run_never', 'local_sentientia_users');
