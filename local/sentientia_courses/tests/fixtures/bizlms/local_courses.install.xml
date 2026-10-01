@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  ADR-032 course_lookups test fixture: the two tables of the BizLMS local_courses plugin that this importer claims,
+  copied from the production snapshot.
+
+  Source : D:/Claude Local/Moodle Backup/01-production-codebase/html/local/courses/db/install.xml
+  sha1   : 679c0b9afc33b37363677be68496f98d30ba17f6 (of the whole source file, as read on 2026-10-01)
+  Date   : 2026-10-01
+
+  Only local_course_types and local_dashboardcourses live here: the other tables of that file belong to other
+  features (local_logs and local_courseerrors to legacy_logs, and so on). Edits to the source (every other byte of
+  the two tables is the source's; the ADR allows (a) to (c), the loader forces (d)):
+    (a) PREVIOUS / NEXT attributes stripped: the source has none on these two tables, so nothing to strip.
+    (b) Types XMLDB rejects replaced: none needed, both tables load as they are.
+    (c) Production-only shape added: local_course_types is DROPPED AND RECREATED by the plugin's upgrade step
+        2022101800.05 (BZ local/courses/db/upgrade.php:128-148), so production does not hold the install.xml shape
+        (lines 40-58 of the source: name and shortname char 225, orgid and active NOT NULL, active default 0 and length 10).
+        It holds the shape of that step, which is what is written here: name and shortname char 255 NOT NULL,
+        orgid int(10) NULL default 0, active int(1) NOT NULL default 1, the four time and user columns int(10) NULL
+        default 0. The orgid index of the source is kept.
+        local_dashboardcourses: the plugin's upgrade step 2022101800.19 (BZ local/courses/db/upgrade.php:222-231)
+        creates it with courseids char(255) only when the table does not exist, so a production database holds char(225)
+        (install path) or char(255) (upgrade path). The importer does not depend on the length; the source's shape is kept.
+    (d) The root element: PATH must equal the directory of this file relative to dirroot (xmldb_structure refuses
+        a file whose PATH differs), so it is local/sentientia_courses/tests/fixtures/bizlms instead of
+        local/courses/db, and the xsi schema location is the matching relative path. VERSION and COMMENT are the
+        source's.
+-->
+<XMLDB PATH="local/sentientia_courses/tests/fixtures/bizlms" VERSION="20161125" COMMENT="XMLDB file for Moodle local/courses"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="local_course_types" COMMENT="local course type" >
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="shortname" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="orgid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="active" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+       <INDEXES>
+        <INDEX NAME="orgid" UNIQUE="false" FIELDS="orgid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_dashboardcourses" COMMENT="dashboard_courses for user" >
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
+                <FIELD NAME="courseids" TYPE="char" LENGTH="225" NOTNULL="false" SEQUENCE="false" />
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+            </KEYS>
+        </TABLE>
+  </TABLES>
+</XMLDB>

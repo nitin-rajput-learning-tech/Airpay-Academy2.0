@@ -340,3 +340,34 @@ Adversarial review of the D1/D2 bundle returned fix-then-ship. Closed here:
   `test_notify_says_where_the_free_lines_went`, `test_notify_does_not_mention_free_lines_when_...`,
   `test_the_order_cart_prices_a_line_without_lib_php_being_loaded`. NOT RUN (low-CPU mode); the lead re-inits
   PHPUnit once after the bundles merge. Both trees.
+
+## 2026-09-30 - ADR-032 course_lookups reader fixes
+
+Branch `claude/bizlms-import-course_lookups`. Version **2026100101** (above 2026093002; no schema or capability change).
+The tables the readers use belong to `local_sentientia_courses` 2026100101 (see that card). **Not run: no PHPUnit here
+(low-CPU mode); re-initialise PHPUnit after the merge.**
+
+- **`category_manager` (mapping doc, section 6, code fix 1).** It read the BizLMS table `local_custom_category` directly
+  (guarded by `table_exists`). It now reads `local_sentientia_course_category`, with no legacy read left, so no catalogue
+  reader depends on a BizLMS table after cutover. `get_root_categories()` and `get_children()` had no tenant filter; both
+  now go through one `list_children()` bounded by `tenant::path_filter('', 'tenant_path')`: a scoped caller lists their own
+  tenant tree (`/1` matches `/1` and `/1/50`, never `/10`), a cross-tenant caller lists every category, a category with a
+  NULL `tenant_path` is visible to cross-tenant callers only, and a caller with no resolvable tenant lists nothing
+  (ADR-031, fail closed). The by-id lookups (`get`, `get_name`, `get_with_parent`) stay unscoped: they name the category of a
+  course the viewer can already see. Nothing in the repo called the two list methods today; the fix is for the API.
+- **Course type label (code fix 2) behind a flag.** The card's `type` came from a hard-coded map on `open_coursetype`
+  (E-Learning, Classroom, Exam), not from the course types. New `catalog_manager::course_type_labels(array $courseids)`
+  looks each id of the EXPLODED comma list `open_identifiedas` up in `local_sentientia_course_type` (BizLMS
+  `courseallocation_lib.php:168` splits it the same way; a join on equality loses every two-type course) and joins the
+  names. Two queries for a whole page, no query per card, and none of the five card SELECTs changed (the PHPUnit fixture
+  trait does not provision `open_identifiedas`, so adding it to them would break every catalogue test). Flag
+  **`sentientia.catalog.course_type_labels.enabled`**, default OFF, registered in `db/feature_flags.php`: OFF returns no
+  label and every card keeps today's text; a course whose list names no known type keeps it too. `format_course()` takes
+  the labels as a parameter. Card caches (`trending`, `new_courses`, `in_progress`) hold the old label for their TTL after
+  the flag is flipped; the importer purges them when it finishes, and a deploy purges them.
+- **UI.** The card text changes only with the flag ON. No template, SCSS or lang change, so no screenshots; the flag-ON card
+  should be looked at by Nitin before the flag is flipped for Airpay (framework decision `reader_flags_airpay_at_cutover`).
+- **Tests.** New `tests/course_lookups_readers_test.php` (`@group tenant_isolation`): scoped, cross-tenant and tenant-less
+  callers, the `/10` boundary, the pathless row, the by-id lookups, the flag registered and OFF, the exploded list (order,
+  whitespace, an unknown id, a non-number, an empty-named type), and the card `type` with the flag OFF, ON and OFF again.
+  NOT RUN. Both trees.

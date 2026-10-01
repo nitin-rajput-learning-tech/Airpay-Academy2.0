@@ -32,25 +32,28 @@ class course_fields {
 
     /**
      * Fields used in access control queries.
+     *
+     * ADR-032 course_lookups code fix 3 (2026-10-01): open_costcenterid and open_departmentid were listed here, but
+     * neither is a column of {course} (sentientia_core\substrate::course_fields() does not create them, and the
+     * production table has none), so all() and select_sql() produced a SELECT that fails. A course's tenant is its
+     * open_path.
      */
     public const ACCESS_FIELDS = [
-        'open_costcenterid',       // Root org — tenant access control
-        'open_departmentid',       // Department — dept-head access control
+        'open_path',               // Org path — tenant access control and notification scoping
     ];
 
     /**
      * Fields used in catalog/display logic.
      */
     public const METADATA_FIELDS = [
-        'open_categoryid',         // Custom category (links to local_custom_category)
+        'open_categoryid',         // Custom category (links to local_sentientia_course_category)
         'open_level',              // Difficulty level (links to local_course_levels)
         'open_coursetype',         // E-learning, classroom, blended
         'open_skill',              // Associated skill ID (links to local_skill)
         'open_certificateid',      // Certificate template ID
         'open_coursecompletiondays',// Days allowed for completion
         'open_points',             // Credit points awarded on completion
-        'open_identifiedas',       // Course type identifier (links to local_course_types)
-        'open_path',               // Org path for notification scoping
+        'open_identifiedas',       // Comma list of course type ids (links to local_sentientia_course_type)
     ];
 
     /**

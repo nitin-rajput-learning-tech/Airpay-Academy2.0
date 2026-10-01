@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  ADR-032 course_lookups test fixture: the BizLMS local_custom_category table, copied from the production snapshot.
+
+  Source : D:/Claude Local/Moodle Backup/01-production-codebase/html/local/custom_category/db/install.xml
+  sha1   : 0f360b6f292deb21cc7ccfd78ab9a12c6d8ca4b5 (of the whole source file, as read on 2026-10-01)
+  Date   : 2026-10-01
+
+  Edits to the source (every other byte is the source's; the ADR allows (a) to (c), the loader forces (d)):
+    (a) PREVIOUS / NEXT attributes stripped: the source has none, so nothing to strip.
+    (b) Types XMLDB rejects replaced: none needed. The source carries UNSIGNED="true" on integer and char fields;
+        XMLDB has ignored the attribute since Moodle 2.3 (lib/xmldb/xmldb_field.php), so the table loads as it is.
+    (c) Production-only columns added: none. The plugin has no upgrade.php (its db directory holds access.php,
+        install.xml and services.php), so the snapshot install file is the shape of production.
+    (d) The root element: PATH must equal the directory of this file relative to dirroot (xmldb_structure refuses
+        a file whose PATH differs), so it is local/sentientia_courses/tests/fixtures/bizlms instead of
+        local/custom_category/db, and the xsi schema location is the matching relative path. VERSION and COMMENT are
+        the source's.
+-->
+<XMLDB PATH="local/sentientia_courses/tests/fixtures/bizlms" VERSION="20150323" COMMENT="XMLDB file for Moodle local/custom_category"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../../../lib/xmldb/xmldb.xsd">
+    <TABLES>
+        <TABLE NAME="local_custom_category" COMMENT="List of custom_category">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" />
+                <FIELD NAME="fullname" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" />
+                <FIELD NAME="shortname" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" />
+                <FIELD NAME="parentid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" />
+                <FIELD NAME="costcenterid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" />
+                <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+                <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+                <FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+                <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+                <FIELD NAME="path" TYPE="char" LENGTH="512" NOTNULL="false" SEQUENCE="false" />
+                <FIELD NAME="depth" TYPE="int" LENGTH="20" NOTNULL="false" UNSIGNED="false" SEQUENCE="false" />
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+            </KEYS>
+            <INDEXES>
+                <INDEX NAME="parentid" UNIQUE="false" FIELDS="parentid"/>
+            </INDEXES>
+        </TABLE>
+    </TABLES>
+</XMLDB>

@@ -70,4 +70,22 @@ $flags = [
                           classes/checkout_bridge.php.',
     ],
 
+    'sentientia.catalog.course_type_labels.enabled' => [
+        'default'     => false,
+        'description' => 'Course card type label from the course types
+                          (ADR-032 course_lookups import, 2026-10-01). When
+                          OFF (default) every course card is labelled
+                          E-Learning, Classroom or Exam from the course\'s
+                          open_coursetype - exactly today\'s behaviour. When
+                          ON, a card shows the names of the course types the
+                          course is identified as (the comma list in
+                          open_identifiedas, looked up in
+                          local_sentientia_course_type, which the BizLMS
+                          import fills with the BizLMS course types). A course
+                          that names no known type keeps the open_coursetype
+                          label. Leave OFF until the import has run and the
+                          course types have been reviewed. See
+                          catalog_manager::course_type_labels().',
+    ],
+
 ];

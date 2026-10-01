@@ -195,3 +195,15 @@ $string['privacy:metadata:courses_remind_sent:courseid'] = 'रिकॉर्�
 $string['privacy:metadata:courses_remind_sent:days_before_deadline'] = 'समय-सीमा से कितने दिन पहले अनुस्मारक गया।';
 $string['privacy:metadata:courses_remind_sent:deadline_ts'] = 'अनुस्मारक की समय-सीमा।';
 $string['privacy:metadata:courses_remind_sent:timesent'] = 'अनुस्मारक कब भेजा गया।';
+
+// ADR-032 course_lookups आयात तालिकाओं के लिए गोपनीयता मेटाडेटा (2026-10-01)।
+$string['privacy:metadata:course_type'] = 'पाठ्यक्रम का प्रकार, यानी वह लेबल जिससे पाठ्यक्रम पहचाना जाता है (जैसे ई-लर्निंग या कक्षा), साथ में यह कि इसे किसने बनाया और किसने आखिरी बार बदला।';
+$string['privacy:metadata:course_type:usercreated'] = 'पाठ्यक्रम प्रकार बनाने वाले उपयोगकर्ता की आईडी।';
+$string['privacy:metadata:course_type:usermodified'] = 'पाठ्यक्रम प्रकार को आखिरी बार बदलने वाले उपयोगकर्ता की आईडी।';
+$string['privacy:metadata:course_type:timecreated'] = 'पाठ्यक्रम प्रकार कब बनाया गया।';
+$string['privacy:metadata:course_type:timemodified'] = 'पाठ्यक्रम प्रकार को आखिरी बार कब बदला गया।';
+$string['privacy:metadata:course_category'] = 'कस्टम पाठ्यक्रम श्रेणी, साथ में यह कि इसे किसने बनाया और किसने आखिरी बार बदला।';
+$string['privacy:metadata:course_category:usercreated'] = 'श्रेणी बनाने वाले उपयोगकर्ता की आईडी।';
+$string['privacy:metadata:course_category:usermodified'] = 'श्रेणी को आखिरी बार बदलने वाले उपयोगकर्ता की आईडी।';
+$string['privacy:metadata:course_category:timecreated'] = 'श्रेणी कब बनाई गई।';
+$string['privacy:metadata:course_category:timemodified'] = 'श्रेणी को आखिरी बार कब बदला गया।';
