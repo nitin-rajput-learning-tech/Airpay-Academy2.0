@@ -144,3 +144,10 @@ Both trees are identical.
   tenant admin sees only their tenant's learners, not a deleted account, not an unmatched row; the login-days
   column). Written, NOT run (the lead re-inits PHPUnit once).
 - No screenshots (no deploy in this build). Capture visual evidence before turning either flag ON.
+
+## 2026-10-01 - users review follow-up (no version bump)
+
+Training Transcript summary: records, completed and hours are now `COUNT`/`SUM` queries over the whole report
+scope, not a total of the (up to 500) rows listed. The table is unchanged (first 500, newest completion first).
+A report of more than 500 records used to under-report. `tests/imported_history_report_test.php` pins it (502
+records, the two completed ones past the table). Both trees identical. Written, NOT run.

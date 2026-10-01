@@ -22,8 +22,14 @@ use local_sentientia_platform\bizlms\step;
  * its loop finished), no error summary.
  *
  * The counters are copied as BizLMS showed them. They are not true totals (the legacy code counted error
- * messages, not rows) and are not de-duplicated; the number of rows that cannot reconcile is in the report.
- * The one derived number is totalrows: inserted + updated + the error rows matched to the run.
+ * messages, not rows) and are not de-duplicated ("Report the difference; do not de-duplicate", mapping doc
+ * section 10). The difference is reported, per run, as two warning codes the report counts:
+ *   - legacy_error_count_differs: the run's errorscount is not the number of error rows matched to it;
+ *   - legacy_warning_count_differs: the run's warningscount + supervisorwarningscount is not the number of warning
+ *     rows matched to it.
+ * Both are only reported when the source has the error table to compare with (sync_index::has_error_source()).
+ * They are expected on most real runs: they say how far the old counters are from the rows, not that the import
+ * lost anything. The one derived number is totalrows: inserted + updated + the error rows matched to the run.
  *
  * The tenant is the uploader's tenant now (sync_index::tenant_for_uploader()), never the legacy costcenterid.
  *
@@ -64,6 +70,14 @@ final class sync_run_step extends step {
             [$total, $c5] = clean::count($inserted + $updated + $index->attached_errors($id));
             if ($c1 || $c2 || $c3 || $c4 || $c5) {
                 $warnings[] = 'count_clamped';
+            }
+            if ($index->has_error_source()) {
+                if ($errors !== $index->attached_errors($id)) {
+                    $warnings[] = 'legacy_error_count_differs';
+                }
+                if ($warned !== $index->attached_warnings($id)) {
+                    $warnings[] = 'legacy_warning_count_differs';
+                }
             }
 
             $created = clean::time($row->timecreated ?? null);

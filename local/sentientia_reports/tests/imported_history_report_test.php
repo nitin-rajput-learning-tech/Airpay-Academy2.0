@@ -114,6 +114,28 @@ final class imported_history_report_test extends \advanced_testcase {
         $this->assertCount(9, $result['columns']);
     }
 
+    public function test_the_summary_covers_the_whole_scope_and_not_only_the_rows_shown(): void {
+        $this->turn_on(report_manager::FLAG_TRAINING_TRANSCRIPT);
+        $this->setAdminUser();
+        $learner = (int) $this->user_at('/1/5', 'big@example.com')->id;
+        // 500 recent failed records fill the table; the two completed ones are the oldest, past the 500 shown.
+        for ($i = 1; $i <= 500; $i++) {
+            $this->transcript($learner, 'Big', 'Recent ' . $i, 1700000000 + $i, 'failed', 1.0);
+        }
+        $this->transcript($learner, 'Big', 'Old A', 1600000000, 'completed', 2.0);
+        $this->transcript($learner, 'Big', 'Old B', 1600000001, 'completed', 2.0);
+
+        $result = report_manager::run_report($this->report('training_transcript', null));
+        $this->assertCount(500, $result['rows'], 'the table lists the first 500, newest first');
+        $this->assertSame('Recent 500', $result['rows'][0]['title']);
+        $this->assertNotContains('Old A', array_column($result['rows'], 'title'));
+        $summary = array_column($result['summary'], 'value', 'label');
+        $this->assertSame(502, $summary[get_string('report_sum_records', 'local_sentientia_reports')]);
+        $this->assertSame(2, $summary[get_string('report_sum_completed', 'local_sentientia_reports')],
+            'the completed records beyond the table are counted');
+        $this->assertSame('504.00', $summary[get_string('report_sum_hours', 'local_sentientia_reports')]);
+    }
+
     public function test_a_tenant_admin_sees_only_records_of_learners_in_their_tenant(): void {
         $this->turn_on('sentientia.reports.training_transcript');
         $own = $this->user_at('/1/5', 'own@example.com', ['firstname' => 'Own', 'lastname' => 'Learner']);

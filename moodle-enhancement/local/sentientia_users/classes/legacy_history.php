@@ -19,8 +19,18 @@ defined('MOODLE_INTERNAL') || die();
  *
  * The signed decision users.erasure_treatment = anonymise: on an erasure request the imported rows are KEPT and
  * the person is removed from them (ids set to 0, identifying text blanked or scrubbed). Login days are the one
- * exception: a row is only a (user, day) pair, and its unique key cannot survive losing the user, so it is
- * deleted, the way core's own log store deletes a user's log rows.
+ * exception: a row is only a (user, day) pair, and its unique key (userid, logindate) cannot survive losing the
+ * user, so it is deleted, the way core's own log store deletes a user's log rows. That exception is NOT covered
+ * by users.erasure_treatment (which names the transcript and sync-error rows); it waits for the owner's written
+ * decision users.logindays_erasure, and deleting is the builder's default until then.
+ *
+ * WHICH ROWS ARE A PERSON'S. A row that carries no account id (an error line, an unmatched transcript row) is a
+ * person's when it names them by e-mail, username, or an employee code. An e-mail or username names one account.
+ * An employee code can name more than one (open_employeeid of one person, idnumber of another), and the importer
+ * left exactly those rows unmatched; claiming them for every holder would export one person's records to
+ * another and let one person's erasure cut the other's link. So a code claims a row only when no OTHER live
+ * account holds it ({@see self::claimable_codes()}); for a request that names several people, when every live
+ * holder is one of them.
  *
  * This is also the reader of the transcript and of the position and domain labels the profile shows. Both
  * readers are behind default-OFF flags (db/feature_flags.php).
@@ -187,12 +197,15 @@ final class legacy_history {
      * What identifies these people on a rejected CSV line or a transcript row: their e-mail address, employee
      * codes (open_employeeid and idnumber), username and name. Placeholders and very short values are left out.
      *
+     * 'codes' is every code they hold (used to scrub messages); 'claimcodes' is the subset that may CLAIM a row
+     * (see the class description): codes no other live account holds.
+     *
      * @param int[] $userids
-     * @return array{emails: string[], codes: string[], usernames: string[], names: string[]}
+     * @return array{emails: string[], codes: string[], usernames: string[], names: string[], claimcodes: string[]}
      */
     public static function identity(array $userids): array {
         global $DB;
-        $out = ['emails' => [], 'codes' => [], 'usernames' => [], 'names' => []];
+        $out = ['emails' => [], 'codes' => [], 'usernames' => [], 'names' => [], 'claimcodes' => []];
         $userids = array_values(array_unique(array_filter(array_map('intval', $userids), static fn(int $id): bool => $id > 0)));
         if (!$userids) {
             return $out;
@@ -214,7 +227,45 @@ final class legacy_history {
         foreach ($out as $kind => $values) {
             $out[$kind] = array_values(array_unique($values));
         }
+        $out['claimcodes'] = self::claimable_codes($userids, $out['codes']);
         return $out;
+    }
+
+    /**
+     * The codes (lower-cased) that no live account OUTSIDE this set holds, in either idnumber or open_employeeid.
+     *
+     * @param int[] $userids The people the request is about.
+     * @param string[] $codes Their codes, lower-cased and trimmed.
+     * @return string[]
+     */
+    private static function claimable_codes(array $userids, array $codes): array {
+        global $DB;
+        if (!$codes || !$userids) {
+            return [];
+        }
+        $hasemployee = array_key_exists('open_employeeid', $DB->get_columns('user'));
+        $fields = 'id, idnumber' . ($hasemployee ? ', open_employeeid' : '');
+        [$notin, $notparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'clx', false);
+        $held = [];
+        foreach (array_chunk($codes, 500) as $chunk) {
+            [$in, $params] = $DB->get_in_or_equal($chunk, SQL_PARAMS_NAMED, 'cla');
+            $match = "LOWER(idnumber) {$in}";
+            if ($hasemployee) {
+                [$in2, $params2] = $DB->get_in_or_equal($chunk, SQL_PARAMS_NAMED, 'clb');
+                $match = "({$match} OR LOWER(open_employeeid) {$in2})";
+                $params += $params2;
+            }
+            $others = $DB->get_records_select('user', "deleted = 0 AND id {$notin} AND {$match}",
+                $params + $notparams, '', $fields);
+            foreach ($others as $row) {
+                self::collect($held, $row->idnumber, true);
+                if ($hasemployee) {
+                    self::collect($held, $row->open_employeeid, true);
+                }
+            }
+        }
+        $held = array_flip($held);
+        return array_values(array_filter($codes, static fn(string $code): bool => !isset($held[$code])));
     }
 
     /**
@@ -234,7 +285,7 @@ final class legacy_history {
     /**
      * WHERE fragment matching the sync-error rows an identity names.
      *
-     * @param array{emails: string[], codes: string[], usernames: string[], names: string[]} $identity
+     * @param array{emails: string[], codes: string[], usernames: string[], names: string[], claimcodes: string[]} $identity
      * @return array{0: string, 1: array} ['' when the identity names nothing]
      */
     private static function error_identity_sql(array $identity): array {
@@ -242,7 +293,8 @@ final class legacy_history {
         $conditions = [];
         $params = [];
         $n = 0;
-        foreach (['emails' => 'email', 'codes' => 'employee_code', 'usernames' => 'username'] as $kind => $column) {
+        // Only a code no other live account holds may claim a line (see the class description).
+        foreach (['emails' => 'email', 'claimcodes' => 'employee_code', 'usernames' => 'username'] as $kind => $column) {
             foreach ($identity[$kind] as $value) {
                 $name = 'blmid' . $n++;
                 $conditions[] = $DB->sql_equal($column, ':' . $name, false);
@@ -279,10 +331,12 @@ final class legacy_history {
                 ['u' => $userid, 'c' => $userid, 'm' => $userid])) {
             return true;
         }
-        return self::transcript_by_code_exists($identity['codes']);
+        return self::transcript_by_code_exists($identity['claimcodes']);
     }
 
     /**
+     * Is there an unmatched transcript row carrying one of these (claiming) codes?
+     *
      * @param string[] $codes
      * @return bool
      */
@@ -357,7 +411,7 @@ final class legacy_history {
         }
 
         $transcript = [];
-        foreach (self::transcript_rows_for($userid, $identity['codes']) as $row) {
+        foreach (self::transcript_rows_for($userid, $identity['claimcodes']) as $row) {
             $transcript[] = [
                 'employee_id' => $row->employee_id,
                 'name' => $row->learner_name,
@@ -375,6 +429,18 @@ final class legacy_history {
         }
         if ($transcript) {
             $out['earlier_training_records'] = $transcript;
+        }
+
+        // Rows about somebody else that this person entered or last changed: they are told the fact, not given the
+        // rows (the same rule as for an uploader's error rows).
+        $entered = [
+            'records_you_created' => $DB->count_records_select(self::TRANSCRIPT, 'usercreated = :c AND userid <> :u',
+                ['c' => $userid, 'u' => $userid]),
+            'records_you_last_changed' => $DB->count_records_select(self::TRANSCRIPT, 'usermodified = :m AND userid <> :v',
+                ['m' => $userid, 'v' => $userid]),
+        ];
+        if (array_sum($entered) > 0) {
+            $out['earlier_training_records_you_entered'] = $entered;
         }
 
         $days = $DB->get_records(self::LOGINDAYS, ['userid' => $userid], 'logindate ASC', 'id, logindate');
@@ -417,7 +483,7 @@ final class legacy_history {
      * - error rows about them (matched by e-mail, employee code or username): the identity columns are blanked and
      *   every identifier is scrubbed out of the message;
      * - transcript rows: userid, employee id and name cleared, and any creator or modifier of theirs set to 0;
-     * - login days: deleted (see the class description).
+     * - login days: deleted (see the class description: the owner's decision users.logindays_erasure is pending).
      *
      * @param int[] $userids
      * @return void
@@ -441,7 +507,8 @@ final class legacy_history {
         [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'ant');
         $DB->execute('UPDATE {' . self::TRANSCRIPT . "} SET userid = 0, employee_id = '', learner_name = ''"
             . " WHERE userid {$insql}", $params);
-        foreach ($identity['codes'] as $i => $code) {
+        // An unmatched row is theirs only through a code nobody else holds (see the class description).
+        foreach ($identity['claimcodes'] as $code) {
             $DB->execute('UPDATE {' . self::TRANSCRIPT . "} SET employee_id = '', learner_name = ''"
                 . ' WHERE userid = 0 AND ' . $DB->sql_equal('employee_id', ':code', false), ['code' => $code]);
         }
@@ -474,7 +541,7 @@ final class legacy_history {
     /**
      * Blank the identity columns of the error rows an identity names, and scrub its identifiers out of the message.
      *
-     * @param array{emails: string[], codes: string[], usernames: string[], names: string[]} $identity
+     * @param array{emails: string[], codes: string[], usernames: string[], names: string[], claimcodes: string[]} $identity
      * @return void
      */
     private static function anonymise_error_rows(array $identity): void {
@@ -514,18 +581,80 @@ final class legacy_history {
     }
 
     /**
-     * User ids that appear in these tables, for the privacy user list.
+     * Queries that return the ids of the people these tables hold data about, for the privacy user list.
      *
-     * @return array<string, string> Column alias => SQL returning userid.
+     * Together they select exactly the people holds_data_for_user() is true for, by the same two routes: the id a
+     * row carries, and the identity a row names (e-mail, username, a claiming employee code; see the class
+     * description). Each is wrapped by core as "JOIN (sql) target ON u.id = target.userid", so each selects one
+     * column named userid, and its aliases are local to it. No query reuses a named parameter.
+     *
+     * Portable SQL only: moodle_database has no sql_lower(); case-insensitive equality is sql_equal(), which
+     * accepts a column as the comparand.
+     *
+     * @return array<string, array{0: string, 1: array}> Key => [SQL returning userid, named parameters].
      */
     public static function user_list_sql(): array {
-        return [
+        global $DB;
+        $list = [];
+        foreach ([
             'runs' => 'SELECT usercreated AS userid FROM {' . self::RUNS . '} WHERE usercreated > 0',
             'uploader' => 'SELECT modified_by AS userid FROM {' . self::ERRORS . '} WHERE modified_by > 0',
             'transcript' => 'SELECT userid AS userid FROM {' . self::TRANSCRIPT . '} WHERE userid > 0',
             'transcript_creator' => 'SELECT usercreated AS userid FROM {' . self::TRANSCRIPT . '} WHERE usercreated > 0',
             'transcript_modifier' => 'SELECT usermodified AS userid FROM {' . self::TRANSCRIPT . '} WHERE usermodified > 0',
             'logins' => 'SELECT userid AS userid FROM {' . self::LOGINDAYS . '} WHERE userid > 0',
+        ] as $key => $sql) {
+            $list[$key] = [$sql, []];
+        }
+
+        $errors = '{' . self::ERRORS . '}';
+        $transcript = '{' . self::TRANSCRIPT . '}';
+
+        // A rejected CSV line names a person by e-mail address or username, not by id.
+        $list['error_email'] = [
+            "SELECT u.id AS userid FROM {user} u JOIN {$errors} e ON " . $DB->sql_equal('e.email', 'u.email', false)
+            . ' WHERE u.deleted = 0 AND u.email <> :eem1 AND u.email <> :eem2',
+            ['eem1' => '', 'eem2' => self::PLACEHOLDER]];
+        $list['error_username'] = [
+            "SELECT u.id AS userid FROM {user} u JOIN {$errors} e ON " . $DB->sql_equal('e.username', 'u.username', false)
+            . ' WHERE u.deleted = 0 AND u.username <> :eus1 AND u.username <> :eus2',
+            ['eus1' => '', 'eus2' => self::PLACEHOLDER]];
+
+        // ...or by employee code, which claims a line only when no other live account holds the code.
+        [$match, $unshared] = self::claiming_code_sql('e.employee_code');
+        $list['error_code'] = [
+            "SELECT u.id AS userid FROM {user} u JOIN {$errors} e ON e.employee_code <> :eco1 AND e.employee_code <> :eco2"
+            . " AND {$match} WHERE u.deleted = 0 AND {$unshared}",
+            ['eco1' => '', 'eco2' => self::PLACEHOLDER]];
+
+        // A transcript row with no account id is the person's whose (sole) employee code it carries.
+        [$match, $unshared] = self::claiming_code_sql('t.employee_id');
+        $list['transcript_code'] = [
+            "SELECT u.id AS userid FROM {user} u JOIN {$transcript} t ON t.userid = :tuz AND t.employee_id <> :tec1"
+            . " AND t.employee_id <> :tec2 AND {$match} WHERE u.deleted = 0 AND {$unshared}",
+            ['tuz' => 0, 'tec1' => '', 'tec2' => self::PLACEHOLDER]];
+        return $list;
+    }
+
+    /**
+     * SQL fragments for "the live account u holds this code, and no other live account does".
+     *
+     * @param string $codecolumn Qualified column holding the code on the row, for example t.employee_id.
+     * @return array{0: string, 1: string} [condition on u (for a JOIN ... ON), NOT EXISTS on every other account]
+     */
+    private static function claiming_code_sql(string $codecolumn): array {
+        global $DB;
+        $hasemployee = array_key_exists('open_employeeid', $DB->get_columns('user'));
+        $holds = static function (string $alias) use ($DB, $hasemployee, $codecolumn): string {
+            $sql = $DB->sql_equal("{$alias}.idnumber", $codecolumn, false);
+            if ($hasemployee) {
+                $sql .= ' OR ' . $DB->sql_equal("{$alias}.open_employeeid", $codecolumn, false);
+            }
+            return '(' . $sql . ')';
+        };
+        return [
+            $holds('u'),
+            'NOT EXISTS (SELECT 1 FROM {user} o WHERE o.deleted = 0 AND o.id <> u.id AND ' . $holds('o') . ')',
         ];
     }
 }

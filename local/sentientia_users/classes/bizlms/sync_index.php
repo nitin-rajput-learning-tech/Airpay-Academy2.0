@@ -81,6 +81,12 @@ final class sync_index {
     /** @var array<int, int> legacy run id => error rows attached to it (warnings are not counted). */
     private array $attached = [];
 
+    /** @var array<int, int> legacy run id => warning rows attached to it. */
+    private array $attachedwarnings = [];
+
+    /** @var bool The source has the error table, so a run's counters can be compared with its matched rows. */
+    private bool $haserrors = false;
+
     /** @var array<string, int> uploader key => lowest error id of that uploader. */
     private array $minid = [];
 
@@ -122,6 +128,7 @@ final class sync_index {
             $this->read_runs($ctx);
         }
         if ($ctx->legacy->exists('local_syncerrors')) {
+            $this->haserrors = true;
             $this->hastype = $ctx->legacy->has_column('local_syncerrors', 'type');
             $this->hasfile = $ctx->legacy->has_column('local_syncerrors', 'sync_file_name');
             $this->read_errors($ctx);
@@ -191,6 +198,26 @@ final class sync_index {
      */
     public function attached_errors(int $runid): int {
         return $this->attached[$runid] ?? 0;
+    }
+
+    /**
+     * Warning rows the legacy run got.
+     *
+     * @param int $runid
+     * @return int
+     */
+    public function attached_warnings(int $runid): int {
+        return $this->attachedwarnings[$runid] ?? 0;
+    }
+
+    /**
+     * Was the source's error table read? Without it there is nothing to compare a run's counters with, so no
+     * difference is reported (every run would otherwise "differ" by its whole count).
+     *
+     * @return bool
+     */
+    public function has_error_source(): bool {
+        return $this->haserrors;
     }
 
     /**
@@ -353,7 +380,9 @@ final class sync_index {
         $warning = $this->is_warning($row);
         [$kind, $ref] = $this->destination($row);
         if ($kind === 'run') {
-            if (!$warning) {
+            if ($warning) {
+                $this->attachedwarnings[$ref] = ($this->attachedwarnings[$ref] ?? 0) + 1;
+            } else {
                 $this->attached[$ref] = ($this->attached[$ref] ?? 0) + 1;
             }
             return;

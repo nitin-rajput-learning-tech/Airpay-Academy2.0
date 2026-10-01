@@ -590,6 +590,9 @@ class report_manager {
      * (an off-platform record) has no path and shows only on an "All organisations" report, which only a
      * cross-tenant caller can run (require_report_access). A matched learner whose account was deleted is left out.
      *
+     * The table lists the first 500 records of the scope (newest completion first); the summary (records,
+     * completed, hours) covers the whole scope, counted in the database.
+     *
      * @param string $org_path report scope; '' = all organisations
      * @param array $config saved filter config (unused)
      * @return array{columns: array, rows: array, summary: array}
@@ -626,20 +629,28 @@ class report_manager {
             fn($f) => 'u.' . $f,
             \core_user\fields::get_name_fields()
         ));
+        $from = "FROM {local_sentientia_users_transcript} t
+            LEFT JOIN {user} u ON u.id = t.userid
+                WHERE " . implode(' AND ', $where);
         $records = $DB->get_records_sql(
             "SELECT t.id, t.employee_id, t.learner_name, t.title, t.training_type, t.status, t.status_raw,
                     t.timecompleted, t.completion_date_raw, t.score, t.hours,
                     u.id AS matcheduser, $unamefields
-               FROM {local_sentientia_users_transcript} t
-          LEFT JOIN {user} u ON u.id = t.userid
-              WHERE " . implode(' AND ', $where) . "
+               $from
            ORDER BY CASE WHEN t.timecompleted IS NULL THEN 1 ELSE 0 END, t.timecompleted DESC, t.id DESC",
             $params, 0, 500);
 
+        // The table shows the first 500 records, like the other reports; the summary is the whole scope. It is
+        // counted in the database: totting up the 500 rows shown under-reports an "All organisations" scope.
+        $totals = $DB->get_record_sql(
+            "SELECT COUNT(1) AS records,
+                    SUM(CASE WHEN t.status = :completedstatus THEN 1 ELSE 0 END) AS completed,
+                    SUM(t.hours) AS hours
+               $from",
+            ['completedstatus' => 'completed'] + $params);
+
         $statuses = ['completed', 'inprogress', 'failed', 'notstarted', 'cancelled', 'unknown'];
         $rows = [];
-        $completed = 0;
-        $hours = 0.0;
         foreach ($records as $r) {
             $status = in_array($r->status, $statuses, true) ? $r->status : 'unknown';
             $rows[] = [
@@ -655,19 +666,16 @@ class report_manager {
                 'score'      => $r->score !== null ? format_float((float) $r->score, 2) : '',
                 'hours'      => $r->hours !== null ? format_float((float) $r->hours, 2) : '',
             ];
-            if ($status === 'completed') {
-                $completed++;
-            }
-            $hours += (float) $r->hours;
         }
 
         return [
             'columns' => $columns,
             'rows' => $rows,
             'summary' => [
-                ['label' => get_string('report_sum_records', 'local_sentientia_reports'),   'value' => count($rows)],
-                ['label' => get_string('report_sum_completed', 'local_sentientia_reports'), 'value' => $completed],
-                ['label' => get_string('report_sum_hours', 'local_sentientia_reports'),     'value' => format_float($hours, 2)],
+                ['label' => get_string('report_sum_records', 'local_sentientia_reports'),   'value' => (int) $totals->records],
+                ['label' => get_string('report_sum_completed', 'local_sentientia_reports'), 'value' => (int) $totals->completed],
+                ['label' => get_string('report_sum_hours', 'local_sentientia_reports'),
+                    'value' => format_float((float) $totals->hours, 2)],
             ],
         ];
     }

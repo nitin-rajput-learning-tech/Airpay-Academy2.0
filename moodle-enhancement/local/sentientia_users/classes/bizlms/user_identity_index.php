@@ -20,6 +20,12 @@ use local_sentientia_platform\bizlms\context;
  * Built once per context. The framework's lookups class holds ids and org paths, not employee ids, so this is
  * the step's own read of {user}.
  *
+ * KNOWN EXCEPTION to ADR-032's "steps reach the database only through the context": this class reads {user}
+ * through the global $DB. It is read-only and preloaded once per context (no query per row, nothing written, so
+ * a dry run and an apply run are unaffected), but it is not reached through the context. The ADR owner has been
+ * asked either to give lookups an employee-id index or to record the exception; when lookups has one, this class
+ * becomes a thin wrapper over it.
+ *
  * @package    local_sentientia_users
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later

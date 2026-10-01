@@ -29,7 +29,7 @@ use local_sentientia_users\legacy_history;
  *
  * What an erasure request does (signed decision users.erasure_treatment = anonymise): the imported history is
  * KEPT and the person removed from it. See legacy_history for the details, including the one exception (login
- * days are deleted).
+ * days are deleted; the owner's written decision users.logindays_erasure for that is pending).
  *
  * Everything is held at system context.
  *
@@ -77,6 +77,7 @@ class provider implements
                 'learner_name' => 'privacy:metadata:field:name',
                 'title' => 'privacy:metadata:field:training',
                 'training_type' => 'privacy:metadata:field:training',
+                'objectref' => 'privacy:metadata:field:training',
                 'location' => 'privacy:metadata:field:training',
                 'courseid' => 'privacy:metadata:field:training',
                 'status' => 'privacy:metadata:field:training',
@@ -104,6 +105,7 @@ class provider implements
                 'logindate' => 'privacy:metadata:field:logindate',
                 'source' => 'privacy:metadata:field:source',
                 'timecreated' => 'privacy:metadata:field:time',
+                'timemodified' => 'privacy:metadata:field:time',
             ],
             'privacy:metadata:logindays'
         );
@@ -120,22 +122,15 @@ class provider implements
     }
 
     public static function get_users_in_context(userlist $userlist): void {
-        global $DB;
         if (!$userlist->get_context() instanceof \context_system) {
             return;
         }
-        foreach (legacy_history::user_list_sql() as $sql) {
-            $userlist->add_from_sql('userid', $sql, []);
+        // The people a row names by id, and the people a rejected line or an unmatched transcript row names by
+        // e-mail, username or employee code: the same two routes get_contexts_for_userid() takes (legacy_history
+        // builds both, so the two halves of the privacy API agree).
+        foreach (legacy_history::user_list_sql() as [$sql, $params]) {
+            $userlist->add_from_sql('userid', $sql, $params);
         }
-        // A rejected CSV line names a person by e-mail, employee code or username, not by id.
-        $lower = [$DB->sql_lower('e.email'), $DB->sql_lower('u.email')];
-        $userlist->add_from_sql('userid',
-            'SELECT u.id AS userid FROM {user} u JOIN {' . legacy_history::ERRORS . "} e ON {$lower[0]} = {$lower[1]}"
-            . ' WHERE u.deleted = 0 AND e.email <> :ph1', ['ph1' => legacy_history::PLACEHOLDER]);
-        $userlist->add_from_sql('userid',
-            'SELECT u.id AS userid FROM {user} u JOIN {' . legacy_history::ERRORS . '} e ON e.employee_code = u.idnumber'
-            . ' WHERE u.deleted = 0 AND u.idnumber <> :empty AND e.employee_code <> :ph2',
-            ['empty' => '', 'ph2' => legacy_history::PLACEHOLDER]);
     }
 
     public static function export_user_data(approved_contextlist $contextlist): void {

@@ -159,6 +159,28 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertArrayHasKey('derived_timestamp', $warnings);
     }
 
+    public function test_a_run_whose_legacy_counters_differ_from_its_matched_rows_is_reported_not_corrected(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        [, $report] = $this->users_run(true);
+        $warnings = $this->step_section($report, 'users.sync_runs', 'warnings');
+
+        // errorscount against the error rows matched to the run: run 1 says 2 and has errors 1 and 10 (equal); runs
+        // 2 and 5 say nothing (NULL) and have error 5 and error 11 matched. Runs 3 and 4 say 0 and have none.
+        $this->assertSame(2, $warnings['legacy_error_count_differs']);
+        // warningscount + supervisorwarningscount against the warning rows matched: run 1 says 1 + 2 and has one
+        // (error 2, a midnight row); no other run claims a warning and none has one.
+        $this->assertSame(1, $warnings['legacy_warning_count_differs']);
+
+        // Reported, never corrected: the counters stay as BizLMS showed them.
+        $one = $this->target_of('local_sentientia_users_sync_runs', 'local_userssyncdata', 1);
+        $five = $this->target_of('local_sentientia_users_sync_runs', 'local_userssyncdata', 5);
+        $this->assertSame(2, (int) $one->errorcount);
+        $this->assertSame(3, (int) $one->warningcount);
+        $this->assertSame(0, (int) $five->errorcount, 'it says nothing, although a matched row exists');
+        $this->assertSame(1, (int) $five->totalrows, 'the derived total does count the matched row');
+    }
+
     public function test_the_run_tenant_is_the_uploaders_tenant_now_never_the_legacy_costcenterid(): void {
         $this->contract_begin();
         $this->contract_seed();

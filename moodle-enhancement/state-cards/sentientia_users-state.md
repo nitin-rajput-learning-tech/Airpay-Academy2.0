@@ -564,3 +564,54 @@ signed decision, see the note for the owner below.
   code reads; it is the choice to record next to `users.erasure_treatment`.
 - Stage B: `SHOW COLUMNS` of `mdl_local_syncerrors`, `local_positions`, `local_domains`; the row counts of
   the five tables (I-20); production `$CFG->timezone` (the midnight inference and every day bucket use it).
+
+## 2026-10-01 - BizLMS import, users feature: review follow-up (fix-then-ship, no version bump)
+
+The review verdict was fix-then-ship. `2026100101` stands (this branch is unmerged; nothing here needs a schema
+change or a new string). Both trees are identical.
+
+**Closed**
+- MUST FIX, privacy user list: `get_users_in_context()` called `$DB->sql_lower()`, which moodle_database does not
+  have, so every user-list request for the system context died. `legacy_history::user_list_sql()` now returns
+  `[sql, params]` pairs built with `sql_equal(..., false)` (portable, takes a column as comparand), and covers the
+  same two routes `get_contexts_for_userid()` takes: the id a row carries, and the identity a row names (e-mail,
+  username, a claiming employee code against BOTH `idnumber` and `open_employeeid`, plus unmatched transcript
+  rows). The rendered SQL was run on MariaDB 10.11 against temp tables (ambiguous, deleted, empty and `-` codes
+  all behaved). `privacy_provider_test` now asserts the two halves agree for EVERY live account.
+- Ambiguous employee codes: an unmatched (userid 0) transcript row, and a rejected line named by code only, are
+  claimed for a person only when NO OTHER live account holds the code (either column, case-insensitive); for one
+  request naming several people, when every live holder is in the request (`legacy_history::claimable_codes()`,
+  `identity()['claimcodes']`). Export, erasure and the user list all use it. This is slightly stricter than
+  `user_identity_index` in one case (it lets `open_employeeid` beat `idnumber`; privacy refuses to guess).
+- Reconciliation reported: `sync_run_step` adds `legacy_error_count_differs` (errorscount vs error rows matched to
+  the run) and `legacy_warning_count_differs` (warnings + supervisor warnings vs warning rows matched), from
+  `sync_index::attached_errors()/attached_warnings()`. Reported, never corrected; expected on most real runs.
+- Privacy metadata now declares `transcript.objectref` and `logindays.timemodified`. A person who only created or
+  last changed transcript rows about somebody else now gets them as a count in the export
+  (`earlier_training_records_you_entered`), not the rows.
+- `run_training_transcript()` (local_sentientia_reports, 1.3.0): the summary (records, completed, hours) is
+  counted in the database over the whole scope; the table still lists the first 500.
+- `user_identity_index` documents its read of `{user}` as a known exception to "steps reach the database only
+  through the context" (see framework need below).
+
+**Needs the owner (not decided by this build)**
+- `users.logindays_erasure` (suggest `delete`): login days are DELETED on erasure, which `users.erasure_treatment`
+  (transcript and sync-error rows) does not cover. `(userid, logindate)` is unique, so a row cannot be anonymised
+  by zeroing the user. Deletion stays the default until the owner signs a value.
+- `users.sync_history_visibility`: `sync_runs.php` and `sync_run_detail.php` show every run of the tenant, with
+  the rejected lines' e-mail, code and name, to anyone with `local/sentientia_users:create` in that tenant. That
+  is Sentientia's existing rule for native runs, now also true for imported ones. BizLMS showed a non-admin only
+  the errors they caused. Either sign "tenant-wide" or filter non-admin viewers to their own uploads (a small
+  change in both pages). No cross-tenant leak either way.
+
+**Still open**
+- No screenshots (no deploy in this build; it may not copy into C:/xampp). To capture before any flag is ON,
+  desktop and mobile: the profile "Earlier training records (imported)" section and the Position/Domain lines
+  (`sentientia.users.legacy_transcript`, `sentientia.users.position_labels` ON); the Training Transcript report
+  and the login-days column (`sentientia.reports.training_transcript`, `sentientia.reports.login_days` ON); and,
+  flag-less because they are default-ON fixes, `sync_runs.php` (paging bar, "Imported from BizLMS") and
+  `sync_run_detail.php` (paging bar, dash for line 0).
+- Framework needs: an employee-id lookup in `lookups` (retire `user_identity_index`'s own read), and
+  `usercreated`/`usermodified`/`modified_by` in `privacy_coverage_test::USER_COLUMNS`.
+- Merge note: `claude/bizlms-import-skills` also appends to the end of this plugin's `lang/en` and `lang/hi`
+  (both trees): expect a trivial end-of-file conflict. That branch does not bump this plugin's version.
