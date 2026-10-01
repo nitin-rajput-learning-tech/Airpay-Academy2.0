@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_exams/tests/fixtures/bizlms" VERSION="20260930"
+       COMMENT="ADR-032 exams tests: the target table of the stub org importer (tests/classes/bizlms/stub_org_importer.php). The registry in test mode reads a plugin's own tables from db/install.xml and from the install.xml files in this directory. Never created: the stub's legacy table does not exist, so the stub writes nothing.">
+  <TABLES>
+    <TABLE NAME="local_sentientia_stub_org" COMMENT="Target of the stub org importer. Declared so the registry accepts the stub; never created or written.">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name"         TYPE="char" LENGTH="100" NOTNULL="true"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+  </TABLES>
+</XMLDB>

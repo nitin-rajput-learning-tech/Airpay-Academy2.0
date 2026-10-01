@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_exams/tests/fixtures/bizlms" VERSION="20260930"
+       COMMENT="ADR-032 exams importer tests. NOT a copy of a BizLMS file: the BizLMS plugin local_onlineexams declares no table at all (BZ local/onlineexams/db has install.php, upgrade.php and uninstall.php, and no install.xml), and a BizLMS online exam is a course row with open_module online_exams. The one table here is local_onlinetests, which no BizLMS code defines or writes but which the Sentientia exam reader assumed (exam_manager.php, before ADR-032) and the mapping doc section 9 says preflight must block on when it exists with rows. Its shape is hand-written from what that reader selected (id, quizid, costcenterid, departmentid) plus the timestamps every BizLMS table carries. This deviates from the ADR-032 Test approach 2 rule that fixture copies are verbatim, because there is nothing to copy. Created once per test class by the legacy_schema_fixture trait and dropped afterwards.">
+  <TABLES>
+    <TABLE NAME="local_onlinetests" COMMENT="Online exam rows of the legacy exam reader. Hand-written shape, see the file comment.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="254" NOTNULL="false"/>
+        <FIELD NAME="quizid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="costcenterid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="departmentid" TYPE="int" LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+  </TABLES>
+</XMLDB>

@@ -147,3 +147,46 @@ now checks the exam against the caller's tenant, unless `tenant::is_cross_tenant
 ## 2026-09-25 - Wave-1 review follow-up (no version change; stays 2026092500)
 
 `view.php` computed `can_edit` from `local/sentientia_exams:update`, which `db/access.php` never declared, so it was always false (and raised a "capability not found" debugging notice on every view). It now uses `:manage`, as the edit form, delete and toggle_status do; `require_exam_access()` has already put the exam in the caller's tenant. The flag is passed to the template but `view.mustache` does not render it yet. Test: `test_view_page_checks_only_declared_capabilities` in `tests/tenant_scope_test.php`.
+
+## 2026-09-30 - ADR-032: the BizLMS exams importer (1.7.0, 2026100100)
+
+Mapping doc section 9, built on `claude/bizlms-import-exams`. A BizLMS online exam is a COURSE with
+`open_module = 'online_exams'` and `open_coursetype = 1` that holds a quiz; there is no BizLMS exam table. The
+importer wraps each quiz of such a course in a `local_sentientia_exams` row. Attempts, grades and completions are
+core data read by quiz id and are never touched.
+
+- **Files:** `db/bizlms_import.php`; `classes/bizlms/exams_importer.php` (feature `exams`, depends on `org`, atomic),
+  `exam_quiz_step.php` (shared source filter), `exam_step.php`, `reminder_seed_step.php`.
+- **Step 1 `exams.exam`** (derived, MAP ids). Accounting unit `#quiz.course`: one group per exam course, source id =
+  the COURSE id, empty subkey = the course's lowest quiz, `quiz:<id>` = each further quiz (decision `exams.multi_quiz`
+  = `per_quiz`, flagged `multi_quiz`). Column map, tenant rule and the pathless/skip decision are in the class comment.
+  A quiz that an exam already wraps is folded (`already_registered`), never wrapped twice: `idx_quizid` is not unique.
+- **Step 2 `exams.reminder_seed`** (derived). For each imported exam whose `quiz.timeclose` passed before the import,
+  writes the `local_sentientia_exams_remind_sent` dedupe row (negative `days_before_deadline`, one per configured
+  `overdue_days_after` bucket) of every learner `exam_overdue` could escalate, so enabling that task later cannot
+  message supervisors about deadlines that passed before go-live.
+- **Reader fixes shipped with it:** `exam_manager` no longer falls back to `local_onlinetests` (R14); the pass count of
+  `view.php` divides by `quiz.sumgrades` through the new `exam_manager::count_passed_learners()` (it divided by every
+  learner's grades added together). New helper `exam_manager::quiz_pass_percentages()` (pass mark as a percent).
+- **No schema change, no new string, no flag:** both target tables are in `db/install.xml`; the import has no UI (the
+  CLI guard gates it, ADR-032), and the fixes remove defects, they add no surface. Version 2026100100; dependency on
+  `local_sentientia_platform` raised to 2026093001 (the framework).
+- **Tests:** `tests/bizlms_import_test.php` (`@group bizlms_import`, one method is `@group tenant_isolation`): the
+  contract trait plus column map, multi-quiz, pathless/skip, already-registered, decisions, `local_onlinetests`
+  blocker, the dedupe rows and the two scheduled tasks staying quiet, nothing else changes, the reader fixes, a
+  tenant admin's scoped view. `contract_not_applicable_without_tables` is overridden: the claimed table is core
+  `quiz`, which the contract version would drop. Fixtures: `tests/fixtures/bizlms/onlineexams.install.xml`
+  (hand-written `local_onlinetests`: no BizLMS file declares it), `stub_org.install.xml`,
+  `tests/classes/bizlms/stub_org_importer.php`. NOT RUN (low-CPU mode, per the brief); the lead re-inits
+  PHPUnit once for all version bumps. Both trees.
+- **Deviations from the mapping doc, all in the report:** the physical source is `quiz`, not `course` (a cache purge
+  rewrites `course.cacherev` on every course and would read as source drift on `--resume`); the dedupe rows are a
+  load step, not `finalise()` (the framework's static scan bans every DB write there); a pathless exam stores
+  `open_path` NULL, not an empty string (the generic tenant verify accepts only a valid path or NULL).
+- **verify():** one primary map row per exam course in each step, no quiz wrapped twice, pass marks in range, every
+  seeded dedupe row names an exam. It returns nothing once `local_sentientia_platform/bizlms_production_open` is
+  set (the parity check re-runs verify while the site is online, and the source is live core data), like the
+  framework's own missing-target check.
+- **Also in this change (other plugins):** `local_sentientia_catalog` 2026100100 lists ordinary courses only
+  (exams code fix 3); `theme_airpayux` 2026100100 reads the exam row through `exam_manager` instead of SQL on
+  `{local_onlinetests}` (exams code fix 4).

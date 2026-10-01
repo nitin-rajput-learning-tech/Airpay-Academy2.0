@@ -4,10 +4,17 @@ namespace local_sentientia_exams;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Exam manager — queries against the online tests table.
+ * Exam manager — queries against the online exams table.
  *
  * Replaces direct queries against {local_onlinetests} found in
  * core_renderer.php (lines 1719, 1738) for access control.
+ *
+ * ADR-032 (BizLMS import, 2026-09-30): this class no longer reads the legacy
+ * {local_onlinetests} table. It used to fall back to it while its own table was
+ * empty, which turned off silently the moment one exam existed and read a table
+ * production does not define at all. BizLMS exams are courses that carry
+ * open_module = 'online_exams'; the exams importer wraps their quizzes in
+ * {local_sentientia_exams} rows (classes/bizlms/exams_importer.php).
  *
  * @package    local_sentientia_exams
  * @copyright  2026 Airpay Payment Services
@@ -16,7 +23,6 @@ defined('MOODLE_INTERNAL') || die();
 class exam_manager {
 
     private const TABLE = 'local_sentientia_exams';
-    private const LEGACY_TABLE = 'local_onlinetests';
 
     /**
      * Count online exams (for dashboard stat card).
@@ -28,8 +34,7 @@ class exam_manager {
     public static function count_exams(): int {
         global $DB;
 
-        $table = self::resolve_table();
-        return $DB->count_records($table);
+        return $DB->count_records(self::TABLE);
     }
 
     /**
@@ -70,10 +75,8 @@ class exam_manager {
             return false;
         }
 
-        $table = self::resolve_table();
-
         return $DB->get_record_sql(
-            "SELECT e.* FROM {{$table}} e
+            "SELECT e.* FROM {" . self::TABLE . "} e
                JOIN {course_modules} cm ON cm.instance = e.quizid AND cm.module = :modid
               WHERE cm.id = :cmid",
             ['modid' => $quizmoduleid, 'cmid' => $cmid]
@@ -93,28 +96,84 @@ class exam_manager {
     public static function get_by_attempt(int $attemptid) {
         global $DB;
 
-        $table = self::resolve_table();
-
         return $DB->get_record_sql(
             "SELECT e.id, e.costcenterid, e.departmentid
-               FROM {{$table}} e
+               FROM {" . self::TABLE . "} e
                JOIN {quiz_attempts} qa ON qa.quiz = e.quizid
               WHERE qa.id = :attemptid",
             ['attemptid' => $attemptid]
         );
     }
 
-    private static function resolve_table(): string {
+    /**
+     * The pass mark of quizzes as a percentage of the quiz's maximum grade.
+     *
+     * Moodle keeps the pass mark in the quiz's grade item (gradepass, out of grademax), not on the quiz
+     * row. A quiz with no pass mark (0) or no grade item has no entry. The exams importer uses this to fill
+     * local_sentientia_exams.passinggrade, which is a percentage (view.php compares attempt percentages
+     * with it).
+     *
+     * This is a read-only helper and lives here, outside classes/bizlms/, on purpose: the import's static
+     * scan treats every grade_* name in importer code as a call that could write a grade, so an importer
+     * cannot name the grade item table itself.
+     *
+     * @param int[] $quizids
+     * @return array<int, float> quiz id => percentage, only for quizzes with a positive pass mark.
+     */
+    public static function quiz_pass_percentages(array $quizids): array {
         global $DB;
-        $dbman = $DB->get_manager();
 
-        if ($dbman->table_exists(self::TABLE) && $DB->count_records(self::TABLE) > 0) {
-            return self::TABLE;
+        $quizids = array_values(array_unique(array_filter(array_map('intval', $quizids), fn(int $id): bool => $id > 0)));
+        if (!$quizids) {
+            return [];
         }
-        if ($dbman->table_exists(self::LEGACY_TABLE)) {
-            return self::LEGACY_TABLE;
+        $out = [];
+        foreach (array_chunk($quizids, 1000) as $chunk) {
+            [$insql, $params] = $DB->get_in_or_equal($chunk, SQL_PARAMS_NAMED, 'pgqz');
+            $rows = $DB->get_records_sql(
+                "SELECT gi.iteminstance AS quizid, gi.gradepass, gi.grademax
+                   FROM {grade_items} gi
+                  WHERE gi.itemtype = :pgtype AND gi.itemmodule = :pgmod AND gi.itemnumber = 0
+                    AND gi.iteminstance {$insql}",
+                ['pgtype' => 'mod', 'pgmod' => 'quiz'] + $params);
+            foreach ($rows as $row) {
+                $max = (float) $row->grademax;
+                $pass = (float) $row->gradepass;
+                if ($max > 0 && $pass > 0) {
+                    $out[(int) $row->quizid] = $pass * 100.0 / $max;
+                }
+            }
         }
-        return self::TABLE;
+        return $out;
+    }
+
+    /**
+     * Learners with a finished, graded attempt at the quiz whose score reaches the pass percentage.
+     *
+     * An attempt's percentage is its sumgrades over the QUIZ's sumgrades (the total marks the quiz offers).
+     * view.php used to divide by SUM(quiz_grades.grade), the grades of every learner added together, so the
+     * more learners had attempted the quiz the lower every score looked (ADR-032 exams code fix 1).
+     *
+     * @param int $quizid
+     * @param float $threshold Pass percentage, 0 to 100.
+     * @param string $usql Extra condition on the user alias u (the tenant filter), '1=1' for none.
+     * @param array $uparams Parameters of $usql.
+     * @return int Distinct learners.
+     */
+    public static function count_passed_learners(int $quizid, float $threshold, string $usql = '1=1',
+                                                  array $uparams = []): int {
+        global $DB;
+        return (int) $DB->count_records_sql(
+            "SELECT COUNT(DISTINCT qa.userid)
+               FROM {quiz_attempts} qa
+               JOIN {quiz} q ON q.id = qa.quiz
+               JOIN {user} u ON u.id = qa.userid
+              WHERE qa.quiz = :qid
+                AND qa.state = 'finished'
+                AND qa.sumgrades IS NOT NULL
+                AND (qa.sumgrades * 100.0 / NULLIF(q.sumgrades, 0)) >= :pg
+                AND {$usql}",
+            ['qid' => $quizid, 'pg' => $threshold] + $uparams);
     }
 
     // ═══════════════════════════════════════════════════════════════════

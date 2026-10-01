@@ -81,18 +81,12 @@ if ($quiz) {
               WHERE e.courseid = :cid AND {$usql}",
             ['cid' => $course->id] + $uargs);
     }
-    // Passed = attempts where sumgrades / grade >= passinggrade%.
+    // Passed = attempts where sumgrades / quiz.sumgrades >= passinggrade%.
+    // ADR-032 exams code fix 1: the denominator used to be SUM(quiz_grades.grade) over
+    // every learner, so a score looked lower with every extra attempt on the quiz.
     $pass_threshold = (float) ($exam->passinggrade ?: 50);
-    $count_passed = (int) $DB->count_records_sql(
-        "SELECT COUNT(DISTINCT qa.userid)
-           FROM {quiz_attempts} qa
-           JOIN {user} u ON u.id = qa.userid
-          WHERE qa.quiz = :qid
-            AND qa.state = 'finished'
-            AND qa.sumgrades IS NOT NULL
-            AND (qa.sumgrades * 100.0 / NULLIF((SELECT SUM(grade) FROM {quiz_grades} WHERE quiz = qa.quiz), 0)) >= :pg
-            AND {$usql}",
-        ['qid' => $quiz->id, 'pg' => $pass_threshold] + $uargs);
+    $count_passed = \local_sentientia_exams\exam_manager::count_passed_learners(
+        (int) $quiz->id, $pass_threshold, $usql, $uargs);
 }
 
 // Per-tab data.
