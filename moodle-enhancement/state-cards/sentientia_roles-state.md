@@ -304,3 +304,114 @@ role to anyone in any tenant, and read every tenant's role holders and audit log
   category-context assignment).
 - Ops: do NOT run the UAT interim lockdown `--revert` after roles 2026092500 - it would re-grant
   `roles:manage` / `:assign` to role 9.
+
+
+## 2026-09-30 - ADR-032: the `org_roles` BizLMS importer (1.2.0-beta -> 1.3.0-beta, 2026093001)
+
+Mapping doc section 4. Nothing was executed against a database: no PHPUnit (the lead re-inits once for every
+version bump), nothing copied to XAMPP. `php -l`, the framework's static scanner (run standalone over
+`classes/bizlms/`), the lang-parity, tree-drift, path-boundary and fixture-copy gates all pass.
+
+**What ships** (both trees, byte-identical)
+
+- `classes/bizlms/importer.php` (feature `org_roles`, depends `org`, atomic), `permissions_step.php`
+  (`local_costcenter_permissions`), `dept_roles_step.php` (`local_org_dept_roles`), `assignment_step.php` (shared
+  transform), `org_contexts.php` (organisation -> category -> context, read only). `db/bizlms_import.php` registers it.
+- Targets: `local_sentientia_roles_auditlog` (own table) and core `role_assignments` (declared core write, insert).
+  No schema change: the table and the core table already exist. The bump to 2026093001 is the plugin version that
+  ships the importer (`requires_version()`), so the upgrade purges the class map.
+- Map shape. Primary row of a source row = the assignment of its first valid user (imported, or folded into the
+  assignment that already exists, reason `already_assigned`). Fan-out rows: `pos:N` (assignment of the user at list
+  position N) and `aud:N` (its audit row). N is the position in the comma list, never a user id.
+- Reasons: `no_role` (roleid 0), `value_not_assigned` (archived), `role_not_found` and `org_not_found` (need the
+  owner), `no_valid_user` (detail `user_deleted` | `user_not_found` | `user_invalid`), `already_assigned`.
+- Preflight blockers: `org_context_missing`, `org_without_category`, `org_source_missing`, unknown `value`. The
+  importer never creates a context (`context_coursecat::instance()` is not called; the tripwire watches `context`).
+- Times come from the source (`timecreated`, else `timemodified`; dept rows the other way round), the actor is
+  `usermodified` (dept: `user_modified`, else `user_created`). `open_path` of the audit row is the actor's, resolved
+  through `tenant_resolver` (walks up to the nearest organisation; NULL when unresolved).
+- Warnings (report only): `user_outside_org_tenant`, `duplicate_user`, `user_invalid`, `user_deleted`,
+  `user_not_found`, `assignment_exists`, `modifier_unknown`, `no_source_time`; preflight warns
+  `role_not_assignable_at_category` and `org_not_found`.
+- `finalise()` marks every touched category context dirty and calls
+  `core_course_category::role_assignment_changed()` (what `role_assign()` would have reset).
+- `verify()` (apply only): every mapped assignment exists and sits at a category context; assignments created =
+  audit rows created; the audit `open_path` of imported rows is a normalised path with a registered root.
+
+**Reader fix** (mapping doc "Code fixes"): `role_manager::list_role_assignments()` listed the system context only, so
+every BizLMS org role was invisible. Flag `sentientia.roles.org_assignments` (default OFF, `db/feature_flags.php`)
+adds the assignments at the category of each organisation. Scoped callers: holders inside their tenant, at
+organisations whose `local_costcenter.path` is inside their tenant (`tenant::path_descendant_filter`, so `/10` is not
+inside `/1`). Rows carry `scope` (`system` | `org`) and `scopename`; the web service returns them as optional keys and
+gives org rows no unassign button (unassigning works on the system context and would remove the wrong row). OFF behaves exactly as
+before (same rows, same keys). No UI in this plugin reads the list, so no visual evidence is owed; turning the flag
+ON for Airpay is Nitin's call after he has seen it (ADR-032 open decision 2).
+
+**Tests** (written, not run): `tests/bizlms_import_test.php` (importer contract + feature cases over a 17+6 row
+seed since the review round below; `@group bizlms_import`), `tests/org_assignments_reader_test.php` (`@group tenant_isolation`),
+`tests/classes/bizlms/org_stub_importer.php` (stands in for the org feature: it claims `local_costcenter`, and the
+seed plays an org import that already ran), `tests/fixtures/bizlms/costcenter.install.xml` (the three BizLMS tables;
+loads and validates with Moodle's XMLDB classes). Run from the moodle5 dirroot after the re-init:
+`vendor/bin/phpunit --group bizlms_import` and the reader test file.
+
+**Known limits**
+
+- A dry run cannot see the assignments an earlier row of the same run would create, so two rows that name the same
+  (role, context, user) show as two `imported` in a dry run and as `imported` + `folded` in an apply.
+- `--purge-feature org_roles` is refused by the runner (the feature has a core write); a rehearsal goes back by
+  restoring the database.
+- The generic tenant verify is not used (`tenant_columns()` is empty on purpose): it reads the whole audit table, and
+  the role UI writes an empty `open_path` for a site admin. `verify()` checks the imported rows only.
+- The mapping doc says an existing assignment is "outcome `merged`"; the framework's `merge()` needs a winner source
+  row, so the outcome is `folded` (target = the existing assignment). Doc correction, not a behaviour change.
+
+
+## 2026-09-30 - ADR-032 `org_roles` review round (1.3.0-beta -> 1.3.1-beta, 2026093002)
+
+Adversarial review verdict was fix-then-ship. Importer rules only: **no schema change**, version bumped because
+`importer::requires_version()` must equal the shipped version (a version below it makes `registry::load()` refuse every
+feature) and because the web service description in `db/services.php` changed. Upgrade step 2026093002 is the bare
+guarded savepoint. PHPUnit must be re-initialised once before `--group bizlms_import` runs. Nothing was executed against a
+database (no PHPUnit, nothing copied to XAMPP); both trees are byte-identical.
+
+**Closed**
+
+- **Cross-tenant grant (must-fix).** A user whose tenant root differs from the organisation's root is left out of the
+  row (warning `user_outside_org_tenant`). A row with nobody left is skipped with the new owner reason
+  `user_outside_org_tenant`. Why: a role at a course category covers every course below it, so the committed behaviour
+  (import and warn) gave a tenant-77 user authority over tenant 1's courses, which ADR-031 decision 6 forbids in the UI.
+  Preflight counts these users as the warning `user_outside_org_tenant:N`. The test seed row 13 is now a skip, and a
+  dedicated `@group tenant_isolation` test walks every imported assignment and compares the user's root with the
+  organisation's.
+- **Role not assignable at a category.** A role with no `CONTEXT_COURSECAT` row in `role_context_levels` is skipped
+  with the new owner reason `role_not_assignable` (core's role UI and `core_role_assign_roles` refuse it, and it would
+  carry course-level rights over every course below). On the April rehearsal the roles that may be assigned at a
+  category are 1 manager, 2 coursecreator, 9 administrator and 10 trainer.
+- **Audit `open_path` of an out-of-tenant actor.** NULL, with `tenant_method` `unresolved` and the warning
+  `actor_outside_org_tenant`; the actor stays on the row (`changedby`, `modifierid`). The audit list then shows the row
+  through its target only. (The previous value let tenant-1 administrators see a tenant-77 assignment.)
+- **Organisation with no path.** Preflight checks the path before the category and only warns (`org_without_path`):
+  the legacy table is never edited, so a blocker could never clear. `transform_row()` skips such an organisation as
+  `org_not_found` (detail `org_without_path`) itself, so the tenant rule does not depend on the org feature having
+  skipped it.
+- **Users dirty.** `finalise()` also calls `mark_user_dirty()` for every user who received an assignment (what
+  `role_assign()` does); the context flag only reloads access for checks at or below the category.
+- **Department outside its cost centre.** A department row names the organisation it should live under: the tenant is
+  taken from the department alone, and a department outside it is reported (`dept_outside_costcenter`).
+
+**Needs for the lead** (builders must not edit these; recorded here, not applied)
+
+- Mapping doc section 4: the existing-assignment outcome is `folded` (reason `already_assigned`), not `merged`
+  (the framework's `merge()` needs a winner source row). Section 4 should also record the tenant rule and the two new
+  owner reasons.
+- `docs/cutover/bizlms-import-decisions.json` has no entry for the needs-owner reasons `user_outside_org_tenant` and
+  `role_not_assignable`, so parity exits 2 if a production row ever hits them. Both source tables are empty on the
+  April dump (`local_costcenter_permissions` 0 rows, `local_org_dept_roles` 0 rows, auditlog 0), so the feature will be a
+  zero-row run at cutover and the signed `value_1_only` decision is confirmed only because there are no rows.
+- Open decision for Nitin: a user with **no** tenant path is still given the category role (warning
+  `user_without_tenant`). ADR-031 decision 4 is fail-closed (no tenant, nothing). Skipping them would be one more
+  owner reason; not done because the review asked whether to.
+- Framework: ADR-032 says steps read only through `$ctx`. `transform()` also reads core state (`role_assignments` to
+  fold an existing assignment, `role`, and `role_context_levels`) through global `$DB`. It works because each ungrouped
+  row is written before the next is transformed, but a dry run reports two `imported` where an apply gives imported +
+  folded (already a known limit above). A read-only core lookup on the context would remove the exception.

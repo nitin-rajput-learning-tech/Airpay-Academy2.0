@@ -53,7 +53,8 @@ $functions = [
     'local_sentientia_roles_list_assignments' => [
         'classname'   => 'local_sentientia_roles\external\list_role_assignments',
         'methodname'  => 'execute',
-        'description' => 'List user assignments for a role at the system context.',
+        'description' => 'List user assignments for a role at the system context and, when the '
+            . 'sentientia.roles.org_assignments flag is on, at the organisation category contexts.',
         'type'        => 'read',
         'capabilities' => 'local/sentientia_roles:view',
         'ajax'        => true,

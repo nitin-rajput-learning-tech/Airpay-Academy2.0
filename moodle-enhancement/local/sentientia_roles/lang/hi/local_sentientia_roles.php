@@ -115,9 +115,11 @@ $string['err_filterstoolong']       = 'फ़िल्टर ब्लॉब स
 $string['err_definitions_crosstenant'] = 'रोल परिभाषाएँ सभी टेनेंट साझा करते हैं, इसलिए केवल प्लेटफ़ॉर्म (क्रॉस-टेनेंट) एडमिनिस्ट्रेटर ही इन्हें बदल सकता है।';
 $string['err_role_not_assignable'] = 'आप केवल वही रोल असाइन कर सकते हैं जो आपके पास स्वयं है और जिसे असाइन करने की आपको अनुमति है, और केवल अपने संगठन के किसी अन्य व्यक्ति को।';
 $string['err_assignment_not_found'] = 'इस यूज़र के पास साइट स्तर पर यह रोल नहीं है, इसलिए हटाने के लिए कुछ नहीं है।';
+// ADR-032 org_roles (2026-09-30): the holder list can also show the assignments at organisation level.
+$string['assignment_scope_system'] = 'पूरा प्लेटफ़ॉर्म';
 
 // Privacy provider strings.
-$string['privacy:metadata:auditlog']               = 'एयरपे रोल-प्रबंधन UI के माध्यम से किए गए रोल और क्षमता परिवर्तनों का केवल-जोड़ें ऑडिट लॉग।';
+$string['privacy:metadata:auditlog']               = 'रोल-प्रबंधन UI के माध्यम से किए गए रोल और क्षमता परिवर्तनों का, और BizLMS से आयात किए गए रोल असाइनमेंट का, केवल-जोड़ें ऑडिट लॉग।';
 $string['privacy:metadata:auditlog:roleid']        = 'जिस रोल को संशोधित किया जा रहा है।';
 $string['privacy:metadata:auditlog:capability']    = 'जिस क्षमता की अनुमति बदली गई।';
 $string['privacy:metadata:auditlog:oldpermission'] = 'परिवर्तन से पहले क्षमता अनुमति।';

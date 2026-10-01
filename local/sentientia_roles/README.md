@@ -39,6 +39,37 @@ Reclassified Tier-2 → built (commit `739af7f87` on 7 May 2026).
 # Expected: list of roles with the cross-tab assignment view
 ```
 
+## BizLMS org-role import (ADR-032, feature `org_roles`)
+
+`classes/bizlms/` holds the importer for the two BizLMS org-role tables, discovered through `db/bizlms_import.php`:
+
+- `local_costcenter_permissions` (local/costcenter) and `local_org_dept_roles` (local/assignroles), both expected to be
+  empty on production. A row is never lost silently: each one gets a primary row in `local_sentientia_legacymap`.
+- Each assignment is **inserted directly** into core `role_assignments` at the course category context of the
+  organisation (`local_costcenter.category`), never through `role_assign()` (that fires `role_assigned`). A manual
+  assignment that already exists is not duplicated: the row folds into it (`already_assigned`).
+- Each assignment the import makes gets one `role_assigned` row in `local_sentientia_roles_auditlog`
+  (reason `bizlms_import:<table>`, `open_path` = the actor's path, or NULL when the actor is outside the
+  organisation's tenant or cannot be resolved).
+- **Never across tenants** (ADR-031 decisions 5 and 6). A user whose tenant root differs from the organisation's is
+  left out of the row (warning `user_outside_org_tenant`); a row with nobody left is skipped with the owner reason
+  `user_outside_org_tenant`. A role assigned at a category covers every course below it, so this would otherwise
+  hand a user authority over another tenant. A user with no tenant path is still given the role, with a warning
+  (`user_without_tenant`): Nitin decides whether that should be refused too.
+- **Only roles a category may hold.** A role with no course category level in `role_context_levels` (the role UI and
+  `core_role_assign_roles` refuse it) is skipped with the owner reason `role_not_assignable`.
+- The category context must exist. A missing one is a **preflight blocker** (`org_context_missing`): the importer
+  never calls `context_coursecat::instance()`. A `local_costcenter` row with no normalised path is not an
+  organisation: it is a preflight warning (`org_without_path`, never a blocker) and its rows are skipped as
+  `org_not_found`.
+- Depends on the `org` feature. Only `value = 1` counts (decision `org_roles.value_filter`).
+- `finalise()` marks the touched contexts and every assigned user dirty and resets the category caches
+  `role_assign()` would.
+
+Reader: the flag `sentientia.roles.org_assignments` (default **OFF**) makes `role_manager::list_role_assignments()`
+(and its web service) also list the holders at organisation level, read-only and tenant-bounded. OFF, the list is
+system context only, as before.
+
 ## Privacy / GDPR
 
 Role changes touch user-id references (who-was-assigned-by-whom). The
