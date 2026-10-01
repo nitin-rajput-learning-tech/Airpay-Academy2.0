@@ -1,0 +1,82 @@
+{{!
+    @template local_sentientia_cart/credits
+
+    Admin credits page (ADR-032): credit bookings and balances imported from BizLMS. Frozen history for finance.
+
+    Context example:
+    {
+        "hasbalances": true,
+        "balances": [{"user": "Asha Rao", "balance": "₹500.00", "earned": "₹500.00", "spent": "₹0.00"}],
+        "hastransactions": true,
+        "transactions": [{"when": "12 Mar 2025", "user": "Asha Rao", "event": "Earned by a cancellation",
+            "order": 1000002, "amount": "₹500.00", "balance": "₹500.00"}],
+        "orders_url": "https://example.com/local/sentientia_cart/admin_orders.php",
+        "paging": ""
+    }
+}}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">{{# str }} creditsadmin_title, local_sentientia_cart {{/ str }}</h2>
+        <a href="{{{ orders_url }}}" class="btn btn-outline-secondary btn-sm">{{# str }} allorders, local_sentientia_cart {{/ str }}</a>
+    </div>
+    <p class="text-muted">{{# str }} creditsadmin_note, local_sentientia_cart {{/ str }}</p>
+
+    <h3 class="h5 mt-4">{{# str }} credits_balances, local_sentientia_cart {{/ str }}</h3>
+    {{^hasbalances}}
+    <p class="text-muted">{{# str }} credits_none, local_sentientia_cart {{/ str }}</p>
+    {{/hasbalances}}
+    {{#hasbalances}}
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th scope="col">{{# str }} credits_user, local_sentientia_cart {{/ str }}</th>
+                <th scope="col">{{# str }} credits_balance, local_sentientia_cart {{/ str }}</th>
+                <th scope="col">{{# str }} credits_earned, local_sentientia_cart {{/ str }}</th>
+                <th scope="col">{{# str }} credits_spent, local_sentientia_cart {{/ str }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#balances}}
+            <tr>
+                <td>{{ user }}</td>
+                <td>{{ balance }}</td>
+                <td>{{ earned }}</td>
+                <td>{{ spent }}</td>
+            </tr>
+            {{/balances}}
+        </tbody>
+    </table>
+    {{/hasbalances}}
+
+    <h3 class="h5 mt-4">{{# str }} credits_transactions, local_sentientia_cart {{/ str }}</h3>
+    {{^hastransactions}}
+    <p class="text-muted">{{# str }} credits_none, local_sentientia_cart {{/ str }}</p>
+    {{/hastransactions}}
+    {{#hastransactions}}
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th scope="col">{{# str }} credits_when, local_sentientia_cart {{/ str }}</th>
+                <th scope="col">{{# str }} credits_user, local_sentientia_cart {{/ str }}</th>
+                <th scope="col">{{# str }} credits_event, local_sentientia_cart {{/ str }}</th>
+                <th scope="col">#</th>
+                <th scope="col">{{# str }} credits_amount, local_sentientia_cart {{/ str }}</th>
+                <th scope="col">{{# str }} credits_balance_after, local_sentientia_cart {{/ str }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#transactions}}
+            <tr>
+                <td>{{ when }}</td>
+                <td>{{ user }}</td>
+                <td>{{ event }}</td>
+                <td>{{ order }}</td>
+                <td>{{ amount }}</td>
+                <td>{{ balance }}</td>
+            </tr>
+            {{/transactions}}
+        </tbody>
+    </table>
+    {{{ paging }}}
+    {{/hastransactions}}
+</div>

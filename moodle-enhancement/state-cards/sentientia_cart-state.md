@@ -362,3 +362,74 @@ Adversarial review of the D1/D2 bundle returned fix-then-ship. Closed here:
 - UAT, when this is deployed: re-run the public77 cart steps (#81-#83, the `local_sentientia_cart_add_item`
   web service) with a WARM cache, i.e. not straight after a cache purge, since the bug depended on which
   plugins' `lib.php` the callback cache had loaded. Both trees.
+
+### 2026-09-30 - ADR-032: BizLMS cart importer (1.1.0 / 2026100101)
+
+The `cart` feature of the BizLMS import (mapping doc section 13, ADR-032) is built: the BizLMS orders, ledger,
+invoices and credit journal become Sentientia cart history, as **frozen, admin-only money history**. Both trees.
+Nothing was copied to the served tree and PHPUnit was not run (the lead re-inits once for every version bump and
+runs the whole `bizlms_import` group).
+
+- **Importer** (`classes/bizlms/`, registered in `db/bizlms_import.php`, depends on nothing, not atomic):
+  - `cart.history`: `local_biz_cart_history` -> one `local_sentientia_cart_history` row per order. A GROUPED
+    non-derived step on `identifier`: the first line (lowest id) becomes the order, every other line is `merged`
+    into it (reason `order_line`), so every source row has exactly one primary map row. Order number =
+    identifier; tenant = the buyer's current root (`costcenterid`, an INT, 0 when unresolved: pathless, never
+    guessed); totals in integer paise (`itempriceisnet` gross/net handled); `items_json` snapshot per line with
+    its own status; status paid / cancelled / part_cancelled / abandoned and NEVER open, pending, failed,
+    refunded or partial_refund; gateway and gateway_ref from the paygw evidence (the attempt with status 2,
+    its enrolment-log transaction id, else `payments:<id>`); `timepaid` from the earliest sale ledger row, else
+    the paid lines' last touch, else the gateway log, NULL when nobody paid; `legacy_source = 'bizlms'`.
+  - `cart.id`: `local_biz_cart_id` rows fold into the order they numbered (identifier = `uniqueidentifier` + id),
+    or are archived when they numbered none. NOT a PRESERVE step (see doc corrections).
+  - `cart.ledger`: 1:1 into `local_sentientia_cart_ledger` with the mapping doc's event types, an order found by
+    identifier else by `schistoryid`, everything else in `payload_json` (buyer's user id FIRST, so the privacy
+    provider finds a row by prefix). No row is synthesized (decision `cart.synthesize_ledger` = false).
+  - `cart.invoices`: grouped on `invoiceid`; imported as `ERPNEXT-<id>`, status `legacy_external`, the order's own
+    buyer / tenant / items / totals, no tax split, no link-out.
+  - `cart.credits`: grouped on the user; one `local_sentientia_cart_credit_txn` row per INR booking (event type
+    matched to a ledger row of the same user and amount within 5 s), and the user's balance row written once as a
+    sub-row. A booking in another currency is skipped (`currency_not_inr`).
+  - `cart.order_numbers` (recompute): numbers a line BizLMS never numbered, above `support::order_floor()`.
+  - `finalise()` records the highest order number the import holds (`bizlms_order_floor`).
+  - The gateway tables (`paygw_airpay`, `paygw_airpay_errorlog`, `paygw_course_enrolmentlog`) and Moodle's
+    `payments` are READ as evidence and declined as tables; nothing writes them. The two finance-confirm keys
+    (`cart.credit_balances`, `cart.erpnext_invoices_legal`) are NOT declared.
+- **Frozen and admin-only** (decisions `cart.imported_visibility`, `cart.admin_refund_imported_orders`):
+  `cart_manager::mark_paid`, `mark_failed`, `refund` and `invoicer::issue_for_order` refuse a row with
+  `legacy_source` (`error_invalidstate`); `list_orders` hides imported rows from their owner always and from
+  administrators unless the flag is on; `get_order`, `return.php`, `invoice.php` follow; `invoicer` refuses the
+  prefix `ERPNEXT`; the daily sums leave the import out while the flag is off and count it as BizLMS did when on
+  (credit-paid sales and corrections excluded, cash drawer and payouts by sign, unknown types skipped before their
+  bucket is made, LEFT JOIN so a ledger row with no order reaches cross-tenant viewers only).
+- **Flags (default OFF, `db/feature_flags.php`)**: `sentientia.cart.imported_orders.enabled` (administrators see
+  imported orders, ledger rows and invoice references) and `sentientia.cart.imported_credits.enabled` (the new
+  admin page `credits.php`, linked from All orders when on). Reader class `imported_history`.
+- **Code fixes of the map**: 1 (refuse imported rows), 2 (owners never see abandoned), 3 (buyer name and email
+  joined for an order with no billing details, searchable), 4 (`history.php` columns read the keys `list_orders`
+  returns), 5 (`return.php` and its template render every status and each line's own status; `legacy_external`
+  renders "Issued in ERPNext as ..."), 6 (daily sums), 7 (privacy provider), 8 (the credits page, behind its flag).
+- **Schema** (`db/install.xml` + `db/upgrade.php` step 2026100101, idempotent): `local_sentientia_cart_history`
+  `legacy_source` char(20) NULL; NEW `local_sentientia_cart_credit_txn`; status and event_type comments list the new
+  values. Plugin 2026093002 -> **2026100101**, release 1.1.0; requires platform 2026093001 (the framework).
+- **Privacy** (`classes/privacy/provider.php`): the credit journal and the ledger's `initiatedby` and
+  `payload_json` are declared, exported, and anonymised on erasure (rows stay: money records); the order slot a
+  paid order refers to is anonymised, never deleted; imported orders and invoice references are left alone (no
+  billing details to blank). en and hi strings for everything new.
+- **Tests**: `tests/bizlms_import_test.php` (contract traits + the mapping doc's fixture: statuses, paise totals,
+  items, gateway reference, ledger types, ERPNEXT invoices, credit journal and balances, number floor, refusal),
+  `tests/imported_history_reader_test.php` (flags, owner never sees, tenant isolation, daily sums, invoice
+  reference), `tests/imported_privacy_test.php`; fixture `tests/fixtures/bizlms/biz_cart.install.xml` (verbatim
+  copies of the BizLMS cart and gateway install files, sha1 in its header).
+- **Doc corrections** (the mapping doc and the ADR say otherwise; the framework as built decides):
+  1. The history group is not a derived `#local_biz_cart_history.identifier` step with merged line rows: a derived
+     step has exactly one primary row per group and cannot give its lines a primary row. It is a grouped step on the
+     table itself, so every line has one (accounting identity holds, and the contract test checks it).
+  2. `local_biz_cart_id` is not PRESERVE: the framework's PRESERVE writes the SOURCE row id, which is the identifier
+     only when the BizLMS base is 0, and an importer cannot insert a placeholder row or reset a sequence outside the
+     runner. The "never reuse a legacy number" guarantee is `finalise()` + `cart_manager::reserve_order_number()`.
+  3. A sale that belongs to no imported order gets event type `legacy_sale_without_order` (not `payment_received`),
+     so it stays on the imported side of the flag.
+- **Open**: the plugin dependency on the platform framework version, the Stage B counts (I-20), whether
+  `paygw_airpay` is deployed on 5.2, production `config_plugins local_biz_cart` values (uniqueidentifier,
+  itempriceisnet, globalcurrency); `cli/mask_pii_for_dev.php` does not know the new free-text `reason` columns.

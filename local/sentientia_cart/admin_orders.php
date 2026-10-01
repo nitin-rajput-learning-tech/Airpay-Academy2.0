@@ -46,6 +46,9 @@ $data = [
     'columns_json'    => json_encode($columns),
     'is_admin'        => true,
     'daily_sums_url'  => (new moodle_url('/local/sentientia_cart/daily_sums.php'))->out(false),
+    // ADR-032: the imported credits page, only while its flag is on.
+    'show_credits'    => \local_sentientia_cart\imported_history::credits_enabled(),
+    'credits_url'     => (new moodle_url('/local/sentientia_cart/credits.php'))->out(false),
     'set_price_url'   => (new moodle_url('/local/sentientia_cart/set_price.php'))->out(false),
 ];
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <XMLDB PATH="local/sentientia_cart/db" VERSION="20260511"
-       COMMENT="Airpay Cart — e-commerce for external tenants. 5 tables.">
+       COMMENT="Airpay Cart — e-commerce for external tenants. 6 tables.">
 
   <TABLES>
 
@@ -50,7 +50,7 @@
         <FIELD NAME="total_amount" TYPE="number" LENGTH="14" DECIMALS="2" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="currency" TYPE="char" LENGTH="3" NOTNULL="true" DEFAULT="INR"/>
         <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="open"
-               COMMENT="open|pending|paid|failed|cancelled|refunded|partial_refund"/>
+               COMMENT="open|pending|paid|failed|cancelled|refunded|partial_refund|abandoned|part_cancelled (the last two only on rows imported from BizLMS)"/>
         <FIELD NAME="gateway" TYPE="char" LENGTH="30" NOTNULL="false"
                COMMENT="airpay|manual|stripe — gateway used for payment"/>
         <FIELD NAME="gateway_ref" TYPE="char" LENGTH="120" NOTNULL="false"
@@ -66,6 +66,8 @@
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timepaid" TYPE="int" LENGTH="10" NOTNULL="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="legacy_source" TYPE="char" LENGTH="20" NOTNULL="false"
+               COMMENT="ADR-032: bizlms on a row imported from BizLMS (frozen, admin-only history), NULL on every native row. mark_paid, mark_failed and refund refuse a row that has it."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -93,7 +95,7 @@
         <FIELD NAME="orderid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"
                COMMENT="FK local_sentientia_cart_id.id (denormalised for fast lookup)"/>
         <FIELD NAME="event_type" TYPE="char" LENGTH="30" NOTNULL="true"
-               COMMENT="payment_received|refund_full|refund_partial|chargeback"/>
+               COMMENT="payment_received|refund_full|refund_partial|chargeback; rows imported from BizLMS also use legacy_credit_redeemed|legacy_credit_payout|legacy_credit_correction|legacy_cash_drawer|legacy_cancel_to_credit|legacy_sale_without_order|legacy_other"/>
         <FIELD NAME="amount" TYPE="number" LENGTH="14" DECIMALS="2" NOTNULL="true" DEFAULT="0"
                COMMENT="Positive for inflow, negative for refund/chargeback"/>
         <FIELD NAME="currency" TYPE="char" LENGTH="3" NOTNULL="true" DEFAULT="INR"/>
@@ -171,7 +173,7 @@
         <FIELD NAME="pdf_filename" TYPE="char" LENGTH="200" NOTNULL="false"
                COMMENT="Cached PDF filename in moodledata"/>
         <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="issued"
-               COMMENT="issued|cancelled|credit_note_issued"/>
+               COMMENT="issued|cancelled|credit_note_issued|legacy_external (an ERPNext invoice imported from BizLMS: shown as a reference, never re-issued)"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
       </FIELDS>
       <KEYS>
@@ -182,6 +184,49 @@
       <INDEXES>
         <INDEX NAME="idx_user_time" UNIQUE="false" FIELDS="userid, timecreated"/>
         <INDEX NAME="idx_orderid" UNIQUE="false" FIELDS="orderid"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ────────────────────────────────────────────────────────────────
+         local_sentientia_cart_credit_txn — BizLMS credit journal (ADR-032)
+         One row per row of the BizLMS local_biz_cart_credits journal.
+         Frozen, admin-only history written only by the cart importer;
+         nothing in the runtime acts on it. The balance a user held at
+         cutover is the local_sentientia_cart_credits row.
+         ──────────────────────────────────────────────────────────────── -->
+    <TABLE NAME="local_sentientia_cart_credit_txn" COMMENT="Credit transactions imported from BizLMS (frozen history)">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="FK user.id - the credit holder"/>
+        <FIELD NAME="costcenterid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Tenant root of the holder at import time; 0 when it could not be resolved"/>
+        <FIELD NAME="event_type" TYPE="char" LENGTH="30" NOTNULL="true"
+               COMMENT="earned_cancellation|redeemed|payout|correction|legacy_unclassified"/>
+        <FIELD NAME="amount" TYPE="number" LENGTH="14" DECIMALS="2" NOTNULL="true" DEFAULT="0"
+               COMMENT="Signed change of the balance"/>
+        <FIELD NAME="balance_after" TYPE="number" LENGTH="14" DECIMALS="2" NOTNULL="true" DEFAULT="0"
+               COMMENT="Balance after this booking, as BizLMS recorded it"/>
+        <FIELD NAME="currency" TYPE="char" LENGTH="3" NOTNULL="true" DEFAULT="INR"/>
+        <FIELD NAME="historyid" TYPE="int" LENGTH="10" NOTNULL="false"
+               COMMENT="FK local_sentientia_cart_history.id of the order that caused it, when known"/>
+        <FIELD NAME="orderid" TYPE="int" LENGTH="10" NOTNULL="false"
+               COMMENT="Order number of that order"/>
+        <FIELD NAME="ledgerid" TYPE="int" LENGTH="10" NOTNULL="false"
+               COMMENT="FK local_sentientia_cart_ledger.id of the matching ledger row, when known"/>
+        <FIELD NAME="initiatedby" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="FK user.id - who made the booking (BizLMS usermodified)"/>
+        <FIELD NAME="reason" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_user" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_user_time" UNIQUE="false" FIELDS="userid, timecreated"/>
+        <INDEX NAME="idx_costcenter" UNIQUE="false" FIELDS="costcenterid"/>
       </INDEXES>
     </TABLE>
 

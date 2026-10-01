@@ -58,4 +58,24 @@
         <a href="{{{ catalog_url }}}" class="btn btn-primary ms-2">Try again</a>
     </div>
     {{/is_failed}}
+
+    {{#is_other}}
+    <div class="text-center mb-4">
+        <h2 class="mt-3">{{ status_label }}</h2>
+        <p class="text-muted">Order #{{ orderid }} · {{ total_str }}</p>
+    </div>
+    {{#has_lines}}
+    <ul class="list-group mb-4">
+        {{#lines}}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span>{{ name }}</span>
+            {{#has_status}}<span class="badge bg-secondary">{{ status_label }}</span>{{/has_status}}
+        </li>
+        {{/lines}}
+    </ul>
+    {{/has_lines}}
+    <div class="d-flex justify-content-center">
+        <a href="{{{ history_url }}}" class="btn btn-link">View all orders</a>
+    </div>
+    {{/is_other}}
 </div>

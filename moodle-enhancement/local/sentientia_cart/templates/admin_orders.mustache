@@ -13,6 +13,11 @@
             <a href="{{{ daily_sums_url }}}" class="btn btn-outline-secondary btn-sm">
                 <i class="fa fa-chart-line"></i> Daily sums
             </a>
+            {{#show_credits}}
+            <a href="{{{ credits_url }}}" class="btn btn-outline-secondary btn-sm">
+                <i class="fa fa-coins"></i> {{#str}}creditsadmin, local_sentientia_cart{{/str}}
+            </a>
+            {{/show_credits}}
         </div>
     </div>
 

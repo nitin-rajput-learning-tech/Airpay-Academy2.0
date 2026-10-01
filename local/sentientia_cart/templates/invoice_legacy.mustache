@@ -1,0 +1,27 @@
+{{!
+    @template local_sentientia_cart/invoice_legacy
+
+    An invoice imported from BizLMS (ADR-032): a reference to the invoice ERPNext issued, never a Sentientia
+    invoice. No link out to ERPNext, no tax split, no print layout.
+
+    Context example:
+    {
+        "erpnext_number": "ACC-SINV-2025-00042",
+        "orderid": 1000001,
+        "invoice_date": "12 Mar 2025",
+        "total": "1,180.00",
+        "currency_symbol": "₹"
+    }
+}}
+<div class="airpay-invoice-legacy container py-4">
+    <h2>{{# str }} legacyinvoice, local_sentientia_cart, {{ erpnext_number }} {{/ str }}</h2>
+    <dl class="row mt-3">
+        <dt class="col-sm-3">{{# str }} ordernumberlabel, local_sentientia_cart {{/ str }}</dt>
+        <dd class="col-sm-9">{{ orderid }}</dd>
+        <dt class="col-sm-3">{{# str }} legacyinvoicedate, local_sentientia_cart {{/ str }}</dt>
+        <dd class="col-sm-9">{{ invoice_date }}</dd>
+        <dt class="col-sm-3">{{# str }} total, local_sentientia_cart {{/ str }}</dt>
+        <dd class="col-sm-9">{{ currency_symbol }}{{ total }}</dd>
+    </dl>
+    <p class="text-muted">{{# str }} legacyinvoicenote, local_sentientia_cart {{/ str }}</p>
+</div>
