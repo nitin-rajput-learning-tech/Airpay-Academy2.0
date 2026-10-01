@@ -209,7 +209,9 @@ final class user_step extends step {
         global $DB;
         if (!isset($this->started[$planid])) {
             if (count($this->started) >= self::CACHE_MAX) {
-                array_shift($this->started);
+                // Drop the oldest plan. Never array_shift() here: the keys are legacy plan ids, and
+                // array_shift() renumbers integer keys, so a later plan id 0..48 would read another plan's set.
+                unset($this->started[array_key_first($this->started)]);
             }
             $set = [];
             $courseids = plan_source::course_ids($ctx, $planid);

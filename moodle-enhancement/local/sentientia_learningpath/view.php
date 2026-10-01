@@ -66,7 +66,12 @@ $status_css   = ((int) $path->status === 1) ? 'badge-success' : 'badge-secondary
 
 // How many courses + users are on this path right now? (Cheap counts, no joins.)
 $course_count = (int) $DB->count_records('local_sentientia_learningpath_courses', ['pathid' => $pathid]);
-$user_count   = (int) $DB->count_records('local_sentientia_learningpath_users',   ['pathid' => $pathid]);
+// Deleted users are not counted: the imported history keeps their rows, and the roster hides them.
+$user_count   = (int) $DB->count_records_sql(
+    "SELECT COUNT(1)
+       FROM {local_sentientia_learningpath_users} lpu
+       JOIN {user} u ON u.id = lpu.userid
+      WHERE lpu.pathid = :pid AND u.deleted = 0", ['pid' => $pathid]);
 
 // The cover image the BizLMS import copied (code fix 8, mapping doc section 17).
 $cover = \local_sentientia_learningpath\path_manager::cover_url((int) $path->id);

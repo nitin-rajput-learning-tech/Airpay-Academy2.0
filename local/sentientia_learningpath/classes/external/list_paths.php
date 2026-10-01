@@ -80,7 +80,9 @@ class list_paths extends external_api {
             $records = $DB->get_records_sql(
                 "SELECT lp.*,
                         (SELECT COUNT(*) FROM {local_sentientia_learningpath_courses} c WHERE c.pathid = lp.id) AS course_count,
-                        (SELECT COUNT(*) FROM {local_sentientia_learningpath_users} u WHERE u.pathid = lp.id) AS user_count
+                        (SELECT COUNT(*) FROM {local_sentientia_learningpath_users} u
+                           JOIN {user} uu ON uu.id = u.userid
+                          WHERE u.pathid = lp.id AND uu.deleted = 0) AS user_count
                    FROM {local_sentientia_learningpath} lp
                   WHERE $wheresql
                ORDER BY lp.$sort $sortdir, lp.id ASC",

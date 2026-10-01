@@ -50,8 +50,9 @@ if ($mode === 'paths') {
         SELECT lp.id, lp.name, lp.status, lp.timecreated,
                (SELECT COUNT(*) FROM {local_sentientia_learningpath_courses}
                  WHERE pathid = lp.id) AS course_count,
-               (SELECT COUNT(*) FROM {local_sentientia_learningpath_users}
-                 WHERE pathid = lp.id) AS user_count
+               (SELECT COUNT(*) FROM {local_sentientia_learningpath_users} cu
+                  JOIN {user} cuu ON cuu.id = cu.userid
+                 WHERE cu.pathid = lp.id AND cuu.deleted = 0) AS user_count
           FROM {local_sentientia_learningpath} lp
          WHERE $tnsql
       ORDER BY lp.name ASC", $tnargs, 0, 10000);

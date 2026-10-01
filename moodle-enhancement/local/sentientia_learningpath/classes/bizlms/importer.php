@@ -107,6 +107,11 @@ final class importer implements importer_contract {
             self::SRC_COURSE => new source_spec(self::SRC_COURSE, true, [
                 // The writer that set a module type is commented out in BizLMS: only a course is ever listed.
                 'moduletype' => ['' => 'no module type, a course', 'course' => 'a course'],
+                // 'and' is the course the learner must finish, 'or' and NULL are optional (lib.php:1006-1010).
+                // Some production rows carry upper case; the comparison is byte-exact, so any other spelling
+                // blocks until the owner maps it in the decisions file (ADR-032, R8).
+                'nextsetoperator' => ['' => 'NULL or empty, optional', 'and' => 'must finish', 'AND' => 'must finish',
+                    'or' => 'optional', 'OR' => 'optional'],
             ], ['moduletype', 'instance', 'nextsetoperator', 'timemodified', 'usercreated', 'usermodified']),
             self::SRC_USER => new source_spec(self::SRC_USER, true, [
                 // BizLMS only ever writes NULL (not completed) and 1 (completed): lib.php:780-786.
@@ -226,12 +231,15 @@ final class importer implements importer_contract {
         $pf = new preflight();
         $legacy = $ctx->legacy;
 
-        // The BizLMS learner row has a start date that no BizLMS code ever wrote. If production has values
-        // in it, they are not imported (no Sentientia reader shows them) and stay in the legacy table.
+        // The BizLMS learner row has a start date that no BizLMS code ever wrote (mapping doc, section 17:
+        // startdate -> timestarted "NEW only if production has non-NULL values"). The target has no such
+        // column, so a value here is learner history this import would drop. That is not a warning to scroll
+        // past: it blocks until the column and its copy are built, or the owner decides the values can stay
+        // in the legacy table (a change to this check). The April copy has none.
         if ($legacy->exists(self::SRC_USER) && $legacy->has_column(self::SRC_USER, 'startdate')) {
             $n = $legacy->count(self::SRC_USER, ['t.startdate > 0', []]);
             if ($n > 0) {
-                $pf->warn('user_startdate_not_imported:' . $n);
+                $pf->block('user_startdate_has_no_target_column:' . $n);
             }
         }
         // A plan with no path goes through the tenant fallback order; say how many that is.

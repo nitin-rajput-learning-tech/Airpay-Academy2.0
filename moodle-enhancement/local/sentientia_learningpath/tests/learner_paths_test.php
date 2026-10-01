@@ -186,6 +186,27 @@ final class learner_paths_test extends \advanced_testcase {
         $this->assertSame([3, 1, 1, 1], [$data['total'], $data['inprogress'], $data['completed'], $data['notstarted']]);
     }
 
+    public function test_names_with_an_ampersand_are_escaped_once(): void {
+        global $OUTPUT, $PAGE;
+        $user = $this->user_at('/1');
+        $course = $this->getDataGenerator()->create_course(['fullname' => 'Fish & Chips']);
+        $pathid = $this->path('/1', 'Tom & Jerry');
+        $this->put_course($pathid, (int) $course->id, 0);
+        $this->enrol($pathid, (int) $user->id);
+
+        $this->setUser($user);
+        $cards = learner_paths::cards((int) $user->id);
+        // The card carries the plain name; the template is what escapes it (once).
+        $this->assertSame('Tom & Jerry', $cards[0]['name']);
+        $this->assertSame('Fish & Chips', $cards[0]['courses'][0]['name']);
+
+        $PAGE->set_url('/local/sentientia_learningpath/mypaths.php');
+        $html = $OUTPUT->render_from_template('local_sentientia_learningpath/mypaths', learner_paths::page_data());
+        $this->assertStringContainsString('Tom &amp; Jerry', $html);
+        $this->assertStringContainsString('Fish &amp; Chips', $html);
+        $this->assertStringNotContainsString('&amp;amp;', $html);
+    }
+
     public function test_the_page_shows_no_other_learners_data(): void {
         $me = $this->user_at('/1');
         $other = $this->user_at('/1');

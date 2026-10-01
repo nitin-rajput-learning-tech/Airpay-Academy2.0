@@ -14,7 +14,8 @@ use local_sentientia_platform\phpunit\legacy_schema_fixture;
  *
  *  - The two fallbacks that read BizLMS tables are gone (is_enrolled, count_paths).
  *  - Imported history is protected (decision framework.protect_imported_history = block): an imported
- *    enrolment cannot be unenrolled and a path that holds imported rows cannot be deleted.
+ *    enrolment cannot be unenrolled, an imported course row cannot be unassigned, and a path that holds
+ *    imported rows cannot be deleted.
  *  - A path delete cascades over the per-course status rows too.
  *  - The plugin file callback refuses what it does not serve.
  *
@@ -130,6 +131,37 @@ final class imported_history_test extends \advanced_testcase {
         $this->assertFalse($DB->record_exists('local_sentientia_learningpath_users', ['id' => $nativeid]));
         // Not on the path at all: false, as before.
         $this->assertFalse(path_manager::unenrol_user($pathid, (int) $other->id));
+    }
+
+    public function test_an_imported_course_row_cannot_be_unassigned(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $imported = $this->getDataGenerator()->create_course();
+        $native = $this->getDataGenerator()->create_course();
+        $pathid = $this->path('/1');
+        $rows = [];
+        foreach ([$imported, $native] as $sortorder => $course) {
+            $rows[(int) $course->id] = (int) $DB->insert_record('local_sentientia_learningpath_courses', (object) [
+                'pathid' => $pathid, 'courseid' => $course->id, 'sortorder' => $sortorder, 'mandatory' => 1,
+                'timecreated' => 100, 'timemodified' => 100,
+            ]);
+        }
+        $this->imported('local_sentientia_learningpath_courses', $rows[(int) $imported->id]);
+
+        // The imported row carries the plan's mandatory flag, order, creator and created time: protected.
+        try {
+            path_manager::unassign_course($pathid, (int) $imported->id);
+            $this->fail('an imported course row is history and is protected');
+        } catch (\moodle_exception $e) {
+            $this->assertSame('imported_history_protected', $e->errorcode);
+        }
+        $this->assertTrue($DB->record_exists('local_sentientia_learningpath_courses', ['id' => $rows[(int) $imported->id]]));
+
+        // A course put on the path on the site is removed as before; one that is not on the path is false.
+        $this->assertTrue(path_manager::unassign_course($pathid, (int) $native->id));
+        $this->assertFalse($DB->record_exists('local_sentientia_learningpath_courses', ['id' => $rows[(int) $native->id]]));
+        $this->assertFalse(path_manager::unassign_course($pathid, (int) $native->id));
     }
 
     public function test_a_path_with_imported_rows_cannot_be_deleted(): void {

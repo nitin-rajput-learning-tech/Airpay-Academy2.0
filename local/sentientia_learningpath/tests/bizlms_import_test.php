@@ -62,6 +62,9 @@ final class bizlms_import_test extends \advanced_testcase {
     /** @var array<int, int> Courses by number. */
     private array $c = [];
 
+    /** @var bool Seed plans the way the April production dump has them: local_learningplan has no costcenter column. */
+    private bool $withoutcostcenter = false;
+
     /** @var array The owner choices the tests run with (the signed values of docs/cutover/bizlms-import-decisions.json). */
     private array $choices = [
         'tenant.unresolved.learningplan' => 'pathless',
@@ -193,10 +196,44 @@ final class bizlms_import_test extends \advanced_testcase {
     private function plan(array $fields): void {
         global $DB;
         $t = self::T;
-        $DB->import_record('local_learningplan', (object) ($fields + [
+        $row = $fields + [
             'shortname' => 'sn', 'visible' => 1, 'lpsequence' => 0, 'selfenrol' => 0, 'open_path' => '',
             'costcenter' => 0, 'timecreated' => $t, 'timemodified' => $t, 'usercreated' => 0, 'usermodified' => 0,
-        ]));
+        ];
+        if ($this->withoutcostcenter) {
+            unset($row['costcenter']);
+        }
+        $DB->import_record('local_learningplan', (object) $row);
+    }
+
+    /**
+     * Insert a legacy plan course row (an 'and' course, no module type).
+     *
+     * @param int $id
+     * @param int $planid
+     * @param int $courseid
+     * @return void
+     */
+    private function legacy_course(int $id, int $planid, int $courseid): void {
+        global $DB;
+        $DB->import_record('local_learningplan_courses', (object) ['id' => $id, 'planid' => $planid,
+            'courseid' => $courseid, 'moduletype' => '', 'sortorder' => 0, 'nextsetoperator' => 'and',
+            'timecreated' => self::T + 11, 'timemodified' => 0, 'usercreated' => 0, 'usermodified' => 0]);
+    }
+
+    /**
+     * Insert a legacy learner row that has not completed.
+     *
+     * @param int $id
+     * @param int $planid
+     * @param int $userid
+     * @return void
+     */
+    private function legacy_enrolment(int $id, int $planid, int $userid): void {
+        global $DB;
+        $DB->import_record('local_learningplan_user', (object) ['id' => $id, 'planid' => $planid,
+            'userid' => $userid, 'status' => null, 'completiondate' => null, 'timecreated' => self::T + 50,
+            'timemodified' => 0, 'usercreated' => 0, 'usermodified' => 0]);
     }
 
     private function seed_plans(): void {
@@ -566,6 +603,139 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertStringContainsString('missing_decision:learningplan.dates_as', implode(' ', $result['blockers']));
     }
 
+    public function test_an_unknown_operator_blocks_the_feature(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->contract_seed();
+        // Lower and upper case are known spellings (the seed has both); any other spelling is a value of its own.
+        $DB->set_field('local_learningplan_courses', 'nextsetoperator', 'xor', ['id' => 1]);
+        [$result] = $this->contract_run(true);
+        $this->assertSame(1, $result['exit']);
+        $this->assertStringContainsString('unknown_enum:local_learningplan_courses.nextsetoperator=xor',
+            implode(' ', $result['blockers']));
+        $this->assertSame(0, $DB->count_records(lp_importer::PATHS), 'a blocked run writes nothing');
+    }
+
+    public function test_learner_start_dates_block_because_the_target_has_no_column_for_them(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->contract_seed();
+        // BizLMS never wrote this column; a value in it is history the import would drop (mapping doc, section 17).
+        $DB->set_field('local_learningplan_user', 'startdate', self::T + 5, ['id' => 1]);
+        [$result] = $this->contract_run(true);
+        $this->assertSame(1, $result['exit']);
+        $this->assertStringContainsString('user_startdate_has_no_target_column:1', implode(' ', $result['blockers']));
+        $this->assertSame(0, $DB->count_records(lp_importer::USERS), 'a blocked run writes nothing');
+    }
+
+    public function test_the_completed_course_cache_never_serves_another_plans_set(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        // 51 plans, each with course 1 (which u1 has completed) and one learner, u2, who has completed nothing.
+        // The cache of completed learners per plan holds 50 plans, so the 51st evicts the oldest. It is keyed by
+        // legacy plan id; an eviction that renumbered the keys (array_shift) would hand plan 5, processed last,
+        // the set of whichever plan sits at key 5, which holds u1.
+        $rowid = 200;
+        foreach (range(101, 151) as $planid) {
+            $this->plan(['id' => $planid, 'name' => 'Cache ' . $planid, 'open_path' => '/1']);
+            $this->legacy_course(300 + $planid, $planid, $this->c[1]);
+            $this->legacy_enrolment($rowid++, $planid, $this->u['u2']);
+        }
+        // Plan 5 has course 2 only, which nobody has completed; u1 is enrolled and has done nothing on it.
+        $this->plan(['id' => 5, 'name' => 'Cache five', 'open_path' => '/1']);
+        $this->legacy_course(305, 5, $this->c[2]);
+        $this->legacy_enrolment($rowid++, 5, $this->u['u1']);
+        // u1 on the first and the last of the 51 plans, after the evictions: course 1 is done there.
+        $this->legacy_enrolment($rowid++, 101, $this->u['u1']);
+        $this->legacy_enrolment($rowid++, 151, $this->u['u1']);
+        $this->apply();
+
+        $this->assertSame(0, (int) $this->user_row(5, $this->u['u1'])->status, 'plan 5 has no completed course for u1');
+        $this->assertSame(1, (int) $this->user_row(101, $this->u['u1'])->status, 'evicted, then read again');
+        $this->assertSame(1, (int) $this->user_row(151, $this->u['u1'])->status, 'still cached');
+        $this->assertSame(0, (int) $this->user_row(120, $this->u['u2'])->status, 'u2 completed nothing');
+    }
+
+    public function test_a_source_without_the_costcenter_column_still_imports(): void {
+        global $DB;
+        $this->contract_begin();
+        // The April production dump: local_learningplan has no costcenter column at all.
+        $dbman = $DB->get_manager();
+        $table = new \xmldb_table('local_learningplan');
+        $field = new \xmldb_field('costcenter');
+        $dbman->drop_field($table, $field);
+        $this->withoutcostcenter = true;
+        try {
+            $this->contract_seed();
+            [$result, $report] = $this->contract_run(true);
+            $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+            $this->assertSame('complete', $result['features']['learningplan']);
+
+            // The path's own tenant still resolves; an empty path falls through to the enrolled learners' root.
+            $this->assertSame('/1/5', $this->path_row(10)->open_path);
+            $this->assertSame('/77', $this->path_row(11)->open_path);
+            $this->assertSame('/177', $this->path_row(12)->open_path);
+            $this->assertSame('/177', $this->path_row(17)->open_path);
+            $this->assertNull($this->path_row(16)->open_path);
+
+            $methods = $report->to_array()['features']['learningplan']['steps']['learningplan.path']['tenant_methods'] ?? null;
+            if ($methods !== null) {
+                $this->assertArrayNotHasKey('fallback:costcenter', $methods, 'there is no column to fall back to');
+                $this->assertArrayHasKey('fallback:enrolled_users', $methods);
+            }
+        } finally {
+            $this->withoutcostcenter = false;
+            // The table is dropped and rebuilt for the next test; put the column back in case it is not.
+            if ($dbman->table_exists($table) && !$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, new \xmldb_field('costcenter', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL,
+                    null, '0'));
+            }
+        }
+    }
+
+    public function test_a_tenant_admin_reaches_only_the_imported_paths_of_their_own_tenant(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->contract_seed();
+        $this->apply();
+
+        // A manager-archetype role at system context, as the tenant admins hold (ADR-031), on a /77 user.
+        $managerid = (int) $DB->get_field('role', 'id', ['shortname' => 'manager'], MUST_EXIST);
+        role_assign($managerid, $this->u['admin77'], \context_system::instance()->id);
+        $this->setUser($DB->get_record('user', ['id' => $this->u['admin77']], '*', MUST_EXIST));
+
+        // Path 11 is the only imported path on /77.
+        $listed = \local_sentientia_learningpath\external\list_paths::execute('', 'name', 'asc', 0, 25, '{}');
+        $this->assertSame(1, (int) $listed['total']);
+        $this->assertSame([11], array_map(static fn(array $row): int => (int) $row['id'], $listed['rows']));
+        $this->assertSame(11, (int) path_manager::require_path_tenant(11)->id);
+
+        // The others are another tenant's, or have no tenant (16): refused for the view and export pages.
+        foreach ([10, 12, 13, 14, 16, 17] as $pathid) {
+            try {
+                path_manager::require_path_tenant($pathid);
+                $this->fail('imported path ' . $pathid . ' is outside the /77 tenant');
+            } catch (\moodle_exception $e) {
+                $this->assertSame('error_outoftenant', $e->errorcode, 'path ' . $pathid);
+            }
+        }
+    }
+
+    public function test_the_admin_counts_leave_out_deleted_users(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        $this->apply();
+        $this->setAdminUser();
+
+        $listed = \local_sentientia_learningpath\external\list_paths::execute('', 'name', 'asc', 0, 25, '{}');
+        $enrolled = [];
+        foreach ($listed['rows'] as $row) {
+            $enrolled[(int) $row['id']] = (int) $row['enrolled'];
+        }
+        // Path 10 holds u1, u2 and u4; u4 is deleted. The deleted user's row is kept, and not counted.
+        $this->assertSame(2, $enrolled[10]);
+    }
+
     public function test_a_manual_change_is_not_undone_by_a_second_apply(): void {
         global $DB;
         $this->contract_begin();
@@ -605,8 +775,15 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->contract_begin();
         $this->contract_seed();
         $counts = [];
-        foreach (['user_enrolments', 'enrol', 'role_assignments', 'course_completions', 'groups_members',
-                  'cohort_members'] as $table) {
+        // The mapping doc's list for this feature (section 17): enrolments, roles, completions, and issued
+        // certificates (the plan's certificateid is stored, nothing is issued). The certificate table is a
+        // plugin's, so it is counted when the site has it.
+        $watched = ['user_enrolments', 'enrol', 'role_assignments', 'course_completions', 'groups_members',
+            'cohort_members'];
+        if ($DB->get_manager()->table_exists('tool_certificate_issues')) {
+            $watched[] = 'tool_certificate_issues';
+        }
+        foreach ($watched as $table) {
             $counts[$table] = $DB->count_records($table);
         }
         $events = $this->redirectEvents();

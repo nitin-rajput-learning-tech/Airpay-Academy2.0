@@ -131,7 +131,8 @@ final class learner_paths {
                 $required += $ismandatory ? 1 : 0;
                 $requireddone += ($ismandatory && $iscomplete) ? 1 : 0;
                 $courses[] = [
-                    'name' => format_string($c->fullname, true, ['context' => $context]),
+                    // escape => false: the template escapes {{name}} once; format_string() escaping too shows "A &amp; B".
+                    'name' => format_string($c->fullname, true, ['context' => $context, 'escape' => false]),
                     'url' => (int) $c->visible
                         ? (new \moodle_url('/course/view.php', ['id' => $c->courseid]))->out(false) : '',
                     'has_url' => (bool) (int) $c->visible,
@@ -153,7 +154,7 @@ final class learner_paths {
             $cover = path_manager::cover_url($pathid);
             $cards[] = [
                 'id' => $pathid,
-                'name' => format_string($r->name, true, ['context' => $context]),
+                'name' => format_string($r->name, true, ['context' => $context, 'escape' => false]),
                 'summary' => $text,
                 'has_summary' => $text !== '',
                 'cover_url' => $cover === null ? '' : $cover->out(false),
