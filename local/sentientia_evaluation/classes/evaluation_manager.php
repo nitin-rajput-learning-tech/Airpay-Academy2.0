@@ -727,18 +727,30 @@ class evaluation_manager {
             foreach ($questions as $q) {
                 if (empty($q['questiontext'])) continue;
                 $sortorder++;
+                $questiontype = (string) ($q['questiontype'] ?? 'rating');
+                // A number question exports its bounds as {min, max} in `options` (export_template() writes the
+                // stored JSON through decode_options()); create_question() takes them as numeric_min / numeric_max.
+                // Joined into a newline string like a choice list they were lost: both came back unset, so reusing a
+                // form (the way to run an imported one again) dropped its 1..5 range.
+                $numericbounds = null;
+                if ($questiontype === 'numeric' && isset($q['options']) && is_array($q['options'])
+                        && !array_is_list($q['options'])) {
+                    $numericbounds = $q['options'];
+                }
                 self::create_question((object) [
                     'evaluationid' => $newid,
-                    'questiontype' => (string) ($q['questiontype'] ?? 'rating'),
+                    'questiontype' => $questiontype,
                     'questiontext' => (string) $q['questiontext'],
                     // create_question expects newline-separated text
                     // (parse_options() splits on \n). We stored the
                     // options as an array in the JSON template, so
                     // re-stringify them here.
-                    'options'      => isset($q['options']) && is_array($q['options'])
+                    'options'      => $numericbounds === null && isset($q['options']) && is_array($q['options'])
                         ? implode("\n", array_map('strval',
                             array_values($q['options'])))
                         : '',
+                    'numeric_min'  => $numericbounds['min'] ?? '',
+                    'numeric_max'  => $numericbounds['max'] ?? '',
                     'required'     => isset($q['required']) ? (int) $q['required'] : 1,
                     'anonymous'    => isset($q['anonymous']) ? (int) $q['anonymous'] : 0,
                     'sortorder'    => (int) ($q['sortorder'] ?? $sortorder),

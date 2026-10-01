@@ -148,6 +148,11 @@ final class imported_history_test extends \advanced_testcase {
         evaluation_manager::create_question((object) [
             'evaluationid' => $form, 'questiontext' => 'Question', 'questiontype' => 'text', 'required' => 0,
         ]);
+        // BizLMS numeric items arrive with their range (April: 1 to 5).
+        evaluation_manager::create_question((object) [
+            'evaluationid' => $form, 'questiontext' => 'Score', 'questiontype' => 'numeric', 'required' => 0,
+            'numeric_min' => 1, 'numeric_max' => 5,
+        ]);
         $imported = evaluation_manager::save_template_from_evaluation($form, 'Brought over', '', (int) $user->id);
         $native = evaluation_manager::save_template_from_evaluation($form, 'Saved by a person', '', (int) $user->id);
         $DB->insert_record(legacymap::TABLE, (object) [
@@ -171,7 +176,13 @@ final class imported_history_test extends \advanced_testcase {
         $this->assertTrue(evaluation_manager::delete_template($native));
         $this->assertFalse($DB->record_exists('local_sentientia_evaluation_template', ['id' => $native]));
         // Using the imported template to start a new evaluation is still how its questions are run again.
-        $this->assertSame(1, evaluation_manager::create_evaluation_from_template($imported)['question_count']);
+        $created = evaluation_manager::create_evaluation_from_template($imported);
+        $this->assertSame(2, $created['question_count']);
+        // ... with the range of its number question: it came back unbounded when only the count was checked.
+        $numeric = array_values(array_filter(evaluation_manager::get_questions($created['id']),
+            static fn($q): bool => $q->questiontype === 'numeric'));
+        $this->assertCount(1, $numeric);
+        $this->assertSame(['min' => 1, 'max' => 5], evaluation_manager::decode_numeric_bounds($numeric[0]->options));
     }
 
     public function test_numeric_answers_keep_their_decimals_in_the_statistics(): void {

@@ -494,3 +494,22 @@ screenshots listed per item before it is merged.
   to other tenants" (`template_ispublic_help`) promises sharing; widening it is for when a picker is built. No version
   change. Test: `tenant_scope_test::test_template_library_is_tenant_scoped` (a /1/5 template, a /77 one, one with no
   tenant, a public /77 one, and /10 against /1).
+- **EV-32 - a template round trip keeps a number question's range.** `export_template()` writes a numeric question's
+  `options` as `{min, max}` (through `decode_options()`), and `import_template()` joined any options array into a
+  newline string, which is only right for a choice list; `build_question_options_json()` reads a number question's
+  bounds from `numeric_min` / `numeric_max` and ignored that string, so both came back unset. The documented way to
+  run an imported form again (export it as a template, create a new evaluation from it) therefore lost April's 1..5
+  range. `import_template()` now passes `numeric_min` / `numeric_max` for a `numeric` question whose options are an
+  associative array (and `options` empty); a list keeps today's behaviour. No version change. Tests:
+  `crud_test::test_template_round_trip_keeps_every_question_setting` (rating, multichoice, multichoice_multi, a bounded
+  and an unbounded number question and an anonymous text question, with `required`, `anonymous` and `sortorder`;
+  through the JSON file and through a saved template row) and a range assertion added to
+  `imported_history_test::test_an_imported_template_cannot_be_deleted_and_a_native_one_can`.
+- **EV-33 - audience assigner tests.** New `tests/audience_assigner_test.php` (the state card's "PHPUnit coverage for
+  `evaluation_audience_assigner`" item; `tenant_scope_test` already covered its tenant scope): each of the six
+  exact-match filters against its own column and not a prefix, filters ANDed with an empty value constraining
+  nothing, `org_path` matching the node and its children but not `/1/50` or `/15` (and normalised), the cohort
+  filter, suspended / deleted users and the built-in accounts never matched, the `MAX_AUDIENCE_SIZE` cap (2001
+  cloned users) and `assign_by_filter()` counting new against already-assigned people with the caller on the audit
+  trail. The Behat item for the import/export round trip is replaced by the PHPUnit round trip above (Behat is not part
+  of this pipeline). Tests only.
