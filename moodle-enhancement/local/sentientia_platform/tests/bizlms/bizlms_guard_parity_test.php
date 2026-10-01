@@ -293,18 +293,44 @@ final class bizlms_guard_parity_test extends \advanced_testcase {
             implode(' ', guard::refusals_for_purge($ok)));
     }
 
+    /**
+     * A second database session, which is what a second import process has.
+     *
+     * @return \moodle_database A connected driver; the caller disposes it.
+     */
+    private function second_database_session(): \moodle_database {
+        global $DB;
+        $cfg = $DB->export_dbconfig();
+        $second = \moodle_database::get_driver_instance($cfg->dbtype, $cfg->dblibrary);
+        $second->connect($cfg->dbhost, $cfg->dbuser, $cfg->dbpass, $cfg->dbname, $cfg->prefix, $cfg->dboptions ?? null);
+        return $second;
+    }
+
     public function test_only_one_import_holds_the_lock(): void {
+        global $DB;
         $this->resetAfterTest();
-        $factory = \core\lock\lock_config::get_lock_factory(self::COMPONENT);
-        if ($factory->supports_recursion()) {
-            $this->markTestSkipped('this lock factory lets one process take a lock twice');
-        }
+
+        // The lock keeps two import PROCESSES apart, and each process has its own database session. A second call
+        // in the SAME process proves nothing: MySQL and MariaDB let one session take a GET_LOCK name twice, and
+        // guard::acquire_lock() asks the lock API for a new factory on every call, so a factory's own "already
+        // held" check never sees the first lock. (The Moodle 5.x factories have no supports_recursion() to ask
+        // either; it belonged to the old lock API.) So the second import is a second session.
         $lock = guard::acquire_lock();
         try {
-            guard::acquire_lock();
-            $this->fail('a second import took the lock');
-        } catch (guard_refused $e) {
-            $this->assertStringContainsString('another_bizlms_import_holds_the_lock', $e->getMessage());
+            $session = $this->second_database_session();
+            $first = $DB;
+            // The factory takes the global $DB when it is built, so while this is swapped guard::acquire_lock()
+            // locks as the second session.
+            $DB = $session;
+            try {
+                guard::acquire_lock();
+                $this->fail('a second import session took the lock');
+            } catch (guard_refused $e) {
+                $this->assertStringContainsString('another_bizlms_import_holds_the_lock', $e->getMessage());
+            } finally {
+                $DB = $first;
+                $session->dispose();
+            }
         } finally {
             $lock->release();
         }

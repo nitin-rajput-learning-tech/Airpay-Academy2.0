@@ -128,7 +128,6 @@ final class exception_strings_test extends \advanced_testcase {
      */
     private const BASELINE = [
         // Same defect as N5 ('nopermission' does not exist), found by the scan.
-        'local_sentientia_manager/member.php|nopermission' => 1,
         'local_sentientia_skills/index.php|nopermission' => 1,
         'theme_sentientia/classes/output/core_renderer.php|nopermission' => 1,
         // 'invalidchoice' is not a core string in any file.

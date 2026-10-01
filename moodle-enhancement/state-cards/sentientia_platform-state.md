@@ -790,3 +790,35 @@ Persona-pass fix D7 (theme shell bundle). New default-OFF flag in `db/feature_fl
 identical), category `ux`. Consumer: `theme_sentientia` `language_switcher` (sidebar language switcher). The
 registry cache has a 60 s TTL, so no purge is needed. See `theme_sentientia-state.md` for the owner notes
 (the switcher ignores `$CFG->langmenu`).
+
+## 2026-10-01 - First real Moodle PHPUnit run: six failures fixed (ADR-032 framework + two stale tests)
+
+Branch `claude/phpunit-fixes-1001`. The first run of the full `local_sentientia_platform` suite on Moodle 5.1.3 /
+MariaDB 10.11 failed in five places here (and one in `local_sentientia_classroom`). Four were wrong tests, one
+was a stale baseline; the framework code was right every time, but one test exposed a property worth writing
+down.
+
+- **Lock test called `supports_recursion()`.** That method belonged to the old lock API; neither the 5.1 nor the
+  5.2 `lock_factory` has it, and the framework never called it (only the test did). Behind it sat a second
+  problem: MariaDB lets one session take the same `GET_LOCK` name twice, and `guard::acquire_lock()` builds a new
+  factory per call, so a second call in one process is NOT refused (probed: `first=1 second=1`). The lock keeps
+  two import PROCESSES apart, each with its own session. The test now takes the lock, swaps the global `$DB` for
+  a second connection and calls `guard::acquire_lock()` again, which is refused. The docblock of
+  `acquire_lock()` states the limit. Every CLI takes the lock once and exits.
+- **Writer tests inserted into the PRESERVE table.** `local_sentientia_toy_org` is the toy importer's PRESERVE
+  target and `writer::insert()` refuses a MAP row there (`map_insert_into_a_preserve_table`), correctly and
+  before any value check. The two integer-limit tests now write through `import_preserved()` (the real path
+  for that table), the dry-run `check()` is asserted too, and a new test pins the PRESERVE guard itself. Only
+  `visible` (tinyint) is small enough to test the limit, so the table could not be swapped.
+- **`missing_required` was never reachable on `toy_item.title`.** XMLDB creates a NOT NULL char without a
+  DEFAULT as `DEFAULT ''` on MySQL, MariaDB, PostgreSQL and SQL Server (`sql_generator::$default_for_char`),
+  so `get_columns()` reports `has_default = true` and the INSERT does not abort; the writer reads the live
+  column and was right to accept the row. The test now uses a column that really has no default,
+  `local_sentientia_legacymap.sourceid`, through `insert_map_rows()`; a second test pins the char behaviour. No
+  writer change.
+- **Baseline.** `local_sentientia_manager/member.php|nopermission` removed from
+  `exception_strings_test::BASELINE` (11 entries left); the manager bundle had fixed the site.
+- **Classroom upgrade test** asserted the stored version equals the step it tests (2026092501). The upgrade
+  function runs every later step, so the version ends at the plugin's latest (2026093001). It now asserts `>=`.
+
+No version bump, no feature, no UI. Both trees identical.
