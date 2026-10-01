@@ -23,6 +23,8 @@ class evaluation_manager {
     private const ASSIGN_TABLE   = 'local_sentientia_evaluation_assign';
     // P1 #41 (2026-05-20) — template library.
     private const TEMPLATE_TABLE = 'local_sentientia_evaluation_template';
+    // W1-5 — the trigger queue (delete() now clears its rows too).
+    private const TRIGGERS_TABLE = 'local_sentientia_evaluation_triggers';
 
     /** Status values matching install.xml. */
     public const STATUS_DRAFT    = 0;
@@ -48,6 +50,42 @@ class evaluation_manager {
     public static function get(int $id) {
         global $DB;
         return $DB->get_record(self::TABLE, ['id' => $id]);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ADR-032 (2026-09-30): imported history is read-only
+    //
+    // A form the BizLMS import brought over (its map row says imported or
+    // adopted) is a record of what was asked and answered, not a live form:
+    // editing it, re-opening it or deleting it would rewrite or destroy that
+    // record (decision evaluation.imported_forms_read_only). The import
+    // itself never goes through this class. To run the same questions again,
+    // export the form as a template and create a new evaluation from it.
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * Did the BizLMS import create this evaluation?
+     *
+     * @param int $evaluationid
+     * @return bool False for a native evaluation, and on a site whose platform has no import framework.
+     */
+    public static function is_imported(int $evaluationid): bool {
+        if ($evaluationid <= 0 || !class_exists(\local_sentientia_platform\bizlms\provenance::class)) {
+            return false;
+        }
+        return \local_sentientia_platform\bizlms\provenance::is_imported(self::TABLE, $evaluationid);
+    }
+
+    /**
+     * Refuse to change an evaluation the import created.
+     *
+     * @param int $evaluationid
+     * @throws \moodle_exception error_imported_form_read_only
+     */
+    public static function assert_not_imported(int $evaluationid): void {
+        if (self::is_imported($evaluationid)) {
+            throw new \moodle_exception('error_imported_form_read_only', 'local_sentientia_evaluation');
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -391,6 +429,7 @@ class evaluation_manager {
         global $DB;
 
         $existing = $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
+        self::assert_not_imported($id);
         $record = (object) ['id' => $id, 'timemodified' => time()];
 
         if (isset($data->name))         $record->name = trim($data->name);
@@ -484,6 +523,7 @@ class evaluation_manager {
         if (!in_array($status, [self::STATUS_DRAFT, self::STATUS_ACTIVE, self::STATUS_ARCHIVED], true)) {
             throw new \moodle_exception('invalidstatus', 'local_sentientia_evaluation');
         }
+        self::assert_not_imported($id);
         $DB->update_record(self::TABLE, (object) [
             'id' => $id,
             'status' => $status,
@@ -493,16 +533,20 @@ class evaluation_manager {
     }
 
     /**
-     * Delete an evaluation form. Cascades through questions + responses.
+     * Delete an evaluation form. Cascades through questions, responses, assignments and queued triggers
+     * (until 2026-09-30 the last two were left behind, pointing at a form that no longer existed).
      */
     public static function delete(int $id): bool {
         global $DB;
         $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
+        self::assert_not_imported($id);
 
         $transaction = $DB->start_delegated_transaction();
         try {
             $DB->delete_records(self::QUESTIONS_TABLE, ['evaluationid' => $id]);
             $DB->delete_records(self::RESPONSES_TABLE, ['evaluationid' => $id]);
+            $DB->delete_records(self::ASSIGN_TABLE, ['evaluationid' => $id]);
+            $DB->delete_records(self::TRIGGERS_TABLE, ['evaluationid' => $id]);
             $DB->delete_records(self::TABLE, ['id' => $id]);
             $transaction->allow_commit();
         } catch (\Throwable $e) {
@@ -695,6 +739,7 @@ class evaluation_manager {
         if (!$DB->record_exists(self::TABLE, ['id' => $data->evaluationid])) {
             throw new \moodle_exception('invalidevaluation', 'local_sentientia_evaluation');
         }
+        self::assert_not_imported((int) $data->evaluationid);
 
         // P1 #18 — both multichoice variants need an options list; numeric
         // optionally stores {min, max} in the same column.
@@ -800,6 +845,9 @@ class evaluation_manager {
     public static function update_question(int $id, object $data): bool {
         global $DB;
         $existing = $DB->get_record(self::QUESTIONS_TABLE, ['id' => $id], '*', MUST_EXIST);
+        // An answered question of an imported form must keep its type and options: its answers are stored
+        // against them (ADR-032).
+        self::assert_not_imported((int) $existing->evaluationid);
 
         $record = (object) ['id' => $id];
 
@@ -934,7 +982,8 @@ class evaluation_manager {
 
     public static function delete_question(int $id): bool {
         global $DB;
-        $DB->get_record(self::QUESTIONS_TABLE, ['id' => $id], '*', MUST_EXIST);
+        $question = $DB->get_record(self::QUESTIONS_TABLE, ['id' => $id], '*', MUST_EXIST);
+        self::assert_not_imported((int) $question->evaluationid);
         // Deleting an answered anonymous question would undo the anonymity
         // lock: identity_protected() keeps a named evaluation's respondents
         // hidden only while such a question exists (2026-09-25).
@@ -952,6 +1001,7 @@ class evaluation_manager {
      */
     public static function reorder_questions(int $evaluationid, array $ordered_ids): bool {
         global $DB;
+        self::assert_not_imported($evaluationid);
 
         $transaction = $DB->start_delegated_transaction();
         try {
@@ -1154,6 +1204,9 @@ class evaluation_manager {
                                                ?int $assigned_by_userid = null,
                                                ?int $due_at = null): int {
         global $DB;
+
+        // An assignment of an imported form is history: re-opening an expired one would rewrite it.
+        self::assert_not_imported($evaluationid);
 
         $existing = $DB->get_record(self::ASSIGN_TABLE, [
             'evaluationid' => $evaluationid,
@@ -1901,7 +1954,9 @@ class evaluation_manager {
                 break;
             case 'numeric':
                 if (!is_numeric($answer)) break;
-                $v = (int) $answer;
+                // Not (int): an imported BizLMS answer may be 7.25 (the item allowed decimals), and truncating
+                // it here would understate the sum and the average. A native answer is an int, which stays one.
+                $v = $answer + 0;
                 $bucket['sum'] += $v;
                 if ($bucket['min_seen'] === null || $v < $bucket['min_seen']) {
                     $bucket['min_seen'] = $v;

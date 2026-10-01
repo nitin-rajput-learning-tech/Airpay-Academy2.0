@@ -41,12 +41,33 @@ php "C:/xampp/htdocs/moodle5/public/local/sentientia_evaluation/cli/smoke_anonym
 
 G-05: analysis dashboard + filtered responses + CSV export.
 
+## BizLMS import (ADR-032)
+
+`db/bizlms_import.php` registers the `evaluation` importer (`classes/bizlms/`), which
+brings the history in the BizLMS `local_evaluation` tables over at cutover:
+forms (ids kept, always archived and manual), their questions, templates,
+assignments and answers. Run it only through
+`local/sentientia_platform/cli/import_bizlms.php`; the map is
+`docs/cutover/BIZLMS-IMPORT-MAPPING-2026-09-29.md` section 18.
+
+- **Anonymous answers stay anonymous**: stored with user id 0, and the legacy
+  link from the answer to the person is never copied.
+- **Supervisor forms** keep the person evaluated in
+  `responses.subject_userid` (the responder stays in `userid`).
+- **Imported forms are read-only**: `evaluation_manager` refuses to edit,
+  re-status, reorder, delete or assign on a form the import created. To run the
+  same questions again, export it as a template and create a new evaluation.
+- **Learner history**: `my_evaluations.php`, behind the default-OFF flag
+  `sentientia.evaluation.learner_history`.
+
 ## Privacy / GDPR
 
 Privacy provider handles the anonymous-question subtlety: anonymous
 responses are NOT exported even on a DSR for the responding user (they
 cannot be linked back to a userid because they were never stored with
-one).
+one). A supervisor's response is also exported to the person it is about
+(`subject_userid`), without naming the supervisor; erasing that person
+keeps the response and removes the link.
 
 ## Open backlog
 

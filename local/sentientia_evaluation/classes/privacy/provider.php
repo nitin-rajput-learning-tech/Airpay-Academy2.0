@@ -24,6 +24,8 @@ class provider implements
             [
                 'evaluationid'  => 'privacy:metadata:responses:evaluationid',
                 'userid'        => 'privacy:metadata:responses:userid',
+                // Added 2026-09-30 (ADR-032): a supervisor form's response is ABOUT a team member.
+                'subject_userid' => 'privacy:metadata:responses:subject_userid',
                 'response_data' => 'privacy:metadata:responses:response_data',
                 'timesubmitted' => 'privacy:metadata:responses:timesubmitted',
             ],
@@ -68,6 +70,8 @@ class provider implements
         // back, so core privacy never asked this provider to export or erase
         // those rows while get_metadata() said they were handled.
         if ($DB->record_exists('local_sentientia_evaluation_responses', ['userid' => $userid])
+                // A supervisor's response about this person (ADR-032, subject_userid).
+                || $DB->record_exists('local_sentientia_evaluation_responses', ['subject_userid' => $userid])
                 || $DB->record_exists('local_sentientia_evaluation_triggers', ['userid' => $userid])
                 || $DB->record_exists('local_sentientia_evaluation_assign', ['userid' => $userid])
                 || $DB->record_exists('local_sentientia_evaluation_assign',
@@ -102,6 +106,28 @@ class provider implements
         if ($data) {
             $writer->export_data(['sentientia_evaluation_responses'],
                 (object) ['responses' => $data]);
+        }
+
+        // Added 2026-09-30 (ADR-032): what a supervisor answered ABOUT this person on a supervisor form. The
+        // supervisor is not named: that row is the supervisor's data as much as the subject's, and the subject
+        // is entitled to what was said about them, not to who said it.
+        $about = $DB->get_records_sql(
+            "SELECT r.id, r.response_data, r.timesubmitted, e.name AS evaluation_name
+               FROM {local_sentientia_evaluation_responses} r
+          LEFT JOIN {local_sentientia_evaluation} e ON e.id = r.evaluationid
+              WHERE r.subject_userid = :uid",
+            ['uid' => $userid]);
+        $aboutdata = [];
+        foreach ($about as $r) {
+            $aboutdata[] = (object) [
+                'evaluation' => format_string($r->evaluation_name ?? '(deleted)'),
+                'submitted'  => userdate($r->timesubmitted),
+                'answers'    => $r->response_data,
+            ];
+        }
+        if ($aboutdata) {
+            $writer->export_data(['sentientia_evaluation_about_you'],
+                (object) ['responses_about_you' => $aboutdata]);
         }
 
         // Added 2026-09-24: the evaluations aimed at this person, answered or
@@ -171,6 +197,10 @@ class provider implements
             'assigned_by_userid', 0, ['assigned_by_userid' => $userid]);
         $DB->delete_records('local_sentientia_evaluation_responses',
             ['userid' => $userid]);
+        // The subject of a supervisor's response: the response is the supervisor's record and stays, but it no
+        // longer says who it was about (ADR-032, subject_userid).
+        $DB->set_field_select('local_sentientia_evaluation_responses', 'subject_userid', null,
+            'subject_userid = :uid', ['uid' => $userid]);
     }
 
     public static function get_users_in_context(userlist $userlist) {
@@ -189,7 +219,10 @@ class provider implements
             $DB->get_fieldset_select('local_sentientia_evaluation_assign',
                 'DISTINCT userid', 'userid > 0'),
             $DB->get_fieldset_select('local_sentientia_evaluation_assign',
-                'DISTINCT assigned_by_userid', 'assigned_by_userid > 0'));
+                'DISTINCT assigned_by_userid', 'assigned_by_userid > 0'),
+            // ADR-032: the people a supervisor's responses are about.
+            $DB->get_fieldset_select('local_sentientia_evaluation_responses',
+                'DISTINCT subject_userid', 'subject_userid > 0'));
         $userids = array_values(array_unique($userids));
         if (!empty($userids)) {
             $userlist->add_users($userids);
@@ -215,6 +248,9 @@ class provider implements
             "userid $insql", $inparams);
         $DB->set_field_select('local_sentientia_evaluation_assign',
             'assigned_by_userid', 0, "assigned_by_userid $insql", $inparams);
+        // ADR-032: the response stays, it stops naming the person it was about.
+        $DB->set_field_select('local_sentientia_evaluation_responses',
+            'subject_userid', null, "subject_userid $insql", $inparams);
     }
 
     private static function has_system_context(approved_contextlist $contextlist): bool {

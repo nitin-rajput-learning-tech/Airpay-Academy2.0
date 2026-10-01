@@ -304,5 +304,28 @@ function xmldb_local_sentientia_evaluation_upgrade(int $oldversion): bool {
             'local', 'sentientia_evaluation');
     }
 
+    // 2026093001 - ADR-032: the BizLMS evaluation import.
+    //
+    // A supervisor form (BizLMS evaluationmode SP) is answered by the supervisor about a team member. The
+    // response keeps the supervisor in userid, as it always has, and this column keeps the team member. NULL on
+    // every other response, and always NULL on an anonymous one. Indexed because the privacy provider and the
+    // subject column of the response list look a response up by it. Guarded so a re-run, or an install that
+    // already has it from install.xml, changes nothing.
+    if ($oldversion < 2026093001) {
+        $table = new xmldb_table('local_sentientia_evaluation_responses');
+
+        $field = new xmldb_field('subject_userid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'userid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $index = new xmldb_index('idx_subject', XMLDB_INDEX_NOTUNIQUE, ['subject_userid']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        upgrade_plugin_savepoint(true, 2026093001, 'local', 'sentientia_evaluation');
+    }
+
     return true;
 }
