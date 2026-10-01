@@ -345,11 +345,13 @@ final class mapping {
      * @param int $classroomstatus BizLMS classroom status
      * @param bool $closedstaywaiting decision classroom.waitlist_closed is waiting
      * @param bool $openstaywaiting decision classroom.waitlist_open lets open classrooms keep waiting places
+     * @param bool $userdeleted the learner's user row is deleted: such a place would have stayed waiting only
+     *        to be hidden by every reader (and to hold position 1 of the queue), so it is removed instead
      * @return array{0: string, 1: string} [status, note]: waiting, promoted or removed, and the note
-     *         ('already_enrolled', 'classroom_closed', 'kept_out_of_the_queue' or '')
+     *         ('already_enrolled', 'classroom_closed', 'kept_out_of_the_queue', 'user_deleted' or '')
      */
     public static function waitlist_status(int $enrolstatus, bool $onroster, int $classroomstatus,
-            bool $closedstaywaiting, bool $openstaywaiting): array {
+            bool $closedstaywaiting, bool $openstaywaiting, bool $userdeleted = false): array {
         if ($enrolstatus === 1) {
             return ['promoted', ''];
         }
@@ -357,9 +359,14 @@ final class mapping {
             return ['promoted', 'already_enrolled'];
         }
         if (self::is_closed($classroomstatus)) {
-            return $closedstaywaiting ? ['waiting', ''] : ['removed', 'classroom_closed'];
+            if (!$closedstaywaiting) {
+                return ['removed', 'classroom_closed'];
+            }
+        } else if (!$openstaywaiting) {
+            return ['removed', 'kept_out_of_the_queue'];
         }
-        return $openstaywaiting ? ['waiting', ''] : ['removed', 'kept_out_of_the_queue'];
+        // The owner's decisions would keep this place waiting.
+        return $userdeleted ? ['removed', 'user_deleted'] : ['waiting', ''];
     }
 
     /**
@@ -376,6 +383,8 @@ final class mapping {
                 return 'Imported from BizLMS: classroom closed before promotion';
             case 'kept_out_of_the_queue':
                 return 'Imported from BizLMS: not kept in the queue';
+            case 'user_deleted':
+                return 'Imported from BizLMS: the learner no longer exists';
         }
         return null;
     }

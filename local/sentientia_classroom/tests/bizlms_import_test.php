@@ -351,11 +351,15 @@ final class bizlms_import_test extends provider_testcase {
      * Seed and apply the signed decisions; return the result of the run.
      *
      * @param decisions|null $decisions
+     * @param callable|null $extra Adds more legacy rows after the seed, before the run.
      * @return array
      */
-    private function seed_and_apply(?decisions $decisions = null): array {
+    private function seed_and_apply(?decisions $decisions = null, ?callable $extra = null): array {
         $this->contract_begin();
         $this->seed_classroom_data();
+        if ($extra !== null) {
+            $extra();
+        }
         $report = new report();
         $runner = new runner([
             'permit' => guard::test_permit(), 'apply' => true, 'decisions' => $decisions ?? self::signed_decisions(),
@@ -449,7 +453,8 @@ final class bizlms_import_test extends provider_testcase {
         $cr2 = $this->target('local_sentientia_classroom', ['id' => 2]);
         $this->assertNull($cr2->trainerid, 'the trainer of CR2 no longer exists');
 
-        // The attendance pages let a trainer in only through the session's or the classroom's trainerid.
+        // The attendance pages let a trainer in through the session's trainerid, the classroom's trainerid
+        // or, for any other trainer of the classroom, a row of the trainers table.
         $s1 = $this->target('local_sentientia_classroom_sessions', ['id' => 1]);
         $s2 = $this->target('local_sentientia_classroom_sessions', ['id' => 2]);
         $s5 = $this->target('local_sentientia_classroom_sessions', ['id' => 5]);
@@ -458,7 +463,10 @@ final class bizlms_import_test extends provider_testcase {
         $this->assertNull($s2->trainerid);
         $this->assertTrue(session_manager::may_run_session($s1, $cr1, $t1));
         $this->assertTrue(session_manager::may_run_session($s2, $cr1, $t1), 'through the classroom trainer');
-        $this->assertFalse(session_manager::may_run_session($s1, $cr1, $t2), 'T2 is not assigned to S1');
+        $this->assertTrue(session_manager::may_run_session($s1, $cr1, $t2),
+            'T2 is a co-trainer of CR1 (a trainers row) so S1, which names only T1, is still theirs to run');
+        $this->assertFalse(session_manager::may_run_session($s5, $cr2row, $t1),
+            'T1 is on no trainer row of CR2 and is not the trainer of S5');
         $this->assertTrue(session_manager::may_run_session($s5, $cr2row, $t2), 'through the session trainer');
     }
 
@@ -721,6 +729,43 @@ final class bizlms_import_test extends provider_testcase {
         $this->assertSame('incomplete_row', $this->map('local_classroom_waitlist', 7)->reason);
     }
 
+    public function test_a_deleted_learners_place_is_removed_and_a_repeated_place_is_merged(): void {
+        global $DB;
+        $t = self::T0;
+        $this->seed_and_apply(null, function () use ($t): void {
+            // CR2 is active. Its queue (seed): T1 (sort 5), T2 (sort 9). Added: the deleted user at the head, and
+            // T1 again further back (a later creation and change time that the surviving place keeps).
+            $this->legacy_waitlist(10, ['classroomid' => 2, 'userid' => $this->u['d']->id, 'sortorder' => 1,
+                'timecreated' => $t + 500]);
+            $this->legacy_waitlist(11, ['classroomid' => 2, 'userid' => $this->u['t1']->id, 'sortorder' => 8,
+                'timecreated' => $t + 400, 'timemodified' => $t + 450]);
+        });
+        $t1 = (int) $this->u['t1']->id;
+        $t2 = (int) $this->u['t2']->id;
+
+        // The deleted learner would have headed the queue; their place is removed, with a reason, and not counted.
+        $gone = $this->target('local_sentientia_classroom_waitlist',
+            ['classroomid' => 2, 'userid' => $this->u['d']->id]);
+        $this->assertSame('removed', $gone->status);
+        $this->assertSame('Imported from BizLMS: the learner no longer exists', $gone->reason);
+        $this->assertNotNull($gone->removed_at);
+        $this->assertNull($gone->promoted_at);
+        $waiting = $DB->get_records_menu('local_sentientia_classroom_waitlist',
+            ['classroomid' => 2, 'status' => 'waiting'], 'position ASC', 'userid, position');
+        $this->assertSame([$t1 => 1, $t2 => 2], array_map('intval', $waiting), 'no gap where the deleted user was');
+
+        // T1 waits once: the earlier place (source id 1) survives and the later one is merged into it.
+        $this->assertSame(1, $DB->count_records('local_sentientia_classroom_waitlist',
+            ['classroomid' => 2, 'userid' => $t1]));
+        $this->assertSame('merged', $this->map('local_classroom_waitlist', 11)->outcome);
+        $this->assertSame('dup_waiting_place', $this->map('local_classroom_waitlist', 11)->reason);
+        $this->assertSame((int) $this->map('local_classroom_waitlist', 1)->targetid,
+            (int) $this->map('local_classroom_waitlist', 11)->targetid, 'the duplicate points at the place that stayed');
+        $kept = $this->target('local_sentientia_classroom_waitlist', ['classroomid' => 2, 'userid' => $t1]);
+        $this->assertSame($t + 1, (int) $kept->timecreated, 'the earliest creation time');
+        $this->assertSame($t + 450, (int) $kept->timemodified, 'the latest change time');
+    }
+
     public function test_the_auto_promote_guard_keeps_an_imported_waiting_place_from_enrolling_anyone(): void {
         global $DB;
         $this->seed_and_apply();
@@ -793,6 +838,38 @@ final class bizlms_import_test extends provider_testcase {
         $result = $runner->run([]);
         $this->assertSame(1, $result['exit']);
         $this->assertStringContainsString('unknown_enum:local_classroom.status=7', implode(' ', $result['blockers']));
+    }
+
+    public function test_a_column_a_step_reads_but_the_source_schema_lacks_blocks_the_feature(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->seed_classroom_data();
+        $dbman = $DB->get_manager();
+
+        // One column from each kind of table; none is in an index, so the fixture can drop it.
+        $missing = [
+            'local_classroom' => 'nomination_startdate',
+            'local_classroom_sessions' => 'messagelink',
+            'local_classroom_attendance' => 'usermodified',
+            'local_location_room' => 'building',
+        ];
+        try {
+            foreach ($missing as $table => $column) {
+                $dbman->drop_field(new \xmldb_table($table), new \xmldb_field($column));
+            }
+            $runner = new runner(['decisions' => self::signed_decisions(), 'report' => new report()]);
+            $result = $runner->run([]);
+            $this->assertSame(1, $result['exit'], 'a missing source column blocks the run, it does not default to 0');
+            $blockers = implode(' ', $result['blockers']);
+            foreach ($missing as $table => $column) {
+                $this->assertStringContainsString("missing_column:{$table}.{$column}", $blockers);
+            }
+        } finally {
+            // The next test gets the tables back whole (the trait recreates a dropped table).
+            foreach (array_keys($missing) as $table) {
+                self::drop_legacy_table($table);
+            }
+        }
     }
 
     // ─── Logo ─────────────────────────────────────────────────────────────────────────────────────────
@@ -898,6 +975,33 @@ final class bizlms_import_test extends provider_testcase {
         $this->assertFalse($DB->record_exists('local_sentientia_classroom_waitlist', ['classroomid' => $native]));
     }
 
+    public function test_unenrol_also_refuses_a_learner_whose_attendance_is_imported_history(): void {
+        global $DB;
+        $this->seed_and_apply();
+        $this->setAdminUser();
+        $b = (int) $this->u['b']->id;
+
+        // B is on CR1's roster with completion_status 0. Take the roster row's provenance away, as if the
+        // import had skipped it and B was put on the roster since: only B's attendance (S1) is history now.
+        $rosterid = (int) $DB->get_field('local_sentientia_classroom_users', 'id', ['classroomid' => 1, 'userid' => $b],
+            MUST_EXIST);
+        $DB->set_field_select(\local_sentientia_platform\bizlms\legacymap::TABLE, 'outcome', 'skipped',
+            'targettable = :t AND targetid = :i', ['t' => 'local_sentientia_classroom_users', 'i' => $rosterid]);
+        $this->assertFalse(session_manager::is_imported('local_sentientia_classroom_users', $rosterid));
+        $attendanceid = (int) $DB->get_field('local_sentientia_classroom_attendance', 'id',
+            ['sessionid' => 1, 'userid' => $b], MUST_EXIST);
+        $this->assertTrue(session_manager::is_imported('local_sentientia_classroom_attendance', $attendanceid));
+
+        try {
+            session_manager::unenrol_user(1, $b);
+            $this->fail('unenrol removed imported attendance');
+        } catch (\moodle_exception $e) {
+            $this->assertSame('error_protected_history', $e->errorcode);
+        }
+        $this->assertTrue($DB->record_exists('local_sentientia_classroom_users', ['id' => $rosterid]));
+        $this->assertTrue($DB->record_exists('local_sentientia_classroom_attendance', ['id' => $attendanceid]));
+    }
+
     // ─── Privacy ──────────────────────────────────────────────────────────────────────────────────────
 
     public function test_privacy_exports_the_imported_rows_and_anonymise_keeps_the_roster(): void {
@@ -936,6 +1040,65 @@ final class bizlms_import_test extends provider_testcase {
         $this->assertNull($DB->get_field('local_sentientia_classroom', 'trainerid', ['id' => 1]));
         $this->assertNull($DB->get_field('local_sentientia_classroom_sessions', 'trainerid', ['id' => 1]));
         $this->assertTrue($DB->record_exists('local_sentientia_classroom', ['id' => 1]));
+    }
+
+    public function test_privacy_finds_exports_and_clears_the_actor_columns(): void {
+        global $DB;
+        $this->seed_and_apply();
+        $actor = $this->getDataGenerator()->create_user();
+        $bystander = $this->getDataGenerator()->create_user();
+        $system = \context_system::instance();
+
+        // The import (usercreated, usermodified) and every native enrolment and mark fill these two columns
+        // with a person who is not the learner; one row of each names the actor here.
+        $rosterid = (int) $DB->get_field_sql('SELECT MIN(id) FROM {local_sentientia_classroom_users}');
+        $attid = (int) $DB->get_field_sql('SELECT MIN(id) FROM {local_sentientia_classroom_attendance}');
+        $DB->set_field('local_sentientia_classroom_users', 'enrolledby', $actor->id, ['id' => $rosterid]);
+        $DB->set_field('local_sentientia_classroom_attendance', 'markedby', $actor->id, ['id' => $attid]);
+
+        // Found: by the context list and by the user list; a user named nowhere is not.
+        $this->assertNotEmpty(privacy\provider::get_contexts_for_userid((int) $actor->id)->get_contextids());
+        $this->assertEmpty(privacy\provider::get_contexts_for_userid((int) $bystander->id)->get_contextids());
+        $userlist = new \core_privacy\local\request\userlist($system, 'local_sentientia_classroom');
+        privacy\provider::get_users_in_context($userlist);
+        $this->assertContains((int) $actor->id, array_map('intval', $userlist->get_userids()));
+        $this->assertNotContains((int) $bystander->id, array_map('intval', $userlist->get_userids()));
+
+        // Exported for the actor: the rows they touched, not the learners on them.
+        $list = new \core_privacy\local\request\approved_contextlist($actor, 'local_sentientia_classroom',
+            [$system->id]);
+        privacy\provider::export_user_data($list);
+        $data = \core_privacy\local\request\writer::with_context($system)->get_data(['sentientia_classroom']);
+        $this->assertSame(1, $data->enrolled_count);
+        $this->assertSame(1, $data->marked_count);
+        $this->assertSame($rosterid, (int) $data->enrolled_by[0]->id);
+        $this->assertSame($attid, (int) $data->marked_by[0]->id);
+        $this->assertFalse(property_exists($data->enrolled_by[0], 'userid'), 'the learner is not exported to the actor');
+        $this->assertFalse(property_exists($data->marked_by[0], 'userid'), 'the learner is not exported to the actor');
+        $this->assertSame(0, $data->roster_count, 'the actor is on no roster themselves');
+
+        // DPDP anonymise keeps the columns: they point at the user row that is anonymised in place.
+        privacy\provider::anonymise_data_for_user($list);
+        $this->assertSame((int) $actor->id, (int) $DB->get_field('local_sentientia_classroom_users', 'enrolledby',
+            ['id' => $rosterid]));
+        $this->assertSame((int) $actor->id, (int) $DB->get_field('local_sentientia_classroom_attendance', 'markedby',
+            ['id' => $attid]));
+
+        // Full erasure clears the actor; the learner's rows stay.
+        privacy\provider::delete_data_for_user($list);
+        $this->assertNull($DB->get_field('local_sentientia_classroom_users', 'enrolledby', ['id' => $rosterid]));
+        $this->assertNull($DB->get_field('local_sentientia_classroom_attendance', 'markedby', ['id' => $attid]));
+        $this->assertTrue($DB->record_exists('local_sentientia_classroom_users', ['id' => $rosterid]));
+        $this->assertTrue($DB->record_exists('local_sentientia_classroom_attendance', ['id' => $attid]));
+        $this->assertEmpty(privacy\provider::get_contexts_for_userid((int) $actor->id)->get_contextids());
+
+        // The bulk path (delete_data_for_users) clears them too.
+        $DB->set_field('local_sentientia_classroom_users', 'enrolledby', $actor->id, ['id' => $rosterid]);
+        $DB->set_field('local_sentientia_classroom_attendance', 'markedby', $actor->id, ['id' => $attid]);
+        privacy\provider::delete_data_for_users(new \core_privacy\local\request\approved_userlist($system,
+            'local_sentientia_classroom', [(int) $actor->id]));
+        $this->assertNull($DB->get_field('local_sentientia_classroom_users', 'enrolledby', ['id' => $rosterid]));
+        $this->assertNull($DB->get_field('local_sentientia_classroom_attendance', 'markedby', ['id' => $attid]));
     }
 
     // ─── Registry and the importer's declarations ──────────────────────────────────────────────────────

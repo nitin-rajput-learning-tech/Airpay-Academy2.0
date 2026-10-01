@@ -103,6 +103,12 @@ final class bizlms_mapping_test extends \basic_testcase {
             'waiting on an active classroom' => [[0, false, 1, false, true], ['waiting', '']],
             'waiting on a draft classroom' => [[0, false, 0, false, true], ['waiting', '']],
             'open classroom, owner removes' => [[0, false, 0, false, false], ['removed', 'kept_out_of_the_queue']],
+            'deleted learner, place would stay waiting' => [[0, false, 1, false, true, true], ['removed', 'user_deleted']],
+            'deleted learner, closed classroom the owner keeps waiting' => [[0, false, 3, true, true, true],
+                ['removed', 'user_deleted']],
+            'deleted learner, already moved to the roster' => [[1, false, 1, false, true, true], ['promoted', '']],
+            'deleted learner, classroom closed' => [[0, false, 4, false, true, true], ['removed', 'classroom_closed']],
+            'active learner, flag spelled out' => [[0, false, 1, false, true, false], ['waiting', '']],
         ];
     }
 
@@ -110,6 +116,7 @@ final class bizlms_mapping_test extends \basic_testcase {
         $this->assertNull(mapping::waitlist_reason(''));
         $this->assertSame('Imported from BizLMS: already enrolled', mapping::waitlist_reason('already_enrolled'));
         $this->assertSame('Imported from BizLMS: classroom closed before promotion', mapping::waitlist_reason('classroom_closed'));
+        $this->assertSame('Imported from BizLMS: the learner no longer exists', mapping::waitlist_reason('user_deleted'));
     }
 
     public function test_path_helpers(): void {

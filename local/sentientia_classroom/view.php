@@ -98,7 +98,8 @@ if ($history) {
     $courses = [];
     foreach (\local_sentientia_classroom\session_manager::get_linked_courses($classroomid) as $course) {
         $courses[] = [
-            'name' => format_string($course->fullname),
+            // Not escaped here: the template's {{ name }} escapes it once.
+            'name' => format_string($course->fullname, true, ['escape' => false]),
             'url'  => (new moodle_url('/course/view.php', ['id' => (int) $course->id]))->out(false),
         ];
     }
@@ -136,10 +137,10 @@ if ($history) {
 
 $data = [
     'classroomid'         => $classroomid,
-    'name'                => format_string($classroom->name),
+    'name'                => format_string($classroom->name, true, ['escape' => false]),
     'description'         => format_text($classroom->description ?? '', FORMAT_HTML),
     'has_description'     => !empty(trim((string) ($classroom->description ?? ''))),
-    'location'            => format_string($classroom->location ?? ''),
+    'location'            => format_string($classroom->location ?? '', true, ['escape' => false]),
     'has_location'        => !empty(trim((string) ($classroom->location ?? ''))),
     'capacity'            => (int) $classroom->capacity,
     'trainer_name'        => $trainer_name,

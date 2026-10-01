@@ -36,8 +36,10 @@ BizLMS import), `local_sentientia_classroom_trainers` and `local_sentientia_clas
 `db/bizlms_import.php` registers the `classroom` importer (`classes/bizlms/`). It moves the history held in
 BizLMS `local_classroom_*` and `local_location_*` into these tables and is run only by
 `local/sentientia_platform/cli/import_bizlms.php` behind its CLI guard. Classroom and session ids are kept;
-the trainer of each classroom and session is carried so trainers keep their attendance access. A classroom or
-session the import brought in cannot be deleted, and its learners cannot be unenrolled, from the pages
+the trainer of each classroom and session is carried so trainers keep their attendance access (the primary
+trainer, the session's trainer and every co-trainer listed in `local_sentientia_classroom_trainers` may open
+and mark the classroom's sessions). A classroom or session the import brought in cannot be deleted, and a
+learner whose roster row or attendance the import brought in cannot be unenrolled, from the pages
 (`error_protected_history`). The readers of the imported history (overview, roster completion, "My
 classrooms" at `my.php`, the logo) are behind the default-OFF flag `sentientia.classroom.import_history`.
 

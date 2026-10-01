@@ -191,7 +191,10 @@ class session_manager {
      * tenant administrator role is; site admins always pass) may do so only for a session
      * they are the assigned trainer of: the user in the session's own `trainerid`
      * ({local_sentientia_classroom_sessions}.trainerid, nullable) or in its classroom's
-     * `trainerid` ({local_sentientia_classroom}.trainerid, nullable). A classroom and session
+     * `trainerid` ({local_sentientia_classroom}.trainerid, nullable), or any other trainer the
+     * classroom lists (a co-trainer: a row of {local_sentientia_classroom_trainers}, filled by
+     * the ADR-032 BizLMS import, so a classroom with trainers T1 and T2 lets both run every one
+     * of its sessions even when the session itself names only T1). A classroom and session
      * with no trainer are therefore open to managers only.
      *
      * Why :update and not :manage (follow-up 2026-09-30): the BizLMS `trainer` role (id 10 on
@@ -211,7 +214,7 @@ class session_manager {
      * @param int|null $userid     defaults to the current user
      */
     public static function may_run_session(\stdClass $session, \stdClass $classroom, ?int $userid = null): bool {
-        global $USER;
+        global $DB, $USER;
         $userid = $userid ?? (int) ($USER->id ?? 0);
         if ($userid <= 0) {
             return false;
@@ -219,8 +222,18 @@ class session_manager {
         if (has_capability('local/sentientia_classroom:update', \context_system::instance(), $userid)) {
             return true;
         }
-        return $userid === (int) ($session->trainerid ?? 0)
-            || $userid === (int) ($classroom->trainerid ?? 0);
+        if ($userid === (int) ($session->trainerid ?? 0)
+                || $userid === (int) ($classroom->trainerid ?? 0)) {
+            return true;
+        }
+        // A co-trainer: listed on the classroom but neither its primary trainer nor the session's.
+        // The table exists once the import schema (upgrade step 2026093002) has run, so look only
+        // then; before it nobody is a co-trainer.
+        return $DB->get_manager()->table_exists(self::TRAINERS_TABLE)
+            && $DB->record_exists(self::TRAINERS_TABLE, [
+                'classroomid' => (int) $classroom->id,
+                'trainerid' => $userid,
+            ]);
     }
 
     /**
@@ -875,10 +888,26 @@ class session_manager {
 
         // ADR-032 (framework.protect_imported_history): removing an imported learner would also delete the
         // attendance the import brought in, and a completed learner's completion goes with the roster row.
+        // (An imported waiting-list place is not history: the pages delete it like any other queue entry.)
         $roster = $DB->get_record(self::USERS_TABLE, ['classroomid' => $classroomid, 'userid' => $userid]);
         if ($roster && ((int) ($roster->completion_status ?? 0) === 1
                 || self::is_imported(self::USERS_TABLE, (int) $roster->id))) {
             throw new \moodle_exception('error_protected_history', 'local_sentientia_classroom');
+        }
+        // The attendance has its own provenance. An imported learner whose roster row the import skipped,
+        // and who was put on the roster since, has a roster row that is not history but attendance rows
+        // that are: removing the roster row removes them too, so refuse for them as well.
+        $sessionids = $DB->get_fieldset_select(self::SESSION_TABLE, 'id',
+            'classroomid = :cid', ['cid' => $classroomid]);
+        if (!empty($sessionids)) {
+            [$insql, $inparams] = $DB->get_in_or_equal($sessionids, SQL_PARAMS_NAMED, 'pah');
+            $attendanceids = $DB->get_fieldset_select(self::ATTENDANCE_TABLE, 'id',
+                "userid = :uid AND sessionid $insql", array_merge($inparams, ['uid' => $userid]));
+            foreach ($attendanceids as $attendanceid) {
+                if (self::is_imported(self::ATTENDANCE_TABLE, (int) $attendanceid)) {
+                    throw new \moodle_exception('error_protected_history', 'local_sentientia_classroom');
+                }
+            }
         }
 
         $tx = $DB->start_delegated_transaction();
@@ -1009,6 +1038,11 @@ class session_manager {
     /**
      * Every trainer of a classroom: the primary trainer first, then the others (the classroom's trainers
      * table). Users that no longer exist or are deleted are left out.
+     *
+     * Not tenant-scoped on purpose (accepted in review round 1): the caller has already passed
+     * require_classroom_access() for this classroom, the names are those its own tenant attached, and the
+     * primary trainer's name has always been shown the same way. Filtering by the trainer's own open_path
+     * would hide a trainer whose user has no path, which an imported user may not have.
      *
      * @param int $classroomid
      * @return \stdClass[] user rows, the primary trainer first

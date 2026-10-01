@@ -7,7 +7,9 @@
 // discovery, export, core's full erasure and the Sentientia DPDP
 // anonymise_data_for_user() hook. Since 2026-09-30 (ADR-032, BizLMS classroom
 // import) it also covers the people named as trainers and creators, and the
-// completion the roster carries.
+// completion the roster carries. The two actor columns - who put a learner on a
+// roster (enrolledby) and who marked an attendance row (markedby) - are found,
+// exported for the actor and cleared on erasure the same way (review round 1).
 
 namespace local_sentientia_classroom\privacy;
 
@@ -102,7 +104,8 @@ class provider implements
         if ($DB->record_exists('local_sentientia_classroom_users', ['userid' => $userid])
             || $DB->record_exists('local_sentientia_classroom_attendance', ['userid' => $userid])
             || (static::waitlist_exists() && $DB->record_exists(self::WAITLIST, ['userid' => $userid]))
-            || self::is_named_as_trainer_or_creator($userid)) {
+            || self::is_named_as_trainer_or_creator($userid)
+            || self::is_named_as_actor($userid)) {
             $contextlist->add_system_context();
         }
         return $contextlist;
@@ -126,6 +129,12 @@ class provider implements
         $classrooms = $DB->get_records_select(self::CLASSROOMS, 'trainerid = :t OR createdby = :c',
             ['t' => $userid, 'c' => $userid], 'id ASC', 'id, name, trainerid, createdby');
         $sessionsled = $DB->get_records(self::SESSIONS, ['trainerid' => $userid], 'id ASC', 'id, classroomid, title');
+        // What the user did to other people's rows: the rosters they put learners on and the attendance they
+        // marked. The learner is somebody else's data, so only the row, its classroom or session and the time.
+        $enrolled = $DB->get_records('local_sentientia_classroom_users', ['enrolledby' => $userid], 'id ASC',
+            'id, classroomid, timecreated');
+        $marked = $DB->get_records('local_sentientia_classroom_attendance', ['markedby' => $userid], 'id ASC',
+            'id, sessionid, status, markedat');
         \core_privacy\local\request\writer::with_context(
             \context_system::instance())
             ->export_data(['sentientia_classroom'],
@@ -140,6 +149,10 @@ class provider implements
                     'trainer'          => array_values((array) $trainerrows),
                     'classrooms'       => array_values((array) $classrooms),
                     'sessions_led'     => array_values((array) $sessionsled),
+                    'enrolled_count'   => count($enrolled),
+                    'enrolled_by'      => array_values((array) $enrolled),
+                    'marked_count'     => count($marked),
+                    'marked_by'        => array_values((array) $marked),
                 ]);
     }
 
@@ -167,6 +180,7 @@ class provider implements
         $DB->delete_records('local_sentientia_classroom_attendance', ['userid' => $uid]);
         self::delete_waitlist_rows([(int) $uid]);
         self::release_trainer_and_creator([(int) $uid]);
+        self::release_actor_columns([(int) $uid]);
     }
 
     /**
@@ -188,7 +202,9 @@ class provider implements
         // the free-text note. Neither the roster row nor the trainer rows hold
         // free text, so there is nothing to clear on them: as in
         // local_sentientia_programs and local_sentientia_learningpath the
-        // records stay and the person is gone.
+        // records stay and the person is gone. The actor columns (enrolledby,
+        // markedby) stay for the same reason: they point at the user row this
+        // flow anonymises in place.
         $DB->set_field('local_sentientia_classroom_attendance', 'notes', null, ['userid' => $uid]);
         // A waiting-list place is a queue entry, not a learning record, and
         // `reason` can hold an admin's free text about this person. It goes,
@@ -212,8 +228,10 @@ class provider implements
         $u5 = $DB->get_fieldset_select(self::CLASSROOMS, 'DISTINCT trainerid', 'trainerid > 0');
         $u6 = $DB->get_fieldset_select(self::CLASSROOMS, 'DISTINCT createdby', 'createdby > 0');
         $u7 = $DB->get_fieldset_select(self::SESSIONS, 'DISTINCT trainerid', 'trainerid > 0');
+        $u8 = $DB->get_fieldset_select('local_sentientia_classroom_users', 'DISTINCT enrolledby', 'enrolledby > 0');
+        $u9 = $DB->get_fieldset_select('local_sentientia_classroom_attendance', 'DISTINCT markedby', 'markedby > 0');
         $userids = array_unique(array_merge((array) $u1, (array) $u2, (array) $u3, (array) $u4,
-            (array) $u5, (array) $u6, (array) $u7));
+            (array) $u5, (array) $u6, (array) $u7, (array) $u8, (array) $u9));
         if (!empty($userids)) {
             $userlist->add_users($userids);
         }
@@ -232,6 +250,7 @@ class provider implements
             "userid $insql", $inparams);
         self::delete_waitlist_rows(array_map('intval', $userids));
         self::release_trainer_and_creator(array_map('intval', $userids));
+        self::release_actor_columns(array_map('intval', $userids));
     }
 
     /**
@@ -261,6 +280,19 @@ class provider implements
     }
 
     /**
+     * Does any roster row name this user as the one who enrolled the learner, or any attendance row as the one
+     * who marked it?
+     *
+     * @param int $userid
+     * @return bool
+     */
+    private static function is_named_as_actor(int $userid): bool {
+        global $DB;
+        return $DB->record_exists('local_sentientia_classroom_users', ['enrolledby' => $userid])
+            || $DB->record_exists('local_sentientia_classroom_attendance', ['markedby' => $userid]);
+    }
+
+    /**
      * Full erasure of users who train or created classrooms: their trainer rows go (a trainer row is only
      * the statement "this person trains this classroom"), and the classroom and session columns that name
      * them are cleared. The classrooms and sessions themselves stay.
@@ -280,6 +312,24 @@ class provider implements
         $DB->set_field_select(self::CLASSROOMS, 'trainerid', null, "trainerid $insql", $inparams);
         $DB->set_field_select(self::CLASSROOMS, 'createdby', null, "createdby $insql", $inparams);
         $DB->set_field_select(self::SESSIONS, 'trainerid', null, "trainerid $insql", $inparams);
+    }
+
+    /**
+     * Full erasure of the actor columns: the rosters this user put learners on and the attendance they marked
+     * keep their row (it belongs to the learner), and the column that names the actor is cleared. NULL, not 0:
+     * on enrolledby 0 already means "promoted off the waiting list automatically".
+     *
+     * @param int[] $userids
+     * @return void
+     */
+    private static function release_actor_columns(array $userids): void {
+        global $DB;
+        if (empty($userids)) {
+            return;
+        }
+        [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'rac');
+        $DB->set_field_select('local_sentientia_classroom_users', 'enrolledby', null, "enrolledby $insql", $inparams);
+        $DB->set_field_select('local_sentientia_classroom_attendance', 'markedby', null, "markedby $insql", $inparams);
     }
 
     /**

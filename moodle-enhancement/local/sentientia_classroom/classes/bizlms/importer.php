@@ -53,15 +53,33 @@ final class importer implements importer_contract {
         'local_sentientia_locations' => ['parentid', 'venue_type', 'building'],
     ];
 
-    /** Columns each claimed legacy table must have; the steps read the rest defensively. */
+    /**
+     * Every column of a legacy table that a step reads. The steps read a row defensively (mapping::int() and
+     * mapping::text() turn a missing column into 0 or ''), so a column that a different source schema lacks
+     * would otherwise import as 0 or NULL without a word. Preflight blocks instead. The April rehearsal copy
+     * (BizLMS 4.1.2 upgraded) has all of them.
+     *
+     * A column only the optional decisions classroom.pathless = by_costcenter / by_creator read
+     * (local_classroom.costcenter) is checked separately in preflight().
+     */
     private const REQUIRED_SOURCE_COLUMNS = [
-        'local_classroom' => ['name', 'status', 'open_path', 'timecreated'],
-        'local_classroom_sessions' => ['classroomid', 'timestart', 'timefinish', 'timecreated'],
-        'local_classroom_users' => ['classroomid', 'userid', 'timecreated'],
-        'local_classroom_attendance' => ['classroomid', 'sessionid', 'userid', 'status', 'timecreated'],
-        'local_classroom_trainers' => ['classroomid', 'trainerid'],
-        'local_classroom_courses' => ['classroomid', 'courseid'],
-        'local_classroom_waitlist' => ['classroomid', 'userid', 'sortorder', 'timecreated'],
+        'local_classroom' => ['name', 'shortname', 'description', 'status', 'open_path', 'visible', 'instituteid',
+            'capacity', 'nomination_startdate', 'nomination_enddate', 'startdate', 'enddate', 'completiondate',
+            'usercreated', 'timecreated', 'timemodified'],
+        'local_classroom_sessions' => ['name', 'classroomid', 'description', 'duration', 'instituteid', 'roomid',
+            'timestart', 'timefinish', 'trainerid', 'messagelink', 'recordinglink', 'timecreated', 'timemodified'],
+        'local_classroom_users' => ['classroomid', 'userid', 'hours', 'completion_status', 'completiondate',
+            'usercreated', 'timecreated', 'timemodified'],
+        'local_classroom_attendance' => ['classroomid', 'sessionid', 'userid', 'status', 'usercreated',
+            'usermodified', 'timecreated', 'timemodified'],
+        'local_classroom_trainers' => ['classroomid', 'trainerid', 'timecreated', 'timemodified'],
+        'local_classroom_courses' => ['classroomid', 'courseid', 'timecreated', 'timemodified'],
+        'local_classroom_waitlist' => ['classroomid', 'userid', 'sortorder', 'enrolstatus', 'timecreated',
+            'timemodified'],
+        'local_location_institutes' => ['costcenter', 'fullname', 'address', 'visible', 'institute_type',
+            'timecreated', 'timemodified'],
+        'local_location_room' => ['instituteid', 'name', 'building', 'address', 'capacity', 'visible',
+            'timecreated', 'timemodified'],
     ];
 
     /**
@@ -187,6 +205,7 @@ final class importer implements importer_contract {
             new reason('pathless_skipped', false, true),
             // Merged: a duplicate folded into the row that won.
             new reason('dup_natural_key', false, false),
+            new reason('dup_waiting_place', false, false),
             // Archived: deliberately only in the legacy table.
             new reason('submission_marker', false, false),
             new reason('completion_rule_config', false, false),
@@ -281,7 +300,7 @@ final class importer implements importer_contract {
             }
         }
 
-        // The columns the steps cannot do without.
+        // The columns the steps read: a different source schema must block, not import as 0 or NULL.
         foreach (self::REQUIRED_SOURCE_COLUMNS as $table => $columns) {
             if (!$ctx->legacy->exists($table)) {
                 continue;
@@ -292,6 +311,12 @@ final class importer implements importer_contract {
                     $pf->block('missing_column:' . $table . '.' . $column);
                 }
             }
+        }
+        // The cost centre is read only when the signed pathless decision files an unusable path under it.
+        if (in_array((string) $ctx->decision('classroom.pathless'), ['by_costcenter', 'by_creator'], true)
+                && $ctx->legacy->exists('local_classroom')
+                && !in_array('costcenter', $ctx->legacy->columns('local_classroom'), true)) {
+            $pf->block('missing_column:local_classroom.costcenter');
         }
 
         // Tables this importer does not copy.

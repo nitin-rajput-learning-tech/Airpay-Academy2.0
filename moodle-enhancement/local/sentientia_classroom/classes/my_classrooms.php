@@ -19,6 +19,18 @@ defined('MOODLE_INTERNAL') || die();
 final class my_classrooms {
 
     /**
+     * A name or title for the template: filtered like format_string(), but NOT HTML-escaped, because the template
+     * escapes every {{ }} itself (including the {{# str }} caption argument). Escaping here too showed an
+     * imported "Tom & Jerry" as "Tom &amp; Jerry" (the same bug class as my_evaluations.php).
+     *
+     * @param string $text
+     * @return string
+     */
+    private static function plain(string $text): string {
+        return format_string($text, true, ['escape' => false]);
+    }
+
+    /**
      * The template context of local_sentientia_classroom/my for one learner.
      *
      * @param int $userid The learner.
@@ -64,10 +76,10 @@ final class my_classrooms {
                 }
                 $title = trim((string) $session->title);
                 $rows[] = [
-                    'title'          => $title !== '' ? format_string($title)
+                    'title'          => $title !== '' ? self::plain($title)
                         : get_string('my_session_untitled', 'local_sentientia_classroom'),
                     'when'           => (int) $session->starttime > 0 ? userdate((int) $session->starttime, $timefmt) : '—',
-                    'location'       => format_string((string) ($session->location ?? '')),
+                    'location'       => self::plain((string) ($session->location ?? '')),
                     'attendance'     => $label,
                     'has_attendance' => $label !== '',
                     'badge'          => $badge,
@@ -76,10 +88,10 @@ final class my_classrooms {
 
             $completed = (int) $classroom->completion_status === 1;
             $items[] = [
-                'name'               => format_string($classroom->name),
+                'name'               => self::plain((string) $classroom->name),
                 'status_label'       => session_manager::status_label((int) $classroom->status),
                 'status_css'         => session_manager::status_badge((int) $classroom->status),
-                'location'           => format_string((string) ($classroom->location ?? '')),
+                'location'           => self::plain((string) ($classroom->location ?? '')),
                 'has_location'       => trim((string) ($classroom->location ?? '')) !== '',
                 'training_dates'     => $dates,
                 'has_training_dates' => $dates !== '',

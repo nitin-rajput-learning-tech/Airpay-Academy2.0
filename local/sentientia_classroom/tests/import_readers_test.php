@@ -335,6 +335,34 @@ final class import_readers_test extends \advanced_testcase {
         $this->assertFalse($none['has_classrooms']);
     }
 
+    public function test_the_my_classrooms_page_escapes_a_name_with_an_ampersand_once(): void {
+        global $DB, $OUTPUT, $PAGE;
+        $learner = $this->getDataGenerator()->create_user();
+        $id = $this->classroom(['name' => 'Tom & Jerry', 'location' => 'Hall A & B']);
+        $this->roster($id, (int) $learner->id);
+        $DB->insert_record('local_sentientia_classroom_sessions', (object) [
+            'classroomid' => $id, 'title' => 'Q&A', 'location' => 'Room 1 & 2', 'sessiondate' => 1700000000,
+            'starttime' => 1700000000, 'endtime' => 1700003600, 'timecreated' => 1700000000,
+            'timemodified' => 1700000000]);
+
+        // The data is plain text: the template, not the page, escapes it.
+        $data = my_classrooms::context_for((int) $learner->id, 1800000000);
+        $item = $data['classrooms'][0];
+        $this->assertSame('Tom & Jerry', $item['name']);
+        $this->assertSame('Hall A & B', $item['location']);
+        $this->assertSame('Q&A', $item['sessions'][0]['title']);
+        $this->assertSame('Room 1 & 2', $item['sessions'][0]['location']);
+
+        $PAGE->set_url('/local/sentientia_classroom/my.php');
+        $html = $OUTPUT->render_from_template('local_sentientia_classroom/my', $data);
+        $this->assertStringContainsString('Tom &amp; Jerry', $html);
+        $this->assertStringContainsString('Sessions of Tom &amp; Jerry', $html, 'the caption argument too');
+        $this->assertStringContainsString('Hall A &amp; B', $html);
+        $this->assertStringContainsString('Q&amp;A', $html);
+        $this->assertStringContainsString('Room 1 &amp; 2', $html);
+        $this->assertStringNotContainsString('&amp;amp;', $html, 'nothing is escaped twice');
+    }
+
     public function test_trainers_and_linked_courses_readers(): void {
         global $DB;
         $gen = $this->getDataGenerator();

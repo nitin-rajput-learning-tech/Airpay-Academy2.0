@@ -445,7 +445,8 @@ Both trees. **No schema change and no version bump in this round** (`version.php
   until the `:manage` grant is removed from role 10 (the same grant lets that role edit any session in the
   UI, see `can_update = update || manage`). Check the live `role_capabilities` before cutover; if
   trainers must be restricted whatever they hold, change the discriminator in `may_run_session()` (for
-  example to `:update`) in one place. None of the 5 local classrooms and none of their sessions carries a
+  example to `:update`) in one place. (2026-10-01: the discriminator is `:update` and a co-trainer row of
+  `local_sentientia_classroom_trainers` also opens every session of its classroom, see "Review round 1".) None of the 5 local classrooms and none of their sessions carries a
   `trainerid`, so the rule locks a real trainer out of a session until it is assigned: the BizLMS import
   (ADR-032) must carry the trainer.
 - **Data meaning (stated for reports).** A roster learner with no attendance row now means "not marked,
@@ -543,9 +544,12 @@ framework, ADR-032 and mapping doc section 15.
   guessed from the cost centre unless the owner chose `by_costcenter`.
 - **Trainers are not locked out.** `local_sentientia_classroom.trainerid` = the lowest `local_classroom_trainers`
   row whose user still exists; `sessions.trainerid` = the session's own trainer (0 -> NULL). The attendance pages
-  (QR fix, 2026-09-30) let a non-`:update` user in only through those two columns. Second and later trainers of a
-  classroom reach sessions that carry their own `trainerid` (BizLMS sessions always do); they are NOT let into
-  every session of the classroom, because `may_run_session()` was not widened (owner's rule).
+  (QR fix, 2026-09-30) let a non-`:update` user in through those two columns and, since review round 1
+  (2026-10-01), through a row of `local_sentientia_classroom_trainers` too: a co-trainer (second and later trainer
+  of a classroom) may open and mark EVERY session of that classroom, not only the sessions that name them. The
+  first version of this branch kept `may_run_session()` unwidened and locked co-trainers out of every session
+  that names somebody else; the brief says co-trainers count once that table exists, and the trainer block
+  already lists the classroom for them. See "Review round 1" below.
 - **Schema (install.xml + upgrade step 2026093002, `db/upgradelib.php::local_sentientia_classroom_ensure_import_schema`,
   idempotent, no row touched):** classroom + `shortname`, `trainingstart`, `trainingend`, `timecompleted`,
   `createdby`; roster + `completion_status` (default 0), `timecompleted`, `hours`; locations + `parentid`,
@@ -595,3 +599,68 @@ framework, ADR-032 and mapping doc section 15.
   The privacy coverage guard (`privacy_coverage_test::USER_COLUMNS`) does not list `trainerid`; the provider
   declares it anyway. No navigation link to `my.php` was added (the theme owns the navbar). `moduleid` and the
   calendar `{event}` rows (gap G7) are untouched.
+
+### Review round 1 (2026-10-01) - ADR-032 classroom importer
+
+Same branch, same version (2026093002 / 1.11.0: no schema, language or template change, so no bump). Both trees
+byte-identical for every file touched. NOT run: PHPUnit (the lead re-inits once). Checked with `php -l`,
+`tools/check-tree-drift.php`, `tools/check-lang-parity.php`, `tools/check-path-boundary.php --quiet` and
+`tools/check-bizlms-fixture-copies.php`.
+
+- **Must-fix, co-trainers (`session_manager::may_run_session()`).** After the two `trainerid` checks it also
+  returns true when `local_sentientia_classroom_trainers` exists and holds `(classroomid, userid)`. The
+  `:update` shortcut and the ADR-031 tenant guard (which runs first in `require_attendance_access()`) are
+  unchanged; every attendance entry point and the `list_classroom_sessions` link go through this one function.
+  `bizlms_import_test` now asserts T2 CAN run S1 and T1 still cannot run CR2's S5;
+  `attendance_trainer_scope_test` gained a co-trainer case (page, three web services, the session link, a stranger
+  and a row on ANOTHER classroom still refused, a co-trainer row of another tenant's classroom still refused) and a
+  `may_run_session` case. The earlier statement that `may_run_session()` "was not widened" is withdrawn.
+- **Privacy, actor columns.** `roster.enrolledby` and `attendance.markedby` (filled by the import from
+  `usercreated` / `usermodified`, and by every native enrolment and mark) are now found by
+  `get_contexts_for_userid()` and `get_users_in_context()`, exported for the ACTOR (row id, classroom or session,
+  time; never the learner's id, which is somebody else's data), and set to NULL by `delete_data_for_user()` and
+  `delete_data_for_users()` (`release_actor_columns()`, next to `release_trainer_and_creator()`). NULL, not 0:
+  on `enrolledby` 0 already means "promoted off the waiting list". The DPDP `anonymise_data_for_user()` keeps
+  them (they point at the user row it anonymises in place), as it keeps the trainer rows. The full-context erase
+  needs nothing: it already deletes both tables. Test: `test_privacy_finds_exports_and_clears_the_actor_columns`.
+- **Double escaping.** `my_classrooms.php` and the linked-course names, classroom name and location of `view.php`
+  passed `format_string()` output into `{{ }}`, so an imported "Tom & Jerry" showed as "Tom &amp; Jerry" (the same
+  class as `my_evaluations.php`). They use `format_string(..., true, ['escape' => false])` and the template
+  escapes once, the `{{# str }}` caption argument included. `view.php`'s classroom name and location were
+  double-escaped before this branch too (not flagged by the review); fixed the same way. Test:
+  `test_the_my_classrooms_page_escapes_a_name_with_an_ampersand_once`.
+- **Source columns.** `REQUIRED_SOURCE_COLUMNS` now lists every column a step reads (classroom, sessions, roster,
+  attendance, trainers, courses, waiting list, and the two venue tables), so a different source schema blocks
+  with `missing_column:<table>.<column>` instead of importing 0 or NULL. `local_classroom.costcenter` is required
+  only when `classroom.pathless` is `by_costcenter` or `by_creator`. Read-only check on the April rehearsal copy
+  (`bizlms_april`): every listed column exists on every table. Test:
+  `test_a_column_a_step_reads_but_the_source_schema_lacks_blocks_the_feature` (drops one column from four tables).
+- **Imported attendance is history on its own.** `unenrol_user()` refused only when the ROSTER row was imported or
+  completed; a learner whose roster row the import skipped but whose attendance rows were imported (and who was put
+  on the roster since) lost that attendance. It now also refuses when any attendance row of that learner in the
+  classroom's sessions has import provenance. Test: `test_unenrol_also_refuses_a_learner_whose_attendance_is_imported_history`.
+- **Waiting list.** A place that would have stayed `waiting` for a DELETED learner is imported as `removed` with the
+  reason "Imported from BizLMS: the learner no longer exists" (`mapping::waitlist_status()` takes a sixth argument,
+  default false, so the existing callers and cases are unchanged): every reader hides a deleted learner, so the
+  queue used to start at position 2. The same learner waiting more than once in one queue is one place: the
+  earliest by (BizLMS sort order, id) stays, the others are merged into it (new merge reason `dup_waiting_place`,
+  declared in `importer::reasons()`), the survivor keeping the earliest `timecreated` and latest `timemodified`.
+  A promoted or removed duplicate is history and is left alone. Tests: `bizlms_mapping_test` cases and
+  `test_a_deleted_learners_place_is_removed_and_a_repeated_place_is_merged`.
+- **`get_trainers()` is NOT tenant-scoped, on purpose (accepted).** It lists the names of the trainers of a
+  classroom the caller already passed `require_classroom_access()` for, exactly as the primary trainer name
+  always was. Scoping by the trainer's own `open_path` would hide any trainer whose user has no path (imported
+  users may), which is worse than showing a name the classroom's own tenant attached.
+- **Not done: visual evidence** (CLAUDE.md section 5). No Moodle was started in this round either, so there are no
+  screenshots, and none are invented. Screens to capture after deploy, desktop and mobile (590 px), as a learner
+  and as a tenant admin: classroom list with Draft / On hold filter buttons; edit form (status select, capacity
+  help); overview with capacity 0 ("No limit"), then with the flag on (training dates, trainers, courses, logo);
+  roster with the Completion / Completed on / Hours columns; `my.php`.
+- **Observation, April rehearsal copy (read-only).** Every `local_classroom*` table has 0 rows and
+  `local_classroom_categories` does not exist; `local_location_institutes` has 2 rows (cost centre 1,
+  `timemodified` 1, which reads as `timecreated`) and `local_location_room` 1. Only the venue steps run on real
+  data; classrooms, sessions, roster, attendance and the waiting list are proven by the PHPUnit fixture alone
+  until Stage B uses live data. The 6 `classroomlogo` files in `{files}` belong to no classroom and stay.
+- **Owner question, unchanged:** a classroom whose `open_path` is unusable imports with NO path (visible to
+  cross-tenant callers only) because the signed value is `classroom.pathless = cross_tenant_only`; mapping section
+  15 and its CR6 fixture describe rebuilding it from the cost centre. The code follows the signed decision.
