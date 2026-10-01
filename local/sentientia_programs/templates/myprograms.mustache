@@ -70,7 +70,7 @@
             <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-3">
                 <div class="d-flex align-items-start gap-3">
                     {{# has_logo }}
-                    <img src="{{{ logo_url }}}" alt="" class="img-fluid rounded" style="max-height: 56px;">
+                    <img src="{{{ logo_url }}}" alt="" class="img-fluid rounded airpay-programs__logo">
                     {{/ has_logo }}
                     <div>
                         <h2 class="h4 mb-1" id="ap-myprogram-{{ id }}">{{ name }}</h2>
@@ -97,10 +97,9 @@
                 </div>
             </div>
 
-            <div class="progress mb-3" role="progressbar" aria-valuenow="{{ overall_pct }}"
-                 aria-valuemin="0" aria-valuemax="100" aria-label="{{# str }}overall_progress, local_sentientia_programs{{/ str }}">
-                <div class="progress-bar bg-primary" style="width: {{ overall_pct }}%;"></div>
-            </div>
+            {{! A native progress element: the value is data, and a class cannot carry it the way an inline width did. }}
+            <progress class="airpay-programs__progress mb-3" value="{{ overall_pct }}" max="100"
+                      aria-label="{{# str }}overall_progress, local_sentientia_programs{{/ str }}">{{ overall_pct }}%</progress>
 
             {{# has_description }}
             <div class="mb-3">{{{ description }}}</div>

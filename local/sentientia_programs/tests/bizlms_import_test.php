@@ -648,6 +648,75 @@ final class bizlms_import_test extends \advanced_testcase {
             $this->step($report, 'program.levelcriteria')['skipped_by_reason']);
     }
 
+    public function test_a_row_under_a_parent_the_import_chose_not_to_keep_is_not_reported_as_an_orphan(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        [$c1, $t] = [$this->w['c1'], self::T0];
+        $crit = fn(int $programid, int $levelid) => [
+            'programid' => $programid, 'levelid' => $levelid, 'coursetracking' => 'ALL', 'courseids' => '',
+            'usercreated' => $this->w['admin'], 'timecreated' => $t + 4,
+        ];
+
+        // Program 44 has no name and is skipped (no_name): its level, that level's course, its criteria rows and an
+        // enrolment all have a parent that exists in BizLMS and that the import did not keep.
+        $this->add_level(111, 44, 'Level of a nameless program');
+        $this->add_level_course(212, 44, 111, $c1);
+        $this->legacy('local_bcl_cmplt_criteria', 406, $crit(44, 111));
+        $this->legacy('local_bc_completion_criteria', 505, ['programid' => 44, 'leveltracking' => 'ALL',
+            'levelids' => '', 'usercreated' => $this->w['admin'], 'timecreated' => $t + 4]);
+        $this->add_enrolment(612, 44, $this->w['uA'], 0, 0, '', $t + 11, $t + 14);
+        // Level 102 of program 41 was skipped as empty; a criteria row of it is not an orphan either.
+        $this->legacy('local_bcl_cmplt_criteria', 407, $crit(41, 102));
+        // A criteria row that names program 41 for a level of program 42 shaped nothing: the level step reads its
+        // criteria by the level's own program.
+        $this->legacy('local_bcl_cmplt_criteria', 408, $crit(41, 110));
+
+        [$result, $report] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+
+        $expect = [
+            ['local_program_levels', 111, 'parent_skipped', 'no_name'],
+            ['local_program_level_courses', 212, 'parent_skipped', 'parent_skipped'],
+            ['local_bcl_cmplt_criteria', 406, 'parent_skipped', 'no_name'],
+            ['local_bc_completion_criteria', 505, 'parent_skipped', 'no_name'],
+            ['local_program_users', 612, 'parent_skipped', 'no_name'],
+            ['local_bcl_cmplt_criteria', 407, 'parent_skipped', 'empty_level'],
+            ['local_bcl_cmplt_criteria', 408, 'criteria_program_mismatch', null],
+        ];
+        foreach ($expect as [$table, $id, $reason, $detail]) {
+            $row = $this->map($table, $id);
+            $this->assertSame('skipped', $row->outcome, "{$table} {$id}");
+            $this->assertSame($reason, $row->reason, "{$table} {$id}");
+            $this->assertSame($detail, $row->detail, "{$table} {$id}");
+        }
+
+        // Parents BizLMS really deleted are still orphans.
+        $this->assertSame('orphan_program', $this->map('local_program_levels', 190)->reason);
+        $this->assertSame('orphan_level', $this->map('local_bcl_cmplt_criteria', 404)->reason);
+
+        $report = $report->to_array();
+        $this->assertEquals(['criteria_folded' => 2, 'dup_criteria' => 1, 'orphan_level' => 1, 'orphan_program' => 1,
+            'parent_skipped' => 2, 'criteria_program_mismatch' => 1],
+            $this->step($report, 'program.levelcriteria')['skipped_by_reason']);
+        $this->assertSame(1, $this->step($report, 'program.level')['skipped_by_reason']['parent_skipped']);
+        $this->assertSame(1, $this->step($report, 'program.user')['skipped_by_reason']['parent_skipped']);
+    }
+
+    public function test_a_program_with_only_a_shortname_is_named_by_it_and_the_report_says_so(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->contract_seed();
+        $this->add_program(46, ['name' => '  ', 'shortname' => ' ONLY-SHORT ']);
+        [$result, $report] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+
+        $this->assertSame('ONLY-SHORT', $DB->get_field('local_sentientia_programs', 'name', ['id' => 46]));
+        $this->assertSame(46, $this->target('local_program', 46), 'kept at its legacy id: certificates point at it');
+        $this->assertSame(1, $this->step($report->to_array(), 'program.program')['warnings']['name_from_shortname']);
+        // No name and no shortname is still the owner's call.
+        $this->assertSame('no_name', $this->map('local_program', 44)->reason);
+    }
+
     public function test_enrolments_carry_status_completion_dates_actor_and_source_times(): void {
         global $DB;
         [$result, $report] = $this->apply();
@@ -820,8 +889,11 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertFalse($DB->record_exists('local_sentientia_programs', ['id' => 45]));
         $this->assertSame('tenant_unresolved', $this->map('local_program', 43)->reason);
         $this->assertSame(2, $DB->count_records('local_sentientia_programs'));
-        // Their children cannot be placed either.
-        $this->assertSame('orphan_program', $this->map('local_bc_completion_criteria', 503)->reason);
+        // Their children cannot be placed either, and the report says the import chose not to keep the parent: BizLMS
+        // did not delete P5, so its criteria row is not an orphan.
+        $criteria = $this->map('local_bc_completion_criteria', 503);
+        $this->assertSame('parent_skipped', $criteria->reason);
+        $this->assertSame('tenant_unresolved', $criteria->detail, "the parent's own reason");
     }
 
     public function test_a_missing_owner_decision_blocks_the_feature_before_anything_is_written(): void {
@@ -940,7 +1012,10 @@ final class bizlms_import_test extends \advanced_testcase {
         $needsowner = array_map(static fn($reason) => $reason->code,
             array_filter($importer->reasons(), static fn($reason) => $reason->needsowner));
         $this->assertContains('empty_level', $codes);
-        $this->assertEqualsCanonicalizing(['no_name', 'tenant_unresolved', 'bk_rows_archived'], array_values($needsowner));
+        $this->assertContains('parent_skipped', $codes);
+        $this->assertContains('criteria_program_mismatch', $codes);
+        $this->assertEqualsCanonicalizing(['no_name', 'tenant_unresolved', 'bk_rows_archived'], array_values($needsowner),
+            'a child of a skipped program is not a second thing for the owner to decide');
     }
 
     public function test_every_decision_the_importer_declares_is_accepted_in_the_signed_file(): void {

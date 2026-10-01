@@ -73,17 +73,27 @@ class learner_view {
     /**
      * Add display values to a program_manager::get_user_program_state() result.
      *
-     * Empty levels (no course, so nothing to do) are dropped from the list; dates are formatted for the
-     * viewer's timezone.
+     * With the imported-history readers on (the default, and always on the flagged learner page) empty levels
+     * (no course, so nothing to do) are dropped from the list and a level's stored completion is shown as such,
+     * with its date. With them off (view.php while sentientia.programs.history.enabled is OFF) the list is what
+     * the page showed before the import: every level, and only the live course counter. Dates are formatted for
+     * the viewer's timezone.
      *
      * @param array $state
+     * @param bool $history True to hide empty levels and show stored completions.
      * @return array The same array, levels filtered and decorated.
      */
-    public static function decorate_state(array $state): array {
+    public static function decorate_state(array $state, bool $history = true): array {
         $levels = [];
         foreach ($state['levels'] as $lvl) {
-            if (!empty($lvl['empty'])) {
+            if ($history && !empty($lvl['empty'])) {
                 continue;
+            }
+            if (!$history) {
+                // Not shown without the flag: the stored completion and its date. `completed` itself stays what the
+                // engine says; only the imported-history wording is held back.
+                $lvl['stored'] = false;
+                $lvl['timecompleted'] = null;
             }
             $lvl['timecompleted_human'] = !empty($lvl['timecompleted'])
                 ? userdate((int) $lvl['timecompleted'], get_string('strftimedatefullshort', 'langconfig')) : '';

@@ -68,7 +68,8 @@ final class trainer_step extends base_step {
         $id = (int) $row->id;
         $program = $ctx->map->resolve('local_program', (int) $row->programid);
         if ($program === null) {
-            return outcome::skip($id, 'orphan_program');
+            [$reason, $detail] = $this->parent_gone($ctx, 'local_program', (int) $row->programid, 'orphan_program');
+            return outcome::skip($id, $reason, $detail);
         }
         if (!$ctx->lookups->user_exists((int) $row->trainerid)) {
             return outcome::skip($id, 'orphan_user');
@@ -77,6 +78,10 @@ final class trainer_step extends base_step {
         return outcome::insert($id, self::T_TRAINERS, (object) [
             'programid' => $program,
             'userid' => (int) $row->trainerid,
+            // The raw BizLMS evaluation id, not resolved through the map: the mapping doc says "evaluation map, later",
+            // and it is the same number because local_evaluations is a PRESERVE table (ADR-032 id strategy, the
+            // evaluation row keeps its legacy id). It needs the evaluation importer's map only if that rule changes;
+            // until then the value is right, and the table is expected to be empty.
             'feedbackid' => max(0, (int) $row->feedback_id),
             'feedback_score' => $ctx->text->fit((string) $row->feedback_score, 45, 'feedback_score'),
             'assignedby' => max(0, (int) $row->usercreated),
@@ -94,7 +99,8 @@ final class trainer_step extends base_step {
         $id = (int) $row->id;
         $program = $ctx->map->resolve('local_program', (int) $row->programid);
         if ($program === null) {
-            return outcome::skip($id, 'orphan_program');
+            [$reason, $detail] = $this->parent_gone($ctx, 'local_program', (int) $row->programid, 'orphan_program');
+            return outcome::skip($id, $reason, $detail);
         }
         $trainerrow = $ctx->map->resolve('local_program_trainers', (int) $row->bc_trainer_id);
         if ($trainerrow === null) {

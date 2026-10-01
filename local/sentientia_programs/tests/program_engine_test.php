@@ -562,6 +562,21 @@ final class program_engine_test extends \advanced_testcase {
         $this->assertFalse($state['levels'][0]['has_counter'], 'a stored completion shows its date, not a counter');
     }
 
+    public function test_decorating_the_state_without_the_history_flag_is_what_the_page_showed_before(): void {
+        $u = $this->getDataGenerator()->create_user();
+        $p = $this->program();
+        $l0 = $this->level($p, 0);
+        $this->level($p, 1);
+        $this->course_on($l0);
+        $this->stored($p, $l0, (int) $u->id, self::T0 + 50);
+        $state = learner_view::decorate_state(program_manager::get_user_program_state($p, (int) $u->id), false);
+        $this->assertCount(2, $state['levels'], 'the empty level stays in the list while the history flag is OFF');
+        $this->assertTrue($state['levels'][0]['completed'], 'the engine result is untouched');
+        $this->assertFalse($state['levels'][0]['stored'], 'the stored-completion wording needs the flag');
+        $this->assertSame('', $state['levels'][0]['timecompleted_human'], 'and so does its date');
+        $this->assertTrue($state['levels'][0]['has_counter'], 'the live course counter is what shows');
+    }
+
     public function test_the_pluginfile_callback_refuses_what_it_should(): void {
         global $CFG;
         require_once($CFG->dirroot . '/local/sentientia_programs/lib.php');

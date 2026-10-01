@@ -18,7 +18,9 @@ defined('MOODLE_INTERNAL') || die();
  * new id.
  *
  * What is copied is what a Sentientia reader shows or an engine uses (mapping doc R7); the audience CSVs, points,
- * capacity, approval flags, cached counters and the like stay in the legacy table, which is the archive.
+ * capacity, approval flags, cached counters and the like stay in the legacy table, which is the archive. The one
+ * use of the shortname is as the name of a program whose name is empty (warning name_from_shortname); a program with
+ * neither is skipped as no_name, which needs the owner.
  *
  * @package    local_sentientia_programs
  * @copyright  2026 Airpay Payment Services
@@ -81,9 +83,12 @@ final class program_step extends base_step {
         $id = (int) $row->id;
 
         $name = trim((string) $row->name);
+        $fromshortname = false;
         if ($name === '') {
-            // The shortname is required in BizLMS, so it is the only honest label left.
+            // The shortname is required in BizLMS, so it is the only honest label left. The map does not copy the
+            // shortname, so the substitution is reported (warning name_from_shortname), never silent.
             $name = trim((string) $row->shortname);
+            $fromshortname = $name !== '';
         }
         if ($name === '') {
             return outcome::skip($id, 'no_name');
@@ -134,6 +139,9 @@ final class program_step extends base_step {
         }
         if ((int) $row->timemodified <= 0) {
             $result->warn('derived_timestamp');
+        }
+        if ($fromshortname) {
+            $result->warn('name_from_shortname');
         }
         if ($path === null) {
             // Kept with no tenant path (decision tenant.unresolved.program = pathless): visible to cross-tenant

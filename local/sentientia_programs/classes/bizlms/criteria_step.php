@@ -18,11 +18,21 @@ defined('MOODLE_INTERNAL') || die();
  *
  * Neither has a unique key in BizLMS, and BizLMS read the first row it found, so the row with the lowest id is
  * the one that counted: it is recorded as folded into the program or level it shaped, and any other row for the
- * same program or level is merged into it. A row whose program or level the import did not keep is skipped.
+ * same program or level is merged into it. A row whose program or level the import did not keep is skipped, with
+ * orphan_program / orphan_level when BizLMS deleted the parent and parent_skipped when the import chose not to keep
+ * it (the detail is the parent's own reason). A level criteria row that names another program than its level
+ * belongs to shaped nothing (the level step reads criteria by the level's own program) and is skipped as
+ * criteria_program_mismatch, not recorded as folded.
  *
  * The step's own target table (the nominal one the registry checks) is not written: a fold writes nothing, it
  * records where the row went. The program table cannot be the nominal target of a MAP step, because the
  * program step owns it as a PRESERVE table.
+ *
+ * Known framework limit: a program criteria row folds into local_sentientia_programs at the PRESERVED legacy id.
+ * In a dry run that row is not written, and runner::settle() FOLD demands that a positive fold target exists in the
+ * database, so the dry run blocks with fold_target_missing. An apply is not affected (the program step has written
+ * the row by then). The importer cannot work around it without running a different transform in a dry run and in an
+ * apply; the runner has to accept a preserved id it has simulated (see the build report, framework needs).
  *
  * @package    local_sentientia_programs
  * @copyright  2026 Airpay Payment Services
@@ -64,14 +74,24 @@ final class criteria_step extends base_step {
         $first = reset($rows);
         $programtarget = $ctx->map->resolve('local_program', (int) $first->programid);
         if ($programtarget === null) {
-            return $this->skip_all($rows, 'orphan_program');
+            // BizLMS deleted the program (orphan_program) or the import chose not to keep it (parent_skipped).
+            [$reason, $detail] = $this->parent_gone($ctx, 'local_program', (int) $first->programid, 'orphan_program');
+            return $this->skip_all($rows, $reason, $detail);
         }
 
         if ($this->perlevel) {
             $target = $ctx->map->resolve('local_program_levels', (int) $first->levelid);
             if ($target === null) {
-                // The level was skipped as empty, or BizLMS deleted it and left the criteria behind.
-                return $this->skip_all($rows, 'orphan_level');
+                // BizLMS deleted the level and left the criteria behind (orphan_level), or the import chose not to
+                // keep it, e.g. an empty level (parent_skipped, detail empty_level).
+                [$reason, $detail] = $this->parent_gone($ctx, 'local_program_levels', (int) $first->levelid,
+                    'orphan_level');
+                return $this->skip_all($rows, $reason, $detail);
+            }
+            // The level step reads its criteria by (the level's own program, the level), as BizLMS did, so a row that
+            // names another program than the level's shaped nothing and is not recorded as folded into it.
+            if ($this->data($ctx)->level_program((int) $first->levelid) !== (int) $first->programid) {
+                return $this->skip_all($rows, 'criteria_program_mismatch');
             }
             $table = self::T_LEVELS;
         } else {

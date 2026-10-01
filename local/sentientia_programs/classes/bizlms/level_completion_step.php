@@ -79,10 +79,12 @@ final class level_completion_step extends base_step {
         $leveltarget = $ctx->map->resolve('local_program_levels', $legacylevel);
 
         $reason = null;
+        $detail = '';
         if ($programtarget === null) {
-            $reason = 'orphan_program';
+            // Deleted by BizLMS (orphan_program) or not kept by the import (parent_skipped).
+            [$reason, $detail] = $this->parent_gone($ctx, 'local_program', $legacyprogram, 'orphan_program');
         } else if ($leveltarget === null) {
-            $reason = 'orphan_level';
+            [$reason, $detail] = $this->parent_gone($ctx, 'local_program_levels', $legacylevel, 'orphan_level');
         } else if (!$ctx->lookups->user_exists($userid)) {
             $reason = 'orphan_user';
         } else if (!$this->enrolled($legacyprogram, $userid, $ctx)) {
@@ -90,7 +92,7 @@ final class level_completion_step extends base_step {
         }
         if ($reason !== null) {
             foreach ($done as $row) {
-                $out[] = outcome::skip((int) $row->id, $reason);
+                $out[] = outcome::skip((int) $row->id, $reason, $detail);
             }
             return $out;
         }

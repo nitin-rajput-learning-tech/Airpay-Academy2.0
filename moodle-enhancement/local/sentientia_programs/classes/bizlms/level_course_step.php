@@ -65,8 +65,10 @@ final class level_course_step extends base_step {
             } else if (!$ctx->lookups->course_exists($courseid)) {
                 $out[] = outcome::skip($id, 'orphan_course');
             } else if ($leveltarget === null) {
-                // The level was skipped (an empty level) or BizLMS deleted it.
-                $out[] = outcome::skip($id, 'orphan_level');
+                // BizLMS deleted the level (orphan_level), or the import chose not to keep it (its program was
+                // skipped, or the level was): parent_skipped, with the level's own reason as the detail.
+                [$reason, $detail] = $this->parent_gone($ctx, 'local_program_levels', $legacylevel, 'orphan_level');
+                $out[] = outcome::skip($id, $reason, $detail);
             } else if (isset($winners[$courseid])) {
                 $out[] = outcome::merge($id, $winners[$courseid], 'dup_level_course');
             } else {

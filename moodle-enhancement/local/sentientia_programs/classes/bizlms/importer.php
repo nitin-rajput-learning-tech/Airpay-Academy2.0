@@ -125,6 +125,10 @@ final class importer implements importer_contract {
             new reason('orphan_level', false, false),
             new reason('orphan_course', false, false),
             new reason('orphan_trainer', false, false),
+            // The parent is in the source and the import chose not to keep it (detail: the parent's own reason).
+            new reason('parent_skipped', false, false),
+            // A level criteria row whose programid is not the program its level belongs to: it shaped nothing.
+            new reason('criteria_program_mismatch', false, false),
             new reason('invalid_course', false, false),
             new reason('empty_level', false, false),
             new reason('deleted_user', false, false),

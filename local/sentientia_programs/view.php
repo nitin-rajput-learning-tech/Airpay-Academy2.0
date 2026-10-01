@@ -103,8 +103,11 @@ $user_enrolled = $DB->record_exists('local_sentientia_programs_users',
 if ($user_enrolled || !$can_update) {
     // For learners + enrolled users, build their progress view so the
     // levels tab can show locked / unlocked / completed state.
+    // ADR-032: with the history flag OFF the levels list is what it was before the import (every level, the live
+    // course counter); the stored-completion wording and the hiding of empty levels need the flag.
     $user_state = \local_sentientia_programs\learner_view::decorate_state(
-        \local_sentientia_programs\program_manager::get_user_program_state((int) $programid, (int) $USER->id));
+        \local_sentientia_programs\program_manager::get_user_program_state((int) $programid, (int) $USER->id),
+        $show_history);
 }
 
 $data = [

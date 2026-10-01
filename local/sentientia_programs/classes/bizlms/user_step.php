@@ -55,7 +55,8 @@ final class user_step extends base_step {
 
         $target = $ctx->map->resolve('local_program', $programid);
         if ($target === null) {
-            return $this->skip_all($rows, 'orphan_program');
+            [$reason, $detail] = $this->parent_gone($ctx, 'local_program', $programid, 'orphan_program');
+            return $this->skip_all($rows, $reason, $detail);
         }
         if (!$ctx->lookups->user_exists($userid)) {
             return $this->skip_all($rows, 'orphan_user');

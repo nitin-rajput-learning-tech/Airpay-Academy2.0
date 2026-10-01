@@ -52,8 +52,10 @@ final class level_step extends base_step {
         $programid = (int) $first->programid;
         $target = $ctx->map->resolve('local_program', $programid);
         if ($target === null) {
-            // BizLMS deleted a program and left its levels behind (PR externallib.php:132-148).
-            return $this->skip_all($rows, 'orphan_program');
+            // BizLMS deleted a program and left its levels behind (PR externallib.php:132-148), or the import chose
+            // not to keep the program (no name, no tenant): parent_skipped says which.
+            [$reason, $detail] = $this->parent_gone($ctx, 'local_program', $programid, 'orphan_program');
+            return $this->skip_all($rows, $reason, $detail);
         }
 
         $data = $this->data($ctx);

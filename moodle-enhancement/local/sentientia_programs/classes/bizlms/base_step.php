@@ -34,6 +34,9 @@ abstract class base_step extends step {
     /** Target: feedback on program trainers. */
     public const T_TRAINERFB = 'local_sentientia_programs_trainerfb';
 
+    /** Reason: the row's parent is in the source and the import chose not to keep it (its own reason is the detail). */
+    public const PARENT_SKIPPED = 'parent_skipped';
+
     /** @var legacy_data|null */
     private ?legacy_data $data = null;
 
@@ -52,6 +55,31 @@ abstract class base_step extends step {
             $this->datactx = $ctx;
         }
         return $this->data;
+    }
+
+    /**
+     * Why a row's parent has no target row.
+     *
+     * Two different things look alike from the child: BizLMS deleted the parent and left its children behind (the
+     * parent is not in the source, so the map has no entry for it: the orphan reason), or the import read the parent
+     * and deliberately did not keep it (an empty level, a program with no name, a program no tenant could be found
+     * for). The second is not an orphan, and reporting it as one sends the owner looking for deleted data that is
+     * not deleted. It is reported as parent_skipped, with the parent's own reason as the detail.
+     *
+     * @param context $ctx
+     * @param string $parenttable Legacy table of the parent, e.g. local_program_levels.
+     * @param int $parentid Legacy id of the parent.
+     * @param string $orphan The reason to use when the parent is not in the map at all.
+     * @return array{0: string, 1: string} [reason, detail]
+     */
+    protected function parent_gone(context $ctx, string $parenttable, int $parentid, string $orphan): array {
+        $entry = $ctx->map->entry($parenttable, $parentid);
+        if ($entry === null) {
+            return [$orphan, ''];
+        }
+        $why = (string) ($entry['reason'] ?? '');
+        // A detail is codes only (outcome::skip refuses anything else).
+        return [self::PARENT_SKIPPED, preg_match('/^[a-z][a-z0-9_]{0,63}$/', $why) ? $why : ''];
     }
 
     /**

@@ -222,3 +222,28 @@ checks after the import, `@group bizlms_import`, `tenant_isolation`), `program_e
 
 **Open (not built here):** certificate re-link (`certificateid`, gap G1); orphaned `enrol = 'program'` instances (gap G6);
 production counts for all 12 tables (I-20); the non-empty `_bk` tables (archived, needs Nitin's written acceptance).
+
+**Review round 1 (2026-10-01):**
+- Reason codes: a row whose parent the import read and chose not to keep (a program skipped as `no_name` or
+  `tenant_unresolved`, a level skipped as `empty_level`) is now `parent_skipped` with the parent's own reason as the
+  detail, in all six child steps. `orphan_program` / `orphan_level` now mean BizLMS deleted the parent. Neither new code
+  needs the owner. A level criteria row that names another program than its level belongs to is `criteria_program_mismatch`
+  (it shaped nothing, the level step reads criteria by the level's own program), no longer "folded".
+- A program with an empty name takes its shortname, and the report says so (warning `name_from_shortname`).
+- `learner_view::decorate_state($state, $history)`: `view.php` passes the history flag. With it OFF the levels list is what
+  it was before the import (every level, the live course counter); empty levels are hidden and a stored completion is shown
+  with its date only with the flag ON.
+- Templates: the logo height and the overall progress bar of `myprograms.mustache` moved to `styles.css` classes
+  (`airpay-programs__logo`, a native `<progress>`). Needs the visual review below.
+- Privacy guard: `trainerid` counts as a user column for `local_sentientia_programs` only
+  (`privacy_coverage_test::COMPONENT_USER_COLUMNS`). It is not global because classroom has `trainerid` on two tables
+  its provider does not declare; move it into `USER_COLUMNS` once classroom does.
+- `trainers.feedbackid` is the raw BizLMS evaluation id: right while `local_evaluations` is PRESERVE, table expected empty.
+- Deviation to record in the mapping doc: code fix 12 is "`delete_level` refuses when a stored completion exists" (decision
+  `framework.protect_imported_history` = block), not "delete_level and unassign clean up `_lvlcomp`".
+
+**Open after round 1:** (1) FRAMEWORK: a program criteria row folds into `local_sentientia_programs` at the preserved id,
+and `runner::settle()` FOLD demands a positive fold target to exist, which it does not in a dry run, so a dry run with such
+a row blocks `fold_target_missing` (see `criteria_step` docblock; April has 0 such rows). (2) Visual evidence for
+`myprograms.php` and the `view.php` levels tab, desktop + mobile, flag ON and OFF, before the two flags are flipped.
+(3) The tests use `org_stub_importer`; switch to the real org importer after the merge.
