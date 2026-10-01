@@ -578,7 +578,7 @@ dead branch is removed; behaviour is otherwise identical. Test: `tests/capabilit
 Built 2026-10-01 on branch `claude/bizlms-import-enrolments`. CUTOVER-BLOCKING and decided: `gap.orphan_enrol_instances` =
 `convert_to_manual` (signed, status accepted).
 
-**What shipped (version 2026100101, release 1.12.0, both trees byte-identical):** the `enrolments` importer. Every
+**What shipped (version 2026100102, release 1.12.0, both trees byte-identical):** the `enrolments` importer. Every
 `user_enrolments` row on a BizLMS enrol instance (`enrol` = `classroom`, `program`, `learningplan`) becomes a MANUAL
 enrolment in the same course with the same status, start and end. It never deletes or changes a legacy instance or
 enrolment, fires no event, calls no enrol API and touches no role assignment.
@@ -589,7 +589,7 @@ enrolment, fires no event, calls no enrol API and touches no role assignment.
 | Importer (sources, reasons, preflight, verify) | `classes/bizlms/enrolments_importer.php` |
 | Step 1: an enabled manual instance per course | `classes/bizlms/enrolments_instances_step.php` |
 | Step 2: one manual enrolment per learner and course | `classes/bizlms/enrolments_step.php` |
-| Schema | ledger `local_sentientia_courses_enrolmove` in `db/install.xml` + `db/upgrade.php` step 2026100101 |
+| Schema | ledger `local_sentientia_courses_enrolmove` in `db/install.xml` + `db/upgrade.php` step 2026100102 |
 | Tests | `tests/bizlms_import_enrolments_test.php`, `tests/fixtures/bizlms/enrol_methods.install.xml` |
 
 `depends()` is empty (no tenant column, no other feature's table). `atomic()` is true. No flag (nothing user-visible), no
@@ -672,7 +672,77 @@ scan. Seed: 12 legacy rows, 5 converted, 2 folded, 5 skipped. Also run without P
 `php -l`, tree drift, lang parity, path boundary, fixture copies, and the read-only April dry run above.
 
 **Deploy:** the upgrade step creates the ledger on Notifications. `version.php` now requires `local_sentientia_platform` 2026093001 (the framework).
-The registry refuses the importer until the installed plugin is at 2026100101, so re-run the PHPUnit init after merging. Shared files with the
+The registry refuses the importer until the installed plugin is at 2026100102, so re-run the PHPUnit init after merging. Shared files with the
 `course_tags` and `course_lookups` importers (same plugin): `version.php`, `db/install.xml`, `db/upgrade.php`, `db/bizlms_import.php`, this card.
-Keep both registry entries and take the highest version. This test file has its own name (`bizlms_import_enrolments_test.php`) so the three
+Keep all registry entries; the versions are distinct on purpose (course_tags 2026093002, course_lookups 2026100101, enrolments 2026100102): take the highest in `version.php` and keep every `if ($oldversion < N)` block in `db/upgrade.php` in ascending order (a second block with the same savepoint throws `downgrade_exception`). This test file has its own name (`bizlms_import_enrolments_test.php`) so the three
 features in this plugin do not collide on `bizlms_import_test.php`.
+
+
+---
+
+## 2026-10-01 - enrolments importer: review fixes (same branch, `claude/bizlms-import-enrolments`)
+
+Review verdict was fix-then-ship. Version is now **2026100102** (release 1.12.0 unchanged), both trees byte-identical.
+
+**Closed.**
+
+- **Version collision (must-fix).** `course_lookups` already owns 2026100101 (its own upgrade block, savepoint and `REQUIRES_VERSION`), and
+  two blocks with the same savepoint make `upgrade_plugin_savepoint()` throw `downgrade_exception` on the second. This importer moved to
+  2026100102 in `version.php`, `db/upgrade.php` (block and savepoint) and `enrolments_importer::REQUIRES_VERSION`. A test
+  (`test_the_required_version_has_exactly_one_upgrade_savepoint_and_is_not_above_the_plugin`) pins one block per required version.
+  Merge order in `db/upgrade.php`: course_tags 2026093002, course_lookups 2026100101, enrolments 2026100102. The PHPUnit re-init must follow
+  the final number.
+- **Cron after cutover.** Preflight now BLOCKS (`manual_expiredaction_not_keep:<action>:enrolments_with_an_end=<n>`) when
+  `enrol_manual/expiredaction` is not KEEP and any BizLMS enrolment has an end: the first `enrol_manual` sync would remove the BizLMS role
+  assignments (component empty) of every converted enrolment that has already ended, and fire events. It also WARNS
+  (`reused_manual_instances_with_expiry_notification:<n>`) about enabled manual instances in the affected courses with `expirynotify > 0`.
+  April is safe (KEEP, 0 enrolments with an end, 0 instances notifying).
+- **Cross-tenant pairs.** Preflight counts learner-course pairs whose user root differs from the course root (ADR-031) and warns
+  (`legacy_enrolments_across_tenants:<n>`, histogram `user root->course root`). It runs only when `open_path` exists on both `user` and `course`.
+  April: 40 pairs (24 from /177, 16 from /77, all into /1 courses through learning plans) for Nitin to confirm before cutover.
+- **Shorter manual end.** A manual enrolment that gives access now but ends before the legacy one (or the legacy one has no end) is no longer
+  folded into: the row is skipped as the new needs-owner reason `manual_enrolment_ends_sooner` (parity exits 2 until
+  `enrolments:manual_enrolment_ends_sooner` is in `accepted_reasons`). Preflight counts the pairs (`pairs_where_the_manual_enrolment_ends_sooner`)
+  and verify's access check now also requires the manual end to be no earlier than the legacy end. April has none.
+- **verify after go-live.** The `source = mapped` identity of both units is gated under `!bizlms_production_open` (deleting an account removes its
+  enrolments and deleting a course its instances, so the source shrinks for good). The `unmapped_source_rows` check stays at all times.
+- **Manual plugin check order.** `manual_enrolment_plugin_disabled` is raised only after the zero-enrolments early return, so a database with
+  nothing to convert is not blocked by a setting it does not use.
+- **Several enabled manual instances.** Preflight counts courses with more than one enabled manual instance
+  (`courses_with_several_enabled_manual_instances`, warning). The import puts the learner on the lowest-id one, so a learner already on another
+  would get a second manual enrolment. April: none (one per course).
+- **Unsigned rules recorded.** `user_deleted` is now a needs-owner reason (mapping rule R11 imports deleted users' rows as history; an
+  enrolment of a deleted account is not history, core removes them on delete, so the skip is the owner's call; parity exits 2 until
+  `enrolments:user_deleted` is accepted). The disabled-instance status rule and the disabled-only-manual-instance rule are reported by
+  preflight warnings and need a signature (see below). The class comment lists all four. `core_writes()` for `enrol` now names the disabled-only case.
+
+**Decisions needed (the lead adds them to the signed decisions file; none of them changes code on its own).**
+
+1. `accepted_reasons`: `enrolments:user_deleted`, `enrolments:manual_enrolment_inactive`, `enrolments:manual_enrolment_ends_sooner` (each only if
+   Nitin agrees with the skip; none occurs on April).
+2. A decision key for the rule "an active row on a DISABLED BizLMS instance converts as suspended" (proposed value: `convert_as_suspended`).
+3. A decision key for "a course whose only manual instance is disabled gets a new enabled one beside it" (proposed value: `add_enabled_beside`).
+4. **What happens to the BizLMS instances after verify.** They stay enabled and still grant access: `enrol_get_enrolment_end()` and `is_enrolled()` do
+   not filter by plugin, and Sentientia's unenrol flows (`unenrol_single`, `bulk_unenrol`) remove only the manual row, after which core keeps the
+   BizLMS role and the legacy row's access. A converted learner an administrator "unenrols" keeps access through an instance the UI no longer shows.
+   Proposed: after verify, DISABLE (status 1, never delete) the BizLMS instances with an enrol `update` (already on CORE_WRITES_ALLOWED), settle the
+   `manual_enrolment_inactive` learners first, and adjust verify's access check to match. Not built: it is a decision, not a fix.
+
+**Not done here (reported to the lead).**
+
+- A ledger row for every legacy row, folded ones included. Today the ledger is one row per CONVERTED enrolment, and the 9 097 folded rows on April
+  rely on the legacy row alone. Uninstalling the missing BizLMS enrol plugins from Plugins overview deletes those rows and instances (core enrol
+  `plugininfo` uninstall_cleanup): the cutover runbook must say DO NOT uninstall `enrol_classroom`, `enrol_program`, `enrol_learningplan` (leave the
+  rows, they are inert), or the ledger must widen first. Widening it changes the ledger contract and every ledger-count expectation in the tests.
+- Readers that count `COUNT(ue.id)` count each converted learner twice (the legacy row stays and the manual row has the same `timestart`):
+  `sentientia_analytics` `analytics_manager.php:61-72`, `sentientia_catalog` `catalog_manager.php:323` and `commerce.php:181,243`,
+  `sentientia_pages` `homepage.php:66,79` and `onboarding.php:165`, `sentientia_integrations` `ai_recommender.php:233`. Other plugins, so a follow-up there:
+  `COUNT(DISTINCT ue.userid)` or exclude instances whose enrol plugin is not on disk.
+- `existing()` still looks only at the chosen instance: only the preflight count above, no step change.
+
+**Tests (written, NOT run).** New: manual end sooner (five cases, no write to the manual rows, verify clean), its preflight count, several enabled
+manual instances, expiredaction block and its clearing (and a blocked run writes nothing), expiry-notice warning, nothing-to-convert with manual off,
+cross-tenant counting (adds `open_path` to `user` and `course` for the test and drops it again), verify after go-live with a shrunk source, verify
+catching a manual end shorter than the legacy end, the version/savepoint pin. Changed: `user_deleted` is unproven (needs-owner) in the exit-2 and acceptance tests;
+the registry test pins the three needs-owner reasons. Also run without PHPUnit: `php -l`, static scan (0 findings on the three classes), tree drift,
+lang parity, path boundary, fixture copies.

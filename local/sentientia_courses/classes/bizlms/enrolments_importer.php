@@ -14,6 +14,7 @@ use local_sentientia_platform\bizlms\legacymap;
 use local_sentientia_platform\bizlms\preflight;
 use local_sentientia_platform\bizlms\reason;
 use local_sentientia_platform\bizlms\source_spec;
+use local_sentientia_platform\bizlms\tenant_resolver;
 
 /**
  * ADR-032 importer for gap G6, the orphaned BizLMS enrol instances (mapping doc, section 21; decision
@@ -34,6 +35,13 @@ use local_sentientia_platform\bizlms\source_spec;
  * (BizLMS wrote its role assignments with component empty and itemid 0, roles_protected() false, so they do
  * not belong to the instance either): preflight counts what the restored database holds and warns about the
  * learners and components that would surprise.
+ *
+ * Rules that are this importer's own and that no signed decision spells out (none occurs in the April 2026 data, and
+ * each is counted or reported so Stage B does not decide it implicitly): a deleted account's row is skipped
+ * (user_deleted, needs the owner, against mapping rule R11); an active row on a DISABLED BizLMS instance is converted as
+ * suspended (warning enrolments_on_disabled_bizlms_instances); a course whose only manual instance is disabled gets a
+ * new enabled one beside it (warning courses_with_only_a_disabled_manual_instance); a manual enrolment that ends before
+ * the legacy one is not folded into (manual_enrolment_ends_sooner, needs the owner).
  *
  * How this fits the frozen framework (the "framework needs" are in the 2026-09-30 state card note):
  *
@@ -61,7 +69,7 @@ final class enrolments_importer implements importer {
     public const FEATURE = 'enrolments';
 
     /** Plugin version that carries the ledger table (version.php, db/upgrade.php). */
-    public const REQUIRES_VERSION = 2026100101;
+    public const REQUIRES_VERSION = 2026100102;
 
     /** The owner decision this importer carries out. */
     public const DECISION = 'gap.orphan_enrol_instances';
@@ -128,7 +136,8 @@ final class enrolments_importer implements importer {
 
     public function core_writes(): array {
         return [
-            'enrol' => 'gap.orphan_enrol_instances (G6): a new enabled manual instance for a course that has none; '
+            'enrol' => 'gap.orphan_enrol_instances (G6): a new enabled manual instance for a course that has none, a '
+                . 'course whose only manual instance is disabled included (the disabled one stays beside it); '
                 . 'insert only, an existing instance is never changed',
             'user_enrolments' => 'gap.orphan_enrol_instances (G6): one manual enrolment per orphaned BizLMS enrolment; '
                 . 'insert only, with the legacy status, start and end',
@@ -145,9 +154,13 @@ final class enrolments_importer implements importer {
             new reason('manual_instance_exists', false, false),
             // The course the BizLMS instance belongs to is gone: there is nothing to enrol into.
             new reason('course_missing', false, false),
-            // The learner row is gone, or the account is deleted: no access to carry over.
+            // The learner row is gone: no access to carry over.
             new reason('user_missing', false, false),
-            new reason('user_deleted', false, false),
+            // The account is deleted. Mapping rule R11 imports deleted users' rows as history, but an enrolment of a
+            // deleted account is not history: Moodle removes all of them when it deletes an account, so a converted one
+            // would be a row core never leaves behind. The skip is therefore the owner's call and not an unsigned
+            // default: parity exits 2 until `enrolments:user_deleted` is in accepted_reasons. (None on the April dump.)
+            new reason('user_deleted', false, true),
             // The BizLMS instance row is gone between the source scan and the transform. Cannot happen under the
             // source filter; kept so an impossible row is recorded, not guessed.
             new reason('instance_missing', false, false),
@@ -159,6 +172,11 @@ final class enrolments_importer implements importer {
             // while the legacy one does: converting would not keep the access, and changing the manual enrolment is
             // an administrator's decision, not the import's.
             new reason('manual_enrolment_inactive', false, true),
+            // The learner has a manual enrolment that gives access today but ENDS BEFORE the legacy one does (or the
+            // legacy one has no end): folding into it would shorten the access the learner has now, once the legacy
+            // instance is gone. Same call as above: the owner decides, the import does not lengthen an administrator's
+            // manual enrolment and does not fold into one that cuts access short.
+            new reason('manual_enrolment_ends_sooner', false, true),
         ];
     }
 
@@ -237,12 +255,6 @@ final class enrolments_importer implements importer {
             return $pf;
         }
 
-        // A manual enrolment on a site whose manual enrol plugin is off grants nothing: the learners would
-        // lose exactly what this import exists to keep.
-        if (!array_key_exists(self::MANUAL, enrol_get_plugins(true))) {
-            $pf->block('manual_enrolment_plugin_disabled');
-        }
-
         [$in, $mp] = self::methods_in('blmp');
         $rows = $DB->get_records_sql(
             "SELECT MIN(e.id) AS k, e.enrol AS v, COUNT(1) AS n FROM {enrol} e WHERE e.enrol IN ({$in}) GROUP BY e.enrol",
@@ -258,7 +270,15 @@ final class enrolments_importer implements importer {
         $total = $this->count("SELECT COUNT(1) FROM {user_enrolments} t WHERE {$filter}", $fp);
         $pf->count('bizlms_enrolments', $total);
         if ($total === 0) {
+            // Nothing to convert, so whether manual enrolment is switched on is no concern of this run: a database
+            // without BizLMS enrolments must not block an --all run over a setting it does not use.
             return $pf;
+        }
+
+        // A manual enrolment on a site whose manual enrol plugin is off grants nothing: the learners would
+        // lose exactly what this import exists to keep.
+        if (!array_key_exists(self::MANUAL, enrol_get_plugins(true))) {
+            $pf->block('manual_enrolment_plugin_disabled');
         }
         if ($total > self::DEFAULT_ATOMIC_THRESHOLD) {
             $pf->warn('source_above_the_default_atomic_threshold:' . $total);
@@ -299,6 +319,9 @@ final class enrolments_importer implements importer {
 
         $this->preflight_instances($pf);
         $this->preflight_roles($pf);
+        $this->preflight_expiry($pf, $filter, $fp);
+        $this->preflight_tenants($pf);
+        $this->preflight_ends($pf);
 
         [$in3, $p3] = self::methods_in('blmu');
         $disabled = $this->count(
@@ -321,12 +344,16 @@ final class enrolments_importer implements importer {
 
         // Accounting for the two derived units, which the generic check leaves to the importer: every course with
         // a BizLMS instance that has enrolments, and every BizLMS enrolment, has exactly one primary map row.
+        // "Exactly one" is two statements. No source row without a map row holds at any time. Source = mapped holds
+        // only until go-live: after it delete_user() removes a learner's enrolments (enrol_user_delete) and deleting a
+        // course removes its instances, so the BizLMS source shrinks while the map keeps its rows. That equality is
+        // gated like the later checks, and the unmapped-row check is not.
         [$ifilter, $ip] = self::instance_filter('e');
         $courses = "SELECT e.courseid FROM {enrol} e WHERE {$ifilter} GROUP BY e.courseid";
         $source = $this->count("SELECT COUNT(1) FROM ({$courses}) c", $ip);
         $mapped = $DB->count_records(legacymap::TABLE, [
             'feature' => self::FEATURE, 'sourcetable' => self::UNIT_INSTANCES, 'subkey' => '']);
-        if ($source !== $mapped) {
+        if (!$open && $source !== $mapped) {
             $failures[] = 'accounting:' . self::UNIT_INSTANCES . ": source={$source} mapped={$mapped}";
         }
         $unmapped = $this->count(
@@ -341,7 +368,7 @@ final class enrolments_importer implements importer {
         $source = $this->count("SELECT COUNT(1) FROM {user_enrolments} t WHERE {$efilter}", $ep);
         $mapped = $DB->count_records(legacymap::TABLE, [
             'feature' => self::FEATURE, 'sourcetable' => self::UNIT_ENROLMENTS, 'subkey' => '']);
-        if ($source !== $mapped) {
+        if (!$open && $source !== $mapped) {
             $failures[] = 'accounting:' . self::UNIT_ENROLMENTS . ": source={$source} mapped={$mapped}";
         }
         $unmapped = $this->count(
@@ -408,7 +435,9 @@ final class enrolments_importer implements importer {
         }
 
         // The point of the whole import: a learner whose legacy enrolment gives access now (active, enabled instance,
-        // inside its dates) has a manual enrolment that gives access now too.
+        // inside its dates) has a manual enrolment that gives access now too, and that does not end before the legacy
+        // one does (no end, or an end at or after it). A manual enrolment that ends sooner is never folded into: the
+        // step skips it as manual_enrolment_ends_sooner.
         $lost = $this->count(
             "SELECT COUNT(1) FROM {$map} m
                JOIN {user_enrolments} lue ON lue.id = m.sourceid
@@ -419,7 +448,8 @@ final class enrolments_importer implements importer {
                 AND m.outcome IN ('imported', 'folded')
                 AND lue.status = 0 AND le.status = 0 AND lue.timestart <= :blmn1 AND (lue.timeend = 0 OR lue.timeend > :blmn2)
                 AND NOT (nue.status = 0 AND ne.status = 0 AND nue.timestart <= :blmn3
-                         AND (nue.timeend = 0 OR nue.timeend > :blmn4))",
+                         AND (nue.timeend = 0 OR nue.timeend > :blmn4)
+                         AND (nue.timeend = 0 OR (lue.timeend > 0 AND nue.timeend >= lue.timeend)))",
             $base + ['blmn1' => $now, 'blmn2' => $now, 'blmn3' => $now, 'blmn4' => $now]);
         if ($lost > 0) {
             $failures[] = 'learners_whose_access_was_not_kept:' . $lost;
@@ -466,6 +496,145 @@ final class enrolments_importer implements importer {
             // A disabled manual instance means an administrator switched manual enrolment off for the course. It is
             // left as it is and a new enabled instance is added beside it, because the learners must keep access.
             $pf->warn('courses_with_only_a_disabled_manual_instance:' . $onlydisabled);
+        }
+
+        // The import puts a learner on ONE enabled manual instance of the course (the lowest id). A learner who is
+        // already enrolled on another enabled manual instance of the same course would get a second manual
+        // enrolment in that course.
+        $several = $this->count(
+            "SELECT COUNT(1) FROM ({$courses}) c WHERE (SELECT COUNT(1) FROM {enrol} m
+                WHERE m.courseid = c.courseid AND m.enrol = :blmx AND m.status = 0) > 1",
+            $params + $man);
+        $pf->count('courses_with_several_enabled_manual_instances', $several);
+        if ($several > 0) {
+            $pf->warn('courses_with_several_enabled_manual_instances:' . $several);
+        }
+    }
+
+    /**
+     * What Moodle's own manual enrolment cron would do to the converted enrolments that have an end.
+     *
+     * enrol_manual's sync (enrol/manual/lib.php, sync_enrolments) acts on every manual enrolment with 0 < timeend < now.
+     * With expiredaction UNENROL or SUSPENDNOROLES it first removes the learner's role assignments in the course whose
+     * component is empty, which is exactly how BizLMS wrote its roles, then unenrols or suspends; every action fires
+     * events. A converted enrolment that has already ended would lose its role on the first cron after cutover. KEEP does
+     * nothing, and it is what the April 2026 production data has. Blocked, not warned, because the damage is silent and
+     * the cure is one admin setting.
+     *
+     * @param preflight $pf
+     * @param string $filter The source filter of the BizLMS enrolments.
+     * @param array $fp Its parameters.
+     * @return void
+     */
+    private function preflight_expiry(preflight $pf, string $filter, array $fp): void {
+        $ending = $this->count("SELECT COUNT(1) FROM {user_enrolments} t WHERE {$filter} AND t.timeend > 0", $fp);
+        $pf->count('bizlms_enrolments_with_an_end', $ending);
+        if ($ending === 0) {
+            return;
+        }
+
+        // An unset value is the plugin's default, KEEP.
+        $action = get_config('enrol_manual', 'expiredaction');
+        $action = ($action === false || $action === null || $action === '') ? ENROL_EXT_REMOVED_KEEP : (int) $action;
+        $pf->histogram('enrol_manual.expiredaction[bizlms enrolments with an end]', [(string) $action => $ending]);
+        if ($action !== ENROL_EXT_REMOVED_KEEP) {
+            $pf->block("manual_expiredaction_not_keep:{$action}:enrolments_with_an_end={$ending}");
+        }
+
+        // An enabled manual instance the converted learners are put on that sends expiry notices will message them
+        // (and their enrollers) as their ends approach. The import sends nothing; the cron would.
+        [$in, $params] = self::methods_in('blme');
+        $notify = $this->count(
+            "SELECT COUNT(1) FROM {enrol} m WHERE m.enrol = :blmx AND m.status = 0 AND m.expirynotify > 0
+                AND m.courseid IN (SELECT bi.courseid FROM {enrol} bi WHERE bi.enrol IN ({$in})
+                                      AND EXISTS (SELECT 1 FROM {user_enrolments} bue WHERE bue.enrolid = bi.id))",
+            $params + ['blmx' => self::MANUAL]);
+        if ($notify > 0) {
+            $pf->warn('reused_manual_instances_with_expiry_notification:' . $notify);
+        }
+    }
+
+    /**
+     * Learner-course pairs where the learner sits in a different tenant than the course (ADR-031).
+     *
+     * BizLMS let a learning plan put a learner into a course of another tenant. The conversion makes that a manual
+     * enrolment, which the tenant rules of the new platform see: the owner confirms the pairs before cutover. Skipped
+     * on a site without open_path on both tables (a vanilla Moodle has no tenants to compare).
+     *
+     * @param preflight $pf
+     * @return void
+     */
+    private function preflight_tenants(preflight $pf): void {
+        global $DB;
+        if (!isset($DB->get_columns('user')['open_path']) || !isset($DB->get_columns('course')['open_path'])) {
+            return;
+        }
+        // One row per distinct (user path, course path) with the number of learner-course pairs behind it: the distinct
+        // paths are few, so the set stays small however many pairs there are.
+        [$in, $params] = self::methods_in('blmk');
+        $rows = $DB->get_records_sql(
+            "SELECT MIN(x.pairkey) AS id, x.upath AS upath, x.cpath AS cpath, COUNT(1) AS n
+               FROM (SELECT MIN(ue.id) AS pairkey, u.open_path AS upath, c.open_path AS cpath
+                       FROM {user_enrolments} ue
+                       JOIN {enrol} e ON e.id = ue.enrolid
+                       JOIN {user} u ON u.id = ue.userid AND u.deleted = 0
+                       JOIN {course} c ON c.id = e.courseid
+                      WHERE e.enrol IN ({$in})
+                   GROUP BY e.courseid, ue.userid, u.open_path, c.open_path) x
+           GROUP BY x.upath, x.cpath",
+            $params);
+        $across = 0;
+        $roots = [];
+        foreach ($rows as $row) {
+            $user = tenant_resolver::normalise($row->upath === null ? null : (string) $row->upath);
+            $course = tenant_resolver::normalise($row->cpath === null ? null : (string) $row->cpath);
+            if ($user === null || $course === null) {
+                continue;
+            }
+            $userroot = explode('/', ltrim($user, '/'))[0];
+            $courseroot = explode('/', ltrim($course, '/'))[0];
+            if ($userroot !== $courseroot) {
+                $across += (int) $row->n;
+                $key = $userroot . '->' . $courseroot;
+                $roots[$key] = ($roots[$key] ?? 0) + (int) $row->n;
+            }
+        }
+        $pf->count('pairs_across_tenants', $across);
+        if ($across > 0) {
+            ksort($roots);
+            $pf->histogram('pairs_across_tenants[user root->course root]', $roots);
+            $pf->warn('legacy_enrolments_across_tenants:' . $across);
+        }
+    }
+
+    /**
+     * Learner-course pairs whose existing manual enrolment gives access today but ends before the legacy one does.
+     *
+     * The step does not fold them: it skips them as manual_enrolment_ends_sooner for the owner (see the reason). The
+     * count is every pair where a legacy enrolment gives access now, the learner has an enabled manual enrolment in the
+     * course that gives access now and has an end, and the legacy one has no end or a later one.
+     *
+     * @param preflight $pf
+     * @return void
+     */
+    private function preflight_ends(preflight $pf): void {
+        [$in, $params] = self::methods_in('blmn');
+        $now = time();
+        $sooner = $this->count(
+            "SELECT COUNT(1) FROM (
+                SELECT e.courseid, ue.userid FROM {user_enrolments} ue JOIN {enrol} e ON e.id = ue.enrolid
+                 WHERE e.enrol IN ({$in}) AND e.status = 0 AND ue.status = 0 AND ue.timestart <= :blmtime1
+                   AND (ue.timeend = 0 OR ue.timeend > :blmtime2)
+                   AND EXISTS (SELECT 1 FROM {user_enrolments} mu JOIN {enrol} me ON me.id = mu.enrolid
+                                WHERE me.courseid = e.courseid AND me.enrol = :blmx AND me.status = 0
+                                  AND mu.userid = ue.userid AND mu.status = 0 AND mu.timestart <= :blmtime3
+                                  AND mu.timeend > :blmtime4 AND (ue.timeend = 0 OR ue.timeend > mu.timeend))
+              GROUP BY e.courseid, ue.userid) p",
+            $params + ['blmtime1' => $now, 'blmtime2' => $now, 'blmtime3' => $now, 'blmtime4' => $now, 'blmx' => self::MANUAL]);
+        $pf->count('pairs_where_the_manual_enrolment_ends_sooner', $sooner);
+        if ($sooner > 0) {
+            // Skipped and unproven until the owner accepts the reason: converting would shorten the access.
+            $pf->warn('manual_enrolments_ending_before_the_legacy_one:' . $sooner);
         }
     }
 

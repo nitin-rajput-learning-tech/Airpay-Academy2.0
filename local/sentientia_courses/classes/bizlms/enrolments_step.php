@@ -28,7 +28,10 @@ use local_sentientia_platform\bizlms\step;
  *  - the learner already has an enrolment on the course's enabled manual instance: folded into it (already_manual),
  *    nothing is written. Except when the legacy enrolment gives access today and that manual one does not (suspended,
  *    or outside its dates): skipped as manual_enrolment_inactive, which needs the owner. Changing an administrator's
- *    manual enrolment is not the import's decision, and converting would not keep the access;
+ *    manual enrolment is not the import's decision, and converting would not keep the access. The same when the manual
+ *    enrolment gives access today but ENDS BEFORE the legacy one does (the legacy one has no end, or a later one):
+ *    skipped as manual_enrolment_ends_sooner. Folding there would silently shorten the access once the legacy
+ *    instance is gone, and lengthening a manual enrolment is an administrator's decision too;
  *  - otherwise a new {user_enrolments} row on that instance (a reviewed core INSERT) with the legacy status, start,
  *    end, modifier and timestamps, plus one ledger row naming the original method and instance. The values come from
  *    the best row of the pair: one that gives access now, then an active one, then the latest end (none is the
@@ -187,6 +190,9 @@ final class enrolments_step extends step {
         if ($existing !== null) {
             if ($this->grants_now($best) && !$this->grants_now($existing)) {
                 return [outcome::skip($id, 'manual_enrolment_inactive')];
+            }
+            if ($this->grants_now($best) && $this->ends_sooner($existing, $best)) {
+                return [outcome::skip($id, 'manual_enrolment_ends_sooner')];
             }
             return [outcome::fold($id, 'user_enrolments', (int) $existing->id, 'already_manual')];
         }
@@ -386,6 +392,24 @@ final class enrolments_step extends step {
         $now = $this->now ??= time();
         $end = (int) $ue->timeend;
         return (int) $ue->status === 0 && (int) $ue->timestart <= $now && ($end === 0 || $end > $now);
+    }
+
+    /**
+     * Does the manual enrolment end before the one that would be carried over? A manual enrolment with no end never
+     * does. Only meaningful when both give access now: the caller has checked that the carried-over one does and that
+     * the manual one is not inactive.
+     *
+     * @param \stdClass $manual The learner's existing manual enrolment.
+     * @param \stdClass $best The enrolment that would be carried over (status already effective).
+     * @return bool
+     */
+    private function ends_sooner(\stdClass $manual, \stdClass $best): bool {
+        $manualend = (int) $manual->timeend;
+        if ($manualend === 0) {
+            return false;
+        }
+        $bestend = (int) $best->timeend;
+        return $bestend === 0 || $bestend > $manualend;
     }
 
     /**

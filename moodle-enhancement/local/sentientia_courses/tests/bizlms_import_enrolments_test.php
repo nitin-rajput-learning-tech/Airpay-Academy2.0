@@ -43,7 +43,7 @@ use local_sentientia_platform\tests\bizlms\static_scanner;
  *   7004 pr1 c      c is already enrolled manually and active: folded (already_manual)
  *   7005 cl1 d      suspended: converted, suspended, on the instance created for course 3
  *   7006 lp3 e      ended in the past: converted with the same end, on a new enabled instance beside the disabled one
- *   7007 lp1 f      the account is deleted: skipped (user_deleted)
+ *   7007 lp1 f      the account is deleted: skipped (user_deleted, which needs the owner: mapping rule R11 says otherwise)
  *   7008 lp1 g      no such account: skipped (user_missing)
  *   7009 lp1 h      h has a SUSPENDED manual enrolment, the legacy one is active: skipped (manual_enrolment_inactive)
  *   7010 lp2 h      the same pair: skipped with the owner's reason
@@ -168,6 +168,10 @@ final class bizlms_import_enrolments_test extends \advanced_testcase {
         $this->assertSame(['enrol', 'user_enrolments'], array_keys($importer->core_writes()));
         $this->assertSame(['enrol', 'user_enrolments'], array_keys($importer->sources()));
         $this->assertSame([enrolments_importer::LEDGER], $importer->target_tables());
+        // Every rule that departs from the map or from the signed decision is the owner's call, not a silent default.
+        $needsowner = array_map(fn($reason) => $reason->code, array_filter($importer->reasons(), fn($reason) => $reason->needsowner));
+        sort($needsowner);
+        $this->assertSame(['manual_enrolment_ends_sooner', 'manual_enrolment_inactive', 'user_deleted'], $needsowner);
         $this->assertSame(['enrolments.instances', 'enrolments.enrolments'],
             array_map(fn($step) => $step->key(), $importer->steps()));
     }
@@ -190,6 +194,7 @@ final class bizlms_import_enrolments_test extends \advanced_testcase {
         // Rows that need the owner are not accepted, so the run is done but unproven.
         $this->assertSame(2, $result['exit'], implode('; ', $result['blockers']));
         $this->assertContains('enrolments:manual_enrolment_inactive=2', $result['unproven']);
+        $this->assertContains('enrolments:user_deleted=1', $result['unproven']);
 
         $rows = $DB->get_records(legacymap::TABLE, ['sourcetable' => enrolments_importer::UNIT_ENROLMENTS, 'subkey' => ''],
             'sourceid', 'sourceid, outcome, targettable, targetid, reason');
@@ -221,7 +226,7 @@ final class bizlms_import_enrolments_test extends \advanced_testcase {
 
         [$result] = $this->contract_run(true, ['decisions' => decisions::from_array([
             enrolments_importer::DECISION => enrolments_importer::DECISION_VALUE,
-            'accepted_reasons' => ['enrolments:manual_enrolment_inactive'],
+            'accepted_reasons' => ['enrolments:manual_enrolment_inactive', 'enrolments:user_deleted'],
         ])]);
 
         $this->assertSame(0, $result['exit'], implode('; ', $result['blockers']));
@@ -506,6 +511,10 @@ final class bizlms_import_enrolments_test extends \advanced_testcase {
         $this->assertSame(12, $counts['rows:enrolments.enrolments']);
         // Only learner a holds a role in a course (the seed's one role assignment): the rest is reported, not changed.
         $this->assertSame(9, $counts['pairs_without_a_role_in_the_course']);
+        // 7006 is the one BizLMS enrolment with an end; no course has two enabled manual instances; no manual enrolment ends sooner.
+        $this->assertSame(1, $counts['bizlms_enrolments_with_an_end']);
+        $this->assertSame(0, $counts['courses_with_several_enabled_manual_instances']);
+        $this->assertSame(0, $counts['pairs_where_the_manual_enrolment_ends_sooner']);
         $warnings = implode(' ', $pf->warnings());
         $this->assertStringContainsString('courses_with_only_a_disabled_manual_instance:1', $warnings);
         $this->assertStringContainsString('legacy_enrolments_without_a_course_role:9', $warnings);
@@ -617,7 +626,271 @@ final class bizlms_import_enrolments_test extends \advanced_testcase {
         $this->assertContains('ledger_rows_without_an_imported_map_row:1', $failures);
     }
 
+    public function test_a_manual_enrolment_that_ends_sooner_is_not_folded_into(): void {
+        global $DB;
+        $importer = $this->contract_begin();
+        $seed = $this->seed();
+        $ids = $this->seed_manual_ends($seed);
+
+        [$result] = $this->contract_run(true);
+
+        $this->assertSame(2, $result['exit'], implode('; ', $result['blockers']));
+        $this->assertContains('enrolments:manual_enrolment_ends_sooner=2', $result['unproven']);
+        $map = fn(int $id) => $DB->get_record(legacymap::TABLE, ['sourcetable' => enrolments_importer::UNIT_ENROLMENTS,
+            'sourceid' => $id, 'subkey' => ''], '*', MUST_EXIST);
+        // No end against an end, and a later end against an end: the access would be cut short, so the owner decides.
+        foreach (['noend', 'laterend'] as $case) {
+            $row = $map($ids[$case]['legacy']);
+            $this->assertSame('skipped', $row->outcome, $case);
+            $this->assertSame('manual_enrolment_ends_sooner', $row->reason, $case);
+            $this->assertNull($row->targetid, $case);
+            $this->assertSame(0, $DB->count_records(enrolments_importer::LEDGER, ['legacyueid' => $ids[$case]['legacy']]), $case);
+        }
+        // An earlier end, the same end and a legacy enrolment that gives no access: nothing to keep, folded as before.
+        foreach (['earlierend', 'sameend', 'legacyinactive'] as $case) {
+            $row = $map($ids[$case]['legacy']);
+            $this->assertSame('folded', $row->outcome, $case);
+            $this->assertSame('already_manual', $row->reason, $case);
+            $this->assertSame($ids[$case]['manual'], (int) $row->targetid, $case);
+        }
+        // The administrators' manual enrolments are exactly as they were: never lengthened, never replaced.
+        foreach ($ids as $case => $row) {
+            $this->assertSame($row['end'], (int) $DB->get_field('user_enrolments', 'timeend', ['id' => $row['manual']]), $case);
+        }
+        $this->assertSame([], $importer->verify(context::build($importer, false, 0, $this->contract_decisions())));
+    }
+
+    public function test_preflight_counts_the_manual_enrolments_that_end_sooner(): void {
+        $this->contract_begin();
+        $seed = $this->seed();
+        $this->seed_manual_ends($seed);
+        $runner = new runner(['decisions' => $this->contract_decisions(), 'report' => new report(), 'batch' => 2]);
+
+        $pf = $runner->preflight(['enrolments'])['preflights']['enrolments'];
+
+        $this->assertFalse($pf->has_blockers(), implode('; ', $pf->blockers()));
+        $this->assertSame(2, $pf->counts()['pairs_where_the_manual_enrolment_ends_sooner']);
+        $this->assertStringContainsString('manual_enrolments_ending_before_the_legacy_one:2', implode(' ', $pf->warnings()));
+    }
+
+    public function test_preflight_counts_courses_with_several_enabled_manual_instances(): void {
+        global $DB;
+        $this->contract_begin();
+        $seed = $this->seed();
+        $runner = new runner(['decisions' => $this->contract_decisions(), 'report' => new report(), 'batch' => 2]);
+
+        $pf = $runner->preflight(['enrolments'])['preflights']['enrolments'];
+        $this->assertSame(0, $pf->counts()['courses_with_several_enabled_manual_instances']);
+        $this->assertStringNotContainsString('courses_with_several_enabled_manual_instances', implode(' ', $pf->warnings()));
+
+        // A second ENABLED manual instance in course 1, and a disabled one in course 2 (which does not count).
+        $DB->insert_record('enrol', (object) ['enrol' => 'manual', 'status' => 0, 'courseid' => $seed->course[1], 'sortorder' => 99,
+            'roleid' => $this->studentrole, 'timecreated' => self::T0, 'timemodified' => self::T0]);
+        $DB->insert_record('enrol', (object) ['enrol' => 'manual', 'status' => 1, 'courseid' => $seed->course[2], 'sortorder' => 99,
+            'roleid' => $this->studentrole, 'timecreated' => self::T0, 'timemodified' => self::T0]);
+
+        $pf = $runner->preflight(['enrolments'])['preflights']['enrolments'];
+        $this->assertSame(1, $pf->counts()['courses_with_several_enabled_manual_instances']);
+        $this->assertStringContainsString('courses_with_several_enabled_manual_instances:1', implode(' ', $pf->warnings()));
+    }
+
+    public function test_a_site_that_expires_manual_enrolments_blocks_while_converted_enrolments_have_an_end(): void {
+        global $DB;
+        $this->contract_begin();
+        $seed = $this->seed();
+        $runner = new runner(['decisions' => $this->contract_decisions(), 'report' => new report(), 'batch' => 2]);
+        $preflight = fn() => $runner->preflight(['enrolments'])['preflights']['enrolments'];
+
+        // The seed has one BizLMS enrolment with an end (7006). Unset and KEEP are the plugin's default: nothing happens.
+        $pf = $preflight();
+        $this->assertSame(1, $pf->counts()['bizlms_enrolments_with_an_end']);
+        $this->assertFalse($pf->has_blockers(), implode('; ', $pf->blockers()));
+        set_config('expiredaction', ENROL_EXT_REMOVED_KEEP, 'enrol_manual');
+        $this->assertFalse($preflight()->has_blockers());
+
+        // Every other action acts on the ended manual enrolments at the first cron; UNENROL and SUSPENDNOROLES also
+        // remove the roles BizLMS wrote (component empty).
+        foreach ([ENROL_EXT_REMOVED_UNENROL, ENROL_EXT_REMOVED_SUSPEND, ENROL_EXT_REMOVED_SUSPENDNOROLES] as $action) {
+            set_config('expiredaction', $action, 'enrol_manual');
+            $this->assertContains("manual_expiredaction_not_keep:{$action}:enrolments_with_an_end=1", $preflight()->blockers());
+        }
+
+        // A blocked run writes nothing.
+        set_config('expiredaction', ENROL_EXT_REMOVED_UNENROL, 'enrol_manual');
+        [$result] = $this->contract_run(true);
+        $this->assertSame(1, $result['exit']);
+        $this->assertSame(0, $DB->count_records(legacymap::TABLE));
+        $this->assertSame(0, $DB->count_records(enrolments_importer::LEDGER));
+
+        // With no BizLMS enrolment that has an end there is nothing for the sync to act on.
+        $DB->set_field('user_enrolments', 'timeend', 0, ['id' => 7006]);
+        $pf = $preflight();
+        $this->assertSame(0, $pf->counts()['bizlms_enrolments_with_an_end']);
+        $this->assertFalse($pf->has_blockers(), implode('; ', $pf->blockers()));
+    }
+
+    public function test_preflight_warns_about_expiry_notices_on_the_instances_the_learners_are_put_on(): void {
+        global $DB;
+        $this->contract_begin();
+        $seed = $this->seed();
+        $runner = new runner(['decisions' => $this->contract_decisions(), 'report' => new report(), 'batch' => 2]);
+
+        $pf = $runner->preflight(['enrolments'])['preflights']['enrolments'];
+        $this->assertStringNotContainsString('expiry_notification', implode(' ', $pf->warnings()));
+
+        // Course 1 has an enabled manual instance the learners go on; course 2's is not set.
+        $DB->set_field('enrol', 'expirynotify', 1, ['id' => $seed->manual['c1']]);
+        $pf = $runner->preflight(['enrolments'])['preflights']['enrolments'];
+        $this->assertStringContainsString('reused_manual_instances_with_expiry_notification:1', implode(' ', $pf->warnings()));
+        $this->assertFalse($pf->has_blockers(), implode('; ', $pf->blockers()));
+    }
+
+    public function test_manual_enrolment_switched_off_does_not_block_a_database_with_nothing_to_convert(): void {
+        $this->contract_begin();
+        set_config('enrol_plugins_enabled', 'guest,self');
+        $runner = new runner(['decisions' => $this->contract_decisions(), 'report' => new report(), 'batch' => 2]);
+
+        $pf = $runner->preflight(['enrolments'])['preflights']['enrolments'];
+
+        $this->assertSame(0, $pf->counts()['bizlms_enrolments']);
+        $this->assertFalse($pf->has_blockers(), implode('; ', $pf->blockers()));
+    }
+
+    public function test_preflight_counts_learners_enrolled_across_tenants(): void {
+        global $DB;
+        $this->contract_begin();
+        $seed = $this->seed();
+        $runner = new runner(['decisions' => $this->contract_decisions(), 'report' => new report(), 'batch' => 2]);
+        $dbman = $DB->get_manager();
+
+        // Without open_path on both tables there are no tenants to compare: nothing is counted and nothing is warned.
+        $added = [];
+        foreach (['user', 'course'] as $table) {
+            if (!isset($DB->get_columns($table)['open_path'])) {
+                $added[] = $table;
+            }
+        }
+        if ($added === ['user', 'course']) {
+            $pf = $runner->preflight(['enrolments'])['preflights']['enrolments'];
+            $this->assertArrayNotHasKey('pairs_across_tenants', $pf->counts());
+            $this->assertStringNotContainsString('across_tenants', implode(' ', $pf->warnings()));
+        }
+
+        foreach ($added as $table) {
+            $dbman->add_field(new \xmldb_table($table), new \xmldb_field('open_path', XMLDB_TYPE_CHAR, '254', null, null, null, null));
+        }
+        try {
+            // Courses 1 and 2 are in tenant 1, course 3 in tenant 1, course 4 has no tenant.
+            foreach ([1 => '/1/4', 2 => '/1/4', 3 => '/1'] as $n => $path) {
+                $DB->set_field('course', 'open_path', $path, ['id' => $seed->course[$n]]);
+            }
+            // Learner a (courses 1, 2) is in tenant 77 and c (course 2) in tenant 177: three pairs across tenants.
+            // b and h are in tenant 1 (a sub-path counts as the same tenant), d has no tenant, e is in a course without one,
+            // and the deleted account f is in tenant 77 but is not converted, so it is not counted.
+            foreach (['a' => '/77/3', 'b' => '/1/9', 'c' => '/177', 'e' => '/1', 'f' => '/77', 'h' => '/1'] as $key => $path) {
+                $DB->set_field('user', 'open_path', $path, ['id' => $seed->user[$key]]);
+            }
+
+            $pf = $runner->preflight(['enrolments'])['preflights']['enrolments'];
+
+            $this->assertSame(3, $pf->counts()['pairs_across_tenants']);
+            $this->assertStringContainsString('legacy_enrolments_across_tenants:3', implode(' ', $pf->warnings()));
+            $this->assertEquals(['77->1' => 2, '177->1' => 1], $pf->histograms()['pairs_across_tenants[user root->course root]']);
+            $this->assertFalse($pf->has_blockers(), implode('; ', $pf->blockers()));
+        } finally {
+            foreach ($added as $table) {
+                $dbman->drop_field(new \xmldb_table($table), new \xmldb_field('open_path'));
+            }
+        }
+    }
+
+    public function test_verify_after_go_live_tolerates_a_source_that_shrank(): void {
+        global $DB;
+        $importer = $this->contract_begin();
+        $this->seed();
+        $this->contract_run(true);
+        $ctx = context::build($importer, false, 0, $this->contract_decisions());
+        $this->assertSame([], $importer->verify($ctx));
+
+        // Deleting an account removes its enrolments (enrol_user_delete) and a course takes its instances with it: after
+        // go-live the BizLMS source is smaller than the map, for good. 7004 and 7012 are the only enrolments of course 2.
+        $DB->delete_records('user_enrolments', ['id' => 7003]);
+        $DB->delete_records('user_enrolments', ['id' => 7004]);
+        $DB->delete_records('user_enrolments', ['id' => 7012]);
+
+        // Before go-live that is a failure: the source and the map must agree.
+        $failures = $importer->verify($ctx);
+        $this->assertContains('accounting:' . enrolments_importer::UNIT_ENROLMENTS . ': source=9 mapped=12', $failures);
+        $this->assertContains('accounting:' . enrolments_importer::UNIT_INSTANCES . ': source=4 mapped=5', $failures);
+
+        // After it, the identity is not asserted any more. A source row without a map row still is.
+        set_config('bizlms_production_open', 1, 'local_sentientia_platform');
+        $this->assertSame([], $importer->verify($ctx));
+        $this->add_enrolment(7950, $this->seeded->inst['lp1'], $this->seeded->user['b']);
+        $this->assertContains('unmapped_source_rows:' . enrolments_importer::UNIT_ENROLMENTS . ':1', $importer->verify($ctx));
+    }
+
+    public function test_verify_reports_a_converted_enrolment_that_now_ends_before_the_legacy_one(): void {
+        global $DB;
+        $importer = $this->contract_begin();
+        $this->seed();
+        $this->contract_run(true);
+        $ctx = context::build($importer, false, 0, $this->contract_decisions());
+        $target = (int) $DB->get_field(legacymap::TABLE, 'targetid', [
+            'sourcetable' => enrolments_importer::UNIT_ENROLMENTS, 'sourceid' => 7003, 'subkey' => '']);
+
+        // The legacy enrolment of 7003 has no end; the manual one is given one in the future: access is still there today
+        // but it would stop, which the import must not have done.
+        $DB->set_field('user_enrolments', 'timeend', time() + 100 * DAYSECS, ['id' => $target]);
+        $this->assertContains('learners_whose_access_was_not_kept:1', $importer->verify($ctx));
+
+        $DB->set_field('user_enrolments', 'timeend', 0, ['id' => $target]);
+        $this->assertSame([], $importer->verify($ctx));
+    }
+
+    public function test_the_required_version_has_exactly_one_upgrade_savepoint_and_is_not_above_the_plugin(): void {
+        $dir = dirname(__DIR__);
+        $required = enrolments_importer::REQUIRES_VERSION;
+
+        // upgrade_plugin_savepoint() throws downgrade_exception when the stored version is already at or above the
+        // savepoint: two blocks with the same number (two importers of this plugin sharing one) fail the second.
+        $upgrade = (string) file_get_contents($dir . '/db/upgrade.php');
+        $this->assertSame(1, substr_count($upgrade, "upgrade_plugin_savepoint(true, {$required}, 'local', 'sentientia_courses')"));
+        $this->assertSame(1, preg_match_all('/\$oldversion < ' . $required . '\)/', $upgrade));
+
+        $plugin = new \stdClass();
+        include($dir . '/version.php');
+        $this->assertGreaterThanOrEqual($required, (int) $plugin->version);
+    }
+
     // Seed.
+
+    /**
+     * Five learners in course 1, each with one legacy enrolment on lp1 and an administrator's manual enrolment (active, with an
+     * end in the future) on the course's manual instance, to see when the import folds into it.
+     *
+     * @param \stdClass $seed
+     * @return array<string, array{legacy: int, manual: int, end: int}> Case => legacy enrolment id, manual enrolment id, manual end.
+     */
+    private function seed_manual_ends(\stdClass $seed): array {
+        $manualend = time() + 100 * DAYSECS;
+        // Case => [legacy id, legacy status, legacy end].
+        $cases = [
+            'noend' => [7041, 0, 0],
+            'laterend' => [7042, 0, $manualend + DAYSECS],
+            'earlierend' => [7043, 0, $manualend - DAYSECS],
+            'sameend' => [7044, 0, $manualend],
+            'legacyinactive' => [7045, 1, 0],
+        ];
+        $ids = [];
+        foreach ($cases as $case => [$legacy, $status, $end]) {
+            $learner = (int) $this->getDataGenerator()->create_user()->id;
+            $manual = $this->add_enrolment(0, $seed->manual['c1'], $learner, 0, self::T0, $manualend);
+            $this->add_enrolment($legacy, $seed->inst['lp1'], $learner, $status, self::T0, $end);
+            $ids[$case] = ['legacy' => $legacy, 'manual' => $manual, 'end' => $manualend];
+        }
+        return $ids;
+    }
 
     /**
      * Put the seed into core enrol and user_enrolments.
