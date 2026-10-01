@@ -37,9 +37,10 @@ use local_sentientia_platform\bizlms\step;
  * LONGTEXT as well, and a cut answer cannot be recovered once the legacy tables are dropped.
  *
  * The assignment beside it. A completion with no local_evaluation_users row for its form and person would leave
- * that person with no assignment, so the FIRST completion of the pair also creates a responded assignment
+ * that person with no assignment, so the FIRST IMPORTED completion of the pair also creates a responded assignment
  * (sub-key assign), on the same rules as assignment_step, with the times cut to the day on an identity-protected
- * form.
+ * form. "Imported" matters: if the lowest completion is skipped (no time, an unknown responder) the next one that is
+ * imported carries the assignment, so the person is not left with a response and no assignment.
  *
  * Never submit_response(): it sends administrators a message per response, checks the form is open and stamps
  * "now". This step only returns rows.
@@ -118,16 +119,17 @@ final class response_step extends step {
                 : outcome::archive($id, 'parent_deleted')];
         }
 
-        $submitted = (int) $row->timemodified;
-        $derived = false;
-        if ($submitted <= 0) {
-            // Sentientia reads timesubmitted 0 as a trigger-queue shell, not a response, so it must be real.
-            $submitted = (int) ($form->timemodified ?? 0);
-            $derived = true;
-        }
-        if ($submitted <= 0) {
+        // The rules that skip a completion live in form_facts::import_problem(), so the implied assignment can be
+        // keyed on the first completion that is imported. Sentientia reads timesubmitted 0 as a trigger-queue shell,
+        // not a response, so a completion with no time of its own takes the form's, or is skipped.
+        [$problem, $submitted] = $this->facts->import_problem($ctx, $row, $form);
+        if ($problem === 'no_timestamp') {
             return [outcome::skip($id, 'no_timestamp', 'no_source_time')];
         }
+        if ($problem === 'orphan_user') {
+            return [outcome::skip($id, 'orphan_user', 'user_not_found')];
+        }
+        $derived = (int) $row->timemodified <= 0;
 
         $completionuser = (int) $row->userid;
         $anonymous = $this->facts->anonymous_final($ctx, $form) || $completionuser <= 0
@@ -142,11 +144,9 @@ final class response_step extends step {
             $evaluatedby = (int) ($row->evaluatedby ?? 0);
             $userid = $evaluatedby > 0 ? $evaluatedby : $completionuser;
             if (!$ctx->lookups->user_exists($userid)) {
-                if ($supervised || $evaluatedby <= 0 || !$ctx->lookups->user_exists($completionuser)) {
-                    return [outcome::skip($id, 'orphan_user', 'user_not_found')];
-                }
-                // A self evaluation: whoever was recorded as filling it in has gone, and the person evaluated is
-                // the person who answered. Keep the answers rather than drop them.
+                // import_problem() let this through, so it is a self evaluation: whoever was recorded as filling it
+                // in has gone, and the person evaluated is the person who answered. Keep the answers rather than
+                // drop them.
                 $userid = $completionuser;
                 $responderunknown = true;
             }
@@ -209,9 +209,10 @@ final class response_step extends step {
     /**
      * The assignment a completion implies when BizLMS never recorded one, or null.
      *
-     * Only the first completion of a (form, person) pair creates it, so a person who answered a repeatable form
-     * three times still has one assignment; and only when local_evaluation_users has no row for the pair, because
-     * then assignment_step owns it.
+     * Only the first IMPORTED completion of a (form, person) pair creates it, so a person who answered a repeatable
+     * form three times still has one assignment, and a first completion that is skipped (no time, an unknown
+     * responder) does not leave the pair without one; and only when local_evaluation_users has no row for the pair,
+     * because then assignment_step owns it.
      *
      * @param context $ctx
      * @param \stdClass $row The completion.
@@ -226,12 +227,13 @@ final class response_step extends step {
             return null;
         }
         $pair = $this->facts->pair($ctx, (int) $row->evaluation, $person);
-        if ($pair->hasusers || $pair->firstid !== (int) $row->id) {
+        if ($pair->hasusers || $pair->firstimportedid !== (int) $row->id) {
             return null;
         }
         $protected = $this->facts->identity_protected($ctx, $form);
         $created = $protected ? $this->facts->day_start($ctx, $submitted) : $submitted;
-        $last = $pair->lasttime > 0 ? $pair->lasttime : $submitted;
+        // The latest time among the completions that are imported, not among every legacy one.
+        $last = $pair->lastimportedtime ?: $submitted;
         return outcome::insert((int) $row->id, importer::T_ASSIGN, (object) [
             'evaluationid' => $target,
             'userid' => $person,

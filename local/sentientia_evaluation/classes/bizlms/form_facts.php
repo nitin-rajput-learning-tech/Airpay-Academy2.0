@@ -136,11 +136,19 @@ final class form_facts {
     /**
      * Completions of one form by one person, and whether the form's assignment table names that person.
      *
+     * count, firstid, firsttime and lasttime describe every legacy completion of the pair, imported or not (the
+     * assignment step reads them: BizLMS had a completion, so the person responded). firstimportedid and
+     * lastimportedtime describe only the completions that will actually be imported ({@see self::import_problem()}),
+     * which is what the assignment a completion implies is keyed on: if the lowest completion is skipped, the next
+     * imported one must carry it.
+     *
      * @param context $ctx
      * @param int $formid
      * @param int $userid
-     * @return \stdClass count, firstid (the lowest completion id, 0 for none), firsttime, lasttime and
-     *         hasusers (a local_evaluation_users row exists for the pair).
+     * @return \stdClass count, firstid (the lowest completion id, 0 for none), firsttime, lasttime, hasusers (a
+     *         local_evaluation_users row exists for the pair), firstimportedid (the lowest id that will be
+     *         imported, 0 for none) and lastimportedtime (the latest submission time among those, the derived one
+     *         where BizLMS stored none).
      */
     public function pair(context $ctx, int $formid, int $userid): \stdClass {
         $key = $formid . '|' . $userid;
@@ -150,15 +158,27 @@ final class form_facts {
         if (count($this->pairs) >= self::KEEP) {
             $this->pairs = [];
         }
-        $rows = $ctx->legacy->page(importer::SRC_COMPLETED, 0, legacy_reader::MAX_PAGE, ['id', 'timemodified'],
+        $rows = $ctx->legacy->page(importer::SRC_COMPLETED, 0, legacy_reader::MAX_PAGE,
+            ['id', 'timemodified', 'userid', 'evaluatedby', 'anonymous_response'],
             ['t.evaluation = :evpf AND t.userid = :evpu', ['evpf' => $formid, 'evpu' => $userid]]);
-        $facts = (object) ['count' => count($rows), 'firstid' => 0, 'firsttime' => 0, 'lasttime' => 0, 'hasusers' => false];
+        $facts = (object) ['count' => count($rows), 'firstid' => 0, 'firsttime' => 0, 'lasttime' => 0, 'hasusers' => false,
+            'firstimportedid' => 0, 'lastimportedtime' => 0];
+        $form = $this->form($ctx, $formid);
         foreach ($rows as $id => $row) {
             if ($facts->firstid === 0) {
                 $facts->firstid = (int) $id;
                 $facts->firsttime = (int) $row->timemodified;
             }
             $facts->lasttime = max($facts->lasttime, (int) $row->timemodified);
+            if ($form !== null) {
+                [$problem, $submitted] = $this->import_problem($ctx, $row, $form);
+                if ($problem === null) {
+                    if ($facts->firstimportedid === 0) {
+                        $facts->firstimportedid = (int) $id;
+                    }
+                    $facts->lastimportedtime = max($facts->lastimportedtime, $submitted);
+                }
+            }
         }
         $facts->hasusers = $ctx->legacy->count(importer::SRC_USERS,
             ['t.evaluationid = :evua AND t.userid = :evub', ['evua' => $formid, 'evub' => $userid]]) > 0;
@@ -203,6 +223,50 @@ final class form_facts {
         uasort($index, static fn(\stdClass $a, \stdClass $b): int => [$a->position, $a->qid] <=> [$b->position, $b->qid]);
         $this->questions[$formid] = $index;
         return $index;
+    }
+
+    /**
+     * Will this completion of an imported form be skipped, and what submission time will its response carry?
+     *
+     * The rules response_step applies before it writes a response, in one place so that the assignment a
+     * completion implies can be keyed on the first completion that is actually imported (response_step::assignment()
+     * and {@see self::pair()}), not on the lowest id whether or not it is skipped:
+     *  - no_timestamp: BizLMS stored no time (timemodified 0) and the form has none to stand in (a response must
+     *    carry a real time, Sentientia reads timesubmitted 0 as a trigger-queue shell);
+     *  - orphan_user: the named responder does not exist. The responder is evaluatedby when BizLMS recorded one,
+     *    else the completion's user. The one exception is a SELF evaluation whose filler has gone while the
+     *    completion's user is still there: the person evaluated is the person who answered, so it is kept.
+     * An anonymous completion needs no responder, so it has no orphan_user case. The form's own state (it does not
+     * exist, it was not imported) is not decided here: the caller has already resolved the form.
+     *
+     * @param context $ctx
+     * @param \stdClass $completed Legacy completion row (timemodified, userid, evaluatedby, anonymous_response).
+     * @param \stdClass $form Legacy form row of that completion.
+     * @return array{0: string|null, 1: int} [no_timestamp|orphan_user|null, the submission time]. The time is the
+     *         completion's own, else the form's; 0 with no_timestamp.
+     */
+    public function import_problem(context $ctx, \stdClass $completed, \stdClass $form): array {
+        $submitted = (int) $completed->timemodified;
+        if ($submitted <= 0) {
+            $submitted = (int) ($form->timemodified ?? 0);
+        }
+        if ($submitted <= 0) {
+            return ['no_timestamp', 0];
+        }
+
+        $completionuser = (int) $completed->userid;
+        $anonymous = $this->anonymous_final($ctx, $form) || $completionuser <= 0
+            || (int) ($completed->anonymous_response ?? 0) === 1;
+        if (!$anonymous) {
+            $supervised = (string) ($form->evaluationmode ?? 'SE') === 'SP';
+            $evaluatedby = (int) ($completed->evaluatedby ?? 0);
+            $responder = $evaluatedby > 0 ? $evaluatedby : $completionuser;
+            if (!$ctx->lookups->user_exists($responder)
+                    && ($supervised || $evaluatedby <= 0 || !$ctx->lookups->user_exists($completionuser))) {
+                return ['orphan_user', $submitted];
+            }
+        }
+        return [null, $submitted];
     }
 
     /**

@@ -209,8 +209,9 @@ the `local_evaluation` tables -> this plugin's tables. Owner `local_sentientia_e
   payload built from the template's items. (3) items -> questions, or folded into a template's payload, or
   archived (`not_a_question`); then `dependency_step` sets `depends_on_qid` in a second pass (the parent may have a
   higher id). (4) `local_evaluation_users` -> `_assign`, **grouped** by (form, person): the earliest `timecreated`
-  wins, the rest merge (`dup_assignment`). (5) completions -> `_responses`; the first completion of a (form,
-  person) pair that has no assignee row also creates a `responded` assign row (sub-key `assign`). (6) values: no
+  wins, the rest merge (`dup_assignment`). (5) completions -> `_responses`; the first IMPORTED completion of a
+  (form, person) pair that has no assignee row also creates a `responded` assign row (sub-key `assign`; keyed on the
+  first completion that is imported, not the lowest id, since 2026-10-01). (6) values: no
   write; each value row is folded into its response or archived with a reason. `form_facts::answers()` decides for
   both (5) and (6), so they cannot disagree.
 - **What a form becomes.** Always archived (status 2), `trigger_event` manual, `days_after` 0,
@@ -532,3 +533,21 @@ screenshots listed per item before it is merged.
   assertions cover both, and new `test_a_value_of_another_forms_item_or_of_no_item_is_left_to_the_owner` (an extra
   value for item 999999 seeded inside the test, parity exits 2 with `evaluation:missing_item=1`, and the preflight
   counts). Checked without Moodle: `php -l`, and the ADR-032 static scan over `classes/bizlms/` (clean).
+- **EV-14 - the implied assignment is keyed on the first IMPORTED completion (re-review should-fix).**
+  `response_step::assignment()` created the `responded` assign row only when the completion was
+  `pair->firstid`, the lowest completion id of the (form, person) pair, imported or not. `map_row` returns early on
+  `no_timestamp` and `orphan_user`, so if the lowest completion was skipped no later one created the row and the
+  person ended up with a response and no assignment. The skip rules moved into
+  `form_facts::import_problem($ctx, $completed, $form)` (returns `[null|'no_timestamp'|'orphan_user', submission
+  time]`, the time being the completion's own, else the form's); `map_row` calls it and behaves as before.
+  `form_facts::pair()` now reads `id, timemodified, userid, evaluatedby, anonymous_response` and returns, besides the
+  unchanged legacy facts (`count`, `firstid`, `firsttime`, `lasttime`, `hasusers`, which `assignment_step` reads),
+  `firstimportedid` and `lastimportedtime` computed with that predicate. `assignment()` returns null unless
+  `firstimportedid` is this completion, and `responded_at` uses `lastimportedtime` (falling back to the completion's
+  own time). `assignment_step` is untouched (it still reads the legacy pair; a separate question, EV-15). April has one
+  completion and an assignee row, so nothing there changes. No schema change, no version change. Test:
+  `bizlms_import_test::test_the_implied_assignment_comes_from_the_first_imported_completion`, seeded inside the test (a
+  form with no time of its own whose first completion is skipped for it; a supervisor form whose first completion
+  was filled in by a user who is gone). Checked without Moodle through a stub of the framework context
+  (the real `form_facts`, `response_step` and `outcome` against in-memory tables): both cases, a pair with nothing
+  imported, and the unchanged legacy facts.
