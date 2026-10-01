@@ -16,10 +16,14 @@ use core_privacy\local\request\writer;
 /**
  * Privacy Subsystem for local_sentientia_skills.
  *
- * The only PII-bearing table is `local_sentientia_user_skills` which stores
- * earned skill levels per user. Other tables (skill_cats, skills,
- * skill_levels, role_skills, course_skills) are reference data with no
- * user-specific rows.
+ * The PII-bearing tables are `local_sentientia_user_skills` (earned skill
+ * levels per user), `local_sentientia_user_skill_hist` (the audit log of
+ * those levels) and `local_sentientia_skill_interest` (the skills a learner
+ * said they are interested in; imported from the BizLMS interests list,
+ * ADR-032). Other tables (skill_cats, skills, skill_levels, role_skills,
+ * course_skills, course_levels) are reference data with no user-specific
+ * rows; the BizLMS import does not copy the creator columns of the
+ * catalogue, so they stay that way.
  *
  * @package local_sentientia_skills
  */
@@ -51,6 +55,14 @@ class provider implements
             'timecreated'       => 'privacy:metadata:user_skill_hist:timecreated',
         ], 'privacy:metadata:user_skill_hist');
 
+        // ADR-032 (BizLMS import, 2026-09-30) - the skills a learner is interested in.
+        $collection->add_database_table('local_sentientia_skill_interest', [
+            'userid'       => 'privacy:metadata:skill_interest:userid',
+            'skillid'      => 'privacy:metadata:skill_interest:skillid',
+            'timecreated'  => 'privacy:metadata:skill_interest:timecreated',
+            'timemodified' => 'privacy:metadata:skill_interest:timemodified',
+        ], 'privacy:metadata:skill_interest');
+
         return $collection;
     }
 
@@ -71,6 +83,8 @@ class provider implements
         // until erasure runs).
         $userlist->add_from_sql('userid',
             "SELECT DISTINCT userid FROM {local_sentientia_user_skill_hist}", []);
+        $userlist->add_from_sql('userid',
+            "SELECT DISTINCT userid FROM {local_sentientia_skill_interest}", []);
         // Acting users (managers / admins) who recorded changes for
         // others must also be discoverable.
         $userlist->add_from_sql('changed_by_userid',
@@ -128,6 +142,24 @@ class provider implements
                 ->export_data(['Airpay Skills — my skill-level history'],
                     (object) ['changes' => array_values($hist_entries)]);
         }
+
+        // ADR-032 - the skills the user said they are interested in.
+        $interests = $DB->get_records_sql("
+            SELECT si.*, s.name AS skill_name
+              FROM {local_sentientia_skill_interest} si
+              JOIN {local_sentientia_skills} s ON s.id = si.skillid
+             WHERE si.userid = :u
+          ORDER BY s.name ASC, si.id ASC", ['u' => $userid]);
+        if (!empty($interests)) {
+            $interest_entries = array_map(fn($r) => (object) [
+                'skill'         => format_string($r->skill_name),
+                'time_recorded' => (int) $r->timecreated,
+                'time_updated'  => (int) $r->timemodified,
+            ], $interests);
+            writer::with_context($context)
+                ->export_data(['Airpay Skills — skills I am interested in'],
+                    (object) ['interests' => array_values($interest_entries)]);
+        }
     }
 
     public static function delete_data_for_all_users_in_context(\context $context): void {
@@ -136,6 +168,7 @@ class provider implements
         $DB->delete_records('local_sentientia_user_skills');
         // P1 #22 — also purge the audit log on full erasure.
         $DB->delete_records('local_sentientia_user_skill_hist');
+        $DB->delete_records('local_sentientia_skill_interest');
     }
 
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
@@ -148,6 +181,7 @@ class provider implements
         $DB->delete_records('local_sentientia_user_skill_hist', ['userid' => $uid]);
         $DB->set_field('local_sentientia_user_skill_hist',
             'changed_by_userid', null, ['changed_by_userid' => $uid]);
+        $DB->delete_records('local_sentientia_skill_interest', ['userid' => $uid]);
     }
 
     public static function delete_data_for_users(approved_userlist $userlist): void {
@@ -162,5 +196,6 @@ class provider implements
         $DB->execute("UPDATE {local_sentientia_user_skill_hist}
                          SET changed_by_userid = NULL
                        WHERE changed_by_userid $insql", $inparams);
+        $DB->execute("DELETE FROM {local_sentientia_skill_interest} WHERE userid $insql", $inparams);
     }
 }

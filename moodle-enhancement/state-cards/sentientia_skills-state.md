@@ -180,3 +180,82 @@ Branch `claude/persona-fix-admingates`. `index.php` (My Skills, viewing another 
 (ADR-025 successor). The ADR-031 `tenant::require_same_tenant_user()` after the gate is unchanged, so a
 holder still cannot open a user in another tenant. Guard: `local_sentientia_platform`
 `tests/capability_names_test.php`. No version bump.
+
+## 2026-09-30 - ADR-032 BizLMS import: the skills feature (1.7.0, 2026093001)
+
+Branch `claude/bizlms-import-skills`. Mapping doc section 14. Both trees (`local/` and
+`moodle-enhancement/local/`) carry the same files; the 2026061700 repaint step that only the top-level
+`db/upgrade.php` had is now in both, and its line is gone from `tools/tree-drift-baseline.txt`.
+
+**Importer** (`classes/bizlms/`, registered in `db/bizlms_import.php`, feature `skills`, depends on `org` and
+`recompletion`, not atomic). Steps, in order:
+
+| Step | Source (accounting unit) | Target | Ids |
+|---|---|---|---|
+| `skills.levels` | `local_course_levels` | `local_sentientia_course_levels` (NEW) | PRESERVE: `course.open_level` stores the id |
+| `skills.categories` | `local_skill_categories` | `local_sentientia_skill_cats` | MAP; exact case-insensitive name match to a category the import did not create folds into it |
+| `skills.skills` | `local_skill` | `local_sentientia_skills` | MAP; never merged into the 48 seeded skills |
+| `skills.course_skills` | `#local_skill.courses` (one group per legacy skill) | `local_sentientia_course_skills` | MAP; one sub-row per further course (`course:<id>`) |
+| `skills.user_skills` | `#course_completions.userid` (one group per learner, keyed by the lowest completion id) | `local_sentientia_user_skills` + `_user_skill_hist` | MAP; sub-rows `skill:<id>` and `hist:<id>_<n>` |
+| `skills.interests` | `local_interested_skills` (grouped by learner) | `local_sentientia_skill_interest` (NEW) | MAP; one row per skill, sub-rows `skill:<id>` |
+
+- **The level map is the owner's, written out.** `skills.level_proficiency` is approved as a rule (name
+  heuristic) but its `csv` is null in the signed file, so the preflight BLOCKS with
+  `level_proficiency_csv_missing`; a csv that misses a level blocks with `level_proficiency_csv_incomplete:<ids>`
+  and a value outside 1..5 with `level_proficiency_csv_invalid`. Nothing is guessed. While it blocks, the
+  preflight warning `level_proficiency_suggested_csv:<id>,<level>;...` applies the heuristic to every level
+  name, to paste into the decisions file after review. The csv takes `levelid,proficiency` lines (or `;`, `=`, `:`)
+  or a JSON object.
+- **Completions -> levels and history.** One chronological pass per learner and skill, like
+  `update_from_course()`: a level is only raised; `source` is the owner's label (`import`); a completion that does
+  not raise the level writes no history row; the recompletion archive (`local_recompletion_cc`) is history too
+  (`skills.history_from_archive`). A learner that already has a row for the skill keeps it (folded, reason
+  `native_row_kept`) and the missing history rows are still written. Deleted users are archived, unknown users
+  skipped. `course_completions` is claimed as a source only while a BizLMS skill table exists.
+- **No side effects.** No `course_completed`, no `skills_manager` call, no enrolment, message or event. Cron must
+  still be off for the window (a `course_completed` event after `course_skills` rows exist would write a native
+  row stamped `time()`).
+- **Schema (version 2026093001, both trees).** `skill_cats` and `skills`: name widened to 255 (form maxlengths
+  raised), `+ idnumber` (index), `+ open_path`. NEW `local_sentientia_course_levels` (UNIQUE code) and
+  `local_sentientia_skill_interest` (UNIQUE userid, skillid). `upgrade.php` step is guarded and idempotent.
+- **Privacy.** `skill_interest` is declared (metadata, users in context, export, all three deletes); en + hi
+  strings. The catalogue tables still hold no personal data (`usercreated` / `usermodified` are not copied).
+
+**Reader code fixes of section 14.** (1) catalog level label reads `local_sentientia_course_levels.name`
+(`catalog_manager::course_level_label()`); (2) `sentientia_users/skillprofile.php` recommendations use the gap
+engine's course read scope (viewer's too), leave out completed courses, and pass the limit to the DB layer;
+(3) `view.php` levels tab reads columns `level` / `label`; (4) `index.php` reads the arrays `get_gap_courses()`
+returns, which now carry `teaches_level` and `reason`; (5) source codes are lang strings, en + hi; (6) privacy, above;
+(7) interests: `skills_manager::get_interest_skills()`, `get_interest_courses()` and `get_recommended_courses()`,
+used by the My Skills page, the skill profile chips and the theme's recommendation rail, all behind the EXISTING
+flag `sentientia.dashboard.skillsrecs.enabled` (default OFF); (8) not built: the catalogue is shared
+(`skills.catalogue_scope = shared`); (9) `sentientia_org/cli/disable_bizlms.php` claims "Merged into
+sentientia_skills" only when the `skills` completion marker exists.
+
+**New flag.** `sentientia.skills.heldskills.enabled` (default OFF): My Skills lists what the learner holds (level,
+source words, date) when the designation has no role skills to compare against.
+
+**Where this differs from the mapping doc** (none changes what is imported):
+- The course links are grouped per LEGACY SKILL (`#local_skill.courses`), not per course (`#course.open_skill`).
+  The registry gives a table one owner and the exams feature also derives from core `course` rows, so claiming
+  `course` here would make the two importers refuse to load together. The target rows are the same.
+- The user-skill group is keyed by the learner's lowest `course_completions.id`; sub-row keys are `skill:<id>`
+  and `hist:<id>_<n>` (the doc said subkey `hist`).
+- A legacy category merged into a seeded one is recorded `folded` (target = the seed), because `outcome::merge()`
+  names a winning SOURCE row.
+- `user_skills.timecreated` of a native row is not lowered to the earliest completion: the importer may only
+  change rows it created.
+- The contract trait's "not applicable" test drops every claimed table, which would include the core table
+  `course_completions`, so this plugin's test overrides it and drops the four legacy tables only.
+
+**Tests** (not run here: no PHPUnit, as instructed). `tests/bizlms_import_test.php` (`@group bizlms_import`,
+`tenant_isolation`): the importer contract on a seed built from the mapping doc's fixture section, plus the level
+map block, the signed file blocking the feature, the tenant rules, the native row, the source label, the
+archive switch, the preflight facts and the catalog label. `tests/bizlms_readers_test.php`: the new readers and
+both flags. `tests/privacy/provider_test.php` updated (its metadata count was stale) and extended. Fixture:
+`tests/fixtures/bizlms/skillrepository.install.xml` (verbatim copy with header; `local_recompletion_cc` appended,
+TEXT `interested_skill_ids`). `tests/classes/bizlms/stub_dependency.php` stands in for `org` and `recompletion`.
+
+**Still to do.** Fill `skills.level_proficiency.csv` from the Stage B preflight; accept the needs-owner reasons
+after the rehearsal; visual evidence for the My Skills page (held skills, interest chips), the skill page levels
+tab and source line, the skill profile chips and the catalog level badge (not captured: nothing was deployed).

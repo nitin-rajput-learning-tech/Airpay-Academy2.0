@@ -39,6 +39,15 @@
         </div>
     </div>
 
+    {{#has_interests}}
+    <div class="mb-4" data-region="skill-interests">
+        <span class="text-muted small text-uppercase me-2">{{# str }}skillprofile_interests, local_sentientia_users{{/ str }}</span>
+        {{#interests}}
+        <a class="badge rounded-pill bg-light text-dark border me-1" href="{{{ viewurl }}}">{{ name }}</a>
+        {{/interests}}
+    </div>
+    {{/has_interests}}
+
     {{#has_skills}}
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-transparent"><strong>Skill levels</strong></div>

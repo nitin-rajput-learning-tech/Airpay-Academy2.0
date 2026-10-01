@@ -23,7 +23,7 @@ class edit_category extends \core_form\dynamic_form {
         $mform->addElement('header', 'hdr_basic', get_string('heading_category', 'local_sentientia_skills'));
 
         $mform->addElement('text', 'name', get_string('category_name', 'local_sentientia_skills'),
-            ['size' => 50, 'maxlength' => 100, 'placeholder' => 'e.g. Compliance, Technical, Leadership']);
+            ['size' => 50, 'maxlength' => 255, 'placeholder' => 'e.g. Compliance, Technical, Leadership']);
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
 

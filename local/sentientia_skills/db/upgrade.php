@@ -119,5 +119,74 @@ function xmldb_local_sentientia_skills_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026092500, 'local', 'sentientia_skills');
     }
 
+    // 2026093001 - ADR-032 BizLMS import (skills): the schema the skills importer writes to.
+    //
+    //  - skill_cats.name and skills.name widen from 100 to 255 (the BizLMS source columns are 255 characters).
+    //  - skill_cats and skills gain idnumber (the legacy shortname) and open_path (the legacy tenant path).
+    //  - local_sentientia_course_levels: the BizLMS course difficulty levels, legacy ids kept because
+    //    course.open_level stores them. proficiency is the owner's level-to-skill-level map.
+    //  - local_sentientia_skill_interest: one row per learner and skill they said they are interested in.
+    //
+    // Idempotent: every step checks what exists first, so a re-run (or a database that already has a part of
+    // it) changes nothing.
+    if ($oldversion < 2026093001) {
+        // Widen the names. change_field_precision re-applies cleanly when the column is already 255.
+        foreach (['local_sentientia_skill_cats', 'local_sentientia_skills'] as $tablename) {
+            $table = new xmldb_table($tablename);
+            $field = new xmldb_field('name', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+            $dbman->change_field_precision($table, $field);
+        }
+
+        // idnumber and open_path, plus the idnumber index.
+        foreach (['local_sentientia_skill_cats', 'local_sentientia_skills'] as $tablename) {
+            $table = new xmldb_table($tablename);
+            $idnumber = new xmldb_field('idnumber', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'timecreated');
+            if (!$dbman->field_exists($table, $idnumber)) {
+                $dbman->add_field($table, $idnumber);
+            }
+            $openpath = new xmldb_field('open_path', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'idnumber');
+            if (!$dbman->field_exists($table, $openpath)) {
+                $dbman->add_field($table, $openpath);
+            }
+            $index = new xmldb_index('idx_idnumber', XMLDB_INDEX_NOTUNIQUE, ['idnumber']);
+            if (!$dbman->index_exists($table, $index)) {
+                $dbman->add_index($table, $index);
+            }
+        }
+
+        // The BizLMS course levels.
+        $table = new xmldb_table('local_sentientia_course_levels');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('name', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL);
+            $table->add_field('code', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL);
+            $table->add_field('open_path', XMLDB_TYPE_CHAR, '255', null, null);
+            $table->add_field('proficiency', XMLDB_TYPE_INTEGER, '2', null, null);
+            $table->add_field('sortorder', XMLDB_TYPE_INTEGER, '10', null, null);
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('uk_code', XMLDB_INDEX_UNIQUE, ['code']);
+            $dbman->create_table($table);
+        }
+
+        // Learner interests.
+        $table = new xmldb_table('local_sentientia_skill_interest');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+            $table->add_field('skillid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_key('fk_user', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+            $table->add_key('fk_skill', XMLDB_KEY_FOREIGN, ['skillid'], 'local_sentientia_skills', ['id']);
+            $table->add_index('uk_user_skill', XMLDB_INDEX_UNIQUE, ['userid', 'skillid']);
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026093001, 'local', 'sentientia_skills');
+    }
+
     return true;
 }

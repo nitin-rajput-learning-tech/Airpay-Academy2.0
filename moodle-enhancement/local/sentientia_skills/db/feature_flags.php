@@ -32,7 +32,26 @@ $flags = [
                           the legacy same-category-newest heuristic, so
                           the rail never goes empty because of this flag.
                           Registered here (the data owner); consumed by
-                          theme_sentientia layout/dashboard.php.',
+                          theme_sentientia layout/dashboard.php.
+                          ADR-032 (BizLMS import, 2026-09-30): with the
+                          flag ON the skills the learner said they are
+                          interested in (imported from BizLMS) also feed
+                          the rail - courses for those skills, after the
+                          gap-closing ones, completed and already-enrolled
+                          courses left out - and show as chips on the
+                          skill profile and the My Skills page.',
+    ],
+
+    'sentientia.skills.heldskills.enabled' => [
+        'default'     => false,
+        'description' => 'Held skills on My Skills (ADR-032, BizLMS import).
+                          When ON, a learner whose designation has no role
+                          skills to compare against sees the skills they
+                          already hold - level, where the level came from
+                          (course, self-rating, manual, import) and when -
+                          instead of an empty page. Imported BizLMS
+                          completions appear here as source "import".
+                          OFF keeps the page exactly as it was.',
     ],
 
 ];
