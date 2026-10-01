@@ -90,12 +90,32 @@ final class bizlms_writer_test extends \advanced_testcase {
 
     public function test_a_missing_required_value_is_refused_before_the_query(): void {
         $writer = $this->writer();
-        $row = $this->item();
-        unset($row->title);
-        $this->assert_refused('missing_required:local_sentientia_toy_item.title',
-            fn() => $writer->insert('local_sentientia_toy_item', $row));
+        // A NOT NULL integer with no default aborts the INSERT in strict mode, so it is refused first. The
+        // framework's own map table has one, sourceid; every NOT NULL integer of the toy schema has a default.
+        $row = (object) ['feature' => 'toy', 'sourcetable' => 'local_toy_item', 'subkey' => '', 'targettable' => '',
+            'targetid' => null, 'outcome' => 'skipped', 'reason' => 'x', 'detail' => null, 'runid' => 1,
+            'timecreated' => 1];
+        $this->assert_refused('missing_required:local_sentientia_legacymap.sourceid',
+            fn() => $writer->insert_map_rows([$row]));
+        // A NOT NULL value that is given as null is refused too.
         $this->assert_refused('null_in_not_null:local_sentientia_toy_item.title',
             fn() => $writer->insert('local_sentientia_toy_item', $this->item(['title' => null])));
+    }
+
+    public function test_a_not_null_char_left_out_is_accepted_because_the_engine_defaults_it(): void {
+        global $DB;
+        // XMLDB creates a NOT NULL char column with no DEFAULT as DEFAULT '' on MySQL, MariaDB, PostgreSQL and
+        // SQL Server (sql_generator::$default_for_char), so the live column reports a default and the INSERT does
+        // not abort. The writer reads the live column, as the ADR says, so it must not refuse the row.
+        $columns = $DB->get_columns('local_sentientia_toy_item');
+        $this->assertTrue($columns['title']->not_null);
+        $this->assertTrue($columns['title']->has_default, 'the engine gave the NOT NULL char a default');
+
+        $writer = $this->writer();
+        $row = $this->item();
+        unset($row->title);
+        $id = $writer->insert('local_sentientia_toy_item', $row);
+        $this->assertSame('', $DB->get_field('local_sentientia_toy_item', 'title', ['id' => $id]));
     }
 
     public function test_every_time_column_must_be_set_explicitly(): void {
@@ -120,24 +140,47 @@ final class bizlms_writer_test extends \advanced_testcase {
             $this->assert_refused('local_sentientia_toy_item.orgid',
                 fn() => $writer->insert('local_sentientia_toy_item', $this->item(['orgid' => $bad])));
         }
-        // Digits in a string are fine; the visible column is int(1), which holds at most 127 on every engine.
+        // Digits in a string are fine.
         $writer->insert('local_sentientia_toy_item', $this->item(['orgid' => '42']));
+        // The visible column is int(1), which holds at most 127 on every engine. toy_org is the importer's PRESERVE
+        // target, so its rows come in through import_preserved() with the legacy id; insert() refuses that table.
         $this->assert_refused('integer_out_of_range:local_sentientia_toy_org.visible',
-            fn() => $writer->insert('local_sentientia_toy_org', (object) ['name' => 'n', 'path' => null,
-                'visible' => 500, 'timecreated' => 1, 'timemodified' => 1]));
+            fn() => $writer->import_preserved('local_sentientia_toy_org', (object) ['name' => 'n', 'path' => null,
+                'visible' => 500, 'timecreated' => 1, 'timemodified' => 1], 71));
+        $this->assert_refused('not_an_integer:local_sentientia_toy_org.visible',
+            fn() => $writer->import_preserved('local_sentientia_toy_org', (object) ['name' => 'n', 'path' => null,
+                'visible' => 'x', 'timecreated' => 1, 'timemodified' => 1], 72));
     }
 
     public function test_the_integer_limit_follows_the_native_type_not_the_display_width(): void {
         // MySQL 8.0.19+ reports tinyint, smallint and int without a display width, so max_length is the
         // numeric precision (3, 5, 10) and cannot say how wide the column is. visible is a tinyint.
+        // toy_org is a PRESERVE target: its rows are written by import_preserved() with the legacy id, and
+        // insert() refuses a MAP row there (test_a_map_insert_into_a_preserve_table_is_refused).
         $writer = $this->writer();
         $org = fn(int $visible) => (object) ['name' => 'n', 'path' => null, 'visible' => $visible,
             'timecreated' => 1, 'timemodified' => 1];
-        $writer->insert('local_sentientia_toy_org', $org(127));
+        $writer->import_preserved('local_sentientia_toy_org', $org(127), 41);
         $this->assert_refused('integer_out_of_range:local_sentientia_toy_org.visible',
-            fn() => $writer->insert('local_sentientia_toy_org', $org(200)));
+            fn() => $writer->import_preserved('local_sentientia_toy_org', $org(200), 42));
         $this->assert_refused('integer_out_of_range:local_sentientia_toy_org.visible',
-            fn() => $writer->insert('local_sentientia_toy_org', $org(-200)));
+            fn() => $writer->import_preserved('local_sentientia_toy_org', $org(-200), 43));
+        // The dry run runs the same check, so it refuses the same row.
+        $this->assert_refused('integer_out_of_range:local_sentientia_toy_org.visible',
+            fn() => $writer->check('local_sentientia_toy_org', $org(200)));
+    }
+
+    public function test_a_map_insert_into_a_preserve_table_is_refused(): void {
+        global $DB;
+        $writer = $this->writer();
+        // An insert with an explicit id raises AUTO_INCREMENT on MySQL and MariaDB, so a MAP row could take a legacy
+        // id the PRESERVE step has not written yet. The guard comes before the value checks: the row is valid.
+        $row = (object) ['name' => 'n', 'path' => null, 'visible' => 1, 'timecreated' => 1, 'timemodified' => 1];
+        $this->assert_refused('map_insert_into_a_preserve_table:local_sentientia_toy_org',
+            fn() => $writer->insert('local_sentientia_toy_org', $row));
+        $this->assert_refused('map_insert_into_a_preserve_table:local_sentientia_toy_org',
+            fn() => $writer->check('local_sentientia_toy_org', $row, false, true));
+        $this->assertSame(0, $DB->count_records('local_sentientia_toy_org'), 'the refused insert wrote nothing');
     }
 
     public function test_a_dry_run_refuses_a_map_row_that_carries_an_id_like_apply_does(): void {

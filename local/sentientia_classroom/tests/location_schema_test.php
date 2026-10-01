@@ -130,7 +130,10 @@ final class location_schema_test extends \advanced_testcase {
         $this->assertStringContainsString('widened local_sentientia_locations.latitude', $out);
         $this->assertStringContainsString('widened local_sentientia_locations.longitude', $out);
         $this->assert_install_xml_schema();
-        $this->assertEquals(2026092501, get_config('local_sentientia_classroom', 'version'));
+        // The upgrade function runs every step after 2026092500, so the stored version ends at the plugin's last
+        // step (later steps move it on: 2026093001 back-fills the trainer capabilities). It must have got past
+        // this step; it is not pinned to the version that happened to be current when the test was written.
+        $this->assertGreaterThanOrEqual(2026092501, (int) get_config('local_sentientia_classroom', 'version'));
 
         // A coordinate now survives the round trip instead of becoming 19 / 73.
         $id = $DB->insert_record(self::LOCATIONS, (object) [

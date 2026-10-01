@@ -220,6 +220,11 @@ final class guard {
      * running run's heartbeat is; a heartbeat that stopped long ago, or no running run at all, means the
      * holder is dead. Release the row only after confirming that no import process is alive (ps on the host).
      *
+     * The lock keeps two import processes apart, not two calls in one process. MySQL and MariaDB let one database
+     * session take the same GET_LOCK name twice and this method builds a new factory per call, so a second call in
+     * the same process is not refused on those engines. Every CLI takes the lock once, then exits. Tests prove
+     * the exclusion from a second database session (bizlms_guard_parity_test).
+     *
      * @return \core\lock\lock
      * @throws guard_refused When another import holds it.
      */

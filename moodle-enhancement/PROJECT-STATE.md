@@ -5,6 +5,19 @@
 
 ---
 
+## 2026-10-01 - First real PHPUnit run: six failures fixed at the root (Sonnet 5.5)
+
+Branch `claude/phpunit-fixes-1001`. The first Moodle PHPUnit run of the ADR-032 framework and the 2026-09-30 fixes
+(Moodle 5.1.3, MariaDB 10.11) failed in six places; all six were test or baseline faults, no framework code was wrong.
+Lock test called a method the Moodle 5.x lock factories do not have (and MariaDB stacks a same-session lock, so the
+test now proves exclusion from a second database session); two writer tests wrote a MAP row into a PRESERVE table
+(now `import_preserved()`); the writer's `missing_required` check is right and `toy_item.title` is never missing a
+default because XMLDB forces `DEFAULT ''` on NOT NULL chars (test now uses `legacymap.sourceid`); a fixed site
+left the `exception_strings_test` baseline; the classroom upgrade test pinned a version a later step moved on.
+Detail: `state-cards/sentientia_platform-state.md` (last section).
+
+---
+
 ## 2026-09-30 - ADR-032 capability repair: divergent permissions no longer pass as "already held" (Sonnet 5.5)
 
 Branch `claude/bizlms-import-framework`. The round-3 re-review's one must-fix is closed in both plugin trees. The repair's exit
