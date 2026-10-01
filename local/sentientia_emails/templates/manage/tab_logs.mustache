@@ -1,8 +1,14 @@
 {{!
     Logs tab — filterable delivery log with pagination.
     Context: tabdata {logs [{id, date, user_name, user_email, channel, subject,
-             template_key, status, status_sent, status_failed, status_suppressed, error}],
-             total, page, perpage, haspages, pages [{page, label, active}]}
+             template_key, template_label, status, status_sent, status_failed, status_suppressed,
+             status_other, status_notsent, error, imported, sender_name, sent_on, can_view, has_body, view_url}],
+             total, page, perpage, haspages, pages [{page, label, active}], show_imported}
+
+    ADR-032: show_imported is the sentientia.emails.imported_history.enabled flag. While it is OFF the table is
+    exactly the native log (no imported rows, no extra columns). While it is ON the table also lists the BizLMS
+    history, marks it, and adds the Sent from / Sent on columns; can_view (the imported_body_detail flag as
+    well) adds the View link to the detail page.
 }}
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
     <span style="font-size:14px; color:#5a6070;">{{tabdata.total}} delivery log entries</span>
@@ -22,6 +28,10 @@
                 <th style="width:30%;">Subject</th>
                 <th style="width:12%;">Template</th>
                 <th style="width:8%;">Status</th>
+                {{#tabdata.show_imported}}
+                <th style="width:10%;">{{#str}}log_col_sentfrom, local_sentientia_emails{{/str}}</th>
+                <th style="width:10%;">{{#str}}log_col_senton, local_sentientia_emails{{/str}}</th>
+                {{/tabdata.show_imported}}
                 <th style="width:12%;">Error</th>
             </tr>
         </thead>
@@ -34,17 +44,33 @@
                     <span style="font-size:11px; color:#8890a0;">{{user_email}}</span>
                 </td>
                 <td><span style="font-size:12px;">{{channel}}</span></td>
-                <td style="font-size:12px;">{{subject}}</td>
+                <td style="font-size:12px;">
+                    {{subject}}
+                    {{#imported}}
+                    <br/><span class="ap-manage-badge ap-manage-badge--bizlms">{{#str}}log_imported_badge, local_sentientia_emails{{/str}}</span>
+                    {{#can_view}}
+                    <a href="{{view_url}}" style="font-size:11px; margin-left:6px;">{{#str}}log_view_message, local_sentientia_emails{{/str}}</a>
+                    {{/can_view}}
+                    {{/imported}}
+                </td>
                 <td>
-                    {{#template_key}}
-                    <code style="font-size:10px;">{{template_key}}</code>
-                    {{/template_key}}
+                    {{#template_label}}
+                    <code style="font-size:10px;">{{template_label}}</code>
+                    {{/template_label}}
                 </td>
                 <td>
                     {{#status_sent}}<span class="ap-manage-badge ap-manage-badge--sent">sent</span>{{/status_sent}}
                     {{#status_failed}}<span class="ap-manage-badge ap-manage-badge--failed">failed</span>{{/status_failed}}
                     {{#status_suppressed}}<span class="ap-manage-badge ap-manage-badge--suppressed">suppressed</span>{{/status_suppressed}}
+                    {{#tabdata.show_imported}}
+                    {{#status_notsent}}<span class="ap-manage-badge ap-manage-badge--notsent">{{#str}}log_status_notsent, local_sentientia_emails{{/str}}</span>{{/status_notsent}}
+                    {{^status_notsent}}{{#status_other}}<span class="ap-manage-badge ap-manage-badge--notsent">{{status}}</span>{{/status_other}}{{/status_notsent}}
+                    {{/tabdata.show_imported}}
                 </td>
+                {{#tabdata.show_imported}}
+                <td style="font-size:12px;">{{sender_name}}</td>
+                <td style="font-size:12px;">{{sent_on}}</td>
+                {{/tabdata.show_imported}}
                 <td style="font-size:11px; color:#dc2626;">{{error}}</td>
             </tr>
             {{/tabdata.logs}}

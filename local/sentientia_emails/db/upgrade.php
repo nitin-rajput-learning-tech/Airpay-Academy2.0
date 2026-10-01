@@ -279,5 +279,37 @@ function xmldb_local_sentientia_emails_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026092501, 'local', 'sentientia_emails');
     }
 
+    // ── ADR-032 (2026-09-30): room for the BizLMS email history ──
+    //    Four nullable columns and one index on the delivery log, so the import of
+    //    local_emaillogs / local_email_logs has somewhere to put what BizLMS knew:
+    //    legacy_source marks an imported row, sender_userid is the actor who queued
+    //    it, timesent is when BizLMS delivered it, body_html is the message body
+    //    (credentials redacted by the importer). Every step is guarded, so a rerun
+    //    and a fresh install that already has the columns are both no-ops.
+    if ($oldversion < 2026093001) {
+        $table = new xmldb_table('local_sentientia_email_log');
+
+        if ($dbman->table_exists($table)) {
+            $fields = [
+                new xmldb_field('legacy_source', XMLDB_TYPE_CHAR, '40', null, null, null, null, 'timecreated'),
+                new xmldb_field('sender_userid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'legacy_source'),
+                new xmldb_field('timesent', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'sender_userid'),
+                new xmldb_field('body_html', XMLDB_TYPE_TEXT, null, null, null, null, null, 'timesent'),
+            ];
+            foreach ($fields as $field) {
+                if (!$dbman->field_exists($table, $field)) {
+                    $dbman->add_field($table, $field);
+                }
+            }
+
+            $index = new xmldb_index('idx_legacy_source', XMLDB_INDEX_NOTUNIQUE, ['legacy_source']);
+            if (!$dbman->index_exists($table, $index)) {
+                $dbman->add_index($table, $index);
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026093001, 'local', 'sentientia_emails');
+    }
+
     return true;
 }

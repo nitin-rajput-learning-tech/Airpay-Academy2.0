@@ -83,10 +83,13 @@ if ($action && confirm_sesskey()) {
             // $tenantid is always > 0 for a scoped caller; delivery_log also
             // forces the caller's tenant itself (ADR-031 defence in depth).
             $filters = $tenantid > 0 ? ['tenant_id' => $tenantid] : [];
-            $csv = \local_sentientia_emails\delivery_log::export_csv($filters);
             header('Content-Type: text/csv');
             header('Content-Disposition: attachment; filename="notification-log-' . date('Y-m-d') . '.csv"');
-            echo $csv;
+            // Streamed a page at a time, so the export is the whole log and not its first 10 000 rows
+            // (mapping doc section 11, code fix 4).
+            \local_sentientia_emails\delivery_log::stream_csv($filters, static function (string $line): void {
+                echo $line;
+            });
             die();
     }
 }

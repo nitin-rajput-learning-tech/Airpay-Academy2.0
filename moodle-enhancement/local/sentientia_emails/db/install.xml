@@ -94,8 +94,10 @@
         <FIELD NAME="subject"       TYPE="char" LENGTH="255" NOTNULL="true"/>
         <FIELD NAME="template_key"  TYPE="char" LENGTH="100" NOTNULL="false"/>
         <FIELD NAME="status"        TYPE="char" LENGTH="32" NOTNULL="true" DEFAULT="sent"
-               COMMENT="sent, failed, bounced, suppressed, suppressed_completion.
-                        Sprint B widened from 20 to 32 to fit 'suppressed_completion'."/>
+               COMMENT="sent, failed, bounced, suppressed, suppressed_completion, not_sent.
+                        Sprint B widened from 20 to 32 to fit 'suppressed_completion'.
+                        ADR-032: not_sent marks an imported BizLMS queue row that was never delivered;
+                        nothing sends it and it is not a failure."/>
         <FIELD NAME="error_message" TYPE="text" NOTNULL="false"/>
         <FIELD NAME="attachment_filename" TYPE="char" LENGTH="255" NOTNULL="false"
                COMMENT="Sprint B: name of any attached file (e.g. 'certificate.pdf').
@@ -104,6 +106,19 @@
                COMMENT="Sprint B: FK to tool_certificate_issues.id when this delivery
                         carried a course-completion certificate PDF."/>
         <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="legacy_source" TYPE="char" LENGTH="40" NOTNULL="false"
+               COMMENT="ADR-032: bizlms on a row imported from the BizLMS email log. NULL on every
+                        row Sentientia wrote itself. Readers and the reminder guards branch on it."/>
+        <FIELD NAME="sender_userid" TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="Imported rows only: the user who queued the message (BizLMS from_userid).
+                        NULL on native rows. Personal data: anonymised to 0 when that user is erased."/>
+        <FIELD NAME="timesent"      TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="Imported rows only: when BizLMS delivered the message (sent_date).
+                        NULL when it never did, and on native rows."/>
+        <FIELD NAME="body_html"     TYPE="text" NOTNULL="false"
+               COMMENT="Imported rows only: the message body with credentials redacted. NULL on native
+                        rows and on imported rows that carried account credentials. Read by the detail
+                        view only, never by a list."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary"  TYPE="primary" FIELDS="id"/>
@@ -114,6 +129,7 @@
         <INDEX NAME="idx_status"      UNIQUE="false" FIELDS="status"/>
         <INDEX NAME="idx_timecreated" UNIQUE="false" FIELDS="timecreated"/>
         <INDEX NAME="idx_tenant"      UNIQUE="false" FIELDS="tenant_id"/>
+        <INDEX NAME="idx_legacy_source" UNIQUE="false" FIELDS="legacy_source"/>
       </INDEXES>
     </TABLE>
 

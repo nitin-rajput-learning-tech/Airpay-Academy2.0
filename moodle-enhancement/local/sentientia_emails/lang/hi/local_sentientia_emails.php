@@ -87,3 +87,24 @@ $string['rule_locked']               = 'केवल-पढ़ने योग�
 $string['rule_scope_tenant']         = 'केवल {$a}';
 $string['tenant_all']                = 'सभी टेनेंट';
 $string['tenant_n']                  = 'टेनेंट {$a}';
+
+// ADR-032 (2026-09-30): BizLMS से आयात किया गया ईमेल इतिहास, नोटिफ़िकेशन लॉग में फ़्लैग के पीछे दिखता है।
+$string['log_col_sentfrom']      = 'भेजने वाला';
+$string['log_col_senton']        = 'भेजने की तिथि';
+$string['log_imported_badge']    = 'BizLMS इतिहास';
+$string['log_view_message']      = 'देखें';
+$string['log_status_notsent']    = 'नहीं भेजा गया';
+$string['email_detail']          = 'आयात की गई सूचना';
+$string['email_detail_recipient'] = 'प्राप्तकर्ता';
+$string['email_detail_status']   = 'स्थिति';
+$string['email_detail_type']     = 'BizLMS सूचना प्रकार';
+$string['email_detail_created']  = 'बनाया गया';
+$string['email_detail_note']     = 'टिप्पणी';
+$string['email_detail_body']     = 'संदेश';
+$string['email_detail_no_body']  = 'इस ईमेल का संदेश-पाठ नहीं दिखाया जा रहा। यदि संदेश में अकाउंट क्रेडेंशियल थे, या बॉडी आयात बंद था, तो उसे रोक दिया जाता है। BizLMS की अपनी प्रति उसकी आर्काइव तालिका में सुरक्षित रहती है।';
+$string['email_detail_back']     = 'नोटिफ़िकेशन लॉग पर वापस';
+
+// ADR-032 गोपनीयता मेटाडेटा: BizLMS आयात द्वारा डिलीवरी लॉग में जोड़े गए कॉलम।
+$string['privacy:metadata:emaillog:sender_userid'] = 'केवल आयात किया गया BizLMS इतिहास: संदेश को कतार में डालने वाला यूज़र। उस यूज़र को मिटाने पर यह 0 हो जाता है; प्राप्तकर्ता का इतिहास बना रहता है।';
+$string['privacy:metadata:emaillog:body_html']     = 'केवल आयात किया गया BizLMS इतिहास: संदेश का पाठ, अकाउंट क्रेडेंशियल हटाकर।';
+$string['privacy:metadata:emaillog:timesent']      = 'केवल आयात किया गया BizLMS इतिहास: BizLMS ने संदेश कब भेजा।';

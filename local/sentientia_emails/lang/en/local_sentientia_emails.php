@@ -90,3 +90,25 @@ $string['rule_locked']               = 'Read-only: only a cross-tenant administr
 $string['rule_scope_tenant']         = '{$a} only';
 $string['tenant_all']                = 'All Tenants';
 $string['tenant_n']                  = 'Tenant {$a}';
+
+// ADR-032 (2026-09-30): the e-mail history imported from BizLMS, shown in the notification log behind
+// the flags sentientia.emails.imported_history.enabled and sentientia.emails.imported_body_detail.enabled.
+$string['log_col_sentfrom']      = 'Sent from';
+$string['log_col_senton']        = 'Sent on';
+$string['log_imported_badge']    = 'BizLMS history';
+$string['log_view_message']      = 'View';
+$string['log_status_notsent']    = 'not sent';
+$string['email_detail']          = 'Imported notification';
+$string['email_detail_recipient'] = 'Recipient';
+$string['email_detail_status']   = 'Status';
+$string['email_detail_type']     = 'BizLMS notification type';
+$string['email_detail_created']  = 'Created';
+$string['email_detail_note']     = 'Note';
+$string['email_detail_body']     = 'Message';
+$string['email_detail_no_body']  = 'No message body is shown for this e-mail. It is withheld when the message carried account credentials, or when body import was switched off. BizLMS\'s own copy stays in its archive table.';
+$string['email_detail_back']     = 'Back to the notification log';
+
+// ADR-032 privacy metadata: columns the BizLMS import added to the delivery log.
+$string['privacy:metadata:emaillog:sender_userid'] = 'Imported BizLMS history only: the user who queued the message. Set to 0 when that user is erased; the recipient\'s history stays.';
+$string['privacy:metadata:emaillog:body_html']     = 'Imported BizLMS history only: the message body, with account credentials redacted.';
+$string['privacy:metadata:emaillog:timesent']      = 'Imported BizLMS history only: when BizLMS delivered the message.';
