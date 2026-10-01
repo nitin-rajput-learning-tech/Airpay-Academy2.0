@@ -19,6 +19,7 @@ defined('MOODLE_INTERNAL') || die();
  * - response_to_csv_row produces the expected column layout
  * - response_to_csv_row anonymises when eval.anonymous = 1
  * - csv_header_row matches the row layout
+ * - the trigger queue's pending shell rows (timesubmitted 0) are never counted, listed or exported
  *
  * @package    local_sentientia_evaluation
  * @category   test
@@ -108,9 +109,11 @@ final class analysis_test extends \advanced_testcase {
         $this->assertSame(9, $params['crid']);
     }
 
-    public function test_build_filter_empty_returns_tautology(): void {
+    public function test_build_filter_empty_only_leaves_out_trigger_shells(): void {
         [$where, $params] = evaluation_manager::build_response_filter([]);
-        $this->assertSame('1=1', $where);
+        // The one condition that is always there: a response row with timesubmitted 0 is the trigger queue's
+        // pending shell (an invitation), not a response.
+        $this->assertSame('r.timesubmitted > 0', $where);
         $this->assertSame([], $params);
     }
 
@@ -161,6 +164,48 @@ final class analysis_test extends \advanced_testcase {
             'courseid'     => 100,
         ]);
         $this->assertCount(2, $rows);
+    }
+
+    /**
+     * The pending shell evaluation_engine writes when a trigger fires (timesubmitted 0, response_data '{}') is an
+     * invitation, not a response. It used to be counted, listed and exported (as an empty row dated 1970).
+     */
+    public function test_trigger_shells_are_not_counted_listed_or_exported(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $eid = $this->seed_eval('Shells', 1);
+        $qid = $this->seed_question($eid, 'rating');
+        $invited = (int) $this->getDataGenerator()->create_user()->id;
+        $answered = (int) $this->getDataGenerator()->create_user()->id;
+        $this->seed_response($eid, $invited, [], 0);                 // the shell
+        $this->seed_response($eid, $answered, [$qid => 4], time());   // a real response
+
+        $this->assertSame(1, evaluation_manager::count_responses($eid));
+        $this->assertSame(1, evaluation_manager::count_responses());
+        $this->assertSame(1, evaluation_manager::count_responses_scoped());
+        $this->assertSame(1, evaluation_manager::count_responses_filtered(['evaluationid' => $eid]));
+
+        $rows = evaluation_manager::get_responses_filtered(['evaluationid' => $eid]);
+        $this->assertCount(1, $rows);
+        $this->assertSame($answered, (int) reset($rows)->userid);
+
+        // The CSV is built from exactly those rows: no empty row dated 1970.
+        $questions = evaluation_manager::get_questions($eid);
+        $form = evaluation_manager::get($eid);
+        $csv = [];
+        foreach ($rows as $row) {
+            $csv[] = evaluation_manager::response_to_csv_row($row, $questions, $form);
+        }
+        $this->assertCount(1, $csv);
+        $this->assertStringNotContainsString('1970', $csv[0][0]);
+        $this->assertSame('4', $csv[0][6]);
+
+        // The statistics and the Kirkpatrick roll-up agree.
+        $this->assertSame(1, evaluation_manager::get_response_stats($eid)[$qid]['count']);
+        $filtered = evaluation_manager::get_response_stats_filtered($eid, []);
+        $this->assertSame(1, $filtered['response_count']);
+        $this->assertSame(1, evaluation_manager::get_kirkpatrick_summary()[1]['response_count']);
     }
 
     // ─── get_response_stats_filtered ────────────────────────────────────

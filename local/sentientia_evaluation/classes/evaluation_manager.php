@@ -300,11 +300,12 @@ class evaluation_manager {
             return 0;
         }
         [$tsql, $params] = self::scope_sql('e');
+        // Submitted responses only: the trigger queue's pending shell (timesubmitted 0) is an invitation.
         return (int) $DB->count_records_sql(
             "SELECT COUNT(1)
                FROM {" . self::RESPONSES_TABLE . "} r
                JOIN {" . self::TABLE . "} e ON e.id = r.evaluationid
-              WHERE {$tsql}", $params);
+              WHERE r.timesubmitted > 0 AND {$tsql}", $params);
     }
 
     /**
@@ -345,14 +346,25 @@ class evaluation_manager {
         return $DB->count_records(self::TABLE, ['status' => $status]);
     }
 
+    /**
+     * How many responses have been SUBMITTED (for one evaluation, or for all).
+     *
+     * The pending "shell" row evaluation_engine writes when a trigger fires (timesubmitted 0, response_data '{}')
+     * is an invitation, not a response, so it is not counted (until 2026-10-01 it was, and every invited user
+     * inflated the "Total Responses" tile before answering anything).
+     *
+     * @param int|null $evaluationid null = every evaluation
+     * @return int
+     */
     public static function count_responses(?int $evaluationid = null): int {
         global $DB;
         $dbman = $DB->get_manager();
         if (!$dbman->table_exists(self::RESPONSES_TABLE)) return 0;
         if ($evaluationid !== null) {
-            return $DB->count_records(self::RESPONSES_TABLE, ['evaluationid' => $evaluationid]);
+            return $DB->count_records_select(self::RESPONSES_TABLE,
+                'evaluationid = :eid AND timesubmitted > 0', ['eid' => $evaluationid]);
         }
-        return $DB->count_records(self::RESPONSES_TABLE);
+        return $DB->count_records_select(self::RESPONSES_TABLE, 'timesubmitted > 0');
     }
 
     public static function count_questions(int $evaluationid): int {
@@ -1056,7 +1068,10 @@ class evaluation_manager {
      *   - the evaluation has multiple_submit=1 (P1 #17 — pulse surveys
      *     explicitly allow re-submission).
      *
-     * Otherwise checks for an existing response row.
+     * Otherwise checks for a SUBMITTED response row. The pending shell the trigger queue writes for an invited user
+     * (timesubmitted 0, see evaluation_engine::process_due_triggers()) is not a response: counting it told every
+     * invited user of a named form "you already responded" and made submit_response() throw alreadyresponded
+     * before they had answered anything (fixed 2026-10-01).
      */
     public static function has_user_responded(int $evaluationid, int $userid): bool {
         global $DB;
@@ -1068,8 +1083,9 @@ class evaluation_manager {
         if ((int) ($eval->multiple_submit ?? 0) === 1) {
             return false;
         }
-        return $DB->record_exists(self::RESPONSES_TABLE,
-            ['evaluationid' => $evaluationid, 'userid' => $userid]);
+        return $DB->record_exists_select(self::RESPONSES_TABLE,
+            'evaluationid = :eid AND userid = :uid AND timesubmitted > 0',
+            ['eid' => $evaluationid, 'uid' => $userid]);
     }
 
     /**
@@ -1865,8 +1881,9 @@ class evaluation_manager {
         global $DB;
 
         $questions = self::get_questions($evaluationid);
-        $responses = $DB->get_records(self::RESPONSES_TABLE,
-            ['evaluationid' => $evaluationid], 'timesubmitted DESC');
+        // Submitted responses only (a trigger shell has no answers to add up).
+        $responses = $DB->get_records_select(self::RESPONSES_TABLE,
+            'evaluationid = :eid AND timesubmitted > 0', ['eid' => $evaluationid], 'timesubmitted DESC');
 
         $stats = [];
         foreach ($questions as $q) {
@@ -2049,12 +2066,15 @@ class evaluation_manager {
      *
      * The caller composes these into their own SELECT.
      *
+     * Always restricted to SUBMITTED responses (timesubmitted > 0): the pending shell the trigger queue writes
+     * for an invited user is not a response, so it is not counted, listed, exported or added up.
+     *
      * @param array $filters
      * @return array [string $where, array $params]
      */
     public static function build_response_filter(array $filters): array {
         global $DB;
-        $where  = ['1=1'];
+        $where  = ['r.timesubmitted > 0'];
         $params = [];
 
         if (!empty($filters['evaluationid'])) {

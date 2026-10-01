@@ -82,7 +82,7 @@ class list_evaluations extends external_api {
             $records = $DB->get_records_sql(
                 "SELECT e.*,
                         (SELECT COUNT(*) FROM {local_sentientia_evaluation_questions} q WHERE q.evaluationid = e.id) AS qcount,
-                        (SELECT COUNT(*) FROM {local_sentientia_evaluation_responses} r WHERE r.evaluationid = e.id) AS rcount
+                        (SELECT COUNT(*) FROM {local_sentientia_evaluation_responses} r WHERE r.evaluationid = e.id AND r.timesubmitted > 0) AS rcount
                    FROM {local_sentientia_evaluation} e
                   WHERE $wheresql
                ORDER BY e.$sort $sortdir, e.id ASC",

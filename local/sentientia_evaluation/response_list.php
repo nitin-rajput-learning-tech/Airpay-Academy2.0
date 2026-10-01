@@ -48,6 +48,7 @@ $rows = $DB->get_records_sql(
        FROM {local_sentientia_evaluation_responses} r
   LEFT JOIN {user} u ON u.id = r.userid
       WHERE r.evaluationid = :eid
+        AND r.timesubmitted > 0
    ORDER BY r.timesubmitted DESC",
     ['eid' => $evaluationid]);
 

@@ -154,6 +154,34 @@ final class list_evaluations_test extends \advanced_testcase {
     }
 
     /**
+     * The response count in the list is of SUBMITTED responses: the pending shell the trigger queue writes for an
+     * invited user (timesubmitted 0) is an invitation, not a response.
+     */
+    public function test_response_count_ignores_trigger_shells(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+
+        $id = $this->seed_evaluation('Airpay Survey', '/1', 1);
+        $learner = $this->getDataGenerator()->create_user();
+        foreach ([0, time()] as $submitted) {
+            $DB->insert_record('local_sentientia_evaluation_responses', (object) [
+                'evaluationid'  => $id,
+                'userid'        => $learner->id,
+                'response_data' => '{}',
+                'timesubmitted' => $submitted,
+            ]);
+        }
+
+        $u = $this->user_at_path('/1');
+        $this->setUser($u);
+        $result = list_evaluations::execute('', 'name', 'asc', 0, 25, '{}');
+
+        $this->assertSame(1, (int) $result['total']);
+        $this->assertSame(1, (int) $result['rows'][0]['rcount']);
+    }
+
+    /**
      * Search escapes LIKE wildcards.
      */
     public function test_search_escapes_like_wildcards(): void {

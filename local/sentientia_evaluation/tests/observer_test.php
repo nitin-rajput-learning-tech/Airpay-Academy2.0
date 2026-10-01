@@ -231,6 +231,56 @@ final class observer_test extends \advanced_testcase {
         $sink->close();
     }
 
+    public function test_an_invited_user_can_still_answer_a_named_form(): void {
+        // A fired trigger leaves a pending shell (timesubmitted 0) for the invitee. It is an invitation, not a
+        // response: it used to make has_user_responded() true, so the invited user was told they had already
+        // responded and submit_response() threw alreadyresponded before they had answered anything.
+        $this->resetAfterTest();
+        global $DB;
+
+        $u = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $eid = $this->seed_evaluation('course_completion', 0);
+        $qid = evaluation_manager::create_question((object) [
+            'evaluationid' => $eid, 'questiontype' => 'yesno', 'questiontext' => 'Was it useful?', 'required' => 1,
+        ]);
+        $DB->insert_record('local_sentientia_evaluation_triggers', (object) [
+            'evaluationid'  => $eid,
+            'userid'        => $u->id,
+            'itemid'        => $course->id,
+            'trigger_event' => 'course_completion',
+            'fire_after'    => time() - 60,
+            'status'        => evaluation_engine::STATUS_PENDING,
+            'timecreated'   => time(),
+        ]);
+        $sink = $this->redirectMessages();
+        $this->assertSame(1, evaluation_engine::process_due_triggers()['fired']);
+        $sink->close();
+
+        // The shell exists, and it is not a response.
+        $this->assertSame(1, $DB->count_records('local_sentientia_evaluation_responses',
+            ['evaluationid' => $eid, 'userid' => $u->id, 'timesubmitted' => 0]));
+        $this->assertFalse(evaluation_manager::has_user_responded($eid, (int) $u->id));
+        $this->assertSame(0, evaluation_manager::count_responses($eid));
+
+        // The invited user can answer ...
+        $responseid = evaluation_manager::submit_response($eid, (int) $u->id, [$qid => 'yes']);
+        $this->assertGreaterThan(0, $responseid);
+        $this->assertTrue(evaluation_manager::has_user_responded($eid, (int) $u->id));
+        $this->assertSame(1, evaluation_manager::count_responses($eid));
+        $this->assertSame('responded', $DB->get_field('local_sentientia_evaluation_assign', 'status',
+            ['evaluationid' => $eid, 'userid' => $u->id]));
+
+        // ... once: a second submission of a named, non-pulse form is still refused.
+        try {
+            evaluation_manager::submit_response($eid, (int) $u->id, [$qid => 'no']);
+            $this->fail('A second submission should be refused.');
+        } catch (\moodle_exception $e) {
+            $this->assertSame('alreadyresponded', $e->errorcode);
+        }
+        $this->assertSame(1, evaluation_manager::count_responses($eid));
+    }
+
     public function test_process_due_triggers_skips_archived_form(): void {
         // Trigger was queued while form was active; form was then archived
         // before fire_after. Engine should mark trigger SKIPPED rather than

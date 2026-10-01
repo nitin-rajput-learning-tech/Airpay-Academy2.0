@@ -379,3 +379,25 @@ platform dependency are unchanged. Both trees byte-identical.
   supervisor exception, stray rows block, `duplicate_value` needs-owner, imported template not deletable, supervisor
   assignment not shown as a response, the `unlinked` note. Static checks run: `php -l` on every changed file, the
   ADR-032 static scan over `classes/bizlms/` (clean), tree drift, lang parity, path boundary, fixture copies.
+
+## 2026-10-01 - evaluation follow-ups (branch claude/eval-followups; no version change, stays 2026093001)
+
+Eleven items from the importer re-review and the mapping doc section 18 "Code fixes", built together. Code and
+tests only, both trees byte-identical. **PHPUnit NOT run** (the lead runs it once). Every UI change needs the
+screenshots listed per item before it is merged.
+
+- **EV-31 - trigger shells are not responses.** When a trigger fires, `evaluation_engine::process_due_triggers()`
+  writes a pending shell (`timesubmitted` 0, `response_data` `{}`) for the invitee. `has_user_responded()` counted
+  it, so on a named, non-pulse form the invited user saw "already responded" (`respond.php`) and `submit_response()`
+  threw `alreadyresponded` before they had answered. It is now `... AND timesubmitted > 0`. The same shells also
+  inflated every count and listing, so `timesubmitted > 0` is now part of `count_responses()`,
+  `count_responses_scoped()` (index tile), `get_response_stats()`, `build_response_filter()` (so
+  `get_responses_filtered()`, `count_responses_filtered()`, the filtered statistics, the Kirkpatrick roll-up and the
+  CSV), the `rcount` subquery of `list_evaluations` and the `response_list.php` query (`response_detail.php` is in
+  EV-05). The privacy provider still sees shells: they are personal data of the invitee. A shell is never turned into
+  the response when the invitee answers (a new row is inserted); it stays as an inert row. Tests:
+  `observer_test::test_an_invited_user_can_still_answer_a_named_form`,
+  `analysis_test::test_trigger_shells_are_not_counted_listed_or_exported` (and the empty-filter test now expects
+  `r.timesubmitted > 0` instead of `1=1`), `list_evaluations_test::test_response_count_ignores_trigger_shells`.
+  Screenshots needed: `respond.php` as an invited learner (the form, not the thank-you page) and `responses.php`
+  "Total Responses" for a form that holds a shell, desktop and 590 px.
