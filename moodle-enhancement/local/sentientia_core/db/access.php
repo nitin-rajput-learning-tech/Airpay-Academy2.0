@@ -20,4 +20,18 @@ $capabilities = [
         'riskbitmask'  => RISK_CONFIG | RISK_DATALOSS,
         'archetypes'   => [],
     ],
+
+    // ADR-032 legacy_logs: read the imported BizLMS admin log (and bulk upload errors).
+    // No archetype grant: BizLMS had no screen for these tables, so a default grant would
+    // make the history more visible than it ever was (owner rule 3), and the descriptions
+    // name the actor by first name (RISK_PERSONAL). A holder who is not cross-tenant
+    // (tenant::is_cross_tenant()) sees only the rows whose actor sat inside their own
+    // tenant; a row with no resolvable tenant is cross-tenant only. The report page is
+    // also behind the default-OFF flag sentientia.legacy_logs.report.enabled.
+    'local/sentientia_core:viewadminlog' => [
+        'captype'      => 'read',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'riskbitmask'  => RISK_PERSONAL,
+        'archetypes'   => [],
+    ],
 ];

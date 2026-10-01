@@ -4,7 +4,7 @@
 |-------|-------|
 | **Component** | `local_sentientia_core` |
 | **Role** | The "Sentientia layer" — the product's tenancy/org abstraction seams that sit ABOVE the BizLMS (`local_airpay_core` / `local_costcenter`) heritage. The decoupling foundation for ADR-018 independence. |
-| **Version** | `2026090301` / `0.7.0-alpha` (MATURITY_ALPHA) — 2026-09-03: NEW `db/install.php` provisions the open_* substrate on FRESH installs (was upgrade-only since 2026060400 → UAT Stage A came up without the 55 columns; see `docs/core-mods/2026-06-04-open-substrate-ownership.md` addendum) |
+| **Version** | `2026093001` / `0.8.0-alpha` (MATURITY_ALPHA) — 2026-09-30: NEW `local_sentientia_admin_log` (ADR-032 legacy_logs import target), see the 2026-09-30 legacy_logs section at the end. Before that, `2026090301` — 2026-09-03: NEW `db/install.php` provisions the open_* substrate on FRESH installs (was upgrade-only since 2026060400 → UAT Stage A came up without the 55 columns; see `docs/core-mods/2026-06-04-open-substrate-ownership.md` addendum) |
 | **Owner** | Nitin Rajput |
 | **Status** | Seams shipped + default-legacy (dormant). Wave 4 registry + Wave 3.2a org model + Wave 3.2b dual-write reconciler + Wave 3.3 backfill/parity CLIs built + locally rehearsed (2,883 users, **100% parity**); live cutover + dual-write enable gated on Nitin's deploy. |
 | **Standalone?** | Yes — every delegation to `local_airpay_core` is `class_exists()`-guarded with an inline fallback, so the plugin ships for Enterprise N with no airpay_core present. |
@@ -237,3 +237,68 @@ backfilled unit "Unit <id>". The column is now a constant (`NAME_COLUMN = 'fulln
 check and the read. Mapping doc section 3, code fix 3. Covered by `test_the_core_legacy_source_reads_the_organisation_name_from_fullname`
 in `local_sentientia_org/tests/bizlms_import_test.php`. Only matters before any `org_legacy` flip; `backfill_org.php`
 is not part of the cutover. No version bump, no schema change.
+
+## 2026-09-30 - ADR-032 legacy_logs importer (BizLMS `local_logs` and `local_courseerrors`)
+
+Version `2026093001` / `0.8.0-alpha`. Map section 8 of `docs/cutover/BIZLMS-IMPORT-MAPPING-2026-09-29.md`.
+Branch `claude/bizlms-import-legacy_logs`. Both trees.
+
+**What ships**
+- `classes/bizlms/legacy_logs_importer.php` (registered in `db/bizlms_import.php`), two MAP steps:
+  `admin_log_step` (`local_logs`, 8 columns) and `upload_error_step` (`local_courseerrors`), sharing
+  `log_step` (tenant attribution, text repair, timestamp rule). One target row per source row, no dedupe, no
+  filter, no status to map. Source times are kept; a missing `timemodified` takes `timecreated`
+  (`derived_timestamp`); nothing invents a time.
+- Target `local_sentientia_admin_log` (new table, `db/install.xml` + idempotent `db/upgrade.php` step
+  `2026093001`): id, source, event, module, description, itemref, userid, usermodified, actor_path,
+  timecreated, timemodified; indexes on userid, timecreated, source.
+- Tenant: `actor_path` = the actor's current `user.open_path`, through `tenant_resolver`. A row whose tenant
+  cannot be resolved is imported pathless (signed `tenant.unresolved.legacy_logs = pathless`), so a tenant
+  admin never sees it. A deleted actor, an actor with no user row and an actor of 0 all keep the row.
+- Read side (new, default OFF): `admin_log.php` (read-only report) behind flag
+  `sentientia.legacy_logs.report.enabled`, capability `local/sentientia_core:viewadminlog` (no archetype, no
+  role holds it), listed in Site administration only while the flag is ON. Tenant scope: a cross-tenant caller
+  sees all, anyone else sees rows inside their own tenant (`tenant::path_descendant_filter`, whole segments),
+  a caller with no tenant sees nothing. `classes/admin_log.php` holds the reader, the export and the erasure.
+- Privacy: `local_sentientia_admin_log` declared in the provider (metadata, export, userlist, erase).
+  Signed `legacy_logs.description_erasure = keep_row_scrub_name`: an erasure request keeps the row, sets
+  `userid` and `usermodified` to 0 and replaces the first name in the description with `[erased]`
+  (`admin_log::scrub_description()`); a description not in the BizLMS shape is replaced whole, except on a row
+  that never had an actor (a cron-style entry), which names nobody and stays.
+- Strings: en and hi (parity gate 0 failures).
+
+**Deviations from the map, and why**
+- Target is `local_sentientia_admin_log`, not `local_sentientia_legacy_log`: the registry refuses any target
+  that starts with `local_sentientia_legacy` (it is the framework's prefix).
+- `depends()` is `['org']`, not none: the registry refuses an importer with a tenant column that does not
+  have `org` in its dependency closure. Run order is unchanged (org runs first).
+- The map's `sourceid` column and UNIQUE key are not built (R6): the ADR-032 map is the idempotence key.
+- Both decisions `legacy_logs.retention = keep_no_purge` and `legacy_logs.description_erasure =
+  keep_row_scrub_name` are declared required, so a run without them signed is blocked at preflight.
+
+**Reader fixes listed for this feature:** none. Nothing in Sentientia read `local_logs` or `local_courseerrors`
+(the map lists no fallback to remove). The only new reader is the report above.
+
+**Tests** (written, NOT yet run: the lead re-inits PHPUnit once for all version bumps)
+- `tests/bizlms_import_test.php` (`@group bizlms_import`, tenant tests also `tenant_isolation`): the
+  `importer_contract` trait plus column map, upload errors, tenant attribution (exact, normalised, walked up,
+  unresolved), warnings, the skip decision and its needs-owner reason, decision gating, the signed decisions
+  file, the legacy tables never written, dry run, preflight, registration, verify damage, pure helpers, and a
+  tenant admin reading only their tenant (including `/7` versus `/77`). The org feature is registered as
+  `tests/classes/bizlms/stub_org_importer.php` because the real org importer is another plugin's.
+- `tests/admin_log_test.php`: scrub shapes, erasure, every provider path, flag default OFF, capability with no
+  default grant, tenant scope, filters and paging.
+- Fixture: `tests/fixtures/bizlms/courses.install.xml` (the two tables, copied from the BizLMS snapshot,
+  sha1 in its header) and `stub_org.install.xml`.
+
+**Defects found and fixed while finishing it:** the erasure regex expected one space before `created` but
+BizLMS wrote two (every create row would have lost its whole description); the export compared an int to the
+string id of the user record (every entry would have shown actor false).
+
+**Not done / open**
+- No screenshots of `admin_log.php`: it needs a deploy to the local Moodle, which this build did not do. The
+  flag stays OFF; capture visual evidence before anyone turns it ON (ADR-032 gate, CLAUDE.md section 5).
+- `usermodified` is not in `privacy_coverage_test::USER_COLUMNS` (framework test, not edited here).
+- The descriptions carry the actor's first name in free text, and the importer cannot find a name in other
+  languages or other shapes: only the shapes BizLMS wrote in English are recognised. Retention and the wider
+  legacy-table privacy treatment remain the separate ADR the owner file names.

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  ADR-032 legacy_logs test fixture: the two BizLMS tables this feature imports, copied from the production
+  snapshot.
+
+  Source : D:/Claude Local/Moodle Backup/01-production-codebase/html/local/courses/db/install.xml
+           (BizLMS local_courses 4.1.2 snapshot), lines 7-39: the TABLE elements local_logs and local_courseerrors,
+           line for line apart from the edits below (line endings normalised to LF; the two trailing spaces after
+           the closing TABLE tags at source lines 25 and 39 dropped, which changes no value). The rest of that file
+           (local_course_types, local_dashboardcourses, ...) belongs to other features and is not copied.
+  sha1   : 679c0b9afc33b37363677be68496f98d30ba17f6 (of the whole source file, as read on 2026-09-30)
+  Date   : 2026-09-30
+
+  Edits to the source (everything else is the source's; the ADR allows (a) to (c), the loader forces (d)):
+    (a) PREVIOUS / NEXT attributes stripped: the source has none, so nothing to strip.
+    (b) Types XMLDB rejects replaced: none needed, both tables load as they are (UNSIGNED on a char field is ignored).
+    (c) Production-only columns added: none. Neither table was altered after install in a way that adds a column
+        (local/courses/db/upgrade.php step 2022101800 only adds the indexes that install.xml already carries).
+    (d) The root element: PATH must equal the directory of this file relative to dirroot (xmldb_structure refuses a
+        file whose PATH differs), so it is local/sentientia_core/tests/fixtures/bizlms instead of local/courses/db.
+        The xsi schema attributes are dropped with it (their relative path does not exist here). VERSION is the source's.
+-->
+<XMLDB PATH="local/sentientia_core/tests/fixtures/bizlms" VERSION="20161125" COMMENT="BizLMS local_courses: local_logs and local_courseerrors (test fixture copy)"
+>
+  <TABLES>
+    <TABLE NAME="local_logs" COMMENT="List of logs" >
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" />
+        <FIELD NAME="event" TYPE="char" LENGTH="225" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" />
+        <FIELD NAME="module" TYPE="char" LENGTH="225" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" />		
+		<FIELD NAME="description" TYPE="text" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="type" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+		<FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+       </KEYS>	
+      <INDEXES>
+        <INDEX NAME="module" UNIQUE="false" FIELDS="module"/>
+      </INDEXES>  
+    </TABLE>
+    <TABLE NAME="local_courseerrors" COMMENT="List of errors in bulk upload courses" > 
+      <FIELDS> 
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" /> 
+        <FIELD NAME="reason" TYPE="char" LENGTH="225" NOTNULL="false" SEQUENCE="false" /> 
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" /> 
+        <FIELD NAME="time" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />
+      </FIELDS> 
+      <KEYS> 
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/> 
+      </KEYS> 
+       <INDEXES>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

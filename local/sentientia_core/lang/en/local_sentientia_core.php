@@ -5,7 +5,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'Sentientia Core';
-$string['privacy:metadata'] = 'The Sentientia Core plugin stores org-unit membership rows (user, unit, role, direct manager) in local_sentientia_org_member. The tenant registry itself (customer + tenant configuration: names, root ids, status) carries no personal data.';
+$string['privacy:metadata'] = 'The Sentientia Core plugin stores org-unit membership rows (user, unit, role, direct manager) in local_sentientia_org_member, and the imported BizLMS admin log in local_sentientia_admin_log (who created, updated or deleted a course and when, with a description that names the person by first name). The tenant registry itself (customer + tenant configuration: names, root ids, status) carries no personal data.';
 
 // Tenant identity settings.
 $string['settings_tenant_identity'] = 'Tenant identity';
@@ -86,3 +86,38 @@ $string['privacy:metadata:org_member:unitid']      = 'The org unit the user belo
 $string['privacy:metadata:org_member:role']        = 'The user\'s role inside the unit';
 $string['privacy:metadata:org_member:managerid']   = 'The user\'s direct manager';
 $string['privacy:metadata:org_member:timecreated'] = 'When the membership was recorded';
+
+// ── ADR-032 legacy_logs: the imported admin log (2026-09-30) ──────────────
+$string['sentientia_core:viewadminlog'] = 'View the imported admin log';
+$string['adminlog'] = 'Imported admin log';
+$string['adminlog_intro'] = 'The BizLMS admin log (course created, updated or deleted) and the bulk course upload errors, imported at cutover. This is read-only history: nothing here can be edited or deleted. Descriptions name the person who acted, by first name, so treat the page as personal data.';
+$string['adminlog_flagoff'] = 'This report is switched off. It is turned on by the feature flag sentientia.legacy_logs.report.enabled, which is OFF until the page has been reviewed.';
+$string['adminlog_noentries'] = 'No entries match.';
+$string['adminlog_notenant'] = 'Your account is not attached to a tenant, so there is nothing to show.';
+$string['adminlog_total'] = '{$a} entries';
+$string['adminlog_col_when'] = 'When';
+$string['adminlog_col_who'] = 'Who';
+$string['adminlog_col_source'] = 'Source';
+$string['adminlog_col_event'] = 'Event';
+$string['adminlog_col_module'] = 'Module';
+$string['adminlog_col_item'] = 'Item';
+$string['adminlog_col_description'] = 'Description';
+$string['adminlog_source_local_logs'] = 'Course administration log';
+$string['adminlog_source_local_courseerrors'] = 'Bulk course upload error';
+$string['adminlog_filter_any'] = 'Any';
+$string['adminlog_filter_apply'] = 'Filter';
+$string['adminlog_actor_deleted'] = '{$a} (deleted user)';
+$string['adminlog_actor_unknown'] = 'Unknown or erased';
+
+// Privacy provider: the imported admin log.
+$string['privacy:metadata:admin_log'] = 'The imported BizLMS admin log and bulk course upload errors: who acted, on what, and when. Kept as history when a person is erased; the person is removed from the row.';
+$string['privacy:metadata:admin_log:source'] = 'Which BizLMS log the row came from';
+$string['privacy:metadata:admin_log:event'] = 'What happened (insert, update, delete, or an upload error)';
+$string['privacy:metadata:admin_log:module'] = 'The kind of item the entry is about';
+$string['privacy:metadata:admin_log:description'] = 'Free text that names the acting person by first name; scrubbed when the person is erased';
+$string['privacy:metadata:admin_log:itemref'] = 'The id of the item the entry is about, usually a course';
+$string['privacy:metadata:admin_log:userid'] = 'The person who acted, or who ran the upload';
+$string['privacy:metadata:admin_log:usermodified'] = 'The person who last modified the entry in BizLMS';
+$string['privacy:metadata:admin_log:actor_path'] = 'The organisation path of the acting person when the entry was imported';
+$string['privacy:metadata:admin_log:timecreated'] = 'When the entry was made in BizLMS';
+$string['privacy:metadata:admin_log:timemodified'] = 'When the entry was last modified in BizLMS';

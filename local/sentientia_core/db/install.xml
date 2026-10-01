@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/sentientia_core/db" VERSION="20260602"
-       COMMENT="Sentientia core — ADR-021 Wave-4 tenant registry + ADR-020 Wave-3.2 org model">
+<XMLDB PATH="local/sentientia_core/db" VERSION="20260930"
+       COMMENT="Sentientia core — ADR-021 Wave-4 tenant registry + ADR-020 Wave-3.2 org model + ADR-032 imported admin log">
   <TABLES>
     <TABLE NAME="local_sentientia_customer"
            COMMENT="Top-level Sentientia customer. Airpay = customer-zero (id 1). One customer owns >=1 tenant root.">
@@ -122,6 +122,44 @@
                COMMENT="unit-lead scan (reserved)"/>
         <INDEX NAME="idx_managerid" UNIQUE="false" FIELDS="managerid"
                COMMENT="direct_reports() / is_manager() reverse lookup"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_sentientia_admin_log"
+           COMMENT="Imported BizLMS admin log (course insert, update and delete) and bulk course upload errors. Read-only history, written only by the ADR-032 legacy_logs importer. One row per source row; the idempotence key is local_sentientia_legacymap, not a column here.">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"
+               COMMENT="Primary key. A new id: nothing outside this table stores the legacy id."/>
+        <FIELD NAME="source"       TYPE="char" LENGTH="40"  NOTNULL="true"
+               COMMENT="Legacy table the row came from: local_logs or local_courseerrors"/>
+        <FIELD NAME="event"        TYPE="char" LENGTH="225" NOTNULL="true"
+               COMMENT="local_logs.event (insert, update or delete), or upload_error for a bulk upload error"/>
+        <FIELD NAME="module"       TYPE="char" LENGTH="225" NOTNULL="true"
+               COMMENT="local_logs.module (course in every known writer), or course for an upload error"/>
+        <FIELD NAME="description"  TYPE="text"              NOTNULL="true"
+               COMMENT="Verbatim. A local_logs description names the actor by first name, so it is personal data: declared in the privacy provider and scrubbed on an erasure request, the row is kept."/>
+        <FIELD NAME="itemref"      TYPE="char" LENGTH="225" NOTNULL="false"
+               COMMENT="local_logs.type: the course id the entry is about, when BizLMS recorded one"/>
+        <FIELD NAME="userid"       TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="The actor (local_logs.usercreated, or local_courseerrors.userid); 0 = none or erased"/>
+        <FIELD NAME="usermodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="local_logs.usermodified; 0 = none or erased"/>
+        <FIELD NAME="actor_path"   TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="Tenant path: the actor's user.open_path at import time, normalised. NULL = no tenant could be resolved, visible to cross-tenant callers only."/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Source timecreated (local_courseerrors.time)"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Source timemodified; timecreated when the source has none"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_userid"      UNIQUE="false" FIELDS="userid"
+               COMMENT="Export and erasure by actor"/>
+        <INDEX NAME="idx_timecreated" UNIQUE="false" FIELDS="timecreated"
+               COMMENT="Report ordering"/>
+        <INDEX NAME="idx_source"      UNIQUE="false" FIELDS="source"
+               COMMENT="Report filter by source table"/>
       </INDEXES>
     </TABLE>
   </TABLES>

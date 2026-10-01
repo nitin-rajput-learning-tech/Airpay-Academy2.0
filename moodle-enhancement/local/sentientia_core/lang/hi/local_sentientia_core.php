@@ -8,7 +8,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'Sentientia Core';
-$string['privacy:metadata'] = 'Sentientia Core प्लगइन local_sentientia_org_member में संगठन-इकाई सदस्यता पंक्तियाँ (उपयोगकर्ता, इकाई, भूमिका, प्रत्यक्ष प्रबंधक) संग्रहीत करता है। टेनेंट रजिस्ट्री स्वयं (ग्राहक + टेनेंट कॉन्फ़िगरेशन: नाम, root id, स्थिति) में कोई व्यक्तिगत डेटा नहीं है।';
+$string['privacy:metadata'] = 'Sentientia Core प्लगइन local_sentientia_org_member में संगठन-इकाई सदस्यता पंक्तियाँ (उपयोगकर्ता, इकाई, भूमिका, प्रत्यक्ष प्रबंधक) और local_sentientia_admin_log में आयात किया गया BizLMS एडमिन लॉग (किसने कोई कोर्स कब बनाया, अपडेट किया या हटाया, और ऐसा विवरण जिसमें व्यक्ति का पहला नाम आता है) संग्रहीत करता है। टेनेंट रजिस्ट्री स्वयं (ग्राहक + टेनेंट कॉन्फ़िगरेशन: नाम, root id, स्थिति) में कोई व्यक्तिगत डेटा नहीं है।';
 
 // Privacy provider (2026-08-04) — real metadata + export + delete.
 $string['privacy:metadata:org_member']             = 'उपयोगकर्ता की संगठन-इकाई सदस्यता: इकाई, भूमिका और प्रत्यक्ष प्रबंधक';
@@ -70,3 +70,38 @@ $string['field_idnumber_help'] = 'एक वैकल्पिक बाहर�
 $string['err_shortname_taken'] = 'यह संक्षिप्त नाम पहले से किसी अन्य ग्राहक द्वारा उपयोग में है।';
 $string['err_rootid_positive'] = 'टेनेंट root id एक धनात्मक पूर्णांक होना चाहिए।';
 $string['err_rootid_taken'] = 'यह टेनेंट root id पहले से पंजीकृत है।';
+
+// ── ADR-032 legacy_logs: आयात किया गया एडमिन लॉग (2026-09-30) ───────────────
+$string['sentientia_core:viewadminlog'] = 'आयात किया गया एडमिन लॉग देखें';
+$string['adminlog'] = 'आयात किया गया एडमिन लॉग';
+$string['adminlog_intro'] = 'BizLMS का एडमिन लॉग (कोर्स बनाया, अपडेट किया या हटाया गया) और बल्क कोर्स अपलोड की त्रुटियाँ, जो cutover पर आयात की गईं। यह केवल पढ़ने योग्य इतिहास है: यहाँ कुछ भी संपादित या हटाया नहीं जा सकता। विवरण में कार्य करने वाले व्यक्ति का पहला नाम आता है, इसलिए इस पेज को व्यक्तिगत डेटा मानें।';
+$string['adminlog_flagoff'] = 'यह रिपोर्ट बंद है। इसे फ़ीचर फ़्लैग sentientia.legacy_logs.report.enabled चालू करता है, जो पेज की समीक्षा होने तक OFF रहता है।';
+$string['adminlog_noentries'] = 'कोई प्रविष्टि मेल नहीं खाती।';
+$string['adminlog_notenant'] = 'आपका खाता किसी टेनेंट से जुड़ा नहीं है, इसलिए दिखाने के लिए कुछ नहीं है।';
+$string['adminlog_total'] = '{$a} प्रविष्टियाँ';
+$string['adminlog_col_when'] = 'कब';
+$string['adminlog_col_who'] = 'किसने';
+$string['adminlog_col_source'] = 'स्रोत';
+$string['adminlog_col_event'] = 'घटना';
+$string['adminlog_col_module'] = 'मॉड्यूल';
+$string['adminlog_col_item'] = 'आइटम';
+$string['adminlog_col_description'] = 'विवरण';
+$string['adminlog_source_local_logs'] = 'कोर्स प्रशासन लॉग';
+$string['adminlog_source_local_courseerrors'] = 'बल्क कोर्स अपलोड त्रुटि';
+$string['adminlog_filter_any'] = 'कोई भी';
+$string['adminlog_filter_apply'] = 'फ़िल्टर करें';
+$string['adminlog_actor_deleted'] = '{$a} (हटाया गया उपयोगकर्ता)';
+$string['adminlog_actor_unknown'] = 'अज्ञात या मिटाया गया';
+
+// Privacy provider: आयात किया गया एडमिन लॉग।
+$string['privacy:metadata:admin_log'] = 'आयात किया गया BizLMS एडमिन लॉग और बल्क कोर्स अपलोड त्रुटियाँ: किसने, किस पर और कब कार्य किया। किसी व्यक्ति को मिटाने पर भी यह इतिहास के रूप में रखा जाता है; पंक्ति से केवल व्यक्ति हटाया जाता है।';
+$string['privacy:metadata:admin_log:source'] = 'पंक्ति BizLMS के किस लॉग से आई';
+$string['privacy:metadata:admin_log:event'] = 'क्या हुआ (insert, update, delete, या अपलोड त्रुटि)';
+$string['privacy:metadata:admin_log:module'] = 'प्रविष्टि किस प्रकार के आइटम के बारे में है';
+$string['privacy:metadata:admin_log:description'] = 'मुक्त पाठ जिसमें कार्य करने वाले व्यक्ति का पहला नाम आता है; व्यक्ति को मिटाने पर यह साफ़ कर दिया जाता है';
+$string['privacy:metadata:admin_log:itemref'] = 'उस आइटम की id जिसके बारे में प्रविष्टि है, आमतौर पर कोई कोर्स';
+$string['privacy:metadata:admin_log:userid'] = 'कार्य करने वाला व्यक्ति, या अपलोड चलाने वाला';
+$string['privacy:metadata:admin_log:usermodified'] = 'वह व्यक्ति जिसने BizLMS में प्रविष्टि को अंतिम बार बदला';
+$string['privacy:metadata:admin_log:actor_path'] = 'प्रविष्टि आयात होते समय कार्य करने वाले व्यक्ति का संगठन पथ';
+$string['privacy:metadata:admin_log:timecreated'] = 'BizLMS में प्रविष्टि कब बनी';
+$string['privacy:metadata:admin_log:timemodified'] = 'BizLMS में प्रविष्टि अंतिम बार कब बदली';

@@ -130,5 +130,32 @@ function xmldb_local_sentientia_core_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026060400, 'local', 'sentientia_core');
     }
 
+    // ADR-032 legacy_logs: the target of the BizLMS admin-log import (local_logs and
+    // local_courseerrors). Additive and idempotent; the importer is the only writer and
+    // the report page behind sentientia.legacy_logs.report.enabled (default OFF) the only
+    // reader. Mirrors db/install.xml field for field.
+    if ($oldversion < 2026093001) {
+        $table = new xmldb_table('local_sentientia_admin_log');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('source', XMLDB_TYPE_CHAR, '40', null, XMLDB_NOTNULL);
+            $table->add_field('event', XMLDB_TYPE_CHAR, '225', null, XMLDB_NOTNULL);
+            $table->add_field('module', XMLDB_TYPE_CHAR, '225', null, XMLDB_NOTNULL);
+            $table->add_field('description', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL);
+            $table->add_field('itemref', XMLDB_TYPE_CHAR, '225', null, null);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('actor_path', XMLDB_TYPE_CHAR, '255', null, null);
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('idx_userid', XMLDB_INDEX_NOTUNIQUE, ['userid']);
+            $table->add_index('idx_timecreated', XMLDB_INDEX_NOTUNIQUE, ['timecreated']);
+            $table->add_index('idx_source', XMLDB_INDEX_NOTUNIQUE, ['source']);
+            $dbman->create_table($table);
+        }
+        upgrade_plugin_savepoint(true, 2026093001, 'local', 'sentientia_core');
+    }
+
     return true;
 }

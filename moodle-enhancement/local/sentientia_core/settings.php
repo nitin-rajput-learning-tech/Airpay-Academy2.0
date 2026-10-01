@@ -69,3 +69,15 @@ if ($hassiteconfig) {
         'local/sentientia_core:managetenants'
     ));
 }
+
+// ADR-032 legacy_logs - the imported admin log report. Listed only while its flag is ON (default OFF), so the
+// admin tree is unchanged until then. Outside the $hassiteconfig block on purpose: the page has its own
+// capability, which a delegated auditor can hold without moodle/site:config.
+if (\local_sentientia_core\admin_log::report_enabled()) {
+    $ADMIN->add('localplugins', new admin_externalpage(
+        'local_sentientia_core_adminlog',
+        get_string('adminlog', 'local_sentientia_core'),
+        $CFG->wwwroot . '/local/sentientia_core/admin_log.php',
+        'local/sentientia_core:viewadminlog'
+    ));
+}
