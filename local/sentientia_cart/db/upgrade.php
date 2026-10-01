@@ -73,5 +73,52 @@ function xmldb_local_sentientia_cart_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026093002, 'local', 'sentientia_cart');
     }
 
+    // ── 2026100101 — ADR-032: BizLMS cart import schema ─────────────────────
+    //
+    // The cart importer (classes/bizlms/) copies the BizLMS orders, ledger,
+    // invoices and credit journal into this plugin's tables as frozen,
+    // admin-only history. It needs two additions, both idempotent:
+    //   - local_sentientia_cart_history.legacy_source: the in-row marker that
+    //     mark_paid(), mark_failed() and refund() branch on to refuse an
+    //     imported order, and that every reader uses to hide it from its owner;
+    //   - local_sentientia_cart_credit_txn: the credit journal (the balance a
+    //     user held lives on in local_sentientia_cart_credits).
+    // The new status values (abandoned, part_cancelled) and event types
+    // (legacy_*) fit the existing columns, so they need no change.
+    if ($oldversion < 2026100101) {
+        $dbman = $DB->get_manager();
+
+        $table = new xmldb_table('local_sentientia_cart_history');
+        $field = new xmldb_field('legacy_source', XMLDB_TYPE_CHAR, '20', null, null, null, null, 'timemodified');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $table = new xmldb_table('local_sentientia_cart_credit_txn');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('costcenterid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('event_type', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('amount', XMLDB_TYPE_NUMBER, '14, 2', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('balance_after', XMLDB_TYPE_NUMBER, '14, 2', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('currency', XMLDB_TYPE_CHAR, '3', null, XMLDB_NOTNULL, null, 'INR');
+            $table->add_field('historyid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+            $table->add_field('orderid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+            $table->add_field('ledgerid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+            $table->add_field('initiatedby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('reason', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_key('fk_user', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+            $table->add_index('idx_user_time', XMLDB_INDEX_NOTUNIQUE, ['userid', 'timecreated']);
+            $table->add_index('idx_costcenter', XMLDB_INDEX_NOTUNIQUE, ['costcenterid']);
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026100101, 'local', 'sentientia_cart');
+    }
+
     return true;
 }

@@ -28,5 +28,10 @@ $PAGE->set_title('Invoice ' . $invoice->invoice_number);
 $PAGE->set_heading('Invoice ' . $invoice->invoice_number);
 
 echo $OUTPUT->header();
-echo \local_sentientia_cart\invoicer::render_html($invoice);
+if ($invoice->status === \local_sentientia_cart\imported_history::INVOICE_STATUS) {
+    // ADR-032: an invoice imported from BizLMS is a reference to the ERPNext invoice, not a Sentientia invoice.
+    echo \local_sentientia_cart\invoicer::render_legacy_html($invoice);
+} else {
+    echo \local_sentientia_cart\invoicer::render_html($invoice);
+}
 echo $OUTPUT->footer();

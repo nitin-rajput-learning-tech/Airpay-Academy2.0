@@ -26,6 +26,10 @@ $cart = $DB->get_record('local_sentientia_cart_history',
 if ((int) $cart->userid !== (int) $USER->id) {
     throw new \moodle_exception('error_outoftenant', 'local_sentientia_cart');
 }
+// ADR-032: an order imported from BizLMS is admin-only history, not its owner's order page.
+if (\local_sentientia_cart\imported_history::is_imported($cart)) {
+    throw new \moodle_exception('error_outoftenant', 'local_sentientia_cart');
+}
 
 $ctx = context_system::instance();
 $PAGE->set_context($ctx);
@@ -38,6 +42,20 @@ $status_label = get_string('status_' . $cart->status, 'local_sentientia_cart');
 $is_paid    = $cart->status === 'paid';
 $is_pending = $cart->status === 'pending';
 $is_failed  = $cart->status === 'failed' || $failed;
+// Every other status (cancelled, refunded, partial_refund, part_cancelled, abandoned) used to render a blank page.
+$is_other   = !$is_paid && !$is_pending && !$is_failed;
+
+// The lines of the order and, where the snapshot records one, each line's own status.
+$lines = [];
+foreach (json_decode($cart->items_json ?: '[]', true) ?: [] as $item) {
+    $linestatus = (string) ($item['status'] ?? '');
+    $lines[] = [
+        'name'        => (string) ($item['name'] ?? ''),
+        'has_status'  => $linestatus !== '',
+        'status_label' => $linestatus !== ''
+            ? get_string('linestatus_' . $linestatus, 'local_sentientia_cart') : '',
+    ];
+}
 
 $invoice = null;
 if ($is_paid) {
@@ -52,6 +70,9 @@ $data = [
     'is_paid'        => $is_paid,
     'is_pending'     => $is_pending,
     'is_failed'      => $is_failed,
+    'is_other'       => $is_other,
+    'has_lines'      => !empty($lines),
+    'lines'          => $lines,
     'is_manual'      => (bool) $manual,
     'total_str'      => \local_sentientia_cart\invoicer::currency_symbol($cart->currency)
                       . number_format((float) $cart->total_amount, 2),

@@ -41,6 +41,18 @@ class invoicer {
     public static function require_view_access(\stdClass $invoice, ?int $viewerid = null): void {
         global $USER;
         $viewerid = $viewerid ?? (int) $USER->id;
+        if (($invoice->status ?? '') === imported_history::INVOICE_STATUS) {
+            // ADR-032: an ERPNext reference imported from BizLMS is admin-only history. Its owner does not see it,
+            // and an administrator only while the flag is on and only inside their own tenant. The refusal is the
+            // one a row of another tenant gets.
+            if (!imported_history::orders_enabled()
+                    || (!is_siteadmin($viewerid) && !has_capability('local/sentientia_cart:viewallorders',
+                        \context_system::instance(), $viewerid))) {
+                throw new \moodle_exception('error_outoftenant', 'local_sentientia_cart');
+            }
+            cart_manager::require_order_tenant((int) $invoice->costcenterid, $viewerid);
+            return;
+        }
         if ((int) $invoice->userid === $viewerid) {
             return;
         }
@@ -58,6 +70,9 @@ class invoicer {
     public static function issue_for_order(\stdClass $cart): \stdClass {
         global $DB;
 
+        // ADR-032: an imported order already has its invoice in ERPNext; Sentientia numbers none for it.
+        imported_history::refuse_if_imported($cart);
+
         $existing = $DB->get_record('local_sentientia_cart_invoices',
             ['historyid' => $cart->id]);
         if ($existing) {
@@ -68,6 +83,11 @@ class invoicer {
 
         // Allocate next number for this year + prefix atomically.
         $prefix = (string) (get_config('local_sentientia_cart', 'invoice_prefix') ?: 'AIRPAY');
+        if (strtoupper(trim($prefix)) === 'ERPNEXT') {
+            // ADR-032: ERPNEXT-<id> is the number of an invoice imported from BizLMS, and invoice_number is unique.
+            throw new \moodle_exception('error_invalidstate', 'local_sentientia_cart',
+                '', 'The invoice prefix ERPNEXT is reserved for invoices imported from BizLMS');
+        }
         $invoice_number = self::reserve_invoice_number($prefix, $year);
 
         // GST split.
@@ -210,6 +230,31 @@ class invoicer {
             'currency_symbol' => self::currency_symbol($invoice->currency),
         ];
         return $OUTPUT->render_from_template('local_sentientia_cart/invoice', $data);
+    }
+
+    /**
+     * Render an invoice imported from BizLMS: a REFERENCE, not an invoice. ERPNext issued the invoice when BizLMS
+     * posted the order; Sentientia says so, shows the order and the total, and links nowhere (no link-out to
+     * ERPNext until finance confirms the ERPNext invoices are the legal tax invoices).
+     *
+     * @param \stdClass $invoice a local_sentientia_cart_invoices row with status legacy_external
+     * @return string HTML
+     */
+    public static function render_legacy_html(\stdClass $invoice): string {
+        global $OUTPUT;
+        $number = (string) $invoice->invoice_number;
+        $prefix = 'ERPNEXT-';
+        if (strncmp($number, $prefix, strlen($prefix)) === 0) {
+            $number = substr($number, strlen($prefix));
+        }
+        $data = [
+            'erpnext_number' => $number,
+            'orderid'        => (int) $invoice->orderid,
+            'invoice_date'   => userdate($invoice->timecreated, '%d %b %Y'),
+            'total'          => number_format((float) $invoice->total, 2),
+            'currency_symbol' => self::currency_symbol((string) $invoice->currency),
+        ];
+        return $OUTPUT->render_from_template('local_sentientia_cart/invoice_legacy', $data);
     }
 
     public static function currency_symbol(string $currency): string {

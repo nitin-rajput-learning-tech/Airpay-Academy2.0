@@ -378,8 +378,7 @@ class cart_manager {
         }
 
         // Reserve order number atomically.
-        $orderid = $DB->insert_record('local_sentientia_cart_id',
-            ['userid' => $userid, 'reserved' => time()]);
+        $orderid = self::reserve_order_number($userid);
 
         $cart->orderid         = $orderid;
         $cart->status          = 'pending';
@@ -393,6 +392,38 @@ class cart_manager {
 
         $DB->update_record('local_sentientia_cart_history', $cart);
         return $cart;
+    }
+
+    /**
+     * Reserve a fresh order number: one row of local_sentientia_cart_id, whose id is the number.
+     *
+     * ADR-032: orders imported from BizLMS keep their BizLMS order numbers (printed receipts and Moodle's payments
+     * rows refer to them), and callback.php and return.php open an order by its number. A native order must never
+     * be given a number an imported order holds. The importer records the highest of them
+     * (bizlms_order_floor); while the sequence is still at or below it, one placeholder row is put AT the floor
+     * and the sequence moves past it, so the number reserved below is above every imported one. With no import
+     * there is no floor, and this is the single insert it always was.
+     *
+     * @param int $userid
+     * @return int The order number.
+     */
+    private static function reserve_order_number(int $userid): int {
+        global $DB;
+        $floor = (int) get_config('local_sentientia_cart', imported_history::ORDER_FLOOR_CONFIG);
+        if ($floor > 0 && !$DB->record_exists_select('local_sentientia_cart_id', 'id >= :floor', ['floor' => $floor])) {
+            try {
+                $DB->import_record('local_sentientia_cart_id',
+                    (object) ['id' => $floor, 'userid' => 0, 'reserved' => time()]);
+                $DB->get_manager()->reset_sequence('local_sentientia_cart_id');
+            } catch (\Throwable $e) {
+                // A concurrent checkout placed it first, or the database refused DDL inside a transaction. The
+                // insert below then takes the next number, which is the best this request can do.
+                debugging('local_sentientia_cart: could not move the order sequence past the imported orders: '
+                    . get_class($e), DEBUG_DEVELOPER);
+            }
+        }
+        return (int) $DB->insert_record('local_sentientia_cart_id',
+            ['userid' => $userid, 'reserved' => time()]);
     }
 
     /**
@@ -420,6 +451,10 @@ class cart_manager {
 
         $cart = $DB->get_record('local_sentientia_cart_history',
             ['id' => $historyid], '*', MUST_EXIST);
+
+        // ADR-032: an order imported from BizLMS is frozen history. It is refused FIRST, even when it is already
+        // paid, so no gateway callback, administrator or web service can touch imported money.
+        imported_history::refuse_if_imported($cart);
 
         if ($cart->status === 'paid') {
             return true;  // idempotent
@@ -515,6 +550,7 @@ class cart_manager {
         global $DB;
         $cart = $DB->get_record('local_sentientia_cart_history',
             ['id' => $historyid], '*', MUST_EXIST);
+        imported_history::refuse_if_imported($cart);  // ADR-032: imported history is frozen.
         if ($cart->status === 'paid') {
             return;  // can't fail a paid order
         }
@@ -538,6 +574,7 @@ class cart_manager {
         $cart = $DB->get_record('local_sentientia_cart_history',
             ['id' => $historyid], '*', MUST_EXIST);
 
+        imported_history::refuse_if_imported($cart);  // ADR-032: no refund or payout of an imported order.
         if (!in_array($cart->status, ['paid', 'partial_refund'], true)) {
             throw new \moodle_exception('error_invalidstate', 'local_sentientia_cart');
         }
@@ -638,6 +675,42 @@ class cart_manager {
     }
 
     /**
+     * Which side of the day's money a ledger row is on, or null when it is not part of it.
+     *
+     * @param string $eventtype
+     * @param int $minor the amount in minor units (signed)
+     * @param string $gateway
+     * @param bool $imported the row belongs to an order imported from BizLMS
+     * @return string|null 'in', 'out', or null
+     */
+    private static function daily_sum_side(string $eventtype, int $minor, string $gateway, bool $imported): ?string {
+        switch ($eventtype) {
+            case 'payment_received':
+                // BizLMS excluded the sums booked as paid by credits (method 2) and credit corrections (method 9).
+                if ($imported && in_array($gateway, ['credits', 'credits_correction'], true)) {
+                    return null;
+                }
+                return 'in';
+            case 'refund_full':
+            case 'refund_partial':
+                return 'out';
+            case 'legacy_sale_without_order':
+                // A sale BizLMS booked that belongs to no imported order: counted like a sale, with BizLMS's own
+                // exclusions (paid by credits, credit corrections).
+                if (in_array($gateway, ['credits', 'credits_correction'], true)) {
+                    return null;
+                }
+                return $minor < 0 ? 'out' : 'in';
+            case 'legacy_cash_drawer':
+            case 'legacy_credit_payout':
+                return $minor < 0 ? 'out' : 'in';
+            default:
+                // A cancellation, a credit redemption or correction, legacy_other, and anything unknown.
+                return null;
+        }
+    }
+
+    /**
      * Get one order with permission check.
      *
      * Three layers:
@@ -652,6 +725,19 @@ class cart_manager {
         global $DB;
         $cart = $DB->get_record('local_sentientia_cart_history',
             ['id' => $historyid], '*', MUST_EXIST);
+        if (imported_history::is_imported($cart)) {
+            // ADR-032: imported BizLMS history is admin-only. Its OWNER does not see it, whatever else they hold,
+            // and an administrator sees it only while the flag is on and only inside their own tenant. The
+            // refusal is the same one a row of another tenant gets, so a probe learns nothing.
+            $ctx = \context_system::instance();
+            if (!imported_history::orders_enabled()
+                    || (!is_siteadmin($viewerid)
+                        && !has_capability('local/sentientia_cart:viewallorders', $ctx, $viewerid))) {
+                throw new \moodle_exception('error_outoftenant', 'local_sentientia_cart');
+            }
+            self::require_order_tenant((int) $cart->costcenterid, $viewerid);
+            return $cart;
+        }
         if ((int) $cart->userid !== $viewerid) {
             $ctx = \context_system::instance();
             if (!is_siteadmin($viewerid)
@@ -760,6 +846,18 @@ class cart_manager {
      * `day`, which get_records_sql() collapses when one day has two
      * gateways or currencies.
      *
+     * ADR-032 (imported BizLMS ledger rows):
+     *  - they are included only while sentientia.cart.imported_orders.enabled is ON, and are left out otherwise,
+     *    so the report is what it was before the import;
+     *  - a row that belongs to no order (the cash drawer, credits paid out: historyid 0) has no tenant, so the
+     *    ledger is LEFT-joined to the order and the tenant filter, which fails closed for a scoped viewer, leaves it
+     *    to cross-tenant viewers;
+     *  - what is counted follows BizLMS: a sale is an inflow unless it was paid by credits or is a credit
+     *    correction (BizLMS excluded payment methods 2 and 9); the cash drawer and paid-out credits count with
+     *    their sign (a negative amount is an outflow); a cancellation, a credit redemption, a correction and any
+     *    other legacy event are not part of the day's money, and an event type nobody knows is skipped BEFORE its
+     *    bucket is made, so it cannot leave an empty line.
+     *
      * @param int $fromts inclusive unix timestamp
      * @param int $tots   inclusive unix timestamp
      * @return \stdClass[] rows with day, gateway, currency, inflow, outflow, payments, refunds;
@@ -768,15 +866,29 @@ class cart_manager {
     public static function daily_sums(int $fromts, int $tots): array {
         global $DB;
         [$tnsql, $tnargs] = \local_sentientia_platform\tenant::sql_filter('h');
+        $imported = imported_history::orders_enabled();
+        // A row of the import is left out while the flag is off: a legacy_* event, or any row of an imported order.
+        $native = $imported ? '' : ' AND h.legacy_source IS NULL AND ' . $DB->sql_like('l.event_type', ':legacyevent',
+            true, true, true);
+        $params = array_merge(['f' => $fromts, 't' => $tots], $tnargs);
+        if (!$imported) {
+            $params['legacyevent'] = $DB->sql_like_escape('legacy_') . '%';
+        }
         $rs = $DB->get_recordset_sql(
-            "SELECT l.id, l.timecreated, l.gateway, l.currency, l.event_type, l.amount
+            "SELECT l.id, l.timecreated, l.gateway, l.currency, l.event_type, l.amount, h.legacy_source
                FROM {local_sentientia_cart_ledger} l
-               JOIN {local_sentientia_cart_history} h ON h.id = l.historyid
+          LEFT JOIN {local_sentientia_cart_history} h ON h.id = l.historyid
               WHERE l.timecreated BETWEEN :f AND :t
-                AND $tnsql",
-            array_merge(['f' => $fromts, 't' => $tots], $tnargs));
+                AND $tnsql$native",
+            $params);
         $buckets = [];
         foreach ($rs as $l) {
+            $minor = (int) round((float) $l->amount * 100);
+            $side = self::daily_sum_side((string) $l->event_type, $minor, (string) $l->gateway,
+                !empty($l->legacy_source));
+            if ($side === null) {
+                continue;
+            }
             $day = date('Y-m-d', (int) $l->timecreated);
             $key = $day . "\0" . $l->gateway . "\0" . $l->currency;
             if (!isset($buckets[$key])) {
@@ -784,11 +896,10 @@ class cart_manager {
                     'currency' => (string) $l->currency, 'in' => 0, 'out' => 0,
                     'payments' => 0, 'refunds' => 0];
             }
-            $minor = (int) round((float) $l->amount * 100);
-            if ($l->event_type === 'payment_received') {
+            if ($side === 'in') {
                 $buckets[$key]['in'] += $minor;
                 $buckets[$key]['payments']++;
-            } else if ($l->event_type === 'refund_full' || $l->event_type === 'refund_partial') {
+            } else {
                 $buckets[$key]['out'] += $minor;
                 $buckets[$key]['refunds']++;
             }

@@ -21,12 +21,14 @@ $PAGE->set_title(get_string('orderhistory', 'local_sentientia_cart'));
 $PAGE->set_heading(get_string('orderhistory', 'local_sentientia_cart'));
 require_capability('local/sentientia_cart:view', $ctx);
 
+// ADR-032 (2026-10-01): the # / Total / Status columns read keys (orderid_link, total_str, statuslabel) that
+// list_orders never returned, so they rendered empty. They now read the keys it does return: orderid,
+// placed_on, total_amount, status. (An order imported from BizLMS never appears here: it is admin-only history.)
 $columns = [
-    ['key' => 'orderid_link', 'label' => '#',         'sortable' => true,  'sortkey' => 'orderid', 'format' => 'html'],
+    ['key' => 'orderid',      'label' => '#',         'sortable' => true,  'sortkey' => 'orderid'],
     ['key' => 'placed_on',    'label' => 'Placed',    'sortable' => true,  'sortkey' => 'timecreated'],
-    ['key' => 'total_str',    'label' => 'Total',     'sortable' => true,  'sortkey' => 'total_amount'],
-    ['key' => 'statuslabel',  'label' => 'Status',    'sortable' => true,  'sortkey' => 'status', 'format' => 'badge'],
-    ['key' => 'actions',      'label' => '',          'sortable' => false, 'format' => 'html'],
+    ['key' => 'total_amount', 'label' => 'Total',     'sortable' => true,  'sortkey' => 'total_amount'],
+    ['key' => 'status',       'label' => 'Status',    'sortable' => true,  'sortkey' => 'status'],
 ];
 
 $data = [

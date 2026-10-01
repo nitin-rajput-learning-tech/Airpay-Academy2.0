@@ -58,6 +58,7 @@ the buyer's own catalogue shows (`cart_manager::can_buy_course()`, ADR-031).
 | `local_sentientia_cart_ledger` | Immutable INSERT-only payment events (payment_received, refund_full, refund_partial) |
 | `local_sentientia_cart_invoices` | GST-compliant invoices (per-year sequential numbering) |
 | `local_sentientia_cart_credits` | Customer credits / wallet balance |
+| `local_sentientia_cart_credit_txn` | Credit bookings imported from BizLMS (frozen history, ADR-032) |
 
 ## Web services
 
@@ -123,3 +124,15 @@ Full provider in `classes/privacy/provider.php`:
 - `_delete_data_for_user` redacts PII on history rows but preserves the
   ledger for finance audit (legal hold).
 - `_delete_data_for_users` bulk variant for tenant-wide DSR runs.
+
+## BizLMS import (ADR-032)
+
+`classes/bizlms/` holds the cart importer, registered in `db/bizlms_import.php` and run by
+`local/sentientia_platform/cli/import_bizlms.php --feature=cart`. It copies the BizLMS orders, ledger, invoices and
+credit journal into the tables above as **frozen, admin-only history**: an imported order has
+`local_sentientia_cart_history.legacy_source = 'bizlms'`, and `cart_manager::mark_paid()`, `mark_failed()` and
+`refund()` refuse it. Its owner never sees it; an order administrator sees it only while
+`sentientia.cart.imported_orders.enabled` is on (default OFF), and the admin credits page (`credits.php`) is behind
+`sentientia.cart.imported_credits.enabled` (default OFF). Mapping: `docs/cutover/BIZLMS-IMPORT-MAPPING-2026-09-29.md`
+section 13. The gateway tables are read as evidence and never imported; the two finance-confirm questions (credit
+balances, ERPNext invoices) are not decided by the import.
