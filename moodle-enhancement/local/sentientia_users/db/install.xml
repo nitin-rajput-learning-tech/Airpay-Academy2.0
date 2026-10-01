@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/sentientia_users/db" VERSION="20260516"
-       COMMENT="W1-6 (2026-05-16) — HRMS sync runs + error log for 24-column Darwinbox/SAP CSV bulk import">
+<XMLDB PATH="local/sentientia_users/db" VERSION="20261001"
+       COMMENT="W1-6 (2026-05-16) — HRMS sync runs + error log for 24-column Darwinbox/SAP CSV bulk import. ADR-032 (2026-10-01) — imported BizLMS history: earlier training records, login days, position and domain lookups">
 
   <TABLES>
 
@@ -74,6 +74,113 @@
       <INDEXES>
         <INDEX NAME="idx_severity" UNIQUE="false" FIELDS="severity"/>
         <INDEX NAME="idx_email"    UNIQUE="false" FIELDS="email"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_users_transcript"
+           COMMENT="Earlier training records imported from the BizLMS transcript history (ADR-032, users). History only: never counted in completion totals. The raw text of every parsed value is kept next to the parsed one.">
+      <FIELDS>
+        <FIELD NAME="id"                  TYPE="int"    LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"              TYPE="int"    LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to mdl_user.id; 0 = no single account matched the employee id (off-platform learner)"/>
+        <FIELD NAME="employee_id"         TYPE="char"   LENGTH="255" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="learner_name"        TYPE="char"   LENGTH="255" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="title"               TYPE="char"   LENGTH="255" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="training_type"       TYPE="char"   LENGTH="255" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="objectref"           TYPE="char"   LENGTH="255" NOTNULL="true" DEFAULT=""
+               COMMENT="BizLMS training_object_id, an identifier from the source system"/>
+        <FIELD NAME="location"            TYPE="char"   LENGTH="255" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="courseid"            TYPE="int"    LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="mdl_course.id; 0 = off-platform training, so no foreign key"/>
+        <FIELD NAME="status"              TYPE="char"   LENGTH="20" NOTNULL="true" DEFAULT="unknown"
+               COMMENT="completed, inprogress, failed, notstarted, cancelled or unknown (the signed normalisation list)"/>
+        <FIELD NAME="status_raw"          TYPE="char"   LENGTH="255" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="completion_date_raw" TYPE="char"   LENGTH="255" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="score_raw"           TYPE="char"   LENGTH="255" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="hours_raw"           TYPE="char"   LENGTH="255" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="timecompleted"       TYPE="int"    LENGTH="10" NOTNULL="false"
+               COMMENT="Parsed completion date in the server timezone; NULL when the text did not parse"/>
+        <FIELD NAME="score"               TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="false"/>
+        <FIELD NAME="hours"               TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="false"/>
+        <FIELD NAME="costcenterid"        TYPE="int"    LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Tenant root of the matched learner when imported; 0 = none"/>
+        <FIELD NAME="open_path"           TYPE="char"   LENGTH="255" NOTNULL="false"
+               COMMENT="The matched learner's org path when imported; NULL = visible to cross-tenant callers only"/>
+        <FIELD NAME="source"              TYPE="char"   LENGTH="20" NOTNULL="true" DEFAULT="bizlms"/>
+        <FIELD NAME="usercreated"         TYPE="int"    LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="usermodified"        TYPE="int"    LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated"         TYPE="int"    LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"        TYPE="int"    LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_user_completed" UNIQUE="false" FIELDS="userid, timecompleted"/>
+        <INDEX NAME="idx_costcenter"     UNIQUE="false" FIELDS="costcenterid"/>
+        <INDEX NAME="idx_course"         UNIQUE="false" FIELDS="courseid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_users_logindays"
+           COMMENT="One row per user per day with a web login, imported from the BizLMS uniquelogins table (ADR-032, users). Read only by the optional active-days report column.">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="logindate"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Midnight (server timezone) of the day of the login"/>
+        <FIELD NAME="source"       TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="web"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="uk_user_day"   UNIQUE="true"  FIELDS="userid, logindate"/>
+        <INDEX NAME="idx_logindate" UNIQUE="false" FIELDS="logindate"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_users_position"
+           COMMENT="Position lookup imported from the BizLMS positions table with the ids kept, because user.open_positionid holds them (ADR-032, users, gap G4).">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name"         TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="code"         TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="domainid"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="local_sentientia_users_domain.id (ids are kept)"/>
+        <FIELD NAME="costcenterid" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="The BizLMS costcenter (organisation id) the position was defined for"/>
+        <FIELD NAME="sortorder"    TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_domain"     UNIQUE="false" FIELDS="domainid"/>
+        <INDEX NAME="idx_costcenter" UNIQUE="false" FIELDS="costcenterid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_users_domain"
+           COMMENT="Domain lookup imported from the BizLMS domains table with the ids kept, because user.open_domainid holds them (ADR-032, users, gap G4).">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name"         TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="code"         TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="costcenterid" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="The BizLMS costcenter (organisation id) the domain was defined for"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_costcenter" UNIQUE="false" FIELDS="costcenterid"/>
       </INDEXES>
     </TABLE>
 

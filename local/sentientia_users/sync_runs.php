@@ -10,6 +10,11 @@ require_login();
 $context = \context_system::instance();
 require_capability('local/sentientia_users:create', $context);
 
+// ADR-032 (users): the list was a hard LIMIT 100. The BizLMS import adds one run per upload BizLMS recorded,
+// so it pages; 100 per page keeps the first page what it was.
+$page = max(0, optional_param('page', 0, PARAM_INT));
+$perpage = 100;
+
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/sentientia_users/sync_runs.php'));
 $PAGE->set_pagelayout('standard');
@@ -42,13 +47,17 @@ $unamefields = implode(', ', array_map(
     fn($f) => 'u.' . $f,
     \core_user\fields::get_name_fields()
 ));
+$total = $DB->count_records_sql(
+    "SELECT COUNT(1) FROM {local_sentientia_users_sync_runs} r WHERE $where", $params);
+// The id breaks ties: runs made in the same second (BizLMS imports, back-to-back uploads) keep one order
+// from page to page.
 $runs = $DB->get_records_sql(
     "SELECT r.*, $unamefields, u.email AS user_email
        FROM {local_sentientia_users_sync_runs} r
   LEFT JOIN {user} u ON u.id = r.usercreated
       WHERE $where
-   ORDER BY r.timecreated DESC",
-    $params, 0, 100
+   ORDER BY r.timecreated DESC, r.id DESC",
+    $params, $page * $perpage, $perpage
 );
 
 echo $OUTPUT->header();
@@ -67,7 +76,7 @@ echo html_writer::link(
 );
 echo html_writer::end_div();
 
-if (empty($runs)) {
+if ($total === 0) {
     echo $OUTPUT->notification(
         get_string('hrms_no_runs', 'local_sentientia_users'), 'info');
     echo $OUTPUT->footer();
@@ -89,7 +98,8 @@ foreach ($runs as $r) {
         s($r->filename ?: '(no file)'),
         userdate((int) $r->timecreated, '%d %b %Y, %H:%M'),
         fullname($r),
-        s($r->source),
+        // A run the BizLMS import made says so (its source is 'bizlms'); the others keep their raw source.
+        $r->source === 'bizlms' ? s(get_string('hrms_source_bizlms', 'local_sentientia_users')) : s($r->source),
         $status_badge,
         (int) $r->totalrows,
         (int) $r->insertedcount,
@@ -116,5 +126,6 @@ $table->head = [
 $table->attributes['class'] = 'generaltable';
 $table->data = $rows;
 echo html_writer::table($table);
+echo $OUTPUT->paging_bar($total, $page, $perpage, $PAGE->url);
 
 echo $OUTPUT->footer();

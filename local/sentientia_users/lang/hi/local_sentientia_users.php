@@ -66,7 +66,7 @@ $string['back_to_users'] = 'यूज़र सूची पर वापस ज
 $string['manage_users']  = 'यूज़र प्रबंधित करें';
 
 // Privacy metadata declaration (Moodle compliance).
-$string['privacy:metadata'] = 'एयरपे यूज़र्स प्लगइन open_* फ़ील्ड्स के माध्यम से कोर {user} तालिका का विस्तार करता है। ये core_user द्वारा निर्यात किए जाते हैं; कोई एयरपे-स्वामित्व वाली तालिकाएँ अतिरिक्त व्यक्तिगत डेटा संग्रहीत नहीं करतीं।';
+$string['privacy:metadata'] = 'सेंटीएन्शिया यूज़र इंजन HRMS सिंक इतिहास, BizLMS से आयात किए गए पुराने प्रशिक्षण रिकॉर्ड और लॉगिन दिन संग्रहीत करता है, जिनका वर्णन नीचे है। कोर यूज़र तालिका में जोड़े गए open_* कॉलम core_user द्वारा निर्यात और मिटाए जाते हैं।';
 
 // P1 #47 (2026-05-20) — Hindi top-up: 128 strings covering capabilities,
 // profile labels, CRUD forms, errors, success messages, HRMS bulk import
@@ -225,7 +225,7 @@ $string['hrms_sync_path_help']        = 'जब स्रोत मोड <em>Fi
 $string['hrms_sync_user_id']          = 'रनर यूज़र ID';
 $string['hrms_sync_user_id_help']     = 'न्यूमेरिक यूज़र ID जिसके अंतर्गत आयात चलता है। डिफ़ॉल्ट <code>2</code> (स्टॉक Sentientia LMS पर साइट एडमिन)। ऐसा यूज़र चुनें जिसके पास <code>local/sentientia_users:edit</code> क्षमता हो और CSV की हर पंक्ति को कवर करने वाला टेनेंट स्कोप हो — अन्यथा पंक्तियाँ क्रॉस-टेनेंट के रूप में अस्वीकार होंगी।';
 $string['hrms_sync_status']           = 'सिंक स्थिति';
-$string['hrms_sync_last_run_value']   = 'अंतिम सफल रन: <strong>{$a->time}</strong> (रन #{$a->runid})। विवरण <a href="../local/sentientia_users/hrms_history.php">HRMS इतिहास पेज</a> पर देखें।';
+$string['hrms_sync_last_run_value']   = 'अंतिम सफल रन: <strong>{$a->time}</strong> (रन #{$a->runid})। विवरण <a href="{$a->url}">HRMS इतिहास पेज</a> पर देखें।';
 $string['hrms_sync_last_run_never']   = 'Cron ने अभी तक कोई HRMS सिंक सफलतापूर्वक पूर्ण नहीं किया है। कार्य सक्षम करें और सर्वर समय 02:30 के बाद देखें, या इसे मैन्युअली ट्रिगर करने के लिए कमांड लाइन से <code>php admin/cli/scheduled_task.php --execute=\\\\local_sentientia_users\\\\task\\\\hrms_sync</code> चलाएँ।';
 
 // Scheduled-task error strings.
@@ -236,3 +236,39 @@ $string['hrms_sync_path_empty']        = 'स्रोत मोड फ़ाइ
 $string['hrms_sync_path_not_absolute'] = 'HRMS फ़ाइलसिस्टम पथ पूर्ण होना चाहिए। मिला: {$a}';
 $string['hrms_sync_path_not_readable'] = 'HRMS फ़ाइलसिस्टम पथ वेब सर्वर द्वारा पठनीय नहीं है: {$a}';
 $string['hrms_sync_path_read_failed']  = 'HRMS फ़ाइलसिस्टम पथ पढ़ा नहीं जा सका: {$a}';
+
+// ADR-032 (2026-10-01) - उपयोगकर्ता आयात: गोपनीयता प्रदाता, पुराने प्रशिक्षण रिकॉर्ड, पद और डोमेन, आयात लेबल।
+$string['privacy:metadata:sync_runs'] = 'प्रत्येक HRMS अपलोड के लिए एक पंक्ति (BizLMS से आयात पंक्तियों के लिए, मिलान किए गए या कृत्रिम अपलोड के लिए): किसने चलाया, फ़ाइल का नाम और गिनतियाँ।';
+$string['privacy:metadata:sync_errors'] = 'HRMS अपलोड की प्रत्येक अस्वीकृत पंक्ति के लिए एक पंक्ति: पंक्ति में ई-मेल पता, कर्मचारी कोड, यूज़रनेम और नाम, त्रुटि का पाठ और अपलोड किसने किया।';
+$string['privacy:metadata:transcript'] = 'BizLMS के ट्रांसक्रिप्ट इतिहास से आयात किए गए पुराने प्रशिक्षण रिकॉर्ड: शिक्षार्थी, कर्मचारी आईडी और नाम, प्रशिक्षण क्या था, और वह कब और कैसे समाप्त हुआ।';
+$string['privacy:metadata:logindays'] = 'प्रत्येक यूज़र के हर उस दिन के लिए एक पंक्ति जिस दिन वेब लॉगिन हुआ, BizLMS से आयात किया गया।';
+$string['privacy:metadata:field:actor'] = 'वह यूज़र जिसने अपलोड चलाया, या जिसने पंक्ति बनाई या बदली।';
+$string['privacy:metadata:field:userid'] = 'वह यूज़र जिसके बारे में पंक्ति है।';
+$string['privacy:metadata:field:filename'] = 'अपलोड की गई फ़ाइल का नाम।';
+$string['privacy:metadata:field:time'] = 'पंक्ति कब बनाई या बदली गई।';
+$string['privacy:metadata:field:email'] = 'अस्वीकृत पंक्ति में ई-मेल पता।';
+$string['privacy:metadata:field:employee_code'] = 'अस्वीकृत पंक्ति या प्रशिक्षण रिकॉर्ड में कर्मचारी कोड।';
+$string['privacy:metadata:field:username'] = 'अस्वीकृत पंक्ति में यूज़रनेम।';
+$string['privacy:metadata:field:name'] = 'व्यक्ति का नाम, जैसा पंक्ति या रिकॉर्ड में था।';
+$string['privacy:metadata:field:message'] = 'त्रुटि का पाठ और छूटे अनिवार्य फ़ील्ड की सूची, जिनमें पंक्ति का अंश हो सकता है।';
+$string['privacy:metadata:field:training'] = 'प्रशिक्षण क्या था, कहाँ, उसकी स्थिति, अंक और घंटे, जैसे लोड किए गए थे।';
+$string['privacy:metadata:field:tenant'] = 'रिकॉर्ड आयात होते समय शिक्षार्थी किस संगठन का था।';
+$string['privacy:metadata:field:logindate'] = 'लॉगिन का दिन।';
+$string['privacy:metadata:field:source'] = 'पंक्ति कहाँ से आई।';
+$string['transcript_heading'] = 'पुराने प्रशिक्षण रिकॉर्ड (आयातित)';
+$string['transcript_intro'] = 'इस लर्निंग प्लेटफ़ॉर्म से पहले पूरा किया गया प्रशिक्षण, पुरानी प्रणाली से लोड किया गया। ये रिकॉर्ड संदर्भ के लिए दिखाए गए हैं और पूर्ण पाठ्यक्रमों या ग्रेड में नहीं गिने जाते।';
+$string['transcript_col_title'] = 'प्रशिक्षण';
+$string['transcript_col_type'] = 'प्रकार';
+$string['transcript_col_completed'] = 'पूर्ण हुआ';
+$string['transcript_col_status'] = 'स्थिति';
+$string['transcript_col_score'] = 'अंक';
+$string['transcript_col_hours'] = 'घंटे';
+$string['transcript_status_completed'] = 'पूर्ण';
+$string['transcript_status_inprogress'] = 'प्रगति में';
+$string['transcript_status_failed'] = 'अनुत्तीर्ण';
+$string['transcript_status_notstarted'] = 'शुरू नहीं हुआ';
+$string['transcript_status_cancelled'] = 'रद्द';
+$string['transcript_status_unknown'] = 'अज्ञात';
+$string['position'] = 'पद';
+$string['domain'] = 'डोमेन';
+$string['hrms_source_bizlms'] = 'BizLMS से आयातित';

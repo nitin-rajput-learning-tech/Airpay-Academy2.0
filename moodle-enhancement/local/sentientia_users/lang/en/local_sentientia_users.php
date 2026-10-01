@@ -103,7 +103,7 @@ $string['usersuspended'] = 'User suspended.';
 $string['useractivated'] = 'User activated.';
 
 // Privacy.
-$string['privacy:metadata'] = 'The Airpay Users plugin extends the core {user} table via open_* fields. These are exported by core_user; no airpay-owned tables store additional personal data.';
+$string['privacy:metadata'] = 'The Sentientia User Engine keeps the HRMS sync history, earlier training records imported from BizLMS and login days described below. The open_* columns it adds to the core user table are exported and erased by core_user.';
 
 // W1-6 (2026-05-16) — HRMS 24-column bulk import.
 $string['hrms_pagetitle']         = 'HRMS bulk import (24-column CSV)';
@@ -238,7 +238,7 @@ $string['hrms_sync_path_help']        = 'Used when source mode is <em>Filesystem
 $string['hrms_sync_user_id']          = 'Runner user ID';
 $string['hrms_sync_user_id_help']     = 'Numeric user ID under which the import runs. Defaults to <code>2</code> (the site admin on a stock Sentientia LMS). Choose a user with the <code>local/sentientia_users:edit</code> capability AND a tenant scope that covers every row in the CSV — otherwise rows will be rejected as cross-tenant.';
 $string['hrms_sync_status']           = 'Sync status';
-$string['hrms_sync_last_run_value']   = 'Last successful run: <strong>{$a->time}</strong> (run #{$a->runid}). View details on the <a href="../local/sentientia_users/hrms_history.php">HRMS history page</a>.';
+$string['hrms_sync_last_run_value']   = 'Last successful run: <strong>{$a->time}</strong> (run #{$a->runid}). View details on the <a href="{$a->url}">HRMS history page</a>.';
 $string['hrms_sync_last_run_never']   = 'Cron has never completed an HRMS sync successfully. Enable the task and check back after 02:30 server time, or run <code>php admin/cli/scheduled_task.php --execute=\\\\local_sentientia_users\\\\task\\\\hrms_sync</code> from the command line to fire it manually.';
 
 // Error strings raised by the scheduled task itself.
@@ -249,3 +249,39 @@ $string['hrms_sync_path_empty']          = 'Source mode is filesystem but no pat
 $string['hrms_sync_path_not_absolute']   = 'HRMS filesystem path must be absolute. Got: {$a}';
 $string['hrms_sync_path_not_readable']   = 'HRMS filesystem path is not readable by the web server: {$a}';
 $string['hrms_sync_path_read_failed']    = 'HRMS filesystem path could not be read: {$a}';
+
+// ADR-032 (2026-10-01) - users import: privacy provider, earlier training records, position and domain, import label.
+$string['privacy:metadata:sync_runs'] = 'One row per HRMS upload (for rows imported from BizLMS, per matched or synthetic upload): who ran it, the file name and the counts.';
+$string['privacy:metadata:sync_errors'] = 'One row per rejected line of an HRMS upload: the e-mail address, employee code, username and name on the line, the error text and who uploaded it.';
+$string['privacy:metadata:transcript'] = 'Earlier training records imported from the BizLMS transcript history: the learner, employee id and name, what the training was, and when and how it ended.';
+$string['privacy:metadata:logindays'] = 'One row per user per day with a web login, imported from BizLMS.';
+$string['privacy:metadata:field:actor'] = 'The user who ran the upload, or who created or changed the row.';
+$string['privacy:metadata:field:userid'] = 'The user the row is about.';
+$string['privacy:metadata:field:filename'] = 'The name of the uploaded file.';
+$string['privacy:metadata:field:time'] = 'When the row was created or changed.';
+$string['privacy:metadata:field:email'] = 'The e-mail address on the rejected line.';
+$string['privacy:metadata:field:employee_code'] = 'The employee code on the rejected line or training record.';
+$string['privacy:metadata:field:username'] = 'The username on the rejected line.';
+$string['privacy:metadata:field:name'] = 'The person\'s name as it was on the line or record.';
+$string['privacy:metadata:field:message'] = 'The error text and the list of missing mandatory fields, which can quote the line.';
+$string['privacy:metadata:field:training'] = 'What the training was, where, its status, score and hours, as loaded.';
+$string['privacy:metadata:field:tenant'] = 'The organisation the learner belonged to when the record was imported.';
+$string['privacy:metadata:field:logindate'] = 'The day of the login.';
+$string['privacy:metadata:field:source'] = 'Where the row came from.';
+$string['transcript_heading'] = 'Earlier training records (imported)';
+$string['transcript_intro'] = 'Training completed before this learning platform, loaded from the old system. These records are shown for reference and are not counted in completed courses or grades.';
+$string['transcript_col_title'] = 'Training';
+$string['transcript_col_type'] = 'Type';
+$string['transcript_col_completed'] = 'Completed';
+$string['transcript_col_status'] = 'Status';
+$string['transcript_col_score'] = 'Score';
+$string['transcript_col_hours'] = 'Hours';
+$string['transcript_status_completed'] = 'Completed';
+$string['transcript_status_inprogress'] = 'In progress';
+$string['transcript_status_failed'] = 'Failed';
+$string['transcript_status_notstarted'] = 'Not started';
+$string['transcript_status_cancelled'] = 'Cancelled';
+$string['transcript_status_unknown'] = 'Unknown';
+$string['position'] = 'Position';
+$string['domain'] = 'Domain';
+$string['hrms_source_bizlms'] = 'Imported from BizLMS';

@@ -300,6 +300,28 @@ class user_manager {
                 DEBUG_DEVELOPER);
         }
 
+        // ADR-032 (users, 2026-10-01) - history the BizLMS import copied into this plugin. Both parts are default OFF
+        // (db/feature_flags.php): BizLMS never showed the transcript, and the Sentientia profile never showed the
+        // position or the domain, so each is a new line on the page. The transcript is history only: it is not added
+        // to the grades summary above or to any completed-course total.
+        try {
+            if (\local_sentientia_users\legacy_history::transcript_enabled()) {
+                $transcript = self::get_transcript_history($userid);
+                if (!empty($transcript)) {
+                    $context['ap_has_transcript'] = true;
+                    $context['ap_transcript'] = $transcript;
+                }
+            }
+            if (\local_sentientia_users\legacy_history::position_labels_enabled()) {
+                $context['ap_position'] = \local_sentientia_users\legacy_history::position_label(
+                    (int) ($user->open_positionid ?? 0));
+                $context['ap_domain'] = \local_sentientia_users\legacy_history::domain_label(
+                    (int) ($user->open_domainid ?? 0));
+            }
+        } catch (\Throwable $e) {
+            debugging('Imported history enrichment failed: ' . $e->getMessage(), DEBUG_DEVELOPER);
+        }
+
         // Collect plugin profile tabs.
         $pluginlist = \core_component::get_plugin_list('local');
         $usercontent = [];
@@ -492,6 +514,21 @@ class user_manager {
             ],
             'courses' => $courses,
         ];
+    }
+
+    /**
+     * ADR-032 (users): the earlier training records the BizLMS import copied for a learner, newest first.
+     *
+     * History only: the rows are never part of get_grades_summary() or any completed-course count. Only rows
+     * matched to this learner, and only while the account is live. The caller decides whether the viewer may open
+     * the profile at all (profile_access); the profile shows this behind sentientia.users.legacy_transcript.
+     *
+     * @param int $userid
+     * @param int $limit Most rows to return.
+     * @return array<int, array<string, mixed>> See legacy_history::transcript_for_user().
+     */
+    public static function get_transcript_history(int $userid, int $limit = 100): array {
+        return legacy_history::transcript_for_user($userid, $limit);
     }
 
     /**
