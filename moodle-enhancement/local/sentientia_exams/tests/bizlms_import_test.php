@@ -263,7 +263,8 @@ final class bizlms_import_test extends \advanced_testcase {
     }
 
     /**
-     * Twelve quizzes in nine exam courses, and what the dedupe seed needs (see the class comment).
+     * Eleven quizzes in eleven courses (nine of them exam courses, one of those with no quiz), and the learners the
+     * dedupe seed needs (see the class comment).
      *
      * @return void
      */
@@ -509,7 +510,11 @@ final class bizlms_import_test extends \advanced_testcase {
 
     public function test_deciding_skip_leaves_the_pathless_courses_out_and_reports_them(): void {
         global $DB;
-        $report = $this->seed_and_apply(['tenant.unresolved.exams' => 'skip']);
+        // A skipped row is not imported, so its reason needs the owner's written acceptance or the run exits 2.
+        $report = $this->seed_and_apply([
+            'tenant.unresolved.exams' => 'skip',
+            'accepted_reasons' => ['exams:tenant_unresolved'],
+        ]);
         $this->assertSame(7, $DB->count_records('local_sentientia_exams'), 'nopath and badroot are not imported');
         foreach (['nopath', 'badroot'] as $name) {
             $map = $DB->get_record(legacymap::TABLE,
@@ -759,7 +764,8 @@ final class bizlms_import_test extends \advanced_testcase {
         $before = $snapshot();
         $events = $this->redirectEvents();
         $messages = $this->redirectMessages();
-        $this->contract_run(true, ['decisions' => $this->contract_decisions()]);
+        [$result] = $this->contract_run(true, ['decisions' => $this->contract_decisions()]);
+        $this->assertSame(0, $result['exit'], 'the run finished: ' . implode('; ', $result['blockers']));
         $this->assertEquals($before, $snapshot(), 'courses, quizzes, attempts and enrolments are what they were');
         $this->assertSame(0, $events->count());
         $this->assertSame(0, $messages->count());
