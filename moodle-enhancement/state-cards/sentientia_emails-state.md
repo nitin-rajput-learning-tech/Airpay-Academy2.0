@@ -509,16 +509,19 @@ What the import does (`classes/bizlms/`, registered in `db/bizlms_import.php`, f
   to `suppressed`). The static scan of `classes/bizlms/` is clean.
 - Status: BizLMS `1` -> `sent`; `0`, NULL and anything else -> `not_sent` with a note (new status value,
   documented in the install.xml COMMENT; never `failed` or `suppressed`, which drive the dashboard tiles).
-  A row BizLMS marked sent for a deleted recipient stays `sent` with a note (decision
-  `notifications.deleted_recipient_sent`; `suppressed` is the other accepted value).
+  A row BizLMS marked sent for a recipient who was ALREADY deleted when the send ran stays `sent` with a note
+  (decision `notifications.deleted_recipient_sent`; `suppressed` is the other accepted value). A recipient
+  deleted AFTER the send was delivered to, and that row is plain `sent` (review round 1, below).
 - `template_key` and `rule_id` stay NULL on every imported row, so the reminder dedupe, cap and
   completion-stamp queries can never count an imported row. `legacy_source = 'bizlms'` marks the row.
 - Tenant: the root of the RECIPIENT's current `open_path`, validated by `tenant::assert_valid()`. The
-  template's path is used only when the recipient has no usable path; a recipient whose path names an
-  unregistered root is NOT filed under the template's tenant (tenant 0, cross-tenant callers only).
+  template's path is used only when the recipient has NO path at all (none stored, or an empty one); a
+  recipient whose path is there but does not parse, or names an unregistered root, is NOT filed under the
+  template's tenant (tenant 0, cross-tenant callers only).
   Decision `tenant.unresolved.notifications` = `pathless` (the alternative, `skip`, archives such rows).
 - Credentials (`redactor`): a users-module type, a template that uses `[employee_password]`, a row whose own
-  module type says users, or an unresolvable template whose subject reads like an account message is
+  subject or body still carries the placeholder, a row whose own module type says users, or an unresolvable
+  template whose subject reads like an account message is
   imported with the subject masked (`[withheld: account credentials]`) and the body NULL. Every other
   subject and body is scrubbed (password/OTP/PIN/token/API key values, secret link parameters, bearer
   tokens); if the scrub cannot run the text is withheld. Status 0 rows too.
@@ -571,3 +574,46 @@ Open for Nitin / the lead:
   question 5) is a parity question, not something this importer answers.
 - Retention of imported rows is "keep, no purge" (`notifications.retention`); a retention period comes with
   the later legacy-table privacy ADR.
+
+#### Review round 1 (2026-10-01): fixes
+
+Same branch, no schema change, plugin version stays `2026093001`. PHPUnit was NOT run (the lead re-inits and runs
+the group). Checked read-only against the April 2026 rehearsal copy (schema `bizlms_april`).
+
+- **Deleted-recipient note is now true.** `log_step::delivered_to_deleted_recipient()` compares the recipient's
+  user row with the row's sent date: the note (or `suppressed`) is applied only when `deleted = 1` AND
+  `timemodified <= sent_date` AND `lastaccess <= sent_date`, i.e. the user was already deleted when BizLMS ran
+  the send (BZ `notification.php:85-88` marks such a row sent without sending). A recipient deleted after a real
+  delivery imports as plain `sent`, `error_message` NULL. If the sent date or the deletion stamp is missing the
+  two cannot be compared: the note is kept and the report carries `deleted_recipient_time_unknown`. On April
+  there are 342 status-1 rows to 108 now-deleted users; the new rule notes 1 of them and finds 0 undecidable
+  (measured read-only), so the old rule would have written 341 false "not delivered" notes. The preflight warning
+  `sent_to_deleted_recipient` is narrowed the same way, and `sent_to_deleted_recipient_time_unknown` counts the
+  undecidable ones. The wording of ADR-032 and of the decision `notifications.deleted_recipient_sent` should say
+  "deleted when BizLMS ran the send" (lead: both are outside this branch's remit).
+- **Template filter on the production shape.** `local_notification_info` in the April copy has `open_path` and NO
+  `costcenterid`. `legacy_bridge` now builds its select, order and tenant filter from the columns the table has
+  (`open_path` only, `costcenterid` only, or both); before, the SQL named `ni.costcenterid`, threw, the catch
+  swallowed it, and the Templates tab and the preview were empty for everybody. Verified against the April
+  copy: 15 templates for a cross-tenant caller, 10 for a /1 caller, 4 for a /77 caller. The label's "(Tenant N)"
+  comes from the root of `open_path` when there is no `costcenterid`. The fixture now has the April shape; the
+  reader test covers it, and a pure test covers all three shapes. **This filter change has no flag**: scoped
+  admins see `open_path` templates as soon as it deploys. It reads as a bug fix; the lead should accept it as one.
+- **Tenant fallback tightened.** A recipient path that is present but does not parse is tenant 0, never the
+  template's root (the template path can name another tenant: BizLMS matched templates with an unbounded LIKE).
+  0 April rows are affected (all 14,202 recipient paths are exact).
+- **Redaction.** A subject that cannot be scrubbed is masked AND its body is withheld (verify() would otherwise
+  fail a non-atomic run after the rows were committed). A row whose own subject or body still holds
+  `[employee_password]` is a credential row (`credentials_withheld:row_placeholder`), whatever its template says.
+- **Display.** `template_label`, `error`, `sender_name` and `subject` are passed to the Logs template raw; the
+  template escapes once (they were escaped twice, so "&" showed as "&amp;").
+- **Preflight** guards every legacy column it queries (`to_userid`, `sent_date`, `notification_infoid`, ...), so a
+  malformed table reports the runner's `missing_column` block instead of throwing.
+
+Known, not changed here (see the build report): while `imported_history.enabled` is OFF (the default), the
+dashboard's BizLMS "Legacy queue" card still counts `local_emaillogs` site-wide; the card is only hidden once the
+imported rows are shown, so nothing is counted twice. Manager copies (`teammemberid` > 0) are imported with a body
+that names the team member, and `teammemberid` is not carried, so erasing the team member does not reach that
+body (spec gap, needs a decision). 78% of April rows were queued by the support pseudo-user (`from_userid` -20),
+which maps to a NULL sender, so the Sent from column is blank on them. `mask_pii_for_dev.php` (platform) does not
+mask the subject or body of imported rows. Visual evidence for the flagged UI is still owed.

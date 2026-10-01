@@ -29,12 +29,16 @@ use local_sentientia_platform\bizlms\tenant_resolver;
  *    as a reminder the new engine sent.
  *  - status: a row BizLMS delivered is sent; anything else (0, NULL, any other
  *    value) is not_sent, which nothing ever sends and no dashboard counts as a
- *    failure. A row BizLMS marked sent for a recipient who is deleted was never
- *    delivered; it stays sent with a note (or suppressed, per decision).
+ *    failure. A row BizLMS marked sent for a recipient who had ALREADY been deleted
+ *    when the send ran was never delivered (BZ notification.php:85-88 marks it sent
+ *    without sending); it stays sent with a note (or suppressed, per decision). A
+ *    recipient deleted AFTER the send was delivered to: that row is plain sent. The
+ *    two are told apart by the user row (deleted, timemodified, lastaccess against
+ *    the row's sent date), see delivered_to_deleted_recipient().
  *  - tenant_id is the root of the RECIPIENT's current open_path, as for native
- *    rows; only when the recipient has none is the template's path tried, and
+ *    rows; only when the recipient has NO path is the template's path tried, and
  *    then 0. The template path never comes first: BizLMS matched templates with an
- *    unbounded LIKE.
+ *    unbounded LIKE, and it never replaces a path that is there but does not parse.
  *  - credentials: see redactor. A credential row keeps its recipient, type, status
  *    and timestamps and loses its subject and body.
  *  - source timestamps are kept; nothing is stamped with the time of the import.
@@ -69,6 +73,9 @@ abstract class log_step extends step {
 
     /** @var array<int, bool> Whether a tenant root is registered, by root. */
     private array $roots = [];
+
+    /** @var array<int, \stdClass> Deleted recipients of the current batch: user id => deleted, timemodified, lastaccess. */
+    private array $deletedusers = [];
 
     /**
      * Read one source row into the shape every step maps from.
@@ -110,6 +117,7 @@ abstract class log_step extends step {
             $candidates[(int) $row->id] = $this->candidate($row);
         }
         $this->load_templates(array_column($candidates, 'infoid'), $ctx);
+        $this->load_deleted_recipients($candidates, $ctx);
 
         $settings = [
             'bodies' => (bool) $ctx->decision('notifications.import_bodies'),
@@ -146,14 +154,21 @@ abstract class log_step extends step {
             return outcome::skip($id, 'tenant_unresolved', 'tenant_not_resolved');
         }
 
-        // Status. A deleted recipient is a user row that exists with deleted = 1.
+        // Status. The deleted-recipient note is for a recipient who was ALREADY deleted when BizLMS ran the send:
+        // that is the only case in which BizLMS marked the row sent without sending (BZ notification.php:85-88).
+        // One deleted since was delivered to, and its row is plain sent.
+        $warnings = [];
         if ($c['delivered']) {
-            if ($ctx->lookups->user_active($c['recipient'])) {
-                $status = 'sent';
-                $error = null;
-            } else {
+            $status = 'sent';
+            $error = null;
+            $deleted = $this->delivered_to_deleted_recipient($c, $ctx);
+            if ($deleted !== 'no') {
                 $status = $settings['deleted'] === 'suppressed' ? 'suppressed' : 'sent';
                 $error = self::NOTE_DELETED_RECIPIENT;
+                if ($deleted === 'unknown') {
+                    // No send date (or no deletion date) to compare: the note is kept, and the report says so.
+                    $warnings[] = 'deleted_recipient_time_unknown';
+                }
             }
         } else {
             $status = 'not_sent';
@@ -161,7 +176,6 @@ abstract class log_step extends step {
         }
 
         // Subject and body, with credentials redacted.
-        $warnings = [];
         $why = $this->credential_reason($c, $template);
         if ($why !== null) {
             $subject = redactor::SUBJECT_MASK;
@@ -170,11 +184,16 @@ abstract class log_step extends step {
         } else {
             $subject = $this->scrubbed($c['subject'], $warnings);
             if ($subject === null) {
+                // A subject that could not be scrubbed is masked, and a masked subject never has a body beside it
+                // (verify() fails withheld_subject_with_a_body, and the rows are already committed by then).
                 $subject = redactor::SUBJECT_MASK;
-            }
-            $body = $settings['bodies'] ? $this->scrubbed($c['body'], $warnings) : null;
-            if ($body === '') {
                 $body = null;
+                $warnings[] = 'credentials_withheld:subject_scrub_failed';
+            } else {
+                $body = $settings['bodies'] ? $this->scrubbed($c['body'], $warnings) : null;
+                if ($body === '') {
+                    $body = null;
+                }
             }
         }
         $subject = $ctx->text->fit($subject, 255, 'subject');
@@ -218,7 +237,7 @@ abstract class log_step extends step {
      *
      * @param array $c The candidate.
      * @param array|null $template Facts about its template, null when the template is gone.
-     * @return string|null users_module, template_placeholder or unresolved_template.
+     * @return string|null users_module, template_placeholder, row_placeholder or unresolved_template.
      */
     private function credential_reason(array $c, ?array $template): ?string {
         if ($template !== null) {
@@ -232,10 +251,73 @@ abstract class log_step extends step {
         if (redactor::is_users_module(null, null, $c['moduletype'])) {
             return 'users_module';
         }
+        // The row's own text still carries the unfilled placeholder: whatever the template says (it may be gone or
+        // edited since), this message must not keep a subject or body that verify() would then reject.
+        if (redactor::template_uses_password($c['subject'], $c['body'])) {
+            return 'row_placeholder';
+        }
         if ($template === null && redactor::subject_suggests_credentials($c['subject'])) {
             return 'unresolved_template';
         }
         return null;
+    }
+
+    /**
+     * Was the recipient of a row BizLMS delivered already deleted when the send ran?
+     *
+     * BizLMS marks a row sent WITHOUT sending when the recipient is deleted at the time of the send
+     * (BZ notification.php:85-88). A recipient who is deleted NOW may have been deleted long after a real delivery,
+     * so the user row is compared with the row's sent date: Moodle stamps timemodified when it deletes a user, and a
+     * user who logged in after the send (lastaccess) was not deleted at that time. Measured on the April 2026
+     * production copy: 342 delivered rows belong to users who are deleted now, and for all but about one the user
+     * was deleted months after the send.
+     *
+     * @param array $c The candidate (a delivered row).
+     * @param context $ctx
+     * @return string 'no' (an active recipient, or one deleted after the send), 'yes' (deleted when the send ran) or
+     *         'unknown' (the send date or the deletion date is missing, so the two cannot be compared).
+     */
+    private function delivered_to_deleted_recipient(array $c, context $ctx): string {
+        if ($ctx->lookups->user_active($c['recipient'])) {
+            return 'no';
+        }
+        $user = $this->deletedusers[$c['recipient']] ?? null;
+        $sent = $c['sentdate'];
+        $modified = $user !== null ? self::epoch($user->timemodified ?? 0) : 0;
+        if ($sent <= 0 || $modified <= 0) {
+            return 'unknown';
+        }
+        if ($modified > $sent) {
+            return 'no';
+        }
+        if (self::epoch($user->lastaccess ?? 0) > $sent) {
+            return 'no';
+        }
+        return 'yes';
+    }
+
+    /**
+     * Read the user rows of the deleted recipients of a batch (deleted, timemodified, lastaccess), once per batch.
+     *
+     * Only a delivered row to a recipient who exists and is not active needs it; the common case reads nothing.
+     *
+     * @param array<int, array> $candidates
+     * @param context $ctx
+     * @return void
+     */
+    private function load_deleted_recipients(array $candidates, context $ctx): void {
+        $this->deletedusers = [];
+        $need = [];
+        foreach ($candidates as $c) {
+            $id = (int) $c['recipient'];
+            if ($c['delivered'] && $id > 0 && $ctx->lookups->user_exists($id) && !$ctx->lookups->user_active($id)) {
+                $need[$id] = $id;
+            }
+        }
+        if ($need) {
+            $this->deletedusers = $ctx->legacy->fetch('user', array_values($need),
+                ['id', 'deleted', 'timemodified', 'lastaccess']);
+        }
     }
 
     /**
@@ -299,9 +381,10 @@ abstract class log_step extends step {
      *
      * The template path is a fallback and nothing more (mapping doc section 11, "Tenant rule"): BizLMS matched
      * templates with an unbounded LIKE, so it says little about who the recipient belongs to. It is tried only
-     * when the recipient has NO usable path (none stored, or one that does not parse). A recipient whose path
-     * parses but names a root that is not a registered tenant is NOT attributed to the template's tenant: that
-     * would file the message under somebody else's tenant (ADR-031), so it stays unresolved (0).
+     * when the recipient has NO path at all (none stored, or an empty one). A recipient whose path is there but
+     * does not parse, or parses to a root that is not a registered tenant, is NOT attributed to the template's
+     * tenant: the template's path can name another tenant, and filing the message there would put it under
+     * somebody else's tenant (ADR-031), so it stays unresolved (0).
      *
      * @param int $userid
      * @param string|null $templatepath local_notification_info.open_path
@@ -310,8 +393,11 @@ abstract class log_step extends step {
      */
     private function tenant_of(int $userid, ?string $templatepath, context $ctx): array {
         $raw = $ctx->lookups->user_path($userid);
-        $path = ($raw === null || trim($raw) === '') ? null : tenant_resolver::normalise($raw);
-        if ($path !== null) {
+        if ($raw !== null && trim($raw) !== '') {
+            $path = tenant_resolver::normalise($raw);
+            if ($path === null) {
+                return [0, 'unresolved'];
+            }
             $root = (int) explode('/', ltrim($path, '/'))[0];
             if (!$this->root_is_registered($root)) {
                 return [0, 'unresolved'];

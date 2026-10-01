@@ -53,7 +53,8 @@ final class emaillogs_step extends log_step {
 
     /**
      * status 1 is delivered: the sender task sets it after message_send() returned. A row it marks 1 for a
-     * deleted recipient was never sent, which map_one() notes.
+     * recipient who was already deleted when it ran was never sent, which log_step notes (a recipient deleted
+     * since was delivered to; see delivered_to_deleted_recipient()).
      *
      * @param \stdClass $row
      * @return array

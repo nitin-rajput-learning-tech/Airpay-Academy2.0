@@ -334,8 +334,8 @@ final class imported_history_reader_test extends \advanced_testcase {
     // The template tenant filter (code fix 6).
 
     /**
-     * The BizLMS template tables, as temporary tables when the test site has none. Returns false when a real
-     * table without open_path is there.
+     * The BizLMS template tables, as temporary tables when the test site has none (in the production shape: open_path
+     * and no costcenterid). Returns false when a real table without open_path is there.
      *
      * @return bool
      */
@@ -359,7 +359,7 @@ final class imported_history_reader_test extends \advanced_testcase {
             $info->add_field('subject', XMLDB_TYPE_CHAR, '255');
             $info->add_field('body', XMLDB_TYPE_TEXT);
             $info->add_field('adminbody', XMLDB_TYPE_TEXT);
-            $info->add_field('costcenterid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            // No costcenterid: the April 2026 production copy has open_path only. The filter must work on this shape.
             $info->add_field('active', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1');
             $info->add_field('completiondays', XMLDB_TYPE_INTEGER, '10');
             $info->add_field('reminderdays', XMLDB_TYPE_INTEGER, '10');
@@ -372,11 +372,13 @@ final class imported_history_reader_test extends \advanced_testcase {
         return array_key_exists('open_path', $DB->get_columns('local_notification_info'));
     }
 
-    public function test_the_template_tenant_filter_matches_open_path_on_a_whole_segment_and_keeps_costcenterid(): void {
+    public function test_the_template_tenant_filter_matches_open_path_on_a_whole_segment(): void {
         global $DB;
         if (!$this->ensure_template_tables()) {
             $this->markTestSkipped('a local_notification_info without open_path is on this test site');
         }
+        // The production shape has no costcenterid; a site whose real table has one gets the older rows too.
+        $hascost = array_key_exists('costcenterid', $DB->get_columns('local_notification_info'));
         $typeid = (int) $DB->insert_record('local_notification_type', (object) ['name' => 'Course enrolment',
             'shortname' => 'course_enrol']);
         // Writers since 2022 set open_path and never costcenterid; older rows set costcenterid only.
@@ -391,27 +393,62 @@ final class imported_history_reader_test extends \advanced_testcase {
         ];
         $ids = [];
         foreach ($templates as $subject => [$path, $costcenter]) {
-            $ids[$subject] = (int) $DB->insert_record('local_notification_info', (object) [
+            $record = (object) [
                 'open_path' => $path, 'notificationid' => $typeid, 'subject' => $subject, 'body' => '<p>b</p>',
-                'costcenterid' => $costcenter, 'active' => 1, 'timecreated' => 1, 'timemodified' => 1,
-            ]);
+                'active' => 1, 'timecreated' => 1, 'timemodified' => 1,
+            ];
+            if ($hascost) {
+                $record->costcenterid = $costcenter;
+            }
+            $ids[$subject] = (int) $DB->insert_record('local_notification_info', $record);
         }
         $subjects = static fn(): array => array_column(legacy_bridge::get_bizlms_templates(), 'subject');
 
         $this->setUser($this->tenant_admin('/1'));
         $seen = $subjects();
         sort($seen);
-        $this->assertSame(['T1', 'T2', 'T5'], $seen,
-            '/1 and /1/5 match; /10 and /177 do not (whole segment); the costcenterid row still does; '
-            . 'a path without its leading slash is not matched (the importer preflight counts those)');
+        $this->assertSame($hascost ? ['T1', 'T2', 'T5'] : ['T1', 'T2'], $seen,
+            '/1 and /1/5 match; /10 and /177 do not (whole segment); where the table has costcenterid that row '
+            . 'still matches too; a path without its leading slash is not matched (the importer preflight counts those)');
         $this->assertNotNull(legacy_bridge::get_bizlms_template($ids['T2']));
         $this->assertNull(legacy_bridge::get_bizlms_template($ids['T3']), '/10 is not tenant 1');
         $this->assertNull(legacy_bridge::get_bizlms_template($ids['T6']));
+        if (!$hascost) {
+            $this->assertSame(1, (int) legacy_bridge::get_bizlms_template($ids['T2'])->costcenterid,
+                'the result carries the tenant whichever column it came from');
+        }
 
         $this->setUser($this->tenant_admin(''));
         $this->assertSame([], $subjects(), 'a caller whose tenant does not resolve sees none');
 
         $this->setAdminUser();
         $this->assertCount(count($templates), $subjects(), 'a cross-tenant caller sees every template');
+        if (!$hascost) {
+            $labels = array_column(legacy_bridge::get_bizlms_templates(), 'label', 'bizlms_id');
+            $this->assertStringContainsString('(Tenant 1)', $labels[$ids['T2']],
+                'a template without costcenterid is labelled with the root of its open_path');
+        }
+    }
+
+    public function test_the_template_tenant_filter_is_built_from_the_columns_the_table_has(): void {
+        // The three shapes of local_notification_info found in the wild. Naming a column the table lacks makes the
+        // query throw, which emptied the Templates tab for everybody on the production shape (path only).
+        $this->setUser($this->tenant_admin('/1'));
+        [$both] = legacy_bridge::tenant_filter_for_columns('ni', true, true);
+        $this->assertStringContainsString('ni.open_path', $both);
+        $this->assertStringContainsString('ni.costcenterid', $both);
+        [$pathonly] = legacy_bridge::tenant_filter_for_columns('ni', true, false);
+        $this->assertStringContainsString('ni.open_path', $pathonly);
+        $this->assertStringNotContainsString('costcenterid', $pathonly, 'the production shape has no such column');
+        [$costonly] = legacy_bridge::tenant_filter_for_columns('ni', false, true);
+        $this->assertStringContainsString('ni.costcenterid', $costonly);
+        $this->assertStringNotContainsString('open_path', $costonly);
+        [$neither, $args] = legacy_bridge::tenant_filter_for_columns('ni', false, false);
+        $this->assertSame('1=0', $neither, 'nothing to scope by: fail closed');
+        $this->assertSame([], $args);
+
+        $this->setAdminUser();
+        $this->assertSame('1=1', legacy_bridge::tenant_filter_for_columns('ni', true, false)[0],
+            'a cross-tenant caller is not filtered');
     }
 }

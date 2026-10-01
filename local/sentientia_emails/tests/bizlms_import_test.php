@@ -151,7 +151,7 @@ final class bizlms_import_test extends \advanced_testcase {
      *  local_emaillogs  17 rows. 16 import, 13 (an unknown recipient) is skipped: orphan_user.
      *    1 sent, to a /1 user, course kept, created = sent date       2 queued, users module: subject masked, body NULL
      *    3 status NULL, /77 recipient                                  4 created 0, only timemodified set
-     *    5 template gone, subject reads like an account message        6 sent to a deleted user
+     *    5 template gone, subject reads like an account message        6 sent to a user already deleted at the send
      *    7 manager copy (teammemberid set)                             8 courseid -1 (custom mail)
      *    9 courseid that does not exist                                10 /1 recipient, template of /177
      *    11 recipient with no path, template of /77                    12 recipient whose root is not a tenant
@@ -173,6 +173,8 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->ids['c'] = $this->user_at('/77');
         $this->ids['d'] = $this->user_at('/1/5');
         $DB->set_field('user', 'deleted', 1, ['id' => $this->ids['d']]);
+        // Deleted 30 seconds into the seed, before row 6 was sent (T0 + 60): BizLMS marked that row sent without sending.
+        $DB->set_field('user', 'timemodified', $t + 30, ['id' => $this->ids['d']]);
         $this->ids['manager'] = $this->user_at('/1/5');
         $this->ids['sender'] = $this->user_at('/1');
         $this->ids['nopath'] = $this->user_at(null);
@@ -202,7 +204,7 @@ final class bizlms_import_test extends \advanced_testcase {
             8 => [1, '', 'No path', 'Body'],
         ] as $id => [$type, $path, $subject, $body]) {
             $this->legacy_row('local_notification_info', ['id' => $id, 'notificationid' => $type, 'open_path' => $path,
-                'subject' => $subject, 'body' => $body, 'costcenterid' => 1, 'timecreated' => $t, 'timemodified' => $t]);
+                'subject' => $subject, 'body' => $body, 'timecreated' => $t, 'timemodified' => $t]);
         }
 
         $mail = function (int $id, int $to, int $info, $status, array $more = []) use ($t): void {
@@ -457,7 +459,8 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertNull($r->legacy_type, 'an unresolvable template has no type');
         $this->assertSame('sent', $r->status);
 
-        // 6: BizLMS marked a deleted recipient sent without sending: kept sent, with the note.
+        // 6: the recipient was already deleted when BizLMS ran the send, so it marked the row sent without sending:
+        // kept sent, with the note.
         $r = $this->row('local_emaillogs', 6);
         $this->assertSame('sent', $r->status);
         $this->assertSame(log_step::NOTE_DELETED_RECIPIENT, $r->error_message);
@@ -711,19 +714,161 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertSame(self::T0 + 44, (int) $this->row('local_emaillogs', 4)->timecreated);
     }
 
-    public function test_a_recipient_without_a_tenant_root_is_pathless_not_filed_under_another_tenant(): void {
+    public function test_a_recipient_whose_path_does_not_parse_is_pathless_not_filed_under_the_template(): void {
         global $DB;
         $this->contract_begin();
         $this->seed_notifications();
-        // A recipient whose path does not parse is "no path": the template's root is then the fallback.
+        // The template's path is the fallback ONLY for a recipient with no path at all (row 11). A path that is there
+        // but does not parse is not "no path": BizLMS matched templates with an unbounded LIKE, so the template's
+        // path can name another tenant, and the message must not be filed under it.
         $broken = $this->user_at('not/a/path');
         $this->legacy_row('local_emaillogs', ['id' => 50, 'notification_infoid' => 5, 'from_userid' => $this->ids['sender'],
             'to_userid' => $broken, 'subject' => 'Broken path', 'status' => 1, 'sent_date' => self::T0 + 500,
             'timecreated' => self::T0 + 500]);
-        $this->contract_run(true);
-        $this->assertSame(77, (int) $this->row('local_emaillogs', 50)->tenant_id, 'template of /77 is the fallback');
-        // ... while a recipient with a real path that is not a tenant is never filed under the template's.
+        [$result, $report] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        $this->assertSame(0, (int) $this->row('local_emaillogs', 50)->tenant_id,
+            'template 5 is for /77, and a path that does not parse does not fall back to it');
+        // The recipient with NO path still falls back to the template's root.
+        $this->assertSame(77, (int) $this->row('local_emaillogs', 11)->tenant_id);
+        // ... and a real path that is not a tenant is never filed under the template's.
         $this->assertSame(0, (int) $this->row('local_emaillogs', 12)->tenant_id);
-        $this->assertSame(1, $DB->count_records(self::TARGET, ['tenant_id' => 0]));
+        $this->assertSame(2, $DB->count_records(self::TARGET, ['tenant_id' => 0]));
+        $this->assertSame(1, $this->tally($report, 'tenant_methods')['fallback:template'] ?? 0,
+            'only row 11 used the template');
+    }
+
+    // The deleted-recipient note: only for a recipient who was already deleted when the send ran.
+
+    /**
+     * A deleted user with the stamps Moodle leaves behind: delete_user() sets deleted = 1 and timemodified = the time
+     * of the deletion; lastaccess is the last login.
+     *
+     * @param int $timemodified
+     * @param int $lastaccess
+     * @return int
+     */
+    private function deleted_user(int $timemodified, int $lastaccess = 0): int {
+        global $DB;
+        $id = $this->user_at('/1/5');
+        $DB->set_field('user', 'deleted', 1, ['id' => $id]);
+        $DB->set_field('user', 'timemodified', $timemodified, ['id' => $id]);
+        $DB->set_field('user', 'lastaccess', $lastaccess, ['id' => $id]);
+        return $id;
+    }
+
+    /**
+     * Rows 60-65: a delivered email (sent at T0 + 600) to six differently deleted recipients.
+     *
+     *  60 deleted months AFTER the send, last seen after it: it was delivered, plain sent
+     *  61 stamps say deleted at T0 + 100 but last seen at T0 + 900: alive at the send, plain sent
+     *  62 deleted, no deletion time on the user row: cannot tell, note kept and reported
+     *  63 deleted exactly at the send: the note
+     *  64 deleted before the send, but the row has no sent date: cannot tell, note kept and reported
+     *  65 deleted at T0 + 500, before the send: the note
+     *
+     * @return void
+     */
+    private function seed_deleted_recipients(): void {
+        $t = self::T0;
+        $recipients = [
+            60 => [$this->deleted_user($t + 5000, $t + 4000), $t + 600],
+            61 => [$this->deleted_user($t + 100, $t + 900), $t + 600],
+            62 => [$this->deleted_user(0, 0), $t + 600],
+            63 => [$this->deleted_user($t + 600, 0), $t + 600],
+            64 => [$this->deleted_user($t + 100, 0), 0],
+            65 => [$this->deleted_user($t + 500, $t + 400), $t + 600],
+        ];
+        foreach ($recipients as $id => [$user, $sent]) {
+            $this->legacy_row('local_emaillogs', ['id' => $id, 'notification_infoid' => 1,
+                'from_userid' => $this->ids['sender'], 'to_userid' => $user, 'subject' => 'Subject ' . $id,
+                'emailbody' => '<p>Body ' . $id . '</p>', 'status' => 1, 'sent_date' => $sent, 'timecreated' => $t + $id]);
+        }
+    }
+
+    public function test_a_recipient_deleted_after_the_send_was_delivered_to_and_gets_no_note(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->seed_notifications();
+        $this->seed_deleted_recipients();
+        [$result, $report] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+
+        foreach ([60, 61] as $id) {
+            $r = $this->row('local_emaillogs', $id);
+            $this->assertSame('sent', $r->status);
+            $this->assertNull($r->error_message, "#{$id}: the email was delivered; saying it was not would be false history");
+        }
+        foreach ([62, 63, 64, 65] as $id) {
+            $r = $this->row('local_emaillogs', $id);
+            $this->assertSame('sent', $r->status, "#{$id}: sent_with_note keeps the status");
+            $this->assertSame(log_step::NOTE_DELETED_RECIPIENT, $r->error_message, "#{$id}");
+        }
+        // The seeded row 6 (deleted at T0 + 30, sent at T0 + 60) is still a note.
+        $this->assertSame(log_step::NOTE_DELETED_RECIPIENT, $this->row('local_emaillogs', 6)->error_message);
+
+        $warnings = $this->tally($report, 'warnings');
+        $this->assertSame(2, $warnings['deleted_recipient_time_unknown'] ?? 0, '#62 and #64 cannot be compared');
+        $this->assertSame(5, $DB->count_records_select(self::TARGET, 'error_message = :n',
+            ['n' => log_step::NOTE_DELETED_RECIPIENT]), 'rows 6, 62, 63, 64 and 65 are noted; 60 and 61 are not');
+    }
+
+    public function test_the_suppressed_decision_only_applies_to_a_recipient_deleted_at_the_send(): void {
+        $this->contract_begin();
+        $this->seed_notifications();
+        $this->seed_deleted_recipients();
+        $this->decisionvalues['notifications.deleted_recipient_sent'] = 'suppressed';
+        [$result] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+
+        $this->assertSame('sent', $this->row('local_emaillogs', 60)->status,
+            'deleted after a real delivery: never rewritten to suppressed');
+        $this->assertSame('sent', $this->row('local_emaillogs', 61)->status);
+        foreach ([6, 62, 63, 64, 65] as $id) {
+            $this->assertSame('suppressed', $this->row('local_emaillogs', $id)->status, "#{$id}");
+        }
+        $verify = (new runner(['decisions' => $this->contract_decisions()]))->verify(['notifications']);
+        $this->assertSame(0, $verify['exit'], implode('; ', $verify['failures']['notifications'] ?? []));
+    }
+
+    public function test_preflight_counts_only_the_deleted_recipients_that_will_be_noted(): void {
+        $this->contract_begin();
+        $this->seed_notifications();
+        $this->seed_deleted_recipients();
+        $runner = new runner(['decisions' => $this->contract_decisions()]);
+        $pf = $runner->preflight(['notifications'])['preflights']['notifications'];
+        $this->assertFalse($pf->has_blockers(), implode('; ', $pf->blockers()));
+        $warnings = $pf->warnings();
+        // Rows 6, 63 and 65 were sent to a recipient already deleted; 60 and 61 were delivered to a live user.
+        $this->assertContains('sent_to_deleted_recipient:local_emaillogs:3', $warnings);
+        $this->assertContains('sent_to_deleted_recipient_time_unknown:local_emaillogs:2', $warnings);
+    }
+
+    // Credentials: a placeholder in the row's own text.
+
+    public function test_a_literal_password_placeholder_in_the_rows_own_text_makes_it_a_credential_row(): void {
+        $this->contract_begin();
+        $this->seed_notifications();
+        $t = self::T0;
+        // The template is gone (999) and the subject reads like nothing, so only the row's own text can say. The
+        // placeholder is not preceded by a secret word, so the scrub would leave it, and verify() would then fail the
+        // run after the rows were committed.
+        $this->legacy_row('local_emaillogs', ['id' => 70, 'notification_infoid' => 999, 'from_userid' => $this->ids['sender'],
+            'to_userid' => $this->ids['a'], 'subject' => 'Course reminder', 'emailbody' => 'Hello [employee_password]',
+            'status' => 1, 'sent_date' => $t + 700, 'timecreated' => $t + 700]);
+        $this->legacy_row('local_emaillogs', ['id' => 71, 'notification_infoid' => 1, 'from_userid' => $this->ids['sender'],
+            'to_userid' => $this->ids['a'], 'subject' => 'Hi [employee_password]', 'emailbody' => '<p>Body</p>',
+            'status' => 1, 'sent_date' => $t + 710, 'timecreated' => $t + 710]);
+        [$result, $report] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+
+        foreach ([70, 71] as $id) {
+            $r = $this->row('local_emaillogs', $id);
+            $this->assertSame(redactor::SUBJECT_MASK, $r->subject, "#{$id}");
+            $this->assertNull($r->body_html, "#{$id}");
+        }
+        $this->assertSame(2, $this->tally($report, 'warnings')['credentials_withheld:row_placeholder'] ?? 0);
+        $verify = (new runner(['decisions' => $this->contract_decisions()]))->verify(['notifications']);
+        $this->assertSame(0, $verify['exit'], implode('; ', $verify['failures']['notifications'] ?? []));
     }
 }

@@ -338,10 +338,11 @@ class manage_controller {
                 'user_name'     => format_string(($r->firstname ?? '') . ' ' . ($r->lastname ?? '')),
                 'user_email'    => s($r->email ?? ''),
                 'channel'       => $r->channel,
-                'subject'       => format_string($r->subject),
+                // The template escapes {{ }} once; a value that is escaped here as well shows "&amp;" for "&".
+                'subject'       => format_string($r->subject, true, ['escape' => false]),
                 'template_key'  => $r->template_key,
                 // The native template key; for an imported row without one, the BizLMS notification type.
-                'template_label' => $templatekey !== '' ? $templatekey : ($isimported ? s($r->legacy_type ?? '') : ''),
+                'template_label' => $templatekey !== '' ? $templatekey : ($isimported ? (string) ($r->legacy_type ?? '') : ''),
                 'status'        => $status,
                 'status_sent'   => ($status === 'sent'),
                 'status_failed' => ($status === 'failed'),
@@ -349,9 +350,10 @@ class manage_controller {
                 // Every other status gets a badge too (not_sent, suppressed_completion, bounced, ...).
                 'status_other'  => !in_array($status, ['sent', 'failed', 'suppressed'], true),
                 'status_notsent' => ($status === 'not_sent'),
-                'error'         => s($r->error_message ?? ''),
+                'error'         => (string) ($r->error_message ?? ''),
                 'imported'      => $isimported,
-                'sender_name'   => $isimported && $sendername !== '' ? format_string($sendername) : '',
+                'sender_name'   => $isimported && $sendername !== ''
+                    ? format_string($sendername, true, ['escape' => false]) : '',
                 'sent_on'       => $isimported && !empty($r->timesent)
                     ? userdate((int) $r->timesent, '%d %b %Y %I:%M %p') : '',
                 'can_view'      => $isimported && $bodyenabled,

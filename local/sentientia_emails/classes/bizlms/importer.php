@@ -32,6 +32,9 @@ use local_sentientia_platform\bizlms\source_spec;
  *  - A queue row BizLMS never delivered is imported as not_sent, never failed or
  *    suppressed, so it does not light the dashboard's failure tile and nothing
  *    picks it up to send.
+ *  - The deleted-recipient note ("marked sent without delivery") is only for a recipient who
+ *    was already deleted when the send ran; one deleted since was delivered to and imports as
+ *    plain sent (log_step::delivered_to_deleted_recipient()).
  *  - template_key and rule_id stay NULL, so no reminder dedupe, cap or completion
  *    stamp ever sees an imported row.
  *
@@ -155,7 +158,8 @@ final class importer implements \local_sentientia_platform\bizlms\importer {
                 [true, false]),
             new decision('notifications.retention', 'Retention of imported e-mail rows', true, null,
                 ['keep_no_purge']),
-            new decision('notifications.deleted_recipient_sent', 'Status of a row BizLMS marked sent for a deleted recipient',
+            new decision('notifications.deleted_recipient_sent',
+                'Status of a row BizLMS marked sent for a recipient who was already deleted when BizLMS ran the send',
                 true, null, ['sent_with_note', 'suppressed']),
             new decision('tenant.unresolved.notifications', 'A row whose tenant cannot be resolved', true, null,
                 ['pathless', 'skip']),
@@ -188,6 +192,8 @@ final class importer implements \local_sentientia_platform\bizlms\importer {
         $legacy = $ctx->legacy;
 
         if ($legacy->exists('local_emaillogs')) {
+            // Every query below names columns of the legacy tables, and this runs even when the runner has already
+            // blocked a missing column, so each one is guarded: a malformed table reports its block, it does not throw.
             if ($legacy->has_column('local_emaillogs', 'status')) {
                 $pf->histogram('local_emaillogs.status', [
                     'sent (1)' => $legacy->count('local_emaillogs', ['t.status = 1', []]),
@@ -196,18 +202,29 @@ final class importer implements \local_sentientia_platform\bizlms\importer {
                     'other' => $legacy->count('local_emaillogs', ['t.status IS NOT NULL AND t.status NOT IN (0, 1)', []]),
                 ]);
             }
-            $this->warn_count($pf, 'orphan_recipients:local_emaillogs', (int) $DB->count_records_sql(
-                'SELECT COUNT(1) FROM {local_emaillogs} t LEFT JOIN {user} u ON u.id = t.to_userid WHERE u.id IS NULL'));
-            if ($legacy->has_column('local_emaillogs', 'status')) {
-                $this->warn_count($pf, 'sent_to_deleted_recipient:local_emaillogs', (int) $DB->count_records_sql(
-                    'SELECT COUNT(1) FROM {local_emaillogs} t JOIN {user} u ON u.id = t.to_userid '
-                    . 'WHERE u.deleted = 1 AND t.status = 1'));
+            if ($legacy->has_column('local_emaillogs', 'to_userid')) {
+                $this->warn_count($pf, 'orphan_recipients:local_emaillogs', (int) $DB->count_records_sql(
+                    'SELECT COUNT(1) FROM {local_emaillogs} t LEFT JOIN {user} u ON u.id = t.to_userid WHERE u.id IS NULL'));
+                if ($legacy->has_column('local_emaillogs', 'status') && $legacy->has_column('local_emaillogs', 'sent_date')) {
+                    // Only a recipient who was already deleted when the send ran is a row BizLMS marked sent without
+                    // delivery (log_step::delivered_to_deleted_recipient() compares the same facts); one deleted since
+                    // was delivered to. A row whose send date or deletion date is missing cannot be told apart: the
+                    // importer keeps the note on it, and says so.
+                    $this->warn_count($pf, 'sent_to_deleted_recipient:local_emaillogs', (int) $DB->count_records_sql(
+                        'SELECT COUNT(1) FROM {local_emaillogs} t JOIN {user} u ON u.id = t.to_userid '
+                        . 'WHERE u.deleted = 1 AND t.status = 1 AND t.sent_date > 0 AND u.timemodified > 0 '
+                        . 'AND u.timemodified <= t.sent_date AND u.lastaccess <= t.sent_date'));
+                    $this->warn_count($pf, 'sent_to_deleted_recipient_time_unknown:local_emaillogs', (int) $DB->count_records_sql(
+                        'SELECT COUNT(1) FROM {local_emaillogs} t JOIN {user} u ON u.id = t.to_userid '
+                        . 'WHERE u.deleted = 1 AND t.status = 1 AND (t.sent_date IS NULL OR t.sent_date <= 0 OR u.timemodified <= 0)'));
+                }
             }
-            if ($legacy->exists('local_notification_info')) {
+            if ($legacy->exists('local_notification_info') && $legacy->has_column('local_emaillogs', 'notification_infoid')) {
                 $this->warn_count($pf, 'template_not_found:local_emaillogs', (int) $DB->count_records_sql(
                     'SELECT COUNT(1) FROM {local_emaillogs} t '
                     . 'LEFT JOIN {local_notification_info} ni ON ni.id = t.notification_infoid WHERE ni.id IS NULL'));
-                if ($legacy->exists('local_notification_type')) {
+                if ($legacy->exists('local_notification_type') && $legacy->has_column('local_notification_info', 'notificationid')
+                        && $legacy->has_column('local_notification_type', 'pluginname')) {
                     // The messages whose subject and body will be withheld because their type is the users module.
                     // Others are added at import time (a template with the password placeholder, an unresolvable
                     // template that reads like an account message), so this is a lower bound.
