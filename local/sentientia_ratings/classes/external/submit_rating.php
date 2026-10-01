@@ -35,19 +35,10 @@ class submit_rating extends external_api {
      * a malicious caller from setting it to `mdl_user` and gaming the ratings
      * for unrelated rows).
      */
-    private const ALLOWED_RATEAREAS = [
-        'local_sentientia_courses',
-        'local_sentientia_classroom',
-        'local_sentientia_programs',
-        'local_sentientia_learningpath',
-        'local_sentientia_exams',
-        'local_sentientia_evaluation',
-        // BizLMS-era values still in old `local_rating` rows during transition.
-        'local_courses',
-        'local_classroom',
-        'local_program',
-        'local_learningplan',
-    ];
+    // The BizLMS-era values (local_courses, local_classroom, local_program, local_learningplan) were dropped
+    // on 2026-09-30 (ADR-032): the import writes those rows under the Sentientia names above, and a rating
+    // filed under an old name would split one item's ratings into two averages that nothing adds up.
+    private const ALLOWED_RATEAREAS = \local_sentientia_ratings\rating_manager::AREAS;
 
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([

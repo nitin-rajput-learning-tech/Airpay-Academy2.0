@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  BizLMS fixture copy for the ratings importer (ADR-032, "Fixture copies").
+
+  Source:  D:/Claude Local/Moodle Backup/01-production-codebase/html/local/ratings/db/install.xml
+  sha1:    743e500b216d157e60eef62a43c75589fbfd2ab2
+  Copied:  2026-09-30
+
+  The copy is verbatim except for one edit, marked EDIT below:
+    (a) the PREVIOUS and NEXT attributes are stripped from every FIELD and TABLE. Several point at the two fields
+        the source has commented out (courseid, activityid), which no longer exist, and XMLDB does not use them
+        to build a table.
+
+  Production-only columns that this file does not declare are added by the test, not here:
+    - local_comment.time, the 2013-era creation time (RA comment.php:35, written as $comm->time). The table's
+      install file has no such column, but rows written before it was rewritten carry it, and the importer reads
+      it when present. The test adds it through the legacy_schema_fixture extrafields, and drops it again in the
+      test that proves the importer runs on a table without it.
+-->
+<XMLDB PATH="local/ratings/db" VERSION="20130905" COMMENT="XMLDB file for Like/Unlike, Rating and Comment tables">
+  <TABLES>
+    <!-- EDIT (a): NEXT="local_comment" and the PREVIOUS/NEXT of every field removed. -->
+    <TABLE NAME="local_rating" COMMENT="To store ratings given to different modules">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true"  SEQUENCE="true"/>
+        <!-- <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"  PREVIOUS="id" NEXT="activityid"/> -->
+        <!-- <FIELD NAME="activityid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"  PREVIOUS="courseid" NEXT="itemid"/> -->
+        <FIELD NAME="itemid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="ratearea" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="rating" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="moduleid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="itemid" UNIQUE="false" FIELDS="itemid"/>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_comment" COMMENT="To store comments given to different modules">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true"  SEQUENCE="true"/>
+        <FIELD NAME="itemid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="commentarea" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="comment" TYPE="text"  NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="itemid" UNIQUE="false" FIELDS="itemid"/>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_like" COMMENT="List of users likes">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <!-- <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" PREVIOUS="id" NEXT="activityid"/> -->
+        <!-- <FIELD NAME="activityid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" PREVIOUS="courseid" NEXT="itemid"/> -->
+        <FIELD NAME="itemid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="likearea" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="likestatus" TYPE="int" LENGTH="1" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <!-- <FIELD NAME="moduleid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"  PREVIOUS="timemodified" /> -->
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="itemid" UNIQUE="false" FIELDS="itemid"/>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_ratings_likes" COMMENT="Aggregate of Ratings and likes ">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="module_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="module_area" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="module_rating" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="module_rating_users" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="module_like" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="module_like_users" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="module_id" UNIQUE="false" FIELDS="module_id"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

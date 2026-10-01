@@ -1,0 +1,96 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_sentientia_ratings/review_list
+
+    The item reviews page: average rating, like and dislike counts, written reviews.
+
+    Every review text arrives already escaped as plain text (format_text with FORMAT_PLAIN), which is the only
+    reason reviewhtml is printed with triple braces. Do not use triple braces for anything else here.
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * none
+
+    Context variables required for this template:
+    * hasaverage - bool
+    * averagetext - string, already localised
+    * showreactions - bool
+    * likestext - string, only when showreactions
+    * dislikestext - string, only when showreactions
+    * showreviews - bool
+    * hasreviews - bool
+    * reviews - list of {reviewer, date, hasrating, ratingtext, reviewhtml}
+
+    Example context (json):
+    {
+        "hasaverage": true,
+        "averagetext": "Average rating 4.5 from 12 ratings",
+        "showreactions": true,
+        "likestext": "Likes: 9",
+        "dislikestext": "Dislikes: 1",
+        "showreviews": true,
+        "hasreviews": true,
+        "reviews": [
+            {
+                "reviewer": "Asha Verma",
+                "date": "12 Mar 2026",
+                "hasrating": true,
+                "ratingtext": "5 out of 5",
+                "reviewhtml": "Clear and practical.<br />Would take again."
+            }
+        ]
+    }
+}}
+<div class="airpay-reviews" data-region="sentientia-ratings-reviews">
+    <h2 class="airpay-reviews__heading">{{#str}} reviewsheading, local_sentientia_ratings {{/str}}</h2>
+
+    <p class="airpay-reviews__summary">
+        {{#hasaverage}}{{averagetext}}{{/hasaverage}}
+        {{^hasaverage}}{{#str}} noratings, local_sentientia_ratings {{/str}}{{/hasaverage}}
+    </p>
+
+    {{#showreactions}}
+    <p class="airpay-reviews__reactions">
+        <span class="airpay-reviews__likes">{{likestext}}</span>
+        <span class="airpay-reviews__dislikes">{{dislikestext}}</span>
+    </p>
+    {{/showreactions}}
+
+    {{#showreviews}}
+        {{#hasreviews}}
+        <ul class="airpay-reviews__list list-unstyled">
+            {{#reviews}}
+            <li class="airpay-reviews__item mb-3">
+                <div class="airpay-reviews__meta">
+                    <strong class="airpay-reviews__reviewer">{{reviewer}}</strong>
+                    <span class="airpay-reviews__date text-muted">{{date}}</span>
+                    {{#hasrating}}<span class="airpay-reviews__rating">{{ratingtext}}</span>{{/hasrating}}
+                </div>
+                <div class="airpay-reviews__text">{{{reviewhtml}}}</div>
+            </li>
+            {{/reviews}}
+        </ul>
+        {{/hasreviews}}
+        {{^hasreviews}}
+        <p class="airpay-reviews__empty text-muted">{{#str}} reviewsempty, local_sentientia_ratings {{/str}}</p>
+        {{/hasreviews}}
+        <p class="airpay-reviews__scope text-muted small">{{#str}} reviewsscope, local_sentientia_ratings {{/str}}</p>
+    {{/showreviews}}
+</div>

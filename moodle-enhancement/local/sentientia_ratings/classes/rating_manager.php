@@ -7,7 +7,12 @@ defined('MOODLE_INTERNAL') || die();
  * Rating manager — star ratings for courses, classrooms, etc.
  *
  * Replaces BizLMS local_ratings with a clean implementation.
- * Falls back to BizLMS tables during transition.
+ *
+ * The BizLMS fallback this class used to carry (reading local_rating while its own table was empty) is gone
+ * (ADR-032, 2026-09-30): the BizLMS import brings those ratings into local_sentientia_ratings, under the
+ * Sentientia area names, in the same release. The fallback compared the new area name with rows stored under
+ * the old one, so it never matched, and its per-item switch hid every imported rating of an item that had
+ * received one new row.
  *
  * @package    local_sentientia_ratings
  * @copyright  2026 Airpay Payment Services
@@ -16,7 +21,20 @@ defined('MOODLE_INTERNAL') || die();
 class rating_manager {
 
     private const TABLE = 'local_sentientia_ratings';
-    private const LEGACY_TABLE = 'local_rating';
+
+    /**
+     * The rating areas a rating, review or reaction may be filed under. Each names the Sentientia plugin that
+     * owns the items. The submit web service accepts exactly these and the item reviews page refuses any other,
+     * so the column cannot be used to rate an arbitrary table row.
+     */
+    public const AREAS = [
+        'local_sentientia_courses',
+        'local_sentientia_classroom',
+        'local_sentientia_programs',
+        'local_sentientia_learningpath',
+        'local_sentientia_exams',
+        'local_sentientia_evaluation',
+    ];
 
     /**
      * Get average rating for an item.
@@ -30,34 +48,15 @@ class rating_manager {
 
         $result = (object) ['average' => 0, 'count' => 0];
 
-        // Try Airpay table first.
-        $dbman = $DB->get_manager();
-        if ($dbman->table_exists(self::TABLE)) {
-            $rec = $DB->get_record_sql(
-                "SELECT AVG(rating) AS avg_rating, COUNT(id) AS cnt
-                   FROM {" . self::TABLE . "}
-                  WHERE itemid = :itemid AND ratearea = :area AND rating > 0",
-                ['itemid' => $itemid, 'area' => $ratearea]
-            );
-            if ($rec && $rec->cnt > 0) {
-                $result->average = round((float) $rec->avg_rating, 1);
-                $result->count = (int) $rec->cnt;
-                return $result;
-            }
-        }
-
-        // Fallback: BizLMS table.
-        if ($dbman->table_exists(self::LEGACY_TABLE)) {
-            $rec = $DB->get_record_sql(
-                "SELECT AVG(rating) AS avg_rating, COUNT(id) AS cnt
-                   FROM {" . self::LEGACY_TABLE . "}
-                  WHERE itemid = :itemid AND ratearea = :area AND rating > 0",
-                ['itemid' => $itemid, 'area' => $ratearea]
-            );
-            if ($rec && $rec->cnt > 0) {
-                $result->average = round((float) $rec->avg_rating, 1);
-                $result->count = (int) $rec->cnt;
-            }
+        $rec = $DB->get_record_sql(
+            "SELECT AVG(rating) AS avg_rating, COUNT(id) AS cnt
+               FROM {" . self::TABLE . "}
+              WHERE itemid = :itemid AND ratearea = :area AND rating > 0",
+            ['itemid' => $itemid, 'area' => $ratearea]
+        );
+        if ($rec && $rec->cnt > 0) {
+            $result->average = round((float) $rec->avg_rating, 1);
+            $result->count = (int) $rec->cnt;
         }
 
         return $result;
@@ -75,25 +74,10 @@ class rating_manager {
         global $DB, $USER;
         $userid = $userid ?? $USER->id;
 
-        $dbman = $DB->get_manager();
-
-        if ($dbman->table_exists(self::TABLE)) {
-            $val = $DB->get_field(self::TABLE, 'rating', [
-                'itemid' => $itemid, 'ratearea' => $ratearea, 'userid' => $userid,
-            ]);
-            if ($val !== false) {
-                return (int) $val;
-            }
-        }
-
-        if ($dbman->table_exists(self::LEGACY_TABLE)) {
-            $val = $DB->get_field(self::LEGACY_TABLE, 'rating', [
-                'itemid' => $itemid, 'ratearea' => $ratearea, 'userid' => $userid,
-            ]);
-            return $val !== false ? (int) $val : 0;
-        }
-
-        return 0;
+        $val = $DB->get_field(self::TABLE, 'rating', [
+            'itemid' => $itemid, 'ratearea' => $ratearea, 'userid' => $userid,
+        ]);
+        return $val !== false ? (int) $val : 0;
     }
 
     /**
