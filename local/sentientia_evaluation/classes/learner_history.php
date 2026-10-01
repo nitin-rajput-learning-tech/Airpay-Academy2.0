@@ -18,6 +18,15 @@ defined('MOODLE_INTERNAL') || die();
  * that says they responded, with the day and not the minute (evaluation_manager::submitted_label()), and a note
  * that their answers are not linked to them. An assignment with no response is listed as waiting or closed.
  *
+ * Supervisor evaluations are not the learner's to answer. On one, the assignment row names the person being
+ * evaluated, and its status says "responded" when the SUPERVISOR answered; showing that to the person evaluated
+ * would tell them they responded to a form they never saw. BizLMS listed only self evaluations to learners, so the
+ * assignment rows of a supervisor evaluation are left out here. The page recognises one by its responses: the
+ * import stores the person evaluated in responses.subject_userid, and nothing else writes that column. What it
+ * cannot recognise is an ANONYMOUS supervisor evaluation, whose subject is deliberately not kept (decision
+ * evaluation.sp_anonymous_subject): the evaluated person would see it as responded. That needs a marker on the
+ * form itself and is recorded as an open item in the plugin state card.
+ *
  * Shown behind the default-OFF flag sentientia.evaluation.learner_history (see my_evaluations.php).
  *
  * @package    local_sentientia_evaluation
@@ -39,8 +48,9 @@ final class learner_history {
      *
      * @param int $userid
      * @return \stdClass[] Each: evaluationid, name (raw; the caller formats it), status (a STATUS_ value),
-     *         time (Unix time, 0 when unknown), anonymous (bool: the learner's answers are not linked to them),
-     *         imported (bool: the form came from the previous system).
+     *         time (Unix time, 0 when unknown), anonymous (bool: the evaluation keeps its respondents hidden, so
+     *         the time is shown to the day), unlinked (bool: the learner's answers are not linked to them, which is
+     *         what the page tells them), imported (bool: the form came from the previous system).
      */
     public static function for_user(int $userid): array {
         global $DB;
@@ -49,19 +59,7 @@ final class learner_history {
         }
         $rows = [];
 
-        $assignments = $DB->get_records_sql(
-            "SELECT a.id, a.evaluationid, a.status, a.due_at, a.responded_at, a.timecreated, e.name, e.anonymous
-               FROM {local_sentientia_evaluation_assign} a
-               JOIN {local_sentientia_evaluation} e ON e.id = a.evaluationid
-              WHERE a.userid = :uid
-           ORDER BY a.timecreated ASC, a.id ASC",
-            ['uid' => $userid]);
-        foreach ($assignments as $a) {
-            $time = (int) ($a->responded_at ?: ($a->due_at ?: $a->timecreated));
-            self::merge($rows, (int) $a->evaluationid, (string) $a->name, (int) $a->anonymous, (string) $a->status, $time);
-        }
-
-        // Named responses. An anonymous one has user id 0 and is not here. The join only supplies the name and
+        // Named responses first: an anonymous one has user id 0 and is not here. The join only supplies the name and
         // the form's own anonymity flag; the learner is matched on the response itself.
         $responses = $DB->get_records_sql(
             "SELECT r.id, r.evaluationid, r.timesubmitted, e.name, e.anonymous
@@ -70,6 +68,31 @@ final class learner_history {
               WHERE r.userid = :uid AND r.timesubmitted > 0
            ORDER BY r.timesubmitted ASC, r.id ASC",
             ['uid' => $userid]);
+        $named = [];
+        foreach ($responses as $r) {
+            $named[(int) $r->evaluationid] = true;
+        }
+
+        $assignments = $DB->get_records_sql(
+            "SELECT a.id, a.evaluationid, a.status, a.due_at, a.responded_at, a.timecreated, e.name, e.anonymous
+               FROM {local_sentientia_evaluation_assign} a
+               JOIN {local_sentientia_evaluation} e ON e.id = a.evaluationid
+              WHERE a.userid = :uid
+           ORDER BY a.timecreated ASC, a.id ASC",
+            ['uid' => $userid]);
+        $supervised = [];
+        foreach ($assignments as $a) {
+            $evaluationid = (int) $a->evaluationid;
+            if (!array_key_exists($evaluationid, $supervised)) {
+                $supervised[$evaluationid] = self::is_supervisor_evaluation($evaluationid);
+            }
+            if ($supervised[$evaluationid]) {
+                // The assignment names the person evaluated, not somebody who was asked to answer.
+                continue;
+            }
+            $time = (int) ($a->responded_at ?: ($a->due_at ?: $a->timecreated));
+            self::merge($rows, $evaluationid, (string) $a->name, (int) $a->anonymous, (string) $a->status, $time);
+        }
         foreach ($responses as $r) {
             self::merge($rows, (int) $r->evaluationid, (string) $r->name, (int) $r->anonymous, self::STATUS_RESPONDED,
                 (int) $r->timesubmitted);
@@ -77,21 +100,45 @@ final class learner_history {
 
         $out = [];
         foreach ($rows as $row) {
+            // Sticky, as the admin pages read it: anonymous now, answered anonymously before, or with an
+            // anonymous question.
+            $protected = evaluation_manager::identity_protected((object) [
+                'id' => $row->evaluationid, 'anonymous' => $row->flag,
+            ]);
+            // The note says the learner's answers are not linked to them. That is true when they have no named
+            // response of their own AND either the form is anonymous (so what they answer, or answered, is stored
+            // without them) or they did answer a form that is protected. It is not true of a learner who has a
+            // named answer on a form that merely once took a guest's anonymous one.
+            $unlinked = !isset($named[$row->evaluationid])
+                && ($row->flag === 1 || ($protected && $row->status === self::STATUS_RESPONDED));
             $out[] = (object) [
                 'evaluationid' => $row->evaluationid,
                 'name' => $row->name,
                 'status' => $row->status,
                 'time' => $row->time,
-                // Sticky, as the admin pages read it: anonymous now, answered anonymously before, or with an
-                // anonymous question.
-                'anonymous' => evaluation_manager::identity_protected((object) [
-                    'id' => $row->evaluationid, 'anonymous' => $row->flag,
-                ]),
+                'anonymous' => $protected,
+                'unlinked' => $unlinked,
                 'imported' => evaluation_manager::is_imported($row->evaluationid),
             ];
         }
         usort($out, static fn(\stdClass $a, \stdClass $b): int => [$b->time, $b->evaluationid] <=> [$a->time, $a->evaluationid]);
         return $out;
+    }
+
+    /**
+     * Is this a supervisor evaluation, as far as the stored responses can tell?
+     *
+     * The import keeps the person evaluated in responses.subject_userid on a supervisor evaluation and nowhere
+     * else, so a response with a subject marks the form. A supervisor evaluation that is anonymous keeps no
+     * subject and is not recognised.
+     *
+     * @param int $evaluationid
+     * @return bool
+     */
+    private static function is_supervisor_evaluation(int $evaluationid): bool {
+        global $DB;
+        return $DB->record_exists_select('local_sentientia_evaluation_responses',
+            'evaluationid = :eid AND subject_userid IS NOT NULL', ['eid' => $evaluationid]);
     }
 
     /**

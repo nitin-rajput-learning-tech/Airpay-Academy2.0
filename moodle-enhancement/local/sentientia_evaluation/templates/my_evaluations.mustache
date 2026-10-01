@@ -9,16 +9,16 @@
     Context variables required for this template:
       * has_rows  bool
       * rows      array of {name, status_label, status_responded, status_assigned, status_expired,
-                            date, has_date, anonymous, imported}
+                            date, has_date, anonymous, unlinked, imported}
 
     Example context (json):
     {
         "has_rows": true,
         "rows": [
             {"name": "Reaction survey", "status_label": "Responded", "status_responded": true,
-             "date": "12 Mar 2026", "has_date": true, "anonymous": true, "imported": true},
+             "date": "12 Mar 2026", "has_date": true, "anonymous": true, "unlinked": true, "imported": true},
             {"name": "Manager feedback", "status_label": "Waiting for you", "status_assigned": true,
-             "date": "", "has_date": false, "anonymous": false, "imported": false}
+             "date": "", "has_date": false, "anonymous": false, "unlinked": false, "imported": false}
         ]
     }
 }}
@@ -43,9 +43,9 @@
                         {{# imported }}
                         <span class="badge bg-light text-dark ms-1">{{# str }}my_evaluations_imported, local_sentientia_evaluation{{/ str }}</span>
                         {{/ imported }}
-                        {{# anonymous }}
+                        {{# unlinked }}
                         <div class="small text-muted">{{# str }}my_evaluations_anonymous_note, local_sentientia_evaluation{{/ str }}</div>
-                        {{/ anonymous }}
+                        {{/ unlinked }}
                     </td>
                     <td>
                         {{# status_responded }}<span class="badge bg-success">{{ status_label }}</span>{{/ status_responded }}

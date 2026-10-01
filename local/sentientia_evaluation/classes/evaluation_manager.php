@@ -1550,11 +1550,36 @@ class evaluation_manager {
             ['cid' => $caller_costcenterid]);
     }
 
-    /** Delete a template row. */
+    /**
+     * Did the BizLMS import create this template?
+     *
+     * @param int $templateid
+     * @return bool False for a template a person saved, and on a site whose platform has no import framework.
+     */
+    public static function is_imported_template(int $templateid): bool {
+        if ($templateid <= 0 || !class_exists(\local_sentientia_platform\bizlms\provenance::class)) {
+            return false;
+        }
+        return \local_sentientia_platform\bizlms\provenance::is_imported(self::TEMPLATE_TABLE, $templateid);
+    }
+
+    /**
+     * Delete a template row.
+     *
+     * A template the BizLMS import created is part of the imported history and is kept (decision
+     * framework.protect_imported_history: delete actions on imported rows are blocked).
+     *
+     * @param int $templateid
+     * @return bool
+     * @throws \moodle_exception error_imported_template_read_only
+     */
     public static function delete_template(int $templateid): bool {
         global $DB;
         $DB->get_record(self::TEMPLATE_TABLE, ['id' => $templateid],
             '*', MUST_EXIST);
+        if (self::is_imported_template($templateid)) {
+            throw new \moodle_exception('error_imported_template_read_only', 'local_sentientia_evaluation');
+        }
         $DB->delete_records(self::TEMPLATE_TABLE, ['id' => $templateid]);
         return true;
     }

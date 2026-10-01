@@ -52,6 +52,8 @@ foreach (\local_sentientia_evaluation\learner_history::for_user((int) $USER->id)
             : '',
         'has_date' => $entry->time > 0,
         'anonymous' => (bool) $entry->anonymous,
+        // The note that the learner's answers are not linked to them: not every row of a protected evaluation.
+        'unlinked' => (bool) $entry->unlinked,
         'imported' => (bool) $entry->imported,
     ];
 }

@@ -96,13 +96,21 @@ final class bizlms_import_test extends \advanced_testcase {
         return $importer;
     }
 
+    /** Every needs-owner reason the importer declares. */
+    private const NEEDS_OWNER = [
+        'evaluation:value_not_valid', 'evaluation:duplicate_value', 'evaluation:orphan_form',
+        'evaluation:orphan_template', 'evaluation:orphan_item', 'evaluation:orphan_user',
+        'evaluation:orphan_assignee', 'evaluation:orphan_completed', 'evaluation:no_timestamp',
+        'evaluation:unmapped_enum',
+    ];
+
     /**
-     * The owner's choices: the seven the importer declares, and every needs-owner reason accepted, so a run that
-     * loses nothing unexpectedly exits 0.
+     * The seven choices the importer declares, with the given needs-owner reasons accepted.
      *
+     * @param string[] $accepted
      * @return decisions
      */
-    protected function contract_decisions(): decisions {
+    private function decisions_accepting(array $accepted): decisions {
         return decisions::from_array([
             'tenant.unresolved.evaluation' => 'pathless',
             'evaluation.open_forms' => 'archived',
@@ -111,12 +119,18 @@ final class bizlms_import_test extends \advanced_testcase {
             'evaluation.legacy_anonymous_linkage' => 'untouched_pending_legacy_privacy_adr',
             'evaluation.trainer_feedback_form_names' => 'keep_bizlms_name',
             'evaluation.imported_forms_read_only' => true,
-            'accepted_reasons' => [
-                'evaluation:value_not_valid', 'evaluation:orphan_form', 'evaluation:orphan_template',
-                'evaluation:orphan_item', 'evaluation:orphan_user', 'evaluation:orphan_assignee',
-                'evaluation:orphan_completed', 'evaluation:no_timestamp', 'evaluation:unmapped_enum',
-            ],
+            'accepted_reasons' => array_values($accepted),
         ]);
+    }
+
+    /**
+     * The owner's choices: the seven the importer declares, and every needs-owner reason accepted, so a run that
+     * loses nothing unexpectedly exits 0.
+     *
+     * @return decisions
+     */
+    protected function contract_decisions(): decisions {
+        return $this->decisions_accepting(self::NEEDS_OWNER);
     }
 
     protected function contract_user_columns(): array {
@@ -884,6 +898,46 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertEquals(1, $warnings['rejected_values'], 'one imported completion (1002) held values that were not answers');
     }
 
+    public function test_a_long_free_text_answer_is_kept_whole(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        // BizLMS kept the answer in a LONGTEXT and the response is one LONGTEXT on MySQL: nothing to cut it to.
+        $long = implode(' ', array_fill(0, 3000, 'word'));
+        $this->assertGreaterThan(10000, strlen($long));
+        $this->put_completed(1007, 1, $this->u['u1'], self::T0 + 1500, ['anonymous_response' => 2]);
+        $this->put_value(40, 1007, 107, $long);
+
+        [$result, $report] = $this->contract_run(true);
+        $this->assertSame(0, $result['exit'], implode('; ', array_merge($result['blockers'], $result['unproven'])));
+        $this->assertSame($long, $this->answers_of(1007)[$this->qid(107)], 'not truncated');
+        $this->assertArrayNotHasKey('truncated:answer', $this->section($report, 'evaluation.responses', 'warnings'));
+        $this->assertSame('folded', $this->entry('local_evaluation_value', 40)->outcome);
+    }
+
+    public function test_a_self_evaluation_whose_filler_has_gone_is_kept_and_a_supervisor_one_is_not(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        $u1 = $this->u['u1'];
+        // evaluatedby names a user that does not exist (77777). On form 1 (self evaluation) the person evaluated is
+        // the person who answered; on form 3 (supervisor evaluation) the completion's user is the person EVALUATED, so
+        // making them the responder would show them as having answered their own review.
+        $this->put_completed(1008, 1, $u1, self::T0 + 1600, ['anonymous_response' => 2, 'evaluatedby' => 77777]);
+        $this->put_completed(3003, 3, $u1, self::T0 + 3200, ['anonymous_response' => 2, 'evaluatedby' => 77777]);
+
+        [$result, $report] = $this->contract_run(true);
+        $this->assertSame(0, $result['exit'], implode('; ', array_merge($result['blockers'], $result['unproven'])));
+
+        $kept = $this->response_of(1008);
+        $this->assertSame($u1, (int) $kept->userid, 'the answers are kept, under the person evaluated');
+        $this->assertNull($kept->subject_userid);
+        $this->assertSame('imported', $this->entry('local_evaluation_completed', 1008)->outcome);
+        $warnings = $this->section($report, 'evaluation.responses', 'warnings');
+        $this->assertEquals(1, $warnings['responder_not_found']);
+
+        $this->assertSame('skipped', $this->entry('local_evaluation_completed', 3003)->outcome);
+        $this->assertSame('orphan_user', $this->entry('local_evaluation_completed', 3003)->reason);
+    }
+
     // Assignments.
 
     public function test_assignments_one_per_form_and_person_with_the_earliest_row_winning(): void {
@@ -1089,6 +1143,52 @@ final class bizlms_import_test extends \advanced_testcase {
         [$result] = $this->contract_run(true);
         $this->assertSame(1, $result['exit']);
         $this->assertStringContainsString('native_form_invalid_path:1', implode(' ', $result['blockers']));
+    }
+
+    public function test_rows_left_at_a_legacy_form_id_block_the_feature(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->contract_seed();
+        // delete() used to leave assignment and trigger rows behind. Forms keep their BizLMS ids, so a row at the id
+        // of legacy form 2 or 3 (neither exists in Sentientia yet) would attach to the imported form.
+        $assign = static fn(int $form, int $user): \stdClass => (object) [
+            'evaluationid' => $form, 'userid' => $user, 'trigger_event' => 'manual', 'source_id' => 0,
+            'status' => 'assigned', 'assigned_by_userid' => null, 'due_at' => null, 'responded_at' => null,
+            'timecreated' => 1, 'timemodified' => 1,
+        ];
+        $DB->insert_record(importer::T_ASSIGN, $assign(2, $this->u['u1']));
+        $DB->insert_record(importer::T_ASSIGN, $assign(2, $this->u['u2']));
+        $DB->insert_record(importer::T_ASSIGN, $assign(500, $this->u['u1']));   // 500 is no legacy form: not ours.
+        $DB->insert_record(importer::T_TRIGGERS, (object) [
+            'evaluationid' => 3, 'userid' => $this->u['u1'], 'itemid' => 0, 'trigger_event' => 'course_completion',
+            'fire_after' => 1, 'status' => 0, 'timecreated' => 1,
+        ]);
+
+        [$result] = $this->contract_run(true);
+        $this->assertSame(1, $result['exit']);
+        $blockers = implode(' ', $result['blockers']);
+        $this->assertStringContainsString('leftover_rows_at_legacy_form_ids:' . importer::T_ASSIGN . ':2', $blockers);
+        $this->assertStringContainsString('leftover_rows_at_legacy_form_ids:' . importer::T_TRIGGERS . ':1', $blockers);
+        $this->assertStringNotContainsString(importer::T_RESPONSES, $blockers, 'a table with no stray row is not named');
+        $this->assertSame(0, $DB->count_records(importer::T_FORMS), 'nothing is written while a blocker stands');
+        $this->assertSame(3, $DB->count_records(importer::T_ASSIGN), 'and the stray rows are not touched');
+    }
+
+    public function test_a_second_stored_answer_for_one_question_is_left_to_the_owner(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        $needs = [];
+        foreach ((new importer())->reasons() as $reason) {
+            $needs[$reason->code] = $reason->needsowner;
+        }
+        $this->assertTrue($needs['duplicate_value'], 'an answer the import drops is for the owner to look at');
+        $this->assertFalse($needs['item_not_imported'], 'a value of a layout item is not');
+
+        // The seed holds one such value (value 11). Until the owner accepts the reason, parity is unproven.
+        $accepted = array_diff(self::NEEDS_OWNER, ['evaluation:duplicate_value']);
+        [$result] = $this->contract_run(true, ['decisions' => $this->decisions_accepting($accepted)]);
+        $this->assertSame(2, $result['exit']);
+        $this->assertContains('evaluation:duplicate_value=1', $result['unproven']);
     }
 
     public function test_the_import_sends_nothing_and_queues_nothing(): void {

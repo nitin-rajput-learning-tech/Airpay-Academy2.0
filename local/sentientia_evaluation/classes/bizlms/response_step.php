@@ -25,6 +25,17 @@ use local_sentientia_platform\bizlms\step;
  * supervisor form in) and the completion's user when not; on a supervisor form (evaluationmode SP) the person
  * evaluated is kept as subject_userid.
  *
+ * Two points where this goes beyond the letter of mapping doc section 18, both recorded in the plugin state card.
+ * (1) Sticky anonymity reaches a completion that BizLMS stamped as named (anonymous_response = 2) when its form
+ * ever held an anonymous answer: the more protective reading, and the one evaluation_manager::identity_protected()
+ * applies to the form anyway. (2) A self evaluation whose evaluatedby names a user that no longer exists is not
+ * dropped: the person evaluated is the person who answered there, so the completion's user is the responder
+ * (warning responder_not_found). A supervisor form is still skipped (orphan_user), because the completion's user is
+ * the person being evaluated and must not be shown as having answered.
+ *
+ * Free text is kept whole. response_data is a TEXT column (LONGTEXT on MySQL), BizLMS kept the answer in a
+ * LONGTEXT as well, and a cut answer cannot be recovered once the legacy tables are dropped.
+ *
  * The assignment beside it. A completion with no local_evaluation_users row for its form and person would leave
  * that person with no assignment, so the FIRST completion of the pair also creates a responded assignment
  * (sub-key assign), on the same rules as assignment_step, with the times cut to the day on an identity-protected
@@ -41,9 +52,6 @@ final class response_step extends step {
 
     /** Step key. */
     public const KEY = 'evaluation.responses';
-
-    /** Longest free-text answer kept, in characters. A response is one TEXT cell; the full value stays in the legacy table. */
-    public const ANSWER_MAX = 10000;
 
     /** @var form_facts */
     private form_facts $facts;
@@ -128,13 +136,21 @@ final class response_step extends step {
         $userid = 0;
         $subject = null;
         $subjectunknown = false;
+        $responderunknown = false;
         if (!$anonymous) {
+            $supervised = (string) ($form->evaluationmode ?? 'SE') === 'SP';
             $evaluatedby = (int) ($row->evaluatedby ?? 0);
             $userid = $evaluatedby > 0 ? $evaluatedby : $completionuser;
             if (!$ctx->lookups->user_exists($userid)) {
-                return [outcome::skip($id, 'orphan_user', 'user_not_found')];
+                if ($supervised || $evaluatedby <= 0 || !$ctx->lookups->user_exists($completionuser)) {
+                    return [outcome::skip($id, 'orphan_user', 'user_not_found')];
+                }
+                // A self evaluation: whoever was recorded as filling it in has gone, and the person evaluated is
+                // the person who answered. Keep the answers rather than drop them.
+                $userid = $completionuser;
+                $responderunknown = true;
             }
-            if ((string) ($form->evaluationmode ?? 'SE') === 'SP' && $completionuser !== $userid) {
+            if ($supervised && $completionuser !== $userid) {
                 if ($ctx->lookups->user_exists($completionuser)) {
                     $subject = $completionuser;
                 } else {
@@ -155,11 +171,6 @@ final class response_step extends step {
         $programid = ($plugin === 'program' && $instance > 0) ? $ctx->map->resolve(importer::SRC_PROGRAM, $instance) : null;
 
         $set = $this->facts->answers($ctx, $row, $form);
-        $data = [];
-        foreach ($set->data as $questionid => $answer) {
-            $data[$questionid] = is_string($answer) ? $ctx->text->fit($answer, self::ANSWER_MAX, 'answer') : $answer;
-        }
-
         $response = outcome::insert($id, importer::T_RESPONSES, (object) [
             'evaluationid' => $target,
             'userid' => $userid,
@@ -168,7 +179,7 @@ final class response_step extends step {
             'programid' => $programid,
             'classroomid' => $classroomid,
             // An object even when empty: Sentientia keeps "questionid => answer", never a list.
-            'response_data' => json_encode((object) $data, JSON_INVALID_UTF8_SUBSTITUTE),
+            'response_data' => json_encode((object) $set->data, JSON_INVALID_UTF8_SUBSTITUTE),
             'timesubmitted' => $submitted,
         ]);
         if ($derived) {
@@ -176,6 +187,9 @@ final class response_step extends step {
         }
         if ($subjectunknown) {
             $response->warn('subject_not_found');
+        }
+        if ($responderunknown) {
+            $response->warn('responder_not_found');
         }
         if ($courseunknown) {
             $response->warn('course_not_found');
