@@ -340,3 +340,20 @@ Adversarial review of the D1/D2 bundle returned fix-then-ship. Closed here:
   `test_notify_says_where_the_free_lines_went`, `test_notify_does_not_mention_free_lines_when_...`,
   `test_the_order_cart_prices_a_line_without_lib_php_being_loaded`. NOT RUN (low-CPU mode); the lead re-inits
   PHPUnit once after the bundles merge. Both trees.
+
+## 2026-09-30 - ADR-032 exams code fix 3: the catalog lists ordinary courses only (1.0.7-beta, 2026100100)
+
+`catalog_manager::get_courses()`, `get_trending()`, `get_new()` and `get_categories()` skip courses with
+`open_coursetype = 1`. BizLMS stored its online exams and its forums as courses with that value and listed only 0 or
+NULL in its own catalog; after the exams import a restored database holds them, and without the condition each would
+be offered as a course to enrol in (decision `exams.forum_pseudocourses` = `exclude_from_catalog`). A course with no
+`open_coursetype` is ordinary. One constant, `ORDINARY_COURSES_ONLY`.
+
+- A parity fix of what a restored database would otherwise show, so no flag; no schema, capability or string change.
+  The queries are the only change, so no screenshots were taken (no template or CSS touched).
+- NOT changed, on purpose: `get_in_progress()` (a learner's own enrolments, including an exam they are sitting) and
+  `commerce::get_public_catalog()` (its query has no `open_coursetype` reference today, and the column is absent on a
+  vanilla schema; guarding it is a separate change). The Public tenant's exam courses would still show on the guest
+  storefront, so this is an open item for the storefront.
+- Test: `tests/pseudo_course_exclusion_test.php`. NOT RUN (low-CPU mode); the lead re-inits PHPUnit once. Both trees.
+- Purge `local_sentientia_catalog` caches on deploy (trending, new_courses and categories are cached).

@@ -6,11 +6,17 @@ $plugin->component = 'local_sentientia_exams';
 //                       source). Mirrors P1 #28's sentientia_courses pattern.
 // P1 #34 (2026-05-20) — overdue manager-escalation cron.
 // P1 #36 (2026-05-20) — Hindi (hi) lang pack: ~65 strings translated.
-$plugin->version   = 2026092500;  // ADR-031: every exam read/write checks the exam's tenant; cascade only narrows
+// ADR-032 (2026-09-30) — BizLMS exams import (mapping doc section 9). New db/bizlms_import.php and
+// classes/bizlms/ (exams importer: the quizzes of the online exam courses become exam rows, and the overdue
+// escalation of their past deadlines is marked as already sent so enabling exam_overdue later cannot flood
+// supervisors). Reader fixes shipped with it: exam_manager no longer falls back to the legacy local_onlinetests
+// table; the pass count on view.php divides by quiz.sumgrades, not by every learner's grades added together.
+// No schema change (both target tables are in db/install.xml), no new lang string, no flag (no new surface).
+$plugin->version   = 2026100100;  // ADR-032 exams importer + reader fixes; no schema change
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.6.3'; // + ADR-031 tenant scope
+$plugin->release   = '1.7.0'; // + ADR-032 exams importer
 $plugin->dependencies = [
     'local_sentientia_org' => 2026041600,
-    'local_sentientia_platform' => 2026092500,  // ADR-031 tenant::is_cross_tenant()
+    'local_sentientia_platform' => 2026093001,  // ADR-032 BizLMS import framework (classes/bizlms/, 3 framework tables)
 ];

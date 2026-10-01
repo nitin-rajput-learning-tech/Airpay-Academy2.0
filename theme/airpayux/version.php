@@ -24,8 +24,12 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026040500;
+// ADR-032 exams code fix 4 (2026-09-30): core_renderer::custom_secured_redirection() reads the exam row through
+// \local_sentientia_exams\exam_manager (guarded by class_exists) instead of running SQL on {local_onlinetests},
+// a table production does not define, and its redirects point at /local/sentientia_exams/. No template, SCSS
+// or string change; no flag (it removes a failure, it adds no surface).
+$plugin->version   = 2026100100;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.0-beta';
+$plugin->release   = '1.0.1-beta';

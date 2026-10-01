@@ -1682,11 +1682,9 @@ class core_renderer extends \core_renderer {
             redirect($CFG->wwwroot.'/local/custom_category/index.php');//Category page redirection
         }
         if($newpageurl == $CFG->wwwroot.'/user/view.php' || $newpageurl == $CFG->wwwroot.'/user/profile.php'){
-            if($_GET['id']){
-                $id = $_GET['id'];
-            }else{
-                $id = $USER->id;
-            }
+            // ADR-032: optional_param() for the raw $_GET reads of this method (the pre-commit hook refuses a file
+            // that still has one, and the old id went into the redirect URL unchecked).
+            $id = optional_param('id', 0, PARAM_INT) ?: $USER->id;
             redirect($CFG->wwwroot."/local/users/profile.php?id=$id");
         }
         if($newpageurl == $CFG->wwwroot.'/course/index.php' || $newpageurl == $CFG->wwwroot.'/course'){
@@ -1718,22 +1716,22 @@ class core_renderer extends \core_renderer {
             }else if($newpageurl == $CFG->wwwroot.'/mod/quiz/edit.php' || $newpageurl == $CFG->wwwroot.'/mod/quiz/report.php'){/*for edit quiz page and quiz default report page*/
                 if($COURSE->id == 1){
                     if($newpageurl == $CFG->wwwroot.'/mod/quiz/edit.php')
-                        $cmid = $_GET['cmid'];
+                        $cmid = optional_param('cmid', 0, PARAM_INT);
                     else
-                        $cmid = $_GET['id'];
+                        $cmid = optional_param('id', 0, PARAM_INT);
 
-                    $quizmoduleid = $DB->get_field('modules', 'id', array('name' => 'quiz'));
-                    $onlinetest_sql = "SELECT lo.* FROM {local_onlinetests} AS lo
-                        JOIN {course_modules} AS cm ON cm.instance=lo.quizid AND cm.module = {$quizmoduleid}
-                        WHERE cm.id = :cmid";
-                        // JOIN {quiz} AS q ON q.id=lo.quizid
-                    $onlinetest = $DB->get_record_sql($onlinetest_sql, array('cmid' => $cmid));
+                    // ADR-032 exams code fix 4: the exam row comes from the Sentientia exam table through
+                    // exam_manager. This used to run unguarded SQL on {local_onlinetests}, a table production
+                    // does not define, so a database without it failed here.
+                    $onlinetest = class_exists('\local_sentientia_exams\exam_manager')
+                        ? \local_sentientia_exams\exam_manager::get_by_course_module((int) $cmid)
+                        : false;
                     if($onlinetest){
                         $return->hideheader = TRUE;
                         if($is_oh && $USER->open_costcenterid != $onlinetest->costcenterid){
-                            redirect($CFG->wwwroot.'/local/onlinetests/index.php');
+                            redirect($CFG->wwwroot.'/local/sentientia_exams/index.php');
                         }else if($is_dh && $USER->open_departmentid != $onlinetest->departmentid){
-                            redirect($CFG->wwwroot.'/local/onlinetests/index.php');
+                            redirect($CFG->wwwroot.'/local/sentientia_exams/index.php');
                         }
                     }else{
                         $return->hideheader = FALSE;
@@ -1741,17 +1739,17 @@ class core_renderer extends \core_renderer {
                 }
             }else if($newpageurl == $CFG->wwwroot.'/mod/quiz/review.php' /*|| $newpageurl == $CFG->wwwroot.'/mod/quiz/attempt.php'*/){/*for quiz reviewpage and quiz attempt page*/
                 if($COURSE->id == 1){
-                    $attempt = $_GET['attempt'];
-                    $onlinetest_sql = "SELECT lo.id, lo.costcenterid, lo.departmentid FROM {local_onlinetests} AS lo
-                        JOIN {quiz_attempts} AS qa ON qa.quiz = lo.quizid
-                        WHERE qa.id=:attemptid ";
-                    $onlinetest = $DB->get_record_sql($onlinetest_sql, array('attemptid' => $attempt));
+                    $attempt = optional_param('attempt', 0, PARAM_INT);
+                    // ADR-032 exams code fix 4: see above; same reader, by attempt.
+                    $onlinetest = class_exists('\local_sentientia_exams\exam_manager')
+                        ? \local_sentientia_exams\exam_manager::get_by_attempt((int) $attempt)
+                        : false;
                     if($onlinetest){
                         $return->hideheader = TRUE;
                         if($is_oh && $USER->open_costcenterid != $onlinetest->costcenterid){
-                            redirect($CFG->wwwroot.'/local/onlinetests/index.php');
+                            redirect($CFG->wwwroot.'/local/sentientia_exams/index.php');
                         }else if($is_dh && $USER->open_departmentid != $onlinetest->departmentid){
-                            redirect($CFG->wwwroot.'/local/onlinetests/index.php');
+                            redirect($CFG->wwwroot.'/local/sentientia_exams/index.php');
                         }
                     }else{
                         $return->hideheader = FALSE;

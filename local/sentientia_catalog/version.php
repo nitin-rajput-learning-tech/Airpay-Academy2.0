@@ -38,10 +38,15 @@ $plugin->component = 'local_sentientia_catalog';
 // action, +8 lang strings (en + hi; 2 of them are review-round notices: price differs at
 // checkout, free lines left in the basket). OFF: cart.php is unchanged. No schema/cap change.
 // Purge local_sentientia_catalog caches and the string cache on deploy.
-$plugin->version   = 2026093002;  // catalog mobile fixes (D8/D10/D12) + D2 storefront checkout bridge behind a default-OFF flag; no schema/cap change
+// ADR-032 exams code fix 3 (2026-09-30) — catalog_manager lists ordinary courses only: get_courses(),
+// get_trending(), get_new() and get_categories() skip open_coursetype = 1 (BizLMS's online-exam and forum
+// pseudo-courses, decision exams.forum_pseudocourses = exclude_from_catalog), as BizLMS's own catalog did. A parity
+// fix of what a restored database would otherwise offer, so no flag; no schema/cap change, no lang string.
+// Purge local_sentientia_catalog caches on deploy (trending, new_courses and categories are cached).
+$plugin->version   = 2026100100;  // ADR-032: catalog lists ordinary courses only (no exam or forum pseudo-courses); no schema/cap change
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.6-beta';
+$plugin->release   = '1.0.7-beta';
 // tenant::is_cross_tenant() arrived in platform 2026092500 (ADR-031).
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026092500,

@@ -14,6 +14,19 @@ defined('MOODLE_INTERNAL') || die();
 class catalog_manager {
 
     /**
+     * ADR-032 exams code fix 3 (decision exams.forum_pseudocourses = exclude_from_catalog): the catalog lists
+     * ordinary courses only.
+     *
+     * BizLMS kept two kinds of pseudo-course in {course} with open_coursetype = 1: online exams
+     * (open_module 'online_exams') and forums (open_module 'forum'). Its own catalog listed
+     * open_coursetype = 0 or NULL (BZ local/courses/classes/local/general_lib.php:120); exams have their
+     * own pages (local_sentientia_exams) and forums are not courses. After the exams import a restored database
+     * holds those rows, and without this condition every exam and forum would be offered as a course to enrol in.
+     * Used in get_courses(), get_trending(), get_new() and get_categories(); alias c is the course table.
+     */
+    private const ORDINARY_COURSES_ONLY = '(c.open_coursetype IS NULL OR c.open_coursetype = 0)';
+
+    /**
      * ADR-031: "no tenant restriction". ONLY a cross-tenant viewer (site
      * admin or :crosstenant holder, tenant::is_cross_tenant()) gets it.
      */
@@ -192,7 +205,7 @@ class catalog_manager {
         global $DB, $USER;
 
         // Build WHERE conditions.
-        $conditions = ['c.visible = 1', 'c.id > 1'];
+        $conditions = ['c.visible = 1', 'c.id > 1', self::ORDINARY_COURSES_ONLY];
         $params = [];
 
         // Sprint C: tenant scoping now also UNIONs in shared courses.
@@ -316,6 +329,7 @@ class catalog_manager {
             \local_sentientia_courses\sharing_manager::build_catalog_filter_sql('c', $viewer_tenant);
         $params = array_merge($params, $tenant_params);
 
+        $ordinary = self::ORDINARY_COURSES_ONLY;
         $courses = $DB->get_records_sql(
             "SELECT c.id, c.fullname, c.shortname, c.summary, c.category, c.timecreated,
                     c.open_path, c.open_level, c.open_skill, c.open_coursetype,
@@ -325,7 +339,7 @@ class catalog_manager {
                JOIN {course_categories} cc ON cc.id = c.category
                JOIN {enrol} e ON e.courseid = c.id
                JOIN {user_enrolments} ue ON ue.enrolid = e.id AND ue.timestart > :since
-              WHERE c.visible = 1 AND c.id > 1 AND $tenant_sql
+              WHERE c.visible = 1 AND c.id > 1 AND $ordinary AND $tenant_sql
            GROUP BY c.id, c.fullname, c.shortname, c.summary, c.category, c.timecreated,
                     c.open_path, c.open_level, c.open_skill, c.open_coursetype, cc.name
            ORDER BY recent_enrolments DESC",
@@ -357,6 +371,7 @@ class catalog_manager {
             \local_sentientia_courses\sharing_manager::build_catalog_filter_sql('c', $viewer_tenant);
         $params = array_merge($params, $tenant_params);
 
+        $ordinary = self::ORDINARY_COURSES_ONLY;
         $courses = $DB->get_records_sql(
             "SELECT c.id, c.fullname, c.shortname, c.summary, c.category, c.timecreated,
                     c.open_path, c.open_level, c.open_skill, c.open_coursetype,
@@ -364,7 +379,7 @@ class catalog_manager {
                     0 as enrolled_count
                FROM {course} c
                JOIN {course_categories} cc ON cc.id = c.category
-              WHERE c.visible = 1 AND c.id > 1 AND c.timecreated > :since AND $tenant_sql
+              WHERE c.visible = 1 AND c.id > 1 AND $ordinary AND c.timecreated > :since AND $tenant_sql
            ORDER BY c.timecreated DESC",
             $params, 0, $limit);
 
@@ -438,12 +453,13 @@ class catalog_manager {
         [$tenant_sql, $tenant_params] =
             \local_sentientia_courses\sharing_manager::build_catalog_filter_sql('c', $viewer_tenant);
 
+        $ordinary = self::ORDINARY_COURSES_ONLY;
         $result = array_values($DB->get_records_sql(
             "SELECT cc.id, cc.name,
                     COUNT(c.id) as course_count
                FROM {course_categories} cc
                JOIN {course} c ON c.category = cc.id AND c.visible = 1 AND c.id > 1
-                    AND $tenant_sql
+                    AND $ordinary AND $tenant_sql
            GROUP BY cc.id, cc.name
              HAVING COUNT(c.id) > 0
            ORDER BY COUNT(c.id) DESC", $tenant_params));
