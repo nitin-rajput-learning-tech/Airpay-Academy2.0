@@ -272,8 +272,10 @@ class evaluation_engine {
         if (!$user) {
             return;
         }
+        // respond.php reads the evaluation from 'id'. This link used to carry 'evaluationid', which the page
+        // does not read, so every invitation opened a "missing parameter" error (found during the ADR-032 review).
         $url = new \moodle_url('/local/sentientia_evaluation/respond.php', [
-            'evaluationid' => (int) $eval->id,
+            'id' => (int) $eval->id,
         ]);
 
         $msg = new \core\message\message();

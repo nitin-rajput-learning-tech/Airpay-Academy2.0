@@ -73,6 +73,8 @@
         <FIELD NAME="evaluationid"   TYPE="int"  LENGTH="10" NOTNULL="true"/>
         <FIELD NAME="userid"         TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
                COMMENT="0 if anonymous"/>
+        <FIELD NAME="subject_userid" TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="ADR-032: supervisor forms only - the team member the response is about (userid is the supervisor who answered). NULL on every other response, and always NULL on an anonymous one."/>
         <FIELD NAME="courseid"       TYPE="int"  LENGTH="10" NOTNULL="false"/>
         <FIELD NAME="programid"      TYPE="int"  LENGTH="10" NOTNULL="false"/>
         <FIELD NAME="classroomid"    TYPE="int"  LENGTH="10" NOTNULL="false"/>
@@ -88,6 +90,7 @@
       <INDEXES>
         <INDEX NAME="idx_evaluation_user" UNIQUE="false" FIELDS="evaluationid, userid"/>
         <INDEX NAME="idx_courseid"        UNIQUE="false" FIELDS="courseid"/>
+        <INDEX NAME="idx_subject"         UNIQUE="false" FIELDS="subject_userid"/>
       </INDEXES>
     </TABLE>
 

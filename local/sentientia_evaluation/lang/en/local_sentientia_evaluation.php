@@ -267,3 +267,20 @@ $string['privacy:metadata:assign:status'] = 'Whether you have responded.';
 $string['privacy:metadata:assign:assigned_by_userid'] = 'The ID of the user who assigned it.';
 $string['privacy:metadata:assign:due_at'] = 'When a response is due.';
 $string['privacy:metadata:assign:responded_at'] = 'When you responded.';
+
+// ADR-032 (2026-09-30): the BizLMS evaluation import.
+$string['privacy:metadata:responses:subject_userid'] = 'Supervisor forms: the ID of the team member the response is about.';
+$string['error_imported_form_read_only'] = 'This evaluation was brought over from the previous system and is read-only: it is a record of what was asked and answered. To run the same questions again, export it as a template and create a new evaluation from that.';
+$string['error_imported_template_read_only'] = 'This template was brought over from the previous system and cannot be deleted. To use it again, create a new evaluation from it.';
+$string['my_evaluations_title'] = 'My evaluations';
+$string['my_evaluations_intro'] = 'The evaluations you were asked to complete or have completed, including those brought over from the previous system.';
+$string['my_evaluations_col_evaluation'] = 'Evaluation';
+$string['my_evaluations_col_status'] = 'Status';
+$string['my_evaluations_col_date'] = 'Date';
+$string['my_evaluations_status_responded'] = 'Responded';
+$string['my_evaluations_status_assigned'] = 'Waiting for you';
+$string['my_evaluations_status_expired'] = 'Closed without a response';
+$string['my_evaluations_imported'] = 'From the previous system';
+$string['my_evaluations_anonymous_note'] = 'Anonymous evaluation: your answers are not linked to you.';
+$string['my_evaluations_none'] = 'You have no evaluations on record.';
+$string['my_evaluations_unavailable'] = 'Your evaluation history is not available yet.';

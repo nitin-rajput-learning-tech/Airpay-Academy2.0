@@ -1,0 +1,69 @@
+{{!
+    This file is part of Sentientia LMS.
+
+    @template local_sentientia_evaluation/my_evaluations
+
+    A learner's own evaluation history (ADR-032). Behind the default-OFF flag
+    sentientia.evaluation.learner_history.
+
+    Context variables required for this template:
+      * has_rows  bool
+      * rows      array of {name, status_label, status_responded, status_assigned, status_expired,
+                            date, has_date, anonymous, unlinked, imported}
+
+    Example context (json):
+    {
+        "has_rows": true,
+        "rows": [
+            {"name": "Reaction survey", "status_label": "Responded", "status_responded": true,
+             "date": "12 Mar 2026", "has_date": true, "anonymous": true, "unlinked": true, "imported": true},
+            {"name": "Manager feedback", "status_label": "Waiting for you", "status_assigned": true,
+             "date": "", "has_date": false, "anonymous": false, "unlinked": false, "imported": false}
+        ]
+    }
+}}
+<div class="container" data-region="sentientia-eval-history">
+    <p class="text-muted">{{# str }}my_evaluations_intro, local_sentientia_evaluation{{/ str }}</p>
+
+    {{# has_rows }}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">{{# str }}my_evaluations_col_evaluation, local_sentientia_evaluation{{/ str }}</th>
+                    <th scope="col">{{# str }}my_evaluations_col_status, local_sentientia_evaluation{{/ str }}</th>
+                    <th scope="col">{{# str }}my_evaluations_col_date, local_sentientia_evaluation{{/ str }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{# rows }}
+                <tr>
+                    <td>
+                        {{ name }}
+                        {{# imported }}
+                        <span class="badge bg-light text-dark ms-1">{{# str }}my_evaluations_imported, local_sentientia_evaluation{{/ str }}</span>
+                        {{/ imported }}
+                        {{# unlinked }}
+                        <div class="small text-muted">{{# str }}my_evaluations_anonymous_note, local_sentientia_evaluation{{/ str }}</div>
+                        {{/ unlinked }}
+                    </td>
+                    <td>
+                        {{# status_responded }}<span class="badge bg-success">{{ status_label }}</span>{{/ status_responded }}
+                        {{# status_assigned }}<span class="badge bg-warning text-dark">{{ status_label }}</span>{{/ status_assigned }}
+                        {{# status_expired }}<span class="badge bg-secondary">{{ status_label }}</span>{{/ status_expired }}
+                    </td>
+                    <td>
+                        {{# has_date }}<small>{{ date }}</small>{{/ has_date }}
+                        {{^ has_date }}<small class="text-muted">&mdash;</small>{{/ has_date }}
+                    </td>
+                </tr>
+                {{/ rows }}
+            </tbody>
+        </table>
+    </div>
+    {{/ has_rows }}
+
+    {{^ has_rows }}
+    <div class="alert alert-info">{{# str }}my_evaluations_none, local_sentientia_evaluation{{/ str }}</div>
+    {{/ has_rows }}
+</div>

@@ -276,3 +276,20 @@ $string['privacy:metadata:assign:status'] = 'आपने उत्तर दि
 $string['privacy:metadata:assign:assigned_by_userid'] = 'सौंपने वाले उपयोगकर्ता की आईडी।';
 $string['privacy:metadata:assign:due_at'] = 'उत्तर कब तक अपेक्षित है।';
 $string['privacy:metadata:assign:responded_at'] = 'आपने कब उत्तर दिया।';
+
+// ADR-032 (2026-09-30): पिछली प्रणाली से मूल्यांकन डेटा का आयात।
+$string['privacy:metadata:responses:subject_userid'] = 'पर्यवेक्षक फॉर्म: उस टीम सदस्य की ID जिसके बारे में प्रतिक्रिया दी गई है।';
+$string['error_imported_form_read_only'] = 'यह मूल्यांकन पिछली प्रणाली से लाया गया है और केवल-पढ़ने योग्य है: यह इस बात का रिकॉर्ड है कि क्या पूछा गया और क्या उत्तर दिया गया। वही प्रश्न फिर से चलाने के लिए इसे टेम्पलेट के रूप में निर्यात करें और उससे नया मूल्यांकन बनाएँ।';
+$string['error_imported_template_read_only'] = 'यह टेम्पलेट पिछली प्रणाली से लाया गया है और इसे हटाया नहीं जा सकता। इसे फिर से उपयोग करने के लिए इससे नया मूल्यांकन बनाएँ।';
+$string['my_evaluations_title'] = 'मेरे मूल्यांकन';
+$string['my_evaluations_intro'] = 'वे मूल्यांकन जिन्हें भरने के लिए आपसे कहा गया था या जो आपने भर दिए हैं, पिछली प्रणाली से लाए गए मूल्यांकन सहित।';
+$string['my_evaluations_col_evaluation'] = 'मूल्यांकन';
+$string['my_evaluations_col_status'] = 'स्थिति';
+$string['my_evaluations_col_date'] = 'तिथि';
+$string['my_evaluations_status_responded'] = 'उत्तर दिया';
+$string['my_evaluations_status_assigned'] = 'आपकी प्रतीक्षा में';
+$string['my_evaluations_status_expired'] = 'बिना उत्तर के बंद';
+$string['my_evaluations_imported'] = 'पिछली प्रणाली से';
+$string['my_evaluations_anonymous_note'] = 'गुमनाम मूल्यांकन: आपके उत्तर आपसे जुड़े नहीं हैं।';
+$string['my_evaluations_none'] = 'आपका कोई मूल्यांकन रिकॉर्ड में नहीं है।';
+$string['my_evaluations_unavailable'] = 'आपका मूल्यांकन इतिहास अभी उपलब्ध नहीं है।';
