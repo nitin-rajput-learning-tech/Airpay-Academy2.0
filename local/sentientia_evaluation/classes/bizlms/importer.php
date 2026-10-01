@@ -208,6 +208,10 @@ final class importer implements framework_importer {
             // so BizLMS could hold two stored answers for one question and Sentientia keeps one.
             new reason('value_not_valid', false, true),
             new reason('duplicate_value', false, true),
+            // A stored answer whose item is another form's, or no longer exists: BizLMS never joined them, and the answer
+            // cannot be carried. The map says "rejected and reported", so the owner looks at the count.
+            new reason('foreign_item', false, true),
+            new reason('missing_item', false, true),
             new reason('orphan_form', false, true),
             new reason('orphan_template', false, true),
             new reason('orphan_item', false, true),
@@ -320,6 +324,29 @@ final class importer implements framework_importer {
             if ($count > 0) {
                 $pf->count('orphans:' . $table, $count);
                 $pf->warn('orphan_rows:' . $table . ':' . $count);
+            }
+        }
+
+        // Stored answers whose item is gone, or belongs to another form. Each is archived with its own reason
+        // (missing_item, foreign_item) and is for the owner to look at; the count tells them before the run.
+        if ($ctx->legacy->exists(self::SRC_VALUES) && $ctx->legacy->exists(self::SRC_ITEMS)
+                && $ctx->legacy->has_column(self::SRC_VALUES, 'item')) {
+            $missing = $ctx->legacy->count(self::SRC_VALUES, ['NOT EXISTS (SELECT 1 FROM {' . self::SRC_ITEMS
+                . '} i WHERE i.id = t.item)', []]);
+            if ($missing > 0) {
+                $pf->count('orphans:' . self::SRC_VALUES . ':item', $missing);
+                $pf->warn('orphan_rows:' . self::SRC_VALUES . ':item:' . $missing);
+            }
+            if ($ctx->legacy->exists(self::SRC_COMPLETED) && $ctx->legacy->has_column(self::SRC_VALUES, 'completed')
+                    && $ctx->legacy->has_column(self::SRC_COMPLETED, 'evaluation')
+                    && $ctx->legacy->has_column(self::SRC_ITEMS, 'evaluation')) {
+                $foreign = $ctx->legacy->count(self::SRC_VALUES, ['EXISTS (SELECT 1 FROM {' . self::SRC_COMPLETED . '} c'
+                    . ' JOIN {' . self::SRC_ITEMS . '} i ON i.id = t.item'
+                    . ' WHERE c.id = t.completed AND i.evaluation <> c.evaluation)', []]);
+                if ($foreign > 0) {
+                    $pf->count('foreign_values', $foreign);
+                    $pf->warn('foreign_values:' . $foreign);
+                }
             }
         }
 

@@ -44,6 +44,9 @@ final class form_facts {
     /** @var array<int, array<int, \stdClass>> Form id => item id => {qid, shape, position}. */
     private array $questions = [];
 
+    /** @var array<int, array<int, true>> Form id => every item id of that form (layout items and unimported ones too). */
+    private array $items = [];
+
     /** @var array<int, \stdClass> Completed id => {data, accepted, rejected}. */
     private array $answers = [];
 
@@ -178,10 +181,15 @@ final class form_facts {
             return $this->questions[$formid];
         }
         if (count($this->questions) >= self::KEEP) {
+            // Both caches go together: answers() reads $items right after calling this.
             $this->questions = [];
+            $this->items = [];
         }
         $rows = $ctx->legacy->page(importer::SRC_ITEMS, 0, legacy_reader::MAX_PAGE,
             ['id', 'typ', 'presentation', 'position'], ['t.evaluation = :evqf', ['evqf' => $formid]]);
+        // Every item of the form, whether or not it becomes a question: answers() tells "an item of this form that
+        // is not a question" (nothing to carry) from "not an item of this form at all" (an answer that is lost).
+        $this->items[$formid] = array_fill_keys(array_map('intval', array_keys($rows)), true);
         $targets = $ctx->map->resolve_many(importer::SRC_ITEMS, array_keys($rows));
         $index = [];
         foreach ($rows as $id => $row) {
@@ -207,8 +215,10 @@ final class form_facts {
      * @param \stdClass $completed Legacy completion row.
      * @param \stdClass $form Legacy form row of that completion.
      * @return \stdClass data (Sentientia question id => answer, every imported question present, null for no
-     *         answer), accepted (value id => true) and rejected (value id => reason code: item_not_imported,
-     *         duplicate_value or value_not_valid).
+     *         answer), accepted (value id => true) and rejected (value id => reason code): item_not_imported (an
+     *         item of this form that is not a question: a layout item), foreign_item (the value names an item of
+     *         ANOTHER form, or of a template), missing_item (the item does not exist), duplicate_value or
+     *         value_not_valid. The last four are answers that are lost, so they are for the owner to look at.
      */
     public function answers(context $ctx, \stdClass $completed, \stdClass $form): \stdClass {
         $cid = (int) $completed->id;
@@ -220,6 +230,7 @@ final class form_facts {
             unset($this->answers[array_key_first($this->answers)]);
         }
         $index = $this->questions($ctx, (int) $form->id);
+        $formitems = $this->items[(int) $form->id] ?? [];
         $values = $ctx->legacy->page(importer::SRC_VALUES, 0, legacy_reader::MAX_PAGE, ['id', 'item', 'completed', 'value'],
             ['t.completed = :evvc', ['evvc' => $cid]]);
 
@@ -228,11 +239,17 @@ final class form_facts {
             $set->data[$question->qid] = null;
         }
         $seen = [];
+        $strangers = [];
         foreach ($values as $valueid => $value) {
             $itemid = (int) $value->item;
             if (!isset($index[$itemid])) {
-                // Another form's item, a layout item, or an item the import did not keep.
-                $set->rejected[(int) $valueid] = 'item_not_imported';
+                if (isset($formitems[$itemid])) {
+                    // A layout item (or one the import did not keep) of this very form: not an answer.
+                    $set->rejected[(int) $valueid] = 'item_not_imported';
+                } else {
+                    // Not an item of this form at all: another form's, or none. Told apart below.
+                    $strangers[(int) $valueid] = $itemid;
+                }
                 continue;
             }
             if (isset($seen[$itemid])) {
@@ -248,6 +265,14 @@ final class form_facts {
             $seen[$itemid] = true;
             $set->data[$index[$itemid]->qid] = $mapped;
             $set->accepted[(int) $valueid] = true;
+        }
+        if ($strangers) {
+            // One read for the completion: an item row that exists but belongs elsewhere is a value of another form's
+            // item (BizLMS never joined the two); no row at all is a value whose item was deleted.
+            $found = $ctx->legacy->fetch(importer::SRC_ITEMS, array_values($strangers), ['id', 'evaluation']);
+            foreach ($strangers as $valueid => $itemid) {
+                $set->rejected[$valueid] = isset($found[$itemid]) ? 'foreign_item' : 'missing_item';
+            }
         }
         $this->answers[$cid] = $set;
         return $set;

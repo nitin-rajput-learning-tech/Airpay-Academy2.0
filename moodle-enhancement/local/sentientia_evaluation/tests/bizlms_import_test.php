@@ -101,7 +101,7 @@ final class bizlms_import_test extends \advanced_testcase {
         'evaluation:value_not_valid', 'evaluation:duplicate_value', 'evaluation:orphan_form',
         'evaluation:orphan_template', 'evaluation:orphan_item', 'evaluation:orphan_user',
         'evaluation:orphan_assignee', 'evaluation:orphan_completed', 'evaluation:no_timestamp',
-        'evaluation:unmapped_enum',
+        'evaluation:unmapped_enum', 'evaluation:foreign_item', 'evaluation:missing_item',
     ];
 
     /**
@@ -833,7 +833,7 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertSame('folded', $this->entry('local_evaluation_value', 7)->outcome, 'an empty answer is an answer of none');
 
         $expected = [
-            8 => 'value_not_valid', 11 => 'duplicate_value', 12 => 'item_not_imported', 13 => 'item_not_imported',
+            8 => 'value_not_valid', 11 => 'duplicate_value', 12 => 'item_not_imported', 13 => 'foreign_item',
             23 => 'response_not_imported', 27 => 'response_not_imported',
         ];
         foreach ($expected as $value => $reason) {
@@ -1030,8 +1030,9 @@ final class bizlms_import_test extends \advanced_testcase {
         }
         ksort($tally);
         $expected = [
-            'deleted_form' => 1, 'dup_assignment' => 1, 'duplicate_value' => 1, 'in_response_data' => 20,
-            'in_template_payload' => 2, 'item_not_imported' => 2, 'not_a_question' => 5, 'orphan_assignee' => 1,
+            'deleted_form' => 1, 'dup_assignment' => 1, 'duplicate_value' => 1, 'foreign_item' => 1,
+            'in_response_data' => 20, 'in_template_payload' => 2, 'item_not_imported' => 1, 'not_a_question' => 5,
+            'orphan_assignee' => 1,
             'orphan_completed' => 1, 'orphan_form' => 3, 'orphan_item' => 1, 'orphan_template' => 1, 'orphan_user' => 1,
             'parent_deleted' => 3, 'response_not_imported' => 2, 'value_not_valid' => 1,
         ];
@@ -1182,6 +1183,8 @@ final class bizlms_import_test extends \advanced_testcase {
             $needs[$reason->code] = $reason->needsowner;
         }
         $this->assertTrue($needs['duplicate_value'], 'an answer the import drops is for the owner to look at');
+        $this->assertTrue($needs['foreign_item'], 'so is a value of another form\'s item');
+        $this->assertTrue($needs['missing_item'], 'and a value of an item that no longer exists');
         $this->assertFalse($needs['item_not_imported'], 'a value of a layout item is not');
 
         // The seed holds one such value (value 11). Until the owner accepts the reason, parity is unproven.
@@ -1189,6 +1192,42 @@ final class bizlms_import_test extends \advanced_testcase {
         [$result] = $this->contract_run(true, ['decisions' => $this->decisions_accepting($accepted)]);
         $this->assertSame(2, $result['exit']);
         $this->assertContains('evaluation:duplicate_value=1', $result['unproven']);
+    }
+
+    public function test_a_value_of_another_forms_item_or_of_no_item_is_left_to_the_owner(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        // The seed already holds value 13, which names an item of ANOTHER form (item 201 belongs to form 2, the
+        // completion to form 1). This one names an item that does not exist at all. Seeded here, not in the shared
+        // world, so the tallies of the other tests do not move.
+        $this->put_value(41, 1001, 999999, '1');
+
+        // The owner has accepted every reason but missing_item.
+        $accepted = array_diff(self::NEEDS_OWNER, ['evaluation:missing_item']);
+        [$result, $report] = $this->contract_run(true, ['decisions' => $this->decisions_accepting($accepted)]);
+
+        $this->assertSame(2, $result['exit'], 'an answer the import cannot carry is unproven until the owner accepts it');
+        $this->assertContains('evaluation:missing_item=1', $result['unproven']);
+        $this->assertNotContains('evaluation:foreign_item=1', $result['unproven'], 'accepted in this run');
+
+        // Each is archived under its own reason, and says which of the two it is.
+        $this->assertSame('archived', $this->entry('local_evaluation_value', 13)->outcome);
+        $this->assertSame('foreign_item', $this->entry('local_evaluation_value', 13)->reason);
+        $this->assertSame('archived', $this->entry('local_evaluation_value', 41)->outcome);
+        $this->assertSame('missing_item', $this->entry('local_evaluation_value', 41)->reason);
+        // A layout item of the form itself stays the harmless kind.
+        $this->assertSame('item_not_imported', $this->entry('local_evaluation_value', 12)->reason);
+        // The completion's real answers are unaffected, and no stray value becomes an answer.
+        $this->assertSame('B', $this->answers_of(1001)[$this->qid(101)]);
+        $this->assertCount(12, $this->answers_of(1001), 'one key per imported question of form 1, no more');
+
+        // The preflight said so before the run.
+        $preflight = $report->to_array()['features']['evaluation']['preflight'];
+        $this->assertSame(1, $preflight['counts']['orphans:local_evaluation_value:item']);
+        $this->assertSame(1, $preflight['counts']['foreign_values']);
+        $this->assertContains('foreign_values:1', $preflight['warnings']);
+        $this->assertContains('orphan_rows:local_evaluation_value:item:1', $preflight['warnings']);
+        $this->assertSame([], $preflight['blockers'], 'a warning, not a blocker: the rows are reported and archived');
     }
 
     public function test_the_import_sends_nothing_and_queues_nothing(): void {

@@ -224,8 +224,9 @@ the `local_evaluation` tables -> this plugin's tables. Owner `local_sentientia_e
   becomes the option text; checkboxes `1|3` -> `["A","C"]`; a number keeps its decimals (7.25 stays 7.25); text is
   entity-decoded once. A value that cannot be an answer (a position that does not exist, text for a number) is
   archived `value_not_valid`; a second value for the same item `duplicate_value` (needs-owner since the review of
-  2026-10-01: an answer the import drops is for the owner to look at); a value of a layout item or of another form's
-  item `item_not_imported`. Free text is kept whole (the 10,000-character cap was removed in the same review).
+  2026-10-01: an answer the import drops is for the owner to look at); a value of a layout item of the same form
+  `item_not_imported` (nothing to carry); a value of ANOTHER form's item `foreign_item` and a value of an item that
+  does not exist `missing_item` (both needs-owner since 2026-10-01, see the follow-ups below). Free text is kept whole (the 10,000-character cap was removed in the same review).
 - **Anonymity.** An anonymous completion (its own flag, the form's flag made sticky, or a guest) is stored with
   user id 0 and `subject_userid` NULL; BizLMS's link from the completion to the person is never copied. Implied
   assignment times on an identity-protected form are cut to the start of the day in the server time zone, and so
@@ -284,7 +285,8 @@ the `local_evaluation` tables -> this plugin's tables. Owner `local_sentientia_e
 - **Needs the owner** (`docs/cutover/bizlms-import-decisions.json` is not edited here): after the Stage B
   rehearsal, `accepted_reasons` for the needs-owner codes that actually occur (`evaluation:value_not_valid`,
   `duplicate_value`, `orphan_form`, `orphan_template`, `orphan_item`, `orphan_user`, `orphan_assignee`,
-  `orphan_completed`, `no_timestamp`, `unmapped_enum`). Only `archived` is implemented for "still-open forms": the
+  `orphan_completed`, `no_timestamp`, `unmapped_enum`, and, since 2026-10-01, `foreign_item` and `missing_item`).
+  Only `archived` is implemented for "still-open forms": the
   declared decision allows nothing else.
 
 ### 2026-10-01 - real-data check of the importer (read-only, April rehearsal dump)
@@ -368,7 +370,7 @@ platform dependency are unchanged. Both trees byte-identical.
   2. *Template tenant fallback.* A form with no `open_path` falls back to `/<costcenterid>`; a template falls back
      from `open_path` to `costcenterid`.
   3. *New reason codes:* `duplicate_value` (needs-owner), `item_not_imported`, `response_not_imported`, `orphan_item`,
-     `orphan_template`; new warnings `responder_not_found`, `anonymity_made_sticky`.
+     `orphan_template` (and, 2026-10-01, `foreign_item` and `missing_item`, both needs-owner); new warnings `responder_not_found`, `anonymity_made_sticky`.
   4. *For the legacy-table privacy ADR* (decision `evaluation.legacy_anonymous_linkage`): the implied assignment is a
      sub-row `(local_evaluation_completed, <id>, 'assign')` of the same completion whose primary map row is the
      anonymous response, and synthesised assignment ids are inserted in completion order. So Sentientia-owned tables
@@ -513,3 +515,20 @@ screenshots listed per item before it is merged.
   cloned users) and `assign_by_filter()` counting new against already-assigned people with the caller on the audit
   trail. The Behat item for the import/export round trip is replaced by the PHPUnit round trip above (Behat is not part
   of this pipeline). Tests only.
+- **EV-13 - a value of another form's item, or of an item that no longer exists, is for the owner (re-review
+  should-fix; mapping doc: "a value from another form ... rejected and reported").** `form_facts::answers()` filed
+  every value whose item was not an imported question of the completion's form as `item_not_imported`, which is not
+  needs-owner, so a lost answer was only a tally entry. It now tells three cases apart. `form_facts::questions()` also
+  remembers EVERY item id of the form (layout and unimported ones too), so: an item of this form that is not a question
+  stays `item_not_imported` (nothing to carry); anything else is collected and looked up once per completion
+  (`$ctx->legacy->fetch(SRC_ITEMS, ids, ['id', 'evaluation'])`): a row found means `foreign_item` (another form's item,
+  or a template's), none means `missing_item`. Both are declared in `importer::reasons()` as needs-owner, so parity
+  exits 2 until the decisions file accepts the count. Preflight counts and warns for them before the run:
+  `orphans:local_evaluation_value:item` / warning `orphan_rows:local_evaluation_value:item:N` (item row missing) and
+  `foreign_values` / warning `foreign_values:N` (the item belongs to another form than its completion). The value
+  step's docblock and the codes listed above are updated. April: all five values belong to their completion's form, so
+  nothing changes there. No schema change, no version change. Tests in `bizlms_import_test.php`: `NEEDS_OWNER` gains
+  both codes, seed value 13 is now `foreign_item` (tally: `item_not_imported` 1, `foreign_item` 1), the needs-owner
+  assertions cover both, and new `test_a_value_of_another_forms_item_or_of_no_item_is_left_to_the_owner` (an extra
+  value for item 999999 seeded inside the test, parity exits 2 with `evaluation:missing_item=1`, and the preflight
+  counts). Checked without Moodle: `php -l`, and the ADR-032 static scan over `classes/bizlms/` (clean).
