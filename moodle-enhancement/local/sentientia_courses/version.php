@@ -37,7 +37,11 @@ $plugin->component = 'local_sentientia_courses';
 // from course_reminder for the <48h urgent surface. No schema change.
 // UAT #3/#4 (2026-09-08) — Manage Courses KPI tiles + category filter now
 // tenant-scoped to the datatable's row set (course_manager::manage_*).
-$plugin->version   = 2026092501;  // ADR-031 follow-up: upgrade step rehomes tenant admins' 'All tenants' featured rows; own-roster unenrol; scoped Enrolled column
+// 2026100101:  // ADR-032 course_lookups importer: tables local_sentientia_course_type, local_sentientia_course_category and
+//                 local_sentientia_courses_detailfill + db/bizlms_import.php; privacy provider declares the two actor columns;
+//                 course_fields drops two columns that never existed on {course}
+$plugin->version   = 2026100101;  // ADR-032 course_lookups importer: type, category and fill-trail tables (no user-visible change)
+// 2026092501:  // ADR-031 follow-up: upgrade step rehomes tenant admins' 'All tenants' featured rows; own-roster unenrol; scoped Enrolled column
 // 2026092500:  // ADR-031: course writes, enrolment, featured, list/export tenant-scoped (no schema/cap change)
 // 2026092201:  // real privacy provider: requests + remind_sent (was null_provider)
 // 2026091700:  // Browse Airpay Library: F-12 (format_string'd slots rendered once) + page copy via lang strings (en+hi)
@@ -48,7 +52,7 @@ $plugin->release   = '1.11.9';  // ADR-031 follow-up: featured rows rehomed, own
 $plugin->dependencies = [
     'local_sentientia_org' => 2026041600,
     // tenant::is_cross_tenant() / scope_path() / require_same_tenant_user() (ADR-031).
-    'local_sentientia_platform' => 2026092500,
+    'local_sentientia_platform' => 2026093001,  // + the ADR-032 import framework (classes/bizlms) the importer implements
 ];
 // Release history:
 // 1.6.0  Phase F.5 — native enrol modal (replaces deep-link)

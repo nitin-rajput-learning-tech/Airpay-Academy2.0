@@ -38,7 +38,13 @@ $plugin->component = 'local_sentientia_catalog';
 // action, +8 lang strings (en + hi; 2 of them are review-round notices: price differs at
 // checkout, free lines left in the basket). OFF: cart.php is unchanged. No schema/cap change.
 // Purge local_sentientia_catalog caches and the string cache on deploy.
-$plugin->version   = 2026093002;  // catalog mobile fixes (D8/D10/D12) + D2 storefront checkout bridge behind a default-OFF flag; no schema/cap change
+// ADR-032 course_lookups reader fixes (2026-10-01): category_manager reads local_sentientia_course_category
+// (the BizLMS local_custom_category fallback is gone) and its two list methods are bounded by the caller's
+// tenant; card type labels from local_sentientia_course_type via the exploded open_identifiedas list, behind the
+// default-OFF flag sentientia.catalog.course_type_labels.enabled (OFF: cards unchanged). No schema/cap change.
+// The categories table needs local_sentientia_courses 2026100101. Purge local_sentientia_catalog caches on deploy.
+$plugin->version   = 2026100101;  // ADR-032 course_lookups reader fixes + course_type_labels flag (default OFF); no schema/cap change
+// 2026093002: catalog mobile fixes (D8/D10/D12) + D2 storefront checkout bridge behind a default-OFF flag; no schema/cap change
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_BETA;
 $plugin->release   = '1.0.6-beta';

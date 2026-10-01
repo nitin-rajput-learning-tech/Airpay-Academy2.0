@@ -190,5 +190,68 @@ function xmldb_local_sentientia_courses_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026092501, 'local', 'sentientia_courses');
     }
 
+    // 2026100101 - ADR-032 course_lookups importer: the three tables it writes.
+    //
+    //  - local_sentientia_course_type      the BizLMS course types, ids kept (course.open_identifiedas)
+    //  - local_sentientia_course_category  the BizLMS custom categories, ids kept (course.open_categoryid)
+    //  - local_sentientia_courses_detailfill  the trail of courses whose open_* columns the import filled
+    //
+    // Every table is created only when it is missing, so a database that already has it (created from
+    // install.xml) passes through untouched. Nothing is copied here: the rows arrive only through
+    // cli/import_bizlms.php, at cutover.
+    if ($oldversion < 2026100101) {
+        $table = new xmldb_table('local_sentientia_course_type');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('name', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, '');
+            $table->add_field('shortname', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, '');
+            $table->add_field('tenant_path', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+            $table->add_field('active', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1');
+            $table->add_field('protected', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('idx_tenant_path', XMLDB_INDEX_NOTUNIQUE, ['tenant_path']);
+            $table->add_index('idx_active', XMLDB_INDEX_NOTUNIQUE, ['active']);
+            $dbman->create_table($table);
+        }
+
+        $table = new xmldb_table('local_sentientia_course_category');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('fullname', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, '');
+            $table->add_field('shortname', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, '');
+            $table->add_field('parentid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('path', XMLDB_TYPE_CHAR, '512', null, XMLDB_NOTNULL, null, '');
+            $table->add_field('depth', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('tenant_path', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+            $table->add_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('idx_parentid', XMLDB_INDEX_NOTUNIQUE, ['parentid']);
+            $table->add_index('idx_tenant_path', XMLDB_INDEX_NOTUNIQUE, ['tenant_path']);
+            $dbman->create_table($table);
+        }
+
+        $table = new xmldb_table('local_sentientia_courses_detailfill');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('detailid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('filledcols', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, '');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('uk_course', XMLDB_INDEX_UNIQUE, ['courseid']);
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026100101, 'local', 'sentientia_courses');
+    }
+
     return true;
 }

@@ -219,3 +219,15 @@ $string['privacy:metadata:courses_remind_sent:courseid'] = 'The ID of the course
 $string['privacy:metadata:courses_remind_sent:days_before_deadline'] = 'How many days before the deadline the reminder went out.';
 $string['privacy:metadata:courses_remind_sent:deadline_ts'] = 'The deadline the reminder referred to.';
 $string['privacy:metadata:courses_remind_sent:timesent'] = 'When the reminder was sent.';
+
+// Privacy metadata for the ADR-032 course_lookups import tables (2026-10-01).
+$string['privacy:metadata:course_type'] = 'A course type, the label a course is identified as (for example E-learning or Classroom), with who created and last changed it.';
+$string['privacy:metadata:course_type:usercreated'] = 'The ID of the user who created the course type.';
+$string['privacy:metadata:course_type:usermodified'] = 'The ID of the user who last changed the course type.';
+$string['privacy:metadata:course_type:timecreated'] = 'When the course type was created.';
+$string['privacy:metadata:course_type:timemodified'] = 'When the course type was last changed.';
+$string['privacy:metadata:course_category'] = 'A custom course category, with who created and last changed it.';
+$string['privacy:metadata:course_category:usercreated'] = 'The ID of the user who created the category.';
+$string['privacy:metadata:course_category:usermodified'] = 'The ID of the user who last changed the category.';
+$string['privacy:metadata:course_category:timecreated'] = 'When the category was created.';
+$string['privacy:metadata:course_category:timemodified'] = 'When the category was last changed.';

@@ -569,3 +569,75 @@ ADR-025 renamed to `local/sentientia_courses:manage|enrol` (relabel map in `loca
 dead branch is removed; behaviour is otherwise identical. Test: `tests/capability_gates_test.php`
 (no debugging notice; new-capability holder passes; ADR-031 tenant bound still holds after the gate;
 `@group tenant_isolation`). No version bump (no DB, capability or archetype change).
+
+## 2026-09-30 - ADR-032 course_lookups importer
+
+Branch `claude/bizlms-import-course_lookups`. Mapping doc section 6. Importer `course_lookups`, class
+`local_sentientia_courses\bizlms\course_lookups_importer`, registered in `db/bizlms_import.php`; depends on `org`;
+`atomic()`. Version **2026100101** (new upgrade step, three tables); platform dependency raised to 2026093001 (the
+framework). **PHPUnit must be re-initialised before the new tests run; none was run here (low-CPU mode, as instructed).**
+
+**Steps (one deliverable, four BizLMS tables):**
+
+| Step | Source -> target | Id |
+|---|---|---|
+| `course_lookups.types` | `local_course_types` -> `local_sentientia_course_type` | PRESERVE (`course.open_identifiedas` lists the ids) |
+| `course_lookups.categories` | `local_custom_category` -> `local_sentientia_course_category` | PRESERVE (`course.open_categoryid`) |
+| `course_lookups.featured` | `local_dashboardcourses` -> `local_sentientia_featured_courses` | MAP; lists exploded and de-duplicated |
+| `course_lookups.details` + `course_lookups.fill` | `local_coursedetails` -> core `course.open_*` | MAP, grouped by `courseid`; the fill is a recompute step |
+
+`local_moduleconfig` and `local_filters` are declined (counts in preflight). `local_certificate` is not claimed: it
+belongs to the certificates gap map.
+
+**Tenant.** Types and categories name a cost centre; the importer resolves it through the legacy map and the tenant
+resolver (falling back to the legacy `local_costcenter.path` before the org importer has run). A type keeps the org's
+path, a category the tenant ROOT. `tenant_path` is NULLABLE, not `NOT NULL DEFAULT ''` as the map said: the framework's
+generic tenant verify (and parity) treat any value that is not NULL or a registered normalised path as invalid, `''`
+included, so NULL is the framework's "no tenant". NULL covers an `orgid` of 0 (BizLMS: offered to every tenant) and, per
+decision `tenant.unresolved.course_lookups = pathless`, an org that cannot be resolved (counted as `unresolved` in the
+report). A future type manager that must tell the two apart cannot, from the table alone.
+
+**Featured courses.** Union of every list, de-duplicated; the EARLIEST list that names a course owns it (independent of
+batch size and resume). The first featured row of a list is the row's primary outcome, further courses are sub-rows
+`course:<id>`; a list that imports nothing is archived (`empty_course_list`), merged into the earliest owner
+(`duplicate_course`) or skipped (`course_missing`, `tenant_unresolved`). Home = the ADR-031 follow-up rule that
+`db/upgradelib.php` applies to native rows, applied at write time (so the writer is the only code that writes and the
+rehome pass is not called): course `open_path` root; an actively shared course stays global; a legacy course with no
+`open_path` is global; a course whose path names a tenant that cannot be resolved is NOT imported (`costcenterid` 0 would
+be global and the decision says never global): reason `tenant_unresolved`, a NEEDS-OWNER reason, so parity exits 2 until
+Nitin accepts the count (the `accepted_reasons` entry is `course_lookups:tenant_unresolved`, added after the
+rehearsal shows how many rows). `sort_order` = rank by course id desc x 10 over every existing course of the union.
+
+**course.open_* backfill (the core write).** `course` is declared in `core_writes()` (UPDATE only). The framework only
+reaches a core UPDATE through a recompute step over rows of the importer's OWN tables, so each course that will be
+filled gets a trail row in `local_sentientia_courses_detailfill` (course id, source row id, source timestamps, the
+columns written; no person). The fill step writes the empty (NULL, '' or 0) columns only: `open_cost`,
+`open_coursecompletiondays`, `open_coursecreator` (only when the user exists), `open_identifiedas` (a list of positive
+ids), `open_requestcourseid`, `open_skill`. It never calls `update_course()` (no event, `course.timemodified` stays) and
+never reads `prerequisite_courses`. `proficiencylevel -> open_level` and `credits -> open_points` are "candidates, verify
+on data" in the map, so they are COUNTED in preflight and written only when the owner sets decision
+`course_lookups.coursedetails_candidate_columns` to `fill` (default `leave`, non-blocking). `--purge-feature` refuses a
+feature that writes a core table; to put a rehearsal back, set to NULL the columns the trail lists for each course (they
+were NULL or 0 before the import), then truncate the trail.
+
+**Other code.** `classes/course_fields.php` (code fix 3): `open_costcenterid` and `open_departmentid` removed; they are not
+`{course}` columns, so `select_sql()` built a failing SELECT. `open_path` is the one access field.
+`classes/privacy/provider.php`: both lookup tables declared (`usercreated`, `usermodified` anonymised to 0 on erasure,
+exported); the trail holds no person. En + hi strings. The catalogue readers are in the `sentientia_catalog` card.
+
+**Decisions** the importer declares (all in the signed file, status accepted): `tenant.unresolved.course_lookups`
+(`pathless` | `skip`), `course_lookups.featured_scope` (`rehome` | `global`),
+`course_lookups.coursedetails_unhomed_columns` (`leave_in_legacy_table`), `course_lookups.declined_config_tables`
+(`stay_in_place`). New and optional: `course_lookups.coursedetails_candidate_columns` (`leave` | `fill`, default `leave`).
+
+**Tests.** `tests/bizlms_import_test.php` (`@group bizlms_import`, `@group tenant_isolation`): the importer contract plus
+types, categories, featured, scope global, skip decision, the backfill, candidates, second apply, verify, preflight.
+Fixtures `tests/fixtures/bizlms/local_courses|local_custom_category|local_costcenter.install.xml` (source path, sha1 and
+the edits in each header). The trait loads one fixture file per class, so the test creates the other two files' tables
+itself. `tests/classes/bizlms/org_stub_importer.php` stands in for `org`, which the registry requires (a not-applicable
+stub: it writes no map row). Static scan clean; `transform()` and `recompute()` were also run against an in-memory fake
+of the context (scratch harness, not committed).
+
+**Merge notes.** `claude/bizlms-import-course_tags` edits the same plugin: `version.php` (keep the HIGHER, mine),
+`db/install.xml`, `db/upgrade.php`, `db/bizlms_import.php` (list both importers) and this card. The platform
+dependency line is identical in both.

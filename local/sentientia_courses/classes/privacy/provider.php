@@ -32,6 +32,9 @@ use core_privacy\local\request\writer;
  *       actor column(s) anonymised: decided_by
  *   - local_sentientia_courses_remind_sent
  *       subject rows deleted on erasure
+ *   - local_sentientia_course_type, local_sentientia_course_category (ADR-032 course_lookups import, 2026-10-01)
+ *       shared configuration rows; actor column(s) anonymised: usercreated, usermodified
+ *   - local_sentientia_courses_detailfill (ADR-032 import trail): ids and timestamps only, no person, not declared
  *
  * OWNER versus ACTOR columns
  * --------------------------
@@ -80,7 +83,39 @@ class provider implements
             'privacy:metadata:courses_remind_sent'
         );
 
+        $collection->add_database_table(
+            'local_sentientia_course_type',
+            [
+                'usercreated' => 'privacy:metadata:course_type:usercreated',
+                'usermodified' => 'privacy:metadata:course_type:usermodified',
+                'timecreated' => 'privacy:metadata:course_type:timecreated',
+                'timemodified' => 'privacy:metadata:course_type:timemodified',
+            ],
+            'privacy:metadata:course_type'
+        );
+
+        $collection->add_database_table(
+            'local_sentientia_course_category',
+            [
+                'usercreated' => 'privacy:metadata:course_category:usercreated',
+                'usermodified' => 'privacy:metadata:course_category:usermodified',
+                'timecreated' => 'privacy:metadata:course_category:timecreated',
+                'timemodified' => 'privacy:metadata:course_category:timemodified',
+            ],
+            'privacy:metadata:course_category'
+        );
+
         return $collection;
+    }
+
+    /**
+     * The shared lookup tables whose rows name the people who created and last changed them. Their rows are
+     * shared configuration, so an erasure anonymises the two actor columns to 0 and never deletes the row.
+     *
+     * @return string[]
+     */
+    private static function lookup_tables(): array {
+        return ['local_sentientia_course_type', 'local_sentientia_course_category'];
     }
 
     public static function get_contexts_for_userid(int $userid): contextlist {
@@ -96,6 +131,10 @@ class provider implements
         $found = $found || $DB->record_exists('local_sentientia_courses_requests', ['requester_userid' => $userid]);
         $found = $found || $DB->record_exists('local_sentientia_courses_requests', ['decided_by' => $userid]);
         $found = $found || $DB->record_exists('local_sentientia_courses_remind_sent', ['userid' => $userid]);
+        foreach (self::lookup_tables() as $table) {
+            $found = $found || $DB->record_exists($table, ['usercreated' => $userid]);
+            $found = $found || $DB->record_exists($table, ['usermodified' => $userid]);
+        }
 
         if ($found) {
             $contextlist->add_system_context();
@@ -116,6 +155,10 @@ class provider implements
             "SELECT decided_by FROM {local_sentientia_courses_requests} WHERE decided_by > 0", []);
         $userlist->add_from_sql('userid',
             "SELECT userid FROM {local_sentientia_courses_remind_sent} WHERE userid > 0", []);
+        foreach (self::lookup_tables() as $table) {
+            $userlist->add_from_sql('usercreated', "SELECT usercreated FROM {{$table}} WHERE usercreated > 0", []);
+            $userlist->add_from_sql('usermodified', "SELECT usermodified FROM {{$table}} WHERE usermodified > 0", []);
+        }
     }
 
     public static function export_user_data(approved_contextlist $contextlist): void {
@@ -182,6 +225,36 @@ class provider implements
                 );
             }
 
+            // local_sentientia_course_type and local_sentientia_course_category: what the user created or changed.
+            foreach (self::lookup_tables() as $table) {
+                $labelcolumn = $table === 'local_sentientia_course_type' ? 'name' : 'fullname';
+                $lookups = $DB->get_records_sql(
+                    "SELECT id, {$labelcolumn} AS label, usercreated, usermodified, timecreated, timemodified
+                       FROM {{$table}}
+                      WHERE usercreated = :u0 OR usermodified = :u1
+                   ORDER BY id ASC",
+                    ['u0' => $userid, 'u1' => $userid]);
+                if (empty($lookups)) {
+                    continue;
+                }
+                $rows = [];
+                foreach ($lookups as $r) {
+                    $rows[] = [
+                        'id' => $r->id,
+                        'label' => $r->label,
+                        'usercreated' => $r->usercreated,
+                        'usermodified' => $r->usermodified,
+                        'timecreated' => empty($r->timecreated) ? null : userdate((int) $r->timecreated),
+                        'timemodified' => empty($r->timemodified) ? null : userdate((int) $r->timemodified),
+                    ];
+                }
+                $stringid = $table === 'local_sentientia_course_type' ? 'privacy:metadata:course_type' : 'privacy:metadata:course_category';
+                writer::with_context($context)->export_data(
+                    [$root, get_string($stringid, 'local_sentientia_courses')],
+                    (object) ['lookuprows' => $rows]
+                );
+            }
+
         }
     }
 
@@ -194,6 +267,11 @@ class provider implements
 
         $DB->delete_records('local_sentientia_courses_requests', []);
         $DB->delete_records('local_sentientia_courses_remind_sent', []);
+        // The lookup rows are shared configuration: only the people on them go.
+        foreach (self::lookup_tables() as $table) {
+            $DB->set_field($table, 'usercreated', 0, []);
+            $DB->set_field($table, 'usermodified', 0, []);
+        }
     }
 
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
@@ -220,6 +298,11 @@ class provider implements
                              SET decided_by = 0, decision_reason = NULL
                            WHERE decided_by = :u", ['u' => $userid]);
             $DB->delete_records('local_sentientia_courses_remind_sent', ['userid' => $userid]);
+            // A course type or category is shared configuration: the creator and editor columns go to 0, the row stays.
+            foreach (self::lookup_tables() as $table) {
+                $DB->set_field($table, 'usercreated', 0, ['usercreated' => $userid]);
+                $DB->set_field($table, 'usermodified', 0, ['usermodified' => $userid]);
+            }
         }
     }
 
@@ -244,5 +327,9 @@ class provider implements
                          SET decided_by = 0, decision_reason = NULL
                        WHERE decided_by $insql", $params);
         $DB->delete_records_select('local_sentientia_courses_remind_sent', "userid $insql", $params);
+        foreach (self::lookup_tables() as $table) {
+            $DB->set_field_select($table, 'usercreated', 0, "usercreated $insql", $params);
+            $DB->set_field_select($table, 'usermodified', 0, "usermodified $insql", $params);
+        }
     }
 }

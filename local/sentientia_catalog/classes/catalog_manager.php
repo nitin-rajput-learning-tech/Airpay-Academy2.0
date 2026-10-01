@@ -29,6 +29,12 @@ class catalog_manager {
     public const TENANT_UNRESOLVED = -1;
 
     /**
+     * ADR-032 course_lookups: label a course card with the names of its course types (open_identifiedas) instead of
+     * the open_coursetype label. Default OFF, registered in db/feature_flags.php.
+     */
+    public const FLAG_COURSE_TYPE_LABELS = 'sentientia.catalog.course_type_labels.enabled';
+
+    /**
      * The catalog tenant for the current viewer.
      *
      *   TENANT_ALL (0)          cross-tenant viewer: every course
@@ -278,9 +284,10 @@ class catalog_manager {
             $params, $page * $perpage, $perpage);
 
         // Format for template.
+        $typelabels = self::course_type_labels(array_keys($courses));
         $formatted = [];
         foreach ($courses as $course) {
-            $formatted[] = self::format_course($course, $userid);
+            $formatted[] = self::format_course($course, $userid, $typelabels);
         }
 
         return [
@@ -331,7 +338,8 @@ class catalog_manager {
            ORDER BY recent_enrolments DESC",
             $params, 0, $limit);
 
-        $result = array_map(fn($c) => self::format_course($c, $userid), array_values($courses));
+        $typelabels = self::course_type_labels(array_keys($courses));
+        $result = array_map(fn($c) => self::format_course($c, $userid, $typelabels), array_values($courses));
         $cache->set($cachekey, $result);
         return $result;
     }
@@ -368,7 +376,8 @@ class catalog_manager {
            ORDER BY c.timecreated DESC",
             $params, 0, $limit);
 
-        $result = array_map(fn($c) => self::format_course($c, $userid), array_values($courses));
+        $typelabels = self::course_type_labels(array_keys($courses));
+        $result = array_map(fn($c) => self::format_course($c, $userid, $typelabels), array_values($courses));
         $cache->set($cachekey, $result);
         return $result;
     }
@@ -401,9 +410,10 @@ class catalog_manager {
            ORDER BY ue.timestart DESC",
             ['uid' => $userid, 'uid2' => $userid], 0, $limit);
 
+        $typelabels = self::course_type_labels(array_keys($courses));
         $formatted = [];
         foreach ($courses as $course) {
-            $f = self::format_course($course, $userid);
+            $f = self::format_course($course, $userid, $typelabels);
             $progress = \core_completion\progress::get_course_progress_percentage(
                 get_course($course->id), $userid);
             $f['progress'] = $progress !== null ? round($progress) : 0;
@@ -452,9 +462,77 @@ class catalog_manager {
     }
 
     /**
-     * Format a course record for Mustache template.
+     * Names of the course types of some courses, for the card's type label.
+     *
+     * ADR-032 course_lookups code fix 2 (2026-10-01). A course's open_identifiedas is a COMMA LIST of course type ids
+     * (BizLMS local/myteam/classes/output/courseallocation_lib.php:168 splits it the same way), so each id is looked up
+     * in local_sentientia_course_type and the names are joined; a join on equality would lose every course that has
+     * two types. Behind the default-OFF flag sentientia.catalog.course_type_labels.enabled: OFF (the default) returns
+     * nothing, and every card keeps the label it has today (from open_coursetype). A course whose list names no
+     * known type is absent from the result and keeps that label too. Two queries for the whole page, no query per card.
+     *
+     * @param int[] $courseids The courses on the page.
+     * @return array<int, string> course id => type names, comma separated.
      */
-    private static function format_course(\stdClass $course, int $userid): array {
+    public static function course_type_labels(array $courseids): array {
+        global $DB;
+
+        $courseids = array_values(array_unique(array_filter(array_map('intval', $courseids))));
+        if (!$courseids || !\local_sentientia_platform\feature_flags::is_enabled(self::FLAG_COURSE_TYPE_LABELS)) {
+            return [];
+        }
+        if (!$DB->get_manager()->table_exists('local_sentientia_course_type')
+                || !array_key_exists('open_identifiedas', $DB->get_columns('course'))) {
+            return [];
+        }
+
+        [$insql, $params] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED, 'ctlc');
+        $lists = $DB->get_records_select('course', "id {$insql}", $params, '', 'id, open_identifiedas');
+        $typeids = [];
+        $percourse = [];
+        foreach ($lists as $row) {
+            $ids = [];
+            foreach (explode(',', (string) $row->open_identifiedas) as $token) {
+                $token = trim($token);
+                if ($token !== '' && ctype_digit($token) && (int) $token > 0) {
+                    $ids[(int) $token] = (int) $token;
+                }
+            }
+            if ($ids) {
+                $percourse[(int) $row->id] = array_values($ids);
+                $typeids += $ids;
+            }
+        }
+        if (!$typeids) {
+            return [];
+        }
+
+        [$tsql, $tparams] = $DB->get_in_or_equal(array_values($typeids), SQL_PARAMS_NAMED, 'ctlt');
+        $names = $DB->get_records_select('local_sentientia_course_type', "id {$tsql}", $tparams, '', 'id, name');
+        $labels = [];
+        foreach ($percourse as $courseid => $ids) {
+            $parts = [];
+            foreach ($ids as $typeid) {
+                if (isset($names[$typeid]) && trim((string) $names[$typeid]->name) !== '') {
+                    $parts[] = format_string($names[$typeid]->name);
+                }
+            }
+            if ($parts) {
+                $labels[$courseid] = implode(', ', $parts);
+            }
+        }
+        return $labels;
+    }
+
+    /**
+     * Format a course record for Mustache template.
+     *
+     * @param \stdClass $course
+     * @param int $userid
+     * @param array<int, string> $typelabels course id => course type names (see course_type_labels()); empty keeps every card's label.
+     * @return array
+     */
+    private static function format_course(\stdClass $course, int $userid, array $typelabels = []): array {
         global $DB;
 
         // Check enrollment status.
@@ -472,9 +550,10 @@ class catalog_manager {
         $levels = [1 => 'Beginner', 2 => 'Intermediate', 3 => 'Advanced'];
         $level = $levels[$course->open_level ?? 0] ?? '';
 
-        // Course type.
+        // Course type. The label of the course's own type(s) when the course_type_labels flag is ON and the course names a
+        // known one; otherwise (flag OFF, the default, or no known type) the open_coursetype label as before.
         $types = [0 => 'E-Learning', 1 => 'E-Learning', 2 => 'Classroom', 3 => 'Exam'];
-        $type = $types[$course->open_coursetype ?? 0] ?? 'E-Learning';
+        $type = $typelabels[(int) $course->id] ?? ($types[$course->open_coursetype ?? 0] ?? 'E-Learning');
 
         // Time ago for "new" badge.
         $daysold = (time() - $course->timecreated) / 86400;

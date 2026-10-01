@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  ADR-032 course_lookups test fixture: four tables of the BizLMS local_costcenter plugin, copied from the production
+  snapshot.
+
+  Source : D:/Claude Local/Moodle Backup/01-production-codebase/html/local/costcenter/db/install.xml
+  sha1   : ff65958deebf5dc133207d3f38e950169f8ae2fe (of the whole source file, as read on 2026-10-01)
+  Date   : 2026-10-01
+
+  Only local_costcenter, local_coursedetails, local_moduleconfig and local_filters live here: local_coursedetails,
+  local_moduleconfig and local_filters are the tables the course_lookups importer claims or declines, and
+  local_costcenter is the organisation table the importer reads to resolve a tenant. local_costcenter_permissions and
+  local_certificate belong to other features.
+
+  Edits to the source (every other byte of the four tables is the source's; the ADR allows (a) to (c), the loader
+  forces (d)):
+    (a) PREVIOUS / NEXT attributes stripped from the tables and fields of the four tables.
+    (b) Types XMLDB rejects replaced: none needed. The source carries UNSIGNED="true" on integer and char fields;
+        XMLDB has ignored the attribute since Moodle 2.3 (lib/xmldb/xmldb_field.php).
+    (c) Production-only columns added: none. The upgrade steps of the plugin (BZ local/costcenter/db/upgrade.php:21-65)
+        add multipleorg, costcenter_logo, shell, button_color and hover_color to local_costcenter, and all five are
+        already in the source's install.xml. The plugin has no upgrade step for local_coursedetails, local_moduleconfig
+        or local_filters.
+    (d) The root element: PATH must equal the directory of this file relative to dirroot (xmldb_structure refuses
+        a file whose PATH differs), so it is local/sentientia_courses/tests/fixtures/bizlms instead of
+        local/costcenter/db, and the xsi schema location is the matching relative path. VERSION and COMMENT are the
+        source's.
+-->
+<XMLDB PATH="local/sentientia_courses/tests/fixtures/bizlms" VERSION="20150323" COMMENT="XMLDB file for Moodle local/costcenter"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="local_costcenter" COMMENT="List of costcenters assigned">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true"/>
+        <FIELD NAME="fullname" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="shortname" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="parentid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="description" TYPE="text" LENGTH="big"  SEQUENCE="false"/>
+        <FIELD NAME="visible" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="path" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="depth" TYPE="int" LENGTH="20" NOTNULL="false" UNSIGNED="false" SEQUENCE="false"/>
+        <FIELD NAME="sortorder" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="childpermission" TYPE="int" LENGTH="2" DEFAULT="0" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="theme" TYPE="char" LENGTH="255"  NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="shell" TYPE="char" LENGTH="255"  NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="costcenter_logo" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="category" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="multipleorg" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="button_color" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="brand_color" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="hover_color" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="parentid" UNIQUE="false" FIELDS="parentid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_coursedetails" COMMENT="Course Details">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" />
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" />
+        <FIELD NAME="costcenterid" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="credits" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="cost" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="enrollstartdate" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true"  SEQUENCE="false"/>
+        <FIELD NAME="enrollenddate" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="coursecompletiondays" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="coursecreator" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="duration" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="identifiedas" TYPE="char" LENGTH="255" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="requestcourseid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"  />
+        <FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"   />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"   />
+        <FIELD NAME="proficiencylevel" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="skill" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="prerequisite_courses" TYPE="text" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="courseid" UNIQUE="false" FIELDS="courseid"/>
+        <INDEX NAME="costcenterid" UNIQUE="false" FIELDS="costcenterid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_moduleconfig" COMMENT="Course Module Configuration">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" />
+        <FIELD NAME="moduleid" TYPE="int" LENGTH="10"  NOTNULL="true" UNSIGNED="true" SEQUENCE="false" />
+        <FIELD NAME="costcenters" TYPE="text" NOTNULL="false" UNSIGNED="false" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="char" LENGTH="225" NOTNULL="false" DEFAULT="0" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" UNSIGNED="true" SEQUENCE="false"  />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="moduleid" UNIQUE="false" FIELDS="moduleid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_filters" COMMENT="Filters for plugins">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true"/>
+        <FIELD NAME="plugins" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="filters" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="plugins_to" TYPE="char" LENGTH="225" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+  </TABLES>
+</XMLDB>

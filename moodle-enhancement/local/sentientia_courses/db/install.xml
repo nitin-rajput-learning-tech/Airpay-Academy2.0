@@ -67,6 +67,89 @@
       </INDEXES>
     </TABLE>
 
+    <TABLE NAME="local_sentientia_course_type"
+           COMMENT="Course types (the 'identified as' labels such as E-learning or Classroom). ADR-032 course_lookups import: the BizLMS local_course_types rows keep their ids, because course.open_identifiedas holds a comma list of these ids. Written by the importer and by a future type manager. usercreated and usermodified name people: declared in the privacy provider.">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name"         TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""
+               COMMENT="Label shown to people"/>
+        <FIELD NAME="shortname"    TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""
+               COMMENT="Short code, spaces stripped as BizLMS did"/>
+        <FIELD NAME="tenant_path"  TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="Org path the type belongs to, for example /1 or /77. NULL means no tenant: a BizLMS orgid 0 type (offered to every tenant) or a type whose org could not be resolved at import. Never an empty string."/>
+        <FIELD NAME="active"       TYPE="int"  LENGTH="1"   NOTNULL="true" DEFAULT="1"
+               COMMENT="1 enabled, 0 disabled"/>
+        <FIELD NAME="protected"    TYPE="int"  LENGTH="1"   NOTNULL="true" DEFAULT="0"
+               COMMENT="1 for the five built-in types (ids 1 to 5): no edit and no delete"/>
+        <FIELD NAME="usercreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Foreign key to user.id of the creator, 0 when unknown or erased"/>
+        <FIELD NAME="usermodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Foreign key to user.id of the last editor, 0 when unknown or erased"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_tenant_path" UNIQUE="false" FIELDS="tenant_path"/>
+        <INDEX NAME="idx_active"      UNIQUE="false" FIELDS="active"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_course_category"
+           COMMENT="Custom course categories, a tree separate from Moodle's course_categories. ADR-032 course_lookups import: the BizLMS local_custom_category rows keep their ids, because course.open_categoryid holds one of them. usercreated and usermodified name people: declared in the privacy provider.">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="fullname"     TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="shortname"    TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="parentid"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Parent category id, 0 for a top-level category"/>
+        <FIELD NAME="path"         TYPE="char" LENGTH="512" NOTNULL="true" DEFAULT=""
+               COMMENT="Category-tree path of ids, for example /3/12. Not an org path."/>
+        <FIELD NAME="depth"        TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="tenant_path"  TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="Tenant root path of the owning org, for example /1. NULL means no tenant: visible to cross-tenant callers only. Never an empty string."/>
+        <FIELD NAME="usercreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Foreign key to user.id of the creator, 0 when unknown or erased"/>
+        <FIELD NAME="usermodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Foreign key to user.id of the last editor, 0 when unknown or erased"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_parentid"    UNIQUE="false" FIELDS="parentid"/>
+        <INDEX NAME="idx_tenant_path" UNIQUE="false" FIELDS="tenant_path"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_courses_detailfill"
+           COMMENT="ADR-032 course_lookups import trail: one row per course whose open_* columns the import filled from the BizLMS local_coursedetails row. detailid names that source row; filledcols lists the course columns the import wrote (each was empty before). The only way the frozen import framework reaches a core UPDATE is through rows of the importer's own tables, so this table exists for that and for audit. Ids and timestamps only, no personal data. Written by the importer only.">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseid"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Foreign key to course.id of the filled course"/>
+        <FIELD NAME="detailid"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="id of the local_coursedetails row the values came from"/>
+        <FIELD NAME="filledcols"   TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""
+               COMMENT="Comma list of the course open_* columns the import filled, empty until the fill step has run"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="timecreated of the source row, 0 when the source had none"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="timemodified of the source row, 0 when the source had none"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="uk_course" UNIQUE="true" FIELDS="courseid"
+               COMMENT="A course is filled from one source row"/>
+      </INDEXES>
+    </TABLE>
+
     <TABLE NAME="local_sentientia_courses_tenant_share"
            COMMENT="Sprint C — many-to-many map (course × tenant) for cross-tenant course sharing.
                     A course appears in tenant N's catalog if (a) its open_path is within tenant N's
