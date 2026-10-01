@@ -62,9 +62,16 @@ section 12.
 - **History:** one row per `\local_recompletion\event\completion_reset` log row, at the real reset time
   (`source` = `legacy`). A cycle whose log row is missing gets an **inferred** row (`time_inferred` = 1, time
   capped at the next cycle's first evidence and at the import time); if the log row turns up in a later run the
-  inferred row is upgraded, never duplicated.
+  inferred row is upgraded, never duplicated. Which reset ended which archived completion is decided by taking
+  the learner's archived completions in the order of their row id (the legacy plugin inserted a row at each
+  reset, so id order is reset order), not by their dates: core recreates the completion row after a reset with
+  the ORIGINAL enrolment date and `timestarted` 0, so a later cycle that was reset without ever being started
+  looks older than the first one. An inferred reset is never dated before the cycle ahead of it ended, and a
+  logged reset with no archived completion takes the previous completion from the log only if it is after the
+  learner's previous logged reset.
 - **Archive:** `cc`, `cc_cc`, `cmc`, `qa`, `qg`, `sst`, `ltia`, `qr` and the seven `qr_*` answer tables, each row
-  attached to the earliest reset at or after its own time (strictly after, for an inferred reset).
+  attached to the earliest reset at or after its own time (strictly after, for an inferred reset). The archived
+  completions themselves are attached through the pairing above.
 - **Not done by the import:** no reset runs, no message or e-mail is sent, no core table is written, no legacy
   table is changed, no rule is enabled. `local_recompletion` is never uninstalled before sign-off.
 - Reasons that need the owner: `orphan_user`, `orphan_response`, `incomplete_event` (parity exits 2 until
@@ -155,11 +162,16 @@ php "C:/xampp/htdocs/moodle5/admin/cli/scheduled_task.php" \
   earlier cycle's completion — and only `reset_by_userid` is anonymised.
 - Archive rows (ADR-032, 2026-09-30) are the same kind of compliance record.
   Core erasure redacts the `userid` column to 0 **and scrubs the payload**: the
-  learner and the overriding administrator become 0 and the free text of a
-  questionnaire answer is emptied; the row survives. The DPDP flow keeps the
-  subject's rows as they are and anonymises only an administrator named in
-  somebody else's payload (`overrideby`). Export returns the person's evidence,
-  decoded. The scrub rules are pure functions in `classes/archive_privacy.php`.
+  learner and the other people the row names (the overriding administrator,
+  `overrideby`; the grader of an engine-archived gradebook grade,
+  `usermodified`) become 0, and what was written about the learner is emptied
+  (the free text of a questionnaire answer, a grade's `feedback` and
+  `information`, text typed into a SCORM package: suspend data, comments,
+  interaction answers, learner name); the row survives. The DPDP flow keeps the
+  subject's rows as they are and anonymises only an administrator or grader
+  named in somebody else's payload. Export returns the person's evidence,
+  decoded, without the id of the other person a row names. The scrub rules are
+  pure functions in `classes/archive_privacy.php`.
 
 ## Idempotency
 

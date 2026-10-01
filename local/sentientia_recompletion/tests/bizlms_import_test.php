@@ -191,7 +191,7 @@ final class bizlms_import_test extends \advanced_testcase {
         $g = $this->getDataGenerator();
         $t = [self::class, 't'];
 
-        foreach (['a', 'b', 'c', 'd', 'e'] as $name) {
+        foreach (['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as $name) {
             $this->ids[$name] = (int) $g->create_user(['firstname' => strtoupper($name), 'lastname' => 'Learner'])->id;
         }
         $DB->set_field('user', 'deleted', 1, ['id' => $this->ids['e']]);
@@ -215,6 +215,7 @@ final class bizlms_import_test extends \advanced_testcase {
         }
 
         [$a, $b, $c, $d, $e] = [$this->ids['a'], $this->ids['b'], $this->ids['c'], $this->ids['d'], $this->ids['e']];
+        [$uf, $ug, $uh] = [$this->ids['f'], $this->ids['g'], $this->ids['h']];
         $course = $this->ids['c1'];
         $reset = sources::RESET_EVENT;
 
@@ -327,6 +328,36 @@ final class bizlms_import_test extends \advanced_testcase {
             'viewed' => 1, 'overrideby' => null, 'timemodified' => $t('2025-11-15'), 'course' => $course]);
         $this->legacy('cmc_c_next', 'local_recompletion_cmc', ['coursemoduleid' => $cm, 'userid' => $c, 'completionstate' => 1,
             'viewed' => 1, 'overrideby' => null, 'timemodified' => $t('2026-01-20'), 'course' => $course]);
+
+        // Learner F: a second cycle that was reset without ever being started. Core recreates the completion row
+        // after a reset with the ORIGINAL enrolment date and timestarted 0, so by its own dates this cycle ran from
+        // before the first one completed. Both resets are in the log (the second from a browser, by an administrator).
+        $this->legacy('cc_f1', 'local_recompletion_cc', ['userid' => $uf, 'course' => $course,
+            'timeenrolled' => $t('2023-01-10'), 'timestarted' => $t('2023-01-15'), 'timecompleted' => $t('2023-03-01'),
+            'reaggregate' => 0]);
+        $this->legacy('cc_f2', 'local_recompletion_cc', ['userid' => $uf, 'course' => $course,
+            'timeenrolled' => $t('2023-01-10'), 'timestarted' => 0, 'timecompleted' => 0, 'reaggregate' => 0]);
+        $this->src['log_rf1'] = [sources::EVENT_UNIT, $this->log($reset, $uf, $course, $t('2024-03-02'))];
+        $this->src['log_rf2'] = [sources::EVENT_UNIT, $this->log($reset, $uf, $course, $t('2024-06-01'), 'web', $this->ids['admin'])];
+
+        // Learner G: one archived cycle and TWO resets in the log (the second has no archived completion of its own,
+        // as when archiving was off). The log saw the learner complete once, before the first reset.
+        $this->legacy('cc_g1', 'local_recompletion_cc', ['userid' => $ug, 'course' => $course,
+            'timeenrolled' => $t('2023-01-10'), 'timestarted' => $t('2023-01-15'), 'timecompleted' => $t('2023-03-01'),
+            'reaggregate' => 0]);
+        $this->log('\\core\\event\\course_completed', $ug, $course, $t('2023-03-01'), 'cli');
+        $this->src['log_rg1'] = [sources::EVENT_UNIT, $this->log($reset, $ug, $course, $t('2024-03-02'))];
+        $this->src['log_rg2'] = [sources::EVENT_UNIT, $this->log($reset, $ug, $course, $t('2024-06-01'))];
+
+        // Learner H: two archived cycles and NO reset in the log, the second never started. Each gets an inferred
+        // reset, and the second cannot be dated before the first one ended.
+        $this->legacy('cc_h1', 'local_recompletion_cc', ['userid' => $uh, 'course' => $course,
+            'timeenrolled' => $t('2023-01-10'), 'timestarted' => $t('2023-01-15'), 'timecompleted' => $t('2023-03-01'),
+            'reaggregate' => 0]);
+        $this->legacy('cc_h2', 'local_recompletion_cc', ['userid' => $uh, 'course' => $course,
+            'timeenrolled' => $t('2023-01-10'), 'timestarted' => 0, 'timecompleted' => 0, 'reaggregate' => 0]);
+        $this->legacy('cmc_h1', 'local_recompletion_cmc', ['coursemoduleid' => $cm, 'userid' => $uh, 'completionstate' => 1,
+            'viewed' => 1, 'overrideby' => null, 'timemodified' => $t('2023-02-20'), 'course' => $course]);
 
         // Orphans: a person the restored database has no row for, and a reset that names nobody.
         $this->legacy('cc_orphan', 'local_recompletion_cc', ['userid' => self::NOBODY, 'course' => $course,
@@ -499,7 +530,8 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertSame('cron', $deleted->reason, 'the history of a deleted user is kept (readers filter)');
         $this->assertEquals(self::t('2022-05-01'), $deleted->previous_timecompleted);
 
-        $this->assertSame(6, $DB->count_records(sources::HISTORY), 'five resets in the log and one inferred');
+        $this->assertSame(12, $DB->count_records(sources::HISTORY),
+            'nine resets in the log (A 2, B, D, E, F 2, G 2) and three inferred (C, H 2)');
         $this->assertSame(0, $DB->count_records(sources::HISTORY, ['source' => 'engine']));
 
         foreach (['log_incomplete' => 'incomplete_event', 'log_orphan' => 'orphan_user'] as $key => $reason) {
@@ -507,7 +539,7 @@ final class bizlms_import_test extends \advanced_testcase {
             $this->assertSame('skipped', $map->outcome, $key);
             $this->assertSame($reason, $map->reason, $key);
         }
-        $this->assertSame(7, $DB->count_records(legacymap::TABLE, ['sourcetable' => sources::EVENT_UNIT, 'subkey' => '']),
+        $this->assertSame(11, $DB->count_records(legacymap::TABLE, ['sourcetable' => sources::EVENT_UNIT, 'subkey' => '']),
             'every reset row of the log has exactly one map row, and nothing else of the log has');
     }
 
@@ -533,7 +565,7 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertEquals($inferred->id, $this->target('cc_c1')->historyid);
         $this->assertEquals(0, $this->target('cmc_c_next')->historyid,
             'nothing ended the next cycle yet: ambiguous rows keep 0 rather than guess');
-        $this->assertSame(1, $DB->count_records(sources::HISTORY, ['time_inferred' => 1]));
+        $this->assertSame(1, $DB->count_records(sources::HISTORY, ['time_inferred' => 1, 'userid' => $this->ids['c']]));
     }
 
     public function test_the_log_row_that_turns_up_later_upgrades_the_inferred_reset_and_adds_no_second_one(): void {
@@ -563,6 +595,60 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertEquals(self::t('2026-01-18'), $this->target('cc_c1')->timecreated, 'archived at the reset time');
         $this->assertEquals($inferred->id, $this->target('cmc_c1')->historyid);
         $this->assertEquals(0, $this->target('cmc_c_next')->historyid, 'still after every reset');
+    }
+
+    public function test_a_cycle_reset_without_ever_being_started_is_paired_with_its_own_reset(): void {
+        global $DB;
+        $this->imported();
+        $f = $this->ids['f'];
+        [$first, $second] = $this->history_of($f);
+
+        $this->assertEquals(self::t('2024-03-02'), $first->timecreated);
+        $this->assertEquals(self::t('2024-06-01'), $second->timecreated);
+        $this->assertSame(0, $DB->count_records(sources::HISTORY, ['userid' => $f, 'time_inferred' => 1]),
+            'both resets are in the log: none is invented');
+        $this->assertSame(2, $DB->count_records(sources::HISTORY, ['userid' => $f]));
+        $this->assertFalse($DB->record_exists(legacymap::TABLE, ['sourcetable' => 'local_recompletion_cc',
+            'sourceid' => $this->src['cc_f2'][1], 'subkey' => 'history']), 'the second cycle has a reset of its own');
+
+        $this->assertEquals(self::t('2023-03-01'), $first->previous_timecompleted);
+        $this->assertNull($second->previous_timecompleted, 'the second cycle was never completed');
+        $this->assertSame('cron', $first->reason);
+        $this->assertSame('legacy', $second->reason, 'a browser reset by somebody else: the log cannot say which kind');
+
+        // Each archived completion hangs off its own reset, not the earliest one after its (original) enrolment.
+        $this->assertEquals($first->id, $this->target('cc_f1')->historyid);
+        $this->assertEquals($second->id, $this->target('cc_f2')->historyid);
+        $this->assertEquals($second->timecreated, $this->target('cc_f2')->timecreated, 'archived at its reset');
+    }
+
+    public function test_a_reset_with_no_archived_cycle_does_not_borrow_an_earlier_cycles_completion(): void {
+        $this->imported();
+        [$first, $second] = $this->history_of($this->ids['g']);
+        $this->assertEquals(self::t('2023-03-01'), $first->previous_timecompleted, 'its own archived completion');
+        $this->assertNull($second->previous_timecompleted,
+            'the logged completion of 2023-03-01 belongs to the cycle the first reset ended');
+        $this->assertEquals($first->id, $this->target('cc_g1')->historyid);
+    }
+
+    public function test_an_inferred_reset_is_never_dated_before_the_cycle_ahead_of_it_ended(): void {
+        $this->imported();
+        [$first, $second] = $this->history_of($this->ids['h']);
+        $this->assertEquals(1, $first->time_inferred);
+        $this->assertEquals(1, $second->time_inferred);
+        $this->assertEquals($first->id, $this->target('cc_h1', 'history')->id);
+        $this->assertEquals($second->id, $this->target('cc_h2', 'history')->id);
+
+        // The first cycle: completion plus the one-year rule period. The second never started: its enrolment is the
+        // ORIGINAL one (2023-01-10), which is evidence of nothing; it can only be dated after the first cycle ended.
+        $this->assertEquals(self::t('2023-03-01') + 31536000, $first->timecreated);
+        $this->assertGreaterThanOrEqual((int) $first->timecreated, (int) $second->timecreated);
+        $this->assertLessThanOrEqual(time(), (int) $second->timecreated, 'never in the future');
+        $this->assertNull($second->previous_timecompleted);
+
+        $this->assertEquals($first->id, $this->target('cc_h1')->historyid);
+        $this->assertEquals($second->id, $this->target('cc_h2')->historyid);
+        $this->assertEquals($first->id, $this->target('cmc_h1')->historyid, 'its own cycle\'s activity');
     }
 
     // Archive.
@@ -709,7 +795,7 @@ final class bizlms_import_test extends \advanced_testcase {
             $this->assertSame($DB->count_records($table),
                 $DB->count_records(legacymap::TABLE, ['sourcetable' => $table, 'subkey' => '']), $table);
         }
-        $this->assertSame(33, $DB->count_records(sources::ARCHIVE), 'the archive is complete');
+        $this->assertSame(39, $DB->count_records(sources::ARCHIVE), 'the archive is complete');
     }
 
     public function test_a_teachers_preview_attempt_stays_in_the_legacy_table_unless_the_owner_says_otherwise(): void {
@@ -719,7 +805,7 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertSame('archived', $map->outcome);
         $this->assertSame('preview_attempt', $map->reason);
         $this->assertSame(0, $DB->count_records(sources::ARCHIVE, ['itemtype' => 'quiz_attempt', 'userid' => $this->ids['admin']]));
-        $this->assertSame(33, $DB->count_records(sources::ARCHIVE));
+        $this->assertSame(39, $DB->count_records(sources::ARCHIVE));
     }
 
     public function test_the_owner_can_choose_to_import_preview_attempts(): void {
@@ -727,7 +813,7 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->decisionoverride = ['recompletion.preview_attempts' => 'import'];
         $this->imported();
         $this->assertSame('imported', $this->mapped('local_recompletion_qa', $this->src['qa_preview'][1])->outcome);
-        $this->assertSame(34, $DB->count_records(sources::ARCHIVE));
+        $this->assertSame(40, $DB->count_records(sources::ARCHIVE));
     }
 
     // Owner decisions and reasons.
@@ -821,6 +907,12 @@ final class bizlms_import_test extends \advanced_testcase {
         $clean = $runner->verify([]);
         $this->assertSame(0, $clean['exit'], implode('; ', $clean['failures']['recompletion'] ?? []));
         $this->assertSame([], $clean['failures']['recompletion']);
+
+        // The log's own cleanup deletes old rows once the site runs: fewer reset events than were imported is not a
+        // failure (an event the import never accounted for is, and is caught below).
+        $DB->delete_records(sources::LOG, ['id' => $this->src['log_ra1'][1]]);
+        $purged = (new runner(['decisions' => $this->contract_decisions()]))->verify([]);
+        $this->assertSame([], $purged['failures']['recompletion'], 'a purged log row is expected');
 
         // An answer whose response row has gone.
         $DB->delete_records(sources::ARCHIVE, ['id' => $this->target('qr_1')->id]);

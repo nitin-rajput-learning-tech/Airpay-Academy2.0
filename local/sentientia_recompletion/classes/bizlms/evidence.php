@@ -67,6 +67,15 @@ final class evidence {
     /** @var array<string, array<int, array{id: int, time: int, inferred: bool}>> Memo of the imported resets of a pair. */
     private array $cycles = [];
 
+    /** @var array<string, int> Memo of when each archived completion's cycle ended (see cycle_end). */
+    private array $ends = [];
+
+    /** @var array<string, array{0: int, 1: bool}> Memo of inferred reset times (see inferred_reset). */
+    private array $inferred = [];
+
+    /** @var int The import time: an inferred reset is never later than this. Fixed for the run. */
+    private int $now;
+
     /**
      * The evidence of a run.
      *
@@ -88,6 +97,7 @@ final class evidence {
      */
     private function __construct(context $ctx) {
         $this->ctx = $ctx;
+        $this->now = time();
     }
 
     // Reset events.
@@ -191,6 +201,12 @@ final class evidence {
                     'enrolled' => (int) mapper::timestamp($row->timeenrolled),
                 ];
             }
+            // The legacy plugin inserted a row at the moment of each reset, so id order is the order of the
+            // cycles. The pages already arrive by id; this keeps the guarantee in the one place that needs it.
+            foreach ($this->completions as $key => $list) {
+                usort($list, static fn(array $a, array $b): int => $a['id'] <=> $b['id']);
+                $this->completions[$key] = $list;
+            }
         }
         return $this->completions;
     }
@@ -231,21 +247,26 @@ final class evidence {
     }
 
     /**
-     * The earliest time, after a cycle's completion, at which the learner did something in the course that
-     * belongs to a later cycle: the start, enrolment or completion of another archived completion, or an
-     * archived activity completion, quiz attempt, quiz grade or SCORM track dated after it.
+     * The earliest time, after a cycle ended, at which the learner did something in the course that belongs to a
+     * LATER cycle: the start, enrolment or completion of a later archived completion (a higher id: the legacy
+     * plugin inserted the rows in reset order), or an archived activity completion, quiz attempt, quiz grade or
+     * SCORM track dated after it.
+     *
+     * Earlier cycles are not evidence of a later one, and neither is anything at or before $after. The caller
+     * passes the later of the time the cycle ran from and the end of the cycle before it (see floor_before), so a
+     * cycle that was never started (its enrolment is the ORIGINAL one) is not handed the previous cycle's rows.
      *
      * @param int $userid
      * @param int $courseid
      * @param int $ccid The archived completion whose next evidence is wanted.
-     * @param int $after The time the cycle ran to: its completion, or its start for a cycle never completed.
+     * @param int $after The time the cycle ran to, and never earlier than the end of the cycle before it.
      * @return int|null
      */
     public function next_evidence(int $userid, int $courseid, int $ccid, int $after): ?int {
         global $DB;
         $best = null;
         foreach ($this->completions()[mapper::pair_key($userid, $courseid)] ?? [] as $other) {
-            if ($other['id'] === $ccid) {
+            if ($other['id'] <= $ccid) {
                 continue;
             }
             foreach ([$other['started'], $other['enrolled'], $other['completed']] as $time) {
@@ -268,6 +289,80 @@ final class evidence {
             }
         }
         return $best;
+    }
+
+    /**
+     * The reset time of an archived completion whose reset is not in the log: the earliest of its completion plus
+     * the legacy duration, the first evidence of the next cycle and the import time (mapper::inferred_time), and
+     * never earlier than the end of the cycle before it.
+     *
+     * @param int $userid
+     * @param int $courseid
+     * @param int $ccid
+     * @return array{0: int, 1: bool} [time, true when the course had no usable duration of its own]
+     */
+    public function inferred_reset(int $userid, int $courseid, int $ccid): array {
+        $key = mapper::pair_key($userid, $courseid) . ':' . $ccid;
+        if (!isset($this->inferred[$key])) {
+            if (count($this->inferred) >= self::MEMO_LIMIT) {
+                $this->inferred = [];
+            }
+            [$duration, $fallback] = $this->duration($courseid);
+            $row = $this->completion_row($userid, $courseid, $ccid);
+            if ($row === null) {
+                $this->inferred[$key] = [$this->now, $fallback];
+            } else {
+                $completed = $row['completed'] > 0 ? $row['completed'] : null;
+                $ranfrom = $completed ?? ($row['started'] > 0 ? $row['started'] : $row['enrolled']);
+                $floor = $this->floor_before($userid, $courseid, $ccid);
+                $next = $this->next_evidence($userid, $courseid, $ccid, max($ranfrom, $floor));
+                $time = max(mapper::inferred_time($completed, $duration, $next, $this->now), $floor);
+                $this->inferred[$key] = [$time, $fallback];
+            }
+        }
+        return $this->inferred[$key];
+    }
+
+    /**
+     * When the cycle of an archived completion ended: the time of the logged reset the pairing gives it, else
+     * its inferred reset time.
+     *
+     * @param int $userid
+     * @param int $courseid
+     * @param int $ccid
+     * @return int
+     */
+    public function cycle_end(int $userid, int $courseid, int $ccid): int {
+        $key = mapper::pair_key($userid, $courseid) . ':' . $ccid;
+        if (!isset($this->ends[$key])) {
+            if (count($this->ends) >= self::MEMO_LIMIT) {
+                $this->ends = [];
+            }
+            $resetid = $this->pairing($userid, $courseid)['cc'][$ccid] ?? null;
+            $reset = $resetid === null ? null : $this->reset_row($userid, $courseid, $resetid);
+            $this->ends[$key] = $reset !== null ? $reset['time'] : $this->inferred_reset($userid, $courseid, $ccid)[0];
+        }
+        return $this->ends[$key];
+    }
+
+    /**
+     * When the cycle before an archived completion's cycle ended; 0 for the first cycle. Nothing that belongs to
+     * the cycle can have happened before this.
+     *
+     * @param int $userid
+     * @param int $courseid
+     * @param int $ccid
+     * @return int
+     */
+    public function floor_before(int $userid, int $courseid, int $ccid): int {
+        $previous = null;
+        foreach ($this->completions()[mapper::pair_key($userid, $courseid)] ?? [] as $completion) {
+            if ($completion['id'] >= $ccid) {
+                break;
+            }
+            $previous = $completion['id'];
+        }
+        return $previous === null ? 0 : $this->cycle_end($userid, $courseid, $previous);
     }
 
     /**
@@ -364,7 +459,8 @@ final class evidence {
 
     /**
      * The latest time, at or before a reset, the log recorded the learner completing the course; null when it
-     * recorded none.
+     * recorded none. A completion at or before the pair's previous logged reset belongs to the cycle THAT reset
+     * ended, so it is not taken: a reset with no archived completion of its own never borrows an earlier cycle's.
      *
      * @param int $userid
      * @param int $courseid
@@ -386,9 +482,10 @@ final class evidence {
                 $this->completed[$key] = $times;
             }
         }
+        $lowest = $this->reset_before($userid, $courseid, $upto);
         $found = null;
         foreach ($this->completed[mapper::pair_key($userid, $courseid)] ?? [] as $time) {
-            if ($time <= $upto) {
+            if ($time <= $upto && $time > $lowest) {
                 $found = $time;
             }
         }

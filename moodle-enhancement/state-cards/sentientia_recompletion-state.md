@@ -211,3 +211,82 @@ Map: `docs/cutover/BIZLMS-IMPORT-MAPPING-2026-09-29.md` section 12 (branch `clau
 **Tests:** `bizlms_import_test.php` (importer contract + the map's fixture: rules, history reasons, cycle attachment, inferred reset and its later upgrade, old-format rows, questionnaire parents and orphan, payload round trip, no side effects, `run_all()` resets 0), `bizlms_pure_test.php`, `privacy_archive_test.php`, `engine_archive_test.php`, `evidence_view_test.php` (@group tenant_isolation), `run_rules_flag_test.php`; fixture `tests/fixtures/bizlms/local_recompletion.install.xml` (verbatim copy, sha1 in its header). `test_contract_not_applicable_without_tables` is overridden: the contract version would drop the standard log table, which the importer claims while a legacy table exists.
 
 **Docs fixed:** this plugin's README (cron time 03:15 not 02:47, no bulk UI, tables, flags, import) and `sentientia_compliance_report/README.md` (it claimed a read of the history table that no code performs; corrected, not implemented).
+
+
+## 2026-10-01 - ADR-032 recompletion importer: review fixes (3 must-fix, the small should-fix items)
+
+Branch `claude/bizlms-import-recompletion`, both trees. No schema change and no version bump (code, lang and test
+only; the lang cache is purged by the deploy). **Written, not run**: the lead re-inits once and runs the tests. php -l,
+the en/hi parity gate, the tree-drift gate, the path-boundary scan and the fixture-copy check were run, and the pure
+logic was run outside Moodle in a stand-in harness (49 checks, green), which also reproduced the reported pairing bug
+on the previous code before the fix.
+
+**Must-fix 1 - the importer invented a reset and recorded the wrong previous completion.** `pairing::pair()` ordered a
+learner's archived completions by the time each ran from (completion, else start, else enrolment). Core's completion
+cron recreates the row after a reset with `timeenrolled` = the ORIGINAL enrolment and `timestarted` 0, so a later
+cycle that was reset without ever being started sorted ahead of the first cycle, found no reset, and got an inferred
+one dated before the first cycle completed; its real reset then took the first cycle's completion from the log as
+`previous_timecompleted`. Now:
+- `pairing::pair()` takes the cycles in the order of the legacy row id (the legacy plugin inserted a row at each reset,
+  so id order is reset order); a cycle's lower bound is the running maximum, because a cycle begins no earlier than the
+  one before it.
+- `evidence::next_evidence()` considers only LATER cycles (higher id) and only evidence after the cycle ahead of it ended.
+- New `evidence::inferred_reset()`, `cycle_end()`, `floor_before()` (memoised per run, `now` fixed per run):
+  an inferred reset is never dated before the cycle ahead of it ended; `course_completion_step` uses them, and the
+  attempt window of an inferred reset starts where the cycle before it ended.
+- `evidence::completed_before()` ignores a logged completion at or before the pair's previous logged reset.
+- `archive_cycles` attaches an archived completion through the pairing (its own dates are not reliable for the case
+  above), via the legacy map (`local_recompletion_cc` -> archive row), the paired event's history row, or the cycle's
+  inferred row; other archive rows keep the rule by time. A row that loses its reset now takes its own time as "archived
+  at" instead of keeping the old reset's.
+- Tests: `bizlms_pure_test` (2 pairing tests: the exact reported shape, id order and the running floor);
+  `bizlms_import_test` seed gains learners F (the reported shape), G (a reset with no archived cycle and a logged
+  completion before the first reset) and H (two unmatched cycles, the second never started) with three new tests.
+  **Counts in the import test changed**: history rows 6 -> 12, reset events mapped 7 -> 11, archive rows 33 -> 39 (34 -> 40
+  with preview attempts imported); the inferred-row assertion is now scoped to learner C.
+
+**Must-fix 2 - grader data survived both erasures.** `evidence_archiver::grades()` archives the whole `grade_grades` row
+before a reset that clears grades (and `reset_grades` defaults to 1). That payload holds `usermodified` (the grader's
+id), `feedback` and `information`. `archive_privacy` now has `ACTOR_KEYS` (activity_completion -> overrideby,
+gradebook_grade -> usermodified) and `FREE_TEXT_KEYS` (questionnaire answer -> response, gradebook grade -> feedback and
+information). Learner erasure zeroes the grader and empties the feedback and information; a grader's erasure (core or
+DPDP) finds and zeroes `usermodified` in `get_contexts_for_userid`, `get_users_in_context`, `scrub_actor_rows`; the
+export no longer hands the learner another person's id (overrideby, usermodified). Same class, closed: text typed into
+a SCORM package (suspend data, comments, interaction answers, learner name; `mapper::is_scorm_free_text`) is emptied on
+learner erasure, the status and score stay. Payload metadata string updated, en + hi. Tests: `privacy_archive_test`
+(two gradebook rows and a grader named only there; row counts 4 -> 6) and `bizlms_pure_test`.
+
+**Must-fix 3 - the evidence view said "the scheduled task" for resets the task did not make.** `evidence_report::header()`
+now credits the task only for reason `cron` with `reset_by_userid` NULL and a real (not estimated) time; NULL with any
+other reason, or an estimated row, is "not recorded"; 0 is "an administrator (erased)". New strings
+`evidence_not_recorded`, `evidence_admin_erased` (en + hi). `evidence_view_test` no longer locks in the old wording.
+
+**Small should-fix, done:** `verify()` no longer fails when the log has FEWER reset events than were imported (the log's own
+cleanup deletes old rows once the site runs; only an unaccounted event fails); `format_string()` output is no longer
+escaped twice in `history.php`, `history_detail.php`, `index.php` and the evidence view (`evidence_report::plain_name()`);
+`edit.php` warns on an imported rule (form notice and, when it is saved ENABLED, a warning on the redirect) that the
+engine does not yet reproduce all of its BizLMS settings.
+
+**Not done (needs a decision or is bigger than a review fix):**
+- Mapping doc: the map asks for reason `manual` on a web reset by another user when the page can be shown; the importer
+  records `legacy` (logstore_standard_log has no url, and the cron and the reset page fire the same event). Record the
+  deviation in the mapping doc (lead's edit).
+- April 2026 rehearsal data: all 16 `local_recompletion_*` tables are empty and the log holds 0 reset events, so at Stage B
+  the feature is applicable and imports nothing unless that changes. Expect several full scans of the unindexed
+  `eventname` column of the 2.5M-row log (preflight count, group scan, fingerprint, `resets()`, `completed_before()`).
+- Engine parity (map code fix 5) is still partly open: SCORM tracking is always wiped, the period is whole days, the
+  extra-attempt/assign/LTI/questionnaire/custom e-mail choices stay in `legacy_config`. The edit.php warning is a
+  guard on the human, not on the engine.
+- `history.php` (badges, filters, imported rows) and `index.php` (legacy settings) are not behind a flag; only the
+  evidence view is. Owner to confirm that is the intent of `learner_history_surface`.
+- Evidence with no reset (historyid 0) is reachable only by typing `history_detail.php?userid=&courseid=`; the history
+  page offers no link.
+- `evidence.php` reads the legacy tables with `$DB` (next_evidence: 4 queries per unmatched completion) and misses
+  `course = 0` rows and `cc_cc` / `ltia` / `qr` times as next-cycle evidence.
+- `recompletion_engine::notify()` formats the previous completion in the sender's language, not the recipient's;
+  `legacy_summary` shows an unexpected choice value as nothing instead of the raw value.
+- DPDP erasure keeps the subject's own rows exactly as archived (design, unchanged): a gradebook row's feedback text
+  stays with the subject there, as a questionnaire answer does.
+- **No visual evidence** for `history.php`, `history_detail.php`, `index.php` / `edit.php` (the wording of Reset by and the
+  imported-rule notice changed): nothing was deployed in this session. Capture desktop + mobile before the evidence flag
+  is flipped.

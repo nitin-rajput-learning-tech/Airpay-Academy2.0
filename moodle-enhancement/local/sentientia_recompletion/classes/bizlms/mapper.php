@@ -232,6 +232,18 @@ final class mapper {
     }
 
     /**
+     * Is a SCORM element one that carries text the learner typed, or the name or id the package was given? Those are
+     * personal data in the tracking row, unlike the status and the score.
+     *
+     * @param string $element
+     * @return bool
+     */
+    public static function is_scorm_free_text(string $element): bool {
+        return (bool) preg_match(
+            '/(^|\.)(suspend_data|comments|comment|student_response|learner_response|student_name|learner_name)$/', $element);
+    }
+
+    /**
      * The archive payload: the whole source row as JSON, every value exactly as the database returned it.
      *
      * @param \stdClass|array $row A source row, or a name => value list.

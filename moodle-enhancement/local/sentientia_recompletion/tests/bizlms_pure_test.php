@@ -113,6 +113,18 @@ final class bizlms_pure_test extends \basic_testcase {
         $this->assertFalse(mapper::is_scorm_score('cmi.score.max'));
     }
 
+    public function test_scorm_elements_that_carry_what_the_learner_typed(): void {
+        foreach (['cmi.suspend_data', 'cmi.comments', 'cmi.comments_from_learner.0.comment',
+                'cmi.interactions.3.learner_response', 'cmi.interactions.3.student_response', 'cmi.core.student_name',
+                'cmi.learner_name', 'suspend_data'] as $e) {
+            $this->assertTrue(mapper::is_scorm_free_text($e), $e);
+        }
+        foreach (['cmi.core.lesson_status', 'cmi.core.score.raw', 'cmi.completion_status', 'cmi.comments_from_lms',
+                'cmi.core.session_time', 'xsuspend_data'] as $e) {
+            $this->assertFalse(mapper::is_scorm_free_text($e), $e);
+        }
+    }
+
     public function test_the_payload_keeps_every_column_exactly(): void {
         $row = (object) ['id' => '5', 'userid' => '12', 'element' => 'cmi.suspend_data', 'value' => "caf\u{e9} / \"x\" \u{0939}",
             'timemodified' => '1700000000', 'note' => null];
@@ -187,6 +199,37 @@ final class bizlms_pure_test extends \basic_testcase {
         $this->assertSame(['cc' => [], 'event' => [71 => null]], pairing::pair([], [['id' => 71, 'time' => 5]]));
     }
 
+    public function test_a_later_cycle_that_was_never_started_is_paired_with_its_own_reset(): void {
+        // Core recreates the completion row after a reset with the ORIGINAL enrolment date and timestarted 0, so
+        // the second cycle "ran from" 10, before the first one completed (100). By its dates it sorted first and
+        // was left with no reset; the first cycle's reset is the earlier of the two and it is the first cycle's.
+        $completions = [
+            ['id' => 1, 'completed' => 100, 'started' => 50, 'enrolled' => 10],
+            ['id' => 2, 'completed' => 0, 'started' => 0, 'enrolled' => 10],
+        ];
+        $resets = [['id' => 71, 'time' => 400], ['id' => 72, 'time' => 900]];
+        $pair = pairing::pair($completions, $resets);
+        $this->assertSame([1 => 71, 2 => 72], $pair['cc'], 'a reset is invented for nobody');
+        $this->assertSame([71 => 1, 72 => 2], $pair['event']);
+    }
+
+    public function test_the_cycles_are_taken_in_the_order_the_legacy_plugin_inserted_them(): void {
+        // The row ids are reset order whatever the dates say, and the rows can arrive in any order.
+        $completions = [
+            ['id' => 8, 'completed' => 0, 'started' => 0, 'enrolled' => 10],
+            ['id' => 3, 'completed' => 100, 'started' => 50, 'enrolled' => 10],
+        ];
+        $pair = pairing::pair($completions, [['id' => 72, 'time' => 900], ['id' => 71, 'time' => 400]]);
+        $this->assertSame(71, $pair['cc'][3]);
+        $this->assertSame(72, $pair['cc'][8]);
+
+        // A cycle never runs from earlier than the one before it did: with only the later reset in the log, the
+        // never-started second cycle does not take a reset that is earlier than the first cycle's completion.
+        $pair = pairing::pair($completions, [['id' => 70, 'time' => 60]]);
+        $this->assertSame([3 => null, 8 => null], $pair['cc'], 'the reset at 60 is before the first cycle completed');
+        $this->assertSame([70 => null], $pair['event']);
+    }
+
     public function test_an_inferred_reset_does_not_take_the_evidence_it_was_capped_at(): void {
         // The inferred time is capped at the first evidence of the next cycle, so evidence with exactly that
         // time IS the next cycle's first evidence and must not be attached to the reset that ended this one.
@@ -244,6 +287,80 @@ final class bizlms_pure_test extends \basic_testcase {
         // The patterns find the id in a JSON object written by mapper::payload, as a string or as a number.
         $written = mapper::payload((object) ['overrideby' => '99', 'userid' => '1']);
         $this->assertTrue((bool) preg_match('/"overrideby":"99"/', $written));
+    }
+
+    public function test_a_grade_names_its_grader_and_carries_their_written_feedback(): void {
+        $grade = json_encode(['id' => '5', 'itemid' => '9', 'userid' => '12', 'finalgrade' => '8.50000',
+            'usermodified' => '99', 'feedback' => 'Well done, Priya', 'information' => 'Re-marked by Mr Rao',
+            'overridden' => '0']);
+        $scrubbed = json_decode(archive_privacy::scrub_subject($grade, 'gradebook_grade'), true);
+        $this->assertSame('0', $scrubbed['userid']);
+        $this->assertSame('0', $scrubbed['usermodified'], 'the grader is another person; a row nobody can be blamed for names nobody');
+        $this->assertSame('', $scrubbed['feedback']);
+        $this->assertSame('', $scrubbed['information']);
+        $this->assertSame('8.50000', $scrubbed['finalgrade'], 'the grade itself is the evidence and stays');
+        $this->assertSame('9', $scrubbed['itemid']);
+
+        // The same keys on another kind of row are not a grader's words.
+        $other = json_encode(['userid' => '12', 'usermodified' => '99', 'feedback' => 'kept']);
+        $kept = json_decode(archive_privacy::scrub_subject($other, 'quiz_grade'), true);
+        $this->assertSame('99', $kept['usermodified']);
+        $this->assertSame('kept', $kept['feedback']);
+    }
+
+    public function test_erasing_a_grader_changes_only_the_grades_that_name_them(): void {
+        $grade = json_encode(['userid' => '12', 'usermodified' => '99', 'feedback' => 'Well done']);
+        $changed = json_decode((string) archive_privacy::scrub_actor($grade, 99, 'gradebook_grade'), true);
+        $this->assertSame(['userid' => '12', 'usermodified' => '0', 'feedback' => 'Well done'], $changed,
+            'the learner and what was written stay; only the grader goes');
+        $this->assertNull(archive_privacy::scrub_actor($grade, 98, 'gradebook_grade'));
+        $this->assertNull(archive_privacy::scrub_actor(json_encode(['usermodified' => null]), 99, 'gradebook_grade'));
+        $number = json_decode((string) archive_privacy::scrub_actor(json_encode(['usermodified' => 99]), 99, 'gradebook_grade'), true);
+        $this->assertSame(0, $number['usermodified']);
+        // A grade's usermodified is not an overriding administrator, and the other way round.
+        $this->assertNull(archive_privacy::scrub_actor($grade, 99));
+        $this->assertNull(archive_privacy::scrub_actor(json_encode(['overrideby' => '99']), 99, 'gradebook_grade'));
+        $this->assertNull(archive_privacy::scrub_actor($grade, 99, 'quiz_grade'));
+
+        $this->assertSame([99], archive_privacy::actors($grade, 'gradebook_grade'));
+        $this->assertSame([], archive_privacy::actors($grade), 'read as an activity completion it names nobody');
+        $this->assertSame([], archive_privacy::actors(json_encode(['usermodified' => '0']), 'gradebook_grade'));
+        $this->assertContains('%"usermodified":"99"%', archive_privacy::actor_patterns(99, 'usermodified'));
+        $this->assertSame(['activity_completion', 'gradebook_grade'], archive_privacy::actor_types());
+        $this->assertSame('usermodified', archive_privacy::actor_key('gradebook_grade'));
+        $this->assertNull(archive_privacy::actor_key('quiz_attempt'));
+    }
+
+    public function test_an_export_leaves_out_the_other_person_a_row_names(): void {
+        $grade = json_encode(['userid' => '12', 'usermodified' => '99', 'feedback' => 'Well done', 'finalgrade' => '8']);
+        $exported = archive_privacy::for_export($grade, 'gradebook_grade');
+        $this->assertArrayNotHasKey('usermodified', $exported, 'the grader\'s id is the grader\'s data');
+        $this->assertSame('Well done', $exported['feedback'], 'what was written to the learner is theirs');
+        $this->assertSame('12', $exported['userid']);
+
+        $completion = json_encode(['userid' => '12', 'overrideby' => '99', 'completionstate' => '1']);
+        $this->assertArrayNotHasKey('overrideby', archive_privacy::for_export($completion, 'activity_completion'));
+        $this->assertSame('1', archive_privacy::for_export($completion, 'activity_completion')['completionstate']);
+
+        $quiz = json_encode(['userid' => '12', 'usermodified' => '99']);
+        $this->assertSame('99', archive_privacy::for_export($quiz, 'quiz_attempt')['usermodified'], 'not an actor of this type');
+        $this->assertNull(archive_privacy::for_export('not json', 'quiz_attempt'));
+    }
+
+    public function test_erasing_the_learner_empties_what_they_typed_into_a_scorm_package(): void {
+        $typed = json_encode(['userid' => '12', 'element' => 'cmi.suspend_data', 'value' => 'name=Priya;bookmark=4']);
+        $this->assertSame('', json_decode(archive_privacy::scrub_subject($typed, 'scorm_track'), true)['value']);
+        $name = json_encode(['userid' => '12', 'element' => 'cmi.core.student_name', 'value' => 'Rao, Priya']);
+        $this->assertSame('', json_decode(archive_privacy::scrub_subject($name, 'scorm_track'), true)['value']);
+
+        // The status and the score are the evidence; they stay.
+        $status = json_encode(['userid' => '12', 'element' => 'cmi.core.lesson_status', 'value' => 'passed']);
+        $kept = json_decode(archive_privacy::scrub_subject($status, 'scorm_track'), true);
+        $this->assertSame('passed', $kept['value']);
+        $this->assertSame('0', $kept['userid']);
+        // Only a SCORM row is read this way.
+        $this->assertSame('kept', json_decode(archive_privacy::scrub_subject(
+            json_encode(['element' => 'cmi.suspend_data', 'value' => 'kept']), 'quiz_attempt'), true)['value']);
     }
 
     // What the rules page says about an imported rule.

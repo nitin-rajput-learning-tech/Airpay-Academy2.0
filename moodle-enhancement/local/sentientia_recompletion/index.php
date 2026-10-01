@@ -33,7 +33,8 @@ foreach ($rules as $r) {
     $course_name = '— all courses with completion —';
     if ($r->courseid > 0) {
         $c = $DB->get_record('course', ['id' => $r->courseid], 'fullname, shortname');
-        $course_name = $c ? format_string($c->fullname) : "(deleted course #{$r->courseid})";
+        $course_name = $c ? \local_sentientia_recompletion\evidence_report::plain_name($c->fullname)
+            : "(deleted course #{$r->courseid})";
     }
     // ADR-032: a rule the BizLMS import made carries the course's legacy settings; say so, and show them.
     $legacy = [];
@@ -50,7 +51,7 @@ foreach ($rules as $r) {
     }
     $rows[] = [
         'id'              => (int) $r->id,
-        'name'            => format_string($r->name),
+        'name'            => \local_sentientia_recompletion\evidence_report::plain_name($r->name),
         'course'          => $course_name,
         'period_days'     => (int) $r->period_days,
         'trigger'         => $r->trigger_type,

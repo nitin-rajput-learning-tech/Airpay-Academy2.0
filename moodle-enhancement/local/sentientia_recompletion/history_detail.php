@@ -59,7 +59,7 @@ if ($id > 0) {
     }
     $header = [
         'learner' => \local_sentientia_recompletion\evidence_report::learner_name($pair),
-        'course' => $pair->coursename !== null ? format_string($pair->coursename)
+        'course' => $pair->coursename !== null ? \local_sentientia_recompletion\evidence_report::plain_name($pair->coursename)
             : get_string('evidence_course_gone', $component),
     ];
     $sections = \local_sentientia_recompletion\evidence_report::sections_for_pair($userid, $courseid);

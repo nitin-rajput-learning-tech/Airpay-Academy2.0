@@ -16,7 +16,8 @@ use local_sentientia_platform\bizlms\outcome;
  * log and then already imported by the events step. When it is not (the log row was purged), the cycle would
  * leave no history row at all, and the only surviving evidence that the person completed and was then reset
  * would be a payload nobody reads; so the row also gets an INFERRED history row, marked as such, with a reset
- * time worked out from the completion (see mapper::inferred_time) and never later than the import.
+ * time worked out from the completion (see mapper::inferred_time) and never later than the import, nor earlier
+ * than the end of the cycle before it (evidence::floor_before).
  *
  * @package    local_sentientia_recompletion
  * @copyright  2026 Airpay Payment Services
@@ -43,7 +44,6 @@ final class course_completion_step extends archive_step {
      */
     public function transform(array $rows, context $ctx): array {
         $evidence = evidence::of($ctx);
-        $now = time();
         $out = [];
         foreach ($rows as $row) {
             $id = (int) $row->id;
@@ -72,11 +72,13 @@ final class course_completion_step extends archive_step {
                 continue;
             }
 
-            [$duration, $fallback] = $evidence->duration($course);
-            $next = $evidence->next_evidence($user, $course, $id, $ranfrom ?? 0);
-            $time = mapper::inferred_time($completed, $duration, $next, $now);
+            // The evidence worked this out once for the run, because the next cycle's inferred time needs this
+            // one's end as its floor.
+            [$time, $fallback] = $evidence->inferred_reset($user, $course, $id);
             $config = $evidence->config($course);
-            $attempted = $evidence->attempted_between($user, $course, $evidence->reset_before($user, $course, $time), $time);
+            // The window of this cycle starts where the one before it ended, logged or inferred.
+            $since = max($evidence->reset_before($user, $course, $time), $evidence->floor_before($user, $course, $id));
+            $attempted = $evidence->attempted_between($user, $course, $since, $time);
             $inferred = outcome::insert($id, sources::HISTORY, (object) [
                 'ruleid' => (int) ($ctx->map->resolve(sources::RULE_UNIT, $course) ?? 0),
                 'userid' => $user,

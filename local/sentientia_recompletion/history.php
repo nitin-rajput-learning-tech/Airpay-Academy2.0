@@ -90,7 +90,9 @@ foreach ($rows as $r) {
         'user_email' => (string) ($r->email ?? ''),
         // ADR-032: the import keeps the history of users who have since been deleted; say so.
         'user_deleted' => !empty($r->user_deleted),
-        'course_name' => format_string($r->course_name ?? get_string('evidence_course_gone', $component)),
+        'course_name' => $r->course_name !== null
+            ? \local_sentientia_recompletion\evidence_report::plain_name($r->course_name)
+            : get_string('evidence_course_gone', $component),
         'reason'    => $r->reason,
         'self'      => $selfreset,
         'legacy'    => $r->source === 'legacy',

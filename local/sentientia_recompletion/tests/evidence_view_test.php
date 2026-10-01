@@ -166,11 +166,27 @@ final class evidence_view_test extends \advanced_testcase {
         $this->assertStringStartsWith('~ ', $header['reset_at'], 'an estimated time is shown with a tilde');
         $this->assertTrue($header['inferred']);
         $this->assertTrue($header['legacy']);
-        $this->assertSame(get_string('evidence_scheduled', 'local_sentientia_recompletion'), $header['reset_by']);
+        $this->assertSame(get_string('evidence_not_recorded', 'local_sentientia_recompletion'), $header['reset_by'],
+            'an estimated reset has no known maker: it must not be called the scheduled task');
         $this->assertSame('Annual AML', $header['course']);
         $this->assertTrue($header['grades_reset']);
 
         global $DB;
+        $table = 'local_sentientia_recompletion_history';
+        $by = static fn(int $id): string => evidence_report::header(evidence_report::visible_history($id))['reset_by'];
+
+        // Only a reset the task is KNOWN to have made (reason cron, a real time) is credited to the task.
+        $DB->set_field($table, 'time_inferred', 0, ['id' => $this->minehistory]);
+        $this->assertSame(get_string('evidence_scheduled', 'local_sentientia_recompletion'), $by($this->minehistory));
+        // An imported reset whose maker the log cannot tell (the reset page, or the cron run from a browser).
+        $DB->set_field($table, 'reason', 'legacy', ['id' => $this->minehistory]);
+        $this->assertSame(get_string('evidence_not_recorded', 'local_sentientia_recompletion'), $by($this->minehistory));
+        // An administrator an erasure has since removed.
+        $DB->set_field($table, 'reset_by_userid', 0, ['id' => $this->minehistory]);
+        $this->assertSame(get_string('evidence_admin_erased', 'local_sentientia_recompletion'), $by($this->minehistory));
+        $DB->set_field($table, 'reason', 'cron', ['id' => $this->minehistory]);
+        $DB->set_field($table, 'time_inferred', 1, ['id' => $this->minehistory]);
+
         $DB->set_field('local_sentientia_recompletion_history', 'reset_by_userid', $this->mine->id, ['id' => $this->minehistory]);
         $DB->set_field('local_sentientia_recompletion_history', 'time_inferred', 0, ['id' => $this->minehistory]);
         $header = evidence_report::header(evidence_report::visible_history($this->minehistory));
@@ -182,6 +198,20 @@ final class evidence_view_test extends \advanced_testcase {
         $this->setUser($this->tenant_admin('/1'));
         $header = evidence_report::header(evidence_report::visible_history($this->minehistory));
         $this->assertSame(get_string('evidence_admin', 'local_sentientia_recompletion'), $header['reset_by']);
+    }
+
+    public function test_a_name_with_an_ampersand_reaches_the_template_unescaped(): void {
+        global $DB;
+        // The template escapes every value once ({{ }}); format_string() escapes by default, which showed "&amp;".
+        $DB->set_field('course', 'fullname', 'Tom & Jerry', ['id' => $this->courseid]);
+        $DB->set_field('quiz', 'name', 'Q & A', ['id' => $this->quiz->id]);
+        $this->setAdminUser();
+
+        $this->assertSame('Tom & Jerry',
+            evidence_report::header(evidence_report::visible_history($this->minehistory))['course']);
+        $cells = evidence_report::sections_for_history($this->minehistory)[0]['rows'][0]['cells'];
+        $this->assertSame('Q & A', $cells[0]);
+        $this->assertSame('Tom & Jerry', evidence_report::plain_name('Tom & Jerry'));
     }
 
     public function test_a_learner_who_was_deleted_since_keeps_their_history_and_is_marked(): void {

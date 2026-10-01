@@ -103,30 +103,16 @@ final class evidence_report {
      * @return array The template's header fields (plain text; the template escapes).
      */
     public static function header(\stdClass $history): array {
-        global $DB;
         $component = 'local_sentientia_recompletion';
         $userid = (int) $history->userid;
-        $resetby = $history->reset_by_userid === null ? 0 : (int) $history->reset_by_userid;
         $inferred = (int) ($history->time_inferred ?? 0) === 1;
 
-        if ($resetby === 0) {
-            $by = get_string('evidence_scheduled', $component);
-        } else if ($resetby === $userid) {
-            $by = get_string('evidence_self', $component);
-        } else if (tenant::is_cross_tenant()) {
-            $by = (string) $DB->get_field_sql(
-                "SELECT " . $DB->sql_concat('u.firstname', "' '", 'u.lastname') . " FROM {user} u WHERE u.id = :evby",
-                ['evby' => $resetby]);
-            $by = trim($by) !== '' ? $by : get_string('evidence_admin', $component);
-        } else {
-            // A tenant admin is not told the name of somebody who may belong to another tenant.
-            $by = get_string('evidence_admin', $component);
-        }
+        $by = self::reset_by($history, $userid, $inferred);
 
         return [
             'learner' => $userid > 0 ? self::learner_name($history)
                 : get_string('evidence_redacted', $component),
-            'course' => $history->coursename !== null ? format_string($history->coursename)
+            'course' => $history->coursename !== null ? self::plain_name($history->coursename)
                 : get_string('evidence_course_gone', $component),
             'reset_at' => ($inferred ? '~ ' : '') . userdate($history->timecreated, self::DATETIME),
             'inferred' => $inferred,
@@ -138,6 +124,56 @@ final class evidence_report {
             'grades_reset' => (bool) $history->reset_grades,
             'attempts_reset' => (bool) $history->reset_attempts,
         ];
+    }
+
+    /**
+     * A course, quiz or activity name as the page's template prints it. The templates escape every value once
+     * ({{ }}), so the name must reach them unescaped: format_string() escapes by default, and an "&" in a name
+     * would show as "&amp;amp;".
+     *
+     * @param string $name
+     * @return string Plain text with the multi-language filters applied.
+     */
+    public static function plain_name(string $name): string {
+        return format_string($name, true, ['escape' => false]);
+    }
+
+    /**
+     * Who the page says made a reset.
+     *
+     * NULL means nobody pressed it. That is "the scheduled task" only for a reset the task is KNOWN to have made
+     * (reason cron, and not an estimated row). An imported reset whose maker the log cannot tell (reason legacy:
+     * the reset page, or an administrator running the cron from a browser) and an inferred one have no known
+     * maker, and an auditor must not be told it was the task. 0 is an administrator an erasure has since removed.
+     *
+     * @param \stdClass $history The history row.
+     * @param int $userid The learner.
+     * @param bool $inferred Whether the reset's time is an estimate.
+     * @return string Plain text.
+     */
+    private static function reset_by(\stdClass $history, int $userid, bool $inferred): string {
+        global $DB;
+        $component = 'local_sentientia_recompletion';
+        if ($history->reset_by_userid === null) {
+            return !$inferred && (string) $history->reason === 'cron'
+                ? get_string('evidence_scheduled', $component)
+                : get_string('evidence_not_recorded', $component);
+        }
+        $resetby = (int) $history->reset_by_userid;
+        if ($resetby === 0) {
+            return get_string('evidence_admin_erased', $component);
+        }
+        if ($resetby === $userid) {
+            return get_string('evidence_self', $component);
+        }
+        if (!tenant::is_cross_tenant()) {
+            // A tenant admin is not told the name of somebody who may belong to another tenant.
+            return get_string('evidence_admin', $component);
+        }
+        $name = (string) $DB->get_field_sql(
+            "SELECT " . $DB->sql_concat('u.firstname', "' '", 'u.lastname') . " FROM {user} u WHERE u.id = :evby",
+            ['evby' => $resetby]);
+        return trim($name) !== '' ? $name : get_string('evidence_admin', $component);
     }
 
     /**
@@ -269,7 +305,7 @@ final class evidence_report {
                 foreach ($rows as $r) {
                     $quiz = $quizzes[(int) $r->instanceid] ?? null;
                     $p = $data($r);
-                    $out[] = [$quiz ? format_string($quiz->name) : ('#' . (int) $r->instanceid),
+                    $out[] = [$quiz ? self::plain_name($quiz->name) : ('#' . (int) $r->instanceid),
                         (string) ($p['attempt'] ?? '-'), $r->state, self::scaled_marks($quiz, $r->grade),
                         $when($r->timeevent)];
                 }
@@ -278,7 +314,7 @@ final class evidence_report {
                 $headers = [$string('col_quiz'), $string('col_grade'), $string('col_when')];
                 foreach ($rows as $r) {
                     $quiz = $quizzes[(int) $r->instanceid] ?? null;
-                    $out[] = [$quiz ? format_string($quiz->name) : ('#' . (int) $r->instanceid),
+                    $out[] = [$quiz ? self::plain_name($quiz->name) : ('#' . (int) $r->instanceid),
                         $quiz && $quiz->grade !== null ? $grade($r->grade) . ' / ' . $grade($quiz->grade) : $grade($r->grade),
                         $when($r->timeevent)];
                 }
@@ -288,7 +324,7 @@ final class evidence_report {
                 foreach ($rows as $r) {
                     $p = $data($r);
                     $scorm = $scorms[(int) $r->instanceid] ?? null;
-                    $out[] = [$scorm ? format_string($scorm->name) : ('#' . (int) $r->instanceid), (string) $r->itemkey,
+                    $out[] = [$scorm ? self::plain_name($scorm->name) : ('#' . (int) $r->instanceid), (string) $r->itemkey,
                         (string) ($p['value'] ?? ''), $when($r->timeevent)];
                 }
                 break;
@@ -369,7 +405,7 @@ final class evidence_report {
                 $modinfos[$courseid] ??= get_fast_modinfo($courseid, -1);
                 $cm = $modinfos[$courseid]->cms[$cmid] ?? null;
                 if ($cm !== null) {
-                    $names[$cmid] = format_string($cm->name);
+                    $names[$cmid] = self::plain_name($cm->name);
                 }
             } catch (\Throwable $e) {
                 // The course is gone: its activities are shown by number.

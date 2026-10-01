@@ -17,6 +17,14 @@ defined('MOODLE_INTERNAL') || die();
  * cannot be the one that ended this cycle, so a purged log row leaves this cycle without a reset instead of
  * handing it the next cycle's.
  *
+ * The cycles are taken in the order of their archived row's id, NOT in the order of the time they ran from.
+ * The legacy plugin inserted the archived row at the moment of the reset, so id order is reset order. Time is
+ * not reliable for that: core's completion cron recreates the completion row after a reset with timeenrolled
+ * set to the ORIGINAL enrolment and timestarted 0 until the learner does something, so a later cycle that was
+ * reset without ever being started "ran from" a date before the first cycle even completed, sorted ahead of
+ * it, and was left with no reset at all. Because the cycles are in chronological order, a cycle can never run
+ * from earlier than the cycle before it did, which is what the running maximum of the lower bound says.
+ *
  * The function is pure, so the step that imports the log rows and the step that imports the archived
  * completions reach the same answer without talking to each other.
  *
@@ -35,13 +43,16 @@ final class pairing {
      *         reset id => completion id (or null)
      */
     public static function pair(array $completions, array $resets): array {
+        usort($completions, static fn(array $a, array $b): int => $a['id'] <=> $b['id']);
         $cycles = [];
+        $floor = 0;
         foreach ($completions as $completion) {
-            $lower = $completion['completed'] > 0 ? $completion['completed']
+            $own = $completion['completed'] > 0 ? $completion['completed']
                 : ($completion['started'] > 0 ? $completion['started'] : $completion['enrolled']);
-            $cycles[] = $completion + ['lower' => $lower];
+            // A cycle begins no earlier than the one before it did.
+            $floor = max($floor, $own);
+            $cycles[] = $completion + ['lower' => $floor];
         }
-        usort($cycles, static fn(array $a, array $b): int => [$a['lower'], $a['id']] <=> [$b['lower'], $b['id']]);
         usort($resets, static fn(array $a, array $b): int => [$a['time'], $a['id']] <=> [$b['time'], $b['id']]);
         $resets = array_values($resets);
 

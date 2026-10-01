@@ -40,6 +40,8 @@ final class privacy_archive_test extends provider_testcase {
     private $other;
     /** @var \stdClass An administrator who overrode both people's activity completions. */
     private $admin;
+    /** @var \stdClass A teacher who graded both people and is named ONLY in the gradebook rows. */
+    private $grader;
     /** @var int Course id. */
     private $courseid;
     /** @var array<string, int> Archive row ids by name. */
@@ -52,6 +54,7 @@ final class privacy_archive_test extends provider_testcase {
         $this->subject = $g->create_user();
         $this->other = $g->create_user();
         $this->admin = $g->create_user();
+        $this->grader = $g->create_user();
         $this->courseid = (int) $g->create_course(['enablecompletion' => 1])->id;
 
         $completion = fn(\stdClass $user) => [
@@ -64,6 +67,16 @@ final class privacy_archive_test extends provider_testcase {
         $this->rows['other_completion'] = $this->archive($this->other, 'activity_completion', $completion($this->other));
         $this->rows['other_quiz'] = $this->archive($this->other, 'quiz_attempt',
             ['id' => '3', 'userid' => (string) $this->other->id, 'quiz' => '9']);
+
+        // What the engine archives before a reset that clears grades: the whole grade_grades row, the grader and
+        // the words they wrote about the learner included.
+        $grade = fn(\stdClass $user) => [
+            'id' => '9', 'itemid' => '4', 'userid' => (string) $user->id, 'finalgrade' => '8.50000',
+            'usermodified' => (string) $this->grader->id, 'feedback' => 'Well done', 'information' => 'Re-marked',
+            'overridden' => '0',
+        ];
+        $this->rows['subject_grade'] = $this->archive($this->subject, 'gradebook_grade', $grade($this->subject));
+        $this->rows['other_grade'] = $this->archive($this->other, 'gradebook_grade', $grade($this->other));
     }
 
     /**
@@ -129,12 +142,14 @@ final class privacy_archive_test extends provider_testcase {
         $this->assertContains($systemid, provider::get_contexts_for_userid((int) $this->subject->id)->get_contextids());
         $this->assertContains($systemid, provider::get_contexts_for_userid((int) $this->admin->id)->get_contextids(),
             'an erasure must reach the overrideby inside a payload, or it is never anonymised');
+        $this->assertContains($systemid, provider::get_contexts_for_userid((int) $this->grader->id)->get_contextids(),
+            'a teacher named only as the grader of a gradebook row is reachable too');
         $nobody = $this->getDataGenerator()->create_user();
         $this->assertSame([], provider::get_contexts_for_userid((int) $nobody->id)->get_contextids());
 
         $userlist = new userlist(\context_system::instance(), 'local_sentientia_recompletion');
         provider::get_users_in_context($userlist);
-        foreach ([$this->subject, $this->other, $this->admin] as $user) {
+        foreach ([$this->subject, $this->other, $this->admin, $this->grader] as $user) {
             $this->assertContainsEquals($user->id, $userlist->get_userids());
         }
     }
@@ -145,12 +160,19 @@ final class privacy_archive_test extends provider_testcase {
         $data = writer::with_context(\context_system::instance())->get_data(
             [$root, get_string('privacy:export:evidence', 'local_sentientia_recompletion')]);
         $this->assertNotEmpty($data);
-        $this->assertCount(2, $data->evidence);
+        $this->assertCount(3, $data->evidence);
         $types = array_column($data->evidence, 'item_type');
         sort($types);
-        $this->assertSame(['activity_completion', 'questionnaire_answer'], $types);
+        $this->assertSame(['activity_completion', 'gradebook_grade', 'questionnaire_answer'], $types);
         $answers = array_filter($data->evidence, static fn(array $r): bool => $r['item_type'] === 'questionnaire_answer');
         $this->assertSame('what I typed', reset($answers)['data']['response'], 'their own words are theirs to export');
+
+        // Their own record, without the id of the other people it names.
+        $byType = array_column($data->evidence, 'data', 'item_type');
+        $this->assertArrayNotHasKey('overrideby', $byType['activity_completion'], 'the administrator\'s id is theirs');
+        $this->assertArrayNotHasKey('usermodified', $byType['gradebook_grade'], 'so is the grader\'s');
+        $this->assertSame('Well done', $byType['gradebook_grade']['feedback'], 'what was written to the learner is theirs');
+        $this->assertSame((string) $this->subject->id, $byType['gradebook_grade']['userid']);
     }
 
     public function test_core_erasure_takes_the_person_and_the_typed_text_out_and_keeps_the_row(): void {
@@ -158,7 +180,7 @@ final class privacy_archive_test extends provider_testcase {
         provider::delete_data_for_user($this->approved($this->subject));
 
         $this->assertSame(0, $DB->count_records('local_sentientia_recompletion_archive', ['userid' => $this->subject->id]));
-        $this->assertSame(4, $DB->count_records('local_sentientia_recompletion_archive'), 'the evidence rows survive');
+        $this->assertSame(6, $DB->count_records('local_sentientia_recompletion_archive'), 'the evidence rows survive');
 
         $completion = $this->payload('subject_completion');
         $this->assertSame('0', $completion['userid']);
@@ -166,6 +188,16 @@ final class privacy_archive_test extends provider_testcase {
         $this->assertSame('100', $completion['timemodified'], 'the rest of the row is untouched');
         $this->assertSame('', $this->payload('subject_answer')['response']);
         $this->assertSame('7', $this->payload('subject_answer')['question_id']);
+
+        $grade = $this->payload('subject_grade');
+        $this->assertSame('0', $grade['userid']);
+        $this->assertSame('0', $grade['usermodified'], 'the grader is another person\'s data in a row that is now nobody\'s');
+        $this->assertSame('', $grade['feedback'], 'what the teacher wrote about the learner goes with the learner');
+        $this->assertSame('', $grade['information']);
+        $this->assertSame('8.50000', $grade['finalgrade'], 'the grade is the evidence and stays');
+        $theirgrade = $this->payload('other_grade');
+        $this->assertSame((string) $this->grader->id, $theirgrade['usermodified'], 'another person\'s grade is not redacted');
+        $this->assertSame('Well done', $theirgrade['feedback']);
 
         $theirs = $this->payload('other_completion');
         $this->assertSame((string) $this->other->id, $theirs['userid'], 'another person\'s row is not redacted');
@@ -183,8 +215,24 @@ final class privacy_archive_test extends provider_testcase {
             $this->assertSame('0', $payload['overrideby'], $name);
             $this->assertNotSame('0', $payload['userid'], $name . ': the learner is untouched');
         }
-        $this->assertSame(4, $DB->count_records('local_sentientia_recompletion_archive'));
+        $this->assertSame(6, $DB->count_records('local_sentientia_recompletion_archive'));
         $this->assertSame('what I typed', $this->payload('subject_answer')['response']);
+        $this->assertSame((string) $this->grader->id, $this->payload('subject_grade')['usermodified'],
+            'an administrator is not the grader');
+    }
+
+    public function test_erasing_a_grader_changes_only_the_gradebook_rows_that_name_them(): void {
+        global $DB;
+        provider::delete_data_for_user($this->approved($this->grader));
+
+        foreach (['subject_grade', 'other_grade'] as $name) {
+            $payload = $this->payload($name);
+            $this->assertSame('0', $payload['usermodified'], $name);
+            $this->assertNotSame('0', $payload['userid'], $name . ': the learner is untouched');
+            $this->assertSame('Well done', $payload['feedback'], $name . ': what was written stays with the learner');
+        }
+        $this->assertSame((string) $this->admin->id, $this->payload('subject_completion')['overrideby']);
+        $this->assertSame(6, $DB->count_records('local_sentientia_recompletion_archive'));
     }
 
     public function test_the_dpdp_flow_keeps_the_subjects_evidence_and_anonymises_only_the_actor(): void {
@@ -198,22 +246,35 @@ final class privacy_archive_test extends provider_testcase {
         $this->assertSame((string) $this->admin->id, $this->payload('subject_completion')['overrideby']);
         $this->assertSame('what I typed', $this->payload('subject_answer')['response']);
 
+        $this->assertSame('Well done', $this->payload('subject_grade')['feedback']);
+
         // As the administrator: named as the overrider in both people's rows.
         provider::anonymise_data_for_user($this->approved($this->admin));
         $this->assertSame('0', $this->payload('subject_completion')['overrideby']);
         $this->assertSame('0', $this->payload('other_completion')['overrideby']);
         $this->assertSame((string) $this->subject->id, $this->payload('subject_completion')['userid']);
+
+        // As the grader: named in both people's gradebook rows.
+        provider::anonymise_data_for_user($this->approved($this->grader));
+        $this->assertSame('0', $this->payload('subject_grade')['usermodified']);
+        $this->assertSame('0', $this->payload('other_grade')['usermodified']);
+        $this->assertSame('Well done', $this->payload('other_grade')['feedback']);
     }
 
     public function test_erasing_everyone_redacts_every_row_and_keeps_them_all(): void {
         global $DB;
         provider::delete_data_for_all_users_in_context(\context_system::instance());
-        $this->assertSame(4, $DB->count_records('local_sentientia_recompletion_archive'));
+        $this->assertSame(6, $DB->count_records('local_sentientia_recompletion_archive'));
         $this->assertSame(0, $DB->count_records_select('local_sentientia_recompletion_archive', 'userid <> 0'));
         foreach (['subject_completion', 'other_completion'] as $name) {
             $this->assertSame('0', $this->payload($name)['userid']);
             $this->assertSame('0', $this->payload($name)['overrideby']);
         }
         $this->assertSame('', $this->payload('subject_answer')['response']);
+        foreach (['subject_grade', 'other_grade'] as $name) {
+            $this->assertSame('0', $this->payload($name)['usermodified'], $name);
+            $this->assertSame('', $this->payload($name)['feedback'], $name);
+            $this->assertSame('', $this->payload($name)['information'], $name);
+        }
     }
 }

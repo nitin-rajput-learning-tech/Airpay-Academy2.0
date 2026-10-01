@@ -52,14 +52,19 @@ defined('MOODLE_INTERNAL') || die();
  *       It is the same kind of compliance record as the history row.
  *       - Subject column `userid`, and the payload's own userid:
  *           core erasure redacts the column to 0 and scrubs the payload
- *           (userid and the overriding administrator to 0, the free text of a
- *           questionnaire answer emptied); the row survives, attributable to
- *           nobody.
+ *           (userid and the other people the row names to 0; what was
+ *           written about the learner emptied: the free text of a
+ *           questionnaire answer, the feedback and information note of a
+ *           gradebook grade, the text typed into a SCORM package); the row
+ *           survives, attributable to nobody.
  *           DPDP erasure KEEPS the subject's rows as they are, for the reason
  *           given for the history row.
  *       - Actor: an administrator who overrode SOMEBODY ELSE's activity
- *           completion is named in that row's payload (overrideby). Both
- *           erasures change it to 0 and leave the row.
+ *           completion is named in that row's payload (overrideby), and the
+ *           grader who last changed a gradebook grade in `usermodified`
+ *           (archive_privacy::ACTOR_KEYS). Both erasures change it to 0 and
+ *           leave the row. An export hands the learner their rows without
+ *           that id: it is the other person's data.
  */
 class provider implements
     \core_privacy\local\metadata\provider,
@@ -179,7 +184,8 @@ class provider implements
         }
 
         // ADR-032: the evidence the resets deleted. The payload is the source row; it is exported decoded, as
-        // the person's own data, exactly as archived (their own answers included).
+        // the person's own data, exactly as archived (their own answers included) - except the id of another
+        // person it names (the overriding administrator, the grader), which is that person's data.
         $evidence = [];
         $archive = $DB->get_recordset(self::TABLE_ARCHIVE, ['userid' => $userid], 'timecreated DESC, id DESC');
         foreach ($archive as $r) {
@@ -190,7 +196,7 @@ class provider implements
                 'grade'       => $r->grade,
                 'happened_at' => $r->timeevent ? userdate($r->timeevent) : null,
                 'archived_at' => userdate($r->timecreated),
-                'data'        => json_decode((string) $r->payload, true),
+                'data'        => archive_privacy::for_export((string) $r->payload, (string) $r->itemtype),
             ];
         }
         $archive->close();
@@ -303,10 +309,10 @@ class provider implements
         $after = 0;
         do {
             $rows = $DB->get_records_select(self::TABLE_ARCHIVE, "($select) AND id > :pvafter", $params + ['pvafter' => $after],
-                'id ASC', 'id, payload', 0, self::SCAN_LIMIT);
+                'id ASC', 'id, itemtype, payload', 0, self::SCAN_LIMIT);
             foreach ($rows as $row) {
                 $after = (int) $row->id;
-                $scrubbed = archive_privacy::scrub_actor((string) $row->payload, $userid);
+                $scrubbed = archive_privacy::scrub_actor((string) $row->payload, $userid, (string) $row->itemtype);
                 if ($scrubbed !== null) {
                     $DB->set_field(self::TABLE_ARCHIVE, 'payload', $scrubbed, ['id' => $row->id]);
                 }
@@ -326,10 +332,10 @@ class provider implements
         $after = 0;
         do {
             $rows = $DB->get_records_select(self::TABLE_ARCHIVE, "($select) AND id > :pvafter", $params + ['pvafter' => $after],
-                'id ASC', 'id, payload', 0, self::SCAN_LIMIT);
+                'id ASC', 'id, itemtype, payload', 0, self::SCAN_LIMIT);
             foreach ($rows as $row) {
                 $after = (int) $row->id;
-                if (archive_privacy::scrub_actor((string) $row->payload, $userid) !== null) {
+                if (archive_privacy::scrub_actor((string) $row->payload, $userid, (string) $row->itemtype) !== null) {
                     return true;
                 }
             }
@@ -338,45 +344,57 @@ class provider implements
     }
 
     /**
-     * Every administrator named as the overrider in an archive payload.
+     * Every other person an archive payload names as an actor: the administrator who overrode an activity
+     * completion, the grader of a gradebook grade.
      *
      * @return int[]
      */
     private static function all_actors(): array {
         global $DB;
         $found = [];
-        $after = 0;
-        do {
-            $rows = $DB->get_records_select(self::TABLE_ARCHIVE,
-                'itemtype = :pvtype AND ' . $DB->sql_like('payload', ':pvlike', true) . ' AND id > :pvafter',
-                ['pvtype' => 'activity_completion', 'pvlike' => '%"overrideby":%', 'pvafter' => $after],
-                'id ASC', 'id, payload', 0, self::SCAN_LIMIT);
-            foreach ($rows as $row) {
-                $after = (int) $row->id;
-                foreach (archive_privacy::actors((string) $row->payload) as $actor) {
-                    $found[$actor] = $actor;
+        foreach (archive_privacy::ACTOR_KEYS as $type => $key) {
+            $after = 0;
+            do {
+                $rows = $DB->get_records_select(self::TABLE_ARCHIVE,
+                    'itemtype = :pvtype AND ' . $DB->sql_like('payload', ':pvlike', true) . ' AND id > :pvafter',
+                    ['pvtype' => $type, 'pvlike' => '%"' . $key . '":%', 'pvafter' => $after],
+                    'id ASC', 'id, payload', 0, self::SCAN_LIMIT);
+                foreach ($rows as $row) {
+                    $after = (int) $row->id;
+                    foreach (archive_privacy::actors((string) $row->payload, $type) as $actor) {
+                        $found[$actor] = $actor;
+                    }
                 }
-            }
-        } while (count($rows) === self::SCAN_LIMIT);
+            } while (count($rows) === self::SCAN_LIMIT);
+        }
         return array_values($found);
     }
 
     /**
-     * The WHERE fragment that selects the archive rows that might name a person as the overrider. The rows it
-     * selects are decoded and compared exactly; the patterns only keep the scan small.
+     * The WHERE fragment that selects the archive rows that might name a person as an actor (the overrider of an
+     * activity completion, the grader of a gradebook grade). The rows it selects are decoded and compared
+     * exactly; the patterns only keep the scan small.
      *
      * @param int $userid
      * @return array{0: string, 1: array}
      */
     private static function actor_select(int $userid): array {
         global $DB;
-        $likes = [];
-        $params = ['pvtype' => 'activity_completion'];
-        foreach (archive_privacy::actor_patterns($userid) as $i => $pattern) {
-            $likes[] = $DB->sql_like('payload', ':pvp' . $i, true);
-            $params['pvp' . $i] = $pattern;
+        $branches = [];
+        $params = [];
+        $n = 0;
+        foreach (archive_privacy::ACTOR_KEYS as $type => $key) {
+            $likes = [];
+            foreach (archive_privacy::actor_patterns($userid, $key) as $pattern) {
+                $likes[] = $DB->sql_like('payload', ':pvp' . $n, true);
+                $params['pvp' . $n] = $pattern;
+                $n++;
+            }
+            $params['pvt' . $n] = $type;
+            $branches[] = '(itemtype = :pvt' . $n . ' AND (' . implode(' OR ', $likes) . '))';
+            $n++;
         }
-        return ['itemtype = :pvtype AND (' . implode(' OR ', $likes) . ')', $params];
+        return ['(' . implode(' OR ', $branches) . ')', $params];
     }
 
     private static function has_system_context(approved_contextlist $contextlist): bool {

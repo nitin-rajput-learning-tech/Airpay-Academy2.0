@@ -251,9 +251,12 @@ final class importer implements platform_importer {
             }
         }
         if ($this->log_is_claimed()) {
+            // The log is a live core table: once the site runs, its cleanup deletes rows older than loglifetime, so
+            // MORE mapped than logged is expected and never a failure. Fewer mapped than logged is: a reset event
+            // the import never accounted for.
             $events = $ctx->legacy->count(sources::LOG, sources::reset_filter());
             $mapped = $DB->count_records(legacymap::TABLE, ['sourcetable' => sources::EVENT_UNIT, 'subkey' => '']);
-            if ($events !== $mapped) {
+            if ($events > $mapped) {
                 $failures[] = 'accounting:' . sources::EVENT_UNIT . ': source=' . $events . ' mapped=' . $mapped;
             }
         }
