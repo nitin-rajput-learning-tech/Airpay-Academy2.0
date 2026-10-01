@@ -17,7 +17,9 @@ use local_sentientia_platform\bizlms\outcome;
  * leave no history row at all, and the only surviving evidence that the person completed and was then reset
  * would be a payload nobody reads; so the row also gets an INFERRED history row, marked as such, with a reset
  * time worked out from the completion (see mapper::inferred_time) and never later than the import, nor earlier
- * than the end of the cycle before it (evidence::floor_before).
+ * than the end of the cycle before it (evidence::floor_before). When the same learner and course also have a
+ * logged reset that fits no cycle, the row carries the warning reset_pairing_unclear: the pairing cannot tell
+ * which cycle that reset ended (see pairing), so the report counts the pairs the owner may want to look at.
  *
  * @package    local_sentientia_recompletion
  * @copyright  2026 Airpay Payment Services
@@ -94,6 +96,12 @@ final class course_completion_step extends archive_step {
                 'time_inferred' => 1,
             ], 'history');
             $inferred->warn('derived_timestamp');
+            if (in_array(null, $pair['event'], true)) {
+                // This cycle has no reset in the log while a logged reset of the same learner and course fits no
+                // cycle at all (a purged log row, or archiving switched off for a while). Which cycle that reset
+                // really ended cannot be told from the data, so the owner is shown the pair in the report.
+                $inferred->warn('reset_pairing_unclear');
+            }
             if ($fallback) {
                 $inferred->warn('duration_fallback');
             }

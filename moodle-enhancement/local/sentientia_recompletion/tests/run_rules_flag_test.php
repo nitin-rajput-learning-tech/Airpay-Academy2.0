@@ -102,6 +102,24 @@ final class run_rules_flag_test extends \advanced_testcase {
         $this->assertSame(1, $sink->count());
     }
 
+    public function test_a_customer_override_does_not_switch_the_task_on_for_the_whole_site(): void {
+        global $DB;
+        // The cron runs as an administrator, who resolves to the first customer. With the customer layer on and
+        // an override for that customer, is_enabled() says yes for that user; the task must still read the
+        // site-wide value, which is OFF.
+        feature_flags::set(feature_flags::CUSTOMER_LEVEL_FLAG, 0, true);
+        feature_flags::set(run_rules::FLAG, 0, true, null, 'the first customer only', \local_sentientia_platform\customer::AIRPAY);
+        $this->assertTrue(feature_flags::is_enabled(run_rules::FLAG), 'the override is real for a user of that customer');
+        $this->assertFalse(feature_flags::is_enabled_for(run_rules::FLAG, 0, 0), 'the site-wide value is still OFF');
+
+        $output = $this->run_task();
+
+        $this->assertStringContainsString('skipped', $output);
+        $this->assertSame(1, $DB->count_records('course_completions', ['userid' => $this->user->id]),
+            'one customer\'s override resets nobody on the other customers\' behalf');
+        $this->assertSame(0, $DB->count_records('local_sentientia_recompletion_history'));
+    }
+
     public function test_a_disabled_rule_stays_idle_with_the_flag_on(): void {
         global $DB;
         feature_flags::set(run_rules::FLAG, 0, true);

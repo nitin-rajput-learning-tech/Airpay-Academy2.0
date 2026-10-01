@@ -68,7 +68,11 @@ section 12.
   the ORIGINAL enrolment date and `timestarted` 0, so a later cycle that was reset without ever being started
   looks older than the first one. An inferred reset is never dated before the cycle ahead of it ended, and a
   logged reset with no archived completion takes the previous completion from the log only if it is after the
-  learner's previous logged reset.
+  learner's previous logged reset. When a cycle is left without a reset, a surviving later reset is kept from
+  it only if the next cycle STARTED before that reset (never by the next cycle's completion, which the cron can
+  backdate, and only when that start is later than this cycle's own completion); when every cycle already has a
+  reset that check is not used at all. A cycle with no logged reset next to a logged reset that fits no cycle
+  cannot be settled from the data: it is reported with the warning `reset_pairing_unclear`.
 - **Archive:** `cc`, `cc_cc`, `cmc`, `qa`, `qg`, `sst`, `ltia`, `qr` and the seven `qr_*` answer tables, each row
   attached to the earliest reset at or after its own time (strictly after, for an inferred reset). The archived
   completions themselves are attached through the pairing above.
@@ -81,7 +85,7 @@ section 12.
 
 | Key | Gates |
 |---|---|
-| `sentientia.recompletion.run_rules` | The daily task. OFF: it evaluates no rule and says so. Turn it on only after the imported rules have been reviewed and, if wanted, enabled. |
+| `sentientia.recompletion.run_rules` | The daily task. OFF: it evaluates no rule and says so. Turn it on only after the imported rules have been reviewed and, if wanted, enabled. Read site-wide (customer 0, tenant 0): a customer or tenant override of this flag does not switch the task on. |
 | `sentientia.recompletion.evidence_view` | `history_detail.php` and the "Evidence" link on the history page. |
 
 ## Known differences from the BizLMS plugin

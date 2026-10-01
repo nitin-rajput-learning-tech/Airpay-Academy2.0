@@ -248,9 +248,9 @@ final class evidence {
 
     /**
      * The earliest time, after a cycle ended, at which the learner did something in the course that belongs to a
-     * LATER cycle: the start, enrolment or completion of a later archived completion (a higher id: the legacy
-     * plugin inserted the rows in reset order), or an archived activity completion, quiz attempt, quiz grade or
-     * SCORM track dated after it.
+     * LATER cycle: the start or enrolment of a later archived completion, or its completion when it also has a
+     * start (a higher id: the legacy plugin inserted the rows in reset order; see later_cycle_evidence), or an
+     * archived activity completion, quiz attempt, quiz grade or SCORM track dated after it.
      *
      * Earlier cycles are not evidence of a later one, and neither is anything at or before $after. The caller
      * passes the later of the time the cycle ran from and the end of the cycle before it (see floor_before), so a
@@ -264,17 +264,7 @@ final class evidence {
      */
     public function next_evidence(int $userid, int $courseid, int $ccid, int $after): ?int {
         global $DB;
-        $best = null;
-        foreach ($this->completions()[mapper::pair_key($userid, $courseid)] ?? [] as $other) {
-            if ($other['id'] <= $ccid) {
-                continue;
-            }
-            foreach ([$other['started'], $other['enrolled'], $other['completed']] as $time) {
-                if ($time > $after && ($best === null || $time < $best)) {
-                    $best = $time;
-                }
-            }
-        }
+        $best = self::later_cycle_evidence($this->completions()[mapper::pair_key($userid, $courseid)] ?? [], $ccid, $after);
         $queries = [
             [sources::CMC, 'timemodified'], [sources::QA, 'timestart'], [sources::QG, 'timemodified'],
             [sources::SST, 'timemodified'],
@@ -286,6 +276,41 @@ final class evidence {
             $time = mapper::timestamp($time);
             if ($time !== null && ($best === null || $time < $best)) {
                 $best = $time;
+            }
+        }
+        return $best;
+    }
+
+    /**
+     * The earliest time after $after at which a LATER archived cycle of the pair shows it began: its start, its
+     * enrolment, and its completion only when it also has a start.
+     *
+     * A later cycle's completion is not evidence of when it began. After a reset core's cron re-marks the criteria
+     * that carry a fixed date (a course end date, a kept grade, a prerequisite course) complete with their OLD
+     * times and completes the course at the latest of them, so a rebuilt row can be "completed" long before it
+     * existed, and a row like that can still have no start of its own (timestarted 0). Taking that completion as
+     * the evidence would date the earlier cycle's inferred reset before anything happened.
+     *
+     * @param array<array{id: int, completed: int, started: int, enrolled: int}> $cycles The pair's archived
+     *        completions; a row with an id at or below $ccid is not later and is ignored.
+     * @param int $ccid The archived completion whose next evidence is wanted.
+     * @param int $after The time the cycle ran to.
+     * @return int|null
+     */
+    public static function later_cycle_evidence(array $cycles, int $ccid, int $after): ?int {
+        $best = null;
+        foreach ($cycles as $other) {
+            if ($other['id'] <= $ccid) {
+                continue;
+            }
+            $times = [$other['started'], $other['enrolled']];
+            if ($other['started'] > 0) {
+                $times[] = $other['completed'];
+            }
+            foreach ($times as $time) {
+                if ($time > $after && ($best === null || $time < $best)) {
+                    $best = $time;
+                }
             }
         }
         return $best;

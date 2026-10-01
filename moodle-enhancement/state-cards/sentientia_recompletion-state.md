@@ -290,3 +290,72 @@ engine does not yet reproduce all of its BizLMS settings.
 - **No visual evidence** for `history.php`, `history_detail.php`, `index.php` / `edit.php` (the wording of Reset by and the
   imported-rule notice changed): nothing was deployed in this session. Capture desktop + mobile before the evidence flag
   is flipped.
+
+
+## 2026-10-01 - ADR-032 recompletion importer: review round 2 (1 must-fix, the small should-fix items)
+
+Branch `claude/bizlms-import-recompletion`, both trees. No schema change and no version bump. **Written, not run**:
+the lead re-inits once and runs the tests. php -l and the four repo gates were run; the pure logic (`pairing`,
+`evidence::later_cycle_evidence`) was run outside Moodle in a stand-in harness (36 checks, green), which also
+reproduced the reported pairing result on the previous code before the fix.
+
+**Must-fix - a real reset could be credited to the wrong cycle and a reset invented for another.** `pairing::pair()`
+stopped each cycle at the following cycle's first evidence, `min(completed, started)`. Core can backdate both. After a
+reset the cron re-marks the criteria that carry a fixed date (a course end date, a kept grade, a prerequisite course)
+complete with their OLD times, and `aggregate_completions` completes the rebuilt row at the latest of them; and
+`completion_criteria_completion::mark_complete()` hands that criterion time to `mark_inprogress()`, so the rebuilt
+row's START can carry the old date too (`timestarted` stays 0 only when nothing went through that path). Shape
+reported: cc1 {completed 2023-03-01, started 2023-01-15}, cc2 {completed 2023-03-01 or 2023-06-01, started 0},
+resets 71 (2024-03-02) and 72 (2024-03-03) gave cc1 -> none, cc2 -> 71, event 72 -> none, and cc1 got an inferred reset.
+Now:
+- `pairing::pair()` first pairs WITHOUT any cap; if that gives every cycle a reset nothing is missing and the answer
+  stands. Only when a cycle is left without a reset does it run the cap pass, and that pass uses the following cycle's
+  START only (never its completion), and only when that start is later than the time this cycle ran from. This is the
+  review's fix plus one step beyond it: the reviewer's own second shape (a kept grade) still fails with just "start
+  only" once core has stamped the start with the same old date (the real behaviour above), and the gate on a shortfall
+  closes it. Cost: a purged reset that is masked by an extra reset with no archived cycle of its own, for the same
+  learner and course, is now paired in order (the old cap pass would have caught it) and is not reported, because every
+  cycle has a reset; that coincidence is rare, and the data cannot tell it from a normal pair by count.
+- `evidence::next_evidence()` no longer takes a later cycle's completion as evidence when that cycle has no start;
+  the choice is the pure `evidence::later_cycle_evidence()` so it is tested without a database.
+- New warning `reset_pairing_unclear` on the inferred history row of a cycle that has no logged reset while a logged
+  reset of the same learner and course fits no cycle (the known ambiguity: the archive switch was toggled, or a log row is
+  missing and the next cycle never started, so the surviving reset goes to the earlier cycle). Counted in the import report.
+- Tests (both trees): `bizlms_pure_test` - the reported shape with a completion equal to and later than the first
+  cycle's, the core-stamped start, a three-cycle purge that the start still explains, a start not after the cycle's own
+  completion, the lone-reset ambiguity pinned, and `later_cycle_evidence`. `bizlms_import_test` seed gains learners I
+  (cc2 completed 2023-06-01, no start) and J (cc2 started and completed 2023-06-01) and a test that asserts no inferred
+  row, each archived completion on its own logged reset, and the second reset's `previous_timecompleted` = cc2's
+  completion. **Counts in the import test changed**: history rows 12 -> 16, reset events mapped 11 -> 15, archive rows
+  39 -> 43 (40 -> 44 with preview attempts imported).
+
+**Should-fix, done:**
+- `run_rules` reads the flag site-wide (`feature_flags::is_enabled_for(FLAG, 0, 0)`). The cron runs as an administrator,
+  who resolves to the first customer, so `is_enabled()` let a customer or tenant override switch the task on for every
+  tenant. New test in `run_rules_flag_test` (customer layer on, an override for customer 1, the task still skips);
+  the flag description says so.
+- `bizlms_import_test`: the verify test claimed an unaccounted reset event "is caught below" and nothing asserted it.
+  New `test_verify_names_a_reset_event_the_import_never_accounted_for` drops one event's map row and expects the
+  `accounting:#logstore_standard_log.completion_reset` failure.
+
+**Not done (needs a decision, a deploy or is bigger than a review fix):**
+- Inferred reset stamped with the import time for a cycle that was never completed and has no later evidence (learner
+  H's second cycle): the map says both "MIN(..., import time)" and "never stamp history timecreated with import time".
+  Capping at the latest source timestamp of the pair or of the log is the suggested way out; owner/lead to choose and
+  record it in the mapping doc.
+- Mapping doc (lead's edit): a web reset by another user is always reason `legacy`, never `manual` (the log has no url
+  and the reset page fires the same event as the cron); and the pairing's cap pass is an addition the map does not have.
+- `history.php` / `index.php` are not behind a flag (only the evidence view is) - owner to confirm `learner_history_surface`;
+  DPDP anonymise keeps a gradebook row's teacher feedback with the subject (core erasure empties it) - owner to confirm;
+  whether saving an imported rule (`legacy_config` set) as ENABLED should be hard-blocked until engine parity lands.
+- Evidence with `historyid` 0 has no link from `history.php` (UI change, needs visual evidence); no visual evidence exists
+  yet for `history.php`, `history_detail.php`, `index.php`, `edit.php` - capture desktop + mobile before either flag flips.
+- `evidence.php` reads the legacy tables with `$DB` instead of `$ctx->legacy`, and `next_evidence` runs 4 `MIN()` queries
+  per unmatched cycle and misses `course = 0` rows and `cc_cc` / `ltia` / `qr` times; `archive_cycles` reads
+  `local_sentientia_legacymap` directly (a reverse lookup target -> source is a framework need).
+- `eventname` of the standard log is not indexed and is scanned by the preflight count, `events_step`, `resets()`,
+  `completed_before()`, the fingerprint and `verify()`: time it on the rehearsal before Stage B.
+- `recompletion_engine::notify()` formats the previous completion in the sender's language, not the recipient's;
+  `legacy_summary` shows an unexpected choice value as nothing instead of the raw value (its pure test locks that in).
+- The rehearsal copy is still at plugin version 2026092500 with no archive table: the 2026093001 upgrade step has never run
+  against the real MySQL schema. Run that upgrade on the rehearsal before Stage B.

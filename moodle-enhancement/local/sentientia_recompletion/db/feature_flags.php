@@ -40,8 +40,9 @@ $flags = [
                           every ENABLED rule, exactly as before. Imported rules are
                           always created disabled; turning this flag on does not enable
                           them. The flag is read site-wide (a scheduled task has no
-                          user, so the global value counts). Manual resets and the CLI
-                          are not gated by it.',
+                          user, so only the global value counts: a customer or tenant
+                          override of this flag does not switch the task on). Manual
+                          resets and the CLI are not gated by it.',
     ],
 
 ];

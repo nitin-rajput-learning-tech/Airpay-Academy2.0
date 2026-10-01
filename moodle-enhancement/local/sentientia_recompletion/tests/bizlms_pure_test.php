@@ -230,6 +230,95 @@ final class bizlms_pure_test extends \basic_testcase {
         $this->assertSame([70 => null], $pair['event']);
     }
 
+    public function test_a_later_cycles_backdated_completion_does_not_cost_the_cycle_before_it_its_reset(): void {
+        // After a reset core's cron re-marks the criteria that carry a fixed date (a course end date, a kept grade, a
+        // prerequisite course) complete with their OLD times and completes the rebuilt row at the latest of them, so
+        // the second cycle "completed" long before it existed, with no start of its own. Both resets are in the log:
+        // the first cycle takes the first and the second cycle the second, whatever the second one's dates say.
+        $first = ['id' => 1, 'completed' => 100, 'started' => 50, 'enrolled' => 10];
+        $resets = [['id' => 71, 'time' => 400], ['id' => 72, 'time' => 500]];
+        $shapes = [
+            'the same completion time as the first cycle' => ['id' => 2, 'completed' => 100, 'started' => 0, 'enrolled' => 10],
+            'a kept grade, dated after the first completion' => ['id' => 2, 'completed' => 200, 'started' => 0, 'enrolled' => 10],
+        ];
+        foreach ($shapes as $name => $second) {
+            $pair = pairing::pair([$first, $second], $resets);
+            $this->assertSame([1 => 71, 2 => 72], $pair['cc'], $name);
+            $this->assertSame([71 => 1, 72 => 2], $pair['event'], $name);
+        }
+    }
+
+    public function test_a_start_stamped_with_a_criterions_old_time_is_not_the_next_cycles_beginning(): void {
+        // completion_criteria_completion::mark_complete hands the criterion's time to mark_inprogress, so the cron
+        // can stamp the rebuilt row's START with the same old date (200 here, long before the reset at 400).
+        // Both resets are in the log, so nothing is missing and the start must not take the first one away.
+        $completions = [
+            ['id' => 1, 'completed' => 100, 'started' => 50, 'enrolled' => 10],
+            ['id' => 2, 'completed' => 200, 'started' => 200, 'enrolled' => 10],
+        ];
+        $pair = pairing::pair($completions, [['id' => 71, 'time' => 400], ['id' => 72, 'time' => 500]]);
+        $this->assertSame([1 => 71, 2 => 72], $pair['cc']);
+        $this->assertSame([71 => 1, 72 => 2], $pair['event']);
+    }
+
+    public function test_the_next_cycles_start_still_says_which_cycle_a_missing_reset_belonged_to(): void {
+        // Three cycles; the middle one's reset (at 800) is gone from the log. The reset at 1000 began after cycle 3
+        // had started (810), so it cannot be the one that ended cycle 2.
+        $completions = [
+            ['id' => 1, 'completed' => 100, 'started' => 50, 'enrolled' => 10],
+            ['id' => 2, 'completed' => 500, 'started' => 410, 'enrolled' => 10],
+            ['id' => 3, 'completed' => 900, 'started' => 810, 'enrolled' => 10],
+        ];
+        $pair = pairing::pair($completions, [['id' => 71, 'time' => 400], ['id' => 73, 'time' => 1000]]);
+        $this->assertSame([1 => 71, 2 => null, 3 => 73], $pair['cc']);
+        $this->assertSame([71 => 1, 73 => 3], $pair['event']);
+    }
+
+    public function test_a_start_that_is_not_after_the_cycle_ran_from_is_not_a_cap(): void {
+        // The second cycle's start (200) is earlier than the first cycle's completion (300): it is an old date the
+        // cron stamped, not the second cycle's beginning, so it cannot say the reset at 400 was too late.
+        $completions = [
+            ['id' => 1, 'completed' => 300, 'started' => 50, 'enrolled' => 10],
+            ['id' => 2, 'completed' => 600, 'started' => 200, 'enrolled' => 10],
+        ];
+        $pair = pairing::pair($completions, [['id' => 71, 'time' => 400]]);
+        $this->assertSame([1 => 71, 2 => null], $pair['cc']);
+        $this->assertSame([71 => 1], $pair['event']);
+    }
+
+    public function test_a_lone_reset_goes_to_the_earlier_cycle_when_the_next_one_never_started(): void {
+        // Known ambiguity, pinned so nobody "fixes" it by trusting the next cycle's completion again: the reset at
+        // 900 may have ended cycle 1 (cycle 2's date is a backdated one) or cycle 2 (cycle 1's reset was purged).
+        // The data cannot say, the earlier cycle takes it, and the importer reports the pair.
+        $completions = [
+            ['id' => 1, 'completed' => 100, 'started' => 50, 'enrolled' => 10],
+            ['id' => 2, 'completed' => 500, 'started' => 0, 'enrolled' => 10],
+        ];
+        $pair = pairing::pair($completions, [['id' => 72, 'time' => 900]]);
+        $this->assertSame([1 => 72, 2 => null], $pair['cc']);
+        $this->assertSame([72 => 1], $pair['event']);
+    }
+
+    public function test_a_later_cycles_completion_is_evidence_of_its_beginning_only_when_it_has_a_start(): void {
+        $cycles = [
+            ['id' => 1, 'completed' => 100, 'started' => 50, 'enrolled' => 10],
+            ['id' => 2, 'completed' => 300, 'started' => 0, 'enrolled' => 10],
+        ];
+        $this->assertNull(evidence::later_cycle_evidence($cycles, 1, 100),
+            'a completion with no start may be a date the cron backdated: it dates nothing');
+
+        $cycles[1]['started'] = 250;
+        $this->assertSame(250, evidence::later_cycle_evidence($cycles, 1, 100), 'the start is the beginning');
+
+        $cycles[1]['started'] = 0;
+        $cycles[1]['enrolled'] = 150;
+        $this->assertSame(150, evidence::later_cycle_evidence($cycles, 1, 100), 'a re-enrolment after the cycle ended');
+
+        $cycles[1] = ['id' => 2, 'completed' => 100, 'started' => 100, 'enrolled' => 10];
+        $this->assertNull(evidence::later_cycle_evidence($cycles, 1, 100), 'nothing at or before the time asked about');
+        $this->assertNull(evidence::later_cycle_evidence($cycles, 2, 0), 'an earlier cycle is not evidence of a later one');
+    }
+
     public function test_an_inferred_reset_does_not_take_the_evidence_it_was_capped_at(): void {
         // The inferred time is capped at the first evidence of the next cycle, so evidence with exactly that
         // time IS the next cycle's first evidence and must not be attached to the reset that ended this one.

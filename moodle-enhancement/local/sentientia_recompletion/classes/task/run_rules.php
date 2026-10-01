@@ -26,7 +26,10 @@ class run_rules extends \core\task\scheduled_task {
     }
 
     public function execute() {
-        if (!\local_sentientia_platform\feature_flags::is_enabled(self::FLAG)) {
+        // A scheduled task has no user. The cron runs as an administrator, who resolves to the first customer, so
+        // is_enabled() would let a customer or tenant override switch the task on for every tenant. Read the
+        // site-wide value (customer 0, tenant 0), which is what the flag's description promises.
+        if (!\local_sentientia_platform\feature_flags::is_enabled_for(self::FLAG, 0, 0)) {
             mtrace('sentientia_recompletion: skipped, feature flag ' . self::FLAG . ' is OFF (no rule was evaluated)');
             return;
         }
