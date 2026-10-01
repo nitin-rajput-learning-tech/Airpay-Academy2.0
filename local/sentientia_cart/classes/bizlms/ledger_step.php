@@ -212,8 +212,9 @@ final class ledger_step extends step {
             'area' => support::clean_text($row->area ?? ''),
             'schistoryid' => isset($row->schistoryid) ? (int) $row->schistoryid : null,
         ];
-        if ($type === 'payment_received' && $identifier > 0) {
-            // The attempt that collected the money, and the others, as the gateway recorded them.
+        if (in_array($type, ['payment_received', 'legacy_sale_without_order'], true) && $identifier > 0) {
+            // The attempt that collected the money, and the others, as the gateway recorded them. A sale whose
+            // order was not imported keeps this evidence too: it is all that says how it was paid.
             $chosen = $evidence->paid_attempt($identifier, $userid);
             $others = [];
             foreach ($evidence->attempts($identifier, $userid) as $attempt) {
