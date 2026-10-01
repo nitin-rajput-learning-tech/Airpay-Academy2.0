@@ -569,3 +569,110 @@ ADR-025 renamed to `local/sentientia_courses:manage|enrol` (relabel map in `loca
 dead branch is removed; behaviour is otherwise identical. Test: `tests/capability_gates_test.php`
 (no debugging notice; new-capability holder passes; ADR-031 tenant bound still holds after the gate;
 `@group tenant_isolation`). No version bump (no DB, capability or archetype change).
+
+
+---
+
+## 2026-09-30 - ADR-032 enrolments importer (BizLMS import, gap G6: orphaned BizLMS enrol instances)
+
+Built 2026-10-01 on branch `claude/bizlms-import-enrolments`. CUTOVER-BLOCKING and decided: `gap.orphan_enrol_instances` =
+`convert_to_manual` (signed, status accepted).
+
+**What shipped (version 2026100101, release 1.12.0, both trees byte-identical):** the `enrolments` importer. Every
+`user_enrolments` row on a BizLMS enrol instance (`enrol` = `classroom`, `program`, `learningplan`) becomes a MANUAL
+enrolment in the same course with the same status, start and end. It never deletes or changes a legacy instance or
+enrolment, fires no event, calls no enrol API and touches no role assignment.
+
+| Piece | File |
+|---|---|
+| Registry | `db/bizlms_import.php` (`enrolments`) |
+| Importer (sources, reasons, preflight, verify) | `classes/bizlms/enrolments_importer.php` |
+| Step 1: an enabled manual instance per course | `classes/bizlms/enrolments_instances_step.php` |
+| Step 2: one manual enrolment per learner and course | `classes/bizlms/enrolments_step.php` |
+| Schema | ledger `local_sentientia_courses_enrolmove` in `db/install.xml` + `db/upgrade.php` step 2026100101 |
+| Tests | `tests/bizlms_import_enrolments_test.php`, `tests/fixtures/bizlms/enrol_methods.install.xml` |
+
+`depends()` is empty (no tenant column, no other feature's table). `atomic()` is true. No flag (nothing user-visible), no
+lang string, no privacy provider change (the ledger has no person column: ids and timestamps only). `core_writes()`: `enrol`
+and `user_enrolments`, insert only.
+
+**Outcomes** (derived units, because both sources are filtered core tables):
+
+- `#enrol.courseid`, one group per course whose BizLMS instances have enrolments: the course already has an enabled manual
+  instance -> `folded` `manual_instance_exists` (lowest id; never changed); none -> a new enabled manual row in `enrol`
+  (`imported`). A course with only a DISABLED manual instance gets a new enabled one beside it and the disabled one is left
+  alone (warned in preflight). The course is gone -> `skipped` `course_missing`.
+- `#user_enrolments.id`, one group per legacy enrolment row. The lowest id of the learner-course pair OWNS the conversion
+  (one enrolment per instance is a unique key, and a course is often in several plans): the learner already has an enrolment on
+  that manual instance -> `folded` `already_manual`; else a new `user_enrolments` row (`imported`) plus one ledger row naming
+  the original method and instance. The other rows of the pair -> `folded` `duplicate_pair`. Skips: `user_missing`,
+  `user_deleted` (no access to keep), `course_missing`, `instance_missing` (cannot happen under the filter).
+- `manual_enrolment_inactive` (skipped, NEEDS THE OWNER): the learner has a manual enrolment that does not give access today
+  (suspended or outside its dates) while the legacy one does. Reactivating an administrator's decision is not the import's call
+  and converting would not keep the access. Parity exits 2 until `enrolments:manual_enrolment_inactive` is in
+  `accepted_reasons`. The April dump has none.
+- Values of a new enrolment come from the best row of the pair (gives access now, then active, then the latest end, then the
+  earliest start, then the lowest id). A row on a DISABLED BizLMS instance is converted as suspended (BizLMS grants nothing
+  there; the import never gives access BizLMS did not give).
+- The lead's wording "a learner already enrolled manually is `adopted`" is `folded` (`already_manual`) here: `adopt` overwrites an
+  identical header copy, and the writer refuses it on a core table. Nothing of the manual enrolment is rewritten.
+
+**Role assignments (verified on the April dump, not assumed).** All three BizLMS methods set `roles_protected()` false, so their
+role assignments are plain (component empty, itemid 0) and do not belong to the instance. On the dump, all 12 565 learner-course
+pairs hold exactly one role assignment in the course context (role 5 `employee`), none without one, none owned by a component. So
+nothing is added, changed or removed. Preflight records the same on the restored database: `pairs_without_a_role_in_the_course`,
+the `role_assignments.component` histogram, and a warning `role_assignments_owned_by_a_component:N` if any assignment would be
+removed by Moodle when its enrol component lets go.
+
+**April 2026 dump facts** (local schema `bizlms_april`, read-only): 136 `learningplan` instances (no program or classroom instance),
+16 830 enrolments, 1 609 learners, 12 565 learner-course pairs, 4 031 of them with 2 or 3 legacy rows (none differ in status or dates),
+7 673 pairs enrolled ONLY through BizLMS (the plan's figure), all rows active with no end, 10 310 rows belong to suspended accounts (no
+deleted user holds one), 71 courses with enrolments, every one with exactly one enabled manual instance. Predicted and, in a
+read-only dry run of the real importer code on that data, reproduced exactly: 7 733 enrolments created (7 733 ledger rows),
+4 832 `already_manual`, 4 265 `duplicate_pair`, 0 skipped, 71 `manual_instance_exists`, 0 manual instances created, no field the
+writer would refuse. The enrolment step took 4.5 s there (86 queries).
+
+**Why a ledger table and derived units (framework limits, reported to the lead).**
+
+1. The registry accepts a step's declared target only from the plugin's own schema, and core tables only in `core_writes()`. A step
+   cannot declare `user_enrolments` as its target. The primary outcome of each step is therefore the reviewed core INSERT (or a fold),
+   and the declared target is the ledger, which gets one row per converted enrolment (original method and instance, ids only: the
+   map's `detail` may not carry an id). Suggested amendment: let a step's target be a `core_writes()` table whose operation is reviewed.
+2. A filtered core source breaks the generic `unmapped_rows` check and core `user_enrolments` keeps changing after go-live, so both
+   steps are derived units and `verify()` carries the identity (every course and every BizLMS enrolment has one primary map row; ledger
+   and map agree one to one). Per-enrolment traceability is kept by `group_by(id)`.
+3. `adopt` is not available for a core table (writer: operation not reviewed), so "already manual" is a fold.
+4. The contract trait's `test_contract_not_applicable_without_tables` DROPS the claimed tables, which would drop core `enrol` and
+   `user_enrolments`; overridden in the test. `contract_clear_import` clears only target tables; overridden to remove the core rows a clean
+   run created. Suggest both skip or guard when a source is not a legacy table.
+5. `--purge-feature` refuses a feature that writes core tables. Rehearsal undo (a restore is the normal way back; production is the RDS
+   snapshot): delete the `user_enrolments` and `enrol` rows the map names (`feature = 'enrolments'`, `targettable` `user_enrolments` or
+   `enrol`, `outcome = 'imported'`), empty `local_sentientia_courses_enrolmove`, then clear the map rows of feature `enrolments` and its
+   marker.
+
+**Reads.** A per-row lookup through `legacy_reader::page()` orders by primary key with a LIMIT, and MariaDB answers a point lookup by
+walking the table (about 20 ms a query on the loaded local box, four a row, minutes for the dump). Step 2 therefore reads the BizLMS
+instances, every BizLMS enrolment and the enrolments on the relevant enabled manual instances once, by keyset scan, on its first row
+(a few small int arrays per row). The snapshot is taken before the step writes and is safe because only a pair's owner writes for it.
+
+**Finding to check at Stage B (read from core, not run).** `enrol_get_enrolment_end()` (`lib/enrollib.php:1278`), which `is_enrolled()`
+uses for active enrolments, does not filter by enabled plugin: an active enrolment on an ENABLED instance of a plugin that is gone
+still counts. Core drops such instances where it asks `enrol_get_instances($id, true)` (enabled plugin and `enrol/<name>/lib.php` on
+disk). So "they lose course access" in the plan may be stronger than core's behaviour. The conversion is decided and right either way
+(it removes the dependency), but test one learner before and after on the rehearsal copy.
+
+**Tests (written, NOT run: no PHPUnit in this pass).** The importer contract plus: every legacy row has one primary map row with the
+expected outcome and reason; converted rows keep status, start, end and timestamps on a manual instance and the ledger names the original
+method and instance; followers and already-manual learners point at the enrolment that does the job and an existing one is untouched; the
+manual instance is reused, created, or added beside a disabled one; no legacy instance or enrolment, no bystander enrolment and no role
+assignment changes; a converted learner stays enrolled with the legacy instances switched off; the best row of a pair decides the values;
+a disabled BizLMS instance converts as suspended; no event; dry run decides the same and changes nothing; second apply writes nothing;
+preflight counts; unknown status, manual plugin off and the decision blocks; the needs-owner exit and its acceptance; verify failures; static
+scan. Seed: 12 legacy rows, 5 converted, 2 folded, 5 skipped. Also run without PHPUnit: the static scan on all three classes (0 findings),
+`php -l`, tree drift, lang parity, path boundary, fixture copies, and the read-only April dry run above.
+
+**Deploy:** the upgrade step creates the ledger on Notifications. `version.php` now requires `local_sentientia_platform` 2026093001 (the framework).
+The registry refuses the importer until the installed plugin is at 2026100101, so re-run the PHPUnit init after merging. Shared files with the
+`course_tags` and `course_lookups` importers (same plugin): `version.php`, `db/install.xml`, `db/upgrade.php`, `db/bizlms_import.php`, this card.
+Keep both registry entries and take the highest version. This test file has its own name (`bizlms_import_enrolments_test.php`) so the three
+features in this plugin do not collide on `bizlms_import_test.php`.

@@ -131,5 +131,34 @@
       </INDEXES>
     </TABLE>
 
+    <TABLE NAME="local_sentientia_courses_enrolmove"
+           COMMENT="ADR-032 enrolments import ledger (gap G6): one row per orphaned BizLMS enrolment that the import converted to a manual enrolment. Names the original BizLMS method and instance, because the legacy map may not carry an id. Ids and timestamps only, no personal data. Written by the importer only.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="legacyueid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
+               COMMENT="user_enrolments.id of the BizLMS enrolment that was converted (left in place)"/>
+        <FIELD NAME="legacyenrolid" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
+               COMMENT="enrol.id of the BizLMS instance it was on (left in place)"/>
+        <FIELD NAME="method"        TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false"
+               COMMENT="The BizLMS enrol method: classroom, learningplan or program"/>
+        <FIELD NAME="courseid"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
+               COMMENT="Foreign key to course.id"/>
+        <FIELD NAME="targetenrolid" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
+               COMMENT="enrol.id of the manual instance the learner was enrolled on"/>
+        <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
+               COMMENT="timecreated of the legacy enrolment, kept from the source"/>
+        <FIELD NAME="timemodified"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
+               COMMENT="timemodified of the legacy enrolment, kept from the source"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="uk_legacyue" UNIQUE="true" FIELDS="legacyueid"
+               COMMENT="An enrolment is converted once"/>
+        <INDEX NAME="idx_course" UNIQUE="false" FIELDS="courseid"/>
+      </INDEXES>
+    </TABLE>
+
   </TABLES>
 </XMLDB>

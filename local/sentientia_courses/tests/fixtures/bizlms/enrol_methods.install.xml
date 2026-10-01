@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  ADR-032 enrolments test fixture: the three BizLMS enrol methods own NO tables.
+
+  Source : D:/Claude Local/Moodle Backup/01-production-codebase/html/enrol/learningplan, enrol/program and
+           enrol/classroom (read on 2026-10-01). Each has db/access.php, install.php, messages.php, services.php
+           and upgrade.php, and no install.xml.
+  Date   : 2026-10-01
+
+  What those plugins left behind is plain core data: an enrol instance (enrol = classroom, program or
+  learningplan, customint1 = the classroom, program or learning plan id) and the user_enrolments rows on it.
+  Both tables are in the PHPUnit database already, so the tests seed them with the data generator and the DB API,
+  and this fixture creates nothing. It exists because the legacy_schema_fixture trait asks every feature test for a
+  readable fixture file, and so that the next reader finds the reason written down.
+
+  Nothing was copied or edited from a source install file, so none of the three allowed edits applies. The root
+  element is the loader's shape: PATH must equal the directory of this file relative to dirroot.
+-->
+<XMLDB PATH="local/sentientia_courses/tests/fixtures/bizlms" VERSION="20261001" COMMENT="ADR-032 enrolments fixture: no BizLMS tables, the data is in core enrol and user_enrolments"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+  </TABLES>
+</XMLDB>
