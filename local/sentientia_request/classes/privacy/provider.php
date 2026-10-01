@@ -21,10 +21,13 @@ class provider implements
     public static function get_metadata(collection $collection): collection {
         $collection->add_database_table('local_sentientia_request', [
             'userid'        => 'privacy:metadata:local_sentientia_request:userid',
+            'item_type'     => 'privacy:metadata:local_sentientia_request:item_type',
+            'itemid'        => 'privacy:metadata:local_sentientia_request:itemid',
             'courseid'      => 'privacy:metadata:local_sentientia_request:courseid',
             'reason'        => 'privacy:metadata:local_sentientia_request:reason',
             'decision_note' => 'privacy:metadata:local_sentientia_request:decision_note',
             'approver_userid' => 'privacy:metadata:local_sentientia_request:approver_userid',
+            'decided_by_userid' => 'privacy:metadata:local_sentientia_request:decided_by_userid',
             'status'        => 'privacy:metadata:local_sentientia_request:status',
             'timecreated'   => 'privacy:metadata:local_sentientia_request:timecreated',
         ], 'privacy:metadata:local_sentientia_request');
@@ -65,6 +68,8 @@ class provider implements
         foreach ($rows as $r) {
             $out[] = [
                 'role'       => $r->userid == $userid ? 'requester' : 'approver',
+                'item_type'  => $r->item_type,
+                'item_id'    => $r->itemid,
                 'course_id'  => $r->courseid,
                 'status'     => $r->status,
                 'reason'     => $r->userid == $userid ? $r->reason : '(other user\'s reason)',
@@ -105,5 +110,14 @@ class provider implements
                          SET decision_note = '(redacted)'
                        WHERE decided_by_userid = :u2",
             ['u2' => $userid]);
+        // A request imported from BizLMS (ADR-032) folds its comment thread into decision_note as
+        // "[date] <full name>: text", so the note names people. The commenters were the requester and the
+        // approver, so redact the note of every imported row this user is on either end of.
+        $DB->execute("UPDATE {local_sentientia_request}
+                         SET decision_note = '(redacted)'
+                       WHERE legacy_source IS NOT NULL
+                         AND decision_note IS NOT NULL
+                         AND (userid = :u3 OR approver_userid = :u4 OR decided_by_userid = :u5)",
+            ['u3' => $userid, 'u4' => $userid, 'u5' => $userid]);
     }
 }

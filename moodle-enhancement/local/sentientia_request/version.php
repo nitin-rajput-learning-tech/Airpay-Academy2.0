@@ -41,13 +41,18 @@ $plugin->component = 'local_sentientia_request';
 // (datatable hasActionsColumn guard in theme; core/modal_save_cancel here).
 // ADR-031 (2026-09-25) — list_all (All requests) is confined to the caller's
 // tenant; only a cross-tenant caller may pick a tenant with filters.tenant.
-$plugin->version   = 2026092500;
+// ADR-032 (2026-09-30) — BizLMS import, request feature: local_sentientia_request.legacy_source marks
+// the rows the import writes; db/bizlms_import.php + classes/bizlms/ hold the importer; routing moved
+// to approver_routing so the import can route legacy pending requests; the lists show every item
+// type's name, imported rows only with the sentientia.request.imported_history flag (default OFF);
+// decide() refuses classroom/program/certification rows; the cron jobs skip imported rows.
+$plugin->version   = 2026093001;
 $plugin->requires  = 2024042200;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.4.0';  // +ADR-031 tenant scope (was 1.3.3 +WF-024 core/modal_save_cancel)
+$plugin->release   = '1.5.0';  // +ADR-032 BizLMS import (was 1.4.0 +ADR-031 tenant scope)
 $plugin->dependencies = [
     'local_sentientia_org'         => 2026040100,
     'local_sentientia_manager'     => 2026040100,  // Approval workflow patterns reused
-    'local_sentientia_platform'        => 2026092500,  // Shared tenant helper (ADR-031 is_cross_tenant)
+    'local_sentientia_platform'        => 2026093001,  // ADR-032 import framework (classes/bizlms); ADR-031 is_cross_tenant
     'local_sentientia_learningpath' => 2026051600,  // P1 #6: path enrolment on approve
 ];

@@ -98,6 +98,18 @@ $string['privacy:metadata:local_sentientia_request:approver_userid'] = 'जि�
 $string['privacy:metadata:local_sentientia_request:status']          = 'लंबित / स्वीकृत / अस्वीकृत / आदि।';
 $string['privacy:metadata:local_sentientia_request:timecreated']     = 'अनुरोध कब रखा गया';
 
+// ADR-032 (2026-09-30) - BizLMS से आयातित अनुरोध, और ऐसे आइटम के अनुरोध जो कोर्स नहीं हैं।
+$string['col_item']             = 'आइटम';
+$string['item_deleted_course']  = '(हटाया गया कोर्स)';
+$string['item_deleted']         = '(हटाया गया आइटम)';
+$string['item_certification']   = 'प्रमाणन (पिछली प्रणाली, आईडी {$a})';
+$string['reason_imported']      = 'पिछली प्रणाली से आयातित - कोई कारण दर्ज नहीं किया गया था।';
+$string['sla_none']             = 'कोई समय-सीमा नहीं';
+$string['route_legacy']         = 'पिछली प्रणाली से आयातित';
+$string['privacy:metadata:local_sentientia_request:item_type']        = 'अनुरोधित आइटम का प्रकार: कोर्स, लर्निंग पाथ, क्लासरूम, प्रोग्राम या प्रमाणन';
+$string['privacy:metadata:local_sentientia_request:itemid']           = 'अनुरोधित आइटम की आईडी';
+$string['privacy:metadata:local_sentientia_request:decided_by_userid'] = 'जिस यूज़र ने वास्तव में अनुरोध पर निर्णय लिया';
+
 // W1-9 (2026-05-15) — event names.
 $string['event_request_submitted'] = 'एक्सेस अनुरोध सबमिट किया गया';
 $string['event_request_approved']  = 'एक्सेस अनुरोध स्वीकृत';

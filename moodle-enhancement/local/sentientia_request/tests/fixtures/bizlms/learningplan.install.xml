@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Fixture copy of a BizLMS install.xml for the ADR-032 import tests (local_sentientia_request).
+  Source : D:/Claude Local/Moodle Backup/01-production-codebase/html/local/learningplan/db/install.xml
+  sha1   : f0a4f8abf718d10b78dbc3b02d160d7cb3c0cb16 (of the source file)
+  Copied : 2026-09-30
+  Tables : local_learningplan_approval (the tables this importer claims or declines; the rest of the file is left out)
+  Edits  : (a) PREVIOUS and NEXT attributes stripped (none were present on this table);
+           (b) none: no type XMLDB rejects;
+           (c) none: no production-only column or install.php-only table is known for this table.
+  Only the approval table is needed: this feature owns it (mapping doc, section 19).
+  Everything else is verbatim, including the odd whitespace and the ignored UNSIGNED attributes.
+-->
+<XMLDB PATH="local/sentientia_request/tests/fixtures/bizlms" VERSION="20060905" COMMENT="Fixture copy of the BizLMS learningplan tables (see the comment above)">
+  <TABLES>
+
+     <TABLE NAME="local_learningplan_approval" COMMENT="Used to store learning plan approval info">
+	  <FIELDS>
+	  <FIELD NAME="id" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="true"/>
+	  <FIELD NAME="planid" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false"/>
+	  <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true"  SEQUENCE="false"/>
+	  <FIELD NAME="approvedby" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false" />
+	  <FIELD NAME="approvestatus" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false" />
+		<FIELD NAME="reject_msg" TYPE="text" NOTNULL="false" SEQUENCE="false" />
+	  <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" />
+	  <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" />
+	  <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true"  SEQUENCE="false"/>
+	  </FIELDS>
+	  <KEYS>
+	  <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+	  </KEYS>
+    <INDEXES>
+        <INDEX NAME="planid" UNIQUE="false" FIELDS="planid"/>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
+    </INDEXES>
+
+    </TABLE>
+
+  </TABLES>
+</XMLDB>

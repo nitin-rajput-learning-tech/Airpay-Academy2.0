@@ -99,13 +99,41 @@ php "C:/xampp/htdocs/moodle5/admin/cli/scheduled_task.php" \
     --execute=\\local_sentientia_request\\task\\escalate_overdue
 ```
 
+## BizLMS import (ADR-032, request feature)
+
+At cutover the requests learners made in BizLMS become normal history in `local_sentientia_request`.
+Nothing here runs by itself: the importer (`db/bizlms_import.php`, `classes/bizlms/`) is run by
+`local/sentientia_platform/cli/import_bizlms.php` behind its CLI guard.
+
+| Legacy source | Becomes |
+|---|---|
+| `local_request_records` | one request row each (duplicates stay separate); item, status, tenant and times from the source |
+| `local_learningplan_approval` | a `path` request, or folded into the request row it duplicates |
+| `local_request_comments` | folded into the request's `decision_note` (expected empty) |
+| `block_request_*`, `local_request_formfields`, `local_request_form_data`, `local_crequest_*` | nothing; a preflight blocker while one holds rows |
+| `local_request_config` | declined (form settings) |
+
+- Imported rows carry `legacy_source = 'bizlms'`, no deadline (`timedue`, `timeescalated` NULL) and no reason.
+- A legacy pending **course or path** request is routed like a new one (`approver_routing`) and stays pending:
+  a person still decides. Classroom, program and certification requests are history only (no approver,
+  `decide()` refuses them).
+- The import sends nothing, enrols nobody and never calls `request_manager`.
+- Reader surface: flag `sentientia.request.imported_history`, default OFF. While it is off the three lists and
+  the approver nav badge leave imported rows out. Turning it on for Airpay is the owner's call after the
+  visual evidence; the import never flips it.
+- `request_manager::escalate_overdue()` and `auto_expire()` skip imported rows always.
+- The lists now show the name of every item type (path, classroom, program, certification), not only courses.
+
 ## Privacy / GDPR
 
 `classes/privacy/provider.php`:
 - DSR exports request history for the user.
 - DSR delete redacts `reason` + `decision_note` (free-text PII may be
   present) but preserves the row for audit (legal hold on approval
-  decisions).
+  decisions). A request imported from BizLMS folds its comment thread into
+  `decision_note` with the commenters' names, so that note is redacted for
+  the requester, the approver and the decider of an imported row.
+- DSR export carries the item (`item_type`, `item_id`) as well as the course id.
 
 ## UX notes
 

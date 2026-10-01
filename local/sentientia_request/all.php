@@ -24,9 +24,9 @@ require_capability('local/sentientia_request:viewall', $ctx);
 $columns = [
     ['key' => 'placed_on',      'label' => 'Placed',    'sortable' => true, 'sortkey' => 'timecreated'],
     ['key' => 'requester_name', 'label' => 'Requester', 'sortable' => false],
-    ['key' => 'course_name',    'label' => 'Course',    'sortable' => false],
+    ['key' => 'course_name',    'label' => get_string('col_item', 'local_sentientia_request'), 'sortable' => false],
     ['key' => 'status_badge',   'label' => 'Status',    'sortable' => true, 'sortkey' => 'status', 'format' => 'badge'],
-    ['key' => 'route',          'label' => 'Route',     'sortable' => false],
+    ['key' => 'route_label',    'label' => 'Route',     'sortable' => false],
     ['key' => 'decided_on',     'label' => 'Decided',   'sortable' => true, 'sortkey' => 'timedecided'],
 ];
 

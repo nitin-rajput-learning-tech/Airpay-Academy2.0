@@ -22,7 +22,7 @@ $PAGE->set_heading(get_string('myrequests', 'local_sentientia_request'));
 require_capability('local/sentientia_request:request', $ctx);
 
 $columns = [
-    ['key' => 'course_name', 'label' => 'Course',     'sortable' => false],
+    ['key' => 'course_name', 'label' => get_string('col_item', 'local_sentientia_request'), 'sortable' => false],
     ['key' => 'reason',      'label' => 'Reason',     'sortable' => false],
     ['key' => 'status_badge', 'label' => 'Status',    'sortable' => true, 'sortkey' => 'status', 'format' => 'badge'],
     ['key' => 'placed_on',   'label' => 'Placed',     'sortable' => true, 'sortkey' => 'timecreated'],

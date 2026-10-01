@@ -34,7 +34,9 @@ approver).
 
 ## Feature flags
 
-None registered.
+| Flag | Default | What it does |
+|---|---|---|
+| `sentientia.request.imported_history` | OFF | Shows the requests imported from BizLMS (ADR-032) in My requests, Pending approvals and All requests, counts them in the approver nav badge and in the duplicate-request guard. OFF (registered in `db/feature_flags.php`, 2026-09-30): the lists look as they did before the import. The import never flips it; turning it on for Airpay is Nitin's call after the visual evidence. |
 
 ## Key files
 
@@ -179,3 +181,62 @@ outside the requester's tenant can now only be decided by a cross-tenant user. T
 a `default_approver` set to a tenant-scoped user. Courseowner rows escalate to the default approver
 after the SLA; 'admin' rows do not escalate. Keep `default_approver` a site admin or `:crosstenant`
 holder (the default, user 2, is).
+
+
+## 2026-09-30 - ADR-032 BizLMS import, request feature (1.5.0, 2026093001)
+
+The request importer (mapping doc `docs/cutover/BIZLMS-IMPORT-MAPPING-2026-09-29.md` section 19), built on branch
+`claude/bizlms-import-request`. `depends()` is classroom, program, learningplan, exactly as the map's run-order
+table says. Atomic: no. Both trees.
+
+**Importer** (`db/bizlms_import.php`, `classes/bizlms/`): three MAP load steps into the one target, no recompute step.
+
+| Step | Source | Result |
+|---|---|---|
+| `request.records` | `local_request_records` | one request per row (duplicates stay separate). compname -> item_type, componentid -> itemid (course id kept; path, classroom and program resolved through their feature's map; certification keeps the legacy id). A decided row: route from decision `request.decided_route` (admin), approver and decider = responder, `timedecided` = respondeddate. A pending course or path row: routed like a new submission (`approver_routing`, full user row) and left pending. A pending classroom, program or certification row: no approver (history only). `costcenterid` = the requester's CURRENT tenant root (0 when none or unregistered). `reason` ''. Times from the source (COALESCE chains as the map says), `timedue` and `timeescalated` NULL. The comment thread of the request is built into `decision_note`. |
+| `request.approvals` | `local_learningplan_approval` | a `path` request of its own (approvestatus 0/1/2, decider = approvedby else usermodified, `reject_msg` = note), or FOLDED (`dup_of_request`) into the latest imported `local_request_records` row for the same (user, plan). |
+| `request.comments` | `local_request_comments` | each comment FOLDED (`folded_into_note`) into its request; orphans skipped (`orphan_request`). The note is built once from the source, so a re-run cannot double it. |
+
+Nothing calls `request_manager`, sends, enrols, triggers an event or sets a deadline; the static scan passes.
+Preflight blockers: an unknown `status`, `compname` or `approvestatus`; a non-NULL value in `compcode`, `compkey`,
+`req_type`, `req_values`, `c1`, `c2`, `c3`; a row in `block_request_*`, `local_request_formfields`,
+`local_request_form_data` or `local_crequest_*`. `local_request_config` is declined. Reasons: `orphan_user`,
+`orphan_item`, `orphan_request` (retryable, need the owner), `no_tenant` (owner), `hidden_in_bizlms`,
+`dup_of_request`, `folded_into_note`.
+
+**Owner decisions read** (all `accepted` in `docs/cutover/bizlms-import-decisions.json`): `request.pending`
+(actionable; readonly and expired are also implemented), `request.pending_classroom_program`, `request.certification`,
+`request.decided_route` (admin; legacy implemented), `request.hidden_rows` (show; filter implemented: archives a
+deleted item or a deleted or suspended requester), `request.tenant_basis`, `request.pending_approver`,
+`request.comments`, `tenant.unresolved.request` (pathless; skip implemented). No cart key is declared.
+
+**Schema:** `local_sentientia_request.legacy_source` CHAR(40) NULL (install.xml + upgrade step 2026093001 through
+`db/upgradelib.php`, idempotent). No other column or table. `version.php` requires platform 2026093001.
+
+**Reader and engine fixes** (map section 19, "Code fixes"): 1 item names for every type in the three lists (LEFT JOINs
+to the path, classroom and program tables, the latter two only when the table exists; search reaches them), 2 the
+"Item" column label through `get_string` (en + hi), 3 `decide()` refuses item types other than course and path and the
+inbox shows no buttons for them, 4 `auto_expire()` and `escalate_overdue()` select `legacy_source IS NULL`, 5 the
+placeholder reason for an imported row, 6 `list_all` declares `status_badge` and `status_badge_class`, 7 `list_pending`
+returns `due_badge`, 8 the inbox sorts rows with no deadline last in either direction, 9 the privacy export carries
+`item_type` and `item_id`, 10 the route in words (`route_label`, `route_legacy`). Also: the routing rules moved to
+`approver_routing` (request_manager delegates; the import may not call the manager, and routing only reads), and the
+duplicate-request guards of `submit()` and `submit_path()` ignore imported rows while the flag is off, so a learner is
+not refused for a pending request the lists do not show them.
+
+**Privacy:** `decided_by_userid`, `item_type` and `itemid` added to the provider's metadata; erasing a requester,
+approver or decider redacts the `decision_note` of every imported row they are on, because the folded thread names people.
+
+**Tests:** `tests/bizlms_import_test.php` (the importer contract plus item and status mapping, routing, tenant, derived
+timestamps, folds, the comment note, every reason and blocker, `request.pending` / `decided_route` / `hidden_rows` /
+`tenant.unresolved` variants, `verify()`, cron and `decide()` on imported rows; fixtures are checked-in copies of the
+BizLMS `request` and `learningplan` install.xml under `tests/fixtures/bizlms/`, stand-ins for the three dependencies in
+`tests/classes/bizlms/dependency_stub.php`), `tests/imported_history_test.php` (flag gating, tenant isolation, item
+names, inbox order and badges, cron, `decide()`, duplicate guards, routing, privacy, the upgrade helper). NOT RUN: the
+lead re-inits PHPUnit once for all version bumps.
+
+**Open items** (owner, from the map): whether the `imported_history` flag is on for Airpay at cutover (framework
+decision, Nitin after the visual evidence); the `reject_msg` of a learning-plan approval that folds into a request row is
+not carried (it is usually NULL); certification requests stay unmapped until an owner entity exists (gap G3). Framework
+need: the static scan bans `request_manager::` wholesale, so the map's "use `rm::route_approver`" became the shared
+`approver_routing` class.
