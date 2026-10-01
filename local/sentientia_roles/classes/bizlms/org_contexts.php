@@ -27,6 +27,30 @@ final class org_contexts {
     private const CHUNK = 1000;
 
     /**
+     * The tenant root of a normalised organisation path.
+     *
+     * @param string|null $path For example /1/5.
+     * @return int The first segment (1 for /1/5); 0 when there is no path.
+     */
+    public static function root_of(?string $path): int {
+        if ($path === null || $path === '') {
+            return 0;
+        }
+        return (int) explode('/', ltrim($path, '/'))[0];
+    }
+
+    /**
+     * Is a path the ancestor itself or below it? Whole segments only: /1/20 is not inside /1/2.
+     *
+     * @param string $path A normalised path.
+     * @param string $ancestor A normalised path.
+     * @return bool
+     */
+    public static function path_within(string $path, string $ancestor): bool {
+        return $path === $ancestor || str_starts_with($path, $ancestor . '/');
+    }
+
+    /**
      * The category and its context for each organisation.
      *
      * @param legacy_reader $legacy

@@ -11,7 +11,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * Column map (mapping doc section 4):
  *  - departmentid (else costcenterid) -> the organisation, and through local_costcenter.category the course
- *    category context;
+ *    category context. With a department, costcenterid is the organisation it should live under: the tenant comes
+ *    from the department alone, and a department outside that organisation is reported (dept_outside_costcenter);
  *  - userid, roleid -> the same columns of role_assignments (one user per row, so userid is a single id);
  *  - user_modified (else user_created) -> modifierid and the audit row's changedby;
  *  - timemodified (else timecreated) -> role_assignments.timemodified; timecreated (else that) -> the audit row's
@@ -56,6 +57,8 @@ final class dept_roles_step extends assignment_step {
         return (object) [
             'included' => true,
             'orgid' => (int) $row->departmentid > 0 ? (int) $row->departmentid : (int) $row->costcenterid,
+            // The organisation the department is said to live under; checked against the department's own path.
+            'containerid' => (int) $row->departmentid > 0 ? (int) $row->costcenterid : 0,
             'users' => (string) ((int) $row->userid),
             'roleid' => (int) $row->roleid,
             'modifier' => self::first_positive((int) $row->user_modified, (int) $row->user_created),

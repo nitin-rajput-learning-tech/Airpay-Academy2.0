@@ -53,6 +53,7 @@ final class permissions_step extends assignment_step {
         return (object) [
             'included' => (int) $row->value === 1,
             'orgid' => (int) $row->costcenterid,
+            'containerid' => 0,
             'users' => (string) ($row->userid ?? ''),
             'roleid' => (int) $row->roleid,
             'modifier' => (int) $row->usermodified,

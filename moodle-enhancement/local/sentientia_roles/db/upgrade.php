@@ -69,5 +69,12 @@ function xmldb_local_sentientia_roles_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026093001, 'local', 'sentientia_roles');
     }
 
+    // 2026093002 - ADR-032 review round: importer rules only, no schema change. The bump re-registers the web service
+    // description of local_sentientia_roles_list_assignments (db/services.php) and is what
+    // importer::requires_version() names.
+    if ($oldversion < 2026093002) {
+        upgrade_plugin_savepoint(true, 2026093002, 'local', 'sentientia_roles');
+    }
+
     return true;
 }

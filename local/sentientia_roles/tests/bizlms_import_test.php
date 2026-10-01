@@ -22,8 +22,11 @@ use local_sentientia_roles\tests\bizlms\org_stub_importer;
 /**
  * The org_roles importer (ADR-032, mapping doc section 4) under the importer contract and its own cases.
  *
- * The seed (seed_org_roles()) is a realistic little BizLMS database: four organisations, thirteen rows of
- * local_costcenter_permissions and four of local_org_dept_roles. Numbers a test may rely on:
+ * The seed (seed_org_roles()) is a realistic little BizLMS database: four organisations (tenant 1: orgs 1 and 5;
+ * tenant 77: org 6; org 7 is a junk row with no path), seventeen rows of local_costcenter_permissions and six of
+ * local_org_dept_roles. Users: u1 to u4 and the actors 'actor' (/1) and 'actor2' (/1/5/99) are tenant 1; u5, u6 and
+ * 'actor77' are tenant 77; 'floater' has no tenant path. Roles: manager and creator may be assigned at a course
+ * category, teacher (editingteacher) may not. Numbers a test may rely on:
  *
  *  permissions  1  u1,u2,u3 manager @org1      imported: 3 assignments (primary + pos:2 + pos:3), 3 audit rows
  *               2  u4 creator @org5            imported; the actor's path walks up to /1/5
@@ -37,13 +40,21 @@ use local_sentientia_roles\tests\bizlms\org_stub_importer;
  *              10  u3, u3, abc creator @org5   imported once; duplicate_user and user_invalid warnings
  *              11  role 99999                  skipped role_not_found
  *              12  u6 manager @org6            folded: the assignment existed before the import
- *              13  u5 (tenant 77) @org1        imported, with the user_outside_org_tenant warning; no timecreated
+ *              13  u5 (tenant 77) @org1        skipped user_outside_org_tenant: no role over another tenant's org
+ *              14  u4 manager @org1            imported; no timecreated, so the modified time stands in
+ *              15  u5 (tenant 77), u2 @org1    imported for u2 only (list position 2); u5 is left out, warned
+ *              16  u1 creator @org1, actor77   imported; the actor is in tenant 77, so the audit row has no path
+ *              17  floater (no tenant) @org5   imported with the user_without_tenant warning
  *  dept roles   1  u4 creator @dept 5          folded (row 2 made it)
- *               2  u5 teacher @org6            imported; times and the actor come from the modified columns
+ *               2  u5 creator @org6            imported; times and the actor (actor2, tenant 1) come from the modified
+ *                                              columns; the actor is outside org 6's tenant, so no audit path
  *               3  user 0                      skipped no_valid_user (user_invalid)
  *               4  org 7                       skipped org_not_found
+ *               5  u6 creator @dept 6 of cc 1  imported; dept_outside_costcenter (org 6 is not under org 1), and the
+ *                                              actor is outside org 6's tenant, so the audit row has no path
+ *               6  u5 editingteacher @org6     skipped role_not_assignable (no course category level)
  *
- * That is 5 imported, 3 folded, 8 skipped and 1 archived primary rows; 7 assignments and 7 audit rows made.
+ * That is 9 imported, 3 folded, 10 skipped and 1 archived primary rows; 11 assignments and 11 audit rows made.
  *
  * @package    local_sentientia_roles
  * @category   test
@@ -118,7 +129,7 @@ final class bizlms_import_test extends \advanced_testcase {
     }
 
     protected function contract_batch(): int {
-        // The permissions step then spans three batches (13 rows), while the org stub's four rows fit in one, so
+        // The permissions step then spans four batches (17 rows), while the org stub's four rows fit in one, so
         // the contract's injected failure lands in a step of org_roles.
         return 5;
     }
@@ -215,11 +226,21 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertContains('insert', registry::core_write_operations('role_assignments'));
         $this->assertSame(['org_roles.permissions', 'org_roles.dept_roles'],
             array_map(static fn($step) => $step->key(), $importer->steps()));
-        // No reason is invented: each one is in the map's vocabulary.
+        // The map's reasons, plus the two the review round added: a role across tenants and a role the category
+        // may not hold. Both need the owner (parity exits 2 until the decisions file accepts them), like the two
+        // that say data was lost (role_not_found, org_not_found).
         $codes = array_map(static fn($reason) => $reason->code, $importer->reasons());
         sort($codes);
-        $this->assertSame(['already_assigned', 'no_role', 'no_valid_user', 'org_not_found', 'role_not_found',
-            'value_not_assigned'], $codes);
+        $this->assertSame(['already_assigned', 'no_role', 'no_valid_user', 'org_not_found', 'role_not_assignable',
+            'role_not_found', 'user_outside_org_tenant', 'value_not_assigned'], $codes);
+        $owner = [];
+        foreach ($importer->reasons() as $reason) {
+            if ($reason->needsowner) {
+                $owner[] = $reason->code;
+            }
+        }
+        sort($owner);
+        $this->assertSame(['org_not_found', 'role_not_assignable', 'role_not_found', 'user_outside_org_tenant'], $owner);
     }
 
     public function test_the_registry_accepts_the_importer_with_its_org_dependency(): void {
@@ -251,11 +272,17 @@ final class bizlms_import_test extends \advanced_testcase {
             [$p, 10, 'imported', '', 'role_assignments'],
             [$p, 11, 'skipped', 'role_not_found', ''],
             [$p, 12, 'folded', 'already_assigned', 'role_assignments'],
-            [$p, 13, 'imported', '', 'role_assignments'],
+            [$p, 13, 'skipped', 'user_outside_org_tenant', ''],
+            [$p, 14, 'imported', '', 'role_assignments'],
+            [$p, 15, 'imported', '', 'role_assignments'],
+            [$p, 16, 'imported', '', 'role_assignments'],
+            [$p, 17, 'imported', '', 'role_assignments'],
             [$d, 1, 'folded', 'already_assigned', 'role_assignments'],
             [$d, 2, 'imported', '', 'role_assignments'],
             [$d, 3, 'skipped', 'no_valid_user', ''],
             [$d, 4, 'skipped', 'org_not_found', ''],
+            [$d, 5, 'imported', '', 'role_assignments'],
+            [$d, 6, 'skipped', 'role_not_assignable', ''],
         ];
         foreach ($expected as [$table, $id, $outcome, $reason, $target]) {
             $row = $this->map_row($table, $id);
@@ -269,15 +296,17 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertSame('user_invalid', $this->map_row($d, 3)->detail);
 
         // Every source row has exactly one primary row; the fan-out rows are the assignments and audit rows.
-        $this->assertSame(17, $DB->count_records(legacymap::TABLE, ['feature' => 'org_roles', 'subkey' => '']));
-        // Seven assignments: five primary rows that imported one, and the fan-out rows pos:2 and pos:3.
-        $this->assertSame(7, $DB->count_records(legacymap::TABLE,
+        $this->assertSame(23, $DB->count_records(legacymap::TABLE, ['feature' => 'org_roles', 'subkey' => '']));
+        // Eleven assignments: nine primary rows that imported one, and the fan-out rows pos:2 and pos:3.
+        $this->assertSame(11, $DB->count_records(legacymap::TABLE,
             ['feature' => 'org_roles', 'targettable' => 'role_assignments', 'outcome' => 'imported']));
-        $this->assertSame(7, $DB->count_records(legacymap::TABLE,
+        $this->assertSame(11, $DB->count_records(legacymap::TABLE,
             ['feature' => 'org_roles', 'targettable' => 'local_sentientia_roles_auditlog', 'outcome' => 'imported']));
         $subkeys = $DB->get_fieldset_select(legacymap::TABLE, 'subkey', "feature = 'org_roles' AND subkey <> ''");
         sort($subkeys);
-        $this->assertSame(['aud:1', 'aud:1', 'aud:1', 'aud:1', 'aud:1', 'aud:2', 'aud:3', 'pos:2', 'pos:3'], $subkeys);
+        // aud:2 is row 1's second user and row 15's only user (list position 2, because position 1 was left out).
+        $this->assertSame(['aud:1', 'aud:1', 'aud:1', 'aud:1', 'aud:1', 'aud:1', 'aud:1', 'aud:1', 'aud:2', 'aud:2',
+            'aud:3', 'pos:2', 'pos:3'], $subkeys);
         // The position in the list, never the user: no sub-key names a person.
         foreach ($subkeys as $subkey) {
             $this->assertMatchesRegularExpression('/^(pos|aud):[0-9]+$/', $subkey);
@@ -294,7 +323,7 @@ final class bizlms_import_test extends \advanced_testcase {
         [$result] = $this->contract_run(true);
         $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
 
-        $this->assertSame($before + 7, $DB->count_records('role_assignments'), 'seven assignments made');
+        $this->assertSame($before + 11, $DB->count_records('role_assignments'), 'eleven assignments made');
         $this->assertSame($contexts, $DB->count_records('context'), 'no context is created, for any organisation');
         $this->assertSame(0, $events->count(), 'no role_assigned event: the rows are inserted, not assigned');
 
@@ -310,7 +339,12 @@ final class bizlms_import_test extends \advanced_testcase {
             [2, '', 'u4', 'creator', $ctx5, $t + 2, 'actor2'],
             [10, '', 'u3', 'creator', $ctx5, $t + 10, 'actor'],
             // No timecreated: the modified time stands in.
-            [13, '', 'u5', 'manager', $ctx1, $t + 23, 'actor'],
+            [14, '', 'u4', 'manager', $ctx1, $t + 24, 'actor'],
+            // The list names u5 first and u5 is left out: u2, at position 2, holds the primary assignment.
+            [15, '', 'u2', 'creator', $ctx1, $t + 15, 'actor'],
+            // The assignment keeps its actor, even though the actor is in another tenant (only the audit path goes).
+            [16, '', 'u1', 'creator', $ctx1, $t + 16, 'actor77'],
+            [17, '', 'floater', 'creator', $ctx5, $t + 17, 'actor'],
         ];
         foreach ($expected as [$id, $subkey, $user, $role, $contextid, $time, $modifier]) {
             $map = $this->map_row('local_costcenter_permissions', $id, $subkey);
@@ -328,10 +362,32 @@ final class bizlms_import_test extends \advanced_testcase {
         $map = $this->map_row('local_org_dept_roles', 2);
         $ra = $DB->get_record('role_assignments', ['id' => $map->targetid], '*', MUST_EXIST);
         $this->assertSame($this->users['u5'], (int) $ra->userid);
-        $this->assertSame($this->roles['teacher'], (int) $ra->roleid);
+        $this->assertSame($this->roles['creator'], (int) $ra->roleid);
         $this->assertSame($ctx6, (int) $ra->contextid);
         $this->assertSame($t + 42, (int) $ra->timemodified);
         $this->assertSame($this->users['actor2'], (int) $ra->modifierid);
+        // A department named under an organisation it is not in: the department's own tenant counts, and it is reported.
+        $map = $this->map_row('local_org_dept_roles', 5);
+        $ra = $DB->get_record('role_assignments', ['id' => $map->targetid], '*', MUST_EXIST);
+        $this->assertSame($this->users['u6'], (int) $ra->userid);
+        $this->assertSame($this->roles['creator'], (int) $ra->roleid);
+        $this->assertSame($ctx6, (int) $ra->contextid);
+        $this->assertSame($t + 35, (int) $ra->timemodified);
+        $this->assertSame($this->users['actor'], (int) $ra->modifierid);
+
+        // Nothing for a user of another tenant: row 13 (tenant 77 user at a tenant 1 organisation) made no assignment
+        // and no audit row, and neither did the u5 of row 15. u5's only assignment is the one at their own tenant.
+        foreach ([$ctx1, $ctx5] as $foreign) {
+            $this->assertFalse($DB->record_exists('role_assignments', ['userid' => $this->users['u5'], 'contextid' => $foreign]),
+                'no role over the organisation of another tenant');
+            $this->assertFalse($DB->record_exists('local_sentientia_roles_auditlog',
+                ['targetuserid' => $this->users['u5'], 'contextid' => $foreign]));
+        }
+        $this->assertSame(1, $DB->count_records('role_assignments', ['userid' => $this->users['u5'],
+            'contextid' => $ctx6]), 'u5 holds exactly one role at the organisation of their own tenant');
+        // A role the category may not hold is not assigned there (dept row 6).
+        $this->assertFalse($DB->record_exists('role_assignments', ['roleid' => $this->roles['teacher'],
+            'contextid' => $ctx6]));
 
         // Folded rows point at the assignment that already existed, and none was duplicated.
         $this->assertSame($this->existingra, (int) $this->map_row('local_costcenter_permissions', 12)->targetid);
@@ -352,8 +408,8 @@ final class bizlms_import_test extends \advanced_testcase {
         [$result] = $this->contract_run(true);
         $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
 
-        $this->assertSame(7, $DB->count_records('local_sentientia_roles_auditlog'));
-        $ctx1 = \context_coursecat::instance($this->cats[1])->id;
+        $this->assertSame(11, $DB->count_records('local_sentientia_roles_auditlog'));
+        $ctx1 =\context_coursecat::instance($this->cats[1])->id;
         $ctx6 = \context_coursecat::instance($this->cats[6])->id;
         $t = self::T;
 
@@ -384,21 +440,38 @@ final class bizlms_import_test extends \advanced_testcase {
             'aud:1')->targetid], '*', MUST_EXIST);
         $this->assertSame('bizlms_import:org_dept_roles', $audit->reason);
         $this->assertSame($ctx6, (int) $audit->contextid);
-        $this->assertSame($this->roles['teacher'], (int) $audit->roleid);
+        $this->assertSame($this->roles['creator'], (int) $audit->roleid);
+        $this->assertSame('coursecreator', $audit->roleshortname);
         $this->assertSame($t + 32, (int) $audit->timecreated);
         $this->assertSame($this->users['actor2'], (int) $audit->changedby);
+        // actor2 belongs to tenant 1 and organisation 6 to tenant 77: the actor is still named, but the row carries no
+        // path, or the audit list would show a tenant-77 assignment to tenant-1 administrators.
+        $this->assertNull($audit->open_path);
+
+        // Row 16 has an actor of another tenant too (tenant 77 at a tenant-1 organisation), and so does dept row 5.
+        foreach ([['local_costcenter_permissions', 16, 'actor77'], ['local_org_dept_roles', 5, 'actor']] as [$table, $id, $who]) {
+            $audit = $DB->get_record('local_sentientia_roles_auditlog', ['id' => $this->map_row($table, $id,
+                'aud:1')->targetid], '*', MUST_EXIST);
+            $this->assertNull($audit->open_path, "{$table} #{$id}: no path for an actor outside the organisation's tenant");
+            $this->assertSame($this->users[$who], (int) $audit->changedby);
+        }
+        // A target without a tenant changes nothing about the actor's path (row 17: the floater is the target).
+        $audit = $DB->get_record('local_sentientia_roles_auditlog', ['id' => $this->map_row('local_costcenter_permissions', 17,
+            'aud:1')->targetid], '*', MUST_EXIST);
+        $this->assertSame('/1', $audit->open_path);
+        $this->assertSame($this->users['floater'], (int) $audit->targetuserid);
 
         // A folded row made nothing, so it has no audit row.
         $this->assertFalse($DB->record_exists(legacymap::TABLE, ['feature' => 'org_roles',
             'sourcetable' => 'local_costcenter_permissions', 'sourceid' => 6, 'subkey' => 'aud:1']));
         // Nothing is invented for the native audit log either: the import adds only role_assigned rows.
-        $this->assertSame(7, $DB->count_records('local_sentientia_roles_auditlog', ['action' => 'role_assigned']));
+        $this->assertSame(11, $DB->count_records('local_sentientia_roles_auditlog', ['action' => 'role_assigned']));
     }
 
     /**
      * @group tenant_isolation
      */
-    public function test_the_tenant_path_of_an_audit_row_is_the_actors_and_a_cross_tenant_grant_is_reported(): void {
+    public function test_the_tenant_path_of_an_audit_row_is_the_actors_and_a_cross_tenant_grant_is_refused(): void {
         global $DB;
         $this->contract_begin();
         $this->contract_seed();
@@ -406,19 +479,114 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
 
         // Every path the import wrote is a normalised path with a registered root (the importer's verify() says so too).
+        // The rows whose actor is outside the organisation's tenant carry none (NULL, never an empty string).
         $paths = $DB->get_fieldset_select('local_sentientia_roles_auditlog', 'DISTINCT open_path', 'open_path IS NOT NULL');
         sort($paths);
         $this->assertSame(['/1', '/1/5'], $paths);
+        $this->assertSame(3, $DB->count_records_select('local_sentientia_roles_auditlog', 'open_path IS NULL'),
+            'permissions row 16, dept rows 2 and 5: an actor outside the organisation\'s tenant');
 
         $steps = $report->to_array()['features']['org_roles']['steps'];
         $permissions = $steps['org_roles.permissions'];
-        $this->assertSame(1, $permissions['warnings']['user_outside_org_tenant'] ?? 0,
-            'a tenant-77 user assigned at a tenant-1 organisation is reported');
+        // Rows 13 and 15 name a tenant-77 user at a tenant-1 organisation: row 13 has nobody left and is skipped, row 15
+        // is imported for its other user. Both are reported.
+        $this->assertSame(2, $permissions['warnings']['user_outside_org_tenant'] ?? 0);
+        $this->assertSame(1, $permissions['skipped_by_reason']['user_outside_org_tenant'] ?? 0);
         $this->assertSame(1, $permissions['warnings']['duplicate_user'] ?? 0);
         $this->assertSame(1, $permissions['warnings']['user_invalid'] ?? 0);
         $this->assertSame(1, $permissions['warnings']['assignment_exists'] ?? 0);
-        $this->assertSame(5, $permissions['tenant_methods']['exact'] ?? 0);
+        $this->assertSame(1, $permissions['warnings']['user_without_tenant'] ?? 0);
+        $this->assertSame(1, $permissions['warnings']['actor_outside_org_tenant'] ?? 0);
+        $this->assertSame(7, $permissions['tenant_methods']['exact'] ?? 0);
         $this->assertSame(1, $permissions['tenant_methods']['walked_up'] ?? 0);
+        $this->assertSame(1, $permissions['tenant_methods']['unresolved'] ?? 0, 'row 16: its actor is in another tenant');
+
+        $dept = $steps['org_roles.dept_roles'];
+        $this->assertSame(1, $dept['warnings']['dept_outside_costcenter'] ?? 0);
+        $this->assertSame(2, $dept['warnings']['actor_outside_org_tenant'] ?? 0);
+        $this->assertSame(1, $dept['skipped_by_reason']['role_not_assignable'] ?? 0);
+        $this->assertSame(1, $dept['tenant_methods']['exact'] ?? 0);
+        $this->assertSame(2, $dept['tenant_methods']['unresolved'] ?? 0);
+    }
+
+    /**
+     * The rule itself, over every assignment the import made: whoever holds a role at an organisation's category has
+     * that organisation's tenant (a user with no tenant path is the one exception, and is reported). The grant is
+     * authority over every course below the category, so a user of another tenant must never hold it.
+     *
+     * @group tenant_isolation
+     */
+    public function test_no_imported_assignment_gives_a_user_a_role_over_another_tenants_organisation(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->contract_seed();
+        [$result] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+
+        $roots = [
+            \context_coursecat::instance($this->cats[1])->id => 1,
+            \context_coursecat::instance($this->cats[5])->id => 1,
+            \context_coursecat::instance($this->cats[6])->id => 77,
+        ];
+        $maps = $DB->get_records(legacymap::TABLE, ['feature' => 'org_roles', 'targettable' => 'role_assignments',
+            'outcome' => 'imported']);
+        $this->assertCount(11, $maps);
+        $checked = 0;
+        foreach ($maps as $map) {
+            $ra = $DB->get_record('role_assignments', ['id' => $map->targetid], '*', MUST_EXIST);
+            $path = (string) $DB->get_field('user', 'open_path', ['id' => $ra->userid]);
+            if ($path === '') {
+                $this->assertSame($this->users['floater'], (int) $ra->userid, 'only the floater has no tenant path');
+                continue;
+            }
+            $this->assertSame($roots[(int) $ra->contextid], (int) explode('/', ltrim($path, '/'))[0],
+                "assignment {$ra->id} of {$map->sourcetable} #{$map->sourceid}");
+            $checked++;
+        }
+        $this->assertSame(10, $checked);
+
+        // The two rows that named a user of another tenant: row 13 is skipped with the owner-visible reason, row 15 is
+        // imported for u2 only.
+        $row13 = $this->map_row('local_costcenter_permissions', 13);
+        $this->assertSame('skipped', $row13->outcome);
+        $this->assertSame('user_outside_org_tenant', $row13->reason);
+        $this->assertSame('', (string) $row13->targettable);
+        $row15 = $this->map_row('local_costcenter_permissions', 15);
+        $this->assertSame('imported', $row15->outcome);
+        $ra = $DB->get_record('role_assignments', ['id' => $row15->targetid], '*', MUST_EXIST);
+        $this->assertSame($this->users['u2'], (int) $ra->userid);
+        $this->assertFalse($DB->record_exists(legacymap::TABLE, ['feature' => 'org_roles',
+            'sourcetable' => 'local_costcenter_permissions', 'sourceid' => 15, 'subkey' => 'aud:1']),
+            'there is no audit row for the user who was left out');
+    }
+
+    /**
+     * @group tenant_isolation
+     */
+    public function test_an_organisation_with_no_path_refuses_every_user_even_when_the_org_map_resolves_it(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->contract_seed();
+        // An org map that (unlike the seeded one) says org 7 imported: the tenant rule must not depend on that.
+        $DB->set_field(legacymap::TABLE, 'targettable', 'local_sentientia_org',
+            ['feature' => 'org', 'sourcetable' => 'local_costcenter', 'sourceid' => 7]);
+        $DB->set_field(legacymap::TABLE, 'targetid', 7,
+            ['feature' => 'org', 'sourcetable' => 'local_costcenter', 'sourceid' => 7]);
+        $DB->set_field(legacymap::TABLE, 'outcome', 'imported',
+            ['feature' => 'org', 'sourcetable' => 'local_costcenter', 'sourceid' => 7]);
+        $DB->set_field(legacymap::TABLE, 'reason', null,
+            ['feature' => 'org', 'sourcetable' => 'local_costcenter', 'sourceid' => 7]);
+
+        [$result] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        $ctx7 = \context_coursecat::instance($this->cats[7])->id;
+        foreach ([['local_costcenter_permissions', 8], ['local_org_dept_roles', 4]] as [$table, $id]) {
+            $row = $this->map_row($table, $id);
+            $this->assertSame('skipped', $row->outcome, "{$table} #{$id}");
+            $this->assertSame('org_not_found', $row->reason);
+            $this->assertSame('org_without_path', $row->detail);
+        }
+        $this->assertFalse($DB->record_exists('role_assignments', ['contextid' => $ctx7]), 'nothing at the junk organisation');
     }
 
     public function test_verify_passes_on_a_clean_import(): void {
@@ -438,7 +606,7 @@ final class bizlms_import_test extends \advanced_testcase {
 
         $DB->delete_records('role_assignments', ['id' => $this->map_row('local_costcenter_permissions', 1, 'pos:2')->targetid]);
         $failures = $importer->verify(context::build($importer, false, 0, $this->contract_decisions()));
-        // The map still names seven assignments and seven audit rows, so only the missing row is reported.
+        // The map still names eleven assignments and eleven audit rows, so only the missing row is reported.
         $this->assertSame(['role_assignment_missing:1'], $failures);
     }
 
@@ -501,6 +669,7 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->contract_begin();
         $this->contract_seed();
         $DB->delete_records('cache_flags', ['flagtype' => 'accesslib/dirtycontexts']);
+        $DB->delete_records('cache_flags', ['flagtype' => 'accesslib/dirtyusers']);
         [$result] = $this->contract_run(true);
         $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
 
@@ -510,6 +679,17 @@ final class bizlms_import_test extends \advanced_testcase {
             $this->assertTrue($DB->record_exists('cache_flags', ['flagtype' => 'accesslib/dirtycontexts', 'name' => $path]),
                 "organisation {$org}'s category context is marked dirty");
         }
+        // A context flag reloads access for checks at or below the category only. role_assign() also marks the user dirty,
+        // so a live session's system-level checks reload too: every user who received an assignment is marked.
+        foreach (['u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'floater'] as $name) {
+            $this->assertTrue($DB->record_exists('cache_flags', ['flagtype' => 'accesslib/dirtyusers',
+                'name' => (string) $this->users[$name]]), "{$name} received an assignment and is marked dirty");
+        }
+        // Nobody else is: not the actors, not the deleted user, not the user who was refused (their row was skipped).
+        foreach (['actor', 'actor2', 'actor77', 'gone'] as $name) {
+            $this->assertFalse($DB->record_exists('cache_flags', ['flagtype' => 'accesslib/dirtyusers',
+                'name' => (string) $this->users[$name]]), "{$name} received nothing and is not marked dirty");
+        }
     }
 
     public function test_preflight_counts_and_warns_but_does_not_block_a_good_seed(): void {
@@ -517,14 +697,30 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->contract_seed();
         $pf = $this->preflight_of('org_roles');
         $this->assertSame([], $pf->blockers());
-        $this->assertSame(15, $pf->counts()['org_roles.assignment_rows']);
+        // Fifteen permission rows with a role and value 1 (ids 1, 2, 5 to 17), and all six department rows.
+        $this->assertSame(21, $pf->counts()['org_roles.assignment_rows']);
         $this->assertSame(5, $pf->counts()['org_roles.organisations']);
         $warnings = implode(' | ', $pf->warnings());
         $this->assertStringContainsString('org_not_found:1', $warnings, 'organisation 99 has no local_costcenter row');
+        // Org 7 is a local_costcenter row with no normalised path: reported, and it cannot block (nothing could clear it).
+        $this->assertStringContainsString('org_without_path:1 ids=7', $warnings);
+        // Rows 13 and 15 name u5 (tenant 77) at a tenant-1 organisation; the floater has no tenant and is not counted.
+        $this->assertStringContainsString('user_outside_org_tenant:2', $warnings);
         // editingteacher is not assignable at a category, and role 99999 does not exist: both are reported.
         $this->assertStringContainsString('role_not_assignable_at_category:2', $warnings);
         $this->assertStringContainsString((string) $this->roles['teacher'], $warnings);
         $this->assertSame(['org'], $importer->depends());
+    }
+
+    public function test_an_organisation_with_no_path_is_a_warning_not_a_blocker_even_when_it_has_no_category(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->contract_seed();
+        // The legacy table can never be edited to clear this, so a junk row must not block the whole feature.
+        $DB->set_field('local_costcenter', 'category', 0, ['id' => 7]);
+        $pf = $this->preflight_of('org_roles');
+        $this->assertSame([], $pf->blockers());
+        $this->assertStringContainsString('org_without_path:1 ids=7', implode(' | ', $pf->warnings()));
     }
 
     public function test_a_missing_category_context_blocks_and_is_never_created(): void {
@@ -601,7 +797,7 @@ final class bizlms_import_test extends \advanced_testcase {
         [$result] = $this->contract_run(true);
         $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
         $this->assertSame('complete', $result['features']['org_roles']);
-        $this->assertSame(13, $DB->count_records(legacymap::TABLE, ['feature' => 'org_roles',
+        $this->assertSame(17, $DB->count_records(legacymap::TABLE, ['feature' => 'org_roles',
             'sourcetable' => 'local_costcenter_permissions', 'subkey' => '']));
         $this->assertSame(0, $DB->count_records(legacymap::TABLE, ['feature' => 'org_roles',
             'sourcetable' => 'local_org_dept_roles']));
@@ -654,9 +850,11 @@ final class bizlms_import_test extends \advanced_testcase {
             $this->roles[$name] = (int) $DB->get_field('role', 'id', ['shortname' => $shortname], MUST_EXIST);
         }
 
-        // Users: u1 to u4 belong to tenant 1, u5 and u6 to tenant 77; the actors made the assignments in BizLMS.
+        // Users: u1 to u4 belong to tenant 1, u5 and u6 to tenant 77; the actors made the assignments in BizLMS (actor77
+        // is a tenant-77 actor, which the native UI would never let assign at a tenant-1 organisation). The floater has
+        // no tenant path at all.
         $paths = ['u1' => '/1', 'u2' => '/1', 'u3' => '/1', 'u4' => '/1', 'u5' => '/77', 'u6' => '/77',
-            'actor' => '/1', 'actor2' => '/1/5/99'];
+            'actor' => '/1', 'actor2' => '/1/5/99', 'actor77' => '/77', 'floater' => ''];
         foreach ($paths as $name => $path) {
             $user = $gen->create_user();
             $DB->set_field('user', 'open_path', $path, ['id' => $user->id]);
@@ -713,6 +911,10 @@ final class bizlms_import_test extends \advanced_testcase {
         $permission(11, (string) $u['u1'], 1, 99999, 1, $t + 11, $t + 21, $u['actor']);
         $permission(12, (string) $u['u6'], 6, $r['manager'], 1, $t + 12, $t + 22, $u['actor']);
         $permission(13, (string) $u['u5'], 1, $r['manager'], 1, 0, $t + 23, $u['actor']);
+        $permission(14, (string) $u['u4'], 1, $r['manager'], 1, 0, $t + 24, $u['actor']);
+        $permission(15, "{$u['u5']},{$u['u2']}", 1, $r['creator'], 1, $t + 15, $t + 25, $u['actor']);
+        $permission(16, (string) $u['u1'], 1, $r['creator'], 1, $t + 16, $t + 26, $u['actor77']);
+        $permission(17, (string) $u['floater'], 5, $r['creator'], 1, $t + 17, $t + 27, $u['actor']);
 
         $dept = static function (int $id, int $org, int $department, int $user, int $role, int $created, int $modified,
                 int $timemodified, int $timecreated) use ($DB): void {
@@ -721,9 +923,13 @@ final class bizlms_import_test extends \advanced_testcase {
                 'user_modified' => $modified, 'timemodified' => $timemodified, 'timecreated' => $timecreated]);
         };
         $dept(1, 1, 5, $u['u4'], $r['creator'], $u['actor'], 0, 0, $t + 31);
-        $dept(2, 6, 0, $u['u5'], $r['teacher'], $u['actor'], $u['actor2'], $t + 42, $t + 32);
+        $dept(2, 6, 0, $u['u5'], $r['creator'], $u['actor'], $u['actor2'], $t + 42, $t + 32);
         $dept(3, 1, 0, 0, $r['manager'], $u['actor'], 0, 0, $t + 33);
         $dept(4, 7, 0, $u['u1'], $r['manager'], $u['actor'], 0, 0, $t + 34);
+        // Department 6 (org 6, tenant 77) said to live under cost centre 1 (tenant 1): reported, the department counts.
+        $dept(5, 1, 6, $u['u6'], $r['creator'], $u['actor'], 0, 0, $t + 35);
+        // A role the category may not hold (editingteacher has no course category level).
+        $dept(6, 6, 0, $u['u5'], $r['teacher'], $u['actor'], 0, 0, $t + 36);
     }
 
     /**

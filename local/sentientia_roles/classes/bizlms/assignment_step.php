@@ -19,19 +19,29 @@ use local_sentientia_platform\bizlms\step;
  *
  * transform() is pure: it reads through the context (and the plain reads named below) and returns outcomes.
  *
+ * Tenant rule (ADR-031 decisions 5 and 6 close the same escalation in the UI): a user of one tenant never gets a
+ * role at another tenant's organisation. A user whose tenant root differs from the organisation's root is left out
+ * of the row (warning user_outside_org_tenant), and a row with no user left is skipped with the owner-visible reason
+ * user_outside_org_tenant. BizLMS never read these tables (mapping doc section 4), so such a row would create
+ * authority that production never gave.
+ *
  * @package    local_sentientia_roles
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 abstract class assignment_step extends step {
 
+    /** @var array<int, bool> Role id => may be assigned at a course category (role_context_levels), read once per role. */
+    private array $assignable = [];
+
     /**
      * What a row says, in one shape for both tables.
      *
      * @param \stdClass $row A source row.
-     * @return \stdClass {included: bool, orgid: int, users: string, roleid: int, modifier: int, assigned: int,
-     *         audited: int}. included is false for a row that is not an assignment. assigned is the value for
-     *         role_assignments.timemodified, audited the value for the audit row's timecreated.
+     * @return \stdClass {included: bool, orgid: int, containerid: int, users: string, roleid: int, modifier: int,
+     *         assigned: int, audited: int}. included is false for a row that is not an assignment. containerid is
+     *         the organisation the row says orgid lives under (0 when the row names no such parent). assigned is
+     *         the value for role_assignments.timemodified, audited the value for the audit row's timecreated.
      */
     abstract protected function facts(\stdClass $row): \stdClass;
 
@@ -70,6 +80,9 @@ abstract class assignment_step extends step {
             $facts[(int) $row->id] = $f;
             if ($f->included && $f->roleid > 0 && $f->orgid > 0) {
                 $orgids[$f->orgid] = true;
+                if ($f->containerid > 0) {
+                    $orgids[$f->containerid] = true;
+                }
             }
         }
         $orgs = org_contexts::for_orgs($ctx->legacy, array_keys($orgids));
@@ -102,6 +115,11 @@ abstract class assignment_step extends step {
         if (!$ctx->lookups->exists('role', $f->roleid)) {
             return [outcome::skip($sid, importer::REASON_ROLE_NOT_FOUND)];
         }
+        // Core never makes a category assignment of a role that may not be assigned at a category (the role UI and
+        // core_role_assign_roles refuse it), and such a role carries its course-level rights over every course below.
+        if (!$this->assignable_at_category($f->roleid)) {
+            return [outcome::skip($sid, importer::REASON_ROLE_NOT_ASSIGNABLE)];
+        }
 
         // The organisation goes through the map, like every foreign legacy id, even though the org feature keeps ids.
         $mapped = $f->orgid > 0 ? $ctx->map->resolve(importer::COSTCENTER, $f->orgid) : null;
@@ -111,15 +129,34 @@ abstract class assignment_step extends step {
             return [outcome::skip($sid, $code)];
         }
         $org = $orgs[$f->orgid] ?? null;
+        if ($org !== null && $org->path === null) {
+            // A local_costcenter row with no normalised path is not an organisation (the org feature skips it). The
+            // tenant rule below needs the organisation's root, so this must not depend on the org feature having run:
+            // without it, every user of the row would pass the tenant check.
+            return [outcome::skip($sid, importer::REASON_ORG_NOT_FOUND, 'org_without_path')];
+        }
         if ($org === null || $org->contextid === null) {
             // Preflight blocks this before anything is written. Reaching it means the data changed since.
             throw new blocked('org_context_missing:' . $f->orgid);
         }
+        // A normalised path always has a positive first segment, so every organisation reaching here has a tenant.
+        $orgroot = org_contexts::root_of($org->path);
+
+        // A department row names the organisation it lives under as well. The tenant is taken from the department
+        // alone, so a department outside that organisation is reported, not corrected.
+        $problems = [];
+        if ($f->containerid > 0 && $f->containerid !== $f->orgid) {
+            $container = $orgs[$f->containerid] ?? null;
+            if ($container !== null && $container->path !== null && $org->path !== null
+                    && !org_contexts::path_within($org->path, $container->path)) {
+                $problems[] = 'dept_outside_costcenter';
+            }
+        }
 
         // The users of the row. The position in the list (1-based) is what the map remembers, never the user id.
-        $problems = [];
         $valid = [];
         $seen = [];
+        $outside = 0;
         foreach (explode(',', $f->users) as $index => $token) {
             $position = $index + 1;
             $token = trim($token);
@@ -141,10 +178,23 @@ abstract class assignment_step extends step {
                 $problems[] = 'user_deleted';
                 continue;
             }
+            $userroot = $ctx->tenant->root_of_user($userid);
+            if ($userroot === 0) {
+                // No tenant path: nothing says the user belongs elsewhere, so the row stands, reported.
+                $problems[] = 'user_without_tenant';
+            } else if ($orgroot > 0 && $userroot !== $orgroot) {
+                // Never a role over another tenant's organisation (ADR-031): the user is left out of this row.
+                $problems[] = 'user_outside_org_tenant';
+                $outside++;
+                continue;
+            }
             $valid[] = [$position, $userid];
         }
         if (!$valid) {
-            $skip = outcome::skip($sid, importer::REASON_NO_VALID_USER, $problems[0] ?? 'user_missing');
+            // Somebody was refused for their tenant: the owner sees that, whatever else was wrong with the row.
+            $skip = $outside > 0
+                ? outcome::skip($sid, importer::REASON_USER_OUTSIDE_TENANT)
+                : outcome::skip($sid, importer::REASON_NO_VALID_USER, $problems[0] ?? 'user_missing');
             foreach (array_unique($problems) as $code) {
                 $skip->warn($code);
             }
@@ -160,17 +210,21 @@ abstract class assignment_step extends step {
         if ($f->assigned <= 0) {
             $problems[] = 'no_source_time';
         }
-        // The audit list is scoped by the actor's path or the target's, so the actor's path goes on the row.
-        [$openpath, , $method] = $ctx->tenant->resolve(['actor' => $modifier > 0 ? $ctx->lookups->user_path($modifier) : null]);
-        $orgroot = $org->path === null ? 0 : (int) explode('/', ltrim($org->path, '/'))[0];
+        // The audit list shows a row to whoever the actor's tenant or the target's tenant is, so the actor's path goes
+        // on the row. An actor outside the organisation's tenant cannot have made the assignment in the native UI
+        // (ADR-031 confines actors to their own tenant), and their path would show the row to the wrong tenant:
+        // the row then carries no path and is seen through its target.
+        [$openpath, $actorroot, $method] = $ctx->tenant->resolve(
+            ['actor' => $modifier > 0 ? $ctx->lookups->user_path($modifier) : null]);
+        $actoroutside = $openpath !== null && $orgroot > 0 && (int) $actorroot !== $orgroot;
+        if ($actoroutside) {
+            $openpath = null;
+        }
 
         $primary = null;
         $subs = [];
+        $audits = 0;
         foreach ($valid as [$position, $userid]) {
-            $userroot = $ctx->tenant->root_of_user($userid);
-            if ($orgroot > 0 && $userroot > 0 && $userroot !== $orgroot) {
-                $problems[] = 'user_outside_org_tenant';
-            }
             $have = $existing[$userid] ?? null;
             if ($have !== null) {
                 if ($primary === null) {
@@ -209,14 +263,34 @@ abstract class assignment_step extends step {
                 'open_path' => $openpath,
                 'timecreated' => $f->audited,
             ], 'aud:' . $position);
+            $audits++;
         }
 
+        if ($actoroutside && $audits > 0) {
+            $method = 'unresolved';
+            $problems[] = 'actor_outside_org_tenant';
+        }
         $primary->tenant_method($method);
         foreach (array_unique($problems) as $code) {
             $primary->warn($code);
         }
         array_unshift($subs, $primary);
         return $subs;
+    }
+
+    /**
+     * May this role be assigned at a course category? (role_context_levels, the rule the role UI applies.)
+     *
+     * @param int $roleid
+     * @return bool
+     */
+    private function assignable_at_category(int $roleid): bool {
+        global $DB;
+        if (!isset($this->assignable[$roleid])) {
+            $this->assignable[$roleid] = $DB->record_exists('role_context_levels',
+                ['roleid' => $roleid, 'contextlevel' => CONTEXT_COURSECAT]);
+        }
+        return $this->assignable[$roleid];
     }
 
     /**
@@ -260,6 +334,23 @@ abstract class assignment_step extends step {
     private function role_shortname(int $roleid): string {
         global $DB;
         return (string) $DB->get_field('role', 'shortname', ['id' => $roleid]);
+    }
+
+    /**
+     * The user ids a comma list names, without duplicates: the tokens transform() would accept as ids.
+     *
+     * @param string $list For example '12, 13,abc'.
+     * @return int[]
+     */
+    public static function user_ids(string $list): array {
+        $ids = [];
+        foreach (explode(',', $list) as $token) {
+            $token = trim($token);
+            if (preg_match('/^[0-9]{1,10}$/', $token) && (int) $token > 0) {
+                $ids[(int) $token] = (int) $token;
+            }
+        }
+        return array_values($ids);
     }
 
     /**

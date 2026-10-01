@@ -39,6 +39,11 @@ use local_sentientia_platform\bizlms\tenant_resolver;
  *  - aud:N  the audit row of the assignment at position N.
  * N is the 1-based position in the list, never the user id (legacymap holds no personal data).
  *
+ * Tenant rule (ADR-031, decisions 5 and 6): a user never gets a role over another tenant's organisation. Such a user
+ * is left out of the row with a warning; a row with no user left is skipped as user_outside_org_tenant, a reason the
+ * owner must accept. A role that may not be assigned at a category is skipped as role_not_assignable (owner reason
+ * too): core would refuse both assignments.
+ *
  * @package    local_sentientia_roles
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -75,8 +80,14 @@ final class importer implements importer_contract {
     /** Reason: the role no longer exists. */
     public const REASON_ROLE_NOT_FOUND = 'role_not_found';
 
+    /** Reason: the role may not be assigned at a course category (role_context_levels). */
+    public const REASON_ROLE_NOT_ASSIGNABLE = 'role_not_assignable';
+
     /** Reason: the organisation is not in the org map (missing, or not an organisation row). */
     public const REASON_ORG_NOT_FOUND = 'org_not_found';
+
+    /** Reason: every user of the row belongs to another tenant than the organisation (ADR-031). */
+    public const REASON_USER_OUTSIDE_TENANT = 'user_outside_org_tenant';
 
     /** Reason: no user of the row exists and is active. */
     public const REASON_NO_VALID_USER = 'no_valid_user';
@@ -106,12 +117,12 @@ final class importer implements importer_contract {
 
     /**
      * The plugin version that ships this importer. There is no schema addition: the audit table and role_assignments
-     * already exist.
+     * already exist. 2026093002 carries the tenant and role-level rules of the review round.
      *
      * @return int
      */
     public function requires_version(): int {
-        return 2026093001;
+        return 2026093002;
     }
 
     /**
@@ -182,7 +193,9 @@ final class importer implements importer_contract {
             new reason(self::REASON_NO_ROLE, false, false),
             new reason(self::REASON_VALUE_NOT_ASSIGNED, false, false),
             new reason(self::REASON_ROLE_NOT_FOUND, false, true),
+            new reason(self::REASON_ROLE_NOT_ASSIGNABLE, false, true),
             new reason(self::REASON_ORG_NOT_FOUND, false, true),
+            new reason(self::REASON_USER_OUTSIDE_TENANT, false, true),
             new reason(self::REASON_NO_VALID_USER, false, false),
             new reason(self::REASON_ALREADY_ASSIGNED, false, false),
         ];
@@ -227,14 +240,15 @@ final class importer implements importer_contract {
 
         // Rows that would become an assignment, per source table: the columns that name the organisation.
         $candidates = [
-            self::PERMISSIONS => ['columns' => ['costcenterid', 'roleid'], 'filter' => ['t.value = 1 AND t.roleid > 0', []],
-                'orgcolumns' => ['costcenterid']],
-            self::DEPT_ROLES => ['columns' => ['costcenterid', 'departmentid', 'roleid'], 'filter' => ['t.roleid > 0', []],
-                'orgcolumns' => ['departmentid', 'costcenterid']],
+            self::PERMISSIONS => ['columns' => ['costcenterid', 'roleid', 'userid'],
+                'filter' => ['t.value = 1 AND t.roleid > 0', []], 'orgcolumns' => ['costcenterid']],
+            self::DEPT_ROLES => ['columns' => ['costcenterid', 'departmentid', 'roleid', 'userid'],
+                'filter' => ['t.roleid > 0', []], 'orgcolumns' => ['departmentid', 'costcenterid']],
         ];
 
         $orgids = [];
         $roleids = [];
+        $holders = [];
         $total = 0;
         foreach ($candidates as $table => $spec) {
             if (!$legacy->exists($table)) {
@@ -255,6 +269,7 @@ final class importer implements importer_contract {
                     }
                     if ($orgid > 0) {
                         $orgids[$orgid] = true;
+                        $holders[] = [$orgid, (string) ($row->userid ?? '')];
                     }
                     if ((int) $row->roleid > 0) {
                         $roleids[(int) $row->roleid] = true;
@@ -271,14 +286,19 @@ final class importer implements importer_contract {
             return $pf->block('org_source_missing:' . self::COSTCENTER);
         }
 
-        // Every organisation an assignment would land in needs an existing course category context.
+        // Every organisation an assignment would land in needs an existing course category context. A local_costcenter
+        // row with no normalised path is not an organisation (the org feature skips it, and so does transform() as
+        // org_not_found): it is reported, but it cannot block, because the legacy tables are never written to clear it.
         $orgs = org_contexts::for_orgs($legacy, array_keys($orgids));
         $nocategory = [];
         $nocontext = [];
+        $nopath = [];
         $notfound = 0;
         foreach (array_keys($orgids) as $orgid) {
             if (!isset($orgs[$orgid])) {
                 $notfound++;
+            } else if ($orgs[$orgid]->path === null) {
+                $nopath[] = $orgid;
             } else if ($orgs[$orgid]->category <= 0) {
                 $nocategory[] = $orgid;
             } else if ($orgs[$orgid]->contextid === null) {
@@ -294,11 +314,34 @@ final class importer implements importer_contract {
             sort($nocontext);
             $pf->block('org_context_missing:' . count($nocontext) . ' ids=' . implode(',', array_slice($nocontext, 0, 20)));
         }
+        if ($nopath) {
+            sort($nopath);
+            $pf->warn('org_without_path:' . count($nopath) . ' ids=' . implode(',', array_slice($nopath, 0, 20)));
+        }
         if ($notfound) {
             $pf->warn('org_not_found:' . $notfound);
         }
 
-        // A role that cannot be assigned at a category is still imported (BizLMS did), but the owner should see it.
+        // Users of another tenant than the organisation they would get a role in are left out (ADR-031): count them
+        // now, so the owner sees the size of it before an apply.
+        $outside = 0;
+        foreach ($holders as [$orgid, $list]) {
+            $orgroot = isset($orgs[$orgid]) ? org_contexts::root_of($orgs[$orgid]->path) : 0;
+            if ($orgroot === 0) {
+                continue;
+            }
+            foreach (assignment_step::user_ids($list) as $userid) {
+                $userroot = $ctx->lookups->user_active($userid) ? $ctx->tenant->root_of_user($userid) : 0;
+                if ($userroot > 0 && $userroot !== $orgroot) {
+                    $outside++;
+                }
+            }
+        }
+        if ($outside) {
+            $pf->warn('user_outside_org_tenant:' . $outside);
+        }
+
+        // A role that may not be assigned at a category is skipped (role_not_assignable): the owner should see it.
         if ($roleids) {
             [$insql, $params] = $DB->get_in_or_equal(array_keys($roleids), SQL_PARAMS_NAMED, 'blmrole');
             $params['blmlevel'] = CONTEXT_COURSECAT;
@@ -358,7 +401,9 @@ final class importer implements importer_contract {
             $failures[] = "audit_rows_differ:assignments={$created} audit={$audited}";
         }
 
-        // The actor's path on the audit rows this import wrote is a normalised path with a registered root, or empty.
+        // The actor's path on the audit rows this import wrote is a normalised path with a registered root. A row the
+        // import could not attribute to a tenant (no actor, or an actor outside the organisation's tenant) holds NULL,
+        // never an empty string, and is not checked here.
         $paths = $DB->get_records_sql(
             "SELECT MIN(a.id) AS id, a.open_path AS pathvalue, COUNT(1) AS n
                FROM {" . legacymap::TABLE . "} m
@@ -376,7 +421,8 @@ final class importer implements importer_contract {
 
     /**
      * Outside any transaction. Role assignments written straight into the table do not reach the users' cached
-     * access or the category caches: mark every touched context dirty and reset the caches role_assign() would.
+     * access or the category caches: mark every touched context and every assigned user dirty and reset the caches
+     * role_assign() would (mark_user_dirty() and core_course_category::role_assignment_changed()).
      *
      * @param context $ctx
      * @return void
@@ -402,6 +448,18 @@ final class importer implements importer_contract {
                 $dirty[$context->id] = true;
             }
             \core_course_category::role_assignment_changed((int) $row->roleid, $context);
+        }
+
+        // role_assign() marks the user dirty: a live session's cached access data reloads at its next check. The
+        // context flag above covers role definitions, not the assignments of one user.
+        $users = $DB->get_fieldset_sql(
+            "SELECT DISTINCT ra.userid
+               FROM {role_assignments} ra
+               JOIN {" . legacymap::TABLE . "} m ON m.targetid = ra.id
+              WHERE m.feature = :feature AND m.targettable = :assignments AND m.outcome = 'imported'",
+            ['feature' => self::FEATURE, 'assignments' => self::ASSIGNMENTS]);
+        foreach ($users as $userid) {
+            mark_user_dirty((int) $userid);
         }
     }
 
