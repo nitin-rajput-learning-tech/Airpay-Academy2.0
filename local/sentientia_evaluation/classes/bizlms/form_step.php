@@ -132,10 +132,11 @@ final class form_step extends step {
         // Tenant: the form's own path, then the root BizLMS kept in costcenterid, then the classroom it belongs to,
         // then whoever last edited it.
         $rawpath = trim((string) ($row->open_path ?? ''));
+        [$classroompath, $deferredparent] = $this->classroom_path($ctx, $row);
         [$path, $costcenterid, $method] = tenant_scope::resolve($ctx, [
             'open_path' => $rawpath === '' ? null : $rawpath,
             'costcenterid' => tenant_scope::root_path($row->costcenterid ?? null),
-            'classroom' => $this->classroom_path($ctx, $row),
+            'classroom' => $classroompath,
             'usermodified' => tenant_scope::user_root_path($ctx, (int) ($row->usermodified ?? 0)),
         ]);
 
@@ -166,6 +167,11 @@ final class form_step extends step {
         $fields->timemodified = $modified;
 
         $outcome = outcome::insert($id, importer::T_FORMS, $fields)->tenant_method($method);
+        if ($deferredparent !== null) {
+            // A single-feature dry run without the classroom feature: the form falls back to its other tenant clues,
+            // and the report says why instead of leaving a silent fallback.
+            $outcome->warn($deferredparent);
+        }
         if ($derived) {
             $outcome->warn('derived_timestamp');
         }
@@ -205,19 +211,25 @@ final class form_step extends step {
      *
      * @param context $ctx
      * @param \stdClass $row
-     * @return string|null
+     * @return array{0: string|null, 1: string|null} [the classroom's path or null, a warning code or null]. The
+     *         warning is deferred:local_classroom when the classroom has no map entry because the classroom
+     *         feature is neither complete nor simulated in this run (a single-feature dry run): the path is null
+     *         then, so the caller's other tenant clues apply, exactly as before; only the report is told why.
      */
-    private function classroom_path(context $ctx, \stdClass $row): ?string {
+    private function classroom_path(context $ctx, \stdClass $row): array {
         if ((string) ($row->plugin ?? '') !== 'classroom' || (int) ($row->instance ?? 0) <= 0) {
-            return null;
+            return [null, null];
         }
         $target = $ctx->map->resolve(importer::SRC_CLASSROOM, (int) $row->instance);
+        if ($target === null && $ctx->is_deferred(importer::SRC_CLASSROOM)) {
+            return [null, 'deferred:' . importer::SRC_CLASSROOM];
+        }
         if ($target === null || $target <= 0 || !$ctx->legacy->exists(importer::CLASSROOM_TARGET)
                 || !$ctx->legacy->has_column(importer::CLASSROOM_TARGET, 'open_path')) {
-            return null;
+            return [null, null];
         }
         $found = $ctx->legacy->fetch(importer::CLASSROOM_TARGET, [$target], ['id', 'open_path']);
         $path = isset($found[$target]) ? trim((string) $found[$target]->open_path) : '';
-        return $path === '' ? null : $path;
+        return [$path === '' ? null : $path, null];
     }
 }

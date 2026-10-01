@@ -551,3 +551,17 @@ screenshots listed per item before it is merged.
   was filled in by a user who is gone). Checked without Moodle through a stub of the framework context
   (the real `form_facts`, `response_step` and `outcome` against in-memory tables): both cases, a pair with nothing
   imported, and the unchanged legacy facts.
+- **EV-28 - a single-feature dry run reports a missing parent as deferred, not as the data's fault (re-review minor).**
+  `form_step`, `assignment_step` and `response_step` looked up a form's classroom (and `response_step` a program)
+  through the map without asking `$ctx->is_deferred()`. In a dry run of the evaluation feature alone the classroom and
+  program features are neither complete nor simulated, so every trainer or program feedback form reported
+  `classroom_unresolved` (assignments) or nothing at all (forms, responses) as though the data were wrong. Now, when
+  the map has no entry and `$ctx->is_deferred('local_classroom')` (or `'local_program'`) is true, the outcome carries
+  the warning `deferred:local_classroom` (or `deferred:local_program`) instead. `form_step::classroom_path()` returns
+  `[path, warning]`; the form's tenant fallback still applies, only the report says why. Outcomes do not change, so
+  the accounting and parity do not change, and an apply run is unaffected (the runner requires the dependencies to be
+  complete). When the parents ARE in the run and the classroom is still unmapped, `assignment_step` still says
+  `classroom_unresolved`. No schema change, no version change. Test:
+  `bizlms_import_test::test_a_dry_run_without_its_parents_reports_the_classroom_as_deferred` (an evaluation-only dry
+  run through `runner->run(['evaluation'])`, then an all-features dry run for the contrast). Checked without Moodle
+  through the stub harness: the assignment and response steps, deferred and not, mapped and not.

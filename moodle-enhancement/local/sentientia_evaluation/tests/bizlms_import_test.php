@@ -13,6 +13,7 @@ use local_sentientia_platform\bizlms\importer as framework_importer;
 use local_sentientia_platform\bizlms\legacymap;
 use local_sentientia_platform\bizlms\registry;
 use local_sentientia_platform\bizlms\report;
+use local_sentientia_platform\bizlms\runner;
 use local_sentientia_platform\phpunit\importer_contract;
 use local_sentientia_platform\phpunit\legacy_schema_fixture;
 
@@ -1282,6 +1283,38 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertContains('foreign_values:1', $preflight['warnings']);
         $this->assertContains('orphan_rows:local_evaluation_value:item:1', $preflight['warnings']);
         $this->assertSame([], $preflight['blockers'], 'a warning, not a blocker: the rows are reported and archived');
+    }
+
+    public function test_a_dry_run_without_its_parents_reports_the_classroom_as_deferred(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+
+        // The evaluation feature ALONE: the classroom feature is neither complete nor simulated, so the trainer
+        // feedback form (form 4, classroom 7) cannot find its classroom in the map. That is the run's doing, not the
+        // data's, and the report says so instead of calling the classroom unresolved.
+        $report = new report();
+        $runner = new runner([
+            'apply' => false, 'decisions' => $this->contract_decisions(), 'report' => $report,
+            'batch' => $this->contract_batch(), 'atomic_threshold' => 0,
+        ]);
+        $result = $runner->run(['evaluation']);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        foreach (['evaluation.forms', 'evaluation.assignments', 'evaluation.responses'] as $step) {
+            $warnings = $this->section($report, $step, 'warnings');
+            $this->assertEquals(1, $warnings['deferred:local_classroom'] ?? 0, $step . ': the one trainer feedback form');
+            $this->assertArrayNotHasKey('classroom_unresolved', $warnings, $step);
+        }
+
+        // With every feature in the run the classroom is simulated; it is still not in the map, so now it IS
+        // unresolved, as before.
+        [$result, $report] = $this->contract_run(false);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        $warnings = $this->section($report, 'evaluation.assignments', 'warnings');
+        $this->assertEquals(1, $warnings['classroom_unresolved'] ?? 0);
+        $this->assertArrayNotHasKey('deferred:local_classroom', $warnings);
+        foreach (['evaluation.forms', 'evaluation.responses'] as $step) {
+            $this->assertArrayNotHasKey('deferred:local_classroom', $this->section($report, $step, 'warnings'), $step);
+        }
     }
 
     public function test_the_import_sends_nothing_and_queues_nothing(): void {

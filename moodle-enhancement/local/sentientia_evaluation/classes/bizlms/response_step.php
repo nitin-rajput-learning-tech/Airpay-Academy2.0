@@ -169,6 +169,15 @@ final class response_step extends step {
         $instance = (int) ($form->instance ?? 0);
         $classroomid = ($plugin === 'classroom' && $instance > 0) ? $ctx->map->resolve(importer::SRC_CLASSROOM, $instance) : null;
         $programid = ($plugin === 'program' && $instance > 0) ? $ctx->map->resolve(importer::SRC_PROGRAM, $instance) : null;
+        // A single-feature dry run without the classroom or program feature: the response keeps no classroom or
+        // program, and the report says why instead of leaving it silent. Apply runs require those features first.
+        $deferredparents = [];
+        if ($plugin === 'classroom' && $instance > 0 && $classroomid === null && $ctx->is_deferred(importer::SRC_CLASSROOM)) {
+            $deferredparents[] = 'deferred:' . importer::SRC_CLASSROOM;
+        }
+        if ($plugin === 'program' && $instance > 0 && $programid === null && $ctx->is_deferred(importer::SRC_PROGRAM)) {
+            $deferredparents[] = 'deferred:' . importer::SRC_PROGRAM;
+        }
 
         $set = $this->facts->answers($ctx, $row, $form);
         $response = outcome::insert($id, importer::T_RESPONSES, (object) [
@@ -193,6 +202,9 @@ final class response_step extends step {
         }
         if ($courseunknown) {
             $response->warn('course_not_found');
+        }
+        foreach ($deferredparents as $warning) {
+            $response->warn($warning);
         }
         if ($set->rejected) {
             $response->warn('rejected_values');
