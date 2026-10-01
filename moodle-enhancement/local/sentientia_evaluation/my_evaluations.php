@@ -42,7 +42,7 @@ foreach (\local_sentientia_evaluation\learner_history::for_user((int) $USER->id)
     // Any status the page has no word for is shown as waiting, never as an error.
     $status = in_array($entry->status, $known, true) ? $entry->status : \local_sentientia_evaluation\learner_history::STATUS_ASSIGNED;
     $rows[] = [
-        'name' => format_string($entry->name),
+        'name' => format_string($entry->name, true, ['escape' => false]),
         'status_' . $status => true,
         'status_label' => get_string('my_evaluations_status_' . $status, 'local_sentientia_evaluation'),
         // The day for an evaluation whose respondents are protected, the minute otherwise - the same rule
