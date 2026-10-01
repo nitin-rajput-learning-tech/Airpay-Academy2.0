@@ -479,3 +479,18 @@ screenshots listed per item before it is merged.
   archived, and a native form). Checked without Moodle: `questions.mustache` rendered for a native form, a read-only
   form and a read-only form with no questions. Screenshots needed: `index.php` with one imported and one native row, and
   `questions.php` for an imported numeric form, desktop and 590 px, as a tenant admin.
+- **EV-11 - the template library is tenant-scoped (mapping doc code fix 9).** `list_templates(int $costcenterid)` returned
+  every row for 0, compared a non-zero argument with `costcenterid` as a bare number (the column holds an organisation
+  id, not a tenant number) and always added every tenant's `ispublic` templates; `create_evaluation_from_template()` and
+  `delete_template()` had no tenant check. `list_templates()` now takes no argument and works the scope out from the
+  caller: `tenant::is_cross_tenant()` (site admin, or the platform's `crosstenant` capability) sees all; anyone else
+  sees the templates whose organisation (`JOIN local_sentientia_org`) is inside their tenant by
+  `tenant::path_filter('o', 'path')`; a caller with no tenant sees none; `costcenterid` 0 is cross-tenant only, as for
+  evaluations. New `can_access_template()` / `require_template_access($id)` apply the same rule and are for the entry
+  point of any future page or web service to call before `create_evaluation_from_template()` or `delete_template()`
+  (those two take no session user, because the CLI drives them, so the gate is not inside them). Nothing calls
+  templates from a page today, so no UI and no strings change. **Owner decision left open:** another tenant's
+  `ispublic` templates are NOT listed (the strict ADR-031 reading), yet the help text of "Make this template available
+  to other tenants" (`template_ispublic_help`) promises sharing; widening it is for when a picker is built. No version
+  change. Test: `tenant_scope_test::test_template_library_is_tenant_scoped` (a /1/5 template, a /77 one, one with no
+  tenant, a public /77 one, and /10 against /1).

@@ -1580,6 +1580,9 @@ class evaluation_manager {
     /**
      * Create a new evaluation from a saved template.
      * Returns the array `import_template()` returns (id, name, question_count).
+     *
+     * No session check here (the CLI calls it): a page or web service that offers it calls
+     * {@see self::require_template_access()} first.
      */
     public static function create_evaluation_from_template(int $templateid,
                                                              int $target_costcenterid = 0,
@@ -1596,24 +1599,74 @@ class evaluation_manager {
     }
 
     /**
-     * Get templates visible to the given tenant. Returns ALL ispublic=1
-     * rows + the caller-tenant's own rows.
+     * The templates the CURRENT USER may see (ADR-031): a cross-tenant caller (site admin, or the platform's
+     * crosstenant capability) sees every template; anyone else sees the templates whose organisation is inside
+     * their own tenant. A caller with no tenant sees none.
      *
-     * @param int $caller_costcenterid  0 = siteadmin → return everything
-     * @return array<int, \stdClass>
+     * A template's costcenterid is an organisation id (the importer and the "save as template" call both store one),
+     * so the scope is read from that organisation's path, not by comparing the id with a tenant number. A template
+     * with costcenterid 0 belongs to no tenant and is for cross-tenant callers only, as a global evaluation is.
+     * Another tenant's `ispublic` templates are NOT included: that is the strict ADR-031 reading. Widening it
+     * (the help text of "Make this template available to other tenants" promises as much) is an owner decision for
+     * when a picker is built; until then nothing in the plugin lists templates to a user.
+     *
+     * Until 2026-10-01 this took a costcenterid, treated 0 as "everything", compared a non-zero one with the
+     * template's organisation id as a bare number, and always added every tenant's public templates.
+     *
+     * @return array<int, \stdClass> template rows, newest first
      */
-    public static function list_templates(int $caller_costcenterid = 0): array {
+    public static function list_templates(): array {
         global $DB;
-        if ($caller_costcenterid === 0) {
-            return $DB->get_records(self::TEMPLATE_TABLE, null,
-                'timemodified DESC');
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return $DB->get_records(self::TEMPLATE_TABLE, null, 'timemodified DESC, id DESC');
         }
+        // path_filter() is '1=0' for a caller with no tenant.
+        [$tsql, $tparams] = \local_sentientia_platform\tenant::path_filter('o', 'path');
         return $DB->get_records_sql(
-            "SELECT * FROM {" . self::TEMPLATE_TABLE . "}
-              WHERE ispublic = 1
-                 OR costcenterid = :cid
-           ORDER BY ispublic DESC, timemodified DESC",
-            ['cid' => $caller_costcenterid]);
+            "SELECT t.*
+               FROM {" . self::TEMPLATE_TABLE . "} t
+               JOIN {local_sentientia_org} o ON o.id = t.costcenterid
+              WHERE {$tsql}
+           ORDER BY t.timemodified DESC, t.id DESC", $tparams);
+    }
+
+    /**
+     * ADR-031: may the current user use (create an evaluation from, delete) this template? The same rule as
+     * list_templates().
+     *
+     * @param \stdClass $template a template row carrying costcenterid
+     * @return bool
+     */
+    public static function can_access_template(\stdClass $template): bool {
+        global $DB;
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return true;
+        }
+        $orgid = (int) ($template->costcenterid ?? 0);
+        if ($orgid <= 0) {
+            return false;
+        }
+        $path = (string) $DB->get_field('local_sentientia_org', 'path', ['id' => $orgid]);
+        return self::path_in_root($path, \local_sentientia_platform\tenant::root_for_current_user());
+    }
+
+    /**
+     * ADR-031: load a template by id and refuse unless can_access_template(). A page or web service that offers
+     * create_evaluation_from_template() or delete_template() calls this first, at the entry point, as the
+     * evaluation pages call require_evaluation_access(); those two methods take no session user (the CLI drives
+     * them), so the gate is not inside them.
+     *
+     * @param int $templateid
+     * @return \stdClass the template row
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_template_access(int $templateid): \stdClass {
+        global $DB;
+        $template = $DB->get_record(self::TEMPLATE_TABLE, ['id' => $templateid], '*', MUST_EXIST);
+        if (!self::can_access_template($template)) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        return $template;
     }
 
     /**
@@ -1634,6 +1687,9 @@ class evaluation_manager {
      *
      * A template the BizLMS import created is part of the imported history and is kept (decision
      * framework.protect_imported_history: delete actions on imported rows are blocked).
+     *
+     * No session check here (the CLI calls it): a page or web service that offers it calls
+     * {@see self::require_template_access()} first.
      *
      * @param int $templateid
      * @return bool
