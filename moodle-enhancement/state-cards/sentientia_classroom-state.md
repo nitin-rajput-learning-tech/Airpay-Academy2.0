@@ -520,3 +520,7 @@ language change (plugin stays 2026093001 / 1.10.6); deploying the JS needs a JS-
 - **Gates:** php -l on every changed PHP file; `tools/check-tree-drift.php` 0 new; `tools/check-lang-parity.php`
   0 failures (no string changed); `tools/check-path-boundary.php` clean; `scan_amd_build_parity.php` 0 missing.
   Both trees byte-identical for every file touched.
+
+## 2026-10-01 - Test fix only (first real PHPUnit run)
+
+No plugin code or version change. `tests/location_schema_test.php::test_upgrade_step_2026092501_widens_the_coordinates_of_an_upgraded_site` asserted the stored version equals 2026092501, but the upgrade function runs every later step, so the version ends at the plugin's latest (now 2026093001). It asserts `>=` the step under test. Passes on Moodle 5.1.3 / MariaDB 10.11. See `sentientia_platform-state.md` (2026-10-01) for the rest of the bundle.
