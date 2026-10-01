@@ -1354,6 +1354,28 @@ class evaluation_manager {
     }
 
     /**
+     * Do the response list and the CSV export carry a "Subject" column for this evaluation?
+     *
+     * A supervisor evaluation (BizLMS evaluationmode SP) is answered by one person ABOUT another, and the import
+     * keeps that person in responses.subject_userid. Native forms never set it, so for them nothing changes: the
+     * column appears only when some response names a subject, and never on a protected evaluation (the subject of
+     * an anonymous supervisor form could identify the respondent; the import does not keep it there either).
+     *
+     * @param \stdClass $evaluation record carrying id and anonymous
+     * @param bool|null $identityprotected identity_protected($evaluation), when the caller has it already;
+     *                  null = work it out here
+     * @return bool
+     */
+    public static function shows_subject(\stdClass $evaluation, ?bool $identityprotected = null): bool {
+        global $DB;
+        if ($identityprotected ?? self::identity_protected($evaluation)) {
+            return false;
+        }
+        return $DB->record_exists_select(self::RESPONSES_TABLE,
+            'evaluationid = :eid AND subject_userid IS NOT NULL', ['eid' => (int) $evaluation->id]);
+    }
+
+    /**
      * Has anybody actually submitted this evaluation? The trigger queue's
      * pending "shell" rows (timesubmitted 0, see evaluation_engine) are not
      * responses.
@@ -2331,10 +2353,15 @@ class evaluation_manager {
      * @param bool|null $identityprotected identity_protected($eval), when the
      *                  caller has it already (exportcsv.php, once per export);
      *                  null = work it out here
+     * @param bool      $withsubject true to add a Subject cell after Email: the person a supervisor evaluation is
+     *                  about ({@see self::shows_subject()}). It goes with csv_header_row()'s $withsubject, and is
+     *                  empty for a response with no subject and on a protected evaluation. Default false, so the
+     *                  layout of every native form's export is unchanged.
      * @return array  row of strings
      */
     public static function response_to_csv_row(object $response, array $questions,
-                                                object $eval, ?bool $identityprotected = null): array {
+                                                object $eval, ?bool $identityprotected = null,
+                                                bool $withsubject = false): array {
         global $DB;
 
         // Phase G.2 (2026-05-08) — when any question in the form is
@@ -2367,9 +2394,16 @@ class evaluation_manager {
             $row[] = '(anonymous)';
             $row[] = '';
         } else {
-            $u = \core_user::get_user((int) $response->userid, 'id, firstname, lastname, email');
+            // Every name field: fullname() reports (in developer mode) a user object that lacks some of them.
+            $u = \core_user::get_user((int) $response->userid,
+                'id, email, ' . implode(', ', \core_user\fields::get_name_fields()));
             $row[] = $u ? fullname($u) : '(deleted user)';
             $row[] = $u ? $u->email : '';
+        }
+
+        // The person a supervisor evaluation is about. Never on a protected evaluation, whatever the row holds.
+        if ($withsubject) {
+            $row[] = $protected ? '' : self::subject_label($response->subject_userid ?? null);
         }
 
         // Context columns.
@@ -2394,13 +2428,35 @@ class evaluation_manager {
     }
 
     /**
+     * The name of the person a response is about, for the Subject column.
+     *
+     * @param int|string|null $subjectid responses.subject_userid
+     * @return string '' when the response has no subject; '(deleted user)' when that account is gone or deleted
+     */
+    public static function subject_label($subjectid): string {
+        if ($subjectid === null || (int) $subjectid <= 0) {
+            return '';
+        }
+        // Every name field, so fullname() has what the site's name format may ask for.
+        $user = \core_user::get_user((int) $subjectid,
+            'id, deleted, ' . implode(', ', \core_user\fields::get_name_fields()));
+        return ($user && empty($user->deleted)) ? fullname($user) : '(deleted user)';
+    }
+
+    /**
      * CSV header row matching response_to_csv_row().
      *
      * @param array $questions ordered question records (from get_questions)
+     * @param bool $withsubject true to add the Subject column after Email ({@see self::shows_subject()}); it must
+     *             be passed to response_to_csv_row() as well
      * @return array
      */
-    public static function csv_header_row(array $questions): array {
-        $header = ['Submitted', 'Respondent', 'Email', 'Course ID', 'Program ID', 'Classroom ID'];
+    public static function csv_header_row(array $questions, bool $withsubject = false): array {
+        $header = ['Submitted', 'Respondent', 'Email'];
+        if ($withsubject) {
+            $header[] = get_string('responses_col_subject', 'local_sentientia_evaluation');
+        }
+        array_push($header, 'Course ID', 'Program ID', 'Classroom ID');
         $i = 1;
         foreach ($questions as $q) {
             $label = 'Q' . $i . ': ' . trim((string) $q->questiontext);

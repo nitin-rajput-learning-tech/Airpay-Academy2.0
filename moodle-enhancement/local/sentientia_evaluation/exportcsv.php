@@ -72,11 +72,15 @@ fwrite($out, "\xEF\xBB\xBF");
 // hides the respondent and carries the day, not the minute, it was submitted.
 $identityprotected = \local_sentientia_evaluation\evaluation_manager::identity_protected($eval);
 
-fputcsv($out, \local_sentientia_evaluation\evaluation_manager::csv_header_row($questions));
+// A Subject column (the person a supervisor evaluation is about) only for a form that has one, and never for a
+// protected form. Worked out once, for the header and every row. Native forms export exactly as before.
+$withsubject = \local_sentientia_evaluation\evaluation_manager::shows_subject($eval, $identityprotected);
+
+fputcsv($out, \local_sentientia_evaluation\evaluation_manager::csv_header_row($questions, $withsubject));
 foreach ($responses as $r) {
     fputcsv($out,
         \local_sentientia_evaluation\evaluation_manager::response_to_csv_row($r, $questions, $eval,
-            $identityprotected));
+            $identityprotected, $withsubject));
 }
 fclose($out);
 

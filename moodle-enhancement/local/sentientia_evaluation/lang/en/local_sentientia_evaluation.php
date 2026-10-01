@@ -284,3 +284,6 @@ $string['my_evaluations_imported'] = 'From the previous system';
 $string['my_evaluations_anonymous_note'] = 'Anonymous evaluation: your answers are not linked to you.';
 $string['my_evaluations_none'] = 'You have no evaluations on record.';
 $string['my_evaluations_unavailable'] = 'Your evaluation history is not available yet.';
+
+// 2026-10-01 (EV-02): the person a supervisor evaluation is about.
+$string['responses_col_subject'] = 'Subject';

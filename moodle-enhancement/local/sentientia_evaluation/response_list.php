@@ -40,13 +40,20 @@ require_capability('local/sentientia_evaluation:view', $ctx);
 // the time is shown to the day only.
 $is_anonymous = \local_sentientia_evaluation\evaluation_manager::identity_protected($evaluation);
 
-// Pull all responses with associated user info.
+// A supervisor evaluation is answered by one person about another; the import keeps that person in
+// subject_userid. The column appears only when some response has one, and never on a protected evaluation.
+$show_subject = \local_sentientia_evaluation\evaluation_manager::shows_subject($evaluation, $is_anonymous);
+
+// Pull all responses with associated user info (and, for a supervisor evaluation, the person it is about).
 $rows = $DB->get_records_sql(
-    "SELECT r.id, r.userid, r.courseid, r.programid, r.classroomid,
+    "SELECT r.id, r.userid, r.subject_userid, r.courseid, r.programid, r.classroomid,
             r.timesubmitted,
-            u.firstname, u.lastname, u.email, u.open_employeeid
+            u.firstname, u.lastname, u.email, u.open_employeeid,
+            s.id AS subjectuserid, s.firstname AS subjectfirstname, s.lastname AS subjectlastname,
+            s.deleted AS subjectdeleted
        FROM {local_sentientia_evaluation_responses} r
   LEFT JOIN {user} u ON u.id = r.userid
+  LEFT JOIN {user} s ON s.id = r.subject_userid
       WHERE r.evaluationid = :eid
         AND r.timesubmitted > 0
    ORDER BY r.timesubmitted DESC",
@@ -54,8 +61,16 @@ $rows = $DB->get_records_sql(
 
 $shape = [];
 foreach ($rows as $r) {
+    // '' when the response has no subject; '(deleted user)' when that account is gone or deleted.
+    $subject_name = '';
+    if ($show_subject && $r->subject_userid !== null) {
+        $subject_name = ($r->subjectuserid !== null && empty($r->subjectdeleted))
+            ? trim(($r->subjectfirstname ?? '') . ' ' . ($r->subjectlastname ?? ''))
+            : '(deleted user)';
+    }
     $shape[] = [
         'id'           => (int) $r->id,
+        'subject_name' => $subject_name,
         'submitted_at' => \local_sentientia_evaluation\evaluation_manager::submitted_label(
             (int) $r->timesubmitted, $is_anonymous),
         'user_name'    => $is_anonymous ? '(anonymous)'
@@ -74,6 +89,7 @@ echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_sentientia_evaluation/response_list', [
     'eval_name'     => format_string($evaluation->name),
     'is_anonymous'  => $is_anonymous,
+    'show_subject'  => $show_subject,
     'total'         => count($shape),
     'rows'          => $shape,
     'has_rows'      => !empty($shape),

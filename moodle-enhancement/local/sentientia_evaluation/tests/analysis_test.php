@@ -371,4 +371,112 @@ final class analysis_test extends \advanced_testcase {
         $this->assertSame('(anonymous)', $row[1]);
         $this->assertSame('',            $row[2]);
     }
+
+    // ─── Subject column (supervisor evaluations, ADR-032) ───────────────
+
+    /**
+     * Put a subject on a response, the way the BizLMS import does for a supervisor evaluation.
+     */
+    private function set_subject(int $responseid, ?int $subjectid): void {
+        global $DB;
+        $DB->set_field('local_sentientia_evaluation_responses', 'subject_userid', $subjectid, ['id' => $responseid]);
+    }
+
+    /**
+     * The CSV export gets a Subject column only for a form that has a person to name, after Email, and the row
+     * width follows the header. A native form keeps its layout; a protected form never names the subject.
+     */
+    public function test_csv_subject_column_only_for_named_supervisor_responses(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $gen = $this->getDataGenerator();
+        $supervisor = $gen->create_user(['firstname' => 'Sue', 'lastname' => 'Supervisor']);
+        $subject = $gen->create_user(['firstname' => 'Sam', 'lastname' => 'Subject']);
+        $label = get_string('responses_col_subject', 'local_sentientia_evaluation');
+
+        // (a) A native named form: no Subject header, and the row keeps its width.
+        $native = $this->seed_eval('Native', 1);
+        $nq = $this->seed_question($native, 'rating');
+        $this->seed_response($native, (int) $supervisor->id, [$nq => 5], time());
+        $nativeform = evaluation_manager::get($native);
+        $nativequestions = evaluation_manager::get_questions($native);
+        $nativerow = $DB->get_record('local_sentientia_evaluation_responses', ['evaluationid' => $native], '*', MUST_EXIST);
+        $this->assertFalse(evaluation_manager::shows_subject($nativeform));
+        $plainheader = evaluation_manager::csv_header_row($nativequestions);
+        $this->assertNotContains($label, $plainheader);
+        $this->assertCount(count($plainheader),
+            evaluation_manager::response_to_csv_row($nativerow, $nativequestions, $nativeform));
+        $this->assertSame('Email', $plainheader[2]);
+        $this->assertSame('Course ID', $plainheader[3]);
+
+        // (b) A supervisor form: Subject right after Email, holding the person the response is about.
+        $sp = $this->seed_eval('Supervisor', 1);
+        $sq = $this->seed_question($sp, 'rating');
+        $responseid = $this->seed_response($sp, (int) $supervisor->id, [$sq => 4], time());
+        $this->set_subject($responseid, (int) $subject->id);
+        // A second response on the same form with no subject (a native answer): an empty cell, same width.
+        $plainid = $this->seed_response($sp, (int) $supervisor->id, [$sq => 3], time() - 10);
+        $spform = evaluation_manager::get($sp);
+        $spquestions = evaluation_manager::get_questions($sp);
+        $this->assertTrue(evaluation_manager::shows_subject($spform));
+        $header = evaluation_manager::csv_header_row($spquestions, true);
+        $this->assertSame('Email', $header[2]);
+        $this->assertSame($label, $header[3]);
+        $this->assertSame('Course ID', $header[4]);
+        $this->assertCount(count($plainheader) + 1, $header);
+        $row = evaluation_manager::response_to_csv_row(
+            $DB->get_record('local_sentientia_evaluation_responses', ['id' => $responseid], '*', MUST_EXIST),
+            $spquestions, $spform, null, true);
+        $this->assertCount(count($header), $row);
+        $this->assertSame(fullname($supervisor), $row[1]);
+        $this->assertSame(fullname($subject), $row[3]);
+        $this->assertSame('4', $row[7], 'the answer is still the last column, after Course/Program/Classroom');
+        $norow = evaluation_manager::response_to_csv_row(
+            $DB->get_record('local_sentientia_evaluation_responses', ['id' => $plainid], '*', MUST_EXIST),
+            $spquestions, $spform, null, true);
+        $this->assertCount(count($header), $norow);
+        $this->assertSame('', $norow[3]);
+
+        // (c) The same form made anonymous, or one that holds a userid-0 response, never shows a subject.
+        $DB->set_field('local_sentientia_evaluation', 'anonymous', 1, ['id' => $sp]);
+        $anonform = evaluation_manager::get($sp);
+        $this->assertFalse(evaluation_manager::shows_subject($anonform));
+        $anonrow = evaluation_manager::response_to_csv_row(
+            $DB->get_record('local_sentientia_evaluation_responses', ['id' => $responseid], '*', MUST_EXIST),
+            $spquestions, $anonform, null, true);
+        $this->assertNotContains(fullname($subject), $anonrow);
+        $this->assertSame('', $anonrow[3]);
+
+        $sticky = $this->seed_eval('Once anonymous', 1);
+        $stickyq = $this->seed_question($sticky, 'rating');
+        $this->seed_response($sticky, 0, [$stickyq => 2], time());
+        $namedid = $this->seed_response($sticky, (int) $supervisor->id, [$stickyq => 5], time());
+        $this->set_subject($namedid, (int) $subject->id);
+        $stickyform = evaluation_manager::get($sticky);
+        $this->assertTrue(evaluation_manager::identity_protected($stickyform));
+        $this->assertFalse(evaluation_manager::shows_subject($stickyform));
+        $stickyrow = evaluation_manager::response_to_csv_row(
+            $DB->get_record('local_sentientia_evaluation_responses', ['id' => $namedid], '*', MUST_EXIST),
+            evaluation_manager::get_questions($sticky), $stickyform, null, true);
+        $this->assertNotContains(fullname($subject), $stickyrow);
+
+        // (d) A subject whose account is deleted, or gone altogether, is '(deleted user)', not a name.
+        $deleted = $gen->create_user(['firstname' => 'Dee', 'lastname' => 'Deleted']);
+        $gone = $this->seed_eval('Subjects who left', 1);
+        $gq = $this->seed_question($gone, 'rating');
+        $softid = $this->seed_response($gone, (int) $supervisor->id, [$gq => 1], time());
+        $this->set_subject($softid, (int) $deleted->id);
+        $goneid = $this->seed_response($gone, (int) $supervisor->id, [$gq => 2], time());
+        $this->set_subject($goneid, 987654321);
+        delete_user($deleted);
+        $goneform = evaluation_manager::get($gone);
+        $this->assertTrue(evaluation_manager::shows_subject($goneform));
+        foreach ([$softid, $goneid] as $id) {
+            $leftrow = evaluation_manager::response_to_csv_row(
+                $DB->get_record('local_sentientia_evaluation_responses', ['id' => $id], '*', MUST_EXIST),
+                evaluation_manager::get_questions($gone), $goneform, null, true);
+            $this->assertSame('(deleted user)', $leftrow[3]);
+        }
+    }
 }

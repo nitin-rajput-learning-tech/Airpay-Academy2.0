@@ -401,3 +401,18 @@ screenshots listed per item before it is merged.
   `r.timesubmitted > 0` instead of `1=1`), `list_evaluations_test::test_response_count_ignores_trigger_shells`.
   Screenshots needed: `respond.php` as an invited learner (the form, not the thank-you page) and `responses.php`
   "Total Responses" for a form that holds a shell, desktop and 590 px.
+- **EV-02 - a Subject column for supervisor forms (mapping doc code fix 2).** The import keeps the person a
+  supervisor evaluation is about in `responses.subject_userid`, but nothing showed it. New
+  `evaluation_manager::shows_subject($evaluation, ?$identityprotected)` is true when the evaluation is NOT
+  identity-protected and some response has a subject. When it is, `csv_header_row($questions, true)` puts "Subject"
+  after Email and `response_to_csv_row(..., $identityprotected, true)` puts that person's name there
+  (`subject_label()`: empty for a response with no subject, "(deleted user)" when the account is deleted or gone;
+  never on a protected form). `exportcsv.php` works the flag out once for header and rows. `response_list.php` joins
+  the subject user and `response_list.mustache` adds the column after Respondent. A native form never has a subject,
+  so its export and list are unchanged (the new parameters default to false). New string `responses_col_subject`
+  (en, hi). No flag (the gates of those pages are unchanged), no version change. The respondent lookup in the CSV now
+  reads every name field `fullname()` wants (it read four and relied on the rest being absent). Test:
+  `analysis_test::test_csv_subject_column_only_for_named_supervisor_responses`. `response_list.php` still needs
+  `local/sentientia_evaluation:view`, which `db/access.php` does not declare, so the page cannot be reached until that
+  is decided (EV-06); screenshots of it (desktop and 590 px, imported supervisor form, tenant admin) wait for that. A
+  sample CSV header line is in the evidence README.

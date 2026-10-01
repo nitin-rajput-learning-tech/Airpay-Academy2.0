@@ -293,3 +293,6 @@ $string['my_evaluations_imported'] = 'पिछली प्रणाली स�
 $string['my_evaluations_anonymous_note'] = 'गुमनाम मूल्यांकन: आपके उत्तर आपसे जुड़े नहीं हैं।';
 $string['my_evaluations_none'] = 'आपका कोई मूल्यांकन रिकॉर्ड में नहीं है।';
 $string['my_evaluations_unavailable'] = 'आपका मूल्यांकन इतिहास अभी उपलब्ध नहीं है।';
+
+// 2026-10-01 (EV-02): वह व्यक्ति जिसके बारे में पर्यवेक्षक मूल्यांकन किया गया है।
+$string['responses_col_subject'] = 'मूल्यांकित व्यक्ति';
