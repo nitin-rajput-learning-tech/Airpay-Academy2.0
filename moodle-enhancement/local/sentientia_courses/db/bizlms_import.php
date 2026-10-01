@@ -15,4 +15,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $imports = [
     'course_lookups' => \local_sentientia_courses\bizlms\course_lookups_importer::class,
+    // Gap G6: enrolments on the orphaned BizLMS enrol methods become manual enrolments.
+    'enrolments' => \local_sentientia_courses\bizlms\enrolments_importer::class,
 ];

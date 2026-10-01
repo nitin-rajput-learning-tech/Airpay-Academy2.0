@@ -253,5 +253,32 @@ function xmldb_local_sentientia_courses_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026100101, 'local', 'sentientia_courses');
     }
 
+    // 2026100102 - ADR-032 enrolments importer (gap G6): the ledger of orphaned BizLMS enrolments converted to manual.
+    //
+    // One row per enrolment on a BizLMS enrol method (classroom, program, learningplan) that the import turned into a
+    // manual enrolment: the legacy enrolment and instance ids, the method and the manual instance. Ids and timestamps
+    // only. Guarded, so a database that already has the table (created from install.xml) passes through untouched.
+    //
+    // Keep the upgrade blocks of this file in ascending order: course_tags 2026093002, course_lookups 2026100101, then this
+    // one (upgrade_plugin_savepoint() refuses a savepoint at or below the stored version).
+    if ($oldversion < 2026100102) {
+        $table = new xmldb_table('local_sentientia_courses_enrolmove');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('legacyueid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('legacyenrolid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('method', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL);
+            $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('targetenrolid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('uk_legacyue', XMLDB_INDEX_UNIQUE, ['legacyueid']);
+            $table->add_index('idx_course', XMLDB_INDEX_NOTUNIQUE, ['courseid']);
+            $dbman->create_table($table);
+        }
+        upgrade_plugin_savepoint(true, 2026100102, 'local', 'sentientia_courses');
+    }
+
     return true;
 }
