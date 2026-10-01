@@ -1,0 +1,89 @@
+{{!
+    @template local_sentientia_recompletion/history_detail
+
+    The evidence of one reset (ADR-032).
+
+    Context variables required for this template:
+    * unattached - true for evidence that is tied to no reset
+    * learner, course - plain text
+    * reset_at, inferred, reason, legacy, reset_by, previous, grades_reset, attempts_reset - the reset
+    * sections - [{title, count, headers: [text], rows: [{cells: [text]}], more}]
+    * has_sections, history_url
+
+    Example context (json):
+    {
+        "unattached": false,
+        "learner": "Asha Rao",
+        "course": "Anti money laundering",
+        "reset_at": "~ 06 Mar 2025 03:15",
+        "inferred": true,
+        "reason": "legacy",
+        "legacy": true,
+        "reset_by": "the scheduled task",
+        "previous": "01 Mar 2024",
+        "grades_reset": true,
+        "attempts_reset": false,
+        "sections": [{"title": "Quiz attempts", "count": 1, "headers": ["Quiz", "Marks"],
+            "rows": [{"cells": ["AML test", "8.00 / 10.00"]}], "more": ""}],
+        "has_sections": true,
+        "history_url": "#"
+    }
+}}
+<div class="container airpay-evidence">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">{{#str}}evidence_title, local_sentientia_recompletion{{/str}}</h2>
+        <a href="{{{ history_url }}}" class="btn btn-link">
+            <i class="fa fa-arrow-left" aria-hidden="true"></i> {{#str}}evidence_back, local_sentientia_recompletion{{/str}}
+        </a>
+    </div>
+
+    <dl class="row">
+        <dt class="col-sm-3">{{#str}}evidence_learner, local_sentientia_recompletion{{/str}}</dt>
+        <dd class="col-sm-9">{{ learner }}</dd>
+        <dt class="col-sm-3">{{#str}}evidence_course, local_sentientia_recompletion{{/str}}</dt>
+        <dd class="col-sm-9">{{ course }}</dd>
+        {{^unattached}}
+        <dt class="col-sm-3">{{#str}}evidence_reset_at, local_sentientia_recompletion{{/str}}</dt>
+        <dd class="col-sm-9">{{ reset_at }}
+            {{#inferred}}<span class="badge bg-warning text-dark">{{#str}}evidence_inferred, local_sentientia_recompletion{{/str}}</span>{{/inferred}}
+        </dd>
+        <dt class="col-sm-3">{{#str}}evidence_reason, local_sentientia_recompletion{{/str}}</dt>
+        <dd class="col-sm-9"><span class="badge bg-light text-dark">{{ reason }}</span>
+            {{#legacy}}<span class="badge bg-secondary">{{#str}}badge_legacy, local_sentientia_recompletion{{/str}}</span>{{/legacy}}
+        </dd>
+        <dt class="col-sm-3">{{#str}}evidence_reset_by, local_sentientia_recompletion{{/str}}</dt>
+        <dd class="col-sm-9">{{ reset_by }}</dd>
+        <dt class="col-sm-3">{{#str}}evidence_previous, local_sentientia_recompletion{{/str}}</dt>
+        <dd class="col-sm-9">{{ previous }}</dd>
+        <dt class="col-sm-3">{{#str}}evidence_grades_reset, local_sentientia_recompletion{{/str}}</dt>
+        <dd class="col-sm-9">{{#grades_reset}}{{#str}}yes, core{{/str}}{{/grades_reset}}{{^grades_reset}}{{#str}}no, core{{/str}}{{/grades_reset}}</dd>
+        <dt class="col-sm-3">{{#str}}evidence_attempts_reset, local_sentientia_recompletion{{/str}}</dt>
+        <dd class="col-sm-9">{{#attempts_reset}}{{#str}}yes, core{{/str}}{{/attempts_reset}}{{^attempts_reset}}{{#str}}no, core{{/str}}{{/attempts_reset}}</dd>
+        {{/unattached}}
+    </dl>
+
+    {{#unattached}}
+    <div class="alert alert-info">{{#str}}evidence_unattached_note, local_sentientia_recompletion{{/str}}</div>
+    {{/unattached}}
+    {{^unattached}}{{#inferred}}
+    <div class="alert alert-warning">{{#str}}evidence_inferred_note, local_sentientia_recompletion{{/str}}</div>
+    {{/inferred}}{{/unattached}}
+
+    {{#has_sections}}
+    {{#sections}}
+    <h3 class="h5 mt-4">{{ title }} <span class="badge bg-secondary">{{ count }}</span></h3>
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <thead><tr>{{#headers}}<th>{{.}}</th>{{/headers}}</tr></thead>
+            <tbody>
+                {{#rows}}<tr>{{#cells}}<td>{{.}}</td>{{/cells}}</tr>{{/rows}}
+            </tbody>
+        </table>
+    </div>
+    {{#more}}<p class="small text-muted">{{.}}</p>{{/more}}
+    {{/sections}}
+    {{/has_sections}}
+    {{^has_sections}}
+    <div class="alert alert-info">{{#str}}evidence_none, local_sentientia_recompletion{{/str}}</div>
+    {{/has_sections}}
+</div>

@@ -11,9 +11,6 @@
             <a href="{{{ history_url }}}" class="btn btn-outline-secondary btn-sm">
                 <i class="fa fa-history"></i> History
             </a>
-            <a href="{{{ bulk_reset_url }}}" class="btn btn-outline-warning btn-sm">
-                <i class="fa fa-undo"></i> Bulk reset
-            </a>
             {{#can_manage}}
             <a href="{{{ new_url }}}" class="btn btn-primary btn-sm">
                 <i class="fa fa-plus"></i> New rule
@@ -37,7 +34,20 @@
         <tbody>
         {{#rules}}
         <tr>
-            <td><strong>{{ name }}</strong></td>
+            <td><strong>{{ name }}</strong>
+                {{#legacy}}
+                <span class="badge bg-secondary">{{#str}}badge_legacy_rule, local_sentientia_recompletion{{/str}}</span>
+                {{#has_legacy_lines}}
+                <details class="small mt-1">
+                    <summary>{{#str}}legacy_settings, local_sentientia_recompletion{{/str}}</summary>
+                    <ul class="mb-0">
+                        {{#legacy_lines}}<li>{{ label }}: {{ value }}</li>{{/legacy_lines}}
+                    </ul>
+                    {{#legacy_dead_scorm}}<div class="text-muted">{{#str}}legacy_dead_scorm, local_sentientia_recompletion{{/str}}</div>{{/legacy_dead_scorm}}
+                </details>
+                {{/has_legacy_lines}}
+                {{/legacy}}
+            </td>
             <td>{{ course }}</td>
             <td><span class="badge bg-secondary">{{ period_days }}d</span></td>
             <td><code class="small">{{ trigger }}</code></td>

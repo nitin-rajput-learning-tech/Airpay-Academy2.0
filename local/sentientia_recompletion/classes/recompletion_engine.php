@@ -75,14 +75,17 @@ class recompletion_engine {
         $expiry_threshold = $now - $period_seconds;
         $warn_threshold = $now - ($period_seconds - ($pre_notify_days * 86400));
 
-        // Courses in scope: specific course OR all courses with completion enabled.
-        $where = ['1=1'];
+        // Courses in scope: specific course OR all courses, and in both cases
+        // only courses that have completion enabled. ADR-032 parity (2026-09-30):
+        // the BizLMS recompletion cron required c.enablecompletion = 1 for every
+        // course, and this engine required it only for an all-courses rule, so a
+        // course-specific rule reset completions of a course whose completion
+        // tracking had been switched off.
+        $where = ['c.enablecompletion = 1'];
         $args  = [];
         if ((int) $rule->courseid > 0) {
             $where[] = 'cc.course = :cid';
             $args['cid'] = (int) $rule->courseid;
-        } else {
-            $where[] = 'c.enablecompletion = 1';
         }
 
         // ── B6 fix: tenant scoping ────────────────────────────────────────
@@ -158,18 +161,19 @@ class recompletion_engine {
                 continue;
             }
 
+            $archived = [];
             if (!$dryrun) {
                 $ok = self::reset_user_in_course(
                     (int) $row->userid, (int) $row->courseid,
                     (bool) $rule->reset_grades, (bool) $rule->reset_attempts,
                     // P1 #20 — cron path has no human reset_by; reason='cron'
                     // gives observers the audit-friendly source label.
-                    null, 'cron');
+                    null, 'cron', $archived);
                 if (!$ok) { $r['skipped']++; continue; }
             }
 
             // Record audit log.
-            $DB->insert_record('local_sentientia_recompletion_history', (object) [
+            $historyid = $DB->insert_record('local_sentientia_recompletion_history', (object) [
                 'ruleid'         => (int) $rule->id,
                 'userid'         => (int) $row->userid,
                 'courseid'       => (int) $row->courseid,
@@ -181,17 +185,18 @@ class recompletion_engine {
                 'dryrun'         => $dryrun ? 1 : 0,
                 'timecreated'    => time(),
             ]);
+            // What the reset deleted is kept against the row that records it.
+            evidence_archiver::attach($archived, (int) $historyid);
 
             $r['reset']++;
 
             // Notify the user (recompletion_reset).
             if (!$dryrun) {
-                self::send_message($row->userid, 'recompletion_reset',
-                    "Recompletion: '$row->fullname' has been reset",
-                    "Your previous completion of '$row->fullname' was on "
-                    . userdate($row->timecompleted, '%d %b %Y') . ". "
-                    . "Per the {$rule->period_days}-day recompletion rule, "
-                    . "you'll need to complete it again to maintain compliance.");
+                self::notify($row->userid, 'recompletion_reset', 'msg_reset_subject', 'msg_reset_body', (object) [
+                    'course'   => $row->fullname,
+                    'previous' => userdate($row->timecompleted, '%d %b %Y'),
+                    'days'     => (int) $rule->period_days,
+                ]);
             }
         }
 
@@ -221,10 +226,10 @@ class recompletion_engine {
                 $cache->set($key, 1);
 
                 $days_left = (int) (((int) $row->timecompleted + $period_seconds - $now) / 86400);
-                self::send_message($row->userid, 'recompletion_due_soon',
-                    "Recompletion due in $days_left days: '$row->fullname'",
-                    "Heads up — your completion of '$row->fullname' will expire in "
-                    . "$days_left day(s). Plan to redo it before then to maintain compliance.");
+                self::notify($row->userid, 'recompletion_due_soon', 'msg_due_subject', 'msg_due_body', (object) [
+                    'course' => $row->fullname,
+                    'days'   => $days_left,
+                ]);
                 $r['notified']++;
             }
         }
@@ -245,15 +250,30 @@ class recompletion_engine {
      * from the stale tracking row and immediately re-marks course completion.
      * Every Airpay compliance course (AML / KYC / POSH / DPDP) is SCORM, so
      * this was the single most-broken behaviour in the recompletion engine.
+     *
+     * ADR-032 (2026-09-30): everything this deletes is first copied into
+     * local_sentientia_recompletion_archive (evidence_archiver), inside the
+     * same transaction, so a copy that fails stops the reset and deletes
+     * nothing. The copied rows are returned through $archived; the caller
+     * writes the history row and then calls evidence_archiver::attach().
+     * (SCORM tracking is still always wiped, whatever the BizLMS plugin's
+     * own SCORM choice was: a stale completion_status re-completes the course.)
+     *
+     * @param int[]|null $archived Out: ids of the archive rows written (empty when the reset failed).
      */
     public static function reset_user_in_course(int $userid, int $courseid,
                                                   bool $reset_grades = true,
                                                   bool $reset_attempts = true,
                                                   ?int $reset_by_userid = null,
-                                                  string $reason = 'cron'): bool {
+                                                  string $reason = 'cron',
+                                                  ?array &$archived = null): bool {
         global $DB;
+        $archived = [];
         $tx = $DB->start_delegated_transaction();
         try {
+            // 0. ADR-032: keep the evidence before anything is deleted.
+            $written = evidence_archiver::archive($userid, $courseid, $reset_grades, $reset_attempts, time());
+
             // 1. Delete course_completions row (Moodle will rebuild on next access).
             $DB->delete_records('course_completions',
                 ['userid' => $userid, 'course' => $courseid]);
@@ -293,20 +313,27 @@ class recompletion_engine {
                     'course = :cid', ['cid' => $courseid]);
                 if (!empty($quizids)) {
                     [$insql, $inparams] = $DB->get_in_or_equal($quizids, SQL_PARAMS_NAMED, 'qid');
-                    $attempt_ids = $DB->get_fieldset_select('quiz_attempts',
-                        'id',
+                    // ADR-032 parity fix: every attempt is deleted against ITS OWN quiz. The loop used to
+                    // pass the first quiz of the course for every attempt, so a course with two quizzes had
+                    // the second quiz's attempts deleted with the first quiz's settings (question usage and
+                    // grade recalculation of the wrong quiz).
+                    $attempts = $DB->get_records_select('quiz_attempts',
                         "userid = :uid AND quiz $insql",
-                        array_merge($inparams, ['uid' => $userid]));
-                    if (!empty($attempt_ids)) {
+                        array_merge($inparams, ['uid' => $userid]), 'id ASC', 'id, quiz');
+                    if (!empty($attempts)) {
                         // Use Moodle's API for proper cascading.
                         require_once($GLOBALS['CFG']->dirroot . '/mod/quiz/locallib.php');
-                        foreach ($attempt_ids as $aid) {
+                        $quizzes = [];
+                        foreach ($attempts as $attempt) {
                             try {
-                                quiz_delete_attempt($aid, $DB->get_record('quiz',
-                                    ['id' => reset($quizids)]));
+                                $qid = (int) $attempt->quiz;
+                                if (!isset($quizzes[$qid])) {
+                                    $quizzes[$qid] = $DB->get_record('quiz', ['id' => $qid], '*', MUST_EXIST);
+                                }
+                                quiz_delete_attempt((int) $attempt->id, $quizzes[$qid]);
                             } catch (\Throwable $e) {
                                 // Best-effort; fall back to direct delete.
-                                $DB->delete_records('quiz_attempts', ['id' => $aid]);
+                                $DB->delete_records('quiz_attempts', ['id' => $attempt->id]);
                             }
                         }
                     }
@@ -314,6 +341,8 @@ class recompletion_engine {
             }
 
             $tx->allow_commit();
+            // Only a committed reset hands its archive rows back.
+            $archived = $written;
 
             // P1 #20 — fire the completion_reset event AFTER commit so
             // observers only see durable state. Wrapped in try/catch
@@ -454,11 +483,12 @@ class recompletion_engine {
             // completion_reset event payload carries them. Without this,
             // bulk resets would fire the event with reset_by_userid=null
             // and observers couldn't tell who initiated them.
+            $archived = [];
             $ok = self::reset_user_in_course($uid, $courseid,
                 $reset_grades, $reset_attempts,
-                $reset_by, $reason);
+                $reset_by, $reason, $archived);
             if ($ok) {
-                $DB->insert_record('local_sentientia_recompletion_history', (object) [
+                $historyid = $DB->insert_record('local_sentientia_recompletion_history', (object) [
                     'ruleid'                 => 0,
                     'userid'                 => $uid,
                     'courseid'               => $courseid,
@@ -470,6 +500,7 @@ class recompletion_engine {
                     'dryrun'                 => 0,
                     'timecreated'            => time(),
                 ]);
+                evidence_archiver::attach($archived, (int) $historyid);
                 $result['reset']++;
             } else {
                 $result['failed']++;
@@ -478,12 +509,31 @@ class recompletion_engine {
         return $result;
     }
 
-    /** Send a Moodle notification via message_send. */
-    private static function send_message(int $userid, string $event,
-                                          string $subject, string $body): void {
+    /**
+     * Send a Moodle notification via message_send, worded in the recipient's own
+     * language (ADR-032 parity fix: the subject and body were hard-coded English).
+     *
+     * @param int $userid Recipient.
+     * @param string $event Message provider name.
+     * @param string $subjectkey Lang string of the subject.
+     * @param string $bodykey Lang string of the body.
+     * @param \stdClass $a Placeholders of both strings.
+     */
+    private static function notify(int $userid, string $event, string $subjectkey, string $bodykey,
+                                   \stdClass $a): void {
         global $DB;
         $user = $DB->get_record('user', ['id' => $userid], '*');
         if (!$user) return;
+        $lang = !empty($user->lang) ? $user->lang : null;
+        $strings = get_string_manager();
+        self::send_message($user, $event,
+            $strings->get_string($subjectkey, 'local_sentientia_recompletion', $a, $lang),
+            $strings->get_string($bodykey, 'local_sentientia_recompletion', $a, $lang));
+    }
+
+    /** Send a Moodle notification via message_send. */
+    private static function send_message(\stdClass $user, string $event,
+                                          string $subject, string $body): void {
         $msg = new \core\message\message();
         $msg->component         = 'local_sentientia_recompletion';
         $msg->name              = $event;

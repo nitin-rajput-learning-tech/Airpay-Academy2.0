@@ -142,10 +142,21 @@ if ($data = $form->get_data()) {
         $rec->timecreated = time();
         $DB->insert_record('local_sentientia_recompletion_rules', $rec);
     }
+    // ADR-032: an imported BizLMS rule is not yet equivalent to what BizLMS ran (the engine parity list), and
+    // the owner decision is that none is enabled at cutover. Enabling one is allowed, but never silently.
+    if (!empty($rec->enabled) && $rule->id && isset($rule->legacy_config)) {
+        redirect(new moodle_url('/local/sentientia_recompletion/index.php'),
+            get_string('legacy_enabled_warning', 'local_sentientia_recompletion'), null,
+            \core\output\notification::NOTIFY_WARNING);
+    }
     redirect(new moodle_url('/local/sentientia_recompletion/index.php'),
         'Rule saved.', null, \core\output\notification::NOTIFY_SUCCESS);
 }
 
 echo $OUTPUT->header();
+if ($rule->id && isset($rule->legacy_config)) {
+    echo $OUTPUT->notification(get_string('legacy_unfinished_parity', 'local_sentientia_recompletion'),
+        \core\output\notification::NOTIFY_WARNING);
+}
 $form->display();
 echo $OUTPUT->footer();
