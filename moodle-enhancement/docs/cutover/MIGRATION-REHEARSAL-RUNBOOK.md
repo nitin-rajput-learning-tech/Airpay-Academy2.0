@@ -65,6 +65,10 @@ ninja sandbox when Nitin provides server access + a fresh live backup. **Nothing
    e. **ADR-031 role configuration (added 2026-09-29):** the role-9 core-cap script and the
       platform-role script, dry run first, then the read-only WS smoke — migration plan §4f-f.
       These scripts are UAT-locked today; they need a target guard first.
+   f. **Site theme (added 2026-10-01):** production's `$CFG->theme` is `epsilon`, which is not in the
+      package, so pages fall back to stock boost (seen in the 2026-10-01 rehearsal upgrade log).
+      `php admin/cli/cfg.php --name=theme --set=sentientia`; April has no user/course/category/cohort
+      overrides (migration plan §8 step 7).
 5. **Purge caches**, then **data-intact gate:**
    `php local/sentientia_platform/cli/migration_parity_check.php --compare=/path/live-baseline.json`
    → **must print `RESULT: 100% PARITY — data intact.`** Any DRIFT line = stop + investigate.
