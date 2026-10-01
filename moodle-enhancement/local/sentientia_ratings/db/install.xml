@@ -22,5 +22,53 @@
         <INDEX NAME="idx_user_item_area" UNIQUE="true"  FIELDS="userid, itemid, ratearea"/>
       </INDEXES>
     </TABLE>
+    <TABLE NAME="local_sentientia_ratings_reviews"
+           COMMENT="Free-text reviews a learner left on an item (ADR-032 BizLMS import, ratings). A learner may leave several, so there is no unique key.">
+      <FIELDS>
+        <FIELD NAME="id"       TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="itemid"   TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="Id of the thing reviewed (course, classroom, programme or learning path)"/>
+        <FIELD NAME="ratearea" TYPE="char" LENGTH="100" NOTNULL="true"
+               COMMENT="Which kind of thing was reviewed, same values as local_sentientia_ratings.ratearea"/>
+        <FIELD NAME="userid"   TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="The reviewer"/>
+        <FIELD NAME="review"   TYPE="text" NOTNULL="false"
+               COMMENT="Raw text exactly as typed. Never trusted: escape on output."/>
+        <FIELD NAME="timecreated"  TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_user" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_item_area"      UNIQUE="false" FIELDS="itemid, ratearea"/>
+        <INDEX NAME="idx_user_item_area" UNIQUE="false" FIELDS="userid, itemid, ratearea"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_sentientia_ratings_reactions"
+           COMMENT="Like and dislike reactions (ADR-032 BizLMS import, ratings). One row per learner and item.">
+      <FIELDS>
+        <FIELD NAME="id"       TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="itemid"   TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="Id of the thing reacted to (course, classroom, programme or learning path)"/>
+        <FIELD NAME="ratearea" TYPE="char" LENGTH="100" NOTNULL="true"
+               COMMENT="Which kind of thing, same values as local_sentientia_ratings.ratearea"/>
+        <FIELD NAME="userid"   TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="The learner who reacted"/>
+        <FIELD NAME="likestatus" TYPE="int" LENGTH="1"  NOTNULL="true" DEFAULT="0"
+               COMMENT="1 = like, 2 = dislike, 0 = none. Any other value is kept as stored and never counted."/>
+        <FIELD NAME="timecreated"  TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_user" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_user_item_area"    UNIQUE="true"  FIELDS="userid, itemid, ratearea"/>
+        <INDEX NAME="idx_item_area_status"  UNIQUE="false" FIELDS="itemid, ratearea, likestatus"/>
+      </INDEXES>
+    </TABLE>
   </TABLES>
 </XMLDB>

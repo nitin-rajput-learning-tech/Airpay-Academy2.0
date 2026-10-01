@@ -921,18 +921,11 @@ JS;
 
             $progress_pct = \local_sentientia_courses\course_manager::get_progress_percentage($courseid, $USER->id);
             $usercourseprogress = ['progress' => $progress_pct];
-            // Ratings: prefer Airpay plugin, fall back to BizLMS.
+            // Ratings. The BizLMS display_rating() fallback that used to follow is gone (ADR-032, 2026-09-30): the
+            // BizLMS plugin's code is not deployed, and the import brought its ratings into the Sentientia table.
             $display_ratings = null;
             if (class_exists('\local_sentientia_ratings\rating_manager')) {
                 $display_ratings = \local_sentientia_ratings\rating_manager::render($courseid, 'local_sentientia_courses');
-            } else {
-                $ratings_lib = $CFG->dirroot . '/local/ratings/lib.php';
-                if (file_exists($ratings_lib)) {
-                    require_once($ratings_lib);
-                    if (function_exists('display_rating')) {
-                        $display_ratings = display_rating($courseid, 'local_sentientia_courses');
-                    }
-                }
             }
             $header=(object)array_merge((array)$header,$usercourseprogress);
             $header->display_ratings=$display_ratings;
@@ -1707,17 +1700,10 @@ JS;
                 
                 $percentage = progress::get_course_progress_percentage($course, $USER->id);
             }
+        // Ratings: no BizLMS display_rating() fallback any more (ADR-032, 2026-09-30).
         $display_ratings = null;
         if (class_exists('\local_sentientia_ratings\rating_manager')) {
             $display_ratings = \local_sentientia_ratings\rating_manager::render($COURSE->id, 'local_sentientia_courses');
-        } else {
-            $ratings_lib = $CFG->dirroot . '/local/ratings/lib.php';
-            if (file_exists($ratings_lib)) {
-                require_once($ratings_lib);
-                if (function_exists('display_rating')) {
-                    $display_ratings = display_rating($COURSE->id, 'local_sentientia_courses');
-                }
-            }
         }
         if(empty($percentage)){
             $percentage=0;}
