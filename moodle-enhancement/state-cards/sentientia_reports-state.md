@@ -121,3 +121,26 @@ Still open, because the fix belongs to the org plugin: sweep hit 67.
 `org_manager::cascade_where_sql()` does not clamp to the caller's tenant, and the programs,
 classroom, evaluation, exams and learningpath callers still let it REPLACE the tenant filter.
 Only this plugin's caller narrows it.
+
+## 2026-09-30 - BizLMS import, users feature: two flagged readers (1.2.0 -> 1.3.0, 2026100101)
+
+ADR-032 + mapping doc section 10 (code fix 6). Both readers are default OFF and read `local_sentientia_users_*`
+tables, so they are guarded by `table_exists` and need `local_sentientia_users` 2026100101 to show anything.
+Both trees are identical.
+
+- Flag `sentientia.reports.training_transcript`: a **Training Transcript** report type. `report_manager::report_types()`
+  returns the four built-in types, plus this one while the flag is ON; `REPORT_TYPES` itself is unchanged, and
+  the edit form and `create()`/`update()` validate against `report_types()`. One row per transcript record, the
+  learner's name from the account when matched (else the name as loaded), status normalised and as loaded, date,
+  score, hours. History only: never in a total. Scope: the learner's CURRENT org path through
+  `tenant::path_descendant_filter()`, deleted accounts left out; a row with no matched learner has no path and
+  shows only on an "All organisations" report, which only a cross-tenant caller can run. A saved report of this
+  type runs to nothing while the flag is OFF.
+- Flag `sentientia.reports.login_days`: a "Login days (imported)" column on User Activity, the count of imported
+  login days per user (`local_sentientia_users_logindays`). It counts every imported day, not "the last 90":
+  nothing writes the table after cutover, so a window would empty out. OFF: the report is exactly what it was.
+- Strings en + hi. Parity gate: 0 failures.
+- Tests: `tests/imported_history_report_test.php` (flag off changes nothing; the report content and totals; a
+  tenant admin sees only their tenant's learners, not a deleted account, not an unmatched row; the login-days
+  column). Written, NOT run (the lead re-inits PHPUnit once).
+- No screenshots (no deploy in this build). Capture visual evidence before turning either flag ON.

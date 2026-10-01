@@ -40,7 +40,7 @@ class edit_report extends \core_form\dynamic_form {
 
         $mform->addElement('select', 'report_type',
             get_string('report_type', 'local_sentientia_reports'),
-            report_manager::REPORT_TYPES);
+            report_manager::report_types());
         $mform->setType('report_type', PARAM_ALPHAEXT);
         $mform->setDefault('report_type', 'course_completion');
         $mform->addHelpButton('report_type', 'report_type', 'local_sentientia_reports');
@@ -70,7 +70,7 @@ class edit_report extends \core_form\dynamic_form {
         if (empty(trim($data['name'] ?? ''))) {
             $errors['name'] = get_string('name_required', 'local_sentientia_reports');
         }
-        if (!array_key_exists($data['report_type'] ?? '', report_manager::REPORT_TYPES)) {
+        if (!array_key_exists($data['report_type'] ?? '', report_manager::report_types())) {
             $errors['report_type'] = get_string('invalid_report_type', 'local_sentientia_reports');
         }
         // ADR-031: "All organisations" is cross-tenant only. The option list

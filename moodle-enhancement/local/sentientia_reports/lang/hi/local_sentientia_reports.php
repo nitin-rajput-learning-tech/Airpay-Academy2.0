@@ -66,3 +66,25 @@ $string['privacy:metadata:reports:created_by']   = 'जिस उपयोगक
 $string['privacy:metadata:reports:name']         = 'रिपोर्ट का नाम';
 $string['privacy:metadata:reports:report_type']  = 'रिपोर्ट का प्रकार';
 $string['privacy:metadata:reports:timecreated']  = 'रिपोर्ट कब बनाई गई';
+
+// ADR-032 (2026-10-01) - उपयोगकर्ता आयात: पुराने प्रशिक्षण रिकॉर्ड की रिपोर्ट और आयातित लॉगिन दिन कॉलम।
+$string['report_type_training_transcript'] = 'प्रशिक्षण ट्रांसक्रिप्ट — पुराने प्रशिक्षण रिकॉर्ड (आयातित)';
+$string['report_col_name'] = 'नाम';
+$string['report_col_empid'] = 'कर्मचारी आईडी';
+$string['report_col_training'] = 'प्रशिक्षण';
+$string['report_col_type'] = 'प्रकार';
+$string['report_col_completed'] = 'पूर्ण हुआ';
+$string['report_col_status'] = 'स्थिति';
+$string['report_col_statusraw'] = 'स्थिति (जैसी लोड हुई)';
+$string['report_col_score'] = 'अंक';
+$string['report_col_hours'] = 'घंटे';
+$string['report_col_logindays'] = 'लॉगिन दिन (आयातित)';
+$string['report_status_completed'] = 'पूर्ण';
+$string['report_status_inprogress'] = 'प्रगति में';
+$string['report_status_failed'] = 'अनुत्तीर्ण';
+$string['report_status_notstarted'] = 'शुरू नहीं हुआ';
+$string['report_status_cancelled'] = 'रद्द';
+$string['report_status_unknown'] = 'अज्ञात';
+$string['report_sum_records'] = 'कुल रिकॉर्ड';
+$string['report_sum_completed'] = 'पूर्ण';
+$string['report_sum_hours'] = 'कुल घंटे';

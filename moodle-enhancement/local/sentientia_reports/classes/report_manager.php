@@ -29,6 +29,12 @@ class report_manager {
         'enrolment_trend'     => 'Enrolment Trend — new enrolments over time',
     ];
 
+    /** ADR-032 (users): the earlier-training-records report type exists only while this flag is ON (default OFF). */
+    public const FLAG_TRAINING_TRANSCRIPT = 'sentientia.reports.training_transcript';
+
+    /** ADR-032 (users): the imported-login-days column of the User Activity report, while this flag is ON (default OFF). */
+    public const FLAG_LOGIN_DAYS = 'sentientia.reports.login_days';
+
     /** Quick-access labels for report cards (shorter). */
     public const REPORT_TYPE_SHORT = [
         'course_completion'   => 'Course Completion',
@@ -40,6 +46,21 @@ class report_manager {
     public static function get(int $id) {
         global $DB;
         return $DB->get_record(self::TABLE, ['id' => $id]);
+    }
+
+    /**
+     * The report types a report can be created or edited with: the built-in ones, plus the earlier-training-records
+     * report while its flag is ON (ADR-032, users). REPORT_TYPES stays the four that have always existed, so a
+     * flag that is OFF changes nothing in the form or in validation.
+     *
+     * @return array<string, string> type => label
+     */
+    public static function report_types(): array {
+        $types = self::REPORT_TYPES;
+        if (\local_sentientia_platform\feature_flags::is_enabled(self::FLAG_TRAINING_TRANSCRIPT)) {
+            $types['training_transcript'] = get_string('report_type_training_transcript', 'local_sentientia_reports');
+        }
+        return $types;
     }
 
     /**
@@ -131,7 +152,7 @@ class report_manager {
             throw new \moodle_exception('missingrequiredfields', 'local_sentientia_reports');
         }
 
-        if (!array_key_exists($data->report_type, self::REPORT_TYPES)) {
+        if (!array_key_exists($data->report_type, self::report_types())) {
             throw new \moodle_exception('invalidreporttype', 'local_sentientia_reports');
         }
 
@@ -179,7 +200,7 @@ class report_manager {
         if (isset($data->name))         $record->name = trim($data->name);
         if (isset($data->description))  $record->description = $data->description;
         if (isset($data->report_type)) {
-            if (!array_key_exists($data->report_type, self::REPORT_TYPES)) {
+            if (!array_key_exists($data->report_type, self::report_types())) {
                 throw new \moodle_exception('invalidreporttype', 'local_sentientia_reports');
             }
             $record->report_type = $data->report_type;
@@ -252,6 +273,7 @@ class report_manager {
             'compliance_overview' => self::run_compliance_overview($org_path, $config),
             'user_activity'       => self::run_user_activity($org_path, $config),
             'enrolment_trend'     => self::run_enrolment_trend($org_path, $config),
+            'training_transcript' => self::run_training_transcript($org_path, $config),
             default => ['columns' => [], 'rows' => [], 'summary' => []],
         };
 
@@ -427,6 +449,18 @@ class report_manager {
                  LIMIT 500";
 
         $records = $DB->get_records_sql($sql, $params);
+
+        // ADR-032 (users): days with a web login, from the history the BizLMS import copied. Default OFF
+        // (sentientia.reports.login_days). It is a COUNT OF IMPORTED DAYS, all of them: nothing in Sentientia
+        // writes the table after cutover, so a 'last 90 days' window would empty out within three months.
+        $logindays = null;
+        if ($records && self::login_days_enabled()) {
+            [$insql, $inparams] = $DB->get_in_or_equal(array_keys($records), SQL_PARAMS_NAMED, 'ldu');
+            $logindays = $DB->get_records_sql_menu(
+                "SELECT userid, COUNT(1) FROM {local_sentientia_users_logindays} WHERE userid $insql GROUP BY userid",
+                $inparams);
+        }
+
         $rows = [];
         $active_30d = 0;
         $never_logged = 0;
@@ -442,11 +476,14 @@ class report_manager {
                 'lastaccess'  => $r->lastaccess ? userdate($r->lastaccess, '%d %b %Y, %H:%M') : 'Never',
                 'status'      => $r->lastaccess && $r->lastaccess > $cutoff ? 'Active' : 'Inactive',
             ];
+            if ($logindays !== null) {
+                $rows[count($rows) - 1]['logindays'] = (int) ($logindays[$r->id] ?? 0);
+            }
             if ($r->lastaccess && $r->lastaccess > $cutoff) $active_30d++;
             if (empty($r->lastaccess)) $never_logged++;
         }
 
-        return [
+        $result = [
             'columns' => [
                 ['key' => 'fullname',    'label' => 'Name'],
                 ['key' => 'email',       'label' => 'Email'],
@@ -463,6 +500,21 @@ class report_manager {
                 ['label' => 'Never Logged In',       'value' => $never_logged],
             ],
         ];
+        if ($logindays !== null) {
+            $result['columns'][] = ['key' => 'logindays', 'label' => get_string('report_col_logindays', 'local_sentientia_reports')];
+        }
+        return $result;
+    }
+
+    /**
+     * Is the imported-login-days column on, and is there a table to read it from?
+     *
+     * @return bool
+     */
+    private static function login_days_enabled(): bool {
+        global $DB;
+        return \local_sentientia_platform\feature_flags::is_enabled(self::FLAG_LOGIN_DAYS)
+            && $DB->get_manager()->table_exists('local_sentientia_users_logindays');
     }
 
     /**
@@ -525,6 +577,97 @@ class report_manager {
                 ['label' => 'Months Tracked',      'value' => count($rows)],
                 ['label' => 'Total Enrolments',    'value' => number_format($total_enrolments)],
                 ['label' => 'Avg per Month',       'value' => $avg_per_month],
+            ],
+        ];
+    }
+
+    /**
+     * Earlier training records - the BizLMS transcript history the users import copied into
+     * local_sentientia_users_transcript (ADR-032, users). Default OFF (sentientia.reports.training_transcript).
+     *
+     * History only: the rows are never added to a completion total anywhere. The scope is the learner's CURRENT
+     * org path, like the other runners, through the shared descendant filter; a row with no matched learner
+     * (an off-platform record) has no path and shows only on an "All organisations" report, which only a
+     * cross-tenant caller can run (require_report_access). A matched learner whose account was deleted is left out.
+     *
+     * @param string $org_path report scope; '' = all organisations
+     * @param array $config saved filter config (unused)
+     * @return array{columns: array, rows: array, summary: array}
+     */
+    private static function run_training_transcript(string $org_path, array $config): array {
+        global $DB;
+
+        $columns = [
+            ['key' => 'fullname',   'label' => get_string('report_col_name', 'local_sentientia_reports')],
+            ['key' => 'employeeid', 'label' => get_string('report_col_empid', 'local_sentientia_reports')],
+            ['key' => 'title',      'label' => get_string('report_col_training', 'local_sentientia_reports')],
+            ['key' => 'type',       'label' => get_string('report_col_type', 'local_sentientia_reports')],
+            ['key' => 'completed',  'label' => get_string('report_col_completed', 'local_sentientia_reports')],
+            ['key' => 'status',     'label' => get_string('report_col_status', 'local_sentientia_reports')],
+            ['key' => 'statusraw',  'label' => get_string('report_col_statusraw', 'local_sentientia_reports')],
+            ['key' => 'score',      'label' => get_string('report_col_score', 'local_sentientia_reports')],
+            ['key' => 'hours',      'label' => get_string('report_col_hours', 'local_sentientia_reports')],
+        ];
+        if (!\local_sentientia_platform\feature_flags::is_enabled(self::FLAG_TRAINING_TRANSCRIPT)
+                || !$DB->get_manager()->table_exists('local_sentientia_users_transcript')) {
+            return ['columns' => $columns, 'rows' => [], 'summary' => []];
+        }
+
+        $where = ['(u.id IS NULL OR u.deleted = 0)'];
+        $params = [];
+        if (!empty($org_path)) {
+            [$scopesql, $scopeparams] = \local_sentientia_platform\tenant::path_descendant_filter(
+                $org_path, 'u', 'open_path', 'rtorg');
+            $where[] = $scopesql;
+            $params += $scopeparams;
+        }
+
+        $unamefields = implode(', ', array_map(
+            fn($f) => 'u.' . $f,
+            \core_user\fields::get_name_fields()
+        ));
+        $records = $DB->get_records_sql(
+            "SELECT t.id, t.employee_id, t.learner_name, t.title, t.training_type, t.status, t.status_raw,
+                    t.timecompleted, t.completion_date_raw, t.score, t.hours,
+                    u.id AS matcheduser, $unamefields
+               FROM {local_sentientia_users_transcript} t
+          LEFT JOIN {user} u ON u.id = t.userid
+              WHERE " . implode(' AND ', $where) . "
+           ORDER BY CASE WHEN t.timecompleted IS NULL THEN 1 ELSE 0 END, t.timecompleted DESC, t.id DESC",
+            $params, 0, 500);
+
+        $statuses = ['completed', 'inprogress', 'failed', 'notstarted', 'cancelled', 'unknown'];
+        $rows = [];
+        $completed = 0;
+        $hours = 0.0;
+        foreach ($records as $r) {
+            $status = in_array($r->status, $statuses, true) ? $r->status : 'unknown';
+            $rows[] = [
+                'fullname'   => !empty($r->matcheduser) ? fullname($r) : $r->learner_name,
+                'employeeid' => $r->employee_id,
+                'title'      => $r->title,
+                'type'       => $r->training_type,
+                'completed'  => $r->timecompleted !== null
+                    ? userdate((int) $r->timecompleted, '%d %b %Y')
+                    : ($r->completion_date_raw !== '' ? $r->completion_date_raw : '—'),
+                'status'     => get_string('report_status_' . $status, 'local_sentientia_reports'),
+                'statusraw'  => $r->status_raw,
+                'score'      => $r->score !== null ? format_float((float) $r->score, 2) : '',
+                'hours'      => $r->hours !== null ? format_float((float) $r->hours, 2) : '',
+            ];
+            if ($status === 'completed') {
+                $completed++;
+            }
+            $hours += (float) $r->hours;
+        }
+
+        return [
+            'columns' => $columns,
+            'rows' => $rows,
+            'summary' => [
+                ['label' => get_string('report_sum_records', 'local_sentientia_reports'),   'value' => count($rows)],
+                ['label' => get_string('report_sum_completed', 'local_sentientia_reports'), 'value' => $completed],
+                ['label' => get_string('report_sum_hours', 'local_sentientia_reports'),     'value' => format_float($hours, 2)],
             ],
         ];
     }
