@@ -818,3 +818,134 @@ cross-tenant counting (adds `open_path` to `user` and `course` for the test and 
 catching a manual end shorter than the legacy end, the version/savepoint pin. Changed: `user_deleted` is unproven (needs-owner) in the exit-2 and acceptance tests;
 the registry test pins the three needs-owner reasons. Also run without PHPUnit: `php -l`, static scan (0 findings on the three classes), tree drift,
 lang parity, path boundary, fixture copies.
+
+
+---
+
+## 2026-10-01 - ADR-032 course_tags importer (BizLMS import, mapping doc section 7)
+
+**What shipped (version 2026100103, release 1.13.0, both trees):** the `course_tags` importer of the BizLMS data import.
+BizLMS tagged courses in its own tag area (`tag_instance.component = local_courses`, `itemtype = courses`).
+Sentientia reads `core` / `course`. Every instance of the old area is moved IN PLACE to the core area: the row
+keeps its id, tag, item, context, user, ordering and timestamps, and only `component` and `itemtype` change. It is
+a direct UPDATE (the only reviewed core write for `tag_instance`), never the `core_tag_tag` API, so no
+`tag_added`/`tag_removed` event fires.
+
+| Piece | File |
+|---|---|
+| Registry | `db/bizlms_import.php` (`course_tags`, beside `course_lookups` and `enrolments`) |
+| Importer (sources, reasons, preflight, verify) | `classes/bizlms/course_tags_importer.php` |
+| Load step (decides what moves) | `classes/bizlms/course_tags_step.php` |
+| Recompute step (the UPDATE) | `classes/bizlms/course_tags_remap_step.php` |
+| Schema | `local_sentientia_courses_tagmove` in `db/install.xml` + `db/upgrade.php` step 2026100103 (the LAST block of the file) |
+| Tests | `tests/bizlms_import_course_tags_test.php` (class `bizlms_import_course_tags_test`), `tests/fixtures/bizlms/local_tags.install.xml` |
+
+**Version rule (review must-fix).** The first build numbered this step 2026093002, below the `course_lookups`
+(2026100101) and `enrolments` (2026100102) steps already on the base. A database that had taken either of those
+would never have run it, and the first trail insert would have failed (writer `unknown_table`). The step is now
+2026100103, strictly above both, `course_tags_importer::REQUIRES_VERSION` is the same number, and
+`test_the_required_version_has_exactly_one_upgrade_step_and_the_trail_table_is_installed` pins: one savepoint and one
+`$oldversion <` block for it, a number above the other two importers', one table in `install.xml`, and a plugin version at
+or above it. Rule for the next importer of this plugin: take a number above the highest one in `upgrade.php`, add the block at
+the end, and keep the order comment in the enrolments block true.
+
+**Outcomes per source row** (derived unit `#tag_instance.id`, one group per instance). The vocabulary below is what the
+code records. Mapping doc section 7 and R13 still say `merged` for a duplicate; the lead should amend the map (see the list
+of needs at the end):
+
+- moves: `imported`, one trail row in `local_sentientia_courses_tagmove` (id of the instance + its two timestamps);
+- a twin already exists in `core/course` (same item, context, user, tag; two missing contexts count as equal):
+  **`folded`**, reason `duplicate_core_instance`, map target = the surviving core row. The legacy row is left
+  untouched and nothing is deleted (R13). It is `folded` and not `merged` because the framework's `outcome::merge()` needs a
+  winner that is a source row of the same step, and the survivor here is a native core row;
+- the tagged course is gone: **`skipped`**, reason `course_missing`; the tag is gone: **`skipped`**, reason `tag_missing`.
+  Both stay in the old area. These two outcomes are not in the map. No reason needs the owner, so parity does not go to
+  exit 2 for them.
+
+`local_tags` and `local_tag_mapping` are declined. The tag areas of classroom, learning plan and evaluation are
+counted in preflight (`other_area_left_in_place:*`) and left alone (decision `gaps.other_tag_areas` = `left_in_place`,
+already accepted in the signed decisions file). No tenant column, no person column, no PRESERVE step, no flag, no
+reader change, no lang string: `depends()` is empty. The trail table has no user column, so the privacy provider
+documents it as `ids and timestamps only, no person, not declared` (docblock added in this pass) and
+`privacy_coverage_test` needs nothing.
+
+**Preflight** blocks when a tag of the old area lives in another tag collection than the core course area
+(`tag_collection_mismatch:N`) or when the two area rows disagree (`tag_collection_differs:*`). It warns about
+instances outside the course context and a missing legacy area row, and counts what a run will do
+(`will_move`, `will_fold_duplicate_core_instance`, `will_skip_*`). New in this pass:
+`will_move_with_the_lifecycle_mandatory_tag` and the warning `moved_instances_carry_the_lifecycle_mandatory_tag:N` (see
+"Cutover notes"). It needs the feature's source below the default atomic threshold (50 000): see "resume" below.
+
+**Why a trail table and a derived unit (framework limits, reported to the lead).** The frozen ADR-032 contract has no
+shape for "update a row of a reviewed core table that is also the source row":
+
+1. `outcome::update` is refused in a load step, and `writer::update_core()` is reachable only from a recompute step,
+   which runs over the rows a load step imported into the importer's OWN tables. So each instance that moves gets a
+   row in a small trail table (ids and timestamps, no person).
+2. The generic accounting identity (source rows with the step filter = primary map rows) and the whole-table check
+   `unmapped_rows` cannot hold for a step that rewrites its own filter, nor for core `tag_instance`, which keeps
+   changing after go-live. The step is therefore a derived unit and the importer's `verify()` carries the real
+   identity: every instance still in the old area is recorded folded or skipped; the trail and the `imported` map rows
+   agree one to one; every trail row is in the core area (waived once `bizlms_production_open` is set, since an
+   administrator may delete a course's tags after go-live). The review walked the framework paths
+   (`runner::verify_feature`, `parity::accounting_problems`, `mutation_problems`) and found that all of them skip derived
+   or non-legacy sources, so nothing breaks; but the map and ADR-032 describe a different accounting for this feature
+   (a preflight snapshot count), so the wording needs the lead's decision.
+3. Resume: a batch-mode run that dies after the remap started cannot resume (the source fingerprint of the finished
+   step has changed). The feature is `atomic()` and far below the threshold, so it runs in one transaction and a crash
+   leaves nothing. Rerun it.
+
+Suggested framework amendment (one change removes both workarounds): an in-place step kind that may return update
+outcomes against a reviewed core write from the load step, with accounting against `legacystep.srccount` and the
+`unmapped_rows` check waived for core sources. ADR-032 already describes it in the parity hooks ("for in-place core
+steps ... the preflight snapshot count is used"), but `parity::accounting_problems()` and `runner::verify_feature()`
+do not implement it.
+
+**Rehearsal undo recipe (a restore is the normal way back; production rollback is the RDS snapshot).**
+`--purge-feature` refuses a feature that writes a core table, so on a rehearsal copy only, in this order:
+
+1. `UPDATE {tag_instance} SET component = 'local_courses', itemtype = 'courses' WHERE id IN (SELECT taginstanceid FROM {local_sentientia_courses_tagmove})`
+2. `DELETE FROM {local_sentientia_courses_tagmove}` - without this a second run inserts a second trail row for the same
+   `taginstanceid`, hits the unique index `uk_taginstance`, fails and rolls back.
+3. `DELETE FROM {local_sentientia_legacymap} WHERE feature = 'course_tags'` and
+   `DELETE FROM {local_sentientia_legacystep} WHERE feature = 'course_tags'`.
+4. `DELETE FROM {config_plugins} WHERE plugin = 'local_sentientia_platform' AND name IN ('bizlms_complete_course_tags', 'bizlms_tripped_course_tags')`
+   (the completion marker, and the tripwire marker if one is set).
+5. `local_sentientia_legacyrun` rows are run history: one run lists several features as text. Leave them, or delete
+   a run only when `course_tags` was the only feature in it.
+
+Then purge the Moodle caches (the tag caches hold the old area).
+
+**Cutover notes (runbook items; the runbook has no per-importer section, so they live here until the lead places them).**
+
+- *Joiner auto-enrol.* `local_sentientia_lifecycle` finds joiner-mandatory courses from `core/course` tag instances
+  (`observer::enrol_in_mandatory_courses`; tag name from its setting `mandatory_tag`, default `mandatory`; visible
+  courses only). After the move, every BizLMS course tagged `mandatory` becomes such a course. It is inert while
+  `sentientia.lifecycle.autoenrol.enabled` is OFF (the default) and tenant-scoped, but a course with an empty `open_path`
+  counts as platform-wide. Preflight now counts these (`will_move_with_the_lifecycle_mandatory_tag`) and warns. Run
+  `course_lookups` (the `open_path` backfill) before switching that flag on; the default run order already does so.
+- *Tag tenancy is not carried.* `local_tags` (the per-tenant overlay: `open_costcenterid`, `open_departmentid`) is declined,
+  deliberately, because its tenant columns are corrupt by construction. Moved tags are ordinary core tags, visible to anyone
+  who can open the core tag index for a course they can access, whichever tenant they belong to. No Sentientia reader uses
+  course tags other than lifecycle, so nothing in the repo leaks; say it once to the customer.
+
+**Tests (written, NOT run: no PHPUnit in this pass; the lead re-inits and runs them after the merge).** Contract trait plus
+the feature cases: move keeps every other column and adds no row; twin folded and both rows untouched; orphans skipped and
+untouched; one primary map row per source row; other areas and `local_tags` never touched; no event; dry run moves nothing;
+second apply writes nothing; preflight counts; preflight mandatory-tag count and warning (default name, a configured
+name with spaces and capitals, a twin that is no new trigger); the two tag-collection blockers; the `gaps.other_tag_areas`
+decision; verify failures; static scan; the version/savepoint pin. Overridden contract cases, with the reason in the test
+file: `test_contract_not_applicable_without_tables` (the source is a core table that cannot be dropped) and
+`contract_clear_import` (a clean run rewrites its own source, so the moved rows are put back before the second run).
+Seed numbers: 8 legacy instances, 4 move, 2 folded, 2 skipped. The test class moved to its own file
+(`bizlms_import_course_tags_test`) because the base already has `bizlms_import_test` (course_lookups) in this plugin.
+
+Run without PHPUnit in this pass: `php -l` on every changed file, install.xml against `xmldb.xsd` (the new table has
+0 findings), tree drift, lang parity, path boundary, fixture copies. Real-data look: the April rehearsal copy holds 0
+`local_courses/courses` instances (`tag_instance` has 4 rows: 1 `core/course_modules`, 3 `core/user`), so the tests are the
+only evidence of the move itself; the preflight SQL shapes (the new mandatory-tag count included) ran clean against that copy, read-only, with the row-level counts forced on.
+
+**Deploy:** the upgrade step creates the trail table on Notifications. `version.php` requires `local_sentientia_platform`
+2026093001 (the framework the importer implements). The registry refuses the importer until the installed plugin is at
+2026100103, so re-run the PHPUnit init after merging. Shared files with the `course_lookups` and `enrolments` importers
+(same plugin): `version.php`, `db/install.xml`, `db/upgrade.php`, `db/bizlms_import.php`, this card.

@@ -35,6 +35,7 @@ use core_privacy\local\request\writer;
  *   - local_sentientia_course_type, local_sentientia_course_category (ADR-032 course_lookups import, 2026-10-01)
  *       shared configuration rows; actor column(s) anonymised: usercreated, usermodified
  *   - local_sentientia_courses_detailfill (ADR-032 import trail): ids and timestamps only, no person, not declared
+ *   - local_sentientia_courses_tagmove (ADR-032 course_tags import trail): ids and timestamps only, no person, not declared
  *
  * OWNER versus ACTOR columns
  * --------------------------
