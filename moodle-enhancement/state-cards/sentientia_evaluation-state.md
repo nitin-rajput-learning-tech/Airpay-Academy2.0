@@ -458,3 +458,24 @@ screenshots listed per item before it is merged.
   unreachable for everyone (`local/sentientia_evaluation:view` is not declared in `db/access.php`: EV-06), so its
   screenshots wait for that decision. Test: `analysis_test::test_response_detail_rows_read_question_id_keys_and_list_options`.
   Checked without Moodle: the rows against a fake `$DB`.
+- **EV-09 - the admin UI stops offering controls that an imported form refuses.** `evaluation_manager` refuses to edit,
+  re-status or delete an imported form and to add, edit, delete or reorder its questions (error
+  `error_imported_form_read_only`), but the list and the question page still offered Edit, Delete, Add, drag and the
+  per-question menu, so every click ended in that error. `list_evaluations` now asks
+  `evaluation_manager::imported_ids($pageids)` (one query on the legacy map: `imported` or `adopted`, the same test as
+  `is_imported()`) and, for those rows, leaves out the Edit and Delete anchors and adds an "Imported" badge; Questions
+  and Responses stay. `questions.php` passes `readonly` (`is_imported()`), and `questions.mustache` then drops the Add
+  buttons, the drag handle and `draggable`, the row menu and the page's JS, and shows an info alert
+  (`imported_readonly_notice`); "Export template" stays (it is how to run the questions again). Found on the way and
+  fixed in the same page: the number type showed the raw key "numeric", a number question printed its `{min, max}` as an ordered
+  list (the bounds 1 and 5 as two list items, or two empty items when unset), and the position badge printed question
+  id + 1. Labels for `multichoice_multi` and `numeric` are lang strings, and a
+  number question now shows its allowed range (`decode_numeric_bounds()`; `responses_numeric_range`, or the new
+  "at least" / "at most" strings when only one bound is set). New strings (en, hi): `imported_badge`,
+  `imported_readonly_notice`, `questiontype_multichoice_multi_short`, `questiontype_numeric_short`,
+  `questions_numeric_atleast`, `questions_numeric_atmost`. The gates do not change and there is no flag: only imported
+  rows change, and they exist only after the import. No version change. Test:
+  `list_evaluations_test::test_an_imported_form_offers_no_edit_or_delete` (imported, adopted, a map row that is only
+  archived, and a native form). Checked without Moodle: `questions.mustache` rendered for a native form, a read-only
+  form and a read-only form with no questions. Screenshots needed: `index.php` with one imported and one native row, and
+  `questions.php` for an imported numeric form, desktop and 590 px, as a tenant admin.

@@ -83,6 +83,28 @@ class evaluation_manager {
     }
 
     /**
+     * Which of these evaluations did the BizLMS import create? The same test as is_imported(), for a whole page of
+     * the admin list in one query.
+     *
+     * @param int[] $evaluationids
+     * @return array<int, true> The ids that are imported or adopted, as keys.
+     */
+    public static function imported_ids(array $evaluationids): array {
+        global $DB;
+        $ids = array_values(array_unique(array_filter(array_map('intval', $evaluationids), static fn(int $i): bool => $i > 0)));
+        if (!$ids || !class_exists(\local_sentientia_platform\bizlms\legacymap::class)) {
+            return [];
+        }
+        [$insql, $params] = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'impid');
+        $params['imptable'] = self::TABLE;
+        $found = $DB->get_fieldset_select(\local_sentientia_platform\bizlms\legacymap::TABLE, 'targetid',
+            "targettable = :imptable AND targetid {$insql} AND outcome IN ('imported', 'adopted')", $params);
+        $imported = array_fill_keys(array_map('intval', $found), true);
+        ksort($imported);
+        return $imported;
+    }
+
+    /**
      * Refuse to change an evaluation the import created.
      *
      * @param int $evaluationid

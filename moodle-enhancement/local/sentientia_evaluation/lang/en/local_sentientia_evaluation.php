@@ -298,3 +298,11 @@ $string['responses_question_no_answers'] = 'No answers yet for this question.';
 
 // 2026-10-01 (EV-05): response_detail.php shows the average of a number question.
 $string['response_detail_numeric_avg'] = 'Average of all responses: {$a}';
+
+// 2026-10-01 (EV-09): imported forms are read-only history; the admin pages say so instead of offering controls that end in an error.
+$string['imported_badge'] = 'Imported';
+$string['imported_readonly_notice'] = 'Brought over from the previous system. This evaluation is read-only: it is a record of what was asked and answered. To run the same questions again, export it as a template and create a new evaluation from that.';
+$string['questiontype_multichoice_multi_short'] = 'Multiple choice (several)';
+$string['questiontype_numeric_short'] = 'Number';
+$string['questions_numeric_atleast'] = 'Allowed range: at least {$a}';
+$string['questions_numeric_atmost'] = 'Allowed range: at most {$a}';

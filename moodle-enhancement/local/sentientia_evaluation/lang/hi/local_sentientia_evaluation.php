@@ -307,3 +307,11 @@ $string['responses_question_no_answers'] = 'इस प्रश्न के ल
 
 // 2026-10-01 (EV-05): response_detail.php में संख्या वाले प्रश्न का औसत।
 $string['response_detail_numeric_avg'] = 'सभी उत्तरों का औसत: {$a}';
+
+// 2026-10-01 (EV-09): आयातित फॉर्म केवल-पढ़ने योग्य इतिहास हैं; एडमिन पेज ऐसे नियंत्रण नहीं दिखाते जिनका अंत त्रुटि में होता है।
+$string['imported_badge'] = 'आयातित';
+$string['imported_readonly_notice'] = 'पिछली प्रणाली से लाया गया। यह मूल्यांकन केवल-पढ़ने योग्य है: यह इस बात का रिकॉर्ड है कि क्या पूछा गया और क्या उत्तर दिया गया। वही प्रश्न फिर से चलाने के लिए इसे टेम्पलेट के रूप में निर्यात करें और उससे नया मूल्यांकन बनाएँ।';
+$string['questiontype_multichoice_multi_short'] = 'बहुविकल्प (कई उत्तर)';
+$string['questiontype_numeric_short'] = 'संख्या';
+$string['questions_numeric_atleast'] = 'अनुमत सीमा: कम से कम {$a}';
+$string['questions_numeric_atmost'] = 'अनुमत सीमा: अधिकतम {$a}';

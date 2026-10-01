@@ -93,9 +93,23 @@ class list_evaluations extends external_api {
         $statusmap = [0 => 'Draft', 1 => 'Active', 2 => 'Archived'];
         $cssmap = [0 => 'badge-secondary', 1 => 'badge-success', 2 => 'badge-warning'];
 
+        // A form the BizLMS import brought over is read-only history (evaluation_manager refuses to edit, re-status
+        // or delete it), so the list does not offer Edit or Delete for it: every click would end in an error.
+        $imported = \local_sentientia_evaluation\evaluation_manager::imported_ids(array_keys($records));
+        $importedbadge = s(get_string('imported_badge', 'local_sentientia_evaluation'));
+
         $rows = [];
         foreach ($records as $e) {
             $status = (int) $e->status;
+            $isimported = isset($imported[(int) $e->id]);
+            $actions = '<a href="questions.php?id=' . (int)$e->id . '" class="btn btn-sm btn-link p-1" title="Questions"><i class="fa fa-list-ol"></i></a>'
+                . ' <a href="responses.php?id=' . (int)$e->id . '" class="btn btn-sm btn-link p-1" title="Responses"><i class="fa fa-bar-chart"></i></a>';
+            if ($isimported) {
+                $actions .= ' <span class="badge bg-light text-dark ms-1">' . $importedbadge . '</span>';
+            } else {
+                $actions .= ' <a href="#" class="btn btn-sm btn-link p-1" data-action="edit-evaluation" data-evaluationid="' . (int)$e->id . '" data-name="' . s($e->name) . '" title="Edit"><i class="fa fa-pencil"></i></a>'
+                    . ' <a href="#" class="btn btn-sm btn-link p-1" data-action="delete-evaluation" data-evaluationid="' . (int)$e->id . '" data-name="' . s($e->name) . '" title="Delete"><i class="fa fa-trash text-danger"></i></a>';
+            }
             $rows[] = [
                 'id'           => (int) $e->id,
                 'name'         => s($e->name),
@@ -105,10 +119,7 @@ class list_evaluations extends external_api {
                 'modified'     => $e->timemodified ? userdate($e->timemodified, '%d %b %Y') : '—',
                 'statuslabel'  => $statusmap[$status] ?? 'Unknown',
                 'statuscss'    => $cssmap[$status] ?? 'badge-secondary',
-                'actions'      => '<a href="questions.php?id=' . (int)$e->id . '" class="btn btn-sm btn-link p-1" title="Questions"><i class="fa fa-list-ol"></i></a>'
-                    . ' <a href="responses.php?id=' . (int)$e->id . '" class="btn btn-sm btn-link p-1" title="Responses"><i class="fa fa-bar-chart"></i></a>'
-                    . ' <a href="#" class="btn btn-sm btn-link p-1" data-action="edit-evaluation" data-evaluationid="' . (int)$e->id . '" data-name="' . s($e->name) . '" title="Edit"><i class="fa fa-pencil"></i></a>'
-                    . ' <a href="#" class="btn btn-sm btn-link p-1" data-action="delete-evaluation" data-evaluationid="' . (int)$e->id . '" data-name="' . s($e->name) . '" title="Delete"><i class="fa fa-trash text-danger"></i></a>',
+                'actions'      => $actions,
             ];
         }
 
