@@ -296,3 +296,11 @@ $string['my_evaluations_unavailable'] = 'आपका मूल्यांक�
 
 // 2026-10-01 (EV-02): वह व्यक्ति जिसके बारे में पर्यवेक्षक मूल्यांकन किया गया है।
 $string['responses_col_subject'] = 'मूल्यांकित व्यक्ति';
+
+// 2026-10-01 (EV-03): संख्या और "सभी लागू विकल्प चुनें" प्रश्नों के आँकड़े (responses.php)।
+$string['responses_numeric_average'] = 'औसत';
+$string['responses_numeric_lowest_highest'] = 'न्यूनतम {$a->lowest}, अधिकतम {$a->highest}';
+$string['responses_numeric_range'] = 'अनुमत सीमा {$a->min} से {$a->max}';
+$string['responses_multi_summary'] = '{$a->respondents} उत्तरदाताओं से {$a->picks} चयन (औसतन प्रति उत्तरदाता {$a->avg})';
+$string['responses_multi_share_note'] = 'एक व्यक्ति कई विकल्प चुन सकता है, इसलिए प्रतिशत का योग 100% से अधिक हो सकता है।';
+$string['responses_question_no_answers'] = 'इस प्रश्न के लिए अभी कोई उत्तर नहीं है।';

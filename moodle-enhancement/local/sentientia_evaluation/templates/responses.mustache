@@ -288,6 +288,45 @@
     {{^response_count}}<div class="no-data">No responses yet for this question.</div>{{/response_count}}
     {{/is_multichoice}}
 
+    {{#is_multichoice_multi}}
+    {{#response_count}}
+    {{#distribution}}
+    <div class="stat-bar-row">
+        <div class="stat-bar-label" style="flex-basis: 200px;">{{option}}</div>
+        <div class="stat-bar-track">
+            <div class="stat-bar-fill" style="width: {{pct}}%;"></div>
+        </div>
+        <div class="stat-bar-value">{{count}} ({{pct}}%)</div>
+    </div>
+    {{/distribution}}
+    <p class="text-muted small mb-0 mt-2">{{summary}}</p>
+    <p class="text-muted small mb-0">{{share_note}}</p>
+    {{/response_count}}
+    {{^response_count}}<div class="no-data">{{#str}}responses_question_no_answers, local_sentientia_evaluation{{/str}}</div>{{/response_count}}
+    {{/is_multichoice_multi}}
+
+    {{#is_numeric}}
+    {{#response_count}}
+    <div class="d-flex align-items-baseline mb-2">
+        <span style="font-size: 2rem; font-weight: 800; color: var(--ap-color-primary, #0066A7);">{{avg}}</span>
+        <span class="text-muted ms-2">{{#str}}responses_numeric_average, local_sentientia_evaluation{{/str}}</span>
+    </div>
+    <p class="text-muted small mb-3">{{lowest_highest}}{{#range_text}} &middot; {{.}}{{/range_text}}</p>
+    {{#has_distribution}}
+    {{#distribution}}
+    <div class="stat-bar-row">
+        <div class="stat-bar-label">{{label}}</div>
+        <div class="stat-bar-track">
+            <div class="stat-bar-fill" style="width: {{pct}}%;"></div>
+        </div>
+        <div class="stat-bar-value">{{count}} ({{pct}}%)</div>
+    </div>
+    {{/distribution}}
+    {{/has_distribution}}
+    {{/response_count}}
+    {{^response_count}}<div class="no-data">{{#str}}responses_question_no_answers, local_sentientia_evaluation{{/str}}</div>{{/response_count}}
+    {{/is_numeric}}
+
     {{#is_text}}
     {{#has_samples}}
     <p class="text-muted small mb-2">Recent responses (showing up to 5):</p>

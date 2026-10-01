@@ -61,89 +61,9 @@ if ($has_filter) {
     $total_responses = \local_sentientia_evaluation\evaluation_manager::count_responses($evaluationid);
 }
 
-// Build template data per question with type-aware presentation.
-$question_rows = [];
-foreach ($questions as $i => $q) {
-    $bucket = $stats[$q->id] ?? ['type' => $q->questiontype, 'count' => 0];
-
-    $row = [
-        'id'           => $q->id,
-        'position'     => $i + 1,
-        'questiontext' => format_string($q->questiontext),
-        'questiontype' => $q->questiontype,
-        'required'     => (bool) $q->required,
-        // Phase G.2 (2026-05-08) — per-question anonymous flag.
-        // Hidden in analysis only — the response_data still contains
-        // the responder's userid for audit purposes; the UI just
-        // doesn't surface it for this particular question.
-        'is_anonymous_question' => (int) ($q->anonymous ?? 0) === 1,
-        'response_count' => $bucket['count'],
-        'is_rating'    => ($q->questiontype === 'rating'),
-        'is_nps'       => ($q->questiontype === 'nps'),
-        'is_yesno'     => ($q->questiontype === 'yesno'),
-        'is_multichoice' => ($q->questiontype === 'multichoice'),
-        'is_text'      => ($q->questiontype === 'text'),
-    ];
-
-    if ($q->questiontype === 'rating' && $bucket['count'] > 0) {
-        $row['avg'] = $bucket['avg'];
-        $row['avg_pct'] = round(($bucket['avg'] / 5) * 100);
-        $dist_rows = [];
-        foreach ($bucket['distribution'] as $val => $count) {
-            $pct = $bucket['count'] > 0 ? round(($count / $bucket['count']) * 100) : 0;
-            $dist_rows[] = [
-                'level' => $val,
-                'count' => $count,
-                'pct'   => $pct,
-                'pct_label' => $count . ' (' . $pct . '%)',
-            ];
-        }
-        $row['distribution'] = $dist_rows;
-    }
-
-    if ($q->questiontype === 'nps' && $bucket['count'] > 0) {
-        $row['nps_score']  = $bucket['nps_score'];
-        $row['avg']        = $bucket['avg'];
-        $row['promoters']  = $bucket['promoters'];
-        $row['passives']   = $bucket['passives'];
-        $row['detractors'] = $bucket['detractors'];
-        $total = max(1, $bucket['count']);
-        $row['promoter_pct']  = round(($bucket['promoters']  / $total) * 100);
-        $row['passive_pct']   = round(($bucket['passives']   / $total) * 100);
-        $row['detractor_pct'] = round(($bucket['detractors'] / $total) * 100);
-        $row['nps_class'] = $bucket['nps_score'] >= 50 ? 'text-success'
-                          : ($bucket['nps_score'] >= 0 ? 'text-warning' : 'text-danger');
-    }
-
-    if ($q->questiontype === 'yesno' && $bucket['count'] > 0) {
-        $row['yes']     = $bucket['yes'];
-        $row['no']      = $bucket['no'];
-        $row['yes_pct'] = $bucket['yes_pct'];
-        $row['no_pct']  = 100 - $bucket['yes_pct'];
-    }
-
-    if ($q->questiontype === 'multichoice' && $bucket['count'] > 0) {
-        $dist_rows = [];
-        foreach ($bucket['distribution'] as $opt => $count) {
-            $pct = $bucket['count'] > 0 ? round(($count / $bucket['count']) * 100) : 0;
-            $dist_rows[] = [
-                'option' => format_string($opt),
-                'count'  => $count,
-                'pct'    => $pct,
-            ];
-        }
-        $row['distribution'] = $dist_rows;
-    }
-
-    if ($q->questiontype === 'text' && !empty($bucket['samples'])) {
-        $row['samples'] = array_map(function ($s) {
-            return ['text' => format_string($s)];
-        }, $bucket['samples']);
-        $row['has_samples'] = true;
-    }
-
-    $question_rows[] = $row;
-}
+// Build template data per question with type-aware presentation (rating, NPS, yes/no, multiple choice - one or
+// several answers -, number and free text). The rows are built in the manager so they can be tested.
+$question_rows = \local_sentientia_evaluation\evaluation_manager::response_question_rows($questions, $stats);
 
 // Build the export URL preserving filters.
 $export_params = ['id' => $evaluationid];

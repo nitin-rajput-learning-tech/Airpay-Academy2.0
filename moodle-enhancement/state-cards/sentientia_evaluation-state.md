@@ -416,3 +416,29 @@ screenshots listed per item before it is merged.
   `local/sentientia_evaluation:view`, which `db/access.php` does not declare, so the page cannot be reached until that
   is decided (EV-06); screenshots of it (desktop and 590 px, imported supervisor form, tenant admin) wait for that. A
   sample CSV header line is in the evidence README.
+- **EV-03 - `responses.php` shows number and tick-all-that-apply statistics (mapping doc code fix 3).** The buckets
+  for `numeric` and `multichoice_multi` were always computed, but the page set flags only for rating, NPS, yes/no,
+  multiple choice and text, so April's only real imported form (five numeric 1..5 items) listed its questions and
+  counts with no statistics. The loop that built the rows moved from the page into
+  `evaluation_manager::response_question_rows($questions, $stats)` so it can be tested; `responses.php` calls it.
+  New: `is_multichoice_multi` rows carry a bar per option (share of RESPONDENTS, so the shares can add up to more
+  than 100%, with a note saying so), `respondents`, `total_picks`, `avg_picks` and a summary line; `is_numeric` rows
+  carry the average (`format_float(avg, 2, true, true)`), lowest and highest, the allowed range when both bounds are
+  set, and, for a bounded range of at most `NUMERIC_DISTRIBUTION_SPAN` (10) steps whose answers are all whole numbers
+  inside it, a bar per value (the bucket gained an int-keyed `distribution` and a `distribution_exact` flag, no
+  schema). One answer such as 7.25 or an out-of-range value switches the bars off and the average stays. Questions
+  nobody answered show "No answers yet" (new string). Strings (en, hi): `responses_numeric_average`,
+  `responses_numeric_lowest_highest`, `responses_numeric_range`, `responses_multi_summary`,
+  `responses_multi_share_note`, `responses_question_no_answers`. The page gate is unchanged; no flag, no version
+  change. Two side effects of the move, both display only: the rows no longer pre-escape question and option text
+  (`format_string(..., ['escape' => false])`, the template escapes once, so "Tom & Jerry" stops showing as
+  "Tom &amp; Jerry"), and the position badge counts 1..n (it printed question id + 1, because `get_questions()` is
+  keyed by id; `questions.php` and `respond.php` still have that bug). Tests:
+  `analysis_test::test_response_stats_buckets_for_numeric_and_multichoice_multi`,
+  `::test_response_question_rows_render_numeric_and_multichoice_multi`. Checked without Moodle: the buckets and the
+  rows against a stub of the Moodle string functions, and `responses.mustache` rendered with the bundled Mustache
+  engine. Not changed on purpose: `get_kirkpatrick_summary()` adds up only rating and NPS, so on `analysis.php` the
+  imported numeric form adds a response count but no average (owner question: should numeric 1..5 items count as
+  ratings?). Screenshots needed: `responses.php?id=<form with a number, a tick-all and one older question>` as a
+  tenant admin (manager role, not site admin), desktop and 590 px; and the imported April form 3 on the rehearsal
+  copy after an import.

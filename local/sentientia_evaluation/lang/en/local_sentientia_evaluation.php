@@ -287,3 +287,11 @@ $string['my_evaluations_unavailable'] = 'Your evaluation history is not availabl
 
 // 2026-10-01 (EV-02): the person a supervisor evaluation is about.
 $string['responses_col_subject'] = 'Subject';
+
+// 2026-10-01 (EV-03): statistics for number and tick-all-that-apply questions (responses.php).
+$string['responses_numeric_average'] = 'average';
+$string['responses_numeric_lowest_highest'] = 'Lowest {$a->lowest}, highest {$a->highest}';
+$string['responses_numeric_range'] = 'Allowed range {$a->min} to {$a->max}';
+$string['responses_multi_summary'] = '{$a->picks} selections from {$a->respondents} respondents ({$a->avg} per respondent on average)';
+$string['responses_multi_share_note'] = 'One person can tick several options, so the shares can add up to more than 100%.';
+$string['responses_question_no_answers'] = 'No answers yet for this question.';

@@ -26,6 +26,12 @@ class evaluation_manager {
     // W1-5 — the trigger queue (delete() now clears its rows too).
     private const TRIGGERS_TABLE = 'local_sentientia_evaluation_triggers';
 
+    /**
+     * A numeric question whose allowed range spans at most this many steps (max - min) keeps a count per value, so
+     * the admin view can draw bars (BizLMS "1 to 5" items). A wider range, or none, shows the average only.
+     */
+    public const NUMERIC_DISTRIBUTION_SPAN = 10;
+
     /** Status values matching install.xml. */
     public const STATUS_DRAFT    = 0;
     public const STATUS_ACTIVE   = 1;
@@ -1962,9 +1968,17 @@ class evaluation_manager {
             case 'numeric':
                 // P1 #18 — running min/max/sum so finalise can compute avg.
                 $bounds = self::decode_numeric_bounds($q->options ?? null);
-                return ['type' => 'numeric', 'count' => 0, 'sum' => 0,
+                $bucket = ['type' => 'numeric', 'count' => 0, 'sum' => 0,
                         'min_seen' => null, 'max_seen' => null,
                         'bound_min' => $bounds['min'], 'bound_max' => $bounds['max']];
+                // A small bounded range also keeps a count per whole value (value => count). It is only shown
+                // while every answer so far is a whole number inside the range ('distribution_exact').
+                if ($bounds['min'] !== null && $bounds['max'] !== null && $bounds['max'] >= $bounds['min']
+                        && $bounds['max'] - $bounds['min'] <= self::NUMERIC_DISTRIBUTION_SPAN) {
+                    $bucket['distribution'] = array_fill_keys(range($bounds['min'], $bounds['max']), 0);
+                    $bucket['distribution_exact'] = true;
+                }
+                return $bucket;
             case 'text':
                 return ['type' => 'text', 'count' => 0, 'samples' => []];
             default:
@@ -2028,6 +2042,15 @@ class evaluation_manager {
                 if ($bucket['max_seen'] === null || $v > $bucket['max_seen']) {
                     $bucket['max_seen'] = $v;
                 }
+                if (isset($bucket['distribution'])) {
+                    $whole = (int) $v;
+                    if ($v == $whole && isset($bucket['distribution'][$whole])) {
+                        $bucket['distribution'][$whole]++;
+                    } else {
+                        // 7.25, or a value outside the allowed range: bars would no longer add up to every answer.
+                        $bucket['distribution_exact'] = false;
+                    }
+                }
                 break;
             case 'text':
                 if (count($bucket['samples']) < 5) {
@@ -2072,6 +2095,182 @@ class evaluation_manager {
                     ? round($bucket['sum'] / $bucket['count'], 2) : 0;
                 break;
         }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Admin response viewer (responses.php): the statistics, ready for the template
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * One display row per question for the aggregate view (responses.php), from the buckets get_response_stats()
+     * or get_response_stats_filtered() computed. Kept out of the page so it can be tested.
+     *
+     * Every row carries the flags is_rating, is_nps, is_yesno, is_multichoice, is_multichoice_multi, is_numeric and
+     * is_text; the data for a type is present only when somebody answered that question (count > 0), and the
+     * template shows its "no answers" text otherwise:
+     *  - rating: avg, avg_pct, distribution (level, count, pct, pct_label);
+     *  - nps: nps_score, avg, promoters, passives, detractors with their shares, nps_class;
+     *  - yesno: yes, no, yes_pct, no_pct;
+     *  - multichoice: distribution (option, count, pct);
+     *  - multichoice_multi: distribution (option, count, pct) where pct is the share of RESPONDENTS who ticked the
+     *    option, respondents, total_picks, avg_picks, summary and share_note;
+     *  - numeric: avg, min_seen, max_seen (formatted, trailing zeros stripped), bound_min, bound_max,
+     *    lowest_highest, range_text (both bounds set only) and, for a small bounded range whose answers are all
+     *    whole numbers inside it, has_distribution with distribution (label, count, pct);
+     *  - text: has_samples with samples.
+     *
+     * @param \stdClass[] $questions question records (from get_questions)
+     * @param array $stats buckets by question id
+     * @return array[] list of rows, in question order
+     */
+    public static function response_question_rows(array $questions, array $stats): array {
+        $component = 'local_sentientia_evaluation';
+        // {{ }} escapes once, in the template, so the text is not escaped here as well (format_string() would
+        // turn a '&' into '&amp;' and the template into '&amp;amp;').
+        $text = static fn(string $s): string => format_string($s, true, ['escape' => false]);
+        $number = static fn($n): string => format_float((float) $n, 2, true, true);
+
+        $rows = [];
+        $position = 0;
+        foreach ($questions as $q) {
+            $position++;
+            $bucket = $stats[$q->id] ?? ['type' => $q->questiontype, 'count' => 0];
+            $count = (int) ($bucket['count'] ?? 0);
+
+            $row = [
+                'id'           => $q->id,
+                'position'     => $position,
+                'questiontext' => $text((string) $q->questiontext),
+                'questiontype' => $q->questiontype,
+                'required'     => (bool) $q->required,
+                // Phase G.2 (2026-05-08) - per-question anonymous flag.
+                // Hidden in analysis only - the response_data still contains
+                // the responder's userid for audit purposes; the UI just
+                // doesn't surface it for this particular question.
+                'is_anonymous_question' => (int) ($q->anonymous ?? 0) === 1,
+                'response_count' => $count,
+                'is_rating'    => ($q->questiontype === 'rating'),
+                'is_nps'       => ($q->questiontype === 'nps'),
+                'is_yesno'     => ($q->questiontype === 'yesno'),
+                'is_multichoice' => ($q->questiontype === 'multichoice'),
+                'is_multichoice_multi' => ($q->questiontype === 'multichoice_multi'),
+                'is_numeric'   => ($q->questiontype === 'numeric'),
+                'is_text'      => ($q->questiontype === 'text'),
+            ];
+
+            if ($q->questiontype === 'rating' && $count > 0) {
+                $row['avg'] = $bucket['avg'];
+                $row['avg_pct'] = round(($bucket['avg'] / 5) * 100);
+                $dist_rows = [];
+                foreach ($bucket['distribution'] as $val => $n) {
+                    $pct = round(($n / $count) * 100);
+                    $dist_rows[] = [
+                        'level' => $val,
+                        'count' => $n,
+                        'pct'   => $pct,
+                        'pct_label' => $n . ' (' . $pct . '%)',
+                    ];
+                }
+                $row['distribution'] = $dist_rows;
+            }
+
+            if ($q->questiontype === 'nps' && $count > 0) {
+                $row['nps_score']  = $bucket['nps_score'];
+                $row['avg']        = $bucket['avg'];
+                $row['promoters']  = $bucket['promoters'];
+                $row['passives']   = $bucket['passives'];
+                $row['detractors'] = $bucket['detractors'];
+                $total = max(1, $count);
+                $row['promoter_pct']  = round(($bucket['promoters']  / $total) * 100);
+                $row['passive_pct']   = round(($bucket['passives']   / $total) * 100);
+                $row['detractor_pct'] = round(($bucket['detractors'] / $total) * 100);
+                $row['nps_class'] = $bucket['nps_score'] >= 50 ? 'text-success'
+                                  : ($bucket['nps_score'] >= 0 ? 'text-warning' : 'text-danger');
+            }
+
+            if ($q->questiontype === 'yesno' && $count > 0) {
+                $row['yes']     = $bucket['yes'];
+                $row['no']      = $bucket['no'];
+                $row['yes_pct'] = $bucket['yes_pct'];
+                $row['no_pct']  = 100 - $bucket['yes_pct'];
+            }
+
+            if ($q->questiontype === 'multichoice' && $count > 0) {
+                $dist_rows = [];
+                foreach ($bucket['distribution'] as $opt => $n) {
+                    $dist_rows[] = [
+                        'option' => $text((string) $opt),
+                        'count'  => $n,
+                        'pct'    => round(($n / $count) * 100),
+                    ];
+                }
+                $row['distribution'] = $dist_rows;
+            }
+
+            if ($q->questiontype === 'multichoice_multi' && $count > 0) {
+                // A person can tick several options, so each share is of RESPONDENTS and the shares can add up to
+                // more than 100%.
+                $dist_rows = [];
+                foreach ($bucket['distribution'] as $opt => $n) {
+                    $dist_rows[] = [
+                        'option' => $text((string) $opt),
+                        'count'  => $n,
+                        'pct'    => (int) round(($n / $count) * 100),
+                    ];
+                }
+                $row['distribution'] = $dist_rows;
+                $row['respondents'] = $count;
+                $row['total_picks'] = (int) $bucket['total_picks'];
+                $row['avg_picks'] = $number($bucket['avg_picks']);
+                $row['summary'] = get_string('responses_multi_summary', $component, (object) [
+                    'picks'       => $row['total_picks'],
+                    'respondents' => $count,
+                    'avg'         => $row['avg_picks'],
+                ]);
+                $row['share_note'] = get_string('responses_multi_share_note', $component);
+            }
+
+            if ($q->questiontype === 'numeric' && $count > 0) {
+                $row['avg'] = $number($bucket['avg']);
+                $row['min_seen'] = $number($bucket['min_seen']);
+                $row['max_seen'] = $number($bucket['max_seen']);
+                $row['bound_min'] = $bucket['bound_min'];
+                $row['bound_max'] = $bucket['bound_max'];
+                $row['lowest_highest'] = get_string('responses_numeric_lowest_highest', $component, (object) [
+                    'lowest'  => $row['min_seen'],
+                    'highest' => $row['max_seen'],
+                ]);
+                if ($bucket['bound_min'] !== null && $bucket['bound_max'] !== null) {
+                    $row['range_text'] = get_string('responses_numeric_range', $component, (object) [
+                        'min' => $bucket['bound_min'],
+                        'max' => $bucket['bound_max'],
+                    ]);
+                }
+                if (isset($bucket['distribution']) && !empty($bucket['distribution_exact'])) {
+                    $dist_rows = [];
+                    foreach ($bucket['distribution'] as $value => $n) {
+                        $pct = (int) round(($n / $count) * 100);
+                        $dist_rows[] = [
+                            'label' => (string) $value,
+                            'count' => $n,
+                            'pct'   => $pct,
+                        ];
+                    }
+                    $row['has_distribution'] = true;
+                    $row['distribution'] = $dist_rows;
+                }
+            }
+
+            if ($q->questiontype === 'text' && !empty($bucket['samples'])) {
+                $row['samples'] = array_map(static function ($sample) use ($text) {
+                    return ['text' => $text((string) $sample)];
+                }, $bucket['samples']);
+                $row['has_samples'] = true;
+            }
+
+            $rows[] = $row;
+        }
+        return $rows;
     }
 
     // ═══════════════════════════════════════════════════════════════════

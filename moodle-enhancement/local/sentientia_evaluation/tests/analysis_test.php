@@ -479,4 +479,149 @@ final class analysis_test extends \advanced_testcase {
             $this->assertSame('(deleted user)', $leftrow[3]);
         }
     }
+
+    // ─── number and tick-all-that-apply statistics (responses.php) ──────
+
+    /**
+     * A form with a bounded number question (1 to 5), an unbounded one, a tick-all-that-apply question and a
+     * rating nobody answers. Returns the question ids by name.
+     *
+     * @return array{eid: int, bounded: int, free: int, multi: int, rating: int}
+     */
+    private function seed_number_and_multi_form(): array {
+        $eid = $this->seed_eval('Numbers and ticks', 1);
+        $bounded = evaluation_manager::create_question((object) [
+            'evaluationid' => $eid, 'questiontype' => 'numeric', 'questiontext' => 'Score the venue',
+            'numeric_min' => 1, 'numeric_max' => 5, 'required' => 0,
+        ]);
+        $free = evaluation_manager::create_question((object) [
+            'evaluationid' => $eid, 'questiontype' => 'numeric', 'questiontext' => 'How many people?', 'required' => 0,
+        ]);
+        $multi = evaluation_manager::create_question((object) [
+            'evaluationid' => $eid, 'questiontype' => 'multichoice_multi', 'questiontext' => 'Which topics helped?',
+            'options' => "A\nB\nC", 'required' => 0,
+        ]);
+        $rating = evaluation_manager::create_question((object) [
+            'evaluationid' => $eid, 'questiontype' => 'rating', 'questiontext' => 'Overall', 'required' => 0,
+        ]);
+        return ['eid' => $eid, 'bounded' => $bounded, 'free' => $free, 'multi' => $multi, 'rating' => $rating];
+    }
+
+    /**
+     * response_data is a JSON object keyed by question id (int keys), as submit_response() and the BizLMS import
+     * both write it.
+     */
+    private function put_answers(int $eid, array $answers): void {
+        global $DB;
+        $DB->insert_record('local_sentientia_evaluation_responses', (object) [
+            'evaluationid' => $eid, 'userid' => 0, 'response_data' => json_encode((object) $answers),
+            'timesubmitted' => time(),
+        ]);
+    }
+
+    public function test_response_stats_buckets_for_numeric_and_multichoice_multi(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $f = $this->seed_number_and_multi_form();
+
+        foreach ([2, 4, 5] as $score) {
+            $this->put_answers($f['eid'], [$f['bounded'] => $score]);
+        }
+        // An imported BizLMS answer can carry decimals (7.25): they are kept, not truncated.
+        $this->put_answers($f['eid'], [$f['free'] => 7.25]);
+        $this->put_answers($f['eid'], [$f['multi'] => ['A', 'C']]);
+        $this->put_answers($f['eid'], [$f['multi'] => ['C']]);
+
+        $stats = evaluation_manager::get_response_stats($f['eid']);
+
+        $bounded = $stats[$f['bounded']];
+        $this->assertSame(3, $bounded['count']);
+        $this->assertEqualsWithDelta(3.67, $bounded['avg'], 0.001);
+        $this->assertEquals(2, $bounded['min_seen']);
+        $this->assertEquals(5, $bounded['max_seen']);
+        $this->assertSame([1 => 0, 2 => 1, 3 => 0, 4 => 1, 5 => 1], $bounded['distribution']);
+        $this->assertTrue($bounded['distribution_exact']);
+
+        $free = $stats[$f['free']];
+        $this->assertSame(1, $free['count']);
+        $this->assertEquals(7.25, $free['sum']);
+        $this->assertEquals(7.25, $free['avg']);
+        $this->assertArrayNotHasKey('distribution', $free, 'no bounds, no bars');
+
+        $multi = $stats[$f['multi']];
+        $this->assertSame(2, $multi['count'], 'two people answered');
+        $this->assertSame(3, $multi['total_picks'], 'and ticked three boxes between them');
+        $this->assertSame(['A' => 1, 'B' => 0, 'C' => 2], $multi['distribution']);
+        $this->assertEquals(1.5, $multi['avg_picks']);
+
+        // One answer that is not a whole number (2.5 is inside 1..5 but is no bar) switches the bars off.
+        $this->put_answers($f['eid'], [$f['bounded'] => 2.5]);
+        $bounded = evaluation_manager::get_response_stats($f['eid'])[$f['bounded']];
+        $this->assertSame(4, $bounded['count']);
+        $this->assertFalse($bounded['distribution_exact']);
+    }
+
+    public function test_response_question_rows_render_numeric_and_multichoice_multi(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $f = $this->seed_number_and_multi_form();
+        foreach ([2, 4, 5] as $score) {
+            $this->put_answers($f['eid'], [$f['bounded'] => $score]);
+        }
+        $this->put_answers($f['eid'], [$f['multi'] => ['A', 'C']]);
+        $this->put_answers($f['eid'], [$f['multi'] => ['C']]);
+
+        $rows = evaluation_manager::response_question_rows(
+            evaluation_manager::get_questions($f['eid']), evaluation_manager::get_response_stats($f['eid']));
+        $this->assertCount(4, $rows);
+        $this->assertSame([1, 2, 3, 4], array_column($rows, 'position'), 'numbered 1..n, not by question id');
+        [$bounded, $free, $multi, $rating] = $rows;
+
+        // Number question with a 1..5 range: the average, the extremes, the range and a bar per value.
+        $this->assertTrue($bounded['is_numeric']);
+        $this->assertFalse($bounded['is_multichoice_multi']);
+        $this->assertSame(3, $bounded['response_count']);
+        $this->assertSame('3.67', $bounded['avg']);
+        $this->assertSame('2', $bounded['min_seen']);
+        $this->assertSame('5', $bounded['max_seen']);
+        $this->assertSame(1, $bounded['bound_min']);
+        $this->assertSame(5, $bounded['bound_max']);
+        $this->assertSame(get_string('responses_numeric_range', 'local_sentientia_evaluation',
+            (object) ['min' => 1, 'max' => 5]), $bounded['range_text']);
+        $this->assertTrue($bounded['has_distribution']);
+        $this->assertSame(['1', '2', '3', '4', '5'], array_column($bounded['distribution'], 'label'));
+        $this->assertSame([0, 1, 0, 1, 1], array_column($bounded['distribution'], 'count'));
+        $this->assertSame([0, 33, 0, 33, 33], array_column($bounded['distribution'], 'pct'));
+
+        // Tick-all-that-apply: shares are of respondents (C was ticked by both), so they can exceed 100% together.
+        $this->assertTrue($multi['is_multichoice_multi']);
+        $this->assertFalse($multi['is_multichoice']);
+        $this->assertSame(2, $multi['respondents']);
+        $this->assertSame(3, $multi['total_picks']);
+        $this->assertSame('1.5', $multi['avg_picks']);
+        $this->assertSame(['A', 'B', 'C'], array_column($multi['distribution'], 'option'));
+        $this->assertSame([1, 0, 2], array_column($multi['distribution'], 'count'));
+        $this->assertSame([50, 0, 100], array_column($multi['distribution'], 'pct'));
+        $this->assertSame(get_string('responses_multi_summary', 'local_sentientia_evaluation',
+            (object) ['picks' => 3, 'respondents' => 2, 'avg' => '1.5']), $multi['summary']);
+        $this->assertNotSame('', $multi['share_note']);
+
+        // A question nobody answered keeps its flag and shows no statistics.
+        foreach ([$free, $rating] as $unanswered) {
+            $this->assertSame(0, $unanswered['response_count']);
+            $this->assertArrayNotHasKey('distribution', $unanswered);
+            $this->assertArrayNotHasKey('avg', $unanswered);
+        }
+        $this->assertTrue($free['is_numeric']);
+        $this->assertTrue($rating['is_rating']);
+        $this->assertArrayNotHasKey('range_text', $free);
+
+        // The same rows for a tick question nobody answered: no distribution.
+        $question = evaluation_manager::get_question($f['multi']);
+        $empty = evaluation_manager::response_question_rows([$question], [])[0];
+        $this->assertTrue($empty['is_multichoice_multi']);
+        $this->assertSame(0, $empty['response_count']);
+        $this->assertArrayNotHasKey('distribution', $empty);
+        $this->assertSame($question->id, $empty['id']);
+    }
 }
