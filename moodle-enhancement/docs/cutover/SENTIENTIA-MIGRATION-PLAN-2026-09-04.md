@@ -213,8 +213,16 @@ Extends `UAT-SENTIENTIA-DEPLOY-CHECKLIST.md §1, §6` and `UAT-ASKS-2026-09-03.m
     3 users, evaluations 3 forms / 1 response, the cart 5 orders.
   - **Course access continuity is the real risk (gap G6):** 16,830 enrolments (1,609 learners) sit on
     `enrol_learningplan` instances, and **7,673 learner-course pairs are enrolled ONLY through a BizLMS enrol
-    method**. With that code off disk they lose course access at cutover unless the G6 conversion (to a
-    manual enrolment, status and dates kept; decided 2026-09-30) runs. It is a cutover-blocking step.
+    method**.
+    - **Corrected 2026-10-01 after a check on the rehearsal copy:** they do NOT lose access at once.
+      There, with `enrol_learningplan` missing from disk, 5 of 5 sampled learners still answer
+      `is_enrolled() = yes`, because the restored `$CFG->enrol_plugins_enabled` still lists
+      `learningplan,program,classroom`.
+    - But the instances have no plugin code: nobody can manage them, and edit or unenrol flows through
+      them fail. The first admin save of the enrol-plugin settings drops the missing plugins from that
+      list and removes access in one step.
+    - So the G6 conversion (to a manual enrolment, status and dates kept; decided 2026-09-30; importer
+      `claude/bizlms-import-enrolments`, reviewed: ship) is still required before cutover sign-off.
   - Live has grown since April: run the I-20 query on live before sizing the window.
 
   **Decided (Nitin, 2026-09-29): IMPORT.** The BizLMS history is imported into the Sentientia tables

@@ -64,7 +64,7 @@ final class tenant_scope_test extends \advanced_testcase {
         return $id;
     }
 
-    private function status(int $id): string {
+    private function job_status(int $id): string {
         global $DB;
         return (string) $DB->get_field(translate_engine::TABLE, 'status', ['id' => $id], MUST_EXIST);
     }
@@ -97,12 +97,12 @@ final class tenant_scope_test extends \advanced_testcase {
 
         $this->assertFalse(translate_engine::accept($foreign, (int) $admin->id, true));
         $this->assertFalse(translate_engine::discard($foreign, (int) $admin->id, true));
-        $this->assertSame(translate_engine::STATUS_TRANSLATED, $this->status($foreign),
+        $this->assertSame(translate_engine::STATUS_TRANSLATED, $this->job_status($foreign),
             'Save / discard no longer update another tenant\'s row by bare id.');
 
         $this->assertTrue(translate_engine::accept($own, (int) $admin->id, true),
             'Inside their own tenant the tenant admin still reviews translations.');
-        $this->assertSame(translate_engine::STATUS_SAVED, $this->status($own));
+        $this->assertSame(translate_engine::STATUS_SAVED, $this->job_status($own));
     }
 
     public function test_a_caller_with_no_tenant_gets_only_their_own_rows(): void {
@@ -116,7 +116,7 @@ final class tenant_scope_test extends \advanced_testcase {
         $this->assertNull(translate_engine::load_for_actor($other, $nobody, true));
         $this->assertNull(translate_engine::load_for_actor($tenanted, $nobody, true));
         $this->assertFalse(translate_engine::discard($other, (int) $nobody->id, true));
-        $this->assertSame(translate_engine::STATUS_TRANSLATED, $this->status($other));
+        $this->assertSame(translate_engine::STATUS_TRANSLATED, $this->job_status($other));
 
         $this->assertSame(['1=0', []], translate_engine::scope_sql((object) ['id' => 0, 'open_path' => ''], true),
             'No actor at all sees nothing.');
