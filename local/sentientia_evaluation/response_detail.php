@@ -45,91 +45,11 @@ if (!$is_anonymous_eval && $response->userid) {
         'firstname, lastname, email, open_employeeid');
 }
 
-// Parse the response data.
-$answers = json_decode($response->response_data ?: '{}', true) ?: [];
-
-// Load all questions in order.
-$questions = $DB->get_records('local_sentientia_evaluation_questions',
-    ['evaluationid' => $evaluation->id], 'sortorder ASC');
-
-// Aggregate stats per question for comparison.
-$all_responses = $DB->get_records('local_sentientia_evaluation_responses',
-    ['evaluationid' => $evaluation->id]);
-
-$qstats = [];  // qid => ['count' => N, 'avg' => x, 'distribution' => {...}]
-foreach ($questions as $q) {
-    $vals = [];
-    foreach ($all_responses as $r) {
-        $data = json_decode($r->response_data ?: '{}', true) ?: [];
-        $key = 'q' . $q->id;
-        if (isset($data[$key]) && $data[$key] !== '') {
-            $vals[] = $data[$key];
-        }
-    }
-    $qstats[$q->id] = [
-        'count'  => count($vals),
-        'values' => $vals,
-    ];
-    if ($q->questiontype === 'rating' || $q->questiontype === 'numeric') {
-        $nums = array_filter($vals, 'is_numeric');
-        $qstats[$q->id]['avg'] = $nums ? round(array_sum($nums) / count($nums), 2) : 0;
-    }
-}
-
-// Build display data.
-$q_rows = [];
-foreach ($questions as $q) {
-    $key = 'q' . $q->id;
-    $my_answer = $answers[$key] ?? '(no answer)';
-    $opts = json_decode($q->options ?: '{}', true) ?: [];
-    $stats = $qstats[$q->id];
-
-    $row = [
-        'qid'           => (int) $q->id,
-        'type'          => $q->questiontype,
-        'text'          => format_string($q->questiontext),
-        'required'      => (bool) $q->required,
-        'anonymous'     => (bool) $q->anonymous,
-        'my_answer'     => is_array($my_answer) ? implode(', ', $my_answer) : (string) $my_answer,
-        'has_my_answer' => $my_answer !== '(no answer)',
-        'response_count' => $stats['count'],
-    ];
-
-    // Type-specific display.
-    if ($q->questiontype === 'rating') {
-        $row['max_rating'] = (int) ($opts['max'] ?? 5);
-        $row['avg'] = $stats['avg'] ?? 0;
-        // Build distribution histogram 1..max.
-        $hist = [];
-        for ($i = 1; $i <= $row['max_rating']; $i++) {
-            $count = count(array_filter($stats['values'], fn($v) => (int) $v === $i));
-            $hist[] = [
-                'level' => $i,
-                'count' => $count,
-                'pct'   => $stats['count'] > 0
-                    ? round(100 * $count / $stats['count'], 1) : 0,
-                'is_my_choice' => (int) $row['my_answer'] === $i,
-            ];
-        }
-        $row['histogram'] = $hist;
-    } else if ($q->questiontype === 'choice' || $q->questiontype === 'multichoice') {
-        $choices = $opts['choices'] ?? [];
-        $hist = [];
-        foreach ($choices as $choice) {
-            $count = count(array_filter($stats['values'],
-                fn($v) => is_array($v) ? in_array($choice, $v) : (string) $v === (string) $choice));
-            $hist[] = [
-                'label' => $choice,
-                'count' => $count,
-                'pct'   => $stats['count'] > 0
-                    ? round(100 * $count / $stats['count'], 1) : 0,
-            ];
-        }
-        $row['histogram'] = $hist;
-    }
-
-    $q_rows[] = $row;
-}
+// The respondent's answers, each beside how everybody else answered. Built in the manager so it can be tested:
+// it reads response_data by the bare question id and a choice question's options as a plain list (this page read
+// 'q<id>' keys and an options['choices'] list that nothing writes, so every answer showed as missing).
+$detail = \local_sentientia_evaluation\evaluation_manager::response_detail_rows($evaluation, $response);
+$q_rows = $detail['questions'];
 
 $data = [
     'response_id'   => (int) $response->id,
@@ -147,8 +67,8 @@ $data = [
     'employee_id'   => $user ? (string) ($user->open_employeeid ?? '') : '',
 
     'questions'     => $q_rows,
-    'question_count' => count($questions),
-    'total_responses' => count($all_responses),
+    'question_count' => count($q_rows),
+    'total_responses' => $detail['total_responses'],
 
     'back_url'      => (new moodle_url('/local/sentientia_evaluation/responses.php',
         ['id' => $evaluation->id]))->out(false),

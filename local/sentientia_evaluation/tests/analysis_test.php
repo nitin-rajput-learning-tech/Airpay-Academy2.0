@@ -511,9 +511,9 @@ final class analysis_test extends \advanced_testcase {
      * response_data is a JSON object keyed by question id (int keys), as submit_response() and the BizLMS import
      * both write it.
      */
-    private function put_answers(int $eid, array $answers): void {
+    private function put_answers(int $eid, array $answers): int {
         global $DB;
-        $DB->insert_record('local_sentientia_evaluation_responses', (object) [
+        return (int) $DB->insert_record('local_sentientia_evaluation_responses', (object) [
             'evaluationid' => $eid, 'userid' => 0, 'response_data' => json_encode((object) $answers),
             'timesubmitted' => time(),
         ]);
@@ -623,5 +623,82 @@ final class analysis_test extends \advanced_testcase {
         $this->assertSame(0, $empty['response_count']);
         $this->assertArrayNotHasKey('distribution', $empty);
         $this->assertSame($question->id, $empty['id']);
+    }
+
+    // ─── one respondent's answers (response_detail.php) ─────────────────
+
+    public function test_response_detail_rows_read_question_id_keys_and_list_options(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $eid = $this->seed_eval('Detail', 1);
+        $rating = evaluation_manager::create_question((object) [
+            'evaluationid' => $eid, 'questiontype' => 'rating', 'questiontext' => 'Overall', 'required' => 0,
+        ]);
+        $choice = evaluation_manager::create_question((object) [
+            'evaluationid' => $eid, 'questiontype' => 'multichoice', 'questiontext' => 'Colour',
+            'options' => "Red\nGreen", 'required' => 0,
+        ]);
+        $multi = evaluation_manager::create_question((object) [
+            'evaluationid' => $eid, 'questiontype' => 'multichoice_multi', 'questiontext' => 'Topics',
+            'options' => "A\nB\nC", 'required' => 0,
+        ]);
+        $number = evaluation_manager::create_question((object) [
+            'evaluationid' => $eid, 'questiontype' => 'numeric', 'questiontext' => 'People', 'required' => 0,
+        ]);
+
+        // response_data is keyed by the bare question id; a choice question's options are a plain list.
+        $first = $this->put_answers($eid, [$rating => 4, $choice => 'Red', $multi => ['A', 'C'], $number => 7.25]);
+        $this->put_answers($eid, [$rating => 2, $choice => 'Red', $multi => ['C'], $number => 3]);
+        $third = $this->put_answers($eid, [$choice => 'Green']);
+        // The pending shell of an invited user is not a response: it counts for nothing here.
+        $this->seed_response($eid, (int) $this->getDataGenerator()->create_user()->id, [], 0);
+
+        $form = evaluation_manager::get($eid);
+        $detail = evaluation_manager::response_detail_rows($form,
+            $DB->get_record('local_sentientia_evaluation_responses', ['id' => $first], '*', MUST_EXIST));
+        $this->assertSame(3, $detail['total_responses']);
+        $this->assertCount(4, $detail['questions']);
+        [$r, $c, $m, $n] = $detail['questions'];
+
+        $this->assertTrue($r['has_my_answer']);
+        $this->assertSame('4', $r['my_answer']);
+        $this->assertSame(2, $r['response_count']);
+        $this->assertEqualsWithDelta(3.0, $r['avg'], 0.001);
+        $this->assertSame([1, 2, 3, 4, 5], array_column($r['histogram'], 'level'));
+        $this->assertSame([0, 1, 0, 1, 0], array_column($r['histogram'], 'count'));
+        $this->assertSame([false, false, false, true, false], array_column($r['histogram'], 'is_my_choice'));
+
+        $this->assertSame('Red', $c['my_answer']);
+        $this->assertSame(['Red', 'Green'], array_column($c['histogram'], 'label'), 'the options come from the list');
+        $this->assertSame([2, 1], array_column($c['histogram'], 'count'));
+        $this->assertEqualsWithDelta(66.7, $c['histogram'][0]['pct'], 0.05);
+        $this->assertSame([true, false], array_column($c['histogram'], 'is_my_choice'));
+
+        $this->assertTrue($m['has_my_answer']);
+        $this->assertSame('A, C', $m['my_answer']);
+        $this->assertSame(2, $m['response_count'], 'two people ticked something');
+        $this->assertSame(['A', 'B', 'C'], array_column($m['histogram'], 'label'));
+        $this->assertSame([1, 0, 2], array_column($m['histogram'], 'count'));
+        $this->assertEqualsWithDelta(100.0, $m['histogram'][2]['pct'], 0.05);
+        $this->assertSame([true, false, true], array_column($m['histogram'], 'is_my_choice'));
+
+        $this->assertSame('7.25', $n['my_answer']);
+        $this->assertTrue($n['has_avg']);
+        $this->assertEqualsWithDelta(5.13, $n['avg'], 0.01);
+        $this->assertStringContainsString('5.13', $n['avg_label']);
+
+        // A response that skipped a question: no answer, and none of the options is marked.
+        $partial = evaluation_manager::response_detail_rows($form,
+            $DB->get_record('local_sentientia_evaluation_responses', ['id' => $third], '*', MUST_EXIST));
+        $this->assertSame(3, $partial['total_responses']);
+        [$r, $c, $m, $n] = $partial['questions'];
+        $this->assertFalse($r['has_my_answer']);
+        $this->assertSame('', $r['my_answer']);
+        $this->assertSame([false, false, false, false, false], array_column($r['histogram'], 'is_my_choice'));
+        $this->assertSame([false, true], array_column($c['histogram'], 'is_my_choice'));
+        $this->assertFalse($m['has_my_answer']);
+        $this->assertSame([false, false, false], array_column($m['histogram'], 'is_my_choice'));
+        $this->assertFalse($n['has_my_answer']);
     }
 }

@@ -442,3 +442,19 @@ screenshots listed per item before it is merged.
   ratings?). Screenshots needed: `responses.php?id=<form with a number, a tick-all and one older question>` as a
   tenant admin (manager role, not site admin), desktop and 590 px; and the imported April form 3 on the rehearsal
   copy after an import.
+- **EV-05 - `response_detail.php` reads the keys and options the plugin really writes (mapping doc code fix 5).**
+  The page read each answer as `$data['q' . $id]` and a choice question's options as `$opts['choices']`. Nothing
+  writes either: `response_data` is keyed by the bare question id (`submit_response()`, the importer) and the options
+  JSON is a plain list. So every answer read "(no answer)", every comparison count was 0 and a choice question had no
+  histogram; `multichoice_multi` was not handled at all and the numeric average was computed but never printed. The
+  body (the old lines 59-132) moved into `evaluation_manager::response_detail_rows($evaluation, $response)`, which
+  reads `$data[(int) $q->id]`, takes the option list from `decode_options()`, builds a histogram per option for
+  `multichoice` and `multichoice_multi` (for tick-all, the people who ticked the option; `is_my_choice` by
+  `in_array`), keeps the rating histogram and exposes the numeric `avg` with `avg_label`. It reads every response
+  once (a recordset) instead of decoding all of them once per question, and it leaves pending trigger shells
+  (`timesubmitted` 0) out of the comparison and of `total_responses`. The ADR-031 and `identity_protected()` gates in
+  the page are untouched. `response_detail.mustache` prints the average and highlights the respondent's own option for
+  the choice histograms. New string `response_detail_numeric_avg` (en, hi). No version change. The page is still
+  unreachable for everyone (`local/sentientia_evaluation:view` is not declared in `db/access.php`: EV-06), so its
+  screenshots wait for that decision. Test: `analysis_test::test_response_detail_rows_read_question_id_keys_and_list_options`.
+  Checked without Moodle: the rows against a fake `$DB`.

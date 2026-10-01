@@ -56,6 +56,8 @@
                 {{/has_my_answer}}
             </div>
 
+            {{#has_avg}}<div class="small text-muted mb-3">{{ avg_label }}</div>{{/has_avg}}
+
             {{#histogram}}
             {{#level}}
             <div class="d-flex align-items-center mb-1">
@@ -77,7 +79,8 @@
                 <div style="width:160px;" class="small">{{ label }}</div>
                 <div class="flex-grow-1 mx-2">
                     <div class="progress" style="height:18px;">
-                        <div class="progress-bar bg-secondary" style="width:{{ pct }}%;">{{ count }}</div>
+                        <div class="progress-bar {{#is_my_choice}}bg-primary{{/is_my_choice}}{{^is_my_choice}}bg-secondary{{/is_my_choice}}"
+                             style="width:{{ pct }}%;">{{ count }}</div>
                     </div>
                 </div>
                 <div style="width:60px;text-align:right;">{{ pct }}%</div>

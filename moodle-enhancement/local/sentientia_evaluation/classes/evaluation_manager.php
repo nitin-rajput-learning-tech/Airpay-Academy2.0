@@ -2273,6 +2273,124 @@ class evaluation_manager {
         return $rows;
     }
 
+    /**
+     * One respondent's answers, question by question, each beside how everybody else answered (response_detail.php).
+     *
+     * response_data is keyed by the BARE question id (submit_response() and the BizLMS import both write it so), and
+     * a choice question's options JSON is a plain list; an answer is read as `$data[(int) $q->id]` and the options
+     * through decode_options(). Pending trigger shells (timesubmitted 0) are invitations, not responses, so they
+     * are left out of the comparison and of the total.
+     *
+     * Per row: qid, type, text, required, anonymous, my_answer (a tick-all answer joined with ', '; empty when
+     * unanswered), has_my_answer, response_count (how many people answered this question) and, by type:
+     *  - rating: max_rating, avg and a histogram of levels (level, count, pct, is_my_choice);
+     *  - multichoice, multichoice_multi: a histogram per option (label, count, pct, is_my_choice) - for the
+     *    tick-all type the count is of respondents who ticked the option, so the shares can exceed 100% together;
+     *  - numeric: avg, has_avg and avg_label.
+     *
+     * @param \stdClass $evaluation the evaluation record
+     * @param \stdClass $response the response being shown
+     * @return array{questions: array[], total_responses: int}
+     */
+    public static function response_detail_rows(\stdClass $evaluation, \stdClass $response): array {
+        global $DB;
+        $text = static fn(string $s): string => format_string($s, true, ['escape' => false]);
+
+        $mine = json_decode((string) ($response->response_data ?: '{}'), true);
+        $mine = is_array($mine) ? $mine : [];
+
+        $questions = self::get_questions((int) $evaluation->id);
+
+        // Everybody's submitted answers, by question id. One pass over the responses.
+        $values = [];
+        $total = 0;
+        $submitted = $DB->get_recordset_select(self::RESPONSES_TABLE,
+            'evaluationid = :eid AND timesubmitted > 0', ['eid' => (int) $evaluation->id], 'id ASC', 'id, response_data');
+        foreach ($submitted as $r) {
+            $total++;
+            $data = json_decode((string) ($r->response_data ?: '{}'), true);
+            if (!is_array($data)) {
+                continue;
+            }
+            foreach ($data as $qid => $value) {
+                if ($value === null || $value === '' || $value === []) {
+                    continue;
+                }
+                $values[(int) $qid][] = $value;
+            }
+        }
+        $submitted->close();
+
+        $rows = [];
+        foreach ($questions as $q) {
+            $qid = (int) $q->id;
+            $answer = $mine[$qid] ?? null;
+            $answered = !($answer === null || $answer === '' || $answer === []);
+            $vals = $values[$qid] ?? [];
+            $count = count($vals);
+
+            $row = [
+                'qid'           => $qid,
+                'type'          => $q->questiontype,
+                'text'          => $text((string) $q->questiontext),
+                'required'      => (bool) $q->required,
+                'anonymous'     => (bool) ($q->anonymous ?? 0),
+                'my_answer'     => $answered
+                    ? (is_array($answer) ? implode(', ', array_map('strval', $answer)) : (string) $answer) : '',
+                'has_my_answer' => $answered,
+                'response_count' => $count,
+            ];
+
+            if ($q->questiontype === 'rating') {
+                $row['max_rating'] = (int) (self::decode_options($q->options)['max'] ?? 5);
+                $nums = array_filter($vals, 'is_numeric');
+                $row['avg'] = $nums ? round(array_sum($nums) / count($nums), 2) : 0;
+                $hist = [];
+                for ($i = 1; $i <= $row['max_rating']; $i++) {
+                    $n = count(array_filter($vals, static fn($v) => is_numeric($v) && (int) $v === $i));
+                    $hist[] = [
+                        'level' => $i,
+                        'count' => $n,
+                        'pct'   => $count > 0 ? round(100 * $n / $count, 1) : 0,
+                        'is_my_choice' => $answered && is_numeric($answer) && (int) $answer === $i,
+                    ];
+                }
+                $row['histogram'] = $hist;
+            } else if ($q->questiontype === 'multichoice' || $q->questiontype === 'multichoice_multi') {
+                $mineticked = is_array($answer) ? array_map('strval', $answer) : [];
+                $hist = [];
+                foreach (self::decode_options($q->options) as $option) {
+                    $option = (string) $option;
+                    $n = 0;
+                    foreach ($vals as $v) {
+                        if (is_array($v) ? in_array($option, array_map('strval', $v), true) : (string) $v === $option) {
+                            $n++;
+                        }
+                    }
+                    $hist[] = [
+                        'label' => $text($option),
+                        'count' => $n,
+                        'pct'   => $count > 0 ? round(100 * $n / $count, 1) : 0,
+                        'is_my_choice' => $answered && (is_array($answer)
+                            ? in_array($option, $mineticked, true) : (string) $answer === $option),
+                    ];
+                }
+                $row['histogram'] = $hist;
+            } else if ($q->questiontype === 'numeric') {
+                $nums = array_filter($vals, 'is_numeric');
+                $row['avg'] = $nums ? round(array_sum($nums) / count($nums), 2) : 0;
+                $row['has_avg'] = (bool) $nums;
+                if ($nums) {
+                    $row['avg_label'] = get_string('response_detail_numeric_avg', 'local_sentientia_evaluation',
+                        format_float((float) $row['avg'], 2, true, true));
+                }
+            }
+
+            $rows[] = $row;
+        }
+        return ['questions' => $rows, 'total_responses' => $total];
+    }
+
     // ═══════════════════════════════════════════════════════════════════
     // FILTERED RESPONSES (G-05)
     // ═══════════════════════════════════════════════════════════════════

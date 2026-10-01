@@ -304,3 +304,6 @@ $string['responses_numeric_range'] = 'अनुमत सीमा {$a->min} स
 $string['responses_multi_summary'] = '{$a->respondents} उत्तरदाताओं से {$a->picks} चयन (औसतन प्रति उत्तरदाता {$a->avg})';
 $string['responses_multi_share_note'] = 'एक व्यक्ति कई विकल्प चुन सकता है, इसलिए प्रतिशत का योग 100% से अधिक हो सकता है।';
 $string['responses_question_no_answers'] = 'इस प्रश्न के लिए अभी कोई उत्तर नहीं है।';
+
+// 2026-10-01 (EV-05): response_detail.php में संख्या वाले प्रश्न का औसत।
+$string['response_detail_numeric_avg'] = 'सभी उत्तरों का औसत: {$a}';

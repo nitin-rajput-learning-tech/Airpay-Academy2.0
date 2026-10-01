@@ -295,3 +295,6 @@ $string['responses_numeric_range'] = 'Allowed range {$a->min} to {$a->max}';
 $string['responses_multi_summary'] = '{$a->picks} selections from {$a->respondents} respondents ({$a->avg} per respondent on average)';
 $string['responses_multi_share_note'] = 'One person can tick several options, so the shares can add up to more than 100%.';
 $string['responses_question_no_answers'] = 'No answers yet for this question.';
+
+// 2026-10-01 (EV-05): response_detail.php shows the average of a number question.
+$string['response_detail_numeric_avg'] = 'Average of all responses: {$a}';
