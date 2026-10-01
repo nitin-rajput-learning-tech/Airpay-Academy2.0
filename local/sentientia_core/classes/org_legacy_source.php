@@ -21,10 +21,17 @@ defined('MOODLE_INTERNAL') || die();
  */
 class org_legacy_source implements org_source {
 
+    /**
+     * The local_costcenter column that holds an organisation's display name. BizLMS calls it fullname; it has
+     * no column called name. This read `name` until 2026-09-30 (ADR-032, mapping doc section 3, code fix 3),
+     * found no such column, and so named every backfilled unit "Unit <id>".
+     */
+    private const NAME_COLUMN = 'fullname';
+
     /** @var array<int,string|null> Request cache: cost-center id => resolved name. */
     private array $namecache = [];
 
-    /** @var bool|null Whether local_costcenter.name is queryable here (resolved once). */
+    /** @var bool|null Whether local_costcenter.fullname is queryable here (resolved once). */
     private ?bool $namecolumn = null;
 
     /**
@@ -72,7 +79,7 @@ class org_legacy_source implements org_source {
         }
         $name = null;
         if ($this->name_column_available()) {
-            $val = $DB->get_field('local_costcenter', 'name', ['id' => $costcenterid], IGNORE_MISSING);
+            $val = $DB->get_field('local_costcenter', self::NAME_COLUMN, ['id' => $costcenterid], IGNORE_MISSING);
             if (is_string($val) && trim($val) !== '') {
                 $name = $val;
             }
@@ -81,7 +88,7 @@ class org_legacy_source implements org_source {
     }
 
     /**
-     * Is local_costcenter.name queryable on this deployment? Resolved once.
+     * Is local_costcenter.fullname queryable on this deployment? Resolved once.
      *
      * An explicit capability check (not a swallowed exception) so the source is
      * portable to an Enterprise-N deployment with a differently-shaped — or
@@ -94,7 +101,7 @@ class org_legacy_source implements org_source {
         if ($this->namecolumn === null) {
             $dbman = $DB->get_manager();
             $this->namecolumn = $dbman->table_exists('local_costcenter')
-                && array_key_exists('name', $DB->get_columns('local_costcenter'));
+                && array_key_exists(self::NAME_COLUMN, $DB->get_columns('local_costcenter'));
         }
         return $this->namecolumn;
     }

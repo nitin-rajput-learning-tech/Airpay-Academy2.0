@@ -253,3 +253,60 @@ legacy name is false without a debugging notice. The top-level copy still called
 on them directly (debugging notice on every nav render) and lacked `legacy_cap()`, which
 `theme_sentientia` `core_renderer` already calls (a fatal on that tree). The file leaves
 `tools/tree-drift-baseline.txt`. New test `tests/accesslib_legacy_cap_test.php`. No version bump.
+
+## 2026-09-30 - ADR-032 org importer (1.5.0, 2026093001)
+
+The org feature of the BizLMS data import (`docs/cutover/BIZLMS-IMPORT-MAPPING-2026-09-29.md` section 3):
+`local_costcenter` -> `local_sentientia_org`, ids kept (PRESERVE). It is the first importer of a full run and
+depends on nothing (`importer::depends()` is empty; the framework names it `registry::TENANT_OWNER`).
+
+- Code: `db/bizlms_import.php` (`'org' => importer::class`), `classes/bizlms/importer.php`, `costcenter_step.php`,
+  `org_source.php`. No schema change, no new table or column, no privacy change (no person column), no feature
+  flag (the import has no user-visible surface; the gate is the CLI guard). Version 2026092500 -> 2026093001;
+  `importer::REQUIRES_VERSION` is the same number, so the importer refuses to run on a site that has not upgraded.
+- Column map: id, fullname (NULL -> ''), shortname (cut to 100, reported), description, parentid (NULL -> 0),
+  visible (enum 0/1; anything else blocks in preflight), path (normalised; root must pass `tenant::assert_valid`),
+  depth (source, else the number of path segments), sortorder (BizLMS vancode -> rank among siblings x 10),
+  costcenter_logo -> org_logo (0 -> NULL), brand/button/hover colour (cut to 20), theme -> theme_scheme (cut to 50),
+  timecreated and timemodified as they are. Not copied: category (read in place), multipleorg, childpermission,
+  shell, usermodified (decision `org.unmapped_columns` = `not_copied`). Favicon, footer, e-mail identity, hero
+  text and custom CSS have no source and stay NULL.
+- Skips: no usable path -> `not_org_row`; path root not a registered tenant -> `invalid_tenant_root` (needs the
+  owner: add `org:invalid_tenant_root` to `accepted_reasons` after the rehearsal shows what it is); a `visible`
+  value the owner let through the enum check -> `unmapped_enum`. Odd but imported: a duplicate path, a path whose
+  last segment is not the id, a parent missing from the table, a path not under its parent's, a depth that differs
+  from the path, all reported as preflight warnings with counts (the legacy table is frozen, so there is nothing to
+  correct them with).
+- `tenant_resolver::resolve()` is deliberately NOT used: it checks a path against the org table this step fills,
+  and on a resume would "walk up" to the parent's path for a row that is not there yet. The importer uses
+  `tenant_resolver::normalise()` and `tenant::assert_valid()` directly.
+- Adoption: a `local_sentientia_org` row at a BizLMS id with the same `shortname` and `path` (what the retired
+  `data_migration.php` wrote) is rewritten with the full mapping; any other occupant blocks the feature.
+- `finalise()` copies each logo from the BizLMS file area (component `local_costcenter`, area `costcenter_logo`,
+  the organisation's category context) into the system context under `local_sentientia_org` / `org_logo`, same
+  item id, through the framework's `file_rehome` (idempotent, originals stay). That is a write to `{files}` that
+  is declared nowhere (`registry::CORE_WRITES_ALLOWED` has no `files`; the tripwire does not watch it), so
+  `--purge-feature=org` leaves the copied logos behind. Harmless: a re-import finds them and copies nothing.
+- Reader fixes shipped with it: `accesslib::can_manage_multi`, `can_view`, `can_manage`, `is_org_head`,
+  `is_dept_head` and `can_manage_classroom` no longer fall back to `local/costcenter:*` and
+  `local/classroom:manageclassroom` (ADR-032 gate 3: the BizLMS capability rows survive in a restored database, so
+  role 9 passed `can_manage_multi()`). The guarded helper `legacy_cap()` stays, deprecated, for ONE non-org caller:
+  `theme/sentientia` core_renderer.php (`block/trainerdashboard:viewtrainerslist`). Delete it when that goes.
+  `branding_manager::get_logo_url()` offers the `local_costcenter` fallback URL only while that plugin is on disk.
+  `local_sentientia_core\org_legacy_source` reads `local_costcenter.fullname` (it read `name`, which does not
+  exist, so every backfilled unit was "Unit <id>"). `cli/disable_bizlms.php` no longer calls `local_forum`,
+  `local_groups` and `local_tags` "Not used".
+- Both trees carry every file. `accesslib.php` is now identical in both (it was baselined drift) and its line is
+  out of `tools/tree-drift-baseline.txt`; `version.php` still differs in comments only.
+- Tests: `tests/bizlms_import_test.php` (`@group bizlms_import`, the tenant case also `@group tenant_isolation`)
+  runs the importer contract against a production-shaped seed of 13 rows (three tenants, three levels, sibling
+  order that differs from id order, padded path, long shortname, missing depth and name, a multipleorg-only row, an
+  unregistered root) plus the column map, sibling ranking, reasons, the decision, enums, adoption, sequence reset,
+  logo copy and its idempotence, verify, a tenant admin's view, the accesslib and `org_legacy_source` fixes.
+  Fixture: `tests/fixtures/bizlms/costcenter.install.xml` (`local_costcenter` only, sha1 of the source file in its
+  header). NOT RUN: PHPUnit needs the re-init for the version bump. `php -l`, the ADR-032 static scan of
+  `classes/bizlms/`, the drift, lang-parity, path-boundary and fixture-copy gates pass, and the pure parts
+  (`org_source`, `costcenter_step::transform`) were exercised on the seed outside Moodle.
+- Open: the Stage B rehearsal decides `org:invalid_tenant_root` (production may hold a fourth tenant root), whether
+  a `visible` value other than 0 and 1 exists, and how many logo item ids have no file behind them
+  (`logo_file_missing` warning). Gate 3 also needs `local/sentientia_platform:crosstenant` granted by hand.

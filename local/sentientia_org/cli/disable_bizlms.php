@@ -46,7 +46,7 @@ cli_writeln('');
 // BizLMS plugins to disable — grouped by replacement status.
 $plugins = [
     // Replaced by Airpay (Phase 1-5).
-    'local_costcenter'      => 'Replaced by local_sentientia_org',
+    'local_costcenter'      => 'Replaced by local_sentientia_org; the table stays and is read in place (ADR-032)',
     'local_users'           => 'Replaced by local_sentientia_users',
     'local_courses'         => 'Replaced by local_sentientia_courses',
     'local_classroom'       => 'Replaced by local_sentientia_classroom',
@@ -60,10 +60,11 @@ $plugins = [
     'local_notifications'   => 'Replaced by sentientia_notifications',
     'local_myteam'          => 'Replaced by sentientia_manager',
 
-    // Not used.
-    'local_forum'           => 'Not used',
-    'local_groups'          => 'Not used',
-    'local_tags'            => 'Not used',
+    // Not replaced by an import target of their own, but NOT unused: their data is live (ADR-032 mapping doc,
+    // section 3, code fix 5). Disabling the code never touches the tables, which stay as the legacy archive.
+    'local_forum'           => 'No Sentientia replacement; its tables stay as the legacy archive (ADR-032)',
+    'local_groups'          => 'Holds live data: the cohort_scope import carries it (ADR-032)',
+    'local_tags'            => 'Holds live data: the course_tags import remaps the tag instances (ADR-032)',
 
     // BizLMS support plugins.
     'local_ratings'         => 'Optional — guarded by file_exists()',

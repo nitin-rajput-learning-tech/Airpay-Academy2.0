@@ -228,3 +228,12 @@ trees.
   existing new `_enabled`; existing new lock kept; `_disable` key; dry run writes nothing and counts
   what a run would do; user rows move unless the user already has the new name; a failure part-way
   through a provider rolls it back. No version bump. Both trees.
+
+## 2026-09-30 - org_legacy_source reads local_costcenter.fullname (ADR-032 org importer)
+
+`classes/org_legacy_source.php` (both trees) asked `local_costcenter` for a column called `name`. BizLMS has no such
+column (it is `fullname`), so `unit_name()` always returned null and `org_reconciler::ensure_unit()` named every
+backfilled unit "Unit <id>". The column is now a constant (`NAME_COLUMN = 'fullname'`), used for both the existence
+check and the read. Mapping doc section 3, code fix 3. Covered by `test_the_core_legacy_source_reads_the_organisation_name_from_fullname`
+in `local_sentientia_org/tests/bizlms_import_test.php`. Only matters before any `org_legacy` flip; `backfill_org.php`
+is not part of the cutover. No version bump, no schema change.
