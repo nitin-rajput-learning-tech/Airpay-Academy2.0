@@ -17,4 +17,5 @@ defined('MOODLE_INTERNAL') || die();
 
 $imports = [
     'org' => \local_sentientia_org\bizlms\importer::class,
+    'cohort_scope' => \local_sentientia_org\bizlms\cohort_scope_importer::class,
 ];

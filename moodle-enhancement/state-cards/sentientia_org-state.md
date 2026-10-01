@@ -310,3 +310,51 @@ depends on nothing (`importer::depends()` is empty; the framework names it `regi
 - Open: the Stage B rehearsal decides `org:invalid_tenant_root` (production may hold a fourth tenant root), whether
   a `visible` value other than 0 and 1 exists, and how many logo item ids have no file behind them
   (`logo_file_missing` warning). Gate 3 also needs `local/sentientia_platform:crosstenant` granted by hand.
+
+## 2026-09-30 - ADR-032 cohort_scope importer (1.4.4 -> 1.5.0, 2026093002)
+
+Mapping doc section 5. The BizLMS satellite of a core cohort, `local_groups` (cohortid, open_path, departmentid,
+costcenterid, usermodified, timemodified), is imported into the new `local_sentientia_cohort_scope` table
+(id, cohortid UNIQUE, open_path, departmentids, usermodified, timemodified). Nothing in Sentientia reads the table
+yet and the mapping doc adds no reader, so there is no flag and no page. The feature depends on `org` (tenant
+paths are validated against the organisation tree). Files: `db/bizlms_import.php` registers
+`cohort_scope => classes/bizlms/cohort_scope_importer`; `cohort_scope_step` (one grouped MAP step),
+`cohort_context` (cohort, context, category and `local_costcenter.category` facts, read through the framework's
+bounded reader) and `cohort_files` (the description files).
+
+Rules the importer follows, each with a test in `tests/bizlms_import_test.php`:
+- Joined on `cohortid` only. `local_groups_update_groups()` updated the row whose id equals the COHORT id, so a
+  row id proves nothing; the test puts one cohort's row at another cohort's id.
+- Tenant: the row's normalised `open_path`; else the organisation that owns the cohort's course category (or the
+  nearest ancestor category); else `costcenterid` when it is a tenant root. `'0'` (the NOT NULL default) and `''`
+  mean unknown. A cohort nothing places gets NULL in `open_path` (visible to cross-tenant callers only) or is
+  skipped (`no_tenant`), as `tenant.unresolved.cohort_scope` says (signed: pathless). The stored value is NULL and
+  not `''` because the framework's generic tenant verify accepts NULL or a normalised path and nothing else.
+- A row whose path names another tenant than its cohort's context is imported with the row's path and reported
+  (`path_context_mismatch`); it is never repaired silently.
+- Two rows for one cohort (the source index is not unique): one is imported (the one that places the cohort, then
+  the one that agrees with the context, then the newest, then the highest id) and the rest are `merged`
+  (`dup_cohort_row`).
+- A row whose cohort is gone is `skipped` (`orphan_cohort`, detail `cohort_not_found`).
+- `departmentid` becomes `departmentids`: positive whole numbers, each once; junk is dropped and reported
+  (`departments_cleaned`). `timemodified` and `usermodified` come from the source; a `timemodified` of 0 takes the
+  core cohort's date (`derived_timestamp`).
+- Core `cohort` and `cohort_members` are not touched, no cohort API is called, no event fires. `local_groups` is
+  never written. `core_writes()` is empty.
+- `finalise()` copies the description files from component `local_groups` (BizLMS edit path) or `groups` (add
+  path) into core's `cohort` / `description` area, in the cohort's own context, through the framework's
+  `file_rehome`. Originals stay. A re-run copies nothing. It throws (no completion marker) if a file has no twin,
+  and a later `verify()` proves the twins again. A `--purge-feature` deletes the scope rows and map rows but not
+  the copied files (they are not a table write); a re-import skips the ones already there.
+
+Privacy: the plugin was a `null_provider`. `usermodified` is an actor reference, so the provider is now a real one
+(metadata, export, delete, userlist, `anonymise_data_for_user`). Erasure sets `usermodified` to 0 and keeps the row
+(it says which tenant a cohort belongs to). en + hi strings added. `usermodified` is not yet in the structural
+guard's `USER_COLUMNS` (`sentientia_platform/tests/privacy_coverage_test.php`), which is framework-owned.
+
+Tests: `bizlms_import_test` (importer contract + the feature world, `@group bizlms_import tenant_isolation`),
+`cohort_scope_departments_test` (pure), `privacy_cohort_scope_test`. Fixture `tests/fixtures/bizlms/groups.install.xml`
+holds verbatim copies of BizLMS `local_groups` and `local_costcenter` (the latter only for its `category` column).
+`tests/classes/bizlms/org_stub_importer.php` stands in for the org feature in the registry (the real org importer
+is a separate deliverable). NOT yet run: PHPUnit (the lead re-inits once for the version bump). The step's
+transform was run against in-memory stubs of the framework collaborators for every case in the world.

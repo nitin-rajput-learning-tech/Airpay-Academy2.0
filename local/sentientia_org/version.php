@@ -43,9 +43,12 @@ $plugin->component = 'local_sentientia_org';
 // local_sentientia_org with the BizLMS ids kept, logos copied, no schema change. The BizLMS capability
 // fallbacks are removed from accesslib in the same release (ADR-032 gate 3), so the importer class refuses
 // to run below this version (importer::REQUIRES_VERSION).
-$plugin->version   = 2026093001;  // ADR-032 org importer + BizLMS capability fallbacks removed
+// 2026093001: ADR-032 org importer + BizLMS capability fallbacks removed.
+$plugin->version   = 2026093002;  // ADR-032 cohort_scope: local_sentientia_cohort_scope + its BizLMS importer
+// 2026092500: ADR-031 tenant-bounded org tree + parent pick.
 // 2026092200: descendants-only access filter is /-bounded.
 // 2026090800:
 $plugin->requires  = 2022041900; // Moodle 4.0+
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->release   = '1.5.0'; // ADR-032 org importer + accesslib fallbacks removed. 1.4.4: ADR-031 tenant scope. 1.4.3: +2026-09-08 cascade_* strings (org cascade filter i18n, en+hi)
+$plugin->release   = '1.6.0'; // ADR-032 cohort_scope importer + cohort scope table + real privacy provider. 1.5.0: ADR-032 org importer + accesslib fallbacks removed. 1.4.4: ADR-031 tenant scope. 1.4.3: +2026-09-08 cascade_* strings (org cascade filter i18n, en+hi) — this ME tree is what UAT runs

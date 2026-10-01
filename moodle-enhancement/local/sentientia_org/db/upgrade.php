@@ -43,5 +43,17 @@ function xmldb_local_sentientia_org_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051100, 'local', 'sentientia_org');
     }
 
+    // ── 2026093002: cohort tenant scope table (ADR-032 BizLMS import, feature cohort_scope). ──
+    // The target of the import of local_groups, the tenant satellite BizLMS kept for each core
+    // cohort. Created from install.xml so the two cannot drift; the table_exists guard makes a
+    // re-run (or a site where the table was made by hand) a no-op. Nothing reads the table yet.
+    if ($oldversion < 2026093002) {
+        $table = new xmldb_table('local_sentientia_cohort_scope');
+        if (!$dbman->table_exists($table)) {
+            $dbman->install_one_table_from_xmldb_file(__DIR__ . '/install.xml', 'local_sentientia_cohort_scope');
+        }
+        upgrade_plugin_savepoint(true, 2026093002, 'local', 'sentientia_org');
+    }
+
     return true;
 }
