@@ -284,9 +284,10 @@ depends on nothing (`importer::depends()` is empty; the framework names it `regi
   `data_migration.php` wrote) is rewritten with the full mapping; any other occupant blocks the feature.
 - `finalise()` copies each logo from the BizLMS file area (component `local_costcenter`, area `costcenter_logo`,
   the organisation's category context) into the system context under `local_sentientia_org` / `org_logo`, same
-  item id, through the framework's `file_rehome` (idempotent, originals stay). That is a write to `{files}` that
-  is declared nowhere (`registry::CORE_WRITES_ALLOWED` has no `files`; the tripwire does not watch it), so
-  `--purge-feature=org` leaves the copied logos behind. Harmless: a re-import finds them and copies nothing.
+  item id, through the framework's `file_rehome` (idempotent, originals stay). Until 2026-10-07 that was a write to
+  `{files}` declared nowhere; it is now a declared side effect (`copies_files` marker, owner decision IDN-04, see the
+  2026-10-07 section below). `--purge-feature=org` still leaves the copied logos behind. Harmless: a re-import finds
+  them and copies nothing.
 - Reader fixes shipped with it: `accesslib::can_manage_multi`, `can_view`, `can_manage`, `is_org_head`,
   `is_dept_head` and `can_manage_classroom` no longer fall back to `local/costcenter:*` and
   `local/classroom:manageclassroom` (ADR-032 gate 3: the BizLMS capability rows survive in a restored database, so
@@ -310,6 +311,9 @@ depends on nothing (`importer::depends()` is empty; the framework names it `regi
 - Open: the Stage B rehearsal decides `org:invalid_tenant_root` (production may hold a fourth tenant root), whether
   a `visible` value other than 0 and 1 exists, and how many logo item ids have no file behind them
   (`logo_file_missing` warning). Gate 3 also needs `local/sentientia_platform:crosstenant` granted by hand.
+  (Decided 2026-10-07: `invalid_tenant_root` and `unmapped_enum` stay fail-closed and are NOT pre-accepted; the
+  crosstenant role is created by `tools/uat/adr031_crosstenant_role.php` with no members until Nitin names them.
+  See the 2026-10-07 section.)
 
 ## 2026-09-30 - ADR-032 cohort_scope importer (1.4.4 -> 1.5.0, 2026093002)
 
@@ -345,12 +349,14 @@ Rules the importer follows, each with a test in `tests/bizlms_import_test.php`:
   path) into core's `cohort` / `description` area, in the cohort's own context, through the framework's
   `file_rehome`. Originals stay. A re-run copies nothing. It throws (no completion marker) if a file has no twin,
   and a later `verify()` proves the twins again. A `--purge-feature` deletes the scope rows and map rows but not
-  the copied files (they are not a table write); a re-import skips the ones already there.
+  the copied files (declared through the `copies_files` marker since 2026-10-07, not a core write); a re-import
+  skips the ones already there.
 
 Privacy: the plugin was a `null_provider`. `usermodified` is an actor reference, so the provider is now a real one
 (metadata, export, delete, userlist, `anonymise_data_for_user`). Erasure sets `usermodified` to 0 and keeps the row
-(it says which tenant a cohort belongs to). en + hi strings added. `usermodified` is not yet in the structural
-guard's `USER_COLUMNS` (`sentientia_platform/tests/privacy_coverage_test.php`), which is framework-owned.
+(it says which tenant a cohort belongs to). en + hi strings added. `usermodified` is in the structural guard's
+`USER_COLUMNS` since 2026-10-07 (`sentientia_platform/tests/privacy_coverage_test.php`, F-15); this provider declares
+the table, so the guard passes it.
 
 Tests: `bizlms_import_test` (importer contract + the feature world, `@group bizlms_import tenant_isolation`),
 `cohort_scope_departments_test` (pure), `privacy_cohort_scope_test`. Fixture `tests/fixtures/bizlms/groups.install.xml`
@@ -358,3 +364,46 @@ holds verbatim copies of BizLMS `local_groups` and `local_costcenter` (the latte
 `tests/classes/bizlms/org_stub_importer.php` stands in for the org feature in the registry (the real org importer
 is a separate deliverable). NOT yet run: PHPUnit (the lead re-inits once for the version bump). The step's
 transform was run against in-memory stubs of the framework collaborators for every case in the world.
+
+
+## 2026-10-07 - ADR-032 owner decisions (delegated 2026-10-07): IDN-03, IDN-04, IDN-05, F-11 (1.6.1, 2026100701)
+
+Branch `claude/owner-decisions-x`. The decisions are the signed record in `docs/cutover/OWNER-DECISIONS-2026-10-07.md`
+and `docs/cutover/bizlms-import-decisions.json`; this card says what the code now does.
+
+- **IDN-04, file copies (code):** the org importer and the cohort_scope importer implement the platform's new
+  `local_sentientia_platform\bizlms\copies_files` marker. `allowed_file_areas()` names the exact
+  [source component, source area, target component, target area] pairs: org `local_costcenter/costcenter_logo` ->
+  `local_sentientia_org/org_logo`; cohort_scope `local_groups/description` and `groups/description` ->
+  `cohort/description`. The runner watches `{files}` for every importer without the marker, lets these two add rows in
+  their declared target areas only, and writes `files_copied` (per area, real files only, the directory rows the file
+  API adds beside a copy are not counted) to the run report. The copies are NOT core writes, so `--purge-feature` stays
+  available for both features and leaves the copies in place (a re-run copies nothing). Signed key
+  `framework.file_rehome_copies`. Tests: `bizlms_import_test` (report counts the logo copy; the declaration),
+  `bizlms_cohort_scope_import_test` (description copies counted, declaration); the framework cases are in
+  `sentientia_platform/tests/bizlms/bizlms_runner_test.php`.
+- **F-11:** `org_source::root_is_registered()` now delegates to `tenant_resolver::root_is_registered()` (new, public,
+  static). The org importer is the TENANT_OWNER and must not call `tenant_resolver::resolve()` for its own rows (it
+  checks the table this feature fills); it still does not.
+- **IDN-03 (decided, no code):** `org:invalid_tenant_root` and `org:unmapped_enum` stay fail-closed. April copy: 213
+  organisations, roots 1 (206 rows), 77 (2) and 177 (5) only, `visible` 1 on every row, so neither fires. NOT
+  pre-accepted: if the Stage B preflight shows `invalid_tenant_root > 0` or `unmapped_enum > 0` the run stops and
+  Nitin decides on the tenant (register it, re-parent the organisation or accept the loss); only then is a reason
+  accepted, with the count.
+- **IDN-02 (decided):** nothing is pre-accepted for any feature. After Stage B one batch edit adds `feature:code` for
+  every needs-owner code with a non-zero rehearsed count, with the counts in the approval note, and the decisions-file
+  hash is re-pinned.
+- **IDN-05 (runbook only):** the cross-tenant platform role is created at Stage B and at cutover by
+  `tools/uat/adr031_crosstenant_role.php --target=<wwwroot> --config=<cfg> --dry-run`, then `--apply` (migration plan
+  step 4f-f). It holds only `local/sentientia_platform:crosstenant`, assigned to nobody. Members are added at
+  `/admin/roles/assign.php?contextid=1` only after Nitin names them; site admins remain the only cross-tenant callers.
+  The code half of gate 3 (org checks no longer call `legacy_cap()`) was done earlier.
+- **Stage B reminder (F-21):** file content is required on the target. April: 14 organisations reference a logo item id
+  but only 5 legacy logo file rows exist, and `filedir` is absent on the rehearsal clone. Stage B must restore
+  `filedir` with the database; expect a `logo_file_missing` warning for the item ids with no file row, and the
+  cohort_scope `finalise()` throws `description_files_not_copied` if a description file lacks content.
+- **Version and dependency:** 2026093002 -> 2026100701; `$plugin->dependencies` now names
+  `local_sentientia_platform` >= 2026100701 (the marker interface). No schema change, no flag, no string, no privacy
+  change. Both trees carry every file; `version.php` is still a baselined, comment-only divergence.
+- NOT RUN: PHPUnit (the lead re-inits once for the platform and org bumps). `php -l` and the drift, lang-parity,
+  path-boundary and fixture-copy gates pass.

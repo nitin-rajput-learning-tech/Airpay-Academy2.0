@@ -388,6 +388,27 @@ final class bizlms_cohort_scope_import_test extends \advanced_testcase {
             'a cohort without a scope row was not imported, so its files are not copied');
     }
 
+    public function test_the_description_copies_are_a_declared_side_effect_and_the_report_counts_them(): void {
+        global $DB;
+        [$result, $report] = $this->apply();
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+
+        // IDN-04: {files} is watched for every importer; this one declares core's cohort description area.
+        $importer = new cohort_scope_importer();
+        $this->assertInstanceOf(\local_sentientia_platform\bizlms\copies_files::class, $importer);
+        $this->assertSame([
+            ['local_groups', 'description', 'cohort', 'description'],
+            ['groups', 'description', 'cohort', 'description'],
+        ], $importer->allowed_file_areas());
+        $this->assertSame([], $importer->core_writes(), 'a file copy is not a core write, so --purge-feature stays available');
+
+        $feature = $report->to_array()['features']['cohort_scope'];
+        $this->assertSame('clean', $feature['tripwire']);
+        $copies = $DB->count_records_select('files', "component = 'cohort' AND filearea = 'description' AND filename <> '.'");
+        $this->assertGreaterThan(0, $copies);
+        $this->assertSame(['cohort/description' => $copies], $feature['files_copied']);
+    }
+
     public function test_a_second_apply_copies_no_file_twice(): void {
         $this->apply();
         $fs = get_file_storage();

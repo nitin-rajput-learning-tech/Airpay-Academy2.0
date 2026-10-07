@@ -28,8 +28,11 @@ defined('MOODLE_INTERNAL') || die();
  *   carried with another status can therefore never be replaced by the importer's
  *   own default.
  * - accepted_reasons (optional): needs-owner reasons the owner has accepted.
- *   Parity exits 2 for any needs-owner reason that is not listed. Each feature
- *   importer adds its own reasons to the list when it is built.
+ *   Parity exits 2 for any needs-owner reason that is not listed. Nothing is
+ *   pre-accepted (ADR-032 signed decisions, 2026-10-07 IDN-02): a reason is added
+ *   here only by the owner, in writing, AFTER the Stage B rehearsal has produced its
+ *   count, with the counts in the approval note; the file's hash is then re-pinned.
+ *   An importer's build does not add its own reasons to the list.
  * - enums (optional): values of a declared enum column the owner has mapped, so
  *   preflight no longer blocks on them. The importer's code decides what a mapped
  *   value becomes.

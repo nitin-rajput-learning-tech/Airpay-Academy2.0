@@ -16,6 +16,7 @@ use local_sentientia_platform\bizlms\registry;
 use local_sentientia_platform\bizlms\report;
 use local_sentientia_platform\bizlms\runner;
 use local_sentientia_platform\phpunit\legacy_schema_fixture;
+use local_sentientia_platform\tests\bizlms\toy_files_importer;
 use local_sentientia_platform\tests\bizlms\toy_importer;
 use local_sentientia_platform\tests\bizlms\toy_seed;
 
@@ -1006,6 +1007,101 @@ final class bizlms_runner_test extends \advanced_testcase {
         $this->assertFalse(legacymap::feature_complete('toy'), 'finalise ran, its leak was seen, and no marker was written');
         $this->assertSame(['toy'], toy_importer::$finalised, 'finalise did run: this is the look after it');
         $this->assertGreaterThan(0, legacymap::tripped_run('toy'));
+    }
+
+    // File copies (IDN-04, signed key framework.file_rehome_copies).
+
+    public function test_a_file_written_by_an_importer_without_the_marker_trips_the_tripwire(): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+        toy_importer::$writefile = ['local_sentientia_platform', 'toytarget'];
+
+        [$result, $report] = $this->execute();
+        $this->assertSame(1, $result['exit']);
+        $this->assertStringContainsString('write_outside_declared_tables:files', implode(' ', $result['blockers']));
+        $this->assertContains('files', $report->to_array()['features']['toy']['tripwire']);
+        $this->assertFalse(legacymap::feature_complete('toy'), 'a tripped feature never gets a marker');
+        $this->assertGreaterThan(0, legacymap::tripped_run('toy'));
+        $this->assertTrue($DB->record_exists('files', ['filearea' => 'toytarget']), 'the row is committed: the snapshot is the way back');
+    }
+
+    public function test_an_importer_with_the_marker_may_copy_into_its_declared_area_and_the_report_counts_it(): void {
+        $this->begin([new toy_files_importer()]);
+        $this->seed_toy_data();
+        toy_importer::$writefile = ['local_sentientia_platform', 'toytarget'];
+
+        [$result, $report] = $this->execute();
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        $this->assertSame('complete', $result['features']['toy']);
+        $feature = $report->to_array()['features']['toy'];
+        $this->assertSame('clean', $feature['tripwire']);
+        // One file; the directory row the file API creates beside it is not counted as a copy.
+        $this->assertSame(['local_sentientia_platform/toytarget' => 1], $feature['files_copied']);
+    }
+
+    public function test_an_importer_with_the_marker_trips_on_a_file_in_any_other_area(): void {
+        $this->begin([new toy_files_importer()]);
+        $this->seed_toy_data();
+        toy_importer::$writefile = ['local_sentientia_platform', 'elsewhere'];
+
+        [$result, $report] = $this->execute();
+        $this->assertSame(1, $result['exit']);
+        $this->assertStringContainsString('write_outside_declared_tables:files:local_sentientia_platform/elsewhere',
+            implode(' ', $result['blockers']));
+        $this->assertContains('files:local_sentientia_platform/elsewhere', $report->to_array()['features']['toy']['tripwire']);
+        $this->assertFalse(legacymap::feature_complete('toy'));
+    }
+
+    public function test_an_importer_with_the_marker_that_copies_nothing_reports_zero(): void {
+        $this->begin([new toy_files_importer()]);
+        $this->seed_toy_data();
+
+        [$result, $report] = $this->execute();
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        $this->assertSame(['local_sentientia_platform/toytarget' => 0],
+            $report->to_array()['features']['toy']['files_copied']);
+    }
+
+    public function test_a_rehearsal_purge_leaves_the_copies_in_place(): void {
+        global $DB;
+        $this->begin([new toy_files_importer()]);
+        $this->seed_toy_data();
+        toy_importer::$writefile = ['local_sentientia_platform', 'toytarget'];
+        [$first] = $this->execute();
+        $this->assertSame('complete', $first['features']['toy']);
+
+        // A copy is not a core write, so the purge is allowed and does not touch it.
+        (new runner(['apply' => true, 'permit' => guard::test_permit(guard_permit::PURGE)]))->purge('toy');
+        $this->assertTrue($DB->record_exists('files', ['filearea' => 'toytarget', 'filename' => 'toy.txt']));
+        $this->assertFalse(legacymap::feature_complete('toy'));
+    }
+
+    public function test_an_importer_with_a_malformed_file_declaration_is_refused_by_the_registry(): void {
+        $this->begin([new toy_files_importer()]);
+        toy_importer::$fileareas = [['local_toy', 'source', 'local_sentientia_platform']];
+        $this->expectException(\local_sentientia_platform\bizlms\registry_error::class);
+        $this->expectExceptionMessage('file_areas_malformed:toy');
+        registry::load();
+    }
+
+    public function test_a_blocked_decision_asked_for_inside_an_importers_preflight_is_a_blocker_not_a_crash(): void {
+        $this->begin();
+        $this->seed_toy_data();
+        toy_importer::$extradecisions = [new decision('toy.credit', 'How a legacy balance is honoured')];
+        toy_importer::$preflightdecision = true;
+
+        // Open (finance-confirm): the decision loop blocks on it AND the importer's own ask throws blocked() with
+        // the same line. Neither may escape, and the line is listed once.
+        $open = decisions::from_array(['toy.credit' => 'frozen_pending_finance'], ['toy.credit' => 'finance-confirm']);
+        [$result] = $this->execute(['decisions' => $open]);
+        $this->assertSame(1, $result['exit']);
+        $this->assertSame(1, substr_count(implode(' ', $result['blockers']), 'decision_not_accepted:toy.credit:finance-confirm'));
+
+        // Absent from the file: required, no default, so the same.
+        [$missing] = $this->execute(['decisions' => decisions::none()]);
+        $this->assertSame(1, $missing['exit']);
+        $this->assertSame(1, substr_count(implode(' ', $missing['blockers']), 'missing_decision:toy.credit'));
     }
 
     public function test_a_dry_run_reports_what_changed_under_it_but_does_not_fail(): void {

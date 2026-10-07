@@ -434,6 +434,13 @@ trait importer_contract {
         $this->assertContains($result['exit'], [0, 2]);
         $after = sideeffect_guard::snapshot();
         $allowed = array_merge($importer->target_tables(), array_keys($importer->core_writes()));
+        if ($importer instanceof \local_sentientia_platform\bizlms\copies_files) {
+            // IDN-04: {files} may grow, in the target areas the importer declares and in no others.
+            $allowed[] = sideeffect_guard::FILES;
+            $files = sideeffect_guard::files_in_areas((int) ($before[sideeffect_guard::FILES] ?? 0),
+                sideeffect_guard::declared_file_areas($importer));
+            $this->assertSame([], $files['outside'], 'the importer copies files only into the areas it declares');
+        }
         $this->assertSame([], sideeffect_guard::violations($before, $after, $allowed));
         $this->assertSame('clean', $report->to_array()['features'][$importer->feature()]['tripwire']);
         $this->assertSame(0, $events->count(), 'the import fires no event');

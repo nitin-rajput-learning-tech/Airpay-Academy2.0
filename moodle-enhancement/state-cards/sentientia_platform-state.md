@@ -850,3 +850,41 @@ the signed file (`tools/check-bizlms-fixture-copies.php` OK). No code, no versio
 - Framework changes this batch's decisions call for (copies_files marker, sequence floor from the legacy AUTO_INCREMENT,
   preflight catching `blocked`, parity wiring) are recorded in ADR-032, "Framework change rule"; they are code, not part of
   this entry. Details and the 84 decisions: `docs/cutover/OWNER-DECISIONS-2026-10-07.md`.
+
+## 2026-10-07 - ADR-032 framework change: copies_files marker, {files} tripwire, preflight catch (1.11.0, 2026100701)
+
+Branch `claude/owner-decisions-x`; the one framework change the "Framework change rule" (F-83) allows before Stage B, for
+the identity cluster's items (the sequence floor, EV-26, and the parity wiring are other clusters').
+
+- **IDN-04 / F-12:** `bizlms\copies_files` (new interface, `allowed_file_areas()` returns
+  [source component, source area, target component, target area] pairs) is the marker for an importer that copies files
+  through `file_rehome`. `sideeffect_guard::TABLES` now contains `files`, so the tripwire watches it for EVERY importer;
+  an importer that implements the marker is exempt from the generic check and is checked by area instead
+  (`sideeffect_guard::files_in_areas()`): a new `{files}` row in any area it did not declare trips with
+  `write_outside_declared_tables:files:<component>/<area>`. The check runs at all three tripwire looks, the last after
+  `finalise()` (where the copies are made). The report gets `files_copied` per declared area (0 when nothing copied;
+  directory rows are not counted). The registry refuses a malformed declaration (`file_areas_malformed:<feature>`). The
+  copies are not core writes, so `--purge-feature` is unaffected and leaves them. Implemented by org and cohort_scope
+  (local_sentientia_org, this batch). `importer_contract::test_contract_no_side_effects` applies the same rule.
+  **Merge dependency:** `learningplan`, `classroom` and `programs` also call `file_rehome` and must implement the marker
+  (decision IDN-04 names all five); until they do their contract tests and real runs trip on `files`. Signed key
+  `framework.file_rehome_copies`.
+- **F-10:** `runner::preflight_feature()` catches `blocked` from an importer's `preflight()` (for example `$ctx->decision()`
+  on an unaccepted key) and records it as a blocker, once, instead of letting it escape the whole preflight pass.
+- **F-11:** `tenant_resolver::root_is_registered(int)` (public, static) is the one "is this a registered tenant root" check;
+  the org importer (the TENANT_OWNER) must not call `resolve()` for its own rows. The org copy is replaced; the other
+  copies of the try/catch around `tenant::assert_valid` (emails `log_step.php`, runner, cart, classroom, evaluation,
+  courses, request, roles, users) are left for their owners.
+- **F-15:** `privacy_coverage_test::USER_COLUMNS` gains `usermodified`, `usercreated` and `modified_by`. The guard then sees
+  three tables whose provider does not declare them (`local_sentientia_email_overrides`, `local_sentientia_email_rules`,
+  `local_sentientia_talent_path`, each only an actor id): they are listed in `UNDECLARED_ACTOR_TABLES` with their owning
+  plugin so the guard stays green and any NEW table with these columns is checked at once. Each entry goes when its provider
+  declares the table (new privacy strings in en and hi, plugins other sessions own). The org and users providers declare theirs.
+- **IDN-02:** `decisions.php` docblock now says what the loader does: nothing is pre-accepted, the owner adds
+  `accepted_reasons` after Stage B with the counts.
+- Tests: `bizlms_runner_test` (file without the marker trips; with the marker in the area, counted; outside the area trips;
+  zero copies reported as 0; purge leaves the copies; malformed declaration refused; a blocked decision in an importer's
+  preflight is one blocker), `bizlms_support_test` (`files` watched, `files_in_areas`, declaration shape,
+  `root_is_registered`). Test scaffolding: `toy_importer` is no longer `final`; `toy_files_importer` implements the marker;
+  new knobs `$writefile`, `$fileareas`, `$preflightdecision`.
+- Version 2026093002 -> 2026100701, release 1.11.0. No schema change. NOT RUN: PHPUnit (the lead re-inits once).

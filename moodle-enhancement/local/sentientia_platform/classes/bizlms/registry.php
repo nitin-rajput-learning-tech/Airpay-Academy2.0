@@ -29,6 +29,8 @@ defined('MOODLE_INTERNAL') || die();
  *    classes/schema TABLES), is a legacy table (known, detected, or claimed or declined by any
  *    importer) or is a framework table: an importer never writes another feature's tables;
  *  - a core_writes() table is not on CORE_WRITES_ALLOWED, the list reviewed against ADR-032;
+ *  - an importer that implements copies_files declares a file area that is not four non-empty strings
+ *    (file_areas_malformed);
  *  - the importer or any of its steps is defined outside the plugin's classes/bizlms/
  *    (the static scan reads that directory and nothing else);
  *  - an importer that declares tenant_columns() does not have TENANT_OWNER (the org feature) in its
@@ -393,6 +395,10 @@ final class registry {
                 if (!($decision instanceof decision)) {
                     $problems[] = "not_a_decision:{$feature}";
                 }
+            }
+            // The file copies the importer may make (IDN-04): the runner enforces the target half of each entry.
+            if ($importer instanceof copies_files && !sideeffect_guard::file_areas_well_formed($importer)) {
+                $problems[] = "file_areas_malformed:{$feature}";
             }
 
             // Steps.
