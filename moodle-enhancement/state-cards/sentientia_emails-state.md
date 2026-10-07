@@ -650,7 +650,10 @@ Importer (`classes/bizlms/`), the three keys are in the signed decisions file an
   them of two letters or more) becomes `[team member]` in the subject (one bulk fetch of names per batch). Warning
   `team_member_copy_body_withheld`. `verify()` joins the legacy map to `local_emaillogs` and fails
   `manager_copy_imported_with_a_body_although_the_decision_says_to_withhold`. A later `subject_userid` column
-  could backfill the bodies from the legacy table.
+  could backfill the bodies from the legacy table. On April (counts only, read-only) 4 of the 23 distinct
+  manager-copy subjects contain the member's first name as a substring and none contains it as a WHOLE word, so the
+  subject scrub changes nothing there (the 4 are the first name inside a longer word, which is correctly left alone);
+  the bodies are where the name is, and they are withheld.
 - **COMMS-N3, course link.** `notifications.course_link = moduleid_for_course_templates`: `courseid` is the column
   when it is above zero and the course exists; else, for a template whose `moduletype` is `course`, the row's
   `moduleid` (a TEXT column, read as an id only when it is one plain number) above 1 whose course exists
