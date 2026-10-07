@@ -601,6 +601,27 @@ final class bizlms_runner_test extends \advanced_testcase {
         $this->assertSame('999', (string) $fold->targetid);
     }
 
+    public function test_a_dry_run_folds_into_a_row_a_preserve_step_only_simulated(): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+
+        // toy.org (PRESERVE) runs before toy.fan. A dry run checks org 7 but does not write it, so a fold into
+        // org 7 must not look for the row in the table (the program importer's criteria rows fold into their
+        // preserved program the same way). Before the fix this blocked with fold_target_missing.
+        toy_importer::$foldto = ['local_sentientia_toy_org', 7];
+        [$result] = $this->execute([], [], false);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        $this->assertSame(0, $DB->count_records('local_sentientia_toy_org'), 'a dry run writes no target row');
+        $this->assertSame(0, $DB->count_records('local_sentientia_legacymap'), 'a dry run writes no map row');
+
+        // An id no step simulated is still a missing target.
+        toy_importer::$foldto = ['local_sentientia_toy_org', 999];
+        [$result] = $this->execute([], [], false);
+        $this->assertSame(1, $result['exit']);
+        $this->assertStringContainsString('fold_target_missing:local_sentientia_toy_org:999', implode(' ', $result['blockers']));
+    }
+
     public function test_purge_refuses_a_feature_that_writes_core_tables(): void {
         $this->begin();
         $this->seed_toy_data();

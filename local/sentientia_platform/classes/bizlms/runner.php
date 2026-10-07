@@ -91,6 +91,12 @@ final class runner {
     /** @var int Counter behind the negative virtual ids of a dry run. */
     private int $virtualid = 0;
 
+    /**
+     * @var array<string, array<int, bool>> Dry run: table => legacy ids a PRESERVE insert simulated this run. Those rows
+     *      are checked but not written, so a later FOLD into one of them must not look for it in the table.
+     */
+    private array $dryrunpreserved = [];
+
     /** @var array<string, string> Legacy table => feature that owns it. */
     private array $ownerof = [];
 
@@ -1820,9 +1826,11 @@ final class runner {
         switch ($o->kind) {
             case outcome::FOLD:
                 // A fold writes nothing, so nothing else would notice an undeclared table or a target that is
-                // not there. A virtual (negative) id only exists in a dry run.
+                // not there. A virtual (negative) id only exists in a dry run, and so does a preserved id that a
+                // dry run simulated without writing (a program criteria row folding into its preserved program).
                 $writer->check_table($o->table);
-                if ((int) $o->targetid > 0 && !$DB->record_exists($o->table, ['id' => $o->targetid])) {
+                if ((int) $o->targetid > 0 && !isset($this->dryrunpreserved[$o->table][(int) $o->targetid])
+                        && !$DB->record_exists($o->table, ['id' => $o->targetid])) {
                     throw new blocked('fold_target_missing:' . $o->table . ':' . $o->targetid);
                 }
                 return ['folded', $o->table, $o->targetid];
@@ -1853,6 +1861,7 @@ final class runner {
             }
             if ($this->dryrun) {
                 $writer->check($o->table, $o->row);
+                $this->dryrunpreserved[$o->table][$id] = true;
             } else {
                 $writer->import_preserved($o->table, $o->row, $id);
             }
