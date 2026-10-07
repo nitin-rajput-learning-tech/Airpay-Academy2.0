@@ -526,6 +526,31 @@ final class bizlms_guard_parity_test extends \advanced_testcase {
         $this->assertStringContainsString('verify_error:toy:missing_decision:toy.mandatory', implode(' ', $problems));
     }
 
+    /**
+     * The CLI boots the real site, so it cannot run inside PHPUnit; what can be pinned is its wiring.
+     */
+    public function test_the_parity_cli_takes_the_decisions_and_checks_them_before_it_counts(): void {
+        $source = (string) file_get_contents(__DIR__ . '/../../cli/migration_parity_check.php');
+        $this->assertNotSame('', $source);
+        foreach (["'decisions' => ''", "'expect-decisions-hash' => ''", 'parity::compare_invariant($decisions)',
+                'decisions::load(', 'hash_equals($decisions->hash(), $expect)'] as $needle) {
+            $this->assertStringContainsString($needle, $source, $needle);
+        }
+        // Comment lines removed: only a CALL of the plain invariant (which runs on no decisions) is the defect.
+        $code = (string) preg_replace('/^\s*(\*|\/\/|\/\*).*$/m', '', $source);
+        $this->assertStringNotContainsString('parity::invariant_problems(', $code,
+            'the CLI must not call the plain invariant, which runs on no decisions');
+
+        // A refused file costs nothing: the decisions are loaded and hash-checked before the counts and checksums are taken.
+        $load = strpos($source, "sentientia_parity_decisions((string) \$options['decisions']");
+        $counts = strpos($source, '$counts = sentientia_parity_counts();');
+        $this->assertNotFalse($load);
+        $this->assertNotFalse($counts);
+        $this->assertLessThan($counts, $load);
+        // A refusal is exit 3, never 0, 1 or 2 (those mean drift, not proven or clean).
+        $this->assertStringContainsString('exit(3)', $source);
+    }
+
     public function test_compare_invariant_with_no_legacy_tables_needs_no_decisions(): void {
         $this->resetAfterTest();
         registry::set_testing_importers([new toy_importer()]);

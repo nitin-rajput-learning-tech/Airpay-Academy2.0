@@ -115,9 +115,9 @@ final class capability_names_test extends \advanced_testcase {
      * @var array<string,int>
      */
     private const PENDING_ELSEWHERE = [
-        // claude/fixes-0930 (77e7fd0a9, c7b6cecb4) gates on
-        // local/sentientia_classroom:attendance instead.
-        'local_sentientia_pages/qr_attendance.php|local/classroom:takesessionattendance' => 1,
+        // (Empty. The one entry here, qr_attendance.php|local/classroom:takesessionattendance, went stale when
+        // claude/fixes-0930 landed: qr_attendance.php gates on local/sentientia_classroom:attendance. Removed
+        // 2026-10-07, critic item 91.)
     ];
 
     /**

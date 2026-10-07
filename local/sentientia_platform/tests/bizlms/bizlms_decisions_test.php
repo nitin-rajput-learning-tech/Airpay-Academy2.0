@@ -128,10 +128,14 @@ final class bizlms_decisions_test extends \advanced_testcase {
         $this->assertSame('off', $ctx->decision('framework.reader_flags_default'));
 
         // cart.finance_keys_status (owner, 2026-10-07, delegated; Airpay Finance not consulted): the two finance
-        // keys are accepted, so nothing in the signed file is open any more and the cart importer, which declares
-        // both, is not blocked. The finance-confirm BLOCKING mechanism is still held by decisions.sample.json
-        // (toy.credit, above) and bizlms_runner_test::test_a_decision_the_owner_has_not_accepted_blocks_...
-        $this->assertSame([], $decisions->not_accepted());
+        // keys are accepted, so the cart importer, which declares both, is not blocked. The finance-confirm BLOCKING
+        // mechanism is still held by decisions.sample.json (toy.credit, above) and
+        // bizlms_runner_test::test_a_decision_the_owner_has_not_accepted_blocks_...
+        // Asserted for these two keys only (review of 2026-10-07): a decision the owner legitimately leaves open later
+        // must not fail CI here, because that would push people to mark it accepted just to turn the build green.
+        $open = $decisions->not_accepted();
+        $this->assertArrayNotHasKey('cart.credit_balances', $open);
+        $this->assertArrayNotHasKey('cart.erpnext_invoices_legal', $open);
         $this->assertSame('frozen_pending_finance', $ctx->decision('cart.credit_balances'));
         $this->assertSame('reference_only_pending_finance', $ctx->decision('cart.erpnext_invoices_legal'));
         // The loader keeps no prose, so read the file for the reason: 'accepted' must never be mistakable for a
