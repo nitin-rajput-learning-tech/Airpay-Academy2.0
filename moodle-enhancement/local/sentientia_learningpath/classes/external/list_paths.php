@@ -80,15 +80,22 @@ class list_paths extends external_api {
             $records = $DB->get_records_sql(
                 "SELECT lp.*,
                         (SELECT COUNT(*) FROM {local_sentientia_learningpath_courses} c WHERE c.pathid = lp.id) AS course_count,
-                        (SELECT COUNT(*) FROM {local_sentientia_learningpath_users} u WHERE u.pathid = lp.id) AS user_count
+                        (SELECT COUNT(*) FROM {local_sentientia_learningpath_users} u
+                           JOIN {user} uu ON uu.id = u.userid
+                          WHERE u.pathid = lp.id AND uu.deleted = 0) AS user_count
                    FROM {local_sentientia_learningpath} lp
                   WHERE $wheresql
                ORDER BY lp.$sort $sortdir, lp.id ASC",
                 $sqlparams, $params['page'] * $params['perpage'], $params['perpage']);
         }
 
-        $statusmap = [0 => 'Cancelled', 1 => 'Active', 2 => 'Completed'];
-        $cssmap = [0 => 'badge-secondary', 1 => 'badge-success', 2 => 'badge-info'];
+        // ADR-032: a path is Active (1) or Archived (0); status 2 does not exist on a path (install.xml).
+        // Status 0 used to read "Cancelled", which is not what an archived path is.
+        $statusmap = [
+            0 => get_string('status_archived', 'local_sentientia_learningpath'),
+            1 => get_string('status_active', 'local_sentientia_learningpath'),
+        ];
+        $cssmap = [0 => 'badge-secondary', 1 => 'badge-success'];
 
         $rows = [];
         foreach ($records as $lp) {

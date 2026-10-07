@@ -107,7 +107,7 @@ class list_path_courses extends external_api {
                     'mandatorycss' => (int) $r->mandatory ? 'badge-primary' : 'badge-secondary',
                     'visible'     => (int) $r->visible ? 'Visible' : 'Hidden',
                     'visiblecss'  => (int) $r->visible ? 'badge-success' : 'badge-warning',
-                    'added'       => userdate($r->timecreated, '%d %b %Y'),
+                    'added'       => $r->timecreated ? userdate($r->timecreated, '%d %b %Y') : '—',
                     'actions'     => '<a href="#" class="btn btn-sm btn-link p-1 text-danger" '
                         . 'data-action="unassign-course" '
                         . 'data-courseid="' . (int) $r->courseid . '" '

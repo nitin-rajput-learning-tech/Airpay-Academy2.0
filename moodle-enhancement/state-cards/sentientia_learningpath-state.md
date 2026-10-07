@@ -254,3 +254,128 @@ Branch `claude/adr031-learning3-ff`, from the cross-cutting review of the merged
   direct ALTER COLUMN ... TYPE NUMERIC(6,2) on PostgreSQL, where change_field_precision() is a no-op
   for a 0 -> 2 decimals change; MySQL/MariaDB keep the DDL API. Same version (not yet deployed anywhere
   on PostgreSQL).
+
+## 2026-09-30 - ADR-032: BizLMS learningplan importer, learner page, imported-history protection
+
+Version `2026093001`, release `1.9.0`. Branch `claude/bizlms-import-learningplan`. Written, not run: the lead
+runs one PHPUnit init for every version bump (`--group bizlms_import`, `--group tenant_isolation`).
+
+**Importer** (`db/bizlms_import.php`, `classes/bizlms/`), feature `learningplan`, depends on `org` and `skills`,
+atomic. It reads the BizLMS tables and never writes them; every source row gets one primary map row.
+
+| Step | Source | Target | Id | Notes |
+|---|---|---|---|---|
+| `learningplan.path` | `local_learningplan` | `local_sentientia_learningpath` | PRESERVE | adopt signature name + timecreated (what the retired `migrate_all.php` wrote) |
+| `learningplan.course` | `local_learningplan_courses` | `..._courses` | MAP | grouped by PLAN (not plan+course) so the sort order can be dense 0..n-1 per path |
+| `learningplan.user` | `local_learningplan_user` | `..._users` | MAP | grouped by (plan, user) |
+| `learningplan.course_status` | `local_plan_course_status` | `local_sentientia_lp_course_status` | MAP | optional source table; expected empty |
+
+- Status: BizLMS 1 = Completed (2, timecompleted = completiondate or NULL with `completed_without_date`); NULL/0 =
+  In progress (1) when a course of the path is completed in `course_completions` (read, never written), else
+  Enrolled (0) (decision `learningplan.not_completed`). Duplicate learner rows: a completed row wins, enrolment date
+  is the earliest.
+- Tenant: the plan's `open_path`, then the `costcenter` column, then the root every enrolled learner shares, then
+  the creator's root, else NULL (pathless, cross-tenant only; decision `tenant.unresolved.learningplan`).
+  `costcenterid` is the organisation at the path (0 + warning `costcenter_not_org` when there is none);
+  `departmentid` is the second path segment.
+- `visible` 1 = Active, 0/NULL = Archived. `adaptive_mode` 0 and thresholds NULL: the journey engine stays off.
+- `approvalreqd`, `selfenrol`, `sequential` (lpsequence) are stored and not enforced (decision `enforce_rules`).
+- `skillid`/`levelid` resolve through the skills map (`local_skill`, `local_course_levels`); an unmapped one is NULL
+  with a warning, the plan is kept. `categoryid` is the raw `open_categoryid` (course_lookups keeps
+  `local_custom_category` ids, and this feature does not depend on it, per the map's run order).
+- Cover image: `finalise()` copies `files` (`local_learningplan`, `summaryfile`, item id = the plan's
+  `summaryfile` column, in whichever context BizLMS used) to this plugin's area (system context, item id = path
+  id). The source files stay. A second run copies nothing.
+- Skipped rows and their reasons (all need-owner except the merges): `no_name`, `tenant_unresolved`,
+  `orphan_plan`, `no_course`, `orphan_course`, `orphan_user`; merges `dup_course`, `dup_enrolment`,
+  `dup_course_status`.
+
+**Schema** (`db/install.xml` + upgrade step `2026093001`, idempotent): `learningpath` + shortname, objective,
+learning_type, approvalreqd, selfenrol, sequential, points, categoryid, skillid, levelid, certificateid,
+usercreated, usermodified, and `name` / `open_path` widened to 255; `courses` + usercreated, usermodified,
+timemodified; `users` + enrolledby, timemodified; new `local_sentientia_lp_course_status`. Not built, on purpose:
+`users.timestarted` (nothing in BizLMS writes `local_learningplan_user.startdate`; preflight BLOCKS with
+`user_startdate_has_no_target_column:N` if production has values, since 2026-10-01 review round 1), and the map's
+`legacy_planid` / `audience_json` (R6, R7).
+
+**Code fixes from the map (section 17):** 1 `is_enrolled` fallback removed; 2 `count_paths` fallback removed and
+the prefix is `/`-bounded; 3 the index tile counts learners with status 2 (it counted paths with status 2, always 0);
+4 status 0 reads "Archived", not "Cancelled"; 5 CSV gains Status and Completed on, percentage over mandatory
+courses (100 for a completed learner); 6 a 0 time prints a dash (path users, path courses, path view); 7 learner
+page `mypaths.php` behind `sentientia.learningpath.learner_paths.enabled` (default OFF); 8 `lib.php`
+`local_sentientia_learningpath_pluginfile` serves the cover (tenant-checked) and the path view renders it; 9
+imported history protected; 10 privacy provider; 11 `migrate_all.php` was already retired by ADR-032 P0.6.
+
+**Imported-history protection** (decision `framework.protect_imported_history = block`): `path_manager::unenrol_user`
+refuses an enrolment the import created, `delete()` refuses a path that is imported or holds an imported course,
+learner or status row (archive it instead; `toggle_status` still works), and the delete cascade now also removes
+`lp_course_status` rows and the cover file. The privacy provider's erasure is not blocked. Ruling taken: ALL
+imported learner rows are protected, not only completed ones, because the decision says "imported rows".
+
+**Learner page rules:** own rows only; inside the learner's tenant (`tenant::path_filter`; a pathless path is
+cross-tenant-only, so never shown); active paths only (status 1 and visible 1), so completed history on an
+archived path stays admin-only (decision `history_on_archived_paths = hidden_from_learners`). Progress is over the
+required courses (every course when none is required), 100 when the stored status is Completed.
+
+**Privacy:** `usercreated`, `usermodified` (paths, courses, status), `enrolledby` (users) and the new table are
+declared, exported (`authored`, `enrolments_made` without the learner, `course_status`) and cleared to 0 on
+erasure or anonymisation. A self-enrolled row stays keyed to its own anonymised user.
+
+**Native rows** now record who made them (`path_manager::create/update/assign_courses/enrol_users`).
+
+**Tests (written, not run):** `tests/bizlms_import_test.php` (contract trait plus the feature tests, fixture
+`tests/fixtures/bizlms/learningplan.install.xml`, wrapper `tests/classes/bizlms/standalone_importer.php` that drops
+the org/skills dependencies because those importers live in other plugins), `tests/imported_history_test.php`,
+`tests/learner_paths_test.php`, and five new cases in `tests/privacy_provider_test.php`.
+
+**Open:** no screenshots of `mypaths.php` or of the cover image on `view.php` yet (this task did not deploy to
+XAMPP); CLAUDE.md requires them before Nitin flips the flag. `rule_learning_path_stalled` in
+`local_sentientia_notifications` will notify learners from imported rows once that rule is enabled (it should
+skip rows `provenance::not_imported_sql` does not match). `approval_manager` and `notification_bridge` still link
+learners to `mycourses.php`; point them at `mypaths.php` when the flag is ON. The certificates map (G1) and
+`local_challenge` (G2) are still open; `certificateid` is stored only.
+
+## 2026-10-01 - ADR-032 learningplan review round 1: must-fix closed
+
+No version bump (no schema, capability or flag change). Written, not run: the lead runs one PHPUnit init.
+
+**Must-fix**
+- `bizlms/user_step.php` `has_started()`: the per-plan cache of "learners who completed a course" evicted with
+  `array_shift()`, which renumbers integer keys. The cache is keyed by legacy plan id, so after the 51st plan the
+  sets sat at keys 0..48 and `isset($started[$planid])` for plan id 0..48 returned ANOTHER plan's set (learners
+  silently got In progress instead of Enrolled). It evicts with `unset($started[array_key_first($started)])` now.
+  Could not trigger on April (17 plans, max id 20).
+- `path_manager::unassign_course()` hard-deleted an imported course row through the `unassign_course` web service,
+  losing the imported mandatory flag, sort order, creator and created time and leaving the map row dangling. It now
+  refuses with `imported_history_protected`, as `unenrol_user()` does. Same ruling as before: ALL imported rows are
+  protected. `reorder_courses()` still rewrites `sortorder` of an imported row (it edits, it does not delete).
+
+**Should-fix taken**
+- `learner_paths::cards()` escaped path and course names twice (`format_string`, then `{{name}}`), so "A & B"
+  showed as "A &amp; B" (two April plan names contain `&`). It uses `format_string(..., ['escape' => false])` now
+  and the template escapes once.
+- Deleted users are no longer counted: the index "Learners completed" tile, `view.php` `user_count`,
+  `exportcsv.php?mode=paths` Users column and `list_paths` Enrolled column. The rosters already hid them (April: 57 rows).
+- `importer::preflight()`: learner `startdate` values are a BLOCKER (`user_startdate_has_no_target_column:N`), no
+  longer a warning. The mapping doc says `timestarted` must be built if production has values. April has none.
+- `local_learningplan_courses.nextsetoperator` is a declared enum (`''`, `and`, `AND`, `or`, `OR`; byte-exact like
+  every enum), so any other spelling blocks (`unknown_enum:...nextsetoperator=...`, ADR-032 R8) instead of importing
+  as optional. April has only `and` (9) and `or` (117). The `unknown_operator` warning stays for a value the owner
+  maps in the decisions file.
+- Tests: `bizlms_import_test` gains the eviction case (51 plans), the unknown operator, the start-date blocker, a
+  source with no `costcenter` column (the April shape), the /77 tenant admin on imported paths (list_paths and
+  `require_path_tenant`), deleted users not counted, and `tool_certificate_issues` in the unchanged-count list.
+  `imported_history_test` gains the unassign case; `learner_paths_test` gains the ampersand case (card data and
+  rendered template).
+
+**Left, and why**
+- `privacy_coverage_test::USER_COLUMNS` (platform) lacks `usercreated` and `usermodified`: the lead adds them.
+- `user_step::has_started()` reads `course_completions` through `global $DB` (read-only, same in dry and apply
+  runs, but outside the "reads only through the context" contract): needs a completion lookup on the framework
+  context, or an ADR note.
+- `rule_learning_path_stalled` (notifications) would notify learners from imported rows once enabled: filter with
+  `provenance::not_imported_sql` and `lp.status = 1` there.
+- CSV headers and status words and the index tile labels stay hard-coded English, like the rest of those pages.
+- Screenshots of `mypaths.php` and the cover on `view.php` are still to take. The cover shows on the admin view page
+  without a flag once the import has copied one (product call: gate it or accept it).
+- Merge order: `depends()` = `org`, `skills`; no skills importer is registered on `claude/gap-integration` yet.

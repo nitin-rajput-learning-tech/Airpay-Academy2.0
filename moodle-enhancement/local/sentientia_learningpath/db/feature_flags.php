@@ -33,6 +33,21 @@ defined('MOODLE_INTERNAL') || die();
 
 $flags = [
 
+    // ADR-032 (2026-09-30): the learner-facing page that lists a learner's own
+    // learning paths, including the ones the BizLMS import brought over.
+    // Default OFF (CLAUDE.md section 13). The import never flips it: whether it
+    // is ON for the Airpay customer at cutover is Nitin's call, after he has
+    // reviewed the visual evidence (decision framework.reader_flags_airpay_at_cutover).
+    'sentientia.learningpath.learner_paths.enabled' => [
+        'default'     => false,
+        'description' => 'Learner "My learning paths" page (/local/sentientia_learningpath/mypaths.php).
+                          When ON, a learner sees the active learning paths they are enrolled
+                          in - their own rows only, inside their own tenant - with progress,
+                          enrolment and completion dates, including history imported from
+                          BizLMS. Completed history on archived paths stays admin-only.
+                          When OFF (default) the page refuses to open and nothing else changes.',
+    ],
+
     'sentientia.learningpath.adaptive.enabled' => [
         'default'     => false,
         'description' => 'Adaptive Learning Journeys (P0.2). When ON, learning

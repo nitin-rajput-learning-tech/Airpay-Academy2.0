@@ -16,13 +16,20 @@ $plugin->component = 'local_sentientia_learningpath';
 // student archetype (upgrade step 2026092502, db/upgradelib.php). The
 // top-level local/ copy is now this copy (it had none of the 2026061600
 // adaptive schema, so a site moving from it would have skipped that step).
-$plugin->version   = 2026092502;  // :view revoked from learner roles without the student archetype
+// 2026-09-30 (ADR-032, BizLMS import, feature learningplan): the importer
+// (db/bizlms_import.php, classes/bizlms/), the columns and the lp_course_status
+// table it fills (upgrade step 2026093001), the learner "My learning paths" page
+// behind sentientia.learningpath.learner_paths.enabled (default OFF), the removal
+// of the two legacy-table fallbacks in path_manager, imported-history protection,
+// and the privacy provider for the new columns.
+$plugin->version   = 2026093001;  // ADR-032: learningplan importer + schema + learner page (flag OFF)
+// 2026092502: :view revoked from learner roles without the student archetype.
 // 2026092501: adaptive log scores keep 2 decimals.
 // 2026092500: ADR-031: every pathid/userid/courseid tenant-checked; :view student default revoked.
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.8.3';  // learner-role :view revoke (1.8.2: adaptive log score precision; 1.8.1: ADR-031 tenant scope; 1.8.0: +P0.2 Adaptive Learning Journeys)
+$plugin->release   = '1.9.0';  // ADR-032 learningplan import (1.8.3: learner-role :view revoke; 1.8.2: adaptive log score precision; 1.8.1: ADR-031 tenant scope; 1.8.0: +P0.2 Adaptive Learning Journeys)
 $plugin->dependencies = [
     'local_sentientia_org'      => 2026041600,
-    'local_sentientia_platform' => 2026092500,  // tenant::is_cross_tenant / scope_path
+    'local_sentientia_platform' => 2026093001,  // tenant::is_cross_tenant / scope_path; bizlms import framework (ADR-032)
 ];

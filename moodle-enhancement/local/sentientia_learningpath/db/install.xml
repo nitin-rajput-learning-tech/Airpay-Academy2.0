@@ -1,18 +1,24 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/sentientia_learningpath/db" VERSION="20260516"
+<XMLDB PATH="local/sentientia_learningpath/db" VERSION="20260930"
        COMMENT="Airpay Learning Paths — replaces BizLMS local_learningplan">
   <TABLES>
     <TABLE NAME="local_sentientia_learningpath" COMMENT="Learning paths (fork of local_learningplan)">
       <FIELDS>
         <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="name"            TYPE="char" LENGTH="254" NOTNULL="true"/>
+        <FIELD NAME="name"            TYPE="char" LENGTH="255" NOTNULL="true"
+               COMMENT="Widened from 254 to 255 in 2026093001 (ADR-032: BizLMS local_learningplan.name is CHAR 255)"/>
+        <FIELD NAME="shortname"       TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="ADR-032 (2026093001): BizLMS shortname, kept on imported paths"/>
         <FIELD NAME="description"     TYPE="text" NOTNULL="false"
                COMMENT="P1 batch (2026-05-16): now rendered via the rich-text editor in edit_path form"/>
         <FIELD NAME="descriptionformat" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1"
                COMMENT="P1 batch (2026-05-16): FORMAT_HTML(1) | FORMAT_PLAIN(2) | FORMAT_MARKDOWN(4)"/>
+        <FIELD NAME="objective"       TYPE="text" NOTNULL="false"
+               COMMENT="ADR-032 (2026093001): BizLMS learning objective text"/>
         <FIELD NAME="costcenterid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="departmentid"    TYPE="int"  LENGTH="10" NOTNULL="false"/>
-        <FIELD NAME="open_path"       TYPE="char" LENGTH="254" NOTNULL="false"/>
+        <FIELD NAME="open_path"       TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="Widened from 254 to 255 in 2026093001 (same width as user.open_path)"/>
         <FIELD NAME="status"          TYPE="int"  LENGTH="2"  NOTNULL="true" DEFAULT="1"
                COMMENT="1=active, 0=archived"/>
         <FIELD NAME="visible"         TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1"/>
@@ -26,6 +32,28 @@
                COMMENT="P0.2 (2026-06-16): below this quiz percent the engine remediates"/>
         <FIELD NAME="score_threshold_high" TYPE="number" LENGTH="5" DECIMALS="2" NOTNULL="false"
                COMMENT="P0.2 (2026-06-16): above this quiz percent the engine accelerates"/>
+        <FIELD NAME="learning_type"   TYPE="int"  LENGTH="2"  NOTNULL="false"
+               COMMENT="ADR-032 (2026093001): 1 = core, 2 = elective (BizLMS learning_type). Stored only."/>
+        <FIELD NAME="approvalreqd"    TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="0"
+               COMMENT="ADR-032 (2026093001): BizLMS approval-required flag. Stored only, nothing enforces it (owner decision learningplan.enforce_rules)."/>
+        <FIELD NAME="selfenrol"       TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="0"
+               COMMENT="ADR-032 (2026093001): BizLMS self-enrolment flag. Stored only, nothing enforces it."/>
+        <FIELD NAME="sequential"      TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="0"
+               COMMENT="ADR-032 (2026093001): BizLMS lpsequence, courses are meant to be taken in order. Stored only."/>
+        <FIELD NAME="points"          TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="ADR-032 (2026093001): BizLMS open_points (shown as credits there). Stored only."/>
+        <FIELD NAME="categoryid"      TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="ADR-032 (2026093001): BizLMS open_categoryid, the legacy custom category id (course_lookups keeps those ids)"/>
+        <FIELD NAME="skillid"         TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="ADR-032 (2026093001): the skills-feature row the BizLMS open_skill maps to"/>
+        <FIELD NAME="levelid"         TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="ADR-032 (2026093001): the skills-feature level the BizLMS open_level maps to"/>
+        <FIELD NAME="certificateid"   TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="ADR-032 (2026093001): BizLMS certificate template id. Stored only (certificates map, gap G1, is open)."/>
+        <FIELD NAME="usercreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="ADR-032 (2026093001): the creator, shown on the path. 0 = unknown. Declared in the privacy provider."/>
+        <FIELD NAME="usermodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="ADR-032 (2026093001): who last edited the path. 0 = unknown. Declared in the privacy provider."/>
         <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
       </FIELDS>
@@ -51,7 +79,13 @@
                COMMENT="P0.2 (2026-06-16): 1=accelerator/branch node"/>
         <FIELD NAME="remedial_for_courseid" TYPE="int" LENGTH="10" NOTNULL="false"
                COMMENT="P0.2 (2026-06-16): main course this remedial node supports"/>
+        <FIELD NAME="usercreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="ADR-032 (2026093001): who put the course on the path. 0 = unknown. Declared in the privacy provider."/>
+        <FIELD NAME="usermodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="ADR-032 (2026093001): who last changed the row. 0 = unknown. Declared in the privacy provider."/>
         <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="ADR-032 (2026093001): last change of the row (BizLMS timemodified on imported rows)"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -70,7 +104,11 @@
         <FIELD NAME="userid"          TYPE="int"  LENGTH="10" NOTNULL="true"/>
         <FIELD NAME="status"          TYPE="int"  LENGTH="2"  NOTNULL="true" DEFAULT="0"
                COMMENT="0=enrolled, 1=in_progress, 2=completed"/>
+        <FIELD NAME="enrolledby"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="ADR-032 (2026093001): who enrolled the learner. The learner's own id = self-enrolled, 0 = unknown. Declared in the privacy provider."/>
         <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="ADR-032 (2026093001): last change of the row (BizLMS timemodified on imported rows)"/>
         <FIELD NAME="timecompleted"   TYPE="int"  LENGTH="10" NOTNULL="false"/>
       </FIELDS>
       <KEYS>
@@ -81,6 +119,35 @@
       <INDEXES>
         <INDEX NAME="idx_path_user" UNIQUE="true" FIELDS="pathid, userid"/>
         <INDEX NAME="idx_status"    UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_lp_course_status" COMMENT="ADR-032 (2026093001): per-course status rows of the BizLMS local_plan_course_status table. No reader yet; kept so the rows are not lost.">
+      <FIELDS>
+        <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="pathid"          TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="courseid"        TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="userid"          TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="status"          TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Raw BizLMS value. No BizLMS code defines what it means."/>
+        <FIELD NAME="percentage"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Raw BizLMS value. No BizLMS code defines what it means."/>
+        <FIELD NAME="startdate"       TYPE="int"  LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="completiondate"  TYPE="int"  LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="usercreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="0 = unknown. Declared in the privacy provider."/>
+        <FIELD NAME="usermodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="0 = unknown. Declared in the privacy provider."/>
+        <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_path" TYPE="foreign" FIELDS="pathid" REFTABLE="local_sentientia_learningpath" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_path_course_user" UNIQUE="true" FIELDS="pathid, courseid, userid"/>
+        <INDEX NAME="idx_userid"           UNIQUE="false" FIELDS="userid"/>
       </INDEXES>
     </TABLE>
 

@@ -249,5 +249,92 @@ function xmldb_local_sentientia_learningpath_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026092502, 'local', 'sentientia_learningpath');
     }
 
+    if ($oldversion < 2026093001) {
+        // ADR-032 (BizLMS data import, feature learningplan): the columns and the table the import
+        // fills. Every statement is guarded, so a site that already has some of them (a restored
+        // copy, a half-run upgrade) finishes instead of failing.
+        //
+        // Nothing here touches a BizLMS table. The added NOT NULL columns all carry a default, so the
+        // rows that exist keep working and the code that inserts without them is unaffected.
+        $table = new xmldb_table('local_sentientia_learningpath');
+
+        // Widen name and open_path from 254 to 255, the width of the BizLMS columns. A 255-character
+        // BizLMS name would otherwise not fit, and the importer never shortens a name silently.
+        // Neither column is indexed. Read the width first so a second run changes nothing.
+        if ($dbman->table_exists($table)) {
+            $columns = $DB->get_columns('local_sentientia_learningpath');
+            if (isset($columns['name']) && (int) $columns['name']->max_length < 255) {
+                $dbman->change_field_precision($table,
+                    new xmldb_field('name', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null));
+            }
+            if (isset($columns['open_path']) && (int) $columns['open_path']->max_length < 255) {
+                $dbman->change_field_precision($table,
+                    new xmldb_field('open_path', XMLDB_TYPE_CHAR, '255', null, null, null, null));
+            }
+        }
+
+        $additions = [
+            'local_sentientia_learningpath' => [
+                new xmldb_field('shortname', XMLDB_TYPE_CHAR, '255', null, null, null, null),
+                new xmldb_field('objective', XMLDB_TYPE_TEXT, null, null, null, null, null),
+                new xmldb_field('learning_type', XMLDB_TYPE_INTEGER, '2', null, null, null, null),
+                new xmldb_field('approvalreqd', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0'),
+                new xmldb_field('selfenrol', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0'),
+                new xmldb_field('sequential', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0'),
+                new xmldb_field('points', XMLDB_TYPE_INTEGER, '10', null, null, null, null),
+                new xmldb_field('categoryid', XMLDB_TYPE_INTEGER, '10', null, null, null, null),
+                new xmldb_field('skillid', XMLDB_TYPE_INTEGER, '10', null, null, null, null),
+                new xmldb_field('levelid', XMLDB_TYPE_INTEGER, '10', null, null, null, null),
+                new xmldb_field('certificateid', XMLDB_TYPE_INTEGER, '10', null, null, null, null),
+                new xmldb_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0'),
+                new xmldb_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0'),
+            ],
+            'local_sentientia_learningpath_courses' => [
+                new xmldb_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0'),
+                new xmldb_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0'),
+                new xmldb_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0'),
+            ],
+            'local_sentientia_learningpath_users' => [
+                new xmldb_field('enrolledby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0'),
+                new xmldb_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0'),
+            ],
+        ];
+        foreach ($additions as $tablename => $fields) {
+            $addto = new xmldb_table($tablename);
+            if (!$dbman->table_exists($addto)) {
+                continue;
+            }
+            foreach ($fields as $field) {
+                if (!$dbman->field_exists($addto, $field)) {
+                    $dbman->add_field($addto, $field);
+                }
+            }
+        }
+
+        // The per-course status rows of BizLMS local_plan_course_status. No reader yet.
+        $status = new xmldb_table('local_sentientia_lp_course_status');
+        if (!$dbman->table_exists($status)) {
+            $status->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $status->add_field('pathid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+            $status->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+            $status->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+            $status->add_field('status', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $status->add_field('percentage', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $status->add_field('startdate', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+            $status->add_field('completiondate', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+            $status->add_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $status->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $status->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $status->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $status->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $status->add_key('fk_path', XMLDB_KEY_FOREIGN, ['pathid'], 'local_sentientia_learningpath', ['id']);
+            $status->add_index('idx_path_course_user', XMLDB_INDEX_UNIQUE, ['pathid', 'courseid', 'userid']);
+            $status->add_index('idx_userid', XMLDB_INDEX_NOTUNIQUE, ['userid']);
+            $dbman->create_table($status);
+        }
+
+        upgrade_plugin_savepoint(true, 2026093001, 'local', 'sentientia_learningpath');
+    }
+
     return true;
 }

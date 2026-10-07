@@ -9,6 +9,7 @@
       name                   string   Path name (already format_string'd)
       description            string   format_text'd HTML
       has_description        bool     Whether to render the description block
+      has_cover, cover_url   bool, string  Cover image of the path (plugin file area summaryfile), when one exists
       status_label, status_css        Badge text + Bootstrap class
       created_human                   Date string
       modified_human                  Date string
@@ -70,6 +71,10 @@
     {{# tab_overview_active }}
     <div class="card border-0 shadow-sm">
         <div class="card-body">
+            {{! ADR-032: the cover image the BizLMS import copied (component local_sentientia_learningpath, filearea summaryfile). }}
+            {{# has_cover }}
+            <img src="{{ cover_url }}" alt="" class="img-fluid rounded mb-4" data-region="path-cover">
+            {{/ has_cover }}
             {{# has_description }}
             <h5 class="mb-2">Description</h5>
             <div class="mb-4">{{{ description }}}</div>
