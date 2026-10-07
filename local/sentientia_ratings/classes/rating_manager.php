@@ -205,7 +205,9 @@ class rating_manager {
         if (empty($USER->id) || isguestuser()) {
             return false;
         }
-        if (!\local_sentientia_platform\feature_flags::is_enabled(self::FLAG_WIDGET)) {
+        // The flag registry belongs to the platform plugin: without it (a bare install) the stars stay read-only.
+        if (!class_exists('\local_sentientia_platform\feature_flags')
+                || !\local_sentientia_platform\feature_flags::is_enabled(self::FLAG_WIDGET)) {
             return false;
         }
         return has_capability('local/sentientia_ratings:rate', \context_system::instance());
