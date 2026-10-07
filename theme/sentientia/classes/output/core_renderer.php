@@ -980,6 +980,9 @@ JS;
         $header->courseheader = $this->course_header();
         $header->display_duedays = !empty($display_duedays) ? $display_duedays : '';        
         $header->headeractions = $this->page->get_header_actions();
+        // Moodle 5.2+: activity_header puts the Opened/Due dates here via $PAGE->add_header_extras().
+        // Core full_header renders them; this override dropped them. Absent on 5.1, hence the guard.
+        $header->headerextras = method_exists($this->page, 'get_header_extras') ? $this->page->get_header_extras() : [];
         if (!empty($pagetype) && !empty($homepagetype) && $pagetype == $homepagetype) {
             $header->welcomemessage = \core_user::welcome_message();
         }
