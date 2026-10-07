@@ -435,13 +435,16 @@ final class bizlms_import_course_tags_test extends \advanced_testcase {
         $this->assertSame([], $importer->verify($ctx));
 
         // The row is back in the old area, where the map says it was imported and moved.
-        $DB->set_field('tag_instance', 'component', 'local_courses', ['id' => 9001]);
+        // Both columns: the old area is local_courses/courses (the core area is core/course), so resetting the
+        // component alone would leave the row in neither area.
+        $DB->update_record('tag_instance', (object) ['id' => 9001, 'component' => 'local_courses',
+            'itemtype' => 'courses']);
         $failures = $importer->verify($ctx);
         $this->assertContains('old_area_rows_unaccounted:1', $failures);
         $this->assertContains('trail_rows_not_in_the_core_area:1', $failures);
 
         // Once the site is open an administrator may delete a course's tags: only the trail check is waived.
-        $DB->set_field('tag_instance', 'component', 'core', ['id' => 9001]);
+        $DB->update_record('tag_instance', (object) ['id' => 9001, 'component' => 'core', 'itemtype' => 'course']);
         $DB->delete_records('tag_instance', ['id' => 9002]);
         $this->assertContains('trail_rows_not_in_the_core_area:1', $importer->verify($ctx));
         set_config('bizlms_production_open', 1, 'local_sentientia_platform');
