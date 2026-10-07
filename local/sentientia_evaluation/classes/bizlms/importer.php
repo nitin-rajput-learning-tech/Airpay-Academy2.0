@@ -37,7 +37,8 @@ use local_sentientia_platform\bizlms\tenant_resolver;
  *
  * Read the choices the owner made in docs/cutover/bizlms-import-decisions.json (keys below): every imported form
  * is ARCHIVED and manual, weighted multichoice becomes plain multichoice, an anonymous supervisor form hides its
- * subject, anonymous answers stay anonymous, the trainer's name is not added to trainer feedback forms, and an
+ * subject, anonymous answers stay anonymous (and a form that ever held one imports EVERY answer anonymous,
+ * evaluation.sticky_anonymity = whole_form), the trainer's name is not added to trainer feedback forms, and an
  * imported form is read-only (evaluation_manager refuses to edit, re-status or delete it).
  *
  * Nothing here sends a message, fires an event, enrols or queues anything; the importer only returns rows.
@@ -95,6 +96,10 @@ final class importer implements framework_importer {
             'Weighted multichoice becomes plain multichoice; the weights stay in the legacy table.'],
         'evaluation.sp_anonymous_subject' => ['hidden',
             'An anonymous supervisor form hides the subject too, since the subject could identify the respondent.'],
+        // EV-16 (owner delegation 2026-10-07). The alternative, named_rows_kept, is not implemented: only a value
+        // this code implements may be signed, so a file that says anything else blocks the feature.
+        'evaluation.sticky_anonymity' => ['whole_form',
+            'A form that ever held an anonymous answer imports every answer anonymous; the legacy table keeps the person link.'],
         'evaluation.legacy_anonymous_linkage' => ['untouched_pending_legacy_privacy_adr',
             'BizLMS links anonymous answers to people in the legacy tables; the import neither copies nor alters that.'],
         'evaluation.trainer_feedback_form_names' => ['keep_bizlms_name',

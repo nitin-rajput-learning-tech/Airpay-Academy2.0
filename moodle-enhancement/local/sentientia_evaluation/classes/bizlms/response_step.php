@@ -34,7 +34,9 @@ use local_sentientia_platform\bizlms\step;
  * Two points where this goes beyond the letter of mapping doc section 18, both recorded in the plugin state card.
  * (1) Sticky anonymity reaches a completion that BizLMS stamped as named (anonymous_response = 2) when its form
  * ever held an anonymous answer: the more protective reading, and the one evaluation_manager::identity_protected()
- * applies to the form anyway. (2) A self evaluation whose evaluatedby names a user that no longer exists is not
+ * applies to the form anyway. It is the owner's decision evaluation.sticky_anonymity = whole_form (EV-16): pooling
+ * the answers means none can be singled out by subtracting the named ones. (2) A self evaluation whose
+ * evaluatedby names a user that no longer exists is not
  * dropped: the person evaluated is the person who answered there, so the completion's user is the responder
  * (warning responder_not_found). A supervisor form is still skipped (orphan_user), because the completion's user is
  * the person being evaluated and must not be shown as having answered.

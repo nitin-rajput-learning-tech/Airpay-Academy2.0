@@ -106,26 +106,38 @@ final class bizlms_import_test extends \advanced_testcase {
     ];
 
     /**
-     * The seven choices the importer declares, with the given needs-owner reasons accepted.
+     * The eight choices the importer declares (evaluation.sticky_anonymity since EV-16), with the given needs-owner
+     * reasons accepted.
      *
      * @param string[] $accepted
      * @return decisions
      */
     private function decisions_accepting(array $accepted): decisions {
-        return decisions::from_array([
-            'tenant.unresolved.evaluation' => 'pathless',
-            'evaluation.open_forms' => 'archived',
-            'evaluation.multichoicerated' => 'multichoice',
-            'evaluation.sp_anonymous_subject' => 'hidden',
-            'evaluation.legacy_anonymous_linkage' => 'untouched_pending_legacy_privacy_adr',
-            'evaluation.trainer_feedback_form_names' => 'keep_bizlms_name',
-            'evaluation.imported_forms_read_only' => true,
+        return decisions::from_array($this->declared_choices() + [
             'accepted_reasons' => array_values($accepted),
         ]);
     }
 
     /**
-     * The owner's choices: the seven the importer declares, and every needs-owner reason accepted, so a run that
+     * The eight choices the importer declares, each with the one value it implements.
+     *
+     * @return array<string, mixed>
+     */
+    private function declared_choices(): array {
+        return [
+            'tenant.unresolved.evaluation' => 'pathless',
+            'evaluation.open_forms' => 'archived',
+            'evaluation.multichoicerated' => 'multichoice',
+            'evaluation.sp_anonymous_subject' => 'hidden',
+            'evaluation.sticky_anonymity' => 'whole_form',
+            'evaluation.legacy_anonymous_linkage' => 'untouched_pending_legacy_privacy_adr',
+            'evaluation.trainer_feedback_form_names' => 'keep_bizlms_name',
+            'evaluation.imported_forms_read_only' => true,
+        ];
+    }
+
+    /**
+     * The owner's choices: the eight the importer declares, and every needs-owner reason accepted, so a run that
      * loses nothing unexpectedly exits 0.
      *
      * @return decisions
@@ -1204,13 +1216,7 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->contract_seed();
         // Only "archived" is implemented: an active form would reopen answering with no assignment check.
         [$result] = $this->contract_run(true, [
-            'decisions' => decisions::from_array(['evaluation.open_forms' => 'active'] + [
-                'tenant.unresolved.evaluation' => 'pathless', 'evaluation.multichoicerated' => 'multichoice',
-                'evaluation.sp_anonymous_subject' => 'hidden',
-                'evaluation.legacy_anonymous_linkage' => 'untouched_pending_legacy_privacy_adr',
-                'evaluation.trainer_feedback_form_names' => 'keep_bizlms_name',
-                'evaluation.imported_forms_read_only' => true,
-            ]),
+            'decisions' => decisions::from_array(['evaluation.open_forms' => 'active'] + $this->declared_choices()),
         ]);
         $this->assertSame(1, $result['exit']);
         $this->assertStringContainsString('decision_value_not_allowed:evaluation.open_forms', implode(' ', $result['blockers']));
@@ -1222,6 +1228,39 @@ final class bizlms_import_test extends \advanced_testcase {
         [$result] = $this->contract_run(true, ['decisions' => decisions::none()]);
         $this->assertSame(1, $result['exit']);
         $this->assertStringContainsString('missing_decision:evaluation.open_forms', implode(' ', $result['blockers']));
+    }
+
+    /**
+     * EV-16: the sticky-anonymity choice is declared, so a decisions file signed before it existed cannot start the
+     * import.
+     */
+    public function test_a_decisions_file_without_the_sticky_anonymity_choice_blocks_the_feature(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->contract_seed();
+        $without = $this->declared_choices();
+        unset($without['evaluation.sticky_anonymity']);
+        [$result] = $this->contract_run(true, ['decisions' => decisions::from_array($without)]);
+        $this->assertSame(1, $result['exit']);
+        $blockers = implode(' ', $result['blockers']);
+        $this->assertStringContainsString('missing_decision:evaluation.sticky_anonymity', $blockers);
+        $this->assertStringNotContainsString('missing_decision:evaluation.open_forms', $blockers,
+            'only the choice that is absent is named');
+        $this->assertSame(0, $DB->count_records(importer::T_FORMS), 'nothing is written while a blocker stands');
+    }
+
+    /**
+     * EV-16: a file that says the other thing (the named rows are kept) is refused too: only whole_form is implemented.
+     */
+    public function test_a_decisions_file_that_keeps_the_named_rows_blocks_the_feature(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        [$result] = $this->contract_run(true, [
+            'decisions' => decisions::from_array(['evaluation.sticky_anonymity' => 'named_rows_kept'] + $this->declared_choices()),
+        ]);
+        $this->assertSame(1, $result['exit']);
+        $this->assertStringContainsString('decision_value_not_allowed:evaluation.sticky_anonymity',
+            implode(' ', $result['blockers']));
     }
 
     public function test_a_native_form_with_a_bad_path_is_reported_before_the_run(): void {
