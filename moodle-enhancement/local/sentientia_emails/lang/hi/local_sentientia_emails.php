@@ -115,6 +115,7 @@ $string['privacy:metadata:emaillog:timesent']      = 'केवल आयात 
 $string['parity_subject_course_enrolled']    = 'आपको इस कोर्स में नामांकित किया गया है: {$a}';
 $string['parity_subject_path_enrolled']      = 'नया लर्निंग पाथ: {$a}';
 $string['parity_subject_manager_completion'] = '{$a->member} ने {$a->course} पूरा कर लिया है';
+$string['parity_log_subject_manager_completion'] = 'एक टीम सदस्य ने {$a} पूरा कर लिया है';
 $string['parity_enrolled_by_self']           = 'स्वयं नामांकन';
 $string['parity_enrolled_by_system']         = 'सिस्टम';
 $string['task_send_path_enrolments']         = 'लर्निंग-पाथ नामांकन ईमेल भेजें';

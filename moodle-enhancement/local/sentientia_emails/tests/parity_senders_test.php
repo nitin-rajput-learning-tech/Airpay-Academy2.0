@@ -228,7 +228,47 @@ final class parity_senders_test extends \advanced_testcase {
         $this->assertSame((int) $course->id, (int) $rows[0]->courseid);
         $this->assertSame('enrollment/manager_course_completed', $rows[0]->template_key);
         $this->assertSame('suppressed', $rows[0]->status);
-        $this->assertSame('Priya Singh has completed ' . $course->fullname, $rows[0]->subject);
+        // The row is the manager's. It must not name the learner: the privacy provider reaches a row by the person it
+        // belongs to, so the learner's own erasure could never remove a name written into the manager's row.
+        $this->assertSame('A team member has completed ' . $course->fullname, $rows[0]->subject);
+    }
+
+    public function test_the_manager_copy_log_row_holds_nothing_of_the_learner(): void {
+        global $DB;
+        $this->on(parity_senders::FLAG_MANAGER_COPY);
+        [$learner, $manager, $course] = $this->learner_with_manager();
+        $this->assertTrue(parity_senders::manager_completion_copy($learner, $course));
+
+        $rows = $this->logs();
+        $this->assertCount(1, $rows);
+        $this->assertSame((int) $manager->id, (int) $rows[0]->userid);
+        // Every text column of the row, and the learner's name, e-mail and username, in either case.
+        $text = strtolower(implode("\n", array_map('strval', (array) $rows[0])));
+        foreach ([$learner->firstname, $learner->lastname, $learner->email, $learner->username] as $needle) {
+            $this->assertStringNotContainsString(strtolower((string) $needle), $text, 'the log row names the learner');
+        }
+        $this->assertNull($rows[0]->sender_userid, 'no sender column points at the learner either');
+        // Nothing of the learner is anywhere in the log table (it has no column that holds the learner's id).
+        $this->assertSame(0, $DB->count_records(self::LOG, ['userid' => (int) $learner->id]));
+    }
+
+    public function test_the_log_subject_option_changes_what_is_logged_and_never_what_is_sent(): void {
+        $this->on(parity_senders::FLAG_MANAGER_COPY);
+        [$learner, $manager, $course] = $this->learner_with_manager();
+        $rule = parity_senders::rule_for(parity_senders::RULE_MANAGER_COPY, $manager);
+        $context = [
+            'firstname' => $manager->firstname, 'member_name' => 'Priya Singh', 'course_name' => $course->fullname,
+            'course_url' => 'https://example.test/c', 'completion_date' => '1 January 2026', 'team_url' => 'https://example.test/t',
+            'subject' => 'Priya Singh has completed X',
+        ];
+        $withlog = notification_sender::send($rule, $manager, $context, (int) $course->id, ['log_subject' => 'Neutral']);
+        $plain = notification_sender::send($rule, $manager, $context, (int) $course->id);
+        $this->assertSame('suppressed', $withlog[0]['status']);
+        $rows = $this->logs();
+        $this->assertCount(2, $rows);
+        $this->assertSame('Neutral', $rows[0]->subject, 'the option replaces the logged subject');
+        $this->assertSame('Priya Singh has completed X', $rows[1]->subject, 'without the option the sent subject is logged, as before');
+        $this->assertSame('suppressed', $plain[0]['status']);
     }
 
     public function test_the_course_completed_observer_sends_the_manager_copy_without_a_learner_rule(): void {
@@ -371,6 +411,40 @@ final class parity_senders_test extends \advanced_testcase {
         $this->on(parity_senders::FLAG_PATH_ENROLMENT);
         $this->assertSame(0, parity_senders::send_pending_path_enrolments(), 'the enrolment was made while the flag was OFF');
         $this->assertSame([], $this->logs());
+    }
+
+    public function test_with_the_flag_off_the_poller_jumps_to_the_highest_id_without_reading_the_rows(): void {
+        [$pathid] = $this->path();
+        parity_senders::send_pending_path_enrolments();   // First run: the marker.
+        $last = 0;
+        foreach (range(1, 5) as $unused) {
+            $last = $this->enrol_in_path($pathid, (int) $this->user_at('/1/5')->id);
+        }
+        $this->assertSame(0, parity_senders::send_pending_path_enrolments());
+        $this->assertSame($last, (int) get_config('local_sentientia_emails', parity_senders::CONFIG_PATH_WATERMARK),
+            'one jump to the highest id');
+        $this->assertSame(0, parity_senders::send_pending_path_enrolments(), 'a run with nothing new changes nothing');
+        $this->assertSame($last, (int) get_config('local_sentientia_emails', parity_senders::CONFIG_PATH_WATERMARK));
+        $this->assertSame([], $this->logs());
+    }
+
+    public function test_a_mixed_batch_moves_the_marker_to_its_last_row_and_mails_only_the_new_enrolments(): void {
+        [$pathid] = $this->path();
+        $this->on(parity_senders::FLAG_PATH_ENROLMENT);
+        parity_senders::send_pending_path_enrolments();   // First run: the marker.
+        $old = $this->enrol_in_path($pathid, (int) $this->user_at('/1/5')->id,
+            ['timecreated' => time() - parity_senders::PATH_ROW_MAX_AGE - 60]);
+        $new = $this->enrol_in_path($pathid, (int) $this->user_at('/1/5')->id);
+        $skipped = $this->enrol_in_path($pathid, (int) $this->user_at('/1/5', ['suspended' => 1])->id);
+
+        $this->assertSame(1, parity_senders::send_pending_path_enrolments());
+        $this->assertCount(1, $this->logs());
+        $this->assertGreaterThan($new, $skipped);
+        $this->assertGreaterThan($old, $new);
+        $this->assertSame($skipped, (int) get_config('local_sentientia_emails', parity_senders::CONFIG_PATH_WATERMARK),
+            'the marker ends on the last row looked at, a skipped one included');
+        $this->assertSame(0, parity_senders::send_pending_path_enrolments(), 'nothing is looked at twice');
+        $this->assertCount(1, $this->logs());
     }
 
     public function test_an_old_an_imported_or_an_archived_path_enrolment_is_not_emailed(): void {

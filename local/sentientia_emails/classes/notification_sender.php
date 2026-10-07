@@ -29,7 +29,10 @@ class notification_sender {
      * @param object $user      Moodle user object (recipient)
      * @param array  $context   Template context variables
      * @param int    $courseid  Optional course ID for logging
-     * @param array  $options   Sprint B: ['certificate_issue' => stdClass]
+     * @param array  $options   Sprint B: ['certificate_issue' => stdClass]. COMMS-N7: ['log_subject' => string], the
+     *                          subject written to the delivery log INSTEAD of the one sent, for a message whose subject names
+     *                          somebody other than the recipient: the log row is the recipient's (userid), so an erasure of
+     *                          the person named could never reach it. The message itself is sent with its own subject.
      * @return array [{channel, status, log_id}] results per channel
      */
     public static function send(object $rule, object $user, array $context,
@@ -47,6 +50,7 @@ class notification_sender {
         $templatekey = $rule->template_key ?? '';
         $html = '';
         $subject = $context['subject'] ?? $rule->rule_name;
+        $logsubject = isset($options['log_subject']) ? (string) $options['log_subject'] : $subject;
 
         if ($templatekey) {
             $context['subject'] = $subject;
@@ -122,7 +126,7 @@ class notification_sender {
                 'courseid'             => $courseid,
                 'tenant_id'            => $tenantid,
                 'channel'              => $channel,
-                'subject'              => $subject,
+                'subject'              => $logsubject,
                 'template_key'         => $templatekey,
                 'status'               => $status,
                 'error_message'        => $error,

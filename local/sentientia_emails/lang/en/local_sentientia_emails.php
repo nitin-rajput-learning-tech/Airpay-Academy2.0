@@ -120,6 +120,7 @@ $string['privacy:metadata:emaillog:timesent']      = 'Imported BizLMS history on
 $string['parity_subject_course_enrolled']    = 'You have been enrolled in: {$a}';
 $string['parity_subject_path_enrolled']      = 'New learning path: {$a}';
 $string['parity_subject_manager_completion'] = '{$a->member} has completed {$a->course}';
+$string['parity_log_subject_manager_completion'] = 'A team member has completed {$a}';
 $string['parity_enrolled_by_self']           = 'Self-enrolment';
 $string['parity_enrolled_by_system']         = 'System';
 $string['task_send_path_enrolments']         = 'Send learning-path enrolment e-mails';

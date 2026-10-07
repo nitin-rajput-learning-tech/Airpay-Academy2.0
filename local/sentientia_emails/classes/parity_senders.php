@@ -328,6 +328,10 @@ final class parity_senders {
      * which is also what stops an old enrolment from being e-mailed the day a flag is switched ON. A row that is older
      * than PATH_ROW_MAX_AGE is not e-mailed, and a row the BizLMS import wrote (it is in the legacy map) never is.
      *
+     * While the flag is OFF for every tenant (how it ships) a run reads no row at all: it moves the saved id to the
+     * highest id in one write. Otherwise the saved id is written once per e-mail handed to the sender (so a run that stops
+     * half way cannot send the same e-mail twice) and once at the end of the run, never once per row looked at.
+     *
      * @param int $limit Rows per run; the rest wait for the next run.
      * @return int E-mails handed to the sender.
      */
@@ -341,7 +345,16 @@ final class parity_senders {
         $saved = get_config('local_sentientia_emails', self::CONFIG_PATH_WATERMARK);
         if ($saved === false || $saved === null || $saved === '') {
             $max = (int) $DB->get_field_sql('SELECT MAX(id) FROM {local_sentientia_learningpath_users}');
-            set_config(self::CONFIG_PATH_WATERMARK, $max, 'local_sentientia_emails');
+            set_config(self::CONFIG_PATH_WATERMARK, (string) $max, 'local_sentientia_emails');
+            return 0;
+        }
+
+        if (!self::enabled_anywhere(self::FLAG_PATH_ENROLMENT)) {
+            // Nothing can be sent, and what is enrolled now must never be e-mailed after a later flip: move past it.
+            $max = (int) $DB->get_field_sql('SELECT MAX(id) FROM {local_sentientia_learningpath_users}');
+            if ($max > (int) $saved) {
+                set_config(self::CONFIG_PATH_WATERMARK, (string) $max, 'local_sentientia_emails');
+            }
             return 0;
         }
 
@@ -360,12 +373,20 @@ final class parity_senders {
 
         $sent = 0;
         $earliest = time() - self::PATH_ROW_MAX_AGE;
+        $written = (int) $saved;
+        $last = $written;
         foreach ($rows as $row) {
+            $last = (int) $row->id;
             if ((int) $row->timecreated >= $earliest
                     && self::learning_path_enrolled((int) $row->userid, (int) $row->pathid, (int) $row->enrolledby)) {
                 $sent++;
+                // An e-mail is a side effect that cannot be taken back: record that this row is done before the next.
+                set_config(self::CONFIG_PATH_WATERMARK, (string) $last, 'local_sentientia_emails');
+                $written = $last;
             }
-            set_config(self::CONFIG_PATH_WATERMARK, (int) $row->id, 'local_sentientia_emails');
+        }
+        if ($last > $written) {
+            set_config(self::CONFIG_PATH_WATERMARK, (string) $last, 'local_sentientia_emails');
         }
         return $sent;
     }
@@ -375,6 +396,10 @@ final class parity_senders {
      *
      * Only to a LIVE supervisor in the SAME tenant as the learner (ADR-031: a person's name and progress are not sent
      * across a tenant boundary, and a supervisor whose tenant does not resolve gets nothing).
+     *
+     * The e-mail names the learner (it is the point of the copy); the delivery-log row written for the manager carries
+     * a neutral subject ("A team member has completed ...") and never the learner's name, so the log holds no personal
+     * data of the learner that their own erasure could not reach.
      *
      * @param \stdClass $learner The user record of the learner (it carries open_supervisorid where the site has it).
      * @param \stdClass $course The course record.
@@ -419,7 +444,13 @@ final class parity_senders {
                     'course' => $name,
                 ]),
             ];
-            notification_sender::send($rule, $manager, $context, (int) $course->id);
+            // The e-mail names the learner; the delivery-log row does not. The row is the MANAGER's (userid), and the
+            // privacy provider deletes or anonymises a row by the person it belongs to, so a name written into it could
+            // never be reached by the learner's own erasure (the same reason the import withholds the body and the
+            // member's name of an imported manager copy, COMMS-N2).
+            notification_sender::send($rule, $manager, $context, (int) $course->id, [
+                'log_subject' => self::string('parity_log_subject_manager_completion', $manager, $name),
+            ]);
             return true;
         } catch (\Throwable $e) {
             debugging('local_sentientia_emails manager copy failed: ' . $e->getMessage(), DEBUG_DEVELOPER);
