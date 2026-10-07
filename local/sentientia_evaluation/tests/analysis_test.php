@@ -935,4 +935,71 @@ final class analysis_test extends \advanced_testcase {
         $this->assertStringContainsString('<label for="q-' . $choice . '-opt-1">Tom &amp; Jerry</label>', $html);
         $this->assertStringNotContainsString('&amp;amp;', $html, 'escaped once, not twice');
     }
+
+    /**
+     * A stored answer that is not a number cannot be added up. It stays out of the count (the average and the bar
+     * shares divide by it), the bars stop claiming to be exact, and the page says how many were left out; with no
+     * number at all the question shows no figures.
+     */
+    public function test_a_stored_answer_that_is_not_a_number_is_left_out_of_the_numeric_figures(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $f = $this->seed_number_and_multi_form();
+        $this->put_answers($f['eid'], [$f['bounded'] => 2]);
+        $this->put_answers($f['eid'], [$f['bounded'] => 4]);
+        $this->put_answers($f['eid'], [$f['bounded'] => 'n/a']);
+        $this->put_answers($f['eid'], [$f['free'] => 'abc']);
+
+        $stats = evaluation_manager::get_response_stats($f['eid']);
+        $bounded = $stats[$f['bounded']];
+        $this->assertSame(2, $bounded['count'], 'numeric answers only');
+        $this->assertEqualsWithDelta(3.0, $bounded['avg'], 0.001, 'the junk answer does not pull the average down');
+        $this->assertSame(1, $bounded['non_numeric']);
+        $this->assertFalse($bounded['distribution_exact'], 'the bars no longer cover every stored answer');
+        $free = $stats[$f['free']];
+        $this->assertSame(0, $free['count']);
+        $this->assertNull($free['min_seen']);
+        $this->assertSame(1, $free['non_numeric']);
+
+        $rows = evaluation_manager::response_question_rows(evaluation_manager::get_questions($f['eid']), $stats);
+        [$boundedrow, $freerow] = $rows;
+        $note = get_string('responses_numeric_ignored', 'local_sentientia_evaluation', 1);
+        $this->assertSame(2, $boundedrow['response_count']);
+        $this->assertSame('3', $boundedrow['avg']);
+        $this->assertArrayNotHasKey('has_distribution', $boundedrow);
+        $this->assertSame($note, $boundedrow['ignored_note']);
+
+        // Nothing numeric at all: no average, no lowest or highest (it used to print "0" for each), just the note.
+        $this->assertSame(0, $freerow['response_count']);
+        foreach (['avg', 'min_seen', 'max_seen', 'lowest_highest', 'range_text'] as $key) {
+            $this->assertArrayNotHasKey($key, $freerow);
+        }
+        $this->assertSame($note, $freerow['ignored_note']);
+
+        // A question whose answers are all numbers carries no note.
+        $clean = evaluation_manager::response_question_rows(
+            [evaluation_manager::get_question($f['multi'])], [])[0];
+        $this->assertArrayNotHasKey('ignored_note', $clean);
+    }
+
+    /**
+     * The lowest and highest answers are real answers, so they are shown as stored; only the average is rounded.
+     */
+    public function test_the_lowest_and_highest_numeric_answers_are_shown_as_stored(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $f = $this->seed_number_and_multi_form();
+        foreach ([7.125, 7.5, 9] as $answer) {
+            $this->put_answers($f['eid'], [$f['free'] => $answer]);
+        }
+        $rows = evaluation_manager::response_question_rows(
+            evaluation_manager::get_questions($f['eid']), evaluation_manager::get_response_stats($f['eid']));
+        $free = $rows[1];
+        $this->assertSame(3, $free['response_count']);
+        $this->assertSame('7.125', $free['min_seen'], 'not 7.13');
+        $this->assertSame('9', $free['max_seen']);
+        $this->assertSame('7.88', $free['avg'], 'the average is rounded to two decimals');
+        $this->assertSame(get_string('responses_numeric_lowest_highest', 'local_sentientia_evaluation',
+            (object) ['lowest' => '7.125', 'highest' => '9']), $free['lowest_highest']);
+    }
 }

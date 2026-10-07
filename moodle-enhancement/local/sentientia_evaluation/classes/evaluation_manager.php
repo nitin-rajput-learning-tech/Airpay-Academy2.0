@@ -2109,8 +2109,10 @@ class evaluation_manager {
             case 'numeric':
                 // P1 #18 — running min/max/sum so finalise can compute avg.
                 $bounds = self::decode_numeric_bounds($q->options ?? null);
+                // count is of NUMERIC answers only (the average and the bar shares divide by it); a stored answer
+                // that is not a number is tallied in non_numeric instead, see accumulate_stat().
                 $bucket = ['type' => 'numeric', 'count' => 0, 'sum' => 0,
-                        'min_seen' => null, 'max_seen' => null,
+                        'min_seen' => null, 'max_seen' => null, 'non_numeric' => 0,
                         'bound_min' => $bounds['min'], 'bound_max' => $bounds['max']];
                 // A small bounded range also keeps a count per whole value (value => count). It is only shown
                 // while every answer so far is a whole number inside the range ('distribution_exact').
@@ -2129,6 +2131,17 @@ class evaluation_manager {
 
     private static function accumulate_stat(array &$bucket, ?object $q, $answer): void {
         if (!$q) return;
+        if ($q->questiontype === 'numeric' && !is_numeric($answer)) {
+            // Imported or edited data can hold an answer that is not a number. It cannot be added up, so it stays out
+            // of the count, the average and the bars (counting it would pull the average down and leave the bars short
+            // of the count), and the page says how many were left out. The bars no longer cover every stored
+            // answer, so they are not shown as exact.
+            $bucket['non_numeric'] = (int) ($bucket['non_numeric'] ?? 0) + 1;
+            if (isset($bucket['distribution'])) {
+                $bucket['distribution_exact'] = false;
+            }
+            return;
+        }
         $bucket['count']++;
         switch ($q->questiontype) {
             case 'rating':
@@ -2172,7 +2185,6 @@ class evaluation_manager {
                 }
                 break;
             case 'numeric':
-                if (!is_numeric($answer)) break;
                 // Not (int): an imported BizLMS answer may be 7.25 (the item allowed decimals), and truncating
                 // it here would understate the sum and the average. A native answer is an int, which stays one.
                 $v = $answer + 0;
@@ -2255,9 +2267,12 @@ class evaluation_manager {
      *  - multichoice: distribution (option, count, pct);
      *  - multichoice_multi: distribution (option, count, pct) where pct is the share of RESPONDENTS who ticked the
      *    option, respondents, total_picks, avg_picks, summary and share_note;
-     *  - numeric: avg, min_seen, max_seen (formatted, trailing zeros stripped), bound_min, bound_max,
-     *    lowest_highest, range_text (both bounds set only) and, for a small bounded range whose answers are all
-     *    whole numbers inside it, has_distribution with distribution (label, count, pct);
+     *  - numeric: avg (two decimals), min_seen and max_seen (the lowest and highest answers as stored, every
+     *    decimal kept), bound_min, bound_max, lowest_highest, range_text (both bounds set only) and, for a small
+     *    bounded range whose answers are all whole numbers inside it, has_distribution with distribution (label,
+     *    count, pct). response_count is of numeric answers only: a stored answer that is not a number is left out
+     *    of every figure, and ignored_note (set whenever one was) says how many; with no number at all the row
+     *    carries no statistics;
      *  - text: has_samples with samples.
      *
      * @param \stdClass[] $questions question records (from get_questions)
@@ -2269,7 +2284,10 @@ class evaluation_manager {
         // {{ }} escapes once, in the template, so the text is not escaped here as well (format_string() would
         // turn a '&' into '&amp;' and the template into '&amp;amp;').
         $text = static fn(string $s): string => format_string($s, true, ['escape' => false]);
+        // An average is rounded to two decimals; the lowest and highest answers are real answers, so they are shown as
+        // stored (format_float() with -1 keeps every decimal, and strips trailing zeros).
         $number = static fn($n): string => format_float((float) $n, 2, true, true);
+        $stored = static fn($n): string => format_float((float) $n, -1, true, true);
 
         $rows = [];
         $position = 0;
@@ -2277,6 +2295,10 @@ class evaluation_manager {
             $position++;
             $bucket = $stats[$q->id] ?? ['type' => $q->questiontype, 'count' => 0];
             $count = (int) ($bucket['count'] ?? 0);
+            if ($q->questiontype === 'numeric' && ($bucket['min_seen'] ?? null) === null) {
+                // No number was given: there is no average, lowest or highest to show, whatever else the bucket holds.
+                $count = 0;
+            }
 
             $row = [
                 'id'           => $q->id,
@@ -2371,10 +2393,15 @@ class evaluation_manager {
                 $row['share_note'] = get_string('responses_multi_share_note', $component);
             }
 
+            if ($q->questiontype === 'numeric' && !empty($bucket['non_numeric'])) {
+                // Shown whether or not any number was given: answers that were left out are worth knowing about.
+                $row['ignored_note'] = get_string('responses_numeric_ignored', $component, (int) $bucket['non_numeric']);
+            }
+
             if ($q->questiontype === 'numeric' && $count > 0) {
                 $row['avg'] = $number($bucket['avg']);
-                $row['min_seen'] = $number($bucket['min_seen']);
-                $row['max_seen'] = $number($bucket['max_seen']);
+                $row['min_seen'] = $stored($bucket['min_seen']);
+                $row['max_seen'] = $stored($bucket['max_seen']);
                 $row['bound_min'] = $bucket['bound_min'];
                 $row['bound_max'] = $bucket['bound_max'];
                 $row['lowest_highest'] = get_string('responses_numeric_lowest_highest', $component, (object) [

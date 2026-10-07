@@ -325,6 +325,7 @@
     {{/has_distribution}}
     {{/response_count}}
     {{^response_count}}<div class="no-data">{{#str}}responses_question_no_answers, local_sentientia_evaluation{{/str}}</div>{{/response_count}}
+    {{#ignored_note}}<p class="text-muted small mb-0 mt-2">{{.}}</p>{{/ignored_note}}
     {{/is_numeric}}
 
     {{#is_text}}
