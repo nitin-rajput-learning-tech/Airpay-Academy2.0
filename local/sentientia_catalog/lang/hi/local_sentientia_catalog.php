@@ -56,3 +56,7 @@ $string['storefront_checkout_redundant'] = '{$a} कोर्स आपकी �
 $string['storefront_checkout_nothing'] = 'आपकी बास्केट के किसी भी सशुल्क कोर्स को चेकआउट में नहीं भेजा जा सका।';
 $string['storefront_checkout_pricediffers'] = '{$a} कोर्स की चेकआउट में कीमत आपकी बास्केट में दिखी कीमत से अलग है। भुगतान करने से पहले इस पृष्ठ पर दी गई राशि जाँच लें।';
 $string['storefront_checkout_freeleft'] = 'आपकी बास्केट में अब भी {$a} निःशुल्क कोर्स हैं। वे चेकआउट से नहीं गुजरते: उनमें नामांकन के लिए अपनी बास्केट खोलें।';
+
+// Owner decision CRS-14 (2026-10-07) — सीखने वाले की "प्रगति में" सूची में रहने वाले BizLMS छद्म-कोर्स (open_coursetype 1) का कार्ड लेबल, open_module के अनुसार।
+$string['coursetype_exam'] = 'परीक्षा';
+$string['coursetype_forum'] = 'फ़ोरम';

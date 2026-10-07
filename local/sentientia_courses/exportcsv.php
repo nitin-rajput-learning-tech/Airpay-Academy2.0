@@ -96,13 +96,14 @@ $wheresql = implode(' AND ', $where);
 $exportlimit = 10000;
 
 // Pull rows with category name + enrolled + completion counts in a single
-// query. The subselect for completion count is bounded — Moodle's course
+// query. The enrolled figure counts LEARNERS (DISTINCT userid), as the Manage Courses grid does: a learner converted from a
+// BizLMS enrol method holds two rows in a course (owner decision 2026-10-07, "readers that count enrolments"). The subselect for completion count is bounded — Moodle's course
 // completion table grows linearly with enrolments, but the EXISTS-style
 // inner SELECT only sums per-course rows so it's O(1) per outer row.
 $sql = "SELECT c.id, c.fullname, c.shortname, c.idnumber, c.visible,
                c.timecreated, c.startdate, c.enddate,
                cat.name AS catname,
-               (SELECT COUNT(*) FROM {user_enrolments} ue
+               (SELECT COUNT(DISTINCT ue.userid) FROM {user_enrolments} ue
                   JOIN {enrol} e ON e.id = ue.enrolid
                  WHERE e.courseid = c.id) AS enrolled_count,
                (SELECT COUNT(*) FROM {course_completions}

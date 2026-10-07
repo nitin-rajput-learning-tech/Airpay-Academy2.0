@@ -925,7 +925,9 @@ JS;
             // BizLMS plugin's code is not deployed, and the import brought its ratings into the Sentientia table.
             $display_ratings = null;
             if (class_exists('\local_sentientia_ratings\rating_manager')) {
-                $display_ratings = \local_sentientia_ratings\rating_manager::render($courseid, 'local_sentientia_courses');
+                // CRS-11 (2026-10-07): interactive stars and the AMD widget only behind sentientia.ratings.widget (default
+                // OFF); read-only stars otherwise. render() with its interactive default drew buttons nothing wired up.
+                $display_ratings = \local_sentientia_ratings\rating_manager::render_for_viewer($courseid, 'local_sentientia_courses');
             }
             $header=(object)array_merge((array)$header,$usercourseprogress);
             $header->display_ratings=$display_ratings;
@@ -1703,7 +1705,8 @@ JS;
         // Ratings: no BizLMS display_rating() fallback any more (ADR-032, 2026-09-30).
         $display_ratings = null;
         if (class_exists('\local_sentientia_ratings\rating_manager')) {
-            $display_ratings = \local_sentientia_ratings\rating_manager::render($COURSE->id, 'local_sentientia_courses');
+            // CRS-11 (2026-10-07): see the course header above; one widget request serves both places.
+            $display_ratings = \local_sentientia_ratings\rating_manager::render_for_viewer($COURSE->id, 'local_sentientia_courses');
         }
         if(empty($percentage)){
             $percentage=0;}

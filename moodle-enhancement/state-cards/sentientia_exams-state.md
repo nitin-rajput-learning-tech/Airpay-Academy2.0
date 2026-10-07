@@ -190,3 +190,30 @@ core data read by quiz id and are never touched.
 - **Also in this change (other plugins):** `local_sentientia_catalog` 2026100100 lists ordinary courses only
   (exams code fix 3); `theme_airpayux` 2026100100 reads the exam row through `exam_manager` instead of SQL on
   `{local_onlinetests}` (exams code fix 4).
+
+## 2026-10-07 - doc item "exams pass figures" and CRS-14 (1.7.1, 2026100701)
+
+Both trees. **Not run: no PHPUnit here; the lead re-initialises PHPUnit once for the version bump.** No flag (a wrong figure
+is fixed, no surface is added), no schema change, no new lang string.
+
+- **The defect.** `view.php` computed the pass rate as passed LEARNERS divided by finished ATTEMPTS, and the failures as
+  attempts minus passed learners: mixed units. Two learners, one of whom needed three tries and passed on the last, read as
+  33 percent passed with 2 failed; the right figures are 50 percent and 1.
+- **The fix.** New `exam_manager::pass_figures($quizid, $threshold, $usql, $uparams)` returns `attempts` (finished attempts, what
+  "Total Attempts" says), `learners` (distinct learners with a finished attempt), `passed` (learners, the existing
+  `count_passed_learners()`), `failed` (`learners - passed`) and `pass_pct` (learners who passed over learners). It uses the
+  same filters as `count_passed_learners()` on purpose, so a learner counted as passed is always a learner counted. `view.php`
+  uses it for the counts, the Pass Rate tile and `count_failed`; it also exposes `count_learners` to the template. The
+  Total Attempts tile and the Attempts tab badge still count attempts.
+- **CRS-14, for exams.** The catalog plugin (1.0.9-beta) takes exam pseudo-courses off the guest storefront and labels them
+  "Exam" in a learner's in-progress rail; this plugin is unchanged by it. Sentientia's exam pages stay manager and teacher
+  only, so the enrolled course is a learner's only path to an assigned exam.
+- **Stage B reads (doc item):** the `exams.reminder_seed` counts in the report (April: 3 closed exam quizzes, 154 enrolment rows
+  on those courses, small); nothing to decide until then.
+- **Tests (new `tests/pass_figures_test.php`, NOT RUN):** a learner with three attempts is one learner on both sides (5 attempts,
+  3 learners, 1 passed, 2 failed, 33.3 percent; the old figures were 20 percent and 4 failed); passed plus failed is always the
+  learners across five thresholds; a quiz nobody finished has zero figures and no division; the tenant condition applies to
+  every figure; another quiz's attempts are not counted.
+- **Visual evidence owed** (CLAUDE.md section 5): the analytics tab of an exam with a repeat-attempt learner, desktop and 590 px.
+  Not captured in this session (no browser access to the UAT build).
+

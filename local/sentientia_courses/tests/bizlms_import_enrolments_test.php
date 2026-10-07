@@ -6,6 +6,7 @@ namespace local_sentientia_courses;
 
 defined('MOODLE_INTERNAL') || die();
 
+use local_sentientia_courses\bizlms\enrolments_access;
 use local_sentientia_courses\bizlms\enrolments_importer;
 use local_sentientia_platform\bizlms\context;
 use local_sentientia_platform\bizlms\decisions;
@@ -50,11 +51,19 @@ use local_sentientia_platform\tests\bizlms\static_scanner;
  *   7011 lp4 b      the course is gone: skipped (course_missing)
  *   7012 pr1 a      converted
  *
+ * The instance step (owner decision CRS-01, 2026-10-07) then judges the six BizLMS instances that hold enrolments: pr1, cl1
+ * and lp3 are proved (every learner keeps the access through manual enrolments) and switched off, in the trail; lp1 and lp2
+ * hold a row nobody settled (7007, 7009, 7010) and stay enabled; lp4 is in a course that is gone. lp5 holds no enrolment and
+ * is not judged.
+ *
  * @package    local_sentientia_courses
  * @category   test
  * @covers     \local_sentientia_courses\bizlms\enrolments_importer
  * @covers     \local_sentientia_courses\bizlms\enrolments_instances_step
  * @covers     \local_sentientia_courses\bizlms\enrolments_step
+ * @covers     \local_sentientia_courses\bizlms\enrolments_access
+ * @covers     \local_sentientia_courses\bizlms\enrolments_legacy_instances_step
+ * @covers     \local_sentientia_courses\bizlms\enrolments_legacy_instances_off_step
  *
  * @group local_sentientia_courses
  * @group bizlms_import
@@ -99,7 +108,9 @@ final class bizlms_import_enrolments_test extends \advanced_testcase {
     }
 
     protected function contract_decisions(): decisions {
-        return decisions::from_array([enrolments_importer::DECISION => enrolments_importer::DECISION_VALUE]);
+        // Every decision of the importer, with the only value its code implements: the gap decision and the three owner
+        // decisions of 2026-10-07 (CRS-01, CRS-02, CRS-03).
+        return decisions::from_array(enrolments_importer::SIGNED_VALUES);
     }
 
     protected function contract_seed(): void {
@@ -124,6 +135,11 @@ final class bizlms_import_enrolments_test extends \advanced_testcase {
      */
     protected function contract_clear_import(importer $importer): void {
         global $DB;
+        // The instances the import switched off go back to the status the trail kept (that is how an operator undoes it),
+        // or the second run would see a seed that is not the one the first run saw.
+        foreach ($DB->get_records_sql('SELECT id, enrolid, priorstatus FROM {' . enrolments_importer::TRAIL . '}') as $trail) {
+            $DB->set_field('enrol', 'status', $trail->priorstatus, ['id' => $trail->enrolid]);
+        }
         foreach (['user_enrolments', 'enrol'] as $table) {
             $ids = $DB->get_fieldset_select(legacymap::TABLE, 'targetid',
                 "feature = :f AND targettable = :t AND outcome = 'imported'", ['f' => enrolments_importer::FEATURE, 't' => $table]);
@@ -167,13 +183,67 @@ final class bizlms_import_enrolments_test extends \advanced_testcase {
         $this->assertSame([], $importer->tenant_columns());
         $this->assertSame(['enrol', 'user_enrolments'], array_keys($importer->core_writes()));
         $this->assertSame(['enrol', 'user_enrolments'], array_keys($importer->sources()));
-        $this->assertSame([enrolments_importer::LEDGER], $importer->target_tables());
+        $this->assertSame([enrolments_importer::LEDGER, enrolments_importer::TRAIL], $importer->target_tables());
         // Every rule that departs from the map or from the signed decision is the owner's call, not a silent default.
         $needsowner = array_map(fn($reason) => $reason->code, array_filter($importer->reasons(), fn($reason) => $reason->needsowner));
         sort($needsowner);
-        $this->assertSame(['manual_enrolment_ends_sooner', 'manual_enrolment_inactive', 'user_deleted'], $needsowner);
-        $this->assertSame(['enrolments.instances', 'enrolments.enrolments'],
-            array_map(fn($step) => $step->key(), $importer->steps()));
+        $this->assertSame(['access_regression', 'manual_enrolment_ends_sooner', 'manual_enrolment_inactive', 'user_deleted'],
+            $needsowner);
+        $this->assertSame(['enrolments.instances', 'enrolments.enrolments', 'enrolments.legacy_instances',
+            'enrolments.legacy_instances_off'], array_map(fn($step) => $step->key(), $importer->steps()));
+    }
+
+    public function test_every_decision_is_declared_required_with_the_one_value_the_code_implements(): void {
+        $importer = new enrolments_importer();
+        $declared = [];
+        foreach ($importer->decisions() as $decision) {
+            $declared[$decision->key] = $decision;
+        }
+        $this->assertSame(array_keys(enrolments_importer::SIGNED_VALUES), array_keys($declared));
+        $this->assertSame([
+            'gap.orphan_enrol_instances', 'enrolments.bizlms_instances_after_verify',
+            'enrolments.disabled_instance_row_status', 'enrolments.disabled_only_manual_instance',
+        ], array_keys($declared));
+        foreach (enrolments_importer::SIGNED_VALUES as $key => $value) {
+            $this->assertTrue($declared[$key]->required, "{$key} is required: the rule is signed, so an absent key blocks");
+            $this->assertNull($declared[$key]->default, "{$key} has no default: an owner choice is data");
+            $this->assertSame([$value], $declared[$key]->allowed, "{$key} allows the one value the code implements");
+        }
+        $this->assertSame('disable_when_converted', enrolments_importer::SIGNED_VALUES['enrolments.bizlms_instances_after_verify']);
+        $this->assertSame('convert_as_suspended', enrolments_importer::SIGNED_VALUES['enrolments.disabled_instance_row_status']);
+        $this->assertSame('add_enabled_beside', enrolments_importer::SIGNED_VALUES['enrolments.disabled_only_manual_instance']);
+    }
+
+    public function test_each_owner_decision_blocks_the_feature_when_it_is_absent(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->seed();
+        $ues = $DB->count_records('user_enrolments');
+        $enrol = $DB->get_records('enrol', null, 'id');
+
+        foreach (array_keys(enrolments_importer::SIGNED_VALUES) as $key) {
+            $without = enrolments_importer::SIGNED_VALUES;
+            unset($without[$key]);
+            [$result] = $this->contract_run(true, ['decisions' => decisions::from_array($without)]);
+            $this->assertSame(1, $result['exit'], $key);
+            $this->assertStringContainsString('missing_decision:' . $key, implode(' ', $result['blockers']), $key);
+            $this->assertSame($ues, $DB->count_records('user_enrolments'), "nothing is converted without {$key}");
+            $this->assertEquals($enrol, $DB->get_records('enrol', null, 'id'), "no instance is switched off without {$key}");
+        }
+        $this->assertSame(0, $DB->count_records(legacymap::TABLE));
+    }
+
+    public function test_an_owner_decision_with_another_value_is_refused(): void {
+        $this->contract_begin();
+        $this->seed();
+        foreach (['enrolments.bizlms_instances_after_verify' => 'leave_enabled',
+                  'enrolments.disabled_instance_row_status' => 'convert_keep_status',
+                  'enrolments.disabled_only_manual_instance' => 'enable_existing'] as $key => $value) {
+            [$result] = $this->contract_run(true, ['decisions' => decisions::from_array(
+                [$key => $value] + enrolments_importer::SIGNED_VALUES)]);
+            $this->assertSame(1, $result['exit'], $key);
+            $this->assertStringContainsString('decision_value_not_allowed:' . $key, implode(' ', $result['blockers']), $key);
+        }
     }
 
     public function test_the_importer_code_passes_the_static_scan(): void {
@@ -218,6 +288,48 @@ final class bizlms_import_enrolments_test extends \advanced_testcase {
         $this->assertSame(5, $steps['enrolments.enrolments']['counters']['imported']);
         $this->assertSame(2, $steps['enrolments.enrolments']['counters']['folded']);
         $this->assertSame(5, $steps['enrolments.enrolments']['counters']['skipped']);
+        // The third unit: one primary map row per BizLMS instance that holds enrolments.
+        $this->assertSame(6, $steps['enrolments.legacy_instances']['counters']['processed']);
+        $this->assertSame(3, $steps['enrolments.legacy_instances']['counters']['imported']);
+        $this->assertSame(3, $steps['enrolments.legacy_instances']['counters']['skipped']);
+    }
+
+    public function test_every_bizlms_instance_with_enrolments_gets_one_primary_map_row_and_the_trail_names_the_proven_ones(): void {
+        global $DB;
+        $this->contract_begin();
+        $seed = $this->seed();
+
+        $this->contract_run(true);
+
+        $rows = $DB->get_records(legacymap::TABLE, ['sourcetable' => enrolments_importer::UNIT_LEGACY_INSTANCES, 'subkey' => ''],
+            'sourceid', 'sourceid, outcome, targettable, targetid, reason');
+        $expected = [
+            // Rows the owner has not decided (a deleted account, an administrator's suspended manual enrolment).
+            $seed->inst['lp1'] => ['skipped', 'rows_unsettled'],
+            $seed->inst['lp2'] => ['skipped', 'rows_unsettled'],
+            // Proved, switched off, in the trail.
+            $seed->inst['pr1'] => ['imported', null],
+            $seed->inst['cl1'] => ['imported', null],
+            $seed->inst['lp3'] => ['imported', null],
+            // The course is gone.
+            $seed->inst['lp4'] => ['skipped', 'course_missing'],
+        ];
+        $this->assertEqualsCanonicalizing(array_keys($expected), array_map('intval', array_keys($rows)));
+        foreach ($expected as $instance => [$outcome, $reason]) {
+            $this->assertSame($outcome, $rows[$instance]->outcome, "instance {$instance}");
+            $this->assertSame($reason, $rows[$instance]->reason, "instance {$instance}");
+            $this->assertSame($outcome === 'imported' ? enrolments_importer::TRAIL : '', $rows[$instance]->targettable);
+        }
+
+        // The trail: ids and source timestamps only, the prior status, the method and the course.
+        $this->assertSame(3, $DB->count_records(enrolments_importer::TRAIL));
+        $trail = $DB->get_record(enrolments_importer::TRAIL, ['enrolid' => $seed->inst['pr1']], '*', MUST_EXIST);
+        $this->assertSame('program', $trail->method);
+        $this->assertSame($seed->course[2], (int) $trail->courseid);
+        $this->assertSame(0, (int) $trail->priorstatus);
+        $this->assertSame(self::T0, (int) $trail->timecreated, 'the source\'s timestamps');
+        $this->assertSame(self::T0, (int) $trail->timemodified, 'the instance row before the import changed it');
+        $this->assertSame((int) $trail->id, (int) $rows[$seed->inst['pr1']]->targetid);
     }
 
     public function test_the_needs_owner_reason_is_the_only_thing_that_keeps_the_run_from_exit_0(): void {
@@ -355,8 +467,25 @@ final class bizlms_import_enrolments_test extends \advanced_testcase {
 
         $this->contract_run(true);
 
-        $this->assertEquals($instances, $DB->get_records_list('enrol', 'id', array_values($seed->inst), 'id'),
-            'no BizLMS instance is changed, disabled or deleted');
+        // Owner decision CRS-01: the only change to a BizLMS instance is the status (and timemodified) of one the import
+        // proved safe to switch off, and the trail names exactly those. Nothing is deleted.
+        $after = $DB->get_records_list('enrol', 'id', array_values($seed->inst), 'id');
+        $this->assertSame(array_keys($instances), array_keys($after), 'no BizLMS instance is deleted');
+        $off = array_map('intval', $DB->get_fieldset_sql('SELECT enrolid FROM {' . enrolments_importer::TRAIL . '} ORDER BY enrolid'));
+        $this->assertSame([$seed->inst['pr1'], $seed->inst['cl1'], $seed->inst['lp3']], $off,
+            'proved: program, classroom and the plan whose only learner has ended; the others hold an unsettled row or have no course');
+        sort($off);
+        foreach ($instances as $id => $before) {
+            if (in_array((int) $id, $off, true)) {
+                $this->assertSame('1', (string) $after[$id]->status, "{$id} is switched off");
+                $changed = clone $after[$id];
+                $changed->status = $before->status;
+                $changed->timemodified = $before->timemodified;
+                $this->assertEquals($before, $changed, "{$id}: nothing but status and timemodified changed");
+            } else {
+                $this->assertEquals($before, $after[$id], "{$id} is not touched");
+            }
+        }
         $this->assertEquals($legacy, $DB->get_records_list('user_enrolments', 'id', $legacyids, 'id'),
             'no legacy enrolment is changed or deleted');
         $this->assertEquals($bystanders, $DB->get_records_list('user_enrolments', 'id', array_values($seed->native), 'id'),
@@ -437,6 +566,14 @@ final class bizlms_import_enrolments_test extends \advanced_testcase {
         $this->assertSame('1', (string) $DB->get_field('user_enrolments', 'status', ['id' => $map->targetid]));
         $this->assertFalse(is_enrolled(\context_course::instance($seed->course[4]), $learner, '', true));
         $this->assertSame('0', (string) $DB->get_field('user_enrolments', 'status', ['id' => 7031]), 'the legacy row is as it was');
+
+        // Owner decision CRS-02: nothing to switch off on an instance that is already off, and nothing recorded for it.
+        $unit = $DB->get_record(legacymap::TABLE, ['sourcetable' => enrolments_importer::UNIT_LEGACY_INSTANCES,
+            'sourceid' => $seed->inst['lp3'], 'subkey' => ''], '*', MUST_EXIST);
+        $this->assertSame('skipped', $unit->outcome);
+        $this->assertSame('already_disabled', $unit->reason);
+        $this->assertSame(0, $DB->count_records(enrolments_importer::TRAIL, ['enrolid' => $seed->inst['lp3']]));
+        $this->assertSame('1', (string) $DB->get_field('enrol', 'status', ['id' => $seed->inst['lp3']]), 'left as the administrator had it');
     }
 
     public function test_the_import_fires_no_enrolment_event(): void {
@@ -467,6 +604,13 @@ final class bizlms_import_enrolments_test extends \advanced_testcase {
         $this->assertSame(5, $steps['enrolments.enrolments']['counters']['imported'], 'a pair is decided once, as in apply');
         $this->assertSame(2, $steps['enrolments.enrolments']['counters']['folded']);
         $this->assertSame(5, $steps['enrolments.enrolments']['counters']['skipped']);
+        // The access proof needs the manual enrolments a dry run does not write, so the step decides from the map alone
+        // (what is settled) and says so; it predicts the same three switch-offs, and the recompute step is not simulated.
+        $this->assertSame(6, $steps['enrolments.legacy_instances']['counters']['processed']);
+        $this->assertSame(3, $steps['enrolments.legacy_instances']['counters']['imported']);
+        $this->assertSame(3, $steps['enrolments.legacy_instances']['counters']['skipped']);
+        $this->assertSame('not_simulated_in_a_dry_run', $steps['enrolments.legacy_instances_off']['status']);
+        $this->assertSame(0, $DB->count_records(enrolments_importer::TRAIL), 'a dry run writes no trail row');
     }
 
     public function test_a_second_apply_writes_nothing_to_core(): void {
@@ -515,6 +659,11 @@ final class bizlms_import_enrolments_test extends \advanced_testcase {
         $this->assertSame(1, $counts['bizlms_enrolments_with_an_end']);
         $this->assertSame(0, $counts['courses_with_several_enabled_manual_instances']);
         $this->assertSame(0, $counts['pairs_where_the_manual_enrolment_ends_sooner']);
+        // What the instance step will look at (owner decision CRS-01): the instances that hold enrolments, none disabled yet.
+        $this->assertSame(6, $counts['legacy_instances_with_enrolments']);
+        $this->assertSame(0, $counts['legacy_instances_already_disabled']);
+        $this->assertSame(6, $counts['legacy_instances_to_prove']);
+        $this->assertSame(6, $counts['rows:enrolments.legacy_instances']);
         $warnings = implode(' ', $pf->warnings());
         $this->assertStringContainsString('courses_with_only_a_disabled_manual_instance:1', $warnings);
         $this->assertStringContainsString('legacy_enrolments_without_a_course_role:9', $warnings);
@@ -858,9 +1007,261 @@ final class bizlms_import_enrolments_test extends \advanced_testcase {
         $this->assertSame(1, substr_count($upgrade, "upgrade_plugin_savepoint(true, {$required}, 'local', 'sentientia_courses')"));
         $this->assertSame(1, preg_match_all('/\$oldversion < ' . $required . '\)/', $upgrade));
 
+        // The trail table of the owner decision CRS-01 comes from exactly this step, and from install.xml for a new site.
+        $this->assertSame(1, substr_count($upgrade, "'" . enrolments_importer::TRAIL . "'"));
+        $xml = (string) file_get_contents($dir . '/db/install.xml');
+        $this->assertSame(1, substr_count($xml, 'TABLE NAME="' . enrolments_importer::TRAIL . '"'));
+
         $plugin = new \stdClass();
         include($dir . '/version.php');
         $this->assertGreaterThanOrEqual($required, (int) $plugin->version);
+    }
+
+    // Owner decision CRS-01 (2026-10-07): switching off the converted BizLMS instances.
+
+    public function test_a_switched_off_instance_no_longer_grants_access_and_one_update_puts_it_back(): void {
+        global $DB;
+        $this->contract_begin();
+        $seed = $this->seed();
+        $this->contract_run(true);
+        $a = $seed->user['a'];
+        $enrolled = fn(): bool => is_enrolled(\context_course::instance($seed->course[2]), $a, '', true);
+        $this->assertTrue($enrolled());
+
+        // A Sentientia unenrol removes the converted manual enrolment. With the program instance still ON, core would go on
+        // granting access through it (the plugin does not have to exist); switched off, the access is gone, as the
+        // administrator intended.
+        $target = (int) $DB->get_field(legacymap::TABLE, 'targetid', [
+            'sourcetable' => enrolments_importer::UNIT_ENROLMENTS, 'sourceid' => 7012, 'subkey' => '']);
+        $DB->delete_records('user_enrolments', ['id' => $target]);
+        $this->assertFalse($enrolled(), 'the BizLMS instance is off: removing the manual enrolment removes the access');
+
+        // The undo of the runbook: UPDATE {enrol} SET status = priorstatus, from the trail.
+        foreach ($DB->get_records_sql('SELECT id, enrolid, priorstatus FROM {' . enrolments_importer::TRAIL . '}') as $trail) {
+            $DB->set_field('enrol', 'status', $trail->priorstatus, ['id' => $trail->enrolid]);
+        }
+        $this->assertTrue($enrolled(), 'one UPDATE reverses it: the legacy instance grants the access again');
+    }
+
+    public function test_a_pair_the_conversion_does_not_carry_keeps_its_instance_enabled_and_needs_the_owner(): void {
+        global $DB;
+        $importer = $this->contract_begin();
+        $seed = $this->seed();
+        $now = time();
+        $learner = (int) $this->getDataGenerator()->create_user()->id;
+        // One learner, two plans in course 2. The owner of the pair (lowest id) gives access now and ends in three days; the
+        // other starts in five days and never ends. The conversion carries the best row, the one that gives access now, so the
+        // second plan's future access is NOT carried: switching its instance off would take it away.
+        $plan9 = $this->add_instance('learningplan', $seed->course[2], 9);
+        $plan8 = $this->add_instance('learningplan', $seed->course[2], 8);
+        $this->add_enrolment(7061, $plan9, $learner, 0, self::T0, $now + 3 * DAYSECS);
+        $this->add_enrolment(7062, $plan8, $learner, 0, $now + 5 * DAYSECS, 0);
+
+        [$result] = $this->contract_run(true);
+
+        $this->assertSame(2, $result['exit'], implode('; ', $result['blockers']));
+        $this->assertContains('enrolments:access_regression=1', $result['unproven']);
+        $unit = fn(int $instance) => $DB->get_record(legacymap::TABLE, [
+            'sourcetable' => enrolments_importer::UNIT_LEGACY_INSTANCES, 'sourceid' => $instance, 'subkey' => ''], '*', MUST_EXIST);
+        $this->assertSame('imported', $unit($plan9)->outcome, 'its only learner keeps the window through the manual enrolment');
+        $this->assertSame('1', (string) $DB->get_field('enrol', 'status', ['id' => $plan9]));
+        $held = $unit($plan8);
+        $this->assertSame('skipped', $held->outcome);
+        $this->assertSame('access_regression', $held->reason);
+        $this->assertSame('learners_would_lose_access', $held->detail);
+        $this->assertSame('0', (string) $DB->get_field('enrol', 'status', ['id' => $plan8]), 'the instance stays enabled');
+        $this->assertSame(0, $DB->count_records(enrolments_importer::TRAIL, ['enrolid' => $plan8]));
+        // verify() has nothing to say about an instance that was left enabled.
+        $this->assertSame([], $importer->verify(context::build($importer, false, 0, $this->contract_decisions())));
+    }
+
+    public function test_an_instance_that_holds_an_unsettled_row_stays_enabled_even_when_its_reasons_are_accepted(): void {
+        global $DB;
+        $this->contract_begin();
+        $seed = $this->seed();
+
+        [$result] = $this->contract_run(true, ['decisions' => decisions::from_array(enrolments_importer::SIGNED_VALUES + [
+            'accepted_reasons' => ['enrolments:manual_enrolment_inactive', 'enrolments:user_deleted']])]);
+
+        $this->assertSame(0, $result['exit'], implode('; ', $result['blockers']));
+        foreach (['lp1', 'lp2'] as $key) {
+            $this->assertSame('0', (string) $DB->get_field('enrol', 'status', ['id' => $seed->inst[$key]]),
+                "{$key} holds a row the owner accepted as skipped, and that learner keeps today's access until L&D acts");
+        }
+        // And learner h, whose administrator-suspended manual enrolment the import left alone, still has access through
+        // the BizLMS instance, exactly as BizLMS gave it.
+        $this->assertTrue(is_enrolled(\context_course::instance($seed->course[1]), $seed->user['h'], '', true));
+    }
+
+    public function test_verify_proves_the_access_of_the_switched_off_instances_again(): void {
+        global $DB;
+        $importer = $this->contract_begin();
+        $seed = $this->seed();
+        $this->contract_run(true);
+        $ctx = context::build($importer, false, 0, $this->contract_decisions());
+        $this->assertSame([], $importer->verify($ctx));
+        $target = (int) $DB->get_field(legacymap::TABLE, 'targetid', [
+            'sourcetable' => enrolments_importer::UNIT_ENROLMENTS, 'sourceid' => 7012, 'subkey' => '']);
+
+        // The converted enrolment of 7012 is given an end in the future: the program instance is off, and the learner would
+        // lose the access the legacy row never limited.
+        $DB->set_field('user_enrolments', 'timeend', time() + 10 * DAYSECS, ['id' => $target]);
+        $failures = implode(' | ', $importer->verify($ctx));
+        $this->assertStringContainsString(
+            'switched_off_instances_where_access_was_not_kept:instances=' . $seed->inst['pr1'] . ' pairs=1 enrolments=7012',
+            $failures);
+
+        // The converted enrolment is gone altogether.
+        $DB->set_field('user_enrolments', 'timeend', 0, ['id' => $target]);
+        $DB->delete_records('user_enrolments', ['id' => $target]);
+        $this->assertStringContainsString('switched_off_instances_where_access_was_not_kept:instances=' . $seed->inst['pr1'],
+            implode(' | ', $importer->verify($ctx)));
+    }
+
+    public function test_verify_says_so_when_the_trail_names_an_instance_that_is_on(): void {
+        global $DB;
+        $importer = $this->contract_begin();
+        $seed = $this->seed();
+        $this->contract_run(true);
+        $ctx = context::build($importer, false, 0, $this->contract_decisions());
+
+        $DB->set_field('enrol', 'status', 0, ['id' => $seed->inst['pr1']]);
+
+        $this->assertContains('trail_instances_still_enabled:1:' . $seed->inst['pr1'], $importer->verify($ctx));
+        // Once the site is open an administrator may switch an instance back on: that is not a failure any more.
+        set_config('bizlms_production_open', 1, 'local_sentientia_platform');
+        $this->assertSame([], $importer->verify($ctx));
+    }
+
+    public function test_verify_reports_a_trail_that_differs_from_the_map(): void {
+        global $DB;
+        $importer = $this->contract_begin();
+        $this->seed();
+        $this->contract_run(true);
+        $ctx = context::build($importer, false, 0, $this->contract_decisions());
+
+        $DB->insert_record(enrolments_importer::TRAIL, (object) ['enrolid' => 7777, 'courseid' => 1, 'method' => 'program',
+            'priorstatus' => 0, 'timecreated' => 1, 'timemodified' => 1]);
+
+        $failures = $importer->verify($ctx);
+        $this->assertContains('trail_rows_differ_from_imported_map_rows: trail=4 imported=3', $failures);
+        $this->assertContains('trail_rows_without_an_imported_map_row:1', $failures);
+    }
+
+    public function test_the_recompute_step_is_idempotent_and_stops_after_go_live(): void {
+        global $DB;
+        $importer = $this->contract_begin();
+        $seed = $this->seed();
+        $this->contract_run(true);
+        $ctx = context::build($importer, false, 0, $this->contract_decisions());
+        $step = new \local_sentientia_courses\bizlms\enrolments_legacy_instances_off_step();
+        $trailids = array_map('intval', $DB->get_fieldset_sql('SELECT id FROM {' . enrolments_importer::TRAIL . '} ORDER BY id'));
+        $this->assertCount(3, $trailids);
+
+        $this->assertSame([], $step->recompute($trailids, $ctx), 'the instances are already off: nothing to write');
+
+        // An administrator switched the program instance back on: a repeat run switches it off again, by update only.
+        $DB->set_field('enrol', 'status', 0, ['id' => $seed->inst['pr1']]);
+        $out = $step->recompute($trailids, $ctx);
+        $this->assertCount(1, $out);
+        $this->assertSame('update', $out[0]->kind);
+        $this->assertSame('enrol', $out[0]->table);
+        $this->assertSame($seed->inst['pr1'], $out[0]->targetid);
+        $this->assertSame(1, (int) $out[0]->row->status);
+        $this->assertSame(['status', 'timemodified'], array_keys(get_object_vars($out[0]->row)), 'nothing else is changed');
+
+        // After go-live the administrator's choice stays.
+        set_config('bizlms_production_open', 1, 'local_sentientia_platform');
+        $this->assertSame([], $step->recompute($trailids, $ctx));
+    }
+
+    public function test_the_recompute_step_refuses_an_instance_that_is_no_longer_proved(): void {
+        global $DB;
+        $importer = $this->contract_begin();
+        $seed = $this->seed();
+        $this->contract_run(true);
+        $ctx = context::build($importer, false, 0, $this->contract_decisions());
+        $step = new \local_sentientia_courses\bizlms\enrolments_legacy_instances_off_step();
+        $trailids = array_map('intval', $DB->get_fieldset_sql('SELECT id FROM {' . enrolments_importer::TRAIL . '} ORDER BY id'));
+        // The program instance is on again and the learner's converted enrolment is gone: switching it off would cost access.
+        $DB->set_field('enrol', 'status', 0, ['id' => $seed->inst['pr1']]);
+        $target = (int) $DB->get_field(legacymap::TABLE, 'targetid', [
+            'sourcetable' => enrolments_importer::UNIT_ENROLMENTS, 'sourceid' => 7012, 'subkey' => '']);
+        $DB->delete_records('user_enrolments', ['id' => $target]);
+
+        $this->expectException(\local_sentientia_platform\bizlms\bizlms_exception::class);
+        $this->expectExceptionMessage('legacy_instance_not_proved:' . $seed->inst['pr1']);
+        $step->recompute($trailids, $ctx);
+    }
+
+    public function test_the_access_windows_cover_exactly_what_core_would_grant(): void {
+        $now = 1000;
+        $window = fn(int $s, int $e) => enrolments_access::window($s, $e, $now);
+        $never = PHP_INT_MAX;
+
+        $this->assertNull($window(0, 500), 'an enrolment that has ended grants nothing now or later');
+        $this->assertNull($window(0, 1000), 'it ends at "now"');
+        $this->assertNull($window(2000, 1500), 'core ignores an end before the start');
+        $this->assertSame([1000, $never], $window(10, 0), 'a start in the past is "now" from here on; 0 never ends');
+        $this->assertSame([3000, 5000], $window(3000, 5000), 'a start in the future is kept');
+
+        $this->assertSame([[1000, 4000]], enrolments_access::merge([[10, 2000], [2000, 4000]], $now), 'touching windows are one');
+        $this->assertSame([[1000, 2000], [3000, 4000]], enrolments_access::merge([[10, 2000], [3000, 4000]], $now), 'a gap stays');
+        $this->assertSame([[1000, $never]], enrolments_access::merge([[10, 0], [50, 3000]], $now));
+        $this->assertSame([], enrolments_access::merge([[0, 500]], $now));
+
+        $covers = fn(array $raw, int $s, int $e): bool => enrolments_access::covers(enrolments_access::merge($raw, $now),
+            enrolments_access::window($s, $e, $now));
+        $this->assertTrue($covers([[10, 0]], 10, 5000), 'a never-ending window holds a shorter one');
+        $this->assertTrue($covers([[10, 5000]], 10, 5000), 'the same end');
+        $this->assertFalse($covers([[10, 5000]], 10, 0), 'a shorter manual enrolment does not hold a never-ending one');
+        $this->assertFalse($covers([[10, 5000]], 10, 5001), 'one second short');
+        $this->assertFalse($covers([[10, 2000], [3000, 0]], 10, 0), 'a gap in the manual enrolments is a gap in the access');
+        $this->assertTrue($covers([[10, 2000], [2000, 0]], 10, 0), 'two touching manual enrolments hold it');
+        $this->assertFalse($covers([[3000, 0]], 10, 0), 'a manual enrolment that starts later does not hold access that exists now');
+        $this->assertTrue($covers([[10, 0]], 3000, 5000), 'access that starts in the future is held by a manual enrolment already running');
+        $this->assertFalse($covers([], 10, 0), 'no manual enrolment holds nothing');
+    }
+
+    public function test_a_row_is_settled_only_when_it_is_carried_over_or_has_nothing_to_carry(): void {
+        $entry = fn(string $outcome, ?int $target, ?string $reason = null): array => [
+            'outcome' => $outcome, 'targetid' => $target, 'reason' => $reason, 'targettable' => '', 'id' => 1];
+
+        $this->assertTrue(enrolments_access::settled($entry('imported', 5)));
+        $this->assertTrue(enrolments_access::settled($entry('folded', 5, 'duplicate_pair')));
+        $this->assertFalse(enrolments_access::settled($entry('folded', null, 'duplicate_pair')), 'a fold with no target carries nothing');
+        $this->assertTrue(enrolments_access::settled($entry('skipped', null, 'user_missing')));
+        $this->assertTrue(enrolments_access::settled($entry('skipped', null, 'course_missing')));
+        $this->assertTrue(enrolments_access::settled($entry('skipped', null, 'instance_missing')));
+        foreach (['user_deleted', 'manual_enrolment_inactive', 'manual_enrolment_ends_sooner'] as $reason) {
+            $this->assertFalse(enrolments_access::settled($entry('skipped', null, $reason)), $reason);
+        }
+        $this->assertFalse(enrolments_access::settled($entry('archived', null, 'x')));
+        $this->assertFalse(enrolments_access::settled(null), 'a row nobody decided about is not settled');
+    }
+
+    public function test_the_unsettled_and_no_access_reasons_match_the_importers_vocabulary(): void {
+        $importer = new enrolments_importer();
+        $reasons = [];
+        foreach ($importer->reasons() as $reason) {
+            $reasons[$reason->code] = $reason;
+        }
+        foreach (enrolments_access::NO_ACCESS_REASONS as $code) {
+            $this->assertArrayHasKey($code, $reasons, $code);
+            $this->assertFalse($reasons[$code]->needsowner, "{$code} leaves nothing for the owner to decide");
+        }
+        // Every row-level reason that needs the owner keeps the instance enabled: none of them is a "no access" reason.
+        foreach ($reasons as $code => $reason) {
+            if ($reason->needsowner && $code !== 'access_regression') {
+                $this->assertNotContains($code, enrolments_access::NO_ACCESS_REASONS, $code);
+            }
+        }
+        foreach (['already_disabled', 'rows_unsettled', 'access_regression'] as $code) {
+            $this->assertArrayHasKey($code, $reasons, $code);
+        }
+        $this->assertTrue($reasons['access_regression']->needsowner);
+        $this->assertFalse($reasons['rows_unsettled']->needsowner, 'the rows carry their own reasons');
+        $this->assertFalse($reasons['already_disabled']->needsowner);
     }
 
     // Seed.

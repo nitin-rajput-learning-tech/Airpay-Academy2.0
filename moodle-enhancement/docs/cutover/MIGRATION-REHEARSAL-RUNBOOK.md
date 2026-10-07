@@ -80,7 +80,7 @@ ninja sandbox when Nitin provides server access + a fresh live backup. **Nothing
       decisions sha256: it is the hash cutover must match (`--expect-decisions-hash`). Run the checks in "BizLMS import: Stage B
       checks" below; the importers' data changes explain deltas in step 5.
 5. **Purge caches**, then **data-intact gate:**
-   `php local/sentientia_platform/cli/migration_parity_check.php --compare=/path/live-baseline.json`
+   `php local/sentientia_platform/cli/migration_parity_check.php --compare=/path/live-baseline.json --decisions=/path/bizlms-import-decisions.json --expect-decisions-hash=<sha256 of the rehearsed decisions file>`
    → **must print `RESULT: 100% PARITY — data intact.`** Any DRIFT line = stop + investigate.
    **Amended 2026-10-07 (decision F-34):** once the BizLMS import has been applied, the core counts and checksums are no
    longer unchanged by design: the `enrolments` importer adds about 7,733 `user_enrolments` rows (April) and changes
@@ -89,6 +89,35 @@ ninja sandbox when Nitin provides server access + a fresh live backup. **Nothing
    `enrol`, outcome `imported`) and the `enrolmove` ledger, and report any unexplained delta as DRIFT. Exit 2 (needs-owner
    reasons not accepted, or an unclaimed legacy table with rows) is allowed only with Nitin's written acceptance. Until that is
    built this gate fails by design on an imported copy.
+
+   **Pass the decisions (added 2026-10-07, review fix round 1).** Every BizLMS importer's `verify()` reads owner
+   decisions (`cart.abandoned`, `notifications.import_bodies`, ...) that have no default, so the `bizlms_import`
+   invariant can only run with the file the import ran with. Without `--decisions`, on a database that holds legacy
+   tables, that invariant prints `SKIPPED` and the gate exits 2 ("not proven"): never a pass, but never a false FAIL
+   either. `--expect-decisions-hash` pins the file; a different file is refused with exit 3 before anything is compared.
+   The hash is the `decisions_hash` in the import run report (`--report=FILE`); the parity CLI also prints the sha256 of
+   the file it was given, so the two can be read side by side. A decision the
+   file does not hold is a real FAIL (`verify_error:<feature>:missing_decision:<key>`).
+   A baseline taken before the import (`--baseline`) needs neither option.
+5a. **Stage B report for the enrolments import (CRS-01, added 2026-10-07).** After the `enrolments` feature has been
+   applied, run `php local/sentientia_courses/cli/enrolments_access_report.php` and paste its output into the rehearsal
+   report: the per-instance verdicts, the learner-course pair count and the ids of the legacy enrolments that regress. The
+   import report itself carries only the per-instance skip codes; the pair count and the regression ids come only from this
+   CLI. Exit 1 means a switched-off instance does not keep its learners' access: undo it (see the CLI header) before going on.
+5b. **No admin unenrol before `bizlms_production_open` (LRN-10, added 2026-10-07).** From the learning-path, program and
+   classroom screens an admin can now remove a pending imported enrolment row. On a rehearsal, UAT or Stage B copy that
+   deletes an imported target, and the `bizlms_import` invariant then reports `missing_target_rows` as a FAIL. Do not
+   unenrol imported rows on a copy that still has to pass the parity gate; once the runbook has set
+   `local_sentientia_platform/bizlms_production_open` the check stops, because admins may then change rows freely.
+5c. **Resuming the enrolments import (CRS-01, added 2026-10-07).** The step that recomputes which BizLMS enrol instances may be
+   switched off changes `enrol.status` and `enrol.timemodified` on those instances, and both columns are inside the
+   filtered CRC of the `enrol` source of `enrolments.instances` and `enrolments.legacy_instances`. In ATOMIC mode (the
+   April copy, about 17 000 rows, is under the atomic threshold) one transaction covers the run and this cannot
+   happen. In BATCH mode, once the recompute step has committed a batch, `--resume` of the same run stops in
+   `open_step` with `source_changed_since_the_run_started`: only a FRESH run recovers (purge the feature first on a
+   rehearsal copy). If a rehearsal ever has to run enrolments in batch mode, plan for a fresh run, not a resume. The
+   same pattern applies to `course_tags`. A later change can leave `status` and `timemodified` out of that step's
+   fingerprint; it was not done because it needs a framework change.
 6. **Workflow smoke** (subset of the FOOLPROOF matrix, all proven headless-runnable):
    provision qa users (`tools/_qa_provision.php` pattern), then login/dashboard/catalog HTTP probes,
    SA-04 both personas, signup POST, reminder cron with a seeded deadline, whatsapp e2e dry,

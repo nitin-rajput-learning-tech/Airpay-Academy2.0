@@ -41,43 +41,14 @@ $perpage = 50;
 // about their own tenant's users; a caller with no tenant nothing. Until
 // 2026-09-25 every tenant admin saw every tenant's reset history with names
 // and emails.
-if (\local_sentientia_platform\tenant::is_cross_tenant()) {
-    $userjoin = 'LEFT JOIN {user} u ON u.id = h.userid';
-    $usersql = '1=1';
-    $userparams = [];
-} else {
-    $userjoin = 'JOIN {user} u ON u.id = h.userid';
-    [$usersql, $userparams] = \local_sentientia_recompletion\rule_access::history_user_filter('u');
-}
-// The narrowing is applied on top of the tenant filter, never instead of it.
-if ($courseid > 0) {
-    $usersql .= ' AND h.courseid = :hfcourse';
-    $userparams['hfcourse'] = $courseid;
-}
-if ($userid > 0) {
-    $usersql .= ' AND h.userid = :hfuser';
-    $userparams['hfuser'] = $userid;
-}
-$total = (int) $DB->count_records_sql(
-    "SELECT COUNT(1)
-       FROM {local_sentientia_recompletion_history} h
-       $userjoin
-      WHERE $usersql", $userparams);
-// B8 fix: LIMIT $perpage OFFSET ... was interpolated into the SQL string.
-// $perpage is a constant 50 here but the pattern is dangerous (one
-// refactor away from accepting user input). Use the 5th/6th args of
-// get_records_sql() for limitfrom + limitnum.
-$rows = $DB->get_records_sql(
-    "SELECT h.*, u.firstname, u.lastname, u.email, u.deleted AS user_deleted,
-            c.fullname AS course_name
-       FROM {local_sentientia_recompletion_history} h
-       $userjoin
-  LEFT JOIN {course} c ON c.id = h.courseid
-      WHERE $usersql
-      ORDER BY h.timecreated DESC, h.id DESC",
-    $userparams, (int) ($page * $perpage), (int) $perpage);
-
+//
+// Owner decision recompletion.legacy_rows_on_history_page (2026-10-07): the resets
+// the BizLMS import wrote (source = legacy, with their Legacy badge and "~" times)
+// are shown only while the evidence view flag is ON, so with it OFF the page is what
+// it was before the import. history_reader holds both rules.
 $evidenceon = \local_sentientia_recompletion\evidence_report::enabled();
+[$total, $rows] = \local_sentientia_recompletion\history_reader::page($courseid, $userid, $page, $perpage, $evidenceon);
+
 $shape = [];
 foreach ($rows as $r) {
     $inferred = (int) $r->time_inferred === 1;

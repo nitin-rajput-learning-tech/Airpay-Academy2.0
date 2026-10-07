@@ -62,11 +62,13 @@ $usercount = $DB->count_records_sql(
 // Get featured courses — STRICTLY Public tenant only. No fallback.
 [$pubcoursesql, $pubcourseargs] = \local_sentientia_platform\tenant::path_descendant_filter(
     '/' . $public_costcenter_id, 'c', 'open_path', 'pubc');
+// The popularity figure counts LEARNERS once, on active enrolments of enabled instances (owner decision 2026-10-07, "readers
+// that count enrolments": a converted learner holds a BizLMS enrolment and its manual twin).
 $featured = $DB->get_records_sql(
-    "SELECT c.id, c.fullname, c.summary, c.summaryformat, COUNT(ue.id) as enrolcount
+    "SELECT c.id, c.fullname, c.summary, c.summaryformat, COUNT(DISTINCT ue.userid) as enrolcount
        FROM {course} c
-       JOIN {enrol} e ON e.courseid = c.id
-       JOIN {user_enrolments} ue ON ue.enrolid = e.id
+       JOIN {enrol} e ON e.courseid = c.id AND e.status = 0
+       JOIN {user_enrolments} ue ON ue.enrolid = e.id AND ue.status = 0
       WHERE c.visible = 1 AND c.id > 1 AND {$pubcoursesql}
    GROUP BY c.id, c.fullname, c.summary, c.summaryformat
    ORDER BY enrolcount DESC",
@@ -76,10 +78,10 @@ $featured = $DB->get_records_sql(
 if (empty($featured) && !empty($public_category_ids)) {
     [$insql, $params] = $DB->get_in_or_equal($public_category_ids, SQL_PARAMS_NAMED, 'cat');
     $featured = $DB->get_records_sql(
-        "SELECT c.id, c.fullname, c.summary, c.summaryformat, COUNT(ue.id) as enrolcount
+        "SELECT c.id, c.fullname, c.summary, c.summaryformat, COUNT(DISTINCT ue.userid) as enrolcount
            FROM {course} c
-           JOIN {enrol} e ON e.courseid = c.id
-           JOIN {user_enrolments} ue ON ue.enrolid = e.id
+           JOIN {enrol} e ON e.courseid = c.id AND e.status = 0
+           JOIN {user_enrolments} ue ON ue.enrolid = e.id AND ue.status = 0
           WHERE c.visible = 1 AND c.id > 1 AND c.open_categoryid $insql
        GROUP BY c.id, c.fullname, c.summary, c.summaryformat
        ORDER BY enrolcount DESC",

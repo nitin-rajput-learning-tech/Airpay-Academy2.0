@@ -73,8 +73,9 @@ $user_count   = (int) $DB->count_records_sql(
        JOIN {user} u ON u.id = lpu.userid
       WHERE lpu.pathid = :pid AND u.deleted = 0", ['pid' => $pathid]);
 
-// The cover image the BizLMS import copied (code fix 8, mapping doc section 17).
-$cover = \local_sentientia_learningpath\path_manager::cover_url((int) $path->id);
+// The cover image the BizLMS import copied (code fix 8, mapping doc section 17), shown only while the learner paths
+// flag is ON (owner decision learningplan.cover_on_admin_view, LRN-08): with it OFF this page is what it was before the import.
+$cover = \local_sentientia_learningpath\path_manager::admin_cover_url((int) $path->id);
 
 $data = [
     'pathid'         => (int) $path->id,

@@ -56,6 +56,14 @@ $string['privacy:metadata:emaillog:timecreated'] = 'भेजने का ट�
 $string['privacy:metadata:emailprefs']              = 'प्रति-यूज़र ईमेल प्राथमिकताएँ।';
 $string['privacy:metadata:emailprefs:userid']       = 'जिस यूज़र की प्राथमिकताएँ हैं।';
 $string['privacy:metadata:emailprefs:timemodified'] = 'अंतिम अपडेट टाइमस्टैम्प।';
+$string['privacy:metadata:emailoverrides'] = 'प्रति-टेनेंट ईमेल टेम्पलेट ओवरराइड। किसी व्यक्ति को मिटाने पर ये बने रहते हैं; इन्हें अंतिम बार संपादित करने वाला यूज़र इनसे हटा दिया जाता है।';
+$string['privacy:metadata:emailoverrides:template_key'] = 'ओवरराइड किस टेम्पलेट की जगह लेता है।';
+$string['privacy:metadata:emailoverrides:usermodified'] = 'ओवरराइड को अंतिम बार संपादित करने वाला यूज़र। उस यूज़र को मिटाने पर यह 0 हो जाता है।';
+$string['privacy:metadata:emailoverrides:timemodified'] = 'ओवरराइड अंतिम बार कब संपादित हुआ।';
+$string['privacy:metadata:emailrules'] = 'सूचना नियम। किसी व्यक्ति को मिटाने पर ये बने रहते हैं; इन्हें अंतिम बार संपादित करने वाला यूज़र इनसे हटा दिया जाता है।';
+$string['privacy:metadata:emailrules:rule_name'] = 'नियम का नाम।';
+$string['privacy:metadata:emailrules:usermodified'] = 'नियम को अंतिम बार संपादित करने वाला यूज़र। उस यूज़र को मिटाने पर यह 0 हो जाता है।';
+$string['privacy:metadata:emailrules:timemodified'] = 'नियम अंतिम बार कब संपादित हुआ।';
 
 // Day-2 (2026-05-14) — settings panel: ramping reminder defaults.
 $string['setting_ramping_heading']        = 'चरणबद्ध रिमाइंडर डिफ़ॉल्ट';

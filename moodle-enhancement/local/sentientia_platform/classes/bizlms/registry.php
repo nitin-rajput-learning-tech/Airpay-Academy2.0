@@ -71,7 +71,10 @@ final class registry {
         ],
         'enrol' => [
             'operations' => ['insert', 'update'],
-            'why' => 'gap.orphan_enrol_instances (G6): a manual instance for a course that has none',
+            'why' => 'gap.orphan_enrol_instances (G6): INSERT a manual instance for a course that has none; UPDATE the status '
+                . 'of a BizLMS enrol instance the import proved safe to switch off (owner decision CRS-01, 2026-10-07): '
+                . 'core grants access through any enabled instance whether or not its plugin is on disk, so a converted '
+                . 'instance left on would keep granting access after a Sentientia unenrol or suspend',
         ],
         'role_assignments' => [
             'operations' => ['insert', 'update'],

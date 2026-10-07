@@ -594,6 +594,15 @@ class rule_engine {
      * copies compared that integer status with the strings 'enrolled' and
      * 'in_progress' - an error on PostgreSQL, and on MySQL both strings cast
      * to 0 so in-progress learners were never matched.
+     *
+     * Owner decision learningplan.stalled_nudge_scope (2026-10-07; LRN-11): the rule nudges
+     * only NATIVE enrolments on ACTIVE, visible paths. An enrolment the BizLMS import
+     * brought over is never nudged automatically: BizLMS sent no such message, so a mass
+     * message about years-old enrolments on the first run after smart_rules is switched on
+     * would be new behaviour caused by the import (nothing acts on its own). A path that
+     * is archived or hidden is switched off, and nobody is nudged about it either. An admin
+     * can still nudge an imported learner by hand. On a site without the platform's import
+     * map nothing is imported, and the provenance filter is left out.
      */
     private static function rule_learning_path_stalled(\stdClass $rule): array {
         global $DB;
@@ -607,6 +616,21 @@ class rule_engine {
         $cutoff = time() - ((int) $rule->trigger_days * 86400);
         $batchlimit = (int) (get_config('local_sentientia_notifications', 'batch_limit') ?: 500);
 
+        $params = [
+            'cutoff' => $cutoff,
+            'stnew'  => \local_sentientia_learningpath\path_manager::ENROL_NEW,
+            'stprog' => \local_sentientia_learningpath\path_manager::ENROL_INPROGRESS,
+            'lpactive' => \local_sentientia_learningpath\path_manager::STATUS_ACTIVE,
+        ];
+        $notimported = '';
+        if (class_exists('\local_sentientia_platform\bizlms\provenance')
+                && $manager->table_exists(\local_sentientia_platform\bizlms\legacymap::TABLE)) {
+            [$sql, $provparams] = \local_sentientia_platform\bizlms\provenance::not_imported_sql(
+                'lu', 'local_sentientia_learningpath_users', 'lpsn');
+            $notimported = 'AND ' . $sql;
+            $params += $provparams;
+        }
+
         $rows = $DB->get_records_sql("
             SELECT lu.userid, u.firstname, lp.id AS pathid, lp.name AS pathname
               FROM {local_sentientia_learningpath_users} lu
@@ -614,14 +638,11 @@ class rule_engine {
               JOIN {local_sentientia_learningpath} lp ON lp.id = lu.pathid
              WHERE lu.timecreated < :cutoff
                AND lu.status IN (:stnew, :stprog)
+               AND lp.status = :lpactive AND lp.visible = 1
+               $notimported
                AND u.deleted = 0 AND u.suspended = 0
           ORDER BY lu.timecreated ASC
-             LIMIT $batchlimit",
-            [
-                'cutoff' => $cutoff,
-                'stnew'  => \local_sentientia_learningpath\path_manager::ENROL_NEW,
-                'stprog' => \local_sentientia_learningpath\path_manager::ENROL_INPROGRESS,
-            ]);
+             LIMIT $batchlimit", $params);
 
         foreach ($rows as $r) {
             $sent = self::send($rule, (int) $r->userid, null,

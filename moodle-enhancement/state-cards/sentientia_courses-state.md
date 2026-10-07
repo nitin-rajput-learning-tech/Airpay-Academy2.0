@@ -949,3 +949,140 @@ only evidence of the move itself; the preflight SQL shapes (the new mandatory-ta
 2026093001 (the framework the importer implements). The registry refuses the importer until the installed plugin is at
 2026100103, so re-run the PHPUnit init after merging. Shared files with the `course_lookups` and `enrolments` importers
 (same plugin): `version.php`, `db/install.xml`, `db/upgrade.php`, `db/bizlms_import.php`, this card.
+
+---
+
+## 2026-10-07 - owner decisions of the courses cluster: CRS-01 to CRS-09 (1.14.0, version 2026100701)
+
+Delegated decisions of Nitin, 2026-10-07 ("self review and decide recommended option"; a critic pass corrected CRS-01). Branch
+`claude/owner-decisions-y`, both trees. **Not run: no PHPUnit here; the lead re-initialises PHPUnit once for the version bump and runs
+`--group bizlms_import`.** No flag is flipped; this plugin adds none. CRS-13 (delete of the dead `airpay_ratings` directory) is NOT done:
+it waits for Nitin's [CONFIRM].
+
+**CRS-01 (built) - a fully converted BizLMS enrol instance is switched off, never deleted.**
+The premise is corrected (XC-G6-WHY): `require_login()` -> `enrol_get_enrolment_end()` (`moodlelib.php:2575`, `enrollib.php:1281`)
+filters only the instance status and the enrolment status and never asks whether the enrol plugin exists. So an ENABLED
+classroom, program or learningplan instance keeps granting access after the BizLMS code is gone, and a Sentientia unenrol or suspend of
+the converted manual row would not take the access away (`unenrol_user()` keeps the roles while another enrolment row exists). What the
+conversion buys is that the enrolments can be managed, not that access would otherwise stop; the switch-off is what makes a Sentientia
+unenrol real. The decision key is `enrolments.bizlms_instances_after_verify` = `disable_when_converted`.
+
+| Piece | File |
+|---|---|
+| The proof (one function for the step, the recompute step, verify and the CLI) | `classes/bizlms/enrolments_access.php` |
+| Step 3 (load, derived unit `#enrol.id`, key `enrolments.legacy_instances`) | `classes/bizlms/enrolments_legacy_instances_step.php` |
+| Step 4 (recompute, key `enrolments.legacy_instances_off`): the reviewed UPDATE | `classes/bizlms/enrolments_legacy_instances_off_step.php` |
+| Trail table `local_sentientia_courses_enroloff` | `db/install.xml`, `db/upgrade.php` block 2026100701 (the LAST block) |
+| Stage B report (read-only CLI) | `cli/enrolments_access_report.php` (`--json`) |
+| Tests | `tests/bizlms_import_enrolments_test.php` (changed and extended) |
+
+- **The rule.** An instance is switched off only when (a) it is enabled and its course exists, (b) every enrolment on it is SETTLED in the
+  map (imported or folded into a manual enrolment, or skipped because the learner, course or instance is gone) and (c) for every
+  learner-course pair on it, core's access window with only the ENABLED MANUAL enrolments covers the window with the manual enrolments plus
+  that BizLMS row. A window covers another when it does not start later and does not end earlier; 0 never ends. The comparison is exact from
+  "now": every moment at or after now at which the BizLMS row grants access must be granted by the manual enrolments (a future start and a
+  gap between two manual enrolments are seen; a plain earliest-start-to-latest-end hull would miss the gap; past history is ignored);
+  only active enrolments of users who are not deleted count, as in `enrol_get_enrolment_end()`. A row on an already-disabled instance grants
+  nothing, so it has nothing to keep. One regression or one unsettled row keeps the whole instance ENABLED.
+- **Outcomes of `#enrol.id`** (one primary map row and one report line per instance): `imported` with a trail row (switch off);
+  `skipped` `course_missing`; `already_disabled` (BizLMS gave nothing on it); `rows_unsettled` (a row has an outcome that needs the owner:
+  `user_deleted`, `manual_enrolment_inactive`, `manual_enrolment_ends_sooner`; the instance stays on EVEN IF the owner accepts those
+  reasons, so the learners keep today's access until L&D acts); `access_regression` (NEEDS THE OWNER, parity exits 2 until
+  `enrolments:access_regression` is accepted after Stage B; with the importer's own rules it is rare, but the pair "the best row is carried,
+  a later plan's FUTURE enrolment is not" is real and the proof catches it). Detail code `learners_would_lose_access`.
+- **The UPDATE.** `outcome::update('enrol', id, {status 1, timemodified})`, only on a BizLMS instance (`classroom`, `program`,
+  `learningplan`) that is still enabled; through `writer::update_core()`, no enrol API, no event. The step proves the instance AGAIN inside the
+  same transaction and throws `legacy_instance_not_proved:<id>` if it no longer holds. After `bizlms_production_open` it writes nothing
+  (an administrator who switched an instance back on keeps it on). A repeat run writes nothing.
+- **Trail** `local_sentientia_courses_enroloff`: `enrolid` (unique), `courseid`, `method`, `priorstatus`, source timestamps. Ids only.
+  **Undo** (a restore is the normal way back): `UPDATE {enrol} SET status = priorstatus` joined to the trail. **Never use "Delete" on a
+  switched-off instance in a course's Enrolment methods page**: deleting an instance deletes its enrolment rows.
+- **Dry run.** The proof needs the manual enrolments a dry run does not write, so step 3 then decides from the map alone (unsettled or
+  "would be switched off", warning `access_proof_not_run_in_a_dry_run`); step 4 is "not simulated". The apply run's proof is the decision.
+- **verify()** (before go-live): the third unit has one primary map row per instance (`accounting:#enrol.id`, `unmapped_source_rows`);
+  trail and map agree one to one (`trail_rows_differ_from_imported_map_rows`, `trail_rows_without_an_imported_map_row`); every trail
+  instance is off (`trail_instances_still_enabled:n:ids`); and the proof still holds for the switched-off instances, counted as they were
+  BEFORE (`switched_off_instances_with_unsettled_rows`, `switched_off_instances_where_access_was_not_kept:instances=.. pairs=.. enrolments=..`,
+  ids only, never a learner). After `bizlms_production_open` only the accounting and the trail count are asserted.
+- **Stage B.** Read `php local/sentientia_courses/cli/enrolments_access_report.php` after the apply: it prints the instance count, the
+  switched-off count, the learner-course PAIR count (April: 12 565 pairs hold a row, 16 830 enrolments, 136 instances all enabled), the unsettled
+  rows and the regressions with the ids of the legacy enrolments. Exit 1 if a switched-off instance does not keep access (undo it), exit 2 if
+  an instance that stays on holds an unsettled row or a regression (for L&D), exit 0 otherwise. Also check one converted learner's access
+  before and after in the browser, and that a Sentientia unenrol of the manual row now removes access.
+- **Tests added/changed (NOT RUN):** the seed switches off exactly program, classroom and the plan whose only learner ended (the two plans
+  with an unsettled row and the one in a missing course stay as they are); each of the four decisions is required, no default, one allowed
+  value, and blocks when absent or different; the instance step's map rows and trail; an unsettled row keeps the instance on even when its
+  reasons are accepted; a future-start enrolment the conversion does not carry keeps its instance on and needs the owner; a switched-off
+  instance stops granting access after a manual unenrol and one UPDATE from the trail puts it back; verify re-proves the switched-off
+  instances, flags a trail instance that is still on and a trail that differs from the map; the recompute step is idempotent, stops after
+  go-live and refuses an instance that is no longer proved; the window arithmetic (ended, end before start, future start, touching, gap);
+  `settled()`; the reason vocabulary. `test_nothing_legacy_is_changed...` now allows exactly the trail instances' status and timemodified.
+  `bizlms_import_course_tags_test` no longer demands that the enrolments importer's `REQUIRES_VERSION` is below course_tags' (it is now above:
+  it needs the trail table).
+
+**CRS-02 (declared) - an active row on a DISABLED BizLMS instance converts as a SUSPENDED manual enrolment.** BizLMS grants nothing on a
+disabled instance and the import never gives access BizLMS did not give; the suspended manual row keeps the record and an admin can
+reactivate it. Behaviour unchanged; the rule is now signed: key `enrolments.disabled_instance_row_status` = `convert_as_suspended`, declared
+required in `enrolments_importer::decisions()`, so the run blocks if the decisions file lacks it. April: 0 such rows (all 136 instances enabled).
+
+**CRS-03 (declared) - a course whose only manual instance is DISABLED gets a new enabled one beside it**, and the administrator's disabled
+instance is untouched. Key `enrolments.disabled_only_manual_instance` = `add_enabled_beside`, declared required. The new instance is in the map
+(`imported`, targettable `enrol`) so it is identifiable; preflight warns `courses_with_only_a_disabled_manual_instance`. April: 0 courses.
+
+**CRS-04 - nothing in code.** `user_deleted`, `manual_enrolment_inactive` and `manual_enrolment_ends_sooner` stay needs-owner skips. They are
+accepted ONLY AFTER Stage B, with the rehearsed count and a per-learner list (ids only) that L&D reviewed (`accepted_reasons`, only for a code
+with a non-zero count; a re-approval event under `framework.decisions_change_after_rehearsal`). The instance holding such a row stays enabled
+(CRS-01). April: 0, 0 and 0. Confirm question for Nitin: "Stage B found N1 deleted-account, N2 inactive-manual and N3 shorter-manual BizLMS
+enrolments that were not converted (list attached, ids only). Do you accept these skips as listed?"
+
+**CRS-05 - nothing in code.** The 40 cross-tenant learner-course pairs on April (24 rooted /177 and 16 rooted /77, in /1 courses, via learning
+plans) convert like every other row: the cross-tenant link already exists as kept core data, ADR-031 lets the course's tenant admin remove an
+out-of-tenant learner, and the importer only changes the method that grants it. The existing preflight already reports them
+(`pairs_across_tenants`, the `user root->course root` histogram, warning `legacy_enrolments_across_tenants`); the course ids and pair counts for
+L&D review at Stage B are read from that histogram. Runbook line pending (see below).
+
+**CRS-06 and CRS-15 - nothing in code, decision recorded.** `course_lookups.coursedetails_candidate_columns` = `leave` (the importer already
+declares it optional with default `leave`; the signed file gets an explicit entry). April: `local_coursedetails` has 0 rows, `open_level` is set on
+394 of 411 courses, `open_points` has no reader, and the id space of `proficiencylevel` against `local_sentientia_course_levels` is unverified.
+If Stage B shows `coursedetails_candidate_open_level_not_written` above 0, add `fill_level_only` (never `open_points`) as a re-approval event
+BEFORE the decisions hash is pinned.
+
+**CRS-07 - nothing until Stage B.** `course_lookups:tenant_unresolved` is added to `accepted_reasons` only if the rehearsed count is above 0
+(expected 0: the single featured list names 6 courses, all rooted /77; the 21 custom categories of the vanished cost centre 80 import pathless
+under the signed `tenant.unresolved.course_lookups = pathless` and are counted, not skipped).
+
+**CRS-08 - documents only (not done in this pass).** Mapping doc section 7 says `merged` and a preflight snapshot count where the code records
+`folded` (reason `duplicate_core_instance`, target = the surviving core row), adds `skipped` `course_missing` and `tag_missing`, and proves its
+accounting with a derived unit `#tag_instance.id` plus the trail table and the importer's `verify()`. The in-place step kind is a framework
+refactor AFTER Stage B.
+
+**CRS-09 - recorded recommendation (the runbook text is not written in this pass).** `sentientia.lifecycle.autoenrol.enabled` stays OFF until
+`course_lookups` and `course_tags` are complete and L&D has reviewed the `will_move_with_the_lifecycle_mandatory_tag` list. Stage B check: if
+`will_move` is above 0, open the core tag index as a /77 learner and confirm that no /1 course names are listed; if they are, handle it under the
+ADR-031 course-listing rules before cutover. The two notes under "Cutover notes" above (joiner auto-enrol, tag tenancy not carried) are to move
+into `MIGRATION-REHEARSAL-RUNBOOK.md` (a per-importer section) and `docs/operations/cutover-day-runbook.md`; they stay on this card until then.
+
+**Privacy.** No person column was added (the trail is ids and timestamps). The provider docblock now lists the two ledgers
+`local_sentientia_courses_enrolmove` and `local_sentientia_courses_enroloff` as "ids and timestamps only, no person, not declared".
+
+**Pending, owned by the docs and decisions-file pass (listed here so nothing is lost):** the decisions-file entries for the three new keys and
+the corrected `gap.orphan_enrol_instances` text (both fixture copies, before the Stage B hash pin); mapping doc sections 0, 2, 6, 7, 9, 20 and 21
+and the ADR-032 G6 lines; runbook lines (never uninstall `enrol_classroom`, `enrol_program`, `enrol_learningplan` or `local_courses` from Plugins
+overview because core uninstall deletes their instances, enrolments and tag instances; keep `enrol_manual/expiredaction = KEEP`; purge caches after
+`course_tags` and `enrolments`; check one converted learner before and after; never re-run `--apply` of a completed core-writing feature after
+`bizlms_production_open`; never use Delete on a switched-off instance); the rehearsal parity gate (see the platform card).
+
+**Deploy:** the upgrade step creates the trail table on Notifications. The registry refuses the enrolments importer until the installed plugin is at
+2026100701, so re-init PHPUnit after merging. Shared files with the other importers of this plugin: `version.php`, `db/install.xml`,
+`db/upgrade.php`, `db/bizlms_import.php`, this card.
+
+
+## 2026-10-07 - fix round 1 (review of stream Y): resume limit, Stage B checklist, two departures recorded for the owner
+
+Branch `claude/owner-decisions-y`, both trees. **No version bump** (docs and a state-card record only). **Written, not run.**
+
+- **CRS-01 resume.** The recompute step of the enrolments import changes `enrol.status` and `enrol.timemodified` on BizLMS instances, and both columns are inside the filtered CRC of the `enrol` source of `enrolments.instances` and `enrolments.legacy_instances`. In batch mode, once that step has committed a batch, resuming the same run stops in `open_step` with `source_changed_since_the_run_started`; only a fresh run recovers. Atomic mode (April, about 17 000 rows) is not affected; `course_tags` has the same pattern. Recorded as runbook step 5c of `MIGRATION-REHEARSAL-RUNBOOK.md`. Leaving `status` and `timemodified` out of that step's fingerprint is a framework change and was not done.
+- **Stage B checklist.** The import report carries only the per-instance skip codes. The learner-course pair count and the ids of the legacy enrolments that regress come only from `php local/sentientia_courses/cli/enrolments_access_report.php`; runbook step 5a puts it in the checklist (critic item 91.1). Run it after the `enrolments` feature has been applied and paste its output into the rehearsal report.
+- **Departure from doc item 40, for the owner's OK (analytics).** The item says `COUNT(DISTINCT ue.userid)` with `ue.status = 0 AND e.status = 0`. The "New Enrolments" KPI of `local_sentientia_analytics` counts DISTINCT learner-COURSE pairs (`e.courseid` and `ue.userid`) with those two filters, because the KPI counts enrolments in a period: a learner who enrolled in two courses is two new enrolments, and a count of distinct learners would report one. A converted learner (BizLMS row plus manual twin in one course) is still counted once. Please confirm; if the item's text is wanted literally, change `$pairkey` in `analytics_manager::get_kpis()` to `ue.userid`.
+- **`exportcsv.php` is NOT given the status filters (second reviewer asked).** Its "Enrolled" column counts DISTINCT learners with no `ue.status` / `e.status` filter, exactly like the Manage Courses grid (`list_courses`) and the course's Enrolled users page, which list suspended learners too; it sits next to a completed count that also has no filter, so filtering only the CSV would make the CSV disagree with the grid and let the completion percentage pass 100%. The item-40 sites are the readers it names (analytics, catalog, commerce, recommender, homepage, onboarding, exams), not the grid. Filtering all three at once is a visible change to the Manage Courses page and needs visual evidence, so it is left for Nitin. **Separate, pre-existing, not touched here:** the CSV's inner count is not tenant-bounded (the grid's was bounded on 2026-09-25, ADR-031): a tenant admin's file counts other tenants' learners enrolled in their courses. Fix with the same `tenant::path_descendant_filter()` call as `list_courses`.
+- **Version ledger.** `local_sentientia_courses` stays at 2026100701 / 1.14.0 from the first pass. The ledger of critic item 86 also listed learningpath, notifications and recompletion for this batch; none of them needed one (flag registry files are read from disk and cached for 60 seconds, strings are purged on deploy, no schema or capability changed). Classroom DID need a bump (see its card).

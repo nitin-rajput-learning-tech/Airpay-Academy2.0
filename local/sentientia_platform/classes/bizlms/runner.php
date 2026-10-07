@@ -1956,7 +1956,7 @@ final class runner {
             return;
         }
         if ($o->tenantmethod !== null) {
-            $this->report->count_tenant_method($feature, $step->key(), $o->tenantmethod);
+            $this->report->count_tenant_method($feature, $step->key(), $o->tenantmethod, $sid);
         }
         $counts['processed']++;
         $counts[$word]++;

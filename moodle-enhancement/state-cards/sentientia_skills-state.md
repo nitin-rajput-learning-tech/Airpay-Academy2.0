@@ -259,3 +259,16 @@ TEXT `interested_skill_ids`). `tests/classes/bizlms/stub_dependency.php` stands 
 **Still to do.** Fill `skills.level_proficiency.csv` from the Stage B preflight; accept the needs-owner reasons
 after the rehearsal; visual evidence for the My Skills page (held skills, interest chips), the skill page levels
 tab and source line, the skill profile chips and the catalog level badge (not captured: nothing was deployed).
+
+
+## 2026-10-07 - owner decision LRN-07: the level map is filled; the preflight reports any deviation from the rule
+
+Branch `claude/owner-decisions-y`, both trees. No schema, capability or flag change, so **no version bump**. **Written, not run**: PHPUnit runs after the merge. php -l, the fixture-copy gate and the tree gates were run.
+
+**Decision (delegation "self review and decide recommended option", critic-checked).** `skills.level_proficiency.csv` in `docs/cutover/bizlms-import-decisions.json` is now `1,2;2,3;3,4;4,5;5,1;7,2;8,3;9,4;10,5;11,2;12,3;13,4;14,5;15,1;16,2;17,3;18,4`: the approved name rule applied to the 17 April levels (ids 1-5 and 7-18, checked with `level_map::suggest()`), then reviewed. Levels 5 and 15 are general, non-levelled labels and take the default 1. **Level 16 is the plural of the rule word "basic", so the literal word match gives 1; the review sets it to 2, the first rung of the /177 ladder (16, 17 intermediate, 18 advanced).** Both fixture copies (`local/` and `moodle-enhancement/local/sentientia_platform/tests/fixtures/bizlms/`) carry the same file (`tools/check-bizlms-fixture-copies.php` passes). April courses use levels 1-5, 7-10, 16 and 17; levels 11-15 sit under root 80 (not a registered tenant) and no course uses them. Unblocks `skills` and `learningplan` (which depends on it: 2,071 learning-plan enrolments) at the Stage B rehearsal.
+
+**Code.** `importer::preflight_level_map()` adds the warning `level_proficiency_differs_from_rule:<ids>` for every csv entry that differs from what the owner's rule gives for the level's CURRENT name, on every run. The reviewed deviation (16 -> 2) and any level renamed since the csv was written therefore show before the hash is pinned. It is a warning, never a block. A new level id with no csv entry still blocks (`level_proficiency_csv_incomplete`).
+
+**Tests.** `test_the_signed_decisions_file_carries_a_complete_level_map` (the signed copy parses with no problems, holds exactly the 17 April levels, 5 and 15 are 1, 16 is 2); `test_a_csv_entry_that_differs_from_the_owners_rule_is_reported_on_every_run`. The old `test_the_signed_decisions_file_blocks_the_feature_until_the_level_map_is_filled` now skips itself (its own guard: the csv is filled).
+
+**Stage B runbook line.** Re-run `--preflight` for skills on the live backup BEFORE the decisions hash is pinned; if a level is new or renamed, update `csv` (and both fixture copies, then re-pin). ADR-032 "Left unanswered on purpose" (line 1124) and the mapping doc section 14 still say the csv is open: the lead's doc batch records the decision (key `skills.level_proficiency`, the same one, now with its csv and the "[proposed + review]" why).

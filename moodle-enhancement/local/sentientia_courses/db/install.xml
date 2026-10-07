@@ -263,5 +263,32 @@
       </INDEXES>
     </TABLE>
 
+    <TABLE NAME="local_sentientia_courses_enroloff"
+           COMMENT="ADR-032 enrolments import trail (gap G6, owner decision CRS-01): one row per BizLMS enrol instance (classroom, program or learningplan) that the import switched off after proving that every learner on it keeps the same access through manual enrolments. The instance is never deleted; its status was changed from priorstatus to disabled, and an UPDATE of enrol.status back to priorstatus reverses it. Ids and timestamps only, no personal data. Written by the importer only.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="enrolid"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
+               COMMENT="enrol.id of the BizLMS instance that was switched off (left in place)"/>
+        <FIELD NAME="courseid"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
+               COMMENT="Foreign key to course.id"/>
+        <FIELD NAME="method"        TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false"
+               COMMENT="The BizLMS enrol method: classroom, learningplan or program"/>
+        <FIELD NAME="priorstatus"   TYPE="int"  LENGTH="4"  NOTNULL="true" DEFAULT="0" SEQUENCE="false"
+               COMMENT="enrol.status before the import changed it (0 enabled): UPDATE enrol SET status = priorstatus puts it back"/>
+        <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
+               COMMENT="timecreated of the legacy instance, kept from the source"/>
+        <FIELD NAME="timemodified"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
+               COMMENT="timemodified of the legacy instance before the import changed it, kept from the source"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="uk_enrol" UNIQUE="true" FIELDS="enrolid"
+               COMMENT="An instance is switched off once"/>
+        <INDEX NAME="idx_course" UNIQUE="false" FIELDS="courseid"/>
+      </INDEXES>
+    </TABLE>
+
   </TABLES>
 </XMLDB>

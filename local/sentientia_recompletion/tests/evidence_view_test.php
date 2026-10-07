@@ -284,4 +284,85 @@ final class evidence_view_test extends \advanced_testcase {
         $this->assertSame([get_string('evidence_type_quiz_grade', 'local_sentientia_recompletion')], array_column($sections, 'title'));
         $this->assertSame([], evidence_report::sections_for_pair((int) $this->theirs->id, $this->courseid));
     }
+
+    /**
+     * A reset the Sentientia engine made (source engine, a real time).
+     *
+     * @param int $userid
+     * @param int $time
+     * @return int
+     */
+    private function engine_history(int $userid, int $time): int {
+        global $DB;
+        return (int) $DB->insert_record('local_sentientia_recompletion_history', (object) [
+            'ruleid' => 0, 'userid' => $userid, 'courseid' => $this->courseid, 'reason' => 'cron',
+            'reset_by_userid' => null, 'previous_timecompleted' => 900, 'reset_grades' => 1, 'reset_attempts' => 1,
+            'dryrun' => 0, 'timecreated' => $time, 'source' => 'engine', 'time_inferred' => 0,
+        ]);
+    }
+
+    /**
+     * The ids history.php lists for the caller, as it calls the reader (the flag decides the imported rows).
+     *
+     * @param int $courseid
+     * @param int $userid
+     * @return int[]
+     */
+    private function listed(int $courseid = 0, int $userid = 0): array {
+        [$total, $rows] = history_reader::page($courseid, $userid, 0, 50, evidence_report::enabled());
+        $this->assertSame($total, count($rows), 'the count and the page agree');
+        return array_map('intval', array_keys($rows));
+    }
+
+    /**
+     * Owner decision recompletion.legacy_rows_on_history_page: the resets the BizLMS import wrote are a history
+     * reader and share the evidence_view flag, so with it OFF the page is what it was before the import.
+     */
+    public function test_imported_resets_are_not_on_the_history_page_while_the_flag_is_off(): void {
+        $engine = $this->engine_history((int) $this->mine->id, 4000);
+        $this->setAdminUser();
+
+        $this->assertFalse(evidence_report::enabled());
+        $this->assertSame([$engine], $this->listed(),
+            'no Legacy badge, no "~" time: only what the Sentientia engine made');
+
+        feature_flags::set(evidence_report::FLAG, 0, true);
+        $this->assertEqualsCanonicalizing(
+            [$engine, $this->minehistory, $this->theirhistory, $this->redacted], $this->listed(),
+            'with the flag ON the imported resets are listed too');
+        $this->assertSame($engine, $this->listed()[0], 'newest first');
+
+        feature_flags::set(evidence_report::FLAG, 0, null);
+        $this->assertSame([$engine], $this->listed(), 'back OFF: gone again, nothing was deleted');
+        global $DB;
+        $this->assertSame(4, $DB->count_records('local_sentientia_recompletion_history'));
+    }
+
+    public function test_the_flag_never_widens_a_tenant_admins_history(): void {
+        $minengine = $this->engine_history((int) $this->mine->id, 4000);
+        $theirengine = $this->engine_history((int) $this->theirs->id, 5000);
+        $this->setUser($this->tenant_admin('/1'));
+
+        $this->assertSame([$minengine], $this->listed(), 'OFF: their own tenant\'s engine resets only');
+
+        feature_flags::set(evidence_report::FLAG, 0, true);
+        $this->assertEqualsCanonicalizing([$minengine, $this->minehistory], $this->listed(),
+            'ON: their own tenant\'s imported reset too, never another tenant\'s or a redacted one');
+        $this->assertNotContains($theirengine, $this->listed());
+        $this->assertNotContains($this->theirhistory, $this->listed());
+        $this->assertNotContains($this->redacted, $this->listed());
+
+        // The narrowing sits on top of the tenant filter and the flag, never instead of them.
+        $this->assertSame([], $this->listed($this->courseid, (int) $this->theirs->id));
+        $this->assertEqualsCanonicalizing([$minengine, $this->minehistory],
+            $this->listed($this->courseid, (int) $this->mine->id));
+        $this->assertSame([], $this->listed($this->courseid + 99));
+    }
+
+    public function test_a_caller_with_no_tenant_still_sees_no_history(): void {
+        $this->engine_history((int) $this->mine->id, 4000);
+        feature_flags::set(evidence_report::FLAG, 0, true);
+        $this->setUser($this->tenant_admin('garbage'));
+        $this->assertSame([], $this->listed());
+    }
 }

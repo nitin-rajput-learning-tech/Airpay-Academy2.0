@@ -771,3 +771,24 @@ Branch `claude/owner-decisions-x`. Written, NOT run (the lead runs PHPUnit after
 
 Visual evidence owed in addition to the list above: the Logs tab with a manager-copy row ('A team member has completed ...'), and
 the Templates tab (it lists 'Course Completed (Manager Copy)' whether or not the sender is on).
+
+---
+
+## 2026-10-07 - privacy: the actor column of the two configuration tables (owner decisions, courses cluster, rule R9)
+
+Both trees. **Not run: no PHPUnit here; the lead runs `--group local_sentientia_emails`.** No schema change, no flag, no version bump
+(new lang strings only; purge the string cache on deploy).
+
+- **The gap.** `local_sentientia_email_overrides` and `local_sentientia_email_rules` record the user who last edited a row
+  (`usermodified`). The provider declared neither table, so the `usermodified` of a tenant admin was neither exported nor removed on a DPDP
+  erasure. Adding `usercreated` and `usermodified` to the platform guard (`privacy_coverage_test::USER_COLUMNS`) would also have failed
+  this plugin.
+- **The fix.** The provider declares both tables (`template_key` / `rule_name`, `usermodified`, `timemodified`; strings en + hi). A user who
+  appears as a last editor has a system context and is in `get_users_in_context()`. The export gains `overrides_edited` and `rules_edited`:
+  id, tenant, template key or rule name, when; never a template body or a rule's conditions (those are the tenant's). Erasure of a user, a
+  user list or the whole context sets `usermodified` to 0 and KEEPS the rows: a tenant's templates and rules are not the editor's data (the
+  signed `users.erasure_treatment` = anonymise design for actor columns).
+- **Tests (NOT RUN):** new `tests/privacy_actor_columns_test.php`: both tables declared with `usermodified` and every string present; every
+  new string has a Hindi pair; the editor has a context and a stranger does not; the export lists only what that user edited and no body or
+  condition; erasing an editor keeps the configuration and removes the person, other editors untouched; the user list and the bulk erasure
+  cover editors; a context wipe removes every editor and deletes nothing.

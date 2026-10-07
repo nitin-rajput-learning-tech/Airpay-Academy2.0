@@ -249,3 +249,21 @@ Tests (`permission_test`, @group tenant_isolation): `test_viewallorgs_holder_is_
 gives ''; `:crosstenant` alone gives '/1'); new tests for the site admin and for the self-granted category
 override (still '/1', even for a cross-tenant user). `version.php` declares the `local_sentientia_platform`
 dependency. Written, not run.
+
+---
+
+## 2026-10-07 - "New Enrolments" KPI counts learner-course pairs once (owner decision: readers that count enrolments)
+
+Both trees. **Not run: no PHPUnit here.** No schema change, no flag, no version bump (the KPI cache `kpis` expires in minutes; purge on deploy).
+
+A learner enrolled through an imported BizLMS method AND its converted manual twin holds two rows for one course (4 832 pairs already on the
+April 2026 copy, and the import adds 7 733 more), so `COUNT(ue.id)` counted that learner twice. `get_kpis()` now counts
+`COUNT(DISTINCT courseid-userid)` of ACTIVE enrolments (`ue.status = 0`) on ENABLED instances (`e.status = 0`). Deviation from the decision
+text, which says `COUNT(DISTINCT ue.userid)`: that would count a learner who enrols in three courses once, and the unit of this KPI is an
+enrolment of a learner in a course, so the pair is the unit. Test: `analytics_manager_test::test_new_enrolments_counts_a_learner_course_pair_once`
+(NOT RUN).
+
+
+## 2026-10-07 - fix round 1: the "New Enrolments" KPI departs from the text of doc item 40 (owner's OK needed)
+
+Doc item 40 says `COUNT(DISTINCT ue.userid)` with `ue.status = 0 AND e.status = 0`. The KPI counts DISTINCT learner-course pairs (`e.courseid` + `ue.userid`) with the same two filters, because it counts enrolments in a period: a learner who enrolled in two courses is two new enrolments, which a distinct-learner count would report as one; a converted learner (BizLMS row and its manual twin in ONE course) is still one. This is deliberate and arguably the better reading of "New Enrolments". Please confirm. To follow the item literally, replace `$pairkey` in `analytics_manager::get_kpis()` with `ue.userid`; `test_new_enrolments_counts_a_learner_course_pair_once` then expects 2 instead of 3. No version change.

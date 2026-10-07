@@ -902,3 +902,76 @@ the identity cluster's items (the sequence floor, EV-26, and the parity wiring a
   `root_is_registered`). Test scaffolding: `toy_importer` is no longer `final`; `toy_files_importer` implements the marker;
   new knobs `$writefile`, `$fileareas`, `$preflightdecision`.
 - Version 2026093002 -> 2026100701, release 1.11.0. No schema change. NOT RUN: PHPUnit (the lead re-inits once).
+
+## 2026-10-07 - owner decisions, finance cluster (branch claude/owner-decisions-y; no version bump)
+
+Two small changes made for the cart decisions (details in `sentientia_cart-state.md`). Not run: no PHPUnit here. Both trees.
+
+- **`tests/bizlms/bizlms_decisions_test.php`** (`cart.finance_keys_status`): `test_the_checked_in_file_loads_and_its_finance_items_block`
+  is now `test_the_checked_in_file_loads_and_every_decision_in_it_is_accepted`. The signed file has no finance-confirm
+  entry any more (the cart importer declares both finance keys with the accepted values), so it asserts `not_accepted()` is
+  empty, that both keys resolve to the delegated values, and that each `why` says delegated and not consulted. The
+  finance-confirm blocking mechanism is still covered by `decisions.sample.json` (`toy.credit`) and
+  `bizlms_runner_test::test_a_decision_the_owner_has_not_accepted_blocks_the_feature_that_declares_it`. It depends on the
+  decisions-file commit (the signed file and both fixture copies) being merged first or with it.
+- **`cli/mask_pii_for_dev.php`** (finance cluster follow-up): a Step 3b calls `\local_sentientia_cart\dev_mask::run()` when the
+  cart is installed, so a dev copy built from an imported database no longer carries the ledger and credit-journal free text,
+  the booking actor ids or the buyer ids inside `payload_json`. The comms-side fix in the same script (the `to_email` UPDATE of
+  a column `local_sentientia_email_log` does not have, imported e-mail subjects and bodies) is a separate change.
+
+No version bump, no feature flag, no UI.
+
+---
+
+## 2026-10-07 - owner decisions, courses cluster: guard columns, G6 core-write reason, parity of the enrolments import
+
+Both trees. **Not run: no PHPUnit here; the lead re-initialises PHPUnit once for the courses 2026100701 bump.**
+
+- **Privacy guard.** `tests/privacy_coverage_test.php::USER_COLUMNS` gains `usercreated` and `usermodified` (rule R9). The providers the
+  guard would then have flagged are fixed in the same change: `local_sentientia_emails` (two configuration tables) and
+  `local_sentientia_talent` (career paths). `local_sentientia_users` declares its two tables through the `legacy_history` constants, and the
+  other plugins that carry the columns (core, courses, learningpath, org) already declare theirs. The identity and learning clusters add
+  further names to the same constant (`modified_by`, `trainerid`); keep one copy of each name when merging.
+- **Registry.** The reviewed reason of the core write `enrol` (`registry::CORE_WRITES_ALLOWED`) now says what the owner decision CRS-01 does:
+  INSERT a manual instance, and UPDATE the status of a BizLMS instance proved safe to switch off; core grants access through any enabled
+  instance whether or not its plugin is on disk. See the courses card.
+- **migration_parity_check.php now calls the framework's parity hooks (P0.4, ADR-032 "Parity hooks").** `--baseline` also stores a
+  fingerprint of every legacy table (count, MAX(id), CRC over all columns, column list; no CRC cap) when the framework is deployed
+  there. `--compare` then (1) compares the legacy tables with `parity::compare_fingerprints()` and sorts the result with
+  `parity::comparison_problems()`: a changed or missing table is DRIFT (exit 1), a skipped CRC or a table the baseline did not have is
+  "not proven" (exit 2), and a baseline with no fingerprints is "not proven" too; (2) runs the `bizlms_import` invariant
+  (`parity::invariant_problems()`, only on `--compare`, because it reads every feature) next to `message_provider_defaults`; (3) EXPLAINS the
+  one difference the import makes on purpose to a counted table. **The rehearsal parity gate no longer fails by design:** the enrolments
+  importer writes about 7 733 manual enrolments into core `user_enrolments` (April 2026 copy), which the count and the value checksum of
+  that table used to report as drift. `parity::imported_enrolments()` finds exactly the rows the legacy map says the feature `enrolments`
+  imported into `user_enrolments` and that still exist (and their summed CRC32, built like the checksum), and
+  `enrolment_count_explained()` / `enrolment_checksum_explained()` accept the delta ONLY when the count grew by exactly those rows and the
+  checksum (a SUM of per-row CRCs) grew by exactly their CRCs. The output line is `EXPLAINED`, not `MATCH`, and the result line says
+  the import was accounted for from the legacy map. A changed or deleted legacy row, or any other difference, stays DRIFT. An imported row
+  an administrator edited since is still explained (the map keeps no per-row CRC): the gate proves that every row the baseline had is as it
+  was. `enrol.status` (the instances the import switches off) and new `enrol` rows are not in the baseline's counts or checksums; the
+  report prints how many instances the trail shows as switched off. Step 5 of `MIGRATION-REHEARSAL-RUNBOOK.md` and ADR-032 parity hook 4
+  still say "100% PARITY / no side effects on enrolments" and need the amendment (docs pass). Tests (NOT RUN):
+  `tests/bizlms/parity_enrolments_test.php`.
+
+
+## 2026-10-07 - owner decisions (learning cluster): report ids for creator-guessed tenants, privacy guard and capability baseline
+
+Branch `claude/owner-decisions-y`, both trees. **No version bump** (report and test changes only). **Written, not run**: PHPUnit runs after the merge.
+
+- **XC-TENANT-GUESS (code part).** `bizlms\report::count_tenant_method()` takes the row's source id; a row whose tenant came from its CREATOR (`fallback:creator`, the signed `program.pathless = creator_root` and the learning plan's `tenant_fallback_order`) is also listed under the step's `tenant_creator_ids` (ids only, capped at `report::CREATOR_IDS_CAP` = 500; the count in `tenant_methods` stays exact). `runner::record()` passes the id. Runbook line: `fallback:creator` > 0 at Stage B means stop and ask Nitin, and re-pin the decisions hash if he changes a value. Test: `bizlms_support_test::test_a_row_that_took_its_tenant_from_its_creator_is_listed_by_id`.
+- **LRN-16 (privacy guard).** `privacy_coverage_test`: `trainerid` is now in `USER_COLUMNS` for every plugin (the classroom provider declares all three of its trainer tables since the classroom merge, programs declares `trainerfb`), and the temporary `COMPONENT_USER_COLUMNS` constant and its plumbing are deleted.
+- **XC-CLS-ENROL (guard).** `capability_names_test::BASELINE` no longer lists the four sites of the dead `local/sentientia_classroom:enrol` surface: classroom now gates on `:manage` behind `sentientia.classroom.bulk_enrol_audience`. (The two evaluation entries are the evaluation job's.)
+- **LRN-07 (fixture copies).** `tests/fixtures/bizlms/bizlms-import-decisions.copy.json` equals the signed file again after `skills.level_proficiency.csv` was filled (`tools/check-bizlms-fixture-copies.php` passes).
+
+
+## 2026-10-07 - fix round 1 (review of stream Y): migration_parity_check no longer fails a clean import (must-fix)
+
+Branch `claude/owner-decisions-y`, both trees. **No version bump** (CLI, one new static method, test and docs). **Written, not run.**
+
+- **The defect.** The `--compare` wiring above called `parity::invariant_problems()` with no argument, so it ran on `decisions::none()`. Every importer's `verify()` that reads a decision with no default (cart: `cart.abandoned`; emails: `notifications.import_bodies`, `notifications.keep_sender`) threw `blocked('missing_decision:...')`, which became `verify_error:cart:...`, the `bizlms_import` invariant reported FAIL and the CLI exited 1. That is every Stage B copy (April has 5 cart orders and the e-mail logs): the parity gate failed by construction and reported a clean import as an invariant FAIL.
+- **The fix.** `migration_parity_check.php` takes `--decisions=FILE` and `--expect-decisions-hash=SHA256` (same meaning as in `import_bizlms.php`). `--compare` loads the file with `decisions::load()` BEFORE it computes the counts, checks the hash (a different file, an unreadable file, or a hash with no file is `REFUSED`, exit 3), prints the file's sha256 and whether it was pinned, and passes the result to the new `parity::compare_invariant(?decisions)`. That method returns an empty list when the database holds no legacy tables (a fresh install still passes with no file), a STRING when there are legacy tables and no decisions (printed `SKIPPED`, so the gate exits 2 "not proven": never FAIL, never a pass), and the whole `invariant_problems($decisions)` otherwise. A signed file that lacks a decision an importer reads is a real FAIL (`verify_error:<feature>:missing_decision:<key>`), not a skip.
+- **Exit codes** of the CLI are now 0 / 1 / 2 as before plus 3 = refused (decisions file unusable, or not the pinned one).
+- **Docs.** `MIGRATION-REHEARSAL-RUNBOOK.md` step 5 passes the decisions file and its hash, and adds 5a (run `local/sentientia_courses/cli/enrolments_access_report.php` for the Stage B pair count and regression ids) and 5b (no admin unenrol of an imported path, program or classroom row before `bizlms_production_open` on a copy that must still pass the gate: the invariant would report `missing_target_rows`). ADR-032 cutover slice step 6 carries the new arguments.
+- **Tests (NOT RUN):** `tests/bizlms/bizlms_guard_parity_test.php::test_compare_invariant_is_not_proven_without_decisions_and_clean_with_them` (a toy importer whose `verify()` reads a required decision: no decisions is a string containing "not proven", the signed decisions are clean, a file without the decision is a real problem; the plain `invariant_problems()` is shown to fail, which is what the CLI used to report) and `test_compare_invariant_with_no_legacy_tables_needs_no_decisions`.
+- **MERGE GATE (both reviewers).** This branch declares keys the signed decisions file does not hold yet: `cart.credit_balances` and `cart.erpnext_invoices_legal` (the file still says `finance-confirm`), `enrolments.bizlms_instances_after_verify`, `enrolments.disabled_instance_row_status`, `enrolments.disabled_only_manual_instance`, and the old `gap.orphan_enrol_instances` why. On this branch alone cart and enrolments block at preflight, and these tests fail: `cart/tests/bizlms_import_test` (the signed-decisions tests) and `platform/tests/bizlms/bizlms_decisions_test` (`not_accepted() === []`). **Merge the decisions-file commit of stream X (doc item 85) before, or together with, this branch, then pin the hash.** Stream X must write the cart whys exactly as decided (the test asserts they contain "delegated" and "not consulted") and the corrected `gap.orphan_enrol_instances` why. The same file conflicts on `skills.level_proficiency` (csv and why): both sides carry the LRN-07 value; keep one copy and re-run `tools/check-bizlms-fixture-copies.php`.

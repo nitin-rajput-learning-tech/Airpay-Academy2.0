@@ -66,47 +66,21 @@ final class privacy_coverage_test extends \advanced_testcase {
         // tables exist so the guard sees them on the first CI run that carries
         // them, instead of after a provider has been copied as a null_provider.
         'enrolledby', 'markedby', 'initiatedby', 'sender_userid', 'subject_userid',
-        // 2026-10-07 (ADR-032 F-15): the three actor columns the guard could not see. They hold the id of the person
-        // who created or last edited a row, on cohort_scope and on the users sync-run, sync-error and transcript
-        // tables (and on older tables of other plugins, see UNDECLARED_ACTOR_TABLES).
-        'usermodified', 'usercreated', 'modified_by',
-    ];
-
-    /**
-     * Tables that carry one of the three actor columns added to USER_COLUMNS on 2026-10-07 and whose provider does
-     * not declare them yet, found the first time the guard read those columns.
-     *
-     * Each is a real gap, not a claim that the column is harmless: the column names the administrator who last
-     * edited a rule or a path, so a subject-access request for that administrator misses it. They are listed rather
-     * than fixed here because declaring them means new privacy strings (en and hi) in plugins other sessions are
-     * editing (emails) or that no session owns (talent). Each entry goes when its provider declares the table; a NEW
-     * table with one of these columns is checked at once, because only the tables below are skipped.
-     *
-     * @var array<string,string> table => owning plugin
-     */
-    private const UNDECLARED_ACTOR_TABLES = [
-        'local_sentientia_email_overrides' => 'local_sentientia_emails',
-        'local_sentientia_email_rules' => 'local_sentientia_emails',
-        'local_sentientia_talent_path' => 'local_sentientia_talent',
-    ];
-
-    /**
-     * User columns that count for ONE plugin only, by component.
-     *
-     * `trainerid` names a person (the trainer a learner gave feedback on) in local_sentientia_programs_trainerfb.
-     * The provider there declares and erases it, but this guard could not see it, so removing the declaration
-     * would have gone unnoticed (ADR-032 program import review, R9).
-     *
-     * It is not in USER_COLUMNS because the classroom plugin has a `trainerid` on local_sentientia_classroom and
-     * local_sentientia_classroom_sessions that its privacy provider declares nowhere. That is a real gap, found
-     * by this very column, and listing the column globally would fail the second test below for classroom until
-     * the classroom owner decides what erasing a trainer means for a class that has run. When classroom declares
-     * those tables, move `trainerid` into USER_COLUMNS and delete this constant.
-     *
-     * @var array<string,string[]>
-     */
-    private const COMPONENT_USER_COLUMNS = [
-        'local_sentientia_programs' => ['trainerid'],
+        // 2026-10-07 (owner decisions, courses cluster, ADR-032 rule R9): the Moodle-style actor columns. Every plugin that
+        // has one declares its table in its provider, anonymises the column to 0 on an erasure (the signed
+        // users.erasure_treatment = anonymise) and exports what the user edited. emails (overrides, rules) and talent
+        // (career paths) did not declare theirs until this change.
+        'usercreated', 'usermodified',
+        // 2026-10-07 (ADR-032 F-15, owner-decisions-x): the actor column of the cohort_scope and users sync-run,
+        // sync-error and transcript tables; their providers declare and anonymise it.
+        'modified_by',
+        // 2026-10-07 (owner decision LRN-16, classroom.trainer_erasure = core_release_dpdp_keep): `trainerid` names a
+        // person: the trainer of a classroom or a session, a row of a classroom's trainer list, and the trainer a
+        // learner gave program feedback on. It used to count for the programs plugin only, because the classroom
+        // provider declared none of its trainer tables. Now both declare every table that holds it (core erasure
+        // releases the trainer and keeps the class and the learners' records; the DPDP flow keeps the trainer rows
+        // against the anonymised user), so the guard sees it everywhere.
+        'trainerid',
     ];
 
     /**
@@ -137,10 +111,9 @@ final class privacy_coverage_test extends \advanced_testcase {
      * Tables declared by a plugin's install.xml, with their user columns.
      *
      * @param string $plugindir
-     * @param string[] $extracolumns User columns that count for this plugin only (COMPONENT_USER_COLUMNS).
      * @return array<string,string[]> table => user columns
      */
-    private function user_tables(string $plugindir, array $extracolumns = []): array {
+    private function user_tables(string $plugindir): array {
         $xml = $plugindir . '/db/install.xml';
         if (!is_readable($xml)) {
             return [];
@@ -160,7 +133,7 @@ final class privacy_coverage_test extends \advanced_testcase {
             return [];
         }
 
-        $usercolumns = array_merge(self::USER_COLUMNS, $extracolumns);
+        $usercolumns = self::USER_COLUMNS;
         $found = [];
         foreach ($doc->xpath('//TABLE') ?: [] as $table) {
             $tname = (string) $table['NAME'];
@@ -244,8 +217,7 @@ final class privacy_coverage_test extends \advanced_testcase {
      * @return array<string,string[]> table => user columns
      */
     private function all_user_tables(string $plugindir, string $component): array {
-        return $this->user_tables($plugindir, self::COMPONENT_USER_COLUMNS[$component] ?? [])
-            + $this->runtime_user_tables($plugindir, $component);
+        return $this->user_tables($plugindir) + $this->runtime_user_tables($plugindir, $component);
     }
 
     public function test_no_plugin_holding_user_data_declares_null_provider(): void {
@@ -348,12 +320,6 @@ final class privacy_coverage_test extends \advanced_testcase {
             }
 
             foreach (array_keys($usertables) as $table) {
-                if (!in_array($table, $declared, true)
-                        && (self::UNDECLARED_ACTOR_TABLES[$table] ?? null) === $component
-                        && array_diff($usertables[$table], ['usermodified', 'usercreated', 'modified_by']) === []) {
-                    // A known gap that only the actor columns cause (UNDECLARED_ACTOR_TABLES).
-                    continue;
-                }
                 if (!in_array($table, $declared, true)) {
                     $gaps[] = sprintf('%s owns %s (%s) but does not declare it',
                         $component, $table, implode(', ', $usertables[$table]));

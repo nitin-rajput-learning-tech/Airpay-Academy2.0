@@ -29,6 +29,23 @@ $flags = [
                           window, signed token) are unchanged.',
     ],
 
+    'sentientia.classroom.bulk_enrol_audience' => [
+        'default'     => false,
+        'description' => 'Bulk enrolment of a classroom by target audience (owner decision XC-CLS-ENROL,
+                          2026-10-07). The button "Bulk enrol by target audience" on a classroom\'s Users
+                          tab, its form, and the two web services behind it
+                          (local_sentientia_classroom_preview_audience and _bulk_enrol_by_audience) gated
+                          on local/sentientia_classroom:enrol, which no db/access.php declares, so the
+                          surface refused everyone, site admins included. It now needs
+                          local/sentientia_classroom:manage (the manager archetype, and any role the
+                          signed capability allow-list grants it to) AND this flag. When OFF (default)
+                          the button is not shown and the form and both web services refuse. When ON it
+                          still stays inside the caller\'s own tenant (ADR-031), refuses an empty filter
+                          (a filter must name at least one criterion; a whole-tenant enrolment names the
+                          tenant\'s org_path) and enrols at most 2,000 users per call. Flip it only after
+                          the visual evidence has been reviewed.',
+    ],
+
     'sentientia.classroom.import_history' => [
         'default'     => false,
         'description' => 'Readers for the classroom history the BizLMS import brings in
