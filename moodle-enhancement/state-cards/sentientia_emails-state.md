@@ -752,6 +752,10 @@ Branch `claude/owner-decisions-x`. Written, NOT run (the lead runs PHPUnit after
 - **COMMS-N7 manager copy (second review, must-fix).** The delivery-log row no longer carries the learner's name (see the N7
   section above). Strings `parity_log_subject_manager_completion` (en, hi). Tests: the logged subject is neutral, no column of
   the row holds the learner's name, e-mail or username, and the `log_subject` option changes only what is logged.
+  What this does NOT change: the message itself (the e-mail and Moodle's own notification to the manager) names the learner,
+  because that is the point of the copy; it is the manager's own received message, held by core's message tables, and not a
+  Sentientia log row. Whether the learner's erasure should also reach messages other people received about them is a core
+  messaging question, not decided here.
 - **COMMS-N7 poller (both reviews, should-fix).** One marker write per run, a jump to the highest id while the flag is OFF
   (see above). Tests: the OFF jump, and a mixed batch (an old row, a new one and a skipped one) ending on the last row.
 - **F-11.** `log_step::root_is_registered()` asks `tenant_resolver::root_is_registered()`.
