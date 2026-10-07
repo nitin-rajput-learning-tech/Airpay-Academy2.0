@@ -302,3 +302,19 @@ string id of the user record (every entry would have shown actor false).
 - The descriptions carry the actor's first name in free text, and the importer cannot find a name in other
   languages or other shapes: only the shapes BizLMS wrote in English are recognised. Retention and the wider
   legacy-table privacy treatment remain the separate ADR the owner file names.
+
+---
+
+## 2026-10-07 - privacy: `course.open_coursecreator` declared, exported and anonymised (owner decisions, courses cluster, rule R9)
+
+Both trees. **Not run: no PHPUnit here.** No schema change, no flag, no version bump (new lang strings only).
+
+- **The gap.** The substrate (`classes/substrate.php`) adds `course.open_coursecreator` (BIGINT NULL), the user who created a course, and no
+  provider declared it. 0 courses carry one on the April 2026 copy; the live backup may.
+- **The fix.** This plugin's provider (the substrate owner) declares the core table `course` with that one column (strings en + hi),
+  lists the creators in `get_users_in_context()`, exports "courses_created" (id, short name, when) and, on an erasure of a user, a user
+  list or the whole context, sets `open_coursecreator` to 0 and KEEPS the course (a course belongs to its tenant; the signed
+  `users.erasure_treatment` = anonymise design). Every access checks that the column exists (a vanilla Moodle does not have it).
+- **Tests (NOT RUN):** new `tests/privacy_course_creator_test.php` (adds the column to the PHPUnit schema as the substrate would): declared with
+  strings and Hindi pair; the export lists the creator's courses; the user list; erasure keeps the courses and removes the person, another creator
+  and a NULL creator untouched; bulk erasure and a context wipe.

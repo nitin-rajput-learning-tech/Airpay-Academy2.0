@@ -43,6 +43,14 @@ $string['privacy:metadata:emaillog:timecreated'] = 'Send timestamp.';
 $string['privacy:metadata:emailprefs'] = 'Per-user email preferences.';
 $string['privacy:metadata:emailprefs:userid'] = 'User the preferences belong to.';
 $string['privacy:metadata:emailprefs:timemodified'] = 'Last update timestamp.';
+$string['privacy:metadata:emailoverrides'] = 'Per-tenant e-mail template overrides. Kept when a person is erased; the person who last edited one is removed from it.';
+$string['privacy:metadata:emailoverrides:template_key'] = 'Which template the override replaces.';
+$string['privacy:metadata:emailoverrides:usermodified'] = 'The user who last edited the override. Set to 0 when that user is erased.';
+$string['privacy:metadata:emailoverrides:timemodified'] = 'When the override was last edited.';
+$string['privacy:metadata:emailrules'] = 'Notification rules. Kept when a person is erased; the person who last edited one is removed from it.';
+$string['privacy:metadata:emailrules:rule_name'] = 'The rule\'s name.';
+$string['privacy:metadata:emailrules:usermodified'] = 'The user who last edited the rule. Set to 0 when that user is erased.';
+$string['privacy:metadata:emailrules:timemodified'] = 'When the rule was last edited.';
 
 // Sprint B (2026-05-13) — course-completion email + ramping reminders.
 // Note: Moodle lang strings with {$a} placeholders MUST be in

@@ -66,6 +66,11 @@ final class privacy_coverage_test extends \advanced_testcase {
         // tables exist so the guard sees them on the first CI run that carries
         // them, instead of after a provider has been copied as a null_provider.
         'enrolledby', 'markedby', 'initiatedby', 'sender_userid', 'subject_userid',
+        // 2026-10-07 (owner decisions, courses cluster, ADR-032 rule R9): the Moodle-style actor columns. Every plugin that
+        // has one declares its table in its provider, anonymises the column to 0 on an erasure (the signed
+        // users.erasure_treatment = anonymise) and exports what the user edited. emails (overrides, rules) and talent
+        // (career paths) did not declare theirs until this change.
+        'usercreated', 'usermodified',
     ];
 
     /**
