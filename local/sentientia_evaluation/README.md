@@ -50,8 +50,12 @@ assignments and answers. Run it only through
 `local/sentientia_platform/cli/import_bizlms.php`; the map is
 `docs/cutover/BIZLMS-IMPORT-MAPPING-2026-09-29.md` section 18.
 
-- **Anonymous answers stay anonymous**: stored with user id 0, and the legacy
-  link from the answer to the person is never copied.
+- **Anonymous answers stay anonymous in their own row**: stored with user id 0
+  and no subject. The legacy tables still link the answer to the person, and the
+  import's map ties the anonymous response and that person's implied assignment
+  to the same completion id (decision `evaluation.legacy_anonymous_linkage`,
+  pending the legacy-table privacy ADR, which has to cover the map and the
+  assignment rows as well as the legacy tables).
 - **Supervisor forms** keep the person evaluated in
   `responses.subject_userid` (the responder stays in `userid`).
 - **Imported forms are read-only**: `evaluation_manager` refuses to edit,

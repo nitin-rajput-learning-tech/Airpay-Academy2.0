@@ -229,7 +229,9 @@ the `local_evaluation` tables -> this plugin's tables. Owner `local_sentientia_e
   `item_not_imported` (nothing to carry); a value of ANOTHER form's item `foreign_item` and a value of an item that
   does not exist `missing_item` (both needs-owner since 2026-10-01, see the follow-ups below). Free text is kept whole (the 10,000-character cap was removed in the same review).
 - **Anonymity.** An anonymous completion (its own flag, the form's flag made sticky, or a guest) is stored with
-  user id 0 and `subject_userid` NULL; BizLMS's link from the completion to the person is never copied. Implied
+  user id 0 and `subject_userid` NULL (the response row names nobody); the legacy tables still link the completion to
+  the person, and the import's map ties the anonymous response and that person's implied assignment to the same
+  completion id (decision `evaluation.legacy_anonymous_linkage`, pending the legacy-table privacy ADR). Implied
   assignment times on an identity-protected form are cut to the start of the day in the server time zone, and so
   is `responded_at` of an assigned pair, because the anonymous response beside it carries the same minute.
   Supervisor forms (`evaluationmode` SP): the responder is `evaluatedby` (else the completion's user) and the
@@ -565,3 +567,15 @@ screenshots listed per item before it is merged.
   `bizlms_import_test::test_a_dry_run_without_its_parents_reports_the_classroom_as_deferred` (an evaluation-only dry
   run through `runner->run(['evaluation'])`, then an all-features dry run for the contrast). Checked without Moodle
   through the stub harness: the assignment and response steps, deferred and not, mapped and not.
+- **EV-20 - the docs stop saying the person link is never copied (re-review should-fix).** `README.md`, the
+  `response_step` docblock and the Anonymity bullet of the importer section above said that BizLMS's link from an
+  anonymous answer to the person "is never copied". That holds for the legacy `userid` column, but not for the
+  import's own map: for the completion that implies a person's assignment, the map holds the anonymous response
+  (sub-key empty) and that person's `assign` row (sub-key `assign`) under the SAME completion id, and the assign row
+  names the person. The three texts now say that, in the same words: the response row names nobody, the legacy
+  tables still link the completion to the person, and the map ties the anonymous response and the implied assignment
+  to one completion id (decision `evaluation.legacy_anonymous_linkage`, pending the legacy-table privacy ADR, which
+  has to cover the map and the assignment rows as well as the legacy tables). Documentation only (the docblock is a
+  comment), both trees byte-identical. Left as it is, for the owner: the learner-facing note
+  `my_evaluations_anonymous_note` ("your answers are not linked to you") is true of the response row; reword it if
+  that ADR decides the map and the assign rows are to be treated as a link.

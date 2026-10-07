@@ -18,12 +18,18 @@ use local_sentientia_platform\bizlms\step;
  * evaluation_manager::submit_response() writes: a JSON object keyed by the NEW question id, every imported
  * question present, null where nobody answered.
  *
- * Who answered. An anonymous answer stays anonymous: user id 0 and no subject, and BizLMS's own link from the
- * completion to a person stays in the legacy table and is never copied. A completion is anonymous when it says
- * so (anonymous_response = 1), when its form is anonymous (the flag, made sticky by form_facts), or when it has
- * no user (a guest). Otherwise the responder is evaluatedby when BizLMS recorded one (the supervisor who filled a
- * supervisor form in) and the completion's user when not; on a supervisor form (evaluationmode SP) the person
- * evaluated is kept as subject_userid.
+ * Who answered. An anonymous answer stays anonymous in its own row: user id 0 and no subject. BizLMS's link from
+ * the completion to a person stays in the legacy tables, which this step does not touch, and the import adds one
+ * trace of its own: for the completion that implies a person's assignment (below), the map holds the anonymous
+ * response (sub-key empty) and that person's assignment (sub-key assign) under the SAME completion id, and the
+ * assign row names the person. So the map and the assign rows can tie an anonymous response to a person at the
+ * database level (decision evaluation.legacy_anonymous_linkage, pending the legacy-table privacy ADR, which has to
+ * cover them as well as the legacy tables).
+ *
+ * A completion is anonymous when it says so (anonymous_response = 1), when its form is anonymous (the flag, made
+ * sticky by form_facts), or when it has no user (a guest). Otherwise the responder is evaluatedby when BizLMS
+ * recorded one (the supervisor who filled a supervisor form in) and the completion's user when not; on a
+ * supervisor form (evaluationmode SP) the person evaluated is kept as subject_userid.
  *
  * Two points where this goes beyond the letter of mapping doc section 18, both recorded in the plugin state card.
  * (1) Sticky anonymity reaches a completion that BizLMS stamped as named (anonymous_response = 2) when its form
