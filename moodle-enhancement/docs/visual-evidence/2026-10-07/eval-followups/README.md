@@ -14,15 +14,20 @@ wide for the mobile shot (the theme's primary mobile breakpoint) and a normal de
 
 | Item | Page | What to look at | Needs first |
 |------|------|-----------------|-------------|
-| EV-03 | `responses.php?id=<form>` | A form that holds a number question, a tick-all-that-apply question and one older type: the average with "Lowest x / Highest y" and the allowed range; the bars for 1..5; the tick-all bars with the "one person can tick several options" note; the quoted text with an ampersand shows once-escaped | A form with answers. Also the imported rehearsal form (April form 3) after an import, if the rehearsal copy is available |
+| EV-03 | `responses.php?id=<form>` | A form that holds a number question, a tick-all-that-apply question and one older type: the average with "Lowest x / Highest y" (shown as stored: a 7.125 is not "7.13") and the allowed range; the bars for 1..5; the tick-all bars with the "one person can tick several options" note; the quoted text with an ampersand shows once-escaped. The page title, the heading and the name above the figures also show an ampersand in the form's name once-escaped | A form with answers, named with an ampersand ("Tom & Jerry"). Also the imported rehearsal form (April form 3) after an import, if the rehearsal copy is available |
+| EV-03 (review) | `responses.php?id=<form>` | A number question that holds a stored answer that is not a number: the line "Stored answers that are not numbers are left out of these figures: N", figures of the numeric answers only, no bars; and one that holds only such answers: "No answers yet" and the line, no "Lowest 0, highest 0" | A number question with a text answer put into `response_data` by hand (or by the import) |
+| Review | `responses.php?id=<form that once collected anonymous answers>` | The "Anonymous responses" badge shows although the form's anonymous flag is off | A form with one answer stored with user id 0 and the flag unticked |
 | EV-09 | `index.php` | One imported row (an "Imported" badge, only Questions and Responses actions) next to one native row (all actions) | An imported form and a native one |
-| EV-09 | `questions.php?id=<imported numeric form>` | The info notice, no Add / drag / row menu, the number type named "Number" with its range, the position badge counting 1..n | The same imported form |
+| EV-09 | `questions.php?id=<imported numeric form>` | The info notice, no Add / drag / row menu, the number type named "Number" with its range, the position badge counting 1..n. The heading, the breadcrumb and the page title show an ampersand in the form's name once-escaped | The same imported form, named with an ampersand |
 | EV-31 | `respond.php?id=<named form>` as the invited learner | The form itself, not the thank-you page | A named, non-pulse form with a fired trigger (so a pending shell exists) for that learner |
 | EV-31 | `responses.php?id=<same form>` | "Total Responses" does not count the invitation | The same form |
-| EV-02 | `response_list.php?id=<imported supervisor form>` | A Subject column after Respondent | EV-06 decided (the page needs `local/sentientia_evaluation:view`, which `db/access.php` does not declare) and an imported supervisor form |
-| EV-05 | `response_detail.php?id=<response>` | The respondent's own answer highlighted, option histograms for choice questions, the numeric average | EV-06 decided |
+| Review | `respond.php?id=<form>` as a learner | The position badges count 1..n (they printed the question id + 1); a number question with a lower bound of 0 and a multiple-choice question with an ampersand in its text and one option: the ampersand shows once-escaped, the number box carries its range, and the bounds of a number question are not offered as options; the form's name in the heading, with an ampersand, once-escaped | A form that is not the first in the database (so ids are not 1, 2, 3), with a number question 0..10, a choice question and an ampersand in the name |
+| EV-02 | `response_list.php?id=<imported supervisor form>` | A Subject column after Respondent, in the site's name format (as the CSV prints it); "(deleted user)" for a subject whose account is gone; no row for an invitation that was never answered | EV-06 decided (the page needs `local/sentientia_evaluation:view`, which `db/access.php` does not declare) and an imported supervisor form |
+| EV-05 | `response_detail.php?id=<response>` | The respondent's own answer highlighted, option histograms for choice questions (a choice whose text is "0" included), the numeric average. An id that is an unanswered invitation answers "Response not found." | EV-06 decided |
 
-EV-11, EV-13, EV-14, EV-20, EV-21, EV-28 and EV-32 have no UI. EV-33 is tests only.
+EV-11, EV-13, EV-14, EV-20, EV-21, EV-28 and EV-32 have no UI. EV-33 is tests only. The review round of 2026-10-07 (the
+rows marked "Review" and the rows it extended) changed `respond.php`, `responses.php`, `questions.php`,
+`response_list.php` and `response_detail.php`; `exportcsv.php` changed only in the Subject header (below).
 
 ## CSV export (EV-02): a sample, no screenshot needed
 
@@ -39,5 +44,7 @@ more column, after Email:
 Submitted,Respondent,Email,Subject,Course ID,Program ID,Classroom ID,Q1: <question text>,...
 ```
 
-The Subject cell holds that person's name, is empty for a response with no subject, reads `(deleted user)` when the
-account is gone, and is never present on an anonymous or otherwise identity-protected form.
+The Subject cell holds that person's name (in the site's name format, as `response_list.php` prints it), is empty for a
+response with no subject, reads `(deleted user)` when the account is gone, and is never present on an anonymous or
+otherwise identity-protected form. Every header is plain English, `Subject` included, whatever the language of the admin
+who exports it (the page's own column heading is the translated string `responses_col_subject`).

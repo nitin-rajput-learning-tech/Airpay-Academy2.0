@@ -9,7 +9,8 @@ Depends on `local_sentientia_platform` >= `2026093001`.
 against real production. Replaces the BizLMS `local_evaluation` forms at cutover; `classes/bizlms/` brings their
 history over.
 **Last refreshed:** 2026-10-07 (EV-21: header, tables, capabilities, flags, key files and tests brought up to date;
-see the follow-ups section at the end for the branch `claude/eval-followups`, PHPUnit not run there)
+then the review round on the same branch; see the two follow-ups sections at the end for the branch
+`claude/eval-followups`, PHPUnit not run there)
 
 ---
 
@@ -98,8 +99,8 @@ local/sentientia_evaluation/
 
 ## Tests
 
-11 PHPUnit classes (133 test methods as of 2026-10-07), none of them run on the follow-ups branch, which is why
-every claim below says "not run":
+11 PHPUnit classes (141 test methods as of 2026-10-07, after the review round), none of them run on the follow-ups
+branch, which is why every claim below says "not run":
 
 | Class | Covers |
 |-------|--------|
@@ -122,6 +123,12 @@ every claim below says "not run":
 - [ ] Email reminder for unfinished surveys (depends on the emails rule pipeline)
 - [ ] `local/sentientia_evaluation:view` is used by `response_list.php` and `response_detail.php` and declared
       nowhere (EV-06; needs the owner)
+- [ ] A trigger's pending shell row is never removed or turned into the response (EV-31 follow-up; needs the owner,
+      see the review round at the end: the privacy export still lists it as "submitted 1 Jan 1970", and on an
+      anonymous form it keeps the invitee's user id beside the anonymous answer)
+- [ ] `non_respondents.php` prints the evaluation name through `format_string()` and then `{{ name }}` (escaped
+      twice, the defect the review round fixed on the pages that branch touched); not touched, outside the branch's
+      pages
 - [x] Anonymous responses: a per-form toggle shipped (sticky once answered, 2026-09-25)
 - [x] PHPUnit coverage for `evaluation_audience_assigner` (EV-33)
 - [x] The import/export round trip, as PHPUnit instead of Behat, which this pipeline does not run (EV-32, EV-33)
@@ -463,7 +470,8 @@ merged; they are collected, with a sample CSV header, in
   after Email and `response_to_csv_row(..., $identityprotected, true)` puts that person's name there
   (`subject_label()`: empty for a response with no subject, "(deleted user)" when the account is deleted or gone;
   never on a protected form). `exportcsv.php` works the flag out once for header and rows. `response_list.php` joins
-  the subject user and `response_list.mustache` adds the column after Respondent. A native form never has a subject,
+  the subject user (the review round replaced that join with `subject_names()`, see the end) and
+  `response_list.mustache` adds the column after Respondent. A native form never has a subject,
   so its export and list are unchanged (the new parameters default to false). New string `responses_col_subject`
   (en, hi). No flag (the gates of those pages are unchanged), no version change. The respondent lookup in the CSV now
   reads every name field `fullname()` wants (it read four and relied on the rest being absent). Test:
@@ -488,7 +496,9 @@ merged; they are collected, with a sample CSV header, in
   change. Two side effects of the move, both display only: the rows no longer pre-escape question and option text
   (`format_string(..., ['escape' => false])`, the template escapes once, so "Tom & Jerry" stops showing as
   "Tom &amp; Jerry"), and the position badge counts 1..n (it printed question id + 1, because `get_questions()` is
-  keyed by id; `questions.php` and `respond.php` still have that bug). Tests:
+  keyed by id; `questions.php` was fixed under EV-09 and `respond.php` in the review round at the end). Since the
+  review round the lowest and highest answers are shown as stored (not rounded to two decimals) and an answer that is
+  not a number is left out of the figures. Tests:
   `analysis_test::test_response_stats_buckets_for_numeric_and_multichoice_multi`,
   `::test_response_question_rows_render_numeric_and_multichoice_multi`. Checked without Moodle: the buckets and the
   rows against a stub of the Moodle string functions, and `responses.mustache` rendered with the bundled Mustache
@@ -577,9 +587,12 @@ merged; they are collected, with a sample CSV header, in
   (`$ctx->legacy->fetch(SRC_ITEMS, ids, ['id', 'evaluation'])`): a row found means `foreign_item` (another form's item,
   or a template's), none means `missing_item`. Both are declared in `importer::reasons()` as needs-owner, so parity
   exits 2 until the decisions file accepts the count. Preflight counts and warns for them before the run:
-  `orphans:local_evaluation_value:item` / warning `orphan_rows:local_evaluation_value:item:N` (item row missing) and
-  `foreign_values` / warning `foreign_values:N` (the item belongs to another form than its completion). The value
-  step's docblock and the codes listed above are updated. April: all five values belong to their completion's form, so
+  `values_missing_item` / warning `values_missing_item:N` (item row missing) and `values_foreign_item` / warning
+  `values_foreign_item:N` (the item belongs to another form than its completion); renamed in the review round from
+  `orphans:local_evaluation_value:item` / `orphan_rows:local_evaluation_value:item:N` and `foreign_values` /
+  `foreign_values:N`, which counted every stray row. Each count is now of the values the run archives under that
+  reason (see the review round at the end), so it can be compared with the run's needs-owner tally one for one. The
+  value step's docblock and the codes listed above are updated. April: all five values belong to their completion's form, so
   nothing changes there. No schema change, no version change. Tests in `bizlms_import_test.php`: `NEEDS_OWNER` gains
   both codes, seed value 13 is now `foreign_item` (tally: `item_not_imported` 1, `foreign_item` 1), the needs-owner
   assertions cover both, and new `test_a_value_of_another_forms_item_or_of_no_item_is_left_to_the_owner` (an extra
@@ -636,3 +649,79 @@ merged; they are collected, with a sample CSV header, in
   and the eleven test classes. The importer section gained what to remove from a UAT or rehearsal target before
   importing again (the leftover-rows blocker also fires at the id of a soft-deleted legacy form, which never gets a
   Sentientia form), and its "not built" notes now point at the follow-ups that built them. Documentation only.
+
+## 2026-10-07 - review round on the evaluation follow-ups (branch claude/eval-followups; no version change, stays 2026093001)
+
+Two reviews of the twelve commits above (`review:ui` and `review:data`, both "ship", no must-fix) listed should-fix
+items. This round closes every one that is code or tests, in six commits on the same branch plus this one for the
+documentation. **PHPUnit NOT run**
+(the lead runs it once). No version bump, no schema, capability, cache or upgrade change, no flag. Both plugin trees
+byte-identical. Checked without Moodle: `php -l`, `tools/check-tree-drift.php`, `tools/check-lang-parity.php`,
+`tools/check-path-boundary.php`, the pre-commit hook on every commit, and the bundled Mustache engine over every
+template (tokenised, and `respond`, `response_detail` and `responses` rendered with sample data: an option whose text
+is "0", a lower bound of 0, an ampersand in a name, the new note).
+
+- **response_detail.php (EV-05).** A response id that is a trigger shell (`timesubmitted` 0) is refused with
+  `invalidresponse` ("Response not found.", en + hi) by `evaluation_manager::require_submitted_response()`, after the
+  capability and tenant checks, so it is never shown as the invitee's answer. Histogram rows carry `is_level` /
+  `is_option` and the template keys on those: Mustache reads the text "0" as false, so a choice whose text is "0"
+  vanished from the histogram with the respondent's pick on it. The respondent fallback is the existing string
+  `eval_response_responder_anonymous`. Tests: `analysis_test::test_a_pending_shell_is_not_a_response_to_open`,
+  `::test_a_choice_whose_text_is_zero_stays_on_the_response_detail_page` (renders the template).
+- **The Subject, one way (EV-02).** `response_list.php` used `trim(firstname . ' ' . lastname)`, the CSV `fullname()`
+  over every name field, so they disagreed under the site's name format. New `subject_names(array $ids)` (one query,
+  `fullname()` per live account) feeds both; `subject_label($id, ?array $names)` takes the map as an optional argument and
+  `response_to_csv_row()` takes it as an optional last one, so `exportcsv.php` reads every subject once instead of one
+  `core_user::get_user()` per row, and every existing caller is unchanged. The list's rows moved to
+  `evaluation_manager::response_list_rows($evaluation, $protected, $showsubject)` (timesubmitted DESC, id DESC; pending
+  shells not listed; a protected form names nobody). "(deleted user)" is a lang string on the page
+  (`responses_subject_deleted`, en + hi) and plain text in the CSV, like its Respondent column. **The CSV's Subject
+  header is plain English** like every other header (it was the one translated header); `responses_col_subject` is the
+  page's column heading only. Test: `analysis_test::test_the_response_list_names_the_subject_the_way_the_csv_does`;
+  the Subject-column test expects `Subject`.
+- **Escaped exactly once.** `evaluation_manager::display_text()` is `format_string(..., ['escape' => false])` for values a
+  template prints with `{{ }}`; `$PAGE->set_title()`, `set_heading()` and the navbar apply `format_string()` themselves
+  and are given the raw name. Applied on `responses.php`, `questions.php`, `respond.php`, `response_list.php` and
+  `response_detail.php` (name, description, question text, option labels). `responses.php`'s anonymous badge is now
+  `identity_protected()` (via `responses_page_header()`), not the flag alone. Test:
+  `analysis_test::test_names_reach_the_templates_unescaped_and_the_badge_follows_identity_protection`.
+- **respond.php.** The question loop moved to `evaluation_manager::respond_question_rows()`. `position` counts 1..n (it
+  printed the question id + 1), only the two choice types get option rows (a number question's `{min, max}` was
+  offered as two options to tick), and `has_numeric_min` / `has_numeric_max` are the template's keys, so a lower bound
+  of 0 keeps its `min="0"` (the text "0" is false to Mustache; found while moving the code, not in the reviews). Test:
+  `analysis_test::test_the_respond_rows_count_from_one_and_keep_text_options_and_bounds_straight` (renders the template).
+- **Number statistics (EV-03).** Lowest and highest are shown as stored (`format_float(..., -1)`; only the average is
+  rounded to two decimals). A stored answer that is not a number is left out of the count, the average and the bars
+  (`non_numeric` is tallied, `distribution_exact` goes false), the page says how many (`responses_numeric_ignored`, en +
+  hi), and a question with no number at all shows "No answers yet" plus that line instead of "Lowest 0, highest 0".
+  Tests: `::test_a_stored_answer_that_is_not_a_number_is_left_out_of_the_numeric_figures`,
+  `::test_the_lowest_and_highest_numeric_answers_are_shown_as_stored`.
+- **Preflight tallies (EV-13).** `values_missing_item` and `values_foreign_item` (formerly `orphans:local_evaluation_
+  value:item` and `foreign_values`) count only the values the run will archive under that reason: the completion
+  exists, its form exists and is not deleted, and `form_facts::import_problem()` finds nothing wrong, the same code
+  `response_step` uses. A stray value of a completion that is skipped is `response_not_imported`, of a missing one
+  `orphan_completed`, as before. Read-only; with no stray value nothing extra is read. Test:
+  `bizlms_import_test::test_a_value_of_another_forms_item_or_of_no_item_is_left_to_the_owner` (five extra strays of
+  completions that are not imported; the old tallies would have said four and three, the new ones say one and one).
+- **EV-14 test.** `bizlms_import_test::test_the_implied_assignment_time_ignores_a_later_skipped_completion`: the skipped
+  completion is the LATER one (t+900), so the old `lasttime` would stamp `responded_at` t+900 instead of t+200.
+
+**Not code, carried to the owner (none can be decided on this branch).** (1) EV-06: declare `:view` (version bump and
+PHPUnit re-init) or gate `response_list.php` / `response_detail.php` on `:manage`; until then the Subject column and all
+of EV-05 are unreachable for everybody, site admin included. (2) The merge gate: no UI commit goes to production before
+the screenshots in `docs/visual-evidence/2026-10-07/eval-followups/README.md` exist (this round extended its list:
+`respond.php`, `responses.php`, `questions.php`, `response_list.php`, `response_detail.php`). (3) Should numeric 1..5
+items count as ratings in `get_kirkpatrick_summary()`? (4) Should another tenant's `ispublic` templates ever be listed?
+(5) After the Stage B rehearsal, add `evaluation:foreign_item` and `evaluation:missing_item` to `accepted_reasons` if they
+occur (April has none). (6) The legacy-table privacy ADR must cover the map and the `assign` rows (decision
+`evaluation.legacy_anonymous_linkage`); EV-14 widens the trace a little: when the lowest completion of a pair is
+skipped, the next imported one, which may be anonymous, now carries the person's `assign` sub-row under its id.
+(7) EV-15: `assignment_step` still marks `responded` from all legacy completions, skipped ones included. (8) EV-31
+follow-up, a data-hygiene question: `submit_response()` inserts a new row and leaves the invitee's shell (user id X,
+`timesubmitted` 0, `response_data` `{}`) in place. Every reader now filters shells, so nothing is miscounted, but the
+privacy export lists the shell as a response "submitted" on 1 Jan 1970, and on an anonymous form the shell keeps the
+invitee's user id beside the anonymous answer. Options: delete the caller's shell inside `submit_response()`, turn it
+into the response, and/or have `privacy\provider` leave shells out of the export. It changes what is stored and what a
+subject-access export contains, so it is the owner's call. (9) Left as it is: `get_kirkpatrick_summary()`, the
+learner-facing `my_evaluations_anonymous_note`, and `non_respondents.php` (same double-escape defect, a page this branch
+did not touch).
