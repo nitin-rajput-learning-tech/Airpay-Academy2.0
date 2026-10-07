@@ -230,6 +230,58 @@ final class audience_assigner_test extends \advanced_testcase {
             'one real filter is enough');
     }
 
+    /**
+     * EV-36 (review round): the bulk-assign form and the service agree on what an audience rule is. The form used
+     * empty() on four keys and the cohort, so a whitespace-only designation passed it and then failed in the service
+     * with an exception instead of a field error. Both read the same filter map through the same has_constraint().
+     */
+    public function test_the_bulk_assign_form_accepts_exactly_what_the_service_accepts(): void {
+        // validation() reads no form state, so the form is made without its constructor (which needs a page and a
+        // dynamic-form request); get_string() is all it uses besides the assigner.
+        $form = (new \ReflectionClass(\local_sentientia_evaluation\form\bulk_assign_audience_form::class))
+            ->newInstanceWithoutConstructor();
+        $evaluationid = evaluation_manager::create((object) ['name' => 'Same rule in both']);
+        $this->user(['open_designation' => 'Present']);
+
+        $submissions = [
+            'nothing' => [],
+            'blank values' => ['designation' => '', 'region' => '', 'location' => '', 'employmenttype' => '', 'cohortid' => 0],
+            'a whitespace-only designation' => ['designation' => '   '],
+            'a tab only' => ['location' => "\t"],
+            'a whitespace-only value and no cohort' => ['region' => ' ', 'employmenttype' => ' ', 'cohortid' => 0],
+            'a cohort that is not positive' => ['cohortid' => -3],
+            'a designation' => ['designation' => 'Present'],
+            'a padded designation' => ['designation' => ' Present '],
+            'a region' => ['region' => 'North'],
+            'a location' => ['location' => 'Pune'],
+            'an employment type' => ['employmenttype' => 'Permanent'],
+            'a cohort' => ['cohortid' => 7],
+            'a cohort given as text' => ['cohortid' => '7'],
+            'a whitespace-only value beside a cohort' => ['designation' => '  ', 'cohortid' => 7],
+        ];
+        foreach ($submissions as $what => $data) {
+            $filters = \local_sentientia_evaluation\form\bulk_assign_audience_form::filters_from($data);
+            $service = evaluation_audience_assigner::has_constraint($filters);
+            $errors = $form->validation($data, []);
+            $this->assertSame($service, $errors === [], "{$what}: the form and the service disagree");
+            if (!$service) {
+                $this->assertArrayHasKey('designation', $errors, $what);
+                $this->assertSame(get_string('bulk_assign_pick_at_least_one', 'local_sentientia_evaluation'),
+                    $errors['designation']);
+                // And the service really does refuse it, with the same message the form shows.
+                try {
+                    evaluation_audience_assigner::assign_by_filter($evaluationid, $filters, $this->caller);
+                    $this->fail("{$what}: the service accepted a rule the form refuses");
+                } catch (\moodle_exception $e) {
+                    $this->assertSame('bulk_assign_pick_at_least_one', $e->errorcode, $what);
+                }
+            }
+        }
+        // The same map, the same keys: an object (what get_data() returns) reads like an array.
+        $this->assertSame(\local_sentientia_evaluation\form\bulk_assign_audience_form::filters_from(['designation' => 'x']),
+            \local_sentientia_evaluation\form\bulk_assign_audience_form::filters_from((object) ['designation' => 'x']));
+    }
+
     public function test_assign_by_filter_refuses_an_empty_audience_rule_and_writes_nothing(): void {
         global $DB;
         $evaluationid = evaluation_manager::create((object) ['name' => 'Nobody by default']);
