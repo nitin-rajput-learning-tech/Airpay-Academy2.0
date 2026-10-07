@@ -629,19 +629,21 @@ recommended option") on top of the signed basis "do everything as recommended". 
 version bump and runs the group). Nothing was copied to XAMPP and no flag was flipped.
 
 Importer (`classes/bizlms/`), the three keys are in the signed decisions file and declared by `importer::decisions()`:
-- **COMMS-N1, credentials.** A row whose template (`local_notification_info`) or notification type is gone, with a
-  template reference above zero, has its BODY withheld whatever it says (`credentials_withheld:unresolved_template`).
-  Its subject is masked only when `redactor::subject_suggests_credentials()` or the new
-  `redactor::text_mentions_secret()` matches, otherwise scrubbed. A row that never pointed at a template (an ILT
-  reminder, a custom mail, `local_email_logs`) keeps the older rule (a subject that reads like an account message).
+- **COMMS-N1, credentials.** A row whose template (`local_notification_info`) or notification type cannot be resolved
+  (gone, or no template reference at all: `notification_infoid` 0 or NULL) has its BODY withheld whatever it says
+  (`credentials_withheld:unresolved_template`). Its subject is masked only when `redactor::subject_suggests_credentials()`
+  or the new `redactor::text_mentions_secret()` matches, otherwise scrubbed. (The first build kept the body of a row that
+  never pointed at a template, behind a `notification_infoid > 0` condition; the decision has no such exception, and both
+  reviews called it out, so a custom mail, an ILT reminder and every `local_email_logs` row lose their body too: fix round 1.)
   The row's own `moduletype` signal never fires on production (`''` on all 14,202 April rows, because the users
   writer never sets it); the template and its type are what carry the answer. `scrub()` now also catches a secret in
   the next table cell (`<td>Password</td><td>X</td>`), behind a line break or a newline, and a value that holds
   `,` `;` or `&`; the value runs to whitespace, `<` or a quote (an `&` that opens the next link parameter still ends
   it). It is idempotent, and `importer::verify()` relies on that: `imported_text_with_unredacted_secret` fails the
   run when scrub would still change an imported subject or body (a subject of exactly 255 characters is not checked:
-  the column limit may have cut a mask). Preflight counts the unresolved-template rows that name a secret word
-  (`unresolved_template_rows_naming_a_secret_word`, an upper bound: LIKE also matches "spin"). F-72: scrub also blanks
+  the column limit may have cut a mask). Preflight counts the unresolved-template rows that name a secret word, in both
+  tables (`unresolved_template_rows_naming_a_secret_word:<table>`, an upper bound: LIKE also matches "spin"; a row with
+  no template reference counts). F-72: scrub also blanks
   the value after the bare words "pass" and "pin" and the word behind a tag or line break after any secret word; it
   changes 0 of the 13,363 kept April rows, so that over-redaction costs nothing and is accepted (documented in the
   redactor docblock). The optional "treat a '/' path as empty" tweak was NOT made (0 April rows).
@@ -696,6 +698,16 @@ sender for them (it has the learner's completion e-mail and, in `local_sentienti
 - Skipped: a hidden course, a suspended enrolment, a suspended or deleted user, a guest, a duplicate within five
   minutes; for the manager copy a supervisor who is suspended, deleted or in another tenant than the learner
   (ADR-031: a name and progress do not cross a tenant boundary).
+- **The manager copy's delivery-log row never names the learner** (fix round 1): the e-mail does, the row (the manager's,
+  `userid` = manager) logs 'A team member has completed <course>'. The privacy provider reaches a log row only by
+  `userid` / `sender_userid`, so a name in the manager's row could never be removed by the learner's own erasure.
+  `notification_sender::send()` takes an optional `log_subject` for this; no schema or provider change.
+- **The path poller writes its marker once per run** (fix round 1), not once per row looked at. While its flag is OFF for
+  every tenant it reads no row and moves the marker to the highest id in one write; otherwise it writes after each
+  e-mail handed to the sender (an e-mail cannot be taken back, so a run that stops half way never sends twice) and once at
+  the end. The values are strings: `set_config` compares strictly, an int is never equal to the stored string and would
+  rewrite and purge the cache on every call. It stands in for 'the learning-path enrol event' until `path_manager` calls
+  `parity_senders::learning_path_enrolled()` directly.
 - **Turning a sender ON for Airpay at cutover is Nitin's call**, after he has seen them on UAT (Q11 of the owner
   decisions). Recommended flip: ON for Airpay. Nothing here flips a flag.
 - New strings en + hi (`parity_*`, `task_send_path_enrolments`); the path template drops its deadline lines for a
@@ -725,3 +737,33 @@ Accepted, recorded (no code):
 Visual evidence still owed (desktop and mobile, `docs/visual-evidence/<date>/`): the Logs tab (Sent from, Sent on,
 `not_sent` and other badges, the BizLMS badge), `email_detail.php` (with an imported mail that had a remote image), the
 Templates tab as a `/77` admin, and the new `enrollment/manager_course_completed` template in the preview.
+
+### 2026-10-07 - fix round 1 after the two reviews (same version `2026100701`, no schema change)
+
+Branch `claude/owner-decisions-x`. Written, NOT run (the lead runs PHPUnit after merging). Both trees identical.
+
+- **COMMS-N1 (both reviews, must-fix).** Removed the `notification_infoid > 0` condition in `log_step::credential_reason()`:
+  every row whose template or type cannot be resolved loses its body, a row with no template reference (a custom mail, an ILT
+  reminder, a `local_email_logs` row, NULL included) too. Preflight counts the unresolved rows that name a secret word for BOTH
+  tables, with no reference condition. The decision text, the mapping doc s11 and the code agree now. April impact: none (0 rows
+  with a reference of 0 or less in `local_emaillogs`, no `local_email_logs` table); the live backup may differ, which is why the
+  count is in the preflight. Tests: a reference of 0 and a NULL reference lose their body, the seed's `local_email_logs` rows are
+  unresolved (their warnings are counted), the preflight counts a row with no reference and the second table.
+- **COMMS-N7 manager copy (second review, must-fix).** The delivery-log row no longer carries the learner's name (see the N7
+  section above). Strings `parity_log_subject_manager_completion` (en, hi). Tests: the logged subject is neutral, no column of
+  the row holds the learner's name, e-mail or username, and the `log_subject` option changes only what is logged.
+- **COMMS-N7 poller (both reviews, should-fix).** One marker write per run, a jump to the highest id while the flag is OFF
+  (see above). Tests: the OFF jump, and a mixed batch (an old row, a new one and a skipped one) ending on the last row.
+- **F-11.** `log_step::root_is_registered()` asks `tenant_resolver::root_is_registered()`.
+- **Left, on purpose.** (1) The manager-copy template `enrollment/manager_course_completed.mustache` is English only, like the
+  shared partials `course_info_box` and `footer_note` and the rest of the template family, so a Hindi recipient gets a mixed
+  e-mail for the subject only. A per-recipient-language render of the whole family (force the recipient's language while
+  rendering, move the texts to `{{#str}}`) has to land before the COMMS-N7 flags are flipped for a Hindi-speaking audience; it
+  is not a small change and it touches every template. (2) F-15: the providers of `email_overrides` and `email_rules` do not
+  declare `usermodified` (listed in `UNDECLARED_ACTOR_TABLES`); another stream's commit `ac725ba2d` declares them, so run
+  `privacy_coverage_test` after the lead's re-init and merge. (3) The visual evidence below is still owed.
+- **UAT checks added to the runbook:** that no core enrol plugin's own welcome message double-sends once
+  `send_course_enrolment` is ON; that the manager-copy log row names no learner.
+
+Visual evidence owed in addition to the list above: the Logs tab with a manager-copy row ('A team member has completed ...'), and
+the Templates tab (it lists 'Course Completed (Manager Copy)' whether or not the sender is on).

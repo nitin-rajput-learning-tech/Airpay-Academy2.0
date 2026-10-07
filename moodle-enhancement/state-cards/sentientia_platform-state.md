@@ -877,16 +877,18 @@ the identity cluster's items (the sequence floor, EV-26, and the parity wiring a
   `finalise()` (where the copies are made). The report gets `files_copied` per declared area (0 when nothing copied;
   directory rows are not counted). The registry refuses a malformed declaration (`file_areas_malformed:<feature>`). The
   copies are not core writes, so `--purge-feature` is unaffected and leaves them. Implemented by org and cohort_scope
-  (local_sentientia_org, this batch). `importer_contract::test_contract_no_side_effects` applies the same rule.
-  **Merge dependency:** `learningplan`, `classroom` and `programs` also call `file_rehome` and must implement the marker
-  (decision IDN-04 names all five); until they do their contract tests and real runs trip on `files`. Signed key
+  (local_sentientia_org, this batch) and, since fix round 1 (2026-10-07), by `learningplan`, `classroom` and `programs`
+  (each requires this plugin at 2026100701), so all five callers of `file_rehome` declare their copies (decision IDN-04
+  names all five). Any future caller must implement the marker too, or its contract test and real runs trip on `files`.
+  A test wrapper around an importer (`learningpath`'s `standalone_importer`) must implement it as well: the runner decides
+  by `instanceof`. `importer_contract::test_contract_no_side_effects` applies the same rule. Signed key
   `framework.file_rehome_copies`.
 - **F-10:** `runner::preflight_feature()` catches `blocked` from an importer's `preflight()` (for example `$ctx->decision()`
   on an unaccepted key) and records it as a blocker, once, instead of letting it escape the whole preflight pass.
 - **F-11:** `tenant_resolver::root_is_registered(int)` (public, static) is the one "is this a registered tenant root" check;
-  the org importer (the TENANT_OWNER) must not call `resolve()` for its own rows. The org copy is replaced; the other
-  copies of the try/catch around `tenant::assert_valid` (emails `log_step.php`, runner, cart, classroom, evaluation,
-  courses, request, roles, users) are left for their owners.
+  the org importer (the TENANT_OWNER) must not call `resolve()` for its own rows. The org copy is replaced, and so is the
+  emails `log_step.php` one (fix round 1); the other copies of the try/catch around `tenant::assert_valid` (runner, cart,
+  classroom, evaluation, courses, request, roles, users) are left for their owners.
 - **F-15:** `privacy_coverage_test::USER_COLUMNS` gains `usermodified`, `usercreated` and `modified_by`. The guard then sees
   three tables whose provider does not declare them (`local_sentientia_email_overrides`, `local_sentientia_email_rules`,
   `local_sentientia_talent_path`, each only an actor id): they are listed in `UNDECLARED_ACTOR_TABLES` with their owning

@@ -1242,7 +1242,11 @@ the second run, redaction of subject and body, tenant attribution by recipient, 
   the new `redactor::text_mentions_secret()` matches (password, passwd, pwd, passcode, credential(s), otp, pin, secret, token,
   no separator required), otherwise scrubbed; `redactor::scrub()` makes the separator optional when the gap holds a tag or
   line break and lets the value run to whitespace, '<' or a quote, so ',', ';' and '&' no longer end it. `verify()` adds
-  `imported_text_with_unredacted_secret`; preflight counts unresolved-template rows that mention a secret word. Expected on
+  `imported_text_with_unredacted_secret`; preflight counts unresolved-template rows that mention a secret word, in both
+  tables. A row with no template reference at all (`notification_infoid` 0 or NULL: a custom mail, an ILT reminder, every
+  `local_email_logs` row) is an unresolved row too: the rule has no reference condition (an `infoid > 0` condition that had
+  narrowed it was removed in fix round 1, 2026-10-07; April: 0 such rows in `local_emaillogs`, no `local_email_logs`
+  table, so the April figures below do not move). Expected on
   April after the fix (to be re-measured read-only): 14,197 sent, 5 not_sent, 839 withheld, 0 masked-with-body. No
   decisions-file key: this is a safety rule, not an owner choice. F-72: `scrub()` over-redacts the bare words 'pass' and
   'pin'; accepted as conservative (it changes 0 of the 13,363 kept April rows) and documented in the redactor docblock;
@@ -3142,6 +3146,13 @@ local_request_comments -> decision_note of the imported row whose source id = CA
   rebuilt identically on every run; orphans reported
   2026-10-07 decision COMMS-R4: preflight blocks (`needs_owner:request_comments_present=N`) when the table has rows, and
   `request_manager::decide()` on an imported row appends to the folded note and never replaces it
+  The owner's way to go on after reading the rows is `request.comments = fold_reviewed` in the decisions file. The signed value
+  is `fold_into_decision_note` (it blocks while rows exist); `fold_reviewed` is an addition of the build, NOT in the decision,
+  and is open question Q14 in OWNER-DECISIONS. Writing it changes the signed file's hash, so it is a re-approval event.
+  verify() (COMMS-R1, `pending_rows_with_an_approver_whose_requester_or_item_is_gone`) compares with the import, not with
+  today: a requester counts only when already deleted or suspended at the import (user.timemodified not after the row's map
+  time), a course only when missing with no course_deleted event after the import. A requester suspended, or a course deleted,
+  after go-live is not an import defect
 ```
 
 ### Status mapping

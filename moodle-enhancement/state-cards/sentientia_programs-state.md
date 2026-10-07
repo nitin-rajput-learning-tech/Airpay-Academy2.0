@@ -337,3 +337,13 @@ all three import as Enrolled (the deleted user's row is kept, hidden by the read
 the three `_bk` tables are empty. `programlogo` item 804714375 has no `{files}` row, so no logo is copied. There are
 no external references to program ids in `tool_certificate_issues`, `local_rating`, `enrol` (`program`),
 `local_request_records` or `local_emaillogs`.
+
+### 2026-10-07 - IDN-04: the importer implements the `copies_files` marker (1.9.0 -> 1.9.1, version `2026100701`)
+
+Fix round 1 of branch `claude/owner-decisions-x`. The platform watches `{files}` for every importer (decision IDN-04, signed key
+`framework.file_rehome_copies`); `rehome_logos()` copies each program logo through `file_rehome` in `finalise()`, so without a
+declaration a real apply with a logo would trip `write_outside_declared_tables:files`. The importer now implements
+`local_sentientia_platform\bizlms\copies_files` and names `local_program/programlogo` -> `local_sentientia_programs/programlogo`: a copy
+anywhere else still trips, the run report counts the copies (`files_copied`), and it is not a core write, so `--purge-feature` stays
+available. The plugin requires `local_sentientia_platform >= 2026100701` and takes version `2026100701` (F-85 ledger); no schema
+change. Tests (written, NOT run): marker declared and well formed; the report counts one copy and the tripwire is clean. Both trees identical.

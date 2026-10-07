@@ -9,7 +9,7 @@
  * ---------------
  * ADR-032's two owner-signed files live in moodle-enhancement/docs/cutover/:
  *
- *     bizlms-import-decisions.json       the 109 decisions Nitin signed
+ *     bizlms-import-decisions.json       the decisions Nitin signed (no count here: it goes stale, and the file has grown)
  *     bizlms-capability-allowlist.json   the capability review's allow-list
  *
  * The plugin is deployed to a Moodle tree on its own, where docs/ does not exist, so a PHPUnit test that reads

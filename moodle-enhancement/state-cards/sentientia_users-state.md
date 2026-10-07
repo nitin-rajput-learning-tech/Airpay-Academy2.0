@@ -670,3 +670,11 @@ signed keys `users.logindays_erasure`, `users.sync_history_visibility` and `fram
   cross-tenant admin, saved to `docs/visual-evidence/2026-10-07/` with a README.md. Needs the UAT session; this build did not
   deploy (no copy into C:/xampp). Nitin reviews before any flag is flipped.
 - Both trees are byte-identical.
+
+### 2026-10-07 - fix round 1 after the two reviews (same version `2026100701`)
+
+`sync_access::in_callers_tenant()` (the detail page's tenant bound) parsed `$USER->open_path` itself while `runs_where()` (the
+list) used `tenant::root_for_current_user()`. Both use the helper now, so the list and the detail page cannot disagree about whose
+tenant a caller is (test `test_the_run_list_and_the_detail_page_decide_a_callers_tenant_the_same_way`: well formed, padded,
+non-numeric, empty and zero paths). Both trees identical; written, NOT run. Visual evidence list: `docs/visual-evidence/2026-10-07/identity/README.md`
+(the rejected-lines rule is unflagged and changes native runs, so it needs captures before anything is flipped).

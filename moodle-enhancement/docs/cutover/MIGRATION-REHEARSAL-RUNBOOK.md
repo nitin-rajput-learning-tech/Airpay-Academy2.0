@@ -147,14 +147,14 @@ rows. April values are quoted in section C.
 | exams | exam courses per root; the `exams.reminder_seed` counts; the guest storefront lists no exam or forum pseudo-course | 8 exam courses (`/1` 2, `/77` 5, `/177` 1), 3 closed exam quizzes, 154 enrolment rows on them | CRS-14, F-40 |
 | ratings | skipped counts per reason and area; `local_ratings/review_enable`; the scanner rows are labelled | `unknown_area` about 195 (194 scanner rows), `orphan_item` about 85+, `invalid_rating` 1, `orphan_user` at most 1, `invalid_reaction` 0; `review_enable` 0 | CRS-10, CRS-12, F-41 |
 | users | the F-17 facts; `users:invalid_login_row` | 4,874 error rows, 749 runs, 0 transcript rows; `local_uniquelogins` absent | IDN-02, F-17 |
-| notifications | run BEFORE any step that updates deleted user rows; credential check re-measured; `team_member_copy_body_withheld`; `course_from_moduleid`; many deleted recipients sharing one `timemodified` (preflight warning) | 14,197 sent, 5 not_sent, 839 withheld, 0 masked-with-body; 1,921 manager copies without body; 9,409 rows with a course | COMMS-N1..N3, N6, F-67, F-68 |
+| notifications | run BEFORE any step that updates deleted user rows; credential check re-measured; `team_member_copy_body_withheld`; `course_from_moduleid`; many deleted recipients sharing one `timemodified` (preflight warning); `unresolved_template_rows_naming_a_secret_word` for BOTH tables (a row with no template reference, `notification_infoid` 0 or NULL, is unresolved and loses its body too, so read `credentials_withheld:unresolved_template` against the count of such rows) | 14,197 sent, 5 not_sent, 839 withheld, 0 masked-with-body; 1,921 manager copies without body; 9,409 rows with a course; 0 rows with a reference of 0 or less, no `local_email_logs` table | COMMS-N1..N3, N6, F-67, F-68 |
 | recompletion | run upgrade 2026093001 on the rehearsal copy and time `--preflight` (the 2.59M-row log, `eventname` unindexed, scanned about six times) | 0 rows in all 16 tables | F-56 |
 | cart | per-table counts; `bizlms_order_floor` equals the highest imported order number; one rehearsal-only native test order gets a number above it; `decisions_not_accepted` in the report is empty; any credit or invoice row goes to Finance | history 5 lines and 5 orders, cart_id 5, ledger 0, invoices 0, credits 0; floor 5 | cart.order_number_floor, F-05 |
 | skills | re-run `--preflight` on the live backup; if a level is new or renamed, update the csv BEFORE the hash is pinned | 17 levels, csv filled | LRN-07 |
 | learningplan | plans with an end date in the past and self-enrol on (the enrolment window now refuses new enrolments where BizLMS only displayed dates); `creator_root` and `shared_learner_root` counts | 0 of 17 plans have dates; `orphan_course` 4 | F-59, XC-TENANT-GUESS |
 | program, classroom | rows by tenant method with `creator_root` ids (> 0: stop, ask Nitin, re-pin if he changes a value); native programs with an empty level (ids only) | 1 program on `/77`; classroom 0 rows | XC-TENANT-GUESS, F-58 |
 | evaluation | time the feature; count of implied assignments on identity-protected forms (ids only); pathless forms | 1 completion, 5 values; 0 anonymous completions; form 2 pathless (`/101`, no stored root) | F-29, EV-19, EV-TENANT |
-| request | `local_request_comments` rows (preflight BLOCKS if > 0); `local_learningplan_approval` rows (> 0: a decided approval is not folded into a pending row); optionally imported pending rows whose approver lacks `local/sentientia_request:approve` | all 0 | COMMS-R4, R5, R6 |
+| request | `local_request_comments` rows (preflight BLOCKS if > 0; the owner goes on by writing `request.comments = fold_reviewed`, which re-pins the hash, Q14); `local_learningplan_approval` rows (> 0: a decided approval is not folded into a pending row); optionally imported pending rows whose approver lacks `local/sentientia_request:approve`; `verify()` is import-time only, so run it right after the import, and a later failure of `pending_rows_with_an_approver_whose_requester_or_item_is_gone` means the importer routed a row it should not have | all 0 | COMMS-R4, R5, R6, COMMS-R1 |
 | legacy_logs | row counts; include the `admin_log` settings call in the performance pass | 0 rows in `local_logs` and `local_courseerrors` | F-76 |
 
 ### D. Report lines every rehearsal must print (F-91)
@@ -184,6 +184,13 @@ rows. April values are quoted in section C.
    cleanups): the deleted-at-send rule reads the user's `timemodified` (F-67).
 9. No native GST tax invoice is issued to a real buyer, and `local_sentientia_cart/enabled_tenants` stays '77,177', until Airpay
    Finance answers the six points (migration plan section 11).
+10. COMMS-N7 senders (all flags OFF until Nitin flips them after UAT evidence): the learning-path e-mail is sent by a
+    five-minute poller (`send_path_enrolments`) that stands in for 'the learning-path enrol event' until `path_manager` calls
+    `parity_senders::learning_path_enrolled()` directly; with its flag OFF it reads no row and only moves its marker. On UAT,
+    before `send_course_enrolment` is flipped: check that no core enrol plugin's own welcome message is also sent to the same
+    learner (a double send), and that the manager-copy delivery-log row reads 'A team member has completed ...' with no
+    learner name. The e-mail templates are English only today (shared partials), so do not flip the senders for a Hindi-speaking
+    audience before a per-recipient-language render lands.
 
 ### F. Owner confirmations the decisions require
 
@@ -207,7 +214,9 @@ OFF until he says so. Capture each page with the flag OFF and ON, as a learner a
 
 - cart: `credits.php`, the 'Issued in ERPNext as' invoice view, `return.php` and `history.php` status rendering, the
   admin_orders Staff notes column, the checkout error path, and the catalogue price and basket after `cart.price_source`.
-- users: `sync_runs.php` and `sync_run_detail.php` as a tenant manager (uploader and non-uploader) and as a cross-tenant admin.
+- users: `sync_runs.php` and `sync_run_detail.php`, desktop and mobile, with `sentientia.users.imported_sync_history` OFF and ON,
+  as the uploader, as a same-tenant colleague who did not upload the run, and as a cross-tenant admin. IDN-07's hiding of the
+  rejected lines is NOT behind a flag and changes native runs too, so capture a native run as the colleague (counts, no lines).
 - learningplan, program, classroom, recompletion, skills: `mypaths.php` and the `view.php` cover; `myprograms.php`, the `view.php`
   levels tab, roster 'Completed on' and the logo; the classroom list with Draft and On hold, the edit form, 'No limit', the
   overview, roster completion columns, `my.php` and bulk enrol by audience; recompletion `history.php`, `history_detail.php`,

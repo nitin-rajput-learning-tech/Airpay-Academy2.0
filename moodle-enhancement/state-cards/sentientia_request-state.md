@@ -312,3 +312,21 @@ path, classroom or program, the comments blocker and the unsupported value, `dec
 zero date, `cancelled` in verify, the real registry. The seed's `request.comments` is `fold_reviewed` because it holds comment rows.
 
 Visual evidence owed: My requests, Pending approvals, All requests (desktop and mobile) with the flag ON.
+
+### 2026-10-07 - fix round 1 after the two reviews (same version `2026100701`, no schema change)
+
+Written, NOT run. Both trees identical.
+
+- **COMMS-R1 `verify()` is import-time only.** `pending_rows_with_an_approver_whose_requester_or_item_is_gone` used to read the
+  requester's CURRENT deleted and suspended state and whether the course exists NOW, so a parity or verify re-run after go-live
+  would fail the day a routed requester was suspended or a course deleted (the same class as F-77). A requester now counts only
+  when already deleted or suspended when the row was imported (Moodle stamps `user.timemodified` on suspend and delete, so a
+  stamp after the row's primary map row was written is a later change); a course counts only when it is missing and no
+  `course_deleted` event after the import names it (`logstore_standard_log`); a path, classroom or program that was gone at the
+  import keeps its permanent `itemid` 0 (COMMS-R2), which was import-time already. Run it right after the import. Test:
+  `test_verify_does_not_blame_the_import_for_what_happened_after_go_live` (a requester suspended and deleted after, a course
+  deleted after, and the two negative cases: the same account stamped before the import, a deletion event from before it).
+- **COMMS-R4 `fold_reviewed` recorded.** The importer accepts `request.comments` = `fold_reviewed` in addition to the signed
+  `fold_into_decision_note`; it is what the owner writes after reading the comment rows, and the importer's own test defaults use
+  it. It is not in the decision. It is now in OWNER-DECISIONS as question Q14, in mapping s19 and in the rehearsal runbook, with
+  the note that writing it changes the signed file's hash (a re-approval event). The signed file's `why` is NOT edited here.

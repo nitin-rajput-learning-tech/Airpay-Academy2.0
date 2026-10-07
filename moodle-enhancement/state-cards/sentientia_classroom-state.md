@@ -704,3 +704,14 @@ trees byte-identical for every file touched. NOT run: PHPUnit (the lead re-inits
   `privacy_waitlist_test`, `tenant_scope_test`, `trainer_block_test`, `ics_builder_test` and
   `rule_engine_phase_c_test`. (6) The April rehearsal copy has 0 classrooms, so only the venue steps are proven on
   real data until Stage B.
+
+### 2026-10-07 - IDN-04: the importer implements the `copies_files` marker (1.11.0 -> 1.11.1, version `2026100701`)
+
+Fix round 1 of branch `claude/owner-decisions-x`. The platform watches `{files}` for every importer (decision IDN-04, signed key
+`framework.file_rehome_copies`); `finalise()` copies each classroom logo through `file_rehome`, so without a declaration a real
+apply with a logo would trip `write_outside_declared_tables:files`, and `test_contract_no_side_effects` plus the logo test would
+fail. The importer now implements `local_sentientia_platform\bizlms\copies_files` and names its pair
+`local_classroom/classroomlogo` -> `local_sentientia_classroom/classroomlogo`: a copy anywhere else still trips, the run report counts
+the copies (`files_copied`), and it is not a core write, so `--purge-feature` stays available and leaves them. The plugin requires
+`local_sentientia_platform >= 2026100701` (where the interface lives) and takes version `2026100701` (F-85 ledger); no schema change.
+Tests (written, NOT run): marker declared and well formed; the run report counts one copy and the tripwire is clean. Both trees identical.
