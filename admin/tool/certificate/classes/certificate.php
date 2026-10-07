@@ -28,6 +28,9 @@ use coding_exception;
 use core_reportbuilder\local\helpers\database;
 use MoodleQuickForm;
 
+// SENTIENTIA-CORE-MOD (vendor): direct-access guard added so the repository pre-commit gate (CHECK 2) accepts this patched file.
+defined('MOODLE_INTERNAL') || die();
+
 /**
  * Class certificate.
  *
@@ -621,7 +624,10 @@ class certificate {
             $expirydateoptions);
         $group[] =& $mform->createElement('date_time_selector', 'expirydateabsolute', '');
         // TODO: Missing here "month" and "year" options. See MDL-61624.
-        $group[] =& $mform->createElement('duration', 'expirydaterelative', '', ['defaulunit' => DAYSECS,
+        // SENTIENTIA-CORE-MOD (vendor): the option key was misspelt 'defaulunit', which Moodle <= 5.2 silently
+        // ignored (default unit stayed MINSECS) and Moodle 5.3 turns into a coding_exception because MINSECS
+        // is not one of the offered units. See docs/core-mods/2026-10-08-tool-certificate-duration-defaultunit.md.
+        $group[] =& $mform->createElement('duration', 'expirydaterelative', '', ['defaultunit' => DAYSECS,
             'units' => [DAYSECS, WEEKSECS], ]);
         $mform->addGroup($group, 'expirydateformgroup', get_string('expirydate', 'tool_certificate'), ' ', false);
         $mform->setDefault('expirydatetype', self::DATE_EXPIRATION_NEVER);
