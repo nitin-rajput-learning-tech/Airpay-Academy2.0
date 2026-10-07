@@ -1257,6 +1257,16 @@ final class bizlms_import_test extends \advanced_testcase {
         // world, so the tallies of the other tests do not move.
         $this->put_value(41, 1001, 999999, '1');
 
+        // Strays the run will NOT archive as missing_item or foreign_item, because their completion is not imported,
+        // so the run reports them under another reason and the preflight must not count them:
+        $this->put_value(42, 1005, 888888, '1');        // no such item; completion 1005 is skipped (its user is gone)
+        $this->put_value(43, 5001, 888889, '1');        // no such item; completion of form 5, which is deleted
+        $this->put_value(44, 5001, 201, '1');           // item of form 2; the same deleted form
+        $this->put_form(10, ['timemodified' => 0, 'open_path' => '/1/5']);
+        $this->put_completed(1201, 10, $this->u['u1'], 0);   // no time of its own and none on its form: skipped
+        $this->put_value(45, 1201, 201, '1');           // item of form 2; completion 1201 is skipped (no time)
+        $this->put_value(46, 77777, 888890, '1');       // no such item; there is no completion 77777 at all
+
         // The owner has accepted every reason but missing_item.
         $accepted = array_diff(self::NEEDS_OWNER, ['evaluation:missing_item']);
         [$result, $report] = $this->contract_run(true, ['decisions' => $this->decisions_accepting($accepted)]);
@@ -1272,16 +1282,25 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertSame('missing_item', $this->entry('local_evaluation_value', 41)->reason);
         // A layout item of the form itself stays the harmless kind.
         $this->assertSame('item_not_imported', $this->entry('local_evaluation_value', 12)->reason);
+        // A stray value of a completion that is not imported is reported under the completion's fate, as the run
+        // has always done: it is not "an answer the import lost", the whole response is.
+        foreach ([42, 43, 44, 45] as $valueid) {
+            $this->assertSame('response_not_imported', $this->entry('local_evaluation_value', $valueid)->reason,
+                "value {$valueid}");
+        }
+        $this->assertSame('orphan_completed', $this->entry('local_evaluation_value', 46)->reason);
         // The completion's real answers are unaffected, and no stray value becomes an answer.
         $this->assertSame('B', $this->answers_of(1001)[$this->qid(101)]);
         $this->assertCount(12, $this->answers_of(1001), 'one key per imported question of form 1, no more');
 
-        // The preflight said so before the run.
+        // The preflight said so before the run, and said it of the values the run archives under each reason: one
+        // each (values 41 and 13). Counting every stray row would have said four and three; the strays of completions
+        // that are not imported (42 to 46) belong to the completion's own reason.
         $preflight = $report->to_array()['features']['evaluation']['preflight'];
-        $this->assertSame(1, $preflight['counts']['orphans:local_evaluation_value:item']);
-        $this->assertSame(1, $preflight['counts']['foreign_values']);
-        $this->assertContains('foreign_values:1', $preflight['warnings']);
-        $this->assertContains('orphan_rows:local_evaluation_value:item:1', $preflight['warnings']);
+        $this->assertSame(1, $preflight['counts']['values_missing_item']);
+        $this->assertSame(1, $preflight['counts']['values_foreign_item']);
+        $this->assertContains('values_missing_item:1', $preflight['warnings']);
+        $this->assertContains('values_foreign_item:1', $preflight['warnings']);
         $this->assertSame([], $preflight['blockers'], 'a warning, not a blocker: the rows are reported and archived');
     }
 

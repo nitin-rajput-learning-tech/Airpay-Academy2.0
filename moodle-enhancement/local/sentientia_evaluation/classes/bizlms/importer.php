@@ -327,25 +327,20 @@ final class importer implements framework_importer {
             }
         }
 
-        // Stored answers whose item is gone, or belongs to another form. Each is archived with its own reason
-        // (missing_item, foreign_item) and is for the owner to look at; the count tells them before the run.
+        // Stored answers whose item is gone (values_missing_item), or belongs to another form than the completion
+        // they sit in (values_foreign_item). The run archives each with its own reason (missing_item, foreign_item)
+        // and it is for the owner to look at; the count tells them before the run. Each count is of the values the run
+        // will archive under that reason, not of every stray row (see stray_values()).
         if ($ctx->legacy->exists(self::SRC_VALUES) && $ctx->legacy->exists(self::SRC_ITEMS)
-                && $ctx->legacy->has_column(self::SRC_VALUES, 'item')) {
-            $missing = $ctx->legacy->count(self::SRC_VALUES, ['NOT EXISTS (SELECT 1 FROM {' . self::SRC_ITEMS
-                . '} i WHERE i.id = t.item)', []]);
-            if ($missing > 0) {
-                $pf->count('orphans:' . self::SRC_VALUES . ':item', $missing);
-                $pf->warn('orphan_rows:' . self::SRC_VALUES . ':item:' . $missing);
-            }
-            if ($ctx->legacy->exists(self::SRC_COMPLETED) && $ctx->legacy->has_column(self::SRC_VALUES, 'completed')
-                    && $ctx->legacy->has_column(self::SRC_COMPLETED, 'evaluation')
-                    && $ctx->legacy->has_column(self::SRC_ITEMS, 'evaluation')) {
-                $foreign = $ctx->legacy->count(self::SRC_VALUES, ['EXISTS (SELECT 1 FROM {' . self::SRC_COMPLETED . '} c'
-                    . ' JOIN {' . self::SRC_ITEMS . '} i ON i.id = t.item'
-                    . ' WHERE c.id = t.completed AND i.evaluation <> c.evaluation)', []]);
-                if ($foreign > 0) {
-                    $pf->count('foreign_values', $foreign);
-                    $pf->warn('foreign_values:' . $foreign);
+                && $ctx->legacy->exists(self::SRC_COMPLETED) && $ctx->legacy->exists(self::SRC_FORMS)
+                && $ctx->legacy->has_column(self::SRC_VALUES, 'item')
+                && $ctx->legacy->has_column(self::SRC_VALUES, 'completed')
+                && $ctx->legacy->has_column(self::SRC_COMPLETED, 'evaluation')
+                && $ctx->legacy->has_column(self::SRC_ITEMS, 'evaluation')) {
+            foreach ($this->stray_values($ctx) as $reason => $count) {
+                if ($count > 0) {
+                    $pf->count('values_' . $reason, $count);
+                    $pf->warn('values_' . $reason . ':' . $count);
                 }
             }
         }
@@ -368,6 +363,78 @@ final class importer implements framework_importer {
             $pf->block('native_form_invalid_path:' . count($invalid) . ' ids=' . implode(',', array_slice($invalid, 0, 20)));
         }
         return $pf;
+    }
+
+    /**
+     * How many stored answers the run will archive as missing_item and as foreign_item.
+     *
+     * Read-only. A value is a candidate when its item does not exist (missing_item), or when its item belongs to
+     * another form than the completion the value sits in (foreign_item). Those are few, so each is looked at: the run
+     * archives a candidate under its own reason only when its completion is imported (value_step); a value of a
+     * completion that is missing (orphan_completed), belongs to a deleted form, or is itself skipped (no time, an
+     * unknown responder: response_step) is reported under THAT reason instead, and is not counted here. The rules
+     * are the ones response_step applies, from the same code (form_facts::import_problem()), so the two cannot
+     * disagree.
+     *
+     * @param context $ctx
+     * @return array{missing_item: int, foreign_item: int}
+     */
+    private function stray_values(context $ctx): array {
+        $facts = new form_facts();
+        $verdicts = [];
+        $counts = ['missing_item' => 0, 'foreign_item' => 0];
+        $candidates = [
+            'missing_item' => 'NOT EXISTS (SELECT 1 FROM {' . self::SRC_ITEMS . '} i WHERE i.id = t.item)',
+            'foreign_item' => 'EXISTS (SELECT 1 FROM {' . self::SRC_COMPLETED . '} c JOIN {' . self::SRC_ITEMS
+                . '} i ON i.id = t.item WHERE c.id = t.completed AND i.evaluation <> c.evaluation)',
+        ];
+        foreach ($candidates as $reason => $condition) {
+            $after = 0;
+            do {
+                $page = $ctx->legacy->page(self::SRC_VALUES, $after, legacy_reader::MAX_PAGE, ['id', 'completed'],
+                    [$condition, []]);
+                $unjudged = [];
+                foreach ($page as $id => $value) {
+                    $after = max($after, (int) $id);
+                    if (!isset($verdicts[(int) $value->completed])) {
+                        $unjudged[(int) $value->completed] = (int) $value->completed;
+                    }
+                }
+                $this->judge_completions($ctx, $facts, array_values($unjudged), $verdicts);
+                foreach ($page as $value) {
+                    if ($verdicts[(int) $value->completed]) {
+                        $counts[$reason]++;
+                    }
+                }
+            } while (count($page) >= legacy_reader::MAX_PAGE);
+        }
+        return $counts;
+    }
+
+    /**
+     * Will the run import each of these completions? Fills $verdicts (completion id => bool).
+     *
+     * Imported means what response_step decides: the completion exists, its form exists and is not deleted, and
+     * form_facts::import_problem() finds nothing wrong with it.
+     *
+     * @param context $ctx
+     * @param form_facts $facts
+     * @param int[] $ids Completion ids not judged yet.
+     * @param array<int, bool> $verdicts
+     * @return void
+     */
+    private function judge_completions(context $ctx, form_facts $facts, array $ids, array &$verdicts): void {
+        if (!$ids) {
+            return;
+        }
+        $completions = $ctx->legacy->fetch(self::SRC_COMPLETED, $ids,
+            ['id', 'evaluation', 'timemodified', 'userid', 'evaluatedby', 'anonymous_response']);
+        foreach ($ids as $id) {
+            $completed = $completions[$id] ?? null;
+            $form = $completed === null ? null : $facts->form($ctx, (int) $completed->evaluation);
+            $verdicts[$id] = $completed !== null && $form !== null && (int) ($form->deleted ?? 0) !== 1
+                && $facts->import_problem($ctx, $completed, $form)[0] === null;
+        }
     }
 
     /**
