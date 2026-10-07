@@ -8,6 +8,8 @@ defined('MOODLE_INTERNAL') || die();
 
 use local_sentientia_platform\bizlms\context;
 use local_sentientia_platform\bizlms\decision;
+use local_sentientia_platform\bizlms\legacy_reader;
+use local_sentientia_platform\bizlms\legacymap;
 use local_sentientia_platform\bizlms\preflight;
 use local_sentientia_platform\bizlms\reason;
 use local_sentientia_platform\bizlms\source_spec;
@@ -28,7 +30,14 @@ use local_sentientia_platform\bizlms\source_spec;
  *    inserts log rows; this class calls no mail, message or event API (the static
  *    scan of classes/bizlms/ fails the build if it does).
  *  - Credentials are redacted (see redactor): a message of the users module keeps
- *    its recipient, type, status and timestamps, and loses its subject and body.
+ *    its recipient, type, status and timestamps, and loses its subject and body. So does
+ *    a message whose template or notification type BizLMS has since deleted, except that
+ *    its subject is masked only when it names a secret or account word (COMMS-N1).
+ *  - A copy BizLMS sent to a manager (teammemberid > 0) is imported without its body, and
+ *    the team member's name leaves its subject, because the member is not carried and so
+ *    an erasure of that person could never reach the body (COMMS-N2).
+ *  - courseid comes from the courseid column when there is one, else from moduleid for a
+ *    template of module type 'course' (the production table has no courseid; COMMS-N3).
  *  - A queue row BizLMS never delivered is imported as not_sent, never failed or
  *    suppressed, so it does not light the dashboard's failure tile and nothing
  *    picks it up to send.
@@ -89,7 +98,11 @@ final class importer implements \local_sentientia_platform\bizlms\importer {
      */
     public function sources(): array {
         return [
-            'local_emaillogs' => new source_spec('local_emaillogs', false, [], ['courseid', 'time_created']),
+            // courseid and time_created are the columns the sender task reads that no install file declares;
+            // moduleid and teammemberid are declared by classroom's install.php, and optional here so that a
+            // snapshot without them still imports (a row then has no course link and is no manager copy).
+            'local_emaillogs' => new source_spec('local_emaillogs', false, [],
+                ['courseid', 'time_created', 'moduleid', 'teammemberid']),
             'local_email_logs' => new source_spec('local_email_logs', false, [],
                 ['notification_infoid', 'courseid', 'created_date', 'time_created']),
         ];
@@ -163,6 +176,12 @@ final class importer implements \local_sentientia_platform\bizlms\importer {
                 true, null, ['sent_with_note', 'suppressed']),
             new decision('tenant.unresolved.notifications', 'A row whose tenant cannot be resolved', true, null,
                 ['pathless', 'skip']),
+            new decision('notifications.team_member_copy_body',
+                'The body of a copy BizLMS sent to a manager (teammemberid > 0): withheld, or imported like any other',
+                true, null, ['withhold', 'import']),
+            new decision('notifications.course_link',
+                'Where an imported e-mail takes its course from when local_emaillogs has no courseid column',
+                true, null, ['moduleid_for_course_templates', 'courseid_column_only']),
         ];
     }
 
@@ -237,6 +256,12 @@ final class importer implements \local_sentientia_platform\bizlms\importer {
             }
         }
 
+        if ($legacy->exists('local_emaillogs')) {
+            $this->preflight_unresolved_secret_rows($pf, $legacy);
+            $this->preflight_deleted_recipient_stamps($pf, $legacy);
+            $this->preflight_manager_copies($pf, $legacy);
+        }
+
         if ($legacy->exists('local_email_logs') && $legacy->has_column('local_email_logs', 'to_userid')) {
             $this->warn_count($pf, 'orphan_recipients:local_email_logs', (int) $DB->count_records_sql(
                 'SELECT COUNT(1) FROM {local_email_logs} t LEFT JOIN {user} u ON u.id = t.to_userid WHERE u.id IS NULL'));
@@ -298,6 +323,17 @@ final class importer implements \local_sentientia_platform\bizlms\importer {
                 && $DB->count_records_select(self::TARGET, $where . ' AND sender_userid IS NOT NULL', $imported)) {
             $failures[] = 'sender_imported_although_the_decision_says_not_to';
         }
+        if ($ctx->decision('notifications.team_member_copy_body') === 'withhold'
+                && $this->manager_copies_with_a_body($ctx) > 0) {
+            // COMMS-N2: the body of a copy sent to a manager names the team member, and the member is not carried.
+            $failures[] = 'manager_copy_imported_with_a_body_although_the_decision_says_to_withhold';
+        }
+
+        // COMMS-N1: scrub() is idempotent, so a text that scrub() would still change holds a secret the import let
+        // through (or was not run through scrub() at all).
+        if ($this->imported_text_with_unredacted_secret()) {
+            $failures[] = 'imported_text_with_unredacted_secret';
+        }
 
         // tenant_id is 0 (no tenant) or a registered root. The generic tenant verify checks paths, not roots.
         foreach ($DB->get_fieldset_sql('SELECT DISTINCT tenant_id FROM {' . self::TARGET . '} WHERE ' . $where, $imported) as $root) {
@@ -320,6 +356,155 @@ final class importer implements \local_sentientia_platform\bizlms\importer {
      * @return void
      */
     public function finalise(context $ctx): void {
+    }
+
+    /**
+     * Imported rows that are a copy BizLMS sent to a manager (the source row has teammemberid > 0) and still carry a body.
+     *
+     * @param context $ctx
+     * @return int
+     */
+    private function manager_copies_with_a_body(context $ctx): int {
+        global $DB;
+        if (!$ctx->legacy->exists('local_emaillogs') || !$ctx->legacy->has_column('local_emaillogs', 'teammemberid')) {
+            return 0;
+        }
+        return (int) $DB->count_records_sql(
+            'SELECT COUNT(1) FROM {' . self::TARGET . '} l '
+            . 'JOIN {' . legacymap::TABLE . '} m ON m.targettable = :tt AND m.targetid = l.id '
+            . 'AND m.sourcetable = :st AND m.subkey = :sk '
+            . 'JOIN {local_emaillogs} t ON t.id = m.sourceid '
+            . 'WHERE l.legacy_source = :s AND l.body_html IS NOT NULL AND t.teammemberid > 0',
+            ['tt' => self::TARGET, 'st' => 'local_emaillogs', 'sk' => '', 's' => log_step::SOURCE_LABEL]);
+    }
+
+    /**
+     * Does any imported subject or body still hold a secret that redactor::scrub() would blank?
+     *
+     * Reads a page at a time. A subject of exactly 255 characters is not checked: it may have been cut inside a mask
+     * by the column limit, and the cut mask would then read as a secret.
+     *
+     * @return bool
+     */
+    private function imported_text_with_unredacted_secret(): bool {
+        global $DB;
+        $rows = $DB->get_recordset_select(self::TARGET, 'legacy_source = :s', ['s' => log_step::SOURCE_LABEL], 'id',
+            'id, subject, body_html');
+        try {
+            foreach ($rows as $row) {
+                $texts = [];
+                if (\core_text::strlen((string) $row->subject) < 255) {
+                    $texts[] = (string) $row->subject;
+                }
+                if ($row->body_html !== null) {
+                    $texts[] = (string) $row->body_html;
+                }
+                foreach ($texts as $text) {
+                    $clean = redactor::scrub($text);
+                    if ($clean === null || $clean !== redactor::utf8($text)) {
+                        return true;
+                    }
+                }
+            }
+        } finally {
+            $rows->close();
+        }
+        return false;
+    }
+
+    /**
+     * Rows whose template or notification type is gone and whose text names a secret word (COMMS-N1).
+     *
+     * Their body is withheld whatever it says. The count is an upper bound of the messages that would have copied a
+     * credential into the second table had the rule not been there (the LIKE also matches "spin" and "option"): the
+     * number to read on the live backup, where a deleted welcome template is the case that matters.
+     *
+     * @param preflight $pf
+     * @param legacy_reader $legacy
+     * @return void
+     */
+    private function preflight_unresolved_secret_rows(preflight $pf, legacy_reader $legacy): void {
+        global $DB;
+        foreach (['notification_infoid', 'subject', 'emailbody'] as $column) {
+            if (!$legacy->has_column('local_emaillogs', $column)) {
+                return;
+            }
+        }
+        $joins = '';
+        $gone = '1 = 1';
+        if ($legacy->exists('local_notification_info') && $legacy->has_column('local_notification_info', 'notificationid')
+                && $legacy->exists('local_notification_type')) {
+            $joins = 'LEFT JOIN {local_notification_info} ni ON ni.id = t.notification_infoid '
+                . 'LEFT JOIN {local_notification_type} nt ON nt.id = ni.notificationid ';
+            $gone = '(ni.id IS NULL OR nt.id IS NULL)';
+        }
+        $likes = [];
+        $params = [];
+        foreach (redactor::MENTION_LIKE as $i => $word) {
+            $pattern = '%' . $DB->sql_like_escape($word) . '%';
+            $likes[] = $DB->sql_like('t.subject', ':blmsub' . $i, false);
+            $likes[] = $DB->sql_like('t.emailbody', ':blmbody' . $i, false);
+            $params['blmsub' . $i] = $pattern;
+            $params['blmbody' . $i] = $pattern;
+        }
+        $this->warn_count($pf, 'unresolved_template_rows_naming_a_secret_word:local_emaillogs', (int) $DB->count_records_sql(
+            'SELECT COUNT(1) FROM {local_emaillogs} t ' . $joins
+            . 'WHERE t.notification_infoid > 0 AND ' . $gone . ' AND (' . implode(' OR ', $likes) . ')', $params));
+    }
+
+    /**
+     * Two signs that something rewrote the rows of deleted users, which would make an undelivered message look
+     * delivered (F-67). The "recipient was already deleted when the send ran" rule compares the user's timemodified
+     * with the row's sent date, and anything that updates deleted users' rows (the DPDP anonymiser, an HRMS re-sync, a
+     * clean-up) moves that stamp. Run this feature before any such step; a warning here says it may be too late.
+     *
+     *  - many deleted recipients sharing one timemodified (25 or more, or a quarter of them once there are five)
+     *  - deleted recipients whose timemodified is later than the newest sent date of the table
+     *
+     * @param preflight $pf
+     * @param legacy_reader $legacy
+     * @return void
+     */
+    private function preflight_deleted_recipient_stamps(preflight $pf, legacy_reader $legacy): void {
+        global $DB;
+        foreach (['to_userid', 'status', 'sent_date'] as $column) {
+            if (!$legacy->has_column('local_emaillogs', $column)) {
+                return;
+            }
+        }
+        $from = 'FROM {local_emaillogs} t JOIN {user} u ON u.id = t.to_userid WHERE u.deleted = 1 AND t.status = 1';
+        $deleted = (int) $DB->count_records_sql('SELECT COUNT(DISTINCT u.id) ' . $from);
+        if ($deleted === 0) {
+            return;
+        }
+        $top = $DB->get_records_sql(
+            'SELECT u.timemodified AS stamp, COUNT(DISTINCT u.id) AS people ' . $from
+            . ' GROUP BY u.timemodified ORDER BY people DESC', [], 0, 1);
+        $people = $top ? (int) reset($top)->people : 0;
+        if ($people >= 25 || ($people >= 5 && $people * 4 >= $deleted)) {
+            $pf->warn('many_deleted_recipients_share_one_timemodified:local_emaillogs:' . $people . 'of' . $deleted);
+        }
+        $newest = (int) $DB->get_field_sql('SELECT MAX(t.sent_date) FROM {local_emaillogs} t WHERE t.status = 1');
+        if ($newest > 0) {
+            $this->warn_count($pf, 'deleted_recipients_modified_after_the_newest_send:local_emaillogs', (int) $DB->count_records_sql(
+                'SELECT COUNT(DISTINCT u.id) ' . $from . ' AND u.timemodified > :newest', ['newest' => $newest]));
+        }
+    }
+
+    /**
+     * How many rows are copies BizLMS sent to a manager (teammemberid > 0): they import without their body (COMMS-N2).
+     *
+     * @param preflight $pf
+     * @param legacy_reader $legacy
+     * @return void
+     */
+    private function preflight_manager_copies(preflight $pf, legacy_reader $legacy): void {
+        global $DB;
+        if (!$legacy->has_column('local_emaillogs', 'teammemberid')) {
+            return;
+        }
+        $this->warn_count($pf, 'manager_copies:local_emaillogs', (int) $DB->count_records_select(
+            'local_emaillogs', 'teammemberid > 0'));
     }
 
     /**

@@ -40,7 +40,13 @@ use local_sentientia_platform\bizlms\tenant_resolver;
  *    then 0. The template path never comes first: BizLMS matched templates with an
  *    unbounded LIKE, and it never replaces a path that is there but does not parse.
  *  - credentials: see redactor. A credential row keeps its recipient, type, status
- *    and timestamps and loses its subject and body.
+ *    and timestamps and loses its subject and body. A row whose template or type is gone loses its body whatever
+ *    it says (COMMS-N1); its subject is masked only when it names a secret or account word.
+ *  - a copy BizLMS sent to a manager (teammemberid > 0) keeps its recipient, type, status and timestamps and
+ *    loses its body, and the team member's name leaves the subject (COMMS-N2, decision
+ *    notifications.team_member_copy_body = withhold).
+ *  - courseid: the column when it is there and the course exists; else, for a template of module type 'course',
+ *    the row's moduleid when that course exists (COMMS-N3, decision notifications.course_link).
  *  - source timestamps are kept; nothing is stamped with the time of the import.
  *
  * Each step holds a small cache of template facts across its batches. The cache
@@ -77,14 +83,22 @@ abstract class log_step extends step {
     /** @var array<int, \stdClass> Deleted recipients of the current batch: user id => deleted, timemodified, lastaccess. */
     private array $deletedusers = [];
 
+    /** @var array<int, \stdClass> Team members of the manager copies of the current batch: user id => firstname, lastname. */
+    private array $teammembers = [];
+
+    /** The placeholder that takes a team member's name out of the subject of a manager copy. */
+    public const TEAM_MEMBER_PLACEHOLDER = '[team member]';
+
     /**
      * Read one source row into the shape every step maps from.
      *
      * @param \stdClass $row
      * @return array{recipient: int, sender: int, courseid: int, subject: string, body: string, delivered: bool,
-     *     sentdate: int, created: int[], prefersent: bool, infoid: int, moduletype: string}
+     *     sentdate: int, created: int[], prefersent: bool, infoid: int, moduletype: string, moduleid: int,
+     *     teammember: int}
      *     created lists the row's own creation timestamps in priority order; prefersent says that a delivered row
-     *     takes its sent date as its creation time (local_emaillogs does).
+     *     takes its sent date as its creation time (local_emaillogs does). moduleid is the row's moduleid as a
+     *     number (0 when it is not one) and teammember the member a manager copy is about (0 when it is no copy).
      */
     abstract protected function candidate(\stdClass $row): array;
 
@@ -124,7 +138,10 @@ abstract class log_step extends step {
             'sender' => (bool) $ctx->decision('notifications.keep_sender'),
             'deleted' => (string) $ctx->decision('notifications.deleted_recipient_sent'),
             'unresolved' => (string) $ctx->decision('tenant.unresolved.notifications'),
+            'teamcopy' => (string) $ctx->decision('notifications.team_member_copy_body'),
+            'courselink' => (string) $ctx->decision('notifications.course_link'),
         ];
+        $this->load_team_members($candidates, $settings['teamcopy'], $ctx);
 
         $out = [];
         foreach ($candidates as $id => $candidate) {
@@ -138,7 +155,8 @@ abstract class log_step extends step {
      *
      * @param int $id Source row id.
      * @param array $c The candidate.
-     * @param array{bodies: bool, sender: bool, deleted: string, unresolved: string} $settings
+     * @param array{bodies: bool, sender: bool, deleted: string, unresolved: string, teamcopy: string,
+     *     courselink: string} $settings
      * @param context $ctx
      * @return outcome
      */
@@ -177,7 +195,13 @@ abstract class log_step extends step {
 
         // Subject and body, with credentials redacted.
         $why = $this->credential_reason($c, $template);
-        if ($why !== null) {
+        if ($why === 'unresolved_template') {
+            // The template or its type is gone, so what the message was cannot be known: the body is withheld
+            // whatever it says, and the subject is masked only when it names a secret or an account word.
+            $subject = $this->subject_of_unresolved_template($c['subject'], $warnings);
+            $body = null;
+            $warnings[] = 'credentials_withheld:' . $why;
+        } else if ($why !== null) {
             $subject = redactor::SUBJECT_MASK;
             $body = null;
             $warnings[] = 'credentials_withheld:' . $why;
@@ -196,6 +220,18 @@ abstract class log_step extends step {
                 }
             }
         }
+
+        // A copy BizLMS sent to a manager (teammemberid > 0) is about somebody else: its body names the team member,
+        // and the member is not carried, so erasing that person could never reach the body (COMMS-N2). The member's
+        // own row already holds the same message, and the legacy table keeps the exact original. The member's name
+        // goes from the subject too.
+        if ($c['teammember'] > 0 && $settings['teamcopy'] === 'withhold') {
+            $body = null;
+            if ($subject !== redactor::SUBJECT_MASK) {
+                $subject = $this->without_member_name($subject, $this->teammembers[$c['teammember']] ?? null);
+            }
+            $warnings[] = 'team_member_copy_body_withheld';
+        }
         $subject = $ctx->text->fit($subject, 255, 'subject');
 
         [$timecreated, $timesent, $timewarning] = $this->times($c);
@@ -203,12 +239,17 @@ abstract class log_step extends step {
             $warnings[] = $timewarning;
         }
 
+        [$courseid, $coursewarning] = $this->course_of($c, $template, $settings['courselink'], $ctx);
+        if ($coursewarning !== null) {
+            $warnings[] = $coursewarning;
+        }
+
         $shortname = $template['shortname'] ?? null;
         $fields = (object) [
             'rule_id' => null,
             'legacy_type' => ($shortname !== null && $shortname !== '') ? $ctx->text->fit($shortname, 100, 'legacy_type') : null,
             'userid' => $c['recipient'],
-            'courseid' => ($c['courseid'] > 0 && $ctx->lookups->course_exists($c['courseid'])) ? $c['courseid'] : null,
+            'courseid' => $courseid,
             'tenant_id' => $tenantid,
             'channel' => 'email',
             'subject' => $subject,
@@ -248,6 +289,8 @@ abstract class log_step extends step {
                 return 'template_placeholder';
             }
         }
+        // The row's own moduletype is empty on every April 2026 production row (the BizLMS users writer never sets it),
+        // so this signal never fires there; the template and its type are what carry the answer (COMMS-N1).
         if (redactor::is_users_module(null, null, $c['moduletype'])) {
             return 'users_module';
         }
@@ -256,10 +299,33 @@ abstract class log_step extends step {
         if (redactor::template_uses_password($c['subject'], $c['body'])) {
             return 'row_placeholder';
         }
+        // BizLMS hard-deletes templates, so a row that points at a template or a type that is gone can have been the
+        // welcome message with the plaintext password. Nothing proves it was not: the whole row is treated as one
+        // (decision COMMS-N1, option C). A row that never pointed at a template (an ILT reminder or a custom mail)
+        // has nothing to be "gone", and keeps the earlier rule: only a subject that reads like an account message.
+        if ($c['infoid'] > 0 && ($template === null || $template['pluginname'] === null)) {
+            return 'unresolved_template';
+        }
         if ($template === null && redactor::subject_suggests_credentials($c['subject'])) {
             return 'unresolved_template';
         }
         return null;
+    }
+
+    /**
+     * The subject of a row whose body is withheld because its template is gone: masked when it names a secret or an
+     * account word, otherwise scrubbed like any other subject (COMMS-N1).
+     *
+     * @param string $subject
+     * @param string[] $warnings Appended to.
+     * @return string The masked or scrubbed subject; the mask when the scrub could not run.
+     */
+    private function subject_of_unresolved_template(string $subject, array &$warnings): string {
+        if (redactor::subject_suggests_credentials($subject) || redactor::text_mentions_secret($subject)) {
+            return redactor::SUBJECT_MASK;
+        }
+        $clean = $this->scrubbed($subject, $warnings);
+        return $clean ?? redactor::SUBJECT_MASK;
     }
 
     /**
@@ -321,6 +387,102 @@ abstract class log_step extends step {
     }
 
     /**
+     * Read the names of the team members of the manager copies of a batch (firstname, lastname), once per batch.
+     *
+     * Only needed when the decision withholds the body of a manager copy: the member's name then leaves the subject.
+     * A member whose user row is gone has nothing to scrub (the body is withheld all the same).
+     *
+     * @param array<int, array> $candidates
+     * @param string $teamcopy The decision notifications.team_member_copy_body.
+     * @param context $ctx
+     * @return void
+     */
+    private function load_team_members(array $candidates, string $teamcopy, context $ctx): void {
+        $this->teammembers = [];
+        if ($teamcopy !== 'withhold') {
+            return;
+        }
+        $need = [];
+        foreach ($candidates as $c) {
+            $member = (int) $c['teammember'];
+            if ($member > 0) {
+                $need[$member] = $member;
+            }
+        }
+        if ($need) {
+            $this->teammembers = $ctx->legacy->fetch('user', array_values($need), ['id', 'firstname', 'lastname']);
+        }
+    }
+
+    /**
+     * A subject without the name of the team member it is about.
+     *
+     * The member's first and last name, and each word of them of two letters or more, are replaced as whole words,
+     * case-insensitively, by TEAM_MEMBER_PLACEHOLDER; the longest name goes first so "Priya Singh" is not left as
+     * "[team member] Singh".
+     *
+     * @param string $subject
+     * @param \stdClass|null $member The member's user row (firstname, lastname), null when it is gone.
+     * @return string
+     */
+    private function without_member_name(string $subject, ?\stdClass $member): string {
+        if ($member === null) {
+            return $subject;
+        }
+        $names = [];
+        foreach ([(string) ($member->firstname ?? ''), (string) ($member->lastname ?? '')] as $name) {
+            $name = trim(preg_replace('/\s+/u', ' ', $name) ?? '');
+            if ($name === '') {
+                continue;
+            }
+            $names[] = $name;
+            foreach (explode(' ', $name) as $word) {
+                if (\core_text::strlen($word) >= 2) {
+                    $names[] = $word;
+                }
+            }
+        }
+        $names = array_unique(array_filter($names, static fn($n) => \core_text::strlen($n) >= 2));
+        usort($names, static fn($a, $b) => strlen($b) <=> strlen($a));
+        foreach ($names as $name) {
+            $replaced = preg_replace('/(?<![\p{L}\p{N}_])' . preg_quote($name, '/') . '(?![\p{L}\p{N}_])/iu',
+                self::TEAM_MEMBER_PLACEHOLDER, $subject);
+            if ($replaced !== null) {
+                $subject = $replaced;
+            }
+        }
+        return $subject;
+    }
+
+    /**
+     * The course an imported message belongs to (COMMS-N3).
+     *
+     * 1. The courseid column when it is there, is above zero and the course exists. A custom mail has -1, and a
+     *    course BizLMS has since deleted is gone: neither is a link.
+     * 2. Otherwise, with the decision notifications.course_link = moduleid_for_course_templates: the production
+     *    local_emaillogs has no courseid column at all, and for a template of module type 'course' its moduleid IS the
+     *    course id. It is used when it is above 1 (1 is the site) and that course exists.
+     * 3. Otherwise none.
+     *
+     * @param array $c The candidate.
+     * @param array|null $template Facts about its template, null when it is gone.
+     * @param string $link The decision value.
+     * @param context $ctx
+     * @return array{0: int|null, 1: string|null} [course id or null, warning code or null]
+     */
+    private function course_of(array $c, ?array $template, string $link, context $ctx): array {
+        if ($c['courseid'] > 0 && $ctx->lookups->course_exists($c['courseid'])) {
+            return [$c['courseid'], null];
+        }
+        if ($link === 'moduleid_for_course_templates' && $template !== null
+                && strtolower(trim($template['moduletype'])) === 'course'
+                && $c['moduleid'] > 1 && $ctx->lookups->course_exists($c['moduleid'])) {
+            return [$c['moduleid'], 'course_from_moduleid'];
+        }
+        return [null, null];
+    }
+
+    /**
      * Scrub a subject or body; record what happened.
      *
      * @param string $text
@@ -369,7 +531,9 @@ abstract class log_step extends step {
                 $warning = 'no_source_timestamp';
             }
         }
-        return [$created, $sent > 0 ? $sent : null, $warning];
+        // timesent is when BizLMS DELIVERED the message (install.xml: "NULL when it never did"). A row it never
+        // delivered can still carry a sent_date, and that is not a delivery time (F-63).
+        return [$created, ($c['delivered'] && $sent > 0) ? $sent : null, $warning];
     }
 
     /**
