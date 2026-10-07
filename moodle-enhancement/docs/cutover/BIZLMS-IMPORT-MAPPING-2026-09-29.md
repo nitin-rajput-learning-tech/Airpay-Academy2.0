@@ -8,6 +8,13 @@
 verifier corrected the mapper, the corrected rule is written into the tables below, and each feature
 lists what was corrected.
 
+**2026-10-07 update.** The owner questions still open after the 2026-09-30 signing were decided under Nitin's
+delegation of 2026-10-07 ("self review and decide recommended option"). `docs/cutover/bizlms-import-decisions.json`
+carries them (status `accepted`, why starts `[delegated 2026-10-07]`), and
+`docs/cutover/OWNER-DECISIONS-2026-10-07.md` lists all 84 with where each is implemented. Every correction made to
+this document because of one is marked `2026-10-07 decision <id>`; `F-<nn>` is a follow-up item in the annex of that
+document. Where a section below still lists an open question, a marked line answers it.
+
 Path roots used in every citation:
 
 - **BZ** = `D:/Claude Local/Moodle Backup/01-production-codebase/html/` (production 4.1.2 snapshot)
@@ -34,11 +41,11 @@ These rules are not repeated in the feature sections.
 | R6 | The per-feature `legacy_id`, `legacy_ref`, `legacy_source` (as a key), `legacykey`, `legacyid` columns, UNIQUE legacy indexes and the `local_sentientia_classroom_legacy` / skills `import_map` tables proposed by the maps are **not built**. The ADR-032 map (`local_sentientia_legacymap`, key `sourcetable, sourceid, subkey`) is the idempotence key. "Key: map" below means that. |
 | R7 | A legacy value is copied into Sentientia only if a Sentientia reader shows it, an engine uses it, or a code fix in this document adds a reader for it. Everything else stays in the legacy table, which is the archive. So `legacy_json`, `legacy_meta`, `audience_json` and the classroom `sourcedata` archive proposed by the maps are dropped. |
 | R8 | Unknown enum values found in preflight block the feature until the decisions file maps them. The importer never guesses a status. |
-| R9 | Every new column that names a person is declared in its plugin's privacy provider (metadata, export, erase or anonymise), with en and hi strings. New actor-column names are added to `USER_COLUMNS` (`SE local/sentientia_platform/tests/privacy_coverage_test.php:52-63`). |
+| R9 | Every new column that names a person is declared in its plugin's privacy provider (metadata, export, erase or anonymise), with en and hi strings. New actor-column names are added to `USER_COLUMNS` (`SE local/sentientia_platform/tests/privacy_coverage_test.php:52-63`). 2026-10-07 decision F-86: `usercreated`, `usermodified`, `modified_by` and `trainerid` are added in ONE change after the program merge, in both trees, together with the provider declarations the guard then asks for (emails, talent, the ten config-table plugins, the users sync tables, classroom, programs; actor columns anonymised to 0 on erasure). It does not block Stage B. |
 | R10 | Reports carry ids and codes only. |
 | R11 | Deleted users' rows are imported as history unless the section says otherwise. Readers named in the section filter `u.deleted = 0` or show a badge. |
 | R12 | A derived group (a row built from many source rows) is keyed by a non-personal integer: the group's own integer key (a cart identifier) or `MIN(id)` of the group. Never a user id. |
-| R13 | The importer never deletes a row anywhere, and never writes a legacy table. Where a map proposed deleting a duplicate, the duplicate is recorded as `merged` and left in place. |
+| R13 | The importer never deletes a row anywhere, and never writes a legacy table. Where a map proposed deleting a duplicate, the duplicate is recorded as `merged` or `folded` and left in place (2026-10-07 decision CRS-08: `folded` when the survivor is a native core row or a row of another step, as in course_tags). |
 | R14 | Readers that fall back to a legacy table have that fallback removed in the release that ships the feature's importer. |
 | R15 | Id policy per step: **P** = PRESERVE (legacy id kept, collision blocks, adopt rule of ADR-032), **M** = MAP (new id, resolved through the map). |
 
@@ -136,7 +143,8 @@ hold rows visible until an owner exists.
 | cohort_scope | sentientia_org | org | yes | |
 | course_lookups | sentientia_courses | org | yes | `course.open_*` backfill is a declared core write |
 | course_tags | sentientia_courses | none | yes | `tag_instance` update is a declared core write |
-| legacy_logs | sentientia_core | none | no | |
+| enrolments | sentientia_courses | none | yes | gap G6; core writes `enrol` and `user_enrolments` (2026-10-07 decision F-35: this row was missing) |
+| legacy_logs | sentientia_core (target `local_sentientia_admin_log`) | org | no | 2026-10-07 decision F-74: the registry refuses a `local_sentientia_legacy*` name and requires `org` for tenant resolution (`tenant_resolution_needs_org`) |
 | exams | sentientia_exams | org | yes | derived from core course rows |
 | users | sentientia_users | org | no | |
 | notifications | sentientia_emails | none | no | largest local table (13 072 rows) |
@@ -153,9 +161,9 @@ hold rows visible until an owner exists.
 "Atomic" = the importer returns `atomic() = true`; the runner uses one outer transaction when the
 preflight total is under the threshold (ADR-032, Transactions).
 
-Run order (`--all` sorts it): org; org_roles, cohort_scope, course_lookups, course_tags, legacy_logs,
-exams, users, notifications, recompletion, cart; skills; classroom, program; learningplan; evaluation,
-request, ratings.
+Run order (`--all` sorts it): org; org_roles, cohort_scope, course_lookups, course_tags, enrolments,
+legacy_logs, exams, users, notifications, recompletion, cart; skills; classroom, program; learningplan;
+evaluation, request, ratings (2026-10-07 decision F-35: `enrolments` added).
 
 ---
 
@@ -205,9 +213,20 @@ favicon, footer_text, email_*, support_email, help_url, hero_*, custom_css -> NU
   row is rewritten with the corrected map above.
 - **Order:** org rows ordered by depth then id (parents first); then the logo copy in `finalise()`;
   then `reset_sequence`; then purge the org caches.
+  2026-10-07 decision IDN-04: the logo copy is a reviewed side effect (copy-only, insert-only, idempotent, the
+  originals are never touched). The org importer declares its source and target file areas through the
+  `copies_files` marker instead of a `core_writes` entry; `--purge-feature` leaves the copy; the run report counts it
+  (`files_copied:local_sentientia_org/org_logo=N`). 2026-10-07 decision F-21: file content is required on the target,
+  so Stage B restores `filedir` together with the database. April: 14 organisations reference a logo itemid but only 5
+  legacy logo file rows exist, so expect a `logo_file_missing` warning for the itemids that have no file row.
 - **Tenant rule:** `path` copied verbatim. Its root (first segment) must pass `tenant::assert_valid`.
   Rows with an empty or NULL path are skipped (`not_org_row`): `BZ local/costcenter/costcentersettings.php:67-72`
   can insert a row that carries only `multipleorg`.
+  2026-10-07 decision IDN-03: `org:invalid_tenant_root` (a root other than 1, 77 or 177) and `org:unmapped_enum`
+  (a `visible` value other than 0 or 1) are needs-owner reasons and are NOT pre-accepted; both stay fail-closed.
+  April: 213 organisations with roots 1 (206 rows), 77 (2) and 177 (5), no empty path and `visible` 1 on every row,
+  so neither fires. A hit at Stage B stops the run: Nitin decides (a new tenant or a re-parent), then the accepted
+  reason or enums entry is added with its count, a re-approval event.
 - **Status mapping:** `visible` 1 = shown, 0 = hidden, on both sides; `org_manager::get_children`
   filters `visible = 1` (`SE local/sentientia_org/classes/org_manager.php:131-132`).
 
@@ -236,6 +255,11 @@ favicon, footer_text, email_*, support_email, help_url, hero_*, custom_css -> NU
   `sentientia_org:manage`, `sentientia_org:manage_multiorganizations` or `sentientia_platform:crosstenant`,
   and never revokes. `crosstenant` goes by hand to the named platform role. If the Stage B inventory shows
   only archetype-default grants on roles 1 and 9, the allow-list is empty.
+  2026-10-07 decision IDN-05: the platform role is created by `tools/uat/adr031_crosstenant_role.php` (`--dry-run`,
+  then `--apply`; migration plan step 4f-f) at Stage B and at cutover, with the one capability
+  `local/sentientia_platform:crosstenant` and NO members. Members are added by hand at
+  `/admin/roles/assign.php?contextid=1` only when Nitin names them, so the site admins stay the only cross-tenant
+  callers until then (signed key `org.crosstenant_platform_role`).
 - Do not flip `org_legacy` or enable `org_dualwrite`; Gate C keeps legacy ON
   (`SE local/sentientia_core/classes/org.php:44-58`).
 - `SE local/sentientia_org/classes/task/sync_cohorts.php:51-101` adds cohort members with events; it
@@ -293,7 +317,8 @@ junk row skipped; long shortname truncated with a warning; pre-written row adopt
 ### Open questions
 
 - What did `multipleorg` (`BZ local/costcenter/costcentersettings.php:57-73`), `childpermission` and
-  `shell` mean on live, and must they be preserved?
+  `shell` mean on live, and must they be preserved? Answered 2026-09-30: not copied, they stay in `local_costcenter`
+  (signed `org.unmapped_columns = not_copied`).
 
 ---
 
@@ -306,7 +331,7 @@ junk row skipped; long shortname truncated with a warning; pre-written row adopt
 
 | Source | Target | Key |
 |---|---|---|
-| local_costcenter_permissions (`BZ local/costcenter/db/install.xml:43-62`) | core `role_assignments` at `context_coursecat(local_costcenter.category)` + one audit row (`SE local/sentientia_roles/db/install.xml:5-48`) | map, subkey `pos:<n>` per exploded user (n = the 1-based position in the comma list, never the user id: legacymap.subkey holds no personal data, and outcome::insert() refuses a `user:` subkey); target skipped when `(roleid, contextid, userid, component='', itemid=0)` exists (outcome `merged`) |
+| local_costcenter_permissions (`BZ local/costcenter/db/install.xml:43-62`) | core `role_assignments` at `context_coursecat(local_costcenter.category)` + one audit row (`SE local/sentientia_roles/db/install.xml:5-48`) | map, subkey `pos:<n>` per exploded user (n = the 1-based position in the comma list, never the user id: legacymap.subkey holds no personal data, and outcome::insert() refuses a `user:` subkey); target skipped when `(roleid, contextid, userid, component='', itemid=0)` exists (outcome `folded`, reason `already_assigned`; 2026-10-07 decision F-13: the code folds, it does not merge) |
 | local_org_dept_roles (`BZ local/assignroles/db/install.xml:6-21`) | same | same |
 
 Both tables are expected to be empty. Current BizLMS code only deletes from
@@ -339,6 +364,15 @@ audit row: action 'role_assigned', roleshortname snapshot, contextid, targetuser
 - **Tenant:** implicit through the category context. The audit row's `open_path` is the actor's, because
   the audit list is scoped by actor or target path (`SE local/sentientia_roles/classes/role_manager.php:546-575`).
 - **Status:** `value` 1 = assigned (assumed). No other state.
+- **Users outside or without a tenant (2026-10-07 decisions IDN-01 and F-13):** a user outside the organisation's
+  tenant is left out of the row (warning `user_outside_org_tenant`). A user with no tenant path is left out too
+  (warning `user_without_tenant`), because ADR-031 decisions 4 and 6 say no tenant means nothing: a scoped
+  `roles:assign` may only assign to users in the actor's own tenant, so the native UI could never make that grant,
+  and BizLMS never read these tables. A row with nobody left is skipped with the needs-owner reason
+  `user_outside_org_tenant` (checked first) or `user_without_tenant`; a role without the coursecat level is skipped
+  `role_not_assignable`. None of the three is pre-accepted (IDN-02): the owner accepts each with its Stage B count.
+  Signed key `org_roles.user_without_tenant = skip_fail_closed`. April: both tables are empty and the only pathless
+  live user is a site admin, who already holds every capability at every category, so the change alters nothing today.
 - **Side effects:** insert directly; never `role_assign()` (it fires `role_assigned`, as
   `BZ local/assignroles/classes/local/assignrole.php:39-45` does). Mark contexts dirty in `finalise()`.
 
@@ -350,8 +384,8 @@ audit row: action 'role_assigned', roleshortname snapshot, contextid, targetuser
 
 ### Fixture
 
-Legacy permissions with a comma-listed userid, a roleid 0 row, a deleted user, a value 0 row; one
-`local_org_dept_roles` row. Assert role assignments at the right category context, audit rows, no
+Legacy permissions with a comma-listed userid, a roleid 0 row, a deleted user, a user with no tenant path (skipped
+`user_without_tenant`, 2026-10-07 decision IDN-01), a value 0 row; one `local_org_dept_roles` row. Assert role assignments at the right category context, audit rows, no
 `role_assigned` event, second run no-op.
 
 ### Verification corrections applied
@@ -360,7 +394,10 @@ Legacy permissions with a comma-listed userid, a roleid 0 row, a deleted user, a
 
 ### Open questions
 
-- What does `local_costcenter_permissions.value = 1` mean, and is `userid` really a comma list?
+- What does `local_costcenter_permissions.value = 1` mean, and is `userid` really a comma list? 2026-10-07 decision
+  F-13: answered by data, not by meaning: the April production copy has 0 rows in `local_costcenter_permissions` and
+  in `local_org_dept_roles`, and all 11 restored category-level role assignments are same-tenant (roles 9 and 10).
+  Re-check both counts at Stage B.
 
 ---
 
@@ -398,6 +435,11 @@ usermodified, timemodified -> same (BZ :14-15)
   row id (`BZ local/groups/lib.php:292-293`), so edits overwrote whichever row has `id = cohortid`.
   Cross-check `open_path` against the cohort context and report mismatches.
 - **Side effects:** no cohort API calls (`BZ local/groups/lib.php:256-261,294-298,374-380` fire events).
+  2026-10-07 decision IDN-04: the description file copy goes through the `copies_files` marker (copy-only, idempotent,
+  originals untouched, left in place by `--purge-feature`). 2026-10-07 decision F-21: `finalise()` throws
+  `description_files_not_copied` when a description file row has no content on the target, so Stage B restores
+  `filedir` with the database (April: 0 description files; the one `local_groups` row has a valid `/77` path on a
+  system-context cohort and is reported as a mismatch).
 
 ### Schema additions
 
@@ -442,7 +484,8 @@ None beyond the ADR.
 local_course_types -> local_sentientia_course_type
   id -> id (preserve; course.open_identifiedas keeps pointing at it)             (BZ :42)
   name -> name; shortname -> shortname (spaces stripped at write, BZ local/courses/classes/external.php:1618) (BZ :43-44)
-  orgid -> tenant_path   0 -> '' (all tenants, BZ local/courses/coursestypes.php:70-71); N -> local_costcenter.path of N (BZ :45)
+  orgid -> tenant_path   0 -> NULL (all tenants, BZ local/courses/coursestypes.php:70-71); N -> local_costcenter.path of N;
+                         an unresolved org -> NULL (BZ :45). 2026-10-07 decision F-35: tenant_path is NULLABLE and NULL = no tenant
   active -> active       1 enabled, 0 disabled (toggle BZ external.php:1733-1736)    (BZ :46)
   id IN (1..5) -> protected = 1   (no edit/delete, BZ coursestypes.php:59-63)
   timecreated, timemodified, usercreated, usermodified -> same                     (BZ :47-50)
@@ -451,7 +494,7 @@ local_custom_category -> local_sentientia_course_category
   id -> id (preserve; course.open_categoryid)                                      (BZ :8)
   fullname, shortname -> same                                                      (BZ :9-10)
   parentid -> parentid   0 = top (BZ local/custom_category/classes/lib.php:14)     (BZ :11)
-  costcenterid -> tenant_path   root of local_costcenter.path of costcenterid; NULL -> '' (set from the form or
+  costcenterid -> tenant_path   root of local_costcenter.path of costcenterid; NULL -> NULL (set from the form or
                                 USER.open_path, BZ local/custom_category/classes/lib.php:10-11) (BZ :12)
   path -> path   category-tree path '/<parent>/<id>', not an org path (classes/lib.php:37-42) (BZ :17)
   depth -> depth (BZ :18); timecreated, timemodified, usercreated, usermodified -> same (BZ :13-16)
@@ -460,8 +503,8 @@ local_dashboardcourses -> local_sentientia_featured_courses
   courseids of EVERY row (union, explode ',', de-duplicate) -> one row per courseid; skip ids with no course
      (the form inserts whenever id <= 0, BZ local/courses/classes/form/adddashboardcourse_form.php:132-136;
       the reader FIND_IN_SETs across all rows, BZ local/courses/renderer.php:499-504)
-  costcenterid -> 0 at insert, then finalise() calls local_sentientia_courses_rehome_global_featured()
-     (SE local/sentientia_courses/db/upgradelib.php:75-131)
+  costcenterid -> the course's tenant, homed by the course's open_path at write time; there is NO finalise() re-home
+     call (2026-10-07 decision F-35; the rule is that of SE local/sentientia_courses/db/upgradelib.php:75-131)
   sort_order -> rank by course.id DESC x10 (reproduces renderer.php:504; step size as featured_manager.php:145,278)
   label -> NULL; timecreated -> import time (no source timestamp)
 
@@ -469,14 +512,17 @@ local_coursedetails -> course.open_* (set_field, only where NULL or 0)
   cost -> open_cost; coursecompletiondays -> open_coursecompletiondays; coursecreator -> open_coursecreator;
   identifiedas -> open_identifiedas; requestcourseid -> open_requestcourseid; skill -> open_skill
      (BZ :69,:72,:73,:75,:76,:82; SE substrate.php:96-102)
-  proficiencylevel -> open_level; credits (CHAR) -> open_points  candidates, verify on data (BZ :81,:68)
+  proficiencylevel -> open_level; credits (CHAR) -> open_points  candidates, verify on data (BZ :81,:68):
+     LEFT in the legacy table and counted in preflight (2026-10-07 decisions CRS-06 and CRS-15,
+     `course_lookups.coursedetails_candidate_columns = leave`)
   costcenterid -> ignored (course.open_path is authoritative)
   enrollstartdate, enrollenddate, duration, prerequisite_courses -> stay in the legacy table (BZ :70-71,:74,:83)
 ```
 
 ### Tenant, status, side effects
 
-- **Tenant:** course types and categories get `tenant_path` as above, validated with `tenant::assert_valid`.
+- **Tenant:** course types and categories get `tenant_path` as above (NULL = no tenant, 2026-10-07 decision F-35),
+  validated with `tenant::assert_valid`.
   Featured rows are re-homed by the course's `open_path` (ADR-031 follow-up rule, `upgradelib.php:56-71`).
 - **Status:** `active` as above. Featured widget shows only `course.visible = 1` and hides enrolled
   courses (`SE local/sentientia_courses/classes/featured_manager.php:216-229`).
@@ -486,7 +532,7 @@ local_coursedetails -> course.open_* (set_field, only where NULL or 0)
 ### Schema additions
 
 - `local_sentientia_course_type`: id (preserved), name CHAR255, shortname CHAR255, tenant_path CHAR255
-  NOT NULL DEFAULT '', active INT1 DEFAULT 1, protected INT1 DEFAULT 0, usercreated, usermodified,
+  NULL (NULL = no tenant; 2026-10-07 decision F-35 corrected NOT NULL DEFAULT ''), active INT1 DEFAULT 1, protected INT1 DEFAULT 0, usercreated, usermodified,
   timecreated, timemodified; indexes on tenant_path and active.
 - `local_sentientia_course_category`: id (preserved), fullname, shortname, parentid, path CHAR512,
   depth, tenant_path, usercreated, usermodified, timecreated, timemodified; indexes on parentid and
@@ -513,7 +559,7 @@ into empty columns, no `course_updated` event.
 
 ### Verification corrections applied
 
-- `local_custom_category` tenant: resolve through `local_costcenter.path` and take the root; NULL -> ''.
+- `local_custom_category` tenant: resolve through `local_costcenter.path` and take the root; NULL -> NULL (2026-10-07 decision F-35).
   (The map's column map and tenant rule disagreed.)
 - `local_dashboardcourses` is not one row: union all rows and de-duplicate.
 
@@ -524,6 +570,28 @@ into empty columns, no `course_updated` event.
 - Featured courses: global as in BizLMS, or re-homed per tenant (the default above)?
 - Confirm `local_moduleconfig` and `local_filters` stay in place. Confirm `local_certificate` belongs to
   the certificates gap map.
+
+### Decisions of 2026-10-07
+
+- **CRS-06 and CRS-15:** `local_coursedetails.proficiencylevel -> open_level` and `credits -> open_points` are LEFT in
+  the legacy table and counted in preflight (signed `course_lookups.coursedetails_candidate_columns = leave`, recorded
+  so the report shows an owner decision and not a silent default). April: 0 `local_coursedetails` rows, `open_level`
+  already set on 394 of 411 courses, `open_points` empty everywhere with no Sentientia reader (R7). If Stage B reports
+  `coursedetails_candidate_open_level_not_written` above 0, `fill_level_only` (never `open_points`) is added as a
+  re-approval event before the hash is pinned.
+- **CRS-07:** `course_lookups:tenant_unresolved` (a featured list whose course names an unregistered tenant root, or a
+  lookup row skipped under `skip`) is not pre-accepted; Nitin accepts it after Stage B only if its count is above 0.
+  April: 0. 21 of the 82 custom categories name cost centre 80, which no longer exists in `local_costcenter`; they
+  import pathless (cross-tenant callers only) under the signed `tenant.unresolved.course_lookups = pathless` and are
+  counted, not skipped. Course types have `orgid` 0 (6 rows) and 1 (1 row). The single featured list names 6 courses,
+  all rooted `/77`. One forum pseudo-course (course 16) carries `/80` and is already kept out of the catalog.
+- **F-38 (before cutover, with F-86):** `course.open_coursecreator` (a core substrate user id; 0 courses on April) is
+  declared in the `sentientia_core` provider and anonymised per `users.erasure_treatment`; the courses provider
+  docblock lists the `local_sentientia_courses_enrolmove` ledger (ids and timestamps only, no person, not declared).
+- **Open questions above, answered:** enrolment dates, duration and prerequisites stay in the legacy table
+  (`course_lookups.coursedetails_unhomed_columns`); featured courses are re-homed per tenant
+  (`course_lookups.featured_scope`); `local_moduleconfig` and `local_filters` stay in place and `local_certificate`
+  belongs to the certificates gap map (`course_lookups.declined_config_tables`).
 
 ---
 
@@ -548,14 +616,20 @@ Why: once `local_courses` is gone, its tag area is orphaned, and uninstalling it
 component 'local_courses' -> 'core'; itemtype 'courses' -> 'course'
 itemid, contextid, tagid, ordering, tiuserid -> unchanged
 duplicate: a core/course instance already exists for (itemid, contextid, tiuserid, tagid)
-   -> outcome merged, legacy row left untouched (R13)
+   -> outcome folded, reason duplicate_core_instance, target = the surviving core row; the legacy row is left
+      untouched (R13). 2026-10-07 decision CRS-08: `folded`, not `merged`, because the survivor is a native core row
+      and `outcome::merge` needs a winner that is a source row of the same step
+   instance whose course is gone -> skipped course_missing; whose tag is gone -> skipped tag_missing
+      (neither needs the owner; both added by CRS-08)
 ```
 
 - **Preflight:** compare `tag_area.tagcollid` and `enabled` for `local_courses/courses` with
   `core/course`. If the collections differ, stop: remapped instances would point at tags in the wrong
   collection.
-- **Accounting:** this step changes its own source filter. The identity uses the preflight snapshot
-  count; verify asserts the filter now matches only rows recorded as `merged`.
+- **Accounting:** this step changes its own source filter, so it is an in-place core step with a derived unit
+  `#tag_instance.id` and the trail table `local_sentientia_courses_tagmove`. The importer's own `verify()` proves the
+  accounting, and the filter afterwards matches exactly the `folded` and `skipped` rows, not 0 (2026-10-07 decision
+  CRS-08). A framework in-place step kind is deferred to after Stage B.
 - `local_tags` is declined: its tenant columns are corrupt by construction (create passes a string path
   into an INT slot, `BZ local/courses/classes/external.php:179`; update passes the department as
   costcenter, :237; signature `BZ local/tags/classes/tag.php:752`). `local_tags.taginstanceid` still
@@ -569,21 +643,37 @@ duplicate: a core/course instance already exists for (itemid, contextid, tiuseri
 ### Fixture
 
 Instances under `local_courses/courses`, one already duplicated as `core/course`, a `local_tags` row.
-Assert remap, the duplicate recorded as merged and untouched, no tag events, second run no-op.
+Assert remap, the duplicate recorded as folded (`duplicate_core_instance`) and untouched, no tag events, second run no-op.
 
 ### Verification corrections applied
 
 - Collection preflight added. The duplicate is no longer deleted (R13).
 
+### Cutover notes (2026-10-07 decision CRS-09)
+
+The two notes that lived only in the courses state card are runbook rules now (`MIGRATION-REHEARSAL-RUNBOOK.md`,
+section "BizLMS import: Stage B checks", and `docs/operations/cutover-day-runbook.md`):
+
+- BizLMS courses tagged with the lifecycle `mandatory` tag become joiner auto-enrol triggers once moved. Recommended
+  future flip, recorded and not decided: `sentientia.lifecycle.autoenrol.enabled` stays OFF until `course_lookups` and
+  `course_tags` are complete and L&D has reviewed the `will_move_with_the_lifecycle_mandatory_tag` list. The flag is
+  OFF by default and tenant-scoped, but a course with an empty `open_path` counts as platform-wide.
+- BizLMS tag tenancy (`local_tags`) is not carried over (declined above); moved tags are ordinary core tags.
+- Stage B check: if the preflight count `will_move` is above 0, open the core tag index as a `/77` learner and confirm
+  that no `/1` course names are listed. If they are, handle it under the ADR-031 course-listing rules before cutover
+  (a core tag index that lists course names across tenants is more visible than BizLMS, owner rule 3).
+- April: 0 `local_courses/courses` tag instances (`tag_instance` has 4 rows, none in that area), so course_tags is a
+  no-op on April and its tests are the only evidence of the move.
+
 ---
 
 ## 8. legacy_logs
 
-**Owner:** `local_sentientia_core`. **Depends:** none. **Atomic:** no.
+**Owner:** `local_sentientia_core`. **Depends:** org (2026-10-07 decision F-74). **Atomic:** no.
 
 | Source | Target | Key |
 |---|---|---|
-| local_logs (`BZ local/courses/db/install.xml:7-25`) | NEW local_sentientia_legacy_log | map |
+| local_logs (`BZ local/courses/db/install.xml:7-25`) | NEW local_sentientia_admin_log (2026-10-07 decision F-74: the registry refuses a `local_sentientia_legacy*` name) | map |
 | local_courseerrors (`BZ local/courses/db/install.xml:26-39`) | same | map |
 
 `local_logs` is BizLMS's admin audit trail, written by `local_custom_logs()`
@@ -605,16 +695,32 @@ local_courseerrors:
 - **Tenant:** `actor_path`; a scoped reader sees rows inside its tenant via `path_descendant_filter`,
   mirroring the roles audit log (`SE local/sentientia_roles/classes/role_manager.php:546-575`). A deleted
   actor keeps the row.
-- **Schema:** `local_sentientia_legacy_log`: id, source CHAR40, event CHAR225, module CHAR225, description
+- **Schema:** `local_sentientia_admin_log`: id, source CHAR40, event CHAR225, module CHAR225, description
   TEXT, itemref CHAR225, userid INT, usermodified INT, actor_path CHAR255, timecreated, timemodified;
   indexes on userid, timecreated, source. (The map's `sourceid` and UNIQUE key are dropped, R6.)
   Declare `userid`, `usermodified` and `description` in the core provider.
-- **Code fix:** a read-only admin report page, behind a default-OFF flag.
+- **Code fix:** a read-only admin report page (`admin_log.php`), behind the default-OFF flag
+  `sentientia.legacy_logs.report.enabled` plus the capability `local/sentientia_core:viewadminlog`, with no archetype
+  grant (2026-10-07 decision F-74).
 - **Fixture:** insert/update/delete log rows and error rows, one with a deleted actor; assert scoping as
   a tenant admin.
 - **Corrections applied:** `usermodified` added; `reason` is CHAR225.
-- **Open question:** retention and DPDP erasure treatment for the actor first names in `description`.
-  Other BizLMS plugins may also call `local_custom_logs()`; every row is imported regardless of module.
+- **Open question:** retention and DPDP erasure treatment for the actor first names in `description`. Answered
+  2026-09-30 by the signed keys `legacy_logs.retention = keep_no_purge` and `legacy_logs.description_erasure =
+  keep_row_scrub_name`. 2026-10-07 decision F-74: erasure recognises only the English BizLMS description shapes; any
+  other shape is replaced whole. Other BizLMS plugins may also call `local_custom_logs()`; every row is imported
+  regardless of module.
+- **Decisions of 2026-10-07:**
+  - COMMS-C2 (recommended flip, Nitin's call after the evidence): `sentientia.legacy_logs.report.enabled` STAYS OFF.
+    BizLMS had no reader of `local_logs` or `local_courseerrors`, only writers (`BZ local/courses/classes/action/insert.php:54`,
+    `BZ local/courses/upload/processor.php:302`), and both tables hold 0 rows on April (both exist there, so the
+    required-source concern does not block).
+  - F-75 (before the report flag is ever flipped): render a NULL or 0 time as a dash, not 1970 in the When column, and
+    correct the `itemref` COMMENT: it says 'course id', but forum and exam rows carry their own ids.
+  - F-76 (Stage B): `admin_log.php` keeps pagelayout `standard`, because `admin_externalpage_setup` cannot run while the
+    page is registered only with the flag ON; revisit after screenshots. The top-level `settings.php` calls
+    `admin_log::report_enabled()` at admin-tree build, so include that call in the Stage B performance pass. Stage B
+    counts decide whether the report is ever worth enabling.
 
 ---
 
@@ -633,7 +739,7 @@ read by quiz id (`SE local/sentientia_exams/view.php:68-95`).
 
 | Source | Target | Key |
 |---|---|---|
-| `#course.online_exams` (derived: course rows with the markers above) | local_sentientia_exams (`SE local/sentientia_exams/db/install.xml:5-34`) | map, sourceid = course id; subkey `''` for the lowest quiz id, `quiz:<id>` for any further quiz (reported) |
+| `#course.online_exams` (derived: course rows with the markers above; the physical source table is `quiz`, 2026-10-07 decision F-35) | local_sentientia_exams (`SE local/sentientia_exams/db/install.xml:5-34`) | map, sourceid = course id; subkey `''` for the lowest quiz id, `quiz:<id>` for any further quiz (reported) |
 | forum pseudo-courses (`open_module = 'forum'`, `BZ local/forum/classes/external.php:147,158`) | none: they stay ordinary courses | declined |
 | local_onlinetests | none | preflight: if the table exists with rows, blocker |
 
@@ -657,22 +763,33 @@ course.timecreated, course.timemodified -> timecreated, timemodified
 
 ### Tenant, side effects
 
-- **Tenant:** `course.open_path`. Empty -> `''`, visible to cross-tenant callers only
+- **Tenant:** `course.open_path`. Empty -> NULL (2026-10-07 decision F-35), visible to cross-tenant callers only
   (`exam_manager.php:43-53,151-160`); reported.
 - **Side effects:** `exam_reminder` and `exam_overdue` message learners and supervisors for active exams
   in the reminder window (`SE local/sentientia_exams/classes/task/exam_reminder.php:52,107-110`;
   `exam_overdue.php:34,53-91`). Both are off by default (`SE local/sentientia_exams/settings.php:22-25,59-62`).
-  `finalise()` pre-seeds `local_sentientia_exams_remind_sent` for every (enrolled user, imported exam,
+  The load step `exams.reminder_seed` (2026-10-07 decision F-35: a load step, not `finalise()`) pre-seeds
+  `local_sentientia_exams_remind_sent` for every (enrolled user, imported exam,
   bucket, timeclose) with timeclose before cutover, so enabling them later cannot flood supervisors.
 
 ### Code fixes
 
 1. `SE local/sentientia_exams/view.php:93`: the pass percentage divides by `SUM(quiz_grades.grade)` over
-   all users; use `quiz.sumgrades` (or `quiz_grades.grade / quiz.grade`).
+   all users; use `quiz.sumgrades` (or `quiz_grades.grade / quiz.grade`). 2026-10-07 decision F-40 (before UAT
+   sign-off): `view.php` also computes `pass_pct` as distinct passed learners over the attempt count, and `count_failed`
+   subtracts learners from attempts (mixed units); use distinct learners with a finished attempt as the denominator
+   for both figures, with a test.
 2. `SE local/sentientia_exams/classes/exam_manager.php:107-118`: remove the `local_onlinetests` fallback (R14).
 3. `SE local/sentientia_catalog/classes/catalog_manager.php:195-209,319-331,360-369,441-449,476-477`:
    exclude or label the pseudo-courses. BizLMS lists normal courses with `open_coursetype = 0 OR NULL`
    (`BZ local/courses/classes/local/general_lib.php:120`); 1 + `online_exams` = Exam, 1 + `forum` = Forum.
+   2026-10-07 decision CRS-14: exclude them from the guest storefront (`commerce::get_public_catalog`, both its COUNT
+   and its SELECT, through the reusable `ORDINARY_COURSES_ONLY` condition); keep them in the learner's in-progress rail,
+   which shows only courses the learner is enrolled in, labelled 'Exam' or 'Forum' from `open_module` (en and hi
+   strings; `format_course` says 'E-Learning' for `open_coursetype` 1 today). April: 5 visible exam courses in the
+   Public tenant would show on the storefront; none of the 8 exam courses has a fee instance and guest and self
+   enrolment are disabled on all of them. Sentientia's exam pages are manager and teacher only, so the enrolled course
+   is a learner's only Sentientia path to an assigned exam, which is why the rail keeps it.
 4. `TOP theme/airpayux/classes/output/core_renderer.php:1726-1730,1745-1748`: unguarded SQL on
    `local_onlinetests`; fix or remove.
 
@@ -688,8 +805,12 @@ pre-seeded, no messages from the reminder tasks afterwards.
 
 ### Open questions
 
-- Show forum pseudo-courses in the catalog as courses, as a "Forums" section, or hide them?
-- Multi-quiz exam course: one exam per quiz (default) or only the final quiz?
+- Show forum pseudo-courses in the catalog as courses, as a "Forums" section, or hide them? Answered 2026-09-30:
+  hidden (signed `exams.forum_pseudocourses = exclude_from_catalog`); CRS-14 above applies it to the guest storefront.
+- Multi-quiz exam course: one exam per quiz (default) or only the final quiz? Answered 2026-09-30: one exam per quiz
+  (signed `exams.multi_quiz = per_quiz`). April: all 8 exam courses have 1 quiz each and registered roots (`/1` 2,
+  `/77` 5, `/177` 1), so there is no multi-quiz and no pathless exam; the reminder seed volume is small (3 closed exam
+  quizzes, 154 enrolment rows on those courses; read the `exams.reminder_seed` counts in the Stage B report, F-40).
 
 ---
 
@@ -789,7 +910,8 @@ local_uniquelogins -> local_sentientia_users_logindays  (written on user_loggedi
    `status 'completed'`, inserted and updated 0, error, warning and total counts recomputed from its
    children in a recompute step, `timecreated` = MAX(date_created), `usercreated` = modified_by.
    BizLMS showed a non-admin only the errors they caused (`BZ local/users/lib.php:1275-1280`), so
-   grouping by uploader keeps that boundary.
+   grouping by uploader keeps that boundary. 2026-10-07 decision IDN-07: the readers keep it too (run list
+   tenant-wide, rejected lines for the uploader and cross-tenant callers only; see the decisions block below).
 
 ### Tenant rule
 
@@ -852,9 +974,14 @@ local_uniquelogins -> local_sentientia_users_logindays  (written on user_loggedi
 1. `SE local/sentientia_users/classes/privacy/provider.php:7-11,17-18`: real metadata, userlist and plugin
    provider (export by userid, modified_by, usercreated; erase or anonymise under the DPDP design). Blocker.
 2. `SE local/sentientia_users/sync_runs.php:39-46`: paging (hard `LIMIT 100` at :45); label source
-   `bizlms` (:86).
+   `bizlms` (:86). 2026-10-07 decision XC-IMPORTED-HISTORY-READERS: with the new default-OFF flag
+   `sentientia.users.imported_sync_history` OFF the page adds `AND source <> 'bizlms'`, so an imported run is listed
+   only when the flag is ON.
 3. `SE local/sentientia_users/sync_run_detail.php:86-87`: tie-break `id ASC`, paging past 500; :102 prints
-   a dash for line 0.
+   a dash for line 0. 2026-10-07 decisions IDN-07 and XC-IMPORTED-HISTORY-READERS: after the tenant check the page
+   refuses a `bizlms` run when `sentientia.users.imported_sync_history` is OFF, and shows the rejected lines only
+   when `sync_access::can_see_lines($run)` is true (cross-tenant caller, or the uploader of the run); otherwise it
+   keeps the header and statistics and shows the notice `hrms_lines_uploader_only` (en and hi).
 4. `SE local/sentientia_users/lang/en/local_sentientia_users.php:241` and `lang/hi/...:228`: the link
    points to a non-existent `hrms_history.php`; point it at `sync_runs.php` via `moodle_url`.
 5. `SE local/sentientia_users/classes/user_manager.php` (after :284-295): `get_transcript_history($userid)`
@@ -905,6 +1032,42 @@ second run identical; privacy export and delete for UA and LA.
 - `local_userdata` reconciliation: if `costcenterpath <> open_path`, which is true at cutover?
 - `local_positions` / `local_domains`: approve the lookup import (gap G4).
 
+### Decisions of 2026-10-07
+
+- **IDN-07 and XC-IMPORTED-HISTORY-READERS (HRMS sync history):** BizLMS showed a non-admin only the error lines they
+  caused (`BZ local/users/lib.php:1266-1283`, filtered by `modified_by`) and the statistics tenant-wide (`:1326-1340`).
+  Sentientia matches that exactly, for imported and native runs alike: the run list stays tenant-wide, and a run's rejected
+  lines (e-mail, employee code, name) are shown only to the uploader and to cross-tenant callers. Imported runs (source
+  `bizlms`) are also a history reader and sit behind the new default-OFF flag `sentientia.users.imported_sync_history`
+  (OFF: `sync_runs.php` lists no `bizlms` run and `sync_run_detail.php` refuses one with a notice; ON: the line rule
+  applies). No Airpay user sees more prospective-employee data after cutover than today. April: 749 runs and 4,874 rejected
+  lines; 659 runs and 4,414 lines were made by site admins (tenant 0, cross-tenant callers only), 90 runs and 460 lines by
+  4 non-admin uploaders. Signed keys `users.sync_history_visibility = runs_tenant_wide_lines_uploader_only` and
+  `framework.imported_rows_on_admin_pages`. Recommended future flip (Nitin's call): ON for Airpay with the other readers
+  after he reviews the evidence. F-16: capture desktop and mobile as a tenant manager (uploader and non-uploader) and as a
+  cross-tenant admin, for the default-ON changes to `sync_runs.php` (paging, 'Imported from BizLMS') and
+  `sync_run_detail.php` (paging, dash for line 0) as well.
+- **IDN-06 (DPDP, login days):** imported login days (`local_sentientia_users_logindays`) are DELETED on an erasure
+  request: a (user, day) row has no meaning once the person is removed, and UNIQUE (userid, logindate) rules out
+  anonymising. The transcript and sync-error rows stay anonymised (signed `users.erasure_treatment = anonymise`). The
+  import deletes nothing; erasure acts on the Sentientia copy through Moodle's privacy request workflow, where a person
+  approves each deletion request. Signed key `users.logindays_erasure = delete`; the legacy table is untouched.
+- **IDN-02 and IDN-08:** `users:invalid_login_row` (and the three org_roles reasons, section 4) is NOT pre-accepted; the
+  owner accepts it after Stage B with its count. April has no `local_uniquelogins` table at all.
+- **F-17 (April facts; the open questions below are answered by them in part; re-run SHOW COLUMNS and the counts on the
+  live backup at Stage B):** `local_syncerrors` has 4,874 rows and the columns id, error, date_created, modified_by,
+  mandatory_fields, email, idnumber (no type, sync_file_name, firstname or lastname); `local_userssyncdata` has 749 rows;
+  `local_transcript_history` has 0 rows; `local_uniquelogins`, `local_positions` and `local_domains` are absent;
+  `$CFG->timezone` is Asia/Kolkata; `local_userdata` has 71 mismatches with `user.open_path` (reported only). Without
+  `sync_file_name`, 4,385 of 4,386 user-2 error rows fall inside a user-2 run window and 1 goes to an orphan-day run; all of
+  them are tenant 0 (cross-tenant only), so there is no tenant exposure.
+- **F-18 (after Stage B):** `step::group_by()` accepts raw columns only, so synthetic runs are per-uploader groups with day
+  sub-rows and the report undercounts the synthetic runs created; let it accept an SQL expression (uploader, day), and add
+  the person-column privacy export and erase check to `importer_contract`.
+- **Answered (signed 2026-09-30):** transcript status normalisation approved as written; admin-uploaded runs get tenant 0;
+  `local_uniquelogins` imported; transcript rows do not count toward completion totals; `local_userdata` is a derived mirror
+  (`user.open_path` wins, report only); `local_positions` and `local_domains` lookups imported with ids kept.
+
 ---
 
 ## 11. notifications
@@ -930,7 +1093,9 @@ to_userid -> userid                 as is; for supervisor copies (teammemberid >
                                     (BZ local/classroom/classes/notification.php:228-232)
 from_userid -> sender_userid        NEW; the enqueuing actor. Every delivered message was sent FROM the support
                                     user and sent_by was overwritten with it (BZ local/notifications/notification.php:64,82,91)
-courseid -> courseid                > 0 and exists; else NULL (-1 = custom mail, BZ local/notifications/lib.php:690)
+courseid -> courseid                > 0 and exists; else NULL (-1 = custom mail, BZ local/notifications/lib.php:690).
+                                    2026-10-07 decision COMMS-N3: the production table has NO courseid column (April
+                                    shape), so for a course template the course is taken from moduleid (decisions block)
 (tenant rule) -> tenant_id
 (const) -> channel 'email'
 subject -> subject                  fit 255; NULL -> ''; MASKED for credential rows (below)
@@ -948,9 +1113,10 @@ sent_date / timecreated -> timecreated  status = 1 AND sent_date > 0 -> sent_dat
 sent_date -> timesent               NEW; 0 -> NULL
 emailbody -> body_html              NEW; NULL for credential rows (below)
 (const) -> legacy_source 'bizlms'   NEW in-row marker (no unique index); readers and guards branch on it
-not copied (stay in the legacy table, R7): notification_infoid, moduletype, moduleid, batchid, teammemberid,
-  ccto, from_emailid, to_emailid, sent_by, adminbody, attachment_filepath, reminderdays, enable_cc, active
-  (BZ local/classroom/db/install.php:95-121, :106-108), the template snapshot
+not copied (stay in the legacy table, R7): notification_infoid, moduletype, batchid (absent on production, 2026-10-07
+  decision F-69), ccto, from_emailid, to_emailid, sent_by, adminbody, attachment_filepath, reminderdays, enable_cc, active
+  (BZ local/classroom/db/install.php:95-121, :106-108), the template snapshot. moduleid and teammemberid are READ but not
+  copied: they derive the course link (COMMS-N3) and the withheld body of a manager copy (COMMS-N2)
 ```
 
 `local_email_logs`: to_userid -> userid; from_userid -> sender_userid; courseid (-1 -> NULL); subject;
@@ -967,6 +1133,8 @@ substituted into the subject (:93). Templates are edited in place and hard-delet
 text cannot prove what was sent. So: set `body_html` NULL and mask the subject when the type's
 `pluginname` is `users`, or the resolved template subject or body contains `[employee_password]`, or the
 template is unresolvable and the row's subject or moduletype suggests the users module. Status 0 rows too.
+2026-10-07 decision COMMS-N1: the `moduletype` signal never fires on production (it is '' on all 14,202 April rows) and
+an unresolvable template now withholds the body; see the decisions block.
 
 ### Tenant rule
 
@@ -975,12 +1143,17 @@ template is unresolvable and the row's subject or moduletype suggests the users 
 (`delivery_log.php:114-125`). Fallback only when the recipient is missing or has an empty path: the root
 of `ni.open_path` (`BZ local/classroom/db/install.php:64`); else 0. The template path never comes first:
 BizLMS matched templates with an unbounded `LIKE '%<root>%'` (`BZ local/notifications/lib.php:485-489`).
+2026-10-07 decision F-69: the importer takes the recipient's path from `lookups->user_path`, normalises it with
+`tenant_resolver::normalise` and validates it with `tenant::assert_valid`; the template's path is used only when the
+recipient has no path, and a recipient path that is present but does not parse is tenant 0, never the template's root.
 
 ### Status mapping
 
 - `1` -> `sent`. The task sets 1 after `message_send` returns (`BZ local/notifications/notification.php:110-115`),
-  and also **without sending** for a deleted recipient (:85-88): keep `sent` and set `error_message`
-  "BizLMS marked a deleted recipient sent without delivery".
+  and also **without sending** for a recipient who was ALREADY deleted when BizLMS ran the send (:85-88): keep `sent`
+  and set `error_message` "BizLMS marked a deleted recipient sent without delivery". A recipient deleted AFTER the send
+  was delivered to and imports as plain `sent` (2026-10-07 decision COMMS-N6; April: 1 of 342 rows to now-deleted users
+  gets the note).
 - `0`, `NULL`, anything else -> `not_sent` (new value; fits CHAR32), with `error_message`
   "BizLMS queue: not delivered before cutover". BizLMS's own UI counts NULL as not sent
   (`BZ local/notifications/email_status_filters.php:68-72`).
@@ -1013,7 +1186,7 @@ BizLMS matched templates with an unbounded `LIKE '%<root>%'` (`BZ local/notifica
    only the detail view fetches `body_html`. Stream `export_csv` instead of the 10 000-row cap.
 5. Dashboard double count: hide the BizLMS tile (`manage_controller.php:39-44,109-111`, fed by
    `SE local/sentientia_emails/classes/legacy_bridge.php:117-136`) when imported rows exist.
-6. `legacy_bridge.php:41,94` filters `ni.costcenterid` via `sql_filter` (`tenant.php:335-349`), which 2022+
+6. (Accepted UNFLAGGED as a bug fix, 2026-10-07 decision COMMS-N5.) `legacy_bridge.php:41,94` filters `ni.costcenterid` via `sql_filter` (`tenant.php:335-349`), which 2022+
    writers never set (`BZ local/notifications/externallib.php:128-130`). Switch to
    `path_filter('ni', 'open_path')` **after** a preflight of the `open_path` format: BizLMS wrapped it as
    `concat('/', ni.open_path, '/')` before LIKE (`BZ local/notifications/lib.php:489`), so values without a
@@ -1028,7 +1201,7 @@ Production-shape legacy tables with production NOT NULL constraints on `notifica
 (`BZ local/classroom/db/install.php:95-103`), plus `reminderdays`, `enable_cc`, `active` (:106-108), and
 both timestamp dialects. Rows: sent to A in /1; status 0 to B with a password in the body; NULL to C;
 timecreated 0 with timemodified set; unresolvable template; sent to a deleted user; a manager copy;
-courseid -1; courseid 999999; recipient /1 with a /177 template. **Ten rows**: assert ten imports, zero on
+courseid -1; courseid 999999; recipient /1 with a /177 template. **17 + 4 rows** (2026-10-07 decision F-69: the fixture is not ten rows): assert every row imported, zero on
 the second run, redaction of subject and body, tenant attribution by recipient, status preserved under
 `noemailever`, empty sinks, legacy tables unchanged, reminder dedupe unaffected.
 
@@ -1046,11 +1219,86 @@ the second run, redaction of subject and body, tenant attribution by recipient, 
 
 ### Open questions
 
-- Accept `not_sent` for queue rows?
-- Import bodies at all (DPDP minimisation), or subjects and metadata only?
-- Keep sender identity? Retention period for imported rows?
-- Status-1 rows to deleted recipients: `sent` with a note (proposed) or `suppressed`?
-- Parity, not import: which BizLMS notification types have no Sentientia rule once BizLMS stops sending?
+- Accept `not_sent` for queue rows? Answered 2026-09-30: yes (signed `notifications.queue_status`).
+- Import bodies at all (DPDP minimisation), or subjects and metadata only? Answered: yes, with credentials redacted
+  (`notifications.import_bodies`); 2026-10-07 decisions COMMS-N1 and COMMS-N2 withhold the bodies named above.
+- Keep sender identity? Retention period for imported rows? Answered: sender kept (`notifications.keep_sender`), no
+  purge (`notifications.retention = keep_no_purge`).
+- Status-1 rows to deleted recipients: `sent` with a note (proposed) or `suppressed`? Answered: `sent` with a note, for a
+  recipient already deleted at send time (`notifications.deleted_recipient_sent`, wording corrected 2026-10-07, COMMS-N6).
+- Parity, not import: which BizLMS notification types have no Sentientia rule once BizLMS stops sending? Answered
+  2026-10-07 (COMMS-N7): course enrolment, learning-path enrolment and the manager copy of course completion; see
+  section 21, G10.
+
+### Decisions of 2026-10-07
+
+- **COMMS-N1 (credentials; blocks Stage B):** the redactor missed realistic shapes (a table cell `<td>Password</td><td>X</td>`,
+  `Password<br>X`, a value containing `;` or `&`, and a welcome subject such as 'Your Airpay Academy account'), and the
+  `moduletype` signal never fires on production. BizLMS hard-deletes templates, and the `users_welcome_email` template covers
+  839 April rows, every one built with the plaintext password; if that template were deleted before cutover those bodies
+  would become unresolved-template rows and be copied into `body_html`, from where `email_detail.php` and DPDP exports show
+  them. Rule now: when the template is unresolvable (`$template === null` or its `pluginname` is NULL) `body_html` is NULL and the row
+  warns `credentials_withheld:unresolved_template`; the subject is masked when `redactor::subject_suggests_credentials()` or
+  the new `redactor::text_mentions_secret()` matches (password, passwd, pwd, passcode, credential(s), otp, pin, secret, token,
+  no separator required), otherwise scrubbed; `redactor::scrub()` makes the separator optional when the gap holds a tag or
+  line break and lets the value run to whitespace, '<' or a quote, so ',', ';' and '&' no longer end it. `verify()` adds
+  `imported_text_with_unredacted_secret`; preflight counts unresolved-template rows that mention a secret word. Expected on
+  April after the fix (to be re-measured read-only): 14,197 sent, 5 not_sent, 839 withheld, 0 masked-with-body. No
+  decisions-file key: this is a safety rule, not an owner choice. F-72: `scrub()` over-redacts the bare words 'pass' and
+  'pin'; accepted as conservative (it changes 0 of the 13,363 kept April rows) and documented in the redactor docblock;
+  optionally treat a '/' or '//' recipient path as empty so the template fallback applies (0 April rows).
+- **COMMS-N2 (manager copies; blocks Stage B):** a copy sent to a manager (`teammemberid` > 0; 1,921 April rows, all
+  `course_complete`) is imported WITHOUT its body, and the team member's whole-word first and last name is scrubbed from the
+  subject (`notifications.team_member_copy_body = withhold`; warning `team_member_copy_body_withheld`). The body names the
+  member and `teammemberid` is not carried, so an erasure of that person could never reach it; the member's own
+  `course_complete` row (1,919 within one hour) already holds the same message and the legacy table keeps the exact original.
+  `verify()` asserts that no imported row whose source row has `teammemberid > 0` carries a body. A later `subject_userid`
+  column can backfill the bodies. April: 1,902 bodies and 4 subjects contain the member's first name; 685 distinct members,
+  75 now deleted; no copy crosses two live tenants.
+- **COMMS-N3 (course link; blocks Stage B):** `courseid` = the column when it exists and is > 0 and the course exists; else
+  `moduleid` when the template's moduletype is 'course', `moduleid` > 1 and the course exists (warning `course_from_moduleid`);
+  else NULL (`notifications.course_link = moduleid_for_course_templates`). 12 of the 15 April templates are 'course'
+  templates; 5,270 of 5,316 `course_enrol` rows and 4,139 of 5,783 `course_complete` rows point at an existing course (9,409
+  in all), and most bodies name it. Imported rows never feed the reminder engine.
+- **COMMS-N4:** a blank 'Sent from' on an imported row means the BizLMS system (the support user, `from_userid` -20, mapped
+  to `sender_userid` NULL) sent it, exactly as BizLMS's own list showed (`BZ local/notifications/email_status_filters.php:43`
+  takes the sender name from a `{user}` subquery, NULL for -20). April: 11,099 of 14,202 rows. Accepted as parity and noted in
+  the state card and the visual-evidence README.
+- **COMMS-N5:** the `legacy_bridge` template-filter change (code fix 6) ships WITHOUT a flag, accepted as a bug fix: before
+  it, the Templates tab and template preview were empty for everyone on the production shape (the SQL named `ni.costcenterid`,
+  which April's `local_notification_info` does not have; it threw and the catch swallowed it). It builds select, order and
+  filter from the columns that exist, matches whole path segments and fails closed when neither column exists (ADR-031).
+  Measured: 15, 10 and 4 templates for cross-tenant, `/1` and `/77` callers. Sentientia is not live, so BizLMS production is
+  untouched. Evidence: a Templates tab screenshot as a scoped (`/77`) admin in the UAT pass.
+- **COMMS-N6:** `notifications.deleted_recipient_sent` wording corrected in the decisions file, ADR-032 and the status
+  mapping above: the note applies only to a recipient already deleted when BizLMS ran the send. F-67: the rule reads the
+  user's `timemodified`, so anything that rewrites deleted users' rows (the DPDP anonymiser, an HRMS re-sync, cleanups) would
+  make undelivered rows look delivered. Runbook: run the notifications feature before any step that updates deleted user
+  rows; preflight warns when many deleted recipients share one `timemodified` or have one later than the newest `sent_date`.
+- **COMMS-N7 (`gaps.notification_sender_parity`):** see section 21, G10.
+- **COMMS-C1:** `notifications:orphan_user`, `request:orphan_user`, `request:orphan_item` and `request:orphan_request` are NOT
+  pre-accepted (all 0 on April; `legacy_logs` needs no reason because pathless skips nothing). They are added to the top-level
+  `accepted_reasons` list after Stage B, with counts. F-82: the older name `accept_needsowner.<feature>.<reason>` in section 23
+  and in the emails state card is wrong; the loader reads a top-level list of `"feature:code"` strings.
+- **COMMS-C2 (recommended future flips, decided by Nitin after the screenshots; none flipped):**
+  `sentientia.emails.imported_history.enabled` ON, `sentientia.emails.imported_body_detail.enabled` ON,
+  `sentientia.request.imported_history` ON only after COMMS-R1 has landed, `sentientia.legacy_logs.report.enabled` OFF.
+  BizLMS showed an e-mail log list and a detail view that echoed the full body, password e-mails included, to anyone holding
+  `local/notifications:view` (`BZ local/notifications/classes/output/renderer.php:213-225,264-287`); Sentientia shows less
+  (credential and manager-copy bodies withheld, tenant-scoped). Evidence (desktop and mobile): the Logs tab,
+  `email_detail.php`, the Templates tab, My requests, Pending approvals, All requests and `admin_log.php`.
+- **Follow-ups:** F-60 and F-87 (before any dev copy of a Stage B database is shared: `mask_pii_for_dev.php` updates a
+  `to_email` column that `local_sentientia_email_log` does not have and never masks imported subjects or bodies; drop that
+  UPDATE, mask the subject and set `body_html` NULL for `legacy_source = 'bizlms'` rows, NULL `decision_note` on imported
+  requests, mask `admin_log` descriptions), F-61 (with P0.4, `migration_parity_check.php` takes `--decisions` and
+  `--expect-decisions-hash`; notifications `verify()` reads two decisions and would report `verify_error` without them),
+  F-62 (see ADR-032), F-63 (`timesent` only when delivered; April: 0 rows), F-64 (index `idx_sender_userid`, before cutover,
+  a new version step if 2026093001 already reached UAT), F-65 (before `imported_body_detail.enabled` is flipped: strip external
+  images and tracking pixels from imported bodies before `format_text`, and prefix CSV cells that start with `=`, `+`, `-`
+  or `@`), F-66 (test hygiene), F-68 and F-69 (April production shape: `local_emaillogs` has `moduleid`, `teammemberid` and
+  `emailbody` but no `courseid`, `batchid` or `time_created`; `local_email_logs` is absent; every template `open_path` has a
+  leading slash; confirm with SHOW COLUMNS on the live backup), F-70 (state card header names the retired plugin and an old
+  version), F-71 (visual evidence for the flagged UI).
 
 ---
 
@@ -1106,9 +1354,9 @@ logstore completion_reset -> history
   origin 'cli' -> reason 'cron', reset_by_userid NULL (engine:176-177)
   origin 'web' AND userid = relateduserid -> reason 'manual', reset_by_userid = userid (self reset,
                                   BZ local/recompletion/resetcompletion.php:44-55)
-  origin 'web' AND userid <> relateduserid -> 'manual' ONLY when the row's contextinstanceid or url, or a matching
-                                  resetcompletion.php access, shows the page; otherwise reason 'legacy' and report
-                                  (admin/cron.php in a browser fires the same event, check_recompletion.php:214-223)
+  origin 'web' AND userid <> relateduserid -> reason 'legacy', ALWAYS (2026-10-07 decision F-53: the log has no url,
+                                  and the reset page and a browser-run cron fire the same event,
+                                  check_recompletion.php:214-223)
   (matched cc row).timecompleted -> previous_timecompleted; else the latest core course_completed log row before
                                   the reset; else NULL (history.php:70-71 shows '-')
   ruleid -> the imported rule for courseid, else 0 (engine:462)
@@ -1122,11 +1370,15 @@ local_recompletion_cc -> archive (itemtype course_completion) and, when no log e
            state = timecompleted > 0 ? 'complete' : 'incomplete'; payload = full row JSON; historyid = its cycle
   history (subkey 'history'): timecreated = MIN(timecompleted + legacy duration,
            the next cycle's first evidence for that user and course (next cc timeenrolled/timestarted or the earliest
-           later archive row), import time); time_inferred 1; reason 'legacy'; reset_by_userid NULL;
+           later archive row)) when that time is not later than the import; otherwise the cycle's latest source evidence
+           + 1 second, never earlier than the previous cycle's end, with warning inferred_reset_from_last_evidence (the
+           import time is NEVER the value; 2026-10-07 decision LRN-01); time_inferred 1; reason 'legacy'; reset_by_userid NULL;
            previous_timecompleted = cc.timecompleted; source 'legacy'
   cycle match per (userid, course): each cc row belongs to the earliest unmatched reset event with
            event.timecreated >= cc.timecompleted; a cc row with NULL timecompleted (manual reset of an incomplete
            user, resetcompletion.php:64-66) takes the earliest unmatched event after timestarted or timeenrolled
+           pairing makes an uncapped pass first and then a start-only cap pass; a pair it cannot settle keeps its rows
+           apart with the warning reset_pairing_unclear (2026-10-07 decision F-53)
 
 cc_cc  -> criteria_completion: criteriaid -> instanceid; gradefinal -> grade; timecompleted -> timeevent; state
 cmc    -> activity_completion: coursemoduleid -> cmid; course = 0 -> course_modules.course (upgrade.php:209-217);
@@ -1222,7 +1474,9 @@ privacy scrub.
 ### Verification corrections applied
 
 - 16 tables, not 17.
-- Inferred reset time capped at the next cycle's first evidence and at import time (never in the future).
+- Inferred reset time capped at the next cycle's first evidence and at import time (never in the future). 2026-10-07
+  decision LRN-01: when neither completion plus duration nor the next cycle's evidence gives a time at or before the
+  import, the cycle's latest source evidence + 1 second is used, never the import time.
 - Rule name truncated to 200.
 - Archive grade clamped; raw value in payload.
 - `qa` payload is the full row.
@@ -1242,6 +1496,48 @@ privacy scrub.
 - Import teacher-preview attempts (`qa.preview = 1`)?
 - Should the engine archive before it deletes, into the same table?
 - Confirm that deploying upstream `local_recompletion` on 5.2 instead is out of scope.
+
+### Decisions of 2026-10-07
+
+- **LRN-01 (inferred reset time):** see the history column map above. Signed key
+  `recompletion.inferred_reset_without_evidence = latest_source_evidence_plus_1s`. Deterministic, so Stage B and cutover
+  produce the same rows; the +1 second keeps the cycle's own last row attached under `evidence::ends_cycle_of`, which
+  requires a row to be strictly before an inferred reset.
+- **LRN-02 (history page):** with `sentientia.recompletion.evidence_view` OFF, `history.php` filters out `source = 'legacy'`
+  rows, so no Legacy badge and no '~' rows; ON shows them, and engine rows always show. The imported-rule marker on
+  `index.php` stays visible (a configuration safety label). Signed key `recompletion.legacy_rows_on_history_page =
+  behind_evidence_view_flag`. Visual evidence of `history.php` with the flag OFF and ON.
+- **LRN-03 (DPDP):** erasure through the DPDP flow keeps the archived evidence row keyed to the anonymised user and CLEARS
+  free text that can identify the person (teacher feedback, typed questionnaire answers, text typed into SCORM), the rule
+  the platform already applies to attendance notes and exemption reasons; core erasure empties the same keys. The payload
+  `userid` and actor ids stay (an actor id is the actor's own data, scrubbed when that actor is erased). Signed key
+  `recompletion.dpdp_archive_free_text = cleared_record_kept`.
+- **LRN-04 (imported rules):** an imported rule (`legacy_config` set) cannot be enabled in the edit form and the engine skips
+  rules with `legacy_config IS NOT NULL` (counted as `skipped_imported`) until a later decision says engine parity (code fix
+  5) is done; the `legacy_enabled_warning` redirect becomes unreachable and is removed. A native rule is the way to reset
+  learners meanwhile. Signed key `recompletion.imported_rule_enable = blocked_until_engine_parity`.
+- **LRN-05 (engineering contract, no decisions-file key):** `reset_user_in_course()` throws on a rollback (it never swallows
+  one) and the callers (`run_rule()`, `bulk_reset()`, `run_all()`) catch per learner, count `failed` and carry on, so one
+  failing learner no longer ends a cron batch; the 'no reset without its archive' guarantee holds.
+- **LRN-06 and F-55 (recommended future flip, NOT decided; today's EOD UAT session):** the 2026093001 deploy turns the 03:15
+  reset task OFF (`sentientia.recompletion.run_rules`, default OFF). Keep it OFF on UAT until the enabled
+  `costcenterid = 0` rules on UAT (list ids and course ids only; they may have been made by a tenant admin before the
+  ADR-031 fix and would reset every tenant) have each been confirmed or disabled by Nitin, then ON only if a UAT test needs
+  scheduled resets. At cutover keep it OFF until a native rule Airpay needs exists. April: 0 rows in all 16 tables and 0
+  Sentientia rules, so OFF is today's behaviour.
+- **F-56 (Stage B):** the rehearsal copy is at plugin 2026092500 (no archive table), so upgrade step 2026093001 has never run on
+  real MySQL. `eventname` on the 2.59M-row standard log is unindexed and is scanned about six times (preflight, `events_step`,
+  `resets()`, `completed_before()`, fingerprint, `verify()`): run the upgrade on the rehearsal copy and time a recompletion
+  `--preflight`, for the maintenance-window estimate (ADR-032 open decision 7).
+- **F-57 (after Stage B, only if Stage B shows recompletion rows; April: 0):** `notify()` formats the previous completion in
+  the sender's language; `legacy_summary` shows an unexpected choice value as nothing; `evidence.php` reads legacy tables
+  with `$DB` and misses `course = 0` rows and `cc_cc`, `ltia` and `qr` times as next-cycle evidence; evidence with
+  `historyid` 0 has no link from `history.php` (the link needs visual evidence).
+- **Open questions above, answered (signed 2026-09-30):** enable imported rules at cutover: no, all disabled; rule tenant:
+  global; where learners see past cycles: the history page and evidence view, flag OFF; archive shape: one generic table with
+  a JSON payload; the engine archives before it deletes: yes, required before any rule is enabled; teacher-preview attempts:
+  skipped; deploying upstream `local_recompletion` on 5.2: out of scope. April: 0 rows in all 16 `local_recompletion_*`
+  tables and 0 reset events in the log, so no recompletion decision changes the April rehearsal.
 
 ---
 
@@ -1318,8 +1614,10 @@ history group (identifier N) -> cart_history
 local_biz_cart_id -> local_sentientia_cart_id
   identifier -> id (import_record); buyer -> userid (the legacy table has no userid column, BC install.xml:115-116)
   legacy timecreated of that id -> reserved, else the order's timecreated
-  finalise(): one placeholder row (userid 0) at MAX(uniqueidentifier + MAX(local_biz_cart_id.id), MAX(identifier)),
-  then reset_sequence, so new orders never reuse a legacy number
+  finalise(): sets `local_sentientia_cart/bizlms_order_floor` to the highest imported order number (April: 5), then
+  reset_sequence; `reserve_order_number()` places the placeholder row at the first native checkout, so new orders never
+  reuse a legacy number (2026-10-07 decision cart.order_number_floor: this replaces the finalise() placeholder row this map
+  first planned; checkout() runs outside any DB transaction, so the reset is not refused there)
 
 local_biz_cart_ledger -> cart_ledger (1:1; insert-only on both sides, BC biz_cart.php:1453-1458)
   identifier -> historyid, orderid of the imported order; 0 when there is none (NOT NULL DEFAULT 0, SC install.xml:91-94)
@@ -1439,17 +1737,99 @@ gets orderid above 1000009, second run no-op, empty sinks.
 
 ### Open questions
 
+Answered 2026-10-07 (decision F-02), from the April copy and the signed keys; re-read at Stage B:
+
 - I-20 counts and production `config_plugins local_biz_cart` (uniqueidentifier, itempriceisnet, enabletax,
-  globalcurrency, invoicingplatform).
-- Synthesize the missing ledger payment rows so daily sums show legacy revenue?
-- Order tenant: buyer's current path (proposed) or the course's path?
-- Abandoned checkouts: admin-only orders (proposed) or not imported?
-- Legacy credit balances: honour, pay out, or write off? Who owns the liability?
-- May admins refund imported orders (proposed: blocked)?
-- Are the ERPNext invoices the legal tax invoices; link out to ERPNext?
-- Is `paygw_airpay` deployed on 5.2; is the PayPal gateway used for any cart order?
-- Cash-drawer rows with historyid 0: acceptable?
-- [CONFIRM] Delete stale `\local_biz_cart\task\*` rows from `task_adhoc` before cutover?
+  globalcurrency, invoicingplatform): the config holds only `accountid`, `expirationtime`, `globalcurrency` = INR,
+  `maxitems` and `version`; `uniqueidentifier` and `itempriceisnet` are unset (the importer warns and treats them as base 0
+  and gross; identifiers 1..5 are consistent with base 0). Five orders in fifteen months, all by Public learners: one paid
+  (Rs 10, 10 January 2025), four abandoned (Rs 2,197 attempted); none charged GST; every line INR; 0 NULL-identifier lines,
+  0 mixed buyers, 0 orphan users.
+- Synthesize the missing ledger payment rows? No (signed `cart.synthesize_ledger = false`).
+- Order tenant: the buyer's current path (signed `cart.order_tenant = buyer`).
+- Abandoned checkouts: admin-only orders (signed `cart.abandoned = admin_only`; April: 4, all Public).
+- Legacy credit balances: honour, pay out, or write off? Who owns the liability? Frozen history, a Finance question
+  (`cart.credit_balances = frozen_pending_finance`; decisions block below). April: none.
+- May admins refund imported orders? No (signed `cart.admin_refund_imported_orders = false`).
+- Are the ERPNext invoices the legal tax invoices; link out to ERPNext? Reference only, no link-out, a Finance question
+  (`cart.erpnext_invoices_legal = reference_only_pending_finance`). April: no stored invoice numbers, ERPNext never connected.
+- Is `paygw_airpay` deployed on 5.2; is the PayPal gateway used for any cart order? Yes, the code is at
+  `moodle-enhancement/payment/gateway/airpay` (also in the rehearsal codebase and XAMPP; the April config has `paygw_airpay`
+  version 2024100700.1). PayPal was never configured: April `payment_gateways` has only airpay (enabled) and the core
+  `payments` table has 0 rows.
+- Cash-drawer rows with historyid 0: imported for cross-tenant admins only (signed `cart.cash_drawer_rows_without_order =
+  import_admin_only`).
+- [CONFIRM] Delete stale `\local_biz_cart\task\*` rows from `task_adhoc` before cutover? No: the April copy has 0
+  `local_biz_cart` task_adhoc rows and the signed `cart.stale_task_adhoc_rows = do_not_delete_here` stands.
+
+### Decisions of 2026-10-07
+
+Nitin delegated these on 2026-10-07 ("self review and decide recommended option"). **Airpay Finance was NOT consulted.**
+`accepted` on the two finance keys records the delegated recommendation, not a Finance sign-off, and the Finance
+questions stay open (`OWNER-DECISIONS-2026-10-07.md`, "Finance explainer").
+
+- **cart.finance_keys_status:** the two keys that were `finance-confirm` are `accepted` in the signed file and the cart
+  importer DECLARES them (`importer.php decisions()`, allowed values `frozen_pending_finance` and
+  `reference_only_pending_finance`). The framework mechanism that blocks a declared key carried as `finance-confirm` stays
+  (covered by the toy sample, not by the signed file). No schema change. The hash is not pinned yet, so the edit is not a
+  re-approval event.
+- **cart.credit_balances = frozen_pending_finance:** the credit journal and balances import as frozen, admin-only history
+  behind `sentientia.cart.imported_credits.enabled` (default OFF). Nothing in Sentientia honours, spends, pays out or writes
+  off a balance: native checkout has no reader or writer of `local_sentientia_cart_credits` or `_credit_txn`. April: 0 credit
+  bookings, 0 ledger rows, 0 holders, INR 0. If Stage B shows a non-zero balance, the count, the total in INR and the tenant
+  go to Airpay Finance before cutover, including how a holder's erasure request is handled: the cart privacy provider deletes
+  a holder's balance row on erasure and anonymises the journal, so a balance owed would lose its holder (F-04: recorded as a
+  question for the legacy-table privacy ADR; no code now; a Finance answer is a re-approval event).
+- **cart.erpnext_invoices_legal = reference_only_pending_finance:** stored ERPNext numbers import as references only
+  (`ERPNEXT-<id>`, status `legacy_external`), shown to order admins as 'Issued in ERPNext as <number>' behind
+  `sentientia.cart.imported_orders.enabled` (default OFF), with no link-out. Sentientia never issues an invoice number for a
+  BizLMS sale. April: 0 invoice rows, no ERPNext connector configured; the one Rs 10 completed sale (10 January 2025, Public
+  tenant, no GST) has no tax invoice anywhere.
+- **cart.accepted_reasons:** none now. None of the seven cart needs-owner reasons fires on April, and a pre-acceptance would
+  pass any count. After Stage B, Nitin reviews each `cart:<code>` with a count above 0 and adds it to `accepted_reasons` (a
+  re-approval event).
+- **cart.order_number_floor:** a plugin setting honoured at checkout plus the runtime placeholder (column map above). Stage B
+  check: after import `bizlms_order_floor` equals the highest imported order number and one rehearsal-only native test order
+  gets a number above it.
+- **cart.credit_sale_classification = keep_unclassified:** a credit booking that matches a sale ledger row has no class in
+  this document; the importer does not guess (R8), keeps `legacy_unclassified` and reports it. April has 0 credit rows. If the
+  report's `credit_unclassified` warning count is above 0 after Stage B, revisit with the real rows (`credits_step.php::EVENT_OF`,
+  both trees).
+- **cart.price_source = enrol_fee_authoritative (confirmed revenue hole; ship before the Stage B persona pass and at the
+  latest before cutover):** production sells through `enrol_fee` plus `paygw_airpay` (the cart's own set-price tool already
+  names `enrol_fee` the single source of truth), but `commerce::get_course_price()` reads only the catalogue setting
+  `course_price_<id>`, so a course priced only through an enabled `enrol_fee` instance reads as Free, `add_to_cart` stores it
+  as free, and the basket's `enrollfree` action (no flag, any logged-in non-guest) enrols it through `enrolment::enrol_now()`,
+  whose 'never enrol into a paid course' re-check uses the same function. April: 66 courses (61 Public, 1 ZEEA, 4 Airpay; INR
+  100-499; all visible) have an enabled priced fee instance and there are 0 catalogue price settings. Fix, both trees:
+  `get_course_price()` returns the enabled `enrol_fee` cost and currency when it is > 0, else the catalogue setting;
+  `enrol_now()` also returns false when `\local_sentientia_cart\cart_manager::get_course_price($courseid)` is not null
+  (guarded by `class_exists`); PHPUnit; catalogue version bump; visual evidence of the catalogue price and the basket
+  (desktop and 590 px). `storefront_checkout` stays OFF. F-00: check UAT for any Public test account that has used the basket
+  action.
+- **cart.withheld_line_refund = state_amounts:** when a paid native order contains a course the buyer may no longer buy, the
+  enrolment is withheld and the notes text (`cart_manager::mark_paid()`) and the admin message (`notifier::order_paid()`) state
+  the per-line amount to refund; nothing is refunded automatically (an automatic refund is the irreversible option). en and
+  hi strings, a test in `purchase_gate_test.php`, a cart version bump; ship before the native cart takes real paid orders.
+- **cart.native_tax_invoices = hold:** Sentientia issues no GST tax invoice to a real buyer until Airpay Finance answers six
+  points: (1) Sentientia, not Finance's own system, issues tax invoices for LMS course sales; (2) the GSTIN for
+  `local_sentientia_cart/our_gstn`; (3) the `AIRPAY-YYYY-NNNN` series (16 characters, restarting each January); (4) how refunds
+  get a GST credit note, since Sentientia issues none; (5) whether B2B invoices need an e-invoice IRN; (6) how long issued
+  invoices must be kept unredacted, because an erasure request currently blanks the buyer's name, e-mail, phone, address and
+  GSTIN on native invoices and order history (CGST Act s.36 retention against DPDP erasure; once Sentientia issues invoices
+  this could destroy a record Finance must keep). Until then, which tenants should `local_sentientia_cart/enabled_tenants`
+  open at cutover? The default is '77,177'. When Finance answers, `redact_for_user()` may change to keep issued invoices
+  unredacted for the retention period.
+- **Follow-ups:** F-01 (this ADR and the cart README and state card rewritten to the accepted keys), F-03 and F-87 (before any
+  dev or UAT copy is built from an imported database: extend `mask_pii_for_dev.php` to null the new credit and ledger free-text
+  reasons, zero `initiatedby` and strip `userid` and `usermodified` from `payload_json`; both trees), F-05 (the Stage B cart
+  checks, in the runbook), F-06 (visual evidence on the UAT build for `credits.php`, the 'Issued in ERPNext as' invoice view,
+  `return.php` and `history.php` status rendering, the admin_orders Staff notes column and the checkout error path; both
+  imported-history flags stay OFF until Nitin reviews them), F-07 (before the native cart takes real paid orders: move the
+  notifier subjects and bodies to lang strings, en and hi, and build each recipient's message in the recipient's own
+  language), F-08 (the four cart PHPUnit suites added by the import and the ADR-031 gate have never run; run them in CI after
+  the finance-keys change, which needs a PHPUnit re-init for the cart version), F-09 (after Stage B: `legacy_reader::fetch_by`
+  and the person-column privacy assertion in `importer_contract`).
 
 ---
 
@@ -1483,6 +1863,9 @@ local_course_levels -> local_sentientia_course_levels
   open_path -> open_path (tenant rule); costcenterid -> fallback (SR classes/local/querylib.php:21)
   sortorder -> sortorder; (decision) -> proficiency 1..5 (operator CSV; name heuristic prefill:
      awareness 1, basic/beginner/foundation 2, intermediate 3, advanced 4, expert 5, else 1)
+     2026-10-07 decision LRN-07: the csv is FILLED: 1,2;2,3;3,4;4,5;5,1;7,2;8,3;9,4;10,5;11,2;12,3;13,4;14,5;15,1;16,2;17,3;18,4
+     (level id, proficiency; the 17 April levels by the rule above; levels 5 and 15 match no rule word and take the default
+     1; level 16, the plural of 'basic', is reviewed to 2)
   usercreated, usermodified -> not copied (keeps the provider's "catalogue holds no user data" claim,
      SS classes/privacy/provider.php:20-22)
   timecreated, timemodified -> same; finalise(): reset_sequence
@@ -1615,11 +1998,25 @@ messages or emails; catalog label reads the imported level name.
 - One shared catalogue (ADR-031 status quo) or tenant-scoped readers?
 - Merge policy: categories by exact name (proposed), skills never. Keep the invented 48-skill seed on
   production at all? (Deleting seed rows is destructive: [CONFIRM].)
-- Approve the level-to-proficiency map (17 local rows; production count I-20).
+- Approve the level-to-proficiency map (17 local rows; production count I-20). Decided 2026-10-07 (LRN-07): see the
+  decisions block below.
 - `user_skills.source` for migrated rows: 'import' (proposed) or 'course'?
 - Grant skill history from the recompletion archive too, or only from current completions?
 - Import `local_skillmatrix`?
 - Interests: build a consumer, or import for the record only?
+
+### Decisions of 2026-10-07
+
+- **LRN-07 (level-to-proficiency map; blocks Stage B):** `skills.level_proficiency.csv` was null, so the skills feature was
+  blocked at preflight, and `learningplan`, which depends on skills, could not run either (2,071 learning-plan enrolments wait on
+  it). The signed rule is applied exactly, plus the review step the signed text itself requires, to the 17 April course levels:
+  `1,2;2,3;3,4;4,5;5,1;7,2;8,3;9,4;10,5;11,2;12,3;13,4;14,5;15,1;16,2;17,3;18,4`. Every entry equals what
+  `level_map::suggest()` returns except level 16, reviewed to 2. A default of 1 for the non-levelled labels (5 and 15) never
+  overstates a learner's proficiency. April courses use levels 1-5, 7-10, 16 and 17; levels 11-15 sit under root 80, which is
+  not a registered tenant, and no course uses them. Preflight `preflight_level_map()` adds the warning
+  `level_proficiency_differs_from_rule:<ids>` whenever a csv entry differs from the rule. Stage B: re-run `--preflight` for
+  skills on the live backup and update the csv before the hash is pinned if a level is new or renamed. The test that expects
+  the signed file to block the feature until the map is filled skips itself.
 
 ---
 
@@ -1673,7 +2070,8 @@ local_classroom -> local_sentientia_classroom
   description -> description (HTML; view.php:92 renders format_text)
   visible -> visible (NULL -> 1)         open_path -> open_path (tenant rule)
   last numeric segment of the path -> costcenterid (the edit form preselects it, SC2 classes/form/edit_classroom.php:81,197,228-241)
-  path segment 2 or 0 -> departmentid    costcenter -> only to rebuild an empty or invalid path
+  path segment 2 or 0 -> departmentid    costcenter -> not used (it does NOT rebuild an empty or invalid path;
+                                         2026-10-07 decision LRN-14)
   instituteid -> locationid (map) and fit(institute.fullname, 254) -> location (view.php:94, list_classrooms.php:127,
                                          ics_builder.php:43-44 show this text)
   MIN(id) row of local_classroom_trainers -> trainerid (view.php:59-65)
@@ -1739,6 +2137,8 @@ local_classroom_waitlist -> waitlist
   enrolstatus -> status (mapping below); timemodified -> promoted_at or removed_at
   reason <- 'Imported from BizLMS: <reason>' for removed rows; timecreated, timemodified
   enroltype, usercreated, usermodified -> not copied
+  a waiting place of a deleted learner -> removed; a duplicate waiting place -> merged as dup_waiting_place
+     (2026-10-07 decision LRN-14: the two round-1 behaviours of the importer, recorded here)
 ```
 
 ### Tenant rule
@@ -1746,9 +2146,11 @@ local_classroom_waitlist -> waitlist
 `open_path` is the only tenant key for readers (`SC2 classes/external/list_classrooms.php:65-73`;
 `SE local/sentientia_org/classes/org_manager.php:242-270`); access by id needs a non-empty path inside the
 caller's tenant (`sm:172-188`). Normalise (trim, add leading `/`, strip trailing `/`, collapse `//`); the
-root must pass `assert_valid` and the path must exist in `local_sentientia_org`. Else rebuild as
-`'/' . costcenter` when that root is valid. Else import with open_path NULL (cross-tenant only, `sm:161-166`)
-and report. Child rows inherit through the classroom. Learners from other tenants on an imported roster
+root must pass `assert_valid` and the path must exist in `local_sentientia_org`. Else import with open_path NULL
+(cross-tenant only, `sm:161-166`) and report. 2026-10-07 decision LRN-14: the earlier sentence 'else rebuild as
+`'/' . costcenter`' is dropped. BizLMS's own readers filtered classrooms on `open_path` and only derived the cost centre
+from it, so a classroom with an empty path was never in a tenant admin's lists; rebuilding a tenant would widen who sees the
+roster (owner rule 3). Signed `classroom.pathless = cross_tenant_only`. April: 0 classrooms. Child rows inherit through the classroom. Learners from other tenants on an imported roster
 are hidden from tenant admins (`sm:311-313,801-803,965`); correct under ADR-031, listed in the report.
 
 ### Status mapping
@@ -1811,7 +2213,9 @@ are hidden from tenant admins (`sm:311-313,801-803,965`); correct under ADR-031,
 7. Protect imported history: `unenrol_user` hard-deletes the roster row and every attendance row
    (`sm:743-763`); `delete()` removes attendance, sessions and roster but not waitlist or the new tables
    (:501-530); `delete_session` removes attendance (:652-664). Block these on completed or imported rows
-   (or soft-delete) and cascade to the new tables.
+   (or soft-delete) and cascade to the new tables. 2026-10-07 decision LRN-10: a PENDING imported roster row with no
+   completion, progress or attendance, on an active classroom, may be unenrolled by an admin; every row that carries
+   history stays blocked (section 17).
 8. Privacy: `anonymise_data_for_user` deletes the roster row on the premise that it "carries no
    completion" (`SC2 classes/privacy/provider.php:130-135`). Keep roster rows on anonymise (clear free text
    only), as sentientia_programs and sentientia_learningpath do.
@@ -1835,7 +2239,7 @@ The ten CL tables and two LO tables from checked-in copies, production-only `cer
 nullable waitlist columns. Orgs `/1`, `/1/5`, `/77`, `/177`. Users A (`/1/5`), B (`/77`), deleted D,
 trainers T1 and T2, a `/1` tenant admin, course C. Institute I1 (costcenter 1, type 1, fullname 225
 characters) with rooms R1 and R2; I2 (77, type 2). Classrooms CR1 status 4 `/1/5` capacity 0; CR2 status 1
-`/77`; CR3 status 3; CR4 status 0; CR5 status 2; CR6 `''` with costcenter 177; CR7 `'1/5/'`; CR8 invalid root;
+`/77`; CR3 status 3; CR4 status 0; CR5 status 2; CR6 `''` with costcenter 177 (expects a NULL path, 2026-10-07 decision LRN-14); CR7 `'1/5/'`; CR8 invalid root;
 CR9 pre-written at its id by a migrate_all-style header copy (adopted). classroom_courses CR1->C twice.
 Trainers CR1 T1 then T2. Sessions S1 (CR1, R1, `www.zoom.us/j/1`, `ftp://x`), S2 (online), S3 (timefinish <
 timestart, duration 90). Users: A completed; B completion 0 with a completiondate (timecompleted NULL);
@@ -1881,6 +2285,41 @@ Present); the fixed QR path writes Sentientia attendance; `get_sessions()` works
 - QR check-in: require the roster and a time window?
 - Which surfaces outside the classroom plugin read `local_sentientia_classroom*`? (Not searched in low-CPU mode.)
 
+### Decisions of 2026-10-07
+
+- **IDN-04 (logo copy):** the `classroomlogo` copy made by `file_rehome` in `finalise()` goes through the `copies_files`
+  marker (copy-only, insert-only, idempotent, originals never touched, left in place by `--purge-feature`), like the org
+  logo (section 3); the run report counts it. `{files}` is watched for every importer without the marker (ADR-032).
+- **LRN-14 (tenant of a classroom with no usable path):** stays `cross_tenant_only` as signed; the tenant-rule sentence, the
+  column-map line and the fixture expectation above are corrected to match.
+- **LRN-15 (co-trainers):** every trainer listed on a classroom (any row of `local_sentientia_classroom_trainers`) may run ALL
+  of its sessions (`classroom.cotrainer_sessions = every_session_of_their_classroom`). BizLMS gated attendance only by
+  capability, never by a session's trainer; this is narrower than BizLMS (inside the classroom) and inside ADR-031.
+- **LRN-16 (trainer erasure):** core erasure releases the trainer (removes the trainer's rows and clears the columns that name
+  them) and keeps classes and learner records; DPDP keeps them against the anonymised user (`classroom.trainer_erasure =
+  core_release_dpdp_keep`). Learner compliance records are untouched in both. After the classroom and program merges,
+  `trainerid` moves into `privacy_coverage_test::USER_COLUMNS` (F-86) and the program branch's `COMPONENT_USER_COLUMNS`
+  constant is deleted.
+- **LRN-17 (new states in the UI):** Draft (5) and On hold (6) ship UNFLAGGED as part of the enum fix
+  (`classroom.new_states_ui = unflagged`): a select that does not list the stored value rewrites it on save, so gating the
+  options would lose data, which overrides the flag rule. The UI is admin-only. Visual evidence must include the Draft and
+  On hold filter buttons and the status select.
+- **LRN-10 (protect imported history):** see section 17.
+- **XC-CLS-ENROL (bulk enrolment by audience):** `local/sentientia_classroom:enrol` is declared by no `access.php`, yet it gates
+  `bulk_enrol_by_audience.php`, `preview_audience.php`, `bulk_enrol_audience_form.php` and two web services in `services.php`,
+  so the page is refused for everyone, site admins included. Decision: the three PHP sites and `services.php` switch to
+  `local/sentientia_classroom:manage` (holders: BizLMS classroom managers, role 1, role 9, and role 10 trainers through the
+  signed allow-list grant of `local/classroom:manageclassroom`), behind the new default-OFF flag
+  `sentientia.classroom.bulk_enrol_audience`, checked on the form page and the two web services; an empty filter is refused
+  (the existing 'pick at least one' wording) so no accidental whole-tenant enrolment; the ADR-031 tenant bound is unchanged.
+  The `BASELINE` lines for classroom `:enrol` come out of `capability_names_test.php` in both platform trees in the same change
+  (F-90). Screenshots before any flip.
+- **Open questions above, answered (signed 2026-09-30):** draft and on hold are added (`classroom.status_new_hold = add_5_6`);
+  waiting rows on closed classrooms are `removed` (`classroom.waitlist_closed`); an unresolvable `open_path` is pathless
+  (`classroom.pathless`); classroom costs stay in the legacy table (`classroom.costs_as_columns`); QR check-in requires the
+  roster (`classroom.qr_checkin_requires_roster`) and uses a window from 30 minutes before the session start to 30 minutes
+  after its end (merge b59adb58c, `sentientia_pages/qr_scan.php`).
+
 ---
 
 ## 16. program
@@ -1914,7 +2353,8 @@ orphaned criteria. The importer is still complete: production counts are unknown
 
 ```
 local_program -> programs
-  id -> id (preserve)            name (CHAR225) -> name (CHAR254, trim) (PR :9; SP :8)
+  id -> id (preserve)            name (CHAR225) -> name (CHAR254, trim) (PR :9; SP :8); when name is empty, shortname
+                                 -> name with warning name_from_shortname (2026-10-07 decision LRN-12)
   description -> description; descriptionformat 1 (the editor text is stored raw, program.php:73; SP view.php:103 renders HTML)
   open_path -> open_path (normalise, tenant rule) (PR :39; SP :15)
   open_path -> costcenterid = id of the local_sentientia_org row whose path equals it (org ids are preserved),
@@ -1988,6 +2428,11 @@ Normalise `open_path` to `'/' . trim(path, '/')`; the root must pass `assert_val
 the root of the creator's `user.open_path`; else NULL and reported. A pathless program is cross-tenant
 only (`tenant.php:380-404`; `pm:76-92`). Children inherit through programid; the roster is limited to the
 caller's tenant (`pm:194-196`; `SP classes/external/list_program_users.php:54-62`).
+2026-10-07 decision XC-TENANT-GUESS: the creator's-root fallback (signed `program.pathless = creator_root`) guesses a tenant,
+which BizLMS never did (its program readers scoped by `open_path` only, `BZ local/program/classes/program.php:403-509`).
+Nothing changes today: April's only program has a path (`/77`), so the fallback does not fire. The Stage B report counts rows
+by tenant method (path, costcenter, classroom, shared_learner_root, creator_root, pathless) with ids for `creator_root`;
+`creator_root > 0` means stop, ask Nitin and re-pin if he changes a value.
 
 ### Status mapping
 
@@ -2035,9 +2480,13 @@ caller's tenant (`pm:194-196`; `SP classes/external/list_program_users.php:54-62
 8. `SP index.php:33-34,59-63`: relabel the status-2 tile "Archived".
 9. `list_program_users.php:94-105`: add "Completed on".
 10. Protect history: the roster trash action (`list_program_users.php:85-92` -> `pm:1095-1100`) and
-    `delete()` (`pm:419-451`) must not hard-delete completions; `delete()` cascades to `lvlcomp`.
+    `delete()` (`pm:419-451`) must not hard-delete completions; `delete()` cascades to `lvlcomp`. 2026-10-07 decisions
+    LRN-10 and LRN-13: an imported program row, an imported level, and trainer or feedback rows are protected history
+    (delete is refused, as delete_level follows the same rule); a roster row with a completion, progress or attendance
+    stays blocked, while a pending imported enrolment with none of those may be unenrolled by an admin.
 11. Privacy (`SP classes/privacy/provider.php:19-116`): `lvlcomp`, `enrolledby` (anonymise as an actor).
-12. `delete_level` (`pm:532-551`) and unassign (`pm:869-874`) clean up `lvlcomp`.
+12. `delete_level` (`pm:532-551`) refuses an imported level or a level with a stored completion; unassign
+    (`pm:869-874`, `unassign_course_from_level`) is unchanged and cleans up `lvlcomp` (2026-10-07 decision LRN-13).
 13. A `programlogo` pluginfile callback and reader.
 
 ### Fixture
@@ -2077,6 +2526,31 @@ unchanged core counts, a native program gets an id above the legacy maximum, sec
 - Non-empty `_bk` tables: a visible "previous completion" history?
 - Certificates: re-link `certificateid` (gap G1)?
 - Enrol instances `enrol='program'` (`program.php:1489-1531`; `PR checkenrol.php:33-41`): gap G6.
+
+### Decisions of 2026-10-07
+
+- **IDN-04 (logo copy):** the `programlogo` copy goes through the `copies_files` marker (see section 15 and ADR-032); the
+  importer is the fifth caller after org, cohort_scope, learningplan and classroom.
+- **LRN-12:** a BizLMS program with no name but with a shortname imports under its shortname with the warning
+  `name_from_shortname`, so its levels and learner history are kept (`program.nameless_with_shortname =
+  import_under_shortname_with_warning`). The shortname is the program's own BizLMS identifier, not personal data. April's only
+  program has a 13-character name.
+- **LRN-13:** an imported program level cannot be deleted, even when no learner has a stored completion on it, because it
+  defines the completion of imported enrolments (`program.delete_imported_level = blocked`); editing it, unassigning courses
+  or archiving the program remain possible. Empty BizLMS levels are already skipped at import (`program.empty_levels =
+  skip`), so every imported level carries courses.
+- **XC-TENANT-GUESS:** see the tenant rule above.
+- **F-58 (with the program merge):** `manage.mustache` labels the status 0 filter 'Cancelled' in hard-coded English although
+  status 0 is Draft; replace the button text with the `status_draft` string (en and hi exist) and show it in the visual
+  evidence. The two program engine fixes (the observer stores completions only for enrolled learners; an empty level no longer
+  counts as completed) ship UNFLAGGED as defect fixes (code fixes 3 to 5); before the UAT deploy, list native programs with an
+  empty level (ids only), because those stop showing learners as completed.
+- **F-54 (April expectations for the post-Stage-B acceptance list):** `program`: orphan levels and criteria under the missing
+  program 1 (`orphan_program`); recompletion and classroom: none (0 rows).
+- **Open questions above, answered (signed 2026-09-30):** completed with date 0: completed, flagged; inactive programs:
+  Archived, not Draft; learners do not see history in inactive programs; empty auto-created levels: skipped; deleted users'
+  enrolments: imported for audit; pathless programs: the creator's root, else none; non-empty `_bk` tables: archived in the
+  legacy tables.
 
 ---
 
@@ -2140,7 +2614,9 @@ local_learningplan_courses -> courses (group planid, courseid)
 local_learningplan_user -> users (group planid, userid)
   planid -> pathid; userid (missing -> skip; deleted imported; readers hide them, ptm:891)
   status + completiondate -> status (mapping below); completiondate -> timecompleted only when status = 1 (0/'' -> NULL)
-  startdate -> timestarted NEW only if production has non-NULL values (nothing writes it, LP ajax.php:60-66,76-82)
+  startdate -> NOT copied. Preflight BLOCKS (`user_startdate_has_no_target_column:N`) if production has any value (none
+               expected: nothing writes it, LP ajax.php:60-66,76-82; April: 0 of 2,071). 2026-10-07 decision LRN-09,
+               `learningplan.user_startdate = block_if_present`
   timecreated -> timecreated (the enrolment date, view.php:2026); timemodified -> timemodified NEW
   usercreated -> enrolledby NEW (equal to userid = self-enrolled, ajax.php:64)
   duplicates: keep a completed row (earliest completiondate), else the lowest id; timecreated MIN; others merged
@@ -2155,6 +2631,10 @@ Normalised `open_path` when its root passes `assert_valid`. Empty (the column wa
 no default, `LP db/upgrade.php:305,353`): (1) `'/' . costcenter` when that production-only column exists
 and is valid; (2) the root shared by every enrolled user; (3) the creator's root; (4) NULL and reported.
 NULL or empty paths are cross-tenant only (`ptm:47-53,68-72`; `tenant.php:380-404`).
+2026-10-07 decision XC-TENANT-GUESS: steps (2) and (3) guess a tenant, which BizLMS never did (it scoped by `open_path`
+only). Nothing changes today (April: 0 of 17 plans have an empty path). The shared-learner root is a weaker guess (that
+tenant's admin already sees those learners): it is reported, not escalated; `creator_root > 0` stops the run for Nitin
+(section 16).
 
 ### Status mapping
 
@@ -2180,7 +2660,8 @@ NULL or empty paths are cross-tenant only (`ptm:47-53,68-72`; `tenant.php:380-40
   DEFAULT 0, selfenrol INT(1) NOT NULL DEFAULT 0, sequential INT(1) NOT NULL DEFAULT 0, points INT, categoryid,
   skillid, levelid, certificateid INT NULL, usercreated, usermodified INT NOT NULL DEFAULT 0; widen name and
   open_path to 255.
-- `courses`: + usercreated, usermodified, timemodified. `users`: + enrolledby, timemodified, timestarted (conditional).
+- `courses`: + usercreated, usermodified, timemodified. `users`: + enrolledby, timemodified (`timestarted` is NOT built,
+  2026-10-07 decision LRN-09).
 - NEW `local_sentientia_lp_course_status` (conditional): pathid, courseid, userid, status, percentage,
   startdate, completiondate, timecreated, timemodified, usercreated, usermodified; UNIQUE (pathid, courseid, userid).
 - `legacy_planid` and `audience_json` are not built (R6, R7). Both trees (`TOP local/sentientia_learningpath`
@@ -2196,10 +2677,16 @@ NULL or empty paths are cross-tenant only (`ptm:47-53,68-72`; `tenant.php:380-40
 5. `SL exportcsv.php:72-106`: add Status and Completed on; compute % over mandatory courses, or 100 when status 2.
 6. `ptm:942` and `SL classes/external/list_path_courses.php:110`: print a dash, not 1970, for timecreated 0.
 7. A learner "My learning paths" page behind a default-OFF flag (no learner page exists,
-   `SE local/sentientia_manager/classes/approval_manager.php:837-842`).
+   `SE local/sentientia_manager/classes/approval_manager.php:837-842`). 2026-10-07 decision F-47: with the reader flag
+   flip (Nitin's call), add the navigation entry behind the same flag and point the approval message and the whatsapp
+   `send_path_milestone()` link at `mypaths.php` when `sentientia.learningpath.learner_paths.enabled` is ON for the recipient.
 8. `SL lib.php` (empty, :1-3): `local_sentientia_learningpath_pluginfile` for `summaryfile`, and render it.
 9. Protect history: `unenrol_user` hard-deletes completed rows (`ptm:852-868`); `delete()` cascades users and
    courses (:474-490) but not `lp_course_status` or the copied file. Block or soft-delete; extend the cascade.
+   2026-10-07 decision LRN-10: a PENDING imported enrolment with no completion or progress, on an active path, may be
+   unenrolled by an admin (BizLMS allowed it); the unenrol result lists the course enrolments that REMAIN from that plan
+   (the legacymap `enrolments` rows created from this plan's BizLMS instances, with course links) and removes nothing
+   automatically.
 10. Privacy (`SL classes/privacy/provider.php:26-35`): the new user columns and table.
 11. `SE local/sentientia_org/cli/migrate_all.php:116-134`: retire the `local_learningplan` step (it drops the
     missing `status` source column, :273-277, so hidden plans become Active).
@@ -2238,6 +2725,47 @@ manual status 2 not downgraded; tenant checks as the `/77` admin; `is_enrolled` 
 - Tenant fallback order for empty paths: accept?
 - `local_plan_course_status` meaning if it has rows; `moduletype` values other than '' or 'course'.
 - Enrol instances `enrol='learningplan'` (`lib/lib.php:1052-1063`): gap G6.
+
+### Decisions of 2026-10-07
+
+- **IDN-04 (cover copy):** the `summaryfile` copy goes through the `copies_files` marker (see section 15 and ADR-032).
+- **LRN-08 (cover image):** the imported cover shows on the admin path page (`view.php:76-85`) only when
+  `sentientia.learningpath.learner_paths.enabled` is ON (otherwise `has_cover` is false), following the program logo
+  precedent (`learningplan.cover_on_admin_view = behind_learner_paths_flag`). April: 1 plan has a cover file. Visual evidence
+  of `view.php` with the flag OFF and ON.
+- **LRN-09 (`startdate`):** BizLMS never writes `local_learningplan_user.startdate`; the column is not copied and the
+  preflight blocker stays (fail closed on unexpected data). If Stage B shows values, the lead traces their writer before
+  anything else is decided. No schema is built for an empty column.
+- **LRN-10 (unenrol of imported rows, also classroom and program):** an admin may unenrol an imported enrolment that has no
+  completion, progress or attendance, on an active path, classroom or program. BizLMS allowed this routine action, and the
+  signed 'block every imported row' would have stopped it for the 762 April learners still pending on the 17 active plans.
+  Every row that carries history, and every row of an archived path, stays blocked; the BizLMS row stays in the legacy
+  archive. On a learning path the unenrol does NOT remove the learner's converted course enrolments (BizLMS did): the result
+  lists the course enrolments that remain from that plan, so the admin is told. Nothing is removed automatically (folded
+  enrolments may give access for other reasons, and removing access is the harder direction to undo). Backlog: 'path unenrol
+  removes course access' as a flagged parity feature for native and imported paths. Signed key
+  `framework.protect_imported_history_pending_enrolments = unenrol_allowed_without_progress`. Runbook: no admin unenrol before
+  `bizlms_production_open`.
+- **LRN-11 (stalled-path nudge):** the notifications rule `rule_learning_path_stalled` never targets imported BizLMS enrolments
+  or archived paths (`AND lp.status = 1 AND lp.visible = 1` plus the `provenance::not_imported_sql` fragment, guarded by
+  `class_exists`); an admin can still nudge those learners by hand (`learningplan.stalled_nudge_scope =
+  native_rows_on_active_paths`). BizLMS sent no such nudge, so an automatic message about a years-old BizLMS enrolment would
+  be new behaviour triggered by the import (about 760 April learners). Must land before `smart_rules` is ever flipped; nothing
+  fires today (`smart_rules` default OFF, rule not seeded).
+- **F-59 (Stage B):** `learningplan.dates_as = enrolment_window` was to be checked at the rehearsal. April: 0 of 17 plans have a
+  start or end date, so it has no effect there. At Stage B count plans with an end date in the past and self-enrol on; if any
+  exist, report that the enrolment window now refuses new enrolments where BizLMS only displayed the dates.
+- **F-54 and F-89 (April expectations for the post-Stage-B acceptance list):** `learningplan:orphan_course` = 4 (122 of 126
+  course rows import); 53 learning-plan enrolments of users from another root on `/1` paths, made up of 6 (`/177`), 6 (`/77`)
+  and 41 (`/80`, all 41 accounts deleted), stay hidden from tenant readers (ADR-031). Root 100 has 113 users, all deleted, with no
+  plan enrolment. (CRS-05's 40 cross-tenant learner-course pairs come from the 12 enrolments of live users.)
+- **F-51:** `user_step::has_started()` reads `course_completions` through global `$DB` inside `transform()`: read-only and
+  identical in dry and apply runs, so it is recorded in ADR-032 as an accepted read-only exception.
+- **XC-TENANT-GUESS:** see the tenant rule above and section 16.
+- **Open questions above, answered (signed 2026-09-30):** non-completed learners: In progress when a course is done, else
+  Enrolled; approvalreqd, selfenrol and sequential: stored only; start and end dates: Sentientia's enrolment window; completed
+  history on archived paths: admins only; tenant fallback order: accepted as written; enrol instances `enrol='learningplan'`:
+  gap G6, decided (section 21).
 
 ---
 
@@ -2290,12 +2818,15 @@ local_evaluations -> evaluation
   (tenant rule) -> costcenterid (a local_sentientia_org id) and open_path (that org's path) (em:174-178,380-384)
   deleted, visible, timeclose -> status 2 ARCHIVED (em:28-30), see status mapping
   anonymous: 1 -> 1, 2 -> 0 (EVALUATION_ANONYMOUS_YES = 1, NO = 2, EV lib.php:34-35); forced 1 when any completed row of the
-             form has anonymous_response = 1 (sticky)
+             form has anonymous_response = 1 (sticky: EVERY completion of such a form imports anonymous, even one BizLMS stamped
+             named; 2026-10-07 decision EV-16, `evaluation.sticky_anonymity = whole_form`)
   timeopen, timeclose -> same (0 = no constraint, SV install.xml:23-26); multiple_submit -> same (default 1, EV :16)
   email_notification -> notify_admin_on_response 0 ALWAYS (1 message_sends every site admin per response,
              em:1120-1128,1575-1591)
   timemodified -> timemodified; timecreated = MIN(timemodified, MIN(users.timecreated), MIN(completed.timemodified))
-  type, evaluationtype, evaluationmode, plugin, instance, visible, course, department, audience columns, publish_stats,
+  evaluationmode -> evaluationmode CHAR(2) NOT NULL DEFAULT 'SE' ('SE' self evaluation, 'SP' supervisor evaluation of a
+             team member; written from the declared enum; 2026-10-07 decision EV-17)
+  type, evaluationtype, plugin, instance, visible, course, department, audience columns, publish_stats,
   autonumbering, completionsubmit, page_after_submit, usermodified -> not copied (R7; the map's legacy_meta is dropped)
 
 local_evaluation_item -> questions
@@ -2331,7 +2862,9 @@ local_evaluation_template -> template
 local_evaluation_completed -> responses
   evaluation -> evaluationid (map; deleted form -> skip)
   anonymous (anonymous_response = 1, or unknown and the form is anonymous, or userid 0 guest, EV classes/completion.php:434-438)
-     -> userid 0, subject_userid NULL (Sentientia stores anonymous answers with userid 0, em:1089)
+     -> userid 0, subject_userid NULL (Sentientia stores anonymous answers with userid 0, em:1089); sticky: a completion
+        BizLMS stamped named (anonymous_response 2) on a form that ever held an anonymous answer is imported anonymous too,
+        warning anonymity_made_sticky (2026-10-07 decision EV-16)
   named -> userid = evaluatedby if > 0 else completed.userid (evaluatedby = $USER at save, EV lib.php:1371,1377; added with
      default 0 by EV db/upgrade.php:36-43); subject_userid NEW = completed.userid when evaluationmode 'SP' and it differs
   courseid -> courseid (> 0, else NULL; never set on save, classes/completion.php:433-440)
@@ -2352,6 +2885,10 @@ local_evaluation_users -> assign (group evaluationid, userid: keep MIN(timecreat
   plugin 'classroom' -> trigger_event 'classroom_end', source_id = instance; else 'manual', 0
   status: 'responded' if a completed row exists for (form, userid) (EV lib.php:2977-2986); else 'expired' (the form is
      imported archived). The source status column is never written (users_assign.php:145-160) and is ignored.
+     2026-10-07 decision EV-15: the status follows EVERY legacy completion of the pair, including completions skipped as
+     orphan_user or no_timestamp (both needs-owner), so an assignment stays 'responded' on purpose: 'expired' would invent a
+     non-response (for example for an evaluated person whose supervisor did fill in the form but has since left);
+     responded_at = MAX over those completions, cut to the day on a protected form
   creatorid -> assigned_by_userid; due_at = timeclose if > 0 else NULL
   responded_at = MAX(completed.timemodified); snapped to 00:00 of that day when the form is identity-protected
   timecreated, timemodified
@@ -2366,9 +2903,11 @@ synthesized assign rows (completions with no users row): trigger 'manual', sourc
 Resolve an org, never a bare root: (1) `rtrim(trim(open_path), '/')`, `'0'` = unset (default, `EV db/install.xml:36`);
 if it is a digit path whose root passes `assert_valid`, find the org by path, dropping the last segment until
 found; (2) `'/' . costcenterid` when positive (BizLMS stores the root there,
-`EV classes/task/evaluation_due.php:59-67`); (3) plugin `classroom`: the classroom's path; (4) the root of
-`usermodified`; (5) unresolved: costcenterid 0, open_path NULL, archived, reported (cross-tenant only,
-`em:82-91,282-288`). Questions, responses and assignments inherit through evaluationid (`em:258-270,2128-2155`).
+`EV classes/task/evaluation_due.php:59-67`); (3) plugin `classroom`: the classroom's path; (4) unresolved:
+costcenterid 0, open_path NULL, archived, reported (cross-tenant only, `em:82-91,282-288`). 2026-10-07 decision EV-TENANT:
+the former step (4), the root of `usermodified` (the tenant of whoever last edited the form), is REMOVED, because that
+guess would show named survey answers to admins who never saw them (`evaluation.tenant_editor_fallback = not_used`; see
+the decisions block). A template resolves `open_path`, then `costcenterid` (2026-10-07 decision F-23). Questions, responses and assignments inherit through evaluationid (`em:258-270,2128-2155`).
 
 ### Status mapping
 
@@ -2390,6 +2929,8 @@ found; (2) `'/' . costcenterid` when positive (BizLMS stores the root there,
 ### Schema additions
 
 - `responses`: + subject_userid INT NULL, indexed.
+- `local_sentientia_evaluation`: + evaluationmode CHAR(2) NOT NULL DEFAULT 'SE' (2026-10-07 decision EV-17; install.xml plus a
+  guarded upgrade step, plugin version above 2026093001, `importer::REQUIRES_VERSION` raised to match).
 - The map's `legacy_id` (evaluation, template), `legacy_meta`, `legacy_itemid` and `legacy_completedid`
   columns are not built (R6, R7).
 - Privacy strings for `subject_userid` in en and hi.
@@ -2402,7 +2943,8 @@ found; (2) `'/' . costcenterid` when positive (BizLMS stores the root there,
 3. `SV responses.php:81-145`: render `multichoice_multi` and `numeric` buckets (computed at `em:1834-1850,1942-1954`).
 4. `em:1902-1911`: accumulate floats, not ints (and `em:919-933` if decimal bounds must survive).
 5. `SV response_detail.php:64,82,115-116`: numeric qid keys and list-shaped options, before re-enabling the page
-   (it needs `local/sentientia_evaluation:view`, which `SV db/access.php:3-12` does not declare).
+   (it needs `local/sentientia_evaluation:view`, which `SV db/access.php:3-12` does not declare). 2026-10-07 decision
+   EV-06: both pages are re-gated on `:manage` behind the new default-OFF flag `sentientia.evaluation.response_drilldown`.
 6. A learner evaluation history page behind a default-OFF flag (BizLMS showed them on the dashboard,
    `EV classes/local/userdashboard_content.php:54`).
 7. Protect history: `delete()` cascades questions and responses and orphans assign and trigger rows (`em:498-512`);
@@ -2446,8 +2988,89 @@ each admin; all ARCHIVED and manual; no triggers or shells; empty sinks; tmp tab
 - SP forms set to anonymous: hide the subject too (proposed)?
 - After a verified import, anonymise the legacy `userid`/`evaluatedby` of anonymous rows, or drop the legacy
   tables ([CONFIRM], Nitin)? They still link anonymous answers to people (`EV classes/completion.php:435-440`).
+  Answered: neither here; see 2026-10-07 decision EV-19 below.
 - Trainer feedback forms (one per trainer, same name, `BZ local/classroom/lib.php:199-202`): add the trainer's name?
 - Make imported forms read-only?
+
+### Decisions of 2026-10-07
+
+- **EV-16 (sticky anonymity; blocks Stage B):** a form that EVER collected an anonymous answer (its flag, or any completion
+  with `anonymous_response` 1) imports EVERY completion anonymous (`userid` 0, no subject), including completions BizLMS stamped
+  named (2) (`evaluation.sticky_anonymity = whole_form`). Pooling means no anonymous answer can be singled out by subtracting
+  the named ones, and it matches `identity_protected()`, which already hides every respondent of such a form, so keeping the
+  named rows named would gain nothing anyone can see (it would only keep a DB-level name on those rows, and the legacy table
+  holds that name anyway). Warning `anonymity_made_sticky`. April: no form is affected (`anonymous` is
+  2 on all 3 forms and `anonymous_response` is 2 on the 1 completion). The importer declares the key (`importer.php`
+  `DECISIONS`), so a decisions file without it blocks the feature; the test helper `decisions_accepting()` carries it.
+- **EV-TENANT:** a BizLMS form whose path, stored root (`costcenterid`) and parent classroom give no tenant imports PATHLESS
+  (costcenterid 0, cross-tenant callers only, archived, reported). BizLMS's readers scoped forms by `open_path`
+  (`BZ local/evaluation/analysis.php:57`, `classes/responses_table.php:346`), so such a form was visible to site admins only;
+  an editor's root is a guess at ownership, the reason the signed `classroom.pathless = cross_tenant_only` rejects
+  `by_creator`. Steps 2 and 3 stay: `costcenterid` is the root BizLMS itself stored for the form and used for its own
+  notifications. April: no form resolves through the old step 4 (form 1 is deleted; form 2 has an unregistered `/101` root and
+  no stored root, so it is already pathless; form 3 has `/1/116`).
+- **EV-17 (evaluation mode; before the learner page can go on; preferably before the Stage B rehearsal so it runs the final
+  schema):** `evaluationmode` is built so Sentientia knows a form was a supervisor evaluation and the person being evaluated is
+  never told they 'responded' (anonymous SP forms, old SP completions with `evaluatedby` 0). `form_step` writes it from the
+  declared enum; `learner_history::for_user` filters `evaluationmode = 'SE'` for assignments and responses and drops
+  `is_supervisor_evaluation()`; `shows_subject()` requires `'SP'`; `response_step` warns `sp_responder_unknown` for an SP
+  completion with `evaluatedby` 0 (it still follows the column map); a new `verify()` check `imported_form_mode_mismatch`. If
+  it lands later, an idempotent backfill from `local_evaluations.evaluationmode` through the map is acceptable. April has
+  `evaluationmode` {SE} only, so no real row changes today. The privacy provider is unchanged (no person column).
+- **EV-19 (legacy anonymous linkage; blocks Stage B as a decisions-file edit):** the link from anonymous answers to people stays
+  in the legacy tables, untouched, until the separate legacy-table privacy ADR (`framework.legacy_table_privacy`). Its scope is
+  WIDER than the legacy tables: it must also cover the import's own map (the 'assign' sub-row and the anonymous response share
+  one completion id) and the completion-ordered ids of implied assignments, with a test that no `legacymap` row joins an
+  anonymous response to an assign row. That ADR is a precondition for anonymising or dropping the legacy evaluation tables, NOT
+  for cutover. The Stage B report records the count of implied assignments on identity-protected forms (ids only). April: 0
+  anonymous completions and 0 completions without an assignee row.
+- **EV-06 (response pages):** `response_list.php` and `response_detail.php` came back dead (they required
+  `local/sentientia_evaluation:view`, which no `access.php` declares, so nobody could open them, site admins included). They are
+  gated on `:manage` behind the new default-OFF flag `sentientia.evaluation.response_drilldown` (a 'not available' notice when
+  OFF); roles: manager archetype only (role 1, role 9 tenant administrator, site admin); trainers (role 10, teacher archetype)
+  and employees get nothing, which matches BizLMS (role 9 held viewreports and viewanalysepage; role 10 was prohibited from
+  both). `require_evaluation_access()` and `identity_protected()` stay. `responses.php` shows an 'Individual responses' link only
+  when the flag is ON. Recommended future flip (Nitin's call): ON for Airpay after he has reviewed the screenshots. The two
+  `BASELINE` entries in `capability_names_test.php` go in the same change (F-31); no version bump (the flag registry is cached
+  and purged on deploy).
+- **EV-18 and EV-20-NOTE (learner page `my_evaluations.php`):** the anonymous note is reworded (en and hi) so it does not claim
+  more anonymity than is true for imported forms ('your answers are not linked to you' is false at DB level while the legacy
+  tables and the import map still link them; a notice to a data principal must be accurate). Revisit only if the privacy ADR
+  later makes the stronger claim true. Screenshots (named responded, anonymous with the new note, waiting, closed, the imported
+  badge, and the SP case after EV-17; desktop and 590 px; test persona and test forms only, no real name) wait for Nitin's
+  answer on how the flag is turned on for the evidence (questions list in `OWNER-DECISIONS-2026-10-07.md`). The production flip
+  is already decided: `framework.reader_flags_airpay_at_cutover`.
+- **EV-23:** no evaluation needs-owner reason is pre-accepted (`value_not_valid`, `duplicate_value`, `foreign_item`,
+  `missing_item`, `orphan_*`, `no_timestamp`, `unmapped_enum`); April produces none, and acceptance only means something after
+  the counts are seen.
+- **EV-03-KP:** numeric questions with a 1..5 range do NOT count as ratings in the Kirkpatrick roll-up on `analysis.php`
+  (BizLMS had no roll-up; a 1..5 number is not necessarily a satisfaction scale; the import never invents meaning). April's
+  only real form has five such questions. A future 'numeric scale counts as rating' option would be a flagged product feature.
+- **EV-11-PUB and EV-35:** another tenant's 'public' templates are NOT listed to a tenant admin (nothing crosses a tenant); the
+  unused help string `template_ispublic_help` is reworded (en and hi) when a picker is built, and any sharing later must follow
+  the cross-tenant route. The old roadmap items (cohort-scoped triggers, a per-customer template library, an e-mail reminder for
+  unfinished surveys) move to the product backlog as unscheduled entries, each with a spec and a default-OFF flag: April shows
+  BizLMS never used survey reminders (no `feedback_due` type, 0 configured feedback notification rows, 0 feedback e-mail log
+  rows, 0 forms with an open and close window).
+- **EV-36:** the bulk-assign web service refuses an empty audience (`bulk_assign_pick_at_least_one`), as the form does; an
+  explicit whole-tenant assignment (`org_path` = the tenant root) still works and reports capped. No flag, no version bump.
+- **EV-FIX-FLAGS:** the admin-page fixes on `claude/eval-followups` (Subject column EV-02, numeric and tick-all statistics EV-03,
+  `response_detail` keys EV-05, read-only controls EV-09) ship UNFLAGGED: they are corrections, or they only affect imported
+  data. Merge only after PHPUnit and the screenshots listed in
+  `docs/visual-evidence/2026-10-07/eval-followups/README.md`; the `response_list` and `response_detail` shots wait for the EV-06
+  flag.
+- **EV-25 and EV-26 (framework, see ADR-032):** merge order (the classroom merge b316c138a and the dry-run fold fix 6991ac1b6
+  are committed; program is merged) and the id-sequence floor.
+- **F-23 (map corrections, EV-22):** reason codes: needs-owner `duplicate_value`, `foreign_item`, `missing_item`; others
+  `item_not_imported`, `response_not_imported`, `orphan_item`, `orphan_template`. Warnings: `responder_not_found`,
+  `anonymity_made_sticky`, `deferred:local_classroom`, `deferred:local_program`, and `sp_responder_unknown` after EV-17.
+- **F-29 and F-30:** `form_facts::pair()` and `answers()` read per completion through a 64-entry cache (an N+1 at scale; April:
+  1 completion and 5 values): time the evaluation feature on the Stage B copy and batch the pair facts per page of completions
+  if it matters for the window. Process rule: before merging any importer, run its preflight read-only against `bizlms_april`
+  and cross-check every `source_spec` enum against a real value histogram (counts only); fixture tests could not catch
+  `anonymous_response = 2` because the checked-in install.xml documents the column as 0/1.
+- **Open questions above, answered (signed 2026-09-30):** still-open forms: archived; multichoicerated: plain multichoice;
+  SP forms set to anonymous: hide the subject too; trainer feedback forms: keep the BizLMS name; imported forms read-only: yes.
 
 ---
 
@@ -2464,8 +3087,8 @@ Short names: `RQ` = `BZ local/request/`; `api` = `RQ classes/api/requestapi.php`
 | Source | Target | Key |
 |---|---|---|
 | local_request_records (`RQ db/install.xml:39`, columns :41-58) | local_sentientia_request (`SQ db/install.xml:7-57`) | map; duplicates are legal in the source (`api:93-95`) and stay separate rows |
-| local_learningplan_approval (`BZ local/learningplan/db/install.xml:124-144`) | local_sentientia_request, item_type `path` | map; skip (merged) when an imported records row exists for the same (userid, path) |
-| local_request_comments (`RQ db/install.xml:8-23`) | folded into decision_note | map, folded; expected empty |
+| local_learningplan_approval (`BZ local/learningplan/db/install.xml:124-144`) | local_sentientia_request, item_type `path` | map; folded (`dup_of_request`), not merged, when an imported records row exists for the same (userid, path) (2026-10-07 decision F-81) |
+| local_request_comments (`RQ db/install.xml:8-23`) | folded into decision_note | map, folded; expected empty; preflight BLOCKS if it has rows (2026-10-07 decision COMMS-R4) |
 | block_request_records, _comments, _config | none | if a table exists with rows: blocker `needsowner` (written by `RQ admin/comment.php:228`, `deny_course.php:310`, `bulk_deny.php:151`) |
 | local_request_config (`RQ db/install.xml:26-35`) | none | declined: form settings; its only reader, `RQ classes/form/request_form.php:58-118`, is never instantiated |
 | local_request_formfields, local_request_form_data, local_crequest_* | none | existence check; rows -> blocker |
@@ -2479,7 +3102,9 @@ local_request_records -> request
      certification -> 'certification' (api:70-77,316-339). ANY OTHER VALUE -> blocker: the WS takes it as PARAM_RAW
      (RQ classes/external.php:137,159) and create() stores anything (api:76-80)
   componentid -> itemid: course id as is; path/classroom/program through their feature maps; certification: the legacy id,
-     unmapped (gap G3)
+     unmapped (gap G3). A path, classroom or program that no longer exists -> itemid 0 (renders '(deleted item)'), because
+     those features keep their ids and a later item could receive the same id (2026-10-07 decision COMMS-R2); course ids are
+     core ids that are never reused, so they keep the source id
   componentid -> courseid when 'elearning', else 0 (as submit_path writes, rm:199)
   (requester) -> costcenterid = tenant::root_for_user(the full restored user row), as submit() does (rm:71-74); 0 if unresolvable
   (none) -> reason '' (NOT NULL text, SQ install.xml:21); readers show a lang string for imported rows
@@ -2489,7 +3114,10 @@ local_request_records -> request
      (rm:289-308); pending path rows -> route_approver_for_path (rm:246-255); pending classroom/program/certification
      rows -> NULL (kept out of every inbox, SQ classes/external/list_pending.php:46). The FULL user row is passed:
      resolve_supervisor reads open_supervisorid / open_managerid from it (rm:269-281); a partial row routes every
-     pending request to default_approver (rm:305-307)
+     pending request to default_approver (rm:305-307). `rm::route_approver` became `approver_routing` (2026-10-07 decision F-81).
+     2026-10-07 decision COMMS-R1: a pending course or path row whose requester is deleted or suspended, or whose item no
+     longer exists, is NOT routed: it imports as ['pending', route admin, approver NULL] with warning `pending_history_only`
+     (`request.pending_stale = history_only`), like classroom and program rows
   respondeddate -> timedecided (decided rows only) (api:177,263)
   timecreated -> COALESCE(timecreated, timemodified, respondeddate, 0) (RQ :54 nullable)
   timemodified -> COALESCE(timemodified, respondeddate, timecreated, 0)
@@ -2504,13 +3132,16 @@ local_learningplan_approval -> request (item_type 'path', itemid = the path id, 
   approvedby -> decided_by_userid and approver_userid when approvestatus != 0; usermodified when approvedby is 0
   pending rows -> approver_userid via route_approver_for_path (as above)
   reject_msg -> decision_note (usually NULL: lib/lib.php:520 writes an undefined variable)
-  timecreated; timemodified, and timedecided when decided; reason ''; route 'manager'; timedue NULL
+  timecreated; timemodified, and timedecided when decided; reason ''; route per `request.decided_route` and the routing
+  label, NOT 'manager' (2026-10-07 decision F-81); timedue NULL
   costcenterid = the requester's root; orphan planid -> skip
 
 local_request_comments -> decision_note of the imported row whose source id = CAST(instanceid AS INT):
   '[Y-m-d H:i] <fullname of createdbyid>: ' + html_to_text(message), joined by newline, oldest first (PARAM_TEXT reader,
   SQ classes/external/list_mine.php:130); dt is read as a string (invalid XMLDB type 'datetime', RQ install.xml:13);
   rebuilt identically on every run; orphans reported
+  2026-10-07 decision COMMS-R4: preflight blocks (`needs_owner:request_comments_present=N`) when the table has rows, and
+  `request_manager::decide()` on an imported row appends to the folded note and never replaces it
 ```
 
 ### Status mapping
@@ -2597,6 +3228,59 @@ classroom row.
 - Accept the requester's current path as the tenant?
 - Legacy pending approvers: Sentientia routing (proposed) or a named L&D admin?
 
+### Decisions of 2026-10-07
+
+- **COMMS-R1 (stale pending requests; blocks Stage B):** see the approver rule above (`request.pending_stale = history_only`).
+  Approving such a row would enrol and message an account that has left, or point at nothing; admins still see it in All
+  requests. `verify()` asserts no imported pending row has an approver whose item is gone. The flag
+  `sentientia.request.imported_history` is turned ON only after this has landed (COMMS-C2). April: every request table is
+  empty, but 1,452 of 2,187 non-deleted tenant-1 users are suspended, so stale pending requests will mostly belong to people
+  who have left.
+- **COMMS-R2 (blocks Stage B):** a request whose path, classroom or program no longer exists gets `itemid` 0. Those features
+  keep their ids (PRESERVE) and reset their sequence, so a deleted item that had the highest id would otherwise hand its id to
+  the next native item: the old request would show the new item's name, trip the `submit_path` duplicate guard, and a
+  cross-tenant admin's approval would enrol the learner in an unrelated path. ADR-032 rule 6 (the sequence floor, EV-26) stays
+  as the primary defence and this as defence in depth.
+- **COMMS-R3:** the reader changes that fix native screens ('Item' header, route in words, status badges in All requests, the SLA
+  column, real names on path requests) ship UNFLAGGED as bug fixes: every path request read '(deleted course)', `all.php`
+  rendered badges `list_all` never returned and `approvals.php` expected a `due_badge` nobody supplied (code fixes 1 to 10).
+  Sentientia is not live, so BizLMS production is untouched. The flag still keeps imported rows out; its description is
+  reworded from 'look exactly as they did before the import' to 'leave the imported rows out' (flag registry and README).
+  Visual evidence (desktop and mobile) of My requests, Pending approvals and All requests.
+- **COMMS-R4 (blocks Stage B):** BizLMS has no writer for `local_request_comments` (its comments went to
+  `block_request_comments`, `BZ local/request/admin/comment.php:228`), so the table is expected to be empty and nobody knows who
+  could see such rows; `list_mine` would show the folded note to the requester, which could widen visibility. Preflight blocks
+  when it has rows, and `decide()` appends to the folded note instead of overwriting imported evidence. April: 0 comment rows.
+- **COMMS-R5:** `approvals_step` folds a DECIDED learning-plan approval into a PENDING records row for the same user and plan
+  and drops the approval's newer state; accepted, because BizLMS has no insert into `local_learningplan_approval` (only
+  `update_record`, `BZ local/learningplan/classes/lib/lib.php:484,522`) and April holds 0 rows (preflight reports the count).
+  Stage B trigger: if `learningplan_approvals` > 0, a decided approval is NOT folded into a pending records row and imports as
+  its own path row.
+- **COMMS-R6:** routing can pick a supervisor who lacks `local/sentientia_request:approve`, and imported rows carry no `timedue`
+  (`verify()` forbids a deadline on them), so they never escalate. Not changed: native and imported routing stay identical
+  (`approver_routing` is shared on purpose). A runbook line only, and optionally a Stage B report count of imported pending rows
+  whose approver lacks the capability. April: 0 request rows.
+- **COMMS-C1:** see section 11 (the four request and notifications reasons are not pre-accepted).
+- **F-77 (before cutover):** `verify()` treats only pending, approved, rejected and expired as valid; add `cancelled`, or a
+  requester cancelling an imported pending row after go-live makes a later verify fail falsely. **F-80 (before cutover):**
+  delete the dead `request_manager::get_course_owner_userid()` (a duplicate of `approver_routing`); add
+  `legacy_source IS NULL` to the deletes in `cli/smoke_request.php` and `cli/seed_qa_pending_request.php`
+  (`framework.protect_imported_history`); wrap `drop_field` in `try/finally` in the upgrade test; test dt '0000-00-00 00:00:00'.
+  **F-78:** until classroom and program landed the registry raised `unknown_dependency` for request and evaluation; the merges
+  close it (ADR-032 Stage B gate 7); then add one real cross-importer test and drop the stand-ins. **F-79 (after Stage B):**
+  framework boilerplate (a `contract_dependencies()` hook and a re-seed after `contract_clear_import`, several fixture XMLs,
+  bulk user attributes in `lookups`, documentation of the read-only `approver_routing` pattern and of fold versus merge across
+  steps).
+- **F-81 (map corrections):** approvals are `folded` (`dup_of_request`), not `merged`; the approval route follows
+  `request.decided_route` and the routing label, not 'manager'; `rm::route_approver` became `approver_routing`; the unmapped C
+  and D tables are declared, with a preflight blocker; the plugin ships TWO fixture XMLs, so the one-fixture-per-plugin wording
+  in ADR-032 and in `tools/check-bizlms-fixture-copies.php` is amended.
+- **F-82:** `accepted_reasons` naming: see section 23.
+- **Open questions above, answered (signed 2026-09-30 and above):** legacy PENDING requests: course and path stay actionable (a
+  person still decides), classroom, program and certification are read-only, stale ones are history only (COMMS-R1);
+  certification: unmapped; decided route label: `admin`; rows BizLMS hid: shown; tenant: the requester's current root; approvers:
+  Sentientia routing.
+
 ---
 
 ## 20. ratings
@@ -2614,7 +3298,7 @@ fatal collision (`SE docs/adr/ADR-022-component-rename.md:196-202`).
 |---|---|---|
 | local_rating (`RA db/install.xml:4-24`) | local_sentientia_ratings (`SR2 db/install.xml:5-24`) | map; group (userid, mapped itemid, mapped area) against the target UNIQUE (:22) |
 | local_comment (`RA db/install.xml:26-43`) | NEW local_sentientia_ratings_reviews | map; **no** natural unique key (2013-era rows are distinct reviews, `RA comment.php:29-31`) |
-| local_like (`RA db/install.xml:44-65`) | NEW local_sentientia_ratings_reactions | map; group (userid, itemid, area) against a UNIQUE on the new table |
+| local_like (`RA db/install.xml:44-65`) | NEW local_sentientia_ratings_reactions | map; group (userid, itemid, ratearea) against a UNIQUE on the new table (2026-10-07 decision F-35: the column is `ratearea` on all three target tables) |
 | local_ratings_likes (`RA db/install.xml:66-84`) | none | declined: a derived cache rewritten on every write (`RA update.php:42-62`; `RA index.php:55-72`); used as the parity oracle |
 
 ### Column maps
@@ -2637,13 +3321,13 @@ local_rating -> ratings
   duplicates (no unique index, RA :20-23): winner MAX(COALESCE(timemodified, timecreated)), then MAX(id); others merged
 
 local_comment -> reviews
-  itemid, commentarea -> itemid, area (maps); userid (skip NULL, <= 1, missing)
+  itemid, commentarea -> itemid, ratearea (maps); userid (skip NULL, <= 1, missing)
   comment -> review verbatim (raw PARAM_RAW input, RA classes/external.php:89; the reader must escape it)
   timecreated = COALESCE(timecreated, timemodified, 0), or the 2013 `time` column when present; timemodified likewise
   2013-era courseid, activityid (RA comment.php:22-28) -> not copied
 
 local_like -> reactions
-  itemid, likearea -> itemid, area; userid (skip as above); likestatus kept (NULL -> 0); timecreated, timemodified
+  itemid, likearea -> itemid, ratearea; userid (skip as above); likestatus kept (NULL -> 0); timecreated, timemodified
   1 = like, 2 = dislike (RA index.php:33; RA lib.php:43,59); other values stored but never counted
   duplicates (RA :60-63): as for ratings
 ```
@@ -2671,10 +3355,11 @@ write `local_ratings_likes` or `block_trending_modules`.
 
 ### Schema additions
 
-- NEW `local_sentientia_ratings_reviews`: id, itemid NOT NULL, area CHAR100 NOT NULL, userid NOT NULL, review TEXT NULL,
-  timecreated, timemodified; FK userid; indexes (itemid, area), non-unique (userid, itemid, area).
-- NEW `local_sentientia_ratings_reactions`: id, itemid, area, userid, likestatus INT(1) NOT NULL DEFAULT 0,
-  timecreated, timemodified; FK userid; UNIQUE (userid, itemid, area); index (itemid, area, likestatus).
+- NEW `local_sentientia_ratings_reviews`: id, itemid NOT NULL, ratearea CHAR100 NOT NULL, userid NOT NULL, review TEXT NULL,
+  timecreated, timemodified; FK userid; indexes (itemid, ratearea), non-unique (userid, itemid, ratearea).
+- NEW `local_sentientia_ratings_reactions`: id, itemid, ratearea, userid, likestatus INT(1) NOT NULL DEFAULT 0,
+  timecreated, timemodified; FK userid; UNIQUE (userid, itemid, ratearea); index (itemid, ratearea, likestatus).
+  (2026-10-07 decision F-35: the area column is named `ratearea` on all three tables; this document said `area`.)
 - `legacyid` columns are not built (R6).
 - Privacy (`SR2 classes/privacy/provider.php:51-67`): metadata, export and delete for both tables; en + hi.
 - Flags `sentientia.ratings.reviews` and `sentientia.ratings.reactions` (default OFF) for the new readers.
@@ -2688,13 +3373,15 @@ write `local_ratings_likes` or `block_trending_modules`.
 3. `SR2 classes/external/submit_rating.php:45-49`: drop the BizLMS-era areas from the whitelist after the import, or
    one item's ratings split into two averages.
 4. Initialise the rating widget on course pages (no `js_call_amd('local_sentientia_ratings/rating_widget', 'init')`
-   exists in theme/sentientia), or render read-only.
+   exists in theme/sentientia), or render read-only. 2026-10-07 decision CRS-11: both, behind the new default-OFF flag
+   `sentientia.ratings.widget` (see the decisions block).
 5. New flag-gated readers: a review list (escape with `s()`/`format_text(FORMAT_PLAIN)`; BizLMS printed it raw,
    `RA lib.php:303-307`; tenant-scoped reviewers; blank reviews hidden) and like/dislike counts (status 1 and 2 only).
 6. `SR2 README.md:3-5,17,26-28,34-35`: correct the claims (no tenant gate, no review column; DSR delete deletes rows,
    `SR2 classes/privacy/provider.php:145,158,177`, so aggregates drift from the cache after an erasure).
 7. Count these tables in `migration_parity_check.php` (the migration plan notes it does not, :165-168).
-8. Remove the dead `SE local/airpay_ratings` directory ([CONFIRM] delete; ADR-022:187-194).
+8. Remove the dead `SE local/airpay_ratings` directory ([CONFIRM] delete; ADR-022:187-194). 2026-10-07 decision CRS-13:
+   NOT done; it waits for Nitin's [CONFIRM].
 
 ### Fixture
 
@@ -2735,6 +3422,40 @@ run no-op, dry run writes nothing, legacy tables unchanged, empty sinks, cache u
 - Show dislike counts?
 - Keep deleted users' ratings (proposed)?
 
+### Decisions of 2026-10-07
+
+- **CRS-10 (skipped rows; accepted after Stage B with counts):** the skips stand. `invalid_rating`, `invalid_reaction`,
+  `orphan_user`, `orphan_item` and `unknown_area` each need the owner's written acceptance, after Stage B and only for a
+  non-zero rehearsed count (a re-approval event); every skipped row stays in the legacy tables, which are the archive. Expected
+  on April: `unknown_area` about 195 (194 `local_like` rows plus 1 `local_rating` row with a NULL area; the 194 like rows hold
+  web-vulnerability-scanner probe strings in `likearea`, 19 of them longer than 100 characters, timestamps 2024-01 to 2025-12,
+  none with a real user); `orphan_item` about 85 or more (84 ratings on courses that no longer exist, plus ratings on the 1 of 4
+  rated learning plans that is gone); `invalid_rating` 1; `orphan_user` at most 1; `invalid_reaction` 0 (`likestatus` is only 1
+  or 2). The Stage B parity report labels the scanner rows (`ratings:unknown_area`).
+- **F-41 (Stage B report; security backlog):** the 194 scanner rows are evidence that BizLMS's like endpoint stored
+  unauthenticated or unvalidated writes. Sentientia does not reproduce it: reactions are read-only and `submit_rating` is
+  login-required with an area whitelist (`services.php:16-22`). Add the fact to the production security audit backlog; under
+  the replace-not-patch rule nothing is patched on live BizLMS.
+- **CRS-11 (rating widget):** the theme calls `render()` with the default interactive = true and never initialises the widget
+  (`theme/sentientia/classes/output/core_renderer.php:927-928` and `1705-1706`), so learners see controls that do nothing. A new
+  default-OFF flag `sentientia.ratings.widget`: OFF renders `rating_manager::render($itemid, $area, false)`, read-only stars; ON
+  renders interactive stars plus `js_call_amd('local_sentientia_ratings/rating_widget', 'init')`. Recommended future flip (not
+  decided): ON for Airpay at cutover after Nitin reviews the visual evidence (desktop and mobile, flag OFF and ON), because
+  BizLMS let learners rate courses.
+- **CRS-12 (reader flags at cutover; recorded recommendation, the flip stays Nitin's call):** `sentientia.ratings.reviews` stays
+  OFF for Airpay at cutover (April: `local_ratings/review_enable` = 0 and `local_comment` has 0 rows, so BizLMS learners never
+  saw reviews, and a review list would be more visible than BizLMS, owner rule 3; re-check `review_enable` on the Stage B
+  copy). `sentientia.ratings.reactions` goes ON only after the reaction counts are wired into a theme template (BizLMS showed
+  like and dislike counts on learning plans: 33 likes and 2 dislikes on April; Sentientia's reaction counts are not yet wired
+  into any template, so flipping it now would show nothing) and the visual evidence is reviewed.
+- **CRS-13:** the dead `moodle-enhancement/local/airpay_ratings` directory (14 tracked files, never packaged, restorable from
+  git; it declares the same global function as `sentientia_ratings`, so installing both is fatal) is a delete and WAITS for
+  Nitin's [CONFIRM]. NOT executed.
+- **F-35 correction:** the area column on all three target tables is `ratearea`.
+- **Open questions above, answered (signed 2026-09-30):** invalid rows: skip; blank reviews: import hidden; deleted users'
+  ratings: keep; dislike counts: shown behind the reaction flag; certification area: skipped and reported until a target
+  exists. The row counts per area are read at Stage B (F-42).
+
 ---
 
 ## 21. Gaps: data with no map yet
@@ -2749,10 +3470,61 @@ Nitin accepts it. All must be closed or accepted before cutover.
 | G3 | `local_certification` and request rows with compname `certification` | `BZ local/request/classes/api/requestapi.php:327`; `BZ local/request/classes/export/requestview.php:142`; plugin not in the snapshot | keep request rows unmapped (section 19) until an owner entity exists |
 | G4 | `local_positions`, `local_domains` | unguarded indexes (`BZ local/users/db/upgrade.php:67-68,107-117`); read at `BZ local/users/classes/local/user.php:117-149`; `user.open_positionid/open_domainid` point at them (`BZ local/users/db/upgrade.php:23-27`); Sentientia shows the bare ids (`SE local/sentientia_users/classes/user_fields.php:61-62`) | users feature: two lookup tables with preserved ids, plus the profile label fix |
 | G5 | Tag instances of the classroom, learning plan and evaluation tag areas | `BZ local/classroom/db/tag.php:28-35`; `BZ local/learningplan/db/tag.php:28-35`; `BZ local/evaluation/db/tag.php:30-31`; uninstall deletes instances (`BZ tag/classes/area.php:386-400`) | counted in preflight; Sentientia tag areas needed before any uninstall |
-| G6 | Orphaned BizLMS enrol instances (`enrol` = classroom, program, learningplan with `customint1`) and their `user_enrolments` | `BZ local/classroom/classes/classroom.php:1781-1786,1829-1846`; `BZ local/program/classes/program.php:1489-1531`; `BZ local/learningplan/classes/lib/lib.php:1052-1063`; Sentientia ships only `enrol/sentientiasub` | enrolment decision: convert to manual at cutover, or keep a shim; course access continuity depends on it |
+| G6 | Orphaned BizLMS enrol instances (`enrol` = classroom, program, learningplan with `customint1`) and their `user_enrolments` | `BZ local/classroom/classes/classroom.php:1781-1786,1829-1846`; `BZ local/program/classes/program.php:1489-1531`; `BZ local/learningplan/classes/lib/lib.php:1052-1063`; Sentientia ships only `enrol/sentientiasub` | DECIDED 2026-09-30: convert each enrolment to a manual enrolment (signed `gap.orphan_enrol_instances = convert_to_manual`) and built (importer `enrolments`); the 2026-10-07 rules (CRS-01, CRS-02, CRS-03, CRS-05, XC-G6-WHY) are below the table |
 | G7 | Core `{event}` rows with BizLMS columns (`plugin`, `plugin_instance`, `local_eventtype`) | columns added by `BZ local/costcenter/db/install.php:31-66`; rows by classroom (`BZ local/classroom/classes/classroom.php:183-205,342-362`), program (`BZ local/program/classes/program.php:170-228`), evaluation (`BZ local/evaluation/lib.php:440,481`); `SE local/sentientia_calendar` has no reader | Stage B check of how the 5.2 calendar renders them; hide or map |
 | G8 | Skill and level tags on classrooms and programs | `BZ local/classroom/db/install.xml:67-68`; `BZ local/program/db/install.xml:45-46` | they stay in the legacy tables; decide whether Sentientia needs them |
 | G9 | `course.open_path` may be NOT NULL without a default on the restored database | upgrade path `BZ local/courses/db/upgrade.php:171-177` vs install path `BZ local/courses/db/install.php:29-31` | Stage B check; if so, core course creation and restore fail in strict mode |
+| G10 | BizLMS notification types with no Sentientia sender | April types in use: `course_complete` 5,783 (including 1,921 manager copies), `course_enrol` 5,316, `learningplan_enrol` 2,264 and `users_welcome_email` 839 (37 types and 15 templates are defined). Sentientia has a learner completion rule (seeded in `db/upgrade.php`, `observer.php`) and a welcome e-mail in `local_sentientia_users`; templates for `course_enrolled` and `learning_path_enrolled` exist (`email_context.php:130,142`) but nothing sends them (`db/events.php` observes only `course_completed`), and nothing sends a manager a completion copy | 2026-10-07 decision COMMS-N7 (`gaps.notification_sender_parity = build_flagged_off`): build the three senders in `local_sentientia_emails` (course enrolment on core `user_enrolment_created`, learning-path enrolment on the learningpath enrol event, manager copy of course completion from the same observer with the manager audience), each behind its own default-OFF flag in `db/feature_flags.php` and each writing `delivery_log` rows with a `template_key`. Turning them ON for Airpay at cutover is Nitin's call after UAT evidence; losing three of the four e-mail types Airpay users get today would break current behaviour |
+
+### G6 rules (2026-10-07 decisions CRS-01, CRS-02, CRS-03, CRS-04, CRS-05 and XC-G6-WHY)
+
+- **Why the conversion is needed (XC-G6-WHY corrects the signed reason):** core grants course access through any ENABLED enrol
+  instance whether or not its plugin is on disk (`require_login` -> `enrol_get_enrolment_end`, `moodlelib.php:2575`, filters only
+  `e.status` and `ue.status`, `enrollib.php:1281-1285`). The real problem the conversion solves is that orphan instances cannot
+  be managed (no unenrol, suspend or expiry handling) while they keep granting access. The signed 'why' said they 'stop
+  granting course access'; it is corrected in the decisions file.
+- **CRS-01 (blocks Stage B):** after a row is converted, a Sentientia unenrol or suspend of the manual row does not revoke access
+  while the BizLMS instance is still enabled. So each fully converted BizLMS instance is DISABLED (`enrol.status` 1, never deleted,
+  the prior status kept in the trail table `local_sentientia_courses_enroloff`, recompute step
+  `enrolments.legacy_instances_off`, key `enrolments.bizlms_instances_after_verify = disable_when_converted`), and only when, for
+  EVERY (user, course) pair that holds a row on the instance, core's access window after the step (manual enrolments only)
+  covers the window before it (manual plus BizLMS): a window covers another when it does not start later and does not end
+  earlier, 0 meaning 'never ends'. One regression blocks the step for that instance and is reported (ids only), and an instance
+  with an unsettled needs-owner row stays enabled. `verify()` and the step share one set-based comparison per pair (the SQL
+  equivalent of `enrol_get_enrolment_end` with and without the BizLMS instances); a one-learner spot check is too weak for a
+  step that changes the access path of every converted pair. The Stage B report prints the pair count and the regressions.
+  Undo is one UPDATE (`UPDATE {enrol} SET status = priorstatus` from the trail). NEVER use 'Delete' on a disabled BizLMS
+  instance in a course's Enrolment methods page: delete removes its `user_enrolments` rows. April: 136 learningplan instances,
+  all enabled, holding 16,830 active rows; every `role_assignment` has component '', so roles are untouched either way.
+- **CRS-02:** an active enrolment row on a DISABLED BizLMS instance converts as SUSPENDED
+  (`enrolments.disabled_instance_row_status = convert_as_suspended`): BizLMS grants nothing on a disabled instance, the import
+  must never give access BizLMS did not give, and the suspended manual row is how an admin restores it. April: 0 such rows
+  (all 136 instances are enabled).
+- **CRS-03:** a course whose only manual instance is DISABLED gets a NEW enabled manual instance beside it, recorded in the
+  legacymap (target table `enrol`, outcome `imported`) (`enrolments.disabled_only_manual_instance = add_enabled_beside`); the
+  admin's disabled instance is untouched. April: 0 such courses (every one of the 71 affected courses has exactly one enabled
+  manual instance).
+- **CRS-04 (accepted after Stage B):** the three exception rules `enrolments:user_deleted`,
+  `enrolments:manual_enrolment_inactive` and `enrolments:manual_enrolment_ends_sooner` stay skips; each is accepted only after
+  Stage B with its rehearsed count and a per-learner list (ids only) that L&D has reviewed, and only if the count is above 0
+  (April 0, 0, 0). Under CRS-01 the BizLMS instance holding any such row stays enabled, so those learners keep today's access
+  until L&D acts. (The descriptive pseudo-key `accepted_reasons` in the decision text is NOT a decisions-file key.)
+- **CRS-05:** the 40 learner-course pairs on April that cross tenants (24 learners rooted `/177` and 16 rooted `/77`, all in
+  `/1` courses, enrolled through learning plans) convert like every other row. They exist in production today; the conversion
+  changes the enrol method, not the tenant of the user or the course; ADR-031 lets the course's tenant admin remove them, and
+  the roster readers for scoped callers filter other tenants' learners. The preflight warning
+  `legacy_enrolments_across_tenants` with its root histogram, plus a list of course ids and pair counts (no person data), goes
+  to L&D at Stage B.
+- **F-34 and F-36 (runbook):** see `MIGRATION-REHEARSAL-RUNBOOK.md`, "BizLMS import: Stage B checks". The rehearsal parity
+  compare must explain the `user_enrolments` and `enrol` deltas (about 7,733 added `user_enrolments` rows on April, and
+  `enrol.status` changes) through the legacymap and the `enrolmove` ledger; see ADR-032 parity hook 4.
+- **F-39 (before UAT sign-off and cutover):** readers that count enrolments count each converted learner twice (April: 4,832
+  pairs are already doubled and the import adds 7,733 more): `analytics_manager.php:61` and `:68`, `catalog_manager.php:344`,
+  `commerce.php:181` and `:243`, `ai_recommender.php:233`. Use `COUNT(DISTINCT ue.userid)` with `ue.status = 0 AND e.status = 0`;
+  `get_in_progress` (`catalog_manager.php:414-426`) joins every enrolment, so it returns duplicate course rows and also shows
+  suspended enrolments: group by course and filter for active enrolments; add a test with one learner holding a manual and a
+  BizLMS enrolment. The report's `sentientia_pages` homepage.php and onboarding.php paths no longer exist under `classes/` and
+  need re-locating.
 
 ---
 
@@ -2792,7 +3564,7 @@ its feature. The proposed value is the default the rehearsal uses unless Nitin c
 | Key | Values | Proposed |
 |---|---|---|
 | `tenant.unresolved.<feature>` | `pathless` \| `skip` | `pathless` (visible cross-tenant only), always reported |
-| `accept_needsowner.<feature>.<reason>` | true \| false | none: each needs Nitin's acceptance |
+| `accepted_reasons` (a top-level list of `"<feature>:<code>"` strings) | one string per needs-owner reason | none now: the owner adds each reason that actually occurs, with its Stage B count, after the rehearsal (2026-10-07 decisions IDN-02, EV-23, COMMS-C1, CRS-04, CRS-07, CRS-10, `cart.accepted_reasons`, F-82). The old name `accept_needsowner.<feature>.<reason>` never existed in the loader |
 | `classroom.status_new_hold` | `add_5_6` \| `collapse_active` | `add_5_6` |
 | `classroom.waitlist_closed` | `removed` \| `waiting` | `removed` |
 | `classroom.pathless` | `cross_tenant_only` \| `by_costcenter` \| `by_creator` | `cross_tenant_only` |
@@ -2805,9 +3577,15 @@ its feature. The proposed value is the default the rehearsal uses unless Nitin c
 | `evaluation.open_forms` | `archived` \| `active` | `archived` |
 | `evaluation.multichoicerated` | `multichoice` \| `rating_when_1_5` | `multichoice` |
 | `evaluation.sp_anonymous_subject` | `hidden` \| `shown` | `hidden` |
-| `cart.synthesize_ledger` | true \| false | open (finance) |
+| `cart.synthesize_ledger` | true \| false | `false`, signed 2026-09-30 (no invented money rows; not a Finance question) |
 | `cart.order_tenant` | `buyer` \| `course` | `buyer` |
 | `cart.abandoned` | `admin_only` \| `skip` | `admin_only` |
+| `cart.imported_visibility` | `admin_only` | `admin_only` (signed 2026-09-30) |
+| `cart.admin_refund_imported_orders` | true \| false | `false` (signed 2026-09-30) |
+| `cart.credit_balances` | `frozen_pending_finance` | `frozen_pending_finance`: accepted 2026-10-07 under delegation, Finance NOT consulted |
+| `cart.erpnext_invoices_legal` | `reference_only_pending_finance` | `reference_only_pending_finance`: accepted 2026-10-07 under delegation, Finance NOT consulted |
+| `cart.cash_drawer_rows_without_order` | `import_admin_only` | `import_admin_only` (signed 2026-09-30) |
+| `cart.stale_task_adhoc_rows` | `do_not_delete_here` | `do_not_delete_here` (signed 2026-09-30; April: 0 rows) |
 | `recompletion.rule_tenant` | `global` \| `per_tenant` | `global` |
 | `recompletion.preview_attempts` | `import` \| `skip` | `skip` |
 | `request.pending` | `actionable` \| `readonly` \| `expired` | `actionable` for course and path; classroom, program and certification always read-only |
@@ -2816,7 +3594,7 @@ its feature. The proposed value is the default the rehearsal uses unless Nitin c
 | `request.hidden_rows` | `show` \| `filter` | `show` |
 | `skills.catalogue_scope` | `shared` \| `tenant` | `shared` |
 | `skills.merge_categories` | `exact_name` \| `none` | `exact_name` |
-| `skills.level_proficiency` | CSV level id -> 1..5 | required (heuristic prefill) |
+| `skills.level_proficiency` | CSV level id -> 1..5 | filled 2026-10-07 (LRN-07): 17 April levels by the name rule, level 16 reviewed to 2 |
 | `skills.source_label` | `import` \| `course` | `import` |
 | `skills.history_from_archive` | true \| false | open |
 | `skills.skillmatrix` | `decline` \| `import` | `decline` |
@@ -2824,12 +3602,51 @@ its feature. The proposed value is the default the rehearsal uses unless Nitin c
 | `users.admin_runs_tenant` | `zero` \| `uploader_root` | `zero` |
 | `users.uniquelogins` | `import` \| `skip` | open (depends on logstore retention) |
 | `notifications.import_bodies` | true \| false | true, with redaction |
-| `notifications.deleted_recipient_sent` | `sent_with_note` \| `suppressed` | `sent_with_note` |
+| `notifications.deleted_recipient_sent` | `sent_with_note` \| `suppressed` | `sent_with_note`, for a recipient already deleted when BizLMS ran the send (wording corrected 2026-10-07, COMMS-N6) |
 | `ratings.invalid_rows` | `skip` \| `quarantine` | `skip` |
 | `ratings.blank_reviews` | `import_hidden` \| `skip` | `import_hidden` |
 | `ratings.deleted_users` | `keep` \| `skip` | `keep` |
 | `exams.multi_quiz` | `per_quiz` \| `final_only` | `per_quiz` |
 | `course_lookups.featured_scope` | `rehome` \| `global` | `rehome` |
 
+The keys added or corrected on 2026-10-07 under Nitin's delegation (status `accepted`, why starts
+`[delegated 2026-10-07]`):
+
+| Key | Recorded value | Decision |
+|---|---|---|
+| `org_roles.user_without_tenant` | `skip_fail_closed` | IDN-01 |
+| `framework.file_rehome_copies` | `reviewed_copy_only_marker_all_callers_left_on_purge` | IDN-04 |
+| `org.crosstenant_platform_role` | `created_by_adr031_script_no_members_until_named` | IDN-05 |
+| `users.logindays_erasure` | `delete` | IDN-06 |
+| `users.sync_history_visibility` | `runs_tenant_wide_lines_uploader_only` | IDN-07 |
+| `framework.imported_rows_on_admin_pages` | `history_rows_behind_reader_flag_entities_unflagged` | XC-IMPORTED-HISTORY-READERS |
+| `framework.protect_imported_history_pending_enrolments` | `unenrol_allowed_without_progress` | LRN-10 |
+| `evaluation.sticky_anonymity` | `whole_form` | EV-16 |
+| `evaluation.legacy_anonymous_linkage` | `untouched_pending_legacy_privacy_adr` (why widened) | EV-19 |
+| `evaluation.tenant_editor_fallback` | `not_used` | EV-TENANT |
+| `enrolments.bizlms_instances_after_verify` | `disable_when_converted` | CRS-01 |
+| `enrolments.disabled_instance_row_status` | `convert_as_suspended` | CRS-02 |
+| `enrolments.disabled_only_manual_instance` | `add_enabled_beside` | CRS-03 |
+| `gap.orphan_enrol_instances` | `convert_to_manual` (why corrected) | XC-G6-WHY |
+| `course_lookups.coursedetails_candidate_columns` | `leave` | CRS-06, CRS-15 |
+| `recompletion.inferred_reset_without_evidence` | `latest_source_evidence_plus_1s` | LRN-01 |
+| `recompletion.legacy_rows_on_history_page` | `behind_evidence_view_flag` | LRN-02 |
+| `recompletion.dpdp_archive_free_text` | `cleared_record_kept` | LRN-03 |
+| `recompletion.imported_rule_enable` | `blocked_until_engine_parity` | LRN-04 |
+| `learningplan.cover_on_admin_view` | `behind_learner_paths_flag` | LRN-08 |
+| `learningplan.user_startdate` | `block_if_present` | LRN-09 |
+| `learningplan.stalled_nudge_scope` | `native_rows_on_active_paths` | LRN-11 |
+| `program.nameless_with_shortname` | `import_under_shortname_with_warning` | LRN-12 |
+| `program.delete_imported_level` | `blocked` | LRN-13 |
+| `classroom.cotrainer_sessions` | `every_session_of_their_classroom` | LRN-15 |
+| `classroom.trainer_erasure` | `core_release_dpdp_keep` | LRN-16 |
+| `classroom.new_states_ui` | `unflagged` | LRN-17 |
+| `notifications.team_member_copy_body` | `withhold` | COMMS-N2 |
+| `notifications.course_link` | `moduleid_for_course_templates` | COMMS-N3 |
+| `gaps.notification_sender_parity` | `build_flagged_off` | COMMS-N7 |
+| `request.pending_stale` | `history_only` | COMMS-R1 |
+| `request.comments` | `fold_into_decision_note` (why extended) | COMMS-R4 |
+
 The file holds policy only, no personal data. Its sha256 is stored on every run and pinned from the
-Stage B rehearsal to cutover (`--expect-decisions-hash`).
+Stage B rehearsal to cutover (`--expect-decisions-hash`). After 2026-10-07 it holds 138 decisions, a top-level
+`delegated_on` and `delegation_note` beside `approved_by` and `approved_on`, and no `accepted_reasons` list.
