@@ -1,10 +1,10 @@
 # State Card — `local_airpay_cart`
 
 **Component:** `local_airpay_cart`
-**Version:** `2026052001` / `1.0.2`  (+P1 #57 Hindi pack)
+**Version:** `2026100701` / `1.1.1`  (was `2026052001` / `1.0.2` when this card was first written; see the dated sections below)
 **Maturity:** `MATURITY_STABLE`
 **Status:** Live on airpay.academy. Course-commerce + invoicing.
-**Last refreshed:** 2026-05-24 (P1 state-card pass)
+**Last refreshed:** 2026-10-07 (owner decisions, finance cluster: finance keys declared, withheld-line refund amounts, notifier in the recipient's language, dev masking; catalogue price source in the catalog card)
 
 ---
 
@@ -32,7 +32,7 @@ cart + order lifecycle; paygw_airpay processes the actual charge).
 
 ## Feature flags
 
-None registered.
+Registered in `db/feature_flags.php`, both default **OFF** (ADR-032): `sentientia.cart.imported_orders.enabled` and `sentientia.cart.imported_credits.enabled`. No flag was added on 2026-10-07; none was flipped.
 
 ## Key files
 
@@ -433,4 +433,109 @@ runs the whole `bizlms_import` group).
      so it stays on the imported side of the flag.
 - **Open**: the plugin dependency on the platform framework version, the Stage B counts (I-20), whether
   `paygw_airpay` is deployed on 5.2, production `config_plugins local_biz_cart` values (uniqueidentifier,
-  itempriceisnet, globalcurrency); `cli/mask_pii_for_dev.php` does not know the new free-text `reason` columns.
+  itempriceisnet, globalcurrency). (Closed 2026-10-07: `paygw_airpay` is deployed, the April config is known, and `cli/mask_pii_for_dev.php` masks the new columns through `dev_mask`; see the next section.)
+
+## 2026-10-07 - owner decisions, finance cluster (1.1.1 / 2026100701)
+
+Branch `claude/owner-decisions-y`. Basis: Nitin's delegation of 2026-10-07 ("self review and decide recommended option")
+plus the signed "do everything as recommended". **Airpay Finance was NOT consulted on any of these**; where a finance key is
+now `accepted`, that records the owner's delegated answer and is not a Finance sign-off. No flag was added or flipped, no
+row or file was deleted, nothing was copied to the served tree and **PHPUnit was not run** (the lead re-initialises once
+for the version bumps). Both trees. The decisions-file entries (`bizlms-import-decisions.json` and its fixture copies) are
+written by a separate commit that must merge before or with this one.
+
+### Code shipped
+
+- **`cart.finance_keys_status` = accept_and_declare.** `bizlms\importer::decisions()` declares `cart.credit_balances`
+  (only `frozen_pending_finance`) and `cart.erpnext_invoices_legal` (only `reference_only_pending_finance`). A later
+  different value (for example `write_off`) now blocks preflight instead of being ignored, and the run report no longer
+  lists two "not accepted" decisions the import never depended on. The importer docblocks, README and this card say the
+  answer was delegated. Tests: `bizlms_import_test` (SIGNED values, both keys accepted and declared with one allowed
+  value, a value the importer cannot do blocks, the signed values do not block) and the platform
+  `bizlms_decisions_test` (the signed file now has no open decision; each why says delegated and not consulted; the
+  finance-confirm blocking mechanism stays held by `decisions.sample.json` and `bizlms_runner_test`).
+- **`cart.withheld_line_refund` = state_amounts.** `cart_manager::withheld_line_amounts()`; `mark_paid()` writes the amounts
+  into `history.notes` and `notifier::order_paid()` into the `admin_new_order` message, marked "for review, not an invoice":
+  per withheld line price, discount, GST share (the order's RECORDED `tax_amount` spread over its taxable amount, paise
+  rounding) and the sum, plus the withheld total against the order total. The GST share can differ from the invoice by a
+  paisa (each line is rounded on its own; the tests pin a basket where the lines add up to one paisa over). The
+  administrator still refunds through a partial `refund()`; Finance issues any GST credit note; nothing is automatic and
+  the buyer's message states no amounts. The first sentence of the old note and message is unchanged. Tests:
+  `purchase_gate_test`. Ship before the native cart takes real paid orders.
+- **Notifier in the recipient's language** (fix:cart unresolved 4). Every buyer and admin subject and body is a lang string
+  (20 new keys, en and hi) built per recipient through the string manager (`$user->lang`, else the site default), not the
+  session that called `mark_paid()`. Tests: `notifier_test` (English unchanged; per-recipient Hindi where the Hindi pack is
+  installed, skipped otherwise; site default; en/hi keys and placeholders; no English literal left in the class).
+- **Dev masking.** New `classes/dev_mask.php`, called from `local_sentientia_platform/cli/mask_pii_for_dev.php` (Step 3b,
+  only where the cart is installed): ledger and credit-journal `reason` set to NULL, both `initiatedby` set to 0, and every
+  `userid` / `usermodified` key inside `local_sentientia_cart_ledger.payload_json` set to 0 (the key and its position stay;
+  a payload that is not JSON becomes `{}`). Idempotent. Tests: `dev_mask_test`. Not masked, and not asked for: the billing
+  name, e-mail, phone and address on `local_sentientia_cart_invoices` (native invoices) and `history.notes`; flagged for
+  whoever next edits the CLI. The comms-side gaps in the same script (the `to_email` UPDATE of a column that does not exist,
+  imported e-mail subjects and bodies) belong to the comms change and were not touched here.
+- **`cart.price_source`** (the catalogue reads `enrol_fee`; `enrol_now()` refuses a paid course) is in the catalog plugin: see
+  `sentientia_catalog-state.md`. It closes a revenue hole that this plugin's order cart was never exposed to.
+
+### Decisions recorded, no code (and what triggers the next step)
+
+- **`cart.credit_balances` = frozen_pending_finance.** Frozen, admin-only history behind the default-OFF flag
+  `sentientia.cart.imported_credits.enabled`. Nothing in Sentientia honours, spends, pays out or writes off a balance: native
+  checkout never reads the credit tables. April 2026 copy: 0 credit bookings, 0 ledger rows, 0 holders, INR 0. **Open Finance
+  question (needs Nitin to put it to Finance):** if the Stage B rehearsal on the final live backup shows any learner with a
+  non-zero balance, send Finance the count, the total in INR and the tenant, for it to decide honour, pay out or write off, and
+  who owns the liability; and whether a holder's erasure request must wait until the balance is settled. Today erasure
+  deletes the balance row (`privacy\provider`, around line 301) and anonymises the journal, so a balance owed to a person
+  would lose its holder. If Stage B shows a balance, the privacy change (keep the balance row against userid 0 until Finance
+  settles it) is decided with Finance's answer. A Finance answer is a re-approval event.
+- **`cart.erpnext_invoices_legal` = reference_only_pending_finance.** A stored ERPNext number imports as `ERPNEXT-<id>`, status
+  `legacy_external`, shown to order admins as "Issued in ERPNext as <number>" behind `sentientia.cart.imported_orders.enabled`,
+  no link-out. Sentientia never issues an invoice number for a BizLMS sale. April copy: 0 invoice rows, no ERPNext connector.
+  **Open Finance question:** (a) the only completed BizLMS cart sale (INR 10, 10 Jan 2025, Public tenant, no GST charged) has no
+  tax invoice in BizLMS or ERPNext: a test payment, or does Finance raise one in its own system (Sentientia will not)? (b) if
+  the final live backup holds stored ERPNext numbers, does Finance confirm ERPNext as the system that holds those legal
+  invoices?
+- **`cart.native_tax_invoices` = HOLD.** Sentientia issues no tax invoice to a real buyer until Finance answers six points:
+  (1) Sentientia, not Finance's own system, issues tax invoices for LMS course sales; (2) the GSTIN for
+  `local_sentientia_cart/our_gstn`; (3) the AIRPAY-YYYY-NNNN series (16 characters, restarting each January); (4) how refunds
+  get a GST credit note, since Sentientia issues none; (5) whether B2B invoices need an e-invoice IRN; (6) how long issued
+  invoices must be kept unredacted. An erasure request currently blanks the buyer's name, e-mail, phone, address and GSTIN on
+  native invoices and order history (`privacy\provider::redact_for_user()`), and tax law requires invoices to be kept for a
+  statutory period (CGST Act s.36). When Finance answers (6), change `redact_for_user()` to keep issued tax invoices
+  unredacted for that period if Finance says so; that code must ship before the first invoice. Until then, which tenants should
+  `local_sentientia_cart/enabled_tenants` open at cutover? The default is `77,177`. No code now.
+- **`cart.accepted_reasons` = none_now_then_actuals.** `accepted_reasons` stays empty. After the Stage B rehearsal, for each
+  `cart:<code>` with a count above 0 in the report (`mixed_buyers`, `orphan_user`, `currency_invalid`, `currency_not_inr`,
+  `invoice_without_order`, `invoice_without_number`, `invoice_number_too_long`; `tenant_unresolved` only if
+  `tenant.unresolved.cart` is `skip`), Nitin reviews the ids and adds the code; the count is written into the approval note
+  (the list has no counts, so accepting a code accepts any count); that is a re-approval event and the new hash is pinned.
+  April: none of the seven would fire.
+- **`cart.order_number_floor` = setting_plus_runtime_placeholder.** No code: `finalise()` sets
+  `local_sentientia_cart/bizlms_order_floor`, and `reserve_order_number()` puts one placeholder row at the floor at the first
+  native checkout (tested: a new checkout gets a number above the floor). April: base 0, identifiers 1..5, floor 5. Stage B
+  runbook checks: after the import `bizlms_order_floor` equals the highest imported order number, and one rehearsal-only
+  native test order gets a number above it. The mapping doc's finalise() "placeholder row" sentence is to be replaced by that
+  wording (documents are the docs owner's change).
+- **`cart.credit_sale_classification` = keep_unclassified.** A credit booking that matches a sale ledger row stays
+  `legacy_unclassified` with a `credit_unclassified` warning (rule R8: the importer never guesses). April has no credit
+  rows. If the Stage B report's warning count is above 0, revisit with the real rows (`credits_step.php::EVENT_OF`, both trees).
+
+### Owed
+
+- **Visual evidence** (CLAUDE.md section 5), on the UAT build, desktop and 590 px, into `docs/visual-evidence/<date>/` with a
+  README, before any flag flip: `credits.php`, the "Issued in ERPNext as" invoice view (`invoice_legacy.mustache`),
+  `return.php` and `history.php` status rendering, the `admin_orders` Staff notes column (now longer: the per-line amounts),
+  and the checkout error path. Both imported-history flags stay OFF until Nitin has reviewed them. Not captured in this
+  session (no browser access to the UAT build).
+- **Stage B runbook** (cart-specific checks): per-table counts against April (history 5 lines and 5 orders, cart_id 5, ledger 0,
+  invoices 0, credits 0); `bizlms_order_floor` equals the highest imported order number (April 5); one rehearsal-only native
+  order gets a number above it; the report's `decisions_not_accepted` is empty; any credit or invoice row goes to Finance per
+  the two open questions above.
+- **ADR-032 lines 957-964 and 1043-1044, the mapping doc (section 13 open questions and the placeholder sentence, section 23's
+  table) and the dev-masking gaps list** still describe the finance keys as open; the docs owner rewrites them to the accepted
+  decisions with the April facts (0 credit, 0 invoice, 0 ledger rows; ERPNext never configured; config has only accountid,
+  expirationtime, globalcurrency=INR, maxitems and version).
+- **PHPUnit never ran** for `bizlms_import_test`, `imported_history_reader_test`, `imported_privacy_test`,
+  `purchase_gate_test`, and the new `notifier_test` and `dev_mask_test`: run them in CI after the re-init; fix fixture-level
+  failures only. The new class `dev_mask` needs a caches purge on deploy (class map).
+- **After Stage B, not needed at April size:** `legacy_reader::fetch_by(column, values)` and an `importer_contract` assertion
+  that each person column of `target_tables` is declared in the privacy metadata.

@@ -833,3 +833,21 @@ down.
   function runs every later step, so the version ends at the plugin's latest (2026093001). It now asserts `>=`.
 
 No version bump, no feature, no UI. Both trees identical.
+
+## 2026-10-07 - owner decisions, finance cluster (branch claude/owner-decisions-y; no version bump)
+
+Two small changes made for the cart decisions (details in `sentientia_cart-state.md`). Not run: no PHPUnit here. Both trees.
+
+- **`tests/bizlms/bizlms_decisions_test.php`** (`cart.finance_keys_status`): `test_the_checked_in_file_loads_and_its_finance_items_block`
+  is now `test_the_checked_in_file_loads_and_every_decision_in_it_is_accepted`. The signed file has no finance-confirm
+  entry any more (the cart importer declares both finance keys with the accepted values), so it asserts `not_accepted()` is
+  empty, that both keys resolve to the delegated values, and that each `why` says delegated and not consulted. The
+  finance-confirm blocking mechanism is still covered by `decisions.sample.json` (`toy.credit`) and
+  `bizlms_runner_test::test_a_decision_the_owner_has_not_accepted_blocks_the_feature_that_declares_it`. It depends on the
+  decisions-file commit (the signed file and both fixture copies) being merged first or with it.
+- **`cli/mask_pii_for_dev.php`** (finance cluster follow-up): a Step 3b calls `\local_sentientia_cart\dev_mask::run()` when the
+  cart is installed, so a dev copy built from an imported database no longer carries the ledger and credit-journal free text,
+  the booking actor ids or the buyer ids inside `payload_json`. The comms-side fix in the same script (the `to_email` UPDATE of
+  a column `local_sentientia_email_log` does not have, imported e-mail subjects and bodies) is a separate change.
+
+No version bump, no feature flag, no UI.

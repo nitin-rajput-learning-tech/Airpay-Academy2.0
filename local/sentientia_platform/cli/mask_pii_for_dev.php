@@ -36,6 +36,9 @@
  *   mdl_local_sentientia_cart_history — clear billing_phone, billing_address.
  *              Keep billing_email + billing_name (already masked via
  *              mdl_user.email + firstname/lastname).
+ *   mdl_local_sentientia_cart_ledger / _cart_credit_txn — reason set to NULL,
+ *              initiatedby set to 0, and (ledger) every userid / usermodified
+ *              inside payload_json set to 0 (\local_sentientia_cart\dev_mask).
  *   mdl_local_sentientia_proctor_identity — clear all rows (identity
  *              photos were never persisted; only match scores).
  *   mdl_local_sentientia_proctor_recordings — clear s3_key (we don't want
@@ -138,6 +141,14 @@ if ($DB->get_manager()->table_exists('local_sentientia_cart_history')) {
             SET billing_phone   = '',
                 billing_address = ''");
     fwrite(STDOUT, "  mdl_local_sentientia_cart_history: phone/address cleared\n");
+}
+// Step 3b (owner follow-up 2026-10-07, finance cluster): the ledger and the BizLMS credit journal carry free-text
+// reasons, the id of the user who made each booking, and (imported rows) the buyer's user id inside payload_json.
+// The cart owns that knowledge, so the cart masks it; skipped where the cart is not installed.
+if (class_exists('\local_sentientia_cart\dev_mask')) {
+    foreach (\local_sentientia_cart\dev_mask::run() as $target => $masked) {
+        fwrite(STDOUT, "  mdl_{$target}: {$masked} row(s) masked\n");
+    }
 }
 
 // ── Step 4: proctoring identity rows (defensive — should be empty) ─
