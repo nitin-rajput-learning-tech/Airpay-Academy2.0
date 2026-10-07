@@ -30,8 +30,9 @@ if (!$evaluation) {
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/sentientia_evaluation/responses.php', ['id' => $evaluationid]));
-// set_title() and set_heading() apply format_string() themselves, so they are given the raw name (format_string()
-// here escaped it twice: "Tom & Jerry" showed as "Tom &amp; Jerry").
+// set_title() and set_heading() run format_string() on what they are given, so they take the raw name (it leaves an
+// "&" that already starts an entity alone, so formatting it first made no difference to their output). The name
+// reaches the template through responses_page_header(), which filters it without escaping: the template escapes once.
 $PAGE->set_title('Responses — ' . $evaluation->name);
 $PAGE->set_heading('Responses — ' . $evaluation->name);
 $PAGE->set_pagelayout('standard');

@@ -21,15 +21,17 @@ if (!$evaluation) {
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/sentientia_evaluation/questions.php', ['id' => $evaluationid]));
-// set_title(), set_heading() and the navbar apply format_string() themselves, so they are given the raw name
-// (format_string() here escaped it twice: "Tom & Jerry" showed as "Tom &amp; Jerry").
+// set_title() and set_heading() run format_string() on what they are given, so they take the raw name (format_string()
+// leaves an "&" that already starts an entity alone, so formatting it first made no difference to the output).
+// The breadcrumb does NOT: the evaluation name is its last crumb, which the theme prints without a link and raw
+// ({{{text}}} in core/navbar), so the name is formatted (cleaned, "&" escaped) here, exactly once.
 $PAGE->set_title('Questions — ' . $evaluation->name);
 $PAGE->set_heading($evaluation->name);
 $PAGE->set_pagelayout('standard');
 $PAGE->set_secondary_navigation(false);
 $PAGE->navbar->add(get_string('pluginname', 'local_sentientia_evaluation'),
     new moodle_url('/local/sentientia_evaluation/index.php'));
-$PAGE->navbar->add($evaluation->name);
+$PAGE->navbar->add(format_string($evaluation->name));
 
 // Load questions.
 $questions = \local_sentientia_evaluation\evaluation_manager::get_questions($evaluationid);

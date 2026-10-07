@@ -25,8 +25,8 @@ $PAGE->set_context($ctx);
 $PAGE->set_url(new moodle_url('/local/sentientia_evaluation/response_list.php',
     ['id' => $evaluationid]));
 $PAGE->set_pagelayout('admin');
-// set_title() and set_heading() apply format_string() themselves, so they are given the raw name (format_string()
-// here escaped it twice).
+// set_title() and set_heading() run format_string() on what they are given, so they take the raw name (it leaves an
+// "&" that already starts an entity alone, so formatting it first made no difference to their output).
 $PAGE->set_title('Responses — ' . $evaluation->name);
 $PAGE->set_heading('Individual responses — ' . $evaluation->name);
 require_capability('local/sentientia_evaluation:view', $ctx);

@@ -1451,8 +1451,12 @@ class evaluation_manager {
      *
      * Mustache escapes once, in the template, so the text is filtered here (multilang tags and the like) and NOT
      * escaped as well: format_string() with its default would turn "Tom & Jerry" into "Tom &amp; Jerry" and the
-     * template into "Tom &amp;amp; Jerry". $PAGE->set_heading(), set_title() and the navbar apply format_string()
-     * themselves, so they are given the raw text instead.
+     * template into "Tom &amp;amp; Jerry".
+     *
+     * This is the rule for a Mustache {{ }} only. Do not carry it over to other APIs: $PAGE->set_title() and
+     * set_heading() run format_string() on what they are given, so they take the raw text. A breadcrumb does not:
+     * navigation_node::get_content() formats a crumb that has a link, but the last crumb has its link removed by the
+     * theme and core/navbar prints it raw ({{{text}}}), so $PAGE->navbar->add() is given format_string($text).
      *
      * @param string|null $text
      * @return string
@@ -2949,11 +2953,15 @@ class evaluation_manager {
      *                  layout of every native form's export is unchanged.
      * @param array|null $subjectnames {@see self::subject_names()} for every response of the export (exportcsv.php
      *                  reads them in one query); null = look each subject up as the row is built
+     * @param array|null $respondents {@see self::respondent_records()} for every response of the export (exportcsv.php
+     *                  reads them in one query, and only for a form that is not protected); null = look each
+     *                  respondent up as the row is built
      * @return array  row of strings
      */
     public static function response_to_csv_row(object $response, array $questions,
                                                 object $eval, ?bool $identityprotected = null,
-                                                bool $withsubject = false, ?array $subjectnames = null): array {
+                                                bool $withsubject = false, ?array $subjectnames = null,
+                                                ?array $respondents = null): array {
         global $DB;
 
         // Phase G.2 (2026-05-08) — when any question in the form is
@@ -2986,9 +2994,11 @@ class evaluation_manager {
             $row[] = '(anonymous)';
             $row[] = '';
         } else {
-            // Every name field: fullname() reports (in developer mode) a user object that lacks some of them.
-            $u = \core_user::get_user((int) $response->userid,
-                'id, email, ' . implode(', ', \core_user\fields::get_name_fields()));
+            // One query for the whole export when the caller read the respondents (exportcsv.php); otherwise this
+            // row's own lookup. Either way the record has every name field, so fullname() has what it may ask for.
+            $u = $respondents !== null
+                ? ($respondents[(int) $response->userid] ?? false)
+                : \core_user::get_user((int) $response->userid, self::respondent_fields());
             $row[] = $u ? fullname($u) : '(deleted user)';
             $row[] = $u ? $u->email : '';
         }
@@ -3032,12 +3042,7 @@ class evaluation_manager {
      */
     public static function subject_names(array $subjectids): array {
         global $DB;
-        $ids = [];
-        foreach ($subjectids as $id) {
-            if ($id !== null && (int) $id > 0) {
-                $ids[(int) $id] = (int) $id;
-            }
-        }
+        $ids = self::positive_user_ids($subjectids);
         if (!$ids) {
             return [];
         }
@@ -3052,6 +3057,57 @@ class evaluation_manager {
             }
         }
         return $names;
+    }
+
+    /**
+     * The user fields that name a respondent: the id, the email and every name field, so fullname() has what the
+     * site's name format may ask for (in developer mode it reports a user object that lacks one).
+     *
+     * @return string
+     */
+    private static function respondent_fields(): string {
+        return 'id, email, ' . implode(', ', \core_user\fields::get_name_fields());
+    }
+
+    /**
+     * The respondents of some responses, for the Respondent and Email columns of the CSV, in one query.
+     *
+     * The records core_user::get_user() gave one row at a time: a deleted account is still here, with its name
+     * (response_to_csv_row() says "(deleted user)" only for an account that is gone). Pass the map to
+     * response_to_csv_row() as its last argument; the response list reads its respondents in its own query.
+     *
+     * @param array $userids user ids (null, 0 and duplicates are ignored)
+     * @return array<int, \stdClass> user id => record with id, email and every name field
+     */
+    public static function respondent_records(array $userids): array {
+        global $DB;
+        $ids = self::positive_user_ids($userids);
+        $records = [];
+        foreach (array_chunk(array_values($ids), 1000) as $chunk) {
+            [$insql, $params] = $DB->get_in_or_equal($chunk, SQL_PARAMS_NAMED, 'resp');
+            $users = $DB->get_records_select('user', "id $insql", $params, '', self::respondent_fields());
+            foreach ($users as $user) {
+                $records[(int) $user->id] = $user;
+            }
+        }
+        return $records;
+    }
+
+    /**
+     * The distinct user ids above 0 among some values (a column read off the responses: null, 0 and repeats are
+     * dropped).
+     *
+     * @param array $values
+     * @return array<int, int> id => id
+     */
+    private static function positive_user_ids(array $values): array {
+        $ids = [];
+        foreach ($values as $id) {
+            if ($id !== null && (int) $id > 0) {
+                $ids[(int) $id] = (int) $id;
+            }
+        }
+        return $ids;
     }
 
     /**
@@ -3077,7 +3133,8 @@ class evaluation_manager {
      * Only SUBMITTED responses: an invited user's pending shell (timesubmitted 0) is not a response. On a protected
      * evaluation ($protected, {@see self::identity_protected()}) the respondent is not named and the time is the
      * day; the Subject (the person a supervisor form is about) is named only when $showsubject says the form has
-     * one ({@see self::shows_subject()}, never on a protected form), through the same fullname() the CSV uses.
+     * one ({@see self::shows_subject()}) and the form is not protected (a protected form names nobody, whatever the
+     * caller passes). Respondent and Subject are both named through fullname(), as the CSV does.
      *
      * @param \stdClass $evaluation
      * @param bool $protected identity_protected($evaluation)
@@ -3086,9 +3143,13 @@ class evaluation_manager {
      */
     public static function response_list_rows(\stdClass $evaluation, bool $protected, bool $showsubject): array {
         global $DB;
+        // Defence in depth: shows_subject() already says no for a protected form, and so does this.
+        $showsubject = $showsubject && !$protected;
+        // Every name field, so fullname() can apply the site's name format (the CSV's Respondent column does).
+        $namefields = 'u.' . implode(', u.', \core_user\fields::get_name_fields());
         $responses = $DB->get_records_sql(
             "SELECT r.id, r.userid, r.subject_userid, r.courseid, r.programid, r.classroomid, r.timesubmitted,
-                    u.firstname, u.lastname, u.email, u.open_employeeid
+                    $namefields, u.email, u.open_employeeid
                FROM {" . self::RESPONSES_TABLE . "} r
           LEFT JOIN {user} u ON u.id = r.userid
               WHERE r.evaluationid = :eid
@@ -3112,7 +3173,8 @@ class evaluation_manager {
                 'id'           => (int) $r->id,
                 'subject_name' => $subjectname,
                 'submitted_at' => self::submitted_label((int) $r->timesubmitted, $protected),
-                'user_name'    => $protected ? $anonymous : trim(($r->firstname ?? '') . ' ' . ($r->lastname ?? '')),
+                // fullname() is '' for a respondent whose account is gone (every name field is null).
+                'user_name'    => $protected ? $anonymous : fullname($r),
                 'user_email'   => $protected ? '' : (string) ($r->email ?? ''),
                 'employee_id'  => $protected ? '' : (string) ($r->open_employeeid ?? ''),
                 'context'      => ($r->courseid > 0)    ? "course #$r->courseid"

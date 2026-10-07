@@ -27,7 +27,8 @@ $PAGE->set_context($ctx);
 $PAGE->set_url(new moodle_url('/local/sentientia_evaluation/response_detail.php', ['id' => $id]));
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title('Response detail');
-// set_heading() applies format_string() itself, so it is given the raw name (format_string() here escaped it twice).
+// set_heading() runs format_string() on what it is given, so it takes the raw name (it leaves an "&" that already
+// starts an entity alone, so formatting it first made no difference to its output).
 $PAGE->set_heading('Response detail — ' . $evaluation->name);
 require_capability('local/sentientia_evaluation:view', $ctx);
 // ADR-031: one respondent's answers only for an evaluation in the caller's

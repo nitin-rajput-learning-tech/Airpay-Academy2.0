@@ -543,7 +543,9 @@ merged; they are collected, with a sample CSV header, in
   `list_evaluations_test::test_an_imported_form_offers_no_edit_or_delete` (imported, adopted, a map row that is only
   archived, and a native form). Checked without Moodle: `questions.mustache` rendered for a native form, a read-only
   form and a read-only form with no questions. Screenshots needed: `index.php` with one imported and one native row, and
-  `questions.php` for an imported numeric form, desktop and 590 px, as a tenant admin.
+  `questions.php` for an imported numeric form, desktop and 590 px, as a tenant admin; name that test form with a tag
+  as well as an ampersand (`Tom & Jerry <b>x</b>`, through `import_template.php`) so the breadcrumb shot proves the text
+  is escaped, not just that the "&" looks right.
 - **EV-11 - the template library is tenant-scoped (mapping doc code fix 9).** `list_templates(int $costcenterid)` returned
   every row for 0, compared a non-zero argument with `costcenterid` as a bare number (the column holds an organisation
   id, not a tenant number) and always added every tenant's `ispublic` templates; `create_evaluation_from_template()` and
@@ -678,11 +680,22 @@ is "0", a lower bound of 0, an ampersand in a name, the new note).
   (`responses_subject_deleted`, en + hi) and plain text in the CSV, like its Respondent column. **The CSV's Subject
   header is plain English** like every other header (it was the one translated header); `responses_col_subject` is the
   page's column heading only. Test: `analysis_test::test_the_response_list_names_the_subject_the_way_the_csv_does`;
-  the Subject-column test expects `Subject`.
+  the Subject-column test expects `Subject`. Follow-up round: the Respondent is one way too. The list selects every name
+  field and calls `fullname()` (it printed `trim(firstname . ' ' . lastname)`), and the CSV's per-row
+  `core_user::get_user()` is gone from the export: `respondent_records(array $userids)` reads them in one query and
+  `response_to_csv_row()` takes the map as its last optional argument (`exportcsv.php` passes it, and passes none for a
+  protected form). `response_list_rows()` also keeps the Subject off a protected form itself (`$showsubject &&
+  !$protected`), so it no longer depends on its caller. `response_detail.php` still builds the name with
+  `trim(firstname . ' ' . lastname)` (page unreachable until EV-06; same change when it is decided).
 - **Escaped exactly once.** `evaluation_manager::display_text()` is `format_string(..., ['escape' => false])` for values a
-  template prints with `{{ }}`; `$PAGE->set_title()`, `set_heading()` and the navbar apply `format_string()` themselves
-  and are given the raw name. Applied on `responses.php`, `questions.php`, `respond.php`, `response_list.php` and
-  `response_detail.php` (name, description, question text, option labels). `responses.php`'s anonymous badge is now
+  template prints with `{{ }}`; `$PAGE->set_title()` and `set_heading()` run `format_string()` on what they are given and
+  take the raw name. **The breadcrumb is the exception**: `questions.php` adds the evaluation name as the LAST crumb,
+  which the theme prints without a link and raw (`{{{text}}}` in `core/navbar`; only a crumb with a link goes through
+  `navigation_node::get_content()`), so that call is `$PAGE->navbar->add(format_string($evaluation->name))`. An
+  intermediate commit passed the raw name there, which let markup in an imported template's name run for a site admin;
+  fixed in the follow-up round. Do not copy "Moodle formats it, pass it raw" to other APIs. Applied on `responses.php`,
+  `questions.php`, `respond.php`, `response_list.php` and `response_detail.php` (name, description, question text,
+  option labels). `responses.php`'s anonymous badge is now
   `identity_protected()` (via `responses_page_header()`), not the flag alone. Test:
   `analysis_test::test_names_reach_the_templates_unescaped_and_the_badge_follows_identity_protection`.
 - **respond.php.** The question loop moved to `evaluation_manager::respond_question_rows()`. `position` counts 1..n (it

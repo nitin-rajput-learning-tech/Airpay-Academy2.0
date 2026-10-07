@@ -832,6 +832,24 @@ final class analysis_test extends \advanced_testcase {
         $this->assertSame('(deleted user)', evaluation_manager::subject_label(987654321, $names));
         $this->assertSame('', evaluation_manager::subject_label(null, $names));
 
+        // The respondent is named the same way on both surfaces (fullname(), the site's name format), and the export
+        // reads every respondent in one query rather than one core_user::get_user() per row.
+        $this->assertSame(fullname($supervisor), $rows[0]['user_name']);
+        $this->assertNotSame('Sue Supervisor', $rows[0]['user_name'], 'the site\'s name format applies');
+        $respondents = evaluation_manager::respondent_records(array_merge(
+            array_column($DB->get_records('local_sentientia_evaluation_responses', ['evaluationid' => $eid], '', 'id, userid'),
+                'userid'), [null, 0]));
+        $this->assertSame([(int) $supervisor->id], array_keys($respondents), 'one record, for the one respondent');
+        $response = $DB->get_record('local_sentientia_evaluation_responses', ['id' => $named], '*', MUST_EXIST);
+        $alone = evaluation_manager::response_to_csv_row($response, $questions, $form, null, true, $names);
+        $batched = evaluation_manager::response_to_csv_row($response, $questions, $form, null, true, $names, $respondents);
+        $this->assertSame($alone, $batched);
+        $this->assertSame($rows[0]['user_name'], $batched[1], 'the list and the CSV name the respondent alike');
+        $this->assertSame($supervisor->email, $batched[2]);
+        $this->assertSame('(deleted user)',
+            evaluation_manager::response_to_csv_row($response, $questions, $form, null, true, $names, [])[1],
+            'the row reads the respondent from the map it is given, not from the database');
+
         // A protected form names neither the respondent nor the subject, and shows the day, not the minute.
         $protected = evaluation_manager::response_list_rows($form, true, false);
         $this->assertCount(4, $protected);
@@ -842,6 +860,10 @@ final class analysis_test extends \advanced_testcase {
             $this->assertSame('', $row['subject_name']);
         }
         $this->assertSame(evaluation_manager::submitted_label($now - 10, true), $protected[0]['submitted_at']);
+        // The list does not rely on its caller to keep the Subject off a protected form.
+        foreach (evaluation_manager::response_list_rows($form, true, true) as $row) {
+            $this->assertSame('', $row['subject_name'], 'a protected form names no subject, whatever the caller says');
+        }
     }
 
     /**
@@ -976,9 +998,17 @@ final class analysis_test extends \advanced_testcase {
         }
         $this->assertSame($note, $freerow['ignored_note']);
 
-        // A question whose answers are all numbers carries no note.
+        // A number question whose answers are all numbers carries no note. A second form, so that none of its answers
+        // is the junk above, and a number question that does have answers (the note is set on number rows only, so
+        // a tick-all question would pass whatever the code does).
+        $g = $this->seed_number_and_multi_form();
+        $this->put_answers($g['eid'], [$g['bounded'] => 3]);
+        $this->put_answers($g['eid'], [$g['bounded'] => 5]);
         $clean = evaluation_manager::response_question_rows(
-            [evaluation_manager::get_question($f['multi'])], [])[0];
+            evaluation_manager::get_questions($g['eid']), evaluation_manager::get_response_stats($g['eid']))[0];
+        $this->assertTrue($clean['is_numeric']);
+        $this->assertSame(2, $clean['response_count'], 'it has answers, so a note could have been set');
+        $this->assertSame('4', $clean['avg']);
         $this->assertArrayNotHasKey('ignored_note', $clean);
     }
 
@@ -1001,5 +1031,6 @@ final class analysis_test extends \advanced_testcase {
         $this->assertSame('7.88', $free['avg'], 'the average is rounded to two decimals');
         $this->assertSame(get_string('responses_numeric_lowest_highest', 'local_sentientia_evaluation',
             (object) ['lowest' => '7.125', 'highest' => '9']), $free['lowest_highest']);
+        $this->assertArrayNotHasKey('ignored_note', $free, 'every stored answer is a number: nothing was left out');
     }
 }

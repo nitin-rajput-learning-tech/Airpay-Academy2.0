@@ -81,11 +81,16 @@ $subjectnames = $withsubject
     ? \local_sentientia_evaluation\evaluation_manager::subject_names(array_column($responses, 'subject_userid'))
     : null;
 
+// The respondents (name and email), likewise in one query; a protected form names nobody, so it reads none.
+$respondents = $identityprotected
+    ? null
+    : \local_sentientia_evaluation\evaluation_manager::respondent_records(array_column($responses, 'userid'));
+
 fputcsv($out, \local_sentientia_evaluation\evaluation_manager::csv_header_row($questions, $withsubject));
 foreach ($responses as $r) {
     fputcsv($out,
         \local_sentientia_evaluation\evaluation_manager::response_to_csv_row($r, $questions, $eval,
-            $identityprotected, $withsubject, $subjectnames));
+            $identityprotected, $withsubject, $subjectnames, $respondents));
 }
 fclose($out);
 
