@@ -430,3 +430,38 @@ PHPUnit once for the version bump.**
 - **Visual evidence owed** (CLAUDE.md section 5): the catalogue price on a card and on `course.php`, and the basket
   (`cart.php`), desktop and 590 px, for a fee-priced course that used to show "Free". Not captured in this session (no
   browser access to the UAT build).
+
+## 2026-10-07 - owner decision CRS-14 and the enrolment-count readers (1.0.9-beta, 2026100702)
+
+Both trees. **Not run: no PHPUnit here; the lead re-initialises PHPUnit once for the version bump.** This closes the open
+item the exams entry above left ("the Public tenant's exam courses would still show on the guest storefront").
+
+- **CRS-14, storefront.** `commerce::get_public_catalog()` lists ordinary courses only, in its COUNT and in its SELECT, through
+  the new public `catalog_manager::ordinary_courses_condition($alias)` (the same condition the browse lists use; always true
+  on a schema without `course.open_coursetype`, so a vanilla database keeps working). On the April 2026 copy, 5 Public-tenant
+  exam courses would have shown to guests; none has a fee instance and guest and self enrolment are disabled on all of them,
+  so a guest who saw one could neither buy nor join. Selling exams to guests would be a new product behind its own flag.
+- **CRS-14, in-progress rail.** `get_in_progress()` KEEPS an enrolled pseudo-course (Sentientia's exam pages are manager and
+  teacher only, so the enrolled course is a learner's only path to an assigned exam) and `format_course()` labels it from
+  `open_module`: `online_exams` = "Exam", `forum` = "Forum" (strings `coursetype_exam`, `coursetype_forum`, en + hi), any
+  other module keeps "E-Learning". The `course_type_labels` flag (default OFF), when ON, still wins, as for every card.
+  `open_module` is selected only when the column exists.
+- **Readers that count enrolments** (doc item, same day). A converted learner holds two rows for one course, so:
+  `get_in_progress()` groups by course (the duplicate-row debugging notice and the rail shorter than its limit are gone), orders by
+  the learner's latest enrolment start, and counts only active enrolments on enabled instances; `get_courses()`'s
+  `enrolled_count`, `get_trending()`'s `recent_enrolments`, and the storefront and homepage `enrolcount` count learners once
+  (`COUNT(DISTINCT ue.userid)`) with `ue.status = 0 AND e.status = 0`. The same rule is applied in
+  `local_sentientia_analytics` (the "New Enrolments" KPI counts learner-course PAIRS once, because the unit of that KPI is an
+  enrolment of a learner in a course, not a distinct learner) and `local_sentientia_integrations` (`ai_recommender` popular
+  courses). Deviation from the decision text, deliberately: it says `COUNT(DISTINCT ue.userid)` everywhere; for the KPI that
+  would count a learner who enrols in three courses once, so the pair is the unit there.
+- No flag: a parity fix of what a restored database would otherwise show; no schema or capability change. Purge
+  `local_sentientia_catalog` caches on deploy (`in_progress`, `trending`, `new_courses` and `categories` are cached).
+- **Tests (new `tests/pseudo_course_labels_test.php`, NOT RUN):** the storefront list and total leave out exam and forum
+  pseudo-courses and keep untyped and typed-0 courses; the condition helper takes any plain alias and refuses anything else;
+  the rail keeps an enrolled exam and forum and labels them (an unknown module keeps "E-Learning"); the labels have a
+  translated Hindi string; a course with two enrolments of one learner is in the rail once; a suspended enrolment and a
+  disabled instance are not "in progress"; the popularity count counts a learner once and only active enrolments.
+- **Visual evidence owed** (CLAUDE.md section 5): the guest storefront (`public.php`) with an exam course in the Public tenant,
+  and the learner's in-progress rail with an enrolled exam labelled "Exam", desktop and 590 px. Not captured in this
+  session (no browser access to the UAT build).

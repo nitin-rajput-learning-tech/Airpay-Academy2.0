@@ -230,10 +230,13 @@ class ai_recommender {
         global $DB;
 
         $courses = $DB->get_records_sql(
-            "SELECT c.id, c.fullname, c.summary, c.category, COUNT(ue.id) as enrolcount
+            // Owner decision (2026-10-07, "readers that count enrolments"): learners, not enrolment rows. A learner enrolled
+            // through an imported BizLMS method and its converted manual twin is one learner; suspended enrolments and
+            // disabled instances do not count.
+            "SELECT c.id, c.fullname, c.summary, c.category, COUNT(DISTINCT ue.userid) as enrolcount
                FROM {course} c
-               JOIN {enrol} e ON e.courseid = c.id
-               JOIN {user_enrolments} ue ON ue.enrolid = e.id
+               JOIN {enrol} e ON e.courseid = c.id AND e.status = 0
+               JOIN {user_enrolments} ue ON ue.enrolid = e.id AND ue.status = 0
               WHERE c.visible = 1 AND c.id > 1
            GROUP BY c.id, c.fullname, c.summary, c.category
            ORDER BY enrolcount DESC",

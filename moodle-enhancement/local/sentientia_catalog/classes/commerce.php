@@ -243,10 +243,10 @@ class commerce {
                 [$insql, $params] = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'fid');
                 $courses = $DB->get_records_sql(
                     "SELECT c.id, c.fullname, c.shortname, c.summary, c.summaryformat,
-                            COUNT(ue.id) as enrolcount
+                            COUNT(DISTINCT ue.userid) as enrolcount
                        FROM {course} c
-                  LEFT JOIN {enrol} e ON e.courseid = c.id
-                  LEFT JOIN {user_enrolments} ue ON ue.enrolid = e.id
+                  LEFT JOIN {enrol} e ON e.courseid = c.id AND e.status = 0
+                  LEFT JOIN {user_enrolments} ue ON ue.enrolid = e.id AND ue.status = 0
                       WHERE c.id $insql AND c.visible = 1
                    GROUP BY c.id, c.fullname, c.shortname, c.summary, c.summaryformat
                    ORDER BY FIELD(c.id, " . implode(',', $ids) . ")",
@@ -298,18 +298,27 @@ class commerce {
             default => 'enrolcount DESC',
         };
 
+        // CRS-14 (2026-10-07): the guest storefront lists ordinary courses only, in the COUNT and in the SELECT alike, so
+        // a BizLMS exam or forum pseudo-course (open_coursetype 1) is neither offered nor counted. Exams have no fee
+        // instance and guest and self enrolment are disabled on them, so a guest who saw one could neither buy nor join.
+        $ordinary = catalog_manager::ordinary_courses_condition('c');
+
         $total = $DB->count_records_sql(
             "SELECT COUNT(*) FROM {course} c
-             WHERE c.visible = 1 AND c.id > 1 AND (c.open_path = :pubexact OR c.open_path LIKE :pubprefix) $searchfilter",
+             WHERE c.visible = 1 AND c.id > 1 AND $ordinary
+               AND (c.open_path = :pubexact OR c.open_path LIKE :pubprefix) $searchfilter",
             $params);
 
+        // The popularity count is learners, not enrolment rows: an imported BizLMS enrolment and its converted manual twin
+        // are one learner, and a suspended enrolment or a disabled instance gives no seat (owner decision 2026-10-07).
         $courses = $DB->get_records_sql(
             "SELECT c.id, c.fullname, c.shortname, c.summary, c.summaryformat, c.timecreated,
-                    COUNT(ue.id) as enrolcount
+                    COUNT(DISTINCT ue.userid) as enrolcount
                FROM {course} c
-          LEFT JOIN {enrol} e ON e.courseid = c.id
-          LEFT JOIN {user_enrolments} ue ON ue.enrolid = e.id
-              WHERE c.visible = 1 AND c.id > 1 AND (c.open_path = :pubexact OR c.open_path LIKE :pubprefix) $searchfilter
+          LEFT JOIN {enrol} e ON e.courseid = c.id AND e.status = 0
+          LEFT JOIN {user_enrolments} ue ON ue.enrolid = e.id AND ue.status = 0
+              WHERE c.visible = 1 AND c.id > 1 AND $ordinary
+                AND (c.open_path = :pubexact OR c.open_path LIKE :pubprefix) $searchfilter
            GROUP BY c.id, c.fullname, c.shortname, c.summary, c.summaryformat, c.timecreated
            ORDER BY $orderby",
             $params, $page * $perpage, $perpage);
