@@ -162,15 +162,17 @@ if ($tenant_catid && $tenant_catpath !== '') {
 // scoped to the user's tenant subtree. Same resolver as above.
 if ($tenant_catid && $tenant_catpath !== '') {
     $recommended = $DB->get_records_sql(
-        "SELECT c.id, c.fullname, c.shortname, COUNT(ue.id) AS enrolcount
+        // Learners once, on active enrolments of enabled instances (owner decision 2026-10-07, "readers that count
+        // enrolments": a converted learner holds a BizLMS enrolment and its manual twin).
+        "SELECT c.id, c.fullname, c.shortname, COUNT(DISTINCT ue.userid) AS enrolcount
            FROM {course} c
            JOIN {course_categories} cc ON cc.id = c.category
-           JOIN {enrol} e ON e.courseid = c.id
-           JOIN {user_enrolments} ue ON ue.enrolid = e.id
+           JOIN {enrol} e ON e.courseid = c.id AND e.status = 0
+           JOIN {user_enrolments} ue ON ue.enrolid = e.id AND ue.status = 0
           WHERE c.visible = 1 AND c.id > 1
             AND (cc.id = :catid OR " . $DB->sql_like('cc.path', ':catpathwild') . ")
        GROUP BY c.id, c.fullname, c.shortname
-       ORDER BY COUNT(ue.id) DESC",
+       ORDER BY enrolcount DESC",
         [
             'catid'        => $tenant_catid,
             'catpathwild'  => $tenant_catpath . '/%',

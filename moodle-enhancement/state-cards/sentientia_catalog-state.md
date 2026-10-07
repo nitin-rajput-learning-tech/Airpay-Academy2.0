@@ -453,7 +453,10 @@ item the exams entry above left ("the Public tenant's exam courses would still s
   (`COUNT(DISTINCT ue.userid)`) with `ue.status = 0 AND e.status = 0`. The same rule is applied in
   `local_sentientia_analytics` (the "New Enrolments" KPI counts learner-course PAIRS once, because the unit of that KPI is an
   enrolment of a learner in a course, not a distinct learner) and `local_sentientia_integrations` (`ai_recommender` popular
-  courses). Deviation from the decision text, deliberately: it says `COUNT(DISTINCT ue.userid)` everywhere; for the KPI that
+  courses), `local_sentientia_pages` (`homepage.php` featured courses, both queries, and `onboarding.php` recommended courses: the
+  two files the report called `homepage.php` and `onboarding.php` under `classes/`, which live at the plugin root) and
+  `local_sentientia_courses` (`exportcsv.php` "enrolled" column: `COUNT(DISTINCT userid)`, as the Manage Courses grid already
+  does). Deviation from the decision text, deliberately: it says `COUNT(DISTINCT ue.userid)` everywhere; for the KPI that
   would count a learner who enrols in three courses once, so the pair is the unit there.
 - No flag: a parity fix of what a restored database would otherwise show; no schema or capability change. Purge
   `local_sentientia_catalog` caches on deploy (`in_progress`, `trending`, `new_courses` and `categories` are cached).
