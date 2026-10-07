@@ -64,7 +64,10 @@ abstract class base_step extends step {
      * parent is not in the source, so the map has no entry for it: the orphan reason), or the import read the parent
      * and deliberately did not keep it (an empty level, a program with no name, a program no tenant could be found
      * for). The second is not an orphan, and reporting it as one sends the owner looking for deleted data that is
-     * not deleted. It is reported as parent_skipped, with the parent's own reason as the detail.
+     * not deleted. It is reported as parent_skipped, with the parent's own reason as the detail. When the parent
+     * is a level the import skipped only because ITS program was not kept (the level's own reason is parent_skipped
+     * too), the detail walks up to the program's reason, so a row two steps down the tree still names the root cause
+     * (no_name, tenant_unresolved) instead of repeating the code parent_skipped.
      *
      * @param context $ctx
      * @param string $parenttable Legacy table of the parent, e.g. local_program_levels.
@@ -78,6 +81,12 @@ abstract class base_step extends step {
             return [$orphan, ''];
         }
         $why = (string) ($entry['reason'] ?? '');
+        if ($why === self::PARENT_SKIPPED && $parenttable === 'local_program_levels') {
+            // The level was skipped because its own program was not kept: name that program's reason.
+            $programid = $this->data($ctx)->level_program($parentid);
+            $programentry = $programid === null ? null : $ctx->map->entry('local_program', $programid);
+            $why = (string) ($programentry['reason'] ?? '');
+        }
         // A detail is codes only (outcome::skip refuses anything else).
         return [self::PARENT_SKIPPED, preg_match('/^[a-z][a-z0-9_]{0,63}$/', $why) ? $why : ''];
     }

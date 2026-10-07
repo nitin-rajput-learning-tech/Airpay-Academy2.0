@@ -144,12 +144,13 @@ final class program_engine_test extends \advanced_testcase {
      *
      * @param string $targettable
      * @param int $targetid
+     * @param string $sourcetable The legacy table the row came from (a map row is unique per source row).
      * @return void
      */
-    private function mark_imported(string $targettable, int $targetid): void {
+    private function mark_imported(string $targettable, int $targetid, string $sourcetable = 'local_program_users'): void {
         global $DB;
         $DB->insert_record('local_sentientia_legacymap', (object) [
-            'feature' => 'program', 'sourcetable' => 'local_program_users', 'sourceid' => $targetid, 'subkey' => '',
+            'feature' => 'program', 'sourcetable' => $sourcetable, 'sourceid' => $targetid, 'subkey' => '',
             'targettable' => $targettable, 'targetid' => $targetid, 'outcome' => 'imported', 'runid' => 0,
             'timecreated' => self::T0,
         ]);
@@ -488,6 +489,56 @@ final class program_engine_test extends \advanced_testcase {
                 'local_sentientia_programs_trainers', 'local_sentientia_programs_trainerfb'] as $table) {
             $this->assertSame(0, $DB->count_records($table), $table);
         }
+    }
+
+    public function test_a_program_with_an_imported_level_or_trainer_row_is_not_deleted(): void {
+        global $DB;
+        $trainer = $this->getDataGenerator()->create_user();
+        $fresh = [
+            'timecreated' => self::T0, 'timemodified' => self::T0,
+        ];
+
+        // An imported level, and nothing else under the program.
+        $withlevel = $this->program();
+        $level = $this->level($withlevel, 0);
+        $this->mark_imported('local_sentientia_programs_levels', $level, 'local_program_levels');
+
+        // An imported trainer row.
+        $withtrainer = $this->program();
+        $trainerrow = (int) $DB->insert_record('local_sentientia_programs_trainers', (object) ([
+            'programid' => $withtrainer, 'userid' => $trainer->id, 'feedbackid' => 0, 'feedback_score' => '0',
+            'assignedby' => 0] + $fresh));
+        $this->mark_imported('local_sentientia_programs_trainers', $trainerrow, 'local_program_trainers');
+
+        // An imported feedback row on a trainer.
+        $withfeedback = $this->program();
+        $fbtrainer = (int) $DB->insert_record('local_sentientia_programs_trainers', (object) ([
+            'programid' => $withfeedback, 'userid' => $trainer->id, 'feedbackid' => 0, 'feedback_score' => '0',
+            'assignedby' => 0] + $fresh));
+        $feedback = (int) $DB->insert_record('local_sentientia_programs_trainerfb', (object) ([
+            'programtrainerid' => $fbtrainer, 'programid' => $withfeedback, 'trainerid' => $trainer->id,
+            'userid' => null, 'score' => '5'] + $fresh));
+        $this->mark_imported('local_sentientia_programs_trainerfb', $feedback, 'local_program_trainerfb');
+
+        foreach ([$withlevel, $withtrainer, $withfeedback] as $programid) {
+            $this->assertTrue(program_manager::program_has_imported_history($programid), "program {$programid}");
+            try {
+                program_manager::delete($programid);
+                $this->fail('imported rows are history: archive the program instead');
+            } catch (\moodle_exception $e) {
+                $this->assertSame('error_history_protected', $e->errorcode);
+            }
+            $this->assertTrue($DB->record_exists('local_sentientia_programs', ['id' => $programid]));
+        }
+        $this->assertTrue($DB->record_exists('local_sentientia_programs_levels', ['id' => $level]));
+        $this->assertTrue($DB->record_exists('local_sentientia_programs_trainers', ['id' => $trainerrow]));
+        $this->assertTrue($DB->record_exists('local_sentientia_programs_trainerfb', ['id' => $feedback]));
+
+        // The same shape built by a person has no import row under it: it still deletes.
+        $native = $this->program();
+        $this->level($native, 0);
+        $this->assertFalse(program_manager::program_has_imported_history($native));
+        $this->assertTrue(program_manager::delete($native));
     }
 
     public function test_a_level_with_a_stored_completion_is_not_deleted_one_without_is(): void {

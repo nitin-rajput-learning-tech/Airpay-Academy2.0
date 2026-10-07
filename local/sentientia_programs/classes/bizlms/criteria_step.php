@@ -20,7 +20,8 @@ defined('MOODLE_INTERNAL') || die();
  * the one that counted: it is recorded as folded into the program or level it shaped, and any other row for the
  * same program or level is merged into it. A row whose program or level the import did not keep is skipped, with
  * orphan_program / orphan_level when BizLMS deleted the parent and parent_skipped when the import chose not to keep
- * it (the detail is the parent's own reason). A level criteria row that names another program than its level
+ * it (the detail is the parent's own reason, walked up to the program's when the level was skipped only because its
+ * program was). A level criteria row that names another program than its level
  * belongs to shaped nothing (the level step reads criteria by the level's own program) and is skipped as
  * criteria_program_mismatch, not recorded as folded.
  *

@@ -103,7 +103,12 @@ class program_manager {
     }
 
     /**
-     * Does the program hold history the import carried (an imported enrolment, or a stored level completion)?
+     * Does the program hold history the import carried?
+     *
+     * That is: a stored level completion, an imported enrolment, an imported level (with the course rows under it),
+     * or an imported trainer or trainer feedback row. Decision framework.protect_imported_history blocks the delete of
+     * imported rows, and a hard delete of the program would take all of these with it. Rows a person created are
+     * not history: a program built in Sentientia, with no import row under it, can still be deleted.
      */
     public static function program_has_imported_history(int $programid): bool {
         global $DB;
@@ -113,6 +118,11 @@ class program_manager {
         }
         if (!$DB->get_manager()->table_exists('local_sentientia_legacymap')) {
             return false;
+        }
+        foreach ([self::LEVELS_TABLE, self::TRAINERS_TABLE, self::TRAINERFB_TABLE] as $table) {
+            if (self::has_imported_child_row($table, $programid)) {
+                return true;
+            }
         }
         [$notsql, $notparams] = \local_sentientia_platform\bizlms\provenance::not_imported_sql(
             'pu', self::USERS_TABLE, 'phi');
@@ -126,6 +136,25 @@ class program_manager {
               WHERE pu.programid = :phpid AND $notsql",
             ['phpid' => $programid] + $notparams);
         return $native < $all;
+    }
+
+    /**
+     * Did the import create or adopt any row of this table that belongs to the program?
+     *
+     * @param string $table  a local_sentientia_programs* table with a programid column
+     * @param int    $programid
+     */
+    private static function has_imported_child_row(string $table, int $programid): bool {
+        global $DB;
+        if (!self::table_present($table)) {
+            return false;
+        }
+        [$notsql, $notparams] = \local_sentientia_platform\bizlms\provenance::not_imported_sql('ch', $table, 'phc');
+        return $DB->record_exists_sql(
+            "SELECT 1
+               FROM {" . $table . "} ch
+              WHERE ch.programid = :phcpid AND NOT ($notsql)",
+            ['phcpid' => $programid] + $notparams);
     }
 
     /** Is the optional ADR-032 table there? (A fresh plugin upgrade creates them all.) */

@@ -676,7 +676,8 @@ final class bizlms_import_test extends \advanced_testcase {
 
         $expect = [
             ['local_program_levels', 111, 'parent_skipped', 'no_name'],
-            ['local_program_level_courses', 212, 'parent_skipped', 'parent_skipped'],
+            // Two steps down the tree (course -> level -> nameless program): the detail names the root cause.
+            ['local_program_level_courses', 212, 'parent_skipped', 'no_name'],
             ['local_bcl_cmplt_criteria', 406, 'parent_skipped', 'no_name'],
             ['local_bc_completion_criteria', 505, 'parent_skipped', 'no_name'],
             ['local_program_users', 612, 'parent_skipped', 'no_name'],

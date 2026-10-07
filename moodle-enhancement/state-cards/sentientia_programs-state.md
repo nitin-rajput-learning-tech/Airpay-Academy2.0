@@ -247,3 +247,52 @@ and `runner::settle()` FOLD demands a positive fold target to exist, which it do
 a row blocks `fold_target_missing` (see `criteria_step` docblock; April has 0 such rows). (2) Visual evidence for
 `myprograms.php` and the `view.php` levels tab, desktop + mobile, flag ON and OFF, before the two flags are flipped.
 (3) The tests use `org_stub_importer`; switch to the real org importer after the merge.
+
+**Review round 2 (2026-10-07).** Verdict fix-then-ship. Nothing found in the round-1 fixes. Closed here (both trees,
+no schema or version change, plugin stays 2026093001 / 1.9.0):
+- `parent_skipped` detail names the root cause two steps down the tree: a level course under a level that was skipped
+  because its program has no name now carries detail `no_name` (it carried `parent_skipped`). `base_step::parent_gone()`
+  walks from a skipped level to its program's own reason.
+- The programs list ("Enrolled" column, `list_programs`) counts the same learners as `count_enrolled()` and the
+  program page: enrolments of deleted users (kept as history, decision `program.deleted_users` = import) are not counted.
+- `program_manager::program_has_imported_history()` now also counts an imported level, trainer or trainer-feedback row
+  (the map's provenance, not mere presence), so `delete()` refuses a program whose imported levels, trainers or
+  feedback a hard delete would take with it (decision `framework.protect_imported_history` = block). A program a
+  person built in Sentientia, with no import row under it, deletes as before. `delete_level()` is unchanged: an
+  imported level nobody has a stored completion for can still be deleted from the level editor.
+- Tests, written and not run: `program_engine_test` (imported level / trainer / feedback block the delete, native
+  twin deletes), `list_programs_test` (deleted user not counted), `bizlms_import_test` (the grandchild detail).
+
+**Still open after round 2** (none of these can be closed from this branch):
+1. FRAMEWORK (must_fix, the lead patches `runner::settle()` in both platform trees): the dry-run FOLD into a preserved
+   id. In a dry run, record every preserved id that settle() simulated (the INSERT-preserve branch after
+   `$writer->check()`, and the adopt-existing branch) in a set, `$this->dryrunpreserved[$table][$id] = true`, and let
+   the FOLD case accept a positive target found in it:
+   `(int) $o->targetid > 0 && !isset($this->dryrunpreserved[$o->table][(int) $o->targetid]) && !$DB->record_exists(...)`.
+   Add a toy-importer framework test that folds into a preserved id in a dry run. Until then
+   `test_contract_dry_run_writes_nothing` fails on this importer's seed (criteria rows 501 and 503) and a dry run
+   with a program criteria row on a kept program exits 1, so evaluation, request and ratings (all depend on
+   `program`) are never simulated. April has 0 such rows (`local_bc_completion_criteria` is empty). When the patch
+   is in: rebase this branch on it and delete the "Known framework limit" paragraph in the `criteria_step` docblock.
+   The importer has no clean fix of its own (a dry run and an apply must run the same transform).
+2. Visual evidence for `myprograms.php` and the `view.php` levels tab and roster "Completed on" column (desktop +
+   mobile, `sentientia.programs.learner.enabled` and `sentientia.programs.history.enabled` each ON and OFF,
+   `docs/visual-evidence/<date>/` with a README). Needs a rendered local or UAT site; Nitin reviews it before either
+   flag is flipped (decision `framework.reader_flags_airpay_at_cutover`).
+3. Nitin to confirm `name_from_shortname` (a nameless program imports under its shortname with a warning; the map says
+   shortname is "not copied"). No decision key covers it; April's only program has a 13-character name.
+4. Mapping doc owner: fix 12 text (see round 1). Classroom owner: `trainerid` privacy declaration (see the platform
+   card).
+5. Tests still register `org_stub_importer`; switch to the real org importer after this branch is rebased on
+   `claude/gap-integration` (the real one needs its fixture tables in `bizlms_fixture`, which the stub avoids).
+
+**April rehearsal expectations (read-only measurement by the round-2 review, schema `bizlms_april`; expectations, not a run).** `local_program` has 1 row (id 2;
+`visible` 0, so Archived; path `/77`, tenant 77; the creator's `open_path` is empty). Its 7 levels (8-14) have no level
+courses and no level completions, so all are skipped `empty_level` and program 2 imports with no levels. Levels 1-7
+belong to the missing program 1 (`orphan_program`). Of the 14 level criteria rows, 7 are `orphan_program` and 7 are
+`parent_skipped` (detail `empty_level`). `local_program_users` has 3 rows, all status 0, one of them a deleted user;
+all three import as Enrolled (the deleted user's row is kept, hidden by the readers). `local_bc_completion_criteria`,
+`local_bc_level_completions`, `local_program_level_courses`, `local_program_trainers`, `local_program_trainerfb` and
+the three `_bk` tables are empty. `programlogo` item 804714375 has no `{files}` row, so no logo is copied. There are
+no external references to program ids in `tool_certificate_issues`, `local_rating`, `enrol` (`program`),
+`local_request_records` or `local_emaillogs`.
