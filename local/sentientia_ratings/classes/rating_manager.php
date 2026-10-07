@@ -23,6 +23,19 @@ class rating_manager {
     private const TABLE = 'local_sentientia_ratings';
 
     /**
+     * Owner decision CRS-11 (2026-10-07): the star widget on course pages. Default OFF (db/feature_flags.php).
+     *
+     * The theme used to render the stars as interactive buttons and never initialised the AMD widget, so learners saw
+     * focusable controls that did nothing. OFF (the default) renders the honest read-only stars; ON renders interactive
+     * stars and loads the widget, as BizLMS let learners rate a course. Recommended future flip, not decided here: ON for
+     * Airpay at cutover, after the visual evidence is reviewed (framework.reader_flags_airpay_at_cutover).
+     */
+    public const FLAG_WIDGET = 'sentientia.ratings.widget';
+
+    /** @var bool Whether the AMD widget has been asked for on this page already (a page can show several stars). */
+    private static bool $widgetrequired = false;
+
+    /**
      * The rating areas a rating, review or reaction may be filed under. Each names the Sentientia plugin that
      * owns the items. The submit web service accepts exactly these and the item reviews page refuses any other,
      * so the column cannot be used to rate an arbitrary table row.
@@ -93,14 +106,18 @@ class rating_manager {
      * still renders but the AMD module won't pick it up because the
      * `data-airpay-rating` attribute is omitted.
      *
+     * Course pages do not choose: the theme calls render_for_viewer(), which is interactive (and loads the widget)
+     * only behind the flag sentientia.ratings.widget (owner decision CRS-11, 2026-10-07).
+     *
      * @param int    $itemid
      * @param string $ratearea
      * @param bool   $interactive  Default true. Set false for read-only display.
      * @param int|null $userid     Defaults to $USER->id. Pass 0 to skip user lookup.
+     * @param string $suffix       HTML (already escaped) shown after the average, inside the widget's element.
      * @return string HTML
      */
     public static function render(int $itemid, string $ratearea,
-                                   bool $interactive = true, ?int $userid = null): string {
+                                   bool $interactive = true, ?int $userid = null, string $suffix = ''): string {
         global $USER;
         $userid = $userid ?? (int) ($USER->id ?? 0);
 
@@ -133,13 +150,95 @@ class rating_manager {
             : '<span class="airpay-rating__count text-muted">'
                 . s(get_string('noratings', 'local_sentientia_ratings')) . '</span>';
 
+        // Interactive: the AMD widget picks the element up through data-airpay-rating. Read-only (CRS-11): there is nothing to
+        // click, so the stars are one image with a text alternative, not five unlabeled icons.
         $extra = $interactive
             ? ' data-airpay-rating data-itemid="' . $itemid
                 . '" data-ratearea="' . s($ratearea)
                 . '" data-my-rating="' . $myrating . '"'
-            : '';
+            : ' role="img" aria-label="' . s($avg->count > 0
+                ? get_string('averagesummary', 'local_sentientia_ratings', $avg)
+                : get_string('noratings', 'local_sentientia_ratings')) . '"';
 
-        return '<div class="airpay-rating"' . $extra . '>' . $stars . ' ' . $counttext . '</div>';
+        return '<div class="airpay-rating"' . $extra . '>' . $stars . ' ' . $counttext
+            . ($suffix === '' ? '' : ' ' . $suffix) . '</div>';
+    }
+
+    /**
+     * The like and dislike counts of an item, as a small inline summary, or '' when there is nothing to show.
+     *
+     * Owner decision CRS-12 (2026-10-07), follow-up code: the counts BizLMS showed beside the thumbs, now beside the stars,
+     * behind the flag sentientia.ratings.reactions (default OFF). The flip for Airpay stays Nitin's call, after the visual
+     * evidence of this very markup is reviewed. Counts only, site-wide per item as in BizLMS, no person data; an item with
+     * no like and no dislike shows nothing. The text alternative is the same pair of strings the reviews page uses.
+     *
+     * @param int $itemid
+     * @param string $ratearea
+     * @return string HTML, escaped, or ''.
+     */
+    public static function render_reactions(int $itemid, string $ratearea): string {
+        if (!reaction_manager::enabled()) {
+            return '';
+        }
+        $counts = reaction_manager::get_counts($itemid, $ratearea);
+        if ($counts->likes === 0 && $counts->dislikes === 0) {
+            return '';
+        }
+        $label = get_string('reactionlikes', 'local_sentientia_ratings', $counts->likes) . ', '
+            . get_string('reactiondislikes', 'local_sentientia_ratings', $counts->dislikes);
+        return '<span class="airpay-rating__reactions text-muted" role="img" aria-label="' . s($label) . '">'
+            . '<i class="fa fa-thumbs-up" aria-hidden="true"></i> ' . (int) $counts->likes . ' '
+            . '<i class="fa fa-thumbs-down" aria-hidden="true"></i> ' . (int) $counts->dislikes
+            . '</span>';
+    }
+
+    /**
+     * Do the stars the viewer sees accept a click? Owner decision CRS-11: only when the flag
+     * sentientia.ratings.widget is ON for the viewer's customer and tenant AND the viewer is a signed-in non-guest who
+     * holds local/sentientia_ratings:rate (the capability the submit web service enforces). Anything else gets read-only
+     * stars, so a control is never shown that would only fail.
+     *
+     * @return bool
+     */
+    public static function widget_enabled(): bool {
+        global $USER;
+        if (empty($USER->id) || isguestuser()) {
+            return false;
+        }
+        if (!\local_sentientia_platform\feature_flags::is_enabled(self::FLAG_WIDGET)) {
+            return false;
+        }
+        return has_capability('local/sentientia_ratings:rate', \context_system::instance());
+    }
+
+    /**
+     * The stars of an item for the page the viewer is on: interactive, with the AMD widget loaded once, when
+     * widget_enabled(); read-only otherwise (owner decision CRS-11). This is what the theme's course header and course
+     * drawer call; render() itself is unchanged and still takes the explicit $interactive choice.
+     *
+     * @param int $itemid
+     * @param string $ratearea
+     * @return string HTML
+     */
+    public static function render_for_viewer(int $itemid, string $ratearea): string {
+        global $PAGE;
+        $interactive = self::widget_enabled();
+        if ($interactive && !self::$widgetrequired) {
+            // init() binds every [data-airpay-rating] on the page, so one call serves the header and the drawer alike;
+            // a second would bind each star twice and send two requests per click.
+            $PAGE->requires->js_call_amd('local_sentientia_ratings/rating_widget', 'init');
+            self::$widgetrequired = true;
+        }
+        return self::render($itemid, $ratearea, $interactive, null, self::render_reactions($itemid, $ratearea));
+    }
+
+    /**
+     * Forget that the widget was requested (tests, which render several pages in one process).
+     *
+     * @return void
+     */
+    public static function reset_widget_request(): void {
+        self::$widgetrequired = false;
     }
 
     /**
