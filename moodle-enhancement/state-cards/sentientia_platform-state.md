@@ -833,3 +833,20 @@ down.
   function runs every later step, so the version ends at the plugin's latest (2026093001). It now asserts `>=`.
 
 No version bump, no feature, no UI. Both trees identical.
+
+## 2026-10-07 - ADR-032 decisions file: 36 owner decisions recorded (fixture copies refreshed)
+
+`docs/cutover/bizlms-import-decisions.json` now holds 138 decisions: 36 were added or corrected under Nitin's delegation of
+2026-10-07 (`why` starts `[delegated 2026-10-07]`; a top-level `delegated_on` and `delegation_note` sit next to `approved_by`
+and `approved_on`, which are unchanged). Both `tests/fixtures/bizlms/bizlms-import-decisions.copy.json` copies are byte-for-byte
+the signed file (`tools/check-bizlms-fixture-copies.php` OK). No code, no version bump, no flag.
+
+- The two cart keys are `accepted` now (Airpay Finance was not consulted), so
+  `bizlms_decisions_test::test_the_checked_in_file_loads_and_its_finance_items_block` and the cart `bizlms_import_test` assertions
+  that expect `finance-confirm` must follow `cart.finance_keys_status`; the toy `decisions.sample.json` keeps covering the
+  blocking mechanism. `skills.level_proficiency.csv` is filled, so the skills test that expects the signed file to block skips itself.
+- The file's sha256 changed. No Stage B hash is pinned yet, so this is not a re-approval event. No `accepted_reasons` list is
+  added on purpose: the owner adds it after Stage B (IDN-02).
+- Framework changes this batch's decisions call for (copies_files marker, sequence floor from the legacy AUTO_INCREMENT,
+  preflight catching `blocked`, parity wiring) are recorded in ADR-032, "Framework change rule"; they are code, not part of
+  this entry. Details and the 84 decisions: `docs/cutover/OWNER-DECISIONS-2026-10-07.md`.
