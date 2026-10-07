@@ -76,5 +76,12 @@ function xmldb_local_sentientia_roles_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026093002, 'local', 'sentientia_roles');
     }
 
+    // 2026100701 - ADR-032 owner decision IDN-01: importer rules only, no schema change. A user with no tenant path is
+    // left out of an org-role row and the new owner reason user_without_tenant exists; importer::requires_version()
+    // names this version, so the bare savepoint is all the upgrade has to do.
+    if ($oldversion < 2026100701) {
+        upgrade_plugin_savepoint(true, 2026100701, 'local', 'sentientia_roles');
+    }
+
     return true;
 }

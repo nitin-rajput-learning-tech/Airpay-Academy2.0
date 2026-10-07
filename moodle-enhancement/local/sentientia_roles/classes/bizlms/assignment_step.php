@@ -19,11 +19,14 @@ use local_sentientia_platform\bizlms\step;
  *
  * transform() is pure: it reads through the context (and the plain reads named below) and returns outcomes.
  *
- * Tenant rule (ADR-031 decisions 5 and 6 close the same escalation in the UI): a user of one tenant never gets a
- * role at another tenant's organisation. A user whose tenant root differs from the organisation's root is left out
- * of the row (warning user_outside_org_tenant), and a row with no user left is skipped with the owner-visible reason
- * user_outside_org_tenant. BizLMS never read these tables (mapping doc section 4), so such a row would create
- * authority that production never gave.
+ * Tenant rule, fail closed (ADR-031 decisions 4, 5 and 6 close the same escalation in the UI): a user of one tenant
+ * never gets a role at another tenant's organisation, and a user with no tenant path gets none either. A user whose
+ * tenant root differs from the organisation's root is left out of the row (warning user_outside_org_tenant); a user
+ * with no tenant path is left out of it (warning user_without_tenant, owner decision IDN-01 of 2026-10-07, signed key
+ * org_roles.user_without_tenant). A row with no user left is skipped with the owner-visible reason
+ * user_outside_org_tenant, or user_without_tenant when nobody was refused for their tenant but somebody had none.
+ * BizLMS never read these tables (mapping doc section 4), so such a row would create authority that production never
+ * gave. The legacy row stays in its table, so nothing is lost and the owner can assign the role by hand later.
  *
  * @package    local_sentientia_roles
  * @copyright  2026 Airpay Payment Services
@@ -157,6 +160,7 @@ abstract class assignment_step extends step {
         $valid = [];
         $seen = [];
         $outside = 0;
+        $notenant = 0;
         foreach (explode(',', $f->users) as $index => $token) {
             $position = $index + 1;
             $token = trim($token);
@@ -180,9 +184,13 @@ abstract class assignment_step extends step {
             }
             $userroot = $ctx->tenant->root_of_user($userid);
             if ($userroot === 0) {
-                // No tenant path: nothing says the user belongs elsewhere, so the row stands, reported.
+                // No tenant path: no tenant means nothing (ADR-031 decision 4), and a scoped roles:assign could
+                // never make this grant (decision 6). The user is left out of this row, reported (IDN-01).
                 $problems[] = 'user_without_tenant';
-            } else if ($orgroot > 0 && $userroot !== $orgroot) {
+                $notenant++;
+                continue;
+            }
+            if ($orgroot > 0 && $userroot !== $orgroot) {
                 // Never a role over another tenant's organisation (ADR-031): the user is left out of this row.
                 $problems[] = 'user_outside_org_tenant';
                 $outside++;
@@ -191,10 +199,15 @@ abstract class assignment_step extends step {
             $valid[] = [$position, $userid];
         }
         if (!$valid) {
-            // Somebody was refused for their tenant: the owner sees that, whatever else was wrong with the row.
-            $skip = $outside > 0
-                ? outcome::skip($sid, importer::REASON_USER_OUTSIDE_TENANT)
-                : outcome::skip($sid, importer::REASON_NO_VALID_USER, $problems[0] ?? 'user_missing');
+            // Somebody was refused for their tenant: the owner sees that, whatever else was wrong with the row. A user
+            // refused for another tenant outranks one that had none; either outranks plain invalid users.
+            if ($outside > 0) {
+                $skip = outcome::skip($sid, importer::REASON_USER_OUTSIDE_TENANT);
+            } else if ($notenant > 0) {
+                $skip = outcome::skip($sid, importer::REASON_USER_WITHOUT_TENANT);
+            } else {
+                $skip = outcome::skip($sid, importer::REASON_NO_VALID_USER, $problems[0] ?? 'user_missing');
+            }
             foreach (array_unique($problems) as $code) {
                 $skip->warn($code);
             }
