@@ -201,5 +201,7 @@ final class bizlms_redactor_test extends \basic_testcase {
         // verify() looks for the placeholder and the subject mask in the target; neither may trip the scrub.
         $this->assertSame(redactor::SUBJECT_MASK, redactor::scrub(redactor::SUBJECT_MASK));
         $this->assertSame(redactor::MASK, redactor::scrub(redactor::MASK));
+        // The dev masking script (local_sentientia_platform/cli/mask_pii_for_dev.php) keeps this exact subject: it names no one.
+        $this->assertSame('[withheld: account credentials]', redactor::SUBJECT_MASK);
     }
 }

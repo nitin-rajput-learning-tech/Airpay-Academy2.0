@@ -78,6 +78,35 @@ final class imported_history {
     }
 
     /**
+     * An imported body without anything the browser would fetch from outside when it is shown (F-65).
+     *
+     * An old BizLMS mail can carry a remote image or a tracking pixel. Opening the detail view of an archived message
+     * must not call out to a third party, and must not tell it that, and when, an administrator read it. So before the
+     * body goes to format_text(): every <img> that points off the site is replaced by the placeholder, a CSS url() that
+     * points off the site becomes none, and a background attribute that does is dropped. An inline data: image and a
+     * relative one stay. This is a second layer: format_text() still cleans the markup afterwards.
+     *
+     * @param string $html
+     * @param string $placeholder What takes the place of a removed image (empty removes it silently).
+     * @return string
+     */
+    public static function without_external_resources(string $html, string $placeholder = ''): string {
+        $external = '(?:https?:)?//';
+        // An <img> with an off-site URL anywhere in the tag: src, srcset, or a lazy-load attribute.
+        $images = preg_replace_callback('~<img\b[^>]*>~i', static function (array $m) use ($external, $placeholder): string {
+            return preg_match('~[\s"\'=,(]' . $external . '~i', $m[0]) === 1 ? $placeholder : $m[0];
+        }, $html);
+        $html = $images ?? $html;
+        // CSS: background:url(http://...), list-style-image, @import and the like inside a style attribute or element.
+        $css = preg_replace('~url\(\s*[\'"]?\s*' . $external . '[^)]*\)~i', 'none', $html);
+        $html = $css ?? $html;
+        // <body background="..."> and <td background="...">.
+        $background = preg_replace(
+            '~\sbackground\s*=\s*(?:"\s*' . $external . '[^"]*"|\'\s*' . $external . '[^\']*\'|' . $external . '[^\s>]*)~i', '', $html);
+        return $background ?? $html;
+    }
+
+    /**
      * @param string $key
      * @return bool
      */
