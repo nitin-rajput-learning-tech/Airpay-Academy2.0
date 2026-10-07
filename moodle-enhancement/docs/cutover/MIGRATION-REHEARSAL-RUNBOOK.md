@@ -70,8 +70,27 @@ ninja sandbox when Nitin provides server access + a fresh live backup. **Nothing
       `php admin/cli/cfg.php --name=theme --set=sentientia`; April has no user/course/category/cohort
       overrides (migration plan §8 step 7).
 5. **Purge caches**, then **data-intact gate:**
-   `php local/sentientia_platform/cli/migration_parity_check.php --compare=/path/live-baseline.json`
+   `php local/sentientia_platform/cli/migration_parity_check.php --compare=/path/live-baseline.json --decisions=/path/bizlms-import-decisions.json --expect-decisions-hash=<sha256 of the rehearsed decisions file>`
    → **must print `RESULT: 100% PARITY — data intact.`** Any DRIFT line = stop + investigate.
+   **Pass the decisions (added 2026-10-07, review fix round 1).** Every BizLMS importer's `verify()` reads owner
+   decisions (`cart.abandoned`, `notifications.import_bodies`, ...) that have no default, so the `bizlms_import`
+   invariant can only run with the file the import ran with. Without `--decisions`, on a database that holds legacy
+   tables, that invariant prints `SKIPPED` and the gate exits 2 ("not proven"): never a pass, but never a false FAIL
+   either. `--expect-decisions-hash` pins the file; a different file is refused with exit 3 before anything is compared.
+   The hash is the `decisions_hash` in the import run report (`--report=FILE`); the parity CLI also prints the sha256 of
+   the file it was given, so the two can be read side by side. A decision the
+   file does not hold is a real FAIL (`verify_error:<feature>:missing_decision:<key>`).
+   A baseline taken before the import (`--baseline`) needs neither option.
+5a. **Stage B report for the enrolments import (CRS-01, added 2026-10-07).** After the `enrolments` feature has been
+   applied, run `php local/sentientia_courses/cli/enrolments_access_report.php` and paste its output into the rehearsal
+   report: the per-instance verdicts, the learner-course pair count and the ids of the legacy enrolments that regress. The
+   import report itself carries only the per-instance skip codes; the pair count and the regression ids come only from this
+   CLI. Exit 1 means a switched-off instance does not keep its learners' access: undo it (see the CLI header) before going on.
+5b. **No admin unenrol before `bizlms_production_open` (LRN-10, added 2026-10-07).** From the learning-path, program and
+   classroom screens an admin can now remove a pending imported enrolment row. On a rehearsal, UAT or Stage B copy that
+   deletes an imported target, and the `bizlms_import` invariant then reports `missing_target_rows` as a FAIL. Do not
+   unenrol imported rows on a copy that still has to pass the parity gate; once the runbook has set
+   `local_sentientia_platform/bizlms_production_open` the check stops, because admins may then change rows freely.
 6. **Workflow smoke** (subset of the FOOLPROOF matrix, all proven headless-runnable):
    provision qa users (`tools/_qa_provision.php` pattern), then login/dashboard/catalog HTTP probes,
    SA-04 both personas, signup POST, reminder cron with a seeded deadline, whatsapp e2e dry,

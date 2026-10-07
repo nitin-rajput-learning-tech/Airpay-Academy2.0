@@ -492,6 +492,50 @@ final class bizlms_guard_parity_test extends \advanced_testcase {
             implode(' ', parity::invariant_problems()), 'without the decisions verify() cannot run, and says so');
     }
 
+    /**
+     * Review of 2026-10-07, must-fix 1: --compare ran the invariant on no decisions, every verify() that reads a decision with
+     * no default threw missing_decision, and a clean import was reported as an invariant FAIL (exit 1).
+     */
+    public function test_compare_invariant_is_not_proven_without_decisions_and_clean_with_them(): void {
+        $this->resetAfterTest();
+        toy_importer::reset();
+        toy_importer::$requiredecision = true;
+        registry::set_testing_importers([new toy_importer()]);
+        $this->seed_toy_data();
+        $decisions = \local_sentientia_platform\bizlms\decisions::from_array(['toy.mandatory' => 'yes']);
+        $result = (new runner(['apply' => true, 'permit' => guard::test_permit(), 'batch' => 2, 'atomic_threshold' => 0,
+            'decisions' => $decisions]))->run([]);
+        $this->assertContains($result['exit'], [0, 2]);
+
+        // The old CLI call: a list of problems, so a FAIL, on an import that is clean.
+        $this->assertNotSame([], parity::invariant_problems(), 'the plain invariant needs the decisions');
+
+        // No decisions given: "not proven" (a string the CLI prints as SKIPPED, exit 2), never a list, so never a FAIL.
+        $withoutdecisions = parity::compare_invariant(null);
+        $this->assertIsString($withoutdecisions);
+        $this->assertStringContainsString('not proven', $withoutdecisions);
+        $this->assertStringContainsString('--decisions', $withoutdecisions);
+
+        // The signed decisions: the whole invariant, clean.
+        $this->assertSame([], parity::compare_invariant($decisions));
+
+        // A file that does not hold the decision is a real problem, not a skip.
+        $other = \local_sentientia_platform\bizlms\decisions::from_array(['toy.unrelated' => 'x']);
+        $problems = parity::compare_invariant($other);
+        $this->assertIsArray($problems);
+        $this->assertStringContainsString('verify_error:toy:missing_decision:toy.mandatory', implode(' ', $problems));
+    }
+
+    public function test_compare_invariant_with_no_legacy_tables_needs_no_decisions(): void {
+        $this->resetAfterTest();
+        registry::set_testing_importers([new toy_importer()]);
+        foreach (['local_toy_org', 'local_toy_item', 'local_toy_dup', 'local_toy_event', 'local_toy_fan', 'local_toy_unused'] as $table) {
+            self::drop_legacy_table($table);
+        }
+        legacy_tables::reset();
+        $this->assertSame([], parity::compare_invariant(null), 'a fresh install has nothing to prove, so nothing is unproven');
+    }
+
     public function test_status_check_is_registered_through_lib_php(): void {
         global $CFG;
         require_once(__DIR__ . '/../../lib.php');

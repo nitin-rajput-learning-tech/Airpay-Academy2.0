@@ -856,7 +856,9 @@ the legacy tables (they check and write `local_classroom_attendance`, migration 
 3. `migration_parity_check.php --compare=<source baseline>`: the legacy tables must be intact.
 4. `import_bizlms.php --preflight --all --decisions=... --expect-decisions-hash=<rehearsed>`: no blockers.
 5. `--all --apply --confirm=<fp> --decisions=... --expect-decisions-hash=... --report=...`.
-6. `migration_parity_check.php --compare=...`: exit 0, or exit 2 with Nitin's written acceptance.
+6. `migration_parity_check.php --compare=... --decisions=... --expect-decisions-hash=<rehearsed>`: exit 0, or exit 2 with
+   Nitin's written acceptance. (Pass the decisions: every importer's `verify()` reads them, and without the file the
+   `bizlms_import` invariant is SKIPPED, exit 2. Wired 2026-10-07, review fix round 1; `parity::compare_invariant()`.)
 7. `admin/cli/checks.php` clean; purge caches; disarm; cron on; maintenance off.
 
 Stage B runs the same slice first. Its timings (I-20) set the maintenance window.

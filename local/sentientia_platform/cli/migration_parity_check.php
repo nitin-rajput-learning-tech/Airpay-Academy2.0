@@ -14,7 +14,7 @@
  *   php migration_parity_check.php --baseline=/path/baseline.json
  *
  * Then on the TARGET (sandbox after restore+upgrade, or live after cutover):
- *   php migration_parity_check.php --compare=/path/baseline.json
+ *   php migration_parity_check.php --compare=/path/baseline.json --decisions=/path/decisions.json --expect-decisions-hash=SHA256
  *
  * Exit 0 = counts AND value checksums match the baseline.
  * Exit 1 = drift, listed per metric and per table, OR a hard invariant
@@ -24,6 +24,8 @@
  * Exit 2 = counts match but values could not be checked, so the data is
  *          NOT proven intact (old baseline, a non-MySQL engine, or an
  *          invariant that could not run: printed as SKIPPED with the reason).
+ * Exit 3 = refused before anything was compared: the --decisions file cannot be read, or its sha256 is not the one
+ *          --expect-decisions-hash names (the cutover must run on the rehearsed decisions).
  * No flags = print current counts and checksums.
  *
  * BizLMS data import (ADR-032, "Parity hooks"; wired 2026-10-07, owner decisions of the courses cluster):
@@ -32,7 +34,10 @@
  *   --compare then proves the legacy tables are intact (a changed table or a missing one is drift, a skipped CRC or a
  *   table that is not in the baseline is "not proven", exit 2), runs the bizlms_import invariant (every feature complete,
  *   source = map, no row without a map row, no imported row whose target is gone, tenant paths valid, no legacy source
- *   changed since its step ran, every importer's verify() clean: any problem is exit 1), and EXPLAINS the one difference the
+ *   changed since its step ran, every importer's verify() clean: any problem is exit 1; it needs --decisions=FILE because
+ *   verify() reads owner decisions (cart.abandoned, notifications.import_bodies, ...): without the file the invariant is
+ *   SKIPPED, exit 2 "not proven", never FAIL, and --expect-decisions-hash=SHA256 pins the file to the rehearsed one and
+ *   refuses a different one, exit 3), and EXPLAINS the one difference the
  *   import makes on purpose to a counted table: the manual enrolments the enrolments importer (gap G6) wrote into core
  *   user_enrolments (about 7 733 on the April 2026 copy). The explanation comes from the legacy map and only covers exactly
  *   those rows, in the count and in the checksum (a SUM of per-row CRCs, so the added rows' CRCs must add up); any other
@@ -46,17 +51,57 @@ require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/clilib.php');
 
 [$options, $unrecognised] = cli_get_params(
-    ['baseline' => '', 'compare' => '', 'crc-max-rows' => 0, 'help' => false], ['h' => 'help']);
+    ['baseline' => '', 'compare' => '', 'crc-max-rows' => 0, 'decisions' => '', 'expect-decisions-hash' => '',
+     'help' => false], ['h' => 'help']);
 if ($unrecognised) {
     cli_error('Unrecognised options: ' . implode(', ', array_keys($unrecognised)));
 }
 if ($options['help']) {
     cli_writeln('Data-intact parity check. --baseline=FILE to save, --compare=FILE to verify, '
-        . '--crc-max-rows=N to skip the CRC of a legacy table above N rows (never a pass).');
+        . '--crc-max-rows=N to skip the CRC of a legacy table above N rows (never a pass). '
+        . 'With --compare, --decisions=FILE (the rehearsed BizLMS import decisions) lets the bizlms_import invariant run '
+        . '(without it that invariant is SKIPPED, exit 2) and --expect-decisions-hash=SHA256 refuses any other file (exit 3).');
     exit(0);
 }
 
 global $DB;
+
+/**
+ * The decisions the BizLMS import ran with, for --compare. Exits 3 (refused) when the file cannot be used or is not the
+ * one the caller pinned: comparing against the wrong decisions would answer a different question.
+ *
+ * @param string $file --decisions
+ * @param string $expect --expect-decisions-hash
+ * @return \local_sentientia_platform\bizlms\decisions|null Null when no file was given (the invariant is then "not proven").
+ */
+function sentientia_parity_decisions(string $file, string $expect): ?\local_sentientia_platform\bizlms\decisions {
+    $expect = strtolower(trim($expect));
+    if ($file === '') {
+        if ($expect !== '') {
+            cli_writeln('REFUSED: --expect-decisions-hash is the hash of the --decisions file, and none was given.');
+            exit(3);
+        }
+        return null;
+    }
+    if (!class_exists('\local_sentientia_platform\bizlms\decisions')) {
+        cli_writeln('REFUSED: --decisions needs the BizLMS import framework (local_sentientia_platform), which is not deployed here.');
+        exit(3);
+    }
+    try {
+        $decisions = \local_sentientia_platform\bizlms\decisions::load($file);
+    } catch (\local_sentientia_platform\bizlms\bizlms_exception $e) {
+        cli_writeln('REFUSED: ' . $e->getMessage());
+        exit(3);
+    }
+    if ($expect !== '' && !hash_equals($decisions->hash(), $expect)) {
+        cli_writeln('REFUSED: decisions_hash_differs_from_the_expected_one (the file is not the rehearsed one).');
+        exit(3);
+    }
+    cli_writeln('Decisions: ' . $file . ' sha256=' . $decisions->hash()
+        . ($expect !== '' ? ' (pinned: matches --expect-decisions-hash)'
+            : ' (NOT pinned: pass --expect-decisions-hash so the cutover must use the rehearsed file)'));
+    return $decisions;
+}
 
 /** Collect the parity metric set. */
 function sentientia_parity_counts(): array {
@@ -208,11 +253,18 @@ function sentientia_parity_checksums(): array {
  * invariant is reported as SKIPPED with its message (--compare then exits 2,
  * "not proven", never a pass).
  *
+ * bizlms_import: parity::compare_invariant(). With the decisions the import ran with it is the whole invariant (a problem is
+ * a FAIL); without them it is a string, so SKIPPED and exit 2, never a FAIL: every importer's verify() reads decisions that
+ * have no default, and running it on none made a clean import fail (review of 2026-10-07).
+ *
+ * @param bool $withimport Also run the bizlms_import invariant (--compare only).
+ * @param \local_sentientia_platform\bizlms\decisions|null $decisions The decisions the import ran with, if given.
  * @return array<string,string[]|string|null> a list of problems (empty = OK);
  *         null = check not available here; a string = the check could not run,
  *         and the string says why
  */
-function sentientia_parity_invariants(bool $withimport = false): array {
+function sentientia_parity_invariants(bool $withimport = false,
+        ?\local_sentientia_platform\bizlms\decisions $decisions = null): array {
     if (!class_exists('\local_sentientia_platform\message_pref_repair')) {
         $out = ['message_provider_defaults' => null];
     } else {
@@ -228,7 +280,7 @@ function sentientia_parity_invariants(bool $withimport = false): array {
             $out['bizlms_import'] = null;
         } else {
             try {
-                $out['bizlms_import'] = \local_sentientia_platform\bizlms\parity::invariant_problems();
+                $out['bizlms_import'] = \local_sentientia_platform\bizlms\parity::compare_invariant($decisions);
             } catch (\Throwable $e) {
                 $out['bizlms_import'] = 'check could not run: ' . $e->getMessage();
             }
@@ -282,10 +334,14 @@ function sentientia_parity_print_invariants(array $invariants): array {
     return [$failed, $skipped];
 }
 
+// The decisions are checked first: a refused file (wrong hash) must not cost the counts and checksums of a large database.
+$decisions = $options['compare'] !== ''
+    ? sentientia_parity_decisions((string) $options['decisions'], (string) $options['expect-decisions-hash'])
+    : null;
 $counts = sentientia_parity_counts();
 $checksums = sentientia_parity_checksums();
 // The bizlms_import invariant reads the whole import (every feature's accounting and verify()): only --compare pays for it.
-$invariants = sentientia_parity_invariants($options['compare'] !== '');
+$invariants = sentientia_parity_invariants($options['compare'] !== '', $decisions);
 
 if ($options['baseline'] !== '') {
     // The legacy tables, fingerprinted with no CRC cap (a capped baseline makes every comparison unproven).
@@ -445,7 +501,8 @@ if ($options['compare'] !== '') {
         if ($hardfail > 0) {
             cli_writeln("RESULT: $hardfail invariant(s) FAILED - see the problems above. message_provider_defaults: run "
                 . 'local/sentientia_platform/cli/repair_task_registrations.php --apply. bizlms_import: read the import report '
-                . '(local/sentientia_platform/cli/import_bizlms.php). Then re-check.');
+                . '(local/sentientia_platform/cli/import_bizlms.php --verify --decisions=FILE shows the same problems). '
+                . 'Then re-check.');
         }
         exit(1);
     }

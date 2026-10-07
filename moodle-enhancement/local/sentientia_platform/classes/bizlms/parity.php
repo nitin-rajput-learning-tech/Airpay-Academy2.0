@@ -19,7 +19,8 @@ defined('MOODLE_INTERNAL') || die();
  *    turns skipped into an unproven item (exit 2), never a pass.
  * 2. invariant_problems(): the bizlms_import invariant. Returns an empty list when
  *    the database holds no legacy tables (a fresh install). Every problem is a hard
- *    failure (exit 1).
+ *    failure (exit 1). compare_invariant() is the form the parity CLI uses: with no decisions
+ *    file it says "not proven" (exit 2) instead of failing every importer's verify().
  * 3. Unproven items (exit 2) are unclaimed legacy tables holding rows and needs-owner
  *    reasons the decisions file has not accepted; see unclaimed and runner.
  * 4. The core counts and checksums stay the proof that the import had no side effects on users, completions, attempts,
@@ -177,6 +178,34 @@ final class parity {
             array_push($problems, ...self::verify_problems($feature, $importer, $decisions));
         }
         return $problems;
+    }
+
+    /**
+     * The bizlms_import invariant as cli/migration_parity_check.php --compare reports it.
+     *
+     * Every importer's verify() reads owner decisions (cart.abandoned, notifications.import_bodies, ...), and a decision with
+     * no default throws blocked('missing_decision:...') when the run has none. Run without the decisions, the invariant
+     * therefore failed on every database that had imported cart or e-mail data: a clean import reported as an invariant FAIL
+     * (review of 2026-10-07, must-fix 1). That is a false result, so:
+     *
+     * - no decisions and no legacy tables: nothing to prove, an empty list (a fresh install still passes);
+     * - no decisions and legacy tables present: a string, never a list. The CLI prints it as SKIPPED and exits 2 ("not
+     *   proven"), the same way it treats every other check that could not run. It is never a pass and never a FAIL;
+     * - decisions given (the rehearsed file, pinned by --expect-decisions-hash): the full invariant, and any problem,
+     *   including a decision the file does not hold, is a real FAIL.
+     *
+     * @param decisions|null $decisions The decisions the import ran with, or null when the caller has none.
+     * @return string[]|string A list of problems (empty = OK), or the reason the invariant could not run.
+     */
+    public static function compare_invariant(?decisions $decisions): array|string {
+        if ($decisions === null) {
+            if (!legacy_tables::detect()) {
+                return [];
+            }
+            return 'not proven: every importer verify() reads owner decisions, so the invariant needs the rehearsed file '
+                . '(--decisions=FILE with --expect-decisions-hash=SHA256)';
+        }
+        return self::invariant_problems($decisions);
     }
 
     /**
