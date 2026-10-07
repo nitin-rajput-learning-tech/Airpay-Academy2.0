@@ -31,6 +31,56 @@ class classroom_audience_enroller {
     public const MAX_AUDIENCE_SIZE = 2000;
 
     /**
+     * The flag that brings bulk enrolment by audience back (owner decision XC-CLS-ENROL, 2026-10-07).
+     *
+     * The page, the form and both web services gated on local/sentientia_classroom:enrol, which no access.php
+     * declares, so the surface refused everyone (site admins included) and was dead. It now gates on :manage, like
+     * the rest of classroom management, behind this default-OFF flag because a dead page comes back. With it OFF
+     * nothing changes: the button is not shown and the form and both web services refuse.
+     */
+    public const FLAG = 'sentientia.classroom.bulk_enrol_audience';
+
+    /** The filter keys a map may carry (all optional, ANDed); cohortid is a number. */
+    private const FILTER_KEYS = ['designation', 'region', 'location', 'employmenttype', 'grade', 'hrmsrole', 'org_path'];
+
+    /**
+     * Is bulk enrolment by audience switched on for the current user's customer and tenant?
+     *
+     * @return bool
+     */
+    public static function enabled(): bool {
+        return \local_sentientia_platform\feature_flags::is_enabled(self::FLAG);
+    }
+
+    /**
+     * Refuse unless the flag is on.
+     *
+     * @throws \moodle_exception audience_not_enabled
+     */
+    public static function require_enabled(): void {
+        if (!self::enabled()) {
+            throw new \moodle_exception('audience_not_enabled', 'local_sentientia_classroom');
+        }
+    }
+
+    /**
+     * Does a filter map name no criterion at all? Such a map matches every learner of the caller's tenant (up to
+     * MAX_AUDIENCE_SIZE), which is a whole-tenant action nobody asked for by accident (owner decision EV-36's rule,
+     * applied here): an explicit whole-tenant enrolment names the tenant's org_path.
+     *
+     * @param array $filters
+     * @return bool
+     */
+    public static function is_empty_filter(array $filters): bool {
+        foreach (self::FILTER_KEYS as $key) {
+            if (trim((string) ($filters[$key] ?? '')) !== '') {
+                return false;
+            }
+        }
+        return (int) ($filters['cohortid'] ?? 0) <= 0;
+    }
+
+    /**
      * Resolve filter map → matching user ids, inside the caller's tenant.
      *
      * ADR-031: cross-tenant callers (site admin, :crosstenant) are unscoped;
@@ -131,6 +181,12 @@ class classroom_audience_enroller {
                                               int $caller_userid): array {
         // ADR-031: the target classroom must be in the caller's tenant.
         session_manager::require_classroom_access($classroomid, $caller_userid);
+
+        // XC-CLS-ENROL: no criterion at all would enrol the whole tenant. The form already says "pick at least one";
+        // the web service now agrees (the same wording).
+        if (self::is_empty_filter($filters)) {
+            throw new \moodle_exception('audience_pick_at_least_one', 'local_sentientia_classroom');
+        }
 
         $userids = self::resolve_audience($filters, $caller_userid);
         $count = count($userids);

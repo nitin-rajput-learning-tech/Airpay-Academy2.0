@@ -1001,7 +1001,8 @@ class path_manager {
             $out[] = [
                 'courseid' => (int) $course->id,
                 // Plain text: the callers escape it once where they put it in HTML.
-                'name' => format_string($course->fullname, true, ['escape' => false]),
+                'name' => format_string($course->fullname, true,
+                    ['context' => \context_system::instance(), 'escape' => false]),
                 'url' => (new \moodle_url('/user/index.php', ['id' => (int) $course->id]))->out(false),
             ];
         }

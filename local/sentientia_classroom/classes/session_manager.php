@@ -880,8 +880,49 @@ class session_manager {
     }
 
     /**
+     * Is this roster row one the BizLMS import brought in that carries NO history yet, and may it be removed?
+     *
+     * Owner decision framework.protect_imported_history_pending_enrolments (2026-10-07, LRN-10): an admin may unenrol
+     * an imported enrolment that has no completion, progress or attendance, on an active classroom. That is a routine
+     * BizLMS action (the 762 April learners still pending on the 17 active plans are of this kind), and refusing it
+     * would leave the admin unable to remove a learner who was enrolled by mistake. Everything that carries history
+     * stays blocked: a completed row, a row with hours, a row with any attendance mark (even "absent": it is a
+     * record), and any row of a classroom that is not active (draft, on hold, cancelled, completed). The BizLMS row
+     * stays in the legacy tables.
+     *
+     * @param \stdClass|false|null $classroom The classroom row.
+     * @param \stdClass $roster The roster row (local_sentientia_classroom_users).
+     * @return bool True when the row carries no history and the classroom is active.
+     */
+    public static function imported_roster_is_pending($classroom, \stdClass $roster): bool {
+        global $DB;
+        if (!$classroom || (int) $classroom->status !== self::STATUS_ACTIVE) {
+            return false;
+        }
+        if ((int) ($roster->completion_status ?? 0) !== 0 || !empty($roster->timecompleted) || !empty($roster->hours)) {
+            return false;
+        }
+        $sessionids = $DB->get_fieldset_select(self::SESSION_TABLE, 'id', 'classroomid = :cid',
+            ['cid' => (int) $roster->classroomid]);
+        if ($sessionids) {
+            [$insql, $inparams] = $DB->get_in_or_equal($sessionids, SQL_PARAMS_NAMED, 'prs');
+            if ($DB->record_exists_select(self::ATTENDANCE_TABLE, "userid = :uid AND sessionid $insql",
+                    array_merge($inparams, ['uid' => (int) $roster->userid]))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Unenrol a user from a classroom roster. Also removes their attendance
      * across all sessions of this classroom.
+     *
+     * An enrolment the BizLMS import brought in is history and is refused (framework.protect_imported_history),
+     * except one that carries none yet (imported_roster_is_pending()). A completed learner's row is refused whether
+     * imported or not: their completion goes with the roster row.
+     *
+     * @throws \moodle_exception error_protected_history
      */
     public static function unenrol_user(int $classroomid, int $userid): bool {
         global $DB;
@@ -889,9 +930,14 @@ class session_manager {
         // ADR-032 (framework.protect_imported_history): removing an imported learner would also delete the
         // attendance the import brought in, and a completed learner's completion goes with the roster row.
         // (An imported waiting-list place is not history: the pages delete it like any other queue entry.)
+        // LRN-10 (2026-10-07): an imported row with no completion, hours or attendance, on an active classroom, is
+        // not history yet and may be removed.
         $roster = $DB->get_record(self::USERS_TABLE, ['classroomid' => $classroomid, 'userid' => $userid]);
-        if ($roster && ((int) ($roster->completion_status ?? 0) === 1
-                || self::is_imported(self::USERS_TABLE, (int) $roster->id))) {
+        if ($roster && (int) ($roster->completion_status ?? 0) === 1) {
+            throw new \moodle_exception('error_protected_history', 'local_sentientia_classroom');
+        }
+        if ($roster && self::is_imported(self::USERS_TABLE, (int) $roster->id)
+                && !self::imported_roster_is_pending($DB->get_record(self::TABLE, ['id' => $classroomid]), $roster)) {
             throw new \moodle_exception('error_protected_history', 'local_sentientia_classroom');
         }
         // The attendance has its own provenance. An imported learner whose roster row the import skipped,

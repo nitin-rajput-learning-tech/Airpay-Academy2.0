@@ -14,7 +14,6 @@ $string['sentientia_classroom:view']       = 'क्लासरूम देख
 $string['sentientia_classroom:create']     = 'क्लासरूम बनाएँ';
 $string['sentientia_classroom:update']     = 'क्लासरूम अपडेट करें';
 $string['sentientia_classroom:delete']     = 'क्लासरूम हटाएँ';
-$string['sentientia_classroom:enrol']      = 'यूज़र्स को क्लासरूम में नामांकित करें';
 $string['sentientia_classroom:attendance'] = 'उपस्थिति प्रबंधित करें';
 
 // Form section headings.
@@ -60,6 +59,7 @@ $string['audience_any']               = 'कोई भी';
 $string['audience_any_cohort']        = 'कोई भी कोहोर्ट';
 $string['audience_users_matched']     = 'यूज़र्स मिलते हैं';
 $string['audience_pick_at_least_one'] = 'कम से कम एक फ़िल्टर चुनें।';
+$string['audience_not_enabled']       = 'लक्षित दर्शकों द्वारा बल्क नामांकन चालू नहीं है।';
 $string['audience_enrol_button']      = 'मिलने वाले यूज़र्स नामांकित करें';
 $string['audience_enrol_result']      = '%d नए नामांकन; %d यूज़र दर्शकों में मिले।';
 $string['designation']                = 'पद';
