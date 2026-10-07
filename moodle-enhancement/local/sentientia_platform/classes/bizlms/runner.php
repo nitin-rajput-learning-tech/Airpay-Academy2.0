@@ -771,6 +771,38 @@ final class runner {
         if ($collisions) {
             $pf->block('preserve_collision:' . $step->key() . ':' . $collisions . ' ids=' . implode(',', $first));
         }
+        $this->preflight_target_children($pf, $step);
+    }
+
+    /**
+     * Rows in a child table that name a legacy id the target does not hold yet (step::target_children()).
+     *
+     * Read-only, counts only: a blocker carries the child table and a number, never a row.
+     *
+     * @param preflight $pf
+     * @param step $step A PRESERVE step.
+     * @return void
+     */
+    private function preflight_target_children(preflight $pf, step $step): void {
+        global $DB;
+        $source = $step->physical_table();
+        $target = $step->targettable();
+        foreach ($step->target_children() as [$child, $column]) {
+            fingerprint::assert_identifier($child);
+            fingerprint::assert_identifier($column);
+            $manager = $DB->get_manager();
+            if (!$manager->table_exists($child) || !$manager->field_exists($child, $column)) {
+                continue;
+            }
+            $count = (int) $DB->count_records_sql(
+                'SELECT COUNT(1) FROM {' . $child . '} c
+                  WHERE EXISTS (SELECT 1 FROM {' . $source . '} s WHERE s.id = c.' . $column . ')
+                    AND NOT EXISTS (SELECT 1 FROM {' . $target . '} p WHERE p.id = c.' . $column . ')');
+            if ($count > 0) {
+                $pf->count('leftover_rows:' . $child, $count);
+                $pf->block('leftover_rows_at_legacy_ids:' . $step->key() . ':' . $child . ':' . $count);
+            }
+        }
     }
 
     // Run bookkeeping.

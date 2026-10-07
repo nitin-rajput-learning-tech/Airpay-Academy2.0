@@ -120,6 +120,20 @@ final class bizlms_registry_test extends \advanced_testcase {
         $this->assertContains('preserve_step_without_external_refs:toy.org', $this->problems([new toy_importer()]));
     }
 
+    public function test_a_map_step_may_not_declare_target_children(): void {
+        // A MAP step takes new ids, so no child can already name one of its legacy ids.
+        toy_importer::$mapchildren = true;
+        $this->assertContains('map_step_declares_target_children:toy.item', $this->problems([new toy_importer()]));
+    }
+
+    public function test_target_children_must_be_plain_table_and_column_names(): void {
+        toy_importer::$badchildren = true;
+        $this->assertContains('target_children_malformed:toy.org', $this->problems([new toy_importer()]));
+        toy_importer::reset();
+        toy_importer::$orgchildren = true;
+        $this->assertSame([], $this->problems([new toy_importer()]), 'a PRESERVE step may declare them');
+    }
+
     public function test_a_legacy_table_cannot_be_a_target(): void {
         toy_importer::$legacytarget = true;
         $this->assertContains('target_is_read_only:toy:local_costcenter', $this->problems([new toy_importer()]));

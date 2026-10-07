@@ -92,6 +92,22 @@ final class form_step extends step {
     }
 
     /**
+     * The tables that name a form by its id. Forms keep their BizLMS ids, so a row left in one of them under the id of
+     * a legacy form that has no Sentientia form yet (a rehearsal, or the old delete(), which left assignment and
+     * trigger rows behind) would attach to the imported form: stale rows would show as BizLMS history, and an
+     * assignment for the same person would collide with the unique key (evaluationid, userid, trigger_event,
+     * source_id) and roll the whole feature back. The framework counts them in preflight and blocks.
+     *
+     * @return array<array{0: string, 1: string}>
+     */
+    public function target_children(): array {
+        return [
+            [importer::T_QUESTIONS, 'evaluationid'], [importer::T_RESPONSES, 'evaluationid'],
+            [importer::T_ASSIGN, 'evaluationid'], [importer::T_TRIGGERS, 'evaluationid'],
+        ];
+    }
+
+    /**
      * No script ever copied a form header, so nothing at a legacy id is an adoptable copy: an occupied id is a
      * collision and blocks the feature. (An empty signature adopts nothing.)
      *

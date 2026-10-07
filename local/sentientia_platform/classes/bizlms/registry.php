@@ -578,6 +578,23 @@ final class registry {
         if ($step->idpolicy() === idpolicy::PRESERVE && !$refs) {
             $problems[] = "preserve_step_without_external_refs:{$key}";
         }
+        $children = $step->target_children();
+        if ($step->idpolicy() === idpolicy::MAP && $children) {
+            // A MAP step takes new ids, so no child can already name one of its legacy ids.
+            $problems[] = "map_step_declares_target_children:{$key}";
+        }
+        foreach ($children as $child) {
+            try {
+                if (!is_array($child) || count($child) !== 2 || !is_string($child[0] ?? null) || !is_string($child[1] ?? null)) {
+                    throw new \coding_exception('target_children entry is not [table, column]');
+                }
+                fingerprint::assert_identifier($child[0]);
+                fingerprint::assert_identifier($child[1]);
+            } catch (\coding_exception $e) {
+                $problems[] = "target_children_malformed:{$key}";
+                break;
+            }
+        }
         if ($step->is_derived() && !$step->group_by()) {
             $problems[] = "derived_source_without_group_by:{$key}";
         }

@@ -85,7 +85,7 @@ final class importer implements framework_importer {
     public const T_TEMPLATES = 'local_sentientia_evaluation_template';
     public const T_ASSIGN = 'local_sentientia_evaluation_assign';
 
-    /** The trigger queue. The import never writes it; preflight reads it for rows left at a legacy form id. */
+    /** The trigger queue. The import never writes it; the leftover-rows preflight (form_step::target_children()) reads it. */
     public const T_TRIGGERS = 'local_sentientia_evaluation_triggers';
 
     /** The classroom feature's target table, whose rows carry the path a trainer feedback form is scoped by. */
@@ -358,16 +358,10 @@ final class importer implements framework_importer {
             }
         }
 
-        // Rows already sitting under the id of a form this import is about to bring in. Forms keep their BizLMS ids
-        // (PRESERVE), so anything in the child tables whose evaluationid is a legacy form id, with no form of that id
-        // yet, would attach to the imported form: stale rows would show as BizLMS history, and an assignment for the
-        // same person would collide with the unique key (evaluationid, userid, trigger_event, source_id) and roll the
-        // whole feature back. delete() used to leave assignment and trigger rows behind, so a rehearsal target can hold
-        // them. An id that is occupied by a form is the framework's collision blocker, not this one.
-        foreach ($this->rows_left_at_legacy_form_ids($ctx) as $table => $count) {
-            $pf->count('leftover_rows:' . $table, $count);
-            $pf->block('leftover_rows_at_legacy_form_ids:' . $table . ':' . $count);
-        }
+        // Rows already sitting under the id of a form this import is about to bring in are the framework's check
+        // (form_step::target_children(), blocker leftover_rows_at_legacy_ids): forms keep their BizLMS ids (PRESERVE),
+        // so a stale row in a child table would attach to the imported form, and an assignment for the same person
+        // would collide with the unique key and roll the whole feature back.
 
         // The framework's tenant check reads EVERY row of the form table after the load, native ones too. A native
         // form whose path is not a valid tenant path would fail that check after all the work; say so now.
@@ -448,33 +442,6 @@ final class importer implements framework_importer {
             $verdicts[$id] = $completed !== null && $form !== null && (int) ($form->deleted ?? 0) !== 1
                 && $facts->import_problem($ctx, $completed, $form)[0] === null;
         }
-    }
-
-    /**
-     * How many rows each child table holds for a legacy form id that has no Sentientia form yet.
-     *
-     * Read-only; counts only (the blocker carries a table name and a number, never a row).
-     *
-     * @param context $ctx
-     * @return array<string, int> Table => rows, only the tables that hold any.
-     */
-    private function rows_left_at_legacy_form_ids(context $ctx): array {
-        if (!$ctx->legacy->exists(self::SRC_FORMS) || !$ctx->legacy->exists(self::T_FORMS)) {
-            return [];
-        }
-        $condition = 'EXISTS (SELECT 1 FROM {' . self::SRC_FORMS . '} f WHERE f.id = t.evaluationid)'
-            . ' AND NOT EXISTS (SELECT 1 FROM {' . self::T_FORMS . '} e WHERE e.id = t.evaluationid)';
-        $found = [];
-        foreach ([self::T_QUESTIONS, self::T_RESPONSES, self::T_ASSIGN, self::T_TRIGGERS] as $table) {
-            if (!$ctx->legacy->exists($table)) {
-                continue;
-            }
-            $count = $ctx->legacy->count($table, [$condition, []]);
-            if ($count > 0) {
-                $found[$table] = $count;
-            }
-        }
-        return $found;
     }
 
     /**

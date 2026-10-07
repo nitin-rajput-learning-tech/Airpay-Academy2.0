@@ -63,6 +63,23 @@ abstract class step {
     }
 
     /**
+     * Sentientia tables that name this PRESERVE step's target rows by id, and the column that holds the id
+     * (opt-in; evaluation item 7). Forbidden on a MAP step.
+     *
+     * PRESERVE keeps the legacy id, so a row already sitting in a child table under an id the legacy source holds, and
+     * that the target does not hold yet (left by a rehearsal, or by an old delete that never cleared its children),
+     * would attach to the parent the import is about to create: it would show as imported history, or collide with a
+     * unique key and roll the whole feature back. Preflight counts those rows and blocks, naming the child table and
+     * the count only (leftover_rows_at_legacy_ids:<step>:<table>:<n>). An id the target already holds is the
+     * collision check's business, not this one.
+     *
+     * @return array<array{0: string, 1: string}> [child table, column holding the parent id]
+     */
+    public function target_children(): array {
+        return [];
+    }
+
+    /**
      * Columns that identify an adoptable header copy: a target row at the legacy
      * id is adopted only when every listed column equals the source.
      *

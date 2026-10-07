@@ -1408,8 +1408,9 @@ final class bizlms_import_test extends \advanced_testcase {
         [$result] = $this->contract_run(true);
         $this->assertSame(1, $result['exit']);
         $blockers = implode(' ', $result['blockers']);
-        $this->assertStringContainsString('leftover_rows_at_legacy_form_ids:' . importer::T_ASSIGN . ':2', $blockers);
-        $this->assertStringContainsString('leftover_rows_at_legacy_form_ids:' . importer::T_TRIGGERS . ':1', $blockers);
+        // The framework's check (form_step::target_children(), item 7): the step, the table and the count, never a row.
+        $this->assertStringContainsString('leftover_rows_at_legacy_ids:evaluation.forms:' . importer::T_ASSIGN . ':2', $blockers);
+        $this->assertStringContainsString('leftover_rows_at_legacy_ids:evaluation.forms:' . importer::T_TRIGGERS . ':1', $blockers);
         $this->assertStringNotContainsString(importer::T_RESPONSES, $blockers, 'a table with no stray row is not named');
         $this->assertSame(0, $DB->count_records(importer::T_FORMS), 'nothing is written while a blocker stands');
         $this->assertSame(3, $DB->count_records(importer::T_ASSIGN), 'and the stray rows are not touched');

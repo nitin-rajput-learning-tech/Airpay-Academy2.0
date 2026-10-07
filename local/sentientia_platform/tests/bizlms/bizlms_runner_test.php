@@ -302,6 +302,53 @@ final class bizlms_runner_test extends \advanced_testcase {
         $this->assertSame(0, $bare['exit']);
     }
 
+    /**
+     * A row of a child table that names an id the legacy source holds, and the target does not hold yet, would attach to
+     * the parent the import is about to create (PRESERVE keeps the id). Opt-in per step; counts only.
+     *
+     * @return \stdClass A stray toy item row, as a row of the child table.
+     */
+    private function stray_item(int $orgid): \stdClass {
+        return (object) ['orgid' => $orgid, 'userid' => 1, 'title' => 'stray', 'kind' => 'a', 'tenantpath' => null,
+            'timecreated' => 1, 'timemodified' => 1];
+    }
+
+    public function test_rows_left_in_a_child_table_at_a_legacy_id_block_the_feature(): void {
+        global $DB;
+        $this->begin();
+        toy_importer::$orgchildren = true;
+        $this->seed_toy_data();
+        $DB->insert_record('local_sentientia_toy_item', $this->stray_item(2));
+        $DB->insert_record('local_sentientia_toy_item', $this->stray_item(2));
+        $DB->insert_record('local_sentientia_toy_item', $this->stray_item(999));   // not a legacy org: not this check's
+
+        [$result, $report] = $this->execute();
+        $this->assertSame(1, $result['exit']);
+        $this->assertSame('blocked', $result['status']);
+        $blockers = implode(' ', $result['blockers']);
+        $this->assertStringContainsString('leftover_rows_at_legacy_ids:toy.org:local_sentientia_toy_item:2', $blockers,
+            'the step, the child table and the count');
+        $this->assertSame(0, $DB->count_records('local_sentientia_legacymap'), 'nothing was written');
+        $this->assertSame(3, $DB->count_records('local_sentientia_toy_item'), 'and the stray rows were not touched');
+        $this->assertSame(2, $report->to_array()['features']['toy']['preflight']['counts']['leftover_rows:local_sentientia_toy_item']);
+    }
+
+    public function test_the_child_table_check_is_opt_in_and_ignores_an_id_the_target_already_holds(): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+        $DB->insert_record('local_sentientia_toy_item', $this->stray_item(2));
+        // The step declares no children: the same row blocks nothing.
+        [$result] = $this->execute();
+        $this->assertStringNotContainsString('leftover_rows_at_legacy_ids', implode(' ', $result['blockers']));
+        $this->assertNotSame(1, $result['exit']);
+
+        // After the import the target holds org 2, so a child row that names it is no leftover.
+        toy_importer::$orgchildren = true;
+        [$again] = $this->execute();
+        $this->assertSame([], $again['blockers']);
+    }
+
     public function test_unknown_enum_value_blocks_until_the_decisions_file_maps_it(): void {
         global $DB;
         $this->begin();
