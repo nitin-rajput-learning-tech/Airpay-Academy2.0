@@ -960,6 +960,54 @@ final class bizlms_import_test extends \advanced_testcase {
             implode(' ', $importer->verify($ctx)));
     }
 
+    public function test_verify_does_not_blame_the_import_for_what_happened_after_go_live(): void {
+        global $DB;
+        $importer = $this->contract_begin();
+        $this->contract_seed();
+        [$result] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        $ctx = context::build($importer, false, 0, $this->contract_decisions());
+        $this->assertSame([], $importer->verify($ctx));
+
+        // Record 1 is a live requester's pending request for course c1, routed to the supervisor.
+        $records = 'local_request_records';
+        $row = $this->imported($records, 1);
+        $this->assertNotNull($row->approver_userid, 'an actionable row: a person decides it');
+        $later = (int) $this->map($records, 1)->timecreated + 3600;
+        $failure = 'pending_rows_with_an_approver_whose_requester_or_item_is_gone';
+
+        // The requester is suspended, then deleted, AFTER the import (Moodle stamps timemodified when it does that).
+        $requester = (int) $row->userid;
+        $DB->set_field('user', 'suspended', 1, ['id' => $requester]);
+        $DB->set_field('user', 'timemodified', $later, ['id' => $requester]);
+        $this->assertSame([], $importer->verify($ctx), 'a requester suspended after the import is not an import defect');
+        $DB->set_field('user', 'deleted', 1, ['id' => $requester]);
+        $this->assertSame([], $importer->verify($ctx), 'nor one deleted after it');
+
+        // The same account, already suspended when the row was imported, is a defect: the importer must not route it.
+        $DB->set_field('user', 'timemodified', (int) $this->map($records, 1)->timecreated - 60, ['id' => $requester]);
+        $this->assertStringContainsString($failure, implode(' ', $importer->verify($ctx)));
+        $DB->set_field('user', 'timemodified', $later, ['id' => $requester]);
+        $this->assertSame([], $importer->verify($ctx));
+
+        // The course is deleted after the import: the row is not an import defect while a course_deleted event says so.
+        $course = (int) $row->courseid;
+        $DB->delete_records('course', ['id' => $course]);
+        $this->assertStringContainsString($failure, implode(' ', $importer->verify($ctx)),
+            'a course that is missing with no deletion event after the import is what the import saw');
+        $logid = (int) $DB->insert_record('logstore_standard_log', (object) [
+            'eventname' => '\\core\\event\\course_deleted', 'component' => 'core', 'action' => 'deleted', 'target' => 'course',
+            'objecttable' => 'course', 'objectid' => $course, 'crud' => 'd', 'edulevel' => 1,
+            'contextid' => \context_system::instance()->id, 'contextlevel' => CONTEXT_COURSE, 'contextinstanceid' => $course,
+            'userid' => 2, 'courseid' => $course, 'relateduserid' => null, 'anonymous' => 0, 'other' => 'N;',
+            'timecreated' => $later, 'origin' => 'cli', 'ip' => null, 'realuserid' => null,
+        ]);
+        $this->assertSame([], $importer->verify($ctx), 'a course deleted after the import is not an import defect');
+        // A deletion event from before the import does not excuse it.
+        $DB->set_field('logstore_standard_log', 'timecreated', (int) $this->map($records, 1)->timecreated - 60, ['id' => $logid]);
+        $this->assertStringContainsString($failure, implode(' ', $importer->verify($ctx)));
+    }
+
     public function test_the_owner_may_keep_stale_pending_requests_actionable(): void {
         $this->overrides = ['request.pending_stale' => 'actionable'];
         $importer = $this->contract_begin();

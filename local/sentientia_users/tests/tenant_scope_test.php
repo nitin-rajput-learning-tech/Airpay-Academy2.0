@@ -736,6 +736,18 @@ final class tenant_scope_test extends \advanced_testcase {
         $this->assertTrue(sync_access::in_callers_tenant($runb));
     }
 
+    public function test_the_run_list_and_the_detail_page_decide_a_callers_tenant_the_same_way(): void {
+        $run = $this->sync_run($this->root_of($this->orga), 'web', 0);
+        // A well-formed path, one with stray spaces, one that does not start with a number, none, and a zero root.
+        $paths = [$this->orga->path, ' ' . trim($this->orga->path, '/') . '/ ', 'x' . $this->orga->path, '', '/0', '0/5'];
+        foreach ($paths as $path) {
+            $this->setUser($this->user_at($path));
+            $listed = in_array((int) $run->id, $this->listed_run_ids(), true);
+            $this->assertSame($listed, sync_access::in_callers_tenant($run),
+                "the list and the detail page disagree for open_path '{$path}'");
+        }
+    }
+
     public function test_the_run_list_is_tenant_wide_and_leaves_out_imported_runs_until_the_flag_is_on(): void {
         $roota = $this->root_of($this->orga);
         $rootb = $this->root_of($this->orgb);

@@ -305,22 +305,39 @@ final class importer implements \local_sentientia_platform\bizlms\importer {
         }
 
         // COMMS-R1: a pending request whose requester has left, or whose item is gone, has no approver: approving it
-        // would enrol and message an account that has left, or point at nothing. "Gone" is what the import saw: a
-        // course that is not there, or a path with no entry in the learning-plan map.
+        // would enrol and message an account that has left, or point at nothing. "Gone" is what the IMPORT saw, never
+        // what happened to the world afterwards: once the site is live a requester is suspended or deleted and a course
+        // is deleted in the ordinary way, and a later verify (the parity check, a re-run) must not call that an import
+        // defect (the same class as F-77). So:
+        //  - a requester counts only when already deleted or suspended when the row was imported: Moodle stamps
+        //    user.timemodified when it suspends or deletes an account, so a stamp after the row's map row was written
+        //    is a later change;
+        //  - a course counts only when it is missing and no course_deleted event after the import names it;
+        //  - a path, classroom or program that was gone at the import has itemid 0 (COMMS-R2), which is permanent: a
+        //    path with no entry in the learning-plan map.
         if ((string) $ctx->decision('request.pending_stale') === 'history_only') {
             $n = (int) $DB->count_records_sql(
                 "SELECT COUNT(1)
                    FROM {" . $table . "} r
+              LEFT JOIN {local_sentientia_legacymap} pm
+                     ON pm.targettable = :tt AND pm.targetid = r.id AND pm.subkey = :nosub0 AND pm.outcome = :imported
               LEFT JOIN {user} u ON u.id = r.userid
                   WHERE r.legacy_source = :ls AND r.status = 'pending' AND r.approver_userid IS NOT NULL
-                    AND (u.id IS NULL OR u.deleted = 1 OR u.suspended = 1
+                    AND (u.id IS NULL
+                         OR ((u.deleted = 1 OR u.suspended = 1) AND u.timemodified <= COALESCE(pm.timecreated, 2147483647))
                          OR (r.item_type = 'course'
-                             AND NOT EXISTS (SELECT 1 FROM {course} c WHERE c.id = r.courseid))
+                             AND NOT EXISTS (SELECT 1 FROM {course} c WHERE c.id = r.courseid)
+                             AND NOT EXISTS (SELECT 1 FROM {logstore_standard_log} lg
+                                              WHERE lg.eventname = :coursedeleted AND lg.objectid = r.courseid
+                                                AND lg.timecreated > COALESCE(pm.timecreated, 0)))
                          OR (r.item_type = 'path'
                              AND NOT EXISTS (SELECT 1 FROM {local_sentientia_legacymap} m
                                               WHERE m.sourcetable = :plansource AND m.sourceid = r.itemid
                                                 AND m.subkey = :nosub AND m.targetid IS NOT NULL)))",
-                $mark + ['plansource' => legacy_request::ITEM_SOURCES['path'], 'nosub' => '']);
+                $mark + [
+                    'tt' => $table, 'nosub0' => '', 'imported' => 'imported', 'coursedeleted' => '\\core\\event\\course_deleted',
+                    'plansource' => legacy_request::ITEM_SOURCES['path'], 'nosub' => '',
+                ]);
             if ($n) {
                 $failures[] = 'pending_rows_with_an_approver_whose_requester_or_item_is_gone:' . $n;
             }

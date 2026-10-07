@@ -73,12 +73,11 @@ final class sync_access {
      * @return bool
      */
     public static function in_callers_tenant(\stdClass $run): bool {
-        global $USER;
         if (\local_sentientia_platform\tenant::is_cross_tenant()) {
             return true;
         }
-        $parts = explode('/', trim((string) ($USER->open_path ?? ''), '/'));
-        $tenant = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
+        // The same helper as runs_where(), so the list and the detail page cannot disagree about whose tenant this is.
+        $tenant = \local_sentientia_platform\tenant::root_for_current_user();
         return $tenant !== 0 && (int) $run->costcenterid === $tenant;
     }
 
