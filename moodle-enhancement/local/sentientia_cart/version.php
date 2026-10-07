@@ -8,7 +8,8 @@ $plugin->component = 'local_sentientia_cart';
 // P1 #57 (2026-05-20) — Hindi pack: 117 strings covering cart UI, checkout,
 // order history, admin orders, pricing, settings (gateway/tax/email/IP),
 // notifications, errors, privacy metadata.
-$plugin->version   = 2026100701;  // owner decisions 2026-10-07: finance keys declared by the importer, withheld-line refund amounts, order notifications built in the recipient's own language (en + hi strings); no schema/cap change
+// 2026100801: Moodle 5.3 compat FX-06: admin_orders (Refund dialog) uses core/modal_save_cancel, the Save button exists again; amd build refreshed. No schema change.
+$plugin->version   = 2026100801;  // (2026100801: FX-06 amd refresh only; 2026100701 was) owner decisions 2026-10-07: finance keys declared by the importer, withheld-line refund amounts, order notifications built in the recipient's own language (en + hi strings); no schema/cap change
 // 2026100101: ADR-032: BizLMS cart importer (orders, ledger, invoices, credits), history.legacy_source, local_sentientia_cart_credit_txn, imported-history readers behind two default-OFF flags
 // 2026093002: D1 review round 1: add_item prices via cart_manager (no lib.php dependency); back-fill also covers $CFG->defaultuserroleid
 // 2026093001: D1 (persona pass 2026-09-30): upgrade back-fills :purchase onto the authenticated-user role
