@@ -162,7 +162,8 @@ final class bizlms_import_test extends \advanced_testcase {
      *    15 password placeholder in a non-users template               16 body with a secret inline
      *    17 notification type whose shortname exceeds the target column
      *  local_email_logs  4 rows. 1 and 4 import... 1 sent, 2 never sent, 3 unknown recipient (skipped),
-     *    4 account credentials (masked). So 3 import and 1 is skipped.
+     *    4 account credentials (masked). So 3 import and 1 is skipped. None points at a template (notification_infoid 0),
+     *    so none can be resolved: every body is withheld (COMMS-N1).
      *
      * @return void
      */
@@ -521,11 +522,14 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertSame(self::T0 + 190, (int) $r->timecreated);
         $this->assertSame(self::T0 + 200, (int) $r->timesent);
         $this->assertSame($this->ids['course'], (int) $r->courseid);
+        $this->assertSame('ILT reminder', $r->subject, 'a subject that names no secret or account word is kept');
+        $this->assertNull($r->body_html, 'no template reference: what the message was cannot be known (COMMS-N1)');
         $r = $this->row('local_email_logs', 2);
         $this->assertSame('not_sent', $r->status);
         $this->assertSame(self::T0 + 210, (int) $r->timecreated);
         $this->assertNull($r->courseid, 'courseid -1 is a custom mail');
         $this->assertSame('Custom email', $r->subject);
+        $this->assertNull($r->body_html, 'a custom mail has no template either: its body is withheld');
         $r = $this->row('local_email_logs', 4);
         $this->assertSame(redactor::SUBJECT_MASK, $r->subject);
         $this->assertNull($r->body_html);
@@ -542,8 +546,8 @@ final class bizlms_import_test extends \advanced_testcase {
         // The report: the warnings are codes, and the tenant methods say how each tenant was decided.
         $warnings = $this->tally($report, 'warnings');
         $this->assertSame(1, $warnings['credentials_withheld:users_module'] ?? 0, 'local_emaillogs#2');
-        $this->assertSame(2, $warnings['credentials_withheld:unresolved_template'] ?? 0,
-            'local_emaillogs#5 and local_email_logs#4');
+        $this->assertSame(4, $warnings['credentials_withheld:unresolved_template'] ?? 0,
+            'local_emaillogs#5 and local_email_logs#1, #2 and #4: none of them can be resolved to a template');
         $this->assertSame(1, $warnings['credentials_withheld:template_placeholder'] ?? 0);
         $this->assertSame(1, $warnings['credential_text_scrubbed'] ?? 0);
         $this->assertSame(1, $warnings['truncated:legacy_type'] ?? 0);
@@ -938,8 +942,13 @@ final class bizlms_import_test extends \advanced_testcase {
             'sent_date' => $t + 910]);
         $this->add_mail(92, $a, 995, 1, ['subject' => 'Your OTP', 'emailbody' => '<p>482913</p>', 'sent_date' => $t + 920]);
         $this->add_mail(93, $a, 9, 1, ['subject' => 'Safety reminder', 'emailbody' => '<p>Pw: Qq1</p>', 'sent_date' => $t + 930]);
-        // A custom mail never had a template, so nothing about it is "gone": it keeps its body (scrubbed).
+        // A custom mail has no template reference (notification_infoid 0), so no template to resolve and no type to read:
+        // COMMS-N1 withholds the body of every row whose template cannot be resolved, this one included.
         $this->add_mail(94, $a, 0, 1, ['subject' => 'Hello', 'emailbody' => '<p>Custom text</p>', 'sent_date' => $t + 940]);
+        // The same for a reference that is NULL (the column is optional in local_email_logs, and old rows had no value).
+        $this->legacy_row('local_email_logs', ['id' => 10, 'notification_infoid' => null, 'from_userid' => $this->ids['sender'],
+            'to_userid' => $a, 'subject' => 'Your pin', 'body_html' => '<p>Pin 4821</p>', 'sent_date' => $t + 950,
+            'created_date' => $t + 950, 'time_created' => 0, 'courseid' => 0]);
 
         [$result, $report] = $this->contract_run(true);
         $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
@@ -958,11 +967,15 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertSame('Safety reminder', $r->subject);
         $this->assertNull($r->body_html, 'the template is there but its notification type is gone');
         $r = $this->row('local_emaillogs', 94);
-        $this->assertSame('Hello', $r->subject);
-        $this->assertSame('<p>Custom text</p>', $r->body_html, 'a row that never pointed at a template keeps its body');
+        $this->assertSame('Hello', $r->subject, 'the subject names no secret or account word');
+        $this->assertNull($r->body_html, 'a row that never pointed at a template loses its body too (COMMS-N1, option C)');
+        $this->assertNull($r->legacy_type);
+        $r = $this->row('local_email_logs', 10);
+        $this->assertSame(redactor::SUBJECT_MASK, $r->subject, 'a NULL reference is unresolved, and the subject names a secret word');
+        $this->assertNull($r->body_html);
 
-        // Seed row 5 and local_email_logs#4 were already unresolved; 90 to 93 are four more.
-        $this->assertSame(6, $this->tally($report, 'warnings')['credentials_withheld:unresolved_template'] ?? 0);
+        // Seed row 5 and local_email_logs#1, #2 and #4 were already unresolved; 90 to 94 and local_email_logs#10 are six more.
+        $this->assertSame(10, $this->tally($report, 'warnings')['credentials_withheld:unresolved_template'] ?? 0);
         foreach ($DB->get_records(self::TARGET) as $row) {
             $text = implode("\n", [$row->subject, (string) $row->body_html]);
             $this->assertStringNotContainsString('Zx81!qpL', $text);
@@ -1204,6 +1217,8 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->add_mail(91, $a, 996, 1, ['subject' => 'Course reminder', 'emailbody' => '<p>See you in class</p>',
             'sent_date' => $t + 910]);
         $this->add_mail(92, $a, 995, 1, ['subject' => 'Your OTP', 'emailbody' => '<p>482913</p>', 'sent_date' => $t + 920]);
+        // No template reference at all, and a secret word in the body: it is an unresolved row too (COMMS-N1).
+        $this->add_mail(93, $a, 0, 1, ['subject' => 'Hello', 'emailbody' => '<p>Your pin is 4821</p>', 'sent_date' => $t + 930]);
         // Five deleted recipients that share one timemodified: something rewrote their rows.
         foreach ([130, 131, 132, 133, 134] as $id) {
             $this->add_mail($id, $this->deleted_user($t + 777, 0), 1, 1, ['sent_date' => $t + 1200]);
@@ -1215,8 +1230,10 @@ final class bizlms_import_test extends \advanced_testcase {
         $pf = $runner->preflight(['notifications'])['preflights']['notifications'];
         $this->assertFalse($pf->has_blockers(), implode('; ', $pf->blockers()));
         $warnings = $pf->warnings();
-        // Seed row 5 (template 999 gone, body names a password), 90 and 92; 91 names nothing.
-        $this->assertContains('unresolved_template_rows_naming_a_secret_word:local_emaillogs:3', $warnings);
+        // Seed row 5 (template 999 gone, body names a password), 90, 92 and 93 (no template reference); 91 names nothing.
+        $this->assertContains('unresolved_template_rows_naming_a_secret_word:local_emaillogs:4', $warnings);
+        // local_email_logs has no template reference in the seed, and #4 names credentials; #1, #2 and #3 name nothing.
+        $this->assertContains('unresolved_template_rows_naming_a_secret_word:local_email_logs:1', $warnings);
         $this->assertContains('manager_copies:local_emaillogs:5', $warnings, 'rows 7, 80, 81, 82 and 84');
         // Deleted recipients with a delivered row: the seed's user d, the five and the late one.
         $this->assertContains('many_deleted_recipients_share_one_timemodified:local_emaillogs:5of7', $warnings);

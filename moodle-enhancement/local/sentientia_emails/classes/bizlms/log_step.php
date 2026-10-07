@@ -40,8 +40,9 @@ use local_sentientia_platform\bizlms\tenant_resolver;
  *    then 0. The template path never comes first: BizLMS matched templates with an
  *    unbounded LIKE, and it never replaces a path that is there but does not parse.
  *  - credentials: see redactor. A credential row keeps its recipient, type, status
- *    and timestamps and loses its subject and body. A row whose template or type is gone loses its body whatever
- *    it says (COMMS-N1); its subject is masked only when it names a secret or account word.
+ *    and timestamps and loses its subject and body. A row whose template or type cannot be resolved (gone, or never
+ *    referenced: notification_infoid 0 or NULL) loses its body whatever it says (COMMS-N1); its subject is masked only
+ *    when it names a secret or account word.
  *  - a copy BizLMS sent to a manager (teammemberid > 0) keeps its recipient, type, status and timestamps and
  *    loses its body, and the team member's name leaves the subject (COMMS-N2, decision
  *    notifications.team_member_copy_body = withhold).
@@ -278,7 +279,8 @@ abstract class log_step extends step {
      *
      * @param array $c The candidate.
      * @param array|null $template Facts about its template, null when the template is gone.
-     * @return string|null users_module, template_placeholder, row_placeholder or unresolved_template.
+     * @return string|null users_module, template_placeholder, row_placeholder or unresolved_template (the template or its
+     *         type cannot be resolved, a row with no template reference included).
      */
     private function credential_reason(array $c, ?array $template): ?string {
         if ($template !== null) {
@@ -301,12 +303,12 @@ abstract class log_step extends step {
         }
         // BizLMS hard-deletes templates, so a row that points at a template or a type that is gone can have been the
         // welcome message with the plaintext password. Nothing proves it was not: the whole row is treated as one
-        // (decision COMMS-N1, option C). A row that never pointed at a template (an ILT reminder or a custom mail)
-        // has nothing to be "gone", and keeps the earlier rule: only a subject that reads like an account message.
-        if ($c['infoid'] > 0 && ($template === null || $template['pluginname'] === null)) {
-            return 'unresolved_template';
-        }
-        if ($template === null && redactor::subject_suggests_credentials($c['subject'])) {
+        // (decision COMMS-N1, option C: "when $template === null or $template['pluginname'] === null"). That covers a
+        // row that never pointed at a template too (notification_infoid 0 or NULL: a custom mail, an ILT reminder, every
+        // local_email_logs row whose reference is optional): with no template to read its type from, what the message
+        // was cannot be known either, and an unscrubbed body would be copied into body_html, email_detail.php and the
+        // DPDP export. The legacy table keeps every withheld body (ADR-032 decision 2).
+        if ($template === null || $template['pluginname'] === null) {
             return 'unresolved_template';
         }
         return null;
@@ -587,12 +589,8 @@ abstract class log_step extends step {
      */
     private function root_is_registered(int $root): bool {
         if (!isset($this->roots[$root])) {
-            try {
-                \local_sentientia_platform\tenant::assert_valid($root);
-                $this->roots[$root] = true;
-            } catch (\Throwable $e) {
-                $this->roots[$root] = false;
-            }
+            // One answer for every importer (F-11): tenant_resolver asks the tenant registry.
+            $this->roots[$root] = tenant_resolver::root_is_registered($root);
         }
         return $this->roots[$root];
     }

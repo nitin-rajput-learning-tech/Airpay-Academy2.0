@@ -257,11 +257,14 @@ final class importer implements \local_sentientia_platform\bizlms\importer {
         }
 
         if ($legacy->exists('local_emaillogs')) {
-            $this->preflight_unresolved_secret_rows($pf, $legacy);
+            $this->preflight_unresolved_secret_rows($pf, $legacy, 'local_emaillogs', 'emailbody');
             $this->preflight_deleted_recipient_stamps($pf, $legacy);
             $this->preflight_manager_copies($pf, $legacy);
         }
 
+        if ($legacy->exists('local_email_logs')) {
+            $this->preflight_unresolved_secret_rows($pf, $legacy, 'local_email_logs', 'body_html');
+        }
         if ($legacy->exists('local_email_logs') && $legacy->has_column('local_email_logs', 'to_userid')) {
             $this->warn_count($pf, 'orphan_recipients:local_email_logs', (int) $DB->count_records_sql(
                 'SELECT COUNT(1) FROM {local_email_logs} t LEFT JOIN {user} u ON u.id = t.to_userid WHERE u.id IS NULL'));
@@ -414,20 +417,25 @@ final class importer implements \local_sentientia_platform\bizlms\importer {
     }
 
     /**
-     * Rows whose template or notification type is gone and whose text names a secret word (COMMS-N1).
+     * Rows whose template or notification type cannot be resolved and whose text names a secret word (COMMS-N1).
      *
-     * Their body is withheld whatever it says. The count is an upper bound of the messages that would have copied a
-     * credential into the second table had the rule not been there (the LIKE also matches "spin" and "option"): the
-     * number to read on the live backup, where a deleted welcome template is the case that matters.
+     * Their body is withheld whatever it says. Rows with no template reference at all (notification_infoid 0 or NULL: a
+     * custom mail, an ILT reminder) are counted too: they are rows whose template cannot be resolved, and the rule
+     * withholds their body as well (log_step::credential_reason()). The count is an upper bound of the messages that
+     * would have copied a credential into the second table had the rule not been there (the LIKE also matches "spin"
+     * and "option"): the number to read on the live backup, where a deleted welcome template is the case that matters.
      *
      * @param preflight $pf
      * @param legacy_reader $legacy
+     * @param string $table local_emaillogs or local_email_logs.
+     * @param string $bodycolumn The column that holds the body in that table.
      * @return void
      */
-    private function preflight_unresolved_secret_rows(preflight $pf, legacy_reader $legacy): void {
+    private function preflight_unresolved_secret_rows(preflight $pf, legacy_reader $legacy, string $table,
+            string $bodycolumn): void {
         global $DB;
-        foreach (['notification_infoid', 'subject', 'emailbody'] as $column) {
-            if (!$legacy->has_column('local_emaillogs', $column)) {
+        foreach (['notification_infoid', 'subject', $bodycolumn] as $column) {
+            if (!$legacy->has_column($table, $column)) {
                 return;
             }
         }
@@ -435,6 +443,7 @@ final class importer implements \local_sentientia_platform\bizlms\importer {
         $gone = '1 = 1';
         if ($legacy->exists('local_notification_info') && $legacy->has_column('local_notification_info', 'notificationid')
                 && $legacy->exists('local_notification_type')) {
+            // A reference of 0 or NULL joins no template, so ni.id is NULL: counted as unresolved, as the importer does.
             $joins = 'LEFT JOIN {local_notification_info} ni ON ni.id = t.notification_infoid '
                 . 'LEFT JOIN {local_notification_type} nt ON nt.id = ni.notificationid ';
             $gone = '(ni.id IS NULL OR nt.id IS NULL)';
@@ -444,13 +453,13 @@ final class importer implements \local_sentientia_platform\bizlms\importer {
         foreach (redactor::MENTION_LIKE as $i => $word) {
             $pattern = '%' . $DB->sql_like_escape($word) . '%';
             $likes[] = $DB->sql_like('t.subject', ':blmsub' . $i, false);
-            $likes[] = $DB->sql_like('t.emailbody', ':blmbody' . $i, false);
+            $likes[] = $DB->sql_like('t.' . $bodycolumn, ':blmbody' . $i, false);
             $params['blmsub' . $i] = $pattern;
             $params['blmbody' . $i] = $pattern;
         }
-        $this->warn_count($pf, 'unresolved_template_rows_naming_a_secret_word:local_emaillogs', (int) $DB->count_records_sql(
-            'SELECT COUNT(1) FROM {local_emaillogs} t ' . $joins
-            . 'WHERE t.notification_infoid > 0 AND ' . $gone . ' AND (' . implode(' OR ', $likes) . ')', $params));
+        $this->warn_count($pf, 'unresolved_template_rows_naming_a_secret_word:' . $table, (int) $DB->count_records_sql(
+            'SELECT COUNT(1) FROM {' . $table . '} t ' . $joins
+            . 'WHERE ' . $gone . ' AND (' . implode(' OR ', $likes) . ')', $params));
     }
 
     /**
