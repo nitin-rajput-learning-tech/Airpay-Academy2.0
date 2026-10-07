@@ -21,13 +21,15 @@ if (!$evaluation) {
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/sentientia_evaluation/questions.php', ['id' => $evaluationid]));
-$PAGE->set_title('Questions — ' . format_string($evaluation->name));
-$PAGE->set_heading(format_string($evaluation->name));
+// set_title(), set_heading() and the navbar apply format_string() themselves, so they are given the raw name
+// (format_string() here escaped it twice: "Tom & Jerry" showed as "Tom &amp; Jerry").
+$PAGE->set_title('Questions — ' . $evaluation->name);
+$PAGE->set_heading($evaluation->name);
 $PAGE->set_pagelayout('standard');
 $PAGE->set_secondary_navigation(false);
 $PAGE->navbar->add(get_string('pluginname', 'local_sentientia_evaluation'),
     new moodle_url('/local/sentientia_evaluation/index.php'));
-$PAGE->navbar->add(format_string($evaluation->name));
+$PAGE->navbar->add($evaluation->name);
 
 // Load questions.
 $questions = \local_sentientia_evaluation\evaluation_manager::get_questions($evaluationid);
@@ -97,8 +99,8 @@ $data = [
     'export_template_url' => (new moodle_url(
         '/local/sentientia_evaluation/export_template.php',
         ['id' => $evaluation->id]))->out(false),
-    'evalname'     => format_string($evaluation->name),
-    'evaldesc'     => format_string($evaluation->description ?? ''),
+    'evalname'     => \local_sentientia_evaluation\evaluation_manager::display_text($evaluation->name),
+    'evaldesc'     => \local_sentientia_evaluation\evaluation_manager::display_text($evaluation->description ?? ''),
     'status_banner_css'   => $status_banner['css'],
     'status_banner_icon'  => $status_banner['icon'],
     'status_banner_label' => $status_banner['label'],

@@ -843,4 +843,96 @@ final class analysis_test extends \advanced_testcase {
         }
         $this->assertSame(evaluation_manager::submitted_label($now - 10, true), $protected[0]['submitted_at']);
     }
+
+    /**
+     * Names and descriptions reach a template that prints them with {{ }} filtered but not escaped (the template
+     * escapes once), and the aggregate page badges a form as anonymous when it is identity-protected, not only when
+     * its flag is set today.
+     */
+    public function test_names_reach_the_templates_unescaped_and_the_badge_follows_identity_protection(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $this->assertSame('Tom & Jerry', evaluation_manager::display_text('Tom & Jerry'));
+        $this->assertSame('', evaluation_manager::display_text(null));
+        $this->assertSame('', evaluation_manager::display_text(''));
+        $this->assertSame('0', evaluation_manager::display_text('0'));
+
+        $eid = $this->seed_eval('Tom & Jerry', 2);
+        $DB->set_field('local_sentientia_evaluation', 'description', 'Fish & chips', ['id' => $eid]);
+        $header = evaluation_manager::responses_page_header(evaluation_manager::get($eid));
+        $this->assertSame('Tom & Jerry', $header['name']);
+        $this->assertSame('Fish & chips', $header['description']);
+        $this->assertSame(evaluation_manager::KIRKPATRICK_LEVELS[2], $header['kirkpatrick_label']);
+        $this->assertFalse($header['is_anonymous'], 'a named form with no anonymous answer');
+
+        // One anonymous answer in the past makes the form protected for good, whatever its flag says.
+        $q = $this->seed_question($eid, 'rating');
+        $this->seed_response($eid, 0, [$q => 5], time());
+        $this->assertFalse((bool) evaluation_manager::get($eid)->anonymous, 'the flag itself is off');
+        $this->assertTrue(evaluation_manager::responses_page_header(evaluation_manager::get($eid))['is_anonymous']);
+    }
+
+    /**
+     * The learner-facing rows: positions count 1..n (the page printed the question id + 1), text and options are not
+     * escaped twice, a number question's bounds are not offered as options to tick, and a bound of 0 is kept.
+     */
+    public function test_the_respond_rows_count_from_one_and_keep_text_options_and_bounds_straight(): void {
+        global $OUTPUT, $PAGE;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        // Another form first, so this one's question ids are not 1, 2, 3.
+        $other = $this->seed_eval('Other', 1);
+        evaluation_manager::create_question((object) [
+            'evaluationid' => $other, 'questiontype' => 'text', 'questiontext' => 'Filler', 'required' => 0,
+        ]);
+        $eid = $this->seed_eval('Respond', 1);
+        $choice = evaluation_manager::create_question((object) [
+            'evaluationid' => $eid, 'questiontype' => 'multichoice', 'questiontext' => 'Tom & Jerry?',
+            'options' => "0\nTom & Jerry\nB", 'required' => 1,
+        ]);
+        $bounded = evaluation_manager::create_question((object) [
+            'evaluationid' => $eid, 'questiontype' => 'numeric', 'questiontext' => 'Score',
+            'numeric_min' => 0, 'numeric_max' => 10, 'required' => 0,
+        ]);
+        $free = evaluation_manager::create_question((object) [
+            'evaluationid' => $eid, 'questiontype' => 'numeric', 'questiontext' => 'How many', 'required' => 0,
+        ]);
+
+        $rows = evaluation_manager::respond_question_rows(evaluation_manager::get_questions($eid));
+        $this->assertSame([1, 2, 3], array_column($rows, 'position'), 'numbered 1..n, not by question id');
+        $this->assertEquals([$choice, $bounded, $free], array_column($rows, 'id'));
+        [$c, $b, $f] = $rows;
+
+        $this->assertSame('Tom & Jerry?', $c['questiontext'], 'filtered, not escaped: the template escapes once');
+        $this->assertSame(['0', 'Tom & Jerry', 'B'], array_column($c['options'], 'label'));
+        $this->assertSame(['0', 'Tom & Jerry', 'B'], array_column($c['options'], 'value'));
+        $this->assertTrue($c['is_multichoice']);
+
+        $this->assertSame([], $b['options'], 'the bounds of a number question are not options to tick');
+        $this->assertTrue($b['has_numeric_min']);
+        $this->assertTrue($b['has_numeric_max']);
+        $this->assertSame('0', $b['numeric_min']);
+        $this->assertSame('10', $b['numeric_max']);
+        $this->assertSame('Range: 0 to 10', $b['numeric_hint']);
+        $this->assertFalse($f['has_numeric_min']);
+        $this->assertFalse($f['has_numeric_max']);
+        $this->assertSame('', $f['numeric_hint']);
+
+        $PAGE->set_url('/local/sentientia_evaluation/respond.php', ['id' => $eid]);
+        $html = $OUTPUT->render_from_template('local_sentientia_evaluation/respond', [
+            'evaluationid' => $eid, 'name' => evaluation_manager::display_text('Tom & Jerry'), 'description' => '',
+            'kirkpatrick_label' => '', 'is_anonymous' => false, 'has_questions' => true, 'questions' => $rows,
+            'already_responded' => false, 'context_courseid' => 0, 'context_programid' => 0,
+            'context_classroomid' => 0, 'backurl' => '/my/', 'window_locked' => false, 'window_notyetopen' => false,
+            'window_closed' => false, 'window_when' => '', 'is_pulse' => false,
+        ]);
+        $this->assertStringContainsString('<span class="question-position">1</span>', $html);
+        $this->assertStringContainsString('<span class="question-position">3</span>', $html);
+        $this->assertStringContainsString('min="0"', $html, 'a lower bound of 0 is kept on the input');
+        $this->assertStringContainsString('max="10"', $html);
+        $this->assertStringContainsString('<h2 class="mb-1" style="font-weight: 700;">Tom &amp; Jerry</h2>', $html);
+        $this->assertStringContainsString('<label for="q-' . $choice . '-opt-1">Tom &amp; Jerry</label>', $html);
+        $this->assertStringNotContainsString('&amp;amp;', $html, 'escaped once, not twice');
+    }
 }

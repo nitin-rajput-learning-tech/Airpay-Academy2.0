@@ -30,8 +30,10 @@ if (!$evaluation) {
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/sentientia_evaluation/responses.php', ['id' => $evaluationid]));
-$PAGE->set_title('Responses — ' . format_string($evaluation->name));
-$PAGE->set_heading('Responses — ' . format_string($evaluation->name));
+// set_title() and set_heading() apply format_string() themselves, so they are given the raw name (format_string()
+// here escaped it twice: "Tom & Jerry" showed as "Tom &amp; Jerry").
+$PAGE->set_title('Responses — ' . $evaluation->name);
+$PAGE->set_heading('Responses — ' . $evaluation->name);
 $PAGE->set_pagelayout('standard');
 $PAGE->set_secondary_navigation(false);
 $PAGE->navbar->add(get_string('pluginname', 'local_sentientia_evaluation'),
@@ -78,12 +80,10 @@ $export_url = (new moodle_url('/local/sentientia_evaluation/exportcsv.php', $exp
 $reset_url = (new moodle_url('/local/sentientia_evaluation/responses.php',
     ['id' => $evaluationid]))->out(false);
 
-$data = [
+// The heading part: name and description ready for {{ }} (escaped once, there) and the anonymous badge, which is
+// identity_protected() like the response list and the CSV - a form that once collected anonymous answers is badged too.
+$data = \local_sentientia_evaluation\evaluation_manager::responses_page_header($evaluation) + [
     'evaluationid'    => $evaluation->id,
-    'name'            => format_string($evaluation->name),
-    'description'     => format_string($evaluation->description ?? ''),
-    'is_anonymous'    => (bool) $evaluation->anonymous,
-    'kirkpatrick_label' => \local_sentientia_evaluation\evaluation_manager::KIRKPATRICK_LEVELS[(int) $evaluation->kirkpatrick_level] ?? '',
     'total_responses' => $total_responses,
     'has_responses'   => ($total_responses > 0),
     'questions'       => $question_rows,

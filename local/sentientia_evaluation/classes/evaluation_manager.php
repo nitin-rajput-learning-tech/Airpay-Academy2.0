@@ -1462,6 +1462,25 @@ class evaluation_manager {
     }
 
     /**
+     * The heading part of the aggregate responses page (responses.php).
+     *
+     * is_anonymous is identity_protected(), the rule the response list and the CSV apply, so a form that is protected
+     * because it once collected anonymous answers (or has an anonymous question) is badged as well, not only one whose
+     * flag is set today.
+     *
+     * @param \stdClass $evaluation
+     * @return array{name: string, description: string, is_anonymous: bool, kirkpatrick_label: string}
+     */
+    public static function responses_page_header(\stdClass $evaluation): array {
+        return [
+            'name'              => self::display_text($evaluation->name ?? ''),
+            'description'       => self::display_text($evaluation->description ?? ''),
+            'is_anonymous'      => self::identity_protected($evaluation),
+            'kirkpatrick_label' => self::KIRKPATRICK_LEVELS[(int) ($evaluation->kirkpatrick_level ?? 0)] ?? '',
+        ];
+    }
+
+    /**
      * May this evaluation no longer be made non-anonymous? True when it is
      * anonymous and somebody has already answered it (update() refuses the
      * change; edit_evaluation shows the reason).
@@ -2391,6 +2410,105 @@ class evaluation_manager {
             }
 
             $rows[] = $row;
+        }
+        return $rows;
+    }
+
+    /**
+     * One row per question for the learner-facing form (respond.php), in form order. Kept out of the page so it can
+     * be tested.
+     *
+     *  - position counts 1..n: get_questions() is keyed by question id, so the loop index the page used printed the
+     *    id plus one;
+     *  - questiontext and the option labels are filtered but not escaped, because the template prints them with
+     *    {{ }}, which escapes once (format_string() with its default escaped them twice: "Tom & Jerry" showed as
+     *    "Tom &amp; Jerry");
+     *  - only the two choice types have options. A number question keeps {min, max} in the same column; those are
+     *    its bounds, and used to come out of decode_options() as two options to tick;
+     *  - has_numeric_min and has_numeric_max are the template's section keys: a bound of 0 is the text "0", which
+     *    Mustache reads as false, so numeric_min itself cannot be the key (the input lost its min="0").
+     *
+     * @param \stdClass[] $questions question records (from get_questions)
+     * @return array[]
+     */
+    public static function respond_question_rows(array $questions): array {
+        // Rating scale: 1-5 with descriptive labels.
+        $rating_scale = [
+            ['value' => 1, 'label' => 'Strongly Disagree'],
+            ['value' => 2, 'label' => 'Disagree'],
+            ['value' => 3, 'label' => 'Neutral'],
+            ['value' => 4, 'label' => 'Agree'],
+            ['value' => 5, 'label' => 'Strongly Agree'],
+        ];
+        // NPS scale: 0-10.
+        $nps_scale = [];
+        for ($n = 0; $n <= 10; $n++) {
+            $nps_scale[] = ['value' => $n, 'label' => (string) $n];
+        }
+
+        $rows = [];
+        $position = 0;
+        foreach ($questions as $q) {
+            $position++;
+
+            $option_rows = [];
+            if (in_array($q->questiontype, ['multichoice', 'multichoice_multi'], true)) {
+                foreach (self::decode_options($q->options ?? null) as $idx => $opt) {
+                    $option_rows[] = [
+                        'value'   => $opt,
+                        'label'   => self::display_text((string) $opt),
+                        'inputid' => 'q-' . $q->id . '-opt-' . $idx,
+                    ];
+                }
+            }
+
+            // P1 #18 — numeric bounds (decoded only when type=numeric).
+            $num_bounds = ($q->questiontype === 'numeric')
+                ? self::decode_numeric_bounds($q->options ?? null)
+                : ['min' => null, 'max' => null];
+
+            $rows[] = [
+                'id'              => $q->id,
+                'position'        => $position,
+                'questiontext'    => self::display_text((string) $q->questiontext),
+                'questiontype'    => $q->questiontype,
+                'is_rating'       => ($q->questiontype === 'rating'),
+                'is_nps'          => ($q->questiontype === 'nps'),
+                'is_yesno'        => ($q->questiontype === 'yesno'),
+                'is_multichoice'  => ($q->questiontype === 'multichoice'),
+                // P1 #18 — both new types surface as flags + share option rows
+                // for multichoice_multi.
+                'is_multichoice_multi' => ($q->questiontype === 'multichoice_multi'),
+                'is_numeric'      => ($q->questiontype === 'numeric'),
+                'is_text'         => ($q->questiontype === 'text'),
+                'required'        => (bool) $q->required,
+                'options'         => $option_rows,
+                'rating_scale'    => $rating_scale,
+                'nps_scale'       => $nps_scale,
+                // Mustache helpers — leave empty string when unset so the
+                // template's `<input min/max>` attrs render as the constraint
+                // only when present.
+                'has_numeric_min' => $num_bounds['min'] !== null,
+                'has_numeric_max' => $num_bounds['max'] !== null,
+                'numeric_min'     => $num_bounds['min'] !== null ? (string) $num_bounds['min'] : '',
+                'numeric_max'     => $num_bounds['max'] !== null ? (string) $num_bounds['max'] : '',
+                'numeric_hint'    => $num_bounds['min'] !== null || $num_bounds['max'] !== null
+                    ? sprintf('Range: %s to %s',
+                        $num_bounds['min'] !== null ? $num_bounds['min'] : '−∞',
+                        $num_bounds['max'] !== null ? $num_bounds['max'] : '+∞')
+                    : '',
+                // P1 #31 (2026-05-20) — dependency wire-up for client show/hide.
+                // We emit raw values for the JS to consume; the server-side
+                // visibility check happens again in submit_response so a
+                // tampered client payload still can't bypass required-when-hidden.
+                'has_dependency'   => (int) ($q->depends_on_qid ?? 0) > 0,
+                'depends_on_qid'   => (int) ($q->depends_on_qid ?? 0),
+                // depends_on_value is intentionally NOT format_string'd — JS
+                // compares string-equality against the parent's raw answer,
+                // which is the user's literal input. The template emits this
+                // via `s()` so the attribute is HTML-escaped safely.
+                'depends_on_value' => (string) ($q->depends_on_value ?? ''),
+            ];
         }
         return $rows;
     }

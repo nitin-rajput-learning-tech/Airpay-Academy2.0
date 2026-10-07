@@ -51,8 +51,9 @@ if (!$is_admin) {
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/sentientia_evaluation/respond.php', ['id' => $evaluationid]));
-$PAGE->set_title(format_string($evaluation->name));
-$PAGE->set_heading(format_string($evaluation->name));
+// set_title() and set_heading() apply format_string() themselves, so they are given the raw name.
+$PAGE->set_title($evaluation->name);
+$PAGE->set_heading($evaluation->name);
 $PAGE->set_pagelayout('standard');
 $PAGE->set_secondary_navigation(false);
 
@@ -64,81 +65,10 @@ $already_responded = \local_sentientia_evaluation\evaluation_manager::has_user_r
 
 $questions = \local_sentientia_evaluation\evaluation_manager::get_questions($evaluationid);
 
-// Build template data with type-specific UI metadata.
-$question_rows = [];
-foreach ($questions as $i => $q) {
-    $opts = \local_sentientia_evaluation\evaluation_manager::decode_options($q->options ?? null);
-
-    $option_rows = [];
-    foreach ($opts as $idx => $opt) {
-        $option_rows[] = [
-            'value'  => $opt,
-            'label'  => format_string($opt),
-            'inputid' => 'q-' . $q->id . '-opt-' . $idx,
-        ];
-    }
-
-    // Rating scale: 1-5 with descriptive labels.
-    $rating_scale = [
-        ['value' => 1, 'label' => 'Strongly Disagree'],
-        ['value' => 2, 'label' => 'Disagree'],
-        ['value' => 3, 'label' => 'Neutral'],
-        ['value' => 4, 'label' => 'Agree'],
-        ['value' => 5, 'label' => 'Strongly Agree'],
-    ];
-
-    // NPS scale: 0-10
-    $nps_scale = [];
-    for ($n = 0; $n <= 10; $n++) {
-        $nps_scale[] = ['value' => $n, 'label' => (string) $n];
-    }
-
-    // P1 #18 — numeric bounds (decoded only when type=numeric).
-    $num_bounds = ($q->questiontype === 'numeric')
-        ? \local_sentientia_evaluation\evaluation_manager::decode_numeric_bounds($q->options ?? null)
-        : ['min' => null, 'max' => null];
-
-    $question_rows[] = [
-        'id'              => $q->id,
-        'position'        => $i + 1,
-        'questiontext'    => format_string($q->questiontext),
-        'questiontype'    => $q->questiontype,
-        'is_rating'       => ($q->questiontype === 'rating'),
-        'is_nps'          => ($q->questiontype === 'nps'),
-        'is_yesno'        => ($q->questiontype === 'yesno'),
-        'is_multichoice'  => ($q->questiontype === 'multichoice'),
-        // P1 #18 — both new types surface as flags + share option rows
-        // for multichoice_multi.
-        'is_multichoice_multi' => ($q->questiontype === 'multichoice_multi'),
-        'is_numeric'      => ($q->questiontype === 'numeric'),
-        'is_text'         => ($q->questiontype === 'text'),
-        'required'        => (bool) $q->required,
-        'options'         => $option_rows,
-        'rating_scale'    => $rating_scale,
-        'nps_scale'       => $nps_scale,
-        // Mustache helpers — leave empty string when unset so the
-        // template's `<input min/max>` attrs render as the constraint
-        // only when present.
-        'numeric_min'     => $num_bounds['min'] !== null ? (string) $num_bounds['min'] : '',
-        'numeric_max'     => $num_bounds['max'] !== null ? (string) $num_bounds['max'] : '',
-        'numeric_hint'    => $num_bounds['min'] !== null || $num_bounds['max'] !== null
-            ? sprintf('Range: %s to %s',
-                $num_bounds['min'] !== null ? $num_bounds['min'] : '−∞',
-                $num_bounds['max'] !== null ? $num_bounds['max'] : '+∞')
-            : '',
-        // P1 #31 (2026-05-20) — dependency wire-up for client show/hide.
-        // We emit raw values for the JS to consume; the server-side
-        // visibility check happens again in submit_response so a
-        // tampered client payload still can't bypass required-when-hidden.
-        'has_dependency'   => (int) ($q->depends_on_qid ?? 0) > 0,
-        'depends_on_qid'   => (int) ($q->depends_on_qid ?? 0),
-        // depends_on_value is intentionally NOT format_string'd — JS
-        // compares string-equality against the parent's raw answer,
-        // which is the user's literal input. The template emits this
-        // via `s()` so the attribute is HTML-escaped safely.
-        'depends_on_value' => (string) ($q->depends_on_value ?? ''),
-    ];
-}
+// Build template data with type-specific UI metadata. The rows are built in the manager so they can be tested: the
+// position counts 1..n (it printed the question id + 1), text and options are not escaped twice, and a number
+// question's bounds are not offered as options to tick.
+$question_rows = \local_sentientia_evaluation\evaluation_manager::respond_question_rows($questions);
 
 $kp_labels = [
     1 => 'Reaction',
@@ -149,8 +79,9 @@ $kp_labels = [
 
 $data = [
     'evaluationid'      => $evaluation->id,
-    'name'              => format_string($evaluation->name),
-    'description'       => format_string($evaluation->description ?? ''),
+    // Printed with {{ }}, which escapes once: filtered here, not escaped as well.
+    'name'              => \local_sentientia_evaluation\evaluation_manager::display_text($evaluation->name),
+    'description'       => \local_sentientia_evaluation\evaluation_manager::display_text($evaluation->description ?? ''),
     'kirkpatrick_label' => $kp_labels[(int) $evaluation->kirkpatrick_level] ?? '',
     'is_anonymous'      => (bool) $evaluation->anonymous,
     'has_questions'     => !empty($question_rows),
