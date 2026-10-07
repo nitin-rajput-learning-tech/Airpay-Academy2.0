@@ -40,7 +40,8 @@ use local_sentientia_platform\bizlms\step;
  *
  * Status is the legacy status, except that a row on a DISABLED BizLMS instance is converted as suspended: BizLMS grants
  * nothing there, and the import never gives a learner access BizLMS did not give (reported as
- * status_from_disabled_instance).
+ * status_from_disabled_instance). That is the owner's decision CRS-02 (enrolments.disabled_instance_row_status =
+ * convert_as_suspended): the record is kept, no access is added, and an administrator can reactivate it.
  *
  * Other rows of the pair: folded into the owner's enrolment (duplicate_pair), or skipped with the owner's reason when
  * the owner has none.

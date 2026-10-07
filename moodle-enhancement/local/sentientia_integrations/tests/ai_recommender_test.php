@@ -64,4 +64,40 @@ final class ai_recommender_test extends \advanced_testcase {
         // The important invariant is no exception is thrown.
         $this->assertIsArray($recs);
     }
+
+    /**
+     * Owner decision (2026-10-07, "readers that count enrolments"): popularity is learners, not enrolment rows. A learner
+     * enrolled through an imported BizLMS method and its converted manual twin is one learner; a suspended enrolment and an
+     * enrolment on a disabled instance count for nothing.
+     */
+    public function test_popular_courses_count_a_learner_once_and_only_active_enrolments(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        set_config('ai_enable', 1, 'local_sentientia_integrations');
+        set_config('ai_recommendations_enable', 1, 'local_sentientia_integrations');
+        $recent = time() - 3600;
+
+        $course = $this->getDataGenerator()->create_course();
+        $twin = $this->getDataGenerator()->create_user();
+        $suspended = $this->getDataGenerator()->create_user();
+        $disabledonly = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($twin->id, $course->id, 'student', 'manual', $recent);
+        $plan = $DB->insert_record('enrol', (object) ['enrol' => 'learningplan', 'status' => 0, 'courseid' => $course->id,
+            'sortorder' => 90, 'roleid' => 0, 'timecreated' => $recent, 'timemodified' => $recent]);
+        $DB->insert_record('user_enrolments', (object) ['status' => 0, 'enrolid' => $plan, 'userid' => $twin->id,
+            'timestart' => $recent, 'timeend' => 0, 'modifierid' => 0, 'timecreated' => $recent, 'timemodified' => $recent]);
+        $this->getDataGenerator()->enrol_user($suspended->id, $course->id, 'student', 'manual', $recent, 0, ENROL_USER_SUSPENDED);
+        $off = $DB->insert_record('enrol', (object) ['enrol' => 'program', 'status' => 1, 'courseid' => $course->id,
+            'sortorder' => 91, 'roleid' => 0, 'timecreated' => $recent, 'timemodified' => $recent]);
+        $DB->insert_record('user_enrolments', (object) ['status' => 0, 'enrolid' => $off, 'userid' => $disabledonly->id,
+            'timestart' => $recent, 'timeend' => 0, 'modifierid' => 0, 'timecreated' => $recent, 'timemodified' => $recent]);
+
+        // A learner with no enrolment of their own is shown the popular courses.
+        $viewer = $this->getDataGenerator()->create_user();
+        $recs = ai_recommender::get_recommendations((int) $viewer->id, 5);
+
+        $this->assertArrayHasKey($course->id, $recs);
+        $this->assertSame(1, (int) $recs[$course->id]->enrolcount, 'one active learner, however many rows');
+    }
 }

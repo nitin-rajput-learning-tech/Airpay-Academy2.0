@@ -23,25 +23,40 @@ use local_sentientia_platform\bizlms\tenant_resolver;
  * BizLMS enrolled learners through three enrol methods of its own, enrol_classroom, enrol_program and
  * enrol_learningplan. Their rows are plain core rows: an {enrol} instance with enrol = classroom, program or
  * learningplan, and the {user_enrolments} on it. The BizLMS code is not deployed after cutover, so those
- * instances are orphans. Each enrolment on one becomes a MANUAL enrolment in the same course, with the same
+ * instances are orphans. The real problem with an orphan is that it cannot be MANAGED: there is no unenrol, no suspend and
+ * no expiry handling for it, while core keeps granting course access through it (require_login uses
+ * enrol_get_enrolment_end(), which filters only the instance and enrolment status and never asks whether the plugin exists;
+ * moodlelib.php:2575, enrollib.php:1281). Each enrolment on one becomes a MANUAL enrolment in the same course, with the same
  * status, start and end, so the learner does not depend on code that is no longer there:
  *
  *  - step enrolments.instances ensures each course that has such enrolments also has an ENABLED manual
  *    instance (the existing one, else a new row in {enrol});
- *  - step enrolments.enrolments gives each learner a row in {user_enrolments} on that instance.
+ *  - step enrolments.enrolments gives each learner a row in {user_enrolments} on that instance;
+ *  - step enrolments.legacy_instances decides, per BizLMS instance, whether it can now be switched off, and the recompute step
+ *    enrolments.legacy_instances_off switches it off (owner decision CRS-01, enrolments.bizlms_instances_after_verify =
+ *    disable_when_converted). Left on, an instance would keep granting access after a Sentientia unenrol or suspend of the
+ *    converted manual row. It is disabled (status 1, NEVER deleted, prior status in the trail table
+ *    local_sentientia_courses_enroloff) only when every learner-course pair on it keeps an access window at least as wide
+ *    through the manual enrolments, proved per pair against core's own rule (enrolments_access). One regression, or one row
+ *    that is not settled, keeps the whole instance enabled.
  *
- * What it never does: delete or change a legacy instance or enrolment, fire an event, send a message, call the
- * enrol API, or touch {role_assignments}. The role the legacy instance gave the learner stays as it is
- * (BizLMS wrote its role assignments with component empty and itemid 0, roles_protected() false, so they do
- * not belong to the instance either): preflight counts what the restored database holds and warns about the
- * learners and components that would surprise.
+ * What it never does: delete a legacy instance or enrolment or change a legacy enrolment, fire an event, send a message, call
+ * the enrol API, or touch {role_assignments}. The only change to a legacy row is enrol.status (and timemodified) of an
+ * instance proven safe to switch off; one UPDATE ({enrol} SET status = priorstatus, from the trail) puts it back. Never use
+ * Delete on a switched-off instance in a course's Enrolment methods page: deleting an instance deletes its enrolments. The role
+ * the legacy instance gave the learner stays as it is (BizLMS wrote its role assignments with component empty and itemid 0,
+ * roles_protected() false, so they do not belong to the instance either): preflight counts what the restored database holds and
+ * warns about the learners and components that would surprise.
  *
- * Rules that are this importer's own and that no signed decision spells out (none occurs in the April 2026 data, and
- * each is counted or reported so Stage B does not decide it implicitly): a deleted account's row is skipped
- * (user_deleted, needs the owner, against mapping rule R11); an active row on a DISABLED BizLMS instance is converted as
- * suspended (warning enrolments_on_disabled_bizlms_instances); a course whose only manual instance is disabled gets a
- * new enabled one beside it (warning courses_with_only_a_disabled_manual_instance); a manual enrolment that ends before
- * the legacy one is not folded into (manual_enrolment_ends_sooner, needs the owner).
+ * Rules that are this importer's own, each now an owner decision of 2026-10-07 and none occurring in the April 2026 data
+ * (each is counted or reported so Stage B does not decide it implicitly): a deleted account's row is skipped (user_deleted,
+ * needs the owner, against mapping rule R11); an active row on a DISABLED BizLMS instance is converted as suspended (decision
+ * enrolments.disabled_instance_row_status = convert_as_suspended, CRS-02; warning enrolments_on_disabled_bizlms_instances); a
+ * course whose only manual instance is disabled gets a new enabled one beside it, the administrator's disabled one untouched
+ * (decision enrolments.disabled_only_manual_instance = add_enabled_beside, CRS-03; warning
+ * courses_with_only_a_disabled_manual_instance); a manual enrolment that ends before the legacy one is not folded into
+ * (manual_enrolment_ends_sooner, needs the owner). The skips that need the owner are accepted only AFTER the Stage B
+ * rehearsal, against its counts (CRS-04); an instance that holds such a row stays enabled even then.
  *
  * How this fits the frozen framework (the "framework needs" are in the 2026-09-30 state card note):
  *
@@ -54,7 +69,9 @@ use local_sentientia_platform\bizlms\tenant_resolver;
  *    already does the job); the declared target is the ledger local_sentientia_courses_enrolmove, which gets one
  *    row per converted enrolment: the original method and instance, in ids only. The map's detail column may
  *    not carry an id, so the ledger is the one durable place that says which BizLMS instance an enrolment came
- *    from once the legacy tables are ever archived.
+ *    from once the legacy tables are ever archived. The third step (enrolments.legacy_instances, derived unit #enrol.id)
+ *    declares the trail table local_sentientia_courses_enroloff the same way, one row per instance it will switch off; the
+ *    recompute step after it does the reviewed UPDATE of enrol.status, as course_tags' remap does for tag_instance.
  *  - A learner can hold ONE enrolment per instance (unique enrolid, userid), and the same course is often in
  *    several BizLMS plans, so several legacy rows can lead to the same manual enrolment. The lowest id of the
  *    learner-course pair owns the conversion; the others fold into what it produced.
@@ -68,14 +85,36 @@ final class enrolments_importer implements importer {
     /** Feature key. */
     public const FEATURE = 'enrolments';
 
-    /** Plugin version that carries the ledger table (version.php, db/upgrade.php). */
-    public const REQUIRES_VERSION = 2026100102;
+    /** Plugin version that carries the ledger and the trail table (version.php, db/upgrade.php). */
+    public const REQUIRES_VERSION = 2026100701;
 
     /** The owner decision this importer carries out. */
     public const DECISION = 'gap.orphan_enrol_instances';
 
     /** The only value of that decision this importer implements. */
     public const DECISION_VALUE = 'convert_to_manual';
+
+    /** Owner decision CRS-01 (2026-10-07): what happens to a BizLMS instance once its learners are manual enrolments. */
+    public const DECISION_INSTANCES = 'enrolments.bizlms_instances_after_verify';
+
+    /** Owner decision CRS-02: an active row on a DISABLED BizLMS instance converts as a suspended manual enrolment. */
+    public const DECISION_DISABLED_ROW = 'enrolments.disabled_instance_row_status';
+
+    /** Owner decision CRS-03: a course whose only manual instance is disabled gets an enabled one beside it. */
+    public const DECISION_DISABLED_ONLY_MANUAL = 'enrolments.disabled_only_manual_instance';
+
+    /**
+     * Every decision of this importer with the only value its code implements. Reading the value ties the code to it: a
+     * future second value must not run this importer's code unchanged.
+     *
+     * @var array<string, string>
+     */
+    public const SIGNED_VALUES = [
+        self::DECISION => self::DECISION_VALUE,
+        self::DECISION_INSTANCES => 'disable_when_converted',
+        self::DECISION_DISABLED_ROW => 'convert_as_suspended',
+        self::DECISION_DISABLED_ONLY_MANUAL => 'add_enabled_beside',
+    ];
 
     /**
      * The three BizLMS enrol methods, as stored in {enrol}.enrol.
@@ -93,8 +132,14 @@ final class enrolments_importer implements importer {
     /** The accounting unit of enrolments.enrolments: one group per legacy user_enrolments row. */
     public const UNIT_ENROLMENTS = '#user_enrolments.id';
 
+    /** The accounting unit of enrolments.legacy_instances: one group per BizLMS instance that has enrolments. */
+    public const UNIT_LEGACY_INSTANCES = '#enrol.id';
+
     /** The ledger: one row per enrolment this import converted. */
     public const LEDGER = 'local_sentientia_courses_enrolmove';
+
+    /** The trail: one row per BizLMS instance this import switched off (owner decision CRS-01). */
+    public const TRAIL = 'local_sentientia_courses_enroloff';
 
     /** Default --atomic-threshold of the CLI: above it the feature runs in batch mode. */
     private const DEFAULT_ATOMIC_THRESHOLD = 50000;
@@ -131,14 +176,17 @@ final class enrolments_importer implements importer {
     }
 
     public function target_tables(): array {
-        return [self::LEDGER];
+        return [self::LEDGER, self::TRAIL];
     }
 
     public function core_writes(): array {
         return [
-            'enrol' => 'gap.orphan_enrol_instances (G6): a new enabled manual instance for a course that has none, a '
-                . 'course whose only manual instance is disabled included (the disabled one stays beside it); '
-                . 'insert only, an existing instance is never changed',
+            'enrol' => 'gap.orphan_enrol_instances (G6): INSERT a new enabled manual instance for a course that has none, a '
+                . 'course whose only manual instance is disabled included (the disabled one stays beside it); an existing '
+                . 'manual instance is never changed. UPDATE (owner decision CRS-01, enrolments.bizlms_instances_after_verify): '
+                . 'status and timemodified of a BizLMS instance (classroom, program, learningplan) and of nothing else, to '
+                . 'disabled, only when every learner on it is proven to keep the same access through manual enrolments; '
+                . 'never deleted, the prior status is kept in the trail table',
             'user_enrolments' => 'gap.orphan_enrol_instances (G6): one manual enrolment per orphaned BizLMS enrolment; '
                 . 'insert only, with the legacy status, start and end',
         ];
@@ -177,6 +225,17 @@ final class enrolments_importer implements importer {
             // instance is gone. Same call as above: the owner decides, the import does not lengthen an administrator's
             // manual enrolment and does not fold into one that cuts access short.
             new reason('manual_enrolment_ends_sooner', false, true),
+
+            // The BizLMS instance step (enrolments.legacy_instances), one code per way an instance stays as it is.
+            // The instance is already disabled: BizLMS granted nothing on it, its rows were converted as suspended.
+            new reason('already_disabled', false, false),
+            // A row on the instance has no settled outcome (an account that is deleted, a suspended or shorter manual
+            // enrolment the import left alone): the instance stays enabled, so those learners keep today's access until L&D
+            // acts. The row's own reason already needs the owner; this one only says why the instance was not switched off.
+            new reason('rows_unsettled', false, false),
+            // A learner-course pair on the instance would lose access (a window the manual enrolments do not cover). Cannot
+            // happen with the rules above, so it is the owner's to see, not a quiet default. The instance stays enabled.
+            new reason('access_regression', false, true),
         ];
     }
 
@@ -184,8 +243,24 @@ final class enrolments_importer implements importer {
         return [
             new decision(self::DECISION,
                 'Orphaned BizLMS enrol instances (gap G6): convert each enrolment on them to a manual enrolment in the '
-                . 'same course, keeping status, start and end',
+                . 'same course, keeping status, start and end. Core grants course access through any ENABLED instance '
+                . 'whether or not its plugin is on disk, so what the conversion buys is that the enrolments can be managed '
+                . '(unenrol, suspend, expiry), not that access would otherwise stop',
                 true, null, [self::DECISION_VALUE]),
+            new decision(self::DECISION_INSTANCES,
+                'Each BizLMS enrol instance whose learners are all manual enrolments is switched off (status 1, never '
+                . 'deleted, prior status in a trail), only when every learner-course pair on it keeps an access window at '
+                . 'least as wide, proved per pair against core\'s own rule; an instance with a regression or an unsettled '
+                . 'row stays enabled',
+                true, null, [self::SIGNED_VALUES[self::DECISION_INSTANCES]]),
+            new decision(self::DECISION_DISABLED_ROW,
+                'An active enrolment row on a DISABLED BizLMS instance is converted as a suspended manual enrolment: the '
+                . 'record is kept, no access is added (BizLMS gave none), and an administrator can reactivate it',
+                true, null, [self::SIGNED_VALUES[self::DECISION_DISABLED_ROW]]),
+            new decision(self::DECISION_DISABLED_ONLY_MANUAL,
+                'A course whose only manual instance is DISABLED gets a new enabled manual instance beside it; the '
+                . 'administrator\'s disabled instance is left untouched and the learners keep today\'s access',
+                true, null, [self::SIGNED_VALUES[self::DECISION_DISABLED_ONLY_MANUAL]]),
         ];
     }
 
@@ -194,7 +269,8 @@ final class enrolments_importer implements importer {
     }
 
     public function steps(): array {
-        return [new enrolments_instances_step(), new enrolments_step()];
+        return [new enrolments_instances_step(), new enrolments_step(), new enrolments_legacy_instances_step(),
+            new enrolments_legacy_instances_off_step()];
     }
 
     /**
@@ -244,15 +320,18 @@ final class enrolments_importer implements importer {
 
         // The runner records a missing or unaccepted decision as a blocker and still calls this method, and
         // context::decision() throws in exactly those cases. The blocker is already there: say nothing more.
-        try {
-            $value = $ctx->decision(self::DECISION);
-        } catch (blocked $e) {
-            return $pf;
-        }
-        // Reading the value ties the code below to it: a future second value must not run this importer's code.
-        if ($value !== self::DECISION_VALUE) {
-            $pf->block('decision_value_not_supported:' . self::DECISION);
-            return $pf;
+        // Every decision of this importer, the three owner decisions of 2026-10-07 included.
+        foreach (self::SIGNED_VALUES as $key => $signed) {
+            try {
+                $value = $ctx->decision($key);
+            } catch (blocked $e) {
+                return $pf;
+            }
+            // Reading the value ties the code below to it: a future second value must not run this importer's code.
+            if ($value !== $signed) {
+                $pf->block('decision_value_not_supported:' . $key);
+                return $pf;
+            }
         }
 
         [$in, $mp] = self::methods_in('blmp');
@@ -322,6 +401,7 @@ final class enrolments_importer implements importer {
         $this->preflight_expiry($pf, $filter, $fp);
         $this->preflight_tenants($pf);
         $this->preflight_ends($pf);
+        $this->preflight_legacy_instances($pf);
 
         [$in3, $p3] = self::methods_in('blmu');
         $disabled = $this->count(
@@ -398,6 +478,42 @@ final class enrolments_importer implements importer {
             $failures[] = 'ledger_rows_without_an_imported_map_row:' . $strays;
         }
 
+        // The third unit (owner decision CRS-01): every BizLMS instance that holds enrolments has exactly one primary map row,
+        // gated like the two above (a course deleted after go-live takes its instances with it).
+        [$lfilter, $lp] = self::instance_filter('e');
+        $source = $this->count("SELECT COUNT(1) FROM {enrol} e WHERE {$lfilter}", $lp);
+        $mapped = $DB->count_records(legacymap::TABLE, [
+            'feature' => self::FEATURE, 'sourcetable' => self::UNIT_LEGACY_INSTANCES, 'subkey' => '']);
+        if (!$open && $source !== $mapped) {
+            $failures[] = 'accounting:' . self::UNIT_LEGACY_INSTANCES . ": source={$source} mapped={$mapped}";
+        }
+        $unmapped = $this->count(
+            "SELECT COUNT(1) FROM {enrol} e WHERE {$lfilter} AND NOT EXISTS (SELECT 1 FROM {$map} m
+              WHERE m.sourcetable = :blmst AND m.subkey = :blmsk AND m.sourceid = e.id)",
+            $lp + ['blmst' => self::UNIT_LEGACY_INSTANCES, 'blmsk' => '']);
+        if ($unmapped > 0) {
+            $failures[] = 'unmapped_source_rows:' . self::UNIT_LEGACY_INSTANCES . ':' . $unmapped;
+        }
+
+        // The trail and the map agree one to one: a trail row for every instance the map says was switched off, and no other.
+        $trail = $DB->count_records(self::TRAIL);
+        $off = $this->count(
+            "SELECT COUNT(1) FROM {$map} m WHERE m.feature = :blmf AND m.sourcetable = :blmst AND m.subkey = :blmsk
+                AND m.outcome = :blmoc AND m.targettable = :blmtt",
+            ['blmf' => self::FEATURE, 'blmst' => self::UNIT_LEGACY_INSTANCES, 'blmsk' => '', 'blmoc' => 'imported',
+                'blmtt' => self::TRAIL]);
+        if ($trail !== $off) {
+            $failures[] = "trail_rows_differ_from_imported_map_rows: trail={$trail} imported={$off}";
+        }
+        $trailstrays = $this->count(
+            'SELECT COUNT(1) FROM {' . self::TRAIL . "} r WHERE NOT EXISTS (SELECT 1 FROM {$map} m
+              WHERE m.feature = :blmf AND m.sourcetable = :blmst AND m.subkey = :blmsk AND m.outcome = :blmoc
+                AND m.sourceid = r.enrolid)",
+            ['blmf' => self::FEATURE, 'blmst' => self::UNIT_LEGACY_INSTANCES, 'blmsk' => '', 'blmoc' => 'imported']);
+        if ($trailstrays > 0) {
+            $failures[] = 'trail_rows_without_an_imported_map_row:' . $trailstrays;
+        }
+
         if ($open) {
             // Once the site is open an administrator may suspend, move or remove any enrolment, and disable an
             // instance: what follows is a statement about the moment of the import, not about the site today.
@@ -453,6 +569,63 @@ final class enrolments_importer implements importer {
             $base + ['blmn1' => $now, 'blmn2' => $now, 'blmn3' => $now, 'blmn4' => $now]);
         if ($lost > 0) {
             $failures[] = 'learners_whose_access_was_not_kept:' . $lost;
+        }
+
+        foreach ($this->switched_off_failures($ctx) as $line) {
+            $failures[] = $line;
+        }
+        return $failures;
+    }
+
+    /**
+     * The proof for the instances this import switched off (owner decision CRS-01), run again over what the database holds.
+     *
+     * Every instance named by the trail must be off, and the proof of enrolments_access must still hold for it, with the
+     * instance counted as it was BEFORE the step: ids of the instances and of the legacy enrolments that regress, never a
+     * learner. An instance that is still enabled although the trail says it was switched off is a failure too: the run
+     * claims a change the database does not show.
+     *
+     * @param context $ctx
+     * @return string[] Failure lines.
+     */
+    private function switched_off_failures(context $ctx): array {
+        global $DB;
+        $ids = array_map('intval', $DB->get_fieldset_sql('SELECT enrolid FROM {' . self::TRAIL . '} ORDER BY enrolid'));
+        if (!$ids) {
+            return [];
+        }
+        $failures = [];
+
+        [$insql, $inparams] = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'blmoff');
+        $still = $DB->get_fieldset_sql("SELECT e.id FROM {enrol} e WHERE e.id {$insql} AND e.status = 0 ORDER BY e.id", $inparams);
+        if ($still) {
+            $failures[] = 'trail_instances_still_enabled:' . count($still) . ':' . implode(',', array_slice(array_map('intval', $still), 0,
+                enrolments_access::MAX_LISTED));
+        }
+
+        $verdicts = enrolments_access::verdicts($ctx, $ids, time(), $ids);
+        $unsettled = [];
+        $regressed = [];
+        $rows = [];
+        $pairs = 0;
+        foreach ($verdicts as $id => $verdict) {
+            if ($verdict['unsettled'] > 0) {
+                $unsettled[] = $id;
+            }
+            if ($verdict['regressions'] > 0) {
+                $regressed[] = $id;
+                $pairs += $verdict['regressions'];
+                $rows = array_merge($rows, $verdict['regressionrows']);
+            }
+        }
+        if ($unsettled) {
+            $failures[] = 'switched_off_instances_with_unsettled_rows:' . count($unsettled) . ':'
+                . implode(',', array_slice($unsettled, 0, enrolments_access::MAX_LISTED));
+        }
+        if ($regressed) {
+            $failures[] = 'switched_off_instances_where_access_was_not_kept:instances=' . implode(',', array_slice($regressed, 0,
+                enrolments_access::MAX_LISTED)) . ' pairs=' . $pairs . ' enrolments=' . implode(',', array_slice($rows, 0,
+                enrolments_access::MAX_LISTED));
         }
         return $failures;
     }
@@ -552,6 +725,26 @@ final class enrolments_importer implements importer {
         if ($notify > 0) {
             $pf->warn('reused_manual_instances_with_expiry_notification:' . $notify);
         }
+    }
+
+    /**
+     * What the third step will look at: the BizLMS instances that hold enrolments (owner decision CRS-01).
+     *
+     * The instances that are enabled are the ones the access proof is run for and, when it holds, switched off; a disabled
+     * one is left as it is (its rows are converted as suspended). The proof itself needs the manual enrolments the run
+     * writes, so it is a result of the run (the map and the trail), not of this preflight. Stage B reads the outcome with
+     * cli/enrolments_access_report.php.
+     *
+     * @param preflight $pf
+     * @return void
+     */
+    private function preflight_legacy_instances(preflight $pf): void {
+        [$filter, $params] = self::instance_filter('t');
+        $with = $this->count("SELECT COUNT(1) FROM {enrol} t WHERE {$filter}", $params);
+        $disabled = $this->count("SELECT COUNT(1) FROM {enrol} t WHERE {$filter} AND t.status <> 0", $params);
+        $pf->count('legacy_instances_with_enrolments', $with);
+        $pf->count('legacy_instances_already_disabled', $disabled);
+        $pf->count('legacy_instances_to_prove', $with - $disabled);
     }
 
     /**

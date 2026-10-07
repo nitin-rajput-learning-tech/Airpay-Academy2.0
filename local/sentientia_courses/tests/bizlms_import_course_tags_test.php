@@ -473,11 +473,14 @@ final class bizlms_import_course_tags_test extends \advanced_testcase {
         $this->assertSame(1, preg_match_all('/\$oldversion < ' . $required . '\)/', $upgrade));
         $this->assertSame(1, substr_count($upgrade, "'" . course_tags_importer::LEDGER . "'"));
 
-        $others = [\local_sentientia_courses\bizlms\course_lookups_importer::REQUIRES_VERSION,
-            \local_sentientia_courses\bizlms\enrolments_importer::REQUIRES_VERSION];
-        foreach ($others as $other) {
-            $this->assertGreaterThan($other, $required, 'a database that took the other importer must still run this step');
-        }
+        // The course_lookups step and the enrolments LEDGER step (2026100102) come before this one. The enrolments importer
+        // has since gained a trail table (owner decision CRS-01, 2026-10-07), so its REQUIRES_VERSION is now ABOVE this one
+        // on purpose: a database that took this step still runs that later block. The three steps must differ.
+        $this->assertGreaterThan(\local_sentientia_courses\bizlms\course_lookups_importer::REQUIRES_VERSION, $required,
+            'a database that took the course_lookups importer must still run this step');
+        $this->assertGreaterThan($required, \local_sentientia_courses\bizlms\enrolments_importer::REQUIRES_VERSION,
+            'the enrolments trail step comes after this one, so a database that took this one still runs it');
+        $this->assertStringContainsString('$oldversion < 2026100102', $upgrade, 'the enrolments ledger step is still there');
 
         $xml = (string) file_get_contents($dir . '/db/install.xml');
         $this->assertSame(1, substr_count($xml, 'TABLE NAME="' . course_tags_importer::LEDGER . '"'));
