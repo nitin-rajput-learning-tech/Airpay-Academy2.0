@@ -113,6 +113,18 @@ final class imported_history_test extends \advanced_testcase {
         $this->assertFalse(imported_history::visible());
     }
 
+    public function test_the_flag_says_it_leaves_the_imported_rows_out_not_that_nothing_changed(): void {
+        // COMMS-R3 (2026-10-07): the native list-screen fixes (Item header, route in words, status badges, SLA column,
+        // names on path requests) ship as bug fixes, so the flag no longer claims the lists "look exactly as before".
+        $description = preg_replace('/\s+/', ' ', feature_flags::load_registry()[self::FLAG]['description']);
+        $this->assertStringContainsString('leave the imported rows out', $description);
+        $this->assertStringNotContainsString('exactly as they did before the import', $description);
+        $this->assertStringContainsString('not behind this flag', $description);
+        $readme = (string) file_get_contents(__DIR__ . '/../README.md');
+        $this->assertStringContainsString('leave the imported rows out', $readme);
+        $this->assertStringNotContainsString('exactly as they did before', $readme);
+    }
+
     public function test_imported_rows_are_left_out_of_every_list_until_the_flag_is_on(): void {
         $learner = $this->user('/1');
         $approver = $this->user('/1', true);

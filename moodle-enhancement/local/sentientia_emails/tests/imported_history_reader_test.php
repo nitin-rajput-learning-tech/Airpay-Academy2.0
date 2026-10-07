@@ -141,6 +141,13 @@ final class imported_history_reader_test extends \advanced_testcase {
         }
     }
 
+    public function test_the_log_has_an_index_on_sender_userid(): void {
+        global $DB;
+        // F-64: the privacy provider looks a sender up on export and on erasure; without the index that scans the log.
+        $this->assertTrue($DB->get_manager()->index_exists(new \xmldb_table(self::LOG),
+            new \xmldb_index('idx_sender_userid', XMLDB_INDEX_NOTUNIQUE, ['sender_userid'])));
+    }
+
     public function test_the_body_flag_does_nothing_without_the_history_flag(): void {
         $this->flags(false, true);
         $this->assertFalse(imported_history::body_enabled(),

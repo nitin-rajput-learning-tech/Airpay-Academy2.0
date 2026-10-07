@@ -381,17 +381,20 @@ final class importer implements \local_sentientia_platform\bizlms\importer {
     /**
      * Does any imported subject or body still hold a secret that redactor::scrub() would blank?
      *
-     * Reads a page at a time. A subject of exactly 255 characters is not checked: it may have been cut inside a mask
+     * Reads a keyset page at a time (the static scan of classes/bizlms/ bans recordsets), so memory stays one page
+     * however large the log is. A subject of exactly 255 characters is not checked: it may have been cut inside a mask
      * by the column limit, and the cut mask would then read as a secret.
      *
      * @return bool
      */
     private function imported_text_with_unredacted_secret(): bool {
         global $DB;
-        $rows = $DB->get_recordset_select(self::TARGET, 'legacy_source = :s', ['s' => log_step::SOURCE_LABEL], 'id',
-            'id, subject, body_html');
-        try {
+        $after = 0;
+        do {
+            $rows = $DB->get_records_select(self::TARGET, 'legacy_source = :s AND id > :after',
+                ['s' => log_step::SOURCE_LABEL, 'after' => $after], 'id ASC', 'id, subject, body_html', 0, 500);
             foreach ($rows as $row) {
+                $after = (int) $row->id;
                 $texts = [];
                 if (\core_text::strlen((string) $row->subject) < 255) {
                     $texts[] = (string) $row->subject;
@@ -406,9 +409,7 @@ final class importer implements \local_sentientia_platform\bizlms\importer {
                     }
                 }
             }
-        } finally {
-            $rows->close();
-        }
+        } while (count($rows) === 500);
         return false;
     }
 
