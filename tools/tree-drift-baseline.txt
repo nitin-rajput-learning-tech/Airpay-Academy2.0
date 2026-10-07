@@ -20,7 +20,6 @@ CONTENT sentientia_courses/lang/hi/local_sentientia_courses.php
 CONTENT sentientia_courses/templates/share_page.mustache
 CONTENT sentientia_emails/classes/email_context.php
 CONTENT sentientia_emails/classes/external/rule_api.php
-CONTENT sentientia_emails/classes/external/template_api.php
 CONTENT sentientia_emails/templates/enrollment/welcome_new_user.mustache
 CONTENT sentientia_exams/classes/task/exam_overdue.php
 CONTENT sentientia_exams/classes/task/exam_reminder.php

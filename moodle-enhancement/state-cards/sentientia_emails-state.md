@@ -792,3 +792,10 @@ Both trees. **Not run: no PHPUnit here; the lead runs `--group local_sentientia_
   new string has a Hindi pair; the editor has a context and a stranger does not; the export lists only what that user edited and no body or
   condition; erasing an editor keeps the configuration and removes the person, other editors untouched; the user list and the bulk erasure
   cover editors; a context wipe removes every editor and deletes nothing.
+
+## 2026-10-08 Moodle 5.3 compat FX-04 (version 2026100801)
+
+- **What changed:** NEW `classes/mustache_factory.php` (`mustache_factory::engine()` returns `\Mustache\Engine` when it exists, else `\Mustache_Engine`). The three `new \Mustache_Engine()` sites (the tenant-override render in `email_renderer::render()`, `preview_ajax.php`, the `preview_template` WS in `external/template_api.php`) use it, and their `catch (\Exception` is now `catch (\Throwable` so a class-not-found `\Error` falls through to the file template instead of fataling. NEW `tests/mustache_factory_test.php`.
+- **Why:** Moodle 5.2 and 5.3 autoload Mustache 3.0 as `\Mustache\Engine` only and do not load the legacy aliases, so any email with a tenant DB override, the AJAX preview and the template preview WS fataled (already broken on the 5.2 UAT).
+- **Twins:** the top-level `local/sentientia_emails` copy takes the same change; its `template_api.php` drift (legacy global `external_*` imports) is reconciled to the ME copy and the baseline line is removed. `email_context.php`, `rule_api.php` and `welcome_new_user.mustache` still drift (baselined).
+- **No schema change.** Dual-target 5.1 / 5.2 / 5.3. Not run: PHPUnit (owner rule), a live send with an override.

@@ -61,9 +61,12 @@ class email_renderer {
         if ($override && !empty($override->body_html)) {
             // Render the DB override through Mustache engine (supports {{placeholders}}).
             try {
-                $mustache = new \Mustache_Engine();
+                // Moodle 5.2+ ships Mustache 3.0 (\Mustache\Engine) and no longer autoloads the
+                // legacy \Mustache_Engine, which is a class-not-found \Error, not an \Exception;
+                // hence the factory and the \Throwable catch (the file fallback below must run).
+                $mustache = mustache_factory::engine();
                 return $mustache->render($override->body_html, $context);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 // Fallback to file if DB template has syntax errors.
                 debugging('DB template render error: ' . $e->getMessage());
             }
