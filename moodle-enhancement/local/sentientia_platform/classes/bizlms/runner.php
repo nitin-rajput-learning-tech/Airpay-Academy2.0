@@ -25,6 +25,11 @@ defined('MOODLE_INTERNAL') || die();
  *   the runner asserts no transaction is open before it calls finalise().
  * - A feature's completion marker is written only after verify, the tripwire
  *   and finalise have all passed.
+ * - A NEW apply run fingerprints the source of every load step it will process before the first feature
+ *   writes, and stores each as a pending step row with the run (run_start_fingerprints(), open_run()). A step
+ *   compares its source with that row when it opens, so a source changed at any time since the run began,
+ *   in the same run or while it was down, is source_drift. The rows are written outside every feature
+ *   transaction, so feature mode returns them to pending and never removes them.
  *
  * Step failures store the exception class and, for the framework's own
  * exceptions, the message (ids and codes). A database exception message can
@@ -239,7 +244,14 @@ final class runner {
 
         try {
             if (!$this->dryrun) {
-                $this->open_run($importers, $order);
+                // A new run reads the source of EVERY step it will process now, before the first feature writes, and
+                // stores it with the run (status pending). A resumed run uses the rows its first start wrote.
+                $fingerprints = [];
+                if (!$this->options['resume']) {
+                    $fingerprints = $this->run_start_fingerprints($importers, $order, $requested);
+                    $this->report->meta('run_start_fingerprints', count($fingerprints));
+                }
+                $this->open_run($importers, $order, $fingerprints);
                 $result['runid'] = $this->runid;
             }
             foreach ($order as $feature) {
@@ -407,11 +419,16 @@ final class runner {
                 'tripped_runid' => legacymap::tripped_run($feature),
                 'started' => false,
                 'running_steps' => 0,
+                'pending_steps' => 0,
                 'last_heartbeat_age' => null,
             ];
             if ($haverun) {
+                // A pending row is a step a run fingerprinted at its start and has not opened: not started.
                 $state['started'] = $DB->record_exists_select(self::STEP_TABLE,
-                    "feature = :f AND status <> 'not_applicable'", ['f' => $feature]);
+                    "feature = :f AND status NOT IN ('not_applicable', 'pending')", ['f' => $feature]);
+                $state['pending_steps'] = $DB->count_records_select(self::STEP_TABLE,
+                    "feature = :f AND status = 'pending' AND runid = (SELECT MAX(runid) FROM {" . self::STEP_TABLE . "} WHERE feature = :f2)",
+                    ['f' => $feature, 'f2' => $feature]);
                 $running = $DB->get_records_select(self::STEP_TABLE, "feature = :f AND status = 'running'",
                     ['f' => $feature], 'timemodified DESC', 'id, timemodified');
                 $state['running_steps'] = count($running);
@@ -791,13 +808,63 @@ final class runner {
     // Run bookkeeping.
 
     /**
-     * Create the run row, or reopen the latest incomplete one for --resume.
+     * The source fingerprint of every load step the NEW run will process, taken before anything is written.
+     *
+     * A step's own fingerprint is taken only when the step opens, so a step the crash never reached has no row to
+     * compare on resume, and a source changed while the run was down looked like the source the run had started
+     * with. ADR-032 promises detection at run start and on resume: this is the run start. Each fingerprint is
+     * stored as a pending step row (open_run()), and open_step() compares it with the source as it is when the step
+     * opens, whether that is a minute later in the same run or a day later on --resume.
+     *
+     * Exactly the steps run_load_step() will open: a feature that is not applicable has none, a step whose source
+     * table is missing takes the not_applicable path and gets no fingerprint, a recompute step has no source, and
+     * a feature that was added as a dependency and is complete already runs no step (run_feature_body()).
+     * Read-only, so it can run before the run row exists.
      *
      * @param array<string, importer> $importers
      * @param string[] $order
+     * @param string[] $requested
+     * @return array<int, array{feature: string, key: string, sourcetable: string, fp: array}>
+     */
+    private function run_start_fingerprints(array $importers, array $order, array $requested): array {
+        $out = [];
+        foreach ($order as $feature) {
+            if (empty($this->applicable[$feature])) {
+                continue;
+            }
+            if (!in_array($feature, $requested, true) && legacymap::feature_complete($feature)) {
+                continue;
+            }
+            foreach ($importers[$feature]->steps() as $step) {
+                if (!($step instanceof step) || !$this->legacy->exists($step->physical_table())) {
+                    continue;
+                }
+                $out[] = [
+                    'feature' => $feature,
+                    'key' => $step->key(),
+                    'sourcetable' => $step->sourcetable(),
+                    'fp' => fingerprint::table($step->physical_table(), $step->source_filter(), $this->crc_cap()),
+                ];
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * Create the run row, or reopen the latest incomplete one for --resume.
+     *
+     * A new run is written together with its pending step rows in one transaction, so a run never exists half
+     * fingerprinted. The rows are written BEFORE any feature's transaction opens, so a feature-mode rollback never
+     * takes them away: it only returns the rows the feature moved to running or done back to pending, with the
+     * fingerprint taken at run start still on them.
+     *
+     * @param array<string, importer> $importers
+     * @param string[] $order
+     * @param array<int, array{feature: string, key: string, sourcetable: string, fp: array}> $fingerprints From
+     *        run_start_fingerprints(); empty on --resume.
      * @return void
      */
-    private function open_run(array $importers, array $order): void {
+    private function open_run(array $importers, array $order, array $fingerprints = []): void {
         global $DB;
         if ($this->options['resume']) {
             // The newest apply run, and only if it did not complete. An older interrupted run behind a later
@@ -827,19 +894,37 @@ final class runner {
             ]);
             return;
         }
-        $this->runid = $this->writer->create_run((object) [
-            'runmode' => 'apply',
-            'status' => 'running',
-            'features' => json_encode($order),
-            'decisionshash' => $this->decisions->hash(),
-            'codehash' => $this->code_hash($importers, $order),
-            'fingerprint' => fingerprint::install(),
-            'host' => substr((string) gethostname(), 0, 100),
-            'pid' => (int) getmypid(),
-            'timestarted' => time(),
-            'heartbeat' => time(),
-            'timefinished' => 0,
-        ]);
+        $tx = $DB->start_delegated_transaction();
+        try {
+            $this->runid = $this->writer->create_run((object) [
+                'runmode' => 'apply',
+                'status' => 'running',
+                'features' => json_encode($order),
+                'decisionshash' => $this->decisions->hash(),
+                'codehash' => $this->code_hash($importers, $order),
+                'fingerprint' => fingerprint::install(),
+                'host' => substr((string) gethostname(), 0, 100),
+                'pid' => (int) getmypid(),
+                'timestarted' => time(),
+                'heartbeat' => time(),
+                'timefinished' => 0,
+            ]);
+            foreach ($fingerprints as $source) {
+                $this->writer->create_step((object) self::new_step_row($this->runid, $source['feature'], $source['key'],
+                    $source['sourcetable'], 'pending', $source['fp']['count'], $source['fp']['maxid'], $source['fp']['crc']));
+            }
+            $tx->allow_commit();
+        } catch (\Throwable $e) {
+            // Nothing of this run survives, so there is no run row for fail_run() to mark.
+            $this->runid = 0;
+            try {
+                $tx->rollback($e);
+            } catch (\Throwable $rethrown) {
+                // The rollback rethrows the original exception; it is rethrown below.
+                unset($rethrown);
+            }
+            throw $e;
+        }
     }
 
     /**
@@ -1229,9 +1314,11 @@ final class runner {
                 'status' => 'failed', 'error' => $message, 'timemodified' => time(),
             ]);
         }
-        if (!$steps && !$DB->record_exists(self::STEP_TABLE, ['runid' => $this->runid, 'feature' => $feature])) {
-            // Feature mode rolled back every step row with the rest, so nothing durable says this feature
-            // started and failed, and the status check would stay green. Leave a row that does.
+        if (!$steps && !$DB->record_exists_select(self::STEP_TABLE, "runid = :r AND feature = :f AND status <> 'pending'",
+                ['r' => $this->runid, 'f' => $feature])) {
+            // Feature mode rolled back every step row's progress with the rest (the rows themselves are the pending
+            // ones written at run start, back to pending), so nothing durable says this feature started and failed,
+            // and the status check would stay green. Leave a row that does.
             $row = self::new_step_row($this->runid, $feature, $feature . '.__feature', '', 'failed', 0, 0, null);
             $row['error'] = $message;
             $this->writer->create_step((object) $row);
@@ -1404,14 +1491,26 @@ final class runner {
      * Record that a step has nothing to do. Idempotent: a resumed run meets the
      * row it wrote the first time, and (runid, stepkey) is unique.
      *
+     * A PENDING row means the run fingerprinted this step's source when it started, so a source that is gone now
+     * is a source that changed, and the run stops like it does for any other change. (A step of any other status
+     * keeps the behaviour it had before pending rows existed.)
+     *
      * @param string $feature
      * @param string $key
      * @param string $sourcetable
      * @return void
+     * @throws source_drift When the run fingerprinted this step's source at its start and the table is gone.
      */
     private function record_not_applicable_step(string $feature, string $key, string $sourcetable): void {
         global $DB;
-        if ($this->dryrun || $DB->record_exists(self::STEP_TABLE, ['runid' => $this->runid, 'stepkey' => $key])) {
+        if ($this->dryrun) {
+            return;
+        }
+        $existing = $DB->get_record(self::STEP_TABLE, ['runid' => $this->runid, 'stepkey' => $key], 'id, status');
+        if ($existing) {
+            if ($existing->status === 'pending') {
+                throw new source_drift('source_changed_since_the_run_started:' . $key);
+            }
             return;
         }
         $this->writer->create_step((object) self::new_step_row($this->runid, $feature, $key, $sourcetable,
@@ -1459,14 +1558,20 @@ final class runner {
     }
 
     /**
-     * Open the step row, creating it or resuming it.
+     * Open the step row, creating it, starting it from its pending row, or resuming it.
+     *
+     * A load step of a new run already has a PENDING row: run_start_fingerprints() wrote it, with the source as it
+     * was when the run started. A pending step has not started (watermark 0, no counters), but its source is
+     * compared with that fingerprint first, like every other step row, so a change made at any time since the run
+     * began is refused here: a change a minute ago in the same run, or one made while the run was down. A step
+     * with no row (a recompute step, or a run begun before pending rows existed) takes the fingerprint now.
      *
      * @param string $feature
      * @param string $key
      * @param string $sourcetable
      * @param array{count: int, maxid: int, crc: ?string, columns: string[]} $fp
      * @return array The step state.
-     * @throws source_drift When a resumed step's source changed.
+     * @throws source_drift When the source changed since the run started.
      */
     private function open_step(string $feature, string $key, string $sourcetable, array $fp): array {
         global $DB;
@@ -1499,9 +1604,14 @@ final class runner {
         foreach (self::COUNTERS as $counter) {
             $state['counters'][$counter] = (int) $existing->{$counter};
         }
-        $this->writer->update_step($state['id'], (object) [
-            'status' => 'running', 'error' => null, 'timemodified' => time(),
-        ]);
+        $fields = ['status' => 'running', 'error' => null, 'timemodified' => time()];
+        if ($existing->status === 'pending') {
+            // Starting now, not when the run began. In feature mode this write sits inside the feature's
+            // transaction, so a rollback puts the row back to pending with its run-start fingerprint.
+            $state['watermark'] = 0;
+            $fields['timestarted'] = time();
+        }
+        $this->writer->update_step($state['id'], (object) $fields);
         return $state;
     }
 
