@@ -431,7 +431,8 @@ class cart_manager {
      *
      * 1. Inserts ledger row (payment_received)
      * 2. Updates history.status → 'paid', timepaid; a withheld line (step 3)
-     *    is written to history.notes as "Refund due"
+     *    is written to history.notes as "Refund due", with what each withheld
+     *    line was charged (withheld_line_amounts(), marked "for review")
      * 3. Enrols the buyer in every course line they may buy (can_buy_course(),
      *    ADR-031 decision 3); a line they may not buy is paid for but NOT
      *    enrolled ("withheld")
@@ -439,7 +440,8 @@ class cart_manager {
      * 5. Sends payment_received to the buyer, listing only the enrolled
      *    courses and saying any withheld one cannot be accessed and will be
      *    refunded; and admin_new_order to the site admins (get_admins()), with
-     *    a refund-due line naming the order and the withheld course ids
+     *    a refund-due line naming the order and the withheld course ids, and
+     *    the per-line amounts to refund (for review), each in the admin's own language
      *
      * The refund itself is manual (refund(), a PARTIAL refund of the withheld
      * lines: a full refund also unenrols the buyer from the granted ones).
@@ -515,11 +517,13 @@ class cart_manager {
             $cart->timemodified = $now;
             $cart->gateway_ref  = $gateway_ref;
             if ($withheld) {
+                // cart.withheld_line_refund: the note also states what each withheld line was charged, for review.
                 $cart->notes = trim(($cart->notes ?? '') . "\n"
                     . 'ADR-031: order #' . (int) ($cart->orderid ?? 0)
                     . ': payment recorded, enrolment withheld for course id(s) '
                     . implode(', ', $withheld)
-                    . ' - not purchasable by this buyer at payment time. Refund due.');
+                    . ' - not purchasable by this buyer at payment time. Refund due.'
+                    . self::withheld_review_note($cart, self::withheld_line_amounts($cart, $withheld)));
             }
             $DB->update_record('local_sentientia_cart_history', $cart);
 
@@ -541,6 +545,82 @@ class cart_manager {
             $transaction->rollback($e);
             return false;  // unreachable; rollback rethrows
         }
+    }
+
+    /**
+     * What the buyer was charged for each withheld line of an order, for the administrator who refunds it
+     * (cart.withheld_line_refund, owner decision 2026-10-07).
+     *
+     * Money is owed to the buyer for a line mark_paid() did not enrol, and the order's GST was computed on the
+     * whole order, so working the partial refund out by hand invites mistakes. Each row gives the line's price, its
+     * discount, its share of the order's GST and the sum, all in paise (two decimals, round() as recompute_totals()
+     * does): the discount is price x discount_pct / 100, the net is price minus discount, and the GST share is the
+     * order's RECORDED tax_amount spread over the order's taxable amount (subtotal - discount_amount), so it follows
+     * the rate the buyer was actually charged even if gst_rate has changed since. A line's figures can differ from
+     * the invoice by a paisa (each is rounded on its own), so every caller labels them "for review": the
+     * administrator decides the refund (refund(), a PARTIAL refund) and Finance issues any GST credit note.
+     * Nothing here refunds anything.
+     *
+     * @param \stdClass $cart the order row (items_json, subtotal, discount_amount, tax_amount)
+     * @param int[] $withheld course ids paid for but not enrolled
+     * @return array[] one per withheld line found in items_json, in basket order: courseid, name, price,
+     *                 discount, net, tax, total (floats, two decimals)
+     */
+    public static function withheld_line_amounts(\stdClass $cart, array $withheld): array {
+        $withheld = array_map('intval', $withheld);
+        $items = json_decode($cart->items_json ?: '[]', true) ?: [];
+        $ordertaxable = (float) $cart->subtotal - (float) $cart->discount_amount;
+        $ordertax = (float) $cart->tax_amount;
+
+        $rows = [];
+        foreach ($items as $item) {
+            $courseid = (int) ($item['courseid'] ?? 0);
+            if (!in_array($courseid, $withheld, true)) {
+                continue;
+            }
+            $price = round((float) ($item['price'] ?? 0), 2);
+            $discount = round($price * ((int) ($item['discount_pct'] ?? 0)) / 100, 2);
+            $net = round($price - $discount, 2);
+            $tax = $ordertaxable > 0 ? round($net * $ordertax / $ordertaxable, 2) : 0.0;
+            $rows[] = [
+                'courseid' => $courseid,
+                'name'     => (string) ($item['name'] ?? ''),
+                'price'    => $price,
+                'discount' => $discount,
+                'net'      => $net,
+                'tax'      => $tax,
+                'total'    => round($net + $tax, 2),
+            ];
+        }
+        return $rows;
+    }
+
+    /**
+     * The staff-notes text for withheld_line_amounts(): the figures, marked "for review, not an invoice". English,
+     * like the rest of history.notes (stored text read by administrators, not a message built per reader).
+     *
+     * @param \stdClass $cart the order row
+     * @param array[] $rows withheld_line_amounts()
+     * @return string starts with a newline; empty when there is nothing to state
+     */
+    private static function withheld_review_note(\stdClass $cart, array $rows): string {
+        if (!$rows) {
+            return '';
+        }
+        $currency = (string) $cart->currency;
+        $text = "\nFor review, not an invoice: the amount charged for each withheld line, worked out from the order's"
+            . ' recorded totals with paise rounding (the GST share can differ from the invoice by a paisa).'
+            . ' Refund them with a partial refund; Finance issues any GST credit note.';
+        $sum = 0.0;
+        foreach ($rows as $row) {
+            $sum += $row['total'];
+            $text .= "\n- course id {$row['courseid']}: price " . number_format($row['price'], 2, '.', '')
+                . ' - discount ' . number_format($row['discount'], 2, '.', '')
+                . ' + GST share ' . number_format($row['tax'], 2, '.', '')
+                . ' = ' . number_format($row['total'], 2, '.', '') . ' ' . $currency;
+        }
+        return $text . "\nWithheld lines total " . number_format(round($sum, 2), 2, '.', '') . " {$currency} of the order total "
+            . number_format((float) $cart->total_amount, 2, '.', '') . " {$currency}.";
     }
 
     /**
