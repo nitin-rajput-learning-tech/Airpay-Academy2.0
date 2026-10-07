@@ -388,3 +388,45 @@ be offered as a course to enrol in (decision `exams.forum_pseudocourses` = `excl
   storefront, so this is an open item for the storefront.
 - Test: `tests/pseudo_course_exclusion_test.php`. NOT RUN (low-CPU mode); the lead re-inits PHPUnit once. Both trees.
 - Purge `local_sentientia_catalog` caches on deploy (trending, new_courses and categories are cached).
+
+## 2026-10-07 - owner decision cart.price_source: the enrol_fee cost is the price (1.0.8-beta, 2026100701)
+
+A confirmed **revenue hole** is closed. Decision `cart.price_source` = `enrol_fee_authoritative` (owner, delegated
+2026-10-07; Airpay Finance not consulted; reversible). Both trees. **Not run: no PHPUnit here; the lead re-initialises
+PHPUnit once for the version bump.**
+
+- **The hole.** `commerce::get_course_price()` read only the config setting `course_price_<id>`, which production never
+  sets, so every course priced through `enrol_fee` read as Free: 66 in the April 2026 copy (61 Public, 1 ZEEA, 4 Airpay;
+  all visible; INR 100-499) against 0 catalogue price settings. The basket stored such a course as `is_free`
+  (`add_to_cart`), and the basket action `enrollfree` (`cart.php`, no flag, any logged-in non-guest) enrolled it through
+  `enrolment::enrol_now()`, whose "never enrol into a paid course" re-check used the same config-only price. A logged-in
+  Public learner could be enrolled in a course production sells, for nothing. (Not the earlier "enrollfree skips self-enrol
+  keys" note, which is a different issue.)
+- **The fix, no flag** (it restores what production shows and charges; a guard that stops paid courses being given away
+  must not depend on a flag; `sentientia.catalog.storefront_checkout.enabled` stays OFF).
+  1. `commerce::get_course_price()` reads the enabled `enrol_fee` instance (cost and currency). New
+     `commerce::enrol_fee_price()`: the lowest `sortorder` (then `id`) enabled instance with a cost above zero; `enrol.cost`
+     is a CHAR column, so the comparison is in PHP. This is the order cart's rule
+     (`cart_manager::get_course_price()`: the first enabled instance by `sortorder`) with one deliberate difference that
+     fails closed: an instance with cost 0 is skipped here, so the catalogue may be stricter than the cart (a course
+     priced here that the cart then refuses), never freer. The config setting is only the fallback for a course with no fee
+     instance (still "paid", and the order cart still refuses it, as before). The returned array gains `price_source`
+     (`enrol_fee`, `config` or `none`); `display` shows the rupee sign for INR and the currency code otherwise, and paise
+     only when the price has them (it used to round 499.50 to "₹500").
+  2. `enrolment::enrol_now()` also returns false for any course `cart_manager::get_course_price()` prices (guarded by
+     `class_exists`), so the refusal does not depend on one price reader being right.
+  3. `checkout_bridge`'s docblock no longer says the two sources are an open decision; `pricediffers` can now only mean the fee
+     changed after the line went into the basket.
+- **Tests (new `tests/price_source_test.php`, NOT RUN):** a fee-priced course is paid with its cost and currency; the basket
+  stores it as paid; the fee beats the config setting; the config setting is only the fallback; no price anywhere is free; a
+  disabled, zero, empty or non-numeric fee is not a price; USD shown with its code and paise kept; the lowest sortorder
+  decides and equals the cart's price; across six instance shapes the catalogue is never Free where the cart has a price;
+  `enrol_now()` refuses a fee-priced course and still enrols free ones (including a disabled or zero fee); the `enrollfree`
+  path cannot enrol a fee-priced line even when the session line says `is_free`; `enrol_now()` asks the order cart.
+  `tests/storefront_checkout_test.php`: the price-differs test now changes the fee after the line is in the basket, and a new
+  test shows the basket carries the fee when config and fee disagree from the start.
+- **Do on UAT after deploy:** check for any Public test account that has used `enrollfree` on a fee-priced course (such an
+  enrolment has no `payments` row); purge `local_sentientia_catalog` caches.
+- **Visual evidence owed** (CLAUDE.md section 5): the catalogue price on a card and on `course.php`, and the basket
+  (`cart.php`), desktop and 590 px, for a fee-priced course that used to show "Free". Not captured in this session (no
+  browser access to the UAT build).

@@ -20,7 +20,12 @@ for non-logged-in browsing.
   unauthenticated (the marketing-facing entry point).
 - Featured carousel pulling from `local_sentientia_courses`'s featured list.
 - Commerce overlay: courses with a price tag show a "Add to cart"
-  button when viewed by a cart-enabled tenant.
+  button when viewed by a cart-enabled tenant. A course's price is its enabled
+  `enrol_fee` instance (cost and currency), the same cost the order cart charges
+  (`commerce::get_course_price()`); the `course_price_<id>` setting is only a
+  fallback for a course with no fee instance. A course priced by either is never
+  enrolled through the free path (`enrolment::enrol_now()` refuses it, and also
+  asks the order cart for its price when `local_sentientia_cart` is installed).
 
 ## Storefront basket to order cart (flag, default OFF)
 
@@ -36,19 +41,19 @@ Coming Soon" button. With `sentientia.catalog.storefront_checkout.enabled` ON
 
 - The order cart decides, not the storefront. `add_item()` applies the ADR-031
   catalogue purchase gate (a course the buyer's own catalogue does not show is
-  refused), the price (the enabled `enrol_fee` instance; the storefront's
-  `course_price_<id>` setting is only what the basket displayed, so a course
-  priced only there is refused, never given a price) and "not already enrolled".
-  `checkout()` and `mark_paid()` repeat the purchase gate later.
+  refused), the price (the enabled `enrol_fee` instance; a course priced only by
+  the `course_price_<id>` setting is refused, never given a price) and "not
+  already enrolled". `checkout()` and `mark_paid()` repeat the purchase gate later.
 - A refused line stays in the basket and the buyer is told how many. A line for a
   course the buyer is already enrolled in is dropped from the basket. Free lines
   are never touched (they enrol through "Enroll in All (Free)"); after a hand-off
   the buyer is told how many free lines are still in the basket. An unexpected
   error on one line (not only a `moodle_exception`) refuses just that line.
-- Two price sources, not unified yet: the basket shows `course_price_<id>`, the
-  order cart charges the `enrol_fee` cost. If they differ for a moved line the
-  buyer gets a warning to check the amounts on the checkout page. Decide which is
-  authoritative before turning the flag on.
+- One price source (owner decision `cart.price_source`, 2026-10-07): the basket
+  shows the enabled `enrol_fee` cost, the same the order cart charges; the
+  `course_price_<id>` setting is only a fallback for a course with no fee
+  instance. If the fee changed after a line went into the basket, the buyer gets
+  a warning to check the amounts on the checkout page.
 - Flag OFF, a guest, a buyer without `:purchase`, or a tenant the cart is off
   for: `cart.php` renders exactly as before.
 - Keep it OFF until the payment gateway has been verified in sandbox.

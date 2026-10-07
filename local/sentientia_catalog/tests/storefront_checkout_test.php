@@ -64,10 +64,12 @@ final class storefront_checkout_test extends \advanced_testcase {
     }
 
     /**
-     * A course owned by tenant $root. Priced when $fee is set: BOTH the storefront price the basket
-     * shows (course_price_<id> config) and the order cart's price (an enabled enrol_fee instance),
-     * because those are two sources. $fee = null leaves it free. $orderfee overrides the enrol_fee
-     * cost alone, so the two sources can disagree.
+     * A course owned by tenant $root. Priced when $fee is set: the enabled enrol_fee instance, which is
+     * the one price source (cart.price_source, 2026-10-07: the basket shows and the order cart charges
+     * the same cost), plus the config setting course_price_<id>, which is only the fallback for a course
+     * with no fee instance. $fee = null leaves it free. $storefrontonly leaves the config setting alone
+     * (no fee instance): the order cart has no price for that course. $orderfee sets the enrol_fee cost
+     * alone, which the catalogue now follows, so the basket and the order cart still agree.
      */
     private function make_course(int $root, ?float $fee = null, bool $storefrontonly = false,
             ?float $orderfee = null): \stdClass {
@@ -364,14 +366,37 @@ final class storefront_checkout_test extends \advanced_testcase {
             array_map(fn($i) => (int) $i['courseid'], json_decode($order->items_json, true)));
     }
 
+    public function test_the_basket_shows_the_enrol_fee_cost_the_order_cart_charges(): void {
+        $this->require_order_cart();
+        $buyer = $this->make_user(77);
+        $this->setUser($buyer);
+        // Config says 500, the enrol_fee instance 650: the fee is the one source, so the basket line carries 650.
+        $course = $this->make_course(77, 500.0, false, 650.0);
+        commerce::add_to_cart((int) $course->id);
+        $line = commerce::get_cart()[0];
+        $this->assertEqualsWithDelta(650.0, (float) $line['price'], 0.001);
+        $this->assertFalse($line['is_free']);
+
+        $result = checkout_bridge::hand_off((int) $buyer->id);
+
+        $this->assertSame([(int) $course->id], $result['added']);
+        $this->assertSame([], $result['pricediffers'], 'One source: the basket and the order cart cannot disagree.');
+        $cart = \local_sentientia_cart\cart_manager::get_or_open_cart((int) $buyer->id);
+        $this->assertEqualsWithDelta(650.00, (float) $cart->subtotal, 0.001);
+    }
+
     public function test_a_price_that_differs_between_basket_and_order_cart_is_flagged_but_still_moved(): void {
+        global $DB;
         $this->require_order_cart();
         $buyer = $this->make_user(77);
         $this->setUser($buyer);
         $agrees = $this->make_course(77, 500.0);
-        $differs = $this->make_course(77, 500.0, false, 650.0);   // basket says 500, the order cart charges 650
+        $differs = $this->make_course(77, 500.0);
         commerce::add_to_cart((int) $agrees->id);
         commerce::add_to_cart((int) $differs->id);
+        // The fee changes after the line is in the basket (the session keeps the price it was added at):
+        // the basket says 500, the order cart now charges 650.
+        $DB->set_field('enrol', 'cost', '650.00', ['courseid' => $differs->id, 'enrol' => 'fee']);
 
         $result = checkout_bridge::hand_off((int) $buyer->id);
 

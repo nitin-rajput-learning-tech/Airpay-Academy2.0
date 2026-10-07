@@ -2,9 +2,10 @@
 /**
  * Commerce Manager — course pricing, cart, and checkout.
  *
- * Pricing is stored as user preferences (admin-set) on a per-course basis
- * using Moodle's custom fields or a lightweight custom table.
- * Cart is stored in session (guest) or user preferences (logged-in).
+ * Pricing: a course's price is its enabled enrol_fee instance (cost and currency), the same source the order cart
+ * (local_sentientia_cart) charges and its set-price tool writes (owner decision cart.price_source, 2026-10-07).
+ * The config setting course_price_<id> is only a fallback for a course that has no fee instance.
+ * The storefront basket is stored in the session ($SESSION->sentientia_cart), for guests and logged-in users alike.
  *
  * @package    local_sentientia_catalog
  * @copyright  2026 Airpay Payment Services
@@ -17,31 +18,95 @@ defined('MOODLE_INTERNAL') || die();
 class commerce {
 
     /**
-     * Get course price. Returns null if free, or price array if paid.
-     * Pricing stored in course custom field 'open_price' or default 0 (free).
+     * The price a course is sold at, from Moodle's enrol_fee: the cost and currency of its first enabled fee
+     * instance that has a cost above zero (lowest sortorder, then lowest id), or null when it has none.
+     *
+     * This is the order cart's rule (\local_sentientia_cart\cart_manager::get_course_price(): the first enabled
+     * enrol_fee instance, ordered by sortorder). The one difference is deliberate and fails closed: the cart looks
+     * at the first enabled instance only, this skips an instance whose cost is not above zero, so a course the
+     * catalogue shows as paid can at worst be refused by the cart, never given away.
+     *
+     * @param int $courseid
+     * @return array{cost: float, currency: string}|null
+     */
+    public static function enrol_fee_price(int $courseid): ?array {
+        global $DB;
+        $instances = $DB->get_records('enrol',
+            ['courseid' => $courseid, 'enrol' => 'fee', 'status' => ENROL_INSTANCE_ENABLED],
+            'sortorder ASC, id ASC', 'id, cost, currency');
+        foreach ($instances as $instance) {
+            // enrol.cost is a CHAR column: compare as a number in PHP, not in SQL.
+            if (is_numeric($instance->cost) && (float) $instance->cost > 0) {
+                $currency = strtoupper(trim((string) $instance->currency));
+                return [
+                    'cost'     => (float) $instance->cost,
+                    'currency' => $currency !== '' ? $currency : 'INR',
+                ];
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get the course price. Always returns an array; is_free says whether the course is free.
+     *
+     * cart.price_source (owner decision, 2026-10-07): the enrol_fee instance is the single source of truth, the
+     * same as the order cart charges and the cart's own set-price tool writes
+     * (local_sentientia_cart\external\set_course_price). The catalogue used to read only the config setting
+     * course_price_<id>, which production never sets, so every course priced through enrol_fee (66 in the April
+     * 2026 copy, 61 of them Public) read as Free and the basket's "enrollfree" action enrolled it for nothing. Now:
+     *
+     *   1. an enabled enrol_fee instance with a cost above zero decides (price, currency);
+     *   2. otherwise the config setting course_price_<id> is only a fallback for a course that has no fee
+     *      instance (it is still "paid" here, and the order cart then refuses it, as before);
+     *   3. otherwise the course is free.
+     *
+     * Paid stays paid: a course production sells is never shown, or enrolled, as free. Reversible.
      */
     public static function get_course_price(int $courseid): array {
-        global $DB;
-
-        // Check if course has a price set (using existing open_ fields or custom config).
         $price = 0;
         $currency = 'INR';
         $is_free = true;
+        $source = 'none';
 
-        // Try course-level price from config table.
-        $priceconfig = get_config('local_sentientia_catalog', 'course_price_' . $courseid);
-        if ($priceconfig !== false && $priceconfig > 0) {
-            $price = (float)$priceconfig;
+        $fee = self::enrol_fee_price($courseid);
+        if ($fee !== null) {
+            $price = $fee['cost'];
+            $currency = $fee['currency'];
             $is_free = false;
+            $source = 'enrol_fee';
+        } else {
+            // Fallback for a course with no fee instance: the course-level config price.
+            $priceconfig = get_config('local_sentientia_catalog', 'course_price_' . $courseid);
+            if ($priceconfig !== false && $priceconfig > 0) {
+                $price = (float)$priceconfig;
+                $is_free = false;
+                $source = 'config';
+            }
         }
 
         return [
-            'price'       => $price,
-            'currency'    => $currency,
-            'is_free'     => $is_free,
-            'display'     => $is_free ? 'Free' : '₹' . number_format($price, 0),
-            'price_class' => $is_free ? 'free' : 'paid',
+            'price'        => $price,
+            'currency'     => $currency,
+            'is_free'      => $is_free,
+            'display'      => $is_free ? 'Free' : self::format_price($price, $currency),
+            'price_class'  => $is_free ? 'free' : 'paid',
+            'price_source' => $source,
         ];
+    }
+
+    /**
+     * A price for display: the rupee sign for INR, the currency code for any other currency; paise only when the
+     * price has them (499 reads "₹499", 499.5 reads "₹499.50").
+     *
+     * @param float $price
+     * @param string $currency
+     * @return string
+     */
+    private static function format_price(float $price, string $currency): string {
+        $decimals = abs($price - round($price)) < 0.005 ? 0 : 2;
+        $number = number_format($price, $decimals);
+        return $currency === 'INR' ? '₹' . $number : $currency . ' ' . $number;
     }
 
     /**
