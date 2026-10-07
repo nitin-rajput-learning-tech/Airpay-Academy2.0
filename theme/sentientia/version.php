@@ -427,7 +427,11 @@ defined('MOODLE_INTERNAL') || die();
 // (the in-flow footer left a blank band); the switcher endpoint takes the choice
 // as 'code', not 'lang' (core applies any GET lang to the session during config.php),
 // sets the page up before the sesskey check, and its return url drops sesskey.
-$plugin->version   = 2026093002;  // persona-pass theme shell + review fix-up: sticky-footer extradata/display:none, switcher 'code' param
+// 2026100801 - Moodle 5.3 compat FX-01 (2026-10-08): course_summary_data() no longer calls
+// external_format_text(), which 5.3 turned into a final-deprecation stub that THROWS (it fataled
+// every page that renders full_header()); it uses \core_external\util::format_text() with the
+// context object, identical output on 5.1 / 5.2 / 5.3. Bump picks up the changed renderer trait.
+$plugin->version   = 2026100801;  // Moodle 5.3 compat FX-01: course_summary_data via \core_external\util::format_text
 // 2026090806:  // login/OTP placeholders + SSO title + block aria-label: {{#quote}} JSON-escaped Hindi into \uXXXX → attribute-safe cleanstr/escaped values (core 5.2 pattern)
 // 2026090805:  footer: GPL badge -> private Airpay notice; sidebar literals localised; scoped-admin subtitle
 // 2026090804:  // admin dashboard: exact-or-child tenant scope on EVERY widget (was LIKE /1% and several unscoped), compliance widget table names fixed, localised chart months, system health = site admins only, core card aria overrides

@@ -25,8 +25,9 @@ defined('MOODLE_INTERNAL') || die();
  *     overview file is present. Pure Moodle core API — no BizLMS.
  *
  *   course_summary_data(): string
- *     HTML-formatted course summary, run through external_format_text
- *     for filters + media embedding.
+ *     HTML-formatted course summary, run through
+ *     \core_external\util::format_text for filters + media embedding
+ *     (external_format_text() is a throwing stub on Moodle 5.3).
  *
  *   hasrmaincontenthidden(): bool
  *     Mustache-friendly boolean (true iff courseviewmenu_hidden()).
@@ -93,15 +94,24 @@ trait course_view {
      * @return string
      */
     public function course_summary_data() {
-        global $COURSE, $CFG;
-        require_once("$CFG->libdir/externallib.php");
+        global $COURSE;
 
         $course  = $COURSE;
         $context = \context_course::instance($course->id, IGNORE_MISSING);
+        if (!$context) {
+            // Course context gone (mid-deletion, or a synthetic $COURSE): nothing to
+            // rewrite file URLs against, so hand back the raw summary as stored.
+            return $course->summary;
+        }
 
+        // Moodle 5.3 turned the global external_format_text() into a final deprecation
+        // stub that throws (MDL-76583), which fataled every page that renders
+        // full_header(). \core_external\util::format_text() is the replacement; it
+        // exists since 4.2 and takes the context OBJECT, so this is identical on
+        // 5.1 / 5.2 / 5.3.
         list($course->summary, $course->summaryformat) =
-            external_format_text($course->summary, $course->summaryformat,
-                $context->id, 'course', 'summary', null);
+            \core_external\util::format_text($course->summary, $course->summaryformat,
+                $context, 'course', 'summary', null);
         return $course->summary;
     }
 
