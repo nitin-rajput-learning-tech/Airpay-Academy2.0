@@ -1048,6 +1048,46 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertSame((int) $subject->id, (int) $response->subject_userid);
     }
 
+    /**
+     * The test above has the skipped completion BEFORE the imported one, where the old "latest of every legacy
+     * completion" time and the new "latest imported" time agree. Here the skipped completion is the LATER one: a
+     * regression to the old time would stamp the person as having responded when a completion that was never
+     * imported happened.
+     */
+    public function test_the_implied_assignment_time_ignores_a_later_skipped_completion(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->contract_seed();
+        $gen = $this->getDataGenerator();
+        $t = self::T0 + 30000;
+
+        // A supervisor form. The subject has no assignee row and two completions. The lower one (A, 1201) is imported
+        // (its supervisor exists); the later one (B, 1202: higher id, later time) was filled in by a user that does
+        // not exist, so it is skipped (orphan_user).
+        $this->put_form(12, ['evaluationmode' => 'SP', 'open_path' => '/1/5']);
+        $subject = $gen->create_user(['username' => 'evimp_subject_late']);
+        $DB->set_field('user', 'open_path', '/1/5', ['id' => $subject->id]);
+        $this->put_completed(1201, 12, (int) $subject->id, $t + 200,
+            ['anonymous_response' => 2, 'evaluatedby' => $this->u['sup']]);
+        $this->put_completed(1202, 12, (int) $subject->id, $t + 900,
+            ['anonymous_response' => 2, 'evaluatedby' => 88882]);
+
+        [$result] = $this->contract_run(true);
+        $this->assertSame(0, $result['exit'], implode('; ', array_merge($result['blockers'], $result['unproven'])));
+
+        $this->assertSame('skipped', $this->entry('local_evaluation_completed', 1202)->outcome);
+        $this->assertSame('orphan_user', $this->entry('local_evaluation_completed', 1202)->reason);
+        $this->assertNull($this->target('local_evaluation_completed', 1202, 'assign'));
+
+        $this->assertSame(1, $DB->count_records(importer::T_ASSIGN, ['evaluationid' => 12, 'userid' => $subject->id]));
+        $assign = $this->assignment(12, (int) $subject->id);
+        $this->assertSame((int) $assign->id, $this->target('local_evaluation_completed', 1201, 'assign'));
+        $this->assertSame('responded', $assign->status);
+        $this->assertSame($t + 200, (int) $assign->timecreated);
+        $this->assertSame($t + 200, (int) $assign->responded_at,
+            'the latest IMPORTED completion; the skipped one at t+900 is not a response the person gave');
+    }
+
     public function test_assignment_times_on_a_protected_form_are_cut_to_the_day(): void {
         $this->run_world();
         $tz = \core_date::get_server_timezone_object();
