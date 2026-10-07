@@ -41,7 +41,7 @@ These rules are not repeated in the feature sections.
 | R6 | The per-feature `legacy_id`, `legacy_ref`, `legacy_source` (as a key), `legacykey`, `legacyid` columns, UNIQUE legacy indexes and the `local_sentientia_classroom_legacy` / skills `import_map` tables proposed by the maps are **not built**. The ADR-032 map (`local_sentientia_legacymap`, key `sourcetable, sourceid, subkey`) is the idempotence key. "Key: map" below means that. |
 | R7 | A legacy value is copied into Sentientia only if a Sentientia reader shows it, an engine uses it, or a code fix in this document adds a reader for it. Everything else stays in the legacy table, which is the archive. So `legacy_json`, `legacy_meta`, `audience_json` and the classroom `sourcedata` archive proposed by the maps are dropped. |
 | R8 | Unknown enum values found in preflight block the feature until the decisions file maps them. The importer never guesses a status. |
-| R9 | Every new column that names a person is declared in its plugin's privacy provider (metadata, export, erase or anonymise), with en and hi strings. New actor-column names are added to `USER_COLUMNS` (`SE local/sentientia_platform/tests/privacy_coverage_test.php:52-63`). 2026-10-07 decision F-86: `usercreated`, `usermodified`, `modified_by` and `trainerid` are added in ONE change after the program merge, in both trees, together with the provider declarations the guard then asks for (emails, talent, the ten config-table plugins, the users sync tables, classroom, programs; actor columns anonymised to 0 on erasure). It does not block Stage B. |
+| R9 | Every new column that names a person is declared in its plugin's privacy provider (metadata, export, erase or anonymise), with en and hi strings. New actor-column names are added to `USER_COLUMNS` (`SE local/sentientia_platform/tests/privacy_coverage_test.php:52-63`). 2026-10-07 decision F-86 (consolidates F-15, F-38, F-48 and F-73): `usercreated`, `usermodified`, `modified_by` and `trainerid` are added in ONE change after the program merge, in both trees, together with the provider declarations the guard then asks for (emails, talent, the ten config-table plugins, the users sync tables, classroom, programs; actor columns anonymised to 0 on erasure). It does not block Stage B. |
 | R10 | Reports carry ids and codes only. |
 | R11 | Deleted users' rows are imported as history unless the section says otherwise. Readers named in the section filter `u.deleted = 0` or show a badge. |
 | R12 | A derived group (a row built from many source rows) is keyed by a non-personal integer: the group's own integer key (a cart identifier) or `MIN(id)` of the group. Never a user id. |
@@ -3577,6 +3577,7 @@ its feature. The proposed value is the default the rehearsal uses unless Nitin c
 | `evaluation.open_forms` | `archived` \| `active` | `archived` |
 | `evaluation.multichoicerated` | `multichoice` \| `rating_when_1_5` | `multichoice` |
 | `evaluation.sp_anonymous_subject` | `hidden` \| `shown` | `hidden` |
+| `evaluation.sticky_anonymity` | `whole_form` \| `named_rows_kept` | `whole_form` (2026-10-07 decision EV-16) |
 | `cart.synthesize_ledger` | true \| false | `false`, signed 2026-09-30 (no invented money rows; not a Finance question) |
 | `cart.order_tenant` | `buyer` \| `course` | `buyer` |
 | `cart.abandoned` | `admin_only` \| `skip` | `admin_only` |

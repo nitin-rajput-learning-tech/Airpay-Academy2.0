@@ -792,7 +792,7 @@ today they are what keeps tenant admins working on a restored UAT database.
   mapping doc introduces (`enrolledby`, `markedby`, `initiatedby`, `sender_userid`, `subject_userid`),
   so the structural guard sees them. A plugin whose provider then fails (for example
   `sentientia_users`, a null provider today) fixes its provider in the same change.
-  2026-10-07 decision F-86: `usercreated`, `usermodified`, `modified_by` and `trainerid` join `USER_COLUMNS` in ONE change after
+  2026-10-07 decision F-86 (consolidates F-15, F-38, F-48 and F-73): `usercreated`, `usermodified`, `modified_by` and `trainerid` join `USER_COLUMNS` in ONE change after
   the program merge, in both trees, with the provider declarations the guard then flags (emails, talent, `course_type`,
   `course_category`, `email_overrides`, `email_rules`, `learningpath`, `learningpath_courses`, `cohort_scope`, `talent_path`,
   `talent_succ`, `talent_opp`, the users sync tables, classroom, programs; actor columns anonymised to 0 on erasure), and the
@@ -945,7 +945,7 @@ recorded above; this is the one list:
 5. `local/sentientia_pages/qr_scan.php` stops reading and inserting `local_classroom_attendance`
    (classroom code fix 1, with visual evidence).
 6. The standard log store is enabled on the database the run is on (gating item 5b).
-7. The registry loads all 19 importers (2026-10-07 decisions EV-25, F-33, F-44, F-78). Until classroom and program were on the
+7. The registry loads all 19 importers (2026-10-07 decisions EV-25, F-33, F-43, F-44, F-78). Until classroom and program were on the
    integration branch, `registry::load()` threw `unknown_dependency` for ratings, evaluation and request and no feature could
    load. Committed on `claude/gap-integration`: classroom (b316c138a), the runner's dry-run FOLD fix (6991ac1b6) and program
    (bae085600). What remains is to confirm `registry::load()` returns all 19 after the PHPUnit re-init, then run the dry runs of

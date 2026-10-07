@@ -199,6 +199,28 @@ rows. April values are quoted in section C.
 | before cutover | Finance (via Nitin) | the six native-tax-invoice points | cart.native_tax_invoices |
 | before cutover, after the evidence | Nitin | reader flags for Airpay (imported e-mail history and body detail, request history, `legacy_logs` report OFF, ratings widget, reactions, reviews OFF, evaluation drilldown, users sync history, notification senders) | COMMS-C2, CRS-11, CRS-12, EV-06, IDN-07, COMMS-N7 |
 
+### G. Visual evidence owed before any reader flag is flipped (F-06, F-16, F-46, F-71; EV-18, COMMS-N5, COMMS-R3)
+
+CLAUDE.md section 5: desktop and 590 px screenshots, a README in `docs/visual-evidence/<date>/<feature>/`, and Nitin reviews. Test
+personas and test data only; no real name may appear (the local XAMPP holds a copy of production users). Every reader flag stays
+OFF until he says so. Capture each page with the flag OFF and ON, as a learner and as a tenant admin:
+
+- cart: `credits.php`, the 'Issued in ERPNext as' invoice view, `return.php` and `history.php` status rendering, the
+  admin_orders Staff notes column, the checkout error path, and the catalogue price and basket after `cart.price_source`.
+- users: `sync_runs.php` and `sync_run_detail.php` as a tenant manager (uploader and non-uploader) and as a cross-tenant admin.
+- learningplan, program, classroom, recompletion, skills: `mypaths.php` and the `view.php` cover; `myprograms.php`, the `view.php`
+  levels tab, roster 'Completed on' and the logo; the classroom list with Draft and On hold, the edit form, 'No limit', the
+  overview, roster completion columns, `my.php` and bulk enrol by audience; recompletion `history.php`, `history_detail.php`,
+  `index.php` and the `edit.php` refusal; My Skills, the skill page levels tab, profile chips, the catalog level badge and the
+  recommendation rail.
+- notifications and request: the Logs tab (Sent from, Sent on, the not_sent and other badges, the BizLMS badge),
+  `email_detail.php`, the Templates tab as a `/77` admin, My requests, Pending approvals, All requests and `admin_log.php`.
+- evaluation: `my_evaluations.php` (named responded, anonymous with the reworded note, waiting, closed, the imported badge, the SP
+  case), `response_list.php` and `response_detail.php`, and the `claude/eval-followups` pages.
+- ratings and exams: the course-page stars with `sentientia.ratings.widget` OFF and ON; the guest storefront and the in-progress
+  rail after CRS-14.
+- the navigation entries added with each flag flip (F-47).
+
 ## Rollback on the sandbox
 
 Disposable by design — drop the restored DB / re-restore. Nothing else is affected.
