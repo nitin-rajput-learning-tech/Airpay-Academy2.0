@@ -50,6 +50,12 @@ class bulk_assign_by_audience extends external_api {
             (int) $params['evaluationid']);
 
         $map = self::parse_filters($params['filters']);
+        // '{}', malformed JSON, keys nobody supports and blank values all leave no filter: refuse, as the form does,
+        // instead of assigning everybody in the tenant (EV-36). After the tenant check, so an evaluation of another
+        // tenant is still refused as out of tenant first.
+        if (!\local_sentientia_evaluation\evaluation_audience_assigner::has_constraint($map)) {
+            throw new \moodle_exception('bulk_assign_pick_at_least_one', 'local_sentientia_evaluation');
+        }
 
         return \local_sentientia_evaluation\evaluation_audience_assigner::assign_by_filter(
             (int) $params['evaluationid'], $map, (int) $USER->id,

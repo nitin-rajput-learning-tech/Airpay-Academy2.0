@@ -206,6 +206,80 @@ final class audience_assigner_test extends \advanced_testcase {
         $this->assertSame(['matched' => 0, 'assigned' => 0, 'capped' => false], $none);
     }
 
+    /**
+     * EV-36: which filter maps narrow an audience. An empty map used to mean "everyone in my tenant".
+     */
+    public function test_has_constraint_says_whether_a_filter_map_narrows_anything(): void {
+        $this->assertFalse(evaluation_audience_assigner::has_constraint([]));
+        $this->assertFalse(evaluation_audience_assigner::has_constraint(['nonsense' => 'x']), 'a key nobody supports');
+        $this->assertFalse(evaluation_audience_assigner::has_constraint(
+            ['designation' => '', 'region' => '   ', 'location' => "\t", 'cohortid' => 0, 'org_path' => '']));
+        $this->assertFalse(evaluation_audience_assigner::has_constraint(['org_path' => ' // ']), 'only slashes');
+        $this->assertFalse(evaluation_audience_assigner::has_constraint(['cohortid' => -3]));
+        $this->assertFalse(evaluation_audience_assigner::has_constraint(['cohortid' => '0']));
+        $this->assertFalse(evaluation_audience_assigner::has_constraint(['designation' => ['a']]), 'not a plain value');
+
+        foreach (['designation', 'region', 'location', 'employmenttype', 'grade', 'hrmsrole'] as $key) {
+            $this->assertTrue(evaluation_audience_assigner::has_constraint([$key => 'x']), $key);
+        }
+        $this->assertTrue(evaluation_audience_assigner::has_constraint(['org_path' => '/1']), 'a tenant root is a node');
+        $this->assertTrue(evaluation_audience_assigner::has_constraint(['org_path' => '1/5/']));
+        $this->assertTrue(evaluation_audience_assigner::has_constraint(['cohortid' => 7]));
+        $this->assertTrue(evaluation_audience_assigner::has_constraint(['cohortid' => '7']));
+        $this->assertTrue(evaluation_audience_assigner::has_constraint(['designation' => '', 'cohortid' => 7]),
+            'one real filter is enough');
+    }
+
+    public function test_assign_by_filter_refuses_an_empty_audience_rule_and_writes_nothing(): void {
+        global $DB;
+        $evaluationid = evaluation_manager::create((object) ['name' => 'Nobody by default']);
+        $this->user(['open_designation' => 'Present']);
+        $this->user();
+
+        foreach ([
+            'no filters' => [],
+            'blank values' => ['designation' => '', 'region' => '   ', 'cohortid' => 0, 'org_path' => ''],
+            'only slashes' => ['org_path' => '//'],
+            'a key nobody supports' => ['nonsense' => 'x'],
+            'a cohort that is not positive' => ['cohortid' => -3],
+            'a value that is not plain' => ['designation' => ['a']],
+        ] as $what => $filters) {
+            try {
+                evaluation_audience_assigner::assign_by_filter($evaluationid, $filters, $this->caller);
+                $this->fail("{$what} should be refused");
+            } catch (\moodle_exception $e) {
+                $this->assertSame('bulk_assign_pick_at_least_one', $e->errorcode, $what);
+            }
+        }
+        $this->assertSame(0, $DB->count_records('local_sentientia_evaluation_assign', ['evaluationid' => $evaluationid]),
+            'nobody was assigned');
+
+        // The preview of an empty rule is still allowed: it only counts, and the admin needs the number.
+        $this->assertGreaterThanOrEqual(2, evaluation_audience_assigner::preview([], $this->caller)['count']);
+    }
+
+    public function test_a_tenant_root_org_path_still_assigns_and_reports_the_cap(): void {
+        global $DB;
+        $cap = evaluation_audience_assigner::MAX_AUDIENCE_SIZE;
+        $evaluationid = evaluation_manager::create((object) ['name' => 'Whole tenant, chosen on purpose']);
+        // One more person in the tenant root than the cap allows, cloned from a real row.
+        $template = $DB->get_record('user', ['id' => $this->user(['open_path' => '/1'])], '*', MUST_EXIST);
+        $records = [];
+        for ($i = 0; $i < $cap + 1; $i++) {
+            $record = clone $template;
+            unset($record->id);
+            $record->username = 'rootpath' . $i;
+            $record->email = 'rootpath' . $i . '@example.invalid';
+            $records[] = $record;
+        }
+        $DB->insert_records('user', $records);
+
+        $result = evaluation_audience_assigner::assign_by_filter($evaluationid, ['org_path' => '/1'], $this->caller);
+        $this->assertSame(['matched' => $cap, 'assigned' => $cap, 'capped' => true], $result,
+            'naming the tenant root is a choice, so it assigns, and it says the audience was cut at the cap');
+        $this->assertSame($cap, $DB->count_records('local_sentientia_evaluation_assign', ['evaluationid' => $evaluationid]));
+    }
+
     public function test_assign_by_filter_refuses_an_evaluation_that_does_not_exist(): void {
         $this->expectException(\dml_missing_record_exception::class);
         evaluation_audience_assigner::assign_by_filter(987654321, [], $this->caller);

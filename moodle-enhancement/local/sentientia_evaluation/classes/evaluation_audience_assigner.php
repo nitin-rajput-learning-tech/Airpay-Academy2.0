@@ -17,7 +17,8 @@ defined('MOODLE_INTERNAL') || die();
  * `evaluation_manager::ensure_assignment()` (P1 #37) which is
  * idempotent — already-assigned learners are silently skipped.
  *
- * Filters supported (all optional; ANDed together; empty = no constraint):
+ * Filters supported (all optional; ANDed together; empty = no constraint; but assign_by_filter() needs at least one
+ * that says something, {@see self::has_constraint()}: an empty rule no longer means "everyone in my tenant"):
  *   designation, region, location, employmenttype, grade, hrmsrole
  *     → exact match on user.open_* column
  *   org_path
@@ -35,6 +36,42 @@ defined('MOODLE_INTERNAL') || die();
 class evaluation_audience_assigner {
 
     public const MAX_AUDIENCE_SIZE = 2000;
+
+    /** Filter keys that match one user column exactly, and the column each one matches. */
+    private const EXACT_FILTERS = [
+        'designation'    => 'u.open_designation',
+        'region'         => 'u.open_region',
+        'location'       => 'u.open_location',
+        'employmenttype' => 'u.open_employmenttype',
+        'grade'          => 'u.open_grade',
+        'hrmsrole'       => 'u.open_hrmsrole',
+    ];
+
+    /**
+     * Does a filter map narrow the audience at all?
+     *
+     * An empty map used to mean "everyone in my tenant" (up to MAX_AUDIENCE_SIZE users), which the bulk-assign form
+     * already refuses ("pick at least one filter criterion") but the web service and assign_by_filter() did not
+     * (EV-36). A value counts only when it says something: a blank or whitespace-only string, a cohort id that is
+     * not positive, an org path that is only slashes, or anything that is not a plain value is no constraint.
+     * An org path that names a tenant root IS one, however many users that is: the caller chose the whole node.
+     *
+     * @param array $filters The filter map, as resolve_audience() reads it.
+     * @return bool
+     */
+    public static function has_constraint(array $filters): bool {
+        $text = static fn($value): string => is_scalar($value) ? trim((string) $value) : '';
+        foreach (array_keys(self::EXACT_FILTERS) as $key) {
+            if ($text($filters[$key] ?? '') !== '') {
+                return true;
+            }
+        }
+        if (trim($text($filters['org_path'] ?? ''), '/') !== '') {
+            return true;
+        }
+        $cohortid = $filters['cohortid'] ?? 0;
+        return is_scalar($cohortid) && (int) $cohortid > 0;
+    }
 
     /**
      * Resolve a filter map → matching user ids. Tenant-scoped unless
@@ -62,15 +99,7 @@ class evaluation_audience_assigner {
             $params = array_merge($params, $tnargs);
         }
 
-        $allowed_exact = [
-            'designation'    => 'u.open_designation',
-            'region'         => 'u.open_region',
-            'location'       => 'u.open_location',
-            'employmenttype' => 'u.open_employmenttype',
-            'grade'          => 'u.open_grade',
-            'hrmsrole'       => 'u.open_hrmsrole',
-        ];
-        foreach ($allowed_exact as $key => $col) {
+        foreach (self::EXACT_FILTERS as $key => $col) {
             $val = (string) ($filters[$key] ?? '');
             if ($val !== '') {
                 $param_key = 'flt_' . $key;
@@ -136,6 +165,13 @@ class evaluation_audience_assigner {
      * Resolve filters + create assignment rows for every matched user.
      * Returns counts. `assigned_by_userid` is the caller — recorded on
      * each row for the audit trail.
+     *
+     * An empty audience rule is refused (EV-36): with no filter at all, or only blank ones, this used to assign the
+     * whole tenant (up to MAX_AUDIENCE_SIZE people). The form already asked for at least one criterion; the web
+     * service did not. The evaluation is looked up first, so a missing one is still reported as missing; nothing is
+     * written before the refusal.
+     *
+     * @throws \moodle_exception bulk_assign_pick_at_least_one when no filter narrows the audience
      */
     public static function assign_by_filter(int $evaluationid,
                                               array $filters,
@@ -144,6 +180,10 @@ class evaluation_audience_assigner {
         global $DB;
         $DB->get_record('local_sentientia_evaluation', ['id' => $evaluationid],
             'id, status', MUST_EXIST);
+
+        if (!self::has_constraint($filters)) {
+            throw new \moodle_exception('bulk_assign_pick_at_least_one', 'local_sentientia_evaluation');
+        }
 
         $userids = self::resolve_audience($filters, $caller_userid);
         $count = count($userids);
