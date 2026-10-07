@@ -106,8 +106,8 @@ final class bizlms_import_test extends \advanced_testcase {
     ];
 
     /**
-     * The eight choices the importer declares (evaluation.sticky_anonymity since EV-16), with the given needs-owner
-     * reasons accepted.
+     * The nine choices the importer declares (evaluation.sticky_anonymity since EV-16,
+     * evaluation.tenant_editor_fallback since EV-TENANT), with the given needs-owner reasons accepted.
      *
      * @param string[] $accepted
      * @return decisions
@@ -119,13 +119,14 @@ final class bizlms_import_test extends \advanced_testcase {
     }
 
     /**
-     * The eight choices the importer declares, each with the one value it implements.
+     * The nine choices the importer declares, each with the one value it implements.
      *
      * @return array<string, mixed>
      */
     private function declared_choices(): array {
         return [
             'tenant.unresolved.evaluation' => 'pathless',
+            'evaluation.tenant_editor_fallback' => 'not_used',
             'evaluation.open_forms' => 'archived',
             'evaluation.multichoicerated' => 'multichoice',
             'evaluation.sp_anonymous_subject' => 'hidden',
@@ -137,7 +138,7 @@ final class bizlms_import_test extends \advanced_testcase {
     }
 
     /**
-     * The owner's choices: the eight the importer declares, and every needs-owner reason accepted, so a run that
+     * The owner's choices: the nine the importer declares, and every needs-owner reason accepted, so a run that
      * loses nothing unexpectedly exits 0.
      *
      * @return decisions
@@ -639,6 +640,39 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertEquals(
             ['exact' => 3, 'fallback:costcenterid' => 1, 'normalised' => 1, 'unresolved' => 2, 'walked_up' => 1],
             $methods, 'form 3 has a padded path; forms 4 and 9 cannot be placed');
+    }
+
+    /**
+     * EV-TENANT: a form that its path, its stored root and its classroom cannot place stays pathless. It used to be
+     * filed under the tenant of the person who last edited it, a guess that would show the form's named answers to
+     * administrators BizLMS never showed them to. Here that person works in /77 today.
+     */
+    public function test_a_form_with_no_clue_is_not_filed_under_the_tenant_of_the_user_who_last_edited_it(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->contract_seed();
+        // No path ('0', the BizLMS default), no stored root, no classroom; last edited by a /77 person.
+        $this->put_form(13, ['usermodified' => $this->u['u2']]);
+        [$result, $report] = $this->contract_run(true);
+        $this->assertSame(0, $result['exit'], implode('; ', array_merge($result['blockers'], $result['unproven'])));
+
+        $thirteen = $this->form(13);
+        $this->assertNull($thirteen->open_path, 'no path: the editor\'s tenant is not a clue');
+        $this->assertSame(0, (int) $thirteen->costcenterid);
+        $methods = $this->section($report, 'evaluation.forms', 'tenant_methods');
+        $this->assertEquals(3, $methods['unresolved'], 'forms 4, 9 and 13 cannot be placed, and the report says so');
+        $this->assertArrayNotHasKey('fallback:usermodified', $methods, 'the editor is not a candidate any more');
+
+        // Only cross-tenant callers see it: not an administrator of the editor's own tenant.
+        $admin77 = $this->getDataGenerator()->create_user(['username' => 'evimp_adm77']);
+        $DB->set_field('user', 'open_path', '/77', ['id' => $admin77->id]);
+        role_assign((int) $DB->get_field('role', 'id', ['shortname' => 'manager'], MUST_EXIST), $admin77->id,
+            \context_system::instance()->id);
+        accesslib_clear_all_caches_for_unit_testing();
+        $this->setUser($DB->get_record('user', ['id' => $admin77->id], '*', MUST_EXIST));
+        $this->assertFalse(evaluation_manager::can_manage_evaluation($thirteen));
+        $this->setAdminUser();
+        $this->assertTrue(evaluation_manager::can_manage_evaluation($thirteen));
     }
 
     public function test_a_trainer_feedback_form_is_scoped_by_its_classroom_and_linked_to_it(): void {

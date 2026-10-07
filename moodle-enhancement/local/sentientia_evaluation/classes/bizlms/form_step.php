@@ -27,8 +27,11 @@ use local_sentientia_platform\bizlms\step;
  *    classroom events it names. So status 2, trigger_event manual, days_after 0, notify_admin_on_response 0.
  *  - anonymous 1 when BizLMS said so (value 1) or when any completion was anonymous: the flag is sticky.
  *  - a soft-deleted form (deleted = 1) is not imported: BizLMS purged its values and hid it everywhere.
- *  - tenant: an organisation, by the rule in the mapping doc (tenant_scope). No organisation: the form keeps no
- *    path and costcenterid 0, so only cross-tenant callers see it (decision tenant.unresolved.evaluation).
+ *  - tenant: an organisation, by the rule in the mapping doc (tenant_scope): the form's own path, then the root
+ *    BizLMS kept in costcenterid, then the path of the classroom it belongs to. No organisation: the form keeps no
+ *    path and costcenterid 0, so only cross-tenant callers see it (decision tenant.unresolved.evaluation). The user
+ *    who last edited the form is NOT a clue (decision evaluation.tenant_editor_fallback = not_used): BizLMS showed
+ *    such a form to site administrators only, and a guessed tenant would show its named answers to others.
  *
  * Not copied: type, evaluationtype, plugin, instance, visible, course, department and audience columns,
  * publish_stats, autonumbering, completionsubmit, page_after_submit, usermodified. Nothing in Sentientia reads
@@ -129,15 +132,16 @@ final class form_step extends step {
             return outcome::archive($id, 'deleted_form');
         }
 
-        // Tenant: the form's own path, then the root BizLMS kept in costcenterid, then the classroom it belongs to,
-        // then whoever last edited it.
+        // Tenant: the form's own path, then the root BizLMS kept in costcenterid, then the classroom it belongs to.
+        // Nothing else: a form that none of those places is imported pathless (decision evaluation.tenant_editor_fallback
+        // = not_used, EV-TENANT). It is never filed under the tenant of whoever last edited it, because that is a
+        // guess, and a guessed tenant would show the form's named answers to administrators BizLMS never showed them to.
         $rawpath = trim((string) ($row->open_path ?? ''));
         [$classroompath, $deferredparent] = $this->classroom_path($ctx, $row);
         [$path, $costcenterid, $method] = tenant_scope::resolve($ctx, [
             'open_path' => $rawpath === '' ? null : $rawpath,
             'costcenterid' => tenant_scope::root_path($row->costcenterid ?? null),
             'classroom' => $classroompath,
-            'usermodified' => tenant_scope::user_root_path($ctx, (int) ($row->usermodified ?? 0)),
         ]);
 
         $created = $this->facts->created($ctx, $row);

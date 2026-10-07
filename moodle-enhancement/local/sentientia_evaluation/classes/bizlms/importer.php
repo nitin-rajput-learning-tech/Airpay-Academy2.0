@@ -90,6 +90,9 @@ final class importer implements framework_importer {
     public const DECISIONS = [
         'tenant.unresolved.evaluation' => ['pathless',
             'A form with no resolvable organisation keeps no path and costcenterid 0: cross-tenant callers only, reported.'],
+        // EV-TENANT (owner delegation 2026-10-07): the user who last edited a form is not a tenant clue.
+        'evaluation.tenant_editor_fallback' => ['not_used',
+            'A form whose path, stored root and classroom give no tenant imports pathless; it is never filed under the tenant of the user who last edited it.'],
         'evaluation.open_forms' => ['archived',
             'Every imported form is archived and manual; an active one would reopen answering with no assignment check.'],
         'evaluation.multichoicerated' => ['multichoice',

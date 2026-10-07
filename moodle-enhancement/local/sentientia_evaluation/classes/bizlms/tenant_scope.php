@@ -54,18 +54,7 @@ final class tenant_scope {
         return (ctype_digit($text) && (int) $text > 0) ? '/' . (int) $text : null;
     }
 
-    /**
-     * The tenant root of a person, as a path, from their current open_path.
-     *
-     * @param context $ctx
-     * @param int $userid
-     * @return string|null
-     */
-    public static function user_root_path(context $ctx, int $userid): ?string {
-        if ($userid <= 0) {
-            return null;
-        }
-        $root = $ctx->tenant->root_of_user($userid);
-        return $root > 0 ? '/' . $root : null;
-    }
+    // There is deliberately no helper that reads a tenant from a PERSON (the user who last edited a form). The
+    // classroom importer rejects that guess and so does this one (decision evaluation.tenant_editor_fallback =
+    // not_used): a person's current tenant says nothing about the tenant a record belonged to when they touched it.
 }
