@@ -57,12 +57,12 @@ class provider implements
             'privacy:metadata:roster');
         $collection->add_database_table('local_sentientia_classroom_attendance',
             [
-                'sessionid'  => 'privacy:metadata:attendance:sessionid',
-                'userid'     => 'privacy:metadata:attendance:userid',
-                'status'     => 'privacy:metadata:attendance:status',
-                'markedat'   => 'privacy:metadata:attendance:markedat',
-                'markedby'   => 'privacy:metadata:attendance:markedby',
-                'notes'      => 'privacy:metadata:attendance:notes',
+                'sessionid'    => 'privacy:metadata:attendance:sessionid',
+                'userid'       => 'privacy:metadata:attendance:userid',
+                'status'       => 'privacy:metadata:attendance:status',
+                'timemodified' => 'privacy:metadata:attendance:markedat',
+                'markedby'     => 'privacy:metadata:attendance:markedby',
+                'notes'        => 'privacy:metadata:attendance:notes',
             ],
             'privacy:metadata:attendance');
         $collection->add_database_table(self::CLASSROOMS,
@@ -133,8 +133,9 @@ class provider implements
         // marked. The learner is somebody else's data, so only the row, its classroom or session and the time.
         $enrolled = $DB->get_records('local_sentientia_classroom_users', ['enrolledby' => $userid], 'id ASC',
             'id, classroomid, timecreated');
+        // The attendance table has no markedat column: the time a row was marked is its timemodified.
         $marked = $DB->get_records('local_sentientia_classroom_attendance', ['markedby' => $userid], 'id ASC',
-            'id, sessionid, status, markedat');
+            'id, sessionid, status, timemodified AS markedat');
         \core_privacy\local\request\writer::with_context(
             \context_system::instance())
             ->export_data(['sentientia_classroom'],

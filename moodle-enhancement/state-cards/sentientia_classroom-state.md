@@ -664,3 +664,39 @@ byte-identical for every file touched. NOT run: PHPUnit (the lead re-inits once)
 - **Owner question, unchanged:** a classroom whose `open_path` is unusable imports with NO path (visible to
   cross-tenant callers only) because the signed value is `classroom.pathless = cross_tenant_only`; mapping section
   15 and its CR6 fixture describe rebuilding it from the cost centre. The code follows the signed decision.
+
+### Review round 2 (2026-10-07) - ADR-032 classroom importer
+
+Same branch, same version (2026093002 / 1.11.0: a provider query, a metadata key and tests only, so no bump). Both
+trees byte-identical for every file touched. NOT run: PHPUnit (the lead re-inits once). Checked with `php -l`,
+`tools/check-tree-drift.php`, `tools/check-lang-parity.php`, `tools/check-path-boundary.php --quiet` and
+`tools/check-bizlms-fixture-copies.php`.
+
+- **Must-fix, privacy export crashed (regression of round 1).** `provider::export_user_data()` selected
+  `attendance.markedat` for the rows the user marked. That column has never existed: `install.xml` and the upgrade
+  steps give the attendance table `id, sessionid, userid, status, markedby, notes, timecreated, timemodified`. The
+  query threw `dml_read_exception` (reproduced read-only on the April rehearsal copy by the reviewer) for EVERY
+  user with a system context here, so every learner, trainer or actor data-subject export failed. It now selects
+  `timemodified AS markedat` (the time a row was marked is its `timemodified`), so the exported key is unchanged.
+  The pre-existing metadata entry that declared the same non-existent `markedat` column now declares the real
+  `timemodified` column, with the same string `privacy:metadata:attendance:markedat` (so en and hi stay as they
+  are). The 2026-09-24 note above that "the `markedat` field it declares does not exist" is closed by this.
+  `test_privacy_finds_exports_and_clears_the_actor_columns` now also asserts the exported row carries `markedat`
+  equal to the real `timemodified`, which would have caught this; `privacy_waitlist_test`'s
+  `provider_without_waitlist::export_user_data` goes through the same query and is unblocked.
+- **Test hygiene.** `import_readers_test::test_the_logo_callback_serves_nothing_...` calls
+  `local_sentientia_classroom_pluginfile()` and now `require_once`s `local/sentientia_classroom/lib.php` first
+  (Moodle does not reliably load a local plugin's lib.php inside PHPUnit).
+- **Not done, for the lead:** (1) merge with `claude/gap-integration`: the review's test merge conflicts in
+  `tests/location_schema_test.php` (both trees; both sides made the same `assertGreaterThanOrEqual` change with
+  different comments) and in the state cards of this plugin and of `sentientia_notifications`; resolve by hand at
+  merge time. (2) Visual evidence is still missing (no running Moodle in this workflow); the screens to capture are
+  listed in round 1. (3) Owner questions unchanged: `classroom.pathless=cross_tenant_only` vs the mapping doc's
+  rebuild of an unusable path from the cost centre (section 15, fixture CR6), and whether a co-trainer may run
+  every session of their classroom. (4) Mapping doc section 15 does not list two behaviours added in round 1: a
+  deleted learner's waiting place imports as `removed`, and a learner waiting twice in one queue is merged into the
+  earliest place (`dup_waiting_place`). (5) Before merge the lead's re-init run should include `--group
+  bizlms_import` plus `attendance_trainer_scope_test`, `import_readers_test`, `import_schema_test`,
+  `privacy_waitlist_test`, `tenant_scope_test`, `trainer_block_test`, `ics_builder_test` and
+  `rule_engine_phase_c_test`. (6) The April rehearsal copy has 0 classrooms, so only the venue steps are proven on
+  real data until Stage B.

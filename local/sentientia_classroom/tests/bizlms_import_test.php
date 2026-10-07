@@ -1075,6 +1075,9 @@ final class bizlms_import_test extends provider_testcase {
         $this->assertSame($attid, (int) $data->marked_by[0]->id);
         $this->assertFalse(property_exists($data->enrolled_by[0], 'userid'), 'the learner is not exported to the actor');
         $this->assertFalse(property_exists($data->marked_by[0], 'userid'), 'the learner is not exported to the actor');
+        $this->assertTrue(property_exists($data->marked_by[0], 'markedat'), 'the time is exported under its metadata name');
+        $this->assertSame((int) $DB->get_field('local_sentientia_classroom_attendance', 'timemodified', ['id' => $attid]),
+            (int) $data->marked_by[0]->markedat, 'markedat is the real column timemodified (the table has no markedat)');
         $this->assertSame(0, $data->roster_count, 'the actor is on no roster themselves');
 
         // DPDP anonymise keeps the columns: they point at the user row that is anonymised in place.

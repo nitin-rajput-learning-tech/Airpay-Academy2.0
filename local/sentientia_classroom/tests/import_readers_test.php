@@ -412,6 +412,9 @@ final class import_readers_test extends \advanced_testcase {
     }
 
     public function test_the_logo_callback_serves_nothing_to_people_who_may_not_see_the_classroom(): void {
+        global $CFG;
+        // Moodle does not reliably load a local plugin's lib.php inside PHPUnit.
+        require_once($CFG->dirroot . '/local/sentientia_classroom/lib.php');
         $this->setUser($this->getDataGenerator()->create_user());
         $context = \context_system::instance();
         $id = $this->classroom();
