@@ -862,6 +862,29 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertEquals(['feedback_giver_not_found' => 1], $step['warnings']);
     }
 
+    public function test_an_actor_who_was_hard_deleted_is_left_empty_not_carried_as_a_dangling_id(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->contract_seed();
+        // The administrator who enrolled uD and the one who assigned the trainer have since been removed from the site.
+        $gone = 987651;
+        $this->assertFalse($DB->record_exists('user', ['id' => $gone]));
+        $DB->set_field('local_program_users', 'usercreated', $gone, ['id' => 604]);
+        $DB->set_field('local_program_trainers', 'usercreated', $gone, ['id' => 701]);
+        [$result, $report] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+
+        $this->assertEquals(0, $this->enrolment(41, 'uD')->enrolledby);
+        $this->assertEquals(0, $DB->get_field('local_sentientia_programs_trainers', 'assignedby',
+            ['id' => $this->target('local_program_trainers', 701)]));
+        $to = $report->to_array();
+        $this->assertSame(1, $this->step($to, 'program.user')['warnings']['enrolledby_not_found']);
+        $this->assertSame(1, $this->step($to, 'program.trainer')['warnings']['assignedby_not_found']);
+        // The rows themselves are kept, and an actor who still exists is carried as before.
+        $this->assertEquals(0, $this->enrolment(41, 'uD')->status);
+        $this->assertEquals($this->w['admin'], $this->enrolment(41, 'uA')->enrolledby);
+    }
+
     public function test_the_owner_can_accept_the_needs_owner_reasons(): void {
         $decisions = decisions::from_array([
             'program.completed_without_date' => 'completed_flagged', 'program.inactive' => 'archived',
@@ -1132,12 +1155,41 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertTrue($DB->record_exists('local_sentientia_programs', ['id' => 41]));
         $this->assertSame(4, $DB->count_records('local_sentientia_programs_lvlcomp'));
 
-        // A level nobody completed carries no history, and archiving always works.
-        $this->assertTrue(program_manager::delete_level($this->target('local_program_levels', 108)));
+        // An imported level is refused too, completion or not: it is the same rule as the program's.
+        $optional = $this->target('local_program_levels', 108);
+        try {
+            program_manager::delete_level($optional);
+            $this->fail('an imported level is not deleted');
+        } catch (\moodle_exception $e) {
+            $this->assertSame('error_history_protected', $e->errorcode);
+        }
+        $this->assertTrue($DB->record_exists('local_sentientia_programs_levels', ['id' => $optional]));
+
+        // A level a person adds to the imported program goes as before, and archiving always works.
+        $added = program_manager::create_level(41, (object) ['name' => 'Added in Sentientia']);
+        $this->assertTrue(program_manager::delete_level($added));
         $this->assertSame(program_manager::STATUS_ARCHIVED, program_manager::change_status(41, program_manager::STATUS_ARCHIVED));
         // A program the import did not touch is deleted as before.
         $native = program_manager::create((object) ['name' => 'Native']);
         $this->assertTrue(program_manager::delete($native));
+    }
+
+    public function test_an_imported_program_with_nothing_imported_under_it_is_not_deleted(): void {
+        global $DB;
+        $this->apply();
+        $this->setAdminUser();
+
+        // Program 45 kept only its criteria row: no level, no enrolment, no trainer. Its row is the history.
+        $this->assertSame(0, $DB->count_records('local_sentientia_programs_levels', ['programid' => 45]));
+        $this->assertSame(0, $DB->count_records('local_sentientia_programs_users', ['programid' => 45]));
+        $this->assertTrue(program_manager::program_has_imported_history(45));
+        try {
+            program_manager::delete(45);
+            $this->fail('the imported program row is what other tables point at');
+        } catch (\moodle_exception $e) {
+            $this->assertSame('error_history_protected', $e->errorcode);
+        }
+        $this->assertTrue($DB->record_exists('local_sentientia_programs', ['id' => 45]));
     }
 
     public function test_a_tenant_admin_reads_only_their_own_tenants_imported_programs(): void {

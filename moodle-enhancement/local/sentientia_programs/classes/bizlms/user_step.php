@@ -107,6 +107,14 @@ final class user_step extends base_step {
             $status = rules::USER_INPROGRESS;
         }
 
+        // Who enrolled the learner. A creator who has since been hard-deleted from the site leaves no user to point at:
+        // 0 (nobody, as for a row BizLMS wrote with no creator) and a warning, never a dangling id.
+        $enrolledby = max(0, (int) $winner->usercreated);
+        if ($enrolledby > 0 && !$ctx->lookups->user_exists($enrolledby)) {
+            $enrolledby = 0;
+            $warnings[] = 'enrolledby_not_found';
+        }
+
         $result = outcome::insert((int) $winner->id, self::T_USERS, (object) [
             'programid' => $target,
             'userid' => $userid,
@@ -114,7 +122,7 @@ final class user_step extends base_step {
             'status' => $status,
             'timecreated' => $created,
             'timecompleted' => $timecompleted,
-            'enrolledby' => max(0, (int) $winner->usercreated),
+            'enrolledby' => $enrolledby,
             'timemodified' => rules::time_or($winner->timemodified, $created),
         ]);
         if ((int) $winner->timemodified <= 0) {

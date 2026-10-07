@@ -541,6 +541,52 @@ final class program_engine_test extends \advanced_testcase {
         $this->assertTrue(program_manager::delete($native));
     }
 
+    public function test_an_imported_program_row_is_history_even_with_nothing_under_it(): void {
+        global $DB;
+        // Every level of it was skipped as empty_level and nobody is enrolled: the row itself is what the
+        // certificates, ratings, requests and e-mail logs of BizLMS point at (its id is preserved).
+        $p = $this->program();
+        $this->assertFalse(program_manager::program_has_imported_history($p), 'a program a person built, nothing imported');
+        $this->mark_imported('local_sentientia_programs', $p, 'local_program');
+
+        $this->assertTrue(program_manager::program_has_imported_history($p));
+        try {
+            program_manager::delete($p);
+            $this->fail('the imported program row is history: archive it instead');
+        } catch (\moodle_exception $e) {
+            $this->assertSame('error_history_protected', $e->errorcode);
+        }
+        $this->assertTrue($DB->record_exists('local_sentientia_programs', ['id' => $p]));
+        $this->assertSame(program_manager::STATUS_ARCHIVED, program_manager::change_status($p, program_manager::STATUS_ARCHIVED));
+
+        // The same shape built by a person deletes.
+        $native = $this->program();
+        $this->assertTrue(program_manager::delete($native));
+        $this->assertFalse($DB->record_exists('local_sentientia_programs', ['id' => $native]));
+    }
+
+    public function test_an_imported_level_is_not_deleted_even_without_a_stored_completion(): void {
+        global $DB;
+        // The same rule as the program: an imported row is not deleted from an admin action.
+        $p = $this->program();
+        $imported = $this->level($p, 0);
+        $added = $this->level($p, 1);
+        $this->mark_imported('local_sentientia_programs_levels', $imported, 'local_program_levels');
+
+        try {
+            program_manager::delete_level($imported);
+            $this->fail('the imported level is not deleted');
+        } catch (\moodle_exception $e) {
+            $this->assertSame('error_history_protected', $e->errorcode);
+        }
+        $this->assertTrue($DB->record_exists('local_sentientia_programs_levels', ['id' => $imported]));
+
+        // A level a person added to the same program goes as before.
+        $this->assertTrue(program_manager::delete_level($added));
+        $this->assertSame([$imported], array_map('intval', $DB->get_fieldset_select(
+            'local_sentientia_programs_levels', 'id', 'programid = :p', ['p' => $p])));
+    }
+
     public function test_a_level_with_a_stored_completion_is_not_deleted_one_without_is(): void {
         global $DB;
         $u = $this->getDataGenerator()->create_user();

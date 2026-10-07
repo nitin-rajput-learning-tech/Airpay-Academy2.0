@@ -105,13 +105,19 @@ class program_manager {
     /**
      * Does the program hold history the import carried?
      *
-     * That is: a stored level completion, an imported enrolment, an imported level (with the course rows under it),
-     * or an imported trainer or trainer feedback row. Decision framework.protect_imported_history blocks the delete of
-     * imported rows, and a hard delete of the program would take all of these with it. Rows a person created are
-     * not history: a program built in Sentientia, with no import row under it, can still be deleted.
+     * That is: the program row itself when the import created or adopted it, a stored level completion, an imported
+     * enrolment, an imported level (with the course rows under it), or an imported trainer or trainer feedback row.
+     * Decision framework.protect_imported_history blocks the delete of imported rows. The program row counts on its
+     * own: its id is a preserved BizLMS id that certificates, ratings, requests and e-mail logs elsewhere point at
+     * (program_step::external_refs), whether or not anything is left under it (every level skipped as empty_level,
+     * nobody enrolled). Rows a person created are not history: a program built in Sentientia, with no import row
+     * under it, can still be deleted.
      */
     public static function program_has_imported_history(int $programid): bool {
         global $DB;
+        if (self::is_imported_row(self::TABLE, $programid)) {
+            return true;
+        }
         if (self::table_present(self::LVLCOMP_TABLE)
                 && $DB->record_exists(self::LVLCOMP_TABLE, ['programid' => $programid])) {
             return true;
@@ -533,9 +539,10 @@ class program_manager {
     /**
      * Delete a program and all its levels, course assignments, enrollments.
      *
-     * ADR-032: a program that holds imported history (an imported enrolment, or a stored level completion) is
-     * not deleted - archive it instead (decision framework.protect_imported_history). Everything the
-     * program owns in the ADR-032 tables goes with a program that is deleted.
+     * ADR-032: a program the import created, or that holds imported history (an imported enrolment, level, trainer
+     * row, or a stored level completion), is not deleted - archive it instead (decision
+     * framework.protect_imported_history). Everything the program owns in the ADR-032 tables goes with a program
+     * that is deleted.
      *
      * @throws \moodle_exception error_history_protected
      */
@@ -663,8 +670,12 @@ class program_manager {
      * Delete a level. Cascades to its course assignments.
      * Reflows sortorder of remaining sibling levels to remove gaps.
      *
-     * ADR-032: a level somebody has a stored completion for (BizLMS history) is not deleted, because the
-     * completion would go with it (decision framework.protect_imported_history).
+     * ADR-032: the same rule as delete(): a level the import created or adopted, or that somebody has a stored
+     * completion for, is not deleted (decision framework.protect_imported_history: delete actions on imported rows
+     * are blocked). The level's id is a preserved BizLMS id that the stored completions and the enrolments'
+     * current level point at, and the program it belongs to cannot be deleted either. The way out is the one
+     * delete() gives: edit the level, unassign its courses, or archive the program. A level a person added in
+     * Sentientia, to an imported program too, deletes as before.
      *
      * @throws \moodle_exception error_history_protected
      */
@@ -674,8 +685,9 @@ class program_manager {
         $level = $DB->get_record(self::LEVELS_TABLE, ['id' => $levelid], '*', MUST_EXIST);
         $programid = (int) $level->programid;
 
-        if (self::table_present(self::LVLCOMP_TABLE)
-                && $DB->record_exists(self::LVLCOMP_TABLE, ['levelid' => $levelid])) {
+        if (self::is_imported_row(self::LEVELS_TABLE, $levelid)
+                || (self::table_present(self::LVLCOMP_TABLE)
+                    && $DB->record_exists(self::LVLCOMP_TABLE, ['levelid' => $levelid]))) {
             throw new \moodle_exception('error_history_protected', 'local_sentientia_programs');
         }
 

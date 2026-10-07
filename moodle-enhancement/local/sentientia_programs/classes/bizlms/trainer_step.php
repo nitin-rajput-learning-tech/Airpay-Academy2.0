@@ -75,7 +75,11 @@ final class trainer_step extends base_step {
             return outcome::skip($id, 'orphan_user');
         }
         $created = (int) $row->timecreated;
-        return outcome::insert($id, self::T_TRAINERS, (object) [
+        // The administrator who assigned the trainer; one that no longer exists is left empty, as for a row with no
+        // creator (the same rule as the feedback giver below), not carried as a dangling id.
+        $assignedby = max(0, (int) $row->usercreated);
+        $assignerexists = $assignedby === 0 || $ctx->lookups->user_exists($assignedby);
+        $result = outcome::insert($id, self::T_TRAINERS, (object) [
             'programid' => $program,
             'userid' => (int) $row->trainerid,
             // The raw BizLMS evaluation id, not resolved through the map: the mapping doc says "evaluation map, later",
@@ -84,10 +88,14 @@ final class trainer_step extends base_step {
             // until then the value is right, and the table is expected to be empty.
             'feedbackid' => max(0, (int) $row->feedback_id),
             'feedback_score' => $ctx->text->fit((string) $row->feedback_score, 45, 'feedback_score'),
-            'assignedby' => max(0, (int) $row->usercreated),
+            'assignedby' => $assignerexists ? $assignedby : 0,
             'timecreated' => $created,
             'timemodified' => rules::time_or($row->timemodified, $created),
         ]);
+        if (!$assignerexists) {
+            $result->warn('assignedby_not_found');
+        }
+        return $result;
     }
 
     /**

@@ -201,12 +201,13 @@ Twelve BizLMS `local_program` tables, one owner, one feature:
 9. "Completed on" roster column, flag `sentientia.programs.history.enabled` (default OFF), with the program logo on
    `view.php`.
 10. Protect history (decision `framework.protect_imported_history` = block): an imported enrolment is not unenrolled,
-    a program with imported history or stored completions is not deleted (archive instead), a level with a stored
-    completion is not deleted; the roster hides the trash action on imported rows. Native rows behave as before;
+    a program the import created, or one with imported history or stored completions, is not deleted (archive
+    instead), an imported level or a level with a stored completion is not deleted (round 3); the roster hides the
+    trash action on imported rows. Native rows behave as before;
     `delete()` and a native `unenrol_user()` cascade to the ADR-032 tables.
 11. Privacy: `_lvlcomp`, `_trainers`, `_trainerfb`, `enrolledby`, `assignedby` declared, exported, erased (core path) and
     anonymised (DPDP path keeps the certification record, clears only references). en + hi strings.
-12. `delete_level`: refuses a level with stored completions, so there is nothing to clean. `unassign_course_from_level`
+12. `delete_level`: refuses an imported level (round 3) and a level with stored completions, so there is nothing to clean. `unassign_course_from_level`
     deliberately does NOT touch `_lvlcomp`: a stored completion is history, not a function of the level's current
     course list (doc correction reported to the lead).
 13. `lib.php` `local_sentientia_programs_pluginfile` serves `programlogo` (system context, item id = program id) to an
@@ -258,8 +259,9 @@ no schema or version change, plugin stays 2026093001 / 1.9.0):
 - `program_manager::program_has_imported_history()` now also counts an imported level, trainer or trainer-feedback row
   (the map's provenance, not mere presence), so `delete()` refuses a program whose imported levels, trainers or
   feedback a hard delete would take with it (decision `framework.protect_imported_history` = block). A program a
-  person built in Sentientia, with no import row under it, deletes as before. `delete_level()` is unchanged: an
-  imported level nobody has a stored completion for can still be deleted from the level editor.
+  person built in Sentientia, with no import row under it, deletes as before. `delete_level()` was left
+  unchanged in round 2 (an imported level nobody has a stored completion for could still be deleted); round 3
+  supersedes that, see below.
 - Tests, written and not run: `program_engine_test` (imported level / trainer / feedback block the delete, native
   twin deletes), `list_programs_test` (deleted user not counted), `bizlms_import_test` (the grandchild detail).
 
@@ -285,6 +287,45 @@ no schema or version change, plugin stays 2026093001 / 1.9.0):
    card).
 5. Tests still register `org_stub_importer`; switch to the real org importer after this branch is rebased on
    `claude/gap-integration` (the real one needs its fixture tables in `bizlms_fixture`, which the stub avoids).
+
+**Review round 3 (2026-10-07).** Verdict fix-then-ship; one must_fix, and it is in the framework (see 1 below), which
+this branch may not edit. Closed here (both trees, no schema or version change, plugin stays 2026093001 / 1.9.0):
+- `program_manager::program_has_imported_history()` now returns true when the program ROW was imported or adopted
+  (legacymap provenance of `local_sentientia_programs` itself). Before, a program whose levels were all skipped as
+  `empty_level` and with no enrolment (seed program 45) deleted with a hard delete although its preserved id is what
+  `tool_certificate_issues`, `local_rating`, `enrol`, `local_request_records` and `local_emaillogs` point at
+  (`program_step::external_refs`), against decision `framework.protect_imported_history` = block.
+- One rule for delete: `delete_level()` now also refuses a level the import created or adopted (it still refuses a
+  level with a stored completion). Before, `delete()` refused a program for an imported level that `delete_level()`
+  would have deleted, together with its imported course rows. The signed wording is "delete ... actions on imported
+  rows are blocked", so this is the literal reading. The way out stays: edit the level, `unassign_course_from_level`
+  (unchanged), or archive the program. A level a person adds to an imported program deletes as before. RECORD for the
+  mapping-doc owner (fix 12 and fix 10 wording): fix 12 is "delete_level refuses an imported level or a stored
+  completion", `unassign_course_from_level` is unchanged. The level editor still shows the delete button on an
+  imported level and surfaces `error_history_protected` on click (no template change, so no new visual evidence beyond
+  the list below).
+- A creator who has been hard-deleted from the site no longer leaves a dangling actor id: `users.enrolledby` and
+  `trainers.assignedby` take 0 with warning `enrolledby_not_found` / `assignedby_not_found` when the BizLMS `usercreated`
+  user does not exist (the rule `trainer_step` already had for the feedback giver). A creator that exists is carried as
+  before. Warning codes are free-form, so there is no string to add.
+- Tests, written and NOT run (no PHPUnit in this pass): `program_engine_test` (imported program row with nothing under
+  it, imported level without a stored completion), `bizlms_import_test` (program 45 not deleted; level 108 refused, a
+  Sentientia-added level on program 41 deleted; the two actor warnings), and the old expectation that level 108 deletes
+  was reversed.
+
+**Still open after round 3** (none of these can be closed from this branch):
+1. FRAMEWORK (must_fix, unchanged from round 2, item 1 above): the `runner::settle()` dry-run FOLD patch in both
+   platform trees. The task for this pass forbade framework edits, so it is not applied; claude/gap-integration has no
+   `runner.php` change since the fork point, so a rebase alone does not fix it either.
+2. Visual evidence (item 2 above). Needs a rendered site, which this pass may not use.
+3. Nitin: confirm `name_from_shortname` (item 3 above), and the round-3 `delete_level` rule above (revert to "an
+   imported level with no stored completion may be deleted" if he prefers; only `delete_level()` and its two new tests
+   change, a program the import created stays undeletable either way).
+4. Run the whole `local_sentientia_programs` PHPUnit suite and `local_sentientia_platform` `privacy_coverage_test`
+   on the rebased branch (no test of rounds 1 to 3 has been executed).
+5. After the rebase on `claude/gap-integration`: swap `org_stub_importer` for the real org importer (add its tables to
+   `bizlms_fixture`); expect a text conflict in `state-cards/sentientia_platform-state.md` only. Once classroom
+   declares `trainerid` in its privacy provider, move `trainerid` from `COMPONENT_USER_COLUMNS` to `USER_COLUMNS`.
 
 **April rehearsal expectations (read-only measurement by the round-2 review, schema `bizlms_april`; expectations, not a run).** `local_program` has 1 row (id 2;
 `visible` 0, so Archived; path `/77`, tenant 77; the creator's `open_path` is empty). Its 7 levels (8-14) have no level
