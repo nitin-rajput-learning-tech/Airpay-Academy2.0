@@ -103,11 +103,9 @@ final class capability_names_test extends \advanced_testcase {
         'local_sentientia_classroom/classes/external/preview_audience.php|local/sentientia_classroom:enrol' => 1,
         'local_sentientia_classroom/classes/form/bulk_enrol_audience_form.php|local/sentientia_classroom:enrol' => 1,
         'local_sentientia_classroom/db/services.php|local/sentientia_classroom:enrol' => 2,
-        // Evaluation response list and detail gate on :view, which only :manage
-        // and :respond exist next to. Declare :view (with a back-fill) or gate
-        // on :manage; a product decision, out of scope for the persona fixes.
-        'local_sentientia_evaluation/response_detail.php|local/sentientia_evaluation:view' => 1,
-        'local_sentientia_evaluation/response_list.php|local/sentientia_evaluation:view' => 1,
+        // The evaluation response list and detail pages were here (they gated on :view, declared nowhere). EV-06
+        // regated both on :manage behind the flag sentientia.evaluation.response_drilldown, so their entries are
+        // gone: a new undeclared capability there fails this test like any other.
     ];
 
     /**

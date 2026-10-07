@@ -91,6 +91,11 @@ $data = \local_sentientia_evaluation\evaluation_manager::responses_page_header($
     'has_questions'   => !empty($question_rows),
     'backurl'         => (new moodle_url('/local/sentientia_evaluation/index.php'))->out(false),
     'export_url'      => $export_url,
+    // The link to the individual responses (EV-06) exists only while the flag is ON: with it OFF the page answers
+    // "not available", so nothing points at it.
+    'has_list_link'   => \local_sentientia_evaluation\evaluation_manager::response_drilldown_enabled(),
+    'list_url'        => (new moodle_url('/local/sentientia_evaluation/response_list.php',
+        ['id' => $evaluationid]))->out(false),
     'reset_url'       => $reset_url,
 
     // Filter form context.

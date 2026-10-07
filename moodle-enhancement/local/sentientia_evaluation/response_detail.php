@@ -8,6 +8,9 @@
  * Shows one respondent's full answers for one evaluation, including
  * comparison to all other respondents (avg / distribution per question).
  *
+ * Behind the default-OFF flag sentientia.evaluation.response_drilldown and local/sentientia_evaluation:manage (EV-06):
+ * the page used to ask for ":view", which no plugin declares, so nobody could open it.
+ *
  * @package local_sentientia_evaluation
  */
 
@@ -15,6 +18,10 @@ require_once(__DIR__ . '/../../config.php');
 require_login();
 
 global $DB, $OUTPUT, $PAGE;
+
+// EV-06: the capability and the flag come first, so that nothing is read for a caller who may not be here. OFF
+// answers "not available", as if the page did not exist.
+\local_sentientia_evaluation\evaluation_manager::require_response_drilldown();
 
 $id = required_param('id', PARAM_INT);  // response id
 $response = $DB->get_record('local_sentientia_evaluation_responses',
@@ -30,10 +37,7 @@ $PAGE->set_title('Response detail');
 // set_heading() runs format_string() on what it is given, so it takes the raw name (it leaves an "&" that already
 // starts an entity alone, so formatting it first made no difference to its output).
 $PAGE->set_heading('Response detail — ' . $evaluation->name);
-require_capability('local/sentientia_evaluation:view', $ctx);
-// ADR-031: one respondent's answers only for an evaluation in the caller's
-// tenant (in place before this page is ever re-enabled - :view is not
-// declared, so today it is dead for everyone).
+// ADR-031: one respondent's answers only for an evaluation in the caller's tenant.
 \local_sentientia_evaluation\evaluation_manager::require_evaluation_access($evaluation);
 // An invited user's pending shell row (timesubmitted 0) is an invitation, not a response: refuse it, so it is never
 // shown as their answer.
@@ -44,11 +48,10 @@ require_capability('local/sentientia_evaluation:view', $ctx);
 // now, answered anonymously before, or with an anonymous question, whose
 // answer is on this very page. The submission time is then shown to the day.
 $is_anonymous_eval = \local_sentientia_evaluation\evaluation_manager::identity_protected($evaluation);
-$user = null;
-if (!$is_anonymous_eval && $response->userid) {
-    $user = $DB->get_record('user', ['id' => $response->userid],
-        'firstname, lastname, email, open_employeeid');
-}
+
+// Who answered, named through fullname() like the response list and the CSV (the site's name format applies to all
+// three); nobody on a protected evaluation. Built in the manager so it can be tested.
+$respondent = \local_sentientia_evaluation\evaluation_manager::response_detail_respondent($response, $is_anonymous_eval);
 
 // The respondent's answers, each beside how everybody else answered. Built in the manager so it can be tested:
 // it reads response_data by the bare question id and a choice question's options as a plain list (this page read
@@ -67,10 +70,9 @@ $data = [
     'kirkpatrick'   => (string) ($evaluation->kirkpatrick_level ?? '—'),
 
     'is_anonymous'  => $is_anonymous_eval,
-    'user_name'     => $user ? trim($user->firstname . ' ' . $user->lastname)
-        : get_string('eval_response_responder_anonymous', 'local_sentientia_evaluation'),
-    'user_email'    => $user ? (string) $user->email : '',
-    'employee_id'   => $user ? (string) ($user->open_employeeid ?? '') : '',
+    'user_name'     => $respondent['user_name'],
+    'user_email'    => $respondent['user_email'],
+    'employee_id'   => $respondent['employee_id'],
 
     'questions'     => $q_rows,
     'question_count' => count($q_rows),

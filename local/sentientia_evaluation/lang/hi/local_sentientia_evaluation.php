@@ -321,3 +321,7 @@ $string['questions_numeric_atmost'] = 'अनुमत सीमा: अधि�
 $string['invalidresponse'] = 'प्रतिक्रिया नहीं मिली।';
 $string['responses_subject_deleted'] = '(हटाया गया उपयोगकर्ता)';
 $string['responses_numeric_ignored'] = 'जो संग्रहीत उत्तर संख्या नहीं हैं, उन्हें इन आँकड़ों में शामिल नहीं किया गया: {$a}।';
+
+// 2026-10-07 (EV-06): व्यक्तिगत प्रतिक्रियाओं वाले पेज फ़ीचर फ़्लैग sentientia.evaluation.response_drilldown (डिफ़ॉल्ट बंद) के पीछे लौटते हैं।
+$string['responses_individual_link'] = 'व्यक्तिगत प्रतिक्रियाएँ';
+$string['response_drilldown_unavailable'] = 'व्यक्तिगत प्रतिक्रियाएँ अभी उपलब्ध नहीं हैं।';

@@ -8,6 +8,9 @@
  * Companion to the aggregate responses.php view. Lists each submission
  * separately with a link to the drill-down detail page.
  *
+ * Behind the default-OFF flag sentientia.evaluation.response_drilldown and local/sentientia_evaluation:manage (EV-06):
+ * the page used to ask for ":view", which no plugin declares, so nobody could open it.
+ *
  * @package local_sentientia_evaluation
  */
 
@@ -15,6 +18,10 @@ require_once(__DIR__ . '/../../config.php');
 require_login();
 
 global $DB, $OUTPUT, $PAGE;
+
+// EV-06: the capability and the flag come first, so that nothing is read for a caller who may not be here. OFF
+// answers "not available", as if the page did not exist.
+\local_sentientia_evaluation\evaluation_manager::require_response_drilldown();
 
 $evaluationid = required_param('id', PARAM_INT);
 $evaluation = $DB->get_record('local_sentientia_evaluation',
@@ -29,10 +36,7 @@ $PAGE->set_pagelayout('admin');
 // "&" that already starts an entity alone, so formatting it first made no difference to their output).
 $PAGE->set_title('Responses — ' . $evaluation->name);
 $PAGE->set_heading('Individual responses — ' . $evaluation->name);
-require_capability('local/sentientia_evaluation:view', $ctx);
-// ADR-031: names, emails and employee ids only for an evaluation in the
-// caller's tenant (in place before this page is ever re-enabled - :view is
-// not declared, so today it is dead for everyone).
+// ADR-031: names, emails and employee ids only for an evaluation in the caller's tenant.
 \local_sentientia_evaluation\evaluation_manager::require_evaluation_access($evaluation);
 
 // 2026-09-25: sticky - anonymous now, answered anonymously before, or with an

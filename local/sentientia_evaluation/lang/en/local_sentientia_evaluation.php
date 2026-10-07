@@ -314,3 +314,7 @@ $string['questions_numeric_atmost'] = 'Allowed range: at most {$a}';
 $string['invalidresponse'] = 'Response not found.';
 $string['responses_subject_deleted'] = '(deleted user)';
 $string['responses_numeric_ignored'] = 'Stored answers that are not numbers are left out of these figures: {$a}.';
+
+// 2026-10-07 (EV-06): the individual responses pages come back, behind the default-OFF flag sentientia.evaluation.response_drilldown.
+$string['responses_individual_link'] = 'Individual responses';
+$string['response_drilldown_unavailable'] = 'The individual responses are not available yet.';

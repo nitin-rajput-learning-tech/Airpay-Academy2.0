@@ -32,6 +32,9 @@ class evaluation_manager {
      */
     public const NUMERIC_DISTRIBUTION_SPAN = 10;
 
+    /** The default-OFF flag behind the individual responses pages (EV-06, db/feature_flags.php). */
+    public const FLAG_RESPONSE_DRILLDOWN = 'sentientia.evaluation.response_drilldown';
+
     /** Status values matching install.xml. */
     public const STATUS_DRAFT    = 0;
     public const STATUS_ACTIVE   = 1;
@@ -1443,6 +1446,67 @@ class evaluation_manager {
     public static function require_submitted_response(\stdClass $response): void {
         if ((int) ($response->timesubmitted ?? 0) <= 0) {
             throw new \moodle_exception('invalidresponse', 'local_sentientia_evaluation');
+        }
+    }
+
+    /**
+     * Are the individual responses pages (response_list.php and response_detail.php) switched on for the current
+     * user's customer and tenant?
+     *
+     * @return bool
+     */
+    public static function response_drilldown_enabled(): bool {
+        return \local_sentientia_platform\feature_flags::is_enabled(self::FLAG_RESPONSE_DRILLDOWN);
+    }
+
+    /**
+     * Who the detail page says answered: name, e-mail and employee id, or nobody.
+     *
+     * The name goes through fullname() over every name field, as the response list and the CSV do, so the site's name
+     * format applies to all three (the page printed trim(firstname . ' ' . lastname)). A protected evaluation
+     * ({@see self::identity_protected()}) names nobody and shows the "anonymous" label, whatever the response row
+     * holds; so does a response with no user, or whose account is gone, as before.
+     *
+     * @param \stdClass $response a responses row
+     * @param bool $protected identity_protected($evaluation)
+     * @return array{user_name: string, user_email: string, employee_id: string}
+     */
+    public static function response_detail_respondent(\stdClass $response, bool $protected): array {
+        global $DB;
+        $anonymous = ['user_name' => get_string('eval_response_responder_anonymous', 'local_sentientia_evaluation'),
+            'user_email' => '', 'employee_id' => ''];
+        $userid = (int) ($response->userid ?? 0);
+        if ($protected || $userid <= 0) {
+            return $anonymous;
+        }
+        $user = $DB->get_record('user', ['id' => $userid], self::respondent_fields() . ', open_employeeid');
+        if (!$user) {
+            return $anonymous;
+        }
+        return ['user_name' => fullname($user), 'user_email' => (string) $user->email,
+            'employee_id' => (string) ($user->open_employeeid ?? '')];
+    }
+
+    /**
+     * The first two gates of response_list.php and response_detail.php, in the order the pages apply them.
+     *
+     * (1) local/sentientia_evaluation:manage, which only the manager archetype holds by default: a manager, a tenant
+     * administrator and a site administrator. A learner (":respond" only) and a trainer (the teacher archetype) are
+     * refused. The pages used to ask for ":view", which no plugin declares, so nobody could open them (EV-06).
+     * (2) The flag {@see self::FLAG_RESPONSE_DRILLDOWN}: OFF answers "not available", as if the pages did not exist.
+     *
+     * The ADR-031 tenant gate ({@see self::require_evaluation_access()}) is the page's third step, because it needs
+     * the evaluation; the capability and the flag come first so that nothing is read for a caller who may not be
+     * here. Neither this nor that gate decides who sees NAMES: identity_protected() does, per evaluation.
+     *
+     * @return void
+     * @throws \required_capability_exception for a caller without :manage
+     * @throws \moodle_exception response_drilldown_unavailable when the flag is OFF
+     */
+    public static function require_response_drilldown(): void {
+        require_capability('local/sentientia_evaluation:manage', \context_system::instance());
+        if (!self::response_drilldown_enabled()) {
+            throw new \moodle_exception('response_drilldown_unavailable', 'local_sentientia_evaluation');
         }
     }
 
