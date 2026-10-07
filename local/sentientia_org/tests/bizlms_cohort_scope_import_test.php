@@ -147,7 +147,10 @@ final class bizlms_cohort_scope_import_test extends \advanced_testcase {
         $this->w['ctx5'] = $ctx5;
         $this->w['ctx77'] = $ctx77;
         $this->w['sys'] = $sys;
-        $gen->create_cohort_member(['cohortid' => $this->w['A'], 'userid' => $member->id]);
+        global $CFG;
+        require_once($CFG->dirroot . '/cohort/lib.php');
+        // Moodle 5.x core testing_data_generator has no cohort-member helper: use the core API.
+        cohort_add_member($this->w['A'], $member->id);
 
         // local_groups. Row ids are deliberately unrelated to cohort ids, and E's row id IS the cohort id of A:
         // local_groups_update_groups() updated the row whose id equals the cohort id, so an id proves nothing.
