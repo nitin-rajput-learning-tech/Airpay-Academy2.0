@@ -8,12 +8,27 @@
 # Usage:
 #   pwsh -File tools/packaging/package-sentientia.ps1                 # plugins + manifest + full bundle
 #   pwsh -File tools/packaging/package-sentientia.ps1 -SkipFull       # plugins + manifest only (fast)
+#
+# RETIRED FOR MOODLE 5.3 (ADR-033, 2026-10-08). Use tools/packaging/build-standalone.sh --target 5.3.
+# This script packages public/ only. Moodle 5.3 keeps Bootstrap, Font Awesome, React and the design system in
+# the ROOT lib/bundles (outside public/), so a public/-only bundle ships without icons and without all
+# React/ESM UI. It also reads the local 5.1 dev webroot rather than git, which is how a fix committed to git
+# could miss a package. It still works against a pre-5.3 tree and refuses a 5.3 one.
 param(
   [string]$PublicRoot = "C:\xampp\htdocs\moodle5\public",
   [string]$OutRoot    = "D:\Claude Local\Moodle Backup\sentientia-package",
   [switch]$SkipFull
 )
 $ErrorActionPreference = "Stop"
+$verFile = Join-Path $PublicRoot "version.php"
+if (Test-Path $verFile) {
+  $relLine = Get-Content $verFile | Where-Object { $_ -match '^\$release\s*=' } | Select-Object -First 1
+  if ($relLine -match "'(\d+)\.(\d+)") {
+    if ([int]$Matches[1] -gt 5 -or ([int]$Matches[1] -eq 5 -and [int]$Matches[2] -ge 3)) {
+      throw "package-sentientia.ps1 is retired for Moodle 5.3+ (it packages public/ only and drops root lib/bundles). Use: tools/packaging/build-standalone.sh --target 5.3"
+    }
+  }
+}
 $stamp = Get-Date -Format "yyyy-MM-dd"
 $OutRoot = "$OutRoot-$stamp"
 $pluginsOut = Join-Path $OutRoot "plugins"
