@@ -113,7 +113,7 @@ final class bizlms_decisions_test extends \advanced_testcase {
         }
     }
 
-    public function test_the_checked_in_file_loads_and_its_finance_items_block(): void {
+    public function test_the_checked_in_file_loads_and_every_decision_in_it_is_accepted(): void {
         $path = $this->real_decisions_file();
         $this->assertFileExists($path, 'the plugin ships a copy of the signed file; a missing copy must not skip the test');
         $decisions = decisions::load($path);
@@ -127,14 +127,22 @@ final class bizlms_decisions_test extends \advanced_testcase {
         // The importer's default is "on"; the owner's recorded value is "off" and must win.
         $this->assertSame('off', $ctx->decision('framework.reader_flags_default'));
 
-        $this->assertSame(['cart.credit_balances', 'cart.erpnext_invoices_legal'], array_keys($decisions->not_accepted()));
+        // cart.finance_keys_status (owner, 2026-10-07, delegated; Airpay Finance not consulted): the two finance
+        // keys are accepted, so nothing in the signed file is open any more and the cart importer, which declares
+        // both, is not blocked. The finance-confirm BLOCKING mechanism is still held by decisions.sample.json
+        // (toy.credit, above) and bizlms_runner_test::test_a_decision_the_owner_has_not_accepted_blocks_...
+        $this->assertSame([], $decisions->not_accepted());
+        $this->assertSame('frozen_pending_finance', $ctx->decision('cart.credit_balances'));
+        $this->assertSame('reference_only_pending_finance', $ctx->decision('cart.erpnext_invoices_legal'));
+        // The loader keeps no prose, so read the file for the reason: 'accepted' must never be mistakable for a
+        // Finance sign-off, so each why says the answer was delegated and Finance was not consulted.
+        $raw = json_decode((string) file_get_contents($path), true);
         foreach (['cart.credit_balances', 'cart.erpnext_invoices_legal'] as $key) {
-            try {
-                $ctx->decision($key);
-                $this->fail("{$key} is finance-confirm and must block");
-            } catch (blocked $e) {
-                $this->assertSame("decision_not_accepted:{$key}:finance-confirm", $e->getMessage());
-            }
+            $this->assertSame(decisions::ACCEPTED, $decisions->status($key));
+            $why = (string) ($raw['decisions'][$key]['why'] ?? '');
+            $this->assertStringContainsString('delegated', strtolower($why), "{$key}: the reason says it was delegated");
+            $this->assertStringContainsString('not consulted', strtolower($why),
+                "{$key}: the reason says Airpay Finance was not consulted");
         }
 
         $lf = str_replace("\r\n", "\n", (string) file_get_contents($path));

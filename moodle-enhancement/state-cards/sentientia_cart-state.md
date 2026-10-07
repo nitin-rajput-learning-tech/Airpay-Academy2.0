@@ -393,8 +393,9 @@ runs the whole `bizlms_import` group).
   - `cart.order_numbers` (recompute): numbers a line BizLMS never numbered, above `support::order_floor()`.
   - `finalise()` records the highest order number the import holds (`bizlms_order_floor`).
   - The gateway tables (`paygw_airpay`, `paygw_airpay_errorlog`, `paygw_course_enrolmentlog`) and Moodle's
-    `payments` are READ as evidence and declined as tables; nothing writes them. The two finance-confirm keys
-    (`cart.credit_balances`, `cart.erpnext_invoices_legal`) are NOT declared.
+    `payments` are READ as evidence and declined as tables; nothing writes them. The two finance keys
+    (`cart.credit_balances`, `cart.erpnext_invoices_legal`) were NOT declared on 2026-09-30; since 2026-10-07 they
+    ARE declared (see the section "2026-10-07 owner decisions (finance cluster)" below).
 - **Frozen and admin-only** (decisions `cart.imported_visibility`, `cart.admin_refund_imported_orders`):
   `cart_manager::mark_paid`, `mark_failed`, `refund` and `invoicer::issue_for_order` refuse a row with
   `legacy_source` (`error_invalidstate`); `list_orders` hides imported rows from their owner always and from

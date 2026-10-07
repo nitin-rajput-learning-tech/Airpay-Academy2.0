@@ -27,9 +27,14 @@ use local_sentientia_platform\bizlms\source_spec;
  *
  * Nothing is sent, enrolled, issued or recomputed by the import: the steps return outcomes, the writer writes
  * them, and none of them calls the cart manager, the invoicer or the notifier (the static scan fails the build if
- * one does). The two finance questions that are still open (what happens to the credit balances, whether the
- * ERPNext invoices are the legal tax invoices) are NOT declared here: the importer does the same whatever the
- * answer is, so it does not wait for it.
+ * one does). The two finance questions (what happens to the credit balances, whether the ERPNext invoices are the
+ * legal tax invoices) are declared as decisions (cart.finance_keys_status, owner decision 2026-10-07): the owner
+ * accepted the values frozen_pending_finance and reference_only_pending_finance, delegated, with Airpay Finance NOT
+ * consulted. The import does exactly that: credits and invoices are frozen, admin-only history behind default-OFF
+ * flags, and nothing honours, pays out, writes off or re-issues anything. They are declared so that a later,
+ * different value in the file (for example write_off) blocks the feature at preflight instead of being silently
+ * ignored by an importer that cannot do it. The business question stays open and is tracked outside the file (see
+ * the Finance confirm items in the state card).
  *
  * Depends on nothing: the tenant of an order is the INT root of the buyer's open_path (history.costcenterid), not
  * a path in the organisation tree, so the org importer need not have run.
@@ -176,10 +181,11 @@ final class importer implements \local_sentientia_platform\bizlms\importer {
     }
 
     /**
-     * Owner choices, all from the decisions file and none with a default. The two finance-confirm keys
-     * (cart.credit_balances, cart.erpnext_invoices_legal) are deliberately NOT here: a declared key that is
-     * finance-confirm blocks the feature, and what the import does with credits and invoices does not depend on
-     * the answer.
+     * Owner choices, all from the decisions file and none with a default. The two finance keys
+     * (cart.credit_balances, cart.erpnext_invoices_legal) are declared with the only value this importer
+     * implements: both are accepted decisions (owner, 2026-10-07, delegated, Finance not consulted), so they no
+     * longer block. A later value the importer cannot do (honour, pay out, write off, link out to ERPNext) is not
+     * in the allowed list and blocks the feature.
      *
      * Each allowed list is what this importer implements. A different value in the file blocks the feature at
      * preflight instead of being silently ignored.
@@ -199,6 +205,10 @@ final class importer implements \local_sentientia_platform\bizlms\importer {
                 true, null, [false]),
             new decision('cart.cash_drawer_rows_without_order', 'Cash-drawer ledger rows that belong to no order',
                 true, null, ['import_admin_only']),
+            // Finance keys (cart.finance_keys_status). Accepted with the delegated values; Finance not consulted.
+            new decision('cart.credit_balances', 'Legacy credit balances', true, null, ['frozen_pending_finance']),
+            new decision('cart.erpnext_invoices_legal', 'ERPNext invoice references', true, null,
+                ['reference_only_pending_finance']),
         ];
     }
 
