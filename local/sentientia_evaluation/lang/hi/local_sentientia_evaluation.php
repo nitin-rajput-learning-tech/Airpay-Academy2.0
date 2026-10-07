@@ -318,3 +318,4 @@ $string['questions_numeric_atmost'] = 'अनुमत सीमा: अधि�
 
 // 2026-10-07 (मूल्यांकन फ़ॉलो-अप की समीक्षा)।
 $string['invalidresponse'] = 'प्रतिक्रिया नहीं मिली।';
+$string['responses_subject_deleted'] = '(हटाया गया उपयोगकर्ता)';

@@ -2802,11 +2802,13 @@ class evaluation_manager {
      *                  about ({@see self::shows_subject()}). It goes with csv_header_row()'s $withsubject, and is
      *                  empty for a response with no subject and on a protected evaluation. Default false, so the
      *                  layout of every native form's export is unchanged.
+     * @param array|null $subjectnames {@see self::subject_names()} for every response of the export (exportcsv.php
+     *                  reads them in one query); null = look each subject up as the row is built
      * @return array  row of strings
      */
     public static function response_to_csv_row(object $response, array $questions,
                                                 object $eval, ?bool $identityprotected = null,
-                                                bool $withsubject = false): array {
+                                                bool $withsubject = false, ?array $subjectnames = null): array {
         global $DB;
 
         // Phase G.2 (2026-05-08) — when any question in the form is
@@ -2848,7 +2850,7 @@ class evaluation_manager {
 
         // The person a supervisor evaluation is about. Never on a protected evaluation, whatever the row holds.
         if ($withsubject) {
-            $row[] = $protected ? '' : self::subject_label($response->subject_userid ?? null);
+            $row[] = $protected ? '' : self::subject_label($response->subject_userid ?? null, $subjectnames);
         }
 
         // Context columns.
@@ -2873,23 +2875,116 @@ class evaluation_manager {
     }
 
     /**
-     * The name of the person a response is about, for the Subject column.
+     * The names of the people some responses are about, for the Subject column of the response list and the CSV.
+     *
+     * One query for all of them, and fullname() over every name field, so the list and the export print the same
+     * name for the same person (the site's name format applies to both). An account that is deleted, or gone, has
+     * no entry: the caller says "deleted user" in its own words (a lang string on the page, the plain text the CSV's
+     * Respondent column already uses).
+     *
+     * @param array $subjectids user ids (null, 0 and duplicates are ignored)
+     * @return array<int, string> user id => full name
+     */
+    public static function subject_names(array $subjectids): array {
+        global $DB;
+        $ids = [];
+        foreach ($subjectids as $id) {
+            if ($id !== null && (int) $id > 0) {
+                $ids[(int) $id] = (int) $id;
+            }
+        }
+        if (!$ids) {
+            return [];
+        }
+        // Every name field, so fullname() has what the site's name format may ask for.
+        $fields = 'id, ' . implode(', ', \core_user\fields::get_name_fields());
+        $names = [];
+        foreach (array_chunk(array_values($ids), 1000) as $chunk) {
+            [$insql, $params] = $DB->get_in_or_equal($chunk, SQL_PARAMS_NAMED, 'subj');
+            $users = $DB->get_records_select('user', "deleted = 0 AND id $insql", $params, '', $fields);
+            foreach ($users as $user) {
+                $names[(int) $user->id] = fullname($user);
+            }
+        }
+        return $names;
+    }
+
+    /**
+     * The name of the person a response is about, for the CSV's Subject column.
      *
      * @param int|string|null $subjectid responses.subject_userid
+     * @param array<int, string>|null $names {@see self::subject_names()} for every subject of the export, so an
+     *        export makes one user query rather than one per row; null = look this one person up
      * @return string '' when the response has no subject; '(deleted user)' when that account is gone or deleted
      */
-    public static function subject_label($subjectid): string {
+    public static function subject_label($subjectid, ?array $names = null): string {
         if ($subjectid === null || (int) $subjectid <= 0) {
             return '';
         }
-        // Every name field, so fullname() has what the site's name format may ask for.
-        $user = \core_user::get_user((int) $subjectid,
-            'id, deleted, ' . implode(', ', \core_user\fields::get_name_fields()));
-        return ($user && empty($user->deleted)) ? fullname($user) : '(deleted user)';
+        $subjectid = (int) $subjectid;
+        $names ??= self::subject_names([$subjectid]);
+        return $names[$subjectid] ?? '(deleted user)';
+    }
+
+    /**
+     * The rows of the individual responses list (response_list.php), newest first.
+     *
+     * Only SUBMITTED responses: an invited user's pending shell (timesubmitted 0) is not a response. On a protected
+     * evaluation ($protected, {@see self::identity_protected()}) the respondent is not named and the time is the
+     * day; the Subject (the person a supervisor form is about) is named only when $showsubject says the form has
+     * one ({@see self::shows_subject()}, never on a protected form), through the same fullname() the CSV uses.
+     *
+     * @param \stdClass $evaluation
+     * @param bool $protected identity_protected($evaluation)
+     * @param bool $showsubject shows_subject($evaluation, $protected)
+     * @return array[] id, subject_name, submitted_at, user_name, user_email, employee_id, context, detail_url
+     */
+    public static function response_list_rows(\stdClass $evaluation, bool $protected, bool $showsubject): array {
+        global $DB;
+        $responses = $DB->get_records_sql(
+            "SELECT r.id, r.userid, r.subject_userid, r.courseid, r.programid, r.classroomid, r.timesubmitted,
+                    u.firstname, u.lastname, u.email, u.open_employeeid
+               FROM {" . self::RESPONSES_TABLE . "} r
+          LEFT JOIN {user} u ON u.id = r.userid
+              WHERE r.evaluationid = :eid
+                AND r.timesubmitted > 0
+           ORDER BY r.timesubmitted DESC, r.id DESC",
+            ['eid' => (int) $evaluation->id]);
+
+        $subjectnames = $showsubject ? self::subject_names(array_column($responses, 'subject_userid')) : [];
+        $gone = get_string('responses_subject_deleted', 'local_sentientia_evaluation');
+        $anonymous = get_string('eval_response_responder_anonymous', 'local_sentientia_evaluation');
+
+        $rows = [];
+        foreach ($responses as $r) {
+            // '' when the response has no subject (as in the CSV); the "deleted user" text when that account is gone
+            // or deleted.
+            $subjectname = '';
+            if ($showsubject && (int) ($r->subject_userid ?? 0) > 0) {
+                $subjectname = $subjectnames[(int) $r->subject_userid] ?? $gone;
+            }
+            $rows[] = [
+                'id'           => (int) $r->id,
+                'subject_name' => $subjectname,
+                'submitted_at' => self::submitted_label((int) $r->timesubmitted, $protected),
+                'user_name'    => $protected ? $anonymous : trim(($r->firstname ?? '') . ' ' . ($r->lastname ?? '')),
+                'user_email'   => $protected ? '' : (string) ($r->email ?? ''),
+                'employee_id'  => $protected ? '' : (string) ($r->open_employeeid ?? ''),
+                'context'      => ($r->courseid > 0)    ? "course #$r->courseid"
+                               : (($r->programid > 0)   ? "program #$r->programid"
+                               : (($r->classroomid > 0) ? "classroom #$r->classroomid" : '—')),
+                'detail_url'   => (new \moodle_url('/local/sentientia_evaluation/response_detail.php',
+                    ['id' => $r->id]))->out(false),
+            ];
+        }
+        return $rows;
     }
 
     /**
      * CSV header row matching response_to_csv_row().
+     *
+     * Every header is plain English, the Subject one too: a CSV is read by spreadsheets and scripts, so its headers
+     * do not change with the language of whoever exports it.
      *
      * @param array $questions ordered question records (from get_questions)
      * @param bool $withsubject true to add the Subject column after Email ({@see self::shows_subject()}); it must
@@ -2899,7 +2994,7 @@ class evaluation_manager {
     public static function csv_header_row(array $questions, bool $withsubject = false): array {
         $header = ['Submitted', 'Respondent', 'Email'];
         if ($withsubject) {
-            $header[] = get_string('responses_col_subject', 'local_sentientia_evaluation');
+            $header[] = 'Subject';
         }
         array_push($header, 'Course ID', 'Program ID', 'Classroom ID');
         $i = 1;

@@ -393,7 +393,9 @@ final class analysis_test extends \advanced_testcase {
         $gen = $this->getDataGenerator();
         $supervisor = $gen->create_user(['firstname' => 'Sue', 'lastname' => 'Supervisor']);
         $subject = $gen->create_user(['firstname' => 'Sam', 'lastname' => 'Subject']);
-        $label = get_string('responses_col_subject', 'local_sentientia_evaluation');
+        // Plain English like every other header of the export: a CSV's headers do not change with the language of
+        // whoever exports it (the page's own column heading is the lang string responses_col_subject).
+        $label = 'Subject';
 
         // (a) A native named form: no Subject header, and the row keeps its width.
         $native = $this->seed_eval('Native', 1);
@@ -768,5 +770,77 @@ final class analysis_test extends \advanced_testcase {
         $this->assertStringContainsString('<div style="width:160px;" class="small">Tom &amp; Jerry</div>', $html);
         $this->assertStringContainsString('<h2 class="mb-0">Tom &amp; Jerry</h2>', $html);
         $this->assertStringNotContainsString('&amp;amp;', $html, 'escaped once, not twice');
+    }
+
+    /**
+     * The Subject of the response list is named through the same fullname() as the CSV (the site's name format applies
+     * to both), in one query; a pending shell is not listed; a protected form names nobody.
+     */
+    public function test_the_response_list_names_the_subject_the_way_the_csv_does(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        set_config('fullnamedisplay', 'lastname, firstname');
+        $gen = $this->getDataGenerator();
+        $supervisor = $gen->create_user(['firstname' => 'Sue', 'lastname' => 'Supervisor']);
+        $subject = $gen->create_user(['firstname' => 'Sam', 'lastname' => 'Subject']);
+        $deleted = $gen->create_user(['firstname' => 'Dee', 'lastname' => 'Deleted']);
+
+        $eid = $this->seed_eval('Supervisor', 1);
+        $q = $this->seed_question($eid, 'rating');
+        $now = time();
+        $named = $this->seed_response($eid, (int) $supervisor->id, [$q => 4], $now - 10);
+        $this->set_subject($named, (int) $subject->id);
+        $nobody = $this->seed_response($eid, (int) $supervisor->id, [$q => 3], $now - 20);
+        $soft = $this->seed_response($eid, (int) $supervisor->id, [$q => 2], $now - 30);
+        $this->set_subject($soft, (int) $deleted->id);
+        $gone = $this->seed_response($eid, (int) $supervisor->id, [$q => 1], $now - 40);
+        $this->set_subject($gone, 987654321);
+        // An invited user's pending shell: not a response, so not listed, whoever it names.
+        $shell = $this->seed_response($eid, (int) $supervisor->id, [], 0);
+        $this->set_subject($shell, (int) $subject->id);
+        delete_user($deleted);
+
+        $form = evaluation_manager::get($eid);
+        $this->assertTrue(evaluation_manager::shows_subject($form));
+        $rows = evaluation_manager::response_list_rows($form, false, true);
+        $this->assertSame([$named, $nobody, $soft, $gone], array_column($rows, 'id'),
+            'newest first, and the pending shell is not a response');
+
+        $this->assertSame(fullname($subject), $rows[0]['subject_name']);
+        $this->assertNotSame('Sam Subject', $rows[0]['subject_name'], 'the site\'s name format applies');
+        $this->assertSame('', $rows[1]['subject_name'], 'a response with no subject');
+        $left = get_string('responses_subject_deleted', 'local_sentientia_evaluation');
+        $this->assertSame($left, $rows[2]['subject_name'], 'a deleted account');
+        $this->assertSame($left, $rows[3]['subject_name'], 'an account that is gone');
+
+        // The CSV names the same person the same way, whether each row looks them up or the export reads them all at
+        // once (exportcsv.php).
+        $questions = evaluation_manager::get_questions($eid);
+        $subjectids = array_column(
+            $DB->get_records('local_sentientia_evaluation_responses', ['evaluationid' => $eid], '', 'id, subject_userid'),
+            'subject_userid');
+        $names = evaluation_manager::subject_names($subjectids);
+        $this->assertSame([(int) $subject->id => fullname($subject)], $names, 'only the live account has a name');
+        foreach ([$named, $soft, $gone] as $id) {
+            $response = $DB->get_record('local_sentientia_evaluation_responses', ['id' => $id], '*', MUST_EXIST);
+            $single = evaluation_manager::response_to_csv_row($response, $questions, $form, null, true)[3];
+            $batched = evaluation_manager::response_to_csv_row($response, $questions, $form, null, true, $names)[3];
+            $this->assertSame($single, $batched);
+        }
+        $this->assertSame($rows[0]['subject_name'], evaluation_manager::subject_label((int) $subject->id));
+        $this->assertSame('(deleted user)', evaluation_manager::subject_label(987654321, $names));
+        $this->assertSame('', evaluation_manager::subject_label(null, $names));
+
+        // A protected form names neither the respondent nor the subject, and shows the day, not the minute.
+        $protected = evaluation_manager::response_list_rows($form, true, false);
+        $this->assertCount(4, $protected);
+        $anonymous = get_string('eval_response_responder_anonymous', 'local_sentientia_evaluation');
+        foreach ($protected as $row) {
+            $this->assertSame($anonymous, $row['user_name']);
+            $this->assertSame('', $row['user_email']);
+            $this->assertSame('', $row['subject_name']);
+        }
+        $this->assertSame(evaluation_manager::submitted_label($now - 10, true), $protected[0]['submitted_at']);
     }
 }

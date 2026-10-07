@@ -76,11 +76,16 @@ $identityprotected = \local_sentientia_evaluation\evaluation_manager::identity_p
 // protected form. Worked out once, for the header and every row. Native forms export exactly as before.
 $withsubject = \local_sentientia_evaluation\evaluation_manager::shows_subject($eval, $identityprotected);
 
+// The subjects' names, in one query for the whole export rather than one per row.
+$subjectnames = $withsubject
+    ? \local_sentientia_evaluation\evaluation_manager::subject_names(array_column($responses, 'subject_userid'))
+    : null;
+
 fputcsv($out, \local_sentientia_evaluation\evaluation_manager::csv_header_row($questions, $withsubject));
 foreach ($responses as $r) {
     fputcsv($out,
         \local_sentientia_evaluation\evaluation_manager::response_to_csv_row($r, $questions, $eval,
-            $identityprotected, $withsubject));
+            $identityprotected, $withsubject, $subjectnames));
 }
 fclose($out);
 
