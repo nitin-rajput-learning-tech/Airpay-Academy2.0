@@ -222,6 +222,65 @@ final class bizlms_support_test extends \advanced_testcase {
         decisions::load($file . '.missing');
     }
 
+    /**
+     * An acceptance after the Stage B rehearsal is for the rows the owner looked at ("feature:code<=n"), so growth in
+     * the data between the rehearsal and cutover is not accepted with it; a bare entry still accepts any count.
+     */
+    public function test_an_accepted_reason_can_be_bounded_by_the_rows_the_owner_looked_at(): void {
+        $file = tempnam(sys_get_temp_dir(), 'dec');
+        file_put_contents($file,
+            '{"decisions": {}, "accepted_reasons": ["toy:orphan_org<=3", "toy:orphan_user", "toy:no_name<=0"]}');
+        $loaded = decisions::load($file);
+
+        $this->assertTrue($loaded->accepts('toy', 'orphan_org'), 'listed');
+        $this->assertTrue($loaded->accepts('toy', 'orphan_org', 2));
+        $this->assertTrue($loaded->accepts('toy', 'orphan_org', 3), 'up to and including the bound');
+        $this->assertFalse($loaded->accepts('toy', 'orphan_org', 4), 'one more than the owner looked at');
+        $this->assertSame(3, $loaded->accepted_limit('toy', 'orphan_org'));
+
+        $this->assertTrue($loaded->accepts('toy', 'orphan_user', 1000000), 'a bare entry accepts any count');
+        $this->assertNull($loaded->accepted_limit('toy', 'orphan_user'));
+
+        $this->assertTrue($loaded->accepts('toy', 'no_name', 0));
+        $this->assertFalse($loaded->accepts('toy', 'no_name', 1), '<=0 accepts nothing');
+        $this->assertFalse($loaded->accepts('toy', 'never_listed', 1));
+        $this->assertFalse($loaded->accepts('toy', 'never_listed'));
+        $this->assertSame(['toy:orphan_org<=3', 'toy:orphan_user', 'toy:no_name<=0'], $loaded->accepted_reasons());
+
+        // The bound is part of the file, so it is part of its hash: raising it is a re-approval.
+        file_put_contents($file,
+            '{"decisions": {}, "accepted_reasons": ["toy:orphan_org<=4", "toy:orphan_user", "toy:no_name<=0"]}');
+        $this->assertNotSame($loaded->hash(), decisions::load($file)->hash());
+
+        // In-process, as the importer tests build it.
+        $built = decisions::from_array(['accepted_reasons' => ['toy:a<=2', 'toy:b']]);
+        $this->assertTrue($built->accepts('toy', 'a', 2));
+        $this->assertFalse($built->accepts('toy', 'a', 3));
+        $this->assertTrue($built->accepts('toy', 'b', 99));
+
+        foreach ([
+            '["toy:x<="]', '["toy:x<=-1"]', '["toy:x<=3<=4"]', '["toy:x<=a"]', '["toy:x<= 3"]', '["toy:x <=3"]',
+            '["toy:x<=1234567890"]', '["toy:x=3"]', '[" toy:x<=3"]',
+        ] as $list) {
+            file_put_contents($file, '{"decisions": {}, "accepted_reasons": ' . $list . '}');
+            try {
+                decisions::load($file);
+                $this->fail("accepted: {$list}");
+            } catch (blocked $e) {
+                $this->assertSame('decisions_file_invalid_accepted_reason', $e->getMessage(), $list);
+            }
+        }
+        // Which of "toy:x" and "toy:x<=3" did the owner mean?
+        file_put_contents($file, '{"decisions": {}, "accepted_reasons": ["toy:x", "toy:x<=3"]}');
+        try {
+            decisions::load($file);
+            $this->fail('the same reason listed twice');
+        } catch (blocked $e) {
+            $this->assertSame('decisions_file_duplicate_accepted_reason:toy:x', $e->getMessage());
+        }
+        unlink($file);
+    }
+
     // Map, fingerprint, tripwire, provenance.
 
     public function test_map_reads_resolve_chunk_preload_and_respect_batches(): void {
@@ -430,6 +489,65 @@ final class bizlms_support_test extends \advanced_testcase {
 
         $this->expectException(\coding_exception::class);
         $reader->page('local_toy_org; DROP TABLE x', 0, 1);
+    }
+
+    /**
+     * EV-26: the counter is read from the text of the CREATE TABLE statement, from the table options only.
+     */
+    public function test_the_auto_increment_counter_is_parsed_from_the_create_statement(): void {
+        $create = static fn(string $options): string => "CREATE TABLE `mdl_local_x` (\n  `id` bigint(10) NOT NULL AUTO_INCREMENT,\n"
+            . "  `name` varchar(20) NOT NULL DEFAULT '' COMMENT 'it''s AUTO_INCREMENT=77',\n  PRIMARY KEY (`id`)\n) {$options}";
+        $this->assertSame(42, legacy_reader::counter_from_create_table(
+            $create("ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPRESSED COMMENT='x AUTO_INCREMENT=9'")),
+            'the clause in the options, not the one in a column comment or the table comment');
+        $this->assertSame(1, legacy_reader::counter_from_create_table($create('ENGINE=InnoDB DEFAULT CHARSET=utf8mb4')),
+            'no clause: the counter is 1 (MySQL 8 leaves it out), which is an answer');
+        $this->assertSame(1, legacy_reader::counter_from_create_table($create("ENGINE=InnoDB COMMENT='AUTO_INCREMENT=500'")),
+            'a number inside a quoted comment is not the counter');
+        $this->assertSame(8, legacy_reader::counter_from_create_table(
+            $create("ENGINE=InnoDB AUTO_INCREMENT=8 COMMENT='it\\'s AUTO_INCREMENT=500'")));
+        $this->assertSame(7, legacy_reader::counter_from_create_table(
+            "create table `t` (\n `id` int not null auto_increment\n) engine=innodb auto_increment=7 default charset=utf8mb4"));
+        $this->assertNull(legacy_reader::counter_from_create_table(
+            "CREATE TABLE `t` (\n  `id` bigint NOT NULL,\n  PRIMARY KEY (`id`)\n) ENGINE=InnoDB"), 'no auto-increment column');
+        $this->assertNull(legacy_reader::counter_from_create_table('CREATE VIEW v AS SELECT 1'));
+        $this->assertNull(legacy_reader::counter_from_create_table(''));
+    }
+
+    /**
+     * EV-26: next_id() reads the counter the database really holds, which is above MAX(id) when BizLMS hard-deleted
+     * its highest rows. It needs a database whose counter can be set from a test (MySQL, MariaDB, Postgres).
+     */
+    public function test_next_id_reads_the_counter_not_the_highest_id(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->seed_toy_data();
+        $reader = new legacy_reader();
+        $this->assertNull($reader->next_id('local_toy_nothere'), 'no such table');
+        $this->assertSame(7, $reader->max_id('local_toy_org'));
+
+        $prefixed = $DB->get_prefix() . 'local_toy_org';
+        switch ($DB->get_dbfamily()) {
+            case 'mysql':
+                $DB->change_database_structure("ALTER TABLE {$prefixed} AUTO_INCREMENT = 90");
+                break;
+            case 'postgres':
+                $DB->execute("SELECT setval(pg_get_serial_sequence(:t, 'id'), 90, false)", ['t' => $prefixed]);
+                break;
+            default:
+                $this->markTestSkipped('The counter of a table cannot be set on this database family.');
+        }
+        $this->assertSame(90, $reader->next_id('local_toy_org'),
+            'the counter, 83 above the highest id, as a restored dump that lost its highest rows would show');
+        $this->assertSame(7, $reader->max_id('local_toy_org'), 'the highest id did not move');
+
+        // MySQL and MariaDB: a row inserted with an explicit id above the counter moves it (a restore does exactly
+        // that), and the read is fresh, not the cached statistic.
+        if ($DB->get_dbfamily() === 'mysql') {
+            $DB->import_record('local_toy_org', (object) ['id' => 120, 'name' => 'Late', 'parentid' => 0, 'path' => '/1',
+                'status' => 1, 'timecreated' => 1, 'timemodified' => 1]);
+            $this->assertSame(121, $reader->next_id('local_toy_org'));
+        }
     }
 
     public function test_forget_drops_what_a_step_cached_but_keeps_a_declared_preload(): void {

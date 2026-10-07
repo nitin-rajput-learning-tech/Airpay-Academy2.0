@@ -244,10 +244,18 @@ final class writer {
      * Reset a PRESERVE target's sequence. DDL on MySQL, so it never runs
      * inside a transaction: the runner calls it from finalise() only.
      *
+     * The next id is the table's own highest id + 1, or $floor when that is higher (EV-26). A PRESERVE import keeps
+     * BizLMS ids, and rows elsewhere (a request's componentid, a classroom's feedback form, a calendar event) still
+     * point at ids BizLMS had issued, including those of rows the import did not carry (archived, soft deleted) and of
+     * rows BizLMS hard-deleted. The runner passes the floor that covers all of those, so a native row created after
+     * cutover can never inherit a legacy reference.
+     *
      * @param string $table
-     * @return void
+     * @param int $floor The lowest id the table may hand out next; 0 = no floor beyond the table's own highest id.
+     * @return int The id the table will hand out next. Lower than $floor when this database cannot set a counter
+     *         (neither MySQL, MariaDB nor Postgres): the caller says so in the report.
      */
-    public function reset_sequence(string $table): void {
+    public function reset_sequence(string $table, int $floor = 0): int {
         global $DB;
         $this->assert_live();
         if (!isset($this->targets[$table])) {
@@ -257,6 +265,35 @@ final class writer {
             throw new writer_refused('reset_sequence_inside_a_transaction');
         }
         $DB->get_manager()->reset_sequence($table);
+        $next = (int) $DB->get_field_sql('SELECT COALESCE(MAX(id), 0) + 1 FROM {' . $table . '}');
+        if ($floor <= $next) {
+            return $next;
+        }
+        return $this->raise_next_id($table, $floor) ? $floor : $next;
+    }
+
+    /**
+     * Set a table's counter to $next, which is above its highest id. DDL on MySQL and MariaDB, a setval() on Postgres.
+     *
+     * @param string $table A declared target; the name is checked before it is put in SQL.
+     * @param int $next
+     * @return bool False when the database is of a family whose counter this does not know how to set.
+     */
+    private function raise_next_id(string $table, int $next): bool {
+        global $DB;
+        fingerprint::assert_identifier($table);
+        $name = $DB->get_prefix() . $table;
+        switch ($DB->get_dbfamily()) {
+            case 'mysql':
+                $DB->change_database_structure('ALTER TABLE ' . $name . ' AUTO_INCREMENT = ' . $next);
+                return true;
+            case 'postgres':
+                $DB->execute('SELECT setval(pg_get_serial_sequence(:tbl, :col), :nxt, false)',
+                    ['tbl' => $name, 'col' => 'id', 'nxt' => $next]);
+                return true;
+            default:
+                return false;
+        }
     }
 
     /**

@@ -17,7 +17,7 @@ defined('MOODLE_INTERNAL') || die();
  *       "decisions": {
  *         "<feature>.<key>": {"value": ..., "why": "...", "source": "...", "status": "accepted"}
  *       },
- *       "accepted_reasons": ["<feature>:<code>", ...],
+ *       "accepted_reasons": ["<feature>:<code>", "<feature>:<code><=<rows>", ...],
  *       "enums": {"<legacy table>.<column>": {"<value>": "<meaning>"}}
  *     }
  *
@@ -28,8 +28,12 @@ defined('MOODLE_INTERNAL') || die();
  *   carried with another status can therefore never be replaced by the importer's
  *   own default.
  * - accepted_reasons (optional): needs-owner reasons the owner has accepted.
- *   Parity exits 2 for any needs-owner reason that is not listed. Each feature
- *   importer adds its own reasons to the list when it is built.
+ *   Parity exits 2 for any needs-owner reason that is not listed. A reason is listed only
+ *   after the Stage B rehearsal has shown that it OCCURS, with the number of rows the owner
+ *   looked at ("<feature>:<code><=<rows>"): at cutover a count above that exits 2 again, so
+ *   an acceptance cannot also accept growth in the data since the rehearsal. A bare
+ *   "<feature>:<code>" accepts any count; use it only for a code that is meant to have none
+ *   to look at. No importer pre-fills this list when it is built.
  * - enums (optional): values of a declared enum column the owner has mapped, so
  *   preflight no longer blocks on them. The importer's code decides what a mapped
  *   value becomes.
@@ -51,8 +55,8 @@ final class decisions {
     /** Shape of a decision key: feature, then one or more dot-separated parts. */
     private const KEY_PATTERN = '/^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$/';
 
-    /** Shape of an accepted reason: feature:code. */
-    private const REASON_PATTERN = '/^[a-z][a-z0-9_]*:[a-z][a-z0-9_]*$/';
+    /** Shape of an accepted reason: feature:code, optionally followed by <=rows (the most rows the owner accepted). */
+    private const REASON_PATTERN = '/^([a-z][a-z0-9_]*:[a-z][a-z0-9_]*)(?:<=(\d{1,9}))?$/';
 
     /** Shape of the key of an enum mapping: legacy table.column. */
     private const ENUM_PATTERN = '/^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/';
@@ -60,8 +64,11 @@ final class decisions {
     /** @var array<string, array{value: mixed, status: string}> */
     private array $entries;
 
-    /** @var string[] */
+    /** @var string[] As written in the file: feature:code, or feature:code<=rows. */
     private array $acceptedreasons;
+
+    /** @var array<string, int|null> feature:code => the most rows accepted, null for any number of rows. */
+    private array $reasonlimits = [];
 
     /** @var array<string, array<string, string>> table.column => value => meaning */
     private array $enums;
@@ -82,6 +89,19 @@ final class decisions {
     private function __construct(array $entries, array $acceptedreasons, array $enums, array $approval, string $hash) {
         $this->entries = $entries;
         $this->acceptedreasons = $acceptedreasons;
+        foreach ($acceptedreasons as $reason) {
+            if (!preg_match(self::REASON_PATTERN, $reason, $match)) {
+                continue;
+            }
+            $limit = isset($match[2]) ? (int) $match[2] : null;
+            // Listed twice (only an in-process caller can): an unbounded entry beats a bounded one, and the larger
+            // bound beats the smaller.
+            if (array_key_exists($match[1], $this->reasonlimits)) {
+                $known = $this->reasonlimits[$match[1]];
+                $limit = ($known === null || $limit === null) ? null : max($known, $limit);
+            }
+            $this->reasonlimits[$match[1]] = $limit;
+        }
         $this->enums = $enums;
         $this->approval = $approval;
         $this->hash = $hash;
@@ -162,10 +182,16 @@ final class decisions {
         }
 
         $reasons = [];
+        $seen = [];
         foreach ((array) ($data['accepted_reasons'] ?? []) as $reason) {
-            if (!is_string($reason) || !preg_match(self::REASON_PATTERN, $reason)) {
+            if (!is_string($reason) || !preg_match(self::REASON_PATTERN, $reason, $match)) {
                 throw new blocked('decisions_file_invalid_accepted_reason');
             }
+            // One entry per reason: "toy:x" and "toy:x<=3" side by side would leave it unclear which one the owner meant.
+            if (isset($seen[$match[1]])) {
+                throw new blocked('decisions_file_duplicate_accepted_reason:' . $match[1]);
+            }
+            $seen[$match[1]] = true;
             $reasons[] = $reason;
         }
 
@@ -284,11 +310,32 @@ final class decisions {
     }
 
     /**
+     * Has the owner accepted this needs-owner reason, for this many rows?
+     *
      * @param string $feature
      * @param string $code
-     * @return bool
+     * @param int|null $count The rows that carry the reason now. Null asks only whether the reason is listed at all
+     *        (with any bound).
+     * @return bool A bare entry accepts any count; "feature:code<=n" accepts up to n rows, so a count above what the
+     *         owner looked at is not accepted.
      */
-    public function accepts(string $feature, string $code): bool {
-        return in_array($feature . ':' . $code, $this->acceptedreasons, true);
+    public function accepts(string $feature, string $code, ?int $count = null): bool {
+        $key = $feature . ':' . $code;
+        if (!array_key_exists($key, $this->reasonlimits)) {
+            return false;
+        }
+        $limit = $this->reasonlimits[$key];
+        return $limit === null || $count === null || $count <= $limit;
+    }
+
+    /**
+     * The most rows the owner accepted for a reason.
+     *
+     * @param string $feature
+     * @param string $code
+     * @return int|null Null when the reason is not listed, or is listed without a bound.
+     */
+    public function accepted_limit(string $feature, string $code): ?int {
+        return $this->reasonlimits[$feature . ':' . $code] ?? null;
     }
 }

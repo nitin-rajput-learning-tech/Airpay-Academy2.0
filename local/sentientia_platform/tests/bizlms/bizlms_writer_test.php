@@ -298,6 +298,34 @@ final class bizlms_writer_test extends \advanced_testcase {
         $this->assert_refused('reset_sequence_needs_a_declared_target', fn() => $writer->reset_sequence('user'));
     }
 
+    /**
+     * EV-26: the runner passes a floor that covers every id the legacy table ever issued, and the writer raises the
+     * counter to it when the target's own highest id is lower.
+     */
+    public function test_reset_sequence_floors_the_counter_above_ids_the_legacy_table_ever_issued(): void {
+        global $DB;
+        $writer = $this->writer();
+        $org = static fn(): \stdClass => (object) ['name' => 'n', 'path' => null, 'visible' => 1, 'timecreated' => 1,
+            'timemodified' => 1];
+        $writer->import_preserved('local_sentientia_toy_org', $org(), 5);
+
+        $this->assertSame(6, $writer->reset_sequence('local_sentientia_toy_org'), 'the table\'s own highest id + 1');
+        $this->assertSame(6, $writer->reset_sequence('local_sentientia_toy_org', 3),
+            'a floor below what the table already needs changes nothing');
+        $this->assertSame(6, $writer->reset_sequence('local_sentientia_toy_org', 6));
+
+        if (!in_array($DB->get_dbfamily(), ['mysql', 'postgres'], true)) {
+            $this->assertSame(6, $writer->reset_sequence('local_sentientia_toy_org', 500),
+                'a database whose counter cannot be set says what it could do, and the runner reports the gap');
+            return;
+        }
+        $this->assertSame(500, $writer->reset_sequence('local_sentientia_toy_org', 500));
+        $this->assertSame(500, (int) $DB->insert_record('local_sentientia_toy_org', $org()), 'the first native id is the floor');
+        // The table's own highest id is now above a stale floor: the floor never lowers a counter.
+        $this->assertSame(501, $writer->reset_sequence('local_sentientia_toy_org', 100));
+        $this->assert_refused('reset_sequence_needs_a_declared_target', fn() => $writer->reset_sequence('user', 500));
+    }
+
     public function test_map_rows_are_checked_like_any_other_row(): void {
         $writer = $this->writer();
         $row = (object) ['feature' => 'toy', 'sourcetable' => str_repeat('t', 65), 'sourceid' => 1, 'subkey' => '',

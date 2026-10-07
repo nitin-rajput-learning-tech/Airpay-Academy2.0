@@ -120,6 +120,94 @@ final class legacy_reader {
     }
 
     /**
+     * The id the table would hand out to its next row: its AUTO_INCREMENT counter (EV-26).
+     *
+     * A PRESERVE import keeps BizLMS ids, and rows elsewhere still point at ids BizLMS had issued, so the Sentientia
+     * table must never hand a native row an id the legacy table has ever issued. MAX(id) misses the ids of rows
+     * BizLMS hard-deleted (the highest one may be gone), but the counter does not: mysqldump keeps it, so a restored
+     * copy still knows every id it issued.
+     *
+     * MySQL and MariaDB: parsed from SHOW CREATE TABLE, because information_schema.TABLES.AUTO_INCREMENT is cached by
+     * MySQL 8 (information_schema_stats_expiry, 24 hours by default) and can lag behind the restore. Postgres: the
+     * serial sequence's last_value. Anything else, or anything that cannot be read, is null: the caller falls back to
+     * the table's highest id and says so.
+     *
+     * @param string $table Name without prefix.
+     * @return int|null The next id (at least 1), or null when the counter cannot be read.
+     */
+    public function next_id(string $table): ?int {
+        global $DB;
+        fingerprint::assert_identifier($table);
+        if (!$this->exists($table)) {
+            return null;
+        }
+        try {
+            switch ($DB->get_dbfamily()) {
+                case 'mysql':
+                    $row = $DB->get_record_sql('SHOW CREATE TABLE {' . $table . '}');
+                    foreach ($row ? array_values((array) $row) : [] as $value) {
+                        if (is_string($value) && stripos(ltrim($value), 'CREATE TABLE') === 0) {
+                            return self::counter_from_create_table($value);
+                        }
+                    }
+                    return null;
+                case 'postgres':
+                    $sequence = $DB->get_field_sql('SELECT pg_get_serial_sequence(:t, :c)',
+                        ['t' => $DB->get_prefix() . $table, 'c' => 'id']);
+                    // The name comes from the database itself; it is still checked before it is put in SQL.
+                    if (!is_string($sequence) || !preg_match('/^[A-Za-z0-9_".]+$/', $sequence)) {
+                        return null;
+                    }
+                    $state = $DB->get_record_sql('SELECT last_value, is_called FROM ' . $sequence);
+                    if (!$state) {
+                        return null;
+                    }
+                    $called = in_array($state->is_called, [true, 1, '1', 't', 'true'], true);
+                    return max(1, (int) $state->last_value + ($called ? 1 : 0));
+                default:
+                    return null;
+            }
+        } catch (\dml_exception $e) {
+            // A table the account may not describe, a driver that answers differently: unreadable, not fatal.
+            return null;
+        }
+    }
+
+    /**
+     * The AUTO_INCREMENT counter in the text of a MySQL or MariaDB CREATE TABLE statement.
+     *
+     * Only the table options (the line that closes the column list, ") ENGINE=...") are searched, and quoted text in
+     * them is removed first, so a column comment or a table COMMENT that happens to say AUTO_INCREMENT=9 is never
+     * read as the counter. A table whose counter is 1 has no AUTO_INCREMENT clause, which is the answer 1, not an
+     * unreadable counter. A statement with no auto-increment column at all is not one this can answer for.
+     *
+     * @param string $ddl
+     * @return int|null The next id, or null when the statement is not a CREATE TABLE of a table with an
+     *         auto-increment id.
+     */
+    public static function counter_from_create_table(string $ddl): ?int {
+        if (stripos(ltrim($ddl), 'CREATE TABLE') !== 0 || stripos($ddl, 'AUTO_INCREMENT') === false) {
+            return null;
+        }
+        // The options line closes the column list. Take the last line that starts with ")": a column definition
+        // never does.
+        $options = null;
+        foreach (preg_split('/\R/', $ddl) as $line) {
+            if (isset($line[0]) && $line[0] === ')') {
+                $options = $line;
+            }
+        }
+        if ($options === null) {
+            return null;
+        }
+        $options = (string) preg_replace("/'(?:[^'\\\\]|\\\\.|'')*'/s", "''", $options);
+        if (preg_match('/\bAUTO_INCREMENT\s*=\s*(\d+)/i', $options, $match)) {
+            return max(1, (int) $match[1]);
+        }
+        return 1;
+    }
+
+    /**
      * One keyset page: rows with id greater than $afterid, ascending.
      *
      * @param string $table
