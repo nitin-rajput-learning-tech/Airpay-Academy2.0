@@ -8,11 +8,13 @@ defined('MOODLE_INTERNAL') || die();
 
 use local_sentientia_org\test\bizlms_fixture;
 use local_sentientia_platform\bizlms\context;
+use local_sentientia_platform\bizlms\copies_files;
 use local_sentientia_platform\bizlms\decisions;
 use local_sentientia_platform\bizlms\idpolicy;
 use local_sentientia_platform\bizlms\importer;
 use local_sentientia_platform\bizlms\legacymap;
 use local_sentientia_platform\bizlms\registry;
+use local_sentientia_platform\bizlms\sideeffect_guard;
 use local_sentientia_platform\phpunit\importer_contract;
 use local_sentientia_platform\phpunit\legacy_schema_fixture;
 use local_sentientia_programs\bizlms\importer as program_importer;
@@ -976,6 +978,25 @@ final class bizlms_import_test extends \advanced_testcase {
 
         $this->contract_run(true);
         $this->assertCount(1, $fs->get_area_files($system, 'local_sentientia_programs', 'programlogo', 41, 'id', false));
+    }
+
+    public function test_the_importer_declares_its_logo_copy_through_the_copies_files_marker(): void {
+        $importer = new program_importer();
+        $this->assertInstanceOf(copies_files::class, $importer);
+        $this->assertSame([['local_program', 'programlogo', 'local_sentientia_programs', 'programlogo']],
+            $importer->allowed_file_areas());
+        $this->assertSame([], $importer->core_writes(), 'a file copy is not a core write, so --purge-feature stays available');
+        $this->assertTrue(sideeffect_guard::file_areas_well_formed($importer));
+    }
+
+    public function test_the_logo_copy_is_a_declared_side_effect_the_report_counts_and_the_tripwire_accepts(): void {
+        // IDN-04: {files} is watched for every importer. Without the marker the copy would trip
+        // write_outside_declared_tables:files and the feature would end with no marker.
+        [$result, $report] = $this->apply();
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        $feature = $report->to_array()['features']['program'];
+        $this->assertSame('clean', $feature['tripwire']);
+        $this->assertSame(['local_sentientia_programs/programlogo' => 1], $feature['files_copied']);
     }
 
     public function test_a_native_program_after_the_import_gets_an_id_above_the_legacy_maximum(): void {

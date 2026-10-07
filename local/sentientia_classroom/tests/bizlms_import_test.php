@@ -10,6 +10,7 @@ use local_sentientia_classroom\bizlms\importer as classroom_importer;
 use local_sentientia_classroom\tests\bizlms\fixture_xml;
 use local_sentientia_classroom\tests\bizlms\org_stub;
 use core_privacy\tests\provider_testcase;
+use local_sentientia_platform\bizlms\copies_files;
 use local_sentientia_platform\bizlms\decisions;
 use local_sentientia_platform\bizlms\guard;
 use local_sentientia_platform\bizlms\importer;
@@ -17,6 +18,7 @@ use local_sentientia_platform\bizlms\legacymap;
 use local_sentientia_platform\bizlms\registry;
 use local_sentientia_platform\bizlms\report;
 use local_sentientia_platform\bizlms\runner;
+use local_sentientia_platform\bizlms\sideeffect_guard;
 use local_sentientia_platform\phpunit\importer_contract;
 use local_sentientia_platform\phpunit\legacy_schema_fixture;
 
@@ -890,6 +892,24 @@ final class bizlms_import_test extends provider_testcase {
             'report' => new report(), 'atomic_threshold' => 0]);
         $runner->run([]);
         $this->assertCount($count, $fs->get_area_files($systemid, 'local_sentientia_classroom', 'classroomlogo', 1, 'id', false));
+    }
+
+    public function test_the_importer_declares_its_logo_copy_through_the_copies_files_marker(): void {
+        $importer = new classroom_importer();
+        $this->assertInstanceOf(copies_files::class, $importer);
+        $this->assertSame([['local_classroom', 'classroomlogo', 'local_sentientia_classroom', 'classroomlogo']],
+            $importer->allowed_file_areas());
+        $this->assertSame([], $importer->core_writes(), 'a file copy is not a core write, so --purge-feature stays available');
+        $this->assertTrue(sideeffect_guard::file_areas_well_formed($importer));
+    }
+
+    public function test_the_logo_copy_is_a_declared_side_effect_the_report_counts_and_the_tripwire_accepts(): void {
+        // IDN-04: {files} is watched for every importer. Without the marker the copy would trip
+        // write_outside_declared_tables:files and the feature would end with no marker.
+        $result = $this->seed_and_apply();
+        $feature = $result['report']->to_array()['features']['classroom'];
+        $this->assertSame('clean', $feature['tripwire']);
+        $this->assertSame(['local_sentientia_classroom/classroomlogo' => 1], $feature['files_copied']);
     }
 
     // ─── Tenant isolation: what a tenant admin sees after the import ──────────────────────────────────
