@@ -64,7 +64,7 @@ $string['status_cancelled'] = 'Cancelled';
 
 // Errors.
 $string['missingrequiredfields'] = 'Please fill in all required fields.';
-$string['capacityinvalid'] = 'Capacity must be at least 1.';
+$string['capacityinvalid'] = 'Capacity cannot be negative. Use 0 for no limit.';
 $string['invalidstatus'] = 'Invalid status value.';
 $string['confirmdelete'] = 'Are you sure you want to delete "{$a}"? This will permanently remove the classroom, all its sessions, and attendance records. This cannot be undone.';
 $string['confirmcancel'] = 'Are you sure you want to cancel "{$a}"? Enrolled learners will be notified.';
@@ -177,3 +177,44 @@ $string['privacy:metadata:waitlist:reason'] = 'Why the place was removed, includ
 $string['privacy:metadata:waitlist:promoted_at'] = 'When the user was moved from the waiting list onto the roster.';
 $string['privacy:metadata:waitlist:removed_at'] = 'When the user left, or was removed from, the waiting list.';
 $string['privacy:metadata:waitlist:timecreated'] = 'When the user joined the waiting list.';
+
+// ADR-032 (2026-09-30): BizLMS classroom import - states, protected history, imported-history readers.
+$string['status_draft'] = 'Draft';
+$string['status_onhold'] = 'On hold';
+$string['status_unknown'] = 'Unknown';
+$string['capacity_help'] = 'The most learners who can be enrolled. Use 0 for no limit.';
+$string['capacity_unlimited'] = 'No limit';
+$string['error_protected_history'] = 'This record was brought in from the previous system and is kept as history. It cannot be deleted or removed.';
+$string['error_history_off'] = 'This page is not available.';
+$string['roster_completion'] = 'Completion';
+$string['roster_completed'] = 'Completed';
+$string['roster_pending'] = 'Pending';
+$string['roster_completed_on'] = 'Completed on';
+$string['roster_hours'] = 'Hours';
+$string['history_training_dates'] = 'Training dates';
+$string['history_completed_on'] = 'Completed on';
+$string['history_trainers'] = 'Trainers';
+$string['history_courses'] = 'Linked courses';
+$string['myclassrooms'] = 'My classrooms';
+$string['my_none'] = 'You are not on the roster of any classroom.';
+$string['my_sessions_caption'] = 'Sessions of {$a}';
+$string['my_session'] = 'Session';
+$string['my_session_untitled'] = 'Session';
+$string['my_when'] = 'When';
+$string['my_attendance'] = 'Attendance';
+$string['my_not_marked'] = 'Not marked';
+// Privacy: the columns the import adds, and two actor columns that were never declared.
+$string['privacy:metadata:roster:enrolledby'] = 'ID of the user who put the learner on the roster (for an imported row, the user who did so in the previous system).';
+$string['privacy:metadata:roster:completion_status'] = 'Whether the learner completed the classroom (imported history).';
+$string['privacy:metadata:roster:timecompleted'] = 'When the learner completed the classroom (imported history).';
+$string['privacy:metadata:roster:hours'] = 'Hours credited to the learner for the classroom (imported history).';
+$string['privacy:metadata:attendance:notes'] = 'A note written on the attendance mark.';
+$string['privacy:metadata:classroom'] = 'The classrooms, with the trainer and the user who created each.';
+$string['privacy:metadata:classroom:trainerid'] = 'ID of the primary trainer of the classroom.';
+$string['privacy:metadata:classroom:createdby'] = 'ID of the user who created the classroom (imported classrooms only).';
+$string['privacy:metadata:sessions'] = 'Classroom sessions, with the trainer assigned to each.';
+$string['privacy:metadata:sessions:trainerid'] = 'ID of the trainer assigned to the session.';
+$string['privacy:metadata:trainers'] = 'Every trainer of a classroom.';
+$string['privacy:metadata:trainers:classroomid'] = 'Classroom ID.';
+$string['privacy:metadata:trainers:trainerid'] = 'ID of the trainer.';
+$string['privacy:metadata:trainers:timecreated'] = 'When the trainer was attached to the classroom.';

@@ -45,6 +45,9 @@ class list_classroom_users extends external_api {
 
         $can_update = has_capability('local/sentientia_classroom:update', $context)
             || has_capability('local/sentientia_classroom:manage', $context);
+        // The completion columns of the imported history (flagged, default OFF): when the flag is off the
+        // three values are empty and the page does not declare the columns.
+        $history = \local_sentientia_classroom\session_manager::history_enabled();
 
         // ADR-031: the capability says WHAT; the classroom must also be in the caller's tenant.
         \local_sentientia_classroom\session_manager::require_classroom_access($params['classroomid']);
@@ -90,6 +93,12 @@ class list_classroom_users extends external_api {
                     'employeeid'   => s($employeeid),
                     'designation'  => s($designation),
                     'enrolled_at'  => $r->enrolled_at ? userdate((int) $r->enrolled_at, '%d %b %Y') : '—',
+                    'completion'   => !$history ? '' : get_string(
+                        (int) $r->completion_status === 1 ? 'roster_completed' : 'roster_pending',
+                        'local_sentientia_classroom'),
+                    'completed_at' => ($history && !empty($r->completed_at))
+                        ? userdate((int) $r->completed_at, '%d %b %Y') : '',
+                    'hours'        => ($history && $r->hours !== null) ? (string) (int) $r->hours : '',
                     'actions'      => $actions,
                 ];
             }
@@ -115,6 +124,9 @@ class list_classroom_users extends external_api {
                     'employeeid'   => new external_value(PARAM_TEXT, 'Employee ID'),
                     'designation'  => new external_value(PARAM_TEXT, 'Designation'),
                     'enrolled_at'  => new external_value(PARAM_TEXT, 'Enrolled date'),
+                    'completion'   => new external_value(PARAM_TEXT, 'Completion (imported history; empty when the reader flag is off)', VALUE_OPTIONAL),
+                    'completed_at' => new external_value(PARAM_TEXT, 'Completed date (imported history)', VALUE_OPTIONAL),
+                    'hours'        => new external_value(PARAM_TEXT, 'Hours credited (imported history)', VALUE_OPTIONAL),
                     'actions'      => new external_value(PARAM_RAW,  'Per-row HTML'),
                 ])
             ),

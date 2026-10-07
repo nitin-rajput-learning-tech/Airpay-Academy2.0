@@ -445,7 +445,8 @@ Both trees. **No schema change and no version bump in this round** (`version.php
   until the `:manage` grant is removed from role 10 (the same grant lets that role edit any session in the
   UI, see `can_update = update || manage`). Check the live `role_capabilities` before cutover; if
   trainers must be restricted whatever they hold, change the discriminator in `may_run_session()` (for
-  example to `:update`) in one place. None of the 5 local classrooms and none of their sessions carries a
+  example to `:update`) in one place. (2026-10-01: the discriminator is `:update` and a co-trainer row of
+  `local_sentientia_classroom_trainers` also opens every session of its classroom, see "Review round 1".) None of the 5 local classrooms and none of their sessions carries a
   `trainerid`, so the rule locks a real trainer out of a session until it is assigned: the BizLMS import
   (ADR-032) must carry the trainer.
 - **Data meaning (stated for reports).** A roster learner with no attendance row now means "not marked,
@@ -524,3 +525,182 @@ language change (plugin stays 2026093001 / 1.10.6); deploying the JS needs a JS-
 ## 2026-10-01 - Test fix only (first real PHPUnit run)
 
 No plugin code or version change. `tests/location_schema_test.php::test_upgrade_step_2026092501_widens_the_coordinates_of_an_upgraded_site` asserted the stored version equals 2026092501, but the upgrade function runs every later step, so the version ends at the plugin's latest (now 2026093001). It asserts `>=` the step under test. Passes on Moodle 5.1.3 / MariaDB 10.11. See `sentientia_platform-state.md` (2026-10-01) for the rest of the bundle.
+
+## 2026-09-30 (ADR-032) - BizLMS classroom importer, schema, reader and engine fixes
+
+Branch `claude/bizlms-import-classroom`. Plugin **2026093002 / 1.11.0** (was 2026093001 / 1.10.6). Both trees
+byte-identical for every file touched. The importer has NOT been run and none of the tests below has been run
+(the lead re-inits PHPUnit once for all version bumps and runs `--group bizlms_import`); everything was checked by
+`php -l`, the framework static scan (`tests/classes/bizlms/static_scanner.php`, 0 findings over
+`classes/bizlms/`), `tools/check-tree-drift.php`, `tools/check-lang-parity.php` and by reading against the
+framework, ADR-032 and mapping doc section 15.
+
+- **Importer** (`db/bizlms_import.php`, `classes/bizlms/`): feature `classroom`, depends on `org`, atomic.
+  Eleven steps in order: institutes and rooms -> `local_sentientia_locations` (MAP, one hierarchy); classrooms
+  -> `local_sentientia_classroom` and sessions -> `local_sentientia_classroom_sessions` (PRESERVE: ids are held by
+  certificates, `{event}` rows, enrol `customint1`, evaluations, ratings; a migrate_all header copy is adopted);
+  trainers and linked courses -> the two new tables (MAP, duplicates merged); roster, attendance and waiting
+  list (MAP, grouped: duplicates merged, waiting places renumbered 1..N); trainer feedback and completion rules
+  archived. `local_classroom_test_score` with rows is a blocker; `local_classroom_categories` is declined.
+  Decisions read from the signed file: `status_new_hold`, `waitlist_closed`, `waitlist_open`, `pathless`,
+  `costs_as_columns` (the costs stay in the legacy table: `true` blocks), `tenant.unresolved.classroom`. The
+  tenant path is the only tenant key readers use: an unusable path imports as NULL (cross-tenant only), never
+  guessed from the cost centre unless the owner chose `by_costcenter`.
+- **Trainers are not locked out.** `local_sentientia_classroom.trainerid` = the lowest `local_classroom_trainers`
+  row whose user still exists; `sessions.trainerid` = the session's own trainer (0 -> NULL). The attendance pages
+  (QR fix, 2026-09-30) let a non-`:update` user in through those two columns and, since review round 1
+  (2026-10-01), through a row of `local_sentientia_classroom_trainers` too: a co-trainer (second and later trainer
+  of a classroom) may open and mark EVERY session of that classroom, not only the sessions that name them. The
+  first version of this branch kept `may_run_session()` unwidened and locked co-trainers out of every session
+  that names somebody else; the brief says co-trainers count once that table exists, and the trainer block
+  already lists the classroom for them. See "Review round 1" below.
+- **Schema (install.xml + upgrade step 2026093002, `db/upgradelib.php::local_sentientia_classroom_ensure_import_schema`,
+  idempotent, no row touched):** classroom + `shortname`, `trainingstart`, `trainingend`, `timecompleted`,
+  `createdby`; roster + `completion_status` (default 0), `timecompleted`, `hours`; locations + `parentid`,
+  `venue_type`, `building`; new tables `local_sentientia_classroom_trainers` and `_courses` (unique
+  `(classroomid, trainerid)` and `(classroomid, courseid)`). Status 5 = draft and 6 = on hold (3 and 4 are never
+  reused: raw BizLMS values).
+- **Code fixes of the map:** 3 legacy fallbacks removed from `session_manager` (and `get_sessions()` sorts by
+  columns it has); 4 draft and on-hold in the labels, the change-status whitelist, the edit form, the list, the
+  overview and the status filter, en + hi; 5 capacity 0 = unlimited (form validation, `create()`, help text);
+  6 `auto_promote()` promotes only on an active classroom and never a deleted user (a deleted user is not the
+  head of the queue and does not hold a place); 7 an imported classroom, session or roster row (and any completed
+  roster row) cannot be deleted or unenrolled (`error_protected_history`), and `delete()` also clears the
+  waiting list and the two new tables; 8 DPDP `anonymise_data_for_user()` keeps the roster row (there is no free
+  text on it), full erasure clears `trainerid` / `createdby` and the trainer rows; 9 (calendar plugin) only
+  status 1 and 2 reach a learner's calendar and session notes that hold HTML become text; 10 (trainer block)
+  reads the trainers table and loses its `local_classroom` fallback; 11 the dashboards (`theme/airpayux` and
+  `theme/sentientia`) count `session_manager::count_classrooms_for_caller()` (tenant-scoped, none without a
+  tenant) instead of the unscoped legacy table, and the airpayux quick link points at the Sentientia page;
+  13 `session_manager::sanitize_url()` is public and delegates to the new `url_rule` (the importer applies the
+  same rule); 14 `local_sentientia_classroom_pluginfile()` serves `classroomlogo`.
+- **Readers of imported history, flag `sentientia.classroom.import_history` (default OFF, registered in
+  `db/feature_flags.php`):** overview shows training dates, completed date, every trainer, linked courses and the
+  logo; the roster table gains Completion, Completed on and Hours; learners get `my.php` (their OWN classrooms,
+  sessions, attendance, completion; data built by `classes/my_classrooms.php`; the page does not exist with the
+  flag off); the logo file is served only with the flag on. Roster, waiting-list and attendance reads now leave
+  out deleted users (not flagged: the import keeps their rows as history, and the count matches the list).
+- **Privacy:** the provider now declares `trainerid` and `createdby` (classroom), `trainerid` (sessions), the
+  trainers table, and `enrolledby`, `completion_status`, `timecompleted`, `hours` on the roster, plus attendance
+  `notes`; export adds trainer rows, classrooms led or created and sessions led; en + hi strings.
+- **Extra plugin touched:** `local_sentientia_notifications` `rule_ilt_feedback_pending` has no upper age limit,
+  so after import a rule switched on would ask everyone who ever sat a session for feedback. It now skips
+  sessions the import brought in (`provenance::not_imported_sql`). Code only, no version bump there.
+- **Tests (written, NOT run):** `bizlms_import_test` (contract trait + the feature tests from the fixture section
+  of the map; fixtures `tests/fixtures/bizlms/local_classroom.install.xml` and `local_location.install.xml` are
+  verbatim BizLMS copies with the production-shape edits listed in their headers; `tests/classes/bizlms/` holds
+  `fixture_xml` (joins the two files) and `org_stub` (the registry refuses `depends() = ['org']` when no org
+  importer is registered)); `bizlms_mapping_test` (pure rules); `import_schema_test` (install.xml and the upgrade
+  helper agree, idempotent, no row touched, step 2026093002); `import_readers_test` (states, capacity 0,
+  auto-promote guard, deleted users, the flag, the roster service, the overview and my-classrooms templates,
+  dashboard scope, the logo callback); in other plugins `ics_builder_test` +2, `rule_engine_phase_c_test` +1,
+  `block_sentientia_trainer/tests/trainer_block_test` (3). `location_schema_test` had a stale assertion (the
+  version after replaying the steps is the LAST step's, not 2026092501); it is now `>=`.
+- **Open:** visual evidence (CLAUDE.md section 5) for the changed pages is NOT in this branch: the work was
+  done without a running Moodle. Needed before the flag is flipped or this merges: classroom list with the
+  Draft / On hold filter buttons, the edit form (status select, capacity help), the overview with the flag on
+  (training dates, trainers, courses, logo), the roster with completion columns, `my.php` desktop and mobile.
+  The privacy coverage guard (`privacy_coverage_test::USER_COLUMNS`) does not list `trainerid`; the provider
+  declares it anyway. No navigation link to `my.php` was added (the theme owns the navbar). `moduleid` and the
+  calendar `{event}` rows (gap G7) are untouched.
+
+### Review round 1 (2026-10-01) - ADR-032 classroom importer
+
+Same branch, same version (2026093002 / 1.11.0: no schema, language or template change, so no bump). Both trees
+byte-identical for every file touched. NOT run: PHPUnit (the lead re-inits once). Checked with `php -l`,
+`tools/check-tree-drift.php`, `tools/check-lang-parity.php`, `tools/check-path-boundary.php --quiet` and
+`tools/check-bizlms-fixture-copies.php`.
+
+- **Must-fix, co-trainers (`session_manager::may_run_session()`).** After the two `trainerid` checks it also
+  returns true when `local_sentientia_classroom_trainers` exists and holds `(classroomid, userid)`. The
+  `:update` shortcut and the ADR-031 tenant guard (which runs first in `require_attendance_access()`) are
+  unchanged; every attendance entry point and the `list_classroom_sessions` link go through this one function.
+  `bizlms_import_test` now asserts T2 CAN run S1 and T1 still cannot run CR2's S5;
+  `attendance_trainer_scope_test` gained a co-trainer case (page, three web services, the session link, a stranger
+  and a row on ANOTHER classroom still refused, a co-trainer row of another tenant's classroom still refused) and a
+  `may_run_session` case. The earlier statement that `may_run_session()` "was not widened" is withdrawn.
+- **Privacy, actor columns.** `roster.enrolledby` and `attendance.markedby` (filled by the import from
+  `usercreated` / `usermodified`, and by every native enrolment and mark) are now found by
+  `get_contexts_for_userid()` and `get_users_in_context()`, exported for the ACTOR (row id, classroom or session,
+  time; never the learner's id, which is somebody else's data), and set to NULL by `delete_data_for_user()` and
+  `delete_data_for_users()` (`release_actor_columns()`, next to `release_trainer_and_creator()`). NULL, not 0:
+  on `enrolledby` 0 already means "promoted off the waiting list". The DPDP `anonymise_data_for_user()` keeps
+  them (they point at the user row it anonymises in place), as it keeps the trainer rows. The full-context erase
+  needs nothing: it already deletes both tables. Test: `test_privacy_finds_exports_and_clears_the_actor_columns`.
+- **Double escaping.** `my_classrooms.php` and the linked-course names, classroom name and location of `view.php`
+  passed `format_string()` output into `{{ }}`, so an imported "Tom & Jerry" showed as "Tom &amp; Jerry" (the same
+  class as `my_evaluations.php`). They use `format_string(..., true, ['escape' => false])` and the template
+  escapes once, the `{{# str }}` caption argument included. `view.php`'s classroom name and location were
+  double-escaped before this branch too (not flagged by the review); fixed the same way. Test:
+  `test_the_my_classrooms_page_escapes_a_name_with_an_ampersand_once`.
+- **Source columns.** `REQUIRED_SOURCE_COLUMNS` now lists every column a step reads (classroom, sessions, roster,
+  attendance, trainers, courses, waiting list, and the two venue tables), so a different source schema blocks
+  with `missing_column:<table>.<column>` instead of importing 0 or NULL. `local_classroom.costcenter` is required
+  only when `classroom.pathless` is `by_costcenter` or `by_creator`. Read-only check on the April rehearsal copy
+  (`bizlms_april`): every listed column exists on every table. Test:
+  `test_a_column_a_step_reads_but_the_source_schema_lacks_blocks_the_feature` (drops one column from four tables).
+- **Imported attendance is history on its own.** `unenrol_user()` refused only when the ROSTER row was imported or
+  completed; a learner whose roster row the import skipped but whose attendance rows were imported (and who was put
+  on the roster since) lost that attendance. It now also refuses when any attendance row of that learner in the
+  classroom's sessions has import provenance. Test: `test_unenrol_also_refuses_a_learner_whose_attendance_is_imported_history`.
+- **Waiting list.** A place that would have stayed `waiting` for a DELETED learner is imported as `removed` with the
+  reason "Imported from BizLMS: the learner no longer exists" (`mapping::waitlist_status()` takes a sixth argument,
+  default false, so the existing callers and cases are unchanged): every reader hides a deleted learner, so the
+  queue used to start at position 2. The same learner waiting more than once in one queue is one place: the
+  earliest by (BizLMS sort order, id) stays, the others are merged into it (new merge reason `dup_waiting_place`,
+  declared in `importer::reasons()`), the survivor keeping the earliest `timecreated` and latest `timemodified`.
+  A promoted or removed duplicate is history and is left alone. Tests: `bizlms_mapping_test` cases and
+  `test_a_deleted_learners_place_is_removed_and_a_repeated_place_is_merged`.
+- **`get_trainers()` is NOT tenant-scoped, on purpose (accepted).** It lists the names of the trainers of a
+  classroom the caller already passed `require_classroom_access()` for, exactly as the primary trainer name
+  always was. Scoping by the trainer's own `open_path` would hide any trainer whose user has no path (imported
+  users may), which is worse than showing a name the classroom's own tenant attached.
+- **Not done: visual evidence** (CLAUDE.md section 5). No Moodle was started in this round either, so there are no
+  screenshots, and none are invented. Screens to capture after deploy, desktop and mobile (590 px), as a learner
+  and as a tenant admin: classroom list with Draft / On hold filter buttons; edit form (status select, capacity
+  help); overview with capacity 0 ("No limit"), then with the flag on (training dates, trainers, courses, logo);
+  roster with the Completion / Completed on / Hours columns; `my.php`.
+- **Observation, April rehearsal copy (read-only).** Every `local_classroom*` table has 0 rows and
+  `local_classroom_categories` does not exist; `local_location_institutes` has 2 rows (cost centre 1,
+  `timemodified` 1, which reads as `timecreated`) and `local_location_room` 1. Only the venue steps run on real
+  data; classrooms, sessions, roster, attendance and the waiting list are proven by the PHPUnit fixture alone
+  until Stage B uses live data. The 6 `classroomlogo` files in `{files}` belong to no classroom and stay.
+- **Owner question, unchanged:** a classroom whose `open_path` is unusable imports with NO path (visible to
+  cross-tenant callers only) because the signed value is `classroom.pathless = cross_tenant_only`; mapping section
+  15 and its CR6 fixture describe rebuilding it from the cost centre. The code follows the signed decision.
+
+### Review round 2 (2026-10-07) - ADR-032 classroom importer
+
+Same branch, same version (2026093002 / 1.11.0: a provider query, a metadata key and tests only, so no bump). Both
+trees byte-identical for every file touched. NOT run: PHPUnit (the lead re-inits once). Checked with `php -l`,
+`tools/check-tree-drift.php`, `tools/check-lang-parity.php`, `tools/check-path-boundary.php --quiet` and
+`tools/check-bizlms-fixture-copies.php`.
+
+- **Must-fix, privacy export crashed (regression of round 1).** `provider::export_user_data()` selected
+  `attendance.markedat` for the rows the user marked. That column has never existed: `install.xml` and the upgrade
+  steps give the attendance table `id, sessionid, userid, status, markedby, notes, timecreated, timemodified`. The
+  query threw `dml_read_exception` (reproduced read-only on the April rehearsal copy by the reviewer) for EVERY
+  user with a system context here, so every learner, trainer or actor data-subject export failed. It now selects
+  `timemodified AS markedat` (the time a row was marked is its `timemodified`), so the exported key is unchanged.
+  The pre-existing metadata entry that declared the same non-existent `markedat` column now declares the real
+  `timemodified` column, with the same string `privacy:metadata:attendance:markedat` (so en and hi stay as they
+  are). The 2026-09-24 note above that "the `markedat` field it declares does not exist" is closed by this.
+  `test_privacy_finds_exports_and_clears_the_actor_columns` now also asserts the exported row carries `markedat`
+  equal to the real `timemodified`, which would have caught this; `privacy_waitlist_test`'s
+  `provider_without_waitlist::export_user_data` goes through the same query and is unblocked.
+- **Test hygiene.** `import_readers_test::test_the_logo_callback_serves_nothing_...` calls
+  `local_sentientia_classroom_pluginfile()` and now `require_once`s `local/sentientia_classroom/lib.php` first
+  (Moodle does not reliably load a local plugin's lib.php inside PHPUnit).
+- **Not done, for the lead:** (1) merge with `claude/gap-integration`: the review's test merge conflicts in
+  `tests/location_schema_test.php` (both trees; both sides made the same `assertGreaterThanOrEqual` change with
+  different comments) and in the state cards of this plugin and of `sentientia_notifications`; resolve by hand at
+  merge time. (2) Visual evidence is still missing (no running Moodle in this workflow); the screens to capture are
+  listed in round 1. (3) Owner questions unchanged: `classroom.pathless=cross_tenant_only` vs the mapping doc's
+  rebuild of an unusable path from the cost centre (section 15, fixture CR6), and whether a co-trainer may run
+  every session of their classroom. (4) Mapping doc section 15 does not list two behaviours added in round 1: a
+  deleted learner's waiting place imports as `removed`, and a learner waiting twice in one queue is merged into the
+  earliest place (`dup_waiting_place`). (5) Before merge the lead's re-init run should include `--group
+  bizlms_import` plus `attendance_trainer_scope_test`, `import_readers_test`, `import_schema_test`,
+  `privacy_waitlist_test`, `tenant_scope_test`, `trainer_block_test`, `ics_builder_test` and
+  `rule_engine_phase_c_test`. (6) The April rehearsal copy has 0 classrooms, so only the venue steps are proven on
+  real data until Stage B.

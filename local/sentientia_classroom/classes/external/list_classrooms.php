@@ -102,10 +102,8 @@ class list_classrooms extends external_api {
 
         $rows = [];
         foreach ($records as $c) {
-            $statusmap = [0 => 'Cancelled', 1 => 'Active', 2 => 'Completed'];
-            $cssmap = [0 => 'badge-secondary', 1 => 'badge-success', 2 => 'badge-info'];
-            $statuslabel = $statusmap[(int) $c->status] ?? 'Unknown';
-            $statuscss = $cssmap[(int) $c->status] ?? 'badge-secondary';
+            $statuslabel = \local_sentientia_classroom\session_manager::status_label((int) $c->status);
+            $statuscss = \local_sentientia_classroom\session_manager::status_badge((int) $c->status);
 
             $viewurl = (new \moodle_url('/local/sentientia_classroom/view.php', ['id' => $c->id]))->out(false);
             $name_html = '<a href="' . s($viewurl) . '" class="text-reset fw-semibold text-decoration-none">'

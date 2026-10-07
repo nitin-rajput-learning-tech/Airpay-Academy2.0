@@ -9,7 +9,9 @@
  * in their tenant. Without local/sentientia_classroom:update (the manager archetype, which the
  * tenant administrator role is, and which a site admin always has) the caller must now be the
  * assigned trainer of the session ({local_sentientia_classroom_sessions}.trainerid) or of its
- * classroom ({local_sentientia_classroom}.trainerid). ADR-031 still bounds all of it to the tenant.
+ * classroom ({local_sentientia_classroom}.trainerid), or be listed as one of the classroom's other
+ * trainers ({local_sentientia_classroom_trainers}, filled by the ADR-032 BizLMS import).
+ * ADR-031 still bounds all of it to the tenant.
  *
  * The discriminator is :update, not :manage (follow-up 2026-09-30): on the prod-data copy the
  * BizLMS trainer role holds :manage but neither :create nor :update, so keyed on :manage it would
@@ -113,6 +115,15 @@ final class attendance_trainer_scope_test extends \advanced_testcase {
         ]);
     }
 
+    /** Lists $user as a trainer of the classroom the way the ADR-032 BizLMS import does (a trainers row). */
+    private function add_co_trainer(int $classroomid, \stdClass $user): void {
+        global $DB;
+        $DB->insert_record('local_sentientia_classroom_trainers', (object) [
+            'classroomid' => $classroomid, 'trainerid' => (int) $user->id,
+            'timecreated' => time(), 'timemodified' => time(),
+        ]);
+    }
+
     /** A session of the classroom whose own trainer is $sessiontrainer (0 = none). */
     private function session(int $classroomid, int $sessiontrainer = 0, string $title = 'Day 1'): int {
         $start = time();
@@ -163,6 +174,61 @@ final class attendance_trainer_scope_test extends \advanced_testcase {
         $this->setUser($other);
         session_manager::require_attendance_access($elsesession);
         $this->assert_refused(fn() => session_manager::require_attendance_access($nosession), 'error_nottrainer');
+    }
+
+    public function test_a_co_trainer_listed_on_the_classroom_may_open_and_mark_all_its_sessions(): void {
+        global $DB;
+        $lead = $this->trainer();
+        $co = $this->trainer();
+        $stranger = $this->trainer();
+        $classroomid = $this->classroom((int) $lead->id);
+        $sessionid = $this->session($classroomid, (int) $lead->id);
+        $learner = $this->getDataGenerator()->create_user();
+        $DB->set_field('user', 'open_path', '/1/2', ['id' => $learner->id]);
+        session_manager::enrol_users($classroomid, [(int) $learner->id]);
+
+        // Before the trainers table lists them, they are neither the session's nor the classroom's trainer.
+        $this->setUser($co);
+        $this->assert_refused(fn() => session_manager::require_attendance_access($sessionid), 'error_nottrainer');
+
+        // Listed on the classroom, the co-trainer runs a session that names somebody else.
+        $this->add_co_trainer($classroomid, $co);
+        $this->setUser($co);
+        [$session, $classroom] = session_manager::require_attendance_access($sessionid);
+        $this->assertSame($sessionid, (int) $session->id);
+        $this->assertNotSame((int) $co->id, (int) $session->trainerid);
+        $this->assertNotSame((int) $co->id, (int) $classroom->trainerid);
+
+        // The web services and the session list agree with the page.
+        $resp = external\bulk_mark_attendance::execute($sessionid, [
+            ['userid' => (int) $learner->id, 'status' => session_manager::ATT_PRESENT, 'notes' => ''],
+        ]);
+        $this->assertSame(1, $resp['marked']);
+        $this->assertSame(session_manager::ATT_LATE, external\mark_session_attendance::execute($sessionid,
+            (int) $learner->id, session_manager::ATT_LATE, '')['status']);
+        $this->assertSame(1, external\list_session_attendance::execute($sessionid)['total']);
+        $rows = [];
+        foreach (external\list_classroom_sessions::execute($classroomid)['rows'] as $row) {
+            $rows[(int) $row['id']] = $row;
+        }
+        $this->assertStringContainsString('attendance.php?sessionid=' . $sessionid, $rows[$sessionid]['title']);
+
+        // A user on no trainer row is still refused, and a row on another classroom grants nothing here.
+        $this->setUser($stranger);
+        $this->assert_refused(fn() => session_manager::require_attendance_access($sessionid), 'error_nottrainer');
+        $this->add_co_trainer($this->classroom(), $stranger);
+        $this->assert_refused(fn() => session_manager::require_attendance_access($sessionid), 'error_nottrainer');
+        $this->assert_refused(fn() => external\list_session_attendance::execute($sessionid), 'error_nottrainer');
+    }
+
+    public function test_a_co_trainer_row_does_not_open_a_classroom_in_another_tenant(): void {
+        $co = $this->trainer('/1/2');
+        $classroomid = $this->classroom(0, '/77');
+        $sessionid = $this->session($classroomid);
+        $this->add_co_trainer($classroomid, $co);
+
+        $this->setUser($co);
+        $this->assert_refused(fn() => session_manager::require_attendance_access($sessionid), 'error_outoftenant');
     }
 
     public function test_a_session_and_classroom_with_no_trainer_are_for_managers_only(): void {
@@ -261,6 +327,12 @@ final class attendance_trainer_scope_test extends \advanced_testcase {
         $this->assertFalse(session_manager::may_run_session($session, $classroom,
             (int) $this->trainer_with_manage()->id));
         $this->assertTrue(session_manager::may_run_session($session, $classroom, (int) $this->updater()->id));
+        // A trainers row makes a user a co-trainer of this classroom and of no other.
+        $this->assertFalse(session_manager::may_run_session($session, $classroom, (int) $other->id));
+        $this->add_co_trainer($classroomid, $other);
+        $this->assertTrue(session_manager::may_run_session($session, $classroom, (int) $other->id));
+        $this->assertFalse(session_manager::may_run_session($session,
+            (object) ['id' => $classroomid + 1000, 'trainerid' => null], (int) $other->id));
         $this->setUser(null);
         $this->assertFalse(session_manager::may_run_session($session, $classroom), 'Nobody logged in: refused.');
     }

@@ -31,24 +31,25 @@ class block_sentientia_trainer extends block_base {
         $this->content->text = '';
         $this->content->footer = '';
 
-        // Get sessions where current user is trainer.
+        // Get the classrooms where the current user is a trainer: the primary trainer of the classroom, or
+        // any trainer listed in local_sentientia_classroom_trainers (ADR-032: BizLMS let a classroom have
+        // several). The BizLMS {local_classroom} fallback is gone (classroom code fix 10): the import moves
+        // that history into the Sentientia tables.
         $sessions = [];
         $table = 'local_sentientia_classroom';
+        $trainers = 'local_sentientia_classroom_trainers';
         $dbman = $DB->get_manager();
 
         if ($dbman->table_exists($table)) {
-            $sessions = $DB->get_records($table, [
-                'trainerid' => $USER->id,
-                'status'    => 1,
-            ], 'timecreated DESC', '*', 0, 10);
-        } else if ($dbman->table_exists('local_classroom')) {
-            // BizLMS fallback.
-            $sessions = $DB->get_records_sql(
-                "SELECT * FROM {local_classroom}
-                  WHERE trainerid = :tid AND visible = 1
-               ORDER BY timecreated DESC",
-                ['tid' => $USER->id], 0, 10
-            );
+            $select = 'status = :status AND (trainerid = :tid1';
+            $params = ['status' => 1, 'tid1' => $USER->id];
+            if ($dbman->table_exists($trainers)) {
+                $select .= " OR EXISTS (SELECT 1 FROM {{$trainers}} ct
+                                         WHERE ct.classroomid = {{$table}}.id AND ct.trainerid = :tid2)";
+                $params['tid2'] = $USER->id;
+            }
+            $select .= ')';
+            $sessions = $DB->get_records_select($table, $select, $params, 'timecreated DESC, id DESC', '*', 0, 10);
         }
 
         if (empty($sessions)) {

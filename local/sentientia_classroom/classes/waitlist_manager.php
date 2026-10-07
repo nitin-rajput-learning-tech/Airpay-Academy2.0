@@ -111,18 +111,30 @@ class waitlist_manager {
         $classroom = $DB->get_record('local_sentientia_classroom',
             ['id' => $classroomid]);
         if (!$classroom) return 0;
-        $current_enrolled = (int) $DB->count_records('local_sentientia_classroom_users',
-            ['classroomid' => $classroomid]);
+        // Only an active classroom promotes anybody (ADR-032, classroom code fix 6). A draft, on-hold,
+        // cancelled or completed classroom may hold a waiting list (the BizLMS import brings those in) and
+        // nothing may enrol a person into it on its own.
+        if ((int) $classroom->status !== session_manager::STATUS_ACTIVE) {
+            return 0;
+        }
+        // A deleted user holds no place: the import keeps the roster rows of deleted users as history.
+        $current_enrolled = (int) $DB->count_records_sql(
+            "SELECT COUNT(1)
+               FROM {local_sentientia_classroom_users} cu
+               JOIN {user} u ON u.id = cu.userid
+              WHERE cu.classroomid = :cid AND u.deleted = 0", ['cid' => $classroomid]);
         if ((int) $classroom->capacity > 0
             && $current_enrolled >= (int) $classroom->capacity) {
             return 0;
         }
 
         // Head of queue = lowest position, status=waiting.
+        // A deleted user is never the head: enrol_users() refuses them too.
         $head = $DB->get_record_sql(
-            "SELECT * FROM {local_sentientia_classroom_waitlist}
-              WHERE classroomid = :cid AND status = 'waiting'
-              ORDER BY position ASC, id ASC LIMIT 1",
+            "SELECT w.* FROM {local_sentientia_classroom_waitlist} w
+               JOIN {user} u ON u.id = w.userid
+              WHERE w.classroomid = :cid AND w.status = 'waiting' AND u.deleted = 0
+              ORDER BY w.position ASC, w.id ASC LIMIT 1",
             ['cid' => $classroomid]);
         if (!$head) return 0;
 
@@ -175,7 +187,7 @@ class waitlist_manager {
                     u.firstname, u.lastname, u.email, u.open_employeeid
                FROM {local_sentientia_classroom_waitlist} w
                JOIN {user} u ON u.id = w.userid
-              WHERE w.classroomid = :cid AND $scopesql
+              WHERE w.classroomid = :cid AND u.deleted = 0 AND $scopesql
               ORDER BY
                 CASE WHEN w.status = 'waiting' THEN 0 ELSE 1 END,
                 w.position ASC, w.id ASC",

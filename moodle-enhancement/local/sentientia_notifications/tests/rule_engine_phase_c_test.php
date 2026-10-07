@@ -69,6 +69,48 @@ final class rule_engine_phase_c_test extends \advanced_testcase {
         $this->assertSame(0, $result['skipped']);
     }
 
+    /**
+     * ADR-032: the ILT feedback rule has no upper age limit, so a session the BizLMS import brought in (years old,
+     * with a roster) would be asked about the day the rule is switched on. Only a session somebody ran in
+     * Sentientia is a candidate.
+     */
+    public function test_ilt_feedback_ignores_sessions_the_bizlms_import_brought_in(): void {
+        global $DB;
+        $this->resetAfterTest();
+        if (!$DB->get_manager()->table_exists('local_sentientia_classroom_sessions')
+                || !$DB->get_manager()->table_exists('local_sentientia_legacymap')) {
+            $this->markTestSkipped('classroom or import tables are not installed');
+        }
+        $now = time();
+        $ended = $now - 10 * DAYSECS;
+        $make = function (string $name) use ($DB, $now, $ended): array {
+            $user = $this->getDataGenerator()->create_user();
+            $classroomid = $DB->insert_record('local_sentientia_classroom', (object) [
+                'name' => $name, 'status' => 1, 'timecreated' => $now, 'timemodified' => $now]);
+            $sessionid = $DB->insert_record('local_sentientia_classroom_sessions', (object) [
+                'classroomid' => $classroomid, 'title' => $name, 'sessiondate' => $ended - 3600,
+                'starttime' => $ended - 3600, 'endtime' => $ended, 'timecreated' => $now, 'timemodified' => $now]);
+            $DB->insert_record('local_sentientia_classroom_users', (object) [
+                'classroomid' => $classroomid, 'userid' => $user->id, 'timecreated' => $now, 'timemodified' => $now]);
+            return [$sessionid, $user];
+        };
+        [, $native] = $make('Native session');
+        [$importedid] = $make('Imported session');
+        $DB->insert_record('local_sentientia_legacymap', (object) [
+            'feature' => 'classroom', 'sourcetable' => 'local_classroom_sessions', 'sourceid' => $importedid,
+            'subkey' => '', 'targettable' => 'local_sentientia_classroom_sessions', 'targetid' => $importedid,
+            'outcome' => 'imported', 'runid' => 1, 'timecreated' => $now]);
+
+        $sink = $this->redirectMessages();
+        $result = rule_engine::process_rule($this->seed_rule('ilt_feedback_pending', 3));
+        $sink->close();
+
+        $this->assertSame(1, $result['sent'] + $result['skipped'],
+            'one candidate: the native session; the imported one is history');
+        $logged = $DB->get_records('local_sentientia_notif_log', null, '', 'id, userid');
+        $this->assertSame([(int) $native->id], array_values(array_map(fn($r) => (int) $r->userid, $logged)));
+    }
+
     public function test_learning_path_stalled_skips_when_table_missing(): void {
         $this->resetAfterTest();
         $rule = $this->seed_rule('learning_path_stalled', 14);

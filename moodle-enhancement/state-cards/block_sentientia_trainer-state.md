@@ -77,3 +77,10 @@ live since 2026-04-16; created now as part of the P1 state-card pass.
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+## 2026-09-30 (ADR-032, classroom code fix 10) - every trainer, no legacy fallback
+
+The block lists the active classrooms where the user is the classroom's `trainerid` OR appears in
+`local_sentientia_classroom_trainers` (BizLMS allowed several trainers; the import keeps them all), each once,
+newest 10. The `{local_classroom}` fallback is removed. New `tests/trainer_block_test.php`. No version bump
+(code only). Both trees. Not run here.

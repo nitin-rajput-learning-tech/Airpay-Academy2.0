@@ -172,7 +172,16 @@ if (isloggedin() && !isguestuser()) {
             // Quick navigation links with live stats.
             $activeusers = $DB->count_records_select('user', 'deleted = 0 AND suspended = 0 AND lastaccess > :t', ['t' => time() - (30 * 86400)]);
             $inactiveusers = $totalusers - $activeusers;
-            $classroomcount = $DB->count_records_select('local_classroom', '1=1');
+            // The classrooms the viewer may see: their tenant's (all of them for a cross-tenant admin), from the
+            // Sentientia table. This used to count every row of the BizLMS {local_classroom} table, unscoped.
+            $classroomcount = 0;
+            try {
+                if (class_exists('\\local_sentientia_classroom\\session_manager')) {
+                    $classroomcount = \local_sentientia_classroom\session_manager::count_classrooms_for_caller();
+                }
+            } catch (Exception $e) {
+                $classroomcount = 0;
+            }
             $examcount = 0;
             try { $examcount = $DB->count_records('local_onlineexams'); } catch (Exception $e) {}
 
@@ -191,7 +200,7 @@ if (isloggedin() && !isguestuser()) {
                 ]],
                 ['label' => 'Reports', 'icon' => 'bar-chart', 'url' => (new moodle_url('/blocks/learnerscript/viewreport.php'))->out(false), 'color' => '#7c3aed'],
                 ['label' => 'Online Exams', 'icon' => 'pencil-square-o', 'url' => (new moodle_url('/local/onlineexams/index.php'))->out(false), 'color' => '#d97706'],
-                ['label' => 'Classrooms', 'icon' => 'calendar', 'url' => (new moodle_url('/local/classroom/index.php'))->out(false), 'color' => '#dc2626',
+                ['label' => 'Classrooms', 'icon' => 'calendar', 'url' => (new moodle_url('/local/sentientia_classroom/index.php'))->out(false), 'color' => '#dc2626',
                  'hasstats' => ($classroomcount > 0), 'stats' => [
                     ['statval' => $classroomcount, 'statlabel' => 'Total'],
                 ]],

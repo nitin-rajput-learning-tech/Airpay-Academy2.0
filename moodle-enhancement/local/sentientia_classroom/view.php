@@ -44,16 +44,9 @@ $PAGE->set_secondary_navigation(false);
 $session_count  = \local_sentientia_classroom\session_manager::count_sessions($classroomid);
 $enrolled_count = \local_sentientia_classroom\session_manager::count_enrolled($classroomid);
 
-$status_map = [
-    \local_sentientia_classroom\session_manager::STATUS_CANCELLED => 'Cancelled',
-    \local_sentientia_classroom\session_manager::STATUS_ACTIVE    => 'Active',
-    \local_sentientia_classroom\session_manager::STATUS_COMPLETED => 'Completed',
-];
-$status_css_map = [
-    \local_sentientia_classroom\session_manager::STATUS_CANCELLED => 'badge-secondary',
-    \local_sentientia_classroom\session_manager::STATUS_ACTIVE    => 'badge-success',
-    \local_sentientia_classroom\session_manager::STATUS_COMPLETED => 'badge-info',
-];
+// The imported-history readers (training dates, every trainer, linked courses, logo, roster completion)
+// are behind sentientia.classroom.import_history, default OFF (ADR-032, classroom code fix 12).
+$history = \local_sentientia_classroom\session_manager::history_enabled();
 
 // Trainer name for overview.
 $trainer_name = '';
@@ -81,17 +74,73 @@ $users_columns = [
     ['key' => 'designation',  'label' => 'Designation',  'sortable' => false],
     ['key' => 'enrolled_at',  'label' => 'Enrolled',     'sortable' => true,  'sortkey' => 'timecreated'],
 ];
+if ($history) {
+    $users_columns[] = ['key' => 'completion',   'sortable' => false,
+        'label' => get_string('roster_completion', 'local_sentientia_classroom')];
+    $users_columns[] = ['key' => 'completed_at', 'sortable' => false,
+        'label' => get_string('roster_completed_on', 'local_sentientia_classroom')];
+    $users_columns[] = ['key' => 'hours',        'sortable' => false,
+        'label' => get_string('roster_hours', 'local_sentientia_classroom')];
+}
 
 $status_int   = (int) $classroom->status;
-$status_label = $status_map[$status_int] ?? 'Active';
-$status_css   = $status_css_map[$status_int] ?? 'badge-success';
+$status_label = \local_sentientia_classroom\session_manager::status_label($status_int);
+$status_css   = \local_sentientia_classroom\session_manager::status_badge($status_int);
+
+// What the BizLMS import brought in that the overview did not show (flagged, default OFF).
+$historydata = [];
+if ($history) {
+    $fmt = '%d %b %Y';
+    $trainers = [];
+    foreach (\local_sentientia_classroom\session_manager::get_trainers($classroomid) as $trainer) {
+        $trainers[] = ['name' => fullname($trainer)];
+    }
+    $courses = [];
+    foreach (\local_sentientia_classroom\session_manager::get_linked_courses($classroomid) as $course) {
+        $courses[] = [
+            // Not escaped here: the template's {{ name }} escapes it once.
+            'name' => format_string($course->fullname, true, ['escape' => false]),
+            'url'  => (new moodle_url('/course/view.php', ['id' => (int) $course->id]))->out(false),
+        ];
+    }
+    $trainingstart = (int) ($classroom->trainingstart ?? 0);
+    $trainingend   = (int) ($classroom->trainingend ?? 0);
+    $trainingdates = '';
+    if ($trainingstart > 0 && $trainingend > 0) {
+        $trainingdates = userdate($trainingstart, $fmt) . ' – ' . userdate($trainingend, $fmt);
+    } else if ($trainingstart > 0 || $trainingend > 0) {
+        $trainingdates = userdate(max($trainingstart, $trainingend), $fmt);
+    }
+    $logourl = '';
+    $logofiles = get_file_storage()->get_area_files($context->id, 'local_sentientia_classroom',
+        'classroomlogo', $classroomid, 'id', false);
+    if ($logofiles) {
+        $logofile = reset($logofiles);
+        $logourl = moodle_url::make_pluginfile_url($context->id, 'local_sentientia_classroom',
+            'classroomlogo', $classroomid, $logofile->get_filepath(), $logofile->get_filename())->out(false);
+    }
+    $completedat = (int) ($classroom->timecompleted ?? 0);
+    $historydata = [
+        'show_history'       => true,
+        'training_dates'     => $trainingdates,
+        'has_training_dates' => $trainingdates !== '',
+        'completed_human'    => $completedat > 0 ? userdate($completedat, $fmt) : '',
+        'has_completed'      => $completedat > 0,
+        'trainers'           => $trainers,
+        'has_trainers'       => !empty($trainers),
+        'courses'            => $courses,
+        'has_courses'        => !empty($courses),
+        'logo_url'           => $logourl,
+        'has_logo'           => $logourl !== '',
+    ];
+}
 
 $data = [
     'classroomid'         => $classroomid,
-    'name'                => format_string($classroom->name),
+    'name'                => format_string($classroom->name, true, ['escape' => false]),
     'description'         => format_text($classroom->description ?? '', FORMAT_HTML),
     'has_description'     => !empty(trim((string) ($classroom->description ?? ''))),
-    'location'            => format_string($classroom->location ?? ''),
+    'location'            => format_string($classroom->location ?? '', true, ['escape' => false]),
     'has_location'        => !empty(trim((string) ($classroom->location ?? ''))),
     'capacity'            => (int) $classroom->capacity,
     'trainer_name'        => $trainer_name,
@@ -124,7 +173,7 @@ $data = [
     'sessions_columns_json' => json_encode($sessions_columns),
     'users_columns_json'    => json_encode($users_columns),
     'extra_args_json'       => json_encode(['classroomid' => $classroomid]),
-];
+] + $historydata;
 
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_sentientia_classroom/view', $data);

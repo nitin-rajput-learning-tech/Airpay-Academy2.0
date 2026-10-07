@@ -29,4 +29,20 @@ $flags = [
                           window, signed token) are unchanged.',
     ],
 
+    'sentientia.classroom.import_history' => [
+        'default'     => false,
+        'description' => 'Readers for the classroom history the BizLMS import brings in
+                          (ADR-032, classroom code fix 12). When OFF (default) nothing
+                          changes on screen: the classroom overview, the roster table and
+                          the pages are as before, and /local/sentientia_classroom/my.php
+                          does not exist. When ON: the overview shows the training dates,
+                          the date completed, every trainer, the linked courses and the
+                          classroom logo; the roster table gains Completion, Completed on
+                          and Hours columns; the classroom logo is served; and a learner
+                          can open "My classrooms" (my.php) to see their own classrooms,
+                          sessions, attendance and completion. The flag only controls what
+                          is shown: the import, the tenant rules (ADR-031) and the
+                          protection of imported history do not depend on it.',
+    ],
+
 ];
