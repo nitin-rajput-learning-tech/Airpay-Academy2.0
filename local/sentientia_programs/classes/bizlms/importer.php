@@ -5,6 +5,7 @@
 namespace local_sentientia_programs\bizlms;
 
 use local_sentientia_platform\bizlms\context;
+use local_sentientia_platform\bizlms\copies_files;
 use local_sentientia_platform\bizlms\decision;
 use local_sentientia_platform\bizlms\file_rehome;
 use local_sentientia_platform\bizlms\importer as importer_contract;
@@ -41,7 +42,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class importer implements importer_contract {
+final class importer implements importer_contract, copies_files {
 
     /** Tables that must exist whenever local_program does. */
     private const COMPANIONS = [
@@ -105,6 +106,18 @@ final class importer implements importer_contract {
 
     public function core_writes(): array {
         return [];
+    }
+
+    /**
+     * The logo copy rehome_logos() makes: the BizLMS program logo file area into the one the Sentientia pluginfile
+     * callback serves. The runner lets {files} grow in that target area and nowhere else (decision IDN-04, signed
+     * key framework.file_rehome_copies). It is a reviewed side effect, not a core write, so --purge-feature stays
+     * available.
+     *
+     * @return array<int, array{0: string, 1: string, 2: string, 3: string}>
+     */
+    public function allowed_file_areas(): array {
+        return [['local_program', 'programlogo', 'local_sentientia_programs', 'programlogo']];
     }
 
     public function tenant_columns(): array {

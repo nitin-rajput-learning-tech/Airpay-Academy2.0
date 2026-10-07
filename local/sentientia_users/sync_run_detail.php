@@ -21,15 +21,10 @@ $run = $DB->get_record('local_sentientia_users_sync_runs', ['id' => $run_id], '*
 
 // Tenant scoping: only a cross-tenant caller (ADR-031) sees any tenant's run;
 // anyone else only runs in their own tenant, and nothing without one.
-if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
-    $caller_path = (string) ($USER->open_path ?? '');
-    $parts = explode('/', trim($caller_path, '/'));
-    $tenant = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
-    if ($tenant === 0 || (int) $run->costcenterid !== $tenant) {
-        throw new \moodle_exception('nopermissions', 'error',
-            new moodle_url('/local/sentientia_users/sync_runs.php'),
-            'view this HRMS sync run');
-    }
+if (!\local_sentientia_users\sync_access::in_callers_tenant($run)) {
+    throw new \moodle_exception('nopermissions', 'error',
+        new moodle_url('/local/sentientia_users/sync_runs.php'),
+        'view this HRMS sync run');
 }
 
 $PAGE->set_context($context);
@@ -46,6 +41,23 @@ $PAGE->navbar->add('#' . $run_id);
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('hrms_run_detail_heading', 'local_sentientia_users', $run_id));
+
+$backlink = html_writer::start_div('mt-4')
+    . html_writer::link(
+        new moodle_url('/local/sentientia_users/sync_runs.php'),
+        '← ' . get_string('hrms_back_to_history', 'local_sentientia_users'),
+        ['class' => 'btn btn-outline-secondary'])
+    . html_writer::end_div();
+
+// A run the BizLMS import made is imported history that nothing references: it is shown only while
+// sentientia.users.imported_sync_history is ON (default OFF; XC-IMPORTED-HISTORY-READERS, 2026-10-07). The tenant
+// check above came first, so a run of another tenant is refused the same way whatever the flag says.
+if (\local_sentientia_users\sync_access::is_hidden_imported_run($run)) {
+    echo $OUTPUT->notification(get_string('hrms_imported_history_off', 'local_sentientia_users'), 'info');
+    echo $backlink;
+    echo $OUTPUT->footer();
+    exit;
+}
 
 // Header card with run stats.
 echo html_writer::start_div('card mb-3');
@@ -88,13 +100,27 @@ echo html_writer::end_div();
 echo html_writer::end_div();
 
 // Errors + warnings detail.
-// id ASC last: BizLMS never stored the CSV line, so every imported row has line 0 and the order would otherwise
-// be whatever the database returns.
-$errortotal = $DB->count_records('local_sentientia_users_sync_errors', ['runid' => $run_id]);
-$errors = $DB->get_records('local_sentientia_users_sync_errors',
-    ['runid' => $run_id], 'severity ASC, csv_line_number ASC, id ASC', '*', $page * $perpage, $perpage);
+// The rejected lines hold the e-mail address, employee code and name of a prospective employee. Only the person who
+// uploaded the run, and cross-tenant callers, see them (IDN-07, BizLMS parity: it showed a non-admin only the error
+// lines they caused). The query is not even run for anyone else. The header and the counts above stay tenant-wide.
+$canseelines = \local_sentientia_users\sync_access::can_see_lines($run);
+$errortotal = 0;
+$errors = [];
+if ($canseelines) {
+    // id ASC last: BizLMS never stored the CSV line, so every imported row has line 0 and the order would otherwise
+    // be whatever the database returns.
+    $errortotal = $DB->count_records('local_sentientia_users_sync_errors', ['runid' => $run_id]);
+    $errors = $DB->get_records('local_sentientia_users_sync_errors',
+        ['runid' => $run_id], 'severity ASC, csv_line_number ASC, id ASC', '*', $page * $perpage, $perpage);
+}
 
-if ($errortotal === 0) {
+if (!$canseelines) {
+    echo html_writer::tag('h5',
+        get_string('hrms_error_log', 'local_sentientia_users'),
+        ['class' => 'mt-4 mb-3']);
+    echo $OUTPUT->notification(
+        get_string('hrms_lines_uploader_only', 'local_sentientia_users'), 'info');
+} else if ($errortotal === 0) {
     echo $OUTPUT->notification(
         get_string('hrms_no_errors', 'local_sentientia_users'), 'success');
 } else {
@@ -137,11 +163,6 @@ if ($errortotal === 0) {
     echo $OUTPUT->paging_bar($errortotal, $page, $perpage, $PAGE->url);
 }
 
-echo html_writer::start_div('mt-4');
-echo html_writer::link(
-    new moodle_url('/local/sentientia_users/sync_runs.php'),
-    '← ' . get_string('hrms_back_to_history', 'local_sentientia_users'),
-    ['class' => 'btn btn-outline-secondary']);
-echo html_writer::end_div();
+echo $backlink;
 
 echo $OUTPUT->footer();

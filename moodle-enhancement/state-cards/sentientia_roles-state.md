@@ -408,10 +408,50 @@ database (no PHPUnit, nothing copied to XAMPP); both trees are byte-identical.
   `role_not_assignable`, so parity exits 2 if a production row ever hits them. Both source tables are empty on the
   April dump (`local_costcenter_permissions` 0 rows, `local_org_dept_roles` 0 rows, auditlog 0), so the feature will be a
   zero-row run at cutover and the signed `value_1_only` decision is confirmed only because there are no rows.
+  **Decided 2026-10-07 (IDN-02): none is pre-accepted.** After the Stage B rehearsal Nitin accepts, in one batch with
+  the counts in the approval note, whichever of `org_roles:user_outside_org_tenant`, `org_roles:role_not_assignable`
+  and `org_roles:user_without_tenant` has a non-zero count, and the hash is re-pinned.
 - Open decision for Nitin: a user with **no** tenant path is still given the category role (warning
   `user_without_tenant`). ADR-031 decision 4 is fail-closed (no tenant, nothing). Skipping them would be one more
   owner reason; not done because the review asked whether to.
+  **DECIDED 2026-10-07 (IDN-01, delegated): fail closed.** The user is left out and a row with nobody left is skipped
+  with the owner reason `user_without_tenant`. See the 2026-10-07 section at the end of this card.
 - Framework: ADR-032 says steps read only through `$ctx`. `transform()` also reads core state (`role_assignments` to
   fold an existing assignment, `role`, and `role_context_levels`) through global `$DB`. It works because each ungrouped
   row is written before the next is transformed, but a dry run reports two `imported` where an apply gives imported +
   folded (already a known limit above). A read-only core lookup on the context would remove the exception.
+
+
+## 2026-10-07 - ADR-032 owner decision IDN-01: org_roles fails closed for a user with no tenant path (1.3.1-beta -> 1.3.2-beta, 2026100701)
+
+Branch `claude/owner-decisions-x`. Decision record: `docs/cutover/OWNER-DECISIONS-2026-10-07.md` (delegated 2026-10-07),
+signed key `org_roles.user_without_tenant` = `skip_fail_closed` in `docs/cutover/bizlms-import-decisions.json`.
+
+- **Behaviour:** `assignment_step::transform_row()` leaves a user with no tenant path (`root_of_user() === 0`) out of the
+  row, with the warning `user_without_tenant`, exactly as it already did for a user of another tenant. A row with nobody
+  left is skipped; the reason is `user_outside_org_tenant` when anybody was refused for their tenant, else
+  `user_without_tenant` when anybody had no tenant path, else `no_valid_user`. The new reason is a needs-owner reason
+  (`importer::REASON_USER_WITHOUT_TENANT`, `reason(.., false, true)`). Preflight counts active pathless users as the
+  warning `user_without_tenant:N` next to `user_outside_org_tenant:N`.
+- **Why (ADR-031):** decision 4, no tenant means nothing; decision 6, a scoped `roles:assign` may only assign to users in
+  the actor's own tenant, so the native UI could never make this grant; BizLMS never read these tables, so the grant would
+  be authority production never gave. A pathless user's role would also switch on silently the day an HRMS sync gave the
+  user any tenant path. April copy: both source tables hold 0 rows, 1 of 2,870 live users has no tenant path (a site
+  admin, who already holds every capability at every category). So nothing changes today; the one path where the importer
+  was not fail-closed is closed. The legacy row stays in `local_costcenter_permissions` / `local_org_dept_roles`, so the
+  role can be assigned by hand later.
+- **Seed totals now:** 8 imported, 3 folded, 11 skipped, 1 archived primary rows; 10 assignments and 10 audit rows
+  (row 17, the floater, is `skipped user_without_tenant`). `tenant_methods.exact` is 6.
+- **Version:** 2026093002 -> 2026100701, `importer::requires_version()` equal to it, guarded bare savepoint in
+  `db/upgrade.php`. No schema, no capability, no flag, no string (the reason is a code, not text). No UI.
+- **IDN-02 (decided, no code):** the three org_roles needs-owner reasons are NOT pre-accepted; Nitin accepts the ones with
+  a non-zero Stage B count, in writing, with the counts. `docs/cutover/bizlms-import-decisions.json` carries no
+  `accepted_reasons`.
+- **Tests (written, not run):** `tests/bizlms_import_test.php` - the seed row 17 is now a skip; every total and count
+  above; the declared reasons include `user_without_tenant` (needs the owner) and `requires_version() === 2026100701`; the
+  tenant-isolation walk asserts that NO imported assignment belongs to a path-less user; the finalise test no longer marks
+  the floater dirty; new `test_a_user_with_no_tenant_path_is_left_out_of_a_row_and_a_row_with_nobody_left_is_skipped`
+  (floater + u3 imports for u3 at list position 2; floater alone, floater + a tenant-77 user and floater + an unknown user
+  are skipped with the right reasons; preflight `user_without_tenant:5`; the floater holds nothing and has no audit row).
+  PHPUnit needs the lead's re-init for the version bump.
+- Both trees are byte-identical.

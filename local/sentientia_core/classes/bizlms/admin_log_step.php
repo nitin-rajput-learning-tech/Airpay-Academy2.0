@@ -18,7 +18,8 @@ use local_sentientia_platform\bizlms\context;
  *   event                   -> event        verbatim
  *   module                  -> module       verbatim
  *   description             -> description  verbatim (it names the actor by first name; see the privacy provider)
- *   type                    -> itemref      (the course id, or NULL)
+ *   type                    -> itemref      (the id of the item the entry is about, or NULL: a course id for a course
+ *                                            entry, the forum's or the online exam's own id for those)
  *   usercreated             -> userid       (the actor)
  *   usermodified            -> usermodified (NULL becomes 0)
  *   the actor's open_path   -> actor_path   (the tenant, see log_step::place())

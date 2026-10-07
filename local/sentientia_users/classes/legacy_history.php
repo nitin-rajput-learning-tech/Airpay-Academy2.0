@@ -21,8 +21,10 @@ defined('MOODLE_INTERNAL') || die();
  * the person is removed from them (ids set to 0, identifying text blanked or scrubbed). Login days are the one
  * exception: a row is only a (user, day) pair, and its unique key (userid, logindate) cannot survive losing the
  * user, so it is deleted, the way core's own log store deletes a user's log rows. That exception is NOT covered
- * by users.erasure_treatment (which names the transcript and sync-error rows); it waits for the owner's written
- * decision users.logindays_erasure, and deleting is the builder's default until then.
+ * by users.erasure_treatment (which names the transcript and sync-error rows); it is the owner's own signed decision
+ * users.logindays_erasure = delete (2026-10-07, delegated), a record that no code reads. The import itself deletes
+ * nothing: this acts on the Sentientia copy, through Moodle's privacy request workflow, where a person approves each
+ * deletion request. The legacy local_uniquelogins stays untouched until the legacy-table privacy ADR.
  *
  * WHICH ROWS ARE A PERSON'S. A row that carries no account id (an error line, an unmatched transcript row) is a
  * person's when it names them by e-mail, username, or an employee code. An e-mail or username names one account.
@@ -33,7 +35,10 @@ defined('MOODLE_INTERNAL') || die();
  * holder is one of them.
  *
  * This is also the reader of the transcript and of the position and domain labels the profile shows. Both
- * readers are behind default-OFF flags (db/feature_flags.php).
+ * readers are behind default-OFF flags (db/feature_flags.php), and so is the third imported-history reader, the
+ * HRMS sync history (sync_runs.php and sync_run_detail.php: sentientia.users.imported_sync_history; see
+ * sync_access). One rule for every feature (XC-IMPORTED-HISTORY-READERS): imported history and log rows nothing
+ * references are shown only when the feature's imported-history flag is ON.
  *
  * @package    local_sentientia_users
  * @copyright  2026 Airpay Payment Services
@@ -64,6 +69,12 @@ final class legacy_history {
 
     /** Flag: the position and domain lines of the profile. */
     public const FLAG_POSITION_LABELS = 'sentientia.users.position_labels';
+
+    /** Flag: the runs and rejected lines the BizLMS import put on the HRMS history pages. */
+    public const FLAG_SYNC_HISTORY = 'sentientia.users.imported_sync_history';
+
+    /** The source value of an HRMS run the BizLMS import made (the native runs say web, cron or api). */
+    public const SOURCE_BIZLMS = 'bizlms';
 
     /** What an anonymised e-mail, employee code or username becomes (the value BizLMS wrote for "none"). */
     public const PLACEHOLDER = '-';
@@ -98,6 +109,15 @@ final class legacy_history {
      */
     public static function position_labels_enabled(): bool {
         return \local_sentientia_platform\feature_flags::is_enabled(self::FLAG_POSITION_LABELS);
+    }
+
+    /**
+     * Are the imported HRMS runs and their rejected lines on the history pages?
+     *
+     * @return bool
+     */
+    public static function sync_history_enabled(): bool {
+        return \local_sentientia_platform\feature_flags::is_enabled(self::FLAG_SYNC_HISTORY);
     }
 
     // Readers.
@@ -483,7 +503,8 @@ final class legacy_history {
      * - error rows about them (matched by e-mail, employee code or username): the identity columns are blanked and
      *   every identifier is scrubbed out of the message;
      * - transcript rows: userid, employee id and name cleared, and any creator or modifier of theirs set to 0;
-     * - login days: deleted (see the class description: the owner's decision users.logindays_erasure is pending).
+     * - login days: deleted (see the class description: the owner's decision users.logindays_erasure = delete,
+     *   signed 2026-10-07).
      *
      * @param int[] $userids
      * @return void

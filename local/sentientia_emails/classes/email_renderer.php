@@ -153,6 +153,7 @@ class email_renderer {
                     ['key' => 'enrollment/course_enrolled',          'label' => 'Course Enrollment'],
                     ['key' => 'enrollment/course_completed',         'label' => 'Course Completed'],
                     ['key' => 'enrollment/learning_path_enrolled',   'label' => 'Learning Path Assigned'],
+                    ['key' => 'enrollment/manager_course_completed', 'label' => 'Course Completed (Manager Copy)'],
                 ],
             ],
             [

@@ -8,6 +8,7 @@ defined('MOODLE_INTERNAL') || die();
 
 use local_sentientia_platform\bizlms\blocked;
 use local_sentientia_platform\bizlms\context;
+use local_sentientia_platform\bizlms\copies_files;
 use local_sentientia_platform\bizlms\decision;
 use local_sentientia_platform\bizlms\file_rehome;
 use local_sentientia_platform\bizlms\importer as framework_importer;
@@ -31,7 +32,7 @@ use local_sentientia_platform\bizlms\source_spec;
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class importer implements framework_importer {
+final class importer implements framework_importer, copies_files {
 
     /** Feature key. The framework names this one registry::TENANT_OWNER. */
     public const FEATURE = 'org';
@@ -111,8 +112,20 @@ final class importer implements framework_importer {
      * @return array<string, string>
      */
     public function core_writes(): array {
-        // None. The logo copy is file storage, which no importer declares (see finalise()).
+        // None. The logo copy is file storage: it is declared through the copies_files marker, see
+        // allowed_file_areas() and finalise().
         return [];
+    }
+
+    /**
+     * The logo copy finalise() makes: from the BizLMS file area of the organisation logo into this plugin's own
+     * file area. The runner lets {files} grow in that target area and nowhere else (decision IDN-04, signed key
+     * framework.file_rehome_copies).
+     *
+     * @return array<int, array{0: string, 1: string, 2: string, 3: string}>
+     */
+    public function allowed_file_areas(): array {
+        return [[self::LEGACY_LOGO_COMPONENT, self::LEGACY_LOGO_AREA, self::COMPONENT, self::NEW_LOGO_AREA]];
     }
 
     /**
@@ -339,9 +352,10 @@ final class importer implements framework_importer {
      * local_costcenter, whose code is gone on 5.2. The originals stay where they are (the legacy archive is never
      * altered) and a file already at the target is left alone, so a second run copies nothing.
      *
-     * The copy is a write to the files table that is declared nowhere: registry::CORE_WRITES_ALLOWED has no files
-     * entry and the side-effect tripwire does not watch files. --purge-feature=org therefore leaves the copied
-     * logos behind; that is harmless, because a re-import finds them and copies nothing.
+     * The copy is a reviewed side effect, declared through the copies_files marker (allowed_file_areas()) and not
+     * as a core write: the side-effect tripwire watches the files table for every importer, and lets this one add
+     * rows in its own logo area only. The run report counts them (files_copied). --purge-feature=org leaves the
+     * copied logos behind, which is harmless: a re-import finds them and copies nothing.
      *
      * @param context $ctx
      * @return void

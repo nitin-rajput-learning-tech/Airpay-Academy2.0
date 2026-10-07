@@ -22,14 +22,17 @@ $plugin->component = 'local_sentientia_learningpath';
 // behind sentientia.learningpath.learner_paths.enabled (default OFF), the removal
 // of the two legacy-table fallbacks in path_manager, imported-history protection,
 // and the privacy provider for the new columns.
-$plugin->version   = 2026093001;  // ADR-032: learningplan importer + schema + learner page (flag OFF)
+// 2026100701 (2026-10-07): ADR-032 owner decision IDN-04 - the importer implements the platform's copies_files marker (its
+// cover copy is a declared side effect, counted in the run report). No schema change. The marker interface ships with
+// local_sentientia_platform 2026100701, which this plugin therefore requires. One version for the batch (F-85).
+$plugin->version   = 2026100701;  // ADR-032 IDN-04: copies_files marker (on top of 2026093001: learningplan importer + schema + learner page, flag OFF)
 // 2026092502: :view revoked from learner roles without the student archetype.
 // 2026092501: adaptive log scores keep 2 decimals.
 // 2026092500: ADR-031: every pathid/userid/courseid tenant-checked; :view student default revoked.
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.9.0';  // ADR-032 learningplan import (1.8.3: learner-role :view revoke; 1.8.2: adaptive log score precision; 1.8.1: ADR-031 tenant scope; 1.8.0: +P0.2 Adaptive Learning Journeys)
+$plugin->release   = '1.9.1';  // ADR-032 IDN-04 copies_files marker (1.9.0: ADR-032 learningplan import; 1.8.3: learner-role :view revoke; 1.8.2: adaptive log score precision; 1.8.1: ADR-031 tenant scope; 1.8.0: +P0.2 Adaptive Learning Journeys)
 $plugin->dependencies = [
     'local_sentientia_org'      => 2026041600,
-    'local_sentientia_platform' => 2026093001,  // tenant::is_cross_tenant / scope_path; bizlms import framework (ADR-032)
+    'local_sentientia_platform' => 2026100701,  // tenant::is_cross_tenant / scope_path; bizlms import framework (ADR-032); the copies_files marker (IDN-04)
 ];

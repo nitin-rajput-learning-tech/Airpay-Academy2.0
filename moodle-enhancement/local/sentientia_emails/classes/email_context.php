@@ -139,6 +139,13 @@ class email_context {
                 'certificate_url' => $CFG->wwwroot . '/mod/customcert/view.php?id=100',
                 'has_certificate'  => true,
             ]),
+            'enrollment/manager_course_completed' => array_merge($base, [
+                'subject'         => 'Priya Singh has completed Anti Money Laundering',
+                'firstname'       => 'Binay',
+                'member_name'     => 'Priya Singh',
+                'completion_date' => date('d F Y'),
+                'team_url'        => $CFG->wwwroot . '/my/dashboard.php',
+            ]),
             'enrollment/learning_path_enrolled' => array_merge($base, [
                 'subject'         => 'New Learning Path: HR Onboarding Courses',
                 'path_name'       => 'HR Onboarding Courses',

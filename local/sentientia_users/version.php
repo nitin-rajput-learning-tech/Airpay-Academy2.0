@@ -78,7 +78,11 @@ $plugin->component = 'local_sentientia_users';
 // a paged sync-run list that labels BizLMS-imported runs, and two default-OFF readers: the earlier training
 // records on the profile (sentientia.users.legacy_transcript) and position/domain labels
 // (sentientia.users.position_labels).
-$plugin->version   = 2026100101;  // ADR-032 users importer + imported-history tables + real privacy provider
+// 2026-10-07 - ADR-032 owner decisions: IDN-07 (the run list stays tenant-wide, a run's rejected lines are shown only to
+// the uploader and to cross-tenant callers, imported and native alike; BizLMS parity), XC-IMPORTED-HISTORY-READERS (the
+// imported HRMS sync runs sit behind the new default-OFF flag sentientia.users.imported_sync_history), IDN-06 (login days
+// are deleted on erasure, comment-only). Two strings (en + hi), no schema change.
+$plugin->version   = 2026100701;  // ADR-032 owner decisions: sync-history visibility + imported-history flag (on top of 2026100101)
 // 2026093001: persona pass D14: supervisor + sync-run name lookups load every fullname() field (no developer notice)
 // 2026092501: welcome email actually sends (email_to_user, white-label token restored).
 // 2026092500: ADR-031: target-tenant checks on every write.
@@ -88,7 +92,7 @@ $plugin->version   = 2026100101;  // ADR-032 users importer + imported-history t
 // 2026090302: H1, signup no longer reveals whether an email exists.
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '2.9.0';  // ADR-032 users import (2.8.2: name-field notice fix; 2.8.1: welcome email fix; 2.8.0: ADR-031)
+$plugin->release   = '2.9.1';  // ADR-032 owner decisions: sync-history visibility + flag (2.9.0: users import; 2.8.2: name-field notice fix; 2.8.1: welcome email fix; 2.8.0: ADR-031)
 $plugin->dependencies = [
     'local_sentientia_org' => 2026051501,
     'local_sentientia_platform' => 2026093001,  // ADR-032: the bizlms import framework the importer implements

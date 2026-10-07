@@ -27,6 +27,7 @@ use local_sentientia_platform\bizlms\tenant_resolver;
 use local_sentientia_platform\bizlms\text;
 use local_sentientia_platform\bizlms\unclaimed;
 use local_sentientia_platform\phpunit\legacy_schema_fixture;
+use local_sentientia_platform\tests\bizlms\toy_files_importer;
 use local_sentientia_platform\tests\bizlms\toy_importer;
 use local_sentientia_platform\tests\bizlms\toy_seed;
 use local_sentientia_platform\bizlms\bizlms_exception;
@@ -508,8 +509,8 @@ final class bizlms_support_test extends \advanced_testcase {
                   'groups_members', 'cohort_members'] as $table) {
             $this->assertContains($table, sideeffect_guard::TABLES);
         }
-        // files is left out on purpose (file_rehome copies an organisation logo in finalise()).
-        $this->assertNotContains('files', sideeffect_guard::TABLES);
+        // files is watched for every importer (IDN-04); only a copies_files importer may add rows, in its areas.
+        $this->assertContains('files', sideeffect_guard::TABLES);
 
         $roleid = $this->getDataGenerator()->create_role();
         $before = sideeffect_guard::snapshot();
@@ -517,6 +518,56 @@ final class bizlms_support_test extends \advanced_testcase {
         $DB->insert_record('role_capabilities', (object) ['contextid' => \context_system::instance()->id, 'roleid' => $roleid,
             'capability' => 'local/blmtest:x', 'permission' => CAP_ALLOW, 'timemodified' => time(), 'modifierid' => 0]);
         $this->assertSame(['role_capabilities'], sideeffect_guard::violations($before, sideeffect_guard::snapshot()));
+    }
+
+    public function test_the_tripwire_sees_a_file_and_counts_copies_per_declared_area(): void {
+        $this->resetAfterTest();
+        $before = sideeffect_guard::snapshot();
+        $this->assertArrayHasKey('files', $before);
+
+        toy_importer::write_file('local_sentientia_platform', 'toytarget');
+        $this->assertSame(['files'], sideeffect_guard::violations($before, sideeffect_guard::snapshot()),
+            'an importer with no marker trips on a file');
+
+        // The file API adds a directory row beside the file: it is part of the area and is not a copy.
+        $found = sideeffect_guard::files_in_areas((int) $before['files'], ['local_sentientia_platform/toytarget']);
+        $this->assertSame([], $found['outside']);
+        $this->assertSame(['local_sentientia_platform/toytarget' => 1], $found['copied']);
+
+        toy_importer::write_file('local_sentientia_platform', 'elsewhere');
+        $found = sideeffect_guard::files_in_areas((int) $before['files'], ['local_sentientia_platform/toytarget']);
+        $this->assertSame(['local_sentientia_platform/elsewhere'], $found['outside']);
+
+        $nothing = sideeffect_guard::files_in_areas((int) sideeffect_guard::snapshot()['files'],
+            ['local_sentientia_platform/toytarget']);
+        $this->assertSame([], $nothing['outside']);
+        $this->assertSame(['local_sentientia_platform/toytarget' => 0], $nothing['copied'], 'a declared area with no copy reads 0');
+    }
+
+    public function test_declared_file_areas_are_the_target_half_and_must_be_four_strings(): void {
+        $this->resetAfterTest();
+        toy_importer::reset();
+        $importer = new toy_files_importer();
+        $this->assertSame(['local_sentientia_platform/toytarget'], sideeffect_guard::declared_file_areas($importer));
+        $this->assertTrue(sideeffect_guard::file_areas_well_formed($importer));
+
+        foreach ([[['a', 'b']], [['a', 'b', 'c', '']], [['a', 'b', 'c', 7]], [['a', 'b', 'c', 'd', 'e']]] as $bad) {
+            toy_importer::$fileareas = $bad;
+            $this->assertFalse(sideeffect_guard::file_areas_well_formed($importer), json_encode($bad));
+        }
+        toy_importer::reset();
+    }
+
+    public function test_root_is_registered_asks_the_tenant_registry_and_not_the_organisation_table(): void {
+        $this->resetAfterTest();
+        $this->assertTrue(tenant_resolver::root_is_registered(1));
+        $this->assertTrue(tenant_resolver::root_is_registered(77));
+        $this->assertTrue(tenant_resolver::root_is_registered(177));
+        $this->assertFalse(tenant_resolver::root_is_registered(999));
+        $this->assertFalse(tenant_resolver::root_is_registered(0));
+        $this->assertFalse(tenant_resolver::root_is_registered(-1));
+        // No organisation row exists here: the answer never depended on one.
+        $this->assertFalse((new lookups())->has_orgs());
     }
 
     public function test_the_database_group_count_is_what_the_grouped_scan_is_checked_against(): void {

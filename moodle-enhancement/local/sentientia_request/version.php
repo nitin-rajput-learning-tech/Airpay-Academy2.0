@@ -46,10 +46,15 @@ $plugin->component = 'local_sentientia_request';
 // to approver_routing so the import can route legacy pending requests; the lists show every item
 // type's name, imported rows only with the sentientia.request.imported_history flag (default OFF);
 // decide() refuses classroom/program/certification rows; the cron jobs skip imported rows.
-$plugin->version   = 2026093001;
+// 2026-10-07 owner decisions (COMMS-R1..R4): a pending request whose requester has left or whose item is gone is history
+// only (request.pending_stale); a request for a gone path, classroom or program gets itemid 0; local_request_comments rows
+// block preflight until the owner has reviewed them, and decide() appends to a folded comment thread instead of replacing
+// it; the imported_history flag description no longer claims the lists look as before. No schema change: the bump is for
+// the flag registry (cached by the platform) and so that the ledger of the batch has one value per plugin.
+$plugin->version   = 2026100701;
 $plugin->requires  = 2024042200;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.5.0';  // +ADR-032 BizLMS import (was 1.4.0 +ADR-031 tenant scope)
+$plugin->release   = '1.5.1';  // +COMMS-R1..R4 importer rules and decide() note (was 1.5.0 +ADR-032 BizLMS import)
 $plugin->dependencies = [
     'local_sentientia_org'         => 2026040100,
     'local_sentientia_manager'     => 2026040100,  // Approval workflow patterns reused

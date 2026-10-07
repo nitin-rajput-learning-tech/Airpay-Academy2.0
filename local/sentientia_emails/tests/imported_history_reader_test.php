@@ -141,6 +141,13 @@ final class imported_history_reader_test extends \advanced_testcase {
         }
     }
 
+    public function test_the_log_has_an_index_on_sender_userid(): void {
+        global $DB;
+        // F-64: the privacy provider looks a sender up on export and on erasure; without the index that scans the log.
+        $this->assertTrue($DB->get_manager()->index_exists(new \xmldb_table(self::LOG),
+            new \xmldb_index('idx_sender_userid', XMLDB_INDEX_NOTUNIQUE, ['sender_userid'])));
+    }
+
     public function test_the_body_flag_does_nothing_without_the_history_flag(): void {
         $this->flags(false, true);
         $this->assertFalse(imported_history::body_enabled(),
@@ -225,6 +232,49 @@ final class imported_history_reader_test extends \advanced_testcase {
         $csv = implode('', $lines);
         $this->assertStringContainsString('Sasha Sender', $csv);
         $this->assertStringNotContainsString('Body of the imported message', $csv, 'a body is never exported');
+    }
+
+    // F-65: nothing an old mail would fetch from outside, and nothing a spreadsheet would run.
+
+    public function test_an_old_mails_remote_images_are_removed_before_the_body_is_shown(): void {
+        $html = '<p>Hi</p><img src="https://track.example/p.gif?u=1" width="1" height="1">'
+            . '<img src=\'//cdn.example/logo.png\'><img src=http://pixel.example/a.png>'
+            . '<img src="data:image/png;base64,iVBOR//wKGgo=" alt="inline">'
+            . '<img src="/pluginfile.php/1/x.png">'
+            . '<div style="background:url(\'http://bg.example/bg.png\') no-repeat">x</div>'
+            . '<table background="https://tbl.example/bg.jpg"><tr><td>y</td></tr></table>';
+        $clean = imported_history::without_external_resources($html, '[removed]');
+
+        foreach (['track.example', 'cdn.example', 'pixel.example', 'bg.example', 'tbl.example'] as $host) {
+            $this->assertStringNotContainsString($host, $clean, "{$host} would be fetched when the message is shown");
+        }
+        $this->assertSame(3, substr_count($clean, '[removed]'), 'the three off-site images are replaced');
+        $this->assertStringContainsString('data:image/png;base64,iVBOR//wKGgo=', $clean, 'an inline image stays');
+        $this->assertStringContainsString('/pluginfile.php/1/x.png', $clean, 'a relative one stays');
+        $this->assertStringContainsString('<p>Hi</p>', $clean);
+        $this->assertStringContainsString('url(', imported_history::without_external_resources('<i style="background:url(a.png)">', ''),
+            'a relative CSS url stays');
+        $this->assertSame('<p>No images</p>', imported_history::without_external_resources('<p>No images</p>'));
+    }
+
+    public function test_a_spreadsheet_formula_in_an_old_subject_is_defused_in_the_export(): void {
+        $this->imported(1, ['subject' => '=HYPERLINK("http://x.example/steal","click")']);
+        $this->native(1, ['subject' => '@SUM(1+1)']);
+        $this->flags(true, false);
+        $csv = '';
+        delivery_log::stream_csv([], static function (string $line) use (&$csv): void {
+            $csv .= $line;
+        });
+        $this->assertStringContainsString("\"'=HYPERLINK", $csv, 'the subject cell no longer starts with =');
+        $this->assertStringContainsString("\"'@SUM", $csv);
+        $this->assertStringNotContainsString("\"=HYPERLINK", $csv);
+
+        foreach (['=a', '+a', '-a', '@a', "\ta", "\ra"] as $text) {
+            $this->assertSame("'" . $text, delivery_log::csv_safe($text));
+        }
+        foreach (['a=', 'Hello', '', '1+1', 'sent'] as $text) {
+            $this->assertSame($text, delivery_log::csv_safe($text));
+        }
     }
 
     public function test_the_export_streams_the_whole_log_not_the_first_ten_thousand(): void {

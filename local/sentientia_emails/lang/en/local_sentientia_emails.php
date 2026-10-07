@@ -107,8 +107,20 @@ $string['email_detail_note']     = 'Note';
 $string['email_detail_body']     = 'Message';
 $string['email_detail_no_body']  = 'No message body is shown for this e-mail. It is withheld when the message carried account credentials, or when body import was switched off. BizLMS\'s own copy stays in its archive table.';
 $string['email_detail_back']     = 'Back to the notification log';
+$string['email_detail_image_removed'] = 'external image removed';
 
 // ADR-032 privacy metadata: columns the BizLMS import added to the delivery log.
 $string['privacy:metadata:emaillog:sender_userid'] = 'Imported BizLMS history only: the user who queued the message. Set to 0 when that user is erased; the recipient\'s history stays.';
 $string['privacy:metadata:emaillog:body_html']     = 'Imported BizLMS history only: the message body, with account credentials redacted.';
 $string['privacy:metadata:emaillog:timesent']      = 'Imported BizLMS history only: when BizLMS delivered the message.';
+
+// COMMS-N7 (2026-10-07): the three e-mails BizLMS sends that Sentientia had no sender for. Each sender is behind its
+// own default-OFF flag (sentientia.emails.send_course_enrolment.enabled, ...send_learning_path_enrolment.enabled and
+// ...send_manager_completion_copy.enabled). The subjects are in the recipient's own language.
+$string['parity_subject_course_enrolled']    = 'You have been enrolled in: {$a}';
+$string['parity_subject_path_enrolled']      = 'New learning path: {$a}';
+$string['parity_subject_manager_completion'] = '{$a->member} has completed {$a->course}';
+$string['parity_log_subject_manager_completion'] = 'A team member has completed {$a}';
+$string['parity_enrolled_by_self']           = 'Self-enrolment';
+$string['parity_enrolled_by_system']         = 'System';
+$string['task_send_path_enrolments']         = 'Send learning-path enrolment e-mails';

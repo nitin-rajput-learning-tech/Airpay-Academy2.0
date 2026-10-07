@@ -8,12 +8,14 @@ defined('MOODLE_INTERNAL') || die();
 
 /**
  * The readers of the imported BizLMS history in this plugin (ADR-032, users): the earlier training records and
- * the position and domain labels on the profile. Both are default OFF (db/feature_flags.php), and the importer
- * does not turn either on.
+ * the position and domain labels on the profile, and (2026-10-07, XC-IMPORTED-HISTORY-READERS) the imported HRMS sync
+ * history on the admin pages. All three are default OFF (db/feature_flags.php), and the importer does not turn any
+ * of them on.
  *
  * @package    local_sentientia_users
  * @category   test
  * @covers     \local_sentientia_users\legacy_history
+ * @covers     \local_sentientia_users\sync_access
  * @covers     \local_sentientia_users\user_manager::build_profile_context
  *
  * @group local_sentientia_users
@@ -52,12 +54,43 @@ final class legacy_history_test extends \advanced_testcase {
     public function test_the_flags_are_registered_and_default_off(): void {
         \local_sentientia_platform\feature_flags::invalidate_caches();
         $registry = \local_sentientia_platform\feature_flags::load_registry();
-        foreach ([legacy_history::FLAG_TRANSCRIPT, legacy_history::FLAG_POSITION_LABELS] as $flag) {
+        // The third reader (XC-IMPORTED-HISTORY-READERS, 2026-10-07): the imported HRMS sync history on the admin pages.
+        foreach ([legacy_history::FLAG_TRANSCRIPT, legacy_history::FLAG_POSITION_LABELS,
+                legacy_history::FLAG_SYNC_HISTORY] as $flag) {
             $this->assertArrayHasKey($flag, $registry, $flag . ' is registered in db/feature_flags.php');
             $this->assertFalse($registry[$flag]['default'], $flag . ' is default OFF');
         }
+        $this->assertSame('sentientia.users.imported_sync_history', legacy_history::FLAG_SYNC_HISTORY);
         $this->assertFalse(legacy_history::transcript_enabled());
         $this->assertFalse(legacy_history::position_labels_enabled());
+        $this->assertFalse(legacy_history::sync_history_enabled());
+    }
+
+    public function test_the_hrms_history_pages_hold_back_imported_runs_until_the_flag_is_on(): void {
+        global $DB;
+        $this->setAdminUser();
+        $run = (object) ['source' => legacy_history::SOURCE_BIZLMS];
+        $native = (object) ['source' => 'web'];
+        $this->assertTrue(sync_access::is_imported($run));
+        $this->assertFalse(sync_access::is_imported($native));
+
+        $this->assertTrue(sync_access::is_hidden_imported_run($run), 'default OFF: an imported run is held back');
+        $this->assertFalse(sync_access::is_hidden_imported_run($native), 'a native run is never behind the flag');
+
+        \local_sentientia_platform\feature_flags::invalidate_caches();
+        \local_sentientia_platform\feature_flags::set(legacy_history::FLAG_SYNC_HISTORY, 0, true);
+        $this->assertTrue(legacy_history::sync_history_enabled());
+        $this->assertFalse(sync_access::is_hidden_imported_run($run), 'ON: the imported run opens');
+
+        // The list's WHERE clause follows the flag, and a site admin sees every tenant either way.
+        [$where, $params] = sync_access::runs_where();
+        $this->assertStringNotContainsString('importedsource', $where);
+        \local_sentientia_platform\feature_flags::set(legacy_history::FLAG_SYNC_HISTORY, 0, false);
+        [$where, $params] = sync_access::runs_where();
+        $this->assertStringContainsString('r.source <> :importedsource', $where);
+        $this->assertSame(legacy_history::SOURCE_BIZLMS, $params['importedsource']);
+        $this->assertSame(0, $DB->count_records_sql(
+            "SELECT COUNT(1) FROM {local_sentientia_users_sync_runs} r WHERE $where", $params));
     }
 
     public function test_the_transcript_of_a_learner_is_newest_first_with_unparsed_dates_last(): void {

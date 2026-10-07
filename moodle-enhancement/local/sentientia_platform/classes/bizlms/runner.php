@@ -671,6 +671,15 @@ final class runner {
         $this->activefeature = $feature;
         try {
             $pf->merge($importer->preflight($this->context_for($importer)));
+        } catch (blocked $e) {
+            // An importer's preflight may ask the context for an owner decision and so throw blocked() (an
+            // unaccepted or missing key). The decision loop above has usually recorded the same blocker already; the
+            // exception must not escape and abort the whole preflight pass (2026-10-07, F-10), and the line must not
+            // appear twice. What the importer would have counted or warned about after that point is lost: the run is
+            // blocked anyway.
+            if (!in_array($e->getMessage(), $pf->blockers(), true)) {
+                $pf->block($e->getMessage());
+            }
         } finally {
             $this->activefeature = null;
         }
@@ -1031,6 +1040,14 @@ final class runner {
         $writer = $this->writer->for_importer($importer);
         $allowed = array_merge($importer->target_tables(), array_keys($importer->core_writes()));
         $extra = $importer instanceof watches_tables ? $importer->watched_tables() : [];
+        // File copies (IDN-04). {files} is watched for every importer. One that implements copies_files may add rows in
+        // the target areas it declares and nowhere else: the generic check lets the table through for it, and
+        // trip_on_violations() checks the areas instead.
+        $fileareas = null;
+        if ($importer instanceof copies_files) {
+            $fileareas = sideeffect_guard::declared_file_areas($importer);
+            $allowed[] = sideeffect_guard::FILES;
+        }
         // A dry run takes the snapshots too, without the log flush (a flush would write pending events, and a dry
         // run writes nothing): it can only see direct writes, and it only reports them, because an online site
         // has other writers.
@@ -1071,7 +1088,7 @@ final class runner {
             if (!$this->dryrun) {
                 // Direct writes. In feature mode this runs inside the outer transaction, so a violation rolls
                 // back with the feature, and nothing is flushed into a transaction that may be rolled back.
-                $this->trip_on_violations($feature, $before, sideeffect_guard::snapshot($extra, !$atomic), $allowed);
+                $this->trip_on_violations($feature, $before, sideeffect_guard::snapshot($extra, !$atomic), $allowed, $fileareas);
             }
             if ($outer) {
                 $outer->allow_commit();
@@ -1082,14 +1099,15 @@ final class runner {
                     // Event side effects. Non-internal observers (the standard log) run only at the commit that
                     // just happened, so the check above cannot have seen them. A violation fails the feature with
                     // no marker, as in batch mode; its rows are committed, so the RDS snapshot is the way back.
-                    $this->trip_on_violations($feature, $before, sideeffect_guard::snapshot($extra), $allowed);
+                    $this->trip_on_violations($feature, $before, sideeffect_guard::snapshot($extra), $allowed, $fileareas);
                 }
             }
             if (!$this->dryrun) {
                 $this->finalise_feature($importer, $ctx);
                 // finalise() and the sequence resets run after the last snapshot above, so their side effects
-                // (a cache purge that queues a task, a message a helper sent) get one more look before the marker.
-                $this->trip_on_violations($feature, $before, sideeffect_guard::snapshot($extra), $allowed);
+                // (a cache purge that queues a task, a message a helper sent, a file copy) get one more look before
+                // the marker.
+                $this->trip_on_violations($feature, $before, sideeffect_guard::snapshot($extra), $allowed, $fileareas);
             }
         } catch (\Throwable $e) {
             if ($outer) {
@@ -1142,11 +1160,23 @@ final class runner {
      * @param array<string, int> $before
      * @param array<string, int> $after
      * @param string[] $allowed Declared targets and reviewed core writes.
+     * @param string[]|null $fileareas For a copies_files importer, its declared target file areas as
+     *        'component/filearea' keys: {files} is then not a violation as such, but a row in any other area is,
+     *        and the copies are counted in the report (files_copied). Null for every other importer, for which
+     *        {files} is an ordinary watched table.
      * @return void
      * @throws tripwire_tripped
      */
-    private function trip_on_violations(string $feature, array $before, array $after, array $allowed): void {
+    private function trip_on_violations(string $feature, array $before, array $after, array $allowed,
+                                        ?array $fileareas = null): void {
         $violations = sideeffect_guard::violations($before, $after, $allowed);
+        if ($fileareas !== null) {
+            $files = sideeffect_guard::files_in_areas((int) ($before[sideeffect_guard::FILES] ?? 0), $fileareas);
+            $this->report->set_feature($feature, ['files_copied' => $files['copied']]);
+            foreach ($files['outside'] as $area) {
+                $violations[] = sideeffect_guard::FILES . ':' . $area;
+            }
+        }
         $this->report->set_feature($feature, ['tripwire' => $violations ? $violations : 'clean']);
         if ($violations) {
             throw new tripwire_tripped('write_outside_declared_tables:' . implode(',', $violations));

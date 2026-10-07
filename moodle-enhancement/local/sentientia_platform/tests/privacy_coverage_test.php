@@ -66,6 +66,28 @@ final class privacy_coverage_test extends \advanced_testcase {
         // tables exist so the guard sees them on the first CI run that carries
         // them, instead of after a provider has been copied as a null_provider.
         'enrolledby', 'markedby', 'initiatedby', 'sender_userid', 'subject_userid',
+        // 2026-10-07 (ADR-032 F-15): the three actor columns the guard could not see. They hold the id of the person
+        // who created or last edited a row, on cohort_scope and on the users sync-run, sync-error and transcript
+        // tables (and on older tables of other plugins, see UNDECLARED_ACTOR_TABLES).
+        'usermodified', 'usercreated', 'modified_by',
+    ];
+
+    /**
+     * Tables that carry one of the three actor columns added to USER_COLUMNS on 2026-10-07 and whose provider does
+     * not declare them yet, found the first time the guard read those columns.
+     *
+     * Each is a real gap, not a claim that the column is harmless: the column names the administrator who last
+     * edited a rule or a path, so a subject-access request for that administrator misses it. They are listed rather
+     * than fixed here because declaring them means new privacy strings (en and hi) in plugins other sessions are
+     * editing (emails) or that no session owns (talent). Each entry goes when its provider declares the table; a NEW
+     * table with one of these columns is checked at once, because only the tables below are skipped.
+     *
+     * @var array<string,string> table => owning plugin
+     */
+    private const UNDECLARED_ACTOR_TABLES = [
+        'local_sentientia_email_overrides' => 'local_sentientia_emails',
+        'local_sentientia_email_rules' => 'local_sentientia_emails',
+        'local_sentientia_talent_path' => 'local_sentientia_talent',
     ];
 
     /**
@@ -326,6 +348,12 @@ final class privacy_coverage_test extends \advanced_testcase {
             }
 
             foreach (array_keys($usertables) as $table) {
+                if (!in_array($table, $declared, true)
+                        && (self::UNDECLARED_ACTOR_TABLES[$table] ?? null) === $component
+                        && array_diff($usertables[$table], ['usermodified', 'usercreated', 'modified_by']) === []) {
+                    // A known gap that only the actor columns cause (UNDECLARED_ACTOR_TABLES).
+                    continue;
+                }
                 if (!in_array($table, $declared, true)) {
                     $gaps[] = sprintf('%s owns %s (%s) but does not declare it',
                         $component, $table, implode(', ', $usertables[$table]));

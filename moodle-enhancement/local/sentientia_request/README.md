@@ -117,10 +117,29 @@ Nothing here runs by itself: the importer (`db/bizlms_import.php`, `classes/bizl
 - A legacy pending **course or path** request is routed like a new one (`approver_routing`) and stays pending:
   a person still decides. Classroom, program and certification requests are history only (no approver,
   `decide()` refuses them).
+- A pending course or path request whose **requester is deleted or suspended, or whose item no longer exists,
+  is history only** too (decision `request.pending_stale = history_only`, 2026-10-07): status stays `pending`,
+  route `admin`, no approver, so it is in nobody's inbox and `Approve` cannot enrol or message an account that
+  has left. Admins still see it in All requests. If a requester comes back, they ask again.
+- A request whose **path, classroom or program is gone gets `itemid` 0** (shown as "(deleted item)"). Those
+  features keep their ids and reset their sequence to `MAX(id)+1`, so keeping the legacy id could attach the old
+  request to a later item. The legacy id stays in `local_request_records.componentid`, reachable through the
+  legacy map. A course keeps its id (core ids are never reused).
+- **Comments.** BizLMS has no writer for `local_request_comments`, so it is expected to be empty. If it holds
+  rows, preflight stops (`needs_owner:request_comments_present=N`) because nobody knows who could see them and
+  the note they fold into is shown to the requester. The owner reads them and writes `request.comments =
+  fold_reviewed` in the decisions file. `decide()` on an imported row **appends** the decider's note below the
+  folded thread (a newline, then the note); it never replaces it.
 - The import sends nothing, enrols nobody and never calls `request_manager`.
 - Reader surface: flag `sentientia.request.imported_history`, default OFF. While it is off the three lists and
-  the approver nav badge leave imported rows out. Turning it on for Airpay is the owner's call after the
-  visual evidence; the import never flips it.
+  the approver nav badge **leave the imported rows out**. Turning it on for Airpay is the owner's call after the
+  visual evidence; the import never flips it. The fixes to the list screens themselves (the Item header, the
+  route in words, status badges in All requests, the SLA column, real names on path requests) are **not**
+  behind the flag: they repair existing native screens and ship as bug fixes (decision COMMS-R3, 2026-10-07).
+- **Runbook, after the flag is ON:** an L&D admin reviews the imported pending rows in All requests. Routing
+  is identical to a native submission, so a supervisor who lacks `local/sentientia_request:approve` leaves a row
+  stuck, and an imported row has no deadline, so it never escalates. Decide such rows with `overrideroute`
+  (COMMS-R6).
 - `request_manager::escalate_overdue()` and `auto_expire()` skip imported rows always.
 - The lists now show the name of every item type (path, classroom, program, certification), not only courses.
 

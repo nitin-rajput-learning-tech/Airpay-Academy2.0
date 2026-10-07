@@ -33,12 +33,15 @@ use local_sentientia_platform\bizlms\watches_tables;
  * local_sentientia_platform\tests\. Real importers do not write or read anything
  * outside their context; the knobs here are test scaffolding only.
  *
+ * Not final: toy_files_importer extends it to implement the copies_files marker (IDN-04), because a class cannot
+ * implement an interface conditionally.
+ *
  * @package    local_sentientia_platform
  * @category   test
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class toy_importer implements importer, watches_tables {
+class toy_importer implements importer, watches_tables {
 
     /** @var bool Run the whole feature in one outer transaction when small. */
     public static bool $atomic = false;
@@ -121,6 +124,15 @@ final class toy_importer implements importer, watches_tables {
     /** @var bool toy.org writes a log row in transform(), which a dry run executes too. */
     public static bool $dryleak = false;
 
+    /** @var array|null [component, filearea]: finalise() stores a file there, in the system context (IDN-04). */
+    public static ?array $writefile = null;
+
+    /** @var array The file areas toy_files_importer declares (copies_files): [source component, source area, target component, target area]. */
+    public static array $fileareas = [['local_toy', 'source', 'local_sentientia_platform', 'toytarget']];
+
+    /** @var bool preflight() asks the context for a decision the owner has not accepted: blocked() must not escape the runner (F-10). */
+    public static bool $preflightdecision = false;
+
     /** @var bool[] What verify() saw in $ctx->dryrun, one entry per call. */
     public static array $verifyseen = [];
 
@@ -163,6 +175,9 @@ final class toy_importer implements importer, watches_tables {
         self::$readorgs = false;
         self::$finaliseleak = false;
         self::$dryleak = false;
+        self::$writefile = null;
+        self::$fileareas = [['local_toy', 'source', 'local_sentientia_platform', 'toytarget']];
+        self::$preflightdecision = false;
         self::$verifyseen = [];
         self::$finalised = [];
         self::$markerseen = [];
@@ -300,6 +315,10 @@ final class toy_importer implements importer, watches_tables {
     }
 
     public function preflight(context $ctx): preflight {
+        if (self::$preflightdecision) {
+            // Throws blocked() for a key the owner has left open: the runner records it, it does not escape.
+            $ctx->decision('toy.credit');
+        }
         return new preflight();
     }
 
@@ -334,9 +353,26 @@ final class toy_importer implements importer, watches_tables {
         ]);
     }
 
+    /**
+     * Test-only: store one small file in the system context, the way file_rehome's copy does.
+     *
+     * @param string $component
+     * @param string $filearea
+     * @return void
+     */
+    public static function write_file(string $component, string $filearea): void {
+        get_file_storage()->create_file_from_string([
+            'contextid' => \context_system::instance()->id, 'component' => $component, 'filearea' => $filearea,
+            'itemid' => 1, 'filepath' => '/', 'filename' => 'toy.txt',
+        ], 'toy');
+    }
+
     public function finalise(context $ctx): void {
         if (self::$finaliseleak) {
             self::leak_log_row();
+        }
+        if (self::$writefile !== null) {
+            self::write_file(self::$writefile[0], self::$writefile[1]);
         }
         self::$finalised[] = $this->feature;
         self::$markerseen[] = legacymap::feature_complete($this->feature) ? 'complete' : 'pending';

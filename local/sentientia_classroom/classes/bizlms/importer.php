@@ -5,6 +5,7 @@
 namespace local_sentientia_classroom\bizlms;
 
 use local_sentientia_platform\bizlms\context;
+use local_sentientia_platform\bizlms\copies_files;
 use local_sentientia_platform\bizlms\decision;
 use local_sentientia_platform\bizlms\file_rehome;
 use local_sentientia_platform\bizlms\importer as importer_contract;
@@ -41,7 +42,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class importer implements importer_contract {
+final class importer implements importer_contract, copies_files {
 
     /** Plugin version that carries the schema this importer writes to (upgrade step 2026093002). */
     public const REQUIRES_VERSION = 2026093002;
@@ -176,6 +177,18 @@ final class importer implements importer_contract {
      */
     public function core_writes(): array {
         return [];
+    }
+
+    /**
+     * The logo copy finalise() makes: the BizLMS classroom logo file area into this plugin's own, which the
+     * pluginfile callback serves. The runner lets {files} grow in that target area and nowhere else (decision IDN-04,
+     * signed key framework.file_rehome_copies). It is a reviewed side effect, not a core write, so --purge-feature
+     * stays available.
+     *
+     * @return array<int, array{0: string, 1: string, 2: string, 3: string}>
+     */
+    public function allowed_file_areas(): array {
+        return [['local_classroom', 'classroomlogo', 'local_sentientia_classroom', 'classroomlogo']];
     }
 
     /**
@@ -432,8 +445,10 @@ final class importer implements importer_contract {
      * Copy each classroom's logo from the BizLMS file area to the Sentientia one. Outside any transaction and
      * idempotent: a file that is already there is left alone, and the originals are never touched.
      *
-     * The copy is the one write this importer makes outside its declared tables. Files are not one of the
-     * tripwire's watched tables (ADR-032, Side-effect safety 3); the copy is reviewed here and in the mapping doc.
+     * The copy is the one write this importer makes outside its declared tables. {files} is watched for every
+     * importer (ADR-032, Side-effect safety 3, decision IDN-04): this importer declares the copy through the
+     * copies_files marker (allowed_file_areas()), so a row in any other file area still trips the tripwire, and the
+     * run report counts the copies (files_copied).
      *
      * @param context $ctx
      * @return void

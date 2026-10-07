@@ -2,6 +2,8 @@
   "version": 1,
   "approved_by": "Nitin Rajput",
   "approved_on": "2026-09-30",
+  "delegated_on": "2026-10-07",
+  "delegation_note": "On 2026-10-07 Nitin Rajput delegated the open owner decisions ('self review and decide recommended option') on top of the signed basis 'do everything as recommended'. Entries whose why starts with [delegated 2026-10-07] were decided under that delegation. The two cart finance keys (cart.credit_balances, cart.erpnext_invoices_legal) are accepted on that basis; Airpay Finance was not consulted. No skip reason is pre-accepted: accepted_reasons is absent on purpose, and the owner adds each needs-owner reason with its Stage B count after the rehearsal. Any edit after the Stage B rehearsal changes the sha256 and is a re-approval event.",
   "basis": "owner instruction: do everything as recommended",
   "decisions": {
     "framework.adr_accepted": {
@@ -62,6 +64,24 @@
       "value": "block",
       "why": "[rule 1] No recommendation on block versus soft-delete. Nothing is lost: delete and retype actions on imported rows are blocked (and cascade to the new tables), shipped with each importer.",
       "source": "ADR-032 lines 608-609; mapping doc classroom fix 7, program fix 10, learningplan fix 9, evaluation fix 7",
+      "status": "accepted"
+    },
+    "framework.file_rehome_copies": {
+      "value": "reviewed_copy_only_marker_all_callers_left_on_purge",
+      "why": "[delegated 2026-10-07] File copies made by file_rehome in finalise() (org logo, cohort descriptions, learning-plan cover, classroom logo, program logo) are copy-only, insert-only and idempotent; the originals are never touched. Each importer declares its exact source and target areas through a marker instead of core_writes, so --purge-feature stays available. A purge leaves the copies, and every run report counts them. {files} is watched for every importer without the marker.",
+      "source": "ADR-032 Side-effect safety 3; owner decision 2026-10-07 IDN-04 (delegated)",
+      "status": "accepted"
+    },
+    "framework.protect_imported_history_pending_enrolments": {
+      "value": "unenrol_allowed_without_progress",
+      "why": "[delegated 2026-10-07] An admin may unenrol an imported enrolment that has no completion, progress or attendance, on an active path, classroom or program. Every row that carries history stays blocked. The BizLMS row stays in the legacy archive. On a learning path the learner's converted course enrolments are not removed (BizLMS removed them); the admin is shown which remain.",
+      "source": "ADR-032 decision 2; framework.protect_imported_history; mapping doc sections 15 to 17; owner decision 2026-10-07 LRN-10 (delegated)",
+      "status": "accepted"
+    },
+    "framework.imported_rows_on_admin_pages": {
+      "value": "history_rows_behind_reader_flag_entities_unflagged",
+      "why": "[delegated 2026-10-07] Imported entities that other rows reference (orgs, roles, courses and enrolments, plans, programs, classrooms, evaluation forms and their responses, rules) show on the admin pages that manage them. Imported history and log rows that nothing references (orders, ledger, credits, e-mail log, requests, recompletion resets, HRMS sync runs, login days, transcripts) show only when the feature's imported-history flag is ON, which Nitin flips after reviewing the visual evidence. HRMS sync runs get sentientia.users.imported_sync_history.",
+      "source": "framework.reader_flags_default; owner decision 2026-10-07 XC-IMPORTED-HISTORY-READERS (delegated)",
       "status": "accepted"
     },
     "tenant.unresolved.cohort_scope": {
@@ -148,10 +168,22 @@
       "source": "mapping doc section 3 lines 196, 266-267",
       "status": "accepted"
     },
+    "org.crosstenant_platform_role": {
+      "value": "created_by_adr031_script_no_members_until_named",
+      "why": "[delegated 2026-10-07] ADR-031 decision 1 and ADR-032 gate 3: the platform role carries only crosstenant and starts empty; site admins remain the only cross-tenant callers until Nitin names members.",
+      "source": "ADR-031 decision 1; ADR-032 gate 3; owner decision 2026-10-07 IDN-05 (delegated)",
+      "status": "accepted"
+    },
     "org_roles.value_filter": {
       "value": "value_1_only",
       "why": "[proposed] Import only rows with value = 1, still to be confirmed against production data. Both source tables are expected to be empty.",
       "source": "mapping doc section 4 lines 283-287, 297, 334",
+      "status": "accepted"
+    },
+    "org_roles.user_without_tenant": {
+      "value": "skip_fail_closed",
+      "why": "[delegated 2026-10-07] ADR-031 decisions 4 and 6: a user with no tenant path gets no role over a tenant's organisation. The user is left out of the row; a row with nobody left is skipped (user_without_tenant). The legacy row stays as the archive. April copy: both source tables empty; the only pathless live user is a site admin.",
+      "source": "ADR-031 decisions 4 and 6; mapping doc section 4; owner decision 2026-10-07 IDN-01 (delegated)",
       "status": "accepted"
     },
     "course_lookups.featured_scope": {
@@ -164,6 +196,12 @@
       "value": "leave_in_legacy_table",
       "why": "[proposed] Enrolment dates, duration and prerequisites have no Sentientia column and stay in local_coursedetails. prerequisite_courses must never become completion criteria.",
       "source": "mapping doc section 6 lines 445, 454, 493-494",
+      "status": "accepted"
+    },
+    "course_lookups.coursedetails_candidate_columns": {
+      "value": "leave",
+      "why": "[delegated 2026-10-07] [rule 1, R7] April has 0 local_coursedetails rows. open_points has no Sentientia reader (R7), and open_level is already set on 394 of 411 courses; proficiencylevel's id space is unverified. The candidate columns proficiencylevel -> open_level and credits -> open_points are counted in preflight, not written; the values stay in the legacy table. A non-zero level count at Stage B is revisited as fill_level_only (never open_points); switching to fill is a re-approval before the hash is pinned.",
+      "source": "mapping doc section 6; owner decisions 2026-10-07 CRS-06 and CRS-15 (delegated)",
       "status": "accepted"
     },
     "course_lookups.declined_config_tables": {
@@ -272,6 +310,18 @@
       "source": "mapping doc section 10 line 877; section 21 G4 line 2721",
       "status": "accepted"
     },
+    "users.logindays_erasure": {
+      "value": "delete",
+      "why": "[delegated 2026-10-07] A (user, day) row has no meaning without the user and UNIQUE(userid, logindate) rules out anonymising; deleted on erasure like core's log store. Transcript and sync-error rows stay anonymised (users.erasure_treatment). The legacy table is untouched.",
+      "source": "mapping doc section 10; owner decision 2026-10-07 IDN-06 (delegated)",
+      "status": "accepted"
+    },
+    "users.sync_history_visibility": {
+      "value": "runs_tenant_wide_lines_uploader_only",
+      "why": "[delegated 2026-10-07] BizLMS parity (lib.php:1266-1283 errors by modified_by; :1326-1340 statistics by tenant): run counts stay tenant-wide; rejected-line e-mail, code and name are shown only to the uploader and to cross-tenant callers, for imported and native runs alike. Never wider than production today.",
+      "source": "mapping doc section 10; owner decision 2026-10-07 IDN-07 (delegated)",
+      "status": "accepted"
+    },
     "notifications.import_bodies": {
       "value": true,
       "why": "[proposed] Email bodies are imported with credential redaction. Bodies and subjects of password-bearing rows are not imported.",
@@ -298,8 +348,20 @@
     },
     "notifications.deleted_recipient_sent": {
       "value": "sent_with_note",
-      "why": "[proposed] Rows BizLMS marked sent for a deleted recipient stay sent, with a note that no delivery happened.",
-      "source": "mapping doc section 23 line 2798",
+      "why": "[delegated 2026-10-07] A row BizLMS marked sent for a recipient who was already deleted when BizLMS ran the send stays sent, with a note that no delivery happened. A recipient deleted after the send was delivered to and imports as plain sent (log_step::delivered_to_deleted_recipient(); April: 1 of 342 rows to now-deleted users gets the note).",
+      "source": "mapping doc section 11; owner decision 2026-10-07 COMMS-N6 (delegated; wording corrected to the shipped rule)",
+      "status": "accepted"
+    },
+    "notifications.team_member_copy_body": {
+      "value": "withhold",
+      "why": "[delegated 2026-10-07] Copies sent to a manager (teammemberid > 0; 1,921 April rows, all course_complete) are imported without their body, and the member's name is scrubbed from the subject. The body names the team member, and teammemberid is not carried, so erasing that person could never reach it. The member's own row already holds the same message, and the legacy table keeps the original. A later subject_userid column can backfill the bodies.",
+      "source": "mapping doc section 11; owner decision 2026-10-07 COMMS-N2 (delegated)",
+      "status": "accepted"
+    },
+    "notifications.course_link": {
+      "value": "moduleid_for_course_templates",
+      "why": "[delegated 2026-10-07] The production local_emaillogs has no courseid column (April shape). For a course template (moduletype 'course'), the row's moduleid is the course id: on April 9,409 rows point at an existing course, and most bodies name it. The course link is taken from moduleid when that course exists; a deleted course gives NULL. Imported rows never feed the reminder engine.",
+      "source": "mapping doc section 11; owner decision 2026-10-07 COMMS-N3 (delegated)",
       "status": "accepted"
     },
     "recompletion.rule_tenant": {
@@ -350,6 +412,30 @@
       "source": "mapping doc section 12 lines 1138-1139, 1215; ADR-032 line 621",
       "status": "accepted"
     },
+    "recompletion.inferred_reset_without_evidence": {
+      "value": "latest_source_evidence_plus_1s",
+      "why": "[delegated 2026-10-07] [rule 1, R2] When neither completion plus duration nor the next cycle's evidence gives a time before the import, the inferred reset is one second after the cycle's last recorded evidence. It is never the import time, is deterministic across runs and is marked inferred.",
+      "source": "mapping doc section 12; owner decision 2026-10-07 LRN-01 (delegated)",
+      "status": "accepted"
+    },
+    "recompletion.legacy_rows_on_history_page": {
+      "value": "behind_evidence_view_flag",
+      "why": "[delegated 2026-10-07] [framework.reader_flags_default] BizLMS reset rows on history.php are a history reader and share the evidence_view flag. The imported-rule marker on index.php stays visible because it is a configuration safety label.",
+      "source": "mapping doc section 12; owner decision 2026-10-07 LRN-02 (delegated)",
+      "status": "accepted"
+    },
+    "recompletion.dpdp_archive_free_text": {
+      "value": "cleared_record_kept",
+      "why": "[delegated 2026-10-07] [rule 4] DPDP erasure keeps the archived evidence row keyed to the anonymised user and clears free text that can identify them, the same rule the platform applies to attendance notes and exemption reasons.",
+      "source": "mapping doc section 12; owner decision 2026-10-07 LRN-03 (delegated)",
+      "status": "accepted"
+    },
+    "recompletion.imported_rule_enable": {
+      "value": "blocked_until_engine_parity",
+      "why": "[delegated 2026-10-07] [rule 2] An imported BizLMS rule cannot be enabled in the form or run by the engine until engine parity is declared done in a later decision. A native rule is the way to reset learners meanwhile.",
+      "source": "mapping doc section 12; owner decision 2026-10-07 LRN-04 (delegated)",
+      "status": "accepted"
+    },
     "cart.synthesize_ledger": {
       "value": false,
       "why": "[instruction] No synthesized rows. The ledger is imported 1:1 from local_biz_cart_ledger only. Daily sums will not show revenue for paid lines that BizLMS never wrote a ledger row for.",
@@ -382,15 +468,15 @@
     },
     "cart.credit_balances": {
       "value": "frozen_pending_finance",
-      "why": "[instruction] Credit transactions and the derived balance import as frozen, admin-only history. Whether to honour, pay out or write off the balances, and who owns the liability, is a finance decision. Nothing acts on a balance until finance answers.",
-      "source": "mapping doc section 13 line 1418",
-      "status": "finance-confirm"
+      "why": "[delegated 2026-10-07] Nitin delegated this decision ('self review and decide recommended option'). Airpay Finance was NOT consulted, so 'accepted' records the delegated recommendation and is not a Finance sign-off. The credit journal and balances import as frozen, admin-only history behind the default-OFF flag sentientia.cart.imported_credits.enabled. Nothing in Sentientia honours, spends, pays out or writes off a balance; native checkout never reads the credit tables. April 2026 rehearsal copy: 0 credit bookings, 0 ledger rows, 0 holders, INR 0. If Stage B shows any non-zero balance, the count and total go to Airpay Finance before cutover, including how a holder's erasure request is handled. A Finance answer is a re-approval event.",
+      "source": "mapping doc section 13; owner decision 2026-10-07 cart.credit_balances (delegated; the status was finance-confirm until then)",
+      "status": "accepted"
     },
     "cart.erpnext_invoices_legal": {
       "value": "reference_only_pending_finance",
-      "why": "[instruction] Invoices import with status legacy_external and show as 'Issued in ERPNext as <number>' to admins. No link-out to ERPNext and no new invoice numbers until finance confirms whether the ERPNext invoices are the legal tax invoices.",
-      "source": "mapping doc section 13 lines 1321, 1374-1375, 1420",
-      "status": "finance-confirm"
+      "why": "[delegated 2026-10-07] Nitin delegated this decision ('self review and decide recommended option'). Airpay Finance was NOT consulted, so 'accepted' records the delegated recommendation and is not a Finance sign-off. Stored ERPNext numbers import as references only: ERPNEXT-<id>, status legacy_external, shown to order admins as 'Issued in ERPNext as <number>' behind the default-OFF flag sentientia.cart.imported_orders.enabled, with no link-out. Sentientia never issues an invoice number for a BizLMS sale: the legal invoice is the one the registered invoicing system issued, and a serial is never re-issued. April 2026 rehearsal copy: 0 invoice rows and no ERPNext connector configured. Finance confirms the legal record only if Stage B shows rows.",
+      "source": "mapping doc section 13; owner decision 2026-10-07 cart.erpnext_invoices_legal (delegated; the status was finance-confirm until then)",
+      "status": "accepted"
     },
     "cart.cash_drawer_rows_without_order": {
       "value": "import_admin_only",
@@ -435,10 +521,10 @@
           "expert": 5
         },
         "default": 1,
-        "csv": null
+        "csv": "1,2;2,3;3,4;4,5;5,1;7,2;8,3;9,4;10,5;11,2;12,3;13,4;14,5;15,1;16,2;17,3;18,4"
       },
-      "why": "[proposed] The name heuristic from section 14 is approved as the rule. The concrete level-id to 1..5 CSV must be generated from the rehearsal preflight by this rule and written into csv before the skills feature can run. The level ids were not available when this file was drafted, so csv is null and the feature stays blocked until it is filled.",
-      "source": "mapping doc section 14 lines 1455-1456, 1589; section 23 line 2790",
+      "why": "[delegated 2026-10-07] The approved name rule applied to the 17 April levels. Levels 5 and 15 match no rule word (a general, non-levelled label) and take the default 1. Level 16 (plural of 'basic') was reviewed to 2. The preflight warns whenever an entry differs from the rule, and the map is rechecked against the live backup before the hash is pinned.",
+      "source": "mapping doc section 14; owner decision 2026-10-07 LRN-07 (delegated; csv generated from the 17 April levels by the signed name rule, level 16 reviewed)",
       "status": "accepted"
     },
     "skills.source_label": {
@@ -501,6 +587,24 @@
       "source": "mapping doc section 15 lines 1770-1773, 1852",
       "status": "accepted"
     },
+    "classroom.cotrainer_sessions": {
+      "value": "every_session_of_their_classroom",
+      "why": "[delegated 2026-10-07] [current behaviour] Every trainer listed on a classroom may run all of its sessions. BizLMS gated attendance only by capability, never by a session's trainer.",
+      "source": "mapping doc section 15; owner decision 2026-10-07 LRN-15 (delegated)",
+      "status": "accepted"
+    },
+    "classroom.trainer_erasure": {
+      "value": "core_release_dpdp_keep",
+      "why": "[delegated 2026-10-07] [rule 4] Core erasure removes the trainer's rows and clears the columns that name them, and keeps classes and learner records. DPDP keeps them against the anonymised user.",
+      "source": "mapping doc section 15; owner decision 2026-10-07 LRN-16 (delegated)",
+      "status": "accepted"
+    },
+    "classroom.new_states_ui": {
+      "value": "unflagged",
+      "why": "[delegated 2026-10-07] [data safety] Draft and On hold must be listed wherever a status is shown or edited, or a save rewrites an imported classroom's status. The UI is admin-only.",
+      "source": "mapping doc section 15; owner decision 2026-10-07 LRN-17 (delegated)",
+      "status": "accepted"
+    },
     "program.completed_without_date": {
       "value": "completed_flagged",
       "why": "[proposed] A program user with completion_status 1 and no completion date imports as Completed, with a fallback date and a flag.",
@@ -543,6 +647,18 @@
       "source": "mapping doc section 16 lines 1881, 2048",
       "status": "accepted"
     },
+    "program.nameless_with_shortname": {
+      "value": "import_under_shortname_with_warning",
+      "why": "[delegated 2026-10-07] [rule 1] A nameless BizLMS program with a shortname imports under its shortname, reported, so its levels and learner history are kept.",
+      "source": "mapping doc section 16; owner decision 2026-10-07 LRN-12 (delegated)",
+      "status": "accepted"
+    },
+    "program.delete_imported_level": {
+      "value": "blocked",
+      "why": "[delegated 2026-10-07] [rule 1] An imported program level cannot be deleted, since it defines the completion of imported enrolments. Editing it, unassigning courses or archiving the program remain possible.",
+      "source": "mapping doc section 16; owner decision 2026-10-07 LRN-13 (delegated)",
+      "status": "accepted"
+    },
     "learningplan.not_completed": {
       "value": "derive_in_progress",
       "why": "[proposed] Non-completed learners are In progress when any course of the path is completed for them, otherwise Enrolled.",
@@ -578,6 +694,24 @@
       "source": "mapping doc section 17 lines 2125-2128, 2209",
       "status": "accepted"
     },
+    "learningplan.cover_on_admin_view": {
+      "value": "behind_learner_paths_flag",
+      "why": "[delegated 2026-10-07] [framework.reader_flags_default] The imported cover image is a history reader and shows only when the feature's reader flag is ON, as the program logo does.",
+      "source": "mapping doc section 17; owner decision 2026-10-07 LRN-08 (delegated)",
+      "status": "accepted"
+    },
+    "learningplan.user_startdate": {
+      "value": "block_if_present",
+      "why": "[delegated 2026-10-07] [fail closed] BizLMS never writes local_learningplan_user.startdate (April: 0 values). Any value found blocks the feature until its origin is understood.",
+      "source": "mapping doc section 17; owner decision 2026-10-07 LRN-09 (delegated)",
+      "status": "accepted"
+    },
+    "learningplan.stalled_nudge_scope": {
+      "value": "native_rows_on_active_paths",
+      "why": "[delegated 2026-10-07] [rule 2] The automatic stalled-path nudge never targets imported BizLMS enrolments or archived paths. An admin can still nudge those learners by hand.",
+      "source": "mapping doc section 17; owner decision 2026-10-07 LRN-11 (delegated)",
+      "status": "accepted"
+    },
     "evaluation.open_forms": {
       "value": "archived",
       "why": "[proposed] Still-open forms import as ARCHIVED and manual, so no observer can invite anyone and nobody can answer by accident.",
@@ -598,8 +732,8 @@
     },
     "evaluation.legacy_anonymous_linkage": {
       "value": "untouched_pending_legacy_privacy_adr",
-      "why": "[instruction] Anonymous answers import anonymous (userid 0, no subject). The legacy tables still link them to people and are not altered or dropped here. That belongs to the separate legacy-table privacy ADR.",
-      "source": "mapping doc section 18 lines 2418-2419; ADR-032 lines 531-534",
+      "why": "[delegated 2026-10-07] Originally an owner instruction (2026-09-30); the scope was widened on 2026-10-07. Anonymous answers import anonymous (userid 0, no subject). The legacy tables still link them to people and are not altered here. Two more links count as part of the same gap: the import's map, where the 'assign' sub-row and the anonymous response share one completion id, and the completion-ordered ids of implied assignments. The separate legacy-table privacy ADR must cover the map and the id order as well as the legacy tables, and it must be accepted before any legacy evaluation table is anonymised or dropped.",
+      "source": "mapping doc section 18; ADR-032 open decision 5; owner decision 2026-10-07 EV-19 (delegated; first recorded as an owner instruction on 2026-09-30)",
       "status": "accepted"
     },
     "evaluation.trainer_feedback_form_names": {
@@ -614,10 +748,28 @@
       "source": "mapping doc section 18 lines 2379-2381, 2421",
       "status": "accepted"
     },
+    "evaluation.sticky_anonymity": {
+      "value": "whole_form",
+      "why": "[delegated 2026-10-07] A form that ever collected an anonymous answer (its flag, or any completion with anonymous_response 1) imports every completion with userid 0 and no subject, including completions BizLMS stamped named (2). This pools the anonymous answers so none can be singled out by subtracting the named ones, and it matches identity_protected(), which hides every respondent of such a form anyway. The legacy table keeps the person link (evaluation.legacy_anonymous_linkage). April: no form is affected.",
+      "source": "mapping doc section 18; owner decision 2026-10-07 EV-16 (delegated)",
+      "status": "accepted"
+    },
+    "evaluation.tenant_editor_fallback": {
+      "value": "not_used",
+      "why": "[delegated 2026-10-07] A BizLMS form whose path, stored root (costcenterid) and parent classroom give no tenant imports pathless (cross-tenant callers only, reported). It is never filed under the tenant of the user who last edited it. BizLMS showed such forms to site admins only, and a guessed tenant would show named answers to admins who never saw them. April: no form affected.",
+      "source": "mapping doc section 18; owner decision 2026-10-07 EV-TENANT (delegated)",
+      "status": "accepted"
+    },
     "request.pending": {
       "value": "actionable",
       "why": "[proposed] Legacy pending course and path requests stay actionable in the approvals inbox (a person must still decide, and auto-expire and escalation skip imported rows). Classroom, program and certification requests are always read-only. Rule 2 would have closed them as history, but its own exception applies because the document says otherwise.",
       "source": "mapping doc section 23 line 2784; section 19 lines 2525-2526, 2563",
+      "status": "accepted"
+    },
+    "request.pending_stale": {
+      "value": "history_only",
+      "why": "[delegated 2026-10-07] A legacy pending course or path request whose requester is deleted or suspended, or whose item no longer exists, imports as history (pending, no approver), like classroom and program requests. Approving it would enrol and message an account that has left, or point at nothing. Admins still see it in All requests.",
+      "source": "mapping doc section 19; owner decision 2026-10-07 COMMS-R1 (delegated)",
       "status": "accepted"
     },
     "request.pending_classroom_program": {
@@ -658,8 +810,8 @@
     },
     "request.comments": {
       "value": "fold_into_decision_note",
-      "why": "[proposed] Request comments are folded into decision_note (the table is expected to be empty). A separate attributable comment table is built only if comments exist and Nitin asks for it.",
-      "source": "mapping doc section 19 lines 2481-2484, 2513-2514",
+      "why": "[delegated 2026-10-07] Request comments are folded into decision_note. BizLMS has no writer for local_request_comments, so it is expected to be empty. If it holds rows, preflight blocks for the owner, because who could see them is unknown and the note is shown to the requester. A decision on an imported row appends to the folded note and never replaces it.",
+      "source": "mapping doc section 19; owner decision 2026-10-07 COMMS-R4 (delegated; why extended, value unchanged)",
       "status": "accepted"
     },
     "ratings.invalid_rows": {
@@ -704,10 +856,34 @@
       "source": "mapping doc section 21 G8 line 2725",
       "status": "accepted"
     },
+    "gaps.notification_sender_parity": {
+      "value": "build_flagged_off",
+      "why": "[delegated 2026-10-07] BizLMS sends course_enrol, learningplan_enrol and manager copies of course_complete, and Sentientia has no sender for them. They are built behind default-OFF flags. Turning them on for Airpay at cutover is Nitin's call after UAT evidence. Welcome and learner completion e-mails already exist natively.",
+      "source": "mapping doc sections 11 and 21; owner decision 2026-10-07 COMMS-N7 (delegated)",
+      "status": "accepted"
+    },
     "gap.orphan_enrol_instances": {
       "value": "convert_to_manual",
-      "why": "Without the BizLMS enrol_classroom/enrol_program/enrol_learningplan code the enrolments on those instances stop granting course access. Convert each such user_enrolments row to a manual enrolment in the same course, keeping status, timestart and timeend, and record the original instance in the legacy map. Verify at the Stage B rehearsal that every affected learner keeps access.",
-      "source": "ADR-032 open decision (gap G6); lead recommendation, owner instruction 2026-09-30",
+      "why": "[delegated 2026-10-07] Without the BizLMS enrol_classroom, enrol_program and enrol_learningplan code, enrolments on those instances can no longer be managed (no unenrol, suspend or expiry handling), while core still grants course access through any enabled instance whether or not its plugin is on disk (require_login uses enrol_get_enrolment_end, which checks only instance and enrolment status). Convert each such user_enrolments row to a manual enrolment in the same course, keeping status, timestart and timeend, and record the original instance in the legacy map. Each fully converted BizLMS instance is then disabled (enrolments.bizlms_instances_after_verify). Verify at the Stage B rehearsal that every affected learner keeps access.",
+      "source": "ADR-032 open decision (gap G6); mapping doc section 21; owner decision 2026-10-07 XC-G6-WHY (delegated; why corrected, value unchanged)",
+      "status": "accepted"
+    },
+    "enrolments.bizlms_instances_after_verify": {
+      "value": "disable_when_converted",
+      "why": "[delegated 2026-10-07] Core grants access through any enabled instance whether or not its plugin is on disk (require_login -> enrol_get_enrolment_end), so leaving the BizLMS instances on makes a Sentientia unenrol or suspend ineffective. An instance is disabled (status 1, never deleted, prior status kept in a trail) only when every (user, course) pair on it keeps an access window at least as wide through manual enrolments, proved per pair against core's rule. An instance with a regression or an unsettled needs-owner row stays enabled. One UPDATE reverses it.",
+      "source": "mapping doc section 21 (G6); owner decision 2026-10-07 CRS-01 (delegated)",
+      "status": "accepted"
+    },
+    "enrolments.disabled_instance_row_status": {
+      "value": "convert_as_suspended",
+      "why": "[delegated 2026-10-07] [rule 3] A row on a disabled BizLMS instance gives no access today. It converts as a suspended manual enrolment: the record is kept, no access is added, and an admin can reactivate it. 0 rows on April.",
+      "source": "mapping doc section 21 (G6); owner decision 2026-10-07 CRS-02 (delegated)",
+      "status": "accepted"
+    },
+    "enrolments.disabled_only_manual_instance": {
+      "value": "add_enabled_beside",
+      "why": "[delegated 2026-10-07] [rule 1 + rule 2] A course whose only manual instance is disabled gets a new enabled one beside it. The admin's disabled instance is untouched and learners keep today's access. 0 courses on April.",
+      "source": "mapping doc section 21 (G6); owner decision 2026-10-07 CRS-03 (delegated)",
       "status": "accepted"
     }
   }

@@ -379,3 +379,15 @@ No version bump (no schema, capability or flag change). Written, not run: the le
 - Screenshots of `mypaths.php` and the cover on `view.php` are still to take. The cover shows on the admin view page
   without a flag once the import has copied one (product call: gate it or accept it).
 - Merge order: `depends()` = `org`, `skills`; no skills importer is registered on `claude/gap-integration` yet.
+
+## 2026-10-07 - IDN-04: the importer implements the `copies_files` marker (1.9.0 -> 1.9.1, version `2026100701`)
+
+Fix round 1 of branch `claude/owner-decisions-x`. The platform watches `{files}` for every importer (decision IDN-04, signed key
+`framework.file_rehome_copies`); `finalise()` copies each plan's cover through `file_rehome`, so without a declaration a real apply
+with a cover would trip `write_outside_declared_tables:files`. The importer now implements `local_sentientia_platform\bizlms\copies_files`
+and names `local_learningplan/summaryfile` -> `local_sentientia_learningpath/summaryfile`: a copy anywhere else still trips, the run
+report counts the copies (`files_copied`), and it is not a core write, so `--purge-feature` stays available. The test wrapper
+`tests/classes/bizlms/standalone_importer.php` implements the marker and hands `allowed_file_areas()` to the real importer (the runner
+decides by `instanceof`, so a wrapper without it would trip on the cover). The plugin requires `local_sentientia_platform >= 2026100701`
+and takes version `2026100701` (F-85 ledger); no schema change. Tests (written, NOT run): marker declared and well formed; the report
+counts one copy and the tripwire is clean. Both trees identical.
