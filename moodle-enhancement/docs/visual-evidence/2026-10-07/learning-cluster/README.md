@@ -41,6 +41,15 @@ As a tenant admin (a manager-archetype role at system level) on a database that 
 - [ ] Users tab: removing an imported learner with no attendance from an active classroom works; a completed learner, a
       learner with any attendance mark, or any learner of a cancelled or completed classroom shows the protected-history
       error.
+- [ ] (fix round 1) Users tab of an ACTIVE classroom that has capacity 1, an imported pending learner and a waiting-list
+      entry: remove the imported learner. The success message appears and the seat stays EMPTY: nobody is promoted from the
+      queue and nobody receives a "promoted from waitlist" message. Then do the same with a learner enrolled on the site:
+      the head of the queue takes the seat as before.
+- [ ] (fix round 1) Download the `.ics` of a session on the UAT build (UAT serves the `moodle-enhancement` tree). Reconciling
+      `ics_builder` shipped the top-level tree's white-label values into that tree: the calendar entry's PRODID and
+      organiser are now the Sentientia ones (organiser name = the site name), where the `moodle-enhancement` copy still
+      carried the Airpay PRODID and organiser. Open it in a calendar app and check the organiser, and that a session whose
+      notes carry markup shows plain text.
 
 ## Programs (LRN-10, doc item) - plugin `local_sentientia_programs`
 

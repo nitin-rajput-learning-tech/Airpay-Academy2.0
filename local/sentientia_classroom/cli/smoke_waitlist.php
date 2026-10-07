@@ -14,7 +14,14 @@
  *    people and real history;
  *  - it creates and cleans up only its OWN classroom, whatever else the database holds: it never edits an existing
  *    classroom and never deletes a row that is not its own;
- *  - it sets $CFG->noemailever for the run, because the auto-promote step sends a message.
+ *  - it sets $CFG->noemailever for the run, because the auto-promote step sends a message;
+ *  - it REFUSES (exit 2, nothing touched) unless it is run with --dev (review of 2026-10-07). It still takes the first four
+ *    real accounts of the database as its learners, so it writes roster and waiting-list rows for them and sends the
+ *    auto-promoted one a notification; $CFG->noemailever stops e-mail only, not the popup notification or any message
+ *    observer. --dev says that this is a development database where that does not matter. Never pass it on a copy that
+ *    holds real people who may be looked at.
+ *
+ *   php local/sentientia_classroom/cli/smoke_waitlist.php --dev
  *
  * @package local_sentientia_classroom
  */
@@ -25,6 +32,14 @@ require_once(__DIR__ . '/../../../config.php');
 global $DB, $CFG;
 
 echo "=== sentientia_classroom waitlist smoke ===\n\n";
+
+// Real accounts are used as learners, so the run needs an explicit acknowledgement that this is a development database.
+if (!in_array('--dev', array_slice($_SERVER['argv'] ?? [], 1), true)) {
+    fwrite(STDERR, "REFUSED: the waitlist smoke test enrols the first four accounts of this database, puts two on a "
+        . "waiting list and sends one a promotion notification. It only runs on a development database: pass --dev "
+        . "to say this is one. Nothing was touched.\n");
+    exit(2);
+}
 
 // Refuse on a database that holds imported BizLMS history.
 if ($DB->get_manager()->table_exists('local_sentientia_legacymap') && $DB->count_records('local_sentientia_legacymap') > 0) {

@@ -37,11 +37,26 @@ final class imported_unenrol_test extends \advanced_testcase {
         $this->setAdminUser();
     }
 
-    private function classroom(int $status = session_manager::STATUS_ACTIVE): int {
+    private function classroom(int $status = session_manager::STATUS_ACTIVE, int $capacity = 20): int {
         global $DB;
         return (int) $DB->insert_record('local_sentientia_classroom', (object) [
             'name' => 'AML workshop', 'description' => '', 'costcenterid' => 0, 'open_path' => '/1',
-            'location' => 'Room', 'capacity' => 20, 'status' => $status, 'visible' => 1,
+            'location' => 'Room', 'capacity' => $capacity, 'status' => $status, 'visible' => 1,
+            'timecreated' => time(), 'timemodified' => time(),
+        ]);
+    }
+
+    /**
+     * Put a user at the head of a classroom's waiting list.
+     *
+     * @param int $classroomid
+     * @param \stdClass $user
+     * @return int The waiting-list row's id.
+     */
+    private function wait(int $classroomid, \stdClass $user): int {
+        global $DB;
+        return (int) $DB->insert_record('local_sentientia_classroom_waitlist', (object) [
+            'classroomid' => $classroomid, 'userid' => $user->id, 'position' => 1, 'status' => 'waiting',
             'timecreated' => time(), 'timemodified' => time(),
         ]);
     }
@@ -114,6 +129,46 @@ final class imported_unenrol_test extends \advanced_testcase {
         $this->assertFalse($DB->record_exists('local_sentientia_classroom_users', ['id' => $rosterid]));
         $this->assertTrue($DB->record_exists(legacymap::TABLE, ['targettable' => 'local_sentientia_classroom_users',
             'targetid' => $rosterid]), 'the BizLMS row and its map entry stay as the record of the import');
+    }
+
+    /**
+     * Review of 2026-10-07 (second reviewer): freeing a seat by removing an imported row used to run auto_promote(), which could
+     * seat an old imported waiting-list place and send that person a message. A clean-up promotes nobody.
+     */
+    public function test_removing_an_imported_learner_does_not_promote_the_waiting_list(): void {
+        global $DB;
+        $classroom = $this->classroom(session_manager::STATUS_ACTIVE, 1);
+        $imported = $this->getDataGenerator()->create_user();
+        $this->imported('local_sentientia_classroom_users', $this->roster($classroom, $imported));
+        $waiting = $this->getDataGenerator()->create_user();
+        $waitid = $this->wait($classroom, $waiting);
+
+        $sink = $this->redirectMessages();
+        $this->assertTrue(session_manager::unenrol_user($classroom, (int) $imported->id));
+        $this->assertSame(0, $sink->count(), 'nobody is told they were promoted');
+        $sink->close();
+
+        $this->assertFalse($DB->record_exists('local_sentientia_classroom_users', ['classroomid' => $classroom]),
+            'the seat is free and stays free');
+        $this->assertSame('waiting', $DB->get_field('local_sentientia_classroom_waitlist', 'status', ['id' => $waitid]),
+            'the place on the queue is untouched');
+    }
+
+    public function test_removing_a_learner_enrolled_on_the_site_still_promotes_the_waiting_list(): void {
+        global $DB;
+        $classroom = $this->classroom(session_manager::STATUS_ACTIVE, 1);
+        $native = $this->getDataGenerator()->create_user();
+        $this->roster($classroom, $native);
+        $waiting = $this->getDataGenerator()->create_user();
+        $waitid = $this->wait($classroom, $waiting);
+
+        $sink = $this->redirectMessages();
+        $this->assertTrue(session_manager::unenrol_user($classroom, (int) $native->id));
+        $sink->close();
+
+        $this->assertTrue($DB->record_exists('local_sentientia_classroom_users',
+            ['classroomid' => $classroom, 'userid' => $waiting->id]), 'unchanged: the head of the queue takes the seat');
+        $this->assertSame('promoted', $DB->get_field('local_sentientia_classroom_waitlist', 'status', ['id' => $waitid]));
     }
 
     public function test_an_imported_learner_who_carries_history_stays_protected(): void {

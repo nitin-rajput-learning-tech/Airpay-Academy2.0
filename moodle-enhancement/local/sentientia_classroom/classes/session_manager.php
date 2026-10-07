@@ -922,6 +922,12 @@ class session_manager {
      * except one that carries none yet (imported_roster_is_pending()). A completed learner's row is refused whether
      * imported or not: their completion goes with the roster row.
      *
+     * Removing a row the import brought in does NOT promote the head of the waiting list (review of 2026-10-07): the
+     * queue of an imported classroom is BizLMS history, possibly years old, and an admin who cleans up an imported
+     * enrolment did not decide to seat whoever waited then, nor to send that person a "you have been promoted" message.
+     * The seat stays free; an admin enrols the right person on purpose. Removing a row enrolled on this site promotes
+     * as before.
+     *
      * @throws \moodle_exception error_protected_history
      */
     public static function unenrol_user(int $classroomid, int $userid): bool {
@@ -936,7 +942,8 @@ class session_manager {
         if ($roster && (int) ($roster->completion_status ?? 0) === 1) {
             throw new \moodle_exception('error_protected_history', 'local_sentientia_classroom');
         }
-        if ($roster && self::is_imported(self::USERS_TABLE, (int) $roster->id)
+        $removingimported = $roster && self::is_imported(self::USERS_TABLE, (int) $roster->id);
+        if ($removingimported
                 && !self::imported_roster_is_pending($DB->get_record(self::TABLE, ['id' => $classroomid]), $roster)) {
             throw new \moodle_exception('error_protected_history', 'local_sentientia_classroom');
         }
@@ -976,8 +983,9 @@ class session_manager {
         }
 
         // Phase 3 B.4 (2026-05-11) — auto-promote head of waiting list.
-        // Runs AFTER the transaction commits so the seat is genuinely free.
-        if (class_exists('\\local_sentientia_classroom\\waitlist_manager')) {
+        // Runs AFTER the transaction commits so the seat is genuinely free. Not after the removal of an imported
+        // row (see above): that queue is history and nobody on it is promoted by a clean-up.
+        if (!$removingimported && class_exists('\\local_sentientia_classroom\\waitlist_manager')) {
             try {
                 \local_sentientia_classroom\waitlist_manager::auto_promote($classroomid);
             } catch (\Throwable $e) {
