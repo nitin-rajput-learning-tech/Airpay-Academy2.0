@@ -28,9 +28,9 @@ import * as Repository from './repository';
 /**
  * Creates and shows a modal that contains a placeholder.
  *
- * core/modal_factory was removed in Moodle 5.2 (its RequireJS dependency 404s, so this whole module
- * never loaded and no payment could start). core/modal is the shape core paygw_paypal uses on
- * 5.1, 5.2 and 5.3 alike.
+ * The legacy modal factory AMD module was removed in Moodle 5.2 (its RequireJS dependency 404s, so
+ * this whole module never loaded and no payment could start). core/modal is the shape core
+ * paygw_paypal uses on 5.1, 5.2 and 5.3 alike.
  *
  * @returns {Promise<Modal>}
  */
