@@ -5,6 +5,30 @@
 
 ---
 
+## 2026-10-07 - Stage B parity tooling: baseline on the 4.1.2 source, legacy-table proof, post-import explanation (Sonnet 5.5)
+
+Branch `claude/stageb-tools`. The old parity tool could not take a baseline on the 4.1.2 source (it read `scorm_attempt`, which
+exists from Moodle 4.3) and could not tell the import's own changes from damage. Now: `cli/source_baseline.php`, one file
+for PHP 7.4 to 8.4 that needs no Sentientia plugin, takes the baseline (and `--compare`s at the hop-1 checkpoint);
+`migration_parity_check.php` runs the same code on the target, fingerprints every BizLMS legacy table (CRC over all rows and
+columns), and with `--after-import --decisions=...` holds everything to the source baseline except what the import wrote,
+which it explains from the import's own map and ledgers (exit 0 / 1 / 2 / 3).
+
+- **Real run.** Source = `backups/airpayprod-mariadb-ready.sql` (release 4.1.2+, the production mysqldump of 2026-04-06). None of
+  the dumps in `Moodle Backup/` is it (4.5.10 or 5.1.3). Restore 49 min; baseline 22 to 30 s; the copy that went through both hops
+  compared **exit 0, 100% PARITY** (23 counts, grade sum, 14 checksums, 95 BizLMS tables / 25,726 rows). SCORM gives the same
+  8,504 attempts, 303,086 tracks and CRC on `scorm_scoes_track` and on `scorm_scoes_value`. A one-row text change in a legacy table is
+  exit 1. First run's only finding: the 5.x `tool_certificate_issues` has an `archived` column the 4.1.2 table lacks (no longer
+  checksummed).
+- **Gate 4 closed** (ADR-032 Stage B gates). The enrolments importer inserts only (April dry run: +7,733 `user_enrolments`, +19
+  `enrol`); it never changes an existing `enrol` row, so a changed `enrol.status` after the import is a failure, not an
+  explained delta.
+- **Not run:** PHPUnit (off limits; two new test files written), and `migration_parity_check.php` under a bootstrapped Moodle:
+  its flows ran through a `$DB` stand-in against scratch schemas. The first real post-import run is the Stage B rehearsal.
+- Version `local_sentientia_platform` 1.11.0 (2026100701), no schema change. Detail: `state-cards/sentientia_platform-state.md`
+  (last section), `docs/cutover/MIGRATION-REHEARSAL-RUNBOOK.md`, ADR-032 "Parity hooks".
+
+---
 ## 2026-10-01 - First real PHPUnit run: six failures fixed at the root (Sonnet 5.5)
 
 Branch `claude/phpunit-fixes-1001`. The first Moodle PHPUnit run of the ADR-032 framework and the 2026-09-30 fixes

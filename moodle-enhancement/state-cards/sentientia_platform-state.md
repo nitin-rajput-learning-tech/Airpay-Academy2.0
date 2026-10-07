@@ -833,3 +833,44 @@ down.
   function runs every later step, so the version ends at the plugin's latest (2026093001). It now asserts `>=`.
 
 No version bump, no feature, no UI. Both trees identical.
+
+---
+
+## 2026-10-07 - Stage B parity tooling (1.10.1 -> 1.11.0, 2026100701)
+
+Branch `claude/stageb-tools` (cut from `claude/gap-integration` @ d06e725a7). Closes ADR-032 P0.4 and Stage B gate 4. No schema
+change, no flag, no UI. Both trees identical (drift gate OK).
+
+- **`cli/source_baseline.php` (new, both trees).** One file, PHP 7.4 grammar (checked with php-parser), mysqli, the box's
+  `config.php` read as data (tokens, never run; `--dbhost`... as the fallback). It is both the STANDALONE baseline tool for the
+  source (a restored 4.1.2 copy with no Sentientia plugin; also `--compare` for the checkpoint after hop 1) and the LIBRARY
+  `migration_parity_check.php` requires (`SENTIENTIA_PARITY_LIBRARY_ONLY`), so both sides run the same code. Read-only session, one
+  consistent snapshot, only SELECT/SHOW (the code refuses anything else). JSON format 2; format 1 still reads.
+- **Version-aware metrics.** SCORM attempts/tracks/CRC read `scorm_scoes_track` before 4.3 and `scorm_attempt` +
+  `scorm_scoes_value` + `scorm_element` after (`STRAIGHT_JOIN`: the optimiser's own order took 67 s instead of 2 s); a table or column
+  a version lacks is left out. `tool_certificate_issues` is checksummed without `archived` (the 4.1.2 BizLMS table has none). New
+  metrics: `role_assignments`, `enrol_instances`, `forum_posts`, completed completions, `users_tenant_other`, the grade sum, and
+  checksums of `role_assignments`, `enrol`, `tool_certificate_issues`, `forum_posts`, SCORM tracks. Invariant `tenant_cross_foot`.
+- **Legacy tables.** `legacy` = every table of `legacy_tables::KNOWN` that exists, CRC over all columns of all rows, no cap (a test
+  holds the copy of the list equal to `KNOWN`, and `parity\legacy::fingerprint()` equal to `fingerprint::table()`); `legacy_other` =
+  legacy-prefixed tables no inventory names (soft: unproven). `migration_parity_check.php --compare` calls
+  `parity::compare_fingerprints()` and `parity::comparison_problems()` through `parity_gate::legacy_comparison()`.
+- **`--after-import`.** `classes/bizlms/parity_gate.php` reads the import's own records: `legacymap` rows with outcome `imported`
+  (the inserts into `user_enrolments`, `enrol`, `role_assignments`) and the ledgers `local_sentientia_courses_detailfill`
+  (`filledcols`) and `..._tagmove`. `parity\core::evaluate()` then holds every old row to the baseline and every new row and
+  column to those records. A core table added to `registry::CORE_WRITES_ALLOWED` without an explanation fails a test.
+  Options `--decisions` (required), `--expect-decisions-hash`, `--run`, `--report`; exits 0/1/2/3 as `import_bizlms.php`. The
+  `bizlms_import` invariant runs only here.
+- **Tests (written, NOT run under PHPUnit):** `tests/parity_library_test.php` (24 pure tests over a fake database; also run through
+  a shim: 24 pass), `tests/bizlms/bizlms_parity_gate_test.php` (DB: SCORM numbers equal on both layouts through a hiding view,
+  fingerprint equality, the map/ledger expectations, the core gate end to end, runs and reports),
+  `tests/classes/parity/{fake_database,hiding_database}.php`.
+- **Run for real (scratch schemas `stageb_*`, dropped afterwards):** the 4.1.2 April copy (`backups/airpayprod-mariadb-ready.sql`;
+  restored in 49 min) -> baseline 22 to 30 s; `--compare` of the copy that went 4.1.2 -> 4.5.10 -> 5.1.3 (`bizlms_april`, read only,
+  no import run): exit 0 in 25 s. A same-length change to a legacy row: exit 1, reverted: exit 0. The Moodle CLI and the gate
+  through a `$DB` stand-in against MariaDB: a clean simulated import exits 0; three kinds of tampering through the CLI (an old enrolment's end date, a role
+  assignment nobody recorded, a renamed course) exit 1, and eight kinds at the gate level are reported; an unknown `--run` exits 3.
+- **Not done / for Nitin:** `migration_parity_check.php` under a bootstrapped Moodle and the two PHPUnit files have not run
+  (PHPUnit was off limits during the work). The after-import mode is exercised only on simulated writes; the first real run is
+  the Stage B rehearsal after `import_bizlms.php --apply`. A source on MySQL 8.0 (RDS) has not been tried: the two session
+  statements that make it read-only and snapshotted are optional and reported as a WARNING if the server refuses them.

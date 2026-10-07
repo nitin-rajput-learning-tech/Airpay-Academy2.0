@@ -75,6 +75,15 @@ What changes in this plan:
 - **I-9** asks for the exact production release. The snapshot says 4.1.2+; confirm on live
   (`SELECT value FROM mdl_config WHERE name IN ('release','version')`, read-only), since production
   may have been patched after the snapshot.
+- **The source dump and the parity tool (2026-10-07).** The April 2026 4.1.2 production copy is
+  `backups/airpayprod-mariadb-ready.sql` in the repo (release `4.1.2+ (Build: 20230401)`, version `2022112802.06`,
+  production mysqldump completed 2026-04-06 7:54). It is NOT one of the dumps in `Moodle Backup/`: those are 4.5.10
+  (`pre-moodle5-backup*.sql`, `moodle_local_pre_import_20260407.sql`) or 5.1.3 (`pre-wipe-backup-20260604`,
+  `sw4-moodle-dump-2026-06-10.sql`). The baseline of the source is taken by `cli/source_baseline.php`, one file for
+  PHP 7.4 to 8.4 that needs no Sentientia plugin and no Moodle load (§4a, §5.1). Measured on the local MariaDB 10.11:
+  restoring the dump took 49 min, the baseline 22 to 30 s, and the copy that went through both hops compared
+  **100% PARITY** (all 23 counts, the grade sum, 14 checksums, all 95 BizLMS tables, 25,726 rows), with SCORM read from
+  `scorm_scoes_track` on the source and from `scorm_scoes_value` after Moodle 4.3 and the same CRC on both.
 - **The data carried by the 22 BizLMS plugins** (classroom, programs, online exams, evaluations,
   learning plans, cart orders, skills, recompletion, requests, ratings, ...): the restore carries
   their tables, but their code is not in the 5.2 package. Which Sentientia plugin reads or imports
@@ -262,14 +271,29 @@ Run every step as the web user (`sudo -u www-data php …`) from the docroot `..
    SELECT COUNT(*) FROM mdl_course_modules_completion WHERE completionstate>0;
    SELECT COUNT(*) FROM mdl_grade_grades WHERE finalgrade IS NOT NULL;
    SELECT ROUND(COALESCE(SUM(finalgrade),0),4) FROM mdl_grade_grades WHERE finalgrade IS NOT NULL; -- VALUE CHECKSUM
+   -- SCORM on the 4.1.2 source (mdl_scorm_scoes_track exists up to Moodle 4.2):
    SELECT COUNT(*) FROM mdl_scorm_scoes_track;
-   SELECT COALESCE(SUM(CRC32(CONCAT_WS('|',userid,scoid,element,value))),0) FROM mdl_scorm_scoes_track; -- status/score CRC
+   SELECT COALESCE(SUM(CRC32(CONCAT_WS(0x1f, userid, scormid, scoid, attempt, element, value, timemodified))),0) FROM mdl_scorm_scoes_track; -- status/score CRC
+   -- the same two numbers on Moodle 4.3 and later (the table above is gone): identical for the same data
+   -- SELECT COUNT(*) FROM mdl_scorm_scoes_value;
+   -- SELECT COALESCE(SUM(CRC32(CONCAT_WS(0x1f, a.userid, a.scormid, v.scoid, a.attempt, e.element, v.value, v.timemodified))),0)
+   --   FROM mdl_scorm_scoes_value v STRAIGHT_JOIN mdl_scorm_attempt a ON a.id = v.attemptid STRAIGHT_JOIN mdl_scorm_element e ON e.id = v.elementid;
    SELECT COUNT(*) FROM mdl_tool_certificate_issues;
    SELECT COUNT(*) FROM mdl_badge_issued; SELECT COUNT(*) FROM mdl_forum_posts;
    SELECT COUNT(*) FROM mdl_quiz_attempts;
    ```
    Also run the §5 auth audit (I-16) and the §6 plugin-version dump against the live DB (read-only), and freeze the §5.2 per-user id sample (Step A) on LIVE now.
    **VERIFY:** baseline JSON/TSV written with both counts AND the value-checksum rows (grade_sum, scorm CRC, completed-completions); counts sane vs known scale (~2,871 users, 3 tenants). **STOP** if the baseline cannot be produced from LIVE — the whole guarantee rests on it.
+   **Use the tool, keep the SQL as the cross-check (2026-10-07).** `cli/source_baseline.php` is the plugin-free capture:
+   copy the one file to the box and run `php source_baseline.php --config=<config.php> --baseline=/vault/live-baseline.json`
+   (PHP 7.4 to 8.4, mysqli, a read-only session on one consistent snapshot, about 30 s on the April copy). It writes the
+   JSON `migration_parity_check.php --compare` reads, and holds more than the SQL above: the value checksums, a CRC over
+   every column of every row of each BizLMS legacy table (the proof that the hops and the import leave the archive
+   untouched), and the rows of the five core tables the import may write. The SQL above stays as an independent check of
+   the headline numbers. **The two SCORM lines depend on the Moodle version:** `scorm_scoes_track` exists up to 4.2 and the
+   4.3 upgrade drops it (`mod_scorm` 2023042403); from 4.3 the same data is `scorm_attempt` + `scorm_scoes_value` +
+   `scorm_element`. The tool reads whichever the database has and reports the same logical numbers (distinct user/scorm/
+   attempt triples, stored elements, one CRC).
 2. **Snapshot the current DNS record VERBATIM** before touching anything: `dig +noall +answer www.airpay.academy` plus a registrar/Route53 record export, stored with the change ticket (I-6). Confirm whether it is an A/EIP, a CNAME, or a Route53 ALIAS-to-ALB; an ALIAS has no settable TTL (the "lower to 60s" step is then moot — plan propagation accordingly).
 3. **Lower DNS TTL** on `www.airpay.academy` to 60s, **24–48h before** the window (only if the record type supports it, I-6). **VERIFY:** `dig +noall +answer www.airpay.academy` shows TTL ≤ 60 after propagation. **STOP** the window if a TTL-lowerable record has not dropped (rollback speed depends on it).
 4. **Announce the maintenance window** and post the in-app banner on live (`cutover-day-runbook.md` Pre-cutover §1). The window is a **multi-hour hard-down for all three tenants** (§10, sized to I-4), and users will be logged out once at repoint (§7) — say both.
@@ -449,6 +473,15 @@ Do NOT run any independence flag-flip (Gates B/C/D stay legacy/dormant — §6).
    php local/sentientia_platform/cli/migration_parity_check.php --compare=/vault/live-baseline.json
    ```
    **VERIFY:** prints `RESULT: 100% PARITY — data intact.` (exit 0) across **both** the row-count metrics **and** the value-level aggregates (grade_sum, completed-completions count, scorm status/score CRC), plus the added tables (scorm_scoes_track, role_assignments, enrol) and the tenant cross-foot invariant `users_tenant_sum == users_total_active`. **STOP** on any `DRIFT` line — a value-checksum drift (grades/completions recomputed with unchanged row counts) is a hard stop identical to a count drift; a tenant-sum mismatch signals `open_path` truncation (§5). Investigate before proceeding. **Exit 2 is also a STOP**: it means a check could not run (the line says `SKIPPED ... (check could not run: ...)`), which is "not proven", never a pass. Only exit 0 with the `100% PARITY` line lets the cutover go on.
+   **Stage B tooling (2026-10-07).** The success line is now `RESULT: 100% PARITY - counts AND value checksums match, and
+   the BizLMS legacy tables are untouched.` The compare also holds each BizLMS legacy table (count, max id, columns, a CRC
+   over every column of every row) to the baseline. The checkpoints, all against the one source baseline: after hop 1
+   `php source_baseline.php --config=<the 4.5 config.php> --compare=...` (no plugin needed); after hop 2 and the repairs
+   `migration_parity_check.php --compare=...`; after the ADR-032 import
+   `migration_parity_check.php --compare=... --after-import --decisions=<rehearsed> [--expect-decisions-hash=...]
+   [--run=ID] [--report=FILE]`, which asks the import's own records to explain every growth of `enrolments`,
+   `enrol` and `role_assignments`, every `course` column filled and every `tag_instance` moved, and fails on any other change
+   (`docs/cutover/MIGRATION-REHEARSAL-RUNBOOK.md` step 5a). Exit codes: 0 parity, 1 drift, 2 not proven, 3 refused.
 2. **Per-user continuity spot-check** (§5.2) — before/after fingerprint over 5–10 named real users (including a re-completion user) must be byte-identical.
 3. **Smoke walk** (reuse `MIGRATION-REHEARSAL-RUNBOOK.md` step 6 + `cutover-day-runbook.md` reusable smoke; access the pre-repoint box by IP / hosts-file override for `www.airpay.academy`):
    - Frontpage `HTTP 200`, ~72 KB, zero error-grep hits.
@@ -468,9 +501,9 @@ Two machine layers plus a human layer, each isolating a different failure. All t
 ### 5.1 Layer 1 — global before/after comparison, LIVE → post-upgrade, counts AND checksums
 `local/sentientia_platform/cli/migration_parity_check.php` must capture, per an **extended** metric set (the count-only version is insufficient — see §4d note):
 
-- **Counts (row-level):** per-tenant active users (leading `open_path` segment), total/suspended users, courses, categories, enrolments, `role_assignments`, `enrol`, `course_completions` (total), `course_modules_completion`, `quiz_attempts`, `scorm_attempt`, **`scorm_scoes_track`**, `badge_issued`, `grade_grades`, certificate issues.
-- **Value-level aggregates (the addition that catches a recompute with unchanged row counts):** `SUM(finalgrade)` over `grade_grades WHERE finalgrade IS NOT NULL` (grade_sum); `COUNT(course_completions WHERE timecompleted IS NOT NULL)` (completed, distinct from total rows); `SUM(CRC32(...))` over `scorm_scoes_track` status/score elements.
-- **Cross-foot invariant:** `users_tenant_sum = airpay+public+zeea`, flagged in `--compare` if `users_tenant_sum != users_total_active` on the current side (catches `open_path` loss that per-metric baseline comparison masks).
+- **Counts (row-level):** per-tenant active users (leading `open_path` segment) and the users in no tenant, total/suspended users, courses, categories, enrolments, `role_assignments`, `enrol`, `course_completions` (total and completed), `course_modules_completion`, `quiz_attempts`, SCORM attempts and track rows (**version aware**: read from `scorm_scoes_track` before Moodle 4.3 and from `scorm_attempt` / `scorm_scoes_value` after it, same numbers), `badge_issued`, `grade_grades`, `forum_posts`, certificate issues.
+- **Value-level aggregates (the addition that catches a recompute with unchanged row counts):** `SUM(finalgrade)` over `grade_grades WHERE finalgrade IS NOT NULL` (grade_sum); `COUNT(course_completions WHERE timecompleted IS NOT NULL)` (completed, distinct from total rows); `SUM(CRC32(...))` over the SCORM track elements (user, scorm, sco, attempt, element, value, timemodified), the same on either layout; and a CRC over every column of every row of each BizLMS legacy table.
+- **Cross-foot invariant:** the three tenant buckets plus the users in no tenant (`users_tenant_other`) must add up to `users_total_active`, flagged in `--compare` as the invariant `tenant_cross_foot` on the current side (catches `open_path` loss that per-metric baseline comparison masks). `users_tenant_other` is a metric of its own, so a user who drops out of the three tenants is a drift, not just a smaller bucket.
 
 `--baseline` is the **LIVE SQL capture from §4a** (never the restored DB). Run `--compare` at §4g against the post-upgrade+repaired+purged target. The 5.1→5.2 core upgrade, a `grade_item` regrade, or a completion reaggregation can rewrite `grade_grades.finalgrade` / `course_completions.timecompleted` **without** changing row counts — the value aggregates are what make "the upgrade transforms schema, not identity" actually provable. **Acceptance: `RESULT: 100% PARITY — data intact.` across counts AND checksums.** Proven single-row granular in the 2026-06-10 rehearsal: 32,248 completions / 11,415 cert issues / 8,687 quiz attempts / 27,166 grades all MATCH.
 
@@ -500,7 +533,9 @@ SELECT u.id, u.username,
   (SELECT COUNT(*) FROM mdl_tool_certificate_issues ci WHERE ci.userid=u.id)                                       AS certificates,
   (SELECT COUNT(*) FROM mdl_grade_grades gg WHERE gg.userid=u.id AND gg.finalgrade IS NOT NULL)                    AS graded_items,
   (SELECT ROUND(COALESCE(SUM(gg2.finalgrade),0),4) FROM mdl_grade_grades gg2 WHERE gg2.userid=u.id AND gg2.finalgrade IS NOT NULL) AS grade_sum,
-  (SELECT COUNT(*) FROM mdl_scorm_scoes_track st WHERE st.userid=u.id)                                             AS scorm_track_rows,
+  (SELECT COUNT(*) FROM mdl_scorm_scoes_track st WHERE st.userid=u.id)                                             AS scorm_track_rows,   -- Moodle up to 4.2 (the 4.1.2 source)
+  -- Moodle 4.3 and later (hop 1 and 2 copies): use this line in place of the one above; the number is the same
+  -- (SELECT COUNT(*) FROM mdl_scorm_scoes_value sv JOIN mdl_scorm_attempt sa ON sa.id=sv.attemptid WHERE sa.userid=u.id) AS scorm_track_rows,
   (SELECT COUNT(*) FROM mdl_forum_posts fp WHERE fp.userid=u.id)                                                   AS forum_posts,
   (SELECT COUNT(*) FROM mdl_badge_issued bi WHERE bi.userid=u.id)                                                  AS badges
 FROM mdl_user u

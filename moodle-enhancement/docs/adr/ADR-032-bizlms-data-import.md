@@ -631,6 +631,47 @@ All in `local/sentientia_platform/cli/migration_parity_check.php`, in both trees
    table that is not in the baseline. The baseline is taken with no CRC cap (`legacy_fingerprints()`
    default), or every comparison against it is unproven.
 
+**Implemented 2026-10-07 (branch `claude/stageb-tools`; closes P0.4 and Stage B gate 4).**
+
+- **Where the baseline is taken.** `cli/source_baseline.php` is one self-contained file (PHP 7.4 to 8.4, mysqli, the box's
+  `config.php` read as data, a read-only session on one consistent snapshot) that takes the baseline on the restored 4.1.2
+  copy with no Sentientia plugin. `migration_parity_check.php` requires the same file as its library, so both sides run
+  the same code. `--compare` of the same file also serves the checkpoint after hop 1 (Moodle 4.5 core only).
+- **Version-aware metrics.** SCORM attempts and tracks and the SCORM checksum come from `scorm_scoes_track` before Moodle 4.3
+  and from `scorm_attempt` + `scorm_scoes_value` + `scorm_element` after it (the 4.3 upgrade drops the old table); a
+  table or column a version lacks is left out, not an error. Measured on the April 2026 copy: 8,504 attempts, 303,086 tracks,
+  CRC 650894253566645 on both layouts.
+- **Hook 1 as built.** `legacy` holds every table of `legacy_tables::KNOWN` that exists (95 on the April copy), `{count, maxid,
+  crc, columns}` with the CRC over ALL columns of ALL rows (no cap), the shape `parity::legacy_fingerprints()` returns.
+  `legacy_other` holds tables with a legacy prefix that no inventory names (11 on the April copy: the learnerscript block,
+  `paygw_airpay`, ...): informational, a change there is unproven (exit 2), because an installed plugin may own the table.
+  The tool compares by the baseline's own table names and calls `parity::compare_fingerprints()` and
+  `parity::comparison_problems()` for the verdict; a table that is legacy now and is in neither section is unproven.
+- **Hook 2 as built.** The `bizlms_import` invariant runs only with `--after-import` (before the import every applicable
+  feature lacks its completion marker, so it would always fail). `tenant_cross_foot` (the tenant buckets plus the users in no
+  tenant add up to the active users) runs always.
+- **Hook 4 made exact (`--after-import`).** After the import three things differ from the source baseline on purpose, and
+  each is explained from the import's own records, not matched to a number: `user_enrolments`, `enrol` and
+  `role_assignments` may have grown by exactly the target ids of the `local_sentientia_legacymap` rows with outcome
+  `imported` (a fan-out sub-row included, a fold or merge excluded); a `course` may differ from the baseline in exactly the
+  `open_*` columns its `local_sentientia_courses_detailfill` row names (`filledcols`); a `tag_instance` may have moved exactly as
+  `local_sentientia_courses_tagmove` says. The baseline keeps, per table, the count, MAX(id) and a CRC over the fixed columns
+  of every row, and for the two update tables a hash per row and per writable column. Every row with an id at or below
+  the baseline's maximum must still hash to the baseline (nothing old changed or went: a changed `enrol.status` or enrolment
+  end date is exit 1), the rows above it must be exactly the mapped inserts, and an update table may differ only in a
+  writable column of a ledger row. `registry::CORE_WRITES_ALLOWED`, `parity\core::WRITES` and `parity_gate` must name the same
+  tables (a test), so a core write added to the registry without an explanation here fails.
+- **Options and exit codes.** `--after-import --decisions=FILE [--expect-decisions-hash=SHA256] [--run=ID] [--report=FILE]`:
+  `--run` explains the deltas with that apply run's records only (default: every apply run); `--report` is checked against
+  the database, this install's fingerprint, the decisions and `--run`. Exit 0 parity, 1 drift or a failed invariant, 2 not
+  proven (an old baseline, a skipped CRC, a table the baseline does not know, needs-owner reasons the decisions do not
+  accept, unclaimed legacy tables holding rows), 3 refused (no complete apply run of this install, a decisions hash that is
+  not the expected one, a run that is not a complete apply run). 0, 1, 2 and 3 mean what they mean in `import_bizlms.php`.
+- **Not yet run:** the Moodle side (`migration_parity_check.php` under a bootstrapped Moodle, the PHPUnit files
+  `tests/parity_library_test.php` and `tests/bizlms/bizlms_parity_gate_test.php`). What ran: the standalone tool on the real
+  4.1.2 copy and on the rehearsal copy, the CLI and the gate through a `$DB` stand-in against MariaDB scratch schemas, and
+  the pure tests through a shim. See the state card.
+
 ## Capabilities
 
 The retired `migrate_all.php` copied every `role_capabilities` row of ten BizLMS capabilities to the
@@ -809,6 +850,8 @@ framework, CLI, tests, the copy scripts retired, the seed scripts guarded) are i
   `compare_fingerprints()` for the baseline and `--compare`, `invariant_problems()` as the
   `bizlms_import` invariant, and `comparison_problems()` for the exit codes). Without it the archive
   proof in the cutover slice, steps 3 and 6, has no script behind it.
+  **Closed 2026-10-07:** the script now calls `parity::compare_fingerprints()` and `parity::comparison_problems()`, takes the
+  baseline with no CRC cap, and has `--after-import` (see "Parity hooks", "Implemented 2026-10-07").
 - The `qr_scan.php` freeze below. `qr_scan.php:43,62` (both trees) still reads and inserts
   `local_classroom_attendance`. Today every scan ends in the catch because the insert omits two NOT NULL
   columns, so the archive is not changed by it, but a fix that made the insert work would change the
@@ -838,6 +881,10 @@ recorded above; this is the one list:
    `local/costcenter:manage_multiorganizations`.
 4. P0.4: `migration_parity_check.php` calls `parity::comparison_problems()`, with the baseline taken with
    no CRC cap.
+   **Closed 2026-10-07.** Evidence: on the April 2026 production copy (4.1.2, 95 BizLMS tables, 25,726 rows) the baseline
+   was taken in 22 to 30 s and the copy that went 4.1.2 -> 4.5.10 -> 5.1.3 compared exit 0 (all 95 tables identical in count,
+   max id, columns and CRC over every column of every row); a same-length text change in one legacy row moved that table's
+   CRC and turned the result into exit 1. The old tool could not take the baseline on 4.1.2 at all (it read `scorm_attempt`).
 5. `local/sentientia_pages/qr_scan.php` stops reading and inserting `local_classroom_attendance`
    (classroom code fix 1, with visual evidence).
 6. The standard log store is enabled on the database the run is on (gating item 5b).
@@ -853,10 +900,10 @@ the legacy tables (they check and write `local_classroom_attendance`, migration 
    before anything else reads a role. Dry by default.
 1. RDS snapshot. This is the rollback point for the whole import. `--purge-feature` is for rehearsals.
 2. Maintenance on, cron off, `noemailever` on, `bizlms_production = 1`, arm the guard.
-3. `migration_parity_check.php --compare=<source baseline>`: the legacy tables must be intact.
+3. `migration_parity_check.php --compare=<source baseline>`: exit 0 (every number and every BizLMS legacy table equals the source baseline: nothing but the upgrades touched them).
 4. `import_bizlms.php --preflight --all --decisions=... --expect-decisions-hash=<rehearsed>`: no blockers.
 5. `--all --apply --confirm=<fp> --decisions=... --expect-decisions-hash=... --report=...`.
-6. `migration_parity_check.php --compare=...`: exit 0, or exit 2 with Nitin's written acceptance.
+6. `migration_parity_check.php --compare=<source baseline> --after-import --decisions=... [--expect-decisions-hash=...] [--run=ID] [--report=FILE]`: exit 0, or exit 2 with Nitin's written acceptance.
 7. `admin/cli/checks.php` clean; purge caches; disarm; cron on; maintenance off.
 
 Stage B runs the same slice first. Its timings (I-20) set the maintenance window.
