@@ -435,9 +435,9 @@
           "expert": 5
         },
         "default": 1,
-        "csv": null
+        "csv": "1,2;2,3;3,4;4,5;5,1;7,2;8,3;9,4;10,5;11,2;12,3;13,4;14,5;15,1;16,2;17,3;18,4"
       },
-      "why": "[proposed] The name heuristic from section 14 is approved as the rule. The concrete level-id to 1..5 CSV must be generated from the rehearsal preflight by this rule and written into csv before the skills feature can run. The level ids were not available when this file was drafted, so csv is null and the feature stays blocked until it is filled.",
+      "why": "[proposed + review] The approved name rule applied to the 17 April levels. Level 16 (plural of 'basic') was reviewed to 2. The preflight warns whenever an entry differs from the rule, and the map is rechecked against the live backup before the hash is pinned.",
       "source": "mapping doc section 14 lines 1455-1456, 1589; section 23 line 2790",
       "status": "accepted"
     },

@@ -645,6 +645,56 @@ final class bizlms_support_test extends \advanced_testcase {
             'only the committed batch was counted');
     }
 
+    /**
+     * Owner decision XC-TENANT-GUESS (2026-10-07): a learning plan or program whose tenant came from its CREATOR's
+     * tenant (the signed fallbacks) is a guess about who may see its learners, so the report lists those rows by id
+     * for the owner to confirm. Every other method is counted only.
+     */
+    public function test_a_row_that_took_its_tenant_from_its_creator_is_listed_by_id(): void {
+        $report = new report();
+        $step = 'program.program';
+        $report->count_tenant_method('program', $step, 'exact', 11);
+        $report->count_tenant_method('program', $step, 'fallback:creator', 12);
+        $report->count_tenant_method('program', $step, 'fallback:enrolled_users', 13);
+        $report->count_tenant_method('program', $step, 'fallback:costcenter', 16);
+        $report->count_tenant_method('program', $step, 'unresolved', 14);
+        $report->count_tenant_method('program', $step, 'fallback:creator', 15);
+        $report->count_tenant_method('program', $step, 'fallback:creator');
+
+        $section = $report->to_array()['features']['program']['steps'][$step];
+        $this->assertSame(['exact' => 1, 'fallback:creator' => 3, 'fallback:enrolled_users' => 1,
+            'fallback:costcenter' => 1, 'unresolved' => 1], $section['tenant_methods'], 'every method is counted');
+        $this->assertSame([12, 15], $section['tenant_creator_ids'],
+            'only the creator guesses are listed, by id; a call with no id counts and lists nothing');
+
+        $this->assertTrue(report::is_creator_guess('fallback:creator'));
+        $this->assertTrue(report::is_creator_guess('fallback:creator_root'));
+        foreach (['exact', 'normalised', 'walked_up', 'unresolved', 'fallback:costcenter', 'fallback:enrolled_users',
+                'fallback:creatorx', 'creator'] as $method) {
+            $this->assertFalse(report::is_creator_guess($method), $method);
+        }
+
+        // The list is capped, the count is not; and a batch that rolls back lists nothing.
+        $capped = new report();
+        for ($id = 1; $id <= report::CREATOR_IDS_CAP + 5; $id++) {
+            $capped->count_tenant_method('learningplan', 'learningplan.path', 'fallback:creator', $id);
+        }
+        $section = $capped->to_array()['features']['learningplan']['steps']['learningplan.path'];
+        $this->assertSame(report::CREATOR_IDS_CAP + 5, $section['tenant_methods']['fallback:creator']);
+        $this->assertCount(report::CREATOR_IDS_CAP, $section['tenant_creator_ids']);
+
+        $held = new report();
+        $held->hold();
+        $held->count_tenant_method('learningplan', 'learningplan.path', 'fallback:creator', 7);
+        $held->discard();
+        $held->hold();
+        $held->count_tenant_method('learningplan', 'learningplan.path', 'fallback:creator', 8);
+        $held->release();
+        $section = $held->to_array()['features']['learningplan']['steps']['learningplan.path'];
+        $this->assertSame([8], $section['tenant_creator_ids'], 'only the committed batch is reported');
+        $this->assertSame(1, $section['tenant_methods']['fallback:creator']);
+    }
+
     public function test_a_comparison_never_reads_a_skipped_crc_as_a_pass(): void {
         $problems = parity::comparison_problems([
             'drift' => ['local_x rows 3->4 maxid 3->4'], 'missing' => ['local_y'], 'skipped' => ['local_z'], 'new' => ['local_new'],

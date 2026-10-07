@@ -273,7 +273,9 @@ final class importer implements importer_contract {
     /**
      * The level map must be written out in the decisions file whenever there are levels to map. No csv, or a csv
      * that misses a level, blocks the feature with a code that names the fix; the suggestion is the owner's
-     * approved heuristic applied to each level name, to paste into the file after review.
+     * approved heuristic applied to each level name, to paste into the file after review. A csv entry that differs
+     * from the heuristic's answer for the level's current name is a warning on every run
+     * (level_proficiency_differs_from_rule), so a reviewed deviation and a renamed level are never silent.
      *
      * @param context $ctx
      * @param preflight $pf
@@ -307,6 +309,19 @@ final class importer implements importer_contract {
         }
         if (!$parsed['problems'] && $missing) {
             $pf->block('level_proficiency_csv_incomplete:' . implode(',', $missing));
+        }
+        // Owner decision LRN-07 (2026-10-07): the signed csv is the approved name rule applied to the April levels and
+        // reviewed by hand. Every entry that differs from what the rule gives for the level's CURRENT name is reported
+        // on every run: the reviewed deviation (April level 16, the plural of "basic", mapped to 2) and any level
+        // renamed or re-pointed since the csv was written show up before the hash is pinned.
+        $differs = [];
+        foreach ($levels as $id => $name) {
+            if (isset($parsed['map'][$id]) && $parsed['map'][$id] !== level_map::suggest($name, $value)) {
+                $differs[] = $id;
+            }
+        }
+        if ($differs) {
+            $pf->warn('level_proficiency_differs_from_rule:' . implode(',', $differs));
         }
         if ($parsed['problems'] || $missing) {
             $suggest = [];

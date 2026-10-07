@@ -257,6 +257,60 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertSame(0, $DB->count_records('local_sentientia_course_levels'));
     }
 
+    /**
+     * Owner decision LRN-07 (2026-10-07): the signed file carries the concrete map, so skills (and learningplan, which
+     * depends on it) can run at Stage B. The map is the owner's name rule applied to the 17 April levels and reviewed
+     * by hand; the preflight warns whenever an entry differs from the rule.
+     */
+    public function test_the_signed_decisions_file_carries_a_complete_level_map(): void {
+        $path = \core_component::get_component_directory('local_sentientia_platform')
+            . '/tests/fixtures/bizlms/bizlms-import-decisions.copy.json';
+        if (!is_readable($path)) {
+            $this->markTestSkipped('the platform\'s copy of the signed decisions file is not deployed');
+        }
+        $rule = decisions::load($path)->get('skills.level_proficiency');
+        $this->assertIsArray($rule);
+        $this->assertNotNull($rule['csv'] ?? null, 'the owner\'s map is written out');
+
+        $parsed = bizlms\level_map::parse($rule);
+        $this->assertSame([], $parsed['problems'], 'every pair is a level id and a proficiency of 1 to 5');
+        $this->assertSame(
+            [1 => 2, 2 => 3, 3 => 4, 4 => 5, 5 => 1, 7 => 2, 8 => 3, 9 => 4, 10 => 5, 11 => 2, 12 => 3, 13 => 4, 14 => 5,
+                15 => 1, 16 => 2, 17 => 3, 18 => 4],
+            $parsed['map'], 'the 17 April levels (ids 1-5 and 7-18)');
+        $this->assertSame(1, $parsed['map'][5], 'a general, non-levelled label takes the default 1');
+        $this->assertSame(2, $parsed['map'][16],
+            'level 16 is the plural of "basic": the literal word match gives 1, the review sets 2, the first rung of the /177 ladder');
+        $this->assertSame(bizlms\level_map::suggest('Basic', $rule), $parsed['map'][16],
+            'the rule itself agrees once the plural is read as the rule word');
+    }
+
+    public function test_a_csv_entry_that_differs_from_the_owners_rule_is_reported_on_every_run(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+
+        // Seeded levels: 5 Basic, 9 Intermediate, 12 Advanced, 14 "Basic duplicate". The rule gives 2, 3, 4, 2.
+        // The default decisions map 14 to 1 (a reviewed deviation), so it is named.
+        [$result, $report] = $this->contract_run(false);
+        $this->assertContains($result['exit'], [0, 2]);
+        $text = json_encode($report->to_array());
+        $this->assertStringContainsString('level_proficiency_differs_from_rule:14', $text);
+        $this->assertStringNotContainsString('level_proficiency_differs_from_rule:5', $text);
+
+        // A csv that is the rule exactly has nothing to report.
+        $rule = $this->decisions_with(['csv' => "5,2\n9,3\n12,4\n14,2\n20,5"]);
+        [$result, $report] = $this->contract_run(false, ['decisions' => $rule]);
+        $this->assertContains($result['exit'], [0, 2]);
+        $this->assertStringNotContainsString('level_proficiency_differs_from_rule', json_encode($report->to_array()));
+
+        // Two entries that differ are both named, in level order, and the run is still allowed to go on: it is
+        // a warning (the owner reviews it), never a block.
+        $two = $this->decisions_with(['csv' => "5,3\n9,3\n12,1\n14,2"]);
+        [$result, $report] = $this->contract_run(false, ['decisions' => $two]);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        $this->assertStringContainsString('level_proficiency_differs_from_rule:5,12', json_encode($report->to_array()));
+    }
+
     public function test_level_map_parses_text_and_json_and_suggests_from_the_names(): void {
         $parsed = bizlms\level_map::parse(['csv' => "levelid,proficiency\n5, 2\n9=3;12:4"]);
         $this->assertSame([5 => 2, 9 => 3, 12 => 4], $parsed['map']);
