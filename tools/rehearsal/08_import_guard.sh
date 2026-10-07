@@ -30,6 +30,7 @@ CLEAR_STALE_RUNNING_TASKS="${CLEAR_STALE_RUNNING_TASKS:-1}"
 BIZLMS_PRODUCTION_FLAG="${BIZLMS_PRODUCTION_FLAG:-0}"
 PLATFORM=local_sentientia_platform
 need_tool "$PHP_BIN"
+require_kit_marker
 
 if [ "$EXECUTE" = 1 ]; then
     release_now="$(db_config_value release || true)"

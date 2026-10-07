@@ -25,6 +25,7 @@ case "$TENANT_CHECKS" in warn | stop | skip) ;; *) die "TENANT_CHECKS must be wa
 CLI=local/sentientia_platform/cli
 
 need_tool "$PHP_BIN"
+require_kit_marker
 
 if [ "$EXECUTE" = 1 ]; then
     release_now="$(db_config_value release || true)"

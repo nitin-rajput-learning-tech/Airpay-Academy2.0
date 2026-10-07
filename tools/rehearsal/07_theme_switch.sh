@@ -9,6 +9,11 @@
 #
 # A theme override that names epsilon would still render boost for that user/course/category/cohort: the step stops and
 # lists them, unless CLEAR_THEME_OVERRIDES=1 (it then sets those rows' theme to ''). Idempotent.
+#
+# CLEAR_THEME_OVERRIDES writes the `theme` column of {user}, {course}, {course_categories} and {cohort} before the import's gate
+# (step 09) compares those tables with the baseline. That is safe because no column the parity baseline hashes is `theme`:
+# source_baseline.php's checksum lists and core::WRITES never name it (selftest.sh asserts it, so a later metric cannot start
+# hashing it unnoticed), and the statement leaves timemodified alone.
 
 # shellcheck source=lib/common.sh
 . "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
@@ -16,6 +21,7 @@ step_init 07 theme_switch "$@"
 
 CLEAR_THEME_OVERRIDES="${CLEAR_THEME_OVERRIDES:-0}"
 need_tool "$PHP_BIN"
+require_kit_marker
 
 if [ "$EXECUTE" = 1 ]; then
     release_now="$(db_config_value release || true)"

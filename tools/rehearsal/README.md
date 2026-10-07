@@ -14,7 +14,7 @@ Nothing in the kit touches production. That is enforced, not promised: see "What
 ## Quick start
 
 ```bash
-cp tools/rehearsal/rehearsal.env.example tools/rehearsal/rehearsal.env     # edit: paths, database, wwwroot
+cp tools/rehearsal/rehearsal.env.example tools/rehearsal/rehearsal.env     # edit: paths, database, wwwroot, PRODUCTION_DB_ENDPOINT (required: live's database host)
 chmod 600 tools/rehearsal/rehearsal.env
 ( umask 077; read -rsp 'Database password: ' p; printf '%s\n' "$p" > /etc/rehearsal/db.pass; unset p )   # not in the shell history
 
@@ -31,39 +31,55 @@ first failure, and always finishes with the summary.
 
 ## What it refuses (step 00, and every step re-checks the policy when it loads the env)
 
-* a database that is not on the explicit allow-list `REHEARSAL_DB_ALLOWLIST`; a name that looks like production
-  (`prod`, `production`, `live`) or a system schema (`moodle`, `mysql`, ...) is refused even if it is listed;
-* any production hostname (`PRODUCTION_HOSTNAMES`, substring match) in the database host, the wwwroot, the paths, the
-  env file's host settings, or any string of a `config.php` already on the box;
+* a database that is not on the explicit allow-list `REHEARSAL_DB_ALLOWLIST`; a name with `prod` or `uat` anywhere in it
+  (production's database is `airpayprod`, UAT's `sentientia_uat`: no underscore boundary is needed), `live` as a word, or a
+  system schema (`moodle`, `mysql`, ...) is refused even if it is listed; and a database **server** that holds the schema
+  `airpayprod` (or one named in `FORBIDDEN_SERVER_SCHEMAS`) is refused;
+* any production hostname (`PRODUCTION_HOSTNAMES`: the live and UAT sites; substring match) in the database host, the
+  wwwroot, the paths, the env file's host settings, or any string of a `config.php` already on the box. The live **database
+  endpoint** (`PRODUCTION_DB_ENDPOINT`, dbhost of live's config.php) is required with `--execute` and joins that list, so a
+  `DB_HOST` copied from live's config cannot get through;
+* a database or moodledata that does not carry the **kit marker**: step 01 stamps the database (a `{config}` row) and the
+  moodledata (a file) with a random restore id, and every writing step (02 to 11) refuses a database or directory without
+  it, so an allow-listed name on the wrong server, or UAT's database, is never written to. A database restored by hand is
+  stamped only on `RESTORE_DONE_BY_HAND=<its name>`; a populated moodledata without the marker is refused too;
 * a `config.php` that points at another database or host, names another wwwroot or dataroot, or lacks
   `$CFG->noemailever = true` (the restored dump holds real e-mail addresses: the May 2026 incident, 151 e-mails);
-* a scheduler that runs Moodle's cron (crontab of the running user, `/etc/crontab`, `/etc/cron.d`, systemd timers) and,
-  once step 01 has set it, a database whose `cron_enabled` is not 0;
+* a scheduler line that runs THIS rehearsal's Moodle cron (a crontab, `/etc/crontab`, `/etc/cron.d` or systemd timer line
+  naming `CODE_45_DIR` or `CODE_5X_DIR`; another site's cron is noted, not refused) and, once step 01 has set it, a
+  database whose `cron_enabled` is not 0, which is the guard that holds whatever a scheduler does;
 * Windows paths, one directory for both code trees, a code tree inside the other, a password file readable by others,
   an env file writable by others, running as anyone but `WEB_USER`.
 
 The `config.php` the kit writes (`lib/make_config.sh`, the port of `make_config.py`) carries a **REHEARSAL GUARD** that
 exits on every load, CLI or web, when the database is not on the allow-list or the database host or wwwroot names a
-production host. The kit never overwrites a `config.php` it did not write, never drops or truncates anything, restores
-only into an EMPTY database, and never flips a feature flag.
+production host, and sets `altcacheconfigpath` to the kit's own directory (the restored `muc/config.php` names live's cache
+stores; step 01 moves it aside too). The kit never overwrites a `config.php` it did not write, never drops or truncates
+anything, restores only into an EMPTY database, and never flips a feature flag.
+
+**The kit is for REHEARSAL. It is not the cutover procedure as it stands.** The cutover's `wwwroot` is the production one,
+which `PRODUCTION_HOSTNAMES` refuses by design; making the same scripts run there means taking the production host off that
+list, which switches the main guard off. A cutover mode needs its own, separately guarded design (and a decision about
+the marker, the allow-list and who may run it); until then the freeze, the restore, the hops and the import of cutover day
+are run by hand from the runbook, using what the rehearsal recorded (the decisions hash, the timings, the restore point).
 
 ## The steps
 
 | Step | Script | What it does | Runbook / plan |
 |---|---|---|---|
 | 00 | `00_preflight.sh` | The refusals above. Changes nothing, even with `--execute`. | runbook Inputs, step 1; plan 1.3, 4d.3, 8-2 |
-| 01 | `01_restore_check.sh` | Restores the dump into an empty database and unpacks the moodledata if asked (`RESTORE_*`). Checks release (`SOURCE_RELEASE_REGEX`, live is 4.1.x), active users, the BizLMS `open_path` substrate. **File store gate:** every distinct `files.contenthash` with content must exist at `filedir/ab/cd/<hash>`; missing ones go to `reports/filedir-missing.txt` and stop the step (a DB-only restore 404s every SCORM package). Then neutralises the restore: wipes `smtphosts/smtpuser/smtppass`, sets `cron_enabled = 0`, writes the restored mail backlog audit (input I-11). With `LIVE_BASELINE_FILE` it compares the restored copy with live's own baseline (isolates restore loss). | runbook 1; plan 4c, 4f-a |
-| 02 | `02_source_baseline.sh` | `source_baseline.php` on the restored 4.1.x copy, before any upgrade. Refuses on an upgraded copy. An existing baseline is re-verified, never retaken. `LIVE_BASELINE_FILE` makes live's own baseline the baseline of record. Records the SHA-256. | runbook 0; plan 4a, 5.1; ADR-032 Parity hooks |
+| 01 | `01_restore_check.sh` | Restores the dump into an empty database and unpacks the moodledata if asked (`RESTORE_*`). The dump is **refused** when it holds `USE` / `CREATE DATABASE` / `DROP DATABASE` (it would reach another schema, whatever the allow-list says; the client also runs with `--one-database`) or has no `-- Dump completed` trailer (an aborted `mysqldump` restores as a silent partial copy); the restore stops at the first error (pipefail), and a restore that did not complete is refused on re-run. **Stamps the database and the moodledata with the restore id** (see "What it refuses"); a new restore moves the earlier rehearsal's state, reports and baseline to `archive/`. Checks release (`SOURCE_RELEASE_REGEX`, live is 4.1.x), active users, the BizLMS `open_path` substrate. **File store gate:** every distinct `files.contenthash` with content must exist at `filedir/ab/cd/<hash>`; missing ones go to `reports/filedir-missing.txt` and stop the step (a DB-only restore 404s every SCORM package). Then neutralises the restore: wipes `smtphosts/smtpuser/smtppass` and the push-service key (airnotifier), sets `cron_enabled = 0`, moves the restored `muc/config.php` aside, writes the restored mail backlog audit (input I-11) and an audit of the other outbound settings (counts only). With `LIVE_BASELINE_FILE` it compares the restored copy with live's own baseline (isolates restore loss). | runbook 1; plan 4c, 4f-a |
+| 02 | `02_source_baseline.sh` | `source_baseline.php` on the restored 4.1.x copy, before any upgrade. Refuses on an upgraded copy. An existing baseline is re-verified, never retaken (and a baseline taken with another metrics version of the tool is refused, exit 3: delete it and take it again). `LIVE_BASELINE_FILE` makes live's own baseline the baseline of record. Records the SHA-256 of the baseline and of the tool. | runbook 0; plan 4a, 5.1; ADR-032 Parity hooks |
 | 03 | `03_hop1_to_45.sh` | Hop 1 on a clean Moodle 4.5 core, **BizLMS code off disk** (checked against `lib/bizlms_plugins.txt`), config with the DB guard, PHP 8.1-8.3 and extensions, restore point, `upgrade.php --non-interactive` timed, release and pending checks, the plugins "missing from disk" listed, then **parity after hop 1** (`source_baseline.php --compare`, exit 0). | runbook 3; plan 0, I-4 |
-| 04 | `04_hop2_to_5x.sh` | Hop 2 on the Sentientia package in its own directory: SHA-256 gate, the package's CLI files present, no leaked `config.php`, BizLMS code and `local/airpay_ratings` off disk, PHP 8.3, `max_allowed_packet >= 64M`, restore point, upgrade timed, Sentientia plugins installed, `enrol_sentientiasub` not enabled, then **parity after hop 2** (`migration_parity_check.php --compare`). | runbook 2-3; plan 0, 4d, 4e |
+| 04 | `04_hop2_to_5x.sh` | Hop 2 on the Sentientia package in its own directory: SHA-256 gate, the package's CLI files present, no leaked `config.php`, BizLMS code and `local/airpay_ratings` off disk, PHP 8.3, `max_allowed_packet >= 64M`, restore point, upgrade timed, Sentientia plugins installed, `enrol_sentientiasub` not enabled, the tree manifest recorded, **the package's `source_baseline.php` must be the file the baseline was taken with** (`ALLOW_BASELINE_TOOL_SKEW=1` overrides), then **parity after hop 2** (`migration_parity_check.php --compare`; the `message_provider_defaults` invariant alone, which step 05 repairs, is not a stop here). | runbook 2-3; plan 0, 4d, 4e |
 | 05 | `05_repairs.sh` | CLI maintenance on; `repair_task_registrations.php` dry run then `--apply` (the message preference check must report 0 problems); the tenant seed and tenant/org parity checks (`TENANT_CHECKS`); the ADR-032 **capability repair**: inventory, check against `docs/cutover/bizlms-capability-allowlist.json` (exit 0 required), `--apply --confirm=<fingerprint>`, check again. | runbook 4a-4c, 4e; ADR-032 Capabilities |
-| 06 | `06_adr031_roles.sh` | The four ADR-031 scripts from `tools/uat/` in **target mode** (`--target=<wwwroot> --config=<config.php>`): predeploy probe, role-9 core caps (dry run, apply), cross-tenant role (dry run, apply), read-only web-service smoke (`ERROR=0` required). | runbook 4f; plan 4f-f |
+| 06 | `06_adr031_roles.sh` | The four ADR-031 scripts from `tools/uat/` in **target mode** (`--target=<wwwroot> --config=<config.php>`): predeploy probe, role-9 core caps (dry run, apply; the apply is skipped on a re-run when its state file exists and the dry run finds nothing left to do, because the script refuses a second apply), cross-tenant role (dry run, apply), read-only web-service smoke (`ERROR=0` required). | runbook 4f; plan 4f-f |
 | 07 | `07_theme_switch.sh` | `cfg.php --name=theme --set=sentientia` (production's epsilon is not in the package), theme overrides checked, purge, landing posture printed. | runbook 4g; plan 8-7 |
 | 08 | `08_import_guard.sh` | Arms the ADR-032 guard: `cron.php --disable`, CLI maintenance on, `noemailever` confirmed, the standard log store, no restored task row marked running, `bizlms_import_armed_until`; then `import_bizlms.php --status` must show every fact the guard needs. | runbook 5a; ADR-032 Gating |
-| 09 | `09_import.sh` | The data-intact gate (`migration_parity_check.php --compare`, exit 0), `--preflight --all`, a dry run with `--report` (**records the decisions hash** from `meta.decisions_hash`), `--all --apply --confirm=<fp> --decisions=... --expect-decisions-hash=<hash> --report=...`, `--verify --all`. All 19 importers. | runbook 5, 5a; ADR-032 CLI |
+| 09 | `09_import.sh` | The data-intact gate (`migration_parity_check.php --compare`, exit 0), `--preflight --all`, a dry run with `--report` (**records the decisions hash** from `meta.decisions_hash`), the restore point (`SNAPSHOT_HOOK before-import`), `--all --apply --confirm=<fp> --decisions=... --expect-decisions-hash=<hash> --report=...`, `--verify --all`. All 19 importers. **A re-run knows where it stands** from the kit's record and from the newest apply run in the database: an unfinished run is continued with `IMPORT_APPLY_MODE=resume` without running the gate again, an exit 2 awaiting Nitin's written acceptance is recorded first and judged again. | runbook 5, 5a; ADR-032 CLI |
 | 10 | `10_parity_compare.sh` | `migration_parity_check.php --compare ... --after-import --decisions=... --expect-decisions-hash=... --run=<id> --report=<apply report>`: everything equals the source baseline except what the import's own records explain. | runbook 5a; ADR-032 Parity hooks 2, 4 |
-| 11 | `11_cron_cycle.sh` | One cron cycle (`cron.php --force --keep-alive=0`) under `noemailever`, timed, with the restored backlog before and after, the e-mails `noemailever` swallowed counted, and the **`transfer_question_categories` task timed** from `{task_log}`; `checks.php`; the parity once more (informational). | ADR-032 Cutover slice 7; plan 8-2, 9 |
-| 12 | `12_summary.sh` | `reports/summary.md`: steps and seconds, the I-4 hard-down estimate, the parity checkpoints, the evidence hashes, accepted unproven items, the seven rollout-gate items and who proves each. Runs even after a failure. | runbook 7; plan 9, 10 |
+| 11 | `11_cron_cycle.sh` | One cron cycle (`cron.php --force --keep-alive=0`) under `noemailever`, timed, with the restored backlog before and after, the e-mails `noemailever` swallowed counted (best effort: the count reads the cron output), the scheduled tasks that phone home switched off in the rehearsal database for the cycle, and the **`transfer_question_categories` task timed** from `{task_log}`; `checks.php`; the parity once more (informational). | ADR-032 Cutover slice 7; plan 8-2, 9 |
+| 12 | `12_summary.sh` | `reports/summary.md`: steps and seconds, the I-4 hard-down estimate (restore, baseline and every timed operation of steps 03 to 10), the parity checkpoints, the evidence hashes, accepted unproven items, the seven rollout-gate items and who proves each. Runs even after a failure. | runbook 7; plan 9, 10 |
 
 Exit codes of the steps: 0 ok, 1 a gate failed, 2 not proven, 3 usage or a refusal. The parity and import tools use the
 same four codes. **Exit 2 is a stop.** ADR-032 allows it only with Nitin's written acceptance: set `ACCEPT_UNPROVEN=1` and
@@ -78,27 +94,49 @@ reports/                every command's output, the import dry-run and apply rep
 baseline/               source-baseline.json (keep it with the change ticket)
 conf/                   the database settings the baseline tool reads (mode 700 directory)
 adr031/                 the four ADR-031 scripts copied from tools/uat/
+muc/                    the rehearsal's own cache configuration (altcacheconfigpath), so live's restored muc/config.php is never read
+archive/<stamp>-<id>/   state, reports, baseline and timings of an EARLIER rehearsal, moved here by a new restore (never deleted)
+restore-ids.log         every restore id this kit stamped in this work directory (not moved by a new restore: a moodledata that carries
+                        an earlier id of the same lineage, e.g. after a restore that failed in between, is still this rehearsal's)
 ```
 
 ## Re-running, resuming, rolling back
 
-Every step is idempotent, and a whole `run_all.sh --execute` can be repeated on a finished rehearsal. A step that already
-finished says so and checks again instead of redoing: the restore never writes over a populated database, the mail backlog
-audit keeps the first (pre-wipe) numbers, the baseline is verified, never retaken (after the hops it only confirms that the
-recorded file is intact), a hop that is done is skipped, the repairs and the role scripts are idempotent, and once the
-import is applied (`state/kv/import.applied`) step 09 runs only the verify, because the gate before the import describes
-a database that no longer exists. After fixing the cause of a failure, `run_all.sh --execute --from NN`. The rollback of a failed hop or import is the restore point taken before it
-(`SNAPSHOT_HOOK`, or by hand: the kit prints a reminder). In a rehearsal the import can also be purged and repeated
+A step that already finished says so and checks again instead of redoing: the restore never writes over a populated database
+(a populated database must carry this rehearsal's marker, and a restore the kit started and did not finish is refused), the
+mail backlog audit keeps the first (pre-wipe) numbers, the baseline is verified, never retaken (after the hops it only
+confirms that the recorded file is intact), a hop that is done is skipped, and the repairs are idempotent. The ADR-031 role
+scripts are idempotent EXCEPT that `adr031_role9_core_caps.php --apply` refuses a second apply while its state file exists;
+step 06 therefore skips the apply on a re-run, after the dry run has shown that nothing is left to prohibit or remove, and
+stops if the dry run still wants changes. After fixing the cause of a failure, `run_all.sh --execute --from NN`.
+
+**Step 09 and a failed import.** Where it stands is decided from the kit's record and from the newest apply run in the database
+(`local_sentientia_legacyrun`), not from the record alone:
+
+* no apply run in the database: from the gate (an apply the guard refused before writing leaves no run);
+* an unfinished run (failed, killed, the guard expired): the data now holds imported rows, so the gate, preflight and dry run
+  are history and are NOT run again. Re-arm the guard (step 08) if it expired, then run step 09 with
+  `IMPORT_APPLY_MODE=resume`; the decisions hash recorded before the apply (or the run's own) is passed again;
+* a finished run: recorded first (`state/kv/import.applied`, `.runid`, `.apply_exit`), then its exit is judged. An exit 2 that
+  Nitin has not accepted yet stops the step; after he accepts it in writing, re-run with `ACCEPT_UNPROVEN=1` and
+  `ACCEPT_UNPROVEN_REF=<where>`: only the judgement and the verify run.
+
+The rollback of a failed hop or import is the restore point taken before it (`SNAPSHOT_HOOK` is called before hop 1, hop 2 and the
+import; or by hand: the kit prints a reminder). In a rehearsal the import can also be purged and repeated
 (`import_bizlms.php --purge-feature`) while `bizlms_production` is not 1 (`BIZLMS_PRODUCTION_FLAG=1` in step 08 makes the
 rehearsal the exact cutover form, where the snapshot is the only way back).
 
+A **new restore** (an empty database and `RESTORE_DB_DUMP`, or `RESTORE_DONE_BY_HAND` for a hand restore) starts a new
+rehearsal: the earlier one's state, reports, baseline and timings move to `archive/`, so a stale `import.applied`, baseline or
+summary can never be taken for this run's result. The timings of a step that was run twice add up (the summary says so).
+
 ## Cutover day
 
-The same scripts are the cutover procedure after the rehearsal is signed off: the same env file shape, with the target's
-paths. Cutover differs in three places: `LIVE_BASELINE_FILE` is the baseline taken on live at the freeze (migration plan
-4a/4b); `BIZLMS_PRODUCTION_FLAG=1`; and `IMPORT_EXPECT_DECISIONS_HASH` is the hash step 09 recorded in the rehearsal, so a
-changed decisions file is refused. The freeze, backup, DNS and repoint steps of the migration plan are IT's and are not
-here.
+See the note under "What it refuses": the kit is for rehearsal. What the rehearsal hands to cutover day is: the decisions hash
+(`state/kv/import.decisions_hash`, passed as `--expect-decisions-hash`), the timings that size the window, the baseline taken the
+same way on live at the freeze (migration plan 4a/4b; the tool must be the same file, and `bizlms_production = 1` is set for the
+import), the restore point, and the list of what a person must still do. The freeze, backup, DNS and repoint steps of the migration
+plan are IT's and are not here.
 
 ## Not in the kit
 
@@ -123,15 +161,25 @@ here.
 | `--allow-unstable` is required in non-interactive mode for a non-stable build | `UPGRADE_ALLOW_UNSTABLE=1` |
 | A restored backup can carry task rows marked running, which the import guard counts | step 08 |
 | Baseline from an upgraded copy is worthless | step 02 |
+| (Stage B tools review 2026-10-08) A dump made with `mysqldump --databases` carries `USE airpayprod`, which sends the restore to that schema on whatever server answers; an aborted dump restores as a partial copy | the dump scan, `--one-database`, pipefail, the trailer check, step 01 |
+| The restored `muc/config.php` is live's cache configuration (Redis, memcached) and Moodle loads it from dataroot | `altcacheconfigpath` in the generated config, the file moved aside, step 01 |
+| An allow-listed database name is not proof that the database is the rehearsal's (`airpayprod`, `sentientia_uat` slipped past the old name patterns) | the `prod`/`uat` name guard, `PRODUCTION_DB_ENDPOINT`, the server schema scan, the kit marker |
+| The role-9 script refuses a second `--apply` ("Already applied"), so a repeated step 06 could not pass | step 06 skips the apply when the state file exists and the dry run shows nothing left |
+| An import that failed half way left a database the gate refuses, and the documented recovery re-ran the gate | step 09 reads the newest apply run from the database |
+| The Moodle 5.0 upgrade uninstalls mod_survey and mod_chat when their code is not on disk, deleting their activities; the first metric sets counted no `course_modules`, so the April copy read "100% PARITY" | metrics version 3 (`course_modules` and the BizLMS substrate are checksummed), ADR-032 "FINDING" |
 
 ## Testing the kit
 
-`bash tools/rehearsal/selftest.sh` (needs bash, PHP, coreutils; no database, no Moodle): the policy refusals, the config
-checks, the generated `config.php` (a hostile password round-trips, the guard exits, a foreign config is not overwritten),
-the file store comparison, `judge()`, `unpack_tree`, the orchestrator in DRY mode, and that no Windows path is hard-coded.
-`bash -n` passes on every script; `shellcheck` was not available when the kit was written, run it where it is.
+`bash tools/rehearsal/selftest.sh` (needs bash, PHP, coreutils; no database, no Moodle): the policy refusals (the database name
+guard, the live endpoint), the config checks, the generated `config.php` (a hostile password round-trips, the guard exits, a
+foreign config is not overwritten, the cache configuration points at the kit's directory), the dump scan (a `USE`, `CREATE
+DATABASE` or `DROP DATABASE` statement, a missing trailer, plain and gzip), the file store comparison, `judge()`,
+`unpack_tree`, the helpers that decide the re-runs of steps 04, 06 and 09, the tree manifest hash, the state rotation, the
+orchestrator in DRY mode, and that no Windows path is hard-coded. Every kit script passes `bash -n` (the selftest runs it);
+`shellcheck` was not available where the kit was written, run it where it is. The selftest starts many `bash` processes: on
+a workstation under antivirus load it takes tens of minutes.
 
-Verified for this commit, on a Windows workstation (Git Bash, PHP 8.2, MariaDB 10.11, scratch schemas named `stageb_*`):
+Verified, on a Windows workstation (Git Bash, PHP 8.2, MariaDB 10.11, scratch schemas named `stageb_*`):
 
 * the whole kit in DRY mode;
 * steps 00, 01, 02 and 12 in `--execute` mode against a scratch schema: a real restore from a gzip dump and a tar of the
@@ -144,9 +192,14 @@ Verified for this commit, on a Windows workstation (Git Bash, PHP 8.2, MariaDB 1
   and its facts, the decisions hash read from the report JSON, exit 2 stopping and being accepted with a reference, the
   refusals (cron switched back on, role holders below system context, web-service smoke errors, the log store off,
   parity drift after the import);
-* `selftest.sh`.
+* `selftest.sh`;
+* (Stage B tools review, 2026-10-08; 28 scenario assertions, all pass, and `selftest.sh`: 105) step 01 in `--execute` mode against scratch schemas: the marker, a hand restore with and
+  without `RESTORE_DONE_BY_HAND`, a dump with `USE` and one without its trailer refused, a second restore rotating the
+  state to `archive/`; steps 06 and 09 against the same stand-in: a repeated step 06, a failed apply continued with
+  `IMPORT_APPLY_MODE=resume`, an exit 2 recorded and then accepted on a re-run; the new metrics on the 4.1.2 tables of the April dump and
+  on the same data after the upgrades (`bizlms_april`, read only).
 
 **Not run: any step against real Moodle 4.5 or 5.x code, `shellcheck` (not installed on that machine), PHPUnit.** The stand-in
 proves the kit's logic and parsing, not that the real tools print exactly what it expects: the first execution on the
 target box does. Parsing that depends on real output (the `--status` fact lines, the repair scripts' result lines, the
-`upgrade.php` success line, `meta.decisions_hash` in the report) was written from the tools' source.
+`upgrade.php` success line, `meta.decisions_hash` in the report, the role-9 dry-run line) was written from the tools' source.

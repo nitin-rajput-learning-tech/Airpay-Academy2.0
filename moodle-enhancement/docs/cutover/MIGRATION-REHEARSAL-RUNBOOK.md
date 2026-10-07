@@ -69,8 +69,8 @@ the first failed gate; after fixing the cause, `--from NN` resumes. `tools/rehea
 
 | Kit script | Runs | Runbook step |
 |---|---|---|
-| `00_preflight.sh` | refuses unless the database is on the explicit rehearsal allow-list, `$CFG->noemailever` is true, no scheduler runs Moodle's cron, and no production hostname appears anywhere; changes nothing | Inputs, 1 |
-| `01_restore_check.sh` | restore into an EMPTY database (only if asked), release and user count, **the file store gate** (every `files.contenthash` on disk; missing = stop), SMTP wipe and `cron_enabled = 0`, the restored mail backlog audit (I-11), restore loss against the live baseline | 1 |
+| `00_preflight.sh` | refuses unless the database is on the explicit rehearsal allow-list (no name with `prod` or `uat` in it), `$CFG->noemailever` is true, no scheduler runs THIS rehearsal's Moodle cron, and no production hostname (the live database endpoint, `PRODUCTION_DB_ENDPOINT`, included) appears anywhere; changes nothing | Inputs, 1 |
+| `01_restore_check.sh` | restore into an EMPTY database (only if asked; a dump with USE / CREATE DATABASE or without its "-- Dump completed" trailer is refused) and stamp the database and moodledata with a restore id that every later writing step checks, release and user count, **the file store gate** (every `files.contenthash` on disk; missing = stop), SMTP wipe and `cron_enabled = 0`, the restored mail backlog audit (I-11), restore loss against the live baseline | 1 |
 | `02_source_baseline.sh` | the baseline on the 4.1.x copy before any upgrade; an existing baseline is re-verified, never retaken | 0 |
 | `03_hop1_to_45.sh` | hop 1 on a clean 4.5 core with the BizLMS code off disk, timed, parity after | 3 |
 | `04_hop2_to_5x.sh` | hop 2 on the Sentientia package in its own directory, timed, parity after | 2, 3 |
@@ -85,6 +85,25 @@ the first failed gate; after fixing the cause, `--from NN` resumes. `tools/rehea
 
 Not in the kit, on purpose: runbook 4d (`enable_oneclick_enrol.php` flips a feature flag, which is Nitin's decision), the
 per-user fingerprint, the known-password logins, the SCORM and certificate walk (step 6), the mail sender test.
+
+Things the kit does that the numbered steps below do not say (added 2026-10-08, Stage B tools review):
+
+* **Nothing is written to a database the kit did not stamp.** Step 01 stamps the restored database (a `{config}` row) and the
+  moodledata (a file) with a random restore id, and every later step refuses a database or directory that does not carry it.
+  A database restored by hand is stamped only on `RESTORE_DONE_BY_HAND=<its name>`. A new restore moves the earlier
+  rehearsal's state, reports and baseline to `archive/`.
+* **The baseline has a metrics version.** A comparison refuses (exit 3) a baseline taken with another version of
+  `source_baseline.php` (the checksums it lacks would otherwise go unchecked), and step 04 stops unless the package's copy of the file
+  is the one the baseline was taken with. After the kit or the tool changes, take the baseline again (delete
+  `baseline/source-baseline.json` and run step 02).
+* **`TENANT_CHECKS` defaults to `warn`, so 4b and 4c are not a stop.** Their "expect 100% PARITY" is a stop only with
+  `TENANT_CHECKS=stop`; use that for the dress rehearsal.
+* **The cron cycle (step 11) switches off, in the rehearsal database, the scheduled tasks that phone home** (moodle.net
+  registration, update check, OAuth2 token refresh, webhooks, content market, HRMS sync); `noemailever` closes e-mail only.
+  The restored push-notification key (airnotifier) is wiped in step 01 and the restored cache configuration is moved aside.
+* **A re-run of step 09 after a failed or killed apply** does not run the gate again (the data holds imported rows): it reads the newest
+  apply run from the database and continues with `IMPORT_APPLY_MODE=resume`; an exit 2 that waits for Nitin's written
+  acceptance is recorded first and judged again on the re-run.
 
 ## Procedure (each step has a verify; stop on any failure)
 

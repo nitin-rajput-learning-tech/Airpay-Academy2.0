@@ -13,8 +13,11 @@
 #   * no production hostname appears in any host or path setting, nor in any string of a config.php already present;
 #   * a config.php already present points only at the rehearsal: allow-listed database, DB_HOST, the rehearsal wwwroot and
 #     dataroot, $CFG->noemailever = true;
-#   * no scheduler on the box runs Moodle's cron (crontab, /etc/cron.d, systemd timers) and, once step 01 has run, the
-#     database has cron_enabled = 0;
+#   * no scheduler on the box runs THIS rehearsal's Moodle cron (a crontab, /etc/cron.d or systemd timer line that names
+#     CODE_45_DIR or CODE_5X_DIR; another site's cron.php is noted, not refused) and, once step 01 has run, the
+#     database has cron_enabled = 0 (the guard that holds whatever a scheduler does);
+#   * PRODUCTION_DB_ENDPOINT (the live database host) is set with --execute and is refused in every host and path setting;
+#     the database name carries neither 'prod' nor 'uat' (production's is airpayprod, UAT's sentientia_uat);
 #   * the paths are absolute POSIX paths, the two code trees are two separate directories, the kit runs as WEB_USER,
 #     the tools, PHP version and files the steps need are there.
 
@@ -175,17 +178,23 @@ for pair in "4.5 tree:$CODE_45_DIR/config.php" "5.x tree:$CODE_5X_DIR/config.php
 done
 
 # ---------------------------------------------------------------------------------------------------------------------
-# Cron: no scheduler on this box may run Moodle's cron.
+# Cron: no scheduler on this box may run THIS rehearsal's Moodle cron. A line that runs another site's cron.php (UAT's, on a
+# shared box) is not ours to refuse: it is noted, and the rehearsal database has cron_enabled = 0 from step 01 on, which is
+# the guard that holds whatever a scheduler does. Only a line that names CODE_45_DIR or CODE_5X_DIR is a failure.
 cron_hits=0
 scan_cron_text() {
-    # scan_cron_text SOURCE < text : count active (uncommented) lines that run a Moodle cron.
+    # scan_cron_text SOURCE < text : count active (uncommented) lines that run this rehearsal's Moodle cron.
     local source="$1" line
     while IFS= read -r line; do
         case "$line" in '' | '#'*) continue ;; esac
         case "$line" in
             *cron.php*)
-                fail "an active scheduler line runs Moodle's cron (${source}): ${line}"
-                cron_hits=$((cron_hits + 1))
+                if names_our_tree "$line"; then
+                    fail "an active scheduler line runs this rehearsal's Moodle cron (${source}): ${line}"
+                    cron_hits=$((cron_hits + 1))
+                else
+                    note "an active scheduler line runs a cron.php that names neither CODE_45_DIR nor CODE_5X_DIR (${source}): ${line} -- not this rehearsal's; confirm it belongs to another site"
+                fi
                 ;;
         esac
     done
@@ -198,13 +207,20 @@ for f in /etc/crontab /etc/cron.d/* /var/spool/cron/crontabs/* /var/spool/cron/*
     scan_cron_text "$f" < "$f" || true
 done
 if command -v systemctl > /dev/null 2>&1; then
-    if systemctl list-timers --all --no-legend 2> /dev/null | grep -Eiq 'moodle|sentientia'; then
-        fail "a systemd timer for moodle or sentientia exists: disable it (systemctl list-timers --all)"
-        cron_hits=$((cron_hits + 1))
-    fi
+    while IFS= read -r timer; do
+        [ -n "$timer" ] || continue
+        service="$(systemctl show -p Unit --value "$timer" 2> /dev/null || true)"
+        unit_text="$(systemctl cat "$timer" ${service:+"$service"} 2> /dev/null || true)"
+        if names_our_tree "$unit_text"; then
+            fail "the systemd timer ${timer} runs this rehearsal's Moodle: disable it (systemctl list-timers --all)"
+            cron_hits=$((cron_hits + 1))
+        else
+            note "the systemd timer ${timer} mentions moodle or sentientia but names neither CODE_45_DIR nor CODE_5X_DIR: not this rehearsal's; confirm it belongs to another site"
+        fi
+    done < <(systemctl list-timers --all --no-legend 2> /dev/null | awk '{ for (i = 1; i <= NF; i++) if ($i ~ /\.timer$/) { print $i; break } }' | grep -Ei 'moodle|sentientia' || true)
 fi
 if [ "$cron_hits" = 0 ]; then
-    pass "no scheduler line of this user or of the system crontabs runs Moodle's cron"
+    pass "no scheduler line of this user or of the system crontabs runs this rehearsal's Moodle cron"
 fi
 note "other users' crontabs cannot be read from here: confirm by hand that none runs cron.php (sudo crontab -l -u ${WEB_USER:-www-data})"
 
@@ -224,6 +240,11 @@ if [ "$EXECUTE" = 1 ] && [ "$FAILS" = 0 ]; then
             ;;
         present)
             log "database ${DB_NAME} holds ${DB_TABLES} tables"
+            if [ -n "$(marker_get)" ]; then
+                pass "database ${DB_NAME} carries a rehearsal-kit marker (restore $(marker_get | cut -c1-8)...)"
+            else
+                warn "database ${DB_NAME} carries no rehearsal-kit marker: step 01 refuses it unless the kit restored it, or RESTORE_DONE_BY_HAND=${DB_NAME} states that you restored the live backup into it by hand"
+            fi
             if [ "$(db_scalar "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${DB_NAME}' AND TABLE_NAME = '${DB_PREFIX}config'")" = 1 ]; then
                 cron="$(db_config_value cron_enabled || true)"
                 if [ "$cron" = "0" ]; then
@@ -238,6 +259,16 @@ if [ "$EXECUTE" = 1 ] && [ "$FAILS" = 0 ]; then
             fi
             ;;
     esac
+fi
+
+# ---------------------------------------------------------------------------------------------------------------------
+# The moodledata: a populated directory must be one this kit stamped (it may be another site's dataroot, UAT's for one).
+if [ "$EXECUTE" = 1 ] && [ -d "$MOODLEDATA" ] && [ -n "$(ls -A "$MOODLEDATA" 2> /dev/null)" ]; then
+    if [ -n "$(moodledata_marker_get)" ]; then
+        pass "${MOODLEDATA} carries a rehearsal-kit marker (restore $(moodledata_marker_get | cut -c1-8)...)"
+    else
+        warn "${MOODLEDATA} is not empty and carries no rehearsal-kit marker: step 01 refuses it (it may be another site's dataroot) unless RESTORE_DONE_BY_HAND=${DB_NAME} says it holds the live moodledata restored for this rehearsal"
+    fi
 fi
 
 # ---------------------------------------------------------------------------------------------------------------------

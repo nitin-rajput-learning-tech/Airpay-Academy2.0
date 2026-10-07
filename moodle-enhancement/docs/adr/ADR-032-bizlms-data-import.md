@@ -377,7 +377,9 @@ The writer is the only code that writes. It enforces:
    table. `core_writes()` accepts only `registry::CORE_WRITES_ALLOWED` (`course`, `enrol`,
    `role_assignments`, `tag_instance`, `user_enrolments`), each with the operations reviewed for it and the
    section that reviewed them: `course` and `tag_instance` are UPDATE only; `enrol`, `role_assignments` and
-   `user_enrolments` are insert and update. The writer enforces the operation: an importer that declares
+   `user_enrolments` are INSERT only (narrowed from insert and update on 2026-10-08, Stage B tools review: no importer updates a
+   row of them, and the parity check holds every old row of them to the baseline, so a reviewed UPDATE could only surface as
+   a failed post-import compare). The writer enforces the operation: an importer that declares
    `course` for the open_* backfill cannot raw-insert course rows (no context, no sections), and one that
    declares `tag_instance` for a remap cannot insert tag instances. A core table is never adopted, purged
    or updated as "the import's own row". History and configuration tables of core
@@ -641,6 +643,28 @@ All in `local/sentientia_platform/cli/migration_parity_check.php`, in both trees
   and from `scorm_attempt` + `scorm_scoes_value` + `scorm_element` after it (the 4.3 upgrade drops the old table); a
   table or column a version lacks is left out, not an error. Measured on the April 2026 copy: 8,504 attempts, 303,086 tracks,
   CRC 650894253566645 on both layouts.
+- **Metrics version 3 (2026-10-08, Stage B tools review).** The plan's continuity list (§1.2) names password hashes, the BizLMS
+  `open_*` user and course columns, `course_modules`, `grade_items` and `course_completion_criteria`; the first two metric sets
+  hashed almost none of them (of the 36 BizLMS user columns only `open_path` was covered, `password` not at all, and no `course_modules`, `grade_items` or criteria row). Version 3 adds, each under a key
+  of its own so the first sets and an older baseline are untouched: `user_bizlms` (password, idnumber, institution, department,
+  every `open_*` column, gender), `course_bizlms` (the course `open_*` columns the import does not write, `courseprice`, ...),
+  `course_modules`, `course_sections`, `grade_items`, `course_completion_criteria`, `tool_certificate_templates`,
+  `tool_certificate_issues_more`, plus counts of those tables and `layout.modules` (the module types the release has). The
+  lists are explicit, only columns that 4.1 and 5.x both have, nothing an upgrade rewrites by itself (no `sortorder`,
+  `timemodified`, `needsupdate`, no section `name` or `sequence`), nothing the import writes, no `theme`. **Measured on the April
+  copy** (the tables of the 4.1.2 dump against `bizlms_april` after 4.1.2 to 4.5.10 to 5.1.3): every new checksum is identical
+  on both sides except `course_modules`, which differs by one row. The tool refuses a baseline of another metrics version
+  (exit 3, `baseline_problem()`), because a baseline that lacks a metric would pass without it being checked; the kit also stops
+  when the package's copy of `source_baseline.php` is not the file the baseline was taken with.
+- **FINDING: the Moodle 5.0 upgrade deletes the activities of mod_survey and mod_chat** (`lib/db/upgrade.php`, "Remove chat and
+  survey": `uninstall_plugin()` for each of them when `mod/survey/version.php` is not on disk, which removes the module type and
+  every activity of it). On the April copy that is one survey activity (course_modules id 1153, course 226, removed with its
+  section sequence entry) between the 4.1.2 dump and `bizlms_april`; module types `assignment`, `chat` and `survey` are gone from
+  `modules`. The earlier metrics counted no `course_modules` row, so that April comparison said exit 0 / 100% PARITY; with metrics
+  version 3 it is exit 1 on `course_modules` (1540 to 1539). Live may hold more (surveys, chats, and their completion rows, which
+  the existing `module_completions` metrics would then also report). **Decision for Nitin before Stage B:** either put the code of
+  `mod_survey` and `mod_chat` in the 5.x package (the upgrade step then skips the uninstall) or accept the loss in writing; the
+  tool has no path for "expected" exit-1 drift, by design.
 - **Hook 1 as built.** `legacy` holds every table of `legacy_tables::KNOWN` that exists (95 on the April copy), `{count, maxid,
   crc, columns}` with the CRC over ALL columns of ALL rows (no cap), the shape `parity::legacy_fingerprints()` returns.
   `legacy_other` holds tables with a legacy prefix that no inventory names (11 on the April copy: the learnerscript block,
@@ -649,7 +673,9 @@ All in `local/sentientia_platform/cli/migration_parity_check.php`, in both trees
   `parity::comparison_problems()` for the verdict; a table that is legacy now and is in neither section is unproven.
 - **Hook 2 as built.** The `bizlms_import` invariant runs only with `--after-import` (before the import every applicable
   feature lacks its completion marker, so it would always fail). `tenant_cross_foot` (the tenant buckets plus the users in no
-  tenant add up to the active users) runs always.
+  tenant add up to the active users) runs always. It is a consistency check of the counting SQL, NOT an independent proof:
+  `users_tenant_other` is the complement of the three buckets, so the sum equals the total by construction. A user lost to a
+  truncated `open_path` is caught by the per-bucket comparison with the baseline (`users_tenant_other` included).
 - **Hook 4 made exact (`--after-import`).** After the import three things differ from the source baseline on purpose, and
   each is explained from the import's own records, not matched to a number: `user_enrolments`, `enrol` and
   `role_assignments` may have grown by exactly the target ids of the `local_sentientia_legacymap` rows with outcome

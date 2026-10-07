@@ -65,13 +65,13 @@ $plugin->component = 'local_sentientia_platform';
 // operator). Schema-only at this version — classification CLI runs in
 // Phase 1, providers consume in Phase 2-5. Q1 immutability ruling
 // means no UPDATE path on user_type column — append-only by design.
-$plugin->version   = 2026100701;  // Stage B parity tooling: cli/source_baseline.php, parity_gate, --after-import (on top of 2026093002 Switchboard category labels)
+$plugin->version   = 2026100801;  // Stage B tools review: metrics version 3 (BizLMS substrate checksums, baseline refused across versions), enrol/role_assignments/user_enrolments INSERT only (on top of 2026100701 Stage B parity tooling)
 // 2026092500 - ADR-031: local/sentientia_platform:crosstenant + tenant::is_cross_tenant/scope_path/require_same_tenant_user
 // 2026092400 - tests/exception_strings_test.php: platform guard - core-resolved exception keys must exist (N5)
 // 2026092200: tenant::path_descendant_filter() + DB-level path-boundary regression suite  // Phase 2.1: customer::current() de-hardwired via tenant_registry (dormant while legacy allow-list ON)
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.11.0';  // +Stage B parity tooling, no schema change (1.10.1: +Switchboard category labels; 1.10.0: +ADR-032 BizLMS import framework, 3 tables)
+$plugin->release   = '1.11.1';  // +metrics v3 and narrowed core-write operations, no schema change (1.11.0: +Stage B parity tooling; 1.10.1: +Switchboard category labels; 1.10.0: +ADR-032 BizLMS import framework, 3 tables)
 // 1.9.0: +ADR-031 cross-tenant authority
 // 1.8.0: +ADR-017 Phase 0 user_type schema (5 tables)
 // Release history

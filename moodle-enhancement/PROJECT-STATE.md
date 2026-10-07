@@ -5,6 +5,60 @@
 
 ---
 
+## 2026-10-08 - Stage B tools: fix round 1 after two Opus reviews (Sonnet 5.5)
+
+Branch `claude/stageb-tools`. The reviews said ship (parity tooling) and fix-then-ship (rehearsal kit, 5 must-fix). All five
+must-fix and the safe should-fix items are closed; `local_sentientia_platform` 1.11.0 -> 1.11.1 (2026100801), no schema change,
+no flag, no UI, both trees identical. Detail: `tools/rehearsal/README.md`, ADR-032 "Metrics version 3" and "FINDING", state card.
+
+- **A finding for Nitin (needs a decision before Stage B).** The Moodle 5.0 upgrade (`lib/db/upgrade.php`, step 2025040100.01)
+  runs `uninstall_plugin()` for `mod_survey` and `mod_chat` when their code is not on disk, which deletes every activity of them.
+  On the April copy that is one survey activity (course_modules 1153): 1540 rows in the 4.1.2 dump, 1539 in `bizlms_april`.
+  The first two metric sets counted no `course_modules`, which is why the 2026-10-07 entry below reads "exit 0, 100% PARITY" for
+  that copy; with metrics version 3 the same comparison is **exit 1** on `course_modules` (the only drift). Live may hold more
+  (surveys, chats, their completion rows). Either put `mod_survey` and `mod_chat` into the 5.x package, or accept the loss in
+  writing; the tool has no path for an "expected" exit-1 drift, on purpose.
+- **Parity coverage (plan 1.2).** Metrics version 3 adds checksums the plan names and nothing hashed: `password` and all 36 BizLMS
+  `open_*` user columns, the course `open_*` columns the import does not write, `course_modules`, `course_sections`, `grade_items`,
+  `course_completion_criteria`, certificate templates and the issue columns the first set left out. Checked on the April data (the
+  4.1.2 dump's tables against `bizlms_april` after both hops): every new checksum is identical on both sides except `course_modules`
+  (the survey). A baseline of another metrics version is refused (exit 3); the kit stops when the package's `source_baseline.php`
+  is not the file the baseline was taken with (compared with carriage returns removed). `tenant_cross_foot` cannot fail by itself
+  (the "other" bucket is the complement): docs corrected, the per-bucket comparison is the protection.
+- **Kit, the five must-fix.** (1) Step 01 refuses a dump with `USE`/`CREATE DATABASE`/`DROP DATABASE` or without its trailer, restores
+  with `--one-database` and pipefail. (2) The restored `muc/config.php` (live's cache stores) is moved aside and the generated
+  config sets `altcacheconfigpath`. (3) Names with `prod` or `uat` are refused (airpayprod, sentientia_uat), the live DB endpoint is
+  required, a server holding `airpayprod` is refused, and every writing step requires the **kit marker** (a restore id in the
+  database and in the moodledata, stamped by step 01 or by `RESTORE_DONE_BY_HAND`). (4) Step 06 no longer dead-ends on a re-run
+  (role 9's "Already applied"). (5) Step 09 recovers from a failed or killed apply (resume from the database's own run table) and
+  records an exit 2 before judging it, so the written acceptance can be applied on a re-run.
+- **Should-fix closed:** restore point before the import; a new restore rotates the old state to `archive/`; a partial restore is
+  refused; gate 1 says "partly met" without a live baseline; the hard-down estimate counts every timed operation of steps 03-10;
+  the tree manifest hash is recorded; README no longer calls the kit the cutover procedure; cron scan only fails on this
+  rehearsal's own trees; push key wiped, phone-home scheduled tasks switched off for the cron cycle (rehearsal database only);
+  hop-2 parity tolerates the one invariant step 05 repairs; `migration_parity_check.php` usage errors exit 3; `enrol`,
+  `role_assignments`, `user_enrolments` are INSERT only in `registry::CORE_WRITES_ALLOWED` (ADR-032 decision 8 amended).
+  **Not changed, with reason:** the `paygw_airpay*` legacy tables stay soft (exit 2) because the package ships that plugin and its
+  upgrade may legitimately alter them; `TENANT_CHECKS` stays `warn` (documented; use `stop` for the dress rehearsal).
+- **Tested.** `tools/rehearsal/selftest.sh`: 105 pass (new: the name guard, the live endpoint, the dump scan plain and gz, the
+  helpers behind the re-runs of steps 04, 06 and 09, the tree manifest hash, the state rotation, the generated cache path, no
+  `theme` in a parity column list). The whole kit in DRY mode. Steps 01, 06 and 09 in `--execute` against a scratch schema
+  `stageb_kit` (dropped afterwards) and a stand-in Moodle, **28 scenario assertions, all pass**: the marker (stamp, re-run, foreign
+  marker, hand restore with and without `RESTORE_DONE_BY_HAND`, a foreign moodledata, a later step refusing an unstamped database or
+  moodledata), a server holding a forbidden schema, a dump with `USE` and one without its trailer refused before anything is
+  created, a restore that fails half way and the refusal of its partial copy, a second restore archiving the first; step 06 repeated
+  after a smoke failure and refused when the role was changed since; step 09 after a failed apply (no gate, resume), an exit 2
+  recorded then accepted on a re-run, a guard refusal that leaves no run. The new metrics: the 4.1.2 tables of the April dump
+  (`stageb_cov`, dropped) against `bizlms_april` (read only), the standalone tool taking a baseline, comparing, and refusing a
+  metrics-2 baseline (exit 3). The DB-free tests of `parity_library_test.php` that need no Moodle autoloader, through a
+  `basic_testcase` shim: 24 pass (a 25th uses `assertStringStartsWith`, which the shim lacks; not run). The harness found two real
+  defects on the way (a transient empty read of `cron_enabled` failing a gate; the moodledata marker of a restore that failed in
+  between), both fixed.
+- **Not run:** PHPUnit (`parity_library_test`, `bizlms_parity_gate_test`, the registry and writer tests): a local run was in
+  progress against the XAMPP Moodle. No step against real Moodle 4.5/5.x code, MySQL 8.4/RDS or the 5.2 hop. `shellcheck` not
+  installed.
+
+---
 ## 2026-10-07 - Stage B rehearsal kit for the Linux target box: `tools/rehearsal/` (Sonnet 5.5)
 
 Branch `claude/stageb-tools`. The Stage B rehearsal ran so far as hand-run Windows scripts (`hop1_45.sh`, `hop2_51.sh`,

@@ -874,3 +874,34 @@ change, no flag, no UI. Both trees identical (drift gate OK).
   (PHPUnit was off limits during the work). The after-import mode is exercised only on simulated writes; the first real run is
   the Stage B rehearsal after `import_bizlms.php --apply`. A source on MySQL 8.0 (RDS) has not been tried: the two session
   statements that make it read-only and snapshotted are optional and reported as a WARNING if the server refuses them.
+---
+
+## 2026-10-08 - Stage B tools, fix round 1 (1.11.0 -> 1.11.1, 2026100801)
+
+Branch `claude/stageb-tools`. No schema change, no flag, no UI. Both trees identical (drift gate OK). Two Opus reviews of the parity
+tooling and the rehearsal kit (`tools/rehearsal/`); this closes their must-fix and the safe should-fix items.
+
+- **`cli/source_baseline.php`: metrics version 3.** New checksums under keys of their own (the first sets and an older baseline are
+  untouched): `user_bizlms` (password, idnumber, institution, department, every `open_*` user column, gender), `course_bizlms`
+  (the course `open_*` columns the import does not write, `courseprice`, ...), `course_modules`, `course_sections` (no `name`, no
+  `sequence`), `grade_items`, `course_completion_criteria`, `tool_certificate_templates`, `tool_certificate_issues_more`; counts of
+  those tables; `layout.modules` (module types the release has) and a NOTE in `compare_metrics()` naming module types the baseline
+  had and the target lacks. Column lists are explicit, 4.1-and-5.x columns only, nothing an upgrade rewrites, nothing the import
+  writes, no `theme` (a test holds the last two). `metrics::baseline_problem()`: a baseline of another metrics version is refused,
+  exit 3 (standalone `--compare` and `migration_parity_check.php --compare`). `tenant_cross_foot` docs say what it is (a consistency
+  check, not a proof).
+- **Measured on the April copy** (tables of the 4.1.2 dump in scratch schema `stageb_cov` against `bizlms_april` after both hops,
+  read only): every new checksum matches except `course_modules`: 1540 vs 1539 rows, and with cm 1153 left out the CRCs are equal.
+  That row is a `mod_survey` activity the Moodle 5.0 upgrade deleted (`lib/db/upgrade.php` 2025040100.01 uninstalls `mod_survey` and
+  `mod_chat` when their code is not on disk). The old metric sets could not see it. **Decision for Nitin:** put both plugins in the
+  package, or accept the loss in writing (ADR-032 "FINDING").
+- **`classes/bizlms/registry.php`:** `enrol`, `role_assignments`, `user_enrolments` are `['insert']` only (no importer updates them; the
+  parity check holds their old rows to the baseline). ADR-032 decision 8 amended; `bizlms_registry_test`, `bizlms_writer_test`
+  comment and `parity_library_test` updated.
+- **`cli/migration_parity_check.php`:** usage errors and an unreadable or unwritable baseline exit 3 as the header says; the header
+  no longer claims all four codes mean the same as `import_bizlms.php`.
+- **Tests added (not run under PHPUnit):** `parity_library_test` +6 (substrate checksum keys and columns, no `theme` and no import-written
+  column in any list, baseline version refusal, version recorded, module-type NOTE, layout modules) and the insert-only registry
+  assertion. Run through a `basic_testcase` shim with the other DB-free tests of the file that need no Moodle autoloader: 24 pass (a 25th uses `assertStringStartsWith`, which the shim lacks).
+- **Kit:** see `tools/rehearsal/README.md` ("What it refuses", "Re-running", "What the first local rehearsal taught") and the
+  PROJECT-STATE entry of 2026-10-08.

@@ -34,6 +34,9 @@
  * same data gives the same numbers on 4.1.2 and on 5.x. A table or column a version does not have is left out of both
  * the baseline and the comparison, never an error. The baseline records which layout it read.
  *
+ * The metrics are versioned (metrics::VERSION, written as tool.metrics): a comparison REFUSES a baseline of another version, exit 3,
+ * because the checksums it lacks would otherwise go unchecked. Take the baseline again with the tool that compares it.
+ *
  * JSON format 2 (format 1, written by the earlier tool, is still read: it has counts, checksums and nothing else):
  *   counts       integer metrics (users per tenant, courses, enrolments, role assignments, SCORM attempts, ...)
  *   aggregates   value-level sums kept as exact decimal strings (the grade sum)
@@ -43,8 +46,9 @@
  *   legacy_other tables with a legacy prefix that no inventory names (informational: drift there is unproven, not failed)
  *   core         what the import's reviewed core writes need to be explained (see class core and ADR-032)
  *
- * Exit codes of --compare, the same as migration_parity_check.php and import_bizlms.php:
- *   0 parity, 1 drift, 2 counts match but something could not be checked (not proven), 3 the tool could not run.
+ * Exit codes of --compare, the same as migration_parity_check.php (import_bizlms.php shares 0, 1 and 2):
+ *   0 parity, 1 drift, 2 counts match but something could not be checked (not proven), 3 the tool could not run, or refused
+ *   (a baseline of another metrics version).
  *
  * PHP 7.4 syntax only in this file: no match, no union types, no named arguments, no str_contains.
  *
@@ -365,8 +369,15 @@ final class sql {
  * The parity metrics: counts, value aggregates and per-table checksums, version aware.
  */
 final class metrics {
-    /** Bumped when a metric is added or its definition changes. Written to the baseline as tool.metrics. */
-    public const VERSION = 2;
+    /**
+     * Bumped when a metric is added or its definition changes. Written to the baseline as tool.metrics, and a comparison REFUSES
+     * (exit 3) a baseline of another version (baseline_problem()): a baseline that lacks a metric this tool computes would pass
+     * without it being checked.
+     *
+     * 3: the BizLMS user and course substrate (password hashes, every open_* column), course_modules, course_sections, grade_items,
+     *    course_completion_criteria and the certificate templates and issue columns the first sets left out.
+     */
+    public const VERSION = 3;
 
     /**
      * Checksummed tables and the columns hashed. Deliberately explicit: adding a column to a schema must not silently
@@ -394,6 +405,57 @@ final class metrics {
         'forum_posts' => ['id', 'discussion', 'parent', 'userid', 'created', 'modified'],
     ];
 
+    /**
+     * Metrics version 3: columns and tables the sets above leave out. Each entry is a checksum of its own, under its own key,
+     * [table read, columns], so the entries above and a baseline that holds only them are untouched. The column lists are
+     * explicit for the same reason as above and follow three rules, checked on the April 2026 copy (the tables of the 4.1.2 dump
+     * against the same data after 4.1.2 to 4.5.10 to 5.1.3): every list below hashed identically on both, except course_modules,
+     * which differs by exactly one row, a mod_survey activity the Moodle 5.0 upgrade deleted (without it the two hash alike):
+     *   - only columns that Moodle 4.1 and 5.x both have (the 5.x ones, such as course.enableaitools or course_sections.component,
+     *     would make the "now" side hash a column the baseline never saw);
+     *   - nothing an upgrade or a cron run rewrites by itself (timemodified, sortorder, needsupdate, the course cache revision,
+     *     course_sections.sequence, which follows the activities);
+     *   - nothing the import writes: the eight course.open_* columns of core::WRITES are out, and so is every `theme` column
+     *     (step 07 of the rehearsal kit clears theme overrides).
+     * The BizLMS substrate the plan names (password hashes, the open_* user and course columns) is here; course_modules is here too,
+     * and the Moodle 5.0 upgrade deletes the activities of mod_survey and mod_chat when their code is not on disk, so this is where
+     * such a loss shows (see the NOTE compare_metrics prints).
+     *
+     * @var array<string, array{0: string, 1: string[]}>
+     */
+    private const MORE = [
+        'user_bizlms' => ['user', ['id', 'password', 'idnumber', 'institution', 'department', 'open_supervisorid',
+            'open_employeeid', 'open_usermodified', 'open_designation', 'open_state', 'open_jobfunction', 'open_group',
+            'open_qualification', 'open_location', 'open_team', 'open_client', 'open_supervisorempid', 'open_band',
+            'open_hrmsrole', 'open_zone', 'open_region', 'open_grade', 'open_positionid', 'open_domainid', 'open_states',
+            'open_district', 'open_subdistrict', 'open_village', 'open_joindate', 'open_dateofbirth', 'gender',
+            'open_employmenttype', 'open_prefix', 'open_orgactive', 'open_educationlevel', 'open_fieldwork',
+            'open_jobtitle', 'open_company', 'open_paymentinfo', 'open_privacypolicy', 'open_termscondition',
+            'open_countryid']],
+        'course_bizlms' => ['course', ['id', 'idnumber', 'format', 'lang', 'enablecompletion', 'open_certificateid',
+            'open_path', 'open_categoryid', 'approvalreqd', 'selfenrol', 'open_securecourse', 'open_hrmsrole',
+            'open_location', 'open_module', 'open_coursetype', 'open_group', 'open_designation', 'price_status',
+            'courseprice']],
+        'course_modules' => ['course_modules', ['id', 'course', 'module', 'instance', 'section', 'idnumber', 'added',
+            'score', 'indent', 'visible', 'visibleoncoursepage', 'visibleold', 'groupmode', 'groupingid', 'completion',
+            'completiongradeitemnumber', 'completionview', 'completionexpected', 'completionpassgrade',
+            'showdescription', 'availability', 'deletioninprogress', 'downloadcontent', 'lang']],
+        // No 'name': an upgrade or a first visit fills a section's empty name with its default (April: one section went from NULL to
+        // 'Topic 1' between 4.1.2 and 5.1.3), and the name carries no learner data.
+        'course_sections' => ['course_sections', ['id', 'course', 'section', 'summaryformat', 'visible',
+            'availability']],
+        'grade_items' => ['grade_items', ['id', 'courseid', 'categoryid', 'itemname', 'itemtype', 'itemmodule',
+            'iteminstance', 'itemnumber', 'idnumber', 'gradetype', 'grademax', 'grademin', 'scaleid', 'outcomeid',
+            'gradepass', 'multfactor', 'plusfactor', 'hidden', 'locked']],
+        'course_completion_criteria' => ['course_completion_criteria', ['id', 'course', 'criteriatype', 'module',
+            'moduleinstance', 'courseinstance', 'enrolperiod', 'timeend', 'gradepass', 'role']],
+        'tool_certificate_templates' => ['tool_certificate_templates', ['id', 'name', 'contextid', 'shared',
+            'timecreated', 'costcenter', 'open_path']],
+        // The columns of tool_certificate_issues the first entry above leaves out (no 'archived': 4.1.2 has none).
+        'tool_certificate_issues_more' => ['tool_certificate_issues', ['id', 'templateid', 'emailed', 'data',
+            'component']],
+    ];
+
     /** Tables whose float columns are rounded before hashing (grades are floats), with their plain columns. */
     private const ROUNDED = [
         'grade_grades' => ['id', 'itemid', 'userid'],
@@ -409,12 +471,21 @@ final class metrics {
      * Everything the baseline's counts, aggregates and checksums contain.
      *
      * @param database $db
-     * @return array{counts: array<string, int>, aggregates: array<string, string>, checksums: array, layout: array<string, string>, notes: string[]}
+     * @return array{counts: array<string, int>, aggregates: array<string, string>, checksums: array, layout: array<string, string|string[]>, notes: string[]}
      */
     public static function collect(database $db): array {
         $notes = [];
         $counts = self::counts($db, $notes);
         $layout = ['scorm' => self::scorm_layout($db)];
+        if ($db->table_exists('modules')) {
+            // The module types this release has: compare_metrics() names the ones the baseline had and this release lacks
+            // (the Moodle 5.0 upgrade uninstalls mod_survey and mod_chat, and deletes their activities, when their code is gone).
+            $modules = [];
+            foreach ($db->rows('SELECT t.name AS name FROM {modules} t ORDER BY t.name') as $row) {
+                $modules[] = (string) $row['name'];
+            }
+            $layout['modules'] = $modules;
+        }
         self::scorm_counts($db, $layout['scorm'], $counts, $notes);
         return [
             'counts' => $counts,
@@ -469,6 +540,12 @@ final class metrics {
             'badges_issued' => 'badge_issued',
             'grade_grades' => 'grade_grades',
             'forum_posts' => 'forum_posts',
+            // Metrics version 3: the activities, their sections, the grade items, the completion criteria, the certificate templates.
+            'course_modules' => 'course_modules',
+            'course_sections' => 'course_sections',
+            'grade_items' => 'grade_items',
+            'course_completion_criteria' => 'course_completion_criteria',
+            'cert_templates' => 'tool_certificate_templates',
         ];
         foreach ($simple as $key => $table) {
             if ($has($table)) {
@@ -568,14 +645,25 @@ final class metrics {
     private static function checksums(database $db, string $scormlayout): array {
         $mysql = $db->family() === 'mysql';
         $out = [];
-        $plan = self::CHECKSUMS + self::ROUNDED;
-        foreach ($plan as $table => $wanted) {
+        // [table read, wanted columns, whether the float columns are rounded] per key. The keys of the first two sets are the
+        // table names; those of metrics version 3 name what they add.
+        $plan = [];
+        foreach (self::CHECKSUMS as $table => $wanted) {
+            $plan[$table] = [$table, $wanted, false];
+        }
+        foreach (self::ROUNDED as $table => $wanted) {
+            $plan[$table] = [$table, $wanted, true];
+        }
+        foreach (self::MORE as $key => $spec) {
+            $plan[$key] = [$spec[0], $spec[1], false];
+        }
+        foreach ($plan as $key => [$table, $wanted, $isrounded]) {
             if (!$db->table_exists($table)) {
                 continue;
             }
             $existing = $db->columns($table);
             $use = array_values(array_intersect($wanted, $existing));
-            $rounded = isset(self::ROUNDED[$table]) ? array_values(array_intersect(self::ROUNDED_COLUMNS, $existing)) : [];
+            $rounded = $isrounded ? array_values(array_intersect(self::ROUNDED_COLUMNS, $existing)) : [];
             if (!$use) {
                 continue;
             }
@@ -585,7 +673,7 @@ final class metrics {
                 $crc = (string) $db->scalar('SELECT COALESCE(SUM(CRC32(' . sql::row_text($use, '', $rounded)
                     . ')), 0) FROM {' . sql::identifier($table) . '}');
             }
-            $out[$table] = ['rows' => $rows, 'crc' => $crc, 'cols' => array_merge($use, $rounded)];
+            $out[$key] = ['rows' => $rows, 'crc' => $crc, 'cols' => array_merge($use, $rounded)];
         }
 
         // SCORM track data, from whichever layout the database has. One logical row per stored element.
@@ -611,8 +699,33 @@ final class metrics {
     }
 
     /**
-     * The tenant cross-foot: the buckets add up to the active users. A user who dropped out of every bucket, or counted
-     * twice, makes it false whatever the per-metric comparison says.
+     * Why this tool cannot compare a baseline, or null. A baseline taken with another metrics version holds other checksums
+     * than this tool computes: those it lacks would go unchecked without a word (a pass that proves less than it says), and
+     * those it has may mean something else. So the comparison refuses (exit 3), and the baseline has to be taken again with
+     * this tool. A format 1 baseline (no tool section at all) predates the versions and is compared as it always was.
+     *
+     * @param array $base A baseline document.
+     * @return string|null
+     */
+    public static function baseline_problem(array $base): ?string {
+        if (!isset($base['tool']['metrics'])) {
+            return null;
+        }
+        $was = (int) $base['tool']['metrics'];
+        if ($was !== self::VERSION) {
+            return "the baseline was taken with metrics version {$was}, and this tool is metrics version " . self::VERSION
+                . ': the two compute different checksums. Take the baseline again with this tool, or compare with the tool that took it.';
+        }
+        return null;
+    }
+
+    /**
+     * The tenant cross-foot: the buckets add up to the active users.
+     *
+     * NOT an independent proof. users_tenant_other is the complement of the three tenant buckets (collect() counts it as "no
+     * open_path, or none of the three trees"), so the sum equals users_total_active by construction and this can only fail if
+     * the counting SQL itself is wrong. What catches a user who drops out of a tenant is the per-bucket comparison with the
+     * baseline, users_tenant_other included: the bucket that lost the user and the one that gained it both drift.
      *
      * @param array<string, int> $counts
      * @return string|null A problem, or null when it holds or the counts are not there.
@@ -1298,6 +1411,16 @@ final class baseline {
         foreach (array_diff_key((array) $now['counts'], (array) $base['counts']) as $key => $value) {
             $out(sprintf('  NEW   %-24s %d (not in baseline)', $key, $value));
         }
+        // Module types the baseline had and this release does not: the Moodle 5.0 upgrade uninstalls mod_survey and mod_chat when
+        // their code is not on disk, and uninstalling a module type deletes every activity of it (course_modules, their
+        // completion rows and the instance tables). Informational: the drift of the counts above is the verdict, this says why.
+        if (isset($base['layout']['modules'], $now['layout']['modules'])) {
+            $gone = array_values(array_diff((array) $base['layout']['modules'], (array) $now['layout']['modules']));
+            if ($gone) {
+                $out('  NOTE  module type(s) the baseline had and this release does not have: ' . implode(', ', $gone)
+                    . ' - their activities are gone with them (put the plugin code on disk before the upgrade, or accept the loss in writing)');
+            }
+        }
 
         if (!empty($base['aggregates'])) {
             $out('');
@@ -1770,8 +1893,14 @@ function print_summary(array $doc, callable $print): void {
  */
 function compare_command(database $db, array $base, array $now, callable $print): int {
     $print('Baseline: ' . ($base['wwwroot'] ?? '?') . ' @ ' . gmdate('Y-m-d H:i:s', (int) ($base['captured_at'] ?? 0))
-        . ' UTC (' . ($base['release'] ?? '?') . ', format ' . ($base['format'] ?? 1) . ')');
-    $print('Current:  ' . $now['wwwroot'] . ' (' . $now['release'] . ')');
+        . ' UTC (' . ($base['release'] ?? '?') . ', format ' . ($base['format'] ?? 1) . ', metrics '
+        . ($base['tool']['metrics'] ?? 'none') . ')');
+    $print('Current:  ' . $now['wwwroot'] . ' (' . $now['release'] . ', metrics ' . metrics::VERSION . ')');
+    $refused = metrics::baseline_problem($base);
+    if ($refused !== null) {
+        $print('REFUSED: ' . $refused);
+        return 3;
+    }
     $result = baseline::compare_metrics($base, $now, $print);
     $drift = $result['drift'];
     $skipped = $result['skipped'];

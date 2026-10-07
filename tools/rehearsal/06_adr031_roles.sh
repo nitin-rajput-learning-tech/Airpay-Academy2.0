@@ -18,6 +18,11 @@
 # dry run prints a WARNING and the apply refuses without it) is passed only when ADR031_ACCEPT_NONSYSTEM_HOLDERS=1, which
 # is Nitin's written decision. The cross-tenant role is created empty; who gets it is his call, by hand.
 # Exit codes of the scripts: 0 clean, 2 done with WARNINGs (logged, not a stop), 1 refused or error (a stop).
+#
+# Re-running: adr031_role9_core_caps.php --apply refuses ("Already applied ... revert it first") while its state file exists in
+# the dataroot, so this step does not apply role 9 twice. When the state file is there the dry run must find nothing left to
+# prohibit or remove (0 capabilities, 0 allow rows), and then the apply is skipped; a dry run that still wants changes is a stop.
+# The cross-tenant role script is idempotent by itself.
 
 # shellcheck source=lib/common.sh
 . "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
@@ -27,6 +32,7 @@ ADR031_ACCEPT_NONSYSTEM_HOLDERS="${ADR031_ACCEPT_NONSYSTEM_HOLDERS:-0}"
 WORKDIR="$REHEARSAL_WORK/adr031"
 CFGFILE="$CODE_5X_DIR/config.php"
 need_tool "$PHP_BIN"
+require_kit_marker
 
 if [ "$EXECUTE" = 1 ]; then
     [ -f "$CFGFILE" ] || die "${CFGFILE} is missing: run step 04 first"
@@ -79,13 +85,39 @@ if [ "$ADR031_ACCEPT_NONSYSTEM_HOLDERS" = 1 ]; then
     apply_args+=(--accept-nonsystem-holders)
     warn "ADR031_ACCEPT_NONSYSTEM_HOLDERS=1: holders of the role below system context are accepted (Nitin's decision)"
 fi
-adr031 adr031_role9_core_caps adr031-role9-apply "ADR-031 role 9 core caps apply" "${apply_args[@]}"
+# The script refuses a second --apply for as long as its state file exists ("Already applied ... revert it first": the file holds
+# the prior values --revert needs). So a re-run of this step (after a later failure in it, or a whole run repeated) must not
+# apply again: the dry run above has to say that nothing is left to do, and then the apply is skipped. A dry run that still
+# wants changes while the state file exists means somebody re-roled it since: that is a stop, not a re-apply. With no state file
+# and a dry run that has nothing to do, the apply was a no-op the first time (the script writes no state then): also skipped.
+ROLE9_STATE="$MOODLEDATA/adr031_role9_core_caps_${TENANT_ADMIN_ROLE}.json"
+DO_ROLE9_APPLY=1
 if [ "$EXECUTE" = 1 ]; then
-    case "$ADR_RC" in
-        0) log "OK: role 9 core capabilities prohibited (prior values are saved under the dataroot for --revert)" ;;
-        *) show_tail "$REPORT_DIR/adr031-role9-apply.txt" 25
-           die "adr031_role9_core_caps --apply exited ${ADR_RC}. Exit 1 with 'below system context' means the role has holders at category or course level: that needs Nitin's decision (ADR031_ACCEPT_NONSYSTEM_HOLDERS=1), not the operator's" ;;
-    esac
+    counts=""
+    counts="$(adr031_role9_dry_counts < "$REPORT_DIR/adr031-role9-dryrun.txt" || true)"
+    if [ -f "$ROLE9_STATE" ]; then
+        [ -n "$counts" ] || die "role 9 was applied before (${ROLE9_STATE}), and the dry run printed no 'DRY RUN: N capabilities ... K allow row(s)' line to prove that nothing is left to do (reports/adr031-role9-dryrun.txt)"
+        [ "$counts" = "0 0" ] || die "role 9 was applied before (${ROLE9_STATE}), but the dry run now wants to prohibit/remove '${counts}' (capabilities, allow rows): the role was changed since. Read reports/adr031-role9-dryrun.txt; to start over, revert it (adr031_role9_core_caps.php --revert) and run this step again"
+        log "OK: role 9 core capabilities were applied before (state ${ROLE9_STATE}) and the dry run finds nothing left to prohibit or remove: not applying again"
+        DO_ROLE9_APPLY=0
+    elif [ -n "$(kv_get adr031.role9_applied)" ] && [ "$counts" = "0 0" ]; then
+        log "OK: role 9 core capabilities need no change (applied before; nothing left to prohibit or remove): not applying again"
+        DO_ROLE9_APPLY=0
+    elif [ -n "$(kv_get adr031.role9_applied)" ]; then
+        note "role 9 was applied before and has been reverted since (no state file, and the dry run wants '${counts:-?}'): applying again"
+        kv_unset adr031.role9_applied
+    fi
+fi
+if [ "$DO_ROLE9_APPLY" = 1 ]; then
+    adr031 adr031_role9_core_caps adr031-role9-apply "ADR-031 role 9 core caps apply" "${apply_args[@]}"
+    if [ "$EXECUTE" = 1 ]; then
+        case "$ADR_RC" in
+            0) log "OK: role 9 core capabilities prohibited (prior values are saved under the dataroot for --revert)"
+               kv_set adr031.role9_applied "$(ts)" ;;
+            *) show_tail "$REPORT_DIR/adr031-role9-apply.txt" 25
+               die "adr031_role9_core_caps --apply exited ${ADR_RC}. Exit 1 with 'below system context' means the role has holders at category or course level: that needs Nitin's decision (ADR031_ACCEPT_NONSYSTEM_HOLDERS=1), not the operator's" ;;
+        esac
+    fi
 fi
 
 # 3. The platform role that carries cross-tenant authority: dry run, then apply.

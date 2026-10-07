@@ -48,9 +48,11 @@
  * Exit 2 = nothing drifted but something could not be checked, so the data is NOT proven intact (old baseline, a
  *          non-MySQL engine, an invariant that could not run, a needs-owner reason the decisions do not accept, an
  *          unclaimed legacy table that holds rows).
- * Exit 3 = refused: the comparison cannot be made (--after-import without an import, a decisions file that does not
- *          hash to the expected value, a --run that is not a complete apply run of this install).
- * 0, 1, 2 and 3 mean the same as in import_bizlms.php.
+ * Exit 3 = refused, or the tool could not run: the comparison cannot be made (an unrecognised option, an unreadable or
+ *          unwritable baseline file, a baseline of another metrics version, --after-import without an import, a decisions
+ *          file that does not hash to the expected value, a --run that is not a complete apply run of this install).
+ * 0, 1 and 2 mean the same as in import_bizlms.php; so does 3 for a guard that refused (import_bizlms.php exits 1 for a
+ * usage error, this tool exits 3).
  * No flags = print current numbers.
  *
  * @package local_sentientia_platform
@@ -78,7 +80,7 @@ parity_gate::load_library();
     'run' => '', 'report' => '', 'help' => false,
 ], ['h' => 'help']);
 if ($unrecognised) {
-    cli_error('Unrecognised options: ' . implode(', ', array_keys($unrecognised)));
+    cli_error('Unrecognised options: ' . implode(', ', array_keys($unrecognised)), 3);
 }
 if ($options['help']) {
     cli_writeln('Data-intact parity check. --baseline=FILE to save, --compare=FILE to verify.');
@@ -117,8 +119,10 @@ $parity_db = new moodle_db($DB);
  * 2026-09-29: 28 of 30 Sentientia providers on a relabelled copy; a count-only
  * parity check could not see it. Repair: repair_task_registrations.php --apply.
  *
- * tenant_cross_foot: the tenant buckets add up to the active users (a user who dropped out of every bucket, or
- * counted twice, is what a truncated open_path looks like).
+ * tenant_cross_foot: the tenant buckets add up to the active users. A consistency check of the counting SQL only:
+ * users_tenant_other is the complement of the three tenant buckets, so the sum cannot differ from the total by
+ * construction. A user lost to a truncated open_path is caught by the per-bucket comparison with the baseline
+ * (users_tenant_other included), not by this.
  *
  * bizlms_import (only with --after-import): parity::invariant_problems().
  *
@@ -196,7 +200,7 @@ if ($options['baseline'] !== '') {
     $doc = parity_baseline::build($parity_db, $meta, $progress);
     $json = json_encode($doc, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     if ($json === false || file_put_contents($options['baseline'], $json . "\n") === false) {
-        cli_error('Cannot write ' . $options['baseline']);
+        cli_error('Cannot write ' . $options['baseline'], 3);
     }
     cli_writeln('Baseline saved: ' . $options['baseline']);
     \local_sentientia_platform\parity\print_summary($doc, $print);
@@ -208,11 +212,17 @@ if ($options['baseline'] !== '') {
 if ($options['compare'] !== '') {
     $base = json_decode((string) @file_get_contents($options['compare']), true);
     if (!$base || empty($base['counts'])) {
-        cli_error('Cannot read baseline file: ' . $options['compare']);
+        cli_error('Cannot read baseline file: ' . $options['compare'], 3);
     }
     cli_writeln('Baseline: ' . ($base['wwwroot'] ?? '?') . ' @ '
         . userdate($base['captured_at'] ?? 0) . ' (' . ($base['release'] ?? '?') . ', format ' . ($base['format'] ?? 1) . ')');
-    cli_writeln('Current:  ' . $CFG->wwwroot . ' (' . $CFG->release . ')');
+    cli_writeln('Current:  ' . $CFG->wwwroot . ' (' . $CFG->release . ', metrics ' . parity_metrics::VERSION . ')');
+    // A baseline of another metrics version holds other checksums than this tool computes: refuse, never compare part of it.
+    $versionproblem = parity_metrics::baseline_problem($base);
+    if ($versionproblem !== null) {
+        cli_writeln('REFUSED: ' . $versionproblem);
+        exit(3);
+    }
 
     // Everything --after-import needs, read before any number is printed: a refusal prints nothing half-done.
     $decisions = null;

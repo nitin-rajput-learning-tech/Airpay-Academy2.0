@@ -10,6 +10,9 @@
 #   1. noemailever must be on, in the 5.x config.php (read as data) and as the running site sees it;
 #   2. disarm the import guard (bizlms_import_armed_until = 0) and record the backlog before: task_adhoc by class, past-due
 #      scheduled tasks, the highest notification, message and task_log ids;
+#   2b. switch off, in the rehearsal database only, the scheduled tasks that phone home (OUTBOUND_TASK_PATTERNS: the moodle.net
+#      registration, the update check, OAuth2 token refresh, webhooks, the content market, the HRMS sync): noemailever closes
+#      e-mail only, and the restored backup carries settings for the other channels;
 #   3. lift CLI maintenance (cron.php refuses to run under it) and run ONE cycle: cron.php --force --keep-alive=0. The
 #      site setting cron_enabled stays 0, so no scheduler can start a second one. Timed;
 #   4. record the backlog after, count the e-mails the cycle tried to send and noemailever swallowed ("Not sending email due
@@ -29,6 +32,7 @@ MAINTENANCE_AFTER_CRON="${MAINTENANCE_AFTER_CRON:-on}"
 case "$MAINTENANCE_AFTER_CRON" in on | off) ;; *) die "MAINTENANCE_AFTER_CRON must be on or off" ;; esac
 PLATFORM=local_sentientia_platform
 need_tool "$PHP_BIN"
+require_kit_marker
 
 counts_snapshot() {
     # counts_snapshot FILE: the backlog and the append-only high-water marks.
@@ -68,6 +72,31 @@ else
     dry "would write reports/cron-before.txt: task_adhoc rows by class, past-due scheduled tasks, high-water marks"
 fi
 
+# 2b. Scheduled tasks that phone home. noemailever closes e-mail only; a restored backup also carries settings for other channels
+# (a moodle.net registration, OAuth2 system accounts with live refresh tokens, an update check), and the Sentientia tasks that call
+# outward (webhooks, the content market, the HRMS sync) would use whatever settings the rehearsal database has. The cycle is about the
+# restored backlog and its timing, not about those: they are switched off in the rehearsal database (a flag in {task_scheduled}, one
+# SQL statement each, listed in reports/cron-outbound-tasks.txt) and left as they are in production.
+OUTBOUND_TASK_PATTERNS="${OUTBOUND_TASK_PATTERNS-registration_cron_task check_for_updates_task refresh_system_tokens_task webhook_drain sync_providers hrms_sync}"
+if [ "$EXECUTE" = 1 ]; then
+    outbound_report="$REPORT_DIR/cron-outbound-tasks.txt"
+    : > "$outbound_report"
+    disabled_total=0
+    for pattern in $OUTBOUND_TASK_PATTERNS; do
+        case "$pattern" in *[!a-z_]*) die "OUTBOUND_TASK_PATTERNS entry '${pattern}' is not a plain class name fragment" ;; esac
+        n="$(db_scalar "SELECT COUNT(*) FROM {p}task_scheduled WHERE INSTR(classname, '${pattern}') > 0 AND disabled = 0")"
+        printf '%s: %s enabled task row(s) found\n' "$pattern" "$n" >> "$outbound_report"
+        if [ "$n" -gt 0 ]; then
+            db_write "UPDATE {p}task_scheduled SET disabled = 1 WHERE INSTR(classname, '${pattern}') > 0"
+            disabled_total=$((disabled_total + n))
+        fi
+    done
+    log "OUTBOUND: ${disabled_total} scheduled task row(s) that phone home switched off for the cycle (${OUTBOUND_TASK_PATTERNS:-none listed}); reports/cron-outbound-tasks.txt"
+    kv_set cron.outbound_tasks_disabled "$disabled_total"
+else
+    dry "would switch off the scheduled tasks that phone home (${OUTBOUND_TASK_PATTERNS:-none listed}) in the rehearsal database for the cycle"
+fi
+
 # 3. One cycle.
 run m5 ../admin/cli/maintenance.php --disable || die "could not lift CLI maintenance (cron.php refuses to run under it)"
 rc=0
@@ -91,8 +120,11 @@ fi
 if [ "$EXECUTE" = 1 ]; then
     counts_snapshot "$REPORT_DIR/cron-after.txt"
     log "task_adhoc rows: before $(kv_get cron.adhoc_before), after $(sed -n 's/^task_adhoc rows: //p' "$REPORT_DIR/cron-after.txt")"
+    # BEST EFFORT: Moodle writes "Not sending email due to $CFG->noemailever" with debugging(), which goes to the PHP error log or to
+    # stderr depending on the CLI's php.ini; a count of 0 can mean "none tried" or "not captured". What proves the cycle sent nothing
+    # is noemailever = 1 for the whole cycle (checked below) and the SMTP credentials wiped (step 01), not this number.
     blocked="$(grep -c 'Not sending email due to' "$REPORT_DIR/cron-cycle.txt" || true)"
-    log "e-mails the cycle tried to send and noemailever swallowed: ${blocked:-0}"
+    log "e-mails the cycle tried to send and noemailever swallowed, as far as the cron output shows (best effort, see above): ${blocked:-0}"
     kv_set cron.blocked_mails "${blocked:-0}"
     [ "$(cfg5 --name=noemailever --no-eol 2> /dev/null || true)" = 1 ] || die "noemailever is no longer on after the cycle"
     log "OK: noemailever was on for the whole cycle: zero real-address sends"

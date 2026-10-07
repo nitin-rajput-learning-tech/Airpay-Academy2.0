@@ -26,6 +26,7 @@ CODE_45_SHA256="${CODE_45_SHA256:-}"
 OUT_UPGRADE="$LOG_DIR/03-hop1-upgrade-output.log"
 
 need_tool "$PHP_BIN"
+require_kit_marker
 
 # 1. The code.
 unpack_tree "$CODE_45_ARCHIVE" "$CODE_45_SHA256" "$CODE_45_DIR" version.php "4.5 core"
@@ -34,6 +35,12 @@ if [ -f "$CODE_45_DIR/version.php" ]; then
     log "4.5 tree release: '${rel45}'"
     [[ "$rel45" =~ $HOP1_RELEASE_REGEX ]] || die "the tree at ${CODE_45_DIR} is '${rel45}', not '${HOP1_RELEASE_REGEX}'"
     kv_set release.hop1_code "$rel45"
+    # The tree that really runs (a directory that already held code is trusted by its version.php, not by an archive hash).
+    if [ "$EXECUTE" = 1 ]; then
+        manifest45="$(tree_manifest_sha "$CODE_45_DIR")"
+        log "4.5 tree manifest SHA-256 (path and hash of every version.php): ${manifest45}"
+        kv_set tree.45.manifest_sha "$manifest45"
+    fi
     [ -f "$CODE_45_DIR/admin/cli/upgrade.php" ] || die "${CODE_45_DIR}/admin/cli/upgrade.php is missing: not a Moodle core tree"
     if [ -d "$CODE_45_DIR/public" ]; then
         die "${CODE_45_DIR}/public exists: this is a 5.x tree. Hop 1 needs the 4.5 core"
@@ -103,7 +110,8 @@ fi
 # 6. The hop.
 if [ "$ALREADY" = 0 ]; then
     snapshot_hook "before-hop-1"
-    run m45 admin/cli/purge_caches.php > /dev/null 2>&1 || warn "purge_caches before the hop failed (a 4.1.2 database with 4.5 code often cannot purge: ignored)"
+    # The output is kept (not sent to /dev/null): a DRY run must print the purge, and a failed one says why in the log.
+    run m45 admin/cli/purge_caches.php || warn "purge_caches before the hop failed (a 4.1.2 database with 4.5 code often cannot purge: ignored)"
     if [ "$EXECUTE" = 1 ]; then
         capture_to "$REPORT_DIR/hop1-missing-before.txt" m45 "$KIT_DIR/lib/missing_plugins.php" "$CODE_45_DIR/config.php" \
             && log "plugins missing from disk before the hop: $(tail -n 1 "$REPORT_DIR/hop1-missing-before.txt")" \

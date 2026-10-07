@@ -83,27 +83,37 @@ verdict() {
     restore="$(secs_for '^(create database|restore database|restore moodledata)$')"
     hop1="$(secs_for '^HOP 1')"
     hop2="$(secs_for '^HOP 2')"
-    repairs="$(awk -F '\t' '$2 == "05" { s += $4 } END { print s + 0 }' "$TIMINGS_FILE" 2> /dev/null || printf 0)"
+    baseline_take="$(secs_for '^take baseline$')"
+    # Every timed operation of the steps that fall inside the hard-down window, not only the headline ones: the parity compares after
+    # each hop, the repairs, the role scripts, the data-intact gate, the preflight, the dry run, the apply, the verify and the
+    # parity after the import all run while the site is down.
+    steps_secs() { awk -F '\t' -v re="$1" '$2 ~ re { s += $4 } END { print s + 0 }' "$TIMINGS_FILE" 2> /dev/null || printf 0; }
+    window_steps="$(steps_secs '^(03|04|05|06|07|08|09|10)$')"
+    repairs="$(steps_secs '^05$')"
+    imp_all="$(steps_secs '^(09|10)$')"
     imp="$(secs_for '^import (apply|resume)$')"
     cron="$(secs_for '^CRON cycle')"
     tq="$(kv cron.transfer_question_categories_seconds)"
     printf '| What | Time |\n|---|---|\n'
     printf '| Restore (database and moodledata, if the kit did it) | %s |\n' "$(mins "$restore")"
-    printf '| Hop 1, 4.1.x to 4.5 | %s |\n' "$(mins "$hop1")"
-    printf '| Hop 2, 4.5 to 5.x | %s |\n' "$(mins "$hop2")"
+    printf '| Baseline taken on the restored copy (step 02; on cutover day it is taken on live at the freeze) | %s |\n' "$(mins "$baseline_take")"
+    printf '| Hop 1, 4.1.x to 4.5 (the upgrade only) | %s |\n' "$(mins "$hop1")"
+    printf '| Hop 2, 4.5 to 5.x (the upgrade only) | %s |\n' "$(mins "$hop2")"
     printf '| Repairs (step 05, all commands) | %s |\n' "$(mins "$repairs")"
-    printf '| Import apply | %s |\n' "$(mins "$imp")"
-    printf '| **Hard-down estimate (restore + hops + repairs + import)** | **%s** |\n' "$(mins $((restore + hop1 + hop2 + repairs + imp)))"
-    printf '| One cron cycle over the restored backlog | %s |\n' "$(mins "$cron")"
+    printf '| Import, gate to parity (steps 09 and 10: gate, preflight, dry run, apply, verify, parity after) | %s |\n' "$(mins "$imp_all")"
+    printf '|   of which the apply itself | %s |\n' "$(mins "$imp")"
+    printf '| **Hard-down estimate (restore + baseline + every timed operation of steps 03 to 10)** | **%s** |\n' "$(mins $((restore + baseline_take + window_steps)))"
+    printf '| One cron cycle over the restored backlog (step 11) | %s |\n' "$(mins "$cron")"
     printf '| transfer_question_categories task (seconds, from the task log) | %s |\n' "$tq"
-    printf '\nThe estimate leaves out the freeze, the backup and the DNS steps, which are IT'"'"'s. Compare it with the window agreed (I-5).\n'
-    printf '\nEvery timed operation: `logs/timings.tsv`.\n'
+    printf '\nThe estimate leaves out the freeze, the backup and the DNS steps, which are IT'"'"'s, and the untimed commands between the timed ones (a few seconds each). Compare it with the window agreed (I-5).\n'
+    printf '\nEvery timed operation: `logs/timings.tsv`. It adds up every run of a step in this rehearsal (a step that was run twice counts twice; a new restore starts a new file). Restore the database from a dump and run from step 01 for one clean number.\n'
 
     printf '\n## Parity checkpoints (all against the one source baseline)\n\n| Checkpoint | Result |\n|---|---|\n'
     printf '| Restored copy vs the live baseline (restore loss) | %s |\n' "$(verdict "$(kv_get parity.restore_vs_live)")"
     printf '| Baseline vs the database it was taken from | %s |\n' "$(verdict "$(kv_get parity.source_selfcheck)")"
     printf '| After hop 1 (4.5, no Sentientia plugin) | %s |\n' "$(verdict "$(kv_get parity.after_hop1)")"
-    printf '| After hop 2 (5.x) | %s |\n' "$(verdict "$(kv_get parity.after_hop2)")"
+    hop2note="$(kv_get parity.after_hop2.note)"
+    printf '| After hop 2 (5.x) | %s%s |\n' "$(verdict "$(kv_get parity.after_hop2)")" "${hop2note:+ ($hop2note)}"
     printf '| Before the import (data intact gate) | %s |\n' "$(verdict "$(kv_get parity.pre_import)")"
     printf '| After the import (`--after-import`) | %s |\n' "$(verdict "$(kv_get parity.after_import)")"
     printf '| After one cron cycle (informational) | %s |\n' "$(verdict "$(kv_get parity.after_cron)")"
@@ -111,8 +121,12 @@ verdict() {
 
     printf '\n## Evidence to keep with the change ticket\n\n'
     printf -- '- Baseline: `%s`, SHA-256 `%s`, release `%s`\n' "$BASELINE_FILE" "$(kv baseline.sha256)" "$(kv baseline.release)"
-    printf -- '- Baseline tool SHA-256: `%s`\n' "$(kv baseline.tool_sha256)"
-    printf -- '- 5.x package SHA-256: `%s` (release %s)\n' "$(kv package.5x.sha256)" "$(kv release.hop2_code)"
+    printf -- '- Baseline tool SHA-256: `%s` (carriage returns removed: `%s`; the package'"'"'s copy, the same way: `%s`; the two must be the same file)
+' "$(kv baseline.tool_sha256)" "$(kv baseline.tool_sha256_lf)" "$(kv package.baseline_tool_sha256_lf)"
+    printf -- '- 5.x package archive SHA-256: `%s` (release %s). The tree that really ran (manifest of every version.php): 4.5 `%s`, 5.x `%s`\n' \
+        "$(kv package.5x.sha256)" "$(kv release.hop2_code)" "$(kv tree.45.manifest_sha)" "$(kv tree.5x.manifest_sha)"
+    printf -- '- Restore: id `%s` (restored by hand: %s); the database and the moodledata carry it, and every writing step checked it\n' \
+        "$(kv restore.id | cut -c1-8)" "$(kv restore.by_hand)"
     printf -- '- Capability allow-list SHA-256: `%s`; granted by the repair: %s\n' "$(kv caps.allowlist_sha256)" "$(kv caps.granted)"
     printf -- '- Import decisions file SHA-256: `%s`\n' "$(kv import.decisions_file_sha256)"
     printf -- '- **Decisions hash for cutover (`--expect-decisions-hash`): `%s`**\n' "$(kv import.decisions_hash)"
@@ -121,8 +135,8 @@ verdict() {
         "$(kv filedir.db_hashes)" "$(kv filedir.disk_files)" "$(kv filedir.missing)" "$(kv filedir.extra)"
     printf -- '- Plugins missing from disk after hop 1: %s; Sentientia local plugins installed after hop 2: %s\n' \
         "$(kv hop1.missing_plugins)" "$(kv hop2.sentientia_plugins)"
-    printf -- '- Cron cycle: %s; mails noemailever swallowed: %s; failed tasks: %s; checks.php exit: %s\n' \
-        "$(kv cron.cycle_line)" "$(kv cron.blocked_mails)" "$(kv cron.failed_tasks)" "$(kv checks.exit)"
+    printf -- '- Cron cycle: %s; mails noemailever swallowed, as far as the cron output shows (best effort: a 0 can mean not captured; noemailever = 1 for the whole cycle is the proof): %s; scheduled tasks that phone home switched off for it: %s; failed tasks: %s; checks.php exit: %s\n' \
+        "$(kv cron.cycle_line)" "$(kv cron.blocked_mails)" "$(kv cron.outbound_tasks_disabled)" "$(kv cron.failed_tasks)" "$(kv checks.exit)"
     printf -- '- Landing posture: %s; site theme: %s\n' "$(kv posture.landing)" "$(kv theme.site)"
     printf -- '- ADR-031 web-service smoke: %s\n' "$(kv adr031.ws_smoke)"
 
@@ -140,10 +154,18 @@ verdict() {
     printf '\n## The rollout gate (migration plan 9): all seven, or the rehearsal repeats\n\n| # | Gate | Who proves it | State |\n|---|---|---|---|\n'
     p_import="$(kv_get parity.after_import)"
     p_pre="$(kv_get parity.pre_import)"
-    if [ "$p_import" = 0 ] && [ "$p_pre" = 0 ]; then g1="MET by the kit"; else g1="NOT MET (see the parity table)"; fi
+    if [ "$p_import" = 0 ] && [ "$p_pre" = 0 ]; then
+        if [ "$(kv_get parity.restore_vs_live)" = 0 ]; then
+            g1="MET by the kit (restore loss isolated against live's own baseline)"
+        else
+            g1="PARTLY MET: the upgrades and the import are held to a baseline taken on the RESTORED copy (no LIVE_BASELINE_FILE), so loss in the restore itself is not isolated"
+        fi
+    else
+        g1="NOT MET (see the parity table)"
+    fi
     if [ "$(status_of 11)" = ok ] && [ -n "$(kv_get cron.blocked_mails)" ]; then g5="evidence recorded by the kit; Nitin judges it"; else g5="NOT MET (step 11 not ok)"; fi
     if [ "$(status_of 04)" = ok ] && [ "$(status_of 03)" = ok ]; then g7="measured by the kit; IT compares it with the window (I-5)"; else g7="NOT MET"; fi
-    printf '| 1 | 100%% parity across counts and value checksums, tenant cross-foot holding, before and after the import | the kit | %s |\n' "$g1"
+    printf '| 1 | 100%% parity across counts and value checksums (every tenant bucket, users_tenant_other included, equal to the baseline) before and after the import | the kit | %s |\n' "$g1"
     printf '| 2 | A byte-identical per-user fingerprint diff (5 to 10 named users, one a re-completion user; plan 5.2) | a person, with the SQL of the plan | NOT IN THE KIT |\n'
     printf '| 3 | An interactive login with a real, known password, one account per tenant (plan 5.3, I-19) | a person | NOT IN THE KIT |\n'
     printf '| 4 | A clean SCORM and certificate walk landing on /my (runbook step 6; a file-backed SCORM activity must return 200) | a person | NOT IN THE KIT |\n'
@@ -161,7 +183,9 @@ verdict() {
     printf -- '- This box has a restored copy of the live data: when the rehearsal is over, destroy it (database, moodledata, work directory).\n'
 
     printf '\n## Verdict of the kit\n\n'
-    if [ "$allok" = 1 ] && [ "$p_import" = 0 ]; then
+    if [ "$allok" = 1 ] && [ "$p_import" = 0 ] && [ "$(kv_get parity.restore_vs_live)" != 0 ]; then
+        printf 'Steps 00 to 11 finished ok and the parity after the import is exit 0, against a baseline taken on the restored copy: the upgrades and the import lost nothing, but loss in the restore itself is not isolated (gate 1 is partly met; run again with LIVE_BASELINE_FILE for the strong form). Gates 2, 3, 4 and 6 are still to be done by people.\n'
+    elif [ "$allok" = 1 ] && [ "$p_import" = 0 ]; then
         printf 'Steps 00 to 11 finished ok and the parity after the import is exit 0. The kit'"'"'s part of the rollout gate is met; gates 2, 3, 4 and 6 are still to be done by people.\n'
     elif [ "$allok" = 1 ]; then
         printf 'Steps 00 to 11 finished ok, but the parity after the import is %s: read the parity table and the unproven list.\n' "$(verdict "$p_import")"

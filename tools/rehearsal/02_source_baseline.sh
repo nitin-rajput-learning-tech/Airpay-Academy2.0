@@ -8,6 +8,7 @@
 # legacy table CRC'd over every row, the five core tables the import may write).
 #
 # Rules it enforces:
+#   * the database must carry this rehearsal's kit marker (step 01 stamps it): nothing is read as "the source" from a database the kit did not restore;
 #   * the database must still be the source release (SOURCE_RELEASE_REGEX): a baseline from an upgraded copy is worthless;
 #   * with LIVE_BASELINE_FILE, that file IS the baseline (copied, its SHA-256 recorded); otherwise the baseline is taken
 #     here, and a baseline that already exists is never overwritten: it is re-verified with --compare (exit 0 = the
@@ -28,10 +29,12 @@ need_tool "$PHP_BIN"
 if [ -f "$SOURCE_BASELINE_PHP" ]; then
     log "baseline tool: ${SOURCE_BASELINE_PHP} (SHA-256 $(sha256_of "$SOURCE_BASELINE_PHP"))"
     kv_set baseline.tool_sha256 "$(sha256_of "$SOURCE_BASELINE_PHP")"
+    kv_set baseline.tool_sha256_lf "$(sha256_lf_of "$SOURCE_BASELINE_PHP")"
 fi
 
 if [ "$EXECUTE" = 1 ]; then
     check_pass_file || die "DB_PASS_FILE ${DB_PASS_FILE} is missing or readable by others"
+    require_kit_marker
     make_config db
     release="$(db_config_value release || true)"
     log "database release: '${release}'"
@@ -80,7 +83,8 @@ if [ "$EXECUTE" = 1 ]; then
     format="$(kit_php json_get.php "$BASELINE_FILE" format || true)"
     [ "${format:-0}" -ge 2 ] || die "the baseline is JSON format '${format}'; the Stage B gates need format 2 (take it again with this version of source_baseline.php)"
     base_release="$(kit_php json_get.php "$BASELINE_FILE" release || true)"
-    log "baseline: format ${format}, taken on release '${base_release}', SHA-256 $(sha256_of "$BASELINE_FILE"), $(wc -c < "$BASELINE_FILE" | tr -d ' ') bytes"
+    base_metrics="$(kit_php json_get.php "$BASELINE_FILE" tool.metrics || printf none)"
+    log "baseline: format ${format}, metrics version ${base_metrics}, taken on release '${base_release}', SHA-256 $(sha256_of "$BASELINE_FILE"), $(wc -c < "$BASELINE_FILE" | tr -d ' ') bytes"
     log "baseline holds: $(kit_php json_get.php "$BASELINE_FILE" counts --count || printf '?') counts, $(kit_php json_get.php "$BASELINE_FILE" checksums --count || printf '?') value checksums, $(kit_php json_get.php "$BASELINE_FILE" legacy --count || printf '0') BizLMS legacy tables, users_total_active $(kit_php json_get.php "$BASELINE_FILE" counts.users_total_active || printf '?')"
     kv_set baseline.sha256 "$(sha256_of "$BASELINE_FILE")"
     kv_set baseline.release "$base_release"

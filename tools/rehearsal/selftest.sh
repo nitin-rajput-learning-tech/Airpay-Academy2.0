@@ -4,7 +4,7 @@
 #
 #   bash tools/rehearsal/selftest.sh
 #
-# What it proves (each line below is a test):
+# What it proves (each line below is a test; the Stage B tools review of 2026-10-08 added the database name guard, the live endpoint, the dump scan, the recovery helpers of steps 04, 06 and 09, the state rotation and the cache configuration):
 #   * every script passes bash -n;
 #   * the env policy refuses: a database that is not on the allow-list, a system or production-looking database in the allow-list,
 #     an empty allow-list, a production hostname in the database host or the wwwroot;
@@ -116,7 +116,7 @@ write_cfg() {
         KIT_CONFIG_MARKER="REHEARSAL-KIT-CONFIG"
         DB_TYPE=mysqli DB_HOST=127.0.0.1 DB_NAME=stageb_selftest DB_USER=rehearsal DB_PREFIX=mdl_ DB_PORT="" DB_COLLATION=utf8mb4_unicode_ci
         DB_PASS_FILE="$T/db.pass" REHEARSAL_WWWROOT=https://rehearsal.example.invalid MOODLEDATA="$T/moodledata" DIVERT_EMAILS_TO=""
-        REHEARSAL_DB_ALLOWLIST="stageb_selftest" PRODUCTION_HOSTNAMES="airpay.academy"
+        REHEARSAL_DB_ALLOWLIST="stageb_selftest" PRODUCTION_HOSTNAMES="airpay.academy" REHEARSAL_WORK="$T/work"
         render_config 45
     ) > "$1" 2> /dev/null
     if [ -n "${2:-}" ]; then
@@ -230,6 +230,139 @@ res="$(bash "$KIT/run_all.sh" --env "$T/ok.env" --only 00,12 2>&1)"
 if printf '%s' "$res" | grep -q 'finished: every selected step ok (DRY mode)'; then ok "run_all.sh --only 00,12 runs in DRY mode"; else bad "run_all.sh --only 00,12" "$res"; fi
 res="$(bash "$KIT/run_all.sh" --env "$T/a.env" --only 00 2>&1; echo "rc=$?")"
 if printf '%s' "$res" | grep -q 'rc=1'; then ok "run_all.sh stops with the failed step's exit code"; else bad "run_all.sh failure exit code" "$res"; fi
+
+printf 'database name guard (Stage B tools review)\n'
+for n in airpayprod sentientia_uat AirpayProd stageb_uat_copy my_prod_copy production live_db; do
+    if [ "$(in_kit db_name_denied "$n" | tail -n 1)" = "rc=0" ]; then ok "'${n}' can never be a rehearsal database"; else bad "'${n}' can never be a rehearsal database"; fi
+done
+for n in stageb_rehearsal stageb_selftest rehearsal_april; do
+    if [ "$(in_kit db_name_denied "$n" | tail -n 1)" = "rc=1" ]; then ok "'${n}' is an acceptable rehearsal database name"; else bad "'${n}' is an acceptable rehearsal database name"; fi
+done
+base_env "$T/ap.env" 'REHEARSAL_DB_ALLOWLIST="airpayprod"' "DB_NAME=airpayprod"
+expect_refused "airpayprod (production's own database name) is refused even when listed" "$T/ap.env" 00_preflight.sh 'production or system database'
+base_env "$T/ua.env" 'REHEARSAL_DB_ALLOWLIST="sentientia_uat"' "DB_NAME=sentientia_uat"
+expect_refused "sentientia_uat (UAT's database) is refused even when listed" "$T/ua.env" 00_preflight.sh 'production or system database'
+
+printf 'the live database endpoint\n'
+base_env "$T/ep.env" "PRODUCTION_DB_ENDPOINT=airpay-live.cluster-c1x.ap-south-1.rds.amazonaws.com" "DB_HOST=airpay-live.cluster-c1x.ap-south-1.rds.amazonaws.com"
+expect_refused "a DB_HOST that is the live database endpoint is refused" "$T/ep.env" 00_preflight.sh 'production host'
+base_env "$T/ep2.env"
+OUT="$(bash "$KIT/00_preflight.sh" --env "$T/ep2.env" --execute 2>&1)"
+RC=$?
+if [ "$RC" -ne 0 ] && printf '%s' "$OUT" | grep -q 'PRODUCTION_DB_ENDPOINT is empty'; then ok "--execute refuses to start while PRODUCTION_DB_ENDPOINT is empty"; else bad "--execute refuses an empty PRODUCTION_DB_ENDPOINT (rc ${RC})" "$OUT"; fi
+base_env "$T/ep3.env" "PRODUCTION_DB_ENDPOINT=CHANGE_ME"
+expect_refused "a placeholder PRODUCTION_DB_ENDPOINT is refused" "$T/ep3.env" 00_preflight.sh 'placeholder'
+base_env "$T/ep4.env" "PRODUCTION_DB_ENDPOINT=live-db.example.internal"
+kit 00_preflight.sh "$T/ep4.env"
+if printf '%s' "$OUT" | grep -q 'preflight passed'; then ok "a DRY preflight passes with the endpoint set (and a different DB_HOST)"; else bad "a DRY preflight with the endpoint set" "$OUT"; fi
+
+printf 'the dump that is restored (step 01)\n'
+mkdir -p "$T/dumps"
+cat > "$T/dumps/good-body.sql" <<'SQL'
+-- MySQL dump 10.13
+DROP TABLE IF EXISTS `mdl_t`;
+CREATE TABLE `mdl_t` (
+  `use` int(11) NOT NULL,
+  `id` int(11) NOT NULL
+);
+INSERT INTO `mdl_t` VALUES (1,2),(3,4);
+INSERT INTO `mdl_x` VALUES ('use `a`; create database x;');
+SQL
+{ cat "$T/dumps/good-body.sql"; printf -- '-- Dump completed on 2026-04-06  7:54:07\n'; } > "$T/dumps/good.sql"
+{ printf -- 'USE `airpayprod`;\n'; cat "$T/dumps/good.sql"; } > "$T/dumps/use.sql"
+{ printf -- 'CREATE DATABASE /*!32312 IF NOT EXISTS*/ `airpayprod` /*!40100 DEFAULT CHARACTER SET utf8mb4 */;\n'; cat "$T/dumps/good.sql"; } > "$T/dumps/createdb.sql"
+{ printf -- '/*!40000 DROP DATABASE IF EXISTS `airpayprod`*/;\n'; cat "$T/dumps/good.sql"; } > "$T/dumps/dropdb.sql"
+{ head -c 200 "$T/dumps/good.sql"; } > "$T/dumps/cut.sql"
+gzip -c "$T/dumps/good.sql" > "$T/dumps/good.sql.gz"
+gzip -c "$T/dumps/use.sql" > "$T/dumps/use.sql.gz"
+gzip -c "$T/dumps/good-body.sql" > "$T/dumps/notrailer.sql.gz"
+res="$(in_kit dump_unsafe_statement "$T/dumps/good.sql")"
+if [ -z "$(printf '%s' "$res" | head -n 1)" ]; then ok "a dump with a column called use and a row text 'create database' holds no unsafe statement"; else bad "a clean dump is not flagged" "$res"; fi
+for f in use createdb dropdb; do
+    res="$(in_kit dump_unsafe_statement "$T/dumps/${f}.sql")"
+    if printf '%s' "$res" | head -n 1 | grep -q 'airpayprod'; then ok "a dump with a ${f} statement is flagged"; else bad "a dump with a ${f} statement is flagged" "$res"; fi
+done
+res="$(in_kit dump_unsafe_statement "$T/dumps/use.sql.gz")"
+if printf '%s' "$res" | head -n 1 | grep -q 'airpayprod'; then ok "the scan reads a .gz dump too"; else bad "the scan reads a .gz dump" "$res"; fi
+for pair in "good.sql:0" "cut.sql:1" "good.sql.gz:0" "notrailer.sql.gz:1"; do
+    f="${pair%%:*}"; want="${pair##*:}"
+    res="$(in_kit dump_has_trailer "$T/dumps/$f")"
+    if [ "$(printf '%s' "$res" | tail -n 1)" = "rc=${want}" ]; then ok "the 'Dump completed' trailer check of ${f}: rc ${want}"; else bad "trailer check of ${f}" "$res"; fi
+done
+
+printf 'step 06: role 9 re-run, and step 04: the pre-repair invariant\n'
+line='DRY RUN: 0 capabilities would be prohibited (7 already are) and 0 allow row(s) removed for role administrator. Nothing changed.'
+res="$(printf 'noise\n%s\nWARNING x\n' "$line" | in_kit adr031_role9_dry_counts)"
+if [ "$(printf '%s' "$res" | head -n 1)" = "0 0" ]; then ok "role 9 dry run: nothing left to do reads as 0 0"; else bad "role 9 dry counts 0 0" "$res"; fi
+res="$(printf 'DRY RUN: 3 capabilities would be prohibited (4 already are) and 2 allow row(s) removed for role x. Nothing changed.\n' | in_kit adr031_role9_dry_counts)"
+if [ "$(printf '%s' "$res" | head -n 1)" = "3 2" ]; then ok "role 9 dry run: changes wanted read as 3 2"; else bad "role 9 dry counts 3 2" "$res"; fi
+res="$(printf 'DRY RUN: 3 capabilities would be prohibited (0 already are) and an unknown number of allow row(s) removed for role x.\n' | in_kit adr031_role9_dry_counts)"
+if [ "$(printf '%s' "$res" | tail -n 1)" = "rc=1" ]; then ok "role 9 dry run with PART 2 unknown prints no counts (never read as nothing to do)"; else bad "role 9 dry counts unknown" "$res"; fi
+printf 'RESULT: 1 invariant(s) FAILED (message_provider_defaults).\n        message_provider_defaults: run x\n' > "$T/pr1.txt"
+printf 'RESULT: 1 invariant(s) FAILED (message_provider_defaults).\nRESULT: 2 metric(s) DRIFTED - investigate before proceeding.\n' > "$T/pr2.txt"
+printf 'RESULT: 2 invariant(s) FAILED (message_provider_defaults, bizlms_import).\n' > "$T/pr3.txt"
+printf 'RESULT: 100%% PARITY\n' > "$T/pr4.txt"
+for pair in "pr1:0" "pr2:1" "pr3:1" "pr4:1"; do
+    f="${pair%%:*}"; want="${pair##*:}"
+    res="$(in_kit parity_only_pre_repair_invariant "$T/${f}.txt")"
+    if [ "$(printf '%s' "$res" | tail -n 1)" = "rc=${want}" ]; then ok "only-the-pre-repair-invariant check of ${f}: rc ${want}"; else bad "pre-repair invariant check ${f}" "$res"; fi
+done
+
+printf 'step 09: where a re-run stands\n'
+for case_ in ':::fresh' '1::apply:recorded' ':complete:apply:recover' ':failed:resume:resume' ':running:resume:resume' ':aborted:apply:refuse' ':failed:apply:refuse' '1:failed:resume:recorded'; do
+    IFS=: read -r a r m want <<< "$case_"
+    res="$(in_kit import_phase "$a" "$r" "$m" | head -n 1)"
+    case "$res" in
+        "$want"*) ok "import_phase applied='${a}' run='${r}' mode='${m}' -> ${want}" ;;
+        *) bad "import_phase applied='${a}' run='${r}' mode='${m}' -> ${want}" "$res" ;;
+    esac
+done
+
+printf 'cron scan, tree manifest, state rotation\n'
+t_names() { CODE_45_DIR=/srv/r/m45 CODE_5X_DIR=/srv/r/m5/ names_our_tree "$1"; }
+[ "$(in_kit t_names '* * * * * www-data php /srv/r/m5/public/cron.php' | tail -n 1)" = rc=0 ] && ok "a cron line naming CODE_5X_DIR is this rehearsal's" || bad "cron line naming CODE_5X_DIR"
+[ "$(in_kit t_names '* * * * * php /var/www/uat/admin/cli/cron.php' | tail -n 1)" = rc=1 ] && ok "a cron line of another site is not" || bad "cron line of another site"
+mkdir -p "$T/tree/a" "$T/tree/b/c"
+printf '<?php $release = 1;\n' > "$T/tree/version.php"
+printf '<?php $plugin = 1;\n' > "$T/tree/a/version.php"
+printf '<?php $plugin = 2;\n' > "$T/tree/b/c/version.php"
+m1="$(in_kit tree_manifest_sha "$T/tree" | head -n 1)"
+touch -d '2001-01-01' "$T/tree/a/version.php"
+m2="$(in_kit tree_manifest_sha "$T/tree" | head -n 1)"
+printf '<?php $plugin = 3;\n' > "$T/tree/b/c/version.php"
+m3="$(in_kit tree_manifest_sha "$T/tree" | head -n 1)"
+if [[ "$m1" =~ ^[0-9a-f]{64}$ ]] && [ "$m1" = "$m2" ] && [ "$m1" != "$m3" ]; then ok "the tree manifest hash follows the content of every version.php, not file times"; else bad "tree manifest hash" "$m1 / $m2 / $m3"; fi
+t_rotate() {
+    EXECUTE=1 STEP_ID=t REHEARSAL_WORK="$T/rw" STATE_DIR="$T/rw/state" REPORT_DIR="$T/rw/reports" BASELINE_DIR="$T/rw/baseline" TIMINGS_FILE="$T/rw/logs/timings.tsv"
+    mkdir -p "$STATE_DIR/kv" "$REPORT_DIR" "$BASELINE_DIR" "$T/rw/logs"
+    printf 'old1234567890\n' > "$STATE_DIR/kv/restore.id"
+    printf 'status=ok\n' > "$STATE_DIR/00.status"
+    printf 'status=ok\n' > "$STATE_DIR/03.status"
+    printf 'x\n' > "$REPORT_DIR/summary.md"
+    printf '{}\n' > "$BASELINE_DIR/source-baseline.json"
+    printf 't\n' > "$TIMINGS_FILE"
+    work_state_has_history || exit 11
+    rotate_work_state > /dev/null
+    work_state_has_history && exit 12
+    [ -f "$STATE_DIR/00.status" ] || exit 13
+    [ ! -e "$STATE_DIR/kv/restore.id" ] || exit 14
+    [ ! -e "$TIMINGS_FILE" ] || exit 15
+    archived="$(find "$T/rw/archive" -name restore.id | wc -l | tr -d ' ')"
+    [ "$archived" = 1 ] || exit 16
+    [ -n "$(find "$T/rw/archive" -name source-baseline.json)" ] || exit 17
+    [ -n "$(find "$T/rw/archive" -name summary.md)" ] || exit 18
+}
+res="$(in_kit t_rotate)"
+if [ "$(printf '%s' "$res" | tail -n 1)" = rc=0 ]; then ok "a new restore moves the earlier rehearsal's state, reports, baseline and timings to archive/ (the preflight status stays)"; else bad "state rotation" "$res"; fi
+
+printf 'the generated config and the parity columns\n'
+write_cfg "$T/cfg_cache.php"
+got="$(SOURCE_BASELINE_PHP="$KIT/../../moodle-enhancement/local/sentientia_platform/cli/source_baseline.php" php "$KIT/lib/config_probe.php" "$T/cfg_cache.php" --get=altcacheconfigpath 2> /dev/null)"
+if [ "$got" = "$T/work/muc" ]; then ok "the generated config.php points the cache configuration at the kit's own directory (not live's muc/config.php)"; else bad "altcacheconfigpath is the kit's directory" "got '${got}'"; fi
+if bash -n "$KIT/rehearsal.env.example" 2> /dev/null; then ok "bash -n rehearsal.env.example"; else bad "bash -n rehearsal.env.example"; fi
+if grep -q '^tools/rehearsal/rehearsal.env$' "$KIT/../../.gitignore"; then ok "the operator's rehearsal.env is git-ignored"; else bad "rehearsal.env is git-ignored"; fi
+hits="$(grep -n "'theme'" "$KIT/../../moodle-enhancement/local/sentientia_platform/cli/source_baseline.php" || true)"
+if [ -z "$hits" ]; then ok "no column list of the parity baseline names 'theme' (step 07 clears theme overrides)"; else bad "a parity column list names theme" "$hits"; fi
 
 printf 'portability\n'
 hits="$(grep -nE '(^|[^A-Za-z0-9_])[A-Za-z]:[\\/]|xampp|/c/Users|/mnt/[a-z]/' "$KIT"/*.sh "$KIT"/lib/*.sh "$KIT"/lib/*.php "$KIT"/lib/bizlms_plugins.txt "$KIT"/rehearsal.env.example 2> /dev/null | grep -v 'selftest.sh' || true)"

@@ -71,6 +71,9 @@ final class parity_library_test extends \basic_testcase {
             if ($spec['mode'] === 'insert') {
                 $this->assertContains($table, parity_gate::INSERT_TABLES, $table);
                 $this->assertSame([], $spec['writable'], $table);
+                // The parity check holds every old row of an insert table to the baseline, so the registry must not review an UPDATE of
+                // it: that would pass review and only fail at the post-import compare (Stage B tools review, 2026-10-08).
+                $this->assertSame(['insert'], registry::core_write_operations($table), $table);
             } else {
                 $this->assertArrayHasKey($table, parity_gate::LEDGERS, $table);
                 $this->assertNotEmpty($spec['writable'], $table);
@@ -147,6 +150,102 @@ final class parity_library_test extends \basic_testcase {
             'users_total_active' => 11];
         $this->assertNull(parity_metrics::cross_foot($ok));
         $this->assertStringContainsString('add up to 10', (string) parity_metrics::cross_foot(['users_tenant_other' => 1] + $ok));
+    }
+
+    // Metrics version 3: the substrate the first sets left out.
+
+    public function test_the_bizlms_user_and_course_substrate_is_checksummed_under_keys_of_its_own(): void {
+        $user = array_merge(['id', 'deleted', 'suspended', 'username', 'password', 'idnumber', 'theme', 'timemodified'],
+            ['open_path', 'open_supervisorid', 'open_employeeid', 'open_designation', 'gender']);
+        $db = new fake_database([
+            'user' => $user,
+            'course' => ['id', 'shortname', 'idnumber', 'theme', 'open_hrmsrole', 'open_cost', 'enableaitools'],
+            'course_modules' => ['id', 'course', 'module', 'instance', 'section', 'completion', 'lang', 'enableaitools'],
+            'course_sections' => ['id', 'course', 'section', 'name', 'sequence', 'component'],
+        ]);
+        $m = parity_metrics::collect($db);
+
+        // The first sets are unchanged: their keys and columns are what a format 1 or 2 baseline holds.
+        $this->assertSame(['id', 'username', 'open_path', 'suspended', 'deleted'], $m['checksums']['user']['cols']);
+        $this->assertSame(['id', 'shortname'], $m['checksums']['course']['cols']);
+
+        $this->assertSame(['id', 'password', 'idnumber', 'open_supervisorid', 'open_employeeid', 'open_designation', 'gender'],
+            $m['checksums']['user_bizlms']['cols'], 'password hashes and the BizLMS open_* columns, own key');
+        $this->assertSame(['id', 'idnumber', 'open_hrmsrole'], $m['checksums']['course_bizlms']['cols'],
+            'the open_* columns the import writes (open_cost) are not here, and neither is the theme');
+        $this->assertSame(['id', 'course', 'module', 'instance', 'section', 'completion', 'lang'],
+            $m['checksums']['course_modules']['cols'], 'a column a version lacks (5.x enableaitools) is never hashed');
+        $this->assertSame(['id', 'course', 'section'], $m['checksums']['course_sections']['cols'],
+            'neither the name nor the sequence, which an upgrade or a first visit fills in');
+        $this->assertSame(0, $m['counts']['course_modules']);
+    }
+
+    public function test_no_checksum_ever_hashes_a_theme_column_or_a_column_the_import_writes(): void {
+        $constants = (new \ReflectionClass(parity_metrics::class))->getConstants();
+        $lists = [];
+        foreach (['CHECKSUMS', 'ROUNDED'] as $name) {
+            $lists += $constants[$name];
+        }
+        foreach ($constants['MORE'] as $key => $spec) {
+            $lists['more:' . $key] = $spec[1];
+        }
+        foreach ($lists as $key => $columns) {
+            $this->assertNotContains('theme', $columns, "{$key}: step 07 of the rehearsal kit clears theme overrides");
+        }
+        // The eight course columns the import fills (parity\core::WRITES) are in no whole-table checksum of course.
+        foreach (parity_core::WRITES['course']['writable'] as $column) {
+            $this->assertNotContains($column, $constants['MORE']['course_bizlms'][1], $column);
+            $this->assertNotContains($column, $constants['CHECKSUMS']['course'], $column);
+        }
+        foreach (parity_core::WRITES as $table => $spec) {
+            $this->assertNotContains('theme', array_merge($spec['fixed'], $spec['writable']), $table);
+        }
+    }
+
+    public function test_a_baseline_of_another_metrics_version_is_refused_never_half_compared(): void {
+        $this->assertNull(parity_metrics::baseline_problem(['counts' => ['courses' => 1]]), 'format 1 has no tool section');
+        $this->assertNull(parity_metrics::baseline_problem(['tool' => ['metrics' => parity_metrics::VERSION]]));
+        $older = (string) parity_metrics::baseline_problem(['tool' => ['metrics' => parity_metrics::VERSION - 1]]);
+        $this->assertStringContainsString('metrics version ' . (parity_metrics::VERSION - 1), $older);
+        $this->assertStringContainsString('Take the baseline again', $older);
+        $this->assertNotNull(parity_metrics::baseline_problem(['tool' => ['metrics' => parity_metrics::VERSION + 1]]));
+    }
+
+    public function test_the_baseline_records_its_metrics_version(): void {
+        $doc = parity_baseline::build(new fake_database(['user' => ['id', 'deleted', 'suspended']]), [], null, ['metrics']);
+        $this->assertSame(parity_metrics::VERSION, $doc['tool']['metrics']);
+    }
+
+    public function test_module_types_the_release_no_longer_has_are_named_beside_the_drift(): void {
+        $base = ['counts' => ['course_modules' => 5], 'checksums' => [], 'dbfamily' => 'mysql',
+            'layout' => ['modules' => ['assign', 'chat', 'survey']]];
+        $now = ['counts' => ['course_modules' => 4], 'checksums' => [], 'dbfamily' => 'mysql',
+            'layout' => ['modules' => ['assign', 'subsection']]];
+        $lines = [];
+        $r = parity_baseline::compare_metrics($base, $now, function (string $l) use (&$lines): void {
+            $lines[] = $l;
+        });
+        $this->assertSame(1, $r['drift'], 'the lost activity is the drift; the note only says why');
+        $note = implode("\n", preg_grep('/NOTE\s+module type/', $lines));
+        $this->assertStringContainsString('chat, survey', $note);
+        $this->assertStringNotContainsString('subsection', $note, 'a module type the release added is not a loss');
+
+        // No module list on one side (an older baseline, or a database without the table): no claim either way.
+        $lines = [];
+        parity_baseline::compare_metrics(['counts' => ['courses' => 1], 'checksums' => []],
+            ['counts' => ['courses' => 1], 'checksums' => [], 'layout' => ['modules' => ['assign']]],
+            function (string $l) use (&$lines): void {
+                $lines[] = $l;
+            });
+        $this->assertSame([], preg_grep('/NOTE\s+module type/', $lines));
+    }
+
+    public function test_the_module_types_are_part_of_the_layout_the_baseline_records(): void {
+        $m = parity_metrics::collect(new fake_database(['user' => ['id', 'deleted', 'suspended'], 'modules' => ['id', 'name']]));
+        $this->assertArrayHasKey('modules', $m['layout']);
+        $this->assertSame([], $m['layout']['modules'], 'the fake database lists no rows');
+        $m = parity_metrics::collect(new fake_database(['user' => ['id', 'deleted', 'suspended']]));
+        $this->assertArrayNotHasKey('modules', $m['layout'], 'no modules table, no list');
     }
 
     public function test_checksums_are_left_out_on_an_engine_without_crc32(): void {

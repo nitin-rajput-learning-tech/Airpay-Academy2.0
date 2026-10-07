@@ -19,6 +19,7 @@
 step_init 10 parity_compare "$@"
 
 need_tool "$PHP_BIN"
+require_kit_marker
 
 if [ "$EXECUTE" = 1 ]; then
     [ -n "$(kv_get import.applied)" ] || die "step 09 has not recorded a complete apply run (state/kv/import.applied): run the import first"

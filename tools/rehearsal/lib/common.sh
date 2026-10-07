@@ -141,16 +141,39 @@ prod_host_hit() {
     return 0
 }
 
-# db_name_denied NAME -> returns 0 when NAME can never be a rehearsal database.
+# prod_host_in_text TEXT -> prints the first production hostname that TEXT contains (nothing when there is none); logs nothing.
+prod_host_in_text() {
+    local value="${1,,}" h
+    for h in ${PRODUCTION_HOSTNAMES:-}; do
+        case "$value" in
+            *"${h,,}"*)
+                printf '%s' "$h"
+                return 0
+                ;;
+        esac
+    done
+    return 0
+}
+
+# db_name_denied NAME -> returns 0 when NAME can never be a rehearsal database (compared in lower case).
+# Anything with 'prod' or 'uat' inside is refused, with no underscore boundary: production's own database is called
+# airpayprod and UAT's is sentientia_uat, and the earlier boundary patterns (prod_*, *_prod) let both through.
 db_name_denied() {
-    case "$1" in
+    local n="${1,,}"
+    case "$n" in
         moodle | mysql | sys | test | information_schema | performance_schema | mariadb) return 0 ;;
     esac
-    case "$1" in
-        prod | prod_* | *_prod | *_prod_* | production | production_* | *_production | *_production_* | live | live_* | *_live | *_live_*) return 0 ;;
+    case "$n" in
+        *prod* | *uat*) return 0 ;;
+    esac
+    case "$n" in
+        live | live_* | *_live | *_live_*) return 0 ;;
     esac
     return 1
 }
+
+# The live database's own name: the one schema no rehearsal server may hold (probe_db), whatever the env file says.
+KIT_LIVE_SCHEMAS="airpayprod"
 
 # db_allowed NAME -> 0 when NAME is on the explicit allow-list.
 db_allowed() {
@@ -195,6 +218,19 @@ validate_policy() {
     esac
     assert_db_allowed
     [ -n "${PRODUCTION_HOSTNAMES:-}" ] || die "PRODUCTION_HOSTNAMES is empty: list the production hosts the rehearsal must never name"
+    # The live database endpoint (the RDS host name of live's config.php) is a required setting: without it nothing stops a
+    # DB_HOST copied from that file. DRY only warns, so the plan can be printed from the example.
+    case "${PRODUCTION_DB_ENDPOINT:-}" in
+        '')
+            if [ "$EXECUTE" = 1 ]; then
+                die "PRODUCTION_DB_ENDPOINT is empty: set it to the live database host name (dbhost of live's config.php). The kit refuses any setting that names it, and cannot do that while it is unknown"
+            fi
+            warn "PRODUCTION_DB_ENDPOINT is not set: --execute refuses to start without it"
+            ;;
+        *CHANGE_ME* | *REPLACE* | '<'*)
+            die "PRODUCTION_DB_ENDPOINT still holds a placeholder (${PRODUCTION_DB_ENDPOINT})"
+            ;;
+    esac
     prod_host_hit DB_HOST "$DB_HOST" || bad=1
     prod_host_hit REHEARSAL_WWWROOT "$REHEARSAL_WWWROOT" || bad=1
     prod_host_hit DIVERT_EMAILS_TO "${DIVERT_EMAILS_TO:-}" || bad=1
@@ -263,6 +299,11 @@ load_env() {
     : "${ADR031_SCRIPTS_DIR:=$REPO_ROOT/tools/uat}"
     : "${TENANT_CHECKS:=warn}"
     : "${GUARD_ARM_SECONDS:=14400}"
+    : "${PRODUCTION_DB_ENDPOINT:=}"
+    : "${FORBIDDEN_SERVER_SCHEMAS:=}"
+    : "${RESTORE_DONE_BY_HAND:=}"
+    : "${RESTORE_ALLOW_NO_TRAILER:=0}"
+    : "${ALLOW_BASELINE_TOOL_SKEW:=0}"
     export SOURCE_BASELINE_PHP
 
     local v missing=""
@@ -272,6 +313,15 @@ load_env() {
         fi
     done
     [ -z "$missing" ] || die "the env file leaves these settings empty:${missing}"
+
+    # The live database endpoint is a production hostname too: every check that scans for one (database host, wwwroot,
+    # paths, the strings of a config.php, the REHEARSAL GUARD of the generated config) then covers it.
+    if [ -n "$PRODUCTION_DB_ENDPOINT" ]; then
+        case " $PRODUCTION_HOSTNAMES " in
+            *" $PRODUCTION_DB_ENDPOINT "*) ;;
+            *) PRODUCTION_HOSTNAMES="$PRODUCTION_HOSTNAMES $PRODUCTION_DB_ENDPOINT" ;;
+        esac
+    fi
 
     REHEARSAL_WORK="${REHEARSAL_WORK%/}"
     LOG_DIR="$REHEARSAL_WORK/logs"
@@ -470,6 +520,11 @@ kv_get() {
     return 0
 }
 
+kv_unset() {
+    [ "$EXECUTE" = 1 ] || return 0
+    rm -f "$STATE_DIR/kv/$1"
+}
+
 # ---------------------------------------------------------------------------------------------------------------------
 # PHP and Moodle CLI
 # ---------------------------------------------------------------------------------------------------------------------
@@ -615,6 +670,21 @@ probe_db() {
     if ! mysql_nodb -e 'SELECT 1' > /dev/null 2>&1; then
         return 0
     fi
+    # The server must not be production or UAT: refuse one that holds the live schema (airpayprod) or any schema the env
+    # file lists in FORBIDDEN_SERVER_SCHEMAS (add UAT's schema there unless this rehearsal shares UAT's server).
+    local schema schema_l forbidden hit=""
+    while IFS= read -r schema; do
+        schema="${schema%$'\r'}"
+        schema_l="${schema,,}"
+        for forbidden in $KIT_LIVE_SCHEMAS ${FORBIDDEN_SERVER_SCHEMAS,,}; do
+            if [ "$schema_l" = "$forbidden" ]; then
+                hit="$schema"
+            fi
+        done
+    done < <(mysql_nodb -e 'SELECT SCHEMA_NAME FROM information_schema.SCHEMATA')
+    if [ -n "$hit" ]; then
+        die "the database server at ${DB_HOST} holds the schema '${hit}': this is production or UAT, not a rehearsal server. Refused"
+    fi
     local exists
     exists="$(mysql_nodb -e "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '${DB_NAME}'")"
     if [ "$exists" != 1 ]; then
@@ -631,7 +701,27 @@ probe_db() {
 
 # db_config_value NAME -> the value of a {config} row (empty when absent). Needs a Moodle database.
 db_config_value() {
-    db_first "SELECT value FROM {p}config WHERE name = '$1'"
+    # A setting that holds a value must never read as empty: the mysql client was seen to print nothing, with status 0, on a loaded
+    # workstation (found again by the 2026-10-08 harness: "cron_enabled is not 0 after the update" on a row that held 0). An empty
+    # answer is therefore checked against a COUNT (which db_scalar asks again until it gets one) and asked again when the row does
+    # hold a value.
+    local v="" tries=0
+    while :; do
+        v="$(db_first "SELECT value FROM {p}config WHERE name = '$1'")" || return 1
+        if [ -n "$v" ]; then
+            break
+        fi
+        if [ "$(db_scalar "SELECT COUNT(*) FROM {p}config WHERE name = '$1' AND value <> ''")" = 0 ]; then
+            break
+        fi
+        tries=$((tries + 1))
+        if [ "$tries" -ge 3 ]; then
+            log "FAIL: the setting '$1' holds a value but three reads of it came back empty" >&2
+            return 1
+        fi
+        sleep 1
+    done
+    printf '%s' "$v"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -726,6 +816,10 @@ judge() {
 
 # sha256_of FILE
 sha256_of() { sha256sum "$1" | cut -d ' ' -f 1; }
+
+# sha256_lf_of FILE -> the SHA-256 of the file with its carriage returns removed: the same source file read through a Windows checkout
+# (CRLF) and through a Linux one (LF) is the same file for the comparison of the baseline tool.
+sha256_lf_of() { tr -d '\015' < "$1" | sha256sum | cut -d ' ' -f 1; }
 
 # need_tool NAME: EXECUTE stops without it; DRY warns.
 need_tool() {
@@ -891,3 +985,192 @@ disk_paths() {
 # comm_only_first A B -> lines of sorted A that are not in sorted B; comm_only_second the other way.
 comm_only_first() { LC_ALL=C comm -23 "$1" "$2"; }
 comm_only_second() { LC_ALL=C comm -13 "$1" "$2"; }
+
+# ---------------------------------------------------------------------------------------------------------------------
+# The dump that is restored (step 01): never one that can reach another database, never a truncated one
+# ---------------------------------------------------------------------------------------------------------------------
+# dump_stream FILE -> the dump as text on stdout (gzip -dc for *.gz).
+dump_stream() {
+    case "$1" in
+        *.gz) gzip -dc "$1" ;;
+        *) cat "$1" ;;
+    esac
+}
+
+# dump_unsafe_statement FILE -> prints the first USE / CREATE DATABASE / DROP DATABASE statement of the dump (nothing when
+# there is none). Such a statement (mysqldump --databases / --all-databases) sends everything after it to the schema it
+# names, on whatever server DB_HOST is, whatever REHEARSAL_DB_ALLOWLIST says.
+dump_unsafe_statement() {
+    { dump_stream "$1" | grep -a -m1 -Ei -e '^[[:space:]]*(/\*![0-9]*[[:space:]]+)?(use[[:space:]]|create[[:space:]]+(database|schema)[[:space:]]|drop[[:space:]]+(database|schema)[[:space:]])' | cut -c1-160; } 2> /dev/null || true
+}
+
+# dump_has_trailer FILE -> 0 when the dump ends with mysqldump's "-- Dump completed" line (an aborted mysqldump has none,
+# and restores as a silent partial copy).
+dump_has_trailer() {
+    case "$1" in
+        *.gz) gzip -dc "$1" 2> /dev/null | tail -c 4096 | grep -aq -- '-- Dump completed' ;;
+        *) tail -c 4096 "$1" | grep -aq -- '-- Dump completed' ;;
+    esac
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+# The kit marker: this database (and this moodledata) is a copy THIS kit restored, or one the operator named as restored by hand
+# ---------------------------------------------------------------------------------------------------------------------
+# Every writing step (01 after the restore, 02 to 11) refuses a database that does not carry the marker of the restore
+# recorded in state/kv/restore.id. An allow-listed database name is not enough: a mistyped DB_HOST or a UAT database named like
+# a rehearsal one has no marker. The marker is a {config} row; the moodledata has a file with the same id.
+KIT_MARKER_KEY="rehearsal_kit_restore_id"
+KIT_MARKER_FILE=".rehearsal-kit-restore-id"
+
+new_restore_id() { od -An -N16 -tx1 /dev/urandom | tr -d ' \n'; }
+
+marker_get() {
+    # The marker of the database, or nothing (also nothing when there is no {config} table). An empty read is checked against a
+    # COUNT first (see db_config_value): a client that printed nothing must not look like a database without the marker.
+    local v="" tries=0
+    while :; do
+        v="$(db_first "SELECT value FROM {p}config WHERE name = '${KIT_MARKER_KEY}'" 2> /dev/null)" || return 0
+        if [ -n "$v" ]; then
+            break
+        fi
+        if [ "$(db_scalar "SELECT COUNT(*) FROM {p}config WHERE name = '${KIT_MARKER_KEY}'" 2> /dev/null || printf 0)" = 0 ]; then
+            break
+        fi
+        tries=$((tries + 1))
+        if [ "$tries" -ge 3 ]; then
+            return 0
+        fi
+        sleep 1
+    done
+    printf '%s' "$v"
+}
+
+marker_set() {
+    db_write "INSERT INTO {p}config (name, value) VALUES ('${KIT_MARKER_KEY}', '$1') ON DUPLICATE KEY UPDATE value = '$1'"
+}
+
+moodledata_marker_get() {
+    if [ -f "$MOODLEDATA/$KIT_MARKER_FILE" ]; then
+        head -n 1 "$MOODLEDATA/$KIT_MARKER_FILE" | tr -d '\r\n'
+    fi
+    return 0
+}
+
+# require_kit_marker: EXECUTE stops unless the database AND the moodledata carry the id that state/kv/restore.id holds.
+require_kit_marker() {
+    [ "$EXECUTE" = 1 ] || return 0
+    local want have dataid
+    want="$(kv_get restore.id)"
+    [ -n "$want" ] || die "no restore id is recorded (state/kv/restore.id): step 01 has not stamped this rehearsal. Run step 01 first"
+    have="$(marker_get)"
+    [ -n "$have" ] || die "database ${DB_NAME} carries no rehearsal-kit marker: it is not a copy this kit restored (step 01), so the kit will not write to it"
+    [ "$have" = "$want" ] || die "database ${DB_NAME} carries restore id ${have:0:8}..., but this work directory belongs to restore ${want:0:8}...: another restore, or a database that is not this rehearsal's. Refused"
+    dataid="$(moodledata_marker_get)"
+    [ -n "$dataid" ] || die "${MOODLEDATA} carries no ${KIT_MARKER_FILE}: it is not a moodledata this kit stamped (step 01), so the kit will not write to it"
+    [ "$dataid" = "$want" ] || die "${MOODLEDATA} carries restore id ${dataid:0:8}..., not ${want:0:8}...: it belongs to another rehearsal or site. Refused"
+}
+
+# work_state_has_history -> 0 when state/ holds results of a rehearsal (kv values, or a status file of step 01 or later).
+work_state_has_history() {
+    local f
+    if [ -d "$STATE_DIR/kv" ] && [ -n "$(ls -A "$STATE_DIR/kv" 2> /dev/null)" ]; then
+        return 0
+    fi
+    for f in "$STATE_DIR"/0[1-9].status "$STATE_DIR"/1[0-2].status; do
+        if [ -f "$f" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# rotate_work_state: a new restore starts a new rehearsal. state/, reports/, baseline/ and logs/timings.tsv of the earlier one
+# move to archive/<stamp>-<id>/ (never deleted) so nothing of it can be mistaken for this one's result. 00.status (the
+# preflight of this very run) stays.
+rotate_work_state() {
+    [ "$EXECUTE" = 1 ] || return 0
+    local stamp old dest d keep00=""
+    stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+    old="$(kv_get restore.id)"
+    dest="$REHEARSAL_WORK/archive/${stamp}-${old:0:8}"
+    [ -n "$old" ] || dest="$REHEARSAL_WORK/archive/${stamp}-unstamped"
+    mkdir -p "$dest"
+    if [ -f "$STATE_DIR/00.status" ]; then
+        keep00="$(cat "$STATE_DIR/00.status")"
+    fi
+    for d in "$STATE_DIR" "$REPORT_DIR" "$BASELINE_DIR"; do
+        if [ -d "$d" ]; then
+            mv "$d" "$dest/"
+        fi
+    done
+    if [ -f "$TIMINGS_FILE" ]; then
+        mv "$TIMINGS_FILE" "$dest/"
+    fi
+    mkdir -p "$STATE_DIR" "$REPORT_DIR" "$BASELINE_DIR"
+    if [ -n "$keep00" ]; then
+        printf '%s\n' "$keep00" > "$STATE_DIR/00.status"
+    fi
+    log "an earlier rehearsal's state, reports, baseline and timings moved to ${dest} (a new restore starts a new rehearsal)"
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+# What the kit records about the code it ran
+# ---------------------------------------------------------------------------------------------------------------------
+# tree_manifest_sha DIR -> SHA-256 over every version.php below DIR (core and every plugin: path and content hash), so the
+# summary names the code that really ran, not only the archive the operator said it unpacked.
+tree_manifest_sha() {
+    ( cd "$1" && find . -name version.php -type f -not -path './node_modules/*' -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | cut -d ' ' -f 1 )
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Step 06 and step 09 recovery: pure helpers (selftest.sh tests them without a database)
+# ---------------------------------------------------------------------------------------------------------------------
+# adr031_role9_dry_counts < dry-run text -> "<capabilities to prohibit> <allow rows to remove>" from the line
+#   DRY RUN: N capabilities would be prohibited (M already are) and K allow row(s) removed for role X. Nothing changed.
+# Prints nothing and returns 1 when the line is not there.
+adr031_role9_dry_counts() {
+    sed -n 's/^DRY RUN: \([0-9][0-9]*\) capabilities would be prohibited ([0-9][0-9]* already are) and \([0-9][0-9]*\) allow row(s) removed.*/\1 \2/p' | tail -n 1 | grep .
+}
+
+# import_phase APPLIED_KV RUN_STATUS MODE -> where a re-run of step 09 stands, decided from the kit's record AND the
+# database's own run table (the newest apply run's status: running, failed, aborted, complete; empty = no apply run):
+#   recorded  the kit recorded a finished apply (only the verify, and the judgement of the recorded exit, remain);
+#   fresh     nothing was applied: the data-intact gate, the preflight and the dry run come first;
+#   resume    an apply run is not complete and IMPORT_APPLY_MODE=resume: continue it, the gate and dry run are history;
+#   recover   a complete apply run exists that the kit never recorded (read it from the report);
+#   refuse:.. an unfinished run exists and the operator did not choose resume.
+import_phase() {
+    local applied="$1" run="$2" mode="$3"
+    if [ -n "$applied" ]; then
+        printf 'recorded'
+        return 0
+    fi
+    case "$run" in
+        '') printf 'fresh' ;;
+        complete) printf 'recover' ;;
+        *)
+            if [ "$mode" = resume ]; then
+                printf 'resume'
+            else
+                printf 'refuse:an apply run of this import is %s in the database. Set IMPORT_APPLY_MODE=resume to continue it, or restore the snapshot taken before step 09 and delete state/kv/import.*' "$run"
+            fi
+            ;;
+    esac
+}
+
+# parity_only_pre_repair_invariant FILE -> 0 when the output of migration_parity_check.php --compare has exactly one RESULT
+# line and it says the only failed invariant is message_provider_defaults (what repair_task_registrations.php --apply, step 05,
+# repairs). Any drift, legacy change or other invariant adds a RESULT line, and then this is not the case.
+parity_only_pre_repair_invariant() {
+    [ -f "$1" ] || return 1
+    [ "$(grep -c '^RESULT:' "$1" || true)" = 1 ] || return 1
+    grep -qx 'RESULT: 1 invariant(s) FAILED (message_provider_defaults).' "$1"
+}
+
+# names_our_tree TEXT -> 0 when TEXT names one of the two code trees of this rehearsal (a scheduler line that runs THIS rehearsal's cron).
+names_our_tree() {
+    case "$1" in
+        *"${CODE_45_DIR%/}/"* | *"${CODE_5X_DIR%/}/"*) return 0 ;;
+    esac
+    return 1
+}

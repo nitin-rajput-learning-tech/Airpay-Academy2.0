@@ -31,6 +31,7 @@ PARITY_HOP2_ENFORCE="${PARITY_HOP2_ENFORCE:-1}"
 OUT_UPGRADE="$LOG_DIR/04-hop2-upgrade-output.log"
 
 need_tool "$PHP_BIN"
+require_kit_marker
 
 # 1. The package.
 unpack_tree "$CODE_5X_ARCHIVE" "$CODE_5X_SHA256" "$CODE_5X_DIR" public/version.php "Sentientia 5.x package"
@@ -55,6 +56,27 @@ if [ -f "$CODE_5X_DIR/public/version.php" ]; then
     done
     [ -z "$missing_files" ] || die "the package lacks files the rehearsal needs:${missing_files}"
     log "OK: the package carries the parity, repair, import and catalog CLI files and theme_sentientia"
+
+    # The code that really runs, and "the same code on both sides": the baseline was taken (step 02) with SOURCE_BASELINE_PHP, and
+    # every compare from here on runs the package's own copy of that file. A different file may count differently.
+    if [ "$EXECUTE" = 1 ]; then
+        manifest5="$(tree_manifest_sha "$CODE_5X_DIR")"
+        log "5.x tree manifest SHA-256 (path and hash of every version.php): ${manifest5}"
+        kv_set tree.5x.manifest_sha "$manifest5"
+        pkgtool="$CODE_5X_DIR/public/local/sentientia_platform/cli/source_baseline.php"
+        pkgsha="$(sha256_lf_of "$pkgtool")"   # carriage returns removed: a Windows checkout and a Linux one are the same file
+        kv_set package.baseline_tool_sha256_lf "$pkgsha"
+        basesha="$(kv_get baseline.tool_sha256_lf)"
+        if [ -z "$basesha" ]; then
+            die "step 02 recorded no hash of the baseline tool (state/kv/baseline.tool_sha256_lf): run step 02 first"
+        elif [ "$pkgsha" = "$basesha" ]; then
+            log "OK: the package's source_baseline.php is the file the baseline was taken with (SHA-256 ${pkgsha})"
+        elif [ "$ALLOW_BASELINE_TOOL_SKEW" = 1 ]; then
+            warn "the package's source_baseline.php (${pkgsha}) is not the file the baseline was taken with (${basesha}); continuing because ALLOW_BASELINE_TOOL_SKEW=1. The tool refuses a baseline of another metrics version, but a changed metric definition under the same version would count differently"
+        else
+            die "the package's source_baseline.php (SHA-256 ${pkgsha}) is not the file the baseline was taken with (${basesha}): the two sides would not run the same code. Build the package from the commit whose tool took the baseline, or take the baseline again with the package's file (SOURCE_BASELINE_PHP). ALLOW_BASELINE_TOOL_SKEW=1 overrides, at your risk"
+        fi
+    fi
 
     # A config.php that is not ours and not the stock loader is a leak (the 2026-08-03 zip carried the dev one).
     for f in "$CODE_5X_DIR/config.php" "$CODE_5X_DIR/public/config.php"; do
@@ -183,6 +205,14 @@ if [ "$EXECUTE" = 1 ]; then
         timed_to "$REPORT_DIR/parity-after-hop2.txt" "parity after hop 2" m5 local/sentientia_platform/cli/migration_parity_check.php --compare="$BASELINE_FILE" || rc=$?
         show_tail "$REPORT_DIR/parity-after-hop2.txt" 16
         kv_set parity.after_hop2 "$rc"
+        kv_unset parity.after_hop2.note
+        if [ "$rc" = 1 ] && parity_only_pre_repair_invariant "$REPORT_DIR/parity-after-hop2.txt"; then
+            # The message-provider defaults of the Sentientia plugins are created by repair_task_registrations.php --apply, which is step 05:
+            # before it, a fresh hop can leave them missing. Nothing else drifted; the gate before the import (step 09) judges it again.
+            note "the only failure is the message_provider_defaults invariant, which step 05 repairs: not a stop here (step 09's gate judges it again, after the repair)"
+            kv_set parity.after_hop2.note "message_provider_defaults only; repaired by step 05"
+            rc=0
+        fi
         judge "parity after hop 2" "$rc" "$PARITY_HOP2_ENFORCE"
     fi
 else

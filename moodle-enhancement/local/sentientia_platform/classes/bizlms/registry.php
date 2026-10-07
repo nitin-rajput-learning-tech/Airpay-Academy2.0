@@ -67,12 +67,16 @@ final class registry {
             'operations' => ['update'],
             'why' => 'course_lookups: the open_* backfill (mapping doc, course_lookups)',
         ],
+        // enrol, role_assignments and user_enrolments are INSERT only. No importer updates a row of them, and the parity check
+        // (parity\core::WRITES mode 'insert', parity_gate::INSERT_TABLES) holds every old row of these tables to the baseline, so
+        // an UPDATE would be refused here at the writer, in the dry run, instead of showing only as a hard failure of the
+        // post-import compare. (Narrowed from insert and update in the Stage B tools review; ADR-032 decision 8.)
         'enrol' => [
-            'operations' => ['insert', 'update'],
+            'operations' => ['insert'],
             'why' => 'gap.orphan_enrol_instances (G6): a manual instance for a course that has none',
         ],
         'role_assignments' => [
-            'operations' => ['insert', 'update'],
+            'operations' => ['insert'],
             'why' => 'org_roles: the role assignments of the org role tables (mapping doc, org_roles)',
         ],
         'tag_instance' => [
@@ -80,7 +84,7 @@ final class registry {
             'why' => 'course_tags: the in-place remap of tag instances (mapping doc, course_tags)',
         ],
         'user_enrolments' => [
-            'operations' => ['insert', 'update'],
+            'operations' => ['insert'],
             'why' => 'gap.orphan_enrol_instances (G6): orphaned enrolments become manual enrolments',
         ],
     ];

@@ -8,13 +8,25 @@
 # What it does, in order:
 #   1. Restore the dump into the EMPTY rehearsal database and unpack the moodledata, only if RESTORE_DB_DUMP /
 #      RESTORE_MOODLEDATA_ARCHIVE are set and the target is empty. It never drops, truncates or overwrites anything.
+#      The dump is refused when it holds a USE / CREATE DATABASE / DROP DATABASE statement (it would reach another schema
+#      whatever the allow-list says; the client also runs with --one-database), when it has no "-- Dump completed" trailer
+#      (an aborted mysqldump restores as a silent partial copy; RESTORE_ALLOW_NO_TRAILER=1 for a dump made another way),
+#      and the restore stops at the first error (pipefail).
+#      THE KIT MARKER: after a restore the kit made (or one the operator names with RESTORE_DONE_BY_HAND=<database name>)
+#      the database and the moodledata are stamped with a random restore id (state/kv/restore.id). Every writing step later
+#      refuses a database or a moodledata that does not carry it, so an allow-listed name on the wrong server, or UAT's
+#      database, can never be written to. A new restore moves the earlier rehearsal's state, reports and baseline to
+#      archive/ (nothing of it can be mistaken for this one's result). A restore that did not complete is refused on re-run.
 #   2. Check the source: the release matches SOURCE_RELEASE_REGEX (live is 4.1.x), active users (optionally equal to
 #      EXPECT_ACTIVE_USERS), the BizLMS open_path substrate is there.
 #   3. The file store gate: every files.contenthash with content must be on disk at filedir/ab/cd/<hash>. Missing = stop
 #      (the local clone with a DB-only restore 404'd every SCORM package; this is why the gate exists). The missing list
 #      goes to reports/filedir-missing.txt.
 #   4. Restore neutralisation, before any code touches the database: wipe smtphosts/smtpuser/smtppass, set cron_enabled = 0,
-#      and record the restored mail backlog (reports/restore-mail-backlog-audit.txt, input I-11).
+#      and record the restored mail backlog (reports/restore-mail-backlog-audit.txt, input I-11). Other ways out are
+#      audited and closed the same way: the restored cache configuration (muc/config.php: a Redis or memcached store named
+#      there would be flushed by every purge) is moved aside, and the push-notification key (airnotifier) is wiped
+#      (reports/restore-outbound-audit.txt holds the counts of what could phone out).
 #   5. With LIVE_BASELINE_FILE: compare the restored copy with the live baseline (source_baseline.php --compare); exit 0
 #      required.
 
@@ -34,18 +46,32 @@ need_tool "$MYSQL_BIN"
 need_tool "$PHP_BIN"
 
 # ---------------------------------------------------------------------------------------------------------------------
-# 1. Restore into an empty database, unpack moodledata
+# 1. Restore into an empty database, unpack moodledata, stamp both
 # ---------------------------------------------------------------------------------------------------------------------
 restore_database() {
     [ -f "$RESTORE_DB_DUMP" ] || die "RESTORE_DB_DUMP not found: ${RESTORE_DB_DUMP}"
+    local bad
+    log "scanning the dump for statements that reach another database, and for its trailer (one read of the whole file)"
+    bad="$(dump_unsafe_statement "$RESTORE_DB_DUMP")"
+    if [ -n "$bad" ]; then
+        die "the dump holds a statement that reaches another database (${bad}): refused. Take it without --databases / --all-databases (mysqldump ${DB_NAME} > dump.sql), then restore again"
+    fi
+    if dump_has_trailer "$RESTORE_DB_DUMP"; then
+        log "OK: the dump ends with mysqldump's '-- Dump completed' line, and holds no USE / CREATE DATABASE / DROP DATABASE statement"
+    elif [ "${RESTORE_ALLOW_NO_TRAILER:-0}" = 1 ]; then
+        warn "the dump has no '-- Dump completed' trailer; restoring it because RESTORE_ALLOW_NO_TRAILER=1 (make sure it is complete)"
+    else
+        die "the dump has no '-- Dump completed' trailer: the mysqldump that wrote it was aborted or the file is cut short, and it would restore as a silent partial copy. Take the dump again (or RESTORE_ALLOW_NO_TRAILER=1 for a dump made by another tool)"
+    fi
     if [ "$DB_STATE" = absent ]; then
         timed "create database" mysql_nodb -e "CREATE DATABASE \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE ${DB_COLLATION}" \
             || die "cannot create database ${DB_NAME}: create it (empty, utf8mb4) and re-run"
     fi
+    # pipefail: a gzip that fails half way must fail the restore, not leave a partial copy that looks restored.
     case "$RESTORE_DB_DUMP" in
-        *.gz) timed "restore database" bash -c 'gzip -dc "$1" | "$2" --defaults-extra-file="$3" --max-allowed-packet=512M "$4"' _ \
+        *.gz) timed "restore database" bash -c 'set -o pipefail; gzip -dc "$1" | "$2" --defaults-extra-file="$3" --one-database --max-allowed-packet=512M "$4"' _ \
                 "$RESTORE_DB_DUMP" "$MYSQL_BIN" "$DB_CNF" "$DB_NAME" ;;
-        *) timed "restore database" bash -c '"$2" --defaults-extra-file="$3" --max-allowed-packet=512M "$4" < "$1"' _ \
+        *) timed "restore database" bash -c 'set -o pipefail; "$2" --defaults-extra-file="$3" --one-database --max-allowed-packet=512M "$4" < "$1"' _ \
                 "$RESTORE_DB_DUMP" "$MYSQL_BIN" "$DB_CNF" "$DB_NAME" ;;
     esac || die "the database restore failed: drop the partial database by hand and restore again"
 }
@@ -61,26 +87,108 @@ restore_moodledata() {
     fi
 }
 
+# by_hand_ack -> 0 when the operator named THIS database as restored by hand (RESTORE_DONE_BY_HAND=<database name>).
+by_hand_ack() { [ -n "$RESTORE_DONE_BY_HAND" ] && [ "$RESTORE_DONE_BY_HAND" = "$DB_NAME" ]; }
+
+# start_new_restore: a new rehearsal begins. The earlier one's state moves to archive/, and the restore id is chosen.
+RESTORE_ID=""
+OLD_RESTORE_ID=""
+BY_HAND=0
+start_new_restore() {
+    OLD_RESTORE_ID="$(kv_get restore.id)"
+    if work_state_has_history; then
+        rotate_work_state
+    fi
+    RESTORE_ID="$(new_restore_id)"
+    [[ "$RESTORE_ID" =~ ^[0-9a-f]{32}$ ]] || die "could not make a restore id"
+}
+
+# stamp_database: the restore of the database is complete (or the operator vouched for it): mark it, record the id.
+stamp_database() {
+    marker_set "$RESTORE_ID"
+    # Every id this kit stamped in this work directory, in a file a new restore does not move to archive/: a moodledata that carries an
+    # earlier id of this lineage (a restore that failed in between, a hand restore before a kit restore) is still this rehearsal's.
+    mkdir -p "$REHEARSAL_WORK"
+    printf '%s\n' "$RESTORE_ID" >> "$REHEARSAL_WORK/restore-ids.log"
+    kv_set restore.id "$RESTORE_ID"
+    kv_set restore.by_hand "$BY_HAND"
+    kv_set restore.complete "$(ts)"
+    log "OK: database ${DB_NAME} stamped as restore ${RESTORE_ID:0:8}... (state/kv/restore.id)"
+}
+
+# restored_cache_stores -> the cache store plugins the restored muc/config.php names, other than file, session and static.
+restored_cache_stores() {
+    local f="$MOODLEDATA/muc/config.php"
+    if [ -f "$f" ]; then
+        grep -o "'plugin' *=> *'[a-z0-9_]*'" "$f" | sed "s/.*=> *'\\(.*\\)'/\\1/" | LC_ALL=C sort -u | grep -Ev '^(file|session|static)$' || true
+    fi
+}
+
 if [ "$EXECUTE" = 1 ]; then
     probe_db
     log "database ${DB_NAME}: ${DB_STATE} (${DB_TABLES} tables)"
     case "$DB_STATE" in
         unreachable) die "the database server at ${DB_HOST} cannot be reached" ;;
         absent | empty)
-            if [ -n "$RESTORE_DB_DUMP" ]; then
-                restore_database
-                probe_db
-                [ "$DB_STATE" = present ] || die "the restore ran but database ${DB_NAME} is still ${DB_STATE}"
-            else
-                die "database ${DB_NAME} is ${DB_STATE} and RESTORE_DB_DUMP is not set: restore the live backup first"
-            fi
+            [ -n "$RESTORE_DB_DUMP" ] || die "database ${DB_NAME} is ${DB_STATE} and RESTORE_DB_DUMP is not set: restore the live backup first"
+            start_new_restore
+            kv_set restore.started "$(ts) dump=${RESTORE_DB_DUMP}"
+            kv_unset restore.complete
+            restore_database
+            probe_db
+            [ "$DB_STATE" = present ] || die "the restore ran but database ${DB_NAME} is still ${DB_STATE}"
+            stamp_database
             ;;
         present)
-            if [ -n "$RESTORE_DB_DUMP" ]; then
-                note "database ${DB_NAME} already holds ${DB_TABLES} tables: not restoring the dump over it"
+            have="$(marker_get)"
+            want="$(kv_get restore.id)"
+            if [ -n "$have" ]; then
+                if [ "$have" = "$want" ]; then
+                    RESTORE_ID="$have"
+                    log "database ${DB_NAME} already holds ${DB_TABLES} tables and carries this rehearsal's marker (restore ${RESTORE_ID:0:8}...): not restoring over it"
+                elif [ -z "$want" ] && ! work_state_has_history; then
+                    RESTORE_ID="$have"
+                    kv_set restore.id "$RESTORE_ID"
+                    log "database ${DB_NAME} carries restore ${RESTORE_ID:0:8}... and this work directory is new: adopting it"
+                else
+                    die "database ${DB_NAME} carries restore id ${have:0:8}..., but this work directory records ${want:-none}: it is another rehearsal's database. Use a work directory (REHEARSAL_WORK) of its own, or restore again into an empty database"
+                fi
+            elif [ -n "$(kv_get restore.started)" ] && [ -z "$(kv_get restore.complete)" ]; then
+                die "the restore this kit started ($(kv_get restore.started)) did not complete, and database ${DB_NAME} holds a partial copy of ${DB_TABLES} tables: drop the database, create it empty and run step 01 again"
+            elif by_hand_ack; then
+                start_new_restore
+                BY_HAND=1
+                warn "database ${DB_NAME} was restored by hand (RESTORE_DONE_BY_HAND=${RESTORE_DONE_BY_HAND}): stamping it as this rehearsal's copy on that statement"
+                stamp_database
+            else
+                die "database ${DB_NAME} holds ${DB_TABLES} tables and carries no rehearsal-kit marker: this kit did not restore it. If it is a copy of the live backup that you restored by hand for this rehearsal, set RESTORE_DONE_BY_HAND=${DB_NAME} for this run; if you are not sure what it is, it may be a real site: stop"
             fi
             ;;
     esac
+
+    # The moodledata: empty (or absent), already this rehearsal's (marked), or foreign (anything else: never written without an
+    # explicit statement). A kit restore into an empty directory is the normal case.
+    md_state=empty
+    if [ -d "$MOODLEDATA" ] && [ -n "$(ls -A "$MOODLEDATA" 2> /dev/null)" ]; then
+        md_have="$(moodledata_marker_get)"
+        if [ -z "$md_have" ]; then
+            md_state=foreign
+        elif [ "$md_have" = "${RESTORE_ID}" ] || { [ -n "$OLD_RESTORE_ID" ] && [ "$md_have" = "$OLD_RESTORE_ID" ]; } \
+                || { [ -f "$REHEARSAL_WORK/restore-ids.log" ] && grep -qx "$md_have" "$REHEARSAL_WORK/restore-ids.log"; }; then
+            md_state=marked
+        else
+            die "${MOODLEDATA} carries restore id ${md_have:0:8}..., not this rehearsal's ${RESTORE_ID:0:8}...: it belongs to another rehearsal or site. Use a moodledata directory of its own"
+        fi
+    fi
+    if [ "$md_state" = foreign ] && ! by_hand_ack; then
+        die "${MOODLEDATA} is not empty and carries no rehearsal-kit marker: it may be another site's dataroot (UAT's, for one). Use an empty directory, or set RESTORE_DONE_BY_HAND=${DB_NAME} if it holds the live moodledata you restored for this rehearsal"
+    fi
+    # Stamp it BEFORE anything is unpacked into it: a partial unpack then still reads as this rehearsal's, not as a foreign directory.
+    if [ "$(moodledata_marker_get)" != "$RESTORE_ID" ]; then
+        mkdir -p "$MOODLEDATA"
+        printf '%s\n' "$RESTORE_ID" > "$MOODLEDATA/$KIT_MARKER_FILE"
+        log "OK: ${MOODLEDATA} stamped with restore ${RESTORE_ID:0:8}... (${KIT_MARKER_FILE})"
+    fi
     if [ ! -d "$MOODLEDATA/filedir" ] || [ -z "$(ls -A "$MOODLEDATA/filedir" 2> /dev/null)" ]; then
         if [ -n "$RESTORE_MOODLEDATA_ARCHIVE" ]; then
             restore_moodledata
@@ -90,9 +198,11 @@ if [ "$EXECUTE" = 1 ]; then
     else
         log "moodledata already holds a filedir ($(find "$MOODLEDATA/filedir" -type f | wc -l | tr -d ' ') files): not restoring over it"
     fi
+    require_kit_marker
 else
-    dry "would restore RESTORE_DB_DUMP (${RESTORE_DB_DUMP:-not set}) into the EMPTY database ${DB_NAME} (never over a populated one)"
+    dry "would restore RESTORE_DB_DUMP (${RESTORE_DB_DUMP:-not set}) into the EMPTY database ${DB_NAME} (never over a populated one); the dump is refused when it holds USE / CREATE DATABASE / DROP DATABASE or has no '-- Dump completed' trailer"
     dry "would unpack RESTORE_MOODLEDATA_ARCHIVE (${RESTORE_MOODLEDATA_ARCHIVE:-not set}) into ${MOODLEDATA} when its filedir/ is missing"
+    dry "would stamp the database (a {config} row) and ${MOODLEDATA} (${KIT_MARKER_FILE}) with a random restore id; a populated database without that marker is refused unless RESTORE_DONE_BY_HAND=${DB_NAME}"
 fi
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -198,6 +308,61 @@ if [ "$EXECUTE" = 1 ]; then
     [ "$(db_scalar "SELECT COUNT(*) FROM {p}config WHERE name IN ('smtphosts','smtpuser','smtppass') AND value <> ''")" = 0 ] \
         || die "an smtp setting still holds a value after the wipe"
     log "OK: smtp credentials wiped, cron_enabled = 0 (no restored scheduler can fire; \$CFG->noemailever stays in config.php)"
+fi
+
+# Other ways out of the box (counts only, never a value). Mail is not the only channel a restored backup can use: the push
+# service key, a registration with moodle.net, OAuth2 system accounts and the cache stores all carry live's settings.
+table_rows() {
+    # table_rows TABLE -> its row count, or '-' when this release has no such table.
+    if [ "$(db_scalar "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${DB_NAME}' AND TABLE_NAME = '${DB_PREFIX}$1'")" = 1 ]; then
+        db_scalar "SELECT COUNT(*) FROM {p}$1"
+    else
+        printf -- '-'
+    fi
+}
+if [ "$EXECUTE" = 1 ]; then
+    outbound="$REPORT_DIR/restore-outbound-audit.txt"
+    if [ -f "$outbound" ]; then
+        log "the outbound audit already exists (reports/restore-outbound-audit.txt): keeping the first one, it is the state before the wipe"
+    else
+        {
+            printf 'Restored settings that could reach outside this box, taken before neutralisation (counts only)\n'
+            printf 'taken: %s\n\n' "$(ts)"
+            printf 'push service (airnotifier) access key set: %s\n' \
+                "$(db_scalar "SELECT COUNT(*) FROM {p}config WHERE name = 'airnotifieraccesskey' AND value <> ''")"
+            printf 'push devices registered (user_devices): %s\n' "$(table_rows user_devices)"
+            printf 'site registrations with moodle.net (registration_hubs): %s\n' "$(table_rows registration_hubs)"
+            printf 'OAuth2 system accounts (oauth2_system_account): %s\n' "$(table_rows oauth2_system_account)"
+            printf 'external cache stores named in the restored muc/config.php: %s\n' "$(restored_cache_stores | tr '\n' ' ')"
+        } > "$outbound"
+        sed 's/^/    /' "$outbound" | sed -n '3,$p'
+    fi
+    db_write "UPDATE {p}config SET value = '' WHERE name = 'airnotifieraccesskey'"
+    log "OK: the push service key is wiped (airnotifier is then not configured and sends nothing); step 11 disables the scheduled tasks that phone home (registration, update check, OAuth2 token refresh) for the cron cycle"
+else
+    dry "would write reports/restore-outbound-audit.txt (counts of what could reach outside) and wipe the airnotifier access key"
+fi
+
+# The restored cache configuration. Moodle reads dataroot/muc/config.php; a store named there (Redis, memcached) points at live's
+# cache servers. The generated config.php sets altcacheconfigpath to the kit's own directory; the restored file is also moved aside.
+if [ "$EXECUTE" = 1 ]; then
+    cachecfg="$MOODLEDATA/muc/config.php"
+    if [ -f "$cachecfg" ]; then
+        stores="$(restored_cache_stores | tr '\n' ' ')"
+        if [ -n "$stores" ]; then
+            warn "the restored cache configuration names store(s) other than file/session/static: ${stores}. Moved aside; the rehearsal uses its own cache directory"
+        fi
+        prodhost="$(prod_host_in_text "$(cat "$cachecfg")")"
+        if [ -n "$prodhost" ]; then
+            warn "the restored cache configuration names a production host (${prodhost}). Moved aside"
+        fi
+        mv "$cachecfg" "$cachecfg.restored-from-live"
+        log "OK: ${cachecfg} moved aside (muc/config.php.restored-from-live); the generated config.php sets altcacheconfigpath to $(cache_config_dir)"
+    else
+        log "no restored muc/config.php in ${MOODLEDATA}: nothing to move aside"
+    fi
+else
+    dry "would move a restored ${MOODLEDATA}/muc/config.php aside (cache stores of live); the generated config.php sets altcacheconfigpath to $(cache_config_dir)"
 fi
 
 # ---------------------------------------------------------------------------------------------------------------------

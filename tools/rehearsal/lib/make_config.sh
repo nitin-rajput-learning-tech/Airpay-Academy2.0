@@ -20,6 +20,9 @@
 # shellcheck source=common.sh
 . "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
+# cache_config_dir -> the directory of the rehearsal's own cache configuration (Moodle writes cacheconfig.php there).
+cache_config_dir() { printf '%s/muc' "${REHEARSAL_WORK%/}"; }
+
 # php_array_literal WORDS... -> 'a', 'b'
 php_array_literal() {
     local out="" w
@@ -61,6 +64,10 @@ render_config() {
     if [ -n "$DIVERT_EMAILS_TO" ]; then
         printf "\$CFG->divertallemailsto = '%s';\n" "$(php_squote "$DIVERT_EMAILS_TO")"
     fi
+    # The restored moodledata brings live's muc/config.php (the cache stores), which Moodle loads from dataroot: a Redis or
+    # memcached store named there would be flushed and refilled by every purge_caches of the rehearsal. The kit's own cache
+    # directory (kit-owned, writable, created by make_config) is used instead; step 01 also moves the restored file aside.
+    printf "\$CFG->altcacheconfigpath = '%s';\n" "$(php_squote "$(cache_config_dir)")"
     printf '%s\n' '$CFG->debug = 32767;' '$CFG->debugdisplay = 0;' ''
     printf '%s\n' '// REHEARSAL GUARD: this code tree must never run against another database, or name a production host.'
     # shellcheck disable=SC2086
@@ -119,6 +126,11 @@ make_config() {
     }
     assert_db_allowed
     body="$(render_config "$tree")"
+    if [ "$EXECUTE" = 1 ] && [ "$tree" != db ]; then
+        # Moodle falls back to dataroot/muc/config.php (live's cache stores) when this directory is missing or not writable.
+        (umask 027; mkdir -p "$(cache_config_dir)")
+        [ -w "$(cache_config_dir)" ] || die "the cache configuration directory $(cache_config_dir) is not writable by $(id -un)"
+    fi
     case "$tree" in
         45)
             [ -d "$CODE_45_DIR" ] || [ "$EXECUTE" != 1 ] || die "CODE_45_DIR ${CODE_45_DIR} does not exist: unpack the 4.5 core first"

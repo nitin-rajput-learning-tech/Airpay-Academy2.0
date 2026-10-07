@@ -266,7 +266,7 @@ final class bizlms_writer_test extends \advanced_testcase {
         toy_importer::reset();
         toy_importer::$corewritetable = 'user_enrolments';
         $writer = (new writer(false))->for_importer(new toy_importer());
-        // user_enrolments is reviewed for insert and update (orphaned enrolments become manual), never for adopting
+        // user_enrolments is reviewed for insert only (orphaned enrolments become manual), never for updating or adopting
         // a row as if it were the importer's own.
         $this->assert_refused('core_write_operation_not_reviewed:user_enrolments:adopt',
             fn() => $writer->adopt('user_enrolments', 1, (object) ['status' => 0]));
