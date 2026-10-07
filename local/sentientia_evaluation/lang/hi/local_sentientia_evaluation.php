@@ -290,7 +290,8 @@ $string['my_evaluations_status_responded'] = 'उत्तर दिया';
 $string['my_evaluations_status_assigned'] = 'आपकी प्रतीक्षा में';
 $string['my_evaluations_status_expired'] = 'बिना उत्तर के बंद';
 $string['my_evaluations_imported'] = 'पिछली प्रणाली से';
-$string['my_evaluations_anonymous_note'] = 'गुमनाम मूल्यांकन: आपके उत्तर आपसे जुड़े नहीं हैं।';
+// EV-20-NOTE (2026-10-07): अंग्रेज़ी पाठ देखें; दावा परिणाम पृष्ठों तक सीमित है, हर तालिका तक नहीं।
+$string['my_evaluations_anonymous_note'] = 'गुमनाम मूल्यांकन: इसके परिणामों में आपका नाम आपके उत्तरों के साथ नहीं दिखाया जाता।';
 $string['my_evaluations_none'] = 'आपका कोई मूल्यांकन रिकॉर्ड में नहीं है।';
 $string['my_evaluations_unavailable'] = 'आपका मूल्यांकन इतिहास अभी उपलब्ध नहीं है।';
 

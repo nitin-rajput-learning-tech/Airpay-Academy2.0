@@ -281,7 +281,10 @@ $string['my_evaluations_status_responded'] = 'Responded';
 $string['my_evaluations_status_assigned'] = 'Waiting for you';
 $string['my_evaluations_status_expired'] = 'Closed without a response';
 $string['my_evaluations_imported'] = 'From the previous system';
-$string['my_evaluations_anonymous_note'] = 'Anonymous evaluation: your answers are not linked to you.';
+// EV-20-NOTE (2026-10-07): worded as what the results pages keep, not as a promise about every table. For a form
+// brought over from the previous system the old tables and the import's map still link an answer to its person, so
+// "not linked to you" was more than could be said. Revisit only if the legacy-table privacy ADR makes it true.
+$string['my_evaluations_anonymous_note'] = 'Anonymous evaluation: your name is not shown with your answers in its results.';
 $string['my_evaluations_none'] = 'You have no evaluations on record.';
 $string['my_evaluations_unavailable'] = 'Your evaluation history is not available yet.';
 

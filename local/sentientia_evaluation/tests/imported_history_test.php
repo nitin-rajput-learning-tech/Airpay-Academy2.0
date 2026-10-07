@@ -392,6 +392,50 @@ final class imported_history_test extends \advanced_testcase {
         $this->assertSame(1700000300, $rows[0]->time, 'the latest answer');
     }
 
+    /**
+     * EV-20-NOTE: for a form brought over from the previous system the old tables and the import's map still link an
+     * answer to its person, so the learner is told what the results keep (their name is not shown with the answers),
+     * not that the answers are "not linked" to them. The template prints the same string for every unlinked row.
+     */
+    public function test_the_anonymous_note_says_what_the_results_keep_and_promises_no_more(): void {
+        $this->resetAfterTest();
+        $en = get_string('my_evaluations_anonymous_note', 'local_sentientia_evaluation');
+        $this->assertStringContainsString('name is not shown', $en);
+        $this->assertStringNotContainsString('linked', $en, 'a claim about every table cannot be made for an imported form');
+
+        // The Hindi pack is read from its file (the test site may not have the language installed): the same
+        // weaker claim, and no trace of the old words for "not linked to you".
+        $string = [];
+        include(__DIR__ . '/../lang/hi/local_sentientia_evaluation.php');
+        $this->assertArrayHasKey('my_evaluations_anonymous_note', $string);
+        $this->assertStringNotContainsString('जुड़े', $string['my_evaluations_anonymous_note']);
+        $this->assertStringContainsString('नाम', $string['my_evaluations_anonymous_note']);
+
+        // The learner page still shows it for an anonymous row of an imported form.
+        global $PAGE;
+        $PAGE->set_url('/local/sentientia_evaluation/my_evaluations.php');
+        $html = $this->render_history_row(true);
+        $this->assertStringContainsString(s($en), $html);
+        $this->assertStringNotContainsString(s($en), $this->render_history_row(false), 'a linked row shows no note');
+    }
+
+    /**
+     * The history template with one row.
+     *
+     * @param bool $unlinked
+     * @return string
+     */
+    private function render_history_row(bool $unlinked): string {
+        global $OUTPUT;
+        return $OUTPUT->render_from_template('local_sentientia_evaluation/my_evaluations', [
+            'has_rows' => true,
+            'rows' => [[
+                'name' => 'Survey', 'status_responded' => true, 'status_label' => 'Responded', 'date' => '12 Mar 2026',
+                'has_date' => true, 'anonymous' => $unlinked, 'unlinked' => $unlinked, 'imported' => true,
+            ]],
+        ]);
+    }
+
     public function test_the_history_page_is_behind_a_flag_that_is_off_by_default(): void {
         $this->resetAfterTest();
         \local_sentientia_platform\feature_flags::invalidate_caches();
