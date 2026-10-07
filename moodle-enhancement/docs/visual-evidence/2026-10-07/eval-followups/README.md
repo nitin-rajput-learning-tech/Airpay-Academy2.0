@@ -4,9 +4,16 @@
 session). This folder holds the list of shots Nitin needs, how to reach each page, and the one thing that needs no
 screenshot (the CSV header). Do not merge the UI items below before the shots exist.
 
-State card: `moodle-enhancement/state-cards/sentientia_evaluation-state.md`, section "2026-10-01 - evaluation
-follow-ups". No flag is involved in these items (only the learner history page is flagged, and it is unchanged), no
-version bump, no schema change.
+State card: `moodle-enhancement/state-cards/sentientia_evaluation-state.md`, sections "2026-10-01 - evaluation
+follow-ups" and "2026-10-07 - evaluation decisions implemented". The first set of items (EV-02, 03, 05, 09, 31 and the
+review round) has no flag of its own (EV-FIX-FLAGS, decided A: visual evidence only). The 2026-10-07 decisions add two
+flags and a schema change, so their rows below say which flag has to be ON on the test site (turning a flag on is
+Nitin's call, on a test site only): `sentientia.evaluation.response_drilldown` (EV-06, new, default OFF) and
+`sentientia.evaluation.learner_history` (ADR-032, default OFF, needed for the EV-18 set). Plugin version `2026100701`
+(`evaluationmode`, EV-17): run the upgrade first.
+
+**Merge gate (EV-FIX-FLAGS):** `claude/eval-followups` is merged only after PHPUnit and the shots in this list. The
+`response_list` and `response_detail` shots wait for the EV-06 flag to be ON on a test site.
 
 How to take them: log in as a TENANT admin (the manager role, not the site admin, so the ADR-031 scope applies), 590 px
 wide for the mobile shot (the theme's primary mobile breakpoint) and a normal desktop width for the other. Name the files
@@ -22,10 +29,17 @@ wide for the mobile shot (the theme's primary mobile breakpoint) and a normal de
 | EV-31 | `respond.php?id=<named form>` as the invited learner | The form itself, not the thank-you page | A named, non-pulse form with a fired trigger (so a pending shell exists) for that learner |
 | EV-31 | `responses.php?id=<same form>` | "Total Responses" does not count the invitation | The same form |
 | Review | `respond.php?id=<form>` as a learner | The position badges count 1..n (they printed the question id + 1); a number question with a lower bound of 0 and a multiple-choice question with an ampersand in its text and one option: the ampersand shows once-escaped, the number box carries its range, and the bounds of a number question are not offered as options; the form's name in the heading, with an ampersand, once-escaped | A form that is not the first in the database (so ids are not 1, 2, 3), with a number question 0..10, a choice question and an ampersand in the name |
-| EV-02 | `response_list.php?id=<imported supervisor form>` | A Respondent and a Subject column, both in the site's name format (as the CSV prints them); "(deleted user)" for a subject whose account is gone; no row for an invitation that was never answered | EV-06 decided (the page needs `local/sentientia_evaluation:view`, which `db/access.php` does not declare) and an imported supervisor form |
-| EV-05 | `response_detail.php?id=<response>` | The respondent's own answer highlighted, option histograms for choice questions (a choice whose text is "0" included), the numeric average. A second shot, of an id that is an unanswered invitation (a trigger shell, `timesubmitted` 0): it answers "Response not found." This is the only page-level proof, because the PHPUnit test covers the helper `require_submitted_response()`, not that `response_detail.php` calls it | EV-06 decided, and a form with a fired trigger so a shell exists |
+| EV-02 | `response_list.php?id=<imported supervisor form>` | A Respondent and a Subject column, both in the site's name format (as the CSV prints them); "(deleted user)" for a subject whose account is gone; no row for an invitation that was never answered. The form must be marked `SP` (`evaluationmode`, EV-17), or the Subject column is not drawn | The EV-06 flag ON, a tenant admin (manager role), and an imported supervisor form (`SP`, named, not anonymous) |
+| EV-05 | `response_detail.php?id=<response>` | The respondent's own answer highlighted, option histograms for choice questions (a choice whose text is "0" included), the numeric average, and the respondent named in the site's name format (EV-06: `fullname()`, as the list and the CSV do). A second shot, of an id that is an unanswered invitation (a trigger shell, `timesubmitted` 0): it answers "Response not found." This is the only page-level proof, because the PHPUnit test covers the helper `require_submitted_response()`, not that `response_detail.php` calls it | The EV-06 flag ON, a tenant admin, and a form with a fired trigger so a shell exists |
 
-EV-11, EV-13, EV-14, EV-20, EV-21, EV-28 and EV-32 have no UI. EV-33 is tests only. The review round of 2026-10-07 (the
+| EV-06 | `response_list.php?id=<form>` and `response_detail.php?id=<response>` with the flag OFF | The "not available" notice (`response_drilldown_unavailable`), for a tenant admin, exactly as the learner history page answers when its flag is OFF; and `responses.php` with NO "Individual responses" link | The EV-06 flag OFF (the default), a tenant admin |
+| EV-06 | `responses.php?id=<form>` with the flag ON | The "Individual responses" button beside "Export CSV", and where it leads | The EV-06 flag ON, a tenant admin |
+| EV-06 | `response_list.php?id=<form that once collected an anonymous answer>` and its `response_detail.php` | A protected form names nobody (the "Anonymous" badge, no Respondent column, no Subject column, the day and not the minute) | The EV-06 flag ON, a tenant admin, a form with one answer stored with user id 0 |
+| EV-06 | `response_list.php?id=<form>` as a TRAINER (teacher archetype) and as an employee | The refusal (no permission), flag ON: trainers and employees get nothing | The EV-06 flag ON, a trainer persona and an employee persona |
+| EV-17 | `my_evaluations.php` as the PERSON EVALUATED | The imported supervisor forms are NOT listed: a named one, an anonymous one (no subject kept) and one from before `evaluatedby` existed; their self evaluations are | The `learner_history` flag ON, imported forms with `evaluationmode` SP and SE for one test person |
+| EV-18 and EV-20-NOTE | `my_evaluations.php` as a learner, en and hi | The set Nitin reviews before the production flip: named responded, anonymous with the NEW note ("your name is not shown with your answers in its results"), waiting, closed, and the imported badge; desktop and 590 px, one Hindi shot of the note. A test persona and test forms only: the local copy holds real users, so no real name may appear | The `learner_history` flag ON on a test site (Nitin's call) |
+
+EV-11, EV-13, EV-14, EV-20, EV-21, EV-28 and EV-32 have no UI. Of the 2026-10-07 decisions, EV-16, EV-TENANT, EV-36 and the three framework items (EV-26, the row-bound acceptances and the child-table preflight) have no UI and need no screenshot (EV-36 changes only what a web service accepts; the form already refused an empty rule). EV-33 is tests only. The review round of 2026-10-07 (the
 rows marked "Review" and the rows it extended) changed `respond.php`, `responses.php`, `questions.php`,
 `response_list.php` and `response_detail.php`; `exportcsv.php` changed only in the Subject header (below) and in how it
 reads names (the respondents and subjects in one query each: the file it writes is the same).

@@ -7,7 +7,7 @@ for course-level evaluation surveys.
 | Field | Value |
 |---|---|
 | Component | `local_sentientia_evaluation` |
-| Version | 1.6.0 |
+| Version | 1.17.0 (`2026100701`) |
 | Depends on | `local_sentientia_org` |
 
 ## What it does
@@ -30,6 +30,10 @@ for course-level evaluation surveys.
 
 `:manage`, `:respond`.
 
+The individual responses pages (`response_list.php`, `response_detail.php`) need `:manage` (the manager archetype: manager,
+tenant administrator, site administrator) and the default-OFF flag `sentientia.evaluation.response_drilldown`; with the
+flag OFF they answer "not available" and nothing links to them. They used to ask for a capability nobody declares.
+
 ## Verify after install
 
 ```powershell
@@ -50,6 +54,8 @@ assignments and answers. Run it only through
 `local/sentientia_platform/cli/import_bizlms.php`; the map is
 `docs/cutover/BIZLMS-IMPORT-MAPPING-2026-09-29.md` section 18.
 
+- **A form that ever held an anonymous answer imports every answer anonymous**, including the ones BizLMS stamped
+  named (decision `evaluation.sticky_anonymity` = `whole_form`).
 - **Anonymous answers stay anonymous in their own row**: stored with user id 0
   and no subject. The legacy tables still link the answer to the person, and the
   import's map ties the anonymous response and that person's implied assignment
@@ -57,7 +63,11 @@ assignments and answers. Run it only through
   pending the legacy-table privacy ADR, which has to cover the map and the
   assignment rows as well as the legacy tables).
 - **Supervisor forms** keep the person evaluated in
-  `responses.subject_userid` (the responder stays in `userid`).
+  `responses.subject_userid` (the responder stays in `userid`) and are marked on the form itself:
+  `evaluationmode` is `SP` (every other form is `SE`), so the person evaluated is never listed as having responded,
+  even on an anonymous supervisor form or an old completion with no evaluator.
+- **A form no clue can place** (its path, its stored root and its classroom) imports pathless, for cross-tenant callers
+  only. It is never filed under the tenant of the user who last edited it (decision `evaluation.tenant_editor_fallback`).
 - **Imported forms are read-only**: `evaluation_manager` refuses to edit,
   re-status, reorder, delete or assign on a form the import created. To run the
   same questions again, export it as a template and create a new evaluation.

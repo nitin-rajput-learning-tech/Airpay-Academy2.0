@@ -822,3 +822,35 @@ down.
   function runs every later step, so the version ends at the plugin's latest (2026093001). It now asserts `>=`.
 
 No version bump, no feature, no UI. Both trees identical.
+
+## 2026-10-07 - ADR-032 framework: sequence floor, bounded acceptances, child-table preflight (branch claude/eval-followups; no version bump)
+
+Three framework items that came out of the evaluation decisions (EV-26, evaluation item 6, evaluation item 7); the
+evaluation state card has the owner-facing text. Class changes only, so no version bump (a deploy purges the class
+map). **PHPUnit NOT run.** Static scan of `classes/bizlms/` clean; both trees identical.
+
+- **A PRESERVE sequence is floored above every id the legacy table ever issued (EV-26).** `runner::finalise_feature` calls
+  `writer::reset_sequence($table, $floor)` (now returns the next id) with
+  `floor = max(legacy MAX(id) + 1, legacy AUTO_INCREMENT)`, so a native row created after cutover never takes an id that
+  references elsewhere still hold: the id of a row the import archived or skipped, or of a row BizLMS hard-deleted
+  (a request's componentid, a classroom's feedback form, an event). `legacy_reader::next_id($table)` reads the counter from
+  `SHOW CREATE TABLE` (MySQL 8 caches `information_schema.TABLES.AUTO_INCREMENT` for 24 hours), from `last_value` on
+  Postgres, and is null for anything else or an unreadable table; `counter_from_create_table()` is the pure parser (table
+  options only, quoted text removed, no clause = 1). The writer raises the counter with `ALTER TABLE ... AUTO_INCREMENT`
+  or `setval` and never lowers it. Warnings: `sequence_counter_unreadable` (fell back to the highest id) and
+  `sequence_floor_not_applied` (a family whose counter cannot be set). The report gains `features.<f>.sequences`
+  (`next_id`, `legacy_floor`, `legacy_counter`; ids only). ADR-032 rule 6 is still to be updated (not edited here).
+- **`accepted_reasons` accepts `feature:code<=n`.** A reason accepted after the Stage B rehearsal is accepted for the rows
+  that were looked at; a count above `n` at cutover is unproven again, named as `feature:code=n (accepted up to m)`. A bare
+  entry accepts any count; the same reason listed twice, or a malformed bound, blocks (`decisions_file_*`). The bound is part
+  of the file and so of its hash. `decisions::accepts()` gained an optional `$count`, `accepted_limit()` is new. The
+  docblock now says an acceptance happens after the rehearsal, for codes that occur.
+- **`step::target_children()` (opt-in, PRESERVE only).** `[child table, column]` pairs; `runner::preflight_preserve`
+  blocks with `leftover_rows_at_legacy_ids:<step>:<table>:<n>` when a child row names an id the legacy source holds and the
+  target does not (counts only). The registry refuses a MAP step that declares children and a malformed entry. The
+  evaluation importer was the first user and its hand-rolled `rows_left_at_legacy_form_ids()` is gone.
+- **`capability_names_test::BASELINE`:** the two `local/sentientia_evaluation:view` entries are removed (EV-06 regated both
+  pages on `:manage`); the classroom `:enrol` entries remain.
+- **Tests added** (not run): `bizlms_writer_test` (floor), `bizlms_runner_test` (a skipped high id, a counter above MAX(id),
+  bounded and bare acceptance, child rows), `bizlms_support_test` (counter parser, `next_id`, bounded reasons),
+  `bizlms_registry_test` (children rules); toy importer knobs `$orgchildren`, `$mapchildren`, `$badchildren`.
