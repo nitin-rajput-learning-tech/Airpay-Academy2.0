@@ -28,7 +28,9 @@ notifies the user so they can re-complete.
    - A course-specific rule skips a course whose completion tracking is off (as the BizLMS cron did).
 3. **History page** (`history.php`) showing every reset event with reason, a "Legacy" badge for a reset
    imported from BizLMS, `~` before a time that was worked out rather than read from the log, "self" when
-   the learner reset their own completion, and optional `?courseid=` / `?userid=` filters.
+   the learner reset their own completion, and optional `?courseid=` / `?userid=` filters. The imported
+   (Legacy) rows are shown only while the flag `sentientia.recompletion.evidence_view` is ON; with it OFF the
+   page lists just the resets the Sentientia engine made, as it did before the import.
 4. **Evidence view** (`history_detail.php`, flag `sentientia.recompletion.evidence_view`, default OFF):
    for one reset, what it deleted — course completion, criteria, activity completions, quiz attempts (marks
    scaled by the quiz), SCORM tracking, LTI grades, questionnaire answers, grades.
@@ -60,9 +62,11 @@ section 12.
   tenant), period `max(1, ceil(seconds / 86400))` (a missing or zero duration takes the BizLMS site default,
   else 365, and is reported). Every setting is kept in `legacy_config` (JSON) and shown on the rules page.
 - **History:** one row per `\local_recompletion\event\completion_reset` log row, at the real reset time
-  (`source` = `legacy`). A cycle whose log row is missing gets an **inferred** row (`time_inferred` = 1, time
-  capped at the next cycle's first evidence and at the import time); if the log row turns up in a later run the
-  inferred row is upgraded, never duplicated. Which reset ended which archived completion is decided by taking
+  (`source` = `legacy`). A cycle whose log row is missing gets an **inferred** row (`time_inferred` = 1): its time
+  is the earlier of completion + the period and the next cycle's first evidence, when that is not later than
+  the import; otherwise one second after the cycle's latest source evidence (warning
+  `inferred_reset_from_last_evidence`). The import time is never the value, only an upper clamp, so every run
+  gives the same answer. If the log row turns up in a later run the inferred row is upgraded, never duplicated. Which reset ended which archived completion is decided by taking
   the learner's archived completions in the order of their row id (the legacy plugin inserted a row at each
   reset, so id order is reset order), not by their dates: core recreates the completion row after a reset with
   the ORIGINAL enrolment date and `timestarted` 0, so a later cycle that was reset without ever being started
@@ -78,6 +82,10 @@ section 12.
   completions themselves are attached through the pairing above.
 - **Not done by the import:** no reset runs, no message or e-mail is sent, no core table is written, no legacy
   table is changed, no rule is enabled. `local_recompletion` is never uninstalled before sign-off.
+- **An imported rule cannot be enabled** (owner decision `recompletion.imported_rule_enable`): the edit form and
+  the save path refuse it, and `run_all()` skips an enabled imported rule (counted as `skipped_imported`).
+  Create a rule of your own to reset learners: it runs exactly as configured. A later decision lifts the block
+  once the engine reproduces the BizLMS settings.
 - Reasons that need the owner: `orphan_user`, `orphan_response`, `incomplete_event` (parity exits 2 until
   `accepted_reasons` names them).
 
@@ -86,7 +94,7 @@ section 12.
 | Key | Gates |
 |---|---|
 | `sentientia.recompletion.run_rules` | The daily task. OFF: it evaluates no rule and says so. Turn it on only after the imported rules have been reviewed and, if wanted, enabled. Read site-wide (customer 0, tenant 0): a customer or tenant override of this flag does not switch the task on. |
-| `sentientia.recompletion.evidence_view` | `history_detail.php` and the "Evidence" link on the history page. |
+| `sentientia.recompletion.evidence_view` | `history_detail.php`, the "Evidence" link on the history page, and the imported (Legacy) resets on the history page. |
 
 ## Known differences from the BizLMS plugin
 
@@ -172,8 +180,9 @@ php "C:/xampp/htdocs/moodle5/admin/cli/scheduled_task.php" \
   (the free text of a questionnaire answer, a grade's `feedback` and
   `information`, text typed into a SCORM package: suspend data, comments,
   interaction answers, learner name); the row survives. The DPDP flow keeps the
-  subject's rows as they are and anonymises only an administrator or grader
-  named in somebody else's payload. Export returns the person's evidence,
+  subject's rows (user id, state, grade, times, item type) and empties the same
+  free-text keys, and anonymises an administrator or grader named in somebody
+  else's payload. Export returns the person's evidence,
   decoded, without the id of the other person a row names. The scrub rules are
   pure functions in `classes/archive_privacy.php`.
 

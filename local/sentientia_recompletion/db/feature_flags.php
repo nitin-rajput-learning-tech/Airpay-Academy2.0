@@ -27,7 +27,13 @@ $flags = [
                           quiz attempts and grades, SCORM tracking, LTI grades and
                           questionnaire answers that the BizLMS plugin archived (or the
                           Sentientia engine archived before it deleted them). Tenant
-                          scope is the same as the history page. Flip it only after the
+                          scope is the same as the history page. It also governs the
+                          BizLMS resets on the history page itself (owner decision
+                          recompletion.legacy_rows_on_history_page, 2026-10-07): while it
+                          is OFF history.php lists only the resets the Sentientia engine
+                          made, with no Legacy badge and no estimated (~) time, so the
+                          page looks as it did before the import; the imported-rule
+                          marker on the rules page stays visible. Flip it only after the
                           visual evidence has been reviewed.',
     ],
 

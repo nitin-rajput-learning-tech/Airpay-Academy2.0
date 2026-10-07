@@ -17,7 +17,10 @@ use local_sentientia_platform\bizlms\outcome;
  * leave no history row at all, and the only surviving evidence that the person completed and was then reset
  * would be a payload nobody reads; so the row also gets an INFERRED history row, marked as such, with a reset
  * time worked out from the completion (see mapper::inferred_time) and never later than the import, nor earlier
- * than the end of the cycle before it (evidence::floor_before). When the same learner and course also have a
+ * than the end of the cycle before it (evidence::floor_before). The import time is never the value: when the
+ * completion plus the period and the next cycle's evidence give no time before the import, the reset is dated one
+ * second after the cycle's latest evidence and the row carries the warning inferred_reset_from_last_evidence.
+ * When the same learner and course also have a
  * logged reset that fits no cycle, the row carries the warning reset_pairing_unclear: the pairing cannot tell
  * which cycle that reset ended (see pairing), so the report counts the pairs the owner may want to look at.
  *
@@ -76,7 +79,7 @@ final class course_completion_step extends archive_step {
 
             // The evidence worked this out once for the run, because the next cycle's inferred time needs this
             // one's end as its floor.
-            [$time, $fallback] = $evidence->inferred_reset($user, $course, $id);
+            [$time, $fallback, $fromevidence] = $evidence->inferred_reset($user, $course, $id);
             $config = $evidence->config($course);
             // The window of this cycle starts where the one before it ended, logged or inferred.
             $since = max($evidence->reset_before($user, $course, $time), $evidence->floor_before($user, $course, $id));
@@ -96,6 +99,12 @@ final class course_completion_step extends archive_step {
                 'time_inferred' => 1,
             ], 'history');
             $inferred->warn('derived_timestamp');
+            if ($fromevidence) {
+                // Neither the completion plus the period nor the next cycle's evidence gave a time before the
+                // import: the reset is dated one second after the cycle's last evidence, the earliest moment the
+                // data allows (owner decision recompletion.inferred_reset_without_evidence). Never the import time.
+                $inferred->warn('inferred_reset_from_last_evidence');
+            }
             if (in_array(null, $pair['event'], true)) {
                 // This cycle has no reset in the log while a logged reset of the same learner and course fits no
                 // cycle at all (a purged log row, or archiving switched off for a while). Which cycle that reset

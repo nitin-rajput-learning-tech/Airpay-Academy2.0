@@ -92,13 +92,37 @@ final class bizlms_pure_test extends \basic_testcase {
     public function test_the_inferred_reset_time_is_never_later_than_now_or_earlier_than_the_completion(): void {
         $this->assertSame(150, mapper::inferred_time(100, 50, null, 1000), 'completion plus the duration');
         $this->assertSame(120, mapper::inferred_time(100, 50, 120, 1000), 'capped at the next cycle\'s first evidence');
-        $this->assertSame(110, mapper::inferred_time(100, 50, null, 110), 'capped at the import time');
         $this->assertSame(100, mapper::inferred_time(100, 50, 90, 1000), 'never before the completion');
-        $this->assertSame(1000, mapper::inferred_time(null, 50, null, 1000), 'never completed: the import time');
-        $this->assertSame(1000, mapper::inferred_time(2000, 50, null, 1000), 'a completion in the future');
         $this->assertSame(150, mapper::inferred_time(100, 50, 0, 1000), 'no usable next evidence');
-        $this->assertSame(1000, mapper::inferred_time(100, 0, null, 1000),
-            'with no duration only the import time is left to cap at');
+        $this->assertSame(150, mapper::inferred_time(100, 50, null, 150), 'a time AT the import is not after it');
+        $this->assertSame(1000, mapper::inferred_time(2000, 50, null, 1000), 'a completion in the future is clamped');
+    }
+
+    /**
+     * Owner decision recompletion.inferred_reset_without_evidence: the import time is an upper clamp, never the
+     * value. A reset dated at cutover would claim the completion stood until then and would give a different
+     * answer on every run, while the archived row proves the reset happened inside BizLMS.
+     */
+    public function test_the_import_time_is_never_the_inferred_reset_time(): void {
+        // The completion plus the duration lies after the import: one second after the completion, not the import.
+        $this->assertSame(101, mapper::inferred_time(100, 50, null, 110), 'no latest evidence: after the completion');
+        $this->assertSame(106, mapper::inferred_time(100, 50, null, 110, 105), 'one second after the latest evidence');
+        $this->assertSame(110, mapper::inferred_time(100, 50, null, 110, 500), 'the import is only the upper clamp');
+        // No duration, no next cycle: the same.
+        $this->assertSame(401, mapper::inferred_time(100, 0, null, 1000, 400));
+        $this->assertSame(101, mapper::inferred_time(100, 0, null, 1000), 'with no evidence at all: after the completion');
+        // A cycle never completed.
+        $this->assertSame(701, mapper::inferred_time(null, 50, null, 1000, 700), 'never completed: its last evidence + 1');
+        $this->assertSame(1, mapper::inferred_time(null, 50, null, 1000),
+            'no completion and no evidence at all: the earliest second, which the caller lifts to the cycle before');
+        // The completion is evidence too, so evidence that is older than it never pulls the reset before it.
+        $this->assertSame(501, mapper::inferred_time(500, 0, null, 1000, 400));
+        $this->assertSame(501, mapper::inferred_from_evidence(500, 400, 1000));
+        // A candidate time that IS usable wins over the evidence.
+        $this->assertSame(150, mapper::inferred_time(100, 50, null, 1000, 900));
+        $this->assertNull(mapper::inferred_candidate(100, 50, null, 110), 'after the import: no candidate');
+        $this->assertNull(mapper::inferred_candidate(null, 50, null, 1000), 'nothing to count from');
+        $this->assertSame(120, mapper::inferred_candidate(100, 50, 120, 1000));
     }
 
     public function test_scorm_elements(): void {
@@ -352,6 +376,37 @@ final class bizlms_pure_test extends \basic_testcase {
         $other = json_encode(['userid' => '12', 'response' => 'kept']);
         $this->assertSame('kept', json_decode(archive_privacy::scrub_subject($other, 'quiz_attempt'), true)['response']);
         $this->assertSame('not json', archive_privacy::scrub_subject('not json', 'quiz_attempt'));
+    }
+
+    public function test_the_dpdp_scrub_empties_only_the_free_text_and_keeps_every_id(): void {
+        $answer = json_encode(['id' => '5', 'userid' => '12', 'question_id' => '7', 'response' => 'my secret']);
+        $cleared = json_decode(archive_privacy::scrub_dpdp($answer, 'questionnaire_answer'), true);
+        $this->assertSame('', $cleared['response']);
+        $this->assertSame('12', $cleared['userid'], 'the row stays keyed to the anonymised user row');
+        $this->assertSame('7', $cleared['question_id']);
+
+        $grade = json_encode(['userid' => '12', 'usermodified' => '99', 'finalgrade' => '8.50000',
+            'feedback' => 'Well done, Priya', 'information' => 'Re-marked']);
+        $cleared = json_decode(archive_privacy::scrub_dpdp($grade, 'gradebook_grade'), true);
+        $this->assertSame('', $cleared['feedback']);
+        $this->assertSame('', $cleared['information']);
+        $this->assertSame('99', $cleared['usermodified'], 'the grader is another person: scrubbed when THEY are erased');
+        $this->assertSame('12', $cleared['userid']);
+        $this->assertSame('8.50000', $cleared['finalgrade'], 'the result is the evidence');
+
+        $typed = json_encode(['userid' => '12', 'element' => 'cmi.suspend_data', 'value' => 'note: call Priya']);
+        $this->assertSame('', json_decode(archive_privacy::scrub_dpdp($typed, 'scorm_track'), true)['value']);
+        $status = json_encode(['userid' => '12', 'element' => 'cmi.core.lesson_status', 'value' => 'completed']);
+        $this->assertSame('completed', json_decode(archive_privacy::scrub_dpdp($status, 'scorm_track'), true)['value']);
+
+        $completion = json_encode(['userid' => '12', 'overrideby' => '99', 'timemodified' => '1']);
+        $this->assertSame(['userid' => '12', 'overrideby' => '99', 'timemodified' => '1'],
+            json_decode(archive_privacy::scrub_dpdp($completion, 'activity_completion'), true), 'nothing to clear: unchanged');
+        $other = json_encode(['response' => 'kept']);
+        $this->assertSame('kept', json_decode(archive_privacy::scrub_dpdp($other, 'quiz_attempt'), true)['response']);
+        $this->assertSame('not json', archive_privacy::scrub_dpdp('not json', 'questionnaire_answer'));
+        $nulls = json_encode(['response' => null]);
+        $this->assertNull(json_decode(archive_privacy::scrub_dpdp($nulls, 'questionnaire_answer'), true)['response']);
     }
 
     public function test_erasing_an_administrator_changes_only_the_rows_that_name_them(): void {

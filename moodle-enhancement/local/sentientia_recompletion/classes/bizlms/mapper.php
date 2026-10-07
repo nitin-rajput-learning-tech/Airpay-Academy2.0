@@ -185,30 +185,83 @@ final class mapper {
     }
 
     /**
-     * The reset time of a completion archived without a log row of its reset.
+     * The reset time of a completion archived without a log row of its reset, when the legacy data gives one.
      *
-     * The earliest of: completion + the legacy duration, the first evidence of the next cycle, and now. It is
-     * never later than now and never earlier than the completion.
+     * The earlier of: completion + the legacy duration, and the first evidence of the next cycle, provided that
+     * time is not later than the import (a time after the import is not a reset that can have happened). It is
+     * never earlier than the completion. Null when neither candidate exists or both lie after the import: the
+     * caller then dates the reset from the cycle's last evidence (inferred_time).
      *
      * @param int|null $completed Completion time, null for a cycle that was never completed.
      * @param int $duration Legacy duration in seconds.
      * @param int|null $next First evidence of the next cycle, after the completion.
      * @param int $now Import time.
-     * @return int
+     * @return int|null
      */
-    public static function inferred_time(?int $completed, int $duration, ?int $next, int $now): int {
-        $candidates = [$now];
+    public static function inferred_candidate(?int $completed, int $duration, ?int $next, int $now): ?int {
+        $candidates = [];
         if ($completed !== null && $completed > 0 && $duration > 0) {
             $candidates[] = $completed + $duration;
         }
         if ($next !== null && $next > 0) {
             $candidates[] = $next;
         }
+        if (!$candidates) {
+            return null;
+        }
         $time = min($candidates);
+        if ($time > $now) {
+            return null;
+        }
         if ($completed !== null && $completed > 0) {
             $time = max($time, min($completed, $now));
         }
         return $time;
+    }
+
+    /**
+     * The reset time of a completion archived without a log row of its reset (owner decision
+     * recompletion.inferred_reset_without_evidence).
+     *
+     * 1. The earlier of completion + the legacy duration and the first evidence of the next cycle, when that is
+     *    not later than the import (inferred_candidate).
+     * 2. Otherwise one second after the latest source evidence of the cycle (its own enrolled, started and
+     *    completed dates and its archived activity rows), which is the earliest moment the data allows. The second
+     *    keeps the cycle's own last row strictly before the reset (evidence::ends_cycle_of).
+     *
+     * The import time is only ever an UPPER CLAMP, never the value: a reset dated at cutover would claim a
+     * completion stood until then, and would give a different answer on every run. The result is also never
+     * earlier than the completion. The caller lifts it to the end of the cycle before it.
+     *
+     * @param int|null $completed Completion time, null for a cycle that was never completed.
+     * @param int $duration Legacy duration in seconds.
+     * @param int|null $next First evidence of the next cycle, after the completion.
+     * @param int $now Import time: the upper clamp.
+     * @param int|null $lastevidence Latest source evidence of the cycle; null when it has none.
+     * @return int
+     */
+    public static function inferred_time(?int $completed, int $duration, ?int $next, int $now,
+                                         ?int $lastevidence = null): int {
+        $time = self::inferred_candidate($completed, $duration, $next, $now);
+        if ($time !== null) {
+            return $time;
+        }
+        return self::inferred_from_evidence($completed, $lastevidence, $now);
+    }
+
+    /**
+     * One second after the latest evidence of a cycle, never later than now and never earlier than the completion.
+     * A cycle with no evidence at all gets second 1: the earliest time there is, which the caller lifts to the end
+     * of the cycle before it and which the reader shows as an estimate.
+     *
+     * @param int|null $completed Completion time, null for a cycle that was never completed.
+     * @param int|null $lastevidence Latest source evidence of the cycle; null when it has none.
+     * @param int $now Import time: the upper clamp.
+     * @return int
+     */
+    public static function inferred_from_evidence(?int $completed, ?int $lastevidence, int $now): int {
+        $latest = max($completed ?? 0, $lastevidence ?? 0, 0);
+        return max(1, min($latest + 1, $now));
     }
 
     /**

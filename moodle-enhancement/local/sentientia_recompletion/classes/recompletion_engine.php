@@ -31,20 +31,30 @@ class recompletion_engine {
 
     /**
      * Run all enabled rules. Returns aggregated counts.
+     *
+     * `failed` counts learners whose reset failed and was rolled back (the rest of the rule's learners still ran).
+     * `skipped_imported` counts enabled rules the BizLMS import made: the engine never runs one (owner decision
+     * recompletion.imported_rule_enable, 2026-10-07). The form and the save path refuse to enable such a rule, so
+     * this is the guard against a direct database edit.
      */
     public static function run_all(bool $dryrun = false): array {
         global $DB;
         $rules = $DB->get_records('local_sentientia_recompletion_rules',
             ['enabled' => 1]);
         $totals = ['rules_run' => 0, 'reset' => 0, 'notified' => 0,
-                   'skipped' => 0, 'errors' => 0];
+                   'skipped' => 0, 'errors' => 0, 'failed' => 0, 'skipped_imported' => 0];
         foreach ($rules as $rule) {
+            if (!rule_access::may_enable($rule)) {
+                $totals['skipped_imported']++;
+                continue;
+            }
             try {
                 $r = self::run_rule($rule, $dryrun);
                 $totals['rules_run']++;
                 $totals['reset']    += $r['reset'];
                 $totals['notified'] += $r['notified'];
                 $totals['skipped']  += $r['skipped'];
+                $totals['failed']   += $r['failed'];
                 // Update rule's last_run.
                 $rule->last_run_at = time();
                 $rule->last_run_resets = $r['reset'];
@@ -60,6 +70,11 @@ class recompletion_engine {
 
     /**
      * Run a single rule. Returns counts.
+     *
+     * A learner whose reset fails (reset_user_in_course rolled it back and threw) is counted in `failed`, logged
+     * with the rule and course ids only, and the rest of the batch still runs: one bad learner does not stop the
+     * rule (owner decision, 2026-10-07; LRN-05). That learner keeps their completion, because the archive copy and
+     * the deletes are one transaction.
      */
     public static function run_rule(\stdClass $rule, bool $dryrun = false): array {
         global $DB;
@@ -67,7 +82,7 @@ class recompletion_engine {
         $pre_notify_days = (int) (get_config('local_sentientia_recompletion',
             'pre_notify_days') ?: 30);
 
-        $r = ['reset' => 0, 'notified' => 0, 'skipped' => 0];
+        $r = ['reset' => 0, 'notified' => 0, 'skipped' => 0, 'failed' => 0];
 
         // Build the candidate users query based on trigger type.
         $now = time();
@@ -163,13 +178,22 @@ class recompletion_engine {
 
             $archived = [];
             if (!$dryrun) {
-                $ok = self::reset_user_in_course(
-                    (int) $row->userid, (int) $row->courseid,
-                    (bool) $rule->reset_grades, (bool) $rule->reset_attempts,
-                    // P1 #20 — cron path has no human reset_by; reason='cron'
-                    // gives observers the audit-friendly source label.
-                    null, 'cron', $archived);
-                if (!$ok) { $r['skipped']++; continue; }
+                try {
+                    self::reset_user_in_course(
+                        (int) $row->userid, (int) $row->courseid,
+                        (bool) $rule->reset_grades, (bool) $rule->reset_attempts,
+                        // P1 #20 — cron path has no human reset_by; reason='cron'
+                        // gives observers the audit-friendly source label.
+                        null, 'cron', $archived);
+                } catch (\Throwable $e) {
+                    // Rolled back by reset_user_in_course: this learner keeps their completion. The log names
+                    // the rule, the course and the kind of failure, never the person: a database error message
+                    // carries the row it failed on.
+                    $r['failed']++;
+                    debugging("recompletion rule {$rule->id} course {$row->courseid}: a learner's reset failed and"
+                        . ' was rolled back (' . get_class($e) . ')', DEBUG_DEVELOPER);
+                    continue;
+                }
             }
 
             // Record audit log.
@@ -259,7 +283,17 @@ class recompletion_engine {
      * (SCORM tracking is still always wiped, whatever the BizLMS plugin's
      * own SCORM choice was: a stale completion_status re-completes the course.)
      *
+     * Contract (owner decision, 2026-10-07; LRN-05): it returns true when the reset committed, and THROWS when it
+     * did not. A failure rolls the delegated transaction back, which rethrows (the copy into the archive and every
+     * delete are one transaction, so a learner whose reset failed keeps their completion and loses nothing); the
+     * exception is not swallowed, because a rollback exception must never be hidden in a nested transaction. The
+     * callers (run_rule, bulk_reset) catch it per learner, count it as failed, log it and carry on with the rest of
+     * the batch. It must not be called inside an outer transaction: a rollback there would mark the outer one for
+     * rollback too.
+     *
      * @param int[]|null $archived Out: ids of the archive rows written (empty when the reset failed).
+     * @return bool Always true: a reset that did not commit throws.
+     * @throws \Throwable Whatever stopped the reset, after it was rolled back.
      */
     public static function reset_user_in_course(int $userid, int $courseid,
                                                   bool $reset_grades = true,
@@ -369,8 +403,9 @@ class recompletion_engine {
 
             return true;
         } catch (\Throwable $e) {
+            // rollback() rolls the transaction back and rethrows $e; the throw below only makes that explicit.
             $tx->rollback($e);
-            return false;
+            throw $e;
         }
     }
 
@@ -468,6 +503,11 @@ class recompletion_engine {
 
     /**
      * Bulk manual reset — used by the admin bulk-reset UI.
+     *
+     * A learner whose reset fails (rolled back, see reset_user_in_course) is counted in `failed`, logged with the
+     * course id only, and the rest of the list still runs (owner decision, 2026-10-07; LRN-05).
+     *
+     * @return array{reset: int, failed: int}
      */
     public static function bulk_reset(int $courseid, array $userids,
                                        int $reset_by, string $reason = 'bulk',
@@ -484,27 +524,30 @@ class recompletion_engine {
             // bulk resets would fire the event with reset_by_userid=null
             // and observers couldn't tell who initiated them.
             $archived = [];
-            $ok = self::reset_user_in_course($uid, $courseid,
-                $reset_grades, $reset_attempts,
-                $reset_by, $reason, $archived);
-            if ($ok) {
-                $historyid = $DB->insert_record('local_sentientia_recompletion_history', (object) [
-                    'ruleid'                 => 0,
-                    'userid'                 => $uid,
-                    'courseid'               => $courseid,
-                    'reason'                 => $reason,
-                    'reset_by_userid'        => $reset_by,
-                    'previous_timecompleted' => $prev ?: null,
-                    'reset_grades'           => $reset_grades ? 1 : 0,
-                    'reset_attempts'         => $reset_attempts ? 1 : 0,
-                    'dryrun'                 => 0,
-                    'timecreated'            => time(),
-                ]);
-                evidence_archiver::attach($archived, (int) $historyid);
-                $result['reset']++;
-            } else {
+            try {
+                self::reset_user_in_course($uid, $courseid,
+                    $reset_grades, $reset_attempts,
+                    $reset_by, $reason, $archived);
+            } catch (\Throwable $e) {
                 $result['failed']++;
+                debugging("recompletion bulk reset course {$courseid}: a learner's reset failed and was rolled back ("
+                    . get_class($e) . ')', DEBUG_DEVELOPER);
+                continue;
             }
+            $historyid = $DB->insert_record('local_sentientia_recompletion_history', (object) [
+                'ruleid'                 => 0,
+                'userid'                 => $uid,
+                'courseid'               => $courseid,
+                'reason'                 => $reason,
+                'reset_by_userid'        => $reset_by,
+                'previous_timecompleted' => $prev ?: null,
+                'reset_grades'           => $reset_grades ? 1 : 0,
+                'reset_attempts'         => $reset_attempts ? 1 : 0,
+                'dryrun'                 => 0,
+                'timecreated'            => time(),
+            ]);
+            evidence_archiver::attach($archived, (int) $historyid);
+            $result['reset']++;
         }
         return $result;
     }
