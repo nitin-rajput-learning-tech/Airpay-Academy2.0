@@ -2,16 +2,19 @@
 
 **Component:** `local_sentientia_evaluation` (was `local_airpay_evaluation`; the rename left the tables, strings and
 capabilities under the new name, and the old name appears nowhere in the code any more)
-**Version:** `2026100701` / `1.17.0` (EV-17: `local_sentientia_evaluation.evaluationmode`; `importer::REQUIRES_VERSION` is
-the same number). `2026093001` / `1.16.0` was the ADR-032 evaluation importer.
-Depends on `local_sentientia_platform` >= `2026093001`.
+**Version:** `2026100702` / `1.17.1` (the EV-17 back-fill and the review fixes of 2026-10-07). `2026100701` / `1.17.0` added
+`local_sentientia_evaluation.evaluationmode` (EV-17), and `importer::REQUIRES_VERSION` stays `2026100701`: it names the version
+that adds the column the importer writes, and the back-fill adds no schema. `2026093001` / `1.16.0` was the ADR-032
+evaluation importer.
+Depends on `local_sentientia_platform` >= `2026100701` (the framework code the importer relies on, see the last section).
 **Maturity:** `MATURITY_STABLE`
 **Status:** NOT live. All data on local and UAT is a test import of a production backup, and the importer has not run
 against real production. Replaces the BizLMS `local_evaluation` forms at cutover; `classes/bizlms/` brings their
 history over.
 **Last refreshed:** 2026-10-07 (the owner's delegated decisions EV-06, 16, 17, 20-NOTE, 36 and EV-TENANT built, plus
-three framework items; see the last section, "2026-10-07 - evaluation decisions implemented". Branch
-`claude/eval-followups`, PHPUnit NOT run there)
+three framework items, then the follow-ups of the data and safety reviews; see the last two sections, "2026-10-07 -
+evaluation decisions implemented" and "2026-10-07 - review follow-ups". Branch `claude/eval-followups`, PHPUnit NOT run
+there)
 
 ---
 
@@ -65,7 +68,7 @@ byte-identical; `tools/check-tree-drift.php` proves it.
 
 ```
 local/sentientia_evaluation/
-├── version.php                                  2026100701 / 1.17.0
+├── version.php                                  2026100702 / 1.17.1
 ├── README.md
 ├── index.php                                     Admin list
 ├── questions.php                                 Question list (read-only on an imported form)
@@ -81,6 +84,7 @@ local/sentientia_evaluation/
 │   ├── evaluation_manager.php                    Form CRUD, statistics, CSV, tenant + anonymity gates
 │   ├── evaluation_engine.php                     Trigger queue (invitations, pending shell rows)
 │   ├── evaluation_audience_assigner.php           Audience rule resolver + bulk assign
+│   ├── evaluation_mode_backfill.php               Upgrade step 2026100702: marks imported supervisor forms SP
 │   ├── learner_history.php                        Rows for my_evaluations.php
 │   ├── observer.php                               Completion events → queue triggers
 │   ├── bizlms/                                    ADR-032 importer: importer, form/template/question/
@@ -804,9 +808,9 @@ commit. Both plugin trees (and the platform trees) byte-identical. No flag was f
   for a named SP completion with no evaluator (it still follows map section 18: the completion's user answers, no subject).
   New verify check `imported_form_mode_mismatch`. A native form defaults to `SE`, and `update()` never changes it. The
   privacy provider is unchanged (no person column). **A site that already ran the import (a rehearsal or UAT copy)** has
-  imported supervisor forms that read `SE` after the upgrade: import again from a clean target, or backfill from
-  `local_evaluations.evaluationmode` through the map (the legacy tables are kept); `verify` names the mismatch. EV-17
-  must land before anyone proposes flipping `sentientia.evaluation.learner_history`.
+  imported supervisor forms that read `SE` after step `2026100701`: step `2026100702` (the review round, below) marks them
+  `SP`; `verify` names any mismatch that is left. EV-17 must land before anyone proposes flipping
+  `sentientia.evaluation.learner_history`.
 - **Framework, EV-26 - a PRESERVE sequence is floored above every id the legacy table ever issued.**
   `runner::finalise_feature` passes `writer::reset_sequence($table, $floor)` the floor
   `max(legacy MAX(id) + 1, legacy AUTO_INCREMENT)`; the writer raises the counter to it (MySQL and MariaDB `ALTER TABLE ...
@@ -876,3 +880,73 @@ commit. Both plugin trees (and the platform trees) byte-identical. No flag was f
 admin with the EV-06 flag ON (an imported named supervisor form with the Subject column, and a protected form),
 `responses.php` with the new link, and the EV-18 learner page set, plus the earlier owed shots of `responses.php`,
 `questions.php`, `index.php` and `respond.php`.
+
+## 2026-10-07 - review follow-ups (branch claude/eval-followups; 2026100702 / 1.17.1, platform 2026100701)
+
+The data review and the safety review of the decisions section above both said "ship"; this round closes their should-fix
+items that are small and safe. **PHPUnit NOT run** (the lead re-inits: evaluation `2026100702`, platform `2026100701`).
+Checked without Moodle: `php -l` on every changed file, `tools/check-tree-drift.php`, `tools/check-lang-parity.php`,
+`tools/check-path-boundary.php`, `tools/check-bizlms-fixture-copies.php`, the pre-commit hook on every commit. Both trees
+of both plugins byte-identical. No flag flipped, no row or file deleted.
+
+- **EV-17 back-fill, a NEW upgrade step `2026100702`.** `2026100701` only added the column, so a site that had already
+  imported (a rehearsal, a UAT copy) read its imported supervisor forms as `SE`, and the plugin no longer guesses from the
+  responses. A new step, not an edit of `2026100701`, because that step may already have run on a copy (a PHPUnit init, a
+  developer site) and Moodle never replays a step a site has passed. `classes/evaluation_mode_backfill::apply()` marks `SP`:
+  (1) a form with a response that names a subject (`subject_userid` not NULL, the old signal) and (2) where
+  `local_sentientia_legacymap` and the kept `local_evaluations.evaluationmode` exist, an imported or adopted form BizLMS
+  called SP (this catches an anonymous supervisor form and one with no evaluator, which the old signal misses). It only ever
+  changes `SE` to `SP`, leaves `timemodified` alone, changes nothing on a second run and touches no native form. A fresh
+  install takes install.xml. `importer::REQUIRES_VERSION` stays `2026100701` (the version that adds the column the importer
+  writes; the back-fill adds no schema). Tests: `evaluation_mode_test` (old signal, never SP to SE, idempotent, the step and
+  its savepoint), `bizlms_import_test` (the map signal on an anonymous supervisor form, then verify agrees).
+- **Platform coupling made explicit.** `local_sentientia_platform` is `2026100701` / `1.11.0` (a guarded no-op step with a
+  savepoint; no schema) and this plugin now depends on it: `step::target_children()` with `runner::preflight_target_children()`
+  (which replaced the importer's own leftover-rows blocker), the EV-26 sequence floor and row-bounded acceptances live in the
+  platform, so an evaluation tree beside an older platform tree would have lost the check silently. Every other importer's
+  `REQUIRES_VERSION` is unchanged (each names its own plugin's schema version).
+- **The flag is read for the EVALUATION's tenant.** `evaluation_manager::flag_scope()` (the root of `open_path`, or
+  `/<costcenterid>` for a pathless tenant-bound form, else tenant 0 and the viewer's customer; the customer through the new
+  `customer::of_tenant()`), `response_drilldown_enabled(?$evaluation)`, and a two-step gate: `require_response_drilldown_capability()`
+  before the page reads anything, `require_response_drilldown($evaluation)` after it loads the evaluation (capability again,
+  the ADR-031 tenant gate first so another tenant's flag is never disclosed, then `is_enabled_for` with the form's customer and
+  tenant). A cross-tenant administrator whose own scope has the flag ON can no longer open a tenant where it is OFF.
+  The old no-argument `require_response_drilldown()` is gone.
+- **A protected evaluation offers no individual responses.** `individual_responses_offered()` is the flag for the evaluation's
+  tenant AND not `identity_protected()`. On a protected form (anonymous now, an anonymous answer on record, or an anonymous
+  question) `response_list.php` and `response_detail.php` show an info notice and a "Back to the totals" button instead of
+  anything read from the responses, and `responses.php` draws no "Individual responses" button but a muted line saying why
+  (new strings `response_list_protected`, `response_list_back_to_totals`, `responses_individual_protected_note`, en and hi).
+  Why the conservative fix and not a partial one: naming nobody does not protect a respondent in a small classroom when the
+  list also prints the day, the course, program or classroom id and sorts by the exact time, and the detail page prints one
+  person's free text beside them. **What this does not cover, for the owner:** `exportcsv.php` and the filters of
+  `responses.php` (date, course, program, classroom id) still let an administrator narrow a protected form's totals or CSV to a
+  handful of people, as before (the CSV already carried the same context columns and a day-only date); changing them alters an
+  existing export and is the owner's call. `response_list_rows()` keeps its protected branch as a second line of defence.
+- **`open_employeeid` is guarded.** `response_detail_respondent()` and `response_list_rows()` select it only when the user table
+  has the column (a customer schema without the BizLMS `open_*` columns shows no employee id instead of failing).
+- **EV-36, one rule.** `bulk_assign_audience_form::validation()` and the submission both build the filter map through
+  `filters_from()` and test it with `evaluation_audience_assigner::has_constraint()`, so the form never accepts what the service
+  refuses (a whitespace-only designation used to pass `empty()` and then throw).
+- **`imported_form_mode_mismatch` and the importer read the mode one way.** `importer::mode_of()` / `is_supervisor()` (SP, ignoring
+  case and surrounding spaces) are used by the form step, the response step and `form_facts`, and the verify SQL compares
+  `UPPER(TRIM(...))`, so a value the owner maps through the decisions file (`sp `) writes SP and verifies clean instead of writing
+  SE while the check expected SP.
+- **The link test cannot be fooled.** `responses.php` takes `has_list_link`, `list_url` and `list_protected_note` from
+  `evaluation_manager::individual_responses_link()`; the test renders the template with that helper's output, asserts the
+  flag, the tenant and the protection change it, and fails if `responses.php` names any of those keys itself.
+- **Docs.** The visual-evidence README table is whole again (a blank line had split it) and lists the new shots; the flag
+  description in `db/feature_flags.php` no longer says "exactly as before" (the pages used to fail with no permission) and states the
+  per-tenant read and the protected-form rule. The framework's same-database reads (`runner::preflight_target_children()`,
+  `importer::form_mode_check()`) are documented in place rather than routed through the legacy reader (a correlated join cannot be paged).
+
+**Left as it is, on purpose:**
+
+- The EV-06 decision text asked for a rendered "not available" notice; both this page and `my_evaluations.php` throw
+  `moodle_exception`, which gives the standard error page. Same effect; change both together if the screenshot review prefers the notice.
+- A named supervisor response with no recorded subject (`sp_responder_unknown`: evaluator not recorded, or the subject's account
+  is gone) lists the person evaluated as the Respondent with an empty Subject ("-"). The count is in the Stage B report as the
+  warning; no marker was added to the list, which cannot tell the two cases apart. Put the count in front of Nitin before
+  `response_drilldown` is flipped.
+- The signed decisions file does not yet carry `evaluation.sticky_anonymity` and `evaluation.tenant_editor_fallback` (see the doc
+  items above); it is the owner's file and was not edited.

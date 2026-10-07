@@ -344,5 +344,21 @@ function xmldb_local_sentientia_evaluation_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026100701, 'local', 'sentientia_evaluation');
     }
 
+    // 2026100702 - EV-17 back-fill, for the site that imported before the column existed.
+    //
+    // Step 2026100701 above only adds the column, so a site that had already run the BizLMS import (a rehearsal or a
+    // UAT copy) reads its imported supervisor forms as self evaluations, and the plugin no longer guesses from the
+    // responses. This step marks them 'SP': the forms whose responses name a subject (the old signal) and, where the map
+    // and the kept BizLMS table are on the site, the imported forms BizLMS itself called SP (which also catches an
+    // anonymous supervisor form and one with no evaluator). It only ever changes SE to SP, so a re-run changes nothing.
+    //
+    // A NEW step, not an edit of 2026100701: that step may already have run on a copy (a PHPUnit init, a developer
+    // site), and Moodle never replays a step a site has passed, so a back-fill added inside it would reach only the
+    // sites that had not upgraded yet. A fresh install has no imported form and takes install.xml.
+    if ($oldversion < 2026100702) {
+        \local_sentientia_evaluation\evaluation_mode_backfill::apply();
+        upgrade_plugin_savepoint(true, 2026100702, 'local', 'sentientia_evaluation');
+    }
+
     return true;
 }

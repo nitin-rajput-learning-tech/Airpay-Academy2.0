@@ -149,7 +149,7 @@ final class response_step extends step {
         $responderunknown = false;
         $evaluatorunknown = false;
         if (!$anonymous) {
-            $supervised = (string) ($form->evaluationmode ?? importer::MODE_SELF) === importer::MODE_SUPERVISOR;
+            $supervised = importer::is_supervisor($form->evaluationmode ?? null);
             $evaluatedby = (int) ($row->evaluatedby ?? 0);
             // EV-17: a supervisor completion from before BizLMS recorded who filled it in (evaluatedby 0). The
             // responder is then the completion's user, who is the person EVALUATED, so the response names them as

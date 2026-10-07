@@ -96,9 +96,90 @@ final class evaluation_mode_test extends \advanced_testcase {
         $this->assertMatchesRegularExpression('/if \(\$oldversion < 2026100701\) \{.*?field_exists\(\$table, \$field\).*?'
             . "upgrade_plugin_savepoint\\(true, 2026100701, 'local', 'sentientia_evaluation'\\)/s", $upgrade,
             'a guarded step with its savepoint');
-        $this->assertStringContainsString('2026100701', (string) file_get_contents(__DIR__ . '/../version.php'));
         $this->assertSame(2026100701, \local_sentientia_evaluation\bizlms\importer::REQUIRES_VERSION,
             'the importer refuses to run below the version that adds the column it writes');
+        $plugin = new \stdClass();
+        include(__DIR__ . '/../version.php');
+        $this->assertGreaterThanOrEqual(\local_sentientia_evaluation\bizlms\importer::REQUIRES_VERSION, $plugin->version,
+            'the plugin is at or above the version the importer requires');
+    }
+
+    /**
+     * Review round of 2026-10-07: the back-fill is a NEW step, so it reaches a site whose 2026100701 step already ran, and
+     * the platform framework code the importer relies on is behind a version the plugin declares as its dependency.
+     */
+    public function test_the_back_fill_is_its_own_upgrade_step_and_the_platform_dependency_names_the_framework_code(): void {
+        $upgrade = (string) file_get_contents(__DIR__ . '/../db/upgrade.php');
+        $this->assertMatchesRegularExpression('/if \(\$oldversion < 2026100702\) \{\s*'
+            . '\\\\local_sentientia_evaluation\\\\evaluation_mode_backfill::apply\(\);\s*'
+            . "upgrade_plugin_savepoint\\(true, 2026100702, 'local', 'sentientia_evaluation'\\);/s", $upgrade,
+            'a step of its own, with its savepoint');
+        // The 2026100701 step still only adds the column: a step that has run is never edited.
+        $this->assertDoesNotMatchRegularExpression('/if \(\$oldversion < 2026100701\) \{[^}]*backfill/s', $upgrade);
+
+        $plugin = new \stdClass();
+        include(__DIR__ . '/../version.php');
+        $this->assertGreaterThanOrEqual(2026100702, $plugin->version);
+        $required = $plugin->dependencies['local_sentientia_platform'] ?? 0;
+        $this->assertGreaterThanOrEqual(2026100701, $required,
+            'the evaluation importer relies on step::target_children(), the sequence floor and row-bounded acceptances');
+        $plugin = new \stdClass();
+        include(__DIR__ . '/../../sentientia_platform/version.php');
+        $this->assertGreaterThanOrEqual($required, $plugin->version, 'the platform tree carries what is declared');
+        $platformupgrade = (string) file_get_contents(__DIR__ . '/../../sentientia_platform/db/upgrade.php');
+        $this->assertStringContainsString("upgrade_plugin_savepoint(true, 2026100701, 'local', 'sentientia_platform')",
+            $platformupgrade, 'the platform records the marker version');
+    }
+
+    /**
+     * EV-17 back-fill, the old signal: a form with a response that names a subject becomes SP; nothing else changes.
+     */
+    public function test_the_back_fill_marks_a_form_whose_responses_name_a_subject_and_nothing_else(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $gen = $this->getDataGenerator();
+        $supervisor = (int) $gen->create_user()->id;
+        $subject = (int) $gen->create_user()->id;
+
+        // What an imported supervisor form looks like on a site that upgraded: the column exists, holding the default.
+        $supervised = $this->form('Imported supervisor review');
+        $this->assign($supervised, $subject, 'responded', 1700000150);
+        $this->respond($supervised, $supervisor, $subject, 1700000100);
+        $this->respond($supervised, $supervisor, null, 1700000200);
+        // A self evaluation, answered, with no subject anywhere.
+        $self = $this->form('Self evaluation');
+        $this->respond($self, $subject, null, 1700000100);
+        // A form that is already SP and has no subject (an anonymous supervisor form, marked by a re-import): kept.
+        $already = $this->form('Anonymous supervisor review', 'SP', 1);
+        $this->respond($already, 0, null, 1700000100);
+        // A form nobody answered.
+        $empty = $this->form('Nobody answered');
+        $modified = (int) $DB->get_field('local_sentientia_evaluation', 'timemodified', ['id' => $supervised]);
+
+        // Before the back-fill the person evaluated is told they responded to the form about them.
+        $names = array_map(static fn(\stdClass $r): string => $r->name, learner_history::for_user($subject));
+        sort($names);
+        $this->assertSame(['Imported supervisor review', 'Self evaluation'], $names);
+
+        $counts = evaluation_mode_backfill::apply();
+        $this->assertSame(1, $counts['subject'], 'one form switched by its subject');
+        $this->assertSame(0, $counts['map'], 'no BizLMS table on this site, so the map signal has nothing to read');
+
+        $mode = static fn(int $id): string => (string) $DB->get_field('local_sentientia_evaluation', 'evaluationmode',
+            ['id' => $id]);
+        $this->assertSame('SP', $mode($supervised));
+        $this->assertSame('SE', $mode($self));
+        $this->assertSame('SP', $mode($already), 'an SP form is never turned back');
+        $this->assertSame('SE', $mode($empty));
+        $this->assertSame($modified, (int) $DB->get_field('local_sentientia_evaluation', 'timemodified',
+            ['id' => $supervised]), 'a repaired marker is not an edit of the form');
+
+        // The person evaluated is no longer listed for the form the back-fill repaired.
+        $names = array_map(static fn(\stdClass $r): string => $r->name, learner_history::for_user($subject));
+        $this->assertSame(['Self evaluation'], $names);
+
+        // Running it again changes nothing.
+        $this->assertSame(['subject' => 0, 'map' => 0], evaluation_mode_backfill::apply());
     }
 
     public function test_a_native_form_is_a_self_evaluation(): void {

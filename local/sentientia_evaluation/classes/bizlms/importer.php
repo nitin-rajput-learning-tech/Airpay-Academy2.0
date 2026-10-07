@@ -66,6 +66,35 @@ final class importer implements framework_importer {
     public const MODE_SELF = \local_sentientia_evaluation\evaluation_manager::MODE_SELF;
     public const MODE_SUPERVISOR = \local_sentientia_evaluation\evaluation_manager::MODE_SUPERVISOR;
 
+    /**
+     * The mode a BizLMS evaluationmode value stands for: SP when it reads SP, anything else (SE, nothing, a value the
+     * owner mapped that is not SP) is SE.
+     *
+     * Case and surrounding spaces are ignored, because the verify check imported_form_mode_mismatch compares in SQL
+     * (UPPER(TRIM(...)) of the same value), and a database compares case and trailing spaces its own way: reading
+     * 'sp ' strictly here would write SE while the check expected SP, and a form the owner mapped on purpose would
+     * fail verify. One reading, used by the form step, the response step, form_facts and the check, keeps them in
+     * agreement. A person evaluated is hidden from the learner history by SP, so a doubtful value that reads SP is
+     * the safer error.
+     *
+     * @param mixed $value local_evaluations.evaluationmode, or null when the column is absent
+     * @return string self::MODE_SUPERVISOR or self::MODE_SELF
+     */
+    public static function mode_of($value): string {
+        return strtoupper(trim(is_scalar($value) ? (string) $value : '', ' ')) === self::MODE_SUPERVISOR
+            ? self::MODE_SUPERVISOR : self::MODE_SELF;
+    }
+
+    /**
+     * Does a BizLMS evaluationmode value stand for a supervisor evaluation?
+     *
+     * @param mixed $value
+     * @return bool
+     */
+    public static function is_supervisor($value): bool {
+        return self::mode_of($value) === self::MODE_SUPERVISOR;
+    }
+
     /** BizLMS tables this feature claims. */
     public const SRC_FORMS = 'local_evaluations';
     public const SRC_ITEMS = 'local_evaluation_item';
@@ -575,6 +604,11 @@ final class importer implements framework_importer {
     /**
      * The SQL and parameters of the check that every imported form carries the mode BizLMS gave it (EV-17).
      *
+     * The source value is read the way mode_of() reads it: UPPER(TRIM(...)), so what the database matches and what the
+     * form step wrote cannot disagree. The legacy table is joined through $DB, not read through the legacy reader: a
+     * join cannot be paged, and the framework's standing assumption is that the legacy tables share the database and
+     * the prefix of the targets (the framework's own checks join them the same way).
+     *
      * @param context $ctx
      * @param string $map The map table, braced.
      * @param string $imported The WHERE fragment that selects the map rows of imported forms and other rows.
@@ -586,10 +620,11 @@ final class importer implements framework_importer {
         $where = "WHERE {$imported} AND m.targettable = :t AND m.sourcetable = :src";
         $params = $base + ['t' => self::T_FORMS, 'src' => self::SRC_FORMS];
         if ($ctx->legacy->exists(self::SRC_FORMS) && $ctx->legacy->has_column(self::SRC_FORMS, 'evaluationmode')) {
-            // SP on the source means SP here; anything else on the source (SE, or nothing) means SE here.
+            // SP on the source means SP here; anything else on the source (SE, or nothing) means SE here. "SP" is read
+            // as mode_of() reads it: case and surrounding spaces do not count.
             return ["SELECT COUNT(1) {$join} JOIN {" . self::SRC_FORMS . "} l ON l.id = m.sourceid {$where}
-                        AND ((l.evaluationmode = :spa AND e.evaluationmode <> :spb)
-                          OR (COALESCE(l.evaluationmode, '') <> :spc AND e.evaluationmode <> :sea))",
+                        AND ((UPPER(TRIM(l.evaluationmode)) = :spa AND e.evaluationmode <> :spb)
+                          OR (COALESCE(UPPER(TRIM(l.evaluationmode)), '') <> :spc AND e.evaluationmode <> :sea))",
                 $params + ['spa' => self::MODE_SUPERVISOR, 'spb' => self::MODE_SUPERVISOR,
                     'spc' => self::MODE_SUPERVISOR, 'sea' => self::MODE_SELF]];
         }

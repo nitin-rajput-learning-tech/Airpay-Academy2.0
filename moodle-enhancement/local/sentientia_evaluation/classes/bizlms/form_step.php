@@ -181,11 +181,12 @@ final class form_step extends step {
         $fields->status = self::STATUS_ARCHIVED;
         $fields->anonymous = $this->facts->anonymous_final($ctx, $row) ? 1 : 0;
         // EV-17: the form says it is a supervisor evaluation. The source column is declared SE or SP (any other
-        // value is an unknown_enum blocker before the run), and an absent column is a self evaluation. This is what
-        // lets Sentientia keep the person evaluated from being told they "responded" on an ANONYMOUS supervisor
-        // form, whose responses keep no subject, and on an old completion that names no evaluator.
-        $fields->evaluationmode = (string) ($row->evaluationmode ?? importer::MODE_SELF) === importer::MODE_SUPERVISOR
-            ? importer::MODE_SUPERVISOR : importer::MODE_SELF;
+        // value is an unknown_enum blocker before the run, unless the owner mapped it), and an absent column is a
+        // self evaluation. This is what lets Sentientia keep the person evaluated from being told they "responded"
+        // on an ANONYMOUS supervisor form, whose responses keep no subject, and on an old completion that names no
+        // evaluator. importer::mode_of() reads the value the way verify's imported_form_mode_mismatch reads it in
+        // SQL (surrounding spaces and case ignored), so a mapped 'sp ' is SP here and in the check.
+        $fields->evaluationmode = importer::mode_of($row->evaluationmode ?? null);
         $fields->timeopen = max(0, (int) ($row->timeopen ?? 0));
         $fields->timeclose = max(0, (int) ($row->timeclose ?? 0));
         $fields->multiple_submit = (int) ($row->multiple_submit ?? 0) === 1 ? 1 : 0;

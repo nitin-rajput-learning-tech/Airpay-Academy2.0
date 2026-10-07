@@ -258,7 +258,7 @@ final class form_facts {
         $anonymous = $this->anonymous_final($ctx, $form) || $completionuser <= 0
             || (int) ($completed->anonymous_response ?? 0) === 1;
         if (!$anonymous) {
-            $supervised = (string) ($form->evaluationmode ?? importer::MODE_SELF) === importer::MODE_SUPERVISOR;
+            $supervised = importer::is_supervisor($form->evaluationmode ?? null);
             $evaluatedby = (int) ($completed->evaluatedby ?? 0);
             $responder = $evaluatedby > 0 ? $evaluatedby : $completionuser;
             if (!$ctx->lookups->user_exists($responder)

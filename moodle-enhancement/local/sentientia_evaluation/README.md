@@ -7,8 +7,8 @@ for course-level evaluation surveys.
 | Field | Value |
 |---|---|
 | Component | `local_sentientia_evaluation` |
-| Version | 1.17.0 (`2026100701`) |
-| Depends on | `local_sentientia_org` |
+| Version | 1.17.1 (`2026100702`) |
+| Depends on | `local_sentientia_org`, `local_sentientia_platform` 2026100701 |
 
 ## What it does
 
@@ -31,8 +31,11 @@ for course-level evaluation surveys.
 `:manage`, `:respond`.
 
 The individual responses pages (`response_list.php`, `response_detail.php`) need `:manage` (the manager archetype: manager,
-tenant administrator, site administrator) and the default-OFF flag `sentientia.evaluation.response_drilldown`; with the
-flag OFF they answer "not available" and nothing links to them. They used to ask for a capability nobody declares.
+tenant administrator, site administrator) and the default-OFF flag `sentientia.evaluation.response_drilldown`, which is
+read for the EVALUATION's tenant (not the viewer's); with the flag OFF they answer "not available" and nothing links to
+them. They used to ask for a capability nobody declares. An evaluation whose respondents are protected (anonymous now, an
+anonymous answer on record, or an anonymous question) offers no individual responses at all: both pages show a notice and
+`responses.php` keeps its totals.
 
 ## Verify after install
 
@@ -65,7 +68,10 @@ assignments and answers. Run it only through
 - **Supervisor forms** keep the person evaluated in
   `responses.subject_userid` (the responder stays in `userid`) and are marked on the form itself:
   `evaluationmode` is `SP` (every other form is `SE`), so the person evaluated is never listed as having responded,
-  even on an anonymous supervisor form or an old completion with no evaluator.
+  even on an anonymous supervisor form or an old completion with no evaluator. The mode is read as SP ignoring case and
+  surrounding spaces, in PHP and in SQL alike (`importer::mode_of()`). A site that imported before the column existed
+  gets its supervisor forms back through upgrade step `2026100702` (`evaluation_mode_backfill`: the forms whose responses
+  name a subject, and, where the map and the kept BizLMS table are present, the imported forms BizLMS called SP).
 - **A form no clue can place** (its path, its stored root and its classroom) imports pathless, for cross-tenant callers
   only. It is never filed under the tenant of the user who last edited it (decision `evaluation.tenant_editor_fallback`).
 - **Imported forms are read-only**: `evaluation_manager` refuses to edit,

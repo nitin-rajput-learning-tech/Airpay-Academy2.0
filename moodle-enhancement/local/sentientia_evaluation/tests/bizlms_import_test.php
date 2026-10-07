@@ -1003,6 +1003,85 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertContains('imported_form_mode_mismatch:2', $failures['failures']['evaluation']);
     }
 
+    /**
+     * Review round of 2026-10-07 (imported_form_mode_mismatch): the form step reads the BizLMS value strictly in PHP while
+     * verify compared it in SQL, where MySQL ignores case and trailing spaces. A value the owner mapped through the
+     * decisions file ('sp ', typed in lower case with a space) wrote SE and then failed verify. Both read it one way now.
+     */
+    public function test_a_mode_the_owner_mapped_reads_the_same_in_the_import_and_in_verify(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        $this->put_form(15, ['evaluationmode' => 'sp ', 'open_path' => '/1/5']);
+        $decisions = decisions::from_array($this->declared_choices() + [
+            'accepted_reasons' => array_values(self::NEEDS_OWNER),
+            'enums.local_evaluations.evaluationmode' => ['sp ' => 'supervisor evaluation, typed in lower case with a space'],
+        ]);
+        [$result] = $this->contract_run(true, ['decisions' => $decisions]);
+        $this->assertSame(0, $result['exit'], implode('; ', array_merge($result['blockers'], $result['unproven'])));
+
+        $this->assertSame('SP', $this->form(15)->evaluationmode, 'a mapped value that reads SP is a supervisor form');
+        $this->assertSame('SP', $this->form(3)->evaluationmode);
+        $this->assertSame('SE', $this->form(1)->evaluationmode);
+
+        $check = (new runner(['decisions' => $decisions]))->verify(['evaluation']);
+        $this->assertSame(0, $check['exit'], implode('; ', $check['failures']['evaluation'] ?? []));
+    }
+
+    /**
+     * The one reading of a BizLMS evaluationmode value: SP, ignoring case and surrounding spaces, or else SE.
+     */
+    public function test_the_evaluation_mode_of_a_bizlms_value(): void {
+        foreach (['SP', 'sp', ' SP', 'SP ', ' sP '] as $value) {
+            $this->assertSame('SP', importer::mode_of($value), "'{$value}'");
+            $this->assertTrue(importer::is_supervisor($value));
+        }
+        foreach (['SE', 'se', '', ' ', 'S P', 'SPX', 'XSP', null, 0, false, [], "\tSP"] as $value) {
+            $this->assertSame('SE', importer::mode_of($value), var_export($value, true));
+            $this->assertFalse(importer::is_supervisor($value));
+        }
+    }
+
+    /**
+     * Review round of 2026-10-07 (EV-17 back-fill): a site that imported before the column existed has every imported
+     * form at the default SE. The back-fill marks the named supervisor form by its subject (the old signal) and the
+     * ANONYMOUS supervisor form, which keeps no subject, through the import's map and the kept BizLMS row.
+     */
+    public function test_the_back_fill_uses_the_map_for_an_anonymous_supervisor_form(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->contract_seed();
+        $u1 = $this->u['u1'];
+        $this->put_form(14, ['evaluationmode' => 'SP', 'anonymous' => 1, 'open_path' => '/1/5']);
+        $this->put_item(1401, ['evaluation' => 14, 'typ' => 'textfield', 'position' => 1]);
+        $this->put_completed(14001, 14, $u1, self::T0 + 14000, ['anonymous_response' => 1]);
+        $this->put_value(41, 14001, 1401, 'Fine');
+        [$result] = $this->contract_run(true);
+        $this->assertSame(0, $result['exit'], implode('; ', array_merge($result['blockers'], $result['unproven'])));
+        $this->assertSame('SP', $this->form(14)->evaluationmode);
+        $this->assertNull($this->response_of(14001)->subject_userid, 'nothing in the responses says form 14 is a supervisor form');
+
+        // The site as it stands after upgrade step 2026100701 on a copy that imported earlier: the column holds SE.
+        $DB->set_field(importer::T_FORMS, 'evaluationmode', 'SE');
+        $this->assertSame('SE', $this->form(3)->evaluationmode);
+        $this->assertSame('SE', $this->form(14)->evaluationmode);
+
+        $counts = evaluation_mode_backfill::apply();
+        $this->assertSame(['subject' => 1, 'map' => 1], $counts, 'form 3 by its subject, form 14 by the map');
+        foreach ($DB->get_records(importer::T_FORMS) as $form) {
+            $this->assertSame(in_array((int) $form->id, [3, 14], true) ? 'SP' : 'SE', $form->evaluationmode,
+                "form {$form->id}: only the two BizLMS supervisor forms are SP");
+        }
+        // verify agrees with BizLMS again, and a second run changes nothing.
+        $check = (new runner(['decisions' => $this->contract_decisions()]))->verify(['evaluation']);
+        $this->assertSame(0, $check['exit'], implode('; ', $check['failures']['evaluation'] ?? []));
+        $this->assertSame(['subject' => 0, 'map' => 0], evaluation_mode_backfill::apply());
+
+        // Only SE becomes SP: a form BizLMS calls SE that somebody marked SP is left alone (that is verify's to name).
+        $DB->set_field(importer::T_FORMS, 'evaluationmode', 'SP', ['id' => 1]);
+        $this->assertSame(['subject' => 0, 'map' => 0], evaluation_mode_backfill::apply());
+        $this->assertSame('SP', $this->form(1)->evaluationmode);
+    }
+
     public function test_responses_of_missing_people_and_missing_times_are_handled(): void {
         $report = $this->run_world();
         $this->assertSame('skipped', $this->entry('local_evaluation_completed', 1005)->outcome);
