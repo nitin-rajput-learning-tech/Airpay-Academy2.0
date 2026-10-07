@@ -488,7 +488,8 @@ Branch `claude/bizlms-import-users`. ADR-032 + mapping doc section 10. Built on 
 - `depends()` = `org` (the transcript table has a tenant path column). Not atomic. No core table is written
   (`core_writes()` is empty). Reasons: `no_unattached_errors`, `no_service_errors`, `duplicate_login_day`,
   `declined_by_decision` (no owner needed) and `invalid_login_row` (needs the owner: parity exits 2 until
-  `accepted_reasons` lists `users:invalid_login_row`).
+  `accepted_reasons` lists `users:invalid_login_row`). Decided 2026-10-07 (IDN-02, IDN-08): NOT pre-accepted; Nitin
+  accepts it after Stage B, if the rehearsal shows a non-zero count (the April copy has no `local_uniquelogins`).
 - Steps, in order: `users.sync_runs` (MAP, `local_userssyncdata`), `users.orphan_runs` and `users.service_runs`
   (derived, `#local_syncerrors.orphan_day` and `.service_day`), `users.sync_errors` (MAP), `users.transcript`
   (MAP), `users.logindays` (MAP, grouped on user and day), `users.domains` and `users.positions` (PRESERVE,
@@ -530,7 +531,9 @@ signed decision, see the note for the owner below.
 - Not flagged because they fix existing admin pages: `sync_runs.php` pages at 100 and says "Imported from
   BizLMS" for source `bizlms`; `sync_run_detail.php` breaks ties by id, pages at 500 and shows a dash for line 0;
   the settings link now points at `sync_runs.php` through `moodle_url` (it pointed at `hrms_history.php`, which
-  never existed).
+  never existed). (Changed 2026-10-07: the IMPORTED runs on those two pages are history nothing references, so they
+  now sit behind a third default-OFF flag, `sentientia.users.imported_sync_history`; the paging and the dash stay
+  default-ON. See the 2026-10-07 section at the end.)
 
 **Deviations from the map, and why**
 - The transcript and login-day tables are built unconditionally, not "only if production has rows": a fresh
@@ -560,8 +563,10 @@ signed decision, see the note for the owner below.
   anyone turns a flag ON (ADR-032 gate, CLAUDE.md section 5).
 - `usercreated`, `usermodified` and `modified_by` are not in `privacy_coverage_test::USER_COLUMNS` (framework
   test, not edited here), so the structural guard does not see them; the provider declares them anyway.
+  (Done 2026-10-07, F-15: the three columns are in `USER_COLUMNS`; this provider declares all three tables.)
 - Owner note: login days are deleted on erasure (above). `users.logindays_erasure = delete` is not a key the
-  code reads; it is the choice to record next to `users.erasure_treatment`.
+  code reads; it is the choice to record next to `users.erasure_treatment`. (DECIDED 2026-10-07, IDN-06: delete;
+  comment-only change, see the 2026-10-07 section.)
 - Stage B: `SHOW COLUMNS` of `mdl_local_syncerrors`, `local_positions`, `local_domains`; the row counts of
   the five tables (I-20); production `$CFG->timezone` (the midnight inference and every day bucket use it).
 
@@ -603,6 +608,8 @@ change or a new string). Both trees are identical.
   is Sentientia's existing rule for native runs, now also true for imported ones. BizLMS showed a non-admin only
   the errors they caused. Either sign "tenant-wide" or filter non-admin viewers to their own uploads (a small
   change in both pages). No cross-tenant leak either way.
+  **DECIDED 2026-10-07 (IDN-07): option C** - the run list stays tenant-wide, the rejected lines are shown only to
+  the uploader and to cross-tenant callers, imported and native runs alike. Built; see the 2026-10-07 section.
 
 **Still open**
 - No screenshots (no deploy in this build; it may not copy into C:/xampp). To capture before any flag is ON,
@@ -615,3 +622,51 @@ change or a new string). Both trees are identical.
   `usercreated`/`usermodified`/`modified_by` in `privacy_coverage_test::USER_COLUMNS`.
 - Merge note: `claude/bizlms-import-skills` also appends to the end of this plugin's `lang/en` and `lang/hi`
   (both trees): expect a trivial end-of-file conflict. That branch does not bump this plugin's version.
+
+
+## 2026-10-07 - ADR-032 owner decisions: IDN-06, IDN-07, XC-IMPORTED-HISTORY-READERS (2.9.0 -> 2.9.1, 2026100701)
+
+Branch `claude/owner-decisions-x`. Decision record: `docs/cutover/OWNER-DECISIONS-2026-10-07.md` (delegated 2026-10-07);
+signed keys `users.logindays_erasure`, `users.sync_history_visibility` and `framework.imported_rows_on_admin_pages` in
+`docs/cutover/bizlms-import-decisions.json`.
+
+- **IDN-07 (code): who sees a run's rejected lines.** The run list (`sync_runs.php`) stays tenant-wide, as BizLMS's sync
+  statistics were. `sync_run_detail.php` shows the header and the counts to everyone who may open the run, but queries and
+  shows the rejected lines (the e-mail, employee code and name of a prospective employee) only to the uploader of the run
+  (`usercreated` = the viewer) and to cross-tenant callers (`tenant::is_cross_tenant()`), for imported and native runs alike;
+  anyone else gets the notice `hrms_lines_uploader_only` and the rows query is not run. BizLMS parity: `manage_syncerrors_count()`
+  filtered a non-admin to `modified_by` = their own id. Consequence worth knowing: a run with no uploader (the daily cron or an
+  API run, `usercreated` 0) shows its lines to cross-tenant callers only; and two managers of one tenant who share HRMS duty no
+  longer see each other's rejected lines. Widening later is a deliberate, reversible choice (a per-customer setting behind a
+  default-OFF flag); un-showing personal data is not. No flag: it narrows an existing page, as the ADR-031 tenant fixes did.
+- **XC-IMPORTED-HISTORY-READERS (code, one change with IDN-07): new flag `sentientia.users.imported_sync_history`, default
+  OFF** (`db/feature_flags.php`; `legacy_history::FLAG_SYNC_HISTORY`, `::sync_history_enabled()`). OFF: `sync_runs.php` lists
+  no run whose `source` is `bizlms`, and `sync_run_detail.php` opens one with the notice `hrms_imported_history_off` instead of
+  the run (after the tenant check, so another tenant's run is refused first). ON: IDN-07 applies to them as above. Native runs
+  are never behind it. The rule behind it (framework key `framework.imported_rows_on_admin_pages`): imported ENTITIES that other
+  rows reference (orgs, roles, courses and enrolments, plans, programs, classrooms, evaluation forms and their responses, rules)
+  show on the admin pages that manage them, unflagged; imported HISTORY and log rows nothing references (orders, ledger, credits,
+  e-mail log, requests, recompletion resets, HRMS sync runs, login days, transcripts) show only when the feature's
+  imported-history flag is ON. Recommended future flip (not decided, never done here): ON for Airpay with the other readers,
+  after Nitin has reviewed the visual evidence. The decision to flip stays his.
+- **Code layout:** `classes/sync_access.php` (new) holds the rules: `runs_where()` (the tenant bound that used to sit in
+  `sync_runs.php`, plus the flag), `in_callers_tenant()` (the bound that used to sit in `sync_run_detail.php`),
+  `can_see_lines()`, `is_imported()`, `is_hidden_imported_run()`. The two pages call it; the tenant logic is moved, not changed.
+- **IDN-06 (comment-only, no behaviour change):** login days are deleted on a DPDP erasure request (`users.logindays_erasure =
+  delete`, a record the code does not read). `legacy_history.php` and `privacy/provider.php` say "signed 2026-10-07" instead of
+  "pending". The import deletes nothing; erasure acts on the Sentientia copy through Moodle's privacy request workflow. The legacy
+  `local_uniquelogins` stays untouched until the legacy-table privacy ADR.
+- **IDN-02 / IDN-08 (decided, no code):** `users:invalid_login_row` is NOT pre-accepted; Nitin accepts it after Stage B if the
+  rehearsal shows a count (the April copy has no `local_uniquelogins`).
+- **Strings (en + hi):** `hrms_lines_uploader_only`, `hrms_imported_history_off`.
+- **Version:** 2026100101 -> 2026100701, release 2.9.1. No schema change, so no upgrade step. The flag registry is read from
+  `db/feature_flags.php` (cached 60 s; the deploy's cache purge covers it).
+- **Tests (written, not run):** `tests/tenant_scope_test.php` (`@group tenant_isolation`): the uploader, a same-tenant non-uploader, a
+  site admin and a `:crosstenant` holder against an imported and a native run; a cron run (no uploader); another tenant's run is
+  refused; the list is tenant-wide, leaves imported runs out while the flag is OFF and takes them in when ON, never another tenant's.
+  `tests/legacy_history_test.php`: the flag is registered, default OFF; the hidden-run rule and the list's WHERE follow it.
+- **Visual evidence OWED (CLAUDE.md section 5; F-16):** desktop and mobile of `sync_runs.php` and `sync_run_detail.php`, flag
+  OFF and flag ON, as a tenant manager who uploaded the run, a tenant manager who did not (notice instead of lines), and a
+  cross-tenant admin, saved to `docs/visual-evidence/2026-10-07/` with a README.md. Needs the UAT session; this build did not
+  deploy (no copy into C:/xampp). Nitin reviews before any flag is flipped.
+- Both trees are byte-identical.
