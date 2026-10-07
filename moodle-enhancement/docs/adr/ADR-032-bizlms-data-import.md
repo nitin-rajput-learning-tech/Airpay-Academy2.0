@@ -442,6 +442,23 @@ The writer is the only code that writes. It enforces:
   delegated transaction. A crash leaves nothing. Features expected to be small declare `atomic()`
   (list in the mapping doc, section 2). Above the threshold they run in batch mode and the operator is
   told.
+- **The source is fingerprinted for the whole run when it starts (added 2026-10-08).** A new `--apply` run
+  reads the fingerprint (row count, max id, CRC; the step's own filter) of the source of EVERY load step of
+  every feature it will process, before the first feature writes, and stores each as a `legacystep` row with
+  status `pending`, in the same transaction as the run row. A step's fingerprint was taken only when the step
+  opened, so a step the crash never reached had no row on `--resume`, and a source changed while the run was
+  down looked like the source the run began with. Now `open_step` compares the source as it is with the stored
+  fingerprint FIRST, for a pending row as for a started or finished one, and refuses with
+  `source_changed_since_the_run_started:<step>`: a change made at any time between run start and the moment
+  the step opens (in the same run, or while it was down) is a blocker, not an import. A pending step then
+  starts from watermark 0. Left out on purpose: a recompute step (no source), a step whose source table is
+  missing (the not_applicable path; a pending row whose table is gone is a source change), a feature added only
+  as a dependency that is complete already (it runs no step), and a dry run (writes nothing). The pending rows
+  are written before any feature transaction, so feature mode never rolls them back: a rolled-back feature
+  returns its rows to pending with the run-start fingerprint, and the failure marker `<feature>.__feature` is
+  written when no step of the feature has left pending. A pending row is not a started feature (`--status`,
+  the status check). The check happens when a step opens, so a resume that refuses has already run the steps
+  before the changed one. Cost: one more fingerprint per step at run start; the CRC cap is the same.
 - **Report lines follow the commit.** The per-row counters and the CSV of non-imported rows are held while
   a batch (and, in feature mode, the whole feature) is inside its transaction, and written after the
   commit. A rolled-back batch leaves no phantom line, and `--resume` never lists a row twice.
@@ -838,7 +855,8 @@ today they are what keeps tenant admins working on a restored UAT database.
    a second apply writes nothing; a failpoint at batch k then resume gives the same rows as a clean
    run; a PRESERVE collision blocks and an identical header row is adopted; after finalise a native
    insert gets an id above the legacy maximum; no legacy tables gives `not_applicable` and exit 0 even
-   with `--apply`; a source change between runs makes resume refuse; a test-only logstore write trips
+   with `--apply`; a source change between runs makes resume refuse, whether the changed source belongs to
+   a step the crash had reached or to one it never reached (run-start fingerprints, pending rows); a test-only logstore write trips
    the tripwire; the writer rejects an unknown field, an overlong char and a missing timestamp;
    interleaved groups are processed deterministically; the marker is set only after verify; the static
    scan; the one-owner rule; an unknown enum value blocks.
@@ -1015,7 +1033,7 @@ pre-acceptance would pass any count the live backup produces.
 | Always keep ids | Seeds occupy low ids (skills), two sources share one target (institutes and rooms), fold targets are built from many rows. |
 | Per-feature `legacy_*` columns or archive tables as idempotence keys (the twelve maps) | Twelve designs, twelve schema additions, install/upgrade drift risk. One map does it once. |
 | Full-row JSON archive (`sourcedata`, `priordata`) in the map (Design A) | Copies every legacy row's personal data into a second table that then needs its own provider; roughly doubles storage; the legacy tables already are the archive. |
-| Per-row `rowhash` (Design A) | Per-step fingerprints (count, max id, CRC) detect source change at run start and on resume at far lower cost; parity catches mutation after completion. |
+| Per-row `rowhash` (Design A) | Per-step fingerprints (count, max id, CRC), taken for every step when a new run starts and compared when each step opens (so also on resume), detect source change at far lower cost; parity catches mutation after completion. |
 | `--allow-remap` on collision (Design A) | Splits the id space; a collision is an operator problem. |
 | `COUNT(*)` snapshots for side effects (Design A) | Slow on a large logstore. `MAX(id)` plus the existing checksums is cheaper and covers updates. |
 | `isprimary` plus `targettable` in the map key (Design B) | The database could not enforce one primary row per source row. The sub-key model can. |

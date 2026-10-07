@@ -118,6 +118,13 @@ ninja sandbox when Nitin provides server access + a fresh live backup. **Nothing
    rehearsal copy). If a rehearsal ever has to run enrolments in batch mode, plan for a fresh run, not a resume. The
    same pattern applies to `course_tags`. A later change can leave `status` and `timemodified` out of that step's
    fingerprint; it was not done because it needs a framework change.
+5d. **The legacy source is frozen from the moment `--apply` starts (added 2026-10-08).** A new run reads the fingerprint of
+   every step's source at its start and stores it as a `pending` step row; each step compares it again when it opens. An edit
+   to a legacy table (an INSERT, a DELETE or a changed value) at any time after the run started, including while a crashed run
+   waits for `--resume`, stops the run with `source_changed_since_the_run_started:<step>` (exit 1). The step that is named
+   had not started; the steps before it had already run. Do not repair the legacy data in place: restore the copy, or purge the
+   feature and start a fresh run. `--status` shows `pending_steps` per feature (steps of the newest run that have not opened);
+   a feature with only pending steps has not started.
 6. **Workflow smoke** (subset of the FOOLPROOF matrix, all proven headless-runnable):
    provision qa users (`tools/_qa_provision.php` pattern), then login/dashboard/catalog HTTP probes,
    SA-04 both personas, signup POST, reminder cron with a seeded deadline, whatsapp e2e dry,

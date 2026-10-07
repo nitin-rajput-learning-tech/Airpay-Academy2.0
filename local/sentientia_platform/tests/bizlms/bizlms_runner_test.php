@@ -321,16 +321,29 @@ final class bizlms_runner_test extends \advanced_testcase {
     }
 
     /**
-     * Feature mode rolls every step row back with the rest, so the runner leaves ONE durable failed row:
-     * without it nothing says the feature started, and the status check would stay green.
+     * Feature mode rolls every step's progress back with the rest, so the runner leaves ONE durable failed row:
+     * without it nothing says the feature started, and the status check would stay green. The step rows the run
+     * wrote at its start (pending, with the source fingerprint) are not part of that transaction, so they stay,
+     * back at pending and with no progress on them.
      */
     private function assert_only_a_failure_marker_survives(): void {
         global $DB;
-        $rows = $DB->get_records('local_sentientia_legacystep');
+        $rows = $DB->get_records_select('local_sentientia_legacystep', "status <> 'pending'");
         $this->assertCount(1, $rows);
         $row = reset($rows);
         $this->assertSame('toy.__feature', $row->stepkey);
         $this->assertSame('failed', $row->status);
+
+        $pending = $DB->get_records('local_sentientia_legacystep', ['status' => 'pending']);
+        $keys = array_values(array_map(fn($r) => $r->stepkey, $pending));
+        sort($keys);
+        $this->assertSame(['toy.dup', 'toy.fan', 'toy.item', 'toy.order', 'toy.org'], $keys,
+            'every load step still has the row the run wrote at its start');
+        foreach ($pending as $step) {
+            $this->assertNull($step->watermark, $step->stepkey);
+            $this->assertSame(0, (int) $step->processed, $step->stepkey);
+            $this->assertGreaterThan(0, (int) $step->srccount, $step->stepkey . ' keeps the fingerprint taken at run start');
+        }
     }
 
     public function test_marker_is_set_only_after_verify_and_finalise(): void {
@@ -731,6 +744,327 @@ final class bizlms_runner_test extends \advanced_testcase {
         [$resumed] = $this->execute(['resume' => true]);
         $this->assertSame(1, $resumed['exit']);
         $this->assertStringContainsString('source_changed_since_the_run_started:toy.org', implode(' ', $resumed['blockers']));
+    }
+
+    // Run-start fingerprints: a step that had not started when the run stopped is covered too.
+
+    /**
+     * One more row in local_toy_dup, the source of toy.dup (a step that is the third of five).
+     *
+     * @return void
+     */
+    private function add_a_dup_row(): void {
+        global $DB;
+        $DB->import_record('local_toy_dup', (object) ['id' => 6, 'natkey' => 'k3', 'label' => 'label 6',
+            'timecreated' => self::$toyt0 + 6]);
+    }
+
+    /**
+     * A failpoint that stops the run in the second batch of the first step: toy.org (five rows, batches of two).
+     *
+     * @return \Closure
+     */
+    private function crash_in_the_first_step(): \Closure {
+        return function (string $key, int $batch): void {
+            if ($key === 'toy.org' && $batch === 2) {
+                throw new \RuntimeException('injected failure');
+            }
+        };
+    }
+
+    /**
+     * A step that never started has a row from the first minute of the run, with the source as it was then.
+     * Fails on the old code: no row exists for toy.dup, so $row is false.
+     */
+    public function test_a_new_run_writes_a_pending_row_with_the_source_fingerprint_for_every_load_step(): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+        [$failed] = $this->execute(['failpoint' => $this->crash_in_the_first_step()]);
+        $this->assertSame(1, $failed['exit']);
+
+        $expected = ['toy.org' => 5, 'toy.item' => 5, 'toy.dup' => 5, 'toy.order' => 6, 'toy.fan' => 3];
+        foreach ($expected as $key => $rows) {
+            $row = $DB->get_record('local_sentientia_legacystep', ['runid' => $failed['runid'], 'stepkey' => $key]);
+            $this->assertNotFalse($row, "{$key} has a row although the run stopped before it");
+            $this->assertSame($key === 'toy.org' ? 'failed' : 'pending', $row->status, $key);
+            $this->assertSame($rows, (int) $row->srccount, $key);
+        }
+        $dup = $DB->get_record('local_sentientia_legacystep', ['stepkey' => 'toy.dup']);
+        $this->assertSame(5, (int) $dup->srcmaxid);
+        $this->assertNull($dup->watermark, 'pending: not started');
+        $this->assertSame(0, (int) $dup->processed);
+        $this->assertSame(0, $DB->count_records('local_sentientia_legacystep', ['stepkey' => 'toy.recompute']),
+            'a recompute step has no source to fingerprint');
+    }
+
+    /**
+     * Fails on the old code: the resume fingerprints toy.dup afresh when it opens, so the row inserted while the run
+     * was down looks like the source the run started with, and the run completes (exit 0 or 2, not 1).
+     */
+    public function test_resume_refuses_when_the_source_of_a_step_that_had_not_started_changed(): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+        [$failed] = $this->execute(['failpoint' => $this->crash_in_the_first_step()]);
+        $this->assertSame(1, $failed['exit']);
+        $this->assertSame('pending', $DB->get_field('local_sentientia_legacystep', 'status', ['stepkey' => 'toy.dup']));
+
+        $this->add_a_dup_row();
+        [$resumed] = $this->execute(['resume' => true]);
+        $this->assertSame(1, $resumed['exit']);
+        $this->assertSame('failed', $resumed['status']);
+        $this->assertStringContainsString('source_changed_since_the_run_started:toy.dup', implode(' ', $resumed['blockers']));
+        $this->assertFalse(legacymap::feature_complete('toy'));
+        $this->assertSame('pending', $DB->get_field('local_sentientia_legacystep', 'status', ['stepkey' => 'toy.dup']),
+            'refused at the door: the step never started');
+        $this->assertSame(0, $DB->count_records('local_sentientia_toy_dup'), 'nothing of toy.dup was imported');
+    }
+
+    /**
+     * The same, in feature mode: the crash rolls the whole feature back, and only the rows written at run start
+     * remember what the source looked like. Fails on the old code: the rollback removed every step row, the resume
+     * fingerprinted afresh and completed.
+     */
+    public function test_resume_after_a_feature_mode_rollback_still_refuses_a_changed_source(): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+        toy_importer::$atomic = true;
+        $atomic = ['atomic_threshold' => 50000];
+        [$failed] = $this->execute($atomic + ['failpoint' => $this->crash_in_the_first_step()]);
+        $this->assertSame(1, $failed['exit']);
+        $this->assert_only_a_failure_marker_survives();
+        $this->assertSame(0, $DB->count_records('local_sentientia_legacymap'), 'the feature rolled back');
+
+        $this->add_a_dup_row();
+        [$resumed] = $this->execute($atomic + ['resume' => true]);
+        $this->assertSame(1, $resumed['exit']);
+        $this->assertStringContainsString('source_changed_since_the_run_started:toy.dup', implode(' ', $resumed['blockers']));
+        $this->assertFalse(legacymap::feature_complete('toy'));
+        $this->assertSame(0, $DB->count_records('local_sentientia_legacymap'), 'and rolled back again');
+        $this->assertSame(1, $DB->count_records('local_sentientia_legacystep', ['stepkey' => 'toy.__feature']),
+            'the failure marker is written once for the run');
+    }
+
+    /**
+     * Fails on the old code (no pending rows to assert on, and nothing to compare): with no change at all a resume
+     * must give exactly the rows of a clean run, with every pending row used up.
+     */
+    public function test_resume_with_no_source_change_gives_the_rows_of_a_clean_run(): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+        [$clean] = $this->execute();
+        $this->assertContains($clean['exit'], [0, 2], implode('; ', $clean['blockers']));
+        $expected = $this->import_signature();
+        $this->assertSame(0, $DB->count_records('local_sentientia_legacystep', ['status' => 'pending']),
+            'a clean run uses every pending row');
+        $this->clear_import();
+
+        [$failed] = $this->execute(['failpoint' => $this->crash_in_the_first_step()]);
+        $this->assertSame(1, $failed['exit']);
+        $this->assertSame(4, $DB->count_records('local_sentientia_legacystep', ['status' => 'pending']),
+            'toy.item, toy.dup, toy.order and toy.fan had not started');
+
+        [$resumed] = $this->execute(['resume' => true]);
+        $this->assertContains($resumed['exit'], [0, 2], implode('; ', $resumed['blockers']));
+        $this->assertSame('complete', $resumed['features']['toy']);
+        $this->assertSame($expected, $this->import_signature(), 'resume gives the rows of a clean run');
+        $this->assertSame(1, $DB->count_records('local_sentientia_legacyrun'), 'resume continues the same run');
+        $this->assertSame(0, $DB->count_records('local_sentientia_legacystep', ['status' => 'pending']));
+        $rows = $DB->get_records('local_sentientia_legacystep', null, 'stepkey', 'stepkey, status, srccount');
+        $this->assertSame(['toy.dup', 'toy.fan', 'toy.item', 'toy.order', 'toy.org', 'toy.recompute'], array_keys($rows));
+        foreach ($rows as $row) {
+            $this->assertSame('done', $row->status, $row->stepkey);
+        }
+        $this->assertSame(5, (int) $rows['toy.dup']->srccount, 'the fingerprint of the step is the one from run start');
+    }
+
+    /**
+     * A source that changes inside one uninterrupted run, after the run started and before its step opens: the
+     * failpoint stands in for a person editing the legacy table while the import is running. Fails on the old code:
+     * the step fingerprints afresh when it opens, sees the new row as its source and the run completes.
+     */
+    public function test_a_source_changed_during_the_run_is_refused_when_its_step_opens(): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+        $changed = false;
+        $edit = function (string $key, int $batch) use (&$changed): void {
+            if ($key === 'toy.org' && $batch === 1 && !$changed) {
+                $changed = true;
+                $this->add_a_dup_row();
+            }
+        };
+        [$result] = $this->execute(['failpoint' => $edit]);
+        $this->assertTrue($changed);
+        $this->assertSame(1, $result['exit']);
+        $this->assertSame('failed', $result['status']);
+        $this->assertStringContainsString('source_changed_since_the_run_started:toy.dup', implode(' ', $result['blockers']));
+        $this->assertFalse(legacymap::feature_complete('toy'));
+        $this->assertSame('failed', $DB->get_field('local_sentientia_legacyrun', 'status', ['id' => $result['runid']]));
+
+        $states = $DB->get_records_menu('local_sentientia_legacystep', ['runid' => $result['runid']], '', 'stepkey, status');
+        ksort($states);
+        $this->assertSame(['toy.dup' => 'pending', 'toy.fan' => 'pending', 'toy.item' => 'done', 'toy.order' => 'pending',
+            'toy.org' => 'done'], $states, 'the steps before the changed one ran, it and the later ones never started');
+    }
+
+    /**
+     * An EDITED row leaves the count and the highest id as they were: only the CRC sees it. MySQL and MariaDB only
+     * (fingerprint::table() returns no CRC elsewhere, and the old and new code alike then cannot see such an edit).
+     * Fails on the old code, like the insert above.
+     */
+    public function test_an_edited_row_in_a_later_source_is_caught_by_the_crc(): void {
+        global $DB;
+        if ($DB->get_dbfamily() !== 'mysql') {
+            $this->markTestSkipped('the CRC fingerprint exists on MySQL and MariaDB only');
+        }
+        $this->begin();
+        $this->seed_toy_data();
+        [$failed] = $this->execute(['failpoint' => $this->crash_in_the_first_step()]);
+        $this->assertSame(1, $failed['exit']);
+
+        $DB->set_field('local_toy_fan', 'title', 'fixed by hand while the run was down', ['id' => 2]);
+        [$resumed] = $this->execute(['resume' => true]);
+        $this->assertSame(1, $resumed['exit']);
+        $this->assertStringContainsString('source_changed_since_the_run_started:toy.fan', implode(' ', $resumed['blockers']));
+    }
+
+    /**
+     * Guard against the obvious wrong implementation: a run looks only at the rows of ITS OWN run. After a completed
+     * run the source may have grown, and the next fresh run starts from the source as it is. (This passes on the old
+     * code too; it fails on an implementation that compares with the newest stored fingerprint of the step key.)
+     */
+    public function test_a_fresh_run_after_a_completed_run_is_not_blocked_by_the_earlier_fingerprints(): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+        [$first] = $this->execute();
+        $this->assertContains($first['exit'], [0, 2], implode('; ', $first['blockers']));
+
+        $this->add_a_dup_row();
+        [$second] = $this->execute();
+        $this->assertContains($second['exit'], [0, 2], implode('; ', $second['blockers']));
+        $this->assertSame('complete', $second['features']['toy']);
+        $this->assertNotSame($first['runid'], $second['runid']);
+        $this->assertSame(5, (int) $DB->get_field('local_sentientia_legacystep', 'srccount',
+            ['runid' => $first['runid'], 'stepkey' => 'toy.dup']), 'the first run keeps what it saw');
+        $this->assertSame(6, (int) $DB->get_field('local_sentientia_legacystep', 'srccount',
+            ['runid' => $second['runid'], 'stepkey' => 'toy.dup']), 'the second run saw the new row from its start');
+        $this->assertSame(0, $DB->count_records('local_sentientia_legacystep', ['runid' => $second['runid'], 'status' => 'pending']));
+    }
+
+    /**
+     * Same guard for a run that crashed and was abandoned: its pending rows stay behind as history, and a new run
+     * (not --resume) neither reads nor reuses them.
+     */
+    public function test_a_fresh_run_after_an_abandoned_run_is_not_blocked_by_its_pending_rows(): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+        [$failed] = $this->execute(['failpoint' => $this->crash_in_the_first_step()]);
+        $this->assertSame(1, $failed['exit']);
+
+        $this->add_a_dup_row();
+        [$fresh] = $this->execute();
+        $this->assertContains($fresh['exit'], [0, 2], implode('; ', $fresh['blockers']));
+        $this->assertSame('complete', $fresh['features']['toy']);
+        $this->assertSame(4, $DB->count_records('local_sentientia_legacystep', ['runid' => $failed['runid'], 'status' => 'pending']),
+            'the abandoned run keeps its rows');
+        $this->assertSame(0, $DB->count_records('local_sentientia_legacystep', ['runid' => $fresh['runid'], 'status' => 'pending']));
+    }
+
+    /**
+     * A feature added to the run only as a dependency, and complete already, runs no step, so it gets no row and a
+     * change in its source does not stop the run that merely needs it to be there.
+     */
+    public function test_a_complete_dependency_added_to_a_new_run_gets_no_fingerprint(): void {
+        global $DB;
+        $this->begin([
+            new toy_importer('toyitem', ['toyorg'], ['local_toy_item']),
+            new toy_importer('toyorg', [], ['local_toy_org']),
+        ]);
+        $this->seed_toy_data();
+        [$first] = $this->execute([], ['toyitem']);
+        $this->assertContains($first['exit'], [0, 2], implode('; ', $first['blockers']));
+
+        $DB->import_record('local_toy_org', (object) ['id' => 60, 'name' => 'New', 'parentid' => 0, 'path' => '/1',
+            'status' => 1, 'timecreated' => 1, 'timemodified' => 1]);
+        [$again, $report] = $this->execute([], ['toyitem']);
+        $this->assertContains($again['exit'], [0, 2], implode('; ', $again['blockers']));
+        $this->assertSame('already_complete', $again['features']['toyorg']);
+        $this->assertSame(0, $DB->count_records('local_sentientia_legacystep', ['runid' => $again['runid'], 'feature' => 'toyorg']));
+        $this->assertSame(1, $report->to_array()['meta']['run_start_fingerprints'], 'only toyitem.item');
+    }
+
+    /**
+     * A step row that is only pending says nothing about the feature having started: the status facts and the
+     * status check must not treat a run's rows for features it never reached as half-imported work.
+     */
+    public function test_pending_rows_do_not_count_as_a_started_feature(): void {
+        global $DB;
+        $this->begin([
+            new toy_importer('toyorg', [], ['local_toy_org']),
+            new toy_importer('toyitem', ['toyorg'], ['local_toy_item']),
+        ]);
+        $this->seed_toy_data();
+        $failpoint = function (string $key, int $batch): void {
+            if ($key === 'toyorg.org' && $batch === 2) {
+                throw new \RuntimeException('injected failure');
+            }
+        };
+        [$failed] = $this->execute(['failpoint' => $failpoint]);
+        $this->assertSame(1, $failed['exit']);
+        $this->assertSame('pending', $DB->get_field('local_sentientia_legacystep', 'status', ['stepkey' => 'toyitem.item']));
+
+        $states = runner::feature_states(registry::load());
+        $this->assertTrue($states['toyorg']['started']);
+        $this->assertSame(0, $states['toyorg']['pending_steps']);
+        $this->assertFalse($states['toyitem']['started'], 'a pending row is not a started feature');
+        $this->assertSame(1, $states['toyitem']['pending_steps']);
+        $this->assertSame(0, $states['toyitem']['running_steps']);
+
+        $summary = (new \local_sentientia_platform\check\bizlms_import())->get_result()->get_summary();
+        $this->assertStringContainsString('toyorg', $summary);
+        $this->assertStringNotContainsString('toyitem', $summary, 'toyitem never started');
+    }
+
+    /**
+     * Rows of every toy target table plus the map, as a comparable signature that leaves out ids.
+     *
+     * @return array
+     */
+    private function import_signature(): array {
+        global $DB;
+        $signature = ['targets' => [], 'map' => []];
+        foreach ((new toy_importer())->target_tables() as $table) {
+            $signature['targets'][$table] = $DB->count_records($table);
+        }
+        $rows = $DB->get_records('local_sentientia_legacymap', null, 'sourcetable, sourceid, subkey',
+            'id, sourcetable, sourceid, subkey, targettable, outcome, reason');
+        foreach ($rows as $row) {
+            $signature['map'][] = implode('|', [$row->sourcetable, $row->sourceid, $row->subkey, $row->targettable,
+                $row->outcome, (string) $row->reason]);
+        }
+        return $signature;
+    }
+
+    /**
+     * Put the toy targets, the map and the run bookkeeping back to empty between two runs of one test.
+     *
+     * @return void
+     */
+    private function clear_import(): void {
+        global $DB;
+        foreach ((new toy_importer())->target_tables() as $table) {
+            $DB->delete_records($table);
+        }
+        $DB->delete_records('local_sentientia_legacymap');
+        $DB->delete_records('local_sentientia_legacystep');
+        $DB->delete_records('local_sentientia_legacyrun');
+        unset_config('bizlms_complete_toy', 'local_sentientia_platform');
     }
 
     public function test_a_decision_the_owner_has_not_accepted_blocks_the_feature_that_declares_it(): void {
