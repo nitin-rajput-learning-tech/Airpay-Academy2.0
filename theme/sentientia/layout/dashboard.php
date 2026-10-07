@@ -516,8 +516,15 @@ if (isloggedin() && !isguestuser()) {
             $classroomcount = 0;
             $examcount = 0;
             try {
-                $classroomcount = $DB->count_records_select('local_classroom',
-                    '1=1' . $tenantfilter_course, $tenantparams_course);
+                // The Sentientia classroom table, scoped to the admin's tenant (ADR-031: no tenant, no count).
+                // This used to read the BizLMS {local_classroom} table.
+                if (class_exists('\\local_sentientia_classroom\\session_manager')) {
+                    $classroomcount = $scope->is_unrestricted()
+                        ? \local_sentientia_classroom\session_manager::count_classrooms('')
+                        : ($scope->is_unresolved()
+                            ? 0
+                            : \local_sentientia_classroom\session_manager::count_classrooms($scope->root()));
+                }
             } catch (Exception $e) {}
             try { $examcount = $DB->count_records('local_onlineexams'); } catch (Exception $e) {}
 
@@ -1019,12 +1026,16 @@ if (isloggedin() && !isguestuser()) {
             && \local_sentientia_platform\feature_flags::is_enabled(
                 'sentientia.dashboard.skillsrecs.enabled');
         if ($skillsrecs) {
-            foreach (\local_sentientia_skills\skills_manager::get_gap_courses((int)$USER->id, 3) as $rec) {
+            // ADR-032: get_recommended_courses() is get_gap_courses() with the courses for the skills the learner
+            // said they are interested in (imported from BizLMS) appended; the flag that turns this rail on also
+            // turns those on, and with it OFF the two are the same list.
+            foreach (\local_sentientia_skills\skills_manager::get_recommended_courses((int)$USER->id, 3) as $rec) {
                 $recommendations[] = [
                     'id' => $rec['courseid'],
                     'fullname' => $rec['fullname'],
-                    'summary' => get_string('recommend_closesgap', 'theme_sentientia',
-                        $rec['skill_name']),
+                    'summary' => get_string(
+                        ($rec['reason'] ?? 'gap') === 'interest' ? 'recommend_interest' : 'recommend_closesgap',
+                        'theme_sentientia', $rec['skill_name']),
                     'category' => $rec['skill_name'],
                     'viewurl' => $rec['viewurl'],
                 ];

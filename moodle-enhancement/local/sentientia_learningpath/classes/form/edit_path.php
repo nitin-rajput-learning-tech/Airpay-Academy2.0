@@ -36,7 +36,7 @@ class edit_path extends \core_form\dynamic_form {
         $mform->addElement('header', 'hdr_basic', get_string('heading_basic', 'local_sentientia_learningpath'));
 
         $mform->addElement('text', 'name', get_string('name', 'local_sentientia_learningpath'),
-            ['size' => 50, 'maxlength' => 254]);
+            ['size' => 50, 'maxlength' => 255]);
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
 

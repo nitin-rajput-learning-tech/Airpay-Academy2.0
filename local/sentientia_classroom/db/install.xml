@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/sentientia_classroom/db" VERSION="20260925"
+<XMLDB PATH="local/sentientia_classroom/db" VERSION="20260930"
        COMMENT="Airpay Classroom Training — replaces BizLMS local_classroom">
   <TABLES>
     <TABLE NAME="local_sentientia_classroom" COMMENT="Classroom/ILT sessions (fork of local_classroom)">
       <FIELDS>
         <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="name"            TYPE="char" LENGTH="254" NOTNULL="true"/>
+        <FIELD NAME="shortname"       TYPE="char" LENGTH="225" NOTNULL="false"
+               COMMENT="ADR-032: BizLMS short name. Filled by the classroom importer, not by the edit form"/>
         <FIELD NAME="description"     TYPE="text" NOTNULL="false"/>
         <FIELD NAME="costcenterid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
                COMMENT="Tenant org ID"/>
@@ -18,12 +20,20 @@
                COMMENT="Phase 5 A.5: local_sentientia_locations.id. Added by step 2026051160; declared here 2026-09-25 (step 2026092501 adds it where missing)"/>
         <FIELD NAME="capacity"        TYPE="int"  LENGTH="6"  NOTNULL="true" DEFAULT="30"/>
         <FIELD NAME="status"          TYPE="int"  LENGTH="2"  NOTNULL="true" DEFAULT="1"
-               COMMENT="1=active, 0=cancelled, 2=completed"/>
+               COMMENT="1=active, 0=cancelled, 2=completed, 5=draft, 6=on hold (5 and 6 added by ADR-032: BizLMS had both states; 3 and 4 are never used because BizLMS used them for other meanings)"/>
         <FIELD NAME="visible"         TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1"/>
         <FIELD NAME="startdate"       TYPE="int"  LENGTH="10" NOTNULL="false"
                COMMENT="P1 batch (2026-05-16): UNIX ts — classroom becomes enrollable on this date"/>
         <FIELD NAME="enddate"         TYPE="int"  LENGTH="10" NOTNULL="false"
                COMMENT="P1 batch (2026-05-16): UNIX ts — classroom closes for new enrolments on this date"/>
+        <FIELD NAME="trainingstart"   TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="ADR-032: UNIX ts, first day the classroom runs (BizLMS startdate). startdate and enddate stay the enrolment window"/>
+        <FIELD NAME="trainingend"     TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="ADR-032: UNIX ts, last day the classroom runs (BizLMS enddate)"/>
+        <FIELD NAME="timecompleted"   TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="ADR-032: UNIX ts, when BizLMS recorded the classroom as completed"/>
+        <FIELD NAME="createdby"       TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="ADR-032: FK to mdl_user.id, the user who created the classroom in BizLMS"/>
         <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
       </FIELDS>
@@ -33,6 +43,45 @@
       <INDEXES>
         <INDEX NAME="idx_costcenter" UNIQUE="false" FIELDS="costcenterid"/>
         <INDEX NAME="idx_status"     UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_classroom_trainers" COMMENT="ADR-032: every trainer of a classroom (BizLMS local_classroom_trainers). The primary trainer is also local_sentientia_classroom.trainerid. Created by upgrade step 2026093002; must stay identical to db/upgradelib.php.">
+      <FIELDS>
+        <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="classroomid"     TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="trainerid"       TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="FK to mdl_user.id, a trainer of the classroom"/>
+        <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"      TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_classroom" TYPE="foreign" FIELDS="classroomid" REFTABLE="local_sentientia_classroom" REFFIELDS="id"/>
+        <KEY NAME="fk_trainer"   TYPE="foreign" FIELDS="trainerid"   REFTABLE="user"                       REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_classroom_trainer" UNIQUE="true" FIELDS="classroomid, trainerid"
+               COMMENT="A user is a trainer of a classroom once"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_classroom_courses" COMMENT="ADR-032: the courses linked to a classroom (BizLMS local_classroom_courses). Created by upgrade step 2026093002; must stay identical to db/upgradelib.php.">
+      <FIELDS>
+        <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="classroomid"     TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="courseid"        TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"      TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_classroom" TYPE="foreign" FIELDS="classroomid" REFTABLE="local_sentientia_classroom" REFFIELDS="id"/>
+        <KEY NAME="fk_course"    TYPE="foreign" FIELDS="courseid"    REFTABLE="course"                     REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_classroom_course" UNIQUE="true" FIELDS="classroomid, courseid"
+               COMMENT="A course is linked to a classroom once"/>
       </INDEXES>
     </TABLE>
 
@@ -74,6 +123,12 @@
         <FIELD NAME="userid"          TYPE="int"  LENGTH="10" NOTNULL="true"/>
         <FIELD NAME="enrolledby"      TYPE="int"  LENGTH="10" NOTNULL="false"
                COMMENT="FK to mdl_user.id — admin who added them"/>
+        <FIELD NAME="completion_status" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0"
+               COMMENT="ADR-032: 0=pending, 1=completed (BizLMS completion_status). Imported history; nothing in Sentientia sets it yet"/>
+        <FIELD NAME="timecompleted"   TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="ADR-032: UNIX ts, when the learner completed the classroom. Only set when completion_status is 1"/>
+        <FIELD NAME="hours"           TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="ADR-032: hours BizLMS credited to the learner for this classroom"/>
         <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
       </FIELDS>
@@ -153,6 +208,12 @@
         <FIELD NAME="costcenterid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
                COMMENT="Tenant org ID"/>
         <FIELD NAME="active"          TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="parentid"        TYPE="int"  LENGTH="10" NOTNULL="false" SEQUENCE="false"
+               COMMENT="ADR-032: a room points at its institute (another row of this table). NULL for an institute or a venue with no parent"/>
+        <FIELD NAME="venue_type"      TYPE="int"  LENGTH="2"  NOTNULL="false" SEQUENCE="false"
+               COMMENT="ADR-032: 1=internal, 2=external (BizLMS institute_type). NULL when unknown"/>
+        <FIELD NAME="building"        TYPE="char" LENGTH="225" NOTNULL="false" SEQUENCE="false"
+               COMMENT="ADR-032: building of a room (BizLMS local_location_room.building)"/>
         <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>

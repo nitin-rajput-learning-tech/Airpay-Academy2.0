@@ -281,5 +281,21 @@ function xmldb_local_sentientia_classroom_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026093001, 'local', 'sentientia_classroom');
     }
 
+    // 2026093002 — ADR-032 (BizLMS data import, classroom feature): the schema the classroom importer
+    // writes to. All additive, nothing is dropped or rewritten, and every change is guarded, so the step
+    // is safe on a site that already has any part of it (a fresh install has all of it from install.xml):
+    //  - local_sentientia_classroom: shortname, trainingstart, trainingend, timecompleted, createdby;
+    //  - local_sentientia_classroom_users: completion_status, timecompleted, hours;
+    //  - local_sentientia_locations: parentid, venue_type, building;
+    //  - new tables local_sentientia_classroom_trainers and local_sentientia_classroom_courses.
+    // Status 5 (draft) and 6 (on hold) need no column change. See db/upgradelib.php.
+    if ($oldversion < 2026093002) {
+        require_once(__DIR__ . '/upgradelib.php');
+        foreach (local_sentientia_classroom_ensure_import_schema($dbman) as $line) {
+            mtrace('local_sentientia_classroom: ' . $line);
+        }
+        upgrade_plugin_savepoint(true, 2026093002, 'local', 'sentientia_classroom');
+    }
+
     return true;
 }

@@ -114,3 +114,22 @@ $string['self_rate_submit']        = 'मेरा स्तर सहेजे�
 $string['self_rate_saved']         = 'आपका स्तर सहेज लिया गया है।';
 $string['self_rate_level_invalid'] = 'स्तर {$a->level} अनुमत सीमा (1..{$a->max}) से बाहर है।';
 $string['self_rate_pick_level']    = 'कृपया पहले एक स्तर चुनें।';
+
+// ADR-032 (BizLMS import, 2026-09-30) - skill interests, privacy metadata, source words, held skills.
+$string['privacy:metadata:skill_interest']              = 'वे कौशल जिनमें शिक्षार्थी ने रुचि बताई है। पिछले प्लेटफ़ॉर्म की रुचि-सूची से आयात किया गया; कौशल सिफ़ारिशों द्वारा पढ़ा जाता है।';
+$string['privacy:metadata:skill_interest:userid']       = 'वह शिक्षार्थी जिसने कौशल चुने।';
+$string['privacy:metadata:skill_interest:skillid']      = 'वह कौशल जिसमें शिक्षार्थी की रुचि है।';
+$string['privacy:metadata:skill_interest:timecreated']  = 'रुचि पहली बार कब दर्ज हुई।';
+$string['privacy:metadata:skill_interest:timemodified'] = 'शिक्षार्थी ने अपनी सूची आख़िरी बार कब बदली।';
+
+$string['self_rate_source']      = 'स्रोत: {$a}';
+$string['source_course']         = 'पाठ्यक्रम पूर्णता';
+$string['source_assessment']     = 'मूल्यांकन';
+$string['source_manual']         = 'प्रबंधक द्वारा जोड़ा गया';
+$string['source_self']           = 'स्व-रेटिंग';
+$string['source_import']         = 'पिछले प्लेटफ़ॉर्म से आयातित';
+
+$string['heldskills_title']      = 'आपके पास जो कौशल हैं';
+$string['heldskills_intro']      = 'आपके पद के लिए अभी कोई कौशल निर्धारित नहीं हैं, इसलिए तुलना के लिए कुछ नहीं है। आपके पास पहले से ये कौशल हैं।';
+$string['interests_title']       = 'जिन कौशलों में आपकी रुचि है';
+$string['recommended_for_you']   = 'आपके लिए सुझाव';

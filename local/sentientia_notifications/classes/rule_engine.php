@@ -543,6 +543,17 @@ class rule_engine {
         $cutoff = time() - ((int) $rule->trigger_days * 86400);
         $batchlimit = (int) (get_config('local_sentientia_notifications', 'batch_limit') ?: 500);
 
+        // A session the BizLMS import brought in (ADR-032) is history: it ended long before this rule could
+        // have been switched on, and nobody should be asked for feedback on a training from years ago the day a
+        // rule is enabled. The rule has no upper age limit, so the provenance guard keeps those sessions out.
+        $notimported = '1 = 1';
+        $importparams = [];
+        if (class_exists('\\local_sentientia_platform\\bizlms\\provenance')
+                && $manager->table_exists(\local_sentientia_platform\bizlms\legacymap::TABLE)) {
+            [$notimported, $importparams] = \local_sentientia_platform\bizlms\provenance::not_imported_sql(
+                's', 'local_sentientia_classroom_sessions', 'iltfb');
+        }
+
         // Sessions that ended at or before cutoff, plus their roster users.
         $rows = $DB->get_records_sql("
             SELECT cu.userid, u.firstname, s.id AS sessionid,
@@ -553,9 +564,10 @@ class rule_engine {
               JOIN {local_sentientia_classroom} c ON c.id = s.classroomid
              WHERE s.endtime > 0 AND s.endtime < :cutoff
                AND u.deleted = 0 AND u.suspended = 0
+               AND $notimported
           ORDER BY s.endtime DESC
              LIMIT $batchlimit",
-            ['cutoff' => $cutoff]);
+            ['cutoff' => $cutoff] + $importparams);
 
         foreach ($rows as $r) {
             $sent = self::send($rule, (int) $r->userid, null,

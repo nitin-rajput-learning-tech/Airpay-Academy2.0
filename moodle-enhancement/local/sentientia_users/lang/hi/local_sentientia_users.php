@@ -272,3 +272,5 @@ $string['transcript_status_unknown'] = 'अज्ञात';
 $string['position'] = 'पद';
 $string['domain'] = 'डोमेन';
 $string['hrms_source_bizlms'] = 'BizLMS से आयातित';
+// ADR-032 (BizLMS import, skills): the skills a user said they are interested in, on the skill profile.
+$string['skillprofile_interests']      = 'रुचि के कौशल';

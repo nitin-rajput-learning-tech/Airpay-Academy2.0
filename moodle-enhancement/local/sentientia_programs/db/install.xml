@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/sentientia_programs/db" VERSION="20260516"
+<XMLDB PATH="local/sentientia_programs/db" VERSION="20260930"
        COMMENT="Airpay Certification Programs — multi-level certification tracks">
   <TABLES>
     <TABLE NAME="local_sentientia_programs" COMMENT="Certification programs (replaces BizLMS local_program)">
@@ -43,6 +43,8 @@
         <FIELD NAME="sortorder"       TYPE="int"  LENGTH="6"  NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="completion_required"  TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1"
                COMMENT="1=must complete to proceed, 0=optional"/>
+        <FIELD NAME="completion_rule" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="all"
+               COMMENT="all = every mandatory course completes the level, any = one mandatory course is enough (ADR-032, BizLMS coursetracking OR)"/>
         <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
       </FIELDS>
       <KEYS>
@@ -84,6 +86,9 @@
                COMMENT="0=enrolled, 1=in_progress, 2=completed"/>
         <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timecompleted"   TYPE="int"  LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="enrolledby"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Actor: the user who enrolled this learner (0 = unknown). Anonymised when that user is erased (ADR-032)"/>
+        <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary"     TYPE="primary" FIELDS="id"/>
@@ -93,6 +98,82 @@
       <INDEXES>
         <INDEX NAME="idx_program_user" UNIQUE="true"  FIELDS="programid, userid"/>
         <INDEX NAME="idx_status"       UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_programs_lvlcomp" COMMENT="Stored level completions per learner (ADR-032: BizLMS local_bc_level_completions, completed rows only). The history readers and the program state read it.">
+      <FIELDS>
+        <FIELD NAME="id"                 TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="programid"          TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="levelid"            TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="userid"             TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="status"             TYPE="int"  LENGTH="2"  NOTNULL="true" DEFAULT="0"
+               COMMENT="0=not completed, 1=completed"/>
+        <FIELD NAME="timecompleted"      TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="When the level was completed (NULL when the source never recorded it)"/>
+        <FIELD NAME="completedcourseids" TYPE="text" NOTNULL="false"
+               COMMENT="Audit only: the course ids BizLMS recorded for the completion. Its format was inconsistent"/>
+        <FIELD NAME="source"             TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="bizlms"
+               COMMENT="Where the row came from: bizlms for imported rows"/>
+        <FIELD NAME="timecreated"        TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"    TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_program" TYPE="foreign" FIELDS="programid" REFTABLE="local_sentientia_programs" REFFIELDS="id"/>
+        <KEY NAME="fk_level"   TYPE="foreign" FIELDS="levelid"   REFTABLE="local_sentientia_programs_levels" REFFIELDS="id"/>
+        <KEY NAME="fk_user"    TYPE="foreign" FIELDS="userid"    REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_level_user"   UNIQUE="true"  FIELDS="levelid, userid"/>
+        <INDEX NAME="idx_program_user" UNIQUE="false" FIELDS="programid, userid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_programs_trainers" COMMENT="Trainers assigned to a program (ADR-032: BizLMS local_program_trainers, imported only when that table holds rows; no Sentientia writer yet)">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="programid"      TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="userid"         TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="The trainer"/>
+        <FIELD NAME="feedbackid"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Evaluation form id (evaluation ids are preserved by the import)"/>
+        <FIELD NAME="feedback_score" TYPE="char" LENGTH="45" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="assignedby"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Actor: the user who assigned the trainer (0 = unknown)"/>
+        <FIELD NAME="timecreated"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"    TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_program" TYPE="foreign" FIELDS="programid" REFTABLE="local_sentientia_programs" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_program_user" UNIQUE="false" FIELDS="programid, userid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_programs_trainerfb" COMMENT="Feedback given on a program trainer (ADR-032: BizLMS local_program_trainerfb, imported only when that table holds rows; no Sentientia writer yet)">
+      <FIELDS>
+        <FIELD NAME="id"               TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="programtrainerid" TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="The local_sentientia_programs_trainers row the feedback is about"/>
+        <FIELD NAME="programid"        TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="trainerid"        TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="The trainer the feedback is about (a user id)"/>
+        <FIELD NAME="userid"           TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="The learner who gave the feedback (NULL when unknown or anonymised)"/>
+        <FIELD NAME="score"            TYPE="char" LENGTH="45" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"    TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_program" TYPE="foreign" FIELDS="programid" REFTABLE="local_sentientia_programs" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_trainer" UNIQUE="false" FIELDS="programtrainerid"/>
+        <INDEX NAME="idx_program_user" UNIQUE="false" FIELDS="programid, userid"/>
       </INDEXES>
     </TABLE>
   </TABLES>

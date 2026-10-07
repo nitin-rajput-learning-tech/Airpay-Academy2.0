@@ -243,5 +243,25 @@
       </INDEXES>
     </TABLE>
 
+    <TABLE NAME="local_sentientia_courses_tagmove"
+           COMMENT="ADR-032 course_tags import trail: one row per tag_instance row that the BizLMS import moved in place from the local_courses/courses tag area to core/course. The row keeps its id; this table only records which ones moved, so the move can be counted, verified and, in a rehearsal, reversed. Ids and timestamps only, no personal data. Written by the importer only.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="taginstanceid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
+               COMMENT="Foreign key to tag_instance.id of the moved row"/>
+        <FIELD NAME="timecreated"   TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
+               COMMENT="timecreated of the tag instance, kept from the source"/>
+        <FIELD NAME="timemodified"  TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
+               COMMENT="timemodified of the tag instance, kept from the source"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="uk_taginstance" UNIQUE="true" FIELDS="taginstanceid"
+               COMMENT="A tag instance is moved once"/>
+      </INDEXES>
+    </TABLE>
+
   </TABLES>
 </XMLDB>

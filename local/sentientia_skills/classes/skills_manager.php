@@ -23,6 +23,18 @@ class skills_manager {
         5 => 'Expert',
     ];
 
+    /**
+     * Feature flag of the skills-first recommendations. With it ON the learner's stated interests
+     * (imported from BizLMS, ADR-032) also drive the "recommended for you" list and the interest chips.
+     */
+    const FLAG_RECS = 'sentientia.dashboard.skillsrecs.enabled';
+
+    /**
+     * Feature flag of the held-skills list: what a learner already holds, shown on My Skills when the
+     * designation has no role skills to compare against (imported levels appear here).
+     */
+    const FLAG_HELD = 'sentientia.skills.heldskills.enabled';
+
     // ═══════════════════════════════════════════════════════════════════
     // ADR-031 tenant scope (2026-09-25)
     //
@@ -731,12 +743,203 @@ class skills_manager {
                     'shortname'   => format_string($course->shortname),
                     'skill_name'  => $gap['skill_name'],
                     'gap_level'   => $gap['required_level'] - $gap['current_level'],
+                    // ADR-032: the level the course brings the learner to (the SELECT always fetched it;
+                    // skills/index.php read a label from it that this array never carried).
+                    'teaches_level' => (int) $course->teaches_level,
+                    'reason'      => 'gap',
                     'viewurl'     => (new \moodle_url('/course/view.php', ['id' => $course->courseid]))->out(false),
                 ];
             }
         }
 
         return array_slice($recommendations, 0, $limit);
+    }
+
+    /**
+     * Is a skills feature flag ON for the current user?
+     *
+     * @param string $flag One of the FLAG_* constants.
+     * @return bool
+     */
+    public static function flag_enabled(string $flag): bool {
+        return class_exists('\local_sentientia_platform\feature_flags')
+            && \local_sentientia_platform\feature_flags::is_enabled($flag);
+    }
+
+    /**
+     * The words a person reads for a user_skills.source code (course, assessment, manual, self, import).
+     * An unknown code is shown as it is.
+     *
+     * @param string $source
+     * @return string
+     */
+    public static function source_label(string $source): string {
+        $source = strtolower(trim($source));
+        if ($source !== '' && get_string_manager()->string_exists('source_' . $source, 'local_sentientia_skills')) {
+            return get_string('source_' . $source, 'local_sentientia_skills');
+        }
+        return $source;
+    }
+
+    /**
+     * What a learner already holds: every skill with a level above zero, with its category and where the level
+     * came from. Imported BizLMS completions are here as source "import".
+     *
+     * @param int $userid
+     * @return array<int, array> skillid, skill_name, category_name, category_color, current_level,
+     *         current_label, source_label, updated_on, viewurl
+     */
+    public static function get_held_skills(int $userid): array {
+        global $DB;
+        $rows = $DB->get_records_sql(
+            "SELECT us.id, us.skillid, us.current_level, us.source, us.timemodified,
+                    s.name AS skill_name, sc.name AS category_name, sc.color AS category_color
+               FROM {" . self::USER_SKILL_TABLE . "} us
+               JOIN {" . self::SKILL_TABLE . "} s ON s.id = us.skillid
+               JOIN {" . self::CAT_TABLE . "} sc ON sc.id = s.categoryid
+              WHERE us.userid = :uid AND us.current_level > 0
+           ORDER BY sc.sort_order ASC, sc.name ASC, s.name ASC, us.id ASC",
+            ['uid' => $userid]);
+        $held = [];
+        foreach ($rows as $r) {
+            $held[] = [
+                'skillid'        => (int) $r->skillid,
+                'skill_name'     => format_string($r->skill_name),
+                'category_name'  => format_string($r->category_name),
+                'category_color' => $r->category_color,
+                'current_level'  => (int) $r->current_level,
+                'current_label'  => self::LEVELS[(int) $r->current_level] ?? '',
+                'source_label'   => self::source_label((string) $r->source),
+                'updated_on'     => $r->timemodified ? userdate((int) $r->timemodified, '%d %b %Y') : '',
+                'viewurl'        => (new \moodle_url('/local/sentientia_skills/view.php',
+                    ['id' => (int) $r->skillid]))->out(false),
+            ];
+        }
+        return $held;
+    }
+
+    /**
+     * The skills a learner said they are interested in (imported from BizLMS, ADR-032), by name.
+     * The caller decides whether to show them: the profile chips and the recommendations sit behind
+     * {@see self::FLAG_RECS}.
+     *
+     * @param int $userid
+     * @return array<int, array> skillid, name, viewurl
+     */
+    public static function get_interest_skills(int $userid): array {
+        global $DB;
+        $rows = $DB->get_records_sql(
+            "SELECT si.id, s.id AS skillid, s.name
+               FROM {local_sentientia_skill_interest} si
+               JOIN {" . self::SKILL_TABLE . "} s ON s.id = si.skillid
+              WHERE si.userid = :uid
+           ORDER BY s.name ASC, si.id ASC", ['uid' => $userid]);
+        $skills = [];
+        foreach ($rows as $r) {
+            $skills[] = [
+                'skillid' => (int) $r->skillid,
+                'name'    => format_string($r->name),
+                'viewurl' => (new \moodle_url('/local/sentientia_skills/view.php',
+                    ['id' => (int) $r->skillid]))->out(false),
+            ];
+        }
+        return $skills;
+    }
+
+    /**
+     * Courses that teach a skill the learner said they are interested in: visible, not completed, not already
+     * enrolled in, inside the learner's course read scope (and the viewer's, when somebody else is looking) -
+     * the same tenant rule as {@see self::get_gap_courses()}. Easiest level first.
+     *
+     * @param int   $userid
+     * @param int   $limit
+     * @param int[] $excludecourseids Courses to leave out (already recommended).
+     * @return array<int, array> courseid, fullname, shortname, skill_name, teaches_level, gap_level, reason, viewurl
+     */
+    public static function get_interest_courses(int $userid, int $limit = 5, array $excludecourseids = []): array {
+        global $DB, $USER;
+
+        $learner = $DB->get_record('user', ['id' => $userid], 'id, open_path');
+        $scope = $learner ? self::course_read_scope_sql('c', 'skintl', $learner) : null;
+        if ($scope === null || $limit < 1) {
+            return [];
+        }
+        [$scopesql, $scopeargs] = $scope;
+        if ($userid !== (int) ($USER->id ?? 0)) {
+            $viewerscope = self::course_read_scope_sql('c', 'skintv');
+            if ($viewerscope === null) {
+                return [];
+            }
+            $scopesql .= ' AND ' . $viewerscope[0];
+            $scopeargs += $viewerscope[1];
+        }
+        $excludesql = '';
+        if ($excludecourseids) {
+            [$insql, $inargs] = $DB->get_in_or_equal(array_map('intval', $excludecourseids), SQL_PARAMS_NAMED, 'skinx', false);
+            $excludesql = " AND c.id {$insql}";
+            $scopeargs += $inargs;
+        }
+
+        // A course can teach two interests, so read more rows than the limit and keep each course once.
+        $rows = $DB->get_records_sql(
+            "SELECT cs.id, cs.courseid, c.fullname, c.shortname, cs.teaches_level, s.name AS skill_name
+               FROM {local_sentientia_skill_interest} si
+               JOIN {" . self::SKILL_TABLE . "} s ON s.id = si.skillid
+               JOIN {" . self::COURSE_SKILL_TABLE . "} cs ON cs.skillid = si.skillid
+               JOIN {course} c ON c.id = cs.courseid AND c.visible = 1 AND c.id > 1
+          LEFT JOIN {course_completions} cc ON cc.course = c.id AND cc.userid = :skinuid
+              WHERE si.userid = :skinwho
+                AND cc.timecompleted IS NULL
+                AND NOT EXISTS (SELECT 1
+                                  FROM {user_enrolments} ue
+                                  JOIN {enrol} e ON e.id = ue.enrolid
+                                 WHERE e.courseid = c.id AND ue.userid = :skinue)
+                AND {$scopesql}{$excludesql}
+           ORDER BY cs.teaches_level ASC, c.id ASC, s.name ASC",
+            ['skinuid' => $userid, 'skinwho' => $userid, 'skinue' => $userid] + $scopeargs,
+            0, $limit * 4);
+
+        $out = [];
+        foreach ($rows as $r) {
+            $courseid = (int) $r->courseid;
+            if (isset($out[$courseid])) {
+                continue;
+            }
+            $out[$courseid] = [
+                'courseid'      => $courseid,
+                'fullname'      => format_string($r->fullname),
+                'shortname'     => format_string($r->shortname),
+                'skill_name'    => format_string($r->skill_name),
+                'gap_level'     => 0,
+                'teaches_level' => (int) $r->teaches_level,
+                'reason'        => 'interest',
+                'viewurl'       => (new \moodle_url('/course/view.php', ['id' => $courseid]))->out(false),
+            ];
+            if (count($out) >= $limit) {
+                break;
+            }
+        }
+        return array_values($out);
+    }
+
+    /**
+     * Courses to recommend to a learner: the ones that close a gap first, then - when the skills-first
+     * recommendations flag is ON - courses for the skills the learner said they are interested in.
+     * With the flag OFF this is exactly {@see self::get_gap_courses()}.
+     *
+     * @param int $userid
+     * @param int $limit
+     * @return array<int, array> As get_gap_courses(), each with a "reason" of gap or interest.
+     */
+    public static function get_recommended_courses(int $userid, int $limit = 5): array {
+        $courses = self::get_gap_courses($userid, $limit);
+        if (count($courses) < $limit && self::flag_enabled(self::FLAG_RECS)) {
+            $taken = array_map(static fn(array $c): int => (int) $c['courseid'], $courses);
+            foreach (self::get_interest_courses($userid, $limit - count($courses), $taken) as $course) {
+                $courses[] = $course;
+            }
+        }
+        return $courses;
     }
 
     private static function empty_summary(): array {

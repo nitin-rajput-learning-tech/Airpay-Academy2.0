@@ -17,4 +17,6 @@ $imports = [
     'course_lookups' => \local_sentientia_courses\bizlms\course_lookups_importer::class,
     // Gap G6: enrolments on the orphaned BizLMS enrol methods become manual enrolments.
     'enrolments' => \local_sentientia_courses\bizlms\enrolments_importer::class,
+    // BizLMS course tags: the local_courses/courses tag area is moved in place to core/course.
+    'course_tags' => \local_sentientia_courses\bizlms\course_tags_importer::class,
 ];

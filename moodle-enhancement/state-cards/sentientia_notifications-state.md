@@ -323,3 +323,12 @@ Branch `claude/persona-fix-admingates`. `nudge.php`: the capability branch used 
 `local/courses:manage`; now `local/sentientia_courses:manage` (ADR-025 successor). The ADR-031 tenant
 match after the gate and the direct-supervisor rule are unchanged. Guard: `local_sentientia_platform`
 `tests/capability_names_test.php`. No version bump.
+
+## 2026-09-30 (ADR-032) - ILT feedback rule ignores imported sessions
+
+`rule_ilt_feedback_pending` has no upper age limit on the session (only `endtime < now - trigger_days`) and its
+24-hour dedupe repeats daily, so once the BizLMS classroom import brings years of sessions and rosters in, a rule
+switched on would ask every person who ever attended for feedback. The query now excludes sessions the import
+created (`local_sentientia_platform\bizlms\provenance::not_imported_sql`, guarded by `class_exists` and a
+`table_exists` on the map). New test `test_ilt_feedback_ignores_sessions_the_bizlms_import_brought_in`. Code
+only, no version bump. Both trees. Not run here.

@@ -18,6 +18,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 function xmldb_local_sentientia_recompletion_upgrade($oldversion) {
     global $DB;
+    $dbman = $DB->get_manager();
 
     if ($oldversion < 2026092500) {
         // ADR-031 (2026-09-25): db/install.php granted :reset to the
@@ -37,6 +38,54 @@ function xmldb_local_sentientia_recompletion_upgrade($oldversion) {
         }
         $syscontext->mark_dirty();
         upgrade_plugin_savepoint(true, 2026092500, 'local', 'sentientia_recompletion');
+    }
+
+    if ($oldversion < 2026093001) {
+        // ADR-032 (2026-09-30): the BizLMS import. Every change is guarded, so a site that already
+        // has a column or the table is left alone (a fresh install runs install.xml, not this step).
+        $rules = new xmldb_table('local_sentientia_recompletion_rules');
+        $field = new xmldb_field('legacy_config', XMLDB_TYPE_TEXT, 'big', null, null, null, null, 'last_run_resets');
+        if (!$dbman->field_exists($rules, $field)) {
+            $dbman->add_field($rules, $field);
+        }
+
+        $history = new xmldb_table('local_sentientia_recompletion_history');
+        $field = new xmldb_field('source', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'engine', 'timecreated');
+        if (!$dbman->field_exists($history, $field)) {
+            $dbman->add_field($history, $field);
+        }
+        $field = new xmldb_field('time_inferred', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'source');
+        if (!$dbman->field_exists($history, $field)) {
+            $dbman->add_field($history, $field);
+        }
+
+        $archive = new xmldb_table('local_sentientia_recompletion_archive');
+        if (!$dbman->table_exists($archive)) {
+            $archive->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $archive->add_field('historyid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $archive->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $archive->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $archive->add_field('itemtype', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL);
+            $archive->add_field('cmid', XMLDB_TYPE_INTEGER, '10');
+            $archive->add_field('instanceid', XMLDB_TYPE_INTEGER, '10');
+            $archive->add_field('parentid', XMLDB_TYPE_INTEGER, '10');
+            $archive->add_field('itemkey', XMLDB_TYPE_CHAR, '255');
+            $archive->add_field('state', XMLDB_TYPE_CHAR, '30');
+            $archive->add_field('grade', XMLDB_TYPE_NUMBER, '10, 5');
+            $archive->add_field('timeevent', XMLDB_TYPE_INTEGER, '10');
+            $archive->add_field('payload', XMLDB_TYPE_TEXT, 'big', null, XMLDB_NOTNULL);
+            $archive->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $archive->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $archive->add_key('fk_history', XMLDB_KEY_FOREIGN, ['historyid'],
+                'local_sentientia_recompletion_history', ['id']);
+            $archive->add_key('fk_user', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+            $archive->add_key('fk_course', XMLDB_KEY_FOREIGN, ['courseid'], 'course', ['id']);
+            $archive->add_index('idx_userid_course', XMLDB_INDEX_NOTUNIQUE, ['userid', 'courseid']);
+            $archive->add_index('idx_parentid', XMLDB_INDEX_NOTUNIQUE, ['parentid']);
+            $dbman->create_table($archive);
+        }
+
+        upgrade_plugin_savepoint(true, 2026093001, 'local', 'sentientia_recompletion');
     }
 
     return true;

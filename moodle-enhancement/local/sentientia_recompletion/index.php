@@ -33,11 +33,25 @@ foreach ($rules as $r) {
     $course_name = '— all courses with completion —';
     if ($r->courseid > 0) {
         $c = $DB->get_record('course', ['id' => $r->courseid], 'fullname, shortname');
-        $course_name = $c ? format_string($c->fullname) : "(deleted course #{$r->courseid})";
+        $course_name = $c ? \local_sentientia_recompletion\evidence_report::plain_name($c->fullname)
+            : "(deleted course #{$r->courseid})";
+    }
+    // ADR-032: a rule the BizLMS import made carries the course's legacy settings; say so, and show them.
+    $legacy = [];
+    foreach (\local_sentientia_recompletion\legacy_summary::lines($r->legacy_config ?? null) as $line) {
+        $label = get_string('legacy_' . $line['name'], 'local_sentientia_recompletion');
+        if ($line['kind'] === \local_sentientia_recompletion\legacy_summary::DAYS) {
+            $value = get_string('legacy_days', 'local_sentientia_recompletion', $line['value']);
+        } else if ($line['kind'] === \local_sentientia_recompletion\legacy_summary::SWITCH) {
+            $value = get_string($line['value'] === '1' ? 'yes' : 'no', 'core');
+        } else {
+            $value = get_string('legacy_choice_' . $line['value'], 'local_sentientia_recompletion');
+        }
+        $legacy[] = ['label' => $label, 'value' => $value];
     }
     $rows[] = [
         'id'              => (int) $r->id,
-        'name'            => format_string($r->name),
+        'name'            => \local_sentientia_recompletion\evidence_report::plain_name($r->name),
         'course'          => $course_name,
         'period_days'     => (int) $r->period_days,
         'trigger'         => $r->trigger_type,
@@ -47,6 +61,10 @@ foreach ($rules as $r) {
         'edit_url'        => $can_manage
             ? (new moodle_url('/local/sentientia_recompletion/edit.php', ['id' => $r->id]))->out(false)
             : '',
+        'legacy'          => $r->legacy_config !== null,
+        'legacy_lines'    => $legacy,
+        'has_legacy_lines' => !empty($legacy),
+        'legacy_dead_scorm' => \local_sentientia_recompletion\legacy_summary::has_dead_scorm_setting($r->legacy_config ?? null),
     ];
 }
 
@@ -57,7 +75,6 @@ $data = [
     'can_manage' => $can_manage,
     'new_url'    => (new moodle_url('/local/sentientia_recompletion/edit.php'))->out(false),
     'history_url' => (new moodle_url('/local/sentientia_recompletion/history.php'))->out(false),
-    'bulk_reset_url' => (new moodle_url('/local/sentientia_recompletion/bulk_reset.php'))->out(false),
 ];
 
 echo $OUTPUT->header();

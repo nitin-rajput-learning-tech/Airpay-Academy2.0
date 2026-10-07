@@ -285,3 +285,5 @@ $string['transcript_status_unknown'] = 'Unknown';
 $string['position'] = 'Position';
 $string['domain'] = 'Domain';
 $string['hrms_source_bizlms'] = 'Imported from BizLMS';
+// ADR-032 (BizLMS import, skills): the skills a user said they are interested in, on the skill profile.
+$string['skillprofile_interests']        = 'Interested in';

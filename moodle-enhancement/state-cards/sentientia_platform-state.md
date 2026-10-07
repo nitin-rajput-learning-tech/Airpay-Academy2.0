@@ -76,6 +76,17 @@ plugin with a copy-pasted `null_provider` fails on its first CI run. Written
 after the audit found four plugins asserting they held no personal data while
 owning nine tables keyed on a user id. See the individual plugins' state cards.
 
+**2026-10-01 - per-component user columns (ADR-032 program import).** `USER_COLUMNS` is global, and
+`trainerid` could not go into it: `local_sentientia_classroom` and `local_sentientia_classroom_sessions` carry a
+`trainerid` that the classroom privacy provider declares nowhere, so listing the column globally fails
+`test_declared_providers_cover_the_tables_they_own` for classroom. The guard gained
+`COMPONENT_USER_COLUMNS` (component => extra user columns, used by `all_user_tables()`), and
+`local_sentientia_programs` is its only entry, so the guard now sees `trainerid` on
+`local_sentientia_programs_trainerfb`, which that provider declares and erases. This is a test-only
+change (no framework file, no version bump). **Open, for the classroom owner:** decide what erasing a
+trainer means for a class that has run, declare `trainerid` on both classroom tables, then move `trainerid`
+into `USER_COLUMNS` and delete `COMPONENT_USER_COLUMNS`. Written, not run (shared PHPUnit DB).
+
 
 ## 2026-09-22 - The migration parity check proved counts, then claimed "data intact"
 

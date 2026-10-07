@@ -82,7 +82,10 @@ class list_programs extends external_api {
             $records = $DB->get_records_sql(
                 "SELECT p.*,
                         (SELECT COUNT(*) FROM {local_sentientia_programs_levels} l WHERE l.programid = p.id) AS level_count,
-                        (SELECT COUNT(*) FROM {local_sentientia_programs_users} pu WHERE pu.programid = p.id) AS user_count
+                        (SELECT COUNT(*)
+                           FROM {local_sentientia_programs_users} pu
+                           JOIN {user} u ON u.id = pu.userid
+                          WHERE pu.programid = p.id AND u.deleted = 0) AS user_count
                    FROM {local_sentientia_programs} p
                   WHERE $wheresql
                ORDER BY p.$sort $sortdir, p.id ASC",

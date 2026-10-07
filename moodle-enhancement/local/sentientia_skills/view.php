@@ -67,11 +67,13 @@ $count_learners = \local_sentientia_skills\skills_manager::count_skill_learners(
 $tab_data = [];
 switch ($tab) {
     case 'levels':
+        // ADR-032 (mapping doc section 14, code fix 3): the table's columns are level and label. This tab
+        // ordered by, and read, level_index and name, which do not exist, so it could not render at all.
         $levels = $DB->get_records('local_sentientia_skill_levels',
-            ['skillid' => $skill->id], 'level_index ASC');
+            ['skillid' => $skill->id], 'level ASC');
         $tab_data['levels'] = array_values(array_map(fn($l) => [
-            'level_index' => (int) ($l->level_index ?? 0),
-            'name'        => format_string($l->name ?? ''),
+            'level'       => (int) ($l->level ?? 0),
+            'label'       => format_string($l->label ?? ''),
             'description' => format_text($l->description ?? '', FORMAT_HTML),
         ], $levels));
         $tab_data['has_levels'] = count($levels) > 0;
@@ -167,6 +169,8 @@ $data = [
     'self_rate_has_current' => $current_level > 0,
     'self_rate_level_options' => $level_options,
     'self_rate_source'        => (string) ($user_skill_row->source ?? ''),
+    // ADR-032 (code fix 5): the source code as words (course, self, manual, import ...), in the learner's language.
+    'self_rate_source_label'  => \local_sentientia_skills\skills_manager::source_label((string) ($user_skill_row->source ?? '')),
 
     'count_levels'       => $count_levels,
     'count_designations' => $count_designations,

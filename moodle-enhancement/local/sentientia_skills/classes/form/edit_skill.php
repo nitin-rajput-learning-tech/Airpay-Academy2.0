@@ -24,7 +24,7 @@ class edit_skill extends \core_form\dynamic_form {
         $mform->addElement('header', 'hdr_basic', get_string('heading_skill', 'local_sentientia_skills'));
 
         $mform->addElement('text', 'name', get_string('skill_name', 'local_sentientia_skills'),
-            ['size' => 50, 'maxlength' => 100, 'placeholder' => 'e.g. Anti-Money Laundering, Java Programming']);
+            ['size' => 50, 'maxlength' => 255, 'placeholder' => 'e.g. Anti-Money Laundering, Java Programming']);
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
 

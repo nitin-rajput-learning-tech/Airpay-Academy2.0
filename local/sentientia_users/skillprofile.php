@@ -119,26 +119,51 @@ foreach ($all_skill_ids as $sid) {
 }
 
 // Recommended courses (link to skills with gaps).
+// ADR-032 (mapping doc section 14, code fix 2): the same course READ scope the skills gap engine uses - the
+// learner's tenant plus legacy courses, and the viewer's too when somebody else is looking - so a profile never
+// names another tenant's course; courses the learner already completed are left out; and the row limit goes
+// through the DB layer instead of a raw LIMIT in the SQL. No skills plugin, no recommendations.
 $recs = [];
-if (!empty($gap_rows)) {
-    [$insql, $inparams] = $DB->get_in_or_equal(
-        array_map(fn($g) => $g['skillid'], $gap_rows), SQL_PARAMS_NAMED, 'sid');
-    $course_recs = $DB->get_records_sql(
-        "SELECT DISTINCT c.id, c.fullname, c.shortname
-           FROM {local_sentientia_course_skills} cs
-           JOIN {course} c ON c.id = cs.courseid
-          WHERE cs.skillid $insql
-            AND c.visible = 1
-          LIMIT 20", $inparams);
-    foreach ($course_recs as $c) {
-        $recs[] = [
-            'courseid'  => (int) $c->id,
-            'fullname'  => format_string($c->fullname),
-            'shortname' => format_string($c->shortname),
-            'view_url'  => (new moodle_url('/course/view.php',
-                ['id' => $c->id]))->out(false),
-        ];
+$skillsmanager = '\local_sentientia_skills\skills_manager';
+if (!empty($gap_rows) && class_exists($skillsmanager)) {
+    $learner = $DB->get_record('user', ['id' => $userid], 'id, open_path');
+    $scope = $learner ? $skillsmanager::course_read_scope_sql('c', 'skpl', $learner) : null;
+    if ($scope !== null && (int) $userid !== (int) $USER->id) {
+        $viewerscope = $skillsmanager::course_read_scope_sql('c', 'skpv');
+        $scope = $viewerscope === null ? null
+            : [$scope[0] . ' AND ' . $viewerscope[0], $scope[1] + $viewerscope[1]];
     }
+    if ($scope !== null) {
+        [$insql, $inparams] = $DB->get_in_or_equal(
+            array_map(fn($g) => $g['skillid'], $gap_rows), SQL_PARAMS_NAMED, 'sid');
+        $course_recs = $DB->get_records_sql(
+            "SELECT DISTINCT c.id, c.fullname, c.shortname
+               FROM {local_sentientia_course_skills} cs
+               JOIN {course} c ON c.id = cs.courseid
+          LEFT JOIN {course_completions} cc ON cc.course = c.id AND cc.userid = :cuid
+              WHERE cs.skillid $insql
+                AND c.visible = 1 AND c.id > 1
+                AND cc.timecompleted IS NULL
+                AND {$scope[0]}
+           ORDER BY c.id ASC",
+            $inparams + ['cuid' => $userid] + $scope[1], 0, 20);
+        foreach ($course_recs as $c) {
+            $recs[] = [
+                'courseid'  => (int) $c->id,
+                'fullname'  => format_string($c->fullname),
+                'shortname' => format_string($c->shortname),
+                'view_url'  => (new moodle_url('/course/view.php',
+                    ['id' => $c->id]))->out(false),
+            ];
+        }
+    }
+}
+
+// ADR-032: the skills the user said they are interested in (imported from BizLMS), as chips - behind the
+// skills-first recommendations flag, default OFF.
+$interests = [];
+if (class_exists($skillsmanager) && $skillsmanager::flag_enabled($skillsmanager::FLAG_RECS)) {
+    $interests = $skillsmanager::get_interest_skills((int) $userid);
 }
 
 // Grades — embed link to Moodle core gradebook for this user.
@@ -159,6 +184,8 @@ $data = [
     'has_gaps'         => count($gap_rows) > 0,
     'has_recs'         => count($recs) > 0,
     'recommendations'  => $recs,
+    'has_interests'    => count($interests) > 0,
+    'interests'        => $interests,
 
     'radar_labels_json'   => json_encode($radar_labels),
     'radar_current_json'  => json_encode($radar_current),

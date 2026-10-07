@@ -1,0 +1,123 @@
+{{!
+    This file is part of Sentientia LMS.
+
+    @template local_sentientia_learningpath/mypaths
+
+    The learner's own learning paths (ADR-032). Behind the flag
+    sentientia.learningpath.learner_paths.enabled.
+
+    Context variables required for this template:
+    * paths - array of cards: id, name, summary, has_summary, cover_url, has_cover, is_completed,
+      is_inprogress, is_notstarted, progress (0-100), course_count, courses_done, has_courses,
+      courses [name, url, has_url, is_done, is_mandatory], enrolled_on / has_enrolled_on,
+      completed_on / has_completed_on, opens_on / has_opens_on, closes_on / has_closes_on
+    * has_paths, total, inprogress, completed, notstarted - counts for the summary strip
+
+    Example context (json):
+    {
+        "has_paths": true, "total": 1, "inprogress": 1, "completed": 0, "notstarted": 0,
+        "paths": [{
+            "id": 10, "name": "Onboarding essentials", "summary": "Start here.", "has_summary": true,
+            "cover_url": "", "has_cover": false, "is_completed": false, "is_inprogress": true,
+            "is_notstarted": false, "progress": 50, "course_count": 2, "courses_done": 1, "has_courses": true,
+            "courses": [
+                {"name": "Welcome", "url": "https://example.org/course/view.php?id=2", "has_url": true,
+                 "is_done": true, "is_mandatory": true},
+                {"name": "Policies", "url": "", "has_url": false, "is_done": false, "is_mandatory": true}
+            ],
+            "enrolled_on": "01 Jan 2026", "has_enrolled_on": true, "completed_on": "", "has_completed_on": false,
+            "opens_on": "", "has_opens_on": false, "closes_on": "", "has_closes_on": false
+        }]
+    }
+}}
+<div class="ap-mypaths" data-region="my-learning-paths">
+
+    <div class="d-flex flex-wrap gap-3 mb-4" role="group" aria-label="{{#str}} mypaths_summary, local_sentientia_learningpath {{/str}}">
+        <div class="card border-0 shadow-sm px-3 py-2">
+            <div class="h4 mb-0">{{total}}</div>
+            <div class="small text-muted">{{#str}} mypaths_stat_total, local_sentientia_learningpath {{/str}}</div>
+        </div>
+        <div class="card border-0 shadow-sm px-3 py-2">
+            <div class="h4 mb-0">{{inprogress}}</div>
+            <div class="small text-muted">{{#str}} lpstate_inprogress, local_sentientia_learningpath {{/str}}</div>
+        </div>
+        <div class="card border-0 shadow-sm px-3 py-2">
+            <div class="h4 mb-0">{{completed}}</div>
+            <div class="small text-muted">{{#str}} lpstate_completed, local_sentientia_learningpath {{/str}}</div>
+        </div>
+    </div>
+
+    {{^has_paths}}
+    <div class="alert alert-info" role="status">
+        {{#str}} mypaths_empty, local_sentientia_learningpath {{/str}}
+    </div>
+    {{/has_paths}}
+
+    {{#has_paths}}
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+        {{#paths}}
+        <div class="col">
+            <article class="card h-100 border-0 shadow-sm" data-region="learning-path-card" data-pathid="{{id}}">
+                {{#has_cover}}
+                <img src="{{cover_url}}" alt="" class="card-img-top" loading="lazy">
+                {{/has_cover}}
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                        <h2 class="h5 mb-0">{{name}}</h2>
+                        {{#is_completed}}
+                        <span class="badge bg-success text-white">{{#str}} lpstate_completed, local_sentientia_learningpath {{/str}}</span>
+                        {{/is_completed}}
+                        {{#is_inprogress}}
+                        <span class="badge bg-info text-white">{{#str}} lpstate_inprogress, local_sentientia_learningpath {{/str}}</span>
+                        {{/is_inprogress}}
+                        {{#is_notstarted}}
+                        <span class="badge bg-secondary text-white">{{#str}} lpstate_enrolled, local_sentientia_learningpath {{/str}}</span>
+                        {{/is_notstarted}}
+                    </div>
+
+                    {{#has_summary}}
+                    <p class="text-muted small">{{summary}}</p>
+                    {{/has_summary}}
+
+                    <label class="small text-muted d-block" for="mypath-progress-{{id}}">
+                        {{#str}} mypaths_progress, local_sentientia_learningpath {{/str}} {{progress}}%
+                    </label>
+                    <progress id="mypath-progress-{{id}}" class="w-100 mb-3" value="{{progress}}" max="100">{{progress}}%</progress>
+
+                    <ul class="list-unstyled small text-muted mb-3">
+                        {{#has_enrolled_on}}
+                        <li>{{#str}} mypaths_enrolled_on, local_sentientia_learningpath {{/str}} {{enrolled_on}}</li>
+                        {{/has_enrolled_on}}
+                        {{#has_completed_on}}
+                        <li>{{#str}} mypaths_completed_on, local_sentientia_learningpath {{/str}} {{completed_on}}</li>
+                        {{/has_completed_on}}
+                        {{#has_opens_on}}
+                        <li>{{#str}} mypaths_opens_on, local_sentientia_learningpath {{/str}} {{opens_on}}</li>
+                        {{/has_opens_on}}
+                        {{#has_closes_on}}
+                        <li>{{#str}} mypaths_closes_on, local_sentientia_learningpath {{/str}} {{closes_on}}</li>
+                        {{/has_closes_on}}
+                    </ul>
+
+                    {{#has_courses}}
+                    <h3 class="h6">{{#str}} mypaths_courses, local_sentientia_learningpath {{/str}} ({{courses_done}}/{{course_count}})</h3>
+                    <ul class="list-unstyled mb-0">
+                        {{#courses}}
+                        <li class="d-flex align-items-center gap-2 py-1">
+                            {{#is_done}}<i class="fa fa-check-circle text-success" aria-hidden="true"></i>
+                            <span class="visually-hidden">{{#str}} mypaths_course_done, local_sentientia_learningpath {{/str}}</span>{{/is_done}}
+                            {{^is_done}}<i class="fa fa-circle-o text-muted" aria-hidden="true"></i>{{/is_done}}
+                            {{#has_url}}<a href="{{url}}">{{name}}</a>{{/has_url}}
+                            {{^has_url}}<span>{{name}}</span>{{/has_url}}
+                            {{^is_mandatory}}<span class="badge bg-light text-dark">{{#str}} mypaths_optional, local_sentientia_learningpath {{/str}}</span>{{/is_mandatory}}
+                        </li>
+                        {{/courses}}
+                    </ul>
+                    {{/has_courses}}
+                </div>
+            </article>
+        </div>
+        {{/paths}}
+    </div>
+    {{/has_paths}}
+</div>

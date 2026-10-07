@@ -138,3 +138,53 @@ $string['privacy:metadata:enrol:timecompleted'] = 'Completion timestamp (NULL if
 
 // W1-9 (2026-05-15) — event names.
 $string['event_program_completed'] = 'Program completed';
+
+// ADR-032 (2026-09-30) - BizLMS program import: the learner page, the history readers, protected history.
+$string['myprograms'] = 'My programs';
+$string['myprograms_none'] = 'You are not enrolled in any certification program yet.';
+$string['completed_on'] = 'Completed on';
+$string['completed_on_date'] = 'Completed on {$a}';
+$string['enrolled_on_date'] = 'Enrolled on {$a}';
+$string['status_completed'] = 'Completed';
+$string['status_inprogress'] = 'In progress';
+$string['status_enrolled'] = 'Enrolled';
+$string['levels_progress'] = '{$a->done} of {$a->total} levels';
+$string['overall_progress'] = 'Overall program progress';
+$string['level_locked'] = 'Locked';
+$string['level_locked_hint'] = 'Complete the previous required level to unlock.';
+$string['badge_required'] = 'required';
+$string['badge_optional'] = 'optional';
+$string['courses_progress'] = '{$a->done}/{$a->total} required courses';
+$string['courses_progress_any'] = 'Any one of {$a->total} required courses ({$a->done} done)';
+$string['error_learner_page_off'] = 'This page is not available.';
+$string['error_history_protected'] = 'This record was imported from BizLMS and is part of the certification history, so it cannot be deleted. Archive the program instead.';
+
+// ADR-032 privacy strings: the actor column of the enrolments and the three history tables.
+$string['privacy:metadata:enrol:enrolledby'] = 'The user who enrolled the learner (0 = unknown). Cleared when that user is erased.';
+$string['privacy:metadata:enrol:timemodified'] = 'When the enrolment record last changed.';
+$string['privacy:metadata:lvlcomp'] = 'Stored level completions of a learner in a certification program (history imported from BizLMS).';
+$string['privacy:metadata:lvlcomp:programid'] = 'Program ID.';
+$string['privacy:metadata:lvlcomp:levelid'] = 'Level ID.';
+$string['privacy:metadata:lvlcomp:userid'] = 'Learner user ID.';
+$string['privacy:metadata:lvlcomp:status'] = 'Completion status (1 = completed).';
+$string['privacy:metadata:lvlcomp:timecompleted'] = 'When the level was completed (empty when the source never recorded it).';
+$string['privacy:metadata:lvlcomp:completedcourseids'] = 'Course IDs BizLMS recorded for the completion (audit only).';
+$string['privacy:metadata:lvlcomp:source'] = 'Where the row came from (bizlms for imported rows).';
+$string['privacy:metadata:lvlcomp:timecreated'] = 'When the record was created.';
+$string['privacy:metadata:lvlcomp:timemodified'] = 'When the record last changed.';
+$string['privacy:metadata:trainers'] = 'Trainers assigned to a certification program (history imported from BizLMS).';
+$string['privacy:metadata:trainers:programid'] = 'Program ID.';
+$string['privacy:metadata:trainers:userid'] = 'The trainer\'s user ID.';
+$string['privacy:metadata:trainers:feedbackid'] = 'Evaluation form ID used for feedback on the trainer.';
+$string['privacy:metadata:trainers:feedback_score'] = 'The feedback score BizLMS recorded for the trainer.';
+$string['privacy:metadata:trainers:assignedby'] = 'The user who assigned the trainer (0 = unknown). Cleared when that user is erased.';
+$string['privacy:metadata:trainers:timecreated'] = 'When the assignment was created.';
+$string['privacy:metadata:trainers:timemodified'] = 'When the assignment last changed.';
+$string['privacy:metadata:trainerfb'] = 'Feedback given on a program trainer (history imported from BizLMS).';
+$string['privacy:metadata:trainerfb:programtrainerid'] = 'The trainer assignment the feedback is about.';
+$string['privacy:metadata:trainerfb:programid'] = 'Program ID.';
+$string['privacy:metadata:trainerfb:trainerid'] = 'The trainer the feedback is about (user ID).';
+$string['privacy:metadata:trainerfb:userid'] = 'The learner who gave the feedback (empty when unknown or erased).';
+$string['privacy:metadata:trainerfb:score'] = 'The feedback score.';
+$string['privacy:metadata:trainerfb:timecreated'] = 'When the feedback was recorded.';
+$string['privacy:metadata:trainerfb:timemodified'] = 'When the feedback last changed.';

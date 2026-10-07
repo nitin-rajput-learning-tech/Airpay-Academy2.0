@@ -259,8 +259,8 @@ function xmldb_local_sentientia_courses_upgrade(int $oldversion): bool {
     // manual enrolment: the legacy enrolment and instance ids, the method and the manual instance. Ids and timestamps
     // only. Guarded, so a database that already has the table (created from install.xml) passes through untouched.
     //
-    // Keep the upgrade blocks of this file in ascending order: course_tags 2026093002, course_lookups 2026100101, then this
-    // one (upgrade_plugin_savepoint() refuses a savepoint at or below the stored version).
+    // Keep the upgrade blocks of this file in ascending order: course_lookups 2026100101, then this one, then course_tags
+    // 2026100103 (upgrade_plugin_savepoint() refuses a savepoint at or below the stored version).
     if ($oldversion < 2026100102) {
         $table = new xmldb_table('local_sentientia_courses_enrolmove');
         if (!$dbman->table_exists($table)) {
@@ -278,6 +278,26 @@ function xmldb_local_sentientia_courses_upgrade(int $oldversion): bool {
             $dbman->create_table($table);
         }
         upgrade_plugin_savepoint(true, 2026100102, 'local', 'sentientia_courses');
+    }
+
+    // 2026100103 - ADR-032 course_tags importer: the trail of tag instances moved in place.
+    //
+    // One row per tag_instance row the BizLMS import moves from the local_courses/courses tag area to core/course.
+    // Ids and timestamps only. Guarded, so a database that already has the table (created from install.xml) passes
+    // through untouched. This block is last on purpose: a database that already took 2026100101 or 2026100102 (the
+    // course_lookups and enrolments importers) must still run it, so its number is above both.
+    if ($oldversion < 2026100103) {
+        $table = new xmldb_table('local_sentientia_courses_tagmove');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('taginstanceid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('uk_taginstance', XMLDB_INDEX_UNIQUE, ['taginstanceid']);
+            $dbman->create_table($table);
+        }
+        upgrade_plugin_savepoint(true, 2026100103, 'local', 'sentientia_courses');
     }
 
     return true;

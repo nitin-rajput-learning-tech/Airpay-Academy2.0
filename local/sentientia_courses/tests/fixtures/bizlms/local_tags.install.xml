@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  ADR-032 course_tags test fixture: the two BizLMS tag tables, copied from the production snapshot.
+
+  Source : D:/Claude Local/Moodle Backup/01-production-codebase/html/local/tags/db/install.xml
+  sha1   : bc38c903977df3f6eabccea750f1d7825d975d46 (of the whole source file, as read on 2026-09-30)
+  Date   : 2026-09-30
+
+  Edits to the source (every other byte is the source's; the ADR allows (a) to (c), the loader forces (d)):
+    (a) PREVIOUS / NEXT attributes stripped: the source has none, so nothing to strip.
+    (b) Types XMLDB rejects replaced: none needed, both tables load as they are.
+    (c) Production-only columns added: none. local/tags/db/upgrade.php (step 2022101800) only adds indexes,
+        no column, so the snapshot install file is the shape of both tables.
+    (d) The root element: PATH must equal the directory of this file relative to dirroot (xmldb_structure refuses
+        a file whose PATH differs), so it is local/sentientia_courses/tests/fixtures/bizlms instead of
+        local/tags/db, and the xsi schema location is the matching relative path. VERSION and COMMENT are the
+        source's.
+
+  Only local_tags and local_tag_mapping live here. The tag instances the importer moves are rows of core
+  tag_instance, which the PHPUnit database already has.
+-->
+<XMLDB PATH="local/sentientia_courses/tests/fixtures/bizlms" VERSION="20190805" COMMENT="XMLDB file for Moodle local/tags"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="local_tags" COMMENT="local tags" >
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>        
+        <FIELD NAME="tagid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="taginstanceid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="open_costcenterid" TYPE="int"  LENGTH="10"  NOTNULL="true"  SEQUENCE="false"/>
+        <FIELD NAME="open_departmentid" TYPE="int"  LENGTH="10"  NOTNULL="false"  SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" COMMENT="used to store updated time"  NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="tagid" UNIQUE="false" FIELDS="tagid"/>
+        <INDEX NAME="taginstanceid" UNIQUE="false" FIELDS="taginstanceid"/>
+        <INDEX NAME="open_costcenterid" UNIQUE="false" FIELDS="open_costcenterid"/>
+        <INDEX NAME="open_departmentid" UNIQUE="false" FIELDS="open_departmentid"/>
+     </INDEXES>
+    </TABLE>
+     <TABLE NAME="local_tag_mapping" COMMENT="tags mapping" >
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>        
+        <FIELD NAME="tagid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="tagitemid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="usercreated" TYPE="int"  LENGTH="10"  NOTNULL="true"  SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int"  LENGTH="10"  NOTNULL="true"  SEQUENCE="false"/>
+        <FIELD NAME="usermodified" TYPE="int"  LENGTH="10"  NOTNULL="false"  SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10"  NOTNULL="false"  SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="tagid" UNIQUE="false" FIELDS="tagid"/>
+     </INDEXES>
+    </TABLE>
+    
+  </TABLES>
+</XMLDB>

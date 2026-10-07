@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/sentientia_recompletion/db" VERSION="20260511"
+<XMLDB PATH="local/sentientia_recompletion/db" VERSION="20260930"
        COMMENT="Airpay Recompletion — annual / periodic course completion reset.">
 
   <TABLES>
@@ -32,6 +32,8 @@
                COMMENT="Last successful cron pass"/>
         <FIELD NAME="last_run_resets" TYPE="int" LENGTH="10" NOTNULL="false"
                COMMENT="Count of users reset on last run"/>
+        <FIELD NAME="legacy_config" TYPE="text" LENGTH="big" NOTNULL="false"
+               COMMENT="BizLMS import (ADR-032): every name/value row of the legacy local_recompletion_config for the course, as one JSON object. NULL for a rule created in Sentientia. The rule cannot express email templates, extra quiz attempts or the archive switches, so they are kept here for the rules page and for the engine parity work."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -64,6 +66,10 @@
         <FIELD NAME="reset_attempts" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="dryrun"         TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timecreated"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="source"         TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="engine"
+               COMMENT="engine = written by recompletion_engine; legacy = imported from BizLMS local_recompletion (ADR-032)"/>
+        <FIELD NAME="time_inferred"  TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="0"
+               COMMENT="1 = timecreated was worked out from the archived completion, not read from a log row of the reset itself"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -74,6 +80,58 @@
       <INDEXES>
         <INDEX NAME="idx_userid_course" UNIQUE="false" FIELDS="userid, courseid"/>
         <INDEX NAME="idx_ruleid_time"   UNIQUE="false" FIELDS="ruleid, timecreated"/>
+      </INDEXES>
+    </TABLE>
+
+
+    <!-- ───────────────────────────────────────────────────────────────
+         local_sentientia_recompletion_archive — evidence of a cycle
+
+         What a reset deleted, kept so an auditor can see the cycle that
+         ended. One row per archived source row; the row's own columns are
+         in payload (JSON), the columns a reader needs are promoted.
+         ADR-032: filled by the BizLMS import from the 16 legacy
+         local_recompletion tables, and by the engine (evidence_archiver)
+         before a reset deletes the live rows. payload holds personal data
+         (userid, overrideby, free-text questionnaire answers): see the
+         privacy provider.
+         ─────────────────────────────────────────────────────────────── -->
+    <TABLE NAME="local_sentientia_recompletion_archive" COMMENT="Archived evidence of the cycle a reset ended">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="historyid"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="The reset that ended this cycle (local_sentientia_recompletion_history.id); 0 when it cannot be told"/>
+        <FIELD NAME="userid"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Whose evidence it is; 0 = an anonymous response or a redacted row"/>
+        <FIELD NAME="courseid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="itemtype"    TYPE="char" LENGTH="30" NOTNULL="true"
+               COMMENT="course_completion|criteria_completion|activity_completion|quiz_attempt|quiz_grade|scorm_track|lti_grade|questionnaire_response|questionnaire_answer|gradebook_grade (gradebook_grade: written by the engine only)"/>
+        <FIELD NAME="cmid"        TYPE="int"  LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="instanceid"  TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="Quiz, SCORM, LTI tool, questionnaire or completion criteria id, by itemtype"/>
+        <FIELD NAME="parentid"    TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="A questionnaire answer points at its response row in this table"/>
+        <FIELD NAME="itemkey"     TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="SCORM element or questionnaire question id"/>
+        <FIELD NAME="state"       TYPE="char" LENGTH="30" NOTNULL="false"/>
+        <FIELD NAME="grade"       TYPE="number" LENGTH="10" DECIMALS="5" NOTNULL="false"
+               COMMENT="As archived (a quiz attempt holds raw marks); NULL when out of range or not a number"/>
+        <FIELD NAME="timeevent"   TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="When the archived thing happened"/>
+        <FIELD NAME="payload"     TYPE="text" LENGTH="big" NOTNULL="true"
+               COMMENT="The archived row, every column, as JSON"/>
+        <FIELD NAME="timecreated" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="When it was archived: the reset time of its cycle when known, else the time of the event"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"    TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_history" TYPE="foreign" FIELDS="historyid" REFTABLE="local_sentientia_recompletion_history" REFFIELDS="id"/>
+        <KEY NAME="fk_user"    TYPE="foreign" FIELDS="userid"    REFTABLE="user"   REFFIELDS="id"/>
+        <KEY NAME="fk_course"  TYPE="foreign" FIELDS="courseid"  REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_userid_course" UNIQUE="false" FIELDS="userid, courseid"/>
+        <INDEX NAME="idx_parentid"      UNIQUE="false" FIELDS="parentid"/>
       </INDEXES>
     </TABLE>
 

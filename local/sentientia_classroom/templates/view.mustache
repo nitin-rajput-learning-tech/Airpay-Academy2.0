@@ -25,6 +25,13 @@
       sessions_columns_json string  JSON for shared datatable
       users_columns_json    string  JSON for shared datatable
       extra_args_json       string  JSON {classroomid: N}
+      show_history          bool   — imported-history overview (flag sentientia.classroom.import_history, default OFF);
+                                     only then are these set:
+        training_dates, has_training_dates  string, bool
+        completed_human, has_completed      string, bool
+        trainers[].name, has_trainers       every trainer of the classroom
+        courses[].name, courses[].url, has_courses   linked courses
+        logo_url, has_logo                  the classroom logo
 }}
 <div data-region="airpay-classroom-view" data-classroomid="{{ classroomid }}">
 
@@ -92,7 +99,7 @@
             <div class="row mt-3">
                 <div class="col-md-3 mb-3">
                     <div class="small text-uppercase text-muted">Capacity</div>
-                    <div style="font-size: 1.5rem; font-weight: 700;">{{ capacity }}</div>
+                    <div style="font-size: 1.5rem; font-weight: 700;">{{# capacity }}{{ capacity }}{{/ capacity }}{{^ capacity }}{{# str }}capacity_unlimited, local_sentientia_classroom{{/ str }}{{/ capacity }}</div>
                 </div>
                 <div class="col-md-3 mb-3">
                     <div class="small text-uppercase text-muted">Sessions</div>
@@ -107,6 +114,47 @@
                     <div>{{ created_human }}</div>
                 </div>
             </div>
+
+            {{# show_history }}
+            <hr class="my-3" data-region="classroom-history">
+            <div class="row">
+                {{# has_logo }}
+                <div class="col-md-2 mb-3">
+                    <img src="{{{ logo_url }}}" alt="{{ name }}" class="img-fluid rounded" style="max-height: 96px;">
+                </div>
+                {{/ has_logo }}
+                <div class="col-md-4 mb-3">
+                    <div class="small text-uppercase text-muted">{{# str }}history_training_dates, local_sentientia_classroom{{/ str }}</div>
+                    <div>{{# has_training_dates }}{{ training_dates }}{{/ has_training_dates }}{{^ has_training_dates }}—{{/ has_training_dates }}</div>
+                </div>
+                {{# has_completed }}
+                <div class="col-md-3 mb-3">
+                    <div class="small text-uppercase text-muted">{{# str }}history_completed_on, local_sentientia_classroom{{/ str }}</div>
+                    <div>{{ completed_human }}</div>
+                </div>
+                {{/ has_completed }}
+            </div>
+            {{# has_trainers }}
+            <div class="mb-3">
+                <div class="small text-uppercase text-muted">{{# str }}history_trainers, local_sentientia_classroom{{/ str }}</div>
+                <ul class="list-unstyled mb-0">
+                    {{# trainers }}
+                    <li><i class="fa fa-user-circle fa-fw text-muted" aria-hidden="true"></i> {{ name }}</li>
+                    {{/ trainers }}
+                </ul>
+            </div>
+            {{/ has_trainers }}
+            {{# has_courses }}
+            <div class="mb-3">
+                <div class="small text-uppercase text-muted">{{# str }}history_courses, local_sentientia_classroom{{/ str }}</div>
+                <ul class="list-unstyled mb-0">
+                    {{# courses }}
+                    <li><i class="fa fa-book fa-fw text-muted" aria-hidden="true"></i> <a href="{{{ url }}}">{{ name }}</a></li>
+                    {{/ courses }}
+                </ul>
+            </div>
+            {{/ has_courses }}
+            {{/ show_history }}
 
             {{# has_trainer }}
             <hr class="my-3">

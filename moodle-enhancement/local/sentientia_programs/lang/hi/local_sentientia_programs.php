@@ -137,3 +137,53 @@ $string['privacy:metadata:enrol:currentlevelid'] = 'वर्तमान स्
 $string['privacy:metadata:enrol:status']        = 'नामांकन स्थिति।';
 $string['privacy:metadata:enrol:timecreated']   = 'नामांकन की तिथि।';
 $string['privacy:metadata:enrol:timecompleted'] = 'पूर्णता की तिथि।';
+
+// ADR-032 (2026-09-30) - BizLMS program import: the learner page, the history readers, protected history.
+$string['myprograms'] = 'मेरे प्रोग्राम';
+$string['myprograms_none'] = 'आप अभी तक किसी सर्टिफिकेशन प्रोग्राम में नामांकित नहीं हैं।';
+$string['completed_on'] = 'पूर्ण होने की तिथि';
+$string['completed_on_date'] = '{$a} को पूर्ण किया';
+$string['enrolled_on_date'] = '{$a} को नामांकित';
+$string['status_completed'] = 'पूर्ण';
+$string['status_inprogress'] = 'प्रगति में';
+$string['status_enrolled'] = 'नामांकित';
+$string['levels_progress'] = '{$a->total} में से {$a->done} स्तर';
+$string['overall_progress'] = 'प्रोग्राम की समग्र प्रगति';
+$string['level_locked'] = 'लॉक';
+$string['level_locked_hint'] = 'अनलॉक करने के लिए पिछला अनिवार्य स्तर पूरा करें।';
+$string['badge_required'] = 'अनिवार्य';
+$string['badge_optional'] = 'वैकल्पिक';
+$string['courses_progress'] = '{$a->done}/{$a->total} अनिवार्य कोर्स';
+$string['courses_progress_any'] = '{$a->total} अनिवार्य कोर्स में से कोई एक ({$a->done} पूर्ण)';
+$string['error_learner_page_off'] = 'यह पृष्ठ उपलब्ध नहीं है।';
+$string['error_history_protected'] = 'यह रिकॉर्ड BizLMS से आयात किया गया है और सर्टिफिकेशन इतिहास का हिस्सा है, इसलिए इसे हटाया नहीं जा सकता। इसके बजाय प्रोग्राम को आर्काइव करें।';
+
+// ADR-032 privacy strings: the actor column of the enrolments and the three history tables.
+$string['privacy:metadata:enrol:enrolledby'] = 'नामांकन करने वाला उपयोगकर्ता (0 = अज्ञात)। उस उपयोगकर्ता का डेटा मिटाने पर हटा दिया जाता है।';
+$string['privacy:metadata:enrol:timemodified'] = 'नामांकन रिकॉर्ड में अंतिम बदलाव की तिथि।';
+$string['privacy:metadata:lvlcomp'] = 'सर्टिफिकेशन प्रोग्राम में शिक्षार्थी के सहेजे गए स्तर-पूर्णता रिकॉर्ड (BizLMS से आयातित इतिहास)।';
+$string['privacy:metadata:lvlcomp:programid'] = 'प्रोग्राम ID।';
+$string['privacy:metadata:lvlcomp:levelid'] = 'स्तर ID।';
+$string['privacy:metadata:lvlcomp:userid'] = 'शिक्षार्थी उपयोगकर्ता ID।';
+$string['privacy:metadata:lvlcomp:status'] = 'पूर्णता स्थिति (1 = पूर्ण)।';
+$string['privacy:metadata:lvlcomp:timecompleted'] = 'स्तर पूर्ण होने की तिथि (स्रोत में दर्ज न हो तो खाली)।';
+$string['privacy:metadata:lvlcomp:completedcourseids'] = 'पूर्णता के लिए BizLMS द्वारा दर्ज कोर्स ID (केवल ऑडिट के लिए)।';
+$string['privacy:metadata:lvlcomp:source'] = 'पंक्ति कहाँ से आई (आयातित पंक्तियों के लिए bizlms)।';
+$string['privacy:metadata:lvlcomp:timecreated'] = 'रिकॉर्ड बनाए जाने की तिथि।';
+$string['privacy:metadata:lvlcomp:timemodified'] = 'रिकॉर्ड में अंतिम बदलाव की तिथि।';
+$string['privacy:metadata:trainers'] = 'सर्टिफिकेशन प्रोग्राम में नियुक्त प्रशिक्षक (BizLMS से आयातित इतिहास)।';
+$string['privacy:metadata:trainers:programid'] = 'प्रोग्राम ID।';
+$string['privacy:metadata:trainers:userid'] = 'प्रशिक्षक का उपयोगकर्ता ID।';
+$string['privacy:metadata:trainers:feedbackid'] = 'प्रशिक्षक पर प्रतिक्रिया के लिए प्रयुक्त मूल्यांकन फ़ॉर्म ID।';
+$string['privacy:metadata:trainers:feedback_score'] = 'प्रशिक्षक के लिए BizLMS द्वारा दर्ज प्रतिक्रिया स्कोर।';
+$string['privacy:metadata:trainers:assignedby'] = 'प्रशिक्षक को नियुक्त करने वाला उपयोगकर्ता (0 = अज्ञात)। उस उपयोगकर्ता का डेटा मिटाने पर हटा दिया जाता है।';
+$string['privacy:metadata:trainers:timecreated'] = 'नियुक्ति बनाए जाने की तिथि।';
+$string['privacy:metadata:trainers:timemodified'] = 'नियुक्ति में अंतिम बदलाव की तिथि।';
+$string['privacy:metadata:trainerfb'] = 'प्रोग्राम प्रशिक्षक पर दी गई प्रतिक्रिया (BizLMS से आयातित इतिहास)।';
+$string['privacy:metadata:trainerfb:programtrainerid'] = 'वह प्रशिक्षक नियुक्ति जिस पर प्रतिक्रिया है।';
+$string['privacy:metadata:trainerfb:programid'] = 'प्रोग्राम ID।';
+$string['privacy:metadata:trainerfb:trainerid'] = 'वह प्रशिक्षक जिस पर प्रतिक्रिया है (उपयोगकर्ता ID)।';
+$string['privacy:metadata:trainerfb:userid'] = 'प्रतिक्रिया देने वाला शिक्षार्थी (अज्ञात या मिटाए जाने पर खाली)।';
+$string['privacy:metadata:trainerfb:score'] = 'प्रतिक्रिया स्कोर।';
+$string['privacy:metadata:trainerfb:timecreated'] = 'प्रतिक्रिया दर्ज होने की तिथि।';
+$string['privacy:metadata:trainerfb:timemodified'] = 'प्रतिक्रिया में अंतिम बदलाव की तिथि।';
