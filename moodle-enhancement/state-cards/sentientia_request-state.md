@@ -1,7 +1,7 @@
 # State Card — `local_sentientia_request`
 
 **Component:** `local_sentientia_request` (was `local_airpay_request` until ADR-022/025; older sections below still use the old name)
-**Version:** `2026093001` / `1.5.0`  (ADR-032 importer; the 2026-10-07 owner decisions below changed code only, so the version did not move)
+**Version:** `2026100701` / `1.5.1`  (ADR-032 importer was `2026093001` / `1.5.0`; the 2026-10-07 owner decisions below bump it with no schema change, for the cached flag registry and the batch's one-version-per-plugin ledger)
 **Maturity:** `MATURITY_STABLE`
 **Status:** Learner-driven course request workflow (Sentientia is not live yet; the live system is BizLMS).
 **Last refreshed:** 2026-10-07 (COMMS-R owner decisions)
@@ -241,12 +241,15 @@ not carried (it is usually NULL); certification requests stay unmapped until an 
 need: the static scan bans `request_manager::` wholesale, so the map's "use `rm::route_approver`" became the shared
 `approver_routing` class.
 
-## 2026-10-07 - owner decisions of the comms cluster (code only, version unchanged)
+## 2026-10-07 - owner decisions of the comms cluster (version `2026100701` / `1.5.1`, no schema change)
 
 Branch `claude/owner-decisions-x`. Decided under Nitin's delegation of 2026-10-07 ("self review and decide recommended
 option") on top of the signed basis "do everything as recommended"; list: `docs/cutover/OWNER-DECISIONS-2026-10-07.md`.
 PHPUnit was NOT run (the lead re-inits and runs the group). No flag flipped, nothing copied to XAMPP. No schema, no
-capability, no new flag, so no version bump: the request plugin stays `2026093001`.
+capability, no new flag. The version is bumped to `2026100701` (release `1.5.1`) because the flag registry description
+changed (the platform caches the registry) and the batch keeps ONE version per plugin (F-85, "request (COMMS-R4)");
+`db/upgrade.php` needs no step (Moodle records the new version itself). The importer's `requires_version()` stays
+`2026093001`: the schema it needs has not changed.
 
 - **COMMS-R1, `request.pending_stale = history_only`** (new decisions-file key, declared by the importer): a legacy
   PENDING course or path request whose requester is deleted or suspended, or whose item no longer exists, imports as
