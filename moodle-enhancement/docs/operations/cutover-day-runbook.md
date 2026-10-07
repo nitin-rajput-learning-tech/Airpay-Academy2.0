@@ -223,6 +223,31 @@ These items are NOT cutover-blocking. Schedule for the day after.
 
 ---
 
+## BizLMS import rules to carry into the cutover (added 2026-10-07)
+
+`SENTIENTIA-MIGRATION-PLAN-2026-09-04.md` supersedes this runbook for the migration (new infra, DNS swap, two upgrade hops); the
+import rules below hold whichever runbook is used. Detail: `docs/cutover/MIGRATION-REHEARSAL-RUNBOOK.md`, section "BizLMS import:
+Stage B checks", and `docs/cutover/OWNER-DECISIONS-2026-10-07.md`.
+
+1. NEVER uninstall `enrol_classroom`, `enrol_program`, `enrol_learningplan` or `local_courses` from Plugins overview (decision F-36):
+   core uninstall deletes their instances, enrolments and tag instances.
+2. Keep `enrol_manual/expiredaction` = KEEP. Purge caches after `course_tags` and after `enrolments`. Check ONE converted
+   learner's access before and after.
+3. NEVER use 'Delete' on a disabled BizLMS instance in a course's Enrolment methods page (CRS-01): delete removes its
+   `user_enrolments` rows. Undo is `UPDATE {enrol} SET status = priorstatus` from the trail table.
+4. NEVER re-run `--apply` of a completed core-writing feature after `bizlms_production_open`; no admin unenrol of an imported row
+   before it (LRN-10).
+5. Course tags (CRS-09): courses tagged with the lifecycle `mandatory` tag become joiner auto-enrol triggers once moved, so
+   `sentientia.lifecycle.autoenrol.enabled` stays OFF until `course_lookups` and `course_tags` are complete and L&D has reviewed the
+   `will_move_with_the_lifecycle_mandatory_tag` list; BizLMS tag tenancy (`local_tags`) is not carried over. If the preflight count
+   `will_move` is above 0, open the core tag index as a `/77` learner and confirm no `/1` course names are listed; if they are,
+   handle it under the ADR-031 course-listing rules before cutover.
+6. Reader flags for imported history stay OFF until Nitin has reviewed the evidence; the importer never flips a flag.
+7. No native GST tax invoice to a real buyer until Airpay Finance answers the six points (`cart.native_tax_invoices = hold`);
+   `local_sentientia_cart/enabled_tenants` defaults to '77,177'.
+
+---
+
 ## Reference index — where to drill in if a step fails
 
 | Step in this runbook | Drill-in doc |

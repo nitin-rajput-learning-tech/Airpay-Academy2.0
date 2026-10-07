@@ -5,6 +5,8 @@
 **Git source of truth for the deployed layer:** branch `claude/gap-integration`, HEAD `9dddfdaf7` (pin the exact SHA + SHA-256 of the built package at §4d / open decision D-3)
 **Model:** restore live production DB + moodledata onto a parallel Sentientia 5.2 stack → `php admin/cli/upgrade.php` in place → repoint DNS/LB at the same `wwwroot` `https://www.airpay.academy`. This is NOT a fresh install and NOT a selective export/import.
 
+**Updated 2026-10-07:** the BizLMS feature-data import (ADR-032) is decided end to end. The open owner questions were decided under Nitin's delegation of 2026-10-07 (`OWNER-DECISIONS-2026-10-07.md`); section 11 below holds the owner confirmations, the Finance list and the after-Stage-B acceptance list, and `MIGRATION-REHEARSAL-RUNBOOK.md` holds the Stage B checks.
+
 **Reads-with, does not duplicate:** `moodle-enhancement/docs/cutover/MIGRATION-REHEARSAL-RUNBOOK.md` (the restore→upgrade→parity procedure this plan runs against real infra), `moodle-enhancement/docs/cutover/SENTIENTIA-CUTOVER-MASTER.md` (independence Gates A–D — all kept dormant here), `moodle-enhancement/docs/cutover/UAT-SENTIENTIA-DEPLOY-CHECKLIST.md` (infra binding), `moodle-enhancement/docs/security/UAT-VALIDATION-PLAN-2026-09-03.md`, `moodle-enhancement/docs/security/UAT-SECURITY-POSTURE-2026-09-03.md`, `moodle-enhancement/docs/operations/OAUTH2-SMTP-M365-RUNBOOK.md`, `moodle-enhancement/docs/security/ENTERPRISE-IDENTITY-PACK.md`, and `CLAUDE.md` (§2 environment/tenant facts). Where this plan and `cutover-day-runbook.md` disagree, **this plan wins** — that runbook describes an in-place single-box swap and its rollback frame is wrong for the new-infra + DNS-swap model (see §7).
 
 ---
@@ -221,12 +223,19 @@ Extends `UAT-SENTIENTIA-DEPLOY-CHECKLIST.md §1, §6` and `UAT-ASKS-2026-09-03.m
     - But the instances have no plugin code: nobody can manage them, and edit or unenrol flows through
       them fail. The first admin save of the enrol-plugin settings drops the missing plugins from that
       list and removes access in one step.
+    - **Corrected 2026-10-07 (decisions CRS-01 and XC-G6-WHY): the converse is the bigger risk once the rows are converted.**
+      `require_login` -> `enrol_get_enrolment_end` filters only `e.status` and `ue.status`, never the plugin, so an ENABLED orphan
+      instance keeps granting course access even though its plugin is gone, and a Sentientia unenrol or suspend of the converted
+      manual row would not revoke it. So each fully converted BizLMS instance is DISABLED (never deleted) once every (user, course)
+      pair on it provably keeps an access window at least as wide through manual enrolments; an instance with a regression or an
+      unsettled needs-owner row stays enabled. See mapping doc section 21 and the runbook rules (never use 'Delete' on a disabled
+      BizLMS instance, never uninstall the BizLMS enrol plugins).
     - So the G6 conversion (to a manual enrolment, status and dates kept; decided 2026-09-30; importer
       `claude/bizlms-import-enrolments`, reviewed: ship) is still required before cutover sign-off.
   - Live has grown since April: run the I-20 query on live before sizing the window.
 
   **Decided (Nitin, 2026-09-29): IMPORT.** The BizLMS history is imported into the Sentientia tables
-  (design: ADR-032 and `BIZLMS-IMPORT-MAPPING-2026-09-29.md`, in progress). The options that were on
+  (design: ADR-032 and `BIZLMS-IMPORT-MAPPING-2026-09-29.md`, in progress; 2026-10-07: all 19 importers are built and merged on `claude/gap-integration`, and the open owner questions are decided under delegation, see section 11). The options that were on
   the table: per feature, **import** into the Sentientia tables
   (a CLI per feature, run after both hops, with before/after counts in the parity gate), or **archive**
   (keep the BizLMS tables read-only plus a read-only history report for admins), or both. Size it with
@@ -425,6 +434,9 @@ Do NOT run any independence flag-flip (Gates B/C/D stay legacy/dormant — §6).
    **Precondition:** count production's role-9 assignments below system context (UAT had 2 at
    category level) and get Nitin's decision before `--accept-nonsystem-holders`. Tenant admins lose
    core "Log in as" (Nitin, 2026-09-29: site admins only).
+   **2026-10-07 decision IDN-05:** the platform role (`adr031_crosstenant_role.php`) is created with NO members at Stage B and at
+   cutover; members are added by hand only when Nitin names them, so the site admins stay the only cross-tenant callers
+   until then.
    **Target mode (2026-09-30; the tooling gap noted on 2026-09-29 is closed):** the four `adr031_*`
    scripts take `--target=<wwwroot> --config=<absolute path to config.php>` as the alternative to
    `--i-am-uat`. Both are read from the command line before Moodle loads; after the config loads the
@@ -448,7 +460,7 @@ Do NOT run any independence flag-flip (Gates B/C/D stay legacy/dormant — §6).
    ```bash
    php local/sentientia_platform/cli/migration_parity_check.php --compare=/vault/live-baseline.json
    ```
-   **VERIFY:** prints `RESULT: 100% PARITY — data intact.` (exit 0) across **both** the row-count metrics **and** the value-level aggregates (grade_sum, completed-completions count, scorm status/score CRC), plus the added tables (scorm_scoes_track, role_assignments, enrol) and the tenant cross-foot invariant `users_tenant_sum == users_total_active`. **STOP** on any `DRIFT` line — a value-checksum drift (grades/completions recomputed with unchanged row counts) is a hard stop identical to a count drift; a tenant-sum mismatch signals `open_path` truncation (§5). Investigate before proceeding. **Exit 2 is also a STOP**: it means a check could not run (the line says `SKIPPED ... (check could not run: ...)`), which is "not proven", never a pass. Only exit 0 with the `100% PARITY` line lets the cutover go on.
+   **VERIFY:** prints `RESULT: 100% PARITY — data intact.` (exit 0) across **both** the row-count metrics **and** the value-level aggregates (grade_sum, completed-completions count, scorm status/score CRC), plus the added tables (scorm_scoes_track, role_assignments, enrol) and the tenant cross-foot invariant `users_tenant_sum == users_total_active`. **STOP** on any `DRIFT` line — a value-checksum drift (grades/completions recomputed with unchanged row counts) is a hard stop identical to a count drift; a tenant-sum mismatch signals `open_path` truncation (§5). Investigate before proceeding. **Exit 2 is also a STOP**: it means a check could not run (the line says `SKIPPED ... (check could not run: ...)`), which is "not proven", never a pass. Only exit 0 with the `100% PARITY` line lets the cutover go on. **2026-10-07 decision F-34:** after the BizLMS import the compare must explain the `user_enrolments` and `enrol` deltas through the import map (the enrolments importer adds about 7,733 rows on April and changes `enrol.status` by design) and report any unexplained delta as drift; see ADR-032 parity hook 4 and the runbook step 5.
 2. **Per-user continuity spot-check** (§5.2) — before/after fingerprint over 5–10 named real users (including a re-completion user) must be byte-identical.
 3. **Smoke walk** (reuse `MIGRATION-REHEARSAL-RUNBOOK.md` step 6 + `cutover-day-runbook.md` reusable smoke; access the pre-repoint box by IP / hosts-file override for `www.airpay.academy`):
    - Frontpage `HTTP 200`, ~72 KB, zero error-grep hits.
@@ -653,6 +665,72 @@ A red rehearsal on any of the seven re-scopes and repeats; it never promotes to 
 - **D-6 — MFA at go-live (§8-3):** enable grace-factor-first now, or defer post-cutover. **Owner: IT/Nitin.**
 - **D-7 — Global search (I-15):** stand up Solr on the new box (reindexed post-repoint async), or run without global search. **Owner: DevOps.**
 - **D-8 — Reconcile `cutover-day-runbook.md`:** it references PHP 8.4 (G9), a ~30-min in-place downtime, and an in-place rollback frame (§7.3) — all superseded by this plan; annotate that doc as superseded-for-migration to prevent accidental reuse. **Owner: Claude.**
+- **D-9 — Finance answers (section 11.3):** the credit-balance and ERPNext-invoice items accepted under delegation on 2026-10-07 without Finance being consulted, and the six points that gate the first native GST tax invoice. **Owner: Nitin/Airpay Finance.**
+- **D-10 — Cross-tenant platform role members (IDN-05):** the role is created with no members; names only from Nitin. **Owner: Nitin.**
+- **D-11 — Written acceptance of needs-owner reasons (section 11.2):** after the Stage B rehearsal, one batch edit of `accepted_reasons` with counts, then the decisions hash is re-pinned. **Owner: Nitin.**
+- **D-12 — Reader flags at cutover (section 11.4):** recommended, never decided by the importers; each flip is Nitin's call after he has reviewed the visual evidence. **Owner: Nitin.**
+
+---
+
+## 11. BizLMS feature-data import: owner confirmations (added 2026-10-07)
+
+Source: `OWNER-DECISIONS-2026-10-07.md` (84 decisions, the critic summary, the follow-up annex) and ADR-032 ("Owner decisions, 2026-10-07 (delegated)"). Nothing here flips a flag, deletes a row or touches live.
+
+### 11.1 What blocks the Stage B rehearsal
+
+Thirteen decisions change import output or the signed file, so they land BEFORE the rehearsal pins the decisions hash: EV-16 (sticky anonymity), EV-19 (legacy anonymous linkage, a decisions-file edit), EV-25 (merge order: all 19 importers load), CRS-01 (disable converted BizLMS instances, per-pair access proof), LRN-07 (skills level csv), COMMS-N1 (credentials), COMMS-N2 (manager copies), COMMS-N3 (course link), COMMS-N6 (deleted-recipient wording), COMMS-R1 (stale pending requests), COMMS-R2 (itemid 0 for a gone item), COMMS-R4 (request comments) and XC-G6-WHY (the corrected G6 reason). The signed file and both fixture copies change in ONE commit, with no `accepted_reasons` list (F-84). The framework batch (F-83) and the parity wiring (F-34, F-61) are engineering, not owner, gates.
+
+### 11.2 After the Stage B rehearsal: written acceptance of needs-owner reasons
+
+Nothing is pre-accepted (IDN-02, EV-23, COMMS-C1, `cart.accepted_reasons`). After the rehearsal the lead tabulates every needs-owner code with its count; Nitin accepts each in writing (ids only, counts in the approval note); ONE batch edit adds `"feature:code"` strings to the top-level `accepted_reasons` list of the signed file and both fixture copies; the new hash is pinned. Any later growth of a count is a re-approval event (count-bounded acceptance is a before-cutover framework item, F-27). Expected from the April copy:
+
+| Feature | Reasons | April expectation |
+|---|---|---|
+| org | `org:invalid_tenant_root`, `org:unmapped_enum` | 0, 0 (a hit stops the run: Nitin decides the tenant first) |
+| org_roles | `org_roles:user_outside_org_tenant`, `:role_not_assignable`, `:user_without_tenant` | 0, 0, 0 (both source tables empty) |
+| users | `users:invalid_login_row` | 0 (no `local_uniquelogins` table) |
+| course_lookups | `course_lookups:tenant_unresolved` | 0 |
+| enrolments | `enrolments:user_deleted`, `:manual_enrolment_inactive`, `:manual_enrolment_ends_sooner` | 0, 0, 0; a per-learner list (ids only) reviewed by L&D first |
+| ratings | `ratings:unknown_area`, `:orphan_item`, `:invalid_rating`, `:orphan_user`, `:invalid_reaction` | about 195 (194 scanner rows), about 85 or more, 1, at most 1, 0 |
+| notifications, request | `notifications:orphan_user`, `request:orphan_user`, `:orphan_item`, `:orphan_request` | all 0 |
+| evaluation | `value_not_valid`, `duplicate_value`, `foreign_item`, `missing_item`, `orphan_*`, `no_timestamp`, `unmapped_enum` | none |
+| cart | the seven cart needs-owner reasons | none |
+| learningplan | `learningplan:orphan_course` | 4 (122 of 126 course rows import); 53 enrolments of users from other roots on `/1` paths (6 `/177`, 6 `/77`, 41 `/80` with all 41 accounts deleted) stay hidden from tenant readers |
+| program | `orphan_program` levels and criteria under the missing program 1 | as seen |
+| recompletion, classroom | none | 0 rows |
+| skills | per Stage B | |
+
+The old name `accept_needsowner.<feature>.<reason>` never existed in the loader and must not be used (F-82).
+
+### 11.3 Finance confirm list (Airpay Finance was NOT consulted)
+
+`cart.credit_balances = frozen_pending_finance` and `cart.erpnext_invoices_legal = reference_only_pending_finance` are `accepted` in the signed file because Nitin delegated them on 2026-10-07. `accepted` is not a Finance sign-off, and nothing acts on a balance or an invoice number until Finance answers. Questions for Finance (through Nitin):
+
+1. **Credit balances.** If the Stage B rehearsal on the final live backup shows any learner with a non-zero BizLMS credit balance, send the list (count, total in INR and tenant) to Airpay Finance before cutover: honour, pay out or write off, and who owns the liability. Should a holder's erasure request also wait until the balance is settled? Today the cart privacy provider deletes the balance row on erasure (the question belongs in the legacy-table privacy ADR; no code change until Finance answers). April: none (0 credit bookings, 0 ledger rows, 0 holders, INR 0).
+2. **ERPNext invoices.** (a) The only completed BizLMS cart sale (INR 10, 10 January 2025, Public tenant, no GST charged) has no tax invoice in BizLMS or ERPNext: was it a test payment, or does Finance need to raise an invoice in its own system? Sentientia will not create one. (b) If the final live backup contains stored ERPNext invoice numbers (April: none), does Finance confirm ERPNext as the system that holds those legal invoices?
+3. **Native GST tax invoices (`cart.native_tax_invoices = hold`).** Before Sentientia issues a GST tax invoice to any real buyer, Finance confirms six points: (1) Sentientia, not Finance's own system, issues tax invoices for LMS course sales; (2) the GSTIN for `local_sentientia_cart/our_gstn`; (3) the `AIRPAY-YYYY-NNNN` series (16 characters, restarting each January); (4) how refunds get a GST credit note, since Sentientia issues none; (5) whether B2B invoices need an e-invoice IRN; (6) how long issued invoices must be kept unredacted, because an erasure request currently blanks the buyer's name, address and GSTIN on them (CGST Act s.36 retention against DPDP erasure). Until then, which tenants should `local_sentientia_cart/enabled_tenants` open at cutover? The default is '77,177'.
+
+### 11.4 Recommended reader flags at cutover (recorded, NOT decided; none flipped)
+
+Every flip is Nitin's call after he has reviewed the visual evidence (`framework.reader_flags_airpay_at_cutover`).
+
+| Flag | Recommendation | Decision |
+|---|---|---|
+| `sentientia.emails.imported_history.enabled`, `sentientia.emails.imported_body_detail.enabled` | ON | COMMS-C2 |
+| `sentientia.request.imported_history` | ON, only after COMMS-R1 has landed | COMMS-C2 |
+| `sentientia.legacy_logs.report.enabled` | stays OFF | COMMS-C2 |
+| `sentientia.ratings.widget` | ON | CRS-11 |
+| `sentientia.ratings.reactions` | ON only after the counts are wired into a theme template and reviewed | CRS-12 |
+| `sentientia.ratings.reviews` | stays OFF (BizLMS had `review_enable` = 0) | CRS-12 |
+| `sentientia.evaluation.response_drilldown` | ON for Airpay after the screenshots | EV-06 |
+| `sentientia.users.imported_sync_history` | ON with the other readers | IDN-07, XC-IMPORTED-HISTORY-READERS |
+| `sentientia.recompletion.run_rules` | OFF on UAT until the `costcenterid = 0` rules are confirmed or disabled; OFF at cutover until a native rule Airpay needs exists | LRN-06 |
+| `sentientia.lifecycle.autoenrol.enabled` | OFF until `course_lookups` and `course_tags` are complete and L&D has reviewed the mandatory-tag list | CRS-09 |
+| the three new notification senders (course enrolment, learning-path enrolment, manager completion copy) | Nitin decides after UAT evidence | COMMS-N7 |
+
+### 11.5 Everything else Nitin must answer
+
+See "Questions that still need Nitin" in `OWNER-DECISIONS-2026-10-07.md` (platform role members, the EV-18 evidence session, the UAT recompletion rules, the CRS-13 [CONFIRM] delete, the optional EV-24 local `git gc`, programs or learning plans whose tenant came from their creator if Stage B shows any, and the flag flips above).
 
 ---
 
