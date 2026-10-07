@@ -327,5 +327,22 @@ function xmldb_local_sentientia_evaluation_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026093001, 'local', 'sentientia_evaluation');
     }
 
+    // 2026100701 - EV-17: the form says whether it is a supervisor evaluation.
+    //
+    // 'SE' (a self evaluation) is what every form that exists today is, so the default is the whole backfill for a
+    // site that has not imported anything. A site that already ran the BizLMS import (a rehearsal or UAT copy) has
+    // imported supervisor forms that this column does not know yet: they read 'SE' until the import is run again
+    // from a clean target, or until the idempotent backfill from local_evaluations.evaluationmode through the
+    // import's map is run (the legacy tables are kept). Guarded so a re-run, or an install that already has the
+    // column from install.xml, changes nothing.
+    if ($oldversion < 2026100701) {
+        $table = new xmldb_table('local_sentientia_evaluation');
+        $field = new xmldb_field('evaluationmode', XMLDB_TYPE_CHAR, '2', null, XMLDB_NOTNULL, null, 'SE', 'anonymous');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        upgrade_plugin_savepoint(true, 2026100701, 'local', 'sentientia_evaluation');
+    }
+
     return true;
 }

@@ -931,6 +931,78 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertNull($old->subject_userid);
     }
 
+    /**
+     * EV-17: the form carries the mode BizLMS gave it, so Sentientia no longer guesses from the responses.
+     */
+    public function test_a_form_carries_the_evaluation_mode_bizlms_gave_it(): void {
+        global $DB;
+        $this->run_world();
+        foreach ($DB->get_records(importer::T_FORMS) as $form) {
+            $this->assertSame((int) $form->id === 3 ? 'SP' : 'SE', $form->evaluationmode,
+                "form {$form->id}: only the seeded supervisor evaluation is SP");
+        }
+    }
+
+    /**
+     * EV-17: a supervisor completion from before BizLMS recorded who filled it in follows the map (the completion's
+     * user answers, which is the person evaluated, and no subject is kept) and is counted, so the owner knows how
+     * many responses name the person evaluated as the responder.
+     */
+    public function test_an_old_supervisor_completion_with_no_evaluator_is_counted(): void {
+        $report = $this->run_world();
+        // 3002 is a named completion of supervisor form 3 with evaluatedby 0; 3001 names its evaluator.
+        $warnings = $this->section($report, 'evaluation.responses', 'warnings');
+        $this->assertEquals(1, $warnings['sp_responder_unknown'], 'only completion 3002 has no evaluator');
+        $this->assertSame($this->u['u1'], (int) $this->response_of(3002)->userid, 'still as the map says');
+        $this->assertNull($this->response_of(3002)->subject_userid);
+        $this->assertSame($this->u['sup'], (int) $this->response_of(3001)->userid);
+    }
+
+    /**
+     * EV-17: an anonymous supervisor evaluation keeps no subject, and the import implies a "responded" assignment
+     * for the person evaluated (no assignee row). Neither it nor the named supervisor form 3 reaches that person's
+     * history, because the forms say they are supervisor evaluations; their self evaluations still do.
+     */
+    public function test_the_person_evaluated_does_not_see_an_imported_supervisor_form_as_responded(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        $u1 = $this->u['u1'];
+        $this->put_form(14, ['evaluationmode' => 'SP', 'anonymous' => 1, 'open_path' => '/1/5']);
+        $this->put_item(1401, ['evaluation' => 14, 'typ' => 'textfield', 'position' => 1]);
+        $this->put_completed(14001, 14, $u1, self::T0 + 14000, ['anonymous_response' => 1]);
+        $this->put_value(41, 14001, 1401, 'Fine');
+        [$result] = $this->contract_run(true);
+        $this->assertSame(0, $result['exit'], implode('; ', array_merge($result['blockers'], $result['unproven'])));
+
+        $this->assertSame('SP', $this->form(14)->evaluationmode);
+        $this->assertSame(0, (int) $this->response_of(14001)->userid, 'anonymous: no responder');
+        $this->assertNull($this->response_of(14001)->subject_userid, 'and no subject: the old marker is gone');
+        $this->assertSame('responded', $this->assignment(14, $u1)->status, 'the import still implies the assignment');
+
+        $names = array_map(static fn(\stdClass $r): string => $r->name, learner_history::for_user($u1));
+        $this->assertContains('Form 1', $names, 'a self evaluation they answered is listed');
+        $this->assertNotContains('Form 3', $names, 'the named supervisor evaluation about them');
+        $this->assertNotContains('Form 14', $names, 'the anonymous one, whose response names nobody');
+    }
+
+    /**
+     * EV-17: verify names an imported form whose mode no longer matches BizLMS.
+     */
+    public function test_verify_names_a_form_whose_mode_no_longer_matches_bizlms(): void {
+        global $DB;
+        $this->run_world();
+        $runner = new runner(['decisions' => $this->contract_decisions()]);
+        $clean = $runner->verify(['evaluation']);
+        $this->assertSame(0, $clean['exit'], implode('; ', $clean['failures']['evaluation']));
+
+        // The supervisor evaluation loses its marker, and a self evaluation gains one.
+        $DB->set_field(importer::T_FORMS, 'evaluationmode', 'SE', ['id' => 3]);
+        $DB->set_field(importer::T_FORMS, 'evaluationmode', 'SP', ['id' => 1]);
+        $failures = $runner->verify(['evaluation']);
+        $this->assertSame(1, $failures['exit']);
+        $this->assertContains('imported_form_mode_mismatch:2', $failures['failures']['evaluation']);
+    }
+
     public function test_responses_of_missing_people_and_missing_times_are_handled(): void {
         $report = $this->run_world();
         $this->assertSame('skipped', $this->entry('local_evaluation_completed', 1005)->outcome);

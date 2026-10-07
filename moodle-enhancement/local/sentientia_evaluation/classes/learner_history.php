@@ -20,12 +20,11 @@ defined('MOODLE_INTERNAL') || die();
  *
  * Supervisor evaluations are not the learner's to answer. On one, the assignment row names the person being
  * evaluated, and its status says "responded" when the SUPERVISOR answered; showing that to the person evaluated
- * would tell them they responded to a form they never saw. BizLMS listed only self evaluations to learners, so the
- * assignment rows of a supervisor evaluation are left out here. The page recognises one by its responses: the
- * import stores the person evaluated in responses.subject_userid, and nothing else writes that column. What it
- * cannot recognise is an ANONYMOUS supervisor evaluation, whose subject is deliberately not kept (decision
- * evaluation.sp_anonymous_subject): the evaluated person would see it as responded. That needs a marker on the
- * form itself and is recorded as an open item in the plugin state card.
+ * would tell them they responded to a form they never saw. BizLMS listed only self evaluations to learners, so only
+ * self evaluations are listed here, assignments and responses alike. The form says which it is: its evaluationmode
+ * column (EV-17), SE for every native form and for a BizLMS self evaluation, SP for a supervisor evaluation. That
+ * holds for an ANONYMOUS supervisor evaluation too, whose subject is deliberately not kept (decision
+ * evaluation.sp_anonymous_subject), and for an old completion that names no evaluator: neither is told it responded.
  *
  * Shown behind the default-OFF flag sentientia.evaluation.learner_history (see my_evaluations.php).
  *
@@ -65,9 +64,9 @@ final class learner_history {
             "SELECT r.id, r.evaluationid, r.timesubmitted, e.name, e.anonymous
                FROM {local_sentientia_evaluation_responses} r
                JOIN {local_sentientia_evaluation} e ON e.id = r.evaluationid
-              WHERE r.userid = :uid AND r.timesubmitted > 0
+              WHERE r.userid = :uid AND r.timesubmitted > 0 AND e.evaluationmode = :mode
            ORDER BY r.timesubmitted ASC, r.id ASC",
-            ['uid' => $userid]);
+            ['uid' => $userid, 'mode' => evaluation_manager::MODE_SELF]);
         $named = [];
         foreach ($responses as $r) {
             $named[(int) $r->evaluationid] = true;
@@ -77,19 +76,13 @@ final class learner_history {
             "SELECT a.id, a.evaluationid, a.status, a.due_at, a.responded_at, a.timecreated, e.name, e.anonymous
                FROM {local_sentientia_evaluation_assign} a
                JOIN {local_sentientia_evaluation} e ON e.id = a.evaluationid
-              WHERE a.userid = :uid
+              WHERE a.userid = :uid AND e.evaluationmode = :mode
            ORDER BY a.timecreated ASC, a.id ASC",
-            ['uid' => $userid]);
-        $supervised = [];
+            ['uid' => $userid, 'mode' => evaluation_manager::MODE_SELF]);
         foreach ($assignments as $a) {
+            // Only self evaluations are listed (the query), so nobody is shown as having responded to a supervisor
+            // evaluation, where the assignment names the person evaluated.
             $evaluationid = (int) $a->evaluationid;
-            if (!array_key_exists($evaluationid, $supervised)) {
-                $supervised[$evaluationid] = self::is_supervisor_evaluation($evaluationid);
-            }
-            if ($supervised[$evaluationid]) {
-                // The assignment names the person evaluated, not somebody who was asked to answer.
-                continue;
-            }
             $time = (int) ($a->responded_at ?: ($a->due_at ?: $a->timecreated));
             self::merge($rows, $evaluationid, (string) $a->name, (int) $a->anonymous, (string) $a->status, $time);
         }
@@ -123,22 +116,6 @@ final class learner_history {
         }
         usort($out, static fn(\stdClass $a, \stdClass $b): int => [$b->time, $b->evaluationid] <=> [$a->time, $a->evaluationid]);
         return $out;
-    }
-
-    /**
-     * Is this a supervisor evaluation, as far as the stored responses can tell?
-     *
-     * The import keeps the person evaluated in responses.subject_userid on a supervisor evaluation and nowhere
-     * else, so a response with a subject marks the form. A supervisor evaluation that is anonymous keeps no
-     * subject and is not recognised.
-     *
-     * @param int $evaluationid
-     * @return bool
-     */
-    private static function is_supervisor_evaluation(int $evaluationid): bool {
-        global $DB;
-        return $DB->record_exists_select('local_sentientia_evaluation_responses',
-            'evaluationid = :eid AND subject_userid IS NOT NULL', ['eid' => $evaluationid]);
     }
 
     /**

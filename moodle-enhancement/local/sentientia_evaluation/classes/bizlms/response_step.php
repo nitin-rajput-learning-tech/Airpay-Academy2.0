@@ -147,9 +147,16 @@ final class response_step extends step {
         $subject = null;
         $subjectunknown = false;
         $responderunknown = false;
+        $evaluatorunknown = false;
         if (!$anonymous) {
-            $supervised = (string) ($form->evaluationmode ?? 'SE') === 'SP';
+            $supervised = (string) ($form->evaluationmode ?? importer::MODE_SELF) === importer::MODE_SUPERVISOR;
             $evaluatedby = (int) ($row->evaluatedby ?? 0);
+            // EV-17: a supervisor completion from before BizLMS recorded who filled it in (evaluatedby 0). The
+            // responder is then the completion's user, who is the person EVALUATED, so the response names them as
+            // the one who answered and keeps no subject. It still follows mapping doc section 18 (the responder is
+            // evaluatedby, else the completion's user); the warning counts these for the owner. The learner history
+            // no longer tells that person they responded, because the form says it is a supervisor evaluation.
+            $evaluatorunknown = $supervised && $evaluatedby <= 0;
             $userid = $evaluatedby > 0 ? $evaluatedby : $completionuser;
             if (!$ctx->lookups->user_exists($userid)) {
                 // import_problem() let this through, so it is a self evaluation: whoever was recorded as filling it
@@ -207,6 +214,9 @@ final class response_step extends step {
         }
         if ($responderunknown) {
             $response->warn('responder_not_found');
+        }
+        if ($evaluatorunknown) {
+            $response->warn('sp_responder_unknown');
         }
         if ($courseunknown) {
             $response->warn('course_not_found');

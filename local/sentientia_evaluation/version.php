@@ -23,10 +23,15 @@ $plugin->component = 'local_sentientia_evaluation';
 // the learner's own evaluation history (my_evaluations.php) sits behind the default-OFF flag
 // sentientia.evaluation.learner_history. The importer class refuses to run below this version
 // (importer::REQUIRES_VERSION).
-$plugin->version   = 2026093001;  // ADR-032: evaluation importer, responses.subject_userid, imported forms read-only
+// EV-17 (2026-10-07) - local_sentientia_evaluation.evaluationmode (SE or SP, default SE): the form says whether it is a
+// supervisor evaluation, so the person evaluated is never told they "responded" (anonymous supervisor forms keep no
+// subject, and old completions carry no evaluator). The importer writes it from BizLMS evaluationmode; the learner
+// history, the Subject column and a verify check read it. Needs a (guarded) upgrade step, and importer::REQUIRES_VERSION
+// is the same number.
+$plugin->version   = 2026100701;  // EV-17: forms.evaluationmode (supervisor evaluations are marked on the form)
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.16.0';  // +ADR-032 BizLMS evaluation import. 1.15.3: ADR-031 tenant scope
+$plugin->release   = '1.17.0';  // +EV-17 evaluationmode. 1.16.0: ADR-032 BizLMS evaluation import. 1.15.3: ADR-031 tenant scope
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026093001,  // ADR-032 classes/bizlms (importer framework, provenance); ADR-031 tenant::is_cross_tenant() / scope_path()
 ];

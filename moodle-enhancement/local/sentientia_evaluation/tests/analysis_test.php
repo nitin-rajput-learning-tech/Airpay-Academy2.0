@@ -26,7 +26,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class analysis_test extends \advanced_testcase {
 
-    private function seed_eval(string $name, int $kirkpatrick = 1, int $anonymous = 0): int {
+    private function seed_eval(string $name, int $kirkpatrick = 1, int $anonymous = 0, string $mode = 'SE'): int {
         global $DB;
         if (!$DB->get_manager()->table_exists('local_sentientia_evaluation')) {
             $this->markTestSkipped('local_sentientia_evaluation table not present.');
@@ -42,6 +42,7 @@ final class analysis_test extends \advanced_testcase {
             'open_path'         => '/1',
             'status'            => evaluation_manager::STATUS_ACTIVE,
             'anonymous'         => $anonymous,
+            'evaluationmode'    => $mode,
             'timecreated'       => $now,
             'timemodified'      => $now,
         ]);
@@ -412,8 +413,9 @@ final class analysis_test extends \advanced_testcase {
         $this->assertSame('Email', $plainheader[2]);
         $this->assertSame('Course ID', $plainheader[3]);
 
-        // (b) A supervisor form: Subject right after Email, holding the person the response is about.
-        $sp = $this->seed_eval('Supervisor', 1);
+        // (b) A supervisor form (evaluationmode SP, EV-17): Subject right after Email, holding the person the response
+        // is about.
+        $sp = $this->seed_eval('Supervisor', 1, 0, 'SP');
         $sq = $this->seed_question($sp, 'rating');
         $responseid = $this->seed_response($sp, (int) $supervisor->id, [$sq => 4], time());
         $this->set_subject($responseid, (int) $subject->id);
@@ -450,7 +452,7 @@ final class analysis_test extends \advanced_testcase {
         $this->assertNotContains(fullname($subject), $anonrow);
         $this->assertSame('', $anonrow[3]);
 
-        $sticky = $this->seed_eval('Once anonymous', 1);
+        $sticky = $this->seed_eval('Once anonymous', 1, 0, 'SP');
         $stickyq = $this->seed_question($sticky, 'rating');
         $this->seed_response($sticky, 0, [$stickyq => 2], time());
         $namedid = $this->seed_response($sticky, (int) $supervisor->id, [$stickyq => 5], time());
@@ -465,7 +467,7 @@ final class analysis_test extends \advanced_testcase {
 
         // (d) A subject whose account is deleted, or gone altogether, is '(deleted user)', not a name.
         $deleted = $gen->create_user(['firstname' => 'Dee', 'lastname' => 'Deleted']);
-        $gone = $this->seed_eval('Subjects who left', 1);
+        $gone = $this->seed_eval('Subjects who left', 1, 0, 'SP');
         $gq = $this->seed_question($gone, 'rating');
         $softid = $this->seed_response($gone, (int) $supervisor->id, [$gq => 1], time());
         $this->set_subject($softid, (int) $deleted->id);
@@ -786,7 +788,7 @@ final class analysis_test extends \advanced_testcase {
         $subject = $gen->create_user(['firstname' => 'Sam', 'lastname' => 'Subject']);
         $deleted = $gen->create_user(['firstname' => 'Dee', 'lastname' => 'Deleted']);
 
-        $eid = $this->seed_eval('Supervisor', 1);
+        $eid = $this->seed_eval('Supervisor', 1, 0, 'SP');
         $q = $this->seed_question($eid, 'rating');
         $now = time();
         $named = $this->seed_response($eid, (int) $supervisor->id, [$q => 4], $now - 10);

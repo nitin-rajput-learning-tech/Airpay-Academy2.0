@@ -25,7 +25,9 @@ use local_sentientia_platform\bizlms\step;
  *  - ARCHIVED and manual, always (decision evaluation.open_forms = archived). An active form would reopen
  *    answering with no assignment check, and a form with a trigger would queue invitations for the course and
  *    classroom events it names. So status 2, trigger_event manual, days_after 0, notify_admin_on_response 0.
- *  - anonymous 1 when BizLMS said so (value 1) or when any completion was anonymous: the flag is sticky.
+ *  - anonymous 1 when BizLMS said so (value 1) or when any completion was anonymous: the flag is sticky (decision
+ *    evaluation.sticky_anonymity = whole_form: every answer of such a form is then imported anonymous).
+ *  - evaluationmode SE or SP, as BizLMS had it (EV-17): the form itself says it is a supervisor evaluation.
  *  - a soft-deleted form (deleted = 1) is not imported: BizLMS purged its values and hid it everywhere.
  *  - tenant: an organisation, by the rule in the mapping doc (tenant_scope): the form's own path, then the root
  *    BizLMS kept in costcenterid, then the path of the classroom it belongs to. No organisation: the form keeps no
@@ -162,6 +164,12 @@ final class form_step extends step {
         $fields->open_path = $path;
         $fields->status = self::STATUS_ARCHIVED;
         $fields->anonymous = $this->facts->anonymous_final($ctx, $row) ? 1 : 0;
+        // EV-17: the form says it is a supervisor evaluation. The source column is declared SE or SP (any other
+        // value is an unknown_enum blocker before the run), and an absent column is a self evaluation. This is what
+        // lets Sentientia keep the person evaluated from being told they "responded" on an ANONYMOUS supervisor
+        // form, whose responses keep no subject, and on an old completion that names no evaluator.
+        $fields->evaluationmode = (string) ($row->evaluationmode ?? importer::MODE_SELF) === importer::MODE_SUPERVISOR
+            ? importer::MODE_SUPERVISOR : importer::MODE_SELF;
         $fields->timeopen = max(0, (int) ($row->timeopen ?? 0));
         $fields->timeclose = max(0, (int) ($row->timeclose ?? 0));
         $fields->multiple_submit = (int) ($row->multiple_submit ?? 0) === 1 ? 1 : 0;

@@ -32,6 +32,10 @@ class evaluation_manager {
      */
     public const NUMERIC_DISTRIBUTION_SPAN = 10;
 
+    /** local_sentientia_evaluation.evaluationmode: a self evaluation (every native form) or a supervisor evaluation (EV-17). */
+    public const MODE_SELF = 'SE';
+    public const MODE_SUPERVISOR = 'SP';
+
     /** The default-OFF flag behind the individual responses pages (EV-06, db/feature_flags.php). */
     public const FLAG_RESPONSE_DRILLDOWN = 'sentientia.evaluation.response_drilldown';
 
@@ -1400,17 +1404,21 @@ class evaluation_manager {
      * Do the response list and the CSV export carry a "Subject" column for this evaluation?
      *
      * A supervisor evaluation (BizLMS evaluationmode SP) is answered by one person ABOUT another, and the import
-     * keeps that person in responses.subject_userid. Native forms never set it, so for them nothing changes: the
-     * column appears only when some response names a subject, and never on a protected evaluation (the subject of
+     * keeps that person in responses.subject_userid. The form says it is one: its evaluationmode column is SP (EV-17;
+     * every native form is SE). Native forms never set a subject, so for them nothing changes: the column appears
+     * only on an SP form where some response names a subject, and never on a protected evaluation (the subject of
      * an anonymous supervisor form could identify the respondent; the import does not keep it there either).
      *
-     * @param \stdClass $evaluation record carrying id and anonymous
+     * @param \stdClass $evaluation record carrying id, anonymous and evaluationmode
      * @param bool|null $identityprotected identity_protected($evaluation), when the caller has it already;
      *                  null = work it out here
      * @return bool
      */
     public static function shows_subject(\stdClass $evaluation, ?bool $identityprotected = null): bool {
         global $DB;
+        if (($evaluation->evaluationmode ?? self::MODE_SELF) !== self::MODE_SUPERVISOR) {
+            return false;
+        }
         if ($identityprotected ?? self::identity_protected($evaluation)) {
             return false;
         }

@@ -317,9 +317,11 @@ final class imported_history_test extends \advanced_testcase {
         $supervisor = (int) $gen->create_user()->id;
         $t = 1700000000;
 
-        // A supervisor evaluation: the assignment names the team member evaluated, "responded" means the SUPERVISOR
-        // answered, and the response keeps the person it is about. BizLMS listed only self evaluations to learners.
+        // A supervisor evaluation (the form says so, EV-17): the assignment names the team member evaluated,
+        // "responded" means the SUPERVISOR answered, and the response keeps the person it is about. BizLMS listed only
+        // self evaluations to learners.
         $review = $this->form('Supervisor review');
+        $DB->set_field('local_sentientia_evaluation', 'evaluationmode', 'SP', ['id' => $review]);
         $this->mark_imported($review);
         $this->assign($review, $me, 'responded', null, $t + 100);
         $DB->insert_record('local_sentientia_evaluation_responses', (object) [
@@ -336,11 +338,10 @@ final class imported_history_test extends \advanced_testcase {
             array_map(static fn(\stdClass $r): string => $r->name, learner_history::for_user($me)),
             'the person evaluated did not respond to the supervisor review');
 
-        // The supervisor did answer it: that is their response, and it is listed.
-        $rows = learner_history::for_user($supervisor);
-        $this->assertSame(['Supervisor review'], array_map(static fn(\stdClass $r): string => $r->name, $rows));
-        $this->assertSame(learner_history::STATUS_RESPONDED, $rows[0]->status);
-        $this->assertSame($t + 110, $rows[0]->time, 'their own response, not the assignment row that names somebody else');
+        // The supervisor did answer it, but only self evaluations are in anybody's history (EV-17: the form's own
+        // evaluationmode decides, assignments and responses alike), so it is not listed for them either. The answer
+        // is theirs and stays in the responses table; it is just not a learner's evaluation to read back.
+        $this->assertSame([], learner_history::for_user($supervisor));
     }
 
     public function test_the_unlinked_note_is_for_a_learner_whose_answers_are_not_linked_to_them(): void {

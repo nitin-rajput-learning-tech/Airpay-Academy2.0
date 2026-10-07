@@ -20,6 +20,8 @@
                COMMENT="0=draft, 1=active, 2=archived"/>
         <FIELD NAME="anonymous"        TYPE="int"  LENGTH="1" NOTNULL="true" DEFAULT="0"
                COMMENT="1 = responses anonymised"/>
+        <FIELD NAME="evaluationmode"   TYPE="char" LENGTH="2" NOTNULL="true" DEFAULT="SE"
+               COMMENT="EV-17. SE = self evaluation (every native form). SP = supervisor evaluation: answered by one person about another. Only the BizLMS import writes SP; the learner history and the Subject column read it."/>
         <FIELD NAME="timeopen"         TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
                COMMENT="P1 #17: Unix timestamp window opens. 0 = no constraint (open immediately)."/>
         <FIELD NAME="timeclose"        TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"

@@ -56,10 +56,15 @@ final class importer implements framework_importer {
     public const COMPONENT = 'local_sentientia_evaluation';
 
     /**
-     * The plugin version that adds responses.subject_userid, the column the importer writes and the privacy
-     * provider declares. The registry refuses to run the importer below it.
+     * The plugin version that adds forms.evaluationmode (EV-17), the column form_step writes, after
+     * responses.subject_userid (2026093001), which response_step writes and the privacy provider declares. The
+     * registry refuses to run the importer below it.
      */
-    public const REQUIRES_VERSION = 2026093001;
+    public const REQUIRES_VERSION = 2026100701;
+
+    /** local_evaluations.evaluationmode, and the same column on the Sentientia form (EV-17). */
+    public const MODE_SELF = \local_sentientia_evaluation\evaluation_manager::MODE_SELF;
+    public const MODE_SUPERVISOR = \local_sentientia_evaluation\evaluation_manager::MODE_SUPERVISOR;
 
     /** BizLMS tables this feature claims. */
     public const SRC_FORMS = 'local_evaluations';
@@ -142,7 +147,7 @@ final class importer implements framework_importer {
                 // EVALUATION_ANONYMOUS_YES = 1, EVALUATION_ANONYMOUS_NO = 2 (BizLMS local/evaluation/lib.php).
                 'anonymous' => ['1' => 'anonymous', '2' => 'named'],
                 'deleted' => ['0' => 'kept', '1' => 'soft deleted'],
-                'evaluationmode' => ['SE' => 'self evaluation', 'SP' => 'supervisor evaluation'],
+                'evaluationmode' => [self::MODE_SELF => 'self evaluation', self::MODE_SUPERVISOR => 'supervisor evaluation'],
             ]),
             self::SRC_ITEMS => new source_spec(self::SRC_ITEMS, true, [
                 'typ' => array_fill_keys(array_merge(answer_mapper::QUESTION_TYPES, answer_mapper::NON_QUESTION_TYPES),
@@ -554,6 +559,11 @@ final class importer implements framework_importer {
                          OR e.notify_admin_on_response <> 0)",
                 $base + ['t' => self::T_FORMS, 'archived' => form_step::STATUS_ARCHIVED, 'manual' => 'manual'],
             ],
+            // EV-17: the form is a supervisor evaluation exactly when BizLMS said so. The learner history and the
+            // Subject column trust the column, so a form that lost or gained SP after the import would tell the person
+            // evaluated that they "responded", or hide the subject. Without the legacy column every imported form is
+            // a self evaluation.
+            'imported_form_mode_mismatch' => $this->form_mode_check($ctx, $map, $imported, $base),
             // A response has its form, a real submission time, and on an anonymous form no name and no subject.
             'imported_response_inconsistent' => [
                 "SELECT COUNT(1) FROM {$map} m JOIN {" . self::T_RESPONSES . "} r ON r.id = m.targetid
@@ -593,6 +603,30 @@ final class importer implements framework_importer {
             }
         }
         return $failures;
+    }
+
+    /**
+     * The SQL and parameters of the check that every imported form carries the mode BizLMS gave it (EV-17).
+     *
+     * @param context $ctx
+     * @param string $map The map table, braced.
+     * @param string $imported The WHERE fragment that selects the map rows of imported forms and other rows.
+     * @param array $base Parameters of that fragment.
+     * @return array{0: string, 1: array}
+     */
+    private function form_mode_check(context $ctx, string $map, string $imported, array $base): array {
+        $join = "FROM {$map} m JOIN {" . self::T_FORMS . "} e ON e.id = m.targetid";
+        $where = "WHERE {$imported} AND m.targettable = :t AND m.sourcetable = :src";
+        $params = $base + ['t' => self::T_FORMS, 'src' => self::SRC_FORMS];
+        if ($ctx->legacy->exists(self::SRC_FORMS) && $ctx->legacy->has_column(self::SRC_FORMS, 'evaluationmode')) {
+            // SP on the source means SP here; anything else on the source (SE, or nothing) means SE here.
+            return ["SELECT COUNT(1) {$join} JOIN {" . self::SRC_FORMS . "} l ON l.id = m.sourceid {$where}
+                        AND ((l.evaluationmode = :spa AND e.evaluationmode <> :spb)
+                          OR (COALESCE(l.evaluationmode, '') <> :spc AND e.evaluationmode <> :sea))",
+                $params + ['spa' => self::MODE_SUPERVISOR, 'spb' => self::MODE_SUPERVISOR,
+                    'spc' => self::MODE_SUPERVISOR, 'sea' => self::MODE_SELF]];
+        }
+        return ["SELECT COUNT(1) {$join} {$where} AND e.evaluationmode <> :seb", $params + ['seb' => self::MODE_SELF]];
     }
 
     /**
