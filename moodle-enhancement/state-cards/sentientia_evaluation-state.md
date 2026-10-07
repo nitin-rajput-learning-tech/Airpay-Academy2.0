@@ -1,10 +1,15 @@
-# State Card — `local_airpay_evaluation`
+# State Card — `local_sentientia_evaluation`
 
-**Component:** `local_airpay_evaluation`
-**Version:** `2026052032` / `1.15.2`  (+P1 #43 Hindi top-up)
+**Component:** `local_sentientia_evaluation` (was `local_airpay_evaluation`; the rename left the tables, strings and
+capabilities under the new name, and the old name appears nowhere in the code any more)
+**Version:** `2026093001` / `1.16.0` (ADR-032 evaluation importer; `importer::REQUIRES_VERSION` is the same number).
+Depends on `local_sentientia_platform` >= `2026093001`.
 **Maturity:** `MATURITY_STABLE`
-**Status:** Live on airpay.academy. Replaces BizLMS evaluation forms.
-**Last refreshed:** 2026-05-24 (P1 state-card pass)
+**Status:** NOT live. All data on local and UAT is a test import of a production backup, and the importer has not run
+against real production. Replaces the BizLMS `local_evaluation` forms at cutover; `classes/bizlms/` brings their
+history over.
+**Last refreshed:** 2026-10-07 (EV-21: header, tables, capabilities, flags, key files and tests brought up to date;
+see the follow-ups section at the end for the branch `claude/eval-followups`, PHPUnit not run there)
 
 ---
 
@@ -19,74 +24,107 @@ report rolls up to tenant dashboards.
 
 | Table | Purpose |
 |-------|---------|
-| `local_airpay_evaluation` | Evaluation form container |
-| `local_airpay_evaluation_questions` | Questions within a form |
-| `local_airpay_evaluation_responses` | Submitted responses (one per user × form) |
-| `local_airpay_evaluation_triggers` | When to fire the form (e.g. on course completion) |
-| `local_airpay_evaluation_template` | Reusable form templates |
-| `local_airpay_evaluation_assign` | Form-to-audience assignment rows |
+| `local_sentientia_evaluation` | Evaluation form container. An imported form keeps its BizLMS id and arrives archived (status 2, manual trigger); `costcenterid` / `open_path` carry its tenant (an organisation, never a bare root) |
+| `local_sentientia_evaluation_questions` | Questions within a form (`numeric` and `multichoice_multi` keep their settings in `options`: `{min, max}` and a plain option list) |
+| `local_sentientia_evaluation_responses` | Submitted responses; `response_data` is JSON keyed by the bare question id. `userid` 0 = anonymous. `subject_userid` = the person a supervisor form is about (written by the import only). `timesubmitted` 0 = the trigger queue's pending shell for an invitee, which is an invitation and never counted as a response |
+| `local_sentientia_evaluation_triggers` | Queue of triggers waiting for their delay (course, program or classroom completion) |
+| `local_sentientia_evaluation_template` | DB-backed reusable form templates (JSON payload as in export / import). `costcenterid` holds an ORGANISATION id; the library is tenant-scoped since EV-11 |
+| `local_sentientia_evaluation_assign` | Who was meant to answer a form (`UNIQUE(evaluationid, userid, trigger_event, source_id)`); the importer also writes `responded` rows for answers BizLMS never had an assignee row for |
 
-## Capabilities (2)
+## Capabilities (2 declared, 1 used but not declared)
 
-`local/airpay_evaluation:` `manage`, `respond`. Compact cap set because
-admin surface gates most operations; learner-side is "respond to one I'm assigned".
+`local/sentientia_evaluation:manage` (manager archetype; every admin page, the web services, the CSV export) and
+`local/sentientia_evaluation:respond` (student and manager archetypes; `respond.php`, `my_evaluations.php`, the
+`submit_response` web service). Tenant scope on top of `:manage` is ADR-031 (`require_evaluation_access()`).
+**Open defect (EV-06, not built):** `response_list.php` and `response_detail.php` call
+`require_capability('local/sentientia_evaluation:view', ...)`, but `db/access.php` does not declare `:view`.
+`has_capability()` refuses a capability that does not exist (accesslib: "capability must exist"), for site
+administrators too, so nobody can open those two pages. Fixing it means a new capability, so a version bump and the
+PHPUnit re-init, which is why it waits for the owner's call (declare `:view`, or gate those pages on `:manage` like
+the rest of the admin surface, which would need no bump).
 
-## Feature flags
+## Feature flags (1)
 
-None registered.
+`sentientia.evaluation.learner_history`, default OFF (`db/feature_flags.php`): gates `my_evaluations.php`, the
+learner's own evaluation history. Nothing else in the plugin is flagged: the importer is gated by its CLI guard, and
+the admin-page improvements of the follow-ups below change only pages that already existed, or rows that exist only
+after the import. The earlier text "None registered" stopped being true with ADR-032.
 
 ## Key files
 
+Both trees (`local/sentientia_evaluation/` and `moodle-enhancement/local/sentientia_evaluation/`) must stay
+byte-identical; `tools/check-tree-drift.php` proves it.
+
 ```
-local/airpay_evaluation/
-├── version.php                                  2026052032 / 1.15.2
+local/sentientia_evaluation/
+├── version.php                                  2026093001 / 1.16.0
 ├── README.md
 ├── index.php                                     Admin list
-├── analysis.php                                  Per-form analytics
-├── export_template.php                            Export form template (JSON)
-├── import_template.php                            Import form template (JSON)
+├── questions.php                                 Question list (read-only on an imported form)
+├── responses.php                                 Aggregate statistics per question
+├── response_list.php / response_detail.php       Per-response views (need :view, undeclared: EV-06)
+├── analysis.php                                  Per-form analytics (Kirkpatrick roll-up)
+├── non_respondents.php                           Responded / pending tabs
+├── respond.php                                   The learner's form
+├── my_evaluations.php                            Learner history (flag learner_history)
+├── export_template.php / import_template.php      Template JSON round trip
 ├── exportcsv.php                                  Per-response CSV export
 ├── classes/
-│   ├── evaluation_manager.php                    Form CRUD
-│   ├── evaluation_engine.php                     Response evaluation + scoring
-│   ├── evaluation_audience_assigner.php           Audience rule resolver
-│   ├── observer.php                               course_completed → fire triggers
+│   ├── evaluation_manager.php                    Form CRUD, statistics, CSV, tenant + anonymity gates
+│   ├── evaluation_engine.php                     Trigger queue (invitations, pending shell rows)
+│   ├── evaluation_audience_assigner.php           Audience rule resolver + bulk assign
+│   ├── learner_history.php                        Rows for my_evaluations.php
+│   ├── observer.php                               Completion events → queue triggers
+│   ├── bizlms/                                    ADR-032 importer: importer, form/template/question/
+│   │                                              dependency/assignment/response/value steps, form_facts,
+│   │                                              answer_mapper, item_shape, tenant_scope
 │   ├── external/                                  WS endpoints
-│   ├── form/                                      Edit + response forms
-│   ├── task/                                      Scheduled triggers
-│   └── privacy/                                   GDPR / DPDP
+│   ├── form/                                      Edit + audience forms
+│   ├── task/                                      process_triggers, expire_assignments
+│   └── privacy/                                   GDPR / DPDP provider
 ├── db/
 │   ├── install.xml                                6 tables
-│   └── upgrade.php
-├── cli/                                           CLI tools (e.g. backfill responses)
-├── amd/
+│   ├── upgrade.php, access.php, events.php, messages.php, services.php, tasks.php
+│   ├── bizlms_import.php                          Registers the 'evaluation' importer
+│   └── feature_flags.php                          sentientia.evaluation.learner_history
+├── cli/                                           smoke_template_io.php, smoke_anonymous_question.php
+├── amd/src/ + amd/build/                          Five modules (the build is the minified copy)
 ├── templates/
 ├── lang/
-│   ├── en/local_airpay_evaluation.php
-│   └── hi/local_airpay_evaluation.php             (100% parity post-P1 #43)
-└── tests/
-    ├── crud_test.php                              8 methods
-    ├── observer_test.php                          9 methods
-    ├── analysis_test.php                          15 methods
-    └── external/list_evaluations_test.php         5 methods (37 total)
+│   ├── en/local_sentientia_evaluation.php
+│   └── hi/local_sentientia_evaluation.php         (100% parity, drive-enforced)
+└── tests/                                         see Tests
 ```
 
 ## Tests
 
-4 PHPUnit classes, 37 methods. `analysis_test.php` is the deepest —
-covers aggregate scoring, NPS calculation, response-distribution
-rendering.
+11 PHPUnit classes (133 test methods as of 2026-10-07), none of them run on the follow-ups branch, which is why
+every claim below says "not run":
+
+| Class | Covers |
+|-------|--------|
+| `crud_test` | Form and question CRUD, template round trip |
+| `observer_test` | Trigger queue, the invited user's shell row |
+| `analysis_test` | Statistics buckets, the response rows, CSV, trigger shells, response detail |
+| `anonymity_sticky_test` | Sticky anonymity (`identity_protected()`) |
+| `tenant_scope_test` (`tenant_isolation`) | ADR-031 gates, the template library |
+| `audience_assigner_test` | The audience filters and `assign_by_filter()` |
+| `privacy_provider_test`, `privacy_subject_test` | Privacy provider, subject links |
+| `imported_history_test` | Imported forms are read-only, learner history |
+| `bizlms_import_test` (`bizlms_import`) | The importer (a 9-form seed), parity, preflight |
+| `external/list_evaluations_test` | The list web service |
 
 ## Open items
 
 - [ ] Cohort-scoped triggers (today: per-course only)
-- [ ] Anonymous responses — admin toggle per form (today: always
-      attributed to userid)
-- [ ] Per-customer form template library
-- [ ] Behat coverage of the import/export round-trip
-- [ ] Email reminder for unfinished surveys (depends on
-      `local_airpay_emails` rule pipeline)
-- [ ] PHPUnit coverage for `evaluation_audience_assigner`
+- [ ] Per-customer form template library (a template picker would have to decide whether another tenant's
+      `ispublic` templates are listed; see EV-11)
+- [ ] Email reminder for unfinished surveys (depends on the emails rule pipeline)
+- [ ] `local/sentientia_evaluation:view` is used by `response_list.php` and `response_detail.php` and declared
+      nowhere (EV-06; needs the owner)
+- [x] Anonymous responses: a per-form toggle shipped (sticky once answered, 2026-09-25)
+- [x] PHPUnit coverage for `evaluation_audience_assigner` (EV-33)
+- [x] The import/export round trip, as PHPUnit instead of Behat, which this pipeline does not run (EV-32, EV-33)
 
 ## State card created — 2026-05-24
 
@@ -271,7 +309,8 @@ the `local_evaluation` tables -> this plugin's tables. Owner `local_sentientia_e
   (`multichoice_multi` and `numeric` buckets in `responses.php`) and 5 (`response_detail.php`) change admin pages and
   need screenshots; 2 and 5 are on a page that is dead today (`local/sentientia_evaluation:view` is not declared).
   8 is needed only if still-open forms were activated (they are not). 9 is a note for a future template picker.
-  1, 4, 6, 7 and 10 are done (above).
+  1, 4, 6, 7 and 10 are done (above). **Since built (2026-10-01, see the follow-ups section at the end):** 2 as EV-02,
+  3 as EV-03, 5 as EV-05 and 9 as EV-11; the page that 2 and 5 sit on is still dead (EV-06).
 - **Tests.** `tests/bizlms_import_test.php` (`@group bizlms_import`, tenant cases also `tenant_isolation`): the
   importer contract against a 9-form seed (anonymous, supervisor, trainer feedback, soft-deleted, root-only,
   sticky-anonymous, deep path, unplaceable), plus column maps, tenant attribution, the dependency second pass,
@@ -309,8 +348,8 @@ The importer was run mentally against the April production dump (`bizlms_april`,
   1 named completion with 5 numeric answers, 1 assignee row (so no implied assignment). Every
   enumerated column now holds only declared values: anonymous {2}, deleted {0,1}, evaluationmode {SE}, typ {numeric},
   anonymous_response {2}. No drafts, no sitecourse rows, no templates, no orphans.
-- **Gap this makes real.** All five April items are numeric, and `responses.php` renders no bucket for `numeric` or
-  `multichoice_multi` (mapping doc code fix 3, still not built: it changes an admin page and needs screenshots). An
+- **Gap this made real (closed by EV-03, 2026-10-01; screenshots outstanding).** All five April items are numeric, and
+  `responses.php` rendered no bucket for `numeric` or `multichoice_multi` (mapping doc code fix 3, then not built). An
   imported numeric form therefore shows its questions with no statistics on that page until fix 3 lands; the answers
   themselves are in `response_data` and in the CSV export.
 
@@ -340,6 +379,17 @@ platform dependency are unchanged. Both trees byte-identical.
   show as BizLMS history or collide with the assignment unique key and roll the whole feature back. An id a form
   already occupies stays the framework's collision blocker. Counts only. Production has an empty target; this guards
   rehearsals and UAT.
+  **What to clear before importing again into a UAT or rehearsal target (added 2026-10-07, EV-21).** The check
+  (`importer::rows_left_at_legacy_form_ids()`) looks at EVERY id in `local_evaluations`, not only the ids the import
+  is about to create, so it fires for **soft-deleted forms too**: such a form is archived in the map (`deleted_form`)
+  and never gets a Sentientia form, so a row left at its id is not cleared by a run and keeps blocking it until it is
+  removed.
+  Remove, by hand, the rows in `local_sentientia_evaluation_questions`, `_responses`, `_assign` and `_triggers` whose
+  `evaluationid` is a legacy form id (soft-deleted ones included) that has no row in `local_sentientia_evaluation`.
+  The message gives only the table and the count (`leftover_rows_at_legacy_form_ids:<table>:<n>`, never a row), so
+  the ids come from comparing `local_evaluations` with the form table. The import itself never deletes. One known way
+  to get such rows: a native test form that sat on an id the legacy table also uses and was deleted by the old
+  `delete()`, which left its assignment and trigger rows behind.
 - **Imported templates cannot be deleted.** `evaluation_manager::delete_template()` throws
   `error_imported_template_read_only` (en + hi) for a template the import created, as the decision
   `framework.protect_imported_history` says. No UI calls it today. `is_imported_template()` is the read.
@@ -357,10 +407,8 @@ platform dependency are unchanged. Both trees byte-identical.
     schema change. April holds no supervisor form, so nothing real is affected yet.
   - *Visual evidence* for `my_evaluations.php` (desktop and mobile, plus README under `docs/visual-evidence/`) is
     still outstanding; the build sessions could not deploy or browse. It is the precondition for flipping the flag.
-  - *Mapping doc code fix 3* (`multichoice_multi` and `numeric` buckets in `responses.php`) is not built. April's
-    five items are all numeric, so the one real imported form shows its questions with no statistics on the admin
-    analysis page until it is; the answers are in `response_data` and the CSV. A cutover gap for Nitin, with
-    screenshots.
+  - *Mapping doc code fix 3* (`multichoice_multi` and `numeric` buckets in `responses.php`) was not built at that
+    point. **Built since as EV-03 (2026-10-01)**; what remains is its screenshots (below).
   - *Performance.* `form_facts::pair()` and `answers()` read per completion through a 64-entry cache. Fine at April
     volumes (1 completion, 5 values); an N+1 at scale. Time Stage B before assuming it is.
 - **Deviations from mapping doc section 18, for the doc (not editable from a build session):**
@@ -387,9 +435,11 @@ platform dependency are unchanged. Both trees byte-identical.
 
 ## 2026-10-01 - evaluation follow-ups (branch claude/eval-followups; no version change, stays 2026093001)
 
-Eleven items from the importer re-review and the mapping doc section 18 "Code fixes", built together. Code and
-tests only, both trees byte-identical. **PHPUnit NOT run** (the lead runs it once). Every UI change needs the
-screenshots listed per item before it is merged.
+Thirteen items from the importer re-review and the mapping doc section 18 "Code fixes", built together (EV-02, 03,
+05, 09, 11, 13, 14, 28, 31, 32 and 33 are code and tests; EV-20 and 21 are documentation). Both trees byte-identical.
+**PHPUnit NOT run** (the lead runs it once). Every UI change needs the screenshots listed per item before it is
+merged; they are collected, with a sample CSV header, in
+`docs/visual-evidence/2026-10-07/eval-followups/README.md`.
 
 - **EV-31 - trigger shells are not responses.** When a trigger fires, `evaluation_engine::process_due_triggers()`
   writes a pending shell (`timesubmitted` 0, `response_data` `{}`) for the invitee. `has_user_responded()` counted
@@ -579,3 +629,10 @@ screenshots listed per item before it is merged.
   comment), both trees byte-identical. Left as it is, for the owner: the learner-facing note
   `my_evaluations_anonymous_note` ("your answers are not linked to you") is true of the response row; reword it if
   that ADR decides the map and the assign rows are to be treated as a link.
+- **EV-21 - this card.** The header, the table, capability and flag sections, the key-file tree, the test list and
+  the open items still described `local_airpay_evaluation` 1.15.2, "Live on airpay.academy", six tables under the old
+  name and "None registered" for flags. They now describe `local_sentientia_evaluation` 2026093001 / 1.16.0, which is
+  not live, with the real table names, the two declared capabilities plus the undeclared `:view` (EV-06), the one flag
+  and the eleven test classes. The importer section gained what to remove from a UAT or rehearsal target before
+  importing again (the leftover-rows blocker also fires at the id of a soft-deleted legacy form, which never gets a
+  Sentientia form), and its "not built" notes now point at the follow-ups that built them. Documentation only.
