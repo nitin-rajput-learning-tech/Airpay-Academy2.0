@@ -66,7 +66,9 @@ section 12.
   is the earlier of completion + the period and the next cycle's first evidence, when that is not later than
   the import; otherwise one second after the cycle's latest source evidence (warning
   `inferred_reset_from_last_evidence`). The import time is never the value, only an upper clamp, so every run
-  gives the same answer. If the log row turns up in a later run the inferred row is upgraded, never duplicated. Which reset ended which archived completion is decided by taking
+  gives the same answer. The one exception the data forces is a cycle whose completion or latest evidence is at or
+  after the import (a completion dated in the future): there is no second after it, so the row IS dated at the
+  import and carries the warning `evidence_at_or_after_import`, which makes it visible in the report. If the log row turns up in a later run the inferred row is upgraded, never duplicated. Which reset ended which archived completion is decided by taking
   the learner's archived completions in the order of their row id (the legacy plugin inserted a row at each
   reset, so id order is reset order), not by their dates: core recreates the completion row after a reset with
   the ORIGINAL enrolment date and `timestarted` 0, so a later cycle that was reset without ever being started

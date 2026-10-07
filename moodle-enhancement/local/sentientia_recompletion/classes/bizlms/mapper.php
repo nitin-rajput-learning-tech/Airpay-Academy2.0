@@ -265,6 +265,22 @@ final class mapper {
     }
 
     /**
+     * Would inferred_from_evidence() have to date the reset AT the import time? That is the one case in which the import
+     * time is the value, not just the upper clamp: the cycle's completion or latest evidence is at or after the import (a
+     * completion dated in the future, or a learner active during the cutover), so the second after it does not exist yet.
+     * The owner decision says the import time is never the value, so the importer reports such a row
+     * (warning evidence_at_or_after_import) instead of leaving it to look like any other estimate (review of 2026-10-07).
+     *
+     * @param int|null $completed Completion time, null for a cycle that was never completed.
+     * @param int|null $lastevidence Latest source evidence of the cycle; null when it has none.
+     * @param int $now Import time.
+     * @return bool
+     */
+    public static function dated_at_import(?int $completed, ?int $lastevidence, int $now): bool {
+        return max($completed ?? 0, $lastevidence ?? 0, 0) + 1 >= $now;
+    }
+
+    /**
      * Is a SCORM element one that carries the learner's status?
      *
      * @param string $element

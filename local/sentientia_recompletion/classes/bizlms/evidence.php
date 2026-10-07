@@ -70,7 +70,7 @@ final class evidence {
     /** @var array<string, int> Memo of when each archived completion's cycle ended (see cycle_end). */
     private array $ends = [];
 
-    /** @var array<string, array{0: int, 1: bool}> Memo of inferred reset times (see inferred_reset). */
+    /** @var array<string, array{0: int, 1: bool, 2: bool, 3: bool}> Memo of inferred reset times (see inferred_reset). */
     private array $inferred = [];
 
     /** @var int The import time: an inferred reset is never later than this. Fixed for the run. */
@@ -366,8 +366,10 @@ final class evidence {
      * @param int $userid
      * @param int $courseid
      * @param int $ccid
-     * @return array{0: int, 1: bool, 2: bool} [time, true when the course had no usable duration of its own,
-     *         true when the time came from the cycle's last evidence because no candidate time was usable]
+     * @return array{0: int, 1: bool, 2: bool, 3: bool} [time, true when the course had no usable duration of its own,
+     *         true when the time came from the cycle's last evidence because no candidate time was usable,
+     *         true when that evidence (or the completion) is at or after the import, so the time IS the import time:
+     *         the importer reports it (evidence_at_or_after_import) because the owner decision says it is never the value]
      */
     public function inferred_reset(int $userid, int $courseid, int $ccid): array {
         $key = mapper::pair_key($userid, $courseid) . ':' . $ccid;
@@ -380,18 +382,20 @@ final class evidence {
             $floor = $this->floor_before($userid, $courseid, $ccid);
             if ($row === null) {
                 // No such archived cycle: nothing to date it from but the end of the cycle before it.
-                $this->inferred[$key] = [max($floor, min($floor + 1, $this->now)), $fallback, true];
+                $this->inferred[$key] = [max($floor, min($floor + 1, $this->now)), $fallback, true, false];
             } else {
                 $completed = $row['completed'] > 0 ? $row['completed'] : null;
                 $ranfrom = $completed ?? ($row['started'] > 0 ? $row['started'] : $row['enrolled']);
                 $next = $this->next_evidence($userid, $courseid, $ccid, max($ranfrom, $floor));
                 $time = mapper::inferred_candidate($completed, $duration, $next, $this->now);
                 $fromevidence = $time === null;
+                $atimport = false;
                 if ($fromevidence) {
-                    $time = mapper::inferred_from_evidence($completed,
-                        $this->latest_evidence($userid, $courseid, $row, $floor), $this->now);
+                    $latest = $this->latest_evidence($userid, $courseid, $row, $floor);
+                    $time = mapper::inferred_from_evidence($completed, $latest, $this->now);
+                    $atimport = mapper::dated_at_import($completed, $latest, $this->now);
                 }
-                $this->inferred[$key] = [max($time, $floor), $fallback, $fromevidence];
+                $this->inferred[$key] = [max($time, $floor), $fallback, $fromevidence, $atimport];
             }
         }
         return $this->inferred[$key];

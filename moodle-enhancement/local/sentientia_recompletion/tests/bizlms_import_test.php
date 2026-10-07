@@ -768,6 +768,36 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertEquals($first->id, $this->target('cmc_h1')->historyid, 'the first cycle keeps its own');
     }
 
+    public function test_a_completion_dated_after_the_import_is_dated_at_the_import_and_reported(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        // A cycle completed AFTER the import (bad source data): there is no second after it yet, so the only time the data
+        // allows is the import time. The owner decision says the import time is never the value, so the row is reported.
+        $uk = (int) $this->getDataGenerator()->create_user(['firstname' => 'K', 'lastname' => 'Learner'])->id;
+        $future = time() + 30 * DAYSECS;
+        $this->legacy('cc_k1', 'local_recompletion_cc', ['userid' => $uk, 'course' => $this->ids['c1'],
+            'timeenrolled' => self::t('2023-01-10'), 'timestarted' => self::t('2023-01-15'), 'timecompleted' => $future,
+            'reaggregate' => 0]);
+        $this->applied();
+
+        $rows = $this->history_of($uk);
+        $this->assertCount(1, $rows);
+        $this->assertEquals(1, $rows[0]->time_inferred);
+        $this->assertLessThanOrEqual(time(), (int) $rows[0]->timecreated, 'never later than the import');
+        $this->assertGreaterThan(self::t('2025-01-01'), (int) $rows[0]->timecreated, 'dated at the import');
+        $warnings = $this->report_step('recompletion.cc')['warnings'];
+        $this->assertSame(1, $warnings['evidence_at_or_after_import'], 'the one row dated at the import is listed');
+        $this->assertSame(2, $warnings['inferred_reset_from_last_evidence'],
+            'learner H\'s second cycle of the seed, and this one');
+    }
+
+    public function test_an_ordinary_estimate_is_not_reported_as_dated_at_the_import(): void {
+        $this->imported();
+        $warnings = $this->report_step('recompletion.cc')['warnings'];
+        $this->assertSame(0, $warnings['evidence_at_or_after_import'] ?? 0,
+            'the seed has no completion or evidence at or after the import');
+    }
+
     // Archive.
 
     public function test_every_archived_row_is_attached_to_the_reset_that_ended_its_cycle(): void {

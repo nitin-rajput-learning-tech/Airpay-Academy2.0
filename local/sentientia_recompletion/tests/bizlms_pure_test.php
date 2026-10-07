@@ -125,6 +125,34 @@ final class bizlms_pure_test extends \basic_testcase {
         $this->assertSame(120, mapper::inferred_candidate(100, 50, 120, 1000));
     }
 
+    /**
+     * Review of 2026-10-07: when a cycle's completion or latest evidence is at or after the import, the import time is the
+     * only value left, which the owner decision says it never is; the importer must be able to tell, to report the row.
+     */
+    public function test_a_reset_that_can_only_be_dated_at_the_import_is_told_apart(): void {
+        // The value is the import time exactly when there is no second after the evidence.
+        $this->assertSame(1000, mapper::inferred_from_evidence(2000, null, 1000), 'a completion in the future');
+        $this->assertTrue(mapper::dated_at_import(2000, null, 1000));
+        $this->assertSame(1000, mapper::inferred_from_evidence(null, 1500, 1000), 'evidence after the import');
+        $this->assertTrue(mapper::dated_at_import(null, 1500, 1000));
+        $this->assertSame(1000, mapper::inferred_from_evidence(500, 999, 1000), 'evidence one second before the import');
+        $this->assertTrue(mapper::dated_at_import(500, 999, 1000), 'the second after it IS the import time');
+        $this->assertTrue(mapper::dated_at_import(1000, null, 1000), 'at the import');
+
+        // Every ordinary estimate stays unflagged.
+        $this->assertFalse(mapper::dated_at_import(500, 400, 1000));
+        $this->assertFalse(mapper::dated_at_import(null, 998, 1000), 'the second after it is before the import');
+        $this->assertFalse(mapper::dated_at_import(null, null, 1000), 'no evidence at all: second 1');
+        $this->assertSame(1, mapper::inferred_from_evidence(null, null, 1000));
+
+        // It always agrees with the value inferred_from_evidence() returns.
+        foreach ([[2000, null], [null, 1500], [500, 999], [500, 400], [null, 998], [null, null], [1000, 1000]] as [$completed, $evidence]) {
+            $this->assertSame(mapper::inferred_from_evidence($completed, $evidence, 1000) === 1000,
+                mapper::dated_at_import($completed, $evidence, 1000),
+                'completed=' . var_export($completed, true) . ' evidence=' . var_export($evidence, true));
+        }
+    }
+
     public function test_scorm_elements(): void {
         foreach (['cmi.core.lesson_status', 'cmi.completion_status', 'cmi.success_status', 'lesson_status'] as $e) {
             $this->assertTrue(mapper::is_scorm_status($e), $e);
