@@ -1,10 +1,10 @@
-# State Card — `local_airpay_request`
+# State Card — `local_sentientia_request`
 
-**Component:** `local_airpay_request`
-**Version:** `2026052201` / `1.2.2`  (+Goal A Bug #6 WS-contract alignment)
+**Component:** `local_sentientia_request` (was `local_airpay_request` until ADR-022/025; older sections below still use the old name)
+**Version:** `2026093001` / `1.5.0`  (ADR-032 importer; the 2026-10-07 owner decisions below changed code only, so the version did not move)
 **Maturity:** `MATURITY_STABLE`
-**Status:** Live on airpay.academy. Learner-driven course request workflow.
-**Last refreshed:** 2026-05-24 (P1 state-card pass)
+**Status:** Learner-driven course request workflow (Sentientia is not live yet; the live system is BizLMS).
+**Last refreshed:** 2026-10-07 (COMMS-R owner decisions)
 
 ---
 
@@ -240,3 +240,72 @@ decision, Nitin after the visual evidence); the `reject_msg` of a learning-plan 
 not carried (it is usually NULL); certification requests stay unmapped until an owner entity exists (gap G3). Framework
 need: the static scan bans `request_manager::` wholesale, so the map's "use `rm::route_approver`" became the shared
 `approver_routing` class.
+
+## 2026-10-07 - owner decisions of the comms cluster (code only, version unchanged)
+
+Branch `claude/owner-decisions-x`. Decided under Nitin's delegation of 2026-10-07 ("self review and decide recommended
+option") on top of the signed basis "do everything as recommended"; list: `docs/cutover/OWNER-DECISIONS-2026-10-07.md`.
+PHPUnit was NOT run (the lead re-inits and runs the group). No flag flipped, nothing copied to XAMPP. No schema, no
+capability, no new flag, so no version bump: the request plugin stays `2026093001`.
+
+- **COMMS-R1, `request.pending_stale = history_only`** (new decisions-file key, declared by the importer): a legacy
+  PENDING course or path request whose requester is deleted or suspended, or whose item no longer exists, imports as
+  `pending`, route `admin`, NO approver, warning `pending_history_only`. The source status stays exact (nothing is
+  closed as `expired`: BizLMS never had that status). It sits in nobody's inbox and admins still see it in All requests
+  (`request.hidden_rows = show` still applies). Why: 1,452 of 2,187 non-deleted tenant-1 users are suspended on the
+  April copy, so a stale pending request mostly belongs to somebody who has left, and Approve would enrol and message
+  that account. Same treatment as classroom and program rows. `request_step::pending_plan()` takes the "item gone"
+  flag from `records_step` and returns a fourth element, the warning code; `approvals_step` can only be stale through
+  its requester (a plan missing from the map is skipped earlier). `verify()` fails
+  `pending_rows_with_an_approver_whose_requester_or_item_is_gone:N` (a course that is not there, a path with no entry in
+  the learning-plan map, a requester deleted or suspended). April: every request table is empty, so no output changes.
+  `request.pending = actionable` still routes the rest.
+- **COMMS-R2, itemid 0.** A request whose path, classroom or program is gone gets `itemid` 0, not its legacy id (the
+  comment in `records_step` that said "nothing new will ever reuse" the id was false: those three features keep their
+  ids and reset their sequence to `MAX(id)+1`, so the next new item could get it, and the old request would show its name,
+  trip the `submit_path` duplicate guard and, on a cross-tenant approval, enrol the learner in an unrelated item). `0`
+  renders as "(deleted item)" (`item_label`). The legacy id stays in `local_request_records.componentid` and, with the
+  legacy map, is recoverable. A course keeps its id (core ids are never reused); a certification keeps its legacy id
+  (no entity). Warning `item_deleted` unchanged.
+- **COMMS-R3, reader fixes unflagged.** The Item header, the route in words, the status badges in All requests, the SLA
+  column and real names on path requests ship as bug fixes to existing native screens (each was wrong without any
+  import). The `sentientia.request.imported_history` description and the README now say the flag "leaves the imported
+  rows out" (it used to say the lists "look exactly as they did before the import", which the fixes make untrue).
+  Recorded: reader fixes accepted unflagged 2026-10-07. Visual evidence (desktop and mobile) of My requests, Pending
+  approvals and All requests is owed in the UAT pass before any production deploy.
+- **COMMS-R4, comments.** BizLMS has no writer for `local_request_comments` (its comments went to
+  `block_request_comments`), so the table is expected to be empty (0 rows on April). If it holds rows, preflight blocks
+  `needs_owner:request_comments_present=N`, because nobody knows who could see them and `list_mine` shows the folded
+  note to the requester. The owner reads the rows and writes `request.comments = fold_reviewed` in the decisions file
+  (the importer accepts `fold_into_decision_note`, the signed value, and `fold_reviewed`; the second is the owner's
+  acknowledgement and is a re-approval event, so the hash is re-pinned). `request_manager::decide()` on an imported row
+  now appends the decider's note below the folded thread (a newline, then the note) and never replaces it; an empty
+  note leaves the thread; a native row is unchanged.
+- **COMMS-R5, no code.** `approvals_step` folds a DECIDED learning-plan approval into a pending request row of the same
+  user and plan and drops the approval's newer state. BizLMS has no insert into `local_learningplan_approval` (only
+  updates), April holds 0 rows, and preflight reports the count (`learningplan_approvals`). Stage B trigger: if it is
+  above 0, change the rule so a decided approval imports as its own row. The step docblock calls the outcome `fold`
+  (`dup_of_request`), not `merge`.
+- **COMMS-R6, no code.** Routing can pick a supervisor who lacks `local/sentientia_request:approve`; imported rows have no
+  deadline, so they never escalate and stay stuck. Routing stays identical to a native submission. Runbook step, after
+  the flag is ON: an L&D admin reviews the imported pending rows in All requests and decides them with `overrideroute`.
+  Optional later: a Stage B count of imported pending rows whose approver lacks the capability.
+- **COMMS-C1.** `request:orphan_user`, `request:orphan_item` and `request:orphan_request` are NOT pre-accepted (all 0 on
+  April). After Stage B the owner adds the ones that occur to the top-level `accepted_reasons` list, with counts.
+- **COMMS-C2.** Recommended future flip for Airpay at cutover, none made: `sentientia.request.imported_history` ON, only
+  after COMMS-R1 (this change) has landed, because otherwise Approve could enrol and message a suspended or deleted account.
+
+Follow-ups done: **F-77** `verify()` accepts `cancelled` (a requester can cancel an imported pending row after go-live;
+`request_manager::cancel()`); **F-78** classroom, program and learningplan are merged, so
+`test_the_real_registry_knows_the_three_features_request_depends_on` pins that the real registry resolves them before
+`request`. The stand-ins stay for the other tests, because `legacy_schema_fixture` takes ONE fixture XML (F-79) and the
+real importers' own legacy tables would need more; a full cross-importer run is a Stage B rehearsal item. **F-80** the dead
+`request_manager::get_course_owner_userid()` is gone (approver_routing has the live copy), the CLI scripts
+`smoke_request.php` and `seed_qa_pending_request.php` leave `legacy_source` rows alone, the upgrade test puts back the
+column it drops (`try/finally`), and a comment with the MySQL zero date (`0000-00-00 00:00:00`) reads as an unknown date.
+
+Tests added (`tests/bizlms_import_test.php`): stale requests history only, the `actionable` variant, itemid 0 for a gone
+path, classroom or program, the comments blocker and the unsupported value, `decide()` appending, the note helper, the
+zero date, `cancelled` in verify, the real registry. The seed's `request.comments` is `fold_reviewed` because it holds comment rows.
+
+Visual evidence owed: My requests, Pending approvals, All requests (desktop and mobile) with the flag ON.

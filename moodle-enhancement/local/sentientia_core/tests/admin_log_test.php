@@ -61,6 +61,15 @@ final class admin_log_test extends provider_testcase {
         ]));
     }
 
+    public function test_a_missing_time_is_shown_as_a_dash_not_as_1970(): void {
+        // F-75: BizLMS wrote no time on some rows and the import stores 0; userdate(0) is 1 January 1970.
+        $this->assertSame('-', admin_log::when(0));
+        $this->assertSame('-', admin_log::when(-5));
+        $shown = admin_log::when(self::T0);
+        $this->assertNotSame('-', $shown);
+        $this->assertStringNotContainsString('1970', $shown);
+    }
+
     /**
      * A user, optionally with a tenant path.
      *

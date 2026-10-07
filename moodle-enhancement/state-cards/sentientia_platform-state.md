@@ -834,6 +834,18 @@ down.
 
 No version bump, no feature, no UI. Both trees identical.
 
+## 2026-10-07 - dev masking script: imported e-mail, request and admin-log text (F-60, F-87, comms part; no version change)
+
+`cli/mask_pii_for_dev.php` (both trees) updated a `to_email` column of `local_sentientia_email_log` that the table has never
+had (install.xml), so the first real run would have stopped at step 6, and it never masked what the BizLMS import put into
+three tables. Step 6 now: drops that UPDATE; masks the subject of every row with `legacy_source` set (the credentials mask
+`[withheld: account credentials]` stays, it names no one) and removes `body_html` of those rows; removes `decision_note` of
+imported `local_sentientia_request` rows (the comment thread: names and free text); masks `description` of
+`local_sentientia_admin_log` (it names the actor by first name). The cart half of F-87 (billing reasons, ledger, credits) is the
+finance cluster's, in step 3 of the same script. Test: `tests/mask_pii_for_dev_test.php` reads the script and the three
+install.xml files and checks that the script names no column that does not exist (the script bootstraps Moodle and writes, so it
+cannot run under PHPUnit). Run this script before any dev or UAT copy is built from a Stage B database.
+
 ## 2026-10-07 - ADR-032 decisions file: 36 owner decisions recorded (fixture copies refreshed)
 
 `docs/cutover/bizlms-import-decisions.json` now holds 138 decisions: 36 were added or corrected under Nitin's delegation of

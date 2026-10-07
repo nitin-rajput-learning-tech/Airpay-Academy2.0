@@ -1,9 +1,9 @@
 # airpay_emails — STATE CARD
 
-**Component:** `local_airpay_emails`
-**Current version:** `2026052001`  (release `1.1.2`, post-Sprint B + Hindi top-ups)
+**Component:** `local_sentientia_emails` (was `local_airpay_emails` until ADR-022/025; the body of this card below the 2026-09-22 sections still uses the old table and plugin names where it was written before the rename)
+**Current version:** `2026100701`  (release `1.4.0`: 2026-10-07 owner decisions, see the last section; before that `2026093001` / `1.3.0`, ADR-032 importer)
 **Maturity:** STABLE (production)
-**Last touched:** 2026-05-20 (P1 #49 — Hindi top-up)
+**Last touched:** 2026-10-07 (COMMS owner decisions: redaction, manager copies, course link, three flagged senders)
 **Last refreshed:** 2026-05-28 (F-039 closeout — runtime DB probe + table inventory)
 **Owner:** Head of L&D
 
@@ -528,8 +528,10 @@ What the import does (`classes/bizlms/`, registered in `db/bizlms_import.php`, f
 - Source timestamps kept: a delivered `local_emaillogs` row is created when it was sent (BizLMS stamped the
   sender task's time); otherwise the first non-zero of `timecreated`, `time_created`, `timemodified`.
   `sent_date` becomes `timesent`. Nothing is stamped with the import time.
-- Skips: a recipient with no user row (`orphan_user`, needs-owner, so parity exits 2 until accepted as
-  `accept_needsowner.notifications.orphan_user`) and, only under the `skip` decision, `tenant_unresolved`.
+- Skips: a recipient with no user row (`orphan_user`, needs-owner, so parity exits 2 until the owner adds
+  `notifications:orphan_user` to the top-level `accepted_reasons` list of the decisions file, with its Stage B
+  count, after the rehearsal; nothing is pre-accepted, COMMS-C1, F-82) and, only under the `skip` decision,
+  `tenant_unresolved`.
   Deleted users' rows are imported (their user row exists).
 
 Schema (`db/install.xml` + guarded `db/upgrade.php` step): `local_sentientia_email_log` gains
@@ -569,7 +571,8 @@ streamed export, detail view, dashboard, template filter), `privacy_imported_his
 install.xml for these tables), with the production-only columns and both timestamp dialects.
 
 Open for Nitin / the lead:
-- Sign-off of `accept_needsowner.notifications.orphan_user` after the rehearsal (a count of rows).
+- After the Stage B rehearsal: the owner decides whether to add `notifications:orphan_user` to `accepted_reasons`
+  (a count of rows; 0 on April). The older name `accept_needsowner.notifications.orphan_user` never existed in the loader.
 - Which BizLMS notification types have no Sentientia rule once BizLMS stops sending (mapping doc, open
   question 5) is a parity question, not something this importer answers.
 - Retention of imported rows is "keep, no purge" (`notifications.retention`); a retention period comes with
@@ -617,3 +620,105 @@ that names the team member, and `teammemberid` is not carried, so erasing the te
 body (spec gap, needs a decision). 78% of April rows were queued by the support pseudo-user (`from_userid` -20),
 which maps to a NULL sender, so the Sent from column is blank on them. `mask_pii_for_dev.php` (platform) does not
 mask the subject or body of imported rows. Visual evidence for the flagged UI is still owed.
+
+### 2026-10-07 - owner decisions of the comms cluster (version `2026100701`, release `1.4.0`)
+
+Branch `claude/owner-decisions-x`. Decided by Nitin's delegation of 2026-10-07 ("self review and decide
+recommended option") on top of the signed basis "do everything as recommended". Full list:
+`docs/cutover/OWNER-DECISIONS-2026-10-07.md`. **PHPUnit was NOT run in this session** (the lead re-inits for the
+version bump and runs the group). Nothing was copied to XAMPP and no flag was flipped.
+
+Importer (`classes/bizlms/`), the three keys are in the signed decisions file and declared by `importer::decisions()`:
+- **COMMS-N1, credentials.** A row whose template (`local_notification_info`) or notification type is gone, with a
+  template reference above zero, has its BODY withheld whatever it says (`credentials_withheld:unresolved_template`).
+  Its subject is masked only when `redactor::subject_suggests_credentials()` or the new
+  `redactor::text_mentions_secret()` matches, otherwise scrubbed. A row that never pointed at a template (an ILT
+  reminder, a custom mail, `local_email_logs`) keeps the older rule (a subject that reads like an account message).
+  The row's own `moduletype` signal never fires on production (`''` on all 14,202 April rows, because the users
+  writer never sets it); the template and its type are what carry the answer. `scrub()` now also catches a secret in
+  the next table cell (`<td>Password</td><td>X</td>`), behind a line break or a newline, and a value that holds
+  `,` `;` or `&`; the value runs to whitespace, `<` or a quote (an `&` that opens the next link parameter still ends
+  it). It is idempotent, and `importer::verify()` relies on that: `imported_text_with_unredacted_secret` fails the
+  run when scrub would still change an imported subject or body (a subject of exactly 255 characters is not checked:
+  the column limit may have cut a mask). Preflight counts the unresolved-template rows that name a secret word
+  (`unresolved_template_rows_naming_a_secret_word`, an upper bound: LIKE also matches "spin"). F-72: scrub also blanks
+  the value after the bare words "pass" and "pin" and the word behind a tag or line break after any secret word; it
+  changes 0 of the 13,363 kept April rows, so that over-redaction costs nothing and is accepted (documented in the
+  redactor docblock). The optional "treat a '/' path as empty" tweak was NOT made (0 April rows).
+- **COMMS-N2, manager copies.** `notifications.team_member_copy_body = withhold`: a row whose source has
+  `teammemberid > 0` imports without its body, and the member's whole-word first and last name (and each word of
+  them of two letters or more) becomes `[team member]` in the subject (one bulk fetch of names per batch). Warning
+  `team_member_copy_body_withheld`. `verify()` joins the legacy map to `local_emaillogs` and fails
+  `manager_copy_imported_with_a_body_although_the_decision_says_to_withhold`. A later `subject_userid` column
+  could backfill the bodies from the legacy table.
+- **COMMS-N3, course link.** `notifications.course_link = moduleid_for_course_templates`: `courseid` is the column
+  when it is above zero and the course exists; else, for a template whose `moduletype` is `course`, the row's
+  `moduleid` (a TEXT column, read as an id only when it is one plain number) above 1 whose course exists
+  (warning `course_from_moduleid`); else NULL. The production table has no `courseid` column.
+- **F-63** `timesent` is set only for a delivered row. **F-67** preflight warns
+  `many_deleted_recipients_share_one_timemodified` and `deleted_recipients_modified_after_the_newest_send`: the
+  deleted-at-send rule reads the user's `timemodified`, so run this feature BEFORE any step that rewrites deleted
+  users' rows (the DPDP anonymiser, an HRMS re-sync, clean-ups). Preflight also reports `manager_copies`.
+- **Measured read-only on the April copy** (local XAMPP database, the worktree code, no write): 14,202 rows,
+  14,197 `sent`, 5 `not_sent`, 839 subjects masked with 0 bodies beside them, 2,760 bodies withheld (839 credential
+  + 1,921 manager copies), 9,409 rows with a course from `moduleid`, 0 rows needing `credential_text_scrubbed`, scrub
+  idempotent on every written subject and body. These are the expected Stage B figures.
+
+New senders (COMMS-N7, `gaps.notification_sender_parity = build_flagged_off`), `classes/parity_senders.php`:
+BizLMS sends `course_enrol`, `learningplan_enrol` and a manager copy of `course_complete`, and Sentientia had no
+sender for them (it has the learner's completion e-mail and, in `local_sentientia_users`, the welcome e-mail).
+
+| Flag (all default OFF, read for the RECIPIENT's customer and tenant) | Trigger | Template |
+|---|---|---|
+| `sentientia.emails.send_course_enrolment.enabled` | `\core\event\user_enrolment_created` (`observer::user_enrolment_created`) | `enrollment/course_enrolled` |
+| `sentientia.emails.send_learning_path_enrolment.enabled` | scheduled task `send_path_enrolments`, every 5 minutes | `enrollment/learning_path_enrolled` |
+| `sentientia.emails.send_manager_completion_copy.enabled` | `observer::course_completed` (the learner's live supervisor, same tenant) | `enrollment/manager_course_completed` (new) |
+
+- The learning-path plugin fires no event when it enrols a learner, so the task polls
+  `local_sentientia_learningpath_users` above a saved id (`path_enrolment_watermark`): the first run only records the
+  end of the table, the id moves past every row it looked at (flag OFF, rule off, user gone), so switching the flag ON
+  never e-mails an old enrolment; a row older than two days, a row the BizLMS import wrote (it is in the legacy
+  map) and an archived path are never e-mailed. If the learning-path plugin ever raises an event, call
+  `parity_senders::learning_path_enrolled()` from it and drop the task.
+- All three go through `notification_sender`: `$CFG->noemailever` logs the row `suppressed` (every non-production
+  copy), the recipient's channel preference applies, a delivery-log row with its `template_key` is written, no
+  password is ever sent. E-mail leaves through the same path as every other rule (`message_send`, honouring the
+  user's message preferences; to force it, set the `notification_alert` provider's e-mail default to forced under
+  Messaging).
+- A rule row of the type (`course_enrolled`, `learning_path_enrolled`, `manager_course_completed`) sets the channel and
+  the template and can switch the e-mail off for a tenant. With NO rule row of the type a built-in default is used,
+  so a fresh install (the plugin has no `db/install.php`, so no rules are seeded there; only `db/upgrade.php` seeds
+  them) sends the same e-mail as an upgraded one. UAT check still open: whether a fresh install has the learner's
+  `course_completed` rule at all.
+- Skipped: a hidden course, a suspended enrolment, a suspended or deleted user, a guest, a duplicate within five
+  minutes; for the manager copy a supervisor who is suspended, deleted or in another tenant than the learner
+  (ADR-031: a name and progress do not cross a tenant boundary).
+- **Turning a sender ON for Airpay at cutover is Nitin's call**, after he has seen them on UAT (Q11 of the owner
+  decisions). Recommended flip: ON for Airpay. Nothing here flips a flag.
+- New strings en + hi (`parity_*`, `task_send_path_enrolments`); the path template drops its deadline lines for a
+  path with no end date; the editor and preview list the new template.
+
+Other changes: `idx_sender_userid` on the log (F-64; install.xml and the guarded upgrade step `2026100701`, the privacy
+provider looks senders up); imported bodies lose off-site images, CSS `url()` and `background` attributes before
+`format_text` (`imported_history::without_external_resources()`), and CSV cells starting with `=` `+` `-` `@` are
+prefixed with a quote (`delivery_log::csv_safe()`), both F-65, before `imported_body_detail.enabled` is ever flipped;
+test hygiene (F-66: the optional-columns test drops the table it cut, `sql_compare_text` on `error_message`); the
+`mask_pii_for_dev.php` fix is in the platform (F-60, F-87: the `to_email` UPDATE is gone, imported subjects are masked,
+bodies removed). F-85 ledger for this plugin: ONE version, `2026100701`.
+
+Accepted, recorded (no code):
+- **COMMS-N4** a blank "Sent from" on an imported row means the BizLMS system (the support user, `from_userid` -20)
+  sent it, exactly as BizLMS's own list showed (`BZ email_status_filters.php:43`). 11,099 of 14,202 April rows. Say so
+  in the visual-evidence README so the blank column does not read as broken.
+- **COMMS-N5** the `legacy_bridge` template-filter change ships WITHOUT a flag, accepted as a bug fix 2026-10-07 under
+  the delegation (the Templates tab was empty for everyone on the production shape). Evidence owed: the Templates tab
+  as a scoped (`/77`) admin.
+- **COMMS-N6** `notifications.deleted_recipient_sent` applies only to a recipient already deleted when BizLMS ran the
+  send; the wording is corrected in the decisions file, ADR-032 and the mapping doc.
+- **COMMS-C1** the orphan skip reasons are NOT pre-accepted; the owner adds `notifications:orphan_user` after Stage B.
+- **COMMS-C2** recommended flips for Airpay at cutover (none made): `sentientia.emails.imported_history.enabled` ON,
+  `sentientia.emails.imported_body_detail.enabled` ON, after the screenshots.
+
+Visual evidence still owed (desktop and mobile, `docs/visual-evidence/<date>/`): the Logs tab (Sent from, Sent on,
+`not_sent` and other badges, the BizLMS badge), `email_detail.php` (with an imported mail that had a remote image), the
+Templates tab as a `/77` admin, and the new `enrollment/manager_course_completed` template in the preview.

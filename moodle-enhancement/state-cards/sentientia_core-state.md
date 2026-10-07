@@ -302,3 +302,29 @@ string id of the user record (every entry would have shown actor false).
 - The descriptions carry the actor's first name in free text, and the importer cannot find a name in other
   languages or other shapes: only the shapes BizLMS wrote in English are recognised. Retention and the wider
   legacy-table privacy treatment remain the separate ADR the owner file names.
+
+## 2026-10-07 - owner decisions of the comms cluster (legacy_logs; code only, version unchanged)
+
+Branch `claude/owner-decisions-x`. Decided under Nitin's delegation of 2026-10-07 on top of the signed basis "do everything
+as recommended"; list: `docs/cutover/OWNER-DECISIONS-2026-10-07.md`. PHPUnit was NOT run. No flag flipped. The plugin
+stays `2026093001`: the changes are a display fix and an install.xml COMMENT (no DDL, no upgrade step).
+
+- **F-75 (cosmetic, before the report flag is ever flipped).** `admin_log.php` showed a row with no time as 1 January 1970
+  in the When column (`userdate(0)`). `admin_log::when()` renders a missing time as a dash; the page uses it. The
+  `itemref` column COMMENT said "course id", but the forum and online-exam entries `local_custom_logs()` also wrote carry
+  their own ids: corrected in `db/install.xml` and the `admin_log_step` docblock. Test: `admin_log_test`.
+- **COMMS-C2.** Recommended for Airpay at cutover (decided by Nitin after the screenshots, nothing flipped):
+  `sentientia.legacy_logs.report.enabled` stays OFF, because BizLMS never showed those tables (it had writers only,
+  `BZ insert.php:54`, `processor.php:302`, and both tables hold 0 rows on April). Stage B counts decide whether the report
+  is ever worth enabling.
+- **COMMS-C1.** `legacy_logs` needs no needs-owner reason: a row with no resolvable tenant is imported pathless, so nothing
+  is skipped.
+- **F-76 (Stage B).** `admin_log.php` keeps page layout `standard` (`admin_externalpage_setup` cannot run while the page is
+  registered only with the flag ON); revisit after the screenshots. The top-level `settings.php` calls
+  `admin_log::report_enabled()` while the admin tree is built: include that call in the Stage B performance pass.
+- **F-73 (after Stage B, NOT done).** `privacy_coverage_test::USER_COLUMNS` does not list `usermodified`; adding it would newly
+  require ten config tables that have only `usermodified` (course_type, course_category, email_overrides, email_rules,
+  learningpath, learningpath_courses, cohort_scope, talent_path, talent_succ, talent_opp) to declare it. It rides with
+  the one platform privacy-guard change of F-86 (usercreated, usermodified, modified_by, trainerid), after the program merge.
+
+Visual evidence owed (desktop and mobile): `admin_log.php` with the flag ON, before the flag is ever flipped.
