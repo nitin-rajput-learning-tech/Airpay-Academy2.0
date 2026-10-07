@@ -14,7 +14,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 import Templates from 'core/templates';
-import ModalFactory from 'core/modal_factory';
+import Modal from 'core/modal';
 import * as Repository from './repository';
 
 /**
@@ -28,15 +28,17 @@ import * as Repository from './repository';
 /**
  * Creates and shows a modal that contains a placeholder.
  *
+ * core/modal_factory was removed in Moodle 5.2 (its RequireJS dependency 404s, so this whole module
+ * never loaded and no payment could start). core/modal is the shape core paygw_paypal uses on
+ * 5.1, 5.2 and 5.3 alike.
+ *
  * @returns {Promise<Modal>}
  */
-const showModalWithPlaceholder = async() => {
-    const modal = await ModalFactory.create({
-        body: await Templates.render('paygw_airpay/airpay_button_placeholder', {})
-    });
-    modal.show();
-    return modal;
-};
+const showModalWithPlaceholder = async() => await Modal.create({
+    body: await Templates.render('paygw_airpay/airpay_button_placeholder', {}),
+    show: true,
+    removeOnClose: true,
+});
 
 /**
  * Process the payment.
