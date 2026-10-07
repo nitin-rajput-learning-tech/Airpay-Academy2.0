@@ -22,6 +22,11 @@ defined('MOODLE_INTERNAL') || die();
  *    failure (exit 1).
  * 3. Unproven items (exit 2) are unclaimed legacy tables holding rows and needs-owner
  *    reasons the decisions file has not accepted; see unclaimed and runner.
+ * 4. The core counts and checksums stay the proof that the import had no side effects on users, completions, attempts,
+ *    badges and grades. The ONE core table the import writes on purpose that those counts cover is user_enrolments (the
+ *    enrolments importer, gap G6): imported_enrolments(), enrolment_count_explained() and
+ *    enrolment_checksum_explained() explain exactly that delta from the legacy map, and nothing else (owner decision,
+ *    2026-10-07). Any other difference stays drift.
  *
  * @package    local_sentientia_platform
  * @copyright  2026 Airpay Payment Services
@@ -172,6 +177,85 @@ final class parity {
             array_push($problems, ...self::verify_problems($feature, $importer, $decisions));
         }
         return $problems;
+    }
+
+    /**
+     * What the enrolments import (gap G6) added to the core user_enrolments table, found from the legacy map.
+     *
+     * Owner decision, 2026-10-07 (courses cluster, parity doc item): the import turns each orphaned BizLMS enrolment into a
+     * MANUAL enrolment, so core user_enrolments holds about 7 733 more rows after it than the source baseline (April 2026
+     * copy), and migration_parity_check.php counts and checksums that table. A clean import therefore drifted by design and
+     * the rehearsal's "100% PARITY" step could not pass. The delta is explained here, and only here, by the map: every row
+     * the map says the feature `enrolments` imported into `user_enrolments`, and that still exists. Anything beyond that
+     * stays drift. (The enrol instances the import switched off or added are not in the baseline's counts or checksums.)
+     *
+     * @param string[] $columns The columns the parity checksum of user_enrolments hashes, in its order.
+     * @return array{rows: int, crc: ?string, switched_off: int} Rows added; the SUM(CRC32(row)) of exactly those rows built
+     *         like the checksum (null on an engine without CRC32, or with no row); BizLMS instances switched off.
+     */
+    public static function imported_enrolments(array $columns): array {
+        global $DB;
+        $out = ['rows' => 0, 'crc' => null, 'switched_off' => 0];
+        $dbman = $DB->get_manager();
+        if (!$dbman->table_exists(legacymap::TABLE) || !$dbman->table_exists('user_enrolments')) {
+            return $out;
+        }
+        $join = "FROM {user_enrolments} ue
+                 JOIN {" . legacymap::TABLE . "} m ON m.targetid = ue.id
+                WHERE m.feature = :f AND m.targettable = :t AND m.outcome = :o AND m.subkey = :k";
+        $params = ['f' => 'enrolments', 't' => 'user_enrolments', 'o' => 'imported', 'k' => ''];
+        $out['rows'] = (int) $DB->count_records_sql("SELECT COUNT(1) {$join}", $params);
+
+        if ($out['rows'] > 0 && $DB->get_dbfamily() === 'mysql') {
+            $existing = array_keys($DB->get_columns('user_enrolments'));
+            $parts = [];
+            foreach (array_values(array_intersect($columns, $existing)) as $column) {
+                fingerprint::assert_identifier($column);
+                $parts[] = "IFNULL(ue.`{$column}`, '~NULL~')";
+            }
+            if ($parts) {
+                $expr = 'CONCAT_WS(0x1f, ' . implode(', ', $parts) . ')';
+                $out['crc'] = (string) $DB->get_field_sql("SELECT COALESCE(SUM(CRC32({$expr})), 0) {$join}", $params);
+            }
+        }
+        if ($dbman->table_exists('local_sentientia_courses_enroloff')) {
+            $out['switched_off'] = $DB->count_records('local_sentientia_courses_enroloff');
+        }
+        return $out;
+    }
+
+    /**
+     * Is a difference in the count of user_enrolments exactly the rows the enrolments import wrote?
+     *
+     * @param int $baseline The count in the source baseline.
+     * @param int $current The count now.
+     * @param int $added Rows the map says the import added (imported_enrolments()['rows']).
+     * @return bool
+     */
+    public static function enrolment_count_explained(int $baseline, int $current, int $added): bool {
+        return $added > 0 && $current - $baseline === $added;
+    }
+
+    /**
+     * Is a difference in the user_enrolments checksum exactly the rows the enrolments import wrote?
+     *
+     * The checksum is SUM(CRC32(row)), so adding rows adds their CRCs: the baseline's sum plus the sum of the imported rows
+     * must be the sum now, and the row count must have grown by exactly those rows. A changed legacy row or a deleted one
+     * breaks the equation and stays drift. The CRCs of the imported rows are read from the rows as they are now (the map
+     * keeps none), so an imported row an administrator edited since the import is still explained: what this proves is
+     * that every row the baseline had is exactly as it was, which is the point of the gate.
+     *
+     * @param array{rows: int, crc: ?string} $baseline The table's entry in the source baseline.
+     * @param array{rows: int, crc: ?string} $current The table's entry now.
+     * @param array{rows: int, crc: ?string} $added As returned by imported_enrolments().
+     * @return bool
+     */
+    public static function enrolment_checksum_explained(array $baseline, array $current, array $added): bool {
+        if ((int) $added['rows'] <= 0 || $added['crc'] === null || $baseline['crc'] === null || $current['crc'] === null) {
+            return false;
+        }
+        return (int) $current['rows'] - (int) $baseline['rows'] === (int) $added['rows']
+            && (string) ((int) $baseline['crc'] + (int) $added['crc']) === (string) $current['crc'];
     }
 
     /**

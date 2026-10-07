@@ -249,3 +249,16 @@ Tests (`permission_test`, @group tenant_isolation): `test_viewallorgs_holder_is_
 gives ''; `:crosstenant` alone gives '/1'); new tests for the site admin and for the self-granted category
 override (still '/1', even for a cross-tenant user). `version.php` declares the `local_sentientia_platform`
 dependency. Written, not run.
+
+---
+
+## 2026-10-07 - "New Enrolments" KPI counts learner-course pairs once (owner decision: readers that count enrolments)
+
+Both trees. **Not run: no PHPUnit here.** No schema change, no flag, no version bump (the KPI cache `kpis` expires in minutes; purge on deploy).
+
+A learner enrolled through an imported BizLMS method AND its converted manual twin holds two rows for one course (4 832 pairs already on the
+April 2026 copy, and the import adds 7 733 more), so `COUNT(ue.id)` counted that learner twice. `get_kpis()` now counts
+`COUNT(DISTINCT courseid-userid)` of ACTIVE enrolments (`ue.status = 0`) on ENABLED instances (`e.status = 0`). Deviation from the decision
+text, which says `COUNT(DISTINCT ue.userid)`: that would count a learner who enrols in three courses once, and the unit of this KPI is an
+enrolment of a learner in a course, so the pair is the unit. Test: `analytics_manager_test::test_new_enrolments_counts_a_learner_course_pair_once`
+(NOT RUN).

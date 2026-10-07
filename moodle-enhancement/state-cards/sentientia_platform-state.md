@@ -851,3 +851,36 @@ Two small changes made for the cart decisions (details in `sentientia_cart-state
   a column `local_sentientia_email_log` does not have, imported e-mail subjects and bodies) is a separate change.
 
 No version bump, no feature flag, no UI.
+
+---
+
+## 2026-10-07 - owner decisions, courses cluster: guard columns, G6 core-write reason, parity of the enrolments import
+
+Both trees. **Not run: no PHPUnit here; the lead re-initialises PHPUnit once for the courses 2026100701 bump.**
+
+- **Privacy guard.** `tests/privacy_coverage_test.php::USER_COLUMNS` gains `usercreated` and `usermodified` (rule R9). The providers the
+  guard would then have flagged are fixed in the same change: `local_sentientia_emails` (two configuration tables) and
+  `local_sentientia_talent` (career paths). `local_sentientia_users` declares its two tables through the `legacy_history` constants, and the
+  other plugins that carry the columns (core, courses, learningpath, org) already declare theirs. The identity and learning clusters add
+  further names to the same constant (`modified_by`, `trainerid`); keep one copy of each name when merging.
+- **Registry.** The reviewed reason of the core write `enrol` (`registry::CORE_WRITES_ALLOWED`) now says what the owner decision CRS-01 does:
+  INSERT a manual instance, and UPDATE the status of a BizLMS instance proved safe to switch off; core grants access through any enabled
+  instance whether or not its plugin is on disk. See the courses card.
+- **migration_parity_check.php now calls the framework's parity hooks (P0.4, ADR-032 "Parity hooks").** `--baseline` also stores a
+  fingerprint of every legacy table (count, MAX(id), CRC over all columns, column list; no CRC cap) when the framework is deployed
+  there. `--compare` then (1) compares the legacy tables with `parity::compare_fingerprints()` and sorts the result with
+  `parity::comparison_problems()`: a changed or missing table is DRIFT (exit 1), a skipped CRC or a table the baseline did not have is
+  "not proven" (exit 2), and a baseline with no fingerprints is "not proven" too; (2) runs the `bizlms_import` invariant
+  (`parity::invariant_problems()`, only on `--compare`, because it reads every feature) next to `message_provider_defaults`; (3) EXPLAINS the
+  one difference the import makes on purpose to a counted table. **The rehearsal parity gate no longer fails by design:** the enrolments
+  importer writes about 7 733 manual enrolments into core `user_enrolments` (April 2026 copy), which the count and the value checksum of
+  that table used to report as drift. `parity::imported_enrolments()` finds exactly the rows the legacy map says the feature `enrolments`
+  imported into `user_enrolments` and that still exist (and their summed CRC32, built like the checksum), and
+  `enrolment_count_explained()` / `enrolment_checksum_explained()` accept the delta ONLY when the count grew by exactly those rows and the
+  checksum (a SUM of per-row CRCs) grew by exactly their CRCs. The output line is `EXPLAINED`, not `MATCH`, and the result line says
+  the import was accounted for from the legacy map. A changed or deleted legacy row, or any other difference, stays DRIFT. An imported row
+  an administrator edited since is still explained (the map keeps no per-row CRC): the gate proves that every row the baseline had is as it
+  was. `enrol.status` (the instances the import switches off) and new `enrol` rows are not in the baseline's counts or checksums; the
+  report prints how many instances the trail shows as switched off. Step 5 of `MIGRATION-REHEARSAL-RUNBOOK.md` and ADR-032 parity hook 4
+  still say "100% PARITY / no side effects on enrolments" and need the amendment (docs pass). Tests (NOT RUN):
+  `tests/bizlms/parity_enrolments_test.php`.
