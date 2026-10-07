@@ -155,7 +155,13 @@ final class dev_mask_test extends \advanced_testcase {
         $this->assertSame(1, $first['local_sentientia_cart_ledger.payload_json']);
         $this->assertSame(['local_sentientia_cart_ledger.reason' => 0, 'local_sentientia_cart_ledger.initiatedby' => 0,
             'local_sentientia_cart_credit_txn.reason' => 0, 'local_sentientia_cart_credit_txn.initiatedby' => 0,
-            'local_sentientia_cart_ledger.payload_json' => 0], $second, 'Nothing left to mask.');
+            'local_sentientia_cart_ledger.payload_json' => 0,
+            'local_sentientia_cart_history.billing_name' => 0, 'local_sentientia_cart_history.billing_email' => 0,
+            'local_sentientia_cart_history.billing_phone' => 0, 'local_sentientia_cart_history.billing_address' => 0,
+            'local_sentientia_cart_history.notes' => 0,
+            'local_sentientia_cart_invoices.billing_name' => 0, 'local_sentientia_cart_invoices.billing_email' => 0,
+            'local_sentientia_cart_invoices.billing_phone' => 0, 'local_sentientia_cart_invoices.billing_address' => 0,
+        ], $second, 'Nothing left to mask.');
         $this->assertEquals($snapshot, [$DB->get_records('local_sentientia_cart_ledger'), $DB->get_records('local_sentientia_cart_credit_txn')]);
     }
 
@@ -175,6 +181,74 @@ final class dev_mask_test extends \advanced_testcase {
         $this->assertSame(0, $DB->count_records_select('local_sentientia_cart_ledger',
             $DB->sql_like('payload_json', ':p', true, true, true), ['p' => '{"userid":0,%']),
             'Every payload starts with the zeroed userid.');
+    }
+
+    /**
+     * Review fix round 1 (2026-10-07): the buyer's name, e-mail, phone and address on the order header and on every native
+     * invoice, and the header's staff notes, were copied into a dev copy unmasked. The CLI's own comment said the name and
+     * e-mail were "already masked via mdl_user"; they are copies the buyer typed at checkout.
+     */
+    public function test_the_buyers_details_on_the_header_and_the_invoice_are_masked(): void {
+        global $DB;
+        $user = $this->getDataGenerator()->create_user();
+        $historyid = (int) $DB->insert_record('local_sentientia_cart_history', (object) [
+            'orderid' => 1000001, 'userid' => (int) $user->id, 'costcenterid' => 1, 'items_json' => '[]', 'subtotal' => 1000,
+            'discount_amount' => 0, 'tax_amount' => 180, 'total_amount' => 1180, 'currency' => 'INR', 'status' => 'paid',
+            'gateway' => 'airpay', 'gateway_ref' => 'AP-1', 'billing_name' => 'Asha Rao', 'billing_email' => 'asha@example.com',
+            'billing_phone' => '9999999999', 'billing_address' => '12 Main Road, Pune', 'billing_gstn' => '27AAAAA0000A1Z5',
+            'notes' => 'Asha called on Tuesday, promised to pay by cheque', 'timecreated' => 1700000000, 'timemodified' => 1700000000,
+        ]);
+        $second = (int) $DB->insert_record('local_sentientia_cart_history', (object) [
+            'orderid' => 1000002, 'userid' => (int) $user->id, 'costcenterid' => 1, 'subtotal' => 10, 'total_amount' => 10,
+            'status' => 'open', 'billing_name' => null, 'billing_email' => null, 'billing_phone' => '', 'billing_address' => null,
+            'notes' => null, 'timecreated' => 1700000000, 'timemodified' => 1700000000,
+        ]);
+        $invoiceid = (int) $DB->insert_record('local_sentientia_cart_invoices', (object) [
+            'historyid' => $historyid, 'orderid' => 1000001, 'invoice_number' => 'AIRPAY-2026-0001', 'userid' => (int) $user->id,
+            'costcenterid' => 1, 'billing_name' => 'Asha Rao', 'billing_email' => 'asha@example.com',
+            'billing_phone' => '9999999999', 'billing_address' => '12 Main Road, Pune', 'billing_gstn' => '27AAAAA0000A1Z5',
+            'line_items_json' => '[]', 'subtotal' => 1000, 'cgst' => 90, 'sgst' => 90, 'igst' => 0, 'total' => 1180,
+            'currency' => 'INR', 'status' => 'issued', 'timecreated' => 1700000000,
+        ]);
+
+        $out = dev_mask::run();
+
+        $header = $DB->get_record('local_sentientia_cart_history', ['id' => $historyid], '*', MUST_EXIST);
+        $this->assertSame(dev_mask::MASKED_NAME, $header->billing_name);
+        $this->assertNull($header->billing_email);
+        $this->assertNull($header->billing_phone);
+        $this->assertNull($header->billing_address);
+        $this->assertNull($header->notes);
+        $invoice = $DB->get_record('local_sentientia_cart_invoices', ['id' => $invoiceid], '*', MUST_EXIST);
+        $this->assertSame(dev_mask::MASKED_NAME, $invoice->billing_name, 'NOT NULL on the invoice: a placeholder, not NULL');
+        $this->assertNull($invoice->billing_email);
+        $this->assertNull($invoice->billing_phone);
+        $this->assertNull($invoice->billing_address);
+
+        // What a developer needs stays: the company's tax number, the amounts, the numbers and the dates.
+        $this->assertSame('27AAAAA0000A1Z5', $header->billing_gstn);
+        $this->assertSame('27AAAAA0000A1Z5', $invoice->billing_gstn);
+        $this->assertSame('AIRPAY-2026-0001', $invoice->invoice_number);
+        $this->assertEqualsWithDelta(1180.00, (float) $invoice->total, 0.001);
+        $this->assertEqualsWithDelta(1180.00, (float) $header->total_amount, 0.001);
+        $this->assertSame('paid', $header->status);
+        $this->assertSame(1700000000, (int) $header->timecreated);
+
+        // Counted per column; the row that had nothing is not counted, and an empty string stays an empty string.
+        $this->assertSame(1, $out['local_sentientia_cart_history.billing_email']);
+        $this->assertSame(1, $out['local_sentientia_cart_history.billing_phone'], 'the empty phone of the second order is not counted');
+        $this->assertSame(1, $out['local_sentientia_cart_history.notes']);
+        $this->assertSame(1, $out['local_sentientia_cart_invoices.billing_name']);
+        $this->assertSame('', $DB->get_field('local_sentientia_cart_history', 'billing_phone', ['id' => $second]));
+
+        // A second run changes nothing.
+        $again = dev_mask::run();
+        foreach (['billing_name', 'billing_email', 'billing_phone', 'billing_address', 'notes'] as $column) {
+            $this->assertSame(0, $again['local_sentientia_cart_history.' . $column], $column);
+        }
+        foreach (['billing_name', 'billing_email', 'billing_phone', 'billing_address'] as $column) {
+            $this->assertSame(0, $again['local_sentientia_cart_invoices.' . $column], $column);
+        }
     }
 
     public function test_the_dev_masking_cli_calls_it(): void {

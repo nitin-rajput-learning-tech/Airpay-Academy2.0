@@ -23,6 +23,14 @@ defined('MOODLE_INTERNAL') || die();
  *    prefix), only the identity goes. A payload that is not valid JSON is replaced by {}: it cannot be masked key by
  *    key, and a dev copy has no use for it.
  *
+ *  - the buyer's details on the order header (local_sentientia_cart_history) and on every native invoice
+ *    (local_sentientia_cart_invoices): billing_name becomes "Dev Buyer", billing_email, billing_phone and billing_address
+ *    become NULL, and so does the header's free-text "notes" (staff notes name the learner and what was agreed with
+ *    them). Review fix round 1, 2026-10-07: the CLI used to clear only the header's phone and address, and its own
+ *    comment said the name and e-mail were "already masked via mdl_user", which they are not: they are copies the buyer
+ *    typed at checkout. billing_gstn (a company's tax number, printed on the invoice) is kept: a developer needs a
+ *    well-formed one and it is not a person's detail.
+ *
  * Amounts, event types, currencies, order numbers and timestamps are left alone: they are what a developer needs and
  * identify no one. It is idempotent, changes only rows that still carry something, and lives in the cart (not in the
  * platform CLI) so the cart's PHPUnit suite can hold it. The CLI calls run() when this class exists.
@@ -40,6 +48,26 @@ final class dev_mask {
 
     /** The imported credit journal. */
     public const CREDIT_TXN = 'local_sentientia_cart_credit_txn';
+
+    /** The order header: the buyer's billing details and the staff notes. */
+    public const HISTORY = 'local_sentientia_cart_history';
+
+    /** Native invoices. */
+    public const INVOICES = 'local_sentientia_cart_invoices';
+
+    /** What every billing name becomes. */
+    public const MASKED_NAME = 'Dev Buyer';
+
+    /**
+     * The personal columns set to NULL, by table: column => true when it is a TEXT column (the empty-value test differs).
+     * billing_name is masked separately (the invoice's is NOT NULL); billing_gstn stays.
+     *
+     * @var array<string, array<string, bool>>
+     */
+    public const PERSONAL_COLUMNS = [
+        self::HISTORY => ['billing_email' => false, 'billing_phone' => false, 'billing_address' => true, 'notes' => true],
+        self::INVOICES => ['billing_email' => false, 'billing_phone' => false, 'billing_address' => true],
+    ];
 
     /** Keys inside payload_json that name a person (lower case). */
     public const PAYLOAD_PERSON_KEYS = ['userid', 'usermodified'];
@@ -67,7 +95,51 @@ final class dev_mask {
         if ($dbman->table_exists(self::LEDGER)) {
             $out[self::LEDGER . '.payload_json'] = self::mask_payloads();
         }
+        foreach (self::PERSONAL_COLUMNS as $table => $columns) {
+            if (!$dbman->table_exists($table)) {
+                continue;
+            }
+            $out[$table . '.billing_name'] = self::mask_names($table);
+            foreach ($columns as $column => $istext) {
+                $out[$table . '.' . $column] = self::clear_column($table, $column, $istext);
+            }
+        }
         return $out;
+    }
+
+    /**
+     * Replace every billing name that is not already the placeholder.
+     *
+     * @param string $table
+     * @return int rows changed
+     */
+    private static function mask_names(string $table): int {
+        global $DB;
+        $select = 'billing_name <> :masked';
+        $params = ['masked' => self::MASKED_NAME];
+        $count = $DB->count_records_select($table, $select, $params);
+        if ($count) {
+            $DB->set_field_select($table, 'billing_name', self::MASKED_NAME, $select, $params);
+        }
+        return $count;
+    }
+
+    /**
+     * Set a personal column to NULL on every row that still holds a value (an empty string is left as it is).
+     *
+     * @param string $table
+     * @param string $column
+     * @param bool $istext True for a TEXT column.
+     * @return int rows changed
+     */
+    private static function clear_column(string $table, string $column, bool $istext): int {
+        global $DB;
+        $select = $DB->sql_isnotempty($table, $column, true, $istext);
+        $count = $DB->count_records_select($table, $select);
+        if ($count) {
+            $DB->set_field_select($table, $column, null, $select);
+        }
+        return $count;
     }
 
     /**

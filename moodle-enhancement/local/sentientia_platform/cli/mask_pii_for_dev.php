@@ -33,9 +33,13 @@
  *              in as any user with a single shared password.
  *   mdl_logstore_standard_log — clear `ip` column (server logs leak
  *              real client IPs from production).
- *   mdl_local_sentientia_cart_history — clear billing_phone, billing_address.
- *              Keep billing_email + billing_name (already masked via
- *              mdl_user.email + firstname/lastname).
+ *   mdl_local_sentientia_cart_history — clear billing_phone, billing_address
+ *              (Step 3), and through \local_sentientia_cart\dev_mask also
+ *              billing_name ("Dev Buyer"), billing_email and the staff
+ *              notes. They are copies the buyer typed at checkout, NOT masked
+ *              by the mdl_user step (that comment was wrong until 2026-10-07).
+ *   mdl_local_sentientia_cart_invoices — the same buyer details: billing_name,
+ *              billing_email, billing_phone, billing_address (dev_mask).
  *   mdl_local_sentientia_cart_ledger / _cart_credit_txn — reason set to NULL,
  *              initiatedby set to 0, and (ledger) every userid / usermodified
  *              inside payload_json set to 0 (\local_sentientia_cart\dev_mask).

@@ -539,3 +539,11 @@ written by a separate commit that must merge before or with this one.
   failures only. The new class `dev_mask` needs a caches purge on deploy (class map).
 - **After Stage B, not needed at April size:** `legacy_reader::fetch_by(column, values)` and an `importer_contract` assertion
   that each person column of `target_tables` is declared in the privacy metadata.
+
+## 2026-10-07 - fix round 1 (review of stream Y): dev masking covers the buyer's details on the header and the invoices
+
+Branch `claude/owner-decisions-y`, both trees. **No version bump** (a class and a test; the new class code needs a cache purge on deploy like the first one). **Written, not run.**
+
+`\local_sentientia_cart\dev_mask::run()` now also masks, on `local_sentientia_cart_history` (the order header) and `local_sentientia_cart_invoices` (native invoices): `billing_name` becomes "Dev Buyer" (NOT NULL on the invoice, so a placeholder, not NULL), and `billing_email`, `billing_phone`, `billing_address` become NULL; the header's free-text `notes` (staff notes) become NULL. An empty string is left as it is, a second run changes nothing, and `billing_gstn` (a company's tax number) is kept. The header comment of `local_sentientia_platform/cli/mask_pii_for_dev.php` said the name and e-mail were "already masked via mdl_user"; they are copies the buyer typed at checkout, and the comment is corrected. The two lines the CLI already ran (header phone and address) stay as a fallback. Test: `dev_mask_test::test_the_buyers_details_on_the_header_and_the_invoice_are_masked` and the exact-keys assertion of the second-run test.
+
+**Still open, and not the cart's:** the comms-side gaps of the same script (critic item 88: the `to_email` UPDATE of a column that does not exist, imported e-mail subjects and bodies, request decision notes, the admin log description) belong to the comms change. Close them before any dev or UAT copy is built from a Stage B database.
