@@ -865,3 +865,34 @@ map). **PHPUnit NOT run.** Static scan of `classes/bizlms/` clean; both trees id
 - **Tests added** (not run): `bizlms_writer_test` (floor), `bizlms_runner_test` (a skipped high id, a counter above MAX(id),
   bounded and bare acceptance, child rows), `bizlms_support_test` (counter parser, `next_id`, bounded reasons),
   `bizlms_registry_test` (children rules); toy importer knobs `$orgchildren`, `$mapchildren`, `$badchildren`.
+
+## 2026-10-07 - review follow-ups: version 2026100701 / 1.11.0, and the counter is really never lowered (branch claude/eval-followups)
+
+The data and safety reviews of the evaluation work both found a gap in the section above. **PHPUnit NOT run** (re-init the
+platform to `2026100701`). Both trees identical (apart from `cli/mint_session.php`, which is in the drift baseline).
+
+- **`writer::reset_sequence()` no longer lowers a counter (data review, EV-26).** The section above said the writer "never
+  lowers" the counter, and that was not true: Moodle's own `reset_sequence()` ran first, and on MySQL and MariaDB it sets
+  `AUTO_INCREMENT = MAX(id) + 1`, which is LOWER than a counter that an earlier run raised to a floor, or that sits above the
+  highest id because the newest rows were deleted. A re-run after cutover would have handed out ids that were already issued,
+  the very bug EV-26 closes. Now the table's own counter is read first (`legacy_reader::next_id()`, which works on any table:
+  `SHOW CREATE TABLE` on MySQL and MariaDB, the sequence's `last_value` on Postgres), and
+  `want = max(floor, counter)`. If `want` is not above the table's highest id + 1, Moodle's reset runs as before (Postgres
+  needs it after `import_record()`); if the counter already is `want` or more, nothing is touched; otherwise the counter is
+  raised to `want`. A database whose counter cannot be set keeps the old behaviour, and the runner still warns
+  `sequence_floor_not_applied`. Test: `bizlms_writer_test::test_reset_sequence_never_lowers_a_counter_that_already_sits_above_the_table_and_the_floor`
+  (counter 500 above MAX 5: a lower floor, no floor, the same floor and a re-run all return 500; a higher floor raises it).
+- **A version marker for the framework code (both reviews).** `step::target_children()` with
+  `runner::preflight_target_children()`, the sequence floor and the row-bounded acceptances changed this plugin with no version
+  bump, while `local_sentientia_evaluation` had removed its own leftover-rows blocker in their favour: an evaluation tree
+  deployed beside an older platform tree would have lost that check silently. The platform is now `2026100701` / `1.11.0` with
+  a guarded no-op upgrade step and savepoint (no schema), and `local_sentientia_evaluation` 2026100702 declares it as its
+  dependency. The other 18 importers keep their own plugin versions and `REQUIRES_VERSION`.
+- **`customer::of_tenant(int $root)`** (new): the customer a tenant root belongs to, by the rule `customer::current()` applies
+  to the viewer's tenant (customer-zero while the registry is dormant, `tenant_registry::customer_of()` when live, customer-zero
+  for a root it does not know). `current()` now calls it. First user: the evaluation plugin reads a feature flag for an
+  EVALUATION's tenant. Test: `customer_resolution_test::test_of_tenant_follows_the_registry_like_current_does`.
+- **Documented, not changed:** `runner::preflight_target_children()` (and the evaluation importer's `form_mode_check()`) read the
+  legacy table through `$DB` with a correlated EXISTS or a join, not through `legacy_reader`: a join cannot be paged, and the
+  framework already assumes the legacy tables share the database and the prefix of the targets. ADR-032 rule text is the other
+  agent's file.

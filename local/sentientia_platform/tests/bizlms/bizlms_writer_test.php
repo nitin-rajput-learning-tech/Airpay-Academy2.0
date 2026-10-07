@@ -326,6 +326,36 @@ final class bizlms_writer_test extends \advanced_testcase {
         $this->assert_refused('reset_sequence_needs_a_declared_target', fn() => $writer->reset_sequence('user', 500));
     }
 
+    /**
+     * Data review of 2026-10-07: Moodle's own reset_sequence() sets the counter to MAX(id) + 1, which is LOWER than a
+     * counter an earlier run raised to a floor, or one that sits above the highest id because the newest rows were
+     * deleted. A re-run after cutover must not take it back down, or ids that were already issued are handed out again.
+     */
+    public function test_reset_sequence_never_lowers_a_counter_that_already_sits_above_the_table_and_the_floor(): void {
+        global $DB;
+        $writer = $this->writer();
+        if (!in_array($DB->get_dbfamily(), ['mysql', 'postgres'], true)) {
+            $this->markTestSkipped('This database family cannot set a counter, so there is none to keep.');
+        }
+        $table = 'local_sentientia_toy_org';
+        $org = static fn(): \stdClass => (object) ['name' => 'n', 'path' => null, 'visible' => 1, 'timecreated' => 1,
+            'timemodified' => 1];
+        $writer->import_preserved($table, $org(), 5);
+
+        // The counter sits at 500, far above the highest id (5) and above the floor of the run that follows.
+        $this->assertSame(500, $writer->reset_sequence($table, 500));
+        $this->assertSame(500, $writer->reset_sequence($table, 100), 'a lower floor does not take it down');
+        $this->assertSame(500, $writer->reset_sequence($table), 'neither does no floor at all (a re-run)');
+        $this->assertSame(500, $writer->reset_sequence($table, 500), 'and the same floor changes nothing');
+        $this->assertSame(500, (int) $DB->insert_record($table, $org()), 'the first native id is still 500');
+
+        // A floor ABOVE the counter does raise it, and what the counter already is still counts when it is the higher.
+        $this->assertSame(900, $writer->reset_sequence($table, 900));
+        $this->assertSame(900, $writer->reset_sequence($table, 0));
+        $this->assertSame(900, (int) $DB->insert_record($table, $org()));
+        $this->assertSame(901, $writer->reset_sequence($table, 10), 'the highest id + 1 once it passes everything else');
+    }
+
     public function test_map_rows_are_checked_like_any_other_row(): void {
         $writer = $this->writer();
         $row = (object) ['feature' => 'toy', 'sourcetable' => str_repeat('t', 65), 'sourceid' => 1, 'subkey' => '',

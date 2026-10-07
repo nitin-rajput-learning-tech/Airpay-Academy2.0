@@ -244,11 +244,16 @@ final class writer {
      * Reset a PRESERVE target's sequence. DDL on MySQL, so it never runs
      * inside a transaction: the runner calls it from finalise() only.
      *
-     * The next id is the table's own highest id + 1, or $floor when that is higher (EV-26). A PRESERVE import keeps
-     * BizLMS ids, and rows elsewhere (a request's componentid, a classroom's feedback form, a calendar event) still
-     * point at ids BizLMS had issued, including those of rows the import did not carry (archived, soft deleted) and of
-     * rows BizLMS hard-deleted. The runner passes the floor that covers all of those, so a native row created after
-     * cutover can never inherit a legacy reference.
+     * The next id is the highest of three: the table's own highest id + 1, $floor (EV-26), and the counter the table
+     * already holds. A PRESERVE import keeps BizLMS ids, and rows elsewhere (a request's componentid, a classroom's
+     * feedback form, a calendar event) still point at ids BizLMS had issued, including those of rows the import did
+     * not carry (archived, soft deleted) and of rows BizLMS hard-deleted. The runner passes the floor that covers all
+     * of those, so a native row created after cutover can never inherit a legacy reference.
+     *
+     * The counter is never lowered. Moodle's own reset_sequence() sets it to MAX(id) + 1 on MySQL and MariaDB, which is
+     * LOWER than the counter whenever the newest rows were deleted, or whenever an earlier run raised it to a floor;
+     * a re-run after cutover would then hand out ids that were already issued. So the counter is read first, and
+     * Moodle's reset runs only when nothing sits above the table's own highest id to protect.
      *
      * @param string $table
      * @param int $floor The lowest id the table may hand out next; 0 = no floor beyond the table's own highest id.
@@ -264,12 +269,26 @@ final class writer {
         if ($DB->is_transaction_started()) {
             throw new writer_refused('reset_sequence_inside_a_transaction');
         }
-        $DB->get_manager()->reset_sequence($table);
-        $next = (int) $DB->get_field_sql('SELECT COALESCE(MAX(id), 0) + 1 FROM {' . $table . '}');
-        if ($floor <= $next) {
-            return $next;
+        // Before anything changes: null when this database's counter cannot be read.
+        $counter = (new legacy_reader())->next_id($table);
+        $highest = (int) $DB->get_field_sql('SELECT COALESCE(MAX(id), 0) + 1 FROM {' . $table . '}');
+        $want = max($floor, $counter ?? 0);
+        if ($want <= $highest) {
+            // Nothing above the table's own highest id: let the sequence follow the data (Postgres needs this after
+            // import_record(), which does not advance it).
+            $DB->get_manager()->reset_sequence($table);
+            return $highest;
         }
-        return $this->raise_next_id($table, $floor) ? $floor : $next;
+        if ($counter !== null && $counter >= $want) {
+            // The table already hands out ids above every floor and above its own highest id: leave it alone.
+            return $counter;
+        }
+        if ($this->raise_next_id($table, $want)) {
+            return $want;
+        }
+        // A database whose counter this cannot set: the old behaviour, and the caller reports the gap.
+        $DB->get_manager()->reset_sequence($table);
+        return $highest;
     }
 
     /**

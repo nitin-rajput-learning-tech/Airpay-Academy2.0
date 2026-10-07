@@ -128,4 +128,28 @@ final class customer_resolution_test extends \advanced_testcase {
         $DB->set_field('local_sentientia_tenant', 'status', 'suspended', ['rootid' => 500]);
         $this->assertSame(customer::AIRPAY, customer::current());
     }
+
+    /**
+     * of_tenant() is the rule current() applies, for a tenant root that is not the viewer's: a record's own customer
+     * (a feature flag read for an evaluation's tenant). Dormant registry: customer-zero for every root.
+     */
+    public function test_of_tenant_follows_the_registry_like_current_does(): void {
+        $this->resetAfterTest();
+        [$airpayid, $demoid] = $this->seed_registry();
+
+        // Dormant: every root, a known one, an unknown one and "no tenant", is customer-zero.
+        foreach ([500, 1, 999, 0, -3] as $root) {
+            $this->assertSame(customer::AIRPAY, customer::of_tenant($root), "dormant registry, root {$root}");
+        }
+
+        set_config('tenant_registry_legacy', 0, 'local_sentientia_core');
+        $this->assertSame($demoid, customer::of_tenant(500));
+        $this->assertSame($airpayid, customer::of_tenant(1));
+        $this->assertSame(customer::AIRPAY, customer::of_tenant(999), 'a root the registry does not know');
+        $this->assertSame(customer::AIRPAY, customer::of_tenant(0), 'no tenant');
+
+        // The viewer's own customer is the same answer, by the same rule.
+        $this->login_with_path('/500/7');
+        $this->assertSame(customer::of_tenant(500), customer::current());
+    }
 }

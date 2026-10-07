@@ -73,18 +73,44 @@ class customer {
         // is byte-identical to Phase 0: AIRPAY. Site admins and callers
         // without a tenant scope (current_tenant() null) also stay AIRPAY,
         // matching the Switchboard convention documented above.
-        if (class_exists('\\local_sentientia_core\\tenant_registry')
-                && !\local_sentientia_core\tenant_registry::use_legacy_registry()) {
+        if (self::registry_is_live()) {
             $tenant = self::current_tenant();
             if ($tenant !== null) {
-                $customerid = \local_sentientia_core\tenant_registry::customer_of($tenant);
-                if ($customerid > 0) {
-                    return $customerid;
-                }
+                return self::of_tenant($tenant);
             }
         }
         // Phase 0/1 / registry-dormant / unscoped callers: customer-zero.
         return self::AIRPAY;
+    }
+
+    /**
+     * The customer a tenant root belongs to (2026-10-07, for code that decides about a RECORD rather than about the
+     * viewer: a record's own customer + tenant is what a feature flag is read for).
+     *
+     * The same rule current() applies to the viewer's tenant: while the tenant registry is dormant (the default, and
+     * every production deployment today) every tenant is customer-zero, and so is a root the registry does not know.
+     *
+     * @param int $tenantroot Tenant root id (1, 77, 177, ...); 0 or less = no tenant.
+     * @return int Customer id, at least 1.
+     */
+    public static function of_tenant(int $tenantroot): int {
+        if ($tenantroot > 0 && self::registry_is_live()) {
+            $customerid = \local_sentientia_core\tenant_registry::customer_of($tenantroot);
+            if ($customerid > 0) {
+                return $customerid;
+            }
+        }
+        return self::AIRPAY;
+    }
+
+    /**
+     * Is the tenant registry live (the one switch that governs tenant validation and customer resolution)?
+     *
+     * @return bool False while local_sentientia_core is absent or its registry is dormant (tenant_registry_legacy ON).
+     */
+    private static function registry_is_live(): bool {
+        return class_exists('\\local_sentientia_core\\tenant_registry')
+            && !\local_sentientia_core\tenant_registry::use_legacy_registry();
     }
 
     /**

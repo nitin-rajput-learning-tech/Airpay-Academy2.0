@@ -785,6 +785,10 @@ final class runner {
      *
      * Read-only, counts only: a blocker carries the child table and a number, never a row.
      *
+     * The legacy table is read through $DB with a correlated EXISTS, not through legacy_reader: a join cannot be
+     * paged by the reader, and the framework's standing assumption (ADR-032, "Reading and performance") is that the
+     * legacy tables share the database and the prefix of the targets, as every other check in this class does.
+     *
      * @param preflight $pf
      * @param step $step A PRESERVE step.
      * @return void
