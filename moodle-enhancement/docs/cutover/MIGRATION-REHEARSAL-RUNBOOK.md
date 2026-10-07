@@ -91,6 +91,15 @@ ninja sandbox when Nitin provides server access + a fresh live backup. **Nothing
    deletes an imported target, and the `bizlms_import` invariant then reports `missing_target_rows` as a FAIL. Do not
    unenrol imported rows on a copy that still has to pass the parity gate; once the runbook has set
    `local_sentientia_platform/bizlms_production_open` the check stops, because admins may then change rows freely.
+5c. **Resuming the enrolments import (CRS-01, added 2026-10-07).** The step that recomputes which BizLMS enrol instances may be
+   switched off changes `enrol.status` and `enrol.timemodified` on those instances, and both columns are inside the
+   filtered CRC of the `enrol` source of `enrolments.instances` and `enrolments.legacy_instances`. In ATOMIC mode (the
+   April copy, about 17 000 rows, is under the atomic threshold) one transaction covers the run and this cannot
+   happen. In BATCH mode, once the recompute step has committed a batch, `--resume` of the same run stops in
+   `open_step` with `source_changed_since_the_run_started`: only a FRESH run recovers (purge the feature first on a
+   rehearsal copy). If a rehearsal ever has to run enrolments in batch mode, plan for a fresh run, not a resume. The
+   same pattern applies to `course_tags`. A later change can leave `status` and `timemodified` out of that step's
+   fingerprint; it was not done because it needs a framework change.
 6. **Workflow smoke** (subset of the FOOLPROOF matrix, all proven headless-runnable):
    provision qa users (`tools/_qa_provision.php` pattern), then login/dashboard/catalog HTTP probes,
    SA-04 both personas, signup POST, reminder cron with a seeded deadline, whatsapp e2e dry,
