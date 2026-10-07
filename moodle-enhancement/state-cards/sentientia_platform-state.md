@@ -884,3 +884,13 @@ Both trees. **Not run: no PHPUnit here; the lead re-initialises PHPUnit once for
   report prints how many instances the trail shows as switched off. Step 5 of `MIGRATION-REHEARSAL-RUNBOOK.md` and ADR-032 parity hook 4
   still say "100% PARITY / no side effects on enrolments" and need the amendment (docs pass). Tests (NOT RUN):
   `tests/bizlms/parity_enrolments_test.php`.
+
+
+## 2026-10-07 - owner decisions (learning cluster): report ids for creator-guessed tenants, privacy guard and capability baseline
+
+Branch `claude/owner-decisions-y`, both trees. **No version bump** (report and test changes only). **Written, not run**: PHPUnit runs after the merge.
+
+- **XC-TENANT-GUESS (code part).** `bizlms\report::count_tenant_method()` takes the row's source id; a row whose tenant came from its CREATOR (`fallback:creator`, the signed `program.pathless = creator_root` and the learning plan's `tenant_fallback_order`) is also listed under the step's `tenant_creator_ids` (ids only, capped at `report::CREATOR_IDS_CAP` = 500; the count in `tenant_methods` stays exact). `runner::record()` passes the id. Runbook line: `fallback:creator` > 0 at Stage B means stop and ask Nitin, and re-pin the decisions hash if he changes a value. Test: `bizlms_support_test::test_a_row_that_took_its_tenant_from_its_creator_is_listed_by_id`.
+- **LRN-16 (privacy guard).** `privacy_coverage_test`: `trainerid` is now in `USER_COLUMNS` for every plugin (the classroom provider declares all three of its trainer tables since the classroom merge, programs declares `trainerfb`), and the temporary `COMPONENT_USER_COLUMNS` constant and its plumbing are deleted.
+- **XC-CLS-ENROL (guard).** `capability_names_test::BASELINE` no longer lists the four sites of the dead `local/sentientia_classroom:enrol` surface: classroom now gates on `:manage` behind `sentientia.classroom.bulk_enrol_audience`. (The two evaluation entries are the evaluation job's.)
+- **LRN-07 (fixture copies).** `tests/fixtures/bizlms/bizlms-import-decisions.copy.json` equals the signed file again after `skills.level_proficiency.csv` was filled (`tools/check-bizlms-fixture-copies.php` passes).

@@ -337,3 +337,24 @@ all three import as Enrolled (the deleted user's row is kept, hidden by the read
 the three `_bk` tables are empty. `programlogo` item 804714375 has no `{files}` row, so no logo is copied. There are
 no external references to program ids in `tool_certificate_issues`, `local_rating`, `enrol` (`program`),
 `local_request_records` or `local_emaillogs`.
+
+
+## 2026-10-07 - owner decisions LRN-10, LRN-12, LRN-13, LRN-16 on programs (and XC-TENANT-GUESS)
+
+Branch `claude/owner-decisions-y`, both trees. **No version bump** (no schema, capability or upgrade step). **Written, not run**: PHPUnit runs after the merge.
+
+**LRN-10 - an admin may unenrol an imported enrolment that carries no history yet** (key `framework.protect_imported_history_pending_enrolments`). `program_manager::imported_enrolment_is_pending()`: program ACTIVE, enrolment not started (`ENROL_NEW`), no completion date, no current level, and no stored level completion (`users_with_stored_completion()` reads a page of learners in one query). Every other imported row, and every row of a draft or archived program, stays refused (`error_history_protected`). `unenrol_user()` applies it; the roster (`list_program_users`) keeps the trash action on exactly the rows the manager would accept (`protected_enrolment_ids()`, one query for the map and one for the stored completions). The BizLMS row and the import's map entry stay. The converted manual course enrolments are NOT removed and, unlike a learning path, are not listed yet: a flagged parity feature for native and imported programs, with the path one (see the learningpath state card).
+
+**LRN-12 - a nameless BizLMS program with a shortname imports under the shortname** with the warning `name_from_shortname` (already built; the state card's "Still open" item 3 is closed). Key `program.nameless_with_shortname` = `import_under_shortname_with_warning`. Rule 1: nothing is lost; skipping it would drop its levels and learner history.
+
+**LRN-13 - `delete_level()` keeps refusing an imported level** (or one with a stored completion); `unassign_course_from_level` is unchanged; native levels added to an imported program still delete normally. Key `program.delete_imported_level` = `blocked`. No code change.
+
+**LRN-16 (programs side).** The privacy guard now knows `trainerid` globally (`privacy_coverage_test::USER_COLUMNS`), so the temporary `COMPONENT_USER_COLUMNS` constant is deleted (platform plugin, both trees). Core erasure removes the trainer's `trainerfb` rows and the trainer link; DPDP keeps the learner records.
+
+**Smaller.** `manage.mustache`: the status 0 filter button said "Cancelled" in hard-coded English although status 0 is Draft (`list_programs`); it now uses `status_draft` (en + hi existed). The two program engine fixes (the observer stores completions only for enrolled learners; an empty level no longer counts as completed) ship UNFLAGGED as defect fixes. **Before the UAT deploy: list the native programs that have an empty level (ids only), because those stop showing learners as completed.**
+
+**XC-TENANT-GUESS (code part).** The signed `program.pathless = creator_root` takes a pathless program's tenant from its creator. The report lists the source ids of every row that did (`tenant_creator_ids`, see the learningpath state card); `fallback:creator` > 0 at Stage B means stop and ask Nitin. April: the only program has a path (/77), so it does not fire.
+
+**Tests.** New `tests/imported_unenrol_test.php` (pending removal, each history kind refused, draft and archived program, native unchanged, the roster action decision, the pure rule and the batch lookup). The existing `test_imported_history_cannot_be_deleted_from_the_admin_actions` and `program_engine_test` use a completed enrolment and still hold.
+
+**Owed.** Visual evidence (docs/visual-evidence/2026-10-07/learning-cluster/README.md): the status filter in en and hi, and the trash action on a pending imported row.

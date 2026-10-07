@@ -516,6 +516,27 @@ class path_manager {
     }
 
     /**
+     * The cover image the admin path page (view.php) shows: the path's cover, but only while the learner paths flag
+     * is ON.
+     *
+     * Owner decision learningplan.cover_on_admin_view (2026-10-07; LRN-08). The cover the BizLMS import copies is
+     * new on that page, and every imported-history reader waits for the feature's default-OFF reader flag
+     * (framework.reader_flags_default), as the program logo does behind sentientia.programs.history.enabled. With the
+     * flag OFF the page is what it was before the import. The file is still copied and the tenant-checked pluginfile
+     * callback (lib.php) keeps serving it; only the rendering is gated. One flag and one visual-evidence review for
+     * the feature.
+     *
+     * @param int $pathid
+     * @return \moodle_url|null Null when the flag is OFF or the path has no cover image.
+     */
+    public static function admin_cover_url(int $pathid): ?\moodle_url {
+        if (!learner_paths::enabled()) {
+            return null;
+        }
+        return self::cover_url($pathid);
+    }
+
+    /**
      * Did the BizLMS import create this path, or any course, learner or status row of it?
      *
      * Reads the import's map. A site that never ran the import has no map rows, so this is false.
@@ -905,25 +926,129 @@ class path_manager {
         }
     }
 
+    /** The BizLMS enrol method of a learning plan, and the map's unit of one converted enrolment (see plan_course_enrolments). */
+    private const PLAN_ENROL_METHOD = 'learningplan';
+    private const MAP_UNIT_ENROLMENTS = '#user_enrolments.id';
+
+    /**
+     * Is this imported path enrolment one that carries NO history yet, so that an admin may remove it?
+     *
+     * Owner decision framework.protect_imported_history_pending_enrolments (2026-10-07; LRN-10): an enrolment the
+     * BizLMS import brought in that has no completion, progress or attendance, on an active path, is not history yet.
+     * Removing it is a routine BizLMS action, and the signed "block every imported row" would have stopped admins
+     * removing any of the 762 April learners still pending on the 17 active plans. A row that carries history
+     * (in progress, completed, or any per-course progress or date) and every row of an archived path stay blocked.
+     * The BizLMS row stays in the legacy tables.
+     *
+     * @param \stdClass $path The path row (status).
+     * @param \stdClass $row The enrolment row (id, userid, pathid, status, timecompleted).
+     * @return bool
+     */
+    public static function imported_enrolment_is_pending(\stdClass $path, \stdClass $row): bool {
+        global $DB;
+        if ((int) $path->status !== self::STATUS_ACTIVE) {
+            return false;
+        }
+        if ((int) $row->status !== self::ENROL_NEW || !empty($row->timecompleted)) {
+            return false;
+        }
+        // The imported per-course status rows: a row that only says "not started" is no progress; any status,
+        // percentage or date is.
+        return !$DB->record_exists_select(self::STATUS_TABLE,
+            'pathid = :ppath AND userid = :puser
+               AND (status <> 0 OR percentage > 0 OR startdate > 0 OR completiondate > 0)',
+            ['ppath' => (int) $row->pathid, 'puser' => (int) $row->userid]);
+    }
+
+    /**
+     * The course enrolments the BizLMS import made for a learner from this plan's enrol instances, which are still there.
+     *
+     * Owner decision LRN-10 (2026-10-07). BizLMS removed them when a learner was removed from a plan; unenrolling
+     * from a path here deletes only the path row, so the learner keeps the manual course enrolments the G6 import
+     * converted from that plan (enrolments.orphan_enrol_instances = convert_to_manual) and, with them, access to the
+     * courses. The admin is told which, with a link to each course's participants page, and removes them knowingly.
+     * Nothing is removed automatically: folded enrolments may give the learner access for other reasons, and taking
+     * access away is the harder direction to undo. Reads the platform's map (feature enrolments, outcome imported)
+     * and the BizLMS instance row the import left in place (enrol = learningplan, customint1 = this path).
+     *
+     * @param int $pathid
+     * @param int $userid
+     * @return array<int, array{courseid: int, name: string, url: string}> Empty when nothing was converted for this
+     *         learner and plan (a native enrolment, or a site that never ran the import).
+     */
+    public static function plan_course_enrolments(int $pathid, int $userid): array {
+        global $DB;
+        $map = \local_sentientia_platform\bizlms\legacymap::TABLE;
+        if (!$DB->get_manager()->table_exists($map)) {
+            return [];
+        }
+        $rows = $DB->get_records_sql(
+            "SELECT DISTINCT c.id, c.fullname
+               FROM {" . $map . "} m
+               JOIN {user_enrolments} lue ON lue.id = m.sourceid AND lue.userid = :luser
+               JOIN {enrol} le ON le.id = lue.enrolid AND le.enrol = :method AND le.customint1 = :planid
+               JOIN {user_enrolments} nue ON nue.id = m.targetid AND nue.userid = lue.userid
+               JOIN {enrol} ne ON ne.id = nue.enrolid
+               JOIN {course} c ON c.id = ne.courseid
+              WHERE m.feature = :feature AND m.sourcetable = :unit AND m.subkey = :subkey
+                AND m.targettable = :target AND m.outcome = :outcome AND c.id > :site
+           ORDER BY c.fullname ASC, c.id ASC",
+            ['luser' => $userid, 'method' => self::PLAN_ENROL_METHOD, 'planid' => $pathid, 'feature' => 'enrolments',
+                'unit' => self::MAP_UNIT_ENROLMENTS, 'subkey' => '', 'target' => 'user_enrolments',
+                'outcome' => 'imported', 'site' => SITEID]);
+        $out = [];
+        foreach ($rows as $course) {
+            $out[] = [
+                'courseid' => (int) $course->id,
+                // Plain text: the callers escape it once where they put it in HTML.
+                'name' => format_string($course->fullname, true, ['escape' => false]),
+                'url' => (new \moodle_url('/user/index.php', ['id' => (int) $course->id]))->out(false),
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * The sentence an admin sees after removing an imported learner from a path: the course enrolments that stay.
+     *
+     * @param array<int, array{courseid: int, name: string, url: string}> $remaining As plan_course_enrolments() returns.
+     * @return string HTML ready to display; '' when nothing stays.
+     */
+    public static function unenrol_notice(array $remaining): string {
+        if (!$remaining) {
+            return '';
+        }
+        $links = [];
+        foreach ($remaining as $course) {
+            $links[] = \html_writer::link($course['url'], s($course['name']));
+        }
+        return get_string('unenrol_courses_remain', 'local_sentientia_learningpath', implode(', ', $links));
+    }
+
     /**
      * Unenrol a single user from a learning path.
      *
      * Note: This does NOT unenrol the user from the underlying Moodle courses.
      * Their enrolment in those courses (if any) survives. Their progress in
      * those courses survives. Only the path-level association is removed.
+     * (For an enrolment the BizLMS import converted, plan_course_enrolments() names the course enrolments that stay,
+     * so the caller can tell the admin.)
+     *
+     * An enrolment the BizLMS import brought in is history and is refused, except one that carries none yet
+     * (imported_enrolment_is_pending()).
      *
      * @param int $pathid
      * @param int $userid
      * @return bool  True if unenrolled; false if user wasn't on the path.
-     * @throws \moodle_exception  If path doesn't exist.
+     * @throws \moodle_exception  If path doesn't exist, or the enrolment is imported history (imported_history_protected).
      */
     public static function unenrol_user(int $pathid, int $userid): bool {
         global $DB;
 
-        $DB->get_record(self::TABLE, ['id' => $pathid], 'id', MUST_EXIST);
+        $path = $DB->get_record(self::TABLE, ['id' => $pathid], 'id, status', MUST_EXIST);
 
         $row = $DB->get_record(self::USERS_TABLE,
-            ['pathid' => $pathid, 'userid' => $userid], 'id');
+            ['pathid' => $pathid, 'userid' => $userid], 'id, pathid, userid, status, timecompleted');
 
         if (!$row) {
             return false;
@@ -932,7 +1057,10 @@ class path_manager {
         // ADR-032 (decision framework.protect_imported_history = block): an enrolment the BizLMS import
         // created is the learner's history on this path, including any completion. Admin unenrol is
         // refused; archive the path instead. Privacy erasure removes rows through the privacy provider.
-        if (\local_sentientia_platform\bizlms\provenance::is_imported(self::USERS_TABLE, (int) $row->id)) {
+        // LRN-10 (2026-10-07): except an imported enrolment that carries no history yet (no progress, not completed,
+        // path active), which BizLMS let an admin remove.
+        if (\local_sentientia_platform\bizlms\provenance::is_imported(self::USERS_TABLE, (int) $row->id)
+                && !self::imported_enrolment_is_pending($path, $row)) {
             throw new \moodle_exception('imported_history_protected', 'local_sentientia_learningpath');
         }
 
