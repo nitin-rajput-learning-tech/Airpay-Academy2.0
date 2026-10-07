@@ -107,7 +107,12 @@ final class bizlms_import_test extends \advanced_testcase {
             'request.hidden_rows' => 'show',
             'request.tenant_basis' => 'requester_current_root',
             'request.pending_approver' => 'sentientia_routing',
-            'request.comments' => 'fold_into_decision_note',
+            // 2026-10-07 (COMMS-R1): a pending request whose requester has left, or whose item is gone, is history.
+            'request.pending_stale' => 'history_only',
+            // The seed holds comment rows, so preflight blocks for the owner unless the owner has reviewed them: the
+            // signed value is fold_into_decision_note, and test_comment_rows_block_until_the_owner_has_reviewed_them
+            // runs with it.
+            'request.comments' => 'fold_reviewed',
             'tenant.unresolved.request' => 'pathless',
         ], $this->overrides));
     }
@@ -474,17 +479,19 @@ final class bizlms_import_test extends \advanced_testcase {
             'status' => 'pending', 'approver_userid' => null,
         ], 'certification');
 
-        // A deleted requester is history and is imported; a pending learning plan routes like a new one would.
+        // A deleted requester is history and is imported. Its request is still pending, but nobody can decide it
+        // (COMMS-R1): route admin, no approver, so Approve could not enrol or message an account that has left.
         $this->assert_columns($this->imported($records, 12), [
-            'userid' => $this->u['dead']->id, 'item_type' => 'path', 'itemid' => 12, 'route' => 'admin',
-            'approver_userid' => $admin,
+            'userid' => $this->u['dead']->id, 'item_type' => 'path', 'itemid' => 12, 'status' => 'pending',
+            'route' => 'admin', 'approver_userid' => null,
         ], 'deleted requester');
         $this->assert_columns($this->imported($records, 13), ['userid' => $this->u['susp']->id, 'status' => 'approved'],
             'suspended requester');
 
-        // A plan that no longer exists keeps its legacy id; the path request still routes to the supervisor.
+        // A plan that no longer exists gets itemid 0, not its legacy id (COMMS-R2: paths keep their ids and a later
+        // path could be given 13), and its pending request is history only (COMMS-R1), not routed to the supervisor.
         $this->assert_columns($this->imported($records, 15), [
-            'item_type' => 'path', 'itemid' => 13, 'route' => 'manager', 'approver_userid' => $sup,
+            'item_type' => 'path', 'itemid' => 0, 'status' => 'pending', 'route' => 'admin', 'approver_userid' => null,
         ], 'deleted plan');
 
         // Rows that cannot be imported are skipped, with a reason.
@@ -578,6 +585,9 @@ final class bizlms_import_test extends \advanced_testcase {
         global $DB;
         $this->contract_begin();
         $this->contract_seed();
+        // A live requester asking for a learning plan that exists (record 15's plan is gone, so since COMMS-R1 it is
+        // history and is no longer routed).
+        $this->record(17, $this->u['u1'], 'learningplan', 12, 'PENDING');
         $this->apply();
         $records = 'local_request_records';
 
@@ -588,9 +598,10 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertSame($route, $row->route);
         $this->assertSame($approver, (int) $row->approver_userid);
 
-        [$route, $approver] = request_manager::route_approver_for_path($u1, 13);
-        $row = $this->imported($records, 15);
+        [$route, $approver] = request_manager::route_approver_for_path($u1, 12);
+        $row = $this->imported($records, 17);
         $this->assertSame($route, $row->route);
+        $this->assertSame('manager', $row->route, 'the live supervisor');
         $this->assertSame($approver, (int) $row->approver_userid);
 
         // A suspended supervisor does not count: the request falls back to the default approver.
@@ -814,12 +825,27 @@ final class bizlms_import_test extends \advanced_testcase {
         $DB->set_field('local_sentientia_request', 'timedue', time() + 3600, ['id' => $ids[0]]);
         $DB->set_field('local_sentientia_request', 'costcenterid', 5, ['id' => $ids[1]]);
         $DB->set_field('local_sentientia_request', 'legacy_source', null, ['id' => $ids[2]]);
-        $DB->set_field('local_sentientia_request', 'status', 'cancelled', ['id' => $ids[3]]);
+        $DB->set_field('local_sentientia_request', 'status', 'bogus', ['id' => $ids[3]]);
         $failures = implode(' ', $importer->verify($ctx));
         $this->assertStringContainsString('imported_rows_with_a_deadline:1', $failures);
         $this->assertStringContainsString('imported_rows_with_an_unregistered_tenant:5', $failures);
         $this->assertStringContainsString('imported_rows_without_the_marker:1', $failures);
         $this->assertStringContainsString('imported_rows_with_an_unknown_status:1', $failures);
+    }
+
+    public function test_a_requester_cancelling_an_imported_pending_row_is_not_a_verify_failure(): void {
+        global $DB;
+        $importer = $this->contract_begin();
+        $this->contract_seed();
+        $this->apply();
+        $ctx = context::build($importer, false, 0, $this->contract_decisions());
+        $this->assertSame([], $importer->verify($ctx));
+
+        // F-77: after go-live the requester may cancel their own pending request; a later verify must still pass.
+        $row = $this->imported('local_request_records', 1);
+        request_manager::cancel((int) $row->id, (int) $this->u['u1']->id);
+        $this->assertSame('cancelled', $DB->get_field('local_sentientia_request', 'status', ['id' => $row->id]));
+        $this->assertSame([], $importer->verify($ctx), 'cancelled is a state a request can be in');
     }
 
     // Imported rows under the engines.
@@ -868,6 +894,212 @@ final class bizlms_import_test extends \advanced_testcase {
         $sink->close();
         $this->assertSame('approved', $DB->get_field('local_sentientia_request', 'status', ['id' => $row->id]));
         $this->assertGreaterThan($enrolments, $DB->count_records('user_enrolments'));
+    }
+
+    // The 2026-10-07 owner decisions: COMMS-R1, R2 and R4, and the follow-ups F-77, F-78 and F-80.
+
+    /**
+     * Summed warnings of the request steps of a run.
+     *
+     * @param \local_sentientia_platform\bizlms\report $report
+     * @return array<string, int>
+     */
+    private function warnings(\local_sentientia_platform\bizlms\report $report): array {
+        $out = [];
+        foreach ($report->to_array()['features']['request']['steps'] ?? [] as $step) {
+            foreach ($step['warnings'] ?? [] as $code => $n) {
+                $out[$code] = ($out[$code] ?? 0) + $n;
+            }
+        }
+        return $out;
+    }
+
+    public function test_a_pending_request_whose_requester_or_item_is_gone_is_history_only(): void {
+        global $DB;
+        $importer = $this->contract_begin();
+        $this->contract_seed();
+        $sup = (int) $this->u['sup']->id;
+        $this->record(17, $this->u['u1'], 'learningplan', 12, 'PENDING');          // live requester, the plan exists
+        $this->record(18, $this->u['susp'], 'elearning', $this->c['c1'], 'PENDING'); // a suspended requester
+        $this->record(19, $this->u['u1'], 'elearning', 999999, 'PENDING');          // the course is gone
+        $this->approval(7, $this->u['susp'], 11, 0);                                // a pending approval of a suspended user
+        [$result, $report] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        $records = 'local_request_records';
+
+        // Routed like any new request: a live requester, an item that exists.
+        $this->assert_columns($this->imported($records, 17), [
+            'status' => 'pending', 'route' => 'manager', 'approver_userid' => $sup,
+        ], 'live requester, existing plan');
+
+        // History only: still pending (the status is exact), route admin, no approver.
+        foreach ([12 => 'deleted requester', 15 => 'plan gone', 18 => 'suspended requester', 19 => 'course gone'] as $id => $why) {
+            $this->assert_columns($this->imported($records, $id), [
+                'status' => 'pending', 'route' => 'admin', 'approver_userid' => null, 'timedue' => null,
+            ], $why);
+        }
+        $this->assertEquals(999999, $this->imported($records, 19)->itemid, 'a course keeps its id: core ids are never reused');
+        $this->assert_columns($this->imported('local_learningplan_approval', 7), [
+            'status' => 'pending', 'route' => 'admin', 'approver_userid' => null,
+        ], 'an approval of a suspended requester');
+
+        // The row is in All requests (request.hidden_rows = show) but in nobody's inbox.
+        $this->assertSame(0, $DB->count_records_select('local_sentientia_request',
+            "legacy_source = 'bizlms' AND status = 'pending' AND approver_userid IS NOT NULL AND id IN ("
+            . implode(',', array_map(fn($id) => (int) $this->imported($records, $id)->id, [12, 15, 18, 19])) . ')'));
+        $this->assertSame(5, $this->warnings($report)['pending_history_only'] ?? 0, 'records 12, 15, 18 and 19, approval 7');
+
+        $ctx = context::build($importer, false, 0, $this->contract_decisions());
+        $this->assertSame([], $importer->verify($ctx));
+
+        // verify() fails a pending row with an approver whose requester or item is gone.
+        $DB->set_field('local_sentientia_request', 'approver_userid', $sup, ['id' => $this->imported($records, 12)->id]);
+        $DB->set_field('local_sentientia_request', 'approver_userid', $sup, ['id' => $this->imported($records, 19)->id]);
+        $DB->set_field('local_sentientia_request', 'approver_userid', $sup, ['id' => $this->imported($records, 15)->id]);
+        $this->assertStringContainsString('pending_rows_with_an_approver_whose_requester_or_item_is_gone:3',
+            implode(' ', $importer->verify($ctx)));
+    }
+
+    public function test_the_owner_may_keep_stale_pending_requests_actionable(): void {
+        $this->overrides = ['request.pending_stale' => 'actionable'];
+        $importer = $this->contract_begin();
+        $this->contract_seed();
+        [$result, $report] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+
+        // As the code behaved before the decision: routed whatever the state of the requester or the item.
+        $this->assertEquals(get_admin()->id, $this->imported('local_request_records', 12)->approver_userid);
+        $this->assertEquals($this->u['sup']->id, $this->imported('local_request_records', 15)->approver_userid);
+        $this->assertArrayNotHasKey('pending_history_only', $this->warnings($report));
+        // The gone plan still gets itemid 0: that is COMMS-R2, not COMMS-R1.
+        $this->assertEquals(0, $this->imported('local_request_records', 15)->itemid);
+        $ctx = context::build($importer, false, 0, $this->contract_decisions());
+        $this->assertSame([], $importer->verify($ctx));
+    }
+
+    public function test_a_request_for_a_gone_path_classroom_or_program_gets_itemid_zero(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        $r = (int) $this->u['resp']->id;
+        $t0 = self::T0;
+        // None of 23, 33 and 14 is in the map of its feature: the item was deleted in BizLMS.
+        $this->record(20, $this->u['u1'], 'classroom', 23, 'APPROVED', ['responder' => $r, 'respondeddate' => $t0 + 9100]);
+        $this->record(21, $this->u['u1'], 'program', 33, 'REJECTED', ['responder' => $r, 'respondeddate' => $t0 + 9200]);
+        $this->record(22, $this->u['u1'], 'learningplan', 14, 'APPROVED', ['responder' => $r, 'respondeddate' => $t0 + 9300]);
+        [$result, $report] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        $records = 'local_request_records';
+
+        foreach ([20 => ['classroom', 'approved'], 21 => ['program', 'rejected'], 22 => ['path', 'approved']] as $id => [$type, $status]) {
+            $row = $this->imported($records, $id);
+            $this->assertSame($type, $row->item_type, "record {$id}");
+            $this->assertEquals(0, $row->itemid, "record {$id}: the legacy id could be given to a later item");
+            $this->assertSame($status, $row->status, "record {$id}: the status is exact");
+        }
+        // The ones that exist keep their ids; a course and a certification keep theirs too.
+        $this->assertEquals(31, $this->imported($records, 5)->itemid, 'program 31 exists');
+        $this->assertEquals(21, $this->imported($records, 4)->itemid, 'classroom 21 exists');
+        $this->assertEquals(11, $this->imported($records, 3)->itemid, 'plan 11 exists');
+        $this->assertEquals(999999, $this->imported($records, 9)->itemid, 'a deleted course keeps its core id');
+        $this->assertEquals(77, $this->imported($records, 11)->itemid, 'a certification has no entity: legacy id kept');
+        $this->assertGreaterThanOrEqual(4, $this->warnings($report)['item_deleted'] ?? 0, '15, 20, 21, 22 and the deleted course');
+    }
+
+    public function test_comment_rows_block_until_the_owner_has_reviewed_them(): void {
+        global $DB;
+        // The signed value. The seed holds five comment rows.
+        $this->overrides = ['request.comments' => 'fold_into_decision_note'];
+        $this->contract_begin();
+        $this->contract_seed();
+        [$result] = $this->contract_run(true);
+        $this->assertSame(1, $result['exit']);
+        $this->assertStringContainsString('needs_owner:request_comments_present=5', implode(' ', $result['blockers']));
+        $this->assertSame(0, $DB->count_records('local_sentientia_request'), 'a blocked preflight writes nothing');
+
+        // With no comment row there is nothing to review: the signed value does not block.
+        $DB->delete_records('local_request_comments');
+        [$result] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+    }
+
+    public function test_a_value_the_importer_does_not_carry_out_blocks_the_comments_decision(): void {
+        $this->overrides = ['request.comments' => 'ignore'];
+        $this->contract_begin();
+        $this->contract_seed();
+        [$result] = $this->contract_run(true);
+        $this->assertSame(1, $result['exit']);
+        $this->assertStringContainsString('decision_value_not_allowed:request.comments', implode(' ', $result['blockers']));
+    }
+
+    public function test_deciding_an_imported_request_appends_to_its_folded_comments(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->contract_seed();
+        $resp = (int) $this->u['resp']->id;
+        // Record 1 is pending and supervised; record 8 too. Each gets one comment, which becomes its note.
+        $this->comment(6, '1', $resp, '2026-03-07 08:00:00', 'Waiting for budget sign-off');
+        $this->comment(7, '8', $resp, '2026-03-07 09:00:00', 'Needs a second opinion');
+        $this->apply();
+        $supervisor = (int) $this->u['sup']->id;
+        $this->setUser($this->u['sup']);
+        $sink = $this->redirectMessages();
+
+        $approved = $this->imported('local_request_records', 1);
+        $thread = (string) $approved->decision_note;
+        $this->assertStringContainsString('Waiting for budget sign-off', $thread);
+        request_manager::decide((int) $approved->id, $supervisor, 'approved', 'Go ahead');
+        $this->assertSame($thread . "\n" . 'Go ahead',
+            $DB->get_field('local_sentientia_request', 'decision_note', ['id' => $approved->id]),
+            'the decider\'s note goes below the thread, and the thread stays');
+
+        $rejected = $this->imported('local_request_records', 8);
+        $thread = (string) $rejected->decision_note;
+        request_manager::decide((int) $rejected->id, $supervisor, 'rejected', 'Not this quarter');
+        $this->assertSame($thread . "\n" . 'Not this quarter',
+            $DB->get_field('local_sentientia_request', 'decision_note', ['id' => $rejected->id]));
+        $sink->close();
+    }
+
+    public function test_the_note_after_a_decision_replaces_a_native_note_and_keeps_an_imported_thread(): void {
+        $method = new \ReflectionMethod(request_manager::class, 'note_after_decision');
+        $thread = '[2026-03-04 09:00] Asha Rao: Attached.';
+        $native = (object) ['legacy_source' => null, 'decision_note' => 'old note'];
+        $imported = (object) ['legacy_source' => 'bizlms', 'decision_note' => $thread];
+        $bare = (object) ['legacy_source' => 'bizlms', 'decision_note' => null];
+
+        $this->assertSame('new note', $method->invoke(null, $native, 'new note'), 'a native note is replaced, as it always was');
+        $this->assertSame($thread . "\n" . 'new note', $method->invoke(null, $imported, 'new note'));
+        $this->assertSame($thread, $method->invoke(null, $imported, ''), 'no decider note: the thread is left as it is');
+        $this->assertSame($thread, $method->invoke(null, $imported, "  \n"), 'a blank note counts as none');
+        $this->assertSame('new note', $method->invoke(null, $bare, 'new note'), 'an imported row with no thread');
+    }
+
+    public function test_a_comment_with_the_zero_date_has_no_date_not_year_zero(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        // F-80: a datetime BizLMS never set reads back from MySQL as the zero date.
+        $this->comment(6, '2', (int) $this->u['resp']->id, '0000-00-00 00:00:00', 'Undated remark');
+        $this->apply();
+        $note = (string) $this->imported('local_request_records', 2)->decision_note;
+        $this->assertStringContainsString('[unknown date] ' . fullname($this->u['resp']) . ': Undated remark', $note);
+        $this->assertStringNotContainsString('0000-00-00', $note);
+    }
+
+    public function test_the_real_registry_knows_the_three_features_request_depends_on(): void {
+        // F-78: classroom, program and learningplan are merged, so the dependency is no longer a stand-in. The other
+        // tests keep the stand-ins (the legacy_schema_fixture trait takes one fixture file, F-79, which the real
+        // importers' own legacy tables would need); this one pins that the real registry resolves the dependency.
+        registry::set_testing_importers(null);
+        $importers = registry::load();
+        foreach ((new importer())->depends() as $feature) {
+            $this->assertArrayHasKey($feature, $importers, "{$feature} is registered by its own plugin");
+            $this->assertNotInstanceOf(dependency_stub::class, $importers[$feature]);
+        }
+        $order = registry::sorted($importers, ['request']);
+        $position = array_flip($order);
+        foreach ((new importer())->depends() as $feature) {
+            $this->assertLessThan($position['request'], $position[$feature], "{$feature} runs before request");
+        }
     }
 
     // The contract, for the parts that need the seed and the extra tables.

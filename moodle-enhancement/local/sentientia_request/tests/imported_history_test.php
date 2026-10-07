@@ -488,9 +488,16 @@ final class imported_history_test extends \advanced_testcase {
         // A site upgraded from 1.4.0 does not: the helper adds it, once, and keeps the rows.
         $id = $this->request();
         $dbman->drop_field($table, $field);
-        $this->assertFalse($dbman->field_exists($table, $field));
-        $this->assertTrue(local_sentientia_request_ensure_legacy_source($dbman));
-        $this->assertFalse(local_sentientia_request_ensure_legacy_source($dbman));
+        try {
+            $this->assertFalse($dbman->field_exists($table, $field));
+            $this->assertTrue(local_sentientia_request_ensure_legacy_source($dbman));
+            $this->assertFalse(local_sentientia_request_ensure_legacy_source($dbman));
+        } finally {
+            // F-80: if an assertion above fails the column must not stay dropped for the tests that follow.
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
         $columns = $DB->get_columns('local_sentientia_request', false);
         $this->assertArrayHasKey('legacy_source', $columns);
         $this->assertFalse((bool) $columns['legacy_source']->not_null, 'NULL on every native row');

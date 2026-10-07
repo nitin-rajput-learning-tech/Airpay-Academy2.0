@@ -26,6 +26,12 @@ defined('MOODLE_INTERNAL') || die();
  * request is routed to the approver a new submission would get and stays pending; a person still decides, and
  * only once the sentientia.request.imported_history flag makes the row visible.
  *
+ * Two 2026-10-07 owner decisions narrow that. A pending request whose requester is deleted or suspended, or whose
+ * item no longer exists, is history only (request.pending_stale = history_only, COMMS-R1): no approver, so nobody
+ * can approve it and enrol or message an account that has left. And a request that names a path, classroom or
+ * program that is gone gets itemid 0 (COMMS-R2): those three features keep their ids and reset their sequence to
+ * MAX(id)+1, so a later item could be given the id the old request still carries.
+ *
  * Tenant: a request stores no tenant in BizLMS. costcenterid is the requester's CURRENT tenant root, 0 when
  * there is none (visible to cross-tenant callers only). Because it is a root and not a path, the importer
  * declares no tenant_columns(), and reaches the organisation data only through the features it depends on.
@@ -174,9 +180,15 @@ final class importer implements \local_sentientia_platform\bizlms\importer {
             new decision('request.pending_approver',
                 'Approver of a legacy pending request: Sentientia routing',
                 true, null, ['sentientia_routing']),
+            new decision('request.pending_stale',
+                'A pending course or path request whose requester is deleted or suspended, or whose item is gone: '
+                . 'history only (no approver) or actionable like any other',
+                true, null, ['history_only', 'actionable']),
             new decision('request.comments',
-                'Request comments: folded into the decision note',
-                true, null, ['fold_into_decision_note']),
+                'Request comments: folded into the decision note. fold_into_decision_note is the signed value: '
+                . 'preflight blocks for the owner when the table holds rows. fold_reviewed is what the owner writes '
+                . 'after reading them, and lets the import proceed',
+                true, null, ['fold_into_decision_note', 'fold_reviewed']),
             new decision('tenant.unresolved.request',
                 'Rows whose tenant cannot be resolved: import with no tenant (cross-tenant callers only) or skip',
                 true, null, ['pathless', 'skip']),
@@ -230,10 +242,19 @@ final class importer implements \local_sentientia_platform\bizlms\importer {
             }
         }
 
-        // Figures for the report.
+        // Comments (COMMS-R4). BizLMS has no writer for local_request_comments (its comments went to
+        // block_request_comments), so the table is expected to be empty. If it is not, nobody knows who could see
+        // those rows, and the note they are folded into is shown to the requester. Preflight stops for the owner;
+        // the owner reads the rows and writes request.comments = fold_reviewed in the decisions file to go on.
         if ($ctx->legacy->exists(legacy_request::SOURCE_COMMENTS)) {
-            $pf->count('comments_to_fold', $ctx->legacy->count(legacy_request::SOURCE_COMMENTS));
+            $comments = $ctx->legacy->count(legacy_request::SOURCE_COMMENTS);
+            $pf->count('comments_to_fold', $comments);
+            if ($comments > 0 && (string) $ctx->decision('request.comments') !== 'fold_reviewed') {
+                $pf->block('needs_owner:request_comments_present=' . $comments);
+            }
         }
+
+        // Figures for the report.
         if ($ctx->legacy->exists(legacy_request::SOURCE_APPROVALS)) {
             $pf->count('learningplan_approvals', $ctx->legacy->count(legacy_request::SOURCE_APPROVALS));
         }
@@ -259,8 +280,9 @@ final class importer implements \local_sentientia_platform\bizlms\importer {
             $failures[] = 'imported_rows_with_a_deadline:' . $n;
         }
 
-        // Only the states a request can be in.
-        [$insql, $params] = $DB->get_in_or_equal(['pending', 'approved', 'rejected', 'expired'],
+        // Only the states a request can be in. 'cancelled' is one: a requester may cancel an imported pending row after
+        // go-live (request_manager::cancel()), and a later verify must not call that an error (F-77).
+        [$insql, $params] = $DB->get_in_or_equal(['pending', 'approved', 'rejected', 'expired', 'cancelled'],
             SQL_PARAMS_NAMED, 'vst', false);
         $n = $DB->count_records_select($table, 'legacy_source = :ls AND status ' . $insql, $mark + $params);
         if ($n) {
@@ -280,6 +302,28 @@ final class importer implements \local_sentientia_platform\bizlms\importer {
             $mark + $params);
         if ($n) {
             $failures[] = 'pending_rows_of_an_undecidable_type_with_an_approver:' . $n;
+        }
+
+        // COMMS-R1: a pending request whose requester has left, or whose item is gone, has no approver: approving it
+        // would enrol and message an account that has left, or point at nothing. "Gone" is what the import saw: a
+        // course that is not there, or a path with no entry in the learning-plan map.
+        if ((string) $ctx->decision('request.pending_stale') === 'history_only') {
+            $n = (int) $DB->count_records_sql(
+                "SELECT COUNT(1)
+                   FROM {" . $table . "} r
+              LEFT JOIN {user} u ON u.id = r.userid
+                  WHERE r.legacy_source = :ls AND r.status = 'pending' AND r.approver_userid IS NOT NULL
+                    AND (u.id IS NULL OR u.deleted = 1 OR u.suspended = 1
+                         OR (r.item_type = 'course'
+                             AND NOT EXISTS (SELECT 1 FROM {course} c WHERE c.id = r.courseid))
+                         OR (r.item_type = 'path'
+                             AND NOT EXISTS (SELECT 1 FROM {local_sentientia_legacymap} m
+                                              WHERE m.sourcetable = :plansource AND m.sourceid = r.itemid
+                                                AND m.subkey = :nosub AND m.targetid IS NOT NULL)))",
+                $mark + ['plansource' => legacy_request::ITEM_SOURCES['path'], 'nosub' => '']);
+            if ($n) {
+                $failures[] = 'pending_rows_with_an_approver_whose_requester_or_item_is_gone:' . $n;
+            }
         }
 
         // The tenant root of every imported row is 0 or a registered tenant.
