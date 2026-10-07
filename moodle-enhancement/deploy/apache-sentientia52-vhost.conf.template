@@ -2,6 +2,10 @@
 # Apache vhost template — Sentientia LMS Moodle 5.2 instance behind PHP 8.4
 # FastCGI (Windows/XAMPP local; the same shape works on any Apache 2.4.26+).
 #
+# 2026-10-08 (ADR-033): THIS IS THE 5.2 RECIPE, FOR THE 5.2 INSTANCES ONLY. For a Moodle 5.3
+# instance use apache-sentientia53-vhost.conf.template instead: it carries NO ini_get_bool()
+# polyfill and NO lib/setuplib.php edit (the polyfill alone is fatal on 5.3).
+#
 # Built + verified 2026-06-11 (Nitin-approved). Why it exists:
 #   - Moodle 5.2 requires PHP >= 8.3; XAMPP's mod_php is 8.2 and must keep
 #     serving the 5.1 instance on :8080 untouched. So :8081 proxies PHP to a
