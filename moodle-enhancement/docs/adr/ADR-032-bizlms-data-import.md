@@ -1,6 +1,6 @@
 # ADR-032 — Import BizLMS feature data through one shared framework
 
-**Status:** Proposed (2026-09-29), import decided by Nitin 2026-09-29
+**Status:** Proposed (2026-09-29), import decided by Nitin 2026-09-29; owner choices signed 2026-09-30, and the rest decided under Nitin's delegation of 2026-10-07 (section "Owner decisions, 2026-10-07 (delegated)"). Edits made because of those decisions carry a `2026-10-07 decision <id>` marker; `F-<nn>` is a follow-up item in the annex of `docs/cutover/OWNER-DECISIONS-2026-10-07.md`
 **Decides:** how the history held in the 22 BizLMS plugins' tables becomes normal Sentientia history at cutover
 **Evidence:** `docs/cutover/SENTIENTIA-MIGRATION-PLAN-2026-09-04.md` §3.3 (lines 136-177) and I-list (lines 51-56);
 `docs/cutover/BIZLMS-IMPORT-MAPPING-2026-09-29.md` (per-feature maps, verified, corrections applied)
@@ -82,6 +82,7 @@ local/sentientia_platform/                        (both trees)
     writer.php                                     the only code that writes
     runner.php, registry.php                       lifecycle, discovery, dependency sort, locking
     tenant_resolver.php, text.php, file_rehome.php helpers
+    copies_files.php                               marker interface for importers that copy files (2026-10-07 decision IDN-04)
     sideeffect_guard.php, fingerprint.php          tripwire and source fingerprints
     legacymap_view.php                             the four map reads a step may make (resolve, resolve_many, entry, entries)
     decisions.php                                  the decisions file (shape in "Owner decisions")
@@ -100,7 +101,8 @@ local/sentientia_platform/                        (both trees)
   db/bizlms_import.php
   classes/bizlms/*.php
   tests/bizlms_import_test.php
-  tests/fixtures/bizlms/<bizlms plugin>.install.xml
+  tests/fixtures/bizlms/<bizlms plugin>.install.xml   (one per source plugin; a target plugin may ship several,
+                                                       2026-10-07 decision F-81)
 ```
 
 Precondition: `sentientia_platform/db/install.xml` already differs between the trees and is baselined
@@ -170,7 +172,17 @@ not need to declare them. Keep it that way.
    (`migrate_all.php:295`). The adopted row is overwritten with the full mapping. Any other occupant is
    a blocker.
 6. **Sequences are reset in `finalise()`,** after every batch of the feature has committed, on every
-   PRESERVE target. Never inside a transaction.
+   PRESERVE target. Never inside a transaction. 2026-10-07 decision EV-26 (a correction of this rule): the floor is
+   `max(target MAX(id), legacy MAX(id), legacy AUTO_INCREMENT - 1) + 1`, so a new native row can never take an id that
+   legacy references still point at, including the id of a BizLMS row that was hard-deleted (a hard-deleted row is not in
+   the legacy table, so `MAX(id)` alone misses it, while `mysqldump` keeps the table's AUTO_INCREMENT and the restored
+   copy still knows every id ever issued). The counter is read through `SHOW CREATE TABLE`, because MySQL 8 caches
+   `information_schema.TABLES.AUTO_INCREMENT` (`information_schema_stats_expiry`, 24 h by default); a new
+   `legacy_reader::next_id(table)` parses it on MySQL and MariaDB and reads `last_value` on PostgreSQL. If the counter cannot
+   be read the floor falls back to the legacy `MAX(id)` and the run warns. `writer::reset_sequence()` takes the floor and
+   `runner::finalise_feature()` passes it. The request importer's `itemid` 0 for a gone path, classroom or program (COMMS-R2)
+   stays as defence in depth. Lands in the pre-Stage-B framework batch, at the latest before the first native row is
+   created at cutover.
 7. **No remap mode.** A collision is resolved by an operator, not by the importer.
 
 PRESERVE targets and why (details in the mapping doc):
@@ -208,7 +220,9 @@ interface importer {
     public function target_tables(): array;
     /** @return array<string, string> core table => reviewed reason (e.g. tag_instance remap) */
     public function core_writes(): array;
-    /** @return array<string, string> target table => path/root column, for generic tenant verify */
+    /** @return array<string, string> target table => path column (a NORMALISED path), for generic tenant verify;
+     *  an INT root column (email_log.tenant_id, request.costcenterid) is checked by the importer's own verify()
+     *  (2026-10-07 decision F-62) */
     public function tenant_columns(): array;
     /** @return reason[] the only codes skip, merge and archive may use */
     public function reasons(): array;
@@ -344,6 +358,14 @@ feature key is duplicated, a legacy table is claimed or declined by two importer
 unknown or cyclic, a class does not implement `importer`, or an installed plugin is below
 `requires_version()`. Tests register toy importers through `registry::set_testing_importers()`.
 
+**2026-10-07 framework notes.** (1) `runner::preflight_feature()` wraps `$importer->preflight()` in `try/finally` only, so
+a `blocked` exception thrown inside an importer's preflight (for example `$ctx->decision()` on an unaccepted key) escapes
+although the runner has already recorded that blocker: it gains `catch (blocked $e) { $pf->block($e->getMessage()); }` (or a
+non-throwing `context::peek_decision()`), with a registry or runner test (F-10). (2) `tenant_resolver::resolve()` checks a
+candidate against `local_sentientia_org`, the table the org feature is filling, so the TENANT_OWNER importer (org) must NOT call
+`resolve()` for its own rows; a public `tenant_resolver::root_is_registered(int)` replaces the try/catch around
+`tenant::assert_valid` copied in `org_source.php` and the emails `log_step.php` (F-11, low priority, before Stage B).
+
 ## Writing rules
 
 The writer is the only code that writes. It enforces:
@@ -401,6 +423,14 @@ The writer is the only code that writes. It enforces:
   `--max-group-scan` caps phase 1.
 - Users, courses, orgs and declared map pairs are preloaded into integer arrays. No per-row SELECT.
 - The report records rows per second per step. Stage B timings set the cutover window.
+- **Accepted read-only exceptions to 'steps read only through `$ctx`' (2026-10-07 decisions F-14 and F-51):**
+  `assignment_step::transform()` (org_roles) reads `role_assignments`, `role` and `role_context_levels` through global `$DB`,
+  so a dry run shows two 'imported' where an apply gives imported plus folded; `user_identity_index` (users) reads `{user}`;
+  `user_step::has_started()` (learningplan) reads `course_completions`. All are read-only, identical in dry and apply runs and
+  not flagged by the static scan; the framework contract is frozen, and a lookups employee-id index plus a read-only role and
+  context lookup (or a dry-run overlay) retire them later. F-52: a core table claimed as a source is owned by one feature
+  (exams and skills cannot both claim `course`; skills worked around it by grouping per legacy skill); a core table may be
+  claimed read-only by several features for fingerprinting, with no ownership, implemented only if a later importer needs it.
 
 ## Transactions
 
@@ -435,9 +465,18 @@ The writer is the only code that writes. It enforces:
    `local_sentientia_notif_log`, `local_sentientia_email_log` (except for the feature that targets it),
    and the tables core APIs write WITHOUT an event: `user_preferences`, `role_capabilities`, `context`,
    `grade_grades`, `grade_grades_history`, `groups_members`, `cohort_members`, plus the importer's own
-   extra list. `files` is deliberately not watched: `file_rehome` copies an organisation logo in
-   `finalise()`, a reviewed side effect that needs a `core_writes` entry and a purge rule, both decided with
-   the org importer. Any change outside declared targets and core writes aborts the
+   extra list. `files` is watched for EVERY importer that does not implement the `copies_files` marker
+   (2026-10-07 decision IDN-04, with F-12 and F-50; this replaces the earlier sentence that left `files` unwatched and
+   promised a `core_writes` entry and a purge rule 'decided with the org importer'). The `file_rehome` copies (the org logo,
+   cohort descriptions, the learning-plan cover, the classroom logo and the program logo, all made in `finalise()`) are a
+   reviewed side effect: copy-only (a target that exists is skipped), insert-only and idempotent, and the originals are never
+   touched. An importer that makes them declares the exact `[source component, source area, target component, target area]`
+   list through the marker (`copies_files::allowed_file_areas()`) instead of a `core_writes` entry; after `finalise` the runner
+   checks that every new `{files}` row lies in a declared target area (an importer without the marker that writes a file trips
+   the tripwire, and so does an implementer writing outside its areas) and the run report counts
+   `files_copied:<component>/<area>=N`. `--purge-feature` leaves the copies, which is harmless: a re-run with PRESERVE ids finds the
+   same item and copies nothing. Five importers implement the marker (org, cohort_scope, learningplan, classroom, programs); any
+   future caller must too. Signed key `framework.file_rehome_copies`. Any change outside declared targets and core writes aborts the
    run before the next feature. `MAX(id)` is O(1) and catches inserts; updates to state tables are
    caught by the existing parity checksums at the end (`migration_parity_check.php:116-133`).
    **Events are not writes at the moment they fire.** The standard log is an observer with
@@ -576,7 +615,7 @@ tenant and customer scopes mean nothing here, an admin can flip a flag from a we
    `legacystep` show a crashed run.
 7. Every target plugin is at or above `requires_version()`.
 8. Every decision the selected features need is present in `--decisions` with status `accepted` (a
-   declared key carried as `finance-confirm` blocks that feature; see "Owner decisions"); at cutover,
+   declared key carried as `finance-confirm` blocks that feature; see "Owner decisions"; since 2026-10-07 no key in the signed file has that status); at cutover,
    its hash equals `--expect-decisions-hash`.
 9. Preflight found no blocker.
 
@@ -584,6 +623,14 @@ tenant and customer scopes mean nothing here, an admin can flip a flag from a we
 views, review lists, detail views) ships behind a default-OFF flag registered in its plugin's
 `db/feature_flags.php`. The import never flips a flag. Whether the reader flags are ON for the Airpay
 customer at cutover is Nitin's decision (BizLMS showed most of this history to users today).
+2026-10-07 decision XC-IMPORTED-HISTORY-READERS records the rule: imported ENTITIES that other rows reference (orgs, roles,
+courses and enrolments, plans, programs, classrooms, evaluation forms and their responses, rules) show on the admin pages
+that manage them; imported HISTORY and LOG rows that nothing references (orders, ledger, credits, e-mail log, requests,
+recompletion resets, HRMS sync runs, login days, transcripts) show only when the feature's imported-history flag is ON, which
+Nitin flips after reviewing the visual evidence. The HRMS sync-run pages were the only history reader without a flag; they get
+`sentientia.users.imported_sync_history`. Evaluation's imported forms and responses are the recorded exception: other imported
+rows reference them (`local_classroom.trainingfeedbackid`, program feedback ids), and their admin pages match BizLMS role 9
+visibility (EV-06), so hiding them would leave dangling references. Signed key `framework.imported_rows_on_admin_pages`.
 
 **Fallback readers.** The legacy fallbacks in `session_manager.php`, `path_manager.php` and
 `rating_manager.php` are removed in the same release that ships their feature's importer; no user runs
@@ -609,7 +656,8 @@ All in `local/sentientia_platform/cli/migration_parity_check.php`, in both trees
    (a fresh install). Hard problems (exit 1):
    - an applicable feature without its completion marker;
    - per step, `source rows (with the step filter) != primary map rows`; for in-place core steps
-     (the tag remap), the preflight snapshot count is used and verify asserts the filter now matches 0;
+     (the tag remap), a derived unit (`#tag_instance.id`) plus the importer's own `verify()` prove the accounting, and the
+     filter afterwards matches exactly the folded and skipped rows, not 0 (2026-10-07 decision CRS-08);
    - a source-to-map anti-join finds a row with no map row;
    - a map-to-target anti-join finds an `imported` or `adopted` row whose target is gone
      (checked until the runbook sets `local_sentientia_platform/bizlms_production_open` when the site
@@ -624,7 +672,13 @@ All in `local/sentientia_platform/cli/migration_parity_check.php`, in both trees
    importer claims or declines. This catches tables whose plugin code is missing from the snapshot
    (`local_challenge`, `local_positions`, `local_domains`, `block_request_*`).
 4. The existing core counts and checksums (:52-76, :116-133) stay the proof that the import had no
-   side effects on users, enrolments, completions, attempts, badges and grades.
+   side effects on users, enrolments, completions, attempts, badges and grades. 2026-10-07 decision F-34 (amends this
+   hook): the enrolments importer is the one DESIGNED exception, so 'no side effects on enrolments' is not literally true. It
+   adds about 7,733 `user_enrolments` rows (April) and changes `enrol.status` (CRS-01), so `migration_parity_check.php` counts
+   and checksums them (:64, :123-124) and runbook step 5 demands 100% PARITY. The compare must EXPLAIN the `user_enrolments`
+   and `enrol` deltas through `legacymap` rows (feature `enrolments`, target table `user_enrolments` or `enrol`, outcome
+   `imported`) and the `enrolmove` ledger, and report any unexplained delta as drift; step 5 of
+   `MIGRATION-REHEARSAL-RUNBOOK.md` is amended to match. Until that is built the rehearsal parity gate fails by design.
 5. **A skipped CRC is never a pass.** A legacy table whose CRC was skipped (no CRC32 on the engine, or
    more rows than `--crc-max-rows`) matched on count, max id and columns only, and an UPDATE changes
    none of those. `parity::comparison_problems()` turns it into an unproven item (exit 2), like a
@@ -738,12 +792,29 @@ today they are what keeps tenant admins working on a restored UAT database.
   mapping doc introduces (`enrolledby`, `markedby`, `initiatedby`, `sender_userid`, `subject_userid`),
   so the structural guard sees them. A plugin whose provider then fails (for example
   `sentientia_users`, a null provider today) fixes its provider in the same change.
+  2026-10-07 decision F-86: `usercreated`, `usermodified`, `modified_by` and `trainerid` join `USER_COLUMNS` in ONE change after
+  the program merge, in both trees, with the provider declarations the guard then flags (emails, talent, `course_type`,
+  `course_category`, `email_overrides`, `email_rules`, `learningpath`, `learningpath_courses`, `cohort_scope`, `talent_path`,
+  `talent_succ`, `talent_opp`, the users sync tables, classroom, programs; actor columns anonymised to 0 on erasure), and the
+  program branch's temporary `COMPONENT_USER_COLUMNS` is deleted. Four clusters asked for overlapping additions with conflicting
+  timing; this settles it. It does not block Stage B, because no import output depends on it.
 - Secrets are never copied. The plaintext passwords in BizLMS welcome emails are the known case: those
   bodies and subjects are not imported (notifications section of the mapping doc).
 - **Known gap, not solved here:** once BizLMS code is off disk, the legacy tables hold learner data
   that no provider exports or erases. The import never alters them. A separate, Nitin-gated deliverable
   after sign-off adds a platform provider section that exports legacy rows by user and anonymises them
   under the DPDP design. Declaring them without erasure would repeat the null-provider defect class.
+  2026-10-07 decisions EV-19 and F-04: the separate ADR's scope also covers the import's own map (the evaluation 'assign'
+  sub-rows, where an anonymous response and its assignment share one completion id) and the completion-ordered ids of implied
+  assignments, and it must be accepted before any legacy evaluation table is anonymised or dropped; it is not a precondition
+  for cutover. It also records how a non-zero cart credit balance is kept when its holder asks for erasure (Finance's call).
+- **DPDP flow (2026-10-07 decision F-88, before cutover):** `privacy_manager.php:231-235` calls `delete_data_for_user()` for every
+  `local_sentientia_*` provider that lacks `anonymise_data_for_user()`; only 8 providers implement it (classroom, learningpath,
+  recompletion, org, xapi, programs, proctoring, compliance_report), so cart, evaluation, users, emails, request, ratings and skills
+  delete or redact on a DPDP request. For each provider that holds imported history, write down whether delete is intended (login
+  days: yes, IDN-06; cart balances and native invoices: Finance), and where the data is learning or compliance evidence add
+  `anonymise_data_for_user()` following LRN-03's rule (keep the structured record, clear identifying free text). Record the outcome in the
+  DPDP design note.
 
 ## Test approach
 
@@ -780,6 +851,9 @@ today they are what keeps tenant admins working on a restored UAT database.
 5. **Feature tests** follow the fixture section of each feature in the mapping doc, including reader
    checks as a tenant admin in `@group tenant_isolation` (ADR-031 decision 8). All import tests are
    `@group bizlms_import` and run from the moodle5 dirroot, not `public/`.
+   2026-10-07 decision F-30 (process rule): before merging ANY importer, run its preflight read-only against `bizlms_april`
+   and cross-check every `source_spec` enum against a real value histogram (counts only). The evaluation build showed why:
+   fixture tests could not catch `anonymous_response = 2`, because the checked-in install.xml documents the column as 0/1.
 6. MySQL 8 and MariaDB are the gating engines; production is MySQL 8.0.44 on RDS (CLAUDE.md §2).
    **Not yet run:** the CRC32 SQL, `insert_records`, `import_record`, `reset_sequence`, the lock factory
    and the fixture lifecycle have only run in the SQLite stand-in used while the framework was written.
@@ -797,8 +871,9 @@ today they are what keeps tenant admins working on a restored UAT database.
 
 ## Build and run order
 
-**Build:** Phase 0 is the framework plus source freezing (below). The framework is frozen after
-Phase 0; changing its contract needs an amendment to this ADR. Then features, each one deliverable,
+**Build:** Phase 0 is the framework plus source freezing (below). The framework contract is frozen after
+Phase 0; changing it needs an amendment to this ADR, and the change rule below applies (2026-10-07 decision F-83, which
+replaces the bare word 'frozen' used in CRS-08). Then features, each one deliverable,
 in dependency order: org; then org_roles, cohort_scope, course_lookups, course_tags, legacy_logs,
 exams, users, notifications, recompletion, cart (parallel); skills; classroom and program; learningplan;
 evaluation, request and ratings; then the gap maps.
@@ -808,7 +883,11 @@ framework, CLI, tests, the copy scripts retired, the seed scripts guarded) are i
 - P0.4: `migration_parity_check.php` does not call `parity::` yet (`legacy_fingerprints()` and
   `compare_fingerprints()` for the baseline and `--compare`, `invariant_problems()` as the
   `bizlms_import` invariant, and `comparison_problems()` for the exit codes). Without it the archive
-  proof in the cutover slice, steps 3 and 6, has no script behind it.
+  proof in the cutover slice, steps 3 and 6, has no script behind it. 2026-10-07 decisions F-34 and F-61: when it is wired,
+  `migration_parity_check.php` takes `--decisions=FILE` and `--expect-decisions-hash` and passes them to
+  `parity::invariant_problems()` (`parity.php:137,318-320` builds the verify context with `decisions::none()` otherwise, and
+  the notifications `verify()` reads two decisions, so it would report `verify_error`), and it explains the enrolments deltas
+  (hook 4).
 - The `qr_scan.php` freeze below. `qr_scan.php:43,62` (both trees) still reads and inserts
   `local_classroom_attendance`. Today every scan ends in the catch because the insert omits two NOT NULL
   columns, so the archive is not changed by it, but a fix that made the insert work would change the
@@ -820,6 +899,24 @@ framework, CLI, tests, the copy scripts retired, the seed scripts guarded) are i
   is built, and runs first in the cutover slice. Its allow-list is signed (2026-09-30) and exits 0 in check
   mode on the rehearsal copy of the April 2026 dump with one grant (trainer, classroom manage); it is
   re-checked against the real live backup at the Stage B rehearsal.
+
+**Framework change rule (2026-10-07 decision F-83).** Before Stage B the framework changes only for a defect that blocks a
+run, changes import output or protects data; refactors wait. One framework change in both platform trees before Stage B, with
+one PHPUnit re-init: `runner::preflight_feature()` catches `blocked` (F-10); the `copies_files` marker and the `{files}` tripwire
+(IDN-04); the sequence floor with the legacy AUTO_INCREMENT (EV-26); `migration_parity_check.php` wired to `parity::` with
+`--decisions` and `--expect-decisions-hash`, explaining the `user_enrolments` and `enrol` deltas through the map (F-34, F-61).
+After Stage B (a refactor, not a defect): the in-place step kind (CRS-08); the contract-trait gaps (`importer_contract`
+must not drop an install-snapshot table, a `contract_clear_core_writes()` hook, several fixture XMLs, a shared org stub in the
+platform test namespace, combinable `setUp`, clear by feature provenance, a reviewed `core_writes()` table as a step target, a
+framework undo for core-writing rehearsals, `grade_*` as read-only table names, a has-rows applicability predicate, a column
+list on `source_spec`, a sanctioned post-load seed step, a dry-run overlay test, exams counting each quiz once in
+`rows_total`: F-37, F-49, F-79); a keyed lookup `legacy_reader::fetch_by()` (F-09); `group_by()` accepting an SQL expression
+(F-18); a generic PRESERVE child-row preflight (an opt-in check per PRESERVE step with the child table and FK column, replacing
+evaluation's hand-rolled `rows_left_at_legacy_form_ids`: F-28); the per-person-column privacy export and erase check in
+`importer_contract` (F-09, F-18, F-49); `tenant_root_columns()` so the parity tenant invariant covers INT roots (F-62). Before
+cutover: count-bounded `accepted_reasons` (`feature:code<=n`, so cutover exits 2 when a needs-owner count exceeds what was
+accepted: F-27). Until that exists the cutover run report compares each accepted code's count with its Stage B count, and any
+increase is a re-approval event.
 
 **Stage B gates (each must close before an importer runs on the restored live copy).** They are all
 recorded above; this is the one list:
@@ -835,12 +932,29 @@ recorded above; this is the one list:
 3. `local_sentientia_org\accesslib::legacy_cap()` is removed in the same release as the org importer, and
    `local/sentientia_platform:crosstenant` is granted deliberately, by hand, to the platform role Nitin
    names. Until then role 9 passes `can_manage_multi()` on a restored database through
-   `local/costcenter:manage_multiorganizations`.
+   `local/costcenter:manage_multiorganizations`. 2026-10-07 decision IDN-05: the code half is done (the org checks no longer call
+   `legacy_cap()`, `local_sentientia_org/classes/accesslib.php:301-325`; the only remaining caller is the trainer dashboard check
+   in `theme/sentientia`) and the capability repair runs first in the cutover slice. The platform role is created by
+   `tools/uat/adr031_crosstenant_role.php --target=<wwwroot> --config=<cfg> --dry-run`, then `--apply` (migration plan step
+   4f-f), at Stage B and at cutover, with the one capability `crosstenant` and NO members; members are added by hand at
+   `/admin/roles/assign.php?contextid=1` only when Nitin names them (`org.crosstenant_platform_role`). Site admins stay the only
+   cross-tenant callers until then.
 4. P0.4: `migration_parity_check.php` calls `parity::comparison_problems()`, with the baseline taken with
-   no CRC cap.
+   no CRC cap, takes `--decisions` and `--expect-decisions-hash`, and explains the enrolments deltas (parity hook 4; 2026-10-07
+   decision F-34).
 5. `local/sentientia_pages/qr_scan.php` stops reading and inserting `local_classroom_attendance`
    (classroom code fix 1, with visual evidence).
 6. The standard log store is enabled on the database the run is on (gating item 5b).
+7. The registry loads all 19 importers (2026-10-07 decisions EV-25, F-33, F-44, F-78). Until classroom and program were on the
+   integration branch, `registry::load()` threw `unknown_dependency` for ratings, evaluation and request and no feature could
+   load. Committed on `claude/gap-integration`: classroom (b316c138a), the runner's dry-run FOLD fix (6991ac1b6) and program
+   (bae085600). What remains is to confirm `registry::load()` returns all 19 after the PHPUnit re-init, then run the dry runs of
+   evaluation, request and ratings (`deferred` parents are reported) and switch the program, learningplan, classroom and skills
+   tests from their stub parents to the real org importer.
+8. The signed decisions file carries every key an importer declares (2026-10-07 decision F-84): an importer that declares a key
+   missing from the file blocks at preflight, so the file and both fixture copies change in ONE commit, before or together with
+   any importer change that declares a new key (EV-16, `cart.finance_keys_status`, CRS-01/02/03), and before the Stage B
+   rehearsal pins the hash. No `accepted_reasons` list is added then.
 
 **Phase 0 source freezing:** move `SE local/sentientia_pages/qr_scan.php` and `qr_attendance.php` off
 the legacy tables (they check and write `local_classroom_attendance`, migration plan :174-177); make
@@ -861,6 +975,12 @@ the legacy tables (they check and write `local_classroom_attendance`, migration 
 
 Stage B runs the same slice first. Its timings (I-20) set the maintenance window.
 
+After the Stage B rehearsal (2026-10-07 decisions IDN-02, CRS-04, CRS-07, CRS-10, COMMS-C1, `cart.accepted_reasons`, F-54): the lead
+tabulates every needs-owner reason with its count per feature, Nitin accepts each in writing, and ONE batch edit adds the
+`feature:code` strings to the top-level `accepted_reasons` list of the signed file (and both fixture copies), with the counts in
+the approval note; the new hash is pinned and `--expect-decisions-hash` uses it. Nothing is accepted before that, because a
+pre-acceptance would pass any count the live backup produces.
+
 ## Consequences
 
 - Imported history becomes visible only where a reader exists. Several readers are new work (learner
@@ -874,7 +994,9 @@ Stage B runs the same slice first. Its timings (I-20) set the maintenance window
 - Several features attribute tenant from the user's **current** `open_path`, because the source
   stores no tenant. HRMS moves since then place old rows under the new tenant.
 - Admin actions in Sentientia can still destroy imported history (unenrol, delete) until each
-  feature's "protect imported history" code fix ships. Those fixes ship with the importer.
+  feature's "protect imported history" code fix ships. Those fixes ship with the importer. 2026-10-07 decision LRN-10: an admin
+  may unenrol an imported enrolment that carries no completion, progress or attendance, on an active learning path, classroom or
+  program (BizLMS allowed it); every row that carries history stays blocked.
 - The maintenance window length is unknown until Stage B.
 - Most features need reader or engine code fixes before their data is useful. They are listed per
   feature in the mapping doc and ship with the importer.
@@ -913,10 +1035,12 @@ Framework-level (feature-level choices are in the mapping doc):
    a re-approval event?
 4. Rollback at cutover: RDS snapshot only, or is `--purge-feature` also allowed there ([CONFIRM] delete)?
 5. The legacy-table privacy deliverable after sign-off: export and anonymise, or drop after an audit
-   period (a separate ADR either way)?
+   period (a separate ADR either way)? 2026-10-07 decision EV-19: its scope includes the import map and the assignment-id order,
+   and it must be accepted before any legacy evaluation table is anonymised or dropped; it is not a precondition for cutover.
 6. Maps are still missing for certificates (`tool_certificate_issues`), `local_challenge`,
    `local_certification`, core `{event}` rows, non-course tag areas and the orphaned BizLMS enrol
-   instances. They must exist before cutover; until then parity exits 2.
+   instances. They must exist before cutover; until then parity exits 2. 2026-10-07: the orphaned enrol instances (gap G6) are
+   decided and built (convert to manual, CRS-01 to CRS-05); the rest stays open.
 7. If Stage B shows the window is too short: approve an "inline key" mode for unreferenced high-volume
    leaf tables (recompletion SCORM tracks, email logs) that records only non-imported outcomes in the
    map? It is off by default and needs an amendment to this ADR.
@@ -935,6 +1059,10 @@ have chosen are marked in their lines: `request.pending` and `request.hidden_row
 Stage B rehearsal and must match at cutover (`--expect-decisions-hash`). Nitin signs it. Any change after the
 rehearsal is a re-approval event. If the two ever disagree, the JSON is what runs.
 
+The JSON now also holds the decisions of 2026-10-07 (section "Owner decisions, 2026-10-07 (delegated)" at the end of this
+ADR): 138 decisions, a top-level `delegated_on` and `delegation_note` next to `approved_by` and `approved_on`, and still no
+`accepted_reasons` list.
+
 **File shape** (read by `bizlms\decisions::load()`; the first loader read it as a flat map and so found none of
 these keys, which is the defect the framework review recorded):
 
@@ -949,19 +1077,26 @@ these keys, which is the defect the framework review recorded):
   selected feature that declares such a key is blocked at preflight (`decision_not_accepted:<key>:<status>`);
   `context::decision()` throws the same. The importer's default never stands in for an open choice.
 - `accepted_reasons` lists needs-owner reasons the owner accepts; parity exits 2 for any needs-owner reason
-  not listed. `enums` maps values of a declared enum column so preflight stops blocking on them. Both are
-  filled in by each feature importer's build, when its reasons and enum columns exist; there is nothing to
-  accept before that, so the signed file does not carry them yet.
+  not listed. `enums` maps values of a declared enum column so preflight stops blocking on them. Neither is
+  filled in by an importer's build (2026-10-07 decisions IDN-02, EV-23 and F-27 correct the earlier wording): the OWNER adds a
+  reason after the Stage B rehearsal, only for codes that occur, with its count, because an acceptance carries no count and a
+  pre-acceptance would also pass any count the live backup produces. Count-bounded acceptance (`feature:code<=n`) is a
+  before-cutover framework item; until then the cutover run report compares each accepted code's count with its Stage B count
+  and any increase is a re-approval event. The signed file does not carry either section yet.
 - The report lists the decisions used with their status, the ones not accepted, and who approved the file.
 
-**FINANCE-CONFIRM (two items).** The import is not blocked, but nothing acts on these until finance answers:
-`cart.credit_balances` (honour, pay out or write off, and who owns the liability) and
-`cart.erpnext_invoices_legal` (are the ERPNext invoices the legal tax invoices). A finance answer changes the
-file, so it counts as a change for the hash rule above. Their status is `finance-confirm`, so an importer that
-DECLARES either key is blocked until finance answers. The cart importer therefore does not declare them: what
-the import does with credits and invoices (frozen, admin-only history; "Issued in ERPNext as <number>", no
-link-out, no new numbers) is fixed by the recorded value and does not depend on the answer. The report shows
-both as not accepted.
+**FINANCE items (two), accepted under delegation on 2026-10-07 (decision cart.finance_keys_status, F-01).** The import is not
+blocked, and nothing acts on these until Airpay Finance answers: `cart.credit_balances` (honour, pay out or write off, and who owns
+the liability) and `cart.erpnext_invoices_legal` (are the ERPNext invoices the legal tax invoices). They were `finance-confirm`;
+Nitin delegated them on 2026-10-07 and both are now status `accepted`, with `frozen_pending_finance` and
+`reference_only_pending_finance` as recorded values, and the cart importer DECLARES them. **Airpay Finance was not consulted:**
+`accepted` records the delegated recommendation, not a Finance sign-off, and each `why` in the file says so. What the import does
+(frozen, admin-only history behind default-OFF flags; 'Issued in ERPNext as <number>', no link-out, no new invoice numbers) does
+not depend on Finance's answer. April facts: 0 credit bookings, 0 ledger rows, 0 invoice rows, INR 0, ERPNext never configured
+(the one Rs 10 paid sale has no invoice anywhere). If Stage B shows any non-zero balance or invoice row it goes to Finance before
+cutover; a Finance answer changes the file and is a re-approval event. The open Finance questions (credits, ERPNext invoices,
+the six native-tax-invoice points including retention against DPDP erasure) are in `OWNER-DECISIONS-2026-10-07.md`. The framework
+mechanism stays: a declared key carried as `finance-confirm` still blocks that feature (covered by the toy sample file).
 
 **Framework (ADR open decisions)**
 
@@ -1020,7 +1155,7 @@ both as not accepted.
 - `notifications.queue_status` Status for undelivered queue rows? -> not_sent, never sent -> nothing in the old queue is ever delivered.
 - `notifications.keep_sender` Keep sender identity? -> Yes -> the column map imports it and the provider covers it.
 - `notifications.retention` Retention of imported email rows? -> Keep, no purge -> nothing is lost (rule 1).
-- `notifications.deleted_recipient_sent` Status-1 rows to deleted recipients? -> sent, with a note -> that is what BizLMS recorded.
+- `notifications.deleted_recipient_sent` Status-1 rows to a recipient already deleted when BizLMS ran the send? -> sent, with a note; a recipient deleted after the send was delivered to and imports as plain sent -> that is what BizLMS recorded (wording corrected 2026-10-07, COMMS-N6; April: 1 of 342 rows to now-deleted users).
 
 **recompletion**
 
@@ -1050,7 +1185,7 @@ both as not accepted.
 - `skills.catalogue_scope` Skills catalogue scope? -> One shared catalogue -> the status quo the document proposes.
 - `skills.merge_categories` Merge policy? -> Categories by exact name, skills never -> the document's proposal.
 - `skills.seed_rows` Keep the 48-skill seed on production? -> Yes, never deleted here -> deleting is a separate [CONFIRM] (rule 1).
-- `skills.level_proficiency` Level-to-proficiency map? -> Name heuristic (awareness 1, basic/beginner/foundation 2, intermediate 3, advanced 4, expert 5, else 1) -> the document's proposal; the concrete CSV is still to be generated from the rehearsal preflight.
+- `skills.level_proficiency` Level-to-proficiency map? -> Name heuristic (awareness 1, basic/beginner/foundation 2, intermediate 3, advanced 4, expert 5, else 1) -> the document's proposal; the concrete CSV was generated on 2026-10-07 from the 17 April levels (LRN-07, level 16 reviewed to 2) and is rechecked on the live backup before the hash is pinned.
 - `skills.source_label` Source label on migrated skills? -> 'import' -> honest about where the row came from.
 - `skills.history_from_archive` Grant skill history from the recompletion archive too? -> Yes -> nothing is lost (rule 1).
 - `skills.skillmatrix` Import local_skillmatrix? -> No -> it had no writer and no live reader.
@@ -1101,7 +1236,7 @@ both as not accepted.
 - `request.hidden_rows` Rows BizLMS hid? -> Show -> the document's proposal (rule 3 would have filtered them).
 - `request.tenant_basis` Tenant of a request? -> The requester's current root -> the source has no tenant column.
 - `request.pending_approver` Approver of legacy pending requests? -> Sentientia routing -> the document's proposal.
-- `request.comments` Request comments? -> Folded into the decision note -> expected empty.
+- `request.comments` Request comments? -> Folded into the decision note -> expected empty; preflight blocks if the table has rows, and a decision on an imported row appends to the note (2026-10-07, COMMS-R4).
 
 **ratings**
 
@@ -1116,21 +1251,89 @@ both as not accepted.
 - `gaps.other_tag_areas` Tag instances of classroom, learning plan and evaluation (G5)? -> Counted and left in place -> no plugin is uninstalled.
 - `gaps.classroom_program_skill_tags` Skill and level tags on classrooms and programs (G8)? -> Stay in the legacy tables -> no Sentientia reader needs them.
 
-**Left unanswered on purpose**
+**Left unanswered on purpose, and what became of each (2026-10-07)**
 
-- `accept_needsowner.<feature>.<reason>`: not pre-accepted. Each acceptance covers an actual rehearsal
-  outcome (a count of rows and a reason code), so it is added after Stage B, in writing, by Nitin. Until
-  then parity exits 2, which step 6 of the cutover slice allows only with Nitin's written acceptance.
-- `skills.level_proficiency.csv`: the rule is approved but the concrete level-id map needs the rehearsal
-  preflight. The skills feature stays blocked until it is filled.
-- Open decision 6 (maps for certificates, `local_challenge`, `local_certification`, core `{event}` rows,
-  non-course tag areas, orphaned BizLMS enrol instances; also gaps G7 and G9) is engineering work or a
-  Stage B check, not an owner choice. The
-  orphaned-enrol-instance choice (convert to manual at cutover, or keep a shim) had no recommendation and
-  the owner rules do not pick between them, so it needs Nitin and Stage B evidence.
-- Facts to collect, not decisions: production row counts (I-20), `SHOW COLUMNS` for the production-only
-  columns, server timezone, logstore retention, the `local_ratings/review_enable` setting, whether
-  `paygw_airpay` is deployed on 5.2, and whether the PayPal gateway was used for any cart order.
-- Classroom QR check-in time window, and which notification types have no Sentientia rule once BizLMS
-  stops sending: no recommendation and no rule applies.
-- Orphaned BizLMS enrol instances (gap G6) -> convert each enrolment to a manual enrolment in the same course (status, start and end kept; original instance in the legacy map) -> without the BizLMS enrol code these learners would lose course access. Verified at the rehearsal.
+- `accepted_reasons` (the wrong name `accept_needsowner.<feature>.<reason>` is replaced by the loader's real shape, a top-level list
+  of `"feature:code"` strings): not pre-accepted, and still not (2026-10-07 decisions IDN-02, EV-23, COMMS-C1, F-82). Each
+  acceptance covers an actual rehearsal outcome (a count of rows and a reason code), so it is added after Stage B, in writing, by
+  Nitin, as one batch with the counts in the approval note. Until then parity exits 2, which step 6 of the cutover slice allows only
+  with Nitin's written acceptance. Expected Stage B reasons from April are in the migration plan, section 11.
+- `skills.level_proficiency.csv`: filled on 2026-10-07 (LRN-07); the skills feature is no longer blocked by it.
+- Open decision 6 (maps for certificates, `local_challenge`, `local_certification`, core `{event}` rows, non-course tag areas; also
+  gaps G7 and G9) is engineering work or a Stage B check, not an owner choice. The orphaned-enrol-instance choice (gap G6) is
+  decided (last line below), so it no longer 'needs Nitin'.
+- Facts to collect, not decisions: production row counts (I-20), `SHOW COLUMNS` for the production-only columns, server timezone
+  (April: Asia/Kolkata), logstore retention, the `local_ratings/review_enable` setting (April: 0), whether `paygw_airpay` is deployed
+  on 5.2 (yes: `moodle-enhancement/payment/gateway/airpay`, April config version 2024100700.1) and whether the PayPal gateway was
+  used for any cart order (no: April `payment_gateways` has only airpay and the core `payments` table has 0 rows). Re-read all of
+  them on the live backup at Stage B.
+- Classroom QR check-in time window: decided by the fixes-0930 merge b59adb58c (30 minutes before the start to 30 minutes after the
+  end). Which notification types have no Sentientia sender once BizLMS stops sending: COMMS-N7
+  (`gaps.notification_sender_parity = build_flagged_off`, mapping doc section 21, G10).
+- Orphaned BizLMS enrol instances (gap G6) -> convert each enrolment to a manual enrolment in the same course (status, start and end kept; original instance in the legacy map) -> the instances have no plugin code, so nobody can manage them (no unenrol, suspend or expiry handling) while core keeps granting access through any enabled instance (2026-10-07 decision XC-G6-WHY corrects the earlier reason, 'these learners would lose course access', which core does not do). Each fully converted instance is then disabled when proven per (user, course) pair (CRS-01). Verified at the rehearsal.
+
+## Owner decisions, 2026-10-07 (delegated)
+
+On 2026-10-07 Nitin delegated the open owner decisions ("self review and decide recommended option"), on top of the signed basis
+"do everything as recommended". A critic pass corrected three decisions and added two. All 84 decisions, where each is
+implemented, and the questions that still need Nitin are in `docs/cutover/OWNER-DECISIONS-2026-10-07.md`; the machine copy is
+`docs/cutover/bizlms-import-decisions.json` (36 keys added or corrected, `why` starts `[delegated 2026-10-07]`). No feature flag is
+flipped and nothing is deleted. Airpay Finance was not consulted for the cart keys. Each line is key -> question -> answer -> why.
+
+**Framework**
+
+- `framework.file_rehome_copies` File copies made by `file_rehome` in `finalise()`? -> A reviewed side effect: copy-only, insert-only, idempotent, declared through the `copies_files` marker by all five callers, left in place by `--purge-feature`; `{files}` is watched for every importer without the marker -> one rule for org, cohort_scope, learningplan, classroom and programs (IDN-04).
+- `framework.protect_imported_history_pending_enrolments` Unenrol of an imported enrolment? -> Allowed when it has no completion, progress or attendance, on an active path, classroom or program; every row with history stays blocked; on a learning path the admin is shown the course enrolments that remain -> BizLMS allowed the routine action, and nothing is removed automatically (LRN-10).
+- `framework.imported_rows_on_admin_pages` Imported rows on existing admin pages? -> Entities other rows reference show on their admin pages; history and log rows nothing references show only behind the feature's imported-history flag; HRMS sync runs get `sentientia.users.imported_sync_history`; evaluation's imported forms and responses are the recorded exception -> one reader rule (XC-IMPORTED-HISTORY-READERS).
+
+**org, org_roles, users**
+
+- `org.crosstenant_platform_role` Who holds the cross-tenant platform role at cutover? -> The role is created by the ADR-031 script with no members; members are added by hand only when Nitin names them -> narrowest reversible default (IDN-05).
+- `org_roles.user_without_tenant` A user with no tenant path named on an org-role row? -> Left out; a row with nobody left is skipped (needs-owner `user_without_tenant`) -> ADR-031 decisions 4 and 6, fail closed (IDN-01).
+- `users.logindays_erasure` Imported login days on a DPDP erasure request? -> Deleted -> a (user, day) row has no meaning without the user (IDN-06).
+- `users.sync_history_visibility` Who sees HRMS sync history? -> Run list tenant-wide; rejected lines only to the uploader and cross-tenant callers -> exact BizLMS parity (IDN-07).
+
+**course_lookups, enrolments**
+
+- `course_lookups.coursedetails_candidate_columns` Write `proficiencylevel` and `credits` into core course columns? -> No, `leave`, counted in preflight -> unverified candidates, no reader for `open_points` (CRS-06, CRS-15).
+- `enrolments.bizlms_instances_after_verify` Disable converted BizLMS instances? -> Yes, each one, only when every (user, course) pair keeps an access window at least as wide through manual enrolments, never deleted, undo is one UPDATE -> core grants access through any enabled instance (CRS-01).
+- `enrolments.disabled_instance_row_status` A row on a disabled BizLMS instance? -> Converts as suspended -> never give access BizLMS did not give (CRS-02).
+- `enrolments.disabled_only_manual_instance` A course whose only manual instance is disabled? -> A new enabled one is added beside it -> learners keep today's access (CRS-03).
+- `gap.orphan_enrol_instances` (why corrected) see the G6 line above (XC-G6-WHY).
+
+**recompletion, learning paths, programs, classrooms, skills**
+
+- `recompletion.inferred_reset_without_evidence` Reset time with no evidence? -> The cycle's last recorded evidence + 1 second, never the import time (LRN-01).
+- `recompletion.legacy_rows_on_history_page` BizLMS rows on `history.php`? -> Behind the evidence_view flag (LRN-02).
+- `recompletion.dpdp_archive_free_text` DPDP erasure and archived free text? -> The record stays, the free text is cleared (LRN-03).
+- `recompletion.imported_rule_enable` Enable an imported rule? -> Blocked until engine parity is declared done (LRN-04).
+- `learningplan.cover_on_admin_view` Imported cover on the admin page? -> Behind the learner_paths flag (LRN-08).
+- `learningplan.user_startdate` A value in `local_learningplan_user.startdate`? -> Preflight blocks (LRN-09).
+- `learningplan.stalled_nudge_scope` Stalled-path nudge? -> Native rows on active paths only (LRN-11).
+- `program.nameless_with_shortname` A nameless program with a shortname? -> Import under the shortname with a warning (LRN-12).
+- `program.delete_imported_level` Delete an imported level? -> Blocked (LRN-13).
+- `classroom.cotrainer_sessions` Co-trainer sessions? -> Every session of their own classroom (LRN-15).
+- `classroom.trainer_erasure` Trainer erasure? -> Core releases the trainer, DPDP keeps the record against the anonymised user (LRN-16).
+- `classroom.new_states_ui` Draft and On hold in the UI? -> Unflagged, because a select that does not list the stored value rewrites it (LRN-17).
+- `skills.level_proficiency` (csv filled) see the Skills line above (LRN-07).
+
+**evaluation, request, notifications, cart**
+
+- `evaluation.sticky_anonymity` A form that ever held an anonymous answer? -> Every answer imports anonymous (EV-16).
+- `evaluation.legacy_anonymous_linkage` (why widened) -> The legacy-table privacy ADR also covers the import map and the assignment-id order, and must be accepted before any legacy evaluation table is anonymised or dropped; not a cutover precondition (EV-19).
+- `evaluation.tenant_editor_fallback` A form with no usable tenant? -> Pathless; never the tenant of whoever last edited it (EV-TENANT).
+- `request.pending_stale` A pending request whose requester left or whose item is gone? -> History only, no approver (COMMS-R1).
+- `request.comments` (why extended) -> Preflight blocks if rows exist; a decision appends to the note (COMMS-R4).
+- `notifications.team_member_copy_body` Manager copies? -> Imported without the body, the member's name scrubbed from the subject (COMMS-N2).
+- `notifications.course_link` The course of an imported e-mail? -> Taken from `moduleid` for course templates (COMMS-N3).
+- `notifications.deleted_recipient_sent` (wording corrected) see the notifications line above (COMMS-N6).
+- `gaps.notification_sender_parity` Notification types with no Sentientia sender? -> Build them behind default-OFF flags; the flips are Nitin's call after UAT (COMMS-N7).
+- `cart.credit_balances` and `cart.erpnext_invoices_legal` -> Accepted under delegation as frozen, admin-only history and references only; Airpay Finance NOT consulted (cart.credit_balances, cart.erpnext_invoices_legal, cart.finance_keys_status).
+
+**Recorded without a decisions-file key:** the id-sequence floor (EV-26, "Id strategy" 6); the framework change rule (F-83); the
+`catalog` price-source fix (`cart.price_source`: `enrol_fee` is authoritative and `enrol_now()` refuses a priced course); the
+withheld-line refund wording (`cart.withheld_line_refund`: state the amounts, never refund automatically); holding native GST tax
+invoices until Finance answers six points (`cart.native_tax_invoices`); exam pseudo-courses off the guest storefront (CRS-14);
+the rating widget flag (CRS-11); the recorded flag recommendations (CRS-12, COMMS-C2, LRN-06); the response-drilldown, bulk-enrol and
+bulk-assign decisions (EV-06, XC-CLS-ENROL, EV-36); and the descriptive acceptance rules `accepted_reasons (org)` (IDN-03) and
+`accepted_reasons` (CRS-04), which are not decision keys.
