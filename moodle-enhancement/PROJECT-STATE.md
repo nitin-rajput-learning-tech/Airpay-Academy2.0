@@ -5,6 +5,42 @@
 
 ---
 
+## 2026-10-07 - Stage B rehearsal kit for the Linux target box: `tools/rehearsal/` (Sonnet 5.5)
+
+Branch `claude/stageb-tools`. The Stage B rehearsal ran so far as hand-run Windows scripts (`hop1_45.sh`, `hop2_51.sh`,
+`make_config.py`, `refresh_and_dryrun.sh`). The kit is the repo-tracked, repeatable form for the target box (PHP 8.3,
+MySQL 8.4 or MariaDB 10.11): one env file (`rehearsal.env.example`), 13 scripts `00` to `12` and the orchestrator
+`run_all.sh`, **DRY by default** (`--execute` runs), idempotent, timed, logging per step, first failed gate stops.
+
+- **Steps.** 00 preflight (refuses unless the database is on the explicit allow-list, `noemailever` is true in every config,
+  no scheduler runs Moodle's cron, no production hostname appears anywhere) · 01 restore check (restore only into an EMPTY
+  database; the file store gate: every `files.contenthash` on disk; SMTP wipe, `cron_enabled = 0`, mail-backlog audit I-11) ·
+  02 source baseline (refuses on an upgraded copy; re-verifies, never retakes) · 03 hop 1 and 04 hop 2 (BizLMS code off disk,
+  `local/airpay_ratings` refused, SHA-256 and fake-zip gates, timed, parity after each hop) · 05 repairs (task registrations,
+  the signed capability allow-list: check, apply, check) · 06 the four ADR-031 scripts in target mode · 07 theme · 08 arming
+  the ADR-032 guard · 09 import (data-intact gate, preflight, dry run that records the decisions hash, apply, verify) ·
+  10 `--after-import` parity · 11 one cron cycle under `noemailever` with the `transfer_question_categories` task timed ·
+  12 summary (I-4 estimate, the seven rollout-gate items and who proves each).
+- **Runbook.** `MIGRATION-REHEARSAL-RUNBOOK.md` points at the kit; the capability repair is now step 4e, BEFORE the ADR-031
+  scripts (4f; theme is 4g); step 5a lists the guard commands and says where the decisions hash comes from
+  (`meta.decisions_hash` of any `--report`, a dry run included).
+- **Found while building it.** The package build leaves `public/config.php` (Moodle's 5.x loader) out of the zip (the kit
+  writes it); a restored backup can carry task rows marked running, which the import guard counts; `cron.php` refuses under
+  CLI maintenance and polls for 3 minutes unless `--keep-alive=0`; the capability `--apply` needs CLI maintenance, which the
+  ADR's cutover slice (item 0 before item 2) leaves open.
+- **Tested.** `tools/rehearsal/selftest.sh` (policy refusals, config checks, generated config round-trip and guard, file store
+  comparison, `judge()`, `unpack_tree`, orchestrator). The whole kit in DRY mode. Steps 00 to 02 and 12 in `--execute` against a
+  scratch MariaDB schema (the file store gate failing on a missing hash and passing when fixed; a restore from a gzip dump and
+  a tar of the moodledata into a new schema); steps 03 to 11 in `--execute` against a stand-in Moodle (fake `upgrade.php`,
+  `cfg.php`, `cron.php`, `import_bizlms.php`, ...) to prove the control flow, gates, parsing and resume: a full run, a stop and
+  `--from` resume, a full second run on the finished rehearsal, exit 2 stopping and being accepted with a reference, and several
+  refusals. **Not run: any step against real Moodle 4.5 or 5.x code, `shellcheck` (not installed), PHPUnit.** The first real
+  execution is on the target box.
+- **Not in the kit:** per-user fingerprint, known-password logins, the SCORM and certificate walk, the mail sender test (gates 2,
+  3, 4, 6 of the plan's rollout gate); runbook 4d (the SW-1 flag flip is Nitin's decision).
+- Detail: `tools/rehearsal/README.md`. No plugin changed: no version bump.
+
+---
 ## 2026-10-07 - Stage B parity tooling: baseline on the 4.1.2 source, legacy-table proof, post-import explanation (Sonnet 5.5)
 
 Branch `claude/stageb-tools`. The old parity tool could not take a baseline on the 4.1.2 source (it read `scorm_attempt`, which

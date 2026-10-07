@@ -8,6 +8,12 @@
 > read `scorm_attempt`, which exists only from Moodle 4.3). The legacy BizLMS tables are fingerprinted in it, and a
 > post-import mode proves that everything the import changed is in its own records.
 
+> **2026-10-07 (the rehearsal kit):** the procedure below is now scripted for the Linux target box in
+> `tools/rehearsal/` (13 steps, one env file, DRY by default). See "The rehearsal kit" below for which script runs which
+> step. Two changes to the order came with it: the ADR-032 capability repair is step 4e and runs BEFORE the ADR-031 role
+> scripts (it must run before anything reads a role), and step 5a now spells out the guard commands and where the
+> decisions hash comes from.
+
 **Owner:** Nitin Rajput · **Status:** kit READY, locally rehearsed 2026-06-10 · **Executes:** on the
 ninja sandbox when Nitin provides server access + a fresh live backup. **Nothing here touches live.**
 
@@ -52,6 +58,33 @@ checksum per critical table (14), a count + max id + CRC over every column of ev
 names (11; a change there is unproven, not failed), and the rows and columns of the five core tables the import may write
 (`user_enrolments`, `enrol`, `role_assignments`, `course`, `tag_instance`). Measured on the April copy on the local
 MariaDB 10.11 (16 MB buffer pool): 22 to 30 s for the baseline, 25 s for a compare; on RDS it is faster.
+
+## The rehearsal kit (`tools/rehearsal/`, added 2026-10-07)
+
+One orchestrator, `bash tools/rehearsal/run_all.sh`, and one script per step. **DRY by default** (it prints what it would run
+and changes nothing); `--execute` runs. Run it as the web user of the target box
+(`sudo -u www-data bash tools/rehearsal/run_all.sh --execute`). One env file holds every path, host and database name
+(`tools/rehearsal/rehearsal.env.example`). Every script logs with timings (`logs/timings.tsv`), is idempotent, and stops on
+the first failed gate; after fixing the cause, `--from NN` resumes. `tools/rehearsal/README.md` has the details.
+
+| Kit script | Runs | Runbook step |
+|---|---|---|
+| `00_preflight.sh` | refuses unless the database is on the explicit rehearsal allow-list, `$CFG->noemailever` is true, no scheduler runs Moodle's cron, and no production hostname appears anywhere; changes nothing | Inputs, 1 |
+| `01_restore_check.sh` | restore into an EMPTY database (only if asked), release and user count, **the file store gate** (every `files.contenthash` on disk; missing = stop), SMTP wipe and `cron_enabled = 0`, the restored mail backlog audit (I-11), restore loss against the live baseline | 1 |
+| `02_source_baseline.sh` | the baseline on the 4.1.x copy before any upgrade; an existing baseline is re-verified, never retaken | 0 |
+| `03_hop1_to_45.sh` | hop 1 on a clean 4.5 core with the BizLMS code off disk, timed, parity after | 3 |
+| `04_hop2_to_5x.sh` | hop 2 on the Sentientia package in its own directory, timed, parity after | 2, 3 |
+| `05_repairs.sh` | 4a to 4c and 4e: `repair_task_registrations` (dry run, apply, the message preference check), tenant seed and parity, the capability inventory, check and apply against the signed allow-list | 4a-4c, 4e |
+| `06_adr031_roles.sh` | the four ADR-031 scripts in target mode | 4f |
+| `07_theme_switch.sh` | `theme` epsilon to sentientia | 4g |
+| `08_import_guard.sh` | arms the ADR-032 guard (cron off, maintenance on, `bizlms_import_armed_until`, the log store, no task marked running) | 5a |
+| `09_import.sh` | the data-intact gate, preflight, dry run (records the decisions hash), apply with a report, verify | 5, 5a |
+| `10_parity_compare.sh` | `--after-import` against the source baseline | 5a |
+| `11_cron_cycle.sh` | one cron cycle under `noemailever`, timed, with the `transfer_question_categories` task timed; `checks.php` | ADR-032 Cutover slice 7 |
+| `12_summary.sh` | the report for Nitin: steps, the I-4 window estimate, parity checkpoints, the evidence hashes, the seven rollout-gate items and who proves each | 7 |
+
+Not in the kit, on purpose: runbook 4d (`enable_oneclick_enrol.php` flips a feature flag, which is Nitin's decision), the
+per-user fingerprint, the known-password logins, the SCORM and certificate walk (step 6), the mail sender test.
 
 ## Procedure (each step has a verify; stop on any failure)
 
@@ -100,10 +133,29 @@ MariaDB 10.11 (16 MB buffer pool): 22 to 30 s for the baseline, 25 s for a compa
    c. `php local/sentientia_core/cli/parity_check_org.php` (expect **100% PARITY**).
    d. `php local/sentientia_catalog/cli/enable_oneclick_enrol.php --dry-run` then `--apply`
       (SW-1; tenants 1+177).
-   e. **ADR-031 role configuration (added 2026-09-29):** the role-9 core-cap script and the
+   e. **BizLMS capability repair (ADR-032 "Capabilities"; added 2026-10-07 to this order, BEFORE the ADR-031 scripts):**
+      the restore carries every role grant on capabilities of the 33 plugins that are missing from disk (520 on the
+      April copy, all at system context). The allow-list `docs/cutover/bizlms-capability-allowlist.json` (signed by Nitin
+      2026-09-30 against the April dump) records, one line each, what is carried (`grants`) and what is declined with a
+      reason. It runs before anything reads a role, so it comes before 4f.
+      ```
+      php local/sentientia_platform/cli/repair_bizlms_capabilities.php                       # inventory, writes nothing
+      php local/sentientia_platform/cli/repair_bizlms_capabilities.php --allowlist=docs/cutover/bizlms-capability-allowlist.json
+                                                                                              # check: must exit 0
+      php admin/cli/maintenance.php --enable                                                  # the apply needs CLI maintenance
+      php local/sentientia_platform/cli/repair_bizlms_capabilities.php --allowlist=... --apply --confirm=<fingerprint>
+      php local/sentientia_platform/cli/repair_bizlms_capabilities.php --allowlist=...        # again: exit 0, nothing to grant
+      ```
+      `<fingerprint>` is the first line of `php local/sentientia_platform/cli/import_bizlms.php --status`. **Exit 2 on the
+      check means grants on this backup that nobody decided: stop; the allow-list is tied to the April dump, so re-run the
+      inventory on the real live backup and have Nitin re-sign the file** (ADR-032 Stage B gate 2). Exit 1 = an allow-list
+      line was refused; exit 3 = a guard refused (maintenance, fingerprint). It never grants
+      `local/sentientia_org:manage`, `:manage_multiorganizations` or `local/sentientia_platform:crosstenant`.
+   f. **ADR-031 role configuration (added 2026-09-29):** the role-9 core-cap script and the
       platform-role script, dry run first, then the read-only WS smoke — migration plan §4f-f.
-      These scripts are UAT-locked today; they need a target guard first.
-   f. **Site theme (added 2026-10-01):** production's `$CFG->theme` is `epsilon`, which is not in the
+      The four scripts run in target mode (`--target=<wwwroot> --config=<absolute config.php>`, 2026-09-30); copy them from
+      `tools/uat/` first, they are not in the package. `--accept-nonsystem-holders` is Nitin's decision, never the operator's.
+   g. **Site theme (added 2026-10-01):** production's `$CFG->theme` is `epsilon`, which is not in the
       package, so pages fall back to stock boost (seen in the 2026-10-01 rehearsal upgrade log).
       `php admin/cli/cfg.php --name=theme --set=sentientia`; April has no user/course/category/cohort
       overrides (migration plan §8 step 7).
@@ -114,6 +166,37 @@ MariaDB 10.11 (16 MB buffer pool): 22 to 30 s for the baseline, 25 s for a compa
    data at this point, so every table must match, the five core tables the import will write included.
 5a. **The BizLMS import and its proof (ADR-032 "Build and run order", cutover slice):** snapshot, maintenance on, cron off,
    `noemailever` on, arm the guard, then `import_bizlms.php --preflight --all ...` and `--all --apply ... --report=FILE`.
+   **The guard commands** (kit step 08; `--apply` refuses, exit 3, naming the missing condition, unless all of them hold):
+   ```
+   php admin/cli/cron.php --disable                       # cron_enabled = 0; the guard fails closed on anything else
+   php admin/cli/maintenance.php --enable                 # CLI maintenance (climaintenance.html); web maintenance does not count
+   #   $CFG->noemailever = true in config.php (check: php admin/cli/cfg.php --name=noemailever prints 1)
+   #   the standard log store on: php admin/cli/cfg.php --component=tool_log --name=enabled_stores must list logstore_standard
+   #   no task marked running: a restored backup taken during a live cron can carry task_adhoc / task_scheduled rows with
+   #   timestarted set; the guard counts them as running ('a_scheduled_or_adhoc_task_is_running'): reset them
+   php admin/cli/cfg.php --component=local_sentientia_platform --name=bizlms_import_armed_until --set=$(( $(date +%s) + 14400 ))
+   php admin/cli/cfg.php --component=local_sentientia_platform --name=bizlms_production --set=1    # cutover only: no --allow-online,
+                                                           # no --purge-feature, --expect-decisions-hash becomes required
+   php local/sentientia_platform/cli/import_bizlms.php --status     # prints the --confirm fingerprint and the facts the guard
+                                                           # sees: maintenance true, noemailever true, standard_log true,
+                                                           # cron_enabled false, running_tasks 0, armed_seconds_left > 0
+   ```
+   The grant window expires by itself (4 hours here); a clean `--all` run clears it. Cron cannot run while CLI maintenance
+   is on (`cron.php` refuses), so after the import lift maintenance before the first cron cycle (kit step 11).
+
+   **Where the decisions hash comes from.** The importer hashes `bizlms-import-decisions.json` itself (`decisions::hash()`: the
+   SHA-256 of the file with CRLF normalised to LF, so a Windows and a Linux checkout agree; for an LF file it equals
+   `sha256sum`). Every run that is given `--report=FILE`, a dry run included, writes it to the report JSON as
+   `meta.decisions_hash`. The rehearsal records it from its dry run and checks that the apply report carries the same one:
+   ```
+   php local/sentientia_platform/cli/import_bizlms.php --all --decisions=<file> --report=/vault/import-dryrun.json
+   php tools/rehearsal/lib/json_get.php /vault/import-dryrun.json meta.decisions_hash        # 64 hex characters
+   ```
+   (kit step 09 stores it in `state/kv/import.decisions_hash` and prints it in the summary). **That value is what cutover day
+   passes** as `--expect-decisions-hash=<hash>` to `import_bizlms.php` (`--apply`, `--verify`) and to
+   `migration_parity_check.php --after-import`: the rehearsed decisions are the ones that run, and a change to the file after the
+   rehearsal is a re-approval event. With `bizlms_production = 1` the apply refuses without it.
+
    Then
    `php local/sentientia_platform/cli/migration_parity_check.php --compare=/vault/live-baseline.json --after-import --decisions=<the rehearsed decisions> [--expect-decisions-hash=<hash>] [--run=<id>] [--report=<the --report file>]`
    → exit 0, or exit 2 with Nitin's written acceptance. It holds everything to the SOURCE baseline except what the import
