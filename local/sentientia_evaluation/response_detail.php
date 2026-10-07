@@ -27,12 +27,16 @@ $PAGE->set_context($ctx);
 $PAGE->set_url(new moodle_url('/local/sentientia_evaluation/response_detail.php', ['id' => $id]));
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title('Response detail');
-$PAGE->set_heading('Response detail — ' . format_string($evaluation->name));
+// set_heading() applies format_string() itself, so it is given the raw name (format_string() here escaped it twice).
+$PAGE->set_heading('Response detail — ' . $evaluation->name);
 require_capability('local/sentientia_evaluation:view', $ctx);
 // ADR-031: one respondent's answers only for an evaluation in the caller's
 // tenant (in place before this page is ever re-enabled - :view is not
 // declared, so today it is dead for everyone).
 \local_sentientia_evaluation\evaluation_manager::require_evaluation_access($evaluation);
+// An invited user's pending shell row (timesubmitted 0) is an invitation, not a response: refuse it, so it is never
+// shown as their answer.
+\local_sentientia_evaluation\evaluation_manager::require_submitted_response($response);
 
 // Anonymous check — if evaluation is anonymous, don't reveal userid.
 // 2026-09-25: sticky (evaluation_manager::identity_protected()) - anonymous
@@ -53,7 +57,7 @@ $q_rows = $detail['questions'];
 
 $data = [
     'response_id'   => (int) $response->id,
-    'eval_name'     => format_string($evaluation->name),
+    'eval_name'     => \local_sentientia_evaluation\evaluation_manager::display_text($evaluation->name),
     'eval_id'       => (int) $evaluation->id,
     'submitted_at'  => $is_anonymous_eval
         ? \local_sentientia_evaluation\evaluation_manager::submitted_label(
@@ -62,7 +66,8 @@ $data = [
     'kirkpatrick'   => (string) ($evaluation->kirkpatrick_level ?? '—'),
 
     'is_anonymous'  => $is_anonymous_eval,
-    'user_name'     => $user ? trim($user->firstname . ' ' . $user->lastname) : '(anonymous)',
+    'user_name'     => $user ? trim($user->firstname . ' ' . $user->lastname)
+        : get_string('eval_response_responder_anonymous', 'local_sentientia_evaluation'),
     'user_email'    => $user ? (string) $user->email : '',
     'employee_id'   => $user ? (string) ($user->open_employeeid ?? '') : '',
 

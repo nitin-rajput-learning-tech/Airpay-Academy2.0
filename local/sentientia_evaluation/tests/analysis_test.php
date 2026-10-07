@@ -701,4 +701,72 @@ final class analysis_test extends \advanced_testcase {
         $this->assertSame([false, false, false], array_column($m['histogram'], 'is_my_choice'));
         $this->assertFalse($n['has_my_answer']);
     }
+
+    // ─── follow-ups of the review of the evaluation follow-ups (2026-10-07) ───
+
+    /**
+     * response_detail.php opens any response id. A pending shell (timesubmitted 0) is an invitation, not a response,
+     * and is refused; a submitted response is not.
+     */
+    public function test_a_pending_shell_is_not_a_response_to_open(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $eid = $this->seed_eval('Shell guard', 1);
+        $q = $this->seed_question($eid, 'rating');
+        $real = $this->seed_response($eid, (int) $this->getDataGenerator()->create_user()->id, [$q => 4], time());
+        $shell = $this->seed_response($eid, (int) $this->getDataGenerator()->create_user()->id, [], 0);
+
+        evaluation_manager::require_submitted_response(
+            $DB->get_record('local_sentientia_evaluation_responses', ['id' => $real], '*', MUST_EXIST));
+        $this->addToAssertionCount(1);
+
+        $this->expectException(\moodle_exception::class);
+        $this->expectExceptionMessage(get_string('invalidresponse', 'local_sentientia_evaluation'));
+        evaluation_manager::require_submitted_response(
+            $DB->get_record('local_sentientia_evaluation_responses', ['id' => $shell], '*', MUST_EXIST));
+    }
+
+    /**
+     * Mustache reads the text "0" as false. A choice whose text is "0" used to vanish from the response detail page
+     * (the row was inside {{#label}}) together with the respondent's pick on it; rows are keyed on is_option and
+     * is_level now, and the name and options reach the page escaped exactly once.
+     */
+    public function test_a_choice_whose_text_is_zero_stays_on_the_response_detail_page(): void {
+        global $DB, $OUTPUT, $PAGE;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $eid = $this->seed_eval('Tom & Jerry', 1);
+        $choice = evaluation_manager::create_question((object) [
+            'evaluationid' => $eid, 'questiontype' => 'multichoice', 'questiontext' => 'How many?',
+            'options' => "0\n1\nTom & Jerry", 'required' => 0,
+        ]);
+        $rating = evaluation_manager::create_question((object) [
+            'evaluationid' => $eid, 'questiontype' => 'rating', 'questiontext' => 'Overall', 'required' => 0,
+        ]);
+        $rid = $this->put_answers($eid, [$choice => '0', $rating => 3]);
+
+        $form = evaluation_manager::get($eid);
+        $detail = evaluation_manager::response_detail_rows($form,
+            $DB->get_record('local_sentientia_evaluation_responses', ['id' => $rid], '*', MUST_EXIST));
+        [$c, $r] = $detail['questions'];
+        $this->assertSame(['0', '1', 'Tom & Jerry'], array_column($c['histogram'], 'label'));
+        $this->assertSame([true, true, true], array_column($c['histogram'], 'is_option'));
+        $this->assertSame([true, false, false], array_column($c['histogram'], 'is_my_choice'), 'the "0" pick is kept');
+        $this->assertSame([true, true, true, true, true], array_column($r['histogram'], 'is_level'));
+
+        $PAGE->set_url('/local/sentientia_evaluation/response_detail.php', ['id' => $rid]);
+        $html = $OUTPUT->render_from_template('local_sentientia_evaluation/response_detail', [
+            'response_id' => $rid, 'eval_name' => evaluation_manager::display_text($form->name), 'eval_id' => $eid,
+            'submitted_at' => '1 Jan', 'kirkpatrick' => '1', 'is_anonymous' => true, 'user_name' => '',
+            'user_email' => '', 'employee_id' => '', 'questions' => $detail['questions'],
+            'question_count' => count($detail['questions']), 'total_responses' => $detail['total_responses'],
+            'back_url' => '/back', 'analysis_url' => '/analysis',
+        ]);
+        $this->assertSame(3, substr_count($html, '<div style="width:160px;" class="small">'), 'one row per option');
+        $this->assertStringContainsString('<div style="width:160px;" class="small">0</div>', $html);
+        $this->assertStringContainsString('<div style="width:160px;" class="small">Tom &amp; Jerry</div>', $html);
+        $this->assertStringContainsString('<h2 class="mb-0">Tom &amp; Jerry</h2>', $html);
+        $this->assertStringNotContainsString('&amp;amp;', $html, 'escaped once, not twice');
+    }
 }

@@ -315,3 +315,6 @@ $string['questiontype_multichoice_multi_short'] = 'बहुविकल्प (
 $string['questiontype_numeric_short'] = 'संख्या';
 $string['questions_numeric_atleast'] = 'अनुमत सीमा: कम से कम {$a}';
 $string['questions_numeric_atmost'] = 'अनुमत सीमा: अधिकतम {$a}';
+
+// 2026-10-07 (मूल्यांकन फ़ॉलो-अप की समीक्षा)।
+$string['invalidresponse'] = 'प्रतिक्रिया नहीं मिली।';

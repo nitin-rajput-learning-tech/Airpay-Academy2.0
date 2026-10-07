@@ -1430,6 +1430,38 @@ class evaluation_manager {
     }
 
     /**
+     * Refuse a response row that is not a submission.
+     *
+     * The trigger queue writes a pending "shell" for an invited user (timesubmitted 0, response_data '{}'): an
+     * invitation, not a response. response_detail.php opens any response id, so without this it showed the shell as
+     * the invitee's answer: their name, "submitted 1 Jan 1970" and every question unanswered.
+     *
+     * @param \stdClass $response a responses row
+     * @return void
+     * @throws \moodle_exception invalidresponse when the row is a shell
+     */
+    public static function require_submitted_response(\stdClass $response): void {
+        if ((int) ($response->timesubmitted ?? 0) <= 0) {
+            throw new \moodle_exception('invalidresponse', 'local_sentientia_evaluation');
+        }
+    }
+
+    /**
+     * Text for a template that prints it with {{ }}.
+     *
+     * Mustache escapes once, in the template, so the text is filtered here (multilang tags and the like) and NOT
+     * escaped as well: format_string() with its default would turn "Tom & Jerry" into "Tom &amp; Jerry" and the
+     * template into "Tom &amp;amp; Jerry". $PAGE->set_heading(), set_title() and the navbar apply format_string()
+     * themselves, so they are given the raw text instead.
+     *
+     * @param string|null $text
+     * @return string
+     */
+    public static function display_text(?string $text): string {
+        return format_string((string) $text, true, ['escape' => false]);
+    }
+
+    /**
      * May this evaluation no longer be made non-anonymous? True when it is
      * anonymous and somebody has already answered it (update() refuses the
      * change; edit_evaluation shows the reason).
@@ -2373,9 +2405,11 @@ class evaluation_manager {
      *
      * Per row: qid, type, text, required, anonymous, my_answer (a tick-all answer joined with ', '; empty when
      * unanswered), has_my_answer, response_count (how many people answered this question) and, by type:
-     *  - rating: max_rating, avg and a histogram of levels (level, count, pct, is_my_choice);
-     *  - multichoice, multichoice_multi: a histogram per option (label, count, pct, is_my_choice) - for the
-     *    tick-all type the count is of respondents who ticked the option, so the shares can exceed 100% together;
+     *  - rating: max_rating, avg and a histogram of levels (is_level, level, count, pct, is_my_choice);
+     *  - multichoice, multichoice_multi: a histogram per option (is_option, label, count, pct, is_my_choice) - for
+     *    the tick-all type the count is of respondents who ticked the option, so the shares can exceed 100%
+     *    together. The template keys its rows on is_level / is_option, never on level / label (an option whose text
+     *    is "0" is falsy to Mustache);
      *  - numeric: avg, has_avg and avg_label.
      *
      * @param \stdClass $evaluation the evaluation record
@@ -2439,6 +2473,7 @@ class evaluation_manager {
                 for ($i = 1; $i <= $row['max_rating']; $i++) {
                     $n = count(array_filter($vals, static fn($v) => is_numeric($v) && (int) $v === $i));
                     $hist[] = [
+                        'is_level' => true,
                         'level' => $i,
                         'count' => $n,
                         'pct'   => $count > 0 ? round(100 * $n / $count, 1) : 0,
@@ -2457,7 +2492,10 @@ class evaluation_manager {
                             $n++;
                         }
                     }
+                    // is_option is the template's section key, not label: Mustache reads the text "0" as false, so a
+                    // choice whose text is "0" would be dropped from the histogram with the respondent's pick on it.
                     $hist[] = [
+                        'is_option' => true,
                         'label' => $text($option),
                         'count' => $n,
                         'pct'   => $count > 0 ? round(100 * $n / $count, 1) : 0,

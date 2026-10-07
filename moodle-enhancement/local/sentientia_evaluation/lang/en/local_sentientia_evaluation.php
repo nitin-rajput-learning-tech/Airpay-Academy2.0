@@ -306,3 +306,6 @@ $string['questiontype_multichoice_multi_short'] = 'Multiple choice (several)';
 $string['questiontype_numeric_short'] = 'Number';
 $string['questions_numeric_atleast'] = 'Allowed range: at least {$a}';
 $string['questions_numeric_atmost'] = 'Allowed range: at most {$a}';
+
+// 2026-10-07 (review of the evaluation follow-ups).
+$string['invalidresponse'] = 'Response not found.';
