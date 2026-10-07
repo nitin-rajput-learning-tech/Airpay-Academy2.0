@@ -1270,7 +1270,7 @@ mechanism stays: a declared key carried as `finance-confirm` still blocks that f
 - Classroom QR check-in time window: decided by the fixes-0930 merge b59adb58c (30 minutes before the start to 30 minutes after the
   end). Which notification types have no Sentientia sender once BizLMS stops sending: COMMS-N7
   (`gaps.notification_sender_parity = build_flagged_off`, mapping doc section 21, G10).
-- Orphaned BizLMS enrol instances (gap G6) -> convert each enrolment to a manual enrolment in the same course (status, start and end kept; original instance in the legacy map) -> the instances have no plugin code, so nobody can manage them (no unenrol, suspend or expiry handling) while core keeps granting access through any enabled instance (2026-10-07 decision XC-G6-WHY corrects the earlier reason, 'these learners would lose course access', which core does not do). Each fully converted instance is then disabled when proven per (user, course) pair (CRS-01). Verified at the rehearsal.
+- Orphaned BizLMS enrol instances (gap G6) -> convert each enrolment to a manual enrolment in the same course (status, start and end kept; original instance in the legacy map) -> the instances have no plugin code, so nobody can manage them (no unenrol, suspend or expiry handling) while core keeps granting access through any enabled instance (2026-10-07 decision XC-G6-WHY corrects the earlier reason, 'these learners would lose course access': core keeps granting access through an enabled instance whether or not its plugin is on disk). Each fully converted instance is then disabled when proven per (user, course) pair (CRS-01). Verified at the rehearsal.
 
 ## Owner decisions, 2026-10-07 (delegated)
 

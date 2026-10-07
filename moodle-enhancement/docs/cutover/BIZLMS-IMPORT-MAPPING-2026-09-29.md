@@ -369,8 +369,8 @@ audit row: action 'role_assigned', roleshortname snapshot, contextid, targetuser
   (warning `user_without_tenant`), because ADR-031 decisions 4 and 6 say no tenant means nothing: a scoped
   `roles:assign` may only assign to users in the actor's own tenant, so the native UI could never make that grant,
   and BizLMS never read these tables. A row with nobody left is skipped with the needs-owner reason
-  `user_outside_org_tenant` (checked first) or `user_without_tenant`; a role without the coursecat level is skipped
-  `role_not_assignable`. None of the three is pre-accepted (IDN-02): the owner accepts each with its Stage B count.
+  `user_outside_org_tenant` (checked first), else `user_without_tenant`, else the existing `no_valid_user`; a role without
+  the coursecat level is skipped `role_not_assignable`. None of the three is pre-accepted (IDN-02): the owner accepts each with its Stage B count.
   Signed key `org_roles.user_without_tenant = skip_fail_closed`. April: both tables are empty and the only pathless
   live user is a site admin, who already holds every capability at every category, so the change alters nothing today.
 - **Side effects:** insert directly; never `role_assign()` (it fires `role_assigned`, as
