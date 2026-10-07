@@ -108,6 +108,35 @@ final class list_programs_test extends \advanced_testcase {
     }
 
     /**
+     * The "Enrolled" column counts the same learners the program page does: an enrolment of a deleted user is
+     * imported history (ADR-032, decision program.deleted_users = import) and the readers do not count it.
+     */
+    public function test_enrolled_count_does_not_include_deleted_users(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+
+        $programid = $this->seed_program('Counted', '/1', 1);
+        $live = $this->getDataGenerator()->create_user();
+        $gone = $this->getDataGenerator()->create_user();
+        foreach ([$live, $gone] as $user) {
+            $DB->insert_record('local_sentientia_programs_users', (object) [
+                'programid' => $programid, 'userid' => $user->id, 'currentlevelid' => null, 'status' => 0,
+                'timecreated' => time(), 'timecompleted' => null, 'enrolledby' => 0, 'timemodified' => time(),
+            ]);
+        }
+        $DB->set_field('user', 'deleted', 1, ['id' => $gone->id]);
+
+        $this->setAdminUser();
+        $result = list_programs::execute('', 'name', 'asc', 0, 25, '{}');
+
+        $this->assertCount(1, $result['rows']);
+        $this->assertSame(1, (int) $result['rows'][0]['enrolled']);
+        $this->assertSame(1, \local_sentientia_programs\program_manager::count_enrolled($programid),
+            'the programs list and the program page agree');
+    }
+
+    /**
      * Sort whitelist: bogus sort key falls back to 'name'.
      */
     public function test_sort_whitelist_rejects_bogus_column(): void {
