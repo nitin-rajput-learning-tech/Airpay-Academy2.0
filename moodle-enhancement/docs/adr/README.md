@@ -32,7 +32,12 @@ accepted; superseded decisions get a new ADR that references the old one.
 | [ADR-025](ADR-025-component-rename-airpay-to-sentientia.md) | Component rename `local_airpay_*` → `local_sentientia_*` (executes ADR-022) | **COMPLETE** — 35 plugins renamed | 2026-06-08 |
 | [ADR-026](ADR-026-theme-cutover-and-canonicalization.md) | Theme cutover & canonicalization (`theme_airpayux → theme_sentientia`) | Accepted — Move 1 ready · Move 2 gated on 5.2 | 2026-06-09 |
 | [ADR-027](ADR-027-quality-gate-system.md) | Quality-gate system (stop auditing, start gating) + surface-upgrade workstream | Accepted — Gate 0 shipped · Gates 1–3 staged | 2026-06-09 |
-| [ADR-028](ADR-028-reconciled-product-roadmap.md) | Reconciled product roadmap: ship-and-prove, parallel tracks (supersedes the 3 coexisting strategy docs as roadmap) | **Accepted** — memo signed same day; freeze rejected (Q1=a), full trust funding (Q3=b), native app funded (Q5), "5.2 now" | 2026-08-04 |
+| [ADR-028](ADR-028-reconciled-product-roadmap.md) | Reconciled product roadmap: ship-and-prove, parallel tracks (supersedes the 3 coexisting strategy docs as roadmap) | **Accepted** — memo signed same day; freeze rejected (Q1=a), full trust funding (Q3=b), native app funded (Q5), "5.2 now" (platform target amended by ADR-033) | 2026-08-04 |
+| [ADR-029](ADR-029-keka-jml-hardening.md) | KeKa JML hardening: gated webhook, canonical sync path, real mandatory-course definition | **Accepted** — implemented on `claude/gap-integration` | 2026-08-07 |
+| [ADR-030](ADR-030-scim-and-outbound-webhooks.md) | SCIM 2.0 provisioning + outbound webhooks (ADR-028 Phase 2.4) | **Implemented** — waves A–C, all flag-OFF | 2026-08-28 |
+| [ADR-031](ADR-031-cross-tenant-authority.md) | One cross-tenant authority; tenant scope fails closed | **Accepted** (Nitin) | 2026-09-25 |
+| [ADR-032](ADR-032-bizlms-data-import.md) | Import BizLMS feature data through one shared framework | **Proposed**; import decided 2026-09-29, owner choices signed 2026-09-30, rest decided under delegation 2026-10-07 | 2026-09-29 |
+| [ADR-033](ADR-033-target-moodle-5.3-lts.md) | Target Moodle 5.3 LTS instead of 5.2 | **Accepted** on Nitin's instruction, subject to the compatibility gate; 5.2 stays the fallback | 2026-10-07 |
 
 > Complete index — every ADR on disk is listed (ADR-006/007 were never assigned;
 > the numbering gap is intentional). ADR-022's component-rename plan was executed by
