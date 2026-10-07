@@ -11,12 +11,16 @@ use local_sentientia_platform\feature_flags;
 /**
  * The individual responses pages (response_list.php, response_detail.php) and their gate (EV-06).
  *
- * The two pages asked for local/sentientia_evaluation:view, which no plugin declares, so nobody could open them,
- * site administrators included. They now ask for :manage (the manager archetype: manager, tenant administrator, site
- * administrator) behind the default-OFF flag sentientia.evaluation.response_drilldown, and the ADR-031 tenant gate
- * and identity_protected() are unchanged. The pages themselves are scripts, so the gate lives in
- * evaluation_manager::require_response_drilldown() and the tests call it as the pages do, then check the pages
- * call it first.
+ * The two pages asked for local/sentientia_evaluation:view, which no plugin declares, so nobody could open them, site
+ * administrators included. They now ask for :manage (the manager archetype: manager, tenant administrator, site
+ * administrator) behind the default-OFF flag sentientia.evaluation.response_drilldown, and the ADR-031 tenant gate and
+ * identity_protected() are unchanged. The pages themselves are scripts, so the gate lives in
+ * evaluation_manager::require_response_drilldown_capability() (before anything is read) and
+ * evaluation_manager::require_response_drilldown() (once the evaluation is loaded), and the tests call them as the
+ * pages do, then check the pages call them in that order.
+ *
+ * Review round of 2026-10-07: the flag is read for the EVALUATION's tenant, not the viewer's, and an evaluation whose
+ * respondents are protected offers no individual responses at all (a notice and the totals).
  *
  * @package    local_sentientia_evaluation
  * @category   test
@@ -116,9 +120,19 @@ final class response_drilldown_test extends \advanced_testcase {
         return $u;
     }
 
+    /**
+     * Set (or, with null, unset) the flag at a tenant. The writer is named, so the current user is left alone.
+     *
+     * @param int $tenant 0 = customer-wide / global
+     * @param bool|null $value
+     * @return void
+     */
+    private function set_flag(int $tenant, ?bool $value): void {
+        feature_flags::set(evaluation_manager::FLAG_RESPONSE_DRILLDOWN, $tenant, $value, (int) get_admin()->id);
+    }
+
     private function flag_on(): void {
-        $this->setAdminUser();
-        feature_flags::set(evaluation_manager::FLAG_RESPONSE_DRILLDOWN, 0, true);
+        $this->set_flag(0, true);
     }
 
     /**
@@ -134,6 +148,22 @@ final class response_drilldown_test extends \advanced_testcase {
         }
     }
 
+    /**
+     * One response row.
+     *
+     * @param \stdClass $evaluation
+     * @param int $userid 0 = an anonymous answer
+     * @return \stdClass
+     */
+    private function response(\stdClass $evaluation, int $userid): \stdClass {
+        global $DB;
+        $id = (int) $DB->insert_record('local_sentientia_evaluation_responses', (object) [
+            'evaluationid' => $evaluation->id, 'userid' => $userid, 'response_data' => '{}',
+            'timesubmitted' => time(),
+        ]);
+        return $DB->get_record('local_sentientia_evaluation_responses', ['id' => $id], '*', MUST_EXIST);
+    }
+
     public function test_the_flag_is_registered_and_off_by_default(): void {
         feature_flags::invalidate_caches();
         $registry = feature_flags::load_registry();
@@ -142,17 +172,19 @@ final class response_drilldown_test extends \advanced_testcase {
         $this->assertSame('sentientia.evaluation.response_drilldown', evaluation_manager::FLAG_RESPONSE_DRILLDOWN);
         $this->assertNotSame('', trim($registry['sentientia.evaluation.response_drilldown']['description']));
         $this->assertFalse(evaluation_manager::response_drilldown_enabled());
+        $this->assertFalse(evaluation_manager::response_drilldown_enabled($this->evaluation('Any', '/1')));
     }
 
     public function test_with_the_flag_off_even_a_tenant_admin_is_told_it_is_not_available(): void {
+        $own = $this->evaluation('Own tenant', '/1');
         $this->setUser($this->tenant_admin('/1'));
-        $this->assertFalse(evaluation_manager::response_drilldown_enabled());
+        $this->assertFalse(evaluation_manager::response_drilldown_enabled($own));
         $this->assertSame('response_drilldown_unavailable',
-            $this->refusal(static fn() => evaluation_manager::require_response_drilldown()));
+            $this->refusal(static fn() => evaluation_manager::require_response_drilldown($own)));
         // Site administrators too: the flag, not the role, decides whether the pages exist.
         $this->setAdminUser();
         $this->assertSame('response_drilldown_unavailable',
-            $this->refusal(static fn() => evaluation_manager::require_response_drilldown()));
+            $this->refusal(static fn() => evaluation_manager::require_response_drilldown($own)));
         $this->assertTrue(get_string_manager()->string_exists('response_drilldown_unavailable',
             'local_sentientia_evaluation'));
     }
@@ -164,20 +196,75 @@ final class response_drilldown_test extends \advanced_testcase {
         $this->flag_on();
 
         $this->setUser($admin);
-        $this->assertTrue(evaluation_manager::response_drilldown_enabled());
-        evaluation_manager::require_response_drilldown();
+        $this->assertTrue(evaluation_manager::response_drilldown_enabled($own));
+        evaluation_manager::require_response_drilldown_capability();
+        evaluation_manager::require_response_drilldown($own);
         evaluation_manager::require_evaluation_access($own);
         $this->assertSame('error_outoftenant',
-            $this->refusal(static fn() => evaluation_manager::require_evaluation_access($foreign)),
-            'ADR-031 still applies behind the flag');
+            $this->refusal(static fn() => evaluation_manager::require_response_drilldown($foreign)),
+            'ADR-031 still applies behind the flag, and it answers first');
 
         // The site administrator is cross-tenant: both.
         $this->setAdminUser();
-        evaluation_manager::require_response_drilldown();
-        evaluation_manager::require_evaluation_access($foreign);
+        evaluation_manager::require_response_drilldown($own);
+        evaluation_manager::require_response_drilldown($foreign);
+    }
+
+    /**
+     * Review round of 2026-10-07: require_response_drilldown() read the flag for the VIEWER's customer and tenant. A
+     * cross-tenant administrator whose own scope has it ON could open a tenant where it is OFF. It is read for the
+     * evaluation's tenant now.
+     */
+    public function test_the_flag_is_read_for_the_evaluations_tenant_not_the_viewers(): void {
+        $first = $this->evaluation('Tenant one', '/1');
+        $other = $this->evaluation('Tenant one hundred seventy-seven', '/177');
+
+        // ON everywhere, OFF for tenant 177: the site administrator's own scope (no tenant) says ON.
+        $this->flag_on();
+        $this->set_flag(177, false);
+        $this->setAdminUser();
+        $this->assertTrue(evaluation_manager::response_drilldown_enabled(), 'the viewer\'s own scope says ON');
+        evaluation_manager::require_response_drilldown($first);
+        $this->assertTrue(evaluation_manager::response_drilldown_enabled($first));
+        $this->assertFalse(evaluation_manager::response_drilldown_enabled($other));
+        $this->assertSame('response_drilldown_unavailable',
+            $this->refusal(static fn() => evaluation_manager::require_response_drilldown($other)),
+            'a cross-tenant admin cannot open a tenant where the flag is OFF');
+
+        // The other way round: OFF by default, ON for tenant 177 only. The viewer's scope says OFF, the evaluation's ON.
+        $this->set_flag(177, null);
+        $this->set_flag(0, null);
+        $this->set_flag(177, true);
+        $this->assertFalse(evaluation_manager::response_drilldown_enabled(), 'the viewer\'s own scope says OFF');
+        evaluation_manager::require_response_drilldown($other);
+        $this->assertSame('response_drilldown_unavailable',
+            $this->refusal(static fn() => evaluation_manager::require_response_drilldown($first)));
+
+        // A tenant administrator is held to their own tenant first, and then to that tenant's flag.
+        $admin177 = $this->tenant_admin('/177');
+        $this->setUser($admin177);
+        evaluation_manager::require_response_drilldown($other);
+        $this->assertSame('error_outoftenant',
+            $this->refusal(static fn() => evaluation_manager::require_response_drilldown($first)),
+            'another tenant is refused as out of tenant, whatever its flag says');
+    }
+
+    public function test_the_flag_scope_of_an_evaluation_is_its_tenant(): void {
+        $this->assertSame([\local_sentientia_platform\customer::AIRPAY, 1],
+            evaluation_manager::flag_scope($this->evaluation('One', '/1')));
+        $this->assertSame(177, evaluation_manager::flag_scope((object) ['open_path' => '/177/5/9', 'costcenterid' => 12])[1],
+            'the root of the path, not the org the form is bound to');
+        $this->assertSame(77, evaluation_manager::flag_scope((object) ['open_path' => null, 'costcenterid' => 77])[1],
+            'tenant-bound but pathless: /<costcenterid>, as evaluation_engine reads it');
+        $this->assertSame(0, evaluation_manager::flag_scope((object) ['open_path' => '', 'costcenterid' => 0])[1],
+            'a global evaluation or an imported form no clue could place belongs to no tenant');
+        $this->assertSame(0, evaluation_manager::flag_scope((object) ['open_path' => 'abc', 'costcenterid' => 0])[1]);
+        $this->assertSame(0, evaluation_manager::flag_scope((object) [])[1]);
+        $this->assertGreaterThan(0, evaluation_manager::flag_scope((object) [])[0], 'always a customer');
     }
 
     public function test_a_learner_and_a_trainer_are_refused_with_the_flag_on_or_off(): void {
+        $own = $this->evaluation('Own tenant', '/1');
         $learner = $this->user_at('/1');
         $this->give_role($learner, 'student');
         $trainer = $this->trainer('/1');
@@ -195,54 +282,173 @@ final class response_drilldown_test extends \advanced_testcase {
                     'a user with no role' => $nobody] as $who => $user) {
                 $this->setUser($user);
                 $this->assertFalse(has_capability('local/sentientia_evaluation:manage', \context_system::instance()), $who);
-                try {
-                    evaluation_manager::require_response_drilldown();
-                    $this->fail($who . ' should be refused (flag ' . ($on ? 'on' : 'off') . ')');
-                } catch (\required_capability_exception $e) {
-                    // The capability is checked before the flag, so a caller who may not be here learns nothing
-                    // about whether the flag is on.
-                    $this->assertSame('nopermissions', $e->errorcode, $who);
+                foreach ([static fn() => evaluation_manager::require_response_drilldown_capability(),
+                        static fn() => evaluation_manager::require_response_drilldown($own)] as $gate) {
+                    try {
+                        $gate();
+                        $this->fail($who . ' should be refused (flag ' . ($on ? 'on' : 'off') . ')');
+                    } catch (\required_capability_exception $e) {
+                        // The capability is checked before the tenant and the flag, so a caller who may not be here
+                        // learns nothing about whether the flag is on.
+                        $this->assertSame('nopermissions', $e->errorcode, $who);
+                    }
                 }
             }
         }
     }
 
-    public function test_the_two_pages_call_the_gate_first_and_no_longer_ask_for_the_undeclared_capability(): void {
+    public function test_the_two_pages_gate_in_order_and_no_longer_ask_for_the_undeclared_capability(): void {
         foreach (['response_list.php', 'response_detail.php'] as $page) {
             $source = (string) file_get_contents(__DIR__ . '/../' . $page);
             $this->assertStringNotContainsString('sentientia_evaluation:view', $source, $page);
-            $gate = strpos($source, 'evaluation_manager::require_response_drilldown()');
-            $this->assertNotFalse($gate, $page . ' calls the gate');
-            $this->assertLessThan(strpos($source, 'required_param('), $gate, $page . ' gates before it reads anything');
-            $this->assertLessThan(strpos($source, '$DB->get_record('), $gate, $page . ' gates before it queries');
-            $this->assertGreaterThan($gate, strpos($source, 'require_evaluation_access('), $page . ' keeps the ADR-031 gate');
+
+            // 1. The capability, before the page reads anything.
+            $capability = strpos($source, 'evaluation_manager::require_response_drilldown_capability()');
+            $this->assertNotFalse($capability, $page . ' asks for the capability');
+            $this->assertLessThan(strpos($source, 'required_param('), $capability, $page . ' gates before it reads anything');
+            $this->assertLessThan(strpos($source, '$DB->get_record('), $capability, $page . ' gates before it queries');
+
+            // 2. Tenant and flag, once the evaluation is loaded, and before the page says anything about it.
+            $gate = strpos($source, 'evaluation_manager::require_response_drilldown($evaluation)');
+            $this->assertNotFalse($gate, $page . ' calls the second step of the gate');
+            $this->assertGreaterThan(strrpos(substr($source, 0, $gate), '$DB->get_record('), $gate,
+                $page . ' loads the evaluation first, so the flag can be read for ITS tenant');
+            $this->assertLessThan(strpos($source, '$OUTPUT->header()'), $gate, $page . ' gates before it renders');
+
+            // 3. A protected evaluation gets the notice, before any response is read or shown.
+            $protected = strpos($source, 'identity_protected($evaluation)');
+            $this->assertNotFalse($protected, $page . ' checks whether respondents are protected');
+            $this->assertGreaterThan($gate, $protected);
+            $notice = strpos($source, 'individual_responses_protected_notice($evaluation)');
+            $this->assertNotFalse($notice, $page . ' answers a protected evaluation with the notice');
+            $this->assertGreaterThan($protected, $notice);
         }
-        // And nothing in the plugin declares or asks for it.
+        $list = (string) file_get_contents(__DIR__ . '/../response_list.php');
+        $this->assertGreaterThan(strpos($list, 'individual_responses_protected_notice($evaluation)'),
+            strpos($list, 'response_list_rows('), 'the list is read only after the notice has had its say');
+        $detail = (string) file_get_contents(__DIR__ . '/../response_detail.php');
+        $noticeat = strpos($detail, 'individual_responses_protected_notice($evaluation)');
+        foreach (['require_submitted_response(', 'response_detail_respondent(', 'response_detail_rows('] as $call) {
+            $this->assertGreaterThan($noticeat, strpos($detail, $call),
+                "response_detail.php reads nothing of the response ({$call}) before the notice");
+        }
+        // And nothing in the plugin declares or asks for the capability the pages used to name.
         $access = (string) file_get_contents(__DIR__ . '/../db/access.php');
         $this->assertStringNotContainsString(':view', $access);
         $this->assertStringContainsString('local/sentientia_evaluation:manage', $access);
     }
 
-    public function test_the_individual_responses_link_follows_the_flag(): void {
-        // responses.php builds has_list_link from response_drilldown_enabled(); with the flag OFF nothing points at
-        // the pages, and with it ON the template draws the link.
-        global $OUTPUT, $PAGE;
+    /**
+     * Review round of 2026-10-07 (anonymity, before the flag is flipped): on a protected evaluation one response on its
+     * own, with its day and the course, program or classroom it came from, can single out a person in a small group,
+     * and the detail page prints that person's free-text answers beside it. Naming nobody is not enough, so neither
+     * page is offered: a notice and the totals.
+     */
+    public function test_a_protected_evaluation_offers_no_individual_responses(): void {
+        global $DB, $PAGE;
         $PAGE->set_url('/local/sentientia_evaluation/responses.php');
-        $render = fn(bool $link): string => $OUTPUT->render_from_template('local_sentientia_evaluation/responses', [
-            'name' => 'Survey', 'description' => '', 'is_anonymous' => false, 'kirkpatrick_label' => '',
-            'evaluationid' => 7, 'total_responses' => 0, 'has_responses' => false, 'questions' => [],
-            'has_questions' => false, 'backurl' => '/b', 'export_url' => '/e', 'reset_url' => '/r',
-            'filter_action_url' => '/f', 'filter_date_from' => '', 'filter_date_to' => '', 'has_filter' => false,
-            'has_list_link' => $link, 'list_url' => 'https://example.invalid/response_list.php?id=7',
+        $named = $this->evaluation('Named', '/1');
+        $anonymousflag = $this->evaluation('Anonymous', '/1', 1);
+        // Named today, but one answer was collected anonymously (userid 0): protected for good.
+        $sticky = $this->evaluation('Once anonymous', '/1');
+        $this->response($sticky, 0);
+        // Named, with one anonymous question.
+        $withquestion = $this->evaluation('Anonymous question', '/1');
+        $DB->insert_record('local_sentientia_evaluation_questions', (object) [
+            'evaluationid' => $withquestion->id, 'questiontype' => 'text', 'questiontext' => 'Say anything',
+            'required' => 0, 'anonymous' => 1, 'sortorder' => 1, 'timecreated' => time(),
         ]);
-        $this->assertStringNotContainsString('response_list.php', $render(false));
-        $html = $render(true);
-        $this->assertStringContainsString('response_list.php?id=7', $html);
-        $this->assertStringContainsString(get_string('responses_individual_link', 'local_sentientia_evaluation'), $html);
 
-        $this->assertFalse(evaluation_manager::response_drilldown_enabled(), 'the page reads the flag, which is OFF');
         $this->flag_on();
-        $this->assertTrue(evaluation_manager::response_drilldown_enabled());
+        $this->assertTrue(evaluation_manager::individual_responses_offered($named));
+        foreach (['the anonymous flag' => $anonymousflag, 'an anonymous answer on record' => $sticky,
+                'an anonymous question' => $withquestion] as $why => $evaluation) {
+            $this->assertTrue(evaluation_manager::identity_protected($evaluation), $why);
+            $this->assertTrue(evaluation_manager::response_drilldown_enabled($evaluation), 'the flag is ON for it');
+            $this->assertFalse(evaluation_manager::individual_responses_offered($evaluation), $why);
+        }
+
+        // The notice says why and leads back to the totals; it carries nothing of any response.
+        $html = evaluation_manager::individual_responses_protected_notice($anonymousflag);
+        $this->assertStringContainsString(get_string('response_list_protected', 'local_sentientia_evaluation'), $html);
+        $this->assertStringContainsString(get_string('response_list_back_to_totals', 'local_sentientia_evaluation'), $html);
+        $this->assertStringContainsString('responses.php?id=' . $anonymousflag->id, $html);
+        $this->assertStringContainsString('data-action="back-to-totals"', $html);
+        $this->assertStringNotContainsString('response_detail.php', $html);
+        $this->assertStringNotContainsString('response_list.php', $html);
+        foreach (['response_list_protected', 'response_list_back_to_totals', 'responses_individual_protected_note'] as $key) {
+            $this->assertTrue(get_string_manager()->string_exists($key, 'local_sentientia_evaluation'), $key);
+            $this->assertNotSame('', get_string($key, 'local_sentientia_evaluation'));
+        }
+    }
+
+    /**
+     * Review round of 2026-10-07 (the link test used to set has_list_link by hand): responses.php takes the link from
+     * evaluation_manager::individual_responses_link(), and this test reads what that returns and renders the template
+     * with it, so a page that hard-coded the link, or a helper that ignored the flag or the protection, fails here.
+     */
+    public function test_the_individual_responses_link_is_built_from_the_flag_and_the_form(): void {
+        global $CFG, $OUTPUT, $PAGE;
+
+        // The page builds nothing of its own: it asks the manager, and holds no link key of its own.
+        $source = (string) file_get_contents(__DIR__ . '/../responses.php');
+        $this->assertStringContainsString('evaluation_manager::individual_responses_link($evaluation)', $source);
+        foreach (['has_list_link', 'list_url', 'list_protected_note', 'response_drilldown_enabled'] as $key) {
+            $this->assertStringNotContainsString($key, $source, "responses.php must not build '{$key}' itself");
+        }
+
+        $named = $this->evaluation('Named', '/1');
+        $protected = $this->evaluation('Anonymous', '/1', 1);
+        $url = $CFG->wwwroot . '/local/sentientia_evaluation/response_list.php?id=' . $named->id;
+
+        $PAGE->set_url('/local/sentientia_evaluation/responses.php');
+        $render = function (\stdClass $evaluation) use ($OUTPUT): string {
+            return $OUTPUT->render_from_template('local_sentientia_evaluation/responses',
+                evaluation_manager::individual_responses_link($evaluation) + [
+                    'name' => 'Survey', 'description' => '', 'is_anonymous' => false, 'kirkpatrick_label' => '',
+                    'evaluationid' => (int) $evaluation->id, 'total_responses' => 0, 'has_responses' => false,
+                    'questions' => [], 'has_questions' => false, 'backurl' => '/b', 'export_url' => '/e',
+                    'reset_url' => '/r', 'filter_action_url' => '/f', 'filter_date_from' => '', 'filter_date_to' => '',
+                    'has_filter' => false,
+                ]);
+        };
+        $link = get_string('responses_individual_link', 'local_sentientia_evaluation');
+        $note = get_string('responses_individual_protected_note', 'local_sentientia_evaluation');
+
+        // Flag OFF: no link and no note, for a named and for a protected evaluation alike.
+        foreach ([$named, $protected] as $evaluation) {
+            $context = evaluation_manager::individual_responses_link($evaluation);
+            $this->assertFalse($context['has_list_link']);
+            $this->assertSame('', $context['list_protected_note']);
+            $html = $render($evaluation);
+            $this->assertStringNotContainsString('response_list.php', $html);
+            $this->assertStringNotContainsString($note, $html);
+        }
+
+        // Flag ON: a named evaluation draws the link, and where it leads is the helper's url.
+        $this->flag_on();
+        $context = evaluation_manager::individual_responses_link($named);
+        $this->assertTrue($context['has_list_link']);
+        $this->assertSame($url, $context['list_url']);
+        $this->assertSame('', $context['list_protected_note']);
+        $html = $render($named);
+        $this->assertStringContainsString('response_list.php?id=' . $named->id, $html);
+        $this->assertStringContainsString($link, $html);
+        $this->assertStringNotContainsString($note, $html);
+
+        // Flag ON, protected: no link, and the page says why.
+        $context = evaluation_manager::individual_responses_link($protected);
+        $this->assertFalse($context['has_list_link']);
+        $this->assertSame($note, $context['list_protected_note']);
+        $html = $render($protected);
+        $this->assertStringNotContainsString('response_list.php', $html);
+        $this->assertStringContainsString($note, $html);
+
+        // The link follows the EVALUATION's tenant: OFF for tenant 177, the other tenant still draws it.
+        $other = $this->evaluation('Elsewhere', '/177');
+        $this->set_flag(177, false);
+        $this->assertFalse(evaluation_manager::individual_responses_link($other)['has_list_link']);
+        $this->assertTrue(evaluation_manager::individual_responses_link($named)['has_list_link']);
     }
 
     /**
@@ -255,11 +461,7 @@ final class response_drilldown_test extends \advanced_testcase {
         $person = $this->getDataGenerator()->create_user(['firstname' => 'Sue', 'lastname' => 'Supervisor']);
         $DB->set_field('user', 'open_employeeid', 'E-1042', ['id' => $person->id]);
         $evaluation = $this->evaluation('Named', '/1');
-        $responseid = (int) $DB->insert_record('local_sentientia_evaluation_responses', (object) [
-            'evaluationid' => $evaluation->id, 'userid' => $person->id, 'response_data' => '{}',
-            'timesubmitted' => time(),
-        ]);
-        $response = $DB->get_record('local_sentientia_evaluation_responses', ['id' => $responseid], '*', MUST_EXIST);
+        $response = $this->response($evaluation, (int) $person->id);
 
         $named = evaluation_manager::response_detail_respondent($response, false);
         $this->assertSame(fullname($DB->get_record('user', ['id' => $person->id], '*', MUST_EXIST)), $named['user_name']);
@@ -270,6 +472,7 @@ final class response_drilldown_test extends \advanced_testcase {
         // The same person, named the same way, by the response list.
         $rows = evaluation_manager::response_list_rows($evaluation, false, false);
         $this->assertSame($named['user_name'], $rows[0]['user_name']);
+        $this->assertSame('E-1042', $rows[0]['employee_id']);
 
         // A protected evaluation names nobody, whatever the row holds.
         $anonymous = get_string('eval_response_responder_anonymous', 'local_sentientia_evaluation');
@@ -282,5 +485,37 @@ final class response_drilldown_test extends \advanced_testcase {
             (object) ['userid' => 0], false)['user_name']);
         $this->assertSame($anonymous, evaluation_manager::response_detail_respondent(
             (object) ['userid' => 987654321], false)['user_name']);
+    }
+
+    /**
+     * Review round of 2026-10-07: open_employeeid belongs to the BizLMS schema. A customer schema without it must not
+     * fail with a database error on either page: the respondent is shown without an employee id.
+     */
+    public function test_the_respondent_pages_do_not_fail_on_a_schema_without_the_bizlms_employee_id(): void {
+        global $DB;
+        $person = $this->getDataGenerator()->create_user(['firstname' => 'Una', 'lastname' => 'Customer']);
+        $evaluation = $this->evaluation('Named', '/1');
+        $response = $this->response($evaluation, (int) $person->id);
+
+        $dbman = $DB->get_manager();
+        $field = new \xmldb_field('open_employeeid');
+        $this->assertTrue($dbman->field_exists('user', $field), 'the fixture added the BizLMS column');
+        $dbman->drop_field(new \xmldb_table('user'), $field);
+        try {
+            $this->assertFalse($dbman->field_exists('user', $field));
+            $named = evaluation_manager::response_detail_respondent($response, false);
+            $this->assertSame(fullname($DB->get_record('user', ['id' => $person->id], '*', MUST_EXIST)), $named['user_name']);
+            $this->assertSame($person->email, $named['user_email']);
+            $this->assertSame('', $named['employee_id'], 'no column, no employee id');
+
+            $rows = evaluation_manager::response_list_rows($evaluation, false, false);
+            $this->assertCount(1, $rows);
+            $this->assertSame($named['user_name'], $rows[0]['user_name']);
+            $this->assertSame('', $rows[0]['employee_id']);
+        } finally {
+            // The column is a fixture of this test database, not part of core: put it back for the tests after this one.
+            $this->ensure_bizlms_schema();
+        }
+        $this->assertTrue($dbman->field_exists('user', $field));
     }
 }

@@ -133,6 +133,11 @@
         </a>
     </div>
 </div>
+{{#list_protected_note}}
+<p class="text-muted small mb-3" data-region="individual-responses-protected">
+    <i class="fa fa-user-secret fa-fw"></i> {{.}}
+</p>
+{{/list_protected_note}}
 
 {{! ── Filter form (G-05) ──────────────────────────────────────────── }}
 <form method="get" action="{{{filter_action_url}}}" class="card border-0 shadow-sm mb-3">

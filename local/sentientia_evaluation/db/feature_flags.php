@@ -36,17 +36,21 @@ $flags = [
                           /local/sentientia_evaluation/response_list.php and response_detail.php
                           asked for a capability that no plugin declares, so nobody could open
                           them, site administrators included. When OFF (default) both pages answer
-                          "not available" and nothing links to them, exactly as before. When ON, a
-                          user who holds local/sentientia_evaluation:manage (the manager
-                          archetype: manager, tenant administrator, site administrator; not
-                          trainers, not employees) and who may manage the evaluation (ADR-031,
+                          "not available" and nothing links to them (until now they failed with "no
+                          permission" for everybody). The flag is read for the EVALUATION\'s tenant,
+                          not the viewer\'s: a cross-tenant administrator cannot open a tenant where
+                          it is OFF. When ON, a user who holds local/sentientia_evaluation:manage
+                          (the manager archetype: manager, tenant administrator, site administrator;
+                          not trainers, not employees) and who may manage the evaluation (ADR-031,
                           their own tenant) sees each submission on its own: the respondent, and
                           for a supervisor form the person it is about, with the answers beside
                           how everybody else answered. A form that is anonymous, or ever held an
-                          anonymous answer, names nobody and shows the day, not the minute. The
-                          flag only gates the two pages and the "Individual responses" link on
-                          responses.php; nothing else changes. Flip it for a customer after the
-                          screenshots of both pages have been reviewed.',
+                          anonymous answer, or has an anonymous question, offers NO individual
+                          responses at all (a notice and the totals only): one response with its
+                          day and its course, program or classroom can single out a person in a
+                          small group. The flag only gates the two pages and the "Individual
+                          responses" link on responses.php; nothing else changes. Flip it for a
+                          customer after the screenshots of both pages have been reviewed.',
     ],
 
 ];

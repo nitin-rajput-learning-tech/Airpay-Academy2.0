@@ -1458,13 +1458,111 @@ class evaluation_manager {
     }
 
     /**
-     * Are the individual responses pages (response_list.php and response_detail.php) switched on for the current
-     * user's customer and tenant?
+     * The (customer, tenant root) a feature flag is read for when the question is about an EVALUATION and not about
+     * whoever is looking at it.
+     *
+     * The tenant is the root of the evaluation's own open_path, as the ADR-031 gate reads it; a tenant-bound evaluation
+     * with no path is '/<costcenterid>', as evaluation_engine and can_respond() treat it. An evaluation with neither (a
+     * global one, or an imported form no clue could place) belongs to no tenant: tenant 0, the customer-wide view, and
+     * the viewer's own customer, since nothing else names one. The customer is the one the tenant belongs to
+     * (customer::of_tenant()).
+     *
+     * @param \stdClass $evaluation record carrying open_path and costcenterid
+     * @return array{0: int, 1: int} [customer id, tenant root or 0]
+     */
+    public static function flag_scope(\stdClass $evaluation): array {
+        $path = trim(trim((string) ($evaluation->open_path ?? '')), '/');
+        $first = $path === '' ? '' : (string) explode('/', $path)[0];
+        $root = ctype_digit($first) ? (int) $first : 0;
+        if ($root <= 0 && (int) ($evaluation->costcenterid ?? 0) > 0) {
+            $root = (int) $evaluation->costcenterid;
+        }
+        $customerid = $root > 0
+            ? \local_sentientia_platform\customer::of_tenant($root)
+            : \local_sentientia_platform\customer::current();
+        return [$customerid, $root];
+    }
+
+    /**
+     * Are the individual responses pages (response_list.php and response_detail.php) switched on?
+     *
+     * For an evaluation: for THAT evaluation's customer and tenant, whoever is looking. A cross-tenant administrator's
+     * own scope used to decide, so one whose scope had the flag ON could open a tenant where it was OFF. Without an
+     * evaluation: for the current user's own customer and tenant (what a page that is about no evaluation yet may ask).
+     *
+     * @param \stdClass|null $evaluation
+     * @return bool
+     */
+    public static function response_drilldown_enabled(?\stdClass $evaluation = null): bool {
+        if ($evaluation === null) {
+            return \local_sentientia_platform\feature_flags::is_enabled(self::FLAG_RESPONSE_DRILLDOWN);
+        }
+        [$customerid, $tenantid] = self::flag_scope($evaluation);
+        return \local_sentientia_platform\feature_flags::is_enabled_for(self::FLAG_RESPONSE_DRILLDOWN, $customerid, $tenantid);
+    }
+
+    /**
+     * Does this evaluation offer its individual responses at all: the flag is ON for its tenant AND respondents are not
+     * protected ({@see self::identity_protected()}).
+     *
+     * An anonymous evaluation, or one that ever held an anonymous answer or has an anonymous question, shows its totals
+     * only. One response on its own, with the day it came in and the course, program or classroom it came from, can be
+     * matched to the person who gave it when the group is small (the list also sorts by the exact time), and the detail
+     * page prints that person's free-text answers beside it. Naming nobody is not enough, so neither page is offered.
+     *
+     * @param \stdClass $evaluation
+     * @return bool
+     */
+    public static function individual_responses_offered(\stdClass $evaluation): bool {
+        return self::response_drilldown_enabled($evaluation) && !self::identity_protected($evaluation);
+    }
+
+    /**
+     * What responses.php needs to say about the individual responses: whether to draw the link, where it goes, and, for
+     * a protected evaluation whose flag is ON, why there is none. Built here so a test can reach it, and so the page
+     * cannot hard-code the link.
+     *
+     * @param \stdClass $evaluation
+     * @return array{has_list_link: bool, list_url: string, list_protected_note: string}
+     */
+    public static function individual_responses_link(\stdClass $evaluation): array {
+        $enabled = self::response_drilldown_enabled($evaluation);
+        $protected = $enabled && self::identity_protected($evaluation);
+        return [
+            'has_list_link'       => $enabled && !$protected,
+            'list_url'            => (new \moodle_url('/local/sentientia_evaluation/response_list.php',
+                ['id' => (int) $evaluation->id]))->out(false),
+            'list_protected_note' => $protected ? get_string('responses_individual_protected_note',
+                'local_sentientia_evaluation') : '',
+        ];
+    }
+
+    /**
+     * The page body response_list.php and response_detail.php show instead of a response, for a protected evaluation:
+     * why there is none, and the way back to the totals.
+     *
+     * @param \stdClass $evaluation
+     * @return string HTML
+     */
+    public static function individual_responses_protected_notice(\stdClass $evaluation): string {
+        global $OUTPUT;
+        return $OUTPUT->notification(get_string('response_list_protected', 'local_sentientia_evaluation'),
+                \core\output\notification::NOTIFY_INFO, false)
+            . \html_writer::div(\html_writer::link(
+                new \moodle_url('/local/sentientia_evaluation/responses.php', ['id' => (int) $evaluation->id]),
+                get_string('response_list_back_to_totals', 'local_sentientia_evaluation'),
+                ['class' => 'btn btn-outline-secondary btn-sm', 'data-action' => 'back-to-totals']), 'mt-3');
+    }
+
+    /**
+     * Does the user table carry the BizLMS employee id column (open_employeeid)? Production does; a customer schema
+     * without the BizLMS open_* columns does not, and selecting the column there is a database error.
      *
      * @return bool
      */
-    public static function response_drilldown_enabled(): bool {
-        return \local_sentientia_platform\feature_flags::is_enabled(self::FLAG_RESPONSE_DRILLDOWN);
+    private static function user_has_employee_id(): bool {
+        global $DB;
+        return array_key_exists('open_employeeid', $DB->get_columns('user'));
     }
 
     /**
@@ -1487,7 +1585,9 @@ class evaluation_manager {
         if ($protected || $userid <= 0) {
             return $anonymous;
         }
-        $user = $DB->get_record('user', ['id' => $userid], self::respondent_fields() . ', open_employeeid');
+        // open_employeeid belongs to the BizLMS schema: a customer without it simply has no employee id to show.
+        $user = $DB->get_record('user', ['id' => $userid],
+            self::respondent_fields() . (self::user_has_employee_id() ? ', open_employeeid' : ''));
         if (!$user) {
             return $anonymous;
         }
@@ -1496,24 +1596,44 @@ class evaluation_manager {
     }
 
     /**
-     * The first two gates of response_list.php and response_detail.php, in the order the pages apply them.
+     * Step one of the gate of response_list.php and response_detail.php: local/sentientia_evaluation:manage, which only
+     * the manager archetype holds by default (a manager, a tenant administrator and a site administrator). A learner
+     * (":respond" only) and a trainer (the teacher archetype) are refused. The pages used to ask for ":view", which no
+     * plugin declares, so nobody could open them (EV-06).
      *
-     * (1) local/sentientia_evaluation:manage, which only the manager archetype holds by default: a manager, a tenant
-     * administrator and a site administrator. A learner (":respond" only) and a trainer (the teacher archetype) are
-     * refused. The pages used to ask for ":view", which no plugin declares, so nobody could open them (EV-06).
-     * (2) The flag {@see self::FLAG_RESPONSE_DRILLDOWN}: OFF answers "not available", as if the pages did not exist.
-     *
-     * The ADR-031 tenant gate ({@see self::require_evaluation_access()}) is the page's third step, because it needs
-     * the evaluation; the capability and the flag come first so that nothing is read for a caller who may not be
-     * here. Neither this nor that gate decides who sees NAMES: identity_protected() does, per evaluation.
+     * The pages call this before they read anything, so that a caller who may not be here learns nothing, not even
+     * whether the flag is on. The rest of the gate needs the evaluation: {@see self::require_response_drilldown()}.
      *
      * @return void
      * @throws \required_capability_exception for a caller without :manage
-     * @throws \moodle_exception response_drilldown_unavailable when the flag is OFF
      */
-    public static function require_response_drilldown(): void {
+    public static function require_response_drilldown_capability(): void {
         require_capability('local/sentientia_evaluation:manage', \context_system::instance());
-        if (!self::response_drilldown_enabled()) {
+    }
+
+    /**
+     * Step two of the gate, once the page has the evaluation: the capability again, the ADR-031 tenant gate, then the
+     * flag {@see self::FLAG_RESPONSE_DRILLDOWN} for THIS evaluation's customer and tenant ({@see self::flag_scope()}).
+     * OFF answers "not available", as if the pages did not exist.
+     *
+     * The tenant gate comes first, so a caller outside the evaluation's tenant is refused as out of tenant and never
+     * learns whether another tenant's flag is on. The flag is read for the evaluation, not for the viewer: a
+     * cross-tenant administrator whose own scope has it ON cannot open a tenant where it is OFF.
+     *
+     * Neither this nor the tenant gate decides who sees NAMES (identity_protected() does, per evaluation), and neither
+     * decides whether a protected evaluation offers its individual responses at all
+     * ({@see self::individual_responses_offered()}): the pages answer that with a notice, after this.
+     *
+     * @param \stdClass $evaluation
+     * @return void
+     * @throws \required_capability_exception for a caller without :manage
+     * @throws \moodle_exception error_outoftenant for an evaluation outside the caller's tenant
+     * @throws \moodle_exception response_drilldown_unavailable when the flag is OFF for the evaluation's tenant
+     */
+    public static function require_response_drilldown(\stdClass $evaluation): void {
+        self::require_response_drilldown_capability();
+        self::require_evaluation_access($evaluation);
+        if (!self::response_drilldown_enabled($evaluation)) {
             throw new \moodle_exception('response_drilldown_unavailable', 'local_sentientia_evaluation');
         }
     }
@@ -3208,6 +3328,9 @@ class evaluation_manager {
      * one ({@see self::shows_subject()}) and the form is not protected (a protected form names nobody, whatever the
      * caller passes). Respondent and Subject are both named through fullname(), as the CSV does.
      *
+     * response_list.php does not call this for a protected evaluation at all ({@see self::individual_responses_offered()}):
+     * it shows the totals only. The branch stays as the second line of defence for any other caller.
+     *
      * @param \stdClass $evaluation
      * @param bool $protected identity_protected($evaluation)
      * @param bool $showsubject shows_subject($evaluation, $protected)
@@ -3219,9 +3342,11 @@ class evaluation_manager {
         $showsubject = $showsubject && !$protected;
         // Every name field, so fullname() can apply the site's name format (the CSV's Respondent column does).
         $namefields = 'u.' . implode(', u.', \core_user\fields::get_name_fields());
+        // open_employeeid belongs to the BizLMS schema: a customer without it has no employee id to list.
+        $employeeid = self::user_has_employee_id() ? ', u.open_employeeid' : '';
         $responses = $DB->get_records_sql(
             "SELECT r.id, r.userid, r.subject_userid, r.courseid, r.programid, r.classroomid, r.timesubmitted,
-                    $namefields, u.email, u.open_employeeid
+                    $namefields, u.email{$employeeid}
                FROM {" . self::RESPONSES_TABLE . "} r
           LEFT JOIN {user} u ON u.id = r.userid
               WHERE r.evaluationid = :eid

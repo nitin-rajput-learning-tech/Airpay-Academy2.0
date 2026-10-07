@@ -318,3 +318,8 @@ $string['responses_numeric_ignored'] = 'Stored answers that are not numbers are 
 // 2026-10-07 (EV-06): the individual responses pages come back, behind the default-OFF flag sentientia.evaluation.response_drilldown.
 $string['responses_individual_link'] = 'Individual responses';
 $string['response_drilldown_unavailable'] = 'The individual responses are not available yet.';
+
+// 2026-10-07 (review): an evaluation whose respondents are protected offers its totals only.
+$string['responses_individual_protected_note'] = 'Individual responses are not available for this evaluation because its responses are anonymous, in whole or in part. The totals below are still shown.';
+$string['response_list_protected'] = 'The responses to this evaluation are anonymous, in whole or in part, so individual responses are not available: only the totals are shown. A single response, with the day it came in and the course, program or classroom it came from, could be matched to the person who gave it.';
+$string['response_list_back_to_totals'] = 'Back to the totals';

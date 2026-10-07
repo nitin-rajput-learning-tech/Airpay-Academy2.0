@@ -83,7 +83,11 @@ $reset_url = (new moodle_url('/local/sentientia_evaluation/responses.php',
 
 // The heading part: name and description ready for {{ }} (escaped once, there) and the anonymous badge, which is
 // identity_protected() like the response list and the CSV - a form that once collected anonymous answers is badged too.
-$data = \local_sentientia_evaluation\evaluation_manager::responses_page_header($evaluation) + [
+// The link to the individual responses (EV-06) is built in the manager (so a test can reach it): it exists only while
+// the flag is ON for THIS evaluation's tenant, and never on a protected evaluation, which shows these totals only
+// (the page says why instead). With the flag OFF the pages answer "not available", so nothing points at them.
+$data = \local_sentientia_evaluation\evaluation_manager::responses_page_header($evaluation)
+    + \local_sentientia_evaluation\evaluation_manager::individual_responses_link($evaluation) + [
     'evaluationid'    => $evaluation->id,
     'total_responses' => $total_responses,
     'has_responses'   => ($total_responses > 0),
@@ -91,11 +95,6 @@ $data = \local_sentientia_evaluation\evaluation_manager::responses_page_header($
     'has_questions'   => !empty($question_rows),
     'backurl'         => (new moodle_url('/local/sentientia_evaluation/index.php'))->out(false),
     'export_url'      => $export_url,
-    // The link to the individual responses (EV-06) exists only while the flag is ON: with it OFF the page answers
-    // "not available", so nothing points at it.
-    'has_list_link'   => \local_sentientia_evaluation\evaluation_manager::response_drilldown_enabled(),
-    'list_url'        => (new moodle_url('/local/sentientia_evaluation/response_list.php',
-        ['id' => $evaluationid]))->out(false),
     'reset_url'       => $reset_url,
 
     // Filter form context.

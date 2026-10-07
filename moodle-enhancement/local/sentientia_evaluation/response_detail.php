@@ -8,8 +8,10 @@
  * Shows one respondent's full answers for one evaluation, including
  * comparison to all other respondents (avg / distribution per question).
  *
- * Behind the default-OFF flag sentientia.evaluation.response_drilldown and local/sentientia_evaluation:manage (EV-06):
- * the page used to ask for ":view", which no plugin declares, so nobody could open it.
+ * Behind the default-OFF flag sentientia.evaluation.response_drilldown (read for the EVALUATION's tenant) and
+ * local/sentientia_evaluation:manage (EV-06): the page used to ask for ":view", which no plugin declares, so nobody
+ * could open it. An evaluation whose respondents are protected (evaluation_manager::identity_protected()) shows its
+ * totals only: this page answers with a notice instead of one respondent's answers.
  *
  * @package local_sentientia_evaluation
  */
@@ -19,9 +21,9 @@ require_login();
 
 global $DB, $OUTPUT, $PAGE;
 
-// EV-06: the capability and the flag come first, so that nothing is read for a caller who may not be here. OFF
-// answers "not available", as if the page did not exist.
-\local_sentientia_evaluation\evaluation_manager::require_response_drilldown();
+// EV-06: the capability comes first, so that nothing is read for a caller who may not be here. The rest of the gate
+// (the ADR-031 tenant and the flag, which is read for the EVALUATION's tenant) needs the evaluation: below.
+\local_sentientia_evaluation\evaluation_manager::require_response_drilldown_capability();
 
 $id = required_param('id', PARAM_INT);  // response id
 $response = $DB->get_record('local_sentientia_evaluation_responses',
@@ -37,17 +39,29 @@ $PAGE->set_title('Response detail');
 // set_heading() runs format_string() on what it is given, so it takes the raw name (it leaves an "&" that already
 // starts an entity alone, so formatting it first made no difference to its output).
 $PAGE->set_heading('Response detail — ' . $evaluation->name);
-// ADR-031: one respondent's answers only for an evaluation in the caller's tenant.
-\local_sentientia_evaluation\evaluation_manager::require_evaluation_access($evaluation);
-// An invited user's pending shell row (timesubmitted 0) is an invitation, not a response: refuse it, so it is never
-// shown as their answer.
-\local_sentientia_evaluation\evaluation_manager::require_submitted_response($response);
+// ADR-031: one respondent's answers only for an evaluation in the caller's tenant; then the flag, read for that
+// evaluation's tenant (OFF answers "not available", as if the page did not exist).
+\local_sentientia_evaluation\evaluation_manager::require_response_drilldown($evaluation);
 
 // Anonymous check — if evaluation is anonymous, don't reveal userid.
 // 2026-09-25: sticky (evaluation_manager::identity_protected()) - anonymous
 // now, answered anonymously before, or with an anonymous question, whose
-// answer is on this very page. The submission time is then shown to the day.
+// answer is on this very page.
 $is_anonymous_eval = \local_sentientia_evaluation\evaluation_manager::identity_protected($evaluation);
+
+// 2026-10-07 (review): such an evaluation offers its totals only. Naming nobody is not enough on this page: it prints
+// one person's free-text answers beside the day and the course, program or classroom, which can single them out in a
+// small group. So the answers are not shown at all: a notice and the way back to the totals.
+if ($is_anonymous_eval) {
+    echo $OUTPUT->header();
+    echo \local_sentientia_evaluation\evaluation_manager::individual_responses_protected_notice($evaluation);
+    echo $OUTPUT->footer();
+    exit;
+}
+
+// An invited user's pending shell row (timesubmitted 0) is an invitation, not a response: refuse it, so it is never
+// shown as their answer.
+\local_sentientia_evaluation\evaluation_manager::require_submitted_response($response);
 
 // Who answered, named through fullname() like the response list and the CSV (the site's name format applies to all
 // three); nobody on a protected evaluation. Built in the manager so it can be tested.
