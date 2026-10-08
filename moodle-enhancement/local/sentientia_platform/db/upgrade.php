@@ -416,5 +416,35 @@ function xmldb_local_sentientia_platform_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026093001, 'local', 'sentientia_platform');
     }
 
+    // ── Moodle 5.3 compat FX-16 (2026-10-08) — the PWA start_url no longer depends on the /my/dashboard.php shim.
+    // Vanilla Moodle 5.3 ships no my/dashboard.php: the BizLMS compatibility redirect is an additive overlay file
+    // now, and links should not rely on it. The 2026052201 step above stored '/my/dashboard.php?utm_source=pwa_install'
+    // for the Airpay customer-zero brand row; that executed step is left as it was. Here every brand row whose
+    // start_url is exactly the old shim path (optionally with a query or fragment) is rewritten to the same URL on
+    // '/my/'. Anything an admin chose for themselves (any other path) is left alone. /my/ is what the shim redirected
+    // to, so an installed PWA lands on the same page. Idempotent: a second run finds nothing to rewrite.
+    if ($oldversion < 2026100802) {
+        if ($dbman->table_exists(new xmldb_table('local_sentientia_customer_brand'))) {
+            $oldpath = '/my/dashboard.php';
+            $rows = $DB->get_records_select('local_sentientia_customer_brand',
+                $DB->sql_like('start_url', ':p'),
+                ['p' => $DB->sql_like_escape($oldpath) . '%'], '', 'id, start_url');
+            foreach ($rows as $row) {
+                $rest = substr($row->start_url, strlen($oldpath));
+                // Only the shim path itself: not /my/dashboard.php.bak or /my/dashboard.phpx.
+                if ($rest !== '' && $rest[0] !== '?' && $rest[0] !== '#') {
+                    continue;
+                }
+                $DB->update_record('local_sentientia_customer_brand', (object) [
+                    'id'           => $row->id,
+                    'start_url'    => '/my/' . $rest,
+                    'timemodified' => time(),
+                ]);
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026100802, 'local', 'sentientia_platform');
+    }
+
     return true;
 }

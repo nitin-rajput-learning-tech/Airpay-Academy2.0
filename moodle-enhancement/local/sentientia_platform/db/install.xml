@@ -114,7 +114,7 @@
         <FIELD NAME="icon_512_url"     TYPE="char" LENGTH="500" NOTNULL="true"
                COMMENT="Absolute or relative URL to 512x512 PNG (splash + adaptive)"/>
         <FIELD NAME="start_url"        TYPE="char" LENGTH="500" NOTNULL="true"
-               COMMENT="Path relative to wwwroot (e.g. /my/dashboard.php?utm=pwa)"/>
+               COMMENT="Path relative to wwwroot (e.g. /my/?utm=pwa)"/>
         <FIELD NAME="lang"             TYPE="char" LENGTH="10"  NOTNULL="true" DEFAULT="en"
                COMMENT="BCP-47 language code (en, hi, en-IN, etc)"/>
         <FIELD NAME="status_bar_style" TYPE="char" LENGTH="20"  NOTNULL="false"

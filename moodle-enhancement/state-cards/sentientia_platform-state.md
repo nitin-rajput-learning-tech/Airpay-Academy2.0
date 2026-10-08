@@ -982,3 +982,9 @@ Branch `claude/owner-decisions-y`, both trees. **No version bump** (CLI, one new
 - **Why:** on 5.3 the old globals are wrappers that emit `DEBUG_DEVELOPER` on every call, and PHPUnit fails a test that reaches one ("unexpected debugging"). The replacements do not exist on 5.1/5.2, so a plain rename would break the local box and the UAT.
 - **Callers moved:** `sentientia_api` SCIM handler, `sentientia_integrations` keka_client, `sentientia_users` hrms_importer / signup_service / user_manager, the `sentientia_pages` seed CLIs. The theme cannot depend on a local plugin; it uses inline `method_exists(\core\user::class, ...)` ternaries (see the theme card).
 - **Twins:** both trees carry the same class, test and version bump. **No schema change.** Not run: PHPUnit (owner rule).
+
+## 2026-10-08 Moodle 5.3 compat FX-16 (version 2026100802, release 1.11.2)
+
+- `customer::branding()` default bundle and `hook_callbacks` home URL point at `/my/` (was `/my/dashboard.php`, a redirect shim that is an ADDED file on 5.3, not a core file).
+- NEW upgrade step `2026100802`: every `local_sentientia_customer_brand` row whose `start_url` is exactly `/my/dashboard.php` (optionally with `?query` / `#fragment`) is rewritten to the same URL on `/my/`; any other path is left alone; idempotent. The executed step `2026052201` is not edited. `db/install.xml` comment updated. No schema change.
+- `tests/customer_brand_test.php` and `cli/verify_brand_resolver.php` expect the new default. Not run: PHPUnit (owner rule).

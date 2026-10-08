@@ -799,3 +799,7 @@ Both trees. **Not run: no PHPUnit here; the lead runs `--group local_sentientia_
 - **Why:** Moodle 5.2 and 5.3 autoload Mustache 3.0 as `\Mustache\Engine` only and do not load the legacy aliases, so any email with a tenant DB override, the AJAX preview and the template preview WS fataled (already broken on the 5.2 UAT).
 - **Twins:** the top-level `local/sentientia_emails` copy takes the same change; its `template_api.php` drift (legacy global `external_*` imports) is reconciled to the ME copy and the baseline line is removed. `email_context.php`, `rule_api.php` and `welcome_new_user.mustache` still drift (baselined).
 - **No schema change.** Dual-target 5.1 / 5.2 / 5.3. Not run: PHPUnit (owner rule), a live send with an override.
+
+## 2026-10-08 Moodle 5.3 compat FX-16
+
+Links and redirects to `/my/dashboard.php` now point at `/my/` (the dashboard; the old path is a redirect shim that is an added file on Moodle 5.3). Same landing page, one redirect fewer, no dependence on the shim. PWA `manifest.php` `start_url` is `/my/`; the stored brand rows are rewritten by the `local_sentientia_platform` upgrade step `2026100802`. No schema change, no version bump here.

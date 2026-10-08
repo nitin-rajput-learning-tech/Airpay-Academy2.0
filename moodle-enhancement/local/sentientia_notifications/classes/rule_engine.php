@@ -1216,7 +1216,7 @@ class rule_engine {
                     'fullname'    => format_string($user->firstname . ' ' . $user->lastname),
                     'course_name' => $courseid ? ($DB->get_field('course', 'fullname', ['id' => $courseid]) ?? '') : '',
                     'course_url'  => $courseid ? (new \moodle_url('/course/view.php', ['id' => $courseid]))->out(false) : '',
-                    'dashboard_url' => (new \moodle_url('/my/dashboard.php'))->out(false),
+                    'dashboard_url' => (new \moodle_url('/my/'))->out(false),
                     'subject'     => $subject,
                 ];
                 try {

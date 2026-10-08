@@ -1,17 +1,61 @@
-# Core-mod record — `my/` overlays on Moodle 5.2
+# Core-mod record: `my/` overlays (5.2 override, rewritten 2026-10-08 as an additive overlay on 5.3)
 
-**Date:** 2026-06-19 · **Context:** Moodle 5.2 reconciliation (see `docs/cutover/MOODLE-5.2-RECONCILIATION-PLAN.md`).
+**Original date:** 2026-06-19 (Moodle 5.2 reconciliation, see `docs/cutover/MOODLE-5.2-RECONCILIATION-PLAN.md`).
+**Rewritten:** 2026-10-08 (Moodle 5.3 compatibility pass, finding C1 / fix FX-16, ADR-033).
 
-Moodle 5.2 ships its **own** `my/dashboard.php` and `my/switchrole.php` as real core files (4.5 did
-not). The Sentientia/BizLMS deploy **overwrites** both. They use only stable 5.2 APIs (verified by the
-2026-06-19 compat audit — no fatal), so they are not a 5.2 break, but they ARE undocumented core-file
-overrides of now-existing core files. Recorded here per the project's core-mod discipline.
+## Status on 5.3: two pure additions, no core file is overridden
 
-| File | What our overlay does | 5.2 risk | Action on each 5.2.x pull |
-|---|---|---|---|
-| `my/dashboard.php` | Redirect shim → `/my/index.php` (every BizLMS nav link targets `/my/dashboard.php`) | Upstream 5.2 ships its own dashboard.php; a point-release pull can clobber/relitigate this. Redirect builds `moodle_url` from raw `$_GET` (fragile, not a vuln) | Diff vs upstream `my/dashboard.php`; prefer pointing nav at `/my/` directly, else re-apply + sanitise params |
-| `my/switchrole.php` | BizLMS role-switch endpoint; writes `$SESSION->airpay_switchrole` + `$USER->useraccess['currentroleinfo']` (NOT core `role_switch()`/`$USER->access['rsw']`) | Overlays 5.2's own switchrole.php. Relies on BizLMS reading `$USER->useraccess` (not a core field) — if the BizLMS costcenter layer is absent the switch silently no-ops. WF-025 history (force-pin/role-demotion). | Re-verify BizLMS still consumes `$USER->useraccess['currentroleinfo']` on the 5.2 cutover; diff vs upstream; consider routing through core `role_switch()` semantics |
+Vanilla Moodle 5.3 `public/my/` holds only `classes`, `tests`, `courses.php`, `index.php`, `indexsys.php`, `lib.php` and
+`upgrade.txt`. It has **no `dashboard.php` and no `switchrole.php`**. The two Sentientia files therefore do not replace
+anything on 5.3: they are added files, and **both are still required**.
 
-**Cutover gate:** on the 5.2 migration, after deploying these two files, confirm `/my/dashboard.php`
-resolves (no 404, no redirect loop) and role-switch works for an org-role user — both were validated on
-5.1.3+ (F7) and must be re-checked on 5.2.
+| File | What it does | Why it is still required on 5.3 |
+|---|---|---|
+| `my/dashboard.php` | Redirect shim to `/my/index.php` (the query string is carried over) | Production BizLMS exposed the dashboard at `/my/dashboard.php`, so bookmarks, the PWA start URL of an installed app, saved e-mail links and the theme navigation (`core_renderer`, `user_menu`, the mobile bottom nav) still point there |
+| `my/switchrole.php` | The BizLMS role-switch endpoint (writes `$SESSION->airpay_switchrole`, then `local_sentientia_org\accesslib::set_user_role_switch()`; NOT core `role_switch()`) | The theme's role-switch menu links to it. WF-025 history (force-pin / role demotion) |
+
+`my/templates/dropdown.mustache` (shipped by the 5.2 overlay) is referenced by nothing and is **no longer shipped**
+(`tools/packaging/build-standalone.sh` and `moodle-enhancement/tools/overlay-airpay-customs.ps1` skip it).
+The stale `moodle-enhancement/my_dashboard_redirect.php` (a 5.1 note that says the dashboard "no longer exists") is
+unreferenced; it is slated for removal and needs a one-line `git rm` once the owner agrees (project rule: no deletion
+without a confirm).
+
+## What changed in the plugins (FX-16)
+
+Plugin links no longer depend on the shim: they point at `/my/`, which is exactly where the shim redirected to.
+
+- Redirects and links: `local_sentientia_cart` `index.php`, `local_sentientia_users` `signup.php`,
+  `local_sentientia_emails` `email_context.php` (3) and `parity_senders.php`, `local_sentientia_notifications`
+  `rule_engine.php`, `local_sentientia_platform` `hook_callbacks.php`, `local_sentientia_pwa` `manifest.php`
+  (both trees).
+- PWA start URL: the default brand bundle in `local_sentientia_platform` `customer::branding()` is now
+  `/my/?utm_source=pwa_install`. A NEW upgrade step (`2026100802`) rewrites every stored customer brand row whose
+  `start_url` is exactly the old shim path (optionally with a query or fragment) to the same URL on `/my/`; any other
+  path an admin chose is left alone. The executed step that first stored the old value (`2026052201`) is not edited.
+  Tests and the brand-resolver CLI expect the new default.
+- Left on the shim on purpose: the theme navigation (`theme/sentientia` `core_renderer.php`, `user_menu.php`,
+  `mobile_bottom_nav.mustache`) and dev CLIs that only call `$PAGE->set_url('/my/dashboard.php')`. The shim stays shipped,
+  so those keep working; moving the theme to `/my/` is a separate, visual change.
+
+## Hardening note (unchanged behaviour)
+
+`my/dashboard.php` builds its redirect from the raw `$_GET`. Moodle's `moodle_url` takes parameter names and values as data
+(not markup) and `redirect()` validates the target, so this is fragile rather than a vulnerability. Not changed here.
+
+## Cutover gate
+
+After deploying the package on a 5.3 instance, confirm `/my/dashboard.php` resolves (no 404, no redirect loop) and lands
+on the dashboard, `/my/` renders the dashboard, and role switch works for an org-role user. Validated on 5.1.3+ (F7) and the
+5.2 UAT; to be repeated on the first 5.3 instance (ADR-033 gate 8).
+
+## History (the 5.2 version of this record)
+
+On 5.2 the premise was different: Moodle 5.2 shipped its **own** `my/dashboard.php` and `my/switchrole.php`, and the deploy
+overwrote both (undocumented overrides of existing core files, recorded here per the core-mod discipline). 5.2 core files
+were checked against stable 5.2 APIs only (compat audit, no fatal). That premise no longer holds on 5.3, hence the rewrite
+above; the 5.2 UAT instance keeps working unchanged because the files are the same.
+
+## Upgrade-merge notes
+
+Nothing to merge on 5.3 (new files). If a later Moodle release adds its own `my/dashboard.php` or `my/switchrole.php`,
+diff against upstream before shipping ours and prefer pointing links at `/my/` so the shim can be dropped.

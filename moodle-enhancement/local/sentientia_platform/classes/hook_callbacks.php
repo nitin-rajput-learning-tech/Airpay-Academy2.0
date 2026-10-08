@@ -60,7 +60,7 @@ class hook_callbacks {
                           || strpos($url, '/user/edit') !== false);
 
         $data = [
-            'homeurl'       => (new \moodle_url('/my/dashboard.php'))->out(false),
+            'homeurl'       => (new \moodle_url('/my/'))->out(false),
             'mycoursesurl'  => (new \moodle_url('/local/sentientia_catalog/mycourses.php'))->out(false),
             'searchurl'     => (new \moodle_url('/local/sentientia_catalog/index.php'))->out(false),
             'profileurl'    => (new \moodle_url('/user/profile.php', ['id' => $USER->id]))->out(false),

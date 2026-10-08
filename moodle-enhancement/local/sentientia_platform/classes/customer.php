@@ -256,7 +256,7 @@ class customer {
             'bg_color'         => '#F2F4FB',
             'icon_192_url'     => $CFG->wwwroot . '/local/sentientia_platform/pix/customer/1/icon-192.png',
             'icon_512_url'     => $CFG->wwwroot . '/local/sentientia_platform/pix/customer/1/icon-512.png',
-            'start_url'        => '/my/dashboard.php?utm_source=pwa_install',
+            'start_url'        => '/my/?utm_source=pwa_install',
             'lang'             => 'en',
             'status_bar_style' => 'default',
             'categories'       => ['education', 'productivity'],

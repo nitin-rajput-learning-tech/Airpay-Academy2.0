@@ -340,3 +340,7 @@ only, no version bump. Both trees. Not run here.
 - the query adds `lp.status = STATUS_ACTIVE AND lp.visible = 1` (archived and hidden paths are never nudged: a plain bug fix);
 - and excludes enrolments the import created (`provenance::not_imported_sql('lu', 'local_sentientia_learningpath_users')`), guarded by `class_exists` and a `table_exists` on the map, the same pattern the ILT feedback rule uses. An admin can still nudge an imported learner by hand.
 `smart_rules` is default OFF and the rule is not seeded, so nothing fires today; this lands before it is ever flipped. A later, separate decision can include imported rows with a cutoff counted from cutover. Tests: `learning_path_stalled_test` (imported row, archived path, hidden path not selected; native row and a second active path of a mixed learner selected; empty import map). Code only, **no version bump**. Both trees. Written, not run.
+
+## 2026-10-08 Moodle 5.3 compat FX-16
+
+Links and redirects to `/my/dashboard.php` now point at `/my/` (the dashboard; the old path is a redirect shim that is an added file on Moodle 5.3). Same landing page, one redirect fewer, no dependence on the shim. PWA `manifest.php` `start_url` is `/my/`; the stored brand rows are rewritten by the `local_sentientia_platform` upgrade step `2026100802`. No schema change, no version bump here.

@@ -554,3 +554,7 @@ Branch `claude/owner-decisions-y`, both trees. **No version bump** (a class and 
 - **Why:** `modalType: 'SAVE_CANCEL'` is not a core API. On 5.2/5.3 it built a BASE modal with an empty footer, so the dialog had no Save button and a refund could not be submitted from the UI; the modal_factory fallback is dead since 5.2. Same defect as `local_sentientia_request/decide` (WF-024). `core/modal_save_cancel` exists unchanged on 5.1, 5.2 and 5.3.
 - **Behaviour kept:** the save handler is attached before `modal.show()` as before; Save still closes the dialog (core behaviour) and reloads the page on success. `removeOnClose: true` is new: it stops stale hidden copies of the dialog (duplicate `refund_amount` ids) piling up on repeated clicks.
 - **Not run:** PHPUnit (owner rule), a click-through of the dialog (needs a 5.2/5.3 runtime). Screenshots owed: the Refund dialog at desktop and 590 px.
+
+## 2026-10-08 Moodle 5.3 compat FX-16
+
+Links and redirects to `/my/dashboard.php` now point at `/my/` (the dashboard; the old path is a redirect shim that is an added file on Moodle 5.3). Same landing page, one redirect fewer, no dependence on the shim. PWA `manifest.php` `start_url` is `/my/`; the stored brand rows are rewritten by the `local_sentientia_platform` upgrade step `2026100802`. No schema change, no version bump here.

@@ -438,7 +438,7 @@ final class parity_senders {
                 'course_name' => $name,
                 'course_url' => (new \moodle_url('/course/view.php', ['id' => (int) $course->id]))->out(false),
                 'completion_date' => userdate($completed > 0 ? $completed : time(), '%d %B %Y'),
-                'team_url' => (new \moodle_url('/my/dashboard.php'))->out(false),
+                'team_url' => (new \moodle_url('/my/'))->out(false),
                 'subject' => self::string('parity_subject_manager_completion', $manager, (object) [
                     'member' => $member,
                     'course' => $name,
