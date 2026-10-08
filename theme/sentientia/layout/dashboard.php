@@ -287,8 +287,9 @@ if (isloggedin() && !isguestuser()) {
                 'deleted = 0 AND suspended = 0 AND lastaccess > :cutoff' . $tenantfilter_user,
                 array_merge(['cutoff' => time() - (30 * 86400)], $tenantparams_user));
             // Moodle 5.3 flags a course being deleted (course.deletioninprogress); absent on 5.1/5.2, so only filtered when present.
+            // It is nullable with no default, so every course that is not being deleted holds NULL, never 0: the test is COALESCE(..., 0) = 0 (a plain '= 0' hid every course).
             $notdeletingcourse = array_key_exists('deletioninprogress', $DB->get_columns('course'))
-                ? ' AND deletioninprogress = 0' : '';
+                ? ' AND COALESCE(deletioninprogress, 0) = 0' : '';
             $totalcourses = $DB->count_records_select('course',
                 'visible = 1 AND id > 1' . $notdeletingcourse . $tenantfilter_course, $tenantparams_course);
             // Tenant-scoped enrolments and completions.

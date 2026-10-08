@@ -41,7 +41,8 @@ $now = time();
 
 // Get all mandatory courses (with deadlines). Moodle 5.3 flags a course being deleted (course.deletioninprogress;
 // the column is absent on 5.1/5.2, so it is only filtered when it exists).
-$notdeleting = array_key_exists('deletioninprogress', $DB->get_columns('course')) ? ' AND deletioninprogress = 0' : '';
+// It is nullable with no default, so every course that is not being deleted holds NULL, never 0: the test is COALESCE(..., 0) = 0 (a plain '= 0' hid every course).
+$notdeleting = array_key_exists('deletioninprogress', $DB->get_columns('course')) ? ' AND COALESCE(deletioninprogress, 0) = 0' : '';
 $mandatorycourses = $DB->get_records_select('course',
     'enddate > 0 AND visible = 1 AND id > 1' . $notdeleting,
     [], 'fullname ASC', 'id,shortname,fullname,enddate');

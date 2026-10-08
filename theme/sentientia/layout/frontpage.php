@@ -43,8 +43,9 @@ $tenantp = $hastenant ? $pubargs : [];
 // Moodle 5.3 flags a course being deleted (course.deletioninprogress) until the asynchronous delete task has
 // removed it. The column is absent on 5.1/5.2, so it is only filtered when it exists.
 $hasdeleting = array_key_exists('deletioninprogress', $DB->get_columns('course'));
-$notdeleting = $hasdeleting ? ' AND deletioninprogress = 0' : '';
-$notdeletingc = $hasdeleting ? ' AND c.deletioninprogress = 0' : '';
+// It is nullable with no default, so every course that is not being deleted holds NULL, never 0: the test is COALESCE(..., 0) = 0 (a plain '= 0' hid every course).
+$notdeleting = $hasdeleting ? ' AND COALESCE(deletioninprogress, 0) = 0' : '';
+$notdeletingc = $hasdeleting ? ' AND COALESCE(c.deletioninprogress, 0) = 0' : '';
 
 if ($hastenant) {
     $coursecount = (int)$DB->count_records_sql(
