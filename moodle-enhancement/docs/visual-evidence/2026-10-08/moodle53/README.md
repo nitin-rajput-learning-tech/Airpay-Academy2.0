@@ -1,4 +1,4 @@
-# Visual evidence owed: Moodle 5.3 compatibility pass, assignment 1 (2026-10-08)
+# Visual evidence owed: Moodle 5.3 compatibility pass, assignments 1 and 2 (2026-10-08)
 
 **Status: NO screenshots yet.** The build session that made these changes may not copy into `C:\xampp`, never restarts a
 service and had no 5.2 or 5.3 web runtime to drive, so every line below is owed. Capture each one on a 5.2 instance AND on a
@@ -31,7 +31,22 @@ Branch `claude/moodle53-compat`. Fix ids refer to `docs/upgrade/MOODLE-5.3-COMPA
 - Items 7 to 9 are dialogs built on `core/modal_save_cancel`; the Save button must exist and the footer must not be empty.
 - Item 10: the default unit moved from the first option (Weeks) to Days on 5.1 and 5.2 too; saved values are unchanged.
 
-## Not covered here
+## Screenshots owed (assignment 2: FX-08 and FX-12 to FX-22)
 
-FX-08 (learnerscript report modals), FX-14 (Bootstrap 5.3 utility shims) and FX-19 (block and course-card templates) have
-their own owed lists in the sections their authors add.
+Capture on a 5.2 instance AND on a 5.3 instance, desktop and 590 px, same naming rule as above. Items 12 to 14 and 17 change
+how existing screens look on **every** Moodle version (not only 5.3), so a before/after pair on the 5.2 UAT is the useful one.
+
+| # | Fix | Page | Role | What must be visible |
+|---|---|---|---|---|
+| 12 | FX-08 | a learnerscript report (`/blocks/learnerscript/viewreport.php`): delete a report component; open the report designer on a report with no columns; trigger an AJAX error dialogue | L&D admin / report author | the **confirm dialog** (title, Confirm and Cancel), the "No Columns" notice that redirects when closed, and no `core/modal_factory` 404 in the browser console |
+| 13 | FX-14 | any page that opens a core modal (for example delete an activity, or a bulk-action confirmation) | admin | the modal **title at a normal size** (not heading size), the close button, bold text rendering bold |
+| 14 | FX-14 | an activity page with the Opened / Due line, and a core block header with controls | learner; teacher | start/end spacing (`ms-auto`, `me-2`) honoured: dates right-aligned, no collapsed gaps |
+| 15 | FX-19 | `/my/dashboard.php` with blocks that have a controls menu (edit mode on), and the course overview card view | teacher in edit mode; learner | the block **controls on the title row** at the right, not under the title; the skip link target focusable; course cards with 0.25rem less side margin and still aligned |
+| 16 | FX-20 | `/local/sentientia_platform/admin/switchboard.php`: change one flag, press Apply | site admin | the **Review changes dialog** (change list, optional reason, Cancel and Apply changes); Apply submits, Cancel does not. Before the fix the changes were submitted with no dialog |
+| 17 | FX-20 | a skill page with the self-rate panel, press Self-rate | learner | the dialog with the level select, Save and Cancel; Save shows the spinner; an empty level shows the warning and keeps the dialog open |
+| 18 | FX-20 | the org management tree (tenant row collapse, the row menu) and the evaluation question card menu | L&D admin | the collapse opens and the ellipsis menus open (they must keep working: the BS4 and BS5 attributes sit side by side) |
+| 19 | FX-21 | the audit trail after a "log in as" | site admin | a `user_loggedinas` row now appears (it never matched before) |
+| 20 | FX-16 | `/my/` and `/my/dashboard.php`; an installed PWA start | learner | both land on the same dashboard; `/my/dashboard.php` still redirects |
+| 21 | FX-22 | a URL that does not exist, on a docroot vhost (UAT) and on the dev alias | any user | the **branded 404 page** (not the stock Apache page): the ErrorDocument base is now a placeholder filled by the package build |
+
+Not screenshots but owed on the first 5.3 runtime: the render smoke (`deploy/render_smoke_53.sh`) and a browser console pass on the pages above.

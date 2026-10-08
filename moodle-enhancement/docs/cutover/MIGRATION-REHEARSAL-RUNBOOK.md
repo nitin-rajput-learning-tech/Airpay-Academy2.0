@@ -3,6 +3,14 @@
 > **2026-09-29:** live is Moodle 4.1.2 (not 5.1), so the upgrade is two hops (4.1.2 → 4.5 → 5.2);
 > the Sentientia migration plan §0 has the details. Steps 3 and 4e below were updated for it.
 >
+> **2026-10-08 (ADR-033, Moodle 5.3 LTS):** the target of hop 2 is now **5.3** (5.2 stays the fallback until the
+> compatibility gate passes). In the steps below read "5.2" as "5.3" for the target: the package is
+> `Sentientia-LMS-5.3-Complete-Standalone-<date>.zip` from `tools/packaging/build-standalone.sh --target 5.3`, **PHP 8.3 serves both
+> hops** (no PHP switch in the window), MariaDB, if ever used, must be **≥ 11.4** (MySQL ≥ 8.4 is unchanged), each hop runs from a
+> clean directory with only `config.php` copied back, and config.php carries **no `ini_get_bool` polyfill** and `lib/setuplib.php` is
+> not edited. After the install or upgrade run `deploy/render_smoke_53.sh` (the gate check). **The 4.5.10 → 5.3 duration is the
+> measurement ADR-033 gate 8c asks for: time it.** See `SENTIENTIA-MIGRATION-PLAN-2026-09-04.md` §0a.
+>
 > **2026-10-07:** the BizLMS feature-data import (ADR-032) is part of the rehearsal. Step 4g and the section
 > "BizLMS import: Stage B checks" below carry the checks and owner confirmations the 2026-10-07 owner decisions
 > require; step 5 is amended (decision F-34). Per-decision detail: `OWNER-DECISIONS-2026-10-07.md`.
@@ -19,7 +27,7 @@ ninja sandbox when Nitin provides server access + a fresh live backup. **Nothing
 
 1. Ninja sandbox server (SSH/RDP), PHP **≥ 8.3** (CLI + web SAPI) with extensions
    mysqli/intl/mbstring/curl/zip/gd/soap/openssl/sodium/exif/fileinfo, `max_input_vars ≥ 5000`,
-   MySQL 8 / MariaDB ≥ 10.6 with **`max_allowed_packet ≥ 64M`** (2026-06-11 cron gauntlet: 1M
+   MySQL ≥ 8.4 (≥ 8.0 for hop 1 alone) / MariaDB ≥ 11.4 for the 5.3 hop (10.6.7 for hop 1, 10.11 for the 5.2 fallback) with **`max_allowed_packet ≥ 64M`** (2026-06-11 cron gauntlet: 1M
    drops the connection mid-cron — "MySQL server has gone away"), web server.
 2. Fresh LIVE backup: full DB dump + `moodledata` archive (+ the live `config.php` for reference).
 3. The `production` branch checkout (or release archive) — carries the entire product layer.
@@ -51,7 +59,8 @@ ninja sandbox when Nitin provides server access + a fresh live backup. **Nothing
    5.2 jump confirm the PHP pre-checks first).
    **Corrected 2026-09-29: live is Moodle 4.1.2, not 5.1.** 5.2 requires 4.4 or later
    (`admin/environment.xml`), so the rehearsal upgrades twice: 4.1.2 → 4.5.x on the 4.5 core, then
-   4.5 → 5.2 with the Sentientia package. See `SENTIENTIA-MIGRATION-PLAN-2026-09-04.md` §0.
+   4.5 → 5.2 with the Sentientia package (**4.5 → 5.3 since 2026-10-08**, ADR-033; 5.3 also requires 4.4 or later). See
+   `SENTIENTIA-MIGRATION-PLAN-2026-09-04.md` §0 and §0a.
    Time both hops, run hop 1 on the target engine (MySQL 8.4), and capture parity after each hop.
 4. **Post-restore repairs (MANDATORY, in order — all idempotent, dry-run first):**
    a. `php local/sentientia_platform/cli/repair_task_registrations.php --apply`

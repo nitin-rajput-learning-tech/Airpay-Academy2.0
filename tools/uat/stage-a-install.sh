@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# stage-a-install.sh - Sentientia LMS 5.2 UAT Stage A fresh install (checklist §3).
+# stage-a-install.sh - Sentientia LMS 5.2 / 5.3 UAT Stage A fresh install (checklist §3).
 # Runs ON UAT-Sentientia-LMS. Captures everything to a timestamped log (Stage A
 # is the first-ever 5.2 runtime validation - the log IS the evidence).
 #
@@ -9,6 +9,10 @@
 # Optional overrides:
 #   DBHOST, DBNAME (default sentientia_uat), DBUSER (default db_user),
 #   WWWROOT, DATAROOT, DOCROOT, ADMINEMAIL
+#
+# Moodle 5.3 (ADR-033): install into a SEPARATE instance beside the 5.2 one, e.g.
+#   DOCROOT=/var/www/sentientia/moodle5.3/public DATAROOT=/var/sentientiadata53 DBNAME=sentientia_uat53 ...
+# The config.php written below carries no ini_get_bool polyfill, which is what 5.3 needs (the polyfill is fatal there).
 set -u
 
 DBHOST="${DBHOST:-lms-sentientia-uat-db.crpst4qn6rtu.ap-south-1.rds.amazonaws.com}"

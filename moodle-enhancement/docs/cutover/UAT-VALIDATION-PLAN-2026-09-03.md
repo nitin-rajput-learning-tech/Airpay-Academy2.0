@@ -3,6 +3,12 @@
 **Date:** 2026-09-03 · **Owner:** Nitin Rajput · **Engineering:** Claude · **Testers:** L&D team (shared personas) · **Infra:** Airpay DevOps + Cloud.in · **Identity/mail:** IT (Azure/M365)
 **Companion records:** `UAT-SENTIENTIA-DEPLOY-CHECKLIST.md` (environment + asks), `STAGE-A-VERIFICATION-MATRIX.md` (Stage A result), `MIGRATION-REHEARSAL-RUNBOOK.md` (Stage B procedure), `SENTIENTIA-CUTOVER-MASTER.md` (gates B/C/D), `docs/security/ENTERPRISE-IDENTITY-PACK.md`, `docs/operations/OAUTH2-SMTP-M365-RUNBOOK.md`.
 
+> **2026-10-08 retarget (ADR-033):** the platform target is **Moodle 5.3 LTS**. This plan's results were gathered on the 5.2 UAT
+> instance and stay as its history; the 5.2 instance keeps running until the 5.3 gate passes. **Stage A, the persona passes, the
+> workflow matrix and the Stage B rehearsal are repeated on a separate 5.3 instance** (ADR-033 item 7: own dirroot, schema, dataroot
+> and vhost) and on the 5.3 upgrade of a copy of this UAT database (gate 8c). Read "5.2" as "5.3" for anything not yet run. The
+> hop 2 of the cutover is 4.5.x → 5.3 (`SENTIENTIA-MIGRATION-PLAN-2026-09-04.md` §0a).
+
 ## Where we are
 
 | Track | State (2026-09-03) |
@@ -89,7 +95,7 @@ Procedure per `MIGRATION-REHEARSAL-RUNBOOK.md`, each step with its verify and st
 1. Baseline counts on live (users, courses, enrolments, completions, certificates, files).
 2. Restore the dump + unpack `moodledata` (incl. `filedir`) into UAT.
 3. **Corrected 2026-09-29: live is Moodle 4.1.2, so the upgrade is two hops.** 5.2 requires 4.4 or
-   later. Run 4.1.2 → 4.5.x on the 4.5 core, then deploy the Sentientia tree and run 4.5 → 5.2. Time both
+   later (the same holds for 5.3). Run 4.1.2 → 4.5.x on the 4.5 core, then deploy the Sentientia tree and run 4.5 → 5.2 (**→ 5.3 since 2026-10-08**). Time both
    hops and take parity counts after each. See `SENTIENTIA-MIGRATION-PLAN-2026-09-04.md` §0.
 4. Post-restore repairs (idempotent, dry-run first), purge caches:
    - `repair_task_registrations.php`, which now also checks message defaults and exits 1 on problems;

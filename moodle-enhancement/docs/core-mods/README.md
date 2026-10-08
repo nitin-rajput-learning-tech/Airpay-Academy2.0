@@ -51,9 +51,21 @@ This makes it grep-able when scanning a fresh upstream Moodle for our changes.
 
 ## Index
 
-(Empty as of Day 0 — no core modifications yet. ADR-001 enables them but we
-haven't shipped any. First entry expected during Phase 1 multi-customer
-accesslib extension.)
+No existing Moodle core file is edited on Moodle 5.3 (ADR-033). The records below are either
+vendor-plugin patches (`// SENTIENTIA-CORE-MOD (vendor)`), additive overlay files, or notes. The status column is the verdict for
+Moodle 5.3; 5.2 stays the fallback target and keeps its notes.
+
+| Record | What it is | Status on 5.3 |
+|---|---|---|
+| `2026-05-20-moodle-to-sentientia-rename.md` | Rename map of user-visible "Moodle" strings (pending approval, no code) | Version independent |
+| `2026-05-23-certificate-image-imageinfo-guard.md` | tool_certificate image-element guard (vendor patch) | Still required; applied to the package source (top-level tree) |
+| `2026-05-29-tool_certificate-hi-pack.md` | Additive Hindi language file for tool_certificate (staged) | Version independent |
+| `2026-06-04-open-substrate-ownership.md` | 37 `open_*` columns on `user`, 18 on `course` (raw ALTER) | No collision; runtime check in the upgrade rehearsal |
+| `2026-06-11-setuplib-ini-get-bool-guard.md` | `ini_get_bool()` guard in `lib/setuplib.php` plus a config.php polyfill (5.2 only) | **Retired on 5.3**: do not apply the guard, no polyfill (it is fatal alone); fallback recorded |
+| `2026-06-19-my-overlays-5.2.md` | `my/dashboard.php` and `my/switchrole.php` | Additive overlay on 5.3 (new files, both required); `dropdown.mustache` no longer shipped |
+| `2026-09-03-tool-certificate-5.2-reset-caches.md` | `issue_handler::reset_caches(): void` (vendor patch) | Still required |
+| `2026-10-08-tool-certificate-duration-defaultunit.md` | `defaulunit` typo fix (vendor patch; throws on 5.3) | Required on 5.3 |
+| `2026-10-08-learnerscript-modal-factory-port.md` | learnerscript report modals ported off the removed modal factory (vendor patch) | Required on 5.2 and 5.3 |
 
 ## Decision criteria
 
