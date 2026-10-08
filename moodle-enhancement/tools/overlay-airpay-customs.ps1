@@ -93,14 +93,23 @@ function Copy-Tree {
         return
     }
     $existed = Test-Path $t
+    # Repo mode MIRRORS the plugin directory (/MIR = /E + purge): the repository owns it, so a file that was
+    # deleted in git must not survive from a staging base that an older overlay already touched (the 5.2
+    # staging tree still carried the deleted paygw_airpay form_submit module). Legacy webroot mode merges.
+    $copyMode = '/E'
+    $verb = 'merging'
+    if ($RepoMode) {
+        $copyMode = '/MIR'
+        $verb = 'mirroring'
+    }
     if ($existed) {
-        Log "[$Label] COLLISION (target exists): $RelPath - merging..."
+        Log "[$Label] COLLISION (target exists): $RelPath - $verb..."
     } else {
         Log "[$Label] COPY: $RelPath"
     }
     # Use robocopy for efficient recursive copy (never dev junk: node_modules, .git, _stale-*, *.log)
     $start = Get-Date
-    robocopy $s $t /E /MT:8 /XD node_modules .git '_stale-*' /XF '*.log' /NFL /NDL /NJH /NJS /NC /NS /NP | Out-Null
+    robocopy $s $t $copyMode /MT:8 /XD node_modules .git '_stale-*' /XF '*.log' /NFL /NDL /NJH /NJS /NC /NS /NP | Out-Null
     $elapsed = (Get-Date) - $start
     $count = (Get-ChildItem $t -Recurse -File -ErrorAction SilentlyContinue | Measure-Object).Count
     Log "[$Label]   -> ${count} files total at target after copy ($([Math]::Round($elapsed.TotalSeconds,1))s)"
