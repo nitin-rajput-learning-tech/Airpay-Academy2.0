@@ -39,6 +39,9 @@ final class engine_archive_test extends \advanced_testcase {
         $this->resetAfterTest();
         // The SCORM and quiz generators need a current user.
         $this->setAdminUser();
+        // The reminder is held back for a day by an application cache keyed by rule, user and course ids, and those
+        // ids repeat from one test to the next once the tables are reset.
+        \cache::make('local_sentientia_recompletion', 'warn_dedupe')->purge();
         $g = $this->getDataGenerator();
 
         $user = $g->create_user(['lang' => 'en']);
@@ -145,7 +148,13 @@ final class engine_archive_test extends \advanced_testcase {
         $this->assertSame(0, $DB->count_records('scorm_attempt', ['userid' => $user->id]));
         $this->assertSame(0, $DB->count_records('quiz_attempts', ['userid' => $user->id]),
             'the attempts of BOTH quizzes are deleted (each against its own quiz)');
-        $this->assertSame(0, $DB->count_records('grade_grades', ['userid' => $user->id, 'itemid' => $this->w['item']->id]));
+        // The learner's grade is gone. An EMPTY row may be back: the quiz grade update inside the reset makes Moodle
+        // re-aggregate the course total, and grade_category::aggregate_grades() then creates a grade_grades row with
+        // no grade for every grade item of the learner ("so we can set the aggregationstatus"). An empty row is the
+        // same as no grade, so the test asks whether any value is left, not whether a row is.
+        $this->assertSame(0, $DB->count_records_select('grade_grades',
+            'userid = :userid AND itemid = :itemid AND (finalgrade IS NOT NULL OR rawgrade IS NOT NULL)',
+            ['userid' => $user->id, 'itemid' => $this->w['item']->id]), 'no grade value is left on the manual item');
 
         // And it was kept first.
         $history = $DB->get_record('local_sentientia_recompletion_history', ['userid' => $user->id], '*', MUST_EXIST);
@@ -256,5 +265,38 @@ final class engine_archive_test extends \advanced_testcase {
         $this->assertStringStartsWith('Recompletion due in ', $messages[0]->subject);
         $this->assertStringContainsString("'Annual AML'", $messages[0]->subject);
         $this->assertStringContainsString('will expire in', $messages[0]->fullmessage);
+    }
+
+    public function test_both_notices_are_deliverable_to_a_learner_who_holds_no_recompletion_capability(): void {
+        $user = $this->w['user'];
+        // The premise: an ordinary learner does not hold :view (it is a manager capability).
+        $this->assertFalse(has_capability('local/sentientia_recompletion:view', \context_system::instance(), $user));
+
+        // message_send() refuses a notification whose provider the recipient is not allowed to use, with only a
+        // debugging() line, so the notice is silently lost. The providers must be offered to this learner.
+        $names = [];
+        foreach (message_get_providers_for_user((int) $user->id) as $provider) {
+            if ($provider->component === 'local_sentientia_recompletion') {
+                $names[] = $provider->name;
+            }
+        }
+        sort($names);
+        $this->assertSame(['recompletion_due_soon', 'recompletion_reset'], $names);
+    }
+
+    public function test_a_second_pass_within_the_day_does_not_repeat_the_reminder(): void {
+        global $DB;
+        $user = $this->w['user'];
+        $course = $this->w['course'];
+        $DB->set_field('course_completions', 'timecompleted', time() - 350 * DAYSECS, ['userid' => $user->id]);
+        $sink = $this->redirectMessages();
+        $rule = $this->rule((int) $course->id);
+
+        $first = recompletion_engine::run_rule($rule, false);
+        $second = recompletion_engine::run_rule($rule, false);
+
+        $this->assertSame(1, $first['notified']);
+        $this->assertSame(0, $second['notified'], 'the warn_dedupe cache holds the reminder back for a day');
+        $this->assertCount(1, $sink->get_messages());
     }
 }

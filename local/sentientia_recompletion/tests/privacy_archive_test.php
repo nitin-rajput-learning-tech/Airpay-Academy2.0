@@ -139,14 +139,18 @@ final class privacy_archive_test extends provider_testcase {
     }
 
     public function test_a_learner_and_an_administrator_named_only_in_a_payload_are_reachable(): void {
-        $systemid = \context_system::instance()->id;
-        $this->assertContains($systemid, provider::get_contexts_for_userid((int) $this->subject->id)->get_contextids());
-        $this->assertContains($systemid, provider::get_contexts_for_userid((int) $this->admin->id)->get_contextids(),
+        $systemid = (int) \context_system::instance()->id;
+        // contextlist::get_contextids() hands back what the database returned, which is strings, and assertContains
+        // compares strictly: the ids are cast, as they are in privacy_anonymise_test through assertContainsEquals.
+        $reachable = static fn(int $userid): array => array_map('intval',
+            provider::get_contexts_for_userid($userid)->get_contextids());
+        $this->assertContains($systemid, $reachable((int) $this->subject->id));
+        $this->assertContains($systemid, $reachable((int) $this->admin->id),
             'an erasure must reach the overrideby inside a payload, or it is never anonymised');
-        $this->assertContains($systemid, provider::get_contexts_for_userid((int) $this->grader->id)->get_contextids(),
+        $this->assertContains($systemid, $reachable((int) $this->grader->id),
             'a teacher named only as the grader of a gradebook row is reachable too');
         $nobody = $this->getDataGenerator()->create_user();
-        $this->assertSame([], provider::get_contexts_for_userid((int) $nobody->id)->get_contextids());
+        $this->assertSame([], $reachable((int) $nobody->id));
 
         $userlist = new userlist(\context_system::instance(), 'local_sentientia_recompletion');
         provider::get_users_in_context($userlist);

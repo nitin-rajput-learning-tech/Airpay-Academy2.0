@@ -243,8 +243,11 @@ class recompletion_engine {
                 0, $max_batch);
 
             foreach ($warn_rows as $row) {
-                // Suppress duplicate warn within 24h.
-                $key = "recompletion_warn:{$rule->id}:{$row->userid}:{$row->courseid}";
+                // Suppress duplicate warn within 24h. The warn_dedupe definition (db/caches.php) uses simple keys,
+                // which may hold only [a-zA-Z0-9_]: a ':' makes the cache throw a coding_exception whenever debugging
+                // is on, so this is the one place the key is built and it is joined with underscores. The three ids
+                // are integers, so the parts cannot run into each other.
+                $key = "recompletion_warn_{$rule->id}_{$row->userid}_{$row->courseid}";
                 $cache = \cache::make('local_sentientia_recompletion', 'warn_dedupe');
                 if ($cache->get($key)) continue;
                 $cache->set($key, 1);
