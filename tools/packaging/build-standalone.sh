@@ -167,9 +167,9 @@ verify_archive() {
         [ "$n" = 0 ] && ok "no public/lib/fonts (5.2 leftover)" || bad "public/lib/fonts present: a stale 5.2 file set, the base is not vanilla 5.3"
         n="$(grep -cE "^${TN_RE}/public/theme/classic(/|\$)" "$list" || true)"
         [ "$n" = 0 ] && ok "no public/theme/classic (removed in 5.3)" || bad "public/theme/classic present: a stale 5.2 file set, the base is not vanilla 5.3"
-        n="$(grep -cE "^${TN_RE}/public/my/templates/dropdown\\.mustache\$" "$list" || true)"
-        [ "$n" = 0 ] && ok "no my/templates/dropdown.mustache" || bad "my/templates/dropdown.mustache present (nothing references it)"
     fi
+    n="$(grep -cE "^${TN_RE}/public/my/templates/dropdown\\.mustache\$" "$list" || true)"
+    [ "$n" = 0 ] && ok "no my/templates/dropdown.mustache" || bad "my/templates/dropdown.mustache present (nothing references it)"
     n="$(grep -c . "$list" || true)"
     echo "  archive entries: $n"
     rm -f "$list"
@@ -245,7 +245,7 @@ fi
 echo "── 2. stage: copy of the vanilla base -> $STAGE_TREE"
 native robocopy "$(win "$BASE")" "$(win "$STAGE_TREE")" /E /MT:8 /R:1 /W:1 \
     /XD node_modules .git '_stale-*' \
-    /XF '*.log' airpay-audit-loginas.php "$(win "$BASE/config.php")" \
+    /XF '*.log' airpay-audit-loginas.php "$(win "$BASE/config.php")" "$(win "$BASE/public/my/templates/dropdown.mustache")" \
     /NFL /NDL /NJH /NJS /NC /NS /NP >/dev/null || [ $? -lt 8 ]
 [ ! -e "$STAGE_TREE/config.php" ] || { echo "root config.php survived into the stage; refusing to continue" >&2; exit 1; }
 # public/config.php stays: it is core's loader shim and every entry point requires it. Prove it is still the shim.
@@ -296,7 +296,7 @@ if [ "${#SHIPPED[@]}" -gt 0 ]; then
     [ -z "$HITS" ] && ok "no shipped amd/build names core/modal_factory" || { bad "shipped amd/build still names core/modal_factory (removed in Moodle 5.2): $(echo "$HITS" | wc -l) file(s)"; echo "$HITS" | head -n 8 | sed 's/^/    /' >&2; }
     # No shipped PHP may INSTANTIATE the legacy Mustache class (comments may name it); local_sentientia_emails' factory is the one allowed instantiation.
     HITS="$(grep -rInE --include='*.php' 'new[[:space:]]+\\?Mustache_Engine' "${SHIPPED[@]}" 2>/dev/null | grep -v 'sentientia_emails/.*mustache_factory' || true)"
-    [ -z "$HITS" ] && ok "no shipped PHP uses Mustache_Engine (except the emails factory)" || { bad "new Mustache_Engine in shipped PHP (the class is gone on 5.2+)"; echo "$HITS" | head -n 8 | sed 's/^/    /' >&2; }
+    [ -z "$HITS" ] && ok "no shipped PHP instantiates Mustache_Engine (except the emails factory)" || { bad "new Mustache_Engine in shipped PHP (the class is gone on 5.2+)"; echo "$HITS" | head -n 8 | sed 's/^/    /' >&2; }
     HITS="$(grep -rIl --include='*.js' 'theme_airpayux' "$PUB/theme/sentientia/amd/build" 2>/dev/null || true)"
     [ -z "$HITS" ] && ok "no stale theme_airpayux module names in theme amd/build" || bad "stale theme_airpayux names in theme/sentientia/amd/build"
 fi
@@ -337,7 +337,7 @@ HARD PREREQUISITES
   Upgrade source: $UPGRADE_FROM.
 
 NOT IN THE PACKAGE (on purpose)
-  The instance config.php at the tree root (supply your own from config-dist.php; a template is
+  The instance config.php at the tree root (supply your own from config-dist.php; a template is the repository file
   moodle-enhancement/deploy/config-sentientia53.php.template), node_modules/, _stale-*/, *.log, theme/airpayux (not served),
   airpay-audit-loginas.php, the retired ini_get_bool polyfill.
   public/config.php IS in the package: it is Moodle's own loader (it requires ../config.php, or sends a fresh site to
@@ -350,7 +350,7 @@ FRESH INSTALL
   2. Create config.php from config-dist.php (dirroot, dataroot, wwwroot, routerconfigured). No polyfill.
   3. sudo -u www-data php admin/cli/install_database.php --agree-license ...; if interrupted run tools/uat/finish_install.php
      (never resume with upgrade.php). Posture: forcelogin=0, enablemyhome=1, frontpage='', theme=sentientia.
-  4. admin/cli/purge_caches.php; start cron. Run moodle-enhancement/deploy/render_smoke_53.sh against the site (gate check).
+  4. admin/cli/purge_caches.php; start cron. Run render_smoke_53.sh (repository file moodle-enhancement/deploy/render_smoke_53.sh) against the site: gate check.
 
 UPGRADE (clean-directory method; NEVER extract over the live root: stale files of the old release stay behind,
   e.g. theme/classic, the blocks/timeline AMD and templates, public/lib/fonts)
