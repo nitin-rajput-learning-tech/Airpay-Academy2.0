@@ -818,8 +818,12 @@ final class bizlms_import_test extends \advanced_testcase {
         $attemptid = (int) $DB->get_field('quiz_attempts', 'id', ['quiz' => $this->quiz['basic'], 'userid' => $this->user['pending']]);
         $this->assertFalse(exam_manager::get_by_attempt($attemptid), 'the legacy table is not read');
 
-        // And with the exam row there, both find it.
-        $this->contract_run(true, ['decisions' => $this->contract_decisions()]);
+        // And with the exam row there, both find it. The legacy row goes first: preflight blocks an import while
+        // local_onlinetests holds rows (test_local_onlinetests_with_rows_blocks_the_import covers that), so with it the run
+        // imported nothing and exam_of('basic') found no row.
+        $DB->delete_records('local_onlinetests');
+        [$result] = $this->contract_run(true, ['decisions' => $this->contract_decisions()]);
+        $this->assertSame(0, $result['exit'], implode('; ', $result['blockers']));
         $exam = $this->exam_of('basic');
         $this->assertSame((int) $exam->id, (int) exam_manager::get_by_course_module($cmid)->id);
         $this->assertSame((int) $exam->id, (int) exam_manager::get_by_attempt($attemptid)->id);
