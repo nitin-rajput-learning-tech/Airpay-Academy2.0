@@ -336,8 +336,8 @@ final class bizlms_import_enrolments_test extends \advanced_testcase {
         $this->contract_begin();
         $this->seed();
 
-        [$result] = $this->contract_run(true, ['decisions' => decisions::from_array([
-            enrolments_importer::DECISION => enrolments_importer::DECISION_VALUE,
+        // The whole signed set (the 2026-10-07 decisions added three enrolments keys), plus the two acceptances.
+        [$result] = $this->contract_run(true, ['decisions' => decisions::from_array(enrolments_importer::SIGNED_VALUES + [
             'accepted_reasons' => ['enrolments:manual_enrolment_inactive', 'enrolments:user_deleted'],
         ])]);
 
