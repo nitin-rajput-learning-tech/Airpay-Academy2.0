@@ -415,3 +415,7 @@ and `docs/cutover/bizlms-import-decisions.json`; this card says what the code no
 ## 2026-10-08 Moodle 5.3 compat FX-21
 
 `cli/seed_badges.php` no longer requires `badges/lib/awardlib.php` (removed in Moodle 5.2; the require was unused, and it made this dev CLI fatal on 5.2+). `badges/lib.php` and `lib/badgeslib.php` are still required. Both trees.
+
+## 2026-10-08 Moodle 5.3 compat FX-20 round 1 (version 2026100802)
+
+The `data-bs-toggle` / `data-bs-target` attributes added in 2026100801 are REMOVED again; `manage.mustache` and `org_node.mustache` are byte-identical to before 2026100801. They were a forward-compat measure for a theme that moves to core Bootstrap 5, but the theme still vendors Bootstrap 4.6 and its jQuery data-api handles `data-toggle` on every page, while core's Bootstrap 5 data-api is loaded on many pages anyway (5.1/5.2: `core/local/dropdown/dialog`, `collapsable_section`, `comboboxsearch`; 5.3: `core/usermenu`, the dialog and collapsable modules via the `bootstrap` import-map bundle). On such a page an element carrying both attributes ran two toggles per click (open, then close). The Bootstrap 4 attribute alone works on 5.1, 5.2 and 5.3 because the theme ships its own copy. When the theme moves to Bootstrap 5, switch the attributes then, not before. No schema change.

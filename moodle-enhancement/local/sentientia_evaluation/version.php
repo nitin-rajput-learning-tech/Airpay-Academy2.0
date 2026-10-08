@@ -24,7 +24,8 @@ $plugin->component = 'local_sentientia_evaluation';
 // sentientia.evaluation.learner_history. The importer class refuses to run below this version
 // (importer::REQUIRES_VERSION).
 // 2026100801 - Moodle 5.3 compat FX-20: the question card menu emits data-bs-toggle beside the Bootstrap 4 data-toggle. No schema change.
-$plugin->version   = 2026100801;  // Moodle 5.3 compat FX-20 (on top of 2026093001 ADR-032 evaluation import)
+// 2026100802 - Moodle 5.3 compat FX-20 round 1: data-bs-toggle removed again (a click on an element with both data-toggle and data-bs-toggle ran the theme's Bootstrap 4 handler AND core's Bootstrap 5 handler where core loads it, so the menu opened and closed at once). Template byte-identical to before 2026100801. No schema change.
+$plugin->version   = 2026100802;  // Moodle 5.3 compat FX-20 round 1 (on top of 2026100801)
 // 2026093001:  // ADR-032: evaluation importer, responses.subject_userid, imported forms read-only
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;

@@ -387,3 +387,7 @@ Every `fputcsv()` / `fgetcsv()` / `str_getcsv()` call in this plugin now passes 
 ## 2026-10-08 Moodle 5.3 compat FX-20 (version 2026100801)
 
 `templates/questions.mustache`: the question card menu emits `data-bs-toggle="dropdown"` beside the Bootstrap 4 `data-toggle`. No schema change.
+
+## 2026-10-08 Moodle 5.3 compat FX-20 round 1 (version 2026100802)
+
+`data-bs-toggle="dropdown"` removed again from `templates/questions.mustache` (byte-identical to before 2026100801): with both attributes a click ran the theme's Bootstrap 4 handler and core's Bootstrap 5 handler on pages where core loads the latter, so the menu opened and closed at once. See the `sentientia_org` card for the full reasoning. No schema change.

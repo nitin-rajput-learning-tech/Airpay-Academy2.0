@@ -276,3 +276,7 @@ Branch `claude/owner-decisions-y`, both trees. No schema, capability or flag cha
 ## 2026-10-08 Moodle 5.3 compat FX-20 (version 2026100801)
 
 The learner self-rate dialog is a `core/modal_save_cancel` dialog. It used `window.bootstrap.Modal` (exists in no tree) and fell back to the theme's Bootstrap 4 jQuery plugin. `templates/view.mustache` now renders an inert hidden source block (`#airpay-self-rate-modal`, `d-none`) holding the localised title, the save label and the level select; the first click on Self-rate builds the dialog and moves the select block into it (ids stay unique), later clicks show the same dialog. The save handler keeps the dialog open while the request runs (spinner on the Save button), shows the existing "pick a level" warning for an empty level, and reloads on success. The title is passed as already-escaped HTML. `amd/src/skill_actions.js` is now identical in both trees (the baselined drift line is removed); `amd/build/skill_actions.min.js` rebuilt (plus a source map). No schema change. Visual evidence owed.
+
+## 2026-10-08 Moodle 5.3 compat FX-20 round 1 (version 2026100802)
+
+`openSelfRateModal()` in `amd/src/skill_actions.js`: the `try { await ModalSaveCancel.create(...) } finally {...}` had no `catch`, so a dialog that could not be built was an unhandled promise rejection with no message for the learner. It now catches, shows `Notification.exception` and returns (the `selfRateOpening` guard is still reset in `finally`). `skill_actions.min.js` rebuilt; both trees identical. No schema change.

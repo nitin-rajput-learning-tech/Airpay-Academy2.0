@@ -365,6 +365,10 @@ const openSelfRateModal = async () => {
             // title is set as HTML.
             title: titleEl ? titleEl.innerHTML.trim() : '',
         });
+    } catch (err) {
+        // If the dialog cannot be built the click must not fail silently (nor leave an unhandled rejection).
+        Notification.exception(err);
+        return;
     } finally {
         selfRateOpening = false;
     }

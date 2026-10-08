@@ -259,8 +259,6 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/notification'], fun
             }
             if (btn.dataset.action === 'open-apply') {
                 openApplyModal();
-            } else if (btn.dataset.action === 'confirm-apply') {
-                submitChanges();
             } else if (btn.dataset.action === 'discard') {
                 discardChanges();
             }
