@@ -129,9 +129,13 @@ trait importer_contract {
     /**
      * Forget the registered importer after every test.
      *
+     * Public, not protected: a test class that also extends core_privacy\tests\provider_testcase (whose tearDown() is
+     * public) cannot narrow it, and PHP refused to load such a class at all (the classroom importer test, 2026-10-08).
+     * Widening is allowed for every parent.
+     *
      * @return void
      */
-    protected function tearDown(): void {
+    public function tearDown(): void {
         registry::set_testing_importers(null);
         parent::tearDown();
     }
@@ -238,12 +242,18 @@ trait importer_contract {
         global $DB;
         $importer = $this->contract_begin();
         $this->contract_seed();
+        // A target table need not be empty before the run: a plugin's db/install.php may seed it (the skills
+        // plugin installs 8 default categories). What a dry run must not do is change it.
+        $before = [];
+        foreach ($importer->target_tables() as $table) {
+            $before[$table] = $DB->count_records($table);
+        }
         $writes = $DB->perf_get_writes();
         [$result] = $this->contract_run(false);
         $this->assertContains($result['exit'], [0, 2], 'a dry run of a valid seed finishes');
         $this->assertSame($writes, $DB->perf_get_writes(), 'a dry run writes nothing, not even bookkeeping');
         foreach ($importer->target_tables() as $table) {
-            $this->assertSame(0, $DB->count_records($table), $table);
+            $this->assertSame($before[$table], $DB->count_records($table), $table);
         }
         $this->assertSame(0, $DB->count_records('local_sentientia_legacyrun'));
     }
