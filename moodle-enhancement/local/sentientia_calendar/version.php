@@ -24,10 +24,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_calendar';
-$plugin->version   = 2026052700;
+$plugin->version   = 2026100800;  // 2026-10-08 session notes to plain text with a fixed conversion, not html_to_text() (Moodle 5.3 upper-cases bold text); no schema change
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.2.0-beta';
+$plugin->release   = '1.2.1-beta';
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026051401,  // feature_flags resolver
 ];
