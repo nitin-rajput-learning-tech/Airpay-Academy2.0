@@ -20,10 +20,14 @@
 #      configuration to archive/ (nothing of it can be mistaken for this one's result). A restore that did not complete is
 #      refused on re-run, WHATEVER RESTORE_DONE_BY_HAND says: a database a kit restore was writing to is never adopted. Drop it and
 #      create it empty; the kit sees it empty and moves the record of the failed restore to archive/ (a hand restore then follows).
+#      That record names the database it was writing to (state/kv/restore.started_db: host, port, name) and is cleared ONLY when that
+#      same database is seen absent or empty, on two reads that agree (a COUNT the client printed nothing for is never read as absent
+#      or empty); a run for any other database refuses and leaves the record alone.
 #      RESTORE_DONE_BY_HAND together with RESTORE_DB_DUMP is refused outright (a leftover statement must not meet a new dump).
 #      THE MOODLEDATA is per rehearsal. The marker file also records which archive the kit unpacked into it (path, size, mtime) and
 #      that the unpack finished. A NEW restore (a new database) accepts a non-empty moodledata only when it is the same unpack of the
-#      same RESTORE_MOODLEDATA_ARCHIVE that no later step has used; anything else (a dataroot an earlier rehearsal ran in, with its
+#      same RESTORE_MOODLEDATA_ARCHIVE that no later step has used (that fact outlives the rotation of state/: restore-ids.log);
+#      anything else (a dataroot an earlier rehearsal ran in, with its
 #      role-9 state file, caches and sessions) is refused: empty it or point MOODLEDATA at a new directory. A named
 #      RESTORE_MOODLEDATA_ARCHIVE is never ignored: if the moodledata already holds a filedir it must be that archive's unpack, or the
 #      step stops. A populated moodledata the kit did not stamp needs its own statement, RESTORE_MOODLEDATA_BY_HAND=<its path>, and
@@ -92,7 +96,7 @@ restore_database() {
                 "$RESTORE_DB_DUMP" "$MYSQL_BIN" "$DB_CNF" "$DB_NAME" ;;
         *) timed "restore database" bash -c 'set -o pipefail; "$2" --defaults-extra-file="$3" --one-database --max-allowed-packet=512M "$4" < "$1"' _ \
                 "$RESTORE_DB_DUMP" "$MYSQL_BIN" "$DB_CNF" "$DB_NAME" ;;
-    esac || die "the database restore failed: drop the partial database by hand and restore again"
+    esac || die "the database restore failed, and database ${DB_NAME} now holds a partial copy, which the kit never adopts (not even with RESTORE_DONE_BY_HAND). Drop it and create it empty (as a database administrator: DROP DATABASE \`${DB_NAME}\`; CREATE DATABASE \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE ${DB_COLLATION};), then either run step 01 again with RESTORE_DB_DUMP set (RESTORE_DONE_BY_HAND unset), or, to restore by hand: run step 01 once on the empty database with RESTORE_DB_DUMP unset, so that it archives the record of the failed restore (it stops with 'restore the live backup first'), restore the live backup into it, and run step 01 with RESTORE_DB_DUMP unset and RESTORE_DONE_BY_HAND=${DB_NAME}"
 }
 
 restore_moodledata() {
@@ -112,6 +116,22 @@ by_hand_ack() { [ -n "$RESTORE_DONE_BY_HAND" ] && [ "$RESTORE_DONE_BY_HAND" = "$
 # failed_kit_restore -> 0 when a restore this kit started in this work directory never completed (restore.started, no restore.complete).
 failed_kit_restore() { [ -n "$(kv_get restore.started)" ] && [ -z "$(kv_get restore.complete)" ]; }
 
+# restore_target -> the database this run is for, as restore.started_db records it for a restore the kit starts. The record of a failed
+# restore describes ONE database (host, port and name): only that database seen absent or empty clears it.
+restore_target() { printf 'host=%s port=%s name=%s' "$DB_HOST" "${DB_PORT:-default}" "$DB_NAME"; }
+
+# confirm_database_gone: the record of a failed restore is cleared only on two reads that agree. probe_db (which asks a COUNT again
+# when the client printed nothing, and never reads an empty answer as absent or empty) has just said absent or empty; it is run once
+# more after a pause and has to say the same, or the record stays where it is.
+confirm_database_gone() {
+    local first_state="$DB_STATE" first_tables="$DB_TABLES"
+    sleep 1
+    probe_db
+    if [ "$DB_STATE" != "$first_state" ] || [ "$DB_TABLES" != "$first_tables" ]; then
+        die "two reads of database ${DB_NAME} disagree (${first_state}, ${first_tables} tables; then ${DB_STATE}, ${DB_TABLES} tables): the record of the failed restore ($(kv_get restore.started)) is NOT cleared, because the partial copy may still be there. Run step 01 again once the server answers the same twice"
+    fi
+}
+
 # start_new_restore: a new rehearsal begins. The earlier one's state moves to archive/, and the restore id is chosen.
 RESTORE_ID=""
 OLD_RESTORE_ID=""
@@ -122,7 +142,9 @@ start_new_restore() {
     NEW_RESTORE=1
     OLD_RESTORE_ID="$(kv_get restore.id)"
     # How far did the earlier rehearsal get? A step after 01 ran code against the moodledata (hop 1 and 2, the repairs, the role-9
-    # state file, caches, sessions), so such a dataroot is not the clean unpack of the archive any more. Read BEFORE the rotation.
+    # state file, caches, sessions), so such a dataroot is not the clean unpack of the archive any more. Read BEFORE the rotation. The
+    # rotation then writes the same fact to restore-ids.log (restore_dataroot_used), which is what a retry of a restore that dies after
+    # the rotation reads: its state/ no longer holds the status files.
     local f
     for f in "$STATE_DIR"/0[2-9].status "$STATE_DIR"/1[0-2].status; do
         if [ -f "$f" ]; then
@@ -169,18 +191,27 @@ fi
 if [ "$EXECUTE" = 1 ]; then
     probe_db
     log "database ${DB_NAME}: ${DB_STATE} (${DB_TABLES} tables)"
+    if failed_kit_restore && [ "$(kv_get restore.started_db)" != "$(restore_target)" ]; then
+        # The record of a failed restore describes ONE database. A run for another one (a different name, host or port) must neither clear
+        # it (the partial copy is still there) nor start a restore of its own, which would move it to archive/ with the rest of the state.
+        die "the restore this kit started ($(kv_get restore.started)) did not complete, and it was into [$(kv_get restore.started_db)], not into this run's database [$(restore_target)]. The record is cleared only when THAT database is seen absent or empty, so this run leaves it alone (and a restore into another database would archive it). Use a work directory (REHEARSAL_WORK) of its own for this database, or set DB_HOST, DB_PORT and DB_NAME back to the recorded ones, drop that database, create it empty and run step 01 once (a record that names no database was made by an older kit: move state/kv/restore.started to archive/ by hand once you have checked that database)"
+    fi
     case "$DB_STATE" in
         unreachable) die "the database server at ${DB_HOST} cannot be reached" ;;
         absent | empty)
             if failed_kit_restore; then
-                # The kit itself sees the database absent or empty: the partial copy that the failed restore wrote is gone, so the record of
-                # that restore describes no database any more. It moves to archive/ now (not deleted), which is what lets a database
-                # restored by hand into this empty one be told from the partial copy. Nothing else clears a failed restore.
-                note "database ${DB_NAME} is ${DB_STATE} again after the restore this kit started ($(kv_get restore.started)) did not complete: the partial copy is gone, and the record of the failed restore moves to archive/"
+                # The kit itself sees THIS database (the one the record names, checked above) absent or empty, on two reads that agree: the
+                # partial copy that the failed restore wrote is gone, so the record describes no database any more. It moves to archive/
+                # now (not deleted), which is what lets a database restored by hand into this empty one be told from the partial copy.
+                # Nothing else clears a failed restore.
+                confirm_database_gone
+                note "database ${DB_NAME} is ${DB_STATE} again (two reads agree) after the restore this kit started ($(kv_get restore.started)) did not complete: the partial copy is gone, and the record of the failed restore moves to archive/"
                 rotate_work_state
             fi
             [ -n "$RESTORE_DB_DUMP" ] || die "database ${DB_NAME} is ${DB_STATE} and RESTORE_DB_DUMP is not set: restore the live backup first"
             start_new_restore
+            # The database is recorded first: a record of a failed restore (restore.started) always names the database it was writing to.
+            kv_set restore.started_db "$(restore_target)"
             kv_set restore.started "$(ts) dump=${RESTORE_DB_DUMP}"
             kv_unset restore.complete
             restore_database
@@ -241,6 +272,10 @@ if [ "$EXECUTE" = 1 ]; then
             if { [ -n "$OLD_RESTORE_ID" ] && [ "$md_have" = "$OLD_RESTORE_ID" ]; } \
                     || { [ -f "$REHEARSAL_WORK/restore-ids.log" ] && grep -qx "$md_have" "$REHEARSAL_WORK/restore-ids.log"; }; then
                 lineage=1
+            fi
+            # Used by a step after 01: seen in state/ just now (PAST_RESTORE), or recorded when an earlier new restore rotated it away.
+            if restore_dataroot_used "$md_have"; then
+                PAST_RESTORE=1
             fi
             if [ "$lineage" = 1 ] && [ "$PAST_RESTORE" = 0 ] && [ -n "$ARCHIVE_ID" ] \
                     && [ "$(moodledata_unpack_state "$ARCHIVE_ID")" = match ]; then

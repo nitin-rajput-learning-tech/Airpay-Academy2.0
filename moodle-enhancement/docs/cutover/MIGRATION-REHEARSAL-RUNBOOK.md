@@ -104,8 +104,12 @@ Things the kit does that the numbered steps below do not say (added 2026-10-08, 
   A database restored by hand is stamped only on `RESTORE_DONE_BY_HAND=<its name>` with `RESTORE_DB_DUMP` unset (both set is
   refused outright: the first stays in `rehearsal.env` until cleared), and never when a kit restore started and did not complete:
   drop that database and create it empty, and the kit, seeing it empty, archives the record of the failed restore (a kit restore
-  or a hand restore follows). A new restore moves the earlier rehearsal's state, reports, baseline and cache configuration to
-  `archive/`.
+  or a hand restore follows: for a hand restore run step 01 once on the empty database, restore the live backup into it, then run
+  step 01 with `RESTORE_DB_DUMP` unset and `RESTORE_DONE_BY_HAND=<its name>`). The record of a failed restore names the database it
+  was writing to (host, port, name) and is cleared only when THAT database is seen absent or empty on two reads that agree (an
+  empty answer from the database client is never read as "absent" or "empty"); a run for another database name, host or port
+  refuses and leaves the record alone. A new restore moves the earlier rehearsal's state, reports, baseline and cache configuration
+  to `archive/`.
 * **The baseline has a metrics version, and names the file that took it.** A comparison refuses (exit 3) a baseline taken with
   another version of `source_baseline.php` (the checksums it lacks would otherwise go unchecked), and the baseline carries the
   SHA-256 of the exact file that took it (`tool.sha256`, carriage returns removed): the tool refuses a baseline another file took,
@@ -117,7 +121,9 @@ Things the kit does that the numbered steps below do not say (added 2026-10-08, 
   two modules is the one way forward (Nitin's decision); an acceptance would first need a narrow mechanism in the tool.
 * **One rehearsal, one moodledata.** A new restore needs an EMPTY moodledata or a new directory: the earlier rehearsal's dataroot
   carries its role-9 state file, caches, sessions and cron files. The marker file records which archive was unpacked and that the
-  unpack finished; a named `RESTORE_MOODLEDATA_ARCHIVE` is never silently ignored. A populated directory the kit did not stamp needs
+  unpack finished; a named `RESTORE_MOODLEDATA_ARCHIVE` is never silently ignored. That a step after 01 ran in a dataroot is also
+  written to `restore-ids.log` when a new restore moves the earlier state to `archive/`, so a new restore that died and is retried
+  still refuses the used dataroot. A populated directory the kit did not stamp needs
   `RESTORE_MOODLEDATA_BY_HAND=<its path>` (a statement of its own, not covered by `RESTORE_DONE_BY_HAND`) and must show no write
   in `sessions/` or `localcache/` in the last 30 minutes.
 * **A restore point before each hop and the import.** `SNAPSHOT_HOOK` is called with the label (before-hop-1, before-hop-2,

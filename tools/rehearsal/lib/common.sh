@@ -655,6 +655,31 @@ db_scalar() {
     printf '%s' "$out"
 }
 
+# count_retry COMMAND...: run COMMAND (it prints one COUNT) until it prints something, at most three times, one second apart. A COUNT can
+# never be empty, and the mysql client was seen to print nothing, with status 0, on a loaded workstation, so an empty answer is asked
+# again and is an error after the third (rc 1). A command that fails is an error at once. Prints the first line, without a carriage return.
+count_retry() {
+    local out tries=0 rc=0
+    while :; do
+        rc=0
+        out="$("$@")" || rc=$?
+        if [ "$rc" != 0 ]; then
+            return 1
+        fi
+        out="${out%%$'\n'*}"
+        out="${out%$'\r'}"
+        if [ -n "$out" ]; then
+            break
+        fi
+        tries=$((tries + 1))
+        if [ "$tries" -ge 3 ]; then
+            return 1
+        fi
+        sleep 1
+    done
+    printf '%s' "$out"
+}
+
 # db_write SQL: a write on the rehearsal database (EXECUTE only; DRY prints it).
 db_write() {
     if [ "$EXECUTE" != 1 ]; then
@@ -688,13 +713,22 @@ probe_db() {
     if [ -n "$hit" ]; then
         die "the database server at ${DB_HOST} holds the schema '${hit}': this is production or UAT, not a rehearsal server. Refused"
     fi
-    local exists
-    exists="$(mysql_nodb -e "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '${DB_NAME}'")"
-    if [ "$exists" != 1 ]; then
-        DB_STATE="absent"
+    # Only a literal 0 reads as "absent" and only a literal 0 as "empty": a COUNT the client printed nothing for (it was seen to, with
+    # status 0, on this box) is asked again, and an answer that stays empty, is not a number, or comes with an error leaves the state
+    # "unreachable" (which every caller refuses), never absent or empty. A failed restore's record is cleared on those two states.
+    local exists tables
+    exists="$(count_retry mysql_nodb -e "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '${DB_NAME}'")" || exists=""
+    case "$exists" in
+        0) DB_STATE="absent"; return 0 ;;
+        1) ;;
+        *) log "the count of schemata named ${DB_NAME} could not be read (got '${exists}'): the database is treated as unreachable, not as absent"; return 0 ;;
+    esac
+    tables="$(count_retry db_q "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${DB_NAME}'")" || tables=""
+    if ! [[ "$tables" =~ ^[0-9]+$ ]]; then
+        log "the count of tables of ${DB_NAME} could not be read (got '${tables}'): the database is treated as unreachable, not as empty"
         return 0
     fi
-    DB_TABLES="$(db_q "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${DB_NAME}'")"
+    DB_TABLES="$tables"
     if [ "$DB_TABLES" = 0 ]; then
         DB_STATE="empty"
     else
@@ -1188,6 +1222,13 @@ require_kit_marker() {
     [ "$dataid" = "$want" ] || die "${MOODLEDATA} carries restore id ${dataid:0:8}..., not ${want:0:8}...: it belongs to another rehearsal or site. Refused"
 }
 
+# restore_dataroot_used ID -> 0 when restore-ids.log records that a step after 01 ran against the moodledata of restore ID (written by
+# rotate_work_state, because the status files that say so are archived by the same rotation).
+restore_dataroot_used() {
+    [ -n "${1:-}" ] && [ -f "$REHEARSAL_WORK/restore-ids.log" ] \
+        && awk -v id="$1" '$1 == id && $2 == "used" { found = 1 } END { exit !found }' "$REHEARSAL_WORK/restore-ids.log"
+}
+
 # work_state_has_history -> 0 when state/ holds results of a rehearsal (kv values, or a status file of step 01 or later).
 work_state_has_history() {
     local f
@@ -1214,6 +1255,18 @@ rotate_work_state() {
     dest="$REHEARSAL_WORK/archive/${stamp}-${old:0:8}"
     [ -n "$old" ] || dest="$REHEARSAL_WORK/archive/${stamp}-unstamped"
     mkdir -p "$dest"
+    # The one fact of state/ that must outlive the rotation: a step after 01 ran against this restore's moodledata (hop 1 and 2, the
+    # repairs, the role-9 state file, caches, sessions and cron files). Step 01 refuses to reuse such a dataroot for a new restore, and
+    # a restore that dies after this rotation is retried with the status files already in archive/. The line goes into restore-ids.log,
+    # which no rotation moves, keyed by the restore id the dataroot carries.
+    if [ -n "$old" ]; then
+        for d in "$STATE_DIR"/0[2-9].status "$STATE_DIR"/1[0-2].status; do
+            if [ -f "$d" ]; then
+                printf '%s used %s\n' "$old" "$(ts)" >> "$REHEARSAL_WORK/restore-ids.log"
+                break
+            fi
+        done
+    fi
     if [ -f "$STATE_DIR/00.status" ]; then
         keep00="$(cat "$STATE_DIR/00.status")"
     fi
