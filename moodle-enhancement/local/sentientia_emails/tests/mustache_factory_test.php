@@ -32,8 +32,31 @@ final class mustache_factory_test extends \basic_testcase {
     }
 
     public function test_engine_prefers_the_current_mustache_class(): void {
-        $expected = class_exists(\Mustache\Engine::class) ? \Mustache\Engine::class : \Mustache_Engine::class;
-        $this->assertInstanceOf($expected, mustache_factory::engine());
+        // class_exists(\Mustache_Engine::class) is safe on every Moodle (on 5.1 it loads Mustache 2.x,
+        // on 5.2 and 5.3 it resolves to no file). The mirror test, class_exists(\Mustache\Engine::class),
+        // is NOT safe on 5.1 and is never called here: see the factory's docblock.
+        $engine = mustache_factory::engine();
+        if (class_exists(\Mustache_Engine::class)) {
+            // 5.1 (Mustache 2.x), or 5.2+ with the compat aliases loaded (a subclass of the current class).
+            $this->assertInstanceOf(\Mustache_Engine::class, $engine);
+        } else {
+            $this->assertInstanceOf(\Mustache\Engine::class, $engine);
+        }
+    }
+
+    public function test_engine_can_be_built_repeatedly_in_one_request(): void {
+        // On 5.1 a probe through the PSR-0 loader re-declared \Mustache_Engine on the second call, an
+        // uncatchable fatal that ended the e-mail cron run. Several engines in a row must be fine.
+        $first = mustache_factory::engine();
+        $second = mustache_factory::engine();
+        $third = mustache_factory::engine([
+            'escape' => static fn($value) => strtoupper((string) $value),
+        ]);
+        $this->assertSame(get_class($first), get_class($second));
+        $this->assertSame(get_class($first), get_class($third));
+        // The options reach the constructor unchanged.
+        $this->assertSame('OK', $third->render('{{v}}', ['v' => 'ok']));
+        $this->assertSame('ok', $second->render('{{v}}', ['v' => 'ok']));
     }
 
     public function test_a_broken_template_throws_something_catchable_as_throwable(): void {

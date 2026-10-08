@@ -42,16 +42,31 @@ class mustache_factory {
     /**
      * A plain Mustache engine (no loader, no helpers) for rendering one string template.
      *
-     * Prefers the Mustache 3.0 class and only falls back to the legacy class when it is
-     * absent, so a site that loads the compat aliases still gets the current engine.
+     * The order of the three tests matters, because autoloading \Mustache\Engine on 5.1 is NOT
+     * harmless. Moodle 5.1 registers 'Mustache' as a PSR-0 prefix (underscore and backslash both
+     * map to a directory separator), so class_exists(\Mustache\Engine::class) resolves to
+     * lib/mustache/src/Mustache/Engine.php, which declares \Mustache_Engine, and core loads it with
+     * a plain require(). The first such call declares the legacy class; any later call, or a first
+     * call after core has already rendered a template, declares it a second time, and PHP stops with
+     * an uncatchable "Cannot declare class Mustache_Engine" fatal. So:
+     *
+     *  1. A \Mustache\Engine that is already loaded is used as it is (never autoloads; only
+     *     5.2 and 5.3, or a site that loaded the compat aliases, can have it).
+     *  2. Otherwise the legacy \Mustache_Engine is asked for by name. On 5.1 that autoload is
+     *     safe and returns true; on 5.2 and 5.3 the PSR-4 'Mustache' prefix maps it to a file
+     *     (src/_Engine.php) that does not exist, so it returns false without loading anything.
+     *  3. Otherwise this is 5.2 or 5.3 and \Mustache\Engine autoloads normally.
      *
      * @param array $options Engine options, passed straight through to the constructor.
      * @return \Mustache\Engine|\Mustache_Engine
      */
     public static function engine(array $options = []) {
-        if (class_exists(\Mustache\Engine::class)) {
+        if (class_exists(\Mustache\Engine::class, false)) {
             return new \Mustache\Engine($options);
         }
-        return new \Mustache_Engine($options);
+        if (class_exists(\Mustache_Engine::class)) {
+            return new \Mustache_Engine($options);
+        }
+        return new \Mustache\Engine($options);
     }
 }
