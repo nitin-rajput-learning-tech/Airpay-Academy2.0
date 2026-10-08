@@ -1,0 +1,70 @@
+<?php  // Moodle configuration file - Sentientia LMS on Moodle 5.3 LTS (TEMPLATE)
+//
+// Copy to <tree>/config.php on the target host and replace every @@TOKEN@@. Never commit,
+// package or share a filled-in copy: it holds the database password. The package builders
+// exclude config.php on purpose (tools/packaging/build-standalone.sh fails the build if one
+// is found); on 2026-08-03 a development config.php leaked into a package once.
+//
+// This is the 5.3 shape of the file. Differences from the 5.2 instance's config.php:
+//
+//   1. NO ini_get_bool() polyfill. The 5.2 recipe (apache-sentientia52-vhost.conf.template)
+//      adds one, and edits lib/setuplib.php to match. On Moodle 5.3 the polyfill ALONE is
+//      fatal: setuplib.php declares ini_get_bool() unguarded, so r.php, theme/font.php and the
+//      cache-miss paths of lib/javascript.php and theme/styles.php die with "Cannot redeclare
+//      ini_get_bool()". 5.3's shutdown_manager no longer calls the function, so nothing needs it.
+//      If render_smoke_53.sh ever shows a 500 on those URLs, follow the fallback in
+//      apache-sentientia53-vhost.conf.template (both halves, never one) and record it.
+//   2. $CFG->routerconfigured = true once public/.htaccess carries the router rewrite
+//      (moodle-htaccess.template). Moodle then self-tests five routed URLs on the Environment page.
+//   3. The database must be MySQL >= 8.4 (user on caching_sha2_password), MariaDB >= 11.4 or
+//      PostgreSQL >= 17. PHP >= 8.3 with sodium and max_input_vars >= 5000.
+
+unset($CFG);
+global $CFG;
+$CFG = new stdClass();
+
+$CFG->dbtype    = 'mysqli';                 // 'mysqli' (MySQL 8.4+), 'mariadb' (11.4+), 'pgsql' (17+)
+$CFG->dblibrary = 'native';
+$CFG->dbhost    = '@@DB_HOST@@';
+$CFG->dbname    = '@@DB_NAME@@';
+$CFG->dbuser    = '@@DB_USER@@';
+$CFG->dbpass    = '@@DB_PASS@@';            // set on the server only
+$CFG->prefix    = 'mdl_';
+$CFG->dboptions = [
+    'dbpersist' => 0,
+    'dbport'    => '',
+    'dbsocket'  => '',
+    'dbcollation' => 'utf8mb4_unicode_ci',
+];
+
+// No trailing slash. A docroot vhost has no path (https://uat53.example.invalid); a
+// sub-directory alias would end in /moodle.
+$CFG->wwwroot   = '@@WWWROOT@@';
+
+// A NEW dataroot for this instance, never shared with another Moodle (including the 5.2
+// instance running beside it), outside the web docroot, writable by the web user.
+$CFG->dataroot  = '@@DATAROOT@@';
+$CFG->admin     = 'admin';
+$CFG->directorypermissions = 02777;
+
+// Moodle 5 router: every URL that is not a real file or directory is rewritten to r.php.
+// Set to true only after public/.htaccess (generated from moodle-htaccess.template) is in place.
+$CFG->routerconfigured = true;
+
+// Behind a TLS-terminating load balancer (UAT / production): uncomment as the host requires.
+// $CFG->sslproxy = true;
+// $CFG->reverseproxy = false;
+
+// A development, UAT or rehearsal instance must NEVER send real mail (a local copy of the production
+// database once sent 151 real e-mails). ON by default so that a filled-in copy of this template is
+// safe until somebody decides otherwise on purpose. Remove or comment out this one line ONLY at the
+// owner-approved production cutover, after the mail transport is configured and verified
+// (docs/operations/OAUTH2-SMTP-M365-RUNBOOK.md).
+$CFG->noemailever = true;
+
+// $CFG->debug = 0;           // E_ALL during bring-up; production stays 0 (DEBUG_NONE)
+// $CFG->debugdisplay = 0;
+
+// NOTE: nothing above the next line may declare ini_get_bool() or any other core function.
+require_once(__DIR__ . '/lib/setup.php'); // Do not edit.
+// There is no closing PHP tag in this file, as it is not needed: it avoids accidental whitespace.

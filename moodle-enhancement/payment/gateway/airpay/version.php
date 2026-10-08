@@ -24,8 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2024100700.10; // The current plugin version (Date: YYYYMMDDXX).
+$plugin->version = 2026100800; // 2026-10-08 Moodle 5.3 compat FX-05: gateways_modal uses core/modal (core/modal_factory is gone in 5.2+); dead form_submit module removed. Was 2024100700.10.
 $plugin->requires = 2022112800; // Requires this Moodle version.
 $plugin->component = 'paygw_airpay'; // Full name of the plugin (used for diagnostics).
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '1.0.1';
+$plugin->release = '1.0.2';

@@ -96,7 +96,11 @@ trait context_header {
                 ? $this->page->course
                 : null;
 
-            if (user_can_view_profile($user, $course)) {
+            // Moodle 5.3 (MDL-82650) moved this to \core\user; the old global only logs a deprecation there.
+            $canviewprofile = method_exists(\core\user::class, 'can_view_profile')
+                ? \core\user::can_view_profile($user, $course)
+                : user_can_view_profile($user, $course);
+            if ($canviewprofile) {
                 // Use the user's full name if the heading isn't set.
                 if (empty($heading)) {
                     $heading = fullname($user);

@@ -11,12 +11,10 @@ namespace local_sentientia_emails\external;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->libdir . '/externallib.php');
-
-use external_api;
-use external_function_parameters;
-use external_single_structure;
-use external_value;
+use core_external\external_api;
+use core_external\external_function_parameters;
+use core_external\external_single_structure;
+use core_external\external_value;
 
 class template_api extends external_api {
 
@@ -196,9 +194,10 @@ class template_api extends external_api {
         // If custom body provided, render it directly. Otherwise use file template.
         if (!empty($params['bodyhtml'])) {
             try {
-                $mustache = new \Mustache_Engine();
+                // \Mustache\Engine on Moodle 5.2+, \Mustache_Engine on 5.1 (see mustache_factory).
+                $mustache = \local_sentientia_emails\mustache_factory::engine();
                 $body = $mustache->render($params['bodyhtml'], $samplecontext);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 $body = '<p style="color:#dc2626;">Mustache error: ' . s($e->getMessage()) . '</p>';
             }
         } else {

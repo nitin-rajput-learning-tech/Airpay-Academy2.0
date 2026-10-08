@@ -6,38 +6,16 @@
  *
  * @module local_sentientia_cart/admin_orders
  *
- * Phase B.4 dual-target (2026-05-24): see createSaveCancelModal() below.
- * Moodle 5.2 removed core/modal_factory (MDL-79182).
+ * Moodle 5.3 compat FX-06 (2026-10-08): the Refund dialog is a core/modal_save_cancel modal.
+ * The legacy modal factory AMD module is gone in Moodle 5.2 (MDL-79182) and a modalType option on
+ * Modal.create is not a core API: it built a BASE modal with an empty footer, so the Save button
+ * never existed and a refund could not be submitted. core/modal_save_cancel exists unchanged on
+ * 5.1, 5.2 and 5.3 (same fix as local_sentientia_request/decide, WF-024).
  */
 import Ajax from 'core/ajax';
 import Notification from 'core/notification';
 import ModalEvents from 'core/modal_events';
-
-/**
- * Dual-target SAVE_CANCEL modal factory.
- * 5.2: require('core/modal') -> Modal.create({modalType: 'SAVE_CANCEL', ...})
- * 5.1: require('core/modal_factory') -> ModalFactory.create({type: ModalFactory.types.SAVE_CANCEL, ...})
- * @param {{title: string, body: string}} spec
- * @return {Promise<object>}
- */
-const createSaveCancelModal = (spec) => new Promise((resolve, reject) => {
-    require(['core/modal'], (Modal) => {
-        if (Modal && typeof Modal.create === 'function') {
-            Modal.create({modalType: 'SAVE_CANCEL', title: spec.title, body: spec.body})
-                .then(resolve).catch(reject);
-            return;
-        }
-        require(['core/modal_factory'], (ModalFactory) => {
-            ModalFactory.create({type: ModalFactory.types.SAVE_CANCEL, title: spec.title, body: spec.body})
-                .then(resolve).catch(reject);
-        }, reject);
-    }, () => {
-        require(['core/modal_factory'], (ModalFactory) => {
-            ModalFactory.create({type: ModalFactory.types.SAVE_CANCEL, title: spec.title, body: spec.body})
-                .then(resolve).catch(reject);
-        }, reject);
-    });
-});
+import ModalSaveCancel from 'core/modal_save_cancel';
 
 export const init = () => {
     document.addEventListener('click', async (e) => {
@@ -49,7 +27,8 @@ export const init = () => {
         const orderid   = btn.dataset.orderid;
         if (!historyid) return;
 
-        const modal = await createSaveCancelModal({
+        const modal = await ModalSaveCancel.create({
+            removeOnClose: true,
             title: `Refund order #${orderid}`,
             body: `
                 <p>Order total: <strong>${total}</strong></p>

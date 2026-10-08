@@ -4,6 +4,8 @@
 // @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 
 import ModalForm from 'core_form/modalform';
+import ModalSaveCancel from 'core/modal_save_cancel';
+import ModalEvents from 'core/modal_events';
 import {get_string as getString} from 'core/str';
 import Notification from 'core/notification';
 import Ajax from 'core/ajax';
@@ -277,13 +279,18 @@ const confirmDeleteCourseSkill = (rowid, skillname, returnFocus) => {
     }, () => null);
 };
 
-// ─── P1 #26 (2026-05-20) — learner self-rate modal ───────────────────────
+// ─── P1 #26 (2026-05-20) — learner self-rate dialog ───────────────────────
 //
-// The view.php template renders a hidden Bootstrap modal with a single
-// <select> for the level. Clicking the "Self-rate" button shows it;
-// submitting POSTs the level through `local_sentientia_skills_self_rate_skill`
-// and reloads on success. Capability check is duplicated server-side
-// in the WS — this code is just UX glue.
+// The view.php template renders an inert, hidden source block (id airpay-self-rate-modal) that holds the
+// localised title, the save label and the level <select>. The first click on "Self-rate" builds a
+// core/modal_save_cancel dialog from it and MOVES the select block into the dialog (so ids stay unique);
+// later clicks show the same dialog again. Saving POSTs the level through
+// `local_sentientia_skills_self_rate_skill` and reloads on success. Capability check is duplicated
+// server-side in the WS — this code is just UX glue.
+//
+// Moodle 5.3 compat FX-20 (2026-10-08): the dialog used window.bootstrap.Modal, which exists in no tree,
+// and fell back to the theme's Bootstrap 4 jQuery plugin. core/modal_save_cancel exists unchanged on
+// Moodle 5.1, 5.2 and 5.3 and needs neither.
 
 /**
  * Swap the contents of a button safely (no innerHTML, no XSS surface).
@@ -301,34 +308,20 @@ const setButtonContent = (btn, iconClass, text) => {
     btn.appendChild(document.createTextNode(text));
 };
 
-const openSelfRateModal = (skillid, skillname) => {
-    const modalEl = document.getElementById('airpay-self-rate-modal');
-    if (!modalEl) return;
-    // Use Moodle's bundled Bootstrap 5 modal. window.bootstrap is
-    // exposed by the airpayux theme; fall back to jQuery's modal
-    // helper if the global isn't there (older theme builds).
-    if (window.bootstrap && window.bootstrap.Modal) {
-        const inst = window.bootstrap.Modal.getOrCreateInstance(modalEl);
-        inst.show();
-    } else if (window.$ && window.$(modalEl).modal) {
-        window.$(modalEl).modal('show');
-    } else {
-        // Last-resort: show the modal manually so the user is never blocked.
-        modalEl.classList.add('show');
-        modalEl.style.display = 'block';
-    }
-};
+let selfRateModal = null;
+let selfRateOpening = false;
 
-const submitSelfRate = async (form) => {
-    const skillid = parseInt(form.dataset.skillid || '0', 10);
-    const levelSel = form.querySelector('#airpay-self-rate-level');
+const submitSelfRate = async (source, modal) => {
+    const skillid = parseInt(source.dataset.skillid || '0', 10);
+    const levelSel = modal.getBody().find('#airpay-self-rate-level')[0];
     const level = parseInt(levelSel ? levelSel.value : '0', 10);
     if (!skillid || !level) {
         const msg = await getString('self_rate_pick_level', 'local_sentientia_skills');
         Notification.addNotification({message: msg, type: 'warning'});
         return;
     }
-    const submitBtn = form.querySelector('[data-action="submit-self-rate"]');
+    const submitBtn = modal.getFooter().find('[data-action="save"]')[0];
+    const submitLabel = submitBtn ? submitBtn.textContent.trim() : '';
     if (submitBtn) {
         submitBtn.disabled = true;
         setButtonContent(submitBtn, 'fa fa-spinner fa-spin fa-fw', 'Saving...');
@@ -347,19 +340,47 @@ const submitSelfRate = async (form) => {
         Notification.exception(err);
         if (submitBtn) {
             submitBtn.disabled = false;
-            setButtonContent(submitBtn, 'fa fa-check fa-fw', 'Save');
+            setButtonContent(submitBtn, 'fa fa-check fa-fw', submitLabel || 'Save');
         }
     }
 };
 
-const wireSelfRateForm = () => {
-    const form = document.getElementById('airpay-self-rate-form');
-    if (!form || form.dataset.airpaySelfRateInit === '1') return;
-    form.dataset.airpaySelfRateInit = '1';
-    form.addEventListener('submit', (event) => {
+const openSelfRateModal = async () => {
+    if (selfRateModal) {
+        selfRateModal.show();
+        return;
+    }
+    const source = document.getElementById('airpay-self-rate-modal');
+    const bodyEl = source ? source.querySelector('[data-region="self-rate-body"]') : null;
+    if (!source || !bodyEl || selfRateOpening) {
+        return;
+    }
+    selfRateOpening = true;
+    const titleEl = source.querySelector('.modal-title');
+    const labelEl = source.querySelector('[data-region="self-rate-save-label"]');
+    let modal;
+    try {
+        modal = await ModalSaveCancel.create({
+            // innerHTML, not textContent: the template already HTML-escaped the skill name, and the dialog
+            // title is set as HTML.
+            title: titleEl ? titleEl.innerHTML.trim() : '',
+        });
+    } catch (err) {
+        // If the dialog cannot be built the click must not fail silently (nor leave an unhandled rejection).
+        Notification.exception(err);
+        return;
+    } finally {
+        selfRateOpening = false;
+    }
+    modal.setSaveButtonText(labelEl ? labelEl.textContent.trim() : 'Save');
+    modal.getBody().append(bodyEl);
+    modal.getRoot().on(ModalEvents.save, (event) => {
+        // Keep the dialog open while the request runs; the page reload closes it on success.
         event.preventDefault();
-        submitSelfRate(form);
+        submitSelfRate(source, modal);
     });
+    selfRateModal = modal;
+    modal.show();
 };
 
 const handleClick = (event) => {
@@ -395,7 +416,7 @@ const handleClick = (event) => {
         // P1 #26 (2026-05-20) — learner self-rate
         case 'open-self-rate':
             event.preventDefault();
-            openSelfRateModal(skillid, trigger.dataset.skillname || 'this skill');
+            openSelfRateModal();
             break;
     }
 };
@@ -408,10 +429,6 @@ export const init = (config = {}) => {
     if (config && config.page === 'course_mapping') {
         wireCourseSearch();
         wireAddCourseMappingForm();
-    }
-    // P1 #26 — skill_view page wires the inline self-rate form submit.
-    if (config && config.page === 'skill_view') {
-        wireSelfRateForm();
     }
     // Click delegation works on body for our two new admin pages too.
     const root = document.querySelector('[data-region="airpay-skills"]') || document.body;

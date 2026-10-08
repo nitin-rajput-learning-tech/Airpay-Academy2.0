@@ -427,7 +427,25 @@ defined('MOODLE_INTERNAL') || die();
 // (the in-flow footer left a blank band); the switcher endpoint takes the choice
 // as 'code', not 'lang' (core applies any GET lang to the session during config.php),
 // sets the page up before the sesskey check, and its return url drops sesskey.
-$plugin->version   = 2026093002;  // persona-pass theme shell + review fix-up: sticky-footer extradata/display:none, switcher 'code' param
+// 2026100801 - Moodle 5.3 compat FX-01 (2026-10-08): course_summary_data() no longer calls
+// external_format_text(), which 5.3 turned into a final-deprecation stub that THROWS (it fataled
+// every page that renders full_header()); it uses \core_external\util::format_text() with the
+// context object, identical output on 5.1 / 5.2 / 5.3. Bump picks up the changed renderer trait.
+// 2026100802 - Moodle 5.3 compat FX-02: NEW templates/core/editswitch.mustache (verbatim Moodle
+// 5.2 core template) so the edit-mode switch renders on 5.3, whose own template needs react
+// props this theme never supplies. Bump purges the compiled template cache.
+// 2026100803 - Moodle 5.3 compat FX-03: full_header passes and renders headerextras (the activity
+// Opened/Due dates added through $PAGE->add_header_extras() since 5.2; method_exists-guarded for 5.1).
+// 2026100804 - Moodle 5.3 compat FX-14: Bootstrap 5.3 utility shims in scss/moodle/partials/_bs5-compat.scss
+// (fs-1..6, fw-*, text-bg-*, bg-body-*, ms/me/ps/pe incl. responsive, modal title size) so 5.3 core templates
+// render as designed in the Bootstrap 4.6 theme. Bump invalidates the compiled CSS.
+// 2026100805 - Moodle 5.3 compat FX-19: templates/core/block.mustache gets the block-header flex row (title left, controls ml-auto)
+// and tabindex=-1 on the skip-link target, and loses the "d-inlines" typo and pull-right; core_course/coursecard.mustache drops mx-1.
+// Bump purges the compiled template cache.
+// 2026100806 - Moodle 5.3 compat FX-02 round 1: templates/core/editswitch.mustache had "<formaction=" (missing space), so the browser
+// built no <form> and the noscript "Set mode" fallback was dead on 5.1, 5.2 and 5.3. Now byte-identical to the 5.2 core template
+// below its header comment. Bump purges the compiled template cache.
+$plugin->version   = 2026100806;  // Moodle 5.3 compat FX-02 round 1: editswitch.mustache <form action=> fixed (on top of 2026100805 FX-19 block + coursecard templates)
 // 2026090806:  // login/OTP placeholders + SSO title + block aria-label: {{#quote}} JSON-escaped Hindi into \uXXXX → attribute-safe cleanstr/escaped values (core 5.2 pattern)
 // 2026090805:  footer: GPL badge -> private Airpay notice; sidebar literals localised; scoped-admin subtitle
 // 2026090804:  // admin dashboard: exact-or-child tenant scope on EVERY widget (was LIKE /1% and several unscoped), compliance widget table names fixed, localised chart months, system health = site admins only, core card aria overrides

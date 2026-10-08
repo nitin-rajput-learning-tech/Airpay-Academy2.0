@@ -165,7 +165,7 @@ Legend for the "Breaks on" column:
   - The ajax preview returns 500.
   - The template-editor preview web service fails.
 - **Fix:**
-  - Add one factory, for example `\local_sentientia_emails\mustache_factory::engine()`, returning `class_exists(\Mustache\Engine::class) ? new \Mustache\Engine() : new \Mustache_Engine()`.
+  - Add one factory, for example `\local_sentientia_emails\mustache_factory::engine()`, returning `class_exists(\Mustache\Engine::class) ? new \Mustache\Engine() : new \Mustache_Engine()`. **Correction (2026-10-08, round 1): do not write it that way.** On 5.1 the probe `class_exists(\Mustache\Engine::class)` goes through the PSR-0 loader, loads `src/Mustache/Engine.php` (which declares `\Mustache_Engine`) with a plain `require()`, and the second call, or a first call after any template render, is an uncatchable "Cannot declare class Mustache_Engine" fatal. The factory as shipped asks for an already-loaded `\Mustache\Engine` without autoloading, then for `\Mustache_Engine` by name (safe on every version), and only then builds `\Mustache\Engine`.
   - Use it at all three sites and change `catch (\Exception` to `catch (\Throwable`.
   - Apply in both trees.
 

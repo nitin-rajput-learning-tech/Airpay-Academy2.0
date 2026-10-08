@@ -37,7 +37,7 @@ accepted; superseded decisions get a new ADR that references the old one.
 | [ADR-030](ADR-030-scim-and-outbound-webhooks.md) | SCIM 2.0 provisioning + outbound webhooks (ADR-028 Phase 2.4) | **Implemented** — waves A–C, all flag-OFF | 2026-08-28 |
 | [ADR-031](ADR-031-cross-tenant-authority.md) | One cross-tenant authority; tenant scope fails closed | **Accepted** (Nitin) | 2026-09-25 |
 | [ADR-032](ADR-032-bizlms-data-import.md) | Import BizLMS feature data through one shared framework | **Proposed**; import decided 2026-09-29, owner choices signed 2026-09-30, rest decided under delegation 2026-10-07 | 2026-09-29 |
-| [ADR-033](ADR-033-target-moodle-5.3-lts.md) | Target Moodle 5.3 LTS instead of 5.2 | **Accepted** on Nitin's instruction, subject to the compatibility gate; 5.2 stays the fallback | 2026-10-07 |
+| [ADR-033](ADR-033-target-moodle-5.3-lts.md) | Target Moodle 5.3 LTS instead of 5.2 | **Accepted** on Nitin's instruction, subject to the compatibility gate; 5.2 stays the fallback. Blockers FX-01 to FX-10 and the non-blockers FX-12 to FX-23 landed on `claude/moodle53-compat` (2026-10-08); the runtime gate (fresh install, upgrade rehearsals, PHPUnit, write paths) is still to run | 2026-10-07 |
 
 > Complete index — every ADR on disk is listed (ADR-006/007 were never assigned;
 > the numbering gap is intentional). ADR-022's component-rename plan was executed by

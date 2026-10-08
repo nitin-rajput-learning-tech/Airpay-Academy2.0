@@ -286,8 +286,11 @@ if (isloggedin() && !isguestuser()) {
             $activeusers = $DB->count_records_select('user',
                 'deleted = 0 AND suspended = 0 AND lastaccess > :cutoff' . $tenantfilter_user,
                 array_merge(['cutoff' => time() - (30 * 86400)], $tenantparams_user));
+            // Moodle 5.3 flags a course being deleted (course.deletioninprogress); absent on 5.1/5.2, so only filtered when present.
+            $notdeletingcourse = array_key_exists('deletioninprogress', $DB->get_columns('course'))
+                ? ' AND deletioninprogress = 0' : '';
             $totalcourses = $DB->count_records_select('course',
-                'visible = 1 AND id > 1' . $tenantfilter_course, $tenantparams_course);
+                'visible = 1 AND id > 1' . $notdeletingcourse . $tenantfilter_course, $tenantparams_course);
             // Tenant-scoped enrolments and completions.
             $totalenrolments = $DB->count_records_sql(
                 "SELECT COUNT(ue.id) FROM {user_enrolments} ue

@@ -20,7 +20,6 @@ CONTENT sentientia_courses/lang/hi/local_sentientia_courses.php
 CONTENT sentientia_courses/templates/share_page.mustache
 CONTENT sentientia_emails/classes/email_context.php
 CONTENT sentientia_emails/classes/external/rule_api.php
-CONTENT sentientia_emails/classes/external/template_api.php
 CONTENT sentientia_emails/templates/enrollment/welcome_new_user.mustache
 CONTENT sentientia_exams/classes/task/exam_overdue.php
 CONTENT sentientia_exams/classes/task/exam_reminder.php
@@ -32,7 +31,6 @@ CONTENT sentientia_leaderboard/classes/external/set_optout.php
 CONTENT sentientia_leaderboard/db/feature_flags.php
 CONTENT sentientia_notifications/templates/prefs.mustache
 CONTENT sentientia_org/classes/test/bizlms_fixture.php
-CONTENT sentientia_org/cli/seed_badges.php
 CONTENT sentientia_org/db/upgrade.php
 CONTENT sentientia_org/version.php
 CONTENT sentientia_pages/onboarding.php
@@ -42,7 +40,6 @@ CONTENT sentientia_pages/templates/certificate_celebration.mustache
 CONTENT sentientia_pages/templates/onboarding.mustache
 CONTENT sentientia_platform/cli/mint_session.php
 CONTENT sentientia_pwa/mock_receiver.php
-CONTENT sentientia_skills/amd/src/skill_actions.js
 CONTENT sentientia_whatsapp/lang/en/local_sentientia_whatsapp.php
 CONTENT sentientia_whatsapp/lang/hi/local_sentientia_whatsapp.php
 CONTENT sentientia_whatsapp/lang/kn/local_sentientia_whatsapp.php

@@ -330,3 +330,10 @@ Written, NOT run. Both trees identical.
   `fold_into_decision_note`; it is what the owner writes after reading the comment rows, and the importer's own test defaults use
   it. It is not in the decision. It is now in OWNER-DECISIONS as question Q14, in mapping s19 and in the rehearsal runbook, with
   the note that writing it changes the signed file's hash (a re-approval event). The signed file's `why` is NOT edited here.
+
+## 2026-10-08 Moodle 5.3 compat FX-06b (version 2026100801)
+
+- **What changed:** `amd/src/decide.js` (approve / reject dialog) and `amd/src/request_button.js` (Request enrolment dialog) now import `core/modal_save_cancel` statically and call `ModalSaveCancel.create({removeOnClose: true, title, body})`. The runtime fallback to the removed legacy modal factory AMD module (left in by WF-024) is gone, and `amd/build/decide.min.js` and `request_button.min.js` (+ maps) are rebuilt in both trees.
+- **Why:** the 5.3 package gate (`tools/packaging/build-standalone.sh`) fails the build when any shipped `amd/build` still names the removed factory module. The fallback was dead code on 5.2/5.3 and unreachable on 5.1 (`core/modal_save_cancel` exists there too), so behaviour is unchanged.
+- **Small behaviour fix:** `removeOnClose: true`. Before, a cancelled dialog stayed hidden in the DOM, so the next dialog read its reason / note from the stale textarea that shared its id.
+- **Not run:** PHPUnit (owner rule), a click-through (needs a runtime). Screenshots owed: the approve/reject dialog and the Request enrolment dialog at desktop and 590 px.

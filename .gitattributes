@@ -8,3 +8,5 @@ tools/uat/*.sh text eol=lf
 moodle-enhancement/docs/cutover/bizlms-import-decisions.json text eol=lf
 moodle-enhancement/docs/cutover/bizlms-capability-allowlist.json text eol=lf
 **/tests/fixtures/bizlms/*.copy.json text eol=lf
+moodle-enhancement/deploy/*.sh text eol=lf
+tools/packaging/*.sh text eol=lf

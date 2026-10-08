@@ -407,3 +407,19 @@ and `docs/cutover/bizlms-import-decisions.json`; this card says what the code no
   change. Both trees carry every file; `version.php` is still a baselined, comment-only divergence.
 - NOT RUN: PHPUnit (the lead re-inits once for the platform and org bumps). `php -l` and the drift, lang-parity,
   path-boundary and fixture-copy gates pass.
+
+## 2026-10-08 Moodle 5.3 compat FX-20 (version 2026100801)
+
+`templates/manage.mustache` and `templates/org_node.mustache` emit `data-bs-toggle="dropdown"` (and, for the tenant row collapse, `data-bs-toggle="collapse"` plus `data-bs-target`) beside the Bootstrap 4 `data-toggle`, so the tree menus keep working if the theme later moves to core Bootstrap 5.3 JS. Bootstrap 4 ignores the new attributes and Bootstrap 5 ignores the old ones. No schema change.
+
+## 2026-10-08 Moodle 5.3 compat FX-21
+
+`cli/seed_badges.php` no longer requires `badges/lib/awardlib.php` (removed in Moodle 5.2; the require was unused, and it made this dev CLI fatal on 5.2+). `badges/lib.php` and `lib/badgeslib.php` are still required. Both trees.
+
+## 2026-10-08 Moodle 5.3 compat FX-20 round 1 (version 2026100802)
+
+The `data-bs-toggle` / `data-bs-target` attributes added in 2026100801 are REMOVED again; `manage.mustache` and `org_node.mustache` are byte-identical to before 2026100801. They were a forward-compat measure for a theme that moves to core Bootstrap 5, but the theme still vendors Bootstrap 4.6 and its jQuery data-api handles `data-toggle` on every page, while core's Bootstrap 5 data-api is loaded on many pages anyway (5.1/5.2: `core/local/dropdown/dialog`, `collapsable_section`, `comboboxsearch`; 5.3: `core/usermenu`, the dialog and collapsable modules via the `bootstrap` import-map bundle). On such a page an element carrying both attributes ran two toggles per click (open, then close). The Bootstrap 4 attribute alone works on 5.1, 5.2 and 5.3 because the theme ships its own copy. When the theme moves to Bootstrap 5, switch the attributes then, not before. No schema change.
+
+## 2026-10-08 Moodle 5.3 compat FX-21 round 1 (no version change)
+
+`cli/seed_badges.php`: the empty `if (file_exists(.../awardlib.php)) { }` block that FX-21 left behind is removed from the top-level copy (the moodle-enhancement copy never had it); the two copies are now byte-identical, so the file leaves the cross-tree drift baseline. Behaviour is unchanged: the block had no body. The script uses only `BADGE_*` constants and `$DB`; none of the symbols defined by 5.1's `badges/lib/awardlib.php` (the selector classes and `process_manual_award`/`process_manual_revoke`). Dead-code removal only, no version bump.

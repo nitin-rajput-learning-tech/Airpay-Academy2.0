@@ -3,6 +3,15 @@
 **Status:** Infra PROVISIONED 2026-08-19 (Cloud.in ticket HS-20260819-79876; approved
 by Jitesh Divekar after Matt/Priyanka sign-off). This checklist binds the generic
 `Sentientia-LMS-5.2-Ninja-RDS-Deployment-Guidebook.pdf` to the actual environment.
+
+> **2026-10-08 retarget (ADR-033):** the platform target is **Moodle 5.3 LTS**; this UAT instance runs **5.2 today and stays on
+> 5.2 until the 5.3 compatibility gate passes** (ADR-033 item 8), so every 5.2 value below is still true for it. 5.3 is built as a
+> **separate instance beside it** (own dirroot `/var/www/sentientia/moodle5.3`, docroot, database schema, dataroot and vhost; item 7),
+> validated there, and the 5.2 instance is replaced only after the gate, by moving a copy of its database through the 5.3 upgrade.
+> Same hardware ask: PHP 8.3, MySQL 8.4 (`caching_sha2_password` user), `max_input_vars ≥ 5000`, Apache with mod_rewrite to `r.php`;
+> 5.3 adds the root `lib/` directory beside `public/` and **no** `ini_get_bool` polyfill in config.php. Templates:
+> `deploy/apache-sentientia53-vhost.conf.template`, `deploy/config-sentientia53.php.template`, the gate check
+> `deploy/render_smoke_53.sh`. `tools/uat/stage-a-install.sh` takes `DOCROOT=/var/www/sentientia/moodle5.3/public` for the 5.3 instance.
 **Owner:** Nitin Rajput · **Executors:** DevOps (Ganesh Satpute) + Cloud.in
 
 ## Provisioned environment
@@ -14,10 +23,11 @@ by Jitesh Divekar after Matt/Priyanka sign-off). This checklist binds the generi
 | Jump public IP | `35.154.8.154` (received 2026-08-27). ⚠ ssh 22/443/2222/8022 all FILTERED — from home IP `117.253.226.211` AND from the corporate-VPN egress `114.143.225.62` (VPN tested 2026-08-28: client routes 10.0.135.185 into the tunnel but the office network has NO route into the AWS UAT VPC — private IPs dead; Matt approved VPN 08-27). **FASTEST FIX: allowlist the stable VPN/office egress `114.143.225.62` on the UAT-Jump SG, port 22** — then the jump+tunnel workflow works as designed. Local `~/.ssh/config` (`uat-jump`/`uat-tunnel`) ready. |
 | SG | `sg-09f4c248ad84d603f` (UAT-Sentientia-LMS_SG) |
 | Instance | t3a.small (2 vCPU / 2 GB RAM), Ubuntu 24.04 LTS, 40 GB encrypted disk, IST |
-| PHP | 8.3.6 ✅ (meets the Moodle 5.2 hard gate) |
-| RDS | `lms-sentientia-UAT-db`, **MySQL 8.4.9 ✅** (hard gate met), encrypted, db.t3.small, 10–20 GB, autoscaling off |
+| PHP | 8.3.6 ✅ (meets the Moodle 5.2 and 5.3 hard gate: both need 8.3 or later) |
+| RDS | `lms-sentientia-UAT-db`, **MySQL 8.4.9 ✅** (hard gate met for 5.2 and 5.3: both need 8.4 or later), encrypted, db.t3.small, 10–20 GB, autoscaling off |
 | RDS endpoint | `lms-sentientia-uat-db.crpst4qn6rtu.ap-south-1.rds.amazonaws.com` |
 | Package | **`Sentientia-LMS-5.2-Complete-Standalone-2026-09-10.zip`** — SHA-256 `775ac46550f102f4656750a7692ef26157720ca33610f470a0162412fb65f170` · 169,961,264 bytes · 65,588 files · built 2026-09-10 from `claude/gap-integration` @ `35cd2a48b` (tag `v4.2.0-sentientia-5.2-package-2026-09-10`) via `tools/packaging/build-5.2-standalone.sh`; verify after download. Supersedes `Sentientia-LMS-5.2-Complete-Standalone-2026-08-05.zip` (SHA-256 `90ff72fd…46af1`), which UAT was installed from on 2026-09-03 — UAT has since received every change by surgical deploy, so upgrading UAT from this zip only brings theme 2026090804 / gamification 1.0.3 / compliance_report 1.0.1 (pending). The guidebook PDF cover still shows the 08-05 name/hash. |
+| Package (5.3) | **Not built or pinned yet.** Build with `tools/packaging/build-standalone.sh --target 5.3` (git export, root `lib/` included, no `config.php`, archive verified), then pin the name + SHA-256 here and tag `v<next>-sentientia-5.3-package-<date>`. The 5.2 package above stays the pin of the running 5.2 instance. |
 
 ## 0. Blockers Cloud.in is waiting on US for
 

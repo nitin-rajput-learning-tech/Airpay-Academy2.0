@@ -33,7 +33,7 @@ class email_context {
             'course_name'   => 'Anti Money Laundering',
             'course_url'    => $CFG->wwwroot . '/course/view.php?id=41',
             'course_id'     => 41,
-            'dashboard_url' => $CFG->wwwroot . '/my/dashboard.php',
+            'dashboard_url' => $CFG->wwwroot . '/my/',
             'site_url'      => $CFG->wwwroot,
             'subject'       => 'Email Preview',
         ];
@@ -105,7 +105,7 @@ class email_context {
                 'subject'         => '3 team members have overdue courses',
                 'manager_name'    => 'Binay Upadhyay',
                 'overdue_count'   => 3,
-                'team_url'        => $CFG->wwwroot . '/my/dashboard.php',
+                'team_url'        => $CFG->wwwroot . '/my/',
                 'overdue_members' => [
                     ['name' => 'Priya Singh', 'course' => 'AML Training', 'days_overdue' => 5],
                     ['name' => 'Rithik Shukla', 'course' => 'POSH Training', 'days_overdue' => 3],
@@ -144,7 +144,7 @@ class email_context {
                 'firstname'       => 'Binay',
                 'member_name'     => 'Priya Singh',
                 'completion_date' => date('d F Y'),
-                'team_url'        => $CFG->wwwroot . '/my/dashboard.php',
+                'team_url'        => $CFG->wwwroot . '/my/',
             ]),
             'enrollment/learning_path_enrolled' => array_merge($base, [
                 'subject'         => 'New Learning Path: HR Onboarding Courses',

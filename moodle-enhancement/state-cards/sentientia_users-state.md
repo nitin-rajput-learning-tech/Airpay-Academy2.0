@@ -678,3 +678,15 @@ list) used `tenant::root_for_current_user()`. Both use the helper now, so the li
 tenant a caller is (test `test_the_run_list_and_the_detail_page_decide_a_callers_tenant_the_same_way`: well formed, padded,
 non-numeric, empty and zero paths). Both trees identical; written, NOT run. Visual evidence list: `docs/visual-evidence/2026-10-07/identity/README.md`
 (the rejected-lines rule is unflagged and changes native runs, so it needs captures before anything is flipped).
+
+## 2026-10-08 Moodle 5.3 compat FX-12
+
+User creation and update now go through `\local_sentientia_platform\compat\user_api::create()` / `::update()` instead of the global `user_create_user()` / `user_update_user()`, which Moodle 5.3 deprecates (PHPUnit "unexpected debugging"). Same arguments, same events, same behaviour on 5.1/5.2 (the shim falls back to `user/lib.php` there). No schema change, no version bump needed (no new class here); the shim lives in `local_sentientia_platform` 2026100801. Not run: PHPUnit (owner rule).
+
+## 2026-10-08 Moodle 5.3 compat FX-16
+
+Links and redirects to `/my/dashboard.php` now point at `/my/` (the dashboard; the old path is a redirect shim that is an added file on Moodle 5.3). Same landing page, one redirect fewer, no dependence on the shim. PWA `manifest.php` `start_url` is `/my/`; the stored brand rows are rewritten by the `local_sentientia_platform` upgrade step `2026100802`. No schema change, no version bump here.
+
+## 2026-10-08 Moodle 5.3 compat FX-18
+
+Every `fputcsv()` / `fgetcsv()` / `str_getcsv()` call in this plugin now passes the `$escape` argument explicitly with the historic default (`',', '"', '\\'`, and `null` for the `fgetcsv` length). The output and the parsing are byte-identical; PHP 8.4 deprecates relying on the default, and the notice would otherwise be written into the CSV stream on a 8.4 host (UAT and production run PHP 8.3). No version bump, no schema change.

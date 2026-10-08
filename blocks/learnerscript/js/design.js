@@ -249,19 +249,20 @@ learnerscript.controller("Reportdesign", function($scope, $http, $sce, $mdDialog
             $scope.lists.exports[index].value = !$scope.lists.exports[index].value;
         };
         if (data.availablecolumns == null || data.availablecolumns.length == 0) {
-            require(['core/modal_factory'], function(ModalFactory) {
-                ModalFactory.create({
+            // SENTIENTIA-CORE-MOD (vendor): Moodle 5.2 removed the legacy modal factory AMD module (MDL-79182).
+            // core/modal exists unchanged on 5.1, 5.2 and 5.3 and its create() returns a native Promise (FX-08).
+            require(['core/modal', 'core/modal_events'], function(Modal, ModalEvents) {
+                Modal.create({
                     title: 'No Columns',
                     body: '<p>No columns available to create report!!!</p>',
                     footer: '',
-                }).done(function(modal) {
-                    dialogue = modal;
-                    ModalEvents = require('core/modal_events');
-                    dialogue.getRoot().on(ModalEvents.hidden, function() {
+                }).then(function(modal) {
+                    modal.getRoot().on(ModalEvents.hidden, function() {
                         window.location = M.cfg.wwwroot + '/blocks/learnerscript/viewreport.php?' + $('#ls_reportparams').val();
                     });
 
-                    dialogue.show();
+                    modal.show();
+                    return modal;
                 });
             });
         }

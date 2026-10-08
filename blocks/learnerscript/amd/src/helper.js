@@ -1,15 +1,17 @@
+// SENTIENTIA-CORE-MOD (vendor): Moodle 5.2 removed the legacy modal factory AMD module (MDL-79182).
+// core/modal_save_cancel exists unchanged on 5.1, 5.2 and 5.3 and its create() returns a native Promise (FX-08).
 define(['jquery',
         'block_learnerscript/ajax',
         'block_learnerscript/ajaxforms',
         'core/str',
-        'core/modal_factory',
+        'core/modal_save_cancel',
         'core/modal_events',
         'core/ajax',
         'core/notification',
         'block_learnerscript/smartfilter',
         'block_learnerscript/bootstrapnotify'
     ],
-    function($, ajax, AjaxForms, Str, ModalFactory, ModalEvents, Ajax, notification, smartfilter) {
+    function($, ajax, AjaxForms, Str, ModalSaveCancel, ModalEvents, Ajax, notification, smartfilter) {
         return helper = {
             sendmessage: function(args, username) {
                     Str.get_strings([{
@@ -117,11 +119,12 @@ define(['jquery',
                     key:'graphcannotbedeleted',
                     component:'block_learnerscript'
                 }]).then(function(s) {
-                    ModalFactory.create({
+                    // removeOnClose: a cancelled confirmation must not stay hidden in the DOM.
+                    ModalSaveCancel.create({
                         title: s[0],
-                        type: ModalFactory.types.SAVE_CANCEL,
-                        body: s[1]
-                    }).done(function(modal) {
+                        body: s[1],
+                        removeOnClose: true
+                    }).then(function(modal) {
                         this.modal = modal;
                         modal.setSaveButtonText('Confirm');
                         modal.getRoot().on(ModalEvents.save, function(e) {
@@ -155,11 +158,14 @@ define(['jquery',
                                 // do something with the exception
                                 console.log(ex);
                             });
-                            modal.hide();
+                            // e.preventDefault() above stops core's own close, so this is the one place the modal goes away on
+                            // Confirm (removeOnClose only acts on the cancel, close and escape paths). destroy() hides the modal
+                            // first on 5.1, 5.2 and 5.3, so no separate hide() is needed (FX-08 follow-up).
                             modal.destroy();
                         }.bind(this));
                         modal.show();
-                        $('.modal-header button.close').attr('title','Close');
+                        // Bootstrap 4 (5.1) renders button.close, Bootstrap 5 (5.2+) renders .btn-close.
+                        $('.modal-header button.close, .modal-header .btn-close').attr('title','Close');
                     }.bind(this));
                 }.bind(this));
             },

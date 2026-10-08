@@ -688,3 +688,35 @@ pick a language there. Not done in this bundle.
 `grader-after-1440.png`; the trainer gradebook at 390 px (`scrollWidth` 390, no `offsetHeight` console error); a course
 page in edit mode with Bulk edit; the language switcher with the flag ON for a test tenant (desktop, 590 px
 drawer, dashboard plus one other shell page, sidebar expanded and collapsed).
+
+## 2026-10-08 Moodle 5.3 compat FX-02 (edit-mode switch) and round 1 (version 2026100806)
+
+- `templates/core/editswitch.mustache` is the Moodle 5.2 core template copied verbatim (plus a header comment), because 5.3 core renders the control only when the renderer passes react props and an element id and this theme's `edit_switch()` passes neither. It overrides core on 5.1, 5.2 and 5.3 alike.
+- **Round 1 defect:** the first cut had `<formaction=` (missing space) on the form line, so the browser built an unknown element instead of a `<form>`: the noscript "Set mode" submit did nothing, the hidden `sesskey` / `pageurl` / `context` inputs belonged to no form, and the closing `</form>` was stray. It was invisible with JavaScript on, because `core/edit_switch` posts through the checkbox's own data attributes. Fixed (`<form action=`); below its header comment the file is now byte-identical to `lib/templates/editswitch.mustache` of 5.2 (diffed). Bump to 2026100806 purges the compiled template cache. The no-JS check (item 2b in `docs/visual-evidence/2026-10-08/moodle53/README.md`) is the one that would have caught it.
+
+## 2026-10-08 Moodle 5.3 compat FX-12 (theme side)
+
+Four deprecated `user_*()` globals are called through `method_exists(\core\user::class, ...)` ternaries: `user_count_login_failures` and `user_convert_text_to_menu_items` in `core_renderer::theme_sentientia_user_get_user_navigation_info()` (the 5.3 call drops the unused `$page` argument and gets the menu text cast to string), `user_can_view_profile` in `traits/context_header.php`, `user_update_user` in `language_switcher::switch_to()`. The theme must not depend on a local plugin, so it does not use `compat\user_api`. 5.1/5.2 keep the global functions. No theme version bump (PHP only).
+
+## 2026-10-08 Moodle 5.3 compat FX-14 (version 2026100804)
+
+`scss/moodle/partials/_bs5-compat.scss` gains a Bootstrap 5.3 utility shim block for the classes 5.3 core templates emit and the vendored Bootstrap 4.6 does not have: `.fs-1`..`.fs-6`, `.fw-*`, `.fst-*`, `.text-bg-{primary,secondary,success,danger,warning,info,light,dark}`, `.bg-body` / `-secondary` / `-tertiary`, `.text-body-secondary` / `-tertiary` / `-emphasis`, and `.ms-` / `.me-` / `.ps-` / `.pe-` (0..5 and auto, logical properties, plus the sm/md/lg/xl responsive forms). `.modal-header .modal-title` is sized to `--ap-text-xl`, which fixes core modal titles rendering at h2 size. All values are theme tokens (no hex). `.rounded-pill` already exists in the vendored Bootstrap. Compiled standalone with the scssphp bundled in 5.1.3, 5.2 and 5.3: identical, valid output (11.8 KB). **Visual change on every version:** core markup that used `fw-bold` / `ms-auto` / `me-2` now gets the weight and spacing it asks for (it was ignored before). Visual evidence is owed (see `docs/visual-evidence/2026-10-08/moodle53/README.md`); the theme CSS cache is invalidated by the version bump.
+
+## 2026-10-08 Moodle 5.3 compat FX-15 (theme side)
+
+`layout/frontpage.php` (guest course count and featured courses) and `layout/dashboard.php` (admin total-courses card) skip courses flagged `deletioninprogress = 1`, only when the column exists (5.3); unchanged on 5.1/5.2. Other dashboard listings keep their queries (a course being deleted for a few minutes in a top-N list is not worth the risk of touching many tenant-scoped queries).
+
+## 2026-10-08 Moodle 5.3 compat FX-17
+
+`core_renderer_maintenance::user_picture()` declares `?array $options = null` (was the implicit-nullable `array $options = null`, a PHP 8.4 deprecation). The parent signature is already `?array $options = null` on 5.1.3, 5.2 and 5.3, so this is the same contract. No behaviour change, no version bump.
+
+## 2026-10-08 Moodle 5.3 compat FX-19 (version 2026100805)
+
+- `templates/core/block.mustache`: the title and the controls now sit in a `block-header d-flex` row (the structure core uses since 5.2; the theme CSS already styles `.block .block-header`), the controls carry `ml-auto` instead of the float `pull-right`, the `d-inlines` typo is gone, and the skip-link target span has `tabindex="-1"`. Still Bootstrap 4 classes, still `h5.card-title` (theme CSS and dark mode select on it) and still the theme's own `block block_<type>` class list.
+- `templates/core_course/coursecard.mustache`: the card drops `mx-1`, as 5.3 core did.
+- **Visual change on every version** (block headers: controls move onto the title row; course cards: 0.25rem less side margin). Visual evidence owed (`docs/visual-evidence/2026-10-08/moodle53/README.md`). Bump purges the compiled template cache.
+
+## 2026-10-08 Moodle 5.3 compat FX-22 (cleanup, no behaviour change)
+
+- `core_renderer_maintenance` no longer carries the `htmllize_file_tree()` stub: Moodle 4.3 deprecated the core method (5.1/5.2 throw a deprecation exception from it) and 5.3 removed it; nothing in the theme or the plugins calls it.
+- **Not removed, on purpose:** `templates/core/otploginform.mustache`. The 5.3 compatibility report called it dead, but `render_otplogin()` in `classes/output/traits/login_render.php` renders it for core's OTP login renderable (`\core_auth\output\otplogin`), so it is live. The templates `nav-drawer.mustache` and `flat_navigation.mustache` ARE unreferenced (only each other); deleting tracked files needs the owner's confirm (project rule), so they stay until Nitin says so.

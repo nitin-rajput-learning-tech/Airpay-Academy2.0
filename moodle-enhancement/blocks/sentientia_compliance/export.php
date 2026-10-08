@@ -39,9 +39,11 @@ if (!class_exists("dataformat_{$format}\\writer")) {
 
 $now = time();
 
-// Get all mandatory courses (with deadlines).
+// Get all mandatory courses (with deadlines). Moodle 5.3 flags a course being deleted (course.deletioninprogress;
+// the column is absent on 5.1/5.2, so it is only filtered when it exists).
+$notdeleting = array_key_exists('deletioninprogress', $DB->get_columns('course')) ? ' AND deletioninprogress = 0' : '';
 $mandatorycourses = $DB->get_records_select('course',
-    'enddate > 0 AND visible = 1 AND id > 1',
+    'enddate > 0 AND visible = 1 AND id > 1' . $notdeleting,
     [], 'fullname ASC', 'id,shortname,fullname,enddate');
 
 // Non-admin users in the caller's scope. Rows are emitted only for enrolled

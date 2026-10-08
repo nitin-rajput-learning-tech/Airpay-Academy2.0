@@ -11,22 +11,26 @@
 # branded "404 Error: File not found" page wrapped in the airpayux
 # sidebar + footer, instead of the stock Apache page.
 #
-# Production note: this file is REPO-MANAGED. On every deploy IT must
-# copy it to <Moodle public root>/.htaccess. The deploy script under
-# moodle-enhancement/deploy/ does this on dev. For production, see the
-# IT runbook step "Apply htaccess after pulling production branch".
+# Production note: this file is REPO-MANAGED. It is a TEMPLATE: the ErrorDocument lines below carry an
+# ERROR_BASE placeholder (the word between two at-signs on each side), which
+# tools/packaging/build-standalone.sh (via moodle-enhancement/tools/overlay-airpay-customs.ps1
+# -ErrorBase) replaces when it generates <Moodle public root>/.htaccess. If you apply it by hand,
+# replace the placeholder yourself: with
+# nothing on a docroot vhost (UAT, production), with /moodle on the XAMPP dev alias. For production,
+# see the IT runbook step "Apply htaccess after pulling production branch".
 
 # -----------------------------------------------------------------------------
 # 1. Branded error pages
 # -----------------------------------------------------------------------------
 # Route Apache HTTP error codes through Moodle's standard error renderer
-# (https://docs.moodle.org/dev/HTTP_error_documents). The /moodle/ prefix
-# matches the Apache Alias on this server; for non-aliased deployments
-# the path simplifies to /error/index.php.
-ErrorDocument 404 /moodle/error/index.php
-ErrorDocument 403 /moodle/error/index.php
-ErrorDocument 500 /moodle/error/index.php
-ErrorDocument 503 /moodle/error/index.php
+# (https://docs.moodle.org/dev/HTTP_error_documents). The placeholder is the URL prefix of Moodle's
+# public directory: /moodle on the XAMPP dev alias, empty on a docroot vhost, where the path is
+# simply /error/index.php (Moodle 5.3 compat FX-22: it was hard-coded to the dev alias, which is wrong
+# on a docroot vhost such as UAT).
+ErrorDocument 404 @@ERROR_BASE@@/error/index.php
+ErrorDocument 403 @@ERROR_BASE@@/error/index.php
+ErrorDocument 500 @@ERROR_BASE@@/error/index.php
+ErrorDocument 503 @@ERROR_BASE@@/error/index.php
 
 # -----------------------------------------------------------------------------
 # 2. Hide Apache server identity in response footer

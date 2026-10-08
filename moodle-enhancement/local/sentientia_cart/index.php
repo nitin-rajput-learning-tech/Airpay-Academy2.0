@@ -23,7 +23,7 @@ $PAGE->set_heading(get_string('mycart', 'local_sentientia_cart'));
 require_capability('local/sentientia_cart:view', $ctx);
 
 if (!\local_sentientia_cart\cart_manager::is_enabled_for_user($USER)) {
-    redirect(new moodle_url('/my/dashboard.php'),
+    redirect(new moodle_url('/my/'),
         'Cart is not enabled for your tenant.', null,
         \core\output\notification::NOTIFY_INFO);
 }

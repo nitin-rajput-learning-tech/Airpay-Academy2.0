@@ -688,7 +688,7 @@ class report_manager {
 
         // Header row.
         $headers = array_map(fn($c) => $c['label'], $report_data['columns']);
-        fputcsv($out, $headers);
+        fputcsv($out, $headers, ',', '"', '\\');
 
         // Data rows.
         foreach ($report_data['rows'] as $row) {
@@ -696,7 +696,7 @@ class report_manager {
             foreach ($report_data['columns'] as $col) {
                 $line[] = $row[$col['key']] ?? '';
             }
-            fputcsv($out, $line);
+            fputcsv($out, $line, ',', '"', '\\');
         }
 
         rewind($out);

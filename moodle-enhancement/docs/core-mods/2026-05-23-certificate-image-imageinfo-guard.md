@@ -114,3 +114,19 @@ walked.
 
 Tracked as a new audit cycle: **Goal A.y — functional click-
 through audit**. See PROJECT-STATE.md.
+
+---
+
+## Addendum 2026-10-08 (Moodle 5.3 compatibility pass, finding B5 / fix FX-07)
+
+- **5.3 status: still required.** `stored_file::get_imageinfo()` still returns `false` for a non-image file in
+  Moodle 5.3 and `element_helper::render_image_html()` still takes `array $imageinfo`.
+- **The guard was missing from every shipped tree.** Until this date it existed only in the single-file copy at
+  `moodle-enhancement/admin/tool/certificate/element/image/classes/element.php`. The package source is the
+  top-level `admin/tool/certificate/` tree (and the overlay script copied it from the 5.1 webroot, which never
+  carried the guard), so every package re-shipped the P0 TypeError. The guard is now applied to
+  `admin/tool/certificate/element/image/classes/element.php` (top-level), tagged `SENTIENTIA-CORE-MOD`, with the same
+  comment block as before.
+- **Source of truth is now the top-level tree.** The single-file ME copy was removed in the same commit so the
+  guard has exactly one home. Re-apply by searching for `SENTIENTIA-CORE-MOD (2026-05-23)` after any vendor update.
+- **Related vendor patches on 5.3:** see `2026-10-08-tool-certificate-duration-defaultunit.md` for the full table.

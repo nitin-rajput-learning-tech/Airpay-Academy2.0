@@ -40,16 +40,21 @@ $dbman = $DB->get_manager();
 $hastenant = $dbman->field_exists('user', 'open_path') && $dbman->field_exists('course', 'open_path');
 $tenantc = $hastenant ? 'AND (c.open_path = :pexact OR c.open_path LIKE :pprefix)' : '';
 $tenantp = $hastenant ? $pubargs : [];
+// Moodle 5.3 flags a course being deleted (course.deletioninprogress) until the asynchronous delete task has
+// removed it. The column is absent on 5.1/5.2, so it is only filtered when it exists.
+$hasdeleting = array_key_exists('deletioninprogress', $DB->get_columns('course'));
+$notdeleting = $hasdeleting ? ' AND deletioninprogress = 0' : '';
+$notdeletingc = $hasdeleting ? ' AND c.deletioninprogress = 0' : '';
 
 if ($hastenant) {
     $coursecount = (int)$DB->count_records_sql(
-        "SELECT COUNT(*) FROM {course} WHERE visible = 1 AND id > 1 AND (open_path = :pexact OR open_path LIKE :pprefix)",
+        "SELECT COUNT(*) FROM {course} WHERE visible = 1 AND id > 1{$notdeleting} AND (open_path = :pexact OR open_path LIKE :pprefix)",
         $pubargs);
     $usercount  = (int)$DB->count_records_sql(
         "SELECT COUNT(*) FROM {user} WHERE deleted = 0 AND suspended = 0 AND id > 1 AND (open_path = :pexact OR open_path LIKE :pprefix)",
         $pubargs);
 } else {
-    $coursecount = (int)$DB->count_records_select('course', 'visible = 1 AND id > 1');
+    $coursecount = (int)$DB->count_records_select('course', 'visible = 1 AND id > 1' . $notdeleting);
     $usercount   = (int)$DB->count_records_select('user', 'deleted = 0 AND suspended = 0 AND id > 1');
 }
 try {
@@ -70,7 +75,7 @@ try {
            FROM {course} c
            JOIN {enrol} e ON e.courseid = c.id
            JOIN {user_enrolments} ue ON ue.enrolid = e.id
-          WHERE c.visible = 1 AND c.id > 1 {$tenantc}
+          WHERE c.visible = 1 AND c.id > 1{$notdeletingc} {$tenantc}
        GROUP BY c.id, c.fullname, c.summary, c.summaryformat
        ORDER BY enrolcount DESC",
         $tenantp, 0, 6);

@@ -47,7 +47,8 @@ $plugin->component = 'local_sentientia_courses';
 //                 enrolments.legacy_instances_off switches off) and three declared decisions. A fully converted BizLMS enrol
 //                 instance is DISABLED, never deleted, only when every learner on it keeps the same access through manual
 //                 enrolments (proved per learner-course pair); privacy docblock lists the trail tables. No capability change.
-$plugin->version   = 2026100701;  // ADR-032 enrolments importer: trail of switched-off BizLMS instances (no user-visible change)
+// 2026100801: Moodle 5.3 compat FX-06: enrolledusers (Enrol user dialog) uses core/modal_save_cancel, the Save button exists again; amd build refreshed. No schema change.
+$plugin->version   = 2026100801;  // (2026100801: FX-06 amd refresh only; 2026100701 was) ADR-032 enrolments importer: trail of switched-off BizLMS instances (no user-visible change)
 // 2026092501:  // ADR-031 follow-up: upgrade step rehomes tenant admins' 'All tenants' featured rows; own-roster unenrol; scoped Enrolled column
 // 2026092500:  // ADR-031: course writes, enrolment, featured, list/export tenant-scoped (no schema/cap change)
 // 2026092201:  // real privacy provider: requests + remind_sent (was null_provider)

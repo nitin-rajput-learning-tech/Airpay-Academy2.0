@@ -28,9 +28,10 @@ $samplecontext['subject'] = $subject ?: ($samplecontext['subject'] ?? 'Preview')
 
 // Render the custom body HTML through Mustache engine.
 try {
-    $mustache = new \Mustache_Engine();
+    // \Mustache\Engine on Moodle 5.2+, \Mustache_Engine on 5.1 (see mustache_factory).
+    $mustache = \local_sentientia_emails\mustache_factory::engine();
     $body = $mustache->render($bodyhtml, $samplecontext);
-} catch (\Exception $e) {
+} catch (\Throwable $e) {
     $body = '<p style="color:#dc2626; font-family:monospace; padding:16px;">'
           . 'Mustache syntax error: ' . s($e->getMessage()) . '</p>';
 }

@@ -65,7 +65,7 @@ class udemy_business_provider implements provider_interface {
                 'page'       => $page,
                 'page_size'  => $page_size,
                 'fields[course]' => 'id,title,description,image_480x270,url,estimated_content_length,locale,difficulty_level,primary_category,price',
-            ]);
+            ], '', '&');
 
         $curl = new \curl();
         // Basic auth: account_id:api_key per Udemy Business docs.

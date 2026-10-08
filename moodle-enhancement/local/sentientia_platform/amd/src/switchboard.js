@@ -17,7 +17,9 @@
  * Behaviour:
  *   - Toggle buttons set a per-row tri-state (on / off / default)
  *   - Modified rows are visually flagged + tracked in a Map
- *   - "Apply" opens a modal listing every change for confirmation
+ *   - "Apply" opens a core/modal_save_cancel dialog listing every change for confirmation
+ *     (Moodle 5.3 compat FX-20: it used window.bootstrap.Modal, which exists in no tree, so the
+ *     confirmation was silently skipped and the changes were submitted directly)
  *   - Submit serialises the Map to JSON and POSTs the form
  *   - "Discard" reverts every modification by reloading the page
  *
@@ -28,7 +30,7 @@
  *
  * @module local_sentientia_platform/switchboard
  */
-define([], function() {
+define(['core/modal_save_cancel', 'core/modal_events', 'core/notification'], function(ModalSaveCancel, ModalEvents, Notification) {
 
     var SELECTORS = {
         form: '[data-region="switchboard-form"]',
@@ -126,33 +128,60 @@ define([], function() {
     }
 
     /**
-     * Build the "review changes" modal body — a list of every change with
-     * old → new state, then submit on confirmation.
+     * Build the "review changes" dialog — a list of every change with old → new
+     * state plus an optional reason — and submit when the admin confirms.
+     *
+     * Every node is created with createElement + textContent and only then serialised for the dialog body, so
+     * a flag key that contains markup stays inert text (the same defence as the rest of this module). The
+     * dialog is core/modal_save_cancel, which exists unchanged on Moodle 5.1, 5.2 and 5.3. If it cannot be
+     * built nothing is submitted: the review step is the safeguard, so it must not be skipped silently.
      */
     function openApplyModal() {
-        var list = document.querySelector(SELECTORS.changeList);
-        if (!list) {
-            return;
-        }
-        // Clear by removing each child — safer than innerHTML = ''.
-        while (list.firstChild) {
-            list.removeChild(list.firstChild);
-        }
-
+        var list = document.createElement('ul');
+        list.className = 'list-unstyled mb-3';
+        list.setAttribute('data-change-list', '');
         pendingChanges.forEach(function(newState, key) {
             var row = document.querySelector('[data-flag-key="' + (window.CSS ? CSS.escape(key) : key) + '"]');
             var oldState = row ? row.dataset.flagTriState : 'unknown';
             list.appendChild(buildChangeListItem(key, oldState, newState));
         });
 
-        if (typeof window.bootstrap !== 'undefined' && window.bootstrap.Modal) {
-            var modalEl = document.getElementById('ap-apply-modal');
-            var modal = new window.bootstrap.Modal(modalEl);
+        var intro = document.createElement('p');
+        intro.className = 'text-muted small';
+        intro.textContent = 'Every change is recorded in the audit log. An optional reason helps future-you remember why.';
+
+        var label = document.createElement('label');
+        label.className = 'form-label';
+        label.setAttribute('for', 'ap-reason-field');
+        label.textContent = 'Reason (optional)';
+
+        var reason = document.createElement('input');
+        reason.type = 'text';
+        reason.className = 'form-control';
+        reason.id = 'ap-reason-field';
+        reason.maxLength = 255;
+        reason.placeholder = 'e.g. Disabling AI assistant during vendor outage';
+
+        var body = document.createElement('div');
+        body.appendChild(intro);
+        body.appendChild(list);
+        body.appendChild(label);
+        body.appendChild(reason);
+
+        ModalSaveCancel.create({
+            title: 'Review changes',
+            body: body.innerHTML,
+            removeOnClose: true
+        }).then(function(modal) {
+            modal.setSaveButtonText('Apply changes');
+            // The reason field is read inside submitChanges() while the dialog is still in the DOM: the
+            // save event fires before the dialog is closed and removed.
+            modal.getRoot().on(ModalEvents.save, function() {
+                submitChanges();
+            });
             modal.show();
-        } else {
-            // Bootstrap not loaded — submit directly (fallback).
-            submitChanges();
-        }
+            return modal;
+        }).catch(Notification.exception);
     }
 
     /**
@@ -230,8 +259,6 @@ define([], function() {
             }
             if (btn.dataset.action === 'open-apply') {
                 openApplyModal();
-            } else if (btn.dataset.action === 'confirm-apply') {
-                submitChanges();
             } else if (btn.dataset.action === 'discard') {
                 discardChanges();
             }

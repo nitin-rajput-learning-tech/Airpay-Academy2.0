@@ -68,7 +68,7 @@ class go1_provider implements provider_interface {
         $url = self::BASE_URL . '/catalog?' . http_build_query([
             'offset' => $offset,
             'limit'  => $page_size,
-        ]);
+        ], '', '&');
 
         $curl = new \curl();
         $curl->setHeader([

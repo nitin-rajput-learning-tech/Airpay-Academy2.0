@@ -33,6 +33,14 @@
  *
  * Both are the same failure: an edit landed in one tree and not the other.
  *
+ * The same applies to the other plugin areas that live in both trees (Moodle 5.3
+ * compat FX-13): payment/gateway, enrol, mod/quiz/accessrule and admin/tool, each
+ * against its moodle-enhancement/ counterpart. The overlay and the package build
+ * export from the top-level tree, UAT deploys can take either, and the airpay
+ * gateway's get_form.php had drifted (legacy global external_* classes in the
+ * ME copy) without anyone noticing. An area whose ME directory does not exist
+ * (today admin/tool: the single-file tool_certificate twin was retired) is skipped.
+ *
  * WHAT IT DOES
  * ------------
  * Compares every file of every plugin present in both trees, normalising line
@@ -63,8 +71,18 @@
  * deliberate, reviewed divergence can be recorded in one step.
  */
 
-const TREE_A = 'moodle-enhancement/local';
-const TREE_B = 'local';
+/**
+ * Plugin areas that exist in both trees: [ME dir, top-level dir, prefix of the finding key].
+ * The first (local plugins) is mandatory and keeps its historic un-prefixed keys, so the
+ * baseline needs no rewrite. The others are optional: an area missing on either side is skipped.
+ */
+const AREAS = [
+    ['moodle-enhancement/local', 'local', ''],
+    ['moodle-enhancement/payment/gateway', 'payment/gateway', 'payment/gateway/'],
+    ['moodle-enhancement/enrol', 'enrol', 'enrol/'],
+    ['moodle-enhancement/mod/quiz/accessrule', 'mod/quiz/accessrule', 'mod/quiz/accessrule/'],
+    ['moodle-enhancement/admin/tool', 'admin/tool', 'admin/tool/'],
+];
 const BASELINE = 'tools/tree-drift-baseline.txt';
 
 $opts = array_slice($argv, 1);
@@ -72,8 +90,8 @@ $quiet = in_array('--quiet', $opts, true);
 $update = in_array('--update-baseline', $opts, true);
 
 $root = dirname(__DIR__);
-$a = $root . '/' . TREE_A;
-$b = $root . '/' . TREE_B;
+$a = $root . '/' . AREAS[0][0];
+$b = $root . '/' . AREAS[0][1];
 
 if (!is_dir($a) || !is_dir($b)) {
     fwrite(STDERR, "check-tree-drift: expected both {$a} and {$b} to exist\n");
@@ -124,33 +142,44 @@ function drift_files(string $dir): array {
 
 // ── collect findings ─────────────────────────────────────────────────────
 $plugins = [];
-foreach (scandir($a) ?: [] as $entry) {
-    if ($entry === '.' || $entry === '..') {
+$findings = [];
+foreach (AREAS as [$areame, $areatop, $prefix]) {
+    $a = $root . '/' . $areame;
+    $b = $root . '/' . $areatop;
+    if (!is_dir($a) || !is_dir($b)) {
         continue;
     }
-    if (is_dir("{$a}/{$entry}") && is_dir("{$b}/{$entry}")) {
-        $plugins[] = $entry;
+    $areaplugins = [];
+    foreach (scandir($a) ?: [] as $entry) {
+        if ($entry === '.' || $entry === '..') {
+            continue;
+        }
+        if (is_dir("{$a}/{$entry}") && is_dir("{$b}/{$entry}")) {
+            $areaplugins[] = $entry;
+            $plugins[] = $prefix . $entry;
+        }
+    }
+    sort($areaplugins);
+
+    foreach ($areaplugins as $plugin) {
+        $fa = drift_files("{$a}/{$plugin}");
+        $fb = drift_files("{$b}/{$plugin}");
+        $key = $prefix . $plugin;
+
+        foreach (array_intersect($fa, $fb) as $rel) {
+            if (drift_hash("{$a}/{$plugin}/{$rel}") !== drift_hash("{$b}/{$plugin}/{$rel}")) {
+                $findings["CONTENT {$key}/{$rel}"] = true;
+            }
+        }
+        foreach (array_diff($fa, $fb) as $rel) {
+            $findings["ONLY-ME {$key}/{$rel}"] = true;
+        }
+        foreach (array_diff($fb, $fa) as $rel) {
+            $findings["ONLY-TOP {$key}/{$rel}"] = true;
+        }
     }
 }
 sort($plugins);
-
-$findings = [];
-foreach ($plugins as $plugin) {
-    $fa = drift_files("{$a}/{$plugin}");
-    $fb = drift_files("{$b}/{$plugin}");
-
-    foreach (array_intersect($fa, $fb) as $rel) {
-        if (drift_hash("{$a}/{$plugin}/{$rel}") !== drift_hash("{$b}/{$plugin}/{$rel}")) {
-            $findings["CONTENT {$plugin}/{$rel}"] = true;
-        }
-    }
-    foreach (array_diff($fa, $fb) as $rel) {
-        $findings["ONLY-ME {$plugin}/{$rel}"] = true;
-    }
-    foreach (array_diff($fb, $fa) as $rel) {
-        $findings["ONLY-TOP {$plugin}/{$rel}"] = true;
-    }
-}
 $findings = array_keys($findings);
 sort($findings);
 
@@ -161,7 +190,8 @@ if ($update) {
     $header = "# Cross-tree drift baseline - see tools/check-tree-drift.php\n"
         . "#\n"
         . "# Every line is a file that differs between local/ and\n"
-        . "# moodle-enhancement/local/ and has NOT yet been reconciled. The gate\n"
+        . "# moodle-enhancement/local/ (or between the payment/enrol/mod/admin\n"
+        . "# areas and their moodle-enhancement/ twins) and has NOT yet been reconciled. The gate\n"
         . "# fails on anything not listed here, so this list can only shrink\n"
         . "# without a deliberate --update-baseline.\n"
         . "#\n"
@@ -192,7 +222,7 @@ $stale = array_values(array_filter(array_keys($baseline),
 
 // ── report ───────────────────────────────────────────────────────────────
 if (!$quiet) {
-    echo "Cross-tree drift: " . count($plugins) . " plugins in both trees\n";
+    echo "Cross-tree drift: " . count($plugins) . " plugins in both trees (local, payment/gateway, enrol, mod/quiz/accessrule, admin/tool)\n";
     echo '  total drifting files : ' . count($findings) . "\n";
     echo '  baselined (known)    : ' . count($baseline) . "\n";
     echo '  NEW (blocking)       : ' . count($new) . "\n";

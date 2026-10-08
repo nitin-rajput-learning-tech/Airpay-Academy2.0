@@ -146,16 +146,6 @@ class core_renderer_maintenance extends core_renderer {
     }
 
     /**
-     * Does nothing. The maintenance renderer cannot produce and HTML file tree.
-     * Signature updated for Moodle 4.3+ compatibility (parameter removed in core).
-     *
-     * @return string
-     */
-    public function htmllize_file_tree() {
-        return '';
-    }
-
-    /**
      * Does nothing. The maintenance renderer does not support JS.
      *
      * @param block_contents $bc
@@ -187,10 +177,10 @@ class core_renderer_maintenance extends core_renderer {
      * Does nothing. The maintenance renderer cannot produce user pictures.
      *
      * @param stdClass $user
-     * @param array $options
+     * @param array|null $options
      * @return string
      */
-    public function user_picture(stdClass $user, array $options = null) {
+    public function user_picture(stdClass $user, ?array $options = null) {
         return '';
     }
 }

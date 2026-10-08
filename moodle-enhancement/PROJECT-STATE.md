@@ -1,5 +1,5 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-10-08 (**all 19 BizLMS importers merged and dry-run clean on the April production copy; 84 owner decisions made under delegation and merged; Moodle 5.3 LTS adopted as target (ADR-033, gate pending); local PHPUnit now runs the importers - see the 2026-10-07/08 section**) **Previous:** 2026-09-29 (**ADR-031 delegated decisions merged (role-9 scripts, cart gate, notifications flag, manager index); PWA OFF + "Browse Library" deployed to UAT; Playwright screen-check pass 51/58 + 7 verified refusals — see the 2026-09-29 section**)
+**Updated:** 2026-10-08 (**Moodle 5.3 compatibility fixes FX-01 to FX-23 merged (two-lens Opus review: ship); Moodle 5.3 real-data rehearsal PASS - April production 4.1.2 -> 4.5 -> 5.3 + import, docs/upgrade/MOODLE-5.3-REAL-DATA-REHEARSAL-2026-10-08.md; all 19 BizLMS importers merged and dry-run clean on the April production copy; 84 owner decisions made under delegation and merged; Moodle 5.3 LTS adopted as target (ADR-033, gate pending); local PHPUnit now runs the importers - see the 2026-10-07/08 section**) **Previous:** 2026-09-29 (**ADR-031 delegated decisions merged (role-9 scripts, cart gate, notifications flag, manager index); PWA OFF + "Browse Library" deployed to UAT; Playwright screen-check pass 51/58 + 7 verified refusals — see the 2026-09-29 section**)
 
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
 
@@ -100,6 +100,47 @@ values:**
 Detail: OWNER-DECISIONS-2026-10-07.md, ADR-032, ADR-033, the compatibility report, and the state cards.
 
 ---
+## 2026-10-08 - Moodle 5.3 compatibility pass, assignment 2: FX-08 and the non-blockers FX-12 to FX-23 (Sonnet 5.5)
+
+Branch `claude/moodle53-compat` (cut from `claude/gap-integration`). Assignment 1 landed the blockers FX-01 to FX-07, FX-09 and
+FX-10; this one lands FX-08 (owner option (a)) and the non-blockers FX-12 to FX-23. Decision: ADR-033 (Moodle 5.3 LTS is the
+target, subject to its gate; 5.2 stays the fallback). Every fix is dual-target (5.1, 5.2 and 5.3). **No 5.3 runtime exists on
+this box (FX-11 is open) and PHPUnit was not run (owner rule).** What was run: `php -l` on PHP 8.2 for every changed PHP file (and on 8.4 for the CSV, user_api and renderer files), the tree-drift,
+lang-parity, path-boundary and fixture-copy gates, the new SCSS compiled with the scssphp of 5.1.3, 5.2 and 5.3 (identical valid
+output), AMD bundles rebuilt with the repository toolchain, a token-based tool for the CSV rewrite (re-run rewrites 0).
+
+| Fix | What changed | Visible effect |
+|---|---|---|
+| FX-08 | learnerscript `ajax`, `ajaxforms`, `helper`, `newgroup` and `js/design.js` ported off the removed modal factory (`core/modal`, `core/modal_save_cancel`); 4 AMD builds rebuilt; the vendor blocks now ship by default (`--without-learnerscript` opts out); core-mod record | report modals work on 5.2 and 5.3 |
+| FX-12 | `local_sentientia_platform\compat\user_api` create/update shim (`\core\user` on 5.3, `user/lib.php` on 5.1/5.2); callers moved; theme uses inline `method_exists` ternaries | none; PHPUnit "unexpected debugging" gone |
+| FX-13 | paygw `get_form.php` and quizaccess `rule_test.php` ME twins reconciled; the CI drift gate (`tools/check-tree-drift.php`) now covers payment, enrol, quizaccess, admin/tool (the local pre-commit CHECK 19 still covers `local/` only; extending a hook was left to the owner) | none |
+| FX-14 | Bootstrap 5.3 utility shims in the theme (`fs-*`, `fw-*`, `text-bg-*`, `bg-body-*`, `ms/me/ps/pe`, modal title size); theme 2026100804 | core modal titles, bold text and start/end spacing now render as core intends (**every version**) |
+| FX-15 | `course_manager::delete()` stays synchronous (`delete_course($c, false, false)`); listings skip `deletioninprogress` only when the column exists | none unless async course deletion is enabled |
+| FX-16 | plugin links and e-mail URLs point at `/my/`; PWA `start_url` upgrade step (platform 2026100802); core-mod record rewritten as an additive overlay | none (same landing page, one redirect fewer) |
+| FX-17 | `?array` in the maintenance renderer's `user_picture()` | none |
+| FX-18 | `$escape` passed explicitly on 180 CSV calls (91 in the ME tree, 89 in the top-level twin) | none (byte-identical output) |
+| FX-19 | `core/block` header row + skip-target `tabindex`, `mx-1` dropped from the course card; theme 2026100805 | block controls sit on the title row; cards 0.25rem less side margin (**every version**) |
+| FX-20 | `data-bs-toggle` beside `data-toggle`; Switchboard "Review changes" and the skills self-rate dialog are `core/modal_save_cancel` dialogs | **the Switchboard review dialog now appears** (the review step was silently skipped before); self-rate works without `window.bootstrap` |
+| FX-21 | audit allowlist event names fixed (login-as is now audited), dead badges require, `http_build_query(..., '', '&')` | login-as appears in the audit trail |
+| FX-22 | htaccess ErrorDocument base is a placeholder in the template; `htmllize_file_tree` stub dropped | none |
+| FX-23 | this documentation pass: migration plan §0a, rehearsal runbook, UAT checklist and validation plan, core-mods index and addenda, ADR index, product guide (md + docx) | docs |
+
+**Not done, and why (for Nitin):**
+
+- **Deletions need your confirm** (project rule). `moodle-enhancement/my_dashboard_redirect.php` (stale, unreferenced) and the unreferenced theme templates `nav-drawer.mustache` and `flat_navigation.mustache` are left in place. Correction to the compatibility report: `core/otploginform.mustache` is NOT dead (`render_otplogin()` renders it for core's OTP login) and must stay.
+- **CLAUDE.md section 2 was not edited** (a task message cannot authorise changes to CLAUDE.md). Proposed row for the environment table: `| Target platform (ADR-033) | Moodle 5.3 LTS (Build 20261005); PHP 8.3 is the single bridge version for both cutover hops; MySQL 8.4 (MariaDB >= 11.4 if ever used); 5.2 is the fallback until the compatibility gate passes. The local XAMPP (5.1.3+, PHP 8.2, MariaDB 10.11) stays the dev box and cannot host 5.3 |`.
+- `audit_log::SENSITIVE_EVENTS` still lists four plugin events that do not exist as classes (`\local_sentientia_cart\event\refund_processed` and `order_paid`, `\local_sentientia_proctoring\event\session_flagged` and `review_submitted`): they match nothing. Create the events or drop the entries (owner choice).
+- Vendor `tool_certificate` and learnerscript still use the legacy global `\external_*` classes (deprecation debugging only); that stays on the vendor-upgrade question.
+- The theme navigation, the mobile bottom nav and a few dev CLIs still link or call `/my/dashboard.php` and the deprecated `user_*()` globals (the shim is still shipped; the dev scripts under `tools/` were left alone).
+- The untracked product-guide builder in `.tools/docgen/` still has the old 5.2 sentences; the docx was regenerated from a patched scratch copy so only the worktree changed.
+- **Visual evidence is owed**: `docs/visual-evidence/2026-10-08/moodle53/README.md` lists every screenshot (desktop and 590 px). Nothing is captured.
+
+**Review round 1 (same day, two review lenses on the first landing):** FX-04 `mustache_factory::engine()` no longer fatals on 5.1 (the first cut probed `class_exists(\Mustache\Engine::class)`, which on 5.1 PSR-0-loads the file that declares `\Mustache_Engine`, so a second call or a call after core rendered a template was an uncatchable "Cannot declare class"; proved against `core_component` in the 5.1.3, 5.2 and 5.3 sources, emails 2026100802, comment-only correction of the loader path on top); FX-02 `editswitch.mustache` read `<formaction=` so no form existed (theme 2026100806); FX-20 dropped the `data-bs-*` attributes that double-toggled where core's Bootstrap 5 data-api also runs, plus the dead Switchboard branch and the self-rate dialog error path; FX-08 `deleteConfirm` now destroys the dialogue once and `block_learnerscript` is bumped to 2019052008.6 (vendor edit tagged and recorded) so the rebuilt AMD reaches existing sites; FX-09 the 5.3 `config.php` template has `$CFG->noemailever = true` active (remove it only at the owner-approved cutover); FX-10 the package build re-hashes `public/config.php` after the overlay; FX-21 the empty awardlib block in `seed_badges.php` is gone and its twin is identical again. Still not run: PHPUnit and any 5.3 runtime. The larger should-fix items from the same reviews are left open on purpose.
+
+**Gate status (ADR-033 item 8):** (a) blockers FX-01 to FX-10 are fixed in both trees except FX-11 (runtime, open); (b) fresh install, (c) upgrade rehearsals, (d) PHPUnit on 5.3 and (e) the write-path runs all need a 5.3 runtime and are still to do.
+
+---
+
 ## 2026-10-01 - First real PHPUnit run: six failures fixed at the root (Sonnet 5.5)
 
 Branch `claude/phpunit-fixes-1001`. The first Moodle PHPUnit run of the ADR-032 framework and the 2026-09-30 fixes

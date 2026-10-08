@@ -26,6 +26,9 @@ namespace certificateelement_image;
 
 use tool_certificate\element_helper;
 
+// SENTIENTIA-CORE-MOD (vendor): direct-access guard added so the repository pre-commit gate (CHECK 2) accepts this patched file.
+defined('MOODLE_INTERNAL') || die();
+
 /**
  * The certificate element image's core interaction API.
  *
@@ -202,6 +205,20 @@ class element extends \tool_certificate\element {
             $url = \moodle_url::make_pluginfile_url($file->get_contextid(), $file->get_component(), $file->get_filearea(),
                 $file->get_itemid(), $file->get_filepath(), $file->get_filename());
             $fileimageinfo = $file->get_imageinfo();
+            // SENTIENTIA-CORE-MOD (2026-05-23): guard against non-image
+            // files. stored_file::get_imageinfo() returns false when the
+            // mime-type isn't an image (e.g., someone uploaded a PDF as
+            // the certificate-element image). Upstream passes that false
+            // straight to render_image_html() which requires array →
+            // fatal TypeError. Fall back to the same defaults the
+            // "Broken file icon" branch above already uses.
+            // Reported as core bug; fix tracked in
+            // docs/core-mods/2026-05-23-certificate-image-imageinfo-guard.md
+            // (re-applied to this package-source tree on 2026-10-08: it had only ever been
+            // kept in the moodle-enhancement single-file copy, so no package carried it).
+            if ($fileimageinfo === false || !is_array($fileimageinfo)) {
+                $fileimageinfo = ['width' => 140, 'height' => 140];
+            }
         }
 
         return element_helper::render_image_html($url, $fileimageinfo, (float)$imageinfo['width'], (float)$imageinfo['height'],

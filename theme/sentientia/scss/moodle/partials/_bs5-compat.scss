@@ -158,3 +158,86 @@ html.dark-mode .ap-shell button:focus-visible {
 }
 
 /* ══════════════════════════════════════════════════════ */
+
+/* ──────────────────────────────────────────────────────────────────────────────
+   BOOTSTRAP 5.3 UTILITY SHIMS (Moodle 5.3 compat FX-14)
+
+   The theme vendors Bootstrap 4.6, while Moodle core templates (5.2 and, more so, 5.3) emit Bootstrap 5.3
+   utility classes: <h2 class="modal-title fs-5">, <span class="text-bg-secondary">, <div class="ms-auto">.
+   Bootstrap 4.6 has none of them, so core modal titles rendered at h2 size, bold text rendered normal,
+   and the start/end spacing of core markup collapsed. Everything below is plain CSS on theme tokens
+   (no hex), keeps the !important of the Bootstrap utilities it stands in for, and is harmless on a core
+   that never emits the classes. Dark mode follows because the tokens are re-pointed by the dark theme.
+
+   Not shimmed on purpose: .rounded-pill (the vendored Bootstrap 4.6 already has it) and the older BS5
+   names that predate 5.3 (text-start/-end, float-start/-end, gap-*, form-select): those are a separate,
+   pre-existing gap with its own surface rules.
+   ────────────────────────────────────────────────────────────────────────────── */
+
+/* Font sizes. Bootstrap 5 also shrinks fs-1..fs-4 below 1200px (RFS); the shim keeps one size. */
+.fs-1 { font-size: 2.5rem !important; }
+.fs-2 { font-size: 2rem !important; }
+.fs-3 { font-size: 1.75rem !important; }
+.fs-4 { font-size: var(--ap-text-2xl) !important; }
+.fs-5 { font-size: var(--ap-text-xl) !important; }
+.fs-6 { font-size: var(--ap-text-base) !important; }
+
+/* Font weights (Bootstrap 4 spells these .font-weight-*). */
+.fw-light { font-weight: 300 !important; }
+.fw-normal { font-weight: var(--ap-weight-normal) !important; }
+.fw-medium { font-weight: var(--ap-weight-medium) !important; }
+.fw-semibold { font-weight: var(--ap-weight-semibold) !important; }
+.fw-bold { font-weight: var(--ap-weight-bold) !important; }
+.fw-bolder { font-weight: bolder !important; }
+.fw-lighter { font-weight: lighter !important; }
+.fst-italic { font-style: italic !important; }
+.fst-normal { font-style: normal !important; }
+
+/* Contextual text-on-background pairs (Bootstrap 5.2+). */
+.text-bg-primary { color: var(--ap-color-text-inverse) !important; background-color: var(--ap-color-primary) !important; }
+.text-bg-secondary { color: var(--ap-color-text-inverse) !important; background-color: var(--ap-neutral-600) !important; }
+.text-bg-success { color: var(--ap-color-text-inverse) !important; background-color: var(--ap-color-success) !important; }
+.text-bg-danger { color: var(--ap-color-text-inverse) !important; background-color: var(--ap-color-danger) !important; }
+.text-bg-warning { color: var(--ap-color-text-inverse) !important; background-color: var(--ap-color-warning) !important; }
+.text-bg-info { color: var(--ap-color-text-inverse) !important; background-color: var(--ap-color-info) !important; }
+.text-bg-light { color: var(--ap-color-text-primary) !important; background-color: var(--ap-color-bg-surface-alt) !important; }
+.text-bg-dark { color: var(--ap-color-text-inverse) !important; background-color: var(--ap-neutral-900) !important; }
+
+/* Body-relative backgrounds and text (Bootstrap 5.3). */
+.bg-body { background-color: var(--ap-color-bg-surface) !important; }
+.bg-body-secondary { background-color: var(--ap-color-bg-surface-alt) !important; }
+.bg-body-tertiary { background-color: var(--ap-color-bg-body) !important; }
+.text-body-secondary { color: var(--ap-color-text-secondary) !important; }
+.text-body-tertiary { color: var(--ap-color-text-muted) !important; }
+.text-body-emphasis { color: var(--ap-color-text-primary) !important; }
+
+/* Logical spacing: ms/me = margin start/end, ps/pe = padding start/end (Bootstrap 4 spells them ml/mr/pl/pr).
+   Logical properties, so the same rule is right in LTR and RTL. Sizes are Bootstrap's 0..5 scale. */
+$ap-bs5-spacers: (0: 0, 1: 0.25rem, 2: 0.5rem, 3: 1rem, 4: 1.5rem, 5: 3rem);
+$ap-bs5-breakpoints: (sm: 576px, md: 768px, lg: 992px, xl: 1200px);
+
+@each $size, $length in $ap-bs5-spacers {
+    .ms-#{$size} { margin-inline-start: $length !important; }
+    .me-#{$size} { margin-inline-end: $length !important; }
+    .ps-#{$size} { padding-inline-start: $length !important; }
+    .pe-#{$size} { padding-inline-end: $length !important; }
+}
+.ms-auto { margin-inline-start: auto !important; }
+.me-auto { margin-inline-end: auto !important; }
+
+@each $bp, $min in $ap-bs5-breakpoints {
+    @media (min-width: $min) {
+        @each $size, $length in $ap-bs5-spacers {
+            .ms-#{$bp}-#{$size} { margin-inline-start: $length !important; }
+            .me-#{$bp}-#{$size} { margin-inline-end: $length !important; }
+            .ps-#{$bp}-#{$size} { padding-inline-start: $length !important; }
+            .pe-#{$bp}-#{$size} { padding-inline-end: $length !important; }
+        }
+        .ms-#{$bp}-auto { margin-inline-start: auto !important; }
+        .me-#{$bp}-auto { margin-inline-end: auto !important; }
+    }
+}
+
+/* Core modals (5.2+) render <h2 class="modal-title fs-5">. Bootstrap 4's h2 is 2rem, so make the title
+   size independent of the heading level (also covers modals that omit fs-5). */
+.modal-header .modal-title { font-size: var(--ap-text-xl); }
