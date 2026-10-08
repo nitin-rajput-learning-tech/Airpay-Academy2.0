@@ -34,6 +34,7 @@ use local_sentientia_programs\tests\bizlms\org_stub_importer;
  *                104-107 empty          108 Optional (not in the list)   110 (of P2)   190 (program 88 is gone)
  *  enrolments    uA completed (date)  uB completed, no date  uC in progress  uD not started  uE twice
  *                uF deleted user  uD2 progress only through a course completion  missing user  missing program
+ *                uA also on P2 (archived): stored as not completed, but c1 (done for P1) is P2's only level course
  *  completions   uA 101 twice (dup) and 103  uB 101 and 103  uC 101 not completed  uG without an enrolment
  *                a level that is gone, a program that is gone
  *  trainers      one trainer, three feedback rows (one orphan, one with a giver that no longer exists)
@@ -761,7 +762,12 @@ final class bizlms_import_test extends \advanced_testcase {
 
         $this->assertEquals(0, $this->enrolment(41, 'uF')->status, 'a deleted user is imported for the record');
         $this->assertEquals(1, $this->enrolment(41, 'uD2')->status, 'a course completion on a program course is progress');
-        $this->assertEquals(0, $this->enrolment(42, 'uA')->status, 'an archived program keeps its roster');
+        // An archived program keeps its roster, and the signed status rule reads it like any other program's: BizLMS
+        // stored uA's P2 enrolment as not completed, but uA completed c1, which is the only course of P2's only level
+        // (the same c1 that dates P1's level 101). The rule reads the learner's evidence, not the program's status
+        // (mapping doc section 16, Users), so the roster row is In progress, not Enrolled.
+        $this->assertEquals(1, $this->enrolment(42, 'uA')->status,
+            'an archived program keeps its roster, and a completed program course is progress there too');
         $this->assertSame(8, $DB->count_records('local_sentientia_programs_users'));
 
         $this->assertSame('orphan_user', $this->map('local_program_users', 608)->reason);
@@ -825,7 +831,9 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertEquals($first, $this->enrolment(41, 'uD2')->currentlevelid);
         $this->assertNull($this->enrolment(41, 'uD')->currentlevelid, 'not started: none');
         $this->assertNull($this->enrolment(41, 'uF')->currentlevelid);
-        $this->assertNull($this->enrolment(42, 'uA')->currentlevelid);
+        // In progress in the archived program (see the status test): the first level with no stored completion.
+        $this->assertEquals($this->target('local_program_levels', 110), $this->enrolment(42, 'uA')->currentlevelid,
+            'an archived program has no carve-out: its only level is the current one');
         $this->assertSame('done', $report->to_array()['features']['program']['steps']['program.currentlevel']['status']);
     }
 
