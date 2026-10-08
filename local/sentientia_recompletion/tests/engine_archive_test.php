@@ -261,6 +261,23 @@ final class engine_archive_test extends \advanced_testcase {
         $this->assertStringContainsString('will expire in', $messages[0]->fullmessage);
     }
 
+    public function test_both_notices_are_deliverable_to_a_learner_who_holds_no_recompletion_capability(): void {
+        $user = $this->w['user'];
+        // The premise: an ordinary learner does not hold :view (it is a manager capability).
+        $this->assertFalse(has_capability('local/sentientia_recompletion:view', \context_system::instance(), $user));
+
+        // message_send() refuses a notification whose provider the recipient is not allowed to use, with only a
+        // debugging() line, so the notice is silently lost. The providers must be offered to this learner.
+        $names = [];
+        foreach (message_get_providers_for_user((int) $user->id) as $provider) {
+            if ($provider->component === 'local_sentientia_recompletion') {
+                $names[] = $provider->name;
+            }
+        }
+        sort($names);
+        $this->assertSame(['recompletion_due_soon', 'recompletion_reset'], $names);
+    }
+
     public function test_a_second_pass_within_the_day_does_not_repeat_the_reminder(): void {
         global $DB;
         $user = $this->w['user'];

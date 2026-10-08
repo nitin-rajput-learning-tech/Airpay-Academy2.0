@@ -110,7 +110,7 @@ used seconds.
 
 | Capability | Granted to | Purpose |
 |---|---|---|
-| `local/sentientia_recompletion:view` | manager | view history + receive messages |
+| `local/sentientia_recompletion:view` | manager | view rules and history (the notices below go to the learner and need no capability) |
 | `local/sentientia_recompletion:manage` | manager | create/edit/delete rules |
 | `local/sentientia_recompletion:reset` | nobody | reserved: no page checks it yet (ADR-031) |
 
@@ -126,8 +126,12 @@ used seconds.
 
 | Provider | When |
 |---|---|
-| `recompletion_due_soon` | `pre_notify_days` before expiry |
+| `recompletion_due_soon` | `pre_notify_days` before expiry (at most once a day per rule, learner and course) |
 | `recompletion_reset` | When a reset actually fires |
+
+Both are addressed to the learner and name no capability: Moodle sends a notification only to a user who holds the
+provider's capability, and `:view` is a manager capability, so tying them to it dropped every notice for a learner
+(changed in 1.2.2; an existing site picks it up through `message_update_providers()` when the plugin upgrades).
 
 ## Settings (Site admin → Plugins → Local plugins → Airpay Recompletion)
 

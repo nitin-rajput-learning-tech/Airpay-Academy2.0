@@ -38,6 +38,8 @@ final class engine_failure_test extends \advanced_testcase {
     private int $courseid;
     /** @var int A page's course module, whose completion row each learner has. */
     private int $cmid;
+    /** @var \phpunit_message_sink What the engine sent. */
+    private $sink;
 
     protected function setUp(): void {
         global $DB;
@@ -61,7 +63,7 @@ final class engine_failure_test extends \advanced_testcase {
             $DB->insert_record('course_modules_completion', (object) ['coursemoduleid' => $this->cmid, 'userid' => $user->id,
                 'completionstate' => 1, 'viewed' => 1, 'overrideby' => null, 'timemodified' => $old]);
         }
-        $this->redirectMessages();
+        $this->sink = $this->redirectMessages();
     }
 
     protected function tearDown(): void {
@@ -155,6 +157,14 @@ final class engine_failure_test extends \advanced_testcase {
         $this->assertSame(1, $this->footprint($third)[3]);
         $this->assertGreaterThan(0, $this->footprint($first)[2]);
         $this->assertGreaterThan(0, $this->footprint($third)[2]);
+
+        // The two learners who were reset are told; the one whose reset was rolled back is not told of a reset
+        // that did not happen.
+        $told = array_map(static fn(\stdClass $m): int => (int) $m->useridto, $this->sink->get_messages());
+        $expected = [(int) $first->id, (int) $third->id];
+        sort($told);
+        sort($expected);
+        $this->assertSame($expected, $told);
     }
 
     public function test_the_log_names_the_rule_and_the_course_never_the_person(): void {
