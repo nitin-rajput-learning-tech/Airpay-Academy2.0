@@ -39,6 +39,9 @@ final class engine_archive_test extends \advanced_testcase {
         $this->resetAfterTest();
         // The SCORM and quiz generators need a current user.
         $this->setAdminUser();
+        // The reminder is held back for a day by an application cache keyed by rule, user and course ids, and those
+        // ids repeat from one test to the next once the tables are reset.
+        \cache::make('local_sentientia_recompletion', 'warn_dedupe')->purge();
         $g = $this->getDataGenerator();
 
         $user = $g->create_user(['lang' => 'en']);
@@ -256,5 +259,21 @@ final class engine_archive_test extends \advanced_testcase {
         $this->assertStringStartsWith('Recompletion due in ', $messages[0]->subject);
         $this->assertStringContainsString("'Annual AML'", $messages[0]->subject);
         $this->assertStringContainsString('will expire in', $messages[0]->fullmessage);
+    }
+
+    public function test_a_second_pass_within_the_day_does_not_repeat_the_reminder(): void {
+        global $DB;
+        $user = $this->w['user'];
+        $course = $this->w['course'];
+        $DB->set_field('course_completions', 'timecompleted', time() - 350 * DAYSECS, ['userid' => $user->id]);
+        $sink = $this->redirectMessages();
+        $rule = $this->rule((int) $course->id);
+
+        $first = recompletion_engine::run_rule($rule, false);
+        $second = recompletion_engine::run_rule($rule, false);
+
+        $this->assertSame(1, $first['notified']);
+        $this->assertSame(0, $second['notified'], 'the warn_dedupe cache holds the reminder back for a day');
+        $this->assertCount(1, $sink->get_messages());
     }
 }
