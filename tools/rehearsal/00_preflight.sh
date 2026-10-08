@@ -244,7 +244,7 @@ if [ "$EXECUTE" = 1 ] && [ "$FAILS" = 0 ]; then
             if [ "$inflight" = 1 ]; then
                 fail "database ${DB_NAME} holds the table ${KIT_INFLIGHT_TABLE}: a restore this kit started into it did not finish ($(inflight_describe)), so it is a PARTIAL copy that step 01 refuses whatever RESTORE_DONE_BY_HAND says. Only DROP DATABASE clears it: drop it and create it empty"
             elif [ "$inflight" != 0 ]; then
-                warn "the count of the in-flight table ${KIT_INFLIGHT_TABLE} in database ${DB_NAME} could not be read: step 01 treats that as a partial restore until it can be read"
+                warn "whether database ${DB_NAME} holds the in-flight table ${KIT_INFLIGHT_TABLE} could not be read (no answer, or an error other than 'table does not exist'): step 01 treats that as a partial restore until it can be read"
             fi
             if [ -n "$(marker_get)" ]; then
                 pass "database ${DB_NAME} carries a rehearsal-kit marker (restore $(marker_get | cut -c1-8)...)"
@@ -270,6 +270,10 @@ fi
 # ---------------------------------------------------------------------------------------------------------------------
 # The moodledata: a populated directory must be one this kit stamped (it may be another site's dataroot, UAT's for one).
 if [ "$EXECUTE" = 1 ] && [ -d "$MOODLEDATA" ] && [ -n "$(ls -A "$MOODLEDATA" 2> /dev/null)" ]; then
+    unfinished="$(moodledata_unfinished_unpack)"
+    if [ -n "$unfinished" ]; then
+        fail "${MOODLEDATA} holds an unpack of the moodledata that did not finish (${unfinished}), so its filedir is a PARTIAL copy. $(unpack_unfinished_advice)"
+    fi
     if [ -n "$(moodledata_marker_get)" ]; then
         pass "${MOODLEDATA} carries a rehearsal-kit marker (restore $(moodledata_marker_get | cut -c1-8)...)"
     else

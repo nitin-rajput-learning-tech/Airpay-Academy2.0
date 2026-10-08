@@ -24,6 +24,14 @@
 #     (.run.lock, taken by a step run alone, held for the steps run_all.sh starts); a schema list that comes back empty is "unreachable";
 #     a moodledata an earlier rehearsal's step after 01 used is still refused for a new restore after the restore that rotated its
 #     state/ died and was retried;
+#   * fix round 6, the same stand-in (and, for the signal, a copy of the kit with stub steps): a moodledata unpack cut short (a tar of the
+#     moodledata that stops after filedir/) leaves .rehearsal_unpack_inflight and an archive line without an unpacked line, and is refused on the
+#     retry with RESTORE_MOODLEDATA_ARCHIVE unset, in a new work directory and with both hand statements, and by require_kit_marker; an archive that
+#     carries its own in-flight file is not a complete unpack; the in-flight table is read by the server's error (1146 = absent), so a count that
+#     answers 0 cannot adopt it, a lost connection is "cannot tell", and a blank answer for an absent table does not refuse a finished copy;
+#     require_kit_marker refuses an in-flight table or file behind a correct marker; a dump that names the table is refused; state/ stays in
+#     place when a claim is not taken (a misread, a lost race); two real runs race for one empty database (the stand-in blocks the first at its
+#     claim until a flag file appears); a TERM sent to run_all.sh alone does not release .run.lock under a running step;
 #   * run_all.sh --list and a DRY --only run work; no Windows path or drive letter is hard-coded in the kit.
 # Exit 0 = every test passed.
 
@@ -469,6 +477,12 @@ case "$sql" in
         fi
         echo 0 > "$here/fake.tables" ;;
     'CREATE TABLE `zz_rehearsal_restore_inflight`'*)
+        # fake.blockclaim: the FIRST client to reach this statement waits here (it says so with the flag fake.blocked) until fake.release
+        # exists, so a second run can go through a whole restore while the first sits at its claim: a deterministic race of two real processes
+        if mv "$here/fake.blockclaim" "$here/fake.blockclaim.taken" 2> /dev/null; then
+            : > "$here/fake.blocked"
+            while [ ! -f "$here/fake.release" ]; do sleep 0.2; done
+        fi
         # fake.claimrace=claimed: another restore claimed the database between this run's probe and its claim
         if [ "$(cat "$here/fake.claimrace" 2> /dev/null)" = claimed ]; then
             rm -f "$here/fake.claimrace"
@@ -492,13 +506,32 @@ case "$sql" in
             blankall) exit 0 ;;
         esac
         if [ "$tables" = none ]; then echo 0; else echo 1; fi ;;
-    *"TABLE_NAME = 'zz_rehearsal_restore_inflight'"*)
-        # fake.once: blankinflight = prints nothing for this count, once; blankinflightall = prints nothing every time
+    *'SELECT 1 FROM `zz_rehearsal_restore_inflight` LIMIT 0'*)
+        # The error-based read of the in-flight table (inflight_count): the statement before it prints 'answered', and then the table either
+        # exists (no error) or does not (error 1146). fake.once: blankinflight = prints nothing, status 0, once (the client fault);
+        # blankinflightall = every time; inflighterr = a lost connection (error 2013), once; inflighterrall = every time.
         once="$(cat "$here/fake.once" 2> /dev/null)"
         case "$once" in
             blankinflight) rm -f "$here/fake.once"; exit 0 ;;
             blankinflightall) exit 0 ;;
+            inflighterr) rm -f "$here/fake.once"; echo "ERROR 2013 (HY000): Lost connection to MySQL server during query" >&2; exit 1 ;;
+            inflighterrall) echo "ERROR 2013 (HY000): Lost connection to MySQL server during query" >&2; exit 1 ;;
         esac
+        if [ "$sent" = 1 ]; then
+            echo answered
+        else
+            echo "ERROR 1146 (42S02) at line 1: Table 'stageb_selftest.zz_rehearsal_restore_inflight' doesn't exist" >&2
+            exit 1
+        fi ;;
+    *"TABLE_NAME = 'zz_rehearsal_restore_inflight'"*)
+        # The kit no longer reads the in-flight table through information_schema (inflight_count asks the table itself); this arm is here to
+        # prove it. fake.asked records every ask; fake.once=zeroinflightall is a count that always answers 0 (a misread), which the old
+        # single COUNT would have taken for "no in-flight table".
+        printf 'asked\n' >> "$here/fake.asked"
+        if [ "$(cat "$here/fake.once" 2> /dev/null)" = zeroinflightall ]; then
+            echo 0
+            exit 0
+        fi
         echo "$sent" ;;
     *"TABLE_NAME = 'mdl_config'"*)
         if [ -f "$here/fake.noconfig" ] || [ "$tables" = none ] || [ "$tables" = 0 ]; then echo 0; else echo 1; fi ;;
@@ -538,10 +571,11 @@ fake_db() {
     printf '%s\n' "$1" > "$FW/fake.tables"
     printf '%s\n' "${2:-0}" > "$FW/fake.restorefails"
     rm -f "$FW"/fake.once "$FW"/fake.afterrestore "$FW"/fake.partial "$FW"/fake.sentinel "$FW"/fake.claimrace "$FW"/fake.schemata \
-        "$FW"/fake.noconfig "$FW"/fake.loads "$FW"/fake.storemarker "$FW"/fake.marker
+        "$FW"/fake.noconfig "$FW"/fake.loads "$FW"/fake.storemarker "$FW"/fake.marker "$FW"/fake.asked \
+        "$FW"/fake.blockclaim "$FW"/fake.blockclaim.taken "$FW"/fake.blocked "$FW"/fake.release
 }
 # fake_once FAULT: a one-off fault of the client (see the stand-in). fake_after N / fake_partial N: a restore that completes / dies leaves
-# N tables. fake_set NAME VALUE: fake.NAME (claimrace, schemata, noconfig, storemarker).
+# N tables. fake_set NAME VALUE: fake.NAME (claimrace, schemata, noconfig, storemarker, sentinel, blockclaim, release, marker).
 fake_once() { printf '%s\n' "$1" > "$FW/fake.once"; }
 fake_after() { printf '%s\n' "$1" > "$FW/fake.afterrestore"; }
 fake_partial() { printf '%s\n' "$1" > "$FW/fake.partial"; }
@@ -777,6 +811,245 @@ res="$(in_kit t_count_once)"
 if [ "$(printf '%s' "$res" | head -n 1)" = 7 ] && [ "$(printf '%s' "$res" | tail -n 1)" = rc=0 ]; then ok "count_retry asks again when the client printed nothing (and drops the carriage return)"; else bad "count_retry asks again after an empty answer" "$res"; fi
 [ "$(in_kit t_count_never | tail -n 1)" = rc=1 ] && ok "count_retry: an answer that stays empty is an error, never a value" || bad "count_retry: three empty answers"
 [ "$(in_kit t_count_fails | tail -n 1)" = rc=1 ] && ok "count_retry: a failing command is an error, whatever it printed" || bad "count_retry: a failing command"
+
+printf 'step 01: the moodledata half of the in-flight record, the error-based read, the claim before the archive, the dump that names the table (Stage B tools fix round 6)\n'
+# A stand-in "server" of its own, so the state of the sections above is not in the way.
+FW="$T/w3"
+mkdir -p "$FW"
+cp "$T/fakemysql" "$FW/fakemysql"
+# wait_file FILE [HALF-SECONDS]: poll until FILE exists (the stand-in's flags, the status of a background run).
+wait_file() {
+    local f="$1" n="${2:-360}" i=0
+    while [ ! -e "$f" ] && [ "$i" -lt "$n" ]; do
+        sleep 0.5
+        i=$((i + 1))
+    done
+    [ -e "$f" ]
+}
+# The archives. filedir/ comes first (one content file), then a 2,000,000-byte language pack. md-cut.tar is cut inside that file: tar stops
+# with 'Unexpected EOF' AFTER the whole filedir is there, which is the cut the filedir gate cannot see.
+mkdir -p "$T/mdcut/filedir/aa/bb" "$T/mdcut/lang/hi"
+printf 'x' > "$T/mdcut/filedir/aa/bb/aabbccddeeff00112233445566778899aabbccdd"
+head -c 2000000 /dev/zero > "$T/mdcut/lang/hi/langconfig.bin"
+tar -C "$T/mdcut" -cf "$T/md-full.tar" filedir lang
+head -c 600000 "$T/md-full.tar" > "$T/md-cut.tar"
+# An archive made from a moodledata whose own unpack had not finished: it carries the in-flight file.
+mkdir -p "$T/mdinf/filedir/aa/bb"
+printf 'x' > "$T/mdinf/filedir/aa/bb/aabbccddeeff00112233445566778899aabbccdd"
+printf 'restore_id=0123456789abcdef0123456789abcdef\narchive=/elsewhere/old.tar|1|2\nstarted=2026-10-01T00:00:00Z\n' > "$T/mdinf/.rehearsal_unpack_inflight"
+tar -C "$T/mdinf" -cf "$T/md-inf.tar" filedir .rehearsal_unpack_inflight
+INFL=".rehearsal_unpack_inflight"
+
+# M1. A kit unpack of the moodledata that is cut short: the cut filedir must never be adopted by a re-run, whatever the archive variable says.
+MD="$T/rb-cut/data"
+fake_db none
+fake_after 120
+fake_set storemarker 1
+rb_run cut "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-cut.tar"
+rb_expect "(M1) a cut moodledata archive: tar fails, and the step says the unpack is UNFINISHED and never adopted" 1 'tar of the moodledata failed: the unpack is UNFINISHED' 'restore check done'
+id="$(rb_kv cut restore.id)"
+if [ -f "$MD/$INFL" ] && grep -qx "restore_id=${id}" "$MD/$INFL" && grep -q '^archive=.*md-cut.tar|' "$MD/$INFL" && grep -q '^started=' "$MD/$INFL" \
+        && [[ "$(sed -n 2p "$MD/.rehearsal-kit-restore-id")" == archive=* ]] && [ -z "$(sed -n 3p "$MD/.rehearsal-kit-restore-id")" ] \
+        && [ -f "$MD/filedir/aa/bb/aabbccddeeff00112233445566778899aabbccdd" ] && [ "$(wc -c < "$MD/lang/hi/langconfig.bin")" -lt 2000000 ]; then
+    ok "(M1) the cut unpack left the in-flight file (restore id, archive, start), a marker with an archive line and no unpacked line, a whole filedir and a cut language pack"
+else bad "(M1) what the cut unpack left in the moodledata ($(ls -A "$MD" | tr '\n' ' '))"; fi
+rb_run cut "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-cut.tar"
+rb_expect "(M1) the same run again, the archive still named: refused, and nothing is unpacked again" 1 'did not finish' 'RUN: restore moodledata'
+rb_run cut "$DUMP"
+rb_expect "(M1) the retry with RESTORE_MOODLEDATA_ARCHIVE UNSET (the reproduced defect): refused, the cut filedir is not adopted" 1 'holds an unpack of the moodledata that did not finish' 'not restoring over it'
+if ! grep -qx 'status=ok' "$T/rb-cut/work/state/01.status"; then ok "(M1) step 01 did not finish ok on the cut copy (01.status is not ok)"; else bad "(M1) step 01 finished ok on a cut moodledata"; fi
+rb_run cut "RESTORE_DONE_BY_HAND=$RBDB" "RESTORE_MOODLEDATA_BY_HAND=$MD"
+rb_expect "(M1) the two hand statements (the database, and this very path) do not override it" 1 'did not finish' 'stamping it as this rehearsal'
+rb_run cut2 "MOODLEDATA=$MD"
+rb_expect "(M1) a NEW REHEARSAL_WORK on the same moodledata, archive unset: refused all the same" 1 'did not finish' 'adopting it'
+rb_kv_empty cut2 "(M1) the new work directory adopted and recorded nothing"
+rm -f "$MD/$INFL"
+rb_run cut "$DUMP"
+rb_expect "(M1) the in-flight file gone (a kit before it, or removed by hand) but the marker records an archive and no unpacked line: refused as well" 1 'records an unpack of an archive' 'not restoring over it'
+rm -rf "$MD"
+rb_run cut "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-full.tar"
+rb_expect "(M1, control) an emptied moodledata and a complete archive: the kit unpacks it" 1 'unpacked from RESTORE_MOODLEDATA_ARCHIVE' 'did not finish'
+if [ ! -e "$MD/$INFL" ] && [[ "$(sed -n 3p "$MD/.rehearsal-kit-restore-id")" == unpacked=* ]] && [ "$(wc -c < "$MD/lang/hi/langconfig.bin")" = 2000000 ]; then
+    ok "(M1, control) the in-flight file went only after the unpack was verified, and the marker records the unpack as finished"
+else bad "(M1, control) the finished unpack's state ($(ls -A "$MD" | tr '\n' ' '))"; fi
+fake_db none
+fake_after 120
+fake_set storemarker 1
+rb_run inf "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-inf.tar"
+rb_expect "(M1) an archive that carries its own in-flight file (it was made from an unfinished unpack) is not a complete unpack, though tar succeeds" 1 'carries its own .rehearsal_unpack_inflight' 'unpacked from RESTORE_MOODLEDATA_ARCHIVE'
+if [ -f "$T/rb-inf/data/$INFL" ]; then ok "(M1) the file stays, so every kit step refuses that directory"; else bad "(M1) the archive's in-flight file was removed"; fi
+
+# S1. The in-flight table is read from the table, by the server's error: a count that comes back wrong cannot read it as absent.
+fake_db 120
+fake_set sentinel 'in-flight (stand-in)'
+fake_once zeroinflightall
+rb_run s1 "RESTORE_DONE_BY_HAND=$RBDB"
+rb_expect "(S1) a count of the in-flight table that always answers 0 (a misread that would have said 'no table') cannot adopt the partial copy" 1 'holds the table zz_rehearsal_restore_inflight' 'restored by hand\|stamped as restore'
+if [ ! -e "$FW/fake.asked" ] && fake_inflight && [ -z "$(rb_kv s1 restore.id)" ]; then ok "(S1) the kit reads the table itself: the information_schema count was never asked, nothing was stamped"; else bad "(S1) the kit asked the count of the in-flight table, or stamped"; fi
+fake_once inflighterr
+rb_run s1 "RESTORE_DONE_BY_HAND=$RBDB"
+rb_expect "(S1) a lost connection on that read (once): asked again, the partial copy is found and refused" 1 'holds the table zz_rehearsal_restore_inflight' 'stamped as restore'
+if [ ! -e "$FW/fake.once" ]; then ok "(S1) (the stand-in did lose the connection once)"; else bad "(S1) the stand-in's fault was not used"; fi
+fake_once inflighterrall
+rb_run s1 "RESTORE_DONE_BY_HAND=$RBDB"
+rb_expect "(S1) a read that always fails with an error other than 1146 is 'could not be read', never 'absent'" 1 'could not be read' 'stamped as restore'
+fake_db 400
+fake_once blankinflight
+rb_run s1b "RESTORE_DONE_BY_HAND=$RBDB"
+rb_expect "(S1) the other direction: the client prints nothing once for an ABSENT in-flight table, error 1146 is the answer on the second read, and the plain hand restore is adopted" 1 'restored by hand' 'holds the table'
+if [ ! -e "$FW/fake.once" ]; then ok "(S1) (the stand-in did print nothing once)"; else bad "(S1) the stand-in's blank answer was not used"; fi
+
+# S2. require_kit_marker, the gate of steps 02 to 11, refuses a partial copy that carries the right marker.
+RKM_ID=0123456789abcdef0123456789abcdef
+rkm_setup() {
+    fake_db 120
+    printf '%s\n' "$RKM_ID" > "$FW/fake.marker"
+    rm -rf "$T/rkm"
+    mkdir -p "$T/rkm/state/kv" "$T/rkm/data"
+    printf '%s\n' "$RKM_ID" > "$T/rkm/state/kv/restore.id"
+    printf '%s\n' "$RKM_ID" > "$T/rkm/data/.rehearsal-kit-restore-id"
+}
+t_rkm() {
+    EXECUTE=1 STEP_ID=t MYSQL_BIN="$FW/fakemysql" DB_NAME=stageb_selftest REHEARSAL_DB_ALLOWLIST=stageb_selftest DB_PREFIX=mdl_ \
+        DB_HOST=127.0.0.1 DB_PORT="" DB_USER=rehearsal DB_PASS_FILE="$T/db.pass" STATE_DIR="$T/rkm/state" MOODLEDATA="$T/rkm/data"
+    require_kit_marker
+}
+rkm_setup
+res="$(in_kit t_rkm)"
+if [ "$(printf '%s' "$res" | tail -n 1)" = rc=0 ]; then ok "(S2, control) a database and a moodledata that carry this rehearsal's marker pass require_kit_marker"; else bad "(S2, control) require_kit_marker" "$res"; fi
+rkm_setup
+fake_set sentinel 'in-flight (stand-in)'
+res="$(in_kit t_rkm)"
+if [ "$(printf '%s' "$res" | tail -n 1)" = rc=1 ] && printf '%s' "$res" | grep -q 'holds the table zz_rehearsal_restore_inflight' && printf '%s' "$res" | grep -q 'PARTIAL copy whatever marker'; then
+    ok "(S2) a database that holds the in-flight table is refused although it carries the right marker"
+else bad "(S2) the in-flight table behind a marker" "$res"; fi
+rkm_setup
+fake_once inflighterrall
+res="$(in_kit t_rkm)"
+if [ "$(printf '%s' "$res" | tail -n 1)" = rc=1 ] && printf '%s' "$res" | grep -q 'could not be read'; then ok "(S2) an in-flight table that cannot be told is refused (not taken for absent)"; else bad "(S2) the unreadable in-flight table" "$res"; fi
+rkm_setup
+printf 'restore_id=%s\narchive=/a/b.tar|1|2\nstarted=2026-10-08T00:00:00Z\n' "$RKM_ID" > "$T/rkm/data/$INFL"
+res="$(in_kit t_rkm)"
+if [ "$(printf '%s' "$res" | tail -n 1)" = rc=1 ] && printf '%s' "$res" | grep -q 'holds an unpack that did not finish'; then ok "(S2) a moodledata that holds the in-flight unpack file is refused although it carries the right marker"; else bad "(S2) the in-flight file behind a marker" "$res"; fi
+rkm_setup
+printf '%s\narchive=/a/b.tar|1|2\n' "$RKM_ID" > "$T/rkm/data/.rehearsal-kit-restore-id"
+res="$(in_kit t_rkm)"
+if [ "$(printf '%s' "$res" | tail -n 1)" = rc=1 ] && printf '%s' "$res" | grep -q 'records an unpack of an archive'; then ok "(S2) a marker with an archive line and no unpacked line is refused"; else bad "(S2) the unfinished marker" "$res"; fi
+printf '%s\narchive=/a/b.tar|1|2\nunpacked=2026-10-08T00:00:00Z\n' "$RKM_ID" > "$T/rkm/data/.rehearsal-kit-restore-id"
+res="$(in_kit t_rkm)"
+if [ "$(printf '%s' "$res" | tail -n 1)" = rc=0 ]; then ok "(S2, control) a marker that records the finished unpack passes"; else bad "(S2, control) the finished marker" "$res"; fi
+
+# S3. A dump that names the in-flight table is refused with the other unsafe statements.
+{ printf 'DROP TABLE IF EXISTS `zz_rehearsal_restore_inflight`;\nCREATE TABLE `zz_rehearsal_restore_inflight` (`restore_id` char(32) NOT NULL);\n'; cat "$T/dumps/good.sql"; } > "$T/dumps/inflight.sql"
+gzip -c "$T/dumps/inflight.sql" > "$T/dumps/inflight.sql.gz"
+for f in inflight.sql inflight.sql.gz; do
+    res="$(in_kit dump_unsafe_statement "$T/dumps/$f")"
+    if printf '%s' "$res" | head -n 1 | grep -q 'zz_rehearsal_restore_inflight'; then ok "(S3) a dump that names the in-flight table is flagged (${f})"; else bad "(S3) the in-flight dump flagged (${f})" "$res"; fi
+done
+fake_db none
+rb_run s3 "RESTORE_DB_DUMP=$T/dumps/inflight.sql"
+rb_expect "(S3) step 01 refuses that dump before it creates or claims anything" 1 'must not be restored here' 'cannot create database\|RUN: restore database'
+if [ "$(cat "$FW/fake.tables")" = none ] && ! fake_inflight && [ "$(fake_loads)" = 0 ]; then ok "(S3) nothing was created, claimed or loaded"; else bad "(S3) the refused dump touched the database"; fi
+
+# S4. The earlier rehearsal's state/ moves to archive/ only after the claim: a run that misreads a finished database as absent stops with
+# state/ in place, and the next plain re-run adopts its own database.
+fake_db none
+fake_after 120
+fake_set storemarker 1
+rb_run s4 "$DUMP"
+rb_expect "(S4, setup) a kit restore finishes the database (the step stops later, at the moodledata)" 1 'stamped as restore'
+printf 'status=ok\n' > "$T/rb-s4/work/state/05.status"
+fake_once zero
+rb_run s4 "$DUMP"
+rb_expect "(S4) an idempotent re-run reads the finished database as absent once: it stops at 'cannot create database'" 1 'cannot create database' 'RUN: restore database'
+if [ -f "$T/rb-s4/work/state/05.status" ] && [[ "$(rb_kv s4 restore.id)" =~ ^[0-9a-f]{32}$ ]] && [ ! -e "$T/rb-s4/work/archive" ]; then
+    ok "(S4) the finished rehearsal's state/ is where it was (05.status, restore.id), and nothing was moved to archive/"
+else bad "(S4) the misread run moved the finished rehearsal's state ($(ls "$T/rb-s4/work" | tr '\n' ' '))"; fi
+rb_run s4 "$DUMP"
+rb_expect "(S4) the next plain re-run adopts its own database, not 'another rehearsal's'" 1 'carries this rehearsal.s marker' 'another rehearsal'
+# A claim that is lost (another restore got there first) leaves the state alone as well.
+fake_db 0
+fake_set claimrace claimed
+printf 'status=ok\n' > "$T/rb-s4/work/state/06.status"
+rb_run s4 "$DUMP"
+rb_expect "(S4) a claim that loses the race to another restore stops at the claim" 1 'cannot claim database'
+if [ -f "$T/rb-s4/work/state/06.status" ] && [ ! -e "$T/rb-s4/work/archive" ]; then ok "(S4) and archives nothing"; else bad "(S4) the lost claim moved the state to archive/"; fi
+
+# Two real runs, deterministically. Run A is held at its claim by the stand-in client until a flag is raised; run B (another work
+# directory) restores the whole empty database meanwhile; A is then released, finds a database that is no longer empty right after its
+# claim, releases itself and writes nothing.
+rb_bg() {
+    local n="$1"
+    shift
+    base_env "$T/rb-$n.env" "REHEARSAL_WORK=$T/rb-$n/work" "MOODLEDATA=$T/rb-$n/data" "MYSQL_BIN=$FW/fakemysql" \
+        "PRODUCTION_DB_ENDPOINT=live-db.example.internal" "$@"
+    rm -f "$T/rb-$n.rc"
+    ( bash "$KIT/01_restore_check.sh" --env "$T/rb-$n.env" --execute > "$T/rb-$n.out" 2>&1; printf '%s\n' "$?" > "$T/rb-$n.rc" ) &
+    BGPID=$!
+}
+fake_db 0
+fake_after 120
+fake_set storemarker 1
+fake_set blockclaim 1
+rb_bg conca "$DUMP"
+if wait_file "$FW/fake.blocked" 360; then ok "(concurrency) run A reached its claim and the stand-in client holds it there"; else bad "(concurrency) run A never reached its claim"; fi
+rb_run concb "$DUMP"
+rb_expect "(concurrency) run B, another work directory, restores the empty database meanwhile and stamps it" 1 'stamped as restore' 'cannot claim'
+touch "$FW/fake.release"
+if wait_file "$T/rb-conca.rc" 360; then
+    sleep 2
+    a_out="$(cat "$T/rb-conca.out" 2> /dev/null)"
+    if [ "$(cat "$T/rb-conca.rc")" != 0 ] && printf '%s' "$a_out" | grep -q 'right after it was claimed' && ! printf '%s' "$a_out" | grep -q 'RUN: restore database\|stamped as restore'; then
+        ok "(concurrency) run A, released, found the database no longer empty right after its claim and stopped without loading"
+    else bad "(concurrency) run A's end (rc $(cat "$T/rb-conca.rc"))" "$(printf '%s\n' "$a_out" | grep -v '^$' | tail -n 6)"; fi
+else
+    bad "(concurrency) run A never finished"
+    kill "$BGPID" 2> /dev/null || true
+fi
+if [ "$(fake_loads)" = 1 ] && ! fake_inflight && [ "$(cat "$FW/fake.tables")" = 120 ] && [ "$(cat "$FW/fake.marker")" = "$(rb_kv concb restore.id)" ] && [ -z "$(ls -A "$T/rb-conca/work/state/kv" 2> /dev/null)" ]; then
+    ok "(concurrency) one load only (B's), no in-flight table left behind, B's 120 tables and marker intact, A recorded nothing"
+else bad "(concurrency) the database after both runs (loads $(fake_loads), tables $(cat "$FW/fake.tables"))"; fi
+
+printf 'run_all.sh: a TERM sent to it alone does not release the lock while a step runs (Stage B tools fix round 6)\n'
+# A copy of the kit whose steps 01, 02 and 12 are stubs: 01 runs until a flag is raised.
+K2="$T/kitcopy"
+SD="$T/sig"
+mkdir -p "$K2/lib" "$SD"
+cp "$KIT"/*.sh "$K2/"
+rm -f "$K2/selftest.sh"
+cp "$KIT"/lib/* "$K2/lib/"
+cat > "$K2/01_restore_check.sh" <<'STUB'
+#!/usr/bin/env bash
+: > "$STUBDIR/01.started"
+while [ ! -f "$STUBDIR/release" ]; do sleep 0.2; done
+: > "$STUBDIR/01.finished"
+exit 0
+STUB
+for n in 02_source_baseline 12_summary; do
+    printf '#!/usr/bin/env bash\n: > "$STUBDIR/%s.started"\nexit 0\n' "${n%%_*}" > "$K2/$n.sh"
+done
+base_env "$T/rb-sig.env" "REHEARSAL_WORK=$T/rb-sig/work" "MOODLEDATA=$T/rb-sig/data" "MYSQL_BIN=$FW/fakemysql" "PRODUCTION_DB_ENDPOINT=live-db.example.internal"
+STUBDIR="$SD" bash "$K2/run_all.sh" --env "$T/rb-sig.env" --execute --only 01,02,12 > "$T/rb-sig.out" 2>&1 &
+RP=$!
+if wait_file "$SD/01.started" 240; then
+    kill -TERM "$RP"
+    sleep 3
+    if kill -0 "$RP" 2> /dev/null && [ -d "$T/rb-sig/work/.run.lock" ] && [ ! -e "$SD/01.finished" ]; then
+        ok "TERM to run_all.sh alone: it is still alive and still holds .run.lock while step 01 runs (it used to remove the lock and leave the step running)"
+    else bad "TERM to run_all.sh released the lock while step 01 still ran (alive: $(kill -0 "$RP" 2> /dev/null && echo yes || echo no), lock: $([ -d "$T/rb-sig/work/.run.lock" ] && echo held || echo gone))"; fi
+    touch "$SD/release"
+    rc=0
+    wait "$RP" || rc=$?
+    if [ "$rc" = 143 ] && [ -e "$SD/01.finished" ] && [ ! -e "$SD/02.started" ] && [ ! -e "$SD/12.started" ] && [ ! -d "$T/rb-sig/work/.run.lock" ]; then
+        ok "once step 01 has finished run_all.sh starts no further step (the summary included), releases the lock and exits 143"
+    else bad "run_all.sh after the TERM (rc ${rc}; 02 $([ -e "$SD/02.started" ] && echo started || echo not started); lock $([ -d "$T/rb-sig/work/.run.lock" ] && echo held || echo gone))" "$(tail -n 6 "$T/rb-sig.out")"; fi
+    if grep -q 'SIGTERM received by run_all.sh' "$T/rb-sig.out" && grep -q 'STOPPED by SIGTERM' "$T/rb-sig.out"; then ok "run_all.sh says what it does with the signal and that it stopped"; else bad "run_all.sh does not log the signal" "$(tail -n 6 "$T/rb-sig.out")"; fi
+else
+    bad "the stub step 01 never started"
+    touch "$SD/release"
+    kill "$RP" 2> /dev/null || true
+fi
+FW="$T"
 
 printf 'the restore point before a hop or the import\n'
 t_snap() {

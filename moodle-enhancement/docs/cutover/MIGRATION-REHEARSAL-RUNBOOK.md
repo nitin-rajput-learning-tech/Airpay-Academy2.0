@@ -110,12 +110,29 @@ Things the kit does that the numbered steps below do not say (added 2026-10-08, 
   database administrator), then either run step 01 with `RESTORE_DB_DUMP` set, or restore the live backup into it by hand and run
   step 01 with `RESTORE_DB_DUMP` unset and `RESTORE_DONE_BY_HAND=<its name>`. The `CREATE TABLE` is also the claim on an empty
   database: a second restore into it (a second run, another work directory) finds the table, or finds the database no longer empty
-  right after it claimed it, and stops without writing; a count of the table that the database client printed nothing for is
-  "cannot tell" (refused), never "no table". A new restore moves the earlier rehearsal's state, reports, baseline and cache
-  configuration to `archive/`.
+  right after it claimed it, and stops without writing. The table is read by its own error, never from one count: the server's
+  error 1146 is the only "absent"; no answer, a lost connection or any other error is "cannot tell" (refused), never "no table". A
+  new restore moves the earlier rehearsal's state, reports, baseline and cache configuration to `archive/` only AFTER that claim
+  is taken, so a run that misreads a finished database as empty cannot strand the finished rehearsal's `state/`. A dump that names
+  the table (it was taken from a partial copy) is refused with the other unsafe statements. The steps after 01 (the gate
+  `require_kit_marker`) also refuse a database that holds the table although it carries the marker.
+* **The moodledata has the same record, a file.** Before the unpack of `RESTORE_MOODLEDATA_ARCHIVE` writes anything, step 01 creates
+  `MOODLEDATA/.rehearsal_unpack_inflight` (restore id, archive, start time) and removes it only when the unpack has returned
+  success. A moodledata that holds it, or whose marker file records an `archive=` line and no `unpacked=` line (a cut tar, a box
+  that died mid-unpack), is a partial copy: step 00, step 01 (before the database is looked at) and every later step refuse it
+  whatever `RESTORE_MOODLEDATA_ARCHIVE` (even unset), `RESTORE_MOODLEDATA_BY_HAND` or `REHEARSAL_WORK` say. The filedir gate cannot
+  catch the cut, because it checks that a file is there and not its size (a cut inside a language pack, `repository/` or `models/`
+  after `filedir/` passes it). Empty the directory (or point `MOODLEDATA` at a new, empty one) and run step 01 again, or unpack
+  the archive by hand into an EMPTY directory and name its path in `RESTORE_MOODLEDATA_BY_HAND`.
 * **One `--execute` run per work directory.** `run_all.sh` takes `REHEARSAL_WORK/.run.lock`, and a step run alone takes it too
   (exit 3 while another run holds it; remove the directory only when no run is alive). Steps started by `run_all.sh` use the lock
-  it holds.
+  it holds. A `TERM` sent to `run_all.sh` alone (`kill <pid>`) does not interrupt the step that is running and does not release the
+  lock under it: `run_all.sh` waits for that step, starts no further step (the summary included) and exits 143 (`INT`: 130).
+  Ctrl-C reaches the whole process group, so it stops the running step as well.
+* **The database server scan sees what the rehearsal login can see.** The check that refuses a server holding `airpayprod` (or a
+  schema in `FORBIDDEN_SERVER_SCHEMAS`) reads `information_schema.SCHEMATA`, which lists only the schemas the login holds a privilege
+  on unless it has the global `SHOW DATABASES` privilege. On any server that is not the rehearsal's own, grant the rehearsal login
+  `SHOW DATABASES`; the name guard, the allow-list and the kit marker do not depend on it.
 * **The baseline has a metrics version, and names the file that took it.** A comparison refuses (exit 3) a baseline taken with
   another version of `source_baseline.php` (the checksums it lacks would otherwise go unchecked), and the baseline carries the
   SHA-256 of the exact file that took it (`tool.sha256`, carriage returns removed): the tool refuses a baseline another file took,

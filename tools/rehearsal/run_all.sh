@@ -14,6 +14,9 @@
 # The first step that fails stops the run, and step 12 (the summary) still runs, so there is always a report. Every step is
 # idempotent: after fixing the cause, run again with --from NN. Exit code: that of the failed step (1 failed, 2 not proven,
 # 3 usage), 0 when every step finished ok.
+# A TERM or INT sent to run_all.sh alone does not interrupt the step that is running: run_all.sh waits for it (the lock
+# REHEARSAL_WORK/.run.lock stays held until it has finished), starts no further step and no summary, and exits 143 (TERM) / 130 (INT).
+# Ctrl-C reaches the whole process group, so it stops the running step too. To stop a step, signal its process group.
 #
 # Steps (each is its own script and can be run alone with the same options):
 #   00 preflight        refuse unless the config is safe (allow-listed database, noemailever, no cron, no production host)
@@ -117,6 +120,7 @@ want() {
 }
 
 LOCK=""
+SIGNAL=""
 if [ "$EXECUTE" = 1 ]; then
     mkdir -p "$REHEARSAL_WORK" "$LOG_DIR"
     LOCK="$REHEARSAL_WORK/.run.lock"
@@ -126,6 +130,17 @@ if [ "$EXECUTE" = 1 ]; then
     fi
     printf '%s\n' "$$" > "$LOCK/pid"
     trap 'rm -rf "$LOCK"' EXIT
+    # TERM / INT sent to run_all.sh ALONE (kill <pid>; Ctrl-C reaches the whole process group, so the step gets it too). The step runs in the
+    # FOREGROUND, and bash defers a trapped signal until the foreground command has finished: the handler only notes it, so the lock is
+    # never released while a step still runs (the EXIT trap used to remove .run.lock and leave the step running, and a step run alone could
+    # then take the lock in the same work directory). The running step is not interrupted: run_all.sh waits for it, starts no further step
+    # (the summary included) and exits 143 / 130. To stop the step as well, signal its process group.
+    on_signal() {
+        SIGNAL="$1"
+        log "SIG${1} received by run_all.sh: the running step is not interrupted and the lock ${LOCK} stays held until it has finished; no further step will start"
+    }
+    trap 'on_signal TERM' TERM
+    trap 'on_signal INT' INT
     # The steps it starts take the same lock when run alone (step_init); these two tell them this run already holds it.
     export REHEARSAL_RUN_LOCK="$LOCK" REHEARSAL_RUN_LOCK_PID="$$"
     exec > >(tee -a "$LOG_DIR/run_all.log") 2>&1
@@ -157,7 +172,7 @@ run_step() {
 if [ -z "$ONLY" ] && [ "$FROM" -gt 0 ]; then
     run_step "${STEPS[0]}" || true
 fi
-if [ -z "$FAILED" ]; then
+if [ -z "$FAILED" ] && [ -z "$SIGNAL" ]; then
     for entry in "${STEPS[@]}"; do
         id="${entry%%:*}"
         [ "$id" = 12 ] && continue
@@ -166,7 +181,18 @@ if [ -z "$FAILED" ]; then
             continue
         fi
         run_step "$entry" || break
+        # A TERM / INT that arrived while that step ran was only noted (see on_signal): stop here, the step has finished.
+        [ -z "$SIGNAL" ] || break
     done
+fi
+
+# A signal stops the run: no further step, and no summary either (it is read-only: run step 12 by hand when the run is to be reported).
+if [ -n "$SIGNAL" ]; then
+    log "STOPPED by SIG${SIGNAL}: the step that was running has finished${FAILED:+ (it failed: ${FAILED})}, nothing further was started and the summary was not run. Continue with: bash tools/rehearsal/run_all.sh --execute --from NN (or 12_summary.sh --execute for the report)"
+    case "$SIGNAL" in
+        INT) exit 130 ;;
+        *) exit 143 ;;
+    esac
 fi
 
 # The summary runs last, failure or not (unless --only leaves it out), so there is always a report.

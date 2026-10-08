@@ -728,6 +728,10 @@ probe_db() {
     # The list always names information_schema, so an answer without it (the client printed nothing, with status 0, as it was seen to on
     # this box, or the query failed) means the scan did not see the server's schemas: asked again twice, then "unreachable", which every
     # caller refuses. An empty list must never read as "no forbidden schema here".
+    # WHAT THE SCAN CAN SEE: information_schema.SCHEMATA lists only the schemas DB_USER holds some privilege on, unless DB_USER has the global
+    # SHOW DATABASES privilege. A rehearsal login without it, on a server that also holds airpayprod or UAT's schema, does not see them, and
+    # the scan passes. So on any server that is not the rehearsal's own, grant the rehearsal login SHOW DATABASES (and name UAT's schema in
+    # FORBIDDEN_SERVER_SCHEMAS); the other guards (the name guard, the allow-list, the kit marker) do not depend on it.
     local schema schema_l forbidden hit="" schemata="" tries=0
     while :; do
         schemata="$(mysql_nodb -e 'SELECT SCHEMA_NAME FROM information_schema.SCHEMATA' 2> /dev/null)" || schemata=""
@@ -755,7 +759,8 @@ probe_db() {
     fi
     # Only a literal 0 reads as "absent" and only a literal 0 as "empty": a COUNT the client printed nothing for (it was seen to, with
     # status 0, on this box) is asked again, and an answer that stays empty, is not a number, or comes with an error leaves the state
-    # "unreachable" (which every caller refuses), never absent or empty. A failed restore's record is cleared on those two states.
+    # "unreachable" (which every caller refuses), never absent or empty. These two states say nothing about a failed restore: a database
+    # that holds the in-flight table is a partial copy whatever its state reads, and step 01 looks for the table by itself (inflight_count).
     local exists tables
     exists="$(count_retry mysql_nodb -e "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '${DB_NAME}'")" || exists=""
     case "$exists" in
@@ -1102,10 +1107,14 @@ dump_stream() {
 #     names, on whatever server DB_HOST is, whatever REHEARSAL_DB_ALLOWLIST says;
 #   * SET @@GLOBAL.GTID_PURGED (what mysqldump writes for a GTID-enabled source such as RDS unless --set-gtid-purged=OFF) is a
 #     SERVER-wide setting: on MariaDB it aborts the restore, and on a privileged MySQL login it changes the replication state of a
-#     server that may be UAT's.
+#     server that may be UAT's;
+#   * any line that names the in-flight table (KIT_INFLIGHT_TABLE). A mysqldump of a database that held it (a partial copy the kit was
+#     still restoring into) carries DROP TABLE IF EXISTS / CREATE TABLE / INSERT for it: restored, it would drop and re-create the kit's
+#     claim in the middle of the load, and a load that died between that DROP and CREATE would leave a partial copy with no in-flight
+#     table, which RESTORE_DONE_BY_HAND adopts.
 # It reads the whole file once (the trailer check reads only its tail), before the restore reads it again.
 dump_unsafe_statement() {
-    { dump_stream "$1" | grep -a -m1 -Ei -e '^[[:space:]]*(/\*![0-9]*[[:space:]]+)?(use[[:space:]]|create[[:space:]]+(database|schema)[[:space:]]|drop[[:space:]]+(database|schema)[[:space:]]|set[[:space:]]+(@@global\.|global[[:space:]]+)gtid_purged)' | cut -c1-160; } 2> /dev/null || true
+    { dump_stream "$1" | grep -a -m1 -Ei -e '^[[:space:]]*(/\*![0-9]*[[:space:]]+)?(use[[:space:]]|create[[:space:]]+(database|schema)[[:space:]]|drop[[:space:]]+(database|schema)[[:space:]]|set[[:space:]]+(@@global\.|global[[:space:]]+)gtid_purged)' -e "$KIT_INFLIGHT_TABLE" | cut -c1-160; } 2> /dev/null || true
 }
 
 # dump_mysql8_collation FILE -> prints the first utf8mb4_0900_* collation named in the first 20 MB of the dump (nothing when there is
@@ -1175,13 +1184,37 @@ sql_squote() {
     printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e "s/'/''/g"
 }
 
-# inflight_count -> 1 when the database holds the in-flight table, 0 when it does not; rc 1 (nothing printed) when the count could not be
-# read, which a caller must treat as "cannot tell", never as 0. Needs the database to exist.
+# inflight_count -> 1 when the database holds the in-flight table, 0 when it does not; rc 1 (nothing printed) when that could not be told,
+# which a caller must treat as "cannot tell", never as 0. Needs the database to exist.
+# It is read from the table itself, by the server's error, and not from a COUNT of information_schema.TABLES: a single count that comes
+# back wrong (the client was seen to print nothing, with status 0; the selftest's fault model also has a count that answers 0) would read
+# a present table as absent, and that one read was all that stood between RESTORE_DONE_BY_HAND and a partial copy. Here
+#   absent   = the server's own error 1146 (the table does not exist), and nothing else;
+#   present  = SELECT 1 FROM the table ran without an error AND the 'answered' line printed by the statement before it is there (a client
+#              that printed nothing proves nothing, and must not read as "present" either: that would send an operator to DROP DATABASE on a
+#              complete copy);
+#   anything else (another error, a lost connection, no output) is asked again, twice, one second apart, and is "cannot tell" after that.
 inflight_count() {
-    local n
-    n="$(count_retry db_q "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${DB_NAME}' AND TABLE_NAME = '${KIT_INFLIGHT_TABLE}'")" || return 1
-    [[ "$n" =~ ^[01]$ ]] || return 1
-    printf '%s' "$n"
+    local out rc tries=0
+    while :; do
+        rc=0
+        out="$(db_q "SELECT 'answered'; SELECT 1 FROM \`${KIT_INFLIGHT_TABLE}\` LIMIT 0" 2>&1)" || rc=$?
+        out="${out//$'\r'/}"
+        if [ "$rc" = 0 ]; then
+            case $'\n'"$out"$'\n' in
+                *$'\n'answered$'\n'*) printf '1'; return 0 ;;
+            esac
+        else
+            case "$out" in
+                *'ERROR 1146'*) printf '0'; return 0 ;;
+            esac
+        fi
+        tries=$((tries + 1))
+        if [ "$tries" -ge 3 ]; then
+            return 1
+        fi
+        sleep 1
+    done
 }
 
 # inflight_describe -> what the in-flight table says about the restore (id, dump, start), for a message; never fails.
@@ -1309,12 +1342,91 @@ moodledata_recent_writes() {
     done | head -n 1
 }
 
-# require_kit_marker: EXECUTE stops unless the database AND the moodledata carry the id that state/kv/restore.id holds.
+# ---------------------------------------------------------------------------------------------------------------------
+# The in-flight unpack: a kit unpack of the moodledata that did not finish says so IN THE MOODLEDATA it was writing to
+# ---------------------------------------------------------------------------------------------------------------------
+# The moodledata half of the in-flight table above, for the same reason: an unpack that stopped half way leaves a filedir that looks
+# restored, and a re-run with RESTORE_MOODLEDATA_ARCHIVE unset (or in another REHEARSAL_WORK) found a populated filedir and went on, so
+# steps 02 to 11 ran on a partial copy. Step 01 creates this file in MOODLEDATA (restore id, archive identity, start time) BEFORE the unpack
+# writes anything, and removes it only when the unpack has returned success. A MOODLEDATA that holds it is a PARTIAL copy: step 00, step 01
+# and require_kit_marker (steps 02 to 11) refuse it whatever RESTORE_MOODLEDATA_ARCHIVE, RESTORE_MOODLEDATA_BY_HAND, RESTORE_DONE_BY_HAND or
+# REHEARSAL_WORK say, because the fact is in the directory itself; only emptying the directory clears it. The file is created with noclobber,
+# so it is also the claim on the directory: a second unpack into it (another run, another work directory) stops instead of writing over the first.
+KIT_UNPACK_INFLIGHT_FILE=".rehearsal_unpack_inflight"
+UNPACK_INFLIGHT_BODY=""
+
+unpack_inflight_present() {
+    [ -e "$MOODLEDATA/$KIT_UNPACK_INFLIGHT_FILE" ] || [ -L "$MOODLEDATA/$KIT_UNPACK_INFLIGHT_FILE" ]
+}
+
+# unpack_inflight_describe -> what the file says (restore id, archive, start), for a message; never fails.
+unpack_inflight_describe() {
+    local f="$MOODLEDATA/$KIT_UNPACK_INFLIGHT_FILE" id arch started
+    id="$(sed -n '1s/^restore_id=//p' "$f" 2> /dev/null | tr -d '\r\n' || true)"
+    arch="$(sed -n '2s/^archive=//p' "$f" 2> /dev/null | tr -d '\r\n' || true)"
+    started="$(sed -n '3s/^started=//p' "$f" 2> /dev/null | tr -d '\r\n' || true)"
+    printf 'restore %s..., archive %s, started %s' "${id:0:8}" "${arch:-?}" "${started:-?}"
+}
+
+# unpack_inflight_begin ID ARCHIVE_IDENTITY: claim the moodledata for this unpack, before the unpack writes anything.
+unpack_inflight_begin() {
+    local f="$MOODLEDATA/$KIT_UNPACK_INFLIGHT_FILE"
+    mkdir -p "$MOODLEDATA"
+    UNPACK_INFLIGHT_BODY="$(printf 'restore_id=%s\narchive=%s\nstarted=%s' "$1" "$2" "$(ts)")"
+    log "claiming ${MOODLEDATA} for this unpack: creating ${KIT_UNPACK_INFLIGHT_FILE} (restore ${1:0:8}..., archive ${2}); it is removed only when the unpack has finished"
+    if ! ( set -o noclobber; printf '%s\n' "$UNPACK_INFLIGHT_BODY" > "$f" ) 2> /dev/null; then
+        die "cannot claim ${MOODLEDATA} for this unpack: ${f} could not be created. If it exists, another unpack is writing here (or did, and did not finish): the kit never writes over it. $(unpack_unfinished_advice). Otherwise the directory is not writable"
+    fi
+}
+
+# unpack_inflight_end: the unpack returned success, so the moodledata no longer counts as a partial copy. The file must still be the one
+# unpack_inflight_begin wrote: an archive taken from a moodledata whose own unpack had not finished carries the file itself and overwrites ours,
+# and what was unpacked is then partial however cleanly tar ended.
+unpack_inflight_end() {
+    local f="$MOODLEDATA/$KIT_UNPACK_INFLIGHT_FILE"
+    if [ "$(cat "$f" 2> /dev/null || true)" != "$UNPACK_INFLIGHT_BODY" ]; then
+        die "the unpack of the moodledata returned success, but ${f} is not the file this run created (it now says: $(unpack_inflight_describe)): the archive carries its own ${KIT_UNPACK_INFLIGHT_FILE}, so it was made from a moodledata whose unpack had not finished, and what was unpacked is a PARTIAL copy. The file stays, so every kit step refuses this directory. $(unpack_unfinished_advice), and use a complete archive"
+    fi
+    rm -f "$f" || die "the unpack of the moodledata is complete, but ${f} could not be removed, so ${MOODLEDATA} still counts as a partial copy and every later run refuses it. $(unpack_unfinished_advice) (the directory must be writable)"
+    log "OK: the unpack is verified complete: ${KIT_UNPACK_INFLIGHT_FILE} removed from ${MOODLEDATA}"
+}
+
+# moodledata_unfinished_unpack -> prints why MOODLEDATA holds an unpack that did not finish (nothing when it does not): the in-flight file
+# above, or a marker file that records an 'archive=' line and no 'unpacked=' line (written before the unpack starts, completed after it:
+# the record of a kit that had no in-flight file yet, or of one whose file was removed by hand).
+moodledata_unfinished_unpack() {
+    local l2 l3
+    if unpack_inflight_present; then
+        printf '%s is there (%s)' "$KIT_UNPACK_INFLIGHT_FILE" "$(unpack_inflight_describe)"
+        return 0
+    fi
+    l2="$(moodledata_marker_line 2)"
+    l3="$(moodledata_marker_line 3)"
+    if [[ "$l2" == archive=* ]] && [ -z "$l3" ]; then
+        printf '%s records an unpack of an archive (%s) and no "unpacked" line' "$KIT_MARKER_FILE" "${l2#archive=}"
+    fi
+    return 0
+}
+
+# unpack_unfinished_advice -> what to do about a moodledata that holds an unfinished unpack (one sentence, no full stop).
+unpack_unfinished_advice() {
+    printf 'The kit never adopts it, whatever RESTORE_MOODLEDATA_ARCHIVE, RESTORE_MOODLEDATA_BY_HAND or REHEARSAL_WORK say. Empty %s (or point MOODLEDATA at a new, empty directory) and run step 01 again, so that the kit unpacks the archive itself; or unpack the archive by hand into an EMPTY directory, set MOODLEDATA to it and RESTORE_MOODLEDATA_BY_HAND to its path' "$MOODLEDATA"
+}
+
+# require_kit_marker: EXECUTE stops unless the database AND the moodledata carry the id that state/kv/restore.id holds, and neither is a
+# partial copy (the database holds no in-flight table, the moodledata no in-flight file and no unpack record that did not finish).
 require_kit_marker() {
     [ "$EXECUTE" = 1 ] || return 0
-    local want have dataid
+    local want have dataid inflight unfinished
     want="$(kv_get restore.id)"
     [ -n "$want" ] || die "no restore id is recorded (state/kv/restore.id): step 01 has not stamped this rehearsal. Run step 01 first"
+    # A marker row can be in a partial copy (a dump or a snapshot of a stamped database that died after {config} was loaded): the marker
+    # does not make a database whole. One query.
+    inflight="$(inflight_count)" \
+        || die "database ${DB_NAME}: whether it holds the in-flight table ${KIT_INFLIGHT_TABLE} could not be read (the client answered nothing, or with an error other than 'table does not exist'): it is treated as a partial restore until it can be read. Run this step again once the server answers"
+    [ "$inflight" = 0 ] || die "database ${DB_NAME} holds the table ${KIT_INFLIGHT_TABLE}: a restore the kit started into it did not finish ($(inflight_describe)), so it is a PARTIAL copy whatever marker it carries. Refused. Only DROP DATABASE clears it: restore again into an empty database (step 01)"
+    unfinished="$(moodledata_unfinished_unpack)"
+    [ -z "$unfinished" ] || die "${MOODLEDATA} holds an unpack that did not finish (${unfinished}), so it is a PARTIAL copy whatever marker it carries. Refused. $(unpack_unfinished_advice)"
     have="$(marker_get)"
     [ -n "$have" ] || die "database ${DB_NAME} carries no rehearsal-kit marker: it is not a copy this kit restored (step 01), so the kit will not write to it"
     [ "$have" = "$want" ] || die "database ${DB_NAME} carries restore id ${have:0:8}..., but this work directory belongs to restore ${want:0:8}...: another restore, or a database that is not this rehearsal's. Refused"

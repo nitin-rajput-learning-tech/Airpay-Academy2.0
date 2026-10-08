@@ -24,8 +24,17 @@
 #      database. A database that holds the table is a PARTIAL copy and is refused whatever RESTORE_DONE_BY_HAND says and whatever
 #      REHEARSAL_WORK the run uses; only DROP DATABASE clears it (then create it empty). The CREATE TABLE is also the claim on an
 #      empty database: a second restore into it (a second run, another work directory) finds the table, or finds the database no longer
-#      empty, and stops instead of writing over the first. Nothing about an unfinished restore is kept in state/.
+#      empty, and stops instead of writing over the first. Nothing about an unfinished restore is kept in state/. The table is looked for by
+#      its own error (1146 = absent; no error plus its answer = present; anything else = cannot tell = refused), never by one count; and
+#      the earlier rehearsal's state/ moves to archive/ only AFTER the claim is taken, so a misread cannot strand it.
 #      RESTORE_DONE_BY_HAND together with RESTORE_DB_DUMP is refused outright (a leftover statement must not meet a new dump).
+#      A dump that names the in-flight table (taken from a partial copy) is refused with the other unsafe statements.
+#      THE IN-FLIGHT FILE: the moodledata has the same record. Before the unpack of RESTORE_MOODLEDATA_ARCHIVE writes anything the kit creates
+#      the file .rehearsal_unpack_inflight in MOODLEDATA (restore id, archive, start time) and removes it only when the unpack has returned
+#      success. A MOODLEDATA that holds it, or whose marker file records an archive and no 'unpacked' line, is a PARTIAL copy: step 01 (before it
+#      looks at the database), step 00 and steps 02 to 11 refuse it whatever RESTORE_MOODLEDATA_ARCHIVE (even unset), RESTORE_MOODLEDATA_BY_HAND
+#      or REHEARSAL_WORK say; empty the directory and run step 01 again, or unpack by hand into an EMPTY directory and use
+#      RESTORE_MOODLEDATA_BY_HAND.
 #      THE MOODLEDATA is per rehearsal. The marker file also records which archive the kit unpacked into it (path, size, mtime) and
 #      that the unpack finished. A NEW restore (a new database) accepts a non-empty moodledata only when it is the same unpack of the
 #      same RESTORE_MOODLEDATA_ARCHIVE that no later step has used (that fact outlives the rotation of state/: restore-ids.log);
@@ -71,7 +80,7 @@ restore_database() {
     log "scanning the dump for statements that reach another database, and for its trailer (one read of the whole file)"
     bad="$(dump_unsafe_statement "$RESTORE_DB_DUMP")"
     if [ -n "$bad" ]; then
-        die "the dump holds a statement that must not be restored here (${bad}): refused. A USE / CREATE DATABASE / DROP DATABASE reaches another database (take the dump without --databases / --all-databases: mysqldump ${DB_NAME} > dump.sql), and SET @@GLOBAL.GTID_PURGED is a server-wide setting (add --set-gtid-purged=OFF). Take the dump again, then restore"
+        die "the dump holds a statement that must not be restored here (${bad}): refused. A USE / CREATE DATABASE / DROP DATABASE reaches another database (take the dump without --databases / --all-databases: mysqldump ${DB_NAME} > dump.sql), SET @@GLOBAL.GTID_PURGED is a server-wide setting (add --set-gtid-purged=OFF), and a line that names ${KIT_INFLIGHT_TABLE} means the dump was taken from a database the kit was still restoring into (a partial copy): it would drop and re-create the kit's own claim in the middle of the load. Take the dump again (from a finished copy), then restore"
     fi
     local collation server
     collation="$(dump_mysql8_collation "$RESTORE_DB_DUMP")"
@@ -95,6 +104,10 @@ restore_database() {
     # The dump is clean and the database exists: claim it (the in-flight table) BEFORE the restore writes anything. From here until the
     # restore is verified complete (see the flow below), the database holds the table, and a database that holds it is never adopted.
     inflight_begin "$RESTORE_ID" "$RESTORE_DB_DUMP"
+    # The claim is taken, so this run really owns an empty database: only now does the earlier rehearsal's state move to archive/. Before
+    # the claim, a run that misread a finished database as absent or empty would have stranded that rehearsal's state/ in archive/ and
+    # then stopped at the claim.
+    archive_earlier_rehearsal
     # pipefail: a gzip that fails half way must fail the restore, not leave a partial copy that looks restored.
     case "$RESTORE_DB_DUMP" in
         *.gz) timed "restore database" bash -c 'set -o pipefail; gzip -dc "$1" | "$2" --defaults-extra-file="$3" --one-database --max-allowed-packet=512M "$4"' _ \
@@ -107,18 +120,25 @@ restore_database() {
 restore_moodledata() {
     [ -f "$RESTORE_MOODLEDATA_ARCHIVE" ] || die "RESTORE_MOODLEDATA_ARCHIVE not found: ${RESTORE_MOODLEDATA_ARCHIVE}"
     mkdir -p "$MOODLEDATA"
+    # The unpack is UNFINISHED when it fails: ${KIT_UNPACK_INFLIGHT_FILE} (created before it wrote anything) stays in MOODLEDATA, which every kit
+    # step then refuses, and the marker file has an 'archive=' line and no 'unpacked=' line.
+    local unfinished="the unpack is UNFINISHED and ${MOODLEDATA} now holds a partial copy of the moodledata (${KIT_UNPACK_INFLIGHT_FILE} stays in it, so the kit never adopts it, whatever any setting says). Empty ${MOODLEDATA} (or point MOODLEDATA at a new, empty directory) and run step 01 again"
     if file_magic_pk "$RESTORE_MOODLEDATA_ARCHIVE"; then
         need_tool unzip
-        timed "restore moodledata" unzip -q -o "$RESTORE_MOODLEDATA_ARCHIVE" -d "$MOODLEDATA" || die "unzip of the moodledata failed"
+        timed "restore moodledata" unzip -q -o "$RESTORE_MOODLEDATA_ARCHIVE" -d "$MOODLEDATA" || die "unzip of the moodledata failed: ${unfinished}"
     else
-        timed "restore moodledata" tar -C "$MOODLEDATA" -xf "$RESTORE_MOODLEDATA_ARCHIVE" || die "tar of the moodledata failed"
+        timed "restore moodledata" tar -C "$MOODLEDATA" -xf "$RESTORE_MOODLEDATA_ARCHIVE" || die "tar of the moodledata failed: ${unfinished}"
     fi
 }
 
 # by_hand_ack -> 0 when the operator named THIS database as restored by hand (RESTORE_DONE_BY_HAND=<database name>).
 by_hand_ack() { [ -n "$RESTORE_DONE_BY_HAND" ] && [ "$RESTORE_DONE_BY_HAND" = "$DB_NAME" ]; }
 
-# start_new_restore: a new rehearsal begins. The earlier one's state moves to archive/, and the restore id is chosen.
+# start_new_restore: a new rehearsal begins. The restore id is chosen and how far the earlier rehearsal got is read; NOTHING is moved here.
+# The earlier rehearsal's state moves to archive/ in archive_earlier_rehearsal, which is called only once this run owns the database: after
+# the claim (restore_database, right after inflight_begin) or, for a hand restore, once the operator's statement is taken. A run that misreads a
+# finished database as absent or empty (the client was seen to) must stop at the claim with the earlier rehearsal's state/ still in place:
+# archiving it first stranded a finished rehearsal (the next plain re-run then refused its own database as "another rehearsal's").
 RESTORE_ID=""
 OLD_RESTORE_ID=""
 BY_HAND=0
@@ -137,11 +157,16 @@ start_new_restore() {
             PAST_RESTORE=1
         fi
     done
+    RESTORE_ID="$(new_restore_id)"
+    [[ "$RESTORE_ID" =~ ^[0-9a-f]{32}$ ]] || die "could not make a restore id"
+}
+
+# archive_earlier_rehearsal: the earlier rehearsal's state, reports, baseline, cache configuration and timings move to archive/. Only after
+# start_new_restore, and only once the database is this run's (claimed, or vouched for by hand).
+archive_earlier_rehearsal() {
     if work_state_has_history; then
         rotate_work_state
     fi
-    RESTORE_ID="$(new_restore_id)"
-    [[ "$RESTORE_ID" =~ ^[0-9a-f]{32}$ ]] || die "could not make a restore id"
 }
 
 # stamp_database: the restore of the database is complete (or the operator vouched for it): mark it, record the id.
@@ -175,6 +200,13 @@ if [ -n "$RESTORE_DONE_BY_HAND" ] && [ -n "$RESTORE_DB_DUMP" ]; then
 fi
 
 if [ "$EXECUTE" = 1 ]; then
+    # FIRST, before the database is even looked at: a moodledata that holds an unpack the kit started and did not finish is a PARTIAL copy of
+    # the filedir. The fact is in the directory (the in-flight file; a marker with an 'archive=' line and no 'unpacked=' line), so it holds
+    # whatever RESTORE_MOODLEDATA_ARCHIVE (even unset: the retry that adopted the cut filedir), RESTORE_MOODLEDATA_BY_HAND or REHEARSAL_WORK says.
+    unfinished="$(moodledata_unfinished_unpack)"
+    if [ -n "$unfinished" ]; then
+        die "${MOODLEDATA} holds an unpack of the moodledata that did not finish (${unfinished}), so its filedir is a PARTIAL copy. $(unpack_unfinished_advice)"
+    fi
     probe_db
     log "database ${DB_NAME}: ${DB_STATE} (${DB_TABLES} tables)"
     case "$DB_STATE" in
@@ -198,9 +230,10 @@ if [ "$EXECUTE" = 1 ]; then
         present)
             # FIRST, before the marker or any statement of the operator: a database that holds the in-flight table is the partial copy of a
             # restore the kit started and did not finish. The fact is in the database, so it holds for any REHEARSAL_WORK, any env file and
-            # any RESTORE_DONE_BY_HAND; only DROP DATABASE clears it. A count that cannot be read is "cannot tell", never "no table".
+            # any RESTORE_DONE_BY_HAND; only DROP DATABASE clears it. It is read from the table itself (the server's error 1146 is the only
+            # "absent"); an answer that cannot be told is "cannot tell", never "no table".
             inflight="$(inflight_count)" \
-                || die "database ${DB_NAME} holds ${DB_TABLES} tables and the count of its in-flight table ${KIT_INFLIGHT_TABLE} could not be read (the client answered nothing, or not a number): it is treated as a partial restore until it can be read. Run step 01 again once the server answers"
+                || die "database ${DB_NAME} holds ${DB_TABLES} tables and whether it holds its in-flight table ${KIT_INFLIGHT_TABLE} could not be read (the client answered nothing, or with an error other than 'table does not exist'): it is treated as a partial restore until it can be read. Run step 01 again once the server answers"
             if [ "$inflight" = 1 ]; then
                 die "database ${DB_NAME} holds the table ${KIT_INFLIGHT_TABLE}: a restore this kit started into it did not finish ($(inflight_describe)), so it holds a PARTIAL copy (${DB_TABLES} tables including that one). It is refused whatever RESTORE_DONE_BY_HAND says and whatever REHEARSAL_WORK this run uses, because the fact is in the database; only DROP DATABASE clears it. Drop it and create it empty (as a database administrator: DROP DATABASE \`${DB_NAME}\`; CREATE DATABASE \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE ${DB_COLLATION};), then run step 01 again: with RESTORE_DB_DUMP set (and RESTORE_DONE_BY_HAND unset) the kit restores into the empty database; to restore by hand instead, restore the live backup into it, then run step 01 with RESTORE_DB_DUMP unset and RESTORE_DONE_BY_HAND=${DB_NAME}"
             fi
@@ -219,6 +252,7 @@ if [ "$EXECUTE" = 1 ]; then
                 fi
             elif by_hand_ack; then
                 start_new_restore
+                archive_earlier_rehearsal
                 BY_HAND=1
                 warn "database ${DB_NAME} was restored by hand (RESTORE_DONE_BY_HAND=${RESTORE_DONE_BY_HAND}): stamping it as this rehearsal's copy on that statement"
                 stamp_database
@@ -292,11 +326,15 @@ if [ "$EXECUTE" = 1 ]; then
     fi
     if [ ! -d "$MOODLEDATA/filedir" ] || [ -z "$(ls -A "$MOODLEDATA/filedir" 2> /dev/null)" ]; then
         if [ -n "$RESTORE_MOODLEDATA_ARCHIVE" ]; then
-            # The archive is recorded BEFORE the unpack, so an unpack that stops half way is recognised as this archive's unfinished
-            # unpack on the next run; the finished line is written after it, and the whole marker is written again then, because an
-            # archive made from an earlier rehearsal's dataroot would have overwritten the marker file.
+            # THE IN-FLIGHT FILE comes first, before the unpack writes anything, and goes only when the unpack has returned success: a
+            # directory that holds it is a partial copy and is refused by step 01 and by every step after it, whatever any setting says.
+            # The archive is recorded in the marker file BEFORE the unpack too (the second record of the same fact: an 'archive=' line
+            # and no 'unpacked=' line is refused as well); the finished line is written after it, and the whole marker is written again
+            # then, because an archive made from an earlier rehearsal's dataroot would have overwritten the marker file.
+            unpack_inflight_begin "$RESTORE_ID" "$ARCHIVE_ID"
             moodledata_write_marker "$RESTORE_ID" "$ARCHIVE_ID"
             restore_moodledata
+            unpack_inflight_end
             moodledata_write_marker "$RESTORE_ID" "$ARCHIVE_ID" done
             log "OK: ${MOODLEDATA} unpacked from RESTORE_MOODLEDATA_ARCHIVE and recorded in ${KIT_MARKER_FILE}"
         else
@@ -309,7 +347,8 @@ if [ "$EXECUTE" = 1 ]; then
                 log "moodledata already holds the finished unpack of RESTORE_MOODLEDATA_ARCHIVE (same path, size and mtime): not restoring over it"
                 ;;
             incomplete)
-                die "the unpack of RESTORE_MOODLEDATA_ARCHIVE into ${MOODLEDATA} did not finish (${KIT_MARKER_FILE} has no 'unpacked' line), so ${MOODLEDATA}/filedir is partial: empty ${MOODLEDATA} (or use a new directory) and run step 01 again"
+                # Refused by the check at the top of this step already; kept as the second line of the same rule.
+                die "the unpack of RESTORE_MOODLEDATA_ARCHIVE into ${MOODLEDATA} did not finish (${KIT_MARKER_FILE} has no 'unpacked' line), so ${MOODLEDATA}/filedir is partial: $(unpack_unfinished_advice)"
                 ;;
             other)
                 die "RESTORE_MOODLEDATA_ARCHIVE is $(basename "$RESTORE_MOODLEDATA_ARCHIVE") (${ARCHIVE_ID}), but ${MOODLEDATA}/filedir was unpacked from another archive ($(moodledata_marker_line 2)): the new archive would be ignored. Use an empty moodledata for it"
@@ -324,7 +363,7 @@ if [ "$EXECUTE" = 1 ]; then
     require_kit_marker
 else
     dry "would restore RESTORE_DB_DUMP (${RESTORE_DB_DUMP:-not set}) into the EMPTY database ${DB_NAME} (never over a populated one); the dump is refused when it holds USE / CREATE DATABASE / DROP DATABASE or has no '-- Dump completed' trailer; the database holds the table ${KIT_INFLIGHT_TABLE} from just before the load until the restore is verified complete, and a database that holds it is refused (only DROP DATABASE clears it)"
-    dry "would unpack RESTORE_MOODLEDATA_ARCHIVE (${RESTORE_MOODLEDATA_ARCHIVE:-not set}) into ${MOODLEDATA} when its filedir/ is missing"
+    dry "would unpack RESTORE_MOODLEDATA_ARCHIVE (${RESTORE_MOODLEDATA_ARCHIVE:-not set}) into ${MOODLEDATA} when its filedir/ is missing; the file ${KIT_UNPACK_INFLIGHT_FILE} is in ${MOODLEDATA} from just before the unpack until it is verified complete, and a moodledata that holds it (or a marker with an archive line and no unpacked line) is a partial copy that every step refuses, whatever any setting says"
     dry "would stamp the database (a {config} row) and ${MOODLEDATA} (${KIT_MARKER_FILE}) with a random restore id; a populated database without that marker is refused unless RESTORE_DONE_BY_HAND=${DB_NAME} (with RESTORE_DB_DUMP unset, and never for a database that holds ${KIT_INFLIGHT_TABLE})"
 fi
 
