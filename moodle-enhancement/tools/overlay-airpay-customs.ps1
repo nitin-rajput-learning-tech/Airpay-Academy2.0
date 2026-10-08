@@ -309,8 +309,9 @@ Copy-File 'core-adjacent' 'my\switchrole.php'     # BizLMS role-switch handler (
 # my\templates\dropdown.mustache is no longer shipped (2026-10-08): nothing references it.
 if ($RepoMode) {
     # Generate the router .htaccess from the repo template (branded error pages, ServerSignature Off,
-    # hardening headers, Moodle 5 router rewrite to r.php). The template's ErrorDocument lines name the
-    # dev alias (/moodle/error/index.php); a docroot vhost needs /error/index.php, so the base is a parameter.
+    # hardening headers, Moodle 5 router rewrite to r.php). The template's ErrorDocument lines carry the
+    # placeholder @@ERROR_BASE@@ ('/moodle' on the dev alias, '' on a docroot vhost), so the base is a parameter.
+    # The second replacement below also rewrites a literal /moodle/error/index.php, for an older template copy.
     $tpl = Join-Path $RepoRoot 'moodle-enhancement\deploy\moodle-htaccess.template'
     $htTarget = Join-Path $Target '.htaccess'
     if (-not (Test-Path $tpl)) {

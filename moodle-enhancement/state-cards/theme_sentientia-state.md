@@ -710,3 +710,8 @@ Four deprecated `user_*()` globals are called through `method_exists(\core\user:
 - `templates/core/block.mustache`: the title and the controls now sit in a `block-header d-flex` row (the structure core uses since 5.2; the theme CSS already styles `.block .block-header`), the controls carry `ml-auto` instead of the float `pull-right`, the `d-inlines` typo is gone, and the skip-link target span has `tabindex="-1"`. Still Bootstrap 4 classes, still `h5.card-title` (theme CSS and dark mode select on it) and still the theme's own `block block_<type>` class list.
 - `templates/core_course/coursecard.mustache`: the card drops `mx-1`, as 5.3 core did.
 - **Visual change on every version** (block headers: controls move onto the title row; course cards: 0.25rem less side margin). Visual evidence owed (`docs/visual-evidence/2026-10-08/moodle53/README.md`). Bump purges the compiled template cache.
+
+## 2026-10-08 Moodle 5.3 compat FX-22 (cleanup, no behaviour change)
+
+- `core_renderer_maintenance` no longer carries the `htmllize_file_tree()` stub: Moodle 4.3 deprecated the core method (5.1/5.2 throw a deprecation exception from it) and 5.3 removed it; nothing in the theme or the plugins calls it.
+- **Not removed, on purpose:** `templates/core/otploginform.mustache`. The 5.3 compatibility report called it dead, but `render_otplogin()` in `classes/output/traits/login_render.php` renders it for core's OTP login renderable (`\core_auth\output\otplogin`), so it is live. The templates `nav-drawer.mustache` and `flat_navigation.mustache` ARE unreferenced (only each other); deleting tracked files needs the owner's confirm (project rule), so they stay until Nitin says so.
