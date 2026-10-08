@@ -12,7 +12,7 @@ certificate-email delivery health at-a-glance.
 
 ## What it does
 
-Reads `local_airpay_email_log` (filtered to rows that carried a
+Reads `local_sentientia_email_log` (filtered to rows that carried a
 certificate PDF — `attachment_filename` or `certificate_issue_id`
 non-null) and presents three KPI cards over a 7-day rolling window:
 
@@ -66,7 +66,7 @@ Also wired into pre_deploy_validate.sh Gate 6 alongside
 
 ## Defensive guards
 
-`get_content()` checks `local_airpay_email_log` table existence
+`get_content()` checks `local_sentientia_email_log` table existence
 before querying. If the `local_sentientia_emails` plugin is uninstalled
 or disabled, the block silently hides (returns null) rather than
 throwing.

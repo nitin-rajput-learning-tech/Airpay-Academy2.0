@@ -5,12 +5,12 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'block_sentientia_cert_health';
-$plugin->version   = 2026080400;  // 2026-08-04 privacy null-provider (GDPR registry closure)
+$plugin->version   = 2026100800;  // 2026-10-08 reads local_sentientia_email_log: the widget queried the pre-rename local_airpay_email_log, which no site has, so it rendered nothing (on top of 2026080400 privacy null-provider)
 $plugin->requires  = 2024042200;        // Moodle 4.5+
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.0.0';
+$plugin->release   = '1.0.1';
 $plugin->dependencies = [
-    // Reads local_airpay_email_log for the certificate-delivery stats
+    // Reads local_sentientia_email_log for the certificate-delivery stats
     // surfaced in the widget.
     'local_sentientia_emails' => 2026051302,
 ];

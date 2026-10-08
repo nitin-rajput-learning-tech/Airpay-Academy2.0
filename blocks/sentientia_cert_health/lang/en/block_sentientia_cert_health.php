@@ -9,7 +9,7 @@ $string['pluginname'] = 'Sentientia Certificate Health';
 $string['sentientia_cert_health:addinstance']   = 'Add an Airpay Cert Health block';
 $string['sentientia_cert_health:myaddinstance'] = 'Add an Airpay Cert Health block to the My Moodle page';
 
-// KPI card labels — each one a 7-day rolling count from local_airpay_email_log.
+// KPI card labels — each one a 7-day rolling count from local_sentientia_email_log.
 $string['kpi_sent']       = 'Certificates emailed (7d)';
 $string['kpi_failed']     = 'Failed sends (7d)';
 $string['kpi_suppressed'] = 'Suppressed sends (7d)';
