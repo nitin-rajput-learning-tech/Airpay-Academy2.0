@@ -2449,6 +2449,9 @@ by tenant method (path, costcenter, classroom, shared_learner_root, creator_root
   progress; else 0 Enrolled. completion_status 1 with completiondate 0 -> 2 with the fallback date, flagged
   (BizLMS lists say not completed, `program.php:552`; `PR classes/local/userdashboard_content.php:23,52`;
   the certificate download says completed, `renderer.php:780-787`).
+  The rule reads the learner's evidence, not the program's status: an archived program (visible 0 or status 2) has no
+  carve-out, so a learner on it who completed a program course is In progress and gets a current level (clarified
+  2026-10-08 after the first local PHPUnit run; the signed text has no exception, no decisions-file key changes).
 - Criteria: ALL = every course; AND = every listed course; OR = any listed course
   (`level_completion_form.php:56-58`; `program_completion_form.php:51-53`).
 
