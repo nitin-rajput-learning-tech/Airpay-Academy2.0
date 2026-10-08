@@ -688,3 +688,7 @@ pick a language there. Not done in this bundle.
 `grader-after-1440.png`; the trainer gradebook at 390 px (`scrollWidth` 390, no `offsetHeight` console error); a course
 page in edit mode with Bulk edit; the language switcher with the flag ON for a test tenant (desktop, 590 px
 drawer, dashboard plus one other shell page, sidebar expanded and collapsed).
+
+## 2026-10-08 Moodle 5.3 compat FX-12 (theme side)
+
+Four deprecated `user_*()` globals are called through `method_exists(\core\user::class, ...)` ternaries: `user_count_login_failures` and `user_convert_text_to_menu_items` in `core_renderer::theme_sentientia_user_get_user_navigation_info()` (the 5.3 call drops the unused `$page` argument and gets the menu text cast to string), `user_can_view_profile` in `traits/context_header.php`, `user_update_user` in `language_switcher::switch_to()`. The theme must not depend on a local plugin, so it does not use `compat\user_api`. 5.1/5.2 keep the global functions. No theme version bump (PHP only).

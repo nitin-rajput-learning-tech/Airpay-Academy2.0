@@ -253,3 +253,7 @@ tests/{rate_limiter_test, lti_jwt_test, lti_registration_test}.php
 - Deploy to XAMPP + Admin → Notifications to install schema; enable the WS
   service + flags; smoke the REST surface. NOT done here (per task constraints).
 ```
+
+## 2026-10-08 Moodle 5.3 compat FX-12
+
+User creation and update now go through `\local_sentientia_platform\compat\user_api::create()` / `::update()` instead of the global `user_create_user()` / `user_update_user()`, which Moodle 5.3 deprecates (PHPUnit "unexpected debugging"). Same arguments, same events, same behaviour on 5.1/5.2 (the shim falls back to `user/lib.php` there). No schema change, no version bump needed (no new class here); the shim lives in `local_sentientia_platform` 2026100801. Not run: PHPUnit (owner rule).

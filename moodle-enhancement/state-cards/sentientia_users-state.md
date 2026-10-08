@@ -678,3 +678,7 @@ list) used `tenant::root_for_current_user()`. Both use the helper now, so the li
 tenant a caller is (test `test_the_run_list_and_the_detail_page_decide_a_callers_tenant_the_same_way`: well formed, padded,
 non-numeric, empty and zero paths). Both trees identical; written, NOT run. Visual evidence list: `docs/visual-evidence/2026-10-07/identity/README.md`
 (the rejected-lines rule is unflagged and changes native runs, so it needs captures before anything is flipped).
+
+## 2026-10-08 Moodle 5.3 compat FX-12
+
+User creation and update now go through `\local_sentientia_platform\compat\user_api::create()` / `::update()` instead of the global `user_create_user()` / `user_update_user()`, which Moodle 5.3 deprecates (PHPUnit "unexpected debugging"). Same arguments, same events, same behaviour on 5.1/5.2 (the shim falls back to `user/lib.php` there). No schema change, no version bump needed (no new class here); the shim lives in `local_sentientia_platform` 2026100801. Not run: PHPUnit (owner rule).

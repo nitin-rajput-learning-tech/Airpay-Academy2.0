@@ -79,7 +79,7 @@ foreach ($users as $udata) {
     $user->timecreated  = $now;
     $user->timemodified  = $now;
 
-    $userid = user_create_user($user, false, false);
+    $userid = \local_sentientia_platform\compat\user_api::create($user, false, false);
     echo "Created user: {$udata['username']} (id=$userid) — {$udata['desc']}\n";
 
     // Assign system-level role for admin/manager.

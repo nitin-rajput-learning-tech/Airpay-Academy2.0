@@ -14,11 +14,12 @@
  *  - Identity matching by open_employeeid FIRST, email second. KeKa
  *    employee numbers are immutable; email addresses are not. Matching
  *    email-first meant an email change in KeKa created a duplicate user.
- *  - User writes go through user_create_user()/user_update_user() so the
- *    real \core\event\user_created / user_updated events fire (no more
- *    forged event + raw $DB->insert_record).
+ *  - User writes go through \local_sentientia_platform\compat\user_api::create()/
+ *    update() (Moodle's user_create_user()/user_update_user() on 5.1/5.2, the
+ *    \core\user equivalents on 5.3) so the real \core\event\user_created /
+ *    user_updated events fire (no more forged event + raw $DB->insert_record).
  *  - Leaver hardening: employeeId fallback lookup, session kill on
- *    suspend, suspend routed through user_update_user().
+ *    suspend, suspend routed through user_api::update().
  *  - Tenant placement: department-code → org shortname mapping preferred,
  *    name-match fallback, and webhook-created users default under a
  *    validated org path (setting keka_default_orgpath, default /1) so an
@@ -335,7 +336,7 @@ class keka_client {
                 }
             }
             if ($changed) {
-                \user_update_user($update, false, true);
+                \local_sentientia_platform\compat\user_api::update($update, false, true);
                 return ['action' => 'updated', 'userid' => (int) $existing->id,
                         'manager_empid' => $manager_empid, 'message' => 'Mover updated'];
             }
@@ -353,7 +354,7 @@ class keka_client {
                     'message' => 'Cannot create a user without an email address'];
         }
 
-        // Joiner: create via user_create_user() so the REAL
+        // Joiner: create via user_api::create() so the REAL
         // \core\event\user_created fires (lifecycle observer feeds off it).
         $userdata['open_path'] = $org['path']; // Mapped, or validated default — never tenantless.
         $newuser = (object) array_merge([
@@ -364,14 +365,14 @@ class keka_client {
             'password'   => hash_internal_user_password(generate_password(20)),
         ], array_filter($userdata, fn($v) => $v !== null && $v !== ''));
 
-        $userid = \user_create_user($newuser, false, true);
+        $userid = \local_sentientia_platform\compat\user_api::create($newuser, false, true);
 
         return ['action' => 'created', 'userid' => (int) $userid,
                 'manager_empid' => $manager_empid, 'message' => 'Joiner created'];
     }
 
     /**
-     * Suspend a user the correct way: through user_update_user() (fires
+     * Suspend a user the correct way: through user_api::update() (fires
      * \core\event\user_updated, stamps timemodified) and kill their live
      * sessions so a leaver cannot keep an authenticated browser open.
      */
@@ -382,7 +383,7 @@ class keka_client {
         $update = new \stdClass();
         $update->id = (int) $user->id;
         $update->suspended = 1;
-        \user_update_user($update, false, true);
+        \local_sentientia_platform\compat\user_api::update($update, false, true);
 
         if (method_exists('\core\session\manager', 'destroy_user_sessions')) {
             \core\session\manager::destroy_user_sessions((int) $user->id);

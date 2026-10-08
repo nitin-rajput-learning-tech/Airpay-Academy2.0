@@ -120,3 +120,7 @@ Both trees. **Not run: no PHPUnit here.** No schema change, no flag, no version 
 `ai_recommender::get_popular_courses()` ranked courses by `COUNT(ue.id)`, which counts a converted learner twice (an imported BizLMS
 enrolment and its manual twin). It now ranks by `COUNT(DISTINCT ue.userid)` over ACTIVE enrolments (`ue.status = 0`) on ENABLED instances
 (`e.status = 0`). Test: `ai_recommender_test::test_popular_courses_count_a_learner_once_and_only_active_enrolments` (NOT RUN).
+
+## 2026-10-08 Moodle 5.3 compat FX-12
+
+User creation and update now go through `\local_sentientia_platform\compat\user_api::create()` / `::update()` instead of the global `user_create_user()` / `user_update_user()`, which Moodle 5.3 deprecates (PHPUnit "unexpected debugging"). Same arguments, same events, same behaviour on 5.1/5.2 (the shim falls back to `user/lib.php` there). No schema change, no version bump needed (no new class here); the shim lives in `local_sentientia_platform` 2026100801. Not run: PHPUnit (owner rule).

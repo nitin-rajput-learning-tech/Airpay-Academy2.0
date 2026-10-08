@@ -448,7 +448,7 @@ class hrms_importer {
                 if ($pw !== '' && self::is_strong_password($pw)) {
                     $userdata->password = hash_internal_user_password($pw);
                 }
-                \user_update_user($userdata, false, false);
+                \local_sentientia_platform\compat\user_api::update($userdata, false, false);
                 if ($force_pwd) {
                     set_user_preference('auth_forcepasswordchange', 1,
                         (int) $existing->id);
@@ -468,7 +468,7 @@ class hrms_importer {
             }
             $userdata->timecreated  = $now;
             $userdata->timemodified = $now;
-            $newid = \user_create_user($userdata, false, false);
+            $newid = \local_sentientia_platform\compat\user_api::create($userdata, false, false);
             if ($force_pwd) {
                 set_user_preference('auth_forcepasswordchange', 1, (int) $newid);
             }

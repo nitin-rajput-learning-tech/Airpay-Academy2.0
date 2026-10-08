@@ -68,13 +68,15 @@ $plugin->component = 'local_sentientia_platform';
 // 2026100701 - ADR-032 owner decisions (2026-10-07): the copies_files marker + the {files} tripwire for every importer
 // without it (IDN-04), runner::preflight_feature() catches blocked (F-10), tenant_resolver::root_is_registered() (F-11),
 // the privacy guard reads usermodified/usercreated/modified_by (F-15). No schema change.
-$plugin->version   = 2026100701;  // ADR-032 owner decisions: copies_files marker + files tripwire (on top of 2026093002 persona pass D11)
+// 2026100801 - Moodle 5.3 compat FX-12: NEW classes/compat/user_api.php, the one place plugins create and update users (\core\user on 5.3,
+// user/lib.php on 5.1/5.2), so the deprecated 5.3 user_*() globals are never reached. No schema change.
+$plugin->version   = 2026100801;  // Moodle 5.3 compat FX-12: compat\user_api (on top of 2026100701 ADR-032 owner decisions: copies_files marker + files tripwire)
 // 2026092500 - ADR-031: local/sentientia_platform:crosstenant + tenant::is_cross_tenant/scope_path/require_same_tenant_user
 // 2026092400 - tests/exception_strings_test.php: platform guard - core-resolved exception keys must exist (N5)
 // 2026092200: tenant::path_descendant_filter() + DB-level path-boundary regression suite  // Phase 2.1: customer::current() de-hardwired via tenant_registry (dormant while legacy allow-list ON)
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.11.0';  // +ADR-032 copies_files marker and files tripwire (1.10.1: +Switchboard category labels; 1.10.0: +ADR-032 BizLMS import framework, 3 tables)
+$plugin->release   = '1.11.1';  // +compat\user_api (1.11.0: +ADR-032 copies_files marker and files tripwire; 1.10.1: +Switchboard category labels; 1.10.0: +ADR-032 BizLMS import framework, 3 tables)
 // 1.9.0: +ADR-031 cross-tenant authority
 // 1.8.0: +ADR-017 Phase 0 user_type schema (5 tables)
 // Release history

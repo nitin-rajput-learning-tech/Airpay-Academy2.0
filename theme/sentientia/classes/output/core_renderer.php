@@ -1190,7 +1190,11 @@ JS;
             // Don't unset this flag as login_info still needs it.
             if (!empty($CFG->displayloginfailures)) {
                 // Don't reset the count either, as login_info() still needs it too.
-                if ($count = user_count_login_failures($user, false)) {
+                // Moodle 5.3 (MDL-82650) moved this to \core\user; the old global only logs a deprecation there.
+                $count = method_exists(\core\user::class, 'count_login_failures')
+                    ? \core\user::count_login_failures($user, false)
+                    : user_count_login_failures($user, false);
+                if ($count) {
 
                     // Get login failures string.
                     $a = new stdClass();
@@ -1234,7 +1238,11 @@ JS;
 
         // Before we add the last items (usually a logout + switch role link), add any
         // custom-defined items.
-        $customitems = user_convert_text_to_menu_items($CFG->customusermenuitems, $page);
+        // Moodle 5.3 (MDL-82650): \core\user::convert_text_to_menu_items() takes the text only ($page was never used).
+        $customusermenutext = (string) ($CFG->customusermenuitems ?? '');
+        $customitems = method_exists(\core\user::class, 'convert_text_to_menu_items')
+            ? \core\user::convert_text_to_menu_items($customusermenutext)
+            : user_convert_text_to_menu_items($customusermenutext, $page);
         foreach ($customitems as $item) {
             $returnobject->navitems[] = $item;
         }

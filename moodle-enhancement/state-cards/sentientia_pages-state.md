@@ -335,3 +335,7 @@ Branch `claude/persona-fix-admingates`. Source: `docs/visual-evidence/2026-09-30
   replaced by `local/sentientia_classroom:attendance` on `claude/fixes-0930` (77e7fd0a9, c7b6cecb4) and is
   deliberately NOT touched here to avoid a conflicting edit.
 - No version bump (no DB, capability or archetype change; the new class autoloads).
+
+## 2026-10-08 Moodle 5.3 compat FX-12
+
+User creation and update now go through `\local_sentientia_platform\compat\user_api::create()` / `::update()` instead of the global `user_create_user()` / `user_update_user()`, which Moodle 5.3 deprecates (PHPUnit "unexpected debugging"). Same arguments, same events, same behaviour on 5.1/5.2 (the shim falls back to `user/lib.php` there). No schema change, no version bump needed (no new class here); the shim lives in `local_sentientia_platform` 2026100801. Not run: PHPUnit (owner rule).

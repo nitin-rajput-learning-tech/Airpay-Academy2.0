@@ -144,7 +144,7 @@ if (!$mgruser) {
     $mgr->open_designation = 'Head of L&D';
     $mgr->timecreated = $now - (365 * 86400);
     $mgr->timemodified = $now;
-    $mgrid = user_create_user($mgr, false, false);
+    $mgrid = \local_sentientia_platform\compat\user_api::create($mgr, false, false);
     echo "   Created manager: mgr_nitin (id=$mgrid)\n";
 
     // Assign HRBP-level role.
@@ -188,7 +188,7 @@ foreach ($employees as $empdata) {
     $user->lastaccess = $now - rand(0, 7) * 86400;
     $user->lastlogin = $now - rand(0, 3) * 86400;
 
-    $userid = user_create_user($user, false, false);
+    $userid = \local_sentientia_platform\compat\user_api::create($user, false, false);
     $userids[$empdata['user']] = $userid;
     echo "   CREATED: {$empdata['user']} — {$empdata['first']} {$empdata['last']} (id=$userid)\n";
 }
