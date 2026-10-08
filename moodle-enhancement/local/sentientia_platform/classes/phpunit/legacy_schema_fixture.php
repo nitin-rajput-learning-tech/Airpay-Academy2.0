@@ -51,6 +51,13 @@ trait legacy_schema_fixture {
     private static array $legacyfixturedefinition = ['xml' => '', 'extrafields' => []];
 
     /**
+     * @var array<string, bool> Fixture tables that are ALSO tables of an installed component (the cart fixture's
+     *      paygw_airpay, paygw_airpay_errorlog, paygw_course_enrolmentlog are the real Airpay gateway tables). They are
+     *      borrowed: emptied, never dropped or altered.
+     */
+    private static array $legacyborrowedtables = [];
+
+    /**
      * What to create.
      *
      * @return array{xml: string, only?: string[], extrafields?: array<string, \xmldb_field[]>}
@@ -117,8 +124,23 @@ trait legacy_schema_fixture {
         $tables = $only ? array_values(array_intersect($matches[1], $only)) : $matches[1];
 
         self::$legacyfixturetables = [];
+        self::$legacyborrowedtables = [];
         self::$legacyfixturedefinition = ['xml' => $fixturexml, 'extrafields' => $extrafields];
+        $installed = self::installed_table_names();
         foreach ($tables as $table) {
+            if (isset($installed[$table])) {
+                // A real table of an installed component. Dropping it (as the branch below does for a leftover
+                // legacy table) deleted the Airpay gateway's own table: the reset after the next test then failed,
+                // core marked the PHPUnit environment stale ('phpunittest' = 'na') and every later suite refused to
+                // start (2026-10-07 and 10-08 local runs, right after the cart suite). Borrow it: empty, never drop.
+                if (!$dbman->table_exists($table)) {
+                    self::install_fixture_table($fixturexml, $table);
+                }
+                $DB->delete_records($table);
+                self::$legacyborrowedtables[$table] = true;
+                self::$legacyfixturetables[] = $table;
+                continue;
+            }
             // A killed run may have left the table behind.
             if ($dbman->table_exists($table)) {
                 $dbman->drop_table(new \xmldb_table($table));
@@ -128,6 +150,9 @@ trait legacy_schema_fixture {
         }
 
         foreach ($extrafields as $table => $fields) {
+            if (isset(self::$legacyborrowedtables[$table])) {
+                throw new \coding_exception('legacy fixture may not add columns to the installed table ' . $table);
+            }
             $xmltable = new \xmldb_table($table);
             foreach ($fields as $field) {
                 if (!$dbman->field_exists($xmltable, $field)) {
@@ -216,13 +241,36 @@ trait legacy_schema_fixture {
         $dbman = $DB->get_manager();
         try {
             foreach (array_reverse(self::$legacyfixturetables) as $table) {
-                if ($dbman->table_exists($table)) {
-                    $dbman->drop_table(new \xmldb_table($table));
+                if (!$dbman->table_exists($table)) {
+                    continue;
                 }
+                if (isset(self::$legacyborrowedtables[$table])) {
+                    $DB->delete_records($table);
+                    continue;
+                }
+                $dbman->drop_table(new \xmldb_table($table));
             }
         } finally {
             self::$legacyfixturetables = [];
+            self::$legacyborrowedtables = [];
         }
+    }
+
+    /**
+     * Names of every table the installed components declare (their install.xml), cached for the process.
+     *
+     * @return array<string, bool>
+     */
+    private static function installed_table_names(): array {
+        global $DB;
+        static $names = null;
+        if ($names === null) {
+            $names = [];
+            foreach ($DB->get_manager()->get_install_xml_schema()->getTables() as $xmltable) {
+                $names[$xmltable->getName()] = true;
+            }
+        }
+        return $names;
     }
 
     /**
@@ -235,6 +283,9 @@ trait legacy_schema_fixture {
     protected static function drop_legacy_table(string $table): void {
         global $DB;
         self::assert_legacy_fixture_is_safe();
+        if (isset(self::$legacyborrowedtables[$table])) {
+            throw new \coding_exception('legacy fixture refuses to drop the installed table ' . $table);
+        }
         $dbman = $DB->get_manager();
         if ($dbman->table_exists($table)) {
             $dbman->drop_table(new \xmldb_table($table));
