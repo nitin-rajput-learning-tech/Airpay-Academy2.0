@@ -54,7 +54,8 @@ class mustache_factory {
      *     5.2 and 5.3, or a site that loaded the compat aliases, can have it).
      *  2. Otherwise the legacy \Mustache_Engine is asked for by name. On 5.1 that autoload is
      *     safe and returns true; on 5.2 and 5.3 the PSR-4 'Mustache' prefix maps it to a file
-     *     (src/_Engine.php) that does not exist, so it returns false without loading anything.
+     *     (lib/mustache/src_Engine.php: core appends the rest of the name to the prefix path with no
+     *     separator) that does not exist, so it returns false without loading anything.
      *  3. Otherwise this is 5.2 or 5.3 and \Mustache\Engine autoloads normally.
      *
      * @param array $options Engine options, passed straight through to the constructor.

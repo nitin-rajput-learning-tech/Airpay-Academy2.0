@@ -37,7 +37,7 @@ final class mustache_factory_test extends \basic_testcase {
         // is NOT safe on 5.1 and is never called here: see the factory's docblock.
         $engine = mustache_factory::engine();
         if (class_exists(\Mustache_Engine::class)) {
-            // 5.1 (Mustache 2.x), or 5.2+ with the compat aliases loaded (a subclass of the current class).
+            // 5.1 (Mustache 2.x), or 5.2+ with the compat aliases loaded (class_alias of the current class).
             $this->assertInstanceOf(\Mustache_Engine::class, $engine);
         } else {
             $this->assertInstanceOf(\Mustache\Engine::class, $engine);
