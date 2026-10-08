@@ -102,8 +102,9 @@ final class privacy_actor_columns_test extends \core_privacy\tests\provider_test
     }
 
     public function test_an_editor_has_a_context_and_a_stranger_does_not(): void {
-        $system = \context_system::instance()->id;
-        $this->assertContains($system, provider::get_contexts_for_userid($this->editor->id)->get_contextids());
+        // get_contextids() returns the ids as the database does (strings on MySQL/MariaDB); assertContains() is strict.
+        $system = (int) \context_system::instance()->id;
+        $this->assertContains($system, array_map('intval', provider::get_contexts_for_userid($this->editor->id)->get_contextids()));
         $stranger = $this->getDataGenerator()->create_user();
         $this->assertSame([], provider::get_contexts_for_userid($stranger->id)->get_contextids());
     }

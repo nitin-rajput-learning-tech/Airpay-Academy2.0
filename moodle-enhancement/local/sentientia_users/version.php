@@ -82,7 +82,8 @@ $plugin->component = 'local_sentientia_users';
 // the uploader and to cross-tenant callers, imported and native alike; BizLMS parity), XC-IMPORTED-HISTORY-READERS (the
 // imported HRMS sync runs sit behind the new default-OFF flag sentientia.users.imported_sync_history), IDN-06 (login days
 // are deleted on erasure, comment-only). Two strings (en + hi), no schema change.
-$plugin->version   = 2026100701;  // ADR-032 owner decisions: sync-history visibility + imported-history flag (on top of 2026100101)
+$plugin->version   = 2026100800;  // 2026-10-08 SITEID is the DB string; strict === / !== against it never matched, so the site-course guard did nothing - now (int) SITEID: the transcript importer skips the site course again; no schema change
+// 2026100701: ADR-032 owner decisions: sync-history visibility + imported-history flag (on top of 2026100101)
 // 2026093001: persona pass D14: supervisor + sync-run name lookups load every fullname() field (no developer notice)
 // 2026092501: welcome email actually sends (email_to_user, white-label token restored).
 // 2026092500: ADR-031: target-tenant checks on every write.

@@ -42,7 +42,8 @@ $plugin->component = 'local_sentientia_aiquiz';
 // generate.php language picker + prompt preview + Devanagari-safe
 // response parser (mb_strlen/mb_substr). No live API in tests
 // (call_mock only). ADR-012 G.1 addendum. Hindi parity 125/125.
-$plugin->version   = 2026092500;  // ADR-031: :manage_all no default grant (+ revoke step); drafts + push target stay in the caller's tenant
+$plugin->version   = 2026100800;  // 2026-10-08 SITEID is the DB string; strict === / !== against it never matched, so the site-course guard did nothing - now (int) SITEID (quiz_publisher, generate.php); no schema change
+// 2026092500: ADR-031: :manage_all no default grant (+ revoke step); drafts + push target stay in the caller's tenant
 // 2026080500: Phase G.4: real mod_quiz publisher (gate #3) - quiz id 0 stub closed
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;     // MVP — needs prod sign-off before flag flips

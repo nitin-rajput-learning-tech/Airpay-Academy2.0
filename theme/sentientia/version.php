@@ -446,7 +446,8 @@ defined('MOODLE_INTERNAL') || die();
 // built no <form> and the noscript "Set mode" fallback was dead on 5.1, 5.2 and 5.3. Now byte-identical to the 5.2 core template
 // below its header comment. Bump purges the compiled template cache.
 // 2026100806: Moodle 5.3 compat FX-02 round 1: editswitch.mustache <form action=> fixed (on top of 2026100805 FX-19 block + coursecard templates)
-$plugin->version   = 2026100807;  // Moodle 5.3 FX-15 follow-up: dashboard + frontpage course counts filter COALESCE(deletioninprogress, 0) = 0 (5.3's column is NULL for every course not being deleted; '= 0' counted none)
+$plugin->version   = 2026100808;  // 2026-10-08 SITEID is the DB string; strict === / !== against it never matched, so the site-course guard did nothing - now (int) SITEID: language_switcher treats the front page as the site course again
+// 2026100807: Moodle 5.3 FX-15 follow-up: dashboard + frontpage course counts filter COALESCE(deletioninprogress, 0) = 0 (5.3's column is NULL for every course not being deleted; '= 0' counted none)
 // 2026090806:  // login/OTP placeholders + SSO title + block aria-label: {{#quote}} JSON-escaped Hindi into \uXXXX → attribute-safe cleanstr/escaped values (core 5.2 pattern)
 // 2026090805:  footer: GPL badge -> private Airpay notice; sidebar literals localised; scoped-admin subtitle
 // 2026090804:  // admin dashboard: exact-or-child tenant scope on EVERY widget (was LIKE /1% and several unscoped), compliance widget table names fixed, localised chart months, system health = site admins only, core card aria overrides

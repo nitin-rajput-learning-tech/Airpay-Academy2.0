@@ -112,7 +112,7 @@ class language_switcher {
         // session and the profile (current_language() returns it), so a switch
         // there would silently do nothing. Core hides its menu in the same case.
         $course = $page->course;
-        if ((int) $course->id !== SITEID && !empty($course->lang)) {
+        if ((int) $course->id !== (int) SITEID && !empty($course->lang)) {
             return $result;
         }
         if (!empty($page->cm->lang)) {

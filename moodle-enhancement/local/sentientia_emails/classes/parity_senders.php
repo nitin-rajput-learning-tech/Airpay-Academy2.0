@@ -215,7 +215,7 @@ final class parity_senders {
     public static function course_enrolled(int $userid, int $courseid, int $actorid = 0, int $enrolmentid = 0): bool {
         global $DB;
         try {
-            if ($courseid <= 0 || $courseid === SITEID || !self::enabled_anywhere(self::FLAG_COURSE_ENROLMENT)) {
+            if ($courseid <= 0 || $courseid === (int) SITEID || !self::enabled_anywhere(self::FLAG_COURSE_ENROLMENT)) {
                 return false;
             }
             $user = self::recipient($userid);
