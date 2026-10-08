@@ -10,7 +10,7 @@
         <FIELD NAME="userid"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="FK to mdl_user.id — the token's owning user"/>
         <FIELD NAME="costcenterid" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="BizLMS tenant root the request was scoped to"/>
         <FIELD NAME="apiversion"   TYPE="char" LENGTH="8"  NOTNULL="true" DEFAULT="v1" COMMENT="API version namespace, e.g. v1"/>
-        <FIELD NAME="endpoint"     TYPE="char" LENGTH="120" NOTNULL="true" DEFAULT="" COMMENT="External function name invoked"/>
+        <FIELD NAME="endpoint"     TYPE="char" LENGTH="120" NOTNULL="true" COMMENT="External function name invoked"/>
         <FIELD NAME="httpmethod"   TYPE="char" LENGTH="8"  NOTNULL="true" DEFAULT="GET" COMMENT="Logical method GET|POST"/>
         <FIELD NAME="status"       TYPE="int"  LENGTH="4"  NOTNULL="true" DEFAULT="200" COMMENT="Logical HTTP-style status: 200 ok, 403 denied, 429 rate-limited, 500 error"/>
         <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
@@ -51,9 +51,9 @@
         <FIELD NAME="id"            TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true" COMMENT="Primary key"/>
         <FIELD NAME="costcenterid"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0" COMMENT="BizLMS tenant this registration belongs to"/>
         <FIELD NAME="regtype"       TYPE="char" LENGTH="12"  NOTNULL="true" DEFAULT="consumer" COMMENT="consumer = we launch an external tool; provider = we are launched"/>
-        <FIELD NAME="name"          TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="" COMMENT="Human label for the registration"/>
-        <FIELD NAME="issuer"        TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="" COMMENT="LTI platform issuer (iss claim)"/>
-        <FIELD NAME="clientid"      TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="" COMMENT="OIDC client_id"/>
+        <FIELD NAME="name"          TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="Human label for the registration"/>
+        <FIELD NAME="issuer"        TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="LTI platform issuer (iss claim)"/>
+        <FIELD NAME="clientid"      TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="OIDC client_id"/>
         <FIELD NAME="deploymentid"  TYPE="char" LENGTH="255" NOTNULL="false" COMMENT="LTI deployment_id"/>
         <FIELD NAME="authloginurl"  TYPE="char" LENGTH="1333" NOTNULL="false" COMMENT="Platform OIDC auth login URL"/>
         <FIELD NAME="authtokenurl"  TYPE="char" LENGTH="1333" NOTNULL="false" COMMENT="Platform OAuth2 token URL"/>
@@ -83,7 +83,7 @@
            COMMENT="One-time OIDC login nonces / state for LTI launches — replay protection.">
       <FIELDS>
         <FIELD NAME="id"          TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true" COMMENT="Primary key"/>
-        <FIELD NAME="nonce"       TYPE="char" LENGTH="64"  NOTNULL="true" DEFAULT="" COMMENT="Random nonce value"/>
+        <FIELD NAME="nonce"       TYPE="char" LENGTH="64"  NOTNULL="true" COMMENT="Random nonce value"/>
         <FIELD NAME="state"       TYPE="char" LENGTH="64"  NOTNULL="false" COMMENT="OIDC state value"/>
         <FIELD NAME="regid"       TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0" COMMENT="FK to local_sentientia_api_lti_reg.id"/>
         <FIELD NAME="consumed"    TYPE="int"  LENGTH="1"   NOTNULL="true" DEFAULT="0" COMMENT="0=unused, 1=already consumed"/>

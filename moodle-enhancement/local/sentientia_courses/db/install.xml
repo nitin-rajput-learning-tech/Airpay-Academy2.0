@@ -71,9 +71,9 @@
            COMMENT="Course types (the 'identified as' labels such as E-learning or Classroom). ADR-032 course_lookups import: the BizLMS local_course_types rows keep their ids, because course.open_identifiedas holds a comma list of these ids. Written by the importer and by a future type manager. usercreated and usermodified name people: declared in the privacy provider.">
       <FIELDS>
         <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="name"         TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""
+        <FIELD NAME="name"         TYPE="char" LENGTH="255" NOTNULL="true"
                COMMENT="Label shown to people"/>
-        <FIELD NAME="shortname"    TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""
+        <FIELD NAME="shortname"    TYPE="char" LENGTH="255" NOTNULL="true"
                COMMENT="Short code, spaces stripped as BizLMS did"/>
         <FIELD NAME="tenant_path"  TYPE="char" LENGTH="255" NOTNULL="false"
                COMMENT="Org path the type belongs to, for example /1 or /77. NULL means no tenant: a BizLMS orgid 0 type (offered to every tenant) or a type whose org could not be resolved at import. Never an empty string."/>
@@ -101,11 +101,11 @@
            COMMENT="Custom course categories, a tree separate from Moodle's course_categories. ADR-032 course_lookups import: the BizLMS local_custom_category rows keep their ids, because course.open_categoryid holds one of them. usercreated and usermodified name people: declared in the privacy provider.">
       <FIELDS>
         <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="fullname"     TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""/>
-        <FIELD NAME="shortname"    TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="fullname"     TYPE="char" LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="shortname"    TYPE="char" LENGTH="255" NOTNULL="true"/>
         <FIELD NAME="parentid"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
                COMMENT="Parent category id, 0 for a top-level category"/>
-        <FIELD NAME="path"         TYPE="char" LENGTH="512" NOTNULL="true" DEFAULT=""
+        <FIELD NAME="path"         TYPE="char" LENGTH="512" NOTNULL="true"
                COMMENT="Category-tree path of ids, for example /3/12. Not an org path."/>
         <FIELD NAME="depth"        TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="tenant_path"  TYPE="char" LENGTH="255" NOTNULL="false"
@@ -134,7 +134,7 @@
                COMMENT="Foreign key to course.id of the filled course"/>
         <FIELD NAME="detailid"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
                COMMENT="id of the local_coursedetails row the values came from"/>
-        <FIELD NAME="filledcols"   TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""
+        <FIELD NAME="filledcols"   TYPE="char" LENGTH="255" NOTNULL="true"
                COMMENT="Comma list of the course open_* columns the import filled, empty until the fill step has run"/>
         <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
                COMMENT="timecreated of the source row, 0 when the source had none"/>

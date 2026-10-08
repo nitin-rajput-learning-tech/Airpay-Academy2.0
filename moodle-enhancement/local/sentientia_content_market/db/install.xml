@@ -13,7 +13,7 @@
                COMMENT="Provider-assigned unique identifier for the course"/>
         <FIELD NAME="costcenterid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
                COMMENT="BizLMS tenant: 1=Airpay, 77=Public, 177=ZEEA. 0=global (all tenants)."/>
-        <FIELD NAME="title"           TYPE="char" LENGTH="500" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="title"           TYPE="char" LENGTH="500" NOTNULL="true"/>
         <FIELD NAME="description"     TYPE="text" NOTNULL="false"/>
         <FIELD NAME="thumbnail_url"   TYPE="char" LENGTH="1024" NOTNULL="false"/>
         <FIELD NAME="provider_url"    TYPE="char" LENGTH="1024" NOTNULL="false"
