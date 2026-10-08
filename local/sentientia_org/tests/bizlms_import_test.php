@@ -490,8 +490,12 @@ final class bizlms_import_test extends \advanced_testcase {
             $this->assertSame('', branding_manager::get_logo_url(11), 'nothing serves the BizLMS copy before the import');
         }
 
-        [$result] = $this->contract_run(true);
+        [$result, $report] = $this->contract_run(true);
         $this->assertContains($result['exit'], [0, 2]);
+        // IDN-04: the copy is a declared side effect. The tripwire is clean and the report counts the copy.
+        $feature = $report->to_array()['features']['org'];
+        $this->assertSame('clean', $feature['tripwire']);
+        $this->assertSame(['local_sentientia_org/org_logo' => 1], $feature['files_copied']);
         $copy = $fs->get_file($systemid, 'local_sentientia_org', 'org_logo', 11, '/', 'logo.png');
         $this->assertNotFalse($copy, 'copied into the system context under this plugin');
         $this->assertSame('not really a png', $copy->get_content());
@@ -502,6 +506,35 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->contract_run(true);
         $this->assertCount(1, $fs->get_area_files($systemid, 'local_sentientia_org', 'org_logo', 11, 'id', false),
             'a second run copies nothing');
+    }
+
+    public function test_the_org_importer_declares_its_logo_copy_through_the_copies_files_marker(): void {
+        $importer = new importer();
+        $this->assertInstanceOf(\local_sentientia_platform\bizlms\copies_files::class, $importer);
+        $this->assertSame([['local_costcenter', 'costcenter_logo', 'local_sentientia_org', 'org_logo']],
+            $importer->allowed_file_areas());
+        $this->assertSame([], $importer->core_writes(), 'a file copy is not a core write, so --purge-feature stays available');
+        $this->assertTrue(\local_sentientia_platform\bizlms\sideeffect_guard::file_areas_well_formed($importer));
+    }
+
+    public function test_the_logo_copy_is_the_only_thing_the_run_adds_to_the_file_table(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->contract_seed();
+        $category = $this->getDataGenerator()->create_category();
+        get_file_storage()->create_file_from_string([
+            'contextid' => \context_coursecat::instance($category->id)->id, 'component' => 'local_costcenter',
+            'filearea' => 'costcenter_logo', 'itemid' => 11, 'filepath' => '/', 'filename' => 'logo.png',
+        ], 'not really a png');
+        $before = (int) $DB->get_field_sql('SELECT MAX(id) FROM {files}');
+        [$result] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2]);
+
+        // The only new rows are the declared ones: nothing else in {files} moved during the run, so the importer
+        // would trip the tripwire if it wrote anywhere else (the runner's own check is tested in the platform).
+        $found = \local_sentientia_platform\bizlms\sideeffect_guard::files_in_areas($before, ['local_sentientia_org/org_logo']);
+        $this->assertSame([], $found['outside']);
+        $this->assertSame(1, $found['copied']['local_sentientia_org/org_logo']);
     }
 
     public function test_a_legacy_logo_url_is_not_offered_when_the_bizlms_plugin_is_gone(): void {

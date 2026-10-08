@@ -176,6 +176,46 @@ class exam_manager {
             ['qid' => $quizid, 'pg' => $threshold] + $uparams);
     }
 
+    /**
+     * The attempt and pass figures of the analytics tab of an exam, in one unit.
+     *
+     * Doc item "exams pass figures" (owner decisions, 2026-10-07): view.php divided the number of learners who passed by the
+     * number of ATTEMPTS, and subtracted learners from attempts to get the failures, so a learner with three attempts
+     * counted three times on one side and once on the other (two learners, one of whom tried three times and passed on the
+     * last, read as 33 percent passed with 2 failed). Both figures now use distinct learners with a finished attempt as the
+     * denominator; the attempts figure stays the number of finished attempts, because that is what "Total Attempts" says.
+     *
+     * Same filters as count_passed_learners(), on purpose: a learner counted as passed is always a learner counted here.
+     *
+     * @param int $quizid
+     * @param float $threshold Pass percentage, 0 to 100.
+     * @param string $usql Extra condition on the user alias u (the tenant filter), '1=1' for none.
+     * @param array $uparams Parameters of $usql.
+     * @return array{attempts: int, learners: int, passed: int, failed: int, pass_pct: float|int}
+     */
+    public static function pass_figures(int $quizid, float $threshold, string $usql = '1=1', array $uparams = []): array {
+        global $DB;
+        $params = ['qid' => $quizid] + $uparams;
+        $attempts = (int) $DB->count_records_sql(
+            "SELECT COUNT(qa.id)
+               FROM {quiz_attempts} qa
+               JOIN {user} u ON u.id = qa.userid
+              WHERE qa.quiz = :qid AND qa.state = 'finished' AND {$usql}", $params);
+        $learners = (int) $DB->count_records_sql(
+            "SELECT COUNT(DISTINCT qa.userid)
+               FROM {quiz_attempts} qa
+               JOIN {user} u ON u.id = qa.userid
+              WHERE qa.quiz = :qid AND qa.state = 'finished' AND {$usql}", $params);
+        $passed = min($learners, self::count_passed_learners($quizid, $threshold, $usql, $uparams));
+        return [
+            'attempts' => $attempts,
+            'learners' => $learners,
+            'passed' => $passed,
+            'failed' => $learners - $passed,
+            'pass_pct' => $learners > 0 ? round(100 * $passed / $learners, 1) : 0,
+        ];
+    }
+
     // ═══════════════════════════════════════════════════════════════════
     // Admin CRUD operations
     // ═══════════════════════════════════════════════════════════════════

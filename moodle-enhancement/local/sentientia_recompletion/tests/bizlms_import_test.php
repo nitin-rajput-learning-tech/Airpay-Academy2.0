@@ -59,6 +59,9 @@ final class bizlms_import_test extends \advanced_testcase {
     /** @var string[] Accepted needs-owner reasons of the decisions the test runs with. */
     private array $accepted = [];
 
+    /** @var array The report (to_array()) of the last import run by imported() or applied(). */
+    private array $report = [];
+
     protected static function legacy_fixture_definition(): array {
         return ['xml' => __DIR__ . '/fixtures/bizlms/local_recompletion.install.xml'];
     }
@@ -450,9 +453,27 @@ final class bizlms_import_test extends \advanced_testcase {
     private function imported(): array {
         $this->contract_begin();
         $this->contract_seed();
-        [$result] = $this->contract_run(true);
+        return $this->applied();
+    }
+
+    /**
+     * Run the import over what is seeded and return the result; the report of the run is kept in $this->report.
+     *
+     * @return array The runner's result.
+     */
+    private function applied(): array {
+        [$result, $report] = $this->contract_run(true);
+        $this->report = $report->to_array();
         $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
         return $result;
+    }
+
+    /**
+     * @param string $step Step key, e.g. recompletion.cc
+     * @return array The step's section of the last report.
+     */
+    private function report_step(string $step): array {
+        return $this->report['features'][sources::FEATURE]['steps'][$step];
     }
 
     // Rules.
@@ -702,12 +723,79 @@ final class bizlms_import_test extends \advanced_testcase {
         // ORIGINAL one (2023-01-10), which is evidence of nothing; it can only be dated after the first cycle ended.
         $this->assertEquals(self::t('2023-03-01') + 31536000, $first->timecreated);
         $this->assertGreaterThanOrEqual((int) $first->timecreated, (int) $second->timecreated);
-        $this->assertLessThanOrEqual(time(), (int) $second->timecreated, 'never in the future');
         $this->assertNull($second->previous_timecompleted);
+
+        // Owner decision recompletion.inferred_reset_without_evidence: neither a completion plus the period nor a
+        // later cycle's evidence dates the second cycle, so it is dated from its own evidence (the original
+        // enrolment, 2023-01-10) and then lifted to the end of the cycle before it. It used to be dated at the
+        // import time, which is a different value on every run and says the completion stood until cutover.
+        $this->assertEquals((int) $first->timecreated, (int) $second->timecreated,
+            'the end of the cycle before it, not the import time');
+        $this->assertSame(1, $this->report_step('recompletion.cc')['warnings']['inferred_reset_from_last_evidence'],
+            'the one cycle dated from its last evidence is reported');
 
         $this->assertEquals($first->id, $this->target('cc_h1')->historyid);
         $this->assertEquals($second->id, $this->target('cc_h2')->historyid);
         $this->assertEquals($first->id, $this->target('cmc_h1')->historyid, 'its own cycle\'s activity');
+    }
+
+    public function test_a_cycle_with_no_usable_time_is_dated_one_second_after_its_last_evidence_never_the_import(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        // Learner H's second cycle (never completed, never started) has one quiz attempt, started on 2024-02-01 and
+        // finished on 2024-03-10. The attempt STARTED before the first cycle's completion plus the period ran out, so
+        // it is that cycle's first evidence of the next one and caps the first reset. The second cycle has no
+        // evidence of a later cycle (nothing starts after it), and its reset is not in the log: it is dated from the
+        // last evidence of its own, the finish of the attempt.
+        $uh = $this->ids['h'];
+        $this->legacy('qa_h2', 'local_recompletion_qa', [
+            'quiz' => $this->ids['quiz'], 'userid' => $uh, 'attempt' => 1, 'uniqueid' => 7010, 'layout' => '1,2,0',
+            'currentpage' => 0, 'preview' => 0, 'state' => 'finished', 'timestart' => self::t('2024-02-01'),
+            'timefinish' => self::t('2024-03-10'), 'timemodified' => self::t('2024-03-10'), 'timecheckstate' => null,
+            'sumgrades' => '12', 'course' => $this->ids['c1']]);
+        $this->applied();
+
+        [$first, $second] = $this->history_of($uh);
+        $this->assertEquals(self::t('2024-02-01'), $first->timecreated, 'the first cycle: capped at the attempt that started');
+        $this->assertEquals(self::t('2024-03-10') + 1, $second->timecreated,
+            'one second after the last row of its own evidence, which is the earliest moment the data allows');
+        $this->assertEquals(1, $second->time_inferred, 'marked as an estimate');
+        $this->assertLessThan(time(), (int) $second->timecreated, 'the import time is never the value');
+        $this->assertSame(1, $this->report_step('recompletion.cc')['warnings']['inferred_reset_from_last_evidence']);
+
+        // The +1 second keeps the cycle's own last row strictly before the reset, so it stays attached to it.
+        $this->assertEquals($second->id, $this->target('qa_h2')->historyid, 'the attempt that finished at the last evidence');
+        $this->assertEquals($first->id, $this->target('cmc_h1')->historyid, 'the first cycle keeps its own');
+    }
+
+    public function test_a_completion_dated_after_the_import_is_dated_at_the_import_and_reported(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        // A cycle completed AFTER the import (bad source data): there is no second after it yet, so the only time the data
+        // allows is the import time. The owner decision says the import time is never the value, so the row is reported.
+        $uk = (int) $this->getDataGenerator()->create_user(['firstname' => 'K', 'lastname' => 'Learner'])->id;
+        $future = time() + 30 * DAYSECS;
+        $this->legacy('cc_k1', 'local_recompletion_cc', ['userid' => $uk, 'course' => $this->ids['c1'],
+            'timeenrolled' => self::t('2023-01-10'), 'timestarted' => self::t('2023-01-15'), 'timecompleted' => $future,
+            'reaggregate' => 0]);
+        $this->applied();
+
+        $rows = $this->history_of($uk);
+        $this->assertCount(1, $rows);
+        $this->assertEquals(1, $rows[0]->time_inferred);
+        $this->assertLessThanOrEqual(time(), (int) $rows[0]->timecreated, 'never later than the import');
+        $this->assertGreaterThan(self::t('2025-01-01'), (int) $rows[0]->timecreated, 'dated at the import');
+        $warnings = $this->report_step('recompletion.cc')['warnings'];
+        $this->assertSame(1, $warnings['evidence_at_or_after_import'], 'the one row dated at the import is listed');
+        $this->assertSame(2, $warnings['inferred_reset_from_last_evidence'],
+            'learner H\'s second cycle of the seed, and this one');
+    }
+
+    public function test_an_ordinary_estimate_is_not_reported_as_dated_at_the_import(): void {
+        $this->imported();
+        $warnings = $this->report_step('recompletion.cc')['warnings'];
+        $this->assertSame(0, $warnings['evidence_at_or_after_import'] ?? 0,
+            'the seed has no completion or evidence at or after the import');
     }
 
     // Archive.

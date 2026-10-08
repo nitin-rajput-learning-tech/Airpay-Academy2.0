@@ -84,6 +84,14 @@ if [ "$EXECUTE" = 1 ]; then
     [ "${format:-0}" -ge 2 ] || die "the baseline is JSON format '${format}'; the Stage B gates need format 2 (take it again with this version of source_baseline.php)"
     base_release="$(kit_php json_get.php "$BASELINE_FILE" release || true)"
     base_metrics="$(kit_php json_get.php "$BASELINE_FILE" tool.metrics || printf none)"
+    # The baseline names the file that took it (tool.sha256: the tool's own SHA-256, carriage returns removed). This checkout's copy must
+    # be that file (with LIVE_BASELINE_FILE the baseline came from elsewhere), and step 04 holds the package's copy to it as well.
+    base_tool_sha="$(kit_php json_get.php "$BASELINE_FILE" tool.sha256 || true)"
+    [ -n "$base_tool_sha" ] || die "the baseline holds no tool.sha256 (taken by a tool older than metrics version 4): take it again with this version of source_baseline.php"
+    kv_set baseline.tool_sha256_in_baseline "$base_tool_sha"
+    if [ "$base_tool_sha" != "$(sha256_lf_of "$SOURCE_BASELINE_PHP")" ]; then
+        die "the baseline was taken by another version of source_baseline.php (tool.sha256 ${base_tool_sha:0:16}...) than SOURCE_BASELINE_PHP (${SOURCE_BASELINE_PHP}, $(sha256_lf_of "$SOURCE_BASELINE_PHP" | cut -c1-16)...): the tool refuses to compare across them. Point SOURCE_BASELINE_PHP at the file that took the baseline (and build the package with it), or take the baseline again with this one"
+    fi
     log "baseline: format ${format}, metrics version ${base_metrics}, taken on release '${base_release}', SHA-256 $(sha256_of "$BASELINE_FILE"), $(wc -c < "$BASELINE_FILE" | tr -d ' ') bytes"
     log "baseline holds: $(kit_php json_get.php "$BASELINE_FILE" counts --count || printf '?') counts, $(kit_php json_get.php "$BASELINE_FILE" checksums --count || printf '?') value checksums, $(kit_php json_get.php "$BASELINE_FILE" legacy --count || printf '0') BizLMS legacy tables, users_total_active $(kit_php json_get.php "$BASELINE_FILE" counts.users_total_active || printf '?')"
     kv_set baseline.sha256 "$(sha256_of "$BASELINE_FILE")"

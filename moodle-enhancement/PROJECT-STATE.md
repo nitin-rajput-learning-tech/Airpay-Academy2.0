@@ -5,6 +5,41 @@
 
 ---
 
+## 2026-10-08 - Stage B tools: fix round 2, merged onto the owner decisions (Sonnet 5.5)
+
+Branch `claude/stageb-tools`, now merged with `claude/gap-integration` (d7dcc5a08). Two reviews (fix-then-ship each) asked for one
+reconciliation by design and a set of kit fixes. `local_sentientia_platform` 1.11.1 -> 1.11.2 (2026100802, above the integration
+branch's 2026100701), no schema change, no flag, no UI, both trees identical. Detail: the state card entry of the same date,
+ADR-032 ("Metrics version 4", "Hook 4 made exact", "FINDING"), `tools/rehearsal/README.md`.
+
+- **The enrolments importer's CRS-01 UPDATE of `enrol` is now explained, not refused.** On the integration branch the importer
+  switches off proven BizLMS enrol instances (`enrol.status`, `timemodified`; trail `local_sentientia_courses_enroloff`), and this
+  branch had narrowed `enrol` to insert-only in four places (registry, `core::WRITES`, `parity_gate`, the tests). Merged as: `enrol` is
+  insert AND update in the registry; the baseline holds it as an update table; `parity_gate` names a switched-off instance from the
+  trail (only a BizLMS method, still the method the trail recorded, status now different from `priorstatus`) and keeps the inserted
+  ids beside it; a status change nobody recorded, or one on any other instance, is still exit 1. Without this the Stage B apply
+  would have stopped at step 09 (`core_write_operation_not_reviewed:enrol:update`) or, with the registry left as it was, failed step 10 on every clean run.
+- **One CLI contract.** `migration_parity_check.php --compare=<baseline> --after-import --decisions=<file> --expect-decisions-hash=<hash>`
+  is the post-import gate (decisions loaded and hash-checked first, `parity::compare_invariant`, exit 3 for a decisions option without
+  `--after-import` or the reverse). Runbook, ADR-032, the plan and the pinned test follow it.
+- **Metrics version 4.** The baseline names the file that took it (`tool.sha256`) and a comparison with another file is refused; the
+  kit checks it at steps 02 and 04; `ALLOW_BASELINE_TOOL_SKEW` is gone. A version 3 baseline must be taken again.
+- **Kit fixes (the two must-fix).** A new restore refuses a moodledata an earlier rehearsal ran in (one rehearsal, one moodledata; the
+  marker records the unpacked archive and the finish; a named archive is never ignored). Step 04 counts the `mod_survey` and
+  `mod_chat` activities BEFORE hop 2 and refuses to start while the package lacks their code. Plus the small should-fix items
+  (restore point acknowledgement, a separate statement for a hand-restored moodledata, GTID and MariaDB-collation dump checks,
+  whole-path cron scan, retried run-status read, cache directory rotated, OAuth2 tokens blanked, the lost log line, the summary lists
+  `legacy_other` tables and says how to read the hop 2 and post-cron rows).
+- **Decision for Nitin (unchanged, sharper).** Ship 5.x-compatible `mod_survey` and `mod_chat` in the package. "Accept the loss in
+  writing" does not exist in the tools and is removed from the docs: the parity tool has no input for expected exit-1 drift.
+- **Not run, on purpose or for lack of a way:** PHPUnit (a local run was in progress; every new and changed test is unexecuted,
+  see the state card), the CLI under a bootstrapped Moodle, MySQL 8.4 / RDS, the hop to 5.3 (ADR-033). What ran: `php -l`, `bash -n`, the
+  four repo gates (all clean), the kit's `selftest.sh` (128 pass) and a DRY run of all 13 steps, step 01 in `--execute` mode against scratch
+  `stageb_*` schemas (22 moodledata and dump scenarios), and the real parity library and `parity_gate` against a scratch schema through a ``
+  stand-in (34 assertions on `enrol`, 7 on the standalone tool's `tool.sha256` refusals). The scratch schemas were dropped.
+
+---
+
 ## 2026-10-08 - Stage B tools: fix round 1 after two Opus reviews (Sonnet 5.5)
 
 Branch `claude/stageb-tools`. The reviews said ship (parity tooling) and fix-then-ship (rehearsal kit, 5 must-fix). All five
@@ -16,8 +51,8 @@ no flag, no UI, both trees identical. Detail: `tools/rehearsal/README.md`, ADR-0
   On the April copy that is one survey activity (course_modules 1153): 1540 rows in the 4.1.2 dump, 1539 in `bizlms_april`.
   The first two metric sets counted no `course_modules`, which is why the 2026-10-07 entry below reads "exit 0, 100% PARITY" for
   that copy; with metrics version 3 the same comparison is **exit 1** on `course_modules` (the only drift). Live may hold more
-  (surveys, chats, their completion rows). Either put `mod_survey` and `mod_chat` into the 5.x package, or accept the loss in
-  writing; the tool has no path for an "expected" exit-1 drift, on purpose.
+  (surveys, chats, their completion rows). Put `mod_survey` and `mod_chat` into the 5.x package; the tool has no path for an
+  "expected" exit-1 drift, on purpose, so "accept the loss in writing" (this entry's first wording) does not exist (fix round 2).
 - **Parity coverage (plan 1.2).** Metrics version 3 adds checksums the plan names and nothing hashed: `password` and all 36 BizLMS
   `open_*` user columns, the course `open_*` columns the import does not write, `course_modules`, `course_sections`, `grade_items`,
   `course_completion_criteria`, certificate templates and the issue columns the first set left out. Checked on the April data (the

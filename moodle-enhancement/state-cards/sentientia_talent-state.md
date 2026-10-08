@@ -143,3 +143,20 @@ Uses `\local_sentientia_platform\phpunit\open_path_fixture_trait` for tenant fix
   manager API + learner board POST flow.
 - External web services (`db/services.php`) not added — pages call the
   manager directly. Add WS layer when the mobile/PWA surface needs it.
+
+---
+
+## 2026-10-07 - privacy: career paths declared, `usermodified` anonymised (owner decisions, courses cluster, rule R9)
+
+Moodle-enhancement tree only (this plugin has no top-level twin). **Not run: no PHPUnit here.** No schema change, no flag, no version bump
+(new lang strings only).
+
+- **The gap.** `local_sentientia_talent_path` (career-path definitions) was declared by no provider; `usermodified` of
+  `local_sentientia_talent_succ` and `local_sentientia_talent_opp` was neither declared nor anonymised on erasure.
+- **The fix.** The provider declares the path table and `usermodified` on all three tables (strings en + hi). The user list includes the
+  last editors. The export gains "Talent - records I last edited" (table, id, when; never the notes or the person a row names). Erasing a
+  user, a user list or the whole context sets `usermodified` to 0 and KEEPS the rows (career paths and postings belong to the tenant's talent
+  configuration; nominations keep being deleted for the candidate, as before).
+- **Tests (NOT RUN):** new `tests/privacy_actor_columns_test.php`: the path table and the three `usermodified` columns are declared and
+  every string exists, with a Hindi pair; the export lists what the user last edited and no note; erasure keeps the rows and removes the
+  person; user list and bulk erasure; a context wipe.

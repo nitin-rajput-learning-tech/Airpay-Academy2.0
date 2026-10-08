@@ -70,7 +70,7 @@ final class evidence {
     /** @var array<string, int> Memo of when each archived completion's cycle ended (see cycle_end). */
     private array $ends = [];
 
-    /** @var array<string, array{0: int, 1: bool}> Memo of inferred reset times (see inferred_reset). */
+    /** @var array<string, array{0: int, 1: bool, 2: bool, 3: bool}> Memo of inferred reset times (see inferred_reset). */
     private array $inferred = [];
 
     /** @var int The import time: an inferred reset is never later than this. Fixed for the run. */
@@ -317,14 +317,59 @@ final class evidence {
     }
 
     /**
-     * The reset time of an archived completion whose reset is not in the log: the earliest of its completion plus
-     * the legacy duration, the first evidence of the next cycle and the import time (mapper::inferred_time), and
-     * never earlier than the end of the cycle before it.
+     * The latest source evidence of a cycle: the later of its own enrolled, started and completed dates and the
+     * latest of its archived activity completions, quiz attempts, quiz grades and SCORM tracking rows dated after
+     * the end of the cycle before it (the tables next_evidence() reads). Evidence in the future of the import is
+     * not evidence of anything and is ignored. 0 when the cycle has none.
+     *
+     * Only the reset of a cycle with no usable candidate time is dated from this (inferred_reset), so the reads
+     * run for the few cycles that need them, not for every archived completion.
+     *
+     * @param int $userid
+     * @param int $courseid
+     * @param array{id: int, completed: int, started: int, enrolled: int} $row The archived completion.
+     * @param int $floor The end of the cycle before it (0 for the first cycle).
+     * @return int
+     */
+    public function latest_evidence(int $userid, int $courseid, array $row, int $floor): int {
+        global $DB;
+        $best = max($row['completed'], $row['started'], $row['enrolled'], 0);
+        if ($best > $this->now) {
+            $best = 0;
+        }
+        // A quiz attempt is dated by its finish, else its last change, else its start (see quiz_attempt_step), so
+        // all three count: the reset must come after the latest of them.
+        $queries = [
+            [sources::CMC, 'timemodified'], [sources::QA, 'timefinish'], [sources::QA, 'timemodified'],
+            [sources::QA, 'timestart'], [sources::QG, 'timemodified'], [sources::SST, 'timemodified'],
+        ];
+        foreach ($queries as [$table, $column]) {
+            $time = $DB->get_field_sql(
+                'SELECT MAX(' . $column . ') FROM {' . $table . '}
+                  WHERE userid = :u AND course = :c AND ' . $column . ' > :t AND ' . $column . ' <= :n',
+                ['u' => $userid, 'c' => $courseid, 't' => $floor, 'n' => $this->now]);
+            $time = mapper::timestamp($time);
+            if ($time !== null && $time > $best) {
+                $best = $time;
+            }
+        }
+        return $best;
+    }
+
+    /**
+     * The reset time of an archived completion whose reset is not in the log (owner decision
+     * recompletion.inferred_reset_without_evidence): the earlier of its completion plus the legacy duration and
+     * the first evidence of the next cycle, when that is not later than the import; otherwise one second after the
+     * cycle's latest source evidence (mapper::inferred_time). Never the import time (that is only the upper
+     * clamp) and never earlier than the end of the cycle before it.
      *
      * @param int $userid
      * @param int $courseid
      * @param int $ccid
-     * @return array{0: int, 1: bool} [time, true when the course had no usable duration of its own]
+     * @return array{0: int, 1: bool, 2: bool, 3: bool} [time, true when the course had no usable duration of its own,
+     *         true when the time came from the cycle's last evidence because no candidate time was usable,
+     *         true when that evidence (or the completion) is at or after the import, so the time IS the import time:
+     *         the importer reports it (evidence_at_or_after_import) because the owner decision says it is never the value]
      */
     public function inferred_reset(int $userid, int $courseid, int $ccid): array {
         $key = mapper::pair_key($userid, $courseid) . ':' . $ccid;
@@ -334,15 +379,23 @@ final class evidence {
             }
             [$duration, $fallback] = $this->duration($courseid);
             $row = $this->completion_row($userid, $courseid, $ccid);
+            $floor = $this->floor_before($userid, $courseid, $ccid);
             if ($row === null) {
-                $this->inferred[$key] = [$this->now, $fallback];
+                // No such archived cycle: nothing to date it from but the end of the cycle before it.
+                $this->inferred[$key] = [max($floor, min($floor + 1, $this->now)), $fallback, true, false];
             } else {
                 $completed = $row['completed'] > 0 ? $row['completed'] : null;
                 $ranfrom = $completed ?? ($row['started'] > 0 ? $row['started'] : $row['enrolled']);
-                $floor = $this->floor_before($userid, $courseid, $ccid);
                 $next = $this->next_evidence($userid, $courseid, $ccid, max($ranfrom, $floor));
-                $time = max(mapper::inferred_time($completed, $duration, $next, $this->now), $floor);
-                $this->inferred[$key] = [$time, $fallback];
+                $time = mapper::inferred_candidate($completed, $duration, $next, $this->now);
+                $fromevidence = $time === null;
+                $atimport = false;
+                if ($fromevidence) {
+                    $latest = $this->latest_evidence($userid, $courseid, $row, $floor);
+                    $time = mapper::inferred_from_evidence($completed, $latest, $this->now);
+                    $atimport = mapper::dated_at_import($completed, $latest, $this->now);
+                }
+                $this->inferred[$key] = [max($time, $floor), $fallback, $fromevidence, $atimport];
             }
         }
         return $this->inferred[$key];

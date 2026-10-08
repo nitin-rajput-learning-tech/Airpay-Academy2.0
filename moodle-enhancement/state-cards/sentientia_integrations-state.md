@@ -110,3 +110,13 @@ untested locally.
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+---
+
+## 2026-10-07 - popular courses count learners once (owner decision: readers that count enrolments)
+
+Both trees. **Not run: no PHPUnit here.** No schema change, no flag, no version bump.
+
+`ai_recommender::get_popular_courses()` ranked courses by `COUNT(ue.id)`, which counts a converted learner twice (an imported BizLMS
+enrolment and its manual twin). It now ranks by `COUNT(DISTINCT ue.userid)` over ACTIVE enrolments (`ue.status = 0`) on ENABLED instances
+(`e.status = 0`). Test: `ai_recommender_test::test_popular_courses_count_a_learner_once_and_only_active_enrolments` (NOT RUN).

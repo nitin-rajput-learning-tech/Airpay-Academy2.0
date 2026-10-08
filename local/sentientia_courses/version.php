@@ -42,7 +42,12 @@ $plugin->component = 'local_sentientia_courses';
 //                 course_fields drops two columns that never existed on {course}
 // 2026100102:  // ADR-032 enrolments importer (gap G6): ledger table local_sentientia_courses_enrolmove (ids only) + db/bizlms_import.php
 // 2026100103:  // ADR-032 course_tags importer: trail table local_sentientia_courses_tagmove (ids only) + db/bizlms_import.php
-$plugin->version   = 2026100103;  // ADR-032 course_tags importer: trail table for the in-place tag remap (no user-visible change)
+// 2026100701:  // ADR-032 enrolments importer, owner decisions CRS-01/02/03 + XC-G6-WHY (2026-10-07): trail table
+//                 local_sentientia_courses_enroloff (ids only), two new steps (enrolments.legacy_instances decides,
+//                 enrolments.legacy_instances_off switches off) and three declared decisions. A fully converted BizLMS enrol
+//                 instance is DISABLED, never deleted, only when every learner on it keeps the same access through manual
+//                 enrolments (proved per learner-course pair); privacy docblock lists the trail tables. No capability change.
+$plugin->version   = 2026100701;  // ADR-032 enrolments importer: trail of switched-off BizLMS instances (no user-visible change)
 // 2026092501:  // ADR-031 follow-up: upgrade step rehomes tenant admins' 'All tenants' featured rows; own-roster unenrol; scoped Enrolled column
 // 2026092500:  // ADR-031: course writes, enrolment, featured, list/export tenant-scoped (no schema/cap change)
 // 2026092201:  // real privacy provider: requests + remind_sent (was null_provider)
@@ -50,7 +55,7 @@ $plugin->version   = 2026100103;  // ADR-032 course_tags importer: trail table f
 // 2026090800:
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.13.0';  // +ADR-032 course_tags importer, enrolments importer (1.11.9: featured rows rehomed, own-roster unenrol, tenant-scoped Enrolled count)
+$plugin->release   = '1.14.0';  // +ADR-032 enrolments importer: switch off proven-converted BizLMS instances (1.13.0: +course_tags and enrolments importers)
 $plugin->dependencies = [
     'local_sentientia_org' => 2026041600,
     // tenant::is_cross_tenant() / scope_path() / require_same_tenant_user() (ADR-031).

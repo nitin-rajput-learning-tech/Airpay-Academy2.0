@@ -335,21 +335,36 @@ class delivery_log {
         $cells = [
             $r->id,
             date('Y-m-d H:i', $r->timecreated),
-            '"' . s(($r->firstname ?? '') . ' ' . ($r->lastname ?? '')) . '"',
-            s($r->email ?? ''),
+            '"' . self::csv_safe(s(($r->firstname ?? '') . ' ' . ($r->lastname ?? ''))) . '"',
+            self::csv_safe(s($r->email ?? '')),
             $r->tenant_id,
             $r->channel,
-            '"' . str_replace('"', '""', s($r->subject)) . '"',
-            s($r->template_key ?? ''),
+            '"' . str_replace('"', '""', self::csv_safe(s($r->subject))) . '"',
+            self::csv_safe(s($r->template_key ?? '')),
             $r->status,
-            '"' . str_replace('"', '""', s($r->error_message ?? '')) . '"',
+            '"' . str_replace('"', '""', self::csv_safe(s($r->error_message ?? ''))) . '"',
         ];
         if ($imported) {
-            $cells[] = s($r->legacy_type ?? '');
-            $cells[] = '"' . s(trim(($r->sender_firstname ?? '') . ' ' . ($r->sender_lastname ?? ''))) . '"';
+            $cells[] = self::csv_safe(s($r->legacy_type ?? ''));
+            $cells[] = '"' . self::csv_safe(s(trim(($r->sender_firstname ?? '') . ' ' . ($r->sender_lastname ?? '')))) . '"';
             $cells[] = !empty($r->timesent) ? date('Y-m-d H:i', (int) $r->timesent) : '';
         }
         return implode(',', $cells);
+    }
+
+    /**
+     * Make a text safe to open in a spreadsheet (F-65).
+     *
+     * A cell that starts with =, +, - or @ (or a tab or a carriage return) is read as a formula by Excel and Calc, and the
+     * subject of an old BizLMS mail is not ours to trust: the export would hand an administrator a file that runs it. The
+     * cell is prefixed with a single quote, which the spreadsheet shows as nothing and does not evaluate. It is applied to
+     * the text AFTER s() has escaped it, so the quote it adds is a plain one and stays in front of the cell.
+     *
+     * @param string $text
+     * @return string
+     */
+    public static function csv_safe(string $text): string {
+        return preg_match('/^[=+\-@\t\r]/', $text) === 1 ? "'" . $text : $text;
     }
 
     /**

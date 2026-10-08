@@ -56,6 +56,14 @@ $string['privacy:metadata:emaillog:timecreated'] = 'भेजने का ट�
 $string['privacy:metadata:emailprefs']              = 'प्रति-यूज़र ईमेल प्राथमिकताएँ।';
 $string['privacy:metadata:emailprefs:userid']       = 'जिस यूज़र की प्राथमिकताएँ हैं।';
 $string['privacy:metadata:emailprefs:timemodified'] = 'अंतिम अपडेट टाइमस्टैम्प।';
+$string['privacy:metadata:emailoverrides'] = 'प्रति-टेनेंट ईमेल टेम्पलेट ओवरराइड। किसी व्यक्ति को मिटाने पर ये बने रहते हैं; इन्हें अंतिम बार संपादित करने वाला यूज़र इनसे हटा दिया जाता है।';
+$string['privacy:metadata:emailoverrides:template_key'] = 'ओवरराइड किस टेम्पलेट की जगह लेता है।';
+$string['privacy:metadata:emailoverrides:usermodified'] = 'ओवरराइड को अंतिम बार संपादित करने वाला यूज़र। उस यूज़र को मिटाने पर यह 0 हो जाता है।';
+$string['privacy:metadata:emailoverrides:timemodified'] = 'ओवरराइड अंतिम बार कब संपादित हुआ।';
+$string['privacy:metadata:emailrules'] = 'सूचना नियम। किसी व्यक्ति को मिटाने पर ये बने रहते हैं; इन्हें अंतिम बार संपादित करने वाला यूज़र इनसे हटा दिया जाता है।';
+$string['privacy:metadata:emailrules:rule_name'] = 'नियम का नाम।';
+$string['privacy:metadata:emailrules:usermodified'] = 'नियम को अंतिम बार संपादित करने वाला यूज़र। उस यूज़र को मिटाने पर यह 0 हो जाता है।';
+$string['privacy:metadata:emailrules:timemodified'] = 'नियम अंतिम बार कब संपादित हुआ।';
 
 // Day-2 (2026-05-14) — settings panel: ramping reminder defaults.
 $string['setting_ramping_heading']        = 'चरणबद्ध रिमाइंडर डिफ़ॉल्ट';
@@ -103,8 +111,19 @@ $string['email_detail_note']     = 'टिप्पणी';
 $string['email_detail_body']     = 'संदेश';
 $string['email_detail_no_body']  = 'इस ईमेल का संदेश-पाठ नहीं दिखाया जा रहा। यदि संदेश में अकाउंट क्रेडेंशियल थे, या बॉडी आयात बंद था, तो उसे रोक दिया जाता है। BizLMS की अपनी प्रति उसकी आर्काइव तालिका में सुरक्षित रहती है।';
 $string['email_detail_back']     = 'नोटिफ़िकेशन लॉग पर वापस';
+$string['email_detail_image_removed'] = 'बाहरी चित्र हटाया गया';
 
 // ADR-032 गोपनीयता मेटाडेटा: BizLMS आयात द्वारा डिलीवरी लॉग में जोड़े गए कॉलम।
 $string['privacy:metadata:emaillog:sender_userid'] = 'केवल आयात किया गया BizLMS इतिहास: संदेश को कतार में डालने वाला यूज़र। उस यूज़र को मिटाने पर यह 0 हो जाता है; प्राप्तकर्ता का इतिहास बना रहता है।';
 $string['privacy:metadata:emaillog:body_html']     = 'केवल आयात किया गया BizLMS इतिहास: संदेश का पाठ, अकाउंट क्रेडेंशियल हटाकर।';
 $string['privacy:metadata:emaillog:timesent']      = 'केवल आयात किया गया BizLMS इतिहास: BizLMS ने संदेश कब भेजा।';
+
+// COMMS-N7 (2026-10-07): वे तीन ईमेल जो BizLMS भेजता है और जिनका Sentientia में भेजने वाला नहीं था। हर भेजने वाला अपने
+// डिफ़ॉल्ट-बंद फ़्लैग के पीछे है। विषय पंक्ति प्राप्तकर्ता की अपनी भाषा में जाती है।
+$string['parity_subject_course_enrolled']    = 'आपको इस कोर्स में नामांकित किया गया है: {$a}';
+$string['parity_subject_path_enrolled']      = 'नया लर्निंग पाथ: {$a}';
+$string['parity_subject_manager_completion'] = '{$a->member} ने {$a->course} पूरा कर लिया है';
+$string['parity_log_subject_manager_completion'] = 'एक टीम सदस्य ने {$a} पूरा कर लिया है';
+$string['parity_enrolled_by_self']           = 'स्वयं नामांकन';
+$string['parity_enrolled_by_system']         = 'सिस्टम';
+$string['task_send_path_enrolments']         = 'लर्निंग-पाथ नामांकन ईमेल भेजें';

@@ -9,14 +9,23 @@
 #   1. Restore the dump into the EMPTY rehearsal database and unpack the moodledata, only if RESTORE_DB_DUMP /
 #      RESTORE_MOODLEDATA_ARCHIVE are set and the target is empty. It never drops, truncates or overwrites anything.
 #      The dump is refused when it holds a USE / CREATE DATABASE / DROP DATABASE statement (it would reach another schema
-#      whatever the allow-list says; the client also runs with --one-database), when it has no "-- Dump completed" trailer
-#      (an aborted mysqldump restores as a silent partial copy; RESTORE_ALLOW_NO_TRAILER=1 for a dump made another way),
-#      and the restore stops at the first error (pipefail).
+#      whatever the allow-list says; the client also runs with --one-database), a SET @@GLOBAL.GTID_PURGED (a server-wide
+#      setting; dump with --set-gtid-purged=OFF), when it has no "-- Dump completed" trailer (an aborted mysqldump restores as a
+#      silent partial copy; RESTORE_ALLOW_NO_TRAILER=1 for a dump made another way), or when it names a MySQL 8 collation
+#      (utf8mb4_0900_*) and the server is MariaDB, and the restore stops at the first error (pipefail).
 #      THE KIT MARKER: after a restore the kit made (or one the operator names with RESTORE_DONE_BY_HAND=<database name>)
 #      the database and the moodledata are stamped with a random restore id (state/kv/restore.id). Every writing step later
 #      refuses a database or a moodledata that does not carry it, so an allow-listed name on the wrong server, or UAT's
-#      database, can never be written to. A new restore moves the earlier rehearsal's state, reports and baseline to
-#      archive/ (nothing of it can be mistaken for this one's result). A restore that did not complete is refused on re-run.
+#      database, can never be written to. A new restore moves the earlier rehearsal's state, reports, baseline and cache
+#      configuration to archive/ (nothing of it can be mistaken for this one's result). A restore that did not complete is
+#      refused on re-run.
+#      THE MOODLEDATA is per rehearsal. The marker file also records which archive the kit unpacked into it (path, size, mtime) and
+#      that the unpack finished. A NEW restore (a new database) accepts a non-empty moodledata only when it is the same unpack of the
+#      same RESTORE_MOODLEDATA_ARCHIVE that no later step has used; anything else (a dataroot an earlier rehearsal ran in, with its
+#      role-9 state file, caches and sessions) is refused: empty it or point MOODLEDATA at a new directory. A named
+#      RESTORE_MOODLEDATA_ARCHIVE is never ignored: if the moodledata already holds a filedir it must be that archive's unpack, or the
+#      step stops. A populated moodledata the kit did not stamp needs its own statement, RESTORE_MOODLEDATA_BY_HAND=<its path>, and
+#      must show no recent writes in sessions/ or localcache/.
 #   2. Check the source: the release matches SOURCE_RELEASE_REGEX (live is 4.1.x), active users (optionally equal to
 #      EXPECT_ACTIVE_USERS), the BizLMS open_path substrate is there.
 #   3. The file store gate: every files.contenthash with content must be on disk at filedir/ab/cd/<hash>. Missing = stop
@@ -54,7 +63,15 @@ restore_database() {
     log "scanning the dump for statements that reach another database, and for its trailer (one read of the whole file)"
     bad="$(dump_unsafe_statement "$RESTORE_DB_DUMP")"
     if [ -n "$bad" ]; then
-        die "the dump holds a statement that reaches another database (${bad}): refused. Take it without --databases / --all-databases (mysqldump ${DB_NAME} > dump.sql), then restore again"
+        die "the dump holds a statement that must not be restored here (${bad}): refused. A USE / CREATE DATABASE / DROP DATABASE reaches another database (take the dump without --databases / --all-databases: mysqldump ${DB_NAME} > dump.sql), and SET @@GLOBAL.GTID_PURGED is a server-wide setting (add --set-gtid-purged=OFF). Take the dump again, then restore"
+    fi
+    local collation server
+    collation="$(dump_mysql8_collation "$RESTORE_DB_DUMP")"
+    if [ -n "$collation" ]; then
+        server="$(mysql_nodb -e 'SELECT VERSION()' 2> /dev/null || true)"
+        case "$server" in
+            *[Mm]aria[Dd][Bb]*) die "the dump names the MySQL 8 collation ${collation}, and the server is MariaDB (${server}), which does not know it: the restore would fail at the first table, after the whole dump was read. Restore it on MySQL 8.x, or take the dump with a collation MariaDB has" ;;
+        esac
     fi
     if dump_has_trailer "$RESTORE_DB_DUMP"; then
         log "OK: the dump ends with mysqldump's '-- Dump completed' line, and holds no USE / CREATE DATABASE / DROP DATABASE statement"
@@ -94,8 +111,19 @@ by_hand_ack() { [ -n "$RESTORE_DONE_BY_HAND" ] && [ "$RESTORE_DONE_BY_HAND" = "$
 RESTORE_ID=""
 OLD_RESTORE_ID=""
 BY_HAND=0
+NEW_RESTORE=0
+PAST_RESTORE=0
 start_new_restore() {
+    NEW_RESTORE=1
     OLD_RESTORE_ID="$(kv_get restore.id)"
+    # How far did the earlier rehearsal get? A step after 01 ran code against the moodledata (hop 1 and 2, the repairs, the role-9
+    # state file, caches, sessions), so such a dataroot is not the clean unpack of the archive any more. Read BEFORE the rotation.
+    local f
+    for f in "$STATE_DIR"/0[2-9].status "$STATE_DIR"/1[0-2].status; do
+        if [ -f "$f" ]; then
+            PAST_RESTORE=1
+        fi
+    done
     if work_state_has_history; then
         rotate_work_state
     fi
@@ -106,8 +134,9 @@ start_new_restore() {
 # stamp_database: the restore of the database is complete (or the operator vouched for it): mark it, record the id.
 stamp_database() {
     marker_set "$RESTORE_ID"
-    # Every id this kit stamped in this work directory, in a file a new restore does not move to archive/: a moodledata that carries an
-    # earlier id of this lineage (a restore that failed in between, a hand restore before a kit restore) is still this rehearsal's.
+    # Every id this kit stamped in this work directory, in a file a new restore does not move to archive/. A moodledata that carries an
+    # earlier id of this lineage is only the first condition for reusing it in a new restore (see the moodledata block below): it must also
+    # be the finished unpack of the same archive, and no step after 01 may have run against it.
     mkdir -p "$REHEARSAL_WORK"
     printf '%s\n' "$RESTORE_ID" >> "$REHEARSAL_WORK/restore-ids.log"
     kv_set restore.id "$RESTORE_ID"
@@ -153,48 +182,110 @@ if [ "$EXECUTE" = 1 ]; then
                 else
                     die "database ${DB_NAME} carries restore id ${have:0:8}..., but this work directory records ${want:-none}: it is another rehearsal's database. Use a work directory (REHEARSAL_WORK) of its own, or restore again into an empty database"
                 fi
-            elif [ -n "$(kv_get restore.started)" ] && [ -z "$(kv_get restore.complete)" ]; then
-                die "the restore this kit started ($(kv_get restore.started)) did not complete, and database ${DB_NAME} holds a partial copy of ${DB_TABLES} tables: drop the database, create it empty and run step 01 again"
             elif by_hand_ack; then
+                # Checked BEFORE the partial-restore refusal: an operator who dropped the partial copy and restored by hand since has
+                # a whole database, and RESTORE_DONE_BY_HAND is how they say so (the failed kit attempt's record is rotated away).
+                if [ -n "$(kv_get restore.started)" ] && [ -z "$(kv_get restore.complete)" ]; then
+                    warn "the restore this kit started ($(kv_get restore.started)) did not complete; RESTORE_DONE_BY_HAND=${RESTORE_DONE_BY_HAND} says database ${DB_NAME} is a whole copy restored by hand since: taking your word for it"
+                fi
                 start_new_restore
                 BY_HAND=1
                 warn "database ${DB_NAME} was restored by hand (RESTORE_DONE_BY_HAND=${RESTORE_DONE_BY_HAND}): stamping it as this rehearsal's copy on that statement"
                 stamp_database
+            elif [ -n "$(kv_get restore.started)" ] && [ -z "$(kv_get restore.complete)" ]; then
+                die "the restore this kit started ($(kv_get restore.started)) did not complete, and database ${DB_NAME} holds a partial copy of ${DB_TABLES} tables: drop the database, create it empty and run step 01 again. (If you dropped it and restored the live backup into it by hand since, set RESTORE_DONE_BY_HAND=${DB_NAME} for this run instead.)"
             else
                 die "database ${DB_NAME} holds ${DB_TABLES} tables and carries no rehearsal-kit marker: this kit did not restore it. If it is a copy of the live backup that you restored by hand for this rehearsal, set RESTORE_DONE_BY_HAND=${DB_NAME} for this run; if you are not sure what it is, it may be a real site: stop"
             fi
             ;;
     esac
 
-    # The moodledata: empty (or absent), already this rehearsal's (marked), or foreign (anything else: never written without an
-    # explicit statement). A kit restore into an empty directory is the normal case.
+    # The moodledata: empty (or absent), this restore's own (marked), the unpack of an earlier restore that nothing has used since
+    # (a NEW restore of the database over the same archive), or foreign (anything else: never written without an explicit
+    # statement). A kit restore into an empty directory is the normal case.
+    ARCHIVE_ID=""
+    if [ -n "$RESTORE_MOODLEDATA_ARCHIVE" ]; then
+        [ -f "$RESTORE_MOODLEDATA_ARCHIVE" ] || die "RESTORE_MOODLEDATA_ARCHIVE not found: ${RESTORE_MOODLEDATA_ARCHIVE}"
+        ARCHIVE_ID="$(archive_identity "$RESTORE_MOODLEDATA_ARCHIVE")"
+    fi
     md_state=empty
     if [ -d "$MOODLEDATA" ] && [ -n "$(ls -A "$MOODLEDATA" 2> /dev/null)" ]; then
         md_have="$(moodledata_marker_get)"
         if [ -z "$md_have" ]; then
             md_state=foreign
-        elif [ "$md_have" = "${RESTORE_ID}" ] || { [ -n "$OLD_RESTORE_ID" ] && [ "$md_have" = "$OLD_RESTORE_ID" ]; } \
-                || { [ -f "$REHEARSAL_WORK/restore-ids.log" ] && grep -qx "$md_have" "$REHEARSAL_WORK/restore-ids.log"; }; then
+        elif [ "$md_have" = "${RESTORE_ID}" ]; then
             md_state=marked
+        elif [ "$NEW_RESTORE" = 1 ]; then
+            # A new restore found a dataroot stamped by an earlier one. It is reusable only if it is the very unpack the new restore
+            # would make (same archive, finished) and nothing after step 01 has run against it: everything else an earlier
+            # rehearsal left there (the role-9 state file, caches, sessions, the cron's files) would carry into this one.
+            lineage=0
+            if { [ -n "$OLD_RESTORE_ID" ] && [ "$md_have" = "$OLD_RESTORE_ID" ]; } \
+                    || { [ -f "$REHEARSAL_WORK/restore-ids.log" ] && grep -qx "$md_have" "$REHEARSAL_WORK/restore-ids.log"; }; then
+                lineage=1
+            fi
+            if [ "$lineage" = 1 ] && [ "$PAST_RESTORE" = 0 ] && [ -n "$ARCHIVE_ID" ] \
+                    && [ "$(moodledata_unpack_state "$ARCHIVE_ID")" = match ]; then
+                md_state=marked
+                log "${MOODLEDATA} is the finished unpack of RESTORE_MOODLEDATA_ARCHIVE by an earlier restore of this lineage (${md_have:0:8}...), and no step after 01 has run against it: reusing it for the new restore"
+            else
+                die "${MOODLEDATA} carries restore id ${md_have:0:8}... and cannot be reused for a new restore: a new rehearsal needs an EMPTY moodledata (or a new directory), because the earlier rehearsal ran in this one (its state file of the role-9 script, caches, sessions and cron files would carry over). It is reusable only as the unfinished-restore retry of the same archive: the same unpack of RESTORE_MOODLEDATA_ARCHIVE, finished, with no step after 01 run (here: lineage ${lineage}, a later step ran ${PAST_RESTORE}, archive $([ -n "$ARCHIVE_ID" ] && moodledata_unpack_state "$ARCHIVE_ID" || printf 'not named')). Move it away and point MOODLEDATA at an empty directory"
+            fi
         else
             die "${MOODLEDATA} carries restore id ${md_have:0:8}..., not this rehearsal's ${RESTORE_ID:0:8}...: it belongs to another rehearsal or site. Use a moodledata directory of its own"
         fi
     fi
-    if [ "$md_state" = foreign ] && ! by_hand_ack; then
-        die "${MOODLEDATA} is not empty and carries no rehearsal-kit marker: it may be another site's dataroot (UAT's, for one). Use an empty directory, or set RESTORE_DONE_BY_HAND=${DB_NAME} if it holds the live moodledata you restored for this rehearsal"
+    if [ "$md_state" = foreign ]; then
+        # Its own statement, naming the directory: vouching for the DATABASE (RESTORE_DONE_BY_HAND) is not vouching for a populated
+        # directory that a mistyped MOODLEDATA may have pointed at another site's dataroot (UAT's, on a shared box).
+        if [ "$RESTORE_MOODLEDATA_BY_HAND" != "$MOODLEDATA" ]; then
+            die "${MOODLEDATA} is not empty and carries no rehearsal-kit marker: it may be another site's dataroot (UAT's, for one). Use an empty directory, or, if it holds the live moodledata you restored for this rehearsal, set RESTORE_MOODLEDATA_BY_HAND=${MOODLEDATA} (the path itself) for this run"
+        fi
+        recent="$(moodledata_recent_writes)"
+        if [ -n "$recent" ]; then
+            die "${MOODLEDATA} has files written in the last 30 minutes in sessions/ or localcache/ (${recent}): a running site is using this dataroot, so it is not a restored copy. RESTORE_MOODLEDATA_BY_HAND does not override this: stop that site or use another directory"
+        fi
+        warn "${MOODLEDATA} was restored by hand (RESTORE_MOODLEDATA_BY_HAND names it, and sessions/ and localcache/ show no write in the last 30 minutes): stamping it as this rehearsal's"
     fi
     # Stamp it BEFORE anything is unpacked into it: a partial unpack then still reads as this rehearsal's, not as a foreign directory.
+    # What an earlier unpack of this lineage recorded (the archive and the finished line) is kept only for a reused unpack.
     if [ "$(moodledata_marker_get)" != "$RESTORE_ID" ]; then
         mkdir -p "$MOODLEDATA"
-        printf '%s\n' "$RESTORE_ID" > "$MOODLEDATA/$KIT_MARKER_FILE"
+        if [ "$md_state" = marked ]; then
+            moodledata_restamp "$RESTORE_ID"
+        else
+            moodledata_write_marker "$RESTORE_ID"
+        fi
         log "OK: ${MOODLEDATA} stamped with restore ${RESTORE_ID:0:8}... (${KIT_MARKER_FILE})"
     fi
     if [ ! -d "$MOODLEDATA/filedir" ] || [ -z "$(ls -A "$MOODLEDATA/filedir" 2> /dev/null)" ]; then
         if [ -n "$RESTORE_MOODLEDATA_ARCHIVE" ]; then
+            # The archive is recorded BEFORE the unpack, so an unpack that stops half way is recognised as this archive's unfinished
+            # unpack on the next run; the finished line is written after it, and the whole marker is written again then, because an
+            # archive made from an earlier rehearsal's dataroot would have overwritten the marker file.
+            moodledata_write_marker "$RESTORE_ID" "$ARCHIVE_ID"
             restore_moodledata
+            moodledata_write_marker "$RESTORE_ID" "$ARCHIVE_ID" done
+            log "OK: ${MOODLEDATA} unpacked from RESTORE_MOODLEDATA_ARCHIVE and recorded in ${KIT_MARKER_FILE}"
         else
             die "${MOODLEDATA}/filedir is missing or empty and RESTORE_MOODLEDATA_ARCHIVE is not set: unpack the live moodledata first"
         fi
+    elif [ -n "$RESTORE_MOODLEDATA_ARCHIVE" ]; then
+        # A filedir is already here AND an archive is named: never ignore it. It must be what this directory was unpacked from.
+        case "$(moodledata_unpack_state "$ARCHIVE_ID")" in
+            match)
+                log "moodledata already holds the finished unpack of RESTORE_MOODLEDATA_ARCHIVE (same path, size and mtime): not restoring over it"
+                ;;
+            incomplete)
+                die "the unpack of RESTORE_MOODLEDATA_ARCHIVE into ${MOODLEDATA} did not finish (${KIT_MARKER_FILE} has no 'unpacked' line), so ${MOODLEDATA}/filedir is partial: empty ${MOODLEDATA} (or use a new directory) and run step 01 again"
+                ;;
+            other)
+                die "RESTORE_MOODLEDATA_ARCHIVE is $(basename "$RESTORE_MOODLEDATA_ARCHIVE") (${ARCHIVE_ID}), but ${MOODLEDATA}/filedir was unpacked from another archive ($(moodledata_marker_line 2)): the new archive would be ignored. Use an empty moodledata for it"
+                ;;
+            *)
+                die "RESTORE_MOODLEDATA_ARCHIVE is set, but ${MOODLEDATA}/filedir already exists and this kit did not unpack it (it was restored by hand, or by an older kit): the archive would be silently ignored. Unset RESTORE_MOODLEDATA_ARCHIVE to use the directory as it is, or empty it to have the kit unpack the archive"
+                ;;
+        esac
     else
         log "moodledata already holds a filedir ($(find "$MOODLEDATA/filedir" -type f | wc -l | tr -d ' ') files): not restoring over it"
     fi
@@ -236,6 +327,17 @@ if [ "$EXECUTE" = 1 ]; then
     withpath="$(db_scalar "SELECT COUNT(*) FROM {p}user WHERE deleted = 0 AND open_path IS NOT NULL AND open_path <> ''")"
     [ "$withpath" -gt 0 ] || die "no active user has an open_path: the tenant substrate is empty"
     log "tenant roots in open_path: $(db_q "SELECT DISTINCT SUBSTRING_INDEX(open_path, '/', 2) FROM {p}user WHERE deleted = 0 AND open_path <> '' ORDER BY 1" | tr '\n' ' ')"
+    # Known before any hop: the activities the Moodle 5.0 upgrade deletes unless the package carries mod_survey and mod_chat. Step 04
+    # refuses to start hop 2 while that is so (it checks the package then); this is the early sight of the count.
+    if [ "$SOURCE_PHASE" = 1 ]; then
+        for m in $HOP2_UNINSTALLS_MISSING_MODULES; do
+            n="$(db_scalar "SELECT COUNT(*) FROM {p}course_modules cm JOIN {p}modules m ON m.id = cm.module WHERE m.name = '${m}'" || printf '?')"
+            kv_set "restore.activities_${m}" "$n"
+            if [ "${n:-0}" != 0 ] && [ "$n" != '?' ]; then
+                note "this copy holds ${n} mod_${m} activit(ies): the Moodle 5.0 upgrade DELETES them (and their answers) unless the 5.x package carries a 5.x mod_${m}. Step 04 stops before hop 2 when it does not. Decide before the real run (ADR-032 FINDING)"
+            fi
+        done
+    fi
 else
     dry "would check: release matches '${SOURCE_RELEASE_REGEX}', active users (EXPECT_ACTIVE_USERS='${EXPECT_ACTIVE_USERS}'), {user}.open_path present and populated"
 fi
@@ -339,6 +441,18 @@ if [ "$EXECUTE" = 1 ]; then
     fi
     db_write "UPDATE {p}config SET value = '' WHERE name = 'airnotifieraccesskey'"
     log "OK: the push service key is wiped (airnotifier is then not configured and sends nothing); step 11 disables the scheduled tasks that phone home (registration, update check, OAuth2 token refresh) for the cron cycle"
+    # OAuth2 system accounts carry live's refresh tokens (a Microsoft or Google service account). Step 11 switches off the one task that
+    # refreshes them, but other code that uses the system account (the OneDrive repository's clean-up, for one) would still send them to
+    # the provider, so the stored tokens are blanked here, in the rehearsal database only, whenever the audit counted any.
+    oauth_n="$(table_rows oauth2_system_account)"
+    if [ "$oauth_n" != '-' ] && [ "${oauth_n:-0}" -gt 0 ]; then
+        db_write "UPDATE {p}oauth2_system_account SET refreshtoken = ''"
+        if [ "$(table_rows oauth2_access_token)" != '-' ]; then
+            db_write "UPDATE {p}oauth2_access_token SET token = ''"
+        fi
+        log "OK: ${oauth_n} OAuth2 system account(s) found: their refresh tokens (and any stored access tokens) are blanked in this database, so nothing here can authenticate as live's service account"
+        kv_set restore.oauth2_tokens_blanked "$oauth_n"
+    fi
 else
     dry "would write reports/restore-outbound-audit.txt (counts of what could reach outside) and wipe the airnotifier access key"
 fi

@@ -5,15 +5,52 @@
 /**
  * Smoke test for Phase 3 B.4 — classroom waiting list with auto-promote.
  *
+ * SAFETY (owner decision, 2026-10-07; classroom review should-fix). Until then this script took the FIRST classroom of the
+ * table, set its capacity to 2, and deleted its whole waiting list and roster. After the BizLMS import the first classroom
+ * is an imported one, so a run erased imported rosters and attendance links and wrote a promotion message to a real
+ * learner. Now:
+ *
+ *  - it REFUSES (exit 2, nothing touched) on a database that holds BizLMS import map rows, which is a database of real
+ *    people and real history;
+ *  - it creates and cleans up only its OWN classroom, whatever else the database holds: it never edits an existing
+ *    classroom and never deletes a row that is not its own;
+ *  - it sets $CFG->noemailever for the run, because the auto-promote step sends a message;
+ *  - it REFUSES (exit 2, nothing touched) unless it is run with --dev (review of 2026-10-07). It still takes the first four
+ *    real accounts of the database as its learners, so it writes roster and waiting-list rows for them and sends the
+ *    auto-promoted one a notification; $CFG->noemailever stops e-mail only, not the popup notification or any message
+ *    observer. --dev says that this is a development database where that does not matter. Never pass it on a copy that
+ *    holds real people who may be looked at.
+ *
+ *   php local/sentientia_classroom/cli/smoke_waitlist.php --dev
+ *
  * @package local_sentientia_classroom
  */
 
 define('CLI_SCRIPT', true);
 require_once(__DIR__ . '/../../../config.php');
 
-global $DB;
+global $DB, $CFG;
 
 echo "=== sentientia_classroom waitlist smoke ===\n\n";
+
+// Real accounts are used as learners, so the run needs an explicit acknowledgement that this is a development database.
+if (!in_array('--dev', array_slice($_SERVER['argv'] ?? [], 1), true)) {
+    fwrite(STDERR, "REFUSED: the waitlist smoke test enrols the first four accounts of this database, puts two on a "
+        . "waiting list and sends one a promotion notification. It only runs on a development database: pass --dev "
+        . "to say this is one. Nothing was touched.\n");
+    exit(2);
+}
+
+// Refuse on a database that holds imported BizLMS history.
+if ($DB->get_manager()->table_exists('local_sentientia_legacymap') && $DB->count_records('local_sentientia_legacymap') > 0) {
+    fwrite(STDERR, "REFUSED: this database holds BizLMS import map rows (real people and imported history). "
+        . "The waitlist smoke test enrols, promotes and messages real users, so it does not run here. "
+        . "Run it on a database that has never run the import.\n");
+    exit(2);
+}
+
+// Nothing in this run may reach a real inbox.
+$CFG->noemailever = true;
 
 $test = 0; $pass = 0;
 $check = function(string $name, bool $ok, string $detail = '') use (&$test, &$pass) {
@@ -21,45 +58,47 @@ $check = function(string $name, bool $ok, string $detail = '') use (&$test, &$pa
     printf("  %s [%2d] %s%s\n", $ok ? '✓' : '✗', $test, $name, $detail ? " — $detail" : '');
 };
 
-// Pick or create a classroom with low capacity.
-$classroom = $DB->get_record_sql(
-    "SELECT * FROM {local_sentientia_classroom} ORDER BY id LIMIT 1");
-if (!$classroom) {
-    // Create a minimal test classroom.
-    $classroom = (object) [
-        'name'         => 'Smoke test classroom',
-        'description'  => 'auto-created for waitlist smoke',
-        'costcenterid' => 1,
-        'departmentid' => 1,
-        'open_path'    => '/1',
-        'trainerid'    => 2,
-        'location'     => 'Test room',
-        'capacity'     => 2,
-        'status'       => 1,
-        'visible'      => 1,
-        'timecreated'  => time(),
-        'timemodified' => time(),
-    ];
-    $classroom->id = $DB->insert_record('local_sentientia_classroom', $classroom);
-} else {
-    // Ensure capacity = 2 for the test.
-    $classroom->capacity = 2;
-    $DB->update_record('local_sentientia_classroom', $classroom);
-}
-
-echo "Test classroom id=$classroom->id capacity={$classroom->capacity}\n\n";
-
-// Get 4 test users.
+// Get 4 test users first: with fewer there is nothing to do, and nothing has been created yet.
 $users = $DB->get_records_sql(
     "SELECT id, username FROM {user} WHERE deleted = 0 AND id > 2
-      ORDER BY id LIMIT 4");
+      ORDER BY id", [], 0, 4);
 $user_ids = array_keys($users);
 if (count($user_ids) < 4) { echo "FAIL: need 4 users\n"; exit(1); }
 [$u1, $u2, $u3, $u4] = $user_ids;
 
-// Clean slate.
-$DB->delete_records('local_sentientia_classroom_waitlist', ['classroomid' => $classroom->id]);
-$DB->delete_records('local_sentientia_classroom_users',    ['classroomid' => $classroom->id]);
+// This run's OWN classroom, with a name no other row has. Capacity 2, so two enrolled users fill it.
+$classroom = (object) [
+    'name'         => 'Smoke test classroom ' . date('YmdHis') . '-' . random_int(1000, 9999),
+    'description'  => 'auto-created for waitlist smoke; deleted again at the end of the run',
+    'costcenterid' => 1,
+    'departmentid' => 1,
+    'open_path'    => '/1',
+    'trainerid'    => 2,
+    'location'     => 'Test room',
+    'capacity'     => 2,
+    'status'       => 1,
+    'visible'      => 1,
+    'timecreated'  => time(),
+    'timemodified' => time(),
+];
+$classroom->id = $DB->insert_record('local_sentientia_classroom', $classroom);
+
+/**
+ * Remove ONLY the classroom this run created, with the rows that hang off it.
+ */
+$cleanup = function() use ($DB, $classroom): void {
+    $id = (int) $classroom->id;
+    if ($id <= 0) {
+        return;
+    }
+    $DB->delete_records('local_sentientia_classroom_waitlist', ['classroomid' => $id]);
+    $DB->delete_records('local_sentientia_classroom_users',    ['classroomid' => $id]);
+    $DB->delete_records('local_sentientia_classroom', ['id' => $id]);
+};
+// Moodle's own shutdown manager runs it before the database is closed, on every way out of the script.
+\core\shutdown_manager::register_function($cleanup);
+
+echo "Test classroom id=$classroom->id (this run's own) capacity={$classroom->capacity}\n\n";
 
 // === 1. Fill capacity (2 users enrolled) ===
 echo "=== 1. Fill capacity directly ===\n";
@@ -144,9 +183,9 @@ $DB->delete_records('local_sentientia_classroom_waitlist', ['classroomid' => $cl
 $promoted = \local_sentientia_classroom\waitlist_manager::auto_promote($classroom->id);
 $check('auto_promote returns 0 when empty', $promoted === 0);
 
-// Cleanup
-$DB->delete_records('local_sentientia_classroom_waitlist', ['classroomid' => $classroom->id]);
-$DB->delete_records('local_sentientia_classroom_users',    ['classroomid' => $classroom->id]);
+// Cleanup: this run's own classroom and its rows, nothing else.
+$cleanup();
+$classroom->id = 0;
 
 echo "\n" . str_repeat('=', 50) . "\n";
 echo sprintf("Smoke result: %d/%d cases pass\n", $pass, $test);

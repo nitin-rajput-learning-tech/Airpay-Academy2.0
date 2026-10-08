@@ -59,7 +59,7 @@ final class bizlms_import_test extends \advanced_testcase {
     /** The target table. */
     private const TARGET = 'local_sentientia_email_log';
 
-    /** The owner's signed values for this feature (docs/cutover/bizlms-import-decisions.json, 2026-09-30). */
+    /** The owner's signed values for this feature (docs/cutover/bizlms-import-decisions.json, 2026-09-30 and 2026-10-07). */
     private const SIGNED = [
         'notifications.import_bodies' => true,
         'notifications.queue_status' => 'not_sent',
@@ -67,6 +67,9 @@ final class bizlms_import_test extends \advanced_testcase {
         'notifications.retention' => 'keep_no_purge',
         'notifications.deleted_recipient_sent' => 'sent_with_note',
         'tenant.unresolved.notifications' => 'pathless',
+        // 2026-10-07, delegated: COMMS-N2 and COMMS-N3.
+        'notifications.team_member_copy_body' => 'withhold',
+        'notifications.course_link' => 'moduleid_for_course_templates',
     ];
 
     /** @var array<string, mixed> The decision values a test runs with; a test may change some. */
@@ -159,7 +162,8 @@ final class bizlms_import_test extends \advanced_testcase {
      *    15 password placeholder in a non-users template               16 body with a secret inline
      *    17 notification type whose shortname exceeds the target column
      *  local_email_logs  4 rows. 1 and 4 import... 1 sent, 2 never sent, 3 unknown recipient (skipped),
-     *    4 account credentials (masked). So 3 import and 1 is skipped.
+     *    4 account credentials (masked). So 3 import and 1 is skipped. None points at a template (notification_infoid 0),
+     *    so none can be resolved: every body is withheld (COMMS-N1).
      *
      * @return void
      */
@@ -206,6 +210,10 @@ final class bizlms_import_test extends \advanced_testcase {
             $this->legacy_row('local_notification_info', ['id' => $id, 'notificationid' => $type, 'open_path' => $path,
                 'subject' => $subject, 'body' => $body, 'timecreated' => $t, 'timemodified' => $t]);
         }
+        // Templates of module type 'course' (12 of the 15 April templates): for them moduleid is a course id (COMMS-N3).
+        foreach ([1, 4] as $id) {
+            $DB->set_field('local_notification_info', 'moduletype', 'course', ['id' => $id]);
+        }
 
         $mail = function (int $id, int $to, int $info, $status, array $more = []) use ($t): void {
             $this->legacy_row('local_emaillogs', $more + [
@@ -216,8 +224,10 @@ final class bizlms_import_test extends \advanced_testcase {
         };
         $a = $this->ids['a'];
         $mail(1, $a, 1, 1, ['subject' => 'Enrolled in Safety 101', 'emailbody' => '<p>Hello, you have been enrolled.</p>',
-            'sent_date' => $t + 10, 'courseid' => $this->ids['course']]);
-        $mail(2, $this->ids['b'], 2, 0, ['subject' => 'Welcome jdoe', 'moduletype' => 'users',
+            'sent_date' => $t + 10, 'courseid' => $this->ids['course'], 'moduleid' => (string) $this->ids['course']]);
+        // The row's own moduletype is '' on every April 2026 production row (the users writer never sets it), so the
+        // credential check must come from the template and its type (COMMS-N1). Row 2 has the production shape.
+        $mail(2, $this->ids['b'], 2, 0, ['subject' => 'Welcome jdoe',
             'emailbody' => 'Username: jdoe<br>Password: Zx81!qpL']);
         $mail(3, $this->ids['c'], 1, null, ['subject' => 'Enrolled in Finance 201']);
         $mail(4, $a, 1, 0, ['subject' => 'Reminder due soon', 'timecreated' => 0, 'time_created' => 0,
@@ -512,11 +522,14 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertSame(self::T0 + 190, (int) $r->timecreated);
         $this->assertSame(self::T0 + 200, (int) $r->timesent);
         $this->assertSame($this->ids['course'], (int) $r->courseid);
+        $this->assertSame('ILT reminder', $r->subject, 'a subject that names no secret or account word is kept');
+        $this->assertNull($r->body_html, 'no template reference: what the message was cannot be known (COMMS-N1)');
         $r = $this->row('local_email_logs', 2);
         $this->assertSame('not_sent', $r->status);
         $this->assertSame(self::T0 + 210, (int) $r->timecreated);
         $this->assertNull($r->courseid, 'courseid -1 is a custom mail');
         $this->assertSame('Custom email', $r->subject);
+        $this->assertNull($r->body_html, 'a custom mail has no template either: its body is withheld');
         $r = $this->row('local_email_logs', 4);
         $this->assertSame(redactor::SUBJECT_MASK, $r->subject);
         $this->assertNull($r->body_html);
@@ -533,8 +546,8 @@ final class bizlms_import_test extends \advanced_testcase {
         // The report: the warnings are codes, and the tenant methods say how each tenant was decided.
         $warnings = $this->tally($report, 'warnings');
         $this->assertSame(1, $warnings['credentials_withheld:users_module'] ?? 0, 'local_emaillogs#2');
-        $this->assertSame(2, $warnings['credentials_withheld:unresolved_template'] ?? 0,
-            'local_emaillogs#5 and local_email_logs#4');
+        $this->assertSame(4, $warnings['credentials_withheld:unresolved_template'] ?? 0,
+            'local_emaillogs#5 and local_email_logs#1, #2 and #4: none of them can be resolved to a template');
         $this->assertSame(1, $warnings['credentials_withheld:template_placeholder'] ?? 0);
         $this->assertSame(1, $warnings['credential_text_scrubbed'] ?? 0);
         $this->assertSame(1, $warnings['truncated:legacy_type'] ?? 0);
@@ -707,11 +720,21 @@ final class bizlms_import_test extends \advanced_testcase {
         $dbman->drop_field($table, new \xmldb_field('time_created'));
         $this->seed_notifications();
 
-        [$result] = $this->contract_run(true);
-        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
-        $this->assertSame(19, $DB->count_records(self::TARGET));
-        $this->assertNull($this->row('local_emaillogs', 1)->courseid, 'there is no course column to read');
-        $this->assertSame(self::T0 + 44, (int) $this->row('local_emaillogs', 4)->timecreated);
+        try {
+            [$result, $report] = $this->contract_run(true);
+            $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+            $this->assertSame(19, $DB->count_records(self::TARGET));
+            // The production table has no courseid column, so the course comes from moduleid for a template of
+            // module type 'course' (COMMS-N3): row 1 has template 1 and moduleid = the course.
+            $this->assertSame($this->ids['course'], (int) $this->row('local_emaillogs', 1)->courseid,
+                'there is no course column, so the course is taken from moduleid');
+            $this->assertSame(1, $this->tally($report, 'warnings')['course_from_moduleid'] ?? 0);
+            $this->assertNull($this->row('local_emaillogs', 9)->courseid, 'no moduleid, no course');
+            $this->assertSame(self::T0 + 44, (int) $this->row('local_emaillogs', 4)->timecreated);
+        } finally {
+            // F-66: the test dropped courseid and time_created; give the next test the whole table back.
+            self::drop_legacy_table('local_emaillogs');
+        }
     }
 
     public function test_a_recipient_whose_path_does_not_parse_is_pathless_not_filed_under_the_template(): void {
@@ -809,7 +832,9 @@ final class bizlms_import_test extends \advanced_testcase {
 
         $warnings = $this->tally($report, 'warnings');
         $this->assertSame(2, $warnings['deleted_recipient_time_unknown'] ?? 0, '#62 and #64 cannot be compared');
-        $this->assertSame(5, $DB->count_records_select(self::TARGET, 'error_message = :n',
+        // error_message is a TEXT column: compare it through sql_compare_text() (F-66), as every engine requires.
+        $this->assertSame(5, $DB->count_records_select(self::TARGET,
+            $DB->sql_compare_text('error_message') . ' = ' . $DB->sql_compare_text(':n'),
             ['n' => log_step::NOTE_DELETED_RECIPIENT]), 'rows 6, 62, 63, 64 and 65 are noted; 60 and 61 are not');
     }
 
@@ -870,5 +895,348 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertSame(2, $this->tally($report, 'warnings')['credentials_withheld:row_placeholder'] ?? 0);
         $verify = (new runner(['decisions' => $this->contract_decisions()]))->verify(['notifications']);
         $this->assertSame(0, $verify['exit'], implode('; ', $verify['failures']['notifications'] ?? []));
+    }
+
+    // The 2026-10-07 owner decisions (COMMS-N1, N2, N3) and the follow-ups that ride with them (F-63, F-66, F-67).
+
+    /**
+     * A local_emaillogs row with the neutral defaults of the seed, for the tests that add rows of their own.
+     *
+     * @param int $id
+     * @param int $to Recipient.
+     * @param int $info notification_infoid.
+     * @param int|null $status
+     * @param array $more Columns to set over the defaults.
+     * @return void
+     */
+    private function add_mail(int $id, int $to, int $info, $status, array $more = []): void {
+        $this->legacy_row('local_emaillogs', $more + [
+            'id' => $id, 'notification_infoid' => $info, 'from_userid' => $this->ids['sender'], 'to_userid' => $to,
+            'subject' => 'Subject ' . $id, 'emailbody' => '<p>Body ' . $id . '</p>', 'status' => $status,
+            'timecreated' => self::T0 + $id, 'timemodified' => self::T0 + 1000 + $id, 'sent_date' => 0,
+        ]);
+    }
+
+    /**
+     * @return array{exit: int, failures: array} The importer's own verify().
+     */
+    private function verify_now(): array {
+        return (new runner(['decisions' => $this->contract_decisions()]))->verify(['notifications']);
+    }
+
+    public function test_a_row_whose_template_or_type_is_gone_loses_its_body_whatever_it_says(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->seed_notifications();
+        $t = self::T0;
+        $a = $this->ids['a'];
+        // A template whose notification type BizLMS has since deleted.
+        $this->legacy_row('local_notification_info', ['id' => 9, 'notificationid' => 99, 'open_path' => '/1',
+            'subject' => 'Orphan', 'body' => 'Body', 'timecreated' => $t, 'timemodified' => $t]);
+        // The production shape of the welcome e-mail whose template was deleted: the row's own moduletype is '' (the
+        // users writer never sets it), so only "the template is gone" can say what it was.
+        $table = '<table><tr><td>Username</td><td>jdoe</td></tr><tr><td>Password</td><td>Zx81!qpL</td></tr></table>';
+        $this->add_mail(90, $a, 997, 1, ['subject' => 'Your Airpay Academy account', 'emailbody' => $table,
+            'sent_date' => $t + 900]);
+        $this->add_mail(91, $a, 996, 1, ['subject' => 'Course reminder', 'emailbody' => '<p>See you in class</p>',
+            'sent_date' => $t + 910]);
+        $this->add_mail(92, $a, 995, 1, ['subject' => 'Your OTP', 'emailbody' => '<p>482913</p>', 'sent_date' => $t + 920]);
+        $this->add_mail(93, $a, 9, 1, ['subject' => 'Safety reminder', 'emailbody' => '<p>Pw: Qq1</p>', 'sent_date' => $t + 930]);
+        // A custom mail has no template reference (notification_infoid 0), so no template to resolve and no type to read:
+        // COMMS-N1 withholds the body of every row whose template cannot be resolved, this one included.
+        $this->add_mail(94, $a, 0, 1, ['subject' => 'Hello', 'emailbody' => '<p>Custom text</p>', 'sent_date' => $t + 940]);
+        // The same for a reference that is NULL (the column is optional in local_email_logs, and old rows had no value).
+        $this->legacy_row('local_email_logs', ['id' => 10, 'notification_infoid' => null, 'from_userid' => $this->ids['sender'],
+            'to_userid' => $a, 'subject' => 'Your pin', 'body_html' => '<p>Pin 4821</p>', 'sent_date' => $t + 950,
+            'created_date' => $t + 950, 'time_created' => 0, 'courseid' => 0]);
+
+        [$result, $report] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+
+        $r = $this->row('local_emaillogs', 90);
+        $this->assertSame(redactor::SUBJECT_MASK, $r->subject, 'the subject names an account');
+        $this->assertNull($r->body_html);
+        $this->assertNull($r->legacy_type, 'an unresolvable template has no type');
+        $r = $this->row('local_emaillogs', 91);
+        $this->assertSame('Course reminder', $r->subject, 'a subject that names no secret or account word is kept');
+        $this->assertNull($r->body_html, 'but the body is withheld: what the message was cannot be known');
+        $r = $this->row('local_emaillogs', 92);
+        $this->assertSame(redactor::SUBJECT_MASK, $r->subject, 'the subject names a secret word');
+        $this->assertNull($r->body_html);
+        $r = $this->row('local_emaillogs', 93);
+        $this->assertSame('Safety reminder', $r->subject);
+        $this->assertNull($r->body_html, 'the template is there but its notification type is gone');
+        $r = $this->row('local_emaillogs', 94);
+        $this->assertSame('Hello', $r->subject, 'the subject names no secret or account word');
+        $this->assertNull($r->body_html, 'a row that never pointed at a template loses its body too (COMMS-N1, option C)');
+        $this->assertNull($r->legacy_type);
+        $r = $this->row('local_email_logs', 10);
+        $this->assertSame(redactor::SUBJECT_MASK, $r->subject, 'a NULL reference is unresolved, and the subject names a secret word');
+        $this->assertNull($r->body_html);
+
+        // Seed row 5 and local_email_logs#1, #2 and #4 were already unresolved; 90 to 94 and local_email_logs#10 are six more.
+        $this->assertSame(10, $this->tally($report, 'warnings')['credentials_withheld:unresolved_template'] ?? 0);
+        foreach ($DB->get_records(self::TARGET) as $row) {
+            $text = implode("\n", [$row->subject, (string) $row->body_html]);
+            $this->assertStringNotContainsString('Zx81!qpL', $text);
+        }
+        $verify = $this->verify_now();
+        $this->assertSame(0, $verify['exit'], implode('; ', $verify['failures']['notifications'] ?? []));
+    }
+
+    public function test_every_leaky_shape_is_scrubbed_from_a_body_whose_template_is_known(): void {
+        $this->contract_begin();
+        $this->seed_notifications();
+        $t = self::T0;
+        $shapes = [
+            120 => ['<td>Password</td><td>Zx81!qpL</td>', 'Zx81!qpL'],
+            121 => ['Password<br>Zx81!qpL', 'Zx81!qpL'],
+            122 => ['<p>Password: Ab;xYz9</p>', 'xYz9'],
+            123 => ['<p>Password: Abc&1234</p>', '1234'],
+            124 => ["Password\nZx81!qpL", 'Zx81!qpL'],
+        ];
+        foreach ($shapes as $id => [$body]) {
+            $this->add_mail($id, $this->ids['a'], 1, 1, ['emailbody' => $body, 'sent_date' => $t + $id]);
+        }
+        [$result, $report] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        foreach ($shapes as $id => [$body, $secret]) {
+            $r = $this->row('local_emaillogs', $id);
+            $this->assertStringNotContainsString($secret, (string) $r->body_html, "#{$id}");
+            $this->assertStringContainsString(redactor::MASK, (string) $r->body_html, "#{$id}");
+        }
+        // Seed row 16 plus the five shapes.
+        $this->assertSame(6, $this->tally($report, 'warnings')['credential_text_scrubbed'] ?? 0);
+        $verify = $this->verify_now();
+        $this->assertSame(0, $verify['exit'], implode('; ', $verify['failures']['notifications'] ?? []));
+    }
+
+    public function test_verify_catches_text_that_the_scrub_would_still_change(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->seed_notifications();
+        $this->contract_run(true);
+        $clean = $this->verify_now();
+        $this->assertSame(0, $clean['exit'], implode('; ', $clean['failures']['notifications'] ?? []));
+
+        $row = $this->row('local_emaillogs', 1);
+        $original = (string) $row->body_html;
+        $DB->set_field(self::TARGET, 'body_html', '<td>Password</td><td>Zx81!qpL</td>', ['id' => $row->id]);
+        $bad = $this->verify_now();
+        $this->assertSame(1, $bad['exit']);
+        $this->assertStringContainsString('imported_text_with_unredacted_secret', implode(' ', $bad['failures']['notifications']));
+
+        // The same check reads the subject.
+        $DB->set_field(self::TARGET, 'body_html', $original, ['id' => $row->id]);
+        $DB->set_field(self::TARGET, 'subject', 'Reset: password: Zx81!qpL', ['id' => $row->id]);
+        $bad = $this->verify_now();
+        $this->assertStringContainsString('imported_text_with_unredacted_secret', implode(' ', $bad['failures']['notifications']));
+
+        // A subject of exactly 255 characters may have been cut inside a mask by the column limit: it is not checked.
+        $cut = str_repeat('x', 240) . ' password: [red';
+        $this->assertSame(255, \core_text::strlen($cut));
+        $DB->set_field(self::TARGET, 'subject', $cut, ['id' => $row->id]);
+        $ok = $this->verify_now();
+        $this->assertSame(0, $ok['exit'], implode('; ', $ok['failures']['notifications'] ?? []));
+        $DB->set_field(self::TARGET, 'subject', \core_text::substr($cut, 1), ['id' => $row->id]);
+        $bad = $this->verify_now();
+        $this->assertStringContainsString('imported_text_with_unredacted_secret', implode(' ', $bad['failures']['notifications']));
+    }
+
+    public function test_a_row_that_was_never_delivered_has_no_timesent_even_with_a_sent_date(): void {
+        $this->contract_begin();
+        $this->seed_notifications();
+        $t = self::T0;
+        // F-63: install.xml says timesent is NULL when BizLMS never delivered the message.
+        $this->add_mail(110, $this->ids['a'], 1, 0, ['sent_date' => $t + 1100]);
+        $this->add_mail(111, $this->ids['a'], 1, 1, ['sent_date' => $t + 1110]);
+        [$result] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+
+        $r = $this->row('local_emaillogs', 110);
+        $this->assertSame('not_sent', $r->status);
+        $this->assertNull($r->timesent, 'never delivered: no delivery time');
+        $r = $this->row('local_emaillogs', 111);
+        $this->assertSame('sent', $r->status);
+        $this->assertSame($t + 1110, (int) $r->timesent);
+    }
+
+    // COMMS-N2: a copy BizLMS sent to a manager.
+
+    /**
+     * Rows 80 to 84: manager copies about one team member, one for a member whose user row is gone, an ordinary row
+     * that happens to name the member, and a subject with a longer word that starts like the member's name.
+     *
+     * @return \stdClass The team member.
+     */
+    private function seed_manager_copies(): \stdClass {
+        global $DB;
+        $t = self::T0;
+        $member = $this->getDataGenerator()->create_user(['firstname' => 'Priya', 'lastname' => 'Singh']);
+        $DB->set_field('user', 'open_path', '/1/5', ['id' => $member->id]);
+        $m = $this->ids['manager'];
+        $this->add_mail(80, $m, 1, 1, ['subject' => 'Priya Singh completed Safety 101',
+            'emailbody' => '<p>Your team member Priya Singh completed Safety 101.</p>', 'teammemberid' => $member->id,
+            'sent_date' => $t + 800]);
+        $this->add_mail(81, $m, 1, 1, ['subject' => 'Well done priya!', 'emailbody' => '<p>Well done</p>',
+            'teammemberid' => $member->id, 'sent_date' => $t + 810]);
+        $this->add_mail(82, $m, 1, 1, ['subject' => 'A colleague completed Safety 101', 'teammemberid' => 888888,
+            'sent_date' => $t + 820]);
+        $this->add_mail(83, $this->ids['a'], 1, 1, ['subject' => 'Priya Singh enrolled', 'emailbody' => '<p>Priya Singh</p>',
+            'sent_date' => $t + 830]);
+        $this->add_mail(84, $m, 1, 1, ['subject' => 'Singhania Corp update', 'teammemberid' => $member->id,
+            'sent_date' => $t + 840]);
+        return $member;
+    }
+
+    public function test_a_copy_sent_to_a_manager_is_imported_without_its_body_and_the_members_name(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->seed_notifications();
+        $this->seed_manager_copies();
+
+        [$result, $report] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+
+        $r = $this->row('local_emaillogs', 80);
+        $this->assertSame('[team member] completed Safety 101', $r->subject, 'first and last name leave the subject');
+        $this->assertNull($r->body_html, 'the body names the member and the member is not carried');
+        $this->assertSame('sent', $r->status, 'everything else about the row is kept');
+        $this->assertSame($this->ids['manager'], (int) $r->userid);
+        $this->assertSame('Well done [team member]!', $this->row('local_emaillogs', 81)->subject, 'whole word, any case');
+        $this->assertNull($this->row('local_emaillogs', 81)->body_html);
+        $r = $this->row('local_emaillogs', 82);
+        $this->assertSame('A colleague completed Safety 101', $r->subject, 'a member whose user row is gone: nothing to scrub');
+        $this->assertNull($r->body_html);
+        $r = $this->row('local_emaillogs', 83);
+        $this->assertSame('Priya Singh enrolled', $r->subject, 'a row that is not a manager copy is left as it is');
+        $this->assertSame('<p>Priya Singh</p>', $r->body_html);
+        $this->assertSame('Singhania Corp update', $this->row('local_emaillogs', 84)->subject, 'only whole words');
+        $this->assertNull($this->row('local_emaillogs', 84)->body_html);
+        // Seed row 7 is a manager copy too.
+        $this->assertNull($this->row('local_emaillogs', 7)->body_html);
+
+        $this->assertSame(5, $this->tally($report, 'warnings')['team_member_copy_body_withheld'] ?? 0, 'rows 7, 80, 81, 82, 84');
+        $verify = $this->verify_now();
+        $this->assertSame(0, $verify['exit'], implode('; ', $verify['failures']['notifications'] ?? []));
+
+        // verify() fails a manager copy that carries a body.
+        $DB->set_field(self::TARGET, 'body_html', '<p>Priya Singh</p>', ['id' => $this->row('local_emaillogs', 80)->id]);
+        $bad = $this->verify_now();
+        $this->assertSame(1, $bad['exit']);
+        $this->assertStringContainsString('manager_copy_imported_with_a_body_although_the_decision_says_to_withhold',
+            implode(' ', $bad['failures']['notifications']));
+    }
+
+    public function test_the_owner_may_choose_to_import_the_body_of_a_manager_copy(): void {
+        $this->contract_begin();
+        $this->seed_notifications();
+        $this->seed_manager_copies();
+        $this->decisionvalues['notifications.team_member_copy_body'] = 'import';
+
+        [$result, $report] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        $r = $this->row('local_emaillogs', 80);
+        $this->assertSame('Priya Singh completed Safety 101', $r->subject);
+        $this->assertSame('<p>Your team member Priya Singh completed Safety 101.</p>', $r->body_html);
+        $this->assertArrayNotHasKey('team_member_copy_body_withheld', $this->tally($report, 'warnings'));
+        $verify = $this->verify_now();
+        $this->assertSame(0, $verify['exit'], implode('; ', $verify['failures']['notifications'] ?? []));
+    }
+
+    // COMMS-N3: the course of a row comes from moduleid for a course template.
+
+    /**
+     * Rows 100 to 108, all with template 1 (module type 'course') unless said.
+     *
+     * @return \stdClass The second course.
+     */
+    private function seed_course_links(): \stdClass {
+        $a = $this->ids['a'];
+        $c = $this->ids['course'];
+        $other = $this->getDataGenerator()->create_course();
+        $o = (string) $other->id;
+        $this->add_mail(100, $a, 1, 1, ['moduleid' => (string) $c]);
+        $this->add_mail(101, $a, 3, 1, ['moduleid' => (string) $c]);
+        $this->add_mail(102, $a, 1, 1, ['moduleid' => '1']);
+        $this->add_mail(103, $a, 1, 1, ['moduleid' => '5,6']);
+        $this->add_mail(104, $a, 1, 1, ['moduleid' => 'abc']);
+        $this->add_mail(105, $a, 1, 1, ['moduleid' => '999999']);
+        $this->add_mail(106, $a, 1, 1, ['courseid' => $c, 'moduleid' => $o]);
+        $this->add_mail(107, $a, 1, 1, ['courseid' => 999999, 'moduleid' => $o]);
+        $this->add_mail(108, $a, 999, 1, ['moduleid' => (string) $c]);
+        return $other;
+    }
+
+    public function test_the_course_comes_from_moduleid_for_a_course_template(): void {
+        $this->contract_begin();
+        $this->seed_notifications();
+        $other = $this->seed_course_links();
+        $c = $this->ids['course'];
+
+        [$result, $report] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+
+        $this->assertSame($c, (int) $this->row('local_emaillogs', 100)->courseid, 'a course template: moduleid is the course');
+        $this->assertNull($this->row('local_emaillogs', 101)->courseid, 'a classroom template: moduleid is not a course id');
+        $this->assertNull($this->row('local_emaillogs', 102)->courseid, 'moduleid 1 is the site');
+        $this->assertNull($this->row('local_emaillogs', 103)->courseid, 'a list is not an id');
+        $this->assertNull($this->row('local_emaillogs', 104)->courseid);
+        $this->assertNull($this->row('local_emaillogs', 105)->courseid, 'a course BizLMS has deleted');
+        $this->assertSame($c, (int) $this->row('local_emaillogs', 106)->courseid, 'the courseid column wins over moduleid');
+        $this->assertSame((int) $other->id, (int) $this->row('local_emaillogs', 107)->courseid,
+            'the column names a deleted course, so moduleid is tried');
+        $this->assertNull($this->row('local_emaillogs', 108)->courseid, 'the template is gone: its module type is unknown');
+        $this->assertSame(2, $this->tally($report, 'warnings')['course_from_moduleid'] ?? 0, 'rows 100 and 107');
+    }
+
+    public function test_the_owner_may_keep_the_course_to_the_courseid_column_only(): void {
+        $this->contract_begin();
+        $this->seed_notifications();
+        $this->seed_course_links();
+        $this->decisionvalues['notifications.course_link'] = 'courseid_column_only';
+
+        [$result, $report] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        $this->assertNull($this->row('local_emaillogs', 100)->courseid);
+        $this->assertNull($this->row('local_emaillogs', 107)->courseid);
+        $this->assertSame($this->ids['course'], (int) $this->row('local_emaillogs', 106)->courseid);
+        $this->assertArrayNotHasKey('course_from_moduleid', $this->tally($report, 'warnings'));
+    }
+
+    // Preflight: what the live backup must be read for.
+
+    public function test_preflight_reports_manager_copies_unresolved_secret_rows_and_rewritten_deleted_users(): void {
+        $this->contract_begin();
+        $this->seed_notifications();
+        $this->seed_manager_copies();
+        $t = self::T0;
+        $a = $this->ids['a'];
+        $this->add_mail(90, $a, 997, 1, ['subject' => 'Your Airpay Academy account',
+            'emailbody' => '<td>Password</td><td>Zx81!qpL</td>', 'sent_date' => $t + 900]);
+        $this->add_mail(91, $a, 996, 1, ['subject' => 'Course reminder', 'emailbody' => '<p>See you in class</p>',
+            'sent_date' => $t + 910]);
+        $this->add_mail(92, $a, 995, 1, ['subject' => 'Your OTP', 'emailbody' => '<p>482913</p>', 'sent_date' => $t + 920]);
+        // No template reference at all, and a secret word in the body: it is an unresolved row too (COMMS-N1).
+        $this->add_mail(93, $a, 0, 1, ['subject' => 'Hello', 'emailbody' => '<p>Your pin is 4821</p>', 'sent_date' => $t + 930]);
+        // Five deleted recipients that share one timemodified: something rewrote their rows.
+        foreach ([130, 131, 132, 133, 134] as $id) {
+            $this->add_mail($id, $this->deleted_user($t + 777, 0), 1, 1, ['sent_date' => $t + 1200]);
+        }
+        // One deleted after the newest send of the table.
+        $this->add_mail(135, $this->deleted_user($t + 99999, 0), 1, 1, ['sent_date' => $t + 1200]);
+
+        $runner = new runner(['decisions' => $this->contract_decisions()]);
+        $pf = $runner->preflight(['notifications'])['preflights']['notifications'];
+        $this->assertFalse($pf->has_blockers(), implode('; ', $pf->blockers()));
+        $warnings = $pf->warnings();
+        // Seed row 5 (template 999 gone, body names a password), 90, 92 and 93 (no template reference); 91 names nothing.
+        $this->assertContains('unresolved_template_rows_naming_a_secret_word:local_emaillogs:4', $warnings);
+        // local_email_logs has no template reference in the seed, and #4 names credentials; #1, #2 and #3 name nothing.
+        $this->assertContains('unresolved_template_rows_naming_a_secret_word:local_email_logs:1', $warnings);
+        $this->assertContains('manager_copies:local_emaillogs:5', $warnings, 'rows 7, 80, 81, 82 and 84');
+        // Deleted recipients with a delivered row: the seed's user d, the five and the late one.
+        $this->assertContains('many_deleted_recipients_share_one_timemodified:local_emaillogs:5of7', $warnings);
+        $this->assertContains('deleted_recipients_modified_after_the_newest_send:local_emaillogs:1', $warnings);
     }
 }

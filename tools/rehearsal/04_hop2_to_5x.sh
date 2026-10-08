@@ -15,9 +15,16 @@
 #   * a zip that is really a tar (GNU tar writes one when asked for a zip) is refused; a leaked dev config.php is refused.
 #
 # Steps: unpack (SHA-256 gate) -> tree checks -> BizLMS code off disk -> config with the DB guard -> box and engine checks ->
-# restore point -> upgrade.php --non-interactive -> verify (release, Sentientia plugins installed, commerce stays dark)
-# -> purge -> parity (migration_parity_check.php --compare). PARITY_HOP2_ENFORCE=0 makes the parity a warning that step 09
-# judges again.
+# THE ACTIVITY CHECK (below) -> restore point -> upgrade.php --non-interactive -> verify (release, Sentientia plugins installed,
+# commerce stays dark) -> purge -> parity (migration_parity_check.php --compare). PARITY_HOP2_ENFORCE=0 makes the parity a warning
+# that step 09 judges again.
+#
+# THE ACTIVITY CHECK, before the irreversible part. The Moodle 5.0 upgrade (lib/db/upgrade.php, 2025040100.01) uninstalls mod_survey
+# and mod_chat when their code is not on disk, and uninstalling a module type deletes every activity of it with its completion rows
+# and data. The parity tool reports the loss (course_modules drifts) but only AFTER a ~40 minute hop that only the snapshot can undo,
+# and it has no way to accept such a loss. So this step counts the activities of those two module types first and refuses to start
+# the hop while the package has no public/mod/<name>/version.php for a type that has activities. The one way forward is to build the
+# package with a 5.x mod_survey and mod_chat (ADR-032 "FINDING"); that is Nitin's decision, not the operator's.
 
 # shellcheck source=lib/common.sh
 . "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
@@ -66,15 +73,20 @@ if [ -f "$CODE_5X_DIR/public/version.php" ]; then
         pkgtool="$CODE_5X_DIR/public/local/sentientia_platform/cli/source_baseline.php"
         pkgsha="$(sha256_lf_of "$pkgtool")"   # carriage returns removed: a Windows checkout and a Linux one are the same file
         kv_set package.baseline_tool_sha256_lf "$pkgsha"
-        basesha="$(kv_get baseline.tool_sha256_lf)"
+        # The baseline names the file that took it: the tool writes its own SHA-256 (carriage returns removed) into tool.sha256. That, and
+        # not the checkout's copy, is what the package must match, because with LIVE_BASELINE_FILE the baseline was taken somewhere else.
+        # The tool itself refuses (exit 3) a baseline another file took, so there is nothing to override.
+        [ -s "$BASELINE_FILE" ] || die "no baseline at ${BASELINE_FILE}: run step 02 first"
+        basesha="$(kit_php json_get.php "$BASELINE_FILE" tool.sha256 || true)"
+        if [ "${ALLOW_BASELINE_TOOL_SKEW:-0}" = 1 ]; then
+            warn "ALLOW_BASELINE_TOOL_SKEW=1 is no longer honoured: the tool refuses a baseline that another version of source_baseline.php took (exit 3), so there is nothing to override"
+        fi
         if [ -z "$basesha" ]; then
-            die "step 02 recorded no hash of the baseline tool (state/kv/baseline.tool_sha256_lf): run step 02 first"
+            die "the baseline holds no tool.sha256 (it was taken by a tool older than metrics version 4): take the baseline again (step 02), with the package's own source_baseline.php"
         elif [ "$pkgsha" = "$basesha" ]; then
-            log "OK: the package's source_baseline.php is the file the baseline was taken with (SHA-256 ${pkgsha})"
-        elif [ "$ALLOW_BASELINE_TOOL_SKEW" = 1 ]; then
-            warn "the package's source_baseline.php (${pkgsha}) is not the file the baseline was taken with (${basesha}); continuing because ALLOW_BASELINE_TOOL_SKEW=1. The tool refuses a baseline of another metrics version, but a changed metric definition under the same version would count differently"
+            log "OK: the package's source_baseline.php is the file the baseline says took it (tool.sha256 ${pkgsha})"
         else
-            die "the package's source_baseline.php (SHA-256 ${pkgsha}) is not the file the baseline was taken with (${basesha}): the two sides would not run the same code. Build the package from the commit whose tool took the baseline, or take the baseline again with the package's file (SOURCE_BASELINE_PHP). ALLOW_BASELINE_TOOL_SKEW=1 overrides, at your risk"
+            die "the package's source_baseline.php (SHA-256 ${pkgsha}) is not the file the baseline says took it (tool.sha256 ${basesha}): the two sides would not run the same code, and the tool refuses the comparison. Build the package from the commit whose tool took the baseline, or take the baseline again with the package's file"
         fi
     fi
 
@@ -144,6 +156,27 @@ fi
 
 # 5. The hop.
 if [ "$ALREADY" = 0 ]; then
+    # The activity check (see the header): before the snapshot, before anything is written.
+    if [ "$EXECUTE" = 1 ]; then
+        lost="$(modules_lost_in_hop2 "$CODE_5X_DIR")" || die "could not count the activities of the module types the 5.x upgrade uninstalls"
+        if [ -n "$lost" ]; then
+            printf '%s\n' "$lost" | awk '{ printf "    mod_%s: %s activities that hop 2 would delete\n", $1, $2 }'
+            kv_set hop2.activities_lost "$(printf '%s' "$lost" | tr '\n' ';')"
+            die "the 5.x package at ${CODE_5X_DIR} carries no code for a module type that has activities here (above). The Moodle 5.0 upgrade uninstalls mod_survey and mod_chat when their code is not on disk and DELETES their activities, completion rows and data: the hop cannot be undone but by the snapshot, and nothing in the parity tool can accept the loss. Nothing was changed. Build the package with a 5.x mod_survey and mod_chat (public/mod/survey, public/mod/chat) and run this step again; shipping them or not is Nitin's decision (ADR-032 FINDING)"
+        fi
+        kv_set hop2.activities_lost "none"
+        log "OK: no activity of mod_survey or mod_chat would be deleted by hop 2 (the package carries their code, or this copy has no activity of them)"
+        others="$(db_q "SELECT m.name, COUNT(cm.id) FROM {p}modules m JOIN {p}course_modules cm ON cm.module = m.id GROUP BY m.name ORDER BY m.name" \
+            | while IFS=$'\t' read -r mname mcount; do
+                [ -n "$mname" ] || continue
+                [ -f "$CODE_5X_DIR/public/mod/$mname/version.php" ] || printf '%s(%s) ' "$mname" "$mcount"
+            done || true)"
+        if [ -n "$others" ]; then
+            warn "module types with activities whose code is not in the 5.x package: ${others}. Their rows stay but the activities cannot be shown; the upgrade does not delete them"
+        fi
+    else
+        dry "would count the activities of mod_survey and mod_chat and stop before the hop when the package has no code for a type that has any (the 5.0 upgrade would delete them)"
+    fi
     snapshot_hook "before-hop-2"
     upgrade_args=(--non-interactive)
     if [ "$UPGRADE_ALLOW_UNSTABLE" = 1 ]; then

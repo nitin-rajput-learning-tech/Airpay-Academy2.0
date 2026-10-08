@@ -302,7 +302,10 @@ load_env() {
     : "${PRODUCTION_DB_ENDPOINT:=}"
     : "${FORBIDDEN_SERVER_SCHEMAS:=}"
     : "${RESTORE_DONE_BY_HAND:=}"
+    : "${RESTORE_MOODLEDATA_BY_HAND:=}"
     : "${RESTORE_ALLOW_NO_TRAILER:=0}"
+    : "${SNAPSHOT_TAKEN:=}"
+    : "${BIZLMS_PRODUCTION_FLAG:=0}"
     : "${ALLOW_BASELINE_TOOL_SKEW:=0}"
     export SOURCE_BASELINE_PHP
 
@@ -960,12 +963,35 @@ release_of_file() {
     sed -n "s/^\\\$release *= *'\\([^']*\\)'.*/\\1/p" "$1" | head -n 1
 }
 
+# snapshot_acknowledged LABEL -> 0 when SNAPSHOT_TAKEN names the label (a comma list: before-hop-1,before-hop-2,before-import) or is
+# 'all': the operator took that restore point by hand and says so.
+snapshot_acknowledged() {
+    local want="$1" item
+    local IFS=','
+    for item in ${SNAPSHOT_TAKEN:-}; do
+        item="${item// /}"
+        if [ "$item" = "$want" ] || [ "$item" = all ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
 # snapshot_hook LABEL: the operator's snapshot command (RDS snapshot, LVM, dump), if any.
+# Without a hook the kit can only remind, and the irreversible step starts in the same second, so a reminder alone is not a restore
+# point. With BIZLMS_PRODUCTION_FLAG=1 (the exact cutover form, where the snapshot is the only way back) the kit therefore refuses to
+# go on unless there is a hook or SNAPSHOT_TAKEN names this label; in the rehearsal form (the dump is the way back) it still only
+# says so.
 snapshot_hook() {
+    local label="$1"
     if [ -n "${SNAPSHOT_HOOK:-}" ]; then
-        timed "snapshot $1" "$SNAPSHOT_HOOK" "$1" || die "the snapshot hook failed for $1"
+        timed "snapshot ${label}" "$SNAPSHOT_HOOK" "$label" || die "the snapshot hook failed for ${label}"
+    elif snapshot_acknowledged "$label"; then
+        note "no SNAPSHOT_HOOK: the restore point '${label}' was taken by hand, as SNAPSHOT_TAKEN says (${SNAPSHOT_TAKEN})"
+    elif [ "$EXECUTE" = 1 ] && [ "${BIZLMS_PRODUCTION_FLAG:-0}" = 1 ]; then
+        die "no restore point for '${label}': BIZLMS_PRODUCTION_FLAG=1 is the cutover form, where the snapshot is the only way back, and neither SNAPSHOT_HOOK nor SNAPSHOT_TAKEN names it. Take the snapshot, set SNAPSHOT_TAKEN=${label} (a comma list of labels, or all) and run this step again"
     else
-        note "no SNAPSHOT_HOOK configured: take the restore point for '$1' by hand now (the rollback of a failed hop is a restore)"
+        note "no SNAPSHOT_HOOK configured: take the restore point for '${label}' by hand now (the rollback of a failed hop is a restore), or set SNAPSHOT_TAKEN=${label} once you have"
     fi
 }
 
@@ -997,11 +1023,22 @@ dump_stream() {
     esac
 }
 
-# dump_unsafe_statement FILE -> prints the first USE / CREATE DATABASE / DROP DATABASE statement of the dump (nothing when
-# there is none). Such a statement (mysqldump --databases / --all-databases) sends everything after it to the schema it
-# names, on whatever server DB_HOST is, whatever REHEARSAL_DB_ALLOWLIST says.
+# dump_unsafe_statement FILE -> prints the first statement of the dump that must not be restored here (nothing when there is none):
+#   * USE / CREATE DATABASE / DROP DATABASE (mysqldump --databases / --all-databases) sends everything after it to the schema it
+#     names, on whatever server DB_HOST is, whatever REHEARSAL_DB_ALLOWLIST says;
+#   * SET @@GLOBAL.GTID_PURGED (what mysqldump writes for a GTID-enabled source such as RDS unless --set-gtid-purged=OFF) is a
+#     SERVER-wide setting: on MariaDB it aborts the restore, and on a privileged MySQL login it changes the replication state of a
+#     server that may be UAT's.
+# It reads the whole file once (the trailer check reads only its tail), before the restore reads it again.
 dump_unsafe_statement() {
-    { dump_stream "$1" | grep -a -m1 -Ei -e '^[[:space:]]*(/\*![0-9]*[[:space:]]+)?(use[[:space:]]|create[[:space:]]+(database|schema)[[:space:]]|drop[[:space:]]+(database|schema)[[:space:]])' | cut -c1-160; } 2> /dev/null || true
+    { dump_stream "$1" | grep -a -m1 -Ei -e '^[[:space:]]*(/\*![0-9]*[[:space:]]+)?(use[[:space:]]|create[[:space:]]+(database|schema)[[:space:]]|drop[[:space:]]+(database|schema)[[:space:]]|set[[:space:]]+(@@global\.|global[[:space:]]+)gtid_purged)' | cut -c1-160; } 2> /dev/null || true
+}
+
+# dump_mysql8_collation FILE -> prints the first utf8mb4_0900_* collation named in the first 20 MB of the dump (nothing when there is
+# none). MySQL 8 dumps name it in every CREATE TABLE; MariaDB does not know it, so the restore would fail at the first table, after the
+# whole file was scanned once already. The head is enough: the first tables are at the top.
+dump_mysql8_collation() {
+    { dump_stream "$1" | head -c 20000000 | grep -a -m1 -Eo 'utf8mb4_0900_[a-z0-9_]+'; } 2> /dev/null || true
 }
 
 # dump_has_trailer FILE -> 0 when the dump ends with mysqldump's "-- Dump completed" line (an aborted mysqldump has none,
@@ -1056,6 +1093,87 @@ moodledata_marker_get() {
     return 0
 }
 
+# The marker file of the moodledata has up to three lines:
+#   1  the restore id (what moodledata_marker_get reads)
+#   2  archive=<identity of the archive the kit unpacked here>   written BEFORE the unpack starts
+#   3  unpacked=<time>                                           written after the unpack succeeded
+# They let a re-run tell "the same unpack, finished" from "a partial unpack", "another archive" and "not unpacked by the kit", and
+# let a NEW restore refuse a dataroot that an earlier rehearsal has already used.
+
+# archive_identity FILE -> absolute path | size | mtime. A 30 GB archive is not hashed: if the path, the size and the mtime are the
+# same, it is the same archive.
+archive_identity() {
+    local f="$1" p
+    # The resolved path is also what is measured: stat of a symlink reports the link, not the archive it points at.
+    p="$(readlink -f "$f" 2> /dev/null || true)"
+    [ -n "$p" ] || p="$f"
+    printf '%s|%s|%s' "$p" "$(stat -c %s "$p")" "$(stat -c %Y "$p")"
+}
+
+moodledata_marker_line() {
+    if [ -f "$MOODLEDATA/$KIT_MARKER_FILE" ]; then
+        sed -n "${1}p" "$MOODLEDATA/$KIT_MARKER_FILE" | tr -d '\r\n'
+    fi
+    return 0
+}
+
+# moodledata_unpack_state IDENTITY -> none (no archive recorded) | other (a different archive) | incomplete (this archive, never
+# finished) | match (this archive, finished).
+moodledata_unpack_state() {
+    local want="$1" l2 l3
+    l2="$(moodledata_marker_line 2)"
+    l3="$(moodledata_marker_line 3)"
+    case "$l2" in
+        '') printf 'none' ;;
+        "archive=${want}")
+            if [ -n "$l3" ]; then
+                printf 'match'
+            else
+                printf 'incomplete'
+            fi
+            ;;
+        *) printf 'other' ;;
+    esac
+}
+
+# moodledata_write_marker ID [IDENTITY [done]]: (re)write the marker file. IDENTITY adds the archive line, 'done' the unpacked line.
+moodledata_write_marker() {
+    mkdir -p "$MOODLEDATA"
+    {
+        printf '%s\n' "$1"
+        if [ -n "${2:-}" ]; then
+            printf 'archive=%s\n' "$2"
+        fi
+        if [ -n "${3:-}" ]; then
+            printf 'unpacked=%s\n' "$(ts)"
+        fi
+    } > "$MOODLEDATA/$KIT_MARKER_FILE"
+}
+
+# moodledata_restamp ID: a new restore reuses an unpack that is already recorded (lines 2 and 3 stay as they are): only the id changes.
+moodledata_restamp() {
+    local rest=""
+    if [ -f "$MOODLEDATA/$KIT_MARKER_FILE" ]; then
+        rest="$(sed -n '2,$p' "$MOODLEDATA/$KIT_MARKER_FILE")"
+    fi
+    {
+        printf '%s\n' "$1"
+        if [ -n "$rest" ]; then
+            printf '%s\n' "$rest"
+        fi
+    } > "$MOODLEDATA/$KIT_MARKER_FILE"
+}
+
+# moodledata_recent_writes -> the first file below sessions/ or localcache/ written in the last 30 minutes (nothing when there is
+# none). A dataroot that a site is using shows it there within minutes; a copy nobody runs does not.
+moodledata_recent_writes() {
+    local d
+    for d in "$MOODLEDATA/sessions" "$MOODLEDATA/localcache"; do
+        [ -d "$d" ] || continue
+        find "$d" -type f -mmin -30 2> /dev/null | head -n 1
+    done | head -n 1
+}
+
 # require_kit_marker: EXECUTE stops unless the database AND the moodledata carry the id that state/kv/restore.id holds.
 require_kit_marker() {
     [ "$EXECUTE" = 1 ] || return 0
@@ -1084,9 +1202,10 @@ work_state_has_history() {
     return 1
 }
 
-# rotate_work_state: a new restore starts a new rehearsal. state/, reports/, baseline/ and logs/timings.tsv of the earlier one
-# move to archive/<stamp>-<id>/ (never deleted) so nothing of it can be mistaken for this one's result. 00.status (the
-# preflight of this very run) stays.
+# rotate_work_state: a new restore starts a new rehearsal. state/, reports/, baseline/, muc/ (the rehearsal's own cache
+# configuration: the 5.x run of the earlier rehearsal wrote a cacheconfig.php there that hop 1's 4.5 code must not start on) and
+# logs/timings.tsv of the earlier one move to archive/<stamp>-<id>/ (never deleted) so nothing of it can be mistaken for this
+# one's result. 00.status (the preflight of this very run) stays.
 rotate_work_state() {
     [ "$EXECUTE" = 1 ] || return 0
     local stamp old dest d keep00=""
@@ -1098,7 +1217,7 @@ rotate_work_state() {
     if [ -f "$STATE_DIR/00.status" ]; then
         keep00="$(cat "$STATE_DIR/00.status")"
     fi
-    for d in "$STATE_DIR" "$REPORT_DIR" "$BASELINE_DIR"; do
+    for d in "$STATE_DIR" "$REPORT_DIR" "$BASELINE_DIR" "$REHEARSAL_WORK/muc"; do
         if [ -d "$d" ]; then
             mv "$d" "$dest/"
         fi
@@ -1110,12 +1229,34 @@ rotate_work_state() {
     if [ -n "$keep00" ]; then
         printf '%s\n' "$keep00" > "$STATE_DIR/00.status"
     fi
-    log "an earlier rehearsal's state, reports, baseline and timings moved to ${dest} (a new restore starts a new rehearsal)"
+    log "an earlier rehearsal's state, reports, baseline, cache configuration and timings moved to ${dest} (a new restore starts a new rehearsal)"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
 # What the kit records about the code it ran
 # ---------------------------------------------------------------------------------------------------------------------
+# The Moodle 5.0 upgrade (lib/db/upgrade.php, 2025040100.01) calls uninstall_plugin() for these two module types when their code is
+# not on disk, and uninstalling a module type deletes every activity of it with its completion rows and instance tables. The 5.x
+# plugin directories are public/mod/survey and public/mod/chat.
+HOP2_UNINSTALLS_MISSING_MODULES="survey chat"
+
+# modules_lost_in_hop2 DIR -> "name count" for each module type the 5.0 upgrade uninstalls when absent (above) that has activities in
+# this database and whose code is NOT in the 5.x tree DIR/public/mod/<name>/version.php. Nothing printed = nothing would be lost.
+# Returns 1 when the database cannot be asked.
+modules_lost_in_hop2() {
+    local dir="$1" name n
+    for name in $HOP2_UNINSTALLS_MISSING_MODULES; do
+        if [ -f "$dir/public/mod/$name/version.php" ]; then
+            continue
+        fi
+        n="$(db_scalar "SELECT COUNT(*) FROM {p}course_modules cm JOIN {p}modules m ON m.id = cm.module WHERE m.name = '${name}'")" || return 1
+        if [ "${n:-0}" -gt 0 ]; then
+            printf '%s %s\n' "$name" "$n"
+        fi
+    done
+    return 0
+}
+
 # tree_manifest_sha DIR -> SHA-256 over every version.php below DIR (core and every plugin: path and content hash), so the
 # summary names the code that really ran, not only the archive the operator said it unpacked.
 tree_manifest_sha() {
@@ -1168,9 +1309,24 @@ parity_only_pre_repair_invariant() {
 }
 
 # names_our_tree TEXT -> 0 when TEXT names one of the two code trees of this rehearsal (a scheduler line that runs THIS rehearsal's cron).
+# The directory counts as a whole path word: the characters before and after it must not be able to continue a path name. A real
+# scheduler line is usually 'cd /srv/rehearsal/moodle5 && php admin/cli/cron.php', which names the tree with no slash after it;
+# '/srv/rehearsal/moodle5-uat/admin/cli/cron.php' and '/mnt/srv/rehearsal/moodle5/...' are other trees and do not count.
 names_our_tree() {
-    case "$1" in
-        *"${CODE_45_DIR%/}/"* | *"${CODE_5X_DIR%/}/"*) return 0 ;;
-    esac
+    local text="$1" dir rest before after pc nc
+    for dir in "${CODE_45_DIR%/}" "${CODE_5X_DIR%/}"; do
+        [ -n "$dir" ] || continue
+        rest="$text"
+        while [[ "$rest" == *"$dir"* ]]; do
+            before="${rest%%"$dir"*}"
+            after="${rest#*"$dir"}"
+            pc="${before: -1}"
+            nc="${after:0:1}"
+            if { [ -z "$pc" ] || [[ ! "$pc" =~ [A-Za-z0-9_.+-] ]]; } && { [ -z "$nc" ] || [[ ! "$nc" =~ [A-Za-z0-9_.+-] ]]; }; then
+                return 0
+            fi
+            rest="$after"
+        done
+    done
     return 1
 }

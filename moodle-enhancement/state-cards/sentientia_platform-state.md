@@ -894,8 +894,8 @@ tooling and the rehearsal kit (`tools/rehearsal/`); this closes their must-fix a
   read only): every new checksum matches except `course_modules`: 1540 vs 1539 rows, and with cm 1153 left out the CRCs are equal.
   That row is a `mod_survey` activity the Moodle 5.0 upgrade deleted (`lib/db/upgrade.php` 2025040100.01 uninstalls `mod_survey` and
   `mod_chat` when their code is not on disk). The old metric sets could not see it. **Decision for Nitin:** put both plugins in the
-  package, or accept the loss in writing (ADR-032 "FINDING").
-- **`classes/bizlms/registry.php`:** `enrol`, `role_assignments`, `user_enrolments` are `['insert']` only (no importer updates them; the
+  package ("accept the loss in writing" was the first wording; the tool cannot accept it, see ADR-032 "FINDING" and the fix round 2 entry).
+- **`classes/bizlms/registry.php`:** `enrol`, `role_assignments`, `user_enrolments` were narrowed to `['insert']` only (CORRECTED in fix round 2: `enrol` is insert+update again, CRS-01; no importer updates the other two; the
   parity check holds their old rows to the baseline). ADR-032 decision 8 amended; `bizlms_registry_test`, `bizlms_writer_test`
   comment and `parity_library_test` updated.
 - **`cli/migration_parity_check.php`:** usage errors and an unreadable or unwritable baseline exit 3 as the header says; the header
@@ -905,3 +905,211 @@ tooling and the rehearsal kit (`tools/rehearsal/`); this closes their must-fix a
   assertion. Run through a `basic_testcase` shim with the other DB-free tests of the file that need no Moodle autoloader: 24 pass (a 25th uses `assertStringStartsWith`, which the shim lacks).
 - **Kit:** see `tools/rehearsal/README.md` ("What it refuses", "Re-running", "What the first local rehearsal taught") and the
   PROJECT-STATE entry of 2026-10-08.
+
+---
+
+## 2026-10-07 - dev masking script: imported e-mail, request and admin-log text (F-60, F-87, comms part; no version change)
+
+`cli/mask_pii_for_dev.php` (both trees) updated a `to_email` column of `local_sentientia_email_log` that the table has never
+had (install.xml), so the first real run would have stopped at step 6, and it never masked what the BizLMS import put into
+three tables. Step 6 now: drops that UPDATE; masks the subject of every row with `legacy_source` set (the credentials mask
+`[withheld: account credentials]` stays, it names no one) and removes `body_html` of those rows; removes `decision_note` of
+imported `local_sentientia_request` rows (the comment thread: names and free text); masks `description` of
+`local_sentientia_admin_log` (it names the actor by first name). The cart half of F-87 (billing reasons, ledger, credits) is the
+finance cluster's, in step 3 of the same script. Test: `tests/mask_pii_for_dev_test.php` reads the script and the three
+install.xml files and checks that the script names no column that does not exist (the script bootstraps Moodle and writes, so it
+cannot run under PHPUnit). Run this script before any dev or UAT copy is built from a Stage B database.
+
+## 2026-10-07 - ADR-032 decisions file: 36 owner decisions recorded (fixture copies refreshed)
+
+`docs/cutover/bizlms-import-decisions.json` now holds 138 decisions: 36 were added or corrected under Nitin's delegation of
+2026-10-07 (`why` starts `[delegated 2026-10-07]`; a top-level `delegated_on` and `delegation_note` sit next to `approved_by`
+and `approved_on`, which are unchanged). Both `tests/fixtures/bizlms/bizlms-import-decisions.copy.json` copies are byte-for-byte
+the signed file (`tools/check-bizlms-fixture-copies.php` OK). No code, no version bump, no flag.
+
+- The two cart keys are `accepted` now (Airpay Finance was not consulted), so
+  `bizlms_decisions_test::test_the_checked_in_file_loads_and_its_finance_items_block` and the cart `bizlms_import_test` assertions
+  that expect `finance-confirm` must follow `cart.finance_keys_status`; the toy `decisions.sample.json` keeps covering the
+  blocking mechanism. `skills.level_proficiency.csv` is filled, so the skills test that expects the signed file to block skips itself.
+- The file's sha256 changed. No Stage B hash is pinned yet, so this is not a re-approval event. No `accepted_reasons` list is
+  added on purpose: the owner adds it after Stage B (IDN-02).
+- Framework changes this batch's decisions call for (copies_files marker, sequence floor from the legacy AUTO_INCREMENT,
+  preflight catching `blocked`, parity wiring) are recorded in ADR-032, "Framework change rule"; they are code, not part of
+  this entry. Details and the 84 decisions: `docs/cutover/OWNER-DECISIONS-2026-10-07.md`.
+
+## 2026-10-07 - ADR-032 framework change: copies_files marker, {files} tripwire, preflight catch (1.11.0, 2026100701)
+
+Branch `claude/owner-decisions-x`; the one framework change the "Framework change rule" (F-83) allows before Stage B, for
+the identity cluster's items (the sequence floor, EV-26, and the parity wiring are other clusters').
+
+- **IDN-04 / F-12:** `bizlms\copies_files` (new interface, `allowed_file_areas()` returns
+  [source component, source area, target component, target area] pairs) is the marker for an importer that copies files
+  through `file_rehome`. `sideeffect_guard::TABLES` now contains `files`, so the tripwire watches it for EVERY importer;
+  an importer that implements the marker is exempt from the generic check and is checked by area instead
+  (`sideeffect_guard::files_in_areas()`): a new `{files}` row in any area it did not declare trips with
+  `write_outside_declared_tables:files:<component>/<area>`. The check runs at all three tripwire looks, the last after
+  `finalise()` (where the copies are made). The report gets `files_copied` per declared area (0 when nothing copied;
+  directory rows are not counted). The registry refuses a malformed declaration (`file_areas_malformed:<feature>`). The
+  copies are not core writes, so `--purge-feature` is unaffected and leaves them. Implemented by org and cohort_scope
+  (local_sentientia_org, this batch) and, since fix round 1 (2026-10-07), by `learningplan`, `classroom` and `programs`
+  (each requires this plugin at 2026100701), so all five callers of `file_rehome` declare their copies (decision IDN-04
+  names all five). Any future caller must implement the marker too, or its contract test and real runs trip on `files`.
+  A test wrapper around an importer (`learningpath`'s `standalone_importer`) must implement it as well: the runner decides
+  by `instanceof`. `importer_contract::test_contract_no_side_effects` applies the same rule. Signed key
+  `framework.file_rehome_copies`.
+- **F-10:** `runner::preflight_feature()` catches `blocked` from an importer's `preflight()` (for example `$ctx->decision()`
+  on an unaccepted key) and records it as a blocker, once, instead of letting it escape the whole preflight pass.
+- **F-11:** `tenant_resolver::root_is_registered(int)` (public, static) is the one "is this a registered tenant root" check;
+  the org importer (the TENANT_OWNER) must not call `resolve()` for its own rows. The org copy is replaced, and so is the
+  emails `log_step.php` one (fix round 1); the other copies of the try/catch around `tenant::assert_valid` (runner, cart,
+  classroom, evaluation, courses, request, roles, users) are left for their owners.
+- **F-15:** `privacy_coverage_test::USER_COLUMNS` gains `usermodified`, `usercreated` and `modified_by`. The guard then sees
+  three tables whose provider does not declare them (`local_sentientia_email_overrides`, `local_sentientia_email_rules`,
+  `local_sentientia_talent_path`, each only an actor id): they are listed in `UNDECLARED_ACTOR_TABLES` with their owning
+  plugin so the guard stays green and any NEW table with these columns is checked at once. Each entry goes when its provider
+  declares the table (new privacy strings in en and hi, plugins other sessions own). The org and users providers declare theirs.
+- **IDN-02:** `decisions.php` docblock now says what the loader does: nothing is pre-accepted, the owner adds
+  `accepted_reasons` after Stage B with the counts.
+- Tests: `bizlms_runner_test` (file without the marker trips; with the marker in the area, counted; outside the area trips;
+  zero copies reported as 0; purge leaves the copies; malformed declaration refused; a blocked decision in an importer's
+  preflight is one blocker), `bizlms_support_test` (`files` watched, `files_in_areas`, declaration shape,
+  `root_is_registered`). Test scaffolding: `toy_importer` is no longer `final`; `toy_files_importer` implements the marker;
+  new knobs `$writefile`, `$fileareas`, `$preflightdecision`.
+- Version 2026093002 -> 2026100701, release 1.11.0. No schema change. NOT RUN: PHPUnit (the lead re-inits once).
+
+## 2026-10-07 - owner decisions, finance cluster (branch claude/owner-decisions-y; no version bump)
+
+Two small changes made for the cart decisions (details in `sentientia_cart-state.md`). Not run: no PHPUnit here. Both trees.
+
+- **`tests/bizlms/bizlms_decisions_test.php`** (`cart.finance_keys_status`): `test_the_checked_in_file_loads_and_its_finance_items_block`
+  is now `test_the_checked_in_file_loads_and_every_decision_in_it_is_accepted`. The signed file has no finance-confirm
+  entry any more (the cart importer declares both finance keys with the accepted values), so it asserts `not_accepted()` is
+  empty, that both keys resolve to the delegated values, and that each `why` says delegated and not consulted. The
+  finance-confirm blocking mechanism is still covered by `decisions.sample.json` (`toy.credit`) and
+  `bizlms_runner_test::test_a_decision_the_owner_has_not_accepted_blocks_the_feature_that_declares_it`. It depends on the
+  decisions-file commit (the signed file and both fixture copies) being merged first or with it.
+- **`cli/mask_pii_for_dev.php`** (finance cluster follow-up): a Step 3b calls `\local_sentientia_cart\dev_mask::run()` when the
+  cart is installed, so a dev copy built from an imported database no longer carries the ledger and credit-journal free text,
+  the booking actor ids or the buyer ids inside `payload_json`. The comms-side fix in the same script (the `to_email` UPDATE of
+  a column `local_sentientia_email_log` does not have, imported e-mail subjects and bodies) is a separate change.
+
+No version bump, no feature flag, no UI.
+
+---
+
+## 2026-10-07 - owner decisions, courses cluster: guard columns, G6 core-write reason, parity of the enrolments import
+
+Both trees. **Not run: no PHPUnit here; the lead re-initialises PHPUnit once for the courses 2026100701 bump.**
+
+- **Privacy guard.** `tests/privacy_coverage_test.php::USER_COLUMNS` gains `usercreated` and `usermodified` (rule R9). The providers the
+  guard would then have flagged are fixed in the same change: `local_sentientia_emails` (two configuration tables) and
+  `local_sentientia_talent` (career paths). `local_sentientia_users` declares its two tables through the `legacy_history` constants, and the
+  other plugins that carry the columns (core, courses, learningpath, org) already declare theirs. The identity and learning clusters add
+  further names to the same constant (`modified_by`, `trainerid`); keep one copy of each name when merging.
+- **Registry.** The reviewed reason of the core write `enrol` (`registry::CORE_WRITES_ALLOWED`) now says what the owner decision CRS-01 does:
+  INSERT a manual instance, and UPDATE the status of a BizLMS instance proved safe to switch off; core grants access through any enabled
+  instance whether or not its plugin is on disk. See the courses card.
+- **migration_parity_check.php now calls the framework's parity hooks (P0.4, ADR-032 "Parity hooks").** `--baseline` also stores a
+  fingerprint of every legacy table (count, MAX(id), CRC over all columns, column list; no CRC cap) when the framework is deployed
+  there. `--compare` then (1) compares the legacy tables with `parity::compare_fingerprints()` and sorts the result with
+  `parity::comparison_problems()`: a changed or missing table is DRIFT (exit 1), a skipped CRC or a table the baseline did not have is
+  "not proven" (exit 2), and a baseline with no fingerprints is "not proven" too; (2) runs the `bizlms_import` invariant
+  (`parity::invariant_problems()`, only on `--compare`, because it reads every feature) next to `message_provider_defaults`; (3) EXPLAINS the
+  one difference the import makes on purpose to a counted table. **The rehearsal parity gate no longer fails by design:** the enrolments
+  importer writes about 7 733 manual enrolments into core `user_enrolments` (April 2026 copy), which the count and the value checksum of
+  that table used to report as drift. `parity::imported_enrolments()` finds exactly the rows the legacy map says the feature `enrolments`
+  imported into `user_enrolments` and that still exist (and their summed CRC32, built like the checksum), and
+  `enrolment_count_explained()` / `enrolment_checksum_explained()` accept the delta ONLY when the count grew by exactly those rows and the
+  checksum (a SUM of per-row CRCs) grew by exactly their CRCs. The output line is `EXPLAINED`, not `MATCH`, and the result line says
+  the import was accounted for from the legacy map. A changed or deleted legacy row, or any other difference, stays DRIFT. An imported row
+  an administrator edited since is still explained (the map keeps no per-row CRC): the gate proves that every row the baseline had is as it
+  was. `enrol.status` (the instances the import switches off) and new `enrol` rows are not in the baseline's counts or checksums; the
+  report prints how many instances the trail shows as switched off. Step 5 of `MIGRATION-REHEARSAL-RUNBOOK.md` and ADR-032 parity hook 4
+  still say "100% PARITY / no side effects on enrolments" and need the amendment (docs pass). Tests (NOT RUN):
+  `tests/bizlms/parity_enrolments_test.php`.
+
+
+## 2026-10-07 - owner decisions (learning cluster): report ids for creator-guessed tenants, privacy guard and capability baseline
+
+Branch `claude/owner-decisions-y`, both trees. **No version bump** (report and test changes only). **Written, not run**: PHPUnit runs after the merge.
+
+- **XC-TENANT-GUESS (code part).** `bizlms\report::count_tenant_method()` takes the row's source id; a row whose tenant came from its CREATOR (`fallback:creator`, the signed `program.pathless = creator_root` and the learning plan's `tenant_fallback_order`) is also listed under the step's `tenant_creator_ids` (ids only, capped at `report::CREATOR_IDS_CAP` = 500; the count in `tenant_methods` stays exact). `runner::record()` passes the id. Runbook line: `fallback:creator` > 0 at Stage B means stop and ask Nitin, and re-pin the decisions hash if he changes a value. Test: `bizlms_support_test::test_a_row_that_took_its_tenant_from_its_creator_is_listed_by_id`.
+- **LRN-16 (privacy guard).** `privacy_coverage_test`: `trainerid` is now in `USER_COLUMNS` for every plugin (the classroom provider declares all three of its trainer tables since the classroom merge, programs declares `trainerfb`), and the temporary `COMPONENT_USER_COLUMNS` constant and its plumbing are deleted.
+- **XC-CLS-ENROL (guard).** `capability_names_test::BASELINE` no longer lists the four sites of the dead `local/sentientia_classroom:enrol` surface: classroom now gates on `:manage` behind `sentientia.classroom.bulk_enrol_audience`. (The two evaluation entries are the evaluation job's.)
+- **LRN-07 (fixture copies).** `tests/fixtures/bizlms/bizlms-import-decisions.copy.json` equals the signed file again after `skills.level_proficiency.csv` was filled (`tools/check-bizlms-fixture-copies.php` passes).
+
+
+## 2026-10-07 - fix round 1 (review of stream Y): migration_parity_check no longer fails a clean import (must-fix)
+
+Branch `claude/owner-decisions-y`, both trees. **No version bump** (CLI, one new static method, test and docs). **Written, not run.**
+
+- **The defect.** The `--compare` wiring above called `parity::invariant_problems()` with no argument, so it ran on `decisions::none()`. Every importer's `verify()` that reads a decision with no default (cart: `cart.abandoned`; emails: `notifications.import_bodies`, `notifications.keep_sender`) threw `blocked('missing_decision:...')`, which became `verify_error:cart:...`, the `bizlms_import` invariant reported FAIL and the CLI exited 1. That is every Stage B copy (April has 5 cart orders and the e-mail logs): the parity gate failed by construction and reported a clean import as an invariant FAIL.
+- **The fix.** `migration_parity_check.php` takes `--decisions=FILE` and `--expect-decisions-hash=SHA256` (same meaning as in `import_bizlms.php`). `--compare` loads the file with `decisions::load()` BEFORE it computes the counts, checks the hash (a different file, an unreadable file, or a hash with no file is `REFUSED`, exit 3), prints the file's sha256 and whether it was pinned, and passes the result to the new `parity::compare_invariant(?decisions)`. That method returns an empty list when the database holds no legacy tables (a fresh install still passes with no file), a STRING when there are legacy tables and no decisions (printed `SKIPPED`, so the gate exits 2 "not proven": never FAIL, never a pass), and the whole `invariant_problems($decisions)` otherwise. A signed file that lacks a decision an importer reads is a real FAIL (`verify_error:<feature>:missing_decision:<key>`), not a skip.
+- **Exit codes** of the CLI are now 0 / 1 / 2 as before plus 3 = refused (decisions file unusable, or not the pinned one).
+- **Merge note (2026-10-08, Stage B tools).** This entry describes the CLI before it was merged with the Stage B parity tooling. After the merge the decisions options belong to `--after-import` (`--compare=<baseline> --after-import --decisions=FILE --expect-decisions-hash=SHA256`); a decisions option without `--after-import`, or `--after-import` without a decisions file, is refused (exit 3), the decisions are still loaded and hash-checked before any number is computed, and the invariant is still `parity::compare_invariant()`. The runbook sub-steps this entry calls 5a and 5b are 5b and 5c after the merge (5a is the BizLMS import and its proof). See the fix round 2 entry at the end of this card.
+- **Docs.** `MIGRATION-REHEARSAL-RUNBOOK.md` step 5 passes the decisions file and its hash, and adds 5a (run `local/sentientia_courses/cli/enrolments_access_report.php` for the Stage B pair count and regression ids) and 5b (no admin unenrol of an imported path, program or classroom row before `bizlms_production_open` on a copy that must still pass the gate: the invariant would report `missing_target_rows`). ADR-032 cutover slice step 6 carries the new arguments.
+- **Tests (NOT RUN):** `tests/bizlms/bizlms_guard_parity_test.php::test_compare_invariant_is_not_proven_without_decisions_and_clean_with_them` (a toy importer whose `verify()` reads a required decision: no decisions is a string containing "not proven", the signed decisions are clean, a file without the decision is a real problem; the plain `invariant_problems()` is shown to fail, which is what the CLI used to report) and `test_compare_invariant_with_no_legacy_tables_needs_no_decisions`.
+- **MERGE GATE (both reviewers).** This branch declares keys the signed decisions file does not hold yet: `cart.credit_balances` and `cart.erpnext_invoices_legal` (the file still says `finance-confirm`), `enrolments.bizlms_instances_after_verify`, `enrolments.disabled_instance_row_status`, `enrolments.disabled_only_manual_instance`, and the old `gap.orphan_enrol_instances` why. On this branch alone cart and enrolments block at preflight, and these tests fail: `cart/tests/bizlms_import_test` (the signed-decisions tests) and `platform/tests/bizlms/bizlms_decisions_test` (`not_accepted() === []`). **Merge the decisions-file commit of stream X (doc item 85) before, or together with, this branch, then pin the hash.** Stream X must write the cart whys exactly as decided (the test asserts they contain "delegated" and "not consulted") and the corrected `gap.orphan_enrol_instances` why. The same file conflicts on `skills.level_proficiency` (csv and why): both sides carry the LRN-07 value; keep one copy and re-run `tools/check-bizlms-fixture-copies.php`.
+
+## 2026-10-08 - ADR-032 framework: the source is fingerprinted for the whole run when it starts (branch claude/runstart-fingerprints; no version bump)
+
+Both trees. **No schema change, no version bump** (the step table already allowed `pending`; ADR-032 listed it from the start). **Written, not run:** PHPUnit is the lead's, after the merge.
+
+- **The gap.** The first real PHPUnit run (2026-10-07) failed `importer_contract::test_contract_source_change_is_detected` for the course_lookups importer. `runner` took a step's source fingerprint only when the step opened, so on `--resume` a step the crash never reached had no step row, was fingerprinted afresh, and a change made while the run was down went unseen. The mutated table (`local_dashboardcourses`) belongs to a later step than the one the failpoint stops in; resume exited 2 instead of 1. ADR-032 promises detection "at run start and on resume".
+- **The fix (`runner.php`).** A NEW apply run (not `--resume`, not a dry run) calls `run_start_fingerprints()` after planning and preflight and before the run row exists: for every load step of every feature the run will process it reads `fingerprint::table()` (count, max id, CRC, the step's own filter, the same CRC cap). `open_run()` then writes the run row and one `legacystep` row per step with status `pending` in ONE transaction (so a run is never half fingerprinted; a crash while fingerprinting leaves nothing). `open_step()` already compared the stored fingerprint with the current one for any existing row; a pending row now takes that path, then starts from watermark 0 and gets a fresh `timestarted`. So a change between run start and the moment the step opens (same run, or while the run was down) throws `source_drift('source_changed_since_the_run_started:<step>')`, exit 1.
+- **What gets no pending row.** A recompute step (no source). A step whose source table is missing (the not_applicable path; if a pending row exists and the table is gone, that is a source change and `record_not_applicable_step()` throws the same drift). A feature that is not applicable. A feature added only as a dependency and complete already (`already_complete`, runs no step). A dry run (writes nothing, unchanged). A run begun before this change, resumed now, has no pending rows and falls back to fingerprinting at step open, as before.
+- **Feature mode.** The pending rows are written before any feature's outer transaction, so a rollback cannot remove them: it returns the rows the feature moved to running or done back to pending, with the run-start fingerprint on them. `record_feature_failure()` now writes the durable `<feature>.__feature` failed row when no step row of the feature has left pending (it used to test "no step row at all"). A resume after a feature-mode rollback therefore still detects a changed source.
+- **Visibility.** A pending row is not a started feature: `runner::feature_states()` `started` and `check\bizlms_import` use `status NOT IN ('not_applicable','pending')`. `feature_states()` gains `pending_steps` (pending rows of the feature's newest run) and `--status` prints `pending_steps=N`. The report meta gets `run_start_fingerprints` (how many steps were fingerprinted; absent on resume). `--report` per-step output is unchanged (it only lists steps that ran).
+- **Behaviour to know (not new, now wider).** The comparison happens when a step opens, so a refused resume has already run the steps before the changed one. And any source that legitimately changes during a run now stops an UNINTERRUPTED run too: reviewed for the real importers, none of their load steps reads a table an earlier step of the same run writes (the enrolments and course_tags recompute steps, which change their own sources, are last in their features), so the 5c resume limit stays what it was. A rehearsal with the site open and traffic into a live source with a thin filter (the standard log for recompletion) can trip it; at cutover the site is in maintenance. The cost is one more `fingerprint::table()` per step at run start (CRC capped at `crc_max_rows` as before).
+- **Tests (`tests/bizlms/bizlms_runner_test.php`, NOT RUN).** New: pending rows exist for every load step after a crash; resume refuses a changed source of a step that never started (insert); the same after a feature-mode rollback; resume with no change gives the rows of a clean run and uses every pending row; a source changed during an uninterrupted run (failpoint as editor) is refused at its step; an edited row (CRC only, MySQL family); a fresh run after a completed run and after an abandoned run is not blocked; a complete dependency gets no fingerprint; pending is not a started feature (`feature_states`, status check). Changed: `assert_only_a_failure_marker_survives()` now expects the five pending rows besides the one failure marker. The shared `importer_contract::test_contract_source_change_is_detected` is unchanged and should now pass for course_lookups.
+
+---
+
+## 2026-10-08 - Stage B tools fix round 2: merged onto the owner decisions (1.11.1 -> 1.11.2, 2026100802)
+
+No schema change. The branch `claude/stageb-tools` (cut from d06e725a7) is merged with `claude/gap-integration` (d7dcc5a08).
+Two reviews asked for two kinds of change: a reconciliation by design (the enrolments importer's CRS-01 UPDATE of `enrol`
+against the branch's "insert only" narrowing), and kit fixes.
+
+- **`enrol` is INSERT and UPDATE again (registry), and the parity tool explains both.** `registry::CORE_WRITES_ALLOWED['enrol']`
+  is `['insert','update']` with the CRS-01 reason. `parity\core::WRITES['enrol']` is an UPDATE table (`status` and
+  `timemodified` writable, every other column fixed). `parity_gate::LEDGERS['enrol']` is the enrolments importer's trail
+  `local_sentientia_courses_enroloff` (key `enrolid`, written `status`, `timemodified`), and `ledger_condition()` makes a trail row
+  name a change only where the instance is still of a BizLMS method (`BIZLMS_ENROL_METHODS`, held equal to
+  `enrolments_importer::METHODS` by a test), still has the method the trail recorded, and its status now differs from
+  `priorstatus`: a trail row the update step left alone (the site was open) names nothing and cannot fail, and a trail row cannot
+  excuse a status change on any other instance. `parity_gate::expected()` no longer overwrites `inserted` when a table is in both
+  `INSERT_TABLES` and `LEDGERS` (the loop used to reset the entry, which would have failed `core_rows_added_not_in_the_import:enrol`).
+  `enrol` stays in `INSERT_TABLES` (the G6 manual instance, the `enrol_instances` count, the skipped whole-table checksum).
+- **Test pins.** `parity_library_test` holds the two lists together operation by operation (an INSERT is reviewed exactly when
+  the map explains it, an UPDATE exactly when a ledger explains it and the baseline holds an update table; the ledger's columns are the
+  baseline's writable columns), `bizlms_registry_test` pins `enrol` as insert+update (the other two stay insert only),
+  `bizlms_parity_gate_test` has a gate-level test with a switched-off instance explained, an unrecorded status change failing, a
+  trail row on a manual instance failing, a trail row on an instance the step left alone not failing, a changed other column failing,
+  and the ids inserted kept beside the ledger. The pinned `bizlms_guard_parity_test::test_the_parity_cli_takes_the_decisions...`
+  follows the merged contract. **All of these are NOT RUN: PHPUnit has not executed them (a local run was in progress).**
+- **One CLI contract (`cli/migration_parity_check.php`).** The branch's `--after-import` core gate is the base, and the
+  owner-decision branch's pieces are folded in: `sentientia_parity_decisions()` loads and hash-checks the decisions before any number is
+  computed (exit 3), the invariant is `parity::compare_invariant($decisions)`, `--decisions`/`--expect-decisions-hash`/`--run`/`--report`
+  without `--after-import` are refused (exit 3), `--after-import` without `--decisions` is refused. The older in-CLI
+  explanation of the enrolments delta (`parity::imported_enrolments()` and the two `..._explained()` helpers, with
+  `parity_enrolments_test`) is no longer called by the CLI; it is kept, tested, as the light form.
+- **Metrics version 4.** The baseline carries `tool.sha256` (SHA-256 of `cli/source_baseline.php`, CR removed); `baseline_problem()`
+  refuses a baseline taken by another file (exit 3) as well as another version, and `metrics::tool_sha256()` is public. A version 3
+  baseline is refused (its `enrol` entry was insert-only). Steps 02 and 04 of the kit hold the checkout's and the package's copies to the
+  hash inside the baseline; the override `ALLOW_BASELINE_TOOL_SKEW` is gone.
+- **Kit (`tools/rehearsal`).** Step 01: a new restore refuses a moodledata an earlier rehearsal ran in unless it is the finished unpack
+  of the same archive (the marker file records the archive and the finish); a named `RESTORE_MOODLEDATA_ARCHIVE` is never ignored;
+  a populated unstamped moodledata needs `RESTORE_MOODLEDATA_BY_HAND=<path>` and no recent writes in `sessions/` or `localcache/`; the
+  dump scan refuses `SET @@GLOBAL.GTID_PURGED` and a MySQL 8 collation on MariaDB; a hand restore after a failed kit restore is reachable;
+  OAuth2 tokens are blanked; the survey and chat activities are counted early. Step 04: refuses to start hop 2 while the package lacks
+  the code of `mod_survey` or `mod_chat` and the database has activities of them (the 5.0 upgrade would delete them and the parity tool
+  cannot accept the loss). Steps 03, 04 and 09: `snapshot_hook` refuses without a hook or `SNAPSHOT_TAKEN` under
+  `BIZLMS_PRODUCTION_FLAG=1`. Step 09: the apply-run status read is retried, the misleading `--purge-feature` hint is gone. Step 11:
+  its maintenance-on line is no longer lost, and says the post-cron parity is not expected to be exit 0 (qbank transfer task). Step 12: the
+  summary lists each `legacy_other` table (payment tables first), the tool hashes, the survey and chat counts and how to read the rows.
+  `names_our_tree()` matches the tree as a whole path. `rotate_work_state` also moves `muc/`.
+- **Decision still open (Nitin).** Ship 5.x-compatible `mod_survey` and `mod_chat` in the package. There is no "accept the loss
+  in writing" path; see ADR-032 "FINDING".
+- **Not run:** PHPUnit (every test above), `migration_parity_check.php` under a bootstrapped Moodle, MySQL 8.4 / RDS, the hop to 5.3
+  (ADR-033), `shellcheck`, a real 4.5 to 5.x hop with the kit.

@@ -62,6 +62,11 @@ class observer {
                 return;
             }
 
+            // COMMS-N7 (2026-10-07): BizLMS also sent the learner's manager a copy of the completion. Behind its own
+            // default-OFF flag, and independent of the learner's rule below: it has its own rule type, and it never
+            // throws.
+            parity_senders::manager_completion_copy($user, $course);
+
             // Find the active course_completed rule. tenant_id=0 is the
             // global default; tenant-specific overrides (1, 77, 177) can
             // be added later via the rule manager UI.
@@ -123,6 +128,23 @@ class observer {
             // Moodle-core path. Just trace and move on.
             debugging('local_sentientia_emails observer failed: ' . $e->getMessage(),
                 DEBUG_DEVELOPER);
+        }
+    }
+
+    /**
+     * Handler for a learner enrolled in a course: the BizLMS course_enrol e-mail (COMMS-N7).
+     *
+     * Behind the flag sentientia.emails.send_course_enrolment.enabled, default OFF; while it is OFF this returns before it
+     * reads anything. Like the completion handler it never throws: an enrolment is a Moodle-core operation.
+     *
+     * @param \core\event\user_enrolment_created $event
+     */
+    public static function user_enrolment_created(\core\event\user_enrolment_created $event): void {
+        try {
+            parity_senders::course_enrolled((int) $event->relateduserid, (int) $event->courseid,
+                (int) $event->userid, (int) $event->objectid);
+        } catch (\Throwable $e) {
+            debugging('local_sentientia_emails enrolment observer failed: ' . $e->getMessage(), DEBUG_DEVELOPER);
         }
     }
 

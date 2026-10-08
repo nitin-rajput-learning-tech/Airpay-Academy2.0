@@ -492,6 +492,82 @@ final class bizlms_guard_parity_test extends \advanced_testcase {
             implode(' ', parity::invariant_problems()), 'without the decisions verify() cannot run, and says so');
     }
 
+    /**
+     * Review of 2026-10-07, must-fix 1: --compare ran the invariant on no decisions, every verify() that reads a decision with
+     * no default threw missing_decision, and a clean import was reported as an invariant FAIL (exit 1).
+     */
+    public function test_compare_invariant_is_not_proven_without_decisions_and_clean_with_them(): void {
+        $this->resetAfterTest();
+        toy_importer::reset();
+        toy_importer::$requiredecision = true;
+        registry::set_testing_importers([new toy_importer()]);
+        $this->seed_toy_data();
+        $decisions = \local_sentientia_platform\bizlms\decisions::from_array(['toy.mandatory' => 'yes']);
+        $result = (new runner(['apply' => true, 'permit' => guard::test_permit(), 'batch' => 2, 'atomic_threshold' => 0,
+            'decisions' => $decisions]))->run([]);
+        $this->assertContains($result['exit'], [0, 2]);
+
+        // The old CLI call: a list of problems, so a FAIL, on an import that is clean.
+        $this->assertNotSame([], parity::invariant_problems(), 'the plain invariant needs the decisions');
+
+        // No decisions given: "not proven" (a string the CLI prints as SKIPPED, exit 2), never a list, so never a FAIL.
+        $withoutdecisions = parity::compare_invariant(null);
+        $this->assertIsString($withoutdecisions);
+        $this->assertStringContainsString('not proven', $withoutdecisions);
+        $this->assertStringContainsString('--decisions', $withoutdecisions);
+
+        // The signed decisions: the whole invariant, clean.
+        $this->assertSame([], parity::compare_invariant($decisions));
+
+        // A file that does not hold the decision is a real problem, not a skip.
+        $other = \local_sentientia_platform\bizlms\decisions::from_array(['toy.unrelated' => 'x']);
+        $problems = parity::compare_invariant($other);
+        $this->assertIsArray($problems);
+        $this->assertStringContainsString('verify_error:toy:missing_decision:toy.mandatory', implode(' ', $problems));
+    }
+
+    /**
+     * The CLI boots the real site, so it cannot run inside PHPUnit; what can be pinned is its wiring.
+     */
+    public function test_the_parity_cli_takes_the_decisions_and_checks_them_before_it_counts(): void {
+        $source = (string) file_get_contents(__DIR__ . '/../../cli/migration_parity_check.php');
+        $this->assertNotSame('', $source);
+        foreach (["'decisions' => ''", "'expect-decisions-hash' => ''", 'parity::compare_invariant($decisions)',
+                'decisions::load(', 'hash_equals($decisions->hash(), $expect)'] as $needle) {
+            $this->assertStringContainsString($needle, $source, $needle);
+        }
+        // Comment lines removed: only a CALL of the plain invariant (which runs on no decisions) is the defect.
+        $code = (string) preg_replace('/^\s*(\*|\/\/|\/\*).*$/m', '', $source);
+        $this->assertStringNotContainsString('parity::invariant_problems(', $code,
+            'the CLI must not call the plain invariant, which runs on no decisions');
+
+        // A refused file costs nothing: the decisions are loaded and hash-checked before the counts and checksums of the
+        // comparison are taken (the line that builds the current document with the metrics part only).
+        $load = strpos($source, "sentientia_parity_decisions((string) \$options['decisions']");
+        $counts = strpos($source, "\$now = parity_baseline::build(\$parity_db, \$meta, \$progress, ['metrics']);");
+        $this->assertNotFalse($load);
+        $this->assertNotFalse($counts);
+        $this->assertLessThan($counts, $load);
+        // A refusal is exit 3, never 0, 1 or 2 (those mean drift, not proven or clean).
+        $this->assertStringContainsString('exit(3)', $source);
+        // The decisions belong to the post-import gate: --compare with a decisions option and no --after-import is refused
+        // (exit 3 through cli_error), never run as a pre-import compare that would ignore the file; and --after-import with no
+        // decisions file is refused, never run without the invariant.
+        foreach (["--{\$name} belongs to --after-import", "--after-import needs --decisions=FILE"] as $needle) {
+            $this->assertStringContainsString($needle, $source, $needle);
+        }
+    }
+
+    public function test_compare_invariant_with_no_legacy_tables_needs_no_decisions(): void {
+        $this->resetAfterTest();
+        registry::set_testing_importers([new toy_importer()]);
+        foreach (['local_toy_org', 'local_toy_item', 'local_toy_dup', 'local_toy_event', 'local_toy_fan', 'local_toy_unused'] as $table) {
+            self::drop_legacy_table($table);
+        }
+        legacy_tables::reset();
+        $this->assertSame([], parity::compare_invariant(null), 'a fresh install has nothing to prove, so nothing is unproven');
+    }
+
     public function test_status_check_is_registered_through_lib_php(): void {
         global $CFG;
         require_once(__DIR__ . '/../../lib.php');

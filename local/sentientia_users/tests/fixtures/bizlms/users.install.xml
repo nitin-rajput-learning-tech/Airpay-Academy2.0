@@ -139,7 +139,7 @@
     <TABLE NAME="local_positions" COMMENT="Position matrix lookup. No install file in the snapshot: columns inferred from the code (see the header)">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="name" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Width unknown (no install file in the snapshot); text so the seed can hold a name over 255 characters and the truncation path runs"/>
         <FIELD NAME="code" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="domain" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="costcenter" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>

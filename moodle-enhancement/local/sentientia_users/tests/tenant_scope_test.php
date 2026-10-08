@@ -47,6 +47,7 @@ defined('MOODLE_INTERNAL') || die();
  * @covers \local_sentientia_users\bulk_csv_processor
  * @covers \local_sentientia_users\external\list_users
  * @covers \local_sentientia_users\task\hrms_sync
+ * @covers \local_sentientia_users\sync_access
  * @group tenant_isolation
  */
 final class tenant_scope_test extends \advanced_testcase {
@@ -650,5 +651,136 @@ final class tenant_scope_test extends \advanced_testcase {
             }
             $this->assertFalse(get_config('local_sentientia_users', 'hrms_sync_last_run'));
         }
+    }
+
+    // ── HRMS sync history: IDN-07 and XC-IMPORTED-HISTORY-READERS (2026-10-07) ───
+
+    /** One row of the run table; $root is the tenant root the run was scoped to. */
+    private function sync_run(int $root, string $source, int $uploader): \stdClass {
+        global $DB;
+        $id = (int) $DB->insert_record('local_sentientia_users_sync_runs', (object) [
+            'filename' => 'run.csv', 'source' => $source, 'costcenterid' => $root, 'totalrows' => 3, 'insertedcount' => 1,
+            'updatedcount' => 1, 'skippedcount' => 0, 'errorcount' => 1, 'warningcount' => 0, 'suspendedcount' => 0,
+            'usercreated' => $uploader, 'status' => 'completed', 'error_summary' => null,
+            'timecreated' => time(), 'timemodified' => time(),
+        ]);
+        return $DB->get_record('local_sentientia_users_sync_runs', ['id' => $id], '*', MUST_EXIST);
+    }
+
+    /** The tenant root of an org node of this test. */
+    private function root_of(\stdClass $org): int {
+        return (int) explode('/', trim($org->path, '/'))[0];
+    }
+
+    /** The run ids sync_runs.php would list for the current user. */
+    private function listed_run_ids(): array {
+        global $DB;
+        [$where, $params] = sync_access::runs_where();
+        $ids = array_map('intval', array_keys($DB->get_records_sql(
+            "SELECT r.id FROM {local_sentientia_users_sync_runs} r WHERE $where ORDER BY r.id", $params)));
+        return $ids;
+    }
+
+    public function test_the_rejected_lines_of_a_run_are_seen_by_its_uploader_and_cross_tenant_callers_only(): void {
+        $root = $this->root_of($this->orga);
+        $uploader = $this->tenant_admin($this->orga->path);
+        $colleague = $this->tenant_admin($this->orga->path);
+        $siteadmin = $this->site_admin_in_a();
+        $platform = $this->cross_tenant_user($this->orga->path);
+
+        // IDN-07 reads the same for an imported run and a native one.
+        foreach (['bizlms', 'web'] as $source) {
+            $run = $this->sync_run($root, $source, (int) $uploader->id);
+            $this->assertTrue(sync_access::can_see_lines($run, (int) $uploader->id), "{$source}: the uploader");
+            $this->assertFalse(sync_access::can_see_lines($run, (int) $colleague->id),
+                "{$source}: a colleague of the same tenant, who did not upload it, sees the counts and no lines");
+            $this->assertTrue(sync_access::can_see_lines($run, (int) $siteadmin->id), "{$source}: a site admin");
+            $this->assertTrue(sync_access::can_see_lines($run, (int) $platform->id), "{$source}: a :crosstenant holder");
+        }
+
+        // The current user is the default viewer.
+        $run = $this->sync_run($root, 'web', (int) $uploader->id);
+        $this->setUser($uploader);
+        $this->assertTrue(sync_access::can_see_lines($run));
+        $this->setUser($colleague);
+        $this->assertFalse(sync_access::can_see_lines($run));
+
+        // A run nobody uploaded (cron, usercreated 0) shows its lines to cross-tenant callers only: a tenant manager
+        // never matches "uploader 0", and neither does somebody not logged in.
+        $cron = $this->sync_run($root, 'cron', 0);
+        $this->assertFalse(sync_access::can_see_lines($cron, (int) $uploader->id));
+        $this->assertFalse(sync_access::can_see_lines($cron, 0));
+        $this->assertTrue(sync_access::can_see_lines($cron, (int) $siteadmin->id));
+    }
+
+    public function test_a_run_of_another_tenant_is_still_refused(): void {
+        $runa = $this->sync_run($this->root_of($this->orga), 'web', 0);
+        $runb = $this->sync_run($this->root_of($this->orgb), 'web', 0);
+        $global = $this->sync_run(0, 'cron', 0);
+
+        $callera = $this->tenant_admin($this->orga->path);
+        $this->setUser($callera);
+        $this->assertTrue(sync_access::in_callers_tenant($runa));
+        $this->assertFalse(sync_access::in_callers_tenant($runb), 'another tenant');
+        $this->assertFalse(sync_access::in_callers_tenant($global), 'a cross-tenant or cron run is not any tenant\'s');
+
+        $nowhere = $this->user_at('');
+        $this->setUser($nowhere);
+        $this->assertFalse(sync_access::in_callers_tenant($runa), 'a caller with no tenant sees nothing');
+
+        $this->setUser($this->site_admin_in_a());
+        foreach ([$runa, $runb, $global] as $run) {
+            $this->assertTrue(sync_access::in_callers_tenant($run), 'a cross-tenant caller opens any run');
+        }
+        $this->setUser($this->cross_tenant_user($this->orga->path));
+        $this->assertTrue(sync_access::in_callers_tenant($runb));
+    }
+
+    public function test_the_run_list_and_the_detail_page_decide_a_callers_tenant_the_same_way(): void {
+        $run = $this->sync_run($this->root_of($this->orga), 'web', 0);
+        // A well-formed path, one with stray spaces, one that does not start with a number, none, and a zero root.
+        $paths = [$this->orga->path, ' ' . trim($this->orga->path, '/') . '/ ', 'x' . $this->orga->path, '', '/0', '0/5'];
+        foreach ($paths as $path) {
+            $this->setUser($this->user_at($path));
+            $listed = in_array((int) $run->id, $this->listed_run_ids(), true);
+            $this->assertSame($listed, sync_access::in_callers_tenant($run),
+                "the list and the detail page disagree for open_path '{$path}'");
+        }
+    }
+
+    public function test_the_run_list_is_tenant_wide_and_leaves_out_imported_runs_until_the_flag_is_on(): void {
+        $roota = $this->root_of($this->orga);
+        $rootb = $this->root_of($this->orgb);
+        $uploader = $this->tenant_admin($this->orga->path);
+        $colleague = $this->tenant_admin($this->orga->path);
+        $nativea = $this->sync_run($roota, 'web', (int) $uploader->id);
+        $importeda = $this->sync_run($roota, 'bizlms', (int) $uploader->id);
+        $nativeb = $this->sync_run($rootb, 'web', 0);
+        $importedb = $this->sync_run($rootb, 'bizlms', 0);
+
+        // Default OFF (XC-IMPORTED-HISTORY-READERS): native runs only, and only the caller's tenant's. The list is
+        // tenant-wide: the colleague who did not upload the run sees it too (IDN-07 changes the lines, not the counts).
+        $this->assertFalse(legacy_history::sync_history_enabled());
+        foreach ([$uploader, $colleague] as $viewer) {
+            $this->setUser($viewer);
+            $this->assertSame([(int) $nativea->id], $this->listed_run_ids());
+        }
+        $this->setUser($this->site_admin_in_a());
+        $this->assertSame([(int) $nativea->id, (int) $nativeb->id], $this->listed_run_ids(), 'a site admin: native runs of every tenant');
+        $this->setUser($this->user_at(''));
+        $this->assertSame([], $this->listed_run_ids(), 'no resolvable tenant: nothing');
+        $this->assertTrue(sync_access::is_hidden_imported_run($importeda));
+        $this->assertFalse(sync_access::is_hidden_imported_run($nativea), 'a native run is never behind the flag');
+
+        // ON: the imported runs of the caller's tenant join the list; another tenant's still never does.
+        \local_sentientia_platform\feature_flags::invalidate_caches();
+        \local_sentientia_platform\feature_flags::set(legacy_history::FLAG_SYNC_HISTORY, 0, true);
+        $this->assertTrue(legacy_history::sync_history_enabled());
+        $this->setUser($colleague);
+        $this->assertSame([(int) $nativea->id, (int) $importeda->id], $this->listed_run_ids());
+        $this->setUser($this->site_admin_in_a());
+        $this->assertSame([(int) $nativea->id, (int) $importeda->id, (int) $nativeb->id, (int) $importedb->id],
+            $this->listed_run_ids());
+        $this->assertFalse(sync_access::is_hidden_imported_run($importeda));
     }
 }

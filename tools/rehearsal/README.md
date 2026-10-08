@@ -42,12 +42,26 @@ first failure, and always finishes with the summary.
 * a database or moodledata that does not carry the **kit marker**: step 01 stamps the database (a `{config}` row) and the
   moodledata (a file) with a random restore id, and every writing step (02 to 11) refuses a database or directory without
   it, so an allow-listed name on the wrong server, or UAT's database, is never written to. A database restored by hand is
-  stamped only on `RESTORE_DONE_BY_HAND=<its name>`; a populated moodledata without the marker is refused too;
+  stamped only on `RESTORE_DONE_BY_HAND=<its name>`; a populated moodledata without the marker is refused too, unless
+  `RESTORE_MOODLEDATA_BY_HAND=<its path>` (a statement of its own: the database statement does not cover the directory) and
+  `sessions/` and `localcache/` show no write in the last 30 minutes (a running site, UAT's for one, is never adopted).
+  **One rehearsal, one moodledata:** a new restore into an empty database refuses a moodledata that an earlier rehearsal ran in
+  (its role-9 state file, caches, sessions and cron files would carry over) unless it is the finished unpack of the same
+  `RESTORE_MOODLEDATA_ARCHIVE` that no step after 01 has used; empty it or point `MOODLEDATA` at a new directory. A named
+  `RESTORE_MOODLEDATA_ARCHIVE` is never ignored: with a filedir already present it must be that archive's unpack (the marker
+  file records the archive's path, size and mtime, and that the unpack finished), or step 01 stops;
 * a `config.php` that points at another database or host, names another wwwroot or dataroot, or lacks
   `$CFG->noemailever = true` (the restored dump holds real e-mail addresses: the May 2026 incident, 151 e-mails);
 * a scheduler line that runs THIS rehearsal's Moodle cron (a crontab, `/etc/crontab`, `/etc/cron.d` or systemd timer line
-  naming `CODE_45_DIR` or `CODE_5X_DIR`; another site's cron is noted, not refused) and, once step 01 has set it, a
+  naming `CODE_45_DIR` or `CODE_5X_DIR` as a whole path, with or without a slash after it, as in `cd /srv/rehearsal/moodle5 &&
+  php admin/cli/cron.php`; another site's cron, `moodle5-uat` for one, is noted, not refused) and, once step 01 has set it, a
   database whose `cron_enabled` is not 0, which is the guard that holds whatever a scheduler does;
+* with `BIZLMS_PRODUCTION_FLAG=1` (the cutover form, where the snapshot is the only way back), a hop or the import that has no
+  restore point: neither `SNAPSHOT_HOOK` nor `SNAPSHOT_TAKEN=<label>` (before-hop-1, before-hop-2, before-import, or all). Without
+  the flag a missing hook is a reminder only, and the step starts in the same second;
+* a hop 2 that would delete activities (step 04, before anything is written): the Moodle 5.0 upgrade uninstalls `mod_survey` and
+  `mod_chat` when their code is not on disk, and uninstalling deletes their activities and data. The step counts them first and
+  stops while the package carries no code for a type that has any (see "What the first local rehearsal taught");
 * Windows paths, one directory for both code trees, a code tree inside the other, a password file readable by others,
   an env file writable by others, running as anyone but `WEB_USER`.
 
@@ -68,10 +82,10 @@ are run by hand from the runbook, using what the rehearsal recorded (the decisio
 | Step | Script | What it does | Runbook / plan |
 |---|---|---|---|
 | 00 | `00_preflight.sh` | The refusals above. Changes nothing, even with `--execute`. | runbook Inputs, step 1; plan 1.3, 4d.3, 8-2 |
-| 01 | `01_restore_check.sh` | Restores the dump into an empty database and unpacks the moodledata if asked (`RESTORE_*`). The dump is **refused** when it holds `USE` / `CREATE DATABASE` / `DROP DATABASE` (it would reach another schema, whatever the allow-list says; the client also runs with `--one-database`) or has no `-- Dump completed` trailer (an aborted `mysqldump` restores as a silent partial copy); the restore stops at the first error (pipefail), and a restore that did not complete is refused on re-run. **Stamps the database and the moodledata with the restore id** (see "What it refuses"); a new restore moves the earlier rehearsal's state, reports and baseline to `archive/`. Checks release (`SOURCE_RELEASE_REGEX`, live is 4.1.x), active users, the BizLMS `open_path` substrate. **File store gate:** every distinct `files.contenthash` with content must exist at `filedir/ab/cd/<hash>`; missing ones go to `reports/filedir-missing.txt` and stop the step (a DB-only restore 404s every SCORM package). Then neutralises the restore: wipes `smtphosts/smtpuser/smtppass` and the push-service key (airnotifier), sets `cron_enabled = 0`, moves the restored `muc/config.php` aside, writes the restored mail backlog audit (input I-11) and an audit of the other outbound settings (counts only). With `LIVE_BASELINE_FILE` it compares the restored copy with live's own baseline (isolates restore loss). | runbook 1; plan 4c, 4f-a |
-| 02 | `02_source_baseline.sh` | `source_baseline.php` on the restored 4.1.x copy, before any upgrade. Refuses on an upgraded copy. An existing baseline is re-verified, never retaken (and a baseline taken with another metrics version of the tool is refused, exit 3: delete it and take it again). `LIVE_BASELINE_FILE` makes live's own baseline the baseline of record. Records the SHA-256 of the baseline and of the tool. | runbook 0; plan 4a, 5.1; ADR-032 Parity hooks |
+| 01 | `01_restore_check.sh` | Restores the dump into an empty database and unpacks the moodledata if asked (`RESTORE_*`). The dump is **refused** when it holds `USE` / `CREATE DATABASE` / `DROP DATABASE` (it would reach another schema, whatever the allow-list says; the client also runs with `--one-database`), a `SET @@GLOBAL.GTID_PURGED` (a server-wide setting: dump with `--set-gtid-purged=OFF`), or has no `-- Dump completed` trailer (an aborted `mysqldump` restores as a silent partial copy), or names a MySQL 8 collation (`utf8mb4_0900_*`) when the server is MariaDB; the restore stops at the first error (pipefail), and a restore that did not complete is refused on re-run (unless `RESTORE_DONE_BY_HAND` says you restored it whole by hand since). **Stamps the database and the moodledata with the restore id** (see "What it refuses"); the marker file also records which archive was unpacked and that it finished. A new restore moves the earlier rehearsal's state, reports, baseline and cache configuration to `archive/`. Blanks the stored OAuth2 system-account tokens when the audit finds any. Checks release (`SOURCE_RELEASE_REGEX`, live is 4.1.x), active users, the BizLMS `open_path` substrate. **File store gate:** every distinct `files.contenthash` with content must exist at `filedir/ab/cd/<hash>`; missing ones go to `reports/filedir-missing.txt` and stop the step (a DB-only restore 404s every SCORM package). Then neutralises the restore: wipes `smtphosts/smtpuser/smtppass` and the push-service key (airnotifier), sets `cron_enabled = 0`, moves the restored `muc/config.php` aside, writes the restored mail backlog audit (input I-11) and an audit of the other outbound settings (counts only). With `LIVE_BASELINE_FILE` it compares the restored copy with live's own baseline (isolates restore loss). | runbook 1; plan 4c, 4f-a |
+| 02 | `02_source_baseline.sh` | `source_baseline.php` on the restored 4.1.x copy, before any upgrade. Refuses on an upgraded copy. An existing baseline is re-verified, never retaken (and a baseline taken with another metrics version of the tool is refused, exit 3: delete it and take it again). `LIVE_BASELINE_FILE` makes live's own baseline the baseline of record. Records the SHA-256 of the baseline and of the tool, and refuses a baseline whose `tool.sha256` is not this checkout's `SOURCE_BASELINE_PHP` (with `LIVE_BASELINE_FILE` the baseline came from elsewhere). | runbook 0; plan 4a, 5.1; ADR-032 Parity hooks |
 | 03 | `03_hop1_to_45.sh` | Hop 1 on a clean Moodle 4.5 core, **BizLMS code off disk** (checked against `lib/bizlms_plugins.txt`), config with the DB guard, PHP 8.1-8.3 and extensions, restore point, `upgrade.php --non-interactive` timed, release and pending checks, the plugins "missing from disk" listed, then **parity after hop 1** (`source_baseline.php --compare`, exit 0). | runbook 3; plan 0, I-4 |
-| 04 | `04_hop2_to_5x.sh` | Hop 2 on the Sentientia package in its own directory: SHA-256 gate, the package's CLI files present, no leaked `config.php`, BizLMS code and `local/airpay_ratings` off disk, PHP 8.3, `max_allowed_packet >= 64M`, restore point, upgrade timed, Sentientia plugins installed, `enrol_sentientiasub` not enabled, the tree manifest recorded, **the package's `source_baseline.php` must be the file the baseline was taken with** (`ALLOW_BASELINE_TOOL_SKEW=1` overrides), then **parity after hop 2** (`migration_parity_check.php --compare`; the `message_provider_defaults` invariant alone, which step 05 repairs, is not a stop here). | runbook 2-3; plan 0, 4d, 4e |
+| 04 | `04_hop2_to_5x.sh` | Hop 2 on the Sentientia package in its own directory: SHA-256 gate, the package's CLI files present, no leaked `config.php`, BizLMS code and `local/airpay_ratings` off disk, PHP 8.3, `max_allowed_packet >= 64M`, **the activity check** (the count of `mod_survey` and `mod_chat` activities the 5.0 upgrade would delete because the package has no code for them: any above zero stops the step before the snapshot), restore point, upgrade timed, Sentientia plugins installed, `enrol_sentientiasub` not enabled, the tree manifest recorded, **the package's `source_baseline.php` must be the file the baseline names as the one that took it** (`tool.sha256` inside the baseline; no override: the tool refuses the comparison itself), then **parity after hop 2** (`migration_parity_check.php --compare`; the `message_provider_defaults` invariant alone, which step 05 repairs, is not a stop here). | runbook 2-3; plan 0, 4d, 4e |
 | 05 | `05_repairs.sh` | CLI maintenance on; `repair_task_registrations.php` dry run then `--apply` (the message preference check must report 0 problems); the tenant seed and tenant/org parity checks (`TENANT_CHECKS`); the ADR-032 **capability repair**: inventory, check against `docs/cutover/bizlms-capability-allowlist.json` (exit 0 required), `--apply --confirm=<fingerprint>`, check again. | runbook 4a-4c, 4e; ADR-032 Capabilities |
 | 06 | `06_adr031_roles.sh` | The four ADR-031 scripts from `tools/uat/` in **target mode** (`--target=<wwwroot> --config=<config.php>`): predeploy probe, role-9 core caps (dry run, apply; the apply is skipped on a re-run when its state file exists and the dry run finds nothing left to do, because the script refuses a second apply), cross-tenant role (dry run, apply), read-only web-service smoke (`ERROR=0` required). | runbook 4f; plan 4f-f |
 | 07 | `07_theme_switch.sh` | `cfg.php --name=theme --set=sentientia` (production's epsilon is not in the package), theme overrides checked, purge, landing posture printed. | runbook 4g; plan 8-7 |
@@ -95,9 +109,11 @@ baseline/               source-baseline.json (keep it with the change ticket)
 conf/                   the database settings the baseline tool reads (mode 700 directory)
 adr031/                 the four ADR-031 scripts copied from tools/uat/
 muc/                    the rehearsal's own cache configuration (altcacheconfigpath), so live's restored muc/config.php is never read
+                        (a new restore moves it to archive/: 5.x writes a cacheconfig.php there that hop 1's 4.5 code must not start on)
 archive/<stamp>-<id>/   state, reports, baseline and timings of an EARLIER rehearsal, moved here by a new restore (never deleted)
-restore-ids.log         every restore id this kit stamped in this work directory (not moved by a new restore: a moodledata that carries
-                        an earlier id of the same lineage, e.g. after a restore that failed in between, is still this rehearsal's)
+restore-ids.log         every restore id this kit stamped in this work directory (not moved by a new restore). A moodledata that carries
+                        an earlier id of this lineage is reused by a NEW restore only when it is the finished unpack of the same archive and no
+                        step after 01 ran against it (the marker file says which archive); otherwise a new rehearsal needs a new moodledata
 ```
 
 ## Re-running, resuming, rolling back
@@ -122,13 +138,16 @@ stops if the dry run still wants changes. After fixing the cause of a failure, `
   `ACCEPT_UNPROVEN_REF=<where>`: only the judgement and the verify run.
 
 The rollback of a failed hop or import is the restore point taken before it (`SNAPSHOT_HOOK` is called before hop 1, hop 2 and the
-import; or by hand: the kit prints a reminder). In a rehearsal the import can also be purged and repeated
-(`import_bizlms.php --purge-feature`) while `bizlms_production` is not 1 (`BIZLMS_PRODUCTION_FLAG=1` in step 08 makes the
-rehearsal the exact cutover form, where the snapshot is the only way back).
+import; or by hand: the kit prints a reminder, and with `BIZLMS_PRODUCTION_FLAG=1` refuses to go on until `SNAPSHOT_TAKEN` names
+the label). To repeat an import, restore the snapshot or the dump and delete `state/kv/import.*`; the kit does not purge a feature
+and repeat it (`import_bizlms.php --purge-feature` does not reset the run's step watermarks, so the purged feature would not be
+imported again and the verify would fail with `feature_not_complete`).
 
 A **new restore** (an empty database and `RESTORE_DB_DUMP`, or `RESTORE_DONE_BY_HAND` for a hand restore) starts a new
-rehearsal: the earlier one's state, reports, baseline and timings move to `archive/`, so a stale `import.applied`, baseline or
-summary can never be taken for this run's result. The timings of a step that was run twice add up (the summary says so).
+rehearsal: the earlier one's state, reports, baseline, cache configuration and timings move to `archive/`, so a stale
+`import.applied`, baseline or summary can never be taken for this run's result. It also needs a **new or emptied moodledata**
+(see "What it refuses"): the earlier rehearsal's dataroot is not a clean unpack of the archive any more. The timings of a step
+that was run twice add up (the summary says so).
 
 ## Cutover day
 
@@ -166,7 +185,9 @@ plan are IT's and are not here.
 | An allow-listed database name is not proof that the database is the rehearsal's (`airpayprod`, `sentientia_uat` slipped past the old name patterns) | the `prod`/`uat` name guard, `PRODUCTION_DB_ENDPOINT`, the server schema scan, the kit marker |
 | The role-9 script refuses a second `--apply` ("Already applied"), so a repeated step 06 could not pass | step 06 skips the apply when the state file exists and the dry run shows nothing left |
 | An import that failed half way left a database the gate refuses, and the documented recovery re-ran the gate | step 09 reads the newest apply run from the database |
-| The Moodle 5.0 upgrade uninstalls mod_survey and mod_chat when their code is not on disk, deleting their activities; the first metric sets counted no `course_modules`, so the April copy read "100% PARITY" | metrics version 3 (`course_modules` and the BizLMS substrate are checksummed), ADR-032 "FINDING" |
+| The Moodle 5.0 upgrade uninstalls mod_survey and mod_chat when their code is not on disk, deleting their activities; the first metric sets counted no `course_modules`, so the April copy read "100% PARITY" | metrics version 3 (`course_modules` and the BizLMS substrate are checksummed), ADR-032 "FINDING". The loss cannot be accepted by the parity tool (it has no acceptance for drift), so step 04 counts the activities BEFORE hop 2 and stops: the one way forward is a package that carries a 5.x `mod_survey` and `mod_chat` (Nitin's decision); step 01 notes the counts early |
+| (Stage B tools fix round 2) A new rehearsal reusing the earlier rehearsal's moodledata silently ignored the new archive and carried over the role-9 state file, so step 06 died and told the operator to revert the earlier rehearsal's role | the marker file records the unpacked archive; a new restore refuses a used dataroot; a named archive is never ignored |
+| (Stage B tools fix round 2) The first parity compare after the import fails on a clean run when the import switches off a BizLMS enrol instance (owner decision CRS-01) and the compare holds `enrol` as insert-only | `parity\core::WRITES['enrol']` is an update table (status, timemodified), named by the enrolments importer's trail `local_sentientia_courses_enroloff` |
 
 ## Testing the kit
 
@@ -174,7 +195,8 @@ plan are IT's and are not here.
 guard, the live endpoint), the config checks, the generated `config.php` (a hostile password round-trips, the guard exits, a
 foreign config is not overwritten, the cache configuration points at the kit's directory), the dump scan (a `USE`, `CREATE
 DATABASE` or `DROP DATABASE` statement, a missing trailer, plain and gzip), the file store comparison, `judge()`,
-`unpack_tree`, the helpers that decide the re-runs of steps 04, 06 and 09, the tree manifest hash, the state rotation, the
+`unpack_tree`, the helpers that decide the re-runs of steps 04, 06 and 09, the whole-path cron scan, the archive identity and the
+marker's unpack record, the GTID and MariaDB-collation dump checks, the snapshot acknowledgement, the tree manifest hash, the state rotation, the
 orchestrator in DRY mode, and that no Windows path is hard-coded. Every kit script passes `bash -n` (the selftest runs it);
 `shellcheck` was not available where the kit was written, run it where it is. The selftest starts many `bash` processes: on
 a workstation under antivirus load it takes tens of minutes.
@@ -198,6 +220,20 @@ Verified, on a Windows workstation (Git Bash, PHP 8.2, MariaDB 10.11, scratch sc
   state to `archive/`; steps 06 and 09 against the same stand-in: a repeated step 06, a failed apply continued with
   `IMPORT_APPLY_MODE=resume`, an exit 2 recorded and then accepted on a re-run; the new metrics on the 4.1.2 tables of the April dump and
   on the same data after the upgrades (`bizlms_april`, read only).
+
+* (Stage B tools fix round 2, 2026-10-08; `selftest.sh`: 128 pass, and a DRY run of all 13 steps) step 01 in `--execute` mode against
+  scratch schemas `stageb_h01` and `stageb_h_src` (22 scenario assertions, all pass): a fresh restore (the marker records the archive and
+  the finished unpack, the OAuth2 tokens are blanked, the survey count is noted), a re-run, a re-run naming another archive (refused), no
+  archive named, a NEW restore over the same finished unpack with nothing after step 01 run (reused), the same after a later step ran
+  (refused), a new moodledata for the new rehearsal, a populated directory the kit did not stamp (refused; not vouched for by
+  `RESTORE_DONE_BY_HAND`; refused with a fresh session file even with `RESTORE_MOODLEDATA_BY_HAND`; adopted when idle; an archive named
+  for it refused), a GTID dump refused before anything is restored, a hand restore after a failed kit restore. The parity gate on a real
+  engine without PHPUnit: the real `core::baseline/evidence/evaluate` and `parity_gate::expected()` through a `$DB` stand-in on scratch
+  schema `stageb_h02` (34 assertions: `enrol` as an update table, a switched-off instance explained, an unrecorded one, a trail row on a
+  manual instance, a trail row whose method differs, a changed fixed column, a stray insert, a removed row, the run filter, the registry and
+  the gate naming the same operations) and the standalone `source_baseline.php` (7 assertions: `tool.sha256`, a baseline another file took
+  refused, no hash refused, a metrics 3 baseline refused, a CRLF copy accepted). The harness scripts are not in the repository; the scratch
+  schemas were dropped.
 
 **Not run: any step against real Moodle 4.5 or 5.x code, `shellcheck` (not installed on that machine), PHPUnit.** The stand-in
 proves the kit's logic and parsing, not that the real tools print exactly what it expects: the first execution on the

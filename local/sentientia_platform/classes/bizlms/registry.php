@@ -29,6 +29,8 @@ defined('MOODLE_INTERNAL') || die();
  *    classes/schema TABLES), is a legacy table (known, detected, or claimed or declined by any
  *    importer) or is a framework table: an importer never writes another feature's tables;
  *  - a core_writes() table is not on CORE_WRITES_ALLOWED, the list reviewed against ADR-032;
+ *  - an importer that implements copies_files declares a file area that is not four non-empty strings
+ *    (file_areas_malformed);
  *  - the importer or any of its steps is defined outside the plugin's classes/bizlms/
  *    (the static scan reads that directory and nothing else);
  *  - an importer that declares tenant_columns() does not have TENANT_OWNER (the org feature) in its
@@ -67,13 +69,23 @@ final class registry {
             'operations' => ['update'],
             'why' => 'course_lookups: the open_* backfill (mapping doc, course_lookups)',
         ],
-        // enrol, role_assignments and user_enrolments are INSERT only. No importer updates a row of them, and the parity check
+        // role_assignments and user_enrolments are INSERT only: no importer updates a row of them, and the parity check
         // (parity\core::WRITES mode 'insert', parity_gate::INSERT_TABLES) holds every old row of these tables to the baseline, so
         // an UPDATE would be refused here at the writer, in the dry run, instead of showing only as a hard failure of the
         // post-import compare. (Narrowed from insert and update in the Stage B tools review; ADR-032 decision 8.)
+        //
+        // enrol is the one table that is both: the enrolments importer INSERTs the manual instance a course lacks (G6) and, by
+        // owner decision CRS-01, UPDATEs the status of a BizLMS instance it proved safe to switch off. The parity check holds it
+        // as an UPDATE table (parity\core::WRITES mode 'update', status and timemodified writable) and parity_gate names every
+        // such row from the importer's own trail (local_sentientia_courses_enroloff), so a status change nobody recorded, or one
+        // on an instance that is not a BizLMS one, is still a hard failure. Every operation reviewed here must be explained there
+        // (parity_library_test holds the two lists together).
         'enrol' => [
-            'operations' => ['insert'],
-            'why' => 'gap.orphan_enrol_instances (G6): a manual instance for a course that has none',
+            'operations' => ['insert', 'update'],
+            'why' => 'gap.orphan_enrol_instances (G6): INSERT a manual instance for a course that has none; UPDATE the status '
+                . 'of a BizLMS enrol instance the import proved safe to switch off (owner decision CRS-01, 2026-10-07): '
+                . 'core grants access through any enabled instance whether or not its plugin is on disk, so a converted '
+                . 'instance left on would keep granting access after a Sentientia unenrol or suspend',
         ],
         'role_assignments' => [
             'operations' => ['insert'],
@@ -397,6 +409,10 @@ final class registry {
                 if (!($decision instanceof decision)) {
                     $problems[] = "not_a_decision:{$feature}";
                 }
+            }
+            // The file copies the importer may make (IDN-04): the runner enforces the target half of each entry.
+            if ($importer instanceof copies_files && !sideeffect_guard::file_areas_well_formed($importer)) {
+                $problems[] = "file_areas_malformed:{$feature}";
             }
 
             // Steps.

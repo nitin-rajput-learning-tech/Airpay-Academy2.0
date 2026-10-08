@@ -20,7 +20,12 @@
 #      at real volume is unknown until now): the seconds come from {task_log};
 #   5. admin/cli/checks.php (informational: its exit code and lines are recorded, the cutover wants it clean);
 #   6. the parity compare once more with --after-import (informational: scheduled tasks legitimately write; the point is to
-#      see what a cron cycle changed, as the plan asks);
+#      see what a cron cycle changed, as the plan asks). It will NOT read exit 0, by design: the 5.0 upgrade queued
+#      \mod_qbank\task\transfer_question_categories (mod/qbank/db/install.php), which on its first run creates qbank activities
+#      (and, for a category or system bank, a container course), so course_modules, course_sections and perhaps course differ
+#      from the baseline afterwards. The data-intact gate therefore belongs BEFORE the first cron of a target (step 10 runs before
+#      this step; on cutover day the same gate runs before cron is enabled), and this row is evidence of what the first cycle did,
+#      not a failure of the import;
 #   7. maintenance goes back ON unless MAINTENANCE_AFTER_CRON=off (lift it for the workflow smoke walk).
 # It never turns cron_enabled on, never sets noemailever off, and never sends mail.
 
@@ -105,7 +110,9 @@ if [ "$EXECUTE" = 1 ]; then
     show_tail "$REPORT_DIR/cron-cycle.txt" 6
     # Whatever happens next, the site goes back under maintenance unless the operator wants it open.
     if [ "$MAINTENANCE_AFTER_CRON" = on ]; then
-        run m5 ../admin/cli/maintenance.php --enable > /dev/null || warn "could not put CLI maintenance back on"
+        # The command's own output stays in the log: the RUN line of `run` goes to the same stream, and a log that does not show that
+        # maintenance went back on is a log nobody can trust after a failed cycle.
+        run m5 ../admin/cli/maintenance.php --enable || warn "could not put CLI maintenance back on"
     fi
     [ "$rc" = 0 ] || die "cron.php exited ${rc} (reports/cron-cycle.txt)"
     grep -q 'Cron run completed correctly' "$REPORT_DIR/cron-cycle.txt" || die "the cron output has no 'Cron run completed correctly' line"
@@ -178,7 +185,7 @@ if [ "$EXECUTE" = 1 ]; then
     if [ "$rc" = 0 ]; then
         log "parity after the cron cycle: exit 0 (the cycle changed nothing the baseline holds)"
     else
-        warn "parity after the cron cycle: exit ${rc}. Informational here: a scheduled task may legitimately write (reports/parity-after-cron.txt lists what changed)"
+        warn "parity after the cron cycle: exit ${rc}. Informational here, and EXPECTED not to be 0: the first cron runs \\mod_qbank\\task\\transfer_question_categories, which creates qbank activities (course_modules and course_sections change, a container course may be added), and any other scheduled task may legitimately write (reports/parity-after-cron.txt lists what changed). The gate that counts is step 10, before the first cron"
     fi
 else
     dry "would run migration_parity_check.php --compare ... --after-import once more, informational"

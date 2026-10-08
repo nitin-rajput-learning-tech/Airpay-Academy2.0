@@ -58,7 +58,8 @@ if ((int) $employee->open_supervisorid !== (int) $manager->id) {
 //    allowed - filter in PHP over the user's own rows instead.
 $stale = 0;
 foreach ($DB->get_records('local_sentientia_request', ['userid' => $employee->id]) as $row) {
-    if ($row->reason === FIXTURE_REASON) {
+    // An imported BizLMS request (legacy_source set) is protected history: never removed by a fixture script.
+    if ($row->reason === FIXTURE_REASON && ($row->legacy_source ?? null) === null) {
         $DB->delete_records('local_sentientia_request', ['id' => $row->id]);
         $stale++;
     }

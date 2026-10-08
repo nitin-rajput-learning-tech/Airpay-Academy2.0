@@ -18,11 +18,14 @@ $plugin->component = 'local_sentientia_roles';
 // ADR-032 review round (2026-09-30) - the importer never grants a role across tenants or at a category the role may
 // not be assigned at (both skipped as owner reasons), audit rows of an out-of-tenant actor carry no path, finalise()
 // marks assigned users dirty. No schema change.
-$plugin->version   = 2026093002;  // ADR-032: org_roles importer tenant + role-level rules, user dirty marks
+// ADR-032 owner decision IDN-01 (2026-10-07) - fail closed: a user with no tenant path is left out of an org-role row
+// (warning user_without_tenant) and a row with nobody left is skipped with the owner reason user_without_tenant. No
+// schema change; importer::requires_version() names this version.
+$plugin->version   = 2026100701;  // ADR-032 IDN-01: org_roles fails closed for a user with no tenant path (on top of 2026093002)
 // 2026052201: Goal A Bug #10 WS-contract alignment.
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.3.1-beta'; // ADR-032 org_roles importer, reviewed; ADR-031 tenant scope + escalation closed
+$plugin->release   = '1.3.2-beta'; // ADR-032 IDN-01 fail-closed for a pathless user (1.3.1-beta: org_roles importer, reviewed; ADR-031 tenant scope + escalation closed)
 // 1.1.3-beta: +Goal A Bug #10 WS-contract alignment
 // role_manager calls local_sentientia_platform\tenant (ADR-031).
 $plugin->dependencies = [

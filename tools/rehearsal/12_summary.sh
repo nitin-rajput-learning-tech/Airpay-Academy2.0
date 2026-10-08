@@ -116,13 +116,18 @@ verdict() {
     printf '| After hop 2 (5.x) | %s%s |\n' "$(verdict "$(kv_get parity.after_hop2)")" "${hop2note:+ ($hop2note)}"
     printf '| Before the import (data intact gate) | %s |\n' "$(verdict "$(kv_get parity.pre_import)")"
     printf '| After the import (`--after-import`) | %s |\n' "$(verdict "$(kv_get parity.after_import)")"
-    printf '| After one cron cycle (informational) | %s |\n' "$(verdict "$(kv_get parity.after_cron)")"
+    printf '| After one cron cycle (informational; **not expected to be exit 0**, see below) | %s |\n' "$(verdict "$(kv_get parity.after_cron)")"
     printf '\nOutputs: `reports/parity-*.txt`.\n'
+    printf '\n**How to read these rows.**\n\n'
+    printf -- '- *After one cron cycle* differs from the baseline by design: the 5.0 upgrade queued `\\mod_qbank\\task\\transfer_question_categories`, which on its first run creates qbank activities (and, for a category or system bank, a container course), so `course_modules`, `course_sections` and perhaps `course` change. The data-intact gate is the row **After the import**, which runs BEFORE the first cron; on cutover day it must run before cron is enabled on the target.\n'
+    printf -- '- *After hop 2* reads exit 0 even when the only failed line was the `message_provider_defaults` invariant (step 05 repairs it). In that case the compare stopped at the failure and printed no UNPROVEN (exit 2) items, so this row can look cleaner than its evidence; the gate **Before the import** (step 09) judges everything again, after the repairs, and is the row that counts.\n'
 
     printf '\n## Evidence to keep with the change ticket\n\n'
     printf -- '- Baseline: `%s`, SHA-256 `%s`, release `%s`\n' "$BASELINE_FILE" "$(kv baseline.sha256)" "$(kv baseline.release)"
-    printf -- '- Baseline tool SHA-256: `%s` (carriage returns removed: `%s`; the package'"'"'s copy, the same way: `%s`; the two must be the same file)
-' "$(kv baseline.tool_sha256)" "$(kv baseline.tool_sha256_lf)" "$(kv package.baseline_tool_sha256_lf)"
+    printf -- '- Baseline tool SHA-256: `%s` (carriage returns removed: `%s`). The baseline names the file that took it (`tool.sha256`): `%s`; the package'"'"'s copy, the same way: `%s`. All three must be the same file, and the tool refuses a comparison across two files\n' \
+        "$(kv baseline.tool_sha256)" "$(kv baseline.tool_sha256_lf)" "$(kv baseline.tool_sha256_in_baseline)" "$(kv package.baseline_tool_sha256_lf)"
+    printf -- '- Activities the Moodle 5.0 upgrade deletes unless the package carries a 5.x module (counted in the restored copy before any hop): mod_survey %s, mod_chat %s. Check before hop 2: %s\n' \
+        "$(kv restore.activities_survey)" "$(kv restore.activities_chat)" "$(kv hop2.activities_lost)"
     printf -- '- 5.x package archive SHA-256: `%s` (release %s). The tree that really ran (manifest of every version.php): 4.5 `%s`, 5.x `%s`\n' \
         "$(kv package.5x.sha256)" "$(kv release.hop2_code)" "$(kv tree.45.manifest_sha)" "$(kv tree.5x.manifest_sha)"
     printf -- '- Restore: id `%s` (restored by hand: %s); the database and the moodledata carry it, and every writing step checked it\n' \
@@ -150,6 +155,22 @@ verdict() {
         done
     fi
     [ "$found" = 1 ] || printf 'None: every exit 2 stopped the run.\n'
+    # The tables the baseline does not name (legacy_other): a difference there is exit 2, not 1, so an acceptance can let a LOST ROW
+    # through. Each one is listed by name so that the written acceptance is specific; payment tables first (a payment log row is
+    # evidence nobody can recreate).
+    others="$(cat "$REPORT_DIR"/parity-after-hop2.txt "$REPORT_DIR"/parity-before-import.txt "$REPORT_DIR"/parity-after-import.txt 2> /dev/null \
+        | grep -o 'other_table_[a-z_]*:[A-Za-z0-9_]*' | LC_ALL=C sort -u || true)"
+    if [ -n "$others" ]; then
+        printf '\nTables that no BizLMS inventory names (`legacy_other`; a changed, missing or unchecked one is exit 2, so an acceptance of exit 2 lets it through). By name, payment tables first:\n\n'
+        pay="$(printf '%s\n' "$others" | grep -E 'paygw_|payment' || true)"
+        rest="$(printf '%s\n' "$others" | grep -Ev 'paygw_|payment' || true)"
+        if [ -n "$pay" ]; then
+            printf '%s\n' "$pay" | sed 's/^/- PAYMENT: `/; s/$/`/'
+        fi
+        if [ -n "$rest" ]; then
+            printf '%s\n' "$rest" | sed 's/^/- `/; s/$/`/'
+        fi
+    fi
 
     printf '\n## The rollout gate (migration plan 9): all seven, or the rehearsal repeats\n\n| # | Gate | Who proves it | State |\n|---|---|---|---|\n'
     p_import="$(kv_get parity.after_import)"

@@ -50,29 +50,39 @@ final class learning_path_stalled_test extends \advanced_testcase {
     }
 
     /** An active learning path at $path. */
-    private function path_at(string $path, string $name): int {
+    private function path_at(string $path, string $name, ?int $status = null, int $visible = 1): int {
         global $DB;
         return (int) $DB->insert_record('local_sentientia_learningpath', (object) [
             'name'         => $name,
             'description'  => '',
             'costcenterid' => 0,
             'open_path'    => $path,
-            'status'       => \local_sentientia_learningpath\path_manager::STATUS_ACTIVE,
-            'visible'      => 1,
+            'status'       => $status ?? \local_sentientia_learningpath\path_manager::STATUS_ACTIVE,
+            'visible'      => $visible,
             'timecreated'  => time(),
             'timemodified' => time(),
         ]);
     }
 
-    /** Put $user on $pathid with $status, enrolled at $timecreated. */
-    private function on_path(int $pathid, \stdClass $user, int $status, int $timecreated): void {
+    /** Put $user on $pathid with $status, enrolled at $timecreated. Returns the enrolment row's id. */
+    private function on_path(int $pathid, \stdClass $user, int $status, int $timecreated): int {
         global $DB;
-        $DB->insert_record('local_sentientia_learningpath_users', (object) [
+        return (int) $DB->insert_record('local_sentientia_learningpath_users', (object) [
             'pathid'        => $pathid,
             'userid'        => $user->id,
             'status'        => $status,
             'timecreated'   => $timecreated,
             'timecompleted' => $status === 2 ? $timecreated : null,
+        ]);
+    }
+
+    /** Record in the platform's import map that the BizLMS import created an enrolment row. */
+    private function mark_imported(int $enrolmentid): void {
+        global $DB;
+        $DB->insert_record(\local_sentientia_platform\bizlms\legacymap::TABLE, (object) [
+            'feature' => 'learningplan', 'sourcetable' => 'local_learningplan_user', 'sourceid' => $enrolmentid + 5000,
+            'subkey' => '', 'targettable' => 'local_sentientia_learningpath_users', 'targetid' => $enrolmentid,
+            'outcome' => 'imported', 'reason' => null, 'detail' => null, 'runid' => 0, 'timecreated' => time(),
         ]);
     }
 
@@ -134,6 +144,66 @@ final class learning_path_stalled_test extends \advanced_testcase {
         $recipients = array_map(fn($m) => (int) $m->useridto, $sink->get_messages());
         sort($recipients);
         $this->assertSame($expected, $recipients, 'The messages go to the stalled learners themselves.');
+        $sink->close();
+    }
+
+    /**
+     * Owner decision learningplan.stalled_nudge_scope (LRN-11): nothing acts on its own on an imported BizLMS
+     * enrolment, and nobody is nudged about a path that is switched off.
+     */
+    public function test_imported_enrolments_and_archived_or_hidden_paths_are_never_nudged(): void {
+        global $DB;
+        $old = time() - 30 * DAYSECS;
+        $active = $this->path_at('/1', 'Active path');
+        $archived = $this->path_at('/1', 'Archived path', \local_sentientia_learningpath\path_manager::STATUS_ARCHIVED);
+        $hidden = $this->path_at('/1', 'Hidden path', null, 0);
+        $new = \local_sentientia_learningpath\path_manager::ENROL_NEW;
+
+        $native = $this->user_at('/1/2');
+        $this->on_path($active, $native, $new, $old);
+        $imported = $this->user_at('/1/2');
+        $this->mark_imported($this->on_path($active, $imported, $new, $old));
+        $onarchived = $this->user_at('/1/2');
+        $this->on_path($archived, $onarchived, $new, $old);
+        $onhidden = $this->user_at('/1/2');
+        $this->on_path($hidden, $onhidden, $new, $old);
+        // A learner with one imported and one native enrolment: only the native one counts.
+        $both = $this->user_at('/1/2');
+        $this->mark_imported($this->on_path($archived, $both, $new, $old));
+        $second = $this->path_at('/1', 'Second active path');
+        $this->on_path($second, $both, $new, $old);
+        $sink = $this->redirectMessages();
+
+        $rule = $this->rule(14);
+        $result = rule_engine::process_rule($rule);
+
+        $this->assertSame(2, $result['sent'], 'the native learner and the second path of the mixed learner');
+        $sent = $DB->get_records('local_sentientia_notif_log', ['ruleid' => $rule->id, 'status' => 'sent'], 'id ASC',
+            'id, userid, message');
+        $byuser = [];
+        foreach ($sent as $row) {
+            $byuser[(int) $row->userid][] = $row->message;
+        }
+        $this->assertEqualsCanonicalizing([(int) $native->id, (int) $both->id], array_keys($byuser));
+        $this->assertStringContainsString('Active path', $byuser[(int) $native->id][0]);
+        $this->assertStringContainsString('Second active path', $byuser[(int) $both->id][0]);
+        foreach ([$imported, $onarchived, $onhidden] as $nobody) {
+            $this->assertArrayNotHasKey((int) $nobody->id, $byuser, 'never nudged about an imported row or a switched-off path');
+        }
+        $this->assertSame(2, $sink->count());
+        $sink->close();
+    }
+
+    public function test_a_native_enrolment_is_nudged_when_the_import_map_is_empty(): void {
+        // A site that never ran the import has no map rows: nothing is imported, so the provenance filter excludes nothing.
+        $path = $this->path_at('/77', 'Public path');
+        $learner = $this->user_at('/77/80');
+        $this->on_path($path, $learner, \local_sentientia_learningpath\path_manager::ENROL_NEW, time() - 30 * DAYSECS);
+        $sink = $this->redirectMessages();
+
+        $result = rule_engine::process_rule($this->rule(14));
+
+        $this->assertSame(1, $result['sent']);
         $sink->close();
     }
 

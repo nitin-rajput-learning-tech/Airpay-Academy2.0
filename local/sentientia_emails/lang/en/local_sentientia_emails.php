@@ -43,6 +43,14 @@ $string['privacy:metadata:emaillog:timecreated'] = 'Send timestamp.';
 $string['privacy:metadata:emailprefs'] = 'Per-user email preferences.';
 $string['privacy:metadata:emailprefs:userid'] = 'User the preferences belong to.';
 $string['privacy:metadata:emailprefs:timemodified'] = 'Last update timestamp.';
+$string['privacy:metadata:emailoverrides'] = 'Per-tenant e-mail template overrides. Kept when a person is erased; the person who last edited one is removed from it.';
+$string['privacy:metadata:emailoverrides:template_key'] = 'Which template the override replaces.';
+$string['privacy:metadata:emailoverrides:usermodified'] = 'The user who last edited the override. Set to 0 when that user is erased.';
+$string['privacy:metadata:emailoverrides:timemodified'] = 'When the override was last edited.';
+$string['privacy:metadata:emailrules'] = 'Notification rules. Kept when a person is erased; the person who last edited one is removed from it.';
+$string['privacy:metadata:emailrules:rule_name'] = 'The rule\'s name.';
+$string['privacy:metadata:emailrules:usermodified'] = 'The user who last edited the rule. Set to 0 when that user is erased.';
+$string['privacy:metadata:emailrules:timemodified'] = 'When the rule was last edited.';
 
 // Sprint B (2026-05-13) — course-completion email + ramping reminders.
 // Note: Moodle lang strings with {$a} placeholders MUST be in
@@ -107,8 +115,20 @@ $string['email_detail_note']     = 'Note';
 $string['email_detail_body']     = 'Message';
 $string['email_detail_no_body']  = 'No message body is shown for this e-mail. It is withheld when the message carried account credentials, or when body import was switched off. BizLMS\'s own copy stays in its archive table.';
 $string['email_detail_back']     = 'Back to the notification log';
+$string['email_detail_image_removed'] = 'external image removed';
 
 // ADR-032 privacy metadata: columns the BizLMS import added to the delivery log.
 $string['privacy:metadata:emaillog:sender_userid'] = 'Imported BizLMS history only: the user who queued the message. Set to 0 when that user is erased; the recipient\'s history stays.';
 $string['privacy:metadata:emaillog:body_html']     = 'Imported BizLMS history only: the message body, with account credentials redacted.';
 $string['privacy:metadata:emaillog:timesent']      = 'Imported BizLMS history only: when BizLMS delivered the message.';
+
+// COMMS-N7 (2026-10-07): the three e-mails BizLMS sends that Sentientia had no sender for. Each sender is behind its
+// own default-OFF flag (sentientia.emails.send_course_enrolment.enabled, ...send_learning_path_enrolment.enabled and
+// ...send_manager_completion_copy.enabled). The subjects are in the recipient's own language.
+$string['parity_subject_course_enrolled']    = 'You have been enrolled in: {$a}';
+$string['parity_subject_path_enrolled']      = 'New learning path: {$a}';
+$string['parity_subject_manager_completion'] = '{$a->member} has completed {$a->course}';
+$string['parity_log_subject_manager_completion'] = 'A team member has completed {$a}';
+$string['parity_enrolled_by_self']           = 'Self-enrolment';
+$string['parity_enrolled_by_system']         = 'System';
+$string['task_send_path_enrolments']         = 'Send learning-path enrolment e-mails';

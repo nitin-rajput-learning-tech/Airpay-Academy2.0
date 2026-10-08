@@ -65,7 +65,10 @@ final class bizlms_import_test extends \advanced_testcase {
     /** The BizLMS base of the order numbers (config uniqueidentifier). */
     private const BASE = 1000000;
 
-    /** The owner's signed values for this feature (docs/cutover/bizlms-import-decisions.json, 2026-09-30). */
+    /**
+     * The owner's signed values for this feature (docs/cutover/bizlms-import-decisions.json, 2026-09-30; the two
+     * finance keys accepted 2026-10-07 by delegation, cart.finance_keys_status, Finance not consulted).
+     */
     private const SIGNED = [
         'tenant.unresolved.cart' => 'pathless',
         'cart.synthesize_ledger' => false,
@@ -74,6 +77,8 @@ final class bizlms_import_test extends \advanced_testcase {
         'cart.imported_visibility' => 'admin_only',
         'cart.admin_refund_imported_orders' => false,
         'cart.cash_drawer_rows_without_order' => 'import_admin_only',
+        'cart.credit_balances' => 'frozen_pending_finance',
+        'cart.erpnext_invoices_legal' => 'reference_only_pending_finance',
     ];
 
     /** @var array<string, mixed> The decision values a test runs with; a test may change some. */
@@ -399,24 +404,58 @@ final class bizlms_import_test extends \advanced_testcase {
             array_keys($importer->declined_tables()), 'the gateway tables are evidence, declined as tables');
     }
 
-    public function test_the_signed_decisions_cover_the_importer_and_the_finance_keys_are_not_declared(): void {
+    public function test_the_signed_decisions_cover_the_importer_and_the_finance_keys_are_accepted_and_declared(): void {
         $this->resetAfterTest();
         $dir = \core_component::get_component_directory('local_sentientia_platform');
         $signed = decisions::load($dir . '/tests/fixtures/bizlms/bizlms-import-decisions.copy.json');
         $importer = new importer();
         $declared = [];
         foreach ($importer->decisions() as $decision) {
-            $declared[] = $decision->key;
+            $declared[$decision->key] = $decision;
             $this->assertSame(decisions::ACCEPTED, $signed->status($decision->key), $decision->key . ' is signed');
             $this->assertTrue($signed->has($decision->key));
             $this->assertContains($signed->get($decision->key), (array) $decision->allowed,
                 $decision->key . ': the signed value is one the importer implements');
         }
-        // The two finance-confirm keys are not accepted, so an importer that declared one would be blocked.
-        foreach (['cart.credit_balances', 'cart.erpnext_invoices_legal'] as $key) {
-            $this->assertSame('finance-confirm', $signed->status($key));
-            $this->assertNotContains($key, $declared, "{$key} must not be declared by the cart importer");
+        // cart.finance_keys_status (owner, 2026-10-07, delegated; Finance not consulted): the two finance keys are
+        // accepted decisions and the importer declares each with only the value it implements, so a later
+        // different value (for example write_off) blocks preflight instead of being silently ignored.
+        $expected = [
+            'cart.credit_balances' => 'frozen_pending_finance',
+            'cart.erpnext_invoices_legal' => 'reference_only_pending_finance',
+        ];
+        foreach ($expected as $key => $value) {
+            $this->assertSame(decisions::ACCEPTED, $signed->status($key), "{$key} is accepted, not finance-confirm");
+            $this->assertSame($value, $signed->get($key));
+            $this->assertArrayHasKey($key, $declared, "{$key} must be declared by the cart importer");
+            $this->assertSame([$value], $declared[$key]->allowed, "{$key}: only the value the importer implements");
         }
+        $this->assertArrayNotHasKey('cart.credit_balances', $signed->not_accepted());
+        $this->assertArrayNotHasKey('cart.erpnext_invoices_legal', $signed->not_accepted());
+    }
+
+    public function test_a_finance_value_the_importer_cannot_do_blocks_the_feature(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        $this->decisionvalues['cart.credit_balances'] = 'write_off';
+        [$result] = $this->contract_run(false);
+        $this->assertSame(1, $result['exit']);
+        $this->assertStringContainsString('decision_value_not_allowed:cart.credit_balances',
+            implode(' ', $result['blockers']));
+
+        $this->decisionvalues = self::SIGNED;
+        $this->decisionvalues['cart.erpnext_invoices_legal'] = 'issue_native_invoices';
+        [$result] = $this->contract_run(false);
+        $this->assertSame(1, $result['exit']);
+        $this->assertStringContainsString('decision_value_not_allowed:cart.erpnext_invoices_legal',
+            implode(' ', $result['blockers']));
+    }
+
+    public function test_the_signed_finance_values_do_not_block_a_run(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        [$result] = $this->contract_run(false);
+        $this->assertSame([], $result['blockers'], 'both finance keys are accepted and declared: nothing blocks');
     }
 
     public function test_a_decision_value_the_importer_does_not_implement_blocks_the_feature(): void {

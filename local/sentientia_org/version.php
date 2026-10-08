@@ -44,11 +44,18 @@ $plugin->component = 'local_sentientia_org';
 // fallbacks are removed from accesslib in the same release (ADR-032 gate 3), so the importer class refuses
 // to run below this version (importer::REQUIRES_VERSION).
 // 2026093001: ADR-032 org importer + BizLMS capability fallbacks removed.
-$plugin->version   = 2026093002;  // ADR-032 cohort_scope: local_sentientia_cohort_scope + its BizLMS importer
+// 2026100701: ADR-032 owner decision IDN-04 - the org and cohort_scope importers implement the platform's copies_files
+// marker (their logo and description copies are a declared side effect, counted in the run report), and
+// org_source::root_is_registered() delegates to tenant_resolver (F-11). No schema change. The marker interface ships
+// with local_sentientia_platform 2026100701, which this plugin therefore requires.
+$plugin->version   = 2026100701;  // ADR-032 IDN-04: copies_files marker (on top of 2026093002 cohort_scope importer)
 // 2026092500: ADR-031 tenant-bounded org tree + parent pick.
 // 2026092200: descendants-only access filter is /-bounded.
 // 2026090800:
 $plugin->requires  = 2022041900; // Moodle 4.0+
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->release   = '1.5.0'; // ADR-032 org importer + accesslib fallbacks removed. 1.4.4: ADR-031 tenant scope. 1.4.3: +2026-09-08 cascade_* strings (org cascade filter i18n, en+hi)
-$plugin->release   = '1.6.0'; // ADR-032 cohort_scope importer + cohort scope table + real privacy provider. 1.5.0: ADR-032 org importer + accesslib fallbacks removed. 1.4.4: ADR-031 tenant scope. 1.4.3: +2026-09-08 cascade_* strings (org cascade filter i18n, en+hi) — this ME tree is what UAT runs
+$plugin->dependencies = [
+    'local_sentientia_platform' => 2026100701, // the copies_files marker the two importers implement (IDN-04)
+];
+$plugin->release   = '1.6.1'; // ADR-032 IDN-04 copies_files marker. 1.6.0: ADR-032 cohort_scope importer + cohort scope table + real privacy provider. 1.5.0: ADR-032 org importer + accesslib fallbacks removed. 1.4.4: ADR-031 tenant scope. 1.4.3: +2026-09-08 cascade_* strings (org cascade filter i18n, en+hi) — this ME tree is what UAT runs

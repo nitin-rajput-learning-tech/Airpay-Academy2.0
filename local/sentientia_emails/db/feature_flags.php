@@ -52,4 +52,43 @@ $flags = [
                           subject and body were withheld at import. Default OFF.',
     ],
 
+    // COMMS-N7 (2026-10-07): three e-mails BizLMS sends today and Sentientia had no sender for (decisions file key
+    // gaps.notification_sender_parity = build_flagged_off). Each is its own flag, default OFF, and the import never
+    // flips one. Turning them ON for Airpay at cutover is Nitin's call after he has seen them work on UAT. They
+    // send through the same engine as every other rule: nothing leaves a server with $CFG->noemailever set (the
+    // delivery log then shows the row as suppressed), the recipient's channel preferences apply, and none of them
+    // carries a password.
+
+    'sentientia.emails.send_course_enrolment.enabled' => [
+        'default'     => false,
+        'description' => 'Sends the learner an e-mail when they are enrolled in a course (the BizLMS
+                          course_enrol e-mail), with the course, who enrolled them and a link. Skipped
+                          for a hidden course, a suspended enrolment and a suspended or deleted user.
+                          The flag is read for the learner\'s own tenant, so it can be ON for one
+                          tenant only. A Notification rule of type course_enrolled can change the
+                          channel or switch the e-mail off for a tenant. Default OFF.',
+    ],
+
+    'sentientia.emails.send_learning_path_enrolment.enabled' => [
+        'default'     => false,
+        'description' => 'Sends the learner an e-mail when they are enrolled in a learning path (the
+                          BizLMS learningplan_enrol e-mail), with the path, its courses and its
+                          closing date. The learning-path plugin raises no event, so a scheduled task
+                          looks for new enrolments every five minutes; it only ever e-mails an
+                          enrolment made after it started, never an old or an imported one. The flag
+                          is read for the learner\'s own tenant. A Notification rule of type
+                          learning_path_enrolled can change the channel or switch the e-mail off for a
+                          tenant. Default OFF.',
+    ],
+
+    'sentientia.emails.send_manager_completion_copy.enabled' => [
+        'default'     => false,
+        'description' => 'When a learner completes a course, sends their supervisor a copy (the BizLMS
+                          course_complete e-mail to a manager), naming the learner and the course. Only
+                          to a live supervisor in the same tenant as the learner. The flag is read for
+                          the supervisor\'s tenant. A Notification rule of type manager_course_completed
+                          can change the channel or switch the e-mail off for a tenant. The learner\'s
+                          own completion e-mail is unchanged. Default OFF.',
+    ],
+
 ];

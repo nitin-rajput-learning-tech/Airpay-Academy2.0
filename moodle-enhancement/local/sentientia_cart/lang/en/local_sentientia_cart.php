@@ -123,6 +123,26 @@ $string['paid_withheld']  = 'This order also included {$a} course(s) that are no
 $string['admin_withheld'] = 'Refund due: order #{$a->orderid} was paid, but the buyer was NOT enrolled in course id(s) {$a->courseids}, which they may no longer buy (ADR-031). Refund those lines with a partial refund; a full refund also unenrols the buyer from the courses they were granted.';
 $string['ordernotes']     = 'Staff notes';
 
+// cart.withheld_line_refund (2026-10-07): what each withheld line was charged, for the administrator's review.
+$string['admin_withheld_amounts'] = 'For review, not an invoice: the amount charged for each withheld line (price - discount + GST share = charged). The GST share is worked out from the order\'s recorded tax with the same paise rounding as the order total, so it can differ from the invoice by a paisa. You decide the refund, with a partial refund; Finance issues any GST credit note.';
+$string['admin_withheld_line']    = '- course id {$a->courseid} ({$a->name}): {$a->price} - {$a->discount} + GST {$a->tax} = {$a->total} {$a->currency}';
+$string['admin_withheld_total']   = 'Withheld lines total: {$a->total} {$a->currency} (order total {$a->ordertotal} {$a->currency}).';
+
+// Order notifications (classes/notifier.php): each subject and body is built in the recipient's own language.
+$string['notify_paid_intro']      = 'Thank you! Your order #{$a} has been confirmed.';
+$string['notify_paid_courses']    = 'Courses:';
+$string['notify_paid_total']      = 'Total: {$a->currency} {$a->amount}';
+$string['notify_paid_access']     = 'You can now access your courses from the catalog.';
+$string['notify_failed_subject']  = 'Order #{$a} failed';
+$string['notify_failed_body']     = 'Your order could not be processed. Reason: {$a}';
+$string['notify_failed_hint']     = 'Please try again from your cart, or contact support.';
+$string['notify_refund_subject']  = 'Refund processed';
+$string['notify_refund_full']     = 'Your order #{$a->orderid} has been fully refunded ({$a->currency} {$a->amount}).';
+$string['notify_refund_partial']  = 'A partial refund of {$a->currency} {$a->amount} has been processed for order #{$a->orderid}.';
+$string['notify_admin_subject']   = 'New order #{$a}';
+$string['notify_admin_body']      = 'Order #{$a->orderid} placed by {$a->name} ({$a->email}) for {$a->currency} {$a->amount}.';
+$string['notify_admin_unknown_buyer'] = 'unknown';
+
 // Errors.
 $string['error_courseunavailable'] = 'This course is no longer available for purchase.';
 $string['error_alreadyenrolled']    = 'You are already enrolled in this course.';

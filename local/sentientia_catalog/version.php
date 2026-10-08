@@ -49,10 +49,31 @@ $plugin->component = 'local_sentientia_catalog';
 // pseudo-courses, decision exams.forum_pseudocourses = exclude_from_catalog), as BizLMS's own catalog did. A parity
 // fix of what a restored database would otherwise offer, so no flag; no schema/cap change, no lang string.
 // Purge local_sentientia_catalog caches on deploy (trending, new_courses and categories are cached).
-$plugin->version   = 2026100102;  // ADR-032 course_lookups reader fixes + course_type_labels flag (default OFF) and exams: catalog lists ordinary courses only; no schema/cap change
+// 2026100701: owner decision cart.price_source (2026-10-07), a confirmed revenue hole closed. commerce::get_course_price()
+// reads the enabled enrol_fee instance (cost, currency; the order cart's own rule), with the config setting
+// course_price_<id> only as the fallback for a course that has no fee instance. Before, every course priced through
+// enrol_fee (66 in the April 2026 copy, 61 of them Public, INR 100-499) read as Free, the basket stored it as is_free
+// and the 'enrollfree' action (no flag) enrolled it through enrolment::enrol_now(), whose paid-course re-check used
+// the same config-only price. enrol_now() now also refuses any course the order cart prices
+// (cart_manager::get_course_price(), guarded by class_exists). Restores what production shows and charges today, so no
+// flag; the storefront_checkout flag stays OFF. No schema/cap change, no lang string. Purge caches on deploy.
+// 2026100702: owner decision CRS-14 (2026-10-07). commerce::get_public_catalog() (the public guest storefront) lists ordinary
+// courses only, in its COUNT and its SELECT (catalog_manager::ordinary_courses_condition(), the public form of the condition the
+// browse lists already use): on the April 2026 copy 5 Public-tenant exam courses would otherwise show to guests, and none can be
+// bought or joined (no fee instance, guest and self enrolment disabled). The learner's in-progress rail KEEPS an enrolled
+// pseudo-course (Sentientia's exam pages are manager and teacher only, so the enrolled course is a learner's only path to an
+// assigned exam) and labels it "Exam" or "Forum" from open_module (+2 lang strings, en + hi) instead of "E-Learning". Same release,
+// the "readers that count enrolments" item: get_in_progress() groups by course (no more duplicate rows or debugging notice,
+// no more rail shorter than its limit) and counts active enrolments on enabled instances only; the popularity counts of the
+// storefront, the homepage picks, get_courses() and get_trending() count learners once (COUNT DISTINCT userid) with the same
+// two status filters. A parity fix of what a restored database would otherwise show, so no flag; no schema/cap change.
+// Purge local_sentientia_catalog caches on deploy (in_progress, trending, new_courses and categories are cached).
+$plugin->version   = 2026100702;  // CRS-14 + readers: storefront excludes pseudo-courses, in-progress rail labels them and lists a course once; no schema/cap change
+// 2026100701: cart.price_source: the enrol_fee cost is the price; enrol_now refuses a course the order cart prices; no schema/cap change
+// 2026100102: ADR-032 course_lookups reader fixes + course_type_labels flag (default OFF) and exams: catalog lists ordinary courses only; no schema/cap change
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.7-beta';
+$plugin->release   = '1.0.9-beta';  // 1.0.9: CRS-14 storefront/rail + enrolment-count readers (was 1.0.8-beta)
 // tenant::is_cross_tenant() arrived in platform 2026092500 (ADR-031).
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026092500,

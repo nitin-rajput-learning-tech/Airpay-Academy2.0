@@ -78,6 +78,39 @@ final class bizlms_parity_gate_test extends \advanced_testcase {
         ]);
     }
 
+    /**
+     * A row of core enrol the way a BizLMS instance sits there (the enrol plugin itself need not exist: the gate reads the row).
+     *
+     * @param int $courseid
+     * @param string $method The enrol column.
+     * @param int $status
+     * @return int The new instance id.
+     */
+    private function enrol_instance(int $courseid, string $method = 'classroom', int $status = 0): int {
+        global $DB;
+        return (int) $DB->insert_record('enrol', (object) ['enrol' => $method, 'status' => $status, 'courseid' => $courseid,
+            'sortorder' => 50, 'timecreated' => 1, 'timemodified' => 2]);
+    }
+
+    /**
+     * A row of the enrolments importer's trail of switched-off instances, and (with a run) the map row that says that run wrote it.
+     *
+     * @param int $enrolid
+     * @param int $courseid
+     * @param string $method What the trail recorded as the instance's enrol method.
+     * @param int $prior The status the instance had.
+     * @param int $runid 0 for no map row.
+     * @return void
+     */
+    private function trail_row(int $enrolid, int $courseid, string $method = 'classroom', int $prior = 0, int $runid = 0): void {
+        global $DB;
+        $id = (int) $DB->insert_record('local_sentientia_courses_enroloff', (object) ['enrolid' => $enrolid,
+            'courseid' => $courseid, 'method' => $method, 'priorstatus' => $prior, 'timecreated' => 1, 'timemodified' => 2]);
+        if ($runid > 0) {
+            $this->map_row('local_sentientia_courses_enroloff', $id, $enrolid, '', 'imported', $runid);
+        }
+    }
+
     // The SCORM numbers.
 
     public function test_scorm_numbers_are_the_same_whichever_layout_holds_them(): void {
@@ -309,6 +342,100 @@ final class bizlms_parity_gate_test extends \advanced_testcase {
         $DB->set_field('tag_instance', 'ordering', 3, ['id' => $moved]);
         $hard = implode(' | ', parity_core::evaluate($base, parity_core::evidence($db, $base), parity_gate::expected(null))['hard']);
         $this->assertStringContainsString("core_fixed_column_changed:tag_instance:id={$moved}", $hard);
+    }
+
+    public function test_expected_names_the_switched_off_instances_and_keeps_the_instances_the_import_inserted(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->require_table('local_sentientia_courses_enroloff');
+        $course = $this->getDataGenerator()->create_course();
+        $off = $this->enrol_instance($course->id, 'classroom');
+        $left = $this->enrol_instance($course->id, 'program');
+        $other = $this->enrol_instance($course->id, 'manual');
+        $new = $this->enrol_instance($course->id, 'manual');
+
+        // The importer decided to switch off $off and $left; the step switched off $off only (the site was open for the other, or an
+        // administrator switched it back on). A trail row that names a manual instance is a lie the gate must not take on trust.
+        $this->trail_row($off, $course->id, 'classroom', 0, 7);
+        $this->trail_row($left, $course->id, 'program', 0, 7);
+        $this->trail_row($other, $course->id, 'manual', 0, 8);
+        $DB->update_record('enrol', (object) ['id' => $off, 'status' => 1, 'timemodified' => 99]);
+        $DB->update_record('enrol', (object) ['id' => $other, 'status' => 1, 'timemodified' => 99]);
+        $this->map_row('enrol', $new, 5, '', 'imported', 7);
+
+        $all = parity_gate::expected(null)['enrol'];
+        $this->assertSame([$off => ['status', 'timemodified']], $all['changed'],
+            'only a BizLMS instance that really differs from the status the trail kept is named');
+        $this->assertSame([$new], $all['inserted'], 'the ledger adds to the inserted ids, it does not replace them');
+
+        $this->assertSame([$off => ['status', 'timemodified']], parity_gate::expected(7)['enrol']['changed'], 'run 7 wrote the trail row');
+        $this->assertSame([], parity_gate::expected(8)['enrol']['changed'], 'run 8 only wrote a trail row for a manual instance');
+        $this->assertSame([$new], parity_gate::expected(7)['enrol']['inserted']);
+        $this->assertSame([], parity_gate::expected(8)['enrol']['inserted']);
+        $this->assertSame(['enrolments' => 0, 'enrol_instances' => 1, 'role_assignments' => 0],
+            parity_gate::explained_counts(parity_gate::expected(null)));
+    }
+
+    public function test_the_core_gate_explains_a_switched_off_bizlms_instance_only_when_the_trail_names_it(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->require_table('local_sentientia_courses_enroloff');
+        if ($DB->get_dbfamily() !== 'mysql') {
+            $this->markTestSkipped('per-row hashes need CRC32 (MySQL or MariaDB)');
+        }
+        $course = $this->getDataGenerator()->create_course();
+        $other = $this->getDataGenerator()->create_course();
+        $a = $this->enrol_instance($course->id, 'classroom');
+        $b = $this->enrol_instance($course->id, 'learningplan');
+        $c = $this->enrol_instance($course->id, 'manual');
+        $d = $this->enrol_instance($course->id, 'program');
+        $db = new moodle_db($DB);
+        $base = parity_core::baseline($db);
+        $this->assertSame('update', $base['enrol']['mode']);
+        $this->assertSame(['status', 'timemodified'], $base['enrol']['writable']);
+        $this->assertNotContains('status', $base['enrol']['fixed']);
+        $verdict = fn() => parity_core::evaluate($base, parity_core::evidence($db, $base), parity_gate::expected(null));
+        $hard = fn() => implode(' | ', $verdict()['hard']);
+        $this->assertSame([], $verdict()['hard'], 'nothing happened yet');
+
+        // The import switches $a off and records it, and inserts a manual instance and records that. The old rows of enrol still
+        // hash to the baseline: status and timemodified are not in what is held fixed.
+        $DB->update_record('enrol', (object) ['id' => $a, 'status' => 1, 'timemodified' => 99]);
+        $this->trail_row($a, $course->id, 'classroom');
+        $new = $this->enrol_instance($other->id, 'manual');
+        $this->map_row('enrol', $new, 1);
+        $result = $verdict();
+        $this->assertSame([], $result['hard'], 'a recorded switch-off and a recorded insert are explained');
+        $this->assertSame([], $result['unproven']);
+
+        // An instance nobody recorded.
+        $DB->set_field('enrol', 'status', 1, ['id' => $b]);
+        $this->assertStringContainsString("core_row_changed_not_in_the_import:enrol:id={$b} columns status", $hard());
+        $DB->set_field('enrol', 'status', 0, ['id' => $b]);
+
+        // An instance that is not a BizLMS one, even with a trail row naming it (the trail is the importer's claim, not proof).
+        $DB->update_record('enrol', (object) ['id' => $c, 'status' => 1, 'timemodified' => 99]);
+        $this->trail_row($c, $course->id, 'manual');
+        $this->assertStringContainsString("core_row_changed_not_in_the_import:enrol:id={$c} columns status,timemodified", $hard());
+        $DB->update_record('enrol', (object) ['id' => $c, 'status' => 0, 'timemodified' => 2]);
+        $this->assertSame([], $verdict()['hard']);
+
+        // A trail row for an instance the step left enabled (the site was open): it names nothing, so it cannot fail.
+        $this->trail_row($d, $course->id, 'program');
+        $this->assertSame([], $verdict()['hard']);
+
+        // A column the import never writes changes on the switched-off instance: the trail excuses status and timemodified only.
+        $DB->set_field('enrol', 'name', 'renamed', ['id' => $a]);
+        $this->assertStringContainsString("core_fixed_column_changed:enrol:id={$a}", $hard());
+        $DB->set_field('enrol', 'name', null, ['id' => $a]);
+        $this->assertSame([], $verdict()['hard']);
+
+        // An old row that is gone, and an added row nobody recorded.
+        $stray = $this->enrol_instance($other->id, 'manual');
+        $this->assertStringContainsString("core_rows_added_not_in_the_import:enrol: 1 (ids {$stray})", $hard());
+        $DB->delete_records('enrol', ['id' => $stray]);
+        $DB->delete_records('enrol', ['id' => $d]);
+        $this->assertStringContainsString("core_row_removed:enrol:id={$d}", $hard());
     }
 
     // Runs and reports.

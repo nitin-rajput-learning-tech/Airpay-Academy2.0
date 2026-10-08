@@ -8,10 +8,12 @@ defined('MOODLE_INTERNAL') || die();
 
 use local_sentientia_learningpath\bizlms\importer as lp_importer;
 use local_sentientia_learningpath\tests\bizlms\standalone_importer;
+use local_sentientia_platform\bizlms\copies_files;
 use local_sentientia_platform\bizlms\decisions;
 use local_sentientia_platform\bizlms\importer;
 use local_sentientia_platform\bizlms\legacymap;
 use local_sentientia_platform\bizlms\registry;
+use local_sentientia_platform\bizlms\sideeffect_guard;
 use local_sentientia_platform\phpunit\importer_contract;
 use local_sentientia_platform\phpunit\legacy_schema_fixture;
 
@@ -768,6 +770,30 @@ final class bizlms_import_test extends \advanced_testcase {
 
         $this->contract_run(true);
         $this->assertCount(1, $fs->get_area_files($systemid, 'local_sentientia_learningpath', 'summaryfile', 10, 'id', false));
+    }
+
+    public function test_the_importer_declares_its_cover_copy_through_the_copies_files_marker(): void {
+        $importer = new lp_importer();
+        $this->assertInstanceOf(copies_files::class, $importer);
+        $this->assertSame([['local_learningplan', 'summaryfile', 'local_sentientia_learningpath', 'summaryfile']],
+            $importer->allowed_file_areas());
+        $this->assertSame([], $importer->core_writes(), 'a file copy is not a core write, so --purge-feature stays available');
+        $this->assertTrue(sideeffect_guard::file_areas_well_formed($importer));
+    }
+
+    public function test_the_cover_copy_is_a_declared_side_effect_the_report_counts_and_the_tripwire_accepts(): void {
+        // IDN-04: {files} is watched for every importer. Without the marker the copy would trip
+        // write_outside_declared_tables:files and the feature would end with no marker.
+        $this->contract_begin();
+        $this->contract_seed();
+        get_file_storage()->create_file_from_string(['contextid' => \context_system::instance()->id,
+            'component' => 'local_learningplan', 'filearea' => lp_importer::FILEAREA, 'itemid' => 4242,
+            'filepath' => '/', 'filename' => 'cover.png'], base64_decode(self::PNG));
+        [$result, $report] = $this->contract_run(true);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        $feature = $report->to_array()['features']['learningplan'];
+        $this->assertSame('clean', $feature['tripwire']);
+        $this->assertSame(['local_sentientia_learningpath/summaryfile' => 1], $feature['files_copied']);
     }
 
     public function test_no_enrolment_completion_or_message_comes_out_of_the_import(): void {

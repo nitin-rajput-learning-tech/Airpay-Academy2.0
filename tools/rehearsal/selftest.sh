@@ -341,6 +341,8 @@ t_rotate() {
     printf 'x\n' > "$REPORT_DIR/summary.md"
     printf '{}\n' > "$BASELINE_DIR/source-baseline.json"
     printf 't\n' > "$TIMINGS_FILE"
+    mkdir -p "$T/rw/muc"
+    printf 'x\n' > "$T/rw/muc/cacheconfig.php"
     work_state_has_history || exit 11
     rotate_work_state > /dev/null
     work_state_has_history && exit 12
@@ -351,9 +353,100 @@ t_rotate() {
     [ "$archived" = 1 ] || exit 16
     [ -n "$(find "$T/rw/archive" -name source-baseline.json)" ] || exit 17
     [ -n "$(find "$T/rw/archive" -name summary.md)" ] || exit 18
+    [ -n "$(find "$T/rw/archive" -name cacheconfig.php)" ] || exit 19
+    [ ! -e "$T/rw/muc" ] || exit 20
 }
 res="$(in_kit t_rotate)"
 if [ "$(printf '%s' "$res" | tail -n 1)" = rc=0 ]; then ok "a new restore moves the earlier rehearsal's state, reports, baseline and timings to archive/ (the preflight status stays)"; else bad "state rotation" "$res"; fi
+
+printf 'cron scan: the tree as a whole path (Stage B tools fix round 2)\n'
+t_names2() { CODE_45_DIR=/srv/r/m45 CODE_5X_DIR=/srv/r/m5 names_our_tree "$1"; }
+for pair in 'cd /srv/r/m5 && php admin/cli/cron.php:0' '*/5 * * * * www-data cd "/srv/r/m45"; php admin/cli/cron.php:0' \
+            '* * * * * php /srv/r/m5/admin/cli/cron.php:0' 'cd /srv/r/m5-uat && php admin/cli/cron.php:1' \
+            'cd /srv/r/m55 && php cron.php:1' 'cd /mnt/srv/r/m5 && php cron.php:1' 'cd /srv/r/m5.bak && php cron.php:1' \
+            '* * * * * php /var/www/uat/admin/cli/cron.php:1' 'cd /srv/r/m5-uat; cd /srv/r/m5 && php cron.php:0'; do
+    text="${pair%:*}"; want="${pair##*:}"
+    if [ "$(in_kit t_names2 "$text" | tail -n 1)" = "rc=${want}" ]; then ok "cron line '${text}': rc ${want}"; else bad "cron line '${text}': rc ${want}"; fi
+done
+
+printf 'the moodledata marker: which archive was unpacked, and whether it finished\n'
+t_marker() {
+    MOODLEDATA="$T/mdmark"
+    mkdir -p "$MOODLEDATA"
+    printf 'x' > "$T/arch.tar"
+    id1="$(archive_identity "$T/arch.tar")"
+    case "$id1" in */arch.tar\|1\|*) ;; *) exit 10 ;; esac
+    moodledata_write_marker abc "$id1"
+    [ "$(moodledata_marker_get)" = abc ] || exit 11
+    [ "$(moodledata_unpack_state "$id1")" = incomplete ] || exit 12
+    moodledata_write_marker abc "$id1" done
+    [ "$(moodledata_unpack_state "$id1")" = match ] || exit 13
+    printf 'xy' > "$T/arch.tar"
+    id2="$(archive_identity "$T/arch.tar")"
+    [ "$id1" != "$id2" ] || exit 14
+    [ "$(moodledata_unpack_state "$id2")" = other ] || exit 15
+    moodledata_write_marker abc
+    [ "$(moodledata_unpack_state "$id2")" = none ] || exit 16
+    moodledata_write_marker abc "$id1" done
+    moodledata_restamp def
+    [ "$(moodledata_marker_get)" = def ] || exit 17
+    [ "$(moodledata_unpack_state "$id1")" = match ] || exit 18
+    [ -z "$(moodledata_recent_writes)" ] || exit 19
+    mkdir -p "$MOODLEDATA/sessions"
+    : > "$MOODLEDATA/sessions/sess_x"
+    [ -n "$(moodledata_recent_writes)" ] || exit 20
+    touch -d '2 hours ago' "$MOODLEDATA/sessions/sess_x"
+    [ -z "$(moodledata_recent_writes)" ] || exit 21
+}
+res="$(in_kit t_marker)"
+if [ "$(printf '%s' "$res" | tail -n 1)" = rc=0 ]; then ok "the marker records the archive and the finish: none, incomplete, match, other; a restamp keeps them; recent writes in sessions/ are seen"; else bad "moodledata marker" "$res"; fi
+
+printf 'the dump: GTID and the MySQL 8 collation (Stage B tools fix round 2)\n'
+{ printf -- "SET @@GLOBAL.GTID_PURGED=/*!80000 '+'*/ '3E11FA47-71CA-11E1-9E33-C80AA9429562:1-5';\n"; cat "$T/dumps/good.sql"; } > "$T/dumps/gtid.sql"
+gzip -c "$T/dumps/gtid.sql" > "$T/dumps/gtid.sql.gz"
+for f in gtid.sql gtid.sql.gz; do
+    res="$(in_kit dump_unsafe_statement "$T/dumps/$f")"
+    if printf '%s' "$res" | head -n 1 | grep -qi 'GTID_PURGED'; then ok "a dump with SET @@GLOBAL.GTID_PURGED is flagged (${f})"; else bad "GTID dump flagged (${f})" "$res"; fi
+done
+printf 'CREATE TABLE `mdl_t` (`id` int) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;\n-- Dump completed on x\n' > "$T/dumps/mysql8.sql"
+res="$(in_kit dump_mysql8_collation "$T/dumps/mysql8.sql" | head -n 1)"
+if [ "$res" = "utf8mb4_0900_ai_ci" ]; then ok "a MySQL 8 collation in the dump is found"; else bad "MySQL 8 collation found" "$res"; fi
+res="$(in_kit dump_mysql8_collation "$T/dumps/good.sql" | sed '/^rc=/d')"
+if [ -z "$res" ]; then ok "a dump without it names none"; else bad "no MySQL 8 collation in a clean dump" "$res"; fi
+
+printf 'the restore point before a hop or the import\n'
+t_snap() {
+    # t_snap HOOK TAKEN PRODUCTION LABEL
+    EXECUTE=1 STEP_ID=t SNAPSHOT_HOOK="$1" SNAPSHOT_TAKEN="$2" BIZLMS_PRODUCTION_FLAG="$3" LOG_DIR="$T/logs" TIMINGS_FILE="$T/logs/timings.tsv"
+    mkdir -p "$LOG_DIR"
+    snapshot_hook "$4" > /dev/null 2>&1
+}
+[ "$(in_kit t_snap "" "" 1 before-hop-1 | rc_of)" = 1 ] && ok "cutover form, no hook and nothing acknowledged: refused" || bad "cutover form refuses a missing restore point"
+[ "$(in_kit t_snap "" "before-hop-1, before-import" 1 before-import | rc_of)" = 0 ] && ok "cutover form: SNAPSHOT_TAKEN names the label" || bad "SNAPSHOT_TAKEN names the label"
+[ "$(in_kit t_snap "" "before-hop-1" 1 before-hop-2 | rc_of)" = 1 ] && ok "cutover form: another label acknowledged is not enough" || bad "another label is not enough"
+[ "$(in_kit t_snap "" "all" 1 before-hop-2 | rc_of)" = 0 ] && ok "cutover form: SNAPSHOT_TAKEN=all" || bad "SNAPSHOT_TAKEN=all"
+[ "$(in_kit t_snap "" "" 0 before-hop-1 | rc_of)" = 0 ] && ok "rehearsal form: a missing hook is a reminder, not a stop" || bad "rehearsal form reminder"
+[ "$(in_kit t_snap true "" 1 before-hop-1 | rc_of)" = 0 ] && ok "a hook that succeeds is the restore point" || bad "hook succeeds"
+[ "$(in_kit t_snap false "" 0 before-hop-1 | rc_of)" = 1 ] && ok "a hook that fails stops the step" || bad "hook fails"
+
+printf 'the activity check before hop 2\n'
+t_lost() {
+    db_scalar() { printf '3'; }
+    rm -rf "$T/pkg"
+    mkdir -p "$T/pkg/public/mod/chat"
+    : > "$T/pkg/public/mod/chat/version.php"
+    modules_lost_in_hop2 "$T/pkg"
+}
+res="$(in_kit t_lost)"
+if [ "$(printf '%s\n' "$res" | sed '/^rc=/d')" = "survey 3" ]; then ok "only the module type the package lacks is reported (survey 3; chat is shipped)"; else bad "activity check names survey only" "$res"; fi
+t_lost_none() {
+    db_scalar() { printf '0'; }
+    rm -rf "$T/pkg2"
+    mkdir -p "$T/pkg2/public/mod"
+    modules_lost_in_hop2 "$T/pkg2"
+}
+res="$(in_kit t_lost_none)"
+if [ -z "$(printf '%s\n' "$res" | sed '/^rc=/d')" ] && [ "$(printf '%s' "$res" | tail -n 1)" = "rc=0" ]; then ok "no activity of those types: nothing reported"; else bad "no activities, nothing reported" "$res"; fi
 
 printf 'the generated config and the parity columns\n'
 write_cfg "$T/cfg_cache.php"

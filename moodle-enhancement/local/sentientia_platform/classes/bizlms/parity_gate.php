@@ -12,11 +12,12 @@ use local_sentientia_platform\parity\legacy as parity_legacy;
 /**
  * What cli/migration_parity_check.php needs from the import framework (ADR-032 "Parity hooks", Stage B gate 4).
  *
- * The parity tool compares a database with the baseline taken on the SOURCE. After the import three things differ from
+ * The parity tool compares a database with the baseline taken on the SOURCE. After the import four things differ from
  * that baseline on purpose: the import inserted enrolments, enrol instances and role assignments, it filled a few empty
- * course columns, and it moved tag instances to the core course area. This class reads the import's OWN records
- * (local_sentientia_legacymap and the importers' ledgers) and says exactly which rows and columns those are, so that
- * parity_core::evaluate() can hold every other row and column to the baseline.
+ * course columns, it moved tag instances to the core course area, and it switched off the BizLMS enrol instances it
+ * proved safe to switch off (enrol.status and timemodified, owner decision CRS-01). This class reads the import's OWN
+ * records (local_sentientia_legacymap and the importers' ledgers) and says exactly which rows and columns those are, so
+ * that parity_core::evaluate() can hold every other row and column to the baseline.
  *
  * Nothing here writes.
  *
@@ -27,12 +28,23 @@ use local_sentientia_platform\parity\legacy as parity_legacy;
 final class parity_gate {
 
     /**
-     * Core tables the import only INSERTS into. The rows it inserted are the map rows with outcome imported and one of
-     * these as target table (a fan-out sub-row has a subkey but the same outcome and target table).
+     * Core tables the import INSERTS into. The rows it inserted are the map rows with outcome imported and one of these
+     * as target table (a fan-out sub-row has a subkey but the same outcome and target table). enrol is here AND in LEDGERS:
+     * the import inserts the manual instance a course lacks and switches off the BizLMS instances it proved safe; the other
+     * two tables are insert only.
      *
      * @var string[]
      */
     public const INSERT_TABLES = ['user_enrolments', 'enrol', 'role_assignments'];
+
+    /**
+     * The enrol methods of the BizLMS plugins. local_sentientia_courses\bizlms\enrolments_importer::METHODS holds the same
+     * list (the platform cannot depend on that plugin; a test holds the two together). A switched-off instance is explained
+     * only when it is one of these.
+     *
+     * @var string[]
+     */
+    public const BIZLMS_ENROL_METHODS = ['classroom', 'learningplan', 'program'];
 
     /**
      * Parity count metric => the core table whose rows the import inserted.
@@ -50,6 +62,13 @@ final class parity_gate {
      * wrote. 'columns' is the ledger column holding a comma list of the columns written, or null when the importer
      * always writes the fixed list in 'written'.
      *
+     * enrol (owner decision CRS-01): the trail local_sentientia_courses_enroloff has one row per BizLMS instance the
+     * enrolments importer decided to switch off, with the status it had (priorstatus). The update step writes status and
+     * timemodified of exactly those instances, and nothing at all once the site is open (bizlms_production_open). So a trail
+     * row names a change only where the instance is a BizLMS one, still has the method the trail recorded, and its status
+     * now differs from priorstatus (see ledger_condition()): a row the step left alone is not named, and a status change on
+     * any other instance has no trail row, so it fails.
+     *
      * @var array<string, array{table: string, key: string, columns: ?string, written: string[]}>
      */
     public const LEDGERS = [
@@ -57,6 +76,8 @@ final class parity_gate {
             'written' => []],
         'tag_instance' => ['table' => 'local_sentientia_courses_tagmove', 'key' => 'taginstanceid', 'columns' => null,
             'written' => ['component', 'itemtype']],
+        'enrol' => ['table' => 'local_sentientia_courses_enroloff', 'key' => 'enrolid', 'columns' => null,
+            'written' => ['status', 'timemodified']],
     ];
 
     /** The map's run table. */
@@ -153,18 +174,24 @@ final class parity_gate {
         }
 
         foreach (self::LEDGERS as $table => $ledger) {
-            $out[$table] = ['changed' => []];
+            // A table the import also inserts into (enrol) keeps the ids it inserted: the ledger only adds what changed.
+            $out[$table]['changed'] = [];
             if (!$dbman->table_exists($ledger['table'])) {
                 continue;
             }
-            $where = '';
+            $conditions = [];
             $params = [];
             if ($runid !== null) {
-                $where = ' WHERE l.id IN (SELECT m.targetid FROM {' . legacymap::TABLE . '} m
+                $conditions[] = 'l.id IN (SELECT m.targetid FROM {' . legacymap::TABLE . '} m
                                            WHERE m.targettable = :blmledger AND m.outcome = \'imported\'
                                              AND m.runid = :blmrun)';
                 $params = ['blmledger' => $ledger['table'], 'blmrun' => $runid];
             }
+            $extra = self::ledger_condition($table);
+            if ($extra !== '') {
+                $conditions[] = $extra;
+            }
+            $where = $conditions ? ' WHERE ' . implode(' AND ', $conditions) : '';
             $select = 'l.id AS id, l.' . $ledger['key'] . ' AS target' . ($ledger['columns'] !== null ? ', l.' . $ledger['columns'] . ' AS cols' : '');
             $rows = $DB->get_recordset_sql('SELECT ' . $select . ' FROM {' . $ledger['table'] . '} l' . $where, $params);
             foreach ($rows as $row) {
@@ -183,6 +210,27 @@ final class parity_gate {
             $rows->close();
         }
         return $out;
+    }
+
+    /**
+     * The condition that makes a ledger row name a change, for a ledger whose rows are written only when the importer acts.
+     *
+     * Only enrol has one. The trail names every instance the importer decided to switch off, but the update step writes
+     * nothing once the site is open, and an administrator may have switched an instance back on, so a trail row is a claim
+     * "this instance changed" only while the instance really differs from the status the trail kept. The condition also
+     * holds the row to a BizLMS enrol method that is still the one the trail recorded: a trail row cannot excuse a status
+     * change on any other kind of instance. The method list is constant code, never input.
+     *
+     * @param string $table The core table.
+     * @return string An SQL condition on the ledger alias l, or '' when every ledger row is a claim.
+     */
+    private static function ledger_condition(string $table): string {
+        if ($table !== 'enrol') {
+            return '';
+        }
+        $methods = "'" . implode("', '", self::BIZLMS_ENROL_METHODS) . "'";
+        return "EXISTS (SELECT 1 FROM {enrol} e WHERE e.id = l.enrolid AND e.status <> l.priorstatus
+                           AND e.enrol = l.method AND e.enrol IN ({$methods}))";
     }
 
     /**

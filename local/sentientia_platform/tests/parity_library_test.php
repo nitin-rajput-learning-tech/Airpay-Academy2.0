@@ -68,6 +68,8 @@ final class parity_library_test extends \basic_testcase {
             'and must be explained by the import\'s records (parity_gate::INSERT_TABLES or ::LEDGERS)');
         foreach (parity_core::WRITES as $table => $spec) {
             $this->assertContains($spec['mode'], ['insert', 'update'], $table);
+            $this->assertSame([], array_intersect($spec['fixed'], $spec['writable']),
+                "{$table}: a writable column is not in the fixed hash, or its change would move the old rows' CRC");
             if ($spec['mode'] === 'insert') {
                 $this->assertContains($table, parity_gate::INSERT_TABLES, $table);
                 $this->assertSame([], $spec['writable'], $table);
@@ -80,9 +82,54 @@ final class parity_library_test extends \basic_testcase {
                 $this->assertContains('update', registry::core_write_operations($table), $table);
             }
         }
+        // Both directions, operation by operation: the gate explains exactly what the registry reviews. A reviewed INSERT needs the
+        // map (INSERT_TABLES), a reviewed UPDATE needs the importer's ledger (LEDGERS) and a baseline that lets the old rows change in
+        // the ledger's columns only. enrol is both (the G6 instance, and the CRS-01 switch-off): it was held insert-only once, which
+        // refused a clean import at the post-import compare (Stage B tools fix round 2).
+        foreach (registry::CORE_WRITES_ALLOWED as $table => $entry) {
+            $operations = $entry['operations'];
+            $this->assertSame(in_array('insert', $operations, true), in_array($table, parity_gate::INSERT_TABLES, true),
+                "{$table}: insert is reviewed exactly when the map explains it");
+            $this->assertSame(in_array('update', $operations, true), array_key_exists($table, parity_gate::LEDGERS),
+                "{$table}: update is reviewed exactly when a ledger explains it");
+            $this->assertSame(in_array('update', $operations, true), parity_core::WRITES[$table]['mode'] === 'update',
+                "{$table}: an updated table is held as an update table by the baseline");
+            if (isset(parity_gate::LEDGERS[$table]) && parity_gate::LEDGERS[$table]['columns'] === null) {
+                $written = parity_gate::LEDGERS[$table]['written'];
+                $writable = parity_core::WRITES[$table]['writable'];
+                sort($written);
+                sort($writable);
+                $this->assertSame($writable, $written, "{$table}: the ledger names the columns the baseline lets change");
+            }
+        }
+        $this->assertSame(['insert', 'update'], registry::core_write_operations('enrol'));
         foreach (parity_gate::COUNT_KEYS as $metric => $table) {
             $this->assertContains($table, parity_gate::INSERT_TABLES, $metric);
         }
+    }
+
+    public function test_enrol_status_and_timemodified_are_the_only_columns_a_switched_off_instance_may_change(): void {
+        $spec = parity_core::WRITES['enrol'];
+        $this->assertSame('update', $spec['mode']);
+        $this->assertSame(['status', 'timemodified'], $spec['writable']);
+        $this->assertNotContains('status', $spec['fixed']);
+        $this->assertNotContains('timemodified', $spec['fixed']);
+        foreach (['id', 'enrol', 'courseid', 'roleid', 'customint1', 'timecreated'] as $column) {
+            $this->assertContains($column, $spec['fixed'], $column);
+        }
+        $this->assertSame(['status', 'timemodified'], parity_gate::LEDGERS['enrol']['written']);
+        $this->assertSame('local_sentientia_courses_enroloff', parity_gate::LEDGERS['enrol']['table']);
+        $this->assertContains('enrol', parity_gate::INSERT_TABLES, 'it is also inserted into');
+    }
+
+    public function test_the_gate_names_the_bizlms_enrol_methods_the_importer_switches_off(): void {
+        $this->assertSame(['classroom', 'learningplan', 'program'], parity_gate::BIZLMS_ENROL_METHODS);
+        $importer = '\local_sentientia_courses\bizlms\enrolments_importer';
+        if (!class_exists($importer)) {
+            $this->markTestSkipped('local_sentientia_courses is not installed on this site');
+        }
+        $this->assertSame($importer::METHODS, parity_gate::BIZLMS_ENROL_METHODS,
+            'the platform cannot depend on the courses plugin, so it holds a copy: change both together');
     }
 
     // The metrics are version aware.
@@ -203,17 +250,39 @@ final class parity_library_test extends \basic_testcase {
     }
 
     public function test_a_baseline_of_another_metrics_version_is_refused_never_half_compared(): void {
+        $mine = ['metrics' => parity_metrics::VERSION, 'sha256' => parity_metrics::tool_sha256()];
         $this->assertNull(parity_metrics::baseline_problem(['counts' => ['courses' => 1]]), 'format 1 has no tool section');
-        $this->assertNull(parity_metrics::baseline_problem(['tool' => ['metrics' => parity_metrics::VERSION]]));
-        $older = (string) parity_metrics::baseline_problem(['tool' => ['metrics' => parity_metrics::VERSION - 1]]);
+        $this->assertNull(parity_metrics::baseline_problem(['tool' => $mine]));
+        $older = (string) parity_metrics::baseline_problem(['tool' => ['metrics' => parity_metrics::VERSION - 1] + $mine]);
         $this->assertStringContainsString('metrics version ' . (parity_metrics::VERSION - 1), $older);
         $this->assertStringContainsString('Take the baseline again', $older);
-        $this->assertNotNull(parity_metrics::baseline_problem(['tool' => ['metrics' => parity_metrics::VERSION + 1]]));
+        $this->assertNotNull(parity_metrics::baseline_problem(['tool' => ['metrics' => parity_metrics::VERSION + 1] + $mine]));
     }
 
-    public function test_the_baseline_records_its_metrics_version(): void {
+    public function test_the_same_metrics_version_from_another_file_is_refused_too(): void {
+        // A change that adds a checksum without bumping VERSION would otherwise compare only the keys the baseline holds.
+        $sha = parity_metrics::tool_sha256();
+        $this->assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $sha);
+        $this->assertSame(hash('sha256', str_replace("\r", '', (string) file_get_contents(__DIR__ . '/../cli/source_baseline.php'))),
+            $sha, 'the hash is of this file with every CR removed: tr -d "\r" < cli/source_baseline.php | sha256sum');
+
+        $other = (string) parity_metrics::baseline_problem(['tool' => ['metrics' => parity_metrics::VERSION,
+            'sha256' => str_repeat('a', 64)]]);
+        $this->assertStringContainsString('another version of cli/source_baseline.php', $other);
+        $this->assertStringContainsString(substr($sha, 0, 12), $other, 'it says which file this is');
+
+        $none = (string) parity_metrics::baseline_problem(['tool' => ['metrics' => parity_metrics::VERSION]]);
+        $this->assertStringContainsString('does not say which tool took it', $none);
+
+        $this->assertNull(parity_metrics::baseline_problem(['tool' => ['metrics' => parity_metrics::VERSION,
+            'sha256' => strtoupper($sha)]]), 'the case of the hex digits does not matter');
+    }
+
+    public function test_the_baseline_records_its_metrics_version_and_the_tool_that_took_it(): void {
         $doc = parity_baseline::build(new fake_database(['user' => ['id', 'deleted', 'suspended']]), [], null, ['metrics']);
         $this->assertSame(parity_metrics::VERSION, $doc['tool']['metrics']);
+        $this->assertSame(parity_metrics::tool_sha256(), $doc['tool']['sha256']);
+        $this->assertNull(parity_metrics::baseline_problem($doc), 'a baseline this tool just took is one it can compare');
     }
 
     public function test_module_types_the_release_no_longer_has_are_named_beside_the_drift(): void {

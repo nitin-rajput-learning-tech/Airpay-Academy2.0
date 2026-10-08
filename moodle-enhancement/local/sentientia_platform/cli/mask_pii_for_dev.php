@@ -33,13 +33,26 @@
  *              in as any user with a single shared password.
  *   mdl_logstore_standard_log — clear `ip` column (server logs leak
  *              real client IPs from production).
- *   mdl_local_sentientia_cart_history — clear billing_phone, billing_address.
- *              Keep billing_email + billing_name (already masked via
- *              mdl_user.email + firstname/lastname).
+ *   mdl_local_sentientia_cart_history — clear billing_phone, billing_address
+ *              (Step 3), and through \local_sentientia_cart\dev_mask also
+ *              billing_name ("Dev Buyer"), billing_email and the staff
+ *              notes. They are copies the buyer typed at checkout, NOT masked
+ *              by the mdl_user step (that comment was wrong until 2026-10-07).
+ *   mdl_local_sentientia_cart_invoices — the same buyer details: billing_name,
+ *              billing_email, billing_phone, billing_address (dev_mask).
+ *   mdl_local_sentientia_cart_ledger / _cart_credit_txn — reason set to NULL,
+ *              initiatedby set to 0, and (ledger) every userid / usermodified
+ *              inside payload_json set to 0 (\local_sentientia_cart\dev_mask).
  *   mdl_local_sentientia_proctor_identity — clear all rows (identity
  *              photos were never persisted; only match scores).
  *   mdl_local_sentientia_proctor_recordings — clear s3_key (we don't want
  *              dev to accidentally hit prod S3 objects).
+ *   mdl_local_sentientia_email_log — rows imported from BizLMS (legacy_source
+ *              set): subject masked (the credentials mask stays), body_html
+ *              removed. The table has no address column.
+ *   mdl_local_sentientia_request — rows imported from BizLMS: decision_note
+ *              removed (it holds the comment thread).
+ *   mdl_local_sentientia_admin_log — description masked (it names the actor).
  *
  * WHAT IT DOES NOT MASK:
  *
@@ -139,6 +152,14 @@ if ($DB->get_manager()->table_exists('local_sentientia_cart_history')) {
                 billing_address = ''");
     fwrite(STDOUT, "  mdl_local_sentientia_cart_history: phone/address cleared\n");
 }
+// Step 3b (owner follow-up 2026-10-07, finance cluster): the ledger and the BizLMS credit journal carry free-text
+// reasons, the id of the user who made each booking, and (imported rows) the buyer's user id inside payload_json.
+// The cart owns that knowledge, so the cart masks it; skipped where the cart is not installed.
+if (class_exists('\local_sentientia_cart\dev_mask')) {
+    foreach (\local_sentientia_cart\dev_mask::run() as $target => $masked) {
+        fwrite(STDOUT, "  mdl_{$target}: {$masked} row(s) masked\n");
+    }
+}
 
 // ── Step 4: proctoring identity rows (defensive — should be empty) ─
 if ($DB->get_manager()->table_exists('local_sentientia_proctor_identity')) {
@@ -152,13 +173,40 @@ if ($DB->get_manager()->table_exists('local_sentientia_proctor_recordings')) {
     fwrite(STDOUT, "  mdl_local_sentientia_proctor_recordings: s3_key cleared\n");
 }
 
-// ── Step 6: email + notification logs may leak addresses ───────────
-if ($DB->get_manager()->table_exists('local_sentientia_email_log')) {
+// ── Step 6: email log, imported requests and the imported admin log ─
+// F-60 / F-87 (2026-10-07). local_sentientia_email_log has NO address column (the recipient is a user id, masked in
+// step 1), so the UPDATE of a to_email column that stood here named a column that does not exist and would have stopped
+// the script. What the log can carry is the text of an e-mail imported from BizLMS (ADR-032): a subject that names a
+// person, and a body. Nothing of either belongs in a dev copy.
+$dbman = $DB->get_manager();
+if ($dbman->table_exists('local_sentientia_email_log')
+        && $dbman->field_exists(new xmldb_table('local_sentientia_email_log'), 'legacy_source')) {
+    // Every imported subject is masked, except the mask that already stands in for a message that carried account
+    // credentials (it names no one); every imported body is removed.
     $DB->execute(
         "UPDATE {local_sentientia_email_log}
-            SET to_email = CONCAT('user', userid, '@dev.invalid')
-          WHERE to_email IS NOT NULL");
-    fwrite(STDOUT, "  mdl_local_sentientia_email_log: to_email masked\n");
+            SET subject = :masked
+          WHERE legacy_source IS NOT NULL AND subject <> :withheld",
+        ['masked' => '[masked for dev]', 'withheld' => '[withheld: account credentials]']);
+    $DB->execute(
+        "UPDATE {local_sentientia_email_log}
+            SET body_html = NULL
+          WHERE legacy_source IS NOT NULL AND body_html IS NOT NULL");
+    fwrite(STDOUT, "  mdl_local_sentientia_email_log: imported subjects masked, imported bodies removed\n");
+}
+// An imported request carries the BizLMS comment thread in decision_note: names and free text, shown to the requester.
+if ($dbman->table_exists('local_sentientia_request')
+        && $dbman->field_exists(new xmldb_table('local_sentientia_request'), 'legacy_source')) {
+    $DB->execute(
+        "UPDATE {local_sentientia_request}
+            SET decision_note = NULL
+          WHERE legacy_source IS NOT NULL AND decision_note IS NOT NULL");
+    fwrite(STDOUT, "  mdl_local_sentientia_request: imported decision notes removed\n");
+}
+// The imported admin log names the actor by first name in every description; the table is written only by the import.
+if ($dbman->table_exists('local_sentientia_admin_log')) {
+    $DB->execute("UPDATE {local_sentientia_admin_log} SET description = :masked", ['masked' => '[masked for dev]']);
+    fwrite(STDOUT, "  mdl_local_sentientia_admin_log: descriptions masked\n");
 }
 
 fwrite(STDOUT, "\n── Done. The database is now safe to use as a dev environment. ──\n");

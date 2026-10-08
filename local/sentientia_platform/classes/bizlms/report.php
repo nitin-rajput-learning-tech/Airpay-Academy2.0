@@ -101,17 +101,46 @@ final class report {
         $this->bump($feature, $stepkey, 'warnings', $code, $n);
     }
 
+    /** Most source ids listed under tenant_creator_ids for one step; the count in tenant_methods is exact whatever this holds. */
+    public const CREATOR_IDS_CAP = 500;
+
     /**
+     * Count how the tenant path of a row was decided.
+     *
+     * A row whose tenant is a GUESS from its creator's tenant (the method fallback:creator: a learning plan or a
+     * program with no usable path of its own, signed learningplan.tenant_fallback_order and program.pathless =
+     * creator_root) is also listed by its source id under `tenant_creator_ids`, so the owner sees exactly which rows
+     * took a tenant from a person and can confirm it or move that feature to pathless before cutover (owner decision
+     * XC-TENANT-GUESS, 2026-10-07). The list is ids only.
+     *
      * @param string $feature
      * @param string $stepkey
      * @param string $method exact, normalised, walked_up, fallback:name or unresolved.
+     * @param int $sourceid Legacy id of the row (0 when the caller has none to list).
      * @return void
      */
-    public function count_tenant_method(string $feature, string $stepkey, string $method): void {
+    public function count_tenant_method(string $feature, string $stepkey, string $method, int $sourceid = 0): void {
         if ($this->hold_call(__FUNCTION__, func_get_args())) {
             return;
         }
         $this->bump($feature, $stepkey, 'tenant_methods', $method, 1);
+        if ($sourceid > 0 && self::is_creator_guess($method)) {
+            $ids = $this->data['features'][$feature]['steps'][$stepkey]['tenant_creator_ids'] ?? [];
+            if (count($ids) < self::CREATOR_IDS_CAP) {
+                $ids[] = $sourceid;
+                $this->data['features'][$feature]['steps'][$stepkey]['tenant_creator_ids'] = $ids;
+            }
+        }
+    }
+
+    /**
+     * Did a row take its tenant from the tenant of the person who created it?
+     *
+     * @param string $method A method as outcome::tenant_method() takes it.
+     * @return bool
+     */
+    public static function is_creator_guess(string $method): bool {
+        return $method === 'fallback:creator' || str_starts_with($method, 'fallback:creator_');
     }
 
     /**

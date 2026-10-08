@@ -45,7 +45,7 @@ for v in REHEARSAL_WORK MOODLEDATA CODE_45_DIR CODE_5X_DIR DB_PASS_FILE; do
         fail "${v}='${!v}' is not an absolute POSIX path"
     fi
 done
-for v in CODE_45_ARCHIVE CODE_5X_ARCHIVE RESTORE_DB_DUMP RESTORE_MOODLEDATA_ARCHIVE LIVE_BASELINE_FILE SNAPSHOT_HOOK \
+for v in CODE_45_ARCHIVE CODE_5X_ARCHIVE RESTORE_DB_DUMP RESTORE_MOODLEDATA_ARCHIVE RESTORE_MOODLEDATA_BY_HAND LIVE_BASELINE_FILE SNAPSHOT_HOOK \
          CAP_ALLOWLIST IMPORT_DECISIONS SOURCE_BASELINE_PHP ADR031_SCRIPTS_DIR; do
     if [ -n "${!v:-}" ] && ! is_abs_posix "${!v}"; then
         fail "${v}='${!v}' is not an absolute POSIX path"
@@ -267,7 +267,7 @@ if [ "$EXECUTE" = 1 ] && [ -d "$MOODLEDATA" ] && [ -n "$(ls -A "$MOODLEDATA" 2> 
     if [ -n "$(moodledata_marker_get)" ]; then
         pass "${MOODLEDATA} carries a rehearsal-kit marker (restore $(moodledata_marker_get | cut -c1-8)...)"
     else
-        warn "${MOODLEDATA} is not empty and carries no rehearsal-kit marker: step 01 refuses it (it may be another site's dataroot) unless RESTORE_DONE_BY_HAND=${DB_NAME} says it holds the live moodledata restored for this rehearsal"
+        warn "${MOODLEDATA} is not empty and carries no rehearsal-kit marker: step 01 refuses it (it may be another site's dataroot) unless RESTORE_MOODLEDATA_BY_HAND=${MOODLEDATA} (its own statement, naming the path) says it holds the live moodledata restored for this rehearsal; even then it must show no write in sessions/ or localcache/ in the last 30 minutes"
     fi
 fi
 

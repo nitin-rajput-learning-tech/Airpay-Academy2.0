@@ -69,6 +69,30 @@ class rule_access {
     }
 
     /**
+     * Did the BizLMS import make this rule (it carries the legacy settings in legacy_config)?
+     *
+     * @param \stdClass|null $rule A rules row, or null when no rule is being edited.
+     * @return bool
+     */
+    public static function is_imported(?\stdClass $rule): bool {
+        return $rule !== null && ($rule->legacy_config ?? null) !== null;
+    }
+
+    /**
+     * May a rule be saved ENABLED? Not an imported one (owner decision recompletion.imported_rule_enable,
+     * 2026-10-07): the engine does not yet reproduce what BizLMS did for it (the SCORM wipe, whole days, the
+     * extra-attempt, LTI, assignment, questionnaire and custom e-mail choices), and nothing may reset people on its
+     * own on that basis. A rule made in Sentientia runs exactly as configured, so it can be enabled; a later
+     * decision lifts this block once engine parity is declared done.
+     *
+     * @param \stdClass|null $rule The rule being saved (null or without legacy_config: a native rule).
+     * @return bool
+     */
+    public static function may_enable(?\stdClass $rule): bool {
+        return !self::is_imported($rule);
+    }
+
+    /**
      * The costcenterid a rule the caller saves must carry. A scoped caller's
      * rules are always their tenant's; on update the stored value is kept
      * (require_rule() already proved it is theirs). Cross-tenant callers keep

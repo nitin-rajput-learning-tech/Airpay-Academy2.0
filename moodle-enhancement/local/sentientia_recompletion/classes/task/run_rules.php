@@ -36,9 +36,9 @@ class run_rules extends \core\task\scheduled_task {
         $dryrun = (bool) get_config('local_sentientia_recompletion', 'dry_run_default');
         $totals = \local_sentientia_recompletion\recompletion_engine::run_all($dryrun);
         mtrace(sprintf(
-            "sentientia_recompletion: rules=%d reset=%d notified=%d skipped=%d errors=%d%s",
+            "sentientia_recompletion: rules=%d reset=%d notified=%d skipped=%d errors=%d failed=%d imported_skipped=%d%s",
             $totals['rules_run'], $totals['reset'], $totals['notified'],
-            $totals['skipped'], $totals['errors'],
+            $totals['skipped'], $totals['errors'], $totals['failed'], $totals['skipped_imported'],
             $dryrun ? ' (DRY-RUN)' : ''));
     }
 }

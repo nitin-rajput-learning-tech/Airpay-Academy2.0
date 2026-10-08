@@ -113,6 +113,18 @@ final class imported_history_test extends \advanced_testcase {
         $this->assertFalse(imported_history::visible());
     }
 
+    public function test_the_flag_says_it_leaves_the_imported_rows_out_not_that_nothing_changed(): void {
+        // COMMS-R3 (2026-10-07): the native list-screen fixes (Item header, route in words, status badges, SLA column,
+        // names on path requests) ship as bug fixes, so the flag no longer claims the lists "look exactly as before".
+        $description = preg_replace('/\s+/', ' ', feature_flags::load_registry()[self::FLAG]['description']);
+        $this->assertStringContainsString('leave the imported rows out', $description);
+        $this->assertStringNotContainsString('exactly as they did before the import', $description);
+        $this->assertStringContainsString('not behind this flag', $description);
+        $readme = (string) file_get_contents(__DIR__ . '/../README.md');
+        $this->assertStringContainsString('leave the imported rows out', $readme);
+        $this->assertStringNotContainsString('exactly as they did before', $readme);
+    }
+
     public function test_imported_rows_are_left_out_of_every_list_until_the_flag_is_on(): void {
         $learner = $this->user('/1');
         $approver = $this->user('/1', true);
@@ -488,9 +500,16 @@ final class imported_history_test extends \advanced_testcase {
         // A site upgraded from 1.4.0 does not: the helper adds it, once, and keeps the rows.
         $id = $this->request();
         $dbman->drop_field($table, $field);
-        $this->assertFalse($dbman->field_exists($table, $field));
-        $this->assertTrue(local_sentientia_request_ensure_legacy_source($dbman));
-        $this->assertFalse(local_sentientia_request_ensure_legacy_source($dbman));
+        try {
+            $this->assertFalse($dbman->field_exists($table, $field));
+            $this->assertTrue(local_sentientia_request_ensure_legacy_source($dbman));
+            $this->assertFalse(local_sentientia_request_ensure_legacy_source($dbman));
+        } finally {
+            // F-80: if an assertion above fails the column must not stay dropped for the tests that follow.
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
         $columns = $DB->get_columns('local_sentientia_request', false);
         $this->assertArrayHasKey('legacy_source', $columns);
         $this->assertFalse((bool) $columns['legacy_source']->not_null, 'NULL on every native row');

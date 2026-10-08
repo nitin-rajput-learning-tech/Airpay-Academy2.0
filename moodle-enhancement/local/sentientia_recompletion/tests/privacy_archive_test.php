@@ -19,7 +19,8 @@ use local_sentientia_recompletion\privacy\provider;
  * The archive is compliance evidence: a reset deleted the live rows, so these rows are what is left of a person's
  * earlier cycles. So erasure takes out the PERSON (the userid column, the learner and the overriding
  * administrator inside the JSON payload, what a learner typed into a questionnaire) and leaves the ROW. The DPDP
- * flow keeps the subject's rows as they are and anonymises only an administrator named in somebody else's row.
+ * flow keeps the subject's rows, with every structured value, and empties the free text in them (what they typed,
+ * what a grader wrote about them); it anonymises an administrator or grader named in somebody else's row.
  * The table must also be declared, or a null-provider-style claim that no personal data is held would come back.
  *
  * @package    local_sentientia_recompletion
@@ -237,16 +238,15 @@ final class privacy_archive_test extends provider_testcase {
 
     public function test_the_dpdp_flow_keeps_the_subjects_evidence_and_anonymises_only_the_actor(): void {
         global $DB;
-        // As the subject: their rows stay exactly as they are (the flow keeps compliance records keyed to the
-        // anonymised user row), including their own words.
+        // As the subject: their rows stay keyed to the anonymised user row with every structured value (the flow
+        // keeps compliance records); only the words that can name them are emptied (see the next test).
         provider::anonymise_data_for_user($this->approved($this->subject));
         $this->assertEquals($this->subject->id, $DB->get_field('local_sentientia_recompletion_archive', 'userid',
             ['id' => $this->rows['subject_completion']]));
         $this->assertSame((string) $this->subject->id, $this->payload('subject_completion')['userid']);
         $this->assertSame((string) $this->admin->id, $this->payload('subject_completion')['overrideby']);
-        $this->assertSame('what I typed', $this->payload('subject_answer')['response']);
-
-        $this->assertSame('Well done', $this->payload('subject_grade')['feedback']);
+        $this->assertSame('', $this->payload('subject_answer')['response']);
+        $this->assertSame('', $this->payload('subject_grade')['feedback']);
 
         // As the administrator: named as the overrider in both people's rows.
         provider::anonymise_data_for_user($this->approved($this->admin));
@@ -259,6 +259,55 @@ final class privacy_archive_test extends provider_testcase {
         $this->assertSame('0', $this->payload('subject_grade')['usermodified']);
         $this->assertSame('0', $this->payload('other_grade')['usermodified']);
         $this->assertSame('Well done', $this->payload('other_grade')['feedback']);
+    }
+
+    /**
+     * Owner decision recompletion.dpdp_archive_free_text: the DPDP flow keeps the record and clears the free text,
+     * as the platform does for attendance notes and exemption reasons (erasure_scope_test). Core's erasure empties
+     * the same keys, so both erasure paths treat the words that can name a person the same way.
+     */
+    public function test_the_dpdp_flow_keeps_the_record_and_clears_the_free_text(): void {
+        global $DB;
+        $scorm = fn(\stdClass $user, string $element, string $value): int => $this->archive($user, 'scorm_track',
+            ['id' => '12', 'userid' => (string) $user->id, 'element' => $element, 'value' => $value, 'timemodified' => '200']);
+        $this->rows['subject_suspend'] = $scorm($this->subject, 'cmi.suspend_data', 'page=4;note=call me Priya');
+        $this->rows['subject_status'] = $scorm($this->subject, 'cmi.core.lesson_status', 'completed');
+        $this->rows['other_suspend'] = $scorm($this->other, 'cmi.suspend_data', 'page=2');
+        $table = 'local_sentientia_recompletion_archive';
+        $before = $DB->count_records($table);
+
+        provider::anonymise_data_for_user($this->approved($this->subject));
+
+        $this->assertSame($before, $DB->count_records($table), 'no evidence row is deleted');
+
+        // Free text goes: a typed answer, the grader's words about them, the text typed into a SCORM package.
+        $this->assertSame('', $this->payload('subject_answer')['response']);
+        $grade = $this->payload('subject_grade');
+        $this->assertSame('', $grade['feedback']);
+        $this->assertSame('', $grade['information']);
+        $this->assertSame('', $this->payload('subject_suspend')['value']);
+
+        // The record stays: who, what, when and the result.
+        $this->assertEquals($this->subject->id, $DB->get_field($table, 'userid', ['id' => $this->rows['subject_grade']]));
+        $this->assertSame((string) $this->subject->id, $grade['userid'], 'the payload still names the anonymised user row');
+        $this->assertSame('8.50000', $grade['finalgrade'], 'the grade is the evidence');
+        $this->assertSame('4', $grade['itemid']);
+        $this->assertSame((string) $this->grader->id, $grade['usermodified'], 'the grader is scrubbed only when THEY are erased');
+        $this->assertSame('7', $this->payload('subject_answer')['question_id']);
+        $this->assertSame('complete', $DB->get_field($table, 'state', ['id' => $this->rows['subject_grade']]));
+        $this->assertEquals(1000, $DB->get_field($table, 'timecreated', ['id' => $this->rows['subject_grade']]));
+        $this->assertSame('completed', $this->payload('subject_status')['value'], 'a SCORM status is not typed text');
+        $this->assertSame('cmi.suspend_data', $this->payload('subject_suspend')['element']);
+
+        // Another person's rows are not touched.
+        $this->assertSame('Well done', $this->payload('other_grade')['feedback']);
+        $this->assertSame('page=2', $this->payload('other_suspend')['value']);
+        $this->assertSame((string) $this->admin->id, $this->payload('other_completion')['overrideby']);
+
+        // Running it twice changes nothing more.
+        provider::anonymise_data_for_user($this->approved($this->subject));
+        $this->assertSame('', $this->payload('subject_answer')['response']);
+        $this->assertSame('8.50000', $this->payload('subject_grade')['finalgrade']);
     }
 
     public function test_erasing_everyone_redacts_every_row_and_keeps_them_all(): void {

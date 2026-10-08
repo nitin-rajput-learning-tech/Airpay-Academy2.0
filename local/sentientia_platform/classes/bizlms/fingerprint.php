@@ -14,8 +14,9 @@ defined('MOODLE_INTERNAL') || die();
  *    database name and the table prefix, so a command copied from a rehearsal
  *    cannot run on production.
  * 2. table(): row count, MAX(id) and a CRC over all columns of a legacy table.
- *    It detects a source that changed between runs (resume refuses) and, in
- *    the parity check, a legacy table mutated after import.
+ *    It detects a source that changed since a run started (a new run takes it
+ *    for every step at its start; a step compares it when it opens, so resume
+ *    refuses too) and, in the parity check, a legacy table mutated after import.
  *
  * @package    local_sentientia_platform
  * @copyright  2026 Airpay Payment Services

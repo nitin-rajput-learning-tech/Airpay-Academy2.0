@@ -22,21 +22,28 @@
  *   After the upgrade hops and the repairs, before the import (nothing but the upgrade may have changed):
  *     php migration_parity_check.php --compare=/safe/place/baseline.json
  *
- *   After import_bizlms.php --apply (the import added enrolments and role assignments, filled some course columns and
- *   moved tag instances, all on purpose):
+ *   After import_bizlms.php --apply (the import added enrolments and role assignments, filled some course columns, moved
+ *   tag instances and switched off the BizLMS enrol instances it proved safe, all on purpose). This is THE post-import
+ *   gate: --decisions and --expect-decisions-hash belong to it and are refused (exit 3) without --after-import.
  *     php migration_parity_check.php --compare=/safe/place/baseline.json --after-import --decisions=FILE
- *         [--expect-decisions-hash=SHA256] [--run=ID] [--report=FILE]
+ *         --expect-decisions-hash=SHA256 [--run=ID] [--report=FILE]
  *
  *   --after-import   Compare as above, except that what the import itself wrote must be EXPLAINED by its own records
  *                    (local_sentientia_legacymap and the importers' ledgers), not matched to the baseline: enrolments,
  *                    enrol instances and role assignments may have grown by exactly the rows the map says were imported;
  *                    a course may differ from the baseline in exactly the open_* columns its ledger row names; a tag
- *                    instance may have moved exactly as its ledger says. Nothing else about those tables, and nothing
- *                    at all about any other table or about the BizLMS legacy tables, may differ. It also runs the
- *                    bizlms_import invariant (accounting, missing targets, tenant values, mutated sources, every
- *                    importer's verify) and lists the needs-owner reasons the decisions do not accept.
- *   --decisions      The decisions file the import ran with (required: verify() reads it).
- *   --expect-decisions-hash   Refuse unless the file hashes to this (cutover must use the rehearsed decisions).
+ *                    instance may have moved exactly as its ledger says; an enrol instance may differ in status and
+ *                    timemodified exactly where the enrolments importer's trail (local_sentientia_courses_enroloff,
+ *                    owner decision CRS-01) says it switched the instance off, and only a BizLMS instance. Nothing else
+ *                    about those tables, and nothing at all about any other table or about the BizLMS legacy tables,
+ *                    may differ. It also runs the bizlms_import invariant (accounting, missing targets, tenant values,
+ *                    mutated sources, every importer's verify) and lists the needs-owner reasons the decisions do not
+ *                    accept.
+ *   --decisions      The decisions file the import ran with (required with --after-import: every importer's verify()
+ *                    reads owner decisions that have no default, so without the file the invariant cannot run and the
+ *                    check refuses, exit 3, instead of reporting a clean import as failed or skipping the invariant).
+ *   --expect-decisions-hash   Refuse (exit 3) unless the file hashes to this (the cutover must use the rehearsed
+ *                    decisions). Checked before any number is computed, so a wrong file costs nothing.
  *   --run            Explain the deltas with this apply run's records only (default: every apply run).
  *   --report         The JSON report import_bizlms.php --report wrote: checked against the database, this install,
  *                    the decisions and --run.
@@ -49,8 +56,10 @@
  *          non-MySQL engine, an invariant that could not run, a needs-owner reason the decisions do not accept, an
  *          unclaimed legacy table that holds rows).
  * Exit 3 = refused, or the tool could not run: the comparison cannot be made (an unrecognised option, an unreadable or
- *          unwritable baseline file, a baseline of another metrics version, --after-import without an import, a decisions
- *          file that does not hash to the expected value, a --run that is not a complete apply run of this install).
+ *          unwritable baseline file, a baseline of another metrics version or taken by another version of
+ *          cli/source_baseline.php, --after-import without an import, a decisions option without --after-import or
+ *          --after-import without a decisions file, a decisions file that does not hash to the expected value, a --run
+ *          that is not a complete apply run of this install).
  * 0, 1 and 2 mean the same as in import_bizlms.php; so does 3 for a guard that refused (import_bizlms.php exits 1 for a
  * usage error, this tool exits 3).
  * No flags = print current numbers.
@@ -98,7 +107,9 @@ if ($afterimport && $options['compare'] === '') {
 }
 foreach (['decisions', 'expect-decisions-hash', 'run', 'report'] as $name) {
     if (!$afterimport && $options[$name] !== '') {
-        cli_error("--{$name} belongs to --after-import.", 3);
+        cli_error("--{$name} belongs to --after-import: the post-import gate is --compare=FILE --after-import "
+            . '--decisions=FILE --expect-decisions-hash=SHA256. Before the import there is nothing to explain, so none of '
+            . 'these options applies.', 3);
     }
 }
 if ($afterimport && $options['decisions'] === '') {
@@ -107,6 +118,37 @@ if ($afterimport && $options['decisions'] === '') {
 
 global $DB;
 $parity_db = new moodle_db($DB);
+
+/**
+ * The decisions the BizLMS import ran with, for --after-import. Exits 3 (refused) when the file cannot be used or is not the
+ * one the caller pinned: comparing against the wrong decisions would answer a different question. It runs before any number
+ * is computed, so a refused file costs nothing on a large database.
+ *
+ * @param string $file --decisions
+ * @param string $expect --expect-decisions-hash
+ * @return decisions
+ */
+function sentientia_parity_decisions(string $file, string $expect): decisions {
+    $expect = strtolower(trim($expect));
+    if ($file === '') {
+        cli_writeln('REFUSED: --after-import needs --decisions=FILE (every importer\'s verify() reads the decisions it ran with).');
+        exit(3);
+    }
+    try {
+        $decisions = decisions::load($file);
+    } catch (bizlms_exception $e) {
+        cli_writeln('REFUSED: ' . $e->getMessage());
+        exit(3);
+    }
+    if ($expect !== '' && !hash_equals($decisions->hash(), $expect)) {
+        cli_writeln('REFUSED: decisions_hash_differs_from_the_expected_one (the file is not the rehearsed one).');
+        exit(3);
+    }
+    cli_writeln('Decisions: ' . $file . ' sha256=' . $decisions->hash()
+        . ($expect !== '' ? ' (pinned: matches --expect-decisions-hash)'
+            : ' (NOT pinned: pass --expect-decisions-hash so the cutover must use the rehearsed file)'));
+    return $decisions;
+}
 
 /**
  * Invariants that must hold on the deployment being checked, whatever the baseline says. They are not compared with the
@@ -124,7 +166,10 @@ $parity_db = new moodle_db($DB);
  * construction. A user lost to a truncated open_path is caught by the per-bucket comparison with the baseline
  * (users_tenant_other included), not by this.
  *
- * bizlms_import (only with --after-import): parity::invariant_problems().
+ * bizlms_import (only with --after-import): parity::compare_invariant(). With the decisions the import ran with (and
+ * --after-import has them or refused) it is the whole invariant and a problem is a FAIL; the same function turns a missing
+ * decisions file into "not proven" instead of a FAIL (review of 2026-10-07, must-fix 1), which is why this tool does not call
+ * the plain invariant.
  *
  * The check never stops the run. On a BizLMS source box that has the plugin
  * directory but not the tables, or on any DB error, check() can throw; that must
@@ -153,7 +198,7 @@ function sentientia_parity_invariants(array $counts, ?decisions $decisions = nul
     $out['tenant_cross_foot'] = $foot === null ? [] : [$foot];
     if ($decisions !== null) {
         try {
-            $out['bizlms_import'] = parity::invariant_problems($decisions);
+            $out['bizlms_import'] = parity::compare_invariant($decisions);
         } catch (\Throwable $e) {
             $out['bizlms_import'] = 'check could not run: ' . $e->getMessage();
         }
@@ -232,12 +277,9 @@ if ($options['compare'] !== '') {
     $importers = [];
     $reportproblems = [];
     if ($afterimport) {
+        // The decisions come first: a file that is refused (unreadable, or not the pinned one) stops here, exit 3.
+        $decisions = sentientia_parity_decisions((string) $options['decisions'], (string) $options['expect-decisions-hash']);
         try {
-            $decisions = decisions::load((string) $options['decisions']);
-            $expect = trim((string) $options['expect-decisions-hash']);
-            if ($expect !== '' && !hash_equals($decisions->hash(), $expect)) {
-                throw new \local_sentientia_platform\bizlms\guard_refused('decisions_hash_differs_from_the_expected_one');
-            }
             $runid = $options['run'] !== '' ? (int) $options['run'] : null;
             if ($runid !== null && $runid <= 0) {
                 throw new \local_sentientia_platform\bizlms\guard_refused('run_is_not_a_run_id');
@@ -255,7 +297,7 @@ if ($options['compare'] !== '') {
                 $reportproblems = parity_gate::report_problems($report, $runid, $decisions);
             }
         } catch (bizlms_exception $e) {
-            // Whatever stopped it (a decisions file, a hash, a run), nothing was compared: the same exit as a guard.
+            // Whatever stopped it (a run, a report), nothing was compared: the same exit as a guard.
             cli_writeln('REFUSED: ' . $e->getMessage());
             exit(3);
         }
@@ -333,6 +375,9 @@ if ($options['compare'] !== '') {
             if (!$verdict['hard'] && !$verdict['unproven']) {
                 cli_writeln('  OK      every row and column that differs from the baseline is named by the import\'s own records');
             }
+            $switchedoff = count((array) ($expected['enrol']['changed'] ?? []));
+            cli_writeln(sprintf('  BizLMS enrol instance(s) switched off by the import (enrol.status and timemodified, named by '
+                . 'local_sentientia_courses_enroloff): %d', $switchedoff));
         }
         foreach (parity_gate::unexplained_core_writes() as $table) {
             $corehard[] = 'core_write_this_check_cannot_explain:' . $table;

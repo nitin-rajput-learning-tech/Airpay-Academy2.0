@@ -61,9 +61,11 @@ class bizlms_import extends check {
             }
             // Once the runbook has declared production, an applicable feature with no marker is unfinished
             // even if nothing ever started it: the site must not open on legacy history nobody imported.
+            // A pending row is a step a run fingerprinted at its start and never opened, so it does not say the
+            // feature started (a run writes one for every step of every feature it will process).
             $started = \local_sentientia_platform\bizlms\guard::is_production()
                 || $DB->record_exists_select('local_sentientia_legacystep',
-                    "feature = :f AND status <> 'not_applicable'", ['f' => $feature]);
+                    "feature = :f AND status NOT IN ('not_applicable', 'pending')", ['f' => $feature]);
             if ($started) {
                 $unfinished[] = $feature;
             }

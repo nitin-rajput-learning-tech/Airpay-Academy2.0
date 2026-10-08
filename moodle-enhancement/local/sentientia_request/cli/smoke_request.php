@@ -177,9 +177,10 @@ $check('Approver reassigned to default', (int) $rec4->approver_userid > 0
 $check('timeescalated stamped', !empty($rec4->timeescalated));
 $check('timedue extended past now', $rec4->timedue > time());
 
-// Clean up smoke artifacts
+// Clean up smoke artifacts. legacy_source IS NULL: a request imported from BizLMS (ADR-032) is protected history and
+// is never touched by a smoke script (decisions file framework.protect_imported_history).
 $DB->delete_records('local_sentientia_request',
-    ['userid' => $user->id, 'courseid' => $course->id]);
+    ['userid' => $user->id, 'courseid' => $course->id, 'legacy_source' => null]);
 
 echo "\n" . str_repeat('=', 50) . "\n";
 echo sprintf("Smoke result: %d/%d cases pass\n", $pass, $test);

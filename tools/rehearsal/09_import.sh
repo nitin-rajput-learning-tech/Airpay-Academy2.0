@@ -50,6 +50,30 @@ RUN_TABLE=local_sentientia_legacyrun
 need_tool "$PHP_BIN"
 require_kit_marker
 
+# apply_run_status -> the status of the newest apply run ('' when there is none). An empty answer is checked against a COUNT before it
+# is believed (the mysql client was seen to print nothing, with status 0, on a loaded box): a run that exists must never read as "no
+# run", or a failed run would be taken for a fresh start.
+apply_run_status() {
+    local v="" tries=0 n
+    while :; do
+        v="$(db_first "SELECT status FROM {p}${RUN_TABLE} WHERE runmode = 'apply' ORDER BY id DESC LIMIT 1")" || return 1
+        if [ -n "$v" ]; then
+            break
+        fi
+        n="$(db_scalar "SELECT COUNT(*) FROM {p}${RUN_TABLE} WHERE runmode = 'apply'")" || return 1
+        if [ "$n" = 0 ]; then
+            break
+        fi
+        tries=$((tries + 1))
+        if [ "$tries" -ge 3 ]; then
+            log "FAIL: the apply run table holds ${n} run(s) but its newest status could not be read, three times" >&2
+            return 1
+        fi
+        sleep 1
+    done
+    printf '%s' "$v"
+}
+
 PHASE=fresh
 RUN_STATUS=""
 if [ "$EXECUTE" = 1 ]; then
@@ -61,7 +85,7 @@ if [ "$EXECUTE" = 1 ]; then
     # Where this step stands: the kit's record, and what the database itself says about the newest apply run.
     APPLIED="$(kv_get import.applied)"
     if [ "$(db_scalar "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${DB_NAME}' AND TABLE_NAME = '${DB_PREFIX}${RUN_TABLE}'")" = 1 ]; then
-        RUN_STATUS="$(db_first "SELECT status FROM {p}${RUN_TABLE} WHERE runmode = 'apply' ORDER BY id DESC LIMIT 1")"
+        RUN_STATUS="$(apply_run_status)" || die "could not read the status of the newest apply run from ${DB_PREFIX}${RUN_TABLE}"
     fi
     PHASE="$(import_phase "$APPLIED" "$RUN_STATUS" "$IMPORT_APPLY_MODE")"
     case "$PHASE" in
@@ -174,7 +198,7 @@ elif [ "$PHASE" = fresh ] || [ "$PHASE" = resume ]; then
     case "$rc" in
         0 | 2) ;;
         3) die "the import was REFUSED by a guard (exit 3): $(grep -E '^REFUSED' "$REPORT_DIR/import-apply.txt" | head -n 3 | tr '\n' ' '). If it wrote nothing the next run starts again from the gate; if the run had started, re-run step 08 and then this step with IMPORT_APPLY_MODE=resume" ;;
-        1) die "the import failed (exit 1). Read reports/import-apply.txt. Data may be partly imported: continue with IMPORT_APPLY_MODE=resume (rehearsal and cutover), or go back to the snapshot taken before this step (production), or --purge-feature (rehearsal, bizlms_production not 1)" ;;
+        1) die "the import failed (exit 1). Read reports/import-apply.txt. Data may be partly imported: continue with IMPORT_APPLY_MODE=resume (rehearsal and cutover), or go back to the snapshot taken before this step and delete state/kv/import.* (a purge of one feature does not reset the run's step watermarks, so this kit cannot repeat a purged feature: restore, do not purge)" ;;
         *) die "import_bizlms.php exited ${rc} (a crash, not one of its result codes): read reports/import-apply.txt, then IMPORT_APPLY_MODE=resume or the snapshot" ;;
     esac
     AH="$(kit_php json_get.php "$REPORT_DIR/import-apply.json" meta.decisions_hash || true)"

@@ -13,6 +13,17 @@
 > step. Two changes to the order came with it: the ADR-032 capability repair is step 4e and runs BEFORE the ADR-031 role
 > scripts (it must run before anything reads a role), and step 5a now spells out the guard commands and where the
 > decisions hash comes from.
+>
+> **2026-10-07 (owner decisions):** the BizLMS feature-data import (ADR-032) is part of the rehearsal. Step 4h and the section
+> "BizLMS import: Stage B checks" below carry the checks and owner confirmations the 2026-10-07 owner decisions
+> require; step 5 is amended (decision F-34). Per-decision detail: `OWNER-DECISIONS-2026-10-07.md`.
+>
+> **2026-10-08 (Stage B tools, merged with the owner-decision branch):** the post-import gate is ONE command,
+> `migration_parity_check.php --compare=<baseline> --after-import --decisions=<file> --expect-decisions-hash=<hash>`
+> (step 5a): it explains the enrolments import's deltas, including the BizLMS enrol instances it switches off (CRS-01), from the
+> import's own records, and refuses without the decisions. The former `--compare ... --decisions` form without `--after-import`
+> is gone (refused, exit 3). Steps 5b to 5e are the enrolments report, the admin-unenrol rule, the resume rule and the frozen
+> legacy source of the owner-decision branch (numbered 5a to 5d there).
 
 **Owner:** Nitin Rajput · **Status:** kit READY, locally rehearsed 2026-06-10 · **Executes:** on the
 ninja sandbox when Nitin provides server access + a fresh live backup. **Nothing here touches live.**
@@ -37,7 +48,7 @@ ninja sandbox when Nitin provides server access + a fresh live backup. **Nothing
 |---|---|---|
 | The SOURCE (a restored 4.1.2 copy, or live in the §4b freeze), and the 4.5 checkpoint after hop 1 | `php source_baseline.php --config=/path/config.php --baseline=FILE` / `--compare=FILE` | the single file `local/sentientia_platform/cli/source_baseline.php`, PHP 7.4 to 8.4, mysqli, the box's own `config.php`. No Moodle load, no Sentientia plugin. |
 | A Sentientia target (after hop 2 and the repairs) | `php local/sentientia_platform/cli/migration_parity_check.php --compare=FILE` | the deployed plugin |
-| A Sentientia target, after the import | `... --compare=FILE --after-import --decisions=FILE [--run=ID] [--report=FILE]` | the deployed plugin and the import's own records |
+| A Sentientia target, after the import | `... --compare=FILE --after-import --decisions=FILE --expect-decisions-hash=SHA256 [--run=ID] [--report=FILE]` | the deployed plugin and the import's own records (the decisions options belong to this mode only) |
 
 Both run the same metric code (`source_baseline.php` is the library `migration_parity_check.php` requires), so a number
 cannot differ because two queries drifted apart. Every metric is version aware: SCORM attempts and the SCORM checksum are
@@ -70,10 +81,10 @@ the first failed gate; after fixing the cause, `--from NN` resumes. `tools/rehea
 | Kit script | Runs | Runbook step |
 |---|---|---|
 | `00_preflight.sh` | refuses unless the database is on the explicit rehearsal allow-list (no name with `prod` or `uat` in it), `$CFG->noemailever` is true, no scheduler runs THIS rehearsal's Moodle cron, and no production hostname (the live database endpoint, `PRODUCTION_DB_ENDPOINT`, included) appears anywhere; changes nothing | Inputs, 1 |
-| `01_restore_check.sh` | restore into an EMPTY database (only if asked; a dump with USE / CREATE DATABASE or without its "-- Dump completed" trailer is refused) and stamp the database and moodledata with a restore id that every later writing step checks, release and user count, **the file store gate** (every `files.contenthash` on disk; missing = stop), SMTP wipe and `cron_enabled = 0`, the restored mail backlog audit (I-11), restore loss against the live baseline | 1 |
+| `01_restore_check.sh` | restore into an EMPTY database (only if asked; a dump with USE / CREATE DATABASE, a `SET @@GLOBAL.GTID_PURGED`, or without its "-- Dump completed" trailer is refused) and stamp the database and moodledata with a restore id that every later writing step checks (the moodledata of ONE rehearsal: a new restore refuses a dataroot an earlier rehearsal ran in), release and user count, **the file store gate** (every `files.contenthash` on disk; missing = stop), SMTP wipe, OAuth2 token wipe and `cron_enabled = 0`, the restored mail backlog audit (I-11), restore loss against the live baseline | 1 |
 | `02_source_baseline.sh` | the baseline on the 4.1.x copy before any upgrade; an existing baseline is re-verified, never retaken | 0 |
 | `03_hop1_to_45.sh` | hop 1 on a clean 4.5 core with the BizLMS code off disk, timed, parity after | 3 |
-| `04_hop2_to_5x.sh` | hop 2 on the Sentientia package in its own directory, timed, parity after | 2, 3 |
+| `04_hop2_to_5x.sh` | hop 2 on the Sentientia package in its own directory, timed, parity after; **before the hop it counts the `mod_survey` and `mod_chat` activities the 5.0 upgrade would delete and stops while the package has no code for them** | 2, 3 |
 | `05_repairs.sh` | 4a to 4c and 4e: `repair_task_registrations` (dry run, apply, the message preference check), tenant seed and parity, the capability inventory, check and apply against the signed allow-list | 4a-4c, 4e |
 | `06_adr031_roles.sh` | the four ADR-031 scripts in target mode | 4f |
 | `07_theme_switch.sh` | `theme` epsilon to sentientia | 4g |
@@ -91,11 +102,30 @@ Things the kit does that the numbered steps below do not say (added 2026-10-08, 
 * **Nothing is written to a database the kit did not stamp.** Step 01 stamps the restored database (a `{config}` row) and the
   moodledata (a file) with a random restore id, and every later step refuses a database or directory that does not carry it.
   A database restored by hand is stamped only on `RESTORE_DONE_BY_HAND=<its name>`. A new restore moves the earlier
-  rehearsal's state, reports and baseline to `archive/`.
-* **The baseline has a metrics version.** A comparison refuses (exit 3) a baseline taken with another version of
-  `source_baseline.php` (the checksums it lacks would otherwise go unchecked), and step 04 stops unless the package's copy of the file
-  is the one the baseline was taken with. After the kit or the tool changes, take the baseline again (delete
-  `baseline/source-baseline.json` and run step 02).
+  rehearsal's state, reports, baseline and cache configuration to `archive/`.
+* **The baseline has a metrics version, and names the file that took it.** A comparison refuses (exit 3) a baseline taken with
+  another version of `source_baseline.php` (the checksums it lacks would otherwise go unchecked), and the baseline carries the
+  SHA-256 of the exact file that took it (`tool.sha256`, carriage returns removed): the tool refuses a baseline another file took,
+  step 02 stops unless this checkout's `SOURCE_BASELINE_PHP` is that file, and step 04 stops unless the package's copy is. There is
+  no override. After the kit or the tool changes, take the baseline again (delete `baseline/source-baseline.json` and run step 02).
+* **Hop 2 deletes activities unless the package carries `mod_survey` and `mod_chat`** (ADR-032 "FINDING"): the Moodle 5.0 upgrade
+  uninstalls them when their code is absent. Step 01 notes the count early; step 04 counts again and refuses to start the hop
+  while the package lacks the code of a type that has activities. The parity tool has no way to accept such a loss, so shipping the
+  two modules is the one way forward (Nitin's decision); an acceptance would first need a narrow mechanism in the tool.
+* **One rehearsal, one moodledata.** A new restore needs an EMPTY moodledata or a new directory: the earlier rehearsal's dataroot
+  carries its role-9 state file, caches, sessions and cron files. The marker file records which archive was unpacked and that the
+  unpack finished; a named `RESTORE_MOODLEDATA_ARCHIVE` is never silently ignored. A populated directory the kit did not stamp needs
+  `RESTORE_MOODLEDATA_BY_HAND=<its path>` (a statement of its own, not covered by `RESTORE_DONE_BY_HAND`) and must show no write
+  in `sessions/` or `localcache/` in the last 30 minutes.
+* **A restore point before each hop and the import.** `SNAPSHOT_HOOK` is called with the label (before-hop-1, before-hop-2,
+  before-import). Without it the kit can only remind, and the irreversible step starts in the same second, so with
+  `BIZLMS_PRODUCTION_FLAG=1` (the cutover form) it refuses to go on unless `SNAPSHOT_TAKEN` names the label.
+* **The post-cron parity row is not expected to be exit 0** (step 11, informational): the 5.0 upgrade queued
+  `\mod_qbank\task\transfer_question_categories`, which creates qbank activities on its first run. The gate that counts is step 10,
+  before the first cron. The same holds on cutover day: run the data-intact gate before cron is enabled on the target.
+* **Step 04 never hides what step 09 will judge.** When the only failed line after hop 2 is the `message_provider_defaults`
+  invariant (step 05 repairs it), the compare stopped at that failure and printed no UNPROVEN items, so the step 04 row reads
+  cleaner than its evidence; the data-intact gate of step 09 judges everything again, after the repairs.
 * **`TENANT_CHECKS` defaults to `warn`, so 4b and 4c are not a stop.** Their "expect 100% PARITY" is a stop only with
   `TENANT_CHECKS=stop`; use that for the dress rehearsal.
 * **The cron cycle (step 11) switches off, in the rehearsal database, the scheduled tasks that phone home** (moodle.net
@@ -136,6 +166,11 @@ Things the kit does that the numbered steps below do not say (added 2026-10-08, 
    (`admin/environment.xml`), so the rehearsal upgrades twice: 4.1.2 → 4.5.x on the 4.5 core, then
    4.5 → 5.2 with the Sentientia package. See `SENTIENTIA-MIGRATION-PLAN-2026-09-04.md` §0.
    Time both hops, run hop 1 on the target engine (MySQL 8.4), and capture parity after each hop.
+   **Before hop 2 (added 2026-10-08):** count the activities of `mod_survey` and `mod_chat`
+   (`SELECT m.name, COUNT(*) FROM mdl_course_modules cm JOIN mdl_modules m ON m.id = cm.module WHERE m.name IN ('survey','chat') GROUP BY m.name`).
+   The 5.0 upgrade deletes them, with their answers, when the package has no `public/mod/survey` or `public/mod/chat`, and nothing
+   in the parity tool can accept that loss: if the count is above zero, the package must carry a 5.x-compatible `mod_survey` and
+   `mod_chat` (Nitin's decision, ADR-032 "FINDING"). Kit step 04 does this count and stops before the hop.
    **Checkpoint after hop 1** (4.5 core, BizLMS code off disk, no Sentientia plugin yet): run
    `php source_baseline.php --config=<the 4.5 config.php> --compare=/vault/live-baseline.json` — exit 0, and the BizLMS
    tables must match (95 of 95 on the April copy). Any DRIFT line here is a core-upgrade effect, isolated from the rest.
@@ -178,6 +213,11 @@ Things the kit does that the numbered steps below do not say (added 2026-10-08, 
       package, so pages fall back to stock boost (seen in the 2026-10-01 rehearsal upgrade log).
       `php admin/cli/cfg.php --name=theme --set=sentientia`; April has no user/course/category/cohort
       overrides (migration plan §8 step 7).
+   h. **BizLMS feature-data import (added 2026-10-07; ADR-032 cutover slice).** It runs in step 5a, after the data-intact gate of
+      step 5: that gate proves that nothing but the upgrades and the repairs touched the data, which is only true before the
+      import. At the rehearsal record the decisions sha256 (kit step 09 does): it is the hash cutover must match
+      (`--expect-decisions-hash`). Run the checks in "BizLMS import: Stage B checks" below; the importers' data changes explain
+      the deltas of the post-import gate.
 5. **Purge caches**, then **data-intact gate (before the import):**
    `php local/sentientia_platform/cli/migration_parity_check.php --compare=/vault/live-baseline.json`
    → **must print `RESULT: 100% PARITY - counts AND value checksums match, and the BizLMS legacy tables are untouched.`**
@@ -216,17 +256,65 @@ Things the kit does that the numbered steps below do not say (added 2026-10-08, 
    `migration_parity_check.php --after-import`: the rehearsed decisions are the ones that run, and a change to the file after the
    rehearsal is a re-approval event. With `bizlms_production = 1` the apply refuses without it.
 
-   Then
-   `php local/sentientia_platform/cli/migration_parity_check.php --compare=/vault/live-baseline.json --after-import --decisions=<the rehearsed decisions> [--expect-decisions-hash=<hash>] [--run=<id>] [--report=<the --report file>]`
+   Then **the post-import gate**:
+   `php local/sentientia_platform/cli/migration_parity_check.php --compare=/vault/live-baseline.json --after-import --decisions=<the rehearsed decisions> --expect-decisions-hash=<hash> [--run=<id>] [--report=<the --report file>]`
    → exit 0, or exit 2 with Nitin's written acceptance. It holds everything to the SOURCE baseline except what the import
    itself wrote, and for that it asks the import's own records: `user_enrolments`, `enrol` and `role_assignments` may have
    grown by exactly the rows `local_sentientia_legacymap` says were imported (the April dry run predicts +7,733
    enrolments and +19 enrol instances); a course may differ from the baseline in exactly the `open_*` columns its
-   `local_sentientia_courses_detailfill` row names; a tag instance may have moved exactly as `..._tagmove` says. A changed
-   old row (an `enrol.status`, an enrolment date), an extra or missing row, a column the ledger does not name, and any
-   change at all to a BizLMS legacy table is exit 1. It also runs the `bizlms_import` invariant and lists the needs-owner
-   reasons the decisions do not accept (exit 2). Exit 3 means it refused (no complete apply run of this install, a run id
-   that is not one, decisions that do not hash to `--expect-decisions-hash`).
+   `local_sentientia_courses_detailfill` row names; a tag instance may have moved exactly as `..._tagmove` says; and a BizLMS
+   enrol instance (classroom, learningplan or program) may differ in `status` and `timemodified`, and in nothing else, exactly
+   where `local_sentientia_courses_enroloff` (the enrolments importer's trail of the instances it proved safe to switch off,
+   owner decision CRS-01) names it. A changed old row (an `enrol.status` that no trail row names, an enrolment date), an extra
+   or missing row, a column the ledger does not name, and any change at all to a BizLMS legacy table is exit 1. It also runs the
+   `bizlms_import` invariant and lists the needs-owner reasons the decisions do not accept (exit 2). Exit 3 means it refused
+   (no complete apply run of this install, a run id that is not one, decisions that do not hash to `--expect-decisions-hash`, no
+   decisions file, a baseline of another metrics version or taken by another file).
+   **Run it before the first cron of the target.** The 5.0 upgrade queued `\mod_qbank\task\transfer_question_categories`, whose
+   first run creates qbank activities (`course_modules` and `course_sections` change, a container course may be added), so the
+   same compare after a cron cycle differs from the baseline by design (kit step 11 runs it once more, informational, and says so).
+
+   **Decision F-34 (2026-10-07), built 2026-10-08.** After the BizLMS import the core counts and checksums are no longer
+   unchanged by design: the `enrolments` importer adds about 7,733 `user_enrolments` rows (April) and changes `enrol.status`
+   (CRS-01). The gate above EXPLAINS those deltas from the `legacymap` rows (target tables `user_enrolments` and `enrol`, outcome
+   `imported`) and the `enroloff` trail, and reports any unexplained delta as DRIFT. Exit 2 (needs-owner reasons not accepted, or
+   an unclaimed legacy table with rows) is allowed only with Nitin's written acceptance.
+
+   **Pass the decisions (added 2026-10-07, review fix round 1; merged 2026-10-08).** Every BizLMS importer's `verify()` reads
+   owner decisions (`cart.abandoned`, `notifications.import_bodies`, ...) that have no default, so the `bizlms_import` invariant
+   can only run with the file the import ran with. The CLI therefore takes `--decisions` and `--expect-decisions-hash` only with
+   `--after-import`, and `--after-import` without a decisions file is refused, exit 3: never a pass, never a false FAIL, and
+   never a quiet SKIPPED. `--expect-decisions-hash` pins the file; a different one is refused with exit 3 before any number is
+   computed. The hash is the `decisions_hash` in the import run report (`--report=FILE`); the CLI also prints the sha256 of the
+   file it was given, so the two can be read side by side. A decision the file does not hold is a real FAIL
+   (`verify_error:<feature>:missing_decision:<key>`). A baseline taken before the import (`--baseline`) and the data-intact gate
+   before the import (step 5, `--compare` alone) need neither option.
+5b. **Stage B report for the enrolments import (CRS-01, added 2026-10-07).** After the `enrolments` feature has been
+   applied, run `php local/sentientia_courses/cli/enrolments_access_report.php` and paste its output into the rehearsal
+   report: the per-instance verdicts, the learner-course pair count and the ids of the legacy enrolments that regress. The
+   import report itself carries only the per-instance skip codes; the pair count and the regression ids come only from this
+   CLI. Exit 1 means a switched-off instance does not keep its learners' access: undo it (see the CLI header) before going on.
+5c. **No admin unenrol before `bizlms_production_open` (LRN-10, added 2026-10-07).** From the learning-path, program and
+   classroom screens an admin can now remove a pending imported enrolment row. On a rehearsal, UAT or Stage B copy that
+   deletes an imported target, and the `bizlms_import` invariant then reports `missing_target_rows` as a FAIL. Do not
+   unenrol imported rows on a copy that still has to pass the parity gate; once the runbook has set
+   `local_sentientia_platform/bizlms_production_open` the check stops, because admins may then change rows freely.
+5d. **Resuming the enrolments import (CRS-01, added 2026-10-07).** The step that recomputes which BizLMS enrol instances may be
+   switched off changes `enrol.status` and `enrol.timemodified` on those instances, and both columns are inside the
+   filtered CRC of the `enrol` source of `enrolments.instances` and `enrolments.legacy_instances`. In ATOMIC mode (the
+   April copy, about 17 000 rows, is under the atomic threshold) one transaction covers the run and this cannot
+   happen. In BATCH mode, once the recompute step has committed a batch, `--resume` of the same run stops in
+   `open_step` with `source_changed_since_the_run_started`: only a FRESH run recovers (purge the feature first on a
+   rehearsal copy). If a rehearsal ever has to run enrolments in batch mode, plan for a fresh run, not a resume. The
+   same pattern applies to `course_tags`. A later change can leave `status` and `timemodified` out of that step's
+   fingerprint; it was not done because it needs a framework change.
+5e. **The legacy source is frozen from the moment `--apply` starts (added 2026-10-08).** A new run reads the fingerprint of
+   every step's source at its start and stores it as a `pending` step row; each step compares it again when it opens. An edit
+   to a legacy table (an INSERT, a DELETE or a changed value) at any time after the run started, including while a crashed run
+   waits for `--resume`, stops the run with `source_changed_since_the_run_started:<step>` (exit 1). The step that is named
+   had not started; the steps before it had already run. Do not repair the legacy data in place: restore the copy, or purge the
+   feature and start a fresh run. `--status` shows `pending_steps` per feature (steps of the newest run that have not opened);
+   a feature with only pending steps has not started.
 6. **Workflow smoke** (subset of the FOOLPROOF matrix, all proven headless-runnable):
    provision qa users (`tools/_qa_provision.php` pattern), then login/dashboard/catalog HTTP probes,
    SA-04 both personas, signup POST, reminder cron with a seeded deadline, whatsapp e2e dry,
@@ -241,6 +329,132 @@ Things the kit does that the numbered steps below do not say (added 2026-10-08, 
    green, the filedir restore (step 1) was incomplete — go back, do not proceed to Phase 3.
 7. **Report to Nitin:** parity output + smoke results + any deviations. **Replacement (Phase 3)
    remains Nitin-gated.**
+
+## BizLMS import: Stage B checks (added 2026-10-07)
+
+Source: the 2026-10-07 owner decisions and follow-up items (`OWNER-DECISIONS-2026-10-07.md`, whose annex names each `F-nn`).
+Counts and non-person ids only; never print a person's data. April = the April 2026 production dump restored in
+`bizlms_april`; the live backup may differ, so re-read every number.
+
+### A. Before the rehearsal starts
+
+1. The signed decisions file and BOTH fixture copies carry every key an importer declares, in one commit
+   (`php tools/check-bizlms-fixture-copies.php` OK); no `accepted_reasons` list yet (F-84, IDN-02).
+2. One framework change in both platform trees, one PHPUnit re-init (F-83): `copies_files` marker, sequence floor
+   (EV-26), preflight catching `blocked` (F-10), parity wiring (F-34, F-61). One version ledger per plugin (F-85).
+3. `--group bizlms_import` and `--group tenant_isolation` pass on MySQL 8.4 and MariaDB 10.11 from the moodle5 dirroot
+   (F-45); `registry::load()` returns all 19 importers (EV-25, F-33).
+4. Code that decisions require is merged: COMMS-N1/N2/N3, COMMS-R1/R2/R4, CRS-01/02/03, EV-16, EV-17 (evaluationmode),
+   EV-TENANT, IDN-01, IDN-07 and XC-IMPORTED-HISTORY-READERS, LRN-01..05, `cart.price_source` (revenue hole), the
+   `claude/eval-followups` importer fixes (F-25). The rehearsal must run the final code and the final schema.
+5. The restore carries `filedir` with the database (step 1; F-21): organisation logos and cohort descriptions need file
+   content, not only `{files}` rows.
+
+### B. Facts to read on the live backup (read-only, counts and ids; F-42, F-17, F-68)
+
+`SHOW COLUMNS` of `local_syncerrors`, `local_emaillogs`, `local_notification_info`; counts of `local_coursedetails` and both
+candidate counters; `local_dashboardcourses` lists and the roots they name; `local_courses/courses` tag instances and the
+`mandatory`-tag count; BizLMS enrol instances by method (classroom and program instances may exist on live), disabled instances,
+needs-owner counts and cross-tenant pairs; `local_ratings/review_enable` and the I-20 ratings counts per area; exam courses per
+root and the reminder seed rows; `local_request_comments`, `local_learningplan_approval` counts; non-zero cart credit or invoice
+rows. April values are quoted in section C.
+
+### C. Per-importer checks
+
+| Feature | Check at Stage B | April expectation | Decision |
+|---|---|---|---|
+| org | `logo_file_missing` warnings for logo itemids without a file row; `org:invalid_tenant_root` and `org:unmapped_enum` stay 0 | 14 organisations reference a logo, 5 file rows; roots 1/77/177 only, `visible` 1 on every row | IDN-03, IDN-04, F-21 |
+| org | create the cross-tenant platform role with NO members: `adr031_crosstenant_role.php --target=<wwwroot> --config=<cfg> --dry-run`, then `--apply` (plan step 4f-f) | members only when Nitin names them | IDN-05 |
+| org_roles | counts of both source tables; `user_outside_org_tenant`, `user_without_tenant`, `role_not_assignable` | 0 rows in both; the only pathless live user is a site admin; all 11 restored category role assignments same-tenant | IDN-01, F-13 |
+| cohort_scope | `description_files_not_copied` stays 0 | 0 description files; 1 `local_groups` row on `/77` reported as a mismatch | IDN-04, F-21 |
+| course_lookups | `coursedetails_candidate_open_level_not_written`; `course_lookups:tenant_unresolved` | 0 `local_coursedetails` rows; 0 unresolved | CRS-06, CRS-07, CRS-15 |
+| course_tags | preflight `will_move`; if > 0, open the core tag index as a `/77` learner and confirm NO `/1` course names are listed (else ADR-031 course-listing rules before cutover); count of the lifecycle `mandatory` tag; `sentientia.lifecycle.autoenrol.enabled` stays OFF until L&D reviews the `will_move_with_the_lifecycle_mandatory_tag` list | 0 instances | CRS-09 |
+| enrolments | report: BizLMS instances by method, disabled instances, pair count and regressions (ids only) of the CRS-01 access-window comparison, list of the cross-tenant pairs (course ids and pair counts, no person data); needs-owner counts `user_deleted`, `manual_enrolment_inactive`, `manual_enrolment_ends_sooner`; ONE converted learner's access before and after (and after a Sentientia unenrol of the manual row); `enrol_manual/expiredaction` = KEEP | 136 learningplan instances, all enabled, 16,830 active rows; 0, 0, 0; 40 cross-tenant pairs (24 from `/177`, 16 from `/77`, all into `/1` courses); `expiredaction` 1 (KEEP) | CRS-01..05, F-36 |
+| exams | exam courses per root; the `exams.reminder_seed` counts; the guest storefront lists no exam or forum pseudo-course | 8 exam courses (`/1` 2, `/77` 5, `/177` 1), 3 closed exam quizzes, 154 enrolment rows on them | CRS-14, F-40 |
+| ratings | skipped counts per reason and area; `local_ratings/review_enable`; the scanner rows are labelled | `unknown_area` about 195 (194 scanner rows), `orphan_item` about 85+, `invalid_rating` 1, `orphan_user` at most 1, `invalid_reaction` 0; `review_enable` 0 | CRS-10, CRS-12, F-41 |
+| users | the F-17 facts; `users:invalid_login_row` | 4,874 error rows, 749 runs, 0 transcript rows; `local_uniquelogins` absent | IDN-02, F-17 |
+| notifications | run BEFORE any step that updates deleted user rows; credential check re-measured; `team_member_copy_body_withheld`; `course_from_moduleid`; many deleted recipients sharing one `timemodified` (preflight warning); `unresolved_template_rows_naming_a_secret_word` for BOTH tables (a row with no template reference, `notification_infoid` 0 or NULL, is unresolved and loses its body too, so read `credentials_withheld:unresolved_template` against the count of such rows) | 14,197 sent, 5 not_sent, 839 withheld, 0 masked-with-body; 1,921 manager copies without body; 9,409 rows with a course; 0 rows with a reference of 0 or less, no `local_email_logs` table | COMMS-N1..N3, N6, F-67, F-68 |
+| recompletion | run upgrade 2026093001 on the rehearsal copy and time `--preflight` (the 2.59M-row log, `eventname` unindexed, scanned about six times) | 0 rows in all 16 tables | F-56 |
+| cart | per-table counts; `bizlms_order_floor` equals the highest imported order number; one rehearsal-only native test order gets a number above it; `decisions_not_accepted` in the report is empty; any credit or invoice row goes to Finance | history 5 lines and 5 orders, cart_id 5, ledger 0, invoices 0, credits 0; floor 5 | cart.order_number_floor, F-05 |
+| skills | re-run `--preflight` on the live backup; if a level is new or renamed, update the csv BEFORE the hash is pinned | 17 levels, csv filled | LRN-07 |
+| learningplan | plans with an end date in the past and self-enrol on (the enrolment window now refuses new enrolments where BizLMS only displayed dates); `creator_root` and `shared_learner_root` counts | 0 of 17 plans have dates; `orphan_course` 4 | F-59, XC-TENANT-GUESS |
+| program, classroom | rows by tenant method with `creator_root` ids (> 0: stop, ask Nitin, re-pin if he changes a value); native programs with an empty level (ids only) | 1 program on `/77`; classroom 0 rows | XC-TENANT-GUESS, F-58 |
+| evaluation | time the feature; count of implied assignments on identity-protected forms (ids only); pathless forms | 1 completion, 5 values; 0 anonymous completions; form 2 pathless (`/101`, no stored root) | F-29, EV-19, EV-TENANT |
+| request | `local_request_comments` rows (preflight BLOCKS if > 0; the owner goes on by writing `request.comments = fold_reviewed`, which re-pins the hash, Q14); `local_learningplan_approval` rows (> 0: a decided approval is not folded into a pending row); optionally imported pending rows whose approver lacks `local/sentientia_request:approve`; `verify()` is import-time only, so run it right after the import, and a later failure of `pending_rows_with_an_approver_whose_requester_or_item_is_gone` means the importer routed a row it should not have | all 0 | COMMS-R4, R5, R6, COMMS-R1 |
+| legacy_logs | row counts; include the `admin_log` settings call in the performance pass | 0 rows in `local_logs` and `local_courseerrors` | F-76 |
+
+### D. Report lines every rehearsal must print (F-91)
+
+1. CRS-01: the per-pair access-window comparison (pair count; regressions as ids).
+2. Rows per feature by tenant method (path, costcenter, classroom, shared_learner_root, creator_root, pathless), with the
+   `creator_root` ids (XC-TENANT-GUESS) and the pathless evaluation forms (EV-TENANT).
+3. Every needs-owner code with its count, for the post-Stage-B `accepted_reasons` batch (IDN-02).
+4. `files_copied:<component>/<area>=N` per area (IDN-04).
+5. Any non-zero cart credit or invoice row, for Finance.
+
+### E. Rules to carry into the runbooks (CRS-09, F-36, CRS-01, LRN-10, F-67)
+
+1. NEVER uninstall `enrol_classroom`, `enrol_program`, `enrol_learningplan` or `local_courses` from Plugins overview: core
+   uninstall deletes their instances, enrolments and tag instances (ADR-032 decision 2). The 9,097 folded enrolment rows on April
+   keep their provenance only in the legacy rows.
+2. Keep `enrol_manual/expiredaction` = KEEP (April value 1).
+3. Purge caches after `course_tags` and after `enrolments`.
+4. Check ONE converted learner's access before and after the enrolments step.
+5. NEVER use 'Delete' on a disabled BizLMS instance in a course's Enrolment methods page (delete removes its `user_enrolments`
+   rows). Undo for the CRS-01 disable step is `UPDATE {enrol} SET status = priorstatus` from the trail table.
+6. NEVER re-run `--apply` of a completed core-writing feature after `bizlms_production_open`: an explicitly named feature
+   re-runs even when complete (`runner.php:1009` skips only implicit ones), and `course_lookups` would refill columns an admin
+   cleared.
+7. No admin unenrol of an imported row before `bizlms_production_open` (LRN-10).
+8. Run the notifications feature before any step that updates deleted users' rows (the DPDP anonymiser, an HRMS re-sync,
+   cleanups): the deleted-at-send rule reads the user's `timemodified` (F-67).
+9. No native GST tax invoice is issued to a real buyer, and `local_sentientia_cart/enabled_tenants` stays '77,177', until Airpay
+   Finance answers the six points (migration plan section 11).
+10. COMMS-N7 senders (all flags OFF until Nitin flips them after UAT evidence): the learning-path e-mail is sent by a
+    five-minute poller (`send_path_enrolments`) that stands in for 'the learning-path enrol event' until `path_manager` calls
+    `parity_senders::learning_path_enrolled()` directly; with its flag OFF it reads no row and only moves its marker. On UAT,
+    before `send_course_enrolment` is flipped: check that no core enrol plugin's own welcome message is also sent to the same
+    learner (a double send), and that the manager-copy delivery-log row reads 'A team member has completed ...' with no
+    learner name. The e-mail templates are English only today (shared partials), so do not flip the senders for a Hindi-speaking
+    audience before a per-recipient-language render lands.
+
+### F. Owner confirmations the decisions require
+
+| When | Who | What | Decision |
+|---|---|---|---|
+| before the rehearsal | Nitin | names (or confirms nobody) for the cross-tenant platform role | IDN-05 |
+| before the rehearsal | Nitin | how the evidence session may turn `sentientia.evaluation.learner_history` on for one local test tenant (or he does it on UAT) | EV-18 |
+| today's EOD UAT session | Nitin | list and confirm or disable each enabled `costcenterid = 0` recompletion rule on UAT; decide `run_rules` on UAT | LRN-06, F-55 |
+| any time | Nitin | [CONFIRM] delete of `moodle-enhancement/local/airpay_ratings` (14 files, restorable from git); optional local `git gc` of the unreachable evaluation commit | CRS-13, F-22 |
+| after the rehearsal | Nitin | written acceptance of each needs-owner reason with its count (ONE batch edit of `accepted_reasons`, then the hash is re-pinned): enrolments, course_lookups, ratings, org_roles, users, cart, notifications, request, learning plans, programs, evaluation | IDN-02, CRS-04/07/10, COMMS-C1 |
+| after the rehearsal, only if shown | Nitin | programs or learning plans whose tenant came from their creator (`creator_root` ids): keep it, or import with no tenant | XC-TENANT-GUESS |
+| after the rehearsal, only if shown | Finance (via Nitin) | any non-zero credit balance (count, INR total, tenant) or ERPNext invoice row | cart.credit_balances, cart.erpnext_invoices_legal |
+| before cutover | Finance (via Nitin) | the six native-tax-invoice points | cart.native_tax_invoices |
+| before cutover, after the evidence | Nitin | reader flags for Airpay (imported e-mail history and body detail, request history, `legacy_logs` report OFF, ratings widget, reactions, reviews OFF, evaluation drilldown, users sync history, notification senders) | COMMS-C2, CRS-11, CRS-12, EV-06, IDN-07, COMMS-N7 |
+
+### G. Visual evidence owed before any reader flag is flipped (F-06, F-16, F-46, F-71; EV-18, COMMS-N5, COMMS-R3)
+
+CLAUDE.md section 5: desktop and 590 px screenshots, a README in `docs/visual-evidence/<date>/<feature>/`, and Nitin reviews. Test
+personas and test data only; no real name may appear (the local XAMPP holds a copy of production users). Every reader flag stays
+OFF until he says so. Capture each page with the flag OFF and ON, as a learner and as a tenant admin:
+
+- cart: `credits.php`, the 'Issued in ERPNext as' invoice view, `return.php` and `history.php` status rendering, the
+  admin_orders Staff notes column, the checkout error path, and the catalogue price and basket after `cart.price_source`.
+- users: `sync_runs.php` and `sync_run_detail.php`, desktop and mobile, with `sentientia.users.imported_sync_history` OFF and ON,
+  as the uploader, as a same-tenant colleague who did not upload the run, and as a cross-tenant admin. IDN-07's hiding of the
+  rejected lines is NOT behind a flag and changes native runs too, so capture a native run as the colleague (counts, no lines).
+- learningplan, program, classroom, recompletion, skills: `mypaths.php` and the `view.php` cover; `myprograms.php`, the `view.php`
+  levels tab, roster 'Completed on' and the logo; the classroom list with Draft and On hold, the edit form, 'No limit', the
+  overview, roster completion columns, `my.php` and bulk enrol by audience; recompletion `history.php`, `history_detail.php`,
+  `index.php` and the `edit.php` refusal; My Skills, the skill page levels tab, profile chips, the catalog level badge and the
+  recommendation rail.
+- notifications and request: the Logs tab (Sent from, Sent on, the not_sent and other badges, the BizLMS badge),
+  `email_detail.php`, the Templates tab as a `/77` admin, My requests, Pending approvals, All requests and `admin_log.php`.
+- evaluation: `my_evaluations.php` (named responded, anonymous with the reworded note, waiting, closed, the imported badge, the SP
+  case), `response_list.php` and `response_detail.php`, and the `claude/eval-followups` pages.
+- ratings and exams: the course-page stars with `sentientia.ratings.widget` OFF and ON; the guest storefront and the in-progress
+  rail after CRS-14.
+- the navigation entries added with each flag flip (F-47).
 
 ## Rollback on the sandbox
 

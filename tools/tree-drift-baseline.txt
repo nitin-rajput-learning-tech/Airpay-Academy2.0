@@ -12,7 +12,6 @@
 #
 # Generated 2026-09-22 with --update-baseline
 CONTENT sentientia_analytics/db/caches.php
-CONTENT sentientia_classroom/classes/ics_builder.php
 CONTENT sentientia_compliance_report/classes/compliance_engine.php
 CONTENT sentientia_courses/classes/task/course_overdue.php
 CONTENT sentientia_courses/classes/task/course_reminder.php

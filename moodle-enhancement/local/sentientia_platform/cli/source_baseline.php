@@ -35,7 +35,9 @@
  * the baseline and the comparison, never an error. The baseline records which layout it read.
  *
  * The metrics are versioned (metrics::VERSION, written as tool.metrics): a comparison REFUSES a baseline of another version, exit 3,
- * because the checksums it lacks would otherwise go unchecked. Take the baseline again with the tool that compares it.
+ * because the checksums it lacks would otherwise go unchecked. The baseline also names the exact file that took it (tool.sha256, this
+ * file with every CR removed): a comparison with another file is refused the same way, so a change that adds a checksum without
+ * bumping the version cannot pass quietly. Take the baseline again with the tool that compares it.
  *
  * JSON format 2 (format 1, written by the earlier tool, is still read: it has counts, checksums and nothing else):
  *   counts       integer metrics (users per tenant, courses, enrolments, role assignments, SCORM attempts, ...)
@@ -48,7 +50,7 @@
  *
  * Exit codes of --compare, the same as migration_parity_check.php (import_bizlms.php shares 0, 1 and 2):
  *   0 parity, 1 drift, 2 counts match but something could not be checked (not proven), 3 the tool could not run, or refused
- *   (a baseline of another metrics version).
+ *   (a baseline of another metrics version, or taken by another version of this file).
  *
  * PHP 7.4 syntax only in this file: no match, no union types, no named arguments, no str_contains.
  *
@@ -376,8 +378,12 @@ final class metrics {
      *
      * 3: the BizLMS user and course substrate (password hashes, every open_* column), course_modules, course_sections, grade_items,
      *    course_completion_criteria and the certificate templates and issue columns the first sets left out.
+     * 4: the core section holds enrol as an UPDATE table (status and timemodified writable: the enrolments importer switches off
+     *    the BizLMS instances it proved safe to switch off, owner decision CRS-01), and the baseline carries the sha256 of the
+     *    tool that took it (tool.sha256), which a comparison checks against its own file. A version 3 baseline holds enrol as an
+     *    insert-only table with status fixed, so it would fail a clean import: take it again.
      */
-    public const VERSION = 3;
+    public const VERSION = 4;
 
     /**
      * Checksummed tables and the columns hashed. Deliberately explicit: adding a column to a schema must not silently
@@ -716,7 +722,34 @@ final class metrics {
             return "the baseline was taken with metrics version {$was}, and this tool is metrics version " . self::VERSION
                 . ': the two compute different checksums. Take the baseline again with this tool, or compare with the tool that took it.';
         }
+        // The same version number is not the same code: a change that adds a checksum without bumping VERSION would compare
+        // only the checksums the baseline holds and ignore the new ones. The baseline names the exact file that took it.
+        $sha = isset($base['tool']['sha256']) ? (string) $base['tool']['sha256'] : '';
+        if ($sha === '') {
+            return 'the baseline does not say which tool took it (no tool.sha256), so it cannot be shown that this tool computes'
+                . ' the same numbers. Take the baseline again with this tool.';
+        }
+        $mine = self::tool_sha256();
+        if (!hash_equals($mine, strtolower($sha))) {
+            return 'the baseline was taken by another version of cli/source_baseline.php (sha256 ' . substr($sha, 0, 12)
+                . ', this file is ' . substr($mine, 0, 12) . '): the same metrics version, but not the same code. Compare with the'
+                . ' file that took the baseline, or take the baseline again with this one.';
+        }
         return null;
+    }
+
+    /**
+     * The sha256 of this file with every carriage return removed, so that a copy that crossed a CRLF boundary (a Windows
+     * checkout, a zip) hashes like the original. `tr -d '\r' < cli/source_baseline.php | sha256sum` gives the same value.
+     *
+     * @return string Lower-case hex, or '' when the file cannot be read.
+     */
+    public static function tool_sha256(): string {
+        $code = @file_get_contents(__FILE__);
+        if ($code === false) {
+            return '';
+        }
+        return hash('sha256', str_replace("\r", '', $code));
     }
 
     /**
@@ -977,12 +1010,13 @@ final class legacy {
  * import made to them (ADR-032 "Parity hooks" 4, Stage B gate 4).
  *
  * The baseline stores, for each of them that exists:
- *  - insert tables (user_enrolments, enrol, role_assignments): count, MAX(id) and one CRC over the fixed columns of
+ *  - insert tables (user_enrolments, role_assignments): count, MAX(id) and one CRC over the fixed columns of
  *    every row. After the import the rows with id <= that MAX(id) must still hash to it (nothing old changed or went),
  *    and the rows above it must be exactly the rows the import's own map names as imported into that table.
- *  - update tables (course, tag_instance): the same, plus a hash per row of the fixed columns and one per writable column.
- *    After the import a row may differ from the baseline in a writable column only, and only a row and a column the
- *    import's own ledger names.
+ *  - update tables (course, tag_instance, enrol): the same, plus a hash per row of the fixed columns and one per writable
+ *    column. After the import a row may differ from the baseline in a writable column only, and only a row and a column the
+ *    import's own ledger names. An update table may ALSO be inserted into (enrol is): the rows above MAX(id) are always held
+ *    to the rows the map names, whatever the mode.
  *
  * The fixed column lists are explicit for the reason given at metrics::CHECKSUMS.
  */
@@ -1000,12 +1034,16 @@ final class core {
         'user_enrolments' => ['mode' => 'insert', 'writable' => [],
             'fixed' => ['id', 'enrolid', 'userid', 'status', 'timestart', 'timeend', 'modifierid', 'timecreated',
                 'timemodified']],
-        'enrol' => ['mode' => 'insert', 'writable' => [],
-            'fixed' => ['id', 'enrol', 'status', 'courseid', 'sortorder', 'name', 'enrolperiod', 'enrolstartdate',
+        // enrol is both: the enrolments importer INSERTs the manual instance a course lacks (G6), and (owner decision CRS-01) it
+        // UPDATEs the status of a BizLMS instance it proved safe to switch off, together with timemodified. So it is held as an
+        // 'update' table: every old row must keep every other column, and may differ in these two only when the importer's trail
+        // (local_sentientia_courses_enroloff) names the row. The new rows are still the rows the import's map says it inserted.
+        'enrol' => ['mode' => 'update', 'writable' => ['status', 'timemodified'],
+            'fixed' => ['id', 'enrol', 'courseid', 'sortorder', 'name', 'enrolperiod', 'enrolstartdate',
                 'enrolenddate', 'expirynotify', 'expirythreshold', 'notifyall', 'password', 'cost', 'currency',
                 'roleid', 'customint1', 'customint2', 'customint3', 'customint4', 'customint5', 'customint6',
                 'customint7', 'customint8', 'customchar1', 'customchar2', 'customchar3', 'customdec1', 'customdec2',
-                'timecreated', 'timemodified']],
+                'timecreated']],
         'role_assignments' => ['mode' => 'insert', 'writable' => [],
             'fixed' => ['id', 'roleid', 'contextid', 'userid', 'timemodified', 'modifierid', 'component', 'itemid',
                 'sortorder']],
@@ -1365,7 +1403,7 @@ final class baseline {
             'dbfamily' => $db->family(),
             'dbserver' => $db->server(),
             'tool' => ['name' => (string) ($meta['tool'] ?? 'source_baseline.php'), 'metrics' => metrics::VERSION,
-                'php' => PHP_VERSION],
+                'sha256' => metrics::tool_sha256(), 'php' => PHP_VERSION],
             'layout' => $m['layout'],
             'notes' => $m['notes'],
             'timings' => $timings,
@@ -1418,7 +1456,7 @@ final class baseline {
             $gone = array_values(array_diff((array) $base['layout']['modules'], (array) $now['layout']['modules']));
             if ($gone) {
                 $out('  NOTE  module type(s) the baseline had and this release does not have: ' . implode(', ', $gone)
-                    . ' - their activities are gone with them (put the plugin code on disk before the upgrade, or accept the loss in writing)');
+                    . ' - their activities are gone with them (the tool cannot accept this loss: put a 5.x version of the plugin in the package before the upgrade; the rehearsal kit refuses to start hop 2 otherwise)');
             }
         }
 

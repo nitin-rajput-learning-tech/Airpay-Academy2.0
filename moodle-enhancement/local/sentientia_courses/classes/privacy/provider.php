@@ -36,6 +36,11 @@ use core_privacy\local\request\writer;
  *       shared configuration rows; actor column(s) anonymised: usercreated, usermodified
  *   - local_sentientia_courses_detailfill (ADR-032 import trail): ids and timestamps only, no person, not declared
  *   - local_sentientia_courses_tagmove (ADR-032 course_tags import trail): ids and timestamps only, no person, not declared
+ *   - local_sentientia_courses_enrolmove (ADR-032 enrolments import ledger): ids and timestamps only, no person, not declared
+ *       (legacy user_enrolments id, legacy and manual enrol instance ids, course id: the learner is named by the enrolment
+ *       row in core, which core's own privacy providers export and erase)
+ *   - local_sentientia_courses_enroloff (ADR-032 enrolments import trail of switched-off BizLMS instances): ids and
+ *       timestamps only, no person, not declared
  *
  * OWNER versus ACTOR columns
  * --------------------------

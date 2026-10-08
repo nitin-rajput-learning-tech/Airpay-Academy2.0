@@ -332,3 +332,11 @@ switched on would ask every person who ever attended for feedback. The query now
 created (`local_sentientia_platform\bizlms\provenance::not_imported_sql`, guarded by `class_exists` and a
 `table_exists` on the map). New test `test_ilt_feedback_ignores_sessions_the_bizlms_import_brought_in`. Code
 only, no version bump. Both trees. Not run here.
+
+
+## 2026-10-07 - owner decision LRN-11: the stalled-path nudge never targets imported enrolments or switched-off paths
+
+`rule_learning_path_stalled` selected every not-completed path enrolment older than `trigger_days`, with no path-status filter and no import filter. Once `smart_rules` is switched on it would have nudged about 760 April learners about old BizLMS plans (BizLMS sent no such message), and learners on archived paths too. Decision `learningplan.stalled_nudge_scope` = `native_rows_on_active_paths`:
+- the query adds `lp.status = STATUS_ACTIVE AND lp.visible = 1` (archived and hidden paths are never nudged: a plain bug fix);
+- and excludes enrolments the import created (`provenance::not_imported_sql('lu', 'local_sentientia_learningpath_users')`), guarded by `class_exists` and a `table_exists` on the map, the same pattern the ILT feedback rule uses. An admin can still nudge an imported learner by hand.
+`smart_rules` is default OFF and the rule is not seeded, so nothing fires today; this lands before it is ever flipped. A later, separate decision can include imported rows with a cutoff counted from cutover. Tests: `learning_path_stalled_test` (imported row, archived path, hidden path not selected; native row and a second active path of a mixed learner selected; empty import map). Code only, **no version bump**. Both trees. Written, not run.
