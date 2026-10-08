@@ -18,7 +18,9 @@
 #      refuses a database or a moodledata that does not carry it, so an allow-listed name on the wrong server, or UAT's
 #      database, can never be written to. A new restore moves the earlier rehearsal's state, reports, baseline and cache
 #      configuration to archive/ (nothing of it can be mistaken for this one's result). A restore that did not complete is
-#      refused on re-run.
+#      refused on re-run, WHATEVER RESTORE_DONE_BY_HAND says: a database a kit restore was writing to is never adopted. Drop it and
+#      create it empty; the kit sees it empty and moves the record of the failed restore to archive/ (a hand restore then follows).
+#      RESTORE_DONE_BY_HAND together with RESTORE_DB_DUMP is refused outright (a leftover statement must not meet a new dump).
 #      THE MOODLEDATA is per rehearsal. The marker file also records which archive the kit unpacked into it (path, size, mtime) and
 #      that the unpack finished. A NEW restore (a new database) accepts a non-empty moodledata only when it is the same unpack of the
 #      same RESTORE_MOODLEDATA_ARCHIVE that no later step has used; anything else (a dataroot an earlier rehearsal ran in, with its
@@ -107,6 +109,9 @@ restore_moodledata() {
 # by_hand_ack -> 0 when the operator named THIS database as restored by hand (RESTORE_DONE_BY_HAND=<database name>).
 by_hand_ack() { [ -n "$RESTORE_DONE_BY_HAND" ] && [ "$RESTORE_DONE_BY_HAND" = "$DB_NAME" ]; }
 
+# failed_kit_restore -> 0 when a restore this kit started in this work directory never completed (restore.started, no restore.complete).
+failed_kit_restore() { [ -n "$(kv_get restore.started)" ] && [ -z "$(kv_get restore.complete)" ]; }
+
 # start_new_restore: a new rehearsal begins. The earlier one's state moves to archive/, and the restore id is chosen.
 RESTORE_ID=""
 OLD_RESTORE_ID=""
@@ -153,12 +158,27 @@ restored_cache_stores() {
     fi
 }
 
+# RESTORE_DB_DUMP says "restore it for me", RESTORE_DONE_BY_HAND says "I restored it myself": both at once is a contradiction. The second
+# one lives in rehearsal.env until somebody clears it, so left over from an earlier hand-restored rehearsal it would meet the next
+# rehearsal's dump, and a kit restore that died part way (packet size, disk, a lost connection) could then be taken for a whole copy.
+# Refused before anything else of the restore is decided (DRY too: the plan must not look fine).
+if [ -n "$RESTORE_DONE_BY_HAND" ] && [ -n "$RESTORE_DB_DUMP" ]; then
+    die "RESTORE_DONE_BY_HAND (=${RESTORE_DONE_BY_HAND}) and RESTORE_DB_DUMP (=${RESTORE_DB_DUMP}) are both set: the kit restores the dump, or you restored the database by hand, never both. Unset RESTORE_DONE_BY_HAND when the kit is to restore the dump (it is a statement about ONE database, and it stays in rehearsal.env until you clear it); unset RESTORE_DB_DUMP when you restored by hand"
+fi
+
 if [ "$EXECUTE" = 1 ]; then
     probe_db
     log "database ${DB_NAME}: ${DB_STATE} (${DB_TABLES} tables)"
     case "$DB_STATE" in
         unreachable) die "the database server at ${DB_HOST} cannot be reached" ;;
         absent | empty)
+            if failed_kit_restore; then
+                # The kit itself sees the database absent or empty: the partial copy that the failed restore wrote is gone, so the record of
+                # that restore describes no database any more. It moves to archive/ now (not deleted), which is what lets a database
+                # restored by hand into this empty one be told from the partial copy. Nothing else clears a failed restore.
+                note "database ${DB_NAME} is ${DB_STATE} again after the restore this kit started ($(kv_get restore.started)) did not complete: the partial copy is gone, and the record of the failed restore moves to archive/"
+                rotate_work_state
+            fi
             [ -n "$RESTORE_DB_DUMP" ] || die "database ${DB_NAME} is ${DB_STATE} and RESTORE_DB_DUMP is not set: restore the live backup first"
             start_new_restore
             kv_set restore.started "$(ts) dump=${RESTORE_DB_DUMP}"
@@ -182,20 +202,18 @@ if [ "$EXECUTE" = 1 ]; then
                 else
                     die "database ${DB_NAME} carries restore id ${have:0:8}..., but this work directory records ${want:-none}: it is another rehearsal's database. Use a work directory (REHEARSAL_WORK) of its own, or restore again into an empty database"
                 fi
+            elif failed_kit_restore; then
+                # Checked BEFORE RESTORE_DONE_BY_HAND and never overridden by it: that variable lives in rehearsal.env until somebody clears
+                # it, so it cannot tell a copy restored by hand after the failure from the partial copy the kit was writing. Only the kit
+                # seeing the database absent or empty (above) clears the failed restore; a hand restore then follows.
+                die "the restore this kit started ($(kv_get restore.started)) did not complete, and database ${DB_NAME} holds a partial copy of ${DB_TABLES} tables: it is refused whatever RESTORE_DONE_BY_HAND says (a database a kit restore was writing to is never adopted). Drop it and create it empty (as a database administrator: DROP DATABASE \`${DB_NAME}\`; CREATE DATABASE \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE ${DB_COLLATION};), then run step 01 again: with RESTORE_DB_DUMP set (and RESTORE_DONE_BY_HAND unset) the kit restores into the empty database. To restore by hand instead: run step 01 once on the empty database (it stops with 'restore the live backup first' and moves the record of the failed restore to archive/), restore the live backup into it, then run step 01 with RESTORE_DB_DUMP unset and RESTORE_DONE_BY_HAND=${DB_NAME}"
             elif by_hand_ack; then
-                # Checked BEFORE the partial-restore refusal: an operator who dropped the partial copy and restored by hand since has
-                # a whole database, and RESTORE_DONE_BY_HAND is how they say so (the failed kit attempt's record is rotated away).
-                if [ -n "$(kv_get restore.started)" ] && [ -z "$(kv_get restore.complete)" ]; then
-                    warn "the restore this kit started ($(kv_get restore.started)) did not complete; RESTORE_DONE_BY_HAND=${RESTORE_DONE_BY_HAND} says database ${DB_NAME} is a whole copy restored by hand since: taking your word for it"
-                fi
                 start_new_restore
                 BY_HAND=1
                 warn "database ${DB_NAME} was restored by hand (RESTORE_DONE_BY_HAND=${RESTORE_DONE_BY_HAND}): stamping it as this rehearsal's copy on that statement"
                 stamp_database
-            elif [ -n "$(kv_get restore.started)" ] && [ -z "$(kv_get restore.complete)" ]; then
-                die "the restore this kit started ($(kv_get restore.started)) did not complete, and database ${DB_NAME} holds a partial copy of ${DB_TABLES} tables: drop the database, create it empty and run step 01 again. (If you dropped it and restored the live backup into it by hand since, set RESTORE_DONE_BY_HAND=${DB_NAME} for this run instead.)"
             else
-                die "database ${DB_NAME} holds ${DB_TABLES} tables and carries no rehearsal-kit marker: this kit did not restore it. If it is a copy of the live backup that you restored by hand for this rehearsal, set RESTORE_DONE_BY_HAND=${DB_NAME} for this run; if you are not sure what it is, it may be a real site: stop"
+                die "database ${DB_NAME} holds ${DB_TABLES} tables and carries no rehearsal-kit marker: this kit did not restore it. If it is a copy of the live backup that you restored by hand for this rehearsal, set RESTORE_DONE_BY_HAND=${DB_NAME} for this run (and leave RESTORE_DB_DUMP unset); if you are not sure what it is, it may be a real site: stop"
             fi
             ;;
     esac
@@ -293,7 +311,7 @@ if [ "$EXECUTE" = 1 ]; then
 else
     dry "would restore RESTORE_DB_DUMP (${RESTORE_DB_DUMP:-not set}) into the EMPTY database ${DB_NAME} (never over a populated one); the dump is refused when it holds USE / CREATE DATABASE / DROP DATABASE or has no '-- Dump completed' trailer"
     dry "would unpack RESTORE_MOODLEDATA_ARCHIVE (${RESTORE_MOODLEDATA_ARCHIVE:-not set}) into ${MOODLEDATA} when its filedir/ is missing"
-    dry "would stamp the database (a {config} row) and ${MOODLEDATA} (${KIT_MARKER_FILE}) with a random restore id; a populated database without that marker is refused unless RESTORE_DONE_BY_HAND=${DB_NAME}"
+    dry "would stamp the database (a {config} row) and ${MOODLEDATA} (${KIT_MARKER_FILE}) with a random restore id; a populated database without that marker is refused unless RESTORE_DONE_BY_HAND=${DB_NAME} (with RESTORE_DB_DUMP unset, and never for a restore the kit started and did not complete)"
 fi
 
 # ---------------------------------------------------------------------------------------------------------------------

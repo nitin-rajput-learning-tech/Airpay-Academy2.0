@@ -15,6 +15,9 @@
 #   * the file store comparison finds missing and extra content hashes and ignores sentinel files;
 #   * judge() stops on exit 2 unless the written acceptance is referenced;
 #   * unpack_tree refuses a wrong SHA-256 and a "zip" that is really a tar, and unpacks a good archive;
+#   * step 01 in --execute mode against a stand-in mysql client (fix round 3): RESTORE_DONE_BY_HAND with RESTORE_DB_DUMP is refused; a
+#     restore the kit started and did not complete is refused whatever RESTORE_DONE_BY_HAND says, and is cleared only by the kit
+#     seeing the database empty; a plain hand restore is adopted;
 #   * run_all.sh --list and a DRY --only run work; no Windows path or drive letter is hard-coded in the kit.
 # Exit 0 = every test passed.
 
@@ -413,6 +416,113 @@ res="$(in_kit dump_mysql8_collation "$T/dumps/mysql8.sql" | head -n 1)"
 if [ "$res" = "utf8mb4_0900_ai_ci" ]; then ok "a MySQL 8 collation in the dump is found"; else bad "MySQL 8 collation found" "$res"; fi
 res="$(in_kit dump_mysql8_collation "$T/dumps/good.sql" | sed '/^rc=/d')"
 if [ -z "$res" ]; then ok "a dump without it names none"; else bad "no MySQL 8 collation in a clean dump" "$res"; fi
+
+printf 'step 01: what RESTORE_DONE_BY_HAND may adopt (Stage B tools fix round 3)\n'
+# Step 01 in --execute mode against a stand-in mysql client (no database): it answers the probes step 01 makes before it decides what
+# to do with the database, and the restore itself (no -e: the dump arrives on stdin) succeeds or dies as fake.restorefails says.
+cat > "$T/fakemysql" <<'FAKE'
+#!/usr/bin/env bash
+here="$(cd "$(dirname "$0")" && pwd)"
+tables="$(cat "$here/fake.tables")"
+sql=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -e) sql="$2"; shift 2 ;;
+        *) shift ;;
+    esac
+done
+if [ -z "$sql" ]; then
+    cat > /dev/null
+    [ "$(cat "$here/fake.restorefails")" = 0 ]
+    exit
+fi
+case "$sql" in
+    'SELECT 1') echo 1 ;;
+    *'COUNT(*) FROM information_schema.SCHEMATA'*) if [ "$tables" = none ]; then echo 0; else echo 1; fi ;;
+    *'COUNT(*) FROM information_schema.TABLES'*) echo "$tables" ;;
+    *'SCHEMA_NAME FROM information_schema.SCHEMATA') echo stageb_selftest ;;
+    *"COUNT(*) FROM mdl_config WHERE name = 'rehearsal_kit_restore_id'"*) echo 0 ;;
+esac
+exit 0
+FAKE
+chmod +x "$T/fakemysql"
+# fake_db TABLES [RESTORE_FAILS]: what the stand-in reports. TABLES: none = no such database, 0 = empty, N = N tables, no marker.
+fake_db() { printf '%s\n' "$1" > "$T/fake.tables"; printf '%s\n' "${2:-0}" > "$T/fake.restorefails"; }
+# rb_run NAME [ENV LINE ...]: step 01 --execute. Each NAME has its own work directory and moodledata, so a second run of the same NAME
+# is a re-run of that rehearsal; the extra lines are the env settings of this run (they replace the earlier run's).
+rb_run() {
+    local n="$1"
+    shift
+    base_env "$T/rb-$n.env" "REHEARSAL_WORK=$T/rb-$n/work" "MOODLEDATA=$T/rb-$n/data" "MYSQL_BIN=$T/fakemysql" \
+        "PRODUCTION_DB_ENDPOINT=live-db.example.internal" "$@"
+    OUT="$(bash "$KIT/01_restore_check.sh" --env "$T/rb-$n.env" --execute 2>&1)"
+    RC=$?
+}
+rb_kv() { cat "$T/rb-$1/work/state/kv/$2" 2> /dev/null || true; }
+# rb_expect NAME WANT-RC PATTERN [FORBIDDEN-PATTERN]: the last rb_run exited as wanted, said PATTERN, and did not say FORBIDDEN.
+rb_expect() {
+    local rc_ok=0
+    if [ "$2" = 0 ]; then
+        [ "$RC" = 0 ] && rc_ok=1
+    else
+        [ "$RC" -ne 0 ] && rc_ok=1
+    fi
+    if [ "$rc_ok" = 1 ] && printf '%s' "$OUT" | grep -q "$3" && { [ -z "${4:-}" ] || ! printf '%s' "$OUT" | grep -q "$4"; }; then
+        ok "$1"
+    else
+        bad "$1 (rc ${RC}, wanted '$3'${4:+ and not '$4'})" "$(printf '%s
+' "$OUT" | grep -v '^$' | tail -n 8)"
+    fi
+}
+RBDB=stageb_selftest
+DUMP="RESTORE_DB_DUMP=$T/dumps/good.sql"
+
+# Both variables set: refused outright, in DRY mode (the plan) and before the database is looked at in EXECUTE mode.
+base_env "$T/rb-both.env" "RESTORE_DONE_BY_HAND=$RBDB" "$DUMP"
+kit 01_restore_check.sh "$T/rb-both.env"
+if [ "$RC" -ne 0 ] && printf '%s' "$OUT" | grep -q 'RESTORE_DONE_BY_HAND' && printf '%s' "$OUT" | grep -q 'RESTORE_DB_DUMP' && printf '%s' "$OUT" | grep -q 'both set'; then
+    ok "RESTORE_DONE_BY_HAND and RESTORE_DB_DUMP set together are refused, naming both (DRY)"
+else bad "both variables set are refused (DRY, rc ${RC})" "$OUT"; fi
+fake_db 0
+rb_run both "RESTORE_DONE_BY_HAND=$RBDB" "$DUMP"
+rb_expect "both variables set are refused before the database is probed (--execute, an empty database)" 1 'both set' 'database stageb_selftest:'
+[ -z "$(rb_kv both restore.started)" ] && ok "the refusal started no restore (no restore.started recorded)" || bad "the refusal started no restore"
+
+# The leftover statement meets a new dump, the kit restore dies part way, the operator re-runs without dropping the database.
+fake_db none 1
+rb_run left "$DUMP"
+rb_expect "a kit restore of the dump dies part way (the stand-in client fails the restore)" 1 'the database restore failed'
+if [ -n "$(rb_kv left restore.started)" ] && [ -z "$(rb_kv left restore.complete)" ]; then ok "the failed restore is recorded: restore.started without restore.complete"; else bad "restore.started recorded, restore.complete absent"; fi
+fake_db 400 1
+rb_run left "RESTORE_DONE_BY_HAND=$RBDB" "$DUMP"
+rb_expect "the re-run with the leftover statement AND the dump is refused (both set)" 1 'both set'
+rb_run left "RESTORE_DONE_BY_HAND=$RBDB"
+rb_expect "started-not-complete + RESTORE_DONE_BY_HAND (partial copy of 400 tables) is refused, not adopted" 1 'did not complete' 'restored by hand'
+if [ -z "$(rb_kv left restore.id)" ] && [ -n "$(rb_kv left restore.started)" ] && [ -z "$(rb_kv left restore.complete)" ]; then
+    ok "nothing was stamped or archived: no restore.id, the failed restore's record is still in place"
+else bad "the refused partial copy was stamped or its record moved (restore.id '$(rb_kv left restore.id)')"; fi
+rb_run left
+rb_expect "started-not-complete without any statement is refused too" 1 'did not complete'
+
+# A hand restore after the failure: drop and recreate (the kit sees it empty and archives the record), restore by hand, say so.
+fake_db 0
+rb_run left
+rb_expect "the database dropped and recreated empty: stops ('restore the live backup first') and says the failed restore is archived" 1 'restore the live backup first' 'taking your word'
+if [ -z "$(rb_kv left restore.started)" ] && [ -n "$(find "$T/rb-left/work/archive" -name restore.started 2> /dev/null)" ]; then ok "the failed restore's record moved to archive/ (not deleted)"; else bad "the failed restore's record moved to archive/"; fi
+fake_db 400
+rb_run left "RESTORE_DONE_BY_HAND=$RBDB"
+rb_expect "then a database restored by hand into it is adopted and stamped" 1 'stamped as restore' 'did not complete'
+if [[ "$(rb_kv left restore.id)" =~ ^[0-9a-f]{32}$ ]] && [ "$(rb_kv left restore.by_hand)" = 1 ]; then ok "restore.id and restore.by_hand=1 are recorded"; else bad "the adopted hand restore is recorded"; fi
+
+# The plain hand restore: no dump, no failed kit restore, the database named: adopted as before.
+fake_db 400
+rb_run hand "RESTORE_DONE_BY_HAND=$RBDB"
+rb_expect "a plain hand restore (RESTORE_DB_DUMP unset, RESTORE_DONE_BY_HAND=<that database>) is adopted" 1 'restored by hand' 'did not complete'
+if [[ "$(rb_kv hand restore.id)" =~ ^[0-9a-f]{32}$ ]] && [ "$(rb_kv hand restore.by_hand)" = 1 ] && [ -n "$(rb_kv hand restore.complete)" ]; then ok "the adopted copy is stamped (restore.id, restore.by_hand=1, restore.complete)"; else bad "the adopted hand restore is stamped"; fi
+rb_run nostmt
+rb_expect "a populated database without the marker and without the statement is still refused" 1 'carries no rehearsal-kit marker'
+rb_run other "RESTORE_DONE_BY_HAND=some_other_db"
+rb_expect "a statement that names another database does not adopt this one" 1 'carries no rehearsal-kit marker'
 
 printf 'the restore point before a hop or the import\n'
 t_snap() {

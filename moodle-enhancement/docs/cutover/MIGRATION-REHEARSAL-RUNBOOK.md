@@ -101,8 +101,11 @@ Things the kit does that the numbered steps below do not say (added 2026-10-08, 
 
 * **Nothing is written to a database the kit did not stamp.** Step 01 stamps the restored database (a `{config}` row) and the
   moodledata (a file) with a random restore id, and every later step refuses a database or directory that does not carry it.
-  A database restored by hand is stamped only on `RESTORE_DONE_BY_HAND=<its name>`. A new restore moves the earlier
-  rehearsal's state, reports, baseline and cache configuration to `archive/`.
+  A database restored by hand is stamped only on `RESTORE_DONE_BY_HAND=<its name>` with `RESTORE_DB_DUMP` unset (both set is
+  refused outright: the first stays in `rehearsal.env` until cleared), and never when a kit restore started and did not complete:
+  drop that database and create it empty, and the kit, seeing it empty, archives the record of the failed restore (a kit restore
+  or a hand restore follows). A new restore moves the earlier rehearsal's state, reports, baseline and cache configuration to
+  `archive/`.
 * **The baseline has a metrics version, and names the file that took it.** A comparison refuses (exit 3) a baseline taken with
   another version of `source_baseline.php` (the checksums it lacks would otherwise go unchecked), and the baseline carries the
   SHA-256 of the exact file that took it (`tool.sha256`, carriage returns removed): the tool refuses a baseline another file took,
