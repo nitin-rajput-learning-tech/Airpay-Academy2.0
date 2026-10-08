@@ -151,9 +151,15 @@ final class audit {
         }
         $scoped = ($path !== '' || $userids !== null);
 
+        // Moodle 5.3 marks a course being deleted (course.deletioninprogress) until the asynchronous delete
+        // task has removed it. The column is absent on 5.1/5.2, so it is only filtered when it exists.
+        $hasdeleting = array_key_exists('deletioninprogress', $DB->get_columns('course'));
+        $notdeleting = $hasdeleting ? ' AND deletioninprogress = 0' : '';
+        $notdeletingc = $hasdeleting ? ' AND c.deletioninprogress = 0' : '';
+
         if (!$scoped) {
             $courses = $DB->get_records_select('course',
-                'enddate > 0 AND visible = 1 AND id > 1',
+                'enddate > 0 AND visible = 1 AND id > 1' . $notdeleting,
                 [], 'fullname ASC', 'id,shortname,fullname,enddate');
         } else {
             [$usql, $uparams] = self::population_sql($path, $userids);
@@ -168,7 +174,7 @@ final class audit {
             $courses = $DB->get_records_sql(
                 "SELECT c.id, c.shortname, c.fullname, c.enddate
                    FROM {course} c
-                  WHERE c.enddate > 0 AND c.visible = 1 AND c.id > 1
+                  WHERE c.enddate > 0 AND c.visible = 1 AND c.id > 1{$notdeletingc}
                     AND ({$ownsql}
                          OR EXISTS (SELECT 1
                                       FROM {user_enrolments} ue

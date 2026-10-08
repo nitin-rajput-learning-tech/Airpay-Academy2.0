@@ -970,6 +970,11 @@ class course_manager {
         // ADR-031 defence in depth: :delete is site-admin-only by default,
         // but a role it is granted to stays inside its own tenant.
         self::require_course_write_access($course);
-        return delete_course($course, false);
+        // Moodle 5.3 added a third argument ($asyncpreferred, default true): with the site setting
+        // moodlecourse|enablecourseasyncdeletion on, delete_course() would only MARK the course and queue a
+        // task, and this method would report success while the course still exists. Pass false to keep the
+        // deletion synchronous, which is what every caller of delete() expects. Moodle 5.1 and 5.2 ignore
+        // the extra argument (the setting does not exist there).
+        return delete_course($course, false, false);
     }
 }

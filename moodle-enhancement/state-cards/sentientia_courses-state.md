@@ -1093,3 +1093,7 @@ Branch `claude/owner-decisions-y`, both trees. **No version bump** (docs and a s
 - **Why:** `modalType: 'SAVE_CANCEL'` is not a core API. On 5.2/5.3 it built a BASE modal with an empty footer, so the dialog had no Save button and nobody could be enrolled from it; the modal_factory fallbacks are dead since 5.2. Same defect as `local_sentientia_request/decide` (WF-024). `core/modal_save_cancel` exists unchanged on 5.1, 5.2 and 5.3.
 - **Behaviour kept:** the save handler is attached before `modal.show()` as before. Save still closes the dialog (core behaviour), so the status line the handler writes is only visible if the dialog is kept open; that is how it behaved on 5.1 and is deliberately unchanged here (a follow-up could call `preventDefault()` on the save event).
 - **Not run:** PHPUnit (owner rule), a click-through (needs a 5.2/5.3 runtime). Screenshots owed: the Enrol user dialog at desktop and 590 px.
+
+## 2026-10-08 Moodle 5.3 compat FX-15
+
+`course_manager::delete()` calls `delete_course($course, false, false)`. Moodle 5.3 added a third argument (`$asyncpreferred`, default true): with the site setting `moodlecourse|enablecourseasyncdeletion` on (default off), `delete_course()` only marks `course.deletioninprogress` and queues an adhoc task, so `delete()` would have reported success while the course still existed. Passing `false` keeps the deletion synchronous, as every caller expects. Moodle 5.1 and 5.2 ignore the extra argument. No schema change, no version bump.
