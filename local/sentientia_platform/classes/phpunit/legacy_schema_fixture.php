@@ -123,7 +123,7 @@ trait legacy_schema_fixture {
             if ($dbman->table_exists($table)) {
                 $dbman->drop_table(new \xmldb_table($table));
             }
-            $dbman->install_one_table_from_xmldb_file($fixturexml, $table);
+            self::install_fixture_table($fixturexml, $table);
             self::$legacyfixturetables[] = $table;
         }
 
@@ -136,6 +136,39 @@ trait legacy_schema_fixture {
             }
         }
         return self::$legacyfixturetables;
+    }
+
+    /**
+     * Install one table of a fixture file.
+     *
+     * Several fixtures are byte-identical copies of a BizLMS install.xml and keep its PATH attribute
+     * (local/ratings/db, local/classroom/db, local/location/db, local/recompletion/db, local/skillrepository/db).
+     * Core refuses a file whose PATH is not the directory it sits in (xmldb_structure::arr2xmldb_structure, which
+     * then skips every table), so such a file is loaded from a temporary copy next to it with PATH set to that
+     * directory, removed straight after. The fixture itself stays identical to the BizLMS original.
+     *
+     * @param string $fixturexml Absolute path of the fixture install.xml.
+     * @param string $table
+     * @return void
+     */
+    private static function install_fixture_table(string $fixturexml, string $table): void {
+        global $CFG, $DB;
+        $dbman = $DB->get_manager();
+        $dir = dirname((string) realpath($fixturexml));
+        $root = (string) realpath($CFG->dirroot);
+        $relative = str_replace(DIRECTORY_SEPARATOR, '/', ltrim(substr($dir, strlen($root)), DIRECTORY_SEPARATOR));
+        $xml = (string) file_get_contents($fixturexml);
+        if (strpos($dir, $root) !== 0 || !preg_match('/<XMLDB\b[^>]*\bPATH="([^"]*)"/', $xml, $m) || $m[1] === $relative) {
+            $dbman->install_one_table_from_xmldb_file($fixturexml, $table);
+            return;
+        }
+        $copy = $dir . DIRECTORY_SEPARATOR . 'tmp-' . getmypid() . '-' . basename($fixturexml);
+        file_put_contents($copy, preg_replace('/(<XMLDB\b[^>]*\bPATH=")[^"]*(")/', '${1}' . $relative . '${2}', $xml, 1));
+        try {
+            $dbman->install_one_table_from_xmldb_file($copy, $table);
+        } finally {
+            @unlink($copy);
+        }
     }
 
     /**
@@ -166,7 +199,7 @@ trait legacy_schema_fixture {
     private static function recreate_legacy_table(string $table): void {
         global $DB;
         $dbman = $DB->get_manager();
-        $dbman->install_one_table_from_xmldb_file(self::$legacyfixturedefinition['xml'], $table);
+        self::install_fixture_table(self::$legacyfixturedefinition['xml'], $table);
         foreach (self::$legacyfixturedefinition['extrafields'][$table] ?? [] as $field) {
             $dbman->add_field(new \xmldb_table($table), $field);
         }
