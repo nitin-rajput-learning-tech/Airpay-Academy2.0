@@ -442,7 +442,10 @@ defined('MOODLE_INTERNAL') || die();
 // 2026100805 - Moodle 5.3 compat FX-19: templates/core/block.mustache gets the block-header flex row (title left, controls ml-auto)
 // and tabindex=-1 on the skip-link target, and loses the "d-inlines" typo and pull-right; core_course/coursecard.mustache drops mx-1.
 // Bump purges the compiled template cache.
-$plugin->version   = 2026100805;  // Moodle 5.3 compat FX-19: block + coursecard templates (on top of 2026100804 FX-14 Bootstrap 5.3 utility shims)
+// 2026100806 - Moodle 5.3 compat FX-02 round 1: templates/core/editswitch.mustache had "<formaction=" (missing space), so the browser
+// built no <form> and the noscript "Set mode" fallback was dead on 5.1, 5.2 and 5.3. Now byte-identical to the 5.2 core template
+// below its header comment. Bump purges the compiled template cache.
+$plugin->version   = 2026100806;  // Moodle 5.3 compat FX-02 round 1: editswitch.mustache <form action=> fixed (on top of 2026100805 FX-19 block + coursecard templates)
 // 2026090806:  // login/OTP placeholders + SSO title + block aria-label: {{#quote}} JSON-escaped Hindi into \uXXXX → attribute-safe cleanstr/escaped values (core 5.2 pattern)
 // 2026090805:  footer: GPL badge -> private Airpay notice; sidebar literals localised; scoped-admin subtitle
 // 2026090804:  // admin dashboard: exact-or-child tenant scope on EVERY widget (was LIKE /1% and several unscoped), compliance widget table names fixed, localised chart months, system health = site admins only, core card aria overrides

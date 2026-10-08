@@ -14,6 +14,7 @@ Branch `claude/moodle53-compat`. Fix ids refer to `docs/upgrade/MOODLE-5.3-COMPA
 |---|---|---|---|---|
 | 1 | FX-01 | `/my/dashboard.php` and a course page (`/course/view.php?id=<any>`) | learner | the page renders with its header (course summary text included) and no fatal: on 5.3 every page that renders the header died before |
 | 2 | FX-02 | a course page and an activity page | teacher / course author | the **Edit mode** switch in the course header and the navbar; flip it on, the page reloads in editing mode, flip it off; both states visible |
+| 2b | FX-02 | the same pages with **JavaScript disabled** (browser setting) or the page source viewed | teacher / course author | a real `<form action=... method="post" class="... editmode-switch-form">` wrapping the hidden inputs, and the noscript **Set mode** button inside it; pressing it toggles edit mode. (Round 1 fix: the first cut had `<formaction=`, so there was no form and this fallback was dead; with JavaScript on it looked fine, which is why only this check catches it) |
 | 3 | FX-02 | the same pages | learner | no edit switch at all |
 | 4 | FX-03 | an activity page with an Opened and a Due date (assignment, quiz) | learner | the Opened / Due line under the header, right-aligned; an activity with no dates shows no empty gap |
 | 5 | FX-04 | `/local/sentientia_emails/editor.php` live preview, and the template preview in Notification Management | L&D admin | a tenant-override template rendering in the preview with the branded wrapper (before: HTTP 500) |

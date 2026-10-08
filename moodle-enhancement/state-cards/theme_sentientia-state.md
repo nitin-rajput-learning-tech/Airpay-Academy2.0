@@ -689,6 +689,11 @@ pick a language there. Not done in this bundle.
 page in edit mode with Bulk edit; the language switcher with the flag ON for a test tenant (desktop, 590 px
 drawer, dashboard plus one other shell page, sidebar expanded and collapsed).
 
+## 2026-10-08 Moodle 5.3 compat FX-02 (edit-mode switch) and round 1 (version 2026100806)
+
+- `templates/core/editswitch.mustache` is the Moodle 5.2 core template copied verbatim (plus a header comment), because 5.3 core renders the control only when the renderer passes react props and an element id and this theme's `edit_switch()` passes neither. It overrides core on 5.1, 5.2 and 5.3 alike.
+- **Round 1 defect:** the first cut had `<formaction=` (missing space) on the form line, so the browser built an unknown element instead of a `<form>`: the noscript "Set mode" submit did nothing, the hidden `sesskey` / `pageurl` / `context` inputs belonged to no form, and the closing `</form>` was stray. It was invisible with JavaScript on, because `core/edit_switch` posts through the checkbox's own data attributes. Fixed (`<form action=`); below its header comment the file is now byte-identical to `lib/templates/editswitch.mustache` of 5.2 (diffed). Bump to 2026100806 purges the compiled template cache. The no-JS check (item 2b in `docs/visual-evidence/2026-10-08/moodle53/README.md`) is the one that would have caught it.
+
 ## 2026-10-08 Moodle 5.3 compat FX-12 (theme side)
 
 Four deprecated `user_*()` globals are called through `method_exists(\core\user::class, ...)` ternaries: `user_count_login_failures` and `user_convert_text_to_menu_items` in `core_renderer::theme_sentientia_user_get_user_navigation_info()` (the 5.3 call drops the unused `$page` argument and gets the menu text cast to string), `user_can_view_profile` in `traits/context_header.php`, `user_update_user` in `language_switcher::switch_to()`. The theme must not depend on a local plugin, so it does not use `compat\user_api`. 5.1/5.2 keep the global functions. No theme version bump (PHP only).
