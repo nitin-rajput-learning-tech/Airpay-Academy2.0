@@ -10,7 +10,7 @@
 Branch `claude/moodle53-compat` (cut from `claude/gap-integration`). Assignment 1 landed the blockers FX-01 to FX-07, FX-09 and
 FX-10; this one lands FX-08 (owner option (a)) and the non-blockers FX-12 to FX-23. Decision: ADR-033 (Moodle 5.3 LTS is the
 target, subject to its gate; 5.2 stays the fallback). Every fix is dual-target (5.1, 5.2 and 5.3). **No 5.3 runtime exists on
-this box (FX-11 is open) and PHPUnit was not run (owner rule).** What was run: `php -l` on PHP 8.2 and 8.4, the tree-drift,
+this box (FX-11 is open) and PHPUnit was not run (owner rule).** What was run: `php -l` on PHP 8.2 for every changed PHP file (and on 8.4 for the CSV, user_api and renderer files), the tree-drift,
 lang-parity, path-boundary and fixture-copy gates, the new SCSS compiled with the scssphp of 5.1.3, 5.2 and 5.3 (identical valid
 output), AMD bundles rebuilt with the repository toolchain, a token-based tool for the CSV rewrite (re-run rewrites 0).
 
