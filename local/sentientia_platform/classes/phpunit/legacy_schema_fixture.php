@@ -172,6 +172,10 @@ trait legacy_schema_fixture {
      * then skips every table), so such a file is loaded from a temporary copy next to it with PATH set to that
      * directory, removed straight after. The fixture itself stays identical to the BizLMS original.
      *
+     * Core resolves realpath($CFG->dirroot . '/' . PATH . '/' . basename) and compares it with the file, so a fixture a
+     * test copied OUTSIDE the code tree (the classroom test writes one under the dataroot's temp directory) gets a
+     * PATH with '..' segments. Only a fixture on another drive than the code cannot be expressed; that is refused.
+     *
      * @param string $fixturexml Absolute path of the fixture install.xml.
      * @param string $table
      * @return void
@@ -181,9 +185,13 @@ trait legacy_schema_fixture {
         $dbman = $DB->get_manager();
         $dir = dirname((string) realpath($fixturexml));
         $root = (string) realpath($CFG->dirroot);
-        $relative = str_replace(DIRECTORY_SEPARATOR, '/', ltrim(substr($dir, strlen($root)), DIRECTORY_SEPARATOR));
+        $relative = self::relative_dir($root, $dir);
+        if ($relative === null) {
+            throw new \coding_exception('legacy fixture is on another drive than the Moodle code, so no XMLDB PATH can '
+                . 'reach it: ' . $fixturexml);
+        }
         $xml = (string) file_get_contents($fixturexml);
-        if (strpos($dir, $root) !== 0 || !preg_match('/<XMLDB\b[^>]*\bPATH="([^"]*)"/', $xml, $m) || $m[1] === $relative) {
+        if (!preg_match('/<XMLDB\b[^>]*\bPATH="([^"]*)"/', $xml, $m) || $m[1] === $relative) {
             $dbman->install_one_table_from_xmldb_file($fixturexml, $table);
             return;
         }
@@ -194,6 +202,31 @@ trait legacy_schema_fixture {
         } finally {
             @unlink($copy);
         }
+    }
+
+    /**
+     * The path of $to relative to $from, with '..' segments where it lies outside, '/' separated.
+     *
+     * @param string $from An absolute directory (the code root).
+     * @param string $to An absolute directory.
+     * @return string|null '' for the same directory; null when the two are on different Windows drives.
+     */
+    private static function relative_dir(string $from, string $to): ?string {
+        $split = static fn(string $p): array => array_values(array_filter(explode('/', str_replace('\\', '/', $p)),
+            static fn(string $s): bool => $s !== ''));
+        $a = $split($from);
+        $b = $split($to);
+        $windows = DIRECTORY_SEPARATOR === '\\';
+        $same = static fn(string $x, string $y): bool => $windows ? strcasecmp($x, $y) === 0 : $x === $y;
+        $isdrive = static fn(array $s): bool => isset($s[0]) && preg_match('/^[A-Za-z]:$/', $s[0]) === 1;
+        if (($isdrive($a) || $isdrive($b)) && !(isset($a[0], $b[0]) && $same($a[0], $b[0]))) {
+            return null;
+        }
+        $i = 0;
+        while ($i < count($a) && $i < count($b) && $same($a[$i], $b[$i])) {
+            $i++;
+        }
+        return implode('/', array_merge(array_fill(0, count($a) - $i, '..'), array_slice($b, $i)));
     }
 
     /**
