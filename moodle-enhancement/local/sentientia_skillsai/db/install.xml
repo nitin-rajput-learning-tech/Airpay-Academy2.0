@@ -108,7 +108,7 @@
                COMMENT="Candidate skill name as proposed by Claude (or edited by reviewer)."/>
         <FIELD NAME="skilldescription"   TYPE="text" NOTNULL="false"
                COMMENT="Candidate skill description / what it demonstrates."/>
-        <FIELD NAME="suggested_category" TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT=""
+        <FIELD NAME="suggested_category" TYPE="char" LENGTH="100" NOTNULL="true"
                COMMENT="Claude-suggested category bucket (Compliance, Technical, ...)."/>
         <FIELD NAME="suggested_level"    TYPE="int"  LENGTH="2"   NOTNULL="true" DEFAULT="1"
                COMMENT="Claude-suggested teach-to level 1-5 (Awareness..Expert)."/>
@@ -166,7 +166,7 @@
                COMMENT="Canonical skill name."/>
         <FIELD NAME="description"    TYPE="text" NOTNULL="false"
                COMMENT="Canonical skill description."/>
-        <FIELD NAME="category"       TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT=""
+        <FIELD NAME="category"       TYPE="char" LENGTH="100" NOTNULL="true"
                COMMENT="Category bucket (Compliance, Technical, Leadership, ...)."/>
         <FIELD NAME="max_level"      TYPE="int"  LENGTH="2"   NOTNULL="true" DEFAULT="5"
                COMMENT="Top of the 1-5 proficiency scale for this skill."/>
@@ -267,7 +267,7 @@
                COMMENT="FK to local_sentientia_skills.id — the production skill the gap is on."/>
         <FIELD NAME="taxonomyid"     TYPE="int"  LENGTH="10"  NOTNULL="false"
                COMMENT="FK to local_sentientia_skai_taxonomy.id when the skill maps to a taxonomy node. NULL otherwise."/>
-        <FIELD NAME="designation"    TYPE="char" LENGTH="200" NOTNULL="true" DEFAULT=""
+        <FIELD NAME="designation"    TYPE="char" LENGTH="200" NOTNULL="true"
                COMMENT="The user's designation the requirement came from."/>
         <FIELD NAME="required_level" TYPE="int"  LENGTH="2"   NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="held_level"     TYPE="int"  LENGTH="2"   NOTNULL="true" DEFAULT="0"/>
@@ -275,7 +275,7 @@
                COMMENT="required_level - held_level (positive)."/>
         <FIELD NAME="impact_weight"  TYPE="int"  LENGTH="2"   NOTNULL="true" DEFAULT="0"
                COMMENT="Max business-impact weight across the skill's impact mappings (0 = none)."/>
-        <FIELD NAME="batchid"        TYPE="char" LENGTH="32"  NOTNULL="true" DEFAULT=""
+        <FIELD NAME="batchid"        TYPE="char" LENGTH="32"  NOTNULL="true"
                COMMENT="Groups all gap rows from one rebuild run."/>
         <FIELD NAME="timecreated"    TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timemodified"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>

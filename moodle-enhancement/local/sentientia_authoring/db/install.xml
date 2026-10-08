@@ -154,7 +154,7 @@
                COMMENT="FK to local_sentientia_auth_draft.id"/>
         <FIELD NAME="cardtype"     TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="concept"
                COMMENT="concept | example | scenario | flip — front-end render hint."/>
-        <FIELD NAME="heading"      TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""
+        <FIELD NAME="heading"      TYPE="char" LENGTH="255" NOTNULL="true"
                COMMENT="Card heading / title."/>
         <FIELD NAME="body"         TYPE="text" NOTNULL="true"
                COMMENT="Card body content (front face for flip cards)."/>

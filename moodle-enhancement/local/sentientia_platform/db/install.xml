@@ -282,9 +282,9 @@
                COMMENT="Legacy table without prefix. A derived group source carries a hash prefix, for example #local_biz_cart_history.identifier"/>
         <FIELD NAME="sourceid"    TYPE="int"  LENGTH="10" NOTNULL="true"
                COMMENT="Legacy row id; for a derived group the non-personal integer key of the group, never a user id"/>
-        <FIELD NAME="subkey"      TYPE="char" LENGTH="64" NOTNULL="true" DEFAULT=""
+        <FIELD NAME="subkey"      TYPE="char" LENGTH="64" NOTNULL="true"
                COMMENT="Empty for the primary row; otherwise a fan-out sub-key such as quiz:17"/>
-        <FIELD NAME="targettable" TYPE="char" LENGTH="64" NOTNULL="true" DEFAULT=""
+        <FIELD NAME="targettable" TYPE="char" LENGTH="64" NOTNULL="true"
                COMMENT="Empty for archived and skipped rows (NOT NULL so a re-run cannot create a duplicate NULL key)"/>
         <FIELD NAME="targetid"    TYPE="int"  LENGTH="10" NOTNULL="false"
                COMMENT="Target row; for merged and folded rows the surviving target row"/>
@@ -328,9 +328,9 @@
                COMMENT="sha256 of the decisions file used"/>
         <FIELD NAME="codehash"      TYPE="char" LENGTH="64" NOTNULL="false"
                COMMENT="sha256 over the plugin versions involved"/>
-        <FIELD NAME="fingerprint"   TYPE="char" LENGTH="12" NOTNULL="true" DEFAULT=""
+        <FIELD NAME="fingerprint"   TYPE="char" LENGTH="12" NOTNULL="true"
                COMMENT="Install fingerprint that was confirmed for the run"/>
-        <FIELD NAME="host"          TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="host"          TYPE="char" LENGTH="100" NOTNULL="true"/>
         <FIELD NAME="pid"           TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timestarted"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="heartbeat"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
@@ -352,7 +352,7 @@
         <FIELD NAME="feature"     TYPE="char" LENGTH="40" NOTNULL="true"/>
         <FIELD NAME="stepkey"     TYPE="char" LENGTH="64" NOTNULL="true"
                COMMENT="Step key, for example classroom.attendance"/>
-        <FIELD NAME="sourcetable" TYPE="char" LENGTH="64" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="sourcetable" TYPE="char" LENGTH="64" NOTNULL="true"/>
         <FIELD NAME="status"      TYPE="char" LENGTH="16" NOTNULL="true" DEFAULT="pending"
                COMMENT="pending, running, done, failed or not_applicable"/>
         <FIELD NAME="watermark"   TYPE="int"  LENGTH="10" NOTNULL="false"
