@@ -61,9 +61,10 @@
 #   --tree-name <name>      directory name inside the archive (default moodle5.3 / moodle5.2)
 #   --error-base <path>     ErrorDocument base in the generated .htaccess ('' for a docroot vhost = default;
 #                           '/moodle' for the dev alias)
-#   --with-learnerscript    also ship the vendor blocks learnerscript, reportdashboard, reporttiles. Their report
-#                           modals still use the removed modal factory (FX-08), so the factory gate FAILS the
-#                           build until they are ported; the flag exists so that gate stays honest.
+#   --without-learnerscript do NOT ship the vendor blocks learnerscript, reportdashboard, reporttiles. They ship by
+#                           default: their report modals were ported to core/modal and core/modal_save_cancel (FX-08,
+#                           valid on 5.1, 5.2 and 5.3), so the modal-factory gate below passes with them in.
+#                           (--with-learnerscript is still accepted and is a no-op.)
 #   --no-zip                stop after stage verification
 #   --verify-zip <file>     verify an existing archive and exit
 #   --cleanup               remove this run's stage directory when the build succeeds
@@ -83,7 +84,7 @@ win() { cygpath -w "$1"; }
 native() { MSYS_NO_PATHCONV=1 "$@"; }
 
 TARGET=""; STAMP="$(date +%F)"; REF="HEAD"; BASE=""; STAGE_PARENT=""; OUT_DIR=""; TREE_NAME=""
-ERROR_BASE=""; WITH_LS=0; NO_ZIP=0; VERIFY_ZIP=""; CLEANUP=0
+ERROR_BASE=""; WITH_LS=1; NO_ZIP=0; VERIFY_ZIP=""; CLEANUP=0
 while [ $# -gt 0 ]; do
     case "$1" in
         --target)        shift; TARGET="${1:-}" ;;
@@ -95,10 +96,11 @@ while [ $# -gt 0 ]; do
         --tree-name)     shift; TREE_NAME="${1:-}" ;;
         --error-base)    shift; ERROR_BASE="${1:-}" ;;
         --with-learnerscript) WITH_LS=1 ;;
+        --without-learnerscript) WITH_LS=0 ;;
         --no-zip)        NO_ZIP=1 ;;
         --verify-zip)    shift; VERIFY_ZIP="${1:-}" ;;
         --cleanup)       CLEANUP=1 ;;
-        -h|--help)       sed -n '2,64p' "$0"; exit 0 ;;
+        -h|--help)       sed -n '2,73p' "$0"; exit 0 ;;
         *) echo "unknown arg: $1 (see --help)" >&2; exit 2 ;;
     esac
     shift
@@ -258,7 +260,7 @@ native robocopy "$(win "$BASE")" "$(win "$STAGE_TREE")" /E /MT:8 /R:1 /W:1 \
 echo "── 3. overlay (repo mode) -> $PUB"
 OVERLAY_ARGS=(-RepoRoot "$(win "$EXPORT")" -Target "$(win "$PUB")" -LogPath "$(win "$RUN_DIR/overlay-log.txt")")
 [ -n "$ERROR_BASE" ] && OVERLAY_ARGS+=(-ErrorBase "$ERROR_BASE")
-[ "$WITH_LS" = 1 ] && OVERLAY_ARGS+=(-WithLearnerscript)
+[ "$WITH_LS" = 0 ] && OVERLAY_ARGS+=(-SkipLearnerscript)
 native powershell -NoProfile -ExecutionPolicy Bypass -File "$(win "$OVERLAY")" "${OVERLAY_ARGS[@]}" | tail -n 4
 
 # ---------------------------------------------------------------------------------------------
@@ -313,6 +315,8 @@ if [ "$NO_ZIP" = 1 ]; then echo "--no-zip: stopping. Stage: $RUN_DIR"; exit 0; f
 mkdir -p "$OUT_DIR"
 OUT="$OUT_DIR/Sentientia-LMS-$TARGET-Complete-Standalone-$STAMP.zip"
 THEME_VER="$(grep -oE 'version\s*=\s*[0-9]+' "$PUB/theme/sentientia/version.php" | grep -oE '[0-9]+' | head -n 1)"
+LS_README=""
+[ "$WITH_LS" = 1 ] && LS_README=" + the vendor report blocks learnerscript, reportdashboard, reporttiles (modals ported to core/modal)"
 echo "── 5. DEPLOY-README.txt + zip -> $OUT"
 cat > "$RUN_DIR/DEPLOY-README.txt" <<EOF
 SENTIENTIA LMS $TARGET - COMPLETE STANDALONE PACKAGE
@@ -322,7 +326,7 @@ Built   : $STAMP from Airpay-Academy2.0 $BRANCH @ $HEAD_SHA (git export of $REF;
 Base    : Moodle $RELEASE, public/-split layout. Serve <extract-dir>/$TREE_NAME/public as the DocumentRoot.
           The root lib/ directory beside public/ (lib/bundles: Bootstrap, Font Awesome, React, design system on 5.3)
           MUST stay where it is: PHP reads it, and icons and all React/ESM UI fail without it.
-Layer   : theme_sentientia $THEME_VER, $NPLUGINS local_sentientia_* plugins, sentientia_* blocks, tool_certificate (with the
+Layer   : theme_sentientia $THEME_VER, $NPLUGINS local_sentientia_* plugins, sentientia_* blocks$LS_README, tool_certificate (with the
           recorded vendor patches), paygw_airpay, enrol_sentientiasub, quizaccess_sentientia_proctoring,
           my/dashboard.php + my/switchrole.php, a router .htaccess
 SHA-256 : see docs/cutover/UAT-SENTIENTIA-DEPLOY-CHECKLIST.md (verify the download)

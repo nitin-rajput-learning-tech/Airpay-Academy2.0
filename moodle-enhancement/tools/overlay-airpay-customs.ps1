@@ -25,8 +25,8 @@
 #     the copied theme/sentientia/amd/build bundles (idempotent; durable fix for
 #     the F-LOAD-02 / ADR-025 follow-up (c) theme-side stale-bundle gap)
 #   - Copy all local/sentientia_* plugins
-#   - Copy our sentientia_* blocks (+ the vendor learnerscript/reportdashboard/reporttiles blocks only
-#     with -WithLearnerscript: their report modals still depend on the removed core modal factory, FX-08)
+#   - Copy our sentientia_* blocks (+ the vendor learnerscript/reportdashboard/reporttiles blocks, whose
+#     report modals were ported off the removed core modal factory in FX-08; -SkipLearnerscript omits them)
 #   - Copy admin/tool/certificate (vendor plugin we ship, with the SENTIENTIA-CORE-MOD vendor patches)
 #   - Copy payment/gateway/airpay, enrol/sentientiasub, mod/quiz/accessrule/sentientia_proctoring
 #   - Copy my/dashboard.php + my/switchrole.php (pure additions on 5.3) and the router .htaccess
@@ -48,8 +48,9 @@ param(
     # Path prefix of Moodle's error/index.php in the generated .htaccess. '' for a docroot vhost
     # (ErrorDocument /error/index.php); '/moodle' for the dev alias. Repo mode only.
     [string]$ErrorBase = '',
-    # Ship the vendor report blocks. Off by default until their modal code is ported (FX-08).
-    [switch]$WithLearnerscript
+    # Do NOT ship the vendor report blocks. They ship by default in repo mode since their modal code was
+    # ported to core/modal / core/modal_save_cancel (FX-08).
+    [switch]$SkipLearnerscript
 )
 
 $ErrorActionPreference = 'Continue'
@@ -245,11 +246,11 @@ foreach ($b in $blocks) {
 }
 
 Log ""
-if ($RepoMode -and -not $WithLearnerscript) {
-    # FX-08 (open owner decision): these three vendor blocks still depend on the core modal factory AMD
-    # module that Moodle 5.2 removed, so their report modals fail. Shipping them is opt-in until their
-    # modules are ported to core/modal, or until the Sentientia reports replace them.
-    Log "=== blocks/learnerscript + reportdashboard + reporttiles NOT shipped (pass -WithLearnerscript to include) ==="
+if ($RepoMode -and $SkipLearnerscript) {
+    # FX-08: the vendor report blocks' modal code was ported to core/modal and core/modal_save_cancel
+    # (the legacy modal factory AMD module is gone in 5.2+), so they ship by default. -SkipLearnerscript
+    # drops them, e.g. if the Sentientia reports replace them.
+    Log "=== blocks/learnerscript + reportdashboard + reporttiles NOT shipped (-SkipLearnerscript) ==="
 } else {
     Log "=== blocks/learnerscript + reportdashboard + reporttiles (vendor blocks we patch) ==="
     Copy-Tree 'block' 'blocks\learnerscript'

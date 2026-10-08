@@ -6,7 +6,9 @@
  * @package    learnerscript
  * @copyright  2017 Naveen kumar <naveen@eabyas.in>
  */
-define(['jquery', 'core/config', 'core/log', 'core/modal_factory'], function($, config, Log, ModalFactory) {
+// SENTIENTIA-CORE-MOD (vendor): Moodle 5.2 removed the legacy modal factory AMD module (MDL-79182).
+// core/modal exists unchanged on 5.1, 5.2 and 5.3 and its create() returns a native Promise (FX-08).
+define(['jquery', 'core/config', 'core/log', 'core/modal'], function($, config, Log, Modal) {
     // Keeps track of when the user leaves the page so we know not to show an error.
     var unloading = false;
     /**
@@ -29,14 +31,16 @@ define(['jquery', 'core/config', 'core/log', 'core/modal_factory'], function($, 
             // Unfortunately this may lead to duplicate dialogues, but each Promise must be rejected.
             if (response.cap || response.debuginfo ||response.errorcode) {
                 var msg = response.msg || response.error;
-                ModalFactory.create({
+                Modal.create({
                     title: response.type || response.errorcode,
                     body: '<p>' + msg + '</p>',
                     footer: '',
-                }).done(function(modal) {
-                    dialogue = modal;
+                }).then(function(modal) {
                     // Display the dialogue.
-                    dialogue.show();
+                    modal.show();
+                    return modal;
+                }).catch(function(ex) {
+                    Log.error(ex);
                 });
             } else {
                 Log.error(response.type + ': ' + response.msg);
