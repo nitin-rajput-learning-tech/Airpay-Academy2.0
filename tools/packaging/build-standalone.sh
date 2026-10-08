@@ -33,7 +33,8 @@
 #
 # Verification gates (build fails on any)
 #   root config.php count in the archive = 0 (tree-name-aware regex), none in the stage either;
-#   public/config.php present and equal to the vanilla loader shim, no DB setting in it;
+#   public/config.php present and equal to the vanilla loader shim, no DB setting in it (hashed after the copy
+#        AND again after the overlay);
 #   5.3: lib/bundles/bootstrap, lib/bundles/fontawesome/webfonts/fa-solid-900.woff2, lib/components.json and
 #        lib/plugins.json present; public/lib/fonts, public/theme/classic and public/my/templates/dropdown.mustache absent;
 #   both: public/my/dashboard.php, public/my/switchrole.php, public/.htaccess, public/theme/sentientia/version.php
@@ -100,7 +101,7 @@ while [ $# -gt 0 ]; do
         --no-zip)        NO_ZIP=1 ;;
         --verify-zip)    shift; VERIFY_ZIP="${1:-}" ;;
         --cleanup)       CLEANUP=1 ;;
-        -h|--help)       sed -n '2,73p' "$0"; exit 0 ;;
+        -h|--help)       sed -n '2,74p' "$0"; exit 0 ;;
         *) echo "unknown arg: $1 (see --help)" >&2; exit 2 ;;
     esac
     shift
@@ -267,6 +268,17 @@ native powershell -NoProfile -ExecutionPolicy Bypass -File "$(win "$OVERLAY")" "
 # 4a. VERIFY the staged tree (content checks the archive listing cannot do)
 # ---------------------------------------------------------------------------------------------
 echo "── 4a. stage verification"
+# public/config.php was proved to be core's loader shim BEFORE the overlay (step 2). The overlay then lays files
+# onto public/, so hash it again AFTER the overlay: a layer that wrote a development config.php over the shim would
+# carry a database password into the package. Explicit -f test first: under set -e a missing file must be a recorded
+# failure, not an abrupt exit from the command substitution.
+if [ ! -f "$PUB/config.php" ]; then
+    bad "public/config.php is missing from the stage after the overlay (core's loader shim: every entry point requires it)"
+elif [ "$(sha256sum "$PUB/config.php" | cut -d' ' -f1)" = "$(sha256sum "$BASE/public/config.php" | cut -d' ' -f1)" ]; then
+    ok "public/config.php is still core's loader shim after the overlay (sha256 equals the vanilla base)"
+else
+    bad "public/config.php differs from the vanilla base after the overlay: the overlay must not touch it (a dev config.php would put a database password in the package)"
+fi
 SHIPPED=()
 for d in "$PUB"/local/sentientia_* "$PUB"/blocks/sentientia_* "$PUB/theme/sentientia" "$PUB/payment/gateway/airpay" \
          "$PUB/enrol/sentientiasub" "$PUB/mod/quiz/accessrule/sentientia_proctoring" "$PUB/admin/tool/certificate"; do

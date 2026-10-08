@@ -55,9 +55,12 @@ $CFG->routerconfigured = true;
 // $CFG->sslproxy = true;
 // $CFG->reverseproxy = false;
 
-// A development or rehearsal instance must NEVER send real mail (a local copy of the production
-// database once sent 151 real e-mails). Keep this ON for every non-production instance.
-// $CFG->noemailever = true;
+// A development, UAT or rehearsal instance must NEVER send real mail (a local copy of the production
+// database once sent 151 real e-mails). ON by default so that a filled-in copy of this template is
+// safe until somebody decides otherwise on purpose. Remove or comment out this one line ONLY at the
+// owner-approved production cutover, after the mail transport is configured and verified
+// (docs/operations/OAUTH2-SMTP-M365-RUNBOOK.md).
+$CFG->noemailever = true;
 
 // $CFG->debug = 0;           // E_ALL during bring-up; production stays 0 (DEBUG_NONE)
 // $CFG->debugdisplay = 0;
