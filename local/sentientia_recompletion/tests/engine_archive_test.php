@@ -148,7 +148,13 @@ final class engine_archive_test extends \advanced_testcase {
         $this->assertSame(0, $DB->count_records('scorm_attempt', ['userid' => $user->id]));
         $this->assertSame(0, $DB->count_records('quiz_attempts', ['userid' => $user->id]),
             'the attempts of BOTH quizzes are deleted (each against its own quiz)');
-        $this->assertSame(0, $DB->count_records('grade_grades', ['userid' => $user->id, 'itemid' => $this->w['item']->id]));
+        // The learner's grade is gone. An EMPTY row may be back: the quiz grade update inside the reset makes Moodle
+        // re-aggregate the course total, and grade_category::aggregate_grades() then creates a grade_grades row with
+        // no grade for every grade item of the learner ("so we can set the aggregationstatus"). An empty row is the
+        // same as no grade, so the test asks whether any value is left, not whether a row is.
+        $this->assertSame(0, $DB->count_records_select('grade_grades',
+            'userid = :userid AND itemid = :itemid AND (finalgrade IS NOT NULL OR rawgrade IS NOT NULL)',
+            ['userid' => $user->id, 'itemid' => $this->w['item']->id]), 'no grade value is left on the manual item');
 
         // And it was kept first.
         $history = $DB->get_record('local_sentientia_recompletion_history', ['userid' => $user->id], '*', MUST_EXIST);
