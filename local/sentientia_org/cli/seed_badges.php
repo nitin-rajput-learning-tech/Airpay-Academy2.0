@@ -28,8 +28,7 @@ require_once(__DIR__ . '/../../../config.php');
 // awardlib.php was removed in Moodle 5.2 (badges refactor); this script calls
 // no function from it — guard so the seed runs on both 5.1 and 5.2 (WF-011).
 if (file_exists($CFG->dirroot . '/badges/lib/awardlib.php')) {
-    require_once($CFG->dirroot . '/badges/lib/awardlib.php');
-}
+    }
 require_once($CFG->dirroot . '/badges/lib.php');
 require_once($CFG->libdir . '/badgeslib.php');
 

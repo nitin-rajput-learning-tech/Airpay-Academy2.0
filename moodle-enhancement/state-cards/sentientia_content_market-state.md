@@ -193,3 +193,7 @@ on the ZEEA admin's *Browse Airpay Library* (UAT screen check). Now `{{{title}}}
 (`get_exception_info()` → `htmlspecialchars`), so the page showed "L&amp;D" on UAT (both tenants have the
 marketplace disabled, so this is the page every UAT user gets). Reworded to "Learning and Development
 administrator" (en) / "लर्निंग एंड डेवलपमेंट व्यवस्थापक" (hi). Deployed to UAT 2026-09-17 10:16 (8aca24621).
+
+## 2026-10-08 Moodle 5.3 compat FX-21
+
+The Coursera, Go1, Skillsoft and Udemy Business adapters pin `http_build_query(..., '', '&')` for their request URLs and the Coursera token body (same reason as `keka_client`: the default separator is `&amp;` on Moodle 5.1 and `&` on 5.2/5.3). No behaviour change on 5.2/5.3. ME tree only.

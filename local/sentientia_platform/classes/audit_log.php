@@ -61,12 +61,13 @@ class audit_log {
         '\core\event\user_updated',
         '\core\event\user_deleted',
         '\core\event\user_password_updated',
-        '\core\event\user_loggedin_as',
+        // The event class is user_loggedinas (one word); the old spelling matched no log row.
+        '\core\event\user_loggedinas',
 
         // Course visibility / structure (admin actions).
         '\core\event\course_created',
         '\core\event\course_deleted',
-        '\core\event\course_visibility_updated',
+        // A course's visibility change fires course_updated (below); there is no course_visibility_updated event.
         // P1 #24 (2026-05-16) — closes audit item #13 from
         // parity-audit-2026-05-15/sentientia_courses.md (BizLMS local_logs
         // parity). Moodle fires `course_updated` from `update_course()`
@@ -81,9 +82,6 @@ class audit_log {
         '\core\event\course_category_updated',
         '\core\event\course_category_created',
         '\core\event\course_category_deleted',
-
-        // Bulk operations.
-        '\core\event\users_bulk_imported',
 
         // Airpay cart financial.
         '\local_sentientia_cart\event\refund_processed',

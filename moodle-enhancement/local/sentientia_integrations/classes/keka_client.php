@@ -674,7 +674,7 @@ class keka_client {
     private function http_get(string $endpoint, array $params = []): ?array {
         $url = $this->base_url . $endpoint;
         if (!empty($params)) {
-            $url .= '?' . http_build_query($params);
+            $url .= '?' . http_build_query($params, '', '&');
         }
 
         $ch = curl_init($url);
@@ -704,7 +704,7 @@ class keka_client {
         $headers = ['Accept: application/json'];
 
         if ($type === 'form') {
-            $body = http_build_query($data);
+            $body = http_build_query($data, '', '&');
             $headers[] = 'Content-Type: application/x-www-form-urlencoded';
         } else {
             $body = json_encode($data);

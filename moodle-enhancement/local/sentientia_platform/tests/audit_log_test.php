@@ -49,7 +49,6 @@ class audit_log_test extends \advanced_testcase {
             '\\core\\event\\course_created',
             '\\core\\event\\course_updated',
             '\\core\\event\\course_deleted',
-            '\\core\\event\\course_visibility_updated',
             '\\core\\event\\course_section_created',
             '\\core\\event\\course_section_updated',
             '\\core\\event\\course_category_created',
@@ -60,6 +59,18 @@ class audit_log_test extends \advanced_testcase {
                 audit_log::SENSITIVE_EVENTS,
                 "audit_log::SENSITIVE_EVENTS missing $eventname — compliance gap");
         }
+    }
+
+    public function test_every_core_event_in_the_list_is_a_real_event_class(): void {
+        // A name that exists in no Moodle version never matches a log row, so it audits nothing and nobody
+        // notices: user_loggedin_as, course_visibility_updated and users_bulk_imported did exactly that.
+        foreach (audit_log::SENSITIVE_EVENTS as $eventname) {
+            if (strpos($eventname, '\\core\\event\\') === 0) {
+                $this->assertTrue(class_exists($eventname), "$eventname is not a Moodle event class");
+            }
+        }
+        $this->assertContains('\\core\\event\\user_loggedinas', audit_log::SENSITIVE_EVENTS);
+        $this->assertNotContains('\\core\\event\\user_loggedin_as', audit_log::SENSITIVE_EVENTS);
     }
 
     public function test_tenant_actions_requires_admin_or_viewreports(): void {

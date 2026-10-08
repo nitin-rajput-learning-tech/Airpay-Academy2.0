@@ -25,7 +25,6 @@
 
 define('CLI_SCRIPT', true);
 require_once(__DIR__ . '/../../../config.php');
-require_once($CFG->dirroot . '/badges/lib/awardlib.php');
 require_once($CFG->dirroot . '/badges/lib.php');
 require_once($CFG->libdir . '/badgeslib.php');
 

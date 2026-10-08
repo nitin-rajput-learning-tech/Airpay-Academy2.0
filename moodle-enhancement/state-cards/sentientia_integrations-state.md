@@ -124,3 +124,7 @@ enrolment and its manual twin). It now ranks by `COUNT(DISTINCT ue.userid)` over
 ## 2026-10-08 Moodle 5.3 compat FX-12
 
 User creation and update now go through `\local_sentientia_platform\compat\user_api::create()` / `::update()` instead of the global `user_create_user()` / `user_update_user()`, which Moodle 5.3 deprecates (PHPUnit "unexpected debugging"). Same arguments, same events, same behaviour on 5.1/5.2 (the shim falls back to `user/lib.php` there). No schema change, no version bump needed (no new class here); the shim lives in `local_sentientia_platform` 2026100801. Not run: PHPUnit (owner rule).
+
+## 2026-10-08 Moodle 5.3 compat FX-21
+
+`keka_client` pins `http_build_query($params, '', '&')` for the KeKa request URL and body. Without a separator the function follows `arg_separator.output`, which is `&amp;` on Moodle 5.1 and `&` on 5.2/5.3, so a 5.1 host would have sent `&amp;` in the query. No behaviour change on 5.2/5.3.

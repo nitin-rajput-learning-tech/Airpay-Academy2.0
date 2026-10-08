@@ -411,3 +411,7 @@ and `docs/cutover/bizlms-import-decisions.json`; this card says what the code no
 ## 2026-10-08 Moodle 5.3 compat FX-20 (version 2026100801)
 
 `templates/manage.mustache` and `templates/org_node.mustache` emit `data-bs-toggle="dropdown"` (and, for the tenant row collapse, `data-bs-toggle="collapse"` plus `data-bs-target`) beside the Bootstrap 4 `data-toggle`, so the tree menus keep working if the theme later moves to core Bootstrap 5.3 JS. Bootstrap 4 ignores the new attributes and Bootstrap 5 ignores the old ones. No schema change.
+
+## 2026-10-08 Moodle 5.3 compat FX-21
+
+`cli/seed_badges.php` no longer requires `badges/lib/awardlib.php` (removed in Moodle 5.2; the require was unused, and it made this dev CLI fatal on 5.2+). `badges/lib.php` and `lib/badgeslib.php` are still required. Both trees.
