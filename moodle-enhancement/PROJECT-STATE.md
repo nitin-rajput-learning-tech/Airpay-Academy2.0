@@ -18,7 +18,7 @@ output), AMD bundles rebuilt with the repository toolchain, a token-based tool f
 |---|---|---|
 | FX-08 | learnerscript `ajax`, `ajaxforms`, `helper`, `newgroup` and `js/design.js` ported off the removed modal factory (`core/modal`, `core/modal_save_cancel`); 4 AMD builds rebuilt; the vendor blocks now ship by default (`--without-learnerscript` opts out); core-mod record | report modals work on 5.2 and 5.3 |
 | FX-12 | `local_sentientia_platform\compat\user_api` create/update shim (`\core\user` on 5.3, `user/lib.php` on 5.1/5.2); callers moved; theme uses inline `method_exists` ternaries | none; PHPUnit "unexpected debugging" gone |
-| FX-13 | paygw `get_form.php` and quizaccess `rule_test.php` ME twins reconciled; drift gate and pre-commit CHECK 19 cover payment, enrol, quizaccess, admin/tool | none |
+| FX-13 | paygw `get_form.php` and quizaccess `rule_test.php` ME twins reconciled; the CI drift gate (`tools/check-tree-drift.php`) now covers payment, enrol, quizaccess, admin/tool (the local pre-commit CHECK 19 still covers `local/` only; extending a hook was left to the owner) | none |
 | FX-14 | Bootstrap 5.3 utility shims in the theme (`fs-*`, `fw-*`, `text-bg-*`, `bg-body-*`, `ms/me/ps/pe`, modal title size); theme 2026100804 | core modal titles, bold text and start/end spacing now render as core intends (**every version**) |
 | FX-15 | `course_manager::delete()` stays synchronous (`delete_course($c, false, false)`); listings skip `deletioninprogress` only when the column exists | none unless async course deletion is enabled |
 | FX-16 | plugin links and e-mail URLs point at `/my/`; PWA `start_url` upgrade step (platform 2026100802); core-mod record rewritten as an additive overlay | none (same landing page, one redirect fewer) |
