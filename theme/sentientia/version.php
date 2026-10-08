@@ -439,7 +439,10 @@ defined('MOODLE_INTERNAL') || die();
 // 2026100804 - Moodle 5.3 compat FX-14: Bootstrap 5.3 utility shims in scss/moodle/partials/_bs5-compat.scss
 // (fs-1..6, fw-*, text-bg-*, bg-body-*, ms/me/ps/pe incl. responsive, modal title size) so 5.3 core templates
 // render as designed in the Bootstrap 4.6 theme. Bump invalidates the compiled CSS.
-$plugin->version   = 2026100804;  // Moodle 5.3 compat FX-14: Bootstrap 5.3 utility shims
+// 2026100805 - Moodle 5.3 compat FX-19: templates/core/block.mustache gets the block-header flex row (title left, controls ml-auto)
+// and tabindex=-1 on the skip-link target, and loses the "d-inlines" typo and pull-right; core_course/coursecard.mustache drops mx-1.
+// Bump purges the compiled template cache.
+$plugin->version   = 2026100805;  // Moodle 5.3 compat FX-19: block + coursecard templates (on top of 2026100804 FX-14 Bootstrap 5.3 utility shims)
 // 2026090806:  // login/OTP placeholders + SSO title + block aria-label: {{#quote}} JSON-escaped Hindi into \uXXXX → attribute-safe cleanstr/escaped values (core 5.2 pattern)
 // 2026090805:  footer: GPL badge -> private Airpay notice; sidebar literals localised; scoped-admin subtitle
 // 2026090804:  // admin dashboard: exact-or-child tenant scope on EVERY widget (was LIKE /1% and several unscoped), compliance widget table names fixed, localised chart months, system health = site admins only, core card aria overrides

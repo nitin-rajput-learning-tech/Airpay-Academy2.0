@@ -704,3 +704,9 @@ Four deprecated `user_*()` globals are called through `method_exists(\core\user:
 ## 2026-10-08 Moodle 5.3 compat FX-17
 
 `core_renderer_maintenance::user_picture()` declares `?array $options = null` (was the implicit-nullable `array $options = null`, a PHP 8.4 deprecation). The parent signature is already `?array $options = null` on 5.1.3, 5.2 and 5.3, so this is the same contract. No behaviour change, no version bump.
+
+## 2026-10-08 Moodle 5.3 compat FX-19 (version 2026100805)
+
+- `templates/core/block.mustache`: the title and the controls now sit in a `block-header d-flex` row (the structure core uses since 5.2; the theme CSS already styles `.block .block-header`), the controls carry `ml-auto` instead of the float `pull-right`, the `d-inlines` typo is gone, and the skip-link target span has `tabindex="-1"`. Still Bootstrap 4 classes, still `h5.card-title` (theme CSS and dark mode select on it) and still the theme's own `block block_<type>` class list.
+- `templates/core_course/coursecard.mustache`: the card drops `mx-1`, as 5.3 core did.
+- **Visual change on every version** (block headers: controls move onto the title row; course cards: 0.25rem less side margin). Visual evidence owed (`docs/visual-evidence/2026-10-08/moodle53/README.md`). Bump purges the compiled template cache.
