@@ -194,8 +194,11 @@ final class course_lookups_readers_test extends \advanced_testcase {
     public function test_the_card_shows_the_label_only_when_the_flag_is_on(): void {
         global $DB, $USER;
         $this->prepare_course_types();
-        $course = $this->course_with_types('1,3');
-        $DB->set_field('course', 'open_coursetype', 2, ['id' => $course]);
+        // An ordinary course, as every BizLMS course is: open_coursetype 0 (only the exam and forum pseudo-courses hold
+        // 1, and CRS-14 keeps any other value out of the catalog, so the earlier open_coursetype = 2 course was never
+        // listed and the test failed). Its flag-OFF label is therefore the open_coursetype 0 label, 'E-Learning'.
+        $course = $this->course_with_types('2,3');
+        $DB->set_field('course', 'open_coursetype', 0, ['id' => $course]);
 
         $this->setAdminUser();
         $find = static function () use ($course, $USER): ?string {
@@ -206,10 +209,10 @@ final class course_lookups_readers_test extends \advanced_testcase {
             }
             return null;
         };
-        $this->assertSame('Classroom', $find(), 'OFF: the open_coursetype label, exactly as before');
+        $this->assertSame('E-Learning', $find(), 'OFF: the open_coursetype label, exactly as before');
         $this->set_flag(true);
-        $this->assertSame('E-Learning, Learning Path', $find());
+        $this->assertSame('Classroom, Learning Path', $find(), 'ON: the course\'s own types');
         $this->set_flag(false);
-        $this->assertSame('Classroom', $find());
+        $this->assertSame('E-Learning', $find());
     }
 }
