@@ -187,10 +187,10 @@ class core_renderer_maintenance extends core_renderer {
      * Does nothing. The maintenance renderer cannot produce user pictures.
      *
      * @param stdClass $user
-     * @param array $options
+     * @param array|null $options
      * @return string
      */
-    public function user_picture(stdClass $user, array $options = null) {
+    public function user_picture(stdClass $user, ?array $options = null) {
         return '';
     }
 }

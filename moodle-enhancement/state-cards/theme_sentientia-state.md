@@ -700,3 +700,7 @@ Four deprecated `user_*()` globals are called through `method_exists(\core\user:
 ## 2026-10-08 Moodle 5.3 compat FX-15 (theme side)
 
 `layout/frontpage.php` (guest course count and featured courses) and `layout/dashboard.php` (admin total-courses card) skip courses flagged `deletioninprogress = 1`, only when the column exists (5.3); unchanged on 5.1/5.2. Other dashboard listings keep their queries (a course being deleted for a few minutes in a top-N list is not worth the risk of touching many tenant-scoped queries).
+
+## 2026-10-08 Moodle 5.3 compat FX-17
+
+`core_renderer_maintenance::user_picture()` declares `?array $options = null` (was the implicit-nullable `array $options = null`, a PHP 8.4 deprecation). The parent signature is already `?array $options = null` on 5.1.3, 5.2 and 5.3, so this is the same contract. No behaviour change, no version bump.
