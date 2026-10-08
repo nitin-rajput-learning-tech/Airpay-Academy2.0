@@ -348,6 +348,27 @@ load_env() {
 # ---------------------------------------------------------------------------------------------------------------------
 # Step lifecycle
 # ---------------------------------------------------------------------------------------------------------------------
+# take_run_lock: one --execute run per REHEARSAL_WORK at a time. run_all.sh takes REHEARSAL_WORK/.run.lock and says so to the steps it
+# starts (REHEARSAL_RUN_LOCK = the lock directory, REHEARSAL_RUN_LOCK_PID = its pid, which the lock's pid file must still hold); a step run
+# alone takes the lock itself and releases it when it exits (on_exit). A second run finds the lock held and stops with exit 3, before it
+# opens a log, a state file or the database.
+STEP_LOCK=""
+take_run_lock() {
+    local lock="$REHEARSAL_WORK/.run.lock"
+    if [ -n "${REHEARSAL_RUN_LOCK:-}" ] && [ "$REHEARSAL_RUN_LOCK" = "$lock" ] && [ -n "${REHEARSAL_RUN_LOCK_PID:-}" ] \
+            && [ "$(cat "$lock/pid" 2> /dev/null || true)" = "$REHEARSAL_RUN_LOCK_PID" ]; then
+        return 0
+    fi
+    mkdir -p "$REHEARSAL_WORK"
+    if ! mkdir "$lock" 2> /dev/null; then
+        printf 'Another rehearsal run holds %s (pid %s). If none is running, remove that directory.\n' "$lock" "$(cat "$lock/pid" 2> /dev/null || printf '?')" >&2
+        exit 3
+    fi
+    printf '%s\n' "$$" > "$lock/pid"
+    STEP_LOCK="$lock"
+    trap 'rm -rf "$STEP_LOCK"' EXIT
+}
+
 # step_init NN name [args...]: parse the arguments, load and validate the env, open the log, arm the exit trap.
 step_init() {
     STEP_ID="$1"
@@ -358,6 +379,7 @@ step_init() {
     parse_args "$@"
     load_env
     if [ "$EXECUTE" = 1 ]; then
+        take_run_lock
         mkdir -p "$LOG_DIR" "$STATE_DIR" "$REPORT_DIR" "$BASELINE_DIR"
         (umask 077; mkdir -p "$CONF_DIR")
         LOG_FILE="$LOG_DIR/${STEP_ID}-${STEP_NAME}.log"
@@ -387,6 +409,9 @@ on_exit() {
             printf 'status=%s\nrc=%s\nwarnings=%s\nseconds=%s\nfinished=%s\nname=%s\nkit=%s\n' \
                 "$status" "$rc" "$WARNINGS" "$seconds" "$(ts)" "$STEP_NAME" "$(kit_rev)"
         } > "$STATE_DIR/${STEP_ID}.status"
+    fi
+    if [ -n "$STEP_LOCK" ]; then
+        rm -rf "$STEP_LOCK"
     fi
 }
 
@@ -700,16 +725,31 @@ probe_db() {
     fi
     # The server must not be production or UAT: refuse one that holds the live schema (airpayprod) or any schema the env
     # file lists in FORBIDDEN_SERVER_SCHEMAS (add UAT's schema there unless this rehearsal shares UAT's server).
-    local schema schema_l forbidden hit=""
+    # The list always names information_schema, so an answer without it (the client printed nothing, with status 0, as it was seen to on
+    # this box, or the query failed) means the scan did not see the server's schemas: asked again twice, then "unreachable", which every
+    # caller refuses. An empty list must never read as "no forbidden schema here".
+    local schema schema_l forbidden hit="" schemata="" tries=0
+    while :; do
+        schemata="$(mysql_nodb -e 'SELECT SCHEMA_NAME FROM information_schema.SCHEMATA' 2> /dev/null)" || schemata=""
+        schemata="${schemata//$'\r'/}"
+        case $'\n'"${schemata,,}"$'\n' in
+            *$'\n'information_schema$'\n'*) break ;;
+        esac
+        tries=$((tries + 1))
+        if [ "$tries" -ge 3 ]; then
+            log "the schema list of ${DB_HOST} could not be read (it came back without information_schema): the server is treated as unreachable, because production and UAT schemas could not be looked for"
+            return 0
+        fi
+        sleep 1
+    done
     while IFS= read -r schema; do
-        schema="${schema%$'\r'}"
         schema_l="${schema,,}"
         for forbidden in $KIT_LIVE_SCHEMAS ${FORBIDDEN_SERVER_SCHEMAS,,}; do
             if [ "$schema_l" = "$forbidden" ]; then
                 hit="$schema"
             fi
         done
-    done < <(mysql_nodb -e 'SELECT SCHEMA_NAME FROM information_schema.SCHEMATA')
+    done <<< "$schemata"
     if [ -n "$hit" ]; then
         die "the database server at ${DB_HOST} holds the schema '${hit}': this is production or UAT, not a rehearsal server. Refused"
     fi
@@ -1118,6 +1158,67 @@ marker_get() {
 
 marker_set() {
     db_write "INSERT INTO {p}config (name, value) VALUES ('${KIT_MARKER_KEY}', '$1') ON DUPLICATE KEY UPDATE value = '$1'"
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+# The in-flight table: a kit restore that did not finish says so IN THE DATABASE it was writing to
+# ---------------------------------------------------------------------------------------------------------------------
+# Step 01 creates this table (outside the Moodle prefix) in the target database after the dump has been checked and immediately before it
+# loads it, and drops it only when the restore is verified complete, just before it stamps the database. A database that holds it is a
+# partial copy: step 01 refuses it whatever RESTORE_DONE_BY_HAND says and whatever REHEARSAL_WORK the run uses (the fact is in the database,
+# not in a work directory), and only DROP DATABASE clears it. The CREATE TABLE is also the claim on an empty database: a second restore
+# that meets the table (or a database that is no longer empty) stops instead of writing over the first.
+KIT_INFLIGHT_TABLE="zz_rehearsal_restore_inflight"
+
+# sql_squote TEXT -> TEXT escaped for a single-quoted SQL string.
+sql_squote() {
+    printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e "s/'/''/g"
+}
+
+# inflight_count -> 1 when the database holds the in-flight table, 0 when it does not; rc 1 (nothing printed) when the count could not be
+# read, which a caller must treat as "cannot tell", never as 0. Needs the database to exist.
+inflight_count() {
+    local n
+    n="$(count_retry db_q "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${DB_NAME}' AND TABLE_NAME = '${KIT_INFLIGHT_TABLE}'")" || return 1
+    [[ "$n" =~ ^[01]$ ]] || return 1
+    printf '%s' "$n"
+}
+
+# inflight_describe -> what the in-flight table says about the restore (id, dump, start), for a message; never fails.
+inflight_describe() {
+    local row
+    row="$(db_first "SELECT CONCAT('restore ', SUBSTRING(restore_id, 1, 8), '..., dump ', dump_path, ', started ', started) FROM \`${KIT_INFLIGHT_TABLE}\`" 2> /dev/null || true)"
+    printf '%s' "${row:-its row could not be read}"
+}
+
+# inflight_begin ID DUMP: claim the database for this restore. The CREATE TABLE fails when the table is already there (another restore is,
+# or was, writing to this database), and the table count right after it must be 1 (the table itself): a database that gained tables
+# since step 01 looked at it (a restore that finished meanwhile, a hand restore) is released again and refused. The table is dropped here
+# only when this call created it.
+inflight_begin() {
+    local id="$1" dump="$2" n
+    case "$KIT_INFLIGHT_TABLE" in
+        "$DB_PREFIX"*) die "DB_PREFIX '${DB_PREFIX}' is a prefix of the in-flight table name ${KIT_INFLIGHT_TABLE}: it would be taken for a Moodle table. Use another prefix" ;;
+    esac
+    log "SQL: CREATE TABLE ${KIT_INFLIGHT_TABLE} (restore ${id:0:8}..., dump ${dump}): the database is claimed for this restore"
+    db_q "CREATE TABLE \`${KIT_INFLIGHT_TABLE}\` (restore_id CHAR(32) NOT NULL, dump_path TEXT NOT NULL, started VARCHAR(40) NOT NULL, PRIMARY KEY (restore_id)) ENGINE=InnoDB" \
+        || die "cannot claim database ${DB_NAME}: the in-flight table ${KIT_INFLIGHT_TABLE} could not be created. If it exists, another restore is writing to this database (or did, and did not finish): the kit never writes over it. Otherwise the database user needs the CREATE privilege on it"
+    if ! db_q "INSERT INTO \`${KIT_INFLIGHT_TABLE}\` (restore_id, dump_path, started) VALUES ('${id}', '$(sql_squote "$dump")', '$(ts)')" > /dev/null; then
+        db_q "DROP TABLE \`${KIT_INFLIGHT_TABLE}\`" > /dev/null || true
+        die "cannot claim database ${DB_NAME}: the in-flight table was created but its row could not be written (it is dropped again; nothing was restored)"
+    fi
+    n="$(count_retry db_q "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${DB_NAME}'")" || n=""
+    if [ "$n" != 1 ]; then
+        db_q "DROP TABLE \`${KIT_INFLIGHT_TABLE}\`" > /dev/null || true
+        die "database ${DB_NAME} holds '${n}' tables right after it was claimed, not 1 (the in-flight table itself): it is not the empty database step 01 saw (another restore, or a hand restore, wrote to it meanwhile; or the table count could not be read). The claim is released and nothing was restored. Look at what is there, then run step 01 again"
+    fi
+}
+
+# inflight_end: the restore is verified complete; the database no longer counts as a partial copy.
+inflight_end() {
+    log "SQL: DROP TABLE ${KIT_INFLIGHT_TABLE}: the restore is verified complete"
+    db_q "DROP TABLE \`${KIT_INFLIGHT_TABLE}\`" > /dev/null \
+        || die "the restore is complete, but the in-flight table ${KIT_INFLIGHT_TABLE} could not be dropped, so database ${DB_NAME} still counts as a partial copy and every later run refuses it. Fix the cause (the database user needs the DROP privilege), then DROP DATABASE \`${DB_NAME}\` and restore again: only a dropped database is cleared"
 }
 
 moodledata_marker_get() {

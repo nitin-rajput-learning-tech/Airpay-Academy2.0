@@ -15,12 +15,15 @@
 #   * the file store comparison finds missing and extra content hashes and ignores sentinel files;
 #   * judge() stops on exit 2 unless the written acceptance is referenced;
 #   * unpack_tree refuses a wrong SHA-256 and a "zip" that is really a tar, and unpacks a good archive;
-#   * step 01 in --execute mode against a stand-in mysql client (fix round 3): RESTORE_DONE_BY_HAND with RESTORE_DB_DUMP is refused; a
-#     restore the kit started and did not complete is refused whatever RESTORE_DONE_BY_HAND says, and is cleared only by the kit
-#     seeing the database empty; a plain hand restore is adopted. Fix round 4: that record names its database (host, port, name) and is
-#     cleared only when THAT database is seen absent or empty on two reads that agree (a client that prints nothing for a COUNT, a read
-#     that is wrong once, a run for another name or port: the record stays); a moodledata an earlier rehearsal's step after 01 used is
-#     still refused for a new restore after the restore that rotated its state/ died and was retried;
+#   * step 01 in --execute mode against a stand-in mysql client (fix rounds 3 to 5): RESTORE_DONE_BY_HAND with RESTORE_DB_DUMP is refused; a
+#     restore the kit started and did not finish leaves the table zz_rehearsal_restore_inflight in the database, and a database that holds it
+#     is refused whatever RESTORE_DONE_BY_HAND says, in any work directory (the fact is in the database, not in state/), a count of it the
+#     client prints nothing for is "cannot tell", and only a dropped and re-created database is cleared; the CREATE TABLE is the claim on an
+#     empty database (another restore's table, or a database that is no longer empty, stops the second restore and it writes nothing); the
+#     same target string on another server is another database; a plain hand restore is adopted; one --execute run per REHEARSAL_WORK
+#     (.run.lock, taken by a step run alone, held for the steps run_all.sh starts); a schema list that comes back empty is "unreachable";
+#     a moodledata an earlier rehearsal's step after 01 used is still refused for a new restore after the restore that rotated its
+#     state/ died and was retried;
 #   * run_all.sh --list and a DRY --only run work; no Windows path or drive letter is hard-coded in the kit.
 # Exit 0 = every test passed.
 
@@ -420,13 +423,19 @@ if [ "$res" = "utf8mb4_0900_ai_ci" ]; then ok "a MySQL 8 collation in the dump i
 res="$(in_kit dump_mysql8_collation "$T/dumps/good.sql" | sed '/^rc=/d')"
 if [ -z "$res" ]; then ok "a dump without it names none"; else bad "no MySQL 8 collation in a clean dump" "$res"; fi
 
-printf 'step 01: what RESTORE_DONE_BY_HAND may adopt (Stage B tools fix round 3)\n'
-# Step 01 in --execute mode against a stand-in mysql client (no database): it answers the probes step 01 makes before it decides what
-# to do with the database, and the restore itself (no -e: the dump arrives on stdin) succeeds or dies as fake.restorefails says.
+printf 'step 01: what RESTORE_DONE_BY_HAND may adopt, and the in-flight table (Stage B tools fix rounds 3 to 5)\n'
+# Step 01 in --execute mode against a stand-in mysql client (no database). The stand-in is a "server": a directory ($FW) with a few state
+# files. It answers the probes step 01 makes before it decides what to do with the database; it keeps the in-flight table the way a database
+# does (fake.sentinel: CREATE TABLE fails while it exists, DROP TABLE removes it, the table count includes it); and the restore itself (no
+# -e: the dump arrives on stdin) succeeds or dies as fake.restorefails says, leaving the tables fake.afterrestore / fake.partial name.
 cat > "$T/fakemysql" <<'FAKE'
 #!/usr/bin/env bash
 here="$(cd "$(dirname "$0")" && pwd)"
 tables="$(cat "$here/fake.tables")"
+sent=0
+[ -f "$here/fake.sentinel" ] && sent=1
+total="$tables"
+[ "$tables" = none ] || total=$((tables + sent))
 sql=""
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -436,7 +445,12 @@ while [ $# -gt 0 ]; do
 done
 if [ -z "$sql" ]; then
     cat > /dev/null
+    echo load >> "$here/fake.loads"
     if [ "$(cat "$here/fake.restorefails")" != 0 ]; then
+        # a restore that dies leaves the partial copy fake.partial names
+        if [ -f "$here/fake.partial" ]; then
+            cp "$here/fake.partial" "$here/fake.tables"
+        fi
         exit 1
     fi
     # a restore that completes leaves the tables fake.afterrestore names (the database was created empty or absent before it)
@@ -447,6 +461,27 @@ if [ -z "$sql" ]; then
 fi
 case "$sql" in
     'SELECT 1') echo 1 ;;
+    'CREATE DATABASE'*)
+        # a database that exists is refused by a real server (error 1007)
+        if [ "$tables" != none ]; then
+            echo "ERROR 1007 (HY000): cannot create database, it exists" >&2
+            exit 1
+        fi
+        echo 0 > "$here/fake.tables" ;;
+    'CREATE TABLE `zz_rehearsal_restore_inflight`'*)
+        # fake.claimrace=claimed: another restore claimed the database between this run's probe and its claim
+        if [ "$(cat "$here/fake.claimrace" 2> /dev/null)" = claimed ]; then
+            rm -f "$here/fake.claimrace"
+            printf 'INSERT of another restore\n' > "$here/fake.sentinel"
+            echo 120 > "$here/fake.tables"
+        fi
+        if [ -f "$here/fake.sentinel" ]; then
+            echo "ERROR 1050 (42S01): the table zz_rehearsal_restore_inflight already exists" >&2
+            exit 1
+        fi
+        printf '%s\n' "$sql" > "$here/fake.sentinel" ;;
+    'INSERT INTO `zz_rehearsal_restore_inflight`'*) printf '%s\n' "$sql" >> "$here/fake.sentinel" ;;
+    'DROP TABLE `zz_rehearsal_restore_inflight`') rm -f "$here/fake.sentinel" ;;
     *'COUNT(*) FROM information_schema.SCHEMATA'*)
         # fake.once, a fault of the client on the schema count: blank = prints nothing, once (the 2026-10-08 client fault); zero = answers
         # 0 once whatever is there (a read that is wrong); blankall = prints nothing every time.
@@ -457,35 +492,79 @@ case "$sql" in
             blankall) exit 0 ;;
         esac
         if [ "$tables" = none ]; then echo 0; else echo 1; fi ;;
-    *'COUNT(*) FROM information_schema.TABLES'*) echo "$tables" ;;
-    *'SCHEMA_NAME FROM information_schema.SCHEMATA') echo stageb_selftest ;;
-    *"COUNT(*) FROM mdl_config WHERE name = 'rehearsal_kit_restore_id'"*) echo 0 ;;
+    *"TABLE_NAME = 'zz_rehearsal_restore_inflight'"*)
+        # fake.once: blankinflight = prints nothing for this count, once; blankinflightall = prints nothing every time
+        once="$(cat "$here/fake.once" 2> /dev/null)"
+        case "$once" in
+            blankinflight) rm -f "$here/fake.once"; exit 0 ;;
+            blankinflightall) exit 0 ;;
+        esac
+        echo "$sent" ;;
+    *"TABLE_NAME = 'mdl_config'"*)
+        if [ -f "$here/fake.noconfig" ] || [ "$tables" = none ] || [ "$tables" = 0 ]; then echo 0; else echo 1; fi ;;
+    *'COUNT(*) FROM information_schema.TABLES'*)
+        # fake.once=zerotables: a table count that is wrong once (0) whatever is there
+        if [ "$(cat "$here/fake.once" 2> /dev/null)" = zerotables ]; then
+            rm -f "$here/fake.once"
+            echo 0
+            exit 0
+        fi
+        echo "$total" ;;
+    *'SCHEMA_NAME FROM information_schema.SCHEMATA')
+        # fake.schemata: blank = prints nothing; prod = the server also holds airpayprod
+        case "$(cat "$here/fake.schemata" 2> /dev/null)" in
+            blank) exit 0 ;;
+            prod) printf 'information_schema\nairpayprod\nstageb_selftest\n' ;;
+            *) printf 'information_schema\nstageb_selftest\n' ;;
+        esac ;;
+    *'FROM `zz_rehearsal_restore_inflight`'*) echo 'restore 0123abcd..., dump (stand-in), started (stand-in)' ;;
+    *"VALUES ('rehearsal_kit_restore_id'"*)
+        # the marker row is kept only when fake.storemarker is there: the other tests rely on the marker NOT reading back
+        if [ -f "$here/fake.storemarker" ]; then
+            printf '%s\n' "$sql" | sed -n "s/.*VALUES ('rehearsal_kit_restore_id', '\([0-9a-f]*\)').*/\1/p" > "$here/fake.marker"
+        fi ;;
+    "SELECT value FROM mdl_config WHERE name = 'rehearsal_kit_restore_id'") cat "$here/fake.marker" 2> /dev/null ;;
+    *"COUNT(*) FROM mdl_config WHERE name = 'rehearsal_kit_restore_id'"*)
+        if [ -s "$here/fake.marker" ]; then echo 1; else echo 0; fi ;;
 esac
 exit 0
 FAKE
 chmod +x "$T/fakemysql"
+# FW: the directory of the stand-in "server" the runs talk to (a second directory with its own copy is a second server).
+FW="$T"
 # fake_db TABLES [RESTORE_FAILS]: what the stand-in reports. TABLES: none = no such database, 0 = empty, N = N tables, no marker.
-# It also clears the one-off hooks below.
+# It also clears every one-off hook below: this is a database dropped and created again.
 fake_db() {
-    printf '%s\n' "$1" > "$T/fake.tables"
-    printf '%s\n' "${2:-0}" > "$T/fake.restorefails"
-    rm -f "$T/fake.once" "$T/fake.afterrestore"
+    printf '%s\n' "$1" > "$FW/fake.tables"
+    printf '%s\n' "${2:-0}" > "$FW/fake.restorefails"
+    rm -f "$FW"/fake.once "$FW"/fake.afterrestore "$FW"/fake.partial "$FW"/fake.sentinel "$FW"/fake.claimrace "$FW"/fake.schemata \
+        "$FW"/fake.noconfig "$FW"/fake.loads "$FW"/fake.storemarker "$FW"/fake.marker
 }
-# fake_once blank|zero|blankall: a fault of the client on the next schema count (see the stand-in). fake_after N: a restore that completes
-# leaves N tables.
-fake_once() { printf '%s\n' "$1" > "$T/fake.once"; }
-fake_after() { printf '%s\n' "$1" > "$T/fake.afterrestore"; }
+# fake_once FAULT: a one-off fault of the client (see the stand-in). fake_after N / fake_partial N: a restore that completes / dies leaves
+# N tables. fake_set NAME VALUE: fake.NAME (claimrace, schemata, noconfig, storemarker).
+fake_once() { printf '%s\n' "$1" > "$FW/fake.once"; }
+fake_after() { printf '%s\n' "$1" > "$FW/fake.afterrestore"; }
+fake_partial() { printf '%s\n' "$1" > "$FW/fake.partial"; }
+fake_set() { printf '%s\n' "$2" > "$FW/fake.$1"; }
+# fake_inflight -> 0 when the stand-in's database holds the in-flight table; fake_loads -> how many restores the client was given.
+fake_inflight() { [ -f "$FW/fake.sentinel" ]; }
+fake_loads() { cat "$FW/fake.loads" 2> /dev/null | wc -l | tr -d ' '; }
 # rb_run NAME [ENV LINE ...]: step 01 --execute. Each NAME has its own work directory and moodledata, so a second run of the same NAME
-# is a re-run of that rehearsal; the extra lines are the env settings of this run (they replace the earlier run's).
+# is a re-run of that rehearsal (another NAME is another work directory); the extra lines are the env settings of this run (they replace
+# the earlier run's).
 rb_run() {
     local n="$1"
     shift
-    base_env "$T/rb-$n.env" "REHEARSAL_WORK=$T/rb-$n/work" "MOODLEDATA=$T/rb-$n/data" "MYSQL_BIN=$T/fakemysql" \
+    base_env "$T/rb-$n.env" "REHEARSAL_WORK=$T/rb-$n/work" "MOODLEDATA=$T/rb-$n/data" "MYSQL_BIN=$FW/fakemysql" \
         "PRODUCTION_DB_ENDPOINT=live-db.example.internal" "$@"
     OUT="$(bash "$KIT/01_restore_check.sh" --env "$T/rb-$n.env" --execute 2>&1)"
     RC=$?
 }
 rb_kv() { cat "$T/rb-$1/work/state/kv/$2" 2> /dev/null || true; }
+# rb_kv_empty NAME LABEL: nothing is recorded in the kv store of that run's work directory (no restore id, nothing about a restore).
+rb_kv_empty() {
+    if [ -z "$(ls -A "$T/rb-$1/work/state/kv" 2> /dev/null)" ]; then ok "$2"; else bad "$2 (kv holds: $(ls "$T/rb-$1/work/state/kv" | tr '\n' ' '))"; fi
+}
 # rb_expect NAME WANT-RC PATTERN [FORBIDDEN-PATTERN]: the last rb_run exited as wanted, said PATTERN, and did not say FORBIDDEN.
 rb_expect() {
     local rc_ok=0
@@ -497,12 +576,13 @@ rb_expect() {
     if [ "$rc_ok" = 1 ] && printf '%s' "$OUT" | grep -q "$3" && { [ -z "${4:-}" ] || ! printf '%s' "$OUT" | grep -q "$4"; }; then
         ok "$1"
     else
-        bad "$1 (rc ${RC}, wanted '$3'${4:+ and not '$4'})" "$(printf '%s
-' "$OUT" | grep -v '^$' | tail -n 8)"
+        bad "$1 (rc ${RC}, wanted '$3'${4:+ and not '$4'})" "$(printf '%s\n' "$OUT" | grep -v '^$' | tail -n 8)"
     fi
 }
 RBDB=stageb_selftest
 DUMP="RESTORE_DB_DUMP=$T/dumps/good.sql"
+res="$(in_kit sql_squote "it's a \\ path")"
+if [ "$(printf '%s' "$res" | head -n 1)" = "it''s a \\\\ path" ]; then ok "sql_squote doubles a quote and a backslash"; else bad "sql_squote" "$res"; fi
 
 # Both variables set: refused outright, in DRY mode (the plan) and before the database is looked at in EXECUTE mode.
 base_env "$T/rb-both.env" "RESTORE_DONE_BY_HAND=$RBDB" "$DUMP"
@@ -513,111 +593,150 @@ else bad "both variables set are refused (DRY, rc ${RC})" "$OUT"; fi
 fake_db 0
 rb_run both "RESTORE_DONE_BY_HAND=$RBDB" "$DUMP"
 rb_expect "both variables set are refused before the database is probed (--execute, an empty database)" 1 'both set' 'database stageb_selftest:'
-[ -z "$(rb_kv both restore.started)" ] && ok "the refusal started no restore (no restore.started recorded)" || bad "the refusal started no restore"
+if ! fake_inflight && [ "$(fake_loads)" = 0 ]; then ok "the refusal touched nothing (no in-flight table, nothing loaded)"; else bad "the refusal touched the database"; fi
 
 # The leftover statement meets a new dump, the kit restore dies part way, the operator re-runs without dropping the database.
 fake_db none 1
+fake_partial 400
 rb_run left "$DUMP"
-rb_expect "a kit restore of the dump dies part way (the stand-in client fails the restore)" 1 'the database restore failed'
-if [ -n "$(rb_kv left restore.started)" ] && [ -z "$(rb_kv left restore.complete)" ]; then ok "the failed restore is recorded: restore.started without restore.complete"; else bad "restore.started recorded, restore.complete absent"; fi
-fake_db 400 1
+rb_expect "a kit restore of the dump dies part way (the stand-in client fails the restore)" 1 'the database restore failed' 'stamped as restore'
+if fake_inflight && grep -q "$T/dumps/good.sql" "$FW/fake.sentinel" && grep -Eq "'[0-9a-f]{32}'" "$FW/fake.sentinel" && [ "$(cat "$FW/fake.tables")" = 400 ]; then
+    ok "the database holds the partial copy AND the in-flight table, which records the restore id and the dump path"
+else bad "the failed restore left the in-flight table with its row ($(cat "$FW/fake.sentinel" 2> /dev/null | tr '\n' ' '))"; fi
+rb_kv_empty left "nothing about the unfinished restore is kept in the work directory (the fact is in the database)"
+if [ ! -d "$T/rb-left/work/.run.lock" ]; then ok "a step run alone released its run lock when it died"; else bad "the run lock was left behind"; fi
 rb_run left "RESTORE_DONE_BY_HAND=$RBDB" "$DUMP"
 rb_expect "the re-run with the leftover statement AND the dump is refused (both set)" 1 'both set'
 rb_run left "RESTORE_DONE_BY_HAND=$RBDB"
-rb_expect "started-not-complete + RESTORE_DONE_BY_HAND (partial copy of 400 tables) is refused, not adopted" 1 'did not complete' 'restored by hand'
-if [ -z "$(rb_kv left restore.id)" ] && [ -n "$(rb_kv left restore.started)" ] && [ -z "$(rb_kv left restore.complete)" ]; then
-    ok "nothing was stamped or archived: no restore.id, the failed restore's record is still in place"
-else bad "the refused partial copy was stamped or its record moved (restore.id '$(rb_kv left restore.id)')"; fi
+rb_expect "a database that holds the in-flight table (400-table partial copy) + RESTORE_DONE_BY_HAND is refused, not adopted" 1 'holds the table zz_rehearsal_restore_inflight' 'restored by hand\|stamped as restore'
+if [ -z "$(rb_kv left restore.id)" ] && fake_inflight; then ok "nothing was stamped, and the in-flight table is still there"; else bad "the refused partial copy was stamped or its in-flight table dropped (restore.id '$(rb_kv left restore.id)')"; fi
 rb_run left
-rb_expect "started-not-complete without any statement is refused too" 1 'did not complete'
+rb_expect "with no statement at all it is refused too" 1 'holds the table zz_rehearsal_restore_inflight'
+rb_run left "$DUMP"
+rb_expect "a retry with the dump (and no statement) does not write over it either" 1 'holds the table zz_rehearsal_restore_inflight' 'RUN: restore database'
+if [ "$(fake_loads)" = 1 ]; then ok "the client was given the one failed restore and no second one"; else bad "restores loaded: $(fake_loads)"; fi
 
-# A hand restore after the failure: drop and recreate (the kit sees it empty and archives the record), restore by hand, say so.
+# A hand restore after the failure: drop and recreate (no in-flight table any more), restore by hand, say so.
 fake_db 0
 rb_run left
-rb_expect "the database dropped and recreated empty: stops ('restore the live backup first') and says the failed restore is archived" 1 'restore the live backup first' 'taking your word'
-if [ -z "$(rb_kv left restore.started)" ] && [ -n "$(find "$T/rb-left/work/archive" -name restore.started 2> /dev/null)" ]; then ok "the failed restore's record moved to archive/ (not deleted)"; else bad "the failed restore's record moved to archive/"; fi
+rb_expect "the database dropped and recreated empty: stops ('restore the live backup first')" 1 'restore the live backup first' 'taking your word'
 fake_db 400
 rb_run left "RESTORE_DONE_BY_HAND=$RBDB"
-rb_expect "then a database restored by hand into it is adopted and stamped" 1 'stamped as restore' 'did not complete'
+rb_expect "then a database restored by hand into it is adopted and stamped" 1 'stamped as restore' 'holds the table'
 if [[ "$(rb_kv left restore.id)" =~ ^[0-9a-f]{32}$ ]] && [ "$(rb_kv left restore.by_hand)" = 1 ]; then ok "restore.id and restore.by_hand=1 are recorded"; else bad "the adopted hand restore is recorded"; fi
 
-# The plain hand restore: no dump, no failed kit restore, the database named: adopted as before.
+# The plain hand restore: no dump, no in-flight table, the database named: adopted as before.
 fake_db 400
 rb_run hand "RESTORE_DONE_BY_HAND=$RBDB"
-rb_expect "a plain hand restore (RESTORE_DB_DUMP unset, RESTORE_DONE_BY_HAND=<that database>) is adopted" 1 'restored by hand' 'did not complete'
+rb_expect "a plain hand restore (RESTORE_DB_DUMP unset, RESTORE_DONE_BY_HAND=<that database>) is adopted" 1 'restored by hand' 'holds the table'
 if [[ "$(rb_kv hand restore.id)" =~ ^[0-9a-f]{32}$ ]] && [ "$(rb_kv hand restore.by_hand)" = 1 ] && [ -n "$(rb_kv hand restore.complete)" ]; then ok "the adopted copy is stamped (restore.id, restore.by_hand=1, restore.complete)"; else bad "the adopted hand restore is stamped"; fi
 rb_run nostmt
-rb_expect "a populated database without the marker and without the statement is still refused" 1 'carries no rehearsal-kit marker'
+rb_expect "a populated database without the marker and without the statement is still refused (and the message does not claim to know what it is)" 1 'carries no rehearsal-kit marker' 'did not restore it'
 rb_run other "RESTORE_DONE_BY_HAND=some_other_db"
 rb_expect "a statement that names another database does not adopt this one" 1 'carries no rehearsal-kit marker'
 
-printf 'step 01: the failed-restore record names its database, and only two agreeing reads clear it (Stage B tools fix round 4)\n'
-# rb_record_in_place NAME LABEL: the failed restore's record is still in state/ (restore.started with its database, no restore.complete,
-# no restore.id), and nothing of it was moved to archive/.
-rb_record_in_place() {
-    if [ -n "$(rb_kv "$1" restore.started)" ] && [ -n "$(rb_kv "$1" restore.started_db)" ] && [ -z "$(rb_kv "$1" restore.complete)" ] \
-            && [ -z "$(rb_kv "$1" restore.id)" ] && [ -z "$(find "$T/rb-$1/work/archive" -name 'restore.started*' 2> /dev/null)" ]; then
-        ok "$2"
-    else
-        bad "$2 (started '$(rb_kv "$1" restore.started)', id '$(rb_kv "$1" restore.id)', archived: $(find "$T/rb-$1/work/archive" -name 'restore.started*' 2> /dev/null | tr '\n' ' '))"
-    fi
-}
-RBTARGET="host=127.0.0.1 port=default name=$RBDB"
-ALLOW2='REHEARSAL_DB_ALLOWLIST="stageb_selftest stageb_selftest2"'
-
-# 1. A client that prints nothing once for the schema count (this fault really happened on this box).
+printf 'step 01: the in-flight table is in the database, so it holds for any work directory and any server (Stage B tools fix round 5)\n'
+# 1. A NEW REHEARSAL_WORK after a failed kit restore: there is no record in it, and none is needed.
 fake_db none 1
-rb_run blank "$DUMP"
-rb_expect "a kit restore dies with a partial copy written (the stand-in fails the restore)" 1 'the database restore failed'
-if [ "$(rb_kv blank restore.started_db)" = "$RBTARGET" ]; then ok "the failed restore records the database it was writing to (host, port, name)"; else bad "restore.started_db is '${RBTARGET}'" "$(rb_kv blank restore.started_db)"; fi
-fake_db 120 1
+fake_partial 120
+rb_run nwa "$DUMP"
+rb_expect "(setup) a kit restore into ${RBDB} dies with 120 tables written" 1 'the database restore failed'
+rb_run nwb "RESTORE_DONE_BY_HAND=$RBDB"
+rb_expect "a NEW work directory and the statement: the 120-table partial copy is refused all the same" 1 'holds the table zz_rehearsal_restore_inflight' 'restored by hand\|stamped as restore'
+if fake_inflight && [ -z "$(ls -A "$T/rb-nwb/work/state/kv" 2> /dev/null)" ]; then ok "nothing was stamped or adopted by the new work directory"; else bad "the new work directory stamped or touched the partial copy"; fi
+
+# 2. A client that prints nothing for the count of the in-flight table is "cannot tell", never "no in-flight table".
+fake_once blankinflight
+rb_run nwb "RESTORE_DONE_BY_HAND=$RBDB"
+rb_expect "the in-flight count printed nothing once: asked again, the partial copy is still found and refused" 1 'holds the table zz_rehearsal_restore_inflight' 'stamped as restore'
+if [ ! -e "$FW/fake.once" ]; then ok "(the stand-in did print nothing for that count)"; else bad "the stand-in client printed nothing for the in-flight count"; fi
+fake_once blankinflightall
+rb_run nwb "RESTORE_DONE_BY_HAND=$RBDB"
+rb_expect "a client that never answers that count is 'could not be read' (a partial restore until it can be), never adopted" 1 'could not be read' 'stamped as restore'
+rm -f "$FW/fake.once"
+
+# 3. A schema or table count that is wrong once cannot start a restore over the partial copy, nor adopt it.
 fake_once blank
-rb_run blank
-rb_expect "the schema count printed nothing once: the 120-table partial copy is still found and refused" 1 'did not complete' 'partial copy is gone'
-[ ! -e "$T/fake.once" ] && ok "(the stand-in did print nothing for that count)" || bad "the stand-in client printed nothing for the schema count"
-rb_record_in_place blank "the failed restore's record is still in place after the blank read"
-rb_run blank "RESTORE_DONE_BY_HAND=$RBDB"
-rb_expect "so a later RESTORE_DONE_BY_HAND does not adopt the 120-table partial copy" 1 'did not complete' 'restored by hand\|stamped as restore'
-rb_record_in_place blank "nothing was stamped by the hand statement"
+rb_run nwb "RESTORE_DONE_BY_HAND=$RBDB"
+rb_expect "the schema count printed nothing once: asked again, the partial copy is found and refused" 1 'holds the table zz_rehearsal_restore_inflight' 'restore the live backup first'
 fake_once blankall
-rb_run blank
-rb_expect "a client that never answers the schema count is 'cannot be reached', never 'absent'" 1 'could not be read.*not as absent' 'partial copy is gone'
-rb_record_in_place blank "the record is still in place when the schema count cannot be read"
-
-# 2. A read that is wrong once (answers 0): two probes that agree are required before the record is cleared.
-fake_db 120 1
+rb_run nwb "RESTORE_DONE_BY_HAND=$RBDB"
+rb_expect "a client that never answers the schema count is 'cannot be reached', never 'absent'" 1 'could not be read.*not as absent' 'restore the live backup first'
 fake_once zero
-rb_run blank
-rb_expect "a first read that says absent while the second finds 120 tables clears nothing" 1 'two reads of database.*disagree' 'partial copy is gone'
-rb_record_in_place blank "the record is still in place after two reads that disagree"
+rb_run nwb "$DUMP"
+rb_expect "a schema count that is wrong once (0, 'absent') cannot start a restore over the partial copy: the database is there" 1 'cannot create database' 'RUN: restore database'
+fake_once zerotables
+rb_run nwb "$DUMP"
+rb_expect "a table count that is wrong once (0, 'empty') cannot either: the claim finds the in-flight table" 1 'cannot claim database' 'RUN: restore database'
+if fake_inflight && [ "$(fake_loads)" = 1 ]; then ok "nothing more was written: the in-flight table is still there, no second restore was loaded"; else bad "a misread let a second restore write ($(fake_loads) loads)"; fi
+
+# 4. A populated database read as empty once (or finished by another restore in the meantime): the claim releases itself.
+fake_db 120
+fake_once zerotables
+rb_run pop "$DUMP"
+rb_expect "a populated database with no in-flight table, read as empty once: the claim finds it is not empty and releases itself" 1 'right after it was claimed' 'RUN: restore database'
+if ! fake_inflight && [ "$(fake_loads)" = 0 ] && [ "$(cat "$FW/fake.tables")" = 120 ]; then ok "no in-flight table was left behind, nothing was loaded, the 120 tables are untouched"; else bad "the released claim left traces"; fi
+
+# 5. Another restore claims the empty database between this run's probe (and its dump scan) and its claim.
 fake_db 0
-rb_run blank
-rb_expect "two reads that agree (empty, empty) clear the record" 1 'two reads agree' 'did not complete,'
-if [ -z "$(rb_kv blank restore.started)" ] && [ -n "$(find "$T/rb-blank/work/archive" -name restore.started 2> /dev/null)" ] \
-        && [ -n "$(find "$T/rb-blank/work/archive" -name restore.started_db 2> /dev/null)" ]; then
-    ok "the cleared record (and the database it names) moved to archive/"
-else bad "the cleared record moved to archive/"; fi
+fake_set claimrace claimed
+rb_run race "$DUMP"
+rb_expect "another restore claimed the database meanwhile: this one stops at its own claim, writes nothing and cannot archive or adopt it" 1 'cannot claim database' 'RUN: restore database\|stamped as restore'
+if fake_inflight && [ "$(fake_loads)" = 0 ] && [ -z "$(ls -A "$T/rb-race/work/state/kv" 2> /dev/null)" ]; then ok "the other restore's in-flight table is untouched (this run did not drop it), nothing was loaded"; else bad "the lost claim disturbed the other restore"; fi
 
-# 3. The record names no database but its own: a run for another name, host or port leaves it alone.
-fake_db none 1
-rb_run twodb "$DUMP"
-rb_expect "(setup) a kit restore into ${RBDB} dies" 1 'the database restore failed'
+# 6. The same name, host and port on ANOTHER server: that server's failed restore is none of this one's business.
+FW="$T/w2"
+mkdir -p "$FW"
+cp "$T/fakemysql" "$FW/fakemysql"
 fake_db none
-rb_run twodb "DB_NAME=stageb_selftest2" "$ALLOW2"
-rb_expect "a run for ${RBDB}2 (absent, no dump) does not clear the record of the failed restore into ${RBDB}" 1 'not into this run' 'RESTORE_DB_DUMP is not set\|partial copy is gone'
-rb_record_in_place twodb "the record is still in place after a run for another database name"
-rb_run twodb "DB_NAME=stageb_selftest2" "$ALLOW2" "$DUMP"
-rb_expect "a kit restore into ${RBDB}2 does not archive it either (a restore into another database is refused)" 1 'not into this run' 'stamped as restore\|moved to'
-rb_record_in_place twodb "the record is still in place after a restore attempt into another database"
-rb_run twodb "DB_PORT=3307"
-rb_expect "the same database name on another port is another database" 1 'not into this run.*port=3307' 'RESTORE_DB_DUMP is not set'
-rb_record_in_place twodb "the record is still in place after a run for another port"
-fake_db 120 1
-rb_run twodb "RESTORE_DONE_BY_HAND=$RBDB"
-rb_expect "with the name set back, the 120-table partial copy is refused (the hand statement does not adopt it)" 1 'did not complete' 'restored by hand\|stamped as restore'
-rb_record_in_place twodb "the record is still in place: nothing was adopted"
+fake_after 120
+fake_set storemarker 1
+rb_run nwa "$DUMP"
+rb_expect "the same target string on another server (empty): it restores there, the failed restore on the first server does not matter" 1 'stamped as restore' 'holds the table'
+if ! fake_inflight && [ "$(fake_loads)" = 1 ] && [[ "$(rb_kv nwa restore.id)" =~ ^[0-9a-f]{32}$ ]]; then ok "the restore was verified complete, its in-flight table dropped, and the database stamped"; else bad "the in-flight table of the finished restore (loads $(fake_loads))"; fi
+rb_run nwa "$DUMP"
+rb_expect "a re-run on the finished kit restore does not restore over it, and is not refused for the in-flight table (it is gone)" 1 'carries this rehearsal.s marker' 'holds the table\|RUN: restore database'
+if [ "$(fake_loads)" = 1 ]; then ok "the client was not given a second restore"; else bad "the re-run restored again ($(fake_loads) loads)"; fi
+fake_db none
+fake_after 120
+fake_set noconfig 1
+rb_run nocfg "$DUMP"
+rb_expect "a restore that brought no mdl_config table is not stamped, and keeps its in-flight table" 1 'has no mdl_config table' 'stamped as restore'
+if fake_inflight; then ok "the in-flight table of the unfinished restore stays"; else bad "the in-flight table was dropped for a restore with no config table"; fi
+FW="$T"
+if fake_inflight; then ok "the first server still holds its own in-flight table"; else bad "the first server's in-flight table"; fi
 
-# 4. One rehearsal, one moodledata: the fact that a step after 01 used the dataroot survives the rotation a new restore makes.
+# 7. One --execute run per work directory: a step run alone takes REHEARSAL_WORK/.run.lock, run_all.sh's own steps use the one it holds.
+mkdir -p "$T/rb-lock/work/.run.lock"
+printf '4242\n' > "$T/rb-lock/work/.run.lock/pid"
+fake_db 0
+rb_run lock "$DUMP"
+if [ "$RC" = 3 ] && printf '%s' "$OUT" | grep -q 'Another rehearsal run holds'; then ok "a step run alone while another run holds .run.lock stops with exit 3"; else bad "the held lock stops the step (rc ${RC})" "$OUT"; fi
+if [ -d "$T/rb-lock/work/.run.lock" ] && [ ! -e "$T/rb-lock/work/state" ] && [ ! -e "$T/rb-lock/work/logs" ] && ! fake_inflight && [ "$(fake_loads)" = 0 ]; then
+    ok "the refused run left the other run's lock, its state and logs and the database alone"
+else bad "the refused run touched something"; fi
+fake_db 400
+export REHEARSAL_RUN_LOCK="$T/rb-lock/work/.run.lock" REHEARSAL_RUN_LOCK_PID=4242
+rb_run lock "RESTORE_DONE_BY_HAND=some_other_db"
+unset REHEARSAL_RUN_LOCK REHEARSAL_RUN_LOCK_PID
+rb_expect "a step started by run_all.sh (REHEARSAL_RUN_LOCK and the pid its lock file holds) goes on" 1 'carries no rehearsal-kit marker' 'Another rehearsal run holds'
+if [ -d "$T/rb-lock/work/.run.lock" ]; then ok "and leaves the lock to run_all.sh (it did not take it, so it does not release it)"; else bad "a step released the lock run_all.sh holds"; fi
+export REHEARSAL_RUN_LOCK="$T/rb-lock/work/.run.lock" REHEARSAL_RUN_LOCK_PID=999
+rb_run lock "RESTORE_DONE_BY_HAND=some_other_db"
+unset REHEARSAL_RUN_LOCK REHEARSAL_RUN_LOCK_PID
+if [ "$RC" = 3 ] && printf '%s' "$OUT" | grep -q 'Another rehearsal run holds'; then ok "a REHEARSAL_RUN_LOCK whose pid is not the lock's is not believed"; else bad "a forged run lock is believed (rc ${RC})" "$OUT"; fi
+rm -rf "$T/rb-lock/work/.run.lock"
+
+# 8. The scan for production and UAT schemas needs a schema list: an empty answer is "cannot be reached", not "none forbidden here".
+fake_db 400
+fake_set schemata blank
+rb_run schemata
+rb_expect "a schema list that comes back empty (it always names information_schema) leaves the server 'unreachable'" 1 'schema list of .* could not be read' 'carries no rehearsal-kit marker'
+fake_set schemata prod
+rb_run schemata
+rb_expect "a server whose list names airpayprod is still refused" 1 "holds the schema 'airpayprod'"
+
+# 9. One rehearsal, one moodledata: the fact that a step after 01 used the dataroot survives the rotation a new restore makes.
 mkdir -p "$T/mdsrc/filedir/aa/bb"
 printf 'x' > "$T/mdsrc/filedir/aa/bb/aabbccddeeff00112233445566778899aabbccdd"
 tar -C "$T/mdsrc" -cf "$T/md-arch.tar" filedir
@@ -646,7 +765,7 @@ for variant in used idle; do
     fi
 done
 
-# 5. The retried read itself.
+# 10. The retried read itself.
 t_count_once() {
     rm -f "$T/cr.n"
     f() { local c; c="$(cat "$T/cr.n" 2> /dev/null || printf 0)"; printf '%s' $((c + 1)) > "$T/cr.n"; [ "$c" = 0 ] || printf '7\r\n'; }

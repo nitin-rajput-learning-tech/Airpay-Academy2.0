@@ -126,6 +126,8 @@ if [ "$EXECUTE" = 1 ]; then
     fi
     printf '%s\n' "$$" > "$LOCK/pid"
     trap 'rm -rf "$LOCK"' EXIT
+    # The steps it starts take the same lock when run alone (step_init); these two tell them this run already holds it.
+    export REHEARSAL_RUN_LOCK="$LOCK" REHEARSAL_RUN_LOCK_PID="$$"
     exec > >(tee -a "$LOG_DIR/run_all.log") 2>&1
 fi
 

@@ -17,12 +17,14 @@
 #      the database and the moodledata are stamped with a random restore id (state/kv/restore.id). Every writing step later
 #      refuses a database or a moodledata that does not carry it, so an allow-listed name on the wrong server, or UAT's
 #      database, can never be written to. A new restore moves the earlier rehearsal's state, reports, baseline and cache
-#      configuration to archive/ (nothing of it can be mistaken for this one's result). A restore that did not complete is
-#      refused on re-run, WHATEVER RESTORE_DONE_BY_HAND says: a database a kit restore was writing to is never adopted. Drop it and
-#      create it empty; the kit sees it empty and moves the record of the failed restore to archive/ (a hand restore then follows).
-#      That record names the database it was writing to (state/kv/restore.started_db: host, port, name) and is cleared ONLY when that
-#      same database is seen absent or empty, on two reads that agree (a COUNT the client printed nothing for is never read as absent
-#      or empty); a run for any other database refuses and leaves the record alone.
+#      configuration to archive/ (nothing of it can be mistaken for this one's result).
+#      THE IN-FLIGHT TABLE: a restore that did not finish is recorded IN THE DATABASE it was writing to, not in the work directory. After
+#      the dump has been checked, and immediately before it is loaded, the kit creates the table zz_rehearsal_restore_inflight (restore id,
+#      dump path, start time) in the target database; it drops it only when the restore is verified complete, just before it stamps the
+#      database. A database that holds the table is a PARTIAL copy and is refused whatever RESTORE_DONE_BY_HAND says and whatever
+#      REHEARSAL_WORK the run uses; only DROP DATABASE clears it (then create it empty). The CREATE TABLE is also the claim on an
+#      empty database: a second restore into it (a second run, another work directory) finds the table, or finds the database no longer
+#      empty, and stops instead of writing over the first. Nothing about an unfinished restore is kept in state/.
 #      RESTORE_DONE_BY_HAND together with RESTORE_DB_DUMP is refused outright (a leftover statement must not meet a new dump).
 #      THE MOODLEDATA is per rehearsal. The marker file also records which archive the kit unpacked into it (path, size, mtime) and
 #      that the unpack finished. A NEW restore (a new database) accepts a non-empty moodledata only when it is the same unpack of the
@@ -90,13 +92,16 @@ restore_database() {
         timed "create database" mysql_nodb -e "CREATE DATABASE \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE ${DB_COLLATION}" \
             || die "cannot create database ${DB_NAME}: create it (empty, utf8mb4) and re-run"
     fi
+    # The dump is clean and the database exists: claim it (the in-flight table) BEFORE the restore writes anything. From here until the
+    # restore is verified complete (see the flow below), the database holds the table, and a database that holds it is never adopted.
+    inflight_begin "$RESTORE_ID" "$RESTORE_DB_DUMP"
     # pipefail: a gzip that fails half way must fail the restore, not leave a partial copy that looks restored.
     case "$RESTORE_DB_DUMP" in
         *.gz) timed "restore database" bash -c 'set -o pipefail; gzip -dc "$1" | "$2" --defaults-extra-file="$3" --one-database --max-allowed-packet=512M "$4"' _ \
                 "$RESTORE_DB_DUMP" "$MYSQL_BIN" "$DB_CNF" "$DB_NAME" ;;
         *) timed "restore database" bash -c 'set -o pipefail; "$2" --defaults-extra-file="$3" --one-database --max-allowed-packet=512M "$4" < "$1"' _ \
                 "$RESTORE_DB_DUMP" "$MYSQL_BIN" "$DB_CNF" "$DB_NAME" ;;
-    esac || die "the database restore failed, and database ${DB_NAME} now holds a partial copy, which the kit never adopts (not even with RESTORE_DONE_BY_HAND). Drop it and create it empty (as a database administrator: DROP DATABASE \`${DB_NAME}\`; CREATE DATABASE \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE ${DB_COLLATION};), then either run step 01 again with RESTORE_DB_DUMP set (RESTORE_DONE_BY_HAND unset), or, to restore by hand: run step 01 once on the empty database with RESTORE_DB_DUMP unset, so that it archives the record of the failed restore (it stops with 'restore the live backup first'), restore the live backup into it, and run step 01 with RESTORE_DB_DUMP unset and RESTORE_DONE_BY_HAND=${DB_NAME}"
+    esac || die "the database restore failed, and database ${DB_NAME} now holds a PARTIAL copy and the in-flight table ${KIT_INFLIGHT_TABLE}: the kit never adopts it, not even with RESTORE_DONE_BY_HAND, whatever REHEARSAL_WORK a later run uses. Only DROP DATABASE clears it. Drop it and create it empty (as a database administrator: DROP DATABASE \`${DB_NAME}\`; CREATE DATABASE \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE ${DB_COLLATION};), then either run step 01 again with RESTORE_DB_DUMP set (RESTORE_DONE_BY_HAND unset), or restore by hand into the empty database and run step 01 with RESTORE_DB_DUMP unset and RESTORE_DONE_BY_HAND=${DB_NAME}"
 }
 
 restore_moodledata() {
@@ -112,25 +117,6 @@ restore_moodledata() {
 
 # by_hand_ack -> 0 when the operator named THIS database as restored by hand (RESTORE_DONE_BY_HAND=<database name>).
 by_hand_ack() { [ -n "$RESTORE_DONE_BY_HAND" ] && [ "$RESTORE_DONE_BY_HAND" = "$DB_NAME" ]; }
-
-# failed_kit_restore -> 0 when a restore this kit started in this work directory never completed (restore.started, no restore.complete).
-failed_kit_restore() { [ -n "$(kv_get restore.started)" ] && [ -z "$(kv_get restore.complete)" ]; }
-
-# restore_target -> the database this run is for, as restore.started_db records it for a restore the kit starts. The record of a failed
-# restore describes ONE database (host, port and name): only that database seen absent or empty clears it.
-restore_target() { printf 'host=%s port=%s name=%s' "$DB_HOST" "${DB_PORT:-default}" "$DB_NAME"; }
-
-# confirm_database_gone: the record of a failed restore is cleared only on two reads that agree. probe_db (which asks a COUNT again
-# when the client printed nothing, and never reads an empty answer as absent or empty) has just said absent or empty; it is run once
-# more after a pause and has to say the same, or the record stays where it is.
-confirm_database_gone() {
-    local first_state="$DB_STATE" first_tables="$DB_TABLES"
-    sleep 1
-    probe_db
-    if [ "$DB_STATE" != "$first_state" ] || [ "$DB_TABLES" != "$first_tables" ]; then
-        die "two reads of database ${DB_NAME} disagree (${first_state}, ${first_tables} tables; then ${DB_STATE}, ${DB_TABLES} tables): the record of the failed restore ($(kv_get restore.started)) is NOT cleared, because the partial copy may still be there. Run step 01 again once the server answers the same twice"
-    fi
-}
 
 # start_new_restore: a new rehearsal begins. The earlier one's state moves to archive/, and the restore id is chosen.
 RESTORE_ID=""
@@ -191,35 +177,33 @@ fi
 if [ "$EXECUTE" = 1 ]; then
     probe_db
     log "database ${DB_NAME}: ${DB_STATE} (${DB_TABLES} tables)"
-    if failed_kit_restore && [ "$(kv_get restore.started_db)" != "$(restore_target)" ]; then
-        # The record of a failed restore describes ONE database. A run for another one (a different name, host or port) must neither clear
-        # it (the partial copy is still there) nor start a restore of its own, which would move it to archive/ with the rest of the state.
-        die "the restore this kit started ($(kv_get restore.started)) did not complete, and it was into [$(kv_get restore.started_db)], not into this run's database [$(restore_target)]. The record is cleared only when THAT database is seen absent or empty, so this run leaves it alone (and a restore into another database would archive it). Use a work directory (REHEARSAL_WORK) of its own for this database, or set DB_HOST, DB_PORT and DB_NAME back to the recorded ones, drop that database, create it empty and run step 01 once (a record that names no database was made by an older kit: move state/kv/restore.started to archive/ by hand once you have checked that database)"
-    fi
     case "$DB_STATE" in
         unreachable) die "the database server at ${DB_HOST} cannot be reached" ;;
         absent | empty)
-            if failed_kit_restore; then
-                # The kit itself sees THIS database (the one the record names, checked above) absent or empty, on two reads that agree: the
-                # partial copy that the failed restore wrote is gone, so the record describes no database any more. It moves to archive/
-                # now (not deleted), which is what lets a database restored by hand into this empty one be told from the partial copy.
-                # Nothing else clears a failed restore.
-                confirm_database_gone
-                note "database ${DB_NAME} is ${DB_STATE} again (two reads agree) after the restore this kit started ($(kv_get restore.started)) did not complete: the partial copy is gone, and the record of the failed restore moves to archive/"
-                rotate_work_state
-            fi
-            [ -n "$RESTORE_DB_DUMP" ] || die "database ${DB_NAME} is ${DB_STATE} and RESTORE_DB_DUMP is not set: restore the live backup first"
+            [ -n "$RESTORE_DB_DUMP" ] || die "database ${DB_NAME} is ${DB_STATE} and RESTORE_DB_DUMP is not set: restore the live backup first (by hand, then run step 01 again with RESTORE_DONE_BY_HAND=${DB_NAME}, or set RESTORE_DB_DUMP for the kit to restore it)"
             start_new_restore
-            # The database is recorded first: a record of a failed restore (restore.started) always names the database it was writing to.
-            kv_set restore.started_db "$(restore_target)"
-            kv_set restore.started "$(ts) dump=${RESTORE_DB_DUMP}"
-            kv_unset restore.complete
             restore_database
             probe_db
-            [ "$DB_STATE" = present ] || die "the restore ran but database ${DB_NAME} is still ${DB_STATE}"
+            # The in-flight table is in the count: the restore wrote something only when there is more than that one table, and it is
+            # complete enough to stamp only when it brought the {config} table the stamp is written to.
+            if [ "$DB_STATE" != present ] || [ "$DB_TABLES" -le 1 ]; then
+                die "the restore ran but database ${DB_NAME} holds no table besides ${KIT_INFLIGHT_TABLE} (${DB_STATE}, ${DB_TABLES} tables): the database keeps the in-flight table and is refused until it is dropped and created empty"
+            fi
+            [ "$(db_scalar "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${DB_NAME}' AND TABLE_NAME = '${DB_PREFIX}config'")" = 1 ] \
+                || die "the restore ran but database ${DB_NAME} has no ${DB_PREFIX}config table (is DB_PREFIX the prefix of the dump?): it is not a Moodle copy the kit can stamp. The database keeps the in-flight table and is refused until it is dropped and created empty"
+            # Verified complete: the dump was checked whole before the load, the load returned no error (pipefail), and the tables are there.
+            inflight_end
             stamp_database
             ;;
         present)
+            # FIRST, before the marker or any statement of the operator: a database that holds the in-flight table is the partial copy of a
+            # restore the kit started and did not finish. The fact is in the database, so it holds for any REHEARSAL_WORK, any env file and
+            # any RESTORE_DONE_BY_HAND; only DROP DATABASE clears it. A count that cannot be read is "cannot tell", never "no table".
+            inflight="$(inflight_count)" \
+                || die "database ${DB_NAME} holds ${DB_TABLES} tables and the count of its in-flight table ${KIT_INFLIGHT_TABLE} could not be read (the client answered nothing, or not a number): it is treated as a partial restore until it can be read. Run step 01 again once the server answers"
+            if [ "$inflight" = 1 ]; then
+                die "database ${DB_NAME} holds the table ${KIT_INFLIGHT_TABLE}: a restore this kit started into it did not finish ($(inflight_describe)), so it holds a PARTIAL copy (${DB_TABLES} tables including that one). It is refused whatever RESTORE_DONE_BY_HAND says and whatever REHEARSAL_WORK this run uses, because the fact is in the database; only DROP DATABASE clears it. Drop it and create it empty (as a database administrator: DROP DATABASE \`${DB_NAME}\`; CREATE DATABASE \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE ${DB_COLLATION};), then run step 01 again: with RESTORE_DB_DUMP set (and RESTORE_DONE_BY_HAND unset) the kit restores into the empty database; to restore by hand instead, restore the live backup into it, then run step 01 with RESTORE_DB_DUMP unset and RESTORE_DONE_BY_HAND=${DB_NAME}"
+            fi
             have="$(marker_get)"
             want="$(kv_get restore.id)"
             if [ -n "$have" ]; then
@@ -233,18 +217,13 @@ if [ "$EXECUTE" = 1 ]; then
                 else
                     die "database ${DB_NAME} carries restore id ${have:0:8}..., but this work directory records ${want:-none}: it is another rehearsal's database. Use a work directory (REHEARSAL_WORK) of its own, or restore again into an empty database"
                 fi
-            elif failed_kit_restore; then
-                # Checked BEFORE RESTORE_DONE_BY_HAND and never overridden by it: that variable lives in rehearsal.env until somebody clears
-                # it, so it cannot tell a copy restored by hand after the failure from the partial copy the kit was writing. Only the kit
-                # seeing the database absent or empty (above) clears the failed restore; a hand restore then follows.
-                die "the restore this kit started ($(kv_get restore.started)) did not complete, and database ${DB_NAME} holds a partial copy of ${DB_TABLES} tables: it is refused whatever RESTORE_DONE_BY_HAND says (a database a kit restore was writing to is never adopted). Drop it and create it empty (as a database administrator: DROP DATABASE \`${DB_NAME}\`; CREATE DATABASE \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE ${DB_COLLATION};), then run step 01 again: with RESTORE_DB_DUMP set (and RESTORE_DONE_BY_HAND unset) the kit restores into the empty database. To restore by hand instead: run step 01 once on the empty database (it stops with 'restore the live backup first' and moves the record of the failed restore to archive/), restore the live backup into it, then run step 01 with RESTORE_DB_DUMP unset and RESTORE_DONE_BY_HAND=${DB_NAME}"
             elif by_hand_ack; then
                 start_new_restore
                 BY_HAND=1
                 warn "database ${DB_NAME} was restored by hand (RESTORE_DONE_BY_HAND=${RESTORE_DONE_BY_HAND}): stamping it as this rehearsal's copy on that statement"
                 stamp_database
             else
-                die "database ${DB_NAME} holds ${DB_TABLES} tables and carries no rehearsal-kit marker: this kit did not restore it. If it is a copy of the live backup that you restored by hand for this rehearsal, set RESTORE_DONE_BY_HAND=${DB_NAME} for this run (and leave RESTORE_DB_DUMP unset); if you are not sure what it is, it may be a real site: stop"
+                die "database ${DB_NAME} holds ${DB_TABLES} tables and carries no rehearsal-kit marker, and the kit cannot tell what it is (a copy of the live backup restored by hand, another rehearsal's database whose marker was lost, or a real site). If it is a copy of the live backup that you restored by hand for this rehearsal, set RESTORE_DONE_BY_HAND=${DB_NAME} for this run (and leave RESTORE_DB_DUMP unset); if you are not sure what it is, it may be a real site: stop"
             fi
             ;;
     esac
@@ -344,9 +323,9 @@ if [ "$EXECUTE" = 1 ]; then
     fi
     require_kit_marker
 else
-    dry "would restore RESTORE_DB_DUMP (${RESTORE_DB_DUMP:-not set}) into the EMPTY database ${DB_NAME} (never over a populated one); the dump is refused when it holds USE / CREATE DATABASE / DROP DATABASE or has no '-- Dump completed' trailer"
+    dry "would restore RESTORE_DB_DUMP (${RESTORE_DB_DUMP:-not set}) into the EMPTY database ${DB_NAME} (never over a populated one); the dump is refused when it holds USE / CREATE DATABASE / DROP DATABASE or has no '-- Dump completed' trailer; the database holds the table ${KIT_INFLIGHT_TABLE} from just before the load until the restore is verified complete, and a database that holds it is refused (only DROP DATABASE clears it)"
     dry "would unpack RESTORE_MOODLEDATA_ARCHIVE (${RESTORE_MOODLEDATA_ARCHIVE:-not set}) into ${MOODLEDATA} when its filedir/ is missing"
-    dry "would stamp the database (a {config} row) and ${MOODLEDATA} (${KIT_MARKER_FILE}) with a random restore id; a populated database without that marker is refused unless RESTORE_DONE_BY_HAND=${DB_NAME} (with RESTORE_DB_DUMP unset, and never for a restore the kit started and did not complete)"
+    dry "would stamp the database (a {config} row) and ${MOODLEDATA} (${KIT_MARKER_FILE}) with a random restore id; a populated database without that marker is refused unless RESTORE_DONE_BY_HAND=${DB_NAME} (with RESTORE_DB_DUMP unset, and never for a database that holds ${KIT_INFLIGHT_TABLE})"
 fi
 
 # ---------------------------------------------------------------------------------------------------------------------

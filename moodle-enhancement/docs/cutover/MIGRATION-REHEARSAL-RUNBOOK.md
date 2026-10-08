@@ -102,14 +102,20 @@ Things the kit does that the numbered steps below do not say (added 2026-10-08, 
 * **Nothing is written to a database the kit did not stamp.** Step 01 stamps the restored database (a `{config}` row) and the
   moodledata (a file) with a random restore id, and every later step refuses a database or directory that does not carry it.
   A database restored by hand is stamped only on `RESTORE_DONE_BY_HAND=<its name>` with `RESTORE_DB_DUMP` unset (both set is
-  refused outright: the first stays in `rehearsal.env` until cleared), and never when a kit restore started and did not complete:
-  drop that database and create it empty, and the kit, seeing it empty, archives the record of the failed restore (a kit restore
-  or a hand restore follows: for a hand restore run step 01 once on the empty database, restore the live backup into it, then run
-  step 01 with `RESTORE_DB_DUMP` unset and `RESTORE_DONE_BY_HAND=<its name>`). The record of a failed restore names the database it
-  was writing to (host, port, name) and is cleared only when THAT database is seen absent or empty on two reads that agree (an
-  empty answer from the database client is never read as "absent" or "empty"); a run for another database name, host or port
-  refuses and leaves the record alone. A new restore moves the earlier rehearsal's state, reports, baseline and cache configuration
-  to `archive/`.
+  refused outright: the first stays in `rehearsal.env` until cleared). A restore the kit started and did not finish is recorded IN
+  THE DATABASE it was writing to: just before it loads the dump, step 01 creates the table `zz_rehearsal_restore_inflight` there
+  (restore id, dump path, start time), and drops it only when the restore is verified complete, just before it stamps the
+  database. A database that holds the table is a partial copy and is refused whatever `RESTORE_DONE_BY_HAND` says and whatever
+  work directory (`REHEARSAL_WORK`) the run uses; only `DROP DATABASE` clears it. Drop that database and create it empty (as a
+  database administrator), then either run step 01 with `RESTORE_DB_DUMP` set, or restore the live backup into it by hand and run
+  step 01 with `RESTORE_DB_DUMP` unset and `RESTORE_DONE_BY_HAND=<its name>`. The `CREATE TABLE` is also the claim on an empty
+  database: a second restore into it (a second run, another work directory) finds the table, or finds the database no longer empty
+  right after it claimed it, and stops without writing; a count of the table that the database client printed nothing for is
+  "cannot tell" (refused), never "no table". A new restore moves the earlier rehearsal's state, reports, baseline and cache
+  configuration to `archive/`.
+* **One `--execute` run per work directory.** `run_all.sh` takes `REHEARSAL_WORK/.run.lock`, and a step run alone takes it too
+  (exit 3 while another run holds it; remove the directory only when no run is alive). Steps started by `run_all.sh` use the lock
+  it holds.
 * **The baseline has a metrics version, and names the file that took it.** A comparison refuses (exit 3) a baseline taken with
   another version of `source_baseline.php` (the checksums it lacks would otherwise go unchecked), and the baseline carries the
   SHA-256 of the exact file that took it (`tool.sha256`, carriage returns removed): the tool refuses a baseline another file took,
