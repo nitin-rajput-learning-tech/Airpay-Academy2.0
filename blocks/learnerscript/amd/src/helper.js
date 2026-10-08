@@ -158,7 +158,9 @@ define(['jquery',
                                 // do something with the exception
                                 console.log(ex);
                             });
-                            modal.hide();
+                            // e.preventDefault() above stops core's own close, so this is the one place the modal goes away on
+                            // Confirm (removeOnClose only acts on the cancel, close and escape paths). destroy() hides the modal
+                            // first on 5.1, 5.2 and 5.3, so no separate hide() is needed (FX-08 follow-up).
                             modal.destroy();
                         }.bind(this));
                         modal.show();

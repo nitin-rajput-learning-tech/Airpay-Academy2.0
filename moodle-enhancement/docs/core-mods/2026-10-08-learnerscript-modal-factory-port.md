@@ -27,7 +27,7 @@ returns a native `Promise` on all three (5.1 `public/lib/amd/src/modal.js:193`, 
 | File | Before | After |
 |---|---|---|
 | `ajax.js` | `ModalFactory.create({title, body, footer: ''}).done(modal => { dialogue = modal; dialogue.show(); })` | `Modal.create({title, body, footer: ''}).then(modal => { modal.show(); ... })` with `core/modal`; also drops the implicit global `dialogue` and logs a rejection |
-| `helper.js` (`deleteConfirm`) | `ModalFactory.create({title, type: ModalFactory.types.SAVE_CANCEL, body}).done(...)` | `ModalSaveCancel.create({title, body, removeOnClose: true}).then(...)` with `core/modal_save_cancel`; the save handler is unchanged. The close-button title selector also matches the Bootstrap 5 `.btn-close` |
+| `helper.js` (`deleteConfirm`) | `ModalFactory.create({title, type: ModalFactory.types.SAVE_CANCEL, body}).done(...)` | `ModalSaveCancel.create({title, body, removeOnClose: true}).then(...)` with `core/modal_save_cancel`; the save handler is unchanged apart from the single destroy (follow-up below). The close-button title selector also matches the Bootstrap 5 `.btn-close` |
 | `ajaxforms.js`, `newgroup.js` | imported the factory but never called it | the unused dependency is removed (positional argument list kept in step) |
 | `js/design.js` | `require(['<factory>'], ...)` then `.done(...)` | `require(['core/modal', 'core/modal_events'], ...)` then `.then(...)`; the hidden-event redirect is unchanged |
 
@@ -37,7 +37,7 @@ build of an unchanged file byte for byte, so the diff is only the intended chang
 
 ## Not changed
 
-- Plugin `version.php` (`2019052008.5`): AMD changes are picked up by the cache purge that every install and upgrade runs.
+- Anything under `db/`: no schema change, no new upgrade step. (The plugin `version.php` is bumped; see the follow-up below.)
 - `externallib.php` of `learnerscript` and `reportdashboard` still extend the legacy global `external_api` classes. On 5.3
   they resolve through `lib/db/renamedclasses.php` and only log deprecation debugging (not fatal). Taking a 5.x-compatible
   upstream release is the fix and is tracked under the vendor-upgrade open question.
@@ -56,6 +56,28 @@ build of an unchanged file byte for byte, so the diff is only the intended chang
 `tools/packaging/build-standalone.sh` and `moodle-enhancement/tools/overlay-airpay-customs.ps1` now ship `learnerscript`,
 `reportdashboard` and `reporttiles` by default (`--without-learnerscript` / `-SkipLearnerscript` opt out). The stage
 verification gate "no shipped amd/build names the removed modal factory" (JS and maps) covers them.
+
+## Follow-up (2026-10-08, review round on FX-08): single destroy and a version bump
+
+Two changes made after the first review of the port, both still dual-target (identical behaviour on 5.1, 5.2 and 5.3).
+
+1. `amd/src/helper.js` (`deleteConfirm`, Confirm handler): `modal.hide(); modal.destroy();` became `modal.destroy();`.
+   The handler calls `e.preventDefault()`, which stops core's own close, so the explicit destroy is the only thing that
+   removes the dialogue on Confirm; `removeOnClose: true` acts on the Cancel, close-button, Escape and outside-click paths
+   (`public/lib/amd/src/modal.js` `registerCloseOnCancel`, `registerEventListeners`, `hideIfNotForm`) and never on this one,
+   so nothing destroys it twice. What was doubled was the hide: `destroy()` itself begins with `this.hide()` in 5.1.3
+   (`modal.js:977-978`), 5.2 (`:1008-1009`) and 5.3 (`:1008-1009`), so the extra `hide()` fired the `hidden` event and the
+   focus-lock release twice. `amd/build/helper.min.js` and its map were rebuilt with the repository toolchain; the built
+   diff against the committed bundle is exactly the 13 characters `modal.hide(),`, and the map's `sourcesContent` equals the
+   LF-normalised source.
+2. `version.php` of `block_learnerscript`: `2019052008.5` to `2019052008.6`, tagged `SENTIENTIA-CORE-MOD (vendor)` at the
+   site. The first cut left the version alone on the reasoning that a cache purge picks AMD changes up; a deploy that
+   copies files over an existing site has no upgrade step to trigger that purge unless the version moves, and
+   `Admin > Notifications` is the documented deploy step. The bump stays inside the vendor's decimal series (the plugin
+   already used `.2` and `.5`) so that a later upstream release (`2019052009` or higher) still upgrades cleanly; a
+   date-style `2026100801` would have sat above every future vendor number and blocked taking one. `db/upgrade.php`
+   needs no step: it ends with `return true` and the last `if ($oldversion < ...)` branch is `2019052008.5`, so a site
+   already on `.5` runs none of them.
 
 ## Detected by
 
