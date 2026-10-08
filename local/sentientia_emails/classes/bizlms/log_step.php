@@ -419,9 +419,10 @@ abstract class log_step extends step {
     /**
      * A subject without the name of the team member it is about.
      *
-     * The member's first and last name, and each word of them of two letters or more, are replaced as whole words,
-     * case-insensitively, by TEAM_MEMBER_PLACEHOLDER; the longest name goes first so "Priya Singh" is not left as
-     * "[team member] Singh".
+     * The member's full name ("first last"), first and last name, and each word of them of two letters or more, are
+     * replaced as whole words, case-insensitively, by TEAM_MEMBER_PLACEHOLDER; the longest name goes first so
+     * "Priya Singh" is not left as "[team member] Singh". Placeholders that end up next to each other (a full name
+     * written "Singh Priya", say) are then folded into one, so the subject never reads "[team member] [team member]".
      *
      * @param string $subject
      * @param \stdClass|null $member The member's user row (firstname, lastname), null when it is gone.
@@ -432,7 +433,8 @@ abstract class log_step extends step {
             return $subject;
         }
         $names = [];
-        foreach ([(string) ($member->firstname ?? ''), (string) ($member->lastname ?? '')] as $name) {
+        $full = trim((string) ($member->firstname ?? '') . ' ' . (string) ($member->lastname ?? ''));
+        foreach ([$full, (string) ($member->firstname ?? ''), (string) ($member->lastname ?? '')] as $name) {
             $name = trim(preg_replace('/\s+/u', ' ', $name) ?? '');
             if ($name === '') {
                 continue;
@@ -453,7 +455,9 @@ abstract class log_step extends step {
                 $subject = $replaced;
             }
         }
-        return $subject;
+        $placeholder = preg_quote(self::TEAM_MEMBER_PLACEHOLDER, '/');
+        $folded = preg_replace('/' . $placeholder . '(?:\s+' . $placeholder . ')+/u', self::TEAM_MEMBER_PLACEHOLDER, $subject);
+        return $folded ?? $subject;
     }
 
     /**

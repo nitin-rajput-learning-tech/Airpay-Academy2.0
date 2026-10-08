@@ -98,9 +98,12 @@ final class privacy_imported_history_test extends \core_privacy\tests\provider_t
     }
 
     public function test_a_sender_and_a_recipient_both_have_a_context_but_a_stranger_does_not(): void {
-        $system = \context_system::instance()->id;
-        $this->assertContains($system, provider::get_contexts_for_userid($this->recipient->id)->get_contextids());
-        $this->assertContains($system, provider::get_contexts_for_userid($this->sender->id)->get_contextids(),
+        // get_contextids() hands back the ids as the database returns them (strings on MySQL/MariaDB), and
+        // assertContains() compares strictly: compare integers.
+        $ids = static fn(int $userid): array => array_map('intval', provider::get_contexts_for_userid($userid)->get_contextids());
+        $system = (int) \context_system::instance()->id;
+        $this->assertContains($system, $ids((int) $this->recipient->id));
+        $this->assertContains($system, $ids((int) $this->sender->id),
             'a user who only queued messages for other people is a data subject');
         $stranger = $this->getDataGenerator()->create_user();
         $this->assertSame([], provider::get_contexts_for_userid($stranger->id)->get_contextids());
