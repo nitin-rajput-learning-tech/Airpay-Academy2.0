@@ -94,7 +94,7 @@
 {{#tenants}}
 <div class="org-tenant-card {{^visible}}hidden-org{{/visible}}">
     <a class="tenant-row text-decoration-none text-reset"
-       data-toggle="collapse" href="#org-{{id}}-children"
+       data-toggle="collapse" data-bs-toggle="collapse" data-bs-target="#org-{{id}}-children" href="#org-{{id}}-children"
        role="button" aria-expanded="false" aria-controls="org-{{id}}-children">
         <div class="org-meta">
             <div class="tenant-icon" style="background: {{#has_brand}}{{brand_color}}{{/has_brand}}{{^has_brand}}var(--ap-color-primary, #0066A7){{/has_brand}};">
@@ -115,7 +115,7 @@
             {{#can_manage}}
             <span class="dropdown" onclick="event.stopPropagation();">
                 <button type="button" class="btn btn-sm btn-link text-muted p-0 dropdown-toggle no-arrow"
-                        data-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
+                        data-toggle="dropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
                     <i class="fa fa-ellipsis-v"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-right">

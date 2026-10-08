@@ -43,7 +43,9 @@ $plugin->component = 'local_sentientia_org';
 // marker (their logo and description copies are a declared side effect, counted in the run report), and
 // org_source::root_is_registered() delegates to tenant_resolver (F-11). No schema change. The marker interface ships
 // with local_sentientia_platform 2026100701, which this plugin therefore requires.
-$plugin->version   = 2026100701;  // ADR-032 IDN-04: copies_files marker (on top of 2026093002 cohort_scope importer)
+// 2026100801 - Moodle 5.3 compat FX-20: org tree dropdown/collapse emit data-bs-toggle (and data-bs-target) beside the Bootstrap 4 data-toggle. No schema change.
+$plugin->version   = 2026100801;  // Moodle 5.3 compat FX-20 (on top of 2026100701 ADR-032 IDN-04)
+// 2026100701:  // ADR-032 IDN-04: copies_files marker (on top of 2026093002 cohort_scope importer)
 // 2026092500: ADR-031 tenant-bounded org tree + parent pick.
 // 2026092200: descendants-only access filter is /-bounded.
 // 2026052002:

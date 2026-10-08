@@ -407,3 +407,7 @@ and `docs/cutover/bizlms-import-decisions.json`; this card says what the code no
   change. Both trees carry every file; `version.php` is still a baselined, comment-only divergence.
 - NOT RUN: PHPUnit (the lead re-inits once for the platform and org bumps). `php -l` and the drift, lang-parity,
   path-boundary and fixture-copy gates pass.
+
+## 2026-10-08 Moodle 5.3 compat FX-20 (version 2026100801)
+
+`templates/manage.mustache` and `templates/org_node.mustache` emit `data-bs-toggle="dropdown"` (and, for the tenant row collapse, `data-bs-toggle="collapse"` plus `data-bs-target`) beside the Bootstrap 4 `data-toggle`, so the tree menus keep working if the theme later moves to core Bootstrap 5.3 JS. Bootstrap 4 ignores the new attributes and Bootstrap 5 ignores the old ones. No schema change.

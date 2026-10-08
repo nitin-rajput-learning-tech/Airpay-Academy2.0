@@ -15,7 +15,9 @@ $plugin->component = 'local_sentientia_skills';
 //                       translated, covering all P1 #22/#25 additions
 //                       plus the previously-missing admin CRUD + privacy
 //                       metadata. Was at 19/80; now 80/80.
-$plugin->version   = 2026093001;  // ADR-032 BizLMS import (skills): course_levels + skill_interest tables, idnumber/open_path on categories and skills, names widened to 255, skills importer
+// 2026100801 - Moodle 5.3 compat FX-20: the learner self-rate dialog is a core/modal_save_cancel dialog (it used window.bootstrap.Modal, which exists in no tree); templates/view.mustache holds an inert source block for it. No schema change.
+$plugin->version   = 2026100801;  // Moodle 5.3 compat FX-20 (on top of 2026093001 ADR-032 BizLMS import)
+// 2026093001:  // ADR-032 BizLMS import (skills): course_levels + skill_interest tables, idnumber/open_path on categories and skills, names widened to 255, skills importer
 // 2026092501:  // ADR-031 follow-up: new :mapcourses cap (manager default) for in-tenant course mapping; catalogue writes cross-tenant only
 // 2026092500:  // ADR-031: :manage has no default grant (+ revoke step); learners/backfill tenant-scoped
 $plugin->requires  = 2024100700;

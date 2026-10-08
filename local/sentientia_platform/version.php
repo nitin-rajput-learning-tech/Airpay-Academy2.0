@@ -72,7 +72,9 @@ $plugin->component = 'local_sentientia_platform';
 // user/lib.php on 5.1/5.2), so the deprecated 5.3 user_*() globals are never reached. No schema change.
 // 2026100802 - Moodle 5.3 compat FX-16: upgrade step rewriting the stored PWA start_url /my/dashboard.php -> /my/ (customer brand rows),
 // default brand bundle and plugin links point at /my/ so they no longer need the my/dashboard.php shim. No schema change.
-$plugin->version   = 2026100802;  // Moodle 5.3 compat FX-16: PWA start_url -> /my/ (on top of 2026100801 FX-12 compat\user_api)
+// 2026100803 - Moodle 5.3 compat FX-20: the Switchboard "Review changes" confirmation is a core/modal_save_cancel dialog (it used window.bootstrap.Modal, which exists in no tree, so the review step was silently skipped); AMD bundle rebuilt, dead modal markup removed from the template. No schema change.
+$plugin->version   = 2026100803;  // Moodle 5.3 compat FX-20 (on top of 2026100802 FX-16)
+// 2026100802:  // Moodle 5.3 compat FX-16: PWA start_url -> /my/ (on top of 2026100801 FX-12 compat\user_api)
 // 2026092500 - ADR-031: local/sentientia_platform:crosstenant + tenant::is_cross_tenant/scope_path/require_same_tenant_user
 // 2026092400 - tests/exception_strings_test.php: platform guard - core-resolved exception keys must exist (N5)
 // 2026092200: tenant::path_descendant_filter() + DB-level path-boundary regression suite  // Phase 2.1: customer::current() de-hardwired via tenant_registry (dormant while legacy allow-list ON)

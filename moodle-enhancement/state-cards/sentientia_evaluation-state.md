@@ -383,3 +383,7 @@ platform dependency are unchanged. Both trees byte-identical.
 ## 2026-10-08 Moodle 5.3 compat FX-18
 
 Every `fputcsv()` / `fgetcsv()` / `str_getcsv()` call in this plugin now passes the `$escape` argument explicitly with the historic default (`',', '"', '\\'`, and `null` for the `fgetcsv` length). The output and the parsing are byte-identical; PHP 8.4 deprecates relying on the default, and the notice would otherwise be written into the CSV stream on a 8.4 host (UAT and production run PHP 8.3). No version bump, no schema change.
+
+## 2026-10-08 Moodle 5.3 compat FX-20 (version 2026100801)
+
+`templates/questions.mustache`: the question card menu emits `data-bs-toggle="dropdown"` beside the Bootstrap 4 `data-toggle`. No schema change.
