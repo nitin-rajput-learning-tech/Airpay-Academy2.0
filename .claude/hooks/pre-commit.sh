@@ -511,8 +511,11 @@ echo "-> [19/19] Cross-tree plugin twin check..."
 #
 # The CI job walks both trees in full. This only checks what is staged, so it
 # is fast and catches the mistake while you can still fix it in one commit.
+# Moodle 5.3 compat FX-13: the same applies to the other plugin areas that live in both trees
+# (payment/gateway, enrol, mod/quiz/accessrule, admin/tool); tools/check-tree-drift.php lists them.
+TWIN_AREAS='(local|payment/gateway|enrol|mod/quiz/accessrule|admin/tool)'
 TWIN_STAGED=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null \
-    | grep -E '^(local|moodle-enhancement/local)/' || true)
+    | grep -E "^(moodle-enhancement/)?${TWIN_AREAS}/" || true)
 if [ -z "$TWIN_STAGED" ]; then
     ok "No dual-tree plugin files staged"
 else
@@ -520,9 +523,8 @@ else
     TWIN_REPORT=""
     for f in $TWIN_STAGED; do
         case "$f" in
-            moodle-enhancement/local/*) twin="local/${f#moodle-enhancement/local/}" ;;
-            local/*)                    twin="moodle-enhancement/local/${f#local/}" ;;
-            *) continue ;;
+            moodle-enhancement/*) twin="${f#moodle-enhancement/}" ;;
+            *)                    twin="moodle-enhancement/$f" ;;
         esac
         # A file with no twin at all is reported by the CI job against the
         # baseline, not here: creating a genuinely single-tree file is a

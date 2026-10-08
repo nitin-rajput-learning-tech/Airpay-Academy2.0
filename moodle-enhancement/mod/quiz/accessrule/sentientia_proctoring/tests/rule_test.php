@@ -26,6 +26,11 @@ namespace quizaccess_sentientia_proctoring;
 
 defined('MOODLE_INTERNAL') || die();
 
+global $CFG;
+// Core loads accessrule rule.php directly (not via the classmap) — tests must
+// do the same, exactly as core quizaccess rule tests do.
+require_once($CFG->dirroot . '/mod/quiz/accessrule/sentientia_proctoring/rule.php');
+
 /**
  * Tests for the quizaccess_sentientia_proctoring\rule class.
  *
