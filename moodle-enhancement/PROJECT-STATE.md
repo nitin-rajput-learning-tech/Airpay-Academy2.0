@@ -35,7 +35,7 @@ ADR-032 ("Metrics version 4", "Hook 4 made exact", "FINDING"), `tools/rehearsal/
 - **Not run, on purpose or for lack of a way:** PHPUnit (a local run was in progress; every new and changed test is unexecuted,
   see the state card), the CLI under a bootstrapped Moodle, MySQL 8.4 / RDS, the hop to 5.3 (ADR-033). What ran: `php -l`, `bash -n`, the
   four repo gates (all clean), the kit's `selftest.sh` (128 pass) and a DRY run of all 13 steps, step 01 in `--execute` mode against scratch
-  `stageb_*` schemas (22 moodledata and dump scenarios), and the real parity library and `parity_gate` against a scratch schema through a ``
+  `stageb_*` schemas (22 moodledata and dump scenarios), and the real parity library and `parity_gate` against a scratch schema through a `$DB`
   stand-in (34 assertions on `enrol`, 7 on the standalone tool's `tool.sha256` refusals). The scratch schemas were dropped.
 
 ---
