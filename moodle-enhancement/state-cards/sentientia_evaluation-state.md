@@ -379,3 +379,7 @@ platform dependency are unchanged. Both trees byte-identical.
   supervisor exception, stray rows block, `duplicate_value` needs-owner, imported template not deletable, supervisor
   assignment not shown as a response, the `unlinked` note. Static checks run: `php -l` on every changed file, the
   ADR-032 static scan over `classes/bizlms/` (clean), tree drift, lang parity, path boundary, fixture copies.
+
+## 2026-10-08 Moodle 5.3 compat FX-18
+
+Every `fputcsv()` / `fgetcsv()` / `str_getcsv()` call in this plugin now passes the `$escape` argument explicitly with the historic default (`',', '"', '\\'`, and `null` for the `fgetcsv` length). The output and the parsing are byte-identical; PHP 8.4 deprecates relying on the default, and the notice would otherwise be written into the CSV stream on a 8.4 host (UAT and production run PHP 8.3). No version bump, no schema change.

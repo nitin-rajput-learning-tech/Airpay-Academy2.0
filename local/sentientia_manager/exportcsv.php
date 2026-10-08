@@ -22,7 +22,7 @@ $out = fopen('php://output', 'w');
 fwrite($out, "\xEF\xBB\xBF");
 
 foreach (\local_sentientia_manager\approval_manager::csv_iterator_decisions((int) $USER->id) as $row) {
-    fputcsv($out, $row);
+    fputcsv($out, $row, ',', '"', '\\');
 }
 fclose($out);
 exit;

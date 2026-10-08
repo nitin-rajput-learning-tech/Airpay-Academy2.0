@@ -72,11 +72,11 @@ fwrite($out, "\xEF\xBB\xBF");
 // hides the respondent and carries the day, not the minute, it was submitted.
 $identityprotected = \local_sentientia_evaluation\evaluation_manager::identity_protected($eval);
 
-fputcsv($out, \local_sentientia_evaluation\evaluation_manager::csv_header_row($questions));
+fputcsv($out, \local_sentientia_evaluation\evaluation_manager::csv_header_row($questions), ',', '"', '\\');
 foreach ($responses as $r) {
     fputcsv($out,
         \local_sentientia_evaluation\evaluation_manager::response_to_csv_row($r, $questions, $eval,
-            $identityprotected));
+            $identityprotected), ',', '"', '\\');
 }
 fclose($out);
 

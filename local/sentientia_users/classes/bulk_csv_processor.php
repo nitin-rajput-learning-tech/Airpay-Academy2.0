@@ -188,14 +188,14 @@ class bulk_csv_processor {
     private static function parse_csv(string $content): array {
         $lines = preg_split('/\r\n|\r|\n/', trim($content));
         if (empty($lines)) return [];
-        $header = str_getcsv(array_shift($lines));
+        $header = str_getcsv(array_shift($lines), ',', '"', '\\');
         $header = array_map(fn($h) => strtolower(trim((string) $h)), $header);
 
         $rows = [];
         foreach ($lines as $i => $line) {
             $line = trim($line);
             if ($line === '') continue;
-            $fields = str_getcsv($line);
+            $fields = str_getcsv($line, ',', '"', '\\');
             $row = [];
             foreach ($header as $idx => $key) {
                 $row[$key] = $fields[$idx] ?? '';

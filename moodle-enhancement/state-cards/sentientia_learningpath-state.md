@@ -408,3 +408,7 @@ Branch `claude/owner-decisions-y`, both trees. **No version bump** (no schema, c
 **Tests.** New `tests/imported_unenrol_test.php` (pending removal, each history kind refused, archived path, native unchanged, the pure rule, the listed course enrolments with a plan/learner/outcome mix, nothing removed, the web service result, en + hi, the cover with the flag OFF and ON). `imported_history_test` still holds (it uses a completed enrolment).
 
 **Not done / owed.** Visual evidence (docs/visual-evidence/2026-10-07/learning-cluster/README.md): the admin path page with the flag OFF and ON, and the unenrol warning. `mypaths.php` is still reached by no navigation entry and the approval message and WhatsApp milestone still link to `mycourses.php`: add the nav entry and point those two links at `mypaths.php` WITH the flag flip (Nitin's call).
+
+## 2026-10-08 Moodle 5.3 compat FX-18
+
+Every `fputcsv()` / `fgetcsv()` / `str_getcsv()` call in this plugin now passes the `$escape` argument explicitly with the historic default (`',', '"', '\\'`, and `null` for the `fgetcsv` length). The output and the parsing are byte-identical; PHP 8.4 deprecates relying on the default, and the notice would otherwise be written into the CSV stream on a 8.4 host (UAT and production run PHP 8.3). No version bump, no schema change.

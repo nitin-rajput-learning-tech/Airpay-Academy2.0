@@ -1097,3 +1097,7 @@ Branch `claude/owner-decisions-y`, both trees. **No version bump** (docs and a s
 ## 2026-10-08 Moodle 5.3 compat FX-15
 
 `course_manager::delete()` calls `delete_course($course, false, false)`. Moodle 5.3 added a third argument (`$asyncpreferred`, default true): with the site setting `moodlecourse|enablecourseasyncdeletion` on (default off), `delete_course()` only marks `course.deletioninprogress` and queues an adhoc task, so `delete()` would have reported success while the course still existed. Passing `false` keeps the deletion synchronous, as every caller expects. Moodle 5.1 and 5.2 ignore the extra argument. No schema change, no version bump.
+
+## 2026-10-08 Moodle 5.3 compat FX-18
+
+Every `fputcsv()` / `fgetcsv()` / `str_getcsv()` call in this plugin now passes the `$escape` argument explicitly with the historic default (`',', '"', '\\'`, and `null` for the `fgetcsv` length). The output and the parsing are byte-identical; PHP 8.4 deprecates relying on the default, and the notice would otherwise be written into the CSV stream on a 8.4 host (UAT and production run PHP 8.3). No version bump, no schema change.

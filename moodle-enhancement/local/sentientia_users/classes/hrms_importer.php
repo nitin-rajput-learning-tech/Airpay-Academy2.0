@@ -721,7 +721,7 @@ class hrms_importer {
             return [];
         }
         $header_line = array_shift($lines);
-        $header = str_getcsv($header_line);
+        $header = str_getcsv($header_line, ',', '"', '\\');
         $header = array_map(fn($h) => strtolower(trim((string) $h)), $header);
 
         // Verify the header contains all mandatory columns.
@@ -736,7 +736,7 @@ class hrms_importer {
             if (trim($line) === '') {
                 continue;
             }
-            $fields = str_getcsv($line);
+            $fields = str_getcsv($line, ',', '"', '\\');
             $row = [];
             foreach ($header as $idx => $key) {
                 if (in_array($key, self::STANDARD_COLUMNS, true)) {

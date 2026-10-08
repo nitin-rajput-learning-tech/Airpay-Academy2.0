@@ -267,3 +267,7 @@ enrolment of a learner in a course, so the pair is the unit. Test: `analytics_ma
 ## 2026-10-07 - fix round 1: the "New Enrolments" KPI departs from the text of doc item 40 (owner's OK needed)
 
 Doc item 40 says `COUNT(DISTINCT ue.userid)` with `ue.status = 0 AND e.status = 0`. The KPI counts DISTINCT learner-course pairs (`e.courseid` + `ue.userid`) with the same two filters, because it counts enrolments in a period: a learner who enrolled in two courses is two new enrolments, which a distinct-learner count would report as one; a converted learner (BizLMS row and its manual twin in ONE course) is still one. This is deliberate and arguably the better reading of "New Enrolments". Please confirm. To follow the item literally, replace `$pairkey` in `analytics_manager::get_kpis()` with `ue.userid`; `test_new_enrolments_counts_a_learner_course_pair_once` then expects 2 instead of 3. No version change.
+
+## 2026-10-08 Moodle 5.3 compat FX-18
+
+Every `fputcsv()` / `fgetcsv()` / `str_getcsv()` call in this plugin now passes the `$escape` argument explicitly with the historic default (`',', '"', '\\'`, and `null` for the `fgetcsv` length). The output and the parsing are byte-identical; PHP 8.4 deprecates relying on the default, and the notice would otherwise be written into the CSV stream on a 8.4 host (UAT and production run PHP 8.3). No version bump, no schema change.

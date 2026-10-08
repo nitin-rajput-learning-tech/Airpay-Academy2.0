@@ -558,3 +558,7 @@ Branch `claude/owner-decisions-y`, both trees. **No version bump** (a class and 
 ## 2026-10-08 Moodle 5.3 compat FX-16
 
 Links and redirects to `/my/dashboard.php` now point at `/my/` (the dashboard; the old path is a redirect shim that is an added file on Moodle 5.3). Same landing page, one redirect fewer, no dependence on the shim. PWA `manifest.php` `start_url` is `/my/`; the stored brand rows are rewritten by the `local_sentientia_platform` upgrade step `2026100802`. No schema change, no version bump here.
+
+## 2026-10-08 Moodle 5.3 compat FX-18
+
+Every `fputcsv()` / `fgetcsv()` / `str_getcsv()` call in this plugin now passes the `$escape` argument explicitly with the historic default (`',', '"', '\\'`, and `null` for the `fgetcsv` length). The output and the parsing are byte-identical; PHP 8.4 deprecates relying on the default, and the notice would otherwise be written into the CSV stream on a 8.4 host (UAT and production run PHP 8.3). No version bump, no schema change.

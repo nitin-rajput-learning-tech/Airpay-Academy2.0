@@ -342,3 +342,7 @@ Now checks the successor. The ADR-031 tenant bound after the gate (`same_tenant(
 cross-tenant) is unchanged. Covered by `local_sentientia_courses` `tests/capability_gates_test.php`
 (tenant bound) and the platform guard `local_sentientia_platform` `tests/capability_names_test.php`.
 No version bump.
+
+## 2026-10-08 Moodle 5.3 compat FX-18
+
+Every `fputcsv()` / `fgetcsv()` / `str_getcsv()` call in this plugin now passes the `$escape` argument explicitly with the historic default (`',', '"', '\\'`, and `null` for the `fgetcsv` length). The output and the parsing are byte-identical; PHP 8.4 deprecates relying on the default, and the notice would otherwise be written into the CSV stream on a 8.4 host (UAT and production run PHP 8.3). No version bump, no schema change.

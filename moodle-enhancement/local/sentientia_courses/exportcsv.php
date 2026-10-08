@@ -142,7 +142,7 @@ fputcsv($out, [
     'Start Date',
     'End Date',
     'Created',
-]);
+], ',', '"', '\\');
 
 foreach ($rows as $c) {
     $enrolled  = (int) ($c->enrolled_count ?? 0);
@@ -164,7 +164,7 @@ foreach ($rows as $c) {
         $c->startdate ? userdate($c->startdate, '%Y-%m-%d') : '',
         $c->enddate   ? userdate($c->enddate,   '%Y-%m-%d') : '',
         $c->timecreated ? userdate($c->timecreated, '%Y-%m-%d') : '',
-    ]);
+    ], ',', '"', '\\');
 }
 
 fclose($out);

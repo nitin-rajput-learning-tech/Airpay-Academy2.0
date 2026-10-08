@@ -455,3 +455,7 @@ signed key `org_roles.user_without_tenant` = `skip_fail_closed` in `docs/cutover
   are skipped with the right reasons; preflight `user_without_tenant:5`; the floater holds nothing and has no audit row).
   PHPUnit needs the lead's re-init for the version bump.
 - Both trees are byte-identical.
+
+## 2026-10-08 Moodle 5.3 compat FX-18
+
+Every `fputcsv()` / `fgetcsv()` / `str_getcsv()` call in this plugin now passes the `$escape` argument explicitly with the historic default (`',', '"', '\\'`, and `null` for the `fgetcsv` length). The output and the parsing are byte-identical; PHP 8.4 deprecates relying on the default, and the notice would otherwise be written into the CSV stream on a 8.4 host (UAT and production run PHP 8.3). No version bump, no schema change.

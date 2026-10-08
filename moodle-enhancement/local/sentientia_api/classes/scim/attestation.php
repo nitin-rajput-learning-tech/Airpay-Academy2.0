@@ -103,7 +103,7 @@ class attestation {
      */
     public static function to_csv(int $limit = 5000, ?int $costcenterid = null): string {
         $out = fopen('php://temp', 'r+');
-        fputcsv($out, ['time_utc', 'action', 'client', 'userid', 'username', 'externalid', 'detail']);
+        fputcsv($out, ['time_utc', 'action', 'client', 'userid', 'username', 'externalid', 'detail'], ',', '"', '\\');
         foreach (self::recent($limit, 0, $costcenterid) as $r) {
             fputcsv($out, [
                 gmdate('Y-m-d\TH:i:s\Z', (int) $r->timecreated),
@@ -113,7 +113,7 @@ class attestation {
                 (string) ($r->username ?? ''),
                 (string) ($r->externalid ?? ''),
                 (string) ($r->detail ?? ''),
-            ]);
+            ], ',', '"', '\\');
         }
         rewind($out);
         $csv = stream_get_contents($out);
