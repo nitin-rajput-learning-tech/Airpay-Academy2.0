@@ -42,7 +42,7 @@
         <FIELD NAME="subject"     TYPE="char" LENGTH="255" NOTNULL="true"/>
         <FIELD NAME="message"     TYPE="text" NOTNULL="false"/>
         <FIELD NAME="status"      TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="sent"
-               COMMENT="sent|read|failed"/>
+               COMMENT="sending|sent|read|failed|suppressed"/>
         <FIELD NAME="timecreated" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timeread"    TYPE="int"  LENGTH="10" NOTNULL="false"/>
       </FIELDS>
