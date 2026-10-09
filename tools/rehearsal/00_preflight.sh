@@ -258,6 +258,24 @@ if [ "$EXECUTE" = 1 ] && [ "$FAILS" = 0 ]; then
             else
                 warn "database ${DB_NAME} carries no rehearsal-kit marker: step 01 refuses it unless the kit restored it, or RESTORE_DONE_BY_HAND=${DB_NAME} states that you restored the live backup into it by hand"
             fi
+            # A stamped copy that step 01 has not FINISHED ok is not cleared: step 01 stamps early and neutralises late (SMTP, cron_enabled, the
+            # restored OAuth2 tokens), and a failed or killed step 01 leaves the copy stamped and un-neutralised. Steps 02 to 11 refuse it
+            # (require_kit_marker). A run that goes through step 01 is what finishes it (a warning here); a run that starts after step 01 (run_all.sh
+            # --from 02, or --only without 01) cannot, and is refused here, before any step. Whether step 01 is in the run is said by run_all.sh
+            # (REHEARSAL_RUN_STEP01); a preflight run alone does not know, and warns.
+            if [ "$have_rc" = 0 ] && [ -n "$have_marker" ] && [ "$have_marker" = "$(kv_get restore.id)" ]; then
+                step01_rc=0
+                step01_why="$(step01_unfinished "$have_marker")" || step01_rc=$?
+                if [ "$step01_rc" != 0 ]; then
+                    warn "database ${DB_NAME}: the record that step 01 finished for restore ${have_marker:0:8}... ({config} ${KIT_STEP01_KEY}) could not be read: steps 02 to 11 refuse this copy until it can be"
+                elif [ -z "$step01_why" ]; then
+                    pass "step 01 finished ok for restore ${have_marker:0:8}... (its record is in the database and in state/kv)"
+                elif [ "${REHEARSAL_RUN_STEP01:-}" = 0 ]; then
+                    fail "step 01 has not finished ok for this copy (restore ${have_marker:0:8}...: ${step01_why}) and this run does not include it: the copy is stamped but not cleared (its file store gate and its neutralisation of the SMTP credentials, cron_enabled and the OAuth2 tokens are not all done), so steps 02 to 11 would refuse it. Run step 01 first: bash tools/rehearsal/run_all.sh --execute --from 01"
+                else
+                    warn "step 01 has not finished ok for this copy (restore ${have_marker:0:8}...: ${step01_why}): steps 02 to 11 refuse it until it has. Run step 01 (bash tools/rehearsal/run_all.sh --execute --from 01)"
+                fi
+            fi
             if [ "$(db_scalar "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${DB_NAME}' AND TABLE_NAME = '${DB_PREFIX}config'")" = 1 ]; then
                 cron="$(db_config_value cron_enabled || true)"
                 if [ "$cron" = "0" ]; then
@@ -265,7 +283,7 @@ if [ "$EXECUTE" = 1 ] && [ "$FAILS" = 0 ]; then
                 elif step_done_ok 01; then
                     fail "cron_enabled is '${cron}' in the database after step 01 set it to 0: someone re-enabled it (php admin/cli/cron.php --disable)"
                 else
-                    warn "cron_enabled is '${cron:-unset}' in the restored database; step 01 sets it to 0 before anything else touches it"
+                    warn "cron_enabled is '${cron:-unset}' in the restored database; step 01 sets it to 0 before anything else touches it (and steps 02 to 11 refuse a copy for which step 01 has not finished ok, whatever cron_enabled says)"
                 fi
                 nm="$(db_config_value noemailever || true)"
                 note "config table holds noemailever='${nm}' (irrelevant: the config.php setting rules)"

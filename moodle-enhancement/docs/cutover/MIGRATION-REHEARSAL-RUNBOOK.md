@@ -127,15 +127,28 @@ Things the kit does that the numbered steps below do not say (added 2026-10-08, 
   directory (or point `MOODLEDATA` at a new, empty one) and run step 01 again, or unpack the archive by hand into an EMPTY directory
   and name its path in `RESTORE_MOODLEDATA_BY_HAND` (a hand unpack has no completeness check of its own: verify the archive's
   SHA-256 against the live backup's manifest first, and that `tar` ran to the end of a complete archive).
-* **A moodledata archive is proven whole before the database is touched** (round 6b). A tar that is cut exactly at a member
+* **A moodledata archive is proven whole before the database is touched** (rounds 6b and 7). A tar that is cut exactly at a member
   header is unpacked by GNU tar with exit status 0 and no message, so a "cut tar" is NOT refused by tar itself, and a `.tar.gz` that a
   dying `tar` wrote into `gzip` is a valid gzip file around a cut tar. Step 01 therefore refuses the archive before it restores
-  anything (nothing is claimed, stamped or unpacked): with `RESTORE_MOODLEDATA_SHA256` set (the checksum of the live backup's
-  manifest) the archive's SHA-256 must match, and that is the proof; without it a tar (plain, gz, bz2, xz, zst) must read to its
-  end and finish with the two zero blocks that end every tar (a zip is cut loudly by its central directory). The proof used, and the
-  checksum, go to `state/kv` and the summary. The archive's size and mtime are read again after the unpack: an archive that changed
-  while it was unpacked leaves the in-flight file in place. Set `RESTORE_MOODLEDATA_SHA256` for the real rehearsal; the format check
-  alone is a weaker proof.
+  anything (nothing is claimed, stamped or unpacked). With `RESTORE_MOODLEDATA_SHA256` set (the checksum of the live backup's
+  manifest) the archive's SHA-256 must match, and that is the proof. **An uncompressed `.tar` needs that checksum and is refused
+  without it:** nothing inside a plain tar can show that every byte of it arrived. A copy that stopped part way (a pre-allocated or
+  segmented download, a file system that kept the size and lost the data) is full size and ends in zeros, GNU tar takes two zero blocks
+  where a header is due for the end of the archive and exits 0, and the members after the zero-filled region are simply not unpacked.
+  A compressed tar (gz, bz2, xz, zst) is read to its end by its decompressor, which fails on a cut or zero-filled stream, and must
+  finish with the two zero blocks that end every tar; a zip is checked by `unzip` itself while it unpacks (its central directory and a
+  CRC-32 per member). A checksum that is set is always checked, also on a re-run where `filedir/` is already there and on a new restore
+  that reuses the finished unpack, and a checksum without `RESTORE_MOODLEDATA_ARCHIVE` is refused. The proof used, and the checksum, go
+  to `state/kv` and the summary. The archive's size and mtime are read again after the unpack: an archive that changed while it was
+  unpacked leaves the in-flight file in place. Take the checksum where the archive is made, from the live backup's manifest.
+* **A copy that step 01 stamped is not a copy that step 01 cleared** (round 7). Step 01 stamps the database and the moodledata right
+  after the restore, long before its file store gate and its neutralisation (SMTP credentials wiped, `cron_enabled = 0`, the restored
+  OAuth2 tokens blanked). The last act of a step 01 that reached its end is a record that it finished for this restore: the `{config}`
+  row `rehearsal_kit_step01_ok` and `state/kv/restore.verified`; step 01 removes both when it starts on a copy it already stamped.
+  Steps 02 to 11 refuse the copy unless `state/01.status` is ok and both records hold the restore id (a record that cannot be read is
+  "cannot tell": refused), and the preflight refuses a run that starts after step 01 on such a copy. So a step 01 that failed at the
+  file store gate, or was killed before it, leaves a copy that nothing after it will touch: fix the cause and run
+  `run_all.sh --execute --from 01`.
 * **One `--execute` run per work directory.** `run_all.sh` takes `REHEARSAL_WORK/.run.lock`, and a step run alone takes it too
   (exit 3 while another run holds it; the lock is per work directory, so two work directories on one database are NOT locked against each other: one `REHEARSAL_WORK` per rehearsal database). Steps started by `run_all.sh` use the lock it holds. The lock directory holds the pid of the
   run and, while a step is running, the pid of that step (`step.pid`); the refusal names both and says whether each is alive. Remove
@@ -144,9 +157,15 @@ Things the kit does that the numbered steps below do not say (added 2026-10-08, 
   `run_all.sh` waits for that step, starts no further step (the summary included) and exits 143 (`INT`: 130, `HUP`: 129). A signal
   sent to a STEP is acted on when the command it is running has returned: the step records `status=fail`, `rc=128+n`, `signal=NAME`
   in `state/NN.status`, releases its lock and exits 128+n; it never records ok on a signal, and a step that dies without a trap
-  (`KILL`) leaves `status=running`, which nothing reads as ok (the summary prints it as DID NOT FINISH). Ctrl-C reaches the whole
-  process group, so it stops the running step and its commands as well; to stop a step and what it runs by hand, signal its process
-  group. Run the rehearsal under `tmux` or `screen`: a dropped ssh session sends `HUP`.
+  (`KILL`) leaves `status=running`, which nothing reads as ok (the summary prints it as DID NOT FINISH). `USR1`, `USR2`, `ALRM`, `VTALRM`, `XCPU` and `XFSZ` are
+  handled like `TERM` (exit 128+n; bash runs the EXIT trap with status 0 for each of them, which used to record a step as ok); `SIGPIPE`
+  (the death of the `tee` a step writes its log through) is only noted, and a step that saw it and no other signal ends `fail`, rc 141.
+  To stop a step and what it runs, signal the whole process group (`kill -TERM -- -PGID`; Ctrl-C and an ssh hangup do the same): the command
+  ends at once, the step records `fail` with `rc=128+n` and `signal=NAME`, and `run_all.sh` logs its STOPPED line to `logs/run_all.log`,
+  releases the lock and exits 128+n (143 for `kill -TERM`); the handlers write straight to the log files because the `tee` they would
+  write through is gone as well. A signal sent to step 01 while it loads the database is acted on when the load has returned, and a load
+  that returned 0 is then not verified: the in-flight table stays and the database must be dropped and restored again, so do not signal
+  step 01 during the load unless that is what is wanted. Run the rehearsal under `tmux` or `screen`: a dropped ssh session sends `HUP`.
 * **A marker that cannot be read is never "no marker".** The kit's reads of the database marker return "cannot tell" on a failed read
   (a lost connection, a restarting server, any error but the server's own 1146 for a missing config table), on a blank answer for a row
   the COUNT says exists, or on a COUNT that fails or stays blank, and step 01, the preflight and the gate of steps 02 to 11 refuse

@@ -32,6 +32,18 @@
 #     require_kit_marker refuses an in-flight table or file behind a correct marker; a dump that names the table is refused; state/ stays in
 #     place when a claim is not taken (a misread, a lost race); two real runs race for one empty database (the stand-in blocks the first at its
 #     claim until a flag file appears); a TERM sent to run_all.sh alone does not release .run.lock under a running step;
+#   * fix round 7: an UNCOMPRESSED tar is refused without RESTORE_MOODLEDATA_SHA256, however complete it is, and a zero-filled copy of the full size
+#     (the last 1024 bytes of which pass the old test) is refused with it unless the checksum is the one taken where the archive was made; a
+#     zero-filled .tar.gz is refused by its decompressor; a checksum that is set is checked on a re-run where filedir/ is there (wrong: refused,
+#     right: the proof is recorded again), a checksum with no archive is refused; a whole step 01 against the stand-in (end-to-end mode) writes
+#     its record that it finished LAST, after the neutralisation, and removes it when it starts again; require_kit_marker (steps 02 to 11) refuses a
+#     stamped copy whose 01.status is fail, running or missing, whose state/kv/restore.verified or whose database record is missing, belongs to
+#     another restore or cannot be read, and accepts the finished one; the real steps 02, 03 and 11 refuse the copy a failed file store gate left and the
+#     copy a TERM left before the gate (nothing was neutralised: no SMTP wipe, no cron_enabled, no OAuth2 statement reached the database); the
+#     preflight refuses a run that starts after step 01 on such a copy and warns for a run that includes it; USR1 and ALRM to a step alone are
+#     recorded as failures, USR1 to run_all.sh alone keeps its lock, and a TERM to the whole process group ends the step (fail, signal=TERM) and
+#     run_all.sh (exit 143, STOPPED in its log) with the lock released; a content hash that {files} records with two sizes is cut only when the file
+#     on disk matches neither;
 #   * run_all.sh --list and a DRY --only run work; no Windows path or drive letter is hard-coded in the kit.
 # Exit 0 = every test passed.
 
@@ -454,6 +466,12 @@ while [ $# -gt 0 ]; do
         *) shift ;;
     esac
 done
+# fake.e2e: every write the kit sends is kept in fake.sqllog (what a step 01 that failed before its neutralisation never sent)
+if [ -f "$here/fake.e2e" ]; then
+    case "$sql" in
+        UPDATE*|INSERT*|DELETE*) printf '%s\n' "$sql" >> "$here/fake.sqllog" ;;
+    esac
+fi
 if [ -z "$sql" ]; then
     cat > /dev/null
     echo load >> "$here/fake.loads"
@@ -607,6 +625,41 @@ case "$sql" in
             exit 0
         fi
         if [ -s "$here/fake.marker" ]; then echo 1; else echo 0; fi ;;
+    "SELECT value FROM mdl_config WHERE name = 'rehearsal_kit_step01_ok'")
+        # The record that step 01 finished (fake.step01 holds the restore id). fake.once=step01errall: a read that always fails (error 2013).
+        if [ "$(cat "$here/fake.once" 2> /dev/null)" = step01errall ]; then
+            echo "ERROR 2013 (HY000): Lost connection to MySQL server during query" >&2
+            exit 1
+        fi
+        cat "$here/fake.step01" 2> /dev/null ;;
+    *"COUNT(*) FROM mdl_config WHERE name = 'rehearsal_kit_step01_ok'"*)
+        if [ -s "$here/fake.step01" ]; then echo 1; else echo 0; fi ;;
+    *"VALUES ('rehearsal_kit_step01_ok'"*)
+        printf '%s\n' "$sql" | sed -n "s/.*VALUES ('rehearsal_kit_step01_ok', '\([0-9a-f]*\)').*/\1/p" > "$here/fake.step01" ;;
+    "DELETE FROM mdl_config WHERE name = 'rehearsal_kit_step01_ok'") rm -f "$here/fake.step01" ;;
+    *)
+        # fake.e2e: the answers a whole step 01 asks after the restore, for a copy of the 4.1.2 live backup whose filedir is the one content
+        # file of the archives below (aabbccdd...: 1 byte). fake.twohashes: {files} also names a content hash that is not on disk (a failed gate).
+        # fake.blockgate: the first client that asks for the content hashes waits (fake.atgate says so) until fake.releasegate exists.
+        [ -f "$here/fake.e2e" ] || exit 0
+        case "$sql" in
+            "SELECT value FROM mdl_config WHERE name = 'release'") echo '4.1.2 (Build: 20230320)' ;;
+            "SELECT value FROM mdl_config WHERE name = 'version'") echo 2022112802 ;;
+            "SELECT value FROM mdl_config WHERE name = 'cron_enabled'") echo 0 ;;
+            "SELECT DISTINCT contenthash, filesize FROM mdl_files WHERE filesize > 0")
+                if mv "$here/fake.blockgate" "$here/fake.blockgate.taken" 2> /dev/null; then
+                    : > "$here/fake.atgate"
+                    while [ ! -f "$here/fake.releasegate" ]; do sleep 0.2; done
+                fi
+                printf 'aabbccddeeff00112233445566778899aabbccdd\t1\n'
+                if [ -f "$here/fake.twohashes" ]; then printf 'ffeeddccbbaa99887766554433221100ffeeddcc\t5\n'; fi ;;
+            "SELECT COALESCE(SUM(t.sz), 0)"*) echo 1 ;;
+            "SELECT DISTINCT SUBSTRING_INDEX"*) echo /1 ;;
+            *'COUNT(*) FROM information_schema.COLUMNS'*) echo 1 ;;
+            *'COUNT(*) FROM mdl_files WHERE filesize > 0'*) echo 1 ;;
+            *'COUNT(*) FROM mdl_user'*) echo 5 ;;
+            *'SELECT COUNT(*)'*) echo 0 ;;
+        esac ;;
 esac
 exit 0
 FAKE
@@ -621,7 +674,7 @@ fake_db() {
     rm -f "$FW"/fake.once "$FW"/fake.afterrestore "$FW"/fake.partial "$FW"/fake.sentinel "$FW"/fake.claimrace "$FW"/fake.schemata \
         "$FW"/fake.noconfig "$FW"/fake.loads "$FW"/fake.storemarker "$FW"/fake.marker "$FW"/fake.asked \
         "$FW"/fake.blockclaim "$FW"/fake.blockclaim.taken "$FW"/fake.blocked "$FW"/fake.release \
-        "$FW"/fake.countzero "$FW"/fake.insertexists "$FW"/fake.mutatedump
+        "$FW"/fake.countzero "$FW"/fake.insertexists "$FW"/fake.mutatedump         "$FW"/fake.e2e "$FW"/fake.twohashes "$FW"/fake.blockgate "$FW"/fake.blockgate.taken "$FW"/fake.atgate "$FW"/fake.releasegate         "$FW"/fake.step01 "$FW"/fake.sqllog
 }
 # fake_once FAULT: a one-off fault of the client (see the stand-in). fake_after N / fake_partial N: a restore that completes / dies leaves
 # N tables. fake_set NAME VALUE: fake.NAME (claimrace, schemata, noconfig, storemarker, sentinel, blockclaim, release, marker).
@@ -824,23 +877,25 @@ mkdir -p "$T/mdsrc/filedir/aa/bb"
 printf 'x' > "$T/mdsrc/filedir/aa/bb/aabbccddeeff00112233445566778899aabbccdd"
 tar -C "$T/mdsrc" -cf "$T/md-arch.tar" filedir
 ARCH="RESTORE_MOODLEDATA_ARCHIVE=$T/md-arch.tar"
+# An uncompressed tar needs its checksum (round 7): the operator vouches for each archive below with the one taken "where it was made".
+ARCHSHA="RESTORE_MOODLEDATA_SHA256=$(sha256sum "$T/md-arch.tar" | cut -d ' ' -f 1)"
 for variant in used idle; do
     # Rehearsal A: a database restored by hand and the moodledata unpacked from the archive (the stand-in then cannot show the marker
     # back, so step 01 stops at the marker check, after the unpack has been recorded). In the 'used' variant a step after 01 ran too.
     fake_db 400
-    rb_run "m${variant}" "RESTORE_DONE_BY_HAND=$RBDB" "$ARCH"
+    rb_run "m${variant}" "RESTORE_DONE_BY_HAND=$RBDB" "$ARCH" "$ARCHSHA"
     rb_expect "(rehearsal A, ${variant}) hand restore stamped, moodledata unpacked from the archive and recorded" 1 'unpacked from RESTORE_MOODLEDATA_ARCHIVE'
     if [ "$variant" = used ]; then
         printf 'status=ok\n' > "$T/rb-m${variant}/work/state/05.status"
     fi
     # Rehearsal B: a kit restore into a new, empty database that dies part way (the rotation of A's state/ happens here)...
     fake_db none 1
-    rb_run "m${variant}" "$DUMP" "$ARCH"
+    rb_run "m${variant}" "$DUMP" "$ARCH" "$ARCHSHA"
     rb_expect "(rehearsal B, ${variant}) a kit restore of the next rehearsal dies part way" 1 'the database restore failed'
     # ...and is retried on the dropped and re-created database.
     fake_db 0
     fake_after 120
-    rb_run "m${variant}" "$DUMP" "$ARCH"
+    rb_run "m${variant}" "$DUMP" "$ARCH" "$ARCHSHA"
     if [ "$variant" = used ]; then
         rb_expect "B's retry refuses A's dataroot: a step after 01 ran against it, though A's status files are in archive/ by now" 1 'cannot be reused for a new restore' 'reusing it for the new restore'
     else
@@ -886,6 +941,7 @@ head -c 600000 "$T/md-full.tar" > "$T/md-cut.tar"
 # way (the in-flight file, the marker without an unpacked line) hand the kit the checksum of this very file, as the operator who vouches for
 # an archive would: RESTORE_MOODLEDATA_SHA256 settles the proof, and tar then fails on its own at the cut.
 CUTSHA="$(sha256sum "$T/md-cut.tar" | cut -d ' ' -f 1)"
+FULLSHA="$(sha256sum "$T/md-full.tar" | cut -d ' ' -f 1)"
 # An archive made from a moodledata whose own unpack had not finished: it carries the in-flight file.
 mkdir -p "$T/mdinf/filedir/aa/bb"
 printf 'x' > "$T/mdinf/filedir/aa/bb/aabbccddeeff00112233445566778899aabbccdd"
@@ -920,7 +976,7 @@ rm -f "$MD/$INFL"
 rb_run cut "$DUMP"
 rb_expect "(M1) the in-flight file gone (a kit before it, or removed by hand) but the marker records an archive and no unpacked line: refused as well" 1 'records an unpack of an archive' 'not restoring over it'
 rm -rf "$MD"
-rb_run cut "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-full.tar"
+rb_run cut "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-full.tar" "RESTORE_MOODLEDATA_SHA256=$FULLSHA"
 rb_expect "(M1, control) an emptied moodledata and a complete archive: the kit unpacks it" 1 'unpacked from RESTORE_MOODLEDATA_ARCHIVE' 'did not finish'
 if [ ! -e "$MD/$INFL" ] && [[ "$(sed -n 3p "$MD/.rehearsal-kit-restore-id")" == unpacked=* ]] && [ "$(wc -c < "$MD/lang/hi/langconfig.bin")" = 2000000 ]; then
     ok "(M1, control) the in-flight file went only after the unpack was verified, and the marker records the unpack as finished"
@@ -928,7 +984,7 @@ else bad "(M1, control) the finished unpack's state ($(ls -A "$MD" | tr '\n' ' '
 fake_db none
 fake_after 120
 fake_set storemarker 1
-rb_run inf "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-inf.tar"
+rb_run inf "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-inf.tar" "RESTORE_MOODLEDATA_SHA256=$(sha256sum "$T/md-inf.tar" | cut -d ' ' -f 1)"
 rb_expect "(M1) an archive that carries its own in-flight file (it was made from an unfinished unpack) is not a complete unpack, though tar succeeds" 1 'carries its own .rehearsal_unpack_inflight' 'unpacked from RESTORE_MOODLEDATA_ARCHIVE'
 if [ -f "$T/rb-inf/data/$INFL" ]; then ok "(M1) the file stays, so every kit step refuses that directory"; else bad "(M1) the archive's in-flight file was removed"; fi
 
@@ -961,6 +1017,10 @@ rkm_setup() {
     mkdir -p "$T/rkm/state/kv" "$T/rkm/data"
     printf '%s\n' "$RKM_ID" > "$T/rkm/state/kv/restore.id"
     printf '%s\n' "$RKM_ID" > "$T/rkm/data/.rehearsal-kit-restore-id"
+    # and step 01 has finished for this restore (round 7: the gate asks for it as well): its status, state/kv/restore.verified and the database's record
+    printf 'status=ok\n' > "$T/rkm/state/01.status"
+    printf '%s\n' "$RKM_ID" > "$T/rkm/state/kv/restore.verified"
+    printf '%s\n' "$RKM_ID" > "$FW/fake.step01"
 }
 t_rkm() {
     EXECUTE=1 STEP_ID=t MYSQL_BIN="$FW/fakemysql" DB_NAME=stageb_selftest REHEARSAL_DB_ALLOWLIST=stageb_selftest DB_PREFIX=mdl_ \
@@ -1144,7 +1204,6 @@ if [ "$(wc -c < "$T/rb-pgz/data/lang/hi/langconfig.bin")" = 2000000 ] && [ "$(rb
     ok "(6b-1, control) the whole language pack is there, and the proof used (tar-end, no checksum) is recorded in state/kv"
 else bad "(6b-1, control) the unpack of the good .tar.gz, or its recorded proof ($(rb_kv pgz restore.moodledata_proof))"; fi
 # RESTORE_MOODLEDATA_SHA256: must match before anything happens, and is recorded.
-FULLSHA="$(sha256sum "$T/md-full.tar" | cut -d ' ' -f 1)"
 fake_db none
 fake_after 120
 fake_set storemarker 1
@@ -1158,6 +1217,57 @@ rb_expect "(6b-1) the right checksum (in capitals: compared as lower case) is ac
 if [ "$(rb_kv psh restore.moodledata_sha256)" = "$FULLSHA" ] && [ "$(rb_kv psh restore.moodledata_proof)" = sha256 ]; then
     ok "(6b-1) the checksum and the proof 'sha256' are recorded in state/kv (the summary prints them)"
 else bad "(6b-1) the recorded checksum ($(rb_kv psh restore.moodledata_sha256))"; fi
+
+# (Stage B tools fix round 7, M1) A checksum that is set is ALWAYS checked, also when filedir/ is already there (a re-run: the 'psh' rehearsal above is a finished
+# unpack of md-full.tar), and one that has no archive to check is refused.
+rb_run psh "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-full.tar" "RESTORE_MOODLEDATA_SHA256=$CUTSHA"
+rb_expect "(7-M1) a re-run on a finished unpack, with a RESTORE_MOODLEDATA_SHA256 that is not the archive's: refused (it used to be ignored: filedir/ was there)" 1 'has SHA-256 .*not the RESTORE_MOODLEDATA_SHA256' 'not restoring over it'
+rm -f "$T/rb-psh/work/state/kv/restore.moodledata_proof" "$T/rb-psh/work/state/kv/restore.moodledata_sha256"
+rb_run psh "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-full.tar" "RESTORE_MOODLEDATA_SHA256=$FULLSHA"
+rb_expect "(7-M1) the same re-run with the right checksum: it is checked, and the finished unpack is kept" 1 'has the SHA-256 in RESTORE_MOODLEDATA_SHA256' 'RUN: restore moodledata'
+if [ "$(rb_kv psh restore.moodledata_sha256)" = "$FULLSHA" ] && [ "$(rb_kv psh restore.moodledata_proof)" = sha256 ]; then
+    ok "(7-M1) ... and the proof is recorded again (the summary prints it, also for an unpack that a new restore reuses)"
+else bad "(7-M1) the proof after the re-run ('$(rb_kv psh restore.moodledata_proof)', '$(rb_kv psh restore.moodledata_sha256)')"; fi
+rb_run psh "$DUMP" "RESTORE_MOODLEDATA_SHA256=$FULLSHA"
+rb_expect "(7-M1) a checksum with no RESTORE_MOODLEDATA_ARCHIVE is refused, not silently ignored" 1 'RESTORE_MOODLEDATA_SHA256 is set and RESTORE_MOODLEDATA_ARCHIVE is not' 'not restoring over it'
+rb_run psh "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-full.tar"
+rb_expect "(7-M1) an uncompressed tar needs its checksum on a re-run too (filedir/ is there; nothing in the tar can show it is whole)" 1 'is an uncompressed tar and RESTORE_MOODLEDATA_SHA256 is not set' 'not restoring over it'
+
+# The zero-filled copy of the round 6b review: full size, every byte after the header of lang/ zero. Its last 1024 bytes are the two zero blocks, GNU tar
+# takes them for the end of the archive and exits 0, and lang/ is simply not there.
+head -c 2560 "$T/md-full.tar" > "$T/md-zero.tar"
+head -c "$(($(stat -c %s "$T/md-full.tar") - 2560))" /dev/zero >> "$T/md-zero.tar"
+if [ "$(stat -c %s "$T/md-zero.tar")" = "$(stat -c %s "$T/md-full.tar")" ]; then ok "(premise) the zero-filled copy has the full size of the archive"; else bad "(premise) the zero-filled copy's size"; fi
+res="$(in_kit tar_ends_complete tar "$T/md-zero.tar")"
+if [ "$(printf '%s' "$res" | tail -n 1)" = rc=0 ]; then ok "(premise) the old test, the last 1024 bytes, passes the zero-filled tar (rc 0): it cannot tell it from a whole one"; else bad "(premise) tar_ends_complete on the zero-filled tar" "$res"; fi
+mkdir -p "$T/md-zero-x"
+if tar -C "$T/md-zero-x" -xf "$T/md-zero.tar" 2> /dev/null && [ ! -e "$T/md-zero-x/lang" ] && [ -f "$T/md-zero-x/filedir/aa/bb/aabbccddeeff00112233445566778899aabbccdd" ]; then
+    ok "(premise) GNU tar unpacks it with exit status 0 and no lang/: a cut that nothing but a checksum shows"
+else ok "(premise) this tar does not accept the zero-filled copy (the checks below still hold)"; fi
+# A zero-filled .tar.gz (the compressed file itself padded with zeros after its first bytes): the decompressor fails on it.
+gzsize="$(stat -c %s "$T/md-full.tar.gz")"
+head -c 1000 "$T/md-full.tar.gz" > "$T/md-zerogz.tar.gz"
+head -c "$((gzsize - 1000))" /dev/zero >> "$T/md-zerogz.tar.gz"
+for variant in "md-full.tar:a COMPLETE uncompressed tar" "md-zero.tar:a zero-filled uncompressed tar of the full size" "md-zerogz.tar.gz:a zero-filled .tar.gz"; do
+    f="${variant%%:*}"
+    fake_db none
+    fake_after 120
+    fake_set storemarker 1
+    rb_run "pz-${f%%.*}" "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/$f"
+    case "$f" in
+        *.gz) rb_expect "(7-M1) ${variant#*:} without a checksum is refused (the decompressor fails on the zeros)" 1 'is not proven complete' 'RUN: restore\|stamped as restore\|unpacked from' ;;
+        *) rb_expect "(7-M1) ${variant#*:} without RESTORE_MOODLEDATA_SHA256 is refused, however complete it is" 1 'is an uncompressed tar and RESTORE_MOODLEDATA_SHA256 is not set' 'RUN: restore\|stamped as restore\|unpacked from' ;;
+    esac
+    nothing_touched "pz-${f%%.*}" "(7-M1) the refusal came before anything was loaded, claimed, stamped or unpacked (${f})"
+done
+# With the checksum the operator vouches for exactly this file: the zero-filled copy is then the file that was made, and is unpacked (the checksum is the proof, and it
+# is the one taken where the archive was made: a copy that stopped part way does not have it).
+fake_db none
+fake_after 120
+fake_set storemarker 1
+rb_run pzr "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-zero.tar" "RESTORE_MOODLEDATA_SHA256=$(sha256sum "$T/md-full.tar" | cut -d ' ' -f 1)"
+rb_expect "(7-M1) the zero-filled copy with the checksum of the COMPLETE archive (the one taken where it was made) is refused: the copy is not that file" 1 'has SHA-256 .*not the RESTORE_MOODLEDATA_SHA256' 'RUN: restore\|unpacked from'
+nothing_touched pzr "(7-M1) ... before anything was loaded, claimed, stamped or unpacked"
 # An archive that is a plain tar but not complete in another way: not a tar at all.
 printf 'this is not an archive\n' > "$T/md-text.tar"
 fake_db none
@@ -1175,7 +1285,7 @@ fake_after 120
 fake_set storemarker 1
 OLDPATH="$PATH"
 PATH="$T/shim:$PATH"
-rb_run pgr "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-grow.tar"
+rb_run pgr "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-grow.tar" "RESTORE_MOODLEDATA_SHA256=$FULLSHA"
 PATH="$OLDPATH"
 rm -f "$T/shim.append"
 rb_expect "(6b-1) an archive that grew while it was unpacked: tar succeeded, the unpack is NOT verified" 1 'changed while it was unpacked' 'unpacked from RESTORE_MOODLEDATA_ARCHIVE'
@@ -1233,9 +1343,8 @@ wait $! 2> /dev/null
 # A signal to a step run alone, while its command runs: TERM and HUP (INT takes the same handler; a background job of this script has INT
 # ignored from the start, which a trap cannot undo, so it cannot be delivered here). The status is running while it runs; the signal is
 # acted on when the command has returned; the step then records failure (128+n, signal=NAME), releases the lock and does not go on.
-for sig in TERM:15 HUP:1; do
-    name="${sig%%:*}"
-    num="${sig##*:}"
+for name in TERM HUP USR1 ALRM; do
+    num="$(kill -l "$name")"
     lname="sg-${name,,}"
     if [ "$name" = HUP ] && [ "$HUP_TRAPPABLE" != 1 ]; then
         skip "(6b-2) SIGHUP to a step alone: SIGHUP is ignored on entry in this environment (started under nohup?), so no bash here can trap it; run the suite without nohup"
@@ -1416,6 +1525,108 @@ else
 fi
 FW="$T"
 
+printf 'a signal to the whole process group, USR1 to run_all.sh alone (Stage B tools fix round 7)\n'
+# USR1 to run_all.sh alone is handled like TERM: it used to end run_all.sh with its EXIT trap (status 0) and the lock released under the running step.
+USR1NUM="$(kill -l USR1)"
+SD="$T/sig6"
+rm -rf "$SD"
+mkdir -p "$SD"
+cp "$K2/sigstep.sh" "$K2/01_restore_check.sh"
+base_env "$T/rb-sgu.env" "REHEARSAL_WORK=$T/rb-sgu/work" "MOODLEDATA=$T/rb-sgu/data" "MYSQL_BIN=$FW/fakemysql" "PRODUCTION_DB_ENDPOINT=live-db.example.internal"
+STUBDIR="$SD" bash "$K2/run_all.sh" --env "$T/rb-sgu.env" --execute --only 01,02,12 > "$T/rb-sgu.out" 2>&1 &
+RP=$!
+if wait_file "$SD/01.started" 240; then
+    kill -USR1 "$RP"
+    sleep 3
+    if alive "$RP" && [ -d "$T/rb-sgu/work/.run.lock" ] && [ ! -e "$SD/child.finished" ]; then
+        ok "(7) USR1 to run_all.sh alone: it is still alive and still holds .run.lock while step 01 runs"
+    else bad "(7) USR1 to run_all.sh released the lock while step 01 still ran (alive: $(alive "$RP" && echo yes || echo no), lock: $([ -d "$T/rb-sgu/work/.run.lock" ] && echo held || echo gone))"; fi
+    touch "$SD/release"
+    rc=0
+    wait "$RP" || rc=$?
+    if [ "$rc" = $((128 + USR1NUM)) ] && [ -e "$SD/child.finished" ] && [ ! -e "$SD/02.started" ] && [ ! -e "$SD/12.started" ] && [ ! -d "$T/rb-sgu/work/.run.lock" ]; then
+        ok "(7) once step 01 has finished run_all.sh starts no further step, releases the lock and exits $((128 + USR1NUM)) (128 + USR1)"
+    else bad "(7) run_all.sh after USR1 (rc ${rc}, wanted $((128 + USR1NUM)); 02 $([ -e "$SD/02.started" ] && echo started || echo not started))" "$(tail -n 6 "$T/rb-sgu.out")"; fi
+else
+    bad "(7) the stub step 01 of the USR1 test never started"
+    touch "$SD/release"
+    kill "$RP" 2> /dev/null || true
+fi
+
+# A step whose log pipe dies (its output goes to a process that has gone) and which then finishes "normally": SIGPIPE is only noted, and the step is
+# recorded failed (rc 141, signal=PIPE), never ok, and releases its lock.
+cat > "$K2/pipestep.sh" <<'STUB'
+#!/usr/bin/env bash
+# shellcheck source=lib/common.sh
+. "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
+step_init 01 pipestep "$@"
+exec > >(exit 0) 2>&1
+sleep 1
+printf 'to a dead pipe\n' || true
+printf 'and again\n' || true
+exit 0
+STUB
+base_env "$T/rb-sgp.env" "REHEARSAL_WORK=$T/rb-sgp/work" "MOODLEDATA=$T/rb-sgp/data" "MYSQL_BIN=$FW/fakemysql" "PRODUCTION_DB_ENDPOINT=live-db.example.internal"
+bash "$K2/pipestep.sh" --env "$T/rb-sgp.env" --execute > "$T/rb-sgp.out" 2>&1
+rc=$?
+if [ "$rc" = 141 ] && [ "$(status_field sgp status)" = fail ] && [ "$(status_field sgp rc)" = 141 ] && [ "$(status_field sgp signal)" = PIPE ] && [ ! -d "$T/rb-sgp/work/.run.lock" ]; then
+    ok "(7) a step that saw SIGPIPE (its log pipe died) and finished 'normally' is recorded failed, rc 141, signal=PIPE, never ok, and releases its lock"
+else bad "(7) the step with a dead log pipe (rc ${rc}, status '$(status_field sgp status)', rc '$(status_field sgp rc)', signal '$(status_field sgp signal)')" "$(tail -n 4 "$T/rb-sgp.out")"; fi
+
+# A signal to the whole PROCESS GROUP (Ctrl-C, an ssh hangup, kill -TERM -- -PGID, which the documentation recommends to stop a step and what it runs)
+# also kills the tee that run_all.sh and the step each write their output through. The handlers' first log line then met a dead pipe: SIGPIPE ended the
+# step with status=running and .run.lock behind it, and run_all.sh with exit 141 and no STOPPED line (round 6b review). The shell has to be able to
+# signal a process group ('set -m': each background job is the leader of its own group).
+GROUP_KILL=0
+bash -c 'set -m; sleep 100 & p=$!; kill -TERM -- -"$p"; wait "$p"; [ "$?" = 143 ]' > /dev/null 2>&1 && GROUP_KILL=1
+if [ "$GROUP_KILL" != 1 ]; then
+    skip "(7) a signal to the whole process group: this shell cannot signal a process group ('set -m', then kill -- -PGID)"
+else
+    cat > "$T/grp.sh" <<'GRP'
+#!/usr/bin/env bash
+# grp.sh STUBDIR KITDIR ENVFILE OUTFILE PIDFILE RCFILE: run_all.sh as the leader of a process group of its own, as a terminal or a tmux window runs it
+set -m
+STUBDIR="$1" bash "$2/run_all.sh" --env "$3" --execute --only 01,02,12 > "$4" 2>&1 &
+printf '%s\n' "$!" > "$5"
+wait "$!"
+printf '%s\n' "$?" > "$6"
+GRP
+    SD="$T/sig5"
+    rm -rf "$SD"
+    mkdir -p "$SD"
+    cp "$K2/sigstep.sh" "$K2/01_restore_check.sh"
+    base_env "$T/rb-sgg.env" "REHEARSAL_WORK=$T/rb-sgg/work" "MOODLEDATA=$T/rb-sgg/data" "MYSQL_BIN=$FW/fakemysql" "PRODUCTION_DB_ENDPOINT=live-db.example.internal"
+    bash "$T/grp.sh" "$SD" "$K2" "$T/rb-sgg.env" "$T/rb-sgg.out" "$T/rb-sgg.pid" "$T/rb-sgg.rc" &
+    GP=$!
+    if wait_file "$SD/01.started" 240 && wait_file "$T/rb-sgg.pid" 20; then
+        RPG="$(cat "$T/rb-sgg.pid")"
+        kill -TERM -- "-$RPG"
+        if wait_file "$T/rb-sgg.rc" 240; then
+            sleep 1
+            rc="$(cat "$T/rb-sgg.rc")"
+            if [ "$rc" = 143 ] && [ ! -d "$T/rb-sgg/work/.run.lock" ] && [ ! -e "$SD/02.started" ] && [ ! -e "$SD/12.started" ]; then
+                ok "(7) kill -TERM to the whole process group: run_all.sh exits 143 (it used to die of SIGPIPE: 141), releases its lock, starts no further step"
+            else bad "(7) run_all.sh after a group TERM (rc ${rc}; lock $([ -d "$T/rb-sgg/work/.run.lock" ] && echo held || echo gone); 02 $([ -e "$SD/02.started" ] && echo started || echo not started))" "$(tail -n 6 "$T/rb-sgg.out")"; fi
+            if [ "$(status_field sgg status)" = fail ] && [ "$(status_field sgg rc)" = 143 ] && [ "$(status_field sgg signal)" = TERM ]; then
+                ok "(7) ... the step recorded itself failed (status=fail rc=143 signal=TERM), not 'running' and not ok"
+            else bad "(7) the status file of the step after a group TERM ($(tr '\n' ' ' < "$T/rb-sgg/work/state/01.status" 2> /dev/null))"; fi
+            if grep -q 'SIGTERM received by step 01' "$T/rb-sgg/work/logs/01-sigstep.log" 2> /dev/null && grep -q 'STOPPED by SIGTERM' "$T/rb-sgg/work/logs/run_all.log" 2> /dev/null; then
+                ok "(7) ... and both say so in their log files (the step's line and run_all.sh's STOPPED line are written to the files when the tee is gone)"
+            else bad "(7) the log files after a group TERM" "$(tail -n 3 "$T/rb-sgg/work/logs/01-sigstep.log" 2> /dev/null; tail -n 3 "$T/rb-sgg/work/logs/run_all.log" 2> /dev/null)"; fi
+            if ! alive "$(cat "$SD/bg.pid")"; then ok "(7) ... and the step's background job is gone"; else bad "(7) the step's background job outlived a group TERM"; kill "$(cat "$SD/bg.pid")" 2> /dev/null; fi
+        else
+            bad "(7) run_all.sh never ended after a group TERM"
+            touch "$SD/release"
+            kill -KILL -- "-$RPG" 2> /dev/null || true
+        fi
+    else
+        bad "(7) the stub step 01 of the group-signal test never started"
+        touch "$SD/release"
+        kill "$GP" 2> /dev/null || true
+    fi
+fi
+FW="$T"
+
 printf 'step 01: the marker read fails closed, and the hand-restore path moves nothing on a misread (Stage B tools fix round 6b, must-fix 3)\n'
 FW="$T/w4"
 fake_db 120
@@ -1557,16 +1768,203 @@ printf 'step 01: the file store gate compares sizes (Stage B tools fix round 6b)
     mkdir -p "$T/fs/aa/bb" "$T/fs/11/22"
     printf 'abc' > "$T/fs/aa/bb/aabbccddeeff00112233445566778899aabbccdd"
     printf 'abcdef' > "$T/fs/11/22/1122334455667788990011223344556677889900"
+    # (round 7) two hashes that {files} records with TWO sizes each (legacy rows: one of the two is wrong); the files on disk are 4 bytes
+    mkdir -p "$T/fs/33/44" "$T/fs/55/66"
+    printf 'abcd' > "$T/fs/33/44/3344556677889900112233445566778899001122"
+    printf 'abcd' > "$T/fs/55/66/5566778899001122334455667788990011223344"
     tab=$'\t'
-    # {files} says: aabb... 3 bytes (right), 1122... 10 bytes (the file on disk is 6: cut), ffee... 5 bytes (not on disk: the missing list's business)
+    # {files} says: aabb... 3 bytes (right), 1122... 10 bytes (the file on disk is 6: cut), ffee... 5 bytes (not on disk: the missing list's business),
+    # 3344... 7 and 4 bytes (the disk has 4: it matches one of the two rows, so it is NOT cut), 5566... 7 and 8 bytes (the disk has 4: it matches neither)
     printf 'aabbccddeeff00112233445566778899aabbccdd%s3\n1122334455667788990011223344556677889900%s10\nffeeddccbbaa99887766554433221100ffeeddcc%s5\n' "$tab" "$tab" "$tab" \
         | expected_paths_sizes | LC_ALL=C sort -u > "$T/fs-db.txt"
+    printf '3344556677889900112233445566778899001122%s7\n3344556677889900112233445566778899001122%s4\n5566778899001122334455667788990011223344%s8\n5566778899001122334455667788990011223344%s7\n' "$tab" "$tab" "$tab" "$tab" \
+        | expected_paths_sizes >> "$T/fs-db.txt"
+    LC_ALL=C sort -u -o "$T/fs-db.txt" "$T/fs-db.txt"
     disk_paths_sizes "$T/fs" | LC_ALL=C sort -u > "$T/fs-disk.txt"
     out="$(filedir_wrong_sizes "$T/fs-db.txt" "$T/fs-disk.txt")"
-    [ "$out" = "11/22/1122334455667788990011223344556677889900${tab}10${tab}6" ] || { printf 'got [%s]\n' "$out"; exit 11; }
-    [ "$(wc -l < "$T/fs-disk.txt" | tr -d ' ')" = 2 ] || exit 12
-) && ok "a content file on disk with a size other than {files}.filesize is listed (path, size in {files}, size on disk); a missing one is not (that is the missing list's)" || bad "the size comparison of the file store gate (exit $?)"
+    want="$(printf '11/22/1122334455667788990011223344556677889900\t10\t6\n55/66/5566778899001122334455667788990011223344\t7,8\t4')"
+    [ "$out" = "$want" ] || { printf 'got [%s]\n' "$out"; exit 11; }
+    [ "$(wc -l < "$T/fs-disk.txt" | tr -d ' ')" = 4 ] || exit 12
+) && ok "a content file on disk with a size other than {files}.filesize is listed (path, size(s) in {files}, size on disk); a missing one is not (that is the missing list's); a hash that two {files} rows record with two sizes is cut only when the disk matches neither" || bad "the size comparison of the file store gate (exit $?)"
 if grep -q 'FILEDIR_MAX_WRONGSIZE' "$KIT/01_restore_check.sh" && grep -q 'FILEDIR_MAX_WRONGSIZE' "$KIT/rehearsal.env.example"; then ok "step 01 stops on a wrong-size content file (FILEDIR_MAX_WRONGSIZE, default 0), documented in rehearsal.env.example"; else bad "FILEDIR_MAX_WRONGSIZE is wired in step 01 and documented"; fi
+
+printf 'step 01 finished: steps 02 to 11 refuse a copy that step 01 stamped and did not clear (Stage B tools fix round 7, M2)\n'
+# A stand-in server of its own, in end-to-end mode (fake.e2e): it also answers what a WHOLE step 01 asks after the restore, for a copy whose filedir is the one
+# content file of md-arch.tar, and keeps every write the kit sends (fake.sqllog).
+FW="$T/w5"
+mkdir -p "$FW"
+cp "$T/fakemysql" "$FW/fakemysql"
+# A copy of the kit for the real steps 00 and 02: where the file system does not keep mode 600 for the password file (Git Bash on NTFS reports 644), the real
+# check_pass_file, which both steps run before anything else, cannot pass; the copy's one change is that this check always passes. Nothing else differs.
+K3="$T/kit3"
+mkdir -p "$K3/lib"
+cp "$KIT"/*.sh "$K3/"
+rm -f "$K3/selftest.sh"
+cp "$KIT"/lib/* "$K3/lib/"
+if [ "$(stat -c %a "$T/db.pass")" != 600 ]; then
+    sed -i 's/^check_pass_file() {$/check_pass_file() { return 0/' "$K3/lib/common.sh"
+fi
+REPO="$(cd "$KIT/../.." && pwd)"
+# the files the preflight looks for (the copy of the kit does not sit in the repository)
+PFENV=("SOURCE_BASELINE_PHP=\"$REPO/moodle-enhancement/local/sentientia_platform/cli/source_baseline.php\"" "CAP_ALLOWLIST=\"$REPO/moodle-enhancement/docs/cutover/bizlms-capability-allowlist.json\""
+       "IMPORT_DECISIONS=\"$REPO/moodle-enhancement/docs/cutover/bizlms-import-decisions.json\"" "ADR031_SCRIPTS_DIR=\"$REPO/tools/uat\"")
+# pf_env NAME -> $T/pf-NAME.env: the env file of rehearsal NAME for the copy of the kit (with the files the real steps and the preflight look for)
+pf_env() {
+    base_env "$T/pf-$1.env" "REHEARSAL_WORK=$T/rb-$1/work" "MOODLEDATA=$T/rb-$1/data" "MYSQL_BIN=$FW/fakemysql" "PRODUCTION_DB_ENDPOINT=live-db.example.internal" "${PFENV[@]}"
+}
+# pf_run NAME STEP01 -> the real preflight --execute on the copy of rehearsal NAME; STEP01 = 0 or 1 as run_all.sh says whether the run includes step 01, empty = run alone
+pf_run() {
+    pf_env "$1"
+    if [ -n "$2" ]; then
+        OUT="$(REHEARSAL_RUN_STEP01="$2" bash "$K3/00_preflight.sh" --env "$T/pf-$1.env" --execute 2>&1)"
+    else
+        OUT="$(env -u REHEARSAL_RUN_STEP01 bash "$K3/00_preflight.sh" --env "$T/pf-$1.env" --execute 2>&1)"
+    fi
+    RC=$?
+}
+t_rkm2() {
+    # t_rkm2 NAME [during-step-01]: what step 02 asks first, on the work directory and moodledata of rehearsal NAME
+    EXECUTE=1 STEP_ID=02 MYSQL_BIN="$FW/fakemysql" DB_NAME=stageb_selftest REHEARSAL_DB_ALLOWLIST=stageb_selftest DB_PREFIX=mdl_ \
+        DB_HOST=127.0.0.1 DB_PORT="" DB_USER=rehearsal DB_PASS_FILE="$T/db.pass" STATE_DIR="$T/rb-$1/work/state" MOODLEDATA="$T/rb-$1/data"
+    require_kit_marker ${2:+"$2"}
+}
+fake_db 400
+fake_set storemarker 1
+fake_set e2e 1
+rb_run f1 "RESTORE_DONE_BY_HAND=$RBDB" "$ARCH" "$ARCHSHA"
+rb_expect "(7-M2, control) a whole step 01 against the stand-in (a hand restore, the unpack, the file store gate, the neutralisation) finishes" 0 'restore check done'
+F1ID="$(rb_kv f1 restore.id)"
+if [ -n "$F1ID" ] && [ "$(rb_kv f1 restore.verified)" = "$F1ID" ] && [ "$(cat "$FW/fake.step01" 2> /dev/null)" = "$F1ID" ] && [ "$(sed -n 's/^status=//p' "$T/rb-f1/work/state/01.status")" = ok ]; then
+    ok "(7-M2) it records that it finished: state/kv/restore.verified and the {config} row both hold the restore id, and 01.status is ok"
+else bad "(7-M2) the record of a finished step 01 (id '${F1ID}', kv '$(rb_kv f1 restore.verified)', row '$(cat "$FW/fake.step01" 2> /dev/null)')"; fi
+smtpline="$(grep -n 'smtphosts' "$FW/fake.sqllog" | head -n 1 | cut -d: -f1)"
+unverline="$(grep -n "DELETE FROM mdl_config WHERE name = 'rehearsal_kit_step01_ok'" "$FW/fake.sqllog" | head -n 1 | cut -d: -f1)"
+lastline="$(wc -l < "$FW/fake.sqllog" | tr -d ' ')"
+if [ -n "$smtpline" ] && [ -n "$unverline" ] && [ "$unverline" -lt "$smtpline" ] && sed -n "${lastline}p" "$FW/fake.sqllog" | grep -q "rehearsal_kit_step01_ok"; then
+    ok "(7-M2) the record is removed when step 01 starts on the stamped copy, and written LAST: after the neutralisation (SMTP wipe, cron_enabled, tokens), as the final statement"
+else bad "(7-M2) the order of the record's statements (unverify line '${unverline}', smtp wipe '${smtpline}', last '$(sed -n "${lastline}p" "$FW/fake.sqllog" | cut -c1-80)')" "$(cut -c1-110 "$FW/fake.sqllog")"; fi
+
+# The gate every writing step starts with, on the finished copy and with each part of the record spoiled.
+m2_good() {
+    printf 'status=ok\nrc=0\n' > "$T/rb-f1/work/state/01.status"
+    printf '%s\n' "$F1ID" > "$T/rb-f1/work/state/kv/restore.verified"
+    printf '%s\n' "$F1ID" > "$FW/fake.step01"
+    rm -f "$FW/fake.once"
+}
+# m2_expect LABEL WANT-RC PATTERN [during-step-01]
+m2_expect() {
+    res="$(in_kit t_rkm2 f1 "${4:-}")"
+    if [ "$(printf '%s' "$res" | tail -n 1)" = "rc=$2" ] && { [ -z "$3" ] || printf '%s' "$res" | grep -q "$3"; }; then ok "$1"; else bad "$1" "$res"; fi
+}
+m2_good
+m2_expect "(7-M2, control) the finished copy passes the gate of steps 02 to 11 (require_kit_marker)" 0 ''
+printf 'status=fail\nrc=1\n' > "$T/rb-f1/work/state/01.status"
+m2_expect "(7-M2) 01.status says fail (the copy is stamped, the record is there): refused, and the message names step 01" 1 'step 01 (restore check) has not finished ok.*state/01.status says fail'
+printf 'status=running\nprevious=ok\n' > "$T/rb-f1/work/state/01.status"
+m2_expect "(7-M2) 01.status says running (step 01 is running, or died without a trap): refused" 1 'state/01.status says running'
+m2_good
+rm -f "$T/rb-f1/work/state/01.status"
+m2_expect "(7-M2) there is no 01.status at all: refused" 1 'there is no state/01.status'
+m2_good
+rm -f "$T/rb-f1/work/state/kv/restore.verified"
+m2_expect "(7-M2) state/kv/restore.verified is not set: refused" 1 'restore.verified is not set'
+m2_good
+printf 'ffffffffffffffffffffffffffffffff\n' > "$T/rb-f1/work/state/kv/restore.verified"
+m2_expect "(7-M2) state/kv/restore.verified holds another restore's id: refused" 1 'restore.verified holds ffffffff'
+m2_good
+rm -f "$FW/fake.step01"
+m2_expect "(7-M2) the database holds no step-01 record (a snapshot or a dump taken before step 01 finished): refused" 1 'holds no {config} row rehearsal_kit_step01_ok'
+m2_good
+printf 'ffffffffffffffffffffffffffffffff\n' > "$FW/fake.step01"
+m2_expect "(7-M2) the database's record belongs to another restore: refused" 1 'holds no {config} row rehearsal_kit_step01_ok for this restore (it holds ffffffff'
+m2_good
+fake_once step01errall
+m2_expect "(7-M2) the database's record cannot be read (a lost connection, every time): refused as 'cannot tell', never as finished" 1 'step 01 finished for restore .*could not be read'
+m2_good
+rm -f "$FW/fake.step01"
+printf 'status=running\nprevious=ok\n' > "$T/rb-f1/work/state/01.status"
+m2_expect "(7-M2) step 01's own call (during-step-01) does not ask for the record: it is the step that makes it" 0 '' during-step-01
+m2_good
+
+# A step 01 that stops at the file store gate AFTER it stamped the copy: {files} names a content hash that is not on disk (the archive carries one).
+fake_db 400
+fake_set storemarker 1
+fake_set e2e 1
+fake_set twohashes 1
+rb_run f2 "RESTORE_DONE_BY_HAND=$RBDB" "$ARCH" "$ARCHSHA"
+rb_expect "(7-M2) the file store gate fails (one content hash of {files} is not on disk): step 01 stops, after it stamped the copy" 1 'content hash(es) of {files} are not on disk' 'restore check done'
+if [[ "$(rb_kv f2 restore.id)" =~ ^[0-9a-f]{32}$ ]] && [ "$(sed -n 's/^status=//p' "$T/rb-f2/work/state/01.status")" = fail ] && [ -z "$(rb_kv f2 restore.verified)" ] && [ ! -e "$FW/fake.step01" ]; then
+    ok "(7-M2) the copy is stamped (restore.id, the marker in the database and in the moodledata), 01.status is fail and nothing says it finished"
+else bad "(7-M2) the state after the failed gate (01.status '$(sed -n 's/^status=//p' "$T/rb-f2/work/state/01.status")', verified '$(rb_kv f2 restore.verified)')"; fi
+if ! grep -q 'smtphosts\|cron_enabled\|oauth2' "$FW/fake.sqllog"; then ok "(7-M2) ... and nothing was neutralised: no SMTP wipe, no cron_enabled, no OAuth2 statement ever reached the database"; else bad "(7-M2) the failed step 01 neutralised something" "$(cut -c1-120 "$FW/fake.sqllog")"; fi
+pf_env f2
+for n in 02_source_baseline 03_hop1_to_45 11_cron_cycle; do
+    OUT="$(bash "$K3/$n.sh" --env "$T/pf-f2.env" --execute 2>&1)"
+    RC=$?
+    rb_expect "(7-M2) step ${n%%_*} --execute on that stamped copy is refused, and says step 01 has not finished ok (it used to go on)" 1 'step 01 (restore check) has not finished ok for this restore (state/01.status says fail' 'database release\|4.5 tree'
+done
+# The preflight. A run that starts after step 01 is refused on that copy, before any step; a run that goes through step 01 (or a preflight run alone) is warned.
+pf_run f2 0
+rb_expect "(7-M2) the preflight of a run that starts after step 01 (REHEARSAL_RUN_STEP01=0, as run_all.sh --from 02 says) refuses the stamped copy whose step 01 failed" 1 'step 01 has not finished ok for this copy.*does not include it'
+pf_run f2 1
+rb_expect "(7-M2) the preflight of a run that includes step 01 (--from 01, or a full run) only warns: step 01 is what finishes the copy" 0 'WARN: step 01 has not finished ok for this copy' 'FAIL'
+pf_run f2 ""
+rb_expect "(7-M2) a preflight run alone does not know, and warns" 0 'WARN: step 01 has not finished ok for this copy' 'FAIL'
+
+# A step 01 that is KILLED (TERM) before its gate: the stand-in holds it at the content-hash query until a flag file appears.
+fake_db 400
+fake_set storemarker 1
+fake_set e2e 1
+fake_set blockgate 1
+base_env "$T/rb-f3.env" "REHEARSAL_WORK=$T/rb-f3/work" "MOODLEDATA=$T/rb-f3/data" "MYSQL_BIN=$FW/fakemysql" "PRODUCTION_DB_ENDPOINT=live-db.example.internal" "RESTORE_DONE_BY_HAND=$RBDB" "$ARCH" "$ARCHSHA"
+bash "$KIT/01_restore_check.sh" --env "$T/rb-f3.env" --execute > "$T/rb-f3.out" 2>&1 &
+KP=$!
+if wait_file "$FW/fake.atgate" 360; then
+    kill -TERM "$KP"
+    sleep 2
+    touch "$FW/fake.releasegate"
+    rc=0
+    wait "$KP" || rc=$?
+    if [ "$rc" = 143 ] && [ "$(sed -n 's/^status=//p' "$T/rb-f3/work/state/01.status")" = fail ] && [ "$(sed -n 's/^signal=//p' "$T/rb-f3/work/state/01.status")" = TERM ]; then
+        ok "(7-M2) step 01 killed by TERM before its file store gate: exit 143, 01.status fail with signal=TERM"
+    else bad "(7-M2) the killed step 01 (rc ${rc}, status '$(sed -n 's/^status=//p' "$T/rb-f3/work/state/01.status")')" "$(tail -n 4 "$T/rb-f3.out")"; fi
+    if [[ "$(rb_kv f3 restore.id)" =~ ^[0-9a-f]{32}$ ]] && ! grep -q 'smtphosts\|cron_enabled\|oauth2' "$FW/fake.sqllog" && [ ! -e "$FW/fake.step01" ]; then
+        ok "(7-M2) the copy is stamped and NOT neutralised (no SMTP wipe, no cron_enabled, no OAuth2 statement), and carries no record that step 01 finished"
+    else bad "(7-M2) the database after the killed step 01" "$(cut -c1-120 "$FW/fake.sqllog")"; fi
+    pf_env f3
+    OUT="$(bash "$K3/02_source_baseline.sh" --env "$T/pf-f3.env" --execute 2>&1)"
+    RC=$?
+    rb_expect "(7-M2) step 02 on the copy the TERM left (it used to go on, with live's OAuth2 refresh tokens usable) is refused: step 01 has not finished ok" 1 'step 01 (restore check) has not finished ok for this restore (state/01.status says fail' 'database release'
+else
+    bad "(7-M2) step 01 never reached its file store gate"
+    touch "$FW/fake.releasegate"
+    kill "$KP" 2> /dev/null || true
+fi
+
+# A step 01 that is started again on a finished copy takes the record away first: a re-run that fails leaves the copy refused, though it was finished before.
+fake_db 400
+fake_set storemarker 1
+fake_set e2e 1
+rb_run f4 "RESTORE_DONE_BY_HAND=$RBDB" "$ARCH" "$ARCHSHA"
+rb_expect "(7-M2, setup) a second copy: step 01 finishes" 0 'restore check done'
+F4ID="$(rb_kv f4 restore.id)"
+if [ -n "$F4ID" ] && [ "$(cat "$FW/fake.step01" 2> /dev/null)" = "$F4ID" ]; then ok "(7-M2, setup) its record is in place"; else bad "(7-M2, setup) the record of the second copy"; fi
+fake_set twohashes 1
+rb_run f4 "RESTORE_DONE_BY_HAND=$RBDB" "$ARCH" "$ARCHSHA"
+rb_expect "(7-M2) step 01 again on the finished copy, and now its gate fails" 1 'content hash(es) of {files} are not on disk' 'restore check done'
+if [ ! -e "$FW/fake.step01" ] && [ -z "$(rb_kv f4 restore.verified)" ] && [ "$(sed -n 's/^status=//p' "$T/rb-f4/work/state/01.status")" = fail ]; then
+    ok "(7-M2) the earlier record was removed when step 01 started again: the copy is no longer finished (row gone, restore.verified gone, 01.status fail)"
+else bad "(7-M2) the record after a failed re-run (row '$(cat "$FW/fake.step01" 2> /dev/null)', kv '$(rb_kv f4 restore.verified)')"; fi
+OUT="$(bash "$KIT/03_hop1_to_45.sh" --env "$T/rb-f4.env" --execute 2>&1)"
+RC=$?
+rb_expect "(7-M2) step 03 on it is refused" 1 'step 01 (restore check) has not finished ok for this restore' '4.5 tree'
+rm -f "$FW/fake.twohashes"
+rb_run f4 "RESTORE_DONE_BY_HAND=$RBDB" "$ARCH" "$ARCHSHA"
+rb_expect "(7-M2) and the step 01 that then finishes makes it accepted again" 0 'restore check done'
+if [ "$(cat "$FW/fake.step01" 2> /dev/null)" = "$F4ID" ] && [ "$(rb_kv f4 restore.verified)" = "$F4ID" ]; then ok "(7-M2) ... the record is written again, for the same restore id"; else bad "(7-M2) the record after the successful re-run"; fi
+pf_run f4 0
+rb_expect "(7-M2) the preflight of a run that starts after step 01 accepts the copy whose step 01 finished (and says so)" 0 'OK: step 01 finished ok for restore' 'FAIL\|WARN: step 01'
+FW="$T"
 
 printf 'the mysql client of the kit reads the kit'"'"'s option file only (Stage B tools fix round 6b)\n'
 if ! grep -n -e '--defaults-extra-file' "$KIT"/*.sh "$KIT"/lib/*.sh 2> /dev/null | grep -v '/selftest.sh:' | grep -v '^[^:]*:[0-9]*:[[:space:]]*#' | grep -q .; then

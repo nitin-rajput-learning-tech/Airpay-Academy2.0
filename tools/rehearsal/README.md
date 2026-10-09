@@ -34,14 +34,24 @@ whether each is alive. **Remove the directory only when none of them is alive**:
 `KILL`, and a second run in the same work directory writes the same database and state.
 A `TERM`, `INT` or `HUP` sent to `run_all.sh` alone does not interrupt the step that is running and does not release the lock under
 it: `run_all.sh` waits for that step, starts no further step (the summary included; a signal that arrives in the instant between two
-steps starts nothing either) and exits 143 (`INT`: 130, `HUP`: 129). A signal sent to a **step** (to its pid, not its group) is acted
-on only when the command it is running (`php upgrade.php`, the restore, the import) has returned: the step then writes
+steps starts nothing either) and exits 143 (`INT`: 130, `HUP`: 129). `USR1`, `USR2`, `ALRM`, `VTALRM`, `XCPU` and `XFSZ` are
+handled the same way (exit 128+n): bash runs the EXIT trap with status 0 for each of them, so an untrapped one used to end `run_all.sh`
+with its lock released under a running step, and to record a step as `ok`. `SIGPIPE` (the death of the `tee` a step writes its log
+through) is only noted and never ends a step as ok: a step that saw it and no other signal ends as `fail` with `rc=141` and `signal=PIPE`. A signal sent to a **step** (to its pid, not its group) is
+acted on only when the command it is running (`php upgrade.php`, the restore, the import) has returned: the step then writes
 `state/NN.status` as `status=fail`, `rc=128+n`, `signal=NAME`, releases its lock and exits 128+n, so a step is **never recorded ok on a
 signal** and the lock is never released under a command that still runs. A step also writes `status=running` when it starts, so one
 that dies without a trap (`KILL`, a power cut) leaves a status nothing reads as ok (`step_done_ok`, the preflight and the summary all
-refuse it; the summary prints it as DID NOT FINISH). Ctrl-C reaches the whole process group, so it stops the running step and its
-commands too; to stop a step and what it runs by hand, signal its process group (`kill -TERM -- -PGID`). Run the rehearsal under `tmux`
-or `screen`: a dropped ssh session sends `HUP` (sudo relays it).
+refuse it; the summary prints it as DID NOT FINISH). **To stop a step and what it runs, signal the whole process group** (`kill -TERM
+-- -PGID`; Ctrl-C and an ssh hangup do the same): the command ends at once, and the signal also kills the `tee` that `run_all.sh` and the
+step write their output through, so their handlers log straight to the log files when the pipe is gone (a handler that wrote to the dead
+pipe used to die of `SIGPIPE`: exit 141, `status=running`, `.run.lock` left behind, no STOPPED line; and a `SIGPIPE` that is handled
+before the `TERM` would have been recorded instead of it, so `SIGPIPE` is only noted). The result is the same as for a
+signal to the step alone: the step records `fail` with `rc=128+n` and `signal=NAME`, `run_all.sh` writes its STOPPED line to
+`logs/run_all.log`, exits 128+n (143 for `kill -TERM`) and releases the lock. **Cost of a signal to step 01 during the database load:** it
+is acted on when the load has returned, and a load that returned 0 is then not verified (the in-flight table stays), so the database must
+be dropped and restored again (the load of live's dump takes tens of minutes): do not signal step 01 during the load unless that is what
+is wanted. Run the rehearsal under `tmux` or `screen`: a dropped ssh session sends `HUP` (sudo relays it).
 
 ## What it refuses (step 00, and every step re-checks the policy when it loads the env)
 
@@ -84,11 +94,18 @@ or `screen`: a dropped ssh session sends `HUP` (sudo relays it).
   archive, because a tar cut at a member header also exits 0; the file store gate's size check below catches a content file cut
   inside, from any route). **A moodledata archive is proven whole before the database is touched:** with `RESTORE_MOODLEDATA_SHA256`
   (the checksum from the live backup's manifest) its SHA-256 must match, and that is the whole proof (recorded in `state/kv`
-  `restore.moodledata_sha256`, `restore.moodledata_proof=sha256`); without it a tar (plain, `.gz`, `.bz2`, `.xz`, `.zst`) must read to
-  its end and its last 1024 bytes must be the two zero blocks that end every tar (`restore.moodledata_proof=tar-end`). That is the
-  check GNU tar does not make for you: it unpacks a plain tar cut exactly at a member header with exit status 0 and no message, and a
-  `.tar.gz` written by a `tar` that died is a valid gzip file around a cut tar (`gzip -t` passes it). A zip is cut loudly by its
-  central directory. A refused archive costs nothing: no restore, no claim, no stamp, no unpack. The archive's path, size and
+  `restore.moodledata_sha256`, `restore.moodledata_proof=sha256`). **An uncompressed `.tar` REQUIRES the checksum and is refused
+  without it** (round 7): nothing inside a plain tar can show that every byte of it arrived. A copy that stopped part way (a pre-allocated
+  or segmented download, a file system that kept the size and lost the data) is full size and ends in zeros, GNU tar takes two zero blocks
+  where a header is due for the end of the archive and exits 0, and the members after the zero-filled region are simply not unpacked, so
+  the last 1024 bytes cannot prove anything. A compressed tar (`.gz`, `.bz2`, `.xz`, `.zst`) is read to its end by its decompressor, which
+  fails on a cut or zero-filled stream, and its last 1024 bytes must be the two zero blocks that end every tar (`restore.moodledata_proof=tar-end`):
+  GNU tar unpacks a tar cut exactly at a member header with exit status 0 and no message, and a `.tar.gz` written by a `tar` that
+  died is a valid gzip file around a cut tar (`gzip -t` passes it). A `.zip` is checked by `unzip` itself while it unpacks: its central
+  directory (at the end of the file) and a CRC-32 per member, which fail on a cut or zero-filled zip (`restore.moodledata_proof=format`).
+  **A checksum that is set is always checked:** before an unpack, and also on a re-run where `filedir/` is already there and on a new
+  restore that reuses the finished unpack (the proof is recorded again), and a checksum without `RESTORE_MOODLEDATA_ARCHIVE` is refused (there
+  is no archive for it to prove). A refused archive costs nothing: no restore, no claim, no stamp, no unpack. The archive's path, size and
   mtime are read again after the unpack, and an archive that changed (still being copied, re-synced) leaves the in-flight file in
   place. The gate of steps 02 to 11
   also refuses a database that holds the in-flight table although it carries the marker (a dump or snapshot of a stamped, unfinished copy).
@@ -102,6 +119,17 @@ or `screen`: a dropped ssh session sends `HUP` (sudo relays it).
   point `MOODLEDATA` at a new directory. A named
   `RESTORE_MOODLEDATA_ARCHIVE` is never ignored: with a filedir already present it must be that archive's unpack (the marker
   file records the archive's path, size and mtime, and that the unpack finished), or step 01 stops;
+* a copy that step 01 **stamped but did not clear** (round 7). Step 01 stamps the database and the moodledata right after the restore, long
+  before its file store gate and its neutralisation (the SMTP credentials wiped, `cron_enabled = 0`, the restored OAuth2 tokens blanked),
+  so a stamped copy is not a cleared copy: a step 01 that failed at the gate, or was killed before the gate or the neutralisation, used to
+  leave a stamped copy that steps 02 to 11 accepted (live's OAuth2 refresh tokens then stayed usable by the step 11 cron cycle). The last
+  act of a step 01 that reached its end is a record that it finished for this restore id: the `{config}` row `rehearsal_kit_step01_ok`
+  (it travels with the data, so a snapshot or a dump taken before step 01 finished does not carry it) and `state/kv/restore.verified`;
+  step 01 removes both when it starts on a copy it already stamped. `require_kit_marker`, the gate every step from 02 to 11 starts with, refuses
+  the copy unless `state/01.status` is ok AND both records hold the restore id (a record that cannot be read is "cannot tell", refused), and
+  its message names step 01 and `run_all.sh --execute --from 01`. The preflight refuses a run that starts after step 01 (`--from 02` and
+  later, or `--only` without 01) on such a copy, before any step; a run that goes through step 01 only warns, because step 01 is what
+  finishes the copy;
 * a `config.php` that points at another database or host, names another wwwroot or dataroot, or lacks
   `$CFG->noemailever = true` (the restored dump holds real e-mail addresses: the May 2026 incident, 151 e-mails);
 * a scheduler line that runs THIS rehearsal's Moodle cron (a crontab, `/etc/crontab`, `/etc/cron.d` or systemd timer line
@@ -257,6 +285,10 @@ plan are IT's and are not here.
 | (Stage B tools fix round 6b) A step killed by `TERM` or `HUP` while a foreground command ran recorded SUCCESS (the EXIT trap saw the last completed status, 0) and released `.run.lock` under the still-running command; a second run then took the lock in the same work directory | `step_init` traps `TERM`, `INT` and `HUP`: the signal is acted on when the foreground command has returned, the step records `status=fail rc=128+n signal=NAME`, releases the lock and exits 128+n; a step writes `status=running` at its start so a `KILL` is never read as ok (`step_done_ok`, the summary); `on_exit` stops the step's background jobs; each step writes its pid to `.run.lock/step.pid` and the refusal names and liveness-checks both pids; `run_all.sh` also traps `HUP` and checks the signal immediately before it starts a step |
 | (Stage B tools fix round 6b) `marker_get` failed open three ways (a failed value read, a failed or blank COUNT, a value that stayed blank while the COUNT said 1), each as 'no marker', and on the `RESTORE_DONE_BY_HAND` path (which stays in `rehearsal.env`) one lost connection archived a finished rehearsal's `state/` and overwrote the database's marker with a new id | `marker_get` returns rc 1 ('cannot tell') on all three, with a retried read; every caller refuses it; the hand path needs `marker_definitely_absent` (two agreeing error-free counts of 0 on an existing config table) and stamps with a plain `INSERT` (error 1062 = a marker exists), archiving `state/` only after it succeeded |
 | (Stage B tools fix round 6b) A changed `RESTORE_DB_DUMP` on a stamped database was silently ignored; a dump re-written while it was scanned and loaded could load with exit 0 and be stamped; a table count that was wrong once after the load refused a complete copy; a work directory holding an older kit's `restore.started` without `restore.complete` adopted that restore's partial copy; a dump line that is a mysql client command (`\u db`, `source`, `system`) went unnoticed; every kit client call let `~/.my.cnf` override the kit's host, port and password | the dump's identity is recorded (`restore.dump`) and checked before and after the load; the post-load probe is repeated once; the older kit's record refuses the copy; the dump scan flags client commands; every client call uses `--defaults-file` (the kit's file only) |
+| (Stage B tools fix round 7) Without `RESTORE_MOODLEDATA_SHA256`, an uncompressed tar was accepted on the test of its last 1024 bytes: a zero-filled region (a pre-allocated or segmented copy that stopped, a file system that kept the size and lost the data) ends in zero blocks at any cut point, GNU tar takes two zero blocks where a header is due for the end of the archive and exits 0, and a full-size copy with a zero-filled tail unpacked without its lang packs or repository files (reproduced); and a checksum that was set was silently ignored when `filedir/` was already there | an uncompressed tar REQUIRES `RESTORE_MOODLEDATA_SHA256` and is refused without it, before anything is touched; a set checksum is checked on every run (a re-run, a reused unpack) and the proof is recorded again; a checksum with no archive is refused; compressed archives keep the end-of-stream test (their decompressor fails on zeros); a zip is checked by `unzip` (`archive_proof`) |
+| (Stage B tools fix round 7) Steps 02 to 11 accepted a copy that step 01 had stamped but not cleared (a failed file store gate, or a step 01 killed before the gate or the neutralisation), so live's OAuth2 refresh tokens stayed usable by the step 11 cron cycle; and the preflight's `cron_enabled` check only warned once `step_done_ok 01` was false, so `run_all.sh --from 02` got through it | step 01 records that it finished (`{config}` row `rehearsal_kit_step01_ok` and `state/kv/restore.verified`) as its very last act and removes the record when it starts; `require_kit_marker` refuses a copy without both records or with `01.status` not ok, naming step 01; the preflight refuses a run that starts after step 01 on a stamped copy it has not finished (`REHEARSAL_RUN_STEP01`, set by `run_all.sh`) |
+| (Stage B tools fix round 7) A signal that ends bash but was not trapped (`USR1`, `USR2`, `ALRM`, `VTALRM`, `XCPU`, `XFSZ`, `PIPE`) ran the EXIT trap with status 0: a step recorded `ok` and released its lock under its command; and a signal to the whole process group, which the documentation recommended, also killed the `tee` that the handlers wrote through, so the handler died of `SIGPIPE` (exit 141, `status=running`, the lock left behind, no STOPPED line) | every such signal but `PIPE` is trapped like `TERM` (`STEP_SIGNALS`), and `PIPE` is noted (`on_step_pipe`: a step that saw it and no other signal ends `fail`, rc 141), so that the signal that caused the dead pipe is the one that is recorded; the handlers log through `log_survivor` (SIGPIPE ignored, the line appended to the log file when the pipe is gone); `run_all.sh` does the same and exits 128+n; the documentation says how a group signal ends and what a signal to step 01 during the database load costs |
+| (Stage B tools fix round 7, should-fix) The adopt branch recorded no dump, so a later run that still named the same `RESTORE_DB_DUMP` was refused with a message that did not match what happened; the file store size gate refused a complete copy when {files} held one content hash with two different `filesize` values | the adopt branch records `restore.adopted` and `check_dump_record` says so; a hash recorded with two sizes counts as cut only when the file on disk matches none of them (`filedir_wrong_sizes`; the list shows every recorded size) |
 
 ## Testing the kit
 
@@ -275,7 +307,7 @@ empty schema list; a plain hand restore adopted; round 6: a cut moodledata archi
 directory, or with both hand statements is refused, the in-flight read by error (a count that always answers 0, a lost connection, a blank answer
 for an absent table), `require_kit_marker` refusing an in-flight table or file or an unfinished unpack record behind a correct marker, a dump that
 names the table, `state/` staying in place when a claim is not taken), the orchestrator in DRY mode, `run_all.sh` keeping its lock while a step
-runs after a `TERM` (a copy of the kit with stub steps), and that no Windows path is hard-coded; round 6b: a moodledata archive cut exactly at a tar member header (plain, and wrapped in a valid `.gz`) refused before anything is restored, `RESTORE_MOODLEDATA_SHA256` matched, mismatched, malformed and recorded, an archive that grew during the unpack, a content file whose size is not `{files}.filesize`; a `TERM` or `HUP` to a step alone and to a step under `run_all.sh` (status `fail` with `signal=`, lock held until the command returned, background jobs gone), a step killed with `KILL` read as not ok, `HUP` to `run_all.sh`, a signal between two steps, the lock message naming both pids; `marker_get` and `marker_definitely_absent` with every fault of the stand-in client (a failed read, a blank read, a blank or failed count, a missing config table), and the hand path meeting each of them (nothing moved, nothing stamped, a marker row that exists refused by the plain `INSERT`); a changed dump, a dump rewritten during its load, a wrong table count after the load, an older kit's unfinished-restore record, the client commands a dump must not carry. The `HUP` cases need a shell that does not ignore `SIGHUP` (not started under `nohup`: bash cannot trap a signal that was ignored on entry); the suite probes this and prints `skip` lines, counted apart from the passes, when it cannot deliver `HUP`. Every kit script passes `bash -n` (the selftest runs it);
+runs after a `TERM` (a copy of the kit with stub steps), and that no Windows path is hard-coded; round 6b: a moodledata archive cut exactly at a tar member header (plain, and wrapped in a valid `.gz`) refused before anything is restored, `RESTORE_MOODLEDATA_SHA256` matched, mismatched, malformed and recorded, an archive that grew during the unpack, a content file whose size is not `{files}.filesize`; a `TERM` or `HUP` to a step alone and to a step under `run_all.sh` (status `fail` with `signal=`, lock held until the command returned, background jobs gone), a step killed with `KILL` read as not ok, `HUP` to `run_all.sh`, a signal between two steps, the lock message naming both pids; `marker_get` and `marker_definitely_absent` with every fault of the stand-in client (a failed read, a blank read, a blank or failed count, a missing config table), and the hand path meeting each of them (nothing moved, nothing stamped, a marker row that exists refused by the plain `INSERT`); a changed dump, a dump rewritten during its load, a wrong table count after the load, an older kit's unfinished-restore record, the client commands a dump must not carry; round 7: a complete and a zero-filled uncompressed tar refused without `RESTORE_MOODLEDATA_SHA256` (and the zero-filled one still refused with the checksum of the complete archive), a zero-filled `.tar.gz` refused, a checksum checked on a re-run and refused without an archive, a whole step 01 against the stand-in (it writes its record that it finished last and removes it when it starts again), `require_kit_marker` refusing a stamped copy for every way the record can be wrong, the real steps 02, 03 and 11 and the preflight refusing the copy a failed file store gate left and the copy a `TERM` left before the gate (nothing neutralised), `USR1` and `ALRM` to a step alone, `USR1` to `run_all.sh` alone, a step whose log pipe died (`fail`, rc 141, `signal=PIPE`) and a `TERM` to the whole process group (step `fail` with `signal=TERM`, `run_all.sh` exit 143 and its STOPPED line in the log, lock released), a content hash that `{files}` records with two sizes. The `HUP` cases need a shell that does not ignore `SIGHUP` (not started under `nohup`: bash cannot trap a signal that was ignored on entry); the suite probes this and prints `skip` lines, counted apart from the passes, when it cannot deliver `HUP`. Every kit script passes `bash -n` (the selftest runs it);
 `shellcheck` was not available where the kit was written, run it where it is. The selftest starts many `bash` processes: on
 a workstation under antivirus load it takes tens of minutes.
 
@@ -357,6 +389,22 @@ Verified, on a Windows workstation (Git Bash, PHP 8.2, MariaDB 10.11, scratch sc
   against `marker_get` and `marker_definitely_absent`, and the hand path meeting them with the statement still in the env file. The `HUP` cases need a
   shell that does not ignore `SIGHUP` (not started under `nohup`); the suite says `skip` for them otherwise. Both clients of this machine (XAMPP 10.11 and
   MariaDB 11.4) read host and port from a `--defaults-file` the way the kit now calls them.
+
+* (Stage B tools fix round 7, 2026-10-09; `selftest.sh`: 390 pass, 0 fail, 0 skipped, about 2.5 hours on the loaded workstation) 68 new assertions for the two
+  must-fix items of the round 6b review and its cheap should-fix items: an uncompressed tar, complete or zero-filled, refused without
+  `RESTORE_MOODLEDATA_SHA256` before anything is touched (the zero-filled copy of the review's repro is full size and passes the old last-1024-bytes
+  test, and GNU tar unpacks it with exit status 0 and no `lang/`), still refused with the checksum of the complete archive, a zero-filled `.tar.gz`
+  refused; the checksum checked on a re-run where `filedir/` is there (wrong: refused, right: the proof is recorded again) and refused without an
+  archive; a whole step 01 against the stand-in client in end-to-end mode, which writes its finished record last, after the neutralisation, and removes
+  it when it starts again; `require_kit_marker` refusing a stamped copy whose `01.status` is fail, running or missing, whose `restore.verified` or
+  database record is missing, belongs to another restore or cannot be read; the real steps 02, 03 and 11 refusing the copy a failed file store gate
+  left, and the copy a `TERM` left before the gate (nothing neutralised: no SMTP wipe, no `cron_enabled`, no OAuth2 statement reached the database),
+  and the preflight refusing a run that starts after step 01 on such a copy; `USR1` and `ALRM` to a step alone, `USR1` to `run_all.sh` alone, a step
+  whose log pipe died, and a `TERM` to the whole process group (the step `fail` with `signal=TERM`, `run_all.sh` exit 143 with its STOPPED line in the
+  log, lock released); a content hash that `{files}` records with two sizes. The real `check_pass_file`, which steps 00 and 02 run first, cannot pass on
+  a file system that does not keep mode 600 (Git Bash on NTFS): the real steps 00 and 02 are run from a copy of the kit whose only change is that this
+  check always passes. The same new assertions were not run against the round 6b kit (`git archive 9423e662d`); the premises (the old test passes the
+  zero-filled tar, GNU tar unpacks it without `lang/`) are asserted in the suite instead.
 
 **Not run: any step against real Moodle 4.5 or 5.x code, `shellcheck` (not installed on that machine), PHPUnit.** The stand-in
 proves the kit's logic and parsing, not that the real tools print exactly what it expects: the first execution on the

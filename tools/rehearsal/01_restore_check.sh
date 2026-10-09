@@ -43,6 +43,10 @@
 #      RESTORE_MOODLEDATA_ARCHIVE is never ignored: if the moodledata already holds a filedir it must be that archive's unpack, or the
 #      step stops. A populated moodledata the kit did not stamp needs its own statement, RESTORE_MOODLEDATA_BY_HAND=<its path>, and
 #      must show no recent writes in sessions/ or localcache/.
+#      THE ARCHIVE IS PROVEN WHOLE before the database is touched (archive_proof): RESTORE_MOODLEDATA_SHA256 (the live backup's manifest) is
+#      REQUIRED for an uncompressed tar, whose last bytes cannot show that a zero-filled copy is whole, and is checked whenever it is set (also
+#      when filedir/ is already there, and a checksum without RESTORE_MOODLEDATA_ARCHIVE is refused); a compressed tar is read to its end; a zip
+#      is checked by unzip itself.
 #   2. Check the source: the release matches SOURCE_RELEASE_REGEX (live is 4.1.x), active users (optionally equal to
 #      EXPECT_ACTIVE_USERS), the BizLMS open_path substrate is there.
 #   3. The file store gate: every files.contenthash with content must be on disk at filedir/ab/cd/<hash>. Missing = stop
@@ -55,6 +59,10 @@
 #      (reports/restore-outbound-audit.txt holds the counts of what could phone out).
 #   5. With LIVE_BASELINE_FILE: compare the restored copy with the live baseline (source_baseline.php --compare); exit 0
 #      required.
+#   6. The very last act, only when everything above passed: record that step 01 FINISHED for this restore ({config} row
+#      rehearsal_kit_step01_ok and state/kv/restore.verified). The copy is stamped early (right after the restore) but cleared only here: while
+#      step 01 runs, and after a step 01 that failed or was killed, steps 02 to 11 refuse the copy (require_kit_marker), and the preflight
+#      refuses a run that starts after step 01.
 
 # shellcheck source=lib/common.sh
 . "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
@@ -128,7 +136,18 @@ restore_database() {
     fi
 }
 
-# archive_proof: an archive that is not proven COMPLETE is refused BEFORE the database is restored and before anything is unpacked (nothing is
+# archive_sha_check: RESTORE_MOODLEDATA_ARCHIVE must have the SHA-256 in RESTORE_MOODLEDATA_SHA256 (sets ARCHIVE_PROVEN=sha256). Asked whenever the
+# checksum is set: before an unpack, and also when filedir/ is already there (a re-run, or a new restore that reuses the unpack): a checksum that is
+# set and silently not looked at proves nothing (round 7 review).
+archive_sha_check() {
+    local got want="${RESTORE_MOODLEDATA_SHA256,,}"
+    got="$(sha256_of "$RESTORE_MOODLEDATA_ARCHIVE")"
+    [ "$got" = "$want" ] || die "RESTORE_MOODLEDATA_ARCHIVE ${RESTORE_MOODLEDATA_ARCHIVE} has SHA-256 ${got}, not the RESTORE_MOODLEDATA_SHA256 ${want}: it is not the archive that checksum was taken from (cut, changed or another file). Refused; nothing was restored or unpacked. Copy the archive again, or correct RESTORE_MOODLEDATA_SHA256 (sha256sum of the archive where it was made)"
+    log "OK: RESTORE_MOODLEDATA_ARCHIVE has the SHA-256 in RESTORE_MOODLEDATA_SHA256 (${got:0:12}...)"
+    ARCHIVE_PROVEN="sha256"
+}
+
+# archive_proof [reuse]: an archive that is not proven COMPLETE is refused BEFORE the database is restored and before anything is unpacked (nothing is
 # claimed, nothing is written). It sets ARCHIVE_PROVEN to the proof used (sha256, tar-end or format; step 01 records it as restore.moodledata_proof).
 # GNU tar 1.35 extracts an uncompressed tar that was cut exactly at a member header with exit status 0 and no message, so a cut archive
 # unpacked "successfully", the in-flight file went, the marker said 'unpacked', the filedir gate (which looks for the files {files} names, and
@@ -137,32 +156,46 @@ restore_database() {
 # normally, so 'gzip -t' passes a valid .tar.gz that holds a cut tar. So:
 #   * RESTORE_MOODLEDATA_SHA256 set (the checksum of the live backup's manifest, taken where the archive was made; any format): the archive's
 #     SHA-256 must equal it. Nothing else is asked of the archive then (the operator vouches for what was made);
-#   * not set: a tar (plain, gzip, bzip2, xz or zstd) must END with its two zero blocks (tar_ends_complete: the compressed stream is read to
-#     its end, which is also the integrity test of the compression). A zip is cut loudly, by its central directory, which unzip checks.
+#   * not set, an UNCOMPRESSED tar: REFUSED. Its last 1024 bytes cannot prove it is whole: a zero-filled region (a pre-allocated or segmented copy
+#     that stopped, a file system that kept the size and lost the data) ends in zero blocks at any cut point, and GNU tar takes two zero blocks where a
+#     header is due for the end of the archive and exits 0, so such a copy unpacks without a message and lacks every member after the region (round 7
+#     review, reproduced). Only the checksum taken where the archive was made can show that every byte arrived;
+#   * not set, a compressed tar (gzip, bzip2, xz or zstd): the compressed stream is read to its end (a cut or zero-filled stream fails the
+#     decompressor's own CRC or length check) and the tar must END with its two zero blocks (tar_ends_complete);
+#   * not set, a zip: unzip's own checks while it unpacks (the central directory at the end of the file, and a CRC-32 per member): a cut or
+#     zero-filled zip fails there, loudly, with an exit status.
+# 'reuse' (filedir/ is already there and the archive is not unpacked again): the checksum, when set, is still checked; a plain tar still needs it
+# (it is the one format whose own content cannot vouch for it); the compressed and zip archives are not read to their end again (the unpack that
+# is here was proven before it was made, and the archive's path, size and mtime are the record of which archive that was).
 ARCHIVE_PROVEN=""
 archive_proof() {
-    local kind got want="${RESTORE_MOODLEDATA_SHA256,,}"
-    if [ -n "$want" ]; then
-        got="$(sha256_of "$RESTORE_MOODLEDATA_ARCHIVE")"
-        [ "$got" = "$want" ] || die "RESTORE_MOODLEDATA_ARCHIVE ${RESTORE_MOODLEDATA_ARCHIVE} has SHA-256 ${got}, not the RESTORE_MOODLEDATA_SHA256 ${want}: it is not the archive that checksum was taken from (cut, changed or another file). Refused; nothing was restored or unpacked. Copy the archive again, or correct RESTORE_MOODLEDATA_SHA256 (sha256sum of the archive where it was made)"
-        log "OK: RESTORE_MOODLEDATA_ARCHIVE has the SHA-256 in RESTORE_MOODLEDATA_SHA256 (${got:0:12}...)"
-        ARCHIVE_PROVEN="sha256"
+    local kind
+    if [ -n "$RESTORE_MOODLEDATA_SHA256" ]; then
+        archive_sha_check
         return 0
     fi
     kind="$(archive_kind "$RESTORE_MOODLEDATA_ARCHIVE")"
     case "$kind" in
+        tar)
+            die "RESTORE_MOODLEDATA_ARCHIVE ${RESTORE_MOODLEDATA_ARCHIVE} is an uncompressed tar and RESTORE_MOODLEDATA_SHA256 is not set, so it is not proven complete: nothing inside an uncompressed tar can show that every byte of it was written. GNU tar takes two zero blocks where a header is due for the end of the archive and exits 0, so a copy that stopped part way (a pre-allocated or segmented download, a file system that kept the size and lost the data) is full size, ends in zeros, and unpacks with exit status 0 and no message, without every member after the zero-filled region. Refused; nothing was restored or unpacked. Set RESTORE_MOODLEDATA_SHA256 to the SHA-256 taken where the archive was made (sha256sum, or the live backup's manifest), or use a compressed archive (.tar.gz, .tar.xz, .tar.zst) or a .zip, whose own checks catch a zero-filled copy"
+            ;;
+    esac
+    [ "${1:-}" != reuse ] || return 0
+    case "$kind" in
         zip) ARCHIVE_PROVEN="format" ;;
         *)
-            if [ "$kind" != tar ]; then
-                need_tool "$kind"
-            fi
+            need_tool "$kind"
             tar_ends_complete "$kind" "$RESTORE_MOODLEDATA_ARCHIVE" \
                 || die "RESTORE_MOODLEDATA_ARCHIVE ${RESTORE_MOODLEDATA_ARCHIVE} is not proven complete: its ${kind} stream is damaged, or the tar inside it does not end with the two zero blocks that end every tar. It was cut (a tar writer that died, a full disk, a copy still running). GNU tar extracts such a file with exit status 0 when the cut falls on a member header, and a compressor closes the stream of a tar that stopped early without complaint, so the unpack would look complete and be partial. Refused; nothing was restored or unpacked. Make or copy the archive again, or set RESTORE_MOODLEDATA_SHA256 to the SHA-256 taken where it was made"
             log "OK: the ${kind} archive reads to its end and its tar ends with the two zero blocks"
             ARCHIVE_PROVEN="tar-end"
             ;;
     esac
-    note "RESTORE_MOODLEDATA_SHA256 is not set: the archive is checked only by its format (${kind}). The SHA-256 taken where the archive was made is the strong proof that it is whole; set it for the real rehearsal"
+    if [ "$kind" = zip ]; then
+        note "RESTORE_MOODLEDATA_SHA256 is not set: the zip is checked by unzip itself while it unpacks (its central directory and a CRC-32 per member), which fails on a cut or zero-filled zip. The SHA-256 taken where the archive was made is the strong proof that it is whole; set it for the real rehearsal"
+    else
+        note "RESTORE_MOODLEDATA_SHA256 is not set: the archive is checked only by its format (${kind}). The SHA-256 taken where the archive was made is the strong proof that it is whole; set it for the real rehearsal"
+    fi
 }
 
 restore_moodledata() {
@@ -193,11 +226,18 @@ by_hand_ack() { [ -n "$RESTORE_DONE_BY_HAND" ] && [ "$RESTORE_DONE_BY_HAND" = "$
 check_dump_record() {
     [ -n "$RESTORE_DB_DUMP" ] || return 0
     [ -f "$RESTORE_DB_DUMP" ] || die "RESTORE_DB_DUMP not found: ${RESTORE_DB_DUMP}"
-    local now rec
+    local now rec how
     now="$(archive_identity "$RESTORE_DB_DUMP")"
     rec="$(kv_get restore.dump)"
     if [ "$now" != "$rec" ]; then
-        die "RESTORE_DB_DUMP names ${RESTORE_DB_DUMP} (${now}), but database ${DB_NAME} is this rehearsal's copy and $([ -n "$rec" ] && printf 'was restored from another dump (%s)' "$rec" || printf 'was not restored from a dump by this kit (a hand restore, or an older kit)'): the dump would be silently ignored. To restore it instead, drop database ${DB_NAME} and create it empty (as a database administrator): step 01 then restores into it and moves this rehearsal's state to archive/; to keep using this copy, unset RESTORE_DB_DUMP"
+        if [ -n "$rec" ]; then
+            how="was restored from another dump (${rec})"
+        elif [ -n "$(kv_get restore.adopted)" ]; then
+            how="was adopted by this work directory ($(kv_get restore.adopted): it already carried another run's marker, so this work directory never restored it from a dump and records none)"
+        else
+            how="was not restored from a dump by this kit (a hand restore, or an older kit)"
+        fi
+        die "RESTORE_DB_DUMP names ${RESTORE_DB_DUMP} (${now}), but database ${DB_NAME} is this rehearsal's copy and ${how}: the dump would be silently ignored. To restore it instead, drop database ${DB_NAME} and create it empty (as a database administrator): step 01 then restores into it and moves this rehearsal's state to archive/; to keep using this copy, unset RESTORE_DB_DUMP"
     fi
 }
 
@@ -299,13 +339,20 @@ if [ "$EXECUTE" = 1 ]; then
     # The archive named for the moodledata is identified now (path, size, mtime: the unpack checks that it is still that file when it has
     # finished) and, when it is going to be unpacked, PROVEN WHOLE before the database is touched: a cut archive found after a 49-minute
     # database restore costs that restore (a tar cut at a member header unpacks with exit status 0, see archive_proof).
+    # The checksum RESTORE_MOODLEDATA_SHA256 is never ignored: it is checked here whether the archive is about to be unpacked or filedir/ is
+    # already there (a re-run, or a new restore that reuses the finished unpack), and a checksum with no archive to check is refused like any
+    # other setting that would be silently ignored (round 7 review).
     ARCHIVE_ID=""
     if [ -n "$RESTORE_MOODLEDATA_ARCHIVE" ]; then
         [ -f "$RESTORE_MOODLEDATA_ARCHIVE" ] || die "RESTORE_MOODLEDATA_ARCHIVE not found: ${RESTORE_MOODLEDATA_ARCHIVE}"
         ARCHIVE_ID="$(archive_identity "$RESTORE_MOODLEDATA_ARCHIVE")"
         if [ ! -d "$MOODLEDATA/filedir" ] || [ -z "$(ls -A "$MOODLEDATA/filedir" 2> /dev/null)" ]; then
             archive_proof
+        else
+            archive_proof reuse
         fi
+    elif [ -n "$RESTORE_MOODLEDATA_SHA256" ]; then
+        die "RESTORE_MOODLEDATA_SHA256 is set and RESTORE_MOODLEDATA_ARCHIVE is not: there is no archive for the checksum to prove, and a checksum that is silently ignored proves nothing. Set RESTORE_MOODLEDATA_ARCHIVE (the archive that checksum was taken from) or unset RESTORE_MOODLEDATA_SHA256"
     fi
     probe_db
     log "database ${DB_NAME}: ${DB_STATE} (${DB_TABLES} tables)"
@@ -369,8 +416,9 @@ if [ "$EXECUTE" = 1 ]; then
                 elif [ -z "$want" ] && ! work_state_has_history; then
                     RESTORE_ID="$have"
                     kv_set restore.id "$RESTORE_ID"
+                    kv_set restore.adopted "$(ts)"
                     if [ -n "$RESTORE_DB_DUMP" ]; then
-                        warn "RESTORE_DB_DUMP is set, but database ${DB_NAME} is already restored (it carries a marker): the dump is NOT used"
+                        warn "RESTORE_DB_DUMP is set, but database ${DB_NAME} is already restored (it carries a marker): the dump is NOT used, and this work directory records no dump for the copy it adopts, so a later run that still names RESTORE_DB_DUMP is refused (a dump that would be silently ignored): unset RESTORE_DB_DUMP from now on"
                     fi
                     log "database ${DB_NAME} carries restore ${RESTORE_ID:0:8}... and this work directory is new: adopting it"
                 else
@@ -477,6 +525,14 @@ if [ "$EXECUTE" = 1 ]; then
         case "$(moodledata_unpack_state "$ARCHIVE_ID")" in
             match)
                 log "moodledata already holds the finished unpack of RESTORE_MOODLEDATA_ARCHIVE (same path, size and mtime): not restoring over it"
+                # The proof is recorded again: a new restore that reuses the unpack starts with an empty state/kv, and the summary prints it.
+                if [ "$ARCHIVE_PROVEN" = sha256 ]; then
+                    kv_set restore.moodledata_proof "$ARCHIVE_PROVEN"
+                    kv_set restore.moodledata_sha256 "${RESTORE_MOODLEDATA_SHA256,,}"
+                elif [ -z "$(kv_get restore.moodledata_proof)" ]; then
+                    kv_set restore.moodledata_proof "earlier-unpack"
+                    note "RESTORE_MOODLEDATA_SHA256 is not set: the archive is not proven again; the unpack that is here is the finished unpack of this very archive (path, size and mtime), made by a run that proved it first"
+                fi
                 ;;
             incomplete)
                 # Refused by the check at the top of this step already; kept as the second line of the same rule.
@@ -492,11 +548,16 @@ if [ "$EXECUTE" = 1 ]; then
     else
         log "moodledata already holds a filedir ($(find "$MOODLEDATA/filedir" -type f | wc -l | tr -d ' ') files): not restoring over it"
     fi
-    require_kit_marker
+    require_kit_marker during-step-01
+    # The copy is stamped, but NOT cleared: its file store gate and its neutralisation are still to come. From here to the last line of this step
+    # it does not count as finished (the record of an earlier, finished run of this step is removed now), so a step 01 that fails or is killed
+    # before the end leaves a copy that steps 02 to 11 refuse (round 7 review; STEP 01 FINISHED in lib/common.sh).
+    step01_unverify
 else
     dry "would restore RESTORE_DB_DUMP (${RESTORE_DB_DUMP:-not set}) into the EMPTY database ${DB_NAME} (never over a populated one); the dump is refused when it holds USE / CREATE DATABASE / DROP DATABASE or has no '-- Dump completed' trailer; the database holds the table ${KIT_INFLIGHT_TABLE} from just before the load until the restore is verified complete, and a database that holds it is refused (only DROP DATABASE clears it)"
     dry "would unpack RESTORE_MOODLEDATA_ARCHIVE (${RESTORE_MOODLEDATA_ARCHIVE:-not set}) into ${MOODLEDATA} when its filedir/ is missing; the file ${KIT_UNPACK_INFLIGHT_FILE} is in ${MOODLEDATA} from just before the unpack until it is verified complete, and a moodledata that holds it (or a marker with an archive line and no unpacked line) is a partial copy that every step refuses, whatever any setting says"
     dry "would stamp the database (a {config} row) and ${MOODLEDATA} (${KIT_MARKER_FILE}) with a random restore id; a populated database without that marker is refused unless RESTORE_DONE_BY_HAND=${DB_NAME} (with RESTORE_DB_DUMP unset, and never for a database that holds ${KIT_INFLIGHT_TABLE})"
+    dry "would remove the record that step 01 finished ({config} ${KIT_STEP01_KEY}, state/kv/restore.verified) while it runs, and write it again as the last act of a step 01 that reached its end: steps 02 to 11 refuse a copy without it"
 fi
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -578,7 +639,7 @@ if [ "$EXECUTE" = 1 ]; then
     kv_set filedir.missing "$missing"
     kv_set filedir.extra "$extra"
     kv_set filedir.wrong_size "$wrongsize"
-    log "FILEDIR: on disk with a size other than {files}.filesize ${wrongsize} (reports/filedir-wrongsize.txt: path, size in {files}, size on disk)"
+    log "FILEDIR: on disk with a size other than {files}.filesize ${wrongsize} (reports/filedir-wrongsize.txt: path, size(s) in {files}, size on disk; a content hash that two {files} rows record with two sizes counts as wrong only when the file on disk matches neither)"
     if [ "$missing" -gt "$FILEDIR_MAX_MISSING" ]; then
         head -n 20 "$REPORT_DIR/filedir-missing.txt" | sed 's/^/    missing: /'
         die "${missing} content hash(es) of {files} are not on disk (allowed ${FILEDIR_MAX_MISSING}): the moodledata restore is incomplete. SCORM packages and certificate images would 404. Do not go on"
@@ -716,4 +777,9 @@ else
     note "LIVE_BASELINE_FILE is not set: restore loss is not isolated. Step 02 takes the baseline from this copy (acceptable for a rehearsal from a dump; live's own baseline at the freeze is the strong form)"
 fi
 
+# The last act of a step 01 that reached its end: the copy is cleared (restored, stamped, file store complete, neutralised). Steps 02 to 11 accept a
+# copy only with this record (and state/01.status ok): see STEP 01 FINISHED in lib/common.sh.
+if [ "$EXECUTE" = 1 ]; then
+    step01_verify "$(kv_get restore.id)"
+fi
 log "restore check done"

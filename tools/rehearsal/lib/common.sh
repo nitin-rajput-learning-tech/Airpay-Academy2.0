@@ -403,11 +403,50 @@ take_run_lock() {
 # signal=NAME), and the lock is held until the child has ended. The child is not interrupted by a signal sent to the step alone (the process
 # group is how to stop it too). A step also writes status=running at its start, so that a death the traps cannot see (SIGKILL, power) leaves a
 # status that is not 'ok'; the status the file held before is kept in a previous= line (step_done_ok reads it for the step that asks about itself).
+# EVERY signal whose default action ends bash with its EXIT trap run is trapped the same way (STEP_SIGNALS: bash runs the EXIT trap with
+# $? = 0 for USR1, USR2, ALRM, VTALRM, XCPU, XFSZ and PIPE too (PIPE: see on_step_pipe), and a step that got one of them while its command ran wrote status=ok and released
+# the lock under the command: round 6b review, USR1 and ALRM reproduced). The exit status 128+n takes n from 'kill -l NAME'.
+# THE PROCESS GROUP. A signal sent to the whole group (Ctrl-C, an ssh hangup, kill -TERM -- -PGID) also kills the tee that step_init started
+# (exec > >(tee ...)), which dies first; the handler's first log line was then a SIGPIPE that killed the handler itself (round 6b review:
+# status=running, .run.lock left behind, exit 141, the log silent). The handlers log through log_survivor, which ignores SIGPIPE and falls back
+# to the log file, so a group signal ends the way a signal to the step alone does: status=fail, rc=128+n, signal=NAME, lock released. SIGPIPE
+# itself is only noted (on_step_pipe, below), so that the signal that caused the dead pipe is the one that is recorded.
 STEP_SIGNAL=""
+STEP_SIGNALS="TERM INT HUP ALRM USR1 USR2 VTALRM XCPU XFSZ"
+# SIGPIPE is the one signal that is only NOTED (on_step_pipe) and never ends the step by itself: the death of the tee a step writes its log through
+# raises it, and a group signal (TERM to the whole process group) kills that tee at the same moment as it signals the step, so the first write to the
+# dead pipe (bash's own "Terminated" message about the killed command is one) raises PIPE too. Bash runs pending traps in the order of the signal
+# numbers, PIPE (13) before TERM (15): a PIPE handler that exited would record the step as killed by PIPE (rc 141) and never log the TERM. The PIPE
+# handler therefore only notes it; the signal that is the cause (TERM) then runs its own handler and decides rc and signal=NAME, and a step that
+# saw PIPE and no other signal is recorded failed, never ok, when it ends (on_exit).
+STEP_PIPE=0
+on_step_pipe() { STEP_PIPE=1; }
+
+# log_survivor TEXT...: log() for a handler that runs while the step is ending (a signal, the exit trap): it never fails, and the line gets
+# through when the step's own tee is gone. SIGPIPE is ignored from here on (the process is ending; nothing after this needs it) and a line the
+# pipe does not take is appended straight to the log file (SURVIVOR_LOG, else the step's LOG_FILE). Running under set -e, a handler that
+# let a failed write end it would skip the status file.
+log_survivor() {
+    trap '' PIPE
+    local line
+    line="$(log "$@")"
+    if ! printf '%s\n' "$line" 2> /dev/null; then
+        if [ -n "${SURVIVOR_LOG:-${LOG_FILE:-}}" ]; then
+            printf '%s\n' "$line" >> "${SURVIVOR_LOG:-$LOG_FILE}" 2> /dev/null || true
+        fi
+    fi
+    return 0
+}
+
 on_step_signal() {
+    local n="${2:-}"
     STEP_SIGNAL="$1"
-    log "SIG${1} received by step ${STEP_ID}: the foreground command has finished, so the step stops here, records itself as failed (exit $((128 + $2))) and releases its lock; it does not go on"
-    exit $((128 + $2))
+    if [ -z "$n" ]; then
+        n="$(kill -l "$1" 2> /dev/null || true)"
+    fi
+    case "$n" in '' | *[!0-9]* | 0) n=1 ;; esac
+    log_survivor "SIG${1} received by step ${STEP_ID}: the foreground command has finished, so the step stops here, records itself as failed (exit $((128 + n))) and releases its lock; it does not go on"
+    exit $((128 + n))
 }
 
 # write_step_status STATUS RC SECONDS: state/NN.status (EXECUTE only). running carries the status the file held before.
@@ -455,19 +494,28 @@ step_init() {
     fi
     STEP_T0="$(epoch)"
     trap 'on_exit $?' EXIT
-    trap 'on_step_signal TERM 15' TERM
-    trap 'on_step_signal INT 2' INT
-    trap 'on_step_signal HUP 1' HUP
+    local sig
+    for sig in $STEP_SIGNALS; do
+        trap "on_step_signal $sig" "$sig" 2> /dev/null || true
+    done
+    trap on_step_pipe PIPE 2> /dev/null || true
     trap 'log "ERROR: a command failed (rc=$?) at ${BASH_SOURCE[0]##*/}:${LINENO}: ${BASH_COMMAND}"' ERR
     write_step_status running "" 0
     log "step ${STEP_ID} ${STEP_NAME} start; mode $(mode_name); kit $(kit_rev); env ${ENV_FILE}"
 }
 
 on_exit() {
-    local rc="$1" t1 seconds status bg
+    local rc="$1" t1 seconds status bg pipefail_rc=0
     # Cleanup is not interrupted: a second signal while the status is written must not leave the file at 'running' half way, or the lock
     # released before the status is there.
-    trap '' TERM INT HUP
+    # shellcheck disable=SC2086
+    trap '' $STEP_SIGNALS PIPE 2> /dev/null || true
+    # A step that saw SIGPIPE (its log pipe died) and no signal that ended it is not ok, whatever its last command returned.
+    if [ "$rc" = 0 ] && [ "$STEP_PIPE" = 1 ]; then
+        rc=$((128 + $(kill -l PIPE 2> /dev/null || printf 13)))
+        pipefail_rc=1
+        [ -n "$STEP_SIGNAL" ] || STEP_SIGNAL=PIPE
+    fi
     t1="$(epoch)"
     seconds=$((t1 - STEP_T0))
     case "$rc" in
@@ -485,13 +533,18 @@ on_exit() {
     if [ -n "$TMP_DIR" ] && [ -d "$TMP_DIR" ]; then
         rm -rf "$TMP_DIR"
     fi
-    log "step ${STEP_ID} ${STEP_NAME} ${status} (rc ${rc}) in ${seconds}s, ${WARNINGS} warning(s), mode $(mode_name)"
+    log_survivor "step ${STEP_ID} ${STEP_NAME} ${status} (rc ${rc}) in ${seconds}s, ${WARNINGS} warning(s), mode $(mode_name)"
     write_step_status "$status" "$rc" "$seconds"
     if [ -n "$STEP_PIDFILE" ]; then
         rm -f "$STEP_PIDFILE"
     fi
     if [ -n "$STEP_LOCK" ]; then
         rm -rf "$STEP_LOCK"
+    fi
+    # The process ends with the status it recorded (run_all.sh stops on a step that exits non-zero): a step that saw SIGPIPE and finished
+    # "normally" is recorded failed above, and exits so as well.
+    if [ "$pipefail_rc" = 1 ]; then
+        exit "$rc"
     fi
 }
 
@@ -1192,12 +1245,35 @@ disk_paths_sizes() {
     find "$1" -type f -printf '%P\t%s\n' | grep -E "^[0-9a-f]{2}/[0-9a-f]{2}/[0-9a-f]{40}${tab}[0-9]+\$" || true
 }
 
-# filedir_wrong_sizes DBSIZES DISKSIZES -> "path<TAB>size in {files}<TAB>size on disk" for each content file that is on disk with a size other
+# filedir_wrong_sizes DBSIZES DISKSIZES -> "path<TAB>size(s) in {files}<TAB>size on disk" for each content file that is on disk with a size other
 # than {files}.filesize. Both inputs are "path<TAB>size", sorted with LC_ALL=C. A file that is missing is not listed (the missing list has it).
 # This is what shows a content file that was cut inside (a cut archive or a hand unpack that stopped in the middle of a file), which the
-# existence check cannot see.
+# existence check cannot see. A content hash is the SHA-1 of the content, so it has one size; but {files} is legacy data, and a hash that two
+# rows record with two different filesize values (one of them wrong) appears here twice. The file is cut only when its size on disk is NONE
+# of the sizes {files} records for that hash: a complete copy is never refused for the one wrong row (the listing then shows every recorded
+# size, comma separated), while a file cut to any other length still is.
 filedir_wrong_sizes() {
-    LC_ALL=C join -t $'\t' -o 0,1.2,2.2 "$1" "$2" | awk -F '\t' '$2 != $3'
+    LC_ALL=C join -t $'\t' -o 0,1.2,2.2 "$1" "$2" | awk -F '\t' '
+        {
+            if (!($1 in disk)) {
+                order[++n] = $1
+                disk[$1] = $3
+                sizes[$1] = $2
+            } else if (index("," sizes[$1] ",", "," $2 ",") == 0) {
+                sizes[$1] = sizes[$1] "," $2
+            }
+            if ($2 == $3) {
+                good[$1] = 1
+            }
+        }
+        END {
+            for (i = 1; i <= n; i++) {
+                p = order[i]
+                if (!(p in good)) {
+                    print p "\t" sizes[p] "\t" disk[p]
+                }
+            }
+        }'
 }
 
 # comm_only_first A B -> lines of sorted A that are not in sorted B; comm_only_second the other way.
@@ -1270,13 +1346,17 @@ new_restore_id() { od -An -N16 -tx1 /dev/urandom | tr -d ' \n'; }
 # RESTORE_DONE_BY_HAND path (which the kit says stays in rehearsal.env) one lost connection made step 01 archive a finished rehearsal's
 # state/ and overwrite the database's marker with a new id (round 6 review, reproduced). Each read is asked up to three times, a second
 # apart. The value is read with its stderr kept apart, so a warning of the client is never taken for the value.
-marker_get() {
-    local v="" n="" tries=0 rc errf
+marker_get() { config_row_get "$KIT_MARKER_KEY"; }
+
+# config_row_get NAME: the value of the kit's own {config} row NAME, read the way marker_get says (rc 0 with a value, rc 0 with nothing = no
+# such row or no {config} table, rc 1 = cannot tell). Used for the restore marker and for the 'step 01 finished' row.
+config_row_get() {
+    local key="$1" v="" n="" tries=0 rc errf
     db_init_cnf
-    errf="$TMP_DIR/marker.err"
+    errf="$TMP_DIR/row.err"
     while :; do
         rc=0
-        v="$(db_q "SELECT value FROM {p}config WHERE name = '${KIT_MARKER_KEY}'" 2> "$errf")" || rc=$?
+        v="$(db_q "SELECT value FROM {p}config WHERE name = '${key}'" 2> "$errf")" || rc=$?
         v="${v//$'\r'/}"
         if [ "$rc" != 0 ]; then
             if grep -q 'ERROR 1146' "$errf" 2> /dev/null; then
@@ -1288,7 +1368,7 @@ marker_get() {
                 printf '%s' "$v"
                 return 0
             fi
-            n="$(count_retry db_q "SELECT COUNT(*) FROM {p}config WHERE name = '${KIT_MARKER_KEY}'" 2> /dev/null)" || n=""
+            n="$(count_retry db_q "SELECT COUNT(*) FROM {p}config WHERE name = '${key}'" 2> /dev/null)" || n=""
             if [ "$n" = 0 ]; then
                 return 0
             fi
@@ -1485,6 +1565,10 @@ archive_stream() {
 # (one decompression pass, which is also the integrity test of the compression: a failing decompressor is rc 1 through pipefail) and only
 # its last 1024 bytes are kept. A file that is not a tar at all fails the same test (its last bytes are not NUL). This is a check of the
 # FORMAT: only a checksum taken where the archive was made (RESTORE_MOODLEDATA_SHA256) proves the archive is the one that was made.
+# For an UNCOMPRESSED tar the format is not even that much: a zero-filled region (a pre-allocated or segmented copy that stopped, a file
+# system that kept the size and lost the data) ends in zero blocks at any cut point, and GNU tar takes two zero blocks where a header is due for
+# the end of the archive and exits 0. archive_proof therefore does not accept a plain tar on this test; it needs the checksum (round 7 review).
+# A compressed tar is different: the decompressor fails on a zero-filled region (its CRC or length check), which is what makes this test enough.
 tar_ends_complete() {
     local kind="$1" f="$2" hex
     # One pass: the last 1024 bytes of the (uncompressed) stream as hexadecimal. A failing decompressor is rc != 0 through pipefail.
@@ -1634,11 +1718,61 @@ unpack_unfinished_advice() {
     printf 'The kit never adopts it, whatever RESTORE_MOODLEDATA_ARCHIVE, RESTORE_MOODLEDATA_BY_HAND or REHEARSAL_WORK say. Empty %s (or point MOODLEDATA at a new, empty directory) and run step 01 again, so that the kit unpacks the archive itself; or unpack the archive by hand into an EMPTY directory (first check its SHA-256 against the one taken where it was made, and that tar ran to the end of a COMPLETE archive: a tar cut at a member header also exits 0), set MOODLEDATA to it and RESTORE_MOODLEDATA_BY_HAND to its path' "$MOODLEDATA"
 }
 
-# require_kit_marker: EXECUTE stops unless the database AND the moodledata carry the id that state/kv/restore.id holds, and neither is a
-# partial copy (the database holds no in-flight table, the moodledata no in-flight file and no unpack record that did not finish).
+# STEP 01 FINISHED. Step 01 stamps the database and the moodledata early (right after the restore and the unpack), long before its file store
+# gate and its neutralisation (SMTP credentials wiped, cron_enabled = 0, the OAuth2 tokens blanked) have run. A copy that is stamped is therefore
+# NOT a copy that step 01 has cleared: a failed filedir gate, or a step 01 killed before the gate or the neutralisation (the round 6b TERM
+# repro), left a stamped copy that steps 02 to 11 accepted, and live's OAuth2 refresh tokens stayed usable by the step 11 cron cycle (round 7
+# review). So the very last thing a successful step 01 does is record the restore id it verified, in two places that must agree with
+# state/kv/restore.id: the {config} row KIT_STEP01_KEY of the database (it travels with the neutralised data, so a snapshot or a dump taken
+# before step 01 finished does not carry it) and state/kv/restore.verified; step 01 removes both when it starts on a copy it already
+# stamped. require_kit_marker (steps 02 to 11) also asks that state/01.status is ok.
+KIT_STEP01_KEY="rehearsal_kit_step01_ok"
+
+# step01_unverify: a step 01 that is running is not finished (EXECUTE only; the database must be this rehearsal's, so after its marker check).
+step01_unverify() {
+    kv_unset restore.verified
+    db_write "DELETE FROM {p}config WHERE name = '${KIT_STEP01_KEY}'"
+}
+
+# step01_verify ID: step 01 reached its end for restore ID: the very last act of the step.
+step01_verify() {
+    db_write "INSERT INTO {p}config (name, value) VALUES ('${KIT_STEP01_KEY}', '$1') ON DUPLICATE KEY UPDATE value = '$1'"
+    kv_set restore.verified "$1"
+    log "OK: step 01 finished for restore ${1:0:8}...: recorded in the database ({config} ${KIT_STEP01_KEY}) and in state/kv/restore.verified; steps 02 to 11 accept this copy"
+}
+
+# step01_unfinished ID -> prints why step 01 has NOT finished ok for restore ID (nothing when it has); rc 1 (nothing printed) when the
+# database's record could not be read, which a caller must treat as "cannot tell", never as finished.
+step01_unfinished() {
+    local want="$1" have st kvv
+    if ! step_done_ok 01; then
+        st="$(sed -n 's/^status=//p' "$STATE_DIR/01.status" 2> /dev/null | head -n 1 || true)"
+        printf 'state/01.status says %s, not ok' "${st:-nothing (there is no state/01.status)}"
+        return 0
+    fi
+    kvv="$(kv_get restore.verified)"
+    if [ "$kvv" != "$want" ]; then
+        if [ -n "$kvv" ]; then
+            printf 'state/kv/restore.verified holds %s..., not this restore id %s...' "${kvv:0:8}" "${want:0:8}"
+        else
+            printf 'state/kv/restore.verified is not set'
+        fi
+        return 0
+    fi
+    have="$(config_row_get "$KIT_STEP01_KEY")" || return 1
+    if [ "$have" != "$want" ]; then
+        printf 'the database holds no {config} row %s for this restore (it holds %s)' "$KIT_STEP01_KEY" "${have:-none}"
+    fi
+    return 0
+}
+
+# require_kit_marker [during-step-01]: EXECUTE stops unless the database AND the moodledata carry the id that state/kv/restore.id holds,
+# neither is a partial copy (the database holds no in-flight table, the moodledata no in-flight file and no unpack record that did not
+# finish), and step 01 has finished ok for this restore (see STEP 01 FINISHED above). Step 01's own call passes during-step-01: it is the
+# step that makes the copy finished.
 require_kit_marker() {
     [ "$EXECUTE" = 1 ] || return 0
-    local want have dataid inflight unfinished
+    local want have dataid inflight unfinished why
     want="$(kv_get restore.id)"
     [ -n "$want" ] || die "no restore id is recorded (state/kv/restore.id): step 01 has not stamped this rehearsal. Run step 01 first"
     # A marker row can be in a partial copy (a dump or a snapshot of a stamped database that died after {config} was loaded): the marker
@@ -1655,6 +1789,11 @@ require_kit_marker() {
     dataid="$(moodledata_marker_get)"
     [ -n "$dataid" ] || die "${MOODLEDATA} carries no ${KIT_MARKER_FILE}: it is not a moodledata this kit stamped (step 01), so the kit will not write to it"
     [ "$dataid" = "$want" ] || die "${MOODLEDATA} carries restore id ${dataid:0:8}..., not ${want:0:8}...: it belongs to another rehearsal or site. Refused"
+    if [ "${1:-}" != during-step-01 ]; then
+        why="$(step01_unfinished "$want")" \
+            || die "database ${DB_NAME}: the record that step 01 finished for restore ${want:0:8}... ({config} ${KIT_STEP01_KEY}) could not be read (a failed read, or a blank answer for a row that exists): cannot tell whether step 01 finished, so the kit will not write to this copy. Run this step again once the server answers"
+        [ -z "$why" ] || die "step 01 (restore check) has not finished ok for this restore (${why}): the copy is stamped, but its filedir gate and its neutralisation (SMTP credentials wiped, cron_enabled = 0, the restored OAuth2 tokens blanked) have not all been done, so step ${STEP_ID} and every step after it refuse it. Fix what step 01 reported and run it again: bash tools/rehearsal/run_all.sh --execute --from 01"
+    fi
 }
 
 # restore_dataroot_used ID -> 0 when restore-ids.log records that a step after 01 ran against the moodledata of restore ID (written by
