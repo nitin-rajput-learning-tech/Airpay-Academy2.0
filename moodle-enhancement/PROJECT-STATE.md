@@ -1,7 +1,103 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-10-08 (**Moodle 5.3 compatibility fixes FX-01 to FX-23 merged (two-lens Opus review: ship); Moodle 5.3 real-data rehearsal PASS - April production 4.1.2 -> 4.5 -> 5.3 + import, docs/upgrade/MOODLE-5.3-REAL-DATA-REHEARSAL-2026-10-08.md; all 19 BizLMS importers merged and dry-run clean on the April production copy; 84 owner decisions made under delegation and merged; Moodle 5.3 LTS adopted as target (ADR-033, gate pending); local PHPUnit now runs the importers - see the 2026-10-07/08 section**) **Previous:** 2026-09-29 (**ADR-031 delegated decisions merged (role-9 scripts, cart gate, notifications flag, manager index); PWA OFF + "Browse Library" deployed to UAT; Playwright screen-check pass 51/58 + 7 verified refusals — see the 2026-09-29 section**)
+**Updated:** 2026-10-10 (**Moodle 5.3 post-import parity gate on the April production copy: everything the import wrote is explained, legacy tables untouched, only drift the FNS0001 survey; 5.3 PHPUnit 2,022 tests + local 5.1 2,403 tests, every failure a test defect, all fixed; claude/stageb-tools merged (platform 2026100902); see the 2026-10-08 to 10-10 section**) **Previous:** 2026-10-08 (Moodle 5.3 real-data rehearsal PASS, FX-01 to FX-23 merged)
 
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
+
+---
+
+## 2026-10-08 to 10-10 - Moodle 5.3 confirmed on real data, full PHPUnit on 5.1 and 5.3, Stage B tooling merged (Opus 5.5)
+
+**Moodle 5.3 on the April production copy (`r53_final`):**
+- Runs on the package staged from gap-integration 474c576f1 (stage `moodle53-stage/20261009-190307-5.3`).
+- The upgrade to the merged code was clean (763 s).
+- The notifications claim-row fold (2026100900) found 0 rows: the rule engine never ran on production.
+- THE post-import parity gate ran: `migration_parity_check.php --compare --after-import --decisions --expect-decisions-hash`.
+  Results:
+  - The import's own records explain everything it wrote: +7,733 user_enrolments, and 90 BizLMS enrol instances
+    switched off (CRS-01, the enroloff trail).
+  - Invariants `message_provider_defaults`, `tenant_cross_foot` and `bizlms_import` all hold.
+  - All 95 BizLMS legacy tables are untouched.
+  - The `--report` run also proves the apply report matches the database.
+- **Only drift:** `course_modules` 1540 -> 1539, the one empty survey (FNS0001). Moodle 5.x drops mod_survey.
+  Nitin decides: ship a 5.x mod_survey, or accept the loss.
+- **Unproven, needs the owner:** learningplan:orphan_course=4, ratings:orphan_item=87, ratings:unknown_area=195.
+- Logs: `D:/Claude Local/moodle53/r53f/gate_parity_after_import*.log`, `gate_progress.txt`.
+
+**PHPUnit, Moodle 5.3 (PHP 8.4, MariaDB 11.4 strict). Confirmation package b502a819d, 15 suites, 2,022 tests:**
+- 10 suites clean.
+- Every failure was in a TEST, and all are fixed:
+  - catalog: the flag snapshot leaked between tests (11e007cd2);
+  - classroom: the session timestamp (d04b323ff);
+  - quizaccess: the upgrade tests never set the stored version, so they hit downgrade_exception (4ee8632f0). This suite
+    had never run green anywhere.
+  - platform: one PHP 8.4 str_getcsv deprecation (98548225b);
+  - exams: a Windows cache rename warning only.
+- The gate re-ran on the merged package: catalog 101/101 and classroom 268/268 pass.
+- The merged platform suite had 584 tests, and 581 passed. Three never-run Stage B tests failed, fixed in 20053b5fb:
+  - bizlms_parity_gate_test overrode setUpBeforeClass(), so the fixture trait never created its tables;
+  - parity_gate used get_recordset_sql, which classes/bizlms bans (ADR-032).
+- **OPEN:** re-proving those 3 classes plus recompletion, programs and quizaccess on 5.3. The disk-full window (below)
+  broke the pu53_ environment. `r53f/recheck53all.sh` (util --drop, init, re-run) was running at 04:00 on 10-10.
+  Read its results in `r53f/gate_progress.txt`.
+
+**PHPUnit, local 5.1 (run1009b, HEAD d04b323ff + test fixes copied in): 20 suites, 2,403 tests:**
+- 18 suites have rc=0. Exams has only Windows cache warnings.
+- Confirmed locally: catalog, classroom 268/268, quizaccess 13/13, cert_health, compliance (FX-15 COALESCE) and
+  calendar.
+- Recompletion had 3 errors from the 00:14 disk-full, not from code. That suite passed 139/139 twice on 10-08.
+  - Hardening anyway (8a9743c65): a unique and checked fixture copy, and a 60 s archive tolerance.
+  - Correction: that commit blames a scanner lock. The cause was the disk filling up.
+
+**Merged to gap-integration:**
+- 474c576f1 `claude/stageb-tools`: post-import parity gate, standalone source baseline (metrics v4), rehearsal kit to
+  round 7. local_sentientia_platform is now 2026100902 / 1.12.0.
+- Fixes: 11e007cd2, 98548225b, 4ee8632f0, 20053b5fb, 8a9743c65.
+- **Pending merge:** `claude/feature-flags-di-reset` (another session; platform 2026100903). feature_flags keeps its
+  snapshot in a \core\di object, so the per-test reset clears it. It was running its XAMPP platform suite at 04:00.
+  Review it, then merge.
+
+**Stage B kit (`claude/stageb-tools`, NOT yet re-merged):**
+- Round 8 (502abefa2, 465/465) added:
+  - the filedir content proof: sha1(content) == name for every file;
+  - an explicit "reached the end" flag;
+  - the hop-1 re-run recovery;
+  - no password copies in TMPDIR.
+- Round 9 (c3bddd7a6) added:
+  - the tar end-of-archive gap is accepted up to 10752 bytes (round 8 had refused 1 in 20 good tars);
+  - LC_ALL=C;
+  - run_all stops after an unreached step.
+  Round 9's check was stopped.
+- Round 9b was stopped mid-fix (weekly limits). It leaves UNCOMMITTED edits in the worktree (README, lib/common.sh,
+  selftest.sh, +85/-12). Its job: a guarded zero_bytes helper for every /dev/zero write in selftest.sh (lines ~959,
+  1294, 1305, 2057, 2195, 2207, 2273, 2293). A negative count there fills the operator's disk. Finish it, run the full
+  selftest, do one focused check, then merge again.
+
+**Incident, 2026-10-10 00:14 and 03:02:**
+- What happened: two kit agents ran `head -c $((size - N)) /dev/zero` with an empty size. GNU head reads a negative
+  count as "all but the last N bytes" of an endless stream.
+- Damage: 162 GB of zero files in the session scratchpad. C: went down to 0-5 GB free.
+- Knock-on: the other session's XAMPP upgrade died (re-run OK), local recompletion failed, and the 5.3 pu53_ bootstrap
+  broke.
+- Response: the processes were killed; Nitin approved deleting the files; C: is back to 155 GB free.
+- Rules now: every agent prompt forbids unguarded /dev/zero, scratch goes to `D:/Claude Local/kit-scratch`, and the
+  scratchpad watcher alarms below 3 GB free. Memory: feedback_workflow_agent_blocked_commands.
+
+**Needs Nitin:**
+- The FNS0001 survey decision.
+- The 3 needs-owner skip counts.
+- EV-18, IDN-05, CRS-13.
+- Sign the decisions file.
+- The Finance questions.
+- IT: a live backup with filedir, and the PHP 8.3 / MySQL 8.4 box.
+- The UAT tunnel.
+- 5.1 screenshots of the 5.3 UI changes.
+- Whether to move XAMPP to D: (about 10 GB; not needed now).
+
+**Follow-ups:**
+- SITEID checker known limits.
+- Legacy 'sending' rows on UAT: time the fold there.
+- A unique-constraint ADR for the notifications dedupe.
+- The feature-flag TTL note for operators (30 s).
 
 ---
 
