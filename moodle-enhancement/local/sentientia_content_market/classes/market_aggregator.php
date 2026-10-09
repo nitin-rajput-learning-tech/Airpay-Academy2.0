@@ -199,7 +199,11 @@ class market_aggregator {
             return 0;
         }
 
-        [$insql, $params] = $DB->get_in_or_equal($seen_ids, SQL_PARAMS_NAMED, 'eid');
+        // $equal = false: the helper itself writes the negation. With ONE seen id it returns '<> :eid1' (with several,
+        // 'NOT IN (...)'); the old code asked for the positive form and put a literal NOT in front of it, which for a
+        // single seen id is 'external_id NOT = :eid1' - a syntax error on MySQL and MariaDB alike - so a provider
+        // listing exactly one course made the whole sync fail after its upserts.
+        [$insql, $params] = $DB->get_in_or_equal($seen_ids, SQL_PARAMS_NAMED, 'eid', false);
         $params['prov']  = $provider_key;
         $params['cid']   = $costcenterid;
         $params['ts']    = time();
@@ -211,7 +215,7 @@ class market_aggregator {
               WHERE provider = :prov
                 AND costcenterid = :cid
                 AND status = 'active'
-                AND external_id NOT $insql",
+                AND external_id $insql",
             $params
         );
 

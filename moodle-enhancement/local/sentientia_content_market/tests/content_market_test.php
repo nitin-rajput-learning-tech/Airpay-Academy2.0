@@ -160,6 +160,65 @@ class content_market_test extends advanced_testcase {
     }
 
     /**
+     * A sync retires what the provider stopped listing, whatever number of ids it saw.
+     *
+     * retire_missing() builds "external_id <> :p" for ONE seen id and "external_id NOT IN (...)" for several; it used to
+     * put its own NOT in front of the helper's positive form, which for exactly one id was "NOT = :p", a syntax error
+     * that failed the sync (status 'failed') after the upserts. Both branches, and a second tenant that must not be
+     * touched, are covered here.
+     *
+     * @test
+     */
+    public function test_sync_retires_items_the_provider_no_longer_lists(): void {
+        global $DB;
+
+        $make = function (array $ids): mock_provider {
+            $provider = new mock_provider();
+            $provider->set_fixture(array_map(fn(string $id) => catalog_item::from_array([
+                'provider'    => 'mock',
+                'external_id' => $id,
+                'title'       => 'Course ' . $id,
+                'raw_payload' => [],
+            ]), $ids));
+            return $provider;
+        };
+        $status = fn(string $id, int $tenant = 1) => $DB->get_field('local_sentientia_cm_item', 'status',
+            ['provider' => 'mock', 'external_id' => $id, 'costcenterid' => $tenant], MUST_EXIST);
+        $aggregator = new market_aggregator();
+
+        // Another tenant's course of the same provider: no sync of tenant 1 may retire it.
+        $stats = $aggregator->sync_provider($make(['r-other']), 77);
+        $this->assertSame('ok', $stats['status'], (string) $stats['error']);
+
+        $stats = $aggregator->sync_provider($make(['r-a', 'r-b', 'r-c']), 1);
+        $this->assertSame('ok', $stats['status'], (string) $stats['error']);
+        $this->assertSame(3, $stats['items_created']);
+
+        // Two ids seen: the NOT IN (...) branch. r-c is gone.
+        $stats = $aggregator->sync_provider($make(['r-a', 'r-b']), 1);
+        $this->assertSame('ok', $stats['status'], (string) $stats['error']);
+        $this->assertSame(1, $stats['items_retired']);
+        $this->assertSame('active', $status('r-a'));
+        $this->assertSame('active', $status('r-b'));
+        $this->assertSame('retired', $status('r-c'));
+
+        // One id seen: the <> branch. r-b is gone as well.
+        $stats = $aggregator->sync_provider($make(['r-a']), 1);
+        $this->assertSame('ok', $stats['status'], (string) $stats['error']);
+        $this->assertSame('active', $status('r-a'));
+        $this->assertSame('retired', $status('r-b'));
+        $this->assertSame('retired', $status('r-c'));
+
+        // A course that comes back is active again.
+        $stats = $aggregator->sync_provider($make(['r-a', 'r-b']), 1);
+        $this->assertSame('ok', $stats['status'], (string) $stats['error']);
+        $this->assertSame('active', $status('r-b'));
+        $this->assertSame('retired', $status('r-c'));
+
+        $this->assertSame('active', $status('r-other', 77), 'a sync of tenant 1 leaves tenant 77 alone');
+    }
+
+    /**
      * @test
      */
     public function test_sync_provider_updates_existing_item(): void {
