@@ -602,8 +602,9 @@ final class bizlms_import_test extends provider_testcase {
         $this->assertSame((int) $this->map('local_location_room', 1)->targetid, (int) $s1->locationid);
         $this->assertStringEndsWith(' - Room A', $s1->location);
         $this->assertTrue(\core_text::strlen($s1->location) <= 254);
-        $this->assertSame($t + 2, (int) $s1->timecreated);
-        $this->assertSame($t + 2, (int) $s1->timemodified);
+        // legacy_session() seeds timecreated = T0 + id and timemodified = 0 (read as timecreated): session 1 is T0 + 1.
+        $this->assertSame($t + 1, (int) $s1->timecreated);
+        $this->assertSame($t + 1, (int) $s1->timemodified);
 
         $s2 = $this->target('local_sentientia_classroom_sessions', ['id' => 2]);
         $this->assertSame('', $s2->title, 'an empty title is allowed');
