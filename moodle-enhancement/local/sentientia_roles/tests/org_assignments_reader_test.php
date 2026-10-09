@@ -59,6 +59,10 @@ final class org_assignments_reader_test extends \advanced_testcase {
     protected function setUp(): void {
         global $DB;
         $this->legacy_fixture_setup();
+        // feature_flags keeps the overrides it read in a static. resetAfterTest() rolls the flag row back but not
+        // that static, so a flag a previous test switched ON was still ON here (and the flag-off web service test,
+        // the last of the class, listed the organisation rows). Start every test from what the database says.
+        feature_flags::invalidate_caches();
         $this->ensure_bizlms_schema();
 
         $gen = $this->getDataGenerator();
@@ -86,6 +90,13 @@ final class org_assignments_reader_test extends \advanced_testcase {
         role_assign($this->roleid, $this->u['b1'], $contexts[77]);
         role_assign($this->roleid, $this->u['a1'], $contexts[10]);
         role_assign($otherrole, $this->u['a2'], $contexts[1]);
+    }
+
+    protected function tearDown(): void {
+        // And leave nothing behind for the next class of the run: a test that enabled the flag must not hand it,
+        // through the static, to a test elsewhere that reads it.
+        feature_flags::invalidate_caches();
+        parent::tearDown();
     }
 
     /**
