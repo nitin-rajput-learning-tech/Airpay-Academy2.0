@@ -3,7 +3,8 @@
 // License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 defined('MOODLE_INTERNAL') || die();
 $plugin->component = 'local_sentientia_content_market';
-$plugin->version   = 2026100900;  // retire_missing: one seen id built 'NOT = :eid1' (syntax error, sync failed) -> get_in_or_equal(..., false)
+$plugin->version   = 2026100901;  // retire_missing returns the rows retired by THIS run (items_retired in the sync log accumulated)
+// 2026100900:  retire_missing: one seen id built 'NOT = :eid1' (syntax error, sync failed) -> get_in_or_equal(..., false)
 // 2026091601:  featureunavailable string without '&' (core escapes exception text → showed L&amp;D on UAT)
 // 2026091600:  F-12: card title is format_string'd, render unescaped
 // 2026061601:  // +1: idx_provider_ext now per-tenant (provider, external_id, costcenterid)

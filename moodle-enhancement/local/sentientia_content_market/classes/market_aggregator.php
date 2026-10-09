@@ -190,7 +190,8 @@ class market_aggregator {
      * @param string   $provider_key
      * @param string[] $seen_ids      external_id values seen in this sync run
      * @param int      $costcenterid
-     * @return int Number of items retired
+     * @return int Number of items retired by THIS call (not the number of retired
+     *             items the provider and tenant hold in total)
      */
     private function retire_missing(string $provider_key, array $seen_ids, int $costcenterid): int {
         global $DB;
@@ -206,24 +207,32 @@ class market_aggregator {
         [$insql, $params] = $DB->get_in_or_equal($seen_ids, SQL_PARAMS_NAMED, 'eid', false);
         $params['prov']  = $provider_key;
         $params['cid']   = $costcenterid;
-        $params['ts']    = time();
 
-        // Update active items whose external_id was NOT in the seen set.
-        $DB->execute(
-            "UPDATE {local_sentientia_cm_item}
-                SET status = 'retired', timemodified = :ts
-              WHERE provider = :prov
-                AND costcenterid = :cid
-                AND status = 'active'
-                AND external_id $insql",
-            $params
-        );
+        // Select the rows this run retires first. $DB->execute() does not say how many rows it changed, and the old
+        // code counted the retired rows afterwards: every row EVER retired for this provider and tenant, so the
+        // items_retired column of the sync log grew from run to run (a provider that dropped 2 courses last month
+        // reported 2 retired on every later sync).
+        $ids = $DB->get_fieldset_select('local_sentientia_cm_item', 'id',
+            "provider = :prov AND costcenterid = :cid AND status = 'active' AND external_id $insql", $params);
+        if (empty($ids)) {
+            return 0;
+        }
 
-        return $DB->count_records('local_sentientia_cm_item', [
-            'provider'    => $provider_key,
-            'costcenterid'=> $costcenterid,
-            'status'      => 'retired',
-        ]);
+        // Retire exactly those rows (in chunks, so a provider that drops a whole catalogue does not build one
+        // enormous IN list). The status guard keeps a row that changed since the select out of the update.
+        $now = time();
+        foreach (array_chunk($ids, 1000) as $chunk) {
+            [$idsql, $idparams] = $DB->get_in_or_equal($chunk, SQL_PARAMS_NAMED, 'rid');
+            $DB->execute(
+                "UPDATE {local_sentientia_cm_item}
+                    SET status = 'retired', timemodified = :ts
+                  WHERE status = 'active'
+                    AND id $idsql",
+                ['ts' => $now] + $idparams
+            );
+        }
+
+        return count($ids);
     }
 
     /**

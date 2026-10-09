@@ -211,3 +211,7 @@ this run, so the sync-log `items_retired` column is cumulative.
 ## 2026-10-08 Moodle 5.3 compat FX-21
 
 The Coursera, Go1, Skillsoft and Udemy Business adapters pin `http_build_query(..., '', '&')` for their request URLs and the Coursera token body (same reason as `keka_client`: the default separator is `&amp;` on Moodle 5.1 and `&` on 5.2/5.3). No behaviour change on 5.2/5.3. ME tree only.
+
+## 2026-10-09 - items_retired is per run (2026100901)
+
+`market_aggregator::retire_missing()` returned the count of ALL retired rows of the provider and tenant, so the sync-log `items_retired` column was cumulative (a provider that dropped 2 courses once reported 2 retired on every later sync). It now selects the ids it is about to retire (provider, tenant, `status = 'active'`, external id not seen), updates exactly those by id in chunks of 1000 (status guard kept) and returns how many it retired in that call. No schema or data change; sync-log rows already written keep their old cumulative numbers. New test `test_items_retired_counts_only_what_this_run_retired` (six syncs of one tenant with per-run expectations, the sync-log column, a second tenant's retired row not counted). Not run here (test databases busy): runs in the next local chain.

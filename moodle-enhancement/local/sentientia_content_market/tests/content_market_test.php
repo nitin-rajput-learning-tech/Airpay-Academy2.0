@@ -219,6 +219,61 @@ class content_market_test extends advanced_testcase {
     }
 
     /**
+     * items_retired in the sync log is what THIS run retired.
+     *
+     * retire_missing() used to return the number of retired rows the provider and tenant held in total, so a course
+     * retired once was counted again on every later sync and the column only grew. A tenant 77 row retired earlier
+     * must not be counted for tenant 1 either.
+     *
+     * @test
+     */
+    public function test_items_retired_counts_only_what_this_run_retired(): void {
+        global $DB;
+
+        $make = function (array $ids): mock_provider {
+            $provider = new mock_provider();
+            $provider->set_fixture(array_map(fn(string $id) => catalog_item::from_array([
+                'provider'    => 'mock',
+                'external_id' => $id,
+                'title'       => 'Course ' . $id,
+                'raw_payload' => [],
+            ]), $ids));
+            return $provider;
+        };
+        $aggregator = new market_aggregator();
+
+        // Tenant 77 retires a course first: it is retired history that no tenant 1 sync may count.
+        $aggregator->sync_provider($make(['o-a', 'o-b']), 77);
+        $stats = $aggregator->sync_provider($make(['o-a']), 77);
+        $this->assertSame(1, $stats['items_retired']);
+
+        $expected = [
+            [['c-a', 'c-b', 'c-c', 'c-d'], 0],   // Everything is new.
+            [['c-a', 'c-b'], 2],                 // c-c and c-d are gone.
+            [['c-a', 'c-b'], 0],                 // Nothing new is gone (the old count said 2).
+            [['c-a'], 1],                        // c-b is gone (the old count said 3).
+            [['c-a', 'c-b'], 0],                 // c-b is back and nothing is gone (the old count said 2).
+            [['c-b', 'c-e'], 1],                 // c-a is gone; c-e is new.
+        ];
+        foreach ($expected as $i => [$listing, $retired]) {
+            $stats = $aggregator->sync_provider($make($listing), 1);
+            $this->assertSame('ok', $stats['status'], (string) $stats['error']);
+            $this->assertSame($retired, $stats['items_retired'], 'sync ' . ($i + 1) . ' of tenant 1');
+        }
+
+        // The sync log carries the same per-run numbers.
+        $logged = array_map(fn($r) => (int) $r->items_retired, array_values($DB->get_records(
+            'local_sentientia_cm_sync_log', ['provider' => 'mock', 'costcenterid' => 1], 'id ASC', 'id, items_retired')));
+        $this->assertSame([0, 2, 0, 1, 0, 1], $logged);
+
+        // Tenant 1's syncs leave tenant 77's rows as tenant 77 left them.
+        $this->assertSame('retired', $DB->get_field('local_sentientia_cm_item', 'status',
+            ['provider' => 'mock', 'external_id' => 'o-b', 'costcenterid' => 77], MUST_EXIST));
+        $this->assertSame('active', $DB->get_field('local_sentientia_cm_item', 'status',
+            ['provider' => 'mock', 'external_id' => 'o-a', 'costcenterid' => 77], MUST_EXIST));
+    }
+
+    /**
      * @test
      */
     public function test_sync_provider_updates_existing_item(): void {
