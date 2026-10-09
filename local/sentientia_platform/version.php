@@ -80,7 +80,7 @@ $plugin->version   = 2026100901;  // B1 feature-flag snapshot TTL (on top of 202
 // 2026092500 - ADR-031: local/sentientia_platform:crosstenant + tenant::is_cross_tenant/scope_path/require_same_tenant_user
 // 2026092400 - tests/exception_strings_test.php: platform guard - core-resolved exception keys must exist (N5)
 // 2026092200: tenant::path_descendant_filter() + DB-level path-boundary regression suite  // Phase 2.1: customer::current() de-hardwired via tenant_registry (dormant while legacy allow-list ON)
-$plugin->requires  = 2024100700;  // Moodle 4.5+: feature_flags uses redi and reock (4.4+); Sentientia runs on 5.1/5.2/5.3
+$plugin->requires  = 2024100700;  // Moodle 4.5+: feature_flags uses the core DI container and clock (4.4+); Sentientia runs on 5.1/5.2/5.3
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->release   = '1.11.2';  // +PWA start_url /my/ upgrade step (1.11.1: +compat\user_api (1.11.0: +ADR-032 copies_files marker and files tripwire; 1.10.1: +Switchboard category labels; 1.10.0: +ADR-032 BizLMS import framework, 3 tables)
 // 1.9.0: +ADR-031 cross-tenant authority
