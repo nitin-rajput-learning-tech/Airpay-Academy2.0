@@ -8,13 +8,14 @@ $plugin->component = 'local_sentientia_notifications';
 // rule_manager_nudge) route the manager->reports grouping through the
 // local_sentientia_core\org seam (reports_by_manager): identical under
 // org_legacy ON (prod-verified: 117 managers exact match); model at cutover.
-$plugin->version   = 2026092500;  // ADR-031: :manage archetype dropped + revoked; rule writes cross-tenant only; logs/test_send/preview/nudge tenant-scoped
+$plugin->version   = 2026100900;  // send() keeps one log row per delivery (claim row updated, not duplicated) + upgrade clean-up of the old duplicates
+// 2026092500: ADR-031: :manage archetype dropped + revoked; rule writes cross-tenant only; logs/test_send/preview/nudge tenant-scoped
 // 2026092400: N5: nudge.php refusal renders a real message (was raw "error/nopermission")
 // 2026092200: new-course broadcast no longer spans tenants
 // 2026060200:
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.5.0'; // +ADR-031 tenant scope (was 1.4.3 +ADR-020 W3.4 org-seam migration of manager digests)
+$plugin->release   = '1.5.1'; // one log row per delivery (was 1.5.0 +ADR-031 tenant scope; 1.4.3 +ADR-020 W3.4 org-seam migration of manager digests)
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026092500,  // tenant::is_cross_tenant() (ADR-031)
 ];
