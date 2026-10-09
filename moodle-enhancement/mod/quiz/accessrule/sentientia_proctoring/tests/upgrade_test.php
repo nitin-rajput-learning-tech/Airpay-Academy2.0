@@ -46,6 +46,9 @@ final class upgrade_test extends \advanced_testcase {
      */
     public static function setUpBeforeClass(): void {
         global $CFG;
+        // The upgrade function calls upgrade_plugin_savepoint() (lib/upgradelib.php). Moodle 5.1 happened to have it
+        // loaded in this context; 5.3 does not, so the test loads it itself, as core's own upgrade tests do.
+        require_once($CFG->libdir . '/upgradelib.php');
         require_once($CFG->dirroot . '/mod/quiz/accessrule/sentientia_proctoring/db/upgrade.php');
     }
 
