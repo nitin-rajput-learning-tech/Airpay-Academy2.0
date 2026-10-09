@@ -30,7 +30,17 @@ defined('MOODLE_INTERNAL') || die();
 final class course_lookups_readers_test extends \advanced_testcase {
 
     // Provisions {user}.open_path + {course}.open_path on the test DB, as the plugin's other suites do.
-    use \local_sentientia_platform\phpunit\open_path_fixture_trait;
+    use \local_sentientia_platform\phpunit\open_path_fixture_trait {
+        setUp as protected open_path_fixture_setup;
+    }
+
+    protected function setUp(): void {
+        $this->open_path_fixture_setup();
+        // feature_flags keeps the overrides it read in a static. resetAfterTest() rolls the flag row back but not
+        // that static, so the label flag the previous test switched ON was still ON when the card test asserted its
+        // flag-OFF label (Moodle 5.3 PHPUnit run, 2026-10-09). Start every test from what the database says.
+        \local_sentientia_platform\feature_flags::invalidate_caches();
+    }
 
     /**
      * A user in a tenant, or with no tenant at all.
