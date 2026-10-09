@@ -47,8 +47,13 @@ trait legacy_schema_fixture {
     /** @var string[] Tables this class created, in creation order. */
     private static array $legacyfixturetables = [];
 
-    /** @var array{xml: string, extrafields: array<string, \xmldb_field[]>} What create_legacy_tables() was given, to recreate a dropped table. */
-    private static array $legacyfixturedefinition = ['xml' => '', 'extrafields' => []];
+    /**
+     * @var array{xml: string, extrafields: array<string, \xmldb_field[]>, content: string} What create_legacy_tables()
+     *      was given, to recreate a dropped table. content is the fixture file's text: a fixture a test GENERATES under
+     *      the dataroot's temp directory (the classroom test joins two BizLMS files there) is deleted by the per-test
+     *      dataroot reset, so the loader writes it back before reading it again.
+     */
+    private static array $legacyfixturedefinition = ['xml' => '', 'extrafields' => [], 'content' => ''];
 
     /**
      * @var array<string, bool> Fixture tables that are ALSO tables of an installed component (the cart fixture's
@@ -125,7 +130,8 @@ trait legacy_schema_fixture {
 
         self::$legacyfixturetables = [];
         self::$legacyborrowedtables = [];
-        self::$legacyfixturedefinition = ['xml' => $fixturexml, 'extrafields' => $extrafields];
+        self::$legacyfixturedefinition = ['xml' => $fixturexml, 'extrafields' => $extrafields,
+            'content' => (string) file_get_contents($fixturexml)];
         $installed = self::installed_table_names();
         foreach ($tables as $table) {
             if (isset($installed[$table])) {
@@ -183,6 +189,17 @@ trait legacy_schema_fixture {
     private static function install_fixture_table(string $fixturexml, string $table): void {
         global $CFG, $DB;
         $dbman = $DB->get_manager();
+        if (!is_file($fixturexml)) {
+            // A generated fixture under the dataroot's temp directory does not survive the per-test dataroot reset.
+            $content = self::$legacyfixturedefinition['content'] ?? '';
+            if ($content === '' || $fixturexml !== self::$legacyfixturedefinition['xml']) {
+                throw new \coding_exception('legacy fixture file is missing: ' . $fixturexml);
+            }
+            if (!is_dir(dirname($fixturexml))) {
+                mkdir(dirname($fixturexml), $CFG->directorypermissions ?? 0777, true);
+            }
+            file_put_contents($fixturexml, $content);
+        }
         $dir = dirname((string) realpath($fixturexml));
         $root = (string) realpath($CFG->dirroot);
         $relative = self::relative_dir($root, $dir);
