@@ -246,8 +246,15 @@ if [ "$EXECUTE" = 1 ] && [ "$FAILS" = 0 ]; then
             elif [ "$inflight" != 0 ]; then
                 warn "whether database ${DB_NAME} holds the in-flight table ${KIT_INFLIGHT_TABLE} could not be read (no answer, or an error other than 'table does not exist'): step 01 treats that as a partial restore until it can be read"
             fi
-            if [ -n "$(marker_get)" ]; then
-                pass "database ${DB_NAME} carries a rehearsal-kit marker (restore $(marker_get | cut -c1-8)...)"
+            # marker_get says "cannot tell" with rc 1 (a failed read, or a blank answer for a row that exists): that is neither a marker nor
+            # its absence, and it is read here once, not twice (the second read used to be able to disagree with the first).
+            have_marker=""
+            have_rc=0
+            have_marker="$(marker_get)" || have_rc=$?
+            if [ "$have_rc" != 0 ]; then
+                warn "database ${DB_NAME}: its rehearsal-kit marker could not be read (a failed read, or a blank answer for a row that exists): the kit cannot tell whether it is this rehearsal's copy, and step 01 and the writing steps refuse it until it can be read"
+            elif [ -n "$have_marker" ]; then
+                pass "database ${DB_NAME} carries a rehearsal-kit marker (restore ${have_marker:0:8}...)"
             else
                 warn "database ${DB_NAME} carries no rehearsal-kit marker: step 01 refuses it unless the kit restored it, or RESTORE_DONE_BY_HAND=${DB_NAME} states that you restored the live backup into it by hand"
             fi

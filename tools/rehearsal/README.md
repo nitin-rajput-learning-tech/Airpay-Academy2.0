@@ -28,10 +28,20 @@ Run it as the web user (`www-data`), as Moodle's own CLI tools are meant to be r
 the user that needs it, and `WEB_USER` in the env file makes the preflight check it. Each step is a separate script and
 can be run alone (`bash tools/rehearsal/05_repairs.sh --execute`); `run_all.sh` only runs them in order, stops at the
 first failure, and always finishes with the summary. One `--execute` run per `REHEARSAL_WORK` at a time: `run_all.sh` takes
-`REHEARSAL_WORK/.run.lock`, and a step run alone takes it too (exit 3 when it is held; remove the directory if no run is alive).
-A `TERM` sent to `run_all.sh` alone does not interrupt the step that is running and does not release the lock under it: `run_all.sh`
-waits for that step, starts no further step (the summary included) and exits 143 (`INT`: 130). Ctrl-C reaches the whole process
-group, so it stops the running step too; to stop a step by hand, signal its process group.
+`REHEARSAL_WORK/.run.lock`, and a step run alone takes it too (exit 3 when it is held; the lock is per work directory: two work directories on the same database are NOT locked against each other, so give every rehearsal database one `REHEARSAL_WORK` and never run steps of two work directories on it at once). The lock directory holds the pid of the run
+(`pid`) and, while a step that `run_all.sh` started is running, the pid of that step (`step.pid`); the refusal names both and says
+whether each is alive. **Remove the directory only when none of them is alive**: a step outlives a `run_all.sh` that was killed with
+`KILL`, and a second run in the same work directory writes the same database and state.
+A `TERM`, `INT` or `HUP` sent to `run_all.sh` alone does not interrupt the step that is running and does not release the lock under
+it: `run_all.sh` waits for that step, starts no further step (the summary included; a signal that arrives in the instant between two
+steps starts nothing either) and exits 143 (`INT`: 130, `HUP`: 129). A signal sent to a **step** (to its pid, not its group) is acted
+on only when the command it is running (`php upgrade.php`, the restore, the import) has returned: the step then writes
+`state/NN.status` as `status=fail`, `rc=128+n`, `signal=NAME`, releases its lock and exits 128+n, so a step is **never recorded ok on a
+signal** and the lock is never released under a command that still runs. A step also writes `status=running` when it starts, so one
+that dies without a trap (`KILL`, a power cut) leaves a status nothing reads as ok (`step_done_ok`, the preflight and the summary all
+refuse it; the summary prints it as DID NOT FINISH). Ctrl-C reaches the whole process group, so it stops the running step and its
+commands too; to stop a step and what it runs by hand, signal its process group (`kill -TERM -- -PGID`). Run the rehearsal under `tmux`
+or `screen`: a dropped ssh session sends `HUP` (sudo relays it).
 
 ## What it refuses (step 00, and every step re-checks the policy when it loads the env)
 
@@ -69,7 +79,18 @@ group, so it stops the running step too; to stop a step by hand, signal its proc
   that holds the file, or whose marker file records an `archive=` line and no `unpacked=` line, is a partial copy: step 01 (before it
   looks at the database), step 00 and the gate of steps 02 to 11 refuse it **whatever `RESTORE_MOODLEDATA_ARCHIVE` (even unset),
   `RESTORE_MOODLEDATA_BY_HAND` or `REHEARSAL_WORK` say**. Empty the directory (or point `MOODLEDATA` at a new, empty one) and run
-  step 01 again, or unpack the archive by hand into an EMPTY directory and use `RESTORE_MOODLEDATA_BY_HAND`. The gate of steps 02 to 11
+  step 01 again, or unpack the archive by hand into an EMPTY directory and use `RESTORE_MOODLEDATA_BY_HAND` (a hand unpack has no
+  check of its own: verify the archive's SHA-256 against the one taken where it was made, and that `tar` ran to the end of a COMPLETE
+  archive, because a tar cut at a member header also exits 0; the file store gate's size check below catches a content file cut
+  inside, from any route). **A moodledata archive is proven whole before the database is touched:** with `RESTORE_MOODLEDATA_SHA256`
+  (the checksum from the live backup's manifest) its SHA-256 must match, and that is the whole proof (recorded in `state/kv`
+  `restore.moodledata_sha256`, `restore.moodledata_proof=sha256`); without it a tar (plain, `.gz`, `.bz2`, `.xz`, `.zst`) must read to
+  its end and its last 1024 bytes must be the two zero blocks that end every tar (`restore.moodledata_proof=tar-end`). That is the
+  check GNU tar does not make for you: it unpacks a plain tar cut exactly at a member header with exit status 0 and no message, and a
+  `.tar.gz` written by a `tar` that died is a valid gzip file around a cut tar (`gzip -t` passes it). A zip is cut loudly by its
+  central directory. A refused archive costs nothing: no restore, no claim, no stamp, no unpack. The archive's path, size and
+  mtime are read again after the unpack, and an archive that changed (still being copied, re-synced) leaves the in-flight file in
+  place. The gate of steps 02 to 11
   also refuses a database that holds the in-flight table although it carries the marker (a dump or snapshot of a stamped, unfinished copy).
   A populated moodledata without the marker is refused too, unless
   `RESTORE_MOODLEDATA_BY_HAND=<its path>` (a statement of its own: the database statement does not cover the directory) and
@@ -232,6 +253,10 @@ plan are IT's and are not here.
 | (Stage B tools fix round 6) `require_kit_marker`, the gate of steps 02 to 11, did not look for the in-flight table, so a dump or snapshot of a stamped, unfinished copy (its `{config}` marker row loaded, the rest not) passed it; and a dump that named the table would have dropped and re-created the kit's claim in the middle of the load | the gate also refuses a database that holds the table and a moodledata that holds the in-flight file or an unfinished unpack record; `dump_unsafe_statement` refuses a dump that names the table |
 | (Stage B tools fix round 6) Step 01 moved `state/` to `archive/` before it had claimed the database: an idempotent re-run on a finished rehearsal that misread the database as absent archived the finished rehearsal's state, stopped at "cannot create database", and the next plain re-run refused its own database ("carries restore id ..., but this work directory records none") | the restore id is chosen first and `state/` moves only after the claim (`inflight_begin`) or, for a hand restore, after the operator's statement is taken (`archive_earlier_rehearsal`) |
 | (Stage B tools fix round 6) A `TERM` sent to `run_all.sh` alone removed `.run.lock` (its EXIT trap) while the step it had started kept running, and a step run alone could then take the lock in the same work directory | `run_all.sh` traps `TERM` and `INT`: the signal is noted, the lock stays held until the running step has finished, no further step starts, exit 143 / 130 (the running step is not interrupted: bash defers a trapped signal until its foreground command ends) |
+| (Stage B tools fix round 6b) A moodledata archive cut exactly at a tar member header was adopted: GNU tar exits 0 on it, the in-flight file went, the marker said 'unpacked', the filedir gate passed when the cut fell after `filedir/`, and steps 02 to 11 ran on a moodledata with no lang packs or repository files. The same holds for a `.tar.gz` that a dying `tar` wrote into `gzip` (a valid gzip around a cut tar) | `archive_proof` refuses the archive BEFORE the database is touched: `RESTORE_MOODLEDATA_SHA256` (the live backup's manifest) must match, or a tar of any compression must read to its end and finish with the two zero blocks (`tar_ends_complete`); the proof is recorded (`restore.moodledata_proof`, `restore.moodledata_sha256`); the archive's identity is read again after the unpack; the filedir gate compares each content file's size with `{files}.filesize` (`FILEDIR_MAX_WRONGSIZE`) |
+| (Stage B tools fix round 6b) A step killed by `TERM` or `HUP` while a foreground command ran recorded SUCCESS (the EXIT trap saw the last completed status, 0) and released `.run.lock` under the still-running command; a second run then took the lock in the same work directory | `step_init` traps `TERM`, `INT` and `HUP`: the signal is acted on when the foreground command has returned, the step records `status=fail rc=128+n signal=NAME`, releases the lock and exits 128+n; a step writes `status=running` at its start so a `KILL` is never read as ok (`step_done_ok`, the summary); `on_exit` stops the step's background jobs; each step writes its pid to `.run.lock/step.pid` and the refusal names and liveness-checks both pids; `run_all.sh` also traps `HUP` and checks the signal immediately before it starts a step |
+| (Stage B tools fix round 6b) `marker_get` failed open three ways (a failed value read, a failed or blank COUNT, a value that stayed blank while the COUNT said 1), each as 'no marker', and on the `RESTORE_DONE_BY_HAND` path (which stays in `rehearsal.env`) one lost connection archived a finished rehearsal's `state/` and overwrote the database's marker with a new id | `marker_get` returns rc 1 ('cannot tell') on all three, with a retried read; every caller refuses it; the hand path needs `marker_definitely_absent` (two agreeing error-free counts of 0 on an existing config table) and stamps with a plain `INSERT` (error 1062 = a marker exists), archiving `state/` only after it succeeded |
+| (Stage B tools fix round 6b) A changed `RESTORE_DB_DUMP` on a stamped database was silently ignored; a dump re-written while it was scanned and loaded could load with exit 0 and be stamped; a table count that was wrong once after the load refused a complete copy; a work directory holding an older kit's `restore.started` without `restore.complete` adopted that restore's partial copy; a dump line that is a mysql client command (`\u db`, `source`, `system`) went unnoticed; every kit client call let `~/.my.cnf` override the kit's host, port and password | the dump's identity is recorded (`restore.dump`) and checked before and after the load; the post-load probe is repeated once; the older kit's record refuses the copy; the dump scan flags client commands; every client call uses `--defaults-file` (the kit's file only) |
 
 ## Testing the kit
 
@@ -250,7 +275,7 @@ empty schema list; a plain hand restore adopted; round 6: a cut moodledata archi
 directory, or with both hand statements is refused, the in-flight read by error (a count that always answers 0, a lost connection, a blank answer
 for an absent table), `require_kit_marker` refusing an in-flight table or file or an unfinished unpack record behind a correct marker, a dump that
 names the table, `state/` staying in place when a claim is not taken), the orchestrator in DRY mode, `run_all.sh` keeping its lock while a step
-runs after a `TERM` (a copy of the kit with stub steps), and that no Windows path is hard-coded. Every kit script passes `bash -n` (the selftest runs it);
+runs after a `TERM` (a copy of the kit with stub steps), and that no Windows path is hard-coded; round 6b: a moodledata archive cut exactly at a tar member header (plain, and wrapped in a valid `.gz`) refused before anything is restored, `RESTORE_MOODLEDATA_SHA256` matched, mismatched, malformed and recorded, an archive that grew during the unpack, a content file whose size is not `{files}.filesize`; a `TERM` or `HUP` to a step alone and to a step under `run_all.sh` (status `fail` with `signal=`, lock held until the command returned, background jobs gone), a step killed with `KILL` read as not ok, `HUP` to `run_all.sh`, a signal between two steps, the lock message naming both pids; `marker_get` and `marker_definitely_absent` with every fault of the stand-in client (a failed read, a blank read, a blank or failed count, a missing config table), and the hand path meeting each of them (nothing moved, nothing stamped, a marker row that exists refused by the plain `INSERT`); a changed dump, a dump rewritten during its load, a wrong table count after the load, an older kit's unfinished-restore record, the client commands a dump must not carry. The `HUP` cases need a shell that does not ignore `SIGHUP` (not started under `nohup`: bash cannot trap a signal that was ignored on entry); the suite probes this and prints `skip` lines, counted apart from the passes, when it cannot deliver `HUP`. Every kit script passes `bash -n` (the selftest runs it);
 `shellcheck` was not available where the kit was written, run it where it is. The selftest starts many `bash` processes: on
 a workstation under antivirus load it takes tens of minutes.
 
@@ -324,6 +349,14 @@ Verified, on a Windows workstation (Git Bash, PHP 8.2, MariaDB 10.11, scratch sc
   holding `.run.lock` while step 01 runs, then no further step starts, the lock is released and the exit is 143. The same new assertions run
   against the round 5 kit (`git archive 6a1f36b84`): 27 fail (the assertions that test the change), 25 pass
   (the controls, and the concurrency case, which exercises the post-claim count round 5 already had).
+
+* (Stage B tools fix round 6b, 2026-10-09; `selftest.sh`: 322 pass, 0 fail, 0 skipped, about two hours on the loaded workstation) 92 new assertions for the three
+  must-fix items of the round 6 review: an archive cut at a tar member header (plain and inside a valid `.gz`), a file that is no tar, a wrong, malformed and
+  right `RESTORE_MOODLEDATA_SHA256` (recorded in `state/kv`), an archive that grew during the unpack; `TERM` and `HUP` to a step run alone and to a step
+  under `run_all.sh`, `HUP` to `run_all.sh`, a signal between two steps, `KILL` read as not ok, the two pids of the lock; every fault of the stand-in client
+  against `marker_get` and `marker_definitely_absent`, and the hand path meeting them with the statement still in the env file. The `HUP` cases need a
+  shell that does not ignore `SIGHUP` (not started under `nohup`); the suite says `skip` for them otherwise. Both clients of this machine (XAMPP 10.11 and
+  MariaDB 11.4) read host and port from a `--defaults-file` the way the kit now calls them.
 
 **Not run: any step against real Moodle 4.5 or 5.x code, `shellcheck` (not installed on that machine), PHPUnit.** The stand-in
 proves the kit's logic and parsing, not that the real tools print exactly what it expects: the first execution on the

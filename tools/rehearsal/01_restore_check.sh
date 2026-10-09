@@ -74,8 +74,15 @@ need_tool "$PHP_BIN"
 # ---------------------------------------------------------------------------------------------------------------------
 # 1. Restore into an empty database, unpack moodledata, stamp both
 # ---------------------------------------------------------------------------------------------------------------------
+DUMP_ID=""
 restore_database() {
     [ -f "$RESTORE_DB_DUMP" ] || die "RESTORE_DB_DUMP not found: ${RESTORE_DB_DUMP}"
+    # The identity of the dump (path, size, mtime) BEFORE it is read. The scan, the trailer check and the load each open the file by its path,
+    # 49 minutes apart on a big dump, and nothing tied the three reads together: a dump that was re-written, re-synced (OneDrive) or cut in
+    # between could load with the client's exit status 0 when the cut falls on a statement boundary, and be stamped. It is read again after
+    # the load; a change keeps the in-flight table. It is also what the stamp records (restore.dump), so a later run that names ANOTHER
+    # dump on this database is refused instead of silently ignored.
+    DUMP_ID="$(archive_identity "$RESTORE_DB_DUMP")"
     local bad
     log "scanning the dump for statements that reach another database, and for its trailer (one read of the whole file)"
     bad="$(dump_unsafe_statement "$RESTORE_DB_DUMP")"
@@ -110,11 +117,52 @@ restore_database() {
     archive_earlier_rehearsal
     # pipefail: a gzip that fails half way must fail the restore, not leave a partial copy that looks restored.
     case "$RESTORE_DB_DUMP" in
-        *.gz) timed "restore database" bash -c 'set -o pipefail; gzip -dc "$1" | "$2" --defaults-extra-file="$3" --one-database --max-allowed-packet=512M "$4"' _ \
+        *.gz) timed "restore database" bash -c 'set -o pipefail; gzip -dc "$1" | "$2" --defaults-file="$3" --one-database --max-allowed-packet=512M "$4"' _ \
                 "$RESTORE_DB_DUMP" "$MYSQL_BIN" "$DB_CNF" "$DB_NAME" ;;
-        *) timed "restore database" bash -c 'set -o pipefail; "$2" --defaults-extra-file="$3" --one-database --max-allowed-packet=512M "$4" < "$1"' _ \
+        *) timed "restore database" bash -c 'set -o pipefail; "$2" --defaults-file="$3" --one-database --max-allowed-packet=512M "$4" < "$1"' _ \
                 "$RESTORE_DB_DUMP" "$MYSQL_BIN" "$DB_CNF" "$DB_NAME" ;;
     esac || die "the database restore failed, and database ${DB_NAME} now holds a PARTIAL copy and the in-flight table ${KIT_INFLIGHT_TABLE}: the kit never adopts it, not even with RESTORE_DONE_BY_HAND, whatever REHEARSAL_WORK a later run uses. Only DROP DATABASE clears it. Drop it and create it empty (as a database administrator: DROP DATABASE \`${DB_NAME}\`; CREATE DATABASE \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE ${DB_COLLATION};), then either run step 01 again with RESTORE_DB_DUMP set (RESTORE_DONE_BY_HAND unset), or restore by hand into the empty database and run step 01 with RESTORE_DB_DUMP unset and RESTORE_DONE_BY_HAND=${DB_NAME}"
+    # The load returned success. The file it read must still be the file that was scanned.
+    if [ "$(archive_identity "$RESTORE_DB_DUMP")" != "$DUMP_ID" ]; then
+        die "the dump ${RESTORE_DB_DUMP} changed while it was scanned and loaded (it was ${DUMP_ID}, it is now $(archive_identity "$RESTORE_DB_DUMP")): what was loaded may not be the file that was checked, and a dump that is cut on a statement boundary loads with exit status 0. The load is NOT verified: database ${DB_NAME} keeps the in-flight table ${KIT_INFLIGHT_TABLE} and is refused, whatever RESTORE_DONE_BY_HAND says, until it is dropped and created empty (as a database administrator: DROP DATABASE \`${DB_NAME}\`; CREATE DATABASE \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE ${DB_COLLATION};). Then make the dump stable (copy it somewhere nothing syncs or rewrites) and run step 01 again"
+    fi
+}
+
+# archive_proof: an archive that is not proven COMPLETE is refused BEFORE the database is restored and before anything is unpacked (nothing is
+# claimed, nothing is written). It sets ARCHIVE_PROVEN to the proof used (sha256, tar-end or format; step 01 records it as restore.moodledata_proof).
+# GNU tar 1.35 extracts an uncompressed tar that was cut exactly at a member header with exit status 0 and no message, so a cut archive
+# unpacked "successfully", the in-flight file went, the marker said 'unpacked', the filedir gate (which looks for the files {files} names, and
+# only for those) passed when the cut fell after filedir/, and steps 02 to 11 ran on a moodledata with no lang packs or repository files
+# (reproduced, round 6 review). A tar that is cut while it is written into a compressor is no better: the compressor closes its stream
+# normally, so 'gzip -t' passes a valid .tar.gz that holds a cut tar. So:
+#   * RESTORE_MOODLEDATA_SHA256 set (the checksum of the live backup's manifest, taken where the archive was made; any format): the archive's
+#     SHA-256 must equal it. Nothing else is asked of the archive then (the operator vouches for what was made);
+#   * not set: a tar (plain, gzip, bzip2, xz or zstd) must END with its two zero blocks (tar_ends_complete: the compressed stream is read to
+#     its end, which is also the integrity test of the compression). A zip is cut loudly, by its central directory, which unzip checks.
+ARCHIVE_PROVEN=""
+archive_proof() {
+    local kind got want="${RESTORE_MOODLEDATA_SHA256,,}"
+    if [ -n "$want" ]; then
+        got="$(sha256_of "$RESTORE_MOODLEDATA_ARCHIVE")"
+        [ "$got" = "$want" ] || die "RESTORE_MOODLEDATA_ARCHIVE ${RESTORE_MOODLEDATA_ARCHIVE} has SHA-256 ${got}, not the RESTORE_MOODLEDATA_SHA256 ${want}: it is not the archive that checksum was taken from (cut, changed or another file). Refused; nothing was restored or unpacked. Copy the archive again, or correct RESTORE_MOODLEDATA_SHA256 (sha256sum of the archive where it was made)"
+        log "OK: RESTORE_MOODLEDATA_ARCHIVE has the SHA-256 in RESTORE_MOODLEDATA_SHA256 (${got:0:12}...)"
+        ARCHIVE_PROVEN="sha256"
+        return 0
+    fi
+    kind="$(archive_kind "$RESTORE_MOODLEDATA_ARCHIVE")"
+    case "$kind" in
+        zip) ARCHIVE_PROVEN="format" ;;
+        *)
+            if [ "$kind" != tar ]; then
+                need_tool "$kind"
+            fi
+            tar_ends_complete "$kind" "$RESTORE_MOODLEDATA_ARCHIVE" \
+                || die "RESTORE_MOODLEDATA_ARCHIVE ${RESTORE_MOODLEDATA_ARCHIVE} is not proven complete: its ${kind} stream is damaged, or the tar inside it does not end with the two zero blocks that end every tar. It was cut (a tar writer that died, a full disk, a copy still running). GNU tar extracts such a file with exit status 0 when the cut falls on a member header, and a compressor closes the stream of a tar that stopped early without complaint, so the unpack would look complete and be partial. Refused; nothing was restored or unpacked. Make or copy the archive again, or set RESTORE_MOODLEDATA_SHA256 to the SHA-256 taken where it was made"
+            log "OK: the ${kind} archive reads to its end and its tar ends with the two zero blocks"
+            ARCHIVE_PROVEN="tar-end"
+            ;;
+    esac
+    note "RESTORE_MOODLEDATA_SHA256 is not set: the archive is checked only by its format (${kind}). The SHA-256 taken where the archive was made is the strong proof that it is whole; set it for the real rehearsal"
 }
 
 restore_moodledata() {
@@ -129,10 +177,29 @@ restore_moodledata() {
     else
         timed "restore moodledata" tar -C "$MOODLEDATA" -xf "$RESTORE_MOODLEDATA_ARCHIVE" || die "tar of the moodledata failed: ${unfinished}"
     fi
+    # The tool returned success. The archive it read must still be the archive that was proven complete before it started.
+    if [ "$(archive_identity "$RESTORE_MOODLEDATA_ARCHIVE")" != "$ARCHIVE_ID" ]; then
+        die "RESTORE_MOODLEDATA_ARCHIVE changed while it was unpacked (it was ${ARCHIVE_ID}, it is now $(archive_identity "$RESTORE_MOODLEDATA_ARCHIVE")): what was unpacked may not be the archive that was checked (a file that is still being copied or re-synced, or one that grew). The unpack is NOT verified: ${unfinished}"
+    fi
 }
 
 # by_hand_ack -> 0 when the operator named THIS database as restored by hand (RESTORE_DONE_BY_HAND=<database name>).
 by_hand_ack() { [ -n "$RESTORE_DONE_BY_HAND" ] && [ "$RESTORE_DONE_BY_HAND" = "$DB_NAME" ]; }
+
+# check_dump_record: this rehearsal's database is never restored over, so a RESTORE_DB_DUMP that is set is either the dump the database was
+# restored from (stamp_database recorded its identity: state/kv/restore.dump) or a dump that would be silently IGNORED, the moodledata's
+# rule for RESTORE_MOODLEDATA_ARCHIVE applied to the database. A run that names a new dump (new-live-backup.sql) on a stamped database must
+# not log "not restoring over it" and carry on with the old copy.
+check_dump_record() {
+    [ -n "$RESTORE_DB_DUMP" ] || return 0
+    [ -f "$RESTORE_DB_DUMP" ] || die "RESTORE_DB_DUMP not found: ${RESTORE_DB_DUMP}"
+    local now rec
+    now="$(archive_identity "$RESTORE_DB_DUMP")"
+    rec="$(kv_get restore.dump)"
+    if [ "$now" != "$rec" ]; then
+        die "RESTORE_DB_DUMP names ${RESTORE_DB_DUMP} (${now}), but database ${DB_NAME} is this rehearsal's copy and $([ -n "$rec" ] && printf 'was restored from another dump (%s)' "$rec" || printf 'was not restored from a dump by this kit (a hand restore, or an older kit)'): the dump would be silently ignored. To restore it instead, drop database ${DB_NAME} and create it empty (as a database administrator): step 01 then restores into it and moves this rehearsal's state to archive/; to keep using this copy, unset RESTORE_DB_DUMP"
+    fi
+}
 
 # start_new_restore: a new rehearsal begins. The restore id is chosen and how far the earlier rehearsal got is read; NOTHING is moved here.
 # The earlier rehearsal's state moves to archive/ in archive_earlier_rehearsal, which is called only once this run owns the database: after
@@ -170,8 +237,24 @@ archive_earlier_rehearsal() {
 }
 
 # stamp_database: the restore of the database is complete (or the operator vouched for it): mark it, record the id.
+# A kit restore replaces a marker row the dump may carry (marker_set). A HAND restore is stamped with a PLAIN INSERT, and only after it
+# succeeded does the earlier rehearsal's state/ move to archive/: a marker row that exists (which the read that led here missed) is the
+# server's error 1062, and then nothing is overwritten and nothing has been moved (round 6 review: one misread on this path used to archive
+# a finished rehearsal's state and overwrite the database's marker with a new id).
 stamp_database() {
-    marker_set "$RESTORE_ID"
+    local rc=0
+    if [ "$BY_HAND" = 1 ]; then
+        marker_insert_new "$RESTORE_ID" || rc=$?
+        case "$rc" in
+            0) ;;
+            1) die "database ${DB_NAME} already holds a marker row (the INSERT of the new restore id was refused with error 1062), although the reads that led here said it did not: another run stamped it, or a read was wrong. Nothing was overwritten, and state/ was not moved. Run step 01 again" ;;
+            *) die "the rehearsal-kit marker could not be written to database ${DB_NAME}: it is not stamped, and state/ was not moved. Check that the database user may INSERT into ${DB_PREFIX}config, then run step 01 again" ;;
+        esac
+        archive_earlier_rehearsal
+    else
+        marker_set "$RESTORE_ID" \
+            || die "the rehearsal-kit marker could not be written to database ${DB_NAME}: it is not stamped (nothing is recorded in state/). Check that the database user may INSERT into ${DB_PREFIX}config, then run step 01 again"
+    fi
     # Every id this kit stamped in this work directory, in a file a new restore does not move to archive/. A moodledata that carries an
     # earlier id of this lineage is only the first condition for reusing it in a new restore (see the moodledata block below): it must also
     # be the finished unpack of the same archive, and no step after 01 may have run against it.
@@ -179,6 +262,9 @@ stamp_database() {
     printf '%s\n' "$RESTORE_ID" >> "$REHEARSAL_WORK/restore-ids.log"
     kv_set restore.id "$RESTORE_ID"
     kv_set restore.by_hand "$BY_HAND"
+    if [ -n "$DUMP_ID" ]; then
+        kv_set restore.dump "$DUMP_ID"
+    fi
     kv_set restore.complete "$(ts)"
     log "OK: database ${DB_NAME} stamped as restore ${RESTORE_ID:0:8}... (state/kv/restore.id)"
 }
@@ -207,6 +293,20 @@ if [ "$EXECUTE" = 1 ]; then
     if [ -n "$unfinished" ]; then
         die "${MOODLEDATA} holds an unpack of the moodledata that did not finish (${unfinished}), so its filedir is a PARTIAL copy. $(unpack_unfinished_advice)"
     fi
+    if [ -n "$RESTORE_MOODLEDATA_SHA256" ] && ! [[ "${RESTORE_MOODLEDATA_SHA256,,}" =~ ^[0-9a-f]{64}$ ]]; then
+        die "RESTORE_MOODLEDATA_SHA256 (${RESTORE_MOODLEDATA_SHA256}) is not a SHA-256 (64 hexadecimal digits): sha256sum of the archive, taken where it was made"
+    fi
+    # The archive named for the moodledata is identified now (path, size, mtime: the unpack checks that it is still that file when it has
+    # finished) and, when it is going to be unpacked, PROVEN WHOLE before the database is touched: a cut archive found after a 49-minute
+    # database restore costs that restore (a tar cut at a member header unpacks with exit status 0, see archive_proof).
+    ARCHIVE_ID=""
+    if [ -n "$RESTORE_MOODLEDATA_ARCHIVE" ]; then
+        [ -f "$RESTORE_MOODLEDATA_ARCHIVE" ] || die "RESTORE_MOODLEDATA_ARCHIVE not found: ${RESTORE_MOODLEDATA_ARCHIVE}"
+        ARCHIVE_ID="$(archive_identity "$RESTORE_MOODLEDATA_ARCHIVE")"
+        if [ ! -d "$MOODLEDATA/filedir" ] || [ -z "$(ls -A "$MOODLEDATA/filedir" 2> /dev/null)" ]; then
+            archive_proof
+        fi
+    fi
     probe_db
     log "database ${DB_NAME}: ${DB_STATE} (${DB_TABLES} tables)"
     case "$DB_STATE" in
@@ -216,12 +316,23 @@ if [ "$EXECUTE" = 1 ]; then
             start_new_restore
             restore_database
             probe_db
+            # One wrong answer must not refuse a complete copy (the only way out is DROP DATABASE and a 49-minute restore): a state or a
+            # table count that says 'nothing there' is looked at once more before it is believed.
+            if [ "$DB_STATE" != present ] || [ "$DB_TABLES" -le 1 ]; then
+                sleep 1
+                probe_db
+            fi
             # The in-flight table is in the count: the restore wrote something only when there is more than that one table, and it is
             # complete enough to stamp only when it brought the {config} table the stamp is written to.
             if [ "$DB_STATE" != present ] || [ "$DB_TABLES" -le 1 ]; then
-                die "the restore ran but database ${DB_NAME} holds no table besides ${KIT_INFLIGHT_TABLE} (${DB_STATE}, ${DB_TABLES} tables): the database keeps the in-flight table and is refused until it is dropped and created empty"
+                die "the restore ran but database ${DB_NAME} holds no table besides ${KIT_INFLIGHT_TABLE} (${DB_STATE}, ${DB_TABLES} tables, read twice): the database keeps the in-flight table and is refused until it is dropped and created empty"
             fi
-            [ "$(db_scalar "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${DB_NAME}' AND TABLE_NAME = '${DB_PREFIX}config'")" = 1 ] \
+            cfg_n="$(db_scalar "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${DB_NAME}' AND TABLE_NAME = '${DB_PREFIX}config'" || true)"
+            if [ "$cfg_n" != 1 ]; then
+                sleep 1
+                cfg_n="$(db_scalar "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${DB_NAME}' AND TABLE_NAME = '${DB_PREFIX}config'" || true)"
+            fi
+            [ "$cfg_n" = 1 ] \
                 || die "the restore ran but database ${DB_NAME} has no ${DB_PREFIX}config table (is DB_PREFIX the prefix of the dump?): it is not a Moodle copy the kit can stamp. The database keeps the in-flight table and is refused until it is dropped and created empty"
             # Verified complete: the dump was checked whole before the load, the load returned no error (pipefail), and the tables are there.
             inflight_end
@@ -237,22 +348,40 @@ if [ "$EXECUTE" = 1 ]; then
             if [ "$inflight" = 1 ]; then
                 die "database ${DB_NAME} holds the table ${KIT_INFLIGHT_TABLE}: a restore this kit started into it did not finish ($(inflight_describe)), so it holds a PARTIAL copy (${DB_TABLES} tables including that one). It is refused whatever RESTORE_DONE_BY_HAND says and whatever REHEARSAL_WORK this run uses, because the fact is in the database; only DROP DATABASE clears it. Drop it and create it empty (as a database administrator: DROP DATABASE \`${DB_NAME}\`; CREATE DATABASE \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE ${DB_COLLATION};), then run step 01 again: with RESTORE_DB_DUMP set (and RESTORE_DONE_BY_HAND unset) the kit restores into the empty database; to restore by hand instead, restore the live backup into it, then run step 01 with RESTORE_DB_DUMP unset and RESTORE_DONE_BY_HAND=${DB_NAME}"
             fi
-            have="$(marker_get)"
+            # The record of an older kit (rounds 3 and 4 wrote restore.started, and restore.complete only when the restore was verified): a work
+            # directory that still holds the first without the second belongs to a restore that did not finish, and this database is its
+            # partial copy (made before the in-flight table existed, so it carries none). Drop it and create it empty; the kit then starts a new
+            # rehearsal (state/ moves to archive/ and the record goes with it).
+            if [ -n "$(kv_get restore.started)" ] && [ -z "$(kv_get restore.complete)" ]; then
+                die "state/kv/restore.started is set and restore.complete is not: an earlier kit recorded a restore into ${DB_NAME} that did not finish, so database ${DB_NAME} (${DB_TABLES} tables) is its PARTIAL copy, and it carries no in-flight table because that kit did not make one. Refused whatever RESTORE_DONE_BY_HAND says. Drop the database and create it empty (as a database administrator: DROP DATABASE \`${DB_NAME}\`; CREATE DATABASE \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE ${DB_COLLATION};), then run step 01 again (the kit starts a new rehearsal and moves this record to archive/)"
+            fi
+            # The marker is read with a verdict: a read that failed, or came back blank for a row that exists, is "cannot tell", never "no
+            # marker". "No marker" moves a finished rehearsal's state/ to archive/ and writes a new id (the hand path below), so it needs more
+            # than one read (marker_definitely_absent).
+            have="$(marker_get)" \
+                || die "database ${DB_NAME} holds ${DB_TABLES} tables and its rehearsal-kit marker could not be read (a failed read, or a blank answer for a row that exists): the kit cannot tell whether it is this rehearsal's copy. Nothing was moved, archived or stamped. Run step 01 again once the server answers"
             want="$(kv_get restore.id)"
             if [ -n "$have" ]; then
                 if [ "$have" = "$want" ]; then
                     RESTORE_ID="$have"
+                    check_dump_record
                     log "database ${DB_NAME} already holds ${DB_TABLES} tables and carries this rehearsal's marker (restore ${RESTORE_ID:0:8}...): not restoring over it"
                 elif [ -z "$want" ] && ! work_state_has_history; then
                     RESTORE_ID="$have"
                     kv_set restore.id "$RESTORE_ID"
+                    if [ -n "$RESTORE_DB_DUMP" ]; then
+                        warn "RESTORE_DB_DUMP is set, but database ${DB_NAME} is already restored (it carries a marker): the dump is NOT used"
+                    fi
                     log "database ${DB_NAME} carries restore ${RESTORE_ID:0:8}... and this work directory is new: adopting it"
                 else
                     die "database ${DB_NAME} carries restore id ${have:0:8}..., but this work directory records ${want:-none}: it is another rehearsal's database. Use a work directory (REHEARSAL_WORK) of its own, or restore again into an empty database"
                 fi
             elif by_hand_ack; then
+                # "No marker" is believed here only after two more error-free reads that agree (and a {config} table that exists): this
+                # branch writes a new id and (in stamp_database, after the id is written) moves the state of the rehearsal that has run.
+                marker_definitely_absent \
+                    || die "database ${DB_NAME} is named as restored by hand (RESTORE_DONE_BY_HAND), but the kit could not confirm that it carries NO rehearsal-kit marker (two reads a second apart, each answering without an error that the marker row count is 0, on an existing ${DB_PREFIX}config table): a read failed, a count was not 0, the reads disagreed, or there is no ${DB_PREFIX}config table (is DB_PREFIX the prefix of the copy?). Nothing was moved, archived or stamped. Run step 01 again once the server answers; RESTORE_DONE_BY_HAND stays in rehearsal.env until you clear it, and a rehearsal that already carries a marker never reaches this branch"
                 start_new_restore
-                archive_earlier_rehearsal
                 BY_HAND=1
                 warn "database ${DB_NAME} was restored by hand (RESTORE_DONE_BY_HAND=${RESTORE_DONE_BY_HAND}): stamping it as this rehearsal's copy on that statement"
                 stamp_database
@@ -265,11 +394,6 @@ if [ "$EXECUTE" = 1 ]; then
     # The moodledata: empty (or absent), this restore's own (marked), the unpack of an earlier restore that nothing has used since
     # (a NEW restore of the database over the same archive), or foreign (anything else: never written without an explicit
     # statement). A kit restore into an empty directory is the normal case.
-    ARCHIVE_ID=""
-    if [ -n "$RESTORE_MOODLEDATA_ARCHIVE" ]; then
-        [ -f "$RESTORE_MOODLEDATA_ARCHIVE" ] || die "RESTORE_MOODLEDATA_ARCHIVE not found: ${RESTORE_MOODLEDATA_ARCHIVE}"
-        ARCHIVE_ID="$(archive_identity "$RESTORE_MOODLEDATA_ARCHIVE")"
-    fi
     md_state=empty
     if [ -d "$MOODLEDATA" ] && [ -n "$(ls -A "$MOODLEDATA" 2> /dev/null)" ]; then
         md_have="$(moodledata_marker_get)"
@@ -331,11 +455,19 @@ if [ "$EXECUTE" = 1 ]; then
             # The archive is recorded in the marker file BEFORE the unpack too (the second record of the same fact: an 'archive=' line
             # and no 'unpacked=' line is refused as well); the finished line is written after it, and the whole marker is written again
             # then, because an archive made from an earlier rehearsal's dataroot would have overwritten the marker file.
+            # An archive that is not proven whole is refused BEFORE the directory is claimed (see archive_proof: tar exits 0 on a tar cut at a
+            # member header). It was proven at the top of this step; this is the same rule for a path that did not go through it.
+            [ -n "$ARCHIVE_PROVEN" ] || archive_proof
             unpack_inflight_begin "$RESTORE_ID" "$ARCHIVE_ID"
             moodledata_write_marker "$RESTORE_ID" "$ARCHIVE_ID"
             restore_moodledata
             unpack_inflight_end
             moodledata_write_marker "$RESTORE_ID" "$ARCHIVE_ID" done
+            # How the archive was shown to be whole is part of the record of the rehearsal (the summary prints it).
+            kv_set restore.moodledata_proof "$ARCHIVE_PROVEN"
+            if [ -n "$RESTORE_MOODLEDATA_SHA256" ]; then
+                kv_set restore.moodledata_sha256 "${RESTORE_MOODLEDATA_SHA256,,}"
+            fi
             log "OK: ${MOODLEDATA} unpacked from RESTORE_MOODLEDATA_ARCHIVE and recorded in ${KIT_MARKER_FILE}"
         else
             die "${MOODLEDATA}/filedir is missing or empty and RESTORE_MOODLEDATA_ARCHIVE is not set: unpack the live moodledata first"
@@ -419,10 +551,17 @@ fi
 if [ "$EXECUTE" = 1 ]; then
     work="$(mktemp -d "$REPORT_DIR/.filedir.XXXXXX")"
     t0="$(epoch)"
-    db_q "SELECT DISTINCT contenthash FROM {p}files WHERE filesize > 0" | expected_paths | LC_ALL=C sort -u > "$work/db.txt"
-    disk_paths "$MOODLEDATA/filedir" | LC_ALL=C sort -u > "$work/disk.txt"
+    # {files} says each content file's hash AND its size: a file that is on disk but shorter than {files}.filesize is a cut file (a cut
+    # archive, or a hand unpack that stopped inside a file), which "the file exists" cannot see.
+    db_q "SELECT DISTINCT contenthash, filesize FROM {p}files WHERE filesize > 0" > "$work/db.raw"
+    expected_paths_sizes < "$work/db.raw" | LC_ALL=C sort -u > "$work/dbsz.txt"
+    cut -f 1 "$work/dbsz.txt" | LC_ALL=C sort -u > "$work/db.txt"
+    disk_paths_sizes "$MOODLEDATA/filedir" | LC_ALL=C sort -u > "$work/disksz.txt"
+    cut -f 1 "$work/disksz.txt" | LC_ALL=C sort -u > "$work/disk.txt"
     comm_only_first "$work/db.txt" "$work/disk.txt" > "$REPORT_DIR/filedir-missing.txt"
     comm_only_second "$work/db.txt" "$work/disk.txt" > "$REPORT_DIR/filedir-extra.txt"
+    filedir_wrong_sizes "$work/dbsz.txt" "$work/disksz.txt" > "$REPORT_DIR/filedir-wrongsize.txt"
+    wrongsize="$(wc -l < "$REPORT_DIR/filedir-wrongsize.txt" | tr -d ' ')"
     dbrows="$(db_scalar "SELECT COUNT(*) FROM {p}files WHERE filesize > 0")"
     dbhashes="$(wc -l < "$work/db.txt" | tr -d ' ')"
     dbbytes="$(db_scalar "SELECT COALESCE(SUM(t.sz), 0) FROM (SELECT DISTINCT contenthash, filesize AS sz FROM {p}files WHERE filesize > 0) t")"
@@ -438,9 +577,15 @@ if [ "$EXECUTE" = 1 ]; then
     kv_set filedir.disk_files "$diskfiles"
     kv_set filedir.missing "$missing"
     kv_set filedir.extra "$extra"
+    kv_set filedir.wrong_size "$wrongsize"
+    log "FILEDIR: on disk with a size other than {files}.filesize ${wrongsize} (reports/filedir-wrongsize.txt: path, size in {files}, size on disk)"
     if [ "$missing" -gt "$FILEDIR_MAX_MISSING" ]; then
         head -n 20 "$REPORT_DIR/filedir-missing.txt" | sed 's/^/    missing: /'
         die "${missing} content hash(es) of {files} are not on disk (allowed ${FILEDIR_MAX_MISSING}): the moodledata restore is incomplete. SCORM packages and certificate images would 404. Do not go on"
+    fi
+    if [ "$wrongsize" -gt "$FILEDIR_MAX_WRONGSIZE" ]; then
+        head -n 20 "$REPORT_DIR/filedir-wrongsize.txt" | sed 's/^/    wrong size: /'
+        die "${wrongsize} content file(s) on disk have a size other than {files}.filesize (allowed ${FILEDIR_MAX_WRONGSIZE}, FILEDIR_MAX_WRONGSIZE): the moodledata restore is cut inside a file (a cut archive, or an unpack that stopped half way). The list is reports/filedir-wrongsize.txt. Do not go on"
     fi
     [ "$dbhashes" -gt 0 ] || die "the database has no file content at all: a restore without files rows"
     log "OK: every content hash of {files} is on disk"

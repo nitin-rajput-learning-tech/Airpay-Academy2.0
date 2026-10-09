@@ -303,6 +303,8 @@ load_env() {
     : "${FORBIDDEN_SERVER_SCHEMAS:=}"
     : "${RESTORE_DONE_BY_HAND:=}"
     : "${RESTORE_MOODLEDATA_BY_HAND:=}"
+    : "${RESTORE_MOODLEDATA_SHA256:=}"
+    : "${FILEDIR_MAX_WRONGSIZE:=0}"
     : "${RESTORE_ALLOW_NO_TRAILER:=0}"
     : "${SNAPSHOT_TAKEN:=}"
     : "${BIZLMS_PRODUCTION_FLAG:=0}"
@@ -351,17 +353,39 @@ load_env() {
 # take_run_lock: one --execute run per REHEARSAL_WORK at a time. run_all.sh takes REHEARSAL_WORK/.run.lock and says so to the steps it
 # starts (REHEARSAL_RUN_LOCK = the lock directory, REHEARSAL_RUN_LOCK_PID = its pid, which the lock's pid file must still hold); a step run
 # alone takes the lock itself and releases it when it exits (on_exit). A second run finds the lock held and stops with exit 3, before it
-# opens a log, a state file or the database.
+# opens a log, a state file or the database. A step that run_all.sh started also writes its own pid to <lock>/step.pid: a step can outlive
+# the run_all.sh that started it (SIGKILL), and the refusal then names both pids and says whether each is alive.
 STEP_LOCK=""
+STEP_PIDFILE=""
+
+# lock_held_message LOCK -> the refusal text for a lock that is held: its pid and the pid of the step run_all.sh started, each with
+# whether that process is alive. A step still running under a run_all.sh that was killed is the reason both are printed.
+lock_held_message() {
+    local lock="$1" p s text
+    p="$(cat "$lock/pid" 2> /dev/null || true)"
+    s="$(cat "$lock/step.pid" 2> /dev/null || true)"
+    text="pid ${p:-?}"
+    if [ -n "$p" ]; then
+        if kill -0 "$p" 2> /dev/null; then text+=" (alive)"; else text+=" (not running)"; fi
+    fi
+    if [ -n "$s" ]; then
+        text+=", step pid ${s}"
+        if kill -0 "$s" 2> /dev/null; then text+=" (alive)"; else text+=" (not running)"; fi
+    fi
+    printf 'Another rehearsal run holds %s (%s). Remove that directory only when NONE of the pids it names is alive: a step outlives a run_all.sh that was killed, and two runs in one work directory write the same database and state.' "$lock" "$text"
+}
+
 take_run_lock() {
     local lock="$REHEARSAL_WORK/.run.lock"
     if [ -n "${REHEARSAL_RUN_LOCK:-}" ] && [ "$REHEARSAL_RUN_LOCK" = "$lock" ] && [ -n "${REHEARSAL_RUN_LOCK_PID:-}" ] \
             && [ "$(cat "$lock/pid" 2> /dev/null || true)" = "$REHEARSAL_RUN_LOCK_PID" ]; then
+        printf '%s\n' "$$" > "$lock/step.pid" 2> /dev/null || true
+        STEP_PIDFILE="$lock/step.pid"
         return 0
     fi
     mkdir -p "$REHEARSAL_WORK"
     if ! mkdir "$lock" 2> /dev/null; then
-        printf 'Another rehearsal run holds %s (pid %s). If none is running, remove that directory.\n' "$lock" "$(cat "$lock/pid" 2> /dev/null || printf '?')" >&2
+        printf '%s\n' "$(lock_held_message "$lock")" >&2
         exit 3
     fi
     printf '%s\n' "$$" > "$lock/pid"
@@ -369,7 +393,51 @@ take_run_lock() {
     trap 'rm -rf "$STEP_LOCK"' EXIT
 }
 
-# step_init NN name [args...]: parse the arguments, load and validate the env, open the log, arm the exit trap.
+# step_init NN name [args...]: parse the arguments, load and validate the env, open the log, arm the exit trap and the signal traps.
+#
+# SIGNALS. TERM, INT and HUP are trapped, because a step that is killed while a foreground child runs (php upgrade.php, the restore, the
+# mysql client) must not record success and must not release .run.lock under that child. Without the traps bash leaves its wait without
+# reaping the child and runs the EXIT trap with $? = 0 (the status of the last command that completed): the step wrote status=ok, rc=0,
+# logged 'ok (rc 0)' and removed the lock while the child ran on (reproduced, round 6 review). With the traps bash defers the handler until
+# the foreground command has returned, and the handler exits 128+n, so the EXIT trap sees a non-zero status: the status file says fail (with
+# signal=NAME), and the lock is held until the child has ended. The child is not interrupted by a signal sent to the step alone (the process
+# group is how to stop it too). A step also writes status=running at its start, so that a death the traps cannot see (SIGKILL, power) leaves a
+# status that is not 'ok'; the status the file held before is kept in a previous= line (step_done_ok reads it for the step that asks about itself).
+STEP_SIGNAL=""
+on_step_signal() {
+    STEP_SIGNAL="$1"
+    log "SIG${1} received by step ${STEP_ID}: the foreground command has finished, so the step stops here, records itself as failed (exit $((128 + $2))) and releases its lock; it does not go on"
+    exit $((128 + $2))
+}
+
+# write_step_status STATUS RC SECONDS: state/NN.status (EXECUTE only). running carries the status the file held before.
+write_step_status() {
+    if [ "$EXECUTE" != 1 ] || [ -z "${STATE_DIR:-}" ] || [ ! -d "$STATE_DIR" ]; then
+        return 0
+    fi
+    local f="$STATE_DIR/${STEP_ID}.status" prev="" finished=""
+    if [ "$1" = running ]; then
+        if [ -f "$f" ]; then
+            prev="$(sed -n 's/^status=//p' "$f" | head -n 1)"
+            if [ "$prev" = running ]; then
+                prev="$(sed -n 's/^previous=//p' "$f" | head -n 1)"
+            fi
+        fi
+    else
+        finished="$(ts)"
+    fi
+    {
+        printf 'status=%s\nrc=%s\nwarnings=%s\nseconds=%s\nfinished=%s\nname=%s\nkit=%s\n' \
+            "$1" "$2" "$WARNINGS" "$3" "$finished" "$STEP_NAME" "$(kit_rev)"
+        if [ "$1" = running ]; then
+            printf 'previous=%s\nstarted=%s\npid=%s\n' "$prev" "$(ts)" "$$"
+        fi
+        if [ -n "$STEP_SIGNAL" ]; then
+            printf 'signal=%s\n' "$STEP_SIGNAL"
+        fi
+    } > "$f"
+}
+
 step_init() {
     STEP_ID="$1"
     STEP_NAME="$2"
@@ -387,12 +455,19 @@ step_init() {
     fi
     STEP_T0="$(epoch)"
     trap 'on_exit $?' EXIT
+    trap 'on_step_signal TERM 15' TERM
+    trap 'on_step_signal INT 2' INT
+    trap 'on_step_signal HUP 1' HUP
     trap 'log "ERROR: a command failed (rc=$?) at ${BASH_SOURCE[0]##*/}:${LINENO}: ${BASH_COMMAND}"' ERR
+    write_step_status running "" 0
     log "step ${STEP_ID} ${STEP_NAME} start; mode $(mode_name); kit $(kit_rev); env ${ENV_FILE}"
 }
 
 on_exit() {
-    local rc="$1" t1 seconds status
+    local rc="$1" t1 seconds status bg
+    # Cleanup is not interrupted: a second signal while the status is written must not leave the file at 'running' half way, or the lock
+    # released before the status is there.
+    trap '' TERM INT HUP
     t1="$(epoch)"
     seconds=$((t1 - STEP_T0))
     case "$rc" in
@@ -400,25 +475,37 @@ on_exit() {
         2) status="unproven" ;;
         *) status="fail" ;;
     esac
+    # A background job of the step (the heartbeat of timed_to) must not outlive it: when the signal trap runs right after the foreground
+    # command, the line that kills the heartbeat has not run yet.
+    bg="$(jobs -p 2> /dev/null || true)"
+    if [ -n "$bg" ]; then
+        # shellcheck disable=SC2086
+        kill $bg 2> /dev/null || true
+    fi
     if [ -n "$TMP_DIR" ] && [ -d "$TMP_DIR" ]; then
         rm -rf "$TMP_DIR"
     fi
     log "step ${STEP_ID} ${STEP_NAME} ${status} (rc ${rc}) in ${seconds}s, ${WARNINGS} warning(s), mode $(mode_name)"
-    if [ "$EXECUTE" = 1 ] && [ -n "${STATE_DIR:-}" ] && [ -d "${STATE_DIR:-/nonexistent}" ]; then
-        {
-            printf 'status=%s\nrc=%s\nwarnings=%s\nseconds=%s\nfinished=%s\nname=%s\nkit=%s\n' \
-                "$status" "$rc" "$WARNINGS" "$seconds" "$(ts)" "$STEP_NAME" "$(kit_rev)"
-        } > "$STATE_DIR/${STEP_ID}.status"
+    write_step_status "$status" "$rc" "$seconds"
+    if [ -n "$STEP_PIDFILE" ]; then
+        rm -f "$STEP_PIDFILE"
     fi
     if [ -n "$STEP_LOCK" ]; then
         rm -rf "$STEP_LOCK"
     fi
 }
 
-# step_done_ok NN -> 0 when step NN finished ok in EXECUTE mode.
+# step_done_ok NN -> 0 when step NN finished ok in EXECUTE mode. A step whose status file says 'running' did not finish (it is running, or
+# it died without a trap running), so it is not ok; the one exception is the step asking about ITSELF (step 02 asks whether an earlier run of
+# 02 finished ok): its own file says 'running' because of this very run, and what it asks about is how the earlier run ended (previous=).
 step_done_ok() {
-    local f="$STATE_DIR/$1.status"
-    [ -f "$f" ] && grep -qx 'status=ok' "$f"
+    local f="$STATE_DIR/$1.status" st
+    [ -f "$f" ] || return 1
+    st="$(sed -n 's/^status=//p' "$f" | head -n 1)"
+    if [ "$st" = running ] && [ "$1" = "$STEP_ID" ]; then
+        st="$(sed -n 's/^previous=//p' "$f" | head -n 1)"
+    fi
+    [ "$st" = ok ]
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -607,6 +694,13 @@ check_pass_file() {
 }
 
 # db_init_cnf: write the private option file for the mysql client (once per process).
+# Every kit client call uses --defaults-file (the kit's file ONLY), not --defaults-extra-file: on Unix the client reads the user's ~/.my.cnf
+# (and MySQL's ~/.mylogin.cnf) AFTER an extra file, so an operator's [client] host, port, user or password would override the kit's and the
+# marker, in-flight and schema checks could run on another server than the one Moodle's hops write to. --defaults-file must be the first
+# option of the command line (it is, in every call). What it cannot settle: (a) with DB_HOST=localhost the CLI client and PHP's mysqli each
+# choose a Unix socket of their own, and the two can name different servers: use DB_HOST=127.0.0.1 with the DB_PORT of the rehearsal server
+# (TCP), which both sides read the same way; (b) a MySQL 8 client still reads ~/.mylogin.cnf after --defaults-file (a [client] group in it
+# would apply): keep no login-path file for the user that runs the kit (the MariaDB client has none).
 db_init_cnf() {
     if [ -n "$DB_CNF" ] && [ -f "$DB_CNF" ]; then
         return 0
@@ -634,7 +728,7 @@ db_init_cnf() {
 # mysql_nodb ARGS...: the client without a default database (probing, CREATE DATABASE).
 mysql_nodb() {
     db_init_cnf
-    "$MYSQL_BIN" --defaults-extra-file="$DB_CNF" --batch --skip-column-names "$@"
+    "$MYSQL_BIN" --defaults-file="$DB_CNF" --batch --skip-column-names "$@"
 }
 
 # db_q SQL: run SQL on the rehearsal database; rows come back tab-separated without a header. {p} is the table prefix.
@@ -642,7 +736,7 @@ db_q() {
     [ "$EXECUTE" = 1 ] || die "internal error: db_q called in DRY mode"
     db_init_cnf
     local sql="${1//\{p\}/$DB_PREFIX}"
-    "$MYSQL_BIN" --defaults-extra-file="$DB_CNF" --batch --skip-column-names "$DB_NAME" -e "$sql"
+    "$MYSQL_BIN" --defaults-file="$DB_CNF" --batch --skip-column-names "$DB_NAME" -e "$sql"
 }
 
 # db_first SQL -> the first value of the first row ('' when there is no row). A failed query is an error (rc 1, said on
@@ -1087,6 +1181,25 @@ disk_paths() {
     find "$1" -type f -printf '%P\n' | grep -E '^[0-9a-f]{2}/[0-9a-f]{2}/[0-9a-f]{40}$' || true
 }
 
+# expected_paths_sizes < "hash<TAB>size" -> "ab/cd/hash<TAB>size": what {files} says each content file is, and how big.
+expected_paths_sizes() {
+    awk -F '[ \t]+' 'NF >= 2 { sub(/\r$/, "", $2); print substr($1, 1, 2) "/" substr($1, 3, 2) "/" $1 "\t" $2 }'
+}
+
+# disk_paths_sizes DIR -> "ab/cd/hash<TAB>bytes" for every regular file below DIR whose name is a content hash.
+disk_paths_sizes() {
+    local tab=$'\t'
+    find "$1" -type f -printf '%P\t%s\n' | grep -E "^[0-9a-f]{2}/[0-9a-f]{2}/[0-9a-f]{40}${tab}[0-9]+\$" || true
+}
+
+# filedir_wrong_sizes DBSIZES DISKSIZES -> "path<TAB>size in {files}<TAB>size on disk" for each content file that is on disk with a size other
+# than {files}.filesize. Both inputs are "path<TAB>size", sorted with LC_ALL=C. A file that is missing is not listed (the missing list has it).
+# This is what shows a content file that was cut inside (a cut archive or a hand unpack that stopped in the middle of a file), which the
+# existence check cannot see.
+filedir_wrong_sizes() {
+    LC_ALL=C join -t $'\t' -o 0,1.2,2.2 "$1" "$2" | awk -F '\t' '$2 != $3'
+}
+
 # comm_only_first A B -> lines of sorted A that are not in sorted B; comm_only_second the other way.
 comm_only_first() { LC_ALL=C comm -23 "$1" "$2"; }
 comm_only_second() { LC_ALL=C comm -13 "$1" "$2"; }
@@ -1111,10 +1224,13 @@ dump_stream() {
 #   * any line that names the in-flight table (KIT_INFLIGHT_TABLE). A mysqldump of a database that held it (a partial copy the kit was
 #     still restoring into) carries DROP TABLE IF EXISTS / CREATE TABLE / INSERT for it: restored, it would drop and re-create the kit's
 #     claim in the middle of the load, and a load that died between that DROP and CREATE would leave a partial copy with no in-flight
-#     table, which RESTORE_DONE_BY_HAND adopts.
+#     table, which RESTORE_DONE_BY_HAND adopts;
+#   * a command of the mysql CLIENT itself (mysqldump never writes one): a backslash command at the start of a line (\u db = USE, \. file and
+#     source file = read another file, \! and system = run a shell command, \r and connect = another server, \q and quit and exit = stop
+#     reading). With --one-database a \u makes the client skip the rest of the dump and exit 0, which would stamp a partial copy.
 # It reads the whole file once (the trailer check reads only its tail), before the restore reads it again.
 dump_unsafe_statement() {
-    { dump_stream "$1" | grep -a -m1 -Ei -e '^[[:space:]]*(/\*![0-9]*[[:space:]]+)?(use[[:space:]]|create[[:space:]]+(database|schema)[[:space:]]|drop[[:space:]]+(database|schema)[[:space:]]|set[[:space:]]+(@@global\.|global[[:space:]]+)gtid_purged)' -e "$KIT_INFLIGHT_TABLE" | cut -c1-160; } 2> /dev/null || true
+    { dump_stream "$1" | grep -a -m1 -Ei -e '^[[:space:]]*(/\*![0-9]*[[:space:]]+)?(use[[:space:]]|create[[:space:]]+(database|schema)[[:space:]]|drop[[:space:]]+(database|schema)[[:space:]]|set[[:space:]]+(@@global\.|global[[:space:]]+)gtid_purged)' -e "$KIT_INFLIGHT_TABLE" -e '^[[:space:]]*\\[a-zA-Z.!]' -e '^[[:space:]]*(source|system|connect|quit|exit)([[:space:]]|;|$)' | cut -c1-160; } 2> /dev/null || true
 }
 
 # dump_mysql8_collation FILE -> prints the first utf8mb4_0900_* collation named in the first 20 MB of the dump (nothing when there is
@@ -1144,29 +1260,87 @@ KIT_MARKER_FILE=".rehearsal-kit-restore-id"
 
 new_restore_id() { od -An -N16 -tx1 /dev/urandom | tr -d ' \n'; }
 
+# marker_get -> the marker of the database, with a return code that says whether the read can be believed:
+#   rc 0, a value printed   the marker row holds that value;
+#   rc 0, nothing printed   there is NO marker row (a COUNT that ran without error said 0), or there is no {config} table at all (the server's
+#                           own error 1146, and nothing else);
+#   rc 1, nothing printed   CANNOT TELL: the read failed with any other error (a lost connection, a restarting server, a wrong DB_PREFIX
+#                           is 1146 and the case above), came back blank while the COUNT says the row exists, or the COUNT itself failed.
+# A caller must treat rc 1 as "do not know", never as "no marker". It used to read every failure as "no marker" (rc 0, empty), and on the
+# RESTORE_DONE_BY_HAND path (which the kit says stays in rehearsal.env) one lost connection made step 01 archive a finished rehearsal's
+# state/ and overwrite the database's marker with a new id (round 6 review, reproduced). Each read is asked up to three times, a second
+# apart. The value is read with its stderr kept apart, so a warning of the client is never taken for the value.
 marker_get() {
-    # The marker of the database, or nothing (also nothing when there is no {config} table). An empty read is checked against a
-    # COUNT first (see db_config_value): a client that printed nothing must not look like a database without the marker.
-    local v="" tries=0
+    local v="" n="" tries=0 rc errf
+    db_init_cnf
+    errf="$TMP_DIR/marker.err"
     while :; do
-        v="$(db_first "SELECT value FROM {p}config WHERE name = '${KIT_MARKER_KEY}'" 2> /dev/null)" || return 0
-        if [ -n "$v" ]; then
-            break
-        fi
-        if [ "$(db_scalar "SELECT COUNT(*) FROM {p}config WHERE name = '${KIT_MARKER_KEY}'" 2> /dev/null || printf 0)" = 0 ]; then
-            break
+        rc=0
+        v="$(db_q "SELECT value FROM {p}config WHERE name = '${KIT_MARKER_KEY}'" 2> "$errf")" || rc=$?
+        v="${v//$'\r'/}"
+        if [ "$rc" != 0 ]; then
+            if grep -q 'ERROR 1146' "$errf" 2> /dev/null; then
+                return 0
+            fi
+        else
+            v="${v%%$'\n'*}"
+            if [ -n "$v" ]; then
+                printf '%s' "$v"
+                return 0
+            fi
+            n="$(count_retry db_q "SELECT COUNT(*) FROM {p}config WHERE name = '${KIT_MARKER_KEY}'" 2> /dev/null)" || n=""
+            if [ "$n" = 0 ]; then
+                return 0
+            fi
         fi
         tries=$((tries + 1))
         if [ "$tries" -ge 3 ]; then
-            return 0
+            return 1
         fi
         sleep 1
     done
-    printf '%s' "$v"
 }
 
+# marker_definitely_absent -> 0 only when the database DEFINITELY carries no marker: its {config} table exists, and TWO reads a second apart,
+# each answering without an error, say COUNT(*) = 0 for the marker row. Anything else (a failed or blank read, a count that is not 0, the
+# two reads disagreeing, no {config} table) is rc 1. The hand-restore path (RESTORE_DONE_BY_HAND) asks this before it moves a rehearsal's
+# state/ to archive/ and stamps a new id, so that one misread cannot do either.
+marker_definitely_absent() {
+    local i n cfg
+    cfg="$(count_retry db_q "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${DB_NAME}' AND TABLE_NAME = '${DB_PREFIX}config'")" || return 1
+    [ "$cfg" = 1 ] || return 1
+    for i in 1 2; do
+        n="$(db_q "SELECT COUNT(*) FROM {p}config WHERE name = '${KIT_MARKER_KEY}'" 2> /dev/null)" || return 1
+        n="${n%%$'\n'*}"
+        n="${n%$'\r'}"
+        [ "$n" = 0 ] || return 1
+        if [ "$i" = 1 ]; then
+            sleep 1
+        fi
+    done
+    return 0
+}
+
+# marker_set ID: the restore the kit made itself is stamped (the dump may hold the marker row of a stamped database: it is replaced).
 marker_set() {
     db_write "INSERT INTO {p}config (name, value) VALUES ('${KIT_MARKER_KEY}', '$1') ON DUPLICATE KEY UPDATE value = '$1'"
+}
+
+# marker_insert_new ID: stamp a hand-restored database with a PLAIN INSERT. A marker row that exists (one the earlier read missed) is the
+# server's error 1062 here, and nothing is overwritten: the caller stops and moves nothing. rc 0 = stamped, 1 = the row exists (1062),
+# 2 = any other failure.
+marker_insert_new() {
+    local out rc=0
+    log "SQL: INSERT INTO ${DB_PREFIX}config (name, value) VALUES ('${KIT_MARKER_KEY}', '${1:0:8}...')  (a plain INSERT: a marker row that exists is an error, never overwritten)"
+    out="$(db_q "INSERT INTO {p}config (name, value) VALUES ('${KIT_MARKER_KEY}', '$1')" 2>&1)" || rc=$?
+    if [ "$rc" = 0 ]; then
+        return 0
+    fi
+    case "$out" in
+        *'ERROR 1062'*) return 1 ;;
+    esac
+    log "the marker INSERT failed: ${out:0:200}"
+    return 2
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -1276,6 +1450,53 @@ archive_identity() {
     p="$(readlink -f "$f" 2> /dev/null || true)"
     [ -n "$p" ] || p="$f"
     printf '%s|%s|%s' "$p" "$(stat -c %s "$p")" "$(stat -c %Y "$p")"
+}
+
+# archive_kind FILE -> zip | gzip | bzip2 | xz | zstd | tar, by the first bytes (tar is everything else: GNU tar reads it uncompressed).
+archive_kind() {
+    local magic
+    magic="$(head -c 6 "$1" 2> /dev/null | od -An -tx1 | tr -d ' \n')"
+    case "$magic" in
+        504b*) printf 'zip' ;;
+        1f8b*) printf 'gzip' ;;
+        425a68*) printf 'bzip2' ;;
+        fd377a585a00*) printf 'xz' ;;
+        28b52ffd*) printf 'zstd' ;;
+        *) printf 'tar' ;;
+    esac
+}
+
+# archive_stream KIND FILE -> the uncompressed bytes of a tar on stdout (KIND from archive_kind: gzip, bzip2, xz, zstd; tar = the file itself).
+archive_stream() {
+    case "$1" in
+        gzip) gzip -dc -- "$2" ;;
+        bzip2) bzip2 -dc -- "$2" ;;
+        xz) xz -dc -- "$2" ;;
+        zstd) zstd -dc -q -- "$2" ;;
+        *) cat -- "$2" ;;
+    esac
+}
+
+# tar_ends_complete KIND FILE -> 0 when the last 1024 bytes of the tar (as it is once uncompressed) are all NUL: the two zero blocks that end
+# every tar (a writer that pads to a record, as GNU tar, bsdtar and python's tarfile do, only adds more NULs). GNU tar 1.35 extracts a tar
+# that is cut exactly at a member header with exit status 0 and no message, so tar's own status cannot tell a cut archive from a whole one.
+# A COMPRESSED tar is not safe either: the tar writer that dies leaves its pipe at end of input, and the compressor then closes its stream
+# normally, so 'gzip -t' is happy with a perfectly valid .tar.gz that holds a cut tar. The compressed stream is therefore read to its end here
+# (one decompression pass, which is also the integrity test of the compression: a failing decompressor is rc 1 through pipefail) and only
+# its last 1024 bytes are kept. A file that is not a tar at all fails the same test (its last bytes are not NUL). This is a check of the
+# FORMAT: only a checksum taken where the archive was made (RESTORE_MOODLEDATA_SHA256) proves the archive is the one that was made.
+tar_ends_complete() {
+    local kind="$1" f="$2" hex
+    # One pass: the last 1024 bytes of the (uncompressed) stream as hexadecimal. A failing decompressor is rc != 0 through pipefail.
+    if [ "$kind" = tar ]; then
+        # An uncompressed tar is a file that can be sought in: only its end is read (a tar of the moodledata is many gigabytes).
+        hex="$(set -o pipefail; tail -c 1024 -- "$f" | od -An -v -tx1 | tr -d ' \n')" || return 1
+    else
+        hex="$(set -o pipefail; archive_stream "$kind" "$f" | tail -c 1024 | od -An -v -tx1 | tr -d ' \n')" || return 1
+    fi
+    # Fewer than 1024 bytes (an empty or tiny stream) is no end-of-archive marker; so is any byte other than NUL.
+    [ "${#hex}" -ge 2048 ] || return 1
+    [[ "$hex" =~ ^0+$ ]]
 }
 
 moodledata_marker_line() {
@@ -1410,7 +1631,7 @@ moodledata_unfinished_unpack() {
 
 # unpack_unfinished_advice -> what to do about a moodledata that holds an unfinished unpack (one sentence, no full stop).
 unpack_unfinished_advice() {
-    printf 'The kit never adopts it, whatever RESTORE_MOODLEDATA_ARCHIVE, RESTORE_MOODLEDATA_BY_HAND or REHEARSAL_WORK say. Empty %s (or point MOODLEDATA at a new, empty directory) and run step 01 again, so that the kit unpacks the archive itself; or unpack the archive by hand into an EMPTY directory, set MOODLEDATA to it and RESTORE_MOODLEDATA_BY_HAND to its path' "$MOODLEDATA"
+    printf 'The kit never adopts it, whatever RESTORE_MOODLEDATA_ARCHIVE, RESTORE_MOODLEDATA_BY_HAND or REHEARSAL_WORK say. Empty %s (or point MOODLEDATA at a new, empty directory) and run step 01 again, so that the kit unpacks the archive itself; or unpack the archive by hand into an EMPTY directory (first check its SHA-256 against the one taken where it was made, and that tar ran to the end of a COMPLETE archive: a tar cut at a member header also exits 0), set MOODLEDATA to it and RESTORE_MOODLEDATA_BY_HAND to its path' "$MOODLEDATA"
 }
 
 # require_kit_marker: EXECUTE stops unless the database AND the moodledata carry the id that state/kv/restore.id holds, and neither is a
@@ -1427,7 +1648,8 @@ require_kit_marker() {
     [ "$inflight" = 0 ] || die "database ${DB_NAME} holds the table ${KIT_INFLIGHT_TABLE}: a restore the kit started into it did not finish ($(inflight_describe)), so it is a PARTIAL copy whatever marker it carries. Refused. Only DROP DATABASE clears it: restore again into an empty database (step 01)"
     unfinished="$(moodledata_unfinished_unpack)"
     [ -z "$unfinished" ] || die "${MOODLEDATA} holds an unpack that did not finish (${unfinished}), so it is a PARTIAL copy whatever marker it carries. Refused. $(unpack_unfinished_advice)"
-    have="$(marker_get)"
+    have="$(marker_get)" \
+        || die "database ${DB_NAME}: its rehearsal-kit marker could not be read (a failed read, or a blank answer for a row that exists): cannot tell whether it is this rehearsal's copy, so the kit will not write to it. Run this step again once the server answers"
     [ -n "$have" ] || die "database ${DB_NAME} carries no rehearsal-kit marker: it is not a copy this kit restored (step 01), so the kit will not write to it"
     [ "$have" = "$want" ] || die "database ${DB_NAME} carries restore id ${have:0:8}..., but this work directory belongs to restore ${want:0:8}...: another restore, or a database that is not this rehearsal's. Refused"
     dataid="$(moodledata_marker_get)"
@@ -1442,14 +1664,16 @@ restore_dataroot_used() {
         && awk -v id="$1" '$1 == id && $2 == "used" { found = 1 } END { exit !found }' "$REHEARSAL_WORK/restore-ids.log"
 }
 
-# work_state_has_history -> 0 when state/ holds results of a rehearsal (kv values, or a status file of step 01 or later).
+# work_state_has_history -> 0 when state/ holds results of a rehearsal (kv values, or a status file of step 01 or later). A status file that
+# says 'running' is not a result: it is the record a step writes at its start (step 01's own, in the run that asks), or what a step that
+# died without a trap leaves.
 work_state_has_history() {
     local f
     if [ -d "$STATE_DIR/kv" ] && [ -n "$(ls -A "$STATE_DIR/kv" 2> /dev/null)" ]; then
         return 0
     fi
     for f in "$STATE_DIR"/0[1-9].status "$STATE_DIR"/1[0-2].status; do
-        if [ -f "$f" ]; then
+        if [ -f "$f" ] && ! grep -qx 'status=running' "$f"; then
             return 0
         fi
     done

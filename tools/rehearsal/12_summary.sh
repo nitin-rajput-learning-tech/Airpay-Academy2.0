@@ -31,9 +31,16 @@ step_label() {
 }
 
 status_of() {
-    local f="$STATE_DIR/$1.status"
+    local f="$STATE_DIR/$1.status" st
     if [ -f "$f" ]; then
-        sed -n 's/^status=//p' "$f"
+        st="$(sed -n 's/^status=//p' "$f")"
+        # 'running' is what a step writes when it starts. Found here (this summary is a later step), it never finished: it was killed without a
+        # trap running (SIGKILL, a power cut), or it is still running. Either way it is not ok, and it is said so.
+        if [ "$st" = running ]; then
+            printf 'DID NOT FINISH (status running: killed, or still running)'
+        else
+            printf '%s' "$st"
+        fi
     else
         printf 'not run'
     fi
@@ -136,8 +143,10 @@ verdict() {
     printf -- '- Import decisions file SHA-256: `%s`\n' "$(kv import.decisions_file_sha256)"
     printf -- '- **Decisions hash for cutover (`--expect-decisions-hash`): `%s`**\n' "$(kv import.decisions_hash)"
     printf -- '- Import apply run: %s; install fingerprint (`--confirm`): `%s`\n' "$(kv import.runid)" "$(kv import.fingerprint)"
-    printf -- '- File store: %s distinct content hashes in the database, %s files on disk, %s missing, %s extra\n' \
-        "$(kv filedir.db_hashes)" "$(kv filedir.disk_files)" "$(kv filedir.missing)" "$(kv filedir.extra)"
+    printf -- '- File store: %s distinct content hashes in the database, %s files on disk, %s missing, %s extra, %s with a size other than {files}.filesize\n' \
+        "$(kv filedir.db_hashes)" "$(kv filedir.disk_files)" "$(kv filedir.missing)" "$(kv filedir.extra)" "$(kv filedir.wrong_size)"
+    printf -- '- Moodledata archive shown to be whole by: %s (SHA-256 given: `%s`); the database dump: `%s`\n' \
+        "$(kv restore.moodledata_proof)" "$(kv restore.moodledata_sha256)" "$(kv restore.dump)"
     printf -- '- Plugins missing from disk after hop 1: %s; Sentientia local plugins installed after hop 2: %s\n' \
         "$(kv hop1.missing_plugins)" "$(kv hop2.sentientia_plugins)"
     printf -- '- Cron cycle: %s; mails noemailever swallowed, as far as the cron output shows (best effort: a 0 can mean not captured; noemailever = 1 for the whole cycle is the proof): %s; scheduled tasks that phone home switched off for it: %s; failed tasks: %s; checks.php exit: %s\n' \

@@ -14,9 +14,14 @@
 # The first step that fails stops the run, and step 12 (the summary) still runs, so there is always a report. Every step is
 # idempotent: after fixing the cause, run again with --from NN. Exit code: that of the failed step (1 failed, 2 not proven,
 # 3 usage), 0 when every step finished ok.
-# A TERM or INT sent to run_all.sh alone does not interrupt the step that is running: run_all.sh waits for it (the lock
-# REHEARSAL_WORK/.run.lock stays held until it has finished), starts no further step and no summary, and exits 143 (TERM) / 130 (INT).
-# Ctrl-C reaches the whole process group, so it stops the running step too. To stop a step, signal its process group.
+# A TERM, INT or HUP sent to run_all.sh alone does not interrupt the step that is running: run_all.sh waits for it (the lock
+# REHEARSAL_WORK/.run.lock stays held until it has finished), starts no further step and no summary, and exits 143 (TERM) / 130 (INT) /
+# 129 (HUP). The same holds for a step: a TERM, INT or HUP sent to a step alone is acted on when the command it is running (php upgrade.php,
+# the restore, the import) has returned, never before; the step then records ITSELF as failed (state/NN.status: status=fail, rc=128+n,
+# signal=NAME), releases its lock and exits 128+n, and run_all.sh starts nothing more. A step is never recorded ok on a signal. Ctrl-C
+# reaches the whole process group, so it stops the running step and its commands too. To stop a step and what it runs, signal the PROCESS
+# GROUP (kill -TERM -- -PGID). A step is also marked status=running while it runs, so one that dies without a trap (SIGKILL) is never read
+# as ok. Run the rehearsal under tmux or screen: a dropped ssh session sends HUP.
 #
 # Steps (each is its own script and can be run alone with the same options):
 #   00 preflight        refuse unless the config is safe (allow-listed database, noemailever, no cron, no production host)
@@ -125,22 +130,24 @@ if [ "$EXECUTE" = 1 ]; then
     mkdir -p "$REHEARSAL_WORK" "$LOG_DIR"
     LOCK="$REHEARSAL_WORK/.run.lock"
     if ! mkdir "$LOCK" 2> /dev/null; then
-        printf 'Another rehearsal run holds %s (pid %s). If none is running, remove that directory.\n' "$LOCK" "$(cat "$LOCK/pid" 2> /dev/null || printf '?')" >&2
+        printf '%s\n' "$(lock_held_message "$LOCK")" >&2
         exit 3
     fi
     printf '%s\n' "$$" > "$LOCK/pid"
     trap 'rm -rf "$LOCK"' EXIT
-    # TERM / INT sent to run_all.sh ALONE (kill <pid>; Ctrl-C reaches the whole process group, so the step gets it too). The step runs in the
+    # TERM / INT / HUP sent to run_all.sh ALONE (kill <pid>; Ctrl-C reaches the whole process group, so the step gets it too; sudo relays HUP
+    # to its command when the ssh session drops, which left run_all.sh dead and the lock released under a running step). The step runs in the
     # FOREGROUND, and bash defers a trapped signal until the foreground command has finished: the handler only notes it, so the lock is
     # never released while a step still runs (the EXIT trap used to remove .run.lock and leave the step running, and a step run alone could
     # then take the lock in the same work directory). The running step is not interrupted: run_all.sh waits for it, starts no further step
-    # (the summary included) and exits 143 / 130. To stop the step as well, signal its process group.
+    # (the summary included) and exits 143 / 130 / 129. To stop the step as well, signal its process group.
     on_signal() {
         SIGNAL="$1"
         log "SIG${1} received by run_all.sh: the running step is not interrupted and the lock ${LOCK} stays held until it has finished; no further step will start"
     }
     trap 'on_signal TERM' TERM
     trap 'on_signal INT' INT
+    trap 'on_signal HUP' HUP
     # The steps it starts take the same lock when run alone (step_init); these two tell them this run already holds it.
     export REHEARSAL_RUN_LOCK="$LOCK" REHEARSAL_RUN_LOCK_PID="$$"
     exec > >(tee -a "$LOG_DIR/run_all.log") 2>&1
@@ -157,6 +164,13 @@ run_step() {
     file="${file%%:*}"
     name="${entry##*:}"
     log "==== step ${id}: ${name} ===="
+    # The signal is read HERE, after the line above (its date is a forked command, and a trapped signal that arrives while bash waits for it
+    # is handled once it returns) and immediately before the step is started: a TERM that arrived in that window used to start the step all
+    # the same, and run_all.sh then waited hours for it. The callers stop the run on SIGNAL.
+    if [ -n "$SIGNAL" ]; then
+        log "step ${id} (${name}) NOT started: SIG${SIGNAL} was received"
+        return 1
+    fi
     local rc=0
     bash "$KIT_DIR/$file" "${PASS[@]+"${PASS[@]}"}" || rc=$?
     if [ "$rc" -ne 0 ]; then
@@ -181,7 +195,7 @@ if [ -z "$FAILED" ] && [ -z "$SIGNAL" ]; then
             continue
         fi
         run_step "$entry" || break
-        # A TERM / INT that arrived while that step ran was only noted (see on_signal): stop here, the step has finished.
+        # A TERM / INT / HUP that arrived while that step ran was only noted (see on_signal): stop here, the step has finished.
         [ -z "$SIGNAL" ] || break
     done
 fi
@@ -191,6 +205,7 @@ if [ -n "$SIGNAL" ]; then
     log "STOPPED by SIG${SIGNAL}: the step that was running has finished${FAILED:+ (it failed: ${FAILED})}, nothing further was started and the summary was not run. Continue with: bash tools/rehearsal/run_all.sh --execute --from NN (or 12_summary.sh --execute for the report)"
     case "$SIGNAL" in
         INT) exit 130 ;;
+        HUP) exit 129 ;;
         *) exit 143 ;;
     esac
 fi

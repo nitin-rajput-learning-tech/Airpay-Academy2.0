@@ -120,15 +120,45 @@ Things the kit does that the numbered steps below do not say (added 2026-10-08, 
   `MOODLEDATA/.rehearsal_unpack_inflight` (restore id, archive, start time) and removes it only when the unpack has returned
   success. A moodledata that holds it, or whose marker file records an `archive=` line and no `unpacked=` line (a cut tar, a box
   that died mid-unpack), is a partial copy: step 00, step 01 (before the database is looked at) and every later step refuse it
-  whatever `RESTORE_MOODLEDATA_ARCHIVE` (even unset), `RESTORE_MOODLEDATA_BY_HAND` or `REHEARSAL_WORK` say. The filedir gate cannot
-  catch the cut, because it checks that a file is there and not its size (a cut inside a language pack, `repository/` or `models/`
-  after `filedir/` passes it). Empty the directory (or point `MOODLEDATA` at a new, empty one) and run step 01 again, or unpack
-  the archive by hand into an EMPTY directory and name its path in `RESTORE_MOODLEDATA_BY_HAND`.
+  whatever `RESTORE_MOODLEDATA_ARCHIVE` (even unset), `RESTORE_MOODLEDATA_BY_HAND` or `REHEARSAL_WORK` say. The filedir gate used to
+  be unable to catch a cut, because it checked that a file is there and not its size (a cut inside a language pack, `repository/` or
+  `models/` after `filedir/` passes the existence check); it now also compares each content file's size with `{files}.filesize`
+  (`FILEDIR_MAX_WRONGSIZE`, default 0), which catches a content file cut inside from any route, a hand unpack included. Empty the
+  directory (or point `MOODLEDATA` at a new, empty one) and run step 01 again, or unpack the archive by hand into an EMPTY directory
+  and name its path in `RESTORE_MOODLEDATA_BY_HAND` (a hand unpack has no completeness check of its own: verify the archive's
+  SHA-256 against the live backup's manifest first, and that `tar` ran to the end of a complete archive).
+* **A moodledata archive is proven whole before the database is touched** (round 6b). A tar that is cut exactly at a member
+  header is unpacked by GNU tar with exit status 0 and no message, so a "cut tar" is NOT refused by tar itself, and a `.tar.gz` that a
+  dying `tar` wrote into `gzip` is a valid gzip file around a cut tar. Step 01 therefore refuses the archive before it restores
+  anything (nothing is claimed, stamped or unpacked): with `RESTORE_MOODLEDATA_SHA256` set (the checksum of the live backup's
+  manifest) the archive's SHA-256 must match, and that is the proof; without it a tar (plain, gz, bz2, xz, zst) must read to its
+  end and finish with the two zero blocks that end every tar (a zip is cut loudly by its central directory). The proof used, and the
+  checksum, go to `state/kv` and the summary. The archive's size and mtime are read again after the unpack: an archive that changed
+  while it was unpacked leaves the in-flight file in place. Set `RESTORE_MOODLEDATA_SHA256` for the real rehearsal; the format check
+  alone is a weaker proof.
 * **One `--execute` run per work directory.** `run_all.sh` takes `REHEARSAL_WORK/.run.lock`, and a step run alone takes it too
-  (exit 3 while another run holds it; remove the directory only when no run is alive). Steps started by `run_all.sh` use the lock
-  it holds. A `TERM` sent to `run_all.sh` alone (`kill <pid>`) does not interrupt the step that is running and does not release the
-  lock under it: `run_all.sh` waits for that step, starts no further step (the summary included) and exits 143 (`INT`: 130).
-  Ctrl-C reaches the whole process group, so it stops the running step as well.
+  (exit 3 while another run holds it; the lock is per work directory, so two work directories on one database are NOT locked against each other: one `REHEARSAL_WORK` per rehearsal database). Steps started by `run_all.sh` use the lock it holds. The lock directory holds the pid of the
+  run and, while a step is running, the pid of that step (`step.pid`); the refusal names both and says whether each is alive. Remove
+  the directory only when NONE of them is alive: a step outlives a `run_all.sh` that was killed with `KILL`. A `TERM`, `INT` or `HUP`
+  sent to `run_all.sh` alone (`kill <pid>`) does not interrupt the step that is running and does not release the lock under it:
+  `run_all.sh` waits for that step, starts no further step (the summary included) and exits 143 (`INT`: 130, `HUP`: 129). A signal
+  sent to a STEP is acted on when the command it is running has returned: the step records `status=fail`, `rc=128+n`, `signal=NAME`
+  in `state/NN.status`, releases its lock and exits 128+n; it never records ok on a signal, and a step that dies without a trap
+  (`KILL`) leaves `status=running`, which nothing reads as ok (the summary prints it as DID NOT FINISH). Ctrl-C reaches the whole
+  process group, so it stops the running step and its commands as well; to stop a step and what it runs by hand, signal its process
+  group. Run the rehearsal under `tmux` or `screen`: a dropped ssh session sends `HUP`.
+* **A marker that cannot be read is never "no marker".** The kit's reads of the database marker return "cannot tell" on a failed read
+  (a lost connection, a restarting server, any error but the server's own 1146 for a missing config table), on a blank answer for a row
+  the COUNT says exists, or on a COUNT that fails or stays blank, and step 01, the preflight and the gate of steps 02 to 11 refuse
+  that. A hand restore (`RESTORE_DONE_BY_HAND`, which stays in the env file) is stamped only after two more error-free counts of 0, on an
+  existing config table, agree; the stamp is a plain `INSERT` (a marker row that exists is error 1062 and nothing is overwritten) and the
+  earlier rehearsal's `state/` moves to `archive/` only after that `INSERT` succeeded. The dump a database was restored from is recorded
+  (`state/kv/restore.dump`: path, size, mtime); a later run that names another `RESTORE_DB_DUMP` on that database is refused instead of
+  silently ignored, and a dump that changed while it was scanned and loaded leaves the in-flight table in place. The rollback to a
+  snapshot or a dump of this rehearsal's own copy is a hand restore: before loading it, create the in-flight table by hand
+  (`CREATE TABLE zz_rehearsal_restore_inflight (restore_id CHAR(32) NOT NULL, dump_path TEXT NOT NULL, started VARCHAR(40) NOT NULL,
+  PRIMARY KEY (restore_id)) ENGINE=InnoDB`, one row with any 32-character id) and drop it only after the load returned 0, so that a
+  rollback that dies half way is refused like any other partial copy (the dump or snapshot must not contain the table).
 * **The database server scan sees what the rehearsal login can see.** The check that refuses a server holding `airpayprod` (or a
   schema in `FORBIDDEN_SERVER_SCHEMAS`) reads `information_schema.SCHEMATA`, which lists only the schemas the login holds a privilege
   on unless it has the global `SHOW DATABASES` privilege. On any server that is not the rehearsal's own, grant the rehearsal login
