@@ -1567,7 +1567,9 @@ final class bizlms_runner_test extends \advanced_testcase {
                 (string) $row->reason, (string) $row->detail];
         }
         $this->assertNotEmpty($expected, 'the toy data has rows that are not imported');
-        $this->assertSame($expected, array_map('str_getcsv', array_slice($lines, 1)),
+        // Parsed with the arguments report.php writes with (FX-18: PHP 8.4 deprecates the implicit $escape).
+        $parse = static fn(string $line): array => str_getcsv($line, ',', '"', '\\');
+        $this->assertSame($expected, array_map($parse, array_slice($lines, 1)),
             'one line per map row that was not imported, in the order the map was written');
         $this->assertSame(1, count(array_keys($lines, 'toy,local_toy_org,3,,skipped,no_name,')));
     }
