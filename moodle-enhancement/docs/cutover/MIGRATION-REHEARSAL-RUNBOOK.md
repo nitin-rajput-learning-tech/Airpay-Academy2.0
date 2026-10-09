@@ -39,7 +39,14 @@ ninja sandbox when Nitin provides server access + a fresh live backup. **Nothing
    mysqli/intl/mbstring/curl/zip/gd/soap/openssl/sodium/exif/fileinfo, `max_input_vars ≥ 5000`,
    MySQL 8 / MariaDB ≥ 10.6 with **`max_allowed_packet ≥ 64M`** (2026-06-11 cron gauntlet: 1M
    drops the connection mid-cron — "MySQL server has gone away"), web server.
-2. Fresh LIVE backup: full DB dump + `moodledata` archive (+ the live `config.php` for reference).
+2. Fresh LIVE backup: full DB dump + `moodledata` archive (+ the live `config.php` for reference), **and the SHA-256 of the
+   moodledata archive (and of the dump), computed ON THE LIVE SERVER right after each was written and before it was copied, delivered with
+   the backup.** A `sha256sum` of the copy on the sandbox matches a cut copy (a pre-allocated or segmented download that stopped part way)
+   just as well as a whole one and proves nothing: do not make the checksum there. The kit takes the moodledata archive's checksum as
+   `RESTORE_MOODLEDATA_SHA256` (an uncompressed `.tar` is refused without it, and the preflight says so in DRY mode too; check the dump's
+   with `sha256sum -c` before the restore: the kit checks the dump's trailer and statements, not a checksum). Whatever the checksum's source,
+   step 01 also reads every file of `filedir/` and requires the SHA-1 of its content to be its own name (Moodle's naming), which a copy that
+   lost data cannot pass.
 3. The `production` branch checkout (or release archive) — carries the entire product layer.
 
 ## The parity tool, in one place
@@ -125,14 +132,17 @@ Things the kit does that the numbered steps below do not say (added 2026-10-08, 
   `models/` after `filedir/` passes the existence check); it now also compares each content file's size with `{files}.filesize`
   (`FILEDIR_MAX_WRONGSIZE`, default 0), which catches a content file cut inside from any route, a hand unpack included. Empty the
   directory (or point `MOODLEDATA` at a new, empty one) and run step 01 again, or unpack the archive by hand into an EMPTY directory
-  and name its path in `RESTORE_MOODLEDATA_BY_HAND` (a hand unpack has no completeness check of its own: verify the archive's
-  SHA-256 against the live backup's manifest first, and that `tar` ran to the end of a complete archive).
+  and name its path in `RESTORE_MOODLEDATA_BY_HAND` (a hand unpack has no completeness check of its own for its archive: verify the
+  archive's SHA-256 against the one computed on the live server first, and that `tar` ran to the end of a complete archive; step 01 reads
+  every file of its `filedir/` all the same, see the content check below).
 * **A moodledata archive is proven whole before the database is touched** (rounds 6b and 7). A tar that is cut exactly at a member
   header is unpacked by GNU tar with exit status 0 and no message, so a "cut tar" is NOT refused by tar itself, and a `.tar.gz` that a
   dying `tar` wrote into `gzip` is a valid gzip file around a cut tar. Step 01 therefore refuses the archive before it restores
-  anything (nothing is claimed, stamped or unpacked). With `RESTORE_MOODLEDATA_SHA256` set (the checksum of the live backup's
-  manifest) the archive's SHA-256 must match, and that is the proof. **An uncompressed `.tar` needs that checksum and is refused
-  without it:** nothing inside a plain tar can show that every byte of it arrived. A copy that stopped part way (a pre-allocated or
+  anything (nothing is claimed, stamped or unpacked). With `RESTORE_MOODLEDATA_SHA256` set (the checksum **computed on the live server**,
+  see Inputs) the archive's SHA-256 must match; **a tar must still end where a tar ends, with or without the checksum** (round 8: the two
+  zero blocks that end every tar and, for a plain tar, GNU tar's own end of the archive within one 10240-byte record of the end of the file),
+  because a checksum taken after the live backup's `tar` died while it wrote into gzip matches the cut archive. **An uncompressed `.tar`
+  needs that checksum and is refused without it:** nothing inside a plain tar can show that every byte of it arrived. A copy that stopped part way (a pre-allocated or
   segmented download, a file system that kept the size and lost the data) is full size and ends in zeros, GNU tar takes two zero blocks
   where a header is due for the end of the archive and exits 0, and the members after the zero-filled region are simply not unpacked.
   A compressed tar (gz, bz2, xz, zst) is read to its end by its decompressor, which fails on a cut or zero-filled stream, and must
@@ -140,7 +150,24 @@ Things the kit does that the numbered steps below do not say (added 2026-10-08, 
   CRC-32 per member). A checksum that is set is always checked, also on a re-run where `filedir/` is already there and on a new restore
   that reuses the finished unpack, and a checksum without `RESTORE_MOODLEDATA_ARCHIVE` is refused. The proof used, and the checksum, go
   to `state/kv` and the summary. The archive's size and mtime are read again after the unpack: an archive that changed while it was
-  unpacked leaves the in-flight file in place. Take the checksum where the archive is made, from the live backup's manifest.
+  unpacked leaves the in-flight file in place. Take the checksum where the archive is made, on the live server.
+* **The content of `filedir/` is read** (round 8, `RESTORE_FILEDIR_HASH_CHECK`, default 1). Moodle names every file of its file store by
+  the SHA-1 of its content (`filedir/ab/cd/abcd...`), so the file store proves itself: step 01 reads EVERY file below `filedir/` (up to 8
+  parallel `sha1sum` processes, progress logged every minute; one full read of the file store on every run of step 01, the reuse path and a
+  hand unpack included) and requires the SHA-1 of what it reads to be the file's own name. A zero-filled, cut or damaged file keeps its
+  name and its size in a copy that stopped part way, and passes the existence and size checks of the file store gate; it does not pass
+  this, whatever the archive, its checksum or the route the moodledata took. Step 01 stops and names up to 20 files (all in
+  `reports/filedir-hash-mismatch.txt`: path, SHA-1 of its content); empty `MOODLEDATA` (the kit deletes nothing), get the archive again
+  from the live server with its checksum, and run step 01 again. A name that is not a content hash (Moodle's `warning.txt` in the root
+  excepted) is warned about, not failed. The proof goes to `state/kv` (`restore.filedir_hash_proof`) and the summary;
+  `RESTORE_FILEDIR_HASH_CHECK=0` skips the read with a warning and the summary then says NOT CHECKED (scratch rehearsals only).
+* **A hop that failed after the release moved does not lock the rehearsal out** (round 8). A hop 1 whose plugin upgrade failed after core set
+  the release, or whose parity check exited 1 or 2, leaves `03.status` fail and the database at 4.5. A full re-run (`run_all.sh --execute`)
+  runs step 01 first, which removes its records of having finished and then used to die at the release gate (the release is not the source,
+  hop 1 is not ok): step 03 was then refused for want of step 01 and step 01 could never pass again, until a new restore. Step 01 now
+  accepts a release past the source (4.5 or 5.x) when this restore already passed the gate: hop 1 is done, or `state/kv/release.source`
+  is set (only a step 01 that saw the source release writes it; it moves to `archive/` with a new restore). Step 01 then passes and step 03
+  can be run again. A database that this work directory never saw at the source release is still refused.
 * **A copy that step 01 stamped is not a copy that step 01 cleared** (round 7). Step 01 stamps the database and the moodledata right
   after the restore, long before its file store gate and its neutralisation (SMTP credentials wiped, `cron_enabled = 0`, the restored
   OAuth2 tokens blanked). The last act of a step 01 that reached its end is a record that it finished for this restore: the `{config}`
@@ -157,7 +184,11 @@ Things the kit does that the numbered steps below do not say (added 2026-10-08, 
   `run_all.sh` waits for that step, starts no further step (the summary included) and exits 143 (`INT`: 130, `HUP`: 129). A signal
   sent to a STEP is acted on when the command it is running has returned: the step records `status=fail`, `rc=128+n`, `signal=NAME`
   in `state/NN.status`, releases its lock and exits 128+n; it never records ok on a signal, and a step that dies without a trap
-  (`KILL`) leaves `status=running`, which nothing reads as ok (the summary prints it as DID NOT FINISH). `USR1`, `USR2`, `ALRM`, `VTALRM`, `XCPU` and `XFSZ` are
+  (`KILL`) leaves `status=running`, which nothing reads as ok (the summary prints it as DID NOT FINISH). **A step is recorded ok only
+  when it reached its last line** (`step_end`): bash runs the EXIT trap with status 0 for every signal whose default action ends it, also
+  `ABRT`, `TRAP`, `SYS`, `ILL`, `FPE`, `BUS`, `SEGV` and the rest that no trap list can be complete for, so a step that ends without
+  reaching its end is recorded `fail` with `ended=unreached`, and keeps its lock (its command may still be running: remove the lock
+  directory only when no pid it names is alive); `run_all.sh` keeps `.run.lock` the same way. `USR1`, `USR2`, `ALRM`, `VTALRM`, `XCPU` and `XFSZ` are
   handled like `TERM` (exit 128+n; bash runs the EXIT trap with status 0 for each of them, which used to record a step as ok); `SIGPIPE`
   (the death of the `tee` a step writes its log through) is only noted, and a step that saw it and no other signal ends `fail`, rc 141.
   To stop a step and what it runs, signal the whole process group (`kill -TERM -- -PGID`; Ctrl-C and an ssh hangup do the same): the command

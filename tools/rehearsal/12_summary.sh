@@ -16,6 +16,7 @@ step_init 12 summary "$@"
 
 if [ "$EXECUTE" != 1 ]; then
     dry "would read state/*.status, state/kv/* and logs/timings.tsv and write reports/summary.md: the steps and their seconds, the I-4 window estimate, the parity checkpoints, the evidence hashes (baseline, package, decisions), what was accepted as unproven, and the seven rollout-gate items with who proves each"
+    step_end
     exit 0
 fi
 
@@ -40,6 +41,10 @@ status_of() {
             printf 'DID NOT FINISH (status running: killed, or still running)'
         else
             printf '%s' "$st"
+            # A step that ended without reaching its last line (a signal that ends bash and that no trap names) is fail, and says why.
+            if grep -qx 'ended=unreached' "$f"; then
+                printf ' (ended without reaching its last line: a signal that ends bash)'
+            fi
         fi
     else
         printf 'not run'
@@ -145,6 +150,13 @@ verdict() {
     printf -- '- Import apply run: %s; install fingerprint (`--confirm`): `%s`\n' "$(kv import.runid)" "$(kv import.fingerprint)"
     printf -- '- File store: %s distinct content hashes in the database, %s files on disk, %s missing, %s extra, %s with a size other than {files}.filesize\n' \
         "$(kv filedir.db_hashes)" "$(kv filedir.disk_files)" "$(kv filedir.missing)" "$(kv filedir.extra)" "$(kv filedir.wrong_size)"
+    case "$(kv_get restore.filedir_hash_proof)" in
+        sha1) fdh="every one of the $(kv restore.filedir_hash_files) files of filedir/ ($(kv restore.filedir_hash_bytes) bytes) was read and its SHA-1 is its own name; $(kv restore.filedir_hash_odd) other name(s) not hashed" ;;
+        skipped) fdh="**NOT CHECKED**: RESTORE_FILEDIR_HASH_CHECK=0 skipped it, so a file that kept its name and size and lost its data (a zero-filled or damaged copy) is not found by this run" ;;
+        failed) fdh="**FAILED**: a file whose content does not hash to its name (reports/filedir-hash-mismatch.txt)" ;;
+        *) fdh="not recorded (step 01 did not get that far)" ;;
+    esac
+    printf -- '- File store content (Moodle names each file by the SHA-1 of its content): %s\n' "$fdh"
     printf -- '- Moodledata archive shown to be whole by: %s (SHA-256 given: `%s`); the database dump: `%s`\n' \
         "$(kv restore.moodledata_proof)" "$(kv restore.moodledata_sha256)" "$(kv restore.dump)"
     printf -- '- Plugins missing from disk after hop 1: %s; Sentientia local plugins installed after hop 2: %s\n' \
@@ -226,3 +238,4 @@ verdict() {
 
 cat "$OUT"
 log "summary written to ${OUT}"
+step_end

@@ -28,6 +28,10 @@
 # database acts when the load has returned: a load that returned 0 is then NOT verified (the in-flight table stays), so the database must
 # be dropped and restored again; do not signal step 01 during the load unless that is what is wanted. Run the rehearsal under tmux or
 # screen: a dropped ssh session sends HUP.
+# A signal that ends bash and that none of the above names (ABRT, TRAP, SYS, ILL, FPE, BUS, SEGV, PROF, ...) cannot be waited out: bash runs the EXIT
+# trap with status 0 and ends the process at once. A step records ok only when it REACHED ITS LAST LINE (step_end), so such a step is recorded fail
+# (state/NN.status: ended=unreached) and keeps its lock; run_all.sh keeps .run.lock the same way (a command the step started may still be running).
+# Remove the lock directory by hand only when none of the pids it names is alive.
 #
 # Steps (each is its own script and can be run alone with the same options):
 #   00 preflight        refuse unless the config is safe (allow-listed database, noemailever, no cron, no production host)
@@ -140,7 +144,21 @@ if [ "$EXECUTE" = 1 ]; then
         exit 3
     fi
     printf '%s\n' "$$" > "$LOCK/pid"
-    trap 'rm -rf "$LOCK"' EXIT
+    # The lock is released on every way out but one: a status of 0 that was not reached by running to the end. Bash runs the EXIT trap with $? = 0
+    # for every signal whose default action ends it (STEP_SIGNALS below names only the ones this script acts on: ABRT, TRAP, SYS, ILL, FPE, BUS and
+    # SEGV are not among them), and the lock was then removed under the step that was still running (round 7 review; see THE LAST LINE in
+    # lib/common.sh). RUN_REACHED_END is set on the last line; an exit with a non-zero status (a failed step, a signal this script handled) is
+    # a deliberate end and releases the lock as before.
+    RUN_REACHED_END=0
+    on_run_exit() {
+        if [ "$1" = 0 ] && [ "$RUN_REACHED_END" != 1 ]; then
+            SURVIVOR_LOG="$LOG_DIR/run_all.log"
+            log_survivor "ERROR: run_all.sh ended without reaching its end (a signal that ends bash and that it does not handle): the lock ${LOCK} is KEPT, because the step it started may still be running. Remove that directory only when NONE of the pids it names is alive"
+            return 0
+        fi
+        rm -rf "$LOCK"
+    }
+    trap 'on_run_exit $?' EXIT
     # TERM / INT / HUP sent to run_all.sh ALONE (kill <pid>; Ctrl-C reaches the whole process group, so the step gets it too; sudo relays HUP
     # to its command when the ssh session drops, which left run_all.sh dead and the lock released under a running step). The step runs in the
     # FOREGROUND, and bash defers a trapped signal until the foreground command has finished: the handler only notes it, so the lock is
@@ -240,4 +258,5 @@ if [ -n "$FAILED" ]; then
     log "STOPPED at step ${FAILED} (exit ${RC}). Fix the cause, then: bash tools/rehearsal/run_all.sh --execute --from ${FAILED%% *}"
     exit "$RC"
 fi
+RUN_REACHED_END=1
 log "rehearsal run finished: every selected step ok ($(mode_name) mode)"

@@ -43,12 +43,19 @@
 #      RESTORE_MOODLEDATA_ARCHIVE is never ignored: if the moodledata already holds a filedir it must be that archive's unpack, or the
 #      step stops. A populated moodledata the kit did not stamp needs its own statement, RESTORE_MOODLEDATA_BY_HAND=<its path>, and
 #      must show no recent writes in sessions/ or localcache/.
-#      THE ARCHIVE IS PROVEN WHOLE before the database is touched (archive_proof): RESTORE_MOODLEDATA_SHA256 (the live backup's manifest) is
-#      REQUIRED for an uncompressed tar, whose last bytes cannot show that a zero-filled copy is whole, and is checked whenever it is set (also
-#      when filedir/ is already there, and a checksum without RESTORE_MOODLEDATA_ARCHIVE is refused); a compressed tar is read to its end; a zip
-#      is checked by unzip itself.
+#      THE ARCHIVE IS PROVEN WHOLE before the database is touched (archive_proof): RESTORE_MOODLEDATA_SHA256 (computed ON THE LIVE SERVER where the
+#      archive was made, delivered with the backup: a sha256sum of the copy on this box matches a cut copy and proves nothing) is REQUIRED for an
+#      uncompressed tar, whose last bytes cannot show that a zero-filled copy is whole, and is checked whenever it is set (also when filedir/ is
+#      already there, and a checksum without RESTORE_MOODLEDATA_ARCHIVE is refused); a tar must END where a tar ends with or without the checksum
+#      (the two zero blocks; for a plain tar also GNU tar's end of the archive within one record of the end of the file); a compressed tar is read
+#      to its end; a zip is checked by unzip itself.
+#      THE CONTENT OF filedir/ IS READ (section 3, filedir_hash_check): Moodle names every file by the SHA-1 of its content, so every file of the
+#      file store must hash to its own name, whatever the archive, its checksum or the route the moodledata took (RESTORE_FILEDIR_HASH_CHECK=0 skips
+#      it with a warning; the cost is one full read of filedir/). The proof is recorded in state/kv (restore.filedir_hash_proof) and the summary.
 #   2. Check the source: the release matches SOURCE_RELEASE_REGEX (live is 4.1.x), active users (optionally equal to
-#      EXPECT_ACTIVE_USERS), the BizLMS open_path substrate is there.
+#      EXPECT_ACTIVE_USERS), the BizLMS open_path substrate is there. A release past the source (4.5 or 5.x) is accepted on a re-run when hop 1 is
+#      done, or when this restore passed the gate before a hop moved the release (state/kv/release.source): a hop 1 that failed after the release
+#      moved must leave step 01 able to pass again, so that step 03 can be run again.
 #   3. The file store gate: every files.contenthash with content must be on disk at filedir/ab/cd/<hash>. Missing = stop
 #      (the local clone with a DB-only restore 404'd every SCORM package; this is why the gate exists). The missing list
 #      goes to reports/filedir-missing.txt.
@@ -75,6 +82,11 @@ RESTORE_DB_DUMP="${RESTORE_DB_DUMP:-}"
 RESTORE_MOODLEDATA_ARCHIVE="${RESTORE_MOODLEDATA_ARCHIVE:-}"
 LIVE_BASELINE_FILE="${LIVE_BASELINE_FILE:-}"
 EXPECT_ACTIVE_USERS="${EXPECT_ACTIVE_USERS:-}"
+RESTORE_FILEDIR_HASH_CHECK="${RESTORE_FILEDIR_HASH_CHECK:-1}"
+case "$RESTORE_FILEDIR_HASH_CHECK" in
+    0 | 1) ;;
+    *) die "RESTORE_FILEDIR_HASH_CHECK is '${RESTORE_FILEDIR_HASH_CHECK}': it is 1 (read every file of filedir/ and compare its SHA-1 with its name: the default) or 0 (skip it, with a warning)" ;;
+esac
 
 need_tool "$MYSQL_BIN"
 need_tool "$PHP_BIN"
@@ -139,12 +151,39 @@ restore_database() {
 # archive_sha_check: RESTORE_MOODLEDATA_ARCHIVE must have the SHA-256 in RESTORE_MOODLEDATA_SHA256 (sets ARCHIVE_PROVEN=sha256). Asked whenever the
 # checksum is set: before an unpack, and also when filedir/ is already there (a re-run, or a new restore that reuses the unpack): a checksum that is
 # set and silently not looked at proves nothing (round 7 review).
+# WHERE THE CHECKSUM COMES FROM is what it is worth (round 7 review, must-fix): a sha256sum of the copy ON THIS BOX matches a cut copy just as
+# well as a whole one (a pre-allocated or segmented download that stopped part way hashes to itself) and proves nothing. It must have been computed
+# ON THE LIVE SERVER, right after the archive was written and before it was copied, and delivered with the backup. The kit cannot tell where a
+# checksum was taken; what it can do, whatever the checksum's source, is step 01's filedir check below (every file of filedir/ must hash to its
+# own name).
 archive_sha_check() {
     local got want="${RESTORE_MOODLEDATA_SHA256,,}"
     got="$(sha256_of "$RESTORE_MOODLEDATA_ARCHIVE")"
-    [ "$got" = "$want" ] || die "RESTORE_MOODLEDATA_ARCHIVE ${RESTORE_MOODLEDATA_ARCHIVE} has SHA-256 ${got}, not the RESTORE_MOODLEDATA_SHA256 ${want}: it is not the archive that checksum was taken from (cut, changed or another file). Refused; nothing was restored or unpacked. Copy the archive again, or correct RESTORE_MOODLEDATA_SHA256 (sha256sum of the archive where it was made)"
+    [ "$got" = "$want" ] || die "RESTORE_MOODLEDATA_ARCHIVE ${RESTORE_MOODLEDATA_ARCHIVE} has SHA-256 ${got}, not the RESTORE_MOODLEDATA_SHA256 ${want}: it is not the archive that checksum was taken from (cut, changed or another file). Refused; nothing was restored or unpacked. Copy the archive again, or correct RESTORE_MOODLEDATA_SHA256 (the SHA-256 computed on the live server, where the archive was made)"
     log "OK: RESTORE_MOODLEDATA_ARCHIVE has the SHA-256 in RESTORE_MOODLEDATA_SHA256 (${got:0:12}...)"
     ARCHIVE_PROVEN="sha256"
+}
+
+# archive_end_check KIND: the tar in RESTORE_MOODLEDATA_ARCHIVE ENDS where a tar ends (round 8, S3). KIND is archive_kind's answer (not zip).
+#   * every kind: the tar, as it is once uncompressed, finishes with the two zero blocks that end every tar (tar_ends_complete; a compressed
+#     stream is read to its end for it, which is also the decompressor's own CRC and length check);
+#   * a plain tar: and the end of the archive that GNU tar finds is within one record of the end of the file (tar_end_near_file_end), which a
+#     zero-filled region in the middle of a full-size copy is not.
+# Asked whether or not RESTORE_MOODLEDATA_SHA256 is set: the checksum shows this copy is the file that was made, and cannot show that the file
+# that was made is a whole tar (a live backup job whose tar died while it wrote into gzip, with the checksum taken afterwards, is a valid .tar.gz
+# around a cut tar with a matching checksum).
+archive_end_check() {
+    local kind="$1"
+    need_tool "$kind"
+    tar_ends_complete "$kind" "$RESTORE_MOODLEDATA_ARCHIVE" \
+        || die "RESTORE_MOODLEDATA_ARCHIVE ${RESTORE_MOODLEDATA_ARCHIVE} is not proven complete: its ${kind} stream is damaged, or the tar inside it does not end with the two zero blocks that end every tar. It was cut (a tar writer that died, a full disk, a copy still running). GNU tar extracts such a file with exit status 0 when the cut falls on a member header, and a compressor closes the stream of a tar that stopped early without complaint, so the unpack would look complete and be partial. Refused, whatever RESTORE_MOODLEDATA_SHA256 says (a checksum taken after the tar died matches the cut archive); nothing was restored or unpacked. Make or copy the archive again"
+    if [ "$kind" = tar ]; then
+        tar_end_near_file_end "$RESTORE_MOODLEDATA_ARCHIVE" \
+            || die "RESTORE_MOODLEDATA_ARCHIVE ${RESTORE_MOODLEDATA_ARCHIVE} is not proven complete: GNU tar cannot list it to its end, or finds the end of the archive (block ${TAR_END_BLOCK:-?}) ${TAR_END_GAP:-?} bytes before the end of the file, more than one 10240-byte record: the file holds a zero-filled or padded region where members were (a pre-allocated or segmented copy that stopped part way keeps its size and ends in the zero blocks), so every member after it would be silently left out of the unpack. Refused, whatever RESTORE_MOODLEDATA_SHA256 says; nothing was restored or unpacked. Copy the archive again (an archive written with another blocking factor than tar's default 20 pads further: write it with the default)"
+        log "OK: the tar ends with the two zero blocks, and GNU tar's end of the archive (block ${TAR_END_BLOCK}) is ${TAR_END_GAP} bytes from the end of the file"
+    else
+        log "OK: the ${kind} archive reads to its end and its tar ends with the two zero blocks"
+    fi
 }
 
 # archive_proof [reuse]: an archive that is not proven COMPLETE is refused BEFORE the database is restored and before anything is unpacked (nothing is
@@ -154,47 +193,49 @@ archive_sha_check() {
 # only for those) passed when the cut fell after filedir/, and steps 02 to 11 ran on a moodledata with no lang packs or repository files
 # (reproduced, round 6 review). A tar that is cut while it is written into a compressor is no better: the compressor closes its stream
 # normally, so 'gzip -t' passes a valid .tar.gz that holds a cut tar. So:
-#   * RESTORE_MOODLEDATA_SHA256 set (the checksum of the live backup's manifest, taken where the archive was made; any format): the archive's
-#     SHA-256 must equal it. Nothing else is asked of the archive then (the operator vouches for what was made);
-#   * not set, an UNCOMPRESSED tar: REFUSED. Its last 1024 bytes cannot prove it is whole: a zero-filled region (a pre-allocated or segmented copy
+#   * RESTORE_MOODLEDATA_SHA256 set (computed ON THE LIVE SERVER where the archive was made, see archive_sha_check; any format): the archive's
+#     SHA-256 must equal it, AND a tar (any kind but a zip) must still end where a tar ends (archive_end_check): the checksum does not replace
+#     the format check any more (round 8). The strong proof of the CONTENT of filedir/ is step 01's filedir check, which depends neither on the
+#     archive nor on where its checksum came from;
+#   * not set, an UNCOMPRESSED tar: REFUSED. Its last bytes cannot prove it is whole: a zero-filled region (a pre-allocated or segmented copy
 #     that stopped, a file system that kept the size and lost the data) ends in zero blocks at any cut point, and GNU tar takes two zero blocks where a
 #     header is due for the end of the archive and exits 0, so such a copy unpacks without a message and lacks every member after the region (round 7
-#     review, reproduced). Only the checksum taken where the archive was made can show that every byte arrived;
+#     review, reproduced). Only the checksum computed on the live server, where the archive was made, can show that every byte arrived;
 #   * not set, a compressed tar (gzip, bzip2, xz or zstd): the compressed stream is read to its end (a cut or zero-filled stream fails the
-#     decompressor's own CRC or length check) and the tar must END with its two zero blocks (tar_ends_complete);
+#     decompressor's own CRC or length check) and the tar must END with its two zero blocks (archive_end_check);
 #   * not set, a zip: unzip's own checks while it unpacks (the central directory at the end of the file, and a CRC-32 per member): a cut or
 #     zero-filled zip fails there, loudly, with an exit status.
 # 'reuse' (filedir/ is already there and the archive is not unpacked again): the checksum, when set, is still checked; a plain tar still needs it
-# (it is the one format whose own content cannot vouch for it); the compressed and zip archives are not read to their end again (the unpack that
-# is here was proven before it was made, and the archive's path, size and mtime are the record of which archive that was).
+# (it is the one format whose own content cannot vouch for it); the end of the tar is not read again (the unpack that is here was proven before it
+# was made, and the archive's path, size and mtime are the record of which archive that was).
 ARCHIVE_PROVEN=""
 archive_proof() {
     local kind
+    kind="$(archive_kind "$RESTORE_MOODLEDATA_ARCHIVE")"
     if [ -n "$RESTORE_MOODLEDATA_SHA256" ]; then
         archive_sha_check
+        if [ "${1:-}" != reuse ] && [ "$kind" != zip ]; then
+            archive_end_check "$kind"
+        fi
         return 0
     fi
-    kind="$(archive_kind "$RESTORE_MOODLEDATA_ARCHIVE")"
     case "$kind" in
         tar)
-            die "RESTORE_MOODLEDATA_ARCHIVE ${RESTORE_MOODLEDATA_ARCHIVE} is an uncompressed tar and RESTORE_MOODLEDATA_SHA256 is not set, so it is not proven complete: nothing inside an uncompressed tar can show that every byte of it was written. GNU tar takes two zero blocks where a header is due for the end of the archive and exits 0, so a copy that stopped part way (a pre-allocated or segmented download, a file system that kept the size and lost the data) is full size, ends in zeros, and unpacks with exit status 0 and no message, without every member after the zero-filled region. Refused; nothing was restored or unpacked. Set RESTORE_MOODLEDATA_SHA256 to the SHA-256 taken where the archive was made (sha256sum, or the live backup's manifest), or use a compressed archive (.tar.gz, .tar.xz, .tar.zst) or a .zip, whose own checks catch a zero-filled copy"
+            die "RESTORE_MOODLEDATA_ARCHIVE ${RESTORE_MOODLEDATA_ARCHIVE} is an uncompressed tar and RESTORE_MOODLEDATA_SHA256 is not set, so it is not proven complete: nothing inside an uncompressed tar can show that every byte of it was written. GNU tar takes two zero blocks where a header is due for the end of the archive and exits 0, so a copy that stopped part way (a pre-allocated or segmented download, a file system that kept the size and lost the data) is full size, ends in zeros, and unpacks with exit status 0 and no message, without every member after the zero-filled region. Refused; nothing was restored or unpacked. Set RESTORE_MOODLEDATA_SHA256 to the SHA-256 COMPUTED ON THE LIVE SERVER, right after the archive was written there and before it was copied, and delivered with the backup (a sha256sum of the copy on this box matches a cut copy and proves nothing), or use a compressed archive (.tar.gz, .tar.xz, .tar.zst) or a .zip, whose own checks catch a zero-filled copy"
             ;;
     esac
     [ "${1:-}" != reuse ] || return 0
     case "$kind" in
         zip) ARCHIVE_PROVEN="format" ;;
         *)
-            need_tool "$kind"
-            tar_ends_complete "$kind" "$RESTORE_MOODLEDATA_ARCHIVE" \
-                || die "RESTORE_MOODLEDATA_ARCHIVE ${RESTORE_MOODLEDATA_ARCHIVE} is not proven complete: its ${kind} stream is damaged, or the tar inside it does not end with the two zero blocks that end every tar. It was cut (a tar writer that died, a full disk, a copy still running). GNU tar extracts such a file with exit status 0 when the cut falls on a member header, and a compressor closes the stream of a tar that stopped early without complaint, so the unpack would look complete and be partial. Refused; nothing was restored or unpacked. Make or copy the archive again, or set RESTORE_MOODLEDATA_SHA256 to the SHA-256 taken where it was made"
-            log "OK: the ${kind} archive reads to its end and its tar ends with the two zero blocks"
+            archive_end_check "$kind"
             ARCHIVE_PROVEN="tar-end"
             ;;
     esac
     if [ "$kind" = zip ]; then
-        note "RESTORE_MOODLEDATA_SHA256 is not set: the zip is checked by unzip itself while it unpacks (its central directory and a CRC-32 per member), which fails on a cut or zero-filled zip. The SHA-256 taken where the archive was made is the strong proof that it is whole; set it for the real rehearsal"
+        note "RESTORE_MOODLEDATA_SHA256 is not set: the zip is checked by unzip itself while it unpacks (its central directory and a CRC-32 per member), which fails on a cut or zero-filled zip. The SHA-256 computed on the live server, where the archive was made, is the strong proof that it is whole; set it for the real rehearsal"
     else
-        note "RESTORE_MOODLEDATA_SHA256 is not set: the archive is checked only by its format (${kind}). The SHA-256 taken where the archive was made is the strong proof that it is whole; set it for the real rehearsal"
+        note "RESTORE_MOODLEDATA_SHA256 is not set: the archive is checked only by its format (${kind}). The SHA-256 computed on the live server, where the archive was made, is the strong proof that it is whole; set it for the real rehearsal"
     fi
 }
 
@@ -334,7 +375,7 @@ if [ "$EXECUTE" = 1 ]; then
         die "${MOODLEDATA} holds an unpack of the moodledata that did not finish (${unfinished}), so its filedir is a PARTIAL copy. $(unpack_unfinished_advice)"
     fi
     if [ -n "$RESTORE_MOODLEDATA_SHA256" ] && ! [[ "${RESTORE_MOODLEDATA_SHA256,,}" =~ ^[0-9a-f]{64}$ ]]; then
-        die "RESTORE_MOODLEDATA_SHA256 (${RESTORE_MOODLEDATA_SHA256}) is not a SHA-256 (64 hexadecimal digits): sha256sum of the archive, taken where it was made"
+        die "RESTORE_MOODLEDATA_SHA256 (${RESTORE_MOODLEDATA_SHA256}) is not a SHA-256 (64 hexadecimal digits): the SHA-256 computed on the live server, where the archive was made"
     fi
     # The archive named for the moodledata is identified now (path, size, mtime: the unpack checks that it is still that file when it has
     # finished) and, when it is going to be unpacked, PROVEN WHOLE before the database is touched: a cut archive found after a 49-minute
@@ -569,9 +610,18 @@ if [ "$EXECUTE" = 1 ]; then
     log "restored source: release '${release}', version ${version}"
     SOURCE_PHASE=1
     if [[ ! "$release" =~ $SOURCE_RELEASE_REGEX ]]; then
+        # A release past the source is accepted when THIS restore already passed the gate before a hop moved it: hop 1 is done (step 03 ok), or
+        # state/kv/release.source is set (round 8: only a step 01 that saw the source release writes it, and it moves to archive/ with a new
+        # restore) and the release is one a hop of this kit leaves (4.5 or 5.x). The second case is a hop 1 that FAILED with the release already
+        # moved (a plugin upgrade that failed after core set the release, or a parity check that exited 1 or 2 after hop 1): without it the full
+        # re-run that the README invites ('run_all.sh --execute', step 01 first) removed step 01's records, died here, and locked the rehearsal out
+        # for good: step 03 was refused for want of step 01, and step 01 could never pass again (round 7 review).
         if step_done_ok 03; then
             SOURCE_PHASE=0
             note "the release is past the source (hop 1 is done); the release gate was passed before the hop"
+        elif [ -n "$(kv_get release.source)" ] && { [[ "$release" =~ $HOP1_RELEASE_REGEX ]] || [[ "$release" =~ $HOP2_RELEASE_REGEX ]]; }; then
+            SOURCE_PHASE=0
+            note "the release '${release}' is past the source, and this restore passed the release gate before a hop moved it (state/kv/release.source = '$(kv_get release.source)'): a re-run after a hop that did not finish; step 03 can be run again"
         else
             die "release '${release}' does not match SOURCE_RELEASE_REGEX '${SOURCE_RELEASE_REGEX}': this is not the live 4.1.x copy"
         fi
@@ -650,8 +700,34 @@ if [ "$EXECUTE" = 1 ]; then
     fi
     [ "$dbhashes" -gt 0 ] || die "the database has no file content at all: a restore without files rows"
     log "OK: every content hash of {files} is on disk"
+    # THE CONTENT. The gates above compare names and sizes, which a copy that kept every name and size and lost the data (a pre-allocated or
+    # segmented download that stopped part way: zero-filled files of the right size) passes, and an archive checksum taken on THIS box matches such
+    # a copy. Moodle names each file by the SHA-1 of its content, so every file of filedir/ is read and must hash to its own name (round 8): the
+    # proof does not depend on the archive, on its checksum or on how the moodledata got here (unpacked by the kit, by hand, or reused).
+    if [ "$RESTORE_FILEDIR_HASH_CHECK" = 0 ]; then
+        warn "RESTORE_FILEDIR_HASH_CHECK=0: the CONTENT of filedir/ was NOT read, so a file that kept its name and size and lost its data (a zero-filled or damaged copy) is not found here; the summary says so. Leave the setting at 1 (its default) for a rehearsal that counts: the cost is one full read of filedir/"
+        kv_set restore.filedir_hash_proof skipped
+    else
+        hrc=0
+        filedir_hash_check "$MOODLEDATA/filedir" "$REPORT_DIR/filedir-hash" || hrc=$?
+        kv_set restore.filedir_hash_files "$FILEDIR_HASH_FILES"
+        kv_set restore.filedir_hash_bytes "$FILEDIR_HASH_BYTES"
+        kv_set restore.filedir_hash_odd "$FILEDIR_HASH_ODD"
+        if [ "$hrc" != 0 ]; then
+            kv_set restore.filedir_hash_proof failed
+            head -n 20 "$REPORT_DIR/filedir-hash-mismatch.txt" | sed 's/^/    content does not hash to its name: /'
+            die "the content of filedir/ does not match its names: ${FILEDIR_HASH_BAD} file(s) hash to something other than their own name (the first 20 are listed above, all in reports/filedir-hash-mismatch.txt: path, SHA-1 of its content), ${FILEDIR_HASH_UNREAD} could not be read. The moodledata copy is damaged (zero-filled, cut or corrupted: a copy that stopped part way, a segmented download), whatever the checksum of its archive says. Do not go on. Empty ${MOODLEDATA} (the kit deletes nothing), get the moodledata archive again from the live server together with the SHA-256 computed THERE, and run step 01 again"
+        fi
+        if [ "$FILEDIR_HASH_ODD" -gt 0 ]; then
+            head -n 5 "$REPORT_DIR/filedir-hash-odd.txt" | sed 's/^/    not a content hash: /'
+            warn "${FILEDIR_HASH_ODD} name(s) under filedir/ are not a content hash (40 lowercase hexadecimal digits in two two-digit directories) and were not hashed (reports/filedir-hash-odd.txt)"
+        fi
+        kv_set restore.filedir_hash_proof sha1
+        log "OK: the content of every one of the ${FILEDIR_HASH_FILES} files of filedir/ (${FILEDIR_HASH_BYTES} bytes) hashes to its own name"
+    fi
 else
     dry "would check the file store gate: every distinct files.contenthash (filesize > 0) exists at ${MOODLEDATA}/filedir/ab/cd/<hash>; missing > ${FILEDIR_MAX_MISSING:-0} stops the step; lists go to reports/"
+    dry "would read EVERY file of ${MOODLEDATA}/filedir/ (one full read, in parallel) and require that the SHA-1 of its content is its own name (Moodle's naming): a zero-filled, cut or damaged copy that kept its names and sizes is found whatever any archive checksum says; RESTORE_FILEDIR_HASH_CHECK=0 skips it with a warning (now ${RESTORE_FILEDIR_HASH_CHECK})"
 fi
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -783,3 +859,4 @@ if [ "$EXECUTE" = 1 ]; then
     step01_verify "$(kv_get restore.id)"
 fi
 log "restore check done"
+step_end

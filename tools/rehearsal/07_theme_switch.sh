@@ -77,3 +77,4 @@ else
     dry "would confirm cfg.php --name=theme prints sentientia, and print forcelogin, enablemyhome and defaulthomepage"
 fi
 log "theme switch done"
+step_end

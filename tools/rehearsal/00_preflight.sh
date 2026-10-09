@@ -19,7 +19,8 @@
 #   * PRODUCTION_DB_ENDPOINT (the live database host) is set with --execute and is refused in every host and path setting;
 #     the database name carries neither 'prod' nor 'uat' (production's is airpayprod, UAT's sentientia_uat);
 #   * the paths are absolute POSIX paths, the two code trees are two separate directories, the kit runs as WEB_USER,
-#     the tools, PHP version and files the steps need are there.
+#     the tools, PHP version and files the steps need are there;
+#   * an UNCOMPRESSED RESTORE_MOODLEDATA_ARCHIVE comes with RESTORE_MOODLEDATA_SHA256, computed on the live server (step 01 refuses it without).
 
 # shellcheck source=lib/common.sh
 . "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
@@ -94,6 +95,28 @@ if [ -n "${CODE_45_ARCHIVE:-}${CODE_5X_ARCHIVE:-}${RESTORE_MOODLEDATA_ARCHIVE:-}
 fi
 if [ -n "${RESTORE_DB_DUMP:-}" ]; then
     need_tool gzip
+fi
+# The moodledata archive. An UNCOMPRESSED tar is refused by step 01 unless RESTORE_MOODLEDATA_SHA256 is set (nothing inside a plain tar can show that
+# every byte of a copy arrived), and the checksum is worth something only when it was computed ON THE LIVE SERVER, right after the archive was
+# written. Step 01 refuses before it touches anything, but by then the backup has been handed over and the sandbox booked: the preflight says it
+# now, in DRY mode too, when it costs nothing (round 8). The kind is read from the file when it is here, and from the name (.tar) when it is not.
+if [ -n "${RESTORE_MOODLEDATA_ARCHIVE:-}" ]; then
+    if [ -z "${RESTORE_MOODLEDATA_SHA256:-}" ]; then
+        plain=0
+        if [ -f "$RESTORE_MOODLEDATA_ARCHIVE" ]; then
+            [ "$(archive_kind "$RESTORE_MOODLEDATA_ARCHIVE")" != tar ] || plain=1
+        else
+            case "$RESTORE_MOODLEDATA_ARCHIVE" in *.tar) plain=1 ;; esac
+        fi
+        if [ "$plain" = 1 ]; then
+            fail "RESTORE_MOODLEDATA_ARCHIVE ${RESTORE_MOODLEDATA_ARCHIVE} is an uncompressed tar and RESTORE_MOODLEDATA_SHA256 is not set: step 01 refuses it (nothing inside a plain tar can show that every byte of a copy arrived). Set RESTORE_MOODLEDATA_SHA256 to the SHA-256 COMPUTED ON THE LIVE SERVER, right after the archive was written there and before it was copied, and delivered with the backup (a sha256sum of the copy on this box matches a cut copy and proves nothing); or ask for a compressed archive (.tar.gz, .tar.xz, .tar.zst) or a .zip"
+        fi
+    else
+        note "RESTORE_MOODLEDATA_SHA256 is set: it proves something only if it was computed ON THE LIVE SERVER, where the archive was made (a sha256sum of the copy on this box matches a cut copy); step 01 also reads every file of filedir/ and compares its SHA-1 with its name, whatever the checksum's source"
+    fi
+fi
+if [ "${RESTORE_FILEDIR_HASH_CHECK:-1}" = 0 ]; then
+    warn "RESTORE_FILEDIR_HASH_CHECK=0: step 01 will NOT read the content of filedir/ (a zero-filled or damaged copy that kept its names and sizes would not be found); the summary will say NOT CHECKED"
 fi
 if command -v "$PHP_BIN" > /dev/null 2>&1; then
     pid="$(php_version_id 2> /dev/null || printf 0)"
@@ -311,3 +334,4 @@ if [ "$FAILS" -gt 0 ]; then
     die "${FAILS} preflight check(s) failed: the rehearsal does not start"
 fi
 log "preflight passed with ${WARNINGS} warning(s): nothing in this configuration can reach production"
+step_end

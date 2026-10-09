@@ -421,6 +421,17 @@ STEP_SIGNALS="TERM INT HUP ALRM USR1 USR2 VTALRM XCPU XFSZ"
 # saw PIPE and no other signal is recorded failed, never ok, when it ends (on_exit).
 STEP_PIPE=0
 on_step_pipe() { STEP_PIPE=1; }
+# THE LAST LINE (round 8). STEP_SIGNALS names the signals the kit knows how to act on, and it cannot be complete: bash runs the EXIT trap with
+# $? = 0 for EVERY signal whose default action ends it (ABRT, TRAP, SYS, ILL, FPE, BUS, SEGV, PROF, LOST and the rest of its list), and a
+# trap list that must name each of them is one signal short of recording success on a step that never finished (round 7 review: ABRT, TRAP and
+# SYS reproduced, ok and the lock released under a running command). So a step is ok only when it REACHED ITS END: every step script ends with
+# step_end, and on_exit takes a status of 0 for a success only when step_end has run, never from $? alone. A step that ends with status 0
+# without it (a signal not in STEP_SIGNALS, or an 'exit 0' that skipped the last line) is recorded fail (ended=unreached in its status file) and
+# keeps its lock, as a step that died without a trap does: the signal may have left its command running. The same holds for run_all.sh, which
+# keeps .run.lock then (RUN_REACHED_END). A signal that cannot be trapped (KILL) leaves status=running, which nothing reads as ok.
+STEP_REACHED_END=0
+STEP_UNREACHED=0
+step_end() { STEP_REACHED_END=1; }
 
 # log_survivor TEXT...: log() for a handler that runs while the step is ending (a signal, the exit trap): it never fails, and the line gets
 # through when the step's own tee is gone. SIGPIPE is ignored from here on (the process is ending; nothing after this needs it) and a line the
@@ -474,6 +485,9 @@ write_step_status() {
         if [ -n "$STEP_SIGNAL" ]; then
             printf 'signal=%s\n' "$STEP_SIGNAL"
         fi
+        if [ "$STEP_UNREACHED" = 1 ]; then
+            printf 'ended=unreached\n'
+        fi
     } > "$f"
 }
 
@@ -516,6 +530,13 @@ on_exit() {
         pipefail_rc=1
         [ -n "$STEP_SIGNAL" ] || STEP_SIGNAL=PIPE
     fi
+    # A status of 0 is a success only when the step reached its last line (step_end): bash runs this trap with $? = 0 for every signal whose
+    # default action ends it, including those STEP_SIGNALS does not name (see THE LAST LINE above). Never ok from $? alone.
+    if [ "$rc" = 0 ] && [ "$STEP_REACHED_END" != 1 ]; then
+        rc=1
+        STEP_UNREACHED=1
+        log_survivor "ERROR: step ${STEP_ID} ${STEP_NAME} ended without reaching its last line (step_end): a signal that ends bash and that no trap here names, or an 'exit 0' that skipped the end. It is NOT recorded ok, and its lock is kept: a command it started may still be running (remove the lock directory only when no pid it names is alive)"
+    fi
     t1="$(epoch)"
     seconds=$((t1 - STEP_T0))
     case "$rc" in
@@ -535,15 +556,20 @@ on_exit() {
     fi
     log_survivor "step ${STEP_ID} ${STEP_NAME} ${status} (rc ${rc}) in ${seconds}s, ${WARNINGS} warning(s), mode $(mode_name)"
     write_step_status "$status" "$rc" "$seconds"
-    if [ -n "$STEP_PIDFILE" ]; then
-        rm -f "$STEP_PIDFILE"
-    fi
-    if [ -n "$STEP_LOCK" ]; then
-        rm -rf "$STEP_LOCK"
+    # A step that did not reach its end keeps its lock and its pid file (they name the pids that tell whether a command is still running).
+    if [ "$STEP_UNREACHED" != 1 ]; then
+        if [ -n "$STEP_PIDFILE" ]; then
+            rm -f "$STEP_PIDFILE"
+        fi
+        if [ -n "$STEP_LOCK" ]; then
+            rm -rf "$STEP_LOCK"
+        fi
     fi
     # The process ends with the status it recorded (run_all.sh stops on a step that exits non-zero): a step that saw SIGPIPE and finished
-    # "normally" is recorded failed above, and exits so as well.
-    if [ "$pipefail_rc" = 1 ]; then
+    # "normally" is recorded failed above, and exits so as well; so does one that did not reach its end (bash 5.2 ends a signalled process with
+    # the signal's own status whatever this trap says, so there this only matters for an 'exit 0' that skipped the last line; another bash may
+    # end it with this exit status: never with 0).
+    if [ "$pipefail_rc" = 1 ] || [ "$STEP_UNREACHED" = 1 ]; then
         exit "$rc"
     fi
 }
@@ -1276,6 +1302,78 @@ filedir_wrong_sizes() {
         }'
 }
 
+# filedir_hash_check DIR PREFIX -> reads EVERY content file below DIR and compares the SHA-1 of what it reads with the file's own name (round 8, the
+# content proof of the moodledata copy). Moodle names each file of its file store by the SHA-1 of its content (filedir/ab/cd/abcd...: 40 hexadecimal
+# digits, in two directories named by the first two pairs), so the file store proves ITSELF, file by file, without the archive, its checksum or
+# the database: a file that was zero-filled (a segmented or pre-allocated copy that stopped part way keeps every name and every size, so the
+# existence and size gates of step 01 pass it), cut or damaged does not hash to its name. A checksum of an archive taken on the box that holds the
+# copy (the round 7 review's repro) matches a cut copy and proves nothing; this does not depend on where any checksum came from.
+# It reads the whole file store once (a moodledata of hundreds of gigabytes: as long as a full read of the disk takes, in parallel; progress is logged
+# every minute). Names that are not a content hash (not 40 lowercase hexadecimal digits in two two-digit directories; Moodle's own warning.txt in the
+# root is not counted) are counted and listed, not failed.
+#   PREFIX-mismatch.txt  one line per file whose content does not hash to its name: path<TAB>sha1 of its content
+#   PREFIX-odd.txt       the names that are not a content hash
+# Sets FILEDIR_HASH_FILES (hashed), FILEDIR_HASH_BYTES (their size), FILEDIR_HASH_BAD (mismatches), FILEDIR_HASH_UNREAD (listed and not read) and
+# FILEDIR_HASH_ODD. rc 0 = every one hashes to its name and every one was read; rc 1 = a mismatch, or a file that could not be read.
+FILEDIR_HASH_FILES=0
+FILEDIR_HASH_BYTES=0
+FILEDIR_HASH_BAD=0
+FILEDIR_HASH_UNREAD=0
+FILEDIR_HASH_ODD=0
+filedir_hash_check() {
+    local dir="$1" prefix="$2" tab=$'\t' hit_re all good names err cnt jobs counted t0 hb rc=0 got="" bad=""
+    all="${prefix}.all.tmp"
+    good="${prefix}.good.tmp"
+    names="${prefix}.names.tmp"
+    err="${prefix}.err.tmp"
+    cnt="${prefix}.count.tmp"
+    hit_re="^[0-9a-f]{2}/[0-9a-f]{2}/[0-9a-f]{40}${tab}[0-9]+\$"
+    FILEDIR_HASH_FILES=0 FILEDIR_HASH_BYTES=0 FILEDIR_HASH_BAD=0 FILEDIR_HASH_UNREAD=0 FILEDIR_HASH_ODD=0
+    : > "${prefix}-mismatch.txt"
+    : > "$cnt"
+    find "$dir" -type f -printf '%P\t%s\n' > "$all"
+    grep -E "$hit_re" "$all" > "$good" || true
+    grep -Ev "$hit_re" "$all" | grep -Ev "^warning\.txt${tab}" | cut -f 1 > "${prefix}-odd.txt" || true
+    FILEDIR_HASH_ODD="$(wc -l < "${prefix}-odd.txt" | tr -d ' ')"
+    counted="$(wc -l < "$good" | tr -d ' ')"
+    FILEDIR_HASH_BYTES="$(awk -F "$tab" '{ s += $2 } END { printf "%.0f", s }' "$good")"
+    cut -f 1 "$good" | tr '\n' '\0' > "$names"
+    jobs="$(nproc 2> /dev/null || printf 2)"
+    [[ "$jobs" =~ ^[0-9]+$ ]] || jobs=2
+    [ "$jobs" -le 8 ] || jobs=8
+    [ "$jobs" -ge 1 ] || jobs=1
+    log "FILEDIR HASH: reading ${counted} content files (${FILEDIR_HASH_BYTES} bytes) with ${jobs} parallel sha1sum processes; ${FILEDIR_HASH_ODD} name(s) that are not a content hash"
+    t0="$(epoch)"
+    (
+        while sleep 60; do
+            log "  ... filedir hash check still running ($(( $(epoch) - t0 ))s, $(cut -d ' ' -f 1 "$cnt" 2> /dev/null | head -n 1) of ${counted} files read)"
+        done
+    ) &
+    hb=$!
+    # -n 32: every sha1sum process prints its (at most ~3 KB of) lines in one write, so the lines of two processes never interleave.
+    ( cd "$dir" && xargs -0 -r -n 32 -P "$jobs" sha1sum -- < "$names" 2> "$err" \
+        | awk -v out="${prefix}-mismatch.txt" -v cnt="$cnt" '
+            { files++; h = $1; p = substr($0, 43); n = split(p, a, "/")
+              if (length(h) != 40 || h != a[n]) { print p "\t" h >> out; bad++ }
+              if (files % 20000 == 0) { printf "%d\n", files > cnt; close(cnt) } }
+            END { printf "%d %d\n", files + 0, bad + 0 > cnt; close(cnt) }' ) || rc=$?
+    kill "$hb" 2> /dev/null || true
+    wait "$hb" 2> /dev/null || true
+    read -r got bad < "$cnt" || true
+    [[ "$got" =~ ^[0-9]+$ ]] || got=0
+    [[ "$bad" =~ ^[0-9]+$ ]] || bad=0
+    FILEDIR_HASH_FILES="$got"
+    FILEDIR_HASH_BAD="$bad"
+    FILEDIR_HASH_UNREAD=$((counted - got))
+    [ "$FILEDIR_HASH_UNREAD" -ge 0 ] || FILEDIR_HASH_UNREAD=0
+    if [ -s "$err" ]; then
+        head -n 5 "$err" | sed 's/^/    sha1sum: /'
+    fi
+    log "FILEDIR HASH: read ${FILEDIR_HASH_FILES} of ${counted} files in $(( $(epoch) - t0 ))s: ${FILEDIR_HASH_BAD} whose content does not hash to their name, ${FILEDIR_HASH_UNREAD} that could not be read (xargs exit ${rc})"
+    rm -f "$all" "$good" "$names" "$err" "$cnt"
+    [ "$FILEDIR_HASH_BAD" = 0 ] && [ "$FILEDIR_HASH_UNREAD" = 0 ] && [ "$rc" = 0 ]
+}
+
 # comm_only_first A B -> lines of sorted A that are not in sorted B; comm_only_second the other way.
 comm_only_first() { LC_ALL=C comm -23 "$1" "$2"; }
 comm_only_second() { LC_ALL=C comm -13 "$1" "$2"; }
@@ -1564,7 +1662,7 @@ archive_stream() {
 # normally, so 'gzip -t' is happy with a perfectly valid .tar.gz that holds a cut tar. The compressed stream is therefore read to its end here
 # (one decompression pass, which is also the integrity test of the compression: a failing decompressor is rc 1 through pipefail) and only
 # its last 1024 bytes are kept. A file that is not a tar at all fails the same test (its last bytes are not NUL). This is a check of the
-# FORMAT: only a checksum taken where the archive was made (RESTORE_MOODLEDATA_SHA256) proves the archive is the one that was made.
+# FORMAT: only a checksum computed on the live server, where the archive was made (RESTORE_MOODLEDATA_SHA256) proves the archive is the one that was made.
 # For an UNCOMPRESSED tar the format is not even that much: a zero-filled region (a pre-allocated or segmented copy that stopped, a file
 # system that kept the size and lost the data) ends in zero blocks at any cut point, and GNU tar takes two zero blocks where a header is due for
 # the end of the archive and exits 0. archive_proof therefore does not accept a plain tar on this test; it needs the checksum (round 7 review).
@@ -1581,6 +1679,27 @@ tar_ends_complete() {
     # Fewer than 1024 bytes (an empty or tiny stream) is no end-of-archive marker; so is any byte other than NUL.
     [ "${#hex}" -ge 2048 ] || return 1
     [[ "$hex" =~ ^0+$ ]]
+}
+
+# tar_end_near_file_end FILE -> 0 when the end of the archive that GNU tar finds is within one record (10240 bytes) of the end of the file. Sets
+# TAR_END_BLOCK (the 512-byte block of the first zero block, or of the end of the file) and TAR_END_GAP (the bytes of the file after it).
+# The end of a tar is two zero blocks, padded to a record; GNU tar takes them for the end wherever a header is due, and exits 0. A copy that
+# stopped part way (a pre-allocated or segmented download that kept the size) holds a region of zeros where members were: its last 1024 bytes
+# are NUL (tar_ends_complete is satisfied) and tar unpacks everything before the region and says nothing about the rest. The region shows in the
+# listing: with -R GNU tar prints the block where it found '** Block of NULs **' (or '** End of File **' when the file ends where a header is due),
+# and in a whole tar that block is within one record of the end of the file (a tar written with another blocking factor than the default 20
+# pads further: write it with the default). The listing reads the headers of the whole archive (the content of a member is skipped, not read);
+# a tar that cannot be listed to its end (a cut inside a member: 'Unexpected EOF') is rc 1 as well. Round 8 (S3).
+TAR_END_BLOCK=""
+TAR_END_GAP=""
+tar_end_near_file_end() {
+    local f="$1" last size
+    last="$(set -o pipefail; tar -tRf "$f" 2> /dev/null | LC_ALL=C awk '/^block [0-9]+: \*\* (Block of NULs|End of File) \*\*$/ { last = $2 } END { sub(/:$/, "", last); print last }')" || return 1
+    [[ "$last" =~ ^[0-9]+$ ]] || return 1
+    size="$(stat -c %s -- "$f")" || return 1
+    TAR_END_BLOCK="$last"
+    TAR_END_GAP=$((size - last * 512))
+    [ "$TAR_END_GAP" -ge 0 ] && [ "$TAR_END_GAP" -le 10240 ]
 }
 
 moodledata_marker_line() {
@@ -1773,6 +1892,10 @@ step01_unfinished() {
 require_kit_marker() {
     [ "$EXECUTE" = 1 ] || return 0
     local want have dataid inflight unfinished why
+    # The client's option file (it holds the database password) is made HERE, in the step's own shell, before the first command substitution: a
+    # $(...) below that ran first made its own temp directory with its own copy of the file, and nothing removes what a subshell made (the step's
+    # EXIT trap removes TMP_DIR of the step's shell only): one directory per read was left in TMPDIR (round 7 review).
+    db_init_cnf
     want="$(kv_get restore.id)"
     [ -n "$want" ] || die "no restore id is recorded (state/kv/restore.id): step 01 has not stamped this rehearsal. Run step 01 first"
     # A marker row can be in a partial copy (a dump or a snapshot of a stamped database that died after {config} was loaded): the marker
