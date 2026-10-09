@@ -113,6 +113,7 @@ final class profile_loginas_test extends \advanced_testcase {
         $this->assertInstanceOf(\moodle_url::class, $url);
         // get_path() carries the wwwroot's own path when Moodle is not served from /.
         $this->assertStringEndsWith('/course/loginas.php', $url->get_path());
+        // siteid-compare-ok: moodle_url casts every parameter to a string, so both sides are strings.
         $this->assertSame((string) SITEID, $url->get_param('id'));
         $this->assertSame((string) $target->id, $url->get_param('user'));
         $this->assertSame(sesskey(), $url->get_param('sesskey'));

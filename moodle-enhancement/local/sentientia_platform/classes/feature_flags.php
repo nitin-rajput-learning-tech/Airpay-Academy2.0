@@ -58,6 +58,57 @@ defined('MOODLE_INTERNAL') || die();
  * - Override lookups are batched: a single SELECT pulls every
  *   override row at first lookup, then served from the static cache.
  *
+ * Seeing a flag change in a long-running process (B1, 2026-10-09)
+ * ---------------------------------------------------------------
+ * The override snapshot is a PHP static, and a static lives as long as its
+ * process. A web request is over in seconds, so it never mattered there. The
+ * cron main process (cron_keepalive, 180 s by default, up to 900 s), adhoc
+ * task runners, CLI scripts and SSE connections do not exit: before this
+ * change they read the flag state of their FIRST lookup until they exited,
+ * whatever an admin flipped meanwhile. Only the writing process was fixed
+ * (set() calls invalidate_caches()).
+ *
+ * The snapshot now expires after SNAPSHOT_TTL seconds. The next lookup after
+ * that re-reads the whole override table with one SELECT. Why a TTL on the
+ * snapshot, rather than the alternatives:
+ *
+ *   - A revision counter (bumped by set(), checked by every process) only
+ *     helps if every writer bumps it. set() is the only production writer
+ *     today, but a restore of a live backup, the BizLMS importers, hand SQL
+ *     and any future writer would silently bypass it and leave long-running
+ *     processes stale for ever. A TTL is writer-independent: it heals
+ *     whatever changed the table.
+ *   - MUC with invalidation cannot work for this. A MUC cache with
+ *     staticacceleration (core/config has it; so does this plugin's
+ *     feature_flags_registry) keeps its static copy for the life of the
+ *     process, with no TTL check (cache::static_acceleration_get()); a delete
+ *     in another process never reaches it. Core knows: its own cron restart
+ *     signal (task\manager::static_caches_cleared_since()) reads
+ *     {config}.scheduledtaskreset straight from $DB with the comment "the
+ *     caches cannot be relied on". A cache without static acceleration would
+ *     put a cache read, often a file read, on every lookup instead.
+ *   - Staleness is bounded by the TTL (30 s), which is also what the MUC
+ *     registry TTL promised ("toggles propagate within a minute").
+ *
+ * Cost: a web request shorter than the TTL does exactly what it did before,
+ * one SELECT on its first lookup. Every resolution takes ONE clock read and
+ * works on one snapshot (a flip cannot land between the customer-layer gate
+ * lookup and the key lookup). A process that lives for an hour runs two
+ * SELECTs a minute against a table of a few dozen rows. The clock is
+ * \core\clock, so PHPUnit moves time with mock_clock_with_frozen() instead
+ * of sleeping; a clock that moves BACKWARDS also forces a reload.
+ *
+ * The registry is deliberately not on the TTL. It holds the defaults and
+ * descriptions declared in db/feature_flags.php, which only a code change
+ * alters; a deploy ends in purge_all_caches(), which reaches
+ * task\manager::clear_static_caches() (via purge_other_caches()) and makes
+ * core stop and restart the cron process.
+ * Re-reading it here would also only reach the MUC copy, which is statically
+ * accelerated, so it would not see anything new.
+ *
+ * invalidate_caches() still drops the snapshot at once. Tests, and any CLI
+ * tool that writes the table without set(), call it.
+ *
  * @package local_sentientia_platform
  */
 class feature_flags {
@@ -65,16 +116,28 @@ class feature_flags {
     /** Feature flag that gates Session 2's customer-level resolution. */
     public const CUSTOMER_LEVEL_FLAG = 'sentientia.customer_level_flags.enabled';
 
+    /**
+     * Seconds a process keeps its snapshot of the override table before the
+     * next lookup re-reads it. The longest a flag flip can stay invisible to a
+     * long-running process (cron, adhoc runner, CLI, SSE). See the class
+     * docblock for why a TTL.
+     */
+    public const SNAPSHOT_TTL = 30;
+
     /** @var array<string, array{default: bool, description: string}>|null Registry cache. */
     private static $registry = null;
 
     /**
      * Override cache. Three-level map keyed by [flag_key][customer_id][tenant_id] => bool.
-     * Single batched SELECT populates the whole thing on first lookup.
+     * Single batched SELECT populates the whole thing, and re-populates it
+     * once it is older than SNAPSHOT_TTL.
      *
      * @var array<string, array<int, array<int, bool>>>|null
      */
     private static $overrides = null;
+
+    /** @var int \core\clock time at which self::$overrides was read. */
+    private static $overridesloadedat = 0;
 
     /**
      * Is the flag enabled for the current user's customer + tenant?
@@ -119,6 +182,9 @@ class feature_flags {
      * @return bool
      */
     public static function is_enabled_for(string $key, int $customer_id, int $tenant_id): bool {
+        // One snapshot (and so one clock read) for the whole resolution: the
+        // gate lookup and the key lookups below cannot straddle a reload.
+        $overrides = self::overrides();
 
         // Recursion guard: looking up the gate flag itself? Skip the
         // customer-aware path entirely — the gate flag has no customer
@@ -126,11 +192,11 @@ class feature_flags {
         // through the customer-aware path would call self::is_enabled_for()
         // recursively and stack-overflow.
         if ($key === self::CUSTOMER_LEVEL_FLAG) {
-            return self::resolve_legacy($key, $tenant_id);
+            return self::resolve_legacy($key, $tenant_id, $overrides);
         }
 
         // Is the customer-level resolution layer enabled?
-        $customer_layer_on = self::resolve_legacy(self::CUSTOMER_LEVEL_FLAG, 0);
+        $customer_layer_on = self::resolve_legacy(self::CUSTOMER_LEVEL_FLAG, 0, $overrides);
 
         // Steps 1 + 2: customer-scoped resolution, only when the layer
         // is enabled AND we have a real (non-default) customer.
@@ -138,21 +204,21 @@ class feature_flags {
 
             // Step 1: most-specific (customer + tenant) override.
             if ($tenant_id > 0) {
-                $val = self::lookup_override($key, $customer_id, $tenant_id);
+                $val = self::lookup_override($overrides, $key, $customer_id, $tenant_id);
                 if ($val !== null) {
                     return $val;
                 }
             }
 
             // Step 2: customer-wide override.
-            $val = self::lookup_override($key, $customer_id, 0);
+            $val = self::lookup_override($overrides, $key, $customer_id, 0);
             if ($val !== null) {
                 return $val;
             }
         }
 
         // Steps 3 + 4 + 5 + 6 are the legacy resolution path.
-        return self::resolve_legacy($key, $tenant_id);
+        return self::resolve_legacy($key, $tenant_id, $overrides);
     }
 
     /**
@@ -170,18 +236,20 @@ class feature_flags {
      *
      * @param string $key
      * @param int    $tenant_id
+     * @param array  $overrides The snapshot from {@see overrides()}; the caller
+     *                          takes it once so a resolution reads one state.
      * @return bool
      */
-    private static function resolve_legacy(string $key, int $tenant_id): bool {
+    private static function resolve_legacy(string $key, int $tenant_id, array $overrides): bool {
         // Step 3: legacy tenant-only override.
         if ($tenant_id > 0) {
-            $val = self::lookup_override($key, 0, $tenant_id);
+            $val = self::lookup_override($overrides, $key, 0, $tenant_id);
             if ($val !== null) {
                 return $val;
             }
         }
         // Step 4: global override.
-        $val = self::lookup_override($key, 0, 0);
+        $val = self::lookup_override($overrides, $key, 0, 0);
         if ($val !== null) {
             return $val;
         }
@@ -228,15 +296,16 @@ class feature_flags {
      */
     public static function all(int $tenant_id = 0, int $customer_id = 0): array {
         $registry = self::load_registry();
+        $overrides = self::overrides();
         $out = [];
         foreach ($registry as $key => $entry) {
             $has_tenant = ($customer_id > 0 && $tenant_id > 0)
-                && self::lookup_override($key, $customer_id, $tenant_id) !== null;
+                && self::lookup_override($overrides, $key, $customer_id, $tenant_id) !== null;
             $has_customer = ($customer_id > 0)
-                && self::lookup_override($key, $customer_id, 0) !== null;
+                && self::lookup_override($overrides, $key, $customer_id, 0) !== null;
             $has_legacy_tenant = ($tenant_id > 0)
-                && self::lookup_override($key, 0, $tenant_id) !== null;
-            $has_global = self::lookup_override($key, 0, 0) !== null;
+                && self::lookup_override($overrides, $key, 0, $tenant_id) !== null;
+            $has_global = self::lookup_override($overrides, $key, 0, 0) !== null;
 
             // Category is the first dotted segment.
             $dotpos = strpos($key, '.');
@@ -341,7 +410,7 @@ class feature_flags {
         // intent — an admin clicking a disabled UI shouldn't have rows
         // accumulate in the DB that don't affect resolution.
         if ($customer_id > 0) {
-            if (!self::resolve_legacy(self::CUSTOMER_LEVEL_FLAG, 0)) {
+            if (!self::resolve_legacy(self::CUSTOMER_LEVEL_FLAG, 0, self::overrides())) {
                 throw new \moodle_exception('customer_layer_disabled',
                     'local_sentientia_platform', '', $key);
             }
@@ -429,30 +498,62 @@ class feature_flags {
     // ─── private helpers ─────────────────────────────────────────────
 
     /**
-     * Look up an override row for a (key, customer, tenant) triple.
-     * Returns null when no row exists (caller falls through to the next
-     * resolution step).
+     * Look up an override row for a (key, customer, tenant) triple in a
+     * snapshot taken from {@see overrides()}. Returns null when no row
+     * exists (caller falls through to the next resolution step).
      *
-     * Internally batches all overrides into a single query on first
-     * call, served from a process-local cache thereafter. The batched
-     * structure is keyed by [flag_key][customer_id][tenant_id] so a
+     * The snapshot is keyed by [flag_key][customer_id][tenant_id] so a
      * lookup is O(1) hash hits.
+     *
+     * @param array<string, array<int, array<int, bool>>> $overrides
      */
-    private static function lookup_override(string $key, int $customer_id, int $tenant_id): ?bool {
-        global $DB;
-        if (self::$overrides === null) {
-            self::$overrides = [];
-            $rows = $DB->get_records('local_sentientia_feature_flags', null,
-                '', 'id, flag_key, customer_id, tenant_id, is_enabled');
-            foreach ($rows as $r) {
-                self::$overrides[$r->flag_key][(int) $r->customer_id][(int) $r->tenant_id]
-                    = (bool) $r->is_enabled;
-            }
-        }
-        if (!isset(self::$overrides[$key][$customer_id][$tenant_id])) {
+    private static function lookup_override(array $overrides, string $key, int $customer_id, int $tenant_id): ?bool {
+        if (!isset($overrides[$key][$customer_id][$tenant_id])) {
             return null;
         }
-        return self::$overrides[$key][$customer_id][$tenant_id];
+        return $overrides[$key][$customer_id][$tenant_id];
+    }
+
+    /**
+     * The process's snapshot of every override row, at most SNAPSHOT_TTL
+     * seconds old.
+     *
+     * Read with ONE batched SELECT on first use and again whenever the
+     * snapshot is SNAPSHOT_TTL seconds old (or the clock has gone backwards),
+     * so a long-running process (cron, adhoc runner, CLI, SSE) sees a flag
+     * flipped by any other process, or by anything that wrote the table
+     * without set(), within the TTL. Between reloads this is a clock read and
+     * a static property return. The array is returned by value (copy on
+     * write), so a caller keeps a consistent view even if a later call
+     * reloads.
+     *
+     * @return array<string, array<int, array<int, bool>>>
+     */
+    private static function overrides(): array {
+        global $DB;
+        $now = self::now();
+        $age = $now - self::$overridesloadedat;
+        if (self::$overrides !== null && $age >= 0 && $age < self::SNAPSHOT_TTL) {
+            return self::$overrides;
+        }
+        $loaded = [];
+        $rows = $DB->get_records('local_sentientia_feature_flags', null,
+            '', 'id, flag_key, customer_id, tenant_id, is_enabled');
+        foreach ($rows as $r) {
+            $loaded[$r->flag_key][(int) $r->customer_id][(int) $r->tenant_id]
+                = (bool) $r->is_enabled;
+        }
+        self::$overrides = $loaded;
+        self::$overridesloadedat = $now;
+        return $loaded;
+    }
+
+    /**
+     * Current time, from the core clock so PHPUnit can move it
+     * (mock_clock_with_frozen()) instead of sleeping.
+     */
+    private static function now(): int {
+        return \core\di::get(\core\clock::class)->time();
     }
 
     /**
@@ -513,12 +614,14 @@ class feature_flags {
     }
 
     /**
-     * Invalidate both caches after a write. Public so admin CLI tools
-     * can clear caches manually if they bypass set().
+     * Invalidate both caches after a write, in THIS process at once (other
+     * processes pick the change up within SNAPSHOT_TTL). Public so tests and
+     * admin CLI tools can clear caches manually if they bypass set().
      */
     public static function invalidate_caches(): void {
         self::$registry = null;
         self::$overrides = null;
+        self::$overridesloadedat = 0;
         $cache = \cache::make('local_sentientia_platform', 'feature_flags_registry');
         $cache->delete('registry');
     }
