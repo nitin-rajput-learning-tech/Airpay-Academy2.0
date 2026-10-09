@@ -47,7 +47,7 @@
 #      archive was made, delivered with the backup: a sha256sum of the copy on this box matches a cut copy and proves nothing) is REQUIRED for an
 #      uncompressed tar, whose last bytes cannot show that a zero-filled copy is whole, and is checked whenever it is set (also when filedir/ is
 #      already there, and a checksum without RESTORE_MOODLEDATA_ARCHIVE is refused); a tar must END where a tar ends with or without the checksum
-#      (the two zero blocks; for a plain tar also GNU tar's end of the archive within one record of the end of the file); a compressed tar is read
+#      (the two zero blocks; for a plain tar also GNU tar's end of the archive 1024 to 10752 bytes before the end of the file: one record plus one block); a compressed tar is read
 #      to its end; a zip is checked by unzip itself.
 #      THE CONTENT OF filedir/ IS READ (section 3, filedir_hash_check): Moodle names every file by the SHA-1 of its content, so every file of the
 #      file store must hash to its own name, whatever the archive, its checksum or the route the moodledata took (RESTORE_FILEDIR_HASH_CHECK=0 skips
@@ -167,7 +167,7 @@ archive_sha_check() {
 # archive_end_check KIND: the tar in RESTORE_MOODLEDATA_ARCHIVE ENDS where a tar ends (round 8, S3). KIND is archive_kind's answer (not zip).
 #   * every kind: the tar, as it is once uncompressed, finishes with the two zero blocks that end every tar (tar_ends_complete; a compressed
 #     stream is read to its end for it, which is also the decompressor's own CRC and length check);
-#   * a plain tar: and the end of the archive that GNU tar finds is within one record of the end of the file (tar_end_near_file_end), which a
+#   * a plain tar: and the end of the archive that GNU tar finds is 1024 to 10752 bytes (one record plus one block) before the end of the file (tar_end_near_file_end), which a
 #     zero-filled region in the middle of a full-size copy is not.
 # Asked whether or not RESTORE_MOODLEDATA_SHA256 is set: the checksum shows this copy is the file that was made, and cannot show that the file
 # that was made is a whole tar (a live backup job whose tar died while it wrote into gzip, with the checksum taken afterwards, is a valid .tar.gz
@@ -179,7 +179,7 @@ archive_end_check() {
         || die "RESTORE_MOODLEDATA_ARCHIVE ${RESTORE_MOODLEDATA_ARCHIVE} is not proven complete: its ${kind} stream is damaged, or the tar inside it does not end with the two zero blocks that end every tar. It was cut (a tar writer that died, a full disk, a copy still running). GNU tar extracts such a file with exit status 0 when the cut falls on a member header, and a compressor closes the stream of a tar that stopped early without complaint, so the unpack would look complete and be partial. Refused, whatever RESTORE_MOODLEDATA_SHA256 says (a checksum taken after the tar died matches the cut archive); nothing was restored or unpacked. Make or copy the archive again"
     if [ "$kind" = tar ]; then
         tar_end_near_file_end "$RESTORE_MOODLEDATA_ARCHIVE" \
-            || die "RESTORE_MOODLEDATA_ARCHIVE ${RESTORE_MOODLEDATA_ARCHIVE} is not proven complete: GNU tar cannot list it to its end, or finds the end of the archive (block ${TAR_END_BLOCK:-?}) ${TAR_END_GAP:-?} bytes before the end of the file, more than one 10240-byte record: the file holds a zero-filled or padded region where members were (a pre-allocated or segmented copy that stopped part way keeps its size and ends in the zero blocks), so every member after it would be silently left out of the unpack. Refused, whatever RESTORE_MOODLEDATA_SHA256 says; nothing was restored or unpacked. Copy the archive again (an archive written with another blocking factor than tar's default 20 pads further: write it with the default)"
+            || die "RESTORE_MOODLEDATA_ARCHIVE ${RESTORE_MOODLEDATA_ARCHIVE} is not proven complete: GNU tar cannot list it to its end, or finds its end-of-archive marker (the first zero block, block ${TAR_END_BLOCK:-?}) ${TAR_END_GAP:-?} bytes before the end of the file, too far from the end of the file (a whole tar leaves 1024 to 10752 bytes after it: the two zero blocks and the padding of one record): the file holds a zero-filled or padded region where members were (a pre-allocated or segmented copy that stopped part way keeps its size and ends in the zero blocks), so every member after it would be silently left out of the unpack. Refused, whatever RESTORE_MOODLEDATA_SHA256 says; nothing was restored or unpacked. Copying the archive again gives the same file if the source is that file: ask live for the archive again, written with tar's default blocking factor (20; an archive written with a larger one pads further and is refused), or for a compressed one (.tar.gz, .tar.xz, .tar.zst) or a .zip"
         log "OK: the tar ends with the two zero blocks, and GNU tar's end of the archive (block ${TAR_END_BLOCK}) is ${TAR_END_GAP} bytes from the end of the file"
     else
         log "OK: the ${kind} archive reads to its end and its tar ends with the two zero blocks"
@@ -716,7 +716,7 @@ if [ "$EXECUTE" = 1 ]; then
         if [ "$hrc" != 0 ]; then
             kv_set restore.filedir_hash_proof failed
             head -n 20 "$REPORT_DIR/filedir-hash-mismatch.txt" | sed 's/^/    content does not hash to its name: /'
-            die "the content of filedir/ does not match its names: ${FILEDIR_HASH_BAD} file(s) hash to something other than their own name (the first 20 are listed above, all in reports/filedir-hash-mismatch.txt: path, SHA-1 of its content), ${FILEDIR_HASH_UNREAD} could not be read. The moodledata copy is damaged (zero-filled, cut or corrupted: a copy that stopped part way, a segmented download), whatever the checksum of its archive says. Do not go on. Empty ${MOODLEDATA} (the kit deletes nothing), get the moodledata archive again from the live server together with the SHA-256 computed THERE, and run step 01 again"
+            die "the content of filedir/ does not match its names: ${FILEDIR_HASH_BAD} file(s) hash to something other than their own name (the first 20 are listed above, all in reports/filedir-hash-mismatch.txt: path, SHA-1 of its content), ${FILEDIR_HASH_UNREAD} could not be read. The moodledata copy is damaged (zero-filled, cut or corrupted: a copy that stopped part way, a segmented download), whatever the checksum of its archive says. Before copying again, run sha1sum ON THE LIVE SERVER on the listed paths (under its filedir/): a file that does not hash to its own name on live fails every copy of it, and copying again then fails the same way. If the files mismatch on live too, the only way past this check today is RESTORE_FILEDIR_HASH_CHECK=0, which drops the whole content proof and needs the owner's written acceptance. Otherwise do not go on: empty ${MOODLEDATA} (the kit deletes nothing), get the moodledata archive again from the live server together with the SHA-256 computed THERE, and run step 01 again"
         fi
         if [ "$FILEDIR_HASH_ODD" -gt 0 ]; then
             head -n 5 "$REPORT_DIR/filedir-hash-odd.txt" | sed 's/^/    not a content hash: /'

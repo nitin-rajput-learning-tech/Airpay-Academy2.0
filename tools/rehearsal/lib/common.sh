@@ -1313,6 +1313,8 @@ filedir_wrong_sizes() {
 # root is not counted) are counted and listed, not failed.
 #   PREFIX-mismatch.txt  one line per file whose content does not hash to its name: path<TAB>sha1 of its content
 #   PREFIX-odd.txt       the names that are not a content hash
+# The working lists (one line per file of the file store: hundreds of megabytes for a large one) are written under TMP_DIR, which the step's EXIT
+# trap removes, never beside the reports: a signal that stops the check leaves nothing behind in reports/ (round 9, S6).
 # Sets FILEDIR_HASH_FILES (hashed), FILEDIR_HASH_BYTES (their size), FILEDIR_HASH_BAD (mismatches), FILEDIR_HASH_UNREAD (listed and not read) and
 # FILEDIR_HASH_ODD. rc 0 = every one hashes to its name and every one was read; rc 1 = a mismatch, or a file that could not be read.
 FILEDIR_HASH_FILES=0
@@ -1322,11 +1324,14 @@ FILEDIR_HASH_UNREAD=0
 FILEDIR_HASH_ODD=0
 filedir_hash_check() {
     local dir="$1" prefix="$2" tab=$'\t' hit_re all good names err cnt jobs counted t0 hb rc=0 got="" bad=""
-    all="${prefix}.all.tmp"
-    good="${prefix}.good.tmp"
-    names="${prefix}.names.tmp"
-    err="${prefix}.err.tmp"
-    cnt="${prefix}.count.tmp"
+    if [ -z "$TMP_DIR" ]; then
+        TMP_DIR="$(umask 077; mktemp -d "${TMPDIR:-/tmp}/rehearsal.XXXXXX")"
+    fi
+    all="$TMP_DIR/filedir-hash.all.tmp"
+    good="$TMP_DIR/filedir-hash.good.tmp"
+    names="$TMP_DIR/filedir-hash.names.tmp"
+    err="$TMP_DIR/filedir-hash.err.tmp"
+    cnt="$TMP_DIR/filedir-hash.count.tmp"
     hit_re="^[0-9a-f]{2}/[0-9a-f]{2}/[0-9a-f]{40}${tab}[0-9]+\$"
     FILEDIR_HASH_FILES=0 FILEDIR_HASH_BYTES=0 FILEDIR_HASH_BAD=0 FILEDIR_HASH_UNREAD=0 FILEDIR_HASH_ODD=0
     : > "${prefix}-mismatch.txt"
@@ -1681,25 +1686,30 @@ tar_ends_complete() {
     [[ "$hex" =~ ^0+$ ]]
 }
 
-# tar_end_near_file_end FILE -> 0 when the end of the archive that GNU tar finds is within one record (10240 bytes) of the end of the file. Sets
-# TAR_END_BLOCK (the 512-byte block of the first zero block, or of the end of the file) and TAR_END_GAP (the bytes of the file after it).
-# The end of a tar is two zero blocks, padded to a record; GNU tar takes them for the end wherever a header is due, and exits 0. A copy that
+# tar_end_near_file_end FILE -> 0 when the end of the archive that GNU tar finds is where a whole tar leaves it: at least the two zero blocks (1024
+# bytes) before the end of the file, and at most one record plus one block (10752 bytes). Sets TAR_END_BLOCK (the 512-byte block of the first zero
+# block, or of the end of the file) and TAR_END_GAP (the bytes of the file after it).
+# The end of a tar is two zero blocks, padded to a record. GNU tar (write_eot), bsdtar and Python's tarfile write ONE zero block and zero-fill the
+# rest of the record, and a second whole record follows when that first zero block was the last block of its record: a correct archive then ends
+# 512 + 10240 = 10752 bytes after the first zero block (the first zero block at offset 9728 mod 10240, one archive in twenty; round 8 refused those,
+# round 9 fix). GNU tar takes the zero block for the end wherever a header is due, and exits 0. A copy that
 # stopped part way (a pre-allocated or segmented download that kept the size) holds a region of zeros where members were: its last 1024 bytes
 # are NUL (tar_ends_complete is satisfied) and tar unpacks everything before the region and says nothing about the rest. The region shows in the
-# listing: with -R GNU tar prints the block where it found '** Block of NULs **' (or '** End of File **' when the file ends where a header is due),
-# and in a whole tar that block is within one record of the end of the file (a tar written with another blocking factor than the default 20
-# pads further: write it with the default). The listing reads the headers of the whole archive (the content of a member is skipped, not read);
-# a tar that cannot be listed to its end (a cut inside a member: 'Unexpected EOF') is rc 1 as well. Round 8 (S3).
+# listing: with -R GNU tar prints the block where it found '** Block of NULs **' (or '** End of File **' when the file ends where a header is due,
+# which a whole tar never does: it always keeps the 1024 bytes), and in a whole tar that block is at most 10752 bytes from the end of the file (a tar
+# written with another blocking factor than the default 20 pads further: write it with the default). The listing reads the headers of the whole
+# archive (the content of a member is skipped, not read) and runs with LC_ALL=C, because GNU tar translates the '** Block of NULs **' line; a tar
+# that cannot be listed to its end (a cut inside a member: 'Unexpected EOF') is rc 1 as well. Round 8 (S3), round 9 (M, S4).
 TAR_END_BLOCK=""
 TAR_END_GAP=""
 tar_end_near_file_end() {
     local f="$1" last size
-    last="$(set -o pipefail; tar -tRf "$f" 2> /dev/null | LC_ALL=C awk '/^block [0-9]+: \*\* (Block of NULs|End of File) \*\*$/ { last = $2 } END { sub(/:$/, "", last); print last }')" || return 1
+    last="$(set -o pipefail; LC_ALL=C tar -tRf "$f" 2> /dev/null | LC_ALL=C awk '/^block [0-9]+: \*\* (Block of NULs|End of File) \*\*$/ { last = $2 } END { sub(/:$/, "", last); print last }')" || return 1
     [[ "$last" =~ ^[0-9]+$ ]] || return 1
     size="$(stat -c %s -- "$f")" || return 1
     TAR_END_BLOCK="$last"
     TAR_END_GAP=$((size - last * 512))
-    [ "$TAR_END_GAP" -ge 0 ] && [ "$TAR_END_GAP" -le 10240 ]
+    [ "$TAR_END_GAP" -ge 1024 ] && [ "$TAR_END_GAP" -le 10752 ]
 }
 
 moodledata_marker_line() {

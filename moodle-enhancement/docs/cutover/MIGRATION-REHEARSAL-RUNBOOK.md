@@ -140,7 +140,7 @@ Things the kit does that the numbered steps below do not say (added 2026-10-08, 
   dying `tar` wrote into `gzip` is a valid gzip file around a cut tar. Step 01 therefore refuses the archive before it restores
   anything (nothing is claimed, stamped or unpacked). With `RESTORE_MOODLEDATA_SHA256` set (the checksum **computed on the live server**,
   see Inputs) the archive's SHA-256 must match; **a tar must still end where a tar ends, with or without the checksum** (round 8: the two
-  zero blocks that end every tar and, for a plain tar, GNU tar's own end of the archive within one 10240-byte record of the end of the file),
+  zero blocks that end every tar and, for a plain tar, GNU tar's own end of the archive 1024 to 10752 bytes (one 10240-byte record plus one block) before the end of the file; a larger gap is refused, and re-copying gives the same file: ask live for the archive again, written with tar's default blocking factor, or for a compressed one),
   because a checksum taken after the live backup's `tar` died while it wrote into gzip matches the cut archive. **An uncompressed `.tar`
   needs that checksum and is refused without it:** nothing inside a plain tar can show that every byte of it arrived. A copy that stopped part way (a pre-allocated or
   segmented download, a file system that kept the size and lost the data) is full size and ends in zeros, GNU tar takes two zero blocks
@@ -160,7 +160,11 @@ Things the kit does that the numbered steps below do not say (added 2026-10-08, 
   `reports/filedir-hash-mismatch.txt`: path, SHA-1 of its content); empty `MOODLEDATA` (the kit deletes nothing), get the archive again
   from the live server with its checksum, and run step 01 again. A name that is not a content hash (Moodle's `warning.txt` in the root
   excepted) is warned about, not failed. The proof goes to `state/kv` (`restore.filedir_hash_proof`) and the summary;
-  `RESTORE_FILEDIR_HASH_CHECK=0` skips the read with a warning and the summary then says NOT CHECKED (scratch rehearsals only).
+  `RESTORE_FILEDIR_HASH_CHECK=0` skips the read with a warning and the summary then says NOT CHECKED (scratch rehearsals only; and the only way past a file
+  that does not hash to its own name on live, where it drops the whole content proof and needs the owner's written acceptance: run `sha1sum` on the listed
+  paths ON LIVE before copying again). Only `filedir/` is proven independently of the archive's checksum: `lang/` and the other directories rest on the
+  checksum computed on live. Every run of step 01 re-reads all of `filedir/`: time it per 100 GB on the target box and plan every re-run with it (resume with
+  `--from 02` once step 01 is ok).
 * **A hop that failed after the release moved does not lock the rehearsal out** (round 8). A hop 1 whose plugin upgrade failed after core set
   the release, or whose parity check exited 1 or 2, leaves `03.status` fail and the database at 4.5. A full re-run (`run_all.sh --execute`)
   runs step 01 first, which removes its records of having finished and then used to die at the release gate (the release is not the source,

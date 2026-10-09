@@ -151,7 +151,7 @@ verdict() {
     printf -- '- File store: %s distinct content hashes in the database, %s files on disk, %s missing, %s extra, %s with a size other than {files}.filesize\n' \
         "$(kv filedir.db_hashes)" "$(kv filedir.disk_files)" "$(kv filedir.missing)" "$(kv filedir.extra)" "$(kv filedir.wrong_size)"
     case "$(kv_get restore.filedir_hash_proof)" in
-        sha1) fdh="every one of the $(kv restore.filedir_hash_files) files of filedir/ ($(kv restore.filedir_hash_bytes) bytes) was read and its SHA-1 is its own name; $(kv restore.filedir_hash_odd) other name(s) not hashed" ;;
+        sha1) fdh="every one of the $(kv restore.filedir_hash_files) files of filedir/ ($(kv restore.filedir_hash_bytes) bytes) was read and its SHA-1 is its own name; $(kv restore.filedir_hash_odd) other name(s) not hashed. Only filedir/ is proven independently of the archive's checksum: lang/ and the other directories of the moodledata rest on the checksum computed on live (or on the archive's own format check when none was given)" ;;
         skipped) fdh="**NOT CHECKED**: RESTORE_FILEDIR_HASH_CHECK=0 skipped it, so a file that kept its name and size and lost its data (a zero-filled or damaged copy) is not found by this run" ;;
         failed) fdh="**FAILED**: a file whose content does not hash to its name (reports/filedir-hash-mismatch.txt)" ;;
         *) fdh="not recorded (step 01 did not get that far)" ;;

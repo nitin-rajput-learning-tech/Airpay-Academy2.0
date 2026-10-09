@@ -107,8 +107,11 @@ is wanted. Run the rehearsal under `tmux` or `screen`: a dropped ssh session sen
   operator took on the sandbox passed step 01). The kit cannot tell where a checksum was taken, so what it does not leave to the
   checksum is read from the files: see the content check below. **A tar must also end where a tar ends, with or without the checksum** (round 8):
   the two zero blocks that end every tar, and, for a plain tar, GNU tar's own end of the archive (`tar -tR`, the block of its first zero block)
-  within one record (10240 bytes) of the end of the file, which a zero-filled region in a full-size copy is not (a checksum taken after the live
-  backup's `tar` died while it wrote into gzip matches the cut archive too). **An uncompressed `.tar` REQUIRES the checksum and is refused
+  1024 to 10752 bytes before the end of the file (the two zero blocks and the padding of one 10240-byte record, one block more when the first zero
+  block was the last block of a record: GNU tar, bsdtar and Python's `tarfile` all write it so, and round 8 refused one whole archive in twenty for it),
+  which a zero-filled region in a full-size copy is not (a checksum taken after the live backup's `tar` died while it wrote into gzip matches the cut
+  archive too). The listing runs with `LC_ALL=C` (GNU tar translates it). A larger gap is refused, and re-copying gives the same file when the source is
+  that file: ask live for the archive again, written with tar's default blocking factor, or for a compressed one. **An uncompressed `.tar` REQUIRES the checksum and is refused
   without it** (round 7), and the preflight says so already, in DRY mode too: nothing inside a plain tar can show that every byte of it
   arrived. A copy that stopped part way (a pre-allocated or segmented download, a file system that kept the size and lost the data) is full size and ends in zeros, GNU tar takes two zero blocks
   where a header is due for the end of the archive and exits 0, and the members after the zero-filled region are simply not unpacked, so
@@ -131,6 +134,13 @@ is wanted. Run the rehearsal under `tmux` or `screen`: a dropped ssh session sen
   two-digit directories; Moodle's `warning.txt` in the root is not counted) are counted, listed in `reports/filedir-hash-odd.txt` and
   warned about, not failed. The proof is recorded in `state/kv` (`restore.filedir_hash_proof` = `sha1`, `skipped` or `failed`, with the
   file and byte counts) and the summary. `RESTORE_FILEDIR_HASH_CHECK=0` skips the read with a warning, and the summary says NOT CHECKED.
+  **Only `filedir/` is proven independently of the archive's checksum:** `lang/` and the other directories of the moodledata rest on the SHA-256
+  computed on live (or, with none, on the archive's own format check), so a zero-filled hole inside the data of a file outside `filedir/` is not
+  found by this check, and the summary says so. **A file that does not hash to its own name on live fails every copy of it** (bit rot, an in-place
+  edit, a text-mode copy in the site's history): the refusal tells the operator to run `sha1sum` on the listed paths ON LIVE before copying again;
+  `RESTORE_FILEDIR_HASH_CHECK=0` is the only way past it today, it drops the whole content proof, and it needs the owner's written acceptance.
+  **Every run of step 01 reads all of `filedir/` again** (the reuse path and a full `run_all.sh --execute` re-run included): time one read on the
+  target box per 100 GB (the log's `FILEDIR HASH: read N of N files in Ns` line) and plan every re-run with it.
   The gate of steps 02 to 11 also refuses a database that holds the in-flight table although it carries the marker (a dump or snapshot of a stamped, unfinished copy).
   A populated moodledata without the marker is refused too, unless
   `RESTORE_MOODLEDATA_BY_HAND=<its path>` (a statement of its own: the database statement does not cover the directory) and
@@ -230,6 +240,9 @@ confirms that the recorded file is intact), a hop that is done is skipped, and t
 scripts are idempotent EXCEPT that `adr031_role9_core_caps.php --apply` refuses a second apply while its state file exists;
 step 06 therefore skips the apply on a re-run, after the dry run has shown that nothing is left to prohibit or remove, and
 stops if the dry run still wants changes. After fixing the cause of a failure, `run_all.sh --execute --from NN`.
+**The cost of a re-run.** Every run of step 01 (the first, the reuse path, the retry, and a full `run_all.sh --execute` without `--from`) re-reads ALL of
+`filedir/` and compares the SHA-1 of every file with its name: time it on the target box per 100 GB (the `FILEDIR HASH: read ... files in ...s` line of
+`logs/01-restore_check.log`) and plan with it. Once step 01 is ok, resume with `--from 02` (or the step that failed) instead of a full run.
 
 **Step 09 and a failed import.** Where it stands is decided from the kit's record and from the newest apply run in the database
 (`local_sentientia_legacyrun`), not from the record alone:
@@ -317,6 +330,11 @@ plan are IT's and are not here.
 | (Stage B tools fix round 8) The signals that end bash and that `STEP_SIGNALS` does not name (`ABRT`, `TRAP`, `SYS`, `ILL`, `FPE`, `BUS`, `SEGV`, `PROF`, ...) ran the EXIT trap with status 0: a step recorded `ok` and released its lock under its running command, and `run_all.sh` released `.run.lock` under its step | a step is ok only when it REACHED ITS LAST LINE (`step_end`, the last line of every step script; never from `$?` alone), otherwise `fail` with `ended=unreached` and its lock kept; `run_all.sh` keeps `.run.lock` the same way (`RUN_REACHED_END`). Chosen over adding every signal to `STEP_SIGNALS`: no list is complete (each bash build ends on its own set), and a handler for a synchronous `SEGV`, `ILL`, `FPE` or `BUS` that returns runs the faulting instruction again |
 | (Stage B tools fix round 8, should-fix) Every gate check left a directory with a copy of the database password (`client.cnf`, mode 700) in `TMPDIR`: a command substitution that ran before the step's own shell had made its option file made one of its own, which no exit trap removes (2 per refused gate, 3 per passing one) | `require_kit_marker` makes the option file first, in the step's own shell; the step's EXIT path removes it |
 | (Stage B tools fix round 8, should-fix) The preflight said nothing about an uncompressed `RESTORE_MOODLEDATA_ARCHIVE` without `RESTORE_MOODLEDATA_SHA256`, which step 01 refuses: the operator learned it on the sandbox, after the backup was handed over; and a selftest premise (`GNU tar unpacks the zero-filled copy`) could only say ok | `00_preflight.sh` FAILS on it, also in DRY mode (by the file's first bytes, or by its name when it is not here); the two `(premise)` tests of GNU tar's behaviour are assertions |
+| (Stage B tools fix round 9) `tar_end_near_file_end` refused about one whole plain tar in twenty, GNU tar archives written with the default settings included: `write_eot` (and bsdtar, and Python's `tarfile`) writes one zero block and zero-fills the rest of the record, and when that first zero block is the last block of a record the fill is a whole new record, so a correct archive ends 512 + 10240 = 10752 bytes after the block GNU tar calls its end (the first zero block at offset 9728 mod 10240); step 01 called such a copy a cut one and `Copy the archive again` gave the same file and the same refusal (round 8 review, reproduced) | the gap must be 1024 to 10752 bytes (one record plus one block; a whole tar always keeps its two zero blocks, so a cut at a member header is refused here too); a larger gap is still refused. The refusal says the end-of-archive marker is too far from the end of the file, that copying again gives the same file if the source is that file, and to ask live for the archive again (written with tar's default blocking factor) or for a compressed one |
+| (Stage B tools fix round 9) The listing of `tar_end_near_file_end` (`tar -tR`) was read in the operator's locale: GNU tar translates `** Block of NULs **`, so under a translated locale every plain tar was refused as unlistable | `LC_ALL=C tar -tRf` |
+| (Stage B tools fix round 9) A STEP that `run_all.sh` started and that did not reach its last line (`ABRT`, `KILL`, ...: `01.status` `ended=unreached`, or `running` after a `KILL`) was logged as an ordinary exit, the summary was started, and `run_all.sh` removed `.run.lock` under the command the step had started (round 8 review, reproduced) | `run_all.sh` treats a step whose status file says `ended=unreached` (a file the step wrote in this run, not an earlier run's), or that exits 128+n for a signal neither it nor the steps handle, like its own unreached end: nothing further is started, not even the summary, `.run.lock` is kept, and it exits with the step's status |
+| (Stage B tools fix round 9) A file of live's own `filedir/` that does not hash to its name failed step 01 on every copy, and the message blamed the copy (`get the moodledata archive again`), so re-copying looped; the summary said `filedir/` was proven without saying that `lang/` and the other directories were not; the re-run cost of the content read was not documented | the refusal says to run `sha1sum` on the listed paths ON LIVE before copying again, and names `RESTORE_FILEDIR_HASH_CHECK=0` as the only way past it today (it drops the whole content proof and needs the owner's written acceptance); the summary and the README say only `filedir/` is proven independently of the archive's checksum (`lang/` and the rest rest on the live checksum); the README says every step 01 run re-reads all of `filedir/` and to time it per 100 GB |
+| (Stage B tools fix round 9) A group signal that stopped the content check left its working lists (`filedir-hash.all.tmp`, `.good.tmp`, `.names.tmp`: one line per file, possibly hundreds of megabytes) in `reports/` | the lists are written under `TMP_DIR`, which the step's exit trap removes; `reports/` keeps only `filedir-hash-mismatch.txt` and `filedir-hash-odd.txt` |
 
 ## Testing the kit
 
@@ -464,6 +482,25 @@ Verified, on a Windows workstation (Git Bash, PHP 8.2, MariaDB 10.11, scratch sc
   cases are now named by the SHA-1 of their content, as Moodle names them. Also run by hand against the stand-in before the suite: the round 7
   review's r3b sequence (step 01 re-run after a failed hop 1), a zero-filled content file with the checksum of the copy, and `ABRT`, `SYS`, `TRAP`,
   `USR1`, `ALRM` and `TERM` to a stub step. Not run: the previous kit against the new assertions.
+
+* (Stage B tools fix round 9, 2026-10-10; `selftest.sh`: 493 pass, 0 fail, 0 skipped, 2 h 32 min on the loaded workstation) 28 new assertions for the
+  must-fix item of the round 8 review and its should-fix items. A whole GNU tar whose first zero block is the last block of a record (the file ends 10752 bytes
+  after the block GNU tar calls its end; the review's t20 recipe, with the file store and the language pack of the round 8 fixture; asserted as a premise, and
+  that GNU tar lists and unpacks it whole) is accepted by `tar_end_near_file_end` (gap 10752) and by a whole step 01 with its correct checksum, which unpacks
+  it, reads the content of `filedir/` (sha1) and finishes, and logs where the end of the archive is; one more block of zeros after it (gap 11264), a cut copy
+  (every member, none of the end), and a full-size copy with a zero-filled region are each refused with a checksum that matches them, before anything is
+  loaded, claimed, stamped or unpacked, and the refusal says the end-of-archive marker is too far from the end of the file, that copying again gives the same file,
+  and to ask live again (default blocking factor) or for a compressed archive. The round 8 assertion that a tar cut at a member header passes
+  `tar_end_near_file_end` is now a refusal (the gap is under the 1024 bytes of the two zero blocks). The listing is read with `LC_ALL=C`: a stand-in `tar` that
+  translates `** Block of NULs **` unless it runs with `LC_ALL=C` (asserted as a premise) is read correctly. `ABRT` and `KILL` sent to a STEP that `run_all.sh` started
+  (the review's e1 sequence): `run_all.sh` exits with the step's status (134, 137), starts no further step and not the summary, and KEEPS `.run.lock` while the
+  step's command still runs, with the log saying why; `01.status` says `ended=unreached` (ABRT) or `running` (KILL); controls: a step that dies the ordinary way
+  (exit 1) still lets the summary run and releases the lock, and an `ended=unreached` left in `01.status` by an earlier run is not read as this run's. The content
+  refusal tells the operator to run `sha1sum` on live first and names `RESTORE_FILEDIR_HASH_CHECK=0` with the owner's written acceptance; the README, the runbook,
+  `rehearsal.env.example` and the summary say only `filedir/` is proven independently of the checksum and that every step 01 run re-reads it (per 100 GB); the
+  content check's working lists are in `TMP_DIR` while it reads (a stand-in `sha1sum` looks) and `reports/` holds only the two result lists afterwards, also after a
+  whole step 01. Also run by hand against the stand-in before the suite: the review's rvE4 set (40 plain tars, none refused now; t20 is block 19, gap 10752), the
+  review's e1 repro, and the whole/cut/zero-filled/padded sequence of step 01 on a fixture that lands on that block position. Not run: the previous kit against the new assertions.
 
 **Not run: any step against real Moodle 4.5 or 5.x code, `shellcheck` (not installed on that machine), PHPUnit.** The stand-in
 proves the kit's logic and parsing, not that the real tools print exactly what it expects: the first execution on the
