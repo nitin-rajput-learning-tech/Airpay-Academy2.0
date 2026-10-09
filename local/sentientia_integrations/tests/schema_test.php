@@ -71,14 +71,31 @@ final class schema_test extends \advanced_testcase {
             $DB->get_field('local_sentientia_integration_log', 'status', ['id' => $id]));
     }
 
-    public function test_no_scheduled_tasks_registered(): void {
+    /**
+     * The duplicate hrms_sync task stays removed, and the one task the plugin does register ships switched off.
+     *
+     * INTEGRATIONS-AUDIT.md §3.2 removed the hrms_sync task (a second implementation of keka_client::sync_employees,
+     * the duplicate-user hazard). ADR-029 (2026-08-07, 708a823fb) then registered task\keka_reconcile, a thin wrapper
+     * around keka_client::sync_employees() (the code path the webhook uses), DISABLED. This test used to assert that
+     * the plugin registers no task at all, so it failed from that commit on, on every Moodle version. What it has to
+     * protect is the two points above: no hrms_sync, and nothing that pulls from KeKa unless an admin turns it on.
+     */
+    public function test_only_the_disabled_reconcile_task_is_registered(): void {
         global $DB;
         $this->resetAfterTest();
-        // INTEGRATIONS-AUDIT.md §3.2 fix — the duplicate hrms_sync task was
-        // removed in this commit. Only the webhook-driven path remains.
         $tasks = $DB->get_records('task_scheduled',
             ['component' => 'local_sentientia_integrations']);
-        $this->assertCount(0, $tasks,
-            'duplicate hrms_sync task should be removed; only webhook-driven sync remains');
+
+        $classes = array_map(fn($t) => ltrim($t->classname, '\\'), $tasks);
+        foreach ($classes as $class) {
+            $this->assertStringNotContainsString('hrms_sync', $class,
+                'duplicate hrms_sync task should be removed; the webhook path and keka_reconcile are the only sync code');
+        }
+        $this->assertSame(['local_sentientia_integrations\task\keka_reconcile'], array_values($classes),
+            'keka_reconcile is the only scheduled task of this plugin');
+        foreach ($tasks as $task) {
+            $this->assertSame(1, (int) $task->disabled,
+                'the reconcile task ships disabled (flag + admin setting + task enable are a triple opt-in)');
+        }
     }
 }
