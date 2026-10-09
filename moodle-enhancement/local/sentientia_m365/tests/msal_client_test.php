@@ -27,6 +27,15 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class msal_client_test extends \advanced_testcase {
 
+    /**
+     * The platform flag resolver keeps raw PHP statics (registry and overrides) that survive resetAfterTest's
+     * database reset: flush them so a flag a previous test switched ON cannot leak into this one.
+     */
+    protected function setUp(): void {
+        parent::setUp();
+        \local_sentientia_platform\feature_flags::invalidate_caches();
+    }
+
     public function test_pkce_pair_has_correct_shape(): void {
         $pair = msal_client::generate_pkce_pair();
 
@@ -300,31 +309,17 @@ final class msal_client_test extends \advanced_testcase {
     }
 
     /**
-     * Helper — enable the sentientia_m365_enabled feature flag globally.
+     * Helper - enable the sentientia_m365_enabled feature flag globally.
      *
-     * Writes directly to {local_sentientia_feature_flags} via set_field so the
-     * test does not depend on the sentientia_platform admin Switchboard UI.
+     * Goes through the platform's own writer, feature_flags::set(). A hand-built row put an 'enabled' property
+     * in the insert, but the column is is_enabled (NOT NULL, no default): Moodle dropped the unknown property,
+     * so the insert failed in strict SQL mode and, in lax mode, stored the flag as OFF, which made the
+     * "flag ON" tests run with the flag OFF. set() writes is_enabled and flushes the resolver's static caches,
+     * which survive resetAfterTest.
      */
     private function set_master_flag_on(): void {
-        global $DB;
-        $row = (object)[
-            'flag_key'   => 'sentientia_m365_enabled',
-            'tenant_id'  => 0,
-            'enabled'    => 1,
-            'timecreated' => time(),
-            'timemodified' => time(),
-        ];
-        // Some installs ship the customer_id column (Session 2 / ADR-002).
-        $columns = $DB->get_columns('local_sentientia_feature_flags');
-        if (isset($columns['customer_id'])) {
-            $row->customer_id = 0;
-        }
-        // Avoid duplicates by deleting any prior row first.
-        $where = ['flag_key' => 'sentientia_m365_enabled', 'tenant_id' => 0];
-        if (isset($columns['customer_id'])) {
-            $where['customer_id'] = 0;
-        }
-        $DB->delete_records('local_sentientia_feature_flags', $where);
-        $DB->insert_record('local_sentientia_feature_flags', $row);
+        \local_sentientia_platform\feature_flags::set('sentientia_m365_enabled', 0, true, null, 'phpunit');
+        $this->assertTrue(\local_sentientia_platform\feature_flags::is_enabled('sentientia_m365_enabled'),
+            'Precondition: the master flag really is ON.');
     }
 }

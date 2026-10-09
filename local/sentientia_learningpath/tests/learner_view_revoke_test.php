@@ -164,6 +164,9 @@ final class learner_view_revoke_test extends \advanced_testcase {
         $this->assertStringContainsString('employee', $out);
         $this->assertStringContainsString('ldauditor (none)', $out,
             'The upgrade must name every remaining holder so an admin can review it.');
-        $this->assertEquals(2026092502, get_config('local_sentientia_learningpath', 'version'));
+        // The upgrade function runs every step after the one under test in the same call (2026093001 and any
+        // later one), so the stored version ends at the LAST savepoint, not at 2026092502. What this step owes
+        // is that its own savepoint was reached: the version is at least 2026092502.
+        $this->assertGreaterThanOrEqual(2026092502, (int) get_config('local_sentientia_learningpath', 'version'));
     }
 }
