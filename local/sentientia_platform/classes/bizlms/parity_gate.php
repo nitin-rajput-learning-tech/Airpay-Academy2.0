@@ -193,7 +193,9 @@ final class parity_gate {
             }
             $where = $conditions ? ' WHERE ' . implode(' AND ', $conditions) : '';
             $select = 'l.id AS id, l.' . $ledger['key'] . ' AS target' . ($ledger['columns'] !== null ? ', l.' . $ledger['columns'] . ' AS cols' : '');
-            $rows = $DB->get_recordset_sql('SELECT ' . $select . ' FROM {' . $ledger['table'] . '} l' . $where, $params);
+            // get_records_sql(), keyed by l.id (the first column), not a recordset: classes/bizlms/ never uses one (ADR-032:
+            // on MySQL a recordset buffers the whole result anyway), and a ledger holds one row per changed instance.
+            $rows = $DB->get_records_sql('SELECT ' . $select . ' FROM {' . $ledger['table'] . '} l' . $where, $params);
             foreach ($rows as $row) {
                 if ($ledger['columns'] === null) {
                     $columns = $ledger['written'];
@@ -207,7 +209,6 @@ final class parity_gate {
                 }
                 $out[$table]['changed'][(int) $row->target] = $columns;
             }
-            $rows->close();
         }
         return $out;
     }

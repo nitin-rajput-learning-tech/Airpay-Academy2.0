@@ -32,7 +32,9 @@ use local_sentientia_platform\tests\parity\hiding_database;
  * @group bizlms_import
  */
 final class bizlms_parity_gate_test extends \advanced_testcase {
-    use legacy_schema_fixture;
+    use legacy_schema_fixture {
+        setUpBeforeClass as protected legacy_fixture_set_up_before_class;
+    }
     use toy_seed;
 
     protected static function legacy_fixture_definition(): array {
@@ -40,7 +42,10 @@ final class bizlms_parity_gate_test extends \advanced_testcase {
     }
 
     public static function setUpBeforeClass(): void {
-        parent::setUpBeforeClass();
+        // The trait's setUpBeforeClass() creates the toy legacy tables, and a class method of the same name replaces it:
+        // parent::setUpBeforeClass() reaches advanced_testcase and skips them, so the two tests that seed the toy data
+        // died on insert_record_raw() (Moodle 5.3 PHPUnit run, 2026-10-09). Call the trait's by its alias.
+        self::legacy_fixture_set_up_before_class();
         parity_gate::load_library();
     }
 
