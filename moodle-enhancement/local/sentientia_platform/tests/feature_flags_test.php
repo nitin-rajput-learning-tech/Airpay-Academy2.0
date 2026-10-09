@@ -394,4 +394,209 @@ class feature_flags_test extends \advanced_testcase {
         $this->assertFalse($flag['has_tenant_override']);
         $this->assertFalse($flag['has_legacy_tenant_override']);
     }
+
+    // ════════════════════════════════════════════════════════════════
+    //  B1 (2026-10-09) — a long-running process sees a flag change
+    //
+    //  The override snapshot is a PHP static. Cron (cron_keepalive),
+    //  adhoc runners, CLI scripts and SSE connections outlive the admin
+    //  click, so before B1 they read the flag state of their first lookup
+    //  until they exited. The snapshot now expires after
+    //  feature_flags::SNAPSHOT_TTL seconds. These tests play "another
+    //  process" by writing the table directly (no set(), no
+    //  invalidate_caches() in this process) and move time with the core
+    //  clock instead of sleeping.
+    // ════════════════════════════════════════════════════════════════
+
+    /** A fixed point in the future so the mocked clock never equals the real one. */
+    private const T0 = 1900000000;
+
+    /**
+     * Insert an override row the way another process would.
+     *
+     * @return int the new row id
+     */
+    private function write_from_another_process(string $key, int $customerid, int $tenantid, bool $enabled): int {
+        global $DB;
+        $now = time();
+        return $DB->insert_record('local_sentientia_feature_flags', (object) [
+            'flag_key'     => $key,
+            'customer_id'  => $customerid,
+            'tenant_id'    => $tenantid,
+            'is_enabled'   => $enabled ? 1 : 0,
+            'modified_by'  => get_admin()->id,
+            'timecreated'  => $now,
+            'timemodified' => $now,
+        ]);
+    }
+
+    /**
+     * An INSERT, an UPDATE and a DELETE made by another process are each
+     * seen by the first lookup at or after SNAPSHOT_TTL, and not before.
+     */
+    public function test_change_made_by_another_process_is_seen_when_the_snapshot_expires(): void {
+        global $DB;
+        $clock = $this->mock_clock_with_frozen(self::T0);
+        $key = 'ai.assistant.enabled';   // Registered default: true.
+        $ttl = feature_flags::SNAPSHOT_TTL;
+
+        // First lookup loads the snapshot.
+        $this->assertTrue(feature_flags::is_enabled_for($key, 0, 0));
+
+        // Another process switches the flag OFF (INSERT).
+        $id = $this->write_from_another_process($key, 0, 0, false);
+
+        // Inside the TTL this process still holds its snapshot...
+        $this->assertTrue(feature_flags::is_enabled_for($key, 0, 0));
+        $clock->bump($ttl - 1);
+        $this->assertTrue(feature_flags::is_enabled_for($key, 0, 0),
+            'one second before the TTL the snapshot is still served');
+        // ...and the first lookup at the TTL re-reads the table.
+        $clock->bump(1);
+        $this->assertFalse(feature_flags::is_enabled_for($key, 0, 0),
+            'at SNAPSHOT_TTL the INSERT made by another process is visible');
+
+        // Another process switches it back ON (UPDATE).
+        $DB->set_field('local_sentientia_feature_flags', 'is_enabled', 1, ['id' => $id]);
+        $this->assertFalse(feature_flags::is_enabled_for($key, 0, 0), 'inside the TTL: unchanged');
+        $clock->bump($ttl);
+        $this->assertTrue(feature_flags::is_enabled_for($key, 0, 0),
+            'the UPDATE made by another process is visible after the TTL');
+
+        // And OFF again, then reverted to the default (DELETE).
+        $DB->set_field('local_sentientia_feature_flags', 'is_enabled', 0, ['id' => $id]);
+        $clock->bump($ttl);
+        $this->assertFalse(feature_flags::is_enabled_for($key, 0, 0));
+        $DB->delete_records('local_sentientia_feature_flags', ['id' => $id]);
+        $clock->bump($ttl);
+        $this->assertTrue(feature_flags::is_enabled_for($key, 0, 0),
+            'the DELETE made by another process reverts to the registered default');
+    }
+
+    /**
+     * The point of a TTL over a per-call check: lookups inside it never touch
+     * the override table, and a whole burst after it costs exactly one read.
+     */
+    public function test_lookups_inside_the_ttl_do_not_query_and_expiry_costs_one_reload(): void {
+        global $DB;
+        $clock = $this->mock_clock_with_frozen(self::T0);
+        $key = 'ai.assistant.enabled';
+        feature_flags::load_registry();   // The registry is not what is measured here.
+
+        $reads = $DB->perf_get_reads();
+        feature_flags::is_enabled_for($key, 0, 0);
+        $loadcost = $DB->perf_get_reads() - $reads;
+        $this->assertGreaterThan(0, $loadcost, 'the first lookup loads the snapshot');
+
+        $reads = $DB->perf_get_reads();
+        for ($i = 0; $i < 100; $i++) {
+            feature_flags::is_enabled_for($key, 0, 0);
+            feature_flags::is_enabled_for($key, customer::AIRPAY, 77);
+            feature_flags::is_enabled_for(feature_flags::CUSTOMER_LEVEL_FLAG, 0, 0);
+        }
+        $this->assertSame($reads, $DB->perf_get_reads(),
+            '300 lookups inside the TTL must not query the override table');
+
+        $clock->bump(feature_flags::SNAPSHOT_TTL);
+        for ($i = 0; $i < 100; $i++) {
+            feature_flags::is_enabled_for($key, 0, 0);
+            feature_flags::is_enabled_for($key, customer::AIRPAY, 77);
+        }
+        $this->assertSame($reads + $loadcost, $DB->perf_get_reads(),
+            'after the TTL, 200 lookups reload the snapshot exactly once');
+    }
+
+    /**
+     * A clock that goes backwards (NTP step, or a test moving time) must not
+     * make a snapshot look young for ever.
+     */
+    public function test_clock_moving_backwards_forces_a_reload(): void {
+        $clock = $this->mock_clock_with_frozen(self::T0);
+        $key = 'ai.assistant.enabled';
+        $this->assertTrue(feature_flags::is_enabled_for($key, 0, 0));
+
+        $this->write_from_another_process($key, 0, 0, false);
+        $this->assertTrue(feature_flags::is_enabled_for($key, 0, 0), 'inside the TTL: snapshot served');
+
+        $clock->set_to(self::T0 - 5);
+        $this->assertFalse(feature_flags::is_enabled_for($key, 0, 0),
+            'a negative snapshot age is not trusted');
+    }
+
+    /**
+     * invalidate_caches() still drops the snapshot at once, with no wait for
+     * the TTL: tests and CLI tools that write the table directly rely on it.
+     */
+    public function test_invalidate_caches_still_drops_the_snapshot_immediately(): void {
+        $this->mock_clock_with_frozen(self::T0);
+        $key = 'ai.assistant.enabled';
+        $this->assertTrue(feature_flags::is_enabled_for($key, 0, 0));
+
+        $this->write_from_another_process($key, 0, 0, false);
+        $this->assertTrue(feature_flags::is_enabled_for($key, 0, 0), 'stale until invalidated');
+
+        feature_flags::invalidate_caches();
+        $this->assertFalse(feature_flags::is_enabled_for($key, 0, 0));
+    }
+
+    /**
+     * The writing process is not made to wait: set() invalidates, so its own
+     * next lookup is current even though the clock has not moved.
+     */
+    public function test_set_in_this_process_is_seen_at_once_without_the_clock_moving(): void {
+        $this->mock_clock_with_frozen(self::T0);
+        $key = 'ai.assistant.enabled';
+        $this->assertTrue(feature_flags::is_enabled_for($key, 0, 0));
+
+        feature_flags::set($key, 0, false, get_admin()->id, 'b1');
+        $this->assertFalse(feature_flags::is_enabled_for($key, 0, 0));
+        feature_flags::set($key, 0, null, get_admin()->id, 'b1');
+        $this->assertTrue(feature_flags::is_enabled_for($key, 0, 0));
+    }
+
+    /**
+     * The customer layer rides the same snapshot: a customer-wide override
+     * written by another process, and the gate flag switched off by another
+     * process, are both seen after the TTL.
+     */
+    public function test_customer_layer_change_by_another_process_is_seen_after_the_ttl(): void {
+        global $DB;
+        $clock = $this->mock_clock_with_frozen(self::T0);
+        $key = 'ai.assistant.enabled';
+        $ttl = feature_flags::SNAPSHOT_TTL;
+        feature_flags::set(feature_flags::CUSTOMER_LEVEL_FLAG, 0, true, get_admin()->id);
+        $this->assertTrue(feature_flags::is_enabled_for($key, customer::AIRPAY, 77));
+
+        // Another process writes a customer-wide OFF.
+        $this->write_from_another_process($key, customer::AIRPAY, 0, false);
+        $this->assertTrue(feature_flags::is_enabled_for($key, customer::AIRPAY, 77), 'inside the TTL');
+        $clock->bump($ttl);
+        $this->assertFalse(feature_flags::is_enabled_for($key, customer::AIRPAY, 77),
+            'customer-wide override seen after the TTL');
+
+        // Another process switches the customer layer off: the row goes inert.
+        $DB->set_field('local_sentientia_feature_flags', 'is_enabled', 0,
+            ['flag_key' => feature_flags::CUSTOMER_LEVEL_FLAG]);
+        $clock->bump($ttl);
+        $this->assertTrue(feature_flags::is_enabled_for($key, customer::AIRPAY, 77),
+            'gate switched off by another process: the customer row no longer applies');
+    }
+
+    /**
+     * The Switchboard summary reads the same snapshot, so it too follows a
+     * change made by another process once the TTL has passed.
+     */
+    public function test_all_follows_a_change_made_by_another_process_after_the_ttl(): void {
+        $clock = $this->mock_clock_with_frozen(self::T0);
+        $key = 'ai.assistant.enabled';
+        $this->assertFalse(feature_flags::all(0)[$key]['has_global_override']);
+
+        $this->write_from_another_process($key, 0, 0, false);
+        $this->assertFalse(feature_flags::all(0)[$key]['has_global_override'], 'inside the TTL');
+
+        $clock->bump(feature_flags::SNAPSHOT_TTL);
+        $summary = feature_flags::all(0)[$key];
+        $this->assertTrue($summary['has_global_override']);
+        $this->assertFalse($summary['resolved']);
+    }
 }

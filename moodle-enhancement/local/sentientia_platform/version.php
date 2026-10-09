@@ -74,7 +74,8 @@ $plugin->component = 'local_sentientia_platform';
 // default brand bundle and plugin links point at /my/ so they no longer need the my/dashboard.php shim. No schema change.
 // 2026100803 - Moodle 5.3 compat FX-20: the Switchboard "Review changes" confirmation is a core/modal_save_cancel dialog (it used window.bootstrap.Modal, which exists in no tree, so the review step was silently skipped); AMD bundle rebuilt, dead modal markup removed from the template. No schema change.
 // 2026100804 - Moodle 5.3 compat FX-20 round 1: switchboard.js loses its dead confirm-apply branch (the dialog's Save button submits through the ModalEvents.save handler; nothing in the template carries that data-action any more); AMD bundle rebuilt. No schema change.
-$plugin->version   = 2026100804;  // Moodle 5.3 compat FX-20 round 1 (on top of 2026100803 FX-20)
+// 2026100901 - B1: feature_flags override snapshot expires after SNAPSHOT_TTL (30 s) so long-running processes (cron, adhoc, CLI, SSE) see a flag flipped elsewhere; one clock read + one snapshot per resolution. No schema change.
+$plugin->version   = 2026100901;  // B1 feature-flag snapshot TTL (on top of 2026100804 FX-20 round 1)
 // 2026100802:  // Moodle 5.3 compat FX-16: PWA start_url -> /my/ (on top of 2026100801 FX-12 compat\user_api)
 // 2026092500 - ADR-031: local/sentientia_platform:crosstenant + tenant::is_cross_tenant/scope_path/require_same_tenant_user
 // 2026092400 - tests/exception_strings_test.php: platform guard - core-resolved exception keys must exist (N5)
