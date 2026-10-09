@@ -80,7 +80,8 @@ $plugin->component = 'local_sentientia_platform';
 // a baseline of another version or tool refused), the post-import parity gate (classes/bizlms/parity_gate.php) and the
 // standalone source baseline (cli/source_baseline.php); enrol is reviewed for INSERT and UPDATE, the UPDATE explained by the
 // enrolments importer's enroloff trail (CRS-01). No schema change.
-$plugin->version   = 2026100902;  // Stage B parity tooling merged (on top of 2026100901 feature-flag snapshot TTL)
+// 2026100903 - feature_flags keeps its registry + override snapshot in NEW classes/local/feature_flags_state.php, fetched from \core\di, so PHPUnit's per-test container reset clears it (a flag one test set no longer leaks into the next); production lifetime and TTL unchanged. No schema change.
+$plugin->version   = 2026100903;  // feature_flags state in \core\di (on top of 2026100902 Stage B parity tooling)
 // 2026100802:  // Moodle 5.3 compat FX-16: PWA start_url -> /my/ (on top of 2026100801 FX-12 compat\user_api)
 // 2026092500 - ADR-031: local/sentientia_platform:crosstenant + tenant::is_cross_tenant/scope_path/require_same_tenant_user
 // 2026092400 - tests/exception_strings_test.php: platform guard - core-resolved exception keys must exist (N5)
