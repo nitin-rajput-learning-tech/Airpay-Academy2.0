@@ -212,8 +212,14 @@ trait legacy_schema_fixture {
             $dbman->install_one_table_from_xmldb_file($fixturexml, $table);
             return;
         }
-        $copy = $dir . DIRECTORY_SEPARATOR . 'tmp-' . getmypid() . '-' . basename($fixturexml);
-        file_put_contents($copy, preg_replace('/(<XMLDB\b[^>]*\bPATH=")[^"]*(")/', '${1}' . $relative . '${2}', $xml, 1));
+        // A name of its own per call: on Windows a copy an earlier call could not delete (a scanner holding it) would
+        // otherwise be reused, and the 2026-10-09 run read one back empty. The write is checked for the same reason.
+        $copy = $dir . DIRECTORY_SEPARATOR . 'tmp-' . getmypid() . '-' . uniqid() . '-' . basename($fixturexml);
+        $copied = (string) preg_replace('/(<XMLDB\b[^>]*\bPATH=")[^"]*(")/', '${1}' . $relative . '${2}', $xml, 1);
+        if ($copied === '' || file_put_contents($copy, $copied) !== strlen($copied)) {
+            @unlink($copy);
+            throw new \coding_exception('could not write the PATH-corrected copy of the legacy fixture: ' . $copy);
+        }
         try {
             $dbman->install_one_table_from_xmldb_file($copy, $table);
         } finally {

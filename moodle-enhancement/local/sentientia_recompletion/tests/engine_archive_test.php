@@ -166,7 +166,9 @@ final class engine_archive_test extends \advanced_testcase {
             $byType[$row->itemtype][] = $row;
             $this->assertEquals($history->id, $row->historyid, $row->itemtype . ' is attached to the reset that deleted it');
             $this->assertEquals($course->id, $row->courseid);
-            $this->assertEqualsWithDelta((int) $history->timecreated, (int) $row->timecreated, 5,
+            // The archive rows are stamped as they are written and the history row when the reset ends, so the gap is
+            // the reset's own run time: 6 s on a loaded box (2026-10-09 local run), hence a minute, not 5 s.
+            $this->assertEqualsWithDelta((int) $history->timecreated, (int) $row->timecreated, 60,
                 'archived at the time of the reset');
         }
         $counts = array_map('count', $byType);
