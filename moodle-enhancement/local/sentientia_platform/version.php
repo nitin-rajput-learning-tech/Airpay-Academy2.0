@@ -75,14 +75,19 @@ $plugin->component = 'local_sentientia_platform';
 // 2026100803 - Moodle 5.3 compat FX-20: the Switchboard "Review changes" confirmation is a core/modal_save_cancel dialog (it used window.bootstrap.Modal, which exists in no tree, so the review step was silently skipped); AMD bundle rebuilt, dead modal markup removed from the template. No schema change.
 // 2026100804 - Moodle 5.3 compat FX-20 round 1: switchboard.js loses its dead confirm-apply branch (the dialog's Save button submits through the ModalEvents.save handler; nothing in the template carries that data-action any more); AMD bundle rebuilt. No schema change.
 // 2026100901 - B1: feature_flags override snapshot expires after SNAPSHOT_TTL (30 s) so long-running processes (cron, adhoc, CLI, SSE) see a flag flipped elsewhere; one clock read + one snapshot per resolution. No schema change.
-$plugin->version   = 2026100901;  // B1 feature-flag snapshot TTL (on top of 2026100804 FX-20 round 1)
+// 2026100902 - Stage B parity tooling merged from claude/stageb-tools (versions 2026100801 and 2026100802 on that branch):
+// parity metrics version 4 (BizLMS substrate checksums, the core section of the baseline, the sha256 of the tool that took it,
+// a baseline of another version or tool refused), the post-import parity gate (classes/bizlms/parity_gate.php) and the
+// standalone source baseline (cli/source_baseline.php); enrol is reviewed for INSERT and UPDATE, the UPDATE explained by the
+// enrolments importer's enroloff trail (CRS-01). No schema change.
+$plugin->version   = 2026100902;  // Stage B parity tooling merged (on top of 2026100901 feature-flag snapshot TTL)
 // 2026100802:  // Moodle 5.3 compat FX-16: PWA start_url -> /my/ (on top of 2026100801 FX-12 compat\user_api)
 // 2026092500 - ADR-031: local/sentientia_platform:crosstenant + tenant::is_cross_tenant/scope_path/require_same_tenant_user
 // 2026092400 - tests/exception_strings_test.php: platform guard - core-resolved exception keys must exist (N5)
 // 2026092200: tenant::path_descendant_filter() + DB-level path-boundary regression suite  // Phase 2.1: customer::current() de-hardwired via tenant_registry (dormant while legacy allow-list ON)
 $plugin->requires  = 2024100700;  // Moodle 4.5+: feature_flags uses the core DI container and clock (4.4+); Sentientia runs on 5.1/5.2/5.3
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.11.2';  // +PWA start_url /my/ upgrade step (1.11.1: +compat\user_api (1.11.0: +ADR-032 copies_files marker and files tripwire; 1.10.1: +Switchboard category labels; 1.10.0: +ADR-032 BizLMS import framework, 3 tables)
+$plugin->release   = '1.12.0';  // +Stage B parity tooling: post-import parity gate, standalone source baseline, metrics v4, no schema change (1.11.2: +PWA start_url /my/ upgrade step; 1.11.1: +compat\user_api; 1.11.0: +ADR-032 copies_files marker and files tripwire; 1.10.1: +Switchboard category labels; 1.10.0: +ADR-032 BizLMS import framework, 3 tables)
 // 1.9.0: +ADR-031 cross-tenant authority
 // 1.8.0: +ADR-017 Phase 0 user_type schema (5 tables)
 // Release history

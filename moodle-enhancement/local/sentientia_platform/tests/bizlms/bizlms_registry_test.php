@@ -180,7 +180,15 @@ final class bizlms_registry_test extends \advanced_testcase {
         }
         $this->assertSame(['update'], registry::core_write_operations('course'));
         $this->assertSame(['update'], registry::core_write_operations('tag_instance'));
-        $this->assertSame(['insert', 'update'], registry::core_write_operations('user_enrolments'));
+        // enrol is the one table that is both inserted (the manual instance a course lacks, G6) and updated (the status of a BizLMS
+        // instance proved safe to switch off, owner decision CRS-01): the parity gate explains each of the two from the importer's
+        // own records (parity_library_test holds the lists together).
+        $this->assertSame(['insert', 'update'], registry::core_write_operations('enrol'));
+        // The other two are INSERT only (the parity check holds their old rows to the baseline: a reviewed UPDATE would only ever
+        // surface as a failure of the post-import compare).
+        foreach (['role_assignments', 'user_enrolments'] as $inserted) {
+            $this->assertSame(['insert'], registry::core_write_operations($inserted), $inserted);
+        }
         $this->assertSame([], registry::core_write_operations('grade_grades'));
         foreach (['course_completions', 'course_modules_completion', 'grade_grades', 'grade_items', 'logstore_standard_log',
                   'role_capabilities', 'messages', 'notifications', 'quiz_attempts', 'badge_issued'] as $history) {

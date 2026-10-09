@@ -834,6 +834,80 @@ down.
 
 No version bump, no feature, no UI. Both trees identical.
 
+---
+
+## 2026-10-07 - Stage B parity tooling (1.10.1 -> 1.11.0, 2026100701)
+
+Branch `claude/stageb-tools` (cut from `claude/gap-integration` @ d06e725a7). Closes ADR-032 P0.4 and Stage B gate 4. No schema
+change, no flag, no UI. Both trees identical (drift gate OK).
+
+- **`cli/source_baseline.php` (new, both trees).** One file, PHP 7.4 grammar (checked with php-parser), mysqli, the box's
+  `config.php` read as data (tokens, never run; `--dbhost`... as the fallback). It is both the STANDALONE baseline tool for the
+  source (a restored 4.1.2 copy with no Sentientia plugin; also `--compare` for the checkpoint after hop 1) and the LIBRARY
+  `migration_parity_check.php` requires (`SENTIENTIA_PARITY_LIBRARY_ONLY`), so both sides run the same code. Read-only session, one
+  consistent snapshot, only SELECT/SHOW (the code refuses anything else). JSON format 2; format 1 still reads.
+- **Version-aware metrics.** SCORM attempts/tracks/CRC read `scorm_scoes_track` before 4.3 and `scorm_attempt` +
+  `scorm_scoes_value` + `scorm_element` after (`STRAIGHT_JOIN`: the optimiser's own order took 67 s instead of 2 s); a table or column
+  a version lacks is left out. `tool_certificate_issues` is checksummed without `archived` (the 4.1.2 BizLMS table has none). New
+  metrics: `role_assignments`, `enrol_instances`, `forum_posts`, completed completions, `users_tenant_other`, the grade sum, and
+  checksums of `role_assignments`, `enrol`, `tool_certificate_issues`, `forum_posts`, SCORM tracks. Invariant `tenant_cross_foot`.
+- **Legacy tables.** `legacy` = every table of `legacy_tables::KNOWN` that exists, CRC over all columns of all rows, no cap (a test
+  holds the copy of the list equal to `KNOWN`, and `parity\legacy::fingerprint()` equal to `fingerprint::table()`); `legacy_other` =
+  legacy-prefixed tables no inventory names (soft: unproven). `migration_parity_check.php --compare` calls
+  `parity::compare_fingerprints()` and `parity::comparison_problems()` through `parity_gate::legacy_comparison()`.
+- **`--after-import`.** `classes/bizlms/parity_gate.php` reads the import's own records: `legacymap` rows with outcome `imported`
+  (the inserts into `user_enrolments`, `enrol`, `role_assignments`) and the ledgers `local_sentientia_courses_detailfill`
+  (`filledcols`) and `..._tagmove`. `parity\core::evaluate()` then holds every old row to the baseline and every new row and
+  column to those records. A core table added to `registry::CORE_WRITES_ALLOWED` without an explanation fails a test.
+  Options `--decisions` (required), `--expect-decisions-hash`, `--run`, `--report`; exits 0/1/2/3 as `import_bizlms.php`. The
+  `bizlms_import` invariant runs only here.
+- **Tests (written, NOT run under PHPUnit):** `tests/parity_library_test.php` (24 pure tests over a fake database; also run through
+  a shim: 24 pass), `tests/bizlms/bizlms_parity_gate_test.php` (DB: SCORM numbers equal on both layouts through a hiding view,
+  fingerprint equality, the map/ledger expectations, the core gate end to end, runs and reports),
+  `tests/classes/parity/{fake_database,hiding_database}.php`.
+- **Run for real (scratch schemas `stageb_*`, dropped afterwards):** the 4.1.2 April copy (`backups/airpayprod-mariadb-ready.sql`;
+  restored in 49 min) -> baseline 22 to 30 s; `--compare` of the copy that went 4.1.2 -> 4.5.10 -> 5.1.3 (`bizlms_april`, read only,
+  no import run): exit 0 in 25 s. A same-length change to a legacy row: exit 1, reverted: exit 0. The Moodle CLI and the gate
+  through a `$DB` stand-in against MariaDB: a clean simulated import exits 0; three kinds of tampering through the CLI (an old enrolment's end date, a role
+  assignment nobody recorded, a renamed course) exit 1, and eight kinds at the gate level are reported; an unknown `--run` exits 3.
+- **Not done / for Nitin:** `migration_parity_check.php` under a bootstrapped Moodle and the two PHPUnit files have not run
+  (PHPUnit was off limits during the work). The after-import mode is exercised only on simulated writes; the first real run is
+  the Stage B rehearsal after `import_bizlms.php --apply`. A source on MySQL 8.0 (RDS) has not been tried: the two session
+  statements that make it read-only and snapshotted are optional and reported as a WARNING if the server refuses them.
+---
+
+## 2026-10-08 - Stage B tools, fix round 1 (1.11.0 -> 1.11.1, 2026100801)
+
+Branch `claude/stageb-tools`. No schema change, no flag, no UI. Both trees identical (drift gate OK). Two Opus reviews of the parity
+tooling and the rehearsal kit (`tools/rehearsal/`); this closes their must-fix and the safe should-fix items.
+
+- **`cli/source_baseline.php`: metrics version 3.** New checksums under keys of their own (the first sets and an older baseline are
+  untouched): `user_bizlms` (password, idnumber, institution, department, every `open_*` user column, gender), `course_bizlms`
+  (the course `open_*` columns the import does not write, `courseprice`, ...), `course_modules`, `course_sections` (no `name`, no
+  `sequence`), `grade_items`, `course_completion_criteria`, `tool_certificate_templates`, `tool_certificate_issues_more`; counts of
+  those tables; `layout.modules` (module types the release has) and a NOTE in `compare_metrics()` naming module types the baseline
+  had and the target lacks. Column lists are explicit, 4.1-and-5.x columns only, nothing an upgrade rewrites, nothing the import
+  writes, no `theme` (a test holds the last two). `metrics::baseline_problem()`: a baseline of another metrics version is refused,
+  exit 3 (standalone `--compare` and `migration_parity_check.php --compare`). `tenant_cross_foot` docs say what it is (a consistency
+  check, not a proof).
+- **Measured on the April copy** (tables of the 4.1.2 dump in scratch schema `stageb_cov` against `bizlms_april` after both hops,
+  read only): every new checksum matches except `course_modules`: 1540 vs 1539 rows, and with cm 1153 left out the CRCs are equal.
+  That row is a `mod_survey` activity the Moodle 5.0 upgrade deleted (`lib/db/upgrade.php` 2025040100.01 uninstalls `mod_survey` and
+  `mod_chat` when their code is not on disk). The old metric sets could not see it. **Decision for Nitin:** put both plugins in the
+  package ("accept the loss in writing" was the first wording; the tool cannot accept it, see ADR-032 "FINDING" and the fix round 2 entry).
+- **`classes/bizlms/registry.php`:** `enrol`, `role_assignments`, `user_enrolments` were narrowed to `['insert']` only (CORRECTED in fix round 2: `enrol` is insert+update again, CRS-01; no importer updates the other two; the
+  parity check holds their old rows to the baseline). ADR-032 decision 8 amended; `bizlms_registry_test`, `bizlms_writer_test`
+  comment and `parity_library_test` updated.
+- **`cli/migration_parity_check.php`:** usage errors and an unreadable or unwritable baseline exit 3 as the header says; the header
+  no longer claims all four codes mean the same as `import_bizlms.php`.
+- **Tests added (not run under PHPUnit):** `parity_library_test` +6 (substrate checksum keys and columns, no `theme` and no import-written
+  column in any list, baseline version refusal, version recorded, module-type NOTE, layout modules) and the insert-only registry
+  assertion. Run through a `basic_testcase` shim with the other DB-free tests of the file that need no Moodle autoloader: 24 pass (a 25th uses `assertStringStartsWith`, which the shim lacks).
+- **Kit:** see `tools/rehearsal/README.md` ("What it refuses", "Re-running", "What the first local rehearsal taught") and the
+  PROJECT-STATE entry of 2026-10-08.
+
+---
+
 ## 2026-10-07 - dev masking script: imported e-mail, request and admin-log text (F-60, F-87, comms part; no version change)
 
 `cli/mask_pii_for_dev.php` (both trees) updated a `to_email` column of `local_sentientia_email_log` that the table has never
@@ -972,6 +1046,7 @@ Branch `claude/owner-decisions-y`, both trees. **No version bump** (CLI, one new
 - **The defect.** The `--compare` wiring above called `parity::invariant_problems()` with no argument, so it ran on `decisions::none()`. Every importer's `verify()` that reads a decision with no default (cart: `cart.abandoned`; emails: `notifications.import_bodies`, `notifications.keep_sender`) threw `blocked('missing_decision:...')`, which became `verify_error:cart:...`, the `bizlms_import` invariant reported FAIL and the CLI exited 1. That is every Stage B copy (April has 5 cart orders and the e-mail logs): the parity gate failed by construction and reported a clean import as an invariant FAIL.
 - **The fix.** `migration_parity_check.php` takes `--decisions=FILE` and `--expect-decisions-hash=SHA256` (same meaning as in `import_bizlms.php`). `--compare` loads the file with `decisions::load()` BEFORE it computes the counts, checks the hash (a different file, an unreadable file, or a hash with no file is `REFUSED`, exit 3), prints the file's sha256 and whether it was pinned, and passes the result to the new `parity::compare_invariant(?decisions)`. That method returns an empty list when the database holds no legacy tables (a fresh install still passes with no file), a STRING when there are legacy tables and no decisions (printed `SKIPPED`, so the gate exits 2 "not proven": never FAIL, never a pass), and the whole `invariant_problems($decisions)` otherwise. A signed file that lacks a decision an importer reads is a real FAIL (`verify_error:<feature>:missing_decision:<key>`), not a skip.
 - **Exit codes** of the CLI are now 0 / 1 / 2 as before plus 3 = refused (decisions file unusable, or not the pinned one).
+- **Merge note (2026-10-08, Stage B tools).** This entry describes the CLI before it was merged with the Stage B parity tooling. After the merge the decisions options belong to `--after-import` (`--compare=<baseline> --after-import --decisions=FILE --expect-decisions-hash=SHA256`); a decisions option without `--after-import`, or `--after-import` without a decisions file, is refused (exit 3), the decisions are still loaded and hash-checked before any number is computed, and the invariant is still `parity::compare_invariant()`. The runbook sub-steps this entry calls 5a and 5b are 5b and 5c after the merge (5a is the BizLMS import and its proof). See the fix round 2 entry at the end of this card.
 - **Docs.** `MIGRATION-REHEARSAL-RUNBOOK.md` step 5 passes the decisions file and its hash, and adds 5a (run `local/sentientia_courses/cli/enrolments_access_report.php` for the Stage B pair count and regression ids) and 5b (no admin unenrol of an imported path, program or classroom row before `bizlms_production_open` on a copy that must still pass the gate: the invariant would report `missing_target_rows`). ADR-032 cutover slice step 6 carries the new arguments.
 - **Tests (NOT RUN):** `tests/bizlms/bizlms_guard_parity_test.php::test_compare_invariant_is_not_proven_without_decisions_and_clean_with_them` (a toy importer whose `verify()` reads a required decision: no decisions is a string containing "not proven", the signed decisions are clean, a file without the decision is a real problem; the plain `invariant_problems()` is shown to fail, which is what the CLI used to report) and `test_compare_invariant_with_no_legacy_tables_needs_no_decisions`.
 - **MERGE GATE (both reviewers).** This branch declares keys the signed decisions file does not hold yet: `cart.credit_balances` and `cart.erpnext_invoices_legal` (the file still says `finance-confirm`), `enrolments.bizlms_instances_after_verify`, `enrolments.disabled_instance_row_status`, `enrolments.disabled_only_manual_instance`, and the old `gap.orphan_enrol_instances` why. On this branch alone cart and enrolments block at preflight, and these tests fail: `cart/tests/bizlms_import_test` (the signed-decisions tests) and `platform/tests/bizlms/bizlms_decisions_test` (`not_accepted() === []`). **Merge the decisions-file commit of stream X (doc item 85) before, or together with, this branch, then pin the hash.** Stream X must write the cart whys exactly as decided (the test asserts they contain "delegated" and "not consulted") and the corrected `gap.orphan_enrol_instances` why. The same file conflicts on `skills.level_proficiency` (csv and why): both sides carry the LRN-07 value; keep one copy and re-run `tools/check-bizlms-fixture-copies.php`.
@@ -1021,3 +1096,54 @@ The Switchboard "Review changes" step is a `core/modal_save_cancel` dialog built
 - **Left alone on purpose:** the registry static. It holds the `db/feature_flags.php` defaults and descriptions, which only a code change alters, and a deploy's `purge_all_caches()` reaches `task\manager::clear_static_caches()` so core restarts the cron process.
 - **Operator note:** a flag flipped on the Switchboard reaches running cron / adhoc / CLI processes within 30 s, not instantly.
 - **Tests:** `tests/feature_flags_test.php` (seven new methods) writes the table directly as "another process" and moves the frozen core clock: INSERT / UPDATE / DELETE seen at the TTL and not a second before; no query inside the TTL and exactly one reload after it; clock-backwards reload; `invalidate_caches()` and `set()` immediate; customer layer and `all()` follow the same snapshot. Not run under PHPUnit (owner rule: test databases busy); run standalone against a stubbed `$DB` and clock on PHP 8.2 and 8.4. **No schema change, no flag touched.** Both trees identical.
+
+---
+
+## 2026-10-08 - Stage B tools fix round 2: merged onto the owner decisions (1.11.1 -> 1.11.2, 2026100802)
+
+No schema change. The branch `claude/stageb-tools` (cut from d06e725a7) is merged with `claude/gap-integration` (d7dcc5a08).
+Two reviews asked for two kinds of change: a reconciliation by design (the enrolments importer's CRS-01 UPDATE of `enrol`
+against the branch's "insert only" narrowing), and kit fixes.
+
+- **`enrol` is INSERT and UPDATE again (registry), and the parity tool explains both.** `registry::CORE_WRITES_ALLOWED['enrol']`
+  is `['insert','update']` with the CRS-01 reason. `parity\core::WRITES['enrol']` is an UPDATE table (`status` and
+  `timemodified` writable, every other column fixed). `parity_gate::LEDGERS['enrol']` is the enrolments importer's trail
+  `local_sentientia_courses_enroloff` (key `enrolid`, written `status`, `timemodified`), and `ledger_condition()` makes a trail row
+  name a change only where the instance is still of a BizLMS method (`BIZLMS_ENROL_METHODS`, held equal to
+  `enrolments_importer::METHODS` by a test), still has the method the trail recorded, and its status now differs from
+  `priorstatus`: a trail row the update step left alone (the site was open) names nothing and cannot fail, and a trail row cannot
+  excuse a status change on any other instance. `parity_gate::expected()` no longer overwrites `inserted` when a table is in both
+  `INSERT_TABLES` and `LEDGERS` (the loop used to reset the entry, which would have failed `core_rows_added_not_in_the_import:enrol`).
+  `enrol` stays in `INSERT_TABLES` (the G6 manual instance, the `enrol_instances` count, the skipped whole-table checksum).
+- **Test pins.** `parity_library_test` holds the two lists together operation by operation (an INSERT is reviewed exactly when
+  the map explains it, an UPDATE exactly when a ledger explains it and the baseline holds an update table; the ledger's columns are the
+  baseline's writable columns), `bizlms_registry_test` pins `enrol` as insert+update (the other two stay insert only),
+  `bizlms_parity_gate_test` has a gate-level test with a switched-off instance explained, an unrecorded status change failing, a
+  trail row on a manual instance failing, a trail row on an instance the step left alone not failing, a changed other column failing,
+  and the ids inserted kept beside the ledger. The pinned `bizlms_guard_parity_test::test_the_parity_cli_takes_the_decisions...`
+  follows the merged contract. **All of these are NOT RUN: PHPUnit has not executed them (a local run was in progress).**
+- **One CLI contract (`cli/migration_parity_check.php`).** The branch's `--after-import` core gate is the base, and the
+  owner-decision branch's pieces are folded in: `sentientia_parity_decisions()` loads and hash-checks the decisions before any number is
+  computed (exit 3), the invariant is `parity::compare_invariant($decisions)`, `--decisions`/`--expect-decisions-hash`/`--run`/`--report`
+  without `--after-import` are refused (exit 3), `--after-import` without `--decisions` is refused. The older in-CLI
+  explanation of the enrolments delta (`parity::imported_enrolments()` and the two `..._explained()` helpers, with
+  `parity_enrolments_test`) is no longer called by the CLI; it is kept, tested, as the light form.
+- **Metrics version 4.** The baseline carries `tool.sha256` (SHA-256 of `cli/source_baseline.php`, CR removed); `baseline_problem()`
+  refuses a baseline taken by another file (exit 3) as well as another version, and `metrics::tool_sha256()` is public. A version 3
+  baseline is refused (its `enrol` entry was insert-only). Steps 02 and 04 of the kit hold the checkout's and the package's copies to the
+  hash inside the baseline; the override `ALLOW_BASELINE_TOOL_SKEW` is gone.
+- **Kit (`tools/rehearsal`).** Step 01: a new restore refuses a moodledata an earlier rehearsal ran in unless it is the finished unpack
+  of the same archive (the marker file records the archive and the finish); a named `RESTORE_MOODLEDATA_ARCHIVE` is never ignored;
+  a populated unstamped moodledata needs `RESTORE_MOODLEDATA_BY_HAND=<path>` and no recent writes in `sessions/` or `localcache/`; the
+  dump scan refuses `SET @@GLOBAL.GTID_PURGED` and a MySQL 8 collation on MariaDB; a hand restore after a failed kit restore is reachable;
+  OAuth2 tokens are blanked; the survey and chat activities are counted early. Step 04: refuses to start hop 2 while the package lacks
+  the code of `mod_survey` or `mod_chat` and the database has activities of them (the 5.0 upgrade would delete them and the parity tool
+  cannot accept the loss). Steps 03, 04 and 09: `snapshot_hook` refuses without a hook or `SNAPSHOT_TAKEN` under
+  `BIZLMS_PRODUCTION_FLAG=1`. Step 09: the apply-run status read is retried, the misleading `--purge-feature` hint is gone. Step 11:
+  its maintenance-on line is no longer lost, and says the post-cron parity is not expected to be exit 0 (qbank transfer task). Step 12: the
+  summary lists each `legacy_other` table (payment tables first), the tool hashes, the survey and chat counts and how to read the rows.
+  `names_our_tree()` matches the tree as a whole path. `rotate_work_state` also moves `muc/`.
+- **Decision still open (Nitin).** Ship 5.x-compatible `mod_survey` and `mod_chat` in the package. There is no "accept the loss
+  in writing" path; see ADR-032 "FINDING".
+- **Not run:** PHPUnit (every test above), `migration_parity_check.php` under a bootstrapped Moodle, MySQL 8.4 / RDS, the hop to 5.3
+  (ADR-033), `shellcheck`, a real 4.5 to 5.x hop with the kit.

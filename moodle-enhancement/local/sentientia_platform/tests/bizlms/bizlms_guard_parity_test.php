@@ -541,14 +541,21 @@ final class bizlms_guard_parity_test extends \advanced_testcase {
         $this->assertStringNotContainsString('parity::invariant_problems(', $code,
             'the CLI must not call the plain invariant, which runs on no decisions');
 
-        // A refused file costs nothing: the decisions are loaded and hash-checked before the counts and checksums are taken.
+        // A refused file costs nothing: the decisions are loaded and hash-checked before the counts and checksums of the
+        // comparison are taken (the line that builds the current document with the metrics part only).
         $load = strpos($source, "sentientia_parity_decisions((string) \$options['decisions']");
-        $counts = strpos($source, '$counts = sentientia_parity_counts();');
+        $counts = strpos($source, "\$now = parity_baseline::build(\$parity_db, \$meta, \$progress, ['metrics']);");
         $this->assertNotFalse($load);
         $this->assertNotFalse($counts);
         $this->assertLessThan($counts, $load);
         // A refusal is exit 3, never 0, 1 or 2 (those mean drift, not proven or clean).
         $this->assertStringContainsString('exit(3)', $source);
+        // The decisions belong to the post-import gate: --compare with a decisions option and no --after-import is refused
+        // (exit 3 through cli_error), never run as a pre-import compare that would ignore the file; and --after-import with no
+        // decisions file is refused, never run without the invariant.
+        foreach (["--{\$name} belongs to --after-import", "--after-import needs --decisions=FILE"] as $needle) {
+            $this->assertStringContainsString($needle, $source, $needle);
+        }
     }
 
     public function test_compare_invariant_with_no_legacy_tables_needs_no_decisions(): void {

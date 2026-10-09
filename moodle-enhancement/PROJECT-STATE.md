@@ -141,6 +141,156 @@ output), AMD bundles rebuilt with the repository toolchain, a token-based tool f
 
 ---
 
+
+## 2026-10-08 - Stage B tools: fix round 2, merged onto the owner decisions (Sonnet 5.5)
+
+Branch `claude/stageb-tools`, now merged with `claude/gap-integration` (d7dcc5a08). Two reviews (fix-then-ship each) asked for one
+reconciliation by design and a set of kit fixes. `local_sentientia_platform` 1.11.1 -> 1.11.2 (2026100802, above the integration
+branch's 2026100701), no schema change, no flag, no UI, both trees identical. Detail: the state card entry of the same date,
+ADR-032 ("Metrics version 4", "Hook 4 made exact", "FINDING"), `tools/rehearsal/README.md`.
+
+- **The enrolments importer's CRS-01 UPDATE of `enrol` is now explained, not refused.** On the integration branch the importer
+  switches off proven BizLMS enrol instances (`enrol.status`, `timemodified`; trail `local_sentientia_courses_enroloff`), and this
+  branch had narrowed `enrol` to insert-only in four places (registry, `core::WRITES`, `parity_gate`, the tests). Merged as: `enrol` is
+  insert AND update in the registry; the baseline holds it as an update table; `parity_gate` names a switched-off instance from the
+  trail (only a BizLMS method, still the method the trail recorded, status now different from `priorstatus`) and keeps the inserted
+  ids beside it; a status change nobody recorded, or one on any other instance, is still exit 1. Without this the Stage B apply
+  would have stopped at step 09 (`core_write_operation_not_reviewed:enrol:update`) or, with the registry left as it was, failed step 10 on every clean run.
+- **One CLI contract.** `migration_parity_check.php --compare=<baseline> --after-import --decisions=<file> --expect-decisions-hash=<hash>`
+  is the post-import gate (decisions loaded and hash-checked first, `parity::compare_invariant`, exit 3 for a decisions option without
+  `--after-import` or the reverse). Runbook, ADR-032, the plan and the pinned test follow it.
+- **Metrics version 4.** The baseline names the file that took it (`tool.sha256`) and a comparison with another file is refused; the
+  kit checks it at steps 02 and 04; `ALLOW_BASELINE_TOOL_SKEW` is gone. A version 3 baseline must be taken again.
+- **Kit fixes (the two must-fix).** A new restore refuses a moodledata an earlier rehearsal ran in (one rehearsal, one moodledata; the
+  marker records the unpacked archive and the finish; a named archive is never ignored). Step 04 counts the `mod_survey` and
+  `mod_chat` activities BEFORE hop 2 and refuses to start while the package lacks their code. Plus the small should-fix items
+  (restore point acknowledgement, a separate statement for a hand-restored moodledata, GTID and MariaDB-collation dump checks,
+  whole-path cron scan, retried run-status read, cache directory rotated, OAuth2 tokens blanked, the lost log line, the summary lists
+  `legacy_other` tables and says how to read the hop 2 and post-cron rows).
+- **Decision for Nitin (unchanged, sharper).** Ship 5.x-compatible `mod_survey` and `mod_chat` in the package. "Accept the loss in
+  writing" does not exist in the tools and is removed from the docs: the parity tool has no input for expected exit-1 drift.
+- **Not run, on purpose or for lack of a way:** PHPUnit (a local run was in progress; every new and changed test is unexecuted,
+  see the state card), the CLI under a bootstrapped Moodle, MySQL 8.4 / RDS, the hop to 5.3 (ADR-033). What ran: `php -l`, `bash -n`, the
+  four repo gates (all clean), the kit's `selftest.sh` (128 pass) and a DRY run of all 13 steps, step 01 in `--execute` mode against scratch
+  `stageb_*` schemas (22 moodledata and dump scenarios), and the real parity library and `parity_gate` against a scratch schema through a `$DB`
+  stand-in (34 assertions on `enrol`, 7 on the standalone tool's `tool.sha256` refusals). The scratch schemas were dropped.
+
+---
+
+## 2026-10-08 - Stage B tools: fix round 1 after two Opus reviews (Sonnet 5.5)
+
+Branch `claude/stageb-tools`. The reviews said ship (parity tooling) and fix-then-ship (rehearsal kit, 5 must-fix). All five
+must-fix and the safe should-fix items are closed; `local_sentientia_platform` 1.11.0 -> 1.11.1 (2026100801), no schema change,
+no flag, no UI, both trees identical. Detail: `tools/rehearsal/README.md`, ADR-032 "Metrics version 3" and "FINDING", state card.
+
+- **A finding for Nitin (needs a decision before Stage B).** The Moodle 5.0 upgrade (`lib/db/upgrade.php`, step 2025040100.01)
+  runs `uninstall_plugin()` for `mod_survey` and `mod_chat` when their code is not on disk, which deletes every activity of them.
+  On the April copy that is one survey activity (course_modules 1153): 1540 rows in the 4.1.2 dump, 1539 in `bizlms_april`.
+  The first two metric sets counted no `course_modules`, which is why the 2026-10-07 entry below reads "exit 0, 100% PARITY" for
+  that copy; with metrics version 3 the same comparison is **exit 1** on `course_modules` (the only drift). Live may hold more
+  (surveys, chats, their completion rows). Put `mod_survey` and `mod_chat` into the 5.x package; the tool has no path for an
+  "expected" exit-1 drift, on purpose, so "accept the loss in writing" (this entry's first wording) does not exist (fix round 2).
+- **Parity coverage (plan 1.2).** Metrics version 3 adds checksums the plan names and nothing hashed: `password` and all 36 BizLMS
+  `open_*` user columns, the course `open_*` columns the import does not write, `course_modules`, `course_sections`, `grade_items`,
+  `course_completion_criteria`, certificate templates and the issue columns the first set left out. Checked on the April data (the
+  4.1.2 dump's tables against `bizlms_april` after both hops): every new checksum is identical on both sides except `course_modules`
+  (the survey). A baseline of another metrics version is refused (exit 3); the kit stops when the package's `source_baseline.php`
+  is not the file the baseline was taken with (compared with carriage returns removed). `tenant_cross_foot` cannot fail by itself
+  (the "other" bucket is the complement): docs corrected, the per-bucket comparison is the protection.
+- **Kit, the five must-fix.** (1) Step 01 refuses a dump with `USE`/`CREATE DATABASE`/`DROP DATABASE` or without its trailer, restores
+  with `--one-database` and pipefail. (2) The restored `muc/config.php` (live's cache stores) is moved aside and the generated
+  config sets `altcacheconfigpath`. (3) Names with `prod` or `uat` are refused (airpayprod, sentientia_uat), the live DB endpoint is
+  required, a server holding `airpayprod` is refused, and every writing step requires the **kit marker** (a restore id in the
+  database and in the moodledata, stamped by step 01 or by `RESTORE_DONE_BY_HAND`). (4) Step 06 no longer dead-ends on a re-run
+  (role 9's "Already applied"). (5) Step 09 recovers from a failed or killed apply (resume from the database's own run table) and
+  records an exit 2 before judging it, so the written acceptance can be applied on a re-run.
+- **Should-fix closed:** restore point before the import; a new restore rotates the old state to `archive/`; a partial restore is
+  refused; gate 1 says "partly met" without a live baseline; the hard-down estimate counts every timed operation of steps 03-10;
+  the tree manifest hash is recorded; README no longer calls the kit the cutover procedure; cron scan only fails on this
+  rehearsal's own trees; push key wiped, phone-home scheduled tasks switched off for the cron cycle (rehearsal database only);
+  hop-2 parity tolerates the one invariant step 05 repairs; `migration_parity_check.php` usage errors exit 3; `enrol`,
+  `role_assignments`, `user_enrolments` are INSERT only in `registry::CORE_WRITES_ALLOWED` (ADR-032 decision 8 amended).
+  **Not changed, with reason:** the `paygw_airpay*` legacy tables stay soft (exit 2) because the package ships that plugin and its
+  upgrade may legitimately alter them; `TENANT_CHECKS` stays `warn` (documented; use `stop` for the dress rehearsal).
+- **Tested.** `tools/rehearsal/selftest.sh`: 105 pass (new: the name guard, the live endpoint, the dump scan plain and gz, the
+  helpers behind the re-runs of steps 04, 06 and 09, the tree manifest hash, the state rotation, the generated cache path, no
+  `theme` in a parity column list). The whole kit in DRY mode. Steps 01, 06 and 09 in `--execute` against a scratch schema
+  `stageb_kit` (dropped afterwards) and a stand-in Moodle, **28 scenario assertions, all pass**: the marker (stamp, re-run, foreign
+  marker, hand restore with and without `RESTORE_DONE_BY_HAND`, a foreign moodledata, a later step refusing an unstamped database or
+  moodledata), a server holding a forbidden schema, a dump with `USE` and one without its trailer refused before anything is
+  created, a restore that fails half way and the refusal of its partial copy, a second restore archiving the first; step 06 repeated
+  after a smoke failure and refused when the role was changed since; step 09 after a failed apply (no gate, resume), an exit 2
+  recorded then accepted on a re-run, a guard refusal that leaves no run. The new metrics: the 4.1.2 tables of the April dump
+  (`stageb_cov`, dropped) against `bizlms_april` (read only), the standalone tool taking a baseline, comparing, and refusing a
+  metrics-2 baseline (exit 3). The DB-free tests of `parity_library_test.php` that need no Moodle autoloader, through a
+  `basic_testcase` shim: 24 pass (a 25th uses `assertStringStartsWith`, which the shim lacks; not run). The harness found two real
+  defects on the way (a transient empty read of `cron_enabled` failing a gate; the moodledata marker of a restore that failed in
+  between), both fixed.
+- **Not run:** PHPUnit (`parity_library_test`, `bizlms_parity_gate_test`, the registry and writer tests): a local run was in
+  progress against the XAMPP Moodle. No step against real Moodle 4.5/5.x code, MySQL 8.4/RDS or the 5.2 hop. `shellcheck` not
+  installed.
+
+---
+## 2026-10-07 - Stage B rehearsal kit for the Linux target box: `tools/rehearsal/` (Sonnet 5.5)
+
+Branch `claude/stageb-tools`. The Stage B rehearsal ran so far as hand-run Windows scripts (`hop1_45.sh`, `hop2_51.sh`,
+`make_config.py`, `refresh_and_dryrun.sh`). The kit is the repo-tracked, repeatable form for the target box (PHP 8.3,
+MySQL 8.4 or MariaDB 10.11): one env file (`rehearsal.env.example`), 13 scripts `00` to `12` and the orchestrator
+`run_all.sh`, **DRY by default** (`--execute` runs), idempotent, timed, logging per step, first failed gate stops.
+
+- **Steps.** 00 preflight (refuses unless the database is on the explicit allow-list, `noemailever` is true in every config,
+  no scheduler runs Moodle's cron, no production hostname appears anywhere) · 01 restore check (restore only into an EMPTY
+  database; the file store gate: every `files.contenthash` on disk; SMTP wipe, `cron_enabled = 0`, mail-backlog audit I-11) ·
+  02 source baseline (refuses on an upgraded copy; re-verifies, never retakes) · 03 hop 1 and 04 hop 2 (BizLMS code off disk,
+  `local/airpay_ratings` refused, SHA-256 and fake-zip gates, timed, parity after each hop) · 05 repairs (task registrations,
+  the signed capability allow-list: check, apply, check) · 06 the four ADR-031 scripts in target mode · 07 theme · 08 arming
+  the ADR-032 guard · 09 import (data-intact gate, preflight, dry run that records the decisions hash, apply, verify) ·
+  10 `--after-import` parity · 11 one cron cycle under `noemailever` with the `transfer_question_categories` task timed ·
+  12 summary (I-4 estimate, the seven rollout-gate items and who proves each).
+- **Runbook.** `MIGRATION-REHEARSAL-RUNBOOK.md` points at the kit; the capability repair is now step 4e, BEFORE the ADR-031
+  scripts (4f; theme is 4g); step 5a lists the guard commands and says where the decisions hash comes from
+  (`meta.decisions_hash` of any `--report`, a dry run included).
+- **Found while building it.** The package build leaves `public/config.php` (Moodle's 5.x loader) out of the zip (the kit
+  writes it); a restored backup can carry task rows marked running, which the import guard counts; `cron.php` refuses under
+  CLI maintenance and polls for 3 minutes unless `--keep-alive=0`; the capability `--apply` needs CLI maintenance, which the
+  ADR's cutover slice (item 0 before item 2) leaves open.
+- **Tested.** `tools/rehearsal/selftest.sh` (policy refusals, config checks, generated config round-trip and guard, file store
+  comparison, `judge()`, `unpack_tree`, orchestrator). The whole kit in DRY mode. Steps 00 to 02 and 12 in `--execute` against a
+  scratch MariaDB schema (the file store gate failing on a missing hash and passing when fixed; a restore from a gzip dump and
+  a tar of the moodledata into a new schema); steps 03 to 11 in `--execute` against a stand-in Moodle (fake `upgrade.php`,
+  `cfg.php`, `cron.php`, `import_bizlms.php`, ...) to prove the control flow, gates, parsing and resume: a full run, a stop and
+  `--from` resume, a full second run on the finished rehearsal, exit 2 stopping and being accepted with a reference, and several
+  refusals. **Not run: any step against real Moodle 4.5 or 5.x code, `shellcheck` (not installed), PHPUnit.** The first real
+  execution is on the target box.
+- **Not in the kit:** per-user fingerprint, known-password logins, the SCORM and certificate walk, the mail sender test (gates 2,
+  3, 4, 6 of the plan's rollout gate); runbook 4d (the SW-1 flag flip is Nitin's decision).
+- Detail: `tools/rehearsal/README.md`. No plugin changed: no version bump.
+
+---
+## 2026-10-07 - Stage B parity tooling: baseline on the 4.1.2 source, legacy-table proof, post-import explanation (Sonnet 5.5)
+
+Branch `claude/stageb-tools`. The old parity tool could not take a baseline on the 4.1.2 source (it read `scorm_attempt`, which
+exists from Moodle 4.3) and could not tell the import's own changes from damage. Now: `cli/source_baseline.php`, one file
+for PHP 7.4 to 8.4 that needs no Sentientia plugin, takes the baseline (and `--compare`s at the hop-1 checkpoint);
+`migration_parity_check.php` runs the same code on the target, fingerprints every BizLMS legacy table (CRC over all rows and
+columns), and with `--after-import --decisions=...` holds everything to the source baseline except what the import wrote,
+which it explains from the import's own map and ledgers (exit 0 / 1 / 2 / 3).
+
+- **Real run.** Source = `backups/airpayprod-mariadb-ready.sql` (release 4.1.2+, the production mysqldump of 2026-04-06). None of
+  the dumps in `Moodle Backup/` is it (4.5.10 or 5.1.3). Restore 49 min; baseline 22 to 30 s; the copy that went through both hops
+  compared **exit 0, 100% PARITY** (23 counts, grade sum, 14 checksums, 95 BizLMS tables / 25,726 rows). SCORM gives the same
+  8,504 attempts, 303,086 tracks and CRC on `scorm_scoes_track` and on `scorm_scoes_value`. A one-row text change in a legacy table is
+  exit 1. First run's only finding: the 5.x `tool_certificate_issues` has an `archived` column the 4.1.2 table lacks (no longer
+  checksummed).
+- **Gate 4 closed** (ADR-032 Stage B gates). The enrolments importer inserts only (April dry run: +7,733 `user_enrolments`, +19
+  `enrol`); it never changes an existing `enrol` row, so a changed `enrol.status` after the import is a failure, not an
+  explained delta.
+- **Not run:** PHPUnit (off limits; two new test files written), and `migration_parity_check.php` under a bootstrapped Moodle:
+  its flows ran through a `$DB` stand-in against scratch schemas. The first real post-import run is the Stage B rehearsal.
+- Version `local_sentientia_platform` 1.11.0 (2026100701), no schema change. Detail: `state-cards/sentientia_platform-state.md`
+  (last section), `docs/cutover/MIGRATION-REHEARSAL-RUNBOOK.md`, ADR-032 "Parity hooks".
+
+---
 ## 2026-10-01 - First real PHPUnit run: six failures fixed at the root (Sonnet 5.5)
 
 Branch `claude/phpunit-fixes-1001`. The first Moodle PHPUnit run of the ADR-032 framework and the 2026-09-30 fixes

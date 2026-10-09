@@ -69,6 +69,17 @@ final class registry {
             'operations' => ['update'],
             'why' => 'course_lookups: the open_* backfill (mapping doc, course_lookups)',
         ],
+        // role_assignments and user_enrolments are INSERT only: no importer updates a row of them, and the parity check
+        // (parity\core::WRITES mode 'insert', parity_gate::INSERT_TABLES) holds every old row of these tables to the baseline, so
+        // an UPDATE would be refused here at the writer, in the dry run, instead of showing only as a hard failure of the
+        // post-import compare. (Narrowed from insert and update in the Stage B tools review; ADR-032 decision 8.)
+        //
+        // enrol is the one table that is both: the enrolments importer INSERTs the manual instance a course lacks (G6) and, by
+        // owner decision CRS-01, UPDATEs the status of a BizLMS instance it proved safe to switch off. The parity check holds it
+        // as an UPDATE table (parity\core::WRITES mode 'update', status and timemodified writable) and parity_gate names every
+        // such row from the importer's own trail (local_sentientia_courses_enroloff), so a status change nobody recorded, or one
+        // on an instance that is not a BizLMS one, is still a hard failure. Every operation reviewed here must be explained there
+        // (parity_library_test holds the two lists together).
         'enrol' => [
             'operations' => ['insert', 'update'],
             'why' => 'gap.orphan_enrol_instances (G6): INSERT a manual instance for a course that has none; UPDATE the status '
@@ -77,7 +88,7 @@ final class registry {
                 . 'instance left on would keep granting access after a Sentientia unenrol or suspend',
         ],
         'role_assignments' => [
-            'operations' => ['insert', 'update'],
+            'operations' => ['insert'],
             'why' => 'org_roles: the role assignments of the org role tables (mapping doc, org_roles)',
         ],
         'tag_instance' => [
@@ -85,7 +96,7 @@ final class registry {
             'why' => 'course_tags: the in-place remap of tag instances (mapping doc, course_tags)',
         ],
         'user_enrolments' => [
-            'operations' => ['insert', 'update'],
+            'operations' => ['insert'],
             'why' => 'gap.orphan_enrol_instances (G6): orphaned enrolments become manual enrolments',
         ],
     ];
