@@ -36,9 +36,11 @@
 - The merged platform suite had 584 tests, and 581 passed. Three never-run Stage B tests failed, fixed in 20053b5fb:
   - bizlms_parity_gate_test overrode setUpBeforeClass(), so the fixture trait never created its tables;
   - parity_gate used get_recordset_sql, which classes/bizlms bans (ADR-032).
-- **OPEN:** re-proving those 3 classes plus recompletion, programs and quizaccess on 5.3. The disk-full window (below)
+- **DONE 2026-10-10 07:14:** re-proved on 5.3 after a clean test-environment reset: recompletion 139/139, programs
+  146/146 (one Windows cache-rename warning), quizaccess 13/13, bizlms_parity_gate_test 11/11, bizlms_static_scan_test
+  100/100, parity_library_test 33/33. (The disk-full window (below)
   broke the pu53_ environment. `r53f/recheck53all.sh` (util --drop, init, re-run) was running at 04:00 on 10-10.
-  Read its results in `r53f/gate_progress.txt`.
+  Results: `r53f/gate_progress.txt`.)
 
 **PHPUnit, local 5.1 (run1009b, HEAD d04b323ff + test fixes copied in): 20 suites, 2,403 tests:**
 - 18 suites have rc=0. Exams has only Windows cache warnings.
