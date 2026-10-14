@@ -124,13 +124,17 @@ class list_orders extends external_api {
             $records = $DB->get_records_sql(
                 "SELECT h.id, h.orderid, h.userid, h.costcenterid, h.total_amount, h.currency,
                         h.status, h.gateway, h.billing_name, h.billing_email,
-                        h.timecreated, h.timepaid, h.notes, u.email AS buyer_email{$names->selects}
+                        h.timecreated, h.timepaid, h.notes, h.legacy_source, h.invoice_due,
+                        u.email AS buyer_email{$names->selects}
                    FROM {local_sentientia_cart_history} h
               LEFT JOIN {user} u ON u.id = h.userid
                   WHERE $wheresql
                ORDER BY h.$sort $sortdir, h.id DESC",
                 $sqlparams,
                 $params['page'] * $params['perpage'], $params['perpage']);
+            // GST receipts and tax documents (2026-10-14): the receipt, tax invoice and credit note links of each order,
+            // empty for every order while both flags are OFF.
+            $documents = \local_sentientia_cart\receipts::history_links($records);
             foreach ($records as $r) {
                 // An order without billing details (every imported one) shows its buyer to order administrators.
                 $billingname = (string) ($r->billing_name ?? '');
@@ -157,6 +161,7 @@ class list_orders extends external_api {
                     // failure reasons): order admins only, as get_order.
                     // Shown in the admin_orders.php "Staff notes" column.
                     'notes'        => $can_view_all ? (string) ($r->notes ?? '') : '',
+                    'documents'    => (string) ($documents[(int) $r->id] ?? ''),
                 ];
             }
         }
@@ -190,6 +195,10 @@ class list_orders extends external_api {
                     // whole list. The datatable escapes plain columns.
                     'notes'        => new external_value(PARAM_RAW,
                         'Staff notes, e.g. an ADR-031 refund due; empty unless the viewer holds :viewallorders'),
+                    // Escaped HTML built by html_writer (the datatable column has format html): links to the receipt,
+                    // the tax invoice and the credit notes of the order. Empty while both GST flags are OFF.
+                    'documents'    => new external_value(PARAM_RAW,
+                        'Links to the receipt, tax invoice and credit notes of the order (HTML); empty when there are none'),
                 ])),
             'page'    => new external_value(PARAM_INT, ''),
             'perpage' => new external_value(PARAM_INT, ''),

@@ -1,0 +1,91 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_sentientia_cart/receipt_pdf
+
+    The HTML that pdf_renderer lays out on an A4 page with TCPDF for a payment receipt: table markup with attributes
+    (TCPDF reads a small subset of HTML), the same data as local_sentientia_cart/receipt, always with English words.
+
+    Context variables required for this template: the same as local_sentientia_cart/receipt.
+
+    Example context (json):
+    {
+        "l": {
+            "title": "Payment receipt", "orderno": "Order number", "paidon": "Paid on", "buyer": "Paid by",
+            "item": "Item", "price": "Price", "discount": "Discount", "subtotal": "Subtotal", "gst": "GST charged",
+            "totalpaid": "Total paid", "gateway": "Payment method", "reference": "Reference", "refunds": "Refunds",
+            "refundedon": "Refunded on", "amount": "Amount", "notinvoice": "This is a payment receipt, not a tax invoice.",
+            "invoicewillfollow": "Your GST tax invoice will follow.", "status": "Status"
+        },
+        "orderid": 1000123,
+        "paid_on": "14 Oct 2026, 15:42 IST",
+        "buyer_name": "Test Buyer",
+        "items": [{"n": 1, "name": "Course", "price": "₹1,000.00", "has_discount": false, "discount": "₹0.00"}],
+        "subtotal": "₹1,000.00",
+        "tax": "₹180.00",
+        "total": "₹1,180.00",
+        "status_label": "Paid",
+        "invoice_follows": false
+    }
+}}
+<b style="font-size: 15pt; color: #0066A7;">{{ l.title }}</b><br/>
+<br/>
+<b>{{ l.orderno }}:</b> #{{ orderid }} &nbsp; <b>{{ l.status }}:</b> {{ status_label }}<br/>
+<b>{{ l.paidon }}:</b> {{ paid_on }}<br/>
+<b>{{ l.buyer }}:</b> {{ buyer_name }}{{#buyer_email}} ({{ buyer_email }}){{/buyer_email}}<br/>
+<br/>
+<table border="1" cellpadding="3" width="100%">
+    <tr style="background-color: #f2f4fb;">
+        <th width="75%"><b>{{ l.item }}</b></th>
+        <th width="25%" align="right"><b>{{ l.price }}</b></th>
+    </tr>
+    {{#items}}
+    <tr>
+        <td width="75%">{{ name }}{{#has_discount}} ({{ l.discount }}: {{ discount }}){{/has_discount}}</td>
+        <td width="25%" align="right">{{ price }}</td>
+    </tr>
+    {{/items}}
+</table>
+<br/>
+<table border="1" cellpadding="3" width="50%" align="right">
+    <tr><td width="60%">{{ l.subtotal }}</td><td width="40%" align="right">{{ subtotal }}</td></tr>
+    {{#has_discount}}
+    <tr><td>{{ l.discount }}</td><td align="right">-{{ discount }}</td></tr>
+    {{/has_discount}}
+    <tr><td>{{ l.gst }}</td><td align="right">{{ tax }}</td></tr>
+    <tr style="background-color: #f2f4fb;"><td><b>{{ l.totalpaid }}</b></td><td align="right"><b>{{ total }}</b></td></tr>
+</table>
+<br/>
+{{#gateway}}<b>{{ l.gateway }}:</b> {{ gateway }}<br/>{{/gateway}}
+{{#gateway_ref}}<b>{{ l.reference }}:</b> {{ gateway_ref }}<br/>{{/gateway_ref}}
+{{#has_refunds}}
+<br/>
+<b>{{ l.refunds }}</b>
+<table border="1" cellpadding="3" width="60%">
+    <tr style="background-color: #f2f4fb;">
+        <th width="60%"><b>{{ l.refundedon }}</b></th>
+        <th width="40%" align="right"><b>{{ l.amount }}</b></th>
+    </tr>
+    {{#refunds}}
+    <tr><td width="60%">{{ date }}</td><td width="40%" align="right">{{ amount }}</td></tr>
+    {{/refunds}}
+</table>
+{{/has_refunds}}
+<br/>
+<p><b>{{ l.notinvoice }}</b>
+{{#has_invoice}}<br/>{{ invoice_number }}{{/has_invoice}}
+{{#invoice_follows}}<br/>{{ l.invoicewillfollow }}{{/invoice_follows}}</p>
