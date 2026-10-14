@@ -54,11 +54,15 @@
 - 474c576f1 `claude/stageb-tools`: post-import parity gate, standalone source baseline (metrics v4), rehearsal kit to
   round 7. local_sentientia_platform is now 2026100902 / 1.12.0.
 - Fixes: 11e007cd2, 98548225b, 4ee8632f0, 20053b5fb, 8a9743c65.
-- **Pending merge:** `claude/feature-flags-di-reset` (another session; platform 2026100903). feature_flags keeps its
-  snapshot in a \core\di object, so the per-test reset clears it. It was running its XAMPP platform suite at 04:00.
-  Review it, then merge.
+- **Pending merge:** `claude/feature-flags-di-reset` (762a717c0, local only; platform 2026100903). feature_flags keeps
+  its registry and override snapshot in a \core\di object, so PHPUnit's per-test container reset clears it; production
+  lifetime and the 30 s TTL are unchanged. Reviewed 2026-10-14: sound (core\di autowires in 5.1 and 5.3; both trees
+  match). The other session's suite was cut at 537/586 when it stopped (10-10 07:35), so it had no result. Under test
+  2026-10-14: XAMPP 5.1 runs the 57 test files that write flags plus the platform suite
+  (`D:/Claude Local/ffreset-check/progress.txt`); 5.3 runs re-init, the per-test reset test and the platform suite
+  (`r53f/gate_progress.txt`, "ffreset53"). Merge when green.
 
-**Stage B kit (`claude/stageb-tools`, NOT yet re-merged):**
+**Stage B kit (`claude/stageb-tools`), merged again 2026-10-14 as 13373bd27:**
 - Round 8 (502abefa2, 465/465) added:
   - the filedir content proof: sha1(content) == name for every file;
   - an explicit "reached the end" flag;
@@ -68,11 +72,11 @@
   - the tar end-of-archive gap is accepted up to 10752 bytes (round 8 had refused 1 in 20 good tars);
   - LC_ALL=C;
   - run_all stops after an unreached step.
-  Round 9's check was stopped.
-- Round 9b was stopped mid-fix (weekly limits). It leaves UNCOMMITTED edits in the worktree (README, lib/common.sh,
-  selftest.sh, +85/-12). Its job: a guarded zero_bytes helper for every /dev/zero write in selftest.sh (lines ~959,
-  1294, 1305, 2057, 2195, 2207, 2273, 2293). A negative count there fills the operator's disk. Finish it, run the full
-  selftest, do one focused check, then merge again.
+- Round 9b (75e8eca03): `dev_bytes KIND COUNT` in lib/common.sh is the only way the kit reads /dev/zero or
+  /dev/urandom; it refuses an empty, non-numeric, negative or above-256 MB count. The selftest proves it, and greps that
+  no other device read is left. Selftest 515/515 (`D:/Claude Local/kit-scratch/r9b-selftest-515.out`).
+- Rounds 9 and 9b were checked on the diff on 2026-10-14: ship. Should-fix: the selftest's own env fixture breaks when
+  TMPDIR contains a space (test only).
 
 **Incident, 2026-10-10 00:14 and 03:02:**
 - What happened: two kit agents ran `head -c $((size - N)) /dev/zero` with an empty size. GNU head reads a negative
