@@ -412,3 +412,28 @@ Left as they were, on purpose:
 - The manager-copy e-mail body keeps hard-coded English (the shared partials `course_info_box` and `footer_note` are English too); a per-recipient-language render of the whole e-mail family has to land before the COMMS-N7 flags are flipped for a Hindi-speaking audience.
 
 F-85 version ledger of this batch (one version per plugin; anything the other stream bumps must be strictly higher): `local_sentientia_platform`, `_org`, `_roles`, `_users`, `_emails`, `_request`, `_classroom`, `_programs`, `_learningpath` are all `2026100701`. `_org`, `_classroom`, `_programs` and `_learningpath` require `local_sentientia_platform 2026100701` (the `copies_files` marker); no plugin needed a schema step for this round.
+
+## 11. Nitin's answers of 2026-10-14
+
+Given in writing (chat, 2026-10-14 12:12 IST) against `NITIN-DECISION-BRIEF-2026-10-14.md`. The decisions file now
+carries `reapproved_on: 2026-10-14`, a `reapproval_note` and `accepted_reasons`; its sha256 (CRLF normalised to LF)
+moved from `a04c15ed...` to `976394aa280afe5b33032df491701226b1b7a5033917eacf00bf4e9b50b31a89`. Stage B records the
+new hash at step 09 and the parity gate checks it at step 10.
+
+| Question | Answer | Effect |
+|---|---|---|
+| D1 (FNS0001 survey) | Accept the loss | The upgrade's `course_modules` 1540 -> 1539 (the empty FNS0001 survey; Moodle 5.x drops mod_survey) is an accepted drift, not a parity failure. No 5.x survey plugin. |
+| Q1 (IDN-05) | Nobody beyond the site admins | No change: the decisions file already says `created_by_adr031_script_no_members_until_named`. |
+| Q2 (EV-18) | Yes, a local evidence session | `sentientia.evaluation.learner_history` ON for one local test tenant, `my_evaluations.php` captured, then OFF again in the same session. |
+| Q3 (LRN-06) | As recommended | `sentientia.recompletion.run_rules` stays OFF until a native rule Airpay needs exists. The UAT listing of enabled all-tenant rules happens at the next UAT session. |
+| Q4, Q5(a) (cart) | The INR 10 sale of 10 Jan 2025 was Nitin's own test payment | No invoice is owed for it (added to `cart.erpnext_invoices_legal`'s why). Credit balances: none on April; the value stays `frozen_pending_finance`. |
+| Q6 (native tax invoices) | Build it | Sentientia issues the GST tax invoice and a purchase receipt for buyers. Built behind a default-OFF flag; the GSTIN, the series and retention stay settings for Finance to confirm before the flag is switched on. |
+| Q7 (needs-owner skips) | Accept | `accepted_reasons`: `learningplan:orphan_course` (April 4), `ratings:orphan_item` (87), `ratings:unknown_area` (195; 194 are scanner probe rows, F-41). Only these three. A reason that was 0 on April and shows a count on the final backup comes back to Nitin. |
+| Q12 (CRS-13) | Delete | `moodle-enhancement/local/airpay_ratings` removed in its own commit. |
+| Q13 (F-22) | Yes | The unreachable local commit is purged from this clone. Checking GitHub for a PR from `claude/bizlms-import-evaluation` stays Nitin's. |
+| Q14 (request comments) | Yes | `fold_reviewed` is how the owner accepts request comment rows if Stage B shows any (April: 0). |
+| SH (screenshots) | Claude captures them | On local XAMPP with the seeded test personas only. |
+| IT asks | After development | A fresh live backup (with moodledata and its SHA-256 computed on live) and the PHP 8.3 / MySQL 8.4 server are requested once development is done. |
+
+Still open: Q8 (only if Stage B shows guessed tenants), Q9 to Q11 (reader flags at cutover, after the UAT
+screenshots), and Q6 points 2 to 6 for Airpay Finance (GSTIN, series, credit notes, e-invoice IRN, retention).
