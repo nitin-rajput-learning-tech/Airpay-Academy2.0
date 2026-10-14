@@ -22,7 +22,7 @@ global $USER, $OUTPUT, $PAGE;
 $ctx = context_system::instance();
 $PAGE->set_context($ctx);
 $PAGE->set_url(new moodle_url('/local/sentientia_cart/einvoice.php'));
-$PAGE->set_pagelayout('admin');
+$PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('einvoice_title', 'local_sentientia_cart'));
 $PAGE->set_heading(get_string('einvoice_title', 'local_sentientia_cart'));
 require_capability('local/sentientia_cart:manageinvoices', $ctx);

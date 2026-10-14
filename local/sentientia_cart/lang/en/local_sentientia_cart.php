@@ -447,3 +447,5 @@ $string['gst_state_37'] = 'Andhra Pradesh';
 $string['gst_state_38'] = 'Ladakh';
 $string['gst_state_97'] = 'Other Territory';
 $string['error_einvoiceoff'] = 'GST tax invoices are switched off wherever you work, so there is nothing to record here.';
+$string['gateway_name_airpay'] = 'Airpay';
+$string['gateway_name_manual'] = 'Manual payment';

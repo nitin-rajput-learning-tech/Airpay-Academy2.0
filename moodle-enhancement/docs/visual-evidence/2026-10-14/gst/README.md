@@ -124,3 +124,22 @@ node gst_checks.mjs --phase off
 
 Scripts are in `moodle-enhancement/tools/visual-pass/`: `gst_evidence_flags.php`, `seed_gst_evidence.php`, `gst_checks.mjs`
 and the shared `evidence_lib.mjs`. Each PHP script refuses unless `wwwroot` is localhost and `noemailever` is set.
+
+## Polish re-capture (2026-10-15, after the first pass's UI notes)
+
+The first pass found four defects on the new GST pages. They are fixed on this branch, and the four pages were
+re-captured with `tools/visual-pass/gst_polish_checks.mjs`. As before, both cart flags were ON for /77 only and were
+switched OFF again afterwards (verified: no override rows). The original shots stay as the record of what the first
+pass found.
+
+| File | Was | Now |
+|---|---|---|
+| `p-01-checkout-state-field-{desktop,mobile}.png` | The State select was an unstyled native control (`form-select` is Bootstrap 5; this theme is 4.6) | `custom-select`, styled like the other fields |
+| `p-04-receipt-b2c-intra-{desktop,mobile}.png` | The payment method showed the gateway key `airpay` | "Airpay" (string `gateway_name_<key>`; "Manual payment" for the manual gateway) |
+| `pdf/p-receipt-order-12.pdf` | The "Refunds" heading sat beside its table, the invoice was a bare number, the credit notes were missing | The heading is on its own line, then "Tax invoice: <number>", then "Credit notes: <numbers>" |
+| `p-12-einvoice-page-{desktop,mobile}.png` | The title appeared twice, under the Site administration tab strip | One title (the page uses the standard layout) |
+
+Still open, and older than this branch (for Nitin, not fixed here):
+- The order history's "Placed" column shows when the cart was opened, not when the order was paid.
+- The order history shows the raw `partial_refund` status.
+- The order history shows totals without the currency symbol.

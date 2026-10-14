@@ -138,7 +138,7 @@ final class receipt_test extends \advanced_testcase {
 
         $html = $OUTPUT->render_from_template('local_sentientia_cart/receipt', $ctx + ['pdf_url' => 'https://example.com/r.pdf']);
         foreach (['Payment receipt', '#' . $order->orderid, 'Asha Rao', 'asha@example.com', 'Payments Basics', 'Risk 101',
-                '₹1,652.00', 'GST charged', 'Total paid', 'airpay', 'TXN-ABC-123',
+                '₹1,652.00', 'GST charged', 'Total paid', 'Airpay', 'TXN-ABC-123',
                 'This is a payment receipt, not a tax invoice.', 'Download PDF'] as $needle) {
             $this->assertStringContainsString($needle, $html, "the receipt shows: $needle");
         }

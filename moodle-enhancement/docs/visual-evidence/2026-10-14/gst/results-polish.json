@@ -1,0 +1,58 @@
+{
+ "generated": "2026-10-14T21:26:51.409Z",
+ "base": "http://localhost:8080",
+ "tenant": 77,
+ "results": [
+  {
+   "name": "p-01-checkout-state-field",
+   "url": "/local/sentientia_cart/checkout.php",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "The State select styled as the theme styles a select (custom-select)",
+   "http": 200,
+   "files": [
+    "p-01-checkout-state-field-desktop.png",
+    "p-01-checkout-state-field-mobile.png"
+   ],
+   "problems": [],
+   "console": [],
+   "textExcerpt": "Skip to main content airpay academy Dashboard My Courses Catalog My Cart Certificates Profile Dark Mode VP VP Public learner /77 Profile & Settings Log out Checkout Checkout Billing details Name * Email * Phone Address State * Select your state 01 - Jammu and Kashmir 02 - Himachal Pradesh 03 - Punja"
+  },
+  {
+   "name": "p-04-receipt-b2c-intra",
+   "url": "/local/sentientia_cart/receipt.php?id=20",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "The payment method reads \"Airpay\", not the gateway key \"airpay\"",
+   "http": 200,
+   "files": [
+    "p-04-receipt-b2c-intra-desktop.png",
+    "p-04-receipt-b2c-intra-mobile.png"
+   ],
+   "problems": [],
+   "console": [],
+   "textExcerpt": "Skip to main content airpay academy Dashboard My Courses Catalog My Cart Certificates Profile Dark Mode VP VP Public learner /77 Profile & Settings Log out Receipt for order #12 Payment receipt ORDER NUMBER: #12 STATUS: Partial refund PAID ON: 14 Oct 2026, 21:04 IST PAID BY: Asha Verma (TEST) (asha."
+  },
+  {
+   "name": "p-receipt-order-12.pdf",
+   "url": "/local/sentientia_cart/receipt.php?id=20&download=pdf",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "Receipt PDF: Refunds heading above its table, \"Tax invoice: <number>\", the credit notes listed",
+   "http": 200,
+   "pdf": true,
+   "bytes": 147636
+  },
+  {
+   "name": "p-12-einvoice-page",
+   "url": "/local/sentientia_cart/einvoice.php",
+   "persona": "vp_siteadmin (site admin)",
+   "shows": "One page title, no Site administration tab strip",
+   "http": 200,
+   "files": [
+    "p-12-einvoice-page-desktop.png",
+    "p-12-einvoice-page-mobile.png"
+   ],
+   "problems": [],
+   "console": [],
+   "textExcerpt": "Skip to main content airpay academy Dashboard Manage Users Manage Courses Course-share Requests Online Exams Classrooms Learning Paths Programs Reports Analytics Compliance Organisation Skills Notifications Evaluations Certificates Emails Privacy Site Admin Dark Mode VS VP Site admin Profile & Setti"
+  }
+ ]
+}

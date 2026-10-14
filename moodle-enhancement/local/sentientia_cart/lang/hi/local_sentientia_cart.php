@@ -456,3 +456,5 @@ $string['gst_state_37'] = 'आंध्र प्रदेश';
 $string['gst_state_38'] = 'लद्दाख';
 $string['gst_state_97'] = 'अन्य क्षेत्र';
 $string['error_einvoiceoff'] = 'जहाँ आप काम करते हैं वहाँ GST कर चालान बंद हैं, इसलिए यहाँ दर्ज करने के लिए कुछ नहीं है।';
+$string['gateway_name_airpay'] = 'Airpay';
+$string['gateway_name_manual'] = 'मैनुअल भुगतान';

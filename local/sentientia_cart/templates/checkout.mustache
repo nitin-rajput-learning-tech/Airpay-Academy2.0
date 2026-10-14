@@ -37,7 +37,7 @@
                     {{#show_state}}
                     <div class="mb-3">
                         <label class="form-label" for="billing_state">{{#str}}billingstate, local_sentientia_cart{{/str}} *</label>
-                        <select id="billing_state" name="billing_state" class="form-select" required>
+                        <select id="billing_state" name="billing_state" class="custom-select" required>
                             <option value="">{{#str}}billingstate_choose, local_sentientia_cart{{/str}}</option>
                             {{#states}}
                             <option value="{{ code }}"{{#selected}} selected{{/selected}}>{{ label }}</option>

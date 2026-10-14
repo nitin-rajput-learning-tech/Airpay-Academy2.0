@@ -181,6 +181,21 @@ final class receipts {
     }
 
     /**
+     * The payment method as the buyer reads it: the gateway's name string, or its key when there is none.
+     *
+     * @param string $gateway The gateway key stored on the order (airpay, manual).
+     * @return string
+     */
+    public static function gateway_label(string $gateway): string {
+        if ($gateway === '') {
+            return '';
+        }
+        $key = 'gateway_name_' . $gateway;
+        return get_string_manager()->string_exists($key, 'local_sentientia_cart')
+            ? get_string($key, 'local_sentientia_cart') : $gateway;
+    }
+
+    /**
      * The tax documents of an order that its buyer may see: the invoice (when it is issued), the credit notes that
      * are issued, and whether a tax invoice is still to come.
      *
@@ -286,7 +301,7 @@ final class receipts {
             'discount'        => $fmt($order->discount_amount),
             'tax'             => $fmt($tax),
             'total'           => $fmt($order->total_amount),
-            'gateway'         => (string) ($order->gateway ?? ''),
+            'gateway'         => self::gateway_label((string) ($order->gateway ?? '')),
             'gateway_ref'     => (string) ($order->gateway_ref ?? ''),
             'has_refunds'     => !empty($refunds),
             'refunds'         => $refunds,
