@@ -56,7 +56,9 @@ the buyer's own catalogue shows (`cart_manager::can_buy_course()`, ADR-031).
 | `local_sentientia_cart_history` | One row per cart/order (open → pending → paid/failed/refunded) |
 | `local_sentientia_cart_id` | Sequential order id reservation table |
 | `local_sentientia_cart_ledger` | Immutable INSERT-only payment events (payment_received, refund_full, refund_partial) |
-| `local_sentientia_cart_invoices` | GST-compliant invoices (per-year sequential numbering) |
+| `local_sentientia_cart_invoices` | GST tax invoices (gap-free `PREFIX-YYYY-NNNN` numbers from `local_sentientia_cart_docseq`; B2B ones wait for the e-invoice IRN) |
+| `local_sentientia_cart_creditnotes` | GST credit notes raised by refunds (CGST Act s.34), their own number series |
+| `local_sentientia_cart_docseq` | One counter row per number series (`AIRPAY-2026`); the gap-free allocator |
 | `local_sentientia_cart_credits` | Customer credits / wallet balance |
 | `local_sentientia_cart_credit_txn` | Credit bookings imported from BizLMS (frozen history, ADR-032) |
 
@@ -93,12 +95,62 @@ the buyer's own catalogue shows (`cart_manager::can_buy_course()`, ADR-031).
 | `our_gstn` | Company GSTN on invoices |
 | `company_name` | Issuer name on invoices |
 | `company_address` | Issuer address (multiline) |
-| `invoice_prefix` | E.g. `AIRPAY` → `AIRPAY-2026-0001` |
+| `invoice_prefix` | E.g. `AIRPAY` → `AIRPAY-2026-0001` (`ERPNEXT` is reserved for invoices imported from BizLMS) |
+| `sac_code` | SAC of the service. **Required, no default**: Finance confirms it |
+| `supplier_state_code` | GST state we supply from; blank = first two digits of `our_gstn` |
+| `credit_note_prefix` | Default `AIRCN` (see "GST tax invoices" below for why not `AIRPAYCN`) |
+| `series_period` | `calendar` (default) or `financial` (April to March, year = the year it starts) |
+| `einvoice_b2b` | Default yes: a buyer with a GSTIN needs an e-invoice IRN |
+| `invoice_retention_years` | Default 8: erasure blanks buyer details only on documents older than this |
+| `signatory_text` | Default "Authorised signatory" |
 
 ## Scheduled tasks
 
-None directly; relies on `sentientia_notifications` dispatcher for queued
+| Task | Schedule | Purpose |
+|---|---|---|
+| `local_sentientia_cart\task\issue_due_documents` | every 15 minutes | Issues every GST tax invoice and credit note still due; warns the site administrators once a day while the tax settings are incomplete |
+
+Order messages themselves rely on the `sentientia_notifications` dispatcher for queued
 messages.
+
+## GST tax invoices, credit notes and purchase receipts (1.2.0, 2026-10-14)
+
+Spec: `docs/integrations/GST-TAX-INVOICE-AND-RECEIPT-SPEC-2026-10-14.md`. Two feature flags, **both default OFF** (and
+resolved for the *order's* customer and tenant, not for whoever is logged in):
+
+- `sentientia.cart.gst_tax_invoices`: GST tax invoices and credit notes. While OFF **no invoice and no credit note is
+  issued** (the "hold" decision; before the flag an invoice was issued for every paid order). Invoices that already
+  exist stay viewable exactly as before (a row without a place of supply is drawn by the old template).
+- `sentientia.cart.purchase_receipts`: the buyer's receipt page and PDF, the Documents column of the order history,
+  and the receipt link in the order-paid message.
+
+How it works:
+
+- **The payment never depends on the invoice.** `mark_paid()` only marks the order `invoice_due` (flag ON) inside the
+  payment transaction. The invoice is issued after the commit, in its own transaction, by the same request; a failure
+  is logged (`debugging` plus `callback_logger`) and the 15-minute task retries. A refund works the same way for credit
+  notes (`credit_notes::after_refund()`).
+- **Numbers** (`docseq`): `UPDATE lastno = lastno + 1` on one row per series, inside the transaction that inserts the
+  document: the row lock serialises issuers and a rollback releases the number, so there are no gaps. Format
+  `PREFIX-YYYY-NNNN`, at most 16 characters (CGST Rule 46(b)); a longer one is refused and the document stays due. The
+  first allocation of a series starts after the highest existing number. Credit notes have their own prefix.
+  *Deviation from the spec:* the default credit note prefix is `AIRCN`, not `AIRPAYCN`, because `AIRPAYCN-2026-0001` is
+  18 characters and could never be issued.
+- **Place of supply and the split** (`gst`): CGST + SGST (each half of the tax, odd paisa to SGST) when the place of
+  supply is the supplier's state, else IGST. B2C: the buyer's state (checkout asks for it, a select of the GST state
+  codes 01 to 38 and 97, required while the invoice flag is ON). B2B: the state in the GSTIN, which must equal the chosen
+  state. Every figure is what the order recorded (`gst_rate` is stored with `tax_amount` when the totals are computed).
+- **B2B and the e-invoice IRN** (`einvoice`, `einvoice.php`): a document for a buyer with a GSTIN is numbered but
+  `awaiting_irn` and hidden from the buyer; Finance (capability `local/sentientia_cart:manageinvoices`, no archetype)
+  registers it on the government portal and records the IRN, acknowledgement and signed QR here. Sentientia has no IRP
+  connection. The QR is drawn with `core_qrcode`.
+- **Documents**: `invoice.php`, `creditnote.php`, `receipt.php` (HTML, and `&download=pdf`). PDFs use Moodle's `pdf`
+  class, A4, and are always in English (TCPDF cannot shape Devanagari); the HTML follows the viewer's language.
+- **Privacy**: erasure keeps a document younger than `invoice_retention_years` unchanged and blanks the buyer's
+  name, e-mail, phone, address and GSTIN on an older one; export gives every invoice, credit note and receipt.
+
+Before either flag goes on, Airpay Finance confirms section 10 of the spec: the GSTIN, the SAC code, the series, the
+IRN, the B2C QR, the retention period, the digital signature.
 
 ## Phase 8.1 security hardening
 

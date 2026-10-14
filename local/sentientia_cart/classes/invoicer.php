@@ -209,7 +209,9 @@ class invoicer {
                 'gst_rate'        => $calc['rate'],
                 'supplier_json'   => doc_view::supplier_snapshot(),
             ];
-            $invoice->id = $DB->insert_record('local_sentientia_cart_invoices', $invoice);
+            $invoiceid = $DB->insert_record('local_sentientia_cart_invoices', $invoice);
+            // The stored row, so every caller sees every column (irn, ack_no, ... are null until recorded).
+            $invoice = $DB->get_record('local_sentientia_cart_invoices', ['id' => $invoiceid], '*', MUST_EXIST);
             $DB->set_field('local_sentientia_cart_history', 'invoice_due', 0, ['id' => $cart->id]);
             $transaction->allow_commit();
         } catch (\Throwable $e) {

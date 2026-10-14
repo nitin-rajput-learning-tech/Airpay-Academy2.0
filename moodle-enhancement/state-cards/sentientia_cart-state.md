@@ -1,7 +1,7 @@
 # State Card — `local_airpay_cart`
 
 **Component:** `local_airpay_cart`
-**Version:** `2026100701` / `1.1.1`  (was `2026052001` / `1.0.2` when this card was first written; see the dated sections below)
+**Version:** `2026101400` / `1.2.0`  (GST tax invoices, credit notes and purchase receipts, 2026-10-14; was `2026052001` / `1.0.2` when this card was first written; see the dated sections below)
 **Maturity:** `MATURITY_STABLE`
 **Status:** Live on airpay.academy. Course-commerce + invoicing.
 **Last refreshed:** 2026-10-07 (owner decisions, finance cluster: finance keys declared, withheld-line refund amounts, notifier in the recipient's language, dev masking; catalogue price source in the catalog card)

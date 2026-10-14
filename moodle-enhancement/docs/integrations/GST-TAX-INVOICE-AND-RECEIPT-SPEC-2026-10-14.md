@@ -1,5 +1,13 @@
 # GST tax invoices, credit notes and purchase receipts (local_sentientia_cart) - spec, 2026-10-14
 
+**Status (2026-10-14): sections 2 to 9 and 11 are BUILT** on branch `claude/gst-invoices` (plugin `local_sentientia_cart`
+1.2.0, version 2026101400, both trees), with both flags OFF. Not yet done: Airpay Finance's confirmations (section 10) and the
+visual evidence (section 11, "Afterwards"). Deviations from this spec, and why, are listed in
+`state-cards/sentientia_cart-state.md` (section "2026-10-14 - GST tax invoices"): the default `credit_note_prefix` is `AIRCN`
+because `AIRPAYCN-2026-0001` is 18 characters and over the 16-character limit of section 4; the checkout state field is shown
+and required only while the invoice flag is ON; the supplier is frozen on each document (`supplier_json`); PDFs are always
+in English.
+
 **Why:** Nitin, 2026-10-14 (OWNER-DECISIONS section 11, Q6): "build the GST invoice mechanism, course purchase receipt
 for buyers". Sentientia issues the GST tax invoice for LMS course sales (Q6 point 1). Points 2 to 6 (GSTIN, series,
 credit notes, e-invoice IRN, retention) are settings with conservative defaults. **Both flags stay OFF until Airpay
