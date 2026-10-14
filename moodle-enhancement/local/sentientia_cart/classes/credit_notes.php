@@ -43,15 +43,34 @@ final class credit_notes {
      */
     public static function after_refund(\stdClass $cart, float $amount, int $ledgerid, string $reason): void {
         global $DB;
+        if ($DB->is_transaction_started()) {
+            // Inside a caller's transaction a failure here would roll the refund back with it. issue_due() raises the
+            // credit note of every refund that has none, so the task picks this one up.
+            return;
+        }
         try {
             $cn = self::create_due($cart, $amount, $ledgerid, $reason);
-            if ($cn && !$DB->is_transaction_started()) {
+            if ($cn) {
                 self::issue((int) $cn->id);
             }
         } catch (\Throwable $e) {
-            debugging('local_sentientia_cart: credit note for the refund of order ' . ($cart->orderid ?? '?')
-                . ' not issued: ' . get_class($e) . ': ' . $e->getMessage(), DEBUG_DEVELOPER);
+            self::log_failure($cart, $e);
         }
+    }
+
+    /**
+     * Log a credit note that could not be raised or issued: debugging plus the callback log, with no personal data
+     * (as cart_manager does for invoices). The task retries it.
+     *
+     * @param \stdClass $cart The order.
+     * @param \Throwable $e
+     * @return void
+     */
+    private static function log_failure(\stdClass $cart, \Throwable $e): void {
+        debugging('local_sentientia_cart: credit note for the refund of order ' . ($cart->orderid ?? '?')
+            . ' not issued: ' . get_class($e) . ': ' . $e->getMessage(), DEBUG_DEVELOPER);
+        callback_logger::log('credit_note_failed', ['orderid' => (int) ($cart->orderid ?? 0),
+            'exception' => get_class($e), 'message' => $e->getMessage()], '');
     }
 
     /**
@@ -104,8 +123,18 @@ final class credit_notes {
 
         $transaction = $DB->start_delegated_transaction();
         try {
-            // Lock the invoice, so two refunds of one order cannot both pass the limit.
-            $DB->set_field('local_sentientia_cart_invoices', 'status', $invoice->status, ['id' => $invoice->id]);
+            // Lock the invoice, so two refunds of one order cannot both pass the limit. A no-op UPDATE takes the row
+            // lock without writing back the status read before it (Finance may have recorded the IRN meanwhile).
+            $DB->execute('UPDATE {local_sentientia_cart_invoices} SET status = status WHERE id = :id', ['id' => $invoice->id]);
+            $invoice = $DB->get_record('local_sentientia_cart_invoices', ['id' => $invoice->id], '*', MUST_EXIST);
+            if ($ledgerid > 0) {
+                // Look again under the lock: the refund request and the task may both have got here for one refund.
+                $existing = $DB->get_record('local_sentientia_cart_creditnotes', ['ledgerid' => $ledgerid]);
+                if ($existing) {
+                    $transaction->allow_commit();
+                    return $existing;
+                }
+            }
             $earlier = self::credited_so_far((int) $invoice->id);
             $remaining = gst::to_paise($invoice->total) - $earlier['total'];
             $amountp = gst::to_paise($amount);
@@ -221,8 +250,10 @@ final class credit_notes {
 
         $transaction = $DB->start_delegated_transaction();
         try {
-            // Lock the row, then look again: the other issuer may have numbered it while this one waited.
-            $DB->set_field('local_sentientia_cart_creditnotes', 'status', self::STATUS_DUE, ['id' => $cn->id]);
+            // Lock the row, then look again: the other issuer may have numbered it while this one waited. A no-op
+            // UPDATE takes the row lock without writing anything; writing 'due' here put an issued note back to due
+            // and had it numbered twice, a gap in the series (review 2026-10-14, must-fix 1).
+            $DB->execute('UPDATE {local_sentientia_cart_creditnotes} SET status = status WHERE id = :id', ['id' => $cn->id]);
             $cn = $DB->get_record('local_sentientia_cart_creditnotes', ['id' => $id], '*', MUST_EXIST);
             if ($cn->status !== self::STATUS_DUE) {
                 $transaction->allow_commit();
@@ -250,6 +281,32 @@ final class credit_notes {
     public static function issue_due(): array {
         global $DB;
         $result = ['issued' => 0, 'skipped' => 0, 'failed' => 0, 'causes' => []];
+
+        // Refunds of an invoiced order that have no credit note yet: a create_due() that failed, or one skipped
+        // because the refund ran inside a caller's transaction. create_due() decides; with the flag OFF it does nothing.
+        $sql = "SELECT DISTINCT i.id
+                  FROM {local_sentientia_cart_invoices} i
+                  JOIN {local_sentientia_cart_ledger} l ON l.historyid = i.historyid
+             LEFT JOIN {local_sentientia_cart_creditnotes} c ON c.ledgerid = l.id
+                 WHERE c.id IS NULL
+                   AND " . $DB->sql_like('l.event_type', ':ev', true, true) . "
+                   AND i.status IN (:issued, :awaiting)
+                   AND i.place_of_supply IS NOT NULL AND i.place_of_supply <> :empty";
+        $params = ['ev' => $DB->sql_like_escape('refund_') . '%', 'issued' => invoicer::STATUS_ISSUED,
+            'awaiting' => invoicer::STATUS_AWAITING_IRN, 'empty' => ''];
+        foreach ($DB->get_fieldset_sql($sql, $params) as $invoiceid) {
+            try {
+                $invoice = $DB->get_record('local_sentientia_cart_invoices', ['id' => (int) $invoiceid], '*', MUST_EXIST);
+                self::create_missing_for_invoice($invoice);
+            } catch (\Throwable $e) {
+                $result['failed']++;
+                $cause = invoicer::cause_of($e);
+                $result['causes'][md5(serialize($cause))] = $cause;
+                debugging('local_sentientia_cart: the credit notes of invoice ' . (int) $invoiceid . ' not raised: '
+                    . get_class($e) . ': ' . $e->getMessage(), DEBUG_DEVELOPER);
+            }
+        }
+
         $ids = $DB->get_fieldset_select('local_sentientia_cart_creditnotes', 'id', 'status = :s', ['s' => self::STATUS_DUE]);
         sort($ids);
         foreach ($ids as $id) {

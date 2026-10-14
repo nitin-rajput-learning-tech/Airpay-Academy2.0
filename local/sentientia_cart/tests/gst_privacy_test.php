@@ -132,6 +132,9 @@ final class gst_privacy_test extends provider_testcase {
         global $DB;
         $buyer = $this->user_at('/77');
         [, $invoice, $cn] = $this->documents($buyer, $this->years_ago(9));
+        // As if Finance had recorded the IRN: the portal's signed QR (a JWT that carries the buyer's GSTIN).
+        $DB->set_field('local_sentientia_cart_invoices', 'signed_qr', 'eyJhbGciOiJSUzI1NiJ9.e30.sig', ['id' => $invoice->id]);
+        $DB->set_field('local_sentientia_cart_creditnotes', 'signed_qr', 'eyJhbGciOiJSUzI1NiJ9.e30.sig', ['id' => $cn->id]);
 
         provider::delete_data_for_user($this->contextlist($buyer));
 
@@ -139,6 +142,12 @@ final class gst_privacy_test extends provider_testcase {
         $this->assert_buyer_details_blanked($old, 'a 9 year old invoice is past its retention period');
         $this->assert_buyer_details_blanked($DB->get_record('local_sentientia_cart_creditnotes', ['id' => $cn->id]),
             'and so is its credit note');
+        // Review 2026-10-14, should-fix 7: the signed QR carries the buyer's GSTIN, and a credit note's reason is
+        // free text, so both go with the buyer details.
+        $this->assertNull($old->signed_qr);
+        $oldcn = $DB->get_record('local_sentientia_cart_creditnotes', ['id' => $cn->id]);
+        $this->assertNull($oldcn->signed_qr);
+        $this->assertNull($oldcn->reason);
         // The tax facts stay: the number, the amounts, the place of supply.
         $this->assertSame($invoice->invoice_number, $old->invoice_number);
         $this->assertEquals($invoice->total, $old->total);

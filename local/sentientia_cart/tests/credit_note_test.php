@@ -284,4 +284,26 @@ final class credit_note_test extends \advanced_testcase {
             $this->assert_refused(fn() => credit_notes::require_view_access($cn, (int) $no->id), 'error_outoftenant');
         }
     }
+
+    public function test_a_refund_inside_a_callers_transaction_gets_its_credit_note_from_the_task(): void {
+        global $DB;
+        // Review 2026-10-14, should-fix 4: inside an outer transaction the refund raises no credit note (a failure
+        // there would roll the refund back with it); the task finds the refund without one and raises it.
+        [$order] = $this->invoiced();
+        $transaction = $DB->start_delegated_transaction();
+        $this->assertTrue(cart_manager::refund((int) $order->id, 0, 'Inside a transaction', (int) get_admin()->id));
+        $transaction->allow_commit();
+        $this->assertCount(0, $this->credit_notes_of((int) $order->id), 'nothing raised inside the transaction');
+
+        $this->expectOutputRegex('/credit notes issued=1/');
+        (new task\issue_due_documents())->execute();
+        $notes = $this->credit_notes_of((int) $order->id);
+        $this->assertCount(1, $notes);
+        $this->assertSame('issued', $notes[0]->status);
+        $this->assertEqualsWithDelta(1180.00, (float) $notes[0]->total, 0.001);
+
+        // A second run finds nothing more to raise: one credit note per refund.
+        (new task\issue_due_documents())->execute();
+        $this->assertCount(1, $this->credit_notes_of((int) $order->id));
+    }
 }

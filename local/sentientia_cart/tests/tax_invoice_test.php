@@ -208,14 +208,35 @@ final class tax_invoice_test extends \advanced_testcase {
         $this->assertEqualsWithDelta(90.00, (float) $invoice->cgst, 0.001);
     }
 
-    public function test_the_supplier_state_setting_overrides_the_gstin_prefix(): void {
+    public function test_the_supplier_state_is_the_one_in_our_gstin(): void {
         $this->flag(flags::INVOICES, true);
-        $this->configure_tax(['supplier_state_code' => '29']);   // supplies are made from Karnataka
+        // Supplies made from Karnataka: the GSTIN starts 29, so a Karnataka buyer is intra-state.
+        $this->configure_tax(['our_gstn' => '29AAAAA0000A1Z5']);
         $inkarnataka = invoicer::issue_for_order($this->paid_order_for($this->user_at('/77'), ['billing_state' => '29']));
         $this->assertEqualsWithDelta(90.00, (float) $inkarnataka->cgst, 0.001);
         $this->assertEqualsWithDelta(0.00, (float) $inkarnataka->igst, 0.001);
         $inmaharashtra = invoicer::issue_for_order($this->paid_order_for($this->user_at('/77'), ['billing_state' => '27']));
         $this->assertEqualsWithDelta(180.00, (float) $inmaharashtra->igst, 0.001);
+    }
+
+    public function test_a_supplier_state_setting_that_disagrees_with_our_gstin_refuses_to_start(): void {
+        global $DB;
+        // Review 2026-10-14, should-fix 6: a Maharashtra GSTIN with the state set to Karnataka would print one state
+        // and split the tax by the other.
+        $this->flag(flags::INVOICES, true);
+        $this->configure_tax(['supplier_state_code' => '29']);   // our_gstn starts 27
+        $this->assertContains('supplier_state', gst_settings::problems());
+        $this->assert_refused(fn() => invoicer::issue_for_order($this->paid_order_for($this->user_at('/77'))),
+            'error_invoicesettings', 'nothing is issued while the two disagree');
+        $this->assertSame(0, $DB->count_records('local_sentientia_cart_invoices'));
+
+        $this->configure_tax(['supplier_state_code' => '27']);   // the same state as the GSTIN: fine
+        $this->assertSame([], gst_settings::problems());
+    }
+
+    public function test_our_gstin_must_be_a_gstin(): void {
+        $this->configure_tax(['our_gstn' => '27-NOT-A-GSTIN']);
+        $this->assertContains('our_gstn', gst_settings::problems());
     }
 
     public function test_the_figures_are_what_the_order_recorded_not_todays_rate(): void {
@@ -582,5 +603,16 @@ final class tax_invoice_test extends \advanced_testcase {
         $this->assert_refused(fn() => invoicer::issue_for_order($order), 'error_invalidstate',
             'ERPNEXT is the prefix of an imported invoice');
         $this->assertFalse($this->invoice_of((int) $order->id), 'nothing was issued');
+    }
+
+    public function test_the_einvoice_page_follows_the_invoice_flag(): void {
+        // Review 2026-10-14, should-fix 5: while the flag is OFF everywhere a site administrator gets neither the
+        // e-invoice button nor the page.
+        $admin = (int) get_admin()->id;
+        $this->paid_order_for($this->user_at('/77'));
+        $this->flag(flags::INVOICES, false);
+        $this->assertFalse(flags::invoices_for_viewer($admin), 'OFF everywhere');
+        $this->flag(flags::INVOICES, true, 77);
+        $this->assertTrue(flags::invoices_for_viewer($admin), 'ON for a tenant that has orders');
     }
 }

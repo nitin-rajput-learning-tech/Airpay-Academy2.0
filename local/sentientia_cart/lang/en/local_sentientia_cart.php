@@ -446,3 +446,4 @@ $string['gst_state_36'] = 'Telangana';
 $string['gst_state_37'] = 'Andhra Pradesh';
 $string['gst_state_38'] = 'Ladakh';
 $string['gst_state_97'] = 'Other Territory';
+$string['error_einvoiceoff'] = 'GST tax invoices are switched off wherever you work, so there is nothing to record here.';

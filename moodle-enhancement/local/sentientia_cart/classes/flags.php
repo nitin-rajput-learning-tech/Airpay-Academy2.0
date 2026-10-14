@@ -67,6 +67,31 @@ final class flags {
     }
 
     /**
+     * Is the invoice flag ON anywhere this viewer works: their own tenant root, and, for a site administrator or a
+     * cross-tenant holder, every tenant root that has orders? Gates the e-invoice (IRN) page and its button, so a
+     * site administrator sees neither while the flag is OFF everywhere (review 2026-10-14, should-fix 5).
+     *
+     * @param int $userid
+     * @return bool
+     */
+    public static function invoices_for_viewer(int $userid): bool {
+        global $DB;
+        $user = \core_user::get_user($userid);
+        if ($user && self::enabled_for_tenant(self::INVOICES, cart_manager::get_tenant_root($user))) {
+            return true;
+        }
+        if (!is_siteadmin($userid) && !\local_sentientia_platform\tenant::is_cross_tenant($userid)) {
+            return false;
+        }
+        foreach ($DB->get_fieldset_sql('SELECT DISTINCT costcenterid FROM {local_sentientia_cart_history}') as $root) {
+            if (self::enabled_for_tenant(self::INVOICES, (int) $root)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * The customer a tenant root belongs to: the registry's answer when the tenant registry is live, else Airpay.
      *
      * @param int $root

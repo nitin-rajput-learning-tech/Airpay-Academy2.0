@@ -186,7 +186,9 @@ order-paid notification links the receipt while the receipt flag is ON.
 
 1. The GSTIN for `our_gstn` and the supplier state.
 2. The SAC code.
-3. The series: prefixes, `calendar` or `financial`.
+3. The series: prefixes, `calendar` or `financial`. A number has at most 16 characters, so the default prefix `AIRPAY`
+   allows 9,999 invoices in a series (`AIRPAY-2026-10000` is 17 characters; invoicing stops and the admins are
+   warned). A shorter prefix allows more; credit notes use `AIRCN` for the same reason.
 4. Whether B2B needs the IRN (aggregate turnover above INR 5 crore: yes), and who records it.
 5. Whether a B2C dynamic QR is required (turnover above INR 500 crore). It is not built; say so if it is needed.
 6. The retention period.

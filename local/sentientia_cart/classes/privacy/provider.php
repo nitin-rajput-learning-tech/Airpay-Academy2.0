@@ -406,15 +406,21 @@ class provider implements
                              billing_email = '',
                              billing_phone = '',
                              billing_address = '',
-                             billing_gstn = ''
+                             billing_gstn = '',
+                             signed_qr = NULL
                        WHERE status <> :legacy AND timecreated < :cutoff$user",
             ['legacy' => \local_sentientia_cart\imported_history::INVOICE_STATUS] + $params);
+        // The signed QR is the portal's JWT, which carries the buyer's GSTIN; a credit note's reason is free text
+        // (review 2026-10-14, should-fix 7). The IRN and the acknowledgement number identify the government record
+        // and stay.
         $DB->execute("UPDATE {local_sentientia_cart_creditnotes}
                          SET billing_name = '(redacted)',
                              billing_email = '',
                              billing_phone = '',
                              billing_address = '',
-                             billing_gstn = ''
+                             billing_gstn = '',
+                             signed_qr = NULL,
+                             reason = NULL
                        WHERE timecreated < :cutoff$user",
             $params);
     }
@@ -442,10 +448,15 @@ class provider implements
      * Redact PII for one user. Ledger + invoice numbers preserved for audit.
      * Billing details, items snapshot get blanked.
      */
-    private static function redact_for_user(int $userid): void {
+    /**
+     * Blank the buyer details of one order (not an import). The invoicer calls it after issuing the invoice of an
+     * order whose buyer has been deleted meanwhile: the order kept the details only for that invoice.
+     *
+     * @param int $historyid
+     * @return void
+     */
+    public static function redact_order(int $historyid): void {
         global $DB;
-        // An order imported from BizLMS carries no billing details and its notes are import facts (legacy ids,
-        // never personal), so it is left as it is: it is frozen history (ADR-032).
         $DB->execute("UPDATE {local_sentientia_cart_history}
                          SET billing_name = '(redacted)',
                              billing_email = '',
@@ -454,7 +465,37 @@ class provider implements
                              billing_gstn = '',
                              billing_state = NULL,
                              notes = ''
-                       WHERE userid = :uid AND legacy_source IS NULL",
+                       WHERE id = :id AND legacy_source IS NULL AND invoice_due = 0",
+            ['id' => $historyid]);
+    }
+
+    private static function redact_for_user(int $userid): void {
+        global $DB;
+        // An order imported from BizLMS carries no billing details and its notes are import facts (legacy ids,
+        // never personal), so it is left as it is: it is frozen history (ADR-032).
+        // A paid order whose tax invoice is still due: issue it now, while the order still holds the buyer details
+        // the invoice needs (review 2026-10-14, should-fix 7). One that still cannot be issued (incomplete settings)
+        // keeps them until it is; invoicer::issue_for_order() then blanks the order if the buyer has been deleted.
+        // Never inside a caller's transaction: a failed issue would roll the whole erasure back with it.
+        if (!$DB->is_transaction_started()) {
+            foreach ($DB->get_records('local_sentientia_cart_history', ['userid' => $userid, 'invoice_due' => 1]) as $due) {
+                try {
+                    \local_sentientia_cart\invoicer::issue_for_order($due);
+                } catch (\Throwable $e) {
+                    debugging('local_sentientia_cart: the due invoice of order ' . (int) $due->orderid
+                        . ' could not be issued before erasure: ' . $e->getMessage(), DEBUG_DEVELOPER);
+                }
+            }
+        }
+        $DB->execute("UPDATE {local_sentientia_cart_history}
+                         SET billing_name = '(redacted)',
+                             billing_email = '',
+                             billing_phone = '',
+                             billing_address = '',
+                             billing_gstn = '',
+                             billing_state = NULL,
+                             notes = ''
+                       WHERE userid = :uid AND legacy_source IS NULL AND invoice_due = 0",
             ['uid' => $userid]);
         // GST tax documents (2026-10-14): kept unchanged while they are inside the retention period (the law requires
         // it), blanked once they are older. Until then the order history above is redacted but the invoice is not.

@@ -26,6 +26,10 @@ $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('einvoice_title', 'local_sentientia_cart'));
 $PAGE->set_heading(get_string('einvoice_title', 'local_sentientia_cart'));
 require_capability('local/sentientia_cart:manageinvoices', $ctx);
+if (!\local_sentientia_cart\flags::invoices_for_viewer((int) $USER->id)) {
+    // GST tax invoices are OFF wherever this viewer works: there is nothing to record (review 2026-10-14, should-fix 5).
+    throw new moodle_exception('error_einvoiceoff', 'local_sentientia_cart');
+}
 
 $self = new moodle_url('/local/sentientia_cart/einvoice.php');
 

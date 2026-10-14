@@ -160,13 +160,19 @@ final class gst_settings {
         if (self::company_address() === '') {
             $problems[] = 'company_address';
         }
-        if (self::our_gstn() === '') {
+        // Our GSTIN must be a GSTIN, and a supplier state set by hand must be the one the GSTIN says: otherwise every
+        // invoice would print one state and split the tax by another (review 2026-10-14, should-fix 6).
+        $gstin = gst::normalise_gstin(self::our_gstn());
+        if ($gstin === '' || !gst::is_gstin_format($gstin)) {
             $problems[] = 'our_gstn';
         }
         if (self::sac_code() === '') {
             $problems[] = 'sac_code';
         }
-        if (self::supplier_state() === '') {
+        $state = self::supplier_state();
+        $configured = trim(self::text('supplier_state_code'));
+        if ($state === '' || ($configured !== '' && gst::is_gstin_format($gstin)
+                && $configured !== gst_states::from_gstin($gstin))) {
             $problems[] = 'supplier_state';
         }
         return $problems;
