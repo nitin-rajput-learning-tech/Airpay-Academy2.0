@@ -1,7 +1,87 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-10-10 (**Moodle 5.3 post-import parity gate on the April production copy: everything the import wrote is explained, legacy tables untouched, only drift the FNS0001 survey; 5.3 PHPUnit 2,022 tests + local 5.1 2,403 tests, every failure a test defect, all fixed; claude/stageb-tools merged (platform 2026100902); see the 2026-10-08 to 10-10 section**) **Previous:** 2026-10-08 (Moodle 5.3 real-data rehearsal PASS, FX-01 to FX-23 merged)
+**Updated:** 2026-10-15 (**GST tax invoices, credit notes and receipts built, reviewed, tested (333) and evidenced on claude/gst-invoices: ready for Nitin's visual review; Nitin's 2026-10-14 answers recorded (decisions file re-approved); Stage B kit and feature-flag reset merged; see the 2026-10-14 / 10-15 section**) **Previous:** 2026-10-10 (Moodle 5.3 post-import parity gate on the April production copy)
 
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
+
+---
+
+## 2026-10-14 / 10-15 - Owner answers recorded, GST invoices built, Stage B kit and feature-flag reset merged (Opus 5.5)
+
+**Merged to gap-integration:**
+- 13373bd27 and 001539d88: the Stage B kit, rounds 8 to 9b plus the selftest TMPDIR guard. Selftest 515/515.
+- 47400b13d: `feature-flags-di-reset`, platform 2026100903.
+  - Moodle 5.3: platform suite 586 OK.
+  - 5.1: the 57 flag-writing test files (785 tests) OK; the platform suite 585/586, the one error an antivirus
+    rename lock that passes on re-run.
+- Follow-ups:
+  - 63092e500 the operator note on the 30 s flag delay;
+  - 0438327fa the notifications dedupe decision;
+  - 3f81a08b3 SITEID rule 4.
+- The 5.3 scssphp warning is explained (core scssphp, on the first compile after a purge) and left as a warning.
+
+**Nitin's answers** (2026-10-14; OWNER-DECISIONS section 11; NITIN-DECISION-BRIEF-2026-10-14.md):
+- The decisions file was re-approved: sha256 976394aa..., with `accepted_reasons` for the three April skip counts.
+- D1: the FNS0001 survey loss is accepted.
+- Q1: nobody beyond the site admins.
+- Q3: `run_rules` stays OFF.
+- Q5(a): the INR 10 sale was a test payment.
+- Q12: airpay_ratings deleted (e9c9dd824).
+- Q13: the old commit was purged locally.
+- Q14: `fold_reviewed`.
+- IT is asked after development is done.
+- Still open: Q8, Q9-Q11 (reader flags at cutover), Finance's seven points.
+
+**GST tax invoices, credit notes and purchase receipts:** branch `claude/gst-invoices`, head 30a424451, cart 1.2.0
+(2026101400). **READY FOR NITIN'S VISUAL REVIEW; not merged.**
+- Spec: `docs/integrations/GST-TAX-INVOICE-AND-RECEIPT-SPEC-2026-10-14.md`. Built by a Sonnet builder; reviewed
+  read-only by Opus (fix-then-ship, 1 must-fix and 6 should-fix, all fixed in 771f086a1); an erasure point from the
+  automated security review fixed in 23c06e18c.
+- Cart suite on XAMPP 5.1: 333 tests green.
+- Evidence: `docs/visual-evidence/2026-10-14/gst/` on the branch (48 PNGs, PDFs, README). Four pages were re-captured
+  after the polish fixes (30a424451).
+- Both flags are OFF. Before either goes on, Airpay Finance confirms spec section 10: GSTIN, SAC, series (the
+  `AIRPAY` prefix allows 9,999 invoices a series), IRN, B2C QR, retention and signature.
+- Local XAMPP keeps TEST cart settings (company name, GSTIN 27AAAAA0000A1Z5, SAC 999293); the README lists the
+  originals.
+
+**EV-18:** f93f9519b, evidence in `docs/visual-evidence/2026-10-14/ev18/`. `learner_history` was ON for /77 during the
+capture and is OFF again.
+
+**Moodle 5.3 UI-change evidence** (39216b0f8, 463f42084; `docs/visual-evidence/2026-10-08/moodle53/README.md`):
+- Captured on local 5.1: items 1-5, 7-10, 13, 16-19, and half of 14 and 15.
+- Not captured:
+  - item 6: the enrol page redirects the Public learner;
+  - items 11 and 12: no safe local data;
+  - the block-controls halves of 14 and 15.
+- Item 10 shows "weeks": the XAMPP copy of `admin/tool/certificate/classes/certificate.php` lacks the FX-07 core-mod
+  fix, so the local core is out of sync with the repo.
+- Still owed: the same shots on 5.2 and 5.3 runtimes.
+
+**`claude/eval-followups`** (reviewed ship, held for screenshots): its base is 183 commits behind gap-integration.
+Merging gap-integration into it conflicts in 7 files per tree: evaluation `exportcsv.php` and `version.php`; platform
+`version.php`, `db/upgrade.php`, `classes/bizlms/decisions.php` and `tests/capability_names_test.php`; both state
+cards. It must be updated before it can be deployed and screenshotted.
+
+**UI findings of the visual pass, older than this work (for Nitin to prioritise; not fixed):**
+- **Cart:** no template renders the admin **Refund** trigger (`data-action="refund-order"`). The order history
+  "Placed" column shows when the cart was opened, the raw `partial_refund` status, and totals without ₹.
+- **E-mail editor:** the live preview is blank on first load (`srcdoc` cut at the first double quote, 22 characters),
+  and the editor is 16 px too wide.
+- **Dropdowns** that carry only the Bootstrap 5 `data-bs-toggle` do not open in this Bootstrap 4.6 theme (for
+  example the certificate templates row menu).
+- **Edit mode:** the switch renders as a bare checkbox. For the course-author persona, edit mode does not survive a
+  page load (needs one manual check), and the course editor throws two JS errors and shows no editing controls.
+- **Requests:** no template renders the learner's "Request enrolment" button. The line manager is routed as approver
+  without `:approve`.
+- **Skills:** the self-rate "pick a level" warning never shows. A skill category and an org name show double-escaped
+  `&amp;amp;`.
+- **My evaluations:** the page has no visible title, and its Date column means the deadline for waiting and closed
+  rows without saying so.
+
+**Machinery:**
+- Resume protocol: `D:/Claude Local/HANDOFF-2026-10-14.md`.
+- Heartbeat: `D:/Claude Local/.sentientia-resume.json`.
+- Scheduled task "Sentientia: resume pending work", hourly; it switches itself off when the heartbeat says done.
 
 ---
 
