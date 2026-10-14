@@ -54,13 +54,15 @@
 - 474c576f1 `claude/stageb-tools`: post-import parity gate, standalone source baseline (metrics v4), rehearsal kit to
   round 7. local_sentientia_platform is now 2026100902 / 1.12.0.
 - Fixes: 11e007cd2, 98548225b, 4ee8632f0, 20053b5fb, 8a9743c65.
-- **Pending merge:** `claude/feature-flags-di-reset` (762a717c0, local only; platform 2026100903). feature_flags keeps
-  its registry and override snapshot in a \core\di object, so PHPUnit's per-test container reset clears it; production
-  lifetime and the 30 s TTL are unchanged. Reviewed 2026-10-14: sound (core\di autowires in 5.1 and 5.3; both trees
-  match). The other session's suite was cut at 537/586 when it stopped (10-10 07:35), so it had no result. Under test
-  2026-10-14: XAMPP 5.1 runs the 57 test files that write flags plus the platform suite
-  (`D:/Claude Local/ffreset-check/progress.txt`); 5.3 runs re-init, the per-test reset test and the platform suite
-  (`r53f/gate_progress.txt`, "ffreset53"). Merge when green.
+- 47400b13d `claude/feature-flags-di-reset` (2026-10-14; platform 2026100903, no schema change). feature_flags keeps
+  its registry and override snapshot in a \core\di object, so PHPUnit's per-test container reset clears it and a flag
+  one test switched on no longer leaks into the next. Production lifetime and the 30 s TTL are unchanged.
+  - Moodle 5.3: per-test reset test 2/2; platform suite OK, 586 tests.
+  - Moodle 5.1 (XAMPP): all 57 test files that write flags (31 plugins, 785 tests) OK. The full 5.1 platform suite
+    was still running as extra confirmation (`D:/Claude Local/ffreset-check/progress.txt`).
+- The 5.3 stage tree (`moodle53-stage/20261009-190307-5.3`) carries every code change up to 47400b13d, and `r53_final`
+  was upgraded to platform 2026100903 (version only). The post-import gate was not re-run: nothing it exercises
+  changed. The next 5.3 package for UAT or Stage B is built from 47400b13d or later.
 
 **Stage B kit (`claude/stageb-tools`), merged again 2026-10-14 as 13373bd27:**
 - Round 8 (502abefa2, 465/465) added:
@@ -104,6 +106,10 @@
 - Legacy 'sending' rows on UAT: time the fold there.
 - A unique-constraint ADR for the notifications dedupe.
 - The feature-flag TTL note for operators (30 s).
+- The kit selftest's own env fixture breaks when TMPDIR contains a space (test only).
+- Moodle 5.3 upgrade prints one scssphp warning (`Array to string conversion`, Compiler.php:927, an `@extend` on a
+  nested selector) while it compiles the theme; it was there before 2026-10-14 and the CSS compiles. Find the
+  `@extend` that triggers it.
 
 ---
 
