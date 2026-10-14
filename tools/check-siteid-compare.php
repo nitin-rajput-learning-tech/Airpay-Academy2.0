@@ -47,6 +47,11 @@
  *   3. strict-match     SITEID as a whole match arm condition (`match ($x) { SITEID => ... }`)
  *                         or as the match subject (`match (SITEID) { 1 => ... }`):
  *                         match compares the subject with every arm using `===`
+ *   4. uncast-value     SITEID, with no cast, as a whole value that leaves its expression:
+ *                         `$s = SITEID;` (also a property or a parameter default),
+ *                         `return SITEID;`, `yield SITEID`, `$x ?? SITEID`, `$a ? SITEID : 0`,
+ *                         `$a ? 0 : SITEID`. Write `(int) SITEID` there (2026-10-14; it closes
+ *                         the KNOWN LIMIT below for every form listed).
  *
  * WHICH CAST IS ENOUGH
  * --------------------
@@ -81,11 +86,14 @@
  * anti-pattern (this docblock does) is never flagged.
  *
  * KNOWN LIMIT: it follows the constant where it stands as the operand, not the
- * value it carries. `$s = SITEID; $x === $s` and `($a ? SITEID : 0) === $x`
- * are invisible to it. Cast at the comparison; do not stash SITEID in a
- * variable first. A match arm is judged only when SITEID is the whole arm
- * condition; `match (true) { SITEID == $x => ... }` is a loose comparison inside
- * a boolean and is not flagged.
+ * value it carries. Rule 4 makes the value carry its cast, so `$s = SITEID;
+ * $x === $s` and `($a ? SITEID : 0) === $x` are flagged where SITEID leaves
+ * uncast. Still invisible: SITEID as an array ELEMENT that is compared later
+ * (`$ids = [SITEID]; in_array($x, $ids, true)`) and SITEID passed as an
+ * argument to a function that compares strictly inside; flagging those would
+ * flag every SQL parameter array and every call. A match arm is judged only
+ * when SITEID is the whole arm condition; `match (true) { SITEID == $x => ... }`
+ * is a loose comparison inside a boolean and is not flagged.
  *
  * SCOPE
  * -----
@@ -681,6 +689,34 @@ $assertother = static function (array $sig, array $args, int $start, int $end) u
     return null;
 };
 
+/**
+ * Whether the operand at $start..$end is a whole value that leaves its expression: the right side of `=`
+ * (a variable, a property, a parameter default), the value of return / yield, a ?? fallback, or a ternary
+ * branch (`? SITEID :`, `: SITEID`, `?: SITEID`). Not: a call argument (positional or named), an array
+ * element or key, `case SITEID:`, or a ternary condition (`SITEID ? a : b`).
+ *
+ * @param array $sig Significant tokens.
+ * @param int $start First token of the operand.
+ * @param int|string|null $before Token id before the operand.
+ * @param int|string|null $after Token id after the operand.
+ * @return bool
+ */
+$isvalueslot = static function (array $sig, int $start, $before, $after): bool {
+    if (!in_array($after, [';', ',', ')', ']', ':', T_COALESCE, T_CLOSE_TAG], true)) {
+        return false; // Part of a larger expression: SITEID . 'x', SITEID + 1, SITEID ? a : b.
+    }
+    if (in_array($before, ['=', T_RETURN, T_YIELD, T_COALESCE, '?'], true)) {
+        return true;
+    }
+    if ($before === ':') {
+        // A named argument, f(courseid: SITEID), is NAME ':' right after '(' or ','; any other ':' here ends a ternary.
+        $name = $sig[$start - 2]['id'] ?? null;
+        $lead = $sig[$start - 3]['id'] ?? null;
+        return !($name === T_STRING && ($lead === '(' || $lead === ','));
+    }
+    return false;
+};
+
 $findings = [];
 
 foreach ($files as $file) {
@@ -760,6 +796,16 @@ foreach ($files as $file) {
 
         // An array-literal key ([SITEID => 'x']): PHP normalises '1' to the int key 1.
         if ($after === T_DOUBLE_ARROW) {
+            continue;
+        }
+
+        // ── Rule 4: SITEID leaves the expression uncast ───────────────────
+        // Assigned, returned, yielded, a ?? fallback or a ternary branch: the string travels to a
+        // comparison this scanner cannot follow (the KNOWN LIMIT below), so the cast belongs here.
+        if ($type === null && $isvalueslot($sig, $start, $before, $after)) {
+            $findings[] = [$file, $lineno, 'uncast-value',
+                'SITEID is the database string (e.g. \'1\'). Stored, returned or chosen here without a cast, '
+                . 'it reaches a later strict comparison that this scanner cannot follow. Write (int) SITEID.', $code];
             continue;
         }
 
