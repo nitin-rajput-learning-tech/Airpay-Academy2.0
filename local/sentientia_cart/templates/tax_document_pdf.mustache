@@ -1,0 +1,168 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_sentientia_cart/tax_document_pdf
+
+    The HTML that pdf_renderer lays out on an A4 page with TCPDF for a GST tax invoice or a credit note. TCPDF reads
+    a small subset of HTML (tables, b, br, inline styles), so this is table markup with attributes, and the same data
+    as tax_document.mustache (doc_view), always with English words. The signed e-invoice QR is drawn by the renderer
+    under this content.
+
+    Context variables required for this template: the same as local_sentientia_cart/tax_document.
+
+    Example context (json):
+    {
+        "l": {
+            "gstin": "GSTIN", "state": "State", "date": "Date", "buyer": "Buyer", "placeofsupply": "Place of supply",
+            "srno": "No.", "description": "Description", "sac": "SAC", "taxable": "Taxable value", "rate": "Rate",
+            "cgst": "CGST", "sgst": "SGST", "igst": "IGST", "total": "Total", "totaltaxable": "Total taxable value",
+            "amountinwords": "Amount in words", "reversecharge": "Reverse charge", "irn": "IRN", "ackno": "Ack. No.",
+            "ackdate": "Ack. date", "againstinvoice": "Against tax invoice", "dated": "dated", "reason": "Reason"
+        },
+        "title": "Tax Invoice",
+        "number_label": "Invoice No.",
+        "number": "AIRPAY-2026-0001",
+        "date": "14 Oct 2026",
+        "supplier_name": "Airpay Payment Services Pvt Ltd",
+        "supplier_address_lines": [{"line": "Airpay House"}],
+        "supplier_gstin": "27AAAAA0000A1Z5",
+        "supplier_state": "27 - Maharashtra",
+        "buyer_name": "Test Buyer",
+        "buyer_address_lines": [{"line": "1 Test Road"}],
+        "place_of_supply": "27 - Maharashtra",
+        "lines": [{"n": 1, "name": "Course", "sac": "999293", "taxable": "₹1,000.00", "rate": "18%",
+                   "cgst": "₹90.00", "sgst": "₹90.00", "igst": "₹0.00"}],
+        "show_cgst_sgst": true,
+        "total_taxable": "₹1,000.00",
+        "total_cgst": "₹90.00",
+        "total_sgst": "₹90.00",
+        "total": "₹1,180.00",
+        "total_words": "Rupees One Thousand One Hundred Eighty only",
+        "reverse_charge": "No",
+        "signatory_for": "For Airpay Payment Services Pvt Ltd",
+        "signatory_text": "Authorised signatory",
+        "computer_generated": "This is a computer-generated invoice."
+    }
+}}
+<table cellpadding="2" width="100%">
+    <tr>
+        <td width="58%">
+            <b style="font-size: 14pt; color: #0066A7;">{{ supplier_name }}</b><br/>
+            {{#supplier_address_lines}}{{ line }}<br/>{{/supplier_address_lines}}
+            {{#supplier_gstin}}{{ l.gstin }}: <b>{{ supplier_gstin }}</b><br/>{{/supplier_gstin}}
+            {{#supplier_state}}{{ l.state }}: {{ supplier_state }}<br/>{{/supplier_state}}
+        </td>
+        <td width="42%" align="right">
+            <b style="font-size: 14pt;">{{ title }}</b><br/>
+            {{ number_label }}: <b>{{ number }}</b><br/>
+            {{ l.date }}: {{ date }}<br/>
+            {{#is_creditnote}}{{ l.againstinvoice }}: <b>{{ original_number }}</b> {{ l.dated }} {{ original_date }}<br/>{{/is_creditnote}}
+        </td>
+    </tr>
+</table>
+<br/>
+<table cellpadding="3" width="100%" border="0">
+    <tr>
+        <td width="50%">
+            <b>{{ l.buyer }}</b><br/>
+            {{ buyer_name }}<br/>
+            {{#buyer_email}}{{ buyer_email }}<br/>{{/buyer_email}}
+            {{#buyer_address_lines}}{{ line }}<br/>{{/buyer_address_lines}}
+            {{#buyer_gstin}}{{ l.gstin }}: <b>{{ buyer_gstin }}</b><br/>{{/buyer_gstin}}
+            {{#buyer_state}}{{ l.state }}: {{ buyer_state }}<br/>{{/buyer_state}}
+        </td>
+        <td width="50%">
+            <b>{{ l.placeofsupply }}</b><br/>
+            {{ place_of_supply }}<br/>
+            <b>{{ l.reversecharge }}</b>: {{ reverse_charge }}<br/>
+            {{#is_creditnote}}{{#has_reason}}<b>{{ l.reason }}</b>: {{ reason }}<br/>{{/has_reason}}{{/is_creditnote}}
+        </td>
+    </tr>
+</table>
+<br/>
+{{#show_cgst_sgst}}
+<table border="1" cellpadding="3" width="100%">
+    <tr style="background-color: #f2f4fb;">
+        <th width="6%"><b>{{ l.srno }}</b></th>
+        <th width="32%"><b>{{ l.description }}</b></th>
+        <th width="10%"><b>{{ l.sac }}</b></th>
+        <th width="16%" align="right"><b>{{ l.taxable }}</b></th>
+        <th width="8%" align="right"><b>{{ l.rate }}</b></th>
+        <th width="14%" align="right"><b>{{ l.cgst }}</b></th>
+        <th width="14%" align="right"><b>{{ l.sgst }}</b></th>
+    </tr>
+    {{#lines}}
+    <tr>
+        <td width="6%">{{ n }}</td>
+        <td width="32%">{{ name }}</td>
+        <td width="10%">{{ sac }}</td>
+        <td width="16%" align="right">{{ taxable }}</td>
+        <td width="8%" align="right">{{ rate }}</td>
+        <td width="14%" align="right">{{ cgst }}</td>
+        <td width="14%" align="right">{{ sgst }}</td>
+    </tr>
+    {{/lines}}
+</table>
+{{/show_cgst_sgst}}
+{{#show_igst}}
+<table border="1" cellpadding="3" width="100%">
+    <tr style="background-color: #f2f4fb;">
+        <th width="6%"><b>{{ l.srno }}</b></th>
+        <th width="40%"><b>{{ l.description }}</b></th>
+        <th width="12%"><b>{{ l.sac }}</b></th>
+        <th width="16%" align="right"><b>{{ l.taxable }}</b></th>
+        <th width="10%" align="right"><b>{{ l.rate }}</b></th>
+        <th width="16%" align="right"><b>{{ l.igst }}</b></th>
+    </tr>
+    {{#lines}}
+    <tr>
+        <td width="6%">{{ n }}</td>
+        <td width="40%">{{ name }}</td>
+        <td width="12%">{{ sac }}</td>
+        <td width="16%" align="right">{{ taxable }}</td>
+        <td width="10%" align="right">{{ rate }}</td>
+        <td width="16%" align="right">{{ igst }}</td>
+    </tr>
+    {{/lines}}
+</table>
+{{/show_igst}}
+<br/>
+<table border="1" cellpadding="3" width="50%" align="right">
+    <tr><td width="60%">{{ l.totaltaxable }}</td><td width="40%" align="right">{{ total_taxable }}</td></tr>
+    {{#show_cgst_sgst}}
+    <tr><td>{{ l.cgst }}</td><td align="right">{{ total_cgst }}</td></tr>
+    <tr><td>{{ l.sgst }}</td><td align="right">{{ total_sgst }}</td></tr>
+    {{/show_cgst_sgst}}
+    {{#show_igst}}
+    <tr><td>{{ l.igst }}</td><td align="right">{{ total_igst }}</td></tr>
+    {{/show_igst}}
+    <tr style="background-color: #f2f4fb;"><td><b>{{ l.total }}</b></td><td align="right"><b>{{ total }}</b></td></tr>
+</table>
+<br/>
+<p><b>{{ l.amountinwords }}:</b> {{ total_words }}</p>
+{{#has_irn}}
+<p><b>{{ l.irn }}:</b> {{ irn }}<br/>
+<b>{{ l.ackno }}:</b> {{ ack_no }} &nbsp; <b>{{ l.ackdate }}:</b> {{ ack_date }}</p>
+{{/has_irn}}
+<br/>
+<table cellpadding="2" width="100%">
+    <tr>
+        <td width="55%"></td>
+        <td width="45%" align="right">{{ signatory_for }}<br/><br/><br/><b>{{ signatory_text }}</b></td>
+    </tr>
+</table>
+<p style="font-size: 8pt; color: #5a6070;">{{ computer_generated }}</p>

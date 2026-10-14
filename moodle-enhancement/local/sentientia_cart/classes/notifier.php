@@ -139,7 +139,52 @@ class notifier {
         if ($granted) {
             $body .= "\n\n" . self::str('notify_paid_access', null, $lang);
         }
+        // sentientia.cart.purchase_receipts (2026-10-14): while the flag is ON for the order's tenant, the message
+        // links the receipt. With the flag OFF the message is exactly what it was.
+        if (!empty($cart->id) && receipts::exists_for($cart)) {
+            $body .= "\n\n" . self::str('notify_paid_receipt', receipts::url((int) $cart->id)->out(false), $lang);
+        }
         return $body;
+    }
+
+    /**
+     * Tell every site administrator that GST tax documents cannot be issued, in the administrator's own language.
+     *
+     * Sent by the issuing task at most once a day (invoicer::warn_admins_once_a_day()); the documents stay due and
+     * are issued by the first run after the cause is fixed.
+     *
+     * @param array[] $causes invoicer::cause_of() rows: what stopped the documents.
+     * @return void
+     */
+    public static function gst_admin_warning(array $causes): void {
+        self::send_to_admins('gst_admin_warning', function (string $lang) use ($causes): array {
+            $lines = [];
+            foreach ($causes as $cause) {
+                $lines[] = '- ' . self::cause_text($cause, $lang);
+            }
+            return [
+                self::str('notify_gst_subject', null, $lang),
+                self::str('notify_gst_body', implode("\n", $lines), $lang),
+            ];
+        });
+    }
+
+    /**
+     * One cause of a document that could not be issued, as text in a language.
+     *
+     * @param array $cause invoicer::cause_of()
+     * @param string $lang
+     * @return string
+     */
+    private static function cause_text(array $cause, string $lang): string {
+        switch ($cause['code'] ?? '') {
+            case 'error_invoicesettings':
+                return self::str('error_invoicesettings', gst_settings::problem_labels($cause['ids'] ?? [], $lang), $lang);
+            case 'error_numbertoolong':
+                return self::str('error_numbertoolong', $cause['a'] ?? new \stdClass(), $lang);
+            default:
+                return (string) ($cause['message'] ?? '');
+        }
     }
 
     /**
