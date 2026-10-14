@@ -598,6 +598,7 @@ final class tax_invoice_test extends \advanced_testcase {
         // ADR-032: ERPNEXT-<id> numbers the invoices imported from BizLMS, and invoice_number is unique. Moved here
         // from imported_history_reader_test on 2026-10-14: issue_for_order now reads the order from the database,
         // so the check needs a real paid order and complete GST settings to be reached.
+        $this->flag(flags::INVOICES, true);
         $this->configure_tax(['invoice_prefix' => 'erpnext']);
         $order = $this->paid_order_for($this->user_at('/77'));
         $this->assert_refused(fn() => invoicer::issue_for_order($order), 'error_invalidstate',
