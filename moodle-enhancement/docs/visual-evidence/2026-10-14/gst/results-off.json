@@ -1,0 +1,83 @@
+{
+ "generated": "2026-10-14T16:00:26.029Z",
+ "base": "http://localhost:8080",
+ "tenant": 77,
+ "results": [
+  {
+   "name": "off-01-checkout-no-state-field",
+   "url": "/local/sentientia_cart/checkout.php",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "Both flags OFF: checkout is what it always was, no State select",
+   "http": 200,
+   "files": [
+    "off-01-checkout-no-state-field-desktop.png",
+    "off-01-checkout-no-state-field-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [],
+   "textExcerpt": "Skip to main content airpay academy Dashboard My Courses Catalog My Cart Certificates Profile Dark Mode VP VP Public learner /77 Profile & Settings Log out Checkout Checkout Billing details Name * Email * Phone Address GST number (optional) For B2B with input tax credit. Payment method Airpay (Cards"
+  },
+  {
+   "name": "off-02-order-history-no-documents",
+   "url": "/local/sentientia_cart/history.php",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "Both flags OFF: order history has no Documents column",
+   "http": 200,
+   "files": [
+    "off-02-order-history-no-documents-desktop.png",
+    "off-02-order-history-no-documents-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [],
+   "textExcerpt": "Skip to main content airpay academy Dashboard My Courses Catalog My Cart Certificates Profile Dark Mode VP VP Public learner /77 Profile & Settings Log out Order history Order history Back to cart 1–3 of 3 # Placed Total Status 12 30 Sept 2026 4130.59 partial_refund 13 14 Oct 2026 5898.82 partial_re"
+  },
+  {
+   "name": "off-03-receipt-refused",
+   "url": "/local/sentientia_cart/receipt.php?id=20",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "Both flags OFF: the receipt page is not available",
+   "http": 404,
+   "files": [
+    "off-03-receipt-refused-desktop.png",
+    "off-03-receipt-refused-mobile.png"
+   ],
+   "problems": [
+    "Moodle debug dump on page"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+   ],
+   "textExcerpt": "Skip to main content airpay academy Dashboard My Courses Catalog My Cart Certificates Profile Dark Mode VP VP Public learner /77 Profile & Settings Log out airpay academy This page is not available. More information about this error Debug info: Error code: error_notavailable Dismiss this notificatio"
+  },
+  {
+   "name": "off-04-invoice-still-viewable",
+   "url": "/local/sentientia_cart/invoice.php?id=14",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "Both flags OFF: an invoice that was already issued stays viewable (spec section 2)",
+   "http": 200,
+   "files": [
+    "off-04-invoice-still-viewable-desktop.png",
+    "off-04-invoice-still-viewable-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [],
+   "textExcerpt": "Skip to main content Airpay Payment Services (TEST) TEST ADDRESS - local evidence only 1 Test Street, Andheri East Mumbai 400069, Maharashtra, India GSTIN: 27AAAAA0000A1Z5 State: 27 - Maharashtra TAX INVOICE Invoice No.: AIRPAY-2026-0013 Date: 14 Oct 2026 BUYER Asha Verma (TEST) asha.verma@visualpas"
+  }
+ ]
+}
