@@ -173,4 +173,5 @@ if [ "${BASH_SOURCE[0]}" = "$0" ]; then
     done
     [ -n "$tree" ] || die "give --tree 45, --tree 5x or --tree db"
     make_config "$tree"
+    step_end
 fi

@@ -52,3 +52,4 @@ else
     dry "would require exit 0 (or exit 2 with ACCEPT_UNPROVEN=1 and ACCEPT_UNPROVEN_REF naming Nitin's written acceptance)"
 fi
 log "parity compare done"
+step_end

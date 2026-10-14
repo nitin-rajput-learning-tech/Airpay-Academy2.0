@@ -175,3 +175,4 @@ else
     dry "would run the parity checkpoint: source_baseline.php --compare=${BASELINE_FILE} (exit 0 required)"
 fi
 log "hop 1 done"
+step_end

@@ -28,6 +28,13 @@
 # database acts when the load has returned: a load that returned 0 is then NOT verified (the in-flight table stays), so the database must
 # be dropped and restored again; do not signal step 01 during the load unless that is what is wanted. Run the rehearsal under tmux or
 # screen: a dropped ssh session sends HUP.
+# A signal that ends bash and that none of the above names (ABRT, TRAP, SYS, ILL, FPE, BUS, SEGV, PROF, ...) cannot be waited out: bash runs the EXIT
+# trap with status 0 and ends the process at once. A step records ok only when it REACHED ITS LAST LINE (step_end), so such a step is recorded fail
+# (state/NN.status: ended=unreached) and keeps its lock; run_all.sh keeps .run.lock the same way (a command the step started may still be running).
+# That holds when the signal reaches run_all.sh itself AND when it reaches a step that run_all.sh started (round 9): a step whose status file says
+# ended=unreached, or that exits 128+n for a signal run_all.sh and the steps do not handle (KILL, ABRT, ...), is treated like run_all.sh's own unreached
+# end: nothing further is started, not even the summary (run 12_summary.sh by hand for the report), and .run.lock is kept; it exits with the step's status.
+# Remove the lock directory by hand only when none of the pids it names is alive.
 #
 # Steps (each is its own script and can be run alone with the same options):
 #   00 preflight        refuse unless the config is safe (allow-listed database, noemailever, no cron, no production host)
@@ -132,6 +139,7 @@ want() {
 
 LOCK=""
 SIGNAL=""
+RUN_STEP_UNREACHED=0
 if [ "$EXECUTE" = 1 ]; then
     mkdir -p "$REHEARSAL_WORK" "$LOG_DIR"
     LOCK="$REHEARSAL_WORK/.run.lock"
@@ -140,7 +148,26 @@ if [ "$EXECUTE" = 1 ]; then
         exit 3
     fi
     printf '%s\n' "$$" > "$LOCK/pid"
-    trap 'rm -rf "$LOCK"' EXIT
+    # The lock is released on every way out but one: a status of 0 that was not reached by running to the end. Bash runs the EXIT trap with $? = 0
+    # for every signal whose default action ends it (STEP_SIGNALS below names only the ones this script acts on: ABRT, TRAP, SYS, ILL, FPE, BUS and
+    # SEGV are not among them), and the lock was then removed under the step that was still running (round 7 review; see THE LAST LINE in
+    # lib/common.sh). RUN_REACHED_END is set on the last line; an exit with a non-zero status (a failed step, a signal this script handled) is
+    # a deliberate end and releases the lock as before.
+    RUN_REACHED_END=0
+    on_run_exit() {
+        if [ "$RUN_STEP_UNREACHED" = 1 ]; then
+            # Not a signal to run_all.sh: a step it started ended without reaching its last line (run_step logged which). Whatever the status
+            # run_all.sh exits with, the command that step started may still be running, and the lock names the pids that tell.
+            return 0
+        fi
+        if [ "$1" = 0 ] && [ "$RUN_REACHED_END" != 1 ]; then
+            SURVIVOR_LOG="$LOG_DIR/run_all.log"
+            log_survivor "ERROR: run_all.sh ended without reaching its end (a signal that ends bash and that it does not handle): the lock ${LOCK} is KEPT, because the step it started may still be running. Remove that directory only when NONE of the pids it names is alive"
+            return 0
+        fi
+        rm -rf "$LOCK"
+    }
+    trap 'on_run_exit $?' EXIT
     # TERM / INT / HUP sent to run_all.sh ALONE (kill <pid>; Ctrl-C reaches the whole process group, so the step gets it too; sudo relays HUP
     # to its command when the ssh session drops, which left run_all.sh dead and the lock released under a running step). The step runs in the
     # FOREGROUND, and bash defers a trapped signal until the foreground command has finished: the handler only notes it, so the lock is
@@ -192,12 +219,44 @@ run_step() {
         log "step ${id} (${name}) NOT started: SIG${SIGNAL} was received"
         return 1
     fi
-    local rc=0
+    local rc=0 sf="" before="" after="" unreached="" signame="" n
+    if [ "$EXECUTE" = 1 ]; then
+        sf="$STATE_DIR/${id}.status"
+        if [ -f "$sf" ]; then
+            before="$(cat "$sf" 2> /dev/null || true)"
+        fi
+    fi
     bash "$KIT_DIR/$file" "${PASS[@]+"${PASS[@]}"}" || rc=$?
     if [ "$rc" -ne 0 ]; then
         log "==== step ${id} (${name}) exited ${rc} ===="
         RC="$rc"
         FAILED="${id} ${name}"
+        # A step that did not reach its last line (round 9). Its status file says ended=unreached (it wrote that itself, as the file differs from the
+        # one it had before this run started it: a stale file from an earlier run does not count), or it was ended by a signal that neither the
+        # step nor run_all.sh handles (exit 128+n; KILL leaves no trap to write anything, and its status file says 'running'). The command it was
+        # running may still be running: the run stops here, with the lock kept.
+        if [ "$EXECUTE" = 1 ]; then
+            if [ -f "$sf" ]; then
+                after="$(cat "$sf" 2> /dev/null || true)"
+            fi
+            if [ "$after" != "$before" ] && printf '%s\n' "$after" | grep -qx 'ended=unreached'; then
+                unreached="its status file says ended=unreached"
+            elif [ "$rc" -gt 128 ] && [ "$rc" -le 192 ]; then
+                signame="$(kill -l "$rc" 2> /dev/null || true)"
+                n="${signame#SIG}"
+                if [ -n "$n" ]; then
+                    case " $STEP_SIGNALS PIPE " in
+                        *" $n "*) ;;
+                        *) unreached="it exited ${rc}, the status of SIG${n}, a signal that neither it nor run_all.sh handles" ;;
+                    esac
+                fi
+            fi
+        fi
+        if [ -n "$unreached" ]; then
+            RUN_STEP_UNREACHED=1
+            SURVIVOR_LOG="$LOG_DIR/run_all.log"
+            log_survivor "ERROR: step ${id} (${name}) ended without reaching its last line (${unreached}): a command it started may still be running. run_all.sh starts nothing further, not even the summary, and KEEPS the lock ${LOCK}. Remove that directory only when none of the pids it names is alive"
+        fi
         return 1
     fi
     return 0
@@ -221,6 +280,13 @@ if [ -z "$FAILED" ] && [ -z "$SIGNAL" ]; then
     done
 fi
 
+# A step that did not reach its last line stops the run the way a signal does: no further step, no summary (it is read-only: run step 12 by hand),
+# and the lock stays (on_run_exit). Exit status: the step's own.
+if [ "$RUN_STEP_UNREACHED" = 1 ]; then
+    log_survivor "STOPPED at step ${FAILED} (exit ${RC}): it did not reach its last line, so nothing further was started and the summary was not run. When none of the pids named in ${LOCK}/ is alive, remove that directory, then: bash tools/rehearsal/run_all.sh --execute --from ${FAILED%% *} (or 12_summary.sh --execute for the report)"
+    exit "$RC"
+fi
+
 # A signal stops the run: no further step, and no summary either (it is read-only: run step 12 by hand when the run is to be reported).
 if [ -n "$SIGNAL" ]; then
     log_survivor "STOPPED by SIG${SIGNAL}: the step that was running has finished${FAILED:+ (it failed: ${FAILED})}, nothing further was started and the summary was not run. Continue with: bash tools/rehearsal/run_all.sh --execute --from NN (NN = the step that was running; or 12_summary.sh --execute for the report)"
@@ -240,4 +306,5 @@ if [ -n "$FAILED" ]; then
     log "STOPPED at step ${FAILED} (exit ${RC}). Fix the cause, then: bash tools/rehearsal/run_all.sh --execute --from ${FAILED%% *}"
     exit "$RC"
 fi
+RUN_REACHED_END=1
 log "rehearsal run finished: every selected step ok ($(mode_name) mode)"

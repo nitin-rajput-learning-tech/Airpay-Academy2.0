@@ -44,6 +44,27 @@
 #     recorded as failures, USR1 to run_all.sh alone keeps its lock, and a TERM to the whole process group ends the step (fail, signal=TERM) and
 #     run_all.sh (exit 143, STOPPED in its log) with the lock released; a content hash that {files} records with two sizes is cut only when the file
 #     on disk matches neither;
+#   * fix round 8: step 01 reads the content of filedir/ and every file must hash to its own name (a clean file store passes; one file zero-filled at
+#     its size, which the existence and size gates pass, is found; a whole step 01 against the stand-in refuses a copy whose SHA-256 the operator took
+#     on the sandbox, on the unpack path and on the reuse path, and a file damaged since the unpack; a stray name is a warning and Moodle's warning.txt
+#     is not counted; a file that cannot be read fails; RESTORE_FILEDIR_HASH_CHECK=0 skips with a warning that the summary prints); a tar must end where
+#     a tar ends, with or without its checksum (a plain tar cut at a member header or inside a member, a .tar.gz around a cut tar, a full-size copy
+#     with a zero-filled region and a tar padded with more than a record of zeros are each refused with a checksum that matches them, before anything is
+#     touched, and a whole plain tar with its checksum is accepted); a step that does not reach its last line is never ok (ABRT, SYS and TRAP to a
+#     step alone, ABRT to run_all.sh alone: fail, ended=unreached, the lock kept; a step that exits 0 without step_end; every step script ends with
+#     step_end); a hop 1 that failed with the release already moved no longer locks step 01 out (and a database this work directory never saw at the
+#     source release, or a release no hop leaves, is still refused); a refused and a passing gate leave no client.cnf in TMPDIR; the preflight refuses
+#     an uncompressed moodledata archive without the checksum from the live server, in DRY mode too; the (premise) tests of GNU tar's behaviour are
+#     assertions, not branches that can only say ok;
+#   * fix round 9: a whole plain tar whose first zero block is the last block of a record (the archive ends 10752 bytes after GNU tar's end of the
+#     archive, one archive in twenty) is accepted end to end by step 01 with its checksum, a larger gap and a cut copy are still refused, and the refusal
+#     tells the operator to ask live again; the listing is read with LC_ALL=C; a step that run_all.sh started and that ended without its last line
+#     (ABRT: ended=unreached; KILL: running) stops run_all.sh with its lock kept and no summary, while an ordinary failure or an earlier run's stale
+#     status file does not; the content refusal tells the operator to run sha1sum on live, and the documents say only filedir/ is proven independently of the
+#     checksum and that every step 01 run re-reads it; the content check's working lists live under TMP_DIR, not in reports/;
+#   * fix round 9b: no fixture reads /dev/zero or /dev/urandom except through dev_bytes (lib/common.sh), which writes exactly COUNT bytes and refuses a
+#     count that is empty, not a plain non-negative integer, or above 256 MB (an empty size once became head -c -2560 on an endless device and filled
+#     the drive); a refusal writes nothing, says why and fails the run; no kit script or fixture line reads a device any other way;
 #   * run_all.sh --list and a DRY --only run work; no Windows path or drive letter is hard-coded in the kit.
 # Exit 0 = every test passed.
 
@@ -59,6 +80,17 @@ ok() { PASS=$((PASS + 1)); printf '  ok    %s\n' "$1"; }
 # skip LABEL: a case that cannot be run HERE (named, never counted as passed, and printed in the summary line).
 skip() { SKIPS=$((SKIPS + 1)); printf '  skip  %s\n' "$1"; }
 bad() { FAILS=$((FAILS + 1)); printf '  FAIL  %s\n' "$1"; [ -n "${2:-}" ] && printf '%s\n' "$2" | head -n 12 | sed 's/^/        /'; return 0; }
+
+# dev_bytes KIND COUNT (lib/common.sh): the only way this file reads /dev/zero or /dev/urandom. Only that function is taken from common.sh (sourcing
+# the file here would bring its set -e, its traps and its globals into the selftest). A refusal is appended to DEV_BYTES_MARK, which is checked before
+# the summary: a call inside a pipe or a $( ) runs in a subshell, where a failure counter would be lost.
+eval "$( ( . "$KIT/lib/common.sh" > /dev/null 2>&1; declare -f dev_bytes ) )"
+if ! declare -F dev_bytes > /dev/null; then
+    printf 'selftest: dev_bytes could not be loaded from lib/common.sh\n' >&2
+    exit 1
+fi
+DEV_BYTES_MARK="$T/.dev-bytes-refused"
+export DEV_BYTES_MARK
 
 # base_env FILE [KEY=value ...]: a valid env file; later lines override (the file is sourced top to bottom).
 base_env() {
@@ -110,6 +142,34 @@ done
 for f in "$KIT"/lib/*.php; do
     if php -l "$f" > /dev/null 2>&1; then ok "php -l $(basename "$f")"; else bad "php -l $(basename "$f")"; fi
 done
+
+printf 'the byte helper (no unbounded read of a device)\n'
+# The calls below run in a subshell with a mark of their own, so that the refusals they provoke on purpose do not fail the run.
+ZB="$T/zb"
+mkdir -p "$ZB"
+zb() { ( DEV_BYTES_MARK="$ZB/mark"; dev_bytes "$@" ); }
+wc_bytes() { wc -c | tr -d ' '; }
+if [ "$(zb zero 1000 | wc_bytes)" = 1000 ] && [ "$(zb zero 1000 | tr -d '\0' | wc_bytes)" = 0 ]; then ok "dev_bytes zero 1000 writes exactly 1000 bytes, every one of them zero"; else bad "dev_bytes zero 1000"; fi
+if [ "$(zb urandom 17 | wc_bytes)" = 17 ] && [ "$(zb zero 0012 | wc_bytes)" = 12 ]; then ok "dev_bytes urandom 17 writes exactly 17 bytes; 0012 is twelve (decimal, never octal)"; else bad "dev_bytes urandom 17 / zero 0012"; fi
+if [ "$(zb zero 0 | wc_bytes)" = 0 ] && zb zero 0; then ok "a count of 0 writes nothing and is not an error"; else bad "dev_bytes zero 0"; fi
+if [ "$(zb zero 268435456 2> /dev/null | head -c 1 | wc_bytes)" = 1 ]; then ok "the limit itself (268435456) is accepted; read through head -c 1, so no file is ever written"; else bad "dev_bytes zero 268435456 is accepted"; fi
+ZB_NL="5
+6"
+for zbc in '' abc -2560 1.5 ' 5' '5 ' 0x10 1e3 +5 268435457 99999999999999999999 "$ZB_NL"; do
+    zbout="$(zb zero "$zbc" 2> "$ZB/err" | wc_bytes)"
+    zb zero "$zbc" > /dev/null 2>&1
+    zbrc=$?
+    if [ "$zbout" = 0 ] && [ "$zbrc" = 1 ] && grep -q '^dev_bytes: refused, ' "$ZB/err"; then ok "dev_bytes refuses the count $(printf '%q' "$zbc"): nothing written, a reason on stderr, status 1"; else bad "dev_bytes zero $(printf '%q' "$zbc") (wrote ${zbout} bytes, rc ${zbrc})" "$(cat "$ZB/err")"; fi
+done
+# The exact failure of round 9: a size that came out empty, then minus a constant.
+ZB_SIZE="$(stat -c %s "$T/no-such-file" 2> /dev/null)"
+if [ "$(zb zero "$((ZB_SIZE - 2560))" 2> /dev/null | wc_bytes)" = 0 ] && [ "$(zb urandom "$((ZB_SIZE - 2560))" 2> /dev/null | wc_bytes)" = 0 ]; then ok "an empty size minus 2560 (the round 9 accident, head -c -2560) writes nothing from either device"; else bad "an empty size minus 2560 still wrote bytes"; fi
+if [ "$(zb random 5 2> /dev/null | wc_bytes)" = 0 ] && ! zb random 5 2> /dev/null && [ "$(zb 2> /dev/null | wc_bytes)" = 0 ] && ! zb 2> /dev/null; then ok "an unknown source, and a call without arguments, are refused too"; else bad "dev_bytes with an unknown source or no arguments"; fi
+if [ -s "$ZB/mark" ] && [ ! -e "$DEV_BYTES_MARK" ]; then ok "a refusal is recorded in DEV_BYTES_MARK (these ran against their own; the run's own is untouched)"; else bad "the refusals' mark file (own mark '$([ -s "$ZB/mark" ] && echo written || echo empty)', the run's '$([ -e "$DEV_BYTES_MARK" ] && echo written || echo untouched)')"; fi
+hits="$( (cd "$KIT" && grep -nE '/dev/(zero|urandom|random)' ./*.sh lib/*.sh) 2> /dev/null | grep -v '^[^:]*:[0-9]*:[[:space:]]*#' | grep -vE '^lib/common\.sh:[0-9]+:[[:space:]]*(zero|urandom)\) dev=/dev/(zero|urandom) ;;$' || true)"
+if [ -z "$hits" ]; then ok "no line of the kit or of this file reads a device except dev_bytes itself (the grep is over every *.sh and lib/*.sh)"; else bad "a line reads a device without dev_bytes" "$hits"; fi
+hits="$( (cd "$KIT" && grep -nE '(^|[^A-Za-z0-9_./-])(dd|truncate|fallocate|fsutil|mkfile)[[:space:]]|head[[:space:]]+-c[[:space:]]*"?[$(]' ./*.sh lib/*.sh) 2> /dev/null | grep -v '^\./selftest.sh:' | grep -v '^[^:]*:[0-9]*:[[:space:]]*#' | grep -vE '^lib/common\.sh:[0-9]+:.*"\$dev"; fi$' || true)"
+if [ -z "$hits" ]; then ok "no kit script (selftest apart) uses dd, truncate or fallocate, or head -c with a computed count, except dev_bytes after its checks"; else bad "a kit script writes by a computed size without dev_bytes" "$hits"; fi
 
 printf 'env policy (preflight, DRY)\n'
 base_env "$T/ok.env"
@@ -639,11 +699,13 @@ case "$sql" in
     "DELETE FROM mdl_config WHERE name = 'rehearsal_kit_step01_ok'") rm -f "$here/fake.step01" ;;
     *)
         # fake.e2e: the answers a whole step 01 asks after the restore, for a copy of the 4.1.2 live backup whose filedir is the one content
-        # file of the archives below (aabbccdd...: 1 byte). fake.twohashes: {files} also names a content hash that is not on disk (a failed gate).
+        # file of the archives below (11f6ad8e...: the SHA-1 of its 1 byte, 'x'). fake.twohashes: {files} also names a content hash that is not on disk (a failed gate).
         # fake.blockgate: the first client that asks for the content hashes waits (fake.atgate says so) until fake.releasegate exists.
         [ -f "$here/fake.e2e" ] || exit 0
         case "$sql" in
-            "SELECT value FROM mdl_config WHERE name = 'release'") echo '4.1.2 (Build: 20230320)' ;;
+            "SELECT value FROM mdl_config WHERE name = 'release'")
+                # fake.relval: the release the copy reports (a hop moved it: 4.5.4, 3.9.1...); the live backup's 4.1.2 otherwise
+                if [ -f "$here/fake.relval" ]; then cat "$here/fake.relval"; else echo '4.1.2 (Build: 20230320)'; fi ;;
             "SELECT value FROM mdl_config WHERE name = 'version'") echo 2022112802 ;;
             "SELECT value FROM mdl_config WHERE name = 'cron_enabled'") echo 0 ;;
             "SELECT DISTINCT contenthash, filesize FROM mdl_files WHERE filesize > 0")
@@ -651,7 +713,8 @@ case "$sql" in
                     : > "$here/fake.atgate"
                     while [ ! -f "$here/fake.releasegate" ]; do sleep 0.2; done
                 fi
-                printf 'aabbccddeeff00112233445566778899aabbccdd\t1\n'
+                # the content file of the archives below: x (1 byte), named by the SHA-1 of its content as Moodle does; fake.hashrows replaces the rows
+                if [ -f "$here/fake.hashrows" ]; then cat "$here/fake.hashrows"; else printf '11f6ad8ec52a2984abaafd7c3b516503785c2072\t1\n'; fi
                 if [ -f "$here/fake.twohashes" ]; then printf 'ffeeddccbbaa99887766554433221100ffeeddcc\t5\n'; fi ;;
             "SELECT COALESCE(SUM(t.sz), 0)"*) echo 1 ;;
             "SELECT DISTINCT SUBSTRING_INDEX"*) echo /1 ;;
@@ -674,7 +737,8 @@ fake_db() {
     rm -f "$FW"/fake.once "$FW"/fake.afterrestore "$FW"/fake.partial "$FW"/fake.sentinel "$FW"/fake.claimrace "$FW"/fake.schemata \
         "$FW"/fake.noconfig "$FW"/fake.loads "$FW"/fake.storemarker "$FW"/fake.marker "$FW"/fake.asked \
         "$FW"/fake.blockclaim "$FW"/fake.blockclaim.taken "$FW"/fake.blocked "$FW"/fake.release \
-        "$FW"/fake.countzero "$FW"/fake.insertexists "$FW"/fake.mutatedump         "$FW"/fake.e2e "$FW"/fake.twohashes "$FW"/fake.blockgate "$FW"/fake.blockgate.taken "$FW"/fake.atgate "$FW"/fake.releasegate         "$FW"/fake.step01 "$FW"/fake.sqllog
+        "$FW"/fake.countzero "$FW"/fake.insertexists "$FW"/fake.mutatedump         "$FW"/fake.e2e "$FW"/fake.twohashes "$FW"/fake.blockgate "$FW"/fake.blockgate.taken "$FW"/fake.atgate "$FW"/fake.releasegate         "$FW"/fake.step01 "$FW"/fake.sqllog \
+        "$FW"/fake.relval "$FW"/fake.hashrows
 }
 # fake_once FAULT: a one-off fault of the client (see the stand-in). fake_after N / fake_partial N: a restore that completes / dies leaves
 # N tables. fake_set NAME VALUE: fake.NAME (claimrace, schemata, noconfig, storemarker, sentinel, blockclaim, release, marker).
@@ -873,8 +937,8 @@ rb_run schemata
 rb_expect "a server whose list names airpayprod is still refused" 1 "holds the schema 'airpayprod'"
 
 # 9. One rehearsal, one moodledata: the fact that a step after 01 used the dataroot survives the rotation a new restore makes.
-mkdir -p "$T/mdsrc/filedir/aa/bb"
-printf 'x' > "$T/mdsrc/filedir/aa/bb/aabbccddeeff00112233445566778899aabbccdd"
+mkdir -p "$T/mdsrc/filedir/11/f6"
+printf 'x' > "$T/mdsrc/filedir/11/f6/11f6ad8ec52a2984abaafd7c3b516503785c2072"
 tar -C "$T/mdsrc" -cf "$T/md-arch.tar" filedir
 ARCH="RESTORE_MOODLEDATA_ARCHIVE=$T/md-arch.tar"
 # An uncompressed tar needs its checksum (round 7): the operator vouches for each archive below with the one taken "where it was made".
@@ -932,19 +996,47 @@ wait_file() {
 }
 # The archives. filedir/ comes first (one content file), then a 2,000,000-byte language pack. md-cut.tar is cut inside that file: tar stops
 # with 'Unexpected EOF' AFTER the whole filedir is there, which is the cut the filedir gate cannot see.
-mkdir -p "$T/mdcut/filedir/aa/bb" "$T/mdcut/lang/hi"
-printf 'x' > "$T/mdcut/filedir/aa/bb/aabbccddeeff00112233445566778899aabbccdd"
-head -c 2000000 /dev/zero > "$T/mdcut/lang/hi/langconfig.bin"
+mkdir -p "$T/mdcut/filedir/11/f6" "$T/mdcut/lang/hi"
+printf 'x' > "$T/mdcut/filedir/11/f6/11f6ad8ec52a2984abaafd7c3b516503785c2072"
+dev_bytes zero 2000000 > "$T/mdcut/lang/hi/langconfig.bin"
 tar -C "$T/mdcut" -cf "$T/md-full.tar" filedir lang
 head -c 600000 "$T/md-full.tar" > "$T/md-cut.tar"
-# The kit refuses an archive that is cut (fix round 6b) before it unpacks anything, so the cases below that need an unpack that dies part
-# way (the in-flight file, the marker without an unpacked line) hand the kit the checksum of this very file, as the operator who vouches for
-# an archive would: RESTORE_MOODLEDATA_SHA256 settles the proof, and tar then fails on its own at the cut.
+# The kit refuses an archive that is cut (fix round 6b) before it unpacks anything, and since round 8 also when the operator vouches for the
+# cut archive with a checksum of it (a tar must end where a tar ends, whatever its checksum says). So the cases below that need an unpack that
+# dies part way (the in-flight file, the marker without an unpacked line) give the kit a COMPLETE archive and a tar that runs out of disk: the
+# stand-in tar (shim-cut) is the real tar, and then cuts the language pack it has just unpacked and exits 2, as tar does on a full disk.
 CUTSHA="$(sha256sum "$T/md-cut.tar" | cut -d ' ' -f 1)"
 FULLSHA="$(sha256sum "$T/md-full.tar" | cut -d ' ' -f 1)"
+REALTAR="$(command -v tar)"
+mkdir -p "$T/shim-cut"
+cat > "$T/shim-cut/tar" <<'SHIM'
+#!/usr/bin/env bash
+# The real tar ($SHIM_REALTAR); when $SHIM_CUT names a file (below the -C directory) an unpack then runs out of disk: that file is cut, tar exits 2.
+"$SHIM_REALTAR" "$@"
+rc=$?
+if [ -n "${SHIM_CUT:-}" ]; then
+    dir=""
+    prev=""
+    for a in "$@"; do
+        [ "$prev" = -C ] && dir="$a"
+        prev="$a"
+    done
+    case " $* " in
+        *" -xf "*)
+            if [ -f "$dir/$SHIM_CUT" ]; then
+                head -c 596480 "$dir/$SHIM_CUT" > "$dir/$SHIM_CUT.cut" && mv "$dir/$SHIM_CUT.cut" "$dir/$SHIM_CUT"
+                echo "tar: $SHIM_CUT: Wrote only 596480 of 2000000 bytes (stand-in: the disk is full)" >&2
+                exit 2
+            fi
+            ;;
+    esac
+fi
+exit $rc
+SHIM
+chmod +x "$T/shim-cut/tar"
 # An archive made from a moodledata whose own unpack had not finished: it carries the in-flight file.
-mkdir -p "$T/mdinf/filedir/aa/bb"
-printf 'x' > "$T/mdinf/filedir/aa/bb/aabbccddeeff00112233445566778899aabbccdd"
+mkdir -p "$T/mdinf/filedir/11/f6"
+printf 'x' > "$T/mdinf/filedir/11/f6/11f6ad8ec52a2984abaafd7c3b516503785c2072"
 printf 'restore_id=0123456789abcdef0123456789abcdef\narchive=/elsewhere/old.tar|1|2\nstarted=2026-10-01T00:00:00Z\n' > "$T/mdinf/.rehearsal_unpack_inflight"
 tar -C "$T/mdinf" -cf "$T/md-inf.tar" filedir .rehearsal_unpack_inflight
 INFL=".rehearsal_unpack_inflight"
@@ -954,12 +1046,17 @@ MD="$T/rb-cut/data"
 fake_db none
 fake_after 120
 fake_set storemarker 1
-rb_run cut "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-cut.tar" "RESTORE_MOODLEDATA_SHA256=$CUTSHA"
-rb_expect "(M1) a cut moodledata archive (vouched for by its checksum): tar fails, and the step says the unpack is UNFINISHED and never adopted" 1 'tar of the moodledata failed: the unpack is UNFINISHED' 'restore check done'
+OLDPATH="$PATH"
+PATH="$T/shim-cut:$PATH"
+export SHIM_REALTAR="$REALTAR" SHIM_CUT=lang/hi/langconfig.bin
+rb_run cut "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-full.tar" "RESTORE_MOODLEDATA_SHA256=$FULLSHA"
+PATH="$OLDPATH"
+unset SHIM_CUT
+rb_expect "(M1) a moodledata unpack that dies part way (a full disk: tar cuts the language pack and exits 2): the step says the unpack is UNFINISHED and never adopted" 1 'tar of the moodledata failed: the unpack is UNFINISHED' 'restore check done'
 id="$(rb_kv cut restore.id)"
-if [ -f "$MD/$INFL" ] && grep -qx "restore_id=${id}" "$MD/$INFL" && grep -q '^archive=.*md-cut.tar|' "$MD/$INFL" && grep -q '^started=' "$MD/$INFL" \
+if [ -f "$MD/$INFL" ] && grep -qx "restore_id=${id}" "$MD/$INFL" && grep -q '^archive=.*md-full.tar|' "$MD/$INFL" && grep -q '^started=' "$MD/$INFL" \
         && [[ "$(sed -n 2p "$MD/.rehearsal-kit-restore-id")" == archive=* ]] && [ -z "$(sed -n 3p "$MD/.rehearsal-kit-restore-id")" ] \
-        && [ -f "$MD/filedir/aa/bb/aabbccddeeff00112233445566778899aabbccdd" ] && [ "$(wc -c < "$MD/lang/hi/langconfig.bin")" -lt 2000000 ]; then
+        && [ -f "$MD/filedir/11/f6/11f6ad8ec52a2984abaafd7c3b516503785c2072" ] && [ "$(wc -c < "$MD/lang/hi/langconfig.bin")" -lt 2000000 ]; then
     ok "(M1) the cut unpack left the in-flight file (restore id, archive, start), a marker with an archive line and no unpacked line, a whole filedir and a cut language pack"
 else bad "(M1) what the cut unpack left in the moodledata ($(ls -A "$MD" | tr '\n' ' '))"; fi
 rb_run cut "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-cut.tar"
@@ -1172,7 +1269,7 @@ cp "$T/fakemysql" "$FW/fakemysql"
 # it with exit status 0 and no message: the cut the round 6 review reproduced, which tar's own status cannot see.
 head -c 2560 "$T/md-full.tar" > "$T/md-cuthdr.tar"
 tar -tf "$T/md-cuthdr.tar" > /dev/null 2>&1 && TARCUTRC=0 || TARCUTRC=1
-if [ "$TARCUTRC" = 0 ]; then ok "(premise) GNU tar reads the archive cut at a member header with exit status 0, so tar's status cannot tell it from a whole one"; else ok "(premise) this tar already fails on an archive cut at a member header; the checks below still hold"; fi
+if [ "$TARCUTRC" = 0 ]; then ok "(premise) GNU tar reads the archive cut at a member header with exit status 0, so tar's status cannot tell it from a whole one"; else bad "(premise) GNU tar reads the archive cut at a member header with exit status 0 (this tar does not: the premise of the tar-end checks does not hold on this box)"; fi
 # The same cut tar, written into a compressor that was closed normally (a tar that died in 'tar c | gzip'): a valid .gz around a cut tar.
 gzip -c "$T/md-cuthdr.tar" > "$T/md-cuthdr.tar.gz"
 gzip -c "$T/md-full.tar" > "$T/md-full.tar.gz"
@@ -1236,18 +1333,18 @@ rb_expect "(7-M1) an uncompressed tar needs its checksum on a re-run too (filedi
 # The zero-filled copy of the round 6b review: full size, every byte after the header of lang/ zero. Its last 1024 bytes are the two zero blocks, GNU tar
 # takes them for the end of the archive and exits 0, and lang/ is simply not there.
 head -c 2560 "$T/md-full.tar" > "$T/md-zero.tar"
-head -c "$(($(stat -c %s "$T/md-full.tar") - 2560))" /dev/zero >> "$T/md-zero.tar"
+dev_bytes zero "$(($(stat -c %s "$T/md-full.tar") - 2560))" >> "$T/md-zero.tar"
 if [ "$(stat -c %s "$T/md-zero.tar")" = "$(stat -c %s "$T/md-full.tar")" ]; then ok "(premise) the zero-filled copy has the full size of the archive"; else bad "(premise) the zero-filled copy's size"; fi
 res="$(in_kit tar_ends_complete tar "$T/md-zero.tar")"
 if [ "$(printf '%s' "$res" | tail -n 1)" = rc=0 ]; then ok "(premise) the old test, the last 1024 bytes, passes the zero-filled tar (rc 0): it cannot tell it from a whole one"; else bad "(premise) tar_ends_complete on the zero-filled tar" "$res"; fi
 mkdir -p "$T/md-zero-x"
-if tar -C "$T/md-zero-x" -xf "$T/md-zero.tar" 2> /dev/null && [ ! -e "$T/md-zero-x/lang" ] && [ -f "$T/md-zero-x/filedir/aa/bb/aabbccddeeff00112233445566778899aabbccdd" ]; then
+if tar -C "$T/md-zero-x" -xf "$T/md-zero.tar" 2> /dev/null && [ ! -e "$T/md-zero-x/lang" ] && [ -f "$T/md-zero-x/filedir/11/f6/11f6ad8ec52a2984abaafd7c3b516503785c2072" ]; then
     ok "(premise) GNU tar unpacks it with exit status 0 and no lang/: a cut that nothing but a checksum shows"
-else ok "(premise) this tar does not accept the zero-filled copy (the checks below still hold)"; fi
+else bad "(premise) GNU tar unpacks the zero-filled copy with exit status 0 and no lang/ (this tar does not: the premise of the zero-filled-copy checks does not hold on this box)"; fi
 # A zero-filled .tar.gz (the compressed file itself padded with zeros after its first bytes): the decompressor fails on it.
 gzsize="$(stat -c %s "$T/md-full.tar.gz")"
 head -c 1000 "$T/md-full.tar.gz" > "$T/md-zerogz.tar.gz"
-head -c "$((gzsize - 1000))" /dev/zero >> "$T/md-zerogz.tar.gz"
+dev_bytes zero "$((gzsize - 1000))" >> "$T/md-zerogz.tar.gz"
 for variant in "md-full.tar:a COMPLETE uncompressed tar" "md-zero.tar:a zero-filled uncompressed tar of the full size" "md-zerogz.tar.gz:a zero-filled .tar.gz"; do
     f="${variant%%:*}"
     fake_db none
@@ -1312,6 +1409,7 @@ printf '%s\n' "$!" > "$STUBDIR/bg.pid"
 bash -c 'while [ ! -f "$1/release" ]; do sleep 0.2; done; : > "$1/child.finished"' _ "$STUBDIR"
 : > "$STUBDIR/after.child"
 : > "$STUBDIR/01.finished"
+step_end
 exit 0
 STUB
 cp "$K2/sigstep.sh" "$K2/01_restore_check.sh"
@@ -1564,6 +1662,7 @@ exec > >(exit 0) 2>&1
 sleep 1
 printf 'to a dead pipe\n' || true
 printf 'and again\n' || true
+step_end
 exit 0
 STUB
 base_env "$T/rb-sgp.env" "REHEARSAL_WORK=$T/rb-sgp/work" "MOODLEDATA=$T/rb-sgp/data" "MYSQL_BIN=$FW/fakemysql" "PRODUCTION_DB_ENDPOINT=live-db.example.internal"
@@ -1966,6 +2065,570 @@ pf_run f4 0
 rb_expect "(7-M2) the preflight of a run that starts after step 01 accepts the copy whose step 01 finished (and says so)" 0 'OK: step 01 finished ok for restore' 'FAIL\|WARN: step 01'
 FW="$T"
 
+printf 'step 01: the content of filedir/ is read, and every file must hash to its own name (Stage B tools fix round 8, must-fix A)\n'
+# Moodle names each file of its file store by the SHA-1 of its content. mkfd DIR CONTENT...: each content goes to DIR/ab/cd/<sha1 of the content>.
+mkfd() {
+    local d="$1" c h
+    shift
+    for c in "$@"; do
+        h="$(printf '%s' "$c" | sha1sum | cut -d ' ' -f 1)"
+        mkdir -p "$d/${h:0:2}/${h:2:2}"
+        printf '%s' "$c" > "$d/${h:0:2}/${h:2:2}/$h"
+    done
+}
+# t_hash NAME: filedir_hash_check on $T/hc-NAME/filedir, the counters it sets, and the lists it writes
+t_hash() {
+    local rc=0
+    mkdir -p "$T/hc-$1/rep" "$T/hc-$1/tmp"
+    TMP_DIR="$T/hc-$1/tmp"
+    filedir_hash_check "$T/hc-$1/filedir" "$T/hc-$1/rep/h" || rc=$?
+    printf 'files=%s bytes=%s bad=%s unread=%s odd=%s hashrc=%s\n' "$FILEDIR_HASH_FILES" "$FILEDIR_HASH_BYTES" "$FILEDIR_HASH_BAD" "$FILEDIR_HASH_UNREAD" "$FILEDIR_HASH_ODD" "$rc"
+}
+BIGC="$(dev_bytes urandom 30000 | od -An -tx1 | tr -d ' \n')"
+mkdir -p "$T/hc-clean/filedir"
+mkfd "$T/hc-clean/filedir" x "hello world" "$BIGC"
+printf 'Moodle sentinel' > "$T/hc-clean/filedir/warning.txt"
+res="$(in_kit t_hash clean)"
+if printf '%s' "$res" | grep -q "^files=3 bytes=$((1 + 11 + ${#BIGC})) bad=0 unread=0 odd=0 hashrc=0$" && [ ! -s "$T/hc-clean/rep/h-mismatch.txt" ] && [ ! -s "$T/hc-clean/rep/h-odd.txt" ]; then
+    ok "(8-A) a clean file store (3 files named by the SHA-1 of their content, and Moodle's warning.txt in the root) passes: 3 files read, nothing odd, nothing listed"
+else bad "(8-A) the clean file store" "$res"; fi
+# the same file store with ONE file zero-filled at its size: its name, its size and its place are all right, and only its content is gone
+cp -r "$T/hc-clean" "$T/hc-zero"
+zf="$T/hc-zero/filedir/$(printf '%s' "$BIGC" | sha1sum | cut -c 1-2)/$(printf '%s' "$BIGC" | sha1sum | cut -c 3-4)/$(printf '%s' "$BIGC" | sha1sum | cut -d ' ' -f 1)"
+zsize="$(stat -c %s "$zf")"
+dev_bytes zero "$zsize" > "$zf"
+if [ "$(stat -c %s "$zf")" = "$zsize" ]; then ok "(premise) the file is zero-filled and has its size and its name: the existence and size gates of step 01 pass it"; else bad "(premise) the zero-filled file's size"; fi
+res="$(in_kit t_hash zero)"
+if printf '%s' "$res" | grep -q '^files=3 .* bad=1 unread=0 odd=0 hashrc=1$' && grep -q "$(printf '%s' "$BIGC" | sha1sum | cut -d ' ' -f 1)" "$T/hc-zero/rep/h-mismatch.txt" && [ "$(wc -l < "$T/hc-zero/rep/h-mismatch.txt" | tr -d ' ')" = 1 ]; then
+    ok "(8-A) one file zero-filled at the same size is found: 3 read, 1 mismatch, listed with the SHA-1 of what it holds; the other two pass"
+else bad "(8-A) the zero-filled file" "$res"; fi
+# names that are not a content hash are counted and listed, not failed; warning.txt in the root is Moodle's own and is not counted
+cp -r "$T/hc-clean" "$T/hc-odd"
+hd="$(printf 'x' | sha1sum | cut -c 1-2)/$(printf 'x' | sha1sum | cut -c 3-4)"
+printf 'stray' > "$T/hc-odd/filedir/$hd/not-a-hash.tmp"
+printf 'stray' > "$T/hc-odd/filedir/stray.dat"
+mkdir -p "$T/hc-odd/filedir/AB/CD"
+printf 'upper' > "$T/hc-odd/filedir/AB/CD/ABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCD"
+res="$(in_kit t_hash odd)"
+if printf '%s' "$res" | grep -q '^files=3 .* bad=0 unread=0 odd=3 hashrc=0$' && grep -qx 'stray.dat' "$T/hc-odd/rep/h-odd.txt" && ! grep -q 'warning.txt' "$T/hc-odd/rep/h-odd.txt"; then
+    ok "(8-A) names that are not a content hash (a stray file, a file in the root, an upper-case name) are counted and listed (3), not failed; warning.txt is not counted"
+else bad "(8-A) the odd names" "$res"; fi
+# a file that cannot be read (sha1sum fails for it and prints no line): not ok either, however many others pass
+mkdir -p "$T/shim-sha"
+cat > "$T/shim-sha/sha1sum" <<'SHIM'
+#!/usr/bin/env bash
+# the real sha1sum; the file named in $SHIM_DROP is "unreadable": no line for it, a message, exit 1
+# $SHIM_LOG: what the two directories SHIM_REP (the reports) and SHIM_TMP (TMP_DIR) hold while the check is reading
+if [ -n "${SHIM_LOG:-}" ]; then
+    { printf 'rep:'; ls -A "$SHIM_REP" | tr '\n' ' '; printf '\ntmp:'; ls -A "$SHIM_TMP" | tr '\n' ' '; printf '\n'; } >> "$SHIM_LOG" 2>&1
+fi
+out="$("$SHIM_REALSHA" "$@")"
+rc=$?
+if [ -n "${SHIM_DROP:-}" ]; then
+    printf '%s\n' "$out" | grep -v "$SHIM_DROP"
+    echo "sha1sum: ${SHIM_DROP}: Permission denied (stand-in)" >&2
+    exit 1
+fi
+printf '%s\n' "$out"
+exit $rc
+SHIM
+chmod +x "$T/shim-sha/sha1sum"
+OLDPATH="$PATH"
+SHIM_REALSHA="$(command -v sha1sum)"
+SHIM_DROPHASH="$(printf 'hello world' | sha1sum | cut -d ' ' -f 1)"
+PATH="$T/shim-sha:$PATH"
+export SHIM_REALSHA SHIM_DROP="$SHIM_DROPHASH"
+res="$(in_kit t_hash clean)"
+PATH="$OLDPATH"
+unset SHIM_DROP
+if printf '%s' "$res" | grep -q '^files=2 .* bad=0 unread=1 odd=0 hashrc=1$'; then ok "(8-A) a file that could not be read is counted (unread 1 of 3) and fails the check although every file that was read is right"; else bad "(8-A) the unreadable file" "$res"; fi
+# (round 9, S6) The working lists of the check (one line per file) are written under TMP_DIR, which the step's exit trap removes, not beside the reports: the
+# stand-in sha1sum looks at both directories while the check reads, and again when it has finished.
+cp -r "$T/hc-clean" "$T/hc-lists"
+PATH="$T/shim-sha:$PATH"
+export SHIM_LOG="$T/shim-lists.log" SHIM_REP="$T/hc-lists/rep" SHIM_TMP="$T/hc-lists/tmp"
+res="$(in_kit t_hash lists)"
+PATH="$OLDPATH"
+unset SHIM_LOG SHIM_REP SHIM_TMP
+if printf '%s' "$res" | grep -q '^files=3 .* bad=0 unread=0 odd=0 hashrc=0$' && grep -q '^tmp:.*filedir-hash\.names\.tmp' "$T/shim-lists.log" && grep -q '^tmp:.*filedir-hash\.good\.tmp' "$T/shim-lists.log" && ! grep '^rep:' "$T/shim-lists.log" | grep -q '\.tmp'; then
+    ok "(9-S6) while the check reads, its working lists (.all, .good, .names) are in TMP_DIR and the reports directory holds none of them"
+else bad "(9-S6) where the working lists are while the check reads" "$(cat "$T/shim-lists.log" 2> /dev/null | head -n 4)"; fi
+if [ -z "$(ls -A "$T/hc-lists/tmp")" ] && [ "$(ls "$T/hc-lists/rep" | tr '\n' ' ')" = "h-mismatch.txt h-odd.txt " ]; then
+    ok "(9-S6) when it has finished TMP_DIR is empty again and the reports directory holds only the two result lists (h-mismatch.txt, h-odd.txt)"
+else bad "(9-S6) what the check left behind (tmp: $(ls -A "$T/hc-lists/tmp" | tr '\n' ' '); rep: $(ls "$T/hc-lists/rep" | tr '\n' ' '))"; fi
+
+# The same, through a whole step 01 (end-to-end mode of the stand-in). The archive holds a file store of three files named by the SHA-1 of their content
+# and a language pack. md-hz.tar is that archive with the CONTENT of one file zero-filled in place: every header, name, size and the end of the archive are
+# intact, so nothing in the tar shows it, and the operator who takes its SHA-256 ON THE SANDBOX (the round 7 review's repro) gets a checksum it matches.
+FW="$T/w6"
+mkdir -p "$FW" "$T/mdh/lang/hi"
+cp "$T/fakemysql" "$FW/fakemysql"
+printf 'x' > "$T/mdh.c1"
+printf 'hello world' > "$T/mdh.c2"
+printf '%s' "$BIGC" > "$T/mdh.c3"
+: > "$T/mdh.rows"
+for c in "$T/mdh.c1" "$T/mdh.c2" "$T/mdh.c3"; do
+    h="$(sha1sum "$c" | cut -d ' ' -f 1)"
+    mkdir -p "$T/mdh/filedir/${h:0:2}/${h:2:2}"
+    cp "$c" "$T/mdh/filedir/${h:0:2}/${h:2:2}/$h"
+    printf '%s\t%s\n' "$h" "$(stat -c %s "$c")" >> "$T/mdh.rows"
+done
+dev_bytes urandom 100000 > "$T/mdh/lang/hi/langconfig.bin"
+tar -C "$T/mdh" -cf "$T/md-h.tar" filedir lang
+php -r '$f = file_get_contents($argv[1]); $c = file_get_contents($argv[3]); $o = strpos($f, substr($c, 0, 4096)); if ($o === false || substr($f, $o, strlen($c)) !== $c) { exit(3); } file_put_contents($argv[2], substr($f, 0, $o) . str_repeat("\0", strlen($c)) . substr($f, $o + strlen($c)));' "$T/md-h.tar" "$T/md-hz.tar" "$T/mdh.c3"
+if [ "$(stat -c %s "$T/md-hz.tar")" = "$(stat -c %s "$T/md-h.tar")" ] && ! cmp -s "$T/md-h.tar" "$T/md-hz.tar"; then ok "(premise) md-hz.tar is md-h.tar with one content file zero-filled in place: the same size, the same headers and names"; else bad "(premise) md-hz.tar"; fi
+tar -tf "$T/md-hz.tar" > /dev/null 2>&1 && ok "(premise) GNU tar lists and unpacks md-hz.tar with exit status 0: the tar itself shows nothing" || bad "(premise) tar on md-hz.tar"
+HSHA="RESTORE_MOODLEDATA_SHA256=$(sha256sum "$T/md-h.tar" | cut -d ' ' -f 1)"
+HZSHA="RESTORE_MOODLEDATA_SHA256=$(sha256sum "$T/md-hz.tar" | cut -d ' ' -f 1)"
+fake_db 400
+fake_set storemarker 1
+fake_set e2e 1
+cp "$T/mdh.rows" "$FW/fake.hashrows"
+rb_run ha1 "RESTORE_DONE_BY_HAND=$RBDB" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-h.tar" "$HSHA"
+rb_expect "(8-A, control) a whole archive: step 01 unpacks it, reads all three content files, and finishes" 0 'restore check done' 'FAIL'
+if [ "$(rb_kv ha1 restore.filedir_hash_proof)" = sha1 ] && [ "$(rb_kv ha1 restore.filedir_hash_files)" = 3 ] && [ "$(rb_kv ha1 restore.filedir_hash_odd)" = 0 ] && printf '%s' "$OUT" | grep -q 'hashes to its own name'; then
+    ok "(8-A, control) the proof is recorded in state/kv (restore.filedir_hash_proof=sha1, 3 files) and said in the log"
+else bad "(8-A, control) the recorded proof ('$(rb_kv ha1 restore.filedir_hash_proof)', files '$(rb_kv ha1 restore.filedir_hash_files)')"; fi
+HA1ID="$(rb_kv ha1 restore.id)"
+fake_db 400
+fake_set storemarker 1
+fake_set e2e 1
+cp "$T/mdh.rows" "$FW/fake.hashrows"
+rb_run ha2 "RESTORE_DONE_BY_HAND=$RBDB" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-hz.tar" "$HZSHA"
+rb_expect "(8-A) the zero-filled copy with the SHA-256 the operator took on the sandbox (it matches the copy): refused by the content check (it used to finish)" 1 'content of filedir/ does not match its names' 'restore check done'
+if printf '%s' "$OUT" | grep -q 'OK: RESTORE_MOODLEDATA_ARCHIVE has the SHA-256 in RESTORE_MOODLEDATA_SHA256' && printf '%s' "$OUT" | grep -q 'OK: every content hash of {files} is on disk'; then
+    ok "(8-A) ... although the checksum matched the copy and the file store gate (names and sizes) passed it: only the content shows it"
+else bad "(8-A) the checksum or the names-and-sizes gate did not pass the zero-filled copy" "$OUT"; fi
+if [ "$(rb_kv ha2 restore.filedir_hash_proof)" = failed ] && grep -q "$(sha1sum "$T/mdh.c3" | cut -d ' ' -f 1)" "$T/rb-ha2/work/reports/filedir-hash-mismatch.txt" \
+        && [ "$(sed -n 's/^status=//p' "$T/rb-ha2/work/state/01.status")" = fail ] && [ -z "$(rb_kv ha2 restore.verified)" ] && [ ! -e "$FW/fake.step01" ] && ! grep -q 'smtphosts\|cron_enabled' "$FW/fake.sqllog"; then
+    ok "(8-A) ... step 01 is fail, the file is listed in reports/filedir-hash-mismatch.txt, nothing says step 01 finished, and nothing was neutralised yet"
+else bad "(8-A) the state after the refused copy (proof '$(rb_kv ha2 restore.filedir_hash_proof)')"; fi
+if printf '%s' "$OUT" | grep -q 'run sha1sum ON THE LIVE SERVER on the listed paths' && printf '%s' "$OUT" | grep -q 'fails every copy of it' && printf '%s' "$OUT" | grep -q 'RESTORE_FILEDIR_HASH_CHECK=0, which drops the whole content proof and needs the owner.s written acceptance'; then
+    ok "(9-S3) the refusal tells the operator to run sha1sum on the listed paths ON LIVE before copying again (a file that mismatches on live fails every copy), and names RESTORE_FILEDIR_HASH_CHECK=0 as the only way past it, which needs the owner's written acceptance"
+else bad "(9-S3) the words of the content refusal" "$OUT"; fi
+pf_env ha2
+OUT="$(bash "$K3/02_source_baseline.sh" --env "$T/pf-ha2.env" --execute 2>&1)"
+RC=$?
+rb_expect "(8-A) step 02 on that copy is refused: step 01 has not finished ok" 1 'step 01 (restore check) has not finished ok' 'database release'
+# RESTORE_FILEDIR_HASH_CHECK=0 skips the read, says so, and the summary prints it
+fake_db 400
+fake_set storemarker 1
+fake_set e2e 1
+cp "$T/mdh.rows" "$FW/fake.hashrows"
+rb_run ha3 "RESTORE_DONE_BY_HAND=$RBDB" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-hz.tar" "$HZSHA" "RESTORE_FILEDIR_HASH_CHECK=0"
+rb_expect "(8-A) RESTORE_FILEDIR_HASH_CHECK=0 skips the content check with a WARN (and the step goes on)" 0 'WARN: RESTORE_FILEDIR_HASH_CHECK=0: the CONTENT of filedir/ was NOT read' 'FILEDIR HASH: reading'
+if [ "$(rb_kv ha3 restore.filedir_hash_proof)" = skipped ]; then ok "(8-A) the skip is recorded (restore.filedir_hash_proof=skipped)"; else bad "(8-A) the recorded skip ('$(rb_kv ha3 restore.filedir_hash_proof)')"; fi
+OUT="$(bash "$KIT/12_summary.sh" --env "$T/rb-ha3.env" --execute 2>&1)"
+if grep -q 'NOT CHECKED.*RESTORE_FILEDIR_HASH_CHECK=0' "$T/rb-ha3/work/reports/summary.md"; then ok "(8-A) the summary says the content of filedir/ was NOT CHECKED"; else bad "(8-A) the summary's line on the skipped check" "$(grep -n 'File store content' "$T/rb-ha3/work/reports/summary.md")"; fi
+rb_run ha3 "RESTORE_DONE_BY_HAND=$RBDB" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-hz.tar" "$HZSHA" "RESTORE_FILEDIR_HASH_CHECK=yes"
+rb_expect "(8-A) a value that is not 0 or 1 is refused" 1 'RESTORE_FILEDIR_HASH_CHECK is .yes.' 'restore check done'
+# The re-run on the finished copy (the reuse path) reads the content again: a stray name is a warning, a file damaged since is a failure.
+printf 'stray' > "$T/rb-ha1/data/filedir/$hd/not-a-hash.tmp"
+printf 'Moodle sentinel' > "$T/rb-ha1/data/filedir/warning.txt"
+fake_db 400
+fake_set storemarker 1
+fake_set e2e 1
+cp "$T/mdh.rows" "$FW/fake.hashrows"
+printf '%s\n' "$HA1ID" > "$FW/fake.marker"
+rb_run ha1 "RESTORE_DONE_BY_HAND=$RBDB" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-h.tar" "$HSHA"
+rb_expect "(8-A) a re-run on the finished unpack (the reuse path) reads the content again; a stray name is one WARN and warning.txt is not counted" 0 'WARN: 1 name(s) under filedir/ are not a content hash' 'FAIL'
+if printf '%s' "$OUT" | grep -q 'not restoring over it' && printf '%s' "$OUT" | grep -q 'hashes to its own name'; then ok "(8-A) ... on the reuse path, with the unpack kept"; else bad "(8-A) the reuse path did not read the content" "$OUT"; fi
+c3p="$T/rb-ha1/data/filedir/$(sha1sum "$T/mdh.c3" | cut -c 1-2)/$(sha1sum "$T/mdh.c3" | cut -c 3-4)/$(sha1sum "$T/mdh.c3" | cut -d ' ' -f 1)"
+dev_bytes zero "$(stat -c %s "$c3p")" > "$c3p"
+rb_run ha1 "RESTORE_DONE_BY_HAND=$RBDB" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-h.tar" "$HSHA"
+rb_expect "(8-A) a file damaged on disk since the unpack (zero-filled, same size) is found by the next run of step 01" 1 'content of filedir/ does not match its names' 'restore check done'
+FW="$T"
+
+printf 'step 01: an archive must END where a tar ends, with or without its checksum (Stage B tools fix round 8, S3)\n'
+# tar_end_near_file_end: GNU tar's own end of the archive, 1024 to 10752 bytes (one record plus one block, round 9) before the end of the file
+res="$(in_kit tar_end_near_file_end "$T/md-full.tar")"
+if [ "$(printf '%s' "$res" | tail -n 1)" = rc=0 ]; then ok "(8-S3) a whole tar: GNU tar's end of the archive is within one record plus one block of the end of the file"; else bad "(8-S3) tar_end_near_file_end on a whole tar" "$res"; fi
+tar -b 1 -C "$T/mdcut" -cf "$T/md-b1.tar" filedir lang
+res="$(in_kit tar_end_near_file_end "$T/md-b1.tar")"
+if [ "$(printf '%s' "$res" | tail -n 1)" = rc=0 ]; then ok "(8-S3) a tar written with a blocking factor of 1 (a 512-byte record) is whole too"; else bad "(8-S3) a tar with a blocking factor of 1" "$res"; fi
+{ cat "$T/md-full.tar"; dev_bytes zero 20480; } > "$T/md-pad.tar"
+res="$(in_kit tar_end_near_file_end "$T/md-pad.tar")"
+if [ "$(printf '%s' "$res" | tail -n 1)" = rc=1 ]; then ok "(8-S3) a tar followed by 20480 bytes of zeros (more than one record plus one block after GNU tar's end of the archive) is refused"; else bad "(8-S3) a padded tar" "$res"; fi
+for f in md-zero.tar md-cut.tar md-cuthdr.tar md-text.tar; do
+    res="$(in_kit tar_end_near_file_end "$T/$f")"
+    if [ "$(printf '%s' "$res" | tail -n 1)" = rc=1 ]; then
+        ok "(8-S3) ${f} is refused by tar_end_near_file_end (a zero-filled region, a cut inside a member, a cut at a member header (GNU tar finds no end marker: fewer than the 1024 bytes of the two zero blocks follow it) or no tar at all)"
+    else bad "(8-S3) tar_end_near_file_end on ${f}" "$res"; fi
+done
+# Each of these archives, vouched for by the SHA-256 of ITSELF (the checksum the operator takes on the sandbox, or after a tar died on the live server), is refused
+# before anything is restored, claimed, stamped or unpacked. Before round 8 the checksum replaced the format check, and every one of them was unpacked.
+FW="$T/w4"
+for variant in "md-cuthdr.tar:a plain tar cut at a member header" "md-cut.tar:a plain tar cut inside a member" "md-cuthdr.tar.gz:a valid .tar.gz that holds a cut tar (a tar that died while it wrote into gzip)" "md-zero.tar:a full-size copy with a zero-filled region" "md-pad.tar:a tar followed by more than one record of zeros"; do
+    f="${variant%%:*}"
+    fake_db none
+    fake_after 120
+    fake_set storemarker 1
+    rb_run "pv-${f%%.*}-${f##*.}" "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/$f" "RESTORE_MOODLEDATA_SHA256=$(sha256sum "$T/$f" | cut -d ' ' -f 1)"
+    rb_expect "(8-S3) ${variant#*:}, with a checksum that matches it, is refused as not proven complete" 1 'is not proven complete' 'RUN: restore\|stamped as restore\|unpacked from'
+    nothing_touched "pv-${f%%.*}-${f##*.}" "(8-S3) ... before anything was loaded, claimed, stamped or unpacked (${f})"
+done
+rb_run pv-md-zero-tar "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-zero.tar" "RESTORE_MOODLEDATA_SHA256=$(sha256sum "$T/md-zero.tar" | cut -d ' ' -f 1)"
+rb_expect "(8-S3) the zero-filled copy says why: GNU tar's end of the archive is too far from the end of the file" 1 'too far from the end of the file' 'unpacked from'
+fake_db none
+fake_after 120
+fake_set storemarker 1
+rb_run pv-ok "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-full.tar" "RESTORE_MOODLEDATA_SHA256=$FULLSHA"
+rb_expect "(8-S3, control) a whole plain tar with its checksum is accepted, and its end is checked too" 1 'GNU tar.s end of the archive (block [0-9]*) is [0-9]* bytes from the end of the file' 'is not proven complete'
+FW="$T"
+
+printf 'a whole tar whose first zero block ends a record is whole, and the listing is read in any locale (Stage B tools fix round 9, M and S4)\n'
+# GNU tar (write_eot), bsdtar and Python's tarfile write ONE zero block and zero-fill the rest of the record. When that first zero block is the last block of a
+# record the fill is a whole new record, and a correct archive ends 512 + 10240 = 10752 bytes after the block GNU tar calls its end: one archive in twenty (the
+# first zero block at offset 9728 mod 10240). Round 8 refused those (gap <= 10240). The fixture is the round 8 review's t20 recipe (block 19, size 20480) with the
+# file store and the language pack of md-h.tar: the size of the language pack is moved by a block at a time until the first zero block is block 19 mod 20.
+cp -r "$T/mdh" "$T/mdg"
+mdg_last() { LC_ALL=C tar -tRf "$1" | LC_ALL=C awk '/^block [0-9]+: \*\* (Block of NULs|End of File) \*\*$/ { last = $2 } END { sub(/:$/, "", last); print last }'; }
+MDG_OK=0
+for k in $(seq 0 19); do
+    dev_bytes urandom "$((100000 + 512 * k))" > "$T/mdg/lang/hi/langconfig.bin"
+    tar -C "$T/mdg" -cf "$T/md-g.tar" filedir lang
+    if [ "$(($(mdg_last "$T/md-g.tar") % 20))" = 19 ]; then
+        MDG_OK=1
+        break
+    fi
+done
+gsize="$(stat -c %s "$T/md-g.tar")"
+gblk="$(mdg_last "$T/md-g.tar")"
+if [ "$MDG_OK" = 1 ] && [ $((gblk * 512 % 10240)) = 9728 ] && [ $((gsize - gblk * 512)) = 10752 ]; then
+    ok "(premise) md-g.tar is a whole GNU tar whose first zero block, block ${gblk}, is the last block of a record (offset 9728 mod 10240): the file ends 10752 bytes after it"
+else bad "(premise) md-g.tar (found $MDG_OK, first zero block ${gblk}, size ${gsize})"; fi
+mkdir -p "$T/md-g-x"
+if tar -tf "$T/md-g.tar" > /dev/null 2>&1 && tar -C "$T/md-g-x" -xf "$T/md-g.tar" 2> /dev/null && cmp -s "$T/mdg/lang/hi/langconfig.bin" "$T/md-g-x/lang/hi/langconfig.bin" \
+        && [ "$(find "$T/md-g-x/filedir" -type f | wc -l | tr -d ' ')" = 3 ]; then
+    ok "(premise) GNU tar lists it and unpacks every member with exit status 0: it is a whole archive, not a cut one"
+else bad "(premise) GNU tar on md-g.tar"; fi
+t_tarend() {
+    local rc=0
+    tar_end_near_file_end "$1" || rc=$?
+    printf 'block=%s gap=%s\n' "$TAR_END_BLOCK" "$TAR_END_GAP"
+    return $rc
+}
+res="$(in_kit t_tarend "$T/md-g.tar")"
+if [ "$(printf '%s' "$res" | tail -n 1)" = rc=0 ] && printf '%s' "$res" | grep -q "gap=10752$"; then
+    ok "(9-M) tar_end_near_file_end accepts it: GNU tar's end of the archive is 10752 bytes (one record plus one block) before the end of the file (round 8 refused it)"
+else bad "(9-M) tar_end_near_file_end on md-g.tar" "$res"; fi
+{ cat "$T/md-g.tar"; dev_bytes zero 512; } > "$T/md-g-pad.tar"
+res="$(in_kit t_tarend "$T/md-g-pad.tar")"
+if [ "$(printf '%s' "$res" | tail -n 1)" = rc=1 ] && printf '%s' "$res" | grep -q "gap=11264$"; then
+    ok "(9-M) one more block of zeros after it (11264 bytes after GNU tar's end of the archive) is refused: a larger gap is still refused"
+else bad "(9-M) tar_end_near_file_end on md-g-pad.tar" "$res"; fi
+# End to end: step 01, with the checksum of exactly this file, unpacks it, reads the content of filedir/ and finishes.
+FW="$T/w6"
+fake_db 400
+fake_set storemarker 1
+fake_set e2e 1
+cp "$T/mdh.rows" "$FW/fake.hashrows"
+rb_run gx1 "RESTORE_DONE_BY_HAND=$RBDB" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-g.tar" "RESTORE_MOODLEDATA_SHA256=$(sha256sum "$T/md-g.tar" | cut -d ' ' -f 1)"
+rb_expect "(9-M) step 01 accepts the whole tar whose first zero block ends a record, with its correct checksum, and finishes (it refused it: 'more than one record')" 0 'restore check done' 'FAIL\|not proven complete'
+if printf '%s' "$OUT" | grep -q "GNU tar.s end of the archive (block ${gblk}) is 10752 bytes from the end of the file" && cmp -s "$T/mdg/lang/hi/langconfig.bin" "$T/rb-gx1/data/lang/hi/langconfig.bin" && [ "$(rb_kv gx1 restore.filedir_hash_proof)" = sha1 ]; then
+    ok "(9-M) ... it says where the end of the archive is, the language pack was unpacked whole, and the content of filedir/ was proven (sha1)"
+else bad "(9-M) the accepted archive's unpack and records (proof '$(rb_kv gx1 restore.filedir_hash_proof)')" "$OUT"; fi
+if ! ls "$T/rb-gx1/work/reports" | grep -q '\.tmp$'; then ok "(9-S6) a whole step 01 leaves no .tmp list in reports/"; else bad "(9-S6) reports/ after step 01 holds $(ls "$T/rb-gx1/work/reports" | grep '\.tmp$' | tr '\n' ' ')"; fi
+# A cut copy is still refused, each with the SHA-256 of ITSELF, before anything is restored, claimed, stamped or unpacked.
+head -c $((gsize - 10752)) "$T/md-g.tar" > "$T/md-g-cut.tar"
+head -c 2560 "$T/md-g.tar" > "$T/md-g-zero.tar"
+dev_bytes zero "$((gsize - 2560))" >> "$T/md-g-zero.tar"
+FW="$T/w4"
+for variant in "md-g-cut.tar:a cut copy of that tar (every member, none of the end of the archive)" "md-g-zero.tar:a full-size copy of that tar with a zero-filled region" "md-g-pad.tar:that tar followed by one more block of zeros"; do
+    f="${variant%%:*}"
+    fake_db none
+    fake_after 120
+    fake_set storemarker 1
+    rb_run "gv-${f%%.*}" "$DUMP" "RESTORE_MOODLEDATA_ARCHIVE=$T/$f" "RESTORE_MOODLEDATA_SHA256=$(sha256sum "$T/$f" | cut -d ' ' -f 1)"
+    rb_expect "(9-M) ${variant#*:}, with a checksum that matches it, is still refused as not proven complete" 1 'is not proven complete' 'RUN: restore\|stamped as restore\|unpacked from'
+    nothing_touched "gv-${f%%.*}" "(9-M) ... before anything was loaded, claimed, stamped or unpacked (${f})"
+    if [ "$f" = md-g-zero.tar ]; then
+        if printf '%s' "$OUT" | grep -q 'end-of-archive marker' && printf '%s' "$OUT" | grep -q 'too far from the end of the file' && printf '%s' "$OUT" | grep -q 'Copying the archive again gives the same file if the source is that file' \
+                && printf '%s' "$OUT" | grep -q "ask live for the archive again, written with tar.s default blocking factor" && printf '%s' "$OUT" | grep -q 'or for a compressed one' && ! printf '%s' "$OUT" | grep -q 'Copy the archive again'; then
+            ok "(9-M) the refusal says the end-of-archive marker is too far from the end of the file, that copying again gives the same file, and to ask live again (default blocking factor) or for a compressed archive"
+        else bad "(9-M) the words of the refusal" "$OUT"; fi
+    fi
+done
+FW="$T"
+# S4: GNU tar translates '** Block of NULs **'; under a translated locale every plain tar was refused. The stand-in tar answers in French unless it runs with LC_ALL=C.
+mkdir -p "$T/shim-tar"
+cat > "$T/shim-tar/tar" <<'SHIM'
+#!/usr/bin/env bash
+# the real tar; under any locale but C its listing says what a translated GNU tar says
+out="$("$SHIM_REALTAR" "$@")"
+rc=$?
+if [ "${LC_ALL:-}" != C ]; then
+    out="$(printf '%s\n' "$out" | sed -e 's/\*\* Block of NULs \*\*/** Bloc de NULs **/' -e 's/\*\* End of File \*\*/** Fin de fichier **/')"
+fi
+printf '%s\n' "$out"
+exit $rc
+SHIM
+chmod +x "$T/shim-tar/tar"
+OLDPATH="$PATH"
+SHIM_REALTAR="$(command -v tar)"
+export SHIM_REALTAR
+if [ "$(env -u LC_ALL PATH="$T/shim-tar:$PATH" tar -tRf "$T/md-full.tar" | grep -c 'Bloc de NULs')" = 1 ] && [ "$(env LC_ALL=C PATH="$T/shim-tar:$PATH" tar -tRf "$T/md-full.tar" | grep -c 'Block of NULs')" = 1 ]; then
+    ok "(premise) the stand-in tar lists '** Bloc de NULs **' when it is not run with LC_ALL=C, and '** Block of NULs **' when it is"
+else bad "(premise) the stand-in tar's translation"; fi
+PATH="$T/shim-tar:$PATH"
+res="$(env -u LC_ALL bash -c '. "$1/lib/make_config.sh"; tar_end_near_file_end "$2" && echo rc=0 || echo rc=1' _ "$KIT" "$T/md-full.tar" 2>&1)"
+PATH="$OLDPATH"
+if [ "$(printf '%s' "$res" | tail -n 1)" = rc=0 ]; then
+    ok "(9-S4) tar_end_near_file_end accepts a whole tar although the operator's locale makes GNU tar translate its listing (the kit runs the listing with LC_ALL=C)"
+else bad "(9-S4) tar_end_near_file_end under a translated listing" "$res"; fi
+
+printf 'a step that does not reach its last line is never ok, and keeps its lock (Stage B tools fix round 8, S2)\n'
+FW="$T/w4"
+for name in ABRT SYS TRAP; do
+    num="$(kill -l "$name")"
+    lname="sg-${name,,}-u"
+    SD="$T/sigu-$name"
+    rm -rf "$SD"
+    mkdir -p "$SD"
+    base_env "$T/rb-${lname}.env" "REHEARSAL_WORK=$T/rb-${lname}/work" "MOODLEDATA=$T/rb-${lname}/data" "MYSQL_BIN=$FW/fakemysql" "PRODUCTION_DB_ENDPOINT=live-db.example.internal"
+    STUBDIR="$SD" bash "$K2/sigstep.sh" --env "$T/rb-${lname}.env" --execute > "$T/rb-${lname}.out" 2>&1 &
+    SP=$!
+    if wait_file "$SD/01.started" 240; then
+        kill -"$name" "$SP"
+        rc=0
+        { wait "$SP" || rc=$?; } 2> /dev/null
+        sleep 1
+        # bash re-raises the signal after its EXIT trap (status 128+n, as bash 5.2 does); another bash may end with the trap's own exit 1: never 0
+        if { [ "$rc" = $((128 + num)) ] || [ "$rc" = 1 ]; } && [ ! -e "$SD/after.child" ] && [ ! -e "$SD/01.finished" ]; then
+            ok "(8-S2) SIG${name} (not one of STEP_SIGNALS) ends the step at once with a non-zero status (${rc}; the signal's own status is $((128 + num))); the code after the command never ran"
+        else bad "(8-S2) the step after SIG${name} (rc ${rc}, wanted $((128 + num)))" "$(tail -n 4 "$T/rb-${lname}.out")"; fi
+        if [ "$(status_field "$lname" status)" = fail ] && [ "$(status_field "$lname" rc)" = 1 ] && [ "$(status_field "$lname" ended)" = unreached ] && ! grep -qx 'status=ok' "$T/rb-${lname}/work/state/01.status"; then
+            ok "(8-S2) state/01.status says status=fail, ended=unreached, never ok (it said ok, rc=0, and released the lock)"
+        else bad "(8-S2) the status file after SIG${name} ($(tr '\n' ' ' < "$T/rb-${lname}/work/state/01.status"))"; fi
+        if [ -d "$T/rb-${lname}/work/.run.lock" ] && [ ! -e "$SD/child.finished" ] && grep -q 'ended without reaching its last line' "$T/rb-${lname}.out"; then
+            ok "(8-S2) the lock is KEPT while the step's command still runs, and the log says the step ended without reaching its last line (SIG${name})"
+        else bad "(8-S2) the lock or the log after SIG${name} (lock $([ -d "$T/rb-${lname}/work/.run.lock" ] && echo held || echo gone))" "$(tail -n 4 "$T/rb-${lname}.out")"; fi
+        touch "$SD/release"
+        wait_file "$SD/child.finished" 60 || true
+        kill "$(cat "$SD/bg.pid" 2> /dev/null)" 2> /dev/null || true
+        rm -rf "$T/rb-${lname}/work/.run.lock"
+        if [ "$name" = ABRT ]; then
+            OUT="$(bash "$KIT/12_summary.sh" --env "$T/rb-${lname}.env" --execute 2>&1)"
+            if grep -q 'fail (ended without reaching its last line' "$T/rb-${lname}/work/reports/summary.md" 2> /dev/null; then
+                ok "(8-S2) the summary labels that step: fail (ended without reaching its last line: a signal that ends bash)"
+            else bad "(8-S2) the summary's label of the unreached step" "$(grep -n '| 01 |' "$T/rb-${lname}/work/reports/summary.md" 2> /dev/null)"; fi
+        fi
+    else
+        bad "(8-S2) the stub step never started (SIG${name})"
+        touch "$SD/release"
+        kill "$SP" 2> /dev/null || true
+    fi
+done
+# An 'exit 0' that skips the last line, with no signal at all, is not ok either.
+cat > "$K2/noend.sh" <<'STUB'
+#!/usr/bin/env bash
+# shellcheck source=lib/common.sh
+. "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
+step_init 01 noendstep "$@"
+exit 0
+STUB
+base_env "$T/rb-sgn.env" "REHEARSAL_WORK=$T/rb-sgn/work" "MOODLEDATA=$T/rb-sgn/data" "MYSQL_BIN=$FW/fakemysql" "PRODUCTION_DB_ENDPOINT=live-db.example.internal"
+bash "$K2/noend.sh" --env "$T/rb-sgn.env" --execute > "$T/rb-sgn.out" 2>&1
+rc=$?
+if [ "$rc" = 1 ] && [ "$(status_field sgn status)" = fail ] && [ "$(status_field sgn ended)" = unreached ]; then ok "(8-S2) a step that exits 0 without step_end is recorded fail (ended=unreached) and exits 1, never ok"; else bad "(8-S2) the step without step_end (rc ${rc}, status '$(status_field sgn status)')" "$(tail -n 3 "$T/rb-sgn.out")"; fi
+rm -rf "$T/rb-sgn/work/.run.lock"
+# run_all.sh: the same signal to run_all.sh alone while a step runs must not release its lock under the step.
+SD="$T/sigu-run"
+rm -rf "$SD"
+mkdir -p "$SD"
+cp "$K2/sigstep.sh" "$K2/01_restore_check.sh"
+for n in 02_source_baseline 12_summary; do
+    printf '#!/usr/bin/env bash\n: > "$STUBDIR/%s.started"\nexit 0\n' "${n%%_*}" > "$K2/$n.sh"
+done
+base_env "$T/rb-sgy.env" "REHEARSAL_WORK=$T/rb-sgy/work" "MOODLEDATA=$T/rb-sgy/data" "MYSQL_BIN=$FW/fakemysql" "PRODUCTION_DB_ENDPOINT=live-db.example.internal"
+STUBDIR="$SD" bash "$K2/run_all.sh" --env "$T/rb-sgy.env" --execute --only 01,02,12 > "$T/rb-sgy.out" 2>&1 &
+RP=$!
+if wait_file "$SD/01.started" 240; then
+    kill -ABRT "$RP"
+    rc=0
+    { wait "$RP" || rc=$?; } 2> /dev/null
+    sleep 1
+    if { [ "$rc" = $((128 + $(kill -l ABRT))) ] || [ "$rc" = 1 ]; } && [ -d "$T/rb-sgy/work/.run.lock" ] && [ ! -e "$SD/child.finished" ] && grep -q 'run_all.sh ended without reaching its end' "$T/rb-sgy/work/logs/run_all.log"; then
+        ok "(8-S2) ABRT to run_all.sh alone while step 01 runs: it dies with a non-zero status, its lock is KEPT under the running step, and its log says so (it removed the lock)"
+    else bad "(8-S2) run_all.sh after ABRT (rc ${rc}, lock $([ -d "$T/rb-sgy/work/.run.lock" ] && echo held || echo gone))" "$(tail -n 4 "$T/rb-sgy.out")"; fi
+    touch "$SD/release"
+    wait_file "$SD/child.finished" 60 || true
+    sleep 3
+    if [ "$(status_field sgy status)" = ok ] && [ ! -e "$SD/02.started" ] && [ ! -e "$SD/12.started" ]; then ok "(8-S2) the step it had started ran to its end (ok) and nothing further was started"; else bad "(8-S2) the step under the killed run_all.sh (status '$(status_field sgy status)')"; fi
+    kill "$(cat "$SD/bg.pid" 2> /dev/null)" 2> /dev/null || true
+    rm -rf "$T/rb-sgy/work/.run.lock"
+else
+    bad "(8-S2) the stub step 01 of the run_all.sh ABRT test never started"
+    touch "$SD/release"
+    kill "$RP" 2> /dev/null || true
+fi
+printf 'a step that ends without its last line, under run_all.sh: nothing further starts and the lock stays (Stage B tools fix round 9, S1)\n'
+# The review's e1 sequence: ABRT (a signal that ends bash and that nothing here handles) sent to a STEP that run_all.sh started, not to run_all.sh. The step records
+# itself fail (ended=unreached) and keeps its lock; run_all.sh used to log the exit, start the summary and release .run.lock under the step's command. KILL leaves
+# no trap to write anything (status=running): run_all.sh reads its exit, 128+9, the same way.
+FW="$T/w4"
+for name in ABRT KILL; do
+    num="$(kill -l "$name")"
+    lname="sg-r9-${name,,}"
+    SD="$T/sigr9-$name"
+    mkdir -p "$SD"
+    cp "$K2/sigstep.sh" "$K2/01_restore_check.sh"
+    base_env "$T/rb-${lname}.env" "REHEARSAL_WORK=$T/rb-${lname}/work" "MOODLEDATA=$T/rb-${lname}/data" "MYSQL_BIN=$FW/fakemysql" "PRODUCTION_DB_ENDPOINT=live-db.example.internal"
+    STUBDIR="$SD" bash "$K2/run_all.sh" --env "$T/rb-${lname}.env" --execute --only 01,02,12 > "$T/rb-${lname}.out" 2>&1 &
+    RP=$!
+    if wait_file "$SD/01.started" 240 && wait_file "$T/rb-${lname}/work/.run.lock/step.pid" 20; then
+        kill -"$name" "$(cat "$T/rb-${lname}/work/.run.lock/step.pid")"
+        rc=0
+        { wait "$RP" || rc=$?; } 2> /dev/null
+        sleep 1
+        if [ "$rc" != 0 ] && [ -d "$T/rb-${lname}/work/.run.lock" ] && [ ! -e "$SD/child.finished" ] && [ ! -e "$SD/02.started" ] && [ ! -e "$SD/12.started" ]; then
+            ok "(9-S1) SIG${name} to a STEP under run_all.sh: run_all.sh exits non-zero (${rc}), starts no further step and not the summary, and KEEPS .run.lock while the step's command still runs"
+        else bad "(9-S1) run_all.sh after SIG${name} to its step (rc ${rc}, lock $([ -d "$T/rb-${lname}/work/.run.lock" ] && echo held || echo gone), 02 $([ -e "$SD/02.started" ] && echo started || echo not started), 12 $([ -e "$SD/12.started" ] && echo started || echo not started))" "$(tail -n 6 "$T/rb-${lname}.out")"; fi
+        if grep -q 'ended without reaching its last line' "$T/rb-${lname}/work/logs/run_all.log" && grep -q 'STOPPED at step 01' "$T/rb-${lname}/work/logs/run_all.log" && grep -q 'KEEPS the lock' "$T/rb-${lname}/work/logs/run_all.log"; then
+            ok "(9-S1) ... and its log says the step did not reach its last line, that the lock is KEPT, and where to continue (SIG${name})"
+        else bad "(9-S1) the log of run_all.sh after SIG${name} to its step" "$(tail -n 6 "$T/rb-${lname}.out")"; fi
+        if [ "$name" = ABRT ]; then
+            if [ "$(status_field "$lname" status)" = fail ] && [ "$(status_field "$lname" ended)" = unreached ]; then ok "(9-S1) ... state/01.status says fail, ended=unreached (SIG${name})"; else bad "(9-S1) the status file after SIG${name} ($(tr '\n' ' ' < "$T/rb-${lname}/work/state/01.status"))"; fi
+        else
+            if [ "$(status_field "$lname" status)" = running ]; then ok "(9-S1) ... state/01.status says running (a step that died without a trap), which nothing reads as ok (SIG${name})"; else bad "(9-S1) the status file after SIG${name} ($(tr '\n' ' ' < "$T/rb-${lname}/work/state/01.status"))"; fi
+        fi
+        touch "$SD/release"
+        wait_file "$SD/child.finished" 60 || true
+        kill "$(cat "$SD/bg.pid" 2> /dev/null)" 2> /dev/null || true
+    else
+        bad "(9-S1) the stub step 01 of the run_all.sh ${name} test never started"
+        touch "$SD/release"
+        kill "$RP" 2> /dev/null || true
+    fi
+done
+# Controls: a step that fails the ordinary way (die: exit 1, its status file written, its lock released) still lets the summary run and releases the lock, and a
+# status file left by an EARLIER run that says ended=unreached is not read as this run's (the step below dies before it writes anything).
+SD="$T/sigr9-die"
+mkdir -p "$SD"
+cat > "$K2/01_restore_check.sh" <<'STUB'
+#!/usr/bin/env bash
+# shellcheck source=lib/common.sh
+. "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
+step_init 01 diestep "$@"
+die "an ordinary failure"
+STUB
+base_env "$T/rb-sg-r9-die.env" "REHEARSAL_WORK=$T/rb-sg-r9-die/work" "MOODLEDATA=$T/rb-sg-r9-die/data" "MYSQL_BIN=$FW/fakemysql" "PRODUCTION_DB_ENDPOINT=live-db.example.internal"
+STUBDIR="$SD" bash "$K2/run_all.sh" --env "$T/rb-sg-r9-die.env" --execute --only 01,02,12 > "$T/rb-sg-r9-die.out" 2>&1
+rc=$?
+if [ "$rc" = 1 ] && [ ! -d "$T/rb-sg-r9-die/work/.run.lock" ] && [ ! -e "$SD/02.started" ] && [ -e "$SD/12.started" ] && ! grep -q 'KEEPS the lock' "$T/rb-sg-r9-die.out"; then
+    ok "(9-S1, control) a step that dies the ordinary way (exit 1): the summary still runs, no later step, the lock is released, run_all.sh exits 1"
+else bad "(9-S1, control) the ordinary failure (rc ${rc}, lock $([ -d "$T/rb-sg-r9-die/work/.run.lock" ] && echo held || echo gone), 12 $([ -e "$SD/12.started" ] && echo started || echo not started))" "$(tail -n 6 "$T/rb-sg-r9-die.out")"; fi
+SD="$T/sigr9-stale"
+mkdir -p "$SD" "$T/rb-sg-r9-stale/work/state"
+printf 'status=fail\nrc=1\nended=unreached\n' > "$T/rb-sg-r9-stale/work/state/01.status"
+printf '#!/usr/bin/env bash\nexit 1\n' > "$K2/01_restore_check.sh"
+base_env "$T/rb-sg-r9-stale.env" "REHEARSAL_WORK=$T/rb-sg-r9-stale/work" "MOODLEDATA=$T/rb-sg-r9-stale/data" "MYSQL_BIN=$FW/fakemysql" "PRODUCTION_DB_ENDPOINT=live-db.example.internal"
+STUBDIR="$SD" bash "$K2/run_all.sh" --env "$T/rb-sg-r9-stale.env" --execute --only 01,02,12 > "$T/rb-sg-r9-stale.out" 2>&1
+rc=$?
+if [ "$rc" = 1 ] && [ ! -d "$T/rb-sg-r9-stale/work/.run.lock" ] && [ -e "$SD/12.started" ] && ! grep -q 'KEEPS the lock' "$T/rb-sg-r9-stale.out"; then
+    ok "(9-S1, control) an ended=unreached left in 01.status by an earlier run is not this run's: a step that fails before it writes anything lets the summary run and the lock go"
+else bad "(9-S1, control) the stale status file (rc ${rc}, lock $([ -d "$T/rb-sg-r9-stale/work/.run.lock" ] && echo held || echo gone), 12 $([ -e "$SD/12.started" ] && echo started || echo not started))" "$(tail -n 6 "$T/rb-sg-r9-stale.out")"; fi
+cp "$K2/sigstep.sh" "$K2/01_restore_check.sh"
+FW="$T"
+# Every step script ends with step_end (a step without it would be recorded fail); the two early exits say it too.
+missing=""
+for f in "$KIT"/[0-1][0-9]_*.sh; do
+    [ "$(grep -v '^[[:space:]]*$' "$f" | tail -n 1)" = step_end ] || missing="$missing $(basename "$f")"
+done
+if [ -z "$missing" ]; then ok "(8-S2) every step script (00 to 12) ends with step_end"; else bad "(8-S2) steps whose last line is not step_end:${missing}"; fi
+if [ "$(grep -c -B1 '^ *exit 0$' "$KIT/02_source_baseline.sh" "$KIT/12_summary.sh" | grep -c .)" -ge 2 ] && ! grep -B1 '^ *exit 0$' "$KIT/02_source_baseline.sh" "$KIT/12_summary.sh" | grep -v 'step_end\|exit 0\|^--' | grep -q .; then ok "(8-S2) the two early 'exit 0' of steps 02 and 12 follow a step_end"; else bad "(8-S2) an early exit 0 without step_end"; fi
+FW="$T"
+
+printf 'no copy of the database password is left in TMPDIR (Stage B tools fix round 8, S4)\n'
+# The stand-in server w5 holds the finished copy f4 (the section above). Steps are run with their own TMPDIR; each leaves nothing in it.
+FW="$T/w5"
+mkdir -p "$T/tmpx"
+printf 'status=fail\nrc=1\n' > "$T/rb-f4/work/state/01.status"
+pf_env f4
+TMPDIR="$T/tmpx" bash "$K3/10_parity_compare.sh" --env "$T/pf-f4.env" --execute > "$T/tmpx.refused.out" 2>&1
+rc=$?
+if [ "$rc" = 1 ] && grep -q 'step 01 (restore check) has not finished ok' "$T/tmpx.refused.out"; then ok "(8-S4, setup) step 10 on a copy whose step 01 did not finish is refused at the gate"; else bad "(8-S4, setup) the refused gate (rc ${rc})" "$(tail -n 3 "$T/tmpx.refused.out")"; fi
+if [ -z "$(ls -A "$T/tmpx")" ]; then ok "(8-S4) a refused gate leaves nothing in TMPDIR (it left one directory with a client.cnf, a copy of the password, per read)"; else bad "(8-S4) what the refused gate left in TMPDIR" "$(find "$T/tmpx" -type f | head -n 5)"; fi
+printf 'status=ok\nrc=0\n' > "$T/rb-f4/work/state/01.status"
+TMPDIR="$T/tmpx" bash "$K3/10_parity_compare.sh" --env "$T/pf-f4.env" --execute > "$T/tmpx.passed.out" 2>&1
+rc=$?
+if ! grep -q 'has not finished ok\|could not be read\|PARTIAL copy' "$T/tmpx.passed.out"; then ok "(8-S4, setup) step 10 on the finished copy passes the gate (it stops later, on what the stand-in does not have)"; else bad "(8-S4, setup) the gate on the finished copy" "$(tail -n 3 "$T/tmpx.passed.out")"; fi
+if [ -z "$(ls -A "$T/tmpx")" ]; then ok "(8-S4) a gate that passes leaves nothing in TMPDIR either (three directories per step run before)"; else bad "(8-S4) what the passing gate left in TMPDIR" "$(find "$T/tmpx" -type f | head -n 5)"; fi
+FW="$T"
+
+printf 'the preflight and an uncompressed moodledata archive without the checksum from the live server (Stage B tools fix round 8, S5)\n'
+base_env "$T/pe1.env" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-full.tar"
+expect_refused "(8-S5) DRY preflight: an uncompressed tar (it is here, so read by its first bytes) with no RESTORE_MOODLEDATA_SHA256 is refused, in the live-server wording" "$T/pe1.env" 00_preflight.sh 'is an uncompressed tar and RESTORE_MOODLEDATA_SHA256 is not set.*COMPUTED ON THE LIVE SERVER'
+base_env "$T/pe2.env" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-full.tar.gz"
+kit 00_preflight.sh "$T/pe2.env"
+if [ "$RC" = 0 ] && printf '%s' "$OUT" | grep -q 'preflight passed'; then ok "(8-S5) a .tar.gz with no checksum passes the preflight (its decompressor is its proof)"; else bad "(8-S5) the preflight on a .tar.gz (rc ${RC})" "$OUT"; fi
+base_env "$T/pe3.env" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-full.tar" "RESTORE_MOODLEDATA_SHA256=$FULLSHA"
+kit 00_preflight.sh "$T/pe3.env"
+if [ "$RC" = 0 ] && printf '%s' "$OUT" | grep -q 'preflight passed' && printf '%s' "$OUT" | grep -q 'computed ON THE LIVE SERVER'; then ok "(8-S5) an uncompressed tar with its checksum passes, and the note says where the checksum must come from"; else bad "(8-S5) the preflight on a tar with its checksum (rc ${RC})" "$OUT"; fi
+base_env "$T/pe4.env" "RESTORE_MOODLEDATA_ARCHIVE=$T/not-here/live-moodledata.tar"
+expect_refused "(8-S5) DRY preflight: an archive that is not on this box and is named .tar is refused as well (it is read by its name)" "$T/pe4.env" 00_preflight.sh 'is an uncompressed tar and RESTORE_MOODLEDATA_SHA256 is not set'
+base_env "$T/pe5.env" "RESTORE_MOODLEDATA_ARCHIVE=$T/not-here/live-moodledata.tar.gz"
+kit 00_preflight.sh "$T/pe5.env"
+if [ "$RC" = 0 ] && printf '%s' "$OUT" | grep -q 'preflight passed'; then ok "(8-S5) an archive that is not on this box and is named .tar.gz is not refused (DRY: nothing to read)"; else bad "(8-S5) the preflight on an absent .tar.gz (rc ${RC})" "$OUT"; fi
+cp "$T/pf-f4.env" "$T/pe6.env"
+printf 'RESTORE_MOODLEDATA_ARCHIVE=%s\n' "$T/md-full.tar" >> "$T/pe6.env"
+OUT="$(bash "$K3/00_preflight.sh" --env "$T/pe6.env" --execute 2>&1)"
+RC=$?
+if [ "$RC" != 0 ] && printf '%s' "$OUT" | grep -q 'FAIL: RESTORE_MOODLEDATA_ARCHIVE .* is an uncompressed tar and RESTORE_MOODLEDATA_SHA256 is not set'; then ok "(8-S5) the --execute preflight refuses it too"; else bad "(8-S5) the --execute preflight (rc ${RC})" "$(printf '%s\n' "$OUT" | grep 'FAIL' | head -n 3)"; fi
+# the words of the refusal and of the documents: where the checksum comes from
+bad_words=""
+for f in "$KIT/01_restore_check.sh" "$KIT/rehearsal.env.example" "$KIT/README.md" "$KIT/../../moodle-enhancement/docs/cutover/MIGRATION-REHEARSAL-RUNBOOK.md"; do
+    grep -qi 'on the live server' "$f" || bad_words="$bad_words missing:$(basename "$f")"
+done
+if grep -q "sha256sum, or the live backup's manifest" "$KIT/01_restore_check.sh" "$KIT/rehearsal.env.example"; then bad_words="$bad_words old-wording"; fi
+if [ -z "$bad_words" ]; then ok "(8-S5) the refusal, rehearsal.env.example, the README and the runbook all say the checksum is computed ON THE LIVE SERVER (a sha256sum on the sandbox proves nothing)"; else bad "(8-S5) the wording where the checksum comes from:${bad_words}"; fi
+for f in "$KIT/rehearsal.env.example" "$KIT/README.md" "$KIT/../../moodle-enhancement/docs/cutover/MIGRATION-REHEARSAL-RUNBOOK.md"; do
+    if grep -q 'RESTORE_FILEDIR_HASH_CHECK' "$f"; then ok "(8-A) $(basename "$f") documents RESTORE_FILEDIR_HASH_CHECK"; else bad "(8-A) $(basename "$f") does not document RESTORE_FILEDIR_HASH_CHECK"; fi
+done
+# Round 9, S2, S3 and S5: where the documents and the summary say what the content check proves, what it costs, and the way past a file that mismatches on live.
+bad_words=""
+for f in "$KIT/rehearsal.env.example" "$KIT/README.md" "$KIT/../../moodle-enhancement/docs/cutover/MIGRATION-REHEARSAL-RUNBOOK.md"; do
+    grep -q 'Only `\?filedir/`\? is proven' "$f" || bad_words="$bad_words no-only-filedir:$(basename "$f")"
+    grep -q 'per 100 GB' "$f" || bad_words="$bad_words no-per-100GB:$(basename "$f")"
+    grep -qi "owner.s written acceptance" "$f" || bad_words="$bad_words no-written-acceptance:$(basename "$f")"
+    grep -q 'sha1sum' "$f" || bad_words="$bad_words no-sha1sum-on-live:$(basename "$f")"
+    grep -q '10752' "$f" || bad_words="$bad_words no-10752:$(basename "$f")"
+done
+grep -q 'Only filedir/ is proven independently of the archive' "$KIT/12_summary.sh" || bad_words="$bad_words summary"
+if [ -z "$bad_words" ]; then ok "(9-S2, S3, S5) the README, the runbook, rehearsal.env.example and the summary say only filedir/ is proven independently of the checksum, that every step 01 run re-reads it (per 100 GB), that sha1sum on live comes first, and that the way past a mismatch needs the owner's written acceptance; the first three give the 10752-byte limit"; else bad "(9-S2, S3, S5) the documents:${bad_words}"; fi
+
+printf 'step 01 after a hop 1 that failed with the release already moved (Stage B tools fix round 8, S1)\n'
+FW="$T/w7"
+mkdir -p "$FW"
+cp "$T/fakemysql" "$FW/fakemysql"
+fake_db 400
+fake_set storemarker 1
+fake_set e2e 1
+rb_run rr1 "RESTORE_DONE_BY_HAND=$RBDB" "$ARCH" "$ARCHSHA"
+rb_expect "(8-S1, setup) step 01 finishes on the live backup's copy (release 4.1.2)" 0 'restore check done'
+RR1ID="$(rb_kv rr1 restore.id)"
+printf 'status=ok\nrc=0\n' > "$T/rb-rr1/work/state/02.status"
+printf 'status=fail\nrc=1\n' > "$T/rb-rr1/work/state/03.status"
+printf '4.5.4 (Build: 20250414)\n' > "$FW/fake.relval"
+if [ -n "$(rb_kv rr1 release.source)" ]; then ok "(8-S1, setup) step 01 recorded the source release it saw (state/kv/release.source), hop 1 failed with the release moved to 4.5.4 (03.status fail)"; else bad "(8-S1, setup) release.source was not recorded"; fi
+rb_run rr1 "RESTORE_DONE_BY_HAND=$RBDB" "$ARCH" "$ARCHSHA"
+rb_expect "(8-S1) a full re-run: step 01 passes again on the copy whose release moved (it died at the release gate and locked the rehearsal out)" 0 'restore check done' 'does not match'
+if printf '%s' "$OUT" | grep -q 'passed the release gate before a hop moved it' && [ "$(sed -n 's/^status=//p' "$T/rb-rr1/work/state/01.status")" = ok ] && [ "$(rb_kv rr1 restore.verified)" = "$RR1ID" ] && [ "$(cat "$FW/fake.step01" 2> /dev/null)" = "$RR1ID" ]; then
+    ok "(8-S1) ... it says why, 01.status is ok, and both records that step 01 finished are written again for the same restore"
+else bad "(8-S1) the re-run's records (01.status '$(sed -n 's/^status=//p' "$T/rb-rr1/work/state/01.status")', verified '$(rb_kv rr1 restore.verified)')" "$OUT"; fi
+pf_env rr1
+OUT="$(bash "$K3/03_hop1_to_45.sh" --env "$T/pf-rr1.env" --execute 2>&1)"
+RC=$?
+rb_expect "(8-S1) step 03 (the retry of the failed hop) now gets past the gate of steps 02 to 11 (it stops later, for want of the 4.5 code in this stand-in)" 1 'holds no code and no archive is configured' 'has not finished ok'
+rm -f "$T/rb-rr1/work/state/kv/release.source"
+rb_run rr1 "RESTORE_DONE_BY_HAND=$RBDB" "$ARCH" "$ARCHSHA"
+rb_expect "(8-S1, control) without that record (a copy this work directory never saw at the source release) a release past the source is still refused" 1 'does not match SOURCE_RELEASE_REGEX' 'restore check done'
+printf '4.1.2 (Build: 20230320)\n' > "$T/rb-rr1/work/state/kv/release.source"
+printf '3.9.1 (Build: 20210101)\n' > "$FW/fake.relval"
+rb_run rr1 "RESTORE_DONE_BY_HAND=$RBDB" "$ARCH" "$ARCHSHA"
+rb_expect "(8-S1, control) a release that no hop of this kit leaves (3.9.1) is refused even with the record" 1 'does not match SOURCE_RELEASE_REGEX' 'restore check done'
+FW="$T"
+
 printf 'the mysql client of the kit reads the kit'"'"'s option file only (Stage B tools fix round 6b)\n'
 if ! grep -n -e '--defaults-extra-file' "$KIT"/*.sh "$KIT"/lib/*.sh 2> /dev/null | grep -v '/selftest.sh:' | grep -v '^[^:]*:[0-9]*:[[:space:]]*#' | grep -q .; then
     ok "no kit client call uses --defaults-extra-file (the user's ~/.my.cnf is read after it and would override the kit's host, port and password)"
@@ -2019,6 +2682,9 @@ hits="$(grep -nE '(^|[^A-Za-z0-9_])[A-Za-z]:[\\/]|xampp|/c/Users|/mnt/[a-z]/' "$
 if [ -z "$hits" ]; then ok "no Windows path, drive letter or XAMPP path is hard-coded in the kit"; else bad "hard-coded Windows paths" "$hits"; fi
 hits="$(grep -nE 'password[[:space:]]*=[[:space:]]*["'"'"'][^"'"'"']{8,}' "$KIT"/*.sh "$KIT"/lib/*.sh "$KIT"/rehearsal.env.example 2> /dev/null | grep -v 'selftest.sh' || true)"
 if [ -z "$hits" ]; then ok "no credential literal in the kit"; else bad "credential literal" "$hits"; fi
+
+# A call that dev_bytes refused left its fixture empty or short; it may have run in a pipe or a $( ), so the mark file is read here, at the end.
+if [ -s "$DEV_BYTES_MARK" ]; then bad "dev_bytes refused a count during the run: a fixture came out empty or short" "$(cat "$DEV_BYTES_MARK")"; else ok "dev_bytes refused no count during the run: every fixture was written at the size that was computed for it"; fi
 
 printf '\n%s passed, %s failed%s\n' "$PASS" "$FAILS" "$([ "$SKIPS" = 0 ] || printf ', %s skipped (see the skip lines above)' "$SKIPS")"
 [ "$FAILS" = 0 ]

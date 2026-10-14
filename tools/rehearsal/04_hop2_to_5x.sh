@@ -253,3 +253,4 @@ else
     dry "would run the parity compare: migration_parity_check.php --compare=${BASELINE_FILE} (exit 0 required unless PARITY_HOP2_ENFORCE=0)"
 fi
 log "hop 2 done"
+step_end

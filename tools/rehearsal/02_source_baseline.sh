@@ -42,6 +42,7 @@ if [ "$EXECUTE" = 1 ]; then
         # A re-run after the hops: the baseline of record must be the one that was recorded, and nothing else is done.
         if step_done_ok 02 && [ -s "$BASELINE_FILE" ] && [ "$(sha256_of "$BASELINE_FILE")" = "$(kv_get baseline.sha256)" ]; then
             log "OK: the database has moved on (release '${release}') and the baseline of record is intact (SHA-256 $(sha256_of "$BASELINE_FILE")): nothing to take or verify"
+            step_end
             exit 0
         fi
         die "the database reports release '${release}', not the source '${SOURCE_RELEASE_REGEX}' (or hop 1 already ran), and there is no recorded baseline: a baseline cannot be taken from a copy that has been upgraded. Restore the source again"
@@ -110,3 +111,4 @@ else
     dry "would verify the baseline against this database with source_baseline.php --compare (exit 0)"
 fi
 log "keep ${BASELINE_FILE} with the change ticket: every later step is measured against it"
+step_end

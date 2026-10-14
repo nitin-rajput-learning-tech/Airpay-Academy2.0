@@ -191,3 +191,4 @@ else
     dry "would run migration_parity_check.php --compare ... --after-import once more, informational"
 fi
 log "cron cycle done; CLI maintenance is $([ "$MAINTENANCE_AFTER_CRON" = on ] && printf 'ON' || printf 'OFF (lift/keep it for the smoke walk)')"
+step_end

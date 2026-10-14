@@ -145,3 +145,4 @@ fi
 
 run m5 ../admin/cli/purge_caches.php || die "purge_caches failed"
 log "repairs done"
+step_end

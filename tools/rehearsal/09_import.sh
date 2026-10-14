@@ -246,3 +246,4 @@ if [ "$EXECUTE" = 1 ]; then
     kv_set import.verify_exit "$rc"
 fi
 log "import done"
+step_end
