@@ -318,4 +318,42 @@ final class gst_privacy_test extends provider_testcase {
         $this->assertEmpty($writer->get_data([$plugin, 'credit_notes']));
         $this->assertNotEmpty($writer->get_data([$plugin, 'receipts']), 'a paid order has a receipt');
     }
+
+    public function test_erasure_blanks_a_due_order_whose_invoice_cannot_be_issued(): void {
+        global $DB;
+        // Security review 2026-10-14: a due order must not keep the buyer's details for ever. With the invoice flag
+        // OFF for its tenant the invoice will not be issued, so erasure blanks the order now.
+        $buyer = $this->user_at('/77');
+        $order = $this->paid_order_for($buyer, ['invoice_due' => 1]);
+        $this->flag(flags::INVOICES, false);
+
+        provider::delete_data_for_user($this->contextlist($buyer));
+
+        $after = $DB->get_record('local_sentientia_cart_history', ['id' => $order->id]);
+        $this->assertSame('(redacted)', $after->billing_name);
+        $this->assertSame('', (string) $after->billing_email);
+        $this->assertSame(0, $DB->count_records('local_sentientia_cart_invoices'));
+    }
+
+    public function test_erasure_issues_a_due_invoice_first_and_keeps_an_order_it_cannot_yet_issue(): void {
+        global $DB;
+        $buyer = $this->user_at('/77');
+        // The settings are incomplete, so the due invoice cannot be issued during the erasure.
+        $order = $this->paid_order_for($buyer, ['invoice_due' => 1]);
+        $this->configure_tax(['sac_code' => '']);
+
+        provider::delete_data_for_user($this->contextlist($buyer));
+        $this->assertDebuggingCalled(null, DEBUG_DEVELOPER);
+        $kept = $DB->get_record('local_sentientia_cart_history', ['id' => $order->id]);
+        $this->assertNotSame('(redacted)', $kept->billing_name, 'the invoice still needs the details');
+
+        // The settings are fixed and the buyer's account is deleted: the task issues the invoice, which carries the
+        // details for its retention period, and blanks the order.
+        $this->configure_tax();
+        $DB->set_field('user', 'deleted', 1, ['id' => $buyer->id]);
+        invoicer::issue_due();
+        $this->assertNotFalse($this->invoice_of((int) $order->id), 'the invoice was issued');
+        $after = $DB->get_record('local_sentientia_cart_history', ['id' => $order->id]);
+        $this->assertSame('(redacted)', $after->billing_name, 'the order no longer keeps them');
+    }
 }

@@ -133,6 +133,7 @@ class invoicer {
         $existing = $DB->get_record('local_sentientia_cart_invoices', ['historyid' => $cart->id]);
         if ($existing) {
             self::clear_due((int) $cart->id);
+            self::redact_order_of_deleted_buyer($existing);
             return $existing;
         }
 
@@ -225,11 +226,22 @@ class invoicer {
             debugging('local_sentientia_cart: could not raise the credit notes of invoice ' . $invoice->invoice_number
                 . ': ' . get_class($e) . ': ' . $e->getMessage(), DEBUG_DEVELOPER);
         }
-        // The buyer was erased while the invoice was due: the order kept the details only for this invoice.
+        self::redact_order_of_deleted_buyer($invoice);
+        return $invoice;
+    }
+
+    /**
+     * The buyer was erased while the invoice was due: the order kept the details only for this invoice, which now
+     * exists, so blank them.
+     *
+     * @param \stdClass $invoice
+     * @return void
+     */
+    private static function redact_order_of_deleted_buyer(\stdClass $invoice): void {
+        global $DB;
         if ((int) $DB->get_field('user', 'deleted', ['id' => (int) $invoice->userid]) === 1) {
             privacy\provider::redact_order((int) $invoice->historyid);
         }
-        return $invoice;
     }
 
     /**

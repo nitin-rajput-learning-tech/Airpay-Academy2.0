@@ -465,7 +465,7 @@ class provider implements
                              billing_gstn = '',
                              billing_state = NULL,
                              notes = ''
-                       WHERE id = :id AND legacy_source IS NULL AND invoice_due = 0",
+                       WHERE id = :id AND legacy_source IS NULL",
             ['id' => $historyid]);
     }
 
@@ -487,6 +487,25 @@ class provider implements
                 }
             }
         }
+        // Then blank every order of the user except one whose invoice is still due AND can still be issued (the
+        // invoice flag is ON for its tenant): that invoice needs the details, the task issues it within 15 minutes or
+        // warns the administrators every day until the settings are complete, and issue_for_order() blanks the order
+        // once the invoice exists. Any other due order is blanked now, so no setting can keep the details for ever
+        // (security review 2026-10-14).
+        $keep = [];
+        foreach ($DB->get_records('local_sentientia_cart_history', ['userid' => $userid, 'invoice_due' => 1], '',
+                'id, costcenterid') as $due) {
+            if (\local_sentientia_cart\flags::invoices_for_order($due)) {
+                $keep[] = (int) $due->id;
+            }
+        }
+        $where = 'userid = :uid AND legacy_source IS NULL';
+        $params = ['uid' => $userid];
+        if ($keep) {
+            [$notin, $keepparams] = $DB->get_in_or_equal($keep, SQL_PARAMS_NAMED, 'keep', false);
+            $where .= " AND id $notin";
+            $params += $keepparams;
+        }
         $DB->execute("UPDATE {local_sentientia_cart_history}
                          SET billing_name = '(redacted)',
                              billing_email = '',
@@ -495,8 +514,8 @@ class provider implements
                              billing_gstn = '',
                              billing_state = NULL,
                              notes = ''
-                       WHERE userid = :uid AND legacy_source IS NULL AND invoice_due = 0",
-            ['uid' => $userid]);
+                       WHERE $where",
+            $params);
         // GST tax documents (2026-10-14): kept unchanged while they are inside the retention period (the law requires
         // it), blanked once they are older. Until then the order history above is redacted but the invoice is not.
         self::redact_tax_documents($userid);
