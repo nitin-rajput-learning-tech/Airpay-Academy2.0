@@ -1,0 +1,88 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_sentientia_cart/einvoice
+
+    The e-invoice (IRN) page: B2B tax documents that wait for the IRN Finance records. Spec
+    GST-TAX-INVOICE-AND-RECEIPT-SPEC-2026-10-14.md, section 6. Each row is a POST form to einvoice.php with the
+    session key; the server checks the capability, the tenant and every field again.
+
+    Context variables required for this template:
+    * rows - array of documents that wait for an IRN
+    * sesskey, action_url - the form
+    * has_rows - boolean
+
+    Example context (json):
+    {
+        "has_rows": true,
+        "sesskey": "abc123",
+        "action_url": "https://example.com/local/sentientia_cart/einvoice.php",
+        "rows": [{
+            "type": "invoice", "type_label": "Tax invoice", "id": 7, "number": "AIRPAY-2026-0007",
+            "date": "14 Oct 2026", "billing_name": "Test Buyer", "billing_gstn": "27AAAAA0000A1Z5",
+            "total": "₹1,180.00", "view_url": "https://example.com/local/sentientia_cart/invoice.php?id=7"
+        }]
+    }
+}}
+<div class="container py-3" data-region="einvoice">
+    <h2 class="mb-2">{{#str}}einvoice_title, local_sentientia_cart{{/str}}</h2>
+    <p class="text-muted">{{#str}}einvoice_intro, local_sentientia_cart{{/str}}</p>
+
+    {{^has_rows}}
+    <div class="alert alert-info" role="status">{{#str}}einvoice_none, local_sentientia_cart{{/str}}</div>
+    {{/has_rows}}
+
+    {{#rows}}
+    <div class="card border-0 shadow-sm mb-4" data-region="einvoice-row" data-doc-type="{{ type }}" data-doc-id="{{ id }}">
+        <div class="card-header bg-transparent d-flex flex-wrap justify-content-between gap-2">
+            <strong>{{ type_label }} {{ number }}</strong>
+            <span class="text-muted">{{ date }} &middot; {{ billing_name }} &middot; {{ billing_gstn }} &middot; {{ total }}</span>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{{ action_url }}">
+                <input type="hidden" name="sesskey" value="{{ sesskey }}">
+                <input type="hidden" name="action" value="record">
+                <input type="hidden" name="type" value="{{ type }}">
+                <input type="hidden" name="id" value="{{ id }}">
+                <div class="mb-3">
+                    <label class="form-label" for="irn_{{ type }}_{{ id }}">{{#str}}einvoice_irn, local_sentientia_cart{{/str}}</label>
+                    <input type="text" class="form-control" id="irn_{{ type }}_{{ id }}" name="irn" required
+                           minlength="64" maxlength="64" pattern="[0-9a-fA-F]{64}" autocomplete="off">
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" for="ack_no_{{ type }}_{{ id }}">{{#str}}einvoice_ackno, local_sentientia_cart{{/str}}</label>
+                        <input type="text" class="form-control" id="ack_no_{{ type }}_{{ id }}" name="ack_no" required
+                               maxlength="40" autocomplete="off">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" for="ack_date_{{ type }}_{{ id }}">{{#str}}einvoice_ackdate, local_sentientia_cart{{/str}}</label>
+                        <input type="datetime-local" class="form-control" id="ack_date_{{ type }}_{{ id }}" name="ack_date" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="signed_qr_{{ type }}_{{ id }}">{{#str}}einvoice_qr, local_sentientia_cart{{/str}}</label>
+                    <textarea class="form-control" id="signed_qr_{{ type }}_{{ id }}" name="signed_qr" rows="4" required
+                              maxlength="2900" autocomplete="off"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">{{#str}}einvoice_record, local_sentientia_cart{{/str}}</button>
+                <a href="{{ view_url }}" class="btn btn-link" target="_blank" rel="noopener">{{#str}}einvoice_view, local_sentientia_cart{{/str}}</a>
+            </form>
+        </div>
+    </div>
+    {{/rows}}
+</div>

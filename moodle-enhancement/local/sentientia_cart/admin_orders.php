@@ -49,6 +49,9 @@ $data = [
     // ADR-032: the imported credits page, only while its flag is on.
     'show_credits'    => \local_sentientia_cart\imported_history::credits_enabled(),
     'credits_url'     => (new moodle_url('/local/sentientia_cart/credits.php'))->out(false),
+    // GST tax invoices (2026-10-14): the e-invoice (IRN) page, for the holders of :manageinvoices.
+    'show_einvoice'   => has_capability('local/sentientia_cart:manageinvoices', $ctx),
+    'einvoice_url'    => (new moodle_url('/local/sentientia_cart/einvoice.php'))->out(false),
     'set_price_url'   => (new moodle_url('/local/sentientia_cart/set_price.php'))->out(false),
 ];
 
