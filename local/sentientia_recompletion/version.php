@@ -18,10 +18,16 @@ $plugin->component = 'local_sentientia_recompletion';
 // local_sentientia_recompletion_archive table (upgrade step 2026093001); the importer under classes/bizlms/
 // is declared in db/bizlms_import.php; the evidence view and the daily task sit behind two default-OFF
 // flags (db/feature_flags.php).
-$plugin->version   = 2026093001;  // ADR-032: BizLMS import schema + importer; evidence view + run_rules behind flags
+// 2026-10-08 (1.2.1) - first real PHPUnit run (Moodle 5.1.3): the warn_dedupe cache key held ':' characters, which a
+// simple-key cache refuses, so the "due soon" reminder pass threw before it sent anything (key built in
+// recompletion_engine::run_rule()). No schema change.
+// 2026-10-08 (1.2.2) - the same run: both message providers required local/sentientia_recompletion:view, which only a
+// manager holds, so message_send() refused every notice addressed to a learner. db/messages.php now names no
+// capability; the upgrade (message_update_providers) clears it in the message_providers rows. No schema change.
+$plugin->version   = 2026100801;  // 1.2.2: message providers need no capability (ADR-032 schema step is 2026093001)
 $plugin->requires  = 2024042200;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.2.0';     // ADR-032 BizLMS import (1.1.2: ADR-031 tenant scope; 1.1.1: +P1 #53 Hindi pack)
+$plugin->release   = '1.2.2';     // 1.2.1: reminder cache key; 1.2.0: ADR-032 BizLMS import (1.1.2: ADR-031 tenant scope; 1.1.1: +P1 #53 Hindi pack)
 $plugin->dependencies = [
     'local_sentientia_org'      => 2026040100,
     'local_sentientia_platform' => 2026092500,  // tenant::is_cross_tenant / scope_path

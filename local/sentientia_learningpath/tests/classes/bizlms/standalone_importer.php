@@ -7,6 +7,7 @@ namespace local_sentientia_learningpath\tests\bizlms;
 defined('MOODLE_INTERNAL') || die();
 
 use local_sentientia_platform\bizlms\context;
+use local_sentientia_platform\bizlms\copies_files;
 use local_sentientia_platform\bizlms\importer;
 use local_sentientia_platform\bizlms\preflight;
 
@@ -19,6 +20,9 @@ use local_sentientia_platform\bizlms\preflight;
  * depends(), so the tests run the real steps, the real sources and the real writes; only the run order
  * differs. A test that needs the real list asserts it on the real class.
  *
+ * The wrapper implements the copies_files marker (IDN-04) and hands allowed_file_areas() to the real importer: the
+ * runner decides by instanceof, so a wrapper without it would trip on the cover copy the real importer makes.
+ *
  * It lives under tests/classes/bizlms, which the registry accepts for a test importer.
  *
  * @package    local_sentientia_learningpath
@@ -26,7 +30,7 @@ use local_sentientia_platform\bizlms\preflight;
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class standalone_importer implements importer {
+final class standalone_importer implements importer, copies_files {
 
     /** @var importer */
     private importer $inner;
@@ -68,6 +72,10 @@ final class standalone_importer implements importer {
 
     public function core_writes(): array {
         return $this->inner->core_writes();
+    }
+
+    public function allowed_file_areas(): array {
+        return $this->inner instanceof copies_files ? $this->inner->allowed_file_areas() : [];
     }
 
     public function tenant_columns(): array {

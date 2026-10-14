@@ -96,3 +96,14 @@ checksum implementation (security-critical).
 Initial state card. Plugin has been live since 2024-10; the 2026-05-24
 security follow-up was the first audited touch in this state-card era.
 Created now as part of the P1 state-card pass.
+
+## 2026-10-08 Moodle 5.3 compat FX-05 (version 2026100800 / release 1.0.2)
+
+- **What changed:** `amd/src/gateways_modal.js` now imports `core/modal` and opens the placeholder with `Modal.create({body, show: true, removeOnClose: true})` (the shape core `paygw_paypal` uses on 5.1, 5.2 and 5.3). `amd/build/gateways_modal.min.js(.map)` rebuilt (Node 22.18, LF-normalised source, `--force` past cosmetic lint; the toolchain reproduces the committed `repository.min.js` byte for byte). The dead `form_submit` module (`alert('Hi')` stub, required by nothing) and its build files are removed. Both trees (top-level `payment/gateway/airpay` and `moodle-enhancement/payment/gateway/airpay`) carry identical AMD sources, builds and version.php.
+- **Why:** `core/modal_factory` was removed in Moodle 5.2. `core_payment/gateways_modal` loads `paygw_airpay/gateways_modal` once the learner picks Airpay; the RequireJS dependency 404ed, the module never loaded, and no payment could start (already broken on the 5.2 UAT, not only 5.3).
+- **Version:** `2024100700.10` was replaced by an integer `YYYYMMDDNN` version so the bump purges the JS cache (jsrev) on upgrade.
+- **Not verified here:** an end-to-end checkout through the Airpay redirect and callback (needs a 5.2/5.3 runtime and gateway test credentials). `get_form.php` in the ME tree still uses the legacy global `external_*` classes (FX-13).
+
+## 2026-10-08 Moodle 5.3 compat FX-13 (twin reconciliation)
+
+`classes/external/get_form.php` in the `moodle-enhancement/payment/gateway/airpay` twin still imported the legacy global `external_api`, `external_function_parameters`, `external_single_structure`, `external_value` and `require_once`d `externallib.php` (deprecation debugging on 5.2/5.3 through `lib/db/renamedclasses.php`). It now carries the top-level copy, which already uses `core_external\*` (valid since Moodle 4.2). The two trees are identical again. The cross-tree drift gate (`tools/check-tree-drift.php`) now also covers `payment/gateway`, `enrol`, `mod/quiz/accessrule` and `admin/tool`, so this cannot silently diverge again. No version bump (behaviour identical).

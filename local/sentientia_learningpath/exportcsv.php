@@ -42,7 +42,7 @@ $out = fopen('php://output', 'w');
 fwrite($out, "\xEF\xBB\xBF");
 
 if ($mode === 'paths') {
-    fputcsv($out, ['Path ID', 'Name', 'Status', 'Courses', 'Users', 'Created']);
+    fputcsv($out, ['Path ID', 'Name', 'Status', 'Courses', 'Users', 'Created'], ',', '"', '\\');
     // ADR-031: the caller's tenant only ('1=1' cross-tenant, '1=0' no tenant).
     // Until 2026-09-25 this exported every tenant's paths.
     [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('lp');
@@ -64,19 +64,19 @@ if ($mode === 'paths') {
             $r->course_count,
             $r->user_count,
             $r->timecreated ? userdate($r->timecreated, '%Y-%m-%d') : '',
-        ]);
+        ], ',', '"', '\\');
     }
 } else if ($mode === 'path_users' && $pathid > 0) {
     $path = \local_sentientia_learningpath\path_manager::require_path_tenant($pathid);
-    fputcsv($out, ['Path', $path->name]);
-    fputcsv($out, []);
+    fputcsv($out, ['Path', $path->name], ',', '"', '\\');
+    fputcsv($out, [], ',', '"', '\\');
     // ADR-032 (2026-09-30): Status and Completed on columns added, and the percentage is over the
     // MANDATORY courses (every course when none is mandatory), or 100 for a learner whose path
     // status is Completed. It used to be completed/all courses, so a learner who finished every
     // mandatory course and skipped an optional one showed under 100 %, and an imported learner
     // marked Completed whose course completions were not in this site showed 0 %.
     fputcsv($out, ['User ID', 'Name', 'Email', 'Employee ID', 'Enrolled', 'Status', 'Completed on',
-                   'Courses in path', 'Completed in path', 'Completion %']);
+                   'Courses in path', 'Completed in path', 'Completion %'], ',', '"', '\\');
     // Get users + their per-course completion within this path's courses.
     // ADR-031: an in-tenant path can still hold other tenants' or pathless
     // learners (site-admin, request/approval-flow or pre-fix enrolments); a
@@ -140,10 +140,10 @@ if ($mode === 'paths') {
             $course_count,
             $completed,
             $pct . '%',
-        ]);
+        ], ',', '"', '\\');
     }
 } else {
-    fputcsv($out, ['ERROR', 'Invalid mode or missing path id']);
+    fputcsv($out, ['ERROR', 'Invalid mode or missing path id'], ',', '"', '\\');
 }
 
 fclose($out);

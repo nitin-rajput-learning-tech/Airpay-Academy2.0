@@ -76,3 +76,7 @@ Initial state card. Plugin shipped pre-2026-05; Phase B.12 hotfix is
 the most recent touch. Created now as part of the P1 state-card pass.
 The full proctoring engine lives in `local_airpay_proctoring` — this
 plugin is intentionally thin (mod_quiz integration layer only).
+
+## 2026-10-08 Moodle 5.3 compat FX-13 (twin reconciliation)
+
+`mod/quiz/accessrule/sentientia_proctoring/tests/rule_test.php` in the `moodle-enhancement` twin lacked the `require_once` of `rule.php` that the top-level copy gained in the WF-011 fix (core loads accessrule `rule.php` directly, not through the classmap). The ME copy takes the top-level file; the twins are identical and the extended drift gate (`tools/check-tree-drift.php`, area `mod/quiz/accessrule`) keeps them so. The access rule itself uses only the new quiz classes and is byte-identical across 5.2 and 5.3 (compat report 3.6).

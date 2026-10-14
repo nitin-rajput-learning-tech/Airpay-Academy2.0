@@ -37,7 +37,7 @@
                COMMENT="Sentientia LMS customer scope. Phase 1: hardcoded 1 (Airpay)."/>
         <FIELD NAME="costcenterid"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
                COMMENT="BizLMS tenant root (1=Airpay, 77=Public, 177=ZEEA). Derived from learner open_path at recommendation time."/>
-        <FIELD NAME="batchid"        TYPE="char" LENGTH="40"  NOTNULL="true" DEFAULT=""
+        <FIELD NAME="batchid"        TYPE="char" LENGTH="40"  NOTNULL="true"
                COMMENT="Identifier shared by all rows produced from a single Claude call. Used to display the most recent batch + invalidate stale ones."/>
         <FIELD NAME="model"          TYPE="char" LENGTH="64"  NOTNULL="true" DEFAULT="claude-sonnet-4-6"
                COMMENT="Anthropic model identifier used for the generation. Recorded for audit."/>

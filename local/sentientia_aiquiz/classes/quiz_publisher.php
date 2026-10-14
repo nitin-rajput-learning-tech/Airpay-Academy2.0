@@ -215,7 +215,7 @@ class quiz_publisher {
             (int) $actor->id, false, 'fullname', 'fullname ASC', $limit);
         $ids = [];
         foreach ($capable ?: [] as $c) {
-            if ((int) $c->id !== SITEID) {
+            if ((int) $c->id !== (int) SITEID) {
                 $ids[] = (int) $c->id;
             }
         }

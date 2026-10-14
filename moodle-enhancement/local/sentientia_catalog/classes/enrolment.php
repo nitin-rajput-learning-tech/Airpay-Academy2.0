@@ -114,7 +114,11 @@ class enrolment {
      *
      * Idempotent: a no-op (returns true) if the user is already enrolled.
      * Refuses (returns false) for non-existent / hidden / PAID courses, so it
-     * can never be used to skip payment on a priced course.
+     * can never be used to skip payment on a priced course. "Paid" is the
+     * enabled enrol_fee price (commerce::get_course_price(), with the config
+     * setting only as a fallback) AND the order cart's own price
+     * (cart_manager::get_course_price()) when that plugin is installed:
+     * cart.price_source, 2026-10-07.
      *
      * Safe to reuse from any free-enrol surface (the one-click CTA handler
      * AND the cart's "Enrol in all (free)" action), which is why it carries
@@ -151,8 +155,15 @@ class enrolment {
         }
 
         // Server-side price re-check — never enrol into a paid course here.
+        // cart.price_source (2026-10-07): the catalogue price now reads the enabled enrol_fee instance, but a guard
+        // that stops paid courses being given away must not depend on one price reader being right, so the order
+        // cart's own rule is asked as well. Either one saying "priced" refuses; neither depends on a feature flag.
         $pricing = commerce::get_course_price($courseid);
         if (empty($pricing['is_free'])) {
+            return false;
+        }
+        if (class_exists('\\local_sentientia_cart\\cart_manager')
+                && \local_sentientia_cart\cart_manager::get_course_price($courseid) !== null) {
             return false;
         }
 

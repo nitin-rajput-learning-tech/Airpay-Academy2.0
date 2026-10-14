@@ -78,6 +78,19 @@ final class admin_log {
     }
 
     /**
+     * The When column of the report (F-75).
+     *
+     * BizLMS wrote no time on some rows, and an import that has no time to copy stores 0. userdate(0) is 1 January 1970,
+     * which reads as a real date; a missing time is shown as a dash.
+     *
+     * @param int $time A stored timecreated.
+     * @return string
+     */
+    public static function when(int $time): string {
+        return $time > 0 ? userdate($time, get_string('strftimedatetimeshort', 'core_langconfig')) : '-';
+    }
+
+    /**
      * The tenant restriction for a viewer, as a WHERE fragment on the alias l.
      *
      * @param \stdClass|null $user Defaults to the current user.

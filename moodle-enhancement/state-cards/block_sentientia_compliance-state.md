@@ -55,3 +55,7 @@ back to `1=0`.
 Test: `test_tenant_matrix_keeps_its_own_courses_with_no_enrolments` in `tests/audit_test.php`.
 No version bump (already 2026092500, no db/ change). Both trees. Not run here (no PHPUnit, as
 instructed).
+
+## 2026-10-08 Moodle 5.3 compat FX-15
+
+`audit::course_stats()` and `export.php` skip a course that Moodle 5.3 has flagged `deletioninprogress = 1` (it stays in `{course}` until the asynchronous delete task removes it, only when `moodlecourse|enablecourseasyncdeletion` is on). The column is absent on 5.1/5.2, so the filter is added only when `$DB->get_columns('course')` has it: nothing changes there.

@@ -86,8 +86,8 @@ $string['link_evidence']        = 'Evidence';
 // Imported rules (ADR-032).
 $string['badge_legacy_rule']    = 'Imported from BizLMS';
 $string['legacy_settings']      = 'BizLMS settings of this course';
-$string['legacy_unfinished_parity']  = 'This rule came from BizLMS. The Sentientia engine does not yet reproduce all of its settings: SCORM tracking is always cleared, the period is counted in whole days, and the extra-attempt, assignment, LTI, questionnaire and custom e-mail choices are kept for reference only. Check them before you enable it.';
-$string['legacy_enabled_warning']   = 'The rule was saved ENABLED. It came from BizLMS, and the Sentientia engine does not yet reproduce all of its settings (see the notice on the rule). When the daily task runs, it resets the people the rule matches.';
+$string['legacy_unfinished_parity']  = 'This rule came from BizLMS. The Sentientia engine does not yet reproduce all of its settings: SCORM tracking is always cleared, the period is counted in whole days, and the extra-attempt, assignment, LTI, questionnaire and custom e-mail choices are kept for reference only. For that reason it cannot be enabled yet. To reset learners now, create a rule of your own: it runs exactly as configured.';
+$string['legacy_enable_blocked']    = 'This rule came from BizLMS and cannot be enabled yet: the Sentientia engine does not reproduce all of its settings (see the notice on the rule). Create a rule of your own to reset learners; it runs exactly as configured.';
 $string['legacy_dead_scorm']    = 'This course only had the old SCORM setting name (deletescormdata), which the BizLMS plugin never read: it did nothing for SCORM.';
 $string['legacy_days']          = '{$a} days';
 $string['legacy_choice_0']      = 'nothing';

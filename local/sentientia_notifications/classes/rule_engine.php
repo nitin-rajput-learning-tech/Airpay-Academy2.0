@@ -37,6 +37,16 @@ class rule_engine {
     public const MAX_BATCH_LIMIT = 5000;
 
     /**
+     * local_sentientia_notif_log.status values send() writes. LOG_SENDING is
+     * the claim row of a delivery that has not recorded its outcome; the other
+     * three are the outcome, written onto that same row.
+     */
+    public const LOG_SENDING = 'sending';
+    public const LOG_SENT = 'sent';
+    public const LOG_FAILED = 'failed';
+    public const LOG_SUPPRESSED = 'suppressed';
+
+    /**
      * The per-run row cap for the smart rules: config
      * local_sentientia_notifications/batch_limit, else DEFAULT_BATCH_LIMIT.
      *
@@ -594,6 +604,15 @@ class rule_engine {
      * copies compared that integer status with the strings 'enrolled' and
      * 'in_progress' - an error on PostgreSQL, and on MySQL both strings cast
      * to 0 so in-progress learners were never matched.
+     *
+     * Owner decision learningplan.stalled_nudge_scope (2026-10-07; LRN-11): the rule nudges
+     * only NATIVE enrolments on ACTIVE, visible paths. An enrolment the BizLMS import
+     * brought over is never nudged automatically: BizLMS sent no such message, so a mass
+     * message about years-old enrolments on the first run after smart_rules is switched on
+     * would be new behaviour caused by the import (nothing acts on its own). A path that
+     * is archived or hidden is switched off, and nobody is nudged about it either. An admin
+     * can still nudge an imported learner by hand. On a site without the platform's import
+     * map nothing is imported, and the provenance filter is left out.
      */
     private static function rule_learning_path_stalled(\stdClass $rule): array {
         global $DB;
@@ -607,6 +626,21 @@ class rule_engine {
         $cutoff = time() - ((int) $rule->trigger_days * 86400);
         $batchlimit = (int) (get_config('local_sentientia_notifications', 'batch_limit') ?: 500);
 
+        $params = [
+            'cutoff' => $cutoff,
+            'stnew'  => \local_sentientia_learningpath\path_manager::ENROL_NEW,
+            'stprog' => \local_sentientia_learningpath\path_manager::ENROL_INPROGRESS,
+            'lpactive' => \local_sentientia_learningpath\path_manager::STATUS_ACTIVE,
+        ];
+        $notimported = '';
+        if (class_exists('\local_sentientia_platform\bizlms\provenance')
+                && $manager->table_exists(\local_sentientia_platform\bizlms\legacymap::TABLE)) {
+            [$sql, $provparams] = \local_sentientia_platform\bizlms\provenance::not_imported_sql(
+                'lu', 'local_sentientia_learningpath_users', 'lpsn');
+            $notimported = 'AND ' . $sql;
+            $params += $provparams;
+        }
+
         $rows = $DB->get_records_sql("
             SELECT lu.userid, u.firstname, lp.id AS pathid, lp.name AS pathname
               FROM {local_sentientia_learningpath_users} lu
@@ -614,14 +648,11 @@ class rule_engine {
               JOIN {local_sentientia_learningpath} lp ON lp.id = lu.pathid
              WHERE lu.timecreated < :cutoff
                AND lu.status IN (:stnew, :stprog)
+               AND lp.status = :lpactive AND lp.visible = 1
+               $notimported
                AND u.deleted = 0 AND u.suspended = 0
           ORDER BY lu.timecreated ASC
-             LIMIT $batchlimit",
-            [
-                'cutoff' => $cutoff,
-                'stnew'  => \local_sentientia_learningpath\path_manager::ENROL_NEW,
-                'stprog' => \local_sentientia_learningpath\path_manager::ENROL_INPROGRESS,
-            ]);
+             LIMIT $batchlimit", $params);
 
         foreach ($rows as $r) {
             $sent = self::send($rule, (int) $r->userid, null,
@@ -1097,16 +1128,36 @@ class rule_engine {
     }
 
     /**
-     * Send a notification — checks for duplicates, respects user preferences.
+     * Send a notification: checks for duplicates, respects user preferences.
      *
-     * @return bool True if sent, false if skipped (duplicate or preference).
+     * A delivery owns exactly one local_sentientia_notif_log row for its whole
+     * life. The row is inserted first as a claim (status 'sending', no
+     * message), so a parallel cron run that reaches the same rule + user +
+     * course within 24 hours finds it and skips. When the outcome is known the
+     * SAME row is updated to its final status ('sent', 'failed' or
+     * 'suppressed') and receives the message.
+     *
+     * Until 2026-10-09 the outcome was inserted as a second row and the claim
+     * stayed 'sending' for good, so logs.php and log_detail.php listed every
+     * notification twice and the 'sending' count in the status filter only
+     * ever grew. A row that is still 'sending' now means send() was
+     * interrupted after the claim and never recorded an outcome.
+     *
+     * @return bool True if the message was handed to the messaging system (or,
+     *         for the push channel, logged); false if it was skipped (a
+     *         duplicate, a user preference) or could not be sent.
      */
     private static function send(\stdClass $rule, int $userid, ?int $courseid,
                                   string $subject, string $message): bool {
         global $DB;
 
         // Prevent duplicate: same rule + user + course within 24 hours.
-        // Use transaction to prevent race condition with parallel cron.
+        // The check and the claim are NOT atomic: under InnoDB's REPEATABLE READ the
+        // SELECT takes no lock, so two writers could both see no row and both insert.
+        // What keeps this to one delivery is that there is one writer: send() is
+        // reached only from the process_rules scheduled task, which cron and
+        // admin/cli/scheduled_task.php both run under its task lock. A second caller
+        // needs a lock of its own or a unique key first (state card, 2026-10-14).
         $cid = $courseid ?? 0;
         $since = time() - 86400;
         $transaction = $DB->start_delegated_transaction();
@@ -1124,7 +1175,7 @@ class rule_engine {
                 'userid'      => $userid,
                 'courseid'    => $cid,
                 'channel'     => $rule->channel,
-                'status'      => 'sending',
+                'status'      => self::LOG_SENDING,
                 'subject'     => $subject,
                 'timecreated' => time(),
             ];
@@ -1132,56 +1183,18 @@ class rule_engine {
             $transaction->allow_commit();
         } catch (\Throwable $e) {
             try { $transaction->rollback($e); } catch (\Throwable $ignored) {}
-            return false; // Another process already claimed this notification.
+            return false; // A database error: the claim was not written, so do not send.
         }
 
         // Check user preferences (Phase C.2 — channel + rule-type opt-out + quiet hours).
-        $prefs = $DB->get_record('local_sentientia_notif_prefs', ['userid' => $userid]);
-        $channel = $rule->channel;
-        if ($prefs) {
-            if ($channel === 'inapp' && !$prefs->channel_inapp) {
-                return false;
-            }
-            if ($channel === 'email' && !$prefs->channel_email) {
-                return false;
-            }
-            if ($channel === 'push' && !$prefs->channel_push) {
-                return false;
-            }
-            // Rule-type opt-out.
-            if (!empty($prefs->disabled_rule_types)) {
-                $disabled = array_map('trim',
-                    explode(',', (string) $prefs->disabled_rule_types));
-                if (in_array((string) $rule->rule_type, $disabled, true)) {
-                    return false;
-                }
-            }
-            // Quiet hours: skip during the user's DND window.
-            if ($prefs->quiet_hours_start !== null
-                    && $prefs->quiet_hours_end !== null) {
-                $hour = (int) date('G', time());
-                $qs = (int) $prefs->quiet_hours_start;
-                $qe = (int) $prefs->quiet_hours_end;
-                $inwindow = ($qs <= $qe)
-                    ? ($hour >= $qs && $hour < $qe)        // same-day window
-                    : ($hour >= $qs || $hour < $qe);       // wraps midnight
-                if ($inwindow) {
-                    return false;
-                }
-            }
+        // The claim row stays, as 'suppressed': it keeps the 24-hour duplicate window, so a
+        // notification the user opted out of (or that fell in quiet hours) is not re-evaluated
+        // on every cron run.
+        if (self::suppressed_by_prefs($rule, $userid)) {
+            self::settle_log($logid, self::LOG_SUPPRESSED, $message);
+            return false;
         }
-
-        // Log the notification.
-        $DB->insert_record('local_sentientia_notif_log', (object)[
-            'ruleid'      => $rule->id,
-            'userid'      => $userid,
-            'courseid'    => $courseid,
-            'channel'     => $channel,
-            'subject'     => $subject,
-            'message'     => $message,
-            'status'      => 'sent',
-            'timecreated' => time(),
-        ]);
+        $channel = $rule->channel;
 
         // Render branded HTML using email template system (if available).
         $html = '';
@@ -1195,7 +1208,7 @@ class rule_engine {
                     'fullname'    => format_string($user->firstname . ' ' . $user->lastname),
                     'course_name' => $courseid ? ($DB->get_field('course', 'fullname', ['id' => $courseid]) ?? '') : '',
                     'course_url'  => $courseid ? (new \moodle_url('/course/view.php', ['id' => $courseid]))->out(false) : '',
-                    'dashboard_url' => (new \moodle_url('/my/dashboard.php'))->out(false),
+                    'dashboard_url' => (new \moodle_url('/my/'))->out(false),
                     'subject'     => $subject,
                 ];
                 try {
@@ -1212,6 +1225,7 @@ class rule_engine {
         }
 
         // Send via Moodle messaging (in-app + email if template rendered).
+        $status = self::LOG_SENT;
         if ($channel === 'inapp' || $channel === 'email') {
             $eventdata = new \core\message\message();
             $eventdata->component         = 'local_sentientia_notifications';
@@ -1231,12 +1245,87 @@ class rule_engine {
             }
 
             try {
-                message_send($eventdata);
+                // message_send() returns the new message id, or false when it could not send.
+                if (message_send($eventdata) === false) {
+                    $status = self::LOG_FAILED;
+                }
             } catch (\Exception $e) {
                 debugging('Notification send failed: ' . $e->getMessage());
+                $status = self::LOG_FAILED;
             }
         }
 
-        return true;
+        self::settle_log($logid, $status, $message);
+        return $status === self::LOG_SENT;
+    }
+
+    /**
+     * Whether the recipient's own notification preferences stop this rule's
+     * message: channel switched off, rule type opted out, or inside the
+     * quiet-hours window.
+     *
+     * @param \stdClass $rule
+     * @param int $userid
+     * @return bool
+     */
+    private static function suppressed_by_prefs(\stdClass $rule, int $userid): bool {
+        global $DB;
+
+        $prefs = $DB->get_record('local_sentientia_notif_prefs', ['userid' => $userid]);
+        if (!$prefs) {
+            return false;
+        }
+        $channel = $rule->channel;
+        if ($channel === 'inapp' && !$prefs->channel_inapp) {
+            return true;
+        }
+        if ($channel === 'email' && !$prefs->channel_email) {
+            return true;
+        }
+        if ($channel === 'push' && !$prefs->channel_push) {
+            return true;
+        }
+        // Rule-type opt-out.
+        if (!empty($prefs->disabled_rule_types)) {
+            $disabled = array_map('trim',
+                explode(',', (string) $prefs->disabled_rule_types));
+            if (in_array((string) $rule->rule_type, $disabled, true)) {
+                return true;
+            }
+        }
+        // Quiet hours: skip during the user's DND window.
+        if ($prefs->quiet_hours_start !== null
+                && $prefs->quiet_hours_end !== null) {
+            $hour = (int) date('G', time());
+            $qs = (int) $prefs->quiet_hours_start;
+            $qe = (int) $prefs->quiet_hours_end;
+            $inwindow = ($qs <= $qe)
+                ? ($hour >= $qs && $hour < $qe)        // same-day window
+                : ($hour >= $qs || $hour < $qe);       // wraps midnight
+            if ($inwindow) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Record the outcome of a delivery on the row send() claimed.
+     *
+     * Updates the claim row in place (status + the message that was, or would
+     * have been, sent) instead of inserting a second row. timecreated is left
+     * alone: it is the start of the 24-hour duplicate window.
+     *
+     * @param int $logid The claim row.
+     * @param string $status One of the LOG_* statuses other than LOG_SENDING.
+     * @param string $message The notification text.
+     */
+    private static function settle_log(int $logid, string $status, string $message): void {
+        global $DB;
+        $DB->update_record('local_sentientia_notif_log', (object) [
+            'id'      => $logid,
+            'status'  => $status,
+            'message' => $message,
+        ]);
     }
 }

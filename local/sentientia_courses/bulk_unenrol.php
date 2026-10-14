@@ -68,7 +68,7 @@ if ($data = $form->get_data()) {
         $file = reset($files);
         $content = $file->get_content();
         $lines = preg_split('/\r\n|\r|\n/', $content);
-        $header = array_map('trim', str_getcsv(array_shift($lines)));
+        $header = array_map('trim', str_getcsv(array_shift($lines), ',', '"', '\\'));
         if ($header[0] !== 'email' || $header[1] !== 'courseshortname') {
             \core\notification::error(
                 'CSV must start with header: email,courseshortname (got: '
@@ -81,7 +81,7 @@ if ($data = $form->get_data()) {
             foreach ($lines as $line) {
                 $line = trim($line);
                 if ($line === '') continue;
-                $row = str_getcsv($line);
+                $row = str_getcsv($line, ',', '"', '\\');
                 $email = trim($row[0] ?? '');
                 $shortname = trim($row[1] ?? '');
                 if ($email === '' || $shortname === '') {

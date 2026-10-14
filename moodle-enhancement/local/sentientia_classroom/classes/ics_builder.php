@@ -48,20 +48,32 @@ class ics_builder {
             'Classroom: ' . trim((string) $classroom->name),
         ];
         if (!empty($session->notes)) {
-            $description_lines[] = trim((string) $session->notes);
+            $notes = self::plain_notes((string) $session->notes);
+            if ($notes !== '') {
+                $description_lines[] = $notes;
+            }
         }
         $description_lines[] = 'View in Moodle: '
             . $CFG->wwwroot . '/local/sentientia_classroom/index.php?id='
             . (int) $classroom->id;
-        $description = implode("\\n", $description_lines);
+        // Real line breaks: escape_text() turns each into the iCal "\n". (The separator used to be the two characters
+        // backslash and n, whose backslash escape_text() then doubled, so a calendar showed a literal "\n" between the lines.)
+        $description = implode("\n", $description_lines);
 
         // ─── Build VEVENT ────────────────────────────────────────────
         // RFC 5545 line-folding @ 75 chars is needed for long lines.
         $uid = 'airpay-classroom-session-' . (int) $session->id . '@airpay.academy';
+
+        // White-label: ORGANIZER common-name is the configured site name,
+        // RFC 5545-quoted (DQUOTE-wrap; strip any embedded DQUOTE — RFC 5545
+        // provides no escape for it inside a quoted param value). PRODID
+        // identifies the generating product (Sentientia), not the customer.
+        $organizer_cn = '"' . str_replace('"', '', (string) get_site()->fullname) . '"';
+
         $lines = [
             'BEGIN:VCALENDAR',
             'VERSION:2.0',
-            'PRODID:-//Airpay Academy//Airpay Classroom//EN',
+            'PRODID:-//Sentientia LMS//Sentientia Classroom//EN',
             'CALSCALE:GREGORIAN',
             'METHOD:PUBLISH',
             'BEGIN:VEVENT',
@@ -75,7 +87,7 @@ class ics_builder {
         if ($loc !== '') {
             $lines[] = 'LOCATION:' . self::escape_text($loc);
         }
-        $lines[] = 'ORGANIZER;CN=Airpay Academy:mailto:' . $organizer_email;
+        $lines[] = 'ORGANIZER;CN=' . $organizer_cn . ':mailto:' . $organizer_email;
         $lines[] = 'STATUS:CONFIRMED';
         $lines[] = 'END:VEVENT';
         $lines[] = 'END:VCALENDAR';
@@ -83,6 +95,23 @@ class ics_builder {
         // RFC 5545 mandates CRLF line endings.
         return implode("\r\n", array_map([self::class, 'fold_line'], $lines))
             . "\r\n";
+    }
+
+    /**
+     * A session's notes as plain text. An imported session's notes are the BizLMS session description, which is
+     * HTML, and a calendar description is plain text (ADR-032, classroom code fix 9; the calendar plugin's
+     * builder already does this). Text that holds no tag is left alone, so a note typed as plain text keeps its
+     * own line breaks and a literal "<" in it is not read as markup.
+     *
+     * @param string $notes The session's notes column.
+     * @return string Plain text, trimmed.
+     */
+    public static function plain_notes(string $notes): string {
+        if (preg_match('/<[a-z!\/][^>]*>/i', $notes)) {
+            // Width 0: no wrapping (the iCal line folding is done later); no link table appended.
+            $notes = html_to_text($notes, 0, false);
+        }
+        return trim($notes);
     }
 
     /**

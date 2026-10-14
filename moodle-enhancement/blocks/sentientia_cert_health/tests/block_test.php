@@ -15,7 +15,7 @@ defined('MOODLE_INTERNAL') || die();
  *   - get_content() returns null for non-site-admin (the silent-hide
  *     contract — the block doesn't render at all unless the viewer
  *     is a site administrator)
- *   - get_content() returns null when local_airpay_email_log table
+ *   - get_content() returns null when local_sentientia_email_log table
  *     is missing (defensive guard for when sentientia_emails is
  *     uninstalled)
  *   - get_content() returns the rendered widget when a site admin
@@ -121,14 +121,14 @@ class block_test extends \advanced_testcase {
             'certificate_issue_id' => 42,
             'timecreated'          => $now,
         ];
-        $DB->insert_record('local_airpay_email_log', (object) array_merge(
+        $DB->insert_record('local_sentientia_email_log', (object) array_merge(
             $row_template, ['status' => 'sent']));
-        $DB->insert_record('local_airpay_email_log', (object) array_merge(
+        $DB->insert_record('local_sentientia_email_log', (object) array_merge(
             $row_template, ['status' => 'sent']));
-        $DB->insert_record('local_airpay_email_log', (object) array_merge(
+        $DB->insert_record('local_sentientia_email_log', (object) array_merge(
             $row_template, ['status' => 'failed']));
         // One older row that should NOT be counted (older than 7 days).
-        $DB->insert_record('local_airpay_email_log', (object) array_merge(
+        $DB->insert_record('local_sentientia_email_log', (object) array_merge(
             $row_template, [
                 'status'      => 'sent',
                 'timecreated' => $now - 8 * 86400,
@@ -167,7 +167,7 @@ class block_test extends \advanced_testcase {
         // Seed 2 NON-cert rows (no attachment_filename and no
         // certificate_issue_id) — they should NOT be counted.
         $now = time();
-        $DB->insert_record('local_airpay_email_log', (object) [
+        $DB->insert_record('local_sentientia_email_log', (object) [
             'rule_id'              => null,
             'userid'               => 1,
             'tenant_id'            => 1,

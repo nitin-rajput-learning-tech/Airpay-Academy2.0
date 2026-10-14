@@ -57,7 +57,7 @@ class coursera_provider implements provider_interface {
             'start'  => $start,
             'limit'  => $page_size,
             'fields' => 'id,slug,name,description,photoUrl,workload,language,domainTypes,subtitleLanguages',
-        ]);
+        ], '', '&');
 
         $curl = new \curl();
         $curl->setHeader([
@@ -113,7 +113,7 @@ class coursera_provider implements provider_interface {
 
         $response = $curl->post(self::TOKEN_URL, http_build_query([
             'grant_type' => 'client_credentials',
-        ]));
+        ], '', '&'));
         $info = $curl->get_info();
 
         if ($curl->get_errno() || ($info['http_code'] ?? 0) !== 200) {

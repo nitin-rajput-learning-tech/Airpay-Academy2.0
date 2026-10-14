@@ -60,7 +60,7 @@ class skillsoft_provider implements provider_interface {
             'offset'     => ($page - 1) * $page_size,
             'max'        => $page_size,
             'typeFilter' => 'COURSE,VIDEO,BOOK',
-        ]);
+        ], '', '&');
 
         $curl = new \curl();
         $curl->setHeader([

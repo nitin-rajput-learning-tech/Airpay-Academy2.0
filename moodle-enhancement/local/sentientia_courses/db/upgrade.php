@@ -300,5 +300,30 @@ function xmldb_local_sentientia_courses_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026100103, 'local', 'sentientia_courses');
     }
 
+    // 2026100701 - ADR-032 enrolments importer, owner decision CRS-01 (2026-10-07): the trail of BizLMS enrol instances that
+    // the import switched off once every learner on them was proven to keep the same access through manual enrolments.
+    //
+    // One row per switched-off instance: the instance id, its course, the BizLMS method, the status it had (so one UPDATE
+    // puts it back), and its source timestamps. Ids and timestamps only. Guarded, so a database that already has the table
+    // (created from install.xml) passes through untouched. This block is last on purpose: the enrolments importer now
+    // requires this version, which is above the course_lookups, enrolments (ledger) and course_tags blocks.
+    if ($oldversion < 2026100701) {
+        $table = new xmldb_table('local_sentientia_courses_enroloff');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('enrolid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('method', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL);
+            $table->add_field('priorstatus', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('uk_enrol', XMLDB_INDEX_UNIQUE, ['enrolid']);
+            $table->add_index('idx_course', XMLDB_INDEX_NOTUNIQUE, ['courseid']);
+            $dbman->create_table($table);
+        }
+        upgrade_plugin_savepoint(true, 2026100701, 'local', 'sentientia_courses');
+    }
+
     return true;
 }

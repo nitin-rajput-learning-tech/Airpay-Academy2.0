@@ -85,6 +85,8 @@ $string['back_to_paths'] = 'Back to learning paths';
 // Confirm prompts.
 $string['confirm_unassign_course'] = 'Remove "{$a}" from this learning path? Users keep their course completions.';
 $string['confirm_unenrol_user'] = 'Unenrol {$a} from this learning path?';
+// LRN-10 (2026-10-07): shown after an imported BizLMS enrolment is removed from a path. {$a} is a list of course links.
+$string['unenrol_courses_remain'] = 'The learner is removed from the path, but the BizLMS import also enrolled them in these courses from this plan, and those enrolments are not removed: {$a}. Remove them from each course\'s participants page if the learner should lose access.';
 
 // Empty states.
 $string['no_courses_assigned'] = 'No courses assigned yet. Click "Add Courses" to get started.';

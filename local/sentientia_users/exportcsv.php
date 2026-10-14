@@ -148,7 +148,7 @@ fputcsv($out, [
     'Status',
     'Last Access',
     'Account Created',
-]);
+], ',', '"', '\\');
 
 foreach ($rows as $u) {
     fputcsv($out, [
@@ -161,7 +161,7 @@ foreach ($rows as $u) {
         $u->suspended ? 'Suspended' : 'Active',
         $u->lastaccess ? userdate($u->lastaccess, '%Y-%m-%d %H:%M') : 'Never',
         $u->timecreated ? userdate($u->timecreated, '%Y-%m-%d') : '',
-    ]);
+    ], ',', '"', '\\');
 }
 
 fclose($out);

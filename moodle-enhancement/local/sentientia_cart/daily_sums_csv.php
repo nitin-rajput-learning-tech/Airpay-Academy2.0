@@ -38,7 +38,7 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 $out = fopen('php://output', 'w');
 fwrite($out, "\xEF\xBB\xBF");  // UTF-8 BOM
 
-fputcsv($out, ['Date', 'Gateway', 'Currency', 'Inflow', 'Outflow', 'Net', 'Payments', 'Refunds']);
+fputcsv($out, ['Date', 'Gateway', 'Currency', 'Inflow', 'Outflow', 'Net', 'Payments', 'Refunds'], ',', '"', '\\');
 foreach ($rows as $r) {
     $net = (float) $r->inflow + (float) $r->outflow;  // outflow is negative
     fputcsv($out, [
@@ -50,7 +50,7 @@ foreach ($rows as $r) {
         number_format($net, 2, '.', ''),
         (int) $r->payments,
         (int) $r->refunds,
-    ]);
+    ], ',', '"', '\\');
 }
 fclose($out);
 exit;

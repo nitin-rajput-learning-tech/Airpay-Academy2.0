@@ -241,6 +241,22 @@ Hit these 5 URLs after every deploy. As **Learner role**, not Site Admin
 If any of them fails, **rollback** (see §4) and do not attempt further
 deploys until the issue is understood.
 
+### Flipping a feature flag: allow 30 seconds
+
+A flag switched on the Switchboard (or by `feature_flags::set()`) is
+seen at once by the next web page, but processes that keep running
+see it only within **30 seconds** (`feature_flags::SNAPSHOT_TTL`):
+
+- the cron main process and adhoc task runners;
+- CLI scripts that are already running;
+- open live-session (SSE) connections.
+
+So after a flip, wait 30 seconds before you judge what cron or a live
+session does. Do not purge caches or restart cron to hurry it: it is
+not needed, and on production a purge costs every user a slow page.
+The same 30 seconds applies to anything that writes the flag table
+without the Switchboard: a database restore, an importer, hand SQL.
+
 ---
 
 ## 4. Rollback

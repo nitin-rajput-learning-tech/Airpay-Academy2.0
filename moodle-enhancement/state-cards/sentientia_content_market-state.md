@@ -105,6 +105,7 @@ File: `tests/content_market_test.php`
 | `test_catalog_item_is_invalid_without_required_fields` | DTO validation |
 | `test_catalog_item_from_array_maps_known_properties` | DTO factory |
 | `test_sync_provider_inserts_new_items` | DB create |
+| `test_sync_retires_items_the_provider_no_longer_lists` | Retire step with several seen ids, one seen id, a returning course, and a second tenant left alone |
 | `test_sync_provider_updates_existing_item` | DB update idempotency |
 | `test_tenant_isolation_in_search` | Multi-tenant isolation |
 | `test_skills_mapping_writes_provider_names_when_skillsai_absent` | Graceful degradation |
@@ -193,3 +194,24 @@ on the ZEEA admin's *Browse Airpay Library* (UAT screen check). Now `{{{title}}}
 (`get_exception_info()` → `htmlspecialchars`), so the page showed "L&amp;D" on UAT (both tenants have the
 marketplace disabled, so this is the page every UAT user gets). Reworded to "Learning and Development
 administrator" (en) / "लर्निंग एंड डेवलपमेंट व्यवस्थापक" (hi). Deployed to UAT 2026-09-17 10:16 (8aca24621).
+
+## 2026-10-09 — retire step failed when a provider listed exactly one course (1.0.3-beta / 2026100900)
+
+`market_aggregator::retire_missing()` took `get_in_or_equal($seen_ids, SQL_PARAMS_NAMED, 'eid')` and wrote
+`external_id NOT $insql`. For ONE seen id the helper returns `= :eid1`, so the statement was `external_id NOT = :eid1`,
+a syntax error on MySQL and MariaDB; `sync_provider()` caught it, returned status `failed` (and a
+"sync failed" debugging notice) after the upserts had already been written. A real provider returns many ids
+(`NOT IN (...)`, fine), so production was not hit; the PHPUnit insert test, which syncs one course, was
+(first seen on the Moodle 5.3 run; the 2026-06-17 gap-test note had listed it as pending). Now
+`get_in_or_equal($seen_ids, SQL_PARAMS_NAMED, 'eid', false)` and `external_id $insql` (`<> :eid1` or
+`NOT IN (...)`). Not version- or strict-mode-specific. New test covers both branches. Known, left alone:
+the value `retire_missing()` returns is the count of ALL retired rows of the provider/tenant, not of those retired by
+this run, so the sync-log `items_retired` column is cumulative.
+
+## 2026-10-08 Moodle 5.3 compat FX-21
+
+The Coursera, Go1, Skillsoft and Udemy Business adapters pin `http_build_query(..., '', '&')` for their request URLs and the Coursera token body (same reason as `keka_client`: the default separator is `&amp;` on Moodle 5.1 and `&` on 5.2/5.3). No behaviour change on 5.2/5.3. ME tree only.
+
+## 2026-10-09 - items_retired is per run (2026100901)
+
+`market_aggregator::retire_missing()` returned the count of ALL retired rows of the provider and tenant, so the sync-log `items_retired` column was cumulative (a provider that dropped 2 courses once reported 2 retired on every later sync). It now selects the ids it is about to retire (provider, tenant, `status = 'active'`, external id not seen), updates exactly those by id in chunks of 1000 (status guard kept) and returns how many it retired in that call. No schema or data change; sync-log rows already written keep their old cumulative numbers. New test `test_items_retired_counts_only_what_this_run_retired` (six syncs of one tenant with per-run expectations, the sync-log column, a second tenant's retired row not counted). Not run here (test databases busy): runs in the next local chain.

@@ -50,7 +50,7 @@
                COMMENT="FK to mdl_user.id - the acting user whose learning the tool touched"/>
         <FIELD NAME="costcenterid" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
                COMMENT="BizLMS tenant root: 1=Airpay, 77=Public, 177=ZEEA"/>
-        <FIELD NAME="tool"         TYPE="char" LENGTH="64"  NOTNULL="true" DEFAULT=""
+        <FIELD NAME="tool"         TYPE="char" LENGTH="64"  NOTNULL="true"
                COMMENT="Tool name the LLM proposed e.g. enrol_course"/>
         <FIELD NAME="args_json"    TYPE="text" NOTNULL="false"
                COMMENT="JSON-encoded proposed arguments - untrusted LLM output validated before exec"/>

@@ -65,13 +65,15 @@ $can_enrol = has_capability('local/sentientia_exams:enrol', $ctx);
 $count_attempts = 0;
 $count_enrolled = 0;
 $count_passed = 0;
+$count_learners = 0;
 if ($quiz) {
-    $count_attempts = (int) $DB->count_records_sql(
-        "SELECT COUNT(qa.id)
-           FROM {quiz_attempts} qa
-           JOIN {user} u ON u.id = qa.userid
-          WHERE qa.quiz = :qid AND qa.state = 'finished' AND {$usql}",
-        ['qid' => $quiz->id] + $uargs);
+    // Attempts, and the learners behind them, from one place: the pass rate and the failures use LEARNERS on both sides
+    // (owner decision, 2026-10-07; they used to divide learners by attempts). See exam_manager::pass_figures().
+    $pass_threshold = (float) ($exam->passinggrade ?: 50);
+    $figures = \local_sentientia_exams\exam_manager::pass_figures((int) $quiz->id, $pass_threshold, $usql, $uargs);
+    $count_attempts = $figures['attempts'];
+    $count_learners = $figures['learners'];
+    $count_passed = $figures['passed'];
     if ($course) {
         $count_enrolled = (int) $DB->count_records_sql(
             "SELECT COUNT(DISTINCT ue.userid)
@@ -81,12 +83,9 @@ if ($quiz) {
               WHERE e.courseid = :cid AND {$usql}",
             ['cid' => $course->id] + $uargs);
     }
-    // Passed = attempts where sumgrades / quiz.sumgrades >= passinggrade%.
+    // Passed = learners with an attempt where sumgrades / quiz.sumgrades >= passinggrade%.
     // ADR-032 exams code fix 1: the denominator used to be SUM(quiz_grades.grade) over
     // every learner, so a score looked lower with every extra attempt on the quiz.
-    $pass_threshold = (float) ($exam->passinggrade ?: 50);
-    $count_passed = \local_sentientia_exams\exam_manager::count_passed_learners(
-        (int) $quiz->id, $pass_threshold, $usql, $uargs);
 }
 
 // Per-tab data.
@@ -172,8 +171,9 @@ switch ($tab) {
 
             $max_grade = (float) ($DB->get_field('quiz', 'grade',
                 ['id' => $quiz->id]) ?: 100);
-            $pass_pct = $count_attempts > 0
-                ? round(100 * $count_passed / $count_attempts, 1)
+            // Learners over learners (owner decision 2026-10-07): the old figure was passed learners over attempts.
+            $pass_pct = $count_learners > 0
+                ? round(100 * $count_passed / $count_learners, 1)
                 : 0;
 
             $tab_data['avg_score']  = $stats && $stats->avg_score !== null
@@ -189,7 +189,8 @@ switch ($tab) {
             $tab_data['pass_pct']   = $pass_pct;
             $tab_data['pass_threshold'] = (float) ($exam->passinggrade ?: 50);
             $tab_data['count_passed']  = $count_passed;
-            $tab_data['count_failed']  = max(0, $count_attempts - $count_passed);
+            $tab_data['count_failed']  = max(0, $count_learners - $count_passed);
+            $tab_data['count_learners'] = $count_learners;
             $tab_data['count_attempts'] = $count_attempts;
             $tab_data['has_analytics']  = $count_attempts > 0;
 

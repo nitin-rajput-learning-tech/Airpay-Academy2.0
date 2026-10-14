@@ -29,7 +29,7 @@ use local_sentientia_users\legacy_history;
  *
  * What an erasure request does (signed decision users.erasure_treatment = anonymise): the imported history is
  * KEPT and the person removed from it. See legacy_history for the details, including the one exception (login
- * days are deleted; the owner's written decision users.logindays_erasure for that is pending).
+ * days are deleted; the owner's written decision users.logindays_erasure = delete was signed 2026-10-07).
  *
  * Everything is held at system context.
  *

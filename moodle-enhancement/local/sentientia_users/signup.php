@@ -20,7 +20,7 @@ $PAGE->set_heading(format_string($CFG->fullname ?? 'Airpay Academy'));
 
 // Already logged in? Send them home.
 if (isloggedin() && !isguestuser()) {
-    redirect(new moodle_url('/my/dashboard.php'));
+    redirect(new moodle_url('/my/'));
 }
 
 // Feature flag — admin must opt in to self-registration via settings.

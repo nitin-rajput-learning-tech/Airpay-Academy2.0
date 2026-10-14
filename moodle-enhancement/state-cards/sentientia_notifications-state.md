@@ -332,3 +332,36 @@ switched on would ask every person who ever attended for feedback. The query now
 created (`local_sentientia_platform\bizlms\provenance::not_imported_sql`, guarded by `class_exists` and a
 `table_exists` on the map). New test `test_ilt_feedback_ignores_sessions_the_bizlms_import_brought_in`. Code
 only, no version bump. Both trees. Not run here.
+
+
+## 2026-10-07 - owner decision LRN-11: the stalled-path nudge never targets imported enrolments or switched-off paths
+
+`rule_learning_path_stalled` selected every not-completed path enrolment older than `trigger_days`, with no path-status filter and no import filter. Once `smart_rules` is switched on it would have nudged about 760 April learners about old BizLMS plans (BizLMS sent no such message), and learners on archived paths too. Decision `learningplan.stalled_nudge_scope` = `native_rows_on_active_paths`:
+- the query adds `lp.status = STATUS_ACTIVE AND lp.visible = 1` (archived and hidden paths are never nudged: a plain bug fix);
+- and excludes enrolments the import created (`provenance::not_imported_sql('lu', 'local_sentientia_learningpath_users')`), guarded by `class_exists` and a `table_exists` on the map, the same pattern the ILT feedback rule uses. An admin can still nudge an imported learner by hand.
+`smart_rules` is default OFF and the rule is not seeded, so nothing fires today; this lands before it is ever flipped. A later, separate decision can include imported rows with a cutoff counted from cutover. Tests: `learning_path_stalled_test` (imported row, archived path, hidden path not selected; native row and a second active path of a mixed learner selected; empty import map). Code only, **no version bump**. Both trees. Written, not run.
+
+## 2026-10-08 Moodle 5.3 compat FX-16
+
+Links and redirects to `/my/dashboard.php` now point at `/my/` (the dashboard; the old path is a redirect shim that is an added file on Moodle 5.3). Same landing page, one redirect fewer, no dependence on the shim. PWA `manifest.php` `start_url` is `/my/`; the stored brand rows are rewritten by the `local_sentientia_platform` upgrade step `2026100802`. No schema change, no version bump here.
+
+## 2026-10-09 - one notif_log row per delivery (2026100900, release 1.5.1)
+
+`rule_engine::send()` claims a delivery with a `sending` row (so a parallel cron run skips it) and then inserted a SECOND row for the outcome, leaving the claim `sending` for good (`$logid` was assigned and never used): `logs.php` / `log_detail.php` listed every notification twice and the `sending (N)` filter count only grew. `send()` now UPDATEs the claim row to `sent`, `failed` (message_send threw or returned false) or `suppressed` (channel off, rule type opted out, quiet hours) and stores the message on it; `timecreated` is kept, so the 24-hour duplicate window and the claim semantics are unchanged. Preference checks moved to `suppressed_by_prefs()`. `get_for_navbar()` lists only `sent` / `read` rows (a `suppressed` row holds the text the user opted out of).
+
+Upgrade 2026100900 (`db/upgradelib.php local_sentientia_notifications_fold_claim_rows`): deletes a `sending` claim row only when its outcome row exists (same rule, user, course with NULL = 0, channel, subject, a message, status `sent`/`read`, written 0..1 hour after the claim). A claim with no outcome row is KEPT as it is: under the old code that is a delivery a preference suppressed or an interrupted one, the data cannot say which, so it is not relabelled. For a claim younger than 2 days the outcome row's NULL courseid is set to 0 first, so removing the claim does not reopen the 24-hour window for course-less rules. Idempotent, one pass in id order in batches of 500. Tests: new `tests/notif_log_claim_rows_test.php` (single-row lifecycle, claim semantics, suppressed/failed, upgrade clean-up and the upgrade step); `rule_engine_phase_c_test` back to one row. Both trees. Not run here (test databases busy): runs in the next local chain.
+
+## 2026-10-14 - Decision: no unique key on notif_log for the 24-hour dedupe (comment fix only, no version change)
+
+The follow-up asked whether the 24-hour duplicate window needs a unique constraint. Recorded here rather than as an ADR (docs/adr/README: a single-plugin implementation choice goes on the state card).
+
+**What the code does.** `rule_engine::send()` checks for a row of the same rule, user and course in the last 24 hours, then inserts a `sending` claim, inside one transaction. The transaction does not make that atomic: under InnoDB's REPEATABLE READ the SELECT takes no lock, so two writers could both see no row and both insert. The old comments ("Use transaction to prevent race condition with parallel cron", "Another process already claimed this notification" on the catch) said otherwise; the catch only runs on a database error, as there is no unique key to violate. Both comments are corrected (both trees).
+
+**Why it holds today.** There is one writer. `send()` is reached only from `process_all()`, called only by the `process_rules` scheduled task (verified 2026-10-14: no other caller of `rule_engine::` outside tests). Core runs a scheduled task under its own task lock, from cron (`\core\cron::run_inner_scheduled_task`) and from `admin/cli/scheduled_task.php --execute` (core_cron lock, then the task lock). On MySQL the lock factory is server-wide, so this also holds with several web nodes.
+
+**Why not a unique key now.**
+- A unique key cannot express a rolling 24-hour window. A day-bucket column (`floor(timecreated / 86400)`) in the key would change which reminders go out (one at 23:59 and another at 00:01 would both be sent) and needs a new column, an upgrade step and a back-fill.
+- Creating the index fails wherever duplicate rows already exist (UAT and local data from before the 2026100900 fold), so it needs a clean-up step first.
+- Legacy rows keep a NULL `courseid` (the fold set NULL to 0 only for claims younger than 2 days); NULLs never collide in a MySQL unique index.
+
+**When to revisit.** Before any second caller of `send()` or `process_rule()`: an event observer that sends at once, an admin "run this rule now" action, a per-tenant adhoc fan-out, or parallel runners. That caller must take a named lock around the check and the claim (`\core\lock\lock_config::get_lock_factory('local_sentientia_notifications')`), or the table gets a dedupe key with a unique index first.

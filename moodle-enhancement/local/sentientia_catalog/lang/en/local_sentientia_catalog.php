@@ -58,3 +58,8 @@ $string['storefront_checkout_redundant'] = '{$a} course(s) were removed from you
 $string['storefront_checkout_nothing'] = 'None of the paid courses in your basket could be moved to checkout.';
 $string['storefront_checkout_pricediffers'] = '{$a} course(s) are priced differently at checkout than in your basket. Check the amounts on this page before you pay.';
 $string['storefront_checkout_freeleft'] = 'Your basket still holds {$a} free course(s). They do not go through checkout: open your basket to enrol in them.';
+
+// Owner decision CRS-14 (2026-10-07) -- the card label of a BizLMS pseudo-course (open_coursetype 1) that stays in a
+// learner's in-progress rail, by open_module. Everything else keeps its E-Learning, Classroom or Exam label.
+$string['coursetype_exam'] = 'Exam';
+$string['coursetype_forum'] = 'Forum';

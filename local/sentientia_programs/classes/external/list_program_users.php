@@ -70,8 +70,10 @@ class list_program_users extends external_api {
 
             // ADR-032: enrolments the BizLMS import carried are history and cannot be removed here, so they get
             // no trash action; "Completed on" is an imported-history reader and sits behind its own flag.
-            $imported = \local_sentientia_programs\program_manager::imported_enrolment_ids(
-                array_map(static fn($rec) => (int) $rec->id, $records));
+            // LRN-10 (2026-10-07): an imported enrolment that carries no history yet (not started, no stored level
+            // completion, on an active program) may be removed, so it keeps the action.
+            $imported = \local_sentientia_programs\program_manager::protected_enrolment_ids(
+                $params['programid'], $records);
             $showcompleted = \local_sentientia_platform\feature_flags::is_enabled(
                 'sentientia.programs.history.enabled');
 

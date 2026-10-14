@@ -108,6 +108,21 @@ final class area_map {
     }
 
     /**
+     * Is this "area" a probe string and not a plugin-style name?
+     *
+     * A BizLMS area is a Moodle component name (local_courses, local_certification): letters, digits and underscores,
+     * and at most a dot or a hyphen. Anything else (a quote, a bracket, a slash, white space, a percent escape, a
+     * non-ASCII letter, a control character) is what a scanner sends and no plugin ever wrote. This only LABELS the
+     * row in the report; the row is skipped as unknown_area either way.
+     *
+     * @param string $area
+     * @return bool
+     */
+    public static function is_probe(string $area): bool {
+        return $area !== '' && preg_match('/[^A-Za-z0-9_.\-]/', $area) === 1;
+    }
+
+    /**
      * The Sentientia item id and area of a legacy (item, area) pair, or why the row cannot be imported.
      *
      * @param context $ctx
@@ -121,10 +136,19 @@ final class area_map {
         if ($area === '') {
             return [null, null, 'unknown_area', 'no_area'];
         }
-        if (\core_text::strlen($area) > self::TARGET_MAX) {
-            return [null, null, 'unknown_area', 'area_too_long'];
-        }
         if (!isset(self::AREAS[$area])) {
+            // Owner decision CRS-10 / doc item "ratings security" (2026-10-07): BizLMS's like endpoint stored what an
+            // unauthenticated caller sent, and the April 2026 copy holds 194 local_like rows whose area is a web
+            // vulnerability scanner's probe string (injection and path-traversal payloads, 19 of them over 100
+            // characters, from 2024-01 to 2025-12, none with a real user). An area is a plugin-style name; one with a
+            // character such a name never holds is labelled as the scanner's, so the parity report shows what the
+            // skipped rows are. The label is a detail code only: the value itself stays in the legacy table.
+            if (self::is_probe($area)) {
+                return [null, null, 'unknown_area', 'scanner_payload'];
+            }
+            if (\core_text::strlen($area) > self::TARGET_MAX) {
+                return [null, null, 'unknown_area', 'area_too_long'];
+            }
             return [null, null, 'unknown_area', $area === 'local_certification' ? 'certification_area' : 'area_not_mapped'];
         }
         [$target, $kind] = self::AREAS[$area];

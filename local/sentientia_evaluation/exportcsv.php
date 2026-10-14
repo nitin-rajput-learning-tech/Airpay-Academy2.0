@@ -86,11 +86,11 @@ $respondents = $identityprotected
     ? null
     : \local_sentientia_evaluation\evaluation_manager::respondent_records(array_column($responses, 'userid'));
 
-fputcsv($out, \local_sentientia_evaluation\evaluation_manager::csv_header_row($questions, $withsubject));
+fputcsv($out, \local_sentientia_evaluation\evaluation_manager::csv_header_row($questions, $withsubject), ',', '"', '\\');
 foreach ($responses as $r) {
     fputcsv($out,
         \local_sentientia_evaluation\evaluation_manager::response_to_csv_row($r, $questions, $eval,
-            $identityprotected, $withsubject, $subjectnames, $respondents));
+            $identityprotected, $withsubject, $subjectnames, $respondents), ',', '"', '\\');
 }
 fclose($out);
 

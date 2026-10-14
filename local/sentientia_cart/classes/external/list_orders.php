@@ -95,7 +95,7 @@ class list_orders extends external_api {
             $search = [
                 $DB->sql_like('h.billing_email', ':s1', false),
                 $DB->sql_like('h.billing_name', ':s2', false),
-                'CAST(h.orderid AS CHAR) ' . $DB->sql_like(null, ':s3', false),
+                $DB->sql_like($DB->sql_cast_to_char('h.orderid'), ':s3', false),
             ];
             $sqlparams['s1'] = $term;
             $sqlparams['s2'] = $term;

@@ -51,45 +51,45 @@ if ($format === 'csv') {
     fwrite($output, "\xEF\xBB\xBF"); // UTF-8 BOM.
 
     // KPIs section.
-    fputcsv($output, ['=== ANALYTICS REPORT ===']);
-    fputcsv($output, ['Generated', $data['generated']]);
-    fputcsv($output, ['Period', $data['range']]);
-    fputcsv($output, []);
+    fputcsv($output, ['=== ANALYTICS REPORT ==='], ',', '"', '\\');
+    fputcsv($output, ['Generated', $data['generated']], ',', '"', '\\');
+    fputcsv($output, ['Period', $data['range']], ',', '"', '\\');
+    fputcsv($output, [], ',', '"', '\\');
 
-    fputcsv($output, ['=== KEY PERFORMANCE INDICATORS ===']);
+    fputcsv($output, ['=== KEY PERFORMANCE INDICATORS ==='], ',', '"', '\\');
     if (!empty($data['kpis'])) {
         foreach ($data['kpis'] as $kpi) {
             $label = $kpi['label'] ?? $kpi['name'] ?? 'KPI';
             $value = $kpi['value'] ?? $kpi['current'] ?? 0;
             $trend = $kpi['trend']['label'] ?? '';
-            fputcsv($output, [$label, $value, $trend]);
+            fputcsv($output, [$label, $value, $trend], ',', '"', '\\');
         }
     }
-    fputcsv($output, []);
+    fputcsv($output, [], ',', '"', '\\');
 
     // Funnel section.
-    fputcsv($output, ['=== ENGAGEMENT FUNNEL ===']);
-    fputcsv($output, ['Stage', 'Count', 'Percentage']);
+    fputcsv($output, ['=== ENGAGEMENT FUNNEL ==='], ',', '"', '\\');
+    fputcsv($output, ['Stage', 'Count', 'Percentage'], ',', '"', '\\');
     if (!empty($data['funnel'])) {
         foreach ($data['funnel'] as $stage) {
-            fputcsv($output, [$stage['stage'], $stage['count'], $stage['pct'] . '%']);
+            fputcsv($output, [$stage['stage'], $stage['count'], $stage['pct'] . '%'], ',', '"', '\\');
         }
     }
-    fputcsv($output, []);
+    fputcsv($output, [], ',', '"', '\\');
 
     // Heatmap section.
-    fputcsv($output, ['=== COMPLIANCE BY DEPARTMENT ===']);
-    fputcsv($output, ['Department', 'Users', 'Compliance Rate', 'RAG Status']);
+    fputcsv($output, ['=== COMPLIANCE BY DEPARTMENT ==='], ',', '"', '\\');
+    fputcsv($output, ['Department', 'Users', 'Compliance Rate', 'RAG Status'], ',', '"', '\\');
     if (!empty($data['heatmap'])) {
         foreach ($data['heatmap'] as $dept) {
-            fputcsv($output, [$dept['department'], $dept['users'], $dept['rate'] . '%', strtoupper($dept['rag'])]);
+            fputcsv($output, [$dept['department'], $dept['users'], $dept['rate'] . '%', strtoupper($dept['rag'])], ',', '"', '\\');
         }
     }
-    fputcsv($output, []);
+    fputcsv($output, [], ',', '"', '\\');
 
     // Course effectiveness section.
-    fputcsv($output, ['=== COURSE EFFECTIVENESS (Top 20) ===']);
-    fputcsv($output, ['Course', 'Enrolled', 'Completed', 'Completion Rate']);
+    fputcsv($output, ['=== COURSE EFFECTIVENESS (Top 20) ==='], ',', '"', '\\');
+    fputcsv($output, ['Course', 'Enrolled', 'Completed', 'Completion Rate'], ',', '"', '\\');
     if (!empty($data['courses'])) {
         foreach ($data['courses'] as $course) {
             fputcsv($output, [
@@ -97,7 +97,7 @@ if ($format === 'csv') {
                 $course['enrolled'] ?? $course->enrolled ?? 0,
                 $course['completed'] ?? $course->completed ?? 0,
                 ($course['completion_rate'] ?? $course->completion_rate ?? 0) . '%',
-            ]);
+            ], ',', '"', '\\');
         }
     }
 

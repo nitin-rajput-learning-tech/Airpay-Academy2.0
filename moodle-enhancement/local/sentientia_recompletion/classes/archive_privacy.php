@@ -116,6 +116,40 @@ final class archive_privacy {
                 $data[$key] = is_int($data[$key]) ? 0 : '0';
             }
         }
+        self::clear_free_text($data, $itemtype);
+        return self::encode($data);
+    }
+
+    /**
+     * The payload of a row of a person whose DPDP erasure keeps their compliance record (owner decision
+     * recompletion.dpdp_archive_free_text): the words that can name them are emptied (a questionnaire answer, a
+     * grade's feedback and information note, the text typed into a SCORM package), and nothing else changes. The
+     * learner's own id and the ids of the other people the row names stay: the row remains keyed to the anonymised
+     * user row, an actor's id is scrubbed when THAT actor is erased, and the state, grade, times and item type are
+     * the evidence an auditor asks for. Core's erasure (scrub_subject) empties the same keys, so both erasure paths
+     * treat free text the same way.
+     *
+     * @param string $json
+     * @param string $itemtype The row's item type.
+     * @return string The new payload; the input when it is not a JSON object.
+     */
+    public static function scrub_dpdp(string $json, string $itemtype): string {
+        $data = self::decode($json);
+        if ($data === null) {
+            return $json;
+        }
+        self::clear_free_text($data, $itemtype);
+        return self::encode($data);
+    }
+
+    /**
+     * Empty, in place, the keys of a decoded payload that hold text somebody wrote or typed.
+     *
+     * @param array $data The decoded payload.
+     * @param string $itemtype The row's item type.
+     * @return void
+     */
+    private static function clear_free_text(array &$data, string $itemtype): void {
         foreach (self::FREE_TEXT_KEYS[$itemtype] ?? [] as $key) {
             if (array_key_exists($key, $data) && $data[$key] !== null) {
                 $data[$key] = '';
@@ -126,7 +160,6 @@ final class archive_privacy {
                 && array_key_exists('value', $data) && $data['value'] !== null) {
             $data['value'] = '';
         }
-        return self::encode($data);
     }
 
     /**

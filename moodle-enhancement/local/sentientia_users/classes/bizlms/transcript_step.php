@@ -72,7 +72,7 @@ final class transcript_step extends step {
                 ['user' => $userid > 0 ? $ctx->lookups->user_path($userid) : null]);
 
             $courseid = clean::id($row->courseid ?? null);
-            if ($courseid === 0 || $courseid === SITEID || !$ctx->lookups->course_exists($courseid)) {
+            if ($courseid === 0 || $courseid === (int) SITEID || !$ctx->lookups->course_exists($courseid)) {
                 $courseid = 0;
             }
 

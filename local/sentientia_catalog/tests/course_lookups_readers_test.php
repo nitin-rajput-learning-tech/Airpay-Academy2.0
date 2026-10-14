@@ -30,7 +30,17 @@ defined('MOODLE_INTERNAL') || die();
 final class course_lookups_readers_test extends \advanced_testcase {
 
     // Provisions {user}.open_path + {course}.open_path on the test DB, as the plugin's other suites do.
-    use \local_sentientia_platform\phpunit\open_path_fixture_trait;
+    use \local_sentientia_platform\phpunit\open_path_fixture_trait {
+        setUp as protected open_path_fixture_setup;
+    }
+
+    protected function setUp(): void {
+        $this->open_path_fixture_setup();
+        // feature_flags keeps the overrides it read in a static. resetAfterTest() rolls the flag row back but not
+        // that static, so the label flag the previous test switched ON was still ON when the card test asserted its
+        // flag-OFF label (Moodle 5.3 PHPUnit run, 2026-10-09). Start every test from what the database says.
+        \local_sentientia_platform\feature_flags::invalidate_caches();
+    }
 
     /**
      * A user in a tenant, or with no tenant at all.
@@ -194,8 +204,11 @@ final class course_lookups_readers_test extends \advanced_testcase {
     public function test_the_card_shows_the_label_only_when_the_flag_is_on(): void {
         global $DB, $USER;
         $this->prepare_course_types();
-        $course = $this->course_with_types('1,3');
-        $DB->set_field('course', 'open_coursetype', 2, ['id' => $course]);
+        // An ordinary course, as every BizLMS course is: open_coursetype 0 (only the exam and forum pseudo-courses hold
+        // 1, and CRS-14 keeps any other value out of the catalog, so the earlier open_coursetype = 2 course was never
+        // listed and the test failed). Its flag-OFF label is therefore the open_coursetype 0 label, 'E-Learning'.
+        $course = $this->course_with_types('2,3');
+        $DB->set_field('course', 'open_coursetype', 0, ['id' => $course]);
 
         $this->setAdminUser();
         $find = static function () use ($course, $USER): ?string {
@@ -206,10 +219,10 @@ final class course_lookups_readers_test extends \advanced_testcase {
             }
             return null;
         };
-        $this->assertSame('Classroom', $find(), 'OFF: the open_coursetype label, exactly as before');
+        $this->assertSame('E-Learning', $find(), 'OFF: the open_coursetype label, exactly as before');
         $this->set_flag(true);
-        $this->assertSame('E-Learning, Learning Path', $find());
+        $this->assertSame('Classroom, Learning Path', $find(), 'ON: the course\'s own types');
         $this->set_flag(false);
-        $this->assertSame('Classroom', $find());
+        $this->assertSame('E-Learning', $find());
     }
 }

@@ -29,13 +29,15 @@ defined('MOODLE_INTERNAL') || die();
  *    on for their tenant (cart_manager::is_enabled_for_user(), the enabled_tenants
  *    setting), exactly as cart's own pages require.
  *
- * Two price sources, on purpose not unified here: the basket shows and totals the
- * catalogue price (commerce::get_course_price(), config course_price_<id>); the
- * order cart charges the enrol_fee cost. hand_off() compares them for every line
- * it moves and reports a difference ('pricediffers'), so the buyer is told to
- * check the amount on the checkout page, which shows what will be charged.
- * Unifying the two sources is an open decision that must be closed before the
- * flag is turned on.
+ * One price source (owner decision cart.price_source, 2026-10-07): the basket shows
+ * and totals commerce::get_course_price(), which reads the enabled enrol_fee
+ * instance, the same cost the order cart charges; the config setting
+ * course_price_<id> is only a fallback for a course with no fee instance, and the
+ * order cart refuses such a course rather than pricing it. hand_off() still
+ * compares the basket's price with the order cart's for every line it moves and
+ * reports a difference ('pricediffers'), which can now only mean the fee changed
+ * after the line was put in the basket, so the buyer is told to check the amount on
+ * the checkout page, which shows what will be charged.
  *
  * Default OFF: with the flag off (or any condition above unmet) can_hand_off() is
  * false and cart.php renders exactly what it did before. The flag stays off until

@@ -79,7 +79,7 @@
         <FIELD NAME="userid"          TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="current_streak"  TYPE="int" LENGTH="6"  NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="longest_streak"  TYPE="int" LENGTH="6"  NOTNULL="true" DEFAULT="0"/>
-        <FIELD NAME="last_login_date" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT=""
+        <FIELD NAME="last_login_date" TYPE="char" LENGTH="10" NOTNULL="true"
                COMMENT="YYYY-MM-DD format — date of last counted login"/>
         <FIELD NAME="total_points"    TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"
                COMMENT="Cached total points for fast leaderboard queries"/>

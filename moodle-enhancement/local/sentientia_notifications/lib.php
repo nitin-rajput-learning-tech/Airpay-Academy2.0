@@ -12,6 +12,10 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Get recent notifications for navbar dropdown.
  *
+ * Only delivered notifications ('sent', 'read'): a 'suppressed' row holds the
+ * message the user's own preferences stopped, and 'sending' / 'failed' rows
+ * were never delivered.
+ *
  * @param int $userid User ID
  * @param int $limit  Max notifications to return
  * @return array Template-ready data
@@ -22,7 +26,7 @@ function local_sentientia_notifications_get_for_navbar(int $userid, int $limit =
     $records = $DB->get_records_sql(
         "SELECT id, ruleid, subject, message, channel, status, courseid, timecreated, timeread
            FROM {local_sentientia_notif_log}
-          WHERE userid = :uid
+          WHERE userid = :uid AND status IN ('sent', 'read')
        ORDER BY timecreated DESC",
         ['uid' => $userid], 0, $limit);
 

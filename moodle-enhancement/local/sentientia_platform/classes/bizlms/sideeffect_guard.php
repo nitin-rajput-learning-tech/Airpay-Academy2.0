@@ -18,9 +18,12 @@ defined('MOODLE_INTERNAL') || die();
  *
  * The watched list covers what an event or a notification writes (the log, messages, tasks) and what a core
  * API writes WITHOUT firing an event (a preference, a role capability, a context, a group or cohort member, a
- * grade). One table is deliberately not watched: files. file_rehome copies an organisation logo in finalise()
- * through the file API, which is a reviewed side effect of the org importer; watching the table needs a
- * reviewed core_writes entry for it and changes what --purge-feature may do. Both belong with the org importer.
+ * grade), and the file table (owner decision IDN-04, signed key framework.file_rehome_copies). file_rehome copies
+ * files in finalise() (the org logo, cohort descriptions, the learning-plan cover, the classroom and program
+ * logos): copy-only, insert-only and idempotent, and the originals are never touched. That is a reviewed side
+ * effect, not a core write, so an importer that makes the copies implements copies_files and names the exact
+ * target file areas; the runner then lets {files} change for that importer in those areas only (files_in_areas())
+ * and counts the copies. Every other importer that adds a {files} row trips.
  *
  * Two traps the snapshot has to know about. Events reach their non-internal
  * observers (the standard log among them) only after the outermost transaction
@@ -34,6 +37,9 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class sideeffect_guard {
+
+    /** The file table, watched for every importer; see the class comment. */
+    public const FILES = 'files';
 
     /**
      * Append-only tables the import must never write to. The e-mail log is
@@ -49,6 +55,9 @@ final class sideeffect_guard {
         // Written by core APIs that fire no event.
         'user_preferences', 'role_capabilities', 'context', 'grade_grades', 'grade_grades_history',
         'groups_members', 'cohort_members',
+        // The file table (IDN-04): allowed only for an importer that implements copies_files, and then only in the
+        // target areas it declares. See files_in_areas().
+        self::FILES,
     ];
 
     /**
@@ -112,5 +121,74 @@ final class sideeffect_guard {
             }
         }
         return $changed;
+    }
+
+    /**
+     * The target file areas a copies_files importer declares, as 'component/filearea' keys.
+     *
+     * @param copies_files $importer
+     * @return string[] Unique keys, in declaration order.
+     */
+    public static function declared_file_areas(copies_files $importer): array {
+        $keys = [];
+        foreach ($importer->allowed_file_areas() as $entry) {
+            $keys[(string) ($entry[2] ?? '') . '/' . (string) ($entry[3] ?? '')] = true;
+        }
+        return array_keys($keys);
+    }
+
+    /**
+     * Are the declared file areas well formed? Four non-empty strings per entry: [source component, source area,
+     * target component, target area]. The registry refuses an importer whose declaration is not.
+     *
+     * @param copies_files $importer
+     * @return bool
+     */
+    public static function file_areas_well_formed(copies_files $importer): bool {
+        foreach ($importer->allowed_file_areas() as $entry) {
+            if (!is_array($entry) || count($entry) !== 4) {
+                return false;
+            }
+            foreach ($entry as $part) {
+                if (!is_string($part) || trim($part) === '') {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * What was added to the file table since a snapshot, split into the declared target areas and everything else.
+     *
+     * Directory rows (filename '.') the file API creates beside a copy count as part of the area they sit in, and
+     * are not counted as copies.
+     *
+     * @param int $afterid Highest {files} id when the feature started.
+     * @param string[] $areas Declared target areas as 'component/filearea' keys (declared_file_areas()).
+     * @return array{outside: string[], copied: array<string, int>} outside lists the 'component/filearea' keys that
+     *         received rows without being declared; copied has one entry per declared area (0 when nothing landed).
+     */
+    public static function files_in_areas(int $afterid, array $areas): array {
+        global $DB;
+        $copied = array_fill_keys($areas, 0);
+        $outside = [];
+        $rows = $DB->get_records_sql(
+            "SELECT MIN(f.id) AS id, f.component, f.filearea,
+                    SUM(CASE WHEN f.filename = :dot THEN 0 ELSE 1 END) AS copies
+               FROM {files} f
+              WHERE f.id > :after
+           GROUP BY f.component, f.filearea
+           ORDER BY f.component, f.filearea",
+            ['dot' => '.', 'after' => $afterid]);
+        foreach ($rows as $row) {
+            $key = $row->component . '/' . $row->filearea;
+            if (array_key_exists($key, $copied)) {
+                $copied[$key] = (int) $row->copies;
+            } else {
+                $outside[] = $key;
+            }
+        }
+        return ['outside' => $outside, 'copied' => $copied];
     }
 }

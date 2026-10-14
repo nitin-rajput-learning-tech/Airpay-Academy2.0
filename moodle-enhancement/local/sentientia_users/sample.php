@@ -30,28 +30,28 @@ switch ($type) {
     case 'import':
         // Sample for bulk_import.php — create new users.
         fputcsv($out, ['firstname', 'lastname', 'email', 'open_employeeid',
-                       'open_designation', 'open_department']);
+                       'open_designation', 'open_department'], ',', '"', '\\');
         fputcsv($out, ['Asha', 'Kumar', 'asha.kumar@airpay.co.in', 'EMP-1001',
-                       'Manager', 'Operations']);
+                       'Manager', 'Operations'], ',', '"', '\\');
         fputcsv($out, ['Rohan', 'Sharma', 'rohan.sharma@airpay.co.in', 'EMP-1002',
-                       'Senior Executive', 'Sales']);
+                       'Senior Executive', 'Sales'], ',', '"', '\\');
         fputcsv($out, ['Priya', 'Singh', 'priya.singh@airpay.co.in', 'EMP-1003',
-                       'Assistant Manager', 'Customer Success']);
+                       'Assistant Manager', 'Customer Success'], ',', '"', '\\');
         break;
 
     case 'status':
         // Sample for bulk_csv.php — change status (suspend/activate).
-        fputcsv($out, ['email', 'action']);
-        fputcsv($out, ['user1@airpay.co.in', 'suspend']);
-        fputcsv($out, ['user2@airpay.co.in', 'activate']);
-        fputcsv($out, ['user3@airpay.co.in', 'suspend']);
+        fputcsv($out, ['email', 'action'], ',', '"', '\\');
+        fputcsv($out, ['user1@airpay.co.in', 'suspend'], ',', '"', '\\');
+        fputcsv($out, ['user2@airpay.co.in', 'activate'], ',', '"', '\\');
+        fputcsv($out, ['user3@airpay.co.in', 'suspend'], ',', '"', '\\');
         break;
 
     case 'enrol':
         // Sample for enrol_csv.php (delegates to sentientia_courses but kept here for convenience).
-        fputcsv($out, ['email', 'courseshortname', 'role']);
-        fputcsv($out, ['asha.kumar@airpay.co.in', 'POSH-2026', 'student']);
-        fputcsv($out, ['rohan.sharma@airpay.co.in', 'AML-2026', 'student']);
+        fputcsv($out, ['email', 'courseshortname', 'role'], ',', '"', '\\');
+        fputcsv($out, ['asha.kumar@airpay.co.in', 'POSH-2026', 'student'], ',', '"', '\\');
+        fputcsv($out, ['rohan.sharma@airpay.co.in', 'AML-2026', 'student'], ',', '"', '\\');
         break;
 
     default:

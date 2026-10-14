@@ -27,6 +27,29 @@ class catalog_manager {
     private const ORDINARY_COURSES_ONLY = '(c.open_coursetype IS NULL OR c.open_coursetype = 0)';
 
     /**
+     * Owner decision CRS-14 (2026-10-07): the same "ordinary courses only" condition for any other listing that must not
+     * offer a BizLMS exam or forum pseudo-course as a course. commerce::get_public_catalog() (the public guest storefront)
+     * applies it to both its COUNT and its SELECT: a guest who saw an exam there could neither buy it nor enrol (no fee
+     * instance, guest and self enrolment disabled), and BizLMS's own public catalog listed ordinary courses only.
+     *
+     * A database that does not have course.open_coursetype at all (a vanilla Moodle schema) has no pseudo-courses, so the
+     * condition is then always true and the query keeps working.
+     *
+     * @param string $alias Alias of the course table in the caller's query.
+     * @return string SQL condition, no parameters.
+     */
+    public static function ordinary_courses_condition(string $alias = 'c'): string {
+        global $DB;
+        if (!array_key_exists('open_coursetype', $DB->get_columns('course'))) {
+            return '1 = 1';
+        }
+        if (!preg_match('/^[a-z][a-z0-9_]*$/i', $alias)) {
+            throw new \coding_exception('ordinary_courses_condition() needs a plain table alias');
+        }
+        return preg_replace('/\bc\./', $alias . '.', self::ORDINARY_COURSES_ONLY);
+    }
+
+    /**
      * ADR-031: "no tenant restriction". ONLY a cross-tenant viewer (site
      * admin or :crosstenant holder, tenant::is_cross_tenant()) gets it.
      */
@@ -289,7 +312,8 @@ class catalog_manager {
                     c.open_path, c.open_level, c.open_skill, c.open_coursetype,
                     cc.name as categoryname,
                     (SELECT COUNT(DISTINCT ue.userid) FROM {user_enrolments} ue
-                     JOIN {enrol} e ON e.id = ue.enrolid WHERE e.courseid = c.id) as enrolled_count
+                     JOIN {enrol} e ON e.id = ue.enrolid AND e.status = 0
+                     WHERE e.courseid = c.id AND ue.status = 0) as enrolled_count
                FROM {course} c
                JOIN {course_categories} cc ON cc.id = c.category
               WHERE $where
@@ -341,11 +365,11 @@ class catalog_manager {
             "SELECT c.id, c.fullname, c.shortname, c.summary, c.category, c.timecreated,
                     c.open_path, c.open_level, c.open_skill, c.open_coursetype,
                     cc.name as categoryname,
-                    COUNT(ue.id) as recent_enrolments
+                    COUNT(DISTINCT ue.userid) as recent_enrolments
                FROM {course} c
                JOIN {course_categories} cc ON cc.id = c.category
-               JOIN {enrol} e ON e.courseid = c.id
-               JOIN {user_enrolments} ue ON ue.enrolid = e.id AND ue.timestart > :since
+               JOIN {enrol} e ON e.courseid = c.id AND e.status = 0
+               JOIN {user_enrolments} ue ON ue.enrolid = e.id AND ue.status = 0 AND ue.timestart > :since
               WHERE c.visible = 1 AND c.id > 1 AND $ordinary AND $tenant_sql
            GROUP BY c.id, c.fullname, c.shortname, c.summary, c.category, c.timecreated,
                     c.open_path, c.open_level, c.open_skill, c.open_coursetype, cc.name
@@ -399,6 +423,17 @@ class catalog_manager {
 
     /**
      * Get courses in progress (user enrolled but not completed).
+     *
+     * Owner decisions (2026-10-07):
+     *  - doc item "readers that count enrolments": a learner who holds two enrolments in a course (an imported BizLMS one
+     *    and its converted manual twin, 4,832 pairs on the April 2026 copy before the import adds more) used to get the
+     *    course twice, which is a debugging notice (the first column is the key of get_records_sql) and left the rail
+     *    with fewer distinct courses than its limit. The query now groups by course, orders by the learner's latest
+     *    enrolment start, and counts only ACTIVE enrolments on ENABLED instances (ue.status = 0, e.status = 0), so a
+     *    suspended enrolment no longer shows a course as "in progress".
+     *  - CRS-14: a BizLMS exam or forum pseudo-course (open_coursetype 1) the learner is enrolled in STAYS in this rail,
+     *    because Sentientia's exam pages are manager and teacher only and the enrolled course is the learner's only way to
+     *    an assigned exam. format_course() labels it "Exam" or "Forum" from open_module instead of "E-Learning".
      */
     public static function get_in_progress(int $userid, int $limit = 6): array {
         global $DB;
@@ -411,18 +446,24 @@ class catalog_manager {
             return $cached;
         }
 
+        // open_module is a BizLMS course column (the substrate adds it); a site without it has no pseudo-courses to label.
+        $hasmodule = array_key_exists('open_module', $DB->get_columns('course'));
+        $modulecolumn = $hasmodule ? ', c.open_module' : '';
         $courses = $DB->get_records_sql(
             "SELECT c.id, c.fullname, c.shortname, c.summary, c.category, c.timecreated,
-                    c.open_path, c.open_level, c.open_skill, c.open_coursetype,
+                    c.open_path, c.open_level, c.open_skill, c.open_coursetype{$modulecolumn},
                     cc.name as categoryname, 0 as enrolled_count
                FROM {course} c
                JOIN {course_categories} cc ON cc.id = c.category
-               JOIN {enrol} e ON e.courseid = c.id
-               JOIN {user_enrolments} ue ON ue.enrolid = e.id AND ue.userid = :uid
+               JOIN {enrol} e ON e.courseid = c.id AND e.status = 0
+               JOIN {user_enrolments} ue ON ue.enrolid = e.id AND ue.userid = :uid AND ue.status = 0
           LEFT JOIN {course_completions} ccomp ON ccomp.course = c.id AND ccomp.userid = :uid2
               WHERE c.visible = 1 AND c.id > 1
                 AND (ccomp.timecompleted IS NULL)
-           ORDER BY ue.timestart DESC",
+           GROUP BY c.id, c.fullname, c.shortname, c.summary, c.category, c.timecreated,
+                    c.open_path, c.open_level, c.open_skill, c.open_coursetype{$modulecolumn},
+                    cc.name
+           ORDER BY MAX(ue.timestart) DESC, c.id DESC",
             ['uid' => $userid, 'uid2' => $userid], 0, $limit);
 
         $typelabels = self::course_type_labels(array_keys($courses));
@@ -599,7 +640,17 @@ class catalog_manager {
         // Course type. The label of the course's own type(s) when the course_type_labels flag is ON and the course names a
         // known one; otherwise (flag OFF, the default, or no known type) the open_coursetype label as before.
         $types = [0 => 'E-Learning', 1 => 'E-Learning', 2 => 'Classroom', 3 => 'Exam'];
-        $type = $typelabels[(int) $course->id] ?? ($types[$course->open_coursetype ?? 0] ?? 'E-Learning');
+        $typeof = (int) ($course->open_coursetype ?? 0);
+        if ($typeof === 1) {
+            // CRS-14 (2026-10-07): a BizLMS pseudo-course the learner is enrolled in (the only kind of open_coursetype 1 any
+            // list still returns, the in-progress rail) is an exam or a forum, not an e-learning course. Strings, en and hi.
+            $types[1] = match ((string) ($course->open_module ?? '')) {
+                'online_exams' => get_string('coursetype_exam', 'local_sentientia_catalog'),
+                'forum' => get_string('coursetype_forum', 'local_sentientia_catalog'),
+                default => 'E-Learning',
+            };
+        }
+        $type = $typelabels[(int) $course->id] ?? ($types[$typeof] ?? 'E-Learning');
 
         // Time ago for "new" badge.
         $daysold = (time() - $course->timecreated) / 86400;

@@ -8,6 +8,7 @@ defined('MOODLE_INTERNAL') || die();
 
 use local_sentientia_platform\bizlms\bizlms_exception;
 use local_sentientia_platform\bizlms\context;
+use local_sentientia_platform\bizlms\copies_files;
 use local_sentientia_platform\bizlms\decision;
 use local_sentientia_platform\bizlms\importer;
 use local_sentientia_platform\bizlms\legacy_reader;
@@ -31,7 +32,9 @@ use local_sentientia_platform\bizlms\source_spec;
  *    are what the BizLMS code did).
  *  - local_groups stays in place as the archive. Nothing is written to it.
  *  - Description files: BizLMS kept them under its own component, core serves them from component
- *    `cohort`. finalise() copies them (originals kept).
+ *    `cohort`. finalise() copies them (originals kept). The copy is a reviewed side effect declared through the
+ *    copies_files marker (decision IDN-04, signed key framework.file_rehome_copies), not a core write: it is
+ *    copy-only, insert-only and idempotent, and --purge-feature leaves it in place.
  *
  * Nothing in Sentientia reads the scope table yet (the mapping doc adds no reader for it), so this
  * feature adds no user-visible surface and no feature flag.
@@ -40,7 +43,7 @@ use local_sentientia_platform\bizlms\source_spec;
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class cohort_scope_importer implements importer {
+final class cohort_scope_importer implements importer, copies_files {
 
     /** Feature key. */
     public const FEATURE = 'cohort_scope';
@@ -91,8 +94,22 @@ final class cohort_scope_importer implements importer {
 
     public function core_writes(): array {
         // None. Core cohort rows are read, never written; the description files are copied by finalise() through
-        // the framework's file helper, which is not a table write the writer performs.
+        // the framework's file helper, declared by allowed_file_areas() below.
         return [];
+    }
+
+    /**
+     * The description files finalise() copies: from the two BizLMS components that held them (the edit path first)
+     * into core's own cohort description area. The runner lets {files} grow in that target area and nowhere else.
+     *
+     * @return array<int, array{0: string, 1: string, 2: string, 3: string}>
+     */
+    public function allowed_file_areas(): array {
+        $areas = [];
+        foreach (cohort_files::SOURCE_COMPONENTS as $component) {
+            $areas[] = [$component, cohort_files::FILEAREA, cohort_files::COMPONENT, cohort_files::FILEAREA];
+        }
+        return $areas;
     }
 
     public function tenant_columns(): array {

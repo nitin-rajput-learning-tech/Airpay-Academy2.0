@@ -51,11 +51,14 @@ Reclassified Tier-2 → built (commit `739af7f87` on 7 May 2026).
 - Each assignment the import makes gets one `role_assigned` row in `local_sentientia_roles_auditlog`
   (reason `bizlms_import:<table>`, `open_path` = the actor's path, or NULL when the actor is outside the
   organisation's tenant or cannot be resolved).
-- **Never across tenants** (ADR-031 decisions 5 and 6). A user whose tenant root differs from the organisation's is
-  left out of the row (warning `user_outside_org_tenant`); a row with nobody left is skipped with the owner reason
-  `user_outside_org_tenant`. A role assigned at a category covers every course below it, so this would otherwise
-  hand a user authority over another tenant. A user with no tenant path is still given the role, with a warning
-  (`user_without_tenant`): Nitin decides whether that should be refused too.
+- **Never across tenants, and never without one** (ADR-031 decisions 4, 5 and 6; fail closed). A user whose tenant
+  root differs from the organisation's is left out of the row (warning `user_outside_org_tenant`); a user with no
+  tenant path is left out of it too (warning `user_without_tenant`). A row with nobody left is skipped with the owner
+  reason `user_outside_org_tenant` (somebody belonged to another tenant) or `user_without_tenant` (nobody did, and
+  somebody had no tenant path). A role assigned at a category covers every course below it, so this would otherwise
+  hand a user authority over another tenant, or authority that data could switch on later by giving the user a path.
+  The legacy row stays in its table, so the role can still be assigned by hand. Signed 2026-10-07 (IDN-01, key
+  `org_roles.user_without_tenant`); on the April copy both source tables are empty.
 - **Only roles a category may hold.** A role with no course category level in `role_context_levels` (the role UI and
   `core_role_assign_roles` refuse it) is skipped with the owner reason `role_not_assignable`.
 - The category context must exist. A missing one is a **preflight blocker** (`org_context_missing`): the importer

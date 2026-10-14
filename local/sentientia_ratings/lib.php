@@ -9,5 +9,6 @@ defined('MOODLE_INTERNAL') || die();
  * @return string HTML
  */
 function airpay_display_rating(int $itemid, string $ratearea): string {
-    return \local_sentientia_ratings\rating_manager::render($itemid, $ratearea);
+    // CRS-11 (2026-10-07): interactive only behind the flag sentientia.ratings.widget, read-only otherwise.
+    return \local_sentientia_ratings\rating_manager::render_for_viewer($itemid, $ratearea);
 }

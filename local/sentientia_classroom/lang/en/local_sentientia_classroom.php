@@ -10,8 +10,8 @@ $string['sentientia_classroom:attendance'] = 'Manage attendance';
 $string['sentientia_classroom:create'] = 'Create classroom sessions';
 $string['sentientia_classroom:update'] = 'Edit classroom sessions';
 $string['sentientia_classroom:delete'] = 'Delete classroom sessions';
-// 2026-08-04 parity closure — capability existed (db/services.php, bulk enrol WS) but the en string was missing.
-$string['sentientia_classroom:enrol'] = 'Enrol users into classrooms';
+// (There is no :enrol capability: the bulk enrol web services named one that no access.php declares, so they refused
+// everyone. They gate on :manage now, behind the flag sentientia.classroom.bulk_enrol_audience: XC-CLS-ENROL, 2026-10-07.)
 
 // CRUD form strings.
 $string['addclassroom'] = 'Add Classroom';
@@ -42,6 +42,7 @@ $string['audience_any']               = 'Any';
 $string['audience_any_cohort']        = 'Any cohort';
 $string['audience_users_matched']     = 'users match';
 $string['audience_pick_at_least_one'] = 'Pick at least one filter criterion (use the regular Enrol Users form to enrol all users).';
+$string['audience_not_enabled']       = 'Bulk enrolment by target audience is not switched on.';
 $string['audience_enrol_button']      = 'Enrol matching users';
 $string['audience_enrol_result']      = '%d new enrolment(s); %d user(s) matched the audience.';
 $string['designation']                = 'Designation';

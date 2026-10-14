@@ -8,7 +8,7 @@
            COMMENT="One row per HRMS bulk-import event. Source: web upload or cron pull.">
       <FIELDS>
         <FIELD NAME="id"             TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="filename"       TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""
+        <FIELD NAME="filename"       TYPE="char" LENGTH="255" NOTNULL="true"
                COMMENT="Original uploaded filename for audit"/>
         <FIELD NAME="source"         TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="web"
                COMMENT="web | cron | api"/>
@@ -54,8 +54,8 @@
         <FIELD NAME="email"            TYPE="char" LENGTH="254" NOTNULL="true" DEFAULT="-"/>
         <FIELD NAME="employee_code"    TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT="-"/>
         <FIELD NAME="username"         TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT="-"/>
-        <FIELD NAME="firstname"        TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT=""/>
-        <FIELD NAME="lastname"         TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="firstname"        TYPE="char" LENGTH="100" NOTNULL="true"/>
+        <FIELD NAME="lastname"         TYPE="char" LENGTH="100" NOTNULL="true"/>
         <FIELD NAME="error_message"    TYPE="text" NOTNULL="true"
                COMMENT="Pipe-separated list of validation messages for this row"/>
         <FIELD NAME="mandatory_fields" TYPE="text" NOTNULL="false"
@@ -83,21 +83,21 @@
         <FIELD NAME="id"                  TYPE="int"    LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="userid"              TYPE="int"    LENGTH="10" NOTNULL="true" DEFAULT="0"
                COMMENT="FK to mdl_user.id; 0 = no single account matched the employee id (off-platform learner)"/>
-        <FIELD NAME="employee_id"         TYPE="char"   LENGTH="255" NOTNULL="true" DEFAULT=""/>
-        <FIELD NAME="learner_name"        TYPE="char"   LENGTH="255" NOTNULL="true" DEFAULT=""/>
-        <FIELD NAME="title"               TYPE="char"   LENGTH="255" NOTNULL="true" DEFAULT=""/>
-        <FIELD NAME="training_type"       TYPE="char"   LENGTH="255" NOTNULL="true" DEFAULT=""/>
-        <FIELD NAME="objectref"           TYPE="char"   LENGTH="255" NOTNULL="true" DEFAULT=""
+        <FIELD NAME="employee_id"         TYPE="char"   LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="learner_name"        TYPE="char"   LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="title"               TYPE="char"   LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="training_type"       TYPE="char"   LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="objectref"           TYPE="char"   LENGTH="255" NOTNULL="true"
                COMMENT="BizLMS training_object_id, an identifier from the source system"/>
-        <FIELD NAME="location"            TYPE="char"   LENGTH="255" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="location"            TYPE="char"   LENGTH="255" NOTNULL="true"/>
         <FIELD NAME="courseid"            TYPE="int"    LENGTH="10" NOTNULL="true" DEFAULT="0"
                COMMENT="mdl_course.id; 0 = off-platform training, so no foreign key"/>
         <FIELD NAME="status"              TYPE="char"   LENGTH="20" NOTNULL="true" DEFAULT="unknown"
                COMMENT="completed, inprogress, failed, notstarted, cancelled or unknown (the signed normalisation list)"/>
-        <FIELD NAME="status_raw"          TYPE="char"   LENGTH="255" NOTNULL="true" DEFAULT=""/>
-        <FIELD NAME="completion_date_raw" TYPE="char"   LENGTH="255" NOTNULL="true" DEFAULT=""/>
-        <FIELD NAME="score_raw"           TYPE="char"   LENGTH="255" NOTNULL="true" DEFAULT=""/>
-        <FIELD NAME="hours_raw"           TYPE="char"   LENGTH="255" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="status_raw"          TYPE="char"   LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="completion_date_raw" TYPE="char"   LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="score_raw"           TYPE="char"   LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="hours_raw"           TYPE="char"   LENGTH="255" NOTNULL="true"/>
         <FIELD NAME="timecompleted"       TYPE="int"    LENGTH="10" NOTNULL="false"
                COMMENT="Parsed completion date in the server timezone; NULL when the text did not parse"/>
         <FIELD NAME="score"               TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="false"/>
@@ -146,8 +146,8 @@
            COMMENT="Position lookup imported from the BizLMS positions table with the ids kept, because user.open_positionid holds them (ADR-032, users, gap G4).">
       <FIELDS>
         <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="name"         TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""/>
-        <FIELD NAME="code"         TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="name"         TYPE="char" LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="code"         TYPE="char" LENGTH="255" NOTNULL="true"/>
         <FIELD NAME="domainid"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
                COMMENT="local_sentientia_users_domain.id (ids are kept)"/>
         <FIELD NAME="costcenterid" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
@@ -169,8 +169,8 @@
            COMMENT="Domain lookup imported from the BizLMS domains table with the ids kept, because user.open_domainid holds them (ADR-032, users, gap G4).">
       <FIELDS>
         <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="name"         TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""/>
-        <FIELD NAME="code"         TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="name"         TYPE="char" LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="code"         TYPE="char" LENGTH="255" NOTNULL="true"/>
         <FIELD NAME="costcenterid" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
                COMMENT="The BizLMS costcenter (organisation id) the domain was defined for"/>
         <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>

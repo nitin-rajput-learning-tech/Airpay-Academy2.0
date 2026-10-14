@@ -48,6 +48,27 @@ languages (English, Hindi, Marathi, Kannada, Swahili).
   `--detail`, `--csv` flags. Answer "did this learner receive their
   certificate?" without DB console access.
 
+### 2026-10-07 additions (owner decisions, version `2026100701` / 1.4.0)
+
+Three e-mails BizLMS sends today that Sentientia had no sender for, each behind its **own default-OFF flag**, read for the
+recipient's customer and tenant (`classes/parity_senders.php`). Nothing turns them ON but Nitin, after he has seen them on
+UAT.
+
+| Flag | Sends | Trigger |
+|---|---|---|
+| `sentientia.emails.send_course_enrolment.enabled` | "You have been enrolled in ..." to the learner | `\core\event\user_enrolment_created` |
+| `sentientia.emails.send_learning_path_enrolment.enabled` | the path, its courses and its closing date | `task\send_path_enrolments`, every 5 minutes (the learning-path plugin fires no event); never an old or an imported enrolment |
+| `sentientia.emails.send_manager_completion_copy.enabled` | "X has completed Y" to the learner's live supervisor in the same tenant | `observer::course_completed` |
+
+All three go through `notification_sender`: under `$CFG->noemailever` the delivery log shows the row as `suppressed`, the
+recipient's channel preference applies, the row carries its `template_key`, and none of them carries a password. A rule of type
+`course_enrolled`, `learning_path_enrolled` or `manager_course_completed` can change the channel or switch the e-mail off; with no
+rule row at all a built-in default applies (so a fresh install behaves like an upgraded one).
+
+The BizLMS import (`classes/bizlms/`) also changed: a message whose template or type BizLMS deleted keeps no body, a copy sent
+to a manager keeps no body and loses the team member's name, and the course of a row comes from `moduleid` for a course
+template. See the state card.
+
 ## Capabilities (6)
 
 `:manage`, `:manage_rules`, `:manage_settings`, `:manage_templates`,

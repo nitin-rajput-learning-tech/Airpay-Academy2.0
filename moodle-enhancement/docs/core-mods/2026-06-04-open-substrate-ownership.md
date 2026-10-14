@@ -62,3 +62,16 @@ ADR-024 Waves 4–5 migrate the live read-path off `open_*` onto the first-party
 `local_sentientia_tenant` / `org_unit` / `org_member` tables, after which this
 substrate (and this core-mod) is retired behind a flag. Until then this is the
 supported way Sentientia stands up its tenant layer.
+
+---
+
+## Addendum 2026-10-08: Moodle 5.3 (ADR-033)
+
+No collision on 5.3. The 37 `open_*` columns on `user` and 18 on `course` do not clash with anything new: 5.3 adds
+`course.deletioninprogress` and no `open_*` name (`public/lib/db/install.xml`). MySQL 8.4 with these columns is already
+proven on the 5.2 UAT. Keep as is.
+
+Runtime items for the 5.3 gate (ADR-033 item 8c): confirm the 4.5.10 to 5.3 upgrade alters `course` cleanly with the extra
+columns present, and expect `admin/cli/check_database_schema.php` to list them as extra columns (the known, accepted result).
+Listings that must ignore a course being deleted detect `deletioninprogress` with `$DB->get_columns('course')`, because the
+column does not exist on 5.1/5.2 (compat fix FX-15).

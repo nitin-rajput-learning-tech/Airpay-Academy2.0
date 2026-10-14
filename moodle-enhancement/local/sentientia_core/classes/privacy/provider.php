@@ -37,6 +37,13 @@ use core_privacy\local\request\writer;
  * customer / tenant / org_unit tables are org configuration (names, ids,
  * status) and carry no user data.
  *
+ * The substrate adds BizLMS columns to core tables (classes/substrate.php). One of them is a person:
+ * course.open_coursecreator, the user who created the course (owner decision, 2026-10-07, "privacy: actor columns", rule R9
+ * of the BizLMS import; 0 courses carry one on the April 2026 copy, but the live backup may). It was declared by no
+ * provider. A course belongs to its tenant, not to its creator, so an erasure KEEPS the course and sets the creator to 0
+ * (the signed users.erasure_treatment = anonymise design for actor columns); the export lists the courses the user created
+ * (id, short name, when). The column exists only on a site that has the BizLMS substrate, so every access checks for it.
+ *
  * @package local_sentientia_core
  */
 class provider implements
@@ -75,7 +82,25 @@ class provider implements
             'privacy:metadata:admin_log'
         );
 
+        $collection->add_database_table(
+            'course',
+            [
+                'open_coursecreator' => 'privacy:metadata:course_creator:open_coursecreator',
+            ],
+            'privacy:metadata:course_creator'
+        );
+
         return $collection;
+    }
+
+    /**
+     * Does this site have the BizLMS course-creator column? A vanilla Moodle does not.
+     *
+     * @return bool
+     */
+    private static function has_creator_column(): bool {
+        global $DB;
+        return array_key_exists('open_coursecreator', $DB->get_columns('course'));
     }
 
     public static function get_contexts_for_userid(int $userid): contextlist {
@@ -101,6 +126,11 @@ class provider implements
         $userlist->add_from_sql('usermodified',
             "SELECT usermodified FROM {local_sentientia_admin_log}
               WHERE usermodified > 0", []);
+        if (self::has_creator_column()) {
+            $userlist->add_from_sql('open_coursecreator',
+                "SELECT DISTINCT open_coursecreator FROM {course}
+                  WHERE open_coursecreator > 0", []);
+        }
     }
 
     public static function export_user_data(approved_contextlist $contextlist): void {
@@ -174,6 +204,26 @@ class provider implements
                     (object) ['entries' => $entries]
                 );
             }
+
+            // Courses this user created (BizLMS open_coursecreator): which course and when, nothing else.
+            if (self::has_creator_column()) {
+                $created = [];
+                foreach ($DB->get_records_select('course', 'open_coursecreator = :uid', ['uid' => $uid], 'id',
+                        'id, shortname, timecreated') as $course) {
+                    $created[] = [
+                        'courseid'    => (int) $course->id,
+                        'shortname'   => $course->shortname,
+                        'timecreated' => userdate((int) $course->timecreated),
+                    ];
+                }
+                if (!empty($created)) {
+                    writer::with_context($context)->export_data(
+                        [get_string('pluginname', 'local_sentientia_core'),
+                         'courses_created'],
+                        (object) ['courses' => $created]
+                    );
+                }
+            }
         }
     }
 
@@ -185,6 +235,10 @@ class provider implements
         $DB->delete_records('local_sentientia_org_member', []);
         // History is kept; only the people are removed from it.
         \local_sentientia_core\admin_log::anonymise_all();
+        // Courses stay with their tenant; no creator stays on them.
+        if (self::has_creator_column()) {
+            $DB->set_field_select('course', 'open_coursecreator', 0, 'open_coursecreator <> 0');
+        }
     }
 
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
@@ -202,6 +256,10 @@ class provider implements
                 ['managerid' => $userid]);
             // The admin log keeps the row and loses the person.
             \local_sentientia_core\admin_log::anonymise_users([$userid]);
+            // A course keeps its record and loses its creator.
+            if (self::has_creator_column()) {
+                $DB->set_field('course', 'open_coursecreator', 0, ['open_coursecreator' => $userid]);
+            }
         }
     }
 
@@ -222,5 +280,9 @@ class provider implements
         $DB->set_field_select('local_sentientia_org_member', 'managerid', 0,
             "managerid $insql2", $params2);
         \local_sentientia_core\admin_log::anonymise_users($userids);
+        if (self::has_creator_column()) {
+            [$insql3, $params3] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'cre');
+            $DB->set_field_select('course', 'open_coursecreator', 0, "open_coursecreator $insql3", $params3);
+        }
     }
 }

@@ -102,3 +102,54 @@ javascript.php URL 500s at shutdown).
 | `r.php/core/esm/...react_autoinit` | 500 (redeclare) | 200 |
 | `theme/font.php/...woff2` | 500 (redeclare) | 200 (`font/woff2`) |
 | Full pages (`/login/index.php`, `/my/`) | 200 (unaffected) | 200 |
+
+---
+
+## Addendum 2026-10-08: Moodle 5.3, both halves RETIRE (finding F3 / fix FX-09)
+
+**Verdict for 5.3: do not apply the `lib/setuplib.php` guard, and do not put the polyfill in `config.php`.**
+This record stays in force for the **5.2 UAT instance only**, until that instance is replaced (ADR-033 Decision item 7).
+
+### Why the reason is gone
+
+- 5.3 `public/lib/classes/shutdown_manager.php` (`request_shutdown()`, around lines 245-256) reads
+  `ini_get('child_terminate')` directly. It no longer calls `ini_get_bool()`, which was the call that fataled the pure
+  `ABORT_AFTER_CONFIG` scripts (class 1: `lib/javascript.php`, `theme/styles.php`) at shutdown on 5.2.
+- The remaining callers (`lib/setup.php:766`, `lib/weblib.php`, `lib/environmentlib.php`, `lib/setuplib.php:546`,
+  `admin/index.php`) all run after `lib/setuplib.php` is loaded (`lib/setup.php` loads it at line 626, after the
+  `ABORT_AFTER_CONFIG` return at line 607).
+
+### Why the polyfill alone is now fatal
+
+`public/lib/setuplib.php:530` still declares `ini_get_bool()` without a `function_exists` guard. `public/r.php:28-33`
+defines `ABORT_AFTER_CONFIG`, requires `config.php` (which would arm the 5.2 polyfill) and then requires
+`setuplib.php`: "Cannot redeclare ini_get_bool()". `theme/font.php`, `lib/javascript.php` and `theme/styles.php` do the
+same on a cache miss (`ABORT_AFTER_CONFIG_CANCEL`). With the 5.2 `config.php` on a 5.3 tree, every ESM/React module
+load and every font cache miss returns 500.
+
+### What the 5.3 recipe is
+
+- `moodle-enhancement/deploy/apache-sentientia53-vhost.conf.template` and
+  `moodle-enhancement/deploy/config-sentientia53.php.template`: no polyfill, no core edit.
+- `tools/packaging/build-standalone.sh --target 5.3` fails the build when `public/lib/setuplib.php` carries a
+  `SENTIENTIA-CORE-MOD` marker.
+- **Gate check:** `bash moodle-enhancement/deploy/render_smoke_53.sh <base-url>` requests one real URL of each of
+  `lib/javascript.php`, `theme/styles.php`, `r.php` and `theme/font.php` under the production SAPI, two rounds (round 1
+  is the cache miss), and requires HTTP 200. It is part of the ADR-033 Decision item 8b fresh-install gate.
+
+### Fallback
+
+If the smoke shows a 500 on any of the four classes, re-apply BOTH halves exactly as recorded above (the setuplib
+hunk applies unchanged at `public/lib/setuplib.php:530` on 5.3, the polyfill goes into `config.php` before the
+`lib/setup.php` require) and add the evidence to this record. Never apply one half: the polyfill alone breaks
+`r.php`/`font.php`, the guard alone leaves class 1 fataling at shutdown on 5.2.
+
+### Upstream
+
+Unchanged in spirit: `ini_get_bool()` should be guarded (or retired) in core. With 5.3 the shutdown-path half of the
+problem no longer exists, so a report would only concern the unguarded declaration.
+
+### Status of the verification
+
+Static reading only so far (nothing executed on 5.3). The php-cgi render smoke above is what proves it. It has not been
+run on a 5.3 instance yet; no 5.3 runtime exists on the local box (ADR-033, FX-11).

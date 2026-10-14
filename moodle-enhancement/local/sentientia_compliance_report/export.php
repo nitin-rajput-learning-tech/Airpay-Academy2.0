@@ -57,7 +57,7 @@ if ($format === 'csv') {
     foreach ($matrix['courses'] as $mc) {
         $headers[] = $mc->coursename;
     }
-    fputcsv($output, $headers);
+    fputcsv($output, $headers, ',', '"', '\\');
 
     // Data rows — use the exact shape compliance_engine::get_compliance_matrix()
     // returns ('courses' = objects with ->coursename; row keys employee_id /
@@ -75,19 +75,19 @@ if ($format === 'csv') {
         foreach ($r['courses'] as $cs) {
             $csvrow[] = $cs['status_label'];
         }
-        fputcsv($output, $csvrow);
+        fputcsv($output, $csvrow, ',', '"', '\\');
     }
 
     // Summary — mirror the xlsx Summary sheet.
-    fputcsv($output, []);
-    fputcsv($output, ['=== SUMMARY ===']);
-    fputcsv($output, ['Total Items', $kpis['total'] ?? 0]);
-    fputcsv($output, ['Completed', $kpis['completed'] ?? 0]);
-    fputcsv($output, ['Overdue', $kpis['overdue'] ?? 0]);
-    fputcsv($output, ['Not Enrolled', $kpis['not_enrolled'] ?? 0]);
-    fputcsv($output, ['Exempted', $kpis['exempted'] ?? 0]);
-    fputcsv($output, ['Compliance Rate', ($kpis['compliance_rate'] ?? 0) . '%']);
-    fputcsv($output, ['Generated', date('d M Y H:i')]);
+    fputcsv($output, [], ',', '"', '\\');
+    fputcsv($output, ['=== SUMMARY ==='], ',', '"', '\\');
+    fputcsv($output, ['Total Items', $kpis['total'] ?? 0], ',', '"', '\\');
+    fputcsv($output, ['Completed', $kpis['completed'] ?? 0], ',', '"', '\\');
+    fputcsv($output, ['Overdue', $kpis['overdue'] ?? 0], ',', '"', '\\');
+    fputcsv($output, ['Not Enrolled', $kpis['not_enrolled'] ?? 0], ',', '"', '\\');
+    fputcsv($output, ['Exempted', $kpis['exempted'] ?? 0], ',', '"', '\\');
+    fputcsv($output, ['Compliance Rate', ($kpis['compliance_rate'] ?? 0) . '%'], ',', '"', '\\');
+    fputcsv($output, ['Generated', date('d M Y H:i')], ',', '"', '\\');
 
     fclose($output);
     die();

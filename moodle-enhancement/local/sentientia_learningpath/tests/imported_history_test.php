@@ -14,7 +14,8 @@ use local_sentientia_platform\phpunit\legacy_schema_fixture;
  *
  *  - The two fallbacks that read BizLMS tables are gone (is_enrolled, count_paths).
  *  - Imported history is protected (decision framework.protect_imported_history = block): an imported
- *    enrolment cannot be unenrolled, an imported course row cannot be unassigned, and a path that holds
+ *    enrolment that carries history cannot be unenrolled (one that carries none yet can: LRN-10, see
+ *    imported_unenrol_test), an imported course row cannot be unassigned, and a path that holds
  *    imported rows cannot be deleted.
  *  - A path delete cascades over the per-course status rows too.
  *  - The plugin file callback refuses what it does not serve.

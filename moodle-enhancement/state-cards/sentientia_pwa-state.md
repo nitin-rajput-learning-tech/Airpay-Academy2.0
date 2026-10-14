@@ -189,3 +189,7 @@ when the flag resolver fails (it fell back to ON). With the flag OFF, `sw.php` s
 unregisters itself, so browsers that already installed it clean up on the next visit. Found by the
 2026-09-29 Playwright pass: in headless Chrome the worker's post-login `/my/` request lost the session.
 Deploy check: any DB override row for `sentientia.pwa.enabled` on UAT wins over the default - list it.
+
+## 2026-10-08 Moodle 5.3 compat FX-16
+
+Links and redirects to `/my/dashboard.php` now point at `/my/` (the dashboard; the old path is a redirect shim that is an added file on Moodle 5.3). Same landing page, one redirect fewer, no dependence on the shim. PWA `manifest.php` `start_url` is `/my/`; the stored brand rows are rewritten by the `local_sentientia_platform` upgrade step `2026100802`. No schema change, no version bump here.

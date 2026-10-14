@@ -165,6 +165,9 @@ $data = [
 
     'can_update'          => $can_update,
     'can_attend'          => $can_attend,
+    // XC-CLS-ENROL (2026-10-07): the bulk-enrol-by-audience button is back only with :manage AND its default-OFF flag.
+    'can_bulk_audience'   => has_capability('local/sentientia_classroom:manage', $context)
+        && \local_sentientia_classroom\classroom_audience_enroller::enabled(),
 
     // NOTE: do NOT s()-wrap these — mustache's double-brace `{{ json }}`
     // already HTML-escapes once, the browser unescapes during dataset

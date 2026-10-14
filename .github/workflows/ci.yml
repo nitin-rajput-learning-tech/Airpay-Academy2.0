@@ -307,6 +307,23 @@ jobs:
       - name: Scan for unbounded tenant/org path prefixes
         run: php tools/check-path-boundary.php
 
+  siteid-compare-check:
+    name: SITEID strict-comparison scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      # SITEID is defined from $SITE->id, which MySQL/MariaDB return as the
+      # STRING '1'. A strict comparison against an int ('(int) $id !== SITEID',
+      # '$id === SITEID') is decided by the types alone, so the site-course
+      # guard silently does nothing. It shipped five times before 0eb31f32f.
+      # Pre-commit twin: .claude/hooks/pre-commit.sh CHECK 20.
+      - name: Scan for strict comparison against an un-cast SITEID
+        run: php tools/check-siteid-compare.php
+
   tree-drift-check:
     name: Cross-tree plugin drift
     runs-on: ubuntu-latest

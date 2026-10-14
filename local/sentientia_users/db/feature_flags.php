@@ -6,9 +6,9 @@
  * Feature flag registry for local_sentientia_users.
  *
  * Read by local_sentientia_platform\feature_flags::load_registry(): a key that is not registered here (or in
- * another plugin's db/feature_flags.php) makes ::set() throw. Both flags are default OFF (CLAUDE.md section 5):
- * they gate the two places the imported BizLMS history becomes visible to a learner or a manager. The importer
- * itself does not depend on either (it is CLI-gated, ADR-032) and never flips one.
+ * another plugin's db/feature_flags.php) makes ::set() throw. All three flags are default OFF (CLAUDE.md section 5):
+ * they gate the three places the imported BizLMS history becomes visible to a learner or a manager. The importer
+ * itself does not depend on any (it is CLI-gated, ADR-032) and never flips one.
  *
  * @package local_sentientia_users
  */
@@ -42,6 +42,21 @@ $flags = [
                           open_domainid hold the ids). The Sentientia profile showed neither before,
                           so the two lines are new: do not turn this ON for a customer before the page
                           has been reviewed with screenshots.',
+    ],
+
+    // ─── ADR-032 users: the imported HRMS sync history on the admin pages ─────
+    'sentientia.users.imported_sync_history' => [
+        'default'     => false,
+        'description' => 'Imported HRMS sync history (ADR-032, users; XC-IMPORTED-HISTORY-READERS, 2026-10-07). When
+                          ON, the HRMS history page (sync_runs.php) lists the upload runs the BizLMS import copied
+                          (source "Imported from BizLMS"), and a run\'s detail page (sync_run_detail.php) opens for
+                          them. When OFF those runs are left out of the list and their detail page shows a notice
+                          instead, so the imported history stays out of sight until it has been reviewed. Native
+                          runs are never behind this flag. Either way a run\'s rejected lines (the e-mail address,
+                          employee code and name of a prospective employee) are shown only to the person who
+                          uploaded the run and to platform administrators, imported or native; the run counts stay
+                          visible to everyone who may open the page for their own tenant. Do not turn this ON for a
+                          customer before the pages have been reviewed with screenshots.',
     ],
 
 ];

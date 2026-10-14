@@ -238,3 +238,11 @@ After your reply I'll execute the renames + visual evidence + commit + push.
 ## File created
 
 This rename map: `docs/core-mods/2026-05-20-moodle-to-sentientia-rename.md`
+
+---
+
+## Addendum 2026-10-08: Moodle 5.3 (ADR-033)
+
+Version independent: this record is a rename map of user-visible "Moodle" strings, pending approval, and it modifies no
+code. Nothing to do for 5.3. If it is ever implemented as core language-string overrides, re-check that every key still
+exists in the 5.3 language pack (`lang/en/deprecated.txt` lists the removed ones).

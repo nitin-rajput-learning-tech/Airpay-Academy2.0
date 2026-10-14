@@ -121,3 +121,5 @@ $string['privacy:metadata:admin_log:usermodified'] = 'The person who last modifi
 $string['privacy:metadata:admin_log:actor_path'] = 'The organisation path of the acting person when the entry was imported';
 $string['privacy:metadata:admin_log:timecreated'] = 'When the entry was made in BizLMS';
 $string['privacy:metadata:admin_log:timemodified'] = 'When the entry was last modified in BizLMS';
+$string['privacy:metadata:course_creator'] = 'The BizLMS course-creator column on a course. The course is kept when its creator is erased; the creator is set to 0.';
+$string['privacy:metadata:course_creator:open_coursecreator'] = 'The user who created the course, as BizLMS recorded it.';

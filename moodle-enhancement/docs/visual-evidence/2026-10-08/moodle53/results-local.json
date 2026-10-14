@@ -1,0 +1,370 @@
+{
+ "generated": "2026-10-14T20:36:28.834Z",
+ "base": "http://localhost:8080",
+ "results": [
+  {
+   "id": "1",
+   "fix": "FX-01",
+   "persona": "learner",
+   "title": "Dashboard and a course page render with their header",
+   "status": "captured",
+   "files": [
+    "01-dashboard-learner-desktop.png",
+    "01-dashboard-learner-mobile.png",
+    "01-course-learner-desktop.png",
+    "01-course-learner-mobile.png"
+   ],
+   "notes": [
+    "01-dashboard-learner: 8 leaderboard name(s) masked in the DOM before the screenshot (real users on the local copy)",
+    "edit switch present for the learner: no (item 3: correct)"
+   ],
+   "console": [],
+   "item3": true
+  },
+  {
+   "id": "4",
+   "fix": "FX-03",
+   "persona": "learner",
+   "title": "Activity page with Opened / Due dates, and one without dates",
+   "status": "captured",
+   "files": [
+    "04-activity-dates-assign-desktop.png",
+    "04-activity-dates-assign-mobile.png",
+    "04b-activity-nodates-page-desktop.png",
+    "04b-activity-nodates-page-mobile.png"
+   ],
+   "notes": [
+    "Opened / Due line present"
+   ],
+   "console": []
+  },
+  {
+   "id": "15",
+   "fix": "FX-19",
+   "persona": "author",
+   "title": "Dashboard in edit mode (teacher): block controls on the title row",
+   "status": "captured",
+   "files": [
+    "15-dashboard-teacher-desktop.png",
+    "15-dashboard-teacher-mobile.png"
+   ],
+   "notes": [
+    "15-dashboard-teacher: 8 leaderboard name(s) masked in the DOM before the screenshot (real users on the local copy)",
+    "no edit switch / \"Customise this page\" button on /my/dashboard.php for the trainer (the theme dashboard is custom)"
+   ],
+   "console": []
+  },
+  {
+   "id": "17",
+   "fix": "FX-20",
+   "persona": "learner",
+   "title": "Skill page: Self-rate dialog",
+   "status": "captured",
+   "files": [
+    "17-skill-page-learner-desktop.png",
+    "17-skill-page-learner-mobile.png",
+    "17-selfrate-dialog-desktop.png",
+    "17-selfrate-dialog-mobile.png",
+    "17-selfrate-empty-level-warning-desktop.png",
+    "17-selfrate-after-cancel-desktop.png"
+   ],
+   "notes": [
+    "Save with no level: dialog stays open; alerts in the page: []; notification containers in the page: 2"
+   ],
+   "console": []
+  },
+  {
+   "id": "2",
+   "fix": "FX-02",
+   "persona": "author",
+   "title": "Edit mode switch (course and activity pages), off then on then off",
+   "status": "captured",
+   "files": [
+    "02-course-editswitch-off-desktop.png",
+    "02-course-editswitch-off-mobile.png",
+    "02-course-editswitch-on-desktop.png",
+    "02-course-editswitch-on-mobile.png",
+    "02-activity-editswitch-on-desktop.png",
+    "02-activity-editswitch-on-mobile.png",
+    "02-activity-editswitch-off-desktop.png",
+    "02-activity-editswitch-off-mobile.png"
+   ],
+   "notes": [
+    "switch form: {\"action\":\"http://localhost:8080/editmode.php\",\"method\":\"post\",\"cls\":\"d-flex align-items-center editmode-switch-form ms-2\",\"noscript\":true,\"hidden\":[\"sesskey\",\"pageurl\",\"context\"]}",
+    "after the click and the reload, body.editing: true; requests: [\"POST 200 /lib/ajax/service.php?sesskey=<redacted>&info=core_change_editmode\",\"GET 200 /lib/ajax/service-nologin.php?info=media_videojs_get_language&cachekey=1791969183&args=%5B%7B%22index%22%3A0%2\",\"POST 200 /lib/ajax/service.php?sesskey=<redacted>&info=core_courseformat_get_state\",\"GET 200 /lib/ajax/service-nologin.php?info=core_output_load_template_with_dependencies&cachekey=1791969184&args=%5B%7B\",\"POST 200 /lib/ajax/service-nologin.php?info=9-method-calls&cachekey=1791969184\",\"POST 200 /lib/ajax/service.php?sesskey=<redacted>&info=core_courseformat_file_handlers\",\"GET 200 /lib/ajax/service-nologin.php?info=core_output_load_template_with_dependencies&cachekey=1791969184&args=%5B%7B\"]",
+    "course-editor controls visible: 0",
+    "second click (box was unticked): body.editing afterwards: true; requests: [\"POST 200 /lib/ajax/service.php?sesskey=<redacted>&info=core_courseformat_get_state\",\"GET 200 /lib/ajax/service-nologin.php?info=core_output_load_template_with_dependencies&cachekey=1791969184&args=%5B%7B\",\"POST 200 /lib/ajax/service.php?sesskey=<redacted>&info=core_change_editmode\",\"GET 200 /lib/ajax/service-nologin.php?info=core_output_load_template_with_dependencies,core_output_load_template_with_\",\"POST 200 /lib/ajax/service.php?sesskey=<redacted>&info=core_courseformat_get_state\",\"GET 200 /lib/ajax/service-nologin.php?info=core_output_load_template_with_dependencies&cachekey=1791969184&args=%5B%7B\",\"POST 200 /lib/ajax/service-nologin.php?info=9-method-calls&cachekey=1791969184\"]"
+   ],
+   "console": [
+    "pageerror: Reactive components needs a main DOM element to dispatch events",
+    "pageerror: Cannot read properties of null (reading 'addEventListener')",
+    "pageerror: Cannot read properties of null (reading 'addEventListener')"
+   ]
+  },
+  {
+   "id": "2b",
+   "fix": "FX-02",
+   "persona": "author",
+   "title": "Edit-mode switch form with JavaScript disabled (noscript Set mode button)",
+   "status": "captured",
+   "files": [
+    "02b-course-js-disabled-desktop.png",
+    "02b-course-js-disabled-mobile.png"
+   ],
+   "notes": [
+    "form markup (JS off, first 600 chars): <form action=\"http://localhost:8080/editmode.php\" method=\"post\" class=\"d-flex align-items-center editmode-switch-form ms-2\"> <div class=\"input-group\"> <label class=\"me-2 mb-0 form-check-label text-primary\" for=\"6acfcfdc6b3936acfcfd8ea2bd12-editingswitch\"> Edit mode </label> <div class=\"form-check form-switch\"> <input type=\"checkbox\" name=\"setmode\" checked=\"\" class=\"form-check-input\" id=\"6acfcfdc6b3936acfcfd8ea2bd12-editingswitch\" data-context=\"6107\" data-pageurl=\"http://localhost:8080/course/view.php?id=448\"> <span class=\"form-check-label\">&nbsp;</span> </div> </div> <input type=\"hidden\" name="
+   ],
+   "console": []
+  },
+  {
+   "id": "15",
+   "fix": "FX-19",
+   "persona": "learner",
+   "title": "Course overview card view (my courses)",
+   "status": "captured",
+   "files": [
+    "15-my-courses-learner-desktop.png",
+    "15-my-courses-learner-mobile.png"
+   ],
+   "notes": [
+    "course cards in the overview: 6"
+   ],
+   "console": []
+  },
+  {
+   "id": "5",
+   "fix": "FX-04",
+   "persona": "admin",
+   "title": "E-mail template editor live preview with a tenant override; template list preview",
+   "status": "captured",
+   "files": [
+    "05-email-editor-preview-override-desktop.png",
+    "05-email-editor-preview-override-mobile.png",
+    "05-email-manage-templates-desktop.png",
+    "05-email-manage-templates-mobile.png",
+    "05-email-editor-preview-no-override-desktop.png",
+    "05-email-editor-preview-no-override-mobile.png"
+   ],
+   "notes": [
+    "override template preview frame: {\"frame\":true,\"srcdocLength\":22,\"bodyText\":\"\",\"height\":\"\"}",
+    "05-email-editor-preview-override: horizontal overflow {\"desktop\":16,\"mobile\":16}",
+    "no \"Preview error\" on the page",
+    "a template WITHOUT an override (hp/../editor.php?template=compliance/reminder_start&tenant=1): {\"frame\":true,\"srcdocLength\":22,\"bodyText\":\"\",\"height\":\"\"}",
+    "05-email-editor-preview-no-override: horizontal overflow {\"desktop\":16,\"mobile\":16}"
+   ],
+   "console": []
+  },
+  {
+   "id": "7",
+   "fix": "FX-06",
+   "persona": "admin",
+   "title": "Cart admin orders: Refund dialog (Save and Cancel in the footer)",
+   "status": "captured",
+   "files": [
+    "07-cart-admin-orders-desktop.png",
+    "07-cart-admin-orders-mobile.png",
+    "07-refund-dialog-desktop.png",
+    "07-refund-dialog-mobile.png"
+   ],
+   "notes": [
+    "NO Refund button is rendered by the orders page (no template or PHP emits data-action=\"refund-order\"); the dialog below was opened from a button INJECTED into the page with the attributes the handler reads",
+    "dialog footer buttons: [\"Cancel\",\"Save changes\"]"
+   ],
+   "console": []
+  },
+  {
+   "id": "8",
+   "fix": "FX-06",
+   "persona": "admin",
+   "title": "Enrolled users: Enrol user dialog (Save and Cancel)",
+   "status": "captured",
+   "files": [
+    "08-enrolled-users-desktop.png",
+    "08-enrolled-users-mobile.png",
+    "08-enrol-user-dialog-desktop.png",
+    "08-enrol-user-dialog-mobile.png"
+   ],
+   "notes": [
+    "dialog footer buttons: [\"Cancel\",\"Save changes\"]"
+   ],
+   "console": []
+  },
+  {
+   "id": "9",
+   "fix": "FX-06b",
+   "persona": "admin",
+   "title": "Pending requests: Approve and Reject dialogs (the learner-side Request enrolment button is in no template)",
+   "status": "captured",
+   "files": [
+    "09-pending-approvals-desktop.png",
+    "09-pending-approvals-mobile.png",
+    "09-approve-dialog-desktop.png",
+    "09-approve-dialog-mobile.png",
+    "09-reject-dialog-desktop.png",
+    "09-reject-dialog-mobile.png"
+   ],
+   "notes": [
+    "re-opened dialog textarea after Cancel is empty (correct)"
+   ],
+   "console": []
+  },
+  {
+   "id": "18",
+   "fix": "FX-20",
+   "persona": "admin",
+   "title": "Org tree collapse and row menu; evaluation question card menu",
+   "status": "captured",
+   "files": [
+    "18-org-tree-desktop.png",
+    "18-org-tree-mobile.png",
+    "18-org-tree-collapse-clicked-desktop.png",
+    "18-org-row-menu-open-desktop.png"
+   ],
+   "notes": [
+    "206 dropdown toggles on the org page",
+    "row menu open after one click: yes (stays open)"
+   ],
+   "console": []
+  },
+  {
+   "id": "10",
+   "fix": "FX-07",
+   "persona": "siteadmin",
+   "title": "Certificate templates: Issue certificates dialog (Days preselected)",
+   "status": "captured",
+   "files": [
+    "10-certificate-templates-desktop.png",
+    "10-certificate-templates-mobile.png",
+    "10-templates-actions-menu-open-desktop.png",
+    "10-issue-certificates-dialog-desktop.png",
+    "10-issue-certificates-dialog-mobile.png",
+    "10-issue-certificates-dialog-after-wait-desktop.png",
+    "10-issue-certificates-dialog-after-wait-mobile.png"
+   ],
+   "notes": [
+    "visible Actions menu items after the click: []",
+    "kebab markup: <div class=\"dropdown\" id=\"yui_3_18_1_1_1792009708980_53\"> <a href=\"#\" tabindex=\"0\" class=\"btn btn-icon d-flex no-caret dropdown-toggle icon-no-margin\" id=\"action-menu-toggle-0\" aria-label=\"Actions\" data-bs-toggle=\"dropdown\" role=\"button\" aria-haspopup=\"true\" aria-expanded=\"false\" aria-controls=\"action-menu-0-menu\" title=\"Actions\"> <i class=\"icon fa fa-ellipsis-vertical fa-fw \" aria-hidden=\"true\"></i><span class=\"visually-hidden\">Actions</span> <b class=\"caret\"></b> </a> <div class=\"dropdown-menu menu dropdown-menu-end\" id=\"action-menu-0-menu\" data-rel=\"menu-content\" aria-labelledby=\"action-menu-toggle-0\" role=\"menu\"> <a href=\"http://localhost:8080/admin/tool/certificate/view.php?templateid=1&amp;preview=1&amp;code=previewing\" class=\"dropdown-item menu-action\" target=\"_blank\" aria-label=\"Preview\" role=\"menuitem\" tabindex=\"-1\"> <i class=\"icon fa fa-magnifying-glass fa-fw \" aria-hidden=\"tru",
+    "the Actions menu did NOT open on a click; the \"Issue\" item exists in the DOM and was clicked through the DOM",
+    "the dialog's form fields arrived",
+    "selects in the dialog: [{\"name\":\"users[]\",\"value\":\"\",\"text\":\"\"},{\"name\":\"expirydatetype\",\"value\":\"0\",\"text\":\"Never\"},{\"name\":\"expirydateabsolute[day]\",\"value\":\"15\",\"text\":\"15\"},{\"name\":\"expirydateabsolute[month]\",\"value\":\"10\",\"text\":\"October\"},{\"name\":\"expirydateabsolute[year]\",\"value\":\"2026\",\"text\":\"2026\"},{\"name\":\"expirydateabsolute[hour]\",\"value\":\"2\",\"text\":\"02\"},{\"name\":\"expirydateabsolute[minute]\",\"value\":\"4\",\"text\":\"04\"},{\"name\":\"expirydaterelative[timeunit]\",\"value\":\"604800\",\"text\":\"weeks\"}]"
+   ],
+   "console": []
+  },
+  {
+   "id": "13",
+   "fix": "FX-14",
+   "persona": "siteadmin",
+   "title": "A core modal (delete activity): title at normal size, close button",
+   "status": "captured",
+   "files": [
+    "13-core-modal-delete-activity-desktop.png",
+    "13-core-modal-delete-activity-mobile.png"
+   ],
+   "notes": [
+    "editing on: true",
+    "modal title: {\"text\":\"Delete activity?\",\"size\":\"20px\",\"tag\":\"H5\"}"
+   ],
+   "console": [
+    "pageerror: Cannot read properties of null (reading 'closest')",
+    "pageerror: Reactive components needs a main DOM element to dispatch events",
+    "pageerror: Cannot read properties of null (reading 'addEventListener')"
+   ]
+  },
+  {
+   "id": "16",
+   "fix": "FX-20",
+   "persona": "siteadmin",
+   "title": "Switchboard: change a flag, press Apply: the Review changes dialog (Cancel only)",
+   "status": "captured",
+   "files": [
+    "16-switchboard-desktop.png",
+    "16-switchboard-mobile.png",
+    "16-switchboard-review-dialog-desktop.png",
+    "16-switchboard-review-dialog-mobile.png"
+   ],
+   "notes": [
+    "row marked modified after the click: 1",
+    "dialog footer buttons: [\"Cancel\",\"Apply changes\"]",
+    "Cancel pressed; Apply changes was never clicked. The staged toggle is discarded by leaving the page."
+   ],
+   "console": []
+  },
+  {
+   "id": "19",
+   "fix": "FX-21",
+   "persona": "siteadmin",
+   "title": "Log in as a learner (the audit row is read back by the CLI check below)",
+   "status": "captured",
+   "files": [
+    "19-logged-in-as-learner-desktop.png",
+    "19-logged-in-as-learner-mobile.png"
+   ],
+   "notes": [
+    "landed on /my/",
+    "19-logged-in-as-learner: 8 leaderboard name(s) masked in the DOM before the screenshot (real users on the local copy)",
+    "the audit read-back is in the commit message / README (audit_log::sensitive_actions through the CLI)"
+   ],
+   "console": [
+    "pageerror: Cannot read properties of null (reading 'get')"
+   ]
+  },
+  {
+   "id": "2c",
+   "fix": "FX-02",
+   "persona": "author",
+   "title": "Edit switch state on the course page and on an activity page while editing is on (diagnostic)",
+   "status": "captured",
+   "files": [],
+   "notes": [
+    "course page, on arrival: {\"url\":\"/course/view.php?id=448\",\"bodyEditing\":false,\"switchPresent\":true,\"switchChecked\":false,\"labelPrimary\":false,\"dataPageurl\":\"http://localhost:8080/course/view.php?id=448\"}",
+    "course page, after switching editing on: {\"url\":\"/course/view.php?id=448\",\"bodyEditing\":true,\"switchPresent\":true,\"switchChecked\":true,\"labelPrimary\":true,\"dataPageurl\":\"http://localhost:8080/course/view.php?id=448\"}",
+    "assign page, on arrival with editing on: {\"url\":\"/mod/assign/view.php?id=1883\",\"bodyEditing\":false,\"switchPresent\":true,\"switchChecked\":false,\"labelPrimary\":false,\"dataPageurl\":\"http://localhost:8080/mod/assign/view.php?id=1883&rownum=0&useridlistid=6acfd68dedbb2567282162&action\"}",
+    "course page again: {\"url\":\"/course/view.php?id=448\",\"bodyEditing\":false,\"switchPresent\":true,\"switchChecked\":false,\"labelPrimary\":false,\"dataPageurl\":\"http://localhost:8080/course/view.php?id=448\"}"
+   ],
+   "console": [
+    "pageerror: Reactive components needs a main DOM element to dispatch events",
+    "pageerror: Cannot read properties of null (reading 'addEventListener')"
+   ]
+  },
+  {
+   "id": "6",
+   "fix": "FX-05",
+   "persona": "public",
+   "title": "Priced course: enrol, pay with Airpay: the checkout placeholder modal",
+   "status": "not captured",
+   "files": [
+    "06-priced-course-enrol-page-desktop.png",
+    "06-priced-course-enrol-page-mobile.png"
+   ],
+   "notes": [
+    "06-priced-course-enrol-page: 8 leaderboard name(s) masked in the DOM before the screenshot (real users on the local copy)"
+   ],
+   "console": [],
+   "reason": "no payment button on the enrol page: ",
+   "debug": "6-DEBUG-public-desktop.png",
+   "url": "/my/",
+   "controls": [
+    "Toggle sidebar",
+    "Dark Mode"
+   ]
+  },
+  {
+   "id": "18b",
+   "fix": "FX-20",
+   "persona": "siteadmin",
+   "title": "Evaluation question card menu stays open after one click",
+   "status": "captured",
+   "files": [
+    "18b-evaluation-questions-desktop.png",
+    "18b-evaluation-questions-mobile.png",
+    "18b-question-card-menu-open-desktop.png"
+   ],
+   "notes": [
+    "3 dropdown toggles on the questions page",
+    "menus open after one click: 1",
+    "menus still open 1.5 s later: 1"
+   ],
+   "console": []
+  }
+ ]
+}

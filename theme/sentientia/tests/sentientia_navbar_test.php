@@ -498,6 +498,9 @@ class sentientia_navbar_test extends \advanced_testcase {
         // Unfortunate hack needed because people use global $PAGE around the place.
         $PAGE->set_url('/');
         $this->resetAfterTest();
+        // As core's boostnavbar_test does since Moodle 5.2: a fresh install defaults enablemyhome to 0, which changes the
+        // primary navigation this test removes from. Moodle 5.1 already defaults to 1, so this is a no-op there.
+        set_config('enablemyhome', 1);
         $page = new \moodle_page();
         $page->set_url('/');
 

@@ -51,5 +51,20 @@ function xmldb_local_sentientia_notifications_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026092500, 'local', 'sentientia_notifications');
     }
 
+    if ($oldversion < 2026100900) {
+        // rule_engine::send() inserted a 'sending' claim row and then a second
+        // row for the outcome, so every delivery left two rows and the claim
+        // stayed 'sending' forever (logs.php listed each notification twice).
+        // send() now updates the claim row. Remove the claim rows the old code
+        // left beside an outcome row; a claim with no outcome row is kept
+        // (see db/upgradelib.php for why).
+        require_once(__DIR__ . '/upgradelib.php');
+        $result = local_sentientia_notifications_fold_claim_rows();
+        mtrace('local_sentientia_notifications: removed ' . $result['removed']
+            . ' duplicate claim row(s) from the notification log; kept ' . $result['kept']
+            . ' claim row(s) that have no outcome row (delivery suppressed by a preference, or interrupted).');
+        upgrade_plugin_savepoint(true, 2026100900, 'local', 'sentientia_notifications');
+    }
+
     return true;
 }

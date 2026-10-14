@@ -91,6 +91,11 @@ class local_sentientia_recompletion_edit_form extends moodleform {
 
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
+        // Owner decision recompletion.imported_rule_enable (2026-10-07): a rule the BizLMS import made cannot be
+        // enabled until engine parity is declared done. Native rules are unaffected.
+        if (!empty($this->_customdata['imported']) && !empty($data['enabled'])) {
+            $errors['enabled'] = get_string('legacy_enable_blocked', 'local_sentientia_recompletion');
+        }
         // ADR-031: the course must be one the caller's tenant may use. Check
         // the RAW submitted value: the select drops an unlisted id, so
         // $data['courseid'] arrives as null, which used to be saved as 0 =
@@ -105,7 +110,10 @@ class local_sentientia_recompletion_edit_form extends moodleform {
     }
 }
 
-$form = new local_sentientia_recompletion_edit_form(null, ['id' => $rule->id]);
+$form = new local_sentientia_recompletion_edit_form(null, [
+    'id' => $rule->id,
+    'imported' => \local_sentientia_recompletion\rule_access::is_imported($rule),
+]);
 if ($rule->id) $form->set_data($rule);
 
 if ($form->is_cancelled()) {
@@ -117,6 +125,13 @@ if ($data = $form->get_data()) {
     // ADR-031: refuse, never coerce, a course that is not one of the options
     // (validation() already did; this keeps the save honest on its own).
     $courseid = \local_sentientia_recompletion\rule_access::require_course_option($data->courseid ?? null);
+    // validation() already did; the save path refuses on its own too, so a request that skipped the form cannot
+    // enable an imported rule (owner decision recompletion.imported_rule_enable).
+    if (!empty($data->enabled) && !\local_sentientia_recompletion\rule_access::may_enable($rule)) {
+        redirect(new moodle_url('/local/sentientia_recompletion/index.php'),
+            get_string('legacy_enable_blocked', 'local_sentientia_recompletion'), null,
+            \core\output\notification::NOTIFY_ERROR);
+    }
     $rec = (object) [
         'name'           => $data->name,
         'courseid'       => $courseid,
@@ -141,13 +156,6 @@ if ($data = $form->get_data()) {
     } else {
         $rec->timecreated = time();
         $DB->insert_record('local_sentientia_recompletion_rules', $rec);
-    }
-    // ADR-032: an imported BizLMS rule is not yet equivalent to what BizLMS ran (the engine parity list), and
-    // the owner decision is that none is enabled at cutover. Enabling one is allowed, but never silently.
-    if (!empty($rec->enabled) && $rule->id && isset($rule->legacy_config)) {
-        redirect(new moodle_url('/local/sentientia_recompletion/index.php'),
-            get_string('legacy_enabled_warning', 'local_sentientia_recompletion'), null,
-            \core\output\notification::NOTIFY_WARNING);
     }
     redirect(new moodle_url('/local/sentientia_recompletion/index.php'),
         'Rule saved.', null, \core\output\notification::NOTIFY_SUCCESS);

@@ -130,6 +130,8 @@
         <INDEX NAME="idx_timecreated" UNIQUE="false" FIELDS="timecreated"/>
         <INDEX NAME="idx_tenant"      UNIQUE="false" FIELDS="tenant_id"/>
         <INDEX NAME="idx_legacy_source" UNIQUE="false" FIELDS="legacy_source"/>
+        <INDEX NAME="idx_sender_userid" UNIQUE="false" FIELDS="sender_userid"
+               COMMENT="2026100701: the privacy provider looks a sender up on export and on erasure; without it that is a scan of the whole log"/>
       </INDEXES>
     </TABLE>
 

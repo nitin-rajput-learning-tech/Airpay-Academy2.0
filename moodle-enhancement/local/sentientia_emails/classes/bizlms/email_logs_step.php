@@ -63,6 +63,8 @@ final class email_logs_step extends log_step {
             'prefersent' => false,
             'infoid' => (int) ($row->notification_infoid ?? 0),
             'moduletype' => '',
+            'moduleid' => 0,
+            'teammember' => 0,
         ];
     }
 }

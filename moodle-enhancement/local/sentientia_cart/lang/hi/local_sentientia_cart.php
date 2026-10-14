@@ -128,6 +128,26 @@ $string['paid_withheld']  = 'इस ऑर्डर में {$a} ऐसे क
 $string['admin_withheld'] = 'रिफ़ंड देय: ऑर्डर #{$a->orderid} का भुगतान हो गया, लेकिन खरीदार को कोर्स ID {$a->courseids} में नामांकित नहीं किया गया, क्योंकि वे अब उन्हें नहीं खरीद सकते (ADR-031)। उन लाइनों का आंशिक रिफ़ंड करें; पूर्ण रिफ़ंड खरीदार को दिए गए कोर्स से भी अनामांकित कर देता है।';
 $string['ordernotes']     = 'स्टाफ़ नोट्स';
 
+// cart.withheld_line_refund (2026-10-07): रोकी गई हर लाइन से कितनी राशि वसूली गई, प्रशासक की समीक्षा के लिए।
+$string['admin_withheld_amounts'] = 'समीक्षा हेतु, इनवॉइस नहीं: रोकी गई हर लाइन से वसूली गई राशि (मूल्य - छूट + GST हिस्सा = वसूली गई राशि)। GST हिस्सा ऑर्डर के दर्ज कर से, ऑर्डर कुल जैसे ही पैसे तक पूर्णांकन के साथ निकाला गया है, इसलिए इनवॉइस से एक पैसे का अंतर हो सकता है। रिफ़ंड का निर्णय आप आंशिक रिफ़ंड से करते हैं; GST क्रेडिट नोट, यदि आवश्यक हो, वित्त जारी करता है।';
+$string['admin_withheld_line']    = '- कोर्स ID {$a->courseid} ({$a->name}): {$a->price} - {$a->discount} + GST {$a->tax} = {$a->total} {$a->currency}';
+$string['admin_withheld_total']   = 'रोकी गई लाइनों का कुल: {$a->total} {$a->currency} (ऑर्डर कुल {$a->ordertotal} {$a->currency})।';
+
+// ऑर्डर सूचनाएँ (classes/notifier.php): हर विषय और संदेश प्राप्तकर्ता की अपनी भाषा में बनता है।
+$string['notify_paid_intro']      = 'धन्यवाद! आपका ऑर्डर #{$a} पुष्ट हो गया है।';
+$string['notify_paid_courses']    = 'कोर्स:';
+$string['notify_paid_total']      = 'कुल: {$a->currency} {$a->amount}';
+$string['notify_paid_access']     = 'अब आप कैटलॉग से अपने कोर्स एक्सेस कर सकते हैं।';
+$string['notify_failed_subject']  = 'ऑर्डर #{$a} विफल रहा';
+$string['notify_failed_body']     = 'आपका ऑर्डर प्रोसेस नहीं हो सका। कारण: {$a}';
+$string['notify_failed_hint']     = 'कृपया अपने कार्ट से फिर प्रयास करें, या सहायता से संपर्क करें।';
+$string['notify_refund_subject']  = 'रिफ़ंड प्रोसेस किया गया';
+$string['notify_refund_full']     = 'आपके ऑर्डर #{$a->orderid} का पूरा रिफ़ंड कर दिया गया है ({$a->currency} {$a->amount})।';
+$string['notify_refund_partial']  = 'ऑर्डर #{$a->orderid} के लिए {$a->currency} {$a->amount} का आंशिक रिफ़ंड प्रोसेस किया गया है।';
+$string['notify_admin_subject']   = 'नया ऑर्डर #{$a}';
+$string['notify_admin_body']      = 'ऑर्डर #{$a->orderid} {$a->name} ({$a->email}) ने {$a->currency} {$a->amount} के लिए दिया है।';
+$string['notify_admin_unknown_buyer'] = 'अज्ञात';
+
 // Errors.
 $string['error_courseunavailable'] = 'यह कोर्स अब खरीद के लिए उपलब्ध नहीं है।';
 $string['error_alreadyenrolled']   = 'आप इस कोर्स में पहले से नामांकित हैं।';

@@ -629,7 +629,7 @@ class user_manager {
         $custom = self::custom_fields_update(0, $data);
 
         // Create via core API (fires events, sets up filearea).
-        $userid = user_create_user($user, false, true);
+        $userid = \local_sentientia_platform\compat\user_api::create($user, false, true);
 
         // Set password separately so it gets hashed properly.
         if ($password) {
@@ -702,7 +702,7 @@ class user_manager {
         $custom = self::custom_fields_update($userid, $data);
 
         // Update via core API (fires events).
-        user_update_user($user, false, true);
+        \local_sentientia_platform\compat\user_api::update($user, false, true);
 
         // Apply custom open_* fields.
         self::apply_custom_fields($userid, $custom);
@@ -940,7 +940,7 @@ class user_manager {
 
         $newstate = $suspended ?? !((bool) $user->suspended);
         $update = (object) ['id' => $userid, 'suspended' => $newstate ? 1 : 0];
-        user_update_user($update, false, true);
+        \local_sentientia_platform\compat\user_api::update($update, false, true);
 
         // End active sessions if suspending. destroy_user_sessions() replaced
         // kill_user_sessions() in 4.5 (the old name emits a deprecation notice).

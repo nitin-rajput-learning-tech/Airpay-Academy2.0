@@ -107,8 +107,12 @@ final class rule_engine_phase_c_test extends \advanced_testcase {
 
         $this->assertSame(1, $result['sent'] + $result['skipped'],
             'one candidate: the native session; the imported one is history');
-        $logged = $DB->get_records('local_sentientia_notif_log', null, '', 'id, userid');
+        // One delivery, one log row (send() settles its claim row in place): exactly one row, for the native
+        // session's learner, and it ended 'sent'. The imported session's learner has no row at all.
+        $logged = $DB->get_records('local_sentientia_notif_log', null, 'id ASC', 'id, userid, status');
         $this->assertSame([(int) $native->id], array_values(array_map(fn($r) => (int) $r->userid, $logged)));
+        $this->assertSame(['sent'], array_values(array_map(fn($r) => $r->status, $logged)),
+            'The one row is the delivered notification, not a leftover claim.');
     }
 
     public function test_learning_path_stalled_skips_when_table_missing(): void {

@@ -160,4 +160,49 @@ final class analytics_manager_test extends \advanced_testcase {
         $this->assertSame(100, $result['pct'], 'previous=0, current>0 should yield 100% growth');
         $this->assertSame('up', $result['direction']);
     }
+
+    /**
+     * Owner decision (2026-10-07, "readers that count enrolments"): a learner enrolled through an imported BizLMS method AND
+     * its converted manual twin holds two rows for one course. The "New Enrolments" KPI counts the learner-course pair once,
+     * and only active enrolments on enabled instances.
+     */
+    public function test_new_enrolments_counts_a_learner_course_pair_once(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+        $recent = time() - 3600;
+
+        $course = $this->getDataGenerator()->create_course();
+        $other = $this->getDataGenerator()->create_course();
+        $twin = $this->user_at_path('/1/2');
+        $single = $this->user_at_path('/1/2');
+        $suspended = $this->user_at_path('/1/2');
+        $disabledonly = $this->user_at_path('/1/2');
+        $elsewhere = $this->user_at_path('/177');
+
+        // The twin: a manual enrolment and a BizLMS one in the same course.
+        $this->getDataGenerator()->enrol_user($twin->id, $course->id, 'student', 'manual', $recent);
+        $bizlms = $DB->insert_record('enrol', (object) ['enrol' => 'learningplan', 'status' => 0, 'courseid' => $course->id,
+            'sortorder' => 90, 'roleid' => 0, 'timecreated' => $recent, 'timemodified' => $recent]);
+        $DB->insert_record('user_enrolments', (object) ['status' => 0, 'enrolid' => $bizlms, 'userid' => $twin->id,
+            'timestart' => $recent, 'timeend' => 0, 'modifierid' => 0, 'timecreated' => $recent, 'timemodified' => $recent]);
+        // The same learner in a second course is a second enrolment.
+        $this->getDataGenerator()->enrol_user($twin->id, $other->id, 'student', 'manual', $recent);
+        // One plain enrolment.
+        $this->getDataGenerator()->enrol_user($single->id, $course->id, 'student', 'manual', $recent);
+        // Not counted: suspended, on a disabled instance only, and in another tenant.
+        $this->getDataGenerator()->enrol_user($suspended->id, $course->id, 'student', 'manual', $recent, 0, ENROL_USER_SUSPENDED);
+        $off = $DB->insert_record('enrol', (object) ['enrol' => 'program', 'status' => 1, 'courseid' => $course->id,
+            'sortorder' => 91, 'roleid' => 0, 'timecreated' => $recent, 'timemodified' => $recent]);
+        $DB->insert_record('user_enrolments', (object) ['status' => 0, 'enrolid' => $off, 'userid' => $disabledonly->id,
+            'timestart' => $recent, 'timeend' => 0, 'modifierid' => 0, 'timecreated' => $recent, 'timemodified' => $recent]);
+        $this->getDataGenerator()->enrol_user($elsewhere->id, $course->id, 'student', 'manual', $recent);
+
+        \cache_helper::purge_by_definition('local_sentientia_analytics', 'kpis');
+        $kpis = analytics_manager::get_kpis('30d', '/1');
+
+        $this->assertSame('New Enrolments', $kpis[1]['label']);
+        $this->assertSame(3, (int) $kpis[1]['value'],
+            'twin in two courses (2 pairs, not 3 rows) plus the single learner');
+    }
 }

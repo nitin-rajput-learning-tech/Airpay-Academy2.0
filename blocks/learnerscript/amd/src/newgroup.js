@@ -7,8 +7,10 @@
  * @copyright  2017 Damyon Wiese <damyon@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/fragment', 'block_learnerscript/ajax', 'core/yui', 'core/templates', 'core/modal'],
-        function($, Str, ModalFactory, ModalEvents, Fragment, Ajax, Y, Templates, Modal) {
+// SENTIENTIA-CORE-MOD (vendor): the legacy modal factory AMD module was removed in Moodle 5.2 (MDL-79182).
+// This module never called it (it only imported it), so the dependency is simply dropped (FX-08).
+define(['jquery', 'core/str', 'core/modal_events', 'core/fragment', 'block_learnerscript/ajax', 'core/yui', 'core/templates', 'core/modal'],
+        function($, Str, ModalEvents, Fragment, Ajax, Y, Templates, Modal) {
 
     /**
      * Constructor

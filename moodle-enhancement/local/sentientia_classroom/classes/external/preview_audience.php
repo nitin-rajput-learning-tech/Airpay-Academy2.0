@@ -34,8 +34,10 @@ class preview_audience extends external_api {
 
         $context = \context_system::instance();
         self::validate_context($context);
-        // Use the same capability the regular enrol form uses.
-        require_capability('local/sentientia_classroom:enrol', $context);
+        // XC-CLS-ENROL (2026-10-07): the same capability as the enrol itself, :manage (the :enrol this used to
+        // name was declared by no access.php), behind the same default-OFF flag.
+        require_capability('local/sentientia_classroom:manage', $context);
+        \local_sentientia_classroom\classroom_audience_enroller::require_enabled();
 
         $map = self::parse_filters($params['filters']);
         return \local_sentientia_classroom\classroom_audience_enroller::preview(

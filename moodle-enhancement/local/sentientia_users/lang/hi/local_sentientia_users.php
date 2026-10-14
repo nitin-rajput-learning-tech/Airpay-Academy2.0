@@ -272,5 +272,8 @@ $string['transcript_status_unknown'] = 'अज्ञात';
 $string['position'] = 'पद';
 $string['domain'] = 'डोमेन';
 $string['hrms_source_bizlms'] = 'BizLMS से आयातित';
+// IDN-07 / XC-IMPORTED-HISTORY-READERS (2026-10-07): who sees an HRMS run's rejected lines, and the imported-history flag.
+$string['hrms_lines_uploader_only'] = 'इस रन की अस्वीकृत पंक्तियों में ईमेल पता, कर्मचारी कोड और नाम होते हैं। वे केवल रन अपलोड करने वाले व्यक्ति और प्लेटफ़ॉर्म प्रशासकों को दिखाई देती हैं।';
+$string['hrms_imported_history_off'] = 'BizLMS से आयातित HRMS सिंक इतिहास इस साइट पर चालू नहीं है।';
 // ADR-032 (BizLMS import, skills): the skills a user said they are interested in, on the skill profile.
 $string['skillprofile_interests']      = 'रुचि के कौशल';

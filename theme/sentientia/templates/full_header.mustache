@@ -26,6 +26,8 @@
         "hasnavbar": false,
         "navbar": "navbar_if_available",
         "courseheader": "course_header_html",
+        "headeractions": ["action1_html", "action2_html"],
+        "headerextras": ["extra1_html", "extra2_html"],
         "welcomemessage": "welcomemessage"
     }
 }}
@@ -58,6 +60,11 @@
                     <div class="header-action ml-2">{{{.}}}</div>
                 {{/headeractions}}
             </div>
+        </div>
+        <div class="header-extras-container ml-auto" data-region="header-extras-container">
+            {{#headerextras}}
+                <div class="header-extra ml-2">{{{.}}}</div>
+            {{/headerextras}}
         </div>
         {{#settingsmenu}}
                     <div class="context-header-settings-menu">

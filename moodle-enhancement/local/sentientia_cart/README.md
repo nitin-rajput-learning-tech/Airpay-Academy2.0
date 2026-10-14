@@ -134,5 +134,13 @@ credit journal into the tables above as **frozen, admin-only history**: an impor
 `refund()` refuse it. Its owner never sees it; an order administrator sees it only while
 `sentientia.cart.imported_orders.enabled` is on (default OFF), and the admin credits page (`credits.php`) is behind
 `sentientia.cart.imported_credits.enabled` (default OFF). Mapping: `docs/cutover/BIZLMS-IMPORT-MAPPING-2026-09-29.md`
-section 13. The gateway tables are read as evidence and never imported; the two finance-confirm questions (credit
-balances, ERPNext invoices) are not decided by the import.
+section 13. The gateway tables are read as evidence and never imported.
+
+The two finance questions are recorded as accepted decisions, declared by the importer with only the value it
+implements (owner, 2026-10-07, delegated; Airpay Finance was NOT consulted, so `accepted` is not a Finance sign-off):
+`cart.credit_balances = frozen_pending_finance` (the credit journal and balances are frozen, admin-only history; nothing
+honours, spends, pays out or writes off a balance) and `cart.erpnext_invoices_legal = reference_only_pending_finance`
+(a stored ERPNext number imports as the reference `ERPNEXT-<id>`, status `legacy_external`; Sentientia never issues a
+number for a BizLMS sale). A different value in the file (for example `write_off`) blocks the feature at preflight.
+April 2026 rehearsal copy: 0 credit rows, 0 ledger rows, 0 invoice rows, no ERPNext connector. If Stage B shows any
+non-zero balance or any invoice row, the count and total go to Airpay Finance before cutover (see the state card).

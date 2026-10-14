@@ -121,7 +121,7 @@ foreach (admin_log::page($filters, $page, $perpage) as $row) {
     }
     $sourcekey = 'adminlog_source_' . $row->source;
     $table->data[] = [
-        userdate((int) $row->timecreated, get_string('strftimedatetimeshort', 'core_langconfig')),
+        admin_log::when((int) $row->timecreated),
         $who,
         get_string_manager()->string_exists($sourcekey, 'local_sentientia_core')
             ? get_string($sourcekey, 'local_sentientia_core') : s($row->source),

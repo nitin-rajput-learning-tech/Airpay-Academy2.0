@@ -925,7 +925,9 @@ JS;
             // BizLMS plugin's code is not deployed, and the import brought its ratings into the Sentientia table.
             $display_ratings = null;
             if (class_exists('\local_sentientia_ratings\rating_manager')) {
-                $display_ratings = \local_sentientia_ratings\rating_manager::render($courseid, 'local_sentientia_courses');
+                // CRS-11 (2026-10-07): interactive stars and the AMD widget only behind sentientia.ratings.widget (default
+                // OFF); read-only stars otherwise. render() with its interactive default drew buttons nothing wired up.
+                $display_ratings = \local_sentientia_ratings\rating_manager::render_for_viewer($courseid, 'local_sentientia_courses');
             }
             $header=(object)array_merge((array)$header,$usercourseprogress);
             $header->display_ratings=$display_ratings;
@@ -978,6 +980,9 @@ JS;
         $header->courseheader = $this->course_header();
         $header->display_duedays = !empty($display_duedays) ? $display_duedays : '';        
         $header->headeractions = $this->page->get_header_actions();
+        // Moodle 5.2+: activity_header puts the Opened/Due dates here via $PAGE->add_header_extras().
+        // Core full_header renders them; this override dropped them. Absent on 5.1, hence the guard.
+        $header->headerextras = method_exists($this->page, 'get_header_extras') ? $this->page->get_header_extras() : [];
         if (!empty($pagetype) && !empty($homepagetype) && $pagetype == $homepagetype) {
             $header->welcomemessage = \core_user::welcome_message();
         }
@@ -1185,7 +1190,11 @@ JS;
             // Don't unset this flag as login_info still needs it.
             if (!empty($CFG->displayloginfailures)) {
                 // Don't reset the count either, as login_info() still needs it too.
-                if ($count = user_count_login_failures($user, false)) {
+                // Moodle 5.3 (MDL-82650) moved this to \core\user; the old global only logs a deprecation there.
+                $count = method_exists(\core\user::class, 'count_login_failures')
+                    ? \core\user::count_login_failures($user, false)
+                    : user_count_login_failures($user, false);
+                if ($count) {
 
                     // Get login failures string.
                     $a = new stdClass();
@@ -1229,7 +1238,11 @@ JS;
 
         // Before we add the last items (usually a logout + switch role link), add any
         // custom-defined items.
-        $customitems = user_convert_text_to_menu_items($CFG->customusermenuitems, $page);
+        // Moodle 5.3 (MDL-82650): \core\user::convert_text_to_menu_items() takes the text only ($page was never used).
+        $customusermenutext = (string) ($CFG->customusermenuitems ?? '');
+        $customitems = method_exists(\core\user::class, 'convert_text_to_menu_items')
+            ? \core\user::convert_text_to_menu_items($customusermenutext)
+            : user_convert_text_to_menu_items($customusermenutext, $page);
         foreach ($customitems as $item) {
             $returnobject->navitems[] = $item;
         }
@@ -1703,7 +1716,8 @@ JS;
         // Ratings: no BizLMS display_rating() fallback any more (ADR-032, 2026-09-30).
         $display_ratings = null;
         if (class_exists('\local_sentientia_ratings\rating_manager')) {
-            $display_ratings = \local_sentientia_ratings\rating_manager::render($COURSE->id, 'local_sentientia_courses');
+            // CRS-11 (2026-10-07): see the course header above; one widget request serves both places.
+            $display_ratings = \local_sentientia_ratings\rating_manager::render_for_viewer($COURSE->id, 'local_sentientia_courses');
         }
         if(empty($percentage)){
             $percentage=0;}

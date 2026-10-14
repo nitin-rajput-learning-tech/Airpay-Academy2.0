@@ -351,3 +351,7 @@ one override row and one audit row, and the flip back is audited too. The whitel
 registered `live.*` keys: ranking flips, and scale, a non-Live key and '' are refused. A /77 tenant
 admin cannot flip any tenant, their own included. A customer-scoped flip is refused while the
 customer layer is off.
+
+## 2026-10-08 Moodle 5.3 compat FX-18
+
+Every `fputcsv()` / `fgetcsv()` / `str_getcsv()` call in this plugin now passes the `$escape` argument explicitly with the historic default (`',', '"', '\\'`, and `null` for the `fgetcsv` length). The output and the parsing are byte-identical; PHP 8.4 deprecates relying on the default, and the notice would otherwise be written into the CSV stream on a 8.4 host (UAT and production run PHP 8.3). No version bump, no schema change.

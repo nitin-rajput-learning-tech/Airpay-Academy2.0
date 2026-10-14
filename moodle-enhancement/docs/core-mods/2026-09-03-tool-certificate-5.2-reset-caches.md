@@ -19,3 +19,14 @@
 - **Detected by:** running a real issue on UAT (the P4 static pass and `php -l` cannot see a
   signature-compatibility fatal). Lesson: exercise each vendor plugin's write path once on the 5.2
   runtime.
+
+---
+
+## Addendum 2026-10-08 (Moodle 5.3 compatibility pass)
+
+- **5.3 status: still required.** Moodle 5.3 `customfield/classes/handler.php:116` still declares
+  `reset_caches(): void`, and `create(int $itemid = 0)` at `:99` still matches `issue_handler::create()`.
+  The reverted handler caching (`CACHE_HANDLER_INSTANCES`, `:46`) does not affect the override.
+- The patch is present in the package source `admin/tool/certificate/classes/customfield/issue_handler.php`
+  (line 289 at this date). Drop it when a vendor release carries `: void`.
+- Two more vendor patches now sit beside it: see `2026-10-08-tool-certificate-duration-defaultunit.md`.

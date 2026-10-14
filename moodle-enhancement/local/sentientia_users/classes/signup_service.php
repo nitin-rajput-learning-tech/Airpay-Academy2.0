@@ -183,7 +183,7 @@ class signup_service {
             'calendartype'      => $CFG->calendartype,
         ];
 
-        $userid = \user_create_user($user, false, false);
+        $userid = \local_sentientia_platform\compat\user_api::create($user, false, false);
 
         // ── ADR-017 / C1.6 (2026-05-28) ─────────────────────────────────
         // Every Public-signup user is a consumer per the §Resolution rule

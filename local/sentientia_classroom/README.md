@@ -40,7 +40,10 @@ the trainer of each classroom and session is carried so trainers keep their atte
 trainer, the session's trainer and every co-trainer listed in `local_sentientia_classroom_trainers` may open
 and mark the classroom's sessions). A classroom or session the import brought in cannot be deleted, and a
 learner whose roster row or attendance the import brought in cannot be unenrolled, from the pages
-(`error_protected_history`). The readers of the imported history (overview, roster completion, "My
+(`error_protected_history`). One exception (owner decision LRN-10): an imported roster row that carries no
+history yet (classroom active, not completed, no hours, no attendance mark of any kind) can be removed.
+"Bulk enrol by target audience" is back behind `sentientia.classroom.bulk_enrol_audience` (default OFF) and
+`local/sentientia_classroom:manage` (XC-CLS-ENROL); it refuses a filter that names no criterion. The readers of the imported history (overview, roster completion, "My
 classrooms" at `my.php`, the logo) are behind the default-OFF flag `sentientia.classroom.import_history`.
 
 ## Web services (~15)

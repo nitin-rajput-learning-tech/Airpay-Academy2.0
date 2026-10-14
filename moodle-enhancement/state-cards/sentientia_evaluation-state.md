@@ -950,3 +950,14 @@ of both plugins byte-identical. No flag flipped, no row or file deleted.
   `response_drilldown` is flipped.
 - The signed decisions file does not yet carry `evaluation.sticky_anonymity` and `evaluation.tenant_editor_fallback` (see the doc
   items above); it is the owner's file and was not edited.
+## 2026-10-08 Moodle 5.3 compat FX-18
+
+Every `fputcsv()` / `fgetcsv()` / `str_getcsv()` call in this plugin now passes the `$escape` argument explicitly with the historic default (`',', '"', '\\'`, and `null` for the `fgetcsv` length). The output and the parsing are byte-identical; PHP 8.4 deprecates relying on the default, and the notice would otherwise be written into the CSV stream on a 8.4 host (UAT and production run PHP 8.3). No version bump, no schema change.
+
+## 2026-10-08 Moodle 5.3 compat FX-20 (version 2026100801)
+
+`templates/questions.mustache`: the question card menu emits `data-bs-toggle="dropdown"` beside the Bootstrap 4 `data-toggle`. No schema change.
+
+## 2026-10-08 Moodle 5.3 compat FX-20 round 1 (version 2026100802)
+
+`data-bs-toggle="dropdown"` removed again from `templates/questions.mustache` (byte-identical to before 2026100801): with both attributes a click ran the theme's Bootstrap 4 handler and core's Bootstrap 5 handler on pages where core loads the latter, so the menu opened and closed at once. See the `sentientia_org` card for the full reasoning. No schema change.

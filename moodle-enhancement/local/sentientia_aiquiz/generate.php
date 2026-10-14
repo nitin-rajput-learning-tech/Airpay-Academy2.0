@@ -145,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // a crafted POST naming another tenant's course).
     if ($prefill['courseid'] > 0) {
         $draftcourse = $DB->get_record('course', ['id' => $prefill['courseid']]);
-        if (!$draftcourse || (int) $draftcourse->id === SITEID) {
+        if (!$draftcourse || (int) $draftcourse->id === (int) SITEID) {
             $errors[] = get_string('invalidcourseid', 'error');
         } else {
             try {

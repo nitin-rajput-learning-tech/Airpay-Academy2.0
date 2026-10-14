@@ -89,20 +89,20 @@ fwrite($out, "\xEF\xBB\xBF");
 // Header rows — session metadata block, then a blank, then the per-
 // response data header. Excel happily parses this; downstream tools
 // can `tail -n +N` past the metadata block.
-fputcsv($out, ['Sentientia LMS Live — session export']);
-fputcsv($out, ['Session ID', (int) $sess->id]);
-fputcsv($out, ['Title',      $sess->title]);
-fputcsv($out, ['Join code',  substr($sess->code, 0, 3) . ' ' . substr($sess->code, 3)]);
-fputcsv($out, ['State',      $sess->state]);
+fputcsv($out, ['Sentientia LMS Live — session export'], ',', '"', '\\');
+fputcsv($out, ['Session ID', (int) $sess->id], ',', '"', '\\');
+fputcsv($out, ['Title',      $sess->title], ',', '"', '\\');
+fputcsv($out, ['Join code',  substr($sess->code, 0, 3) . ' ' . substr($sess->code, 3)], ',', '"', '\\');
+fputcsv($out, ['State',      $sess->state], ',', '"', '\\');
 fputcsv($out, ['Created',    $sess->timecreated
     ? userdate((int) $sess->timecreated, '%Y-%m-%d %H:%M:%S')
-    : '']);
+    : ''], ',', '"', '\\');
 fputcsv($out, ['Started',    $sess->timestarted
     ? userdate((int) $sess->timestarted, '%Y-%m-%d %H:%M:%S')
-    : '']);
+    : ''], ',', '"', '\\');
 fputcsv($out, ['Ended',      $sess->timeended
     ? userdate((int) $sess->timeended, '%Y-%m-%d %H:%M:%S')
-    : '']);
+    : ''], ',', '"', '\\');
 $slide_count    = \local_sentientia_live\slide_manager::count_for_session((int) $sess->id);
 $total_resp     = $DB->count_records_sql(
     "SELECT COUNT(r.id)
@@ -112,13 +112,13 @@ $total_resp     = $DB->count_records_sql(
     ['sid' => $sess->id]);
 $total_partic   = \local_sentientia_live\participant_manager::total_count_for_session(
     (int) $sess->id);
-fputcsv($out, ['Total slides',       $slide_count]);
-fputcsv($out, ['Total participants', $total_partic]);
-fputcsv($out, ['Total responses',    $total_resp]);
+fputcsv($out, ['Total slides',       $slide_count], ',', '"', '\\');
+fputcsv($out, ['Total participants', $total_partic], ',', '"', '\\');
+fputcsv($out, ['Total responses',    $total_resp], ',', '"', '\\');
 fputcsv($out, ['Exported by',        fullname($USER)
-    . ' <' . $USER->email . '>']);
-fputcsv($out, ['Exported at',        userdate(time(), '%Y-%m-%d %H:%M:%S')]);
-fputcsv($out, []);  // blank row separator
+    . ' <' . $USER->email . '>'], ',', '"', '\\');
+fputcsv($out, ['Exported at',        userdate(time(), '%Y-%m-%d %H:%M:%S')], ',', '"', '\\');
+fputcsv($out, [], ',', '"', '\\');  // blank row separator
 
 // Per-response data header.
 fputcsv($out, [
@@ -130,7 +130,7 @@ fputcsv($out, [
     'response_value',
     'time_to_answer_seconds',
     'response_timestamp',
-]);
+], ',', '"', '\\');
 
 // Build a slide-id → start-time map so we can compute time-to-answer
 // per response without N queries to the events table. One scan of
@@ -237,7 +237,7 @@ foreach ($rs as $row) {
         $value_str,
         $time_to_answer,
         userdate((int) $row->response_t, '%Y-%m-%d %H:%M:%S'),
-    ]);
+    ], ',', '"', '\\');
 }
 $rs->close();
 

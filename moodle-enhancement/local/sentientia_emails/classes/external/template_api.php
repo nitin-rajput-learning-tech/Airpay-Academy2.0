@@ -194,9 +194,10 @@ class template_api extends external_api {
         // If custom body provided, render it directly. Otherwise use file template.
         if (!empty($params['bodyhtml'])) {
             try {
-                $mustache = new \Mustache_Engine();
+                // \Mustache\Engine on Moodle 5.2+, \Mustache_Engine on 5.1 (see mustache_factory).
+                $mustache = \local_sentientia_emails\mustache_factory::engine();
                 $body = $mustache->render($params['bodyhtml'], $samplecontext);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 $body = '<p style="color:#dc2626;">Mustache error: ' . s($e->getMessage()) . '</p>';
             }
         } else {

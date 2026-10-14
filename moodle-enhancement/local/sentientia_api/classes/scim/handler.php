@@ -439,7 +439,7 @@ class handler {
                         ['u' => $new, 'm' => $CFG->mnet_localhost_id, 'id' => $user->id])) {
                     throw new scim_exception(409, get_string('scim_conflict_username', 'local_sentientia_api'), 'uniqueness');
                 }
-                user_update_user((object) ['id' => (int) $user->id, 'username' => $new], false, true);
+                \local_sentientia_platform\compat\user_api::update((object) ['id' => (int) $user->id, 'username' => $new], false, true);
                 $changed = true;
             }
         }

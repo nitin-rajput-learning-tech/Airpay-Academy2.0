@@ -24,8 +24,9 @@ use local_sentientia_platform\bizlms\step;
  *  - otherwise a new row in {enrol} (a reviewed core INSERT: registry::CORE_WRITES_ALLOWED, enrol). A course with
  *    only a DISABLED manual instance gets a new enabled one beside it: the disabled one records that an
  *    administrator switched manual enrolment off, and the import does not undo that, but the learners must keep
- *    access. The map holds the new instance (imported, targettable enrol), which is how enrolments.enrolments finds
- *    it.
+ *    access (owner decision CRS-03, enrolments.disabled_only_manual_instance = add_enabled_beside; after cutover the
+ *    administrator can see the import-created instance in the map and move or close it with a real decision). The map holds
+ *    the new instance (imported, targettable enrol), which is how enrolments.enrolments finds it.
  *
  * The declared target is the ledger, because the registry accepts a step's target only from the plugin's own schema.
  * This step writes no ledger row: a created instance is recorded by its map row (provenance::is_imported('enrol', id)).

@@ -75,3 +75,11 @@ On every future `tool_certificate` upgrade:
 - Staging location + activation steps: `docs/translations/README.md`
 - The draft itself: `docs/translations/tool_certificate-hi-DRAFT.php`
 - C10 investigation (Gap 4): `docs/audits/C10-CERTIFICATE-STACK-INVESTIGATION-2026-05-28.md`
+
+---
+
+## Addendum 2026-10-08: Moodle 5.3 (ADR-033)
+
+Version independent: an additive Hindi language file for the vendored `tool_certificate`, staged and not applied. Nothing
+to do for 5.3 itself. When a 5.x-compatible `tool_certificate` release replaces the bundled 4.5.7 (compatibility report C6),
+diff its English strings against this pack's keys before applying it.

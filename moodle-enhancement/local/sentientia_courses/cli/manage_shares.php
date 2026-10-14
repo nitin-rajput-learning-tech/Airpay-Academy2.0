@@ -358,7 +358,7 @@ if ($options['bulk-csv'] !== false) {
         cli_error("Cannot open --bulk-csv file: $path", 2);
     }
     // First row = header. Expected columns: courseid, tenants, action.
-    $header = fgetcsv($fh);
+    $header = fgetcsv($fh, null, ',', '"', '\\');
     if (!$header) {
         cli_error("Empty CSV", 2);
     }
@@ -381,7 +381,7 @@ if ($options['bulk-csv'] !== false) {
         . ($dry ? ' (DRY RUN — no writes)' : ''));
     cli_writeln('  ' . str_repeat('-', 80));
 
-    while (($row = fgetcsv($fh)) !== false) {
+    while (($row = fgetcsv($fh, null, ',', '"', '\\')) !== false) {
         $lineno++;
         if (empty($row[$idx_courseid])) {
             continue;  // skip blank rows

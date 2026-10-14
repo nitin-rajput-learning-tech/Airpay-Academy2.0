@@ -232,7 +232,7 @@ class ics_builder {
             // description is plain text (ADR-032, classroom code fix 9). Text that holds no tag is left alone.
             $notes = (string) $row->notes;
             if (preg_match('/<[a-z!\/][^>]*>/i', $notes)) {
-                $notes = html_to_text($notes, 0, false);
+                $notes = self::plain_text_of($notes);
             }
             $notes = trim($notes);
             if ($notes !== '') {
@@ -450,6 +450,26 @@ class ics_builder {
      * Escape special chars in an iCal text value (RFC 5545 §3.3.11).
      * Backslash, comma, semicolon, newline → escaped sequences.
      */
+    /**
+     * Plain text of an HTML fragment, the same on every Moodle version.
+     *
+     * Not html_to_text(): its converter changed between releases (on Moodle 5.3 it upper-cases bold text, so
+     * "Bring <strong>your ID</strong>" became "Bring YOUR ID"), and a calendar event should read the same whichever
+     * version wrote it. Script and style blocks go with their content, block-level ends become line breaks, tags are
+     * dropped, entities decoded, and runs of blank lines and spaces collapsed.
+     *
+     * @param string $html
+     * @return string
+     */
+    private static function plain_text_of(string $html): string {
+        $text = preg_replace('#<(script|style)\b[^>]*>.*?</\1\s*>#is', '', $html) ?? $html;
+        $text = preg_replace('#<br\s*/?>|</(p|div|li|tr|h[1-6]|blockquote|pre)\s*>#i', "\n", $text) ?? $text;
+        $text = html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $lines = array_map(static fn(string $l): string => trim(preg_replace('/[ \t\x{00A0}]+/u', ' ', $l) ?? $l),
+            explode("\n", str_replace(["\r\n", "\r"], "\n", $text)));
+        return trim(preg_replace("/\n{3,}/", "\n\n", implode("\n", $lines)) ?? '');
+    }
+
     private static function escape_text(string $s): string {
         return str_replace(
             ["\\", ";", ",", "\r\n", "\n"],

@@ -148,3 +148,53 @@ Not done, on purpose
 Tests: `tests/bizlms_import_test.php` (contract plus the feature rules), `tests/bizlms_readers_test.php`,
 `tests/privacy/provider_test.php`; fixture `tests/fixtures/bizlms/ratings.install.xml`. Not yet run: the local PHPUnit
 database has to be re-initialised for version 2026093001 first.
+
+## 2026-10-07 - owner decisions of the courses cluster: CRS-10, CRS-11, CRS-12 (1.2.1, 2026100701)
+
+Both trees (plus `theme/sentientia`, which has one tree). **Not run: no PHPUnit here; the lead re-initialises PHPUnit once for
+the version bump.** No flag is flipped; the one new flag ships OFF. No schema or capability change.
+
+- **CRS-11 - the course-page stars (new flag `sentientia.ratings.widget`, default OFF).** The theme called `render()` with its
+  interactive default and never initialised the AMD widget, so a learner saw buttons that did nothing (an accessibility
+  defect: dead, focusable controls). Now `rating_manager::render_for_viewer($itemid, $area)` decides: flag OFF, or a guest, or
+  a user without `local/sentientia_ratings:rate`, gets READ-ONLY stars (no `<button>`, no `data-airpay-rating`, one `role="img"`
+  element with a text alternative from the existing `averagesummary` / `noratings` strings); flag ON for a signed-in learner who
+  may rate gets the interactive stars and `js_call_amd('local_sentientia_ratings/rating_widget', 'init')`, requested ONCE per page
+  (init binds every widget on the page; a second call would bind each star twice and send two requests per click). Both theme
+  sites (`core_renderer` course header and course drawer) and the `airpay_display_rating()` helper in `lib.php` call it;
+  `render()` itself is unchanged for explicit callers. The submit web service is unchanged (capability and area whitelist).
+  Recommended future flip, not decided: ON for Airpay at cutover, after Nitin has seen the evidence
+  (`framework.reader_flags_airpay_at_cutover`). No new lang string: the alternative text reuses strings that already have a
+  Hindi pair.
+- **CRS-12 - recorded recommendation, no flip.** `sentientia.ratings.reviews` stays OFF for Airpay at cutover (April: BizLMS
+  `local_ratings/review_enable` = 0 and `local_comment` has 0 rows, so BizLMS learners never saw reviews; a review list would be
+  MORE visible than BizLMS, rule 3). `sentientia.ratings.reactions` goes ON only after the counts are wired into the theme and
+  the screenshots are reviewed (BizLMS did show like and dislike counts on learning plans: 33 likes and 2 dislikes on April).
+  Re-check `local_ratings/review_enable` on the Stage B copy. **Follow-up code, done:** `rating_manager::render_reactions()`
+  puts the counts (a thumbs-up and a thumbs-down icon with the numbers, `role="img"` with the "Likes: n, Dislikes: n" text) beside
+  the stars, inside the same element, only behind `sentientia.ratings.reactions`, and only when the item has any like or
+  dislike. Counts only, site-wide per item as in BizLMS, no person data. This closes the line above ("the reaction counts are not
+  wired into any theme template") for the course header and drawer; learning plan, programme and classroom pages are not wired.
+  Needs Nitin's yes at cutover (confirm question in the decisions file).
+- **CRS-10 / doc item "ratings security" - label the scanner rows.** `area_map::resolve()` gives an area that holds a character a
+  plugin-style name never has (a quote, bracket, slash, white space, percent escape, non-ASCII letter, control character; letters,
+  digits, underscore, dot and hyphen are fine) the detail code `scanner_payload` instead of `area_not_mapped` / `area_too_long`.
+  Still skipped as `unknown_area` (needs the owner), nothing is imported or deleted, the value stays in the legacy table; the
+  detail code shows in the map and in every report line. On the April 2026 copy that is the 194 `local_like` rows with probe strings
+  in `likearea` (none has a real user), so the parity report reads `unknown_area ~195` with 194 of them `scanner_payload` and the
+  1 NULL-area `local_rating` row `no_area`. Acceptance of the five reasons (`ratings:unknown_area`, `orphan_item`,
+  `invalid_rating`, `orphan_user`, `invalid_reaction`) is written ONLY after Stage B with the rehearsed counts (CRS-10; nothing
+  pre-accepted, nothing in code). Expected April: unknown_area ~195, orphan_item 85 or more, invalid_rating 1, orphan_user at most
+  1, invalid_reaction 0. The security fact (BizLMS's like endpoint stored unauthenticated writes; Sentientia reactions are read-only
+  and `submit_rating` is login-required with an area whitelist) goes to the production security audit backlog; nothing is
+  patched on live BizLMS (replace-not-patch).
+- **CRS-13 (delete the dead `moodle-enhancement/local/airpay_ratings`) is NOT done**: a delete waits for Nitin's [CONFIRM].
+- **Tests (NOT RUN):** new `tests/widget_flag_test.php` (flag registered and OFF; OFF is read-only with a text alternative and no
+  script; the alternative carries the average; ON is interactive and the widget is requested once for two renders; a guest and a
+  learner without the capability never get a control; `render()` keeps its default; the lib helper follows the flag; the CRS-12
+  counts show only behind their flag, count only likes and dislikes, and sit inside the stars' element) and new
+  `tests/area_probe_label_test.php` (ten probe shapes are `scanner_payload`; a plain unmapped, certification, empty or long-letter
+  area keeps its old detail; the label is a detail code the framework accepts; a mapped area is never a probe).
+- **Visual evidence owed** (CLAUDE.md section 5): the course header and drawer with the flag OFF (read-only stars) and ON
+  (interactive stars; hover, click, saved average), and with `sentientia.ratings.reactions` ON (the counts), desktop and 590 px,
+  learner and guest. Not captured in this session (no browser access to the UAT build).

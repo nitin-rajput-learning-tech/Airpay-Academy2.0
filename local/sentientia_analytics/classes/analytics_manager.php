@@ -56,19 +56,22 @@ class analytics_manager {
                 AND u.deleted = 0 AND u.suspended = 0 $orgfilter",
             array_merge($params, ['start' => $previous_start, 'end' => $previous_end]));
 
-        // New enrolments.
+        // New enrolments. Owner decision (2026-10-07, "readers that count enrolments"): a learner enrolled through an
+        // imported BizLMS method AND its converted manual twin held two rows for one course, so counting rows counted that
+        // learner twice. The unit is the learner-course pair, counted once, and only ACTIVE enrolments on ENABLED instances.
+        $pairkey = $DB->sql_concat('e.courseid', "'-'", 'ue.userid');
         $enrol_current = $DB->count_records_sql(
-            "SELECT COUNT(ue.id) FROM {user_enrolments} ue
-               JOIN {enrol} e ON e.id = ue.enrolid
+            "SELECT COUNT(DISTINCT $pairkey) FROM {user_enrolments} ue
+               JOIN {enrol} e ON e.id = ue.enrolid AND e.status = 0
                JOIN {user} u ON u.id = ue.userid
-              WHERE ue.timestart >= :start AND ue.timestart < :end $orgfilter",
+              WHERE ue.status = 0 AND ue.timestart >= :start AND ue.timestart < :end $orgfilter",
             array_merge($params, ['start' => $current_start, 'end' => $current_end]));
 
         $enrol_previous = $DB->count_records_sql(
-            "SELECT COUNT(ue.id) FROM {user_enrolments} ue
-               JOIN {enrol} e ON e.id = ue.enrolid
+            "SELECT COUNT(DISTINCT $pairkey) FROM {user_enrolments} ue
+               JOIN {enrol} e ON e.id = ue.enrolid AND e.status = 0
                JOIN {user} u ON u.id = ue.userid
-              WHERE ue.timestart >= :start AND ue.timestart < :end $orgfilter",
+              WHERE ue.status = 0 AND ue.timestart >= :start AND ue.timestart < :end $orgfilter",
             array_merge($params, ['start' => $previous_start, 'end' => $previous_end]));
 
         // Completions.

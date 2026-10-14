@@ -142,7 +142,11 @@ final class approvals_step extends request_step {
         }
 
         if ($status === 'pending') {
-            [$newstatus, $route, $approver] = $this->pending_plan($ctx, $settings, 'path', $itemid, 0, $user);
+            // The plan is in the map (a missing one was skipped above), so only the requester can make this row stale.
+            [$newstatus, $route, $approver, $planwarning] = $this->pending_plan($ctx, $settings, 'path', $itemid, 0, $user);
+            if ($planwarning !== null) {
+                $warnings[] = $planwarning;
+            }
             $decidedby = null;
             $timedecided = null;
         } else {

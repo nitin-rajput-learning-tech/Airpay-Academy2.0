@@ -114,7 +114,7 @@
                COMMENT="Question stem as produced by Claude (or edited by reviewer)"/>
         <FIELD NAME="qoptions_json" TYPE="text" NOTNULL="false"
                COMMENT="JSON array of option strings. NULL for qtypes that don't have options (shortanswer)."/>
-        <FIELD NAME="qanswer"       TYPE="char" LENGTH="64"   NOTNULL="true" DEFAULT=""
+        <FIELD NAME="qanswer"       TYPE="char" LENGTH="64"   NOTNULL="true"
                COMMENT="Correct-answer marker: '0'..'3' for multichoice (index), 'true'/'false' for truefalse, free text for shortanswer."/>
         <FIELD NAME="qexplanation"  TYPE="text" NOTNULL="false"
                COMMENT="Optional rationale Claude produced explaining why the correct answer is correct. Shown in review UI."/>

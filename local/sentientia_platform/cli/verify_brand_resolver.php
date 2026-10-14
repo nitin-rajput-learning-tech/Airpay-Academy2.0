@@ -29,7 +29,7 @@ expect(str_contains($brand['icon_192_url'], '/local/sentientia_platform/pix/cust
     'icon_192_url path correct');
 expect(str_contains($brand['icon_512_url'], '/local/sentientia_platform/pix/customer/1/icon-512.png'),
     'icon_512_url path correct');
-expect($brand['start_url']    === '/my/dashboard.php?utm_source=pwa_install', 'start_url correct');
+expect($brand['start_url']    === '/my/?utm_source=pwa_install', 'start_url correct');
 
 echo "\n2. Phase 2 new keys\n";
 expect(isset($brand['status_bar_style']), 'status_bar_style present');

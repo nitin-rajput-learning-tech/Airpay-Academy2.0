@@ -35,16 +35,17 @@
     {{! Block contents }}
     <div class="card-body p-0 pb-3">
 
-        {{! Block header }}
-        {{#title}}
-            <h5 id="instance-{{blockinstanceid}}-header" class="card-title d-inlines">{{{title}}}</h5>
-        {{/title}}
-
-        {{#hascontrols}}
-            <div class="block-controls pull-right header">
-                {{{controls}}}
-            </div>
-        {{/hascontrols}}
+        {{! Block header: a flex row, title left and controls right (the core 5.2+ structure, Bootstrap 4 classes) }}
+        <div class="block-header d-flex">
+            {{#title}}
+                <h5 id="instance-{{blockinstanceid}}-header" class="card-title">{{{title}}}</h5>
+            {{/title}}
+            {{#hascontrols}}
+                <div class="block-controls header ml-auto">
+                    {{{controls}}}
+                </div>
+            {{/hascontrols}}
+        </div>
 
         <div class="card-text content">
             {{{content}}}
@@ -59,5 +60,5 @@
 
 {{! Block Skip Link Target }}
 {{#showskiplink}}
-  <span id="sb-{{skipid}}"></span>
+  <span id="sb-{{skipid}}" tabindex="-1"></span>
 {{/showskiplink}}

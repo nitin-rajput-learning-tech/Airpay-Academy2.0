@@ -39,10 +39,12 @@ use local_sentientia_platform\bizlms\tenant_resolver;
  *  - aud:N  the audit row of the assignment at position N.
  * N is the 1-based position in the list, never the user id (legacymap holds no personal data).
  *
- * Tenant rule (ADR-031, decisions 5 and 6): a user never gets a role over another tenant's organisation. Such a user
- * is left out of the row with a warning; a row with no user left is skipped as user_outside_org_tenant, a reason the
- * owner must accept. A role that may not be assigned at a category is skipped as role_not_assignable (owner reason
- * too): core would refuse both assignments.
+ * Tenant rule, fail closed (ADR-031, decisions 4, 5 and 6): a user never gets a role over another tenant's
+ * organisation, and a user with no tenant path gets none either. Such a user is left out of the row with a warning; a
+ * row with no user left is skipped as user_outside_org_tenant (somebody belonged to another tenant) or as
+ * user_without_tenant (somebody had no tenant path), reasons the owner accepts in writing after the Stage B rehearsal
+ * has produced a count (nothing is pre-accepted: IDN-02). A role that may not be assigned at a category is skipped as
+ * role_not_assignable (owner reason too): core would refuse both assignments. The legacy rows stay where they are.
  *
  * @package    local_sentientia_roles
  * @copyright  2026 Airpay Payment Services
@@ -89,6 +91,9 @@ final class importer implements importer_contract {
     /** Reason: every user of the row belongs to another tenant than the organisation (ADR-031). */
     public const REASON_USER_OUTSIDE_TENANT = 'user_outside_org_tenant';
 
+    /** Reason: nobody is left after the users with no tenant path were left out (ADR-031, IDN-01, 2026-10-07). */
+    public const REASON_USER_WITHOUT_TENANT = 'user_without_tenant';
+
     /** Reason: no user of the row exists and is active. */
     public const REASON_NO_VALID_USER = 'no_valid_user';
 
@@ -117,12 +122,13 @@ final class importer implements importer_contract {
 
     /**
      * The plugin version that ships this importer. There is no schema addition: the audit table and role_assignments
-     * already exist. 2026093002 carries the tenant and role-level rules of the review round.
+     * already exist. 2026093002 carried the tenant and role-level rules of the review round; 2026100701 adds the
+     * fail-closed rule for a user with no tenant path (the reason user_without_tenant).
      *
      * @return int
      */
     public function requires_version(): int {
-        return 2026093002;
+        return 2026100701;
     }
 
     /**
@@ -196,6 +202,7 @@ final class importer implements importer_contract {
             new reason(self::REASON_ROLE_NOT_ASSIGNABLE, false, true),
             new reason(self::REASON_ORG_NOT_FOUND, false, true),
             new reason(self::REASON_USER_OUTSIDE_TENANT, false, true),
+            new reason(self::REASON_USER_WITHOUT_TENANT, false, true),
             new reason(self::REASON_NO_VALID_USER, false, false),
             new reason(self::REASON_ALREADY_ASSIGNED, false, false),
         ];
@@ -322,23 +329,33 @@ final class importer implements importer_contract {
             $pf->warn('org_not_found:' . $notfound);
         }
 
-        // Users of another tenant than the organisation they would get a role in are left out (ADR-031): count them
-        // now, so the owner sees the size of it before an apply.
+        // Users of another tenant than the organisation they would get a role in, and users with no tenant path at
+        // all, are left out (ADR-031, IDN-01): count them now, so the owner sees the size of it before an apply.
         $outside = 0;
+        $notenant = 0;
         foreach ($holders as [$orgid, $list]) {
             $orgroot = isset($orgs[$orgid]) ? org_contexts::root_of($orgs[$orgid]->path) : 0;
             if ($orgroot === 0) {
                 continue;
             }
             foreach (assignment_step::user_ids($list) as $userid) {
-                $userroot = $ctx->lookups->user_active($userid) ? $ctx->tenant->root_of_user($userid) : 0;
-                if ($userroot > 0 && $userroot !== $orgroot) {
+                if (!$ctx->lookups->user_active($userid)) {
+                    // Missing or deleted: not a tenant question (transform() reports it as such).
+                    continue;
+                }
+                $userroot = $ctx->tenant->root_of_user($userid);
+                if ($userroot === 0) {
+                    $notenant++;
+                } else if ($userroot !== $orgroot) {
                     $outside++;
                 }
             }
         }
         if ($outside) {
             $pf->warn('user_outside_org_tenant:' . $outside);
+        }
+        if ($notenant) {
+            $pf->warn('user_without_tenant:' . $notenant);
         }
 
         // A role that may not be assigned at a category is skipped (role_not_assignable): the owner should see it.

@@ -85,7 +85,8 @@ class list_exams extends external_api {
         $records = [];
         if ($total > 0) {
             // G-06: also fetch the parent course of the wrapping quiz —
-            // needed to deep-link Enrol Users to /enrol/users.php?id=<courseid>.
+            // needed to link the manage-enrolment action to
+            // /local/sentientia_courses/enrolledusers.php?id=<courseid>.
             $records = $DB->get_records_sql(
                 "SELECT e.*, q.attempts AS attempts_allowed, q.timelimit, q.course AS quiz_courseid
                    FROM {local_sentientia_exams} e

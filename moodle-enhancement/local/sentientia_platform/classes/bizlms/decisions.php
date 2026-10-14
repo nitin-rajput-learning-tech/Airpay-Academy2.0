@@ -28,12 +28,12 @@ defined('MOODLE_INTERNAL') || die();
  *   carried with another status can therefore never be replaced by the importer's
  *   own default.
  * - accepted_reasons (optional): needs-owner reasons the owner has accepted.
- *   Parity exits 2 for any needs-owner reason that is not listed. A reason is listed only
- *   after the Stage B rehearsal has shown that it OCCURS, with the number of rows the owner
- *   looked at ("<feature>:<code><=<rows>"): at cutover a count above that exits 2 again, so
- *   an acceptance cannot also accept growth in the data since the rehearsal. A bare
- *   "<feature>:<code>" accepts any count; use it only for a code that is meant to have none
- *   to look at. No importer pre-fills this list when it is built.
+ *   Parity exits 2 for any needs-owner reason that is not listed. Nothing is pre-accepted (ADR-032 signed decisions,
+ *   2026-10-07 IDN-02): a reason is added only by the owner, in writing, after the Stage B rehearsal has shown that it
+ *   OCCURS, with the number of rows the owner looked at ("<feature>:<code><=<rows>"; the counts also go in the approval
+ *   note, and the file's hash is then re-pinned). At cutover a count above that exits 2 again, so an acceptance cannot
+ *   also accept growth in the data since the rehearsal. A bare "<feature>:<code>" accepts any count; use it only for a
+ *   code that is meant to have none to look at. No importer pre-fills this list when it is built.
  * - enums (optional): values of a declared enum column the owner has mapped, so
  *   preflight no longer blocks on them. The importer's code decides what a mapped
  *   value becomes.

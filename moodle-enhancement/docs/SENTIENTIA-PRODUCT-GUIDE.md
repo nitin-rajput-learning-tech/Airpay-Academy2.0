@@ -60,7 +60,7 @@ These are running capabilities, not plans:
 | Mobile-ready APIs | 22 read + 14 learner-write web-service endpoints audited as mobile-app-ready; 36 admin endpoints deliberately desktop-only |
 | Quality system | 4 gates (static scanners → render-smoke → accessibility → coverage matrix), 15-check pre-commit hook, CI gates (PHPUnit, contract drift, conflict markers, Playwright) |
 | Engineering record | 27 Architecture Decision Records; per-plugin state cards; every UI change ships with visual evidence |
-| Platform base | Moodle 5.1.3 (LTS-class open core), PHP 8.3, MariaDB/MySQL; **Moodle 5.2 upgrade already rehearsed and code-complete**, cutover at our discretion |
+| Platform base | Moodle 5.1.3 (LTS-class open core), PHP 8.3, MariaDB/MySQL; **Moodle 5.3 LTS is the next platform target** (security support to October 2029): the compatibility fixes are code-complete and its validation gate is still to run; the Moodle 5.2 upgrade was rehearsed and remains the fallback |
 
 ---
 
@@ -128,7 +128,7 @@ This quarter's work is committed, pushed, and staging-verified but not deployed 
 - Enable one-click free enrolment per internal tenant (flag exists, default OFF).
 - Merge the five reviewed QA-fix branches (owner-gated by policy).
 - Deploy the payment-gateway security fix after one sandbox transaction test.
-- Pick the Moodle 5.2 cutover window (upgrade is rehearsed; production stays on 5.1 until we choose).
+- Pick the Moodle 5.3 cutover window once its validation gate has passed (the 5.2 upgrade is rehearsed and remains the fallback; the platform keeps its current Moodle release until we choose).
 
 **C. Budget asks to activate dormant features:**
 - **Anthropic API key** → AI quiz generation, AI assistant, translation leave mock mode (cost-defended: caps, caching, per-customer limits).
@@ -148,7 +148,7 @@ This quarter's work is committed, pushed, and staging-verified but not deployed 
 | Horizon | Focus |
 |---|---|
 | **Now → +30 days** | Production rollout of the product layer to airpay.academy; flag-enable decisions; paygw fix deploy; Gate-2 baselines |
-| **+1 → +3 months** | AI live mode + content pipeline GA (keys/budget); Moodle 5.2 cutover; app-shell completion; mobile wrapper decision (PWA is live — wrappers are store-presence) |
+| **+1 → +3 months** | AI live mode + content pipeline GA (keys/budget); Moodle 5.3 cutover (after its validation gate); app-shell completion; mobile wrapper decision (PWA is live — wrappers are store-presence) |
 | **+3 → +6 months** | Customer-#2 readiness: demo tenant, packaging & pricing, first external pilot; M365 integration; subscriptions if monetisation strategy wants it |
 
 ---

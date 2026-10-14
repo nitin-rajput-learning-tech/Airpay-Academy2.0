@@ -188,11 +188,19 @@ const confirmUnenrolUser = async (pathid, userid, name, returnFocus) => {
     Notification.deleteCancelPromise(title, message, label, returnFocus).then(() => {
         Ajax.call([{methodname: 'local_sentientia_learningpath_unenrol_user',
                     args: {pathid: pathid, userid: userid}}])[0]
-            .then(() => {
+            .then((result) => {
                 Notification.addNotification({
                     message: 'User unenrolled.',
                     type: 'success'
                 });
+                // LRN-10: an enrolment the BizLMS import converted leaves course enrolments behind; the server
+                // says which (ready-made, escaped HTML), so the admin removes them knowingly.
+                if (result && result.notice) {
+                    Notification.addNotification({
+                        message: result.notice,
+                        type: 'warning'
+                    });
+                }
                 refreshTable();
                 return null;
             }).catch(Notification.exception);

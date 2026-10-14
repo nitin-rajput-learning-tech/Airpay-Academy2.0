@@ -138,7 +138,7 @@
         <FIELD NAME="description"  TYPE="text"              NOTNULL="true"
                COMMENT="Verbatim. A local_logs description names the actor by first name, so it is personal data: declared in the privacy provider and scrubbed on an erasure request, the row is kept."/>
         <FIELD NAME="itemref"      TYPE="char" LENGTH="225" NOTNULL="false"
-               COMMENT="local_logs.type: the course id the entry is about, when BizLMS recorded one"/>
+               COMMENT="local_logs.type: the id of the item the entry is about, when BizLMS recorded one. A course id for a course entry; a forum or an online exam entry carries that item's own id (F-75)"/>
         <FIELD NAME="userid"       TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
                COMMENT="The actor (local_logs.usercreated, or local_courseerrors.userid); 0 = none or erased"/>
         <FIELD NAME="usermodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"

@@ -17,7 +17,8 @@
     SENTIENTIA OVERRIDE (2026-09-10): identical to Moodle 5.2 core except the
     visually-hidden course name below is output RAW (triple braces) — the exporter already
     HTML-escapes fullname, so core's escaped tag read "AML &amp; KYC" to screen
-    readers. Re-diff against core on every Moodle upgrade.
+    readers. Moodle 5.3 compat FX-19 (2026-10-08): the card no longer carries the horizontal margin
+    utility mx-1, matching 5.3 core. Re-diff against core on every Moodle upgrade.
 }}
 {{!
     @template core_course/coursecard
@@ -39,7 +40,7 @@
         ]
     }
 }}
-<div class="card course-card mx-1" role="listitem"
+<div class="card course-card" role="listitem"
     data-region="course-content"
     data-course-id="{{{id}}}">
     <a href="{{viewurl}}" tabindex="-1">

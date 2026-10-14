@@ -1,0 +1,42 @@
+{
+ "generated": "2026-10-14T16:48:38.430Z",
+ "base": "http://localhost:8080",
+ "results": [
+  {
+   "name": "01-my-evaluations-en",
+   "url": "/local/sentientia_evaluation/my_evaluations.php",
+   "persona": "vp_eval77 (test learner, /77)",
+   "shows": "Learner history, flag ON for tenant /77: a named form answered, an anonymous form answered (with the \"not linked to you\" note), a form waiting for the learner, and a closed one",
+   "http": 200,
+   "files": [
+    "01-my-evaluations-en-desktop.png",
+    "01-my-evaluations-en-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [],
+   "textExcerpt": "Skip to main content airpay academy Dashboard My Courses Catalog My Cart My Skills Certificates Profile Dark Mode VL VP Learner (evaluations) /77 Profile & Settings Log out My evaluations The evaluations you were asked to complete or have completed, including those brought over from the previous system. Evaluation Status Date VP Manager feedback form Waiting for you 21 Oct 2026 21:18 VP Anonymous workplace pulse Anonymous evaluation: your answers are not linked to you. Responded 14 Oct 2026 VP Course reaction survey: Compliance Essentials Responded 14 Oct 2026 21:18 VP Training follow-up (30 days after) Closed without a response 11 Oct 2026 21:18 Privacy Terms Help Contact © 2026 airpay paym"
+  },
+  {
+   "name": "02-my-evaluations-hi",
+   "url": "/local/sentientia_evaluation/my_evaluations.php?lang=hi",
+   "persona": "vp_eval77 (test learner, /77)",
+   "shows": "The same page in Hindi (?lang=hi): column titles, statuses, the anonymous note",
+   "http": 200,
+   "files": [
+    "02-my-evaluations-hi-desktop.png",
+    "02-my-evaluations-hi-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [],
+   "textExcerpt": "छोड़ कर मुख्य सामग्री पर जाएं airpay academy डैशबोर्ड मेरे कोर्स कैटलॉग मेरा कार्ट मेरी स्किल्स सर्टिफ़िकेट विवरण Dark Mode VL VP Learner (evaluations) /77 प्रोफ़ाइल और सेटिंग्स लोग आउट मेरे मूल्यांकन वे मूल्यांकन जिन्हें भरने के लिए आपसे कहा गया था या जो आपने भर दिए हैं, पिछली प्रणाली से लाए गए मूल्यांकन सहित। मूल्यांकन स्थिति तिथि VP Manager feedback form आपकी प्रतीक्षा में 21 अक्तू॰ 2026 21:18 VP Anonymous workplace pulse गुमनाम मूल्यांकन: आपके उत्तर आपसे जुड़े नहीं हैं। उत्तर दिया 14 अक्तू॰ 2026 VP Course reaction survey: Compliance Essentials उत्तर दिया 14 अक्तू॰ 2026 21:18 VP Training follow-up (30 days after) बिना उत्तर के बंद 11 अक्तू॰ 2026 21:18 प्राइवेसी नियम और शर्तें मदद संपर्क ©"
+  }
+ ]
+}

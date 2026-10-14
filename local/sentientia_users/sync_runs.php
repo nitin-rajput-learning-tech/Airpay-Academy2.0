@@ -24,22 +24,13 @@ $PAGE->navbar->add(get_string('manage_users', 'local_sentientia_users'),
     new moodle_url('/local/sentientia_users/index.php'));
 $PAGE->navbar->add(get_string('hrms_history_breadcrumb', 'local_sentientia_users'));
 
-// Tenant scoping — only a cross-tenant caller (ADR-031: site admin or
-// :crosstenant) sees every run; anyone else only their own tenant's. A caller
-// with no resolvable tenant sees none: this used to stay '1=1' for them, i.e.
-// every tenant's runs. (Not "costcenterid = 0" either: that is exactly the
-// cross-tenant and cron runs.)
-$where = '1=1';
-$params = [];
-if (!\local_sentientia_platform\tenant::is_cross_tenant()) {
-    $tenant = \local_sentientia_platform\tenant::root_for_current_user();
-    if ($tenant > 0) {
-        $where = 'r.costcenterid = :cc';
-        $params['cc'] = $tenant;
-    } else {
-        $where = '1=0';
-    }
-}
+// Tenant scoping — only a cross-tenant caller (ADR-031: site admin or :crosstenant) sees every run; anyone else only
+// their own tenant's, and a caller with no resolvable tenant sees none (this used to stay '1=1' for them, i.e. every
+// tenant's runs). The runs the BizLMS import made are imported history that nothing references: they are listed only
+// while sentientia.users.imported_sync_history is ON (default OFF; XC-IMPORTED-HISTORY-READERS, 2026-10-07). The list
+// is otherwise tenant-wide, as BizLMS's sync statistics were (IDN-07); the rejected lines are the detail page's
+// business. Both rules live in sync_access::runs_where().
+[$where, $params] = \local_sentientia_users\sync_access::runs_where();
 
 // fullname($r) below needs every name field, not just firstname+lastname
 // (same defect class as user_manager::get_supervisor(), persona pass D14).

@@ -311,5 +311,22 @@ function xmldb_local_sentientia_emails_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026093001, 'local', 'sentientia_emails');
     }
 
+    // ── 2026-10-07 owner decisions (F-64, COMMS-N7) ──
+    //    An index on sender_userid: the privacy provider looks a sender up on export and on erasure (the imported
+    //    BizLMS rows carry one), and without an index that is a scan of the whole log. 2026093001 has already reached
+    //    UAT, so this is a step of its own rather than an edit of that one. The same bump registers the three
+    //    default-OFF sender flags (db/feature_flags.php), the user_enrolment_created observer (db/events.php) and the
+    //    learning-path enrolment task (db/tasks.php). Guarded: a fresh install already has the index.
+    if ($oldversion < 2026100701) {
+        $table = new xmldb_table('local_sentientia_email_log');
+        if ($dbman->table_exists($table)) {
+            $index = new xmldb_index('idx_sender_userid', XMLDB_INDEX_NOTUNIQUE, ['sender_userid']);
+            if (!$dbman->index_exists($table, $index)) {
+                $dbman->add_index($table, $index);
+            }
+        }
+        upgrade_plugin_savepoint(true, 2026100701, 'local', 'sentientia_emails');
+    }
+
     return true;
 }

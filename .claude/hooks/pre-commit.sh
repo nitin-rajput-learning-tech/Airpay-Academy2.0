@@ -54,7 +54,7 @@ STAGED_CONFLICT=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null \
 # CHECK 1: PHP SYNTAX
 # ============================================================
 echo ""
-echo "→ [1/19] PHP syntax check..."
+echo "→ [1/20] PHP syntax check..."
 if [ -n "$STAGED_PHP" ]; then
     PHP_ERRORS=0
     while IFS= read -r file; do
@@ -74,7 +74,7 @@ fi
 # ============================================================
 # CHECK 2: MOODLE_INTERNAL GUARD
 # ============================================================
-echo "→ [2/19] MOODLE_INTERNAL guard..."
+echo "→ [2/20] MOODLE_INTERNAL guard..."
 GUARD_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -91,7 +91,7 @@ done <<< "$STAGED_PHP"
 # ============================================================
 # CHECK 3: RAW SUPERGLOBAL ACCESS
 # ============================================================
-echo "→ [3/19] Superglobal access (\$_GET/\$_POST)..."
+echo "→ [3/20] Superglobal access (\$_GET/\$_POST)..."
 SUPER_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -115,7 +115,7 @@ done <<< "$STAGED_PHP"
 # ============================================================
 # CHECK 4: CREDENTIAL PATTERNS
 # ============================================================
-echo "→ [4/19] Credential leak detection..."
+echo "→ [4/20] Credential leak detection..."
 CRED_ISSUES=0
 CRED_PATTERNS=(
     "(api_key|apikey|api_secret|secret_key)\s*=\s*['\"][a-zA-Z0-9_\-]{10,}"
@@ -141,7 +141,7 @@ done <<< "$STAGED_ALL"
 # ============================================================
 # CHECK 5: .env FILE PROTECTION
 # ============================================================
-echo "→ [5/19] .env file protection..."
+echo "→ [5/20] .env file protection..."
 if echo "$STAGED_ALL" | grep -qE '^\.env$|/\.env$'; then
     err ".env file staged — NEVER commit credentials"
     ERRORS=$((ERRORS+1))
@@ -152,7 +152,7 @@ fi
 # ============================================================
 # CHECK 6: MOODLE CORE FILE PROTECTION
 # ============================================================
-echo "→ [6/19] Moodle core file protection..."
+echo "→ [6/20] Moodle core file protection..."
 CORE_ISSUES=0
 CORE_PATTERNS=(
     "moodle/lib/"
@@ -175,7 +175,7 @@ done
 # ============================================================
 # CHECK 7: CONTENT/SOPS PROTECTION
 # ============================================================
-echo "→ [7/19] SOP file protection..."
+echo "→ [7/20] SOP file protection..."
 if git diff --cached --name-only --diff-filter=D 2>/dev/null | grep -q 'content/sops/'; then
     err "content/sops/ file DELETED — NEVER delete SOP source files"
 elif git diff --cached --name-only --diff-filter=M 2>/dev/null | grep -q 'content/sops/'; then
@@ -187,7 +187,7 @@ fi
 # ============================================================
 # CHECK 8: SCORM ZIP VALIDATION
 # ============================================================
-echo "→ [8/19] SCORM ZIP structure..."
+echo "→ [8/20] SCORM ZIP structure..."
 if [ -n "$STAGED_ZIP" ]; then
     while IFS= read -r zipfile; do
         [ -f "$zipfile" ] || continue
@@ -224,7 +224,7 @@ fi
 # ============================================================
 # CHECK 9: version.php FORMAT
 # ============================================================
-echo "→ [9/19] version.php format..."
+echo "→ [9/20] version.php format..."
 VERSION_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -260,7 +260,7 @@ done <<< "$STAGED_PHP"
 # ============================================================
 # CHECK 10: UNCOMMITTED [CONFIRM] PLACEHOLDERS
 # ============================================================
-echo "→ [10/19] Uncommitted CONFIRM placeholders..."
+echo "→ [10/20] Uncommitted CONFIRM placeholders..."
 CONFIRM_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -288,7 +288,7 @@ done <<< "$STAGED_ALL"
 #   - {{<base/columns}}  Mustache parent-template inheritance
 #   - `// =====`         SCSS section comment dividers
 #   - `================`  setext-style heredoc CLI help banners
-echo "→ [11/19] Git conflict-marker scan..."
+echo "→ [11/20] Git conflict-marker scan..."
 CONFLICT_ISSUES=0
 if [ -n "$STAGED_CONFLICT" ]; then
     while IFS= read -r file; do
@@ -315,7 +315,7 @@ fi
 # This check runs in --mode=staged: looks at staged plugin changes
 # and warns if the matching state card is NOT also staged. Soft
 # warning (does not block — author may be splitting commits).
-echo "→ [12/19] State-card freshness check..."
+echo "→ [12/20] State-card freshness check..."
 FRESHNESS_SCRIPT="tools/check_state_card_freshness.sh"
 if [ -f "$FRESHNESS_SCRIPT" ]; then
     # NOTE: Use grep -c + sed instead of `... | while; warn`. A pipe
@@ -343,7 +343,7 @@ fi
 # course/view.php (course_full_header.mustache) + 13 sibling templates
 # on 2026-06-09. scan_mustache_comment_leaks.php is the single source
 # of truth for the detection (CI runs the same script over whole trees).
-echo "→ [13/19] Mustache comment-leak scan..."
+echo "→ [13/20] Mustache comment-leak scan..."
 STAGED_MUSTACHE=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep '\.mustache$' || true)
 LEAK_SCANNER="moodle-enhancement/tools/scan_mustache_comment_leaks.php"
 if [ -z "$STAGED_MUSTACHE" ]; then
@@ -369,7 +369,7 @@ fi
 # (window.require still exists, so the Gate-1 render-smoke cannot see it).
 # scan_stale_theme_refs.php flags only quoted refs (real deps), excluding the
 # legacy theme dir + tooling/docs. CI runs the same script over whole trees.
-echo "→ [14/19] Stale theme_airpayux reference scan..."
+echo "→ [14/20] Stale theme_airpayux reference scan..."
 STAGED_REFS=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '\.(php|js|mustache|scss|json)$' || true)
 REF_SCANNER="moodle-enhancement/tools/scan_stale_theme_refs.php"
 if [ -z "$STAGED_REFS" ]; then
@@ -395,7 +395,7 @@ fi
 # render-smoke catches it at runtime; this is the cheaper static net. The detector
 # strips {{! }} comments and resolves footer/shell partials, and honours an
 # 'end-of-body-allow' marker for deliberate non-JS docs (e.g. the email wrapper).
-echo "→ [15/19] Missing standard_end_of_body_html scan..."
+echo "→ [15/20] Missing standard_end_of_body_html scan..."
 STAGED_MUSTACHE=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '\.mustache$' || true)
 EOB_SCANNER="moodle-enhancement/tools/scan_missing_end_of_body.php"
 if [ -z "$STAGED_MUSTACHE" ]; then
@@ -426,7 +426,7 @@ fi
 # single source of truth (CI's amd-build-parity job runs the same script over
 # whole trees); pre-existing gaps are grandfathered in
 # tools/amd-build-parity-allowlist.txt, opt-out marker `amd-build-parity-allow`.
-echo "→ [16/19] AMD src/build parity..."
+echo "→ [16/20] AMD src/build parity..."
 STAGED_AMD_SRC=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '/amd/src/.*\.js$' || true)
 AMD_SCANNER="moodle-enhancement/tools/scan_amd_build_parity.php"
 if [ -z "$STAGED_AMD_SRC" ]; then
@@ -463,7 +463,7 @@ fi
 # a lang file is staged (fast path otherwise). FAILs on en<->hi key
 # drift where a hi pack exists; en-only components are warnings (known
 # backlog). CI twin: .github/workflows/ci.yml::lang-parity-check.
-echo "-> [17/19] en/hi lang-pack parity..."
+echo "-> [17/20] en/hi lang-pack parity..."
 STAGED_LANG=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '/lang/(en|hi)/.*[.]php$' || true)
 if [ -z "$STAGED_LANG" ]; then
     ok "No lang files staged"
@@ -481,7 +481,7 @@ else
     warn "tools/check-lang-parity.php missing - parity unchecked"
 fi
 
-echo "-> [18/19] Tenant path-boundary scan..."
+echo "-> [18/20] Tenant path-boundary scan..."
 STAGED_PHP=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '[.]php$' || true)
 if [ -z "$STAGED_PHP" ]; then
     ok "No PHP files staged"
@@ -501,7 +501,7 @@ else
     warn "tools/check-path-boundary.php missing - path boundaries unchecked"
 fi
 
-echo "-> [19/19] Cross-tree plugin twin check..."
+echo "-> [19/20] Cross-tree plugin twin check..."
 # Every local plugin exists twice, in local/ and moodle-enhancement/local/,
 # and BOTH are deployed from (deploy_to_uat.sh takes --prefer-top/--prefer-me;
 # UAT serves org, analytics, learningpath, compliance_report and courses from
@@ -548,6 +548,29 @@ else
     fi
 fi
 
+echo "-> [20/20] SITEID strict-comparison scan..."
+# SITEID is defined from $SITE->id, which MySQL/MariaDB return as the STRING '1'.
+# '(int) $id !== SITEID' is therefore always true and '$id === SITEID' always
+# false: the site-course guard silently does nothing. It shipped five times
+# before 0eb31f32f. CI twin: .github/workflows/ci.yml::siteid-compare-check.
+STAGED_PHP=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '[.]php$' || true)
+if [ -z "$STAGED_PHP" ]; then
+    ok "No PHP files staged"
+elif [ -f "tools/check-siteid-compare.php" ]; then
+    SID_OUT=$(echo "$STAGED_PHP" | php tools/check-siteid-compare.php --stdin 2>&1 || true)
+    SID_FAILS=$(echo "$SID_OUT" | grep -c '^FAIL' || true)
+    if [ "$SID_FAILS" -gt 0 ]; then
+        err "Strict comparison against an un-cast SITEID ($SID_FAILS site(s))"
+        echo "$SID_OUT" | sed 's/^/       /' | head -30
+        echo "       SITEID is a database string ('1'), so === / !== against an int never matches."
+        echo "       Write (int) SITEID, e.g.  (int) \$course->id !== (int) SITEID."
+        echo "       This defect shipped 5 times and is silent - the guard just does nothing."
+    else
+        ok "No strict comparison against an un-cast SITEID in staged PHP"
+    fi
+else
+    warn "tools/check-siteid-compare.php missing - SITEID comparisons unchecked"
+fi
 # ============================================================
 # SUMMARY
 # ============================================================

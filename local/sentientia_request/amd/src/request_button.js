@@ -9,40 +9,16 @@
  *
  * @module local_sentientia_request/request_button
  *
- * Phase B.4 dual-target (2026-05-24): Moodle 5.2 removed
- * `core/modal_factory` (MDL-79182). This module lazy-requires the
- * version-specific modal API at modal-open time — see
- * `createSaveCancelModal()` below.
+ * WF-024 (2026-06-15) + Moodle 5.3 compat FX-06 (2026-10-08): the dialog is a core/modal_save_cancel
+ * modal. Moodle 5.2 removed the legacy modal factory AMD module (MDL-79182), and a modalType option
+ * on Modal.create is NOT a core API: it silently built a BASE modal with an empty footer (no
+ * Save/Cancel buttons), so the request could never be submitted. core/modal_save_cancel exists
+ * unchanged on 5.1, 5.2 and 5.3, so the former runtime fallback to the factory is gone.
  */
 import Ajax from 'core/ajax';
 import Notification from 'core/notification';
 import ModalEvents from 'core/modal_events';
-
-/**
- * Dual-target SAVE_CANCEL modal factory.
- * 5.2: require('core/modal') -> Modal.create({modalType: 'SAVE_CANCEL', ...})
- * 5.1: require('core/modal_factory') -> ModalFactory.create({type: ModalFactory.types.SAVE_CANCEL, ...})
- * @param {{title: string, body: string}} spec
- * @return {Promise<object>}
- */
-const createSaveCancelModal = (spec) => new Promise((resolve, reject) => {
-    // WF-024: Moodle 5.2's SAVE_CANCEL modal is core/modal_save_cancel.
-    // The previous `core/modal` Modal.create({modalType:'SAVE_CANCEL'}) is NOT
-    // a valid 5.2 API — it silently built a BASE modal with an empty footer
-    // (no Save/Cancel buttons), so the request could never be submitted.
-    const viaFactory = () => require(['core/modal_factory'], (ModalFactory) => {
-        ModalFactory.create({type: ModalFactory.types.SAVE_CANCEL, title: spec.title, body: spec.body})
-            .then(resolve).catch(reject);
-    }, reject);
-    require(['core/modal_save_cancel'], (ModalSaveCancel) => {
-        if (ModalSaveCancel && typeof ModalSaveCancel.create === 'function') {
-            ModalSaveCancel.create({title: spec.title, body: spec.body})
-                .then(resolve).catch(reject);
-            return;
-        }
-        viaFactory();
-    }, viaFactory);
-});
+import ModalSaveCancel from 'core/modal_save_cancel';
 
 export const init = () => {
     document.addEventListener('click', async (e) => {
@@ -56,7 +32,10 @@ export const init = () => {
             (c) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
         if (!courseid) return;
 
-        const modal = await createSaveCancelModal({
+        // removeOnClose: a cancelled dialog must not stay in the DOM, or the next one would read its
+        // reason from the stale hidden textarea with the same id.
+        const modal = await ModalSaveCancel.create({
+            removeOnClose: true,
             title: 'Request enrolment',
             body: `
                 <p>Requesting access to <strong>${coursename}</strong>.</p>

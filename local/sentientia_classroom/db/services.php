@@ -125,13 +125,13 @@ $functions = [
         'description'  => 'Preview users matching a target-audience filter before bulk-enrolling',
         'type'         => 'read',
         'ajax'         => true,
-        'capabilities' => 'local/sentientia_classroom:enrol',
+        'capabilities' => 'local/sentientia_classroom:manage',
     ],
     'local_sentientia_classroom_bulk_enrol_by_audience' => [
         'classname'    => 'local_sentientia_classroom\external\bulk_enrol_by_audience',
         'description'  => 'Resolve a target-audience filter and bulk-enrol all matching users into a classroom',
         'type'         => 'write',
         'ajax'         => true,
-        'capabilities' => 'local/sentientia_classroom:enrol',
+        'capabilities' => 'local/sentientia_classroom:manage',
     ],
 ];

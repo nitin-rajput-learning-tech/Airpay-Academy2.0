@@ -57,8 +57,10 @@ defined('MOODLE_INTERNAL') || die();
  *           questionnaire answer, the feedback and information note of a
  *           gradebook grade, the text typed into a SCORM package); the row
  *           survives, attributable to nobody.
- *           DPDP erasure KEEPS the subject's rows as they are, for the reason
- *           given for the history row.
+ *           DPDP erasure KEEPS the subject's rows, with their user id and
+ *           every structured value, for the reason given for the history
+ *           row, and empties the free text in the payload (the same keys
+ *           core's erasure empties: archive_privacy::scrub_dpdp).
  *       - Actor: an administrator who overrode SOMEBODY ELSE's activity
  *           completion is named in that row's payload (overrideby), and the
  *           grader who last changed a gradebook grade in `usermodified`
@@ -247,6 +249,15 @@ class provider implements
      * The subject's own reset history is kept exactly as it is (see the class
      * comment for why it is a compliance record); only the actor column, where
      * the subject reset someone else's completion, is anonymised.
+     *
+     * The subject's archived evidence rows are kept with their user id, state,
+     * grade, times and item type, and the free text in their payloads is
+     * emptied (owner decision recompletion.dpdp_archive_free_text, 2026-10-07):
+     * a questionnaire answer they typed, the feedback and information note a
+     * grader wrote about them, the text typed into a SCORM package. Those are
+     * the words that can name an anonymised person, and the same keys core's
+     * erasure empties; the attestation an auditor needs is in the structured
+     * values, which stay.
      */
     public static function anonymise_data_for_user(approved_contextlist $contextlist): void {
         global $DB;
@@ -255,8 +266,9 @@ class provider implements
         }
         $userid = (int) $contextlist->get_user()->id;
         $DB->set_field(self::TABLE_HISTORY, 'reset_by_userid', 0, ['reset_by_userid' => $userid]);
-        // The subject's evidence rows are kept exactly as they are; only an administrator named in a payload
-        // (overrideby) is anonymised.
+        // The subject's evidence rows are kept; what can identify them (free text) is emptied.
+        self::clear_free_text_for_user($userid);
+        // An administrator named in a payload (overrideby) or a grader (usermodified) is anonymised.
         self::scrub_actor_rows($userid);
     }
 
@@ -272,6 +284,29 @@ class provider implements
         self::scrub_archive('userid = :pvuser', ['pvuser' => $userid]);
         $DB->set_field(self::TABLE_ARCHIVE, 'userid', 0, ['userid' => $userid]);
         self::scrub_actor_rows($userid);
+    }
+
+    /**
+     * Empty the free text in the payloads of a person's own archive rows (archive_privacy::scrub_dpdp). The rows,
+     * their user id and every structured value stay.
+     *
+     * @param int $userid
+     * @return void
+     */
+    private static function clear_free_text_for_user(int $userid): void {
+        global $DB;
+        $after = 0;
+        do {
+            $rows = $DB->get_records_select(self::TABLE_ARCHIVE, 'userid = :pvuser AND id > :pvafter',
+                ['pvuser' => $userid, 'pvafter' => $after], 'id ASC', 'id, itemtype, payload', 0, self::SCAN_LIMIT);
+            foreach ($rows as $row) {
+                $after = (int) $row->id;
+                $cleared = archive_privacy::scrub_dpdp((string) $row->payload, (string) $row->itemtype);
+                if ($cleared !== (string) $row->payload) {
+                    $DB->set_field(self::TABLE_ARCHIVE, 'payload', $cleared, ['id' => $row->id]);
+                }
+            }
+        } while (count($rows) === self::SCAN_LIMIT);
     }
 
     /**

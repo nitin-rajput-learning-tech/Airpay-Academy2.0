@@ -114,8 +114,10 @@ class bulk_enrol_audience_form extends \core_form\dynamic_form {
     }
 
     protected function check_access_for_dynamic_submission(): void {
-        require_capability('local/sentientia_classroom:enrol',
+        // XC-CLS-ENROL (2026-10-07): :manage, not the undeclared :enrol, behind the default-OFF flag.
+        require_capability('local/sentientia_classroom:manage',
             $this->get_context_for_dynamic_submission());
+        \local_sentientia_classroom\classroom_audience_enroller::require_enabled();
         // ADR-031: the classroom being enrolled into must be in the caller's tenant.
         \local_sentientia_classroom\session_manager::require_classroom_access((int) $this->optional_param('classroomid', 0, PARAM_INT));
     }

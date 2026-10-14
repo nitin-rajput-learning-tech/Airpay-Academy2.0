@@ -54,7 +54,7 @@ $brand = class_exists('\\local_sentientia_platform\\customer')
         'bg_color'     => '#F2F4FB',
         'icon_192_url' => $CFG->wwwroot . '/pix/i/grade_correct.svg',
         'icon_512_url' => $CFG->wwwroot . '/pix/i/grade_correct.svg',
-        'start_url'    => '/my/dashboard.php',
+        'start_url'    => '/my/',
         'lang'         => 'en',
     ];
 

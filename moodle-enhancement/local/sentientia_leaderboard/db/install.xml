@@ -224,7 +224,7 @@
                COMMENT="Diagnostic: previous rank at the moment of dispatch"/>
         <FIELD NAME="last_new_rank" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
                COMMENT="Diagnostic: new rank at the moment of dispatch"/>
-        <FIELD NAME="last_reason"   TYPE="char" LENGTH="40" NOTNULL="true" DEFAULT=""
+        <FIELD NAME="last_reason"   TYPE="char" LENGTH="40" NOTNULL="true"
                COMMENT="Diagnostic: 'top10_entry' | 'large_move'"/>
         <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timemodified"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>

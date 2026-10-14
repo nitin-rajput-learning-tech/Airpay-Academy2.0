@@ -69,7 +69,7 @@ class block_sentientia_cert_health extends block_base {
         // The block depends on local_sentientia_emails — bail gracefully
         // if the table isn't present (e.g. plugin disabled during
         // operational triage).
-        if (!$DB->get_manager()->table_exists('local_airpay_email_log')) {
+        if (!$DB->get_manager()->table_exists('local_sentientia_email_log')) {
             return null;
         }
 
@@ -80,13 +80,13 @@ class block_sentientia_cert_health extends block_base {
         // are non-null on the cert-bearing emails only).
         $cert_filter = "(attachment_filename IS NOT NULL "
             . "OR certificate_issue_id IS NOT NULL)";
-        $sent = (int) $DB->count_records_select('local_airpay_email_log',
+        $sent = (int) $DB->count_records_select('local_sentientia_email_log',
             "$cert_filter AND status = :status AND timecreated >= :since",
             ['status' => 'sent', 'since' => $since]);
-        $failed = (int) $DB->count_records_select('local_airpay_email_log',
+        $failed = (int) $DB->count_records_select('local_sentientia_email_log',
             "$cert_filter AND status = :status AND timecreated >= :since",
             ['status' => 'failed', 'since' => $since]);
-        $suppressed = (int) $DB->count_records_select('local_airpay_email_log',
+        $suppressed = (int) $DB->count_records_select('local_sentientia_email_log',
             "$cert_filter AND status IN ('suppressed', 'suppressed_completion') "
             . "AND timecreated >= :since",
             ['since' => $since]);

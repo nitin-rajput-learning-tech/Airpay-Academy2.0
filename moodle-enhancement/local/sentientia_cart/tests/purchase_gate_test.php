@@ -24,6 +24,11 @@ defined('MOODLE_INTERNAL') || die();
  * refund-due line naming the order and the course id), and history.notes reach
  * order admins through get_order / list_orders.
  *
+ * 2026-10-07 (cart.withheld_line_refund): the admin message and history.notes also
+ * state what each withheld line was charged (price, discount, share of the order's
+ * GST, paise rounding), labelled "for review". The administrator still decides the
+ * refund (a partial refund()); nothing is refunded automatically.
+ *
  * @package    local_sentientia_cart
  * @category   test
  * @copyright  2026 Airpay Payment Services
@@ -33,6 +38,7 @@ defined('MOODLE_INTERNAL') || die();
  * @covers     \local_sentientia_cart\cart_manager::add_item
  * @covers     \local_sentientia_cart\cart_manager::checkout
  * @covers     \local_sentientia_cart\cart_manager::mark_paid
+ * @covers     \local_sentientia_cart\cart_manager::withheld_line_amounts
  * @covers     \local_sentientia_cart\notifier::order_paid
  * @covers     \local_sentientia_cart\external\get_order
  * @group      tenant_isolation
@@ -397,6 +403,157 @@ final class purchase_gate_test extends \advanced_testcase {
             $this->assertStringNotContainsString(get_string('refunddue', 'local_sentientia_cart'),
                 (string) $m->subject . (string) $m->fullmessage, 'No refund is due on a fully granted order.');
         }
+    }
+
+    // ── cart.withheld_line_refund: the amounts to refund, for review ──────
+
+    /**
+     * A pending order with real totals (18 % GST), as checkout() leaves one, so the withheld-line
+     * figures are held against what recompute_totals() actually stored.
+     *
+     * @param \stdClass $buyer
+     * @param array $lines course id => [name, price, discount_pct]
+     * @return int history id
+     */
+    private function pending_gst_order(\stdClass $buyer, array $lines): int {
+        global $DB;
+        set_config('gst_rate', 18, 'local_sentientia_cart');
+        $historyid = $this->pending_order($buyer, []);
+        $items = [];
+        foreach ($lines as $courseid => [$name, $price, $pct]) {
+            $items[] = ['courseid' => (int) $courseid, 'name' => $name, 'price' => (float) $price,
+                'discount_pct' => (int) $pct];
+        }
+        $cart = $DB->get_record('local_sentientia_cart_history', ['id' => $historyid], '*', MUST_EXIST);
+        $cart->items_json = json_encode($items);
+        cart_manager::recompute_totals($cart);
+        return $historyid;
+    }
+
+    public function test_withheld_line_amounts_are_the_lines_price_discount_and_share_of_the_orders_gst(): void {
+        global $DB;
+        $buyer = $this->user_at('/1/4');
+        $mine = $this->priced_course_at('/1/9');
+        $theirs = $this->priced_course_at('/177');
+        // 1000.00 + 500.00 less 10 % = 1450.00 taxable; GST 18 % = 261.00; total 1711.00.
+        $historyid = $this->pending_gst_order($buyer, [
+            (int) $mine->id => ['Payments Basics In Tenant', 1000, 0],
+            (int) $theirs->id => ['Zeea Onboarding Elsewhere', 500, 10],
+        ]);
+        $order = $DB->get_record('local_sentientia_cart_history', ['id' => $historyid], '*', MUST_EXIST);
+        $this->assertEqualsWithDelta(1711.00, (float) $order->total_amount, 0.001, 'Precondition: the order totals.');
+
+        $rows = cart_manager::withheld_line_amounts($order, [(int) $theirs->id]);
+
+        $this->assertCount(1, $rows, 'Only the withheld line is stated.');
+        $this->assertSame((int) $theirs->id, $rows[0]['courseid']);
+        $this->assertSame('Zeea Onboarding Elsewhere', $rows[0]['name']);
+        $this->assertEqualsWithDelta(500.00, $rows[0]['price'], 0.0001);
+        $this->assertEqualsWithDelta(50.00, $rows[0]['discount'], 0.0001);
+        $this->assertEqualsWithDelta(450.00, $rows[0]['net'], 0.0001);
+        $this->assertEqualsWithDelta(81.00, $rows[0]['tax'], 0.0001, '450.00 of 1450.00 taxable carries 81.00 of the 261.00 GST.');
+        $this->assertEqualsWithDelta(531.00, $rows[0]['total'], 0.0001);
+        $this->assertSame([], cart_manager::withheld_line_amounts($order, []), 'Nothing withheld, nothing stated.');
+        $this->assertSame([], cart_manager::withheld_line_amounts($order, [987654]), 'A course not in the order is not stated.');
+    }
+
+    public function test_the_refund_note_states_the_amounts_for_review(): void {
+        global $DB;
+        $buyer = $this->user_at('/1/4');
+        $mine = $this->priced_course_at('/1/9');
+        $theirs = $this->priced_course_at('/177');
+        $historyid = $this->pending_gst_order($buyer, [
+            (int) $mine->id => ['Payments Basics In Tenant', 1000, 0],
+            (int) $theirs->id => ['Zeea Onboarding Elsewhere', 500, 10],
+        ]);
+        $sink = $this->redirectMessages();
+        $this->assertTrue(cart_manager::mark_paid($historyid, 'TXN-AMT', []));
+        $sink->close();
+
+        $notes = (string) $DB->get_field('local_sentientia_cart_history', 'notes', ['id' => $historyid]);
+        $this->assertStringContainsString("course id(s) {$theirs->id} -", $notes, 'The existing refund-due line is unchanged.');
+        $this->assertStringContainsString('Refund due.', $notes);
+        $this->assertStringContainsString('For review, not an invoice', $notes);
+        $this->assertStringContainsString("course id {$theirs->id}: price 500.00 - discount 50.00 + GST share 81.00 = 531.00 INR",
+            $notes);
+        $this->assertStringContainsString('Withheld lines total 531.00 INR of the order total 1711.00 INR.', $notes);
+        $this->assertStringNotContainsString("course id {$mine->id}:", $notes, 'The granted line is not a refund.');
+    }
+
+    public function test_the_admin_message_states_the_amounts_and_the_buyer_message_does_not(): void {
+        $buyer = $this->user_at('/1/4');
+        $mine = $this->priced_course_at('/1/9');
+        $theirs = $this->priced_course_at('/177');
+        $historyid = $this->pending_gst_order($buyer, [
+            (int) $mine->id => ['Payments Basics In Tenant', 1000, 0],
+            (int) $theirs->id => ['Zeea Onboarding Elsewhere', 500, 10],
+        ]);
+        $sink = $this->redirectMessages();
+        cart_manager::mark_paid($historyid, 'TXN-AMT2', []);
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $line = get_string('admin_withheld_line', 'local_sentientia_cart', (object) [
+            'courseid' => (int) $theirs->id, 'name' => 'Zeea Onboarding Elsewhere', 'price' => '500.00',
+            'discount' => '50.00', 'tax' => '81.00', 'total' => '531.00', 'currency' => 'INR']);
+        $total = get_string('admin_withheld_total', 'local_sentientia_cart', (object) [
+            'total' => '531.00', 'ordertotal' => '1,711.00', 'currency' => 'INR']);
+        $toadmins = array_values(array_filter($messages, fn($m) => $m->eventtype === 'admin_new_order'));
+        $this->assertNotEmpty($toadmins);
+        foreach ($toadmins as $m) {
+            $body = (string) $m->fullmessage;
+            $this->assertStringContainsString(get_string('admin_withheld_amounts', 'local_sentientia_cart'), $body);
+            $this->assertStringContainsString($line, $body, 'Each withheld line is stated with its amounts.');
+            $this->assertStringContainsString($total, $body);
+            $this->assertStringNotContainsString('Payments Basics In Tenant', $body, 'The granted line is not a refund.');
+        }
+
+        $tobuyer = array_values(array_filter($messages, fn($m) =>
+            (int) $m->useridto === (int) $buyer->id && $m->eventtype === 'payment_received'));
+        $this->assertCount(1, $tobuyer);
+        $this->assertStringNotContainsString('531.00', (string) $tobuyer[0]->fullmessage,
+            'The figures to refund are for the administrator; the buyer is told it will be refunded.');
+        $this->assertStringNotContainsString('GST', (string) $tobuyer[0]->fullmessage);
+    }
+
+    public function test_an_all_withheld_order_states_amounts_that_add_up_to_the_total_within_a_paisa(): void {
+        $buyer = $this->user_at('/1/4');
+        $a = $this->priced_course_at('/177');
+        $b = $this->priced_course_at('/177');
+        $c = $this->priced_course_at('/177');
+        // Exact: 1000 + 500, GST 270.00, total 1770.00; shares 180.00 + 90.00.
+        $exact = $this->pending_gst_order($buyer, [(int) $a->id => ['A', 1000, 0], (int) $b->id => ['B', 500, 0]]);
+        $order = $this->order_row($exact);
+        $rows = cart_manager::withheld_line_amounts($order, [(int) $a->id, (int) $b->id]);
+        $this->assertEqualsWithDelta((float) $order->total_amount, array_sum(array_column($rows, 'total')), 0.0001);
+
+        // 99.99 + 149.99 + 249.99 = 499.97; GST on the whole order is 89.99 (499.97 x 18 %, to the paisa), total 589.96.
+        // The lines' shares round to 18.00 + 27.00 + 45.00 = 90.00, so the lines add up to 589.97: a paisa over the
+        // order. That is why every figure is labelled "for review" and the administrator decides the refund.
+        $buyer2 = $this->user_at('/1/5');
+        $paisa = $this->pending_gst_order($buyer2, [
+            (int) $a->id => ['A', 99.99, 0], (int) $b->id => ['B', 149.99, 0], (int) $c->id => ['C', 249.99, 0]]);
+        $order2 = $this->order_row($paisa);
+        $rows2 = cart_manager::withheld_line_amounts($order2, [(int) $a->id, (int) $b->id, (int) $c->id]);
+        $this->assertEqualsWithDelta(589.96, (float) $order2->total_amount, 0.0001);
+        $this->assertEqualsWithDelta(589.97, array_sum(array_column($rows2, 'total')), 0.0001);
+        $this->assertEqualsWithDelta((float) $order2->total_amount, array_sum(array_column($rows2, 'total')), 0.011,
+            'Never more than a paisa from the order total.');
+    }
+
+    public function test_an_order_with_no_tax_states_no_gst_share(): void {
+        $buyer = $this->user_at('/1/4');
+        $theirs = $this->priced_course_at('/177');
+        $historyid = $this->pending_order($buyer, [(int) $theirs->id => 'Zeea Onboarding Elsewhere']);   // tax_amount 0
+        $rows = cart_manager::withheld_line_amounts($this->order_row($historyid), [(int) $theirs->id]);
+        $this->assertCount(1, $rows);
+        $this->assertEqualsWithDelta(0.0, $rows[0]['tax'], 0.0001);
+        $this->assertEqualsWithDelta(1000.00, $rows[0]['total'], 0.0001);
+    }
+
+    private function order_row(int $historyid): \stdClass {
+        global $DB;
+        return $DB->get_record('local_sentientia_cart_history', ['id' => $historyid], '*', MUST_EXIST);
     }
 
     // ── cross-tenant callers are unchanged ───────────────────────────────

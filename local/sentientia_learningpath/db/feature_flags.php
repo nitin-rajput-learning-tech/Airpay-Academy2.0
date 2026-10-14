@@ -45,7 +45,11 @@ $flags = [
                           in - their own rows only, inside their own tenant - with progress,
                           enrolment and completion dates, including history imported from
                           BizLMS. Completed history on archived paths stays admin-only.
-                          When OFF (default) the page refuses to open and nothing else changes.',
+                          It also governs the BizLMS cover image on the admin path page
+                          (view.php): shown only while the flag is ON (owner decision
+                          learningplan.cover_on_admin_view, 2026-10-07).
+                          When OFF (default) the page refuses to open, the admin path page shows
+                          no cover image, and nothing else changes.',
     ],
 
     'sentientia.learningpath.adaptive.enabled' => [

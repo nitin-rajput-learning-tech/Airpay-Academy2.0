@@ -1,11 +1,50 @@
-# Live airpay.academy → Sentientia 5.2 migration plan
+# Live airpay.academy → Sentientia 5.3 migration plan (5.2 retained as the fallback, ADR-033)
 
 **Document owner:** Nitin Rajput (Head of L&D) · **Migration architect:** Claude · **Executors:** DevOps (Ganesh Satpute), Cloud.in, IT, Nitin
 **Version:** 1.1 · **Date:** 2026-09-04 · **Target cutover window:** T+7 to T+14 days
 **Git source of truth for the deployed layer:** branch `claude/gap-integration`, HEAD `9dddfdaf7` (pin the exact SHA + SHA-256 of the built package at §4d / open decision D-3)
-**Model:** restore live production DB + moodledata onto a parallel Sentientia 5.2 stack → `php admin/cli/upgrade.php` in place → repoint DNS/LB at the same `wwwroot` `https://www.airpay.academy`. This is NOT a fresh install and NOT a selective export/import.
+**Model:** restore live production DB + moodledata onto a parallel Sentientia 5.3 stack (5.2 on the fallback, §0a) → `php admin/cli/upgrade.php` in place → repoint DNS/LB at the same `wwwroot` `https://www.airpay.academy`. This is NOT a fresh install and NOT a selective export/import.
+
+**Updated 2026-10-07:** the BizLMS feature-data import (ADR-032) is decided end to end. The open owner questions were decided under Nitin's delegation of 2026-10-07 (`OWNER-DECISIONS-2026-10-07.md`); section 11 below holds the owner confirmations, the Finance list and the after-Stage-B acceptance list, and `MIGRATION-REHEARSAL-RUNBOOK.md` holds the Stage B checks.
 
 **Reads-with, does not duplicate:** `moodle-enhancement/docs/cutover/MIGRATION-REHEARSAL-RUNBOOK.md` (the restore→upgrade→parity procedure this plan runs against real infra), `moodle-enhancement/docs/cutover/SENTIENTIA-CUTOVER-MASTER.md` (independence Gates A–D — all kept dormant here), `moodle-enhancement/docs/cutover/UAT-SENTIENTIA-DEPLOY-CHECKLIST.md` (infra binding), `moodle-enhancement/docs/security/UAT-VALIDATION-PLAN-2026-09-03.md`, `moodle-enhancement/docs/security/UAT-SECURITY-POSTURE-2026-09-03.md`, `moodle-enhancement/docs/operations/OAUTH2-SMTP-M365-RUNBOOK.md`, `moodle-enhancement/docs/security/ENTERPRISE-IDENTITY-PACK.md`, and `CLAUDE.md` (§2 environment/tenant facts). Where this plan and `cutover-day-runbook.md` disagree, **this plan wins** — that runbook describes an in-place single-box swap and its rollback frame is wrong for the new-infra + DNS-swap model (see §7).
+
+---
+
+## 0a. Retarget 2026-10-08: Moodle 5.3 LTS (ADR-033)
+
+**The target changed from Moodle 5.2 to Moodle 5.3 LTS (Build 20261005), subject to the compatibility gate in ADR-033 item 8.**
+Until that gate passes, 5.2 stays the fallback target and every 5.2 instruction below remains valid: the code fixes are
+dual-target, so both stay buildable. Decision: `docs/adr/ADR-033-target-moodle-5.3-lts.md`. Evidence:
+`docs/upgrade/MOODLE-5.3-COMPATIBILITY-2026-10-07.md`.
+
+| What | Before (5.2) | Now (5.3) |
+|---|---|---|
+| Hop 2 target | 4.5.x → 5.2 | **4.5.x → 5.3** (hop 1, 4.1.2 → 4.5.x, is unchanged) |
+| Upgrade-source floor | 4.4 | 4.4, unchanged: the live 4.1.2 still needs hop 1 |
+| PHP | 8.3 | **8.3 is the single bridge version.** It is the only one that hop 1 (4.5: 8.1 to 8.3) and hop 2 (5.3: 8.3 or later) both accept, so the cutover window needs no PHP switch |
+| MySQL | ≥ 8.4 | ≥ 8.4, unchanged (the existing IT request covers it); the application user must use `caching_sha2_password` |
+| MariaDB floor | ≥ 10.11 | **≥ 11.4** (PostgreSQL floor 16 → 17); production uses neither |
+| Code layout | `public/` | `public/` **plus the root `lib/`** (Bootstrap, Font Awesome, React and design-system bundles), deployed beside `public/` |
+| Package | `build-5.2-standalone.sh` → `Sentientia-LMS-5.2-Complete-Standalone-<date>.zip` | `tools/packaging/build-standalone.sh --target 5.3` (builds from git, verifies the archive) → `Sentientia-LMS-5.3-Complete-Standalone-<date>.zip`. `package-sentientia.ps1` is retired for 5.3 |
+| Core edits | `lib/setuplib.php` `ini_get_bool` guard + config.php polyfill | **None.** No polyfill in config.php (alone it is fatal on 5.3) and no `setuplib.php` edit; `deploy/render_smoke_53.sh` is the gate check. `my/dashboard.php` and `my/switchrole.php` ship as added files |
+| Each hop | clean directory | clean directory, never extract over the previous tree: move the old tree aside, extract the package, copy back `config.php`, `upgrade.php --non-interactive`, `purge_caches.php`, cron |
+| dirroot / docroot | `.../moodle5.2/public` | `.../moodle5.3/public` |
+
+**How to read the rest of this plan.** Where a section names 5.2 as the *target*, read **5.3**, and read `moodle5.2` as
+`moodle5.3`. The measured numbers (the 2,057 core steps, the 2026-06-10 and 2026-10-01 rehearsal timings) are 5.1 → 5.2 and
+4.5 → 5.1.3+ facts and stay as history. **The 4.5.10 → 5.3 duration is not measured yet**; ADR-033 gate 8c records it. Nothing
+here says Sentientia is live: all user data on UAT and on the local box is a test import of a production backup.
+
+**Gate before 5.3 is the target in any rehearsal** (ADR-033 item 8):
+
+- (a) every blocker in the compatibility report is fixed in both trees and the cross-tree drift gate is green;
+- (b) a fresh 5.3 install on PHP 8.3 + MySQL 8.4 is clean: environment page, `check_database_schema.php` showing only the known `open_*` extras, the render smoke returning 200 under the production SAPI, persona passes with visual evidence;
+- (c) the 4.5.10 production-copy database and a copy of the UAT 5.2 database both upgrade to 5.3 cleanly, the import and parity checks pass, and the duration is recorded for the window;
+- (d) PHPUnit on 5.3 is green, with zero unexpected-debugging failures;
+- (e) every write path runs once on 5.3: certificate issue, Airpay checkout to the callback, Refund, Enrol user, HRMS import, SCIM PATCH, the KeKa sync against a mock, signup, course delete, an e-mail with a tenant override, every CSV export.
+
+If an item fails and cannot be fixed, the plan falls back to 5.2 with no rework. Cut over on the latest 5.3.x point release, not on 5.3.0.
 
 ---
 
@@ -20,12 +59,12 @@ Sentientia plugin**. The "5.1" came from the local XAMPP copy, whose DB had alre
 **Moodle refuses the one-hop upgrade.** The 5.2 `admin/environment.xml` declares
 `<MOODLE version="5.2" requires="4.4">` (5.0 and 5.1 require 4.2.3; 4.5 requires 4.1.2), so
 `admin/cli/upgrade.php` on the 5.2 code stops at the environment check for a 4.1.2 database. The path
-is **4.1.2 → 4.5.x (LTS) → 5.2**:
+is **4.1.2 → 4.5.x (LTS) → 5.2**, and **→ 5.3** since the 2026-10-08 retarget (§0a; the 5.3 `environment.xml` also requires 4.4):
 
 | Hop | Code on disk | Engine limits (from `environment.xml`) | Evidence it works |
 |---|---|---|---|
 | 1. 4.1.2 → 4.5.x | Moodle 4.5.x core (+ a decision on the BizLMS plugin code, below) | PHP 8.1–8.3 (8.4 refused); MySQL ≥ 8.0 / MariaDB ≥ 10.6.7 | Done once locally (April 2026 import: 3.5 GB prod dump → `C:/xampp/htdocs/moodle-4.5-archive`, 4.5.10) on MariaDB 10.11, never on MySQL 8.4, never timed |
-| 2. 4.5.x → 5.2 | the Sentientia 5.2 package (§4d) | PHP 8.3; MySQL ≥ 8.4 / MariaDB ≥ 10.11 | The 2026-06-10 rehearsal ran 5.1→5.2 (2,057 steps); 4.5→5.2 itself is unrehearsed |
+| 2. 4.5.x → 5.3 (5.2 = fallback) | the Sentientia 5.3 package (§4d, `build-standalone.sh --target 5.3`) | PHP 8.3; MySQL ≥ 8.4 / MariaDB ≥ 11.4 (5.2: ≥ 10.11) | The 2026-06-10 rehearsal ran 5.1→5.2 (2,057 steps) and 2026-10-01 ran 4.5.10→5.1.3+; 4.5→5.3 is unrehearsed (ADR-033 gate 8c) |
 
 What changes in this plan:
 - **§4e runs twice**: swap in the 4.5 core, `upgrade.php --non-interactive`, verify, RDS snapshot; then
@@ -75,6 +114,15 @@ What changes in this plan:
 - **I-9** asks for the exact production release. The snapshot says 4.1.2+; confirm on live
   (`SELECT value FROM mdl_config WHERE name IN ('release','version')`, read-only), since production
   may have been patched after the snapshot.
+- **The source dump and the parity tool (2026-10-07).** The April 2026 4.1.2 production copy is
+  `backups/airpayprod-mariadb-ready.sql` in the repo (release `4.1.2+ (Build: 20230401)`, version `2022112802.06`,
+  production mysqldump completed 2026-04-06 7:54). It is NOT one of the dumps in `Moodle Backup/`: those are 4.5.10
+  (`pre-moodle5-backup*.sql`, `moodle_local_pre_import_20260407.sql`) or 5.1.3 (`pre-wipe-backup-20260604`,
+  `sw4-moodle-dump-2026-06-10.sql`). The baseline of the source is taken by `cli/source_baseline.php`, one file for
+  PHP 7.4 to 8.4 that needs no Sentientia plugin and no Moodle load (§4a, §5.1). Measured on the local MariaDB 10.11:
+  restoring the dump took 49 min, the baseline 22 to 30 s, and the copy that went through both hops compared
+  **100% PARITY** (all 23 counts, the grade sum, 14 checksums, all 95 BizLMS tables, 25,726 rows), with SCORM read from
+  `scorm_scoes_track` on the source and from `scorm_scoes_value` after Moodle 4.3 and the same CRC on both.
 - **The data carried by the 22 BizLMS plugins** (classroom, programs, online exams, evaluations,
   learning plans, cart orders, skills, recompletion, requests, ratings, ...): the restore carries
   their tables, but their code is not in the 5.2 package. Which Sentientia plugin reads or imports
@@ -89,7 +137,7 @@ Where the sections below say "5.1", read "4.1.2 (via 4.5)" until the plan is re-
 ## 1. Objective and the continuity guarantee
 
 ### 1.1 Objective
-Move the live Airpay Academy learning platform from its current Moodle 5.1.x line (BizLMS/eAbyas fork on MySQL 8.0.44 AWS RDS) onto the new Sentientia 5.2 infrastructure (EC2 + RDS MySQL 8.4 + PHP 8.3, docroot `.../moodle5.2/public`, dataroot `/var/sentientiadata`, app-scoped DB user), by **restoring the same database and moodledata and upgrading them in place**, then repointing the `www.airpay.academy` domain at the new stack. `wwwroot` stays `https://www.airpay.academy`; users keep the same URL.
+Move the live Airpay Academy learning platform from its current Moodle 5.1.x line (BizLMS/eAbyas fork on MySQL 8.0.44 AWS RDS) onto the new Sentientia 5.3 infrastructure (5.2 on the fallback; EC2 + RDS MySQL 8.4 + PHP 8.3, docroot `.../moodle5.3/public`, dataroot `/var/sentientiadata`, app-scoped DB user), by **restoring the same database and moodledata and upgrading them in place**, then repointing the `www.airpay.academy` domain at the new stack. `wwwroot` stays `https://www.airpay.academy`; users keep the same URL.
 
 ### 1.2 The continuity guarantee (made concrete)
 Because the target is **the same database restored** — not an export/import — every history-bearing row arrives on the new box keyed by the **same primary ids**, and the upgrade transforms schema, not identity. On next login every user sees ALL their content, enrolments, past completions, certificates, grades, and forum/SCORM history. Nothing is re-created. The following carry automatically in the restore:
@@ -139,14 +187,14 @@ Extends `UAT-SENTIENTIA-DEPLOY-CHECKLIST.md §1, §6` and `UAT-ASKS-2026-09-03.m
 
 ### 3.1 Prod-today vs target
 
-| Layer | Production today (airpay.academy) | Target Sentientia 5.2 | Source |
+| Layer | Production today (airpay.academy) | Target Sentientia 5.3 (fallback 5.2) | Source |
 |---|---|---|---|
-| App | Moodle **5.1.x** + BizLMS/eAbyas fork | Moodle **5.2** (Build 20260519) | `CLAUDE.md §2` |
+| App | Moodle **5.1.x** + BizLMS/eAbyas fork | Moodle **5.3** LTS (Build 20261005); fallback 5.2 (Build 20260519) | `CLAUDE.md §2`; ADR-033 |
 | DB | **MySQL 8.0.44** on AWS RDS | **MySQL 8.4.9** on AWS RDS (`db.t3.small`→resize I-12) | `CLAUDE.md §2`; `DEPLOY-CHECKLIST` |
 | PHP | confirm (I-9; local dev 8.2.12) | **8.3.6** | `DEPLOY-CHECKLIST §2` |
 | Web | single host, file-copy deploy | Apache 2.4.58 + PHP-FPM behind internet-facing **ALB** | `DEPLOY-CHECKLIST` |
 | DB user | BizLMS resolves at runtime (historically broad) | **app-scoped, no-SUPER** for `config.php` | `DEPLOY-CHECKLIST §0` |
-| docroot / dataroot | current prod paths | `.../moodle5.2/public` / `/var/sentientiadata` | `DEPLOY-CHECKLIST` |
+| docroot / dataroot | current prod paths | `.../moodle5.3/public` (5.2: `.../moodle5.2/public`) / `/var/sentientiadata` | `DEPLOY-CHECKLIST` |
 | wwwroot | `https://www.airpay.academy` | **`https://www.airpay.academy` (unchanged)** — new stack was installed as `academy2.airpay.ninja`, so wwwroot MUST be rewritten at deploy (§4d) | ground truth; `DEPLOY-CHECKLIST §0` |
 | Tenants | BizLMS cost-centres **1=Airpay, 77=Public, 177=ZEEA Mafunzo (TZ)**, detected by `$USER->open_path` | identical (carried in restore) | `CLAUDE.md §2`; `rules/database.md` |
 | Scale | ~2,871 users / ~411 courses / 618 tables (rehearsal baseline: 2,888 active users, 32,248 completions, 11,415 cert issues, 8,687 quiz attempts, 27,166 grades) | identical after restore | MEMORY Phase 16; `MIGRATION-REHEARSAL-RUNBOOK.md` |
@@ -221,12 +269,19 @@ Extends `UAT-SENTIENTIA-DEPLOY-CHECKLIST.md §1, §6` and `UAT-ASKS-2026-09-03.m
     - But the instances have no plugin code: nobody can manage them, and edit or unenrol flows through
       them fail. The first admin save of the enrol-plugin settings drops the missing plugins from that
       list and removes access in one step.
+    - **Corrected 2026-10-07 (decisions CRS-01 and XC-G6-WHY): the converse is the bigger risk once the rows are converted.**
+      `require_login` -> `enrol_get_enrolment_end` filters only `e.status` and `ue.status`, never the plugin, so an ENABLED orphan
+      instance keeps granting course access even though its plugin is gone, and a Sentientia unenrol or suspend of the converted
+      manual row would not revoke it. So each fully converted BizLMS instance is DISABLED (never deleted) once every (user, course)
+      pair on it provably keeps an access window at least as wide through manual enrolments; an instance with a regression or an
+      unsettled needs-owner row stays enabled. See mapping doc section 21 and the runbook rules (never use 'Delete' on a disabled
+      BizLMS instance, never uninstall the BizLMS enrol plugins).
     - So the G6 conversion (to a manual enrolment, status and dates kept; decided 2026-09-30; importer
       `claude/bizlms-import-enrolments`, reviewed: ship) is still required before cutover sign-off.
   - Live has grown since April: run the I-20 query on live before sizing the window.
 
   **Decided (Nitin, 2026-09-29): IMPORT.** The BizLMS history is imported into the Sentientia tables
-  (design: ADR-032 and `BIZLMS-IMPORT-MAPPING-2026-09-29.md`, in progress). The options that were on
+  (design: ADR-032 and `BIZLMS-IMPORT-MAPPING-2026-09-29.md`, in progress; 2026-10-07: all 19 importers are built and merged on `claude/gap-integration`, and the open owner questions are decided under delegation, see section 11). The options that were on
   the table: per feature, **import** into the Sentientia tables
   (a CLI per feature, run after both hops, with before/after counts in the parity gate), or **archive**
   (keep the BizLMS tables read-only plus a read-only history report for admins), or both. Size it with
@@ -244,7 +299,7 @@ Extends `UAT-SENTIENTIA-DEPLOY-CHECKLIST.md §1, §6` and `UAT-ASKS-2026-09-03.m
 
 ## 4. Migration procedure
 
-Run every step as the web user (`sudo -u www-data php …`) from the docroot `.../moodle5.2/public`. Each step has an exact command, a **VERIFY**, and a **STOP** condition. This runs identically in the Stage-B rehearsal (§9) and on the production target. The lettered structure mirrors `MIGRATION-REHEARSAL-RUNBOOK.md` steps 0–5 plus the DNS-swap section that no existing doc covers.
+Run every step as the web user (`sudo -u www-data php …`) from the docroot `.../moodle5.3/public` (`.../moodle5.2/public` on the 5.2 fallback). Each step has an exact command, a **VERIFY**, and a **STOP** condition. This runs identically in the Stage-B rehearsal (§9) and on the production target. The lettered structure mirrors `MIGRATION-REHEARSAL-RUNBOOK.md` steps 0–5 plus the DNS-swap section that no existing doc covers.
 
 ### 4a. Pre-flight on live (live is READ-only-touched: LIVE baseline + DNS capture + TTL + announce)
 
@@ -262,14 +317,29 @@ Run every step as the web user (`sudo -u www-data php …`) from the docroot `..
    SELECT COUNT(*) FROM mdl_course_modules_completion WHERE completionstate>0;
    SELECT COUNT(*) FROM mdl_grade_grades WHERE finalgrade IS NOT NULL;
    SELECT ROUND(COALESCE(SUM(finalgrade),0),4) FROM mdl_grade_grades WHERE finalgrade IS NOT NULL; -- VALUE CHECKSUM
+   -- SCORM on the 4.1.2 source (mdl_scorm_scoes_track exists up to Moodle 4.2):
    SELECT COUNT(*) FROM mdl_scorm_scoes_track;
-   SELECT COALESCE(SUM(CRC32(CONCAT_WS('|',userid,scoid,element,value))),0) FROM mdl_scorm_scoes_track; -- status/score CRC
+   SELECT COALESCE(SUM(CRC32(CONCAT_WS(0x1f, userid, scormid, scoid, attempt, element, value, timemodified))),0) FROM mdl_scorm_scoes_track; -- status/score CRC
+   -- the same two numbers on Moodle 4.3 and later (the table above is gone): identical for the same data
+   -- SELECT COUNT(*) FROM mdl_scorm_scoes_value;
+   -- SELECT COALESCE(SUM(CRC32(CONCAT_WS(0x1f, a.userid, a.scormid, v.scoid, a.attempt, e.element, v.value, v.timemodified))),0)
+   --   FROM mdl_scorm_scoes_value v STRAIGHT_JOIN mdl_scorm_attempt a ON a.id = v.attemptid STRAIGHT_JOIN mdl_scorm_element e ON e.id = v.elementid;
    SELECT COUNT(*) FROM mdl_tool_certificate_issues;
    SELECT COUNT(*) FROM mdl_badge_issued; SELECT COUNT(*) FROM mdl_forum_posts;
    SELECT COUNT(*) FROM mdl_quiz_attempts;
    ```
    Also run the §5 auth audit (I-16) and the §6 plugin-version dump against the live DB (read-only), and freeze the §5.2 per-user id sample (Step A) on LIVE now.
    **VERIFY:** baseline JSON/TSV written with both counts AND the value-checksum rows (grade_sum, scorm CRC, completed-completions); counts sane vs known scale (~2,871 users, 3 tenants). **STOP** if the baseline cannot be produced from LIVE — the whole guarantee rests on it.
+   **Use the tool, keep the SQL as the cross-check (2026-10-07).** `cli/source_baseline.php` is the plugin-free capture:
+   copy the one file to the box and run `php source_baseline.php --config=<config.php> --baseline=/vault/live-baseline.json`
+   (PHP 7.4 to 8.4, mysqli, a read-only session on one consistent snapshot, about 30 s on the April copy). It writes the
+   JSON `migration_parity_check.php --compare` reads, and holds more than the SQL above: the value checksums, a CRC over
+   every column of every row of each BizLMS legacy table (the proof that the hops and the import leave the archive
+   untouched), and the rows of the five core tables the import may write. The SQL above stays as an independent check of
+   the headline numbers. **The two SCORM lines depend on the Moodle version:** `scorm_scoes_track` exists up to 4.2 and the
+   4.3 upgrade drops it (`mod_scorm` 2023042403); from 4.3 the same data is `scorm_attempt` + `scorm_scoes_value` +
+   `scorm_element`. The tool reads whichever the database has and reports the same logical numbers (distinct user/scorm/
+   attempt triples, stored elements, one CRC).
 2. **Snapshot the current DNS record VERBATIM** before touching anything: `dig +noall +answer www.airpay.academy` plus a registrar/Route53 record export, stored with the change ticket (I-6). Confirm whether it is an A/EIP, a CNAME, or a Route53 ALIAS-to-ALB; an ALIAS has no settable TTL (the "lower to 60s" step is then moot — plan propagation accordingly).
 3. **Lower DNS TTL** on `www.airpay.academy` to 60s, **24–48h before** the window (only if the record type supports it, I-6). **VERIFY:** `dig +noall +answer www.airpay.academy` shows TTL ≤ 60 after propagation. **STOP** the window if a TTL-lowerable record has not dropped (rollback speed depends on it).
 4. **Announce the maintenance window** and post the in-app banner on live (`cutover-day-runbook.md` Pre-cutover §1). The window is a **multi-hour hard-down for all three tenants** (§10, sized to I-4), and users will be logged out once at repoint (§7) — say both.
@@ -298,7 +368,7 @@ The largest procedural hole in the corpus is that a point-in-time restore with l
 
 > If Nitin decides to minimise learner-visible downtime by keeping live fully serving until repoint, the alternative is a **final incremental delta** re-run of 4b just before 4h — but that re-runs the whole restore→upgrade→verify on the delta and is far more complex. Default and recommended: atomic freeze at 4b for the window duration (open decision D-1).
 
-### 4c. Restore into the 5.2 infra
+### 4c. Restore into the 5.3 infra (5.2 on the fallback)
 
 1. **Restore the DB** into a fresh RDS 8.4 database, and **unpack moodledata** into `/var/sentientiadata`:
    ```bash
@@ -325,7 +395,7 @@ The largest procedural hole in the corpus is that a point-in-time restore with l
    Pin and record the package identity (closes gap G8):
    ```bash
    git -C "D:/Claude Local/airpay-ld-os" rev-parse HEAD   # expect 9dddfdaf7… (or newer, recorded)
-   sha256sum sentientia-5.2-<sha>.tar.gz                  # record in the change ticket
+   sha256sum sentientia-5.3-<sha>.tar.gz                  # record in the change ticket (the 5.3 package: Sentientia-LMS-5.3-Complete-Standalone-<date>.zip from build-standalone.sh --target 5.3; pin its SHA in the deploy checklist)
    ```
    **VERIFY:** `ls local/sentientia_platform/cli/migration_parity_check.php local/sentientia_platform/cli/repair_task_registrations.php local/sentientia_catalog/cli/enable_oneclick_enrol.php` all present in the deployed webroot. **STOP** if any is missing — the parity gate and repairs cannot run.
    > **Parity CLI must carry the value-level checksums (§5.1).** Before deploy, confirm `migration_parity_check.php`'s metric set includes the aggregate checksums and the added tables (grade_sum, completed-completions, scorm CRC + count, role_assignments, enrol, tenant cross-foot). If HEAD still ships the count-only version, bump the `local_sentientia_platform` version so the enhanced metrics deploy and are captured on both baseline and compare — a count-only gate does not satisfy §1.2 and must not be the gate.
@@ -337,7 +407,7 @@ The largest procedural hole in the corpus is that a point-in-time restore with l
    - `$CFG->noemailever = 1;` (**stays on through §4f, the verifying cron run, and §8 items 1–7 — flipped off only as the last action before repoint, §8 step 1**).
    - Do **not** alter `sessioncookie*` settings — the cookie domain/path must stay as live because wwwroot is identical (§7).
    **VERIFY:** `php -l config.php`; `php admin/cli/cfg.php --name=wwwroot` prints `https://www.airpay.academy`; `php admin/cli/cfg.php --name=noemailever` prints `1`. **STOP** on any lint error, a wwwroot still showing `.ninja`, or `noemailever` not 1.
-3. **Confirm cron is NOT firing** on the new box (the `www-data` crontab line is commented) and that the 5.2 pre-checks pass: PHP ≥ 8.3 (CLI+web) with `mysqli/intl/mbstring/curl/zip/gd/soap/openssl/sodium/exif/fileinfo`, `max_input_vars ≥ 5000`, `max_allowed_packet ≥ 64M` (I-13), `memory_limit ≥ 512M`. **STOP** if any pre-check fails (`MIGRATION-REHEARSAL-RUNBOOK.md` 5.2 hard pre-checks).
+3. **Confirm cron is NOT firing** on the new box (the `www-data` crontab line is commented) and that the 5.3 (and 5.2) pre-checks pass (5.3 adds MariaDB ≥ 11.4 if MariaDB is ever used, and the root `lib/` beside `public/`): PHP ≥ 8.3 (CLI+web) with `mysqli/intl/mbstring/curl/zip/gd/soap/openssl/sodium/exif/fileinfo`, `max_input_vars ≥ 5000`, `max_allowed_packet ≥ 64M` (I-13), `memory_limit ≥ 512M`. **STOP** if any pre-check fails (`MIGRATION-REHEARSAL-RUNBOOK.md` 5.2 hard pre-checks).
 
 ### 4e. Run the in-place upgrade
 
@@ -351,7 +421,7 @@ The largest procedural hole in the corpus is that a point-in-time restore with l
    ```bash
    sudo -u www-data php admin/cli/upgrade.php --non-interactive
    ```
-   - The **long-running exposure is the core 5.1→5.2 upgrade** — **2,057 steps, proven zero errors** in the local rehearsal on a prod-shaped clone. Airpay's small footprint (2,871 users / 411 courses) means no multi-million-row core ALTERs; the only large tables (`logstore_standard_log`, `scorm_scoes_track`) are not wholesale-rewritten by 5.1→5.2. **Time this run in the rehearsal (I-4) — it is the primary driver of the hard-down window (§10).**
+   - The **long-running exposure is the core upgrade** — on 5.2: **2,057 steps (5.1→5.2), proven zero errors** in the local rehearsal on a prod-shaped clone; **on 5.3 the 4.5→5.3 step count and duration are unmeasured** (ADR-033 gate 8c; the 5.2/5.3 steps to watch are the `task_adhoc` identityhash backfill, the assign_allocated_marker migration, the move of the AI token columns and `course.deletioninprogress`). Airpay's small footprint (2,871 users / 411 courses) means no multi-million-row core ALTERs; the only large tables (`logstore_standard_log`, `scorm_scoes_track`) are not wholesale-rewritten by 5.1→5.2. **Time this run in the rehearsal (I-4) — it is the primary driver of the hard-down window (§10).**
    - **xAPI `stored→timestored` rename** (`local/sentientia_xapi/db/upgrade.php:21-40`, step `2026090300`): fires only on the **re-cutover** path when the recorded xapi version < `2026090300`. On the **install** path it does NOT fire — `install.xml` already ships `timestored`. The "millions of rows ALTER" worry does not exist: `local_sentientia_xapi_stmts` is a NEW LRS table and xAPI/Live flags are OFF in production, so it holds **zero statements** (confirm via I-11). The step is `field_exists`-guarded and MySQL 8 `RENAME COLUMN` is metadata-only; only the `idx_timestored` rebuild touches rows — time it in the rehearsal at the real (near-zero) volume.
    - **platform user-type tables / org branding columns** (G3): on the install path, created by `install.php`/`install.xml`; on the re-cutover path, created by the upgrade steps only if the recorded platform/org versions predate them (I-10). Either way they hit small Sentientia-owned tables.
    - **core `substrate::ensure_all()`** runs (install.php on install path; upgrade step on re-cutover) but is a **pure no-op** on a restored BizLMS DB — all 37 user + 18 course `open_*` columns already exist, so `field_exists` is true and no ALTER is emitted.
@@ -425,6 +495,9 @@ Do NOT run any independence flag-flip (Gates B/C/D stay legacy/dormant — §6).
    **Precondition:** count production's role-9 assignments below system context (UAT had 2 at
    category level) and get Nitin's decision before `--accept-nonsystem-holders`. Tenant admins lose
    core "Log in as" (Nitin, 2026-09-29: site admins only).
+   **2026-10-07 decision IDN-05:** the platform role (`adr031_crosstenant_role.php`) is created with NO members at Stage B and at
+   cutover; members are added by hand only when Nitin names them, so the site admins stay the only cross-tenant callers
+   until then.
    **Target mode (2026-09-30; the tooling gap noted on 2026-09-29 is closed):** the four `adr031_*`
    scripts take `--target=<wwwroot> --config=<absolute path to config.php>` as the alternative to
    `--i-am-uat`. Both are read from the command line before Moodle loads; after the config loads the
@@ -449,6 +522,21 @@ Do NOT run any independence flag-flip (Gates B/C/D stay legacy/dormant — §6).
    php local/sentientia_platform/cli/migration_parity_check.php --compare=/vault/live-baseline.json
    ```
    **VERIFY:** prints `RESULT: 100% PARITY — data intact.` (exit 0) across **both** the row-count metrics **and** the value-level aggregates (grade_sum, completed-completions count, scorm status/score CRC), plus the added tables (scorm_scoes_track, role_assignments, enrol) and the tenant cross-foot invariant `users_tenant_sum == users_total_active`. **STOP** on any `DRIFT` line — a value-checksum drift (grades/completions recomputed with unchanged row counts) is a hard stop identical to a count drift; a tenant-sum mismatch signals `open_path` truncation (§5). Investigate before proceeding. **Exit 2 is also a STOP**: it means a check could not run (the line says `SKIPPED ... (check could not run: ...)`), which is "not proven", never a pass. Only exit 0 with the `100% PARITY` line lets the cutover go on.
+   **Stage B tooling (2026-10-07).** The success line is now `RESULT: 100% PARITY - counts AND value checksums match, and
+   the BizLMS legacy tables are untouched.` The compare also holds each BizLMS legacy table (count, max id, columns, a CRC
+   over every column of every row) to the baseline. The checkpoints, all against the one source baseline: after hop 1
+   `php source_baseline.php --config=<the 4.5 config.php> --compare=...` (no plugin needed); after hop 2 and the repairs
+   `migration_parity_check.php --compare=...`; after the ADR-032 import
+   `migration_parity_check.php --compare=... --after-import --decisions=<rehearsed> --expect-decisions-hash=<hash>
+   [--run=ID] [--report=FILE]` (the decisions options belong to this mode and are refused without it), which asks the import's
+   own records to explain every growth of `enrolments`, `enrol` and `role_assignments`, every `course` column filled, every
+   `tag_instance` moved and every BizLMS `enrol` instance switched off (`enrol.status` and `timemodified`, named by the enrolments
+   importer's trail `local_sentientia_courses_enroloff`), and fails on any other change
+   (`docs/cutover/MIGRATION-REHEARSAL-RUNBOOK.md` step 5a). **2026-10-07 decision F-34:** the enrolments importer adds about 7,733
+   `user_enrolments` rows on April and changes `enrol.status` by design, so the unexplained-delta rule above applies to the
+   rows the import did NOT write; see ADR-032 parity hook 4. Run the post-import compare BEFORE the first cron of the target: the
+   5.0 upgrade queued the qbank transfer task, which creates qbank activities on its first run, so a compare after cron differs
+   from the baseline by design. Exit codes: 0 parity, 1 drift, 2 not proven, 3 refused.
 2. **Per-user continuity spot-check** (§5.2) — before/after fingerprint over 5–10 named real users (including a re-completion user) must be byte-identical.
 3. **Smoke walk** (reuse `MIGRATION-REHEARSAL-RUNBOOK.md` step 6 + `cutover-day-runbook.md` reusable smoke; access the pre-repoint box by IP / hosts-file override for `www.airpay.academy`):
    - Frontpage `HTTP 200`, ~72 KB, zero error-grep hits.
@@ -468,9 +556,10 @@ Two machine layers plus a human layer, each isolating a different failure. All t
 ### 5.1 Layer 1 — global before/after comparison, LIVE → post-upgrade, counts AND checksums
 `local/sentientia_platform/cli/migration_parity_check.php` must capture, per an **extended** metric set (the count-only version is insufficient — see §4d note):
 
-- **Counts (row-level):** per-tenant active users (leading `open_path` segment), total/suspended users, courses, categories, enrolments, `role_assignments`, `enrol`, `course_completions` (total), `course_modules_completion`, `quiz_attempts`, `scorm_attempt`, **`scorm_scoes_track`**, `badge_issued`, `grade_grades`, certificate issues.
-- **Value-level aggregates (the addition that catches a recompute with unchanged row counts):** `SUM(finalgrade)` over `grade_grades WHERE finalgrade IS NOT NULL` (grade_sum); `COUNT(course_completions WHERE timecompleted IS NOT NULL)` (completed, distinct from total rows); `SUM(CRC32(...))` over `scorm_scoes_track` status/score elements.
-- **Cross-foot invariant:** `users_tenant_sum = airpay+public+zeea`, flagged in `--compare` if `users_tenant_sum != users_total_active` on the current side (catches `open_path` loss that per-metric baseline comparison masks).
+- **Counts (row-level):** per-tenant active users (leading `open_path` segment) and the users in no tenant, total/suspended users, courses, categories, enrolments, `role_assignments`, `enrol`, `course_completions` (total and completed), `course_modules_completion`, `quiz_attempts`, SCORM attempts and track rows (**version aware**: read from `scorm_scoes_track` before Moodle 4.3 and from `scorm_attempt` / `scorm_scoes_value` after it, same numbers), `badge_issued`, `grade_grades`, `forum_posts`, certificate issues.
+- **Value-level aggregates (the addition that catches a recompute with unchanged row counts):** `SUM(finalgrade)` over `grade_grades WHERE finalgrade IS NOT NULL` (grade_sum); `COUNT(course_completions WHERE timecompleted IS NOT NULL)` (completed, distinct from total rows); `SUM(CRC32(...))` over the SCORM track elements (user, scorm, sco, attempt, element, value, timemodified), the same on either layout; and a CRC over every column of every row of each BizLMS legacy table.
+- **Cross-foot invariant:** the three tenant buckets plus the users in no tenant (`users_tenant_other`) must add up to `users_total_active`, flagged in `--compare` as the invariant `tenant_cross_foot` on the current side (a consistency check of the counting SQL only: `users_tenant_other` is the complement of the three buckets, so the sum equals the total by construction and this check cannot fail by itself). What catches `open_path` loss is the per-bucket comparison with the baseline: `users_tenant_other` is a metric of its own, so a user who drops out of the three tenants is a drift, not just a smaller bucket.
+- **Substrate checksums (metrics version 3, added 2026-10-08):** a checksum of its own for the BizLMS user columns (password hashes, every `open_*` column, gender), the course `open_*` columns the import does not write, `course_modules`, `course_sections`, `grade_items`, `course_completion_criteria`, the certificate templates and the issue columns the first checksum leaves out. The tool refuses a baseline of another metrics version (exit 3): take the baseline again after the tool changes. **Metrics version 4 (2026-10-08):** the baseline also carries `tool.sha256`, the SHA-256 of the exact `source_baseline.php` that took it, and the tool (and the rehearsal kit, at steps 02 and 04) refuses a baseline another file took, because the same version number is not the same code; and the core section holds `enrol` as an update table, because the enrolments importer switches off the BizLMS instances it proved safe (CRS-01). **Known consequence (ADR-032 "FINDING"):** the Moodle 5.0 upgrade uninstalls `mod_survey` and `mod_chat` when their code is not on disk, deleting their activities; on the April copy that is one survey activity, and `course_modules` then drifts (exit 1). **Decide before Stage B: ship 5.x-compatible `mod_survey` and `mod_chat` in the package.** There is no "accept the loss in writing" path in the tools (the parity tool has no input for expected exit-1 drift; one would need the exact `course_modules` ids recorded in the baseline and subtracted on both sides); the kit's step 04 counts the activities before hop 2 and refuses to start it while the package lacks their code.
 
 `--baseline` is the **LIVE SQL capture from §4a** (never the restored DB). Run `--compare` at §4g against the post-upgrade+repaired+purged target. The 5.1→5.2 core upgrade, a `grade_item` regrade, or a completion reaggregation can rewrite `grade_grades.finalgrade` / `course_completions.timecompleted` **without** changing row counts — the value aggregates are what make "the upgrade transforms schema, not identity" actually provable. **Acceptance: `RESULT: 100% PARITY — data intact.` across counts AND checksums.** Proven single-row granular in the 2026-06-10 rehearsal: 32,248 completions / 11,415 cert issues / 8,687 quiz attempts / 27,166 grades all MATCH.
 
@@ -500,7 +589,9 @@ SELECT u.id, u.username,
   (SELECT COUNT(*) FROM mdl_tool_certificate_issues ci WHERE ci.userid=u.id)                                       AS certificates,
   (SELECT COUNT(*) FROM mdl_grade_grades gg WHERE gg.userid=u.id AND gg.finalgrade IS NOT NULL)                    AS graded_items,
   (SELECT ROUND(COALESCE(SUM(gg2.finalgrade),0),4) FROM mdl_grade_grades gg2 WHERE gg2.userid=u.id AND gg2.finalgrade IS NOT NULL) AS grade_sum,
-  (SELECT COUNT(*) FROM mdl_scorm_scoes_track st WHERE st.userid=u.id)                                             AS scorm_track_rows,
+  (SELECT COUNT(*) FROM mdl_scorm_scoes_track st WHERE st.userid=u.id)                                             AS scorm_track_rows,   -- Moodle up to 4.2 (the 4.1.2 source)
+  -- Moodle 4.3 and later (hop 1 and 2 copies): use this line in place of the one above; the number is the same
+  -- (SELECT COUNT(*) FROM mdl_scorm_scoes_value sv JOIN mdl_scorm_attempt sa ON sa.id=sv.attemptid WHERE sa.userid=u.id) AS scorm_track_rows,
   (SELECT COUNT(*) FROM mdl_forum_posts fp WHERE fp.userid=u.id)                                                   AS forum_posts,
   (SELECT COUNT(*) FROM mdl_badge_issued bi WHERE bi.userid=u.id)                                                  AS badges
 FROM mdl_user u
@@ -544,7 +635,7 @@ The determining fact: on the **first** production cutover, LIVE carries no `loca
 | **BizLMS roles** (admin 9, employee 5, trainer 10, sentientiaauthor) | Carried in restore; provisioning script is **NOT run** | YES | `tools/uat/provision_test_users.php` is fresh-install-only — **excluded** (G4). |
 | **core substrate `db/install.php` (2026090301)** | Install-only path (fresh) | N/A | UAT F-3 fix for blank installs; **irrelevant to migration** — do not run standalone. |
 | **flushpackets/SSE (F-11), htaccess M3/M4, footer links, forcelogin/enablemyhome** | Server/config, not data | Reproduce on infra | §3.2, §4d, §8 — not caught by any data-parity gate. |
-| **Core Moodle 5.1→5.2 (2,057 steps)** | **YES — the one real transform** | YES (rehearsed) | Zero errors in rehearsal; small footprint → seconds-scale backfills. Mitigate with pre-upgrade RDS snapshot + timed rehearsal. |
+| **Core Moodle 5.1→5.2 (2,057 steps)** (5.3: 4.5→5.3, unmeasured) | **YES — the one real transform** | YES (rehearsed on 5.2; 5.3 per ADR-033 gate 8c) | Zero errors in rehearsal; small footprint → seconds-scale backfills. Mitigate with pre-upgrade RDS snapshot + timed rehearsal. |
 
 **Payment gateway (C1) — corrected status.** The Sentientia airpay gateway's callback handler at `payment/gateway/airpay/process.php:91-108` **has the 2026-06-02 security fix applied**: `airpay_helper::verify_secure_hash()` is called and fails closed, and the fulfilment guard (`if empty($error_msg) && transactionstatus===200 && $order`) is enforced before enrolment. The forged-callback-grants-free-enrolment hole is **CLOSED**. The genuine residual is that the CRC32 secure-hash carries no secret and is forgeable by design, and the server-side Order Confirmation (Verify API) is a **HARDENING TODO** (not "commented out"). Keeping `paygw_airpay` + `enrol_sentientiasub` **DISABLED** at go-live is still correct; enablement is a separate later decision gated on adding the Verify API call + Airpay sandbox sign-off. Existing enrolments restore intact, so dark commerce costs continuity nothing. Verify the disabled state at §4e-3.
 
@@ -647,12 +738,78 @@ A red rehearsal on any of the seven re-scopes and repeats; it never promotes to 
 ### 10.3 Open decisions (resolve before P4)
 - **D-1 — Freeze vs final-delta (§4b):** default is atomic-freeze-live-for-the-window (simpler, zero-loss). Confirm the window length (I-4/I-5) makes freeze acceptable, or elect the more complex final-delta model. **Owner: Nitin/IT.**
 - **D-2 — Real-load sizing (I-12):** `t3a.medium+`/`db.t3.medium` vs staying on UAT-class. Decide before, not during. **Owner: Cloud.in/Nitin.**
-- **D-3 — Package SHA pin (G8):** **PINNED 2026-09-10** — `Sentientia-LMS-5.2-Complete-Standalone-2026-09-10.zip`, built from `claude/gap-integration` @ `35cd2a48b` (tag `v4.2.0-sentientia-5.2-package-2026-09-10`); name + SHA-256 in `UAT-SENTIENTIA-DEPLOY-CHECKLIST.md`. Built via the overlay pipeline from the local webroot, i.e. the **`moodle-enhancement/` plugin tree — the tree UAT actually runs** (verified 2026-09-09: UAT's `local_sentientia_org` hashes match ME 1.4.x, not top-level 1.5.x). The earlier intent to build from the top-level `local/` tree stands as a separate reconciliation item for the 5 drifted plugins (org, request, analytics, assistant, learningpath — see the AMD/parity memory notes); until then the package matches UAT byte-for-byte in that layer. Supersedes the 2026-08-05 package. **Owner: Claude/Nitin.**
+- **D-3 — Package SHA pin (G8):** (2026-10-08: the 5.3 package is a new artefact and needs its own pin once built; the 5.2 pin below stays the UAT 5.2 instance's.) **PINNED 2026-09-10** — `Sentientia-LMS-5.2-Complete-Standalone-2026-09-10.zip`, built from `claude/gap-integration` @ `35cd2a48b` (tag `v4.2.0-sentientia-5.2-package-2026-09-10`); name + SHA-256 in `UAT-SENTIENTIA-DEPLOY-CHECKLIST.md`. Built via the overlay pipeline from the local webroot, i.e. the **`moodle-enhancement/` plugin tree — the tree UAT actually runs** (verified 2026-09-09: UAT's `local_sentientia_org` hashes match ME 1.4.x, not top-level 1.5.x). The earlier intent to build from the top-level `local/` tree stands as a separate reconciliation item for the 5 drifted plugins (org, request, analytics, assistant, learningpath — see the AMD/parity memory notes); until then the package matches UAT byte-for-byte in that layer. Supersedes the 2026-08-05 package. **Owner: Claude/Nitin.**
 - **D-4 — Auth-plugin + hash resolution (I-16/I-9):** if any `eabyas`/BizLMS auth users exist or any hash format is not stock-verifiable, ship+enable that plugin or migrate to manual — decided from the rehearsal audit + known-password login, not on cutover night. **Owner: DevOps/Nitin.**
 - **D-5 — Self-registration + reCAPTCHA (§8-4):** keep public self-reg off (recommended) or enable it with domain-scoped keys. **Owner: Nitin.**
 - **D-6 — MFA at go-live (§8-3):** enable grace-factor-first now, or defer post-cutover. **Owner: IT/Nitin.**
 - **D-7 — Global search (I-15):** stand up Solr on the new box (reindexed post-repoint async), or run without global search. **Owner: DevOps.**
 - **D-8 — Reconcile `cutover-day-runbook.md`:** it references PHP 8.4 (G9), a ~30-min in-place downtime, and an in-place rollback frame (§7.3) — all superseded by this plan; annotate that doc as superseded-for-migration to prevent accidental reuse. **Owner: Claude.**
+- **D-9 — Finance answers (section 11.3):** the credit-balance and ERPNext-invoice items accepted under delegation on 2026-10-07 without Finance being consulted, and the six points that gate the first native GST tax invoice. **Owner: Nitin/Airpay Finance.**
+- **D-10 — Cross-tenant platform role members (IDN-05):** the role is created with no members; names only from Nitin. **Owner: Nitin.**
+- **D-11 — Written acceptance of needs-owner reasons (section 11.2):** after the Stage B rehearsal, one batch edit of `accepted_reasons` with counts, then the decisions hash is re-pinned. **Owner: Nitin.**
+- **D-12 — Reader flags at cutover (section 11.4):** recommended, never decided by the importers; each flip is Nitin's call after he has reviewed the visual evidence. **Owner: Nitin.**
+
+---
+
+## 11. BizLMS feature-data import: owner confirmations (added 2026-10-07)
+
+Source: `OWNER-DECISIONS-2026-10-07.md` (84 decisions, the critic summary, the follow-up annex) and ADR-032 ("Owner decisions, 2026-10-07 (delegated)"). Nothing here flips a flag, deletes a row or touches live.
+
+### 11.1 What blocks the Stage B rehearsal
+
+Thirteen decisions change import output or the signed file, so they land BEFORE the rehearsal pins the decisions hash: EV-16 (sticky anonymity), EV-19 (legacy anonymous linkage, a decisions-file edit), EV-25 (merge order: all 19 importers load), CRS-01 (disable converted BizLMS instances, per-pair access proof), LRN-07 (skills level csv), COMMS-N1 (credentials), COMMS-N2 (manager copies), COMMS-N3 (course link), COMMS-N6 (deleted-recipient wording), COMMS-R1 (stale pending requests), COMMS-R2 (itemid 0 for a gone item), COMMS-R4 (request comments) and XC-G6-WHY (the corrected G6 reason). The signed file and both fixture copies change in ONE commit, with no `accepted_reasons` list (F-20, F-24, F-84; done on this branch). The framework batch (F-83) and the parity wiring (F-34, F-61) are engineering, not owner, gates.
+
+### 11.2 After the Stage B rehearsal: written acceptance of needs-owner reasons
+
+Nothing is pre-accepted (IDN-02, EV-23, COMMS-C1, `cart.accepted_reasons`). After the rehearsal the lead tabulates every needs-owner code with its count; Nitin accepts each in writing (ids only, counts in the approval note); ONE batch edit adds `"feature:code"` strings to the top-level `accepted_reasons` list of the signed file and both fixture copies; the new hash is pinned. Any later growth of a count is a re-approval event (count-bounded acceptance is a before-cutover framework item, F-27). Expected from the April copy:
+
+| Feature | Reasons | April expectation |
+|---|---|---|
+| org | `org:invalid_tenant_root`, `org:unmapped_enum` | 0, 0 (a hit stops the run: Nitin decides the tenant first) |
+| org_roles | `org_roles:user_outside_org_tenant`, `:role_not_assignable`, `:user_without_tenant` | 0, 0, 0 (both source tables empty) |
+| users | `users:invalid_login_row` | 0 (no `local_uniquelogins` table) |
+| course_lookups | `course_lookups:tenant_unresolved` | 0 |
+| enrolments | `enrolments:user_deleted`, `:manual_enrolment_inactive`, `:manual_enrolment_ends_sooner` | 0, 0, 0; a per-learner list (ids only) reviewed by L&D first |
+| ratings | `ratings:unknown_area`, `:orphan_item`, `:invalid_rating`, `:orphan_user`, `:invalid_reaction` | about 195 (194 scanner rows), about 85 or more, 1, at most 1, 0 |
+| notifications, request | `notifications:orphan_user`, `request:orphan_user`, `:orphan_item`, `:orphan_request` | all 0 |
+| evaluation | `value_not_valid`, `duplicate_value`, `foreign_item`, `missing_item`, `orphan_*`, `no_timestamp`, `unmapped_enum` | none |
+| cart | the seven cart needs-owner reasons | none |
+| learningplan | `learningplan:orphan_course` | 4 (122 of 126 course rows import); 53 enrolments of users from other roots on `/1` paths (6 `/177`, 6 `/77`, 41 `/80` with all 41 accounts deleted) stay hidden from tenant readers |
+| program | `orphan_program` levels and criteria under the missing program 1 | as seen |
+| recompletion, classroom | none | 0 rows |
+| skills | per Stage B | |
+
+The old name `accept_needsowner.<feature>.<reason>` never existed in the loader and must not be used (F-82).
+
+### 11.3 Finance confirm list (Airpay Finance was NOT consulted)
+
+`cart.credit_balances = frozen_pending_finance` and `cart.erpnext_invoices_legal = reference_only_pending_finance` are `accepted` in the signed file because Nitin delegated them on 2026-10-07. `accepted` is not a Finance sign-off, and nothing acts on a balance or an invoice number until Finance answers. Questions for Finance (through Nitin):
+
+1. **Credit balances.** If the Stage B rehearsal on the final live backup shows any learner with a non-zero BizLMS credit balance, send the list (count, total in INR and tenant) to Airpay Finance before cutover: honour, pay out or write off, and who owns the liability. Should a holder's erasure request also wait until the balance is settled? Today the cart privacy provider deletes the balance row on erasure (the question belongs in the legacy-table privacy ADR; no code change until Finance answers). April: none (0 credit bookings, 0 ledger rows, 0 holders, INR 0).
+2. **ERPNext invoices.** (a) The only completed BizLMS cart sale (INR 10, 10 January 2025, Public tenant, no GST charged) has no tax invoice in BizLMS or ERPNext: was it a test payment, or does Finance need to raise an invoice in its own system? Sentientia will not create one. (b) If the final live backup contains stored ERPNext invoice numbers (April: none), does Finance confirm ERPNext as the system that holds those legal invoices?
+3. **Native GST tax invoices (`cart.native_tax_invoices = hold`).** Before Sentientia issues a GST tax invoice to any real buyer, Finance confirms six points: (1) Sentientia, not Finance's own system, issues tax invoices for LMS course sales; (2) the GSTIN for `local_sentientia_cart/our_gstn`; (3) the `AIRPAY-YYYY-NNNN` series (16 characters, restarting each January); (4) how refunds get a GST credit note, since Sentientia issues none; (5) whether B2B invoices need an e-invoice IRN; (6) how long issued invoices must be kept unredacted, because an erasure request currently blanks the buyer's name, address and GSTIN on them (CGST Act s.36 retention against DPDP erasure). Until then, which tenants should `local_sentientia_cart/enabled_tenants` open at cutover? The default is '77,177'.
+
+### 11.4 Recommended reader flags at cutover (recorded, NOT decided; none flipped)
+
+Every flip is Nitin's call after he has reviewed the visual evidence (`framework.reader_flags_airpay_at_cutover`).
+
+| Flag | Recommendation | Decision |
+|---|---|---|
+| `sentientia.emails.imported_history.enabled`, `sentientia.emails.imported_body_detail.enabled` | ON | COMMS-C2 |
+| `sentientia.request.imported_history` | ON, only after COMMS-R1 has landed | COMMS-C2 |
+| `sentientia.legacy_logs.report.enabled` | stays OFF | COMMS-C2 |
+| `sentientia.ratings.widget` | ON | CRS-11 |
+| `sentientia.ratings.reactions` | ON only after the counts are wired into a theme template and reviewed | CRS-12 |
+| `sentientia.ratings.reviews` | stays OFF (BizLMS had `review_enable` = 0) | CRS-12 |
+| `sentientia.evaluation.response_drilldown` | ON for Airpay after the screenshots | EV-06 |
+| `sentientia.users.imported_sync_history` | ON with the other readers | IDN-07, XC-IMPORTED-HISTORY-READERS |
+| `sentientia.recompletion.run_rules` | OFF on UAT until the `costcenterid = 0` rules are confirmed or disabled; OFF at cutover until a native rule Airpay needs exists | LRN-06 |
+| `sentientia.lifecycle.autoenrol.enabled` | OFF until `course_lookups` and `course_tags` are complete and L&D has reviewed the mandatory-tag list | CRS-09 |
+| the three new notification senders (course enrolment, learning-path enrolment, manager completion copy) | Nitin decides after UAT evidence | COMMS-N7 |
+
+### 11.5 Everything else Nitin must answer
+
+See "Questions that still need Nitin" in `OWNER-DECISIONS-2026-10-07.md` (platform role members, the EV-18 evidence session, the UAT recompletion rules, the CRS-13 [CONFIRM] delete, the optional EV-24 local `git gc`, programs or learning plans whose tenant came from their creator if Stage B shows any, and the flag flips above).
 
 ---
 

@@ -23,6 +23,15 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class graph_client_test extends \advanced_testcase {
 
+    /**
+     * The platform flag resolver keeps raw PHP statics (registry and overrides) that survive resetAfterTest's
+     * database reset: flush them so a flag a previous test switched ON cannot leak into this one.
+     */
+    protected function setUp(): void {
+        parent::setUp();
+        \local_sentientia_platform\feature_flags::invalidate_caches();
+    }
+
     public function test_get_me_throws_confirm_required(): void {
         $this->resetAfterTest();
         $user = $this->getDataGenerator()->create_user();
@@ -50,30 +59,18 @@ final class graph_client_test extends \advanced_testcase {
     public function test_guard_fires_even_when_feature_flag_is_on(): void {
         $this->resetAfterTest();
 
-        // Flip the master flag ON. The guard MUST still fire because
-        // Phase C.1 has no live-API flag — graph traffic stays gated.
-        global $DB;
-        $row = (object)[
-            'flag_key'    => 'sentientia_m365_enabled',
-            'tenant_id'   => 0,
-            'enabled'     => 1,
-            'timecreated' => time(),
-            'timemodified' => time(),
-        ];
-        $columns = $DB->get_columns('local_sentientia_feature_flags');
-        if (isset($columns['customer_id'])) {
-            $row->customer_id = 0;
-        }
-        $where = ['flag_key' => 'sentientia_m365_enabled', 'tenant_id' => 0];
-        if (isset($columns['customer_id'])) {
-            $where['customer_id'] = 0;
-        }
-        $DB->delete_records('local_sentientia_feature_flags', $where);
-        $DB->insert_record('local_sentientia_feature_flags', $row);
+        // Flip the master flag ON through the platform's own writer. A hand-built row used to put an 'enabled'
+        // property in the insert; the column is is_enabled (NOT NULL, no default), so Moodle dropped the
+        // unknown property and the insert failed in strict SQL mode (and in lax mode stored the flag as OFF,
+        // which made this test pass without ever having the flag on). set() writes is_enabled and flushes the
+        // resolver's static caches, which survive resetAfterTest.
+        \local_sentientia_platform\feature_flags::set('sentientia_m365_enabled', 0, true, null, 'phpunit');
+        $this->assertTrue(\local_sentientia_platform\feature_flags::is_enabled('sentientia_m365_enabled'),
+            'Precondition: the master flag really is ON.');
 
         $user = $this->getDataGenerator()->create_user();
 
-        // Master flag ON, but graph traffic still throws.
+        // Master flag ON, but graph traffic still throws: Phase C.1 has no live-API flag, so the guard ignores it.
         $this->expectException(\moodle_exception::class);
         graph_client::get_me($user->id, 1);
     }

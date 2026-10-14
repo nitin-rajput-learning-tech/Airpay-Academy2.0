@@ -134,3 +134,6 @@ moodle-enhancement/docs/cutover/uat-credentials/
 # Local-only Playwright visual pass: generated test persona credentials and deps
 moodle-enhancement/tools/visual-pass/.personas.local.json
 moodle-enhancement/tools/visual-pass/node_modules/
+
+# Stage B rehearsal kit: the operator's env file holds box paths and database hosts (the example is tracked)
+tools/rehearsal/rehearsal.env

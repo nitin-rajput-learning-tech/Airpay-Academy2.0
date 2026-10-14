@@ -48,7 +48,11 @@ $hasbody = $row->body_html !== null && trim((string) $row->body_html) !== '';
 $body = '';
 if ($hasbody) {
     // Cleaned, never raw: trusted is false and noclean is not set. No filters: this is an archived message.
-    $body = format_text((string) $row->body_html, FORMAT_HTML, [
+    // First, nothing that would be fetched from outside: an old mail's remote image or tracking pixel must not call out
+    // to a third party, and tell it when an administrator read the message (F-65).
+    $source = \local_sentientia_emails\imported_history::without_external_resources((string) $row->body_html,
+        '[' . get_string('email_detail_image_removed', 'local_sentientia_emails') . ']');
+    $body = format_text($source, FORMAT_HTML, [
         'context' => $context,
         'trusted' => false,
         'noclean' => false,

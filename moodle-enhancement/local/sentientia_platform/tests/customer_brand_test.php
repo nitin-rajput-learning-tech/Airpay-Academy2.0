@@ -65,7 +65,7 @@ class customer_brand_test extends \advanced_testcase {
             'bg_color'         => '#F2F4FB',
             'icon_192_url'     => '/local/sentientia_platform/pix/customer/1/icon-192.png',
             'icon_512_url'     => '/local/sentientia_platform/pix/customer/1/icon-512.png',
-            'start_url'        => '/my/dashboard.php?utm_source=pwa_install',
+            'start_url'        => '/my/?utm_source=pwa_install',
             'lang'             => 'en',
             'status_bar_style' => 'default',
             'categories'       => 'education,productivity',
@@ -92,7 +92,7 @@ class customer_brand_test extends \advanced_testcase {
         $this->assertSame('#0066A7', $brand['theme_color']);
         $this->assertSame('#F2F4FB', $brand['bg_color']);
         $this->assertSame('en', $brand['lang']);
-        $this->assertSame('/my/dashboard.php?utm_source=pwa_install',
+        $this->assertSame('/my/?utm_source=pwa_install',
             $brand['start_url']);
 
         // Icons must resolve to an absolute URL containing the customer

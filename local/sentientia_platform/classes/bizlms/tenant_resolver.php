@@ -150,17 +150,30 @@ final class tenant_resolver {
     }
 
     /**
-     * Is this a registered tenant root?
+     * Is this a registered tenant root? Asks tenant::assert_valid(), which delegates to the tenant registry
+     * (VALID_TENANTS is never tested directly, mapping doc rule R3).
+     *
+     * Unlike resolve(), this does not look at the organisation table. The TENANT_OWNER importer (org) is the one
+     * that fills that table, so it must NOT call resolve() for its own rows: resolve() asks the table the feature
+     * is still writing. It asks this instead (2026-10-07, F-11).
      *
      * @param int $root
      * @return bool
      */
-    private function root_is_valid(int $root): bool {
+    public static function root_is_registered(int $root): bool {
         try {
             \local_sentientia_platform\tenant::assert_valid($root);
             return true;
         } catch (\Throwable $e) {
             return false;
         }
+    }
+
+    /**
+     * @param int $root
+     * @return bool
+     */
+    private function root_is_valid(int $root): bool {
+        return self::root_is_registered($root);
     }
 }

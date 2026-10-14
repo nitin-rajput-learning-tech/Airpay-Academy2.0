@@ -31,4 +31,13 @@ $observers = [
         'priority'  => 100,        // run before lower-priority observers
         'internal'  => false,      // run even in installation/upgrade context
     ],
+    [
+        // COMMS-N7 (2026-10-07): the BizLMS course_enrol e-mail. A no-op while the flag
+        // sentientia.emails.send_course_enrolment.enabled is OFF, which is its default. External (internal => false) so it
+        // runs after the enrolment's transaction has committed.
+        'eventname' => '\\core\\event\\user_enrolment_created',
+        'callback'  => '\\local_sentientia_emails\\observer::user_enrolment_created',
+        'priority'  => 100,
+        'internal'  => false,
+    ],
 ];

@@ -18,12 +18,14 @@ defined('MOODLE_INTERNAL') || die();
  *
  * What a row becomes:
  *  - item_type / itemid / courseid from compname and componentid. A course id is a core id and is kept. A
- *    path, classroom or program goes through that feature's map. A certification has no Sentientia entity
- *    (gap G3): item_type certification, the legacy id kept, history only.
+ *    path, classroom or program goes through that feature's map; one that is gone gets itemid 0 (COMMS-R2: the
+ *    legacy id could be given to a later item). A certification has no Sentientia entity (gap G3):
+ *    item_type certification, the legacy id kept, history only.
  *  - status PENDING/APPROVED/REJECTED -> pending/approved/rejected. A decided row is routed 'admin' (owner
  *    decision request.decided_route) with the responder as approver and decider. A pending course or path
- *    row is routed the way a new submission would be; a pending classroom, program or certification row has
- *    no approver and so sits in nobody's inbox.
+ *    row is routed the way a new submission would be, unless its requester is deleted or suspended or its item
+ *    is gone (COMMS-R1, request.pending_stale = history_only: warning pending_history_only); a pending
+ *    classroom, program or certification row has no approver and so sits in nobody's inbox.
  *  - costcenterid: the requester's CURRENT tenant root (the source stores none), 0 when there is none.
  *  - reason '': BizLMS recorded no reason (the column is NOT NULL text, so an empty string); the lists say so.
  *  - decision_note: the comment thread of the request, oldest first, as "[date] <full name>: text".
@@ -134,7 +136,13 @@ final class records_step extends request_step {
                     return outcome::skip($id, 'deferred');
                 }
                 // The component no longer exists in BizLMS. BizLMS hid the row; the owner chose to show it
-                // (request.hidden_rows), with the legacy id, which nothing new will ever reuse.
+                // (request.hidden_rows). It does NOT keep the legacy id (COMMS-R2): paths, classrooms and programs
+                // keep their ids on import and reset their sequence to MAX(id)+1, so if the deleted item had the
+                // highest id the next new one gets it, and this old request would show the new item's name, trip the
+                // duplicate guard of submit_path() and, on approval, enrol the learner in an unrelated item. itemid 0
+                // renders as "(deleted item)"; the legacy id stays in local_request_records.componentid and, with the
+                // legacy map, is recoverable. A course id is a core id and is never reused, so a course keeps its id.
+                $itemid = 0;
                 $gone = true;
             } else if ($entry['targetid'] === null) {
                 return outcome::skip($id, 'orphan_item', 'item_not_imported');
@@ -174,7 +182,11 @@ final class records_step extends request_step {
         $responder = legacy_request::int10($row->responder);
         $responder = ($responder !== null && $responder > 0) ? $responder : null;
         if ($status === 'pending') {
-            [$newstatus, $route, $approver] = $this->pending_plan($ctx, $settings, $itemtype, $itemid, $courseid, $user);
+            [$newstatus, $route, $approver, $planwarning] = $this->pending_plan($ctx, $settings, $itemtype, $itemid,
+                $courseid, $user, $gone);
+            if ($planwarning !== null) {
+                $warnings[] = $planwarning;
+            }
             $decidedby = null;
             $timedecided = null;
         } else {
@@ -297,7 +309,8 @@ final class records_step extends request_step {
      */
     private static function when(mixed $dt): string {
         if (preg_match('/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/', trim((string) $dt), $m)) {
-            return $m[1] . ' ' . $m[2];
+            // MySQL's zero date is how a datetime that was never set reads back: it is no date at all (F-80).
+            return $m[1] === '0000-00-00' ? '' : $m[1] . ' ' . $m[2];
         }
         return '';
     }

@@ -26,6 +26,13 @@ use core_privacy\local\request\writer;
  * carry no user-identifying data beyond the usermodified editor id, which
  * is handled here too.
  *
+ * ACTOR COLUMN usermodified (owner decision, 2026-10-07, "privacy: actor columns", rule R9 of the BizLMS import).
+ *   - local_sentientia_talent_path / _succ / _opp record the user who last edited a row. local_sentientia_talent_path was
+ *     not declared at all, and usermodified of the other two was handled but not declared. The rows belong to the
+ *     tenant's talent configuration and to the people they name, not to the editor, so an erasure KEEPS them and sets
+ *     usermodified to 0 (the signed users.erasure_treatment = anonymise design for actor columns). The export lists
+ *     what the user last edited (table, id, when), never the notes or the nominee.
+ *
  * @package local_sentientia_talent
  */
 class provider implements
@@ -33,13 +40,23 @@ class provider implements
         \core_privacy\local\request\plugin\provider,
         \core_privacy\local\request\core_userlist_provider {
 
+    /** Tables that record the user who last edited a row (usermodified). */
+    private const EDITED_TABLES = ['local_sentientia_talent_path', 'local_sentientia_talent_succ', 'local_sentientia_talent_opp'];
+
     public static function get_metadata(collection $collection): collection {
+        $collection->add_database_table('local_sentientia_talent_path', [
+            'name'         => 'privacy:metadata:path:name',
+            'usermodified' => 'privacy:metadata:path:usermodified',
+            'timemodified' => 'privacy:metadata:path:timemodified',
+        ], 'privacy:metadata:path');
+
         $collection->add_database_table('local_sentientia_talent_succ', [
             'designation' => 'privacy:metadata:succ:designation',
             'candidateid' => 'privacy:metadata:succ:candidateid',
             'incumbentid' => 'privacy:metadata:succ:incumbentid',
             'readiness'   => 'privacy:metadata:succ:readiness',
             'notes'       => 'privacy:metadata:succ:notes',
+            'usermodified' => 'privacy:metadata:succ:usermodified',
             'timecreated' => 'privacy:metadata:succ:timecreated',
         ], 'privacy:metadata:succ');
 
@@ -54,6 +71,7 @@ class provider implements
         $collection->add_database_table('local_sentientia_talent_opp', [
             'title'       => 'privacy:metadata:opp:title',
             'postedby'    => 'privacy:metadata:opp:postedby',
+            'usermodified' => 'privacy:metadata:opp:usermodified',
             'timecreated' => 'privacy:metadata:opp:timecreated',
         ], 'privacy:metadata:opp');
 
@@ -94,6 +112,10 @@ class provider implements
         $userlist->add_from_sql('targetuserid',
             "SELECT DISTINCT targetuserid FROM {local_sentientia_talent_audit}
               WHERE targetuserid IS NOT NULL", []);
+        foreach (self::EDITED_TABLES as $table) {
+            $userlist->add_from_sql('usermodified',
+                "SELECT DISTINCT usermodified FROM {{$table}} WHERE usermodified > 0", []);
+        }
     }
 
     public static function export_user_data(approved_contextlist $contextlist): void {
@@ -131,6 +153,23 @@ class provider implements
                 ['Talent — my expressions of interest'],
                 (object) ['interests' => array_values($entries)]);
         }
+
+        // Records this user last edited: which table, which row and when. Never the notes or the person a row names.
+        $edited = [];
+        foreach (self::EDITED_TABLES as $table) {
+            foreach ($DB->get_records_select($table, 'usermodified = :uid', ['uid' => $userid], 'id', 'id, timemodified') as $r) {
+                $edited[] = (object) [
+                    'table'         => $table,
+                    'id'            => (int) $r->id,
+                    'time_modified' => (int) $r->timemodified,
+                ];
+            }
+        }
+        if (!empty($edited)) {
+            writer::with_context($context)->export_data(
+                ['Talent — records I last edited'],
+                (object) ['records' => $edited]);
+        }
     }
 
     public static function delete_data_for_all_users_in_context(\context $context): void {
@@ -144,6 +183,9 @@ class provider implements
         // Opportunities are reference-ish; null out the poster rather than
         // deleting the postings on a blanket context wipe.
         $DB->set_field('local_sentientia_talent_opp', 'postedby', 0, []);
+        // Career paths and postings stay with the tenant; no editor stays on them.
+        $DB->set_field_select('local_sentientia_talent_path', 'usermodified', 0, 'usermodified <> 0');
+        $DB->set_field_select('local_sentientia_talent_opp', 'usermodified', 0, 'usermodified <> 0');
     }
 
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
@@ -164,6 +206,10 @@ class provider implements
             ['changedby' => $uid]);
         $DB->set_field('local_sentientia_talent_opp', 'postedby', 0,
             ['postedby' => $uid]);
+        // The editor is removed from what they last edited; the rows stay.
+        foreach (self::EDITED_TABLES as $table) {
+            $DB->set_field($table, 'usermodified', 0, ['usermodified' => $uid]);
+        }
     }
 
     public static function delete_data_for_users(approved_userlist $userlist): void {
@@ -186,5 +232,8 @@ class provider implements
                        WHERE changedby $insql", $inparams);
         $DB->execute("UPDATE {local_sentientia_talent_opp} SET postedby = 0
                        WHERE postedby $insql", $inparams);
+        foreach (self::EDITED_TABLES as $table) {
+            $DB->execute("UPDATE {{$table}} SET usermodified = 0 WHERE usermodified $insql", $inparams);
+        }
     }
 }

@@ -65,14 +65,33 @@ $plugin->component = 'local_sentientia_platform';
 // operator). Schema-only at this version — classification CLI runs in
 // Phase 1, providers consume in Phase 2-5. Q1 immutability ruling
 // means no UPDATE path on user_type column — append-only by design.
-$plugin->version   = 2026100701;  // ADR-032 framework: PRESERVE sequence floor never lowers a counter, step::target_children(), row-bounded acceptances, customer::of_tenant() (no schema change; the version marks the code local_sentientia_evaluation 2026100702 relies on)
-// 2026093002 - persona pass D11: Switchboard category labels (on top of 2026093001 ADR-032 BizLMS import framework)
+// 2026100701 - ADR-032 owner decisions (2026-10-07): the copies_files marker + the {files} tripwire for every importer
+// without it (IDN-04), runner::preflight_feature() catches blocked (F-10), tenant_resolver::root_is_registered() (F-11),
+// the privacy guard reads usermodified/usercreated/modified_by (F-15). No schema change.
+// 2026100801 - Moodle 5.3 compat FX-12: NEW classes/compat/user_api.php, the one place plugins create and update users (\core\user on 5.3,
+// user/lib.php on 5.1/5.2), so the deprecated 5.3 user_*() globals are never reached. No schema change.
+// 2026100802 - Moodle 5.3 compat FX-16: upgrade step rewriting the stored PWA start_url /my/dashboard.php -> /my/ (customer brand rows),
+// default brand bundle and plugin links point at /my/ so they no longer need the my/dashboard.php shim. No schema change.
+// 2026100803 - Moodle 5.3 compat FX-20: the Switchboard "Review changes" confirmation is a core/modal_save_cancel dialog (it used window.bootstrap.Modal, which exists in no tree, so the review step was silently skipped); AMD bundle rebuilt, dead modal markup removed from the template. No schema change.
+// 2026100804 - Moodle 5.3 compat FX-20 round 1: switchboard.js loses its dead confirm-apply branch (the dialog's Save button submits through the ModalEvents.save handler; nothing in the template carries that data-action any more); AMD bundle rebuilt. No schema change.
+// 2026100901 - B1: feature_flags override snapshot expires after SNAPSHOT_TTL (30 s) so long-running processes (cron, adhoc, CLI, SSE) see a flag flipped elsewhere; one clock read + one snapshot per resolution. No schema change.
+// 2026100902 - Stage B parity tooling merged from claude/stageb-tools (versions 2026100801 and 2026100802 on that branch):
+// parity metrics version 4 (BizLMS substrate checksums, the core section of the baseline, the sha256 of the tool that took it,
+// a baseline of another version or tool refused), the post-import parity gate (classes/bizlms/parity_gate.php) and the
+// standalone source baseline (cli/source_baseline.php); enrol is reviewed for INSERT and UPDATE, the UPDATE explained by the
+// enrolments importer's enroloff trail (CRS-01). No schema change.
+// 2026100903 - feature_flags keeps its registry + override snapshot in NEW classes/local/feature_flags_state.php, fetched from \core\di, so PHPUnit's per-test container reset clears it (a flag one test set no longer leaks into the next); production lifetime and TTL unchanged. No schema change.
+// 2026101500 - claude/eval-followups merged: the ADR-032 framework code it wrote as 2026100701 (the PRESERVE sequence
+// floor that never lowers a counter, step::target_children() + runner::preflight_target_children(), row-bounded
+// accepted_reasons "<feature>:<code><=<rows>", customer::of_tenant()). No schema change; the upgrade step only records it.
+$plugin->version   = 2026101500;  // eval-followups framework code (on top of 2026100903 feature_flags state in \core\di)
+// 2026100802:  // Moodle 5.3 compat FX-16: PWA start_url -> /my/ (on top of 2026100801 FX-12 compat\user_api)
 // 2026092500 - ADR-031: local/sentientia_platform:crosstenant + tenant::is_cross_tenant/scope_path/require_same_tenant_user
 // 2026092400 - tests/exception_strings_test.php: platform guard - core-resolved exception keys must exist (N5)
 // 2026092200: tenant::path_descendant_filter() + DB-level path-boundary regression suite  // Phase 2.1: customer::current() de-hardwired via tenant_registry (dormant while legacy allow-list ON)
-$plugin->requires  = 2022041900;
+$plugin->requires  = 2024100700;  // Moodle 4.5+: feature_flags uses the core DI container and clock (4.4+); Sentientia runs on 5.1/5.2/5.3
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.11.0';  // +framework: sequence floor (EV-26), step::target_children(), row-bounded acceptances, customer::of_tenant() (1.10.1: +Switchboard category labels; 1.10.0: +ADR-032 BizLMS import framework, 3 tables)
+$plugin->release   = '1.13.0';  // +eval-followups framework code: sequence floor, target_children, row-bounded acceptances, customer::of_tenant() (1.12.0: Stage B parity tooling; 1.11.x: compat, PWA start_url)
 // 1.9.0: +ADR-031 cross-tenant authority
 // 1.8.0: +ADR-017 Phase 0 user_type schema (5 tables)
 // Release history

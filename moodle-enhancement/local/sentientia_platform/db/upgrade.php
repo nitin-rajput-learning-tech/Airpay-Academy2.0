@@ -416,14 +416,44 @@ function xmldb_local_sentientia_platform_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026093001, 'local', 'sentientia_platform');
     }
 
-    // ── 2026-10-07 — ADR-032 framework code marker. No schema change: the PRESERVE sequence floor that never lowers a
+    // ── Moodle 5.3 compat FX-16 (2026-10-08) — the PWA start_url no longer depends on the /my/dashboard.php shim.
+    // Vanilla Moodle 5.3 ships no my/dashboard.php: the BizLMS compatibility redirect is an additive overlay file
+    // now, and links should not rely on it. The 2026052201 step above stored '/my/dashboard.php?utm_source=pwa_install'
+    // for the Airpay customer-zero brand row; that executed step is left as it was. Here every brand row whose
+    // start_url is exactly the old shim path (optionally with a query or fragment) is rewritten to the same URL on
+    // '/my/'. Anything an admin chose for themselves (any other path) is left alone. /my/ is what the shim redirected
+    // to, so an installed PWA lands on the same page. Idempotent: a second run finds nothing to rewrite.
+    if ($oldversion < 2026100802) {
+        if ($dbman->table_exists(new xmldb_table('local_sentientia_customer_brand'))) {
+            $oldpath = '/my/dashboard.php';
+            $rows = $DB->get_records_select('local_sentientia_customer_brand',
+                $DB->sql_like('start_url', ':p'),
+                ['p' => $DB->sql_like_escape($oldpath) . '%'], '', 'id, start_url');
+            foreach ($rows as $row) {
+                $rest = substr($row->start_url, strlen($oldpath));
+                // Only the shim path itself: not /my/dashboard.php.bak or /my/dashboard.phpx.
+                if ($rest !== '' && $rest[0] !== '?' && $rest[0] !== '#') {
+                    continue;
+                }
+                $DB->update_record('local_sentientia_customer_brand', (object) [
+                    'id'           => $row->id,
+                    'start_url'    => '/my/' . $rest,
+                    'timemodified' => time(),
+                ]);
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026100802, 'local', 'sentientia_platform');
+    }
+
+    // ── 2026-10-15 — ADR-032 framework code marker, merged from claude/eval-followups (written there as 2026100701,
+    // a number gap-integration had already used). No schema change: the PRESERVE sequence floor that never lowers a
     // counter (writer::reset_sequence), step::target_children() with runner::preflight_target_children(), the
-    // row-bounded accepted_reasons, and customer::of_tenant(). local_sentientia_evaluation 2026100702 declares this
-    // version as its dependency, so an evaluation tree can never run beside a platform tree that lacks them (the
-    // evaluation importer's own leftover-rows check was replaced by the framework's, and would otherwise vanish
-    // silently). Nothing to alter, so the step only records the version (the savepoint keeps a re-run harmless).
-    if ($oldversion < 2026100701) {
-        upgrade_plugin_savepoint(true, 2026100701, 'local', 'sentientia_platform');
+    // row-bounded accepted_reasons, and customer::of_tenant(). local_sentientia_evaluation declares this version as
+    // its dependency, so an evaluation tree can never run beside a platform tree that lacks them. Nothing to alter, so
+    // the step only records the version (the savepoint keeps a re-run harmless).
+    if ($oldversion < 2026101500) {
+        upgrade_plugin_savepoint(true, 2026101500, 'local', 'sentientia_platform');
     }
 
     return true;

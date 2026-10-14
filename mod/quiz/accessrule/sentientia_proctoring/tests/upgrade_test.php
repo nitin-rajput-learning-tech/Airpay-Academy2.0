@@ -46,7 +46,22 @@ final class upgrade_test extends \advanced_testcase {
      */
     public static function setUpBeforeClass(): void {
         global $CFG;
+        // The upgrade function calls upgrade_plugin_savepoint() (lib/upgradelib.php). Moodle 5.1 happened to have it
+        // loaded in this context; 5.3 does not, so the test loads it itself, as core's own upgrade tests do.
+        require_once($CFG->libdir . '/upgradelib.php');
         require_once($CFG->dirroot . '/mod/quiz/accessrule/sentientia_proctoring/db/upgrade.php');
+    }
+
+    /**
+     * Run the upgrade as Moodle runs it: with the plugin's stored version at $oldversion. The test site holds the
+     * current version, above every savepoint, so upgrade_plugin_savepoint() would refuse each one as a downgrade.
+     *
+     * @param int $oldversion Version the upgrade starts from.
+     * @return bool The upgrade function's result.
+     */
+    private function upgrade_from(int $oldversion): bool {
+        set_config('version', $oldversion, 'quizaccess_sentientia_proctoring');
+        return xmldb_quizaccess_sentientia_proctoring_upgrade($oldversion);
     }
 
     /**
@@ -80,7 +95,7 @@ final class upgrade_test extends \advanced_testcase {
         ]);
 
         // 3. Run the upgrade from a pre-2026051300 version.
-        $result = xmldb_quizaccess_sentientia_proctoring_upgrade(2026051200);
+        $result = $this->upgrade_from(2026051200);
 
         // 4. Upgrade returned true.
         $this->assertTrue($result);
@@ -127,7 +142,7 @@ final class upgrade_test extends \advanced_testcase {
         // No legacy config rows seeded.
         $before = $DB->count_records('quizaccess_sentientia_proctor');
 
-        $result = xmldb_quizaccess_sentientia_proctoring_upgrade(2026051200);
+        $result = $this->upgrade_from(2026051200);
 
         $this->assertTrue($result);
         $this->assertTrue($dbman->table_exists($table));
@@ -153,7 +168,7 @@ final class upgrade_test extends \advanced_testcase {
             'value'  => '1',
         ]);
 
-        $result = xmldb_quizaccess_sentientia_proctoring_upgrade(2026051300);
+        $result = $this->upgrade_from(2026051300);
         $this->assertTrue($result);
 
         // The config row should still exist — migration did NOT run.
@@ -193,7 +208,7 @@ final class upgrade_test extends \advanced_testcase {
             'value'  => '1',
         ]);
 
-        $result = xmldb_quizaccess_sentientia_proctoring_upgrade(2026051200);
+        $result = $this->upgrade_from(2026051200);
 
         $this->assertTrue($result);
         // 77 was migrated.

@@ -152,10 +152,10 @@ try {
         }
         cli_writeln(count($importers) . ' importer(s) registered');
         foreach (runner::feature_states($importers) as $feature => $s) {
-            cli_writeln(sprintf('  %-18s owner=%s deps=[%s] sources=%d/%d complete=%s tripped=%s started=%s running_steps=%d heartbeat_age=%s',
+            cli_writeln(sprintf('  %-18s owner=%s deps=[%s] sources=%d/%d complete=%s tripped=%s started=%s running_steps=%d pending_steps=%d heartbeat_age=%s',
                 $feature, $s['owner'], implode(',', $s['depends']), $s['sources_present'], $s['sources'],
                 $s['complete_runid'] ?: 'no', $s['tripped_runid'] ?: 'no', $s['started'] ? 'yes' : 'no', $s['running_steps'],
-                $s['last_heartbeat_age'] === null ? '-' : $s['last_heartbeat_age'] . 's'));
+                $s['pending_steps'], $s['last_heartbeat_age'] === null ? '-' : $s['last_heartbeat_age'] . 's'));
         }
         if ($options['list']) {
             $rows = unclaimed::with_rows($importers);

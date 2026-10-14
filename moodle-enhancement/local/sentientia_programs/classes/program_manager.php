@@ -1372,10 +1372,95 @@ class program_manager {
     }
 
     /**
+     * Is this imported program enrolment one that carries NO history yet, so that an admin may remove it?
+     *
+     * Owner decision framework.protect_imported_history_pending_enrolments (2026-10-07; LRN-10): an enrolment the
+     * BizLMS import brought in that has no completion, progress or stored level completion, on an active program, is
+     * not history yet, and removing it is a routine BizLMS action. A row that is in progress or completed, that has
+     * a current level or a stored level completion, and every row of a program that is not active (draft or
+     * archived) stay blocked. The BizLMS row stays in the legacy tables.
+     *
+     * @param \stdClass $program The program row (status).
+     * @param \stdClass $row The enrolment row (programid, userid, status, currentlevelid, timecompleted).
+     * @param bool|null $hasstoredcompletion Does the learner hold a stored level completion in the program? Null reads it.
+     * @return bool
+     */
+    public static function imported_enrolment_is_pending(\stdClass $program, \stdClass $row,
+                                                         ?bool $hasstoredcompletion = null): bool {
+        global $DB;
+        if ((int) $program->status !== self::STATUS_ACTIVE) {
+            return false;
+        }
+        if ((int) $row->status !== self::ENROL_NEW || !empty($row->timecompleted) || !empty($row->currentlevelid)) {
+            return false;
+        }
+        if ($hasstoredcompletion === null) {
+            $hasstoredcompletion = self::table_present(self::LVLCOMP_TABLE)
+                && $DB->record_exists(self::LVLCOMP_TABLE, ['programid' => (int) $row->programid, 'userid' => (int) $row->userid]);
+        }
+        return !$hasstoredcompletion;
+    }
+
+    /**
+     * Which of these learners hold a stored level completion in a program? One query for a page of a roster.
+     *
+     * @param int $programid
+     * @param int[] $userids
+     * @return array<int, true> The learners that do, keyed by user id.
+     */
+    public static function users_with_stored_completion(int $programid, array $userids): array {
+        global $DB;
+        $userids = array_values(array_unique(array_filter(array_map('intval', $userids), fn($id) => $id > 0)));
+        if (!$userids || !self::table_present(self::LVLCOMP_TABLE)) {
+            return [];
+        }
+        [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'sc');
+        $params['scprog'] = $programid;
+        $ids = $DB->get_fieldset_select(self::LVLCOMP_TABLE, 'DISTINCT userid',
+            "programid = :scprog AND userid $insql", $params);
+        return array_fill_keys(array_map('intval', $ids), true);
+    }
+
+    /**
+     * Which of a page of roster records are imported history that an admin may NOT remove?
+     *
+     * An imported enrolment that carries no history yet is not one of them (imported_enrolment_is_pending()). One
+     * query for the map and one for the stored level completions, whatever the page size.
+     *
+     * @param int $programid
+     * @param \stdClass[] $records Rows of get_enrolled_users() (id, userid, status, currentlevelid, timecompleted).
+     * @return array<int, true> Enrolment id => true, for the records that must not be removed.
+     */
+    public static function protected_enrolment_ids(int $programid, array $records): array {
+        $imported = self::imported_enrolment_ids(array_map(static fn($rec) => (int) $rec->id, $records));
+        if (!$imported) {
+            return [];
+        }
+        $program = self::get($programid);
+        $withstored = self::users_with_stored_completion($programid,
+            array_map(static fn($rec) => (int) $rec->userid, $records));
+        $protected = [];
+        foreach ($records as $rec) {
+            if (empty($imported[(int) $rec->id])) {
+                continue;
+            }
+            $pending = $program && self::imported_enrolment_is_pending($program, (object) [
+                'programid' => $programid, 'userid' => (int) $rec->userid, 'status' => $rec->status,
+                'currentlevelid' => $rec->currentlevelid ?? null, 'timecompleted' => $rec->timecompleted ?? null,
+            ], !empty($withstored[(int) $rec->userid]));
+            if (!$pending) {
+                $protected[(int) $rec->id] = true;
+            }
+        }
+        return $protected;
+    }
+
+    /**
      * Unenrol a user from a program. No-op if not enrolled.
      *
      * ADR-032: an enrolment the BizLMS import carried is history and is not removed (decision
-     * framework.protect_imported_history); a program can be archived instead. Removing any other enrolment
+     * framework.protect_imported_history); a program can be archived instead. LRN-10 (2026-10-07): except an imported
+     * enrolment that carries none yet (imported_enrolment_is_pending()). Removing any other enrolment
      * also removes the learner's stored level completions in that program, so none is left without an
      * enrolment.
      *
@@ -1384,9 +1469,16 @@ class program_manager {
     public static function unenrol_user(int $programid, int $userid): bool {
         global $DB;
         $rows = $DB->get_records(self::USERS_TABLE,
-            ['programid' => $programid, 'userid' => $userid], '', 'id');
-        if ($rows && self::imported_enrolment_ids(array_keys($rows))) {
-            throw new \moodle_exception('error_history_protected', 'local_sentientia_programs');
+            ['programid' => $programid, 'userid' => $userid], '', 'id, programid, userid, status, currentlevelid, timecompleted');
+        $imported = $rows ? self::imported_enrolment_ids(array_keys($rows)) : [];
+        if ($imported) {
+            $program = $DB->get_record(self::TABLE, ['id' => $programid], 'id, status');
+            foreach ($rows as $row) {
+                if (!empty($imported[(int) $row->id])
+                        && (!$program || !self::imported_enrolment_is_pending($program, $row))) {
+                    throw new \moodle_exception('error_history_protected', 'local_sentientia_programs');
+                }
+            }
         }
         $DB->delete_records(self::USERS_TABLE,
             ['programid' => $programid, 'userid' => $userid]);

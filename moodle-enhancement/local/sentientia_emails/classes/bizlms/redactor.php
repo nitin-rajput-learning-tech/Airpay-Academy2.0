@@ -17,15 +17,27 @@ defined('MOODLE_INTERNAL') || die();
  *
  *  1. A row is a CREDENTIAL row when the notification type belongs to the users
  *     module, when its template text uses the password placeholder, when its own
- *     module type says users, or when its template cannot be found any more and the
- *     subject reads like an account message. Templates are edited in place and
- *     hard-deleted in BizLMS, so the template that exists today cannot prove what
- *     was sent. A credential row is imported with its subject MASKED and its body
- *     NULL. The original stays in the legacy table, which is the archive.
+ *     module type says users, or when its template (or its notification type) cannot
+ *     be found any more. Templates are edited in place and hard-deleted in BizLMS,
+ *     so the template that exists today cannot prove what was sent. The row's own
+ *     moduletype column cannot be relied on either: it is empty on every row of the
+ *     April 2026 production copy, because the BizLMS users writer never sets it
+ *     (decision COMMS-N1, 2026-10-07). A credential row is imported with its body
+ *     NULL and its subject MASKED. A row whose template is gone has its body
+ *     withheld whatever its text says (it cannot be known what the message was); its
+ *     subject is masked only when it names a secret or account word, else scrubbed.
+ *     The original stays in the legacy table, which is the archive.
  *  2. Every other subject and body still goes through scrub(), a second line of
  *     defence that blanks the value after words such as password, passcode, PIN,
  *     OTP, secret, token or API key, and the secret parameters of a URL. If the
- *     scrub itself fails, the text is withheld rather than copied.
+ *     scrub itself fails, the text is withheld rather than copied. scrub() is
+ *     deliberately conservative: it also blanks the bare words "pass" and "pin"
+ *     followed by a value, and a word after a secret word that sits behind a tag or a
+ *     line break. It changes 0 of the 13,363 kept April rows (F-72), so the cost of
+ *     that over-redaction is nil today and it is accepted.
+ *  3. importer::verify() runs scrub() over everything that was imported and fails the
+ *     run when it would still change a word (imported_text_with_unredacted_secret).
+ *     scrub() is idempotent, so a clean import never trips it.
  *
  * Everything here is pure: no database, no Moodle state. It is the part of the
  * importer that can be tested without a site.
@@ -50,6 +62,21 @@ final class redactor {
 
     /** Words that introduce a secret value. Matched whole, case-insensitively. */
     private const SECRET_WORDS = 'pass(?:word|wd|code|phrase)?|pwd|otp|pin|secret|token|api[ _-]?key|access[ _-]?key|credentials?';
+
+    /**
+     * Words that mean "a secret follows or is named here", for deciding what to do with the SUBJECT of a message
+     * whose template is gone (COMMS-N1). No separator is needed: the subject only has to name one. The bare word
+     * "pass" is not in the list (it would mask "Exam pass certificate"); password, passwd, passcode and passphrase
+     * are. Matched whole, case-insensitively.
+     */
+    private const MENTION_WORDS = 'pass(?:word|wd|code|phrase)|pwd|otp|pin|secret|token|credentials?';
+
+    /**
+     * The same words as plain substrings, for the LIKE of the preflight count (a substring also matches "spin" and
+     * "optional", so a count made with it is an upper bound).
+     */
+    public const MENTION_LIKE = ['password', 'passwd', 'passcode', 'passphrase', 'pwd', 'credential', 'otp', 'pin',
+        'secret', 'token'];
 
     /** A dash as a separator: hyphen, en dash, em dash (the last two as UTF-8 bytes; the patterns are not /u). */
     private const DASH = '-|\xE2\x80[\x93\x94]';
@@ -103,13 +130,29 @@ final class redactor {
      * Does a subject read like an account message? Only used when the template is gone and nothing else can
      * say what the message was, so it errs on the side of withholding.
      *
+     * "Your Airpay Academy account" is the shape of a real welcome subject (COMMS-N1), so the bare word
+     * "account" counts, as do log in, sign in, activation and reset.
+     *
      * @param string|null $subject
      * @return bool
      */
     public static function subject_suggests_credentials(?string $subject): bool {
         return preg_match(
-            '/\b(?:password|passwd|credentials?|login (?:details|info\w*)|user ?name|welcome|account (?:created|details)|registration)\b/i',
+            '/\b(?:password|passwd|pwd|passcode|credentials?|log[- ]?in|sign[- ]?in|user ?name|user ?id|welcome'
+            . '|account|registration|activat\w*|reset)\b/i',
             (string) $subject) === 1;
+    }
+
+    /**
+     * Does a text name a secret word (password, passwd, pwd, passcode, credential(s), OTP, PIN, secret, token), with
+     * no separator needed? Used for the subject of a message whose template is gone: such a subject is masked when
+     * it names one, and scrubbed otherwise. Whole words only, so "spinning" and "optional" do not count.
+     *
+     * @param string|null $text
+     * @return bool
+     */
+    public static function text_mentions_secret(?string $text): bool {
+        return preg_match('/(?<![A-Za-z0-9_])(?:' . self::MENTION_WORDS . ')(?![A-Za-z0-9_])/i', (string) $text) === 1;
     }
 
     /**
@@ -129,11 +172,21 @@ final class redactor {
         // a longer run is not a "password: value" construct, and an unbounded one can exhaust PCRE's JIT stack
         // on a message with a hundred thousand blanks (scrub() would then return null and withhold the text).
         $gap = '(?>(?:\s|&nbsp;|<[^<>]{0,300}>){0,50})';
+        // A gap that holds at least one tag or line break, and needs NO separator: the label and the value sit in
+        // different table cells, lines or elements ("<td>Password</td><td>x</td>", "Password<br>x"). Whatever token
+        // follows it is taken for the value: over-redaction is the safe direction (F-72).
+        $taggap = '(?>(?:[ \t]|&nbsp;){0,50}(?:<[^<>]{0,300}>|\r\n|\n|\r)(?:\s|&nbsp;|<[^<>]{0,300}>){0,50})';
         // "password: x", "password = x", "password is x", "password - x", "the password was: x", "password: 'x'".
         // The words is, was and are must end there, or "password island" would read "password is" + "land".
+        // The value runs to the next whitespace, '<' or quote, so a ',', ';' or '&' inside a password no longer ends
+        // it and leaves its tail behind ("Abc&1234", "Ab;xYz9"). One exception: an '&' that opens the next link
+        // parameter ("token=abc&user=5") still ends it, so the rest of the link survives. It has no upper length: a
+        // value cut at a limit would leave a tail, and scrub() must be idempotent for importer::verify(). The runs are
+        // possessive and made of single character classes, so a very long token costs nothing.
+        $value = '((?:[^\s<"\'&]|&(?![A-Za-z_]+=))[^\s<"\'&]*+(?:&(?![A-Za-z_]+=)[^\s<"\'&]*+)*+)';
         $pattern = '/(?<![A-Za-z0-9_])(' . self::SECRET_WORDS . ')(?![A-Za-z0-9_])'
-            . '(' . $gap . '(?:(?:(?:is|was|are)(?![A-Za-z0-9_])|:|=|' . self::DASH . ')' . $gap . '){1,3})'
-            . '(["\']?)([^\s<>"\',;&]{3,200})/i';
+            . '(' . $gap . '(?:(?:(?:is|was|are)(?![A-Za-z0-9_])|:|=|' . self::DASH . ')' . $gap . '){1,3}|' . $taggap . ')'
+            . '(["\']?)' . $value . '/i';
         $scrubbed = preg_replace($pattern, '${1}${2}${3}' . self::MASK, $text);
         if ($scrubbed === null) {
             return null;

@@ -1,0 +1,70 @@
+# Stage B rehearsal kit: where the production BizLMS (eAbyas) plugin code must NOT be.
+#
+# Source: the 50 plugins "missing from disk" on the April 2026 production copy after hop 1 (rehearsal log, 2026-09-30),
+# and migration plan section 0 (decision of 2026-09-30: BizLMS code OFF disk for both hops; their tables stay for the
+# ADR-032 importers; never uninstall a missing-from-disk plugin, which drops its tables).
+#
+# One plugin per line:  <component>  <hop1 rule>  <hop2 rule>
+#   hop1 = the Moodle 4.5 core tree (CODE_45_DIR), hop2 = the Sentientia 5.x package (CODE_5X_DIR)
+#   R = the directory must be absent (the step fails if it is there)
+#   W = warn when the directory is there
+#   - = not checked (the 5.x package legitimately ships it)
+#
+# A component maps to a directory by its type: local_x -> local/x, block_x -> blocks/x, enrol_x -> enrol/x,
+# tool_x -> admin/tool/x, theme_x -> theme/x, paygw_x -> payment/gateway/x. The 5.x tree adds a public/ prefix.
+#
+# local_airpay_ratings is the retired duplicate of local_sentientia_ratings. With both on disk the upgrade stops with
+# "Cannot redeclare airpay_display_rating()" (first local hop-2 attempt, 2026-10-01); tools/packaging/build-5.2-standalone.sh
+# leaves it out of the package, and this line makes the kit refuse a tree that has it.
+local_airpay_ratings        R R
+#
+# The 22 BizLMS local plugins.
+local_assignroles           R R
+local_biz_cart              R R
+local_classroom             R R
+local_costcenter            R R
+local_courses               R R
+local_custom_category       R R
+local_evaluation            R R
+local_forum                 R R
+local_groups                R R
+local_learningplan          R R
+local_location              R R
+local_myteam                R R
+local_notifications         R R
+local_onlineexams           R R
+local_program               R R
+local_ratings               R R
+local_recompletion          R R
+local_request               R R
+local_search                R R
+local_skillrepository       R R
+local_tags                  R R
+local_users                 R R
+#
+# BizLMS enrol methods.
+enrol_classroom             R R
+enrol_learningplan          R R
+enrol_program               R R
+#
+# BizLMS blocks (the package ships the sentientia_* blocks, so a BizLMS block there is unexpected: warn).
+block_achievements          R W
+block_learnerscript         R W
+block_masterinfo            R W
+block_my_event_calendar     R W
+block_myskills              R W
+block_quick_navigation      R W
+block_reportdashboard       R W
+block_reporttiles           R W
+block_suggested_courses     R W
+block_trainerdashboard      R W
+block_trending_modules      R W
+block_userdashboard         R W
+#
+# Production's theme. It is not in the package, so pages fall back to boost until step 07 switches the site theme.
+theme_epsilon               R W
+#
+# Bundled by BizLMS on 4.1.2; the Sentientia package ships tool_certificate and paygw_airpay itself.
+tool_certificate            R -
+tool_tcpdffonts             R -
+paygw_airpay                R -

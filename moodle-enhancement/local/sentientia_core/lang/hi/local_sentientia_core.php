@@ -105,3 +105,5 @@ $string['privacy:metadata:admin_log:usermodified'] = 'वह व्यक्त�
 $string['privacy:metadata:admin_log:actor_path'] = 'प्रविष्टि आयात होते समय कार्य करने वाले व्यक्ति का संगठन पथ';
 $string['privacy:metadata:admin_log:timecreated'] = 'BizLMS में प्रविष्टि कब बनी';
 $string['privacy:metadata:admin_log:timemodified'] = 'BizLMS में प्रविष्टि अंतिम बार कब बदली';
+$string['privacy:metadata:course_creator'] = 'कोर्स पर BizLMS का कोर्स-निर्माता कॉलम। निर्माता को मिटाने पर कोर्स बना रहता है; निर्माता 0 कर दिया जाता है।';
+$string['privacy:metadata:course_creator:open_coursecreator'] = 'वह उपयोगकर्ता जिसने कोर्स बनाया, जैसा BizLMS ने दर्ज किया।';

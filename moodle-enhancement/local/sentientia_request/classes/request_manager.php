@@ -355,7 +355,7 @@ class request_manager {
         try {
             $now = time();
             $rec->status            = $decision;
-            $rec->decision_note     = $note;
+            $rec->decision_note     = self::note_after_decision($rec, $note);
             $rec->decided_by_userid = $deciderid;
             $rec->timedecided       = $now;
             $rec->timemodified      = $now;
@@ -579,19 +579,23 @@ class request_manager {
     }
 
     /**
-     * Look up a course owner userid from a custom course field, if set.
-     * Returns 0 if unset.
+     * The decision note a row carries after a decision.
+     *
+     * A native row's note is the decider's note, replacing whatever was there. A row imported from BizLMS (ADR-032)
+     * may carry the folded comment thread of the request in decision_note, which is history and shown to the
+     * requester: the decider's note goes BELOW it, after a newline, and never replaces it (COMMS-R4). An empty note
+     * leaves the thread as it is.
+     *
+     * @param \stdClass $rec The request row before the decision.
+     * @param string $note The decider's note.
+     * @return string
      */
-    private static function get_course_owner_userid(int $courseid): int {
-        global $DB;
-        // Check Moodle custom course fields shortname='course_owner_userid'.
-        $row = $DB->get_record_sql(
-            "SELECT cd.intvalue FROM {customfield_data} cd
-               JOIN {customfield_field} cf ON cf.id = cd.fieldid
-              WHERE cf.shortname = :sn AND cd.instanceid = :cid
-              LIMIT 1",
-            ['sn' => 'course_owner_userid', 'cid' => $courseid]);
-        return $row ? (int) $row->intvalue : 0;
+    private static function note_after_decision(\stdClass $rec, string $note): string {
+        $existing = trim((string) ($rec->decision_note ?? ''));
+        if (($rec->legacy_source ?? null) !== 'bizlms' || $existing === '') {
+            return $note;
+        }
+        return trim($note) === '' ? $existing : $existing . "\n" . $note;
     }
 
     /** Enrol user via manual enrol — idempotent, mirrors cart_manager. */

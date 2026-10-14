@@ -96,13 +96,9 @@ final class capability_names_test extends \advanced_testcase {
      * @var array<string,int>
      */
     private const BASELINE = [
-        // Bulk enrolment by audience. lang/en names the capability but no
-        // access.php declares it, so the page, the form and both web services
-        // refuse everyone, site admins included. Belongs to the classroom work.
-        'local_sentientia_classroom/classes/external/bulk_enrol_by_audience.php|local/sentientia_classroom:enrol' => 1,
-        'local_sentientia_classroom/classes/external/preview_audience.php|local/sentientia_classroom:enrol' => 1,
-        'local_sentientia_classroom/classes/form/bulk_enrol_audience_form.php|local/sentientia_classroom:enrol' => 1,
-        'local_sentientia_classroom/db/services.php|local/sentientia_classroom:enrol' => 2,
+        // (Bulk enrolment by audience gated on local/sentientia_classroom:enrol, which no access.php declares, so the
+        // page, the form and both web services refused everyone. Fixed 2026-10-07, XC-CLS-ENROL: they gate on
+        // :manage now, behind the flag sentientia.classroom.bulk_enrol_audience. The four entries are gone.)
         // The evaluation response list and detail pages were here (they gated on :view, declared nowhere). EV-06
         // regated both on :manage behind the flag sentientia.evaluation.response_drilldown, so their entries are
         // gone: a new undeclared capability there fails this test like any other.
@@ -117,9 +113,9 @@ final class capability_names_test extends \advanced_testcase {
      * @var array<string,int>
      */
     private const PENDING_ELSEWHERE = [
-        // claude/fixes-0930 (77e7fd0a9, c7b6cecb4) gates on
-        // local/sentientia_classroom:attendance instead.
-        'local_sentientia_pages/qr_attendance.php|local/classroom:takesessionattendance' => 1,
+        // (Empty. The one entry here, qr_attendance.php|local/classroom:takesessionattendance, went stale when
+        // claude/fixes-0930 landed: qr_attendance.php gates on local/sentientia_classroom:attendance. Removed
+        // 2026-10-07, critic item 91.)
     ];
 
     /**

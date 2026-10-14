@@ -34,6 +34,24 @@ final class evidence_archiver {
     /** Ids per IN clause when rows are attached to their history row. */
     private const CHUNK = 1000;
 
+    /** @var \Closure|null A failure the tests inject (see inject_failure()); null in production. */
+    private static ?\Closure $failure = null;
+
+    /**
+     * Make archive() fail on demand, so a test can prove that a learner whose copy fails is rolled back and the
+     * rest of a batch still runs. A database cannot be made to fail on cue with valid data: every value the copy
+     * writes is bounded first. The closure is called with (userid, courseid) AFTER every row of that learner has
+     * been copied, inside the reset's transaction, and whatever it throws stops the reset: the copied rows must go
+     * with the rollback. Pass null to remove it.
+     *
+     * @internal Tests only; no production code calls it.
+     * @param \Closure|null $failure
+     * @return void
+     */
+    public static function inject_failure(?\Closure $failure): void {
+        self::$failure = $failure;
+    }
+
     /**
      * Copy everything a reset of one learner in one course will delete.
      *
@@ -57,6 +75,9 @@ final class evidence_archiver {
         }
         if ($grades) {
             array_push($ids, ...self::grades($userid, $courseid, $now));
+        }
+        if (self::$failure !== null) {
+            (self::$failure)($userid, $courseid);
         }
         return $ids;
     }

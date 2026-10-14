@@ -112,7 +112,7 @@ class language_switcher {
         // session and the profile (current_language() returns it), so a switch
         // there would silently do nothing. Core hides its menu in the same case.
         $course = $page->course;
-        if ((int) $course->id !== SITEID && !empty($course->lang)) {
+        if ((int) $course->id !== (int) SITEID && !empty($course->lang)) {
             return $result;
         }
         if (!empty($page->cm->lang)) {
@@ -197,8 +197,14 @@ class language_switcher {
                 && !\core\session\manager::is_loggedinas()
                 && has_capability('moodle/user:editownprofile', \context_system::instance())
                 && (string) ($USER->lang ?? '') !== $lang) {
-            require_once($CFG->dirroot . '/user/lib.php');
-            user_update_user((object) ['id' => $USER->id, 'lang' => $lang], false, true);
+            $update = (object) ['id' => $USER->id, 'lang' => $lang];
+            if (method_exists(\core\user::class, 'update_user')) {
+                // Moodle 5.3 (MDL-82650): the global user_update_user() is deprecated there.
+                \core\user::update_user($update, false, true);
+            } else {
+                require_once($CFG->dirroot . '/user/lib.php');
+                user_update_user($update, false, true);
+            }
             $USER->lang = $lang;
         }
 

@@ -80,19 +80,16 @@ final class org_source {
     }
 
     /**
-     * Is this a registered tenant root? Asks tenant::assert_valid(), which delegates to the tenant registry.
-     * VALID_TENANTS is never tested directly (mapping doc rule R3).
+     * Is this a registered tenant root? Delegates to tenant_resolver::root_is_registered() (2026-10-07, F-11), which
+     * asks tenant::assert_valid() and so the tenant registry. VALID_TENANTS is never tested directly (mapping doc
+     * rule R3). This importer is the TENANT_OWNER: it must not use tenant_resolver::resolve() for its own rows,
+     * because resolve() checks a candidate against local_sentientia_org, the table this feature is filling.
      *
      * @param int $root
      * @return bool
      */
     public static function root_is_registered(int $root): bool {
-        try {
-            \local_sentientia_platform\tenant::assert_valid($root);
-            return true;
-        } catch (\Throwable $e) {
-            return false;
-        }
+        return tenant_resolver::root_is_registered($root);
     }
 
     /**

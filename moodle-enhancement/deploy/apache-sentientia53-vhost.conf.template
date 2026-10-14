@@ -1,0 +1,156 @@
+# ============================================================================
+# Apache vhost template - Sentientia LMS Moodle 5.3 instance behind PHP >= 8.3
+# FastCGI (Windows/XAMPP local; the same shape works on any Apache 2.4.26+).
+#
+# Companion files:
+#   config-sentientia53.php.template   the 5.3 config.php (NO ini_get_bool polyfill)
+#   render_smoke_53.sh                 the php-cgi render smoke (a GATE check, see below)
+#   moodle-htaccess.template           becomes <docroot>/.htaccess (router rewrite)
+#
+# Decision record: ADR-033 (target Moodle 5.3 LTS). Compatibility report:
+#   moodle-enhancement/docs/upgrade/MOODLE-5.3-COMPATIBILITY-2026-10-07.md (finding F3)
+#
+# THIS IS THE 5.3 RECIPE. DO NOT CARRY OVER THE 5.2 RECIPE:
+#   - apache-sentientia52-vhost.conf.template tells you to add an ini_get_bool()
+#     polyfill to config.php AND a function_exists guard to lib/setuplib.php. Both
+#     halves exist only because Moodle 5.2's core\shutdown_manager called
+#     ini_get_bool() on a minimal bootstrap. Moodle 5.3 removed that call
+#     (public/lib/classes/shutdown_manager.php, request_shutdown(): it reads
+#     ini_get('child_terminate') directly), and the only remaining early callers
+#     (lib/setup.php:766, lib/weblib.php, lib/environmentlib.php) run after
+#     lib/setuplib.php is loaded.
+#   - Under 5.3 the polyfill ALONE is fatal: public/lib/setuplib.php:530 still
+#     declares ini_get_bool() unguarded, and every script that defines
+#     ABORT_AFTER_CONFIG and later re-enters full setup (r.php always;
+#     theme/font.php, lib/javascript.php and theme/styles.php on a cache miss,
+#     where they define ABORT_AFTER_CONFIG_CANCEL) would die with
+#     "Cannot redeclare ini_get_bool()". Every ESM/React module load and every
+#     font cache miss would return 500.
+#   So on 5.3: NO polyfill in config.php, NO edit to lib/setuplib.php. No core file
+#   is modified on this instance. Keep the 5.2 template and both halves for the
+#   5.2 UAT instance only.
+#
+# --- GATE CHECK (ADR-033 Decision item 8b) -----------------------------------
+#   Static reading says no ABORT_AFTER_CONFIG path under php-cgi reaches
+#   ini_get_bool() on 5.3. Only a render proves it. After the instance is up, run:
+#     bash moodle-enhancement/deploy/render_smoke_53.sh http://localhost:8082
+#   It fetches the login page, then requests one real URL of each of the four
+#   classes and requires HTTP 200 with a body:
+#       lib/javascript.php     theme/styles.php     r.php     theme/font.php
+#   Run it TWICE: the first request of each is a cache miss (the path that
+#   re-enters full setup), the second is the cached path.
+#   If ANY of the four returns 500, the fallback is to re-apply BOTH 5.2 halves
+#   (polyfill in config.php + the setuplib.php guard; the hunk applies unchanged at
+#   public/lib/setuplib.php:530) and record it in
+#   docs/core-mods/2026-06-11-setuplib-ini-get-bool-guard.md. Do not apply one half.
+#
+# --- httpd.conf prerequisites (uncomment these LoadModule lines) -------------
+#   LoadModule proxy_module modules/mod_proxy.so
+#   LoadModule proxy_fcgi_module modules/mod_proxy_fcgi.so
+#   LoadModule rewrite_module modules/mod_rewrite.so
+#   Listen 8082
+#
+# --- Moodle 5.3 environment requirements (public/admin/environment.xml) ------
+#   PHP >= 8.3.0 (no upper bound; the local php-cgi 8.4 is fine), 64-bit, with
+#   intl, soap, sodium, gd, mbstring, xml, zip, curl, opcache, and the DB driver.
+#   max_input_vars >= 5000. This is a HARD failure despite the environment.xml
+#   label: lib/upgradelib.php sets level "required" below 5000 and install/upgrade
+#   stops. XAMPP's default is 1000.
+#   Database: MySQL >= 8.4 (application user on caching_sha2_password; 8.4
+#   disables mysql_native_password by default) or MariaDB >= 11.4 or PostgreSQL
+#   >= 17. XAMPP's MariaDB 10.11 cannot host 5.3.
+#   Code layout: <tree>/public is the DocumentRoot, and <tree>/lib (Bootstrap
+#   5.3.8, Font Awesome webfonts, React, design system under lib/bundles) must sit
+#   beside it. It is read by PHP, not served by Apache, but without it icons and
+#   all React/ESM UI fail.
+#
+# --- PHP backend (start before Apache; keep running) -------------------------
+#   Set PHP_FCGI_MAX_REQUESTS=0 in the process env (php-cgi exits after 500
+#   requests otherwise) and launch the 8.3+ binary:
+#     php-cgi.exe -b 127.0.0.1:9085 -c <php.ini with all Moodle extensions>
+#   Windows php-cgi is single-process, so PHP requests serialize; static assets
+#   are served by Apache in parallel. Use a port DIFFERENT from the 5.2 instance
+#   (8081 / 9084) so both can run side by side. Recycle the worker periodically
+#   when PHP_FCGI_MAX_REQUESTS=0 (it degrades after a day of heavy traffic).
+#   PowerShell 5.1 gotcha: -ArgumentList does NOT quote arguments containing
+#   spaces, so a php.ini path with spaces must carry embedded quotes, or php-cgi
+#   silently loads NO ini (and so no mysqli):
+#     Start-Process -FilePath $phpcgi -WorkingDirectory $phpdir `
+#       -ArgumentList '-b','127.0.0.1:9085','-c','"D:\path with spaces\php.ini"' `
+#       -WindowStyle Hidden
+#
+# --- Per-deployment values to change -----------------------------------------
+#   DocumentRoot / <Directory>   the 5.3 tree's public/ directory
+#   Listen / VirtualHost port    8082 here; 80/443 on a real host
+#   backend 127.0.0.1:9085       your php-cgi / php-fpm endpoint
+#   logs                         sentientia53-*.log
+#   On a docroot vhost (anything that is not a /moodle alias) the generated
+#   public/.htaccess must point ErrorDocument at /error/index.php, not
+#   /moodle/error/index.php (build-standalone.sh does this with --error-base).
+# ============================================================================
+
+<VirtualHost *:8082>
+    ServerName localhost
+    DocumentRoot "C:/xampp/htdocs/moodle5.3/public"
+    DirectoryIndex index.php
+
+    # Moodle slasharguments URLs (/pluginfile.php/1/...) need PATH_INFO.
+    AcceptPathInfo On
+
+    # libcurl-based clients (Playwright webkit on Windows) race Apache's default
+    # 5s keep-alive close on the serialized single-PHP backend. 60s removes the
+    # race window.
+    KeepAliveTimeout 60
+    MaxKeepAliveRequests 500
+
+    # SetHandler form: Apache resolves the file itself (a missing .php is a REAL
+    # 404 before proxying) and hands proxy_fcgi the real SCRIPT_FILENAME. The
+    # trailing slash on the backend URL is REQUIRED on Windows (without it the
+    # drive letter concatenates onto the port).
+    <FilesMatch "\.php$">
+        SetHandler "proxy:fcgi://127.0.0.1:9085/"
+    </FilesMatch>
+
+    # Windows: proxy_fcgi hands php-cgi "proxy:fcgi://host:port/C:/path" as
+    # SCRIPT_FILENAME - strip everything up to the real path.
+    ProxyFCGISetEnvIf "reqenv('SCRIPT_FILENAME') =~ m|^proxy:[a-z]+://[^/]+/(.*)$|" SCRIPT_FILENAME "$1"
+
+    <Directory "C:/xampp/htdocs/moodle5.3/public">
+        Options FollowSymLinks
+        # AllowOverride All lets public/.htaccess carry the Moodle 5 router rewrite
+        # (every URL that is not a real file or directory goes to r.php). Moodle 5.3
+        # needs it more than 5.2 did: React/ESM modules and fonts are served through
+        # r.php and the environment page checks the router.
+        AllowOverride All
+        Require all granted
+        # Pass Authorization to FastCGI - Apache strips it by default, which
+        # silently breaks Moodle WS-token auth and VAPID push.
+        CGIPassAuth On
+    </Directory>
+
+    ErrorLog "logs/sentientia53-error.log"
+    CustomLog "logs/sentientia53-access.log" common
+</VirtualHost>
+
+# ----------------------------------------------------------------------------
+# Linux / UAT sample (side-by-side 5.3 instance beside the 5.2 one; ADR-033
+# Decision item 7). Adapt paths, PHP-FPM endpoint and server name to the host;
+# the database schema and dataroot of the 5.3 instance are NEW, never shared
+# with the 5.2 instance. Left commented because it depends on the host.
+#
+# <VirtualHost *:443>
+#     ServerName uat53.example.invalid
+#     DocumentRoot /var/www/sentientia/moodle5.3/public
+#     DirectoryIndex index.php
+#     AcceptPathInfo On
+#     <FilesMatch "\.php$">
+#         SetHandler "proxy:unix:/run/php/php8.3-fpm.sock|fcgi://localhost"
+#     </FilesMatch>
+#     <Directory /var/www/sentientia/moodle5.3/public>
+#         Options FollowSymLinks
+#         AllowOverride All
+#         Require all granted
+#         CGIPassAuth On
+#     </Directory>
+# </VirtualHost>
+# ----------------------------------------------------------------------------

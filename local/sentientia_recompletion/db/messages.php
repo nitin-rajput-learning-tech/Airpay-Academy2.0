@@ -14,7 +14,13 @@ $defaults = [
     'popup' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
 ];
 
+// Both notices are addressed to the LEARNER whose completion is about to expire or was just reset, so neither
+// provider names a capability. message_send() delivers a notification only to a user who holds the provider's
+// capability (message_get_providers_for_user()), and local/sentientia_recompletion:view is a manager capability
+// (db/access.php): with it here, every notice to an ordinary learner was dropped, with nothing but a debugging()
+// line, and nobody was ever told. The learner's own message preferences (the defaults above) still apply, and a
+// provider without a capability is the convention of the other learner-facing local_sentientia_* providers.
 $messageproviders = [
-    'recompletion_due_soon' => ['capability' => 'local/sentientia_recompletion:view', 'defaults' => $defaults],
-    'recompletion_reset'    => ['capability' => 'local/sentientia_recompletion:view', 'defaults' => $defaults],
+    'recompletion_due_soon' => ['capability' => null, 'defaults' => $defaults],
+    'recompletion_reset'    => ['capability' => null, 'defaults' => $defaults],
 ];
