@@ -56,13 +56,14 @@ defined('MOODLE_INTERNAL') || die();
  * - Registry is process-cached after first build (no DB hit on
  *   subsequent calls within the same request).
  * - Override lookups are batched: a single SELECT pulls every
- *   override row at first lookup, then served from the static cache.
+ *   override row at first lookup, then served from the in-process snapshot.
  *
  * Seeing a flag change in a long-running process (B1, 2026-10-09)
  * ---------------------------------------------------------------
- * The override snapshot is a PHP static, and a static lives as long as its
- * process. A web request is over in seconds, so it never mattered there. The
- * cron main process (cron_keepalive, 180 s by default, up to 900 s), adhoc
+ * The override snapshot is held in memory for as long as its process lives
+ * (a PHP static when this was written; "Where the caches live" below says
+ * where it is now). A web request is over in seconds, so it never mattered
+ * there. The cron main process (cron_keepalive, 180 s by default, up to 900 s), adhoc
  * task runners, CLI scripts and SSE connections do not exit: before this
  * change they read the flag state of their FIRST lookup until they exited,
  * whatever an admin flipped meanwhile. Only the writing process was fixed
@@ -106,8 +107,40 @@ defined('MOODLE_INTERNAL') || die();
  * Re-reading it here would also only reach the MUC copy, which is statically
  * accelerated, so it would not see anything new.
  *
- * invalidate_caches() still drops the snapshot at once. Tests, and any CLI
- * tool that writes the table without set(), call it.
+ * invalidate_caches() still drops the snapshot at once. A test that writes the
+ * table without set() and reads it back in the same test, and any CLI tool
+ * that writes the table without set(), call it.
+ *
+ * Where the caches live (2026-10-09)
+ * ----------------------------------
+ * The registry and the snapshot are fields of one local\feature_flags_state
+ * object, fetched from the core DI container (\core\di::get() hands back the
+ * same instance until the container is reset), not private statics. In 5.1
+ * and 5.3 only the test frameworks reset the container (PHPUnit's and Behat's
+ * reset_all_data()); no production path does (cron and the task manager only
+ * read the clock from it). So a process keeps one state object for its whole
+ * life, exactly as it kept the statics: everything above holds as written.
+ *
+ * PHPUnit is the reason. phpunit_util::reset_all_data() rolls the flag table
+ * back after every test and ends with \core\di::reset_container() (core,
+ * 4.4+), but it never reached the statics. A flag one test switched ON was
+ * still ON in the next test, inside the TTL, whatever the table said, so a
+ * test that read a flag before setting it failed only when it ran after one
+ * that had set it; at least eight suites called invalidate_caches() in
+ * setUp() to guard against it. Now every test starts with no snapshot and no
+ * registry. Rejected:
+ *   - Keying the statics to the container instance. spl_object_id() is
+ *     reused once the old container is freed, so a new container could
+ *     inherit the old id and the stale snapshot with it. A WeakMap avoids
+ *     that, but it adds a second lifetime mechanism for the one the container
+ *     already provides.
+ *   - A core per-test reset hook. There is none in 5.1 or 5.3:
+ *     reset_all_data() calls a fixed list of core reset_caches() and no
+ *     plugin callback.
+ * The clock is still read from the container on every lookup rather than
+ * held by the state object: mock_clock_with_frozen() swaps it with
+ * \core\di::set() in the middle of a test, and a clock captured when the
+ * state was built would miss that.
  *
  * @package local_sentientia_platform
  */
@@ -124,20 +157,15 @@ class feature_flags {
      */
     public const SNAPSHOT_TTL = 30;
 
-    /** @var array<string, array{default: bool, description: string}>|null Registry cache. */
-    private static $registry = null;
-
     /**
-     * Override cache. Three-level map keyed by [flag_key][customer_id][tenant_id] => bool.
-     * Single batched SELECT populates the whole thing, and re-populates it
-     * once it is older than SNAPSHOT_TTL.
-     *
-     * @var array<string, array<int, array<int, bool>>>|null
+     * The registry cache and the override snapshot (fields documented on
+     * local\feature_flags_state). Held by the core DI container rather than
+     * in statics so that PHPUnit's per-test container reset clears them; see
+     * "Where the caches live" in the class docblock.
      */
-    private static $overrides = null;
-
-    /** @var int \core\clock time at which self::$overrides was read. */
-    private static $overridesloadedat = 0;
+    private static function state(): local\feature_flags_state {
+        return \core\di::get(local\feature_flags_state::class);
+    }
 
     /**
      * Is the flag enabled for the current user's customer + tenant?
@@ -523,18 +551,19 @@ class feature_flags {
      * so a long-running process (cron, adhoc runner, CLI, SSE) sees a flag
      * flipped by any other process, or by anything that wrote the table
      * without set(), within the TTL. Between reloads this is a clock read and
-     * a static property return. The array is returned by value (copy on
-     * write), so a caller keeps a consistent view even if a later call
-     * reloads.
+     * a property read on the state object. The array is returned by value
+     * (copy on write), so a caller keeps a consistent view even if a later
+     * call reloads.
      *
      * @return array<string, array<int, array<int, bool>>>
      */
     private static function overrides(): array {
         global $DB;
+        $state = self::state();
         $now = self::now();
-        $age = $now - self::$overridesloadedat;
-        if (self::$overrides !== null && $age >= 0 && $age < self::SNAPSHOT_TTL) {
-            return self::$overrides;
+        $age = $now - $state->overridesloadedat;
+        if ($state->overrides !== null && $age >= 0 && $age < self::SNAPSHOT_TTL) {
+            return $state->overrides;
         }
         $loaded = [];
         $rows = $DB->get_records('local_sentientia_feature_flags', null,
@@ -543,8 +572,8 @@ class feature_flags {
             $loaded[$r->flag_key][(int) $r->customer_id][(int) $r->tenant_id]
                 = (bool) $r->is_enabled;
         }
-        self::$overrides = $loaded;
-        self::$overridesloadedat = $now;
+        $state->overrides = $loaded;
+        $state->overridesloadedat = $now;
         return $loaded;
     }
 
@@ -564,15 +593,16 @@ class feature_flags {
      * lifetime of this PHP request.
      */
     public static function load_registry(): array {
-        if (self::$registry !== null) {
-            return self::$registry;
+        $state = self::state();
+        if ($state->registry !== null) {
+            return $state->registry;
         }
 
         $cache = \cache::make('local_sentientia_platform', 'feature_flags_registry');
         $cached = $cache->get('registry');
         if ($cached !== false) {
-            self::$registry = $cached;
-            return self::$registry;
+            $state->registry = $cached;
+            return $state->registry;
         }
 
         $registry = [];
@@ -608,7 +638,7 @@ class feature_flags {
             }
         }
 
-        self::$registry = $registry;
+        $state->registry = $registry;
         $cache->set('registry', $registry);
         return $registry;
     }
@@ -617,11 +647,16 @@ class feature_flags {
      * Invalidate both caches after a write, in THIS process at once (other
      * processes pick the change up within SNAPSHOT_TTL). Public so tests and
      * admin CLI tools can clear caches manually if they bypass set().
+     *
+     * A test no longer needs it to start clean: each test gets a fresh
+     * container and so a fresh state. It still needs it to see, in the same
+     * test, a row it wrote without set().
      */
     public static function invalidate_caches(): void {
-        self::$registry = null;
-        self::$overrides = null;
-        self::$overridesloadedat = 0;
+        $state = self::state();
+        $state->registry = null;
+        $state->overrides = null;
+        $state->overridesloadedat = 0;
         $cache = \cache::make('local_sentientia_platform', 'feature_flags_registry');
         $cache->delete('registry');
     }
