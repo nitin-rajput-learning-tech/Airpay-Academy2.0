@@ -69,7 +69,7 @@ errors, horizontal overflow at both widths: 0 everywhere, text excerpt).
 | `off-02-order-history-no-documents` | `history.php` | vp_public77 | Both flags OFF: no Documents column |
 | `off-03-receipt-refused` | `receipt.php?id=20` | vp_public77 | Both flags OFF: "This page is not available" |
 | `off-04-invoice-still-viewable` | `invoice.php?id=14` | vp_public77 | Both flags OFF: an invoice already issued stays viewable (spec section 2) |
-| `off-05-einvoice-refused` | `einvoice.php` | vp_siteadmin | Both flags OFF: the e-invoice page is refused even for a site admin (see "Not captured") |
+| `off-05-einvoice-refused` | `einvoice.php` | vp_siteadmin | Both flags OFF: the e-invoice page is refused even for a site admin ("GST tax invoices are switched off wherever you work, so there is nothing to record here."; HTTP 404; the Debug info and Stack trace boxes are this box's developer-debug setting) |
 
 `pdf/`: the PDFs as downloaded through the Download PDF buttons, and `-page1.png` renders of their first page (90 dpi):
 `invoice-AIRPAY-2026-0013.pdf` (B2C intra-state), `invoice-AIRPAY-2026-0014.pdf` (inter-state), `invoice-AIRPAY-2026-0015.pdf`
@@ -93,20 +93,23 @@ errors, horizontal overflow at both widths: 0 everywhere, text excerpt).
 5. **`einvoice.php` shows its title twice** ("E-invoice IRN" in the page header and again as the first heading of the card) and,
    because the page uses the `admin` layout, the Site administration tab strip (General, Users, Courses, ...), which has nothing
    to do with this page.
-6. The invoice does not print the line's list price and discount for the B2B order (taxable value 6,750.00 only; the receipt
+6. **A first take of `off-05` showed the raw text "local_sentientia_cart/error_einvoiceoff"** instead of the message. The string
+   exists in both language files; the local language-string cache was stale (the string came with the last review commit,
+   which did not bump `version.php`, so nothing purged the cache here). `php admin/cli/purge_caches.php --lang` fixed it and
+   `off-05` was taken again. It is a deploy note, not a code defect: a string-only change needs the "purge caches" step of
+   the deploy (the pages taken earlier were unaffected).
+7. The invoice does not print the line's list price and discount for the B2B order (taxable value 6,750.00 only; the receipt
    does show the 750.00 discount). That follows the spec (section 8 prints taxable value), so it is a note, not a defect.
 
 Checked and fine: every figure on the six documents (line CGST/SGST sum to the totals, the odd paisa goes to SGST, the credit
 note taxable value is amount / 1.18, the amounts in words), no horizontal overflow at 590 px, no console errors from the
-pages (three `pageerror` entries in `results.json` on 02, 14 and 15 come from the script polling a page mid-navigation, not
+pages (the 404 pages `07`, `off-03` and `off-05` log the failed resource of a refusal; three `pageerror` entries in `results.json` on 02, 14 and 15 come from the script polling a page mid-navigation, not
 from the site), no missing-string or unrendered-template markers.
 
 ## Not captured
 
-- `off-05-einvoice-refused`: the script lost its connection while logging in as the site admin (the local Apache was
-  restarted by its watchdog), and a second attempt was still pending when this was written. See the top of the commit message
-  / the final report for whether it was taken.
 - A B2C dynamic QR (spec section 10, point 5) is not built, so there is nothing to show.
+- Hindi screens of the documents: the PDFs and pages are English only by design (spec section 11 says so for the PDFs); no Hindi shot was taken.
 
 ## How to reproduce (local only, cwd = `C:/xampp/htdocs/moodle5/public` for the PHP scripts)
 

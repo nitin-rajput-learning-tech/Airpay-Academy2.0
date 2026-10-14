@@ -1,6 +1,29 @@
 {
- "generated": "2026-10-14T16:13:13.675Z",
+ "generated": "2026-10-14T17:24:12.156Z",
  "base": "http://localhost:8080",
  "tenant": 77,
- "results": []
+ "results": [
+  {
+   "name": "off-05-einvoice-refused",
+   "url": "/local/sentientia_cart/einvoice.php",
+   "persona": "vp_siteadmin (site admin)",
+   "shows": "Both flags OFF: the e-invoice page is refused even for a site admin",
+   "http": 404,
+   "files": [
+    "off-05-einvoice-refused-desktop.png",
+    "off-05-einvoice-refused-mobile.png"
+   ],
+   "problems": [
+    "Moodle debug dump on page"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+   ],
+   "textExcerpt": "Skip to main content airpay academy Dashboard Manage Users Manage Courses Course-share Requests Online Exams Classrooms Learning Paths Programs Reports Analytics Compliance Organisation Skills Notifications Evaluations Certificates Emails Privacy Site Admin Dark Mode VS VP Site admin Profile & Setti"
+  }
+ ]
 }
