@@ -70,6 +70,16 @@
 
 set -uo pipefail
 KIT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# The fixtures are env files that the kit sources as shell, and they hold paths under $T unquoted, so $T may not
+# contain whitespace: a TMPDIR of "D:/Claude Local/..." made two config checks fail for the wrong reason (2026-10-10).
+# An operator quotes such a value in their own env file (rehearsal.env.example says so); the selftest asks for a
+# plain TMPDIR instead of failing checks that have nothing to do with it.
+case "${TMPDIR:-/tmp}" in
+    *[[:space:]]*)
+        printf 'selftest: TMPDIR (%s) contains whitespace, which the env-file fixtures cannot hold. Run it with a TMPDIR without spaces, e.g. TMPDIR=/tmp bash tools/rehearsal/selftest.sh\n' "${TMPDIR:-/tmp}" >&2
+        exit 2
+        ;;
+esac
 T="$(mktemp -d "${TMPDIR:-/tmp}/rehearsal-selftest.XXXXXX")"
 trap 'rm -rf "$T"' EXIT
 PASS=0
