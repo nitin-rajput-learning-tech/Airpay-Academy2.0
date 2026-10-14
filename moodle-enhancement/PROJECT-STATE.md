@@ -102,14 +102,22 @@
 - Whether to move XAMPP to D: (about 10 GB; not needed now).
 
 **Follow-ups:**
-- SITEID checker known limits.
-- Legacy 'sending' rows on UAT: time the fold there.
-- A unique-constraint ADR for the notifications dedupe.
-- The feature-flag TTL note for operators (30 s).
-- The kit selftest's own env fixture breaks when TMPDIR contains a space (test only).
-- Moodle 5.3 upgrade prints one scssphp warning (`Array to string conversion`, Compiler.php:927, an `@extend` on a
-  nested selector) while it compiles the theme; it was there before 2026-10-14 and the CSS compiles. Find the
-  `@extend` that triggers it.
+- Legacy 'sending' rows on UAT: time the fold there (needs the UAT tunnel).
+- Done 2026-10-14:
+  - SITEID checker: rule 4 `uncast-value` closes its known limit (3f81a08b3).
+  - Notifications dedupe: no unique key; one writer under core's task lock. Decision on the notifications state card,
+    misleading claim comments corrected (0438327fa).
+  - Feature-flag 30 s note for operators: deploy-runbook section 3 and cutover-day runbook item 6 (63092e500).
+  - Kit selftest stops with a clear message when TMPDIR contains whitespace (stageb-tools 665af9223). Its full
+    selftest runs after the XAMPP suite (`D:/Claude Local/kit-scratch/r10/summary.txt`); merge again when it passes.
+  - Moodle 5.3 scssphp warning (`Array to string conversion`, Compiler.php:927): explained, not fixed. It fires on
+    the FIRST theme compile after a cache purge (so on every upgrade), from core's bundled scssphp 1.12.1
+    `matchExtends()` running `array_diff` over selector parts that hold an attribute selector
+    (`.ap-sidebar[data-collapsed="true"]`) while the theme has `@extend`s. Boost does not trigger it. Unquoting the
+    value does not help (the CSS was byte-identical apart from the quotes and the warning stayed), so the edit was
+    reverted. The CSS is complete. A fix would be a core library patch (ADR + core-mod record) for a warning only.
+- **Decision brief for Nitin:** `docs/cutover/NITIN-DECISION-BRIEF-2026-10-14.md` (every open question, ordered by
+  what it unblocks, with a recommendation and a one-line reply).
 
 ---
 
