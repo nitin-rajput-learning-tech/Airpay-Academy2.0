@@ -31,6 +31,13 @@ defined('MOODLE_INTERNAL') || die();
  *  - local_sentientia_cart_id: a slot a paid order refers to is anonymised, never deleted (deleting it would let
  *    the order number be issued twice); only an unreferenced basket slot is deleted.
  * Imported orders and invoice references carry no billing details, so there is nothing to blank in them.
+ *
+ * GST tax invoices and credit notes (2026-10-14, spec section 9): the invoice and the credit note are tax records the
+ * law makes the supplier keep (CGST Act section 36: 72 months from the due date of the annual return). Erasure
+ * therefore keeps a document that is younger than the invoice_retention_years setting (default 8) exactly as it is,
+ * and blanks the buyer's name, e-mail, phone, address and GSTIN on one that is older, counted from the document date.
+ * Export gives the user every invoice, credit note and receipt of theirs. The order history follows the rules it
+ * always had.
  */
 class provider implements
     \core_privacy\local\metadata\provider,
@@ -43,6 +50,7 @@ class provider implements
             'items_json'     => 'privacy:metadata:local_sentientia_cart_history:items',
             'total_amount'   => 'privacy:metadata:local_sentientia_cart_history:totalamount',
             'status'         => 'privacy:metadata:local_sentientia_cart_history:status',
+            'billing_state'  => 'privacy:metadata:local_sentientia_cart_history:billing_state',
             'timecreated'    => 'privacy:metadata:local_sentientia_cart_history:timecreated',
         ], 'privacy:metadata:local_sentientia_cart_history');
 
@@ -53,7 +61,25 @@ class provider implements
             'billing_phone'  => 'privacy:metadata:local_sentientia_cart_invoices:billing_phone',
             'billing_address' => 'privacy:metadata:local_sentientia_cart_invoices:billing_address',
             'billing_gstn'   => 'privacy:metadata:local_sentientia_cart_invoices:billing_gstn',
+            'billing_state'  => 'privacy:metadata:local_sentientia_cart_invoices:billing_state',
+            'place_of_supply' => 'privacy:metadata:local_sentientia_cart_invoices:place_of_supply',
+            'line_items_json' => 'privacy:metadata:local_sentientia_cart_invoices:line_items',
+            'irn'            => 'privacy:metadata:local_sentientia_cart_invoices:irn',
         ], 'privacy:metadata:local_sentientia_cart_invoices');
+
+        // GST credit notes (2026-10-14): a tax record, kept for the retention period like the invoice it reduces.
+        $collection->add_database_table('local_sentientia_cart_creditnotes', [
+            'userid'          => 'privacy:metadata:local_sentientia_cart_creditnotes:userid',
+            'billing_name'    => 'privacy:metadata:local_sentientia_cart_creditnotes:billing_name',
+            'billing_email'   => 'privacy:metadata:local_sentientia_cart_creditnotes:billing_email',
+            'billing_phone'   => 'privacy:metadata:local_sentientia_cart_creditnotes:billing_phone',
+            'billing_address' => 'privacy:metadata:local_sentientia_cart_creditnotes:billing_address',
+            'billing_gstn'    => 'privacy:metadata:local_sentientia_cart_creditnotes:billing_gstn',
+            'billing_state'   => 'privacy:metadata:local_sentientia_cart_creditnotes:billing_state',
+            'total'           => 'privacy:metadata:local_sentientia_cart_creditnotes:total',
+            'reason'          => 'privacy:metadata:local_sentientia_cart_creditnotes:reason',
+            'irn'             => 'privacy:metadata:local_sentientia_cart_creditnotes:irn',
+        ], 'privacy:metadata:local_sentientia_cart_creditnotes');
 
         // Ledger — audit log retained for financial/tax compliance. ADR-032: who booked a row (initiatedby) and
         // what the previous system recorded for an imported row (payload_json, which names the buyer) are personal.
@@ -113,7 +139,9 @@ class provider implements
         foreach (['local_sentientia_cart_history',
                   'local_sentientia_cart_id',
                   'local_sentientia_cart_credits',
-                  'local_sentientia_cart_credit_txn'] as $table) {
+                  'local_sentientia_cart_credit_txn',
+                  'local_sentientia_cart_invoices',
+                  'local_sentientia_cart_creditnotes'] as $table) {
             if ($DB->record_exists($table, ['userid' => $userid])) {
                 $contextlist->add_system_context();
                 break;
@@ -131,7 +159,9 @@ class provider implements
         foreach (['local_sentientia_cart_history',
                   'local_sentientia_cart_id',
                   'local_sentientia_cart_credits',
-                  'local_sentientia_cart_credit_txn'] as $table) {
+                  'local_sentientia_cart_credit_txn',
+                  'local_sentientia_cart_invoices',
+                  'local_sentientia_cart_creditnotes'] as $table) {
             $userlist->add_users($DB->get_fieldset_sql(
                 "SELECT DISTINCT userid FROM {" . $table . "} WHERE userid > 0"));
         }
@@ -213,6 +243,8 @@ class provider implements
                 (object) ['payments' => $rows]);
         }
 
+        self::export_tax_documents($userid, $context);
+
         $credits = $DB->get_records('local_sentientia_cart_credits', ['userid' => $userid]);
         if (!empty($credits)) {
             $rows = [];
@@ -230,6 +262,161 @@ class provider implements
                 [get_string('pluginname', 'local_sentientia_cart'), 'credits'],
                 (object) ['credits' => $rows]);
         }
+    }
+
+    /**
+     * Export every invoice, credit note and receipt of a user (GST tax invoices spec, section 9).
+     *
+     * An invoice or credit note is exported whatever its status, with the particulars it carries; a receipt is
+     * exported for every paid order of theirs (it is worked out from the order, and so exists whether or not the
+     * receipt flag is on). Imported BizLMS orders carry no receipt, and an imported invoice is a reference with no
+     * buyer details.
+     *
+     * @param int $userid
+     * @param \context $context
+     * @return void
+     */
+    private static function export_tax_documents(int $userid, \context $context): void {
+        global $DB;
+        $component = get_string('pluginname', 'local_sentientia_cart');
+        $stamp = static fn($t): ?string => empty($t) ? null : userdate((int) $t);
+
+        $invoices = $DB->get_records('local_sentientia_cart_invoices', ['userid' => $userid], 'timecreated ASC, id ASC');
+        if ($invoices) {
+            $rows = [];
+            foreach ($invoices as $i) {
+                $rows[] = [
+                    'invoice_number'  => $i->invoice_number,
+                    'order_number'    => $i->orderid,
+                    'status'          => $i->status,
+                    'issued_on'       => $stamp($i->timecreated),
+                    'billing_name'    => $i->billing_name,
+                    'billing_email'   => $i->billing_email,
+                    'billing_phone'   => $i->billing_phone,
+                    'billing_address' => $i->billing_address,
+                    'billing_gstn'    => $i->billing_gstn,
+                    'billing_state'   => $i->billing_state,
+                    'place_of_supply' => $i->place_of_supply,
+                    'sac_code'        => $i->sac_code,
+                    'gst_rate'        => $i->gst_rate,
+                    'lines'           => json_decode((string) $i->line_items_json, true),
+                    'taxable_value'   => $i->subtotal,
+                    'cgst'            => $i->cgst,
+                    'sgst'            => $i->sgst,
+                    'igst'            => $i->igst,
+                    'total'           => $i->total,
+                    'currency'        => $i->currency,
+                    'irn'             => $i->irn,
+                    'ack_no'          => $i->ack_no,
+                    'ack_date'        => $stamp($i->ack_date),
+                ];
+            }
+            writer::with_context($context)->export_data([$component, 'invoices'], (object) ['invoices' => $rows]);
+        }
+
+        $notes = $DB->get_records('local_sentientia_cart_creditnotes', ['userid' => $userid], 'timecreated ASC, id ASC');
+        if ($notes) {
+            $rows = [];
+            foreach ($notes as $n) {
+                $rows[] = [
+                    'credit_note_number' => $n->cn_number,
+                    'against_invoice_id' => $n->invoiceid,
+                    'status'          => $n->status,
+                    'issued_on'       => $stamp($n->timecreated),
+                    'billing_name'    => $n->billing_name,
+                    'billing_email'   => $n->billing_email,
+                    'billing_phone'   => $n->billing_phone,
+                    'billing_address' => $n->billing_address,
+                    'billing_gstn'    => $n->billing_gstn,
+                    'billing_state'   => $n->billing_state,
+                    'place_of_supply' => $n->place_of_supply,
+                    'taxable_value'   => $n->taxable,
+                    'cgst'            => $n->cgst,
+                    'sgst'            => $n->sgst,
+                    'igst'            => $n->igst,
+                    'total'           => $n->total,
+                    'currency'        => $n->currency,
+                    'reason'          => $n->reason,
+                    'irn'             => $n->irn,
+                    'ack_no'          => $n->ack_no,
+                    'ack_date'        => $stamp($n->ack_date),
+                ];
+            }
+            writer::with_context($context)->export_data([$component, 'credit_notes'], (object) ['credit_notes' => $rows]);
+        }
+
+        // Receipts: one per paid, native order. The refunds so far come from the ledger, as on the receipt itself.
+        [$insql, $inparams] = $DB->get_in_or_equal(['paid', 'partial_refund', 'refunded'], SQL_PARAMS_NAMED, 'rcptst');
+        $orders = $DB->get_records_select('local_sentientia_cart_history',
+            "userid = :uid AND status $insql AND " . \local_sentientia_cart\imported_history::native_only_sql(),
+            ['uid' => $userid] + $inparams, 'timecreated ASC, id ASC');
+        if ($orders) {
+            $rows = [];
+            foreach ($orders as $o) {
+                $refunds = [];
+                foreach (\local_sentientia_cart\receipts::refunds_of($o) as $r) {
+                    $refunds[] = ['amount' => $r->refunded, 'refunded_on' => $stamp($r->timecreated)];
+                }
+                $rows[] = [
+                    'order_number' => $o->orderid,
+                    'paid_on'      => $stamp($o->timepaid ?: $o->timecreated),
+                    'buyer_name'   => $o->billing_name,
+                    'buyer_email'  => $o->billing_email,
+                    'items'        => json_decode((string) $o->items_json, true),
+                    'subtotal'     => $o->subtotal,
+                    'discount'     => $o->discount_amount,
+                    'gst'          => $o->tax_amount,
+                    'total_paid'   => $o->total_amount,
+                    'currency'     => $o->currency,
+                    'gateway'      => $o->gateway,
+                    'gateway_ref'  => $o->gateway_ref,
+                    'refunds'      => $refunds,
+                ];
+            }
+            writer::with_context($context)->export_data([$component, 'receipts'], (object) ['receipts' => $rows]);
+        }
+    }
+
+    /**
+     * The time before which a tax document is past its retention period: now minus invoice_retention_years.
+     *
+     * @return int A timestamp; a document dated before it may have the buyer's details blanked.
+     */
+    private static function retention_cutoff(): int {
+        $years = \local_sentientia_cart\gst_settings::retention_years();
+        return (new \DateTimeImmutable('@' . time()))->modify('-' . $years . ' years')->getTimestamp();
+    }
+
+    /**
+     * Blank the buyer's name, e-mail, phone, address and GSTIN on the tax documents that are past their retention
+     * period; documents younger than that are kept unchanged (the law requires the supplier to keep them).
+     * Imported ERPNext references carry no buyer details and are left alone.
+     *
+     * @param int|null $userid One user, or null for every user.
+     * @return void
+     */
+    private static function redact_tax_documents(?int $userid): void {
+        global $DB;
+        $cutoff = self::retention_cutoff();
+        $user = $userid === null ? '' : ' AND userid = :uid';
+        $params = ['cutoff' => $cutoff] + ($userid === null ? [] : ['uid' => $userid]);
+
+        $DB->execute("UPDATE {local_sentientia_cart_invoices}
+                         SET billing_name = '(redacted)',
+                             billing_email = '',
+                             billing_phone = '',
+                             billing_address = '',
+                             billing_gstn = ''
+                       WHERE status <> :legacy AND timecreated < :cutoff$user",
+            ['legacy' => \local_sentientia_cart\imported_history::INVOICE_STATUS] + $params);
+        $DB->execute("UPDATE {local_sentientia_cart_creditnotes}
+                         SET billing_name = '(redacted)',
+                             billing_email = '',
+                             billing_phone = '',
+                             billing_address = '',
+                             billing_gstn = ''
+                       WHERE timecreated < :cutoff$user",
+            $params);
     }
 
     public static function delete_data_for_all_users_in_context(\context $context): void {
@@ -265,17 +452,13 @@ class provider implements
                              billing_phone = '',
                              billing_address = '',
                              billing_gstn = '',
+                             billing_state = NULL,
                              notes = ''
                        WHERE userid = :uid AND legacy_source IS NULL",
             ['uid' => $userid]);
-        $DB->execute("UPDATE {local_sentientia_cart_invoices}
-                         SET billing_name = '(redacted)',
-                             billing_email = '',
-                             billing_phone = '',
-                             billing_address = '',
-                             billing_gstn = ''
-                       WHERE userid = :uid AND status <> :legacy",
-            ['uid' => $userid, 'legacy' => \local_sentientia_cart\imported_history::INVOICE_STATUS]);
+        // GST tax documents (2026-10-14): kept unchanged while they are inside the retention period (the law requires
+        // it), blanked once they are older. Until then the order history above is redacted but the invoice is not.
+        self::redact_tax_documents($userid);
 
         // ADR-032: the ledger and the credit journal are money records. They stay, with the person taken out.
         self::anonymise_ledger_of($userid);
@@ -309,16 +492,11 @@ class provider implements
                              billing_phone = '',
                              billing_address = '',
                              billing_gstn = '',
+                             billing_state = NULL,
                              notes = ''
                        WHERE legacy_source IS NULL");
-        $DB->execute("UPDATE {local_sentientia_cart_invoices}
-                         SET billing_name = '(redacted)',
-                             billing_email = '',
-                             billing_phone = '',
-                             billing_address = '',
-                             billing_gstn = ''
-                       WHERE status <> :legacy",
-            ['legacy' => \local_sentientia_cart\imported_history::INVOICE_STATUS]);
+        // GST tax documents: only those past the retention period (see redact_tax_documents()).
+        self::redact_tax_documents(null);
 
         // ADR-032: the money records stay, with every person taken out.
         $DB->execute("UPDATE {local_sentientia_cart_ledger} SET initiatedby = 0 WHERE initiatedby <> 0");

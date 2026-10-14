@@ -55,6 +55,9 @@ final class dev_mask {
     /** Native invoices. */
     public const INVOICES = 'local_sentientia_cart_invoices';
 
+    /** GST credit notes (2026-10-14): they copy the buyer's details from the invoice they reduce, and carry the refund's reason. */
+    public const CREDITNOTES = 'local_sentientia_cart_creditnotes';
+
     /** What every billing name becomes. */
     public const MASKED_NAME = 'Dev Buyer';
 
@@ -67,6 +70,9 @@ final class dev_mask {
     public const PERSONAL_COLUMNS = [
         self::HISTORY => ['billing_email' => false, 'billing_phone' => false, 'billing_address' => true, 'notes' => true],
         self::INVOICES => ['billing_email' => false, 'billing_phone' => false, 'billing_address' => true],
+        // The credit note's reason is the refund's free text, which can name a person (as the ledger's reason does).
+        self::CREDITNOTES => ['billing_email' => false, 'billing_phone' => false, 'billing_address' => true,
+            'reason' => true],
     ];
 
     /** Keys inside payload_json that name a person (lower case). */
