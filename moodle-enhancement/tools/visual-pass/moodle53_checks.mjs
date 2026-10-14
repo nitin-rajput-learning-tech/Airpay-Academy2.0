@@ -143,7 +143,7 @@ async function cancelModal(page) {
 async function toggleEdit(page, sel = 'form.editmode-switch-form input[name="setmode"]', trace = null) {
   const toggle = page.locator(sel).first();
   await page.evaluate(() => { window.__vpmarker = true; });
-  const onResp = r => { if (trace && /editmode|ajax\/service|edit_switch|setmode/.test(r.url())) trace.push(`${r.request().method()} ${r.status()} ${r.url().replace(BASE, '').slice(0, 110)}`); };
+  const onResp = r => { if (trace && /editmode|ajax\/service|edit_switch|setmode/.test(r.url())) trace.push(`${r.request().method()} ${r.status()} ${r.url().replace(BASE, '').replace(/sesskey=\w+/, 'sesskey=<redacted>').slice(0, 110)}`); };
   if (trace) page.on('response', onResp);
   await toggle.click({ timeout: 60000 });
   await page.waitForFunction(() => !window.__vpmarker, null, { timeout: 240000, polling: 1000 }).catch(() => {});
