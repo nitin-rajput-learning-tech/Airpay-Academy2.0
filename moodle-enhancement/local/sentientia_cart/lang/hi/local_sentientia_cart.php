@@ -167,7 +167,7 @@ $string['privacy:metadata:local_sentientia_cart_history:status']      = 'ऑर�
 $string['privacy:metadata:local_sentientia_cart_history:timecreated'] = 'ऑर्डर कब दिया गया';
 
 // Privacy — invoices.
-$string['privacy:metadata:local_sentientia_cart_invoices']                 = 'जारी किए गए इनवॉइस';
+$string['privacy:metadata:local_sentientia_cart_invoices']                 = 'जारी किए गए जीएसटी टैक्स इनवॉइस। कानून के अनुसार इन्हें रखना आवश्यक है (CGST अधिनियम धारा 36), इसलिए ये प्रतिधारण अवधि तक अपरिवर्तित रखे जाते हैं; मिटाने का अनुरोध करने पर आपका विवरण केवल उससे पुराने इनवॉइस से हटाया जाता है।';
 $string['privacy:metadata:local_sentientia_cart_invoices:userid']          = 'जिस यूज़र को इनवॉइस जारी किया गया';
 $string['privacy:metadata:local_sentientia_cart_invoices:billing_name']    = 'इनवॉइस पर बिलिंग नाम';
 $string['privacy:metadata:local_sentientia_cart_invoices:billing_email']   = 'इनवॉइस पर बिलिंग ईमेल';
@@ -240,3 +240,218 @@ $string['privacy:metadata:local_sentientia_cart_credit_txn:balance_after'] = '�
 $string['privacy:metadata:local_sentientia_cart_credit_txn:event_type'] = 'प्रविष्टि का प्रकार।';
 $string['privacy:metadata:local_sentientia_cart_credit_txn:reason'] = 'प्रविष्टि के लिए दिया गया कारण।';
 $string['privacy:metadata:local_sentientia_cart_credit_txn:timecreated'] = 'प्रविष्टि कब की गई।';
+
+// ── जीएसटी टैक्स इनवॉइस, क्रेडिट नोट और खरीद रसीदें (2026-10-14) ──
+
+// क्षमता, संदेश प्रदाता और निर्धारित कार्य।
+$string['sentientia_cart:manageinvoices'] = 'ई-इनवॉइस IRN दर्ज करें और IRN की प्रतीक्षा कर रहे इनवॉइस देखें';
+$string['messageprovider:gst_admin_warning'] = 'जीएसटी इनवॉइसिंग पर ध्यान आवश्यक (एडमिन)';
+$string['task_issue_due_documents'] = 'देय जीएसटी टैक्स इनवॉइस और क्रेडिट नोट जारी करें';
+
+// सेटिंग्स।
+$string['settings_gst']                    = 'जीएसटी टैक्स इनवॉइस और क्रेडिट नोट';
+$string['settings_gst_desc']               = 'केवल तब उपयोग होता है जब "जीएसटी टैक्स इनवॉइस" फ़्लैग चालू हो। कंपनी का नाम, कंपनी का पता, हमारा GSTN या SAC कोड खाली होने पर, या जीएसटी राज्य मान्य न होने पर इनवॉइसिंग शुरू नहीं होती। दस्तावेज़ देय बने रहते हैं और साइट एडमिन को दिन में एक बार चेतावनी भेजी जाती है।';
+$string['settings_saccode']                = 'सेवा का SAC कोड';
+$string['settings_saccode_desc']           = 'हर टैक्स इनवॉइस पंक्ति पर छपने वाला सेवा लेखा कोड (SAC)। अनिवार्य, कोई डिफ़ॉल्ट नहीं: आपकी फ़ाइनेंस टीम इसकी पुष्टि करती है।';
+$string['settings_supplierstate']          = 'हमारा जीएसटी राज्य';
+$string['settings_supplierstate_desc']     = 'जिस राज्य से हमारी आपूर्ति की जाती है। हमारे GSTN के पहले दो अंक उपयोग करने के लिए "हमारे GSTN से" चुनें।';
+$string['settings_supplierstate_fromgstn'] = 'हमारे GSTN से';
+$string['settings_creditnoteprefix']       = 'क्रेडिट नोट नंबर का उपसर्ग';
+$string['settings_creditnoteprefix_desc']  = 'उदाहरण: AIRCN से AIRCN-2026-0001 बनता है। पूरा नंबर 16 अक्षरों से अधिक नहीं हो सकता, इसलिए वर्ष और चार अंकों के साथ उपसर्ग में अधिकतम 6 अक्षर हो सकते हैं।';
+$string['settings_seriesperiod']           = 'क्रमांक श्रृंखला का वर्ष';
+$string['settings_seriesperiod_desc']      = 'कैलेंडर वर्ष में नंबर हर जनवरी से फिर शुरू होते हैं; वित्तीय वर्ष में हर अप्रैल से (नंबर में वर्ष वह होता है जिसमें वित्तीय वर्ष शुरू होता है)।';
+$string['settings_seriesperiod_calendar']  = 'कैलेंडर वर्ष (जनवरी से दिसंबर)';
+$string['settings_seriesperiod_financial'] = 'वित्तीय वर्ष (अप्रैल से मार्च)';
+$string['settings_einvoiceb2b']            = 'B2B दस्तावेज़ों के लिए ई-इनवॉइस IRN आवश्यक';
+$string['settings_einvoiceb2b_desc']       = 'जब खरीदार GSTIN देता है, तो इनवॉइस या क्रेडिट नोट अपने IRN की प्रतीक्षा करता है, जिसे फ़ाइनेंस ई-इनवॉइस पृष्ठ पर दर्ज करता है। केवल तभी बंद करें जब टर्नओवर ई-इनवॉइसिंग की सीमा से कम हो।';
+$string['settings_retentionyears']         = 'टैक्स दस्तावेज़ रखने के वर्ष';
+$string['settings_retentionyears_desc']    = 'मिटाने के अनुरोध पर खरीदार का विवरण केवल इससे पुराने इनवॉइस और क्रेडिट नोट से हटाया जाता है; नए दस्तावेज़ कानून (CGST अधिनियम धारा 36) के अनुसार रखे जाते हैं। डिफ़ॉल्ट 8।';
+$string['settings_signatory']              = 'हस्ताक्षरकर्ता पंक्ति';
+$string['settings_signatory_desc']         = 'हर दस्तावेज़ के अंत में कंपनी के नाम के नीचे छपने वाली पंक्ति।';
+$string['einvoice_link']                   = 'ई-इनवॉइस IRN पृष्ठ';
+$string['signatory_default']               = 'अधिकृत हस्ताक्षरकर्ता';
+$string['settings_problem_company_name']    = 'इनवॉइस पर कंपनी का नाम';
+$string['settings_problem_company_address'] = 'कंपनी का पता';
+$string['settings_problem_our_gstn']        = 'हमारा GSTN';
+$string['settings_problem_sac_code']        = 'सेवा का SAC कोड';
+$string['settings_problem_supplier_state']  = 'हमारा जीएसटी राज्य';
+
+// त्रुटियाँ।
+$string['error_invoicesettings'] = 'जीएसटी इनवॉइसिंग शुरू नहीं हो सकती। ये सेटिंग्स अनुपस्थित या अमान्य हैं: {$a}।';
+$string['error_numbertoolong']   = 'दस्तावेज़ नंबर {$a->number} में {$a->length} अक्षर होंगे, जबकि सीमा {$a->max} है। सेटिंग्स में नंबर का उपसर्ग छोटा करें।';
+$string['error_creditnotelimit'] = 'किसी इनवॉइस के क्रेडिट नोट का कुल योग इनवॉइस से अधिक नहीं हो सकता।';
+$string['error_statemissing']    = 'कृपया अपना राज्य चुनें।';
+$string['error_statenotvalid']   = 'यह मान्य जीएसटी राज्य कोड नहीं है।';
+$string['error_gstinformat']     = 'यह जीएसटी नंबर जैसा नहीं दिखता। इसमें 15 अक्षर और अंक होते हैं और यह दो अंकों के राज्य कोड से शुरू होता है।';
+$string['error_gstinstate']      = 'आपके जीएसटी नंबर का राज्य आपके चुने हुए राज्य से मेल नहीं खाता। कृपया दोनों जाँचें।';
+$string['error_irninvalid']      = 'IRN ठीक 64 हेक्साडेसिमल अक्षर (0-9 और a-f) का होना चाहिए।';
+$string['error_ackinvalid']      = 'पावती संख्या 1 से 40 अक्षर, अंक या हाइफ़न की होनी चाहिए।';
+$string['error_ackdateinvalid']  = 'पोर्टल पर दिखाई गई पावती की तिथि और समय दर्ज करें; यह भविष्य का नहीं हो सकता।';
+$string['error_qrinvalid']       = 'पोर्टल से हस्ताक्षरित QR स्ट्रिंग चिपकाएँ: बिना रिक्त स्थान के छपने योग्य अक्षर, अधिकतम 2900।';
+$string['error_irnduplicate']    = 'यह IRN पहले से किसी अन्य दस्तावेज़ पर दर्ज है।';
+$string['error_irnnotawaiting']  = 'यह दस्तावेज़ IRN की प्रतीक्षा में नहीं है।';
+
+// चेकआउट (राज्य का फ़ील्ड) और ऑर्डर इतिहास / ऑर्डर पृष्ठ के लिंक।
+$string['billingstate']        = 'राज्य';
+$string['billingstate_choose'] = 'अपना राज्य चुनें';
+$string['billingstate_hint']   = 'आपके टैक्स इनवॉइस पर जीएसटी तय करने के लिए। यदि आप जीएसटी नंबर दर्ज करते हैं, तो उसके पहले दो अंक इस राज्य से मेल खाने चाहिए।';
+$string['history_documents']   = 'दस्तावेज़';
+$string['history_receipt']     = 'रसीद';
+$string['history_taxinvoice']  = 'टैक्स इनवॉइस';
+$string['history_creditnote']  = 'क्रेडिट नोट';
+$string['viewreceipt']         = 'रसीद देखें';
+
+// संदेश।
+$string['notify_paid_receipt'] = 'आपकी भुगतान रसीद: {$a}';
+$string['notify_gst_subject']  = 'जीएसटी इनवॉइसिंग पर ध्यान आवश्यक';
+$string['notify_gst_body']     = 'कुछ जीएसटी टैक्स इनवॉइस या क्रेडिट नोट जारी नहीं हो सके। वे देय बने रहते हैं और कारण ठीक होने के 15 मिनट के भीतर अपने आप जारी हो जाएँगे:
+{$a}
+
+साइट एडमिनिस्ट्रेशन > प्लगइन्स > लोकल प्लगइन्स > सेंटिएंटिया कार्ट के अंतर्गत कर सेटिंग्स (GSTN, SAC कोड, जीएसटी राज्य, नंबर उपसर्ग) जाँचें। कारण बने रहने तक यह चेतावनी दिन में एक बार भेजी जाती है।';
+
+// टैक्स इनवॉइस और क्रेडिट नोट (दस्तावेज़ का हर शब्द)।
+$string['doc_taxinvoice']  = 'टैक्स इनवॉइस';
+$string['doc_creditnote']  = 'क्रेडिट नोट';
+$string['doc_invoiceno']   = 'इनवॉइस सं.';
+$string['doc_creditnoteno'] = 'क्रेडिट नोट सं.';
+$string['doc_date']        = 'दिनांक';
+$string['doc_supplier']    = 'आपूर्तिकर्ता';
+$string['doc_buyer']       = 'खरीदार';
+$string['doc_gstin']       = 'GSTIN';
+$string['doc_state']       = 'राज्य';
+$string['doc_placeofsupply'] = 'आपूर्ति का स्थान';
+$string['doc_srno']        = 'क्र.';
+$string['doc_description'] = 'विवरण';
+$string['doc_sac']         = 'SAC';
+$string['doc_taxable']     = 'कर योग्य मूल्य';
+$string['doc_rate']        = 'दर';
+$string['doc_cgst']        = 'CGST';
+$string['doc_sgst']        = 'SGST';
+$string['doc_igst']        = 'IGST';
+$string['doc_total']       = 'कुल';
+$string['doc_totaltaxable'] = 'कुल कर योग्य मूल्य';
+$string['doc_totaltax']    = 'कुल जीएसटी';
+$string['doc_amountinwords'] = 'शब्दों में राशि';
+$string['doc_reversecharge'] = 'रिवर्स चार्ज';
+$string['doc_no']          = 'नहीं';
+$string['doc_irn']         = 'IRN';
+$string['doc_ackno']       = 'पावती सं.';
+$string['doc_ackdate']     = 'पावती दिनांक';
+$string['doc_qralt']       = 'हस्ताक्षरित ई-इनवॉइस QR कोड';
+$string['doc_computergenerated_invoice']    = 'यह कंप्यूटर द्वारा बनाया गया इनवॉइस है।';
+$string['doc_computergenerated_creditnote'] = 'यह कंप्यूटर द्वारा बनाया गया क्रेडिट नोट है।';
+$string['doc_againstinvoice'] = 'टैक्स इनवॉइस के विरुद्ध';
+$string['doc_dated']       = 'दिनांक';
+$string['doc_reason']      = 'कारण';
+$string['doc_print']       = 'प्रिंट करें / PDF के रूप में सहेजें';
+$string['doc_downloadpdf'] = 'PDF डाउनलोड करें';
+$string['doc_pendingirn']  = 'यह दस्तावेज़ अपने ई-इनवॉइस IRN की प्रतीक्षा में है और अभी खरीदार को दिखाई नहीं देता।';
+$string['doc_email']       = 'ईमेल';
+$string['doc_phone']       = 'फ़ोन';
+$string['doc_grandtotal']  = 'कुल योग';
+$string['doc_tax']         = 'जीएसटी';
+$string['doc_for']         = '{$a} के लिए';
+$string['doc_creditline']  = 'ऑर्डर #{$a} के रिफ़ंड के लिए क्रेडिट';
+
+// भुगतान रसीद।
+$string['receipt_page_title']      = 'ऑर्डर #{$a} की रसीद';
+$string['receipt_title']           = 'भुगतान रसीद';
+$string['receipt_orderno']         = 'ऑर्डर संख्या';
+$string['receipt_paidon']          = 'भुगतान की तिथि';
+$string['receipt_buyer']           = 'भुगतानकर्ता';
+$string['receipt_email']           = 'ईमेल';
+$string['receipt_items']           = 'आइटम';
+$string['receipt_item']            = 'आइटम';
+$string['receipt_price']           = 'मूल्य';
+$string['receipt_discount']        = 'छूट';
+$string['receipt_subtotal']        = 'उप-योग';
+$string['receipt_gst']             = 'लगाया गया जीएसटी';
+$string['receipt_totalpaid']       = 'कुल भुगतान';
+$string['receipt_payment']         = 'भुगतान';
+$string['receipt_gateway']         = 'भुगतान का तरीका';
+$string['receipt_reference']       = 'संदर्भ';
+$string['receipt_refunds']         = 'रिफ़ंड';
+$string['receipt_refundedon']      = 'रिफ़ंड की तिथि';
+$string['receipt_amount']          = 'राशि';
+$string['receipt_notinvoice']      = 'यह भुगतान की रसीद है, टैक्स इनवॉइस नहीं।';
+$string['receipt_taxinvoice']      = 'टैक्स इनवॉइस';
+$string['receipt_viewtaxinvoice']  = 'टैक्स इनवॉइस देखें';
+$string['receipt_invoicewillfollow'] = 'आपका जीएसटी टैक्स इनवॉइस बाद में भेजा जाएगा।';
+$string['receipt_creditnotes']     = 'क्रेडिट नोट';
+$string['receipt_viewcreditnote']  = 'क्रेडिट नोट देखें';
+$string['receipt_downloadpdf']     = 'PDF डाउनलोड करें';
+$string['receipt_print']           = 'प्रिंट करें';
+$string['receipt_status']          = 'स्थिति';
+
+// ई-इनवॉइस (IRN) पृष्ठ।
+$string['einvoice_title']          = 'ई-इनवॉइस IRN';
+$string['einvoice_intro']          = 'B2B टैक्स दस्तावेज़ अपने ई-इनवॉइस IRN की प्रतीक्षा में यहाँ दिखते हैं। हर दस्तावेज़ को सरकारी इनवॉइस रजिस्ट्रेशन पोर्टल (IRP) पर पंजीकृत करें, फिर उसका IRN, पावती संख्या, पावती की तिथि और हस्ताक्षरित QR स्ट्रिंग यहाँ दर्ज करें। इसके बाद दस्तावेज़ खरीदार को दिखाई देने लगता है। Sentientia का पोर्टल से कोई कनेक्शन नहीं है।';
+$string['einvoice_none']           = 'कोई दस्तावेज़ IRN की प्रतीक्षा में नहीं है।';
+$string['einvoice_type_invoice']   = 'टैक्स इनवॉइस';
+$string['einvoice_type_creditnote'] = 'क्रेडिट नोट';
+$string['einvoice_irn']            = 'IRN (64 हेक्साडेसिमल अक्षर)';
+$string['einvoice_ackno']          = 'पावती संख्या';
+$string['einvoice_ackdate']        = 'पावती की तिथि और समय (IST)';
+$string['einvoice_qr']             = 'हस्ताक्षरित QR स्ट्रिंग';
+$string['einvoice_record']         = 'IRN दर्ज करें';
+$string['einvoice_view']           = 'दस्तावेज़ देखें';
+$string['einvoice_recorded']       = '{$a} का IRN दर्ज हो गया है। दस्तावेज़ अब खरीदार को दिखाई देता है।';
+
+// निजता मेटाडेटा (classes/privacy/provider.php): टैक्स दस्तावेज़ प्रतिधारण अवधि तक रखे जाते हैं।
+$string['privacy:metadata:local_sentientia_cart_history:billing_state'] = 'चेकआउट पर आपका चुना हुआ राज्य।';
+$string['privacy:metadata:local_sentientia_cart_invoices:billing_state'] = 'खरीदार का राज्य।';
+$string['privacy:metadata:local_sentientia_cart_invoices:place_of_supply'] = 'बिक्री की आपूर्ति का स्थान, जीएसटी राज्य कोड के रूप में।';
+$string['privacy:metadata:local_sentientia_cart_invoices:line_items'] = 'क्या खरीदा गया, उसके मूल्य और कर सहित।';
+$string['privacy:metadata:local_sentientia_cart_invoices:irn'] = 'B2B इनवॉइस का ई-इनवॉइस संदर्भ क्रमांक।';
+$string['privacy:metadata:local_sentientia_cart_creditnotes'] = 'ऑर्डर रिफ़ंड होने पर जारी किए गए जीएसटी क्रेडिट नोट। जिस इनवॉइस को वे घटाते हैं उसी की तरह, वे कर कानून द्वारा आवश्यक प्रतिधारण अवधि (CGST अधिनियम धारा 36) तक अपरिवर्तित रखे जाते हैं; मिटाने का अनुरोध करने पर आपका विवरण केवल उससे पुराने दस्तावेज़ों से हटाया जाता है।';
+$string['privacy:metadata:local_sentientia_cart_creditnotes:userid'] = 'जिस यूज़र को क्रेडिट नोट जारी किया गया।';
+$string['privacy:metadata:local_sentientia_cart_creditnotes:billing_name'] = 'क्रेडिट नोट पर बिलिंग नाम।';
+$string['privacy:metadata:local_sentientia_cart_creditnotes:billing_email'] = 'क्रेडिट नोट पर बिलिंग ईमेल।';
+$string['privacy:metadata:local_sentientia_cart_creditnotes:billing_phone'] = 'क्रेडिट नोट पर बिलिंग फ़ोन।';
+$string['privacy:metadata:local_sentientia_cart_creditnotes:billing_address'] = 'क्रेडिट नोट पर बिलिंग पता।';
+$string['privacy:metadata:local_sentientia_cart_creditnotes:billing_gstn'] = 'ग्राहक का GSTN, यदि दिया गया।';
+$string['privacy:metadata:local_sentientia_cart_creditnotes:billing_state'] = 'खरीदार का राज्य।';
+$string['privacy:metadata:local_sentientia_cart_creditnotes:total'] = 'रिफ़ंड की गई राशि।';
+$string['privacy:metadata:local_sentientia_cart_creditnotes:reason'] = 'रिफ़ंड के लिए दिया गया कारण।';
+$string['privacy:metadata:local_sentientia_cart_creditnotes:irn'] = 'B2B क्रेडिट नोट का ई-इनवॉइस संदर्भ क्रमांक।';
+
+// जीएसटी राज्य कोड (classes/gst_states.php): 01 से 38 और 97।
+$string['gst_state_01'] = 'जम्मू और कश्मीर';
+$string['gst_state_02'] = 'हिमाचल प्रदेश';
+$string['gst_state_03'] = 'पंजाब';
+$string['gst_state_04'] = 'चंडीगढ़';
+$string['gst_state_05'] = 'उत्तराखंड';
+$string['gst_state_06'] = 'हरियाणा';
+$string['gst_state_07'] = 'दिल्ली';
+$string['gst_state_08'] = 'राजस्थान';
+$string['gst_state_09'] = 'उत्तर प्रदेश';
+$string['gst_state_10'] = 'बिहार';
+$string['gst_state_11'] = 'सिक्किम';
+$string['gst_state_12'] = 'अरुणाचल प्रदेश';
+$string['gst_state_13'] = 'नागालैंड';
+$string['gst_state_14'] = 'मणिपुर';
+$string['gst_state_15'] = 'मिज़ोरम';
+$string['gst_state_16'] = 'त्रिपुरा';
+$string['gst_state_17'] = 'मेघालय';
+$string['gst_state_18'] = 'असम';
+$string['gst_state_19'] = 'पश्चिम बंगाल';
+$string['gst_state_20'] = 'झारखंड';
+$string['gst_state_21'] = 'ओडिशा';
+$string['gst_state_22'] = 'छत्तीसगढ़';
+$string['gst_state_23'] = 'मध्य प्रदेश';
+$string['gst_state_24'] = 'गुजरात';
+$string['gst_state_25'] = 'दमन और दीव';
+$string['gst_state_26'] = 'दादरा और नगर हवेली और दमन और दीव';
+$string['gst_state_27'] = 'महाराष्ट्र';
+$string['gst_state_28'] = 'आंध्र प्रदेश (पुराना)';
+$string['gst_state_29'] = 'कर्नाटक';
+$string['gst_state_30'] = 'गोवा';
+$string['gst_state_31'] = 'लक्षद्वीप';
+$string['gst_state_32'] = 'केरल';
+$string['gst_state_33'] = 'तमिलनाडु';
+$string['gst_state_34'] = 'पुदुच्चेरी';
+$string['gst_state_35'] = 'अंडमान और निकोबार द्वीप समूह';
+$string['gst_state_36'] = 'तेलंगाना';
+$string['gst_state_37'] = 'आंध्र प्रदेश';
+$string['gst_state_38'] = 'लद्दाख';
+$string['gst_state_97'] = 'अन्य क्षेत्र';

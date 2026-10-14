@@ -120,5 +120,116 @@ function xmldb_local_sentientia_cart_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026100101, 'local', 'sentientia_cart');
     }
 
+    // ── 2026101400 - GST tax invoices, credit notes and purchase receipts (1.2.0) ──
+    //
+    // Spec: docs/integrations/GST-TAX-INVOICE-AND-RECEIPT-SPEC-2026-10-14.md (sections 4 to 8, 11).
+    // Everything here is additive, each part guarded so a re-run, or a site that took a part by hand, is safe, and
+    // db/install.xml defines exactly the same schema (a fresh install and an upgraded site must end identically):
+    //   - history: billing_state, gst_rate, invoice_due (+ idx_invoice_due);
+    //   - invoices: billing_state, place_of_supply, sac_code, gst_rate, irn, ack_no, ack_date, signed_qr, supplier_json
+    //     (the supplier as printed at issue: an issued invoice must not change when the company settings do) (+ idx_status);
+    //   - NEW local_sentientia_cart_creditnotes;
+    //   - NEW local_sentientia_cart_docseq (the gap-free number counters).
+    // No row is touched and no flag is switched on: both new flags (db/feature_flags.php) default OFF, so until
+    // Finance has confirmed section 10 of the spec the plugin issues no invoice and no credit note.
+    if ($oldversion < 2026101400) {
+        $dbman = $DB->get_manager();
+
+        $table = new xmldb_table('local_sentientia_cart_history');
+        $field = new xmldb_field('billing_state', XMLDB_TYPE_CHAR, '2', null, null, null, null, 'legacy_source');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        $field = new xmldb_field('gst_rate', XMLDB_TYPE_NUMBER, '5, 2', null, null, null, null, 'billing_state');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        $field = new xmldb_field('invoice_due', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'gst_rate');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        $index = new xmldb_index('idx_invoice_due', XMLDB_INDEX_NOTUNIQUE, ['invoice_due']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        $table = new xmldb_table('local_sentientia_cart_invoices');
+        $newcolumns = [
+            new xmldb_field('billing_state', XMLDB_TYPE_CHAR, '2', null, null, null, null, 'timecreated'),
+            new xmldb_field('place_of_supply', XMLDB_TYPE_CHAR, '2', null, null, null, null, 'billing_state'),
+            new xmldb_field('sac_code', XMLDB_TYPE_CHAR, '20', null, null, null, null, 'place_of_supply'),
+            new xmldb_field('gst_rate', XMLDB_TYPE_NUMBER, '5, 2', null, null, null, null, 'sac_code'),
+            new xmldb_field('irn', XMLDB_TYPE_CHAR, '64', null, null, null, null, 'gst_rate'),
+            new xmldb_field('ack_no', XMLDB_TYPE_CHAR, '40', null, null, null, null, 'irn'),
+            new xmldb_field('ack_date', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'ack_no'),
+            new xmldb_field('signed_qr', XMLDB_TYPE_TEXT, null, null, null, null, null, 'ack_date'),
+            new xmldb_field('supplier_json', XMLDB_TYPE_TEXT, null, null, null, null, null, 'signed_qr'),
+        ];
+        foreach ($newcolumns as $field) {
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+        $index = new xmldb_index('idx_status', XMLDB_INDEX_NOTUNIQUE, ['status']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        $table = new xmldb_table('local_sentientia_cart_creditnotes');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('invoiceid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('historyid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('ledgerid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+            $table->add_field('cn_number', XMLDB_TYPE_CHAR, '50', null, null, null, null);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('costcenterid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('billing_name', XMLDB_TYPE_CHAR, '200', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('billing_email', XMLDB_TYPE_CHAR, '200', null, null, null, null);
+            $table->add_field('billing_phone', XMLDB_TYPE_CHAR, '40', null, null, null, null);
+            $table->add_field('billing_address', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $table->add_field('billing_gstn', XMLDB_TYPE_CHAR, '20', null, null, null, null);
+            $table->add_field('billing_state', XMLDB_TYPE_CHAR, '2', null, null, null, null);
+            $table->add_field('place_of_supply', XMLDB_TYPE_CHAR, '2', null, null, null, null);
+            $table->add_field('sac_code', XMLDB_TYPE_CHAR, '20', null, null, null, null);
+            $table->add_field('gst_rate', XMLDB_TYPE_NUMBER, '5, 2', null, null, null, null);
+            $table->add_field('taxable', XMLDB_TYPE_NUMBER, '14, 2', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('cgst', XMLDB_TYPE_NUMBER, '14, 2', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('sgst', XMLDB_TYPE_NUMBER, '14, 2', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('igst', XMLDB_TYPE_NUMBER, '14, 2', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('total', XMLDB_TYPE_NUMBER, '14, 2', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('currency', XMLDB_TYPE_CHAR, '3', null, XMLDB_NOTNULL, null, 'INR');
+            $table->add_field('reason', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $table->add_field('status', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'due');
+            $table->add_field('irn', XMLDB_TYPE_CHAR, '64', null, null, null, null);
+            $table->add_field('ack_no', XMLDB_TYPE_CHAR, '40', null, null, null, null);
+            $table->add_field('ack_date', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+            $table->add_field('signed_qr', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $table->add_field('supplier_json', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_key('unique_cn_number', XMLDB_KEY_UNIQUE, ['cn_number']);
+            $table->add_key('fk_invoice', XMLDB_KEY_FOREIGN, ['invoiceid'], 'local_sentientia_cart_invoices', ['id']);
+            $table->add_key('fk_history', XMLDB_KEY_FOREIGN, ['historyid'], 'local_sentientia_cart_history', ['id']);
+            $table->add_index('idx_ledger', XMLDB_INDEX_NOTUNIQUE, ['ledgerid']);
+            $table->add_index('idx_status', XMLDB_INDEX_NOTUNIQUE, ['status']);
+            $table->add_index('idx_user_time', XMLDB_INDEX_NOTUNIQUE, ['userid', 'timecreated']);
+            $dbman->create_table($table);
+        }
+
+        $table = new xmldb_table('local_sentientia_cart_docseq');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('series', XMLDB_TYPE_CHAR, '40', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('lastno', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_key('unique_series', XMLDB_KEY_UNIQUE, ['series']);
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026101400, 'local', 'sentientia_cart');
+    }
+
     return true;
 }
