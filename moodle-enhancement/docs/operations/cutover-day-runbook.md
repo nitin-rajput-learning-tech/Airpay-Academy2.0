@@ -242,7 +242,9 @@ Stage B checks", and `docs/cutover/OWNER-DECISIONS-2026-10-07.md`.
    `will_move_with_the_lifecycle_mandatory_tag` list; BizLMS tag tenancy (`local_tags`) is not carried over. If the preflight count
    `will_move` is above 0, open the core tag index as a `/77` learner and confirm no `/1` course names are listed; if they are,
    handle it under the ADR-031 course-listing rules before cutover.
-6. Reader flags for imported history stay OFF until Nitin has reviewed the evidence; the importer never flips a flag.
+6. Reader flags for imported history stay OFF until Nitin has reviewed the evidence; the importer never flips a flag. When
+   one is switched on, the next web page shows it at once, but cron, adhoc task runners and open live sessions see it only
+   within 30 seconds (`feature_flags::SNAPSHOT_TTL`): wait 30 seconds before checking what they do (deploy-runbook §3).
 7. No native GST tax invoice to a real buyer until Airpay Finance answers the six points (`cart.native_tax_invoices = hold`);
    `local_sentientia_cart/enabled_tenants` defaults to '77,177'.
 
