@@ -1437,7 +1437,34 @@ dump_has_trailer() {
 KIT_MARKER_KEY="rehearsal_kit_restore_id"
 KIT_MARKER_FILE=".rehearsal-kit-restore-id"
 
-new_restore_id() { od -An -N16 -tx1 /dev/urandom | tr -d ' \n'; }
+# dev_bytes KIND COUNT -> exactly COUNT bytes of KIND (zero or urandom) on stdout; the one way the kit and its selftest read either device.
+# A device has no end, so an unbounded read written to a file fills the disk (round 9: a computed COUNT that came out empty became a
+# negative -c, which GNU head reads as "all but the last N bytes" of an endless stream, and it wrote until the drive was full). COUNT must
+# be a plain non-negative decimal of at most 9 digits and at most 268435456 (256 MB). Anything else writes nothing, says why on stderr,
+# appends the reason to the file named by DEV_BYTES_MARK when that is set (the selftest counts a non-empty file as a failure) and returns 1.
+dev_bytes() {
+    local kind="${1-}" count="${2-}" dev="" why=""
+    case "$kind" in
+        zero) dev=/dev/zero ;;
+        urandom) dev=/dev/urandom ;;
+        *) why="the source '${kind}' is neither zero nor urandom" ;;
+    esac
+    if [ -z "$why" ]; then
+        case "$count" in
+            '') why="the count is empty" ;;
+            *[!0-9]*) why="the count '${count}' is not a plain non-negative integer" ;;
+            *) if [ "${#count}" -gt 9 ] || [ "$((10#$count))" -gt 268435456 ]; then why="the count '${count}' is above the 256 MB limit (268435456 bytes)"; fi ;;
+        esac
+    fi
+    if [ -n "$why" ]; then
+        printf 'dev_bytes: refused, %s\n' "$why" >&2
+        if [ -n "${DEV_BYTES_MARK:-}" ]; then printf '%s\n' "$why" >> "$DEV_BYTES_MARK"; fi
+        return 1
+    fi
+    if [ "$((10#$count))" -gt 0 ]; then head -c "$((10#$count))" "$dev"; fi
+}
+
+new_restore_id() { dev_bytes urandom 16 | od -An -tx1 | tr -d ' \n'; }
 
 # marker_get -> the marker of the database, with a return code that says whether the read can be believed:
 #   rc 0, a value printed   the marker row holds that value;

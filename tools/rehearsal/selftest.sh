@@ -62,6 +62,9 @@
 #     (ABRT: ended=unreached; KILL: running) stops run_all.sh with its lock kept and no summary, while an ordinary failure or an earlier run's stale
 #     status file does not; the content refusal tells the operator to run sha1sum on live, and the documents say only filedir/ is proven independently of the
 #     checksum and that every step 01 run re-reads it; the content check's working lists live under TMP_DIR, not in reports/;
+#   * fix round 9b: no fixture reads /dev/zero or /dev/urandom except through dev_bytes (lib/common.sh), which writes exactly COUNT bytes and refuses a
+#     count that is empty, not a plain non-negative integer, or above 256 MB (an empty size once became head -c -2560 on an endless device and filled
+#     the drive); a refusal writes nothing, says why and fails the run; no kit script or fixture line reads a device any other way;
 #   * run_all.sh --list and a DRY --only run work; no Windows path or drive letter is hard-coded in the kit.
 # Exit 0 = every test passed.
 
@@ -77,6 +80,17 @@ ok() { PASS=$((PASS + 1)); printf '  ok    %s\n' "$1"; }
 # skip LABEL: a case that cannot be run HERE (named, never counted as passed, and printed in the summary line).
 skip() { SKIPS=$((SKIPS + 1)); printf '  skip  %s\n' "$1"; }
 bad() { FAILS=$((FAILS + 1)); printf '  FAIL  %s\n' "$1"; [ -n "${2:-}" ] && printf '%s\n' "$2" | head -n 12 | sed 's/^/        /'; return 0; }
+
+# dev_bytes KIND COUNT (lib/common.sh): the only way this file reads /dev/zero or /dev/urandom. Only that function is taken from common.sh (sourcing
+# the file here would bring its set -e, its traps and its globals into the selftest). A refusal is appended to DEV_BYTES_MARK, which is checked before
+# the summary: a call inside a pipe or a $( ) runs in a subshell, where a failure counter would be lost.
+eval "$( ( . "$KIT/lib/common.sh" > /dev/null 2>&1; declare -f dev_bytes ) )"
+if ! declare -F dev_bytes > /dev/null; then
+    printf 'selftest: dev_bytes could not be loaded from lib/common.sh\n' >&2
+    exit 1
+fi
+DEV_BYTES_MARK="$T/.dev-bytes-refused"
+export DEV_BYTES_MARK
 
 # base_env FILE [KEY=value ...]: a valid env file; later lines override (the file is sourced top to bottom).
 base_env() {
@@ -128,6 +142,34 @@ done
 for f in "$KIT"/lib/*.php; do
     if php -l "$f" > /dev/null 2>&1; then ok "php -l $(basename "$f")"; else bad "php -l $(basename "$f")"; fi
 done
+
+printf 'the byte helper (no unbounded read of a device)\n'
+# The calls below run in a subshell with a mark of their own, so that the refusals they provoke on purpose do not fail the run.
+ZB="$T/zb"
+mkdir -p "$ZB"
+zb() { ( DEV_BYTES_MARK="$ZB/mark"; dev_bytes "$@" ); }
+wc_bytes() { wc -c | tr -d ' '; }
+if [ "$(zb zero 1000 | wc_bytes)" = 1000 ] && [ "$(zb zero 1000 | tr -d '\0' | wc_bytes)" = 0 ]; then ok "dev_bytes zero 1000 writes exactly 1000 bytes, every one of them zero"; else bad "dev_bytes zero 1000"; fi
+if [ "$(zb urandom 17 | wc_bytes)" = 17 ] && [ "$(zb zero 0012 | wc_bytes)" = 12 ]; then ok "dev_bytes urandom 17 writes exactly 17 bytes; 0012 is twelve (decimal, never octal)"; else bad "dev_bytes urandom 17 / zero 0012"; fi
+if [ "$(zb zero 0 | wc_bytes)" = 0 ] && zb zero 0; then ok "a count of 0 writes nothing and is not an error"; else bad "dev_bytes zero 0"; fi
+if [ "$(zb zero 268435456 2> /dev/null | head -c 1 | wc_bytes)" = 1 ]; then ok "the limit itself (268435456) is accepted; read through head -c 1, so no file is ever written"; else bad "dev_bytes zero 268435456 is accepted"; fi
+ZB_NL="5
+6"
+for zbc in '' abc -2560 1.5 ' 5' '5 ' 0x10 1e3 +5 268435457 99999999999999999999 "$ZB_NL"; do
+    zbout="$(zb zero "$zbc" 2> "$ZB/err" | wc_bytes)"
+    zb zero "$zbc" > /dev/null 2>&1
+    zbrc=$?
+    if [ "$zbout" = 0 ] && [ "$zbrc" = 1 ] && grep -q '^dev_bytes: refused, ' "$ZB/err"; then ok "dev_bytes refuses the count $(printf '%q' "$zbc"): nothing written, a reason on stderr, status 1"; else bad "dev_bytes zero $(printf '%q' "$zbc") (wrote ${zbout} bytes, rc ${zbrc})" "$(cat "$ZB/err")"; fi
+done
+# The exact failure of round 9: a size that came out empty, then minus a constant.
+ZB_SIZE="$(stat -c %s "$T/no-such-file" 2> /dev/null)"
+if [ "$(zb zero "$((ZB_SIZE - 2560))" 2> /dev/null | wc_bytes)" = 0 ] && [ "$(zb urandom "$((ZB_SIZE - 2560))" 2> /dev/null | wc_bytes)" = 0 ]; then ok "an empty size minus 2560 (the round 9 accident, head -c -2560) writes nothing from either device"; else bad "an empty size minus 2560 still wrote bytes"; fi
+if [ "$(zb random 5 2> /dev/null | wc_bytes)" = 0 ] && ! zb random 5 2> /dev/null && [ "$(zb 2> /dev/null | wc_bytes)" = 0 ] && ! zb 2> /dev/null; then ok "an unknown source, and a call without arguments, are refused too"; else bad "dev_bytes with an unknown source or no arguments"; fi
+if [ -s "$ZB/mark" ] && [ ! -e "$DEV_BYTES_MARK" ]; then ok "a refusal is recorded in DEV_BYTES_MARK (these ran against their own; the run's own is untouched)"; else bad "the refusals' mark file (own mark '$([ -s "$ZB/mark" ] && echo written || echo empty)', the run's '$([ -e "$DEV_BYTES_MARK" ] && echo written || echo untouched)')"; fi
+hits="$( (cd "$KIT" && grep -nE '/dev/(zero|urandom|random)' ./*.sh lib/*.sh) 2> /dev/null | grep -v '^[^:]*:[0-9]*:[[:space:]]*#' | grep -vE '^lib/common\.sh:[0-9]+:[[:space:]]*(zero|urandom)\) dev=/dev/(zero|urandom) ;;$' || true)"
+if [ -z "$hits" ]; then ok "no line of the kit or of this file reads a device except dev_bytes itself (the grep is over every *.sh and lib/*.sh)"; else bad "a line reads a device without dev_bytes" "$hits"; fi
+hits="$( (cd "$KIT" && grep -nE '(^|[^A-Za-z0-9_./-])(dd|truncate|fallocate|fsutil|mkfile)[[:space:]]|head[[:space:]]+-c[[:space:]]*"?[$(]' ./*.sh lib/*.sh) 2> /dev/null | grep -v '^\./selftest.sh:' | grep -v '^[^:]*:[0-9]*:[[:space:]]*#' | grep -vE '^lib/common\.sh:[0-9]+:.*"\$dev"; fi$' || true)"
+if [ -z "$hits" ]; then ok "no kit script (selftest apart) uses dd, truncate or fallocate, or head -c with a computed count, except dev_bytes after its checks"; else bad "a kit script writes by a computed size without dev_bytes" "$hits"; fi
 
 printf 'env policy (preflight, DRY)\n'
 base_env "$T/ok.env"
@@ -956,7 +998,7 @@ wait_file() {
 # with 'Unexpected EOF' AFTER the whole filedir is there, which is the cut the filedir gate cannot see.
 mkdir -p "$T/mdcut/filedir/11/f6" "$T/mdcut/lang/hi"
 printf 'x' > "$T/mdcut/filedir/11/f6/11f6ad8ec52a2984abaafd7c3b516503785c2072"
-head -c 2000000 /dev/zero > "$T/mdcut/lang/hi/langconfig.bin"
+dev_bytes zero 2000000 > "$T/mdcut/lang/hi/langconfig.bin"
 tar -C "$T/mdcut" -cf "$T/md-full.tar" filedir lang
 head -c 600000 "$T/md-full.tar" > "$T/md-cut.tar"
 # The kit refuses an archive that is cut (fix round 6b) before it unpacks anything, and since round 8 also when the operator vouches for the
@@ -1291,7 +1333,7 @@ rb_expect "(7-M1) an uncompressed tar needs its checksum on a re-run too (filedi
 # The zero-filled copy of the round 6b review: full size, every byte after the header of lang/ zero. Its last 1024 bytes are the two zero blocks, GNU tar
 # takes them for the end of the archive and exits 0, and lang/ is simply not there.
 head -c 2560 "$T/md-full.tar" > "$T/md-zero.tar"
-head -c "$(($(stat -c %s "$T/md-full.tar") - 2560))" /dev/zero >> "$T/md-zero.tar"
+dev_bytes zero "$(($(stat -c %s "$T/md-full.tar") - 2560))" >> "$T/md-zero.tar"
 if [ "$(stat -c %s "$T/md-zero.tar")" = "$(stat -c %s "$T/md-full.tar")" ]; then ok "(premise) the zero-filled copy has the full size of the archive"; else bad "(premise) the zero-filled copy's size"; fi
 res="$(in_kit tar_ends_complete tar "$T/md-zero.tar")"
 if [ "$(printf '%s' "$res" | tail -n 1)" = rc=0 ]; then ok "(premise) the old test, the last 1024 bytes, passes the zero-filled tar (rc 0): it cannot tell it from a whole one"; else bad "(premise) tar_ends_complete on the zero-filled tar" "$res"; fi
@@ -1302,7 +1344,7 @@ else bad "(premise) GNU tar unpacks the zero-filled copy with exit status 0 and 
 # A zero-filled .tar.gz (the compressed file itself padded with zeros after its first bytes): the decompressor fails on it.
 gzsize="$(stat -c %s "$T/md-full.tar.gz")"
 head -c 1000 "$T/md-full.tar.gz" > "$T/md-zerogz.tar.gz"
-head -c "$((gzsize - 1000))" /dev/zero >> "$T/md-zerogz.tar.gz"
+dev_bytes zero "$((gzsize - 1000))" >> "$T/md-zerogz.tar.gz"
 for variant in "md-full.tar:a COMPLETE uncompressed tar" "md-zero.tar:a zero-filled uncompressed tar of the full size" "md-zerogz.tar.gz:a zero-filled .tar.gz"; do
     f="${variant%%:*}"
     fake_db none
@@ -2042,7 +2084,7 @@ t_hash() {
     filedir_hash_check "$T/hc-$1/filedir" "$T/hc-$1/rep/h" || rc=$?
     printf 'files=%s bytes=%s bad=%s unread=%s odd=%s hashrc=%s\n' "$FILEDIR_HASH_FILES" "$FILEDIR_HASH_BYTES" "$FILEDIR_HASH_BAD" "$FILEDIR_HASH_UNREAD" "$FILEDIR_HASH_ODD" "$rc"
 }
-BIGC="$(head -c 30000 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+BIGC="$(dev_bytes urandom 30000 | od -An -tx1 | tr -d ' \n')"
 mkdir -p "$T/hc-clean/filedir"
 mkfd "$T/hc-clean/filedir" x "hello world" "$BIGC"
 printf 'Moodle sentinel' > "$T/hc-clean/filedir/warning.txt"
@@ -2054,7 +2096,7 @@ else bad "(8-A) the clean file store" "$res"; fi
 cp -r "$T/hc-clean" "$T/hc-zero"
 zf="$T/hc-zero/filedir/$(printf '%s' "$BIGC" | sha1sum | cut -c 1-2)/$(printf '%s' "$BIGC" | sha1sum | cut -c 3-4)/$(printf '%s' "$BIGC" | sha1sum | cut -d ' ' -f 1)"
 zsize="$(stat -c %s "$zf")"
-head -c "$zsize" /dev/zero > "$zf"
+dev_bytes zero "$zsize" > "$zf"
 if [ "$(stat -c %s "$zf")" = "$zsize" ]; then ok "(premise) the file is zero-filled and has its size and its name: the existence and size gates of step 01 pass it"; else bad "(premise) the zero-filled file's size"; fi
 res="$(in_kit t_hash zero)"
 if printf '%s' "$res" | grep -q '^files=3 .* bad=1 unread=0 odd=0 hashrc=1$' && grep -q "$(printf '%s' "$BIGC" | sha1sum | cut -d ' ' -f 1)" "$T/hc-zero/rep/h-mismatch.txt" && [ "$(wc -l < "$T/hc-zero/rep/h-mismatch.txt" | tr -d ' ')" = 1 ]; then
@@ -2131,7 +2173,7 @@ for c in "$T/mdh.c1" "$T/mdh.c2" "$T/mdh.c3"; do
     cp "$c" "$T/mdh/filedir/${h:0:2}/${h:2:2}/$h"
     printf '%s\t%s\n' "$h" "$(stat -c %s "$c")" >> "$T/mdh.rows"
 done
-head -c 100000 /dev/urandom > "$T/mdh/lang/hi/langconfig.bin"
+dev_bytes urandom 100000 > "$T/mdh/lang/hi/langconfig.bin"
 tar -C "$T/mdh" -cf "$T/md-h.tar" filedir lang
 php -r '$f = file_get_contents($argv[1]); $c = file_get_contents($argv[3]); $o = strpos($f, substr($c, 0, 4096)); if ($o === false || substr($f, $o, strlen($c)) !== $c) { exit(3); } file_put_contents($argv[2], substr($f, 0, $o) . str_repeat("\0", strlen($c)) . substr($f, $o + strlen($c)));' "$T/md-h.tar" "$T/md-hz.tar" "$T/mdh.c3"
 if [ "$(stat -c %s "$T/md-hz.tar")" = "$(stat -c %s "$T/md-h.tar")" ] && ! cmp -s "$T/md-h.tar" "$T/md-hz.tar"; then ok "(premise) md-hz.tar is md-h.tar with one content file zero-filled in place: the same size, the same headers and names"; else bad "(premise) md-hz.tar"; fi
@@ -2192,7 +2234,7 @@ rb_run ha1 "RESTORE_DONE_BY_HAND=$RBDB" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-h.tar"
 rb_expect "(8-A) a re-run on the finished unpack (the reuse path) reads the content again; a stray name is one WARN and warning.txt is not counted" 0 'WARN: 1 name(s) under filedir/ are not a content hash' 'FAIL'
 if printf '%s' "$OUT" | grep -q 'not restoring over it' && printf '%s' "$OUT" | grep -q 'hashes to its own name'; then ok "(8-A) ... on the reuse path, with the unpack kept"; else bad "(8-A) the reuse path did not read the content" "$OUT"; fi
 c3p="$T/rb-ha1/data/filedir/$(sha1sum "$T/mdh.c3" | cut -c 1-2)/$(sha1sum "$T/mdh.c3" | cut -c 3-4)/$(sha1sum "$T/mdh.c3" | cut -d ' ' -f 1)"
-head -c "$(stat -c %s "$c3p")" /dev/zero > "$c3p"
+dev_bytes zero "$(stat -c %s "$c3p")" > "$c3p"
 rb_run ha1 "RESTORE_DONE_BY_HAND=$RBDB" "RESTORE_MOODLEDATA_ARCHIVE=$T/md-h.tar" "$HSHA"
 rb_expect "(8-A) a file damaged on disk since the unpack (zero-filled, same size) is found by the next run of step 01" 1 'content of filedir/ does not match its names' 'restore check done'
 FW="$T"
@@ -2204,7 +2246,7 @@ if [ "$(printf '%s' "$res" | tail -n 1)" = rc=0 ]; then ok "(8-S3) a whole tar: 
 tar -b 1 -C "$T/mdcut" -cf "$T/md-b1.tar" filedir lang
 res="$(in_kit tar_end_near_file_end "$T/md-b1.tar")"
 if [ "$(printf '%s' "$res" | tail -n 1)" = rc=0 ]; then ok "(8-S3) a tar written with a blocking factor of 1 (a 512-byte record) is whole too"; else bad "(8-S3) a tar with a blocking factor of 1" "$res"; fi
-{ cat "$T/md-full.tar"; head -c 20480 /dev/zero; } > "$T/md-pad.tar"
+{ cat "$T/md-full.tar"; dev_bytes zero 20480; } > "$T/md-pad.tar"
 res="$(in_kit tar_end_near_file_end "$T/md-pad.tar")"
 if [ "$(printf '%s' "$res" | tail -n 1)" = rc=1 ]; then ok "(8-S3) a tar followed by 20480 bytes of zeros (more than one record plus one block after GNU tar's end of the archive) is refused"; else bad "(8-S3) a padded tar" "$res"; fi
 for f in md-zero.tar md-cut.tar md-cuthdr.tar md-text.tar; do
@@ -2243,7 +2285,7 @@ cp -r "$T/mdh" "$T/mdg"
 mdg_last() { LC_ALL=C tar -tRf "$1" | LC_ALL=C awk '/^block [0-9]+: \*\* (Block of NULs|End of File) \*\*$/ { last = $2 } END { sub(/:$/, "", last); print last }'; }
 MDG_OK=0
 for k in $(seq 0 19); do
-    head -c $((100000 + 512 * k)) /dev/urandom > "$T/mdg/lang/hi/langconfig.bin"
+    dev_bytes urandom "$((100000 + 512 * k))" > "$T/mdg/lang/hi/langconfig.bin"
     tar -C "$T/mdg" -cf "$T/md-g.tar" filedir lang
     if [ "$(($(mdg_last "$T/md-g.tar") % 20))" = 19 ]; then
         MDG_OK=1
@@ -2270,7 +2312,7 @@ res="$(in_kit t_tarend "$T/md-g.tar")"
 if [ "$(printf '%s' "$res" | tail -n 1)" = rc=0 ] && printf '%s' "$res" | grep -q "gap=10752$"; then
     ok "(9-M) tar_end_near_file_end accepts it: GNU tar's end of the archive is 10752 bytes (one record plus one block) before the end of the file (round 8 refused it)"
 else bad "(9-M) tar_end_near_file_end on md-g.tar" "$res"; fi
-{ cat "$T/md-g.tar"; head -c 512 /dev/zero; } > "$T/md-g-pad.tar"
+{ cat "$T/md-g.tar"; dev_bytes zero 512; } > "$T/md-g-pad.tar"
 res="$(in_kit t_tarend "$T/md-g-pad.tar")"
 if [ "$(printf '%s' "$res" | tail -n 1)" = rc=1 ] && printf '%s' "$res" | grep -q "gap=11264$"; then
     ok "(9-M) one more block of zeros after it (11264 bytes after GNU tar's end of the archive) is refused: a larger gap is still refused"
@@ -2290,7 +2332,7 @@ if ! ls "$T/rb-gx1/work/reports" | grep -q '\.tmp$'; then ok "(9-S6) a whole ste
 # A cut copy is still refused, each with the SHA-256 of ITSELF, before anything is restored, claimed, stamped or unpacked.
 head -c $((gsize - 10752)) "$T/md-g.tar" > "$T/md-g-cut.tar"
 head -c 2560 "$T/md-g.tar" > "$T/md-g-zero.tar"
-head -c $((gsize - 2560)) /dev/zero >> "$T/md-g-zero.tar"
+dev_bytes zero "$((gsize - 2560))" >> "$T/md-g-zero.tar"
 FW="$T/w4"
 for variant in "md-g-cut.tar:a cut copy of that tar (every member, none of the end of the archive)" "md-g-zero.tar:a full-size copy of that tar with a zero-filled region" "md-g-pad.tar:that tar followed by one more block of zeros"; do
     f="${variant%%:*}"
@@ -2640,6 +2682,9 @@ hits="$(grep -nE '(^|[^A-Za-z0-9_])[A-Za-z]:[\\/]|xampp|/c/Users|/mnt/[a-z]/' "$
 if [ -z "$hits" ]; then ok "no Windows path, drive letter or XAMPP path is hard-coded in the kit"; else bad "hard-coded Windows paths" "$hits"; fi
 hits="$(grep -nE 'password[[:space:]]*=[[:space:]]*["'"'"'][^"'"'"']{8,}' "$KIT"/*.sh "$KIT"/lib/*.sh "$KIT"/rehearsal.env.example 2> /dev/null | grep -v 'selftest.sh' || true)"
 if [ -z "$hits" ]; then ok "no credential literal in the kit"; else bad "credential literal" "$hits"; fi
+
+# A call that dev_bytes refused left its fixture empty or short; it may have run in a pipe or a $( ), so the mark file is read here, at the end.
+if [ -s "$DEV_BYTES_MARK" ]; then bad "dev_bytes refused a count during the run: a fixture came out empty or short" "$(cat "$DEV_BYTES_MARK")"; else ok "dev_bytes refused no count during the run: every fixture was written at the size that was computed for it"; fi
 
 printf '\n%s passed, %s failed%s\n' "$PASS" "$FAILS" "$([ "$SKIPS" = 0 ] || printf ', %s skipped (see the skip lines above)' "$SKIPS")"
 [ "$FAILS" = 0 ]
