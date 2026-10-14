@@ -1152,7 +1152,12 @@ class rule_engine {
         global $DB;
 
         // Prevent duplicate: same rule + user + course within 24 hours.
-        // Use transaction to prevent race condition with parallel cron.
+        // The check and the claim are NOT atomic: under InnoDB's REPEATABLE READ the
+        // SELECT takes no lock, so two writers could both see no row and both insert.
+        // What keeps this to one delivery is that there is one writer: send() is
+        // reached only from the process_rules scheduled task, which cron and
+        // admin/cli/scheduled_task.php both run under its task lock. A second caller
+        // needs a lock of its own or a unique key first (state card, 2026-10-14).
         $cid = $courseid ?? 0;
         $since = time() - 86400;
         $transaction = $DB->start_delegated_transaction();
@@ -1178,7 +1183,7 @@ class rule_engine {
             $transaction->allow_commit();
         } catch (\Throwable $e) {
             try { $transaction->rollback($e); } catch (\Throwable $ignored) {}
-            return false; // Another process already claimed this notification.
+            return false; // A database error: the claim was not written, so do not send.
         }
 
         // Check user preferences (Phase C.2 — channel + rule-type opt-out + quiet hours).
