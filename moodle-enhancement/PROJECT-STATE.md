@@ -58,8 +58,9 @@
   its registry and override snapshot in a \core\di object, so PHPUnit's per-test container reset clears it and a flag
   one test switched on no longer leaks into the next. Production lifetime and the 30 s TTL are unchanged.
   - Moodle 5.3: per-test reset test 2/2; platform suite OK, 586 tests.
-  - Moodle 5.1 (XAMPP): all 57 test files that write flags (31 plugins, 785 tests) OK. The full 5.1 platform suite
-    was still running as extra confirmation (`D:/Claude Local/ffreset-check/progress.txt`).
+  - Moodle 5.1 (XAMPP): all 57 test files that write flags (31 plugins, 785 tests) OK. Full platform suite: 585 of
+    586 OK. The one error was Windows refusing `rename()` over `notimported.csv` ("Access is denied": the virus
+    scanner held the just-closed file; report.php closes both handles first). Re-run alone it passes.
 - The 5.3 stage tree (`moodle53-stage/20261009-190307-5.3`) carries every code change up to 47400b13d, and `r53_final`
   was upgraded to platform 2026100903 (version only). The post-import gate was not re-run: nothing it exercises
   changed. The next 5.3 package for UAT or Stage B is built from 47400b13d or later.
