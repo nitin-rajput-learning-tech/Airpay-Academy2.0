@@ -338,6 +338,9 @@ class cart_manager {
         $cart->discount_amount = round($discount, 2);
         $cart->tax_amount      = $tax;
         $cart->total_amount    = $total;
+        // GST tax invoices (2026-10-14): the rate tax_amount was computed at is recorded with it, so the invoice
+        // prints what the buyer was charged and never recomputes at whatever gst_rate says on the day it is issued.
+        $cart->gst_rate        = $gstrate;
         $cart->timemodified    = time();
 
         $DB->update_record('local_sentientia_cart_history', $cart);
@@ -377,6 +380,11 @@ class cart_manager {
             }
         }
 
+        // GST tax invoices (2026-10-14, spec section 5): the buyer's state is the place of supply of a B2C order,
+        // and its GST state code must agree with the state in the GSTIN of a B2B one. Checked before an order
+        // number is reserved, so a refusal burns none.
+        [$billingstate, $billinggstn] = self::checked_billing_state($cart, $billing);
+
         // Reserve order number atomically.
         $orderid = self::reserve_order_number($userid);
 
@@ -387,11 +395,50 @@ class cart_manager {
         $cart->billing_email   = (string) ($billing['billing_email'] ?? '');
         $cart->billing_phone   = (string) ($billing['billing_phone'] ?? '');
         $cart->billing_address = (string) ($billing['billing_address'] ?? '');
-        $cart->billing_gstn    = (string) ($billing['billing_gstn'] ?? '');
+        $cart->billing_gstn    = $billinggstn;
+        $cart->billing_state   = $billingstate;
         $cart->timemodified    = time();
 
         $DB->update_record('local_sentientia_cart_history', $cart);
         return $cart;
+    }
+
+    /**
+     * The buyer's GST state and GSTIN, checked (checkout step of the GST tax invoices spec, section 5).
+     *
+     * While the invoice flag is ON for the order's tenant: the state is required, a GSTIN must look like one, and its
+     * first two digits must equal the state (a Maharashtra GSTIN with a Gujarat state would print an invoice
+     * that is wrong either way). While the flag is OFF checkout asks for nothing new and behaves as it always did: a
+     * state is only checked when one is sent, and a GSTIN is stored as typed.
+     *
+     * @param \stdClass $cart The order being checked out (costcenterid decides the flag).
+     * @param array $billing The billing details (billing_state, billing_gstn).
+     * @return array [state code or null, GSTIN as it is to be stored]
+     * @throws \moodle_exception error_statemissing, error_statenotvalid, error_gstinformat, error_gstinstate
+     */
+    private static function checked_billing_state(\stdClass $cart, array $billing): array {
+        $state = trim((string) ($billing['billing_state'] ?? ''));
+        $gstin = (string) ($billing['billing_gstn'] ?? '');
+        $strict = flags::invoices_for_order($cart);
+
+        if ($strict) {
+            $gstin = gst::normalise_gstin($gstin);
+            if ($state === '') {
+                throw new \moodle_exception('error_statemissing', 'local_sentientia_cart');
+            }
+            if ($gstin !== '' && !gst::is_gstin_format($gstin)) {
+                throw new \moodle_exception('error_gstinformat', 'local_sentientia_cart');
+            }
+        }
+        if ($state !== '') {
+            if (!gst_states::is_valid($state)) {
+                throw new \moodle_exception('error_statenotvalid', 'local_sentientia_cart');
+            }
+            if (!gst::state_matches_gstin($state, $gstin)) {
+                throw new \moodle_exception('error_gstinstate', 'local_sentientia_cart');
+            }
+        }
+        return [$state !== '' ? $state : null, $gstin];
     }
 
     /**
@@ -436,7 +483,10 @@ class cart_manager {
      * 3. Enrols the buyer in every course line they may buy (can_buy_course(),
      *    ADR-031 decision 3); a line they may not buy is paid for but NOT
      *    enrolled ("withheld")
-     * 4. Issues invoice (for the whole order, withheld lines included)
+     * 4. Marks the order invoice-due while the GST invoice flag is ON for its tenant (2026-10-14). The invoice is NOT
+     *    issued in this transaction: it is issued after the commit, in its own transaction (issue_after_payment()),
+     *    or by the issue_due_documents task, for the whole order, withheld lines included. The payment never
+     *    depends on the invoice.
      * 5. Sends payment_received to the buyer, listing only the enrolled
      *    courses and saying any withheld one cannot be accessed and will be
      *    refunded; and admin_new_order to the site admins (get_admins()), with
@@ -516,6 +566,11 @@ class cart_manager {
             $cart->timepaid     = $now;
             $cart->timemodified = $now;
             $cart->gateway_ref  = $gateway_ref;
+            // GST tax invoices (2026-10-14): the payment only MARKS the order invoice-due, and only while the invoice
+            // flag is ON for the order's tenant. The invoice itself is issued after this transaction commits, in its
+            // own one (below), or by the 15-minute task: an invoice failure must never roll back a payment the
+            // gateway has already taken.
+            $cart->invoice_due  = flags::invoices_for_order($cart) ? 1 : 0;
             if ($withheld) {
                 // cart.withheld_line_refund: the note also states what each withheld line was charged, for review.
                 $cart->notes = trim(($cart->notes ?? '') . "\n"
@@ -532,19 +587,60 @@ class cart_manager {
                 self::enrol_user_in_course((int) $cart->userid, $courseid);
             }
 
-            // 4. Issue invoice.
-            invoicer::issue_for_order($cart);
+            // 4. (The invoice is NOT issued here: see "invoice_due" above, and issue_after_payment().)
 
             // 5. Send notifications: the buyer is told what was withheld, and
             // the site admins that it is a refund due.
             notifier::order_paid($cart, $withheld);
 
             $transaction->allow_commit();
-            return true;
         } catch (\Throwable $e) {
             $transaction->rollback($e);
             return false;  // unreachable; rollback rethrows
         }
+
+        // 6. After the commit: the invoice, in its own transaction. Never throws.
+        self::issue_after_payment($cart);
+        return true;
+    }
+
+    /**
+     * Try to issue the invoice of an order that has just been paid. Called after mark_paid()'s transaction has
+     * committed, so nothing that goes wrong here can reach the payment: a failure is logged, the order stays
+     * invoice-due, and the issue_due_documents task issues it within 15 minutes.
+     *
+     * When the payment ran inside somebody else's transaction (a delegated transaction that is still open), its
+     * commit has not happened yet and an invoice issued now could outlive a rollback of the payment; nothing is
+     * attempted and the task issues it.
+     *
+     * @param \stdClass $cart The order, as mark_paid() left it.
+     * @return void
+     */
+    private static function issue_after_payment(\stdClass $cart): void {
+        global $DB;
+        if (empty($cart->invoice_due) || $DB->is_transaction_started()) {
+            return;
+        }
+        try {
+            invoicer::issue_for_order($cart);
+        } catch (\Throwable $e) {
+            self::log_document_failure('invoice', $cart, $e);
+        }
+    }
+
+    /**
+     * Log a tax document that could not be issued: debugging plus the callback log, with no personal data.
+     *
+     * @param string $kind 'invoice' or 'credit_note'
+     * @param \stdClass $cart The order.
+     * @param \Throwable $e
+     * @return void
+     */
+    private static function log_document_failure(string $kind, \stdClass $cart, \Throwable $e): void {
+        debugging('local_sentientia_cart: ' . $kind . ' for order ' . ($cart->orderid ?? '?') . ' not issued: '
+            . get_class($e) . ': ' . $e->getMessage(), DEBUG_DEVELOPER);
+        callback_logger::log($kind . '_failed', ['orderid' => (int) ($cart->orderid ?? 0),
+            'exception' => get_class($e), 'message' => $e->getMessage()], '');
     }
 
     /**
@@ -676,10 +772,11 @@ class cart_manager {
 
         $isfull = abs($amount - $maxrefundable) < 0.01 && abs($previousrefunds) < 0.01;
 
+        $ledgerid = 0;
         $transaction = $DB->start_delegated_transaction();
         try {
             $now = time();
-            $DB->insert_record('local_sentientia_cart_ledger', (object) [
+            $ledgerid = (int) $DB->insert_record('local_sentientia_cart_ledger', (object) [
                 'historyid'   => $cart->id,
                 'orderid'     => (int) $cart->orderid,
                 'event_type'  => $isfull ? 'refund_full' : 'refund_partial',
@@ -705,11 +802,16 @@ class cart_manager {
 
             notifier::refund_processed($cart, $amount, $isfull);
             $transaction->allow_commit();
-            return true;
         } catch (\Throwable $e) {
             $transaction->rollback($e);
             return false;
         }
+
+        // GST credit note (2026-10-14, spec section 7): after the refund has committed, the same way an invoice is
+        // issued after a payment. It is created due and issued in its own transaction; a failure never reaches the
+        // refund, and the task issues what is still due. A no-op while the invoice flag is OFF.
+        credit_notes::after_refund($cart, $amount, $ledgerid, $reason);
+        return true;
     }
 
     /**

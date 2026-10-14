@@ -58,10 +58,21 @@ foreach (json_decode($cart->items_json ?: '[]', true) ?: [] as $item) {
 }
 
 $invoice = null;
+$invoicefollows = false;
 if ($is_paid) {
     $invoice = $DB->get_record('local_sentientia_cart_invoices',
         ['historyid' => $cart->id]);
+    // GST tax invoices (2026-10-14): a B2B invoice that awaits its e-invoice IRN is not shown to the buyer, and a
+    // paid order whose invoice is still due is told it will follow. Neither can happen while the flag is OFF.
+    if ($invoice && $invoice->status === \local_sentientia_cart\invoicer::STATUS_AWAITING_IRN) {
+        $invoice = null;
+        $invoicefollows = true;
+    } else if (!$invoice && !empty($cart->invoice_due)) {
+        $invoicefollows = \local_sentientia_cart\flags::invoices_for_order($cart);
+    }
 }
+// The receipt, while the flag is ON for the order's tenant.
+$hasreceipt = \local_sentientia_cart\receipts::exists_for($cart);
 
 $data = [
     'orderid'        => (int) $cart->orderid,
@@ -80,6 +91,9 @@ $data = [
         ? (new moodle_url('/local/sentientia_cart/invoice.php',
             ['id' => $invoice->id]))->out(false)
         : '',
+    'has_receipt'    => $hasreceipt,
+    'receipt_url'    => $hasreceipt ? \local_sentientia_cart\receipts::url((int) $cart->id)->out(false) : '',
+    'invoice_follows' => $invoicefollows,
     'history_url'    => (new moodle_url('/local/sentientia_cart/history.php'))->out(false),
     'catalog_url'    => (new moodle_url('/local/sentientia_catalog/index.php'))->out(false),
 ];

@@ -21,16 +21,19 @@ class checkout extends external_api {
             'billing_phone'   => new external_value(PARAM_TEXT, '', VALUE_DEFAULT, ''),
             'billing_address' => new external_value(PARAM_TEXT, '', VALUE_DEFAULT, ''),
             'billing_gstn'    => new external_value(PARAM_TEXT, '', VALUE_DEFAULT, ''),
+            // GST tax invoices (2026-10-14): the buyer's two-digit GST state code. Required by
+            // cart_manager::checkout() while the invoice flag is ON for the buyer's tenant.
+            'billing_state'   => new external_value(PARAM_ALPHANUM, 'GST state code, e.g. 27', VALUE_DEFAULT, ''),
         ]);
     }
 
     public static function execute(string $gateway, string $billing_name, string $billing_email,
                                     string $billing_phone = '', string $billing_address = '',
-                                    string $billing_gstn = ''): array {
+                                    string $billing_gstn = '', string $billing_state = ''): array {
         global $USER;
         $params = self::validate_parameters(self::execute_parameters(), compact(
             'gateway', 'billing_name', 'billing_email', 'billing_phone',
-            'billing_address', 'billing_gstn'));
+            'billing_address', 'billing_gstn', 'billing_state'));
 
         $ctx = \context_system::instance();
         self::validate_context($ctx);
@@ -51,6 +54,7 @@ class checkout extends external_api {
                 'billing_phone'   => $params['billing_phone'],
                 'billing_address' => $params['billing_address'],
                 'billing_gstn'    => $params['billing_gstn'],
+                'billing_state'   => $params['billing_state'],
             ],
             $params['gateway']
         );

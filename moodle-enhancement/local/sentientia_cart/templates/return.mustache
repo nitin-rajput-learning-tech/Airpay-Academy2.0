@@ -11,6 +11,11 @@
         <p class="text-muted">Order #{{ orderid }} · {{ total_str }}</p>
     </div>
     <div class="d-flex justify-content-center gap-2">
+        {{#has_receipt}}
+        <a href="{{{ receipt_url }}}" target="_blank" class="btn btn-outline-primary" data-region="receipt-link">
+            <i class="fa fa-receipt"></i> {{#str}}viewreceipt, local_sentientia_cart{{/str}}
+        </a>
+        {{/has_receipt}}
         {{#invoice_url}}
         <a href="{{{ invoice_url }}}" target="_blank" class="btn btn-outline-primary">
             <i class="fa fa-file-pdf"></i> {{#str}}downloadinvoice, local_sentientia_cart{{/str}}
@@ -21,6 +26,9 @@
         </a>
         <a href="{{{ history_url }}}" class="btn btn-link">View all orders</a>
     </div>
+    {{#invoice_follows}}
+    <p class="text-center text-muted mt-3" data-region="invoice-follows">{{#str}}receipt_invoicewillfollow, local_sentientia_cart{{/str}}</p>
+    {{/invoice_follows}}
     {{/is_paid}}
 
     {{#is_pending}}

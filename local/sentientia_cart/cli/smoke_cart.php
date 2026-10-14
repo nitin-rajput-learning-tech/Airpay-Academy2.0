@@ -141,6 +141,7 @@ $cart = \local_sentientia_cart\cart_manager::checkout($user->id, [
     'billing_phone'   => '9999999999',
     'billing_address' => 'Test address',
     'billing_gstn'    => '27AAAAA0000A1Z5',  // Maharashtra → CGST+SGST
+    'billing_state'   => '27',               // the GST state code; required while the invoice flag is ON
 ], 'manual');
 $check('Order number reserved', !empty($cart->orderid), "orderid={$cart->orderid}");
 $check('Status = pending', $cart->status === 'pending');
@@ -168,16 +169,22 @@ foreach ($ledger as $l) {
 $context = \context_course::instance($course->id);
 $check('User enrolled in course', is_enrolled($context, $user->id));
 
-// Invoice issued?
+// Invoice issued? (GST tax invoices spec 2026-10-14: only while sentientia.cart.gst_tax_invoices is ON for the order's
+// tenant; the flag is OFF by default, and then NO invoice is issued: the hold decision.)
 $invoice = $DB->get_record('local_sentientia_cart_invoices', ['historyid' => $historyid]);
-$check('Invoice issued', !empty($invoice));
-if ($invoice) {
-    $check('Invoice number format', preg_match('/^AIRPAY-\d{4}-\d{4}$/', $invoice->invoice_number) === 1,
-        $invoice->invoice_number);
-    // 27 = Maharashtra HQ → intra-state → CGST+SGST split, IGST=0
-    $check('Intra-state CGST = 135', abs($invoice->cgst - 135.00) < 0.01, "got {$invoice->cgst}");
-    $check('Intra-state SGST = 135', abs($invoice->sgst - 135.00) < 0.01);
-    $check('Intra-state IGST = 0',   $invoice->igst == 0);
+if (\local_sentientia_cart\flags::invoices_for_order($cart_after)) {
+    $check('Invoice issued (invoice flag ON)', !empty($invoice));
+    if ($invoice) {
+        $check('Invoice number format', preg_match('/^AIRPAY-\d{4}-\d{4}$/', $invoice->invoice_number) === 1,
+            $invoice->invoice_number);
+        // 27 = Maharashtra HQ → intra-state → CGST+SGST split, IGST=0
+        $check('Intra-state CGST = 135', abs($invoice->cgst - 135.00) < 0.01, "got {$invoice->cgst}");
+        $check('Intra-state SGST = 135', abs($invoice->sgst - 135.00) < 0.01);
+        $check('Intra-state IGST = 0',   $invoice->igst == 0);
+    }
+} else {
+    $check('No invoice while the invoice flag is OFF', empty($invoice));
+    $check('Order not marked invoice-due while the flag is OFF', (int) $cart_after->invoice_due === 0);
 }
 
 // === 5. Refund (full) ===
