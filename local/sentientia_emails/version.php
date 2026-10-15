@@ -4,7 +4,8 @@ defined('MOODLE_INTERNAL') || die();
 $plugin->component = 'local_sentientia_emails';
 // P1 #49 (2026-05-20) — Hindi top-up: 25 strings covering privacy metadata,
 // ramping reminder + certificate settings, and cadence JSON errors.
-$plugin->version   = 2026100804;  // 2026-10-08 SITEID is the DB string; strict === / !== against it never matched, so the site-course guard did nothing - now (int) SITEID: parity_senders::course_enrolled no longer e-mails an enrolment on the site course; no schema change
+$plugin->version   = 2026101501;  // 2026-10-15 UI fix, template editor (editor.mustache): the live preview iframe's srcdoc is attribute-escaped (it was raw, cut at the first double quote: blank first paint) and the studio no longer has a -1rem side margin (it was 16px wider than the embedded layout); no schema change
+// 2026100804: 2026-10-08 SITEID is the DB string; strict === / !== against it never matched, so the site-course guard did nothing - now (int) SITEID: parity_senders::course_enrolled no longer e-mails an enrolment on the site course; no schema change
 // 2026100803: 2026-10-08 notifications importer: a manager copy's subject masks the member's full name first and folds adjacent placeholders (was "[team member] [team member] completed ..."); no schema change
 // 2026100802: 2026-10-08 FX-04 round 1: mustache_factory::engine() no longer probes class_exists(\Mustache\Engine) on 5.1 (PSR-0 loader re-declared \Mustache_Engine, uncatchable fatal on the 2nd e-mail of a cron run); legacy class is asked for by name first. No schema change.
 // 2026100801: 2026-10-08 Moodle 5.3 compat FX-04: NEW classes/mustache_factory.php (\Mustache\Engine on 5.2+/5.3, \Mustache_Engine on 5.1) used by the tenant-override render, the AJAX preview and the preview WS; catch \Throwable so the file fallback runs. No schema change.

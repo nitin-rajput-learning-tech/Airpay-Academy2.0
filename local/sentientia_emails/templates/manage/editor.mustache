@@ -162,8 +162,16 @@
                 </div>
             </div>
             <div class="ap-studio__preview-viewport" id="preview-viewport">
+                {{!
+                    UI fix 2026-10-15 - srcdoc used to be written with triple braces, so the first
+                    double quote in the preview HTML (the XHTML doctype's PUBLIC "..." id) ended the
+                    attribute and only 22 characters reached the frame: blank first paint. The preview
+                    is an HTML document inside an HTML attribute, so it must be attribute-escaped:
+                    double braces run it through s() (quotes, ampersands, angle brackets), the same
+                    escaping preview.php uses. The sandbox stays without allow-scripts.
+                }}
                 <iframe id="preview-frame" class="ap-studio__preview-frame"
-                        srcdoc="{{{preview_html}}}"
+                        srcdoc="{{preview_html}}"
                         sandbox="allow-same-origin"
                         onload="this.style.height = Math.max(600, this.contentDocument.body.scrollHeight + 40) + 'px';"></iframe>
             </div>
@@ -181,7 +189,12 @@
    EMAIL DESIGN STUDIO — Pro Editor Styles
    ═══════════════════════════════════════════════════════ */
 
-.ap-studio { font-family: 'Montserrat', -apple-system, sans-serif; background: #F2F4FB; min-height: 100vh; margin: -1rem -1rem 0; }
+/* UI fix 2026-10-15: no negative margin. It was written to cancel the 1rem padding of the standard
+   page container, but this page uses the "embedded" layout, which has none: with width:auto, a
+   -1rem margin on each side made the studio 2rem wider than its container, 16px of it past the
+   right edge of the viewport (horizontal scrollbar, content clipped on the left, the first 16px
+   of the page pulled up under the sticky top bar). */
+.ap-studio { font-family: 'Montserrat', -apple-system, sans-serif; background: #F2F4FB; min-height: 100vh; margin: 0; }
 
 /* Toast notifications */
 .ap-studio-toast {
