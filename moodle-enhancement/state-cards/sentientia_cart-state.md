@@ -606,13 +606,21 @@ No schema, capability or flag change. `amd/src/admin_orders.js` and its build ar
 1. **No Refund button.** The script opens the Refund dialog from `[data-action="refund-order"]`; nothing rendered one.
    `list_orders` now returns it in a new `actions` field (escaped HTML) for the rows `cart_manager::refund()` accepts
    (paid, partial_refund, not imported, a balance left: one grouped ledger query per page) and only to a viewer who holds
-   `:viewallorders` and `:refund`. `admin_orders.php` adds an Actions column for the holders of `:refund`.
+   `:viewallorders` and `:refund`, and only when the call carries `withactions=true`. `admin_orders.php` adds an Actions
+   column for the holders of `:refund` and its table sends `withactions` through `data-extra-args` (the datatable merges
+   those into every call). `history.php` shares the service, has no Actions column and does not send it: without that
+   gate an administrator opening their own order history was sent the button anyway, and the datatable painted it in an
+   extra headerless cell (table misaligned, button inert, `history.mustache` never loads `admin_orders.js`). The
+   parameter is optional and defaults to false, so every other caller is unchanged.
 2. **Placed** is `timepaid`, else `timecreated` (there is no checkout-time column; `receipts::context()` dates an order
    the same way), and the header sorts by it (`placed` sort key; `timecreated` still works).
 3. **Status** shows the `status_<key>` string (`status_label`), **Total** shows the symbol and the receipt money format
    (`total_str`: `invoicer::currency_symbol` + `gst::money`). Both `history.php` and `admin_orders.php`.
 4. New string `refund_button` (en + hi). Tests: `tests/order_list_ui_test.php`; `gst_schema_strings_test` no longer pins
    the exact version.
+
+Not done: the remaining refundable balance is not sent as a data attribute of the button. Only a change to
+`amd/src/admin_orders.js` (an AMD rebuild) would show it in the Refund dialog, which still prints the order total.
 
 Known and left alone: `amd/src/history.js` listens for `airpay-datatable:rows-rendered`, which the datatable never fires
 (it fires `airpay:datatable:rendered`), and reads `tr.dataset.orderid`, which it never sets, so the order # in the

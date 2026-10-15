@@ -42,13 +42,17 @@ final class order_list_ui_test extends \advanced_testcase {
     /**
      * What the list service returns to the current user, after the return value passes the schema check.
      *
+     * Asks for the row actions by default, as admin_orders.php does (data-extra-args of its table); history.php does
+     * not, and the test of that passes false.
+     *
      * @param string $sort
      * @param string $dir
+     * @param bool $withactions Whether the caller asks for the row actions (the Refund button).
      * @return array[] The rows, in the order returned.
      */
-    private function list_rows(string $sort = 'timecreated', string $dir = 'desc'): array {
+    private function list_rows(string $sort = 'timecreated', string $dir = 'desc', bool $withactions = true): array {
         $result = external_api::clean_returnvalue(list_orders::execute_returns(),
-            list_orders::execute('', $sort, $dir, 0, 100, '{}'));
+            list_orders::execute('', $sort, $dir, 0, 100, '{}', $withactions));
         return $result['rows'];
     }
 
@@ -149,6 +153,51 @@ final class order_list_ui_test extends \advanced_testcase {
         $this->assertSame('', $rows[(int) $order->id]['actions']);
     }
 
+    /**
+     * history.php shares the service with admin_orders.php and has no actions column; the datatable paints row.actions
+     * in an extra headerless cell for any table that receives it. An administrator who opens their own order history
+     * (a site administrator, or the administrator role, both of whom hold :viewallorders and :refund) must therefore
+     * get no button there. The call history.php makes is the one that sends no 'withactions'.
+     */
+    public function test_the_buyers_history_call_is_sent_no_button_even_when_the_caller_is_an_administrator(): void {
+        $buyer = $this->user_at('/77');
+        $paid = $this->paid_order_for($buyer);
+        $part = $this->paid_order_for($buyer);
+        $this->refund($part, 500.00);
+
+        foreach ([null, $this->refunder('/77')] as $admin) {
+            if ($admin === null) {
+                $this->setAdminUser();
+            } else {
+                $this->setUser($admin);
+            }
+            $rows = $this->by_id($this->list_rows('timecreated', 'desc', false));
+            foreach ([$paid, $part] as $order) {
+                $this->assertArrayHasKey((int) $order->id, $rows, 'the administrator still sees the order');
+                $this->assertSame('', $rows[(int) $order->id]['actions'],
+                    'withactions=false (the history.php call): no button, whoever the caller is');
+            }
+            foreach ($rows as $row) {
+                $this->assertSame('', $row['actions']);
+            }
+            // The same caller, asking for the actions as admin_orders.php does, is sent the button.
+            $rows = $this->by_id($this->list_rows('timecreated', 'desc', true));
+            $this->assertStringContainsString('data-action="refund-order"', $rows[(int) $paid->id]['actions']);
+        }
+
+        // The service's own default is the safe one: a call that says nothing gets no button.
+        $this->setAdminUser();
+        $result = external_api::clean_returnvalue(list_orders::execute_returns(), list_orders::execute());
+        foreach ($result['rows'] as $row) {
+            $this->assertSame('', $row['actions'], 'withactions defaults to false');
+        }
+        $parameters = list_orders::execute_parameters()->keys;
+        $this->assertArrayHasKey('withactions', $parameters);
+        $this->assertSame(VALUE_DEFAULT, $parameters['withactions']->required,
+            'optional: history.php and old callers need not send it');
+        $this->assertFalse($parameters['withactions']->default);
+    }
+
     public function test_a_refunder_is_sent_buttons_for_their_own_tenant_only(): void {
         $mine = $this->paid_order_for($this->user_at('/77'));
         $other = $this->paid_order_for($this->user_at('/1'));
@@ -235,6 +284,13 @@ final class order_list_ui_test extends \advanced_testcase {
             $page, 'admin_orders.php paints the actions column for the holders of :refund');
         $this->assertStringNotContainsString("'key' => 'actions'", file_get_contents($dir . '/history.php'),
             "the buyer's history has no refund column");
+
+        // The request: the admin page's table asks the service for the actions (the datatable merges data-extra-args
+        // into every call); the buyer's table, which shares the service, does not.
+        $this->assertStringContainsString("data-extra-args='{\"withactions\":true}'",
+            file_get_contents($dir . '/templates/admin_orders.mustache'), 'admin_orders.php asks for the actions');
+        $this->assertStringNotContainsString('withactions', file_get_contents($dir . '/templates/history.mustache'),
+            'history.php does not');
     }
 
     // ── defect (b): Placed, Status, Total ────────────────────────────────

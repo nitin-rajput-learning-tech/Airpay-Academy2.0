@@ -32,15 +32,20 @@ class list_orders extends external_api {
             'page'    => new external_value(PARAM_INT, '', VALUE_DEFAULT, 0),
             'perpage' => new external_value(PARAM_INT, '', VALUE_DEFAULT, 25),
             'filters' => new external_value(PARAM_RAW, '', VALUE_DEFAULT, '{}'),
+            // Whether the caller paints a row actions column. Only admin_orders.php sends true (data-extra-args of its
+            // table); the buyer's history.php, which shares this service, has no such column and sends nothing, so
+            // an administrator who opens their own order history is not sent a Refund button it cannot show.
+            'withactions' => new external_value(PARAM_BOOL,
+                'Return the row actions (the Refund button); only the admin orders page asks', VALUE_DEFAULT, false),
         ]);
     }
 
     public static function execute(string $search = '', string $sort = 'timecreated',
                                     string $sortdir = 'desc', int $page = 0,
-                                    int $perpage = 25, string $filters = '{}'): array {
+                                    int $perpage = 25, string $filters = '{}', bool $withactions = false): array {
         global $DB, $USER;
         $params = self::validate_parameters(self::execute_parameters(), compact(
-            'search', 'sort', 'sortdir', 'page', 'perpage', 'filters'));
+            'search', 'sort', 'sortdir', 'page', 'perpage', 'filters', 'withactions'));
 
         $ctx = \context_system::instance();
         self::validate_context($ctx);
@@ -144,8 +149,12 @@ class list_orders extends external_api {
             // empty for every order while both flags are OFF.
             $documents = \local_sentientia_cart\receipts::history_links($records);
             // The Refund button (UI pass 2026-10-15): only for a holder of :refund who is also an order
-            // administrator (the viewer of admin_orders.php); nobody else is sent a button.
-            $canrefund = $can_view_all && has_capability('local/sentientia_cart:refund', $ctx);
+            // administrator (the viewer of admin_orders.php) and only when the caller asked for the actions, which
+            // is admin_orders.php alone: history.php shares this service, has no actions column, and the datatable
+            // paints row.actions in an extra headerless cell for any table that receives it. Nobody else is sent
+            // a button.
+            $canrefund = $params['withactions'] && $can_view_all
+                && has_capability('local/sentientia_cart:refund', $ctx);
             $refunded = $canrefund ? self::refunded_amounts($records) : [];
             foreach ($records as $r) {
                 // An order without billing details (every imported one) shows its buyer to order administrators.
