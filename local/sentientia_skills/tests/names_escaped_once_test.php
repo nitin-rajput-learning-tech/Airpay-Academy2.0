@@ -106,7 +106,7 @@ final class names_escaped_once_test extends \advanced_testcase {
         foreach (['<', '>', '&', "'"] as $char) {
             $this->assertStringNotContainsString($char, $radar['radar_labels']);
         }
-        $this->assertStringContainsString('&', $radar['radar_labels']);
+        $this->assertStringContainsString('\u0026', $radar['radar_labels']);
         $this->assertSame('Risk & Compliance', $radar['designation']);
     }
 }
