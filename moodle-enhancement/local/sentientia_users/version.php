@@ -82,7 +82,9 @@ $plugin->component = 'local_sentientia_users';
 // the uploader and to cross-tenant callers, imported and native alike; BizLMS parity), XC-IMPORTED-HISTORY-READERS (the
 // imported HRMS sync runs sit behind the new default-OFF flag sentientia.users.imported_sync_history), IDN-06 (login days
 // are deleted on erasure, comment-only). Two strings (en + hi), no schema change.
-$plugin->version   = 2026100800;  // 2026-10-08 SITEID is the DB string; strict === / !== against it never matched, so the site-course guard did nothing - now (int) SITEID: the transcript importer skips the site course again; no schema change
+// 2026101501 - UI fix (visual pass 2026-10-14 review): the profile Suggested next courses card is a double-brace template, so user_manager now asks skills_manager::get_gap_courses() for plain-text names (plain = true). The HTML-escaped default printed an ampersand in a course or skill name as the literal text amp-semicolon, while the Skills rows above it (already plain) did not. No schema change.
+$plugin->version   = 2026101501;  // UI fix: profile gap-course names escaped once (on top of 2026100800)
+// 2026100800: SITEID is the DB string; strict === / !== against it never matched, so the site-course guard did nothing - now (int) SITEID: the transcript importer skips the site course again; no schema change
 // 2026100701: ADR-032 owner decisions: sync-history visibility + imported-history flag (on top of 2026100101)
 // 2026093001: persona pass D14: supervisor + sync-run name lookups load every fullname() field (no developer notice)
 // 2026092501: welcome email actually sends (email_to_user, white-label token restored).
