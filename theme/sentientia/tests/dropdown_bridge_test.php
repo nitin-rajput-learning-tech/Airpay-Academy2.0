@@ -87,6 +87,37 @@ class dropdown_bridge_test extends \basic_testcase {
     }
 
     /**
+     * An element that carries both attributes is Bootstrap 4's only. Where core's Bootstrap 5 data-api is
+     * loaded it would match the same element and toggle it a second time (open, then closed at once,
+     * FX-20 round 1), so the bridge takes data-bs-toggle off it for the length of the click and puts it
+     * back in the next task.
+     */
+    public function test_bridge_keeps_bootstrap_5_off_elements_with_both_attributes(): void {
+        $src = $this->theme_file('amd/src/dropdown_bridge.js');
+        $this->assertStringContainsString(
+            "const BOTH_SELECTOR = '[data-toggle=\"dropdown\"][data-bs-toggle=\"dropdown\"]';",
+            $src
+        );
+        $this->assertStringContainsString("toggle.removeAttribute('data-bs-toggle');", $src);
+        $this->assertStringContainsString(
+            "window.setTimeout(() => toggle.setAttribute('data-bs-toggle', 'dropdown'), 0);",
+            $src
+        );
+        // It happens in the capture phase handler, ahead of every document level handler.
+        $this->assertMatchesRegularExpression(
+            '/const onClickCapture = .*?target\.closest\(BOTH_SELECTOR\).*?hideFromBootstrap5\(both\);/s',
+            $src
+        );
+
+        $build = $this->theme_file('amd/build/dropdown_bridge.min.js');
+        $this->assertStringContainsString(
+            '[data-toggle="dropdown"][data-bs-toggle="dropdown"]',
+            $build
+        );
+        $this->assertStringContainsString('removeAttribute("data-bs-toggle")', $build);
+    }
+
+    /**
      * The bridge compares the open state before any handler ran (capture phase on window) with the state
      * after every document level handler ran (bubble phase on window). That ordering is what stops it
      * from acting when core's Bootstrap 5 data-api already toggled the menu.

@@ -469,10 +469,15 @@ defined('MOODLE_INTERNAL') || die();
 // dropped the header actions, so core's Bulk edit button (added by course/view.php in editing mode) was never printed while its script ran
 // ("Reactive components needs a main DOM element to dispatch events"); it now prints them (empty, no space, when there are none).
 // Bump purges the template cache.
+// 2026101504 - dropdown_bridge, element with BOTH data-toggle and data-bs-toggle (FX-20 round 1): where core's Bootstrap 5 data-api is loaded (search
+// combobox, dropdown dialog and participants initials pages) it matched the same element as the theme's Bootstrap 4 data-api and toggled it a second
+// time (open, then closed at once). The bridge now takes data-bs-toggle off such an element for the length of that click (capture phase on window)
+// and puts it back in the next task, so Bootstrap 4 alone handles it. AMD build refreshed. Bump purges the AMD cache.
 // 2026100808: 2026-10-08 SITEID is the DB string; strict === / !== against it never matched, so the site-course guard did nothing - now (int) SITEID: language_switcher treats the front page as the site course again
 // 2026101501: 2026-10-15 dropdown_bridge: data-bs-toggle-only dropdowns open in the Bootstrap 4 theme
 // 2026101502: 2026-10-15 edit-mode switch styled as the theme's Bootstrap 4 custom switch
-$plugin->version   = 2026101503;  // 2026-10-15 course author edit mode: no reset of $USER->editing, no orphan edit_switch init, header actions printed (on top of 2026101502)
+// 2026101503: 2026-10-15 course author edit mode: no reset of $USER->editing, no orphan edit_switch init, header actions printed
+$plugin->version   = 2026101504;  // 2026-10-15 dropdown_bridge keeps core's Bootstrap 5 data-api off elements that carry both attributes (on top of 2026101503)
 // 2026100807: Moodle 5.3 FX-15 follow-up: dashboard + frontpage course counts filter COALESCE(deletioninprogress, 0) = 0 (5.3's column is NULL for every course not being deleted; '= 0' counted none)
 // 2026090806:  // login/OTP placeholders + SSO title + block aria-label: {{#quote}} JSON-escaped Hindi into \uXXXX → attribute-safe cleanstr/escaped values (core 5.2 pattern)
 // 2026090805:  footer: GPL badge -> private Airpay notice; sidebar literals localised; scoped-admin subtitle

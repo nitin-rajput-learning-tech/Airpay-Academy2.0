@@ -31,15 +31,22 @@
  *     page that loaded it) already toggled the menu and nothing more is done. If it did not change, the
  *     element is handed to the theme's Bootstrap 4 dropdown, exactly once.
  *
- * Elements that carry data-toggle="dropdown" (with or without data-bs-toggle) are never touched here:
- * the Bootstrap 4 data-api owns them. That is what keeps an element with both attributes from being
- * toggled twice (open, then closed at once), see the FX-20 round 1 notes in the version.php of
- * local_sentientia_org and local_sentientia_evaluation.
+ * Who handles a click, by attributes and by whether core loaded its Bootstrap 5 data-api on the page
+ * (core does on pages that use a search combobox, a dropdown dialog or the participants initials bar):
+ *
+ *  - data-toggle only: the theme's Bootstrap 4 data-api. Core's Bootstrap 5 never matches it.
+ *  - data-bs-toggle only: core's Bootstrap 5 where it is loaded, otherwise this module hands it to Bootstrap 4.
+ *  - both attributes: the theme's Bootstrap 4 data-api ONLY. Where core's Bootstrap 5 data-api is loaded it
+ *    would match the same element and toggle it a second time (open, then closed at once: the FX-20 round 1
+ *    notes in the version.php of local_sentientia_org and local_sentientia_evaluation), so for the length
+ *    of that click this module takes data-bs-toggle off the element (capture phase, before any handler) and
+ *    puts it back when the click is over. This module never selects such an element for its own fallback.
  *
  * When the fallback opens a toggle it also writes data-toggle="dropdown" onto it. Bootstrap 4 finds the
  * dropdowns to close on an outside click, Escape or Tab through that attribute only, so without it a menu
  * opened here would never close again. Later clicks on that element are then plain Bootstrap 4 clicks.
- * Only data-bs-toggle is bridged: the other data-bs-* options (offset, display, auto-close, ...) are not.
+ * Only data-bs-toggle is bridged: the other data-bs-* options (offset, display, auto-close, ...) are not, nor
+ * are Bootstrap 5's native events (shown.bs.dropdown ...): Bootstrap 4 triggers them through jQuery.
  *
  * @module     theme_sentientia/dropdown_bridge
  * @copyright  2026 Airpay Payment Services
@@ -57,6 +64,13 @@ import './bootstrap/dropdown';
  * @type {string}
  */
 const SELECTOR = '[data-bs-toggle="dropdown"]:not([data-toggle="dropdown"]):not(.disabled):not(:disabled)';
+
+/**
+ * Toggles that carry both attributes. Bootstrap 4 (data-toggle) owns them, see the docblock of this module.
+ *
+ * @type {string}
+ */
+const BOTH_SELECTOR = '[data-toggle="dropdown"][data-bs-toggle="dropdown"]';
 
 /**
  * Click events travelling through window, with the toggle and its state before any other handler ran.
@@ -89,13 +103,33 @@ const openState = (toggle) => {
 };
 
 /**
- * Window, capture phase: remember the state of a Bootstrap 5 only toggle before anybody handles the click.
+ * Keep core's Bootstrap 5 data-api away from a toggle that Bootstrap 4 handles, for the length of one click.
+ *
+ * Bootstrap 5 looks the toggles up by data-bs-toggle when the click reaches document, so an element without
+ * the attribute is not its business. Every handler of the click runs inside the dispatch, so the attribute
+ * can come back in the next task.
+ *
+ * @param {Element} toggle
+ */
+const hideFromBootstrap5 = (toggle) => {
+    toggle.removeAttribute('data-bs-toggle');
+    window.setTimeout(() => toggle.setAttribute('data-bs-toggle', 'dropdown'), 0);
+};
+
+/**
+ * Window, capture phase: keep Bootstrap 5 off a toggle that carries both attributes; for a Bootstrap 5 only
+ * toggle remember its state before anybody handles the click.
  *
  * @param {MouseEvent} event
  */
 const onClickCapture = (event) => {
     const target = event.target;
     if (!target || typeof target.closest !== 'function') {
+        return;
+    }
+    const both = target.closest(BOTH_SELECTOR);
+    if (both) {
+        hideFromBootstrap5(both);
         return;
     }
     const toggle = target.closest(SELECTOR);
