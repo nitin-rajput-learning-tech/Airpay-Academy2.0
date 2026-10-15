@@ -44,11 +44,22 @@ class org_manager {
      * "Issuance & Loyalty" in the org tree as "Issuance &amp; Loyalty". Keep format_string() only where the value
      * is written straight into HTML (a form element, a heading built by hand).
      *
+     * Independent of the site's formatstringstriptags setting: with it OFF format_string() returns clean_text()
+     * HTML (an ampersand as its entity), which is reduced to text here.
+     *
      * @param string|null $text
      * @return string plain text (the output layer escapes it once)
      */
     public static function plain(?string $text): string {
-        return format_string((string) $text, true, ['escape' => false]);
+        global $CFG;
+        $text = format_string((string) $text, true, ['escape' => false]);
+        if (empty($CFG->formatstringstriptags)) {
+            // The site setting "Remove HTML tags from all activity names" (formatstringstriptags) is OFF: format_string()
+            // then ends in clean_text(), whose output is HTML, an ampersand being the entity - so the double escape came
+            // back. Reduce that to the same text the setting-ON path returns (tags stripped, entities decoded).
+            $text = html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        }
+        return $text;
     }
 
     /**

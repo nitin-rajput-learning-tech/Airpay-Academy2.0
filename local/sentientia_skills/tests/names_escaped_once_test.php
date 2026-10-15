@@ -60,6 +60,19 @@ final class names_escaped_once_test extends \advanced_testcase {
         return [(int) $learner->id, $skillid];
     }
 
+    public function test_plain_is_text_whether_or_not_the_site_strips_tags(): void {
+        global $CFG;
+
+        // The Moodle default: tags are stripped, so format_string() with escape off is already text.
+        $CFG->formatstringstriptags = 1;
+        $this->assertSame('Compliance & Risk on', skills_manager::plain('Compliance & Risk on'));
+
+        // Setting OFF: format_string() ends in clean_text(), which returns HTML. plain() still returns text.
+        $CFG->formatstringstriptags = 0;
+        $this->assertSame('Compliance & Risk off', skills_manager::plain('Compliance & Risk off'));
+        $this->assertSame('Compliance & Risk bold end', skills_manager::plain('Compliance & Risk <b>bold</b> end'));
+    }
+
     public function test_plain_is_text_not_html(): void {
         $this->assertSame('Compliance & Risk', skills_manager::plain('Compliance & Risk'));
         $this->assertSame('', skills_manager::plain(null));
