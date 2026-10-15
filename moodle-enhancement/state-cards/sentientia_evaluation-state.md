@@ -961,3 +961,12 @@ Every `fputcsv()` / `fgetcsv()` / `str_getcsv()` call in this plugin now passes 
 ## 2026-10-08 Moodle 5.3 compat FX-20 round 1 (version 2026100802)
 
 `data-bs-toggle="dropdown"` removed again from `templates/questions.mustache` (byte-identical to before 2026100801): with both attributes a click ran the theme's Bootstrap 4 handler and core's Bootstrap 5 handler on pages where core loads the latter, so the menu opened and closed at once. See the `sentientia_org` card for the full reasoning. No schema change.
+
+## 2026-10-15 EV-18 findings on `my_evaluations.php` (version 2026101501 / 1.17.3)
+
+Found by the 2026-10-14 scripted visual pass (`docs/visual-evidence/2026-10-14/ev18/README.md`, "Things that look wrong or odd"), fixed here:
+
+- **No visible title.** `set_heading()` was set but the theme shows no `$PAGE` heading on the `standard` layout, and the template had no heading, so the page opened on the intro sentence. `templates/my_evaluations.mustache` now prints the title as an `h2`, as the plugin's other templates do (`set_heading()` stays).
+- **The Date column meant three things.** `learner_history::for_user()` folded an answer time, a deadline (`due_at`) and the assigned day (`timecreated`) into one `time`. Each row now carries `time_kind` (`TIME_SUBMITTED`, `TIME_DUE`, `TIME_ASSIGNED`), kept through `merge()` with whichever time wins, and the page prints a word with the date: Submitted, Due by, Assigned (`my_evaluations_date_*`, en and hi). The time, its format (the day on a protected form), the order and the status are unchanged. A responded row whose completion time was never recorded (imported) shows its fallback time labelled Due by or Assigned, not Submitted.
+
+No schema change; the platform dependency is unchanged. Tests added in `tests/imported_history_test.php` (NOT run on this branch: the main session runs the suite in one serialized pass).
