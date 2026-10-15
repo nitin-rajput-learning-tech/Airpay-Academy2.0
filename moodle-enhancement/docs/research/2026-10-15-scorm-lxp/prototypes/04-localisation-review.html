@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Localisation review - Sentientia prototype</title>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/proto.css">
+<style>
+  .langs { max-width: 100%; display: flex; gap: var(--ap-space-2); overflow-x: auto; padding-block-end: var(--ap-space-2); }
+  .langs button { flex: 0 0 auto; display: inline-flex; align-items: center; gap: var(--ap-space-2); min-height: var(--ap-tap-target-cozy); padding: 0 var(--ap-space-3); border: 1px solid var(--ap-color-border); border-radius: var(--ap-radius-pill); background: var(--ap-color-bg-surface); cursor: pointer; font-size: var(--ap-text-sm); }
+  .langs button[aria-selected="true"] { border-color: var(--ap-color-primary); background: var(--ap-color-bg-active); font-weight: var(--ap-weight-semibold); }
+  .work { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--ap-space-4); align-items: start; }
+  .seg { display: grid; grid-template-columns: 36px minmax(0, 1fr) minmax(0, 1fr) 96px; gap: var(--ap-space-3); padding: var(--ap-space-3); border-block-end: 1px solid var(--ap-color-divider); align-items: start; cursor: pointer; }
+  .seg:hover { background: var(--ap-color-bg-hover); }
+  .seg[aria-selected="true"] { background: var(--ap-color-bg-active); box-shadow: inset 3px 0 0 var(--ap-color-primary); }
+  [dir="rtl"] .seg[aria-selected="true"] { box-shadow: inset -3px 0 0 var(--ap-color-primary); }
+  .seg .src { background: var(--ap-color-bg-inset); border-radius: var(--ap-radius-sm); padding: var(--ap-space-2) var(--ap-space-3); font-size: var(--ap-text-sm); }
+  .seg textarea { min-height: 64px; font-size: var(--ap-text-sm); }
+  .seg .id { font-family: var(--ap-font-family-mono); font-size: 11px; color: var(--ap-color-text-muted); word-break: break-all; }
+  .term { background: var(--ap-color-primary-light); color: var(--ap-color-primary-text); border-radius: 3px; padding: 0 3px; font-weight: var(--ap-weight-semibold); unicode-bidi: isolate; }
+  .head { display: grid; grid-template-columns: 36px minmax(0, 1fr) minmax(0, 1fr) 96px; gap: var(--ap-space-3); padding: var(--ap-space-2) var(--ap-space-3); font-size: var(--ap-text-xs); text-transform: uppercase; letter-spacing: .04em; color: var(--ap-color-text-secondary); border-block-end: 1px solid var(--ap-color-border-strong); font-weight: var(--ap-weight-semibold); }
+  .flow { display: flex; align-items: center; gap: var(--ap-space-2); flex-wrap: wrap; }
+  .flow .st { padding: var(--ap-space-2) var(--ap-space-3); border-radius: var(--ap-radius-sm); border: 1px solid var(--ap-color-border); font-size: var(--ap-text-sm); font-weight: var(--ap-weight-semibold); color: var(--ap-color-text-secondary); }
+  .flow .st.on { border-color: var(--ap-color-primary); background: var(--ap-color-bg-active); color: var(--ap-color-primary-text); }
+  .flow .st.done { color: var(--ap-color-success); border-color: var(--ap-color-success); }
+  .pv { background: var(--ap-color-bg-surface); border: 1px solid var(--ap-color-border-strong); border-radius: var(--ap-radius-md); padding: var(--ap-space-4); box-shadow: var(--ap-shadow-sm); }
+  .pv h4 { font-size: var(--ap-text-lg); margin-block-end: var(--ap-space-2); }
+  .pv ul { margin: 0; padding-inline-start: var(--ap-space-5); display: flex; flex-direction: column; gap: var(--ap-space-2); font-size: var(--ap-text-sm); }
+  .iso bdi { outline: 1px dashed var(--ap-color-accent); border-radius: 2px; }
+  .qa-item { display: flex; gap: var(--ap-space-2); align-items: flex-start; font-size: var(--ap-text-sm); padding: var(--ap-space-2) 0; }
+  @media (max-width: 1100px) { .work { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 700px) { .seg, .head { grid-template-columns: minmax(0, 1fr); } .head { display: none; } .seg .n { display: none; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="page">
+    <section class="card stack" aria-labelledby="ctx">
+      <div class="row spread">
+        <div><p class="xs muted bold">COURSE - v0.1.0 - BASE LANGUAGE ENGLISH</p><h2 id="ctx">Handling a disputed UPI transaction</h2></div>
+        <div class="row">
+          <div class="field"><label for="role">View as</label><select class="select" id="role"><option value="translator">Translator (Stage 1)</option><option value="sme">Subject expert (Stage 2)</option><option value="admin">Admin (sign-off)</option></select></div>
+          <span class="chip info" id="sla"></span>
+        </div>
+      </div>
+      <div class="langs" role="tablist" aria-label="Languages" id="langs"></div>
+      <div class="flow" id="flow" aria-label="Review stages"></div>
+      <div id="banner"></div>
+    </section>
+
+    <div class="work">
+      <section class="card" style="padding:0" aria-labelledby="seg-h">
+        <div class="row spread" style="padding:var(--ap-space-4) var(--ap-space-4) 0">
+          <h3 id="seg-h">Segments</h3>
+          <div class="row">
+            <div class="tabs" role="tablist" id="filters" aria-label="Filter segments"></div>
+          </div>
+        </div>
+        <div class="head" aria-hidden="true"><span>#</span><span>Source (locked)</span><span>Target</span><span>Match / QA</span></div>
+        <div id="grid" role="list"></div>
+        <div class="row spread" style="padding:var(--ap-space-4)" id="actions"></div>
+      </section>
+
+      <div class="stack">
+        <section class="card stack" aria-labelledby="ctx-h">
+          <h3 id="ctx-h">Context for the selected segment</h3>
+          <div class="tabs" role="tablist" id="ptabs"></div>
+          <div id="pane" class="stack" aria-live="polite"></div>
+        </section>
+        <section class="card stack" aria-labelledby="pv-h">
+          <div class="row spread"><h3 id="pv-h">Learner preview</h3><label class="row small" style="gap:6px;cursor:pointer"><input type="checkbox" id="iso">Show bidi isolation</label></div>
+          <div class="pv" id="preview"></div>
+          <p class="xs muted" id="pv-note"></p>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="assets/proto.js"></script>
+<script>
+(function () {
+  var P = PROTO, el = P.el;
+  P.mount({
+    screen: 'localisation-review', title: 'Localisation review',
+    about: {
+      purpose: 'The workspace where machine drafts become approved translations: source locked on the left, target on the right, memory, glossary and automatic checks beside it, two human stages, and a learner preview that mirrors for right-to-left languages.',
+      interactions: ['Pick a language tab: Hindi (mixed human and machine units) and Arabic (illustrative draft with deliberate faults) have segments; other languages offer "Create machine draft (mock)".', 'Edit a target: automatic checks re-run live (placeholders, numbers, protected terms, Latin leakage, trailing punctuation). Errors block "Submit for review".', 'Select a row: the right pane shows memory matches (use a match), the glossary, checks, comments and the audio tab.', 'Switch "View as": Translator saves and submits; Subject expert starts review, approves or reassigns with feedback; Admin signs off. The stage tracker and state dot update.', 'The learner preview follows the selected language; for Arabic and Urdu it renders right-to-left and "Show bidi isolation" outlines the isolated Latin terms.'],
+      patterns: ['Source / target grid with a context pane (Smartling, Phrase, memoQ, Crowdin).', 'Translation-memory match percentage with an explicit "use match".', 'QA severities: Error blocks submit, Warning needs a conscious override.', 'Two human stages with reassign-with-feedback and a visible counter; nothing machine-translated reaches learners unreviewed.', 'Preview in the real layout, mirrored for RTL, with bidi isolation of protected terms.'],
+      maps: ['local_sentientia_translate review UI (diff-before-save) extended with segments, TM and QA', 'Theme tokens: --ap-color-state-* for the seven review states'],
+      notBuilt: ['XLIFF import/export, external translator links, real translation memory, persistence.']
+    }
+  });
+
+  var PROTECTED = ['UPI', 'OTP', 'UTR', 'CVV', 'PIN', 'Tier-2', 'RBI'];
+  var SEG = [
+    { id: '/course/title', en: 'Handling a disputed UPI transaction', hi: ['विवादित UPI लेन-देन को संभालना', 'human'], ar: ['التعامل مع معاملة UPI متنازع عليها', 'machine'] },
+    { id: '/blocks/1/title', en: 'Step 1: verify without asking for secrets', hi: ['चरण 1: बिना गोपनीय जानकारी माँगे वेरिफाई करें', 'human'], ar: ['الخطوة 1: تحقق من هوية العميل دون طلب أي أسرار', 'machine'] },
+    { id: '/blocks/1/points/0', en: 'Registered mobile number plus two security questions', hi: ['रजिस्टर्ड मोबाइल नंबर और दो सुरक्षा प्रश्न', 'human'], ar: ['رقم الجوال المسجّل مع سؤالَي أمان', 'machine'] },
+    { id: '/blocks/1/points/1', en: 'Never ask for UPI PIN, OTP, card number or CVV', hi: ['UPI PIN, OTP, कार्ड नंबर या CVV कभी न माँगें', 'human'], ar: ['لا تطلب أبدًا UPI PIN أو رقم البطاقة أو CVV', 'machine'] },
+    { id: '/blocks/1/points/2', en: 'Collect UTR, date, amount, merchant name', hi: ['UTR, तारीख, राशि, मर्चेंट का नाम लें', 'human'], ar: ['اجمع رقم المرجع والتاريخ والمبلغ واسم التاجر', 'machine'] },
+    { id: '/blocks/3/points/3', en: 'Escalate over 50,000 rupees, repeat debits, legal, media', hi: ['50,000 रुपये से ऊपर, बार-बार डेबिट, कानूनी या मीडिया मामले एस्केलेट करें', 'machine'], ar: ['صعّد إذا زاد المبلغ عن 500,000 روبية أو تكررت الخصومات', 'machine'] },
+    { id: '/ui/position', en: 'Step {$a} of {$b}', hi: ['चरण {$a} / {$b}', 'human'], ar: ['الخطوة {$a}', 'machine'] },
+    { id: '/ui/quizResult', en: 'You scored {$a} percent', hi: ['आपको {$a} प्रतिशत अंक मिले', 'human'], ar: ['حصلت على {$a} بالمئة', 'machine'] },
+    { id: '/blocks/1/narration', en: 'Never ask for the UPI PIN, the OTP, the card number or the CVV.', hi: ['आपको UPI PIN, OTP, कार्ड नंबर या CVV की कभी ज़रूरत नहीं है।', 'human'], ar: ['لا تحتاج أبدًا إلى UPI PIN أو OTP أو رقم البطاقة أو CVV.', 'machine'] }
+  ];
+  var TM = {
+    '/blocks/3/points/3': [{ pct: 87, from: 'POSH-2026, slide 4', src: 'Escalate over 25,000 rupees, repeat complaints, legal, media', tgt: '25,000 रुपये से ऊपर, बार-बार शिकायत, कानूनी या मीडिया मामले एस्केलेट करें' }],
+    '/blocks/1/points/0': [{ pct: 100, from: 'SOP-CS-009, slide 2', src: 'Registered mobile number plus two security questions', tgt: 'रजिस्टर्ड मोबाइल नंबर और दो सुरक्षा प्रश्न' }]
+  };
+  var GLOSS = [['UPI', 'Never translated', 'UPI'], ['OTP', 'Never translated', 'OTP'], ['UTR', 'Never translated; pronounced letter by letter', 'UTR'], ['Tier-2', 'Never translated', 'Tier-2'], ['Airpay', 'Brand; script form per language', 'Hindi: एयरपे  (customer glossary)']];
+  var state = {}; P.LANGS.forEach(function (l) { state[l.tag] = { s: l.state, reassign: l.tag === 'ar' ? 1 : 0, feedback: l.tag === 'ar' ? 'Numbers and protected terms must match the source. Please re-check segments 4 to 6.' : '', smeOk: false, text: {}, comments: {} }; });
+  state.hi.text = {}; SEG.forEach(function (g) { state.hi.text[g.id] = g.hi[0]; state.ar.text[g.id] = g.ar[0]; });
+  var cur = 'hi', role = 'translator', filter = 'all', sel = 0, ptab = 'tm';
+
+  function qa(src, tgt, lang) {
+    var out = [];
+    if (!tgt.trim()) { out.push({ l: 'error', m: 'Target is empty.' }); return out; }
+    var ph = function (x) { return (x.match(/\{\$[a-z]\}/g) || []).sort().join(','); };
+    if (ph(src) !== ph(tgt)) { out.push({ l: 'error', m: 'Placeholders differ. Source has ' + (ph(src) || 'none') + '; target has ' + (ph(tgt) || 'none') + '.' }); }
+    var num = function (x) { return (x.replace(/\{\$[a-z]\}/g, '').match(/\d[\d,.]*/g) || []).sort().join(' '); };
+    if (num(src) !== num(tgt)) { out.push({ l: 'error', m: 'Numbers differ: source "' + num(src) + '" vs target "' + num(tgt) + '". Amounts must never change.' }); }
+    PROTECTED.forEach(function (t) { if (src.indexOf(t) >= 0 && tgt.indexOf(t) < 0) { out.push({ l: 'error', m: 'Protected term "' + t + '" is missing from the target.' }); } });
+    var lat = (tgt.replace(/\{\$[a-z]\}/g, '').match(/[A-Za-z][A-Za-z-]+/g) || []).filter(function (w) { return PROTECTED.indexOf(w) < 0 && ['Success', 'Pending', 'Failed'].indexOf(w) < 0; });
+    if (lat.length && lang !== 'en') { out.push({ l: 'warn', m: 'Latin words in a non-Latin target: ' + lat.slice(0, 3).join(', ') + '. Keep only if intended.' }); }
+    var endP = function (x) { return /[.!?।؟]\s*$/.test(x) ? 'stop' : 'none'; };
+    if (endP(src) !== endP(tgt)) { out.push({ l: 'warn', m: 'Trailing punctuation differs from the source.' }); }
+    return out;
+  }
+  function markTerms(text) { var frag = document.createDocumentFragment(); var re = new RegExp('(' + PROTECTED.join('|') + '|\\{\\$[a-z]\\})', 'g'); text.split(re).forEach(function (part) { if (!part) { return; } if (re.test(part) || PROTECTED.indexOf(part) >= 0 || /^\{\$[a-z]\}$/.test(part)) { frag.appendChild(el('span', { class: 'term', text: part })); } else { frag.appendChild(document.createTextNode(part)); } re.lastIndex = 0; }); return frag; }
+  function langInfo() { return P.LANGS.filter(function (l) { return l.tag === cur; })[0]; }
+  function hasText() { return Object.keys(state[cur].text).length > 0; }
+  function counts() { var e = 0, w = 0, done = 0; SEG.forEach(function (g) { var t = state[cur].text[g.id]; if (t) { done++; qa(g.en, t, cur).forEach(function (x) { if (x.l === 'error') { e++; } else { w++; } }); } }); return { e: e, w: w, done: done }; }
+
+  function paintLangs() {
+    var host = document.getElementById('langs'); host.replaceChildren();
+    P.LANGS.forEach(function (l) {
+      host.appendChild(el('button', { type: 'button', role: 'tab', 'aria-selected': l.tag === cur ? 'true' : 'false', onclick: function () { cur = l.tag; sel = 0; P.applyDir(l.dir); render(); } }, [el('span', { class: 'dot state-' + state[l.tag].s, 'aria-hidden': 'true' }), el('span', { text: l.name, lang: l.tag }), el('span', { class: 'sr-only', text: ', ' + P.STATE_LABEL[state[l.tag].s] })]));
+    });
+  }
+  function paintFlow() {
+    var s = state[cur].s, stage = { pending: 0, machine: 0, in_translation: 0, reassigned: 0, translated: 1, in_review: 1, approved: 3 }[s];
+    if (s === 'in_review' && state[cur].smeOk) { stage = 2; }
+    var names = ['Stage 1 - Translator', 'Stage 2 - Subject expert', 'Admin sign-off'];
+    var host = document.getElementById('flow'); host.replaceChildren(el('span', { class: 'chip', style: 'background:var(--ap-color-bg-inset)' }, [el('span', { class: 'dot state-' + s }), P.STATE_LABEL[s]]));
+    names.forEach(function (n, i) { host.appendChild(P.icon('right', 'i-flip')); host.appendChild(el('span', { class: 'st ' + (i < stage ? 'done' : (i === stage ? 'on' : '')), 'aria-current': i === stage ? 'step' : null, text: (i < stage ? '✓ ' : '') + n })); });
+    host.appendChild(el('span', { class: 'xs muted', style: 'margin-inline-start:auto', text: 'Reassigned ' + state[cur].reassign + ' time' + (state[cur].reassign === 1 ? '' : 's') }));
+    document.getElementById('sla').replaceChildren(P.icon('clock'), 'Due 18 Oct - queue position 2 of 5');
+    var b = document.getElementById('banner'); b.replaceChildren();
+    if (s === 'reassigned' && state[cur].feedback) { b.appendChild(el('div', { class: 'callout warn', role: 'status' }, [P.icon('flag'), el('div', null, [el('strong', { text: 'Reassigned with feedback: ' }), state[cur].feedback])])); }
+    if (s === 'approved') { b.appendChild(el('div', { class: 'callout ok', role: 'status' }, [P.icon('check'), 'Approved and signed off. This language is carried into learner packages. Audit entry written with the document hash.'])); }
+    if (!hasText()) { b.appendChild(el('div', { class: 'callout' }, [P.icon('info'), 'No segments for this language yet (state: ' + P.STATE_LABEL[s] + ').'])); }
+  }
+  function paintFilters() {
+    var host = document.getElementById('filters'); host.replaceChildren();
+    var c = counts();
+    [['all', 'All ' + SEG.length], ['attn', 'Needs attention ' + (c.e + c.w)], ['todo', 'Untranslated ' + (SEG.length - c.done)]].forEach(function (f) { host.appendChild(el('button', { type: 'button', role: 'tab', 'aria-selected': filter === f[0] ? 'true' : 'false', text: f[1], onclick: function () { filter = f[0]; render(); } })); });
+  }
+  function editable() { var s = state[cur].s; return role === 'translator' && ['pending', 'machine', 'in_translation', 'reassigned'].indexOf(s) >= 0; }
+  function paintGrid() {
+    var host = document.getElementById('grid'); host.replaceChildren();
+    if (!hasText()) { host.appendChild(el('div', { class: 'empty' }, [el('p', { text: 'Nothing to review yet.' }), el('div', { style: 'margin-top:12px' }, [el('button', { type: 'button', class: 'btn primary', onclick: function () { SEG.forEach(function (g) { state[cur].text[g.id] = '[' + cur + '] ' + g.en; }); state[cur].s = 'machine'; P.toast('Machine draft created (mock: pseudo-localised text, INR 0).'); render(); } }, [P.icon('zap'), 'Create machine draft (mock)'])])])); return; }
+    var shown = 0;
+    SEG.forEach(function (g, i) {
+      var t = state[cur].text[g.id] || '', issues = qa(g.en, t, cur), err = issues.filter(function (x) { return x.l === 'error'; }).length, warn = issues.length - err;
+      if (filter === 'attn' && !issues.length) { return; } if (filter === 'todo' && t) { return; }
+      shown++;
+      var tm = TM[g.id] ? TM[g.id][0].pct : null, origin = (cur === 'hi' || cur === 'ar') ? (cur === 'hi' ? g.hi[1] : g.ar[1]) : 'machine';
+      var ta = el('textarea', { class: 'textarea', value: t, readonly: !editable(), lang: cur, dir: langInfo().dir, 'aria-label': 'Target for segment ' + (i + 1), oninput: function (ev) { state[cur].text[g.id] = ev.target.value; if (state[cur].s === 'machine' || state[cur].s === 'pending') { state[cur].s = 'in_translation'; } paintFlow(); paintQa(row, g); paintFilters(); paintPane(); paintPreview(); paintActions(); } });
+      ta.value = t;
+      var qaBox = el('div', { class: 'stack', style: 'gap:4px;align-items:flex-start' });
+      var row = el('div', { class: 'seg', role: 'listitem', 'aria-selected': i === sel ? 'true' : 'false', onclick: function (ev) { if (ev.target.tagName !== 'TEXTAREA') { sel = i; paintGrid(); paintPane(); } else { sel = i; paintPane(); } }, 'data-i': i }, [
+        el('span', { class: 'muted small n', text: String(i + 1) }),
+        el('div', { class: 'stack', style: 'gap:6px' }, [el('div', { class: 'src', lang: 'en' }, [markTerms(g.en)]), el('span', { class: 'id', text: g.id })]),
+        ta, qaBox
+      ]);
+      row.qaBox = qaBox; paintQa(row, g, tm, origin);
+      host.appendChild(row);
+    });
+    if (!shown) { host.appendChild(el('div', { class: 'empty', text: 'Nothing matches this filter.' })); }
+  }
+  function paintQa(row, g, tm, origin) {
+    var t = state[cur].text[g.id] || '', issues = qa(g.en, t, cur), err = issues.filter(function (x) { return x.l === 'error'; }).length;
+    row.qaBox.replaceChildren();
+    if (tm) { row.qaBox.appendChild(el('span', { class: 'chip ' + (tm === 100 ? 'ok' : 'info'), text: 'TM ' + tm + '%' })); } else { row.qaBox.appendChild(el('span', { class: 'chip ai' }, [P.icon('zap'), origin === 'human' ? 'Human' : 'Machine'])); }
+    row.qaBox.appendChild(err ? el('span', { class: 'chip bad' }, [P.icon('alert'), err + ' error' + (err > 1 ? 's' : '')]) : (issues.length ? el('span', { class: 'chip warn' }, [P.icon('alert'), issues.length + ' warning']) : el('span', { class: 'chip ok' }, [P.icon('check'), 'QA ok'])));
+  }
+  function paintPane() {
+    var tabs = document.getElementById('ptabs'); tabs.replaceChildren();
+    [['tm', 'Memory'], ['gloss', 'Glossary'], ['qa', 'Checks'], ['cm', 'Comments'], ['au', 'Audio']].forEach(function (x) { tabs.appendChild(el('button', { type: 'button', role: 'tab', 'aria-selected': ptab === x[0] ? 'true' : 'false', text: x[1], onclick: function () { ptab = x[0]; paintPane(); } })); });
+    var pane = document.getElementById('pane'); pane.replaceChildren();
+    var g = SEG[sel], t = state[cur].text[g.id] || '';
+    if (ptab === 'tm') {
+      var m = TM[g.id];
+      if (!m) { pane.appendChild(el('p', { class: 'small muted', text: 'No memory match for this segment. It goes to the machine draft and then to you.' })); }
+      else { m.forEach(function (x) { pane.appendChild(el('div', { class: 'card flat tight stack', style: 'gap:6px' }, [el('div', { class: 'row spread' }, [el('span', { class: 'chip ' + (x.pct === 100 ? 'ok' : 'info'), text: x.pct + '% match' }), el('span', { class: 'xs muted', text: x.from })]), el('p', { class: 'small', lang: 'en', text: x.src }), el('p', { class: 'small', lang: 'hi', text: x.tgt }), el('button', { type: 'button', class: 'btn sm', disabled: !editable() || cur !== 'hi', onclick: function () { state.hi.text[g.id] = x.tgt; P.toast('Memory match applied. Check the changed words.'); render(); } }, [P.icon('check'), 'Use match'])])); }); pane.appendChild(el('p', { class: 'xs muted', text: 'Human-approved translations are saved to memory; unedited machine output is not.' })); }
+    } else if (ptab === 'gloss') {
+      pane.appendChild(el('table', { class: 'table' }, [el('thead', null, [el('tr', null, [el('th', { text: 'Term' }), el('th', { text: 'Rule' })])]), el('tbody', null, GLOSS.map(function (r) { return el('tr', null, [el('td', { class: 'bold', text: r[0] }), el('td', { class: 'small', text: r[1] + (r[2] !== r[0] ? ' - ' + r[2] : '') })]); }))]));
+    } else if (ptab === 'qa') {
+      var issues = qa(g.en, t, cur);
+      if (!issues.length) { pane.appendChild(el('div', { class: 'callout ok' }, [P.icon('check'), 'No problems found for this segment.'])); }
+      issues.forEach(function (x) { pane.appendChild(el('div', { class: 'qa-item' }, [el('span', { class: 'chip ' + (x.l === 'error' ? 'bad' : 'warn'), text: x.l === 'error' ? 'Error' : 'Warning' }), el('span', { text: x.m })])); });
+      pane.appendChild(el('p', { class: 'xs muted', text: 'Errors block submit. Warnings can be overridden with a comment.' }));
+    } else if (ptab === 'cm') {
+      var list = state[cur].comments[g.id] = state[cur].comments[g.id] || [];
+      list.forEach(function (c) { pane.appendChild(el('div', { class: 'card flat tight' }, [el('p', { class: 'xs muted', text: c.who + ' - ' + c.at }), el('p', { class: 'small', text: c.text })])); });
+      if (!list.length) { pane.appendChild(el('p', { class: 'small muted', text: 'No comments on this segment.' })); }
+      var ta = el('textarea', { class: 'textarea', 'aria-label': 'New comment', style: 'min-height:64px' });
+      pane.appendChild(ta); pane.appendChild(el('button', { type: 'button', class: 'btn sm', onclick: function () { if (!ta.value.trim()) { return; } list.push({ who: { translator: 'Translator', sme: 'Subject expert', admin: 'Admin' }[role], at: 'just now', text: ta.value.trim() }); paintPane(); P.toast('Comment added.'); } }, [P.icon('msg'), 'Add comment']));
+    } else {
+      pane.appendChild(el('div', { class: 'callout' }, [P.icon('mic'), 'Narration for this unit is synthesised after approval. Reviewers hear 20% of segments.']));
+      pane.appendChild(el('p', { class: 'small', text: 'Engine: self-hosted, India region (mock). Duration estimate ' + Math.max(2, Math.round(t.split(/\s+/).length / 2.17)) + ' s.' }));
+      pane.appendChild(el('div', { class: 'field' }, [el('label', { for: 'pron', text: 'Pronunciation override' }), el('input', { class: 'input', id: 'pron', value: 'UTR = "U T R"' })]));
+      pane.appendChild(el('button', { type: 'button', class: 'btn sm', onclick: function () { P.toast('Re-synthesis queued (mock): 1 segment, about 4 s of speech.'); } }, [P.icon('refresh'), 'Re-synthesise this segment']));
+    }
+  }
+  function paintPreview() {
+    var host = document.getElementById('preview'); host.replaceChildren();
+    var d = langInfo().dir, iso = document.getElementById('iso').checked;
+    var get = function (id) { return state[cur].text[id] || SEG.filter(function (g) { return g.id === id; })[0].en; };
+    function withBdi(text) { var frag = document.createDocumentFragment(); var re = new RegExp('(' + PROTECTED.join('|') + '|\\d[\\d,.]*)', 'g'); text.split(re).forEach(function (p) { if (!p) { return; } if (PROTECTED.indexOf(p) >= 0 || /^\d/.test(p)) { frag.appendChild(el('bdi', { text: p })); } else { frag.appendChild(document.createTextNode(p)); } }); return frag; }
+    var title = el('h4', { lang: cur }), ul = el('ul', { lang: cur });
+    title.appendChild(withBdi(get('/blocks/1/title')));
+    ['/blocks/1/points/0', '/blocks/1/points/1', '/blocks/1/points/2'].forEach(function (id) { var li = el('li'); li.appendChild(withBdi(get(id))); ul.appendChild(li); });
+    host.setAttribute('dir', d); host.className = 'pv' + (iso ? ' iso' : '');
+    host.appendChild(title); host.appendChild(ul);
+    document.getElementById('pv-note').textContent = d === 'rtl' ? 'Right-to-left: layout and bullets mirror. Terms like UPI and amounts stay as isolated left-to-right runs so the line does not scramble.' : 'Left-to-right language. Switch to Arabic or Urdu to see the mirrored layout.';
+  }
+  function paintActions() {
+    var host = document.getElementById('actions'); host.replaceChildren();
+    var c = counts(), s = state[cur].s, L = state[cur];
+    host.appendChild(el('span', { class: 'small muted', text: c.done + ' of ' + SEG.length + ' translated - ' + c.e + ' error' + (c.e === 1 ? '' : 's') + ', ' + c.w + ' warning' + (c.w === 1 ? '' : 's') + ' - memory leverage 22%' }));
+    var acts = el('div', { class: 'row' });
+    function btn(label, kind, icon, fn, dis) { acts.appendChild(el('button', { type: 'button', class: 'btn ' + kind, disabled: !!dis, onclick: fn }, [P.icon(icon), label])); }
+    if (role === 'translator') {
+      btn('Save draft', '', 'check', function () { if (s === 'machine' || s === 'pending') { L.s = 'in_translation'; } P.toast('Draft saved.'); render(); }, !hasText());
+      btn('Submit for review', 'primary', 'right', function () { L.s = 'translated'; P.toast('Submitted to the subject expert. Audit entry written.'); render(); }, !hasText() || c.e > 0 || ['pending', 'machine', 'in_translation', 'reassigned'].indexOf(s) < 0);
+    } else if (role === 'sme') {
+      btn('Start review', '', 'eye', function () { L.s = 'in_review'; P.toast('Review started.'); render(); }, s !== 'translated');
+      btn('Approve language', 'primary', 'check', function () { L.smeOk = true; P.toast('Approved by the subject expert. Waiting for admin sign-off.'); render(); }, s !== 'in_review' || L.smeOk || c.e > 0);
+      btn('Reassign with feedback', 'danger', 'flag', function () { reassign(); }, !(s === 'in_review' || s === 'translated'));
+    } else {
+      btn('Sign off', 'primary', 'award', function () { L.s = 'approved'; P.toast('Signed off. Approval time locked; language will ship in learner packages.'); render(); }, !(s === 'in_review' && L.smeOk));
+      btn('Reassign with feedback', 'danger', 'flag', function () { reassign(); }, !(s === 'in_review' || s === 'translated'));
+    }
+    host.appendChild(acts);
+    if (role !== 'translator' && ['translated', 'in_review'].indexOf(s) < 0 && s !== 'approved') { host.appendChild(el('p', { class: 'xs muted', style: 'flex-basis:100%', text: 'Nothing waiting for you in this language yet (state: ' + P.STATE_LABEL[s] + ').' })); }
+  }
+  function reassign() {
+    var ta = el('textarea', { class: 'textarea', 'aria-label': 'Feedback for the translator', placeholder: 'What should the translator fix?' });
+    P.dialog({ title: 'Reassign to the translator', body: [el('p', { class: 'small muted', text: 'The translator link reopens and the counter increases. Feedback is required.' }), ta], actions: [{ label: 'Cancel' }, { label: 'Reassign', kind: 'danger', keepOpen: true, onClick: function (d) { if (!ta.value.trim()) { ta.focus(); P.toast('Feedback is required.'); return; } state[cur].s = 'reassigned'; state[cur].reassign++; state[cur].feedback = ta.value.trim(); state[cur].smeOk = false; d.close(); P.toast('Reassigned (' + state[cur].reassign + '). Audit entry written.'); render(); } }] });
+  }
+  function render() {
+    paintLangs(); paintFlow(); paintFilters(); paintGrid(); paintPane(); paintPreview(); paintActions();
+  }
+  document.getElementById('role').onchange = function (ev) { role = ev.target.value; render(); };
+  document.getElementById('iso').onchange = paintPreview;
+  document.addEventListener('proto:dir', function (e) { var want = e.detail === 'rtl' ? 'ar' : 'hi'; if (langInfo().dir !== e.detail) { cur = want; render(); } });
+  if (document.documentElement.getAttribute('dir') === 'rtl') { cur = 'ar'; }
+  render();
+}());
+</script>
+</body>
+</html>

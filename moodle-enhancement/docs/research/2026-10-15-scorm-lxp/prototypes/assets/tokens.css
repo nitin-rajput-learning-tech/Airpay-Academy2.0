@@ -11,6 +11,12 @@
      * motion uses --ap-transition-* / --ap-duration-* which collapse to
        0ms under prefers-reduced-motion: reduce.
 
+   Tokens PROPOSED by these prototypes (not in the theme file today; verified by
+   grep on 2026-10-15): --ap-chart-seq-0..5, --ap-chart-grid, --ap-chart-axis,
+   --ap-color-state-* (the seven review states), --ap-color-outcome-*,
+   --ap-font-family-devanagari / -arabic / -urdu and --ap-leading-devanagari /
+   -nastaliq. Everything else keeps the theme's name and value.
+
    Deviations from the theme file (both requested by the prototype brief):
      * --ap-content-max-width is 1440px here (theme: 1400px);
      * --ap-focus-ring-width is 2px here (theme: 3px).

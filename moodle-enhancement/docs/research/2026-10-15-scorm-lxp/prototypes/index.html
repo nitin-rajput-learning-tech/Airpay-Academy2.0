@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sentientia content engine - clickable prototypes</title>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/proto.css">
+<style>
+  body { padding: var(--ap-space-8) var(--ap-space-4); }
+  .wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--ap-space-6); }
+  .hero { background: var(--ap-gradient-hero); color: var(--ap-color-text-inverse); border-radius: var(--ap-radius-lg); padding: var(--ap-space-8); }
+  .hero p { max-width: 70ch; opacity: .92; margin-block-start: var(--ap-space-3); }
+  .tile { display: flex; flex-direction: column; gap: var(--ap-space-3); text-decoration: none; color: inherit; transition: box-shadow var(--ap-transition-quick), transform var(--ap-transition-quick); }
+  .tile:hover { box-shadow: var(--ap-shadow-hover); transform: translateY(-2px); }
+  .tile img { width: 100%; height: 180px; object-fit: cover; object-position: top; border-radius: var(--ap-radius-sm); border: 1px solid var(--ap-color-border); background: var(--ap-color-bg-inset); }
+  .tile .n { font-size: var(--ap-text-xs); font-weight: var(--ap-weight-bold); color: var(--ap-color-primary-text); text-transform: uppercase; letter-spacing: .06em; }
+  .bar { display: flex; gap: var(--ap-space-2); flex-wrap: wrap; align-items: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <p class="xs bold" style="opacity:.8;margin:0">SENTIENTIA CONTENT ENGINE - STUDY 2026-10-15</p>
+    <h1 style="font-size:var(--ap-text-4xl);margin-block-start:var(--ap-space-2)">Six clickable prototypes</h1>
+    <p>One course, "Handling a disputed UPI transaction", seen from six seats: the learner who takes it, the author who builds it from an SOP, the reviewer who approves its translations, the admin who watches it, and the scenario designer who shapes its decisions. Everything is synthetic; nothing is live or saved.</p>
+    <div class="bar" style="margin-block-start:var(--ap-space-5)">
+      <button type="button" class="btn" id="dir-btn" aria-pressed="false">LTR (en)</button>
+      <button type="button" class="btn" id="theme-btn">Theme: auto</button>
+      <span class="chip" style="background:rgba(255,255,255,.18);color:inherit">Light and dark - LTR and RTL - 1440 and 375 px</span>
+    </div>
+  </header>
+  <section class="grid cols-3" id="tiles" aria-label="Prototypes"></section>
+  <section class="card stack">
+    <h2>How to read these</h2>
+    <p class="muted">Each screen has an "About" button with what to click, the patterns it demonstrates, what it maps to in the real theme and what is deliberately not built. Colours, spacing, type, motion and focus all come from <code>assets/tokens.css</code>, which mirrors the theme's token names, so a component lifts into <code>theme/sentientia</code> unchanged. Open from the file system in Chrome or Edge; no server and no build. Montserrat loads from Google Fonts if online; otherwise system fonts are used.</p>
+    <p class="small muted">URL switches for review: <code>?theme=dark</code>, <code>?dir=rtl</code>, <code>?nofonts=1</code>.</p>
+  </section>
+</div>
+<script src="assets/proto.js"></script>
+<script>
+(function () {
+  var P = PROTO, el = P.el, root = document.documentElement;
+  var info = {
+    'learner-home': ['Learner', 'What must I finish, and by when? Required work apart from optional; a two-minute retrieval-practice habit.', '01-learner-home-desktop-light.png'],
+    'course-player': ['Learner', 'Narrated slides with word-synchronised captions, an embedded branching scenario, a mastery quiz, in 3 languages with RTL.', '02-course-player-desktop-light.png'],
+    'authoring-studio': ['Author', 'SOP to course in five gated steps: source and PII scan, outline, generate, refine with AI marks and revert, review and publish.', '03-authoring-studio-desktop-light.png'],
+    'localisation-review': ['Translator, subject expert, admin', 'Source and target side by side, translation memory, automatic checks, two human stages, reassign with feedback, RTL preview.', '04-localisation-review-desktop-light.png'],
+    'admin-analytics': ['L&D admin, auditor', 'Completion, decision-level scenario analytics, language coverage, review capacity, spend and where voice ran.', '05-admin-analytics-desktop-light.png'],
+    'scenario-editor': ['Scenario designer', 'A node-graph editor with live checks for dead ends and the state budget, keyboard moves, play mode and an analytics overlay.', '06-scenario-editor-desktop-light.png']
+  };
+  var host = document.getElementById('tiles');
+  P.SCREENS.forEach(function (s, i) {
+    var d = info[s.id];
+    var img = el('img', { src: 'screenshots/' + d[2], alt: '', loading: 'lazy' });
+    img.addEventListener('error', function () { img.style.display = 'none'; });
+    host.appendChild(el('a', { class: 'card tile', href: s.file }, [img, el('span', { class: 'n', text: String(i + 1).padStart(2, '0') + ' - ' + d[0] }), el('h3', { text: s.label }), el('p', { class: 'small muted', text: d[1] })]));
+  });
+  function setTheme(m) { if (m === 'auto') { root.removeAttribute('data-theme'); } else { root.setAttribute('data-theme', m); } P.guard(function () { sessionStorage.setItem('sp-theme', m); }); document.getElementById('theme-btn').textContent = 'Theme: ' + m; }
+  document.getElementById('theme-btn').onclick = function () { var cur = root.getAttribute('data-theme') || 'auto'; setTheme({ auto: 'light', light: 'dark', dark: 'auto' }[cur]); };
+  document.getElementById('dir-btn').onclick = function () { P.applyDir(root.getAttribute('dir') === 'rtl' ? 'ltr' : 'rtl'); };
+  var q = new URLSearchParams(location.search);
+  setTheme(q.get('theme') || P.guard(function () { return sessionStorage.getItem('sp-theme'); }) || 'auto');
+  P.applyDir(q.get('dir') || P.guard(function () { return sessionStorage.getItem('sp-dir'); }) || 'ltr');
+  document.title = 'Sentientia content engine - clickable prototypes';
+}());
+</script>
+</body>
+</html>

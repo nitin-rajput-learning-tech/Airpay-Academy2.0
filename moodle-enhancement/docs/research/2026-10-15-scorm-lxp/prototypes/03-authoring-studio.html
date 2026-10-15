@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Authoring studio - Sentientia prototype</title>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/proto.css">
+<style>
+  .split { display: grid; grid-template-columns: 220px minmax(0, 1fr) 320px; gap: var(--ap-space-4); align-items: start; }
+  .slide-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--ap-space-2); }
+  .slide-list button { width: 100%; text-align: start; padding: var(--ap-space-3); border: 1px solid var(--ap-color-border); border-radius: var(--ap-radius-sm); background: var(--ap-color-bg-surface); cursor: pointer; min-height: var(--ap-tap-target-cozy); font-size: var(--ap-text-sm); }
+  .slide-list button[aria-current="true"] { border-color: var(--ap-color-primary); background: var(--ap-color-bg-active); font-weight: var(--ap-weight-semibold); }
+  .preview { background: var(--ap-color-bg-surface); border: 1px solid var(--ap-color-border); border-radius: var(--ap-radius-md); padding: var(--ap-space-6); box-shadow: var(--ap-shadow-sm); min-height: 360px; }
+  .preview ul { padding-inline-start: var(--ap-space-6); display: flex; flex-direction: column; gap: var(--ap-space-3); }
+  .bullet { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--ap-space-2); align-items: center; }
+  .diff-add { background: var(--ap-color-success-light); border-radius: 3px; }
+  .diff-del { background: var(--ap-color-danger-light); text-decoration: line-through; border-radius: 3px; }
+  .outline-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto auto; gap: var(--ap-space-3); align-items: center; padding: var(--ap-space-3); border: 1px solid var(--ap-color-border); border-radius: var(--ap-radius-sm); background: var(--ap-color-bg-surface); }
+  .gen-step { display: flex; gap: var(--ap-space-3); align-items: center; padding: var(--ap-space-3); border-radius: var(--ap-radius-sm); border: 1px solid var(--ap-color-border); }
+  .gen-step.run { border-color: var(--ap-color-primary); background: var(--ap-color-bg-active); }
+  .gen-step.done { color: var(--ap-color-text-primary); }
+  .rule { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: var(--ap-space-3); align-items: center; padding: var(--ap-space-2) 0; border-block-end: 1px solid var(--ap-color-divider); font-size: var(--ap-text-sm); }
+  .split2 { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+  @media (max-width: 1100px) { .split, .split2 { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 560px) { .outline-row { grid-template-columns: 24px minmax(0, 1fr); } .outline-row .acts { grid-column: 1 / -1; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="page">
+    <ol class="stepper" id="stepper" aria-label="Authoring steps"></ol>
+    <section id="panel" class="stack" aria-live="polite" tabindex="-1"></section>
+    <div class="row spread" id="foot"></div>
+  </div>
+</main>
+<script src="assets/proto.js"></script>
+<script>
+(function () {
+  var P = PROTO, el = P.el;
+  P.mount({
+    screen: 'authoring-studio', title: 'Authoring studio',
+    about: {
+      purpose: 'SOP to course in five steps, with a human gate before the expensive generate step and another before publish. Fixture: SOP-CS-014 (UPI dispute handling).',
+      interactions: ['Step 1: toggle "Simulate PII in the source" - the scan blocks the step with masked findings; clear it to continue. Change course types and languages: the estimate updates.', 'Step 2: edit titles, reorder with the up/down buttons (a keyboard alternative to dragging), delete (with undo) and add; approve the outline.', 'Step 3: Generate runs a staged mock with progress, cost and Cancel.', 'Step 4: use "Shorter" or "Simpler" on a bullet: a visible diff appears; "Revert to AI original" restores it; "Lock verbatim" disables AI edits for that passage. Bullets over 8 words show a live warning.', 'Step 5: run validation; tick both approvals; publish (mock) after a confirmation dialog.'],
+      patterns: ['Staged generation: outline, approve, generate, refine, review, publish (Rise, Mindsmith, 360Learning pattern).', 'Source-fidelity control and verbatim lock for SOP text.', 'AI mark with prompt version and revert on every AI-written passage.', 'Cost and mock-versus-live shown before and during every long operation.', 'Validation rules R01-R12 shown by name, not as one opaque score.'],
+      maps: ['local_sentientia_authoring studio (cards, review gate, course builder)', 'Compile step: pilot/lib/packager.py semantics, PHP compiler in Stage 1'],
+      notBuilt: ['Real upload, real model calls, the PHP compiler, persistence.']
+    }
+  });
+
+  var steps = ['Source', 'Outline', 'Generate', 'Refine', 'Review and publish'];
+  var cur = 0, maxReached = 0;
+  var S = {
+    pii: false, types: { slides: true, scenario: true, roleplay: false, video: false }, fidelity: 'faithful',
+    langs: { en: true, hi: true, mr: false, ta: false, ar: false },
+    outline: [
+      { t: 'Welcome and the five moves', k: 'Slide', src: 'Summary' },
+      { t: 'Step 1: verify without asking for secrets', k: 'Slide', src: 'Section 3, Step 1' },
+      { t: 'Step 2: classify the case', k: 'Slide', src: 'Section 3, Step 2' },
+      { t: 'Steps 3 and 4: expectations, notes, escalation', k: 'Slide', src: 'Section 3, Steps 3-4' },
+      { t: 'Practice: the angry caller', k: 'Scenario', src: 'Section 4, worked examples' },
+      { t: 'Mastery check (5 questions)', k: 'Quiz', src: 'All sections' }
+    ],
+    objectives: ['Verify a caller without asking for secrets', 'Classify a disputed UPI payment correctly', 'Escalate on the right triggers'],
+    approved: false, gen: 0, genTimer: null,
+    slides: [
+      { id: 'b02', title: 'Step 1: verify without asking for secrets', bullets: ['Registered mobile number plus two security questions', 'Never ask for UPI PIN, OTP, card number or CVV', 'Collect UTR, date, amount, merchant name', 'Check status: Success, Pending or Failed'], narration: 'Start by authenticating the caller with the registered mobile number and two security questions. You never need the UPI PIN, the OTP, the card number or the CVV.', locked: false, ai: [true, true, true, true], orig: null, src: 'SOP-CS-014 section 3, Step 1 (lines 12 to 18)' },
+      { id: 'b03', title: 'Step 2: classify the case', bullets: ['Pending within 3 working days: wait, share the date', 'Failed, not reversed after window: raise dispute', 'Unauthorised: block UPI debits, then raise dispute', 'Merchant service dispute: route to grievance'], narration: 'Classification decides everything that follows. A pending payment inside three working days needs patience, not a dispute.', locked: false, ai: [true, true, true, true], orig: null, src: 'SOP-CS-014 section 3, Step 2 (lines 19 to 27)' }
+    ],
+    sel: 0, validated: false, sme: false, comp: false, std: { scorm12: true, scorm2004: true, cmi5: true }
+  };
+  var RATE = { model: 35, speech: 9, review: 5.5 };
+  var panel = document.getElementById('panel');
+
+  function estimate() {
+    var n = Object.keys(S.langs).filter(function (k) { return S.langs[k]; }).length;
+    var extra = n - 1;
+    return { n: n, model: 12 + extra * 25, speech: n * RATE.speech, hours: Math.max(0, extra) * RATE.review };
+  }
+  function renderStepper() {
+    var ol = document.getElementById('stepper'); ol.replaceChildren();
+    steps.forEach(function (s, i) { ol.appendChild(el('li', { class: i < cur ? 'done' : '', 'aria-current': i === cur ? 'step' : null, text: s })); });
+  }
+  function words(x) { return x.trim().split(/\s+/).filter(Boolean).length; }
+
+  function step1() {
+    var e = estimate();
+    var piiBox = el('div');
+    function paintPii() {
+      piiBox.replaceChildren();
+      if (S.pii) {
+        piiBox.appendChild(el('div', { class: 'callout bad', role: 'alert' }, [P.icon('shield'), el('div', { class: 'stack', style: 'gap:4px' }, [el('strong', { text: 'Blocked: 2 personal identifiers found. Nothing was sent to any model.' }), el('span', { class: 'mono', text: 'PAN  ******234F  (line 41)   mobile  ******3210  (line 41)' }), el('span', { class: 'small', text: 'Values are masked here and never stored. Remove them from the source, then scan again.' })])]));
+      } else {
+        piiBox.appendChild(el('div', { class: 'callout ok' }, [P.icon('check'), el('div', { class: 'stack', style: 'gap:2px' }, [el('strong', { text: 'Clean: no Aadhaar, PAN, mobile, email, IFSC or card numbers found.' }), el('span', { class: 'small muted', text: 'Scanner pilot-pii-regex/0.1 - 690 words - hash 4b8cab03... recorded in the audit log' })])]));
+      }
+      var nb = document.getElementById('next'); if (nb) { nb.disabled = S.pii; }
+    }
+    var left = el('div', { class: 'card stack' }, [
+      el('div', { class: 'card-title' }, [el('h2', { text: 'Source document' }), el('span', { class: 'sub', text: 'Text up to 100,000 characters. Images are not read.' })]),
+      el('div', { class: 'tabs', role: 'tablist' }, ['Upload file', 'Paste text', 'Prompt only'].map(function (t, i) { return el('button', { type: 'button', role: 'tab', 'aria-selected': i === 0 ? 'true' : 'false', text: t, onclick: function (ev) { Array.prototype.forEach.call(ev.target.parentNode.children, function (b) { b.setAttribute('aria-selected', b === ev.target ? 'true' : 'false'); }); P.toast('Prototype: the sample SOP stays selected.'); } }); })),
+      el('div', { class: 'row card flat tight' }, [P.icon('file'), el('div', { class: 'grow' }, [el('p', { class: 'bold', text: 'sample-sop-upi-dispute.md' }), el('p', { class: 'small muted', text: 'SOP-CS-014 v3.1 - 690 words - uploaded by you just now' })]), el('button', { type: 'button', class: 'btn sm', onclick: function () { P.toast('Prototype: file picker not wired.'); } }, [P.icon('upload'), 'Replace'])]),
+      piiBox,
+      el('label', { class: 'row small', style: 'cursor:pointer' }, [el('input', { type: 'checkbox', checked: S.pii, onchange: function (ev) { S.pii = ev.target.checked; paintPii(); renderFoot(); } }), 'Simulate PII in the source (demonstration)'])
+    ]);
+    paintPii();
+    var types = [['slides', 'Narrated slides and mastery quiz', true, ''], ['scenario', 'Deterministic branching scenario', true, ''], ['roleplay', 'Live AI roleplay', false, 'Stage 3, flag off'], ['video', 'AI avatar video', false, 'Deferred, costed only']];
+    var right = el('div', { class: 'stack' }, [
+      el('div', { class: 'card stack' }, [el('h3', { text: 'Course types' })].concat(types.map(function (t) {
+        return el('label', { class: 'row small', style: 'cursor:' + (t[2] ? 'pointer' : 'not-allowed') }, [el('input', { type: 'checkbox', checked: S.types[t[0]], disabled: !t[2], onchange: function (ev) { S.types[t[0]] = ev.target.checked; } }), t[1], t[3] ? el('span', { class: 'chip line', text: t[3] }) : null]);
+      }))),
+      el('fieldset', { class: 'card stack', style: 'border:1px solid var(--ap-color-border)' }, [el('legend', { class: 'bold', text: 'How closely should the AI follow the source?' })].concat([['verbatim', 'Verbatim where possible', 'SOP wording kept; AI only structures it'], ['faithful', 'Faithful (default)', 'Rewords for learning, keeps every rule and number'], ['reshape', 'Reshape for learning', 'Freer examples; needs closer review']].map(function (o) {
+        return el('label', { class: 'row small', style: 'align-items:flex-start;cursor:pointer' }, [el('input', { type: 'radio', name: 'fid', value: o[0], checked: S.fidelity === o[0], onchange: function () { S.fidelity = o[0]; } }), el('span', null, [el('strong', { text: o[1] }), el('span', { class: 'muted', style: 'display:block', text: o[2] })])]);
+      }))),
+      el('div', { class: 'card stack' }, [el('h3', { text: 'Languages' }), el('div', { class: 'row', style: 'gap:6px' }, Object.keys(S.langs).map(function (k) {
+        var l = P.LANGS.filter(function (x) { return x.tag === k; })[0];
+        return el('button', { type: 'button', class: 'btn sm', 'aria-pressed': S.langs[k] ? 'true' : 'false', disabled: k === 'en', lang: k, text: l.name, onclick: function (ev) { S.langs[k] = !S.langs[k]; ev.currentTarget.setAttribute('aria-pressed', S.langs[k] ? 'true' : 'false'); paintEst(); } });
+      })), el('p', { class: 'xs muted', text: 'English is the base language. Each added language needs two human review stages before learners see it.' })]),
+      el('div', { class: 'card flat stack', id: 'est' })
+    ]);
+    panel.appendChild(el('div', { class: 'grid split2' }, [left, right]));
+    function paintEst() {
+      var q = estimate();
+      var box = document.getElementById('est'); box.replaceChildren(
+        el('div', { class: 'row spread' }, [el('h3', { text: 'Estimate for ' + q.n + ' language' + (q.n > 1 ? 's' : '') }), el('span', { class: 'mock-tag', text: 'Mock mode: INR 0' })]),
+        el('p', { class: 'small', text: 'Model (generate and translate): about INR ' + q.model }),
+        el('p', { class: 'small', text: 'Speech (self-hosted, India region): about INR ' + q.speech }),
+        el('p', { class: 'small', text: 'Human review: about ' + q.hours.toFixed(0) + ' hours (two stages per added language)' }),
+        el('p', { class: 'xs muted', text: 'Planning values from the study; the harness measures real cost on the first live run.' }));
+    }
+    paintEst();
+  }
+
+  function move(i, d) { var j = i + d; if (j < 0 || j >= S.outline.length) { return; } var t = S.outline[i]; S.outline[i] = S.outline[j]; S.outline[j] = t; render(); var b = panel.querySelectorAll('.outline-row')[j]; if (b) { b.querySelector('[data-focus]').focus(); } P.toast('Moved "' + t.t + '" ' + (d < 0 ? 'up' : 'down') + '.'); }
+  function step2() {
+    var rows = el('div', { class: 'stack', role: 'list' });
+    S.outline.forEach(function (o, i) {
+      rows.appendChild(el('div', { class: 'outline-row', role: 'listitem' }, [
+        el('span', { class: 'muted bold', text: String(i + 1) }),
+        el('div', { class: 'stack', style: 'gap:2px' }, [el('input', { class: 'input', value: o.t, 'aria-label': 'Title of item ' + (i + 1), 'data-focus': '1', oninput: function (ev) { o.t = ev.target.value; } }), el('span', { class: 'xs muted', text: 'From: ' + o.src })]),
+        el('span', { class: 'chip ' + (o.k === 'Scenario' ? 'ai' : 'info'), text: o.k }),
+        el('div', { class: 'row acts', style: 'gap:4px;flex-wrap:nowrap' }, [
+          el('button', { type: 'button', class: 'btn sm icon', disabled: i === 0, 'aria-label': 'Move up', onclick: function () { move(i, -1); } }, [P.icon('up')]),
+          el('button', { type: 'button', class: 'btn sm icon', disabled: i === S.outline.length - 1, 'aria-label': 'Move down', onclick: function () { move(i, 1); } }, [P.icon('down')]),
+          el('button', { type: 'button', class: 'btn sm icon', 'aria-label': 'Delete item', onclick: function () { var removed = S.outline.splice(i, 1)[0]; render(); P.toast('Deleted "' + removed.t + '". Use Undo below.'); S.undo = { i: i, o: removed }; document.getElementById('undo').hidden = false; } }, [P.icon('trash')])
+        ])]));
+    });
+    var coverage = Math.min(100, 48 + S.outline.length * 8);
+    panel.appendChild(el('div', { class: 'grid split2' }, [
+      el('div', { class: 'card stack' }, [
+        el('div', { class: 'card-title' }, [el('h2', { text: 'Proposed outline' }), el('span', { class: 'ai-mark' }, [P.icon('zap'), 'AI proposal - prompt pilot-outline/0.1 (mock)'])]),
+        rows,
+        el('div', { class: 'row' }, [
+          el('button', { type: 'button', class: 'btn', onclick: function () { S.outline.push({ t: 'New section', k: 'Slide', src: 'Added by you' }); render(); P.toast('Added a section.'); } }, [P.icon('plus'), 'Add section']),
+          el('button', { type: 'button', class: 'btn', id: 'undo', hidden: true, onclick: function () { S.outline.splice(S.undo.i, 0, S.undo.o); S.undo = null; render(); P.toast('Restored.'); } }, [P.icon('undo'), 'Undo delete'])
+        ])]),
+      el('div', { class: 'stack' }, [
+        el('div', { class: 'card stack' }, [el('h3', { text: 'Learning objectives' }), el('ul', { class: 'small', style: 'margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:6px' }, S.objectives.map(function (o) { return el('li', { text: o }); }))]),
+        el('div', { class: 'card stack' }, [el('h3', { text: 'Source coverage' }), el('div', { class: 'progress', role: 'progressbar', 'aria-valuenow': coverage, 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-label': 'Source coverage' }, [el('span', { style: 'width:' + coverage + '%' })]), el('p', { class: 'small', text: coverage + '% of SOP sections are used by this outline.' + (coverage < 100 ? ' Section 5 (record keeping) is not covered yet.' : '') })]),
+        el('label', { class: 'row small card flat tight', style: 'cursor:pointer' }, [el('input', { type: 'checkbox', checked: S.approved, onchange: function (ev) { S.approved = ev.target.checked; document.getElementById('next').disabled = !S.approved; } }), 'I approve this outline. Generation uses it as written.'])
+      ])]));
+  }
+
+  var GEN = [['Read the SOP and split it into sections', 700], ['Draft slides and narration', 1100], ['Draft the branching scenario (9 nodes)', 1100], ['Draft the five-question quiz', 800], ['Validate: schema and rules R01 to R12', 700]];
+  function step3() {
+    var list = el('div', { class: 'stack' });
+    var meter = el('div', { class: 'progress', role: 'progressbar', 'aria-label': 'Generation progress', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': 0 }, [el('span', { style: 'width:0%' })]);
+    var status = el('p', { class: 'small muted', 'aria-live': 'polite' });
+    var startBtn = el('button', { type: 'button', class: 'btn primary lg' }, [P.icon('zap'), 'Generate course']);
+    var cancel = el('button', { type: 'button', class: 'btn', hidden: true }, [P.icon('x'), 'Cancel']);
+    function paint(stage, done) {
+      list.replaceChildren();
+      GEN.forEach(function (g, i) { list.appendChild(el('div', { class: 'gen-step ' + (i < stage ? 'done' : (i === stage && !done ? 'run' : '')) }, [P.icon(i < stage || done ? 'check' : (i === stage ? 'refresh' : 'clock')), g[0]])); });
+      var pct = done ? 100 : Math.round(stage / GEN.length * 100);
+      meter.firstChild.style.width = pct + '%'; meter.setAttribute('aria-valuenow', pct);
+    }
+    paint(-1, false);
+    var token;
+    startBtn.onclick = function () {
+      startBtn.disabled = true; cancel.hidden = false; var i = 0; status.textContent = 'Mock mode: no model is called; the structure below is the fixture course.';
+      (function next() {
+        paint(i, false);
+        token = setTimeout(function () { i++; if (i >= GEN.length) { paint(GEN.length, true); status.textContent = 'Done in 5 steps. 0 validation errors, 2 warnings (bullets longer than 8 words). Cost: INR 0 (mock). A live run is estimated at about INR 38.'; cancel.hidden = true; S.gen = 1; document.getElementById('next').disabled = false; P.toast('Draft ready for review.'); return; } next(); }, GEN[i][1]);
+      }());
+    };
+    cancel.onclick = function () { clearTimeout(token); paint(-1, false); startBtn.disabled = false; cancel.hidden = true; status.textContent = 'Cancelled. Nothing was kept and nothing was spent.'; P.toast('Generation cancelled.'); };
+    S.stopGen = function () { clearTimeout(token); };
+    panel.appendChild(el('div', { class: 'card stack' }, [
+      el('div', { class: 'card-title' }, [el('h2', { text: 'Generate the course draft' }), el('span', { class: 'mock-tag', text: 'Mock mode' })]),
+      el('p', { class: 'muted', text: 'Uses the approved outline and the "' + S.fidelity + '" fidelity setting. The draft stays a draft until a person approves it.' }),
+      meter, list, status, el('div', { class: 'row' }, [startBtn, cancel])
+    ]));
+  }
+
+  function step4() {
+    var sl = S.slides[S.sel];
+    var list = el('ol', { class: 'slide-list' }, S.slides.map(function (s, i) { return el('li', null, [el('button', { type: 'button', 'aria-current': i === S.sel ? 'true' : null, text: (i + 1) + '. ' + s.title, onclick: function () { S.sel = i; render(); } })]); }));
+    var over = sl.bullets.filter(function (b) { return words(b) > 8; }).length;
+    var bullets = el('ul', null, sl.bullets.map(function (b, i) {
+      var long = words(b) > 8;
+      return el('li', null, [el('div', { class: 'bullet' }, [
+        el('input', { class: 'input', value: b, 'aria-label': 'Bullet ' + (i + 1), 'aria-describedby': long ? 'w' + i : null, oninput: function (ev) { sl.bullets[i] = ev.target.value; sl.ai[i] = false; paintWarn(); }, lang: 'en' }),
+        sl.ai[i] ? el('span', { class: 'ai-mark', title: 'AI-written; edit to take ownership' }, [P.icon('zap'), 'AI']) : el('span', { class: 'chip line', text: 'You' })
+      ]), long ? el('span', { class: 'xs', id: 'w' + i, style: 'color:var(--ap-color-warning)', text: words(b) + ' words: bullets over 8 words are hard to read.' }) : null]);
+    }));
+    function paintWarn() { var w = document.getElementById('warn'); if (w) { var n = sl.bullets.filter(function (b) { return words(b) > 8; }).length; w.textContent = n ? n + ' bullet' + (n > 1 ? 's' : '') + ' over 8 words' : 'All bullets within 8 words'; w.className = 'chip ' + (n ? 'warn' : 'ok'); } }
+    var narr = el('div', { class: 'stack', style: 'gap:6px' }, [el('div', { class: 'row spread' }, [el('span', { class: 'label', text: 'Narration' }), el('label', { class: 'row small', style: 'cursor:pointer;gap:6px' }, [el('input', { type: 'checkbox', checked: sl.locked, onchange: function (ev) { sl.locked = ev.target.checked; render(); P.toast(sl.locked ? 'Narration locked verbatim: AI cannot change it.' : 'Narration unlocked.'); } }), P.icon('lock'), 'Lock verbatim'])]), el('p', { class: 'small', text: sl.narration })]);
+    var quick = ['Shorter', 'Simpler', 'Add an example'];
+    var panelR = el('div', { class: 'stack' }, [
+      el('div', { class: 'card stack' }, [el('h3', { text: 'Refine with a prompt' }),
+        el('textarea', { class: 'textarea', 'aria-label': 'Refinement prompt', placeholder: 'For example: make bullet 2 shorter', id: 'prompt' }),
+        el('div', { class: 'row', style: 'gap:6px' }, quick.map(function (q) { return el('button', { type: 'button', class: 'btn sm', disabled: sl.locked, text: q, onclick: function () { refine(q); } }); })),
+        sl.locked ? el('p', { class: 'xs muted', text: 'The narration is locked; AI refinement applies to bullets only.' }) : null,
+        el('div', { id: 'diff', 'aria-live': 'polite' })]),
+      el('div', { class: 'card stack' }, [el('h3', { text: 'Where this came from' }), el('p', { class: 'small', text: sl.src }), el('p', { class: 'xs muted', text: 'Every AI passage links to its source lines so a reviewer can check it against the SOP.' }), el('span', { class: 'chip ai', text: 'AI - pilot-slides/0.1 - mock' })]),
+      el('div', { class: 'card stack' }, [el('h3', { text: 'Checks' }), el('span', { id: 'warn' }), el('span', { class: 'chip ok', text: 'Protected terms present: UPI, OTP, UTR' })])
+    ]);
+    function refine(kind) {
+      var idx = 1;
+      var before = sl.bullets[idx];
+      var after = { Shorter: 'Never ask for PIN, OTP, card or CVV', Simpler: 'Do not ask for PIN, OTP, card number or CVV', 'Add an example': before + ' (even if the customer offers)' }[kind];
+      sl.orig = sl.orig || { idx: idx, text: before };
+      sl.bullets[idx] = after; sl.ai[idx] = true;
+      render();
+      var d = document.getElementById('diff');
+      d.replaceChildren(el('div', { class: 'callout' }, [P.icon('info'), el('div', { class: 'stack', style: 'gap:6px' }, [el('p', { class: 'small' }, [el('span', { class: 'diff-del', text: before }), ' ', el('span', { class: 'diff-add', text: after })]), el('button', { type: 'button', class: 'btn sm', onclick: function () { sl.bullets[sl.orig.idx] = sl.orig.text; sl.orig = null; render(); P.toast('Reverted to the AI original.'); } }, [P.icon('undo'), 'Revert to AI original'])])]));
+      P.toast('Applied "' + kind + '" to bullet 2. Review the change.');
+    }
+    panel.appendChild(el('div', { class: 'split' }, [
+      el('nav', { class: 'card', 'aria-label': 'Slides' }, [el('h3', { text: 'Slides', style: 'margin-bottom:8px' }), list]),
+      el('div', { class: 'stack' }, [el('div', { class: 'preview stack' }, [el('div', { class: 'row spread' }, [el('h2', { text: sl.title }), el('span', { class: 'chip', id: 'warn2' })]), bullets, narr])]),
+      panelR
+    ]));
+    paintWarn();
+  }
+
+  var RULES = [['R01', 'Every text has the base language'], ['R02', 'Languages declared once'], ['R03', 'Right-to-left languages marked'], ['R04', 'Scenario graph: no dead ends or orphans'], ['R05', 'Saved-state budget fits SCORM 1.2 (104 of 3,500 characters)'], ['R06', 'Quiz questions valid'], ['R07', 'Protected terms kept in every translation'], ['R08', 'Media files exist'], ['R09', 'Document approved before learner build'], ['R10', 'Ids are URL-safe and unique'], ['R11', 'Interaction responses are ids, under 255 characters'], ['R12', 'PII scan clean']];
+  function step5() {
+    var rules = el('div', { id: 'rules' });
+    function paintRules(done) { rules.replaceChildren(); RULES.forEach(function (r) { rules.appendChild(el('div', { class: 'rule' }, [el('span', { class: 'mono', text: r[0] }), el('span', { text: r[1] }), done ? el('span', { class: 'chip ok' }, [P.icon('check'), 'Pass']) : el('span', { class: 'chip line', text: 'Not run' })])); }); }
+    paintRules(S.validated);
+    var states = [['en', 'approved'], ['hi', 'in_review'], ['mr', 'machine'], ['ta', 'in_translation'], ['ar', 'reassigned']].filter(function (x) { return S.langs[x[0]]; });
+    var pub = el('button', { type: 'button', class: 'btn primary lg', disabled: true, id: 'pub' }, [P.icon('upload'), 'Publish to UAT']);
+    function gate() { pub.disabled = !(S.validated && S.sme && S.comp); }
+    pub.onclick = function () {
+      P.dialog({ title: 'Publish this course to UAT?', body: [el('p', { text: 'Builds ' + Object.keys(S.std).filter(function (k) { return S.std[k]; }).length + ' packages from the approved English text. Languages that are not approved are not included (preview builds only).' }), el('p', { class: 'small muted', text: 'Nothing is uploaded in this prototype.' })], actions: [{ label: 'Cancel' }, { label: 'Publish (mock)', kind: 'primary', onClick: function () { P.toast('Published (mock): packages built, audit entry 14 written, chain valid.'); } }] });
+    };
+    panel.appendChild(el('div', { class: 'grid cols-2' }, [
+      el('div', { class: 'stack' }, [
+        el('div', { class: 'card stack' }, [el('div', { class: 'card-title' }, [el('h2', { text: 'Validation' }), el('button', { type: 'button', class: 'btn sm', onclick: function () { S.validated = true; paintRules(true); gate(); P.toast('0 errors, 2 warnings. Rules R01 to R12 pass.'); } }, [P.icon('refresh'), 'Run validation'])]), rules, el('p', { class: 'xs muted', text: 'Same rules the compiler enforces. 2 warnings: bullets longer than 8 words (slides 2 and 3).' })]),
+        el('div', { class: 'card stack' }, [el('h3', { text: 'Language review state' }), el('div', { class: 'table-wrap' }, [el('table', { class: 'table' }, [el('thead', null, [el('tr', null, [el('th', { text: 'Language' }), el('th', { text: 'State' }), el('th', { text: 'Reaches learners?' })])]), el('tbody', null, states.map(function (s) { return el('tr', null, [el('td', { text: P.LANGS.filter(function (l) { return l.tag === s[0]; })[0].name, lang: s[0] }), el('td', null, [el('span', { class: 'row', style: 'gap:6px' }, [el('span', { class: 'dot state-' + s[1] }), P.STATE_LABEL[s[1]]])]), el('td', { text: s[1] === 'approved' ? 'Yes' : 'No: preview builds only' })]); }))])])])]),
+      el('div', { class: 'stack' }, [
+        el('div', { class: 'card stack' }, [el('h3', { text: 'Approvals' }),
+          el('label', { class: 'row small', style: 'cursor:pointer' }, [el('input', { type: 'checkbox', onchange: function (ev) { S.sme = ev.target.checked; gate(); } }), 'Subject-matter expert: R. Iyer, Customer Support - approves content accuracy']),
+          el('label', { class: 'row small', style: 'cursor:pointer' }, [el('input', { type: 'checkbox', onchange: function (ev) { S.comp = ev.target.checked; gate(); } }), 'Compliance reviewer: S. Kulkarni - approves for mandatory use']),
+          el('p', { class: 'xs muted', text: 'Each approval is written to the audit log with name, time and the document hash.' })]),
+        el('div', { class: 'card stack' }, [el('h3', { text: 'Packages' }), el('div', { class: 'row' }, [['scorm12', 'SCORM 1.2 (default)'], ['scorm2004', 'SCORM 2004 4th Ed.'], ['cmi5', 'cmi5 / xAPI']].map(function (o) { return el('button', { type: 'button', class: 'btn sm', 'aria-pressed': S.std[o[0]] ? 'true' : 'false', text: o[1], onclick: function (ev) { S.std[o[0]] = !S.std[o[0]]; ev.currentTarget.setAttribute('aria-pressed', S.std[o[0]] ? 'true' : 'false'); } }); })), el('p', { class: 'xs muted', text: 'One package carries every approved language with an in-player switcher.' })]),
+        el('div', { class: 'card stack' }, [el('div', { class: 'row spread' }, [el('h3', { text: 'Cost of this run' }), el('span', { class: 'mock-tag', text: 'Mock: INR 0' })]), el('p', { class: 'small', text: 'A live run of the same course in the chosen languages is estimated at about INR ' + (estimate().model + estimate().speech) + ' for model and speech, plus ' + estimate().hours.toFixed(0) + ' reviewer hours.' })]),
+        el('div', { class: 'row' }, [pub]),
+        el('div', { class: 'callout warn' }, [P.icon('alert'), 'Publishing needs both approvals and a passing validation. Without them the button stays disabled.'])
+      ])]));
+    gate();
+  }
+
+  function renderFoot() {
+    var f = document.getElementById('foot'); f.replaceChildren();
+    f.appendChild(el('button', { type: 'button', class: 'btn', disabled: cur === 0, onclick: function () { if (S.stopGen) { S.stopGen(); } cur--; render(); } }, [P.icon('left', 'i-flip'), 'Back']));
+    f.appendChild(el('span', { class: 'small muted', text: 'Step ' + (cur + 1) + ' of ' + steps.length + ' - drafts autosave (simulated)' }));
+    f.appendChild(el('button', { type: 'button', class: 'btn primary', id: 'next', disabled: cur === steps.length - 1 || (cur === 0 && S.pii) || (cur === 1 && !S.approved) || (cur === 2 && !S.gen), onclick: function () { if (S.stopGen) { S.stopGen(); } cur++; maxReached = Math.max(maxReached, cur); render(); } }, [cur === steps.length - 1 ? 'Done' : 'Next', P.icon('right', 'i-flip')]));
+  }
+  function render() {
+    panel.replaceChildren(); renderStepper();
+    [step1, step2, step3, step4, step5][cur]();
+    renderFoot();
+  }
+  render();
+}());
+</script>
+</body>
+</html>
