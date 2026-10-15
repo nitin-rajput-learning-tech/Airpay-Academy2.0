@@ -1,7 +1,7 @@
 # State Card — `local_airpay_cart`
 
 **Component:** `local_airpay_cart`
-**Version:** `2026101400` / `1.2.0`  (GST tax invoices, credit notes and purchase receipts, 2026-10-14; was `2026052001` / `1.0.2` when this card was first written; see the dated sections below)
+**Version:** `2026101500` / `1.2.1`  (order-list UI pass 2026-10-15: Refund button, payment date, status in words, currency symbol; 2026101400 / 1.2.0 was GST tax invoices, credit notes and purchase receipts, 2026-10-14; was `2026052001` / `1.0.2` when this card was first written; see the dated sections below)
 **Maturity:** `MATURITY_STABLE`
 **Status:** Live on airpay.academy. Course-commerce + invoicing.
 **Last refreshed:** 2026-10-07 (owner decisions, finance cluster: finance keys declared, withheld-line refund amounts, notifier in the recipient's language, dev masking; catalogue price source in the catalog card)
@@ -598,3 +598,23 @@ spec section 10 before either goes on.
 7. Past retention, erasure also clears `signed_qr` and the credit note's `reason`. Erasure first issues a due invoice,
    and keeps the details of an order whose invoice still cannot be issued; the invoicer blanks them once it issues
    the invoice for a deleted buyer.
+
+## 2026-10-15 - order-list UI pass, found by the visual pass of 2026-10-14 (2026101500, release 1.2.1)
+
+No schema, capability or flag change. `amd/src/admin_orders.js` and its build are unchanged.
+
+1. **No Refund button.** The script opens the Refund dialog from `[data-action="refund-order"]`; nothing rendered one.
+   `list_orders` now returns it in a new `actions` field (escaped HTML) for the rows `cart_manager::refund()` accepts
+   (paid, partial_refund, not imported, a balance left: one grouped ledger query per page) and only to a viewer who holds
+   `:viewallorders` and `:refund`. `admin_orders.php` adds an Actions column for the holders of `:refund`.
+2. **Placed** is `timepaid`, else `timecreated` (there is no checkout-time column; `receipts::context()` dates an order
+   the same way), and the header sorts by it (`placed` sort key; `timecreated` still works).
+3. **Status** shows the `status_<key>` string (`status_label`), **Total** shows the symbol and the receipt money format
+   (`total_str`: `invoicer::currency_symbol` + `gst::money`). Both `history.php` and `admin_orders.php`.
+4. New string `refund_button` (en + hi). Tests: `tests/order_list_ui_test.php`; `gst_schema_strings_test` no longer pins
+   the exact version.
+
+Known and left alone: `amd/src/history.js` listens for `airpay-datatable:rows-rendered`, which the datatable never fires
+(it fires `airpay:datatable:rendered`), and reads `tr.dataset.orderid`, which it never sets, so the order # in the
+buyer's history is not a link to `return.php`. The Refund dialog's own title and labels are English literals in the
+script.
