@@ -51,17 +51,24 @@ function local_sentientia_request_ensure_legacy_source(database_manager $dbman):
  *
  * Idempotent, and it only fills a gap: a role that already has ANY setting for the capability at system
  * context (ALLOW already, or an administrator's PREVENT or PROHIBIT) is left as it is, so nothing is ever
- * downgraded or overridden. A capability that is not registered yet is skipped. Only roles of the `user`
- * archetype (the authenticated-user role) are touched, and only :approve: :viewall and :overrideroute stay
- * with the manager archetype and the tenant-admin role.
+ * downgraded or overridden. A capability that is not registered yet is skipped. Only the authenticated-user
+ * role is touched, and only :approve: :viewall and :overrideroute stay with the manager archetype and the
+ * tenant-admin role.
  *
- * Used by upgrade step 2026101501; a function so tests/approver_capability_test.php can prove it without
- * replaying the upgrade.
+ * "The authenticated-user role" is selected as local_sentientia_cart_backfill_user_purchase() selects it: every
+ * role of archetype `user`, plus the role with shortname `user` and the role $CFG->defaultuserroleid points at
+ * (how Moodle itself identifies Authenticated user), so a restored BizLMS database that renamed the role and
+ * cleared its archetype is covered and its line managers are not left without :approve. A custom role that is
+ * none of these, the guest role and the student archetype are not touched.
+ *
+ * Used by upgrade steps 2026101501 and 2026101504 (the second re-runs it for sites that ran the first with the
+ * archetype-only selection); a function so tests/approver_capability_test.php can prove it without replaying
+ * the upgrade.
  *
  * @return int number of grants made (0 when every such role already had a setting)
  */
 function local_sentientia_request_backfill_approve_cap(): int {
-    global $DB;
+    global $CFG, $DB;
 
     $cap = 'local/sentientia_request:approve';
     if (!$DB->record_exists('capabilities', ['name' => $cap])) {
@@ -70,7 +77,14 @@ function local_sentientia_request_backfill_approve_cap(): int {
 
     $syscontext = \context_system::instance();
     $granted = 0;
-    foreach ($DB->get_records('role', ['archetype' => 'user'], 'id ASC', 'id') as $role) {
+    $select = 'archetype = :archetype OR shortname = :shortname';
+    $params = ['archetype' => 'user', 'shortname' => 'user'];
+    $defaultuserroleid = (int) ($CFG->defaultuserroleid ?? 0);
+    if ($defaultuserroleid > 0) {
+        $select .= ' OR id = :defaultuserroleid';
+        $params['defaultuserroleid'] = $defaultuserroleid;
+    }
+    foreach ($DB->get_records_select('role', $select, $params, 'id ASC', 'id') as $role) {
         if ($DB->record_exists('role_capabilities',
                 ['roleid' => $role->id, 'capability' => $cap, 'contextid' => $syscontext->id])) {
             continue;   // An explicit setting stands, whatever it is.

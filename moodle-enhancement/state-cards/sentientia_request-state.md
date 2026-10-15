@@ -1,7 +1,7 @@
 # State Card — `local_sentientia_request`
 
 **Component:** `local_sentientia_request` (was `local_airpay_request` until ADR-022/025; older sections below still use the old name)
-**Version:** `2026101503` / `1.6.1`  (2026-10-15: the catalogue button no longer treats self-enrolment as a way in; the line manager holds `:approve`, upgrade step `2026101501`; the catalogue Request enrolment button, flag OFF. Was `2026100801` / `1.5.1`; ADR-032 importer was `2026093001` / `1.5.0`. No schema change since 1.5.0.)
+**Version:** `2026101504` / `1.6.2`  (2026-10-15: the :approve back-fill also covers a renamed authenticated-user role, upgrade step `2026101504`; the catalogue button no longer treats self-enrolment as a way in; the line manager holds `:approve`, upgrade step `2026101501`; the catalogue Request enrolment button, flag OFF. Was `2026100801` / `1.5.1`; ADR-032 importer was `2026093001` / `1.5.0`. No schema change since 1.5.0.)
 **Maturity:** `MATURITY_STABLE`
 **Status:** Learner-driven course request workflow (Sentientia is not live yet; the live system is BizLMS).
 **Last refreshed:** 2026-10-15 (visual-pass finding 7: approver capability + catalogue button)
@@ -431,3 +431,27 @@ end with no button. `has_own_way_in()` is removed. The routes before a request a
 to the cart, one-click enrols at once). `tests/catalog_cta_test.php`: the case that locked the wrong behaviour in now
 asserts REQUEST for an open and a keyed self instance; the disabled and expired cases are kept. Flag description in
 `db/feature_flags.php`, both READMEs and the catalogue docblock updated. Revisit if a reachable self-enrol route is built.
+
+### Review fixes, round 2 (2026-10-15, version `2026101504` / `1.6.2`): back-fill selection, Notification preferences, evidence
+
+- **Back-fill role selection (finding 7 (b), review).** `local_sentientia_request_backfill_approve_cap()` found the
+  authenticated-user role by `archetype = 'user'` only. The earlier cart back-fill
+  (`local_sentientia_cart_backfill_user_purchase()`, step 2026093002, D1 review round 1) also takes shortname `user` and the
+  role `$CFG->defaultuserroleid` points at, so a restored BizLMS database that renamed the role and cleared its archetype is
+  still covered. The :approve back-fill now selects the same way, and upgrade step `2026101504` re-runs it (idempotent, fills a
+  gap only, never overrides an explicit ALLOW, PREVENT or PROHIBIT) for any site that ran step 2026101501 first. Tests
+  (not run): `approver_capability_test.php` gains the renamed-default-role case, that a custom role that is none of these
+  is left alone, and that an administrator's PROHIBIT on the default user role stands.
+- **A visible side effect of 7 (b): Notification preferences.** `message_get_providers_for_user()` follows each provider's
+  capability, and `request_pending` and `request_escalated` are bound to `:approve` (`db/messages.php`). Granting `:approve`
+  to the authenticated-user role therefore adds two rows, "Request needs your approval (approver)" and "Request escalated
+  past SLA", to the Notification preferences page of every employee (about 3,500 on Airpay), email and web permitted and
+  enabled by default. No message is sent because of it: only the one routed approver is notified. `has_approvals_entry()`
+  does not cover this page. Owner to see it before merge (the README says the same, with the way to hide the rows
+  site-wide). Alternatives not taken: keep :approve off ordinary employees and route only to holders (sends nearly every
+  request to the default approver and defeats the line-manager route), or split the two notification providers onto a
+  capability only line managers hold (a new capability and a back-fill for every line manager, so a bigger change than 7 (b)).
+- **Visual evidence owed.** Not captured in this session (no browser by instruction). The capture list is in
+  `moodle-enhancement/docs/visual-evidence/2026-10-15/request-ui-fix/README.md`. CLAUDE.md sections 5 and 13: nothing here merges without it.
+  Note that 7 (b) is NOT behind a flag: a line manager who is an ordinary employee now gets the Pending approvals entry and
+  can open `approvals.php` as soon as the upgrade runs.

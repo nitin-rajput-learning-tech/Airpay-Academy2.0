@@ -92,5 +92,18 @@ function xmldb_local_sentientia_request_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026101501, 'local', 'sentientia_request');
     }
 
+    // 2026101504 - review of finding 7 (b): the back-fill above found the authenticated-user role by
+    // archetype 'user' only. A restored BizLMS database can have renamed that role and cleared its archetype,
+    // and its line managers then still lacked :approve. The selection now also takes shortname 'user' and
+    // $CFG->defaultuserroleid, as the cart back-fill does. Re-run it: idempotent, fills a gap only, never
+    // overrides an explicit setting. See db/upgradelib.php.
+    if ($oldversion < 2026101504) {
+        require_once(__DIR__ . '/upgradelib.php');
+        $granted = local_sentientia_request_backfill_approve_cap();
+        mtrace('local_sentientia_request: granted ' . $granted
+            . ' approve capability setting(s) to the authenticated-user role (default-user-role selection).');
+        upgrade_plugin_savepoint(true, 2026101504, 'local', 'sentientia_request');
+    }
+
     return true;
 }

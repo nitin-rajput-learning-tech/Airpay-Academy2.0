@@ -97,6 +97,20 @@ covered: the guest/Public storefront (`public.php`, cart), which keeps its Add-t
 | `request_decided` | Sent to requester on decision |
 | `request_escalated` | Sent to new approver after auto-escalate |
 
+**Notification preferences (visible change for every employee, version `2026101501` onwards).** A message provider
+is listed in a user's Notification preferences only while the user holds the provider's capability
+(`message_get_providers_for_user()`), and `request_pending` and `request_escalated` are bound to
+`local/sentientia_request:approve` (`db/messages.php`). `:approve` is now granted to the authenticated-user role
+(`db/access.php`, back-filled by the upgrade), so on the next page load roughly every employee (about 3,500 on
+Airpay) sees two new rows, "Request needs your approval (approver)" and "Request escalated past SLA", on their
+Notification preferences page, with email and web (popup) permitted and enabled by default (`db/messages.php`).
+Nothing is sent because of this: a notification goes only to the one approver a request is routed to, and
+`has_approvals_entry()` governs only the Pending approvals link and the My requests button, not the preferences
+page. The rows cannot be hidden for the ordinary employee without un-granting `:approve` from them, which is what
+stops the line manager being notified; a site that does not want them can set the two providers to "Disallowed"
+under Site administration, Messaging, Notification settings. The upgrade selects the authenticated-user role like
+the cart back-fill does: archetype `user`, shortname `user` and `$CFG->defaultuserroleid`.
+
 ## Settings (Site admin → Plugins → Local plugins → Airpay Request)
 
 | Setting | Purpose |

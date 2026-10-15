@@ -242,6 +242,44 @@ final class approver_capability_test extends \advanced_testcase {
             ['roleid' => $userrole, 'capability' => self::CAP, 'contextid' => $sys->id]));
     }
 
+    public function test_the_role_moodle_calls_the_default_user_role_is_back_filled_even_if_renamed(): void {
+        global $CFG, $DB;
+        require_once(__DIR__ . '/../db/upgradelib.php');
+        $sys = \context_system::instance();
+        // A restored BizLMS database can rename Authenticated user and clear its archetype; Moodle still
+        // identifies it by $CFG->defaultuserroleid (and, usually, by shortname 'user').
+        $renamed = create_role('Renamed authenticated', 'renamedauth', '', '');
+        $other = create_role('Some other custom role', 'someothercustom', '', '');
+        unassign_capability(self::CAP, $renamed, $sys->id);
+        unassign_capability(self::CAP, $other, $sys->id);
+        set_config('defaultuserroleid', $renamed);
+        $CFG->defaultuserroleid = $renamed;
+
+        local_sentientia_request_backfill_approve_cap();
+
+        $this->assertEquals(CAP_ALLOW, $DB->get_field('role_capabilities', 'permission',
+            ['roleid' => $renamed, 'capability' => self::CAP, 'contextid' => $sys->id]),
+            'The role the site treats as Authenticated user gets :approve, so its line managers can approve.');
+        $this->assertFalse($DB->record_exists('role_capabilities',
+            ['roleid' => $other, 'capability' => self::CAP, 'contextid' => $sys->id]),
+            'A custom role that is not the default user role is still left alone.');
+    }
+
+    public function test_an_administrators_prohibit_on_the_default_user_role_stands(): void {
+        global $CFG, $DB;
+        require_once(__DIR__ . '/../db/upgradelib.php');
+        $sys = \context_system::instance();
+        $renamed = create_role('Renamed authenticated', 'renamedauth', '', '');
+        assign_capability(self::CAP, CAP_PROHIBIT, $renamed, $sys->id, true);
+        set_config('defaultuserroleid', $renamed);
+        $CFG->defaultuserroleid = $renamed;
+
+        local_sentientia_request_backfill_approve_cap();
+
+        $this->assertEquals(CAP_PROHIBIT, $DB->get_field('role_capabilities', 'permission',
+            ['roleid' => $renamed, 'capability' => self::CAP, 'contextid' => $sys->id]));
+    }
+
     public function test_the_backfill_touches_only_the_authenticated_user_archetype_and_only_approve(): void {
         global $DB;
         require_once(__DIR__ . '/../db/upgradelib.php');
