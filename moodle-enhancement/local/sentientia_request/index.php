@@ -40,9 +40,11 @@ $data = [
     // Pass raw JSON; Mustache will escape exactly once for the attribute,
     // the browser unescapes once on dataset read.
     'columns_json'   => json_encode($columns),
-    'pending_url'    => has_capability('local/sentientia_request:approve', $ctx)
+    // has_approvals_entry(): :approve alone no longer means "is an approver" (every employee holds it since
+    // 2026-10-15, so a line manager can approve), so the button is offered to those a request can reach.
+    'pending_url'    => \local_sentientia_request\request_manager::has_approvals_entry((int) $USER->id)
         ? (new moodle_url('/local/sentientia_request/approvals.php'))->out(false) : '',
-    'has_pending_cap' => has_capability('local/sentientia_request:approve', $ctx),
+    'has_pending_cap' => \local_sentientia_request\request_manager::has_approvals_entry((int) $USER->id),
 ];
 
 echo $OUTPUT->header();

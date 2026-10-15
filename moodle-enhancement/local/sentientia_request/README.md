@@ -36,9 +36,14 @@ Escalation:
 | Capability | Granted to | Purpose |
 |---|---|---|
 | `local/sentientia_request:request` | student, user | submit a request |
-| `local/sentientia_request:approve` | manager | approve/reject requests routed to you |
+| `local/sentientia_request:approve` | manager, user (2026-10-15) | approve/reject requests routed to you. Routing picks the requester's **line manager**, who on BizLMS data is an ordinary employee, so the capability is granted to every authenticated user, like `:request`. It gives no authority over anyone else's request: `list_pending` lists only what is assigned to the caller and `decide()` refuses anyone else (bar a tenant-checked `:overrideroute` holder). Existing sites are back-filled by upgrade step 2026101501 (`db/upgradelib.php`); an explicit setting an administrator made is never overridden |
 | `local/sentientia_request:overrideroute` | _(none by default)_ | bypass routing — but **only within own tenant** ← Phase 8.1 B10 |
 | `local/sentientia_request:view` | manager | view all-requests list (tenant-scoped) |
+
+The "Pending approvals" entry (preferences menu, and the button on My requests) is not shown to every employee
+just because they hold `:approve`: `request_manager::has_approvals_entry()` offers it to the holders of
+`:viewall` / `:overrideroute` (as before), to a line manager (someone with direct reports, through
+`\local_sentientia_core\org::is_manager()`), and to anyone with a request waiting on them.
 
 ## Tables (1)
 
@@ -137,9 +142,10 @@ Nothing here runs by itself: the importer (`db/bizlms_import.php`, `classes/bizl
   route in words, status badges in All requests, the SLA column, real names on path requests) are **not**
   behind the flag: they repair existing native screens and ship as bug fixes (decision COMMS-R3, 2026-10-07).
 - **Runbook, after the flag is ON:** an L&D admin reviews the imported pending rows in All requests. Routing
-  is identical to a native submission, so a supervisor who lacks `local/sentientia_request:approve` leaves a row
-  stuck, and an imported row has no deadline, so it never escalates. Decide such rows with `overrideroute`
-  (COMMS-R6).
+  is identical to a native submission. Since 2026-10-15 every employee holds `:approve`, so a line manager who
+  is an ordinary employee can decide the rows routed to them. An imported row has no deadline, so it never
+  escalates: one whose approver can no longer act (suspended since the import, for example) stays stuck. Decide
+  such rows with `overrideroute` (COMMS-R6).
 - `request_manager::escalate_overdue()` and `auto_expire()` skip imported rows always.
 - The lists now show the name of every item type (path, classroom, program, certification), not only courses.
 

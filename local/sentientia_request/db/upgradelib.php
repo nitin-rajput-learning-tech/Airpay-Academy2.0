@@ -38,3 +38,47 @@ function local_sentientia_request_ensure_legacy_source(database_manager $dbman):
     $dbman->add_field($table, $field);
     return true;
 }
+
+/**
+ * Visual-pass finding 7 back-fill: let the authenticated-user role hold local/sentientia_request:approve.
+ *
+ * db/access.php now lists the `user` archetype for :approve, as it already did for :request. Moodle applies
+ * archetype defaults only when a capability is first registered, so a site that already has the capability
+ * never gives it to an existing role; this grants it explicitly, as a fresh install now would. The reason
+ * is in db/access.php: the line manager that approver_routing picks is an ordinary employee on BizLMS data,
+ * who held neither the capability nor, because message_send() checks the message provider's capability, the
+ * request_pending notification.
+ *
+ * Idempotent, and it only fills a gap: a role that already has ANY setting for the capability at system
+ * context (ALLOW already, or an administrator's PREVENT or PROHIBIT) is left as it is, so nothing is ever
+ * downgraded or overridden. A capability that is not registered yet is skipped. Only roles of the `user`
+ * archetype (the authenticated-user role) are touched, and only :approve: :viewall and :overrideroute stay
+ * with the manager archetype and the tenant-admin role.
+ *
+ * Used by upgrade step 2026101501; a function so tests/approver_capability_test.php can prove it without
+ * replaying the upgrade.
+ *
+ * @return int number of grants made (0 when every such role already had a setting)
+ */
+function local_sentientia_request_backfill_approve_cap(): int {
+    global $DB;
+
+    $cap = 'local/sentientia_request:approve';
+    if (!$DB->record_exists('capabilities', ['name' => $cap])) {
+        return 0;
+    }
+
+    $syscontext = \context_system::instance();
+    $granted = 0;
+    foreach ($DB->get_records('role', ['archetype' => 'user'], 'id ASC', 'id') as $role) {
+        if ($DB->record_exists('role_capabilities',
+                ['roleid' => $role->id, 'capability' => $cap, 'contextid' => $syscontext->id])) {
+            continue;   // An explicit setting stands, whatever it is.
+        }
+        assign_capability($cap, CAP_ALLOW, $role->id, $syscontext->id, false);
+        $granted++;
+    }
+    $syscontext->mark_dirty();
+
+    return $granted;
+}

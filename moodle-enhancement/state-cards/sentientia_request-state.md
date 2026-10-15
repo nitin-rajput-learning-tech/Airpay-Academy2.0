@@ -337,3 +337,40 @@ Written, NOT run. Both trees identical.
 - **Why:** the 5.3 package gate (`tools/packaging/build-standalone.sh`) fails the build when any shipped `amd/build` still names the removed factory module. The fallback was dead code on 5.2/5.3 and unreachable on 5.1 (`core/modal_save_cancel` exists there too), so behaviour is unchanged.
 - **Small behaviour fix:** `removeOnClose: true`. Before, a cancelled dialog stayed hidden in the DOM, so the next dialog read its reason / note from the stale textarea that shared its id.
 - **Not run:** PHPUnit (owner rule), a click-through (needs a runtime). Screenshots owed: the approve/reject dialog and the Request enrolment dialog at desktop and 590 px.
+
+## 2026-10-15 Visual-pass finding 7 (b): the line manager can approve (version `2026101501` / `1.5.2`, no schema change)
+
+Branch `claude/ui-fix-request`, from the 2026-10-14 visual pass on local XAMPP 5.1
+(`docs/visual-evidence/2026-10-08/moodle53/README.md`, finding 7). PHPUnit NOT run (the main session runs it once).
+
+- **Root cause.** `approver_routing::for_course()` and `for_path()` route to the requester's line manager
+  (`user.open_supervisorid`), and `db/access.php` granted `:approve` to the manager archetype only. On BizLMS data a
+  line manager is an ordinary employee (110 users have direct reports on the April copy, about 10 hold the manager
+  archetype). So the named approver (a) could not open `approvals.php` (`require_capability`), (b) was refused by
+  `list_pending` and `decide`, and (c) was never sent `request_pending` or `request_escalated`, because both message
+  providers are bound to `:approve` and `message_send()` drops a notification whose provider capability the user lacks.
+  The state card's mission ("routed to their line manager ... for approval") and COMMS-R6 both assumed the approver could act.
+- **The choice: grant, do not route only to holders.** Routing only to holders of `:approve` would send nearly every
+  request to the default approver, which defeats the line-manager route the plugin exists for, and would still leave a
+  course owner or default approver without the capability. So `db/access.php` now lists the `user` (authenticated-user)
+  archetype for `:approve`, exactly as it does for `:request`, and upgrade step 2026101501 (`db/upgradelib.php`
+  `local_sentientia_request_backfill_approve_cap()`) back-fills sites that already have the capability registered (a role
+  default applies only when a capability is first registered, the T-01 class). The back-fill only fills a gap: a role
+  with any setting for the capability (ALLOW, or an administrator's PREVENT or PROHIBIT) is left alone, only roles of the
+  `user` archetype are touched, and only `:approve`.
+- **Authority is not widened.** `list_pending` lists only requests where `approver_userid` is the caller, and `decide()`
+  lets only the assigned approver (or a tenant-checked `:overrideroute` holder) decide, with the ADR-031 tenant checks
+  unchanged. `:viewall` and `:overrideroute` stay with the manager archetype and the tenant-admin role.
+- **The entry is not shown to everyone.** `request_manager::has_approvals_entry()` (new) gates the preferences-menu
+  "Pending approvals" link (`lib.php`) and the button on My requests (`index.php`): holders of `:viewall` or
+  `:overrideroute` keep it, a line manager (`\local_sentientia_core\org::is_manager()`) and anyone with a request waiting
+  on them get it, an ordinary employee does not. `approvals.php`, the services and `decide()` are unchanged.
+- **Tests (not run):** `tests/approver_capability_test.php` (access.php lists the `user` archetype and nothing else widened;
+  a plain line manager is sent `request_pending`, lists and decides the request routed to them and the learner is
+  enrolled; a colleague holding `:approve` sees nothing and is refused; the entry follows the rules above; the back-fill
+  grants once, is idempotent, overrides no explicit setting and touches no other archetype).
+- **A screenshot should show:** as the learner's line manager (an employee without the manager role, e.g.
+  `vp_manager1`): Preferences, "Pending approvals (1)" present; `approvals.php` opens (no "Sorry, but you do not currently
+  have permissions") with the learner's request and Approve / Reject; as a learner with no reports, no "Pending approvals"
+  link and no button on My requests. After the upgrade runs on XAMPP, `role_capabilities` has one ALLOW row for the `user`
+  role and `local/sentientia_request:approve`.

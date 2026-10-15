@@ -52,10 +52,11 @@ $plugin->component = 'local_sentientia_request';
 // it; the imported_history flag description no longer claims the lists look as before. No schema change: the bump is for
 // the flag registry (cached by the platform) and so that the ledger of the batch has one value per plugin.
 // 2026100801: Moodle 5.3 compat FX-06b: decide + request_button use core/modal_save_cancel with no removed-factory fallback; removeOnClose so a cancelled dialog cannot leave a stale textarea behind. No schema change.
-$plugin->version   = 2026100801;
+// 2026101501: visual-pass finding 7 (b): the line manager routing picks holds :approve (db/access.php lists the user archetype, upgrade step 2026101501 back-fills existing roles); the Pending approvals entry is shown only to those a request can reach. No schema change.
+$plugin->version   = 2026101501;
 $plugin->requires  = 2024042200;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.5.1';  // +COMMS-R1..R4 importer rules and decide() note (was 1.5.0 +ADR-032 BizLMS import)
+$plugin->release   = '1.5.2';  // +line manager holds :approve (was 1.5.1 +COMMS-R1..R4 importer rules and decide() note)
 $plugin->dependencies = [
     'local_sentientia_org'         => 2026040100,
     'local_sentientia_manager'     => 2026040100,  // Approval workflow patterns reused
