@@ -1,0 +1,1 @@
+none required at pilot-to-100-course volume: on-demand batch jobs ≈ ₹7.5–17k per year for 1,500 course-languages (a standing T4 would be ≈ ₹40k/month and is only needed for real-time roleplay ASR in Stage 3)

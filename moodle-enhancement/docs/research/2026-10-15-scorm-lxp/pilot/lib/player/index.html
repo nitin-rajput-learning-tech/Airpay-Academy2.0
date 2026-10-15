@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="{{LANG}}" dir="{{DIR}}" data-standard="{{STANDARD}}" data-package-mode="{{PACKAGE_MODE}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="sentientia-pilot-harness">
+  <title>{{TITLE}}</title>
+  <link rel="stylesheet" href="player.css">
+</head>
+<body>
+  <a class="skip-link" href="#main" id="skip-link">Skip to content</a>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <h1 id="course-title">{{TITLE}}</h1>
+    </div>
+    <div class="topbar-controls">
+      <label class="lang-label" for="lang-select" id="lang-label">Language</label>
+      <select id="lang-select" class="lang-select"></select>
+      <span id="tracking-badge" class="badge badge-warn" role="status">not tracked</span>
+    </div>
+  </header>
+  <div class="progress" id="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Progress">
+    <div class="progress-fill" id="progress-fill"></div>
+  </div>
+  <div class="layout">
+    <nav class="toc" aria-labelledby="toc-heading">
+      <h2 id="toc-heading" class="toc-heading">Contents</h2>
+      <ol id="toc" class="toc-list"></ol>
+    </nav>
+    <main id="main" class="stage" tabindex="-1">
+      <p id="notice" class="notice" role="status" hidden></p>
+      <section id="block" class="block"></section>
+    </main>
+  </div>
+  <footer class="navbar">
+    <button type="button" id="prev-btn" class="btn btn-secondary">Previous</button>
+    <span id="position" class="position"></span>
+    <button type="button" id="next-btn" class="btn btn-primary">Next</button>
+  </footer>
+  <noscript><p class="notice">This course needs JavaScript.</p></noscript>
+  <script src="core.js"></script>
+  <script src="course-data.js"></script>
+  <script src="{{RUNTIME_SCRIPT}}"></script>
+  <script src="player.js"></script>
+</body>
+</html>

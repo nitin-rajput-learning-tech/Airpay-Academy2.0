@@ -33,14 +33,14 @@ Sizing method: minutes of narration per month × real-time factor of the engine 
 
 | Check | Method | Pass threshold |
 |---|---|---|
-| Naturalness | Blind MOS panel: ≥ 5 native listeners, 20 narration samples (incl. amounts, dates, protected terms, one code-mixed line), self-hosted vs fallback SaaS sample | mean MOS ≥ 3.8/5 and within 0.5 of the fallback |
-| Intelligibility | ASR round-trip with an independent engine; WER on scripted narration | ≤ 10% (≤ 15% for Urdu/Arabic in the first gate) |
-| Terminology | Protected-term pronunciation checklist after lexicon tuning | 100% |
-| Numerals and currency | 30 amounts/dates read back correctly by two listeners | 100% |
-| Speed | Real-time factor on the target host | ≤ 0.5 GPU, ≤ 2.0 CPU |
+| Naturalness | Blind MOS panel per ITU-T P.800 ACR: ≥ 20 native raters × 30 sentences (incl. amounts, dates, protected terms, one code-mixed line), randomised with a hidden SaaS reference and a human recording; the human anchor must score ≥ 4.3 or the panel is invalid | **MOS ≥ 4.0** and **CMOS ≥ −0.3 vs the SaaS reference** (within-panel comparison only; MOS is not comparable across labs) |
+| Intelligibility | ASR round-trip with an independent engine (IndicConformer for Indic, Whisper for ar/sw/en) on synthetic vs a human recording of the same script; CER alongside WER for abugida scripts | **WER(synthetic) ≤ 1.2 × WER(human recording)** — relative, because absolute Indic WERs are 20–25% even for the best models |
+| Terminology | 60-item lexicon (Airpay, UPI, RBI, Aadhaar, NPCI, IMPS, NEFT, KYC, OTP, PAN, merchant names) × language, 3 raters, after lexicon tuning | ≥ 95% correct, with a per-term override mechanism |
+| Numerals, dates, currency, code-mixing | 50-item normalisation set per language (₹1,23,456.00; 12/03/2026; 9.5%; Hinglish; Roman-script Hindi); Urdu/Arabic diacritisation | ≥ 95% correct spoken form |
+| Speed and cost | Real-time factor on the target GPU; a 15-language batch for one course | RTF ≤ 0.5 (T4) / ≤ 0.25 (L4); ≤ 15 min wall-clock per course; marginal cost ≤ the Sarvam/Azure fallback (₹12–24) |
+| Caption timing | Word onsets vs 100 hand-aligned words per language | median error ≤ 100 ms, 95th percentile ≤ 300 ms; caption text accuracy ≥ 99% |
 | Stability | 1,000-segment soak, no crashes, memory stable | pass |
-| Licence | Commercial use permitted, attribution requirements met, written confirmation filed | pass |
-| Cost | Marginal cost per course per language below the fallback's | pass |
+| Licence | Commercial use permitted, attribution met, training-data lineage confirmed in writing, weights SBOM filed | no CC-BY-NC / CPML / research-only upstream |
 
 Scorecard stored with the language's gate flag (`sentientia.speech.engine.<lang>`); re-run on every engine or model update (golden-set regression, as the AI gateway does for prompts). A language that fails stays on the fallback; the decision is per language, not per platform.
 
