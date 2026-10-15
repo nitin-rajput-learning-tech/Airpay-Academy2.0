@@ -13,8 +13,8 @@
 #   --from PHASE   start at PHASE (default build). Phases, in order:
 #                    build     stage tree A (5.2) and tree B (5.3) with tools/packaging/build-standalone.sh --no-zip;
 #                              a tree already staged for the same ref is reused (a build takes 20-35 min under AV load)
-#                    install   recreate uatreh52, write tree A's config.php, fresh install_database.php, the Stage A
-#                              posture step, substrate + task-registration repair
+#                    install   recreate uatreh52, write tree A's config.php, fresh install_database.php (about 1 h under AV load)
+#                    postinstall  the Stage A posture step, substrate, purge, task-registration repair (stage-a-install.sh 5c)
 #                    snapshot  record plugin versions, table counts, settings, flags and the schema check of the 5.2 site;
 #                              take a logical dump of uatreh52 (the "5.2 site as UAT has it" restore point)
 #                    upgrade   [from the dump when --from upgrade] maintenance on, tree B config.php, upgrade.php, maintenance off
@@ -40,7 +40,7 @@ REPO="$(cd "$HERE/../.." && pwd)"
 ROOT="${REHEARSAL_ROOT:-D:/Claude Local/kit-scratch/uatreh}"
 FROM="build"; TO="report"; RENDER=1; SHUTDOWN=""
 UAT_COMMIT=""; TARGET_REF=""
-PHASES=(build install snapshot upgrade checks smoke scan report)
+PHASES=(build install postinstall snapshot upgrade checks smoke scan report)
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -71,8 +71,9 @@ BASE53="${BASE53:-D:/Claude Local/moodle53/moodle}"
 MDB_DIR="D:/Claude Local/moodle53"
 RENDER_PORT="${RENDER_PORT:-8099}"
 WWWROOT="http://localhost/uatreh"
-SCRIPTS="$HERE"
-HELPER=(python -I "$HERE/rehearse_helper.py")
+HERE_W="$(cygpath -m "$HERE" 2>/dev/null || echo "$HERE")"     # mixed D:/... form for the native Windows programs (php.exe, python.exe)
+SCRIPTS="$HERE_W"
+HELPER=(python -I "$HERE_W/rehearse_helper.py")
 
 RUN="$ROOT/run"
 mkdir -p "$RUN/logs" "$RUN/snap" "$RUN/dumps" "$RUN/reports" "$RUN/sql"
@@ -87,7 +88,29 @@ hard() { # hard <name> <rc-or-0/1> <detail>: record a hard check
     if [ "$2" -eq 0 ]; then log "PASS  $1 - $3"; res "PASS:$1" "$3"; else log "FAIL  $1 - $3"; res "FAIL:$1" "$3"; FAILS+=("$1"); fi
 }
 secs() { echo $(( $(date +%s) - $1 )); }
-php_in() { local tree="$1"; shift; ( cd "$tree" && "$PHP_BIN" -c "$PHP_INI" -d memory_limit=4G "$@" ); }
+schema_findings() { # schema_findings <log> <out>: "table: finding" lines of check_database_schema.php, debug trace lines dropped
+    awk '/^-----/ {next} /^[*] line/ {next} /^[+][+] XMLDB/ {next} /^ [*] / {print tbl ": " substr($0, 4); next} {tbl = $0}' "$1" | sort > "$2"
+}
+schema_unknown() { # schema_unknown <findings file> -> number of findings that are NOT the known tenant substrate
+    # local_sentientia_core provisions the open_* columns of {user} and {course} and five profile / user-type tables in code
+    # (db/install.php, not install.xml), so check_database_schema.php always reports them. Anything else is a real finding.
+    grep -Evc "^(course|user): column 'open_|^local_sentientia_(consumer_profile|employee_profile|operator_profile|partner_employee_profile|user_type): table is not expected" "$1"
+}
+PEAKLOG="$RUN/logs/peakmem.txt"
+PREPEND="$RUN/peakmem_prepend.php"
+cat > "$PREPEND" <<'PHP'
+<?php
+// Rehearsal only: every php_in() run appends its PHP memory peak to $REHEARSAL_PEAKLOG when it ends (the 2 GB UAT box matters).
+register_shutdown_function(function () {
+    $f = getenv('REHEARSAL_PEAKLOG');
+    if ($f) {
+        @file_put_contents($f, sprintf("%s\tpeak_alloc_mb=%.1f\tpeak_real_mb=%.1f\n", basename((string) ($_SERVER['argv'][0] ?? '?')),
+            memory_get_peak_usage(false) / 1048576, memory_get_peak_usage(true) / 1048576), FILE_APPEND);
+    }
+});
+PHP
+export REHEARSAL_PEAKLOG="$PEAKLOG"
+php_in() { local tree="$1"; shift; ( cd "$tree" && "$PHP_BIN" -c "$PHP_INI" -d memory_limit=4G -d "auto_prepend_file=$PREPEND" "$@" ); }
 
 SHA_UAT="$(git -C "$REPO" rev-parse --verify "$UAT_COMMIT^{commit}" 2>/dev/null)" || { echo "refused: $UAT_COMMIT is not a commit in $REPO" >&2; exit 2; }
 SHA_TGT="$(git -C "$REPO" rev-parse --verify "$TARGET_REF^{commit}" 2>/dev/null)" || { echo "refused: $TARGET_REF is not a commit in $REPO" >&2; exit 2; }
@@ -232,9 +255,19 @@ if want install; then
     IRC=$?
     INST_SECS="$(secs "$T0")"
     res install_A_seconds "$INST_SECS"
+    res install_A_peak_memory "$(grep '^install_database.php' "$PEAKLOG" | tail -1)"
     TAIL_OK="$(php_in "$TREE_A" -r 'define("CLI_SCRIPT", true); require "./config.php"; echo (!empty($CFG->version) && !empty($CFG->rolesactive) && $DB->get_field("user", "password", ["username" => "admin"]) !== "adminsetuppending") ? "1" : "0";' 2>/dev/null | tail -1)"
     hard "install_5.2_fresh" "$([ "$IRC" -eq 0 ] && [ "$TAIL_OK" = "1" ] && echo 0 || echo 1)" "install_database.php exit $IRC in ${INST_SECS}s, install tail present: $TAIL_OK"
     if [ "$IRC" -ne 0 ] || [ "$TAIL_OK" != "1" ]; then log "STOP: the 5.2 install did not finish cleanly. Read $RUN/logs/install_A.log, fix, rerun --from install."; exit 1; fi
+    "${HELPER[@]}" summarize-log "$RUN/logs/install_A.log" > "$RUN/logs/install_A.summary.txt" 2>&1
+    log "install log summary: $(head -8 "$RUN/logs/install_A.summary.txt" | tr '\n' ' ' | tr -s ' ')"
+fi
+
+# ------------------------------------------------------------------------------------------------------------
+# 2b. what stage-a-install.sh does after the install (posture, substrate, repair)
+# ------------------------------------------------------------------------------------------------------------
+if want postinstall; then
+    need_state
     # Stage A posture (stage-a-install.sh 5b/5c) and the post-install CLIs it runs
     php_in "$TREE_A" "$SCRIPTS/rehearse_posture.php" --config="$TREE_A/config.php" --i-am-the-rehearsal 2>&1 | tail -2 | tee -a "$PROGRESS"
     if [ -f "$TREE_A/public/local/sentientia_core/cli/bootstrap_substrate.php" ]; then
@@ -243,8 +276,6 @@ if want install; then
     php_in "$TREE_A" admin/cli/purge_caches.php > "$RUN/logs/purge_A.log" 2>&1
     php_in "$TREE_A" public/local/sentientia_platform/cli/repair_task_registrations.php --apply > "$RUN/logs/repair_tasks_A.log" 2>&1
     log "repair_task_registrations --apply (tree A) exit $?: $(tail -1 "$RUN/logs/repair_tasks_A.log" | cut -c1-160)"
-    "${HELPER[@]}" summarize-log "$RUN/logs/install_A.log" > "$RUN/logs/install_A.summary.txt" 2>&1
-    log "install log summary: $(head -8 "$RUN/logs/install_A.summary.txt" | tr '\n' ' ' | tr -s ' ')"
 fi
 
 # ------------------------------------------------------------------------------------------------------------
@@ -256,7 +287,9 @@ if want snapshot; then
     hard "5.2_all_plugins_uptodate" "$(cat "$RUN/snap/versions-A.rc")" "$(tail -1 "$RUN/snap/versions-A.err")"
     php_in "$TREE_A" admin/cli/check_database_schema.php > "$RUN/logs/schema_A.log" 2>&1
     SRC=$?
-    hard "5.2_schema_matches_install_xml" "$SRC" "check_database_schema.php (tree A): exit $SRC, $(tail -2 "$RUN/logs/schema_A.log" | tr '\n' ' ' | cut -c1-160)"
+    schema_findings "$RUN/logs/schema_A.log" "$RUN/snap/schema_findings_A.txt"
+    SCH_UNK="$(schema_unknown "$RUN/snap/schema_findings_A.txt")"
+    hard "5.2_schema_matches_install_xml" "$([ "$SCH_UNK" -eq 0 ] && echo 0 || echo 1)" "check_database_schema.php (tree A) exit $SRC: $(wc -l < "$RUN/snap/schema_findings_A.txt") known tenant-substrate finding(s) (open_* columns, 5 profile tables, in no install.xml), $SCH_UNK unknown"
     php_in "$TREE_A" admin/cli/upgrade.php --is-pending > /dev/null 2>&1
     PRC=$?
     hard "5.2_no_upgrade_pending" "$([ "$PRC" -eq 0 ] && echo 0 || echo 1)" "upgrade.php --is-pending (tree A) exit $PRC (0 = nothing pending, 2 = pending)"
@@ -283,6 +316,7 @@ if want upgrade; then
     URC=$?
     UP_SECS="$(secs "$T0")"
     res upgrade_B_seconds "$UP_SECS"
+    res upgrade_B_peak_memory "$(grep '^upgrade.php' "$PEAKLOG" | tail -1)"
     hard "5.3_upgrade_exit_0" "$URC" "upgrade.php exit $URC in ${UP_SECS}s; $(grep -E 'completed successfully|Upgrade failed|rror' "$RUN/logs/upgrade_B.log" | tail -1 | cut -c1-140)"
     "${HELPER[@]}" summarize-log "$RUN/logs/upgrade_B.log" > "$RUN/logs/upgrade_B.summary.txt" 2>&1
     log "upgrade log summary: $(head -9 "$RUN/logs/upgrade_B.summary.txt" | tr '\n' ' ' | tr -s ' ')"
@@ -301,7 +335,11 @@ if want checks; then
     need_state
     php_in "$TREE_B" admin/cli/check_database_schema.php > "$RUN/logs/schema_B.log" 2>&1
     SRC=$?
-    hard "5.3_schema_matches_install_xml" "$SRC" "check_database_schema.php (tree B): exit $SRC, $(tail -2 "$RUN/logs/schema_B.log" | tr '\n' ' ' | cut -c1-200)"
+    schema_findings "$RUN/logs/schema_B.log" "$RUN/snap/schema_findings_B.txt"
+    SCH_UNK="$(schema_unknown "$RUN/snap/schema_findings_B.txt")"
+    SCH_NEW="$(comm -13 "$RUN/snap/schema_findings_A.txt" "$RUN/snap/schema_findings_B.txt" | wc -l)"     # findings the upgrade ADDED
+    SCH_GONE="$(comm -23 "$RUN/snap/schema_findings_A.txt" "$RUN/snap/schema_findings_B.txt" | wc -l)"    # findings the upgrade resolved (now declared in an install.xml)
+    hard "5.3_schema_matches_install_xml" "$([ "$SCH_UNK" -eq 0 ] && [ "$SCH_NEW" -eq 0 ] && echo 0 || echo 1)" "check_database_schema.php (tree B) exit $SRC: $(wc -l < "$RUN/snap/schema_findings_B.txt") known tenant-substrate finding(s), $SCH_UNK unknown, $SCH_NEW new since the 5.2 site, $SCH_GONE of the 5.2 site's findings resolved (tables now declared in an install.xml)"
     run_snapshots "$TREE_B" B
     hard "5.3_all_plugins_uptodate_db_eq_disk" "$("${HELPER[@]}" versions-diff "$RUN/snap/versions-A.tsv" "$RUN/snap/versions-B.tsv" > "$RUN/snap/versions-diff.txt" 2>&1; echo $?)" "$(grep -E '^== after-upgrade' "$RUN/snap/versions-diff.txt" | tr '\n' ' ' | cut -c1-240)"
     "${HELPER[@]}" counts-diff "$RUN/snap/counts-A.tsv" "$RUN/snap/counts-B.tsv" > "$RUN/snap/counts-diff.txt" 2>&1
@@ -317,6 +355,11 @@ if want checks; then
     php_in "$TREE_B" admin/cli/upgrade.php --is-pending > /dev/null 2>&1
     PRC=$?
     hard "5.3_no_upgrade_pending" "$([ "$PRC" -eq 0 ] && echo 0 || echo 1)" "upgrade.php --is-pending (tree B) exit $PRC"
+    # Rollback fact for the runbook (read-only): what the 5.2 code says about the upgraded database
+    php_in "$TREE_A" admin/cli/upgrade.php --is-pending > "$RUN/logs/downgrade_probe_A.log" 2>&1
+    DRC=$?
+    log "downgrade probe (5.2 code, upgraded database) exit $DRC: $(tail -3 "$RUN/logs/downgrade_probe_A.log" | tr '\n' ' ' | cut -c1-220)"
+    res downgrade_probe "5.2 code against the 5.3 database: exit $DRC; $(tail -3 "$RUN/logs/downgrade_probe_A.log" | tr '\n' ' ' | cut -c1-220)"
     php_in "$TREE_B" admin/cli/cfg.php --name=release 2>&1 | tail -1 > "$RUN/snap/core_release_B.txt"
     log "core release on the upgraded database: $(cat "$RUN/snap/core_release_B.txt")"
 fi
@@ -353,11 +396,19 @@ if want smoke; then
         for path in /login/index.php /index.php /course/index.php /admin/index.php; do
             code="$(curl -s -o "$RUN/logs/render$(echo "$path" | tr '/' '_').html" -w '%{http_code}' --max-time 280 "$URL$path" 2>/dev/null)"
             body="$RUN/logs/render$(echo "$path" | tr '/' '_').html"
-            nbad="$(grep -ciE 'Fatal error|Parse error|Stack trace|Exception - |Error code:' "$body" 2>/dev/null)"
-            ndbg="$(grep -ciE '<b>(Warning|Notice|Deprecated)</b>|Debugging:|debuginfo' "$body" 2>/dev/null)"
+            nbad="$(grep -cE '^(PHP )?(Fatal error|Parse error): |Stack trace:|Default exception handler|Exception - ' "$body" 2>/dev/null)"
+            ndbg="$(grep -cE '^(PHP )?(Warning|Notice|Deprecated): |class="debuggingmessage|^Debugging: ' "$body" 2>/dev/null)"
             log "render $path -> HTTP $code, $(wc -c < "$body" 2>/dev/null) bytes, fatal-error markers $nbad, warning/debug markers $ndbg"
-            res "render$path" "HTTP $code; fatal markers $nbad; debug markers $ndbg"
+            case "$path" in
+                /login/index.php|/index.php) hard "render$path" "$([ "$code" = "200" ] && [ "$nbad" -eq 0 ] && echo 0 || echo 1)" "web render on the upgraded database: HTTP $code, fatal markers $nbad, debug markers $ndbg" ;;
+                *) res "render$path" "HTTP $code; fatal markers $nbad; debug markers $ndbg (informational: an anonymous visitor is redirected)" ;;
+            esac
         done
+        # the ADR-033 gate check: the four URL classes that re-enter full setup (lib/javascript.php, theme/styles.php, r.php, theme/font.php)
+        bash "$REPO/moodle-enhancement/deploy/render_smoke_53.sh" "$URL" --rounds 2 > "$RUN/logs/render_smoke_53.log" 2>&1
+        RSC=$?
+        log "render_smoke_53.sh (2 rounds) exit $RSC: $(tail -2 "$RUN/logs/render_smoke_53.log" | tr '\n' ' ' | cut -c1-200)"
+        hard "render_smoke_53" "$RSC" "render_smoke_53.sh (lib/javascript.php, theme/styles.php, r.php, theme/font.php, 2 rounds) exit $RSC"
         taskkill //PID "$(cat "$RUN/php_server.pid" 2>/dev/null)" //F >/dev/null 2>&1
         # the built-in server runs under a different PID than the subshell on Windows: stop it by listening port
         for pid in $(netstat -ano 2>/dev/null | grep -E "127\.0\.0\.1:$RENDER_PORT .*LISTENING" | awk '{print $5}' | sort -u); do taskkill //PID "$pid" //F >/dev/null 2>&1; done
@@ -369,10 +420,10 @@ fi
 # ------------------------------------------------------------------------------------------------------------
 if want scan; then
     load_state
-    python -I "$HERE/mysql84_reserved_scan.py" --base "$SHA_UAT" --head "$SHA_TGT" ${TREE_B:+--moodle-root "$TREE_B"} > "$RUN/snap/reserved_scan.txt" 2>&1
+    python -I "$HERE_W/mysql84_reserved_scan.py" --base "$SHA_UAT" --head "$SHA_TGT" ${TREE_B:+--moodle-root "$TREE_B"} > "$RUN/snap/reserved_scan.txt" 2>&1
     SRC=$?
     hard "mysql84_reserved_words" "$SRC" "$(grep -E '^RESULT:' "$RUN/snap/reserved_scan.txt" | cut -c1-200)"
-    python -I "$HERE/mysql84_reserved_scan.py" --base "$SHA_UAT" --head "$SHA_TGT" --list-words > "$RUN/snap/reserved_words.txt" 2>&1
+    python -I "$HERE_W/mysql84_reserved_scan.py" --base "$SHA_UAT" --head "$SHA_TGT" --list-words > "$RUN/snap/reserved_words.txt" 2>&1
 fi
 
 # ------------------------------------------------------------------------------------------------------------
@@ -386,7 +437,7 @@ if want report; then
     for f in versions-diff.txt counts-diff.txt config-diff.txt flags-diff.txt reserved_scan.txt reserved_words.txt upgraded_components.txt; do cp -f "$RUN/snap/$f" "$OUT/$f" 2>/dev/null; done
     for f in install_A.summary.txt upgrade_B.summary.txt serverinfo.txt tasks_list_B.log repair_tasks_B_dry.log import_list_B.log cron_health_B.log; do cp -f "$RUN/logs/$f" "$OUT/$f" 2>/dev/null; done
     { echo "UAT commit  $SHA_UAT"; echo "target ref  $TARGET_REF = $SHA_TGT"; echo "tree A      $(cat "$RUN/treeA" 2>/dev/null)"; echo "tree B      $(cat "$RUN/treeB" 2>/dev/null)";
-      echo "php         $PHPV"; echo "database    $(tr -d '\r' < "$RUN/logs/serverinfo.txt" | head -1)"; echo; echo "hard checks:"; grep -E '^(PASS|FAIL):' "$RESULTS" | sed 's/\t/  -  /'; } > "$OUT/SUMMARY.txt"
+      echo "php         $PHPV"; echo "database    $(tr -d '\r' < "$RUN/logs/serverinfo.txt" | head -1)"; echo; echo "hard checks (the last result of each check):"; grep -E '^(PASS|FAIL):' "$RESULTS" | tac | awk -F'\t' '{k=$1; sub(/^(PASS|FAIL):/, "", k)} !seen[k]++' | tac | sed 's/\t/  -  /'; } > "$OUT/SUMMARY.txt"
     cat "$OUT/SUMMARY.txt"
     log "result files: $OUT"
 fi

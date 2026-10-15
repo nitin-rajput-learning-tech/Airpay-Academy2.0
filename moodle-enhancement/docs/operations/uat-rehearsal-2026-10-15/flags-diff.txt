@@ -1,0 +1,41 @@
+47a48,50
+> sentientia.cart.imported_credits.enabled default=off resolved=off overrides=-
+> sentientia.cart.imported_orders.enabled default=off resolved=off overrides=-
+> sentientia.catalog.course_type_labels.enabled default=off resolved=off overrides=-
+49a53
+> sentientia.catalog.storefront_checkout.enabled default=off resolved=off overrides=-
+50a55,57
+> sentientia.classroom.bulk_enrol_audience default=off resolved=off overrides=-
+> sentientia.classroom.import_history default=off resolved=off overrides=-
+> sentientia.classroom.qr_attendance default=off resolved=off overrides=-
+58a66,71
+> sentientia.emails.imported_body_detail.enabled default=off resolved=off overrides=-
+> sentientia.emails.imported_history.enabled default=off resolved=off overrides=-
+> sentientia.emails.send_course_enrolment.enabled default=off resolved=off overrides=-
+> sentientia.emails.send_learning_path_enrolment.enabled default=off resolved=off overrides=-
+> sentientia.emails.send_manager_completion_copy.enabled default=off resolved=off overrides=-
+> sentientia.evaluation.learner_history default=off resolved=off overrides=-
+68a82,83
+> sentientia.learningpath.learner_paths.enabled default=off resolved=off overrides=-
+> sentientia.legacy_logs.report.enabled default=off resolved=off overrides=-
+70a86,87
+> sentientia.programs.history.enabled default=off resolved=off overrides=-
+> sentientia.programs.learner.enabled default=off resolved=off overrides=-
+75a93,95
+> sentientia.ratings.reactions default=off resolved=off overrides=-
+> sentientia.ratings.reviews default=off resolved=off overrides=-
+> sentientia.ratings.widget default=off resolved=off overrides=-
+78a99,105
+> sentientia.recompletion.evidence_view default=off resolved=off overrides=-
+> sentientia.recompletion.run_rules default=off resolved=off overrides=-
+> sentientia.reports.login_days default=off resolved=off overrides=-
+> sentientia.reports.training_transcript default=off resolved=off overrides=-
+> sentientia.request.imported_history default=off resolved=off overrides=-
+> sentientia.roles.org_assignments default=off resolved=off overrides=-
+> sentientia.skills.heldskills.enabled default=off resolved=off overrides=-
+87a115,117
+> sentientia.users.imported_sync_history default=off resolved=off overrides=-
+> sentientia.users.legacy_transcript default=off resolved=off overrides=-
+> sentientia.users.position_labels default=off resolved=off overrides=-
+94a125
+> ux.languageSwitcher.enabled default=off resolved=off overrides=-

@@ -276,7 +276,7 @@ def read_tsv(path):
     rows = []
     with open(path, encoding='utf-8') as fh:
         for line in fh:
-            line = line.rstrip('\n')
+            line = line.rstrip('\r\n')
             if line:
                 rows.append(line.split('\t'))
     return rows
@@ -373,11 +373,14 @@ def cmd_config_diff(a):
             flag = '' if before.get(k) == after.get(k) else '   <-- CHANGED'
             moved += 1 if flag else 0
             print('  %-22s %r -> %r%s' % (name, before.get(k), after.get(k), flag))
-    print('== settings that CHANGED value (%d)' % len(changed))
-    for k in changed[:120]:
+    # a core / plugin upgrade re-versions every component it touches; those rows say nothing, so they are counted, not listed
+    bumps = [k for k in changed if k[1] in ('version', 'release')]
+    other = [k for k in changed if k[1] not in ('version', 'release')]
+    print('== settings that CHANGED value: %d (%d are component version / release bumps, not listed; %d listed)' % (len(changed), len(bumps), len(other)))
+    for k in other[:120]:
         print('  %s / %s : %r -> %r' % (k[0], k[1], before[k][:60], after[k][:60]))
-    if len(changed) > 120:
-        print('  ... %d more' % (len(changed) - 120))
+    if len(other) > 120:
+        print('  ... %d more' % (len(other) - 120))
     print('== settings REMOVED (%d)' % len(removed))
     for k in removed[:80]:
         print('  %s / %s = %r' % (k[0], k[1], before[k][:60]))
