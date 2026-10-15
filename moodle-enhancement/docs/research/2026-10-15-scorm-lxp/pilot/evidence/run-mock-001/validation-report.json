@@ -1,0 +1,1081 @@
+{
+  "ok": true,
+  "run_id": "run-20261015T155015Z",
+  "mode": "mock",
+  "preview": true,
+  "package_mode": "multilingual",
+  "tts_engine": "mock-silent",
+  "carried_languages": [
+    "en",
+    "hi",
+    "mr",
+    "kn",
+    "ta",
+    "te",
+    "bn",
+    "gu",
+    "ml",
+    "pa",
+    "or",
+    "ur",
+    "ar"
+  ],
+  "excluded_languages": {},
+  "standards": [
+    "scorm12",
+    "scorm2004",
+    "cmi5"
+  ],
+  "fill": {
+    "engine": "mock-pseudo",
+    "model": "none",
+    "prompt_version": "pilot-translate/0.1",
+    "kept_human_units": {
+      "hi": 33
+    },
+    "filled_machine_units": {
+      "mr": 90,
+      "kn": 90,
+      "ta": 90,
+      "te": 90,
+      "bn": 90,
+      "gu": 90,
+      "ml": 90,
+      "pa": 90,
+      "or": 90,
+      "ur": 90,
+      "ar": 90,
+      "hi": 57
+    },
+    "spend_inr": 0.0,
+    "requests_built": 0
+  },
+  "narration_units": 169,
+  "audio_ms_by_lang": {
+    "en": 244513,
+    "hi": 226772,
+    "mr": 249506,
+    "kn": 249506,
+    "ta": 249506,
+    "te": 249506,
+    "bn": 249506,
+    "gu": 249506,
+    "ml": 249506,
+    "pa": 249506,
+    "or": 249506,
+    "ur": 249506,
+    "ar": 249506
+  },
+  "tts_characters_by_lang": {
+    "en": 3040,
+    "hi": 2965,
+    "mr": 3105,
+    "kn": 3105,
+    "ta": 3105,
+    "te": 3105,
+    "bn": 3105,
+    "gu": 3105,
+    "ml": 3105,
+    "pa": 3105,
+    "or": 3105,
+    "ur": 3105,
+    "ar": 3105
+  },
+  "speech_cost_table": [
+    {
+      "engine": "self-hosted open engine, on-demand India-region GPU (incl. ASR QA)",
+      "characters": 40160,
+      "inr_low": 24.1,
+      "inr_high": 56.2,
+      "basis": "R3 Part C: INR 5-11 per 8,000 characters"
+    },
+    {
+      "engine": "Sarvam Bulbul v2 / v3 (India-resident, vendor marketing)",
+      "characters": 40160,
+      "inr_low": 60.2,
+      "inr_high": 120.5,
+      "basis": "R3 Part D: INR 12 / 24 per 8,000 characters"
+    },
+    {
+      "engine": "Azure AI Speech / Google Neural2 / Polly neural (India region where offered)",
+      "characters": 40160,
+      "inr_low": 56.2,
+      "inr_high": 64.3,
+      "basis": "R3 Part D: about INR 11-13 per 8,000 characters"
+    },
+    {
+      "engine": "ElevenLabs (incumbent; India residency Enterprise-only)",
+      "characters": 40160,
+      "inr_low": 317.3,
+      "inr_high": 803.2,
+      "basis": "R3 Part D: about INR 63-160 per 8,000 characters"
+    }
+  ],
+  "translation_estimate": {
+    "model": "claude-sonnet-4-6",
+    "requests": 24,
+    "input_tokens": 42540,
+    "output_tokens": 100762,
+    "usd": 1.6391,
+    "inr": 142.6,
+    "cap_inr": null,
+    "prices": {
+      "input_usd_per_mtok": 3.0,
+      "output_usd_per_mtok": 15.0,
+      "usd_inr": 87.0
+    },
+    "per_lang": {
+      "hi": {
+        "input_tokens": 3545,
+        "output_tokens": 8397
+      },
+      "mr": {
+        "input_tokens": 3545,
+        "output_tokens": 8397
+      },
+      "kn": {
+        "input_tokens": 3545,
+        "output_tokens": 8397
+      },
+      "ta": {
+        "input_tokens": 3545,
+        "output_tokens": 8397
+      },
+      "te": {
+        "input_tokens": 3545,
+        "output_tokens": 8397
+      },
+      "bn": {
+        "input_tokens": 3545,
+        "output_tokens": 8397
+      },
+      "gu": {
+        "input_tokens": 3545,
+        "output_tokens": 8397
+      },
+      "ml": {
+        "input_tokens": 3545,
+        "output_tokens": 8397
+      },
+      "pa": {
+        "input_tokens": 3545,
+        "output_tokens": 8397
+      },
+      "or": {
+        "input_tokens": 3545,
+        "output_tokens": 8397
+      },
+      "ur": {
+        "input_tokens": 3545,
+        "output_tokens": 8397
+      },
+      "ar": {
+        "input_tokens": 3545,
+        "output_tokens": 8397
+      }
+    }
+  },
+  "pii": {
+    "status": "clean",
+    "findings": 0
+  },
+  "document_rules": {
+    "ok": true,
+    "error_count": 0,
+    "warning_count": 2,
+    "rule_status": {
+      "R01": "pass",
+      "R02": "pass",
+      "R03": "pass",
+      "R04": "pass",
+      "R05": "pass",
+      "R06": "pass",
+      "R07": "pass",
+      "R08": "pass",
+      "R09": "pass",
+      "R10": "pass",
+      "R11": "pass",
+      "R12": "pass",
+      "schema": "pass"
+    },
+    "pending_units_per_lang": {
+      "en": 0,
+      "hi": 0,
+      "mr": 0,
+      "kn": 0,
+      "ta": 0,
+      "te": 0,
+      "bn": 0,
+      "gu": 0,
+      "ml": 0,
+      "pa": 0,
+      "or": 0,
+      "ur": 0,
+      "ar": 0
+    },
+    "issues": [
+      {
+        "level": "info",
+        "rule": "R03",
+        "pointer": "/course/rtl_langs",
+        "message": "dir=\"rtl\" will be emitted for: ['ur', 'ar']"
+      },
+      {
+        "level": "info",
+        "rule": "R05",
+        "pointer": "/blocks",
+        "message": "worst-case suspend_data token: 104 chars plain (110 compressed); budgets 3,500 pre-compression / 4,096 SCORM 1.2 / 64,000 SCORM 2004"
+      },
+      {
+        "level": "info",
+        "rule": "R07",
+        "pointer": "/course/protected_terms",
+        "message": "9 protected terms checked across 1080 translations"
+      },
+      {
+        "level": "info",
+        "rule": "R08",
+        "pointer": "/blocks",
+        "message": "507 media references checked"
+      },
+      {
+        "level": "info",
+        "rule": "R10",
+        "pointer": "/blocks",
+        "message": "29 document-unique ids (option and pair ids are scoped to their question per R06)"
+      },
+      {
+        "level": "info",
+        "rule": "R11",
+        "pointer": "/blocks",
+        "message": "longest possible student_response is 37 chars (limit 255); responses carry ids only"
+      },
+      {
+        "level": "warning",
+        "rule": "slides",
+        "pointer": "/blocks/1/points/1",
+        "message": "bullet has 10 words > 8 recommended"
+      },
+      {
+        "level": "warning",
+        "rule": "slides",
+        "pointer": "/blocks/2/points/0",
+        "message": "bullet has 9 words > 8 recommended"
+      }
+    ]
+  },
+  "state_budget": {
+    "token_length": 104,
+    "compressed_length": 110,
+    "sections": {
+      "lang": "en",
+      "block_index": 5,
+      "bitmask": "Pw",
+      "scenarios": "s01:e1a,e2a,e3a",
+      "quizzes": "q01!=q01_1:ca,q01_2:ca,q01_3:ma+b+c+d,q01_4:tt,q01_5:xp1.p1+p2.p1+p3.p1+p4.p1"
+    },
+    "longest_scenario_paths": {
+      "s01": [
+        "e1a",
+        "e2a",
+        "e3a"
+      ]
+    },
+    "scenario_nodes": {
+      "s01": 9
+    },
+    "budgets": {
+      "scorm12_precompress_budget": 3500,
+      "scorm12_target": 4000,
+      "scorm12_limit": 4096,
+      "scorm2004_limit": 64000
+    },
+    "fits_scorm12_precompress": true,
+    "fits_scorm12_limit": true,
+    "fits_scorm2004": true
+  },
+  "packages": [
+    {
+      "standard": "scorm12",
+      "file": "sop-cs-014-upi-dispute-handling-scorm12.zip",
+      "langs": [
+        "en",
+        "hi",
+        "mr",
+        "kn",
+        "ta",
+        "te",
+        "bn",
+        "gu",
+        "ml",
+        "pa",
+        "or",
+        "ur",
+        "ar"
+      ],
+      "package_mode": "multilingual",
+      "manifest": "imsmanifest.xml",
+      "size_bytes": 318714,
+      "sha256": "398e366f4b4491470d99ce034c444b3a916c28f30ccb9148b2a5a65e43ec4dc2",
+      "file_count": 515
+    },
+    {
+      "standard": "scorm2004",
+      "file": "sop-cs-014-upi-dispute-handling-scorm2004.zip",
+      "langs": [
+        "en",
+        "hi",
+        "mr",
+        "kn",
+        "ta",
+        "te",
+        "bn",
+        "gu",
+        "ml",
+        "pa",
+        "or",
+        "ur",
+        "ar"
+      ],
+      "package_mode": "multilingual",
+      "manifest": "imsmanifest.xml",
+      "size_bytes": 318943,
+      "sha256": "bc5d55d1f5eacd177a3f38b5eba8dc933f9a879f9f2aa9534fd672a104fe705f",
+      "file_count": 515
+    },
+    {
+      "standard": "cmi5",
+      "file": "sop-cs-014-upi-dispute-handling-cmi5.zip",
+      "langs": [
+        "en",
+        "hi",
+        "mr",
+        "kn",
+        "ta",
+        "te",
+        "bn",
+        "gu",
+        "ml",
+        "pa",
+        "or",
+        "ur",
+        "ar"
+      ],
+      "package_mode": "multilingual",
+      "manifest": "cmi5.xml",
+      "size_bytes": 319877,
+      "sha256": "16a194f1d55fefba40d488f0d28a0cc88f2fcbd7a0c47d3bad252026c8b3359a",
+      "file_count": 515
+    }
+  ],
+  "package_reports": [
+    {
+      "standard": "scorm12",
+      "file": "sop-cs-014-upi-dispute-handling-scorm12.zip",
+      "ok": true,
+      "counts": {
+        "pass": 21,
+        "fail": 0,
+        "warn": 0,
+        "skip": 0
+      },
+      "checks": [
+        {
+          "id": "Z01",
+          "status": "pass",
+          "message": "515 entries, no duplicates, no unsafe paths"
+        },
+        {
+          "id": "Z02",
+          "status": "pass",
+          "message": "imsmanifest.xml is at the ZIP root"
+        },
+        {
+          "id": "Z06",
+          "status": "pass",
+          "message": "318,714 bytes (limit 52,428,800)"
+        },
+        {
+          "id": "Z03",
+          "status": "pass",
+          "message": "manifest is well-formed XML without DTD or entities"
+        },
+        {
+          "id": "S01",
+          "status": "pass",
+          "message": "root <manifest> in namespace http://www.imsproject.org/xsd/imscp_rootv1p1p2"
+        },
+        {
+          "id": "S02",
+          "status": "pass",
+          "message": "schemaversion '1.2'"
+        },
+        {
+          "id": "S03",
+          "status": "pass",
+          "message": "organizations default='ORG_01' resolves"
+        },
+        {
+          "id": "S04",
+          "status": "pass",
+          "message": "1 item(s) reference existing resources"
+        },
+        {
+          "id": "S05",
+          "status": "pass",
+          "message": "adlcp:scormtype=\"sco\" with the correct casing"
+        },
+        {
+          "id": "S06",
+          "status": "pass",
+          "message": "adlcp:masteryscore = 70"
+        },
+        {
+          "id": "S07",
+          "status": "pass",
+          "message": "launch file 'index.html' exists"
+        },
+        {
+          "id": "Z04",
+          "status": "pass",
+          "message": "all 514 declared files exist"
+        },
+        {
+          "id": "Z05",
+          "status": "pass",
+          "message": "every packaged file is declared"
+        },
+        {
+          "id": "P01",
+          "status": "pass",
+          "message": "player assets present with only runtime-scorm12.js"
+        },
+        {
+          "id": "P03",
+          "status": "pass",
+          "message": "index.html carries lang and dir attributes (not hard-coded to English)"
+        },
+        {
+          "id": "P02",
+          "status": "pass",
+          "message": "course-data.js parses (13 language(s), 6 block(s))"
+        },
+        {
+          "id": "P03",
+          "status": "pass",
+          "message": "per-language dir and UI strings present; RTL carried: ur, ar"
+        },
+        {
+          "id": "M01",
+          "status": "pass",
+          "message": "every narrated block has audio and captions in all 13 carried language(s)"
+        },
+        {
+          "id": "M02",
+          "status": "pass",
+          "message": "caption files are valid WebVTT with ascending, non-overlapping cues"
+        },
+        {
+          "id": "B01",
+          "status": "pass",
+          "message": "worst-case suspend token 104 chars (compressed 110), budget 3500"
+        },
+        {
+          "id": "J01",
+          "status": "pass",
+          "message": "all 4 packaged JavaScript files compile"
+        }
+      ]
+    },
+    {
+      "standard": "scorm2004",
+      "file": "sop-cs-014-upi-dispute-handling-scorm2004.zip",
+      "ok": true,
+      "counts": {
+        "pass": 21,
+        "fail": 0,
+        "warn": 0,
+        "skip": 0
+      },
+      "checks": [
+        {
+          "id": "Z01",
+          "status": "pass",
+          "message": "515 entries, no duplicates, no unsafe paths"
+        },
+        {
+          "id": "Z02",
+          "status": "pass",
+          "message": "imsmanifest.xml is at the ZIP root"
+        },
+        {
+          "id": "Z06",
+          "status": "pass",
+          "message": "318,943 bytes (limit 52,428,800)"
+        },
+        {
+          "id": "Z03",
+          "status": "pass",
+          "message": "manifest is well-formed XML without DTD or entities"
+        },
+        {
+          "id": "S01",
+          "status": "pass",
+          "message": "root <manifest> in namespace http://www.imsglobal.org/xsd/imscp_v1p1"
+        },
+        {
+          "id": "S02",
+          "status": "pass",
+          "message": "schemaversion '2004 4th Edition'"
+        },
+        {
+          "id": "S03",
+          "status": "pass",
+          "message": "organizations default='ORG_01' resolves"
+        },
+        {
+          "id": "S04",
+          "status": "pass",
+          "message": "1 item(s) reference existing resources"
+        },
+        {
+          "id": "S05",
+          "status": "pass",
+          "message": "adlcp:scormType=\"sco\" with the correct casing"
+        },
+        {
+          "id": "S06",
+          "status": "pass",
+          "message": "imsss:minNormalizedMeasure = 0.70"
+        },
+        {
+          "id": "S07",
+          "status": "pass",
+          "message": "launch file 'index.html' exists"
+        },
+        {
+          "id": "Z04",
+          "status": "pass",
+          "message": "all 514 declared files exist"
+        },
+        {
+          "id": "Z05",
+          "status": "pass",
+          "message": "every packaged file is declared"
+        },
+        {
+          "id": "P01",
+          "status": "pass",
+          "message": "player assets present with only runtime-scorm2004.js"
+        },
+        {
+          "id": "P03",
+          "status": "pass",
+          "message": "index.html carries lang and dir attributes (not hard-coded to English)"
+        },
+        {
+          "id": "P02",
+          "status": "pass",
+          "message": "course-data.js parses (13 language(s), 6 block(s))"
+        },
+        {
+          "id": "P03",
+          "status": "pass",
+          "message": "per-language dir and UI strings present; RTL carried: ur, ar"
+        },
+        {
+          "id": "M01",
+          "status": "pass",
+          "message": "every narrated block has audio and captions in all 13 carried language(s)"
+        },
+        {
+          "id": "M02",
+          "status": "pass",
+          "message": "caption files are valid WebVTT with ascending, non-overlapping cues"
+        },
+        {
+          "id": "B01",
+          "status": "pass",
+          "message": "worst-case suspend token 104 chars (compressed 110), budget 64000"
+        },
+        {
+          "id": "J01",
+          "status": "pass",
+          "message": "all 4 packaged JavaScript files compile"
+        }
+      ]
+    },
+    {
+      "standard": "cmi5",
+      "file": "sop-cs-014-upi-dispute-handling-cmi5.zip",
+      "ok": true,
+      "counts": {
+        "pass": 19,
+        "fail": 0,
+        "warn": 0,
+        "skip": 0
+      },
+      "checks": [
+        {
+          "id": "Z01",
+          "status": "pass",
+          "message": "515 entries, no duplicates, no unsafe paths"
+        },
+        {
+          "id": "Z02",
+          "status": "pass",
+          "message": "cmi5.xml is at the ZIP root"
+        },
+        {
+          "id": "Z06",
+          "status": "pass",
+          "message": "319,877 bytes (limit 52,428,800)"
+        },
+        {
+          "id": "Z03",
+          "status": "pass",
+          "message": "manifest is well-formed XML without DTD or entities"
+        },
+        {
+          "id": "S01",
+          "status": "pass",
+          "message": "root <courseStructure> in the cmi5 namespace"
+        },
+        {
+          "id": "S02",
+          "status": "pass",
+          "message": "cmi5 course structure (schemaversion is implicit in the namespace)"
+        },
+        {
+          "id": "S03",
+          "status": "pass",
+          "message": "course and AU ids are IRIs"
+        },
+        {
+          "id": "S04",
+          "status": "pass",
+          "message": "1 assignable unit(s) (one expected)"
+        },
+        {
+          "id": "S05",
+          "status": "pass",
+          "message": "moveOn='CompletedAndPassed'"
+        },
+        {
+          "id": "S06",
+          "status": "pass",
+          "message": "masteryScore='0.70' (expected 0.70)"
+        },
+        {
+          "id": "S07",
+          "status": "pass",
+          "message": "launch url 'index.html' exists"
+        },
+        {
+          "id": "P01",
+          "status": "pass",
+          "message": "player assets present with only runtime-cmi5.js"
+        },
+        {
+          "id": "P03",
+          "status": "pass",
+          "message": "index.html carries lang and dir attributes (not hard-coded to English)"
+        },
+        {
+          "id": "P02",
+          "status": "pass",
+          "message": "course-data.js parses (13 language(s), 6 block(s))"
+        },
+        {
+          "id": "P03",
+          "status": "pass",
+          "message": "per-language dir and UI strings present; RTL carried: ur, ar"
+        },
+        {
+          "id": "M01",
+          "status": "pass",
+          "message": "every narrated block has audio and captions in all 13 carried language(s)"
+        },
+        {
+          "id": "M02",
+          "status": "pass",
+          "message": "caption files are valid WebVTT with ascending, non-overlapping cues"
+        },
+        {
+          "id": "B01",
+          "status": "pass",
+          "message": "worst-case suspend token 104 chars (compressed 110), budget 64000"
+        },
+        {
+          "id": "J01",
+          "status": "pass",
+          "message": "all 4 packaged JavaScript files compile"
+        }
+      ]
+    }
+  ],
+  "smoke": {
+    "ok": true,
+    "results": [
+      {
+        "ok": true,
+        "standard": "scorm12",
+        "checks": [
+          {
+            "name": "init: tracked by the LMS",
+            "ok": true,
+            "detail": "SCORM 1.2"
+          },
+          {
+            "name": "init: mastery score read from the LMS",
+            "ok": true,
+            "detail": "LMS 70 vs course 70"
+          },
+          {
+            "name": "good attempt: course complete and passed",
+            "ok": true,
+            "detail": "percent 100"
+          },
+          {
+            "name": "good attempt: LMS status is passed",
+            "ok": true,
+            "detail": "passed"
+          },
+          {
+            "name": "good attempt: score written",
+            "ok": true,
+            "detail": "100"
+          },
+          {
+            "name": "exit is suspend before finish",
+            "ok": true,
+            "detail": "suspend"
+          },
+          {
+            "name": "finish called once",
+            "ok": true,
+            "detail": "1"
+          },
+          {
+            "name": "suspend_data within the LMS limit",
+            "ok": true,
+            "detail": "102 / 4096"
+          },
+          {
+            "name": "no truncation of the state token",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "LMS rejected no value",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "interaction count matches decisions + questions",
+            "ok": true,
+            "detail": "8 vs 8"
+          },
+          {
+            "name": "interaction ids are URL-safe ids, not text",
+            "ok": true,
+            "detail": "8 ids"
+          },
+          {
+            "name": "responses are id-only and short",
+            "ok": true,
+            "detail": "8 responses"
+          },
+          {
+            "name": "resume: suspend data returned by the LMS",
+            "ok": true,
+            "detail": "entry=ab-initio"
+          },
+          {
+            "name": "resume: decoded state equals the saved state",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "bad attempt: reported as failed",
+            "ok": true,
+            "detail": "percent 0, status failed"
+          },
+          {
+            "name": "no LMS: runs untracked without throwing",
+            "ok": true,
+            "detail": "not tracked (no SCORM 1.2 API found)"
+          },
+          {
+            "name": "worst-case state fits the limit with no truncation",
+            "ok": true,
+            "detail": "104 chars of 4000"
+          },
+          {
+            "name": "worst-case plain token within the pre-compression budget",
+            "ok": true,
+            "detail": "104 / 3500"
+          }
+        ],
+        "file": "sop-cs-014-upi-dispute-handling-scorm12.zip"
+      },
+      {
+        "ok": true,
+        "standard": "scorm2004",
+        "checks": [
+          {
+            "name": "init: tracked by the LMS",
+            "ok": true,
+            "detail": "SCORM 2004"
+          },
+          {
+            "name": "init: mastery score read from the LMS",
+            "ok": true,
+            "detail": "LMS 70 vs course 70"
+          },
+          {
+            "name": "good attempt: course complete and passed",
+            "ok": true,
+            "detail": "percent 100"
+          },
+          {
+            "name": "good attempt: LMS status is passed",
+            "ok": true,
+            "detail": "passed"
+          },
+          {
+            "name": "good attempt: completion_status completed",
+            "ok": true,
+            "detail": "completed"
+          },
+          {
+            "name": "good attempt: score written",
+            "ok": true,
+            "detail": "100"
+          },
+          {
+            "name": "exit is suspend before finish",
+            "ok": true,
+            "detail": "suspend"
+          },
+          {
+            "name": "finish called once",
+            "ok": true,
+            "detail": "1"
+          },
+          {
+            "name": "suspend_data within the LMS limit",
+            "ok": true,
+            "detail": "102 / 64000"
+          },
+          {
+            "name": "no truncation of the state token",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "LMS rejected no value",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "interaction count matches decisions + questions",
+            "ok": true,
+            "detail": "8 vs 8"
+          },
+          {
+            "name": "interaction ids are URL-safe ids, not text",
+            "ok": true,
+            "detail": "8 ids"
+          },
+          {
+            "name": "responses are id-only and short",
+            "ok": true,
+            "detail": "8 responses"
+          },
+          {
+            "name": "resume: suspend data returned by the LMS",
+            "ok": true,
+            "detail": "entry=ab-initio"
+          },
+          {
+            "name": "resume: decoded state equals the saved state",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "bad attempt: reported as failed",
+            "ok": true,
+            "detail": "percent 0, status failed"
+          },
+          {
+            "name": "no LMS: runs untracked without throwing",
+            "ok": true,
+            "detail": "not tracked (no SCORM 2004 API found)"
+          },
+          {
+            "name": "worst-case state fits the limit with no truncation",
+            "ok": true,
+            "detail": "104 chars of 64000"
+          }
+        ],
+        "file": "sop-cs-014-upi-dispute-handling-scorm2004.zip"
+      },
+      {
+        "ok": true,
+        "standard": "cmi5",
+        "checks": [
+          {
+            "name": "init: cmi5 launch succeeded (fetch token, launch data)",
+            "ok": true,
+            "detail": "cmi5"
+          },
+          {
+            "name": "init: mastery score from LMS.LaunchData",
+            "ok": true,
+            "detail": "70"
+          },
+          {
+            "name": "statements: initialized first",
+            "ok": true,
+            "detail": "initialized,answered,answered"
+          },
+          {
+            "name": "statements: completed and passed sent once",
+            "ok": true,
+            "detail": "initialized,answered,answered,answered,answered,answered,answered,answered,answered,completed,passed,terminated"
+          },
+          {
+            "name": "statements: terminated sent last via sendBeacon",
+            "ok": true,
+            "detail": "terminated"
+          },
+          {
+            "name": "statements: one answered per decision and question",
+            "ok": true,
+            "detail": "8 vs 8"
+          },
+          {
+            "name": "passed: carries cmi5 category, registration, session, mastery score",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "passed: result.success true with scaled score",
+            "ok": true,
+            "detail": "{\"scaled\":1,\"raw\":100,\"min\":0,\"max\":100}"
+          },
+          {
+            "name": "resume document saved to the LRS state API",
+            "ok": true,
+            "detail": "102 chars"
+          },
+          {
+            "name": "resume: state restored from the LRS",
+            "ok": true,
+            "detail": "entry=resume"
+          },
+          {
+            "name": "bad attempt: failed statement, no passed",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "no launch parameters: runs untracked without throwing",
+            "ok": true,
+            "detail": "not tracked (no cmi5 launch parameters)"
+          },
+          {
+            "name": "worst-case state fits the limit with no truncation",
+            "ok": true,
+            "detail": "104 chars of 64000"
+          }
+        ],
+        "file": "sop-cs-014-upi-dispute-handling-cmi5.zip"
+      }
+    ]
+  },
+  "audit": {
+    "entries": 14,
+    "chain_valid": true,
+    "final_sha256": "1e778c1f7f4d0ae4bbdf129f4306b14be5e4148b88530dd6abe356ad24dd12cf",
+    "file": "audit/audit.jsonl"
+  },
+  "spend_inr": 0.0,
+  "course_sha256": "4b8cab030ae309a4ae9a668b06e629062508a27b73fa5dffe9caeccf100d295b",
+  "generated_at": "2026-10-15T15:51:26Z",
+  "lang_states": {
+    "en": {
+      "state": "approved",
+      "approved_by": "author:fixture",
+      "approved_at": "2026-10-15T06:30:00Z",
+      "engine": "human"
+    },
+    "hi": {
+      "state": "in_review",
+      "translator": "human:fixture",
+      "engine": "human",
+      "tm_leverage_pct": 0
+    },
+    "mr": {
+      "state": "machine",
+      "engine": "mock-pseudo"
+    },
+    "kn": {
+      "state": "machine",
+      "engine": "mock-pseudo"
+    },
+    "ta": {
+      "state": "machine",
+      "engine": "mock-pseudo"
+    },
+    "te": {
+      "state": "machine",
+      "engine": "mock-pseudo"
+    },
+    "bn": {
+      "state": "machine",
+      "engine": "mock-pseudo"
+    },
+    "gu": {
+      "state": "machine",
+      "engine": "mock-pseudo"
+    },
+    "ml": {
+      "state": "machine",
+      "engine": "mock-pseudo"
+    },
+    "pa": {
+      "state": "machine",
+      "engine": "mock-pseudo"
+    },
+    "or": {
+      "state": "machine",
+      "engine": "mock-pseudo"
+    },
+    "ur": {
+      "state": "machine",
+      "engine": "mock-pseudo"
+    },
+    "ar": {
+      "state": "machine",
+      "engine": "mock-pseudo"
+    }
+  },
+  "pending_units": {
+    "en": 0,
+    "hi": 0,
+    "mr": 0,
+    "kn": 0,
+    "ta": 0,
+    "te": 0,
+    "bn": 0,
+    "gu": 0,
+    "ml": 0,
+    "pa": 0,
+    "or": 0,
+    "ur": 0,
+    "ar": 0
+  },
+  "network_calls_made": false
+}

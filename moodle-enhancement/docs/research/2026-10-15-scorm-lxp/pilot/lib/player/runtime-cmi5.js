@@ -84,7 +84,7 @@
     var beacon = options.sendBeacon || (typeof navigator !== 'undefined' && navigator.sendBeacon ? navigator.sendBeacon.bind(navigator) : null);
     var search = options.search !== undefined ? options.search : (typeof location !== 'undefined' ? location.search : '');
     var storage = options.storage !== undefined ? options.storage : safeStorage();
-    var timers = options.timers || { setTimeout: setTimeout, clearTimeout: clearTimeout };
+    var timers = options.timers || { setTimeout: function (fn, ms) { return setTimeout(fn, ms); }, clearTimeout: function (id) { clearTimeout(id); } };
     var clock = options.now || function () { return new Date(); };
     var courseId = options.courseId || 'course';
     var launch = parseLaunch(search);

@@ -4,7 +4,7 @@ Detectors (ASCII digits after Unicode-digit normalisation):
     aadhaar  12 digits, optional 4-4-4 grouping with spaces/hyphens, first digit 2-9;
              confidence "high" when the Verhoeff checksum validates, else "medium"
     pan      [A-Z]{5}[0-9]{4}[A-Z]
-    mobile   Indian mobile: optional +91/0 prefix, 10 digits starting 6-9
+    mobile   Indian mobile: optional +91/0 prefix, 10 digits starting 6-9, one optional space or hyphen after digit 5
     email    local@domain.tld
     ifsc     [A-Z]{4}0[A-Z0-9]{6}
     card     13-19 digits (optional single spaces/hyphens) passing Luhn
@@ -24,7 +24,7 @@ from .common import walk_strings
 
 CARD_RE = re.compile(r"(?<![0-9])(?:[0-9][ -]?){12,18}[0-9](?![0-9])")
 AADHAAR_RE = re.compile(r"(?<![0-9])[2-9][0-9]{3}[ -]?[0-9]{4}[ -]?[0-9]{4}(?![0-9])")
-MOBILE_RE = re.compile(r"(?<![0-9A-Za-z])(?:\+91[ -]?|0)?[6-9][0-9]{9}(?![0-9])")
+MOBILE_RE = re.compile(r"(?<![0-9A-Za-z])(?:\+91[ -]?|0)?[6-9][0-9]{4}[ -]?[0-9]{5}(?![0-9])")
 PAN_RE = re.compile(r"(?<![A-Z0-9])[A-Z]{5}[0-9]{4}[A-Z](?![A-Z0-9])")
 IFSC_RE = re.compile(r"(?<![A-Z0-9])[A-Z]{4}0[A-Z0-9]{6}(?![A-Z0-9])")
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")

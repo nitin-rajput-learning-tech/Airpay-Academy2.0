@@ -17,7 +17,7 @@ Price inputs (all overridable through the environment, all PLACEHOLDERS to be
 confirmed against the current price list before a live run):
     ANTHROPIC_INPUT_USD_PER_MTOK   default 3.0   (claude-sonnet-4-6 list price, input)
     ANTHROPIC_OUTPUT_USD_PER_MTOK  default 15.0  (claude-sonnet-4-6 list price, output)
-    USD_INR                        default 84.0
+    USD_INR                        default 87.0
     ANTHROPIC_MAX_TOKENS           default 16000
     ANTHROPIC_MODEL                default claude-sonnet-4-6
 """
@@ -45,7 +45,7 @@ MAX_SOURCE_CHARS_PER_REQUEST = 6000
 PRICE_DEFAULTS = {
     "ANTHROPIC_INPUT_USD_PER_MTOK": 3.0,
     "ANTHROPIC_OUTPUT_USD_PER_MTOK": 15.0,
-    "USD_INR": 84.0,
+    "USD_INR": 87.0,
     "ANTHROPIC_MAX_TOKENS": 16000,
 }
 # Output-token multiplier per target script (PLACEHOLDER: Indic and Arabic scripts

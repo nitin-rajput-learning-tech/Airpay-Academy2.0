@@ -41,7 +41,7 @@
     var win = options.win || (typeof window !== 'undefined' ? window : null);
     var storage = options.storage !== undefined ? options.storage : safeStorage();
     var courseId = options.courseId || 'course';
-    var timers = options.timers || { setTimeout: setTimeout, clearTimeout: clearTimeout };
+    var timers = options.timers || { setTimeout: function (fn, ms) { return setTimeout(fn, ms); }, clearTimeout: function (id) { clearTimeout(id); } };
     var now = options.now || function () { return new Date(); };
     var api = null;
     var fallback = null;
