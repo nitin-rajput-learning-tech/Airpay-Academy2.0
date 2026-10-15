@@ -13,7 +13,8 @@
     .primary-navigation {
         display: none;
     }
-    .editmode-switch-form label {
+    // Hide the words only. Hiding the whole label would clip the switch (its ::before and ::after).
+    .editmode-switch-form .editmode-switch-form__text {
         @include sr-only();
     }
 }

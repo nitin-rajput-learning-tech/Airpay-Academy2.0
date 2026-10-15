@@ -453,8 +453,15 @@ defined('MOODLE_INTERNAL') || die();
 // that carries data-toggle (so one with BOTH attributes is not toggled twice, see the FX-20 round 1 notes of local_sentientia_org and
 // local_sentientia_evaluation) and does nothing when core's Bootstrap 5 data-api already opened or closed the menu on that click.
 // Bump purges the AMD cache so the changed loader and the new module are served.
+// 2026101502 - older UI defect 2 (visual pass 2026-10-14, finding 1, FX-02 round 2): the edit-mode switch rendered as a bare browser
+// checkbox. templates/core/editswitch.mustache used the Moodle 5.2 core markup (form-check form-switch, ms-2, me-2, input-group), which is
+// Bootstrap 5 and not styled by this Bootstrap 4.6 theme. Now Bootstrap 4's custom-control custom-switch (compiled by the theme and already
+// styled in the navbar by _surface-navbar.scss); the label words sit in a span so that below the md breakpoint only the words are visually
+// hidden (primarynavigation.scss), not the whole label, which clipped the switch. Form, ids, data attributes, hidden inputs, noscript
+// submit and the core/edit_switch init are unchanged. Bump purges the template cache and recompiles the CSS.
 // 2026100808: 2026-10-08 SITEID is the DB string; strict === / !== against it never matched, so the site-course guard did nothing - now (int) SITEID: language_switcher treats the front page as the site course again
-$plugin->version   = 2026101501;  // 2026-10-15 dropdown_bridge: data-bs-toggle-only dropdowns open in the Bootstrap 4 theme (on top of 2026100808 SITEID fix)
+// 2026101501: 2026-10-15 dropdown_bridge: data-bs-toggle-only dropdowns open in the Bootstrap 4 theme
+$plugin->version   = 2026101502;  // 2026-10-15 edit-mode switch styled as the theme's Bootstrap 4 custom switch (on top of 2026101501 dropdown_bridge)
 // 2026100807: Moodle 5.3 FX-15 follow-up: dashboard + frontpage course counts filter COALESCE(deletioninprogress, 0) = 0 (5.3's column is NULL for every course not being deleted; '= 0' counted none)
 // 2026090806:  // login/OTP placeholders + SSO title + block aria-label: {{#quote}} JSON-escaped Hindi into \uXXXX → attribute-safe cleanstr/escaped values (core 5.2 pattern)
 // 2026090805:  footer: GPL badge -> private Airpay notice; sidebar literals localised; scoped-admin subtitle
