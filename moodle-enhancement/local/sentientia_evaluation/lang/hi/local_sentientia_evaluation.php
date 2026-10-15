@@ -286,6 +286,10 @@ $string['my_evaluations_intro'] = 'वे मूल्यांकन जिन�
 $string['my_evaluations_col_evaluation'] = 'मूल्यांकन';
 $string['my_evaluations_col_status'] = 'स्थिति';
 $string['my_evaluations_col_date'] = 'तिथि';
+// 2026-10-15: तिथि स्तंभ में तीन अलग-अलग तिथियाँ होती हैं, इसलिए हर कक्ष बताता है कि वह कौन-सी है।
+$string['my_evaluations_date_submitted'] = 'जमा किया गया';
+$string['my_evaluations_date_due'] = 'देय तिथि';
+$string['my_evaluations_date_assigned'] = 'नियुक्त किया गया';
 $string['my_evaluations_status_responded'] = 'उत्तर दिया';
 $string['my_evaluations_status_assigned'] = 'आपकी प्रतीक्षा में';
 $string['my_evaluations_status_expired'] = 'बिना उत्तर के बंद';

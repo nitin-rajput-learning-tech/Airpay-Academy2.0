@@ -277,6 +277,10 @@ $string['my_evaluations_intro'] = 'The evaluations you were asked to complete or
 $string['my_evaluations_col_evaluation'] = 'Evaluation';
 $string['my_evaluations_col_status'] = 'Status';
 $string['my_evaluations_col_date'] = 'Date';
+// 2026-10-15: the Date column holds three different dates, so each cell says which one it is.
+$string['my_evaluations_date_submitted'] = 'Submitted';
+$string['my_evaluations_date_due'] = 'Due by';
+$string['my_evaluations_date_assigned'] = 'Assigned';
 $string['my_evaluations_status_responded'] = 'Responded';
 $string['my_evaluations_status_assigned'] = 'Waiting for you';
 $string['my_evaluations_status_expired'] = 'Closed without a response';

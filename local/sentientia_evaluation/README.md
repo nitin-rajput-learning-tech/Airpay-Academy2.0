@@ -78,7 +78,9 @@ assignments and answers. Run it only through
   re-status, reorder, delete or assign on a form the import created. To run the
   same questions again, export it as a template and create a new evaluation.
 - **Learner history**: `my_evaluations.php`, behind the default-OFF flag
-  `sentientia.evaluation.learner_history`.
+  `sentientia.evaluation.learner_history`. The page prints its own title (the theme does not show the `$PAGE`
+  heading), and each row's date says which date it is: Submitted, Due by (the deadline, on a waiting row and on a
+  closed one) or Assigned (no deadline, no answer), from `learner_history`'s `time_kind`.
 
 ## Privacy / GDPR
 

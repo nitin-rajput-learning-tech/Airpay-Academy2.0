@@ -305,8 +305,104 @@ final class imported_history_test extends \advanced_testcase {
         $this->assertTrue($byname['Missed']->imported);
         $this->assertFalse($byname['Waiting']->imported);
 
+        // Which time each row shows: the page prints the matching word (Submitted / Due by / Assigned) beside it.
+        $this->assertSame(learner_history::TIME_DUE, $byname['Waiting']->time_kind, 'the deadline that is coming');
+        $this->assertSame(learner_history::TIME_SUBMITTED, $byname['Named and answered']->time_kind);
+        $this->assertSame(learner_history::TIME_SUBMITTED, $byname['Anonymous and answered']->time_kind);
+        $this->assertSame(learner_history::TIME_DUE, $byname['Missed']->time_kind, 'the deadline that passed');
+
         $this->assertSame([], learner_history::for_user(0));
         $this->assertCount(1, learner_history::for_user($other));
+    }
+
+    /**
+     * EV-18 finding 2: the Date column held a deadline on a waiting or closed row, the answering time on an answered
+     * one, and (with no deadline) the day it was assigned, with nothing to say which. Each row now carries what its time
+     * is, and a fallback time is never passed off as the learner's answer.
+     */
+    public function test_each_row_says_which_date_it_shows(): void {
+        $this->resetAfterTest();
+        $me = (int) $this->getDataGenerator()->create_user()->id;
+        $t = 1700000000;   // What assign() writes as timecreated.
+
+        $open = $this->form('No deadline');
+        $this->assign($open, $me, 'assigned', null, null);
+        $dated = $this->form('Dated');
+        $this->assign($dated, $me, 'assigned', $t + 900, null);
+        $closed = $this->form('Closed');
+        $this->assign($closed, $me, 'expired', $t + 100, null);
+        // An answered form whose completion time the import could not find (responded, no responded_at, no response
+        // row): the time it falls back to is the deadline, and it is not called a submission.
+        $nocompletion = $this->form('Answered, time unknown');
+        $this->assign($nocompletion, $me, 'responded', $t + 50, null);
+        // An answer arrives for a form still showing a later deadline: the answer's own time wins, called Submitted.
+        $answered = $this->form('Answered before the deadline');
+        $this->assign($answered, $me, 'assigned', $t + 900, null);
+        $this->respond($answered, $me, $t + 300);
+
+        $byname = [];
+        foreach (learner_history::for_user($me) as $row) {
+            $byname[$row->name] = $row;
+        }
+        $this->assertSame([learner_history::TIME_ASSIGNED, $t],
+            [$byname['No deadline']->time_kind, $byname['No deadline']->time]);
+        $this->assertSame([learner_history::TIME_DUE, $t + 900], [$byname['Dated']->time_kind, $byname['Dated']->time]);
+        $this->assertSame([learner_history::TIME_DUE, $t + 100], [$byname['Closed']->time_kind, $byname['Closed']->time]);
+        $this->assertSame(learner_history::STATUS_RESPONDED, $byname['Answered, time unknown']->status);
+        $this->assertSame([learner_history::TIME_DUE, $t + 50],
+            [$byname['Answered, time unknown']->time_kind, $byname['Answered, time unknown']->time]);
+        $this->assertSame(learner_history::STATUS_RESPONDED, $byname['Answered before the deadline']->status);
+        $this->assertSame([learner_history::TIME_SUBMITTED, $t + 300],
+            [$byname['Answered before the deadline']->time_kind, $byname['Answered before the deadline']->time]);
+
+        // Every kind has a word, in English and in Hindi, and the Hindi is not the English left in place.
+        $string = [];
+        include(__DIR__ . '/../lang/hi/local_sentientia_evaluation.php');
+        foreach ([learner_history::TIME_SUBMITTED, learner_history::TIME_DUE, learner_history::TIME_ASSIGNED] as $kind) {
+            $key = 'my_evaluations_date_' . $kind;
+            $en = get_string($key, 'local_sentientia_evaluation');
+            $this->assertNotSame('', $en);
+            $this->assertStringNotContainsString('[[', $en, 'a missing string shows as [[key]]');
+            $this->assertArrayHasKey($key, $string, 'Hindi parity');
+            $this->assertNotSame('', $string[$key]);
+            $this->assertNotSame($en, $string[$key], 'the Hindi word is a translation');
+        }
+    }
+
+    /**
+     * EV-18 finding 1: the theme does not show the $PAGE heading on the standard layout, so the page had no visible
+     * title until the template printed one, as the plugin's other templates do.
+     */
+    public function test_the_page_prints_its_own_title_and_names_the_date_in_each_row(): void {
+        global $PAGE;
+        $this->resetAfterTest();
+        $PAGE->set_url('/local/sentientia_evaluation/my_evaluations.php');
+        $title = get_string('my_evaluations_title', 'local_sentientia_evaluation');
+        $html = $this->render_history_row(false);
+        $this->assertMatchesRegularExpression('/<h2[^>]*>\s*' . preg_quote(s($title), '/') . '\s*<\/h2>/', $html);
+        $this->assertLessThan(strpos($html, get_string('my_evaluations_intro', 'local_sentientia_evaluation')),
+            strpos($html, '<h2'), 'the title comes before the introduction');
+        // The page with no rows still has its title.
+        $empty = $this->render_history_rows([], false);
+        $this->assertStringContainsString(s($title), $empty);
+        $this->assertStringContainsString(get_string('my_evaluations_none', 'local_sentientia_evaluation'), $empty);
+
+        // The word for the date is printed with it.
+        $this->assertStringContainsString('Submitted', $html);
+        $this->assertStringContainsString('12 Mar 2026', $html);
+        $due = $this->render_history_rows([[
+            'name' => 'Feedback', 'status_assigned' => true, 'status_label' => 'Waiting for you', 'date' => '21 Oct 2026 17:00',
+            'has_date' => true, 'date_label' => 'Due by', 'anonymous' => false, 'unlinked' => false, 'imported' => false,
+        ]], true);
+        $this->assertStringContainsString('Due by', $due);
+        $this->assertStringContainsString('21 Oct 2026 17:00', $due);
+        // A row with no date shows a dash and no word.
+        $undated = $this->render_history_rows([[
+            'name' => 'Feedback', 'status_assigned' => true, 'status_label' => 'Waiting for you', 'date' => '',
+            'has_date' => false, 'date_label' => 'NOT-SHOWN', 'anonymous' => false, 'unlinked' => false, 'imported' => false,
+        ]], true);
+        $this->assertStringNotContainsString('NOT-SHOWN', $undated);
+        $this->assertStringContainsString('&mdash;', $undated);
     }
 
     public function test_the_person_evaluated_on_a_supervisor_form_is_not_shown_as_having_responded(): void {
@@ -427,13 +523,25 @@ final class imported_history_test extends \advanced_testcase {
      * @return string
      */
     private function render_history_row(bool $unlinked): string {
+        return $this->render_history_rows([[
+            'name' => 'Survey', 'status_responded' => true, 'status_label' => 'Responded', 'date' => '12 Mar 2026',
+            'has_date' => true, 'date_label' => 'Submitted', 'anonymous' => $unlinked, 'unlinked' => $unlinked,
+            'imported' => true,
+        ]], true);
+    }
+
+    /**
+     * The history template with the given rows.
+     *
+     * @param array[] $rows
+     * @param bool $hasrows
+     * @return string
+     */
+    private function render_history_rows(array $rows, bool $hasrows): string {
         global $OUTPUT;
         return $OUTPUT->render_from_template('local_sentientia_evaluation/my_evaluations', [
-            'has_rows' => true,
-            'rows' => [[
-                'name' => 'Survey', 'status_responded' => true, 'status_label' => 'Responded', 'date' => '12 Mar 2026',
-                'has_date' => true, 'anonymous' => $unlinked, 'unlinked' => $unlinked, 'imported' => true,
-            ]],
+            'has_rows' => $hasrows,
+            'rows' => $rows,
         ]);
     }
 

@@ -39,6 +39,17 @@ final class learner_history {
     public const STATUS_ASSIGNED = 'assigned';
     public const STATUS_EXPIRED = 'expired';
 
+    // What the time on a row is. The row has one time, and it does not mean the same thing on every row: the page
+    // prints it next to a word that says which, so a learner does not read a deadline as the day something happened.
+    // The values double as the tail of the page's lang strings (my_evaluations_date_<kind>).
+
+    /** When the learner answered (a response's own time, or the assignment's responded_at). */
+    public const TIME_SUBMITTED = 'submitted';
+    /** The assignment's deadline: on a waiting row what is coming, on a closed row the one that passed. */
+    public const TIME_DUE = 'due';
+    /** When the assignment was made: the only time an assignment with no deadline and no response has. */
+    public const TIME_ASSIGNED = 'assigned';
+
     /**
      * The evaluations one learner answered, was asked to answer, or was asked to answer and missed.
      *
@@ -47,9 +58,10 @@ final class learner_history {
      *
      * @param int $userid
      * @return \stdClass[] Each: evaluationid, name (raw; the caller formats it), status (a STATUS_ value),
-     *         time (Unix time, 0 when unknown), anonymous (bool: the evaluation keeps its respondents hidden, so
-     *         the time is shown to the day), unlinked (bool: the learner's answers are not linked to them, which is
-     *         what the page tells them), imported (bool: the form came from the previous system).
+     *         time (Unix time, 0 when unknown), time_kind (a TIME_ value: which time that is), anonymous (bool: the
+     *         evaluation keeps its respondents hidden, so the time is shown to the day), unlinked (bool: the
+     *         learner's answers are not linked to them, which is what the page tells them), imported (bool: the form
+     *         came from the previous system).
      */
     public static function for_user(int $userid): array {
         global $DB;
@@ -83,12 +95,18 @@ final class learner_history {
             // Only self evaluations are listed (the query), so nobody is shown as having responded to a supervisor
             // evaluation, where the assignment names the person evaluated.
             $evaluationid = (int) $a->evaluationid;
-            $time = (int) ($a->responded_at ?: ($a->due_at ?: $a->timecreated));
-            self::merge($rows, $evaluationid, (string) $a->name, (int) $a->anonymous, (string) $a->status, $time);
+            if ($a->responded_at) {
+                [$time, $kind] = [(int) $a->responded_at, self::TIME_SUBMITTED];
+            } else if ($a->due_at) {
+                [$time, $kind] = [(int) $a->due_at, self::TIME_DUE];
+            } else {
+                [$time, $kind] = [(int) $a->timecreated, self::TIME_ASSIGNED];
+            }
+            self::merge($rows, $evaluationid, (string) $a->name, (int) $a->anonymous, (string) $a->status, $time, $kind);
         }
         foreach ($responses as $r) {
             self::merge($rows, (int) $r->evaluationid, (string) $r->name, (int) $r->anonymous, self::STATUS_RESPONDED,
-                (int) $r->timesubmitted);
+                (int) $r->timesubmitted, self::TIME_SUBMITTED);
         }
 
         $out = [];
@@ -109,6 +127,7 @@ final class learner_history {
                 'name' => $row->name,
                 'status' => $row->status,
                 'time' => $row->time,
+                'time_kind' => $row->timekind,
                 'anonymous' => $protected,
                 'unlinked' => $unlinked,
                 'imported' => evaluation_manager::is_imported($row->evaluationid),
@@ -122,7 +141,8 @@ final class learner_history {
      * Fold one assignment or response into the learner's row for its evaluation.
      *
      * Responded beats waiting, and waiting beats closed; within the same status the latest time wins. Once the
-     * learner has responded, a later waiting or closed assignment for the same form does not undo it.
+     * learner has responded, a later waiting or closed assignment for the same form does not undo it. The time
+     * keeps its kind (TIME_*): whichever time is kept, the row says what it is.
      *
      * @param \stdClass[] $rows Rows so far, by evaluation id.
      * @param int $evaluationid
@@ -130,24 +150,31 @@ final class learner_history {
      * @param int $flag The form's own anonymous flag.
      * @param string $status
      * @param int $time
+     * @param string $kind Which time that is: a TIME_ value.
      * @return void
      */
-    private static function merge(array &$rows, int $evaluationid, string $name, int $flag, string $status, int $time): void {
+    private static function merge(array &$rows, int $evaluationid, string $name, int $flag, string $status, int $time,
+            string $kind): void {
         if (!isset($rows[$evaluationid])) {
             $rows[$evaluationid] = (object) [
                 'evaluationid' => $evaluationid, 'name' => $name, 'flag' => $flag, 'status' => $status, 'time' => $time,
+                'timekind' => $kind,
             ];
             return;
         }
         $row = $rows[$evaluationid];
         if ($status === self::STATUS_RESPONDED) {
-            $row->time = $row->status === self::STATUS_RESPONDED ? max($row->time, $time) : $time;
+            if ($row->status !== self::STATUS_RESPONDED || $time > $row->time) {
+                [$row->time, $row->timekind] = [$time, $kind];
+            }
             $row->status = self::STATUS_RESPONDED;
         } else if ($row->status !== self::STATUS_RESPONDED) {
             if ($status === self::STATUS_ASSIGNED) {
                 $row->status = self::STATUS_ASSIGNED;
             }
-            $row->time = max($row->time, $time);
+            if ($time > $row->time) {
+                [$row->time, $row->timekind] = [$time, $kind];
+            }
         }
     }
 }
