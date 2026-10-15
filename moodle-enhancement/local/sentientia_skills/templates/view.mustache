@@ -251,6 +251,8 @@
                     </option>
                     {{/ self_rate_level_options }}
                 </select>
+                {{! The "pick a level" message goes here, inside the dialog (skill_actions.js fills it and gives it its alert look): a page-level notification is hidden behind the dialog's backdrop. Empty until then. }}
+                <div id="airpay-self-rate-feedback" data-region="self-rate-feedback" role="alert"></div>
             </div>
         </div>
     </div>

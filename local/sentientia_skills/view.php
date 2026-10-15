@@ -63,6 +63,10 @@ $count_courses = (int) $DB->count_records_sql(
     ['sid' => $skill->id] + $cargs);
 $count_learners = \local_sentientia_skills\skills_manager::count_skill_learners((int) $skill->id);
 
+// Names reach the template as TEXT (skills_manager::plain()), because render_from_template escapes every {{ }}
+// itself: format_string() here escaped them first, so "Compliance & Risk" printed as "Compliance &amp; Risk".
+$plain = static fn(?string $text): string => \local_sentientia_skills\skills_manager::plain($text);
+
 // Per-tab data.
 $tab_data = [];
 switch ($tab) {
@@ -73,7 +77,7 @@ switch ($tab) {
             ['skillid' => $skill->id], 'level ASC');
         $tab_data['levels'] = array_values(array_map(fn($l) => [
             'level'       => (int) ($l->level ?? 0),
-            'label'       => format_string($l->label ?? ''),
+            'label'       => $plain($l->label ?? ''),
             'description' => format_text($l->description ?? '', FORMAT_HTML),
         ], $levels));
         $tab_data['has_levels'] = count($levels) > 0;
@@ -105,8 +109,8 @@ switch ($tab) {
               ORDER BY c.fullname ASC", ['sid' => $skill->id] + $cargs);
         $tab_data['courses'] = array_values(array_map(fn($r) => [
             'courseid'  => (int) $r->courseid,
-            'fullname'  => format_string($r->fullname),
-            'shortname' => format_string($r->shortname),
+            'fullname'  => $plain($r->fullname),
+            'shortname' => $plain($r->shortname),
             'visible'   => (bool) $r->visible,
             'view_url'  => (new \moodle_url('/local/sentientia_courses/enrolledusers.php',
                 ['id' => (int) $r->courseid]))->out(false),
@@ -150,17 +154,17 @@ for ($n = 1; $n <= $maxlevel; $n++) {
     $label = trim((string) ($level_labels[$n] ?? ''));
     $level_options[] = [
         'value'   => $n,
-        'label'   => $label !== '' ? format_string($label) : "Level $n",
+        'label'   => $label !== '' ? $plain($label) : "Level $n",
         'selected' => ($current_level === $n),
     ];
 }
 
 $data = [
     'skillid'      => (int) $skill->id,
-    'name'         => format_string($skill->name),
+    'name'         => $plain($skill->name),
     'description'  => format_text($skill->description ?? '', FORMAT_HTML),
     'has_description' => !empty(trim($skill->description ?? '')),
-    'category_name' => $category ? format_string($category->name) : 'Uncategorised',
+    'category_name' => $category ? $plain($category->name) : 'Uncategorised',
     'max_level'    => $maxlevel,
 
     // P1 #26 — self-rate panel context.

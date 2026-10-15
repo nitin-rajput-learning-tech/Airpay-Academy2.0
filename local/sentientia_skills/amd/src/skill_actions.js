@@ -311,15 +311,57 @@ const setButtonContent = (btn, iconClass, text) => {
 let selfRateModal = null;
 let selfRateOpening = false;
 
+/**
+ * Show (message) or clear (no message) the "pick a level" warning INSIDE the self-rate dialog.
+ *
+ * Notification.addNotification() writes into the page's #user-notifications region, which sits behind the
+ * dialog's backdrop (and is empty again by the time the dialog closes), so Save with no level looked like it
+ * did nothing. The template provides an empty role="alert" region under the select for this; the select is
+ * marked invalid and focused so the message and the field it is about are together. textContent only, never
+ * innerHTML: the message is a language string, not markup.
+ *
+ * @param {Object} modal The core/modal_save_cancel instance.
+ * @param {String} message The localised warning, or '' to clear it.
+ * @returns {Boolean} Whether the message was shown in the dialog.
+ */
+const setSelfRateFeedback = (modal, message) => {
+    const body = modal.getBody();
+    const region = body.find('[data-region="self-rate-feedback"]')[0];
+    const levelSel = body.find('#airpay-self-rate-level')[0];
+    if (levelSel) {
+        if (message) {
+            levelSel.classList.add('is-invalid');
+            levelSel.setAttribute('aria-invalid', 'true');
+            levelSel.setAttribute('aria-describedby', 'airpay-self-rate-feedback');
+            levelSel.focus();
+        } else {
+            levelSel.classList.remove('is-invalid');
+            levelSel.removeAttribute('aria-invalid');
+            levelSel.removeAttribute('aria-describedby');
+        }
+    }
+    if (!region) {
+        return false;
+    }
+    region.textContent = message;
+    region.className = message ? 'alert alert-warning mt-3 mb-0' : '';
+    return !!message;
+};
+
 const submitSelfRate = async (source, modal) => {
     const skillid = parseInt(source.dataset.skillid || '0', 10);
     const levelSel = modal.getBody().find('#airpay-self-rate-level')[0];
     const level = parseInt(levelSel ? levelSel.value : '0', 10);
     if (!skillid || !level) {
+        // FX-20 (2026-10-15): keep the dialog open (the save handler already prevented the default close) and say
+        // why, inside the dialog. Falls back to the page-level notification only if the region is missing.
         const msg = await getString('self_rate_pick_level', 'local_sentientia_skills');
-        Notification.addNotification({message: msg, type: 'warning'});
+        if (!setSelfRateFeedback(modal, msg)) {
+            Notification.addNotification({message: msg, type: 'warning'});
+        }
         return;
     }
+    setSelfRateFeedback(modal, '');
     const submitBtn = modal.getFooter().find('[data-action="save"]')[0];
     const submitLabel = submitBtn ? submitBtn.textContent.trim() : '';
     if (submitBtn) {
@@ -374,6 +416,11 @@ const openSelfRateModal = async () => {
     }
     modal.setSaveButtonText(labelEl ? labelEl.textContent.trim() : 'Save');
     modal.getBody().append(bodyEl);
+    const pickedLevel = modal.getBody().find('#airpay-self-rate-level')[0];
+    if (pickedLevel) {
+        // Choosing a level answers the warning: take it away.
+        pickedLevel.addEventListener('change', () => setSelfRateFeedback(modal, ''));
+    }
     modal.getRoot().on(ModalEvents.save, (event) => {
         // Keep the dialog open while the request runs; the page reload closes it on success.
         event.preventDefault();

@@ -33,10 +33,11 @@ $levels = \local_sentientia_skills\skills_manager::get_skill_levels($skillid);
 $data = [
     'skill' => [
         'id'             => (int) $skill->id,
-        'name'           => format_string($skill->name),
+        // TEXT for the template (skills_manager::plain()): level_definitions.mustache escapes every {{ }} itself.
+        'name'           => \local_sentientia_skills\skills_manager::plain($skill->name),
         'max_level'      => (int) $skill->max_level,
-        'category_name'  => format_string((string) ($skill->category_name ?? 'Uncategorised')),
-        'category_color' => s((string) ($skill->category_color ?? '#0066A7')),
+        'category_name'  => \local_sentientia_skills\skills_manager::plain((string) ($skill->category_name ?? 'Uncategorised')),
+        'category_color' => (string) ($skill->category_color ?? '#0066A7'),
     ],
     'levels'    => $levels,
     'admin_url' => (new moodle_url('/local/sentientia_skills/admin.php'))->out(false),

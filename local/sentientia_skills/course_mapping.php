@@ -40,12 +40,13 @@ $all_skills = $DB->get_records_sql(
    ORDER BY c.sort_order ASC, s.name ASC");
 $skill_options = [];
 foreach ($all_skills as $s) {
+    // TEXT for the template (skills_manager::plain()): course_mapping.mustache escapes every {{ }} itself.
     $skill_options[] = [
         'id'             => (int) $s->id,
-        'name'           => format_string($s->name),
+        'name'           => \local_sentientia_skills\skills_manager::plain($s->name),
         'max_level'      => (int) $s->max_level,
-        'category_name'  => format_string((string) ($s->category_name ?? '')),
-        'category_color' => s((string) ($s->category_color ?? '#0066A7')),
+        'category_name'  => \local_sentientia_skills\skills_manager::plain((string) ($s->category_name ?? '')),
+        'category_color' => (string) ($s->category_color ?? '#0066A7'),
     ];
 }
 

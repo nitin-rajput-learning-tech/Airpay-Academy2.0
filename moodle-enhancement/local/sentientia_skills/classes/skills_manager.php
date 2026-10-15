@@ -35,6 +35,34 @@ class skills_manager {
      */
     const FLAG_HELD = 'sentientia.skills.heldskills.enabled';
 
+    /**
+     * A name (skill, category, course, designation) for display, as TEXT: filtered like format_string() but NOT
+     * HTML-escaped. Every sink these rows reach escapes for itself - Mustache {{ }}, the datatable's escapeHtml,
+     * textContent, the radar's SVG/canvas text - so escaping here as well showed "Compliance & Risk" as
+     * "Compliance &amp; Risk" (the same bug class as my_classrooms::plain() in local_sentientia_classroom).
+     * Use this for anything handed to a template or a web service row; keep format_string() only where the
+     * value is written straight into HTML (a form element, a navbar node, a {{{ }}} slot).
+     *
+     * @param string|null $text
+     * @return string plain text (the caller's output layer escapes it once)
+     */
+    public static function plain(?string $text): string {
+        return format_string((string) $text, true, ['escape' => false]);
+    }
+
+    /**
+     * A name in the form the CALLER's output layer needs: plain text ($plain true, see {@see self::plain()}) or
+     * HTML-escaped exactly as format_string() has always returned it ($plain false). Only the recommendation
+     * chain keeps the second form as its default, because theme_sentientia writes it with {{{ }}}.
+     *
+     * @param string|null $text
+     * @param bool $plain
+     * @return string
+     */
+    private static function label(?string $text, bool $plain): string {
+        return $plain ? self::plain($text) : format_string((string) $text);
+    }
+
     // ═══════════════════════════════════════════════════════════════════
     // ADR-031 tenant scope (2026-09-25)
     //
@@ -282,9 +310,16 @@ class skills_manager {
     /**
      * Get gap analysis for a user — compares current skills vs required for their role.
      *
+     * The names (skill_name, category_name, designation) are PLAIN TEXT by default: every consumer
+     * (skills/index.php's dashboard, the learner profile in local_sentientia_users) renders them with {{ }},
+     * which escapes them itself, so format_string() here showed "Risk & Compliance" as "Risk &amp; Compliance".
+     * Pass $plain = false for the HTML-escaped form ({@see self::get_gap_courses()} does, for its own callers).
+     *
+     * @param int $userid
+     * @param bool $plain Names as plain text (true) or HTML-escaped (false).
      * @return array {skills: [{name, category, required, current, gap, status}], summary: {total, met, gaps, percentage}}
      */
-    public static function get_gap_analysis(int $userid): array {
+    public static function get_gap_analysis(int $userid, bool $plain = true): array {
         global $DB, $USER;
 
         $user = $DB->get_record('user', ['id' => $userid], 'id, open_designation');
@@ -328,8 +363,8 @@ class skills_manager {
                 // gap-closing course recommendations (skills page + the new
                 // dashboard rail) never matched a course. Latent since 1.0.
                 'skillid'        => (int) $r->skillid,
-                'skill_name'     => format_string($r->skill_name),
-                'category_name'  => format_string($r->category_name),
+                'skill_name'     => self::label($r->skill_name, $plain),
+                'category_name'  => self::label($r->category_name, $plain),
                 'category_color' => $r->category_color,
                 'required_level' => $r->required_level,
                 'required_label' => self::LEVELS[$r->required_level] ?? '',
@@ -359,7 +394,7 @@ class skills_manager {
                 'percentage' => $total > 0 ? round(($met / $total) * 100) : 0,
             ],
             'has_data'     => true,
-            'designation'  => format_string($designation),
+            'designation'  => self::label($designation, $plain),
         ];
     }
 
@@ -385,7 +420,9 @@ class skills_manager {
 
         return [
             'has_radar'       => true,
-            'radar_labels'    => json_encode($labels),
+            // The skill names are plain text (see plain()). dashboard.mustache writes this JSON raw into a <script>,
+            // so < > & ' " are \u-escaped: nothing in a name can close the script or leave the string.
+            'radar_labels'    => json_encode($labels, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT),
             'radar_current'   => json_encode($current),
             'radar_required'  => json_encode($required),
             'designation'     => $analysis['designation'],
@@ -642,7 +679,7 @@ class skills_manager {
             foreach ($all_skills as $skill) {
                 $level = $user_skills[$skill->id] ?? 0;
                 $skill_data[] = [
-                    'skill_name' => format_string($skill->name),
+                    'skill_name' => self::plain($skill->name),
                     'level'      => $level,
                     'level_label' => self::LEVELS[$level] ?? '',
                     'heat_class' => 'heat-' . min($level, 5),
@@ -650,16 +687,16 @@ class skills_manager {
             }
 
             $members[] = [
-                'firstname' => format_string($member->firstname),
-                'lastname'  => format_string($member->lastname),
+                'firstname' => self::plain($member->firstname),
+                'lastname'  => self::plain($member->lastname),
                 'initials'  => strtoupper(substr($member->firstname, 0, 1) . substr($member->lastname, 0, 1)),
                 'skills'    => $skill_data,
             ];
         }
 
         $skill_headers = array_map(fn($s) => [
-            'name' => format_string($s->name),
-            'category' => format_string($s->category_name),
+            'name' => self::plain($s->name),
+            'category' => self::plain($s->category_name),
         ], array_values($all_skills));
 
         return [
@@ -683,8 +720,17 @@ class skills_manager {
      * can never name a course they could not see. The query used to join
      * course_skills to course with no tenant filter, recommending /177
      * course names and links to a /1 learner.
+     *
+     * The names (fullname, shortname, skill_name) are HTML-ESCAPED by default - format_string() - because
+     * theme_sentientia's dashboard rail writes them with {{{ }}}; making that default plain text would let a
+     * course or skill name carrying markup through unescaped. A caller that renders them with {{ }} (skills/index.php)
+     * passes $plain = true, or they print "&amp;" for "&".
+     *
+     * @param int $userid
+     * @param int $limit
+     * @param bool $plain Names as plain text (true) or HTML-escaped (false, the long-standing form).
      */
-    public static function get_gap_courses(int $userid, int $limit = 5): array {
+    public static function get_gap_courses(int $userid, int $limit = 5, bool $plain = false): array {
         global $DB, $USER;
 
         $learner = $DB->get_record('user', ['id' => $userid], 'id, open_path');
@@ -702,7 +748,7 @@ class skills_manager {
             $scopeargs += $viewerscope[1];
         }
 
-        $analysis = self::get_gap_analysis($userid);
+        $analysis = self::get_gap_analysis($userid, $plain);
         if (!$analysis['has_data']) {
             return [];
         }
@@ -739,8 +785,8 @@ class skills_manager {
             foreach ($courses as $course) {
                 $recommendations[] = [
                     'courseid'    => $course->courseid,
-                    'fullname'    => format_string($course->fullname),
-                    'shortname'   => format_string($course->shortname),
+                    'fullname'    => self::label($course->fullname, $plain),
+                    'shortname'   => self::label($course->shortname, $plain),
                     'skill_name'  => $gap['skill_name'],
                     'gap_level'   => $gap['required_level'] - $gap['current_level'],
                     // ADR-032: the level the course brings the learner to (the SELECT always fetched it;
@@ -804,8 +850,8 @@ class skills_manager {
         foreach ($rows as $r) {
             $held[] = [
                 'skillid'        => (int) $r->skillid,
-                'skill_name'     => format_string($r->skill_name),
-                'category_name'  => format_string($r->category_name),
+                'skill_name'     => self::plain($r->skill_name),
+                'category_name'  => self::plain($r->category_name),
                 'category_color' => $r->category_color,
                 'current_level'  => (int) $r->current_level,
                 'current_label'  => self::LEVELS[(int) $r->current_level] ?? '',
@@ -838,7 +884,7 @@ class skills_manager {
         foreach ($rows as $r) {
             $skills[] = [
                 'skillid' => (int) $r->skillid,
-                'name'    => format_string($r->name),
+                'name'    => self::plain($r->name),
                 'viewurl' => (new \moodle_url('/local/sentientia_skills/view.php',
                     ['id' => (int) $r->skillid]))->out(false),
             ];
@@ -854,9 +900,11 @@ class skills_manager {
      * @param int   $userid
      * @param int   $limit
      * @param int[] $excludecourseids Courses to leave out (already recommended).
+     * @param bool $plain Names as plain text (true) or HTML-escaped (false, as {@see self::get_gap_courses()}).
      * @return array<int, array> courseid, fullname, shortname, skill_name, teaches_level, gap_level, reason, viewurl
      */
-    public static function get_interest_courses(int $userid, int $limit = 5, array $excludecourseids = []): array {
+    public static function get_interest_courses(int $userid, int $limit = 5, array $excludecourseids = [],
+            bool $plain = false): array {
         global $DB, $USER;
 
         $learner = $DB->get_record('user', ['id' => $userid], 'id, open_path');
@@ -907,9 +955,9 @@ class skills_manager {
             }
             $out[$courseid] = [
                 'courseid'      => $courseid,
-                'fullname'      => format_string($r->fullname),
-                'shortname'     => format_string($r->shortname),
-                'skill_name'    => format_string($r->skill_name),
+                'fullname'      => self::label($r->fullname, $plain),
+                'shortname'     => self::label($r->shortname, $plain),
+                'skill_name'    => self::label($r->skill_name, $plain),
                 'gap_level'     => 0,
                 'teaches_level' => (int) $r->teaches_level,
                 'reason'        => 'interest',
@@ -929,13 +977,14 @@ class skills_manager {
      *
      * @param int $userid
      * @param int $limit
+     * @param bool $plain Names as plain text (true) or HTML-escaped (false, the form theme_sentientia writes raw).
      * @return array<int, array> As get_gap_courses(), each with a "reason" of gap or interest.
      */
-    public static function get_recommended_courses(int $userid, int $limit = 5): array {
-        $courses = self::get_gap_courses($userid, $limit);
+    public static function get_recommended_courses(int $userid, int $limit = 5, bool $plain = false): array {
+        $courses = self::get_gap_courses($userid, $limit, $plain);
         if (count($courses) < $limit && self::flag_enabled(self::FLAG_RECS)) {
             $taken = array_map(static fn(array $c): int => (int) $c['courseid'], $courses);
-            foreach (self::get_interest_courses($userid, $limit - count($courses), $taken) as $course) {
+            foreach (self::get_interest_courses($userid, $limit - count($courses), $taken, $plain) as $course) {
                 $courses[] = $course;
             }
         }
@@ -1263,11 +1312,11 @@ class skills_manager {
             $out[] = [
                 'id'             => (int) $r->id,
                 'skillid'        => (int) $r->skillid,
-                'skill_name'     => format_string($r->skill_name),
+                'skill_name'     => self::plain($r->skill_name),
                 'required_level' => (int) $r->required_level,
                 'max_level'      => (int) $r->max_level,
-                'category_name'  => format_string((string) ($r->category_name ?? '')),
-                'category_color' => s((string) ($r->category_color ?? '#0066A7')),
+                'category_name'  => self::plain((string) ($r->category_name ?? '')),
+                'category_color' => (string) ($r->category_color ?? '#0066A7'),
             ];
         }
         return $out;
@@ -1349,11 +1398,11 @@ class skills_manager {
             $out[] = [
                 'id'             => (int) $r->id,
                 'skillid'        => (int) $r->skillid,
-                'skill_name'     => format_string($r->skill_name),
+                'skill_name'     => self::plain($r->skill_name),
                 'teaches_level'  => (int) $r->teaches_level,
                 'max_level'      => (int) $r->max_level,
-                'category_name'  => format_string((string) ($r->category_name ?? '')),
-                'category_color' => s((string) ($r->category_color ?? '#0066A7')),
+                'category_name'  => self::plain((string) ($r->category_name ?? '')),
+                'category_color' => (string) ($r->category_color ?? '#0066A7'),
             ];
         }
         return $out;
@@ -1498,8 +1547,8 @@ class skills_manager {
         foreach ($rows as $r) {
             $out[] = [
                 'id'           => (int) $r->id,
-                'fullname'     => format_string($r->fullname),
-                'shortname'    => format_string($r->shortname),
+                'fullname'     => self::plain($r->fullname),
+                'shortname'    => self::plain($r->shortname),
                 'mapped_count' => (int) $r->mapped_count,
             ];
         }
@@ -1524,8 +1573,8 @@ class skills_manager {
         }
         return [
             'id'        => (int) $c->id,
-            'fullname'  => format_string($c->fullname),
-            'shortname' => format_string($c->shortname),
+            'fullname'  => self::plain($c->fullname),
+            'shortname' => self::plain($c->shortname),
         ];
     }
 

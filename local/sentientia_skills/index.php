@@ -60,10 +60,12 @@ $radar = $manager::get_radar_data($userid);
 // Recommended courses: the ones that close a gap, then - with the skills-first recommendations flag ON - courses
 // for the skills the learner said they are interested in (ADR-032). get_gap_courses() returns arrays already
 // formatted for display (fullname, skill_name, teaches_level, viewurl); this page read them as objects with other
-// field names (coursename, courseid), so every card rendered empty.
+// field names (coursename, courseid), so every card rendered empty. The names are asked for as PLAIN TEXT (the
+// third argument): dashboard.mustache escapes them with {{ }}, and the default, HTML-escaped form is for the
+// theme's {{{ }}} rail - here it printed "Risk &amp; Compliance" for "Risk & Compliance".
 $recommendations = [];
 $hasinterestrecs = false;
-foreach ($manager::get_recommended_courses($userid, 5) as $r) {
+foreach ($manager::get_recommended_courses($userid, 5, true) as $r) {
     $recommendations[] = [
         'coursename'    => $r['fullname'],
         'skill_name'    => $r['skill_name'],

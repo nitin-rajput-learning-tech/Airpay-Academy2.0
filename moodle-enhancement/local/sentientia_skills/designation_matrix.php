@@ -24,9 +24,12 @@ $PAGE->navbar->add('Designation Matrix');
 $designations = \local_sentientia_skills\skills_manager::list_designations();
 $designation_options = [];
 foreach ($designations as $d) {
+    // TEXT for the template: designation_matrix.mustache escapes every {{ }} itself. The value is the designation
+    // exactly as stored - s() here made the select send "Risk &amp; Compliance" for "Risk & Compliance", which
+    // matches no row, and the Add / Copy buttons carried the same wrong key.
     $designation_options[] = [
-        'value'    => s($d),
-        'label'    => format_string($d),
+        'value'    => $d,
+        'label'    => \local_sentientia_skills\skills_manager::plain($d),
         'selected' => $d === $designation,
     ];
 }
@@ -37,7 +40,7 @@ $rows = $designation !== ''
 
 $data = [
     'designation_options' => $designation_options,
-    'current_designation' => $designation !== '' ? s($designation) : '',
+    'current_designation' => $designation,
     'rows'                => $rows,
     'has_rows'            => !empty($rows),
     'admin_url'           => (new moodle_url('/local/sentientia_skills/admin.php'))->out(false),
