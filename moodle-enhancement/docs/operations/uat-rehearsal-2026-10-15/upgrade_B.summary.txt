@@ -1,0 +1,12 @@
+Fatal error      0
+Parse error      0
+Error            0
+Exception        0
+Warning          1
+Notice           0
+Debugging        0
+Deprecated       0
+components that printed a --> header: 443
+
+-- Warning: 1 line(s), 1 distinct
+  x1   Array to string conversion   [lib/scssphp/src/Compiler.php:927]

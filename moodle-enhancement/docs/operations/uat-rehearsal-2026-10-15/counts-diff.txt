@@ -1,0 +1,19 @@
+tables: before 654, after 690 (36 added, 0 dropped)
+rows:   before 11514, after 13001
+-- tables added: grade_outcomes_modules, local_sentientia_admin_log, local_sentientia_cart_credit_txn, local_sentientia_classroom_courses, local_sentientia_classroom_trainers, local_sentientia_cohort_scope, local_sentientia_course_category, local_sentientia_course_levels, local_sentientia_course_type, local_sentientia_courses_detailfill, local_sentientia_courses_enrolmove, local_sentientia_courses_enroloff, local_sentientia_courses_tagmove, local_sentientia_legacymap, local_sentientia_legacyrun, local_sentientia_legacystep, local_sentientia_lp_course_status, local_sentientia_programs_lvlcomp, local_sentientia_programs_trainerfb, local_sentientia_programs_trainers, local_sentientia_ratings_reactions, local_sentientia_ratings_reviews, local_sentientia_recompletion_archive, local_sentientia_skill_interest, local_sentientia_users_domain, local_sentientia_users_logindays, local_sentientia_users_position, local_sentientia_users_transcript, oauth2_server_client_access_tokens, oauth2_server_client_auth_codes, oauth2_server_client_granted_scopes, oauth2_server_client_redirect_uris, oauth2_server_client_refresh_tokens, oauth2_server_client_secrets, oauth2_server_clients, rest_api_tokens
+-- tables dropped: none
+== tables whose row count FELL: 0 (data-bearing: 0, volatile / registry tables: 0)
+-- tables whose row count grew: 13
+  grew  cache_flags                                                0 ->       1
+  grew  capabilities                                             948 ->     959
+  grew  config                                                   582 ->     583
+  grew  config_log                                              2002 ->    2018
+  grew  config_plugins                                          2379 ->    2395
+  grew  external_functions                                       967 ->     972
+  grew  external_services_functions                              442 ->     443
+  grew  logstore_standard_log                                      0 ->      34
+  grew  message_providers                                         82 ->      84
+  grew  role_capabilities                                       1790 ->    1808
+  grew  task_adhoc                                                 3 ->       4
+  grew  task_scheduled                                           158 ->     163
+  grew  upgrade_log                                             1442 ->    2818

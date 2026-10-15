@@ -1,0 +1,144 @@
+[21:43:38] === rehearsal start: UAT commit 481252996 -> target origin/claude/gap-integration (7366c6050); phases postinstall..snapshot; root D:/Claude Local/kit-scratch/uatreh
+[21:43:42] php: 8.4.21  (UAT runs 8.3; both Moodle 5.2 and 5.3 require >= 8.3)
+[21:43:44] disk: 453G free of 563G
+[21:43:54] database server: 11.4.13-MariaDB
+posture: theme=sentientia forcelogin=0 enablemyhome=1 frontpage="" footer-links=off
+=== Summary ===
+Substrate already complete - nothing to do.
+[21:45:49] repair_task_registrations --apply (tree A) exit 0: Message preferences check: 0 problems
+[21:47:48] snapshot A: 480 plugins, 0 not up to date or missing | 654 tables | 2961 settings | 94 flags
+[21:47:50] PASS  5.2_all_plugins_uptodate - 480 plugins, 0 not up to date or missing
+[21:50:08] FAIL  5.2_schema_matches_install_xml - check_database_schema.php (tree A): exit 1,  * table is not expected ------------------------------------------------------------------------------- 
+[21:50:51] PASS  5.2_no_upgrade_pending - upgrade.php --is-pending (tree A) exit 0 (0 = nothing pending, 2 = pending)
+dump written: D:/Claude Local/kit-scratch/uatreh/run/dumps/uatreh52-at-5.2.sql (1693725 bytes)
+[21:52:26] === rehearsal end: 1 hard check(s) FAILED: 5.2_schema_matches_install_xml
+[22:01:59] === rehearsal start: UAT commit 481252996 -> target origin/claude/gap-integration (7366c6050); phases snapshot..snapshot; root D:/Claude Local/kit-scratch/uatreh
+[22:02:03] php: 8.4.21  (UAT runs 8.3; both Moodle 5.2 and 5.3 require >= 8.3)
+[22:02:08] disk: 453G free of 563G
+[22:02:16] database server: 11.4.13-MariaDB
+[22:05:12] snapshot A: 480 plugins, 0 not up to date or missing | 654 tables | 2961 settings | 94 flags
+[22:05:14] PASS  5.2_all_plugins_uptodate - 480 plugins, 0 not up to date or missing
+[22:06:08] PASS  5.2_schema_matches_install_xml - check_database_schema.php (tree A) exit 1: 60 known tenant-substrate finding(s) (open_* columns, 5 profile tables, in no install.xml), 0 unknown
+[22:06:37] PASS  5.2_no_upgrade_pending - upgrade.php --is-pending (tree A) exit 0 (0 = nothing pending, 2 = pending)
+dump written: D:/Claude Local/kit-scratch/uatreh/run/dumps/uatreh52-at-5.2.sql (1693725 bytes)
+[22:08:05] === rehearsal end: every hard check of the phases that ran passed
+[22:08:52] === rehearsal start: UAT commit 481252996 -> target origin/claude/gap-integration (7366c6050); phases upgrade..upgrade; root D:/Claude Local/kit-scratch/uatreh
+[22:08:55] php: 8.4.21  (UAT runs 8.3; both Moodle 5.2 and 5.3 require >= 8.3)
+[22:09:01] disk: 453G free of 563G
+[22:09:12] database server: 11.4.13-MariaDB
+[22:10:07] database uatreh52 recreated empty (utf8mb4 / utf8mb4_unicode_ci, as stage-a-install.sh creates it on UAT)
+restored D:/Claude Local/kit-scratch/uatreh/run/dumps/uatreh52-at-5.2.sql into uatreh52
+[22:10:36] maintenance mode ON (tree A, as the runbook does before the code swap)
+Your site is currently in Command Line Interface (CLI) maintenance mode. No web access is allowed.
+[22:11:22] upgrade: Moodle 5.3 + 7366c6050 over the 5.2 database (admin/cli/upgrade.php --non-interactive, no --allow-unstable)
+[22:35:07] PASS  5.3_upgrade_exit_0 - upgrade.php exit 0 in 1423s; Command line upgrade from 5.2+ (Build: 20260519) (2026042000.04) to 5.3 (Build: 20261005) (2026100500) completed successfully.
+[22:35:10] upgrade log summary: Fatal error 0 Parse error 0 Error 0 Exception 0 Warning 1 Notice 0 Debugging 0 Deprecated 0 components that printed a --> header: 443 
+[22:35:13] components that ran upgrade steps: 443
+Maintenance mode has been disabled and the site is running normally again
+[22:37:49] purge_caches (tree B) exit 0
+[22:37:50] === rehearsal end: every hard check of the phases that ran passed
+[22:39:37] === rehearsal start: UAT commit 481252996 -> target origin/claude/gap-integration (7366c6050); phases checks..scan; root D:/Claude Local/kit-scratch/uatreh
+[22:39:39] php: 8.4.21  (UAT runs 8.3; both Moodle 5.2 and 5.3 require >= 8.3)
+[22:39:42] disk: 453G free of 563G
+[22:39:49] database server: 11.4.13-MariaDB
+[22:41:41] FAIL  5.3_schema_matches_install_xml - check_database_schema.php (tree B) exit 1: 55 known tenant-substrate finding(s), 0 unknown, identical to the 5.2 site's list: NO
+[22:43:45] snapshot B: 481 plugins, 0 not up to date or missing | 690 tables | 2978 settings | 125 flags
+[22:43:49] PASS  5.3_all_plugins_uptodate_db_eq_disk - == after-upgrade status: 0 plugin(s) not uptodate: none == after-upgrade db version != disk version: 0: none 
+[22:43:53] PASS  5.3_no_data_rows_lost - tables: before 654, after 690 (36 added, 0 dropped) rows:   before 11514, after 13001  ; == tables whose row count FELL: 0 (data-bearing: 0, volatile / registry tables: 0)
+[22:43:56] PASS  5.3_posture_settings_unchanged - theme / forcelogin / enablemyhome / frontpage ...: 0 changed
+[22:44:01] PASS  5.3_flags_stay_off - flags before 94, after 125; existing flag lines changed: 0; new flags not default-off: 0
+[22:44:30] PASS  5.3_no_upgrade_pending - upgrade.php --is-pending (tree B) exit 0
+[22:45:09] downgrade probe (5.2 code, upgraded database) exit 1: Error: The code you are using is older than the version recorded in the database.  
+[22:45:25] core release on the upgraded database: 5.3 (Build: 20261005)
+[22:45:51] scheduled_task.php --list: 165 lines, 32 Sentientia tasks
+[22:47:13] PASS  task_\local_sentientia_api\task\cleanup - scheduled_task.php --execute exit 0: ... used 16.3 MB peak memory Scheduled task complete: Sentientia API cleanup (rate counters, LTI nonces, request log) (local_sentientia_api\task\cleanup) 
+[22:47:32] PASS  task_\local_sentientia_xapi\task\purge_old_statements - scheduled_task.php --execute exit 0: ... used 16.4 MB peak memory Scheduled task complete: Purge old xAPI statements (local_sentientia_xapi\task\purge_old_statements) 
+[22:47:45] PASS  task_\local_sentientia_platform\task\publish_cron_health - scheduled_task.php --execute exit 0: ... used 16.2 MB peak memory Scheduled task complete: Airpay Core: publish cron-health summary (local_sentientia_platform\task\publish_cron_health) 
+[22:47:57] repair_task_registrations dry run (tree B) exit 0: Message preferences check: 0 problems
+[22:48:12] import_bizlms.php --list exit 0: 19 importer(s) registered 
+[22:48:22] cron_health.php exit 0: 
+[22:48:49] render /login/index.php -> HTTP 200, 33583 bytes, fatal-error markers 1, warning/debug markers 1
+[22:49:09] render /index.php -> HTTP 200, 71704 bytes, fatal-error markers 1, warning/debug markers 1
+[22:49:25] render /course/index.php -> HTTP 303, 1520 bytes, fatal-error markers 0, warning/debug markers 0
+[22:49:46] render /admin/index.php -> HTTP 303, 1509 bytes, fatal-error markers 0, warning/debug markers 0
+[22:51:30] render_smoke_53.sh (2 rounds) exit 0:  RESULT: all four classes returned 200 in every round. 
+[22:53:47] PASS  mysql84_reserved_words - RESULT: PASS (no MySQL 8.4 reserved word among the 673 judged table and column names)
+[22:53:50] === rehearsal end: 1 hard check(s) FAILED: 5.3_schema_matches_install_xml
+[22:55:44] === rehearsal start: UAT commit 481252996 -> target origin/claude/gap-integration (7366c6050); phases checks..report; root D:/Claude Local/kit-scratch/uatreh
+[22:55:48] php: 8.4.21  (UAT runs 8.3; both Moodle 5.2 and 5.3 require >= 8.3)
+[22:55:52] disk: 453G free of 563G
+[22:56:01] database server: 11.4.13-MariaDB
+[22:57:12] PASS  5.3_schema_matches_install_xml - check_database_schema.php (tree B) exit 1: 55 known tenant-substrate finding(s), 0 unknown, 0 new since the 5.2 site, 5 of the 5.2 site's findings resolved (tables now declared in an install.xml)
+[22:58:07] snapshot B: 481 plugins, 0 not up to date or missing | 690 tables | 2978 settings | 125 flags
+[22:58:12] PASS  5.3_all_plugins_uptodate_db_eq_disk - == after-upgrade status: 0 plugin(s) not uptodate: none == after-upgrade db version != disk version: 0: none 
+[22:58:16] PASS  5.3_no_data_rows_lost - tables: before 654, after 690 (36 added, 0 dropped) rows:   before 11514, after 13014  ; == tables whose row count FELL: 0 (data-bearing: 0, volatile / registry tables: 0)
+[22:58:19] PASS  5.3_posture_settings_unchanged - theme / forcelogin / enablemyhome / frontpage ...: 0 changed
+[22:58:23] PASS  5.3_flags_stay_off - flags before 94, after 125; existing flag lines changed: 0; new flags not default-off: 0
+[22:58:55] PASS  5.3_no_upgrade_pending - upgrade.php --is-pending (tree B) exit 0
+[22:59:16] downgrade probe (5.2 code, upgraded database) exit 1: Error: The code you are using is older than the version recorded in the database.  
+[22:59:28] core release on the upgraded database: 5.3 (Build: 20261005)
+[22:59:51] scheduled_task.php --list: 165 lines, 32 Sentientia tasks
+[23:00:06] PASS  task_\local_sentientia_api\task\cleanup - scheduled_task.php --execute exit 0: ... used 16.4 MB peak memory Scheduled task complete: Sentientia API cleanup (rate counters, LTI nonces, request log) (local_sentientia_api\task\cleanup) 
+[23:00:22] PASS  task_\local_sentientia_xapi\task\purge_old_statements - scheduled_task.php --execute exit 0: ... used 16.5 MB peak memory Scheduled task complete: Purge old xAPI statements (local_sentientia_xapi\task\purge_old_statements) 
+[23:00:38] PASS  task_\local_sentientia_platform\task\publish_cron_health - scheduled_task.php --execute exit 0: ... used 16.2 MB peak memory Scheduled task complete: Airpay Core: publish cron-health summary (local_sentientia_platform\task\publish_cron_health) 
+[23:00:52] repair_task_registrations dry run (tree B) exit 0: Message preferences check: 0 problems
+[23:01:08] import_bizlms.php --list exit 0: 19 importer(s) registered 
+[23:01:22] cron_health.php exit 0: 
+[23:01:44] render /login/index.php -> HTTP 200, 33583 bytes, fatal-error markers 0, warning/debug markers 0
+[23:01:45] PASS  render/login/index.php - web render on the upgraded database: HTTP 200, fatal markers 0, debug markers 0
+[23:02:02] render /index.php -> HTTP 200, 71704 bytes, fatal-error markers 0, warning/debug markers 0
+[23:02:03] PASS  render/index.php - web render on the upgraded database: HTTP 200, fatal markers 0, debug markers 0
+[23:02:14] render /course/index.php -> HTTP 303, 1520 bytes, fatal-error markers 0, warning/debug markers 0
+[23:02:35] render /admin/index.php -> HTTP 303, 1509 bytes, fatal-error markers 0, warning/debug markers 0
+[23:04:09] render_smoke_53.sh (2 rounds) exit 0:  RESULT: all four classes returned 200 in every round. 
+[23:04:10] PASS  render_smoke_53 - render_smoke_53.sh (lib/javascript.php, theme/styles.php, r.php, theme/font.php, 2 rounds) exit 0
+[23:05:58] PASS  mysql84_reserved_words - RESULT: PASS (no MySQL 8.4 reserved word among the 673 judged table and column names)
+[23:06:12] result files: D:/Claude Local/kit-scratch/uatreh/run/reports/20261015-230601
+[23:06:13] === rehearsal end: every hard check of the phases that ran passed
+[23:09:49] === rehearsal start: UAT commit 481252996 -> target origin/claude/gap-integration (7366c6050); phases upgrade..report; root D:/Claude Local/kit-scratch/uatreh
+[23:09:51] php: 8.4.21  (UAT runs 8.3; both Moodle 5.2 and 5.3 require >= 8.3)
+[23:09:54] disk: 453G free of 563G
+[23:10:01] database server: 11.4.13-MariaDB
+[23:10:35] database uatreh52 recreated empty (utf8mb4 / utf8mb4_unicode_ci, as stage-a-install.sh creates it on UAT)
+restored D:/Claude Local/kit-scratch/uatreh/run/dumps/uatreh52-at-5.2.sql into uatreh52
+[23:11:03] maintenance mode ON (tree A, as the runbook does before the code swap)
+Your site is currently in Command Line Interface (CLI) maintenance mode. No web access is allowed.
+[23:11:32] upgrade: Moodle 5.3 + 7366c6050 over the 5.2 database (admin/cli/upgrade.php --non-interactive, no --allow-unstable)
+[23:31:38] PASS  5.3_upgrade_exit_0 - upgrade.php exit 0 in 1201s; Command line upgrade from 5.2+ (Build: 20260519) (2026042000.04) to 5.3 (Build: 20261005) (2026100500) completed successfully.
+[23:31:41] upgrade log summary: Fatal error 0 Parse error 0 Error 0 Exception 0 Warning 1 Notice 0 Debugging 0 Deprecated 0 components that printed a --> header: 443 
+[23:31:43] components that ran upgrade steps: 443
+Maintenance mode has been disabled and the site is running normally again
+[23:32:07] purge_caches (tree B) exit 0
+[23:33:04] PASS  5.3_schema_matches_install_xml - check_database_schema.php (tree B) exit 1: 55 known tenant-substrate finding(s), 0 unknown, 0 new since the 5.2 site, 5 of the 5.2 site's findings resolved (tables now declared in an install.xml)
+[23:34:01] snapshot B: 481 plugins, 0 not up to date or missing | 690 tables | 2978 settings | 125 flags
+[23:34:03] PASS  5.3_all_plugins_uptodate_db_eq_disk - == after-upgrade status: 0 plugin(s) not uptodate: none == after-upgrade db version != disk version: 0: none 
+[23:34:06] PASS  5.3_no_data_rows_lost - tables: before 654, after 690 (36 added, 0 dropped) rows:   before 11514, after 13001  ; == tables whose row count FELL: 0 (data-bearing: 0, volatile / registry tables: 0)
+[23:34:07] PASS  5.3_posture_settings_unchanged - theme / forcelogin / enablemyhome / frontpage ...: 0 changed
+[23:34:10] PASS  5.3_flags_stay_off - flags before 94, after 125; existing flag lines changed: 0; new flags not default-off: 0
+[23:34:38] PASS  5.3_no_upgrade_pending - upgrade.php --is-pending (tree B) exit 0
+[23:34:58] downgrade probe (5.2 code, upgraded database) exit 1: Error: The code you are using is older than the version recorded in the database.  
+[23:35:10] core release on the upgraded database: 5.3 (Build: 20261005)
+[23:35:50] scheduled_task.php --list: 165 lines, 32 Sentientia tasks
+[23:36:22] PASS  task_\local_sentientia_api\task\cleanup - scheduled_task.php --execute exit 0: ... used 16.3 MB peak memory Scheduled task complete: Sentientia API cleanup (rate counters, LTI nonces, request log) (local_sentientia_api\task\cleanup) 
+[23:36:37] PASS  task_\local_sentientia_xapi\task\purge_old_statements - scheduled_task.php --execute exit 0: ... used 16.4 MB peak memory Scheduled task complete: Purge old xAPI statements (local_sentientia_xapi\task\purge_old_statements) 
+[23:36:50] PASS  task_\local_sentientia_platform\task\publish_cron_health - scheduled_task.php --execute exit 0: ... used 16.2 MB peak memory Scheduled task complete: Airpay Core: publish cron-health summary (local_sentientia_platform\task\publish_cron_health) 
+[23:37:01] repair_task_registrations dry run (tree B) exit 0: Message preferences check: 0 problems
+[23:37:19] import_bizlms.php --list exit 0: 19 importer(s) registered 
+[23:37:32] cron_health.php exit 0: 
+[23:37:57] render /login/index.php -> HTTP 200, 33583 bytes, fatal-error markers 0, warning/debug markers 0
+[23:37:58] PASS  render/login/index.php - web render on the upgraded database: HTTP 200, fatal markers 0, debug markers 0
+[23:38:12] render /index.php -> HTTP 200, 71704 bytes, fatal-error markers 0, warning/debug markers 0
+[23:38:13] PASS  render/index.php - web render on the upgraded database: HTTP 200, fatal markers 0, debug markers 0
+[23:38:26] render /course/index.php -> HTTP 303, 1520 bytes, fatal-error markers 0, warning/debug markers 0
+[23:38:43] render /admin/index.php -> HTTP 303, 1509 bytes, fatal-error markers 0, warning/debug markers 0
+[23:40:04] render_smoke_53.sh (2 rounds) exit 0:  RESULT: all four classes returned 200 in every round. 
+[23:40:04] PASS  render_smoke_53 - render_smoke_53.sh (lib/javascript.php, theme/styles.php, r.php, theme/font.php, 2 rounds) exit 0
+[23:41:24] PASS  mysql84_reserved_words - RESULT: PASS (no MySQL 8.4 reserved word among the 673 judged table and column names)
+[23:41:34] result files: D:/Claude Local/kit-scratch/uatreh/run/reports/20261015-234125
+[23:41:35] === rehearsal end: every hard check of the phases that ran passed
+[23:43:03] === rehearsal start: UAT commit 481252996 -> target origin/claude/gap-integration (7366c6050); phases report..report; root D:/Claude Local/kit-scratch/uatreh
+[23:43:08] php: 8.4.21  (UAT runs 8.3; both Moodle 5.2 and 5.3 require >= 8.3)
+[23:43:12] disk: 453G free of 563G
+[23:43:25] database server: 11.4.13-MariaDB
+[23:43:49] result files: D:/Claude Local/kit-scratch/uatreh/run/reports/20261015-234341
+[23:43:50] === rehearsal end: every hard check of the phases that ran passed

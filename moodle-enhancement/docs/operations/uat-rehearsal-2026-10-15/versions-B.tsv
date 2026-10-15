@@ -1,0 +1,484 @@
+#core	version	2026100500
+#core	release	5.3 (Build: 20261005)
+#core	branch	503
+mod_assign	2026100500	2026100500		uptodate	std
+mod_bigbluebuttonbn	2026100500	2026100500		uptodate	std
+mod_book	2026100500	2026100500		uptodate	std
+mod_choice	2026100500	2026100500		uptodate	std
+mod_data	2026100500	2026100500		uptodate	std
+mod_feedback	2026100500	2026100500		uptodate	std
+mod_folder	2026100500	2026100500		uptodate	std
+mod_forum	2026100500	2026100500		uptodate	std
+mod_glossary	2026100500	2026100500		uptodate	std
+mod_h5pactivity	2026100500	2026100500		uptodate	std
+mod_imscp	2026100500	2026100500		uptodate	std
+mod_label	2026100500	2026100500		uptodate	std
+mod_lesson	2026100500	2026100500		uptodate	std
+mod_lti	2026100500	2026100500		uptodate	std
+mod_page	2026100500	2026100500		uptodate	std
+mod_qbank	2026100500	2026100500		uptodate	std
+mod_quiz	2026100500	2026100500		uptodate	std
+mod_resource	2026100500	2026100500		uptodate	std
+mod_scorm	2026100500	2026100500		uptodate	std
+mod_subsection	2026100500	2026100500		uptodate	std
+mod_url	2026100500	2026100500		uptodate	std
+mod_wiki	2026100500	2026100500		uptodate	std
+mod_workshop	2026100500	2026100500		uptodate	std
+assignsubmission_comments	2026100500	2026100500		uptodate	std
+assignsubmission_file	2026100500	2026100500		uptodate	std
+assignsubmission_onlinetext	2026100500	2026100500		uptodate	std
+assignfeedback_comments	2026100500	2026100500		uptodate	std
+assignfeedback_editpdf	2026100500	2026100500		uptodate	std
+assignfeedback_file	2026100500	2026100500		uptodate	std
+assignfeedback_offline	2026100500	2026100500		uptodate	std
+booktool_exportimscp	2026100500	2026100500		uptodate	std
+booktool_importhtml	2026100500	2026100500		uptodate	std
+booktool_print	2026100500	2026100500		uptodate	std
+datafield_checkbox	2026100500	2026100500		uptodate	std
+datafield_date	2026100500	2026100500		uptodate	std
+datafield_file	2026100500	2026100500		uptodate	std
+datafield_latlong	2026100500	2026100500		uptodate	std
+datafield_menu	2026100500	2026100500		uptodate	std
+datafield_multimenu	2026100500	2026100500		uptodate	std
+datafield_number	2026100500	2026100500		uptodate	std
+datafield_picture	2026100500	2026100500		uptodate	std
+datafield_radiobutton	2026100500	2026100500		uptodate	std
+datafield_text	2026100500	2026100500		uptodate	std
+datafield_textarea	2026100500	2026100500		uptodate	std
+datafield_url	2026100500	2026100500		uptodate	std
+datapreset_imagegallery	2026100500	2026100500		uptodate	std
+datapreset_journal	2026100500	2026100500		uptodate	std
+datapreset_proposals	2026100500	2026100500		uptodate	std
+datapreset_resources	2026100500	2026100500		uptodate	std
+forumreport_summary	2026100500	2026100500		uptodate	std
+ltiservice_basicoutcomes	2026100500	2026100500		uptodate	std
+ltiservice_gradebookservices	2026100500	2026100500		uptodate	std
+ltiservice_memberships	2026100500	2026100500		uptodate	std
+ltiservice_profile	2026100500	2026100500		uptodate	std
+ltiservice_toolproxy	2026100500	2026100500		uptodate	std
+ltiservice_toolsettings	2026100500	2026100500		uptodate	std
+quiz_grading	2026100500	2026100500		uptodate	std
+quiz_overview	2026100500	2026100500		uptodate	std
+quiz_responses	2026100500	2026100500		uptodate	std
+quiz_statistics	2026100500	2026100500		uptodate	std
+quizaccess_delaybetweenattempts	2026100500	2026100500		uptodate	std
+quizaccess_ipaddress	2026100500	2026100500		uptodate	std
+quizaccess_numattempts	2026100500	2026100500		uptodate	std
+quizaccess_offlineattempts	2026100500	2026100500		uptodate	std
+quizaccess_openclosedate	2026100500	2026100500		uptodate	std
+quizaccess_password	2026100500	2026100500		uptodate	std
+quizaccess_seb	2026100500	2026100500		uptodate	std
+quizaccess_securewindow	2026100500	2026100500		uptodate	std
+quizaccess_sentientia_proctoring	2026080400	2026080400	1.1.1	uptodate	add
+quizaccess_timelimit	2026100500	2026100500		uptodate	std
+scormreport_basic	2026100500	2026100500		uptodate	std
+scormreport_graphs	2026100500	2026100500		uptodate	std
+scormreport_interactions	2026100500	2026100500		uptodate	std
+scormreport_objectives	2026100500	2026100500		uptodate	std
+workshopform_accumulative	2026100500	2026100500		uptodate	std
+workshopform_comments	2026100500	2026100500		uptodate	std
+workshopform_numerrors	2026100500	2026100500		uptodate	std
+workshopform_rubric	2026100500	2026100500		uptodate	std
+workshopallocation_manual	2026100500	2026100500		uptodate	std
+workshopallocation_random	2026100500	2026100500		uptodate	std
+workshopallocation_scheduled	2026100500	2026100500		uptodate	std
+workshopeval_best	2026100500	2026100500		uptodate	std
+block_accessreview	2026100500	2026100500		uptodate	std
+block_activity_results	2026100500	2026100500		uptodate	std
+block_admin_bookmarks	2026100500	2026100500		uptodate	std
+block_badges	2026100500	2026100500		uptodate	std
+block_blog_menu	2026100500	2026100500		uptodate	std
+block_blog_recent	2026100500	2026100500		uptodate	std
+block_blog_tags	2026100500	2026100500		uptodate	std
+block_calendar_month	2026100500	2026100500		uptodate	std
+block_calendar_upcoming	2026100500	2026100500		uptodate	std
+block_comments	2026100500	2026100500		uptodate	std
+block_completionstatus	2026100500	2026100500		uptodate	std
+block_course_list	2026100500	2026100500		uptodate	std
+block_course_summary	2026100500	2026100500		uptodate	std
+block_feedback	2026100500	2026100500		uptodate	std
+block_globalsearch	2026100500	2026100500		uptodate	std
+block_glossary_random	2026100500	2026100500		uptodate	std
+block_html	2026100500	2026100500		uptodate	std
+block_learnerscript	2019052008.6	2019052008.6		uptodate	add
+block_login	2026100500	2026100500		uptodate	std
+block_lp	2026100500	2026100500		uptodate	std
+block_mentees	2026100500	2026100500		uptodate	std
+block_myoverview	2026100500	2026100500		uptodate	std
+block_myprofile	2026100500	2026100500		uptodate	std
+block_navigation	2026100500	2026100500		uptodate	std
+block_news_items	2026100500	2026100500		uptodate	std
+block_online_users	2026100500	2026100500		uptodate	std
+block_private_files	2026100500	2026100500		uptodate	std
+block_recent_activity	2026100500	2026100500		uptodate	std
+block_recentlyaccessedcourses	2026100500	2026100500		uptodate	std
+block_recentlyaccesseditems	2026100500	2026100500		uptodate	std
+block_reportdashboard	2019052001.3	2019052001.3		uptodate	add
+block_reporttiles	2019052001	2019052001		uptodate	add
+block_rss_client	2026100500	2026100500		uptodate	std
+block_search_forums	2026100500	2026100500		uptodate	std
+block_selfcompletion	2026100500	2026100500		uptodate	std
+block_sentientia_cert_health	2026100800	2026100800	1.0.1	uptodate	add
+block_sentientia_compliance	2026100800	2026100800	1.0.1-beta	uptodate	add
+block_sentientia_cron_health	2026080400	2026080400	1.0.0	uptodate	add
+block_sentientia_leaderboard	2026092500	2026092500	0.1.1-alpha	uptodate	add
+block_sentientia_recommendations	2026080400	2026080400	0.1.0-alpha	uptodate	add
+block_sentientia_trainer	2026080400	2026080400	1.0.0	uptodate	add
+block_settings	2026100500	2026100500		uptodate	std
+block_site_main_menu	2026100500	2026100500		uptodate	std
+block_social_activities	2026100500	2026100500		uptodate	std
+block_starredcourses	2026100500	2026100500		uptodate	std
+block_tag_flickr	2026100500	2026100500		uptodate	std
+block_tag_youtube	2026100500	2026100500		uptodate	std
+block_tags	2026100500	2026100500		uptodate	std
+block_timeline	2026100500	2026100500		uptodate	std
+qtype_calculated	2026100500	2026100500		uptodate	std
+qtype_calculatedmulti	2026100500	2026100500		uptodate	std
+qtype_calculatedsimple	2026100500	2026100500		uptodate	std
+qtype_ddimageortext	2026100500	2026100500		uptodate	std
+qtype_ddmarker	2026100500	2026100500		uptodate	std
+qtype_ddwtos	2026100500	2026100500		uptodate	std
+qtype_description	2026100500	2026100500		uptodate	std
+qtype_essay	2026100500	2026100500		uptodate	std
+qtype_gapselect	2026100500	2026100500		uptodate	std
+qtype_match	2026100500	2026100500		uptodate	std
+qtype_missingtype	2026100500	2026100500		uptodate	std
+qtype_multianswer	2026100500	2026100500		uptodate	std
+qtype_multichoice	2026100500	2026100500		uptodate	std
+qtype_numerical	2026100500	2026100500		uptodate	std
+qtype_ordering	2026100500	2026100500		uptodate	std
+qtype_randomsamatch	2026100500	2026100500		uptodate	std
+qtype_shortanswer	2026100500	2026100500		uptodate	std
+qtype_truefalse	2026100500	2026100500		uptodate	std
+qbank_bulkmove	2026100500	2026100500		uptodate	std
+qbank_columnsortorder	2026100500	2026100500		uptodate	std
+qbank_comment	2026100500	2026100500		uptodate	std
+qbank_customfields	2026100500	2026100500		uptodate	std
+qbank_deletequestion	2026100500	2026100500		uptodate	std
+qbank_editquestion	2026100500	2026100500		uptodate	std
+qbank_exportquestions	2026100500	2026100500		uptodate	std
+qbank_exporttoxml	2026100500	2026100500		uptodate	std
+qbank_history	2026100500	2026100500		uptodate	std
+qbank_importquestions	2026100500	2026100500		uptodate	std
+qbank_managecategories	2026100500	2026100500		uptodate	std
+qbank_previewquestion	2026100500	2026100500		uptodate	std
+qbank_statistics	2026100500	2026100500		uptodate	std
+qbank_tagquestion	2026100500	2026100500		uptodate	std
+qbank_usage	2026100500	2026100500		uptodate	std
+qbank_viewcreator	2026100500	2026100500		uptodate	std
+qbank_viewquestionname	2026100500	2026100500		uptodate	std
+qbank_viewquestiontext	2026100500	2026100500		uptodate	std
+qbank_viewquestiontype	2026100500	2026100500		uptodate	std
+qbehaviour_adaptive	2026100500	2026100500		uptodate	std
+qbehaviour_adaptivenopenalty	2026100500	2026100500		uptodate	std
+qbehaviour_deferredcbm	2026100500	2026100500		uptodate	std
+qbehaviour_deferredfeedback	2026100500	2026100500		uptodate	std
+qbehaviour_immediatecbm	2026100500	2026100500		uptodate	std
+qbehaviour_immediatefeedback	2026100500	2026100500		uptodate	std
+qbehaviour_informationitem	2026100500	2026100500		uptodate	std
+qbehaviour_interactive	2026100500	2026100500		uptodate	std
+qbehaviour_interactivecountback	2026100500	2026100500		uptodate	std
+qbehaviour_manualgraded	2026100500	2026100500		uptodate	std
+qbehaviour_missing	2026100500	2026100500		uptodate	std
+qformat_aiken	2026100500	2026100500		uptodate	std
+qformat_blackboard_six	2026100500	2026100500		uptodate	std
+qformat_gift	2026100500	2026100500		uptodate	std
+qformat_missingword	2026100500	2026100500		uptodate	std
+qformat_multianswer	2026100500	2026100500		uptodate	std
+qformat_xhtml	2026100500	2026100500		uptodate	std
+qformat_xml	2026100500	2026100500		uptodate	std
+filter_activitynames	2026100500	2026100500		uptodate	std
+filter_algebra	2026100500	2026100500		uptodate	std
+filter_codehighlighter	2026100500	2026100500		uptodate	std
+filter_data	2026100500	2026100500		uptodate	std
+filter_displayh5p	2026100500	2026100500		uptodate	std
+filter_emailprotect	2026100500	2026100500		uptodate	std
+filter_emoticon	2026100500	2026100500		uptodate	std
+filter_glossary	2026100500	2026100500		uptodate	std
+filter_mathjaxloader	2026100500	2026100500		uptodate	std
+filter_mediaplugin	2026100500	2026100500		uptodate	std
+filter_multilang	2026100500	2026100500		uptodate	std
+filter_tex	2026100500	2026100500		uptodate	std
+filter_urltolink	2026100500	2026100500		uptodate	std
+editor_textarea	2026100500	2026100500		uptodate	std
+editor_tiny	2026100500	2026100500		uptodate	std
+tiny_accessibilitychecker	2026100500	2026100500		uptodate	std
+tiny_aiplacement	2026100500	2026100500		uptodate	std
+tiny_autosave	2026100500	2026100500		uptodate	std
+tiny_equation	2026100500	2026100500		uptodate	std
+tiny_h5p	2026100500	2026100500		uptodate	std
+tiny_html	2026100500	2026100500		uptodate	std
+tiny_link	2026100500	2026100500		uptodate	std
+tiny_media	2026100500	2026100500		uptodate	std
+tiny_noautolink	2026100500	2026100500		uptodate	std
+tiny_premium	2026100500	2026100500		uptodate	std
+tiny_recordrtc	2026100500	2026100500		uptodate	std
+enrol_category	2026100500	2026100500		uptodate	std
+enrol_cohort	2026100500	2026100500		uptodate	std
+enrol_database	2026100500	2026100500		uptodate	std
+enrol_fee	2026100500	2026100500		uptodate	std
+enrol_flatfile	2026100500	2026100500		uptodate	std
+enrol_guest	2026100500	2026100500		uptodate	std
+enrol_imsenterprise	2026100500	2026100500		uptodate	std
+enrol_ldap	2026100500	2026100500		uptodate	std
+enrol_lti	2026100500	2026100500		uptodate	std
+enrol_manual	2026100500	2026100500		uptodate	std
+enrol_meta	2026100500	2026100500		uptodate	std
+enrol_paypal	2026100500	2026100500		uptodate	std
+enrol_self	2026100500	2026100500		uptodate	std
+enrol_sentientiasub	2026060300	2026060300	0.2.0-alpha	uptodate	add
+auth_db	2026100500	2026100500		uptodate	std
+auth_email	2026100500	2026100500		uptodate	std
+auth_ldap	2026100500	2026100500		uptodate	std
+auth_lti	2026100500	2026100500		uptodate	std
+auth_manual	2026100500	2026100500		uptodate	std
+auth_nologin	2026100500	2026100500		uptodate	std
+auth_none	2026100500	2026100500		uptodate	std
+auth_oauth2	2026100500	2026100500		uptodate	std
+auth_shibboleth	2026100500	2026100500		uptodate	std
+auth_webservice	2026100500	2026100500		uptodate	std
+tool_admin_presets	2026100500	2026100500		uptodate	std
+tool_analytics	2026100500	2026100500		uptodate	std
+tool_availabilityconditions	2026100500	2026100500		uptodate	std
+tool_behat	2026100500	2026100500		uptodate	std
+tool_brickfield	2026100500	2026100500		uptodate	std
+tool_capability	2026100500	2026100500		uptodate	std
+tool_certificate	2025031804	2025031804	4.5.7	uptodate	add
+tool_cohortroles	2026100500	2026100500		uptodate	std
+tool_componentlibrary	2026100500	2026100500		uptodate	std
+tool_customlang	2026100500	2026100500		uptodate	std
+tool_dataprivacy	2026100500	2026100500		uptodate	std
+tool_dbtransfer	2026100500	2026100500		uptodate	std
+tool_filetypes	2026100500	2026100500		uptodate	std
+tool_generator	2026100500	2026100500		uptodate	std
+tool_httpsreplace	2026100500	2026100500		uptodate	std
+tool_installaddon	2026100500	2026100500		uptodate	std
+tool_langimport	2026100500	2026100500		uptodate	std
+tool_licensemanager	2026100500	2026100500		uptodate	std
+tool_log	2026100500	2026100500		uptodate	std
+tool_lp	2026100500	2026100500		uptodate	std
+tool_lpimportcsv	2026100500	2026100500		uptodate	std
+tool_lpmigrate	2026100500	2026100500		uptodate	std
+tool_messageinbound	2026100500	2026100500		uptodate	std
+tool_mfa	2026100500	2026100500		uptodate	std
+tool_mobile	2026100500	2026100500		uptodate	std
+tool_monitor	2026100500	2026100500		uptodate	std
+tool_multilangupgrade	2026100500	2026100500		uptodate	std
+tool_oauth2	2026100500	2026100500		uptodate	std
+tool_phpunit	2026100500	2026100500		uptodate	std
+tool_policy	2026100500	2026100500		uptodate	std
+tool_profiling	2026100500	2026100500		uptodate	std
+tool_recyclebin	2026100500	2026100500		uptodate	std
+tool_replace	2026100500	2026100500		uptodate	std
+tool_spamcleaner	2026100500	2026100500		uptodate	std
+tool_task	2026100500	2026100500		uptodate	std
+tool_templatelibrary	2026100500	2026100500		uptodate	std
+tool_unsuproles	2026100500	2026100500		uptodate	std
+tool_uploadcourse	2026100500	2026100500		uptodate	std
+tool_uploaduser	2026100500	2026100500		uptodate	std
+tool_usertours	2026100500	2026100500		uptodate	std
+tool_xmldb	2026100500	2026100500		uptodate	std
+certificateelement_border	2025031804	2025031804	4.5.7	uptodate	add
+certificateelement_code	2025031804	2025031804	4.5.7	uptodate	add
+certificateelement_date	2025031804	2025031804	4.5.7	uptodate	add
+certificateelement_digitalsignature	2025031804	2025031804	4.5.7	uptodate	add
+certificateelement_image	2025031804	2025031804	4.5.7	uptodate	add
+certificateelement_program	2025031804	2025031804	4.5.7	uptodate	add
+certificateelement_text	2025031804	2025031804	4.5.7	uptodate	add
+certificateelement_userfield	2025031804	2025031804	4.5.7	uptodate	add
+certificateelement_userpicture	2025031804	2025031804	4.5.7	uptodate	add
+logstore_database	2026100500	2026100500		uptodate	std
+logstore_standard	2026100500	2026100500		uptodate	std
+factor_admin	2026100500	2026100500		uptodate	std
+factor_auth	2026100500	2026100500		uptodate	std
+factor_capability	2026100500	2026100500		uptodate	std
+factor_cohort	2026100500	2026100500		uptodate	std
+factor_email	2026100500	2026100500		uptodate	std
+factor_grace	2026100500	2026100500		uptodate	std
+factor_iprange	2026100500	2026100500		uptodate	std
+factor_nosetup	2026100500	2026100500		uptodate	std
+factor_role	2026100500	2026100500		uptodate	std
+factor_sms	2026100500	2026100500		uptodate	std
+factor_token	2026100500	2026100500		uptodate	std
+factor_totp	2026100500	2026100500		uptodate	std
+factor_webauthn	2026100500	2026100500		uptodate	std
+aiplacement_courseassist	2026100500	2026100500		uptodate	std
+aiplacement_editor	2026100500	2026100500		uptodate	std
+aiprovider_anthropic	2026100500	2026100500		uptodate	std
+aiprovider_awsbedrock	2026100500	2026100500		uptodate	std
+aiprovider_azureai	2026100500	2026100500		uptodate	std
+aiprovider_deepseek	2026100500	2026100500		uptodate	std
+aiprovider_gemini	2026100500	2026100500		uptodate	std
+aiprovider_ollama	2026100500	2026100500		uptodate	std
+aiprovider_openai	2026100500	2026100500		uptodate	std
+antivirus_clamav	2026100500	2026100500		uptodate	std
+availability_completion	2026100500	2026100500		uptodate	std
+availability_date	2026100500	2026100500		uptodate	std
+availability_grade	2026100500	2026100500		uptodate	std
+availability_group	2026100500	2026100500		uptodate	std
+availability_grouping	2026100500	2026100500		uptodate	std
+availability_profile	2026100500	2026100500		uptodate	std
+calendartype_gregorian	2026100500	2026100500		uptodate	std
+communication_customlink	2026100500	2026100500		uptodate	std
+communication_matrix	2026100500	2026100500		uptodate	std
+customfield_checkbox	2026100500	2026100500		uptodate	std
+customfield_date	2026100500	2026100500		uptodate	std
+customfield_number	2026100500	2026100500		uptodate	std
+customfield_select	2026100500	2026100500		uptodate	std
+customfield_text	2026100500	2026100500		uptodate	std
+customfield_textarea	2026100500	2026100500		uptodate	std
+message_airnotifier	2026100500	2026100500		uptodate	std
+message_email	2026100500	2026100500		uptodate	std
+message_popup	2026100500	2026100500		uptodate	std
+message_sms	2026100500	2026100500		uptodate	std
+media_html5audio	2026100500	2026100500		uptodate	std
+media_html5video	2026100500	2026100500		uptodate	std
+media_videojs	2026100500	2026100500		uptodate	std
+media_vimeo	2026100500	2026100500		uptodate	std
+media_youtube	2026100500	2026100500		uptodate	std
+format_topics	2026100500	2026100500		uptodate	std
+format_weeks	2026100500	2026100500		uptodate	std
+format_singleactivity	2026100500	2026100500		uptodate	std
+format_social	2026100500	2026100500		uptodate	std
+dataformat_csv	2026100500	2026100500		uptodate	std
+dataformat_excel	2026100500	2026100500		uptodate	std
+dataformat_html	2026100500	2026100500		uptodate	std
+dataformat_json	2026100500	2026100500		uptodate	std
+dataformat_ods	2026100500	2026100500		uptodate	std
+dataformat_pdf	2026100500	2026100500		uptodate	std
+profilefield_checkbox	2026100500	2026100500		uptodate	std
+profilefield_datetime	2026100500	2026100500		uptodate	std
+profilefield_menu	2026100500	2026100500		uptodate	std
+profilefield_social	2026100500	2026100500		uptodate	std
+profilefield_text	2026100500	2026100500		uptodate	std
+profilefield_textarea	2026100500	2026100500		uptodate	std
+report_aiusage	2026100500	2026100500		uptodate	std
+report_backups	2026100500	2026100500		uptodate	std
+report_competency	2026100500	2026100500		uptodate	std
+report_completion	2026100500	2026100500		uptodate	std
+report_configlog	2026100500	2026100500		uptodate	std
+report_courseoverview	2026100500	2026100500		uptodate	std
+report_eventlist	2026100500	2026100500		uptodate	std
+report_infectedfiles	2026100500	2026100500		uptodate	std
+report_insights	2026100500	2026100500		uptodate	std
+report_log	2026100500	2026100500		uptodate	std
+report_loglive	2026100500	2026100500		uptodate	std
+report_outline	2026100500	2026100500		uptodate	std
+report_participation	2026100500	2026100500		uptodate	std
+report_performance	2026100500	2026100500		uptodate	std
+report_progress	2026100500	2026100500		uptodate	std
+report_questioninstances	2026100500	2026100500		uptodate	std
+report_security	2026100500	2026100500		uptodate	std
+report_stats	2026100500	2026100500		uptodate	std
+report_status	2026100500	2026100500		uptodate	std
+report_themeusage	2026100500	2026100500		uptodate	std
+report_usersessions	2026100500	2026100500		uptodate	std
+gradeexport_ods	2026100500	2026100500		uptodate	std
+gradeexport_txt	2026100500	2026100500		uptodate	std
+gradeexport_xls	2026100500	2026100500		uptodate	std
+gradeexport_xml	2026100500	2026100500		uptodate	std
+gradeimport_csv	2026100500	2026100500		uptodate	std
+gradeimport_direct	2026100500	2026100500		uptodate	std
+gradeimport_xml	2026100500	2026100500		uptodate	std
+gradepenalty_duedate	2026100500	2026100500		uptodate	std
+gradereport_grader	2026100500	2026100500		uptodate	std
+gradereport_history	2026100500	2026100500		uptodate	std
+gradereport_outcomes	2026100500	2026100500		uptodate	std
+gradereport_overview	2026100500	2026100500		uptodate	std
+gradereport_singleview	2026100500	2026100500		uptodate	std
+gradereport_summary	2026100500	2026100500		uptodate	std
+gradereport_user	2026100500	2026100500		uptodate	std
+gradingform_guide	2026100500	2026100500		uptodate	std
+gradingform_rubric	2026100500	2026100500		uptodate	std
+mlbackend_python	2026100500	2026100500		uptodate	std
+webservice_rest	2026100500	2026100500		uptodate	std
+webservice_soap	2026100500	2026100500		uptodate	std
+repository_areafiles	2026100500	2026100500		uptodate	std
+repository_contentbank	2026100500	2026100500		uptodate	std
+repository_coursefiles	2026100500	2026100500		uptodate	std
+repository_dropbox	2026100500	2026100500		uptodate	std
+repository_equella	2026100500	2026100500		uptodate	std
+repository_filesystem	2026100500	2026100500		uptodate	std
+repository_flickr	2026100500	2026100500		uptodate	std
+repository_flickr_public	2026100500	2026100500		uptodate	std
+repository_googledocs	2026100500	2026100500		uptodate	std
+repository_local	2026100500	2026100500		uptodate	std
+repository_merlot	2026100500	2026100500		uptodate	std
+repository_nextcloud	2026100500	2026100500		uptodate	std
+repository_onedrive	2026100500	2026100500		uptodate	std
+repository_recent	2026100500	2026100500		uptodate	std
+repository_s3	2026100500	2026100500		uptodate	std
+repository_upload	2026100500	2026100500		uptodate	std
+repository_url	2026100500	2026100500		uptodate	std
+repository_user	2026100500	2026100500		uptodate	std
+repository_webdav	2026100500	2026100500		uptodate	std
+repository_wikimedia	2026100500	2026100500		uptodate	std
+repository_youtube	2026100500	2026100500		uptodate	std
+portfolio_download	2026100500	2026100500		uptodate	std
+portfolio_flickr	2026100500	2026100500		uptodate	std
+portfolio_googledocs	2026100500	2026100500		uptodate	std
+search_simpledb	2026100500	2026100500		uptodate	std
+search_solr	2026100500	2026100500		uptodate	std
+cachestore_apcu	2026100500	2026100500		uptodate	std
+cachestore_file	2026100500	2026100500		uptodate	std
+cachestore_redis	2026100500	2026100500		uptodate	std
+cachestore_session	2026100500	2026100500		uptodate	std
+cachestore_static	2026100500	2026100500		uptodate	std
+cachelock_file	2026100500	2026100500		uptodate	std
+fileconverter_googledrive	2026100500	2026100500		uptodate	std
+fileconverter_unoconv	2026100500	2026100500		uptodate	std
+contenttype_h5p	2026100500	2026100500		uptodate	std
+theme_boost	2026100500	2026100500		uptodate	std
+theme_sentientia	2026100808	2026100808	1.0.58-beta	uptodate	add
+local_sentientia_ai	2026092500	2026092500	0.1.1-alpha	uptodate	add
+local_sentientia_aiquiz	2026100800	2026100800	0.3.1-alpha	uptodate	add
+local_sentientia_analytics	2026092500	2026092500	1.2.3-beta	uptodate	add
+local_sentientia_api	2026092501	2026092501	1.3.2	uptodate	add
+local_sentientia_assistant	2026092201	2026092201	1.2.2-alpha	uptodate	add
+local_sentientia_authoring	2026092500	2026092500	0.2.2-alpha	uptodate	add
+local_sentientia_calendar	2026100800	2026100800	1.2.1-beta	uptodate	add
+local_sentientia_cart	2026100801	2026100801	1.1.1	uptodate	add
+local_sentientia_catalog	2026100702	2026100702	1.0.9-beta	uptodate	add
+local_sentientia_challenge	2026092501	2026092501	1.1.6-alpha	uptodate	add
+local_sentientia_classroom	2026100702	2026100702	1.11.2	uptodate	add
+local_sentientia_compliance_report	2026092401	2026092401	1.0.5	uptodate	add
+local_sentientia_content_market	2026100901	2026100901	1.0.3-beta	uptodate	add
+local_sentientia_core	2026093001	2026093001	0.8.0-alpha	uptodate	add
+local_sentientia_courses	2026100801	2026100801	1.14.0	uptodate	add
+local_sentientia_emails	2026100804	2026100804	1.4.0	uptodate	add
+local_sentientia_evaluation	2026100802	2026100802	1.16.0	uptodate	add
+local_sentientia_exams	2026100701	2026100701	1.7.1	uptodate	add
+local_sentientia_gamification	2026092500	2026092500	1.0.5-beta	uptodate	add
+local_sentientia_integrations	2026080700	2026080700	1.2.0-beta	uptodate	add
+local_sentientia_leaderboard	2026092500	2026092500	0.2.2-alpha	uptodate	add
+local_sentientia_learningpath	2026100701	2026100701	1.9.1	uptodate	add
+local_sentientia_lifecycle	2026080700	2026080700	1.1.0-beta	uptodate	add
+local_sentientia_live	2026092500	2026092500	0.2.4-alpha	uptodate	add
+local_sentientia_m365	2026052801	2026052801	0.2.0-alpha	uptodate	add
+local_sentientia_manager	2026093001	2026093001	1.3.7	uptodate	add
+local_sentientia_notifications	2026100900	2026100900	1.5.1	uptodate	add
+local_sentientia_org	2026100802	2026100802	1.6.1	uptodate	add
+local_sentientia_pages	2026092400	2026092400	1.2	uptodate	add
+local_sentientia_platform	2026100903	2026100903	1.12.0	uptodate	add
+local_sentientia_privacy	2026092500	2026092500	1.0.3	uptodate	add
+local_sentientia_proctoring	2026092500	2026092500	1.0.4	uptodate	add
+local_sentientia_programs	2026100701	2026100701	1.9.1	uptodate	add
+local_sentientia_pwa	2026092900	2026092900	0.6.1-alpha	uptodate	add
+local_sentientia_ratings	2026100701	2026100701	1.2.1	uptodate	add
+local_sentientia_recommendations	2026092500	2026092500	0.1.2-alpha	uptodate	add
+local_sentientia_recompletion	2026100801	2026100801	1.2.2	uptodate	add
+local_sentientia_reports	2026100101	2026100101	1.3.0	uptodate	add
+local_sentientia_request	2026100801	2026100801	1.5.1	uptodate	add
+local_sentientia_roles	2026100701	2026100701	1.3.2-beta	uptodate	add
+local_sentientia_skills	2026100802	2026100802	1.7.0	uptodate	add
+local_sentientia_skillsai	2026092500	2026092500	0.1.3-alpha	uptodate	add
+local_sentientia_talent	2026061600	2026061600	1.0.0-beta	uptodate	add
+local_sentientia_translate	2026092500	2026092500	0.2.2-alpha	uptodate	add
+local_sentientia_users	2026100800	2026100800	2.9.1	uptodate	add
+local_sentientia_whatsapp	2026092500	2026092500	0.4.1-alpha	uptodate	add
+local_sentientia_xapi	2026090302	2026090302	1.0.2	uptodate	add
+h5plib_v128	2026100500	2026100500		uptodate	std
+paygw_airpay	2026100800	2026100800	1.0.2	uptodate	add
+paygw_paypal	2026100500	2026100500		uptodate	std
+smsgateway_aws	2026100500	2026100500		uptodate	std
+smsgateway_modica	2026100500	2026100500		uptodate	std

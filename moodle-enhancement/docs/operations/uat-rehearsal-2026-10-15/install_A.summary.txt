@@ -1,0 +1,13 @@
+Fatal error      0
+Parse error      0
+Error            0
+Exception        0
+Warning          2
+Notice           0
+Debugging        0
+Deprecated       0
+components that printed a --> header: 482
+
+-- Warning: 2 line(s), 2 distinct
+  x1   openssl_pkey_export(): Cannot get key from parameter 1   [mod/lti/upgradelib.php:52]
+  x1   openssl_pkey_export(): Cannot get key from parameter 1   [enrol/lti/upgradelib.php:52]

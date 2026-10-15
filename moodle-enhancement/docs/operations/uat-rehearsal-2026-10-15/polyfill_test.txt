@@ -1,0 +1,4 @@
+Negative test, 2026-10-15: public/r.php lines 28-33 emulated (ABORT_AFTER_CONFIG, config.php, setuplib.php) on the Moodle 5.3 tree.
+with the 5.2-recipe conditional polyfill in config.php : Fatal error: Cannot redeclare function ini_get_bool() (previously declared in config.php:30) in public/lib/setuplib.php
+without it (the generated 5.3 config.php)             : loaded setuplib.php without a redeclare error
+Meaning: if UAT's config.php carries the ini_get_bool polyfill of the 5.2 recipe, it must be removed from the 5.3 copy, or r.php (the ESM loader) 500s on every page.
