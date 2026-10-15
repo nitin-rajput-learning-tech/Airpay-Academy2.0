@@ -62,6 +62,28 @@ just because they hold `:approve`: `request_manager::has_approvals_entry()` offe
 | `local_sentientia_request_list_pending` | List requests assigned to me as approver |
 | `local_sentientia_request_pending_count` | Badge count for nav |
 
+## Request enrolment on the catalogue (flag, default OFF)
+
+`amd/src/request_button.js` opens the Request enrolment dialog for any `[data-action="request-course"]`
+element, but until 2026-10-15 no page rendered one, so a learner could not start a request. With
+`sentientia.request.catalog_button` ON (per tenant or customer-wide from the Switchboard), the logged-in
+catalogue card and the catalogue course page (`local_sentientia_catalog`: `course_card.mustache`, `course.php`)
+offer the button. `classes/catalog_cta.php` owns the rule, so the catalogue does not re-implement it. The
+learner is offered **Request enrolment** when all of these hold:
+
+- a real, logged-in user holding `local/sentientia_request:request`;
+- not enrolled in the course already;
+- a course `submit()` would accept (visible, in the learner's tenant scope, ADR-031): `request_manager::can_request_course()`;
+- no way in of the course's own: no enabled self-enrolment instance the learner can use (`enrol_self::can_self_enrol()`;
+  an enrolment key counts as a way in, a cohort or date restriction they fail does not).
+
+The catalogue adds its own two routes first (`enrolment::request_state()`): a **paid** course goes to the cart,
+and a **free** course the learner is offered one-click enrolment for
+(`sentientia.catalog.free_oneclick_enrol.enabled`) is enrolled at once. While a request of the learner's for the
+course is pending (imported BizLMS rows only when `imported_history` shows them) the button reads **Request
+pending** and is not clickable. With the flag OFF nothing is rendered and the catalogue is as it was. Not
+covered: the guest/Public storefront (`public.php`, cart), which keeps its Add-to-cart routes.
+
 ## Message providers
 
 | Provider | When |

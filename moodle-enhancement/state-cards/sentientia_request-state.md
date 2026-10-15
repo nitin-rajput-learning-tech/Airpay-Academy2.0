@@ -1,10 +1,10 @@
 # State Card — `local_sentientia_request`
 
 **Component:** `local_sentientia_request` (was `local_airpay_request` until ADR-022/025; older sections below still use the old name)
-**Version:** `2026100701` / `1.5.1`  (ADR-032 importer was `2026093001` / `1.5.0`; the 2026-10-07 owner decisions below bump it with no schema change, for the cached flag registry and the batch's one-version-per-plugin ledger)
+**Version:** `2026101502` / `1.6.0`  (2026-10-15: the line manager holds `:approve`, upgrade step `2026101501`; the catalogue Request enrolment button, flag OFF. Was `2026100801` / `1.5.1`; ADR-032 importer was `2026093001` / `1.5.0`. No schema change since 1.5.0.)
 **Maturity:** `MATURITY_STABLE`
 **Status:** Learner-driven course request workflow (Sentientia is not live yet; the live system is BizLMS).
-**Last refreshed:** 2026-10-07 (COMMS-R owner decisions)
+**Last refreshed:** 2026-10-15 (visual-pass finding 7: approver capability + catalogue button)
 
 ---
 
@@ -374,3 +374,46 @@ Branch `claude/ui-fix-request`, from the 2026-10-14 visual pass on local XAMPP 5
   have permissions") with the learner's request and Approve / Reject; as a learner with no reports, no "Pending approvals"
   link and no button on My requests. After the upgrade runs on XAMPP, `role_capabilities` has one ALLOW row for the `user`
   role and `local/sentientia_request:approve`.
+
+## 2026-10-15 Visual-pass finding 7 (a): the learner's "Request enrolment" button (version `2026101502` / `1.6.0`, no schema change)
+
+Same branch, `claude/ui-fix-request`. PHPUnit NOT run.
+
+- **Root cause.** `amd/src/request_button.js` (FX-06b) listens for a click on `[data-action="request-course"]`
+  with `data-courseid` and `data-coursename`, but `git grep` finds no template or PHP that renders such an element.
+  The logged-in catalogue card (`local_sentientia_catalog/templates/course_card.mustache:89-93`) renders only an
+  "Enroll" link to `/course/view.php`, and `course.php` only Continue, one-click, "Enroll Now - Free"
+  (`/enrol/index.php`), or Add to Cart. The theme redirects `/enrol/index.php` to `/my`
+  (`theme/sentientia/classes/output/core_renderer.php:1324`), so on a course with nothing to enrol through the learner
+  had no way to start a request at all.
+- **The rule (this plugin owns it): `classes/catalog_cta.php`.** A request is the way in when the viewer is a real
+  logged-in user with `:request`, is not enrolled, may be enrolled (`request_manager::can_request_course()`, new: the test
+  `submit()` applies, without throwing) and the course has no way in of its own (no enabled `self` instance that passes
+  `enrol_self::can_self_enrol()`; an enrolment key is a way in, a cohort or date restriction the learner fails is not). A
+  pending request of the learner's for the course (imported rows only while `imported_history` shows them) gives the state
+  `pending` instead of a second button. Viewer only: it never answers for another user (`can_self_enrol()` reads `$USER`).
+- **Flag `sentientia.request.catalog_button`, default OFF** (`db/feature_flags.php`): CLAUDE.md section 13 says no
+  learner-visible element ships without one. OFF renders nothing and the catalogue is exactly as it was. Turning it on
+  for Airpay is Nitin's call after the visual evidence. New string `requestpending_short` (en + hi).
+- **Catalogue side (`local_sentientia_catalog` 1.0.10-beta, `2026101502`).** `enrolment::request_state()` keeps the
+  catalogue's own routes first (a paid course goes to the cart; a free course `should_offer_oneclick()` is true for is
+  enrolled at once), then asks `catalog_cta`. `catalog_manager::with_request_offers()` marks the cards AFTER the lists are
+  read (`index.php`), because trending and new_courses are cached for five minutes per user and a flag flip or a
+  just-submitted request must show on the next load. `course_card.mustache` renders the `<button>` (or the "Request
+  pending" chip); `course.php` gets two branches between the one-click and the "Enroll Now - Free" ones; `styles.css`
+  drops the native button chrome and styles the pending chip. `index.php` and `course.php` load
+  `local_sentientia_request/request_button` once, only when a button is rendered. `data-coursename` carries the plain name
+  (Mustache escapes it once, the module escapes it for its dialog), so "A &amp; B" is not shown twice-escaped.
+- **Not done:** `public.php` (the guest and Public-storefront grid) and the cart keep their Add-to-cart routes; the dialog's own
+  English strings in `request_button.js` are untouched; paths and other item types have no catalogue button (the dialog and
+  the service are course-only).
+- **Tests (not run):** `tests/catalog_cta_test.php` (flag registered and OFF; every gate; self-enrolment open, keyed, disabled,
+  expired; pending, decided, imported; foreign and hidden course; guest and other user; `can_request_course()` agrees with
+  `submit()`); catalogue `tests/request_offer_test.php` (paid and one-click first, flag OFF leaves cards untouched, enrolled
+  cards untouched, pending, plain name, viewer only).
+- **A screenshot should show** (flag ON for Airpay via `feature_flags::set('sentientia.request.catalog_button', 0, true)`, learner
+  with no self-enrolment course, e.g. a course with only a manual instance): the catalogue card footer with a primary
+  "Request enrolment" button instead of Enroll, desktop and 590 px; clicking it opens the dialog with Save and Cancel; after a
+  valid request, reloading the catalogue shows "Request pending" on that card; the same course on
+  `/local/sentientia_catalog/course.php?id=N`; the line manager's Pending approvals (finding 7b) lists it. With the flag OFF the
+  card shows Enroll again.

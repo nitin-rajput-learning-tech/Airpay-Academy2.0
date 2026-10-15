@@ -87,9 +87,27 @@
             </a>
             {{/is_enrolled}}
             {{^is_enrolled}}
+            {{! Visual-pass finding 7 (a): where a request is the learner's way in (local_sentientia_request,
+                flag sentientia.request.catalog_button, default OFF) the card offers "Request enrolment". The
+                click is handled by local_sentientia_request/request_button, loaded once by index.php;
+                data-coursename is the plain name (Mustache escapes it once). While a request is pending the
+                card says so. With the flag OFF neither section renders and the Enroll link below is unchanged. }}
+            {{#can_request}}
+            <button type="button" class="airpay-catalog__btn airpay-catalog__btn--enroll"
+                    data-action="request-course" data-courseid="{{id}}" data-coursename="{{request_coursename}}">
+                {{#str}}requestcourse_long, local_sentientia_request{{/str}}
+            </button>
+            {{/can_request}}
+            {{#request_pending}}
+            <span class="airpay-catalog__btn airpay-catalog__btn--pending" role="status">
+                {{#str}}requestpending_short, local_sentientia_request{{/str}}
+            </span>
+            {{/request_pending}}
+            {{^can_request}}{{^request_pending}}
             <a href="{{detailurl}}" class="airpay-catalog__btn airpay-catalog__btn--enroll">
                 {{#str}}enroll, local_sentientia_catalog{{/str}}
             </a>
+            {{/request_pending}}{{/can_request}}
             {{/is_enrolled}}
         </div>
     </div>

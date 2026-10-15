@@ -37,6 +37,14 @@ if ($category) {
 }
 $results = $manager::get_courses($userid, $search, $filters, $sort, $page, 12);
 
+// Visual-pass finding 7 (a), 2026-10-15: mark the cards that offer "Request enrolment" (local_sentientia_request,
+// flag sentientia.request.catalog_button, default OFF - then every list comes back unchanged). Done here, after
+// the lists are read, because trending and new_courses are cached for five minutes. The in-progress rail is all
+// enrolled courses, so it never offers a request.
+$trending = $manager::with_request_offers($trending, (int) $userid);
+$new_courses = $manager::with_request_offers($new_courses, (int) $userid);
+$results['courses'] = $manager::with_request_offers($results['courses'], (int) $userid);
+
 // Add progress_offset for SVG ring in continue-learning cards.
 foreach ($in_progress as &$ip) {
     $pct = $ip['progress'] ?? 0;
@@ -177,6 +185,18 @@ if (empty($results['courses'])) {
     $data['has_empty_state'] = true;
 } else {
     $data['has_empty_state'] = false;
+}
+
+// The Request enrolment dialog (local_sentientia_request/request_button) is loaded once per page, and only when
+// some card offers it - the module listens on the document, so loading it per card would open the dialog
+// several times.
+foreach ([$trending, $new_courses, $results['courses']] as $cards) {
+    foreach ($cards as $card) {
+        if (!empty($card['can_request'])) {
+            $PAGE->requires->js_call_amd('local_sentientia_request/request_button', 'init');
+            break 2;
+        }
+    }
 }
 
 echo $OUTPUT->header();

@@ -569,6 +569,27 @@ class request_manager {
     }
 
     /**
+     * Would submit() accept a request from this user for this course, as far as the course is concerned?
+     *
+     * The same test submit() applies (require_course_requestable(): the requester has a tenant, and the course is
+     * visible and in their enrolment scope, or the requester is cross-tenant), without throwing. The catalogue uses
+     * it to offer "Request enrolment" only where a request would be accepted (catalog_cta), so a learner is not
+     * shown a button that ends in a tenant error.
+     *
+     * @param \stdClass $requester a user record carrying id and open_path
+     * @param int $courseid
+     * @return bool
+     */
+    public static function can_request_course(\stdClass $requester, int $courseid): bool {
+        try {
+            self::require_course_requestable($requester, $courseid);
+        } catch (\moodle_exception $e) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Is this course in the enrolment scope of tenant $root?
      *
      * Delegates to local_sentientia_courses when it is installed (tree, share

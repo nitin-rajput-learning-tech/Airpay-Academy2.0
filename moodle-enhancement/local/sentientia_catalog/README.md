@@ -58,6 +58,18 @@ Coming Soon" button. With `sentientia.catalog.storefront_checkout.enabled` ON
   for: `cart.php` renders exactly as before.
 - Keep it OFF until the payment gateway has been verified in sandbox.
 
+## Request enrolment (flag in `local_sentientia_request`, default OFF)
+
+With `sentientia.request.catalog_button` ON, a course card (`course_card.mustache`) and `course.php` show
+**Request enrolment** (or **Request pending**) in place of Enroll for a learner whose only way in is a request:
+a free course with no self-enrolment of its own that the learner can use, not enrolled, in their tenant scope.
+The rule lives in `\local_sentientia_request\catalog_cta`; this plugin adds its own routes first
+(`enrolment::request_state()`: a paid course goes to the cart, a free course offered one-click enrolment is
+enrolled at once) and marks the cards after the cached lists are read (`catalog_manager::with_request_offers()`,
+called by `index.php`), so the flag and a just-submitted request show on the next load. The click is handled by
+`local_sentientia_request/request_button`, loaded once per page and only when a card offers it. Optional: without
+`local_sentientia_request`, or with the flag OFF, nothing changes. `public.php` (the guest storefront) is not touched.
+
 ## Tables
 
 None of its own — reads from `mdl_course`, `mdl_tag`, plus the airpay

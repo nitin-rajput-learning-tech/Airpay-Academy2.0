@@ -109,6 +109,40 @@ class enrolment {
     }
 
     /**
+     * Should the catalogue offer this learner "Request enrolment" for this course, instead of Enroll?
+     *
+     * Visual-pass finding 7 (a), 2026-10-15. The rule that a request is the way in lives in the request plugin
+     * (\local_sentientia_request\catalog_cta::state(): its flag sentientia.request.catalog_button, the :request
+     * capability, not enrolled, a course submit() would accept, no self-enrolment of the course's own). This adds
+     * the two things only the catalogue knows, and so keeps its own routes first:
+     *
+     *   - a PAID course goes to the cart (and checkout), never to a request;
+     *   - a FREE course this user is offered one-click enrolment for ({@see should_offer_oneclick()}) is enrolled
+     *     at once, so there is nothing to request.
+     *
+     * The request plugin is optional: without it, or with its flag OFF (the default), this is always 'none' and
+     * the catalogue renders as it did. The flag is read before anything else, so the default path costs one
+     * cached lookup per card.
+     *
+     * @param \stdClass $user    The viewer (a full user record, e.g. $USER).
+     * @param int       $courseid
+     * @param array|null $pricing The result of commerce::get_course_price(), when the caller has it already;
+     *                   read here, after the flag check, when null (a catalogue card does not have it).
+     * @return string 'request' (show the button), 'pending' (show that a request is pending) or 'none'.
+     */
+    public static function request_state(\stdClass $user, int $courseid, ?array $pricing = null): string {
+        if (!class_exists('\\local_sentientia_request\\catalog_cta')
+                || !\local_sentientia_request\catalog_cta::enabled()) {
+            return 'none';
+        }
+        $pricing ??= commerce::get_course_price($courseid);
+        if (empty($pricing['is_free']) || self::should_offer_oneclick($user, $pricing)) {
+            return 'none';
+        }
+        return \local_sentientia_request\catalog_cta::state($user, $courseid);
+    }
+
+    /**
      * MECHANISM — enrol a user in a FREE course immediately, bypassing any
      * self-enrol enrolment key by using Moodle's `manual` enrol plugin.
      *

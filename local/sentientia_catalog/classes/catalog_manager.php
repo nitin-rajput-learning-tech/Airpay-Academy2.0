@@ -719,6 +719,45 @@ class catalog_manager {
     }
 
     /**
+     * Mark the cards on which the viewer is offered "Request enrolment" (can_request) or shown "Request pending"
+     * (request_pending), in place of the Enroll link.
+     *
+     * Visual-pass finding 7 (a), 2026-10-15. Applied by index.php to the lists AFTER they are read, not inside
+     * format_course(): trending and new_courses are cached for five minutes per user, and a flag flipped, or a
+     * request just submitted, must show on the next page load, not when the cache expires. The rule is
+     * enrolment::request_state(), which defers to \local_sentientia_request\catalog_cta and is always 'none'
+     * unless that plugin is installed and its flag sentientia.request.catalog_button is ON, so by default the
+     * cards come back exactly as they went in. A card the viewer is enrolled in is never touched.
+     *
+     * @param array[] $cards Formatted course cards (format_course() shape).
+     * @param int $userid The viewer; anything but the logged-in user gets the cards back unchanged.
+     * @return array[]
+     */
+    public static function with_request_offers(array $cards, int $userid): array {
+        global $USER;
+        if (!$cards || $userid <= 0 || $userid !== (int) $USER->id) {
+            return $cards;
+        }
+        foreach ($cards as &$card) {
+            if (!empty($card['is_enrolled'])) {
+                continue;
+            }
+            $state = enrolment::request_state($USER, (int) $card['id']);
+            if ($state === 'none') {
+                continue;
+            }
+            $card['can_request'] = $state === 'request';
+            $card['request_pending'] = $state === 'pending';
+            // The plain name for data-coursename: Mustache escapes it once and request_button.js escapes it for its
+            // dialog, so the format_string()ed fullname (already HTML-safe) would show "&amp;" twice-escaped.
+            $card['request_coursename'] = html_entity_decode(strip_tags((string) $card['fullname']),
+                ENT_QUOTES | ENT_HTML5);
+        }
+        unset($card);
+        return $cards;
+    }
+
+    /**
      * Resolve a course's poster image for catalogue cards.
      *
      * Returns the course's uploaded overview image when one exists. When it
