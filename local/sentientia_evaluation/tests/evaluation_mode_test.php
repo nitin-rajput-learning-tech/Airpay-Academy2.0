@@ -127,7 +127,9 @@ final class evaluation_mode_test extends \advanced_testcase {
         include(__DIR__ . '/../../sentientia_platform/version.php');
         $this->assertGreaterThanOrEqual($required, $plugin->version, 'the platform tree carries what is declared');
         $platformupgrade = (string) file_get_contents(__DIR__ . '/../../sentientia_platform/db/upgrade.php');
-        $this->assertStringContainsString("upgrade_plugin_savepoint(true, 2026100701, 'local', 'sentientia_platform')",
+        // The platform records exactly the version this plugin depends on (2026101500 since the 2026-10-15 merge with
+        // gap-integration, which had used 2026100701 for something else), so the dependency names a real upgrade step.
+        $this->assertStringContainsString("upgrade_plugin_savepoint(true, {$required}, 'local', 'sentientia_platform')",
             $platformupgrade, 'the platform records the marker version');
     }
 

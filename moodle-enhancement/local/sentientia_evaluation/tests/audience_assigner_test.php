@@ -121,9 +121,10 @@ final class audience_assigner_test extends \advanced_testcase {
         $member = $this->user();
         $other = $this->user();
         $cohort = $generator->create_cohort();
-        $generator->create_cohort_member(['cohortid' => $cohort->id, 'userid' => $member]);
+        // Core has no create_cohort_member() generator; cohort_add_member() is the API (cohort/lib.php).
+        cohort_add_member((int) $cohort->id, (int) $member);
         $otherCohort = $generator->create_cohort();
-        $generator->create_cohort_member(['cohortid' => $otherCohort->id, 'userid' => $other]);
+        cohort_add_member((int) $otherCohort->id, (int) $other);
 
         $this->assertSame([$member], $this->resolve(['cohortid' => (int) $cohort->id]));
         // A cohort id that does not exist matches nobody; 0 is no constraint.
