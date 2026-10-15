@@ -446,7 +446,15 @@ defined('MOODLE_INTERNAL') || die();
 // built no <form> and the noscript "Set mode" fallback was dead on 5.1, 5.2 and 5.3. Now byte-identical to the 5.2 core template
 // below its header comment. Bump purges the compiled template cache.
 // 2026100806: Moodle 5.3 compat FX-02 round 1: editswitch.mustache <form action=> fixed (on top of 2026100805 FX-19 block + coursecard templates)
-$plugin->version   = 2026100808;  // 2026-10-08 SITEID is the DB string; strict === / !== against it never matched, so the site-course guard did nothing - now (int) SITEID: language_switcher treats the front page as the site course again
+// 2026101501 - older UI defect 1 (visual pass 2026-10-14, finding 4): dropdowns that carry only the Bootstrap 5 attribute
+// data-bs-toggle="dropdown" (core 5.x action menus, e.g. the certificate templates row menu) did nothing on a click, because this
+// theme ships Bootstrap 4.6 whose data-api reads data-toggle. New AMD module theme_sentientia/dropdown_bridge (src + build, started
+// from theme_sentientia/loader) hands such a toggle to the theme's Bootstrap 4 dropdown, exactly once: it never touches an element
+// that carries data-toggle (so one with BOTH attributes is not toggled twice, see the FX-20 round 1 notes of local_sentientia_org and
+// local_sentientia_evaluation) and does nothing when core's Bootstrap 5 data-api already opened or closed the menu on that click.
+// Bump purges the AMD cache so the changed loader and the new module are served.
+// 2026100808: 2026-10-08 SITEID is the DB string; strict === / !== against it never matched, so the site-course guard did nothing - now (int) SITEID: language_switcher treats the front page as the site course again
+$plugin->version   = 2026101501;  // 2026-10-15 dropdown_bridge: data-bs-toggle-only dropdowns open in the Bootstrap 4 theme (on top of 2026100808 SITEID fix)
 // 2026100807: Moodle 5.3 FX-15 follow-up: dashboard + frontpage course counts filter COALESCE(deletioninprogress, 0) = 0 (5.3's column is NULL for every course not being deleted; '= 0' counted none)
 // 2026090806:  // login/OTP placeholders + SSO title + block aria-label: {{#quote}} JSON-escaped Hindi into \uXXXX → attribute-safe cleanstr/escaped values (core 5.2 pattern)
 // 2026090805:  footer: GPL badge -> private Airpay notice; sidebar literals localised; scoped-admin subtitle

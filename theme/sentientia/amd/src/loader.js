@@ -25,6 +25,7 @@
 import $ from 'jquery';
 import * as Aria from './aria';
 import Bootstrap from './index';
+import * as DropdownBridge from './dropdown_bridge';
 import Pending from 'core/pending';
 import setupBootstrapPendingChecks from './pending';
 
@@ -94,6 +95,9 @@ enablePopovers();
 
 // Enable all tooltips.
 enableTooltips();
+
+// Open dropdowns that only carry the Bootstrap 5 attribute data-bs-toggle (core 5.x templates), see dropdown_bridge.
+DropdownBridge.init();
 
 // Disables flipping the dropdowns up and getting hidden behind the navbar.
 $.fn.dropdown.Constructor.Default.flip = false;
