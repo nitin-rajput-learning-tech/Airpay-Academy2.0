@@ -149,6 +149,17 @@
                 </div>
             {{/settingsmenu}}
         </div>
+        {{!
+            Header actions: HTML that core adds with $PAGE->add_header_action(). On a course page in editing mode that is the
+            Bulk edit button. This template used to drop them, but the button's own script was still queued and started on an
+            element that was not in the page (console: "Reactive components needs a main DOM element to dispatch events"), and
+            nobody could start bulk editing. The container is empty, and takes no space, when there are no actions.
+        }}
+        <div class="header-actions-container d-flex justify-content-end px-3" data-region="header-actions-container">
+            {{#headeractions}}
+                <div class="header-action ml-2">{{{.}}}</div>
+            {{/headeractions}}
+        </div>
         {{#course_summary_data}}
         <div class="px-3">
             <h3 class="mt-2">{{#str}}description, moodle{{/str}}</h3>

@@ -129,7 +129,11 @@ $headercontent = $header->export_for_template($renderer);
 // removed that navbar, so surface core's edit switch explicitly for users
 // with editing capabilities (renders empty for everyone else).
 $editswitch = '';
-if (method_exists($OUTPUT, 'edit_switch')) {
+// Only for the viewing template (course.mustache), which prints {{{ editswitch }}}. The editing template (course_editing.mustache)
+// prints the switch through its navbar partial (output.edit_switch) and never uses this variable. Rendering it here as well queued a
+// second core/edit_switch init, for an element id that is never in the page, and that threw "Cannot read properties of null (reading
+// 'addEventListener')" on every page load in editing mode.
+if (!$apcourseediting && method_exists($OUTPUT, 'edit_switch')) {
     $editswitch = $OUTPUT->edit_switch();
     if (is_object($editswitch)) {
         // Some cores return a renderable; normalise to HTML.

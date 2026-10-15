@@ -459,9 +459,20 @@ defined('MOODLE_INTERNAL') || die();
 // styled in the navbar by _surface-navbar.scss); the label words sit in a span so that below the md breakpoint only the words are visually
 // hidden (primarynavigation.scss), not the whole label, which clipped the switch. Form, ids, data attributes, hidden inputs, noscript
 // submit and the core/edit_switch init are unchanged. Bump purges the template cache and recompiles the CSS.
+// 2026101503 - older UI defect 3 (visual pass 2026-10-14, findings 2 and 3): for a course author (editingteacher) edit mode did not survive a
+// page load, and the course editor threw two console errors with no editing controls. Three causes, all in this theme. (1) core_renderer::
+// course_context_header_settings_menu() set $USER->editing = 0 for everybody without moodle/course:view, a manager capability an editingteacher
+// does not hold: it ran after the layout and the body class were built in editing mode and before the course content, which then rendered in
+// viewing mode, and the next load found editing off; $PAGE->user_is_editing() already requires user_allowed_editing(), so nothing needs clearing.
+// (2) layout/course.php rendered the edit switch for the editing template too, which never prints it (its navbar partial renders its own): the
+// queued core/edit_switch init found no element ("Cannot read properties of null (reading 'addEventListener')"). (3) course_full_header.mustache
+// dropped the header actions, so core's Bulk edit button (added by course/view.php in editing mode) was never printed while its script ran
+// ("Reactive components needs a main DOM element to dispatch events"); it now prints them (empty, no space, when there are none).
+// Bump purges the template cache.
 // 2026100808: 2026-10-08 SITEID is the DB string; strict === / !== against it never matched, so the site-course guard did nothing - now (int) SITEID: language_switcher treats the front page as the site course again
 // 2026101501: 2026-10-15 dropdown_bridge: data-bs-toggle-only dropdowns open in the Bootstrap 4 theme
-$plugin->version   = 2026101502;  // 2026-10-15 edit-mode switch styled as the theme's Bootstrap 4 custom switch (on top of 2026101501 dropdown_bridge)
+// 2026101502: 2026-10-15 edit-mode switch styled as the theme's Bootstrap 4 custom switch
+$plugin->version   = 2026101503;  // 2026-10-15 course author edit mode: no reset of $USER->editing, no orphan edit_switch init, header actions printed (on top of 2026101502)
 // 2026100807: Moodle 5.3 FX-15 follow-up: dashboard + frontpage course counts filter COALESCE(deletioninprogress, 0) = 0 (5.3's column is NULL for every course not being deleted; '= 0' counted none)
 // 2026090806:  // login/OTP placeholders + SSO title + block aria-label: {{#quote}} JSON-escaped Hindi into \uXXXX → attribute-safe cleanstr/escaped values (core 5.2 pattern)
 // 2026090805:  footer: GPL badge -> private Airpay notice; sidebar literals localised; scoped-admin subtitle
