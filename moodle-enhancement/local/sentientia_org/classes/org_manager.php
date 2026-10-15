@@ -38,6 +38,20 @@ class org_manager {
     private const LEGACY_TABLE = 'local_costcenter';
 
     /**
+     * An org name or description for display, as TEXT: filtered like format_string() but NOT HTML-escaped.
+     *
+     * For anything handed to a Mustache template: {{ }} escapes it, so escaping here as well showed
+     * "Issuance & Loyalty" in the org tree as "Issuance &amp; Loyalty". Keep format_string() only where the value
+     * is written straight into HTML (a form element, a heading built by hand).
+     *
+     * @param string|null $text
+     * @return string plain text (the output layer escapes it once)
+     */
+    public static function plain(?string $text): string {
+        return format_string((string) $text, true, ['escape' => false]);
+    }
+
+    /**
      * Get an org record by ID.
      *
      * Reads from local_sentientia_org first, falls back to local_costcenter.

@@ -69,19 +69,22 @@ $build_node = function (object $org) use (&$build_node, $by_parent, $path_user_t
     // Look up pre-computed user count (no per-node DB hit).
     $user_count = empty($org->path) ? 0 : (int) ($path_user_totals[$org->path] ?? 0);
 
+    // Every value below goes to manage.mustache / org_node.mustache, which escape each {{ }} themselves, so these are
+    // TEXT (org_manager::plain()). format_string() and s() here escaped them a first time and printed
+    // "Issuance & Loyalty" as "Issuance &amp; Loyalty"; data-name on the row menu was double-escaped too.
     return [
         'id'           => (int) $org->id,
-        'fullname'     => format_string($org->fullname),
-        'shortname'    => s($org->shortname ?? ''),
-        'description'  => format_string($org->description ?? ''),
-        'path'         => s($org->path ?? ''),
+        'fullname'     => \local_sentientia_org\org_manager::plain($org->fullname),
+        'shortname'    => (string) ($org->shortname ?? ''),
+        'description'  => \local_sentientia_org\org_manager::plain($org->description ?? ''),
+        'path'         => (string) ($org->path ?? ''),
         'depth'        => (int) $org->depth,
         'is_tenant'    => ((int) $org->depth === 1),
         'visible'      => (bool) $org->visible,
         'visible_int'  => (int) $org->visible,
         'visiblelabel' => $org->visible ? 'Active' : 'Hidden',
         'visiblecss'   => $org->visible ? 'badge-success' : 'badge-secondary',
-        'brand_color'  => s($org->brand_color ?? ''),
+        'brand_color'  => (string) ($org->brand_color ?? ''),
         'has_brand'    => !empty($org->brand_color),
         'children'     => $children,
         'has_children' => !empty($children),
