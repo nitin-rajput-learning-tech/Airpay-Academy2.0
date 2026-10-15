@@ -174,14 +174,14 @@ def build(md_text: str, footer_title: str) -> Document:
         st.element.rPr.rFonts.set(qn("w:eastAsia"), "Arial")
         st.element.rPr.rFonts.set(qn("w:ascii"), "Arial")
         st.element.rPr.rFonts.set(qn("w:hAnsi"), "Arial")
+        for theme_attr in ("w:asciiTheme", "w:hAnsiTheme", "w:eastAsiaTheme", "w:cstheme"):
+            st.element.rPr.rFonts.attrib.pop(qn(theme_attr), None)
         st.font.size = Pt(size)
         st.font.bold = True
         st.font.color.rgb = color
     # footer
     foot = section.footer.paragraphs[0]
-    foot.paragraph_format.tab_stops.add_tab_stop(Emu(CONTENT_DXA * 635), WD_TAB_ALIGNMENT.RIGHT)
-    add_runs(foot, f"{footer_title} · Confidential", size=8, color=GREY)
-    foot.add_run("\t")
+    add_runs(foot, f"{footer_title} · Confidential · ", size=8, color=GREY)
     add_runs(foot, "Page ", size=8, color=GREY)
     add_field(foot, "PAGE", 8, GREY)
     add_runs(foot, " of ", size=8, color=GREY)
