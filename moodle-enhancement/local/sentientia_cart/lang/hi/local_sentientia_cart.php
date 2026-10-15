@@ -458,3 +458,5 @@ $string['gst_state_97'] = 'अन्य क्षेत्र';
 $string['error_einvoiceoff'] = 'जहाँ आप काम करते हैं वहाँ GST कर चालान बंद हैं, इसलिए यहाँ दर्ज करने के लिए कुछ नहीं है।';
 $string['gateway_name_airpay'] = 'Airpay';
 $string['gateway_name_manual'] = 'मैनुअल भुगतान';
+// UI pass 2026-10-15: एडमिन ऑर्डर पेज पर ऑर्डर की पंक्ति का रिफ़ंड बटन।
+$string['refund_button'] = 'रिफ़ंड';

@@ -26,18 +26,28 @@ $columns = [
     // (orderid_link, user_link, total_str, statuslabel) that list_orders never
     // returned, so they rendered empty and a "Refund due" note could not be
     // tied to an order. They now read the fields list_orders returns.
+    // UI pass 2026-10-15: Placed is the payment date (list_orders::placed_time()) and sorts by it; Total and Status
+    // show what list_orders formats for the reader (the symbol, the status in words) and sort by their own columns.
     ['key' => 'orderid',       'label' => '#',       'sortable' => true,  'sortkey' => 'orderid'],
-    ['key' => 'placed_on',     'label' => 'Placed',  'sortable' => true,  'sortkey' => 'timecreated'],
+    ['key' => 'placed_on',     'label' => 'Placed',  'sortable' => true,  'sortkey' => 'placed'],
     ['key' => 'billing_email', 'label' => 'User',    'sortable' => false],
-    ['key' => 'total_amount',  'label' => 'Total',   'sortable' => true,  'sortkey' => 'total_amount'],
+    ['key' => 'total_str',     'label' => 'Total',   'sortable' => true,  'sortkey' => 'total_amount'],
     ['key' => 'gateway',       'label' => 'Gateway', 'sortable' => false],
-    ['key' => 'status',        'label' => 'Status',  'sortable' => true,  'sortkey' => 'status'],
+    ['key' => 'status_label',  'label' => 'Status',  'sortable' => true,  'sortkey' => 'status'],
     // ADR-031 decision 3 (2026-09-29): history.notes, from list_orders, which
     // returns it to :viewallorders holders only. Carries the "Refund due" line
     // mark_paid() writes when it withholds an enrolment, and gateway failure
     // reasons. Plain text: the datatable escapes it.
     ['key' => 'notes',        'label' => get_string('ordernotes', 'local_sentientia_cart'), 'sortable' => false],
 ];
+// The Refund button (UI pass 2026-10-15). amd/src/admin_orders.js opens the Refund dialog from an element with
+// data-action="refund-order", but nothing ever rendered one, so no administrator could start a refund. list_orders
+// returns the button as escaped HTML in 'actions' for the rows that can be refunded, and only to a holder of
+// :refund; this column paints it (format html), the way the approvals inbox paints its row actions. A viewer who
+// does not hold :refund gets an empty cell, so the column is added only for those who do.
+if (has_capability('local/sentientia_cart:refund', $ctx)) {
+    $columns[] = ['key' => 'actions', 'label' => get_string('actions'), 'sortable' => false, 'format' => 'html'];
+}
 
 $data = [
     // Bug fix 2026-05-22 (Goal A audit Bug #12 part 2): see history.php

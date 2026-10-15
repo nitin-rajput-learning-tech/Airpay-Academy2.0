@@ -13,7 +13,8 @@ defined('MOODLE_INTERNAL') || die();
  *  - install.xml and upgrade.php both create the schema (a fresh install and an upgraded site must end the same), and
  *    install.xml respects the XMLDB limits (index names under 30 characters, VARCHAR up to 1333, no raw '<' in a
  *    COMMENT, which breaks the whole file and which upgrade.php would hide);
- *  - the version is 2026101400, release 1.2.0, in the plugin's version.php;
+ *  - the version is at least 2026101400 (the release that added the schema), release 1.2.x, in the plugin's version.php
+ *    (the 2026-10-15 UI pass bumped it to 2026101500 / 1.2.1 without a schema change);
  *  - every string the new code asks for exists in English and in Hindi, with the same keys in both packs;
  *  - the new templates print everything with the escaping braces (no triple brace) and no word of their own.
  *
@@ -139,11 +140,13 @@ final class gst_schema_strings_test extends \advanced_testcase {
         $this->assertSame(2, substr_count($step, 'table_exists('), 'each new table is guarded');
     }
 
-    public function test_the_version_is_2026101400_release_1_2_0(): void {
+    public function test_the_version_is_at_least_2026101400_release_1_2_x(): void {
         $plugin = new \stdClass();
         include($this->plugin_dir() . '/version.php');
-        $this->assertSame(2026101400, $plugin->version);
-        $this->assertSame('1.2.0', $plugin->release);
+        // 2026101400 is the release that created the schema (its upgrade step is asserted above); a later bump with no
+        // schema change (2026101500, 1.2.1: the order-list UI pass) must not fail this test.
+        $this->assertGreaterThanOrEqual(2026101400, $plugin->version);
+        $this->assertMatchesRegularExpression('/^1\.2\.\d+$/', $plugin->release);
         $this->assertSame('local_sentientia_cart', $plugin->component);
     }
 

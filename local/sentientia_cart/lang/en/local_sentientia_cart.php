@@ -449,3 +449,5 @@ $string['gst_state_97'] = 'Other Territory';
 $string['error_einvoiceoff'] = 'GST tax invoices are switched off wherever you work, so there is nothing to record here.';
 $string['gateway_name_airpay'] = 'Airpay';
 $string['gateway_name_manual'] = 'Manual payment';
+// UI pass 2026-10-15: the Refund button of an order row on the admin orders page.
+$string['refund_button'] = 'Refund';
