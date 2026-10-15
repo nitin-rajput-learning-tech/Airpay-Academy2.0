@@ -100,8 +100,9 @@ and errs on the side of reporting):
 
 ## 4. Monday pre-flight on UAT (read-only; nothing here changes UAT)
 
-Connect: VPN, `ssh uat-tunnel` (TOTP) in its own terminal, then `ssh uat-lms hostname` must print the UAT host. Work in one shell on the box (`ssh uat-lms`),
-inside `tmux new -s up53` if `command -v tmux` finds it, with these variables:
+Connect: VPN, `ssh uat-tunnel` (TOTP) in its own terminal, then `ssh uat-lms hostname` must print the UAT host. Use two terminals: one **on the box** (`ssh uat-lms`, inside
+`tmux new -s up53` if `command -v tmux` finds it) and one **on the laptop** (the repo root, Git Bash). A command that starts with `ssh uat-lms "..."`, `scp` or `python` runs on the laptop;
+every other command runs on the box. Set these variables in **both** terminals:
 
 ```bash
 OLD=/var/www/html/moodle5.2; NEW=/var/www/html/moodle5.3; DATA=/var/sentientiadata
@@ -175,8 +176,8 @@ Plan **3 hours** end to end. The upgrade step alone took 20 to 24 min in the reh
    The code tarball holds `config.php` with the database password: it stays `0700` root-only, and `$BK` is deleted once the upgrade is accepted.
 4. **Put the 5.3 package on the box and verify it.**
    ```bash
-   scp Sentientia-LMS-5.3-Complete-Standalone-<date>.zip uat-lms:/tmp/
-   sha256sum /tmp/Sentientia-LMS-5.3-Complete-Standalone-<date>.zip         # must equal the pinned SHA-256
+   scp Sentientia-LMS-5.3-Complete-Standalone-<date>.zip uat-lms:/tmp/       # from the laptop
+   sha256sum /tmp/Sentientia-LMS-5.3-Complete-Standalone-<date>.zip         # on the box: must equal the pinned SHA-256
    cd /var/www/html && sudo unzip -q /tmp/Sentientia-LMS-5.3-Complete-Standalone-<date>.zip    # creates moodle5.3/ and DEPLOY-README.txt
    sudo chown -R www-data:www-data $NEW && sudo find $NEW -type d -exec chmod 755 {} + && sudo find $NEW -type f -exec chmod 644 {} +
    ls $NEW $NEW/lib/bundles | head -20          # the root lib/bundles tree must exist (5.3 needs it beside public/)

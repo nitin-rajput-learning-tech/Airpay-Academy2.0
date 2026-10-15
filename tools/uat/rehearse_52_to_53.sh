@@ -257,6 +257,7 @@ if want install; then
     res install_A_seconds "$INST_SECS"
     res install_A_peak_memory "$(grep '^install_database.php' "$PEAKLOG" | tail -1)"
     TAIL_OK="$(php_in "$TREE_A" -r 'define("CLI_SCRIPT", true); require "./config.php"; echo (!empty($CFG->version) && !empty($CFG->rolesactive) && $DB->get_field("user", "password", ["username" => "admin"]) !== "adminsetuppending") ? "1" : "0";' 2>/dev/null | tail -1)"
+    case "$TAIL_OK" in 0|1) ;; *) TAIL_OK=0 ;; esac     # any other output (a PHP fatal on stdout) means the tail is not there
     hard "install_5.2_fresh" "$([ "$IRC" -eq 0 ] && [ "$TAIL_OK" = "1" ] && echo 0 || echo 1)" "install_database.php exit $IRC in ${INST_SECS}s, install tail present: $TAIL_OK"
     if [ "$IRC" -ne 0 ] || [ "$TAIL_OK" != "1" ]; then log "STOP: the 5.2 install did not finish cleanly. Read $RUN/logs/install_A.log, fix, rerun --from install."; exit 1; fi
     "${HELPER[@]}" summarize-log "$RUN/logs/install_A.log" > "$RUN/logs/install_A.summary.txt" 2>&1
