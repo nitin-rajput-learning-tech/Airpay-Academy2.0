@@ -1,6 +1,6 @@
 ## 4. Scored capability matrix
 
-**Criteria (54) in nine clusters; weights reflect the India-BFSI-first buyer.** Score 0 = absent, 1 = partial or vendor-claimed only, 2 = shipped and documented, 3 = shipped and differentiated. Sentientia is scored three times: today (from code), after Stage 1 of the plan, after Stage 3. The CSV (`matrix/capability-matrix.csv`) carries every cell with its source note; this section shows cluster totals.
+**Criteria (51) in nine clusters; weights reflect the India-BFSI-first buyer.** Score 0 = absent, 1 = partial or vendor-claimed only, 2 = shipped and documented, 3 = shipped and differentiated. Sentientia is scored three times: today (from code), after Stage 1 of the plan, after Stage 3 (the last two are targets, not facts). The CSV (`matrix/capability-matrix.csv`) carries every cell with its source note; this section shows cluster totals.
 
 | Cluster (weight) | Criteria |
 |---|---|
@@ -13,6 +13,8 @@
 | G Delivery, mobile, offline (0.8) | G1 responsive player · G2 native apps · G3 offline SCORM · G4 PWA/push · G5 WhatsApp/SMS nudges |
 | H Reinforcement and analytics (0.9) | H1 spaced retrieval practice · H2 adaptive paths · H3 decision-level analytics · H4 skills mapping · H5 predictive/ROI · H6 LRS/xAPI capture |
 | I Enterprise and trust (1.2) | I1 multi-tenant white-label · I2 SSO/SCIM · I3 API/webhooks · I4 ISO 27001/SOC 2/VAPT · I5 India residency/on-prem option · I6 DPDP/privacy tooling · I7 transparent cost model (no per-seat AI tax) |
+
+How F1 and F2 are read: for authoring tools they score the standards the tool can *publish*; for LMS vendors, the standards the platform can *play and track*; for Sentientia today they score what Moodle's `mod_scorm` plays (SCORM 1.2 verified end to end, 2004 with partial sequencing) while the content engine's own output is the demo packager with the runtime flaws of §5.1.
 
 ### 4.1 Cluster totals (weighted, % of maximum)
 

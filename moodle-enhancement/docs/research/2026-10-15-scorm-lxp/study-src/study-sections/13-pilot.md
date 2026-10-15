@@ -10,12 +10,16 @@ What mock mode does **not** prove: translation quality, voice quality, Moodle ru
 
 ```
 cd moodle-enhancement/docs/research/2026-10-15-scorm-lxp/pilot
-python -I run_pilot.py --selftest
-python -I run_pilot.py --mode mock --out out/run-mock-001
-python -I run_pilot.py --mode mock --package-mode per_language --langs en,hi,ar --out out/run-mock-002
+python -I run_pilot.py --selftest                                   # 55 tests, about two minutes
+python -I run_pilot.py --mode mock --preview --out out/run-mock-001  # all 13 languages, three standards
+python -I run_pilot.py --mode mock --out out/run-mock-002            # learner build: approved languages only
+python -I run_pilot.py --mode mock --preview --package-mode per_language --langs en,hi,ar --out out/run-mock-003
+python -I run_pilot.py --estimate                                   # pre-flight cost, no network
 ```
 
-Outputs: `out/<run>/scorm12/*.zip`, `scorm2004/*.zip`, `cmi5/*.zip`, `validation-report.md|json`, `audit/*.jsonl`. {{PILOT_RUN_SUMMARY}}
+Outputs: `out/<run>/scorm12/*.zip`, `scorm2004/*.zip`, `cmi5/*.zip`, `course.compiled.json`, `validation-report.md|json`, `audit/audit.jsonl`.
+
+{{PILOT_RUN_SUMMARY}}
 
 ### 13.3 Live run — exactly what Nitin must set and [CONFIRM]
 

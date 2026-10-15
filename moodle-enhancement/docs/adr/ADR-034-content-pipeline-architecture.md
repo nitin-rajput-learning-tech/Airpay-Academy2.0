@@ -33,6 +33,7 @@
 
 - The compiler lives in PHP inside `local_sentientia_authoring\compile\` and runs as an adhoc task with progress in the studio: `scorm12`, `scorm2004_4`, `cmi5`, `moodle_course`. Packaging is template + ZIP; Moodle already has the file API. The learner player is a static HTML/JS/CSS bundle maintained in the plugin (`assets/player/`), shipped unchanged into every package; the package carries `course.json` (the compiled SCD restricted to the languages carried), audio, captions and fonts. No per-course JavaScript is generated.
 - The Python harness in the study (`pilot/`) is the reference implementation of the compiler semantics: same fixtures, same validation report, same manifests. Contract tests in PHP consume the same fixtures so the two cannot drift. The six Python agents are retired in two steps: the Python tree `scripts/agents/` is declared canonical and `sentientia/` is removed (Stage 1), then ingestion moves into the studio and the Python code is reduced to the batch CLI that calls the same schema (Stage 2).
+- Trade-off recorded: the standards research (R4) recommends one package per language for reporting parity, because SCORM manifest titles are static and Moodle records one completion per activity. The default below is the opposite on purpose (one activity, one completion record, an in-player switcher, one package to approve and deploy); `per_language` ships as an option, the harness builds both, and the default is to be revisited after the first UAT upload against Moodle's own SCORM report.
 - Package mode default `multilingual` (one package carrying all approved languages with an in-player switcher, so one Moodle activity serves every learner and the LMS passes `lang` when it can); `per_language` remains available for customers whose LMS wants one activity per language.
 
 ### D3 — Standards outputs and Moodle hardening
@@ -106,7 +107,7 @@ Every flag resolves through the 5-level `local_sentientia_platform\feature_flags
 
 ---
 
-## Implementation actions (mapped to the staged plan in STUDY.md §8)
+## Implementation actions (mapped to the staged plan in STUDY.md §11)
 
 - **Stage 1 (0–90 days):** schema into the plugin; `local_sentientia_scd*` tables; PHP compiler for scorm12/scorm2004/cmi5 + static player ported from the harness; validation gates + headless runtime smoke in CI; XLIFF export/import + TM table + machine translation through the gateway + QA checks; translator/reviewer workspaces (two-stage) on the existing review UI; `sentientia-speech` v0 with the chosen engine behind the interface, fallback adapter, evaluation harness; pilot on one SOP in the v1 languages (mock first, live after the cap and key).
 - **Stage 2 (90–180 days):** scenario editor and packaged scenario player; reinforcement pool hand-off to notifications ("Daily Review"); cmi5 launcher decision for Moodle; UI lang-pack generation via the same TM; ASR-based alignment for karaoke captions; analytics (decision flows from cmi.interactions/xAPI, language coverage, spend, TTS minutes, region badges).
@@ -114,6 +115,10 @@ Every flag resolves through the 5-level `local_sentientia_platform\feature_flags
 - **Records:** this ADR; state cards for authoring, translate, xapi, ai; `docs/core-mods/` untouched (no core edits are needed); CLAUDE.md §8–§9 updated when Stage 1 ships.
 
 ---
+
+## Evidence from the reference implementation (2026-10-15, mock mode)
+
+The harness in `pilot/` (55 tests) compiles one fixture course to SCORM 1.2, SCORM 2004 4th Edition and cmi5 with 21, 21 and 19 package checks passing, byte-stable builds, a headless learner simulation against a fake LMS and a fake LRS, and a real-browser run of the DOM player against a stub LMS for SCORM 1.2 and 2004 (pass, fail, resume after reload; 102-character saved state against the 4,096 limit). The browser run found a defect no Node test could (a bare `setTimeout` passed as a method throws "Illegal invocation" in browsers), which is why gate 2 below insists on Moodle itself and not only on simulators. What this does not show: Moodle 5.3 behaviour, LRS acceptance of the cmi5 statements, translation or voice quality, ADL conformance.
 
 ## Verification gates (before any flag flips for learners)
 
@@ -128,9 +133,9 @@ Every flag resolves through the 5-level `local_sentientia_platform\feature_flags
 
 ## References
 
-- Study: `moodle-enhancement/docs/research/2026-10-15-scorm-lxp/STUDY.md` (sections 4–10) and `sources/` (cited research notes).
+- Study: `moodle-enhancement/docs/research/2026-10-15-scorm-lxp/STUDY.md` (the ten findings; sections 4 to 13) and `sources/` (seven cited research notes).
 - Schema and reference implementation: `.../pilot/schema/sentientia-course.schema.json`, `.../pilot/`.
-- Prototypes: `.../prototypes/` (authoring studio, localisation workspace, scenario editor, course player).
+- Prototypes: `.../prototypes/` (six clickable screens: learner home, course player, authoring studio, localisation review, admin analytics, scenario editor; screenshots and a self-assessment in its README).
 - Existing code: `local/sentientia_authoring`, `local/sentientia_translate`, `local/sentientia_xapi`, `local/sentientia_ai`, `sentientia/`, `scripts/agents/`.
 - Prior decisions: ADR-012, ADR-016, ADR-028 (+ `docs/business/DECISION-MEMO-2026-08-04.md`), ADR-031, ADR-033.
 

@@ -32,6 +32,8 @@
 
 **Where it runs.** Generation and translation: Claude through the gateway (model configurable; current Sonnet generation recommended once the gateway's golden-set eval is re-run — Sonnet 5.5 is cheaper than the gateway's default Sonnet 4.6). Speech: in India, on a GPU we control (cloud Mumbai/Central India or on-prem), with a SaaS fallback that processes in an India region. Compilation and review: inside Moodle (PHP), no new runtime. Audit and ledger: Moodle DB, exportable.
 
+**One package or one per language?** The standards research recommends one package per language for reporting parity (static manifest titles; one completion per Moodle activity). ADR-034 defaults to the opposite on purpose: one activity, one completion record, an in-player switcher and one package to approve and deploy, with `per_language` as an option. The harness builds both (`--package-mode`), and the default is revisited after the first UAT upload against Moodle's own SCORM report.
+
 Full decisions, alternatives and verification gates: `docs/adr/ADR-034-content-pipeline-architecture.md`.
 
 ---

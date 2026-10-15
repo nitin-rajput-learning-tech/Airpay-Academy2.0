@@ -17,6 +17,7 @@
   .diff-add { background: var(--ap-color-success-light); border-radius: 3px; }
   .diff-del { background: var(--ap-color-danger-light); text-decoration: line-through; border-radius: 3px; }
   .outline-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto auto; gap: var(--ap-space-3); align-items: center; padding: var(--ap-space-3); border: 1px solid var(--ap-color-border); border-radius: var(--ap-radius-sm); background: var(--ap-color-bg-surface); }
+  .step-link { all: unset; cursor: pointer; color: inherit; font-weight: inherit; text-decoration: underline; text-underline-offset: 3px; } .step-link:focus-visible { outline: var(--ap-focus-ring-width) solid var(--ap-focus-ring-color); outline-offset: 2px; }
   .gen-step { display: flex; gap: var(--ap-space-3); align-items: center; padding: var(--ap-space-3); border-radius: var(--ap-radius-sm); border: 1px solid var(--ap-color-border); }
   .gen-step.run { border-color: var(--ap-color-primary); background: var(--ap-color-bg-active); }
   .gen-step.done { color: var(--ap-color-text-primary); }
@@ -42,7 +43,7 @@
     screen: 'authoring-studio', title: 'Authoring studio',
     about: {
       purpose: 'SOP to course in five steps, with a human gate before the expensive generate step and another before publish. Fixture: SOP-CS-014 (UPI dispute handling).',
-      interactions: ['Step 1: toggle "Simulate PII in the source" - the scan blocks the step with masked findings; clear it to continue. Change course types and languages: the estimate updates.', 'Step 2: edit titles, reorder with the up/down buttons (a keyboard alternative to dragging), delete (with undo) and add; approve the outline.', 'Step 3: Generate runs a staged mock with progress, cost and Cancel.', 'Step 4: use "Shorter" or "Simpler" on a bullet: a visible diff appears; "Revert to AI original" restores it; "Lock verbatim" disables AI edits for that passage. Bullets over 8 words show a live warning.', 'Step 5: run validation; tick both approvals; publish (mock) after a confirmation dialog.'],
+      interactions: ['Step 1: toggle "Simulate PII in the source" - the scan blocks the step with masked findings; clear it to continue. Change course types and languages: the estimate updates.', 'Step 2: edit titles, reorder with the up/down buttons (a keyboard alternative to dragging), delete (with undo) and add; approve the outline.', 'Step 3: Generate runs a staged mock with progress, cost and Cancel.', 'Visited steps in the rail are links: the studio is a status rail, not a lock-step wizard, so you can jump back without losing work (later steps unlock when their gate is met).', 'Step 4: use "Shorter" or "Simpler" on a bullet: a visible diff appears; "Revert to AI original" restores it; "Lock verbatim" disables AI edits for that passage. Bullets over 8 words show a live warning.', 'Step 5: run validation; tick both approvals; publish (mock) after a confirmation dialog.'],
       patterns: ['Staged generation: outline, approve, generate, refine, review, publish (Rise, Mindsmith, 360Learning pattern).', 'Source-fidelity control and verbatim lock for SOP text.', 'AI mark with prompt version and revert on every AI-written passage.', 'Cost and mock-versus-live shown before and during every long operation.', 'Validation rules R01-R12 shown by name, not as one opaque score.'],
       maps: ['local_sentientia_authoring studio (cards, review gate, course builder)', 'Compile step: pilot/lib/packager.py semantics, PHP compiler in Stage 1'],
       notBuilt: ['Real upload, real model calls, the PHP compiler, persistence.']
@@ -80,7 +81,12 @@
   }
   function renderStepper() {
     var ol = document.getElementById('stepper'); ol.replaceChildren();
-    steps.forEach(function (s, i) { ol.appendChild(el('li', { class: i < cur ? 'done' : '', 'aria-current': i === cur ? 'step' : null, text: s })); });
+    steps.forEach(function (s, i) {
+      var li = el('li', { class: i < cur ? 'done' : '', 'aria-current': i === cur ? 'step' : null });
+      if (i <= maxReached && i !== cur) { li.appendChild(el('button', { type: 'button', class: 'step-link', text: s, onclick: function () { if (S.stopGen) { S.stopGen(); } cur = i; render(); } })); }
+      else { li.appendChild(document.createTextNode(s)); }
+      ol.appendChild(li);
+    });
   }
   function words(x) { return x.trim().split(/\s+/).filter(Boolean).length; }
 

@@ -1,6 +1,6 @@
 ## 12. Cost model: per course, per language, per tier
 
-**Unit.** One 12-minute course: ≈ 1,500 narration words, ≈ 700 words of slide/scenario/quiz text (≈ 2,200 source words, ≈ 13,000 characters per language), one nine-node scenario, a five-question quiz. Prices: Claude API list prices as of 2026-10-06 (Sonnet 5.5 $2/$10, Sonnet 4.6 $3/$15, Opus 5.5 $4/$20, Haiku 5.5 $0.10/$0.50 per million tokens; cache reads cheaper); USD/INR planning rate ₹87; speech and GPU figures from `sources/R3-tts-asr-infra.md` (list prices captured 2026-10-15). Human rates are planning assumptions for the Indian market and must be replaced by quotes.
+**Unit.** One 12-minute course: ≈ 1,500 narration words, ≈ 700 words of slide/scenario/quiz text (≈ 2,200 source words, ≈ 13,000 characters per language), one nine-node scenario, a five-question quiz. Prices: Claude API list prices as of 2026-10-06 (Sonnet 5.5 $2/$10, Sonnet 4.6 $3/$15, Opus 5.5 $4/$20, Haiku 5.5 $0.10/$0.50 per million tokens; cache reads cheaper); USD/INR planning rate ₹87 for the model lines (the speech note converts at about ₹95 per USD; a 9% spread that changes no conclusion); speech and GPU figures from `sources/R3-tts-asr-infra.md` (list prices captured 2026-10-15). Human rates are planning assumptions for the Indian market and must be replaced by quotes.
 
 ### 12.1 Model spend (the small line)
 
