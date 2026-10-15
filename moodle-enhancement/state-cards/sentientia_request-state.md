@@ -1,7 +1,7 @@
 # State Card — `local_sentientia_request`
 
 **Component:** `local_sentientia_request` (was `local_airpay_request` until ADR-022/025; older sections below still use the old name)
-**Version:** `2026101502` / `1.6.0`  (2026-10-15: the line manager holds `:approve`, upgrade step `2026101501`; the catalogue Request enrolment button, flag OFF. Was `2026100801` / `1.5.1`; ADR-032 importer was `2026093001` / `1.5.0`. No schema change since 1.5.0.)
+**Version:** `2026101503` / `1.6.1`  (2026-10-15: the catalogue button no longer treats self-enrolment as a way in; the line manager holds `:approve`, upgrade step `2026101501`; the catalogue Request enrolment button, flag OFF. Was `2026100801` / `1.5.1`; ADR-032 importer was `2026093001` / `1.5.0`. No schema change since 1.5.0.)
 **Maturity:** `MATURITY_STABLE`
 **Status:** Learner-driven course request workflow (Sentientia is not live yet; the live system is BizLMS).
 **Last refreshed:** 2026-10-15 (visual-pass finding 7: approver capability + catalogue button)
@@ -387,9 +387,8 @@ Same branch, `claude/ui-fix-request`. PHPUnit NOT run.
   (`theme/sentientia/classes/output/core_renderer.php:1324`), so on a course with nothing to enrol through the learner
   had no way to start a request at all.
 - **The rule (this plugin owns it): `classes/catalog_cta.php`.** A request is the way in when the viewer is a real
-  logged-in user with `:request`, is not enrolled, may be enrolled (`request_manager::can_request_course()`, new: the test
-  `submit()` applies, without throwing) and the course has no way in of its own (no enabled `self` instance that passes
-  `enrol_self::can_self_enrol()`; an enrolment key is a way in, a cohort or date restriction the learner fails is not). A
+  logged-in user with `:request`, is not enrolled and may be enrolled (`request_manager::can_request_course()`, new: the test
+  `submit()` applies, without throwing). Self-enrolment is NOT a way in (see the review fix below). A
   pending request of the learner's for the course (imported rows only while `imported_history` shows them) gives the state
   `pending` instead of a second button. Viewer only: it never answers for another user (`can_self_enrol()` reads `$USER`).
 - **Flag `sentientia.request.catalog_button`, default OFF** (`db/feature_flags.php`): CLAUDE.md section 13 says no
@@ -407,13 +406,28 @@ Same branch, `claude/ui-fix-request`. PHPUnit NOT run.
 - **Not done:** `public.php` (the guest and Public-storefront grid) and the cart keep their Add-to-cart routes; the dialog's own
   English strings in `request_button.js` are untouched; paths and other item types have no catalogue button (the dialog and
   the service are course-only).
-- **Tests (not run):** `tests/catalog_cta_test.php` (flag registered and OFF; every gate; self-enrolment open, keyed, disabled,
-  expired; pending, decided, imported; foreign and hidden course; guest and other user; `can_request_course()` agrees with
+- **Tests (not run):** `tests/catalog_cta_test.php` (flag registered and OFF; every gate; self-enrolment open and keyed offer the
+  request, as do disabled and expired ones; pending, decided, imported; foreign and hidden course; guest and other user; `can_request_course()` agrees with
   `submit()`); catalogue `tests/request_offer_test.php` (paid and one-click first, flag OFF leaves cards untouched, enrolled
   cards untouched, pending, plain name, viewer only).
 - **A screenshot should show** (flag ON for Airpay via `feature_flags::set('sentientia.request.catalog_button', 0, true)`, learner
-  with no self-enrolment course, e.g. a course with only a manual instance): the catalogue card footer with a primary
+  on a course with only a manual instance, and on one with an enabled self-enrolment instance, keyed or open): the catalogue card footer with a primary
   "Request enrolment" button instead of Enroll, desktop and 590 px; clicking it opens the dialog with Save and Cancel; after a
   valid request, reloading the catalogue shows "Request pending" on that card; the same course on
   `/local/sentientia_catalog/course.php?id=N`; the line manager's Pending approvals (finding 7b) lists it. With the flag OFF the
   card shows Enroll again.
+
+### Review fix (2026-10-15, version `2026101503` / `1.6.1`): self-enrolment is not a way in
+
+The first cut of `catalog_cta::state()` skipped the button on any course with an enabled `self` instance the learner passed
+`can_self_enrol()` for, with or without an enrolment key, on the reasoning that the learner enters the key. On this theme
+nobody can: `enrol/index.php` uses the `incourse` layout, `theme/sentientia/layout/course.php:31` calls
+`$OUTPUT->custom_secured_redirection()`, and `core_renderer.php:1324` sends `/enrol/index.php` to `/my` (airpayux does the
+same from `full_header`), so neither the key form nor "Enrol me" ever renders. The card's Enroll link
+(`/course/view.php`, then `require_login`, then `/enrol/index.php`) and course.php's "Enroll Now - Free" both end on `/my`.
+Result with the flag ON: a free course with an enabled self instance (course 71, QA-walk E-01, is the keyed case on real
+data; BizLMS let learners in through the self instance, so this is probably most self-service courses) stayed a dead
+end with no button. `has_own_way_in()` is removed. The routes before a request are now only the catalogue's own (paid goes
+to the cart, one-click enrols at once). `tests/catalog_cta_test.php`: the case that locked the wrong behaviour in now
+asserts REQUEST for an open and a keyed self instance; the disabled and expired cases are kept. Flag description in
+`db/feature_flags.php`, both READMEs and the catalogue docblock updated. Revisit if a reachable self-enrol route is built.

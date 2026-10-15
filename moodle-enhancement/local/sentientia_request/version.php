@@ -54,10 +54,11 @@ $plugin->component = 'local_sentientia_request';
 // 2026100801: Moodle 5.3 compat FX-06b: decide + request_button use core/modal_save_cancel with no removed-factory fallback; removeOnClose so a cancelled dialog cannot leave a stale textarea behind. No schema change.
 // 2026101501: visual-pass finding 7 (b): the line manager routing picks holds :approve (db/access.php lists the user archetype, upgrade step 2026101501 back-fills existing roles); the Pending approvals entry is shown only to those a request can reach. No schema change.
 // 2026101502: visual-pass finding 7 (a): the learner's "Request enrolment" button on the catalogue (classes/catalog_cta.php, flag sentientia.request.catalog_button, default OFF; new string requestpending_short en + hi; request_manager::can_request_course()). No schema change.
-$plugin->version   = 2026101502;
+// 2026101503: visual-pass finding 7 (a), review fix: catalog_cta no longer counts an enabled self-enrolment instance (keyed or open) as a way in, because the theme redirects /enrol/index.php to /my and the learner cannot reach it; so such a course now offers the request. No schema change.
+$plugin->version   = 2026101503;
 $plugin->requires  = 2024042200;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.6.0';  // +catalogue Request enrolment button, flagged (was 1.5.2 +line manager holds :approve; 1.5.1 +COMMS-R1..R4)
+$plugin->release   = '1.6.1';  // catalogue button also on courses whose self-enrolment is unreachable (was 1.6.0 +catalogue Request enrolment button, flagged; was 1.5.2 +line manager holds :approve; 1.5.1 +COMMS-R1..R4)
 $plugin->dependencies = [
     'local_sentientia_org'         => 2026040100,
     'local_sentientia_manager'     => 2026040100,  // Approval workflow patterns reused

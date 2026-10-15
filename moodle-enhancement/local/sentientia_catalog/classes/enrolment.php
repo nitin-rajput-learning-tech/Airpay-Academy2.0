@@ -113,7 +113,8 @@ class enrolment {
      *
      * Visual-pass finding 7 (a), 2026-10-15. The rule that a request is the way in lives in the request plugin
      * (\local_sentientia_request\catalog_cta::state(): its flag sentientia.request.catalog_button, the :request
-     * capability, not enrolled, a course submit() would accept, no self-enrolment of the course's own). This adds
+     * capability, not enrolled, a course submit() would accept; self-enrolment is not a way in on this theme, which
+     * redirects /enrol/index.php to /my). This adds
      * the two things only the catalogue knows, and so keeps its own routes first:
      *
      *   - a PAID course goes to the cart (and checkout), never to a request;

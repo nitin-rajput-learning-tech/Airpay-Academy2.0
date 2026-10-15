@@ -16,8 +16,8 @@ defined('MOODLE_INTERNAL') || die();
  * cards and course.php) renders it, adding only its own routes (a paid course, one-click free enrolment).
  *
  * Locked in here: the flag is registered, default OFF, and OFF offers nothing; the offer needs :request, a real
- * logged-in viewer, no enrolment already, a course submit() would accept, and no self-enrolment of the course's
- * own the viewer can use; a pending request shows as pending rather than as a second button (and a decided or
+ * logged-in viewer, no enrolment already, and a course submit() would accept; self-enrolment (open or keyed) is
+ * NOT a way in, because the theme sends /enrol/index.php to /my and the learner can never reach it; a pending request shows as pending rather than as a second button (and a decided or
  * cancelled one does not); a pending request imported from BizLMS counts only while the imported_history flag
  * shows it; and can_request_course() agrees with submit().
  *
@@ -78,7 +78,7 @@ final class catalog_cta_test extends \advanced_testcase {
         return $DB->get_record('course', ['id' => $course->id], '*', MUST_EXIST);
     }
 
-    /** An enabled self-enrolment instance, with an enrolment key when $key is given. */
+    /** An enabled self-enrolment instance, with an enrolment key when $key is given. Unreachable on this theme. */
     private function enable_self_enrolment(\stdClass $course, ?string $key = null): void {
         global $DB;
         $plugin = enrol_get_plugin('self');
@@ -134,20 +134,23 @@ final class catalog_cta_test extends \advanced_testcase {
         $this->assertSame(catalog_cta::REQUEST, catalog_cta::state($learner, (int) $course->id));
     }
 
-    public function test_a_self_enrolment_the_learner_can_use_is_a_way_in_with_or_without_a_key(): void {
+    public function test_a_self_enrolment_instance_is_not_a_way_in_with_or_without_a_key(): void {
         $learner = $this->learner_with_flag();
         $open = $this->course_at('/1/5');
         $this->enable_self_enrolment($open);
         $keyed = $this->course_at('/1/5');
         $this->enable_self_enrolment($keyed, 'SECRET-KEY-123');
 
-        $this->assertSame(catalog_cta::NONE, catalog_cta::state($learner, (int) $open->id),
-            'Self-enrolment is open: nothing to request.');
-        $this->assertSame(catalog_cta::NONE, catalog_cta::state($learner, (int) $keyed->id),
-            'An enrolment key is a way in: the learner types the key.');
+        // enrol/index.php (the key form and "Enrol me") is redirected to /my by the theme, so the learner can
+        // never use the instance: without a request the course is a dead end. QA-walk E-01's course 71 is the
+        // keyed case on real data.
+        $this->assertSame(catalog_cta::REQUEST, catalog_cta::state($learner, (int) $open->id),
+            'An open self-enrolment instance cannot be reached on this theme: offer the request.');
+        $this->assertSame(catalog_cta::REQUEST, catalog_cta::state($learner, (int) $keyed->id),
+            'Nor can a keyed one: offer the request.');
     }
 
-    public function test_a_disabled_self_enrolment_is_not_a_way_in(): void {
+    public function test_a_disabled_self_enrolment_offers_the_request(): void {
         global $DB;
         $learner = $this->learner_with_flag();
         $course = $this->course_at('/1/5');
@@ -156,7 +159,7 @@ final class catalog_cta_test extends \advanced_testcase {
         $this->assertSame(catalog_cta::REQUEST, catalog_cta::state($learner, (int) $course->id));
     }
 
-    public function test_a_self_enrolment_the_learner_fails_is_not_a_way_in(): void {
+    public function test_an_expired_self_enrolment_offers_the_request(): void {
         global $DB;
         $learner = $this->learner_with_flag();
         $course = $this->course_at('/1/5');
@@ -243,7 +246,7 @@ final class catalog_cta_test extends \advanced_testcase {
         $other = $this->user_at('/1/4');
         $course = $this->course_at('/1/5');
         $this->assertSame(catalog_cta::NONE, catalog_cta::state($other, (int) $course->id),
-            'The self-enrolment test reads $USER, so it never answers for another user.');
+            'The catalogue renders the button for the logged-in viewer, so it never answers for another user.');
 
         $this->setGuestUser();
         global $USER;

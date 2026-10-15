@@ -42,10 +42,10 @@ $flags = [
                           the logged-in catalogue card and the catalogue course page offer the button
                           to a learner who holds local/sentientia_request:request, is not enrolled,
                           may be enrolled in the course (visible and in the learner\'s tenant scope,
-                          the test submit() applies), and has no way in of the course\'s own (no
-                          enabled self-enrolment instance they can use); a free course the one-click
-                          flag (sentientia.catalog.free_oneclick_enrol.enabled) enrols at once, and a
-                          paid course (the cart), never get it. While a request of the learner\'s for
+                          the test submit() applies). Self-enrolment is not counted as a way in: the
+                          theme sends /enrol/index.php to /my, so a learner can never use it. A free
+                          course the one-click flag (sentientia.catalog.free_oneclick_enrol.enabled)
+                          enrols at once, and a paid course (the cart), never get it. While a request of the learner\'s for
                           the course is pending the button reads "Request pending". Turning it on
                           for Airpay is the owner\'s decision, taken after the visual evidence is
                           reviewed. See classes/catalog_cta.php.',

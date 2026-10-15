@@ -22,19 +22,25 @@ defined('MOODLE_INTERNAL') || die();
  *   1. is a real, logged-in user holding local/sentientia_request:request;
  *   2. is not enrolled in the course already;
  *   3. may be enrolled in it, which is the test submit() applies (visible, in the learner's tenant scope, ADR-031);
- *   4. has no way in of the course's own: an enabled self-enrolment instance the learner can use (an enrolment
- *      key is a way in, a cohort restriction they fail is not);
  *
  * and, with the feature flag ON, shows "Request pending" instead of the button while a request of theirs for the
  * course is pending (submit() would refuse a second one).
+ *
+ * Self-enrolment is deliberately NOT a way in here (fix 2026-10-15, review of 7a). enrol/index.php, where both the
+ * enrolment-key form and the "Enrol me" form render, uses the 'incourse' layout, and theme/sentientia sends
+ * /enrol/index.php to /my for everyone (core_renderer::custom_secured_redirection(); airpayux does the same from
+ * full_header), so a learner can never reach a self-enrolment instance, keyed or not, and a course whose only
+ * enabled method is self-enrolment would otherwise be a dead end with no button. The routes that come before a
+ * request are the catalogue's own: a paid course goes to the cart, and a free course offered one-click enrolment is
+ * enrolled at once. Count self-enrolment as a way in again only once a reachable self-enrol route exists.
  *
  * What the catalogue adds on its side, because only it knows the price and its own one-click policy: a paid
  * course goes to the cart, and a free course the learner is offered one-click enrolment for is enrolled at once
  * (local_sentientia_catalog\enrolment::request_state()).
  *
  * Gated by the feature flag sentientia.request.catalog_button, default OFF (db/feature_flags.php): with it OFF
- * nothing is rendered and the catalogue is exactly what it was. The check is for the viewer only: it reads the
- * logged-in user's own enrolment options (enrol_self::can_self_enrol() looks at $USER).
+ * nothing is rendered and the catalogue is exactly what it was. The check is for the viewer only: the catalogue
+ * renders the button for the logged-in user, and the answer is never given for anybody else.
  *
  * @package    local_sentientia_request
  * @copyright  2026 Airpay Payment Services
@@ -66,8 +72,7 @@ final class catalog_cta {
     /**
      * What the catalogue should offer this learner for this course, as far as the request plugin's rules go.
      *
-     * Only ever answers for the logged-in viewer: for any other user it is NONE, because the self-enrolment test
-     * reads $USER.
+     * Only ever answers for the logged-in viewer: for any other user it is NONE.
      *
      * @param \stdClass $user The viewer (a full user record, e.g. $USER).
      * @param int $courseid
@@ -93,38 +98,11 @@ final class catalog_cta {
         if (!request_manager::can_request_course($user, $courseid)) {
             return self::NONE;
         }
-        if (self::has_own_way_in($courseid)) {
-            return self::NONE;
-        }
 
         // A request imported from BizLMS counts only where the lists show it (imported_history flag), as in submit().
         $pending = $DB->record_exists_select('local_sentientia_request',
             'userid = :u AND courseid = :c AND status = :s' . imported_history::filter_sql(''),
             ['u' => (int) $user->id, 'c' => $courseid, 's' => 'pending']);
         return $pending ? self::PENDING : self::REQUEST;
-    }
-
-    /**
-     * Does the course already give the viewer a way to enrol themselves?
-     *
-     * An enabled self-enrolment instance the viewer passes can_self_enrol() for (open dates, room left, cohort,
-     * the new-enrolments switch). An enrolment key does not count against it: the learner enters the key, so
-     * there is nothing to request. Manual and other administrator-driven methods are not a way in for the
-     * learner; that is the case a request exists for.
-     *
-     * @param int $courseid
-     * @return bool
-     */
-    private static function has_own_way_in(int $courseid): bool {
-        $plugin = enrol_get_plugin('self');
-        if (!$plugin) {
-            return false;
-        }
-        foreach (enrol_get_instances($courseid, true) as $instance) {
-            if ($instance->enrol === 'self' && $plugin->can_self_enrol($instance, false) === true) {
-                return true;
-            }
-        }
-        return false;
     }
 }
