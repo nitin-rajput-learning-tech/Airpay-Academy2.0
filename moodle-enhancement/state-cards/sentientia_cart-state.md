@@ -1,7 +1,7 @@
 # State Card — `local_airpay_cart`
 
 **Component:** `local_airpay_cart`
-**Version:** `2026100701` / `1.1.1`  (was `2026052001` / `1.0.2` when this card was first written; see the dated sections below)
+**Version:** `2026101500` / `1.2.1`  (order-list UI pass 2026-10-15: Refund button, payment date, status in words, currency symbol; 2026101400 / 1.2.0 was GST tax invoices, credit notes and purchase receipts, 2026-10-14; was `2026052001` / `1.0.2` when this card was first written; see the dated sections below)
 **Maturity:** `MATURITY_STABLE`
 **Status:** Live on airpay.academy. Course-commerce + invoicing.
 **Last refreshed:** 2026-10-07 (owner decisions, finance cluster: finance keys declared, withheld-line refund amounts, notifier in the recipient's language, dev masking; catalogue price source in the catalog card)
@@ -562,3 +562,67 @@ Links and redirects to `/my/dashboard.php` now point at `/my/` (the dashboard; t
 ## 2026-10-08 Moodle 5.3 compat FX-18
 
 Every `fputcsv()` / `fgetcsv()` / `str_getcsv()` call in this plugin now passes the `$escape` argument explicitly with the historic default (`',', '"', '\\'`, and `null` for the `fgetcsv` length). The output and the parsing are byte-identical; PHP 8.4 deprecates relying on the default, and the notice would otherwise be written into the CSV stream on a 8.4 host (UAT and production run PHP 8.3). No version bump, no schema change.
+## 2026-10-14 - GST tax invoices, credit notes and purchase receipts (2026101400, release 1.2.0)
+
+**The contract:** `docs/integrations/GST-TAX-INVOICE-AND-RECEIPT-SPEC-2026-10-14.md` (Nitin, Q6: build it). Two flags,
+both default OFF: `sentientia.cart.purchase_receipts` and `sentientia.cart.gst_tax_invoices`. Airpay Finance confirms
+spec section 10 before either goes on.
+
+**What it does:**
+- Invoices are issued after the payment commits, never inside it. `invoice_due` marks the order, and the task
+  `issue_due_documents` retries every 15 minutes.
+- Numbers are gap-free and at most 16 characters, from `docseq`.
+- The place of supply comes from the buyer's state, which must match a buyer GSTIN.
+- Every figure comes from what the order recorded.
+- B2B documents wait in `awaiting_irn` until Finance records the IRN on `einvoice.php`.
+- Refunds get credit notes.
+- Buyers get a receipt with a PDF.
+- Erasure keeps tax documents for `invoice_retention_years`.
+
+**Deviations from the spec:**
+- `credit_note_prefix` defaults to `AIRCN`, because `AIRPAYCN-2026-0001` is 18 characters.
+- The checkout state field shows, and is required, only while the invoice flag is ON.
+- The supplier is frozen on each document (`supplier_json`).
+- PDFs are always in English.
+
+**Review fixes, 2026-10-14** (the read-only review's verdict was fix-then-ship; all seven are fixed):
+1. Credit-note `issue()` took its lock by writing a status it had read before the lock. A concurrent issuer could put
+   an issued note back to due and number it twice. It now takes the lock with a no-op UPDATE and reads again.
+2. `create_due()` locked the invoice by writing back its old status, which could undo an IRN that Finance had just
+   recorded. Same fix.
+3. "One credit note per refund" is checked again under the lock.
+4. A refund inside a caller's transaction raises no credit note there. The task raises the credit note of every
+   refund that has none. Failures go to `callback_logger`.
+5. The e-invoice button and page need the invoice flag: `flags::invoices_for_viewer()`.
+6. `our_gstn` must be a GSTIN, and a `supplier_state_code` set by hand must equal the GSTIN's state.
+7. Past retention, erasure also clears `signed_qr` and the credit note's `reason`. Erasure first issues a due invoice,
+   and keeps the details of an order whose invoice still cannot be issued; the invoicer blanks them once it issues
+   the invoice for a deleted buyer.
+
+## 2026-10-15 - order-list UI pass, found by the visual pass of 2026-10-14 (2026101500, release 1.2.1)
+
+No schema, capability or flag change. `amd/src/admin_orders.js` and its build are unchanged.
+
+1. **No Refund button.** The script opens the Refund dialog from `[data-action="refund-order"]`; nothing rendered one.
+   `list_orders` now returns it in a new `actions` field (escaped HTML) for the rows `cart_manager::refund()` accepts
+   (paid, partial_refund, not imported, a balance left: one grouped ledger query per page) and only to a viewer who holds
+   `:viewallorders` and `:refund`, and only when the call carries `withactions=true`. `admin_orders.php` adds an Actions
+   column for the holders of `:refund` and its table sends `withactions` through `data-extra-args` (the datatable merges
+   those into every call). `history.php` shares the service, has no Actions column and does not send it: without that
+   gate an administrator opening their own order history was sent the button anyway, and the datatable painted it in an
+   extra headerless cell (table misaligned, button inert, `history.mustache` never loads `admin_orders.js`). The
+   parameter is optional and defaults to false, so every other caller is unchanged.
+2. **Placed** is `timepaid`, else `timecreated` (there is no checkout-time column; `receipts::context()` dates an order
+   the same way), and the header sorts by it (`placed` sort key; `timecreated` still works).
+3. **Status** shows the `status_<key>` string (`status_label`), **Total** shows the symbol and the receipt money format
+   (`total_str`: `invoicer::currency_symbol` + `gst::money`). Both `history.php` and `admin_orders.php`.
+4. New string `refund_button` (en + hi). Tests: `tests/order_list_ui_test.php`; `gst_schema_strings_test` no longer pins
+   the exact version.
+
+Not done: the remaining refundable balance is not sent as a data attribute of the button. Only a change to
+`amd/src/admin_orders.js` (an AMD rebuild) would show it in the Refund dialog, which still prints the order total.
+
+Known and left alone: `amd/src/history.js` listens for `airpay-datatable:rows-rendered`, which the datatable never fires
+(it fires `airpay:datatable:rendered`), and reads `tr.dataset.orderid`, which it never sets, so the order # in the
+buyer's history is not a link to `return.php`. The Refund dialog's own title and labels are English literals in the
+script.

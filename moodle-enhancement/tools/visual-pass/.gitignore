@@ -2,3 +2,4 @@
 .personas.local.json
 .journey-context.local.json
 node_modules/
+.gst-evidence.local.json

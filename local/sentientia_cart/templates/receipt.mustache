@@ -1,0 +1,156 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_sentientia_cart/receipt
+
+    The buyer's payment receipt as a page. Spec GST-TAX-INVOICE-AND-RECEIPT-SPEC-2026-10-14.md, section 8. It says it
+    is a payment receipt and not a tax invoice, and points to the tax invoice when there is one.
+
+    Context variables required for this template:
+    * l - object of lang strings (receipts::context())
+    * orderid, paid_on, buyer_name, buyer_email - strings / numbers
+    * items - array of rows (n, name, price, has_discount, discount)
+    * subtotal, discount, tax, total - strings
+    * gateway, gateway_ref, refunds - payment facts
+    * invoice_url, invoice_follows, creditnotes - the tax documents
+
+    Example context (json):
+    {
+        "l": {
+            "title": "Payment receipt", "orderno": "Order number", "paidon": "Paid on", "buyer": "Paid by",
+            "email": "Email", "items": "Items", "item": "Item", "price": "Price", "discount": "Discount",
+            "subtotal": "Subtotal", "gst": "GST charged", "totalpaid": "Total paid", "payment": "Payment",
+            "gateway": "Payment method", "reference": "Reference", "refunds": "Refunds", "refundedon": "Refunded on",
+            "amount": "Amount", "notinvoice": "This is a payment receipt, not a tax invoice.",
+            "viewtaxinvoice": "View tax invoice", "invoicewillfollow": "Your GST tax invoice will follow.",
+            "creditnotes": "Credit notes", "viewcreditnote": "View credit note", "downloadpdf": "Download PDF",
+            "print": "Print", "status": "Status"
+        },
+        "orderid": 1000123,
+        "paid_on": "14 Oct 2026, 15:42 IST",
+        "buyer_name": "Test Buyer",
+        "buyer_email": "buyer@example.com",
+        "items": [{"n": 1, "name": "Course", "price": "₹1,000.00", "has_discount": false, "discount": "₹0.00"}],
+        "subtotal": "₹1,000.00",
+        "has_discount": false,
+        "discount": "₹0.00",
+        "tax": "₹180.00",
+        "total": "₹1,180.00",
+        "gateway": "airpay",
+        "gateway_ref": "TXN-0001",
+        "status_label": "Paid",
+        "has_refunds": false,
+        "has_invoice": true,
+        "invoice_number": "AIRPAY-2026-0001",
+        "invoice_url": "https://example.com/local/sentientia_cart/invoice.php?id=1",
+        "invoice_follows": false,
+        "has_creditnotes": false,
+        "pdf_url": "https://example.com/local/sentientia_cart/receipt.php?id=1&download=pdf"
+    }
+}}
+<style>
+.airpay-receipt { max-width: 760px; margin: 1.5rem auto; padding: 1.5rem; border: 1px solid #e2e6ef; background: #fff;
+    color: #1a1a2e; font-family: 'Montserrat', -apple-system, sans-serif; }
+.airpay-receipt h1 { color: #0066A7; font-size: 1.4rem; margin: 0 0 .25rem; }
+.airpay-receipt__scroll { overflow-x: auto; }
+.airpay-receipt table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+.airpay-receipt th, .airpay-receipt td { padding: 6px 10px; border: 1px solid #e2e6ef; vertical-align: top; }
+.airpay-receipt th { background: #f8f9fc; text-align: left; }
+.airpay-receipt__num { text-align: right; white-space: nowrap; }
+.airpay-receipt__label { font-weight: 700; color: #5a6070; font-size: .8rem; text-transform: uppercase; }
+.airpay-receipt__note { background: #e8f2f9; border-left: 4px solid #0066A7; padding: .6rem .9rem; margin: 1rem 0; }
+@media print { .no-print { display: none !important; } .airpay-receipt { border: 0; margin: 0; } }
+</style>
+
+<div class="airpay-receipt" data-region="receipt">
+    <h1>{{ l.title }}</h1>
+    <div><span class="airpay-receipt__label">{{ l.orderno }}:</span> <strong>#{{ orderid }}</strong>
+        &nbsp; <span class="airpay-receipt__label">{{ l.status }}:</span> {{ status_label }}</div>
+    <div><span class="airpay-receipt__label">{{ l.paidon }}:</span> {{ paid_on }}</div>
+    <div><span class="airpay-receipt__label">{{ l.buyer }}:</span> {{ buyer_name }}
+        {{#buyer_email}}({{ buyer_email }}){{/buyer_email}}</div>
+
+    <div class="airpay-receipt__scroll">
+        <table>
+            <thead>
+                <tr><th>{{ l.item }}</th><th class="airpay-receipt__num">{{ l.price }}</th></tr>
+            </thead>
+            <tbody>
+                {{#items}}
+                <tr>
+                    <td>{{ name }}{{#has_discount}} <span class="text-muted small">({{ l.discount }}: {{ discount }})</span>{{/has_discount}}</td>
+                    <td class="airpay-receipt__num">{{ price }}</td>
+                </tr>
+                {{/items}}
+            </tbody>
+        </table>
+    </div>
+
+    <table>
+        <tr><td>{{ l.subtotal }}</td><td class="airpay-receipt__num">{{ subtotal }}</td></tr>
+        {{#has_discount}}
+        <tr><td>{{ l.discount }}</td><td class="airpay-receipt__num">-{{ discount }}</td></tr>
+        {{/has_discount}}
+        <tr><td>{{ l.gst }}</td><td class="airpay-receipt__num">{{ tax }}</td></tr>
+        <tr><th>{{ l.totalpaid }}</th><th class="airpay-receipt__num">{{ total }}</th></tr>
+    </table>
+
+    <div>
+        {{#gateway}}<div><span class="airpay-receipt__label">{{ l.gateway }}:</span> {{ gateway }}</div>{{/gateway}}
+        {{#gateway_ref}}<div><span class="airpay-receipt__label">{{ l.reference }}:</span> {{ gateway_ref }}</div>{{/gateway_ref}}
+    </div>
+
+    {{#has_refunds}}
+    <h2 class="h5 mt-3">{{ l.refunds }}</h2>
+    <table>
+        <thead><tr><th>{{ l.refundedon }}</th><th class="airpay-receipt__num">{{ l.amount }}</th></tr></thead>
+        <tbody>
+            {{#refunds}}
+            <tr><td>{{ date }}</td><td class="airpay-receipt__num">{{ amount }}</td></tr>
+            {{/refunds}}
+        </tbody>
+    </table>
+    {{/has_refunds}}
+
+    <div class="airpay-receipt__note" data-region="receipt-notice">
+        {{ l.notinvoice }}
+        {{#has_invoice}}
+        <div><a href="{{ invoice_url }}">{{ l.viewtaxinvoice }} {{ invoice_number }}</a></div>
+        {{/has_invoice}}
+        {{#invoice_follows}}
+        <div>{{ l.invoicewillfollow }}</div>
+        {{/invoice_follows}}
+    </div>
+
+    {{#has_creditnotes}}
+    <h2 class="h5">{{ l.creditnotes }}</h2>
+    <ul>
+        {{#creditnotes}}
+        <li><a href="{{ url }}">{{ l.viewcreditnote }} {{ number }}</a> ({{ date }})</li>
+        {{/creditnotes}}
+    </ul>
+    {{/has_creditnotes}}
+
+    <div class="no-print text-center mt-3">
+        <button onclick="window.print();" class="btn btn-primary">
+            <i class="fa fa-print" aria-hidden="true"></i> {{ l.print }}
+        </button>
+        <a href="{{ pdf_url }}" class="btn btn-outline-primary">
+            <i class="fa fa-file-pdf" aria-hidden="true"></i> {{ l.downloadpdf }}
+        </a>
+    </div>
+</div>

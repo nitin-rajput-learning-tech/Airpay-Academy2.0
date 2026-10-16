@@ -1,0 +1,225 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_sentientia_cart/tax_document
+
+    A GST tax invoice or credit note as a page (print it, or download the PDF).
+    Spec GST-TAX-INVOICE-AND-RECEIPT-SPEC-2026-10-14.md, section 8.
+
+    Every word is a lang string, passed in `l` (doc_view::labels()); every value is plain text printed with the
+    escaping double braces. There is no triple brace in this template: the lines of an address are rows.
+
+    Context variables required for this template:
+    * l - object of lang strings
+    * title, number_label, number, date - strings
+    * supplier_name, supplier_address_lines, supplier_gstin, supplier_state - the supplier at issue
+    * buyer_name, buyer_email, buyer_address_lines, buyer_gstin, buyer_state, place_of_supply - the buyer
+    * lines - array of rows
+    * show_cgst_sgst, show_igst - which tax columns to draw
+    * total_taxable, total_cgst, total_sgst, total_igst, total, total_words - strings
+
+    Example context (json):
+    {
+        "l": {
+            "gstin": "GSTIN", "state": "State", "date": "Date", "buyer": "Buyer", "placeofsupply": "Place of supply",
+            "srno": "No.", "description": "Description", "sac": "SAC", "taxable": "Taxable value", "rate": "Rate",
+            "cgst": "CGST", "sgst": "SGST", "igst": "IGST", "total": "Total", "totaltaxable": "Total taxable value",
+            "amountinwords": "Amount in words", "reversecharge": "Reverse charge", "irn": "IRN", "ackno": "Ack. No.",
+            "ackdate": "Ack. date", "qralt": "Signed e-invoice QR code", "againstinvoice": "Against tax invoice",
+            "dated": "dated", "reason": "Reason", "print": "Print / Save as PDF", "downloadpdf": "Download PDF",
+            "pendingirn": "This document is awaiting its e-invoice IRN.", "supplier": "Supplier", "email": "Email"
+        },
+        "title": "Tax Invoice",
+        "number_label": "Invoice No.",
+        "number": "AIRPAY-2026-0001",
+        "date": "14 Oct 2026",
+        "supplier_name": "Airpay Payment Services Pvt Ltd",
+        "supplier_address_lines": [{"line": "Airpay House"}, {"line": "Mumbai 400063, India"}],
+        "supplier_gstin": "27AAAAA0000A1Z5",
+        "supplier_state": "27 - Maharashtra",
+        "buyer_name": "Test Buyer",
+        "buyer_email": "buyer@example.com",
+        "buyer_address_lines": [{"line": "1 Test Road"}],
+        "buyer_gstin": "",
+        "buyer_state": "27 - Maharashtra",
+        "place_of_supply": "27 - Maharashtra",
+        "lines": [{"n": 1, "name": "Course", "sac": "999293", "taxable": "₹1,000.00", "rate": "18%",
+                   "cgst": "₹90.00", "sgst": "₹90.00", "igst": "₹0.00"}],
+        "show_cgst_sgst": true,
+        "show_igst": false,
+        "total_taxable": "₹1,000.00",
+        "total_cgst": "₹90.00",
+        "total_sgst": "₹90.00",
+        "total_igst": "₹0.00",
+        "total": "₹1,180.00",
+        "total_words": "Rupees One Thousand One Hundred Eighty only",
+        "reverse_charge": "No",
+        "has_irn": false,
+        "signatory_for": "For Airpay Payment Services Pvt Ltd",
+        "signatory_text": "Authorised signatory",
+        "computer_generated": "This is a computer-generated invoice.",
+        "has_pdf": true,
+        "pdf_url": "https://example.com/local/sentientia_cart/invoice.php?id=1&download=pdf"
+    }
+}}
+<style>
+.airpay-taxdoc { max-width: 860px; margin: 1.5rem auto; padding: 1.5rem; border: 1px solid #e2e6ef; background: #fff;
+    color: #1a1a2e; font-family: 'Montserrat', -apple-system, sans-serif; font-size: 0.9rem; }
+.airpay-taxdoc__head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; }
+.airpay-taxdoc__company { color: #0066A7; font-size: 1.4rem; margin: 0 0 .25rem; }
+.airpay-taxdoc__meta { text-align: right; }
+.airpay-taxdoc__title { margin: 0 0 .25rem; font-size: 1.3rem; text-transform: uppercase; }
+.airpay-taxdoc__parties { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 1rem; }
+.airpay-taxdoc__party { flex: 1 1 240px; }
+.airpay-taxdoc__label { font-weight: 700; text-transform: uppercase; font-size: .75rem; color: #5a6070; }
+.airpay-taxdoc__scroll { overflow-x: auto; }
+.airpay-taxdoc table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+.airpay-taxdoc th, .airpay-taxdoc td { padding: 6px 10px; border: 1px solid #e2e6ef; vertical-align: top; }
+.airpay-taxdoc th { background: #f8f9fc; text-align: left; }
+.airpay-taxdoc .airpay-taxdoc__num { text-align: right; white-space: nowrap; }
+.airpay-taxdoc__totals { margin-left: auto; width: 100%; max-width: 420px; }
+.airpay-taxdoc__irn { word-break: break-all; }
+.airpay-taxdoc__qr { width: 140px; height: 140px; }
+.airpay-taxdoc__sign { text-align: right; margin-top: 2rem; }
+.airpay-taxdoc__note { font-size: .8rem; color: #5a6070; }
+@media print { .no-print { display: none !important; } .airpay-taxdoc { border: 0; margin: 0; } }
+@media (max-width: 590px) { .airpay-taxdoc { padding: 1rem; } .airpay-taxdoc__meta { text-align: left; } }
+</style>
+
+<div class="airpay-taxdoc" data-region="tax-document">
+    {{#awaiting_irn}}
+    <div class="alert alert-warning no-print" role="status">{{ l.pendingirn }}</div>
+    {{/awaiting_irn}}
+
+    <div class="airpay-taxdoc__head">
+        <div class="airpay-taxdoc__supplier">
+            <h1 class="airpay-taxdoc__company">{{ supplier_name }}</h1>
+            {{#supplier_address_lines}}<div>{{ line }}</div>{{/supplier_address_lines}}
+            {{#supplier_gstin}}<div>{{ l.gstin }}: <strong>{{ supplier_gstin }}</strong></div>{{/supplier_gstin}}
+            {{#supplier_state}}<div>{{ l.state }}: {{ supplier_state }}</div>{{/supplier_state}}
+        </div>
+        <div class="airpay-taxdoc__meta">
+            <h2 class="airpay-taxdoc__title">{{ title }}</h2>
+            <div>{{ number_label }}: <strong>{{ number }}</strong></div>
+            <div>{{ l.date }}: {{ date }}</div>
+            {{#is_creditnote}}
+            <div>{{ l.againstinvoice }}: <strong>{{ original_number }}</strong> {{ l.dated }} {{ original_date }}</div>
+            {{/is_creditnote}}
+        </div>
+    </div>
+
+    <div class="airpay-taxdoc__parties">
+        <div class="airpay-taxdoc__party">
+            <div class="airpay-taxdoc__label">{{ l.buyer }}</div>
+            <div><strong>{{ buyer_name }}</strong></div>
+            {{#buyer_email}}<div>{{ buyer_email }}</div>{{/buyer_email}}
+            {{#buyer_address_lines}}<div>{{ line }}</div>{{/buyer_address_lines}}
+            {{#buyer_gstin}}<div>{{ l.gstin }}: <strong>{{ buyer_gstin }}</strong></div>{{/buyer_gstin}}
+            {{#buyer_state}}<div>{{ l.state }}: {{ buyer_state }}</div>{{/buyer_state}}
+        </div>
+        <div class="airpay-taxdoc__party">
+            <div class="airpay-taxdoc__label">{{ l.placeofsupply }}</div>
+            <div><strong>{{ place_of_supply }}</strong></div>
+            <div class="airpay-taxdoc__label mt-2">{{ l.reversecharge }}</div>
+            <div>{{ reverse_charge }}</div>
+            {{#is_creditnote}}{{#has_reason}}
+            <div class="airpay-taxdoc__label mt-2">{{ l.reason }}</div>
+            <div>{{ reason }}</div>
+            {{/has_reason}}{{/is_creditnote}}
+        </div>
+    </div>
+
+    <div class="airpay-taxdoc__scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ l.srno }}</th>
+                    <th>{{ l.description }}</th>
+                    <th>{{ l.sac }}</th>
+                    <th class="airpay-taxdoc__num">{{ l.taxable }}</th>
+                    <th class="airpay-taxdoc__num">{{ l.rate }}</th>
+                    {{#show_cgst_sgst}}
+                    <th class="airpay-taxdoc__num">{{ l.cgst }}</th>
+                    <th class="airpay-taxdoc__num">{{ l.sgst }}</th>
+                    {{/show_cgst_sgst}}
+                    {{#show_igst}}
+                    <th class="airpay-taxdoc__num">{{ l.igst }}</th>
+                    {{/show_igst}}
+                </tr>
+            </thead>
+            <tbody>
+                {{#lines}}
+                <tr>
+                    <td>{{ n }}</td>
+                    <td>{{ name }}</td>
+                    <td>{{ sac }}</td>
+                    <td class="airpay-taxdoc__num">{{ taxable }}</td>
+                    <td class="airpay-taxdoc__num">{{ rate }}</td>
+                    {{#show_cgst_sgst}}
+                    <td class="airpay-taxdoc__num">{{ cgst }}</td>
+                    <td class="airpay-taxdoc__num">{{ sgst }}</td>
+                    {{/show_cgst_sgst}}
+                    {{#show_igst}}
+                    <td class="airpay-taxdoc__num">{{ igst }}</td>
+                    {{/show_igst}}
+                </tr>
+                {{/lines}}
+            </tbody>
+        </table>
+    </div>
+
+    <table class="airpay-taxdoc__totals">
+        <tr><td>{{ l.totaltaxable }}</td><td class="airpay-taxdoc__num">{{ total_taxable }}</td></tr>
+        {{#show_cgst_sgst}}
+        <tr><td>{{ l.cgst }}</td><td class="airpay-taxdoc__num">{{ total_cgst }}</td></tr>
+        <tr><td>{{ l.sgst }}</td><td class="airpay-taxdoc__num">{{ total_sgst }}</td></tr>
+        {{/show_cgst_sgst}}
+        {{#show_igst}}
+        <tr><td>{{ l.igst }}</td><td class="airpay-taxdoc__num">{{ total_igst }}</td></tr>
+        {{/show_igst}}
+        <tr><th>{{ l.total }}</th><th class="airpay-taxdoc__num">{{ total }}</th></tr>
+    </table>
+
+    <p><span class="airpay-taxdoc__label">{{ l.amountinwords }}:</span> <strong>{{ total_words }}</strong></p>
+
+    {{#has_irn}}
+    <div class="airpay-taxdoc__irn" data-region="einvoice">
+        <div><span class="airpay-taxdoc__label">{{ l.irn }}:</span> {{ irn }}</div>
+        <div><span class="airpay-taxdoc__label">{{ l.ackno }}:</span> {{ ack_no }}
+            &nbsp; <span class="airpay-taxdoc__label">{{ l.ackdate }}:</span> {{ ack_date }}</div>
+        {{#qr_src}}<img class="airpay-taxdoc__qr" src="{{ qr_src }}" alt="{{ l.qralt }}">{{/qr_src}}
+    </div>
+    {{/has_irn}}
+
+    <div class="airpay-taxdoc__sign">
+        <div>{{ signatory_for }}</div>
+        <div class="mt-4"><strong>{{ signatory_text }}</strong></div>
+    </div>
+
+    <p class="airpay-taxdoc__note">{{ computer_generated }}</p>
+
+    <div class="no-print text-center mt-3">
+        <button onclick="window.print();" class="btn btn-primary">
+            <i class="fa fa-print" aria-hidden="true"></i> {{ l.print }}
+        </button>
+        {{#has_pdf}}
+        <a href="{{ pdf_url }}" class="btn btn-outline-primary">
+            <i class="fa fa-file-pdf" aria-hidden="true"></i> {{ l.downloadpdf }}
+        </a>
+        {{/has_pdf}}
+    </div>
+</div>

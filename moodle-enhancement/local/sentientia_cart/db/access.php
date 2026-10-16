@@ -78,4 +78,15 @@ $capabilities = [
             'editingteacher' => CAP_ALLOW,
         ],
     ],
+
+    // Record the e-invoice IRN of a B2B tax invoice or credit note (einvoice.php) and see the documents that wait
+    // for it. 2026-10-14, GST tax invoices spec section 6: NO archetype, so nobody holds it until an administrator
+    // grants it to the Finance role; site administrators hold every capability. Tenant scoping (ADR-031) still
+    // applies on top: a holder sees and records only the documents of their own tenant.
+    'local/sentientia_cart:manageinvoices' => [
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [],
+        'riskbitmask'  => RISK_PERSONAL,
+    ],
 ];

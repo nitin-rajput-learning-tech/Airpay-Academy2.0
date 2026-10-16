@@ -79,5 +79,59 @@ if ($hassiteconfig) {
         'Prefix for invoice numbers. E.g. AIRPAY → AIRPAY-2026-0001',
         'AIRPAY', PARAM_ALPHANUMEXT));
 
+    // ── GST tax invoices and credit notes (2026-10-14; spec GST-TAX-INVOICE-AND-RECEIPT-SPEC-2026-10-14.md) ──
+    // Used only while sentientia.cart.gst_tax_invoices is ON. Invoicing refuses to start while the company name, the
+    // company address, our GSTN or the SAC code is empty, or the supplier state is not a valid GST state code; the
+    // documents then stay due, and the site administrators are warned once a day.
+    $settings->add(new admin_setting_heading('local_sentientia_cart/gst_heading',
+        get_string('settings_gst', 'local_sentientia_cart'),
+        get_string('settings_gst_desc', 'local_sentientia_cart')));
+
+    $settings->add(new admin_setting_configtext('local_sentientia_cart/sac_code',
+        get_string('settings_saccode', 'local_sentientia_cart'),
+        get_string('settings_saccode_desc', 'local_sentientia_cart'),
+        '', PARAM_ALPHANUM));
+
+    $settings->add(new admin_setting_configselect('local_sentientia_cart/supplier_state_code',
+        get_string('settings_supplierstate', 'local_sentientia_cart'),
+        get_string('settings_supplierstate_desc', 'local_sentientia_cart'),
+        '',
+        ['' => get_string('settings_supplierstate_fromgstn', 'local_sentientia_cart')]
+            + \local_sentientia_cart\gst_states::options()));
+
+    $settings->add(new admin_setting_configtext('local_sentientia_cart/credit_note_prefix',
+        get_string('settings_creditnoteprefix', 'local_sentientia_cart'),
+        get_string('settings_creditnoteprefix_desc', 'local_sentientia_cart'),
+        \local_sentientia_cart\gst_settings::DEFAULT_CREDIT_NOTE_PREFIX, PARAM_ALPHANUMEXT));
+
+    $settings->add(new admin_setting_configselect('local_sentientia_cart/series_period',
+        get_string('settings_seriesperiod', 'local_sentientia_cart'),
+        get_string('settings_seriesperiod_desc', 'local_sentientia_cart'),
+        'calendar',
+        [
+            'calendar'  => get_string('settings_seriesperiod_calendar', 'local_sentientia_cart'),
+            'financial' => get_string('settings_seriesperiod_financial', 'local_sentientia_cart'),
+        ]));
+
+    $settings->add(new admin_setting_configcheckbox('local_sentientia_cart/einvoice_b2b',
+        get_string('settings_einvoiceb2b', 'local_sentientia_cart'),
+        get_string('settings_einvoiceb2b_desc', 'local_sentientia_cart'),
+        1));
+
+    $settings->add(new admin_setting_configtext('local_sentientia_cart/invoice_retention_years',
+        get_string('settings_retentionyears', 'local_sentientia_cart'),
+        get_string('settings_retentionyears_desc', 'local_sentientia_cart'),
+        (string) \local_sentientia_cart\gst_settings::DEFAULT_RETENTION_YEARS, PARAM_INT));
+
+    $settings->add(new admin_setting_configtext('local_sentientia_cart/signatory_text',
+        get_string('settings_signatory', 'local_sentientia_cart'),
+        get_string('settings_signatory_desc', 'local_sentientia_cart'),
+        'Authorised signatory', PARAM_TEXT));
+
+    $settings->add(new admin_setting_description('local_sentientia_cart/einvoice_link',
+        get_string('einvoice_link', 'local_sentientia_cart'),
+        html_writer::link(new moodle_url('/local/sentientia_cart/einvoice.php'),
+            get_string('einvoice_title', 'local_sentientia_cart'))));
+
     $ADMIN->add('localplugins', $settings);
 }

@@ -1,0 +1,418 @@
+{
+ "generated": "2026-10-14T15:55:23.472Z",
+ "base": "http://localhost:8080",
+ "tenant": 77,
+ "results": [
+  {
+   "name": "01-checkout-state-field",
+   "url": "/local/sentientia_cart/checkout.php",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "Checkout with sentientia.cart.gst_tax_invoices ON: the required \"State\" select (place of supply) between the address and the GSTIN",
+   "http": 200,
+   "files": [
+    "01-checkout-state-field-desktop.png",
+    "01-checkout-state-field-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [],
+   "textExcerpt": "Skip to main content airpay academy Dashboard My Courses Catalog My Cart Certificates Profile Dark Mode VP VP Public learner /77 Profile & Settings Log out Checkout Checkout Billing details Name * Email * Phone Address State * Select your state 01 - Jammu and Kashmir 02 - Himachal Pradesh 03 - Punja"
+  },
+  {
+   "name": "02-checkout-state-gstin-mismatch",
+   "url": "/local/sentientia_cart/checkout.php (POST, refused)",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "State = Karnataka (29) with a Maharashtra GSTIN (27...): checkout refuses, shows why, keeps what was typed; no order is created",
+   "http": 200,
+   "files": [
+    "02-checkout-state-gstin-mismatch-desktop.png",
+    "02-checkout-state-gstin-mismatch-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [
+    "pageerror: Cannot read properties of null (reading 'innerText')"
+   ],
+   "textExcerpt": "Skip to main content airpay academy Dashboard My Courses Catalog My Cart Certificates Profile Dark Mode VP VP Public learner /77 Profile & Settings Log out Checkout The state in your GST number does not match the state you chose. Please check both. Dismiss this notification Checkout Billing details Name * Email * Phone Address State * Select your state 01 - Jammu and Kashmir 02 - Himachal Pradesh "
+  },
+  {
+   "name": "03-order-history-documents-before-irn",
+   "url": "/local/sentientia_cart/history.php",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "Order history with the Documents column: Receipt for each paid order, Tax invoice and Credit note links for the issued ones; the B2B order has no Tax invoice link while it awaits the IRN",
+   "http": 200,
+   "files": [
+    "03-order-history-documents-before-irn-desktop.png",
+    "03-order-history-documents-before-irn-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [],
+   "textExcerpt": "Skip to main content airpay academy Dashboard My Courses Catalog My Cart Certificates Profile Dark Mode VP VP Public learner /77 Profile & Settings Log out Order history Order history Back to cart 1–3 of 3 # Placed Total Status Documents 12 30 Sept 2026 4130.59 partial_refund ReceiptTax invoiceCredi"
+  },
+  {
+   "name": "04-receipt-b2c-intra",
+   "url": "/local/sentientia_cart/receipt.php?id=20",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "Purchase receipt of order #12 (B2C, Maharashtra, two lines, partial refund shown, link to the tax invoice)",
+   "http": 200,
+   "files": [
+    "04-receipt-b2c-intra-desktop.png",
+    "04-receipt-b2c-intra-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [],
+   "textExcerpt": "Skip to main content airpay academy Dashboard My Courses Catalog My Cart Certificates Profile Dark Mode VP VP Public learner /77 Profile & Settings Log out Receipt for order #12 Payment receipt ORDER NUMBER: #12 STATUS: Partial refund PAID ON: 14 Oct 2026, 21:04 IST PAID BY: Asha Verma (TEST) (asha."
+  },
+  {
+   "name": "05-receipt-b2c-inter",
+   "url": "/local/sentientia_cart/receipt.php?id=22",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "Purchase receipt of order #13 (B2C, Karnataka)",
+   "http": 200,
+   "files": [
+    "05-receipt-b2c-inter-desktop.png",
+    "05-receipt-b2c-inter-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [],
+   "textExcerpt": "Skip to main content airpay academy Dashboard My Courses Catalog My Cart Certificates Profile Dark Mode VP VP Public learner /77 Profile & Settings Log out Receipt for order #13 Payment receipt ORDER NUMBER: #13 STATUS: Partial refund PAID ON: 14 Oct 2026, 21:04 IST PAID BY: Ravi Menon (TEST) (ravi."
+  },
+  {
+   "name": "06-receipt-b2b-awaiting-irn",
+   "url": "/local/sentientia_cart/receipt.php?id=23",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "Purchase receipt of the B2B order #14 while the invoice awaits the IRN: \"Your GST tax invoice will follow\", no invoice link",
+   "http": 200,
+   "files": [
+    "06-receipt-b2b-awaiting-irn-desktop.png",
+    "06-receipt-b2b-awaiting-irn-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [],
+   "textExcerpt": "Skip to main content airpay academy Dashboard My Courses Catalog My Cart Certificates Profile Dark Mode VP VP Public learner /77 Profile & Settings Log out Receipt for order #14 Payment receipt ORDER NUMBER: #14 STATUS: Partial refund PAID ON: 14 Oct 2026, 21:04 IST PAID BY: Meridian Test Traders Pv"
+  },
+  {
+   "name": "07-invoice-b2b-awaiting-as-buyer",
+   "url": "/local/sentientia_cart/invoice.php?id=16",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "What the buyer gets when they open the awaiting-IRN B2B invoice by its URL (spec: the buyer does not see such an invoice)",
+   "http": 404,
+   "files": [
+    "07-invoice-b2b-awaiting-as-buyer-desktop.png",
+    "07-invoice-b2b-awaiting-as-buyer-mobile.png"
+   ],
+   "problems": [
+    "Moodle debug dump on page"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+   ],
+   "textExcerpt": "Skip to main content airpay academy Dashboard My Courses Catalog My Cart Certificates Profile Dark Mode VP VP Public learner /77 Profile & Settings Log out airpay academy This page is not available. More information about this error Debug info: Error code: error_notavailable Dismiss this notificatio"
+  },
+  {
+   "name": "08-invoice-b2c-intra-state",
+   "url": "/local/sentientia_cart/invoice.php?id=14",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "Tax invoice AIRPAY-2026-0013: B2C intra-state (Maharashtra to Maharashtra), CGST + SGST, odd paisa to SGST",
+   "http": 200,
+   "files": [
+    "08-invoice-b2c-intra-state-desktop.png",
+    "08-invoice-b2c-intra-state-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [],
+   "textExcerpt": "Skip to main content Airpay Payment Services (TEST) TEST ADDRESS - local evidence only 1 Test Street, Andheri East Mumbai 400069, Maharashtra, India GSTIN: 27AAAAA0000A1Z5 State: 27 - Maharashtra TAX INVOICE Invoice No.: AIRPAY-2026-0013 Date: 14 Oct 2026 BUYER Asha Verma (TEST) asha.verma@visualpas"
+  },
+  {
+   "name": "09-invoice-b2c-inter-state",
+   "url": "/local/sentientia_cart/invoice.php?id=15",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "Tax invoice AIRPAY-2026-0014: B2C inter-state (Maharashtra to Karnataka), IGST",
+   "http": 200,
+   "files": [
+    "09-invoice-b2c-inter-state-desktop.png",
+    "09-invoice-b2c-inter-state-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [],
+   "textExcerpt": "Skip to main content Airpay Payment Services (TEST) TEST ADDRESS - local evidence only 1 Test Street, Andheri East Mumbai 400069, Maharashtra, India GSTIN: 27AAAAA0000A1Z5 State: 27 - Maharashtra TAX INVOICE Invoice No.: AIRPAY-2026-0014 Date: 14 Oct 2026 BUYER Ravi Menon (TEST) ravi.menon@visualpas"
+  },
+  {
+   "name": "10-creditnote-b2c-intra-state",
+   "url": "/local/sentientia_cart/creditnote.php?id=1",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "Credit note AIRCN-2026-0001 for a partial refund of the intra-state invoice (CGST + SGST), referencing the invoice",
+   "http": 200,
+   "files": [
+    "10-creditnote-b2c-intra-state-desktop.png",
+    "10-creditnote-b2c-intra-state-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [],
+   "textExcerpt": "Skip to main content Airpay Payment Services (TEST) TEST ADDRESS - local evidence only 1 Test Street, Andheri East Mumbai 400069, Maharashtra, India GSTIN: 27AAAAA0000A1Z5 State: 27 - Maharashtra CREDIT NOTE Credit Note No.: AIRCN-2026-0001 Date: 14 Oct 2026 Against tax invoice: AIRPAY-2026-0013 dat"
+  },
+  {
+   "name": "11-creditnote-b2c-inter-state",
+   "url": "/local/sentientia_cart/creditnote.php?id=2",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "Credit note AIRCN-2026-0002 for a partial refund of the inter-state invoice (IGST)",
+   "http": 200,
+   "files": [
+    "11-creditnote-b2c-inter-state-desktop.png",
+    "11-creditnote-b2c-inter-state-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [],
+   "textExcerpt": "Skip to main content Airpay Payment Services (TEST) TEST ADDRESS - local evidence only 1 Test Street, Andheri East Mumbai 400069, Maharashtra, India GSTIN: 27AAAAA0000A1Z5 State: 27 - Maharashtra CREDIT NOTE Credit Note No.: AIRCN-2026-0002 Date: 14 Oct 2026 Against tax invoice: AIRPAY-2026-0014 dat"
+  },
+  {
+   "name": "invoice-AIRPAY-2026-0013.pdf",
+   "url": "/local/sentientia_cart/invoice.php?id=14&download=pdf",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "PDF of the B2C intra-state tax invoice",
+   "http": 200,
+   "pdf": true,
+   "bytes": 148428,
+   "contentType": "application/pdf"
+  },
+  {
+   "name": "receipt-order-12.pdf",
+   "url": "/local/sentientia_cart/receipt.php?id=20&download=pdf",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "PDF of the purchase receipt of the B2C intra-state order",
+   "http": 200,
+   "pdf": true,
+   "bytes": 147583,
+   "contentType": "application/pdf"
+  },
+  {
+   "name": "creditnote-AIRCN-2026-0001.pdf",
+   "url": "/local/sentientia_cart/creditnote.php?id=1&download=pdf",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "PDF of the credit note of the B2C intra-state invoice",
+   "http": 200,
+   "pdf": true,
+   "bytes": 148324,
+   "contentType": "application/pdf"
+  },
+  {
+   "name": "12-einvoice-before-recording",
+   "url": "/local/sentientia_cart/einvoice.php",
+   "persona": "vp_siteadmin (site admin)",
+   "shows": "E-invoice (IRN) page: the B2B tax invoice and the B2B credit note that wait for the IRN, one form each",
+   "http": 200,
+   "files": [
+    "12-einvoice-before-recording-desktop.png",
+    "12-einvoice-before-recording-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [],
+   "textExcerpt": "Skip to main content airpay academy Dashboard Manage Users Manage Courses Course-share Requests Online Exams Classrooms Learning Paths Programs Reports Analytics Compliance Organisation Skills Notifications Evaluations Certificates Emails Privacy Site Admin Dark Mode VS VP Site admin Profile & Setti"
+  },
+  {
+   "name": "13-einvoice-form-filled",
+   "url": "/local/sentientia_cart/einvoice.php",
+   "persona": "vp_siteadmin (site admin)",
+   "shows": "The same page with the IRN, acknowledgement number, date and signed QR typed into both forms (TEST values: the IRN is a SHA-256 of a label, the QR is a dummy string; nothing came from a government portal)",
+   "http": 200,
+   "files": [
+    "13-einvoice-form-filled-desktop.png",
+    "13-einvoice-form-filled-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": []
+  },
+  {
+   "name": "14-einvoice-after-invoice-recorded",
+   "url": "/local/sentientia_cart/einvoice.php",
+   "persona": "vp_siteadmin (site admin)",
+   "shows": "After recording the invoice IRN: success message, the invoice is gone from the list, the credit note still waits",
+   "http": 200,
+   "files": [
+    "14-einvoice-after-invoice-recorded-desktop.png",
+    "14-einvoice-after-invoice-recorded-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [
+    "pageerror: Cannot read properties of null (reading 'innerText')"
+   ],
+   "textExcerpt": "Skip to main content airpay academy Dashboard Manage Users Manage Courses Course-share Requests Online Exams Classrooms Learning Paths Programs Reports Analytics Compliance Organisation Skills Notifications Evaluations Certificates Emails Privacy Site Admin Dark Mode VS VP Site admin Profile & Setti"
+  },
+  {
+   "name": "15-einvoice-after-all-recorded",
+   "url": "/local/sentientia_cart/einvoice.php",
+   "persona": "vp_siteadmin (site admin)",
+   "shows": "After recording the credit note IRN as well: nothing awaits an IRN (empty state)",
+   "http": 200,
+   "files": [
+    "15-einvoice-after-all-recorded-desktop.png",
+    "15-einvoice-after-all-recorded-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [
+    "pageerror: Cannot read properties of null (reading 'innerText')"
+   ],
+   "textExcerpt": "Skip to main content airpay academy Dashboard Manage Users Manage Courses Course-share Requests Online Exams Classrooms Learning Paths Programs Reports Analytics Compliance Organisation Skills Notifications Evaluations Certificates Emails Privacy Site Admin Dark Mode VS VP Site admin Profile & Setti"
+  },
+  {
+   "name": "16-order-history-documents-after-irn",
+   "url": "/local/sentientia_cart/history.php",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "Order history after the IRNs were recorded: the B2B order now has Receipt, Tax invoice and Credit note links",
+   "http": 200,
+   "files": [
+    "16-order-history-documents-after-irn-desktop.png",
+    "16-order-history-documents-after-irn-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [],
+   "textExcerpt": "Skip to main content airpay academy Dashboard My Courses Catalog My Cart Certificates Profile Dark Mode VP VP Public learner /77 Profile & Settings Log out Order history Order history Back to cart 1–3 of 3 # Placed Total Status Documents 12 30 Sept 2026 4130.59 partial_refund ReceiptTax invoiceCredi"
+  },
+  {
+   "name": "17-receipt-b2b-after-irn",
+   "url": "/local/sentientia_cart/receipt.php?id=23",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "Receipt of the B2B order #14 after the IRN: link to the tax invoice instead of \"will follow\"",
+   "http": 200,
+   "files": [
+    "17-receipt-b2b-after-irn-desktop.png",
+    "17-receipt-b2b-after-irn-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [],
+   "textExcerpt": "Skip to main content airpay academy Dashboard My Courses Catalog My Cart Certificates Profile Dark Mode VP VP Public learner /77 Profile & Settings Log out Receipt for order #14 Payment receipt ORDER NUMBER: #14 STATUS: Partial refund PAID ON: 14 Oct 2026, 21:04 IST PAID BY: Meridian Test Traders Pv"
+  },
+  {
+   "name": "18-invoice-b2b-irn-qr",
+   "url": "/local/sentientia_cart/invoice.php?id=16",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "Tax invoice AIRPAY-2026-0015: B2B, buyer GSTIN, 10% line discount, IRN, acknowledgement number and date, QR (dummy test QR)",
+   "http": 200,
+   "files": [
+    "18-invoice-b2b-irn-qr-desktop.png",
+    "18-invoice-b2b-irn-qr-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [],
+   "textExcerpt": "Skip to main content Airpay Payment Services (TEST) TEST ADDRESS - local evidence only 1 Test Street, Andheri East Mumbai 400069, Maharashtra, India GSTIN: 27AAAAA0000A1Z5 State: 27 - Maharashtra TAX INVOICE Invoice No.: AIRPAY-2026-0015 Date: 14 Oct 2026 BUYER Meridian Test Traders Pvt Ltd (TEST) a"
+  },
+  {
+   "name": "19-creditnote-b2b-irn-qr",
+   "url": "/local/sentientia_cart/creditnote.php?id=3",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "Credit note AIRCN-2026-0003 of the B2B invoice, with its own IRN and QR",
+   "http": 200,
+   "files": [
+    "19-creditnote-b2b-irn-qr-desktop.png",
+    "19-creditnote-b2b-irn-qr-mobile.png"
+   ],
+   "problems": [],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [],
+   "textExcerpt": "Skip to main content Airpay Payment Services (TEST) TEST ADDRESS - local evidence only 1 Test Street, Andheri East Mumbai 400069, Maharashtra, India GSTIN: 27AAAAA0000A1Z5 State: 27 - Maharashtra CREDIT NOTE Credit Note No.: AIRCN-2026-0003 Date: 14 Oct 2026 Against tax invoice: AIRPAY-2026-0015 dat"
+  },
+  {
+   "name": "invoice-AIRPAY-2026-0015.pdf",
+   "url": "/local/sentientia_cart/invoice.php?id=16&download=pdf",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "PDF of the B2B tax invoice with IRN and QR",
+   "http": 200,
+   "pdf": true,
+   "bytes": 151570,
+   "contentType": "application/pdf"
+  },
+  {
+   "name": "creditnote-AIRCN-2026-0003.pdf",
+   "url": "/local/sentientia_cart/creditnote.php?id=3&download=pdf",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "PDF of the B2B credit note with IRN and QR",
+   "http": 200,
+   "pdf": true,
+   "bytes": 151713,
+   "contentType": "application/pdf"
+  },
+  {
+   "name": "invoice-AIRPAY-2026-0014.pdf",
+   "url": "/local/sentientia_cart/invoice.php?id=15&download=pdf",
+   "persona": "vp_public77 (buyer, /77)",
+   "shows": "PDF of the B2C inter-state tax invoice (IGST)",
+   "http": 200,
+   "pdf": true,
+   "bytes": 148133,
+   "contentType": "application/pdf"
+  }
+ ]
+}

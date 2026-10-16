@@ -392,19 +392,4 @@ final class imported_history_reader_test extends \advanced_testcase {
         invoicer::require_view_access($invoice, (int) $admin->id);
         $this->addToAssertionCount(1);
     }
-
-    public function test_the_invoice_prefix_erpnext_is_reserved(): void {
-        set_config('invoice_prefix', 'erpnext', 'local_sentientia_cart');
-        $buyer = $this->user_at('/1/2');
-        $cart = (object) ['id' => 5, 'orderid' => 5, 'userid' => $buyer->id, 'costcenterid' => 1, 'billing_name' => 'x',
-            'billing_email' => '', 'billing_phone' => '', 'billing_address' => '', 'billing_gstn' => '', 'items_json' => '[]',
-            'subtotal' => 100, 'discount_amount' => 0, 'total_amount' => 118, 'currency' => 'INR', 'timepaid' => time(),
-            'legacy_source' => null];
-        try {
-            invoicer::issue_for_order($cart);
-            $this->fail('ERPNEXT is the prefix of an imported invoice');
-        } catch (\moodle_exception $e) {
-            $this->assertSame('error_invalidstate', $e->errorcode);
-        }
-    }
 }

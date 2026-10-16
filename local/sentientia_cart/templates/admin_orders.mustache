@@ -13,6 +13,11 @@
             <a href="{{{ daily_sums_url }}}" class="btn btn-outline-secondary btn-sm">
                 <i class="fa fa-chart-line"></i> Daily sums
             </a>
+            {{#show_einvoice}}
+            <a href="{{{ einvoice_url }}}" class="btn btn-outline-secondary btn-sm">
+                <i class="fa fa-file-invoice"></i> {{#str}}einvoice_link, local_sentientia_cart{{/str}}
+            </a>
+            {{/show_einvoice}}
             {{#show_credits}}
             <a href="{{{ credits_url }}}" class="btn btn-outline-secondary btn-sm">
                 <i class="fa fa-coins"></i> {{#str}}creditsadmin, local_sentientia_cart{{/str}}
@@ -28,6 +33,10 @@
         old "datatable" value never matched so the admin orders table
         rendered as a permanent "Loading..." spinner. Init() takes no
         args; passing the wrong element is also a silent no-op.
+
+        UI pass 2026-10-15: data-extra-args asks list_orders for the row actions (the Refund button); the datatable
+        merges extra args into every call. history.mustache shares the service and leaves them out, so the buyer's
+        history gets no actions cell.
     }}
     <div data-region="airpay-datatable"
          data-component="local_sentientia_cart"
@@ -35,7 +44,7 @@
          data-columns="{{ columns_json }}"
          data-default-sort="timecreated"
          data-default-sortdir="desc"
-         data-extra-args='{}'>
+         data-extra-args='{"withactions":true}'>
         <div class="text-center text-muted py-5">Loading...</div>
     </div>
 </div>

@@ -40,6 +40,10 @@ if (empty($items)) {
         null, \core\output\notification::NOTIFY_WARNING);
 }
 
+// What the buyer typed, to put back in the form when an error sends them here again (a refused state or GST number
+// must not cost them the rest of the form).
+$posted = null;
+
 // Handle POST (place order).
 if (data_submitted() && confirm_sesskey()) {
     $billing = [
@@ -48,7 +52,11 @@ if (data_submitted() && confirm_sesskey()) {
         'billing_phone'   => optional_param('billing_phone', '', PARAM_TEXT),
         'billing_address' => optional_param('billing_address', '', PARAM_TEXT),
         'billing_gstn'    => optional_param('billing_gstn', '', PARAM_TEXT),
+        // GST tax invoices (2026-10-14): the buyer's state, a two-digit GST state code. Required by
+        // cart_manager::checkout() while the invoice flag is ON for the buyer's tenant.
+        'billing_state'   => optional_param('billing_state', '', PARAM_ALPHANUM),
     ];
+    $posted = $billing;
     $gateway_name = required_param('gateway', PARAM_ALPHANUMEXT);
 
     try {
@@ -112,6 +120,17 @@ foreach (\local_sentientia_cart\gateway\gateway_factory::available_for_user($USE
     ];
 }
 
+// GST tax invoices (2026-10-14): the state field exists only while the invoice flag is ON for the buyer's tenant, so
+// with the flag OFF checkout is exactly what it was. The same flag makes cart_manager::checkout() require it.
+$showstate = \local_sentientia_cart\flags::invoices_for_order($cart);
+$states = [];
+if ($showstate) {
+    $chosen = (string) ($posted['billing_state'] ?? '');
+    foreach (\local_sentientia_cart\gst_states::options() as $code => $label) {
+        $states[] = ['code' => (string) $code, 'label' => $label, 'selected' => (string) $code === $chosen];
+    }
+}
+
 $data = [
     'sesskey'        => sesskey(),
     'items'          => $rows,
@@ -120,9 +139,13 @@ $data = [
     'total_str'      => $symbol . number_format((float) $cart->total_amount, 2),
     'currency_symbol' => $symbol,
     'gateways'       => $gateways,
-    'default_name'   => fullname($USER),
-    'default_email'  => $USER->email,
-    'default_phone'  => $USER->phone1 ?? '',
+    'default_name'   => $posted['billing_name'] ?? fullname($USER),
+    'default_email'  => $posted['billing_email'] ?? $USER->email,
+    'default_phone'  => $posted['billing_phone'] ?? ($USER->phone1 ?? ''),
+    'default_address' => $posted['billing_address'] ?? '',
+    'default_gstn'   => $posted['billing_gstn'] ?? '',
+    'show_state'     => $showstate,
+    'states'         => $states,
     'back_url'       => (new moodle_url('/local/sentientia_cart/index.php'))->out(false),
 ];
 

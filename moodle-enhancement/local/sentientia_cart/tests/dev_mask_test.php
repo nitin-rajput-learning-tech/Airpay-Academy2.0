@@ -161,6 +161,9 @@ final class dev_mask_test extends \advanced_testcase {
             'local_sentientia_cart_history.notes' => 0,
             'local_sentientia_cart_invoices.billing_name' => 0, 'local_sentientia_cart_invoices.billing_email' => 0,
             'local_sentientia_cart_invoices.billing_phone' => 0, 'local_sentientia_cart_invoices.billing_address' => 0,
+            'local_sentientia_cart_creditnotes.billing_name' => 0, 'local_sentientia_cart_creditnotes.billing_email' => 0,
+            'local_sentientia_cart_creditnotes.billing_phone' => 0, 'local_sentientia_cart_creditnotes.billing_address' => 0,
+            'local_sentientia_cart_creditnotes.reason' => 0,
         ], $second, 'Nothing left to mask.');
         $this->assertEquals($snapshot, [$DB->get_records('local_sentientia_cart_ledger'), $DB->get_records('local_sentientia_cart_credit_txn')]);
     }

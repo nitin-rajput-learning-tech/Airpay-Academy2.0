@@ -32,12 +32,24 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="billing_address">{{#str}}billingaddress, local_sentientia_cart{{/str}}</label>
-                        <textarea id="billing_address" name="billing_address" class="form-control" rows="3"></textarea>
+                        <textarea id="billing_address" name="billing_address" class="form-control" rows="3">{{ default_address }}</textarea>
                     </div>
+                    {{#show_state}}
+                    <div class="mb-3">
+                        <label class="form-label" for="billing_state">{{#str}}billingstate, local_sentientia_cart{{/str}} *</label>
+                        <select id="billing_state" name="billing_state" class="custom-select" required>
+                            <option value="">{{#str}}billingstate_choose, local_sentientia_cart{{/str}}</option>
+                            {{#states}}
+                            <option value="{{ code }}"{{#selected}} selected{{/selected}}>{{ label }}</option>
+                            {{/states}}
+                        </select>
+                        <small class="form-text text-muted">{{#str}}billingstate_hint, local_sentientia_cart{{/str}}</small>
+                    </div>
+                    {{/show_state}}
                     <div class="mb-3">
                         <label class="form-label" for="billing_gstn">{{#str}}billinggstn, local_sentientia_cart{{/str}}</label>
                         <input type="text" id="billing_gstn" name="billing_gstn" class="form-control"
-                               placeholder="e.g. 27AAAAA0000A1Z5">
+                               value="{{ default_gstn }}" placeholder="e.g. 27AAAAA0000A1Z5">
                         <small class="form-text text-muted">For B2B with input tax credit.</small>
                     </div>
                 </div>

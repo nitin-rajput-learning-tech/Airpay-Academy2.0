@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/sentientia_cart/db" VERSION="20260511"
-       COMMENT="Airpay Cart — e-commerce for external tenants. 6 tables.">
+<XMLDB PATH="local/sentientia_cart/db" VERSION="20261014"
+       COMMENT="Sentientia Cart — course commerce, GST tax invoices, credit notes and receipts. 8 tables.">
 
   <TABLES>
 
@@ -68,6 +68,12 @@
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="legacy_source" TYPE="char" LENGTH="20" NOTNULL="false"
                COMMENT="ADR-032: bizlms on a row imported from BizLMS (frozen, admin-only history), NULL on every native row. mark_paid, mark_failed and refund refuse a row that has it."/>
+        <FIELD NAME="billing_state" TYPE="char" LENGTH="2" NOTNULL="false"
+               COMMENT="GST state code of the buyer, chosen at checkout (01 to 38, 97). The place of supply of a B2C order. NULL on orders placed before GST tax invoices."/>
+        <FIELD NAME="gst_rate" TYPE="number" LENGTH="5" DECIMALS="2" NOTNULL="false"
+               COMMENT="GST rate in percent that tax_amount was computed at. NULL on orders placed before GST tax invoices."/>
+        <FIELD NAME="invoice_due" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"
+               COMMENT="1 while a GST tax invoice is due for this paid order and has not been issued yet."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -78,6 +84,7 @@
         <INDEX NAME="idx_user_status" UNIQUE="false" FIELDS="userid, status"/>
         <INDEX NAME="idx_costcenter" UNIQUE="false" FIELDS="costcenterid"/>
         <INDEX NAME="idx_status_time" UNIQUE="false" FIELDS="status, timecreated"/>
+        <INDEX NAME="idx_invoice_due" UNIQUE="false" FIELDS="invoice_due"/>
       </INDEXES>
     </TABLE>
 
@@ -173,8 +180,27 @@
         <FIELD NAME="pdf_filename" TYPE="char" LENGTH="200" NOTNULL="false"
                COMMENT="Cached PDF filename in moodledata"/>
         <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="issued"
-               COMMENT="issued|cancelled|credit_note_issued|legacy_external (an ERPNext invoice imported from BizLMS: shown as a reference, never re-issued)"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+               COMMENT="issued|awaiting_irn (a B2B invoice that waits for the e-invoice IRN Finance records, hidden from the buyer)|cancelled|credit_note_issued|legacy_external (an ERPNext invoice imported from BizLMS: shown as a reference, never re-issued)"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="The invoice date: when the invoice was issued"/>
+        <FIELD NAME="billing_state" TYPE="char" LENGTH="2" NOTNULL="false"
+               COMMENT="GST state code of the buyer, copied from the order"/>
+        <FIELD NAME="place_of_supply" TYPE="char" LENGTH="2" NOTNULL="false"
+               COMMENT="GST state code of the place of supply: the state in the buyer GSTIN for B2B, else the buyer state. NULL on an invoice issued before GST tax invoices (a pre-1.2.0 layout)."/>
+        <FIELD NAME="sac_code" TYPE="char" LENGTH="20" NOTNULL="false"
+               COMMENT="SAC of the service, as configured when the invoice was issued"/>
+        <FIELD NAME="gst_rate" TYPE="number" LENGTH="5" DECIMALS="2" NOTNULL="false"
+               COMMENT="GST rate in percent the order was charged at"/>
+        <FIELD NAME="irn" TYPE="char" LENGTH="64" NOTNULL="false"
+               COMMENT="E-invoice reference number (64 hex characters) recorded by Finance from the IRP"/>
+        <FIELD NAME="ack_no" TYPE="char" LENGTH="40" NOTNULL="false"
+               COMMENT="IRP acknowledgement number"/>
+        <FIELD NAME="ack_date" TYPE="int" LENGTH="10" NOTNULL="false"
+               COMMENT="IRP acknowledgement date and time"/>
+        <FIELD NAME="signed_qr" TYPE="text" NOTNULL="false"
+               COMMENT="Signed QR string from the IRP, printed as a QR code on the invoice"/>
+        <FIELD NAME="supplier_json" TYPE="text" NOTNULL="false"
+               COMMENT="The supplier as printed at issue: name, address, GSTIN, state, signatory line. An issued invoice must not change when the company settings do."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -184,7 +210,94 @@
       <INDEXES>
         <INDEX NAME="idx_user_time" UNIQUE="false" FIELDS="userid, timecreated"/>
         <INDEX NAME="idx_orderid" UNIQUE="false" FIELDS="orderid"/>
+        <INDEX NAME="idx_status" UNIQUE="false" FIELDS="status"/>
       </INDEXES>
+    </TABLE>
+
+    <!-- ────────────────────────────────────────────────────────────────
+         local_sentientia_cart_creditnotes — GST credit notes (CGST Act section 34)
+         One row per refund of an order that has a tax invoice. Created
+         "due" after the refund commits; numbered and issued by
+         invoicer-style allocation (local_sentientia_cart_docseq) in its
+         own transaction, then optionally waits for the e-invoice IRN.
+         ──────────────────────────────────────────────────────────────── -->
+    <TABLE NAME="local_sentientia_cart_creditnotes" COMMENT="GST credit notes issued on refunds">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="invoiceid" TYPE="int" LENGTH="10" NOTNULL="true"
+               COMMENT="FK local_sentientia_cart_invoices.id - the tax invoice this credit note reduces"/>
+        <FIELD NAME="historyid" TYPE="int" LENGTH="10" NOTNULL="true"
+               COMMENT="FK local_sentientia_cart_history.id - the refunded order"/>
+        <FIELD NAME="ledgerid" TYPE="int" LENGTH="10" NOTNULL="false"
+               COMMENT="FK local_sentientia_cart_ledger.id - the refund this credit note is for (one credit note per refund)"/>
+        <FIELD NAME="cn_number" TYPE="char" LENGTH="50" NOTNULL="false"
+               COMMENT="Credit note number, at most 16 characters, e.g. AIRCN-2026-0001. NULL while the credit note is due."/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="costcenterid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="billing_name" TYPE="char" LENGTH="200" NOTNULL="true"/>
+        <FIELD NAME="billing_email" TYPE="char" LENGTH="200" NOTNULL="false"/>
+        <FIELD NAME="billing_phone" TYPE="char" LENGTH="40" NOTNULL="false"/>
+        <FIELD NAME="billing_address" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="billing_gstn" TYPE="char" LENGTH="20" NOTNULL="false"/>
+        <FIELD NAME="billing_state" TYPE="char" LENGTH="2" NOTNULL="false"/>
+        <FIELD NAME="place_of_supply" TYPE="char" LENGTH="2" NOTNULL="false"/>
+        <FIELD NAME="sac_code" TYPE="char" LENGTH="20" NOTNULL="false"/>
+        <FIELD NAME="gst_rate" TYPE="number" LENGTH="5" DECIMALS="2" NOTNULL="false"/>
+        <FIELD NAME="taxable" TYPE="number" LENGTH="14" DECIMALS="2" NOTNULL="true" DEFAULT="0"
+               COMMENT="Taxable value credited"/>
+        <FIELD NAME="cgst" TYPE="number" LENGTH="14" DECIMALS="2" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="sgst" TYPE="number" LENGTH="14" DECIMALS="2" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="igst" TYPE="number" LENGTH="14" DECIMALS="2" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="total" TYPE="number" LENGTH="14" DECIMALS="2" NOTNULL="true" DEFAULT="0"
+               COMMENT="The gross refunded amount"/>
+        <FIELD NAME="currency" TYPE="char" LENGTH="3" NOTNULL="true" DEFAULT="INR"/>
+        <FIELD NAME="reason" TYPE="text" NOTNULL="false"
+               COMMENT="The reason given for the refund"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="due"
+               COMMENT="due|issued|awaiting_irn"/>
+        <FIELD NAME="irn" TYPE="char" LENGTH="64" NOTNULL="false"/>
+        <FIELD NAME="ack_no" TYPE="char" LENGTH="40" NOTNULL="false"/>
+        <FIELD NAME="ack_date" TYPE="int" LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="signed_qr" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="supplier_json" TYPE="text" NOTNULL="false"
+               COMMENT="The supplier as printed at issue, copied from the invoice"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="The credit note date: set when it is issued (until then, when it fell due)"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="unique_cn_number" TYPE="unique" FIELDS="cn_number"/>
+        <KEY NAME="fk_invoice" TYPE="foreign" FIELDS="invoiceid" REFTABLE="local_sentientia_cart_invoices" REFFIELDS="id"/>
+        <KEY NAME="fk_history" TYPE="foreign" FIELDS="historyid" REFTABLE="local_sentientia_cart_history" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_ledger" UNIQUE="false" FIELDS="ledgerid"/>
+        <INDEX NAME="idx_status" UNIQUE="false" FIELDS="status"/>
+        <INDEX NAME="idx_user_time" UNIQUE="false" FIELDS="userid, timecreated"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ────────────────────────────────────────────────────────────────
+         local_sentientia_cart_docseq — gap-free document number counters
+         One row per series (PREFIX-YYYY). A number is allocated inside the
+         transaction that inserts the document: UPDATE lastno = lastno + 1
+         takes the row lock, so concurrent issuers queue, and a rollback
+         releases the number (CGST Rule 46(b): consecutive, at most 16
+         characters).
+         ──────────────────────────────────────────────────────────────── -->
+    <TABLE NAME="local_sentientia_cart_docseq" COMMENT="Gap-free document number counters, one row per series">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="series" TYPE="char" LENGTH="40" NOTNULL="true"
+               COMMENT="The number prefix plus the series year, e.g. AIRPAY-2026"/>
+        <FIELD NAME="lastno" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="The last number allocated in the series"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="unique_series" TYPE="unique" FIELDS="series"/>
+      </KEYS>
     </TABLE>
 
     <!-- ────────────────────────────────────────────────────────────────
