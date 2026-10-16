@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scenario editor - Sentientia prototype</title>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/proto.css">
+<style>
+  .ed { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--ap-space-4); align-items: start; }
+  .ed > aside { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: var(--ap-space-4); align-items: start; }
+  .canvas-wrap { overflow: auto; border: 1px solid var(--ap-color-border); border-radius: var(--ap-radius-md); background: var(--ap-color-bg-surface); background-image: radial-gradient(var(--ap-color-border) 1px, transparent 1px); background-size: 24px 24px; max-height: 640px; }
+  svg.canvas { display: block; width: 100%; height: auto; min-width: 760px; }
+  .node rect { fill: var(--ap-color-bg-surface); stroke: var(--ap-color-border-strong); stroke-width: 2; rx: 12; }
+  .node.decision rect { stroke: var(--ap-color-primary); }
+  .node.info rect { stroke-dasharray: 5 4; }
+  .node.terminal.success rect { stroke: var(--ap-color-outcome-acceptable); fill: var(--ap-color-success-light); }
+  .node.terminal.partial rect { stroke: var(--ap-color-outcome-recoverable); fill: var(--ap-color-warning-light); }
+  .node.terminal.failure rect { stroke: var(--ap-color-outcome-irrecoverable); fill: var(--ap-color-danger-light); }
+  .node.sel rect { stroke-width: 4; filter: drop-shadow(0 4px 10px rgba(0, 51, 102, .25)); }
+  .node.bad rect { stroke: var(--ap-color-danger); stroke-width: 4; }
+  .node:focus-visible { outline: none; } .node:focus-visible rect { stroke: var(--ap-focus-ring-color); stroke-width: 5; }
+  .node text { fill: var(--ap-color-text-primary); font-family: inherit; pointer-events: none; }
+  .node .id { font-size: 12px; font-weight: 700; } .node .kind { font-size: 10px; fill: var(--ap-color-text-secondary); text-transform: uppercase; letter-spacing: .05em; } .node .pr { font-size: 11px; fill: var(--ap-color-text-secondary); }
+  .start-tag { fill: var(--ap-color-primary); font-size: 10px; font-weight: 700; }
+  .edge { fill: none; stroke-width: 2.5; }
+  .edge.acceptable { stroke: var(--ap-color-outcome-acceptable); } .edge.recoverable { stroke: var(--ap-color-outcome-recoverable); } .edge.irrecoverable { stroke: var(--ap-color-outcome-irrecoverable); } .edge.next { stroke: var(--ap-color-outcome-neutral); stroke-dasharray: 6 5; }
+  .edge.sel { stroke-width: 5; }
+  .elabel text { font-size: 11px; font-weight: 700; fill: var(--ap-color-text-primary); }
+  .elabel rect { fill: var(--ap-color-bg-surface); stroke: var(--ap-color-border-strong); rx: 8; }
+  .edge-card { border: 1px solid var(--ap-color-border); border-radius: var(--ap-radius-sm); padding: var(--ap-space-3); display: flex; flex-direction: column; gap: var(--ap-space-2); }
+  .issue { display: flex; gap: var(--ap-space-2); align-items: flex-start; width: 100%; text-align: start; background: transparent; border: 0; padding: var(--ap-space-2); border-radius: var(--ap-radius-sm); cursor: pointer; font-size: var(--ap-text-sm); }
+  .issue:hover { background: var(--ap-color-bg-hover); }
+  .play .choice { display: block; width: 100%; text-align: start; padding: var(--ap-space-3) var(--ap-space-4); border: 1px solid var(--ap-color-border-strong); border-radius: var(--ap-radius-sm); background: var(--ap-color-bg-surface); cursor: pointer; margin-block-end: var(--ap-space-2); min-height: var(--ap-tap-target-cozy); }
+  @media (max-width: 1100px) { .ed > aside { grid-template-columns: minmax(0, 1fr); } .canvas-wrap { max-height: 480px; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="page">
+    <section class="card tight row spread" aria-label="Scenario toolbar">
+      <div class="row">
+        <div><p class="xs muted bold">SCENARIO - DETERMINISTIC - OFFLINE-CAPABLE</p><h2>Practice: the angry caller</h2></div>
+      </div>
+      <div class="row">
+        <div class="tabs" role="tablist" aria-label="Mode"><button type="button" role="tab" aria-selected="true" id="m-edit">Edit</button><button type="button" role="tab" aria-selected="false" id="m-play">Play</button><button type="button" role="tab" aria-selected="false" id="m-data">Analytics overlay</button></div>
+        <button type="button" class="btn sm" id="undo" aria-label="Undo"></button>
+        <button type="button" class="btn sm" id="redo" aria-label="Redo"></button>
+        <button type="button" class="btn sm" id="reset"></button>
+      </div>
+    </section>
+
+    <div class="ed">
+      <section class="stack" aria-label="Scenario graph">
+        <div class="canvas-wrap" id="cwrap" tabindex="-1"></div>
+        <div class="row small muted"><span>Drag a node, or select it and use the arrow keys (Shift for bigger steps). Connect nodes with "Add choice" in the inspector. No action needs dragging.</span></div>
+        <div class="card stack play" id="playcard" hidden></div>
+      </section>
+      <aside class="stack" aria-label="Inspector and checks">
+        <section class="card stack" aria-labelledby="val-h">
+          <div class="row spread"><h3 id="val-h">Checks</h3><span id="val-badge" class="chip"></span></div>
+          <div id="issues"></div>
+          <div class="stack" style="gap:6px"><div class="row spread small"><span>Saved-state budget (SCORM 1.2)</span><span id="budget-n" class="mono"></span></div><div class="meter" id="budget" role="img"><span></span></div><p class="xs muted">Worst-case path written to cmi.suspend_data. Limit 3,500 characters before compression.</p></div>
+          <div class="row small"><span class="chip info" id="score-chip"></span></div>
+        </section>
+        <section class="card stack" aria-labelledby="insp-h" id="insp"></section>
+      </aside>
+    </div>
+  </div>
+</main>
+<script src="assets/proto.js"></script>
+<script>
+(function () {
+  var P = PROTO, el = P.el, NS = 'http://www.w3.org/2000/svg';
+  P.mount({
+    screen: 'scenario-editor', title: 'Scenario editor',
+    about: {
+      purpose: 'Author and test a deterministic branching scenario. Every node has a stable id, every decision shows its consequence and score, and the checks prove there are no dead ends before anything is published.',
+      interactions: ['Click or tab to a node to select it; drag it, or use the arrow keys (Shift = 32 px).', 'Inspector: edit the prompt, change a choice\'s target, score, outcome, correct flag and consequence; "Add choice" connects to any node without dragging.', 'Break it on purpose: set a choice target to a different node, delete a choice, or delete a node. The Checks panel names the problem; click an issue to jump to the node.', 'Undo and Redo (also Ctrl+Z / Ctrl+Y).', 'Play tab: play the scenario as a learner would, with the live score and path. Analytics overlay: shows the share of learners choosing each edge (synthetic).'],
+      patterns: ['Node-graph canvas with visible validation (Twine, H5P, Mindsmith) and an outline-style inspector as a non-drag alternative (WCAG 2.5.7).', 'Outcome is always a word plus a symbol, never colour alone.', 'The state-budget meter makes the 4,096-character SCORM 1.2 limit visible while authoring.', 'Stable ids per node and edge: the same ids become interaction ids and decision analytics.'],
+      maps: ['Scenario schema block in pilot/schema (nodes, edges, scoring) and rules R04, R05', 'Stage 2.1: local_sentientia_authoring scenario editor and packaged player'],
+      notBuilt: ['Persistence, AI "suggest a branch", character avatars, translation of edges from this screen.']
+    }
+  });
+
+  function initial() {
+    return {
+      start: 'n1', pass: 20, max: 30, nodes: [
+        { id: 'n1', kind: 'decision', x: 40, y: 230, prompt: '"Twelve thousand four hundred rupees gone and the shop says they got nothing. Fix it now..." What do you say first?', edges: [
+          { id: 'e1a', text: 'Acknowledge, then confirm the registered mobile number', to: 'n2', d: 10, o: 'acceptable', ok: true, c: 'Acknowledgement first, then authentication through an allowed channel.' },
+          { id: 'e1b', text: 'Ask for the OTP just received', to: 'n_fail_otp', d: -10, o: 'irrecoverable', ok: false, c: 'Asking for an OTP is a disciplinary offence under SOP-CS-014.' },
+          { id: 'e1c', text: 'Tell the customer it is between them and the merchant', to: 'n2_cold', d: -3, o: 'recoverable', ok: false, c: 'You blamed a party before verifying anything.' }] },
+        { id: 'n_fail_otp', kind: 'terminal', outcome: 'failure', x: 300, y: 30, prompt: 'The call is terminated for review. Asking for an OTP is never acceptable.', edges: [] },
+        { id: 'n2_cold', kind: 'info', x: 300, y: 440, prompt: 'You pause, lower your pace and say: "You are right to be upset. Let me check properly."', next: 'n2', edges: [] },
+        { id: 'n2', kind: 'decision', x: 300, y: 235, prompt: 'Authentication passes. The console shows the UTR with status Pending, two days old. What do you do?', edges: [
+          { id: 'e2a', text: 'Raise a Failed Transaction dispute immediately', to: 'n3_wrongdispute', d: -5, o: 'recoverable', ok: false, c: 'Pending inside the window must not be disputed yet.' },
+          { id: 'e2b', text: 'Explain the window, give the expected date, share the reference', to: 'n3', d: 10, o: 'acceptable', ok: true, c: 'Correct classification and a supported expectation.' },
+          { id: 'e2c', text: 'Say the money will be back today', to: 'n3_overpromise', d: -5, o: 'recoverable', ok: false, c: 'You promised something the console does not show.' }] },
+        { id: 'n3_wrongdispute', kind: 'info', x: 560, y: 40, prompt: 'Your Tier-2 colleague: "Pending within window, dispute rejected. Call the customer back."', next: 'n3', edges: [] },
+        { id: 'n3', kind: 'decision', x: 580, y: 235, prompt: '"If this is not sorted I will go to the media. Also there was another 9,000 debit we did not make." What now?', edges: [
+          { id: 'e3a', text: 'Block UPI debits, dispute the second debit, escalate to Tier-2', to: 't_success', d: 10, o: 'acceptable', ok: true, c: 'Two escalation triggers at once; blocking first protects the customer.' },
+          { id: 'e3b', text: 'Reassure, close the call, handle the second debit tomorrow', to: 't_partial', d: -5, o: 'recoverable', ok: false, c: 'An unauthorised debit must be acted on now.' }] },
+        { id: 'n3_overpromise', kind: 'info', x: 560, y: 440, prompt: 'You catch yourself and correct it: "Let me be precise. The console shows Pending."', next: 'n3', edges: [] },
+        { id: 't_success', kind: 'terminal', outcome: 'success', x: 840, y: 150, prompt: 'Tier-2 takes the fraud case; the customer has a reference number and a blocked mandate.', edges: [] },
+        { id: 't_partial', kind: 'terminal', outcome: 'partial', x: 840, y: 330, prompt: 'The first case is handled, but the second debit and the media remark were not actioned.', edges: [] }
+      ]
+    };
+  }
+  var G = initial(), hist = [JSON.stringify(G)], hpos = 0, sel = 'n1', selEdge = null, mode = 'edit';
+  var W = 190, H = 70;
+  function node(id) { return G.nodes.filter(function (n) { return n.id === id; })[0]; }
+  function snap() { hist = hist.slice(0, hpos + 1); hist.push(JSON.stringify(G)); hpos = hist.length - 1; paintBar(); }
+  function restore(i) { hpos = i; G = JSON.parse(hist[hpos]); if (!node(sel)) { sel = G.start; } render(); }
+  function s(tag, attrs, text) { var e = document.createElementNS(NS, tag); Object.keys(attrs || {}).forEach(function (k) { e.setAttribute(k, attrs[k]); }); if (text !== undefined) { e.textContent = text; } return e; }
+
+  // ---- validation (mirrors R04 and R05) ----
+  function targets(n) { var t = (n.edges || []).map(function (e) { return e.to; }); if (n.next) { t.push(n.next); } return t; }
+  function validate() {
+    var issues = [], ids = {}; G.nodes.forEach(function (n) { ids[n.id] = true; });
+    G.nodes.forEach(function (n) {
+      (n.edges || []).forEach(function (e) { if (!ids[e.to]) { issues.push({ l: 'error', n: n.id, m: n.id + ': choice ' + e.id + ' points to a node that does not exist.' }); } });
+      if (n.kind === 'info' && (!n.next || !ids[n.next])) { issues.push({ l: 'error', n: n.id, m: n.id + ': an info node needs a following node.' }); }
+      if (n.kind === 'decision' && (n.edges || []).length < 2) { issues.push({ l: 'error', n: n.id, m: n.id + ': a decision needs at least 2 choices (has ' + (n.edges || []).length + ').' }); }
+      if (n.kind === 'terminal' && (n.edges || []).length) { issues.push({ l: 'error', n: n.id, m: n.id + ': an ending cannot have choices.' }); }
+      if (n.kind === 'decision') { var c = (n.edges || []).filter(function (e) { return e.ok; }).length; if (c !== 1 && (n.edges || []).length >= 2) { issues.push({ l: 'warn', n: n.id, m: n.id + ': ' + (c === 0 ? 'no choice' : c + ' choices') + ' marked correct (expected exactly 1).' }); } }
+    });
+    var seen = {}, q = [G.start]; seen[G.start] = true;
+    while (q.length) { var cur = node(q.shift()); if (!cur) { continue; } targets(cur).forEach(function (t) { if (!seen[t] && ids[t]) { seen[t] = true; q.push(t); } }); }
+    G.nodes.forEach(function (n) { if (!seen[n.id]) { issues.push({ l: 'error', n: n.id, m: n.id + ': not reachable from the start. No learner can ever see it.' }); } });
+    var memo = {};
+    function reaches(id, stack) { if (memo[id] !== undefined) { return memo[id]; } var nd = node(id); if (!nd || stack[id]) { return false; } if (nd.kind === 'terminal') { return (memo[id] = true); } stack[id] = true; var ok = targets(nd).some(function (t) { return reaches(t, stack); }); delete stack[id]; return (memo[id] = ok); }
+    G.nodes.forEach(function (n) { if (seen[n.id] && n.kind !== 'terminal' && !reaches(n.id, {})) { issues.push({ l: 'error', n: n.id, m: n.id + ': dead end. No path from here reaches an ending.' }); } });
+    var color = {}, cyc = null;
+    (function dfs(id, path) { if (cyc) { return; } var nd = node(id); if (!nd) { return; } color[id] = 1; targets(nd).forEach(function (t) { if (cyc) { return; } if (color[t] === 1) { cyc = path.concat([id, t]); } else if (!color[t]) { dfs(t, path.concat([id])); } }); color[id] = 2; }(G.start, []));
+    if (cyc) { issues.push({ l: 'error', n: cyc[cyc.length - 1], m: 'Loop: ' + cyc.slice(-3).join(' to ') + '. Loops are off unless the scenario allows them.' }); }
+    // worst-case path + score
+    var best = {}, longest = {};
+    function walk(id, stack) {
+      if (longest[id]) { return longest[id]; } var nd = node(id); if (!nd || stack[id]) { return { edges: [], score: 0 }; } stack[id] = true; var res = { edges: [], score: 0 };
+      (nd.edges || []).forEach(function (e) { var r = walk(e.to, stack); var edges = [e.id].concat(r.edges); if (edges.join(',').length > res.edges.join(',').length) { res.edges = edges; } res.score = Math.max(res.score, e.d + r.score); });
+      if (nd.next) { var r2 = walk(nd.next, stack); if (r2.edges.join(',').length > res.edges.join(',').length) { res.edges = r2.edges; } res.score = Math.max(res.score, r2.score); }
+      delete stack[id]; return (longest[id] = res);
+    }
+    var w = walk(G.start, {});
+    return { issues: issues, budget: ('s01:' + w.edges.join(',')).length + 80, path: w.edges, best: w.score };
+  }
+  function paintChecks() {
+    var v = validate(), errs = v.issues.filter(function (i) { return i.l === 'error'; }).length, warns = v.issues.length - errs;
+    var badge = document.getElementById('val-badge'); badge.className = 'chip ' + (errs ? 'bad' : warns ? 'warn' : 'ok'); badge.replaceChildren(P.icon(errs ? 'alert' : 'check'), errs ? errs + ' error' + (errs > 1 ? 's' : '') : (warns ? warns + ' warning' : 'All checks pass'));
+    var host = document.getElementById('issues'); host.replaceChildren();
+    if (!v.issues.length) { host.appendChild(el('p', { class: 'small muted', text: 'No dead ends, no orphans, no loops. Every decision has 2 or more choices and one correct answer.' })); }
+    v.issues.forEach(function (i) { host.appendChild(el('button', { type: 'button', class: 'issue', onclick: function () { sel = i.n; selEdge = null; render(); document.getElementById('insp').scrollIntoView({ block: 'nearest' }); } }, [el('span', { class: 'chip ' + (i.l === 'error' ? 'bad' : 'warn'), text: i.l === 'error' ? 'Error' : 'Warning' }), el('span', { text: i.m })])); });
+    var pct = Math.min(100, v.budget / 3500 * 100), bar = document.getElementById('budget'); bar.className = 'meter ' + (v.budget > 3500 ? 'bad' : v.budget > 2500 ? 'warn' : ''); bar.firstChild.style.width = pct + '%'; bar.setAttribute('aria-label', v.budget + ' of 3500 characters'); document.getElementById('budget-n').textContent = v.budget + ' / 3,500';
+    var sc = document.getElementById('score-chip'); sc.replaceChildren(P.icon(v.best >= G.pass ? 'check' : 'alert'), 'Best path scores ' + v.best + ' of ' + G.max + '; pass mark ' + G.pass); sc.className = 'chip ' + (v.best >= G.pass ? 'ok' : 'bad');
+    return v;
+  }
+
+  // ---- canvas ----
+  var share = { e1a: 71, e1b: 6, e1c: 23, e2a: 18, e2b: 74, e2c: 8, e3a: 64, e3b: 36 };
+  var SYM = { acceptable: '✓', recoverable: '!', irrecoverable: '✕' };
+  function anchor(n, side) { return side === 'r' ? [n.x + W, n.y + H / 2] : side === 'l' ? [n.x, n.y + H / 2] : side === 't' ? [n.x + W / 2, n.y] : [n.x + W / 2, n.y + H]; }
+  function path(a, b) { var forward = b.x > a.x + W / 2; var p1 = forward ? anchor(a, 'r') : (b.y >= a.y ? anchor(a, 'b') : anchor(a, 't')); var p2 = forward ? anchor(b, 'l') : (b.y >= a.y ? anchor(b, 't') : anchor(b, 'b')); var dx = Math.max(40, Math.abs(p2[0] - p1[0]) / 2); var c1 = forward ? [p1[0] + dx, p1[1]] : [p1[0], p1[1] + (b.y >= a.y ? 60 : -60)]; var c2 = forward ? [p2[0] - dx, p2[1]] : [p2[0], p2[1] + (b.y >= a.y ? -60 : 60)]; return { d: 'M' + p1 + ' C' + c1 + ' ' + c2 + ' ' + p2, mid: [(p1[0] + 3 * c1[0] + 3 * c2[0] + p2[0]) / 8, (p1[1] + 3 * c1[1] + 3 * c2[1] + p2[1]) / 8] }; }
+  function paintCanvas(v) {
+    var wrap = document.getElementById('cwrap'); var scroll = [wrap.scrollLeft, wrap.scrollTop]; wrap.replaceChildren();
+    var bad = {}; v.issues.forEach(function (i) { if (i.l === 'error') { bad[i.n] = true; } });
+    var svg = s('svg', { class: 'canvas', viewBox: '0 0 1060 560', role: 'group', 'aria-label': 'Scenario graph with ' + G.nodes.length + ' nodes' });
+    var defs = s('defs'); ['acceptable', 'recoverable', 'irrecoverable', 'next'].forEach(function (c) { var m = s('marker', { id: 'ar-' + c, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' }); m.appendChild(s('path', { d: 'M0 0L10 5L0 10z', fill: 'var(--ap-color-outcome-' + (c === 'next' ? 'neutral' : c) + ')' })); defs.appendChild(m); }); svg.appendChild(defs);
+    var gE = s('g'), gN = s('g'); svg.appendChild(gE); svg.appendChild(gN);
+    G.nodes.forEach(function (n) {
+      (n.edges || []).forEach(function (e) {
+        var t = node(e.to); if (!t) { return; } var p = path(n, t), cls = (mode === 'data') ? e.o : e.o;
+        var pe = s('path', { d: p.d, class: 'edge ' + cls + (selEdge === e.id ? ' sel' : ''), 'marker-end': 'url(#ar-' + cls + ')', 'stroke-width': mode === 'data' ? 2 + (share[e.id] || 10) / 8 : '' });
+        gE.appendChild(pe);
+        var label = mode === 'data' ? (share[e.id] || 0) + '%' : SYM[e.o] + ' ' + e.id + ' ' + (e.d > 0 ? '+' : '') + e.d;
+        var g = s('g', { class: 'elabel', style: 'cursor:pointer', onclick: '' }); var lw = label.length * 6.6 + 14;
+        g.appendChild(s('rect', { x: p.mid[0] - lw / 2, y: p.mid[1] - 11, width: lw, height: 22 })); g.appendChild(s('text', { x: p.mid[0], y: p.mid[1] + 4, 'text-anchor': 'middle' }, label));
+        g.addEventListener('click', function () { sel = n.id; selEdge = e.id; render(); });
+        gE.appendChild(g);
+      });
+      if (n.next && node(n.next)) { var p2 = path(n, node(n.next)); gE.appendChild(s('path', { d: p2.d, class: 'edge next', 'marker-end': 'url(#ar-next)' })); }
+    });
+    G.nodes.forEach(function (n) {
+      var cls = 'node ' + n.kind + (n.kind === 'terminal' ? ' ' + n.outcome : '') + (sel === n.id ? ' sel' : '') + (bad[n.id] ? ' bad' : '');
+      var g = s('g', { class: cls, transform: 'translate(' + n.x + ',' + n.y + ')', tabindex: 0, role: 'button', 'aria-label': n.id + ', ' + n.kind + (n.kind === 'terminal' ? ' (' + n.outcome + ')' : '') + (bad[n.id] ? ', has an error' : '') + (sel === n.id ? ', selected' : ''), 'aria-pressed': sel === n.id ? 'true' : 'false' });
+      g.appendChild(s('rect', { width: W, height: H })); g.appendChild(s('text', { class: 'id', x: 12, y: 22 }, n.id)); g.appendChild(s('text', { class: 'kind', x: 12, y: 38 }, n.kind + (n.kind === 'terminal' ? ' - ' + n.outcome : '') + (bad[n.id] ? '  ✕ error' : '')));
+      g.appendChild(s('text', { class: 'pr', x: 12, y: 56 }, (n.prompt || '').slice(0, 27) + ((n.prompt || '').length > 27 ? '...' : '')));
+      if (n.id === G.start) { g.appendChild(s('text', { class: 'start-tag', x: W - 44, y: 22 }, 'START')); }
+      var drag = null;
+      g.addEventListener('pointerdown', function (ev) { var sc = 1060 / svg.getBoundingClientRect().width; drag = { sx: ev.clientX, sy: ev.clientY, ox: n.x, oy: n.y, moved: false, sc: sc }; g.setPointerCapture(ev.pointerId); sel = n.id; selEdge = null; });
+      g.addEventListener('pointermove', function (ev) { if (!drag) { return; } var dx = (ev.clientX - drag.sx) * drag.sc, dy = (ev.clientY - drag.sy) * drag.sc; if (Math.abs(dx) + Math.abs(dy) > 3) { drag.moved = true; } if (drag.moved) { n.x = Math.max(0, Math.min(1060 - W, Math.round((drag.ox + dx) / 8) * 8)); n.y = Math.max(0, Math.min(560 - H, Math.round((drag.oy + dy) / 8) * 8)); g.setAttribute('transform', 'translate(' + n.x + ',' + n.y + ')'); } });
+      g.addEventListener('pointerup', function () { if (drag && drag.moved) { snap(); } var moved = drag && drag.moved; drag = null; render(moved); });
+      g.addEventListener('keydown', function (ev) {
+        var step = ev.shiftKey ? 32 : 8, mv = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[ev.key];
+        if (mv) { ev.preventDefault(); n.x = Math.max(0, Math.min(1060 - W, n.x + mv[0])); n.y = Math.max(0, Math.min(560 - H, n.y + mv[1])); snap(); sel = n.id; render(true); }
+        else if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); sel = n.id; selEdge = null; render(true); }
+        else if (ev.key === 'Delete') { ev.preventDefault(); removeNode(n.id); }
+      });
+      gN.appendChild(g);
+    });
+    wrap.appendChild(svg); wrap.scrollLeft = scroll[0]; wrap.scrollTop = scroll[1];
+  }
+  function focusSel() { var g = document.querySelector('.node.sel'); if (g) { g.focus({ preventScroll: true }); } }
+
+  // ---- inspector ----
+  function removeNode(id) {
+    if (id === G.start) { P.toast('The start node cannot be deleted.'); return; }
+    G.nodes = G.nodes.filter(function (n) { return n.id !== id; }); sel = G.start; snap(); render(); P.toast('Deleted ' + id + '. The checks now show what depends on it. Use Undo to restore.');
+  }
+  function paintInspector() {
+    var host = document.getElementById('insp'); host.replaceChildren();
+    var n = node(sel); if (!n) { return; }
+    host.appendChild(el('div', { class: 'row spread' }, [el('h3', { id: 'insp-h', text: 'Node ' + n.id }), el('span', { class: 'chip ' + (n.kind === 'decision' ? 'info' : 'line'), text: n.kind })]));
+    host.appendChild(el('div', { class: 'field' }, [el('label', { for: 'f-kind', text: 'Type' }), el('select', { class: 'select', id: 'f-kind', onchange: function (ev) { n.kind = ev.target.value; if (n.kind === 'terminal' && !n.outcome) { n.outcome = 'partial'; } if (n.kind === 'terminal') { n.edges = []; } if (n.kind === 'info' && !n.next) { n.next = G.start; } snap(); render(); } }, ['decision', 'info', 'terminal'].map(function (k) { return el('option', { value: k, text: k, selected: k === n.kind }); }))]));
+    host.appendChild(el('div', { class: 'field' }, [el('label', { for: 'f-prompt', text: 'What the learner reads' }), el('textarea', { class: 'textarea', id: 'f-prompt', value: '', onchange: function (ev) { n.prompt = ev.target.value; snap(); render(); } })]));
+    host.querySelector('#f-prompt').value = n.prompt || '';
+    if (n.kind === 'terminal') { host.appendChild(el('div', { class: 'field' }, [el('label', { for: 'f-out', text: 'Ending' }), el('select', { class: 'select', id: 'f-out', onchange: function (ev) { n.outcome = ev.target.value; snap(); render(); } }, ['success', 'partial', 'failure'].map(function (k) { return el('option', { value: k, text: k, selected: k === n.outcome }); }))])); }
+    if (n.kind === 'info') { host.appendChild(el('div', { class: 'field' }, [el('label', { for: 'f-next', text: 'Then continue to' }), el('select', { class: 'select', id: 'f-next', onchange: function (ev) { n.next = ev.target.value; snap(); render(); } }, G.nodes.filter(function (x) { return x.id !== n.id; }).map(function (x) { return el('option', { value: x.id, text: x.id, selected: x.id === n.next }); }))])); }
+    if (n.kind === 'decision') {
+      host.appendChild(el('h4', { text: 'Choices' }));
+      (n.edges || []).forEach(function (e, i) {
+        var card = el('div', { class: 'edge-card', style: selEdge === e.id ? 'border-color:var(--ap-color-primary)' : '' }, [
+          el('div', { class: 'row spread' }, [el('strong', { class: 'mono', text: e.id }), el('button', { type: 'button', class: 'btn sm icon', 'aria-label': 'Delete choice ' + e.id, onclick: function () { n.edges.splice(i, 1); snap(); render(); P.toast('Deleted choice ' + e.id + '.'); } }, [P.icon('trash')])]),
+          el('textarea', { class: 'textarea', style: 'min-height:56px', 'aria-label': 'Text of choice ' + e.id, onchange: function (ev) { e.text = ev.target.value; snap(); render(); } }),
+          el('div', { class: 'row', style: 'gap:8px' }, [
+            el('label', { class: 'small' }, ['Go to ', el('select', { class: 'select', style: 'width:auto;min-height:32px', 'aria-label': 'Target of ' + e.id, onchange: function (ev) { e.to = ev.target.value; snap(); render(); } }, G.nodes.filter(function (x) { return x.id !== n.id; }).map(function (x) { return el('option', { value: x.id, text: x.id, selected: x.id === e.to }); }))]),
+            el('label', { class: 'small' }, ['Score ', el('input', { class: 'input', type: 'number', style: 'width:72px;min-height:32px', value: e.d, onchange: function (ev) { e.d = parseInt(ev.target.value, 10) || 0; snap(); render(); } })])]),
+          el('div', { class: 'row', style: 'gap:8px' }, [
+            el('label', { class: 'small' }, ['Outcome ', el('select', { class: 'select', style: 'width:auto;min-height:32px', onchange: function (ev) { e.o = ev.target.value; snap(); render(); } }, ['acceptable', 'recoverable', 'irrecoverable'].map(function (k) { return el('option', { value: k, text: SYM[k] + ' ' + k, selected: k === e.o }); }))]),
+            el('label', { class: 'small row', style: 'gap:6px;cursor:pointer' }, [el('input', { type: 'checkbox', checked: e.ok, onchange: function (ev) { e.ok = ev.target.checked; snap(); render(); } }), 'Correct'])]),
+          el('textarea', { class: 'textarea', style: 'min-height:56px', 'aria-label': 'Consequence of ' + e.id, placeholder: 'Consequence the learner sees', onchange: function (ev) { e.c = ev.target.value; snap(); } })]);
+        card.querySelectorAll('textarea')[0].value = e.text; card.querySelectorAll('textarea')[1].value = e.c || '';
+        host.appendChild(card);
+      });
+      host.appendChild(el('button', { type: 'button', class: 'btn', onclick: function () { var k = 1; while ((n.edges || []).some(function (e) { return e.id === n.id.replace('n', 'e') + String.fromCharCode(96 + k); })) { k++; } var cand = G.nodes.filter(function (x) { return x.id !== n.id; })[0]; n.edges = n.edges || []; n.edges.push({ id: n.id.replace('n', 'e') + String.fromCharCode(96 + k), text: 'New choice', to: cand.id, d: 0, o: 'recoverable', ok: false, c: '' }); snap(); render(); P.toast('Choice added. Set its target and score.'); } }, [P.icon('plus'), 'Add choice']));
+    }
+    host.appendChild(el('hr', { class: 'divider' }));
+    host.appendChild(el('div', { class: 'row' }, [
+      el('button', { type: 'button', class: 'btn sm', onclick: function () { var base = { decision: 'n', info: 'i', terminal: 't' }; var id, k = G.nodes.length + 1; do { id = 'n' + (k++); } while (node(id)); G.nodes.push({ id: id, kind: 'decision', x: 60 + (G.nodes.length % 5) * 24, y: 480 - (G.nodes.length % 4) * 16, prompt: 'New decision', edges: [] }); sel = id; snap(); render(); P.toast('Node ' + id + ' added. It is unreachable until a choice points to it.'); } }, [P.icon('plus'), 'Add node']),
+      el('button', { type: 'button', class: 'btn sm danger', disabled: n.id === G.start, onclick: function () { removeNode(n.id); } }, [P.icon('trash'), 'Delete node'])
+    ]));
+  }
+
+  // ---- play ----
+  var play = null;
+  function paintPlay() {
+    var card = document.getElementById('playcard'); card.hidden = mode !== 'play'; card.replaceChildren();
+    if (mode !== 'play') { return; }
+    if (!play) { play = { at: G.start, score: 0, path: [], pending: null }; }
+    var nd = node(play.at);
+    card.appendChild(el('div', { class: 'row spread' }, [el('h3', { text: 'Learner view' }), el('button', { type: 'button', class: 'btn sm', onclick: function () { play = null; paintPlay(); } }, [P.icon('refresh'), 'Restart'])]));
+    if (play.pending) {
+      card.appendChild(el('div', { class: 'callout ' + (play.pending.o === 'acceptable' ? 'ok' : play.pending.o === 'irrecoverable' ? 'bad' : 'warn') }, [P.icon(play.pending.o === 'acceptable' ? 'check' : 'alert'), el('div', null, [el('strong', { text: { acceptable: 'Good choice. ', recoverable: 'You can recover. ', irrecoverable: 'Serious mistake. ' }[play.pending.o] }), play.pending.c])]));
+      card.appendChild(el('button', { type: 'button', class: 'btn primary', onclick: function () { play.pending = null; paintPlay(); } }, ['Continue', P.icon('right', 'i-flip')]));
+    } else if (!nd) { card.appendChild(el('div', { class: 'callout bad' }, [P.icon('alert'), 'The scenario points to a node that does not exist. Fix it in the editor.'])); }
+    else {
+      card.appendChild(el('p', { text: nd.prompt }));
+      if (nd.kind === 'decision') { (nd.edges || []).forEach(function (e) { card.appendChild(el('button', { type: 'button', class: 'choice', text: e.text, onclick: function () { play.score += e.d; play.path.push(e.id); play.at = e.to; play.pending = e; paintPlay(); } })); }); if (!(nd.edges || []).length) { card.appendChild(el('div', { class: 'callout bad' }, [P.icon('alert'), 'Dead end: this decision has no choices.'])); } }
+      else if (nd.kind === 'info') { card.appendChild(el('button', { type: 'button', class: 'btn primary', onclick: function () { play.at = nd.next; paintPlay(); } }, ['Continue', P.icon('right', 'i-flip')])); }
+      else { card.appendChild(el('div', { class: 'callout ' + (nd.outcome === 'success' ? 'ok' : nd.outcome === 'partial' ? 'warn' : 'bad') }, [P.icon('flag'), 'Ending: ' + nd.outcome + '. Score ' + Math.max(0, play.score) + ' of ' + G.max + (Math.max(0, play.score) >= G.pass ? ' (passed)' : ' (below the pass mark of ' + G.pass + ')')])); }
+    }
+    card.appendChild(el('p', { class: 'xs muted', text: 'Path so far: ' + (play.path.join(' > ') || 'none') + ' - score ' + play.score }));
+  }
+
+  function paintBar() {
+    var u = document.getElementById('undo'), r = document.getElementById('redo'), z = document.getElementById('reset');
+    u.replaceChildren(P.icon('undo'), 'Undo'); u.disabled = hpos === 0; r.replaceChildren(P.icon('refresh'), 'Redo'); r.disabled = hpos >= hist.length - 1; z.replaceChildren(P.icon('x'), 'Reset sample');
+  }
+  function render(focus) { var v = paintChecks(); paintCanvas(v); paintInspector(); paintPlay(); paintBar(); if (focus) { focusSel(); } }
+  document.getElementById('undo').onclick = function () { if (hpos > 0) { restore(hpos - 1); } };
+  document.getElementById('redo').onclick = function () { if (hpos < hist.length - 1) { restore(hpos + 1); } };
+  document.getElementById('reset').onclick = function () { G = initial(); hist = [JSON.stringify(G)]; hpos = 0; sel = 'n1'; selEdge = null; play = null; render(); P.toast('Sample scenario restored.'); };
+  document.addEventListener('keydown', function (ev) { if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z' && !/TEXTAREA|INPUT|SELECT/.test(document.activeElement.tagName)) { ev.preventDefault(); if (hpos > 0) { restore(hpos - 1); } } if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'y' && !/TEXTAREA|INPUT|SELECT/.test(document.activeElement.tagName)) { ev.preventDefault(); if (hpos < hist.length - 1) { restore(hpos + 1); } } });
+  [['m-edit', 'edit'], ['m-play', 'play'], ['m-data', 'data']].forEach(function (m) { document.getElementById(m[0]).onclick = function () { mode = m[1]; if (mode === 'play') { play = null; } ['m-edit', 'm-play', 'm-data'].forEach(function (id) { document.getElementById(id).setAttribute('aria-selected', id === m[0] ? 'true' : 'false'); }); render(); }; });
+  render();
+}());
+</script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+90 localisable unit(s) x 12 target language(s)
+model claude-sonnet-4-6: 24 request(s), ~42,540 input / ~100,762 output tokens
+estimated cost: USD 1.6391 = INR 142.6 (prices {'input_usd_per_mtok': 3.0, 'output_usd_per_mtok': 15.0, 'usd_inr': 87.0}); cap in env: None
+This is an estimate from character counts; nothing was sent anywhere.

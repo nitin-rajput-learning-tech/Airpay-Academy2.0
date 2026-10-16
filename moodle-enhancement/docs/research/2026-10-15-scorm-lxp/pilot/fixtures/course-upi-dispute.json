@@ -1,0 +1,360 @@
+{
+  "scd_version": "0.1",
+  "course": {
+    "id": "6f1c2b0e-3d4a-4f5b-9c6d-7e8f90a1b2c3",
+    "slug": "sop-cs-014-upi-dispute-handling",
+    "version": "0.1.0",
+    "base_lang": "en",
+    "langs": ["en", "hi", "mr", "kn", "ta", "te", "bn", "gu", "ml", "pa", "or", "ur", "ar"],
+    "rtl_langs": ["ar", "ur"],
+    "lang_states": {
+      "en": { "state": "approved", "approved_by": "author:fixture", "approved_at": "2026-10-15T06:30:00Z", "engine": "human" },
+      "hi": { "state": "in_review", "translator": "human:fixture", "engine": "human", "tm_leverage_pct": 0 }
+    },
+    "title": {
+      "en": "Handling a disputed UPI transaction",
+      "hi": "विवादित UPI लेन-देन को संभालना"
+    },
+    "description": {
+      "en": "What to do when a customer reports a failed or unauthorised UPI payment: verify, classify, set expectations, record and escalate. Based on SOP-CS-014 v3.1.",
+      "hi": "जब कोई ग्राहक फेल या अनधिकृत UPI भुगतान की शिकायत करे तो क्या करें: वेरिफाई करें, केस की श्रेणी तय करें, सही उम्मीद बताएँ, नोट लिखें और एस्केलेट करें। SOP-CS-014 v3.1 पर आधारित।"
+    },
+    "mastery_score": 70,
+    "estimated_minutes": 12,
+    "audience": { "customer_id": 1, "tenant_ids": [1], "roles": ["support_agent_t1", "support_agent_t2"] },
+    "tags": ["customer-support", "upi", "disputes", "compliance", "annual"],
+    "skills": [
+      { "id": "cs.dispute.classification", "name": { "en": "Dispute classification" }, "level": 3 },
+      { "id": "cs.customer.deescalation", "name": { "en": "De-escalation" }, "level": 2 },
+      { "id": "risk.credential.hygiene", "name": { "en": "Credential hygiene" }, "level": 3 }
+    ],
+    "protected_terms": ["Airpay", "Sentientia", "UPI", "RBI", "OTP", "UTR", "RRN", "KYC", "Tier-2"],
+    "term_overrides": {},
+    "source": {
+      "type": "markdown",
+      "filename": "sample-sop-upi-dispute.md",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "words": 690,
+      "pii_scan": { "status": "clean", "findings": 0, "scanner": "pilot-pii-regex/0.1", "scanned_at": "2026-10-15T06:00:00Z" }
+    }
+  },
+  "blocks": [
+    {
+      "id": "b01",
+      "type": "slide",
+      "layout": "title",
+      "title": { "en": "Handling a disputed UPI transaction", "hi": "विवादित UPI लेन-देन को संभालना" },
+      "points": [
+        { "en": "Verify, classify, set expectations, record, escalate", "hi": "वेरिफाई, श्रेणी, उम्मीद, नोट, एस्केलेट" }
+      ],
+      "narration": {
+        "en": "Welcome. In the next twelve minutes you will learn the five moves that resolve a disputed UPI transaction: verify the caller, classify the case, set the right expectation, record the note, and escalate when the rules say so.",
+        "hi": "स्वागत है। अगले बारह मिनट में आप विवादित UPI लेन-देन सुलझाने के पाँच कदम सीखेंगे: कॉलर को वेरिफाई करना, केस की श्रेणी तय करना, सही उम्मीद बताना, नोट लिखना, और नियम कहें तो एस्केलेट करना।"
+      },
+      "skills": [{ "id": "cs.dispute.classification" }],
+      "estimated_seconds": 25
+    },
+    {
+      "id": "b02",
+      "type": "slide",
+      "layout": "bullets",
+      "title": { "en": "Step 1: verify without asking for secrets", "hi": "चरण 1: बिना गोपनीय जानकारी माँगे वेरिफाई करें" },
+      "points": [
+        { "en": "Registered mobile number plus two security questions", "hi": "रजिस्टर्ड मोबाइल नंबर और दो सुरक्षा प्रश्न" },
+        { "en": "Never ask for UPI PIN, OTP, card number or CVV", "hi": "UPI PIN, OTP, कार्ड नंबर या CVV कभी न माँगें" },
+        { "en": "Collect UTR, date, amount, merchant name", "hi": "UTR, तारीख, राशि, मर्चेंट का नाम लें" },
+        { "en": "Check status: Success, Pending or Failed", "hi": "स्टेटस देखें: Success, Pending या Failed" }
+      ],
+      "narration": {
+        "en": "Start by authenticating the caller with the registered mobile number and two security questions. You never need the UPI PIN, the OTP, the card number or the CVV. If the customer offers them, stop them politely and note that the information was offered but not captured. Then collect the UTR, the date, the amount and the merchant name exactly as the customer sees them, and look the transaction up in the disputes console.",
+        "hi": "शुरुआत रजिस्टर्ड मोबाइल नंबर और दो सुरक्षा प्रश्नों से कॉलर को वेरिफाई करके करें। आपको UPI PIN, OTP, कार्ड नंबर या CVV की कभी ज़रूरत नहीं है। अगर ग्राहक खुद बताने लगे, तो उन्हें विनम्रता से रोकें और नोट करें कि जानकारी दी गई थी पर दर्ज नहीं की गई। फिर UTR, तारीख, राशि और मर्चेंट का नाम ठीक वैसे ही लें जैसे ग्राहक को दिखता है, और डिस्प्यूट कंसोल में लेन-देन देखें।"
+      },
+      "skills": [{ "id": "risk.credential.hygiene" }],
+      "estimated_seconds": 40
+    },
+    {
+      "id": "b03",
+      "type": "slide",
+      "layout": "two-column",
+      "title": { "en": "Step 2: classify the case", "hi": "चरण 2: केस की श्रेणी तय करें" },
+      "points": [
+        { "en": "Pending within 3 working days: wait, share the date", "hi": "3 कार्यदिवसों के भीतर Pending: प्रतीक्षा करें, तारीख बताएँ" },
+        { "en": "Failed, not reversed after window: raise dispute", "hi": "Failed, विंडो के बाद भी रिवर्स नहीं: डिस्प्यूट उठाएँ" },
+        { "en": "Unauthorised: block UPI debits, then raise dispute", "hi": "अनधिकृत: UPI डेबिट ब्लॉक करें, फिर डिस्प्यूट उठाएँ" },
+        { "en": "Merchant service dispute: route to grievance", "hi": "मर्चेंट सर्विस विवाद: ग्रीवांस प्रक्रिया में भेजें" }
+      ],
+      "narration": {
+        "en": "Classification decides everything that follows. A pending payment inside three working days needs patience, not a dispute. A failed payment that has not reversed after the window becomes a Failed Transaction dispute. An unauthorised debit is a fraud report: block further UPI debits first, then raise the dispute and tell the customer to inform their bank and the cyber-crime helpline. A complaint about goods or service is not a payment failure at all; route it to merchant grievance and explain the difference."
+      },
+      "skills": [{ "id": "cs.dispute.classification" }],
+      "estimated_seconds": 45
+    },
+    {
+      "id": "b04",
+      "type": "slide",
+      "layout": "bullets",
+      "title": { "en": "Steps 3 and 4: expectations, notes, escalation" },
+      "points": [
+        { "en": "Reference number, TAT, how they will hear back" },
+        { "en": "Promise only what the console shows" },
+        { "en": "Note: classification, UTR, amount, words, actions" },
+        { "en": "Escalate over 50,000 rupees, repeat debits, legal, media" },
+        { "en": "Never close with an open commitment" }
+      ],
+      "narration": {
+        "en": "Give the customer the reference number, the turnaround time for their case type and how they will be informed. Promise only what the console shows; never say it will reverse today unless the status already says Reversed. Write the case note in the required format. Escalate to Tier-2 when the amount exceeds fifty thousand rupees, when there is more than one unauthorised debit, when a lawyer, the media or a regulator is mentioned, or when a distressed customer asks for a supervisor. And never close a case while a commitment is open."
+      },
+      "skills": [{ "id": "cs.dispute.classification" }, { "id": "cs.customer.deescalation" }],
+      "estimated_seconds": 45
+    },
+    {
+      "id": "s01",
+      "type": "scenario",
+      "mode": "deterministic",
+      "title": { "en": "Practice: the angry caller", "hi": "अभ्यास: नाराज़ कॉलर" },
+      "intro": {
+        "en": "A customer calls. Their account was debited 12,400 rupees two days ago for a kirana order the merchant says never arrived. They are angry and in a hurry. Choose each response; you will see the consequence immediately.",
+        "hi": "एक ग्राहक कॉल करता है। दो दिन पहले किराना ऑर्डर के लिए खाते से 12,400 रुपये कटे, पर मर्चेंट कहता है भुगतान आया ही नहीं। ग्राहक नाराज़ है और जल्दी में है। हर जवाब चुनें; नतीजा तुरंत दिखेगा।"
+      },
+      "characters": [
+        { "id": "cust", "name": { "en": "Rohan (customer)" }, "role": { "en": "Angry caller" } }
+      ],
+      "start": "n1",
+      "scoring": { "max": 30, "pass": 20, "weight_in_course": 0.4 },
+      "nodes": [
+        {
+          "id": "n1",
+          "kind": "decision",
+          "character": "cust",
+          "prompt": {
+            "en": "\"Twelve thousand four hundred rupees gone and the shop says they got nothing. Fix it now or I am going to the bank and the police.\" What do you say first?",
+            "hi": "\"बारह हज़ार चार सौ रुपये चले गए और दुकान कहती है कुछ नहीं मिला। अभी ठीक करो वरना मैं बैंक और पुलिस के पास जा रहा हूँ।\" आप सबसे पहले क्या कहेंगे?"
+          },
+          "edges": [
+            {
+              "id": "e1a",
+              "text": { "en": "\"I understand, Rohan. A debit without delivery is stressful. I will check it right now. May I confirm your registered mobile number?\"", "hi": "\"समझ सकता हूँ, रोहन। पैसा कटे और सामान न मिले तो तनाव होता है। मैं अभी देखता हूँ। क्या आप अपना रजिस्टर्ड मोबाइल नंबर कन्फ़र्म करेंगे?\"" },
+              "to": "n2",
+              "score_delta": 10,
+              "outcome": "acceptable",
+              "correct": true,
+              "consequence": { "en": "Acknowledgement first, then authentication through an allowed channel. The customer slows down.", "hi": "पहले स्वीकारोक्ति, फिर अनुमत तरीके से पहचान की पुष्टि। ग्राहक शांत होने लगता है।" }
+            },
+            {
+              "id": "e1b",
+              "text": { "en": "\"Please share the OTP you just received so I can verify the transaction quickly.\"", "hi": "\"कृपया अभी आया OTP बताइए ताकि मैं लेन-देन जल्दी वेरिफाई कर सकूँ।\"" },
+              "to": "n_fail_otp",
+              "score_delta": -10,
+              "outcome": "irrecoverable",
+              "correct": false,
+              "consequence": { "en": "Asking for an OTP is a disciplinary offence under SOP-CS-014 §3 Step 1. The call is flagged for review.", "hi": "OTP माँगना SOP-CS-014 §3 चरण 1 के तहत अनुशासनात्मक अपराध है। कॉल समीक्षा के लिए फ़्लैग हो जाती है।" }
+            },
+            {
+              "id": "e1c",
+              "text": { "en": "\"Sir, this is between you and the merchant. You should contact them.\"", "hi": "\"सर, यह आपके और मर्चेंट के बीच की बात है। आप उनसे संपर्क कीजिए।\"" },
+              "to": "n2_cold",
+              "score_delta": -3,
+              "outcome": "recoverable",
+              "correct": false,
+              "consequence": { "en": "You have not verified anything yet, and you blamed a party. The customer gets angrier, but you can recover.", "hi": "आपने अभी कुछ वेरिफाई नहीं किया और एक पक्ष को दोष दे दिया। ग्राहक और नाराज़ होता है, पर स्थिति संभल सकती है।" }
+            }
+          ]
+        },
+        {
+          "id": "n2_cold",
+          "kind": "info",
+          "character": "cust",
+          "prompt": { "en": "\"So nobody will help me? Fine, give me your name.\" You pause, lower your pace and say: \"You are right to be upset. Let me check the transaction properly. May I confirm your registered mobile number?\"" },
+          "next": "n2"
+        },
+        {
+          "id": "n2",
+          "kind": "decision",
+          "character": "cust",
+          "prompt": {
+            "en": "Authentication passes. The console shows the UTR with status Pending, transaction date two days ago. What do you do?",
+            "hi": "पहचान की पुष्टि हो गई। कंसोल में UTR का स्टेटस Pending है, लेन-देन दो दिन पहले का है। आप क्या करेंगे?"
+          },
+          "edges": [
+            {
+              "id": "e2a",
+              "text": { "en": "Raise a Failed Transaction dispute immediately so the customer feels action is being taken." },
+              "to": "n3_wrongdispute",
+              "score_delta": -5,
+              "outcome": "recoverable",
+              "correct": false,
+              "consequence": { "en": "Pending inside the three-working-day window must not be disputed yet (§3 Step 2). The disputes team will reject it and the customer will be told twice." }
+            },
+            {
+              "id": "e2b",
+              "text": { "en": "Explain that pending UPI payments auto-reverse or settle within the regulatory window, give the expected date from the console, and share the reference number." },
+              "to": "n3",
+              "score_delta": 10,
+              "outcome": "acceptable",
+              "correct": true,
+              "consequence": { "en": "Correct classification and an expectation the console supports." }
+            },
+            {
+              "id": "e2c",
+              "text": { "en": "Tell the customer the money will be back in their account today." },
+              "to": "n3_overpromise",
+              "score_delta": -5,
+              "outcome": "recoverable",
+              "correct": false,
+              "consequence": { "en": "You promised something the console does not show (§3 Step 3). If it does not arrive today, you have created a second complaint." }
+            }
+          ]
+        },
+        {
+          "id": "n3_wrongdispute",
+          "kind": "info",
+          "prompt": { "en": "Your Tier-2 colleague pings you: \"Pending within window, dispute rejected. Call the customer back and explain.\" You correct course and explain the window and the date." },
+          "next": "n3"
+        },
+        {
+          "id": "n3_overpromise",
+          "kind": "info",
+          "prompt": { "en": "You catch yourself and correct it: \"Let me be precise. The console shows Pending with an expected settlement or reversal by the date I will give you now.\"" },
+          "next": "n3"
+        },
+        {
+          "id": "n3",
+          "kind": "decision",
+          "character": "cust",
+          "prompt": {
+            "en": "\"OK. But if this is not sorted by then I will go to the media. Also my wife says there was another 9,000 debit yesterday that we did not make.\" What now?"
+          },
+          "edges": [
+            {
+              "id": "e3a",
+              "text": { "en": "Note the media remark and the second unauthorised debit; block further UPI debits on the registered number; raise an Unauthorised Transaction dispute for the second debit; escalate to Tier-2 now." },
+              "to": "t_success",
+              "score_delta": 10,
+              "outcome": "acceptable",
+              "correct": true,
+              "consequence": { "en": "Multiple unauthorised debits plus a media mention are two escalation triggers (§3 Step 4). Blocking first protects the customer." }
+            },
+            {
+              "id": "e3b",
+              "text": { "en": "Reassure the customer, finish the note for the first case and close the call; the second debit can be a new call tomorrow." },
+              "to": "t_partial",
+              "score_delta": -5,
+              "outcome": "recoverable",
+              "correct": false,
+              "consequence": { "en": "An unauthorised debit is a fraud report and must be acted on now; the media remark is an escalation trigger. Closing here leaves a commitment open." }
+            }
+          ]
+        },
+        { "id": "n_fail_otp", "kind": "terminal", "terminal_outcome": "failure", "prompt": { "en": "The call is terminated for review. Asking a customer for an OTP or UPI PIN is never acceptable, whatever the pressure. Restart the scenario." } },
+        { "id": "t_success", "kind": "terminal", "terminal_outcome": "success", "prompt": { "en": "Tier-2 takes the fraud case; the customer has a reference number, a date and a blocked UPI mandate. You followed every step of SOP-CS-014." } },
+        { "id": "t_partial", "kind": "terminal", "terminal_outcome": "partial", "prompt": { "en": "The first case is handled, but the second debit and the media remark were not actioned. Your supervisor will review the call." } }
+      ],
+      "skills": [{ "id": "cs.customer.deescalation" }, { "id": "cs.dispute.classification" }, { "id": "risk.credential.hygiene" }]
+    },
+    {
+      "id": "q01",
+      "type": "quiz",
+      "title": { "en": "Mastery check", "hi": "दक्षता जाँच" },
+      "intro": { "en": "Five questions. You need 70% to pass.", "hi": "पाँच प्रश्न। पास होने के लिए 70% चाहिए।" },
+      "shuffle": true,
+      "pass_percent": 70,
+      "questions": [
+        {
+          "id": "q01_1",
+          "type": "multichoice",
+          "stem": { "en": "A customer offers to read out the OTP they just received so you can verify the transaction. What do you do?", "hi": "एक ग्राहक अभी आया OTP पढ़कर बताने की पेशकश करता है ताकि आप लेन-देन वेरिफाई कर सकें। आप क्या करेंगे?" },
+          "options": [
+            { "id": "a", "text": { "en": "Accept it; the customer volunteered it", "hi": "मान लें; ग्राहक ने खुद बताया" }, "correct": false, "feedback": { "en": "Capturing an OTP is never allowed, even when volunteered." } },
+            { "id": "b", "text": { "en": "Stop them politely and record that it was offered but not captured", "hi": "विनम्रता से रोकें और नोट करें कि दिया गया था पर दर्ज नहीं किया" }, "correct": true, "feedback": { "en": "Correct: SOP-CS-014 §3 Step 1." } },
+            { "id": "c", "text": { "en": "Ask for the UPI PIN instead", "hi": "इसके बजाय UPI PIN माँगें" }, "correct": false, "feedback": { "en": "Never ask for the PIN either." } },
+            { "id": "d", "text": { "en": "Transfer the call to Tier-2", "hi": "कॉल Tier-2 को ट्रांसफर करें" }, "correct": false, "feedback": { "en": "Not an escalation trigger; just decline the secret." } }
+          ],
+          "points": 1,
+          "skills": [{ "id": "risk.credential.hygiene" }]
+        },
+        {
+          "id": "q01_2",
+          "type": "multichoice",
+          "stem": { "en": "The console shows a UPI payment as Pending, made two working days ago. The customer wants a dispute raised. What is correct?" },
+          "options": [
+            { "id": "a", "text": { "en": "Raise a Failed Transaction dispute now" }, "correct": false },
+            { "id": "b", "text": { "en": "Explain the regulatory window, share the expected date, do not dispute yet" }, "correct": true },
+            { "id": "c", "text": { "en": "Raise an Unauthorised Transaction dispute" }, "correct": false },
+            { "id": "d", "text": { "en": "Route to merchant grievance" }, "correct": false }
+          ],
+          "points": 1,
+          "skills": [{ "id": "cs.dispute.classification" }]
+        },
+        {
+          "id": "q01_3",
+          "type": "multiresponse",
+          "stem": { "en": "Which of these require escalation to Tier-2? Select all that apply." },
+          "options": [
+            { "id": "a", "text": { "en": "Amount above 50,000 rupees" }, "correct": true },
+            { "id": "b", "text": { "en": "More than one unauthorised debit" }, "correct": true },
+            { "id": "c", "text": { "en": "The customer mentions a lawyer, the media or a regulator" }, "correct": true },
+            { "id": "d", "text": { "en": "The customer asks for the reference number" }, "correct": false }
+          ],
+          "points": 2,
+          "skills": [{ "id": "cs.dispute.classification" }]
+        },
+        {
+          "id": "q01_4",
+          "type": "truefalse",
+          "stem": { "en": "You may close a case while a commitment to the customer is still open, as long as the note records it." },
+          "options": [
+            { "id": "t", "text": { "en": "True" }, "correct": false },
+            { "id": "f", "text": { "en": "False" }, "correct": true, "feedback": { "en": "Never close a case with an open commitment (§3 Step 4)." } }
+          ],
+          "points": 1
+        },
+        {
+          "id": "q01_5",
+          "type": "match",
+          "stem": { "en": "Match the situation to the correct classification." },
+          "pairs": [
+            { "id": "p1", "left": { "en": "Debited, merchant not credited, 5 working days passed" }, "right": { "en": "Failed Transaction dispute" } },
+            { "id": "p2", "left": { "en": "Customer did not make the payment" }, "right": { "en": "Unauthorised Transaction (fraud report)" } },
+            { "id": "p3", "left": { "en": "Goods arrived damaged" }, "right": { "en": "Merchant service dispute (grievance route)" } },
+            { "id": "p4", "left": { "en": "Pending, 1 working day old" }, "right": { "en": "Wait for the regulatory window" } }
+          ],
+          "points": 2,
+          "skills": [{ "id": "cs.dispute.classification" }]
+        }
+      ]
+    }
+  ],
+  "reinforcement": {
+    "enabled": true,
+    "schedule_days": [2, 7, 30],
+    "questions_per_session": 3,
+    "channels": ["dashboard", "push", "whatsapp"]
+  },
+  "delivery": {
+    "standards": ["scorm12", "scorm2004_4", "cmi5", "moodle_course"],
+    "package_mode": "multilingual",
+    "offline_capable": true,
+    "xapi": { "activity_iri_base": "https://airpay.academy/xapi/activities/", "side_channel": false }
+  },
+  "provenance": {
+    "generator": {
+      "name": "sentientia-pilot-harness",
+      "version": "0.1.0",
+      "mode": "human",
+      "model": "none (hand-authored fixture)",
+      "prompt_version": "n/a",
+      "gateway_ledger_ids": [],
+      "processing_region": "local"
+    },
+    "created_at": "2026-10-15T06:30:00Z",
+    "created_by": "fixture author",
+    "source": "sample-sop-upi-dispute.md",
+    "review": {
+      "state": "approved",
+      "approvals": [
+        { "role": "author", "by": "fixture author", "at": "2026-10-15T06:30:00Z", "note": "Hand-authored pilot fixture; English approved for mock runs." }
+      ]
+    },
+    "audit_log": "audit/course-upi-dispute.audit.jsonl"
+  }
+}

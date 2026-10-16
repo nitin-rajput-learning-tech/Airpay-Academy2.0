@@ -1,0 +1,1 @@
+optional; ADL's SCORM test suites are free; SCORM Cloud (Rustici) third-party listings show a free trial (3 courses, 10 registrations) and paid tiers from about USD 90 a month (50 registrations), vendor page blocked, approximate [R4:37]

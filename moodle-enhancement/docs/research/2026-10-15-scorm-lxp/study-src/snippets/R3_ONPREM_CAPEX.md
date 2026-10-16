@@ -1,0 +1,1 @@
+≈ ₹3.0–3.5 lakh for an RTX 4090 workstation (only beats cloud batch above ~1,000 course-languages per month; consumer-driver EULA caveat)

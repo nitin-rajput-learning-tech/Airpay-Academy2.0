@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin analytics - Sentientia prototype</title>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/proto.css">
+<style>
+  .filters { display: flex; gap: var(--ap-space-4); align-items: flex-end; flex-wrap: wrap; }
+  .filters .field { min-width: 160px; }
+  .kpi-card { position: relative; }
+  .kpi-card .def { position: absolute; inset-block-start: var(--ap-space-3); inset-inline-end: var(--ap-space-3); }
+  .hbar { display: grid; grid-template-columns: 150px minmax(0, 1fr) 96px; gap: var(--ap-space-3); align-items: center; font-size: var(--ap-text-sm); padding: 4px 0; }
+  .track { height: 14px; background: var(--ap-color-bg-inset); border-radius: var(--ap-radius-pill); overflow: hidden; display: flex; }
+  .fill { height: 100%; background: var(--ap-color-chart-series-1); }
+  .stackbar { display: flex; height: 28px; border-radius: var(--ap-radius-sm); overflow: hidden; border: 1px solid var(--ap-color-border); }
+  .stackbar > span { display: flex; align-items: center; justify-content: center; font-size: var(--ap-text-xs); font-weight: var(--ap-weight-bold); color: var(--ap-color-on-primary); min-width: 0; overflow: hidden; white-space: nowrap; }
+  .o-acceptable { background: var(--ap-color-outcome-acceptable); } .o-recoverable { background: var(--ap-color-outcome-recoverable); } .o-irrecoverable { background: var(--ap-color-outcome-irrecoverable); } .o-neutral { background: var(--ap-color-outcome-neutral); }
+  .matrix { border-collapse: separate; border-spacing: 3px; font-size: var(--ap-text-xs); }
+  .matrix th { font-weight: var(--ap-weight-semibold); color: var(--ap-color-text-secondary); padding: 2px 4px; text-align: center; }
+  .matrix th.rowh { text-align: start; white-space: nowrap; font-size: var(--ap-text-sm); color: var(--ap-color-text-primary); padding-inline-end: var(--ap-space-3); }
+  .cell { width: 34px; height: 34px; border-radius: var(--ap-radius-xs); display: flex; align-items: center; justify-content: center; font-weight: var(--ap-weight-bold); border: 1px solid var(--ap-color-border); cursor: default; }
+  .c-approved { background: var(--ap-chart-seq-4); color: var(--ap-color-on-primary); } .c-in_review { background: var(--ap-chart-seq-3); color: var(--ap-color-on-primary); }
+  .c-machine { background: var(--ap-chart-seq-2); color: var(--ap-color-text-primary); } .c-in_translation { background: var(--ap-chart-seq-1); color: var(--ap-color-text-primary); } .c-pending { background: var(--ap-chart-seq-0); color: var(--ap-color-text-secondary); }
+  .legend { display: flex; gap: var(--ap-space-3); flex-wrap: wrap; font-size: var(--ap-text-xs); color: var(--ap-color-text-secondary); }
+  .legend .cell { width: 20px; height: 20px; display: inline-flex; font-size: 10px; margin-inline-end: 4px; vertical-align: middle; }
+  .line-chart { width: 100%; height: auto; }
+  .line-chart text { fill: var(--ap-chart-axis); font-size: 11px; }
+  .badge-region { display: inline-flex; gap: 4px; align-items: center; }
+  .sortable th button { all: unset; cursor: pointer; display: inline-flex; gap: 4px; align-items: center; }
+  .sortable th button:focus-visible { outline: var(--ap-focus-ring-width) solid var(--ap-focus-ring-color); }
+  @media (max-width: 700px) { .hbar { grid-template-columns: 96px minmax(0, 1fr) 70px; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="page">
+    <section class="card" aria-label="Filters">
+      <div class="filters">
+        <div class="field"><label for="f-tenant">Tenant</label><select class="select" id="f-tenant"><option value="1">Airpay (internal)</option><option value="0.6">Public</option><option value="0.25">ZEEA (Tanzania)</option></select></div>
+        <div class="field"><label for="f-period">Period</label><select class="select" id="f-period"><option value="0.4">Last 30 days</option><option value="1" selected>Last 90 days</option></select></div>
+        <div class="field"><label for="f-course">Course</label><select class="select" id="f-course"><option value="all">All courses</option><option value="upi">Handling a disputed UPI transaction</option><option value="posh">POSH annual refresher</option></select></div>
+        <div class="grow"></div>
+        <p class="xs muted" id="fresh"></p>
+        <button type="button" class="btn" id="csv"><svg class="i"></svg>Export CSV</button>
+      </div>
+    </section>
+
+    <section aria-label="Key figures" class="grid cols-3" id="kpis"></section>
+
+    <div class="grid cols-2">
+      <section class="card stack" aria-labelledby="wk-h"><div class="card-title"><h2 id="wk-h">Completions per week</h2><button type="button" class="btn sm" id="wk-toggle" aria-pressed="false">View as table</button></div><div id="wk"></div></section>
+      <section class="card stack" aria-labelledby="lang-h"><div class="card-title"><h2 id="lang-h">Completion by language</h2><span class="sub">Bar length = completion rate</span></div><div id="bylang"></div></section>
+    </div>
+
+    <section class="card stack" aria-labelledby="dp-h">
+      <div class="card-title"><h2 id="dp-h">Scenario decisions: "Practice, the angry caller"</h2><span class="sub" id="dp-sub"></span></div>
+      <div id="paths" class="stack"></div>
+      <div class="callout" id="insight"></div>
+    </section>
+
+    <div class="grid cols-2">
+      <section class="card stack" aria-labelledby="cov-h"><div class="card-title"><h2 id="cov-h">Language coverage</h2><span class="sub">Review state per course</span></div><div class="table-wrap" id="cov"></div><div class="legend" id="legend"></div></section>
+      <section class="card stack" aria-labelledby="q-h"><div class="card-title"><h2 id="q-h">Review queue and capacity</h2><span class="sub">Planning: 5 to 6 reviewer hours per language per course</span></div><div class="table-wrap" id="queue"></div></section>
+    </div>
+
+    <div class="grid cols-2">
+      <section class="card stack" aria-labelledby="sp-h"><div class="card-title"><h2 id="sp-h">AI and voice spend this month</h2><span class="mock-tag">Mock data</span></div><div id="spend" class="stack"></div></section>
+      <section class="card stack" aria-labelledby="ct-h"><div class="card-title"><h2 id="ct-h">Courses</h2><span class="sub">Click a column to sort</span></div><div class="table-wrap" id="courses"></div></section>
+    </div>
+  </div>
+</main>
+<script src="assets/proto.js"></script>
+<script>
+(function () {
+  var P = PROTO, el = P.el;
+  P.mount({
+    screen: 'admin-analytics', title: 'Admin analytics',
+    about: {
+      purpose: 'What an L&D admin or a bank auditor asks: who finished, where do people go wrong in scenarios, which languages are covered and reviewed, how deep is the review queue, and what is the AI and voice bill and where did it run.',
+      interactions: ['Change Tenant, Period or Course: every figure recalculates (synthetic data, deterministic).', 'Press the "i" on a figure to read its definition; each card shows when the data was last refreshed.', '"View as table" turns the weekly chart into a data table (every chart has one).', 'Scenario decisions: decision-level shares from interaction records; the insight names the most common serious mistake.', 'Sort the course table by clicking a header; Export CSV downloads the visible rows.', 'Language coverage cells carry a letter as well as a shade, so they work without colour.'],
+      patterns: ['Few cards, shared filters, quantity encoded by bar length (NN/G, Metabase guidance).', 'Definitions and freshness on every figure so numbers can be defended.', 'Colour-blind-safe single-hue ramp for coverage; outcome tags always carry text.', 'Region badge on speech spend: where the processing happened is evidence for residency questions.'],
+      maps: ['local_sentientia_analytics (descriptive KPIs, flag-off) plus cmi.interactions / xAPI decision data (Stage 2.5)', 'Chart series tokens --ap-color-chart-series-1..5 and --ap-chart-seq-0..5'],
+      notBuilt: ['Real data, drill-through, scheduled exports, per-tenant permissions.']
+    }
+  });
+
+  var LANGS = P.LANGS;
+  var fTenant = document.getElementById('f-tenant'), fPeriod = document.getElementById('f-period'), fCourse = document.getElementById('f-course');
+  function k() { return { t: parseFloat(fTenant.value), p: parseFloat(fPeriod.value), c: fCourse.value }; }
+  function n(x) { return Math.round(x).toLocaleString('en-IN'); }
+  function pct(base, t) { return Math.max(40, Math.min(99, Math.round(base - (1 - t) * 6))); }
+
+  document.getElementById('csv').firstChild.replaceWith(P.icon('download'));
+  document.getElementById('fresh').textContent = 'Data as of 15 Oct 14:05 IST. Refreshes every 24 hours.';
+
+  var DEF = {
+    Completion: 'Learners who reached "completed" status in the period divided by learners assigned in the period. A learner counts once per course.',
+    Pass: 'Completed learners whose course score met the mastery score (70 unless the customer changed it) divided by completed learners.',
+    Time: 'Median minutes between first launch and completion, excluding sessions idle for more than 30 minutes.',
+    Overdue: 'Assigned learners past their due date who have not completed. Hard and soft deadlines are counted separately in the course table.',
+    Queue: 'Translation segments waiting for a human stage across all languages and courses.',
+    Spend: 'Gateway ledger total for the month: model calls and voice synthesis, in rupees, with the cap alongside.'
+  };
+  function kpis() {
+    var f = k(), assigned = 3500 * f.t * (f.c === 'all' ? 1 : 0.55) * (f.p === 1 ? 1 : 0.45);
+    var comp = pct(86, f.t), pass = pct(91, f.t);
+    var items = [
+      ['Completion', comp + '%', n(assigned * comp / 100) + ' of ' + n(assigned) + ' assigned', 'ok'],
+      ['Pass', pass + '%', 'at mastery score 70', 'ok'],
+      ['Time', Math.round(11 + (1 - f.t) * 4) + ' min', 'median to complete', 'info'],
+      ['Overdue', n(assigned * (100 - comp) / 100 * 0.45), 'past due, not completed', 'bad'],
+      ['Queue', n(214 * f.t + 12), 'segments waiting for review', 'warn'],
+      ['Spend', 'INR ' + n(3420 * f.t * f.p / 1 + 90), 'of INR 10,000 cap (mock data)', 'info']
+    ];
+    var host = document.getElementById('kpis'); host.replaceChildren();
+    items.slice(0, 4).forEach(function (it) { host.appendChild(card(it)); });
+    function card(it) {
+      var def = el('button', { type: 'button', class: 'btn sm icon ghost def', 'aria-label': 'Definition of ' + it[0], onclick: function () { P.dialog({ title: it[0] === 'Time' ? 'Time to complete' : it[0] === 'Pass' ? 'Pass rate' : it[0] === 'Queue' ? 'Review queue' : it[0] === 'Spend' ? 'AI and voice spend' : (it[0] + (it[0] === 'Completion' ? ' rate' : '')), body: [el('p', { text: DEF[it[0]] }), el('p', { class: 'small muted', text: 'Data as of 15 Oct 14:05 IST.' })], actions: [{ label: 'Close', kind: 'primary' }] }); } }, [P.icon('info')]);
+      return el('div', { class: 'card kpi kpi-card' }, [def, el('span', { class: 'l', text: it[0] === 'Time' ? 'Median time' : it[0] === 'Queue' ? 'Review queue' : it[0] === 'Pass' ? 'Pass rate' : it[0] === 'Spend' ? 'Spend' : it[0] }), el('span', { class: 'v', text: it[1] }), el('span', { class: 'small muted', text: it[2] })]);
+    }
+    items.slice(4).forEach(function (it) { host.appendChild(card(it)); });
+    // keep six cards in two rows on wide screens
+  }
+
+  // weekly completions line chart (SVG) with table fallback
+  var weeks = [38, 52, 61, 58, 74, 90, 83, 97, 110, 104, 126, 119];
+  var showTable = false;
+  function weekly() {
+    var host = document.getElementById('wk'); host.replaceChildren();
+    var f = k(), data = weeks.map(function (v) { return Math.round(v * f.t * (f.c === 'all' ? 1 : 0.55)); });
+    if (showTable) {
+      host.appendChild(el('table', { class: 'table' }, [el('thead', null, [el('tr', null, [el('th', { text: 'Week' }), el('th', { class: 'num', text: 'Completions' })])]), el('tbody', null, data.map(function (v, i) { return el('tr', null, [el('td', { text: 'Week ' + (i + 1) }), el('td', { class: 'num', text: String(v) })]); }))]));
+      return;
+    }
+    var W = 560, H = 220, pad = { l: 36, r: 12, t: 12, b: 28 }, max = Math.max.apply(null, data) * 1.1 || 10;
+    var NS = 'http://www.w3.org/2000/svg';
+    function s(tag, attrs, text) { var e = document.createElementNS(NS, tag); Object.keys(attrs || {}).forEach(function (a) { e.setAttribute(a, attrs[a]); }); if (text !== undefined) { e.textContent = text; } return e; }
+    var svg = s('svg', { viewBox: '0 0 ' + W + ' ' + H, class: 'line-chart', role: 'img', 'aria-label': 'Line chart of weekly completions, rising from ' + data[0] + ' to ' + data[data.length - 1] + ' over 12 weeks' });
+    for (var g = 0; g <= 4; g++) { var y = pad.t + (H - pad.t - pad.b) * g / 4; svg.appendChild(s('line', { x1: pad.l, x2: W - pad.r, y1: y, y2: y, stroke: 'var(--ap-chart-grid)', 'stroke-width': 1 })); svg.appendChild(s('text', { x: pad.l - 6, y: y + 4, 'text-anchor': 'end' }, String(Math.round(max * (1 - g / 4))))); }
+    var pts = data.map(function (v, i) { return [pad.l + (W - pad.l - pad.r) * i / (data.length - 1), pad.t + (H - pad.t - pad.b) * (1 - v / max)]; });
+    svg.appendChild(s('path', { d: 'M' + pts.map(function (p) { return p.join(','); }).join(' L') + ' L' + pts[pts.length - 1][0] + ',' + (H - pad.b) + ' L' + pts[0][0] + ',' + (H - pad.b) + ' Z', fill: 'var(--ap-color-primary-light)', opacity: 0.7 }));
+    svg.appendChild(s('path', { d: 'M' + pts.map(function (p) { return p.join(','); }).join(' L'), fill: 'none', stroke: 'var(--ap-color-chart-series-1)', 'stroke-width': 3, 'stroke-linejoin': 'round' }));
+    pts.forEach(function (p, i) { var c = s('circle', { cx: p[0], cy: p[1], r: 4, fill: 'var(--ap-color-bg-surface)', stroke: 'var(--ap-color-chart-series-1)', 'stroke-width': 2 }); c.appendChild(s('title', {}, 'Week ' + (i + 1) + ': ' + data[i] + ' completions')); svg.appendChild(c); if (i % 2 === 0) { svg.appendChild(s('text', { x: p[0], y: H - 8, 'text-anchor': 'middle' }, 'W' + (i + 1))); } });
+    host.appendChild(svg);
+  }
+  document.getElementById('wk-toggle').onclick = function (ev) { showTable = !showTable; ev.currentTarget.setAttribute('aria-pressed', showTable ? 'true' : 'false'); ev.currentTarget.textContent = showTable ? 'View as chart' : 'View as table'; weekly(); };
+
+  function bylang() {
+    var f = k(), host = document.getElementById('bylang'); host.replaceChildren();
+    var base = { en: 88, hi: 84, mr: 79, kn: 76, ta: 74, te: 72, bn: 71, gu: 0, ml: 0, pa: 0, or: 0, ur: 0, ar: 0 };
+    var learners = { en: 2100, hi: 860, mr: 240, kn: 180, ta: 70, te: 50, bn: 0 };
+    LANGS.forEach(function (l) {
+      var b = base[l.tag], u = Math.round((learners[l.tag] || 0) * f.t * (f.p === 1 ? 1 : 0.45));
+      host.appendChild(el('div', { class: 'hbar' }, [el('span', { lang: l.tag, text: l.name }), el('div', { class: 'track', role: 'img', 'aria-label': l.name + ': ' + (b ? pct(b, f.t) + ' percent' : 'no learners yet') }, [el('div', { class: 'fill', style: 'width:' + (b ? pct(b, f.t) : 0) + '%' })]), el('span', { class: 'num small', style: 'text-align:end', text: b ? pct(b, f.t) + '% - ' + n(u) : 'not live' })]));
+    });
+    host.appendChild(el('p', { class: 'xs muted', text: 'Only languages with an approved translation have learners. Others show "not live".' }));
+  }
+
+  function paths() {
+    var f = k(), host = document.getElementById('paths'); host.replaceChildren();
+    var runs = Math.round(1840 * f.t * f.p * (f.c === 'posh' ? 0 : 1));
+    document.getElementById('dp-sub').textContent = f.c === 'posh' ? 'No scenario in this course' : n(runs) + ' attempts';
+    if (f.c === 'posh') { host.appendChild(el('div', { class: 'empty', text: 'This course has no branching scenario. Choose "All courses" or the UPI course.' })); document.getElementById('insight').replaceChildren(); return; }
+    var nodes = [
+      ['Decision 1: what do you say first?', [['Acknowledge, then verify', 71, 'acceptable'], ['Asked for the OTP', 6, 'irrecoverable'], ['Blamed the merchant', 23, 'recoverable']]],
+      ['Decision 2: a Pending payment, two days old', [['Explained the window', 74, 'acceptable'], ['Raised a dispute too early', 18, 'recoverable'], ['Promised money back today', 8, 'recoverable']]],
+      ['Decision 3: media threat and a second debit', [['Blocked, disputed, escalated', 64, 'acceptable'], ['Closed the call', 36, 'recoverable']]]
+    ];
+    nodes.forEach(function (nd) {
+      host.appendChild(el('div', { class: 'stack', style: 'gap:6px' }, [el('p', { class: 'small bold', text: nd[0] }), el('div', { class: 'stackbar', role: 'img', 'aria-label': nd[1].map(function (e) { return e[0] + ' ' + e[1] + ' percent'; }).join(', ') }, nd[1].map(function (e) { return el('span', { class: 'o-' + e[2], style: 'width:' + e[1] + '%', text: e[1] >= 14 ? e[1] + '%' : '', title: e[0] + ': ' + e[1] + '%' }); })), el('div', { class: 'legend' }, nd[1].map(function (e) { return el('span', null, [el('span', { class: 'dot', style: 'background:var(--ap-color-outcome-' + e[2] + ');margin-inline-end:4px' }), e[0] + ' ' + e[1] + '% (' + { acceptable: 'good choice', recoverable: 'recoverable', irrecoverable: 'serious mistake' }[e[2]] + ')']); }))]));
+    });
+    host.appendChild(el('div', { class: 'stack', style: 'gap:6px' }, [el('p', { class: 'small bold', text: 'Where the scenarios ended' }), el('div', { class: 'stackbar', role: 'img', 'aria-label': 'Best outcome 52, partly handled 31, failed 6, abandoned 11 percent' }, [['Best 52%', 52, 'acceptable'], ['Partly 31%', 31, 'recoverable'], ['', 6, 'irrecoverable'], ['', 11, 'neutral']].map(function (e) { return el('span', { class: 'o-' + e[2], style: 'width:' + e[1] + '%', text: e[0] }); })), el('div', { class: 'legend' }, [el('span', { text: 'Best outcome 52%' }), el('span', { text: 'Partly handled 31%' }), el('span', { text: 'Failed 6%' }), el('span', { text: 'Abandoned 11%' })])]));
+    document.getElementById('insight').replaceChildren(P.icon('info'), el('span', null, [el('strong', { text: 'Reading it: ' }), 'about 1 in 16 learners asked for an OTP at the first decision, a disciplinary mistake. Decision 3 is the weakest point: 36% close the call and leave a second fraud debit unactioned. Consider a short refresher on escalation triggers.']));
+  }
+
+  var COURSES = [
+    { n: 'Handling a disputed UPI transaction', code: 'SOP-CS-014', enr: 1480, comp: 82, score: 84, over: 61, langs: 3 },
+    { n: 'POSH annual refresher', code: 'POSH-2026', enr: 3120, comp: 74, score: 88, over: 212, langs: 2 },
+    { n: 'IT security basics', code: 'ITS-107', enr: 2890, comp: 91, score: 79, over: 38, langs: 1 },
+    { n: 'AML awareness', code: 'AML-2026', enr: 1210, comp: 68, score: 81, over: 142, langs: 2 }
+  ];
+  var sortKey = 'n', sortDir = 1;
+  function coursesTable() {
+    var f = k(), host = document.getElementById('courses'); host.replaceChildren();
+    var rows = COURSES.filter(function (c) { return f.c === 'all' || (f.c === 'upi' && c.code === 'SOP-CS-014') || (f.c === 'posh' && c.code === 'POSH-2026'); }).map(function (c) { return Object.assign({}, c, { enr: Math.round(c.enr * f.t * f.p), over: Math.round(c.over * f.t * f.p) }); });
+    rows.sort(function (a, b) { var x = a[sortKey], y = b[sortKey]; return (typeof x === 'string' ? x.localeCompare(y) : x - y) * sortDir; });
+    var cols = [['n', 'Course', false], ['enr', 'Assigned', true], ['comp', 'Completed %', true], ['score', 'Avg score', true], ['over', 'Overdue', true], ['langs', 'Languages', true]];
+    var table = el('table', { class: 'table sortable' }, [el('thead', null, [el('tr', null, cols.map(function (c) { return el('th', { class: c[2] ? 'num' : '', scope: 'col', 'aria-sort': sortKey === c[0] ? (sortDir === 1 ? 'ascending' : 'descending') : 'none' }, [el('button', { type: 'button', onclick: function () { if (sortKey === c[0]) { sortDir = -sortDir; } else { sortKey = c[0]; sortDir = 1; } coursesTable(); } }, [c[1], sortKey === c[0] ? P.icon(sortDir === 1 ? 'up' : 'down') : null])]); }))]), el('tbody', null, rows.map(function (r) { return el('tr', null, [el('td', null, [el('div', { class: 'bold', text: r.n }), el('div', { class: 'xs muted', text: r.code })]), el('td', { class: 'num', text: n(r.enr) }), el('td', { class: 'num', text: r.comp + '%' }), el('td', { class: 'num', text: String(r.score) }), el('td', { class: 'num', text: n(r.over) }), el('td', { class: 'num', text: String(r.langs) })]); }))]);
+    host.appendChild(table);
+    document.getElementById('csv').onclick = function () {
+      var csv = ['course,code,assigned,completed_pct,avg_score,overdue,languages'].concat(rows.map(function (r) { return [r.n, r.code, r.enr, r.comp, r.score, r.over, r.langs].map(function (x) { return '"' + String(x).replace(/"/g, '""') + '"'; }).join(','); })).join('\n');
+      var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'courses-prototype.csv'; document.body.appendChild(a); a.click(); a.remove(); P.toast('Exported ' + rows.length + ' rows (prototype data).');
+    };
+  }
+
+  function coverage() {
+    var host = document.getElementById('cov'); host.replaceChildren();
+    var shown = LANGS.slice(0, 13), letters = { approved: 'A', in_review: 'R', machine: 'M', in_translation: 'T', pending: '-' };
+    var rows = [['SOP-CS-014 UPI disputes', ['approved', 'approved', 'in_review', 'machine', 'in_translation', 'machine', 'machine', 'pending', 'pending', 'pending', 'pending', 'pending', 'in_review']], ['POSH-2026', ['approved', 'approved', 'machine', 'pending', 'pending', 'pending', 'pending', 'pending', 'pending', 'pending', 'pending', 'pending', 'pending']], ['ITS-107 security', ['approved', 'pending', 'pending', 'pending', 'pending', 'pending', 'pending', 'pending', 'pending', 'pending', 'pending', 'pending', 'pending']], ['AML-2026', ['approved', 'approved', 'in_review', 'pending', 'pending', 'pending', 'pending', 'pending', 'pending', 'pending', 'pending', 'pending', 'pending']]];
+    var table = el('table', { class: 'matrix', 'aria-label': 'Language coverage matrix' }, [el('thead', null, [el('tr', null, [el('th', { text: '' })].concat(shown.map(function (l) { return el('th', { scope: 'col', text: l.tag, title: l.name }); })))]), el('tbody', null, rows.map(function (r) { return el('tr', null, [el('th', { class: 'rowh', scope: 'row', text: r[0] })].concat(r[1].map(function (s, i) { return el('td', null, [el('div', { class: 'cell c-' + s, tabindex: 0, role: 'img', 'aria-label': r[0] + ', ' + shown[i].name + ': ' + P.STATE_LABEL[s], title: shown[i].name + ': ' + P.STATE_LABEL[s], text: letters[s] })]); }))); }))]);
+    host.appendChild(table);
+    var lg = document.getElementById('legend'); lg.replaceChildren();
+    Object.keys(letters).forEach(function (s) { lg.appendChild(el('span', null, [el('span', { class: 'cell c-' + s, text: letters[s], 'aria-hidden': 'true' }), P.STATE_LABEL[s] + (s === 'approved' ? ' (reaches learners)' : '')])); });
+  }
+
+  function queue() {
+    var f = k(), host = document.getElementById('queue'); host.replaceChildren();
+    var rows = [['hi', 38, 3, '6 h', 92], ['mr', 54, 1, '14 h', 61], ['kn', 41, 1, '12 h', 64], ['ta', 33, 2, '9 h', 78], ['ar', 24, 1, '18 h', 55], ['ur', 0, 0, '-', 0]];
+    host.appendChild(el('table', { class: 'table' }, [el('thead', null, [el('tr', null, ['Language', 'Waiting', 'Reviewers', 'Median wait', 'On time'].map(function (h, i) { return el('th', { class: i ? 'num' : '', text: h }); }))]), el('tbody', null, rows.map(function (r) { var l = LANGS.filter(function (x) { return x.tag === r[0]; })[0]; return el('tr', null, [el('td', { lang: r[0], text: l.name }), el('td', { class: 'num', text: String(Math.round(r[1] * f.t)) }), el('td', { class: 'num', text: String(r[2]) }), el('td', { class: 'num', text: r[3] }), el('td', { class: 'num' }, [r[4] ? el('div', { class: 'row', style: 'justify-content:flex-end;gap:8px' }, [el('div', { class: 'meter ' + (r[4] < 60 ? 'bad' : r[4] < 80 ? 'warn' : ''), style: 'width:56px', role: 'img', 'aria-label': r[4] + ' percent on time' }, [el('span', { style: 'width:' + r[4] + '%' })]), el('span', { text: r[4] + '%' })]) : el('span', { class: 'muted', text: 'no reviewer' })])]); }))]));
+    host.appendChild(el('p', { class: 'xs muted', style: 'margin-top:8px', text: 'Marathi, Kannada and Arabic are below 66% on time because each has one reviewer: capacity, not quality, decides how many languages a course gets.' }));
+  }
+
+  function spend() {
+    var f = k(), host = document.getElementById('spend'); host.replaceChildren();
+    var total = Math.round(3420 * f.t * f.p + 90);
+    host.appendChild(el('div', { class: 'stack', style: 'gap:6px' }, [el('div', { class: 'row spread' }, [el('span', { class: 'bold', text: 'INR ' + n(total) + ' of INR 10,000' }), el('span', { class: 'small muted', text: Math.round(total / 100) + '% of the monthly cap' })]), el('div', { class: 'meter ' + (total > 8000 ? 'bad' : total > 6000 ? 'warn' : ''), role: 'img', 'aria-label': total + ' of 10000 rupees' }, [el('span', { style: 'width:' + Math.min(100, total / 100) + '%' })])]));
+    host.appendChild(el('table', { class: 'table' }, [el('thead', null, [el('tr', null, [el('th', { text: 'Feature' }), el('th', { text: 'Where it ran' }), el('th', { class: 'num', text: 'INR' })])]), el('tbody', null, [['Generate course drafts', 'Claude via gateway', 0.12], ['Translate (12 languages)', 'Claude via gateway', 0.55], ['Quiz generation', 'Claude via gateway', 0.08], ['Voice: self-hosted batch', 'in-IN GPU (Mumbai)', 0.12], ['Voice: fallback SaaS', 'in-IN region', 0.13]].map(function (r) { return el('tr', null, [el('td', { text: r[0] }), el('td', null, [el('span', { class: 'badge-region chip ' + (r[1].indexOf('in-IN') >= 0 ? 'ok' : 'line') }, [P.icon(r[1].indexOf('in-IN') >= 0 ? 'shield' : 'globe'), r[1]])]), el('td', { class: 'num', text: n(total * r[2]) })]); }))]));
+    host.appendChild(el('p', { class: 'xs muted', text: 'Voice minutes this month: 412 (self-hosted 331, fallback 81). Prompts and responses are not stored; only counts and costs are.' }));
+  }
+
+  function all() { kpis(); weekly(); bylang(); paths(); coverage(); queue(); spend(); coursesTable(); }
+  [fTenant, fPeriod, fCourse].forEach(function (s) { s.onchange = function () { all(); P.toast('Figures updated for the new filters (synthetic data).'); }; });
+  all();
+}());
+</script>
+</body>
+</html>

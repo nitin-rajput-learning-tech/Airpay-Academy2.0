@@ -1,0 +1,8 @@
+1. Will Airpay (or Sentientia as a separate entity) be notified as a **Significant Data Fiduciary**, triggering Rule 12 localisation and the India-resident DPO/auditor duties?
+2. Which DPDP Rules are in force today versus at the 12-/18-month marks, and does s.44(2) (omission of IT Act s.43A) commence on 13 May 2027 — leaving the SPDI Rules applicable until then?
+3. Is an employee-training LMS/LLM pipeline a **material** IT outsourcing for Airpay under RBI MD 2(c)/3(a)(ii), and must Sentientia-as-vendor offer 16(13)/16(15) audit-access clauses to every BFSI customer by default?
+4. Is a scrubbed SOP sent to a US inference endpoint a "transfer of personal data" under s.16 at all, and does the RE need a Clause 21 cross-border assessment for it?
+5. Can Anthropic contractually provide an India or APAC `inference_geo`, zero data retention for the chosen model, and an audit substitute (SOC 2 report + sub-processor list) acceptable to an RBI-regulated buyer — or must Azure South India (regional) be the default for BFSI tenants?
+6. Does CERT-In's 180-day log rule reach logs held by foreign LLM/TMS vendors serving Indian users, and who files the 6-hour report when the incident is at the vendor?
+7. For the public and ZEEA (Tanzania) tenants: which consent notice, age-verification mechanism and (for Tanzania) local data-protection law apply, and can one consent flow serve all?
+8. Does LLM-generated *regulatory* training content create an RBI expectation of independent content validation before release to regulated staff, making the human sign-off a formal control in the RE's compliance framework?

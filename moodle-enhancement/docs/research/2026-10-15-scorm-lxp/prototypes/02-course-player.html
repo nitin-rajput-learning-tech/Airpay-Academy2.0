@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Course player - Sentientia prototype</title>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/proto.css">
+<style>
+  .player { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: var(--ap-space-6); align-items: start; }
+  .toc { position: sticky; top: calc(var(--ap-topbar-height) + var(--ap-space-4)); }
+  .toc ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--ap-space-1); }
+  .toc button { width: 100%; display: flex; align-items: center; gap: var(--ap-space-3); min-height: var(--ap-tap-target-cozy); padding: var(--ap-space-2) var(--ap-space-3); border: 1px solid transparent; border-radius: var(--ap-radius-sm); background: transparent; cursor: pointer; text-align: start; font-size: var(--ap-text-sm); }
+  .toc button:hover { background: var(--ap-color-bg-hover); }
+  .toc button[aria-current="true"] { background: var(--ap-color-bg-active); border-color: var(--ap-color-primary); font-weight: var(--ap-weight-semibold); }
+  .toc .kind { width: 24px; height: 24px; border-radius: var(--ap-radius-xs); background: var(--ap-color-bg-inset); display: inline-flex; align-items: center; justify-content: center; font-size: var(--ap-text-xs); font-weight: var(--ap-weight-bold); flex: 0 0 auto; }
+  .toc .t { flex: 1 1 auto; min-width: 0; }
+  .stage-head { display: flex; gap: var(--ap-space-3); align-items: center; flex-wrap: wrap; }
+  .slide h2 { font-size: var(--ap-text-3xl); font-weight: var(--ap-weight-extrabold); margin-block-end: var(--ap-space-4); }
+  .slide ul { margin: 0 0 var(--ap-space-5); padding-inline-start: var(--ap-space-6); display: flex; flex-direction: column; gap: var(--ap-space-3); font-size: var(--ap-text-lg); }
+  .audio { background: var(--ap-color-bg-surface-alt); border: 1px solid var(--ap-color-border); border-radius: var(--ap-radius-md); padding: var(--ap-space-4); display: flex; flex-direction: column; gap: var(--ap-space-3); }
+  .scrub { width: 100%; accent-color: var(--ap-color-primary); height: 24px; }
+  .karaoke { min-height: 5.5em; padding: var(--ap-space-4); border-radius: var(--ap-radius-sm); background: var(--ap-neutral-900); color: var(--ap-neutral-300); font-size: var(--ap-text-lg); line-height: 1.7; }
+  :root[data-theme="dark"] .karaoke { background: var(--ap-neutral-950); }
+  .karaoke .w.done { color: var(--ap-neutral-100); } .karaoke .w.now { background: var(--ap-color-primary); color: var(--ap-color-on-primary); border-radius: 4px; padding: 0 3px; }
+  .karaoke[hidden] { display: none; }
+  .choice { display: block; width: 100%; text-align: start; padding: var(--ap-space-4); border: 1px solid var(--ap-color-border-strong); border-radius: var(--ap-radius-sm); background: var(--ap-color-bg-surface); cursor: pointer; min-height: var(--ap-tap-target-min); }
+  .choice:hover:not(:disabled) { border-color: var(--ap-color-primary); background: var(--ap-color-bg-hover); }
+  .outcome { padding: var(--ap-space-4); border-radius: var(--ap-radius-sm); border-inline-start: 4px solid var(--c); background: var(--ap-color-bg-surface-alt); }
+  .outcome.acceptable { --c: var(--ap-color-outcome-acceptable); background: var(--ap-color-success-light); } .outcome.recoverable { --c: var(--ap-color-outcome-recoverable); background: var(--ap-color-warning-light); } .outcome.irrecoverable { --c: var(--ap-color-outcome-irrecoverable); background: var(--ap-color-danger-light); }
+  .q label { display: flex; gap: var(--ap-space-3); align-items: flex-start; padding: var(--ap-space-3); border-radius: var(--ap-radius-sm); cursor: pointer; min-height: var(--ap-tap-target-cozy); }
+  .q label.right { background: var(--ap-color-success-light); } .q label.wrong { background: var(--ap-color-danger-light); }
+  .token { word-break: break-all; }
+  @media (max-width: 1100px) { .player { grid-template-columns: minmax(0, 1fr); } .toc { position: static; } }
+  @media (max-width: 560px) { .slide h2 { font-size: var(--ap-text-2xl); } .slide ul { font-size: var(--ap-text-base); } }
+</style>
+</head>
+<body>
+<main>
+  <div class="page">
+    <div class="stage-head">
+      <div class="grow">
+        <p class="xs muted bold">SOP-CS-014 - 12 minutes - mandatory</p>
+        <h2 id="course-title"></h2>
+      </div>
+      <div class="field" style="min-width:220px">
+        <label for="lang">Course language</label>
+        <select class="select" id="lang"></select>
+      </div>
+      <span class="chip ok" id="track"></span>
+    </div>
+    <div class="player">
+      <nav class="card toc" aria-label="Course contents">
+        <details open id="toc-details">
+          <summary class="bold" style="cursor:pointer;min-height:var(--ap-tap-target-cozy);display:flex;align-items:center">Contents</summary>
+          <ol id="toc"></ol>
+        </details>
+        <hr class="divider" style="margin-block:var(--ap-space-4)">
+        <p class="label">Saved progress token</p>
+        <p class="mono token small" id="token"></p>
+        <p class="xs muted" id="token-note"></p>
+      </nav>
+      <section class="card" id="stage" aria-live="off" tabindex="-1"></section>
+    </div>
+  </div>
+</main>
+<script src="assets/proto.js"></script>
+<script>
+(function () {
+  var P = PROTO, el = P.el;
+  P.mount({
+    screen: 'course-player', title: 'Course player',
+    about: {
+      purpose: 'The learner-facing player for one narrated course: slides with synchronised captions, an embedded branching scenario and a mastery quiz, in the learner\'s language.',
+      interactions: ['Play the narration: words highlight as they are spoken (simulated, silent). Change speed, drag the scrubber, toggle captions, open the transcript.', 'Language: English, Hindi (human-written, from the pilot fixture) and Arabic (illustrative draft, unreviewed) show real text; other languages fall back to English with a visible note.', 'Switch the header toggle to RTL or pick Arabic: layout, progress and chevrons mirror; "UPI", "OTP" and rupee amounts stay isolated Latin runs.', 'Scenario: pick a response, read the consequence, continue; the score and path update.', 'Quiz: answer, check, see per-option feedback; the saved-progress token on the left updates after every step.'],
+      patterns: ['Narration with optional captions, never reading bullets verbatim (modality and redundancy principles).', 'Progress is saved on every step and survives a tab close (compact suspend token shown live).', 'Consequence reveals with a text label and icon, not colour alone.', 'One primary action per screen; Previous / Next stay in one place.'],
+      maps: ['The static player in pilot/lib/player (this prototype is its visual target in the real theme)', 'Course re-shell in theme/sentientia (course_default banner, breadcrumbs)'],
+      notBuilt: ['Real audio, real LMS tracking, certificate step, offline sync.']
+    }
+  });
+
+  var T = {
+    en: {
+      title: 'Handling a disputed UPI transaction', contents: 'Contents', next: 'Next', prev: 'Previous', check: 'Check answers', cont: 'Continue', again: 'Try again',
+      b1: 'Handling a disputed UPI transaction', b2: 'Step 1: verify without asking for secrets', b3: 'Step 2: classify the case', b4: 'Steps 3 and 4: expectations, notes, escalation', s: 'Practice: the angry caller', q: 'Mastery check', sum: 'Course summary',
+      p1: ['Verify, classify, set expectations, record, escalate'],
+      p2: ['Registered mobile number plus two security questions', 'Never ask for UPI PIN, OTP, card number or CVV', 'Collect UTR, date, amount, merchant name', 'Check status: Success, Pending or Failed'],
+      p3: ['Pending within 3 working days: wait, share the date', 'Failed, not reversed after window: raise dispute', 'Unauthorised: block UPI debits, then raise dispute', 'Merchant service dispute: route to grievance'],
+      p4: ['Reference number, TAT, how they will hear back', 'Promise only what the console shows', 'Note: classification, UTR, amount, words, actions', 'Escalate over 50,000 rupees, repeat debits, legal, media', 'Never close with an open commitment'],
+      n1: 'Welcome. In the next twelve minutes you will learn the five moves that resolve a disputed UPI transaction: verify the caller, classify the case, set the right expectation, record the note, and escalate when the rules say so.',
+      n2: 'Start by authenticating the caller with the registered mobile number and two security questions. You never need the UPI PIN, the OTP, the card number or the CVV. If the customer offers them, stop them politely and note that the information was offered but not captured. Then collect the UTR, the date, the amount and the merchant name exactly as the customer sees them.',
+      n3: 'Classification decides everything that follows. A pending payment inside three working days needs patience, not a dispute. A failed payment that has not reversed after the window becomes a Failed Transaction dispute. An unauthorised debit is a fraud report: block further UPI debits first, then raise the dispute.',
+      n4: 'Give the customer the reference number, the turnaround time and how they will be informed. Promise only what the console shows. Escalate to Tier-2 above fifty thousand rupees, for repeat unauthorised debits, or when a lawyer or the media is mentioned. Never close a case while a commitment is open.',
+      fallback: 'Shown in English: not translated yet.'
+    },
+    hi: {
+      title: 'विवादित UPI लेन-देन को संभालना', contents: 'विषय-सूची', next: 'आगे', prev: 'पिछला', check: 'उत्तर जाँचें', cont: 'आगे बढ़ें', again: 'फिर से कोशिश करें',
+      b1: 'विवादित UPI लेन-देन को संभालना', b2: 'चरण 1: बिना गोपनीय जानकारी माँगे वेरिफाई करें', b3: 'चरण 2: केस की श्रेणी तय करें', s: 'अभ्यास: नाराज़ कॉलर', q: 'दक्षता जाँच', sum: 'कोर्स का सार',
+      p1: ['वेरिफाई, श्रेणी, उम्मीद, नोट, एस्केलेट'],
+      p2: ['रजिस्टर्ड मोबाइल नंबर और दो सुरक्षा प्रश्न', 'UPI PIN, OTP, कार्ड नंबर या CVV कभी न माँगें', 'UTR, तारीख, राशि, मर्चेंट का नाम लें', 'स्टेटस देखें: Success, Pending या Failed'],
+      p3: ['3 कार्यदिवसों के भीतर Pending: प्रतीक्षा करें, तारीख बताएँ', 'Failed, विंडो के बाद भी रिवर्स नहीं: डिस्प्यूट उठाएँ', 'अनधिकृत: UPI डेबिट ब्लॉक करें, फिर डिस्प्यूट उठाएँ', 'मर्चेंट सर्विस विवाद: ग्रीवांस प्रक्रिया में भेजें'],
+      n1: 'स्वागत है। अगले बारह मिनट में आप विवादित UPI लेन-देन सुलझाने के पाँच कदम सीखेंगे: कॉलर को वेरिफाई करना, केस की श्रेणी तय करना, सही उम्मीद बताना, नोट लिखना, और नियम कहें तो एस्केलेट करना।',
+      n2: 'शुरुआत रजिस्टर्ड मोबाइल नंबर और दो सुरक्षा प्रश्नों से कॉलर को वेरिफाई करके करें। आपको UPI PIN, OTP, कार्ड नंबर या CVV की कभी ज़रूरत नहीं है। अगर ग्राहक खुद बताने लगे, तो उन्हें विनम्रता से रोकें और नोट करें कि जानकारी दी गई थी पर दर्ज नहीं की गई। फिर UTR, तारीख, राशि और मर्चेंट का नाम ठीक वैसे ही लें जैसे ग्राहक को दिखता है।',
+      fallback: 'अंग्रेज़ी में दिखाया गया: अभी अनुवाद नहीं हुआ।'
+    },
+    ar: {
+      title: 'التعامل مع معاملة UPI متنازع عليها', contents: 'المحتويات', next: 'التالي', prev: 'السابق', check: 'تحقق من الإجابات', cont: 'متابعة', again: 'حاول مرة أخرى',
+      b1: 'التعامل مع معاملة UPI متنازع عليها', b2: 'الخطوة 1: تحقق من هوية العميل دون طلب أي أسرار', s: 'تدريب: المتصل الغاضب', q: 'اختبار الإتقان', sum: 'ملخص الدورة',
+      p2: ['رقم الجوال المسجّل مع سؤالَي أمان', 'لا تطلب أبدًا UPI PIN أو OTP أو رقم البطاقة أو CVV', 'اجمع UTR والتاريخ والمبلغ واسم التاجر', 'تحقق من الحالة: Success أو Pending أو Failed'],
+      n2: 'ابدأ بالتحقق من هوية المتصل برقم الجوال المسجّل وسؤالَي أمان. أنت لا تحتاج أبدًا إلى UPI PIN أو OTP أو رقم البطاقة أو CVV. إذا عرضها العميل فأوقفه بلطف وسجّل أنها عُرضت ولم تُؤخذ. ثم اجمع UTR والتاريخ والمبلغ واسم التاجر كما يراها العميل.',
+      fallback: 'معروض بالإنجليزية: لم تتم الترجمة بعد. (مسودة توضيحية غير مراجعة)'
+    }
+  };
+  function t(key) { var l = T[lang] || {}; return l[key] !== undefined ? { v: l[key], fb: false } : { v: T.en[key], fb: lang !== 'en' }; }
+
+  var blocks = [{ id: 'b01', k: 'S', key: 'b1', p: 'p1', n: 'n1' }, { id: 'b02', k: 'S', key: 'b2', p: 'p2', n: 'n2' }, { id: 'b03', k: 'S', key: 'b3', p: 'p3', n: 'n3' }, { id: 'b04', k: 'S', key: 'b4', p: 'p4', n: 'n4' }, { id: 's01', k: 'D', key: 's' }, { id: 'q01', k: 'Q', key: 'q' }, { id: 'sum', k: '=', key: 'sum' }];
+  var lang = (new URLSearchParams(location.search)).get('plang') || ((P.guard(function () { return document.documentElement.lang; }) === 'ar') ? 'ar' : 'en');
+  var idx = 1, visited = [true, true, false, false, false, false, false], playing = false, pos = 0, speed = 1, captions = true, timer = null;
+  var scen = { path: [], node: 'n1', pending: null, score: 0 }, quiz = { done: false, ans: {} };
+
+  var SC = {
+    n1: { p: '"Twelve thousand four hundred rupees gone and the shop says they got nothing. Fix it now or I am going to the bank and the police." What do you say first?', e: [
+      { id: 'e1a', t: '"I understand, Rohan. A debit without delivery is stressful. I will check it right now. May I confirm your registered mobile number?"', to: 'n2', d: 10, o: 'acceptable', c: 'Acknowledgement first, then authentication through an allowed channel. The customer slows down.' },
+      { id: 'e1b', t: '"Please share the OTP you just received so I can verify the transaction quickly."', to: 'f', d: -10, o: 'irrecoverable', c: 'Asking for an OTP is a disciplinary offence under SOP-CS-014. The call is flagged for review.' },
+      { id: 'e1c', t: '"Sir, this is between you and the merchant. You should contact them."', to: 'n2', d: -3, o: 'recoverable', c: 'You have not verified anything yet and you blamed a party. The customer gets angrier, but you can recover.' }] },
+    n2: { p: 'Authentication passes. The console shows the UTR with status Pending, transaction date two days ago. What do you do?', e: [
+      { id: 'e2a', t: 'Raise a Failed Transaction dispute immediately so the customer feels action is being taken.', to: 'n3', d: -5, o: 'recoverable', c: 'Pending inside the three-working-day window must not be disputed yet. The disputes team will reject it.' },
+      { id: 'e2b', t: 'Explain that pending UPI payments settle or reverse within the regulatory window, give the expected date from the console and share the reference number.', to: 'n3', d: 10, o: 'acceptable', c: 'Correct classification and an expectation the console supports.' }] },
+    n3: { p: '"OK. But if this is not sorted by then I will go to the media. Also my wife says there was another 9,000 debit yesterday that we did not make." What now?', e: [
+      { id: 'e3a', t: 'Note the media remark and the second unauthorised debit; block further UPI debits; raise an Unauthorised Transaction dispute; escalate to Tier-2 now.', to: 't', d: 10, o: 'acceptable', c: 'Two escalation triggers at once. Blocking first protects the customer.' },
+      { id: 'e3b', t: 'Reassure the customer, finish the note and close the call; the second debit can be a new call tomorrow.', to: 'p', d: -5, o: 'recoverable', c: 'An unauthorised debit is a fraud report and must be acted on now.' }] },
+    f: { term: 'failure', p: 'The call is terminated for review. Asking a customer for an OTP or UPI PIN is never acceptable, whatever the pressure.' },
+    t: { term: 'success', p: 'Tier-2 takes the fraud case; the customer has a reference number, a date and a blocked UPI mandate. You followed every step of SOP-CS-014.' },
+    p: { term: 'partial', p: 'The first case is handled, but the second debit and the media remark were not actioned. Your supervisor will review the call.' }
+  };
+  var QZ = [
+    { id: 'q1', type: 'one', s: 'A customer offers to read out the OTP they just received so you can verify the transaction. What do you do?', o: [['Accept it; the customer volunteered it', 0, 'Capturing an OTP is never allowed, even when volunteered.'], ['Stop them politely and record that it was offered but not captured', 1, 'Correct: SOP-CS-014, step 1.'], ['Ask for the UPI PIN instead', 0, 'Never ask for the PIN either.']] },
+    { id: 'q3', type: 'many', s: 'Which of these require escalation to Tier-2? Select all that apply.', o: [['Amount above 50,000 rupees', 1, ''], ['More than one unauthorised debit', 1, ''], ['The customer asks for the reference number', 0, 'A reference number is routine.']] }
+  ];
+
+  var stage = document.getElementById('stage');
+  function langOptions() {
+    var sel = document.getElementById('lang'); sel.replaceChildren();
+    P.LANGS.forEach(function (l) {
+      var avail = T[l.tag] ? '' : ' (not available yet)';
+      sel.appendChild(el('option', { value: l.tag, text: l.name + (l.state === 'approved' || T[l.tag] ? '' : '') + avail, lang: l.tag, selected: l.tag === lang }));
+    });
+    sel.onchange = function () { lang = sel.value; if (!T[lang]) { P.toast('Not translated yet: shown in English.'); } var l = P.LANGS.filter(function (x) { return x.tag === lang; })[0]; P.applyDir(l.dir); stopPlay(); render(); };
+  }
+  document.addEventListener('proto:dir', function (e) { if (e.detail === 'rtl' && lang !== 'ar' && lang !== 'ur') { lang = 'ar'; langOptions(); } if (e.detail === 'ltr' && (lang === 'ar' || lang === 'ur')) { lang = 'en'; langOptions(); } stopPlay(); render(); });
+
+  function words() { var b = blocks[idx]; if (!b.n) { return []; } return t(b.n).v.split(/\s+/); }
+  function total() { return Math.max(1, words().length) / (130 / 60); }
+  function stopPlay() { playing = false; if (timer) { clearInterval(timer); timer = null; } }
+  function togglePlay() {
+    if (playing) { stopPlay(); render(true); return; }
+    playing = true;
+    if (pos >= total()) { pos = 0; }
+    timer = setInterval(function () { pos += 0.1 * speed; if (pos >= total()) { pos = total(); stopPlay(); } paintAudio(); }, 100);
+    paintAudio();
+  }
+  var audioEls = {};
+  function paintAudio() {
+    if (!audioEls.kar) { return; }
+    var ws = words(), n = ws.length, cur = Math.min(n - 1, Math.floor(pos / total() * n));
+    var k = audioEls.kar; if (k) {
+      Array.prototype.forEach.call(k.children, function (c, i) { c.className = 'w' + (pos > 0 && i < cur ? ' done' : '') + (pos > 0 && i === cur && pos < total() ? ' now' : ''); });
+    }
+    if (audioEls.scrub) { audioEls.scrub.value = Math.round(pos / total() * 1000); audioEls.scrub.setAttribute('aria-valuetext', fmt(pos) + ' of ' + fmt(total())); }
+    if (audioEls.time) { audioEls.time.textContent = fmt(pos) + ' / ' + fmt(total()); }
+    if (audioEls.btn) { audioEls.btn.setAttribute('aria-pressed', playing ? 'true' : 'false'); audioEls.btn.replaceChildren(P.icon(playing ? 'pause' : 'play'), playing ? 'Pause' : 'Play narration'); }
+  }
+  function fmt(s) { s = Math.round(s); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
+
+  function audioPanel() {
+    var ws = words();
+    var kar = el('p', { class: 'karaoke', hidden: !captions, 'aria-hidden': 'true' }, ws.map(function (w, i) { return el('span', { class: 'w', text: w + (i < ws.length - 1 ? ' ' : '') }); }));
+    var btn = el('button', { type: 'button', class: 'btn primary', 'aria-pressed': 'false', onclick: togglePlay }, [P.icon('play'), 'Play narration']);
+    var scrub = el('input', { type: 'range', class: 'scrub', min: 0, max: 1000, value: 0, 'aria-label': 'Narration position', oninput: function () { pos = scrub.value / 1000 * total(); paintAudio(); } });
+    var time = el('span', { class: 'mono' });
+    var spd = el('select', { id: 'spd-x', class: 'select', style: 'width:auto;min-height:32px', 'aria-label': 'Playback speed', onchange: function () { speed = parseFloat(spd.value); } }, [0.75, 1, 1.25, 1.5].map(function (v) { return el('option', { value: v, text: v + 'x', selected: v === speed }); }));
+    var cap = el('button', { type: 'button', class: 'btn sm', 'aria-pressed': captions ? 'true' : 'false', onclick: function () { captions = !captions; cap.setAttribute('aria-pressed', captions ? 'true' : 'false'); kar.hidden = !captions; } }, [P.icon('msg'), 'Captions']);
+    audioEls = { kar: kar, scrub: scrub, time: time, btn: btn };
+    var tr = el('details', null, [el('summary', { class: 'small bold', style: 'cursor:pointer', text: 'Transcript' }), el('p', { class: 'small', style: 'margin-top:8px', text: t(blocks[idx].n).v, lang: t(blocks[idx].n).fb ? 'en' : lang })]);
+    return el('div', { class: 'audio' }, [el('div', { class: 'row' }, [btn, time, el('span', { class: 'grow' }), el('label', { class: 'xs muted', for: 'spd-x' }, ['Speed']), spd, cap]), scrub, kar, tr, el('p', { class: 'xs muted', text: 'Mock audio is silent in this prototype; the highlight timing is simulated at 130 words per minute.' })]);
+  }
+
+  function renderSlide(b) {
+    var f = t(b.n).fb || t(b.p).fb;
+    stage.appendChild(el('div', { class: 'slide stack', style: 'gap:var(--ap-space-4)' }, [
+      el('p', { class: 'chip info', text: 'Slide ' + (idx + 1) + ' of 4', style: 'align-self:flex-start' }),
+      el('h2', { id: 'slide-h', tabindex: '-1', text: t(b.key).v, lang: t(b.key).fb ? 'en' : lang }),
+      el('ul', { lang: t(b.p).fb ? 'en' : lang }, t(b.p).v.map(function (x) { return el('li', { text: x }); })),
+      f ? el('div', { class: 'callout warn' }, [P.icon('info'), t('fallback').v]) : null,
+      audioPanel()
+    ]));
+  }
+
+  function renderScenario() {
+    var node = SC[scen.node], isEnd = !!node.term;
+    stage.appendChild(el('p', { class: 'chip info', text: 'Scenario - practice', style: 'align-self:flex-start;margin-bottom:8px' }));
+    stage.appendChild(el('h2', { id: 'slide-h', tabindex: '-1', text: t('s').v, lang: t('s').fb ? 'en' : lang }));
+    var area = el('div', { class: 'stack', style: 'margin-top:var(--ap-space-4)', 'aria-live': 'polite' });
+    stage.appendChild(area);
+    if (scen.pending) {
+      var e = scen.pending;
+      area.appendChild(el('div', { class: 'outcome ' + e.o }, [el('p', { class: 'bold row', style: 'gap:8px' }, [P.icon(e.o === 'acceptable' ? 'check' : 'alert'), { acceptable: 'Good choice', recoverable: 'You can recover', irrecoverable: 'Serious mistake' }[e.o]]), el('p', { text: e.c })]));
+      area.appendChild(el('div', null, [el('button', { type: 'button', class: 'btn primary', onclick: function () { scen.pending = null; render(); } }, [t('cont').v, P.icon('right', 'i-flip')])]));
+    } else if (isEnd) {
+      var cls = node.term === 'success' ? 'acceptable' : node.term === 'partial' ? 'recoverable' : 'irrecoverable';
+      area.appendChild(el('div', { class: 'outcome ' + cls }, [el('p', { class: 'bold', text: { success: 'Best outcome', partial: 'Partly handled', failure: 'Scenario failed' }[node.term] }), el('p', { text: node.p })]));
+      area.appendChild(el('p', { class: 'bold', text: 'Scenario score: ' + Math.max(0, scen.score) + ' of 30 (pass mark 20)' }));
+      area.appendChild(el('div', null, [el('button', { type: 'button', class: 'btn', onclick: function () { scen = { path: [], node: 'n1', pending: null, score: 0 }; render(); } }, [P.icon('refresh'), t('again').v])]));
+    } else {
+      area.appendChild(el('div', { class: 'row', style: 'gap:12px;align-items:flex-start;flex-wrap:nowrap' }, [el('span', { class: 'chip line', text: 'Rohan, angry caller' })]));
+      area.appendChild(el('p', { class: 'prompt', style: 'font-size:var(--ap-text-lg)', text: node.p }));
+      var list = el('div', { class: 'stack' });
+      node.e.forEach(function (ed) { list.appendChild(el('button', { type: 'button', class: 'choice', text: ed.t, onclick: function () { scen.path.push(ed.id); scen.score += ed.d; scen.node = ed.to; scen.pending = ed; render(); } })); });
+      area.appendChild(list);
+    }
+    if (scen.path.length) {
+      stage.appendChild(el('div', { class: 'row', style: 'margin-top:var(--ap-space-4)' }, [el('span', { class: 'small muted', text: 'Decisions made: ' + scen.path.length }), el('span', { class: 'small muted', text: 'Score so far: ' + scen.score })]));
+    }
+  }
+
+  function renderQuiz() {
+    stage.appendChild(el('p', { class: 'chip info', text: 'Quiz - mastery check, pass mark 70%', style: 'align-self:flex-start;margin-bottom:8px' }));
+    stage.appendChild(el('h2', { id: 'slide-h', tabindex: '-1', text: t('q').v, lang: t('q').fb ? 'en' : lang }));
+    var form = el('div', { class: 'stack', style: 'margin-top:var(--ap-space-4)' });
+    QZ.forEach(function (q) {
+      var set = quiz.ans[q.id] || [];
+      var fs = el('fieldset', { class: 'q', style: 'border:1px solid var(--ap-color-border);border-radius:var(--ap-radius-sm);padding:var(--ap-space-4)' }, [el('legend', { class: 'bold', style: 'padding:0 8px', text: q.s })]);
+      q.o.forEach(function (o, i) {
+        var input = el('input', { type: q.type === 'one' ? 'radio' : 'checkbox', name: q.id, value: i, checked: set.indexOf(i) >= 0, disabled: quiz.done, onchange: function () { var cur = quiz.ans[q.id] || []; if (q.type === 'one') { cur = [i]; } else if (input.checked) { cur.push(i); } else { cur = cur.filter(function (x) { return x !== i; }); } quiz.ans[q.id] = cur; paintToken(); } });
+        var cls = '';
+        if (quiz.done) { cls = o[1] ? 'right' : (set.indexOf(i) >= 0 ? 'wrong' : ''); }
+        fs.appendChild(el('label', { class: cls }, [input, el('span', null, [o[0], quiz.done && o[2] && (set.indexOf(i) >= 0 || o[1]) ? el('span', { class: 'xs muted', style: 'display:block', text: o[2] }) : null])]));
+      });
+      form.appendChild(fs);
+    });
+    stage.appendChild(form);
+    var res = el('div', { 'aria-live': 'polite', style: 'margin-top:var(--ap-space-4)' });
+    stage.appendChild(res);
+    if (quiz.done) {
+      var correct = 0; QZ.forEach(function (q) { var set = quiz.ans[q.id] || []; var want = q.o.map(function (o, i) { return o[1] ? i : -1; }).filter(function (x) { return x >= 0; }); if (set.length === want.length && want.every(function (w) { return set.indexOf(w) >= 0; })) { correct++; } });
+      var pct = Math.round(correct / QZ.length * 100);
+      res.appendChild(el('div', { class: 'callout ' + (pct >= 70 ? 'ok' : 'bad'), role: 'status' }, [P.icon(pct >= 70 ? 'check' : 'alert'), 'You scored ' + pct + ' percent. ' + (pct >= 70 ? 'Passed.' : 'Not passed yet: pass mark is 70%.')]));
+      res.appendChild(el('div', { style: 'margin-top:12px' }, [el('button', { type: 'button', class: 'btn', onclick: function () { quiz = { done: false, ans: {} }; render(); } }, [P.icon('refresh'), t('again').v])]));
+    } else {
+      res.appendChild(el('button', { type: 'button', class: 'btn primary', onclick: function () { quiz.done = true; render(); } }, [t('check').v]));
+    }
+  }
+
+  function renderSummary() {
+    stage.appendChild(el('h2', { id: 'slide-h', tabindex: '-1', text: t('sum').v }));
+    var done = blocks.slice(0, 6).filter(function (b, i) { return visited[i]; }).length;
+    stage.appendChild(el('div', { class: 'grid cols-3', style: 'margin-top:var(--ap-space-4)' }, [
+      el('div', { class: 'kpi' }, [el('span', { class: 'v', text: done + '/6' }), el('span', { class: 'l', text: 'Steps visited' })]),
+      el('div', { class: 'kpi' }, [el('span', { class: 'v', text: Math.max(0, scen.score) + '/30' }), el('span', { class: 'l', text: 'Scenario' })]),
+      el('div', { class: 'kpi' }, [el('span', { class: 'v', text: quiz.done ? 'Done' : 'Open' }), el('span', { class: 'l', text: 'Quiz' })])
+    ]));
+    stage.appendChild(el('p', { class: 'muted', style: 'margin-top:var(--ap-space-4)', text: 'On finishing, the player writes the final status, score and a resume point to the LMS (exit = suspend), so closing the tab never loses progress.' }));
+  }
+
+  function paintToken() {
+    var bits = 0; visited.forEach(function (v, i) { if (v) { bits |= 1 << i; } });
+    var bm = btoa(String.fromCharCode(bits)).replace(/=+$/, '');
+    var q = Object.keys(quiz.ans).map(function (k) { return k + ':' + quiz.ans[k].join('+'); }).join(',');
+    var tok = 'v1|' + lang + '|' + idx + '|' + bm + '|s01:' + scen.path.join(',') + '|q01' + (quiz.done ? '!' : '') + '=' + q;
+    document.getElementById('token').textContent = tok;
+    document.getElementById('token-note').textContent = tok.length + ' characters. SCORM 1.2 allows 4,096; the player compresses above 3,500.';
+    document.getElementById('track').replaceChildren(P.icon('check'), 'Progress is being saved (SCORM 1.2)');
+  }
+
+  function renderToc() {
+    var ol = document.getElementById('toc'); ol.replaceChildren();
+    blocks.forEach(function (b, i) {
+      var st = i === 6 ? '' : (visited[i] ? (i < idx || i !== idx ? 'Done' : '') : '');
+      ol.appendChild(el('li', null, [el('button', { type: 'button', 'aria-current': i === idx ? 'true' : null, onclick: function () { go(i); } }, [el('span', { class: 'kind', 'aria-hidden': 'true', text: b.k }), el('span', { class: 't', text: t(b.key).v, lang: t(b.key).fb ? 'en' : lang }), el('span', { class: 'xs muted', text: i === 6 ? '' : (visited[i] && i !== idx ? 'Done' : '') })])]));
+    });
+  }
+
+  function nav() {
+    var row = el('div', { class: 'row spread', style: 'margin-top:var(--ap-space-6)' }, [
+      el('button', { type: 'button', class: 'btn', disabled: idx === 0, onclick: function () { go(idx - 1); } }, [P.icon('left', 'i-flip'), t('prev').v]),
+      el('span', { class: 'small muted', text: 'Step ' + (idx + 1) + ' of ' + blocks.length }),
+      el('button', { type: 'button', class: 'btn primary', disabled: idx === blocks.length - 1, onclick: function () { go(idx + 1); } }, [t('next').v, P.icon('right', 'i-flip')])
+    ]);
+    stage.appendChild(row);
+  }
+
+  function go(i) { stopPlay(); pos = 0; idx = Math.max(0, Math.min(blocks.length - 1, i)); visited[idx] = true; render(true); }
+
+  function render(keepFocus) {
+    var l = P.LANGS.filter(function (x) { return x.tag === lang; })[0];
+    document.documentElement.setAttribute('lang', lang);
+    document.getElementById('course-title').textContent = t('title').v;
+    document.getElementById('course-title').setAttribute('lang', t('title').fb ? 'en' : lang);
+    stage.replaceChildren(); audioEls = {};
+    var b = blocks[idx];
+    visited[idx] = true;
+    if (b.k === 'S') { renderSlide(b); } else if (b.k === 'D') { renderScenario(); } else if (b.k === 'Q') { renderQuiz(); } else { renderSummary(); }
+    nav(); renderToc(); paintToken(); paintAudio();
+    var det = document.getElementById('toc-details'); if (!render.once) { render.once = true; det.open = window.matchMedia('(min-width: 1101px)').matches; }
+    if (keepFocus === true) { var h = document.getElementById('slide-h'); if (h) { h.focus({ preventScroll: true }); } }
+  }
+
+  langOptions();
+  if (lang === 'ar' || lang === 'ur') { P.applyDir('rtl'); }
+  render();
+}());
+</script>
+</body>
+</html>

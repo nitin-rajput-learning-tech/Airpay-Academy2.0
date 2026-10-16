@@ -1,0 +1,390 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   SENTIENTIA LMS — PROTOTYPE DESIGN TOKENS
+   Derived (read-only) from theme/sentientia/scss/moodle/_tokens.scss and
+   _tokens-dark.scss on 2026-10-15. Token NAMES are kept verbatim so every
+   prototype component can be lifted into the real theme unchanged.
+
+   Rules for the prototypes:
+     * every colour in proto.css / screen CSS references a token — no hex;
+     * dark mode = [data-theme="dark"] OR prefers-color-scheme: dark when
+       no explicit theme is set (data-theme absent);
+     * motion uses --ap-transition-* / --ap-duration-* which collapse to
+       0ms under prefers-reduced-motion: reduce.
+
+   Tokens PROPOSED by these prototypes (not in the theme file today; verified by
+   grep on 2026-10-15): --ap-chart-seq-0..5, --ap-chart-grid, --ap-chart-axis,
+   --ap-color-state-* (the seven review states), --ap-color-outcome-*,
+   --ap-font-family-devanagari / -arabic / -urdu and --ap-leading-devanagari /
+   -nastaliq. Everything else keeps the theme's name and value.
+
+   Deviations from the theme file (both requested by the prototype brief):
+     * --ap-content-max-width is 1440px here (theme: 1400px);
+     * --ap-focus-ring-width is 2px here (theme: 3px).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+    /* ── Colour primitives (brand palette) ─────────────────────────── */
+    --ap-blue-50:  #e8f4fd;
+    --ap-blue-100: #c5e3f7;
+    --ap-blue-200: #8ec8ef;
+    --ap-blue-300: #4da8e4;
+    --ap-blue-400: #1a8cd8;
+    --ap-blue-500: #0077bf;
+    --ap-blue-600: #0066A7;  /* Primary — Airpay brand */
+    --ap-blue-700: #005590;
+    --ap-blue-800: #004570;
+    --ap-blue-900: #003050;
+
+    /* Revised Brand Book 2026-06 secondaries. No teal anywhere. */
+    --ap-blue-bright: #1985DD;  /* secondary "blue for decks" — accent / active */
+    --ap-blue-sky:    #9cdbf4;  /* sky tint — light fills */
+    --ap-blue-deep:   #0d5da1;  /* deep blue — gradient end / hover / pressed */
+    --ap-orange-500:  #ed692b;  /* brand warm accent — SPARING (CTA/badge) */
+    --ap-orange-light:#fdeee6;
+    --ap-orange-dark: #c9551d;
+    --ap-purple-500:  #6d58a5;  /* brand tertiary — sparing */
+    --ap-purple-light:#ece8f5;
+
+    --ap-neutral-0:   #ffffff;
+    --ap-neutral-25:  #fafbfc;
+    --ap-neutral-50:  #f2f4fb;
+    --ap-neutral-100: #e8ebf0;
+    --ap-neutral-200: #d1d5de;
+    --ap-neutral-300: #b0b7c3;
+    --ap-neutral-400: #8896a6;
+    --ap-neutral-500: #607286;
+    --ap-neutral-600: #475569;
+    --ap-neutral-700: #334155;
+    --ap-neutral-800: #1e293b;
+    --ap-neutral-900: #0f172a;
+    --ap-neutral-950: #0f1117;
+
+    /* ── Semantic colour tokens (tenant branding overrides ONLY these) ─ */
+    --ap-color-primary:        var(--ap-blue-600);
+    --ap-color-primary-hover:  var(--ap-blue-700);
+    --ap-color-primary-light:  var(--ap-blue-50);
+    --ap-color-primary-dark:   var(--ap-blue-800);
+    /* Text-on-surface rendering of the primary (bumped in dark mode). */
+    --ap-color-primary-text:   var(--ap-blue-600);
+    --ap-color-on-primary:     var(--ap-neutral-0);
+
+    --ap-color-accent:         var(--ap-blue-bright);
+    --ap-color-accent-hover:   var(--ap-blue-deep);
+    --ap-color-accent-light:   var(--ap-blue-50);
+
+    --ap-color-highlight:        var(--ap-orange-500);
+    --ap-color-highlight-hover:  var(--ap-orange-dark);
+    --ap-color-highlight-light:  var(--ap-orange-light);
+    --ap-color-tertiary:         var(--ap-purple-500);
+    --ap-color-tertiary-light:   var(--ap-purple-light);
+
+    --ap-gradient-brand:         linear-gradient(135deg, var(--ap-blue-600) 0%, var(--ap-blue-deep) 100%);
+    --ap-gradient-brand-bright:  linear-gradient(135deg, var(--ap-blue-bright) 0%, var(--ap-blue-600) 100%);
+    --ap-gradient-hero:          linear-gradient(160deg, var(--ap-blue-900), var(--ap-blue-600), var(--ap-blue-deep));
+    --ap-gradient-cta:           linear-gradient(135deg, var(--ap-color-primary), var(--ap-color-accent));
+    --ap-gradient-sidebar:       linear-gradient(180deg, var(--ap-neutral-900), var(--ap-neutral-800));
+
+    --ap-color-bg-body:        var(--ap-neutral-50);
+    --ap-color-bg-surface:     var(--ap-neutral-0);
+    --ap-color-bg-surface-alt: var(--ap-neutral-25);
+    --ap-color-bg-elevated:    var(--ap-neutral-0);
+    --ap-color-bg-hover:       var(--ap-neutral-50);
+    --ap-color-bg-active:      var(--ap-blue-50);
+    --ap-color-bg-inset:       var(--ap-neutral-100);
+    --ap-color-backdrop:       rgba(15, 23, 42, 0.45);
+
+    --ap-color-text-primary:   var(--ap-neutral-900);
+    --ap-color-text-secondary: var(--ap-neutral-600);  /* A11Y-7: 6.4:1 on white */
+    --ap-color-text-muted:     var(--ap-neutral-500);
+    --ap-color-text-inverse:   var(--ap-neutral-0);
+
+    --ap-color-border:         var(--ap-neutral-100);
+    --ap-color-border-strong:  var(--ap-neutral-200);
+    --ap-color-divider:        var(--ap-neutral-100);
+
+    /* Status colours (A11Y-7 contrast-bumped values) */
+    --ap-color-success:        #15803d;
+    --ap-color-success-light:  #dcfce7;
+    --ap-color-warning:        #b45309;
+    --ap-color-warning-light:  #fef3c7;
+    --ap-color-danger:         #dc2626;
+    --ap-color-danger-light:   #fee2e2;
+    --ap-color-info:           var(--ap-color-primary);
+    --ap-color-info-light:     var(--ap-color-primary-light);
+
+    /* Chart series (F-066): primary, accent, purple, warning, danger */
+    --ap-color-chart-series-1: var(--ap-color-primary);
+    --ap-color-chart-series-2: var(--ap-color-accent);
+    --ap-color-chart-series-3: var(--ap-purple-500);
+    --ap-color-chart-series-4: var(--ap-color-warning);
+    --ap-color-chart-series-5: var(--ap-color-danger);
+
+    /* Colour-blind-safe SEQUENTIAL ramp (single hue, luminance steps).
+       Used by heatmaps and coverage matrices — never relies on hue alone. */
+    --ap-chart-seq-0: var(--ap-neutral-100);
+    --ap-chart-seq-1: var(--ap-blue-100);
+    --ap-chart-seq-2: var(--ap-blue-200);
+    --ap-chart-seq-3: var(--ap-blue-400);
+    --ap-chart-seq-4: var(--ap-blue-600);
+    --ap-chart-seq-5: var(--ap-blue-900);
+    --ap-chart-grid:  var(--ap-neutral-200);
+    --ap-chart-axis:  var(--ap-neutral-500);
+
+    /* Scenario outcome tags — always rendered with a text label + icon. */
+    --ap-color-outcome-acceptable:   var(--ap-color-success);
+    --ap-color-outcome-recoverable:  var(--ap-color-warning);
+    --ap-color-outcome-irrecoverable:var(--ap-color-danger);
+    --ap-color-outcome-neutral:      var(--ap-neutral-500);
+
+    /* Localisation review states (schema $defs.review_state) */
+    --ap-color-state-pending:        var(--ap-neutral-300);
+    --ap-color-state-machine:        var(--ap-purple-500);
+    --ap-color-state-in-translation: var(--ap-blue-300);
+    --ap-color-state-translated:     var(--ap-blue-600);
+    --ap-color-state-in-review:      var(--ap-color-warning);
+    --ap-color-state-reassigned:     var(--ap-orange-500);
+    --ap-color-state-approved:       var(--ap-color-success);
+
+    /* ── Elevation ─────────────────────────────────────────────────── */
+    --ap-shadow-xs:    0 1px 2px rgba(0, 0, 0, 0.04);
+    --ap-shadow-sm:    0 4px 12px rgba(0, 51, 102, 0.06);
+    --ap-shadow-md:    0 8px 24px rgba(0, 51, 102, 0.08);
+    --ap-shadow-lg:    0 16px 48px rgba(0, 51, 102, 0.12);
+    --ap-shadow-hover: 0 20px 40px rgba(0, 51, 102, 0.10);
+    --ap-shadow-focus: 0 0 0 3px rgba(0, 102, 167, 0.25);
+
+    /* ── Spacing (8px grid; -1/-3/-5 are half-steps) ──────────────── */
+    --ap-space-0:  0;
+    --ap-space-1:  4px;
+    --ap-space-2:  8px;
+    --ap-space-3:  12px;
+    --ap-space-4:  16px;
+    --ap-space-5:  20px;
+    --ap-space-6:  24px;
+    --ap-space-8:  32px;
+    --ap-space-10: 40px;
+    --ap-space-12: 48px;
+    --ap-space-16: 64px;
+    --ap-space-20: 80px;
+
+    /* ── Border radius ─────────────────────────────────────────────── */
+    --ap-radius-xs:   4px;
+    --ap-radius-sm:   8px;
+    --ap-radius-md:   12px;
+    --ap-radius-lg:   16px;
+    --ap-radius-xl:   20px;
+    --ap-radius-pill:  999px;
+    --ap-radius-full:  50%;
+
+    /* ── Typography ────────────────────────────────────────────────── */
+    --ap-font-family:      'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --ap-font-family-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Mono', 'Courier New', monospace;
+    /* Script-specific stacks: fall back to installed system fonts (no web fetch). */
+    --ap-font-family-devanagari: 'Noto Sans Devanagari', 'Nirmala UI', 'Mangal', 'Montserrat', sans-serif;
+    --ap-font-family-arabic:     'Noto Naskh Arabic', 'Segoe UI', 'Tahoma', 'Arial', sans-serif;
+    --ap-font-family-urdu:       'Noto Nastaliq Urdu', 'Urdu Typesetting', 'Jameel Noori Nastaleeq', 'Noto Naskh Arabic', 'Segoe UI', sans-serif;
+
+    --ap-text-xs:   0.75rem;
+    --ap-text-sm:   0.875rem;
+    --ap-text-base: 1rem;
+    --ap-text-lg:   1.125rem;
+    --ap-text-xl:   1.25rem;
+    --ap-text-2xl:  1.5rem;
+    --ap-text-3xl:  1.875rem;
+    --ap-text-4xl:  2.25rem;
+
+    --ap-weight-normal:   400;
+    --ap-weight-medium:   500;
+    --ap-weight-semibold: 600;
+    --ap-weight-bold:     700;
+    --ap-weight-extrabold: 800;
+
+    --ap-leading-tight:   1.25;
+    --ap-leading-normal:  1.5;
+    --ap-leading-relaxed: 1.75;
+    --ap-leading-devanagari: 1.6;   /* Devanagari needs taller lines (matras) */
+    --ap-leading-nastaliq:   2.0;   /* Nastaliq hangs below the baseline */
+
+    /* ── Layout ────────────────────────────────────────────────────── */
+    --ap-sidebar-width:           260px;
+    --ap-sidebar-collapsed-width: 72px;
+    --ap-topbar-height:           64px;
+    --ap-content-max-width:       1440px;  /* brief: 1440 (theme: 1400) */
+    --ap-mobile-bottom-bar:       64px;
+
+    /* ── Motion — durations (UI-UX-MANIFESTO §5.1) ─────────────────── */
+    --ap-duration-instant:    0ms;
+    --ap-duration-quick:    150ms;
+    --ap-duration-default:  250ms;
+    --ap-duration-slow:     400ms;
+    --ap-duration-deliberate: 700ms;
+
+    /* ── Motion — easing (§5.2) ────────────────────────────────────── */
+    --ap-ease-out:     cubic-bezier(0.16, 1, 0.3, 1);
+    --ap-ease-in:      cubic-bezier(0.7, 0, 0.84, 0);
+    --ap-ease-in-out:  cubic-bezier(0.5, 0, 0.5, 1);
+    --ap-ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    --ap-transition-quick:    var(--ap-duration-quick) var(--ap-ease-out);
+    --ap-transition-default:  var(--ap-duration-default) var(--ap-ease-out);
+    --ap-transition-slow:     var(--ap-duration-slow) var(--ap-ease-in-out);
+    --ap-transition-emphatic: var(--ap-duration-default) var(--ap-ease-spring);
+    /* Legacy aliases — kept for portability, do not add usages. */
+    --ap-transition-fast:     var(--ap-transition-quick);
+    --ap-transition-normal:   var(--ap-transition-default);
+
+    /* ── Touch & focus (WCAG 2.2 AA) ───────────────────────────────── */
+    --ap-tap-target-min:   44px;
+    --ap-tap-target-cozy:  40px;
+    --ap-tap-target-dense: 24px;   /* WCAG 2.5.8 minimum for pointer */
+
+    --ap-focus-ring-width:  2px;   /* brief: 2px (theme: 3px) */
+    --ap-focus-ring-offset: 2px;
+    --ap-focus-ring-color:  var(--ap-color-primary);
+
+    /* ── Component sizing ──────────────────────────────────────────── */
+    --ap-control-height-sm: 32px;
+    --ap-control-height-md: 40px;
+    --ap-control-height-lg: 48px;
+    --ap-control-height-xl: 56px;
+
+    /* ── Z-index scale ─────────────────────────────────────────────── */
+    --ap-z-dropdown:    1000;
+    --ap-z-sticky:      1020;
+    --ap-z-fixed:       1030;
+    --ap-z-offcanvas:   1045;
+    --ap-z-modal:       1055;
+    --ap-z-toast:       1090;
+}
+
+/* ── Dark mode: explicit opt-in via data-theme="dark" ─────────────────
+   Only semantic tokens are overridden — never selectors (theme rule). */
+:root[data-theme="dark"] {
+    --ap-color-bg-body:        var(--ap-neutral-950);
+    --ap-color-bg-surface:     var(--ap-neutral-800);
+    --ap-color-bg-surface-alt: #232733;
+    --ap-color-bg-elevated:    var(--ap-neutral-700);
+    --ap-color-bg-hover:       var(--ap-neutral-700);
+    --ap-color-bg-active:      #172554;
+    --ap-color-bg-inset:       var(--ap-neutral-900);
+    --ap-color-backdrop:       rgba(0, 0, 0, 0.6);
+
+    --ap-color-text-primary:   #e8eaed;
+    --ap-color-text-secondary: #9ca3b4;
+    --ap-color-text-muted:     #9ca3af;   /* UAT-L5: 5.1:1 on #1a1d27 */
+
+    --ap-color-border:         #2d3140;
+    --ap-color-border-strong:  #3d4250;
+    --ap-color-divider:        #2d3140;
+
+    --ap-color-primary-light:  #172554;
+    --ap-color-primary-text:   var(--ap-blue-300);   /* 6:1 on neutral-800 */
+    --ap-color-accent-light:   #0d3a5c;
+    --ap-color-highlight-light:#3b1d0e;
+    --ap-color-tertiary-light: #2a2340;
+
+    --ap-color-success-light:  #052e16;
+    --ap-color-warning-light:  #451a03;
+    --ap-color-danger-light:   #450a0a;
+    --ap-color-info-light:     #172554;
+    --ap-color-success:        #4ade80;   /* UAT-L5: >= 4.5:1 on dark */
+    --ap-color-warning:        #ed692b;
+    --ap-color-danger:         #f87171;
+
+    --ap-chart-seq-0: var(--ap-neutral-700);
+    --ap-chart-seq-1: var(--ap-blue-900);
+    --ap-chart-seq-2: var(--ap-blue-700);
+    --ap-chart-seq-3: var(--ap-blue-500);
+    --ap-chart-seq-4: var(--ap-blue-300);
+    --ap-chart-seq-5: var(--ap-blue-100);
+    --ap-chart-grid:  var(--ap-neutral-700);
+    --ap-chart-axis:  #9ca3af;
+    --ap-color-state-pending: var(--ap-neutral-500);
+
+    --ap-shadow-xs:    0 1px 2px rgba(0, 0, 0, 0.2);
+    --ap-shadow-sm:    0 4px 12px rgba(0, 0, 0, 0.3);
+    --ap-shadow-md:    0 8px 24px rgba(0, 0, 0, 0.35);
+    --ap-shadow-lg:    0 16px 48px rgba(0, 0, 0, 0.4);
+    --ap-shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.35);
+    --ap-shadow-focus: 0 0 0 3px rgba(77, 168, 228, 0.35);
+    --ap-focus-ring-color: var(--ap-blue-300);
+
+    --ap-gradient-sidebar: linear-gradient(180deg, #0a0c12, #111827);
+    color-scheme: dark;
+}
+
+/* ── Dark mode: OS preference when no explicit theme is chosen ─────── */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]):not([data-theme="dark"]) {
+        --ap-color-bg-body:        var(--ap-neutral-950);
+        --ap-color-bg-surface:     var(--ap-neutral-800);
+        --ap-color-bg-surface-alt: #232733;
+        --ap-color-bg-elevated:    var(--ap-neutral-700);
+        --ap-color-bg-hover:       var(--ap-neutral-700);
+        --ap-color-bg-active:      #172554;
+        --ap-color-bg-inset:       var(--ap-neutral-900);
+        --ap-color-backdrop:       rgba(0, 0, 0, 0.6);
+
+        --ap-color-text-primary:   #e8eaed;
+        --ap-color-text-secondary: #9ca3b4;
+        --ap-color-text-muted:     #9ca3af;
+
+        --ap-color-border:         #2d3140;
+        --ap-color-border-strong:  #3d4250;
+        --ap-color-divider:        #2d3140;
+
+        --ap-color-primary-light:  #172554;
+        --ap-color-primary-text:   var(--ap-blue-300);
+        --ap-color-accent-light:   #0d3a5c;
+        --ap-color-highlight-light:#3b1d0e;
+        --ap-color-tertiary-light: #2a2340;
+
+        --ap-color-success-light:  #052e16;
+        --ap-color-warning-light:  #451a03;
+        --ap-color-danger-light:   #450a0a;
+        --ap-color-info-light:     #172554;
+        --ap-color-success:        #4ade80;
+        --ap-color-warning:        #ed692b;
+        --ap-color-danger:         #f87171;
+
+        --ap-chart-seq-0: var(--ap-neutral-700);
+        --ap-chart-seq-1: var(--ap-blue-900);
+        --ap-chart-seq-2: var(--ap-blue-700);
+        --ap-chart-seq-3: var(--ap-blue-500);
+        --ap-chart-seq-4: var(--ap-blue-300);
+        --ap-chart-seq-5: var(--ap-blue-100);
+        --ap-chart-grid:  var(--ap-neutral-700);
+        --ap-chart-axis:  #9ca3af;
+        --ap-color-state-pending: var(--ap-neutral-500);
+
+        --ap-shadow-xs:    0 1px 2px rgba(0, 0, 0, 0.2);
+        --ap-shadow-sm:    0 4px 12px rgba(0, 0, 0, 0.3);
+        --ap-shadow-md:    0 8px 24px rgba(0, 0, 0, 0.35);
+        --ap-shadow-lg:    0 16px 48px rgba(0, 0, 0, 0.4);
+        --ap-shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.35);
+        --ap-shadow-focus: 0 0 0 3px rgba(77, 168, 228, 0.35);
+        --ap-focus-ring-color: var(--ap-blue-300);
+
+        --ap-gradient-sidebar: linear-gradient(180deg, #0a0c12, #111827);
+        color-scheme: dark;
+    }
+}
+
+/* ── Reduced motion (UI-UX-MANIFESTO §5.4) ─────────────────────────────
+   Collapse every duration to 0ms; components using the tokens need no
+   per-component opt-in. */
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --ap-duration-quick:      0ms;
+        --ap-duration-default:    0ms;
+        --ap-duration-slow:       0ms;
+        --ap-duration-deliberate: 0ms;
+    }
+}
+
+/* ── Universal focus-visible (WCAG 2.4.11) ─────────────────────────── */
+:focus-visible {
+    outline: var(--ap-focus-ring-width) solid var(--ap-focus-ring-color);
+    outline-offset: var(--ap-focus-ring-offset);
+    border-radius: var(--ap-radius-xs);
+}

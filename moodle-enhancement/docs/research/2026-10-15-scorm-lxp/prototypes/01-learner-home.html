@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Learner home - Sentientia prototype</title>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/proto.css">
+<style>
+  .hero { background: var(--ap-gradient-hero); color: var(--ap-color-text-inverse); border-radius: var(--ap-radius-lg); padding: var(--ap-space-6); display: flex; gap: var(--ap-space-6); align-items: center; flex-wrap: wrap; }
+  .hero h2 { font-size: var(--ap-text-2xl); font-weight: var(--ap-weight-extrabold); }
+  .hero .select { color: var(--ap-color-text-primary); }
+  .hero .btn.primary { background: var(--ap-color-bg-surface); color: var(--ap-color-primary-text); border-color: transparent; }
+  .layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--ap-space-6); align-items: start; }
+  .course { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: var(--ap-space-4); align-items: start; padding: var(--ap-space-4); border: 1px solid var(--ap-color-border); border-radius: var(--ap-radius-md); background: var(--ap-color-bg-surface); }
+  .course.overdue { border-color: var(--ap-color-danger); }
+  .course .ico { width: 48px; height: 48px; border-radius: var(--ap-radius-sm); background: var(--ap-color-primary-light); color: var(--ap-color-primary-text); display: flex; align-items: center; justify-content: center; }
+  .course.overdue .ico { background: var(--ap-color-danger-light); color: var(--ap-color-danger); }
+  .opt-card { display: flex; flex-direction: column; gap: var(--ap-space-3); }
+  .quiz-opt { display: block; width: 100%; text-align: start; min-height: var(--ap-tap-target-cozy); padding: var(--ap-space-3) var(--ap-space-4); border: 1px solid var(--ap-color-border-strong); border-radius: var(--ap-radius-sm); background: var(--ap-color-bg-surface); cursor: pointer; }
+  .quiz-opt:hover:not(:disabled) { background: var(--ap-color-bg-hover); }
+  .quiz-opt.right { background: var(--ap-color-success-light); border-color: var(--ap-color-success); }
+  .quiz-opt.wrong { background: var(--ap-color-danger-light); border-color: var(--ap-color-danger); }
+  .skill { display: grid; grid-template-columns: minmax(0, 1fr) 90px; gap: var(--ap-space-3); align-items: center; }
+  .pips { display: flex; gap: 4px; } .pips i { flex: 1; height: 8px; border-radius: var(--ap-radius-pill); background: var(--ap-color-bg-inset); } .pips i.on { background: var(--ap-color-primary); } .pips i.target { outline: 2px dashed var(--ap-color-accent); outline-offset: 1px; }
+  @media (max-width: 1100px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 560px) { .course { grid-template-columns: 40px minmax(0, 1fr); } .course .ico { width: 40px; height: 40px; } .course .actions { grid-column: 1 / -1; } .hero { padding: var(--ap-space-4); } }
+</style>
+</head>
+<body>
+<main>
+  <div class="page">
+    <section class="hero" aria-labelledby="hello">
+      <div class="grow stack">
+        <p class="xs bold" style="opacity:.85">TUESDAY 15 OCTOBER - CUSTOMER SUPPORT, TIER 1</p>
+        <h2 id="hello">Good morning, Anita</h2>
+        <p style="opacity:.9">You have <strong>1 overdue</strong> and <strong>2 due soon</strong>. Required learning comes first; everything else is optional.</p>
+        <div class="row">
+          <button type="button" class="btn primary lg" id="resume-top"></button>
+          <span class="chip" id="streak-chip"></span>
+        </div>
+      </div>
+      <div class="stack" style="min-width:220px">
+        <label class="label" for="pref-lang" style="color:inherit;opacity:.85">My learning language</label>
+        <select class="select" id="pref-lang"></select>
+        <p class="xs" style="opacity:.85" id="lang-note"></p>
+      </div>
+    </section>
+
+    <div class="layout">
+      <div class="stack" style="gap:var(--ap-space-6)">
+        <section aria-labelledby="assigned-h" class="card">
+          <div class="card-title"><h2 id="assigned-h">Assigned and due</h2><span class="sub">Mandatory - sorted by due date</span></div>
+          <div class="stack" id="assigned"></div>
+        </section>
+        <section aria-labelledby="optional-h" class="card">
+          <div class="card-title"><h2 id="optional-h">Optional: picked for your skills</h2><span class="sub">Not part of your compliance record</span></div>
+          <div class="grid cols-3" id="optional"></div>
+        </section>
+      </div>
+      <div class="stack" style="gap:var(--ap-space-6)">
+        <section aria-labelledby="review-h" class="card" id="review-card">
+          <div class="card-title"><span class="chip info"><svg class="i"></svg></span><h2 id="review-h">Daily review</h2><span class="sub" id="review-sub">3 questions, about 2 minutes</span></div>
+          <div id="review-body" class="stack"></div>
+        </section>
+        <section aria-labelledby="skills-h" class="card">
+          <div class="card-title"><h2 id="skills-h">My skills</h2><span class="sub">Level now / target</span></div>
+          <div class="stack" id="skills"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="assets/proto.js"></script>
+<script>
+(function () {
+  var P = PROTO, el = P.el;
+  P.mount({
+    screen: 'learner-home', title: 'Learner home',
+    about: {
+      purpose: 'The first screen a learner sees. Its one job: tell Anita what she must finish and by when, then offer a two-minute retrieval-practice habit.',
+      interactions: ['Change "My learning language": course cards switch title, language chips and the "not available in this language" notes.', 'Press Resume (hero or any course): opens the course player at the saved step.', 'Daily review: answer the three questions; each shows feedback; the finish card shows the 2 / 7 / 30 day schedule.', '"Add to my plan" on an optional card posts a toast (a live region).', 'Use the header buttons: LTR/RTL, theme, and About.'],
+      patterns: ['Assigned and due separated from optional discovery (Degreed, Docebo pattern).', 'Overdue is shown with text and an icon, never colour alone.', 'Honest language: "spaced retrieval practice", not "defeating the forgetting curve".', 'Learners only see languages that are approved; unapproved ones never appear.'],
+      maps: ['theme/sentientia learner dashboard shell and the Daily Review card planned in ADR-028 Phase 3.7', '--ap-color-danger / success tokens for status; no hard-coded colours'],
+      notBuilt: ['Real progress data, notifications, WhatsApp nudge settings, skills taxonomy.']
+    }
+  });
+
+  var LANGS = {
+    en: { name: 'English' }, hi: { name: 'हिन्दी' }, mr: { name: 'मराठी' }
+  };
+  var courses = [
+    { id: 'upi', icon: 'file', due: 'Due in 3 days', dueState: 'warn', overdue: false, mins: 12, progress: 71, step: 'Step 5 of 7: Practice, the angry caller', kinds: 'Narrated slides, scenario, quiz', langs: ['en', 'hi', 'mr'],
+      title: { en: 'Handling a disputed UPI transaction', hi: 'विवादित UPI लेन-देन को संभालना', mr: 'विवादित UPI व्यवहार हाताळणे' }, code: 'SOP-CS-014' },
+    { id: 'posh', icon: 'shield', due: 'Overdue by 2 days', dueState: 'bad', overdue: true, mins: 18, progress: 0, step: 'Not started', kinds: 'Narrated slides, quiz', langs: ['en', 'hi'],
+      title: { en: 'POSH annual refresher', hi: 'POSH वार्षिक रिफ्रेशर' }, code: 'POSH-2026' },
+    { id: 'sec', icon: 'lock', due: 'Due 5 November', dueState: 'info', overdue: false, mins: 9, progress: 22, step: 'Step 2 of 6', kinds: 'Narrated slides, quiz', langs: ['en'],
+      title: { en: 'IT security basics' }, code: 'ITS-107' }
+  ];
+  var optional = [
+    { title: 'De-escalation in 5 moves', skill: 'De-escalation', mins: 8, langs: ['en', 'hi'] },
+    { title: 'Reading a chargeback timeline', skill: 'Dispute classification', mins: 10, langs: ['en'] },
+    { title: 'Merchant KYC red flags', skill: 'Risk awareness', mins: 14, langs: ['en', 'hi', 'mr'] }
+  ];
+  var lang = (new URLSearchParams(location.search)).get('plang') || 'en';
+  var prefSel = document.getElementById('pref-lang');
+  Object.keys(LANGS).forEach(function (k) { prefSel.appendChild(el('option', { value: k, text: LANGS[k].name, lang: k, selected: k === lang })); });
+
+  function titleFor(c) { return c.title[lang] || c.title.en; }
+  function renderAssigned() {
+    var host = document.getElementById('assigned'); host.replaceChildren();
+    courses.forEach(function (c) {
+      var has = c.langs.indexOf(lang) >= 0;
+      var chips = el('div', { class: 'row', style: 'gap:6px' }, c.langs.map(function (k) { return el('span', { class: 'chip ' + (k === lang ? 'info' : 'line'), text: LANGS[k].name, lang: k }); }));
+      var info = el('div', { class: 'stack', style: 'gap:6px' }, [
+        el('div', { class: 'row' }, [
+          el('h3', { text: titleFor(c), lang: has ? lang : 'en' }),
+          el('span', { class: 'chip ' + c.dueState }, [P.icon(c.overdue ? 'alert' : 'clock'), c.due]),
+          el('span', { class: 'chip line', text: 'Mandatory' })
+        ]),
+        el('p', { class: 'small muted', text: c.code + ' - ' + c.mins + ' min - ' + c.kinds }),
+        el('div', { class: 'row' }, [el('div', { class: 'progress grow', role: 'progressbar', 'aria-valuenow': c.progress, 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-label': 'Progress ' + c.progress + ' percent' }, [el('span', { style: 'width:' + c.progress + '%' })]), el('span', { class: 'xs muted', text: c.step })]),
+        chips,
+        has ? null : el('p', { class: 'xs muted', text: 'Not available in ' + LANGS[lang].name + ' yet - shown in English. ' }),
+      ]);
+      var go = el('a', { class: 'btn ' + (c.overdue ? 'primary' : ''), href: '02-course-player.html' + (lang !== 'en' && has ? '?plang=' + lang : '') }, [c.progress ? 'Resume' : 'Start', P.icon('right', 'i-flip')]);
+      host.appendChild(el('article', { class: 'course' + (c.overdue ? ' overdue' : '') }, [el('div', { class: 'ico' }, [P.icon(c.icon)]), info, el('div', { class: 'actions' }, [go])]));
+    });
+    var first = courses[0];
+    document.getElementById('resume-top').replaceChildren(P.icon('play'), 'Resume: ' + titleFor(first));
+    document.getElementById('resume-top').onclick = function () { location.href = '02-course-player.html'; };
+    document.getElementById('lang-note').textContent = lang === 'en' ? 'Courses show in English unless your own language is approved.' : 'Only approved translations are shown to learners. Others fall back to English.';
+  }
+  function renderOptional() {
+    var host = document.getElementById('optional'); host.replaceChildren();
+    optional.forEach(function (o) {
+      var has = o.langs.indexOf(lang) >= 0;
+      var btn = el('button', { type: 'button', class: 'btn sm', 'aria-pressed': 'false', onclick: function () { var on = btn.getAttribute('aria-pressed') !== 'true'; btn.setAttribute('aria-pressed', on ? 'true' : 'false'); btn.replaceChildren(P.icon(on ? 'check' : 'plus'), on ? 'In my plan' : 'Add to my plan'); P.toast(on ? '"' + o.title + '" added to your plan.' : 'Removed from your plan.'); } }, [P.icon('plus'), 'Add to my plan']);
+      host.appendChild(el('article', { class: 'card flat opt-card' }, [
+        el('span', { class: 'chip line', text: o.skill }),
+        el('h3', { text: o.title }),
+        el('p', { class: 'small muted', text: o.mins + ' min - ' + (has ? 'Available in ' + LANGS[lang].name : 'English only') }),
+        btn
+      ]));
+    });
+  }
+  prefSel.addEventListener('change', function () { lang = prefSel.value; renderAssigned(); renderOptional(); P.toast('Language preference: ' + LANGS[lang].name); });
+
+  // skills
+  var skills = [{ n: 'Dispute classification', now: 3, target: 4 }, { n: 'De-escalation', now: 2, target: 3 }, { n: 'Credential hygiene', now: 3, target: 3 }];
+  var sk = document.getElementById('skills');
+  skills.forEach(function (s) {
+    var pips = el('div', { class: 'pips', role: 'img', 'aria-label': 'Level ' + s.now + ' of 5, target ' + s.target }, [1, 2, 3, 4, 5].map(function (i) { return el('i', { class: (i <= s.now ? 'on ' : '') + (i === s.target ? 'target' : '') }); }));
+    sk.appendChild(el('div', { class: 'skill' }, [el('span', { class: 'small', text: s.n }), pips]));
+  });
+
+  // daily review (retrieval practice)
+  var Q = [
+    { q: 'A customer offers to read out the OTP they just received. What do you do?', o: ['Accept it; they volunteered it', 'Stop them politely and note it was offered, not captured', 'Ask for the UPI PIN instead'], a: 1, why: 'Never capture an OTP or PIN, even when volunteered (SOP-CS-014, step 1).' },
+    { q: 'A UPI payment shows Pending, two working days old. Raise a Failed Transaction dispute now?', o: ['Yes, so the customer feels action', 'No: explain the window and share the expected date'], a: 1, why: 'Pending inside the three-working-day window must not be disputed yet.' },
+    { q: 'Which needs escalation to Tier-2?', o: ['Amount above 50,000 rupees', 'The customer asks for a reference number', 'The customer says thank you'], a: 0, why: 'Over 50,000 rupees is an escalation trigger.' }
+  ];
+  var qi = 0, score = 0, rb = document.getElementById('review-body');
+  document.querySelector('#review-card .chip svg').replaceWith(P.icon('zap'));
+  function renderReview() {
+    rb.replaceChildren();
+    if (qi >= Q.length) {
+      rb.appendChild(el('div', { class: 'callout ok', role: 'status' }, [P.icon('check'), 'Review done: ' + score + ' of ' + Q.length + ' correct. Next reviews are scheduled in 2, 7 and 30 days.']));
+      rb.appendChild(el('button', { type: 'button', class: 'btn sm', onclick: function () { qi = 0; score = 0; renderReview(); } }, [P.icon('refresh'), 'Practise again']));
+      document.getElementById('streak-chip').replaceChildren(P.icon('fire'), '4-day review streak');
+      return;
+    }
+    var item = Q[qi];
+    rb.appendChild(el('p', { class: 'xs muted', text: 'Question ' + (qi + 1) + ' of ' + Q.length }));
+    rb.appendChild(el('p', { class: 'bold', text: item.q, id: 'rq' }));
+    var fb = el('div', { 'aria-live': 'polite' });
+    var opts = el('div', { class: 'stack', role: 'group', 'aria-labelledby': 'rq' });
+    item.o.forEach(function (text, i) {
+      var b = el('button', { type: 'button', class: 'quiz-opt', text: text });
+      b.addEventListener('click', function () {
+        Array.prototype.forEach.call(opts.children, function (x) { x.disabled = true; });
+        var right = i === item.a;
+        if (right) { score++; }
+        b.classList.add(right ? 'right' : 'wrong');
+        opts.children[item.a].classList.add('right');
+        fb.replaceChildren(el('div', { class: 'callout ' + (right ? 'ok' : 'warn') }, [P.icon(right ? 'check' : 'info'), (right ? 'Correct. ' : 'Not quite. ') + item.why]), el('button', { type: 'button', class: 'btn primary sm', style: 'margin-top:8px', onclick: function () { qi++; renderReview(); } }, [qi === Q.length - 1 ? 'Finish' : 'Next', P.icon('right', 'i-flip')]));
+      });
+      opts.appendChild(b);
+    });
+    rb.appendChild(opts); rb.appendChild(fb);
+  }
+  document.getElementById('streak-chip').replaceChildren(P.icon('fire'), '3-day review streak');
+  renderAssigned(); renderOptional(); renderReview();
+}());
+</script>
+</body>
+</html>

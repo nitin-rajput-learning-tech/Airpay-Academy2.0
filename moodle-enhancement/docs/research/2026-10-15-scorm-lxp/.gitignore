@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+pilot/out/
+pilot/evidence/**/*cmi5.zip

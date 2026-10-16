@@ -1,0 +1,432 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sentientia.lms/schemas/course/0.1/sentientia-course.schema.json",
+  "title": "Sentientia Canonical Course Document (SCD) v0.1",
+  "description": "The single source of truth for a generated course. Everything downstream (SCORM 1.2, SCORM 2004 4th Ed., cmi5/xAPI, a native Moodle course, a mobile stream, XLIFF export) is compiled from this document and never edited by hand. Every localisable string is an `i18n` object keyed by BCP-47 tag; the JSON Pointer of that object is its stable XLIFF trans-unit id. Draft status: proposed in ADR-034 (2026-10-15).",
+  "type": "object",
+  "required": ["scd_version", "course", "blocks", "provenance"],
+  "additionalProperties": false,
+  "x-rules": [
+    "R01 Every i18n object MUST contain the course.base_lang key; other declared course.langs MAY be absent until translated (the compiler reports them as pending).",
+    "R02 course.langs MUST include course.base_lang and MUST NOT contain duplicates.",
+    "R03 Languages whose tag is in course.rtl_langs (default: ar, ur, he, fa) are rendered with dir=\"rtl\" and mirrored chrome; the compiler emits per-language dir attributes.",
+    "R04 Scenario graphs: every edge.to MUST reference an existing node id in the same scenario; every node MUST be reachable from scenario.start; from every node at least one path MUST reach a terminal node; a decision node MUST have >= 2 edges; a terminal node MUST have 0 edges; cycles are forbidden unless scenario.allow_cycles is true.",
+    "R05 Scenario state budget: the compiler serialises visited edge ids as a compact token; the worst-case (longest) path token for SCORM 1.2 MUST be <= 3,500 characters before compression so it always fits the 4,096-character cmi.suspend_data limit. Scenarios with > 60 nodes are rejected for SCORM 1.2 output.",
+    "R06 Quiz questions: multichoice has exactly one correct option; multiresponse has >= 1 correct; truefalse has exactly 2 options; match has >= 2 pairs. Option ids are unique within a question.",
+    "R07 Protected terms (course.protected_terms) MUST appear verbatim in every translation unless an explicit per-language override exists in course.term_overrides.",
+    "R08 Media references are relative paths inside the package; the compiler verifies existence and declares every file in the manifest.",
+    "R09 provenance.review.state MUST be 'approved' or 'published' before any package is compiled for learners; 'draft' and 'in_review' documents compile only with --preview.",
+    "R10 Block ids and all nested ids are URL-safe ([A-Za-z0-9_-]), unique across the whole document; they are used as cmi.interactions ids and xAPI activity id suffixes.",
+    "R11 cmi.interactions.n.student_response is written as the option/edge id (never the display text) so it stays under the 255-character SCORM 1.2 limit; full text goes to xAPI when an endpoint is configured.",
+    "R12 Source PII scan: provenance.source.pii_scan.status MUST be 'clean' or 'redacted' before any live model call; 'blocked' halts generation."
+  ],
+  "$defs": {
+    "lang": {
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$",
+      "description": "BCP-47 language tag, e.g. en, hi, mr, kn, ta, te, bn, gu, ml, pa, or, as, ur, ar, sw, en-IN."
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,64}$"
+    },
+    "i18n": {
+      "type": "object",
+      "description": "Localised string. One XLIFF trans-unit; id = JSON Pointer of this object.",
+      "patternProperties": {
+        "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$": { "type": "string" }
+      },
+      "additionalProperties": false,
+      "minProperties": 1
+    },
+    "i18n_list": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/i18n" }
+    },
+    "review_state": {
+      "type": "string",
+      "enum": ["pending", "machine", "in_translation", "translated", "in_review", "reassigned", "approved"],
+      "description": "Per-language localisation state (two-stage human-in-the-loop: translator -> SME reviewer -> admin approval)."
+    },
+    "lang_states": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$": {
+          "type": "object",
+          "required": ["state"],
+          "properties": {
+            "state": { "$ref": "#/$defs/review_state" },
+            "translator": { "type": "string" },
+            "reviewer": { "type": "string" },
+            "approved_by": { "type": "string" },
+            "approved_at": { "type": "string", "format": "date-time" },
+            "reassign_count": { "type": "integer", "minimum": 0 },
+            "engine": { "type": "string", "description": "e.g. claude-sonnet-4-6 via local_sentientia_ai, or human" },
+            "tm_leverage_pct": { "type": "number", "minimum": 0, "maximum": 100 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "media_ref": {
+      "type": "object",
+      "required": ["path"],
+      "properties": {
+        "path": { "type": "string", "description": "Relative path inside the package, e.g. audio/hi/b01.mp3" },
+        "mime": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "duration_ms": { "type": "integer", "minimum": 0 },
+        "engine": { "type": "string", "description": "TTS engine id, e.g. sentientia-speech/indic-parler-tts@1.2, elevenlabs, mock-silent" },
+        "voice": { "type": "string" },
+        "word_timestamps": { "type": "string", "description": "Relative path to a JSON file of [{w, start_ms, end_ms}] used to build WebVTT and karaoke highlighting" },
+        "processing_region": { "type": "string", "description": "Where synthesis ran, e.g. in-IN (ap-south-1), on-prem" }
+      },
+      "additionalProperties": false
+    },
+    "audio_set": {
+      "type": "object",
+      "description": "Per-language narration audio.",
+      "patternProperties": {
+        "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$": { "$ref": "#/$defs/media_ref" }
+      },
+      "additionalProperties": false
+    },
+    "captions_set": {
+      "type": "object",
+      "description": "Per-language WebVTT caption file paths (HH:MM:SS.mmm).",
+      "patternProperties": {
+        "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "skill_ref": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "$ref": "#/$defs/i18n" },
+        "level": { "type": "integer", "minimum": 1, "maximum": 5 }
+      },
+      "additionalProperties": false
+    },
+    "slide_block": {
+      "type": "object",
+      "required": ["id", "type", "title"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "type": { "const": "slide" },
+        "title": { "$ref": "#/$defs/i18n" },
+        "points": { "$ref": "#/$defs/i18n_list", "maxItems": 5, "description": "Max 5 bullets, max 8 words each in the base language (compiler warns)." },
+        "narration": { "$ref": "#/$defs/i18n" },
+        "notes": { "$ref": "#/$defs/i18n" },
+        "layout": { "type": "string", "enum": ["title", "bullets", "two-column", "image-left", "image-right", "statement"], "default": "bullets" },
+        "image": { "$ref": "#/$defs/media_ref" },
+        "audio": { "$ref": "#/$defs/audio_set" },
+        "captions": { "$ref": "#/$defs/captions_set" },
+        "skills": { "type": "array", "items": { "$ref": "#/$defs/skill_ref" } },
+        "estimated_seconds": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "edge": {
+      "type": "object",
+      "required": ["id", "text", "to"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "text": { "$ref": "#/$defs/i18n", "description": "The learner's choice as displayed." },
+        "to": { "$ref": "#/$defs/id", "description": "Target node id." },
+        "score_delta": { "type": "integer", "default": 0 },
+        "outcome": { "type": "string", "enum": ["acceptable", "recoverable", "irrecoverable", "neutral"], "default": "neutral" },
+        "consequence": { "$ref": "#/$defs/i18n", "description": "Immediate consequence reveal shown after the choice (why it was acceptable / recoverable / irrecoverable)." },
+        "correct": { "type": "boolean", "description": "Used for cmi.interactions.n.result and xAPI result.success." }
+      },
+      "additionalProperties": false
+    },
+    "node": {
+      "type": "object",
+      "required": ["id", "kind", "prompt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "type": "string", "enum": ["decision", "info", "terminal"] },
+        "character": { "$ref": "#/$defs/id", "description": "Optional speaking character id." },
+        "prompt": { "$ref": "#/$defs/i18n", "description": "Situation text or dialogue turn." },
+        "audio": { "$ref": "#/$defs/audio_set" },
+        "captions": { "$ref": "#/$defs/captions_set" },
+        "edges": { "type": "array", "items": { "$ref": "#/$defs/edge" }, "default": [] },
+        "next": { "$ref": "#/$defs/id", "description": "For info nodes: the single following node." },
+        "terminal_outcome": { "type": "string", "enum": ["success", "partial", "failure"], "description": "Required when kind = terminal." }
+      },
+      "additionalProperties": false
+    },
+    "character": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/i18n" },
+        "role": { "$ref": "#/$defs/i18n" },
+        "avatar": { "$ref": "#/$defs/media_ref" },
+        "voice": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "scenario_block": {
+      "type": "object",
+      "required": ["id", "type", "title", "start", "nodes"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "type": { "const": "scenario" },
+        "mode": { "type": "string", "enum": ["deterministic", "live_roleplay"], "default": "deterministic", "description": "live_roleplay is a flagged later phase: it needs the proxy shell and an online LLM bridge; deterministic is fully packaged and offline-capable." },
+        "title": { "$ref": "#/$defs/i18n" },
+        "intro": { "$ref": "#/$defs/i18n" },
+        "characters": { "type": "array", "items": { "$ref": "#/$defs/character" } },
+        "start": { "$ref": "#/$defs/id" },
+        "nodes": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/node" } },
+        "allow_cycles": { "type": "boolean", "default": false },
+        "scoring": {
+          "type": "object",
+          "properties": {
+            "max": { "type": "integer", "minimum": 1 },
+            "pass": { "type": "integer", "minimum": 0 },
+            "weight_in_course": { "type": "number", "minimum": 0, "maximum": 1 }
+          },
+          "additionalProperties": false
+        },
+        "rubric": {
+          "type": "array",
+          "description": "For live_roleplay only: hidden criteria for the evaluation agent (e.g. empathy, compliance, objection handling).",
+          "items": {
+            "type": "object",
+            "required": ["id", "criterion", "weight"],
+            "properties": {
+              "id": { "$ref": "#/$defs/id" },
+              "criterion": { "$ref": "#/$defs/i18n" },
+              "weight": { "type": "number", "minimum": 0, "maximum": 1 }
+            },
+            "additionalProperties": false
+          }
+        },
+        "skills": { "type": "array", "items": { "$ref": "#/$defs/skill_ref" } }
+      },
+      "additionalProperties": false
+    },
+    "option": {
+      "type": "object",
+      "required": ["id", "text"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "text": { "$ref": "#/$defs/i18n" },
+        "correct": { "type": "boolean", "default": false },
+        "feedback": { "$ref": "#/$defs/i18n" }
+      },
+      "additionalProperties": false
+    },
+    "pair": {
+      "type": "object",
+      "required": ["id", "left", "right"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "left": { "$ref": "#/$defs/i18n" },
+        "right": { "$ref": "#/$defs/i18n" }
+      },
+      "additionalProperties": false
+    },
+    "question": {
+      "type": "object",
+      "required": ["id", "type", "stem"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "type": { "type": "string", "enum": ["multichoice", "multiresponse", "truefalse", "match"] },
+        "stem": { "$ref": "#/$defs/i18n" },
+        "options": { "type": "array", "items": { "$ref": "#/$defs/option" } },
+        "pairs": { "type": "array", "items": { "$ref": "#/$defs/pair" } },
+        "points": { "type": "number", "minimum": 0, "default": 1 },
+        "feedback_correct": { "$ref": "#/$defs/i18n" },
+        "feedback_incorrect": { "$ref": "#/$defs/i18n" },
+        "skills": { "type": "array", "items": { "$ref": "#/$defs/skill_ref" } },
+        "reinforce": { "type": "boolean", "default": true, "description": "Eligible for the spaced-practice 'Daily Review' pool after course completion." }
+      },
+      "additionalProperties": false
+    },
+    "quiz_block": {
+      "type": "object",
+      "required": ["id", "type", "title", "questions"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "type": { "const": "quiz" },
+        "title": { "$ref": "#/$defs/i18n" },
+        "intro": { "$ref": "#/$defs/i18n" },
+        "shuffle": { "type": "boolean", "default": true },
+        "pass_percent": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "questions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/question" } }
+      },
+      "additionalProperties": false
+    },
+    "video_block": {
+      "type": "object",
+      "description": "DEFERRED (costed only): AI avatar video. Kept in the schema so documents stay forward-compatible.",
+      "required": ["id", "type", "title", "script"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "type": { "const": "video" },
+        "title": { "$ref": "#/$defs/i18n" },
+        "script": { "$ref": "#/$defs/i18n" },
+        "avatar": { "type": "string" },
+        "media": { "$ref": "#/$defs/audio_set" },
+        "captions": { "$ref": "#/$defs/captions_set" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "scd_version": { "const": "0.1" },
+    "course": {
+      "type": "object",
+      "required": ["id", "slug", "base_lang", "langs", "title", "mastery_score"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "slug": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+        "version": { "type": "string", "description": "Semantic version of the document, bumped on every approved change." },
+        "base_lang": { "$ref": "#/$defs/lang" },
+        "langs": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/lang" } },
+        "rtl_langs": { "type": "array", "items": { "$ref": "#/$defs/lang" }, "default": ["ar", "ur", "he", "fa"] },
+        "lang_states": { "$ref": "#/$defs/lang_states" },
+        "title": { "$ref": "#/$defs/i18n" },
+        "description": { "$ref": "#/$defs/i18n" },
+        "mastery_score": { "type": "integer", "minimum": 0, "maximum": 100, "default": 70, "description": "Written to <adlcp:masteryscore> (SCORM 1.2), scaled passing score (2004) and cmi5 masteryScore." },
+        "estimated_minutes": { "type": "integer", "minimum": 1 },
+        "audience": {
+          "type": "object",
+          "properties": {
+            "customer_id": { "type": "integer" },
+            "tenant_ids": { "type": "array", "items": { "type": "integer" } },
+            "roles": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "skills": { "type": "array", "items": { "$ref": "#/$defs/skill_ref" } },
+        "protected_terms": { "type": "array", "items": { "type": "string" }, "description": "Never translated (brand, regulator, product names). Defaults from local_sentientia_translate brand_manager::DEFAULT_PROTECTED." },
+        "term_overrides": {
+          "type": "object",
+          "description": "Per-language script renderings of protected terms, e.g. {\"kn\": {\"Airpay\": \"<Kannada form>\"}}.",
+          "patternProperties": {
+            "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$": { "type": "object", "additionalProperties": { "type": "string" } }
+          },
+          "additionalProperties": false
+        },
+        "source": {
+          "type": "object",
+          "required": ["type", "sha256", "pii_scan"],
+          "properties": {
+            "type": { "type": "string", "enum": ["sop", "pdf", "docx", "pptx", "markdown", "prompt", "url", "scorm_import"] },
+            "filename": { "type": "string" },
+            "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+            "words": { "type": "integer", "minimum": 0 },
+            "pii_scan": {
+              "type": "object",
+              "required": ["status"],
+              "properties": {
+                "status": { "type": "string", "enum": ["clean", "redacted", "blocked"] },
+                "findings": { "type": "integer", "minimum": 0 },
+                "scanner": { "type": "string" },
+                "scanned_at": { "type": "string", "format": "date-time" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "blocks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/slide_block" },
+          { "$ref": "#/$defs/scenario_block" },
+          { "$ref": "#/$defs/quiz_block" },
+          { "$ref": "#/$defs/video_block" }
+        ]
+      }
+    },
+    "reinforcement": {
+      "type": "object",
+      "description": "Post-completion spaced practice. The LMS (not the package) schedules these; the package only declares the pool.",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "schedule_days": { "type": "array", "items": { "type": "integer", "minimum": 1 }, "default": [2, 7, 30] },
+        "questions_per_session": { "type": "integer", "minimum": 1, "maximum": 10, "default": 3 },
+        "channels": { "type": "array", "items": { "type": "string", "enum": ["dashboard", "push", "email", "whatsapp", "sms"] } }
+      },
+      "additionalProperties": false
+    },
+    "delivery": {
+      "type": "object",
+      "properties": {
+        "standards": { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["scorm12", "scorm2004_4", "cmi5", "moodle_course", "mobile_stream"] } },
+        "package_mode": { "type": "string", "enum": ["multilingual", "per_language"], "default": "multilingual", "description": "One package carrying all approved languages with an in-player switcher, or one package per language." },
+        "offline_capable": { "type": "boolean", "default": true },
+        "xapi": {
+          "type": "object",
+          "properties": {
+            "activity_iri_base": { "type": "string", "format": "uri" },
+            "side_channel": { "type": "boolean", "default": false, "description": "When true, SCORM packages also post full decision transcripts to the configured LRS (local_sentientia_xapi)." }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["generator", "created_at", "review", "source"],
+      "properties": {
+        "generator": {
+          "type": "object",
+          "required": ["name", "version"],
+          "properties": {
+            "name": { "type": "string" },
+            "version": { "type": "string" },
+            "mode": { "type": "string", "enum": ["mock", "live", "human"] },
+            "model": { "type": "string" },
+            "prompt_version": { "type": "string" },
+            "gateway_ledger_ids": { "type": "array", "items": { "type": "integer" }, "description": "local_sentientia_ai ledger row ids for every model call that produced this document." },
+            "processing_region": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "created_at": { "type": "string", "format": "date-time" },
+        "created_by": { "type": "string" },
+        "source": { "type": "string", "description": "Same as course.source.filename; repeated here for audit readability." },
+        "review": {
+          "type": "object",
+          "required": ["state"],
+          "properties": {
+            "state": { "type": "string", "enum": ["draft", "in_review", "approved", "published", "rejected"] },
+            "approvals": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["role", "by", "at"],
+                "properties": {
+                  "role": { "type": "string", "enum": ["author", "sme", "compliance", "admin"] },
+                  "by": { "type": "string" },
+                  "at": { "type": "string", "format": "date-time" },
+                  "note": { "type": "string" }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "audit_log": { "type": "string", "description": "Relative path to the append-only JSONL audit log for this document." }
+      },
+      "additionalProperties": false
+    }
+  }
+}

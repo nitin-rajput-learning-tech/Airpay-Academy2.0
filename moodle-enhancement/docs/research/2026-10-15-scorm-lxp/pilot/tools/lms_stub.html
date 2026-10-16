@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stub LMS for the Sentientia pilot packages</title>
+<style>
+  body { font: 14px/1.5 system-ui, sans-serif; margin: 0; background: #f2f4fb; color: #1a1a2e; }
+  header { display: flex; gap: 12px; align-items: center; padding: 8px 16px; background: #fff; border-bottom: 1px solid #e2e6ef; flex-wrap: wrap; }
+  header h1 { font-size: 15px; margin: 0; }
+  select, button { font: inherit; padding: 4px 10px; }
+  .wrap { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 12px; padding: 12px; }
+  iframe { width: 100%; height: calc(100vh - 90px); border: 1px solid #e2e6ef; border-radius: 8px; background: #fff; }
+  pre { margin: 0; padding: 8px; background: #fff; border: 1px solid #e2e6ef; border-radius: 8px; height: calc(100vh - 130px); overflow: auto; font-size: 11px; }
+  @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } pre { height: 220px; } iframe { height: 70vh; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Stub LMS (development tool, not Moodle)</h1>
+  <label>Standard
+    <select id="std"><option value="scorm12">SCORM 1.2</option><option value="scorm2004">SCORM 2004</option></select>
+  </label>
+  <button id="reload" type="button">Reload SCO (simulates tab close and reopen)</button>
+  <button id="reset" type="button">Reset learner data</button>
+  <span id="status"></span>
+</header>
+<div class="wrap">
+  <iframe id="sco" title="SCO"></iframe>
+  <pre id="log" aria-label="API call log"></pre>
+</div>
+<script>
+(function () {
+  'use strict';
+  var KEY = 'sentientia-stub-lms';
+  var params = new URLSearchParams(location.search);
+  var std = params.get('std') || 'scorm12';
+  var src = params.get('src') || 'index.html';
+  document.getElementById('std').value = std;
+  if (params.get('fresh')) { try { sessionStorage.removeItem(KEY + ':' + std); } catch (e) { /* ignore */ } }
+  var store = {};
+  try { store = JSON.parse(sessionStorage.getItem(KEY + ':' + std) || '{}'); } catch (e) { store = {}; }
+  var log = document.getElementById('log');
+  var calls = (window.__calls = []);
+  var mastery = parseInt(params.get('mastery') || '70', 10);
+
+  function note(text) { calls.push(text); log.textContent += text + '\n'; log.scrollTop = log.scrollHeight; }
+  function persist() { try { sessionStorage.setItem(KEY + ':' + std, JSON.stringify(store)); } catch (e) { /* ignore */ } }
+  function seed() {
+    if (store.__seeded) { return; }
+    store.__seeded = true;
+    if (std === 'scorm12') {
+      Object.assign(store, { 'cmi.core.lesson_status': 'not attempted', 'cmi.student_data.mastery_score': String(mastery), 'cmi.core.entry': 'ab-initio', 'cmi.core.lesson_mode': 'normal', 'cmi.suspend_data': '', 'cmi.core.lesson_location': '' });
+    } else {
+      Object.assign(store, { 'cmi.completion_status': 'unknown', 'cmi.success_status': 'unknown', 'cmi.scaled_passing_score': String(mastery / 100), 'cmi.entry': 'ab-initio', 'cmi.mode': 'normal', 'cmi.suspend_data': '', 'cmi.location': '' });
+    }
+    store['cmi.interactions._count'] = '0';
+  }
+  seed();
+  var limit = std === 'scorm12' ? 4096 : 64000;
+  var responseLimit = std === 'scorm12' ? 255 : 4000;
+
+  function setValue(name, value) {
+    value = String(value);
+    if (name === 'cmi.suspend_data' && value.length > limit) { note('REJECT ' + name + ' (' + value.length + ' > ' + limit + ')'); return 'false'; }
+    if (/^cmi\.interactions\.\d+\.(student_response|learner_response)$/.test(name) && value.length > responseLimit) { note('REJECT ' + name); return 'false'; }
+    var m = /^cmi\.interactions\.(\d+)\.id$/.exec(name);
+    if (m) { store['cmi.interactions._count'] = String(Math.max(parseInt(store['cmi.interactions._count'], 10), parseInt(m[1], 10) + 1)); }
+    store[name] = value;
+    note('Set ' + name + ' = ' + (value.length > 60 ? value.slice(0, 57) + '...(' + value.length + ')' : value));
+    return 'true';
+  }
+  function getValue(name) { return store[name] === undefined ? '' : store[name]; }
+  function status() {
+    var s = std === 'scorm12' ? store['cmi.core.lesson_status'] : store['cmi.completion_status'] + ' / ' + store['cmi.success_status'];
+    document.getElementById('status').textContent = 'LMS status: ' + s + ' | interactions: ' + store['cmi.interactions._count'];
+  }
+  var common = { GetLastError: function () { return '0'; }, GetErrorString: function () { return ''; }, GetDiagnostic: function () { return ''; } };
+  if (std === 'scorm12') {
+    window.API = {
+      LMSInitialize: function () { note('LMSInitialize'); store['cmi.core.entry'] = store['cmi.suspend_data'] ? 'resume' : 'ab-initio'; return 'true'; },
+      LMSGetValue: getValue, LMSSetValue: function (n, v) { var r = setValue(n, v); persist(); status(); return r; },
+      LMSCommit: function () { note('LMSCommit'); persist(); return 'true'; },
+      LMSFinish: function () { note('LMSFinish'); persist(); return 'true'; },
+      LMSGetLastError: common.GetLastError, LMSGetErrorString: common.GetErrorString, LMSGetDiagnostic: common.GetDiagnostic
+    };
+  } else {
+    window.API_1484_11 = {
+      Initialize: function () { note('Initialize'); store['cmi.entry'] = store['cmi.suspend_data'] ? 'resume' : 'ab-initio'; return 'true'; },
+      GetValue: getValue, SetValue: function (n, v) { var r = setValue(n, v); persist(); status(); return r; },
+      Commit: function () { note('Commit'); persist(); return 'true'; },
+      Terminate: function () { note('Terminate'); persist(); return 'true'; },
+      GetLastError: common.GetLastError, GetErrorString: common.GetErrorString, GetDiagnostic: common.GetDiagnostic
+    };
+  }
+  window.__store = store;
+  function load() { document.getElementById('sco').src = src + (src.indexOf('?') < 0 ? '?' : '&') + 't=' + Date.now(); }
+  document.getElementById('std').addEventListener('change', function (e) { location.search = '?std=' + e.target.value + '&src=' + encodeURIComponent(src); });
+  document.getElementById('reload').addEventListener('click', function () { note('--- SCO reloaded ---'); load(); });
+  document.getElementById('reset').addEventListener('click', function () { try { sessionStorage.removeItem(KEY + ':' + std); } catch (e) { /* ignore */ } location.reload(); });
+  status();
+  load();
+}());
+</script>
+</body>
+</html>

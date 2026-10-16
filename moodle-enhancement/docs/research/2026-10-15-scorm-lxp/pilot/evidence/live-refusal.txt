@@ -1,0 +1,4 @@
+ERROR: live translation refused:
+  - --confirm is not set ([CONFIRM] is required for every live run)
+  - ANTHROPIC_API_KEY is not set in the environment
+  - PILOT_SPEND_CAP_INR is not set in the environment
