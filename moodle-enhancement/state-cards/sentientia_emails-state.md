@@ -1,9 +1,9 @@
 # airpay_emails — STATE CARD
 
 **Component:** `local_sentientia_emails` (was `local_airpay_emails` until ADR-022/025; the body of this card below the 2026-09-22 sections still uses the old table and plugin names where it was written before the rename)
-**Current version:** `2026100701`  (release `1.4.0`: 2026-10-07 owner decisions, see the last section; before that `2026093001` / `1.3.0`, ADR-032 importer)
+**Current version:** `2026101501`  (release `1.4.0`; 2026-10-15 template-editor UI fix, see the last section; 1.4.0 was: 2026-10-07 owner decisions, see the last section; before that `2026093001` / `1.3.0`, ADR-032 importer)
 **Maturity:** STABLE (production)
-**Last touched:** 2026-10-07 (COMMS owner decisions: redaction, manager copies, course link, three flagged senders)
+**Last touched:** 2026-10-15 (template editor: live-preview srcdoc escaping, editor width)
 **Last refreshed:** 2026-05-28 (F-039 closeout — runtime DB probe + table inventory)
 **Owner:** Head of L&D
 
@@ -808,3 +808,14 @@ Both trees. **Not run: no PHPUnit here; the lead runs `--group local_sentientia_
 ## 2026-10-08 Moodle 5.3 compat FX-16
 
 Links and redirects to `/my/dashboard.php` now point at `/my/` (the dashboard; the old path is a redirect shim that is an added file on Moodle 5.3). Same landing page, one redirect fewer, no dependence on the shim. PWA `manifest.php` `start_url` is `/my/`; the stored brand rows are rewritten by the `local_sentientia_platform` upgrade step `2026100802`. No schema change, no version bump here.
+
+
+## 2026-10-15 Template editor UI fix (version 2026101501)
+
+Found by the 2026-10-14 scripted visual pass on Moodle 5.1 (`docs/visual-evidence/2026-10-08/moodle53/README.md` finding 5).
+
+- **Blank first preview:** `templates/manage/editor.mustache` wrote the preview iframe as `srcdoc="{{{preview_html}}}"`. The preview HTML starts with an XHTML doctype that contains double quotes, so the attribute ended after 22 characters (`<!DOCTYPE html PUBLIC `), the `sandbox` attribute after it was lost, and a template body containing `">` could inject markup into the editor page. Now `srcdoc="{{preview_html}}"`: Mustache's `s()` escaping, as `preview.php` already does. The sandbox stays `allow-same-origin` (no scripts). Typing refreshed the frame before, through `preview_ajax.php` and `iframe.srcdoc = html` (a property, no escaping needed); that path is unchanged.
+- **16 px too wide:** `.ap-studio` had `margin: -1rem -1rem 0` to cancel the padding of the standard page container; `editor.php` uses the `embedded` layout, which has none, so the studio was 2rem wider than its container, 16 px past the right edge at 1440 and at 590 (horizontal scrollbar, the left of the sidebar clipped, the first 16 px of the page under the sticky top bar). Now `margin: 0`.
+- **Tests (not run, owner rule):** `tests/editor_template_test.php` in both trees: the whole preview reaches `srcdoc` byte for byte, hostile preview HTML cannot leave the attribute, the sandbox has no `allow-scripts`, `.ap-studio` has no negative margin. The first two were also run outside Moodle (Mustache 2.x with `escape => s()`, libxml read-back): the old template gives `srcdoc` length 22, the new one the full 534.
+- **Left alone, found on the same page (confirmed by rendering the template outside Moodle; not changed, listed for Nitin):** `insertPlaceholder()` builds `'{{' + name + '}}'` inside the page script, which Mustache reads as a tag, so the Placeholders buttons insert nothing; `current_subject` and the placeholder sample values are `s()`ed in `editor.php` and then escaped again by `{{ }}` (a subject with `&` shows and re-saves as `&amp;`); the body textarea is written with `{{{current_body_raw}}}`, so entities in a template are decoded on the round trip and a body containing `</textarea>` breaks out of it.
+- **No schema change.** Twin `moodle-enhancement/local/sentientia_emails` and `local/sentientia_emails` changed identically. Needs a cache purge to pick up the template.
