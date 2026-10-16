@@ -1,7 +1,64 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-10-15 (**GST tax invoices, credit notes and receipts built, reviewed, tested (333) and evidenced on claude/gst-invoices: ready for Nitin's visual review; Nitin's 2026-10-14 answers recorded (decisions file re-approved); Stage B kit and feature-flag reset merged; see the 2026-10-14 / 10-15 section**) **Previous:** 2026-10-10 (Moodle 5.3 post-import parity gate on the April production copy)
+**Updated:** 2026-10-16 (**Nitin approved all seven review-queue branches; merged into gap-integration with the April skip caps; 10-16 screenshot pass running; production fast-forward waits for it; see the 2026-10-16 section**) **Previous:** 2026-10-15 (GST invoices built and evidenced on claude/gst-invoices; Nitin's 2026-10-14 answers recorded)
 
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
+
+---
+
+## 2026-10-16 - Seven branches merged on Nitin's ok, April skip caps, screenshot pass (Opus 5.5)
+
+**Nitin's answer** (chat, 2026-10-16 08:27, against `docs/REVIEW-QUEUE-2026-10-16.md`): "ok 1 to 7". The merges waited
+until after his restart, as he asked.
+
+**Merged into `claude/gap-integration`** (each with `--no-ff`, ordered so plugin versions stay ascending; no conflicts;
+no plugin was changed by two branches; gap-integration had no commits on any merged plugin since each branch's base, so
+the code on XAMPP during the 10-16 test pass is the merged code):
+
+| Merge | Branch | What it adds |
+|---|---|---|
+| 35c6d72c4 | `claude/eval-followups` | EV-17 to EV-36. Platform 2026101500 (row-bounded `accepted_reasons`). Evaluation 2026101500/1.17.2. |
+| 3cbc555da | `claude/gst-invoices` | GST tax invoices, credit notes and receipts (cart 2026101500). Flags OFF until Finance answers spec section 10. |
+| 3a49e109b | `claude/ui-fix-emails` | The template editor's preview renders on first load; the editor no longer overflows. |
+| 6447c3efc | `claude/ui-fix-theme` | BS5 dropdowns in BS4.6; the edit switch is styled; edit mode survives a reload for course authors. |
+| a56129615 | `claude/ui-fix-request` | Request enrolment on the catalogue (flag); the line manager gets `:approve`, with a back-fill. |
+| a5b26a161 | `claude/ui-fix-skills-org` | The self-rate warning; no double-escaped ampersands; plain-text suggested course names. |
+| fff796df2 | `claude/research-scorm-lxp` | The SCORM/LXP study, ADR-034, the C-suite brief, the deck, the prototypes and the pilot harness (docs only). |
+
+**Checks on the merged tree:**
+- tree-drift: 0 new;
+- siteid-compare: OK, 4170 files;
+- bizlms-fixture-copies: OK;
+- lang-parity: 57 files, 0 failures;
+- path-boundary: OK;
+- `php -l`: 293 changed PHP files, clean;
+- no conflict markers.
+
+**Tests:** the serialized XAMPP pass of 10-16 (all six fix branches deployed together) ran 11 suites and about 2,160 tests,
+with 0 failures (`D:/Claude Local/kit-scratch/fixpass/progress.txt`).
+
+**April skip caps** (b40a0fd36; Nitin's approval of 10-15):
+- `accepted_reasons` is now `learningplan:orphan_course<=4`, `ratings:orphan_item<=87`, `ratings:unknown_area<=195`.
+- `reapproved_on` is 2026-10-15.
+- The sha256 moved from 976394aa... to `e27be56757b5a3c7562fba118df0c7cabc363cd561b8b631ac78b788d832357b`.
+- The fixture copies were replaced in both trees. The decision is recorded in OWNER-DECISIONS section 12.
+- The 10 test files that load the signed copy ran 363 tests, with 0 failures.
+
+**Pushed:** `claude/gap-integration` b40a0fd36. **`production` is not yet fast-forwarded:** the UI merges owe the 10-16
+screenshots first (CLAUDE.md sections 5 and 13).
+
+**Screenshot pass** (workflow `evidence-2026-10-16`, local XAMPP only, real names masked before every shot, each flag
+restored to its previous value):
+- the areas are cart (to finish), evaluation, emails, theme, request and skills-org;
+- the evidence goes to `docs/visual-evidence/2026-10-16/<area>/`;
+- each area is checked independently for fix coverage and privacy.
+
+STATUS: running.
+
+**Next:**
+1. Commit the evidence, then fast-forward `production`.
+2. Sunday: run `tools/uat/rehearse_52_to_53.sh 481252996 origin/claude/gap-integration` on the merged ref.
+3. Monday 10-19: the UAT upgrade per `docs/operations/UAT-UPGRADE-5.3-2026-10-19.md`.
+4. Still waiting on others: Finance's 7 GST points, the research pilot's prerequisites, and Q8-Q11.
 
 ---
 

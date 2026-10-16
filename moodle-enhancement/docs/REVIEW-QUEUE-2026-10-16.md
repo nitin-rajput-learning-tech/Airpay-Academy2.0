@@ -1,5 +1,9 @@
 # Review queue for Nitin, 2026-10-16
 
+**Answered 2026-10-16 08:27: "ok 1 to 7".** All seven branches were merged into `claude/gap-integration` after Nitin's restart
+(35c6d72c4 to fff796df2), and the April skip caps followed (b40a0fd36). See PROJECT-STATE, 2026-10-16. The evidence folders
+named below are captured on the merged tree under `docs/visual-evidence/2026-10-16/<area>/`.
+
 Everything here is built, reviewed by a separate read-only check, and tested on local XAMPP Moodle 5.1. **Nothing is
 merged into `claude/gap-integration` until you say "ok" for that branch.** Every new feature is behind a default-OFF
 flag. Compare links show the full diff on GitHub.
