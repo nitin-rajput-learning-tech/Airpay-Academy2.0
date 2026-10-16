@@ -446,7 +446,38 @@ defined('MOODLE_INTERNAL') || die();
 // built no <form> and the noscript "Set mode" fallback was dead on 5.1, 5.2 and 5.3. Now byte-identical to the 5.2 core template
 // below its header comment. Bump purges the compiled template cache.
 // 2026100806: Moodle 5.3 compat FX-02 round 1: editswitch.mustache <form action=> fixed (on top of 2026100805 FX-19 block + coursecard templates)
-$plugin->version   = 2026100808;  // 2026-10-08 SITEID is the DB string; strict === / !== against it never matched, so the site-course guard did nothing - now (int) SITEID: language_switcher treats the front page as the site course again
+// 2026101501 - older UI defect 1 (visual pass 2026-10-14, finding 4): dropdowns that carry only the Bootstrap 5 attribute
+// data-bs-toggle="dropdown" (core 5.x action menus, e.g. the certificate templates row menu) did nothing on a click, because this
+// theme ships Bootstrap 4.6 whose data-api reads data-toggle. New AMD module theme_sentientia/dropdown_bridge (src + build, started
+// from theme_sentientia/loader) hands such a toggle to the theme's Bootstrap 4 dropdown, exactly once: it never touches an element
+// that carries data-toggle (so one with BOTH attributes is not toggled twice, see the FX-20 round 1 notes of local_sentientia_org and
+// local_sentientia_evaluation) and does nothing when core's Bootstrap 5 data-api already opened or closed the menu on that click.
+// Bump purges the AMD cache so the changed loader and the new module are served.
+// 2026101502 - older UI defect 2 (visual pass 2026-10-14, finding 1, FX-02 round 2): the edit-mode switch rendered as a bare browser
+// checkbox. templates/core/editswitch.mustache used the Moodle 5.2 core markup (form-check form-switch, ms-2, me-2, input-group), which is
+// Bootstrap 5 and not styled by this Bootstrap 4.6 theme. Now Bootstrap 4's custom-control custom-switch (compiled by the theme and already
+// styled in the navbar by _surface-navbar.scss); the label words sit in a span so that below the md breakpoint only the words are visually
+// hidden (primarynavigation.scss), not the whole label, which clipped the switch. Form, ids, data attributes, hidden inputs, noscript
+// submit and the core/edit_switch init are unchanged. Bump purges the template cache and recompiles the CSS.
+// 2026101503 - older UI defect 3 (visual pass 2026-10-14, findings 2 and 3): for a course author (editingteacher) edit mode did not survive a
+// page load, and the course editor threw two console errors with no editing controls. Three causes, all in this theme. (1) core_renderer::
+// course_context_header_settings_menu() set $USER->editing = 0 for everybody without moodle/course:view, a manager capability an editingteacher
+// does not hold: it ran after the layout and the body class were built in editing mode and before the course content, which then rendered in
+// viewing mode, and the next load found editing off; $PAGE->user_is_editing() already requires user_allowed_editing(), so nothing needs clearing.
+// (2) layout/course.php rendered the edit switch for the editing template too, which never prints it (its navbar partial renders its own): the
+// queued core/edit_switch init found no element ("Cannot read properties of null (reading 'addEventListener')"). (3) course_full_header.mustache
+// dropped the header actions, so core's Bulk edit button (added by course/view.php in editing mode) was never printed while its script ran
+// ("Reactive components needs a main DOM element to dispatch events"); it now prints them (empty, no space, when there are none).
+// Bump purges the template cache.
+// 2026101504 - dropdown_bridge, element with BOTH data-toggle and data-bs-toggle (FX-20 round 1): where core's Bootstrap 5 data-api is loaded (search
+// combobox, dropdown dialog and participants initials pages) it matched the same element as the theme's Bootstrap 4 data-api and toggled it a second
+// time (open, then closed at once). The bridge now takes data-bs-toggle off such an element for the length of that click (capture phase on window)
+// and puts it back in the next task, so Bootstrap 4 alone handles it. AMD build refreshed. Bump purges the AMD cache.
+// 2026100808: 2026-10-08 SITEID is the DB string; strict === / !== against it never matched, so the site-course guard did nothing - now (int) SITEID: language_switcher treats the front page as the site course again
+// 2026101501: 2026-10-15 dropdown_bridge: data-bs-toggle-only dropdowns open in the Bootstrap 4 theme
+// 2026101502: 2026-10-15 edit-mode switch styled as the theme's Bootstrap 4 custom switch
+// 2026101503: 2026-10-15 course author edit mode: no reset of $USER->editing, no orphan edit_switch init, header actions printed
+$plugin->version   = 2026101504;  // 2026-10-15 dropdown_bridge keeps core's Bootstrap 5 data-api off elements that carry both attributes (on top of 2026101503)
 // 2026100807: Moodle 5.3 FX-15 follow-up: dashboard + frontpage course counts filter COALESCE(deletioninprogress, 0) = 0 (5.3's column is NULL for every course not being deleted; '= 0' counted none)
 // 2026090806:  // login/OTP placeholders + SSO title + block aria-label: {{#quote}} JSON-escaped Hindi into \uXXXX → attribute-safe cleanstr/escaped values (core 5.2 pattern)
 // 2026090805:  footer: GPL badge -> private Airpay notice; sidebar literals localised; scoped-admin subtitle

@@ -34,32 +34,39 @@
 {{!
     Sentientia theme override (Moodle 5.3 compat FX-02, 2026-10-08).
 
-    This is the Moodle 5.2 core template, copied verbatim. Moodle 5.3 rewrote core/editswitch
-    to render the whole control only when the renderer supplies react props and an element id,
-    and this theme's renderer supplies neither, so on 5.3 only the hidden inputs and the
-    noscript submit rendered and nobody could turn editing on. This copy needs no react
-    props, no element id and no design-system CSS. It is picked up on 5.1, 5.2 and 5.3 alike,
-    and the core/edit_switch AMD module it initialises keeps the same init(id) signature on
+    This is the Moodle 5.2 core template with the markup changed to this theme's Bootstrap 4.6.
+    Moodle 5.3 rewrote core/editswitch to render the whole control only when the renderer supplies
+    react props and an element id, and this theme's renderer supplies neither, so on 5.3 only the
+    hidden inputs and the noscript submit rendered and nobody could turn editing on. This copy needs
+    no react props, no element id and no design-system CSS. It is picked up on 5.1, 5.2 and 5.3
+    alike, and the core/edit_switch AMD module it initialises keeps the same init(id) signature on
     all three. Re-sync only if the theme edit_switch() starts passing the 5.3 context.
+
+    Markup (FX-02 round 2, 2026-10-15): the 5.2 core markup (form-check form-switch, ms-2, me-2,
+    input-group) is Bootstrap 5, which this theme does not style, so the switch rendered as a bare
+    browser checkbox. It is now Bootstrap 4's custom-control custom-switch, which the theme compiles
+    (scss/bootstrap/_custom-forms.scss) and already styles in the navbar (_surface-navbar.scss) and
+    here (primarynavigation.scss: .editmode-switch-form). The label text sits in its own span so that
+    below the md breakpoint only the words are visually hidden (a hidden label would clip the switch
+    drawn by its ::before and ::after as well). Everything the script and the no-JavaScript fallback
+    rely on is unchanged: the form, the checkbox name, id, data-context and data-pageurl, the hidden
+    inputs and the noscript submit.
 }}
-<form action="{{{legacyseturl}}}" method="post" class="d-flex align-items-center editmode-switch-form ms-2">
-    <div class="input-group">
-        <label class="me-2 mb-0 form-check-label {{#checked}}text-primary{{/checked}}" for="{{uniqid}}-editingswitch">
-            {{#str}} editmode {{/str}}
+<form action="{{{legacyseturl}}}" method="post" class="d-flex align-items-center editmode-switch-form ml-2">
+    <div class="custom-control custom-switch">
+        <input type="checkbox"{{!
+            }} name="setmode"{{!
+            }}{{#checked}}{{!
+                }} checked{{!
+            }}{{/checked}}{{!
+            }} class="custom-control-input"{{!
+            }} id="{{uniqid}}-editingswitch"{{!
+            }} data-context="{{{pagecontextid}}}"{{!
+            }} data-pageurl="{{{pageurl}}}"{{!
+        }}>
+        <label class="custom-control-label{{#checked}} text-primary{{/checked}}" for="{{uniqid}}-editingswitch">
+            <span class="editmode-switch-form__text">{{#str}} editmode {{/str}}</span>
         </label>
-        <div class="form-check form-switch">
-            <input type="checkbox"{{!
-                }} name="setmode"{{!
-                }}{{#checked}}{{!
-                    }} checked{{!
-                }}{{/checked}}{{!
-                }} class="form-check-input"{{!
-                }} id="{{uniqid}}-editingswitch"{{!
-                }} data-context="{{{pagecontextid}}}"{{!
-                }} data-pageurl="{{{pageurl}}}"{{!
-            }}>
-            <span class="form-check-label">&nbsp;</span>
-        </div>
     </div>
     <input type="hidden" name="sesskey" value="{{{sesskey}}}">
     <input type="hidden" name="pageurl" value="{{{pageurl}}}">

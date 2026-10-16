@@ -1011,6 +1011,7 @@ JS;
         $categorycontext = context_coursecat::instance($COURSE->category);
 
         $admin_default_menu = $is_courseedit_icon = $course_reports = $course_complition = $coursebackup = false;
+        $manage = false;
         $allow_editing = false;
         $editing_url = "";
          if(has_capability('moodle/course:create', $systemcontext) || is_siteadmin()) {
@@ -1026,7 +1027,12 @@ JS;
         if($this->page->pagetype!='local-catalog-courseinfo') {
             if(!(is_siteadmin() || has_any_capability(['moodle/course:view'], $systemcontext))){
                 $manage = false;
-                $USER->editing = 0;
+                // Edit mode is NOT cleared here. This used to set $USER->editing = 0 for everybody without moodle/course:view,
+                // and an editingteacher does not hold that capability (it is a manager capability), so editing was switched
+                // off in the middle of the very request that showed it: the layout and the body class had been built in editing
+                // mode, the course content that follows the header rendered in viewing mode (no editing controls, console
+                // errors) and the next page load found editing off. $PAGE->user_is_editing() already requires
+                // $PAGE->user_allowed_editing(), so a user who may not edit never gets editing mode and nothing needs clearing.
             }
             if ($PAGE->user_allowed_editing() && $manage){
 
