@@ -4,13 +4,13 @@
   "approved_on": "2026-09-30",
   "delegated_on": "2026-10-07",
   "delegation_note": "On 2026-10-07 Nitin Rajput delegated the open owner decisions ('self review and decide recommended option') on top of the signed basis 'do everything as recommended'. Entries whose why starts with [delegated 2026-10-07] were decided under that delegation. The two cart finance keys (cart.credit_balances, cart.erpnext_invoices_legal) are accepted on that basis; Airpay Finance was not consulted. No skip reason is pre-accepted: accepted_reasons is absent on purpose, and the owner adds each needs-owner reason with its Stage B count after the rehearsal. Any edit after the Stage B rehearsal changes the sha256 and is a re-approval event.",
-  "reapproved_on": "2026-10-14",
-  "reapproval_note": "On 2026-10-14 Nitin Rajput answered the open owner questions in writing (chat, 12:12 IST; docs/cutover/NITIN-DECISION-BRIEF-2026-10-14.md): D1 accept the loss of the empty FNS0001 survey (Moodle 5.x drops mod_survey); Q1 IDN-05 nobody beyond the site admins; Q2 EV-18 a local evidence session; Q3 LRN-06 sentientia.recompletion.run_rules stays OFF; Q5(a) the INR 10 sale of 10 Jan 2025 was his own test payment, no invoice owed; Q7 accept the needs-owner skips counted on the April copy (learningplan:orphan_course 4, ratings:orphan_item 87, ratings:unknown_area 195, of which 194 are vulnerability-scanner probe rows, F-41). Only those three reasons are accepted; a reason that was 0 on April and shows a count on the final backup comes back to him. Q12, Q13 deletes confirmed; Q14 fold_reviewed confirmed as the way to accept request comment rows.",
+  "reapproved_on": "2026-10-15",
+  "reapproval_note": "On 2026-10-14 Nitin Rajput answered the open owner questions in writing (chat, 12:12 IST; docs/cutover/NITIN-DECISION-BRIEF-2026-10-14.md): D1 accept the loss of the empty FNS0001 survey (Moodle 5.x drops mod_survey); Q1 IDN-05 nobody beyond the site admins; Q2 EV-18 a local evidence session; Q3 LRN-06 sentientia.recompletion.run_rules stays OFF; Q5(a) the INR 10 sale of 10 Jan 2025 was his own test payment, no invoice owed; Q7 accept the needs-owner skips counted on the April copy (learningplan:orphan_course 4, ratings:orphan_item 87, ratings:unknown_area 195, of which 194 are vulnerability-scanner probe rows, F-41). Only those three reasons are accepted; a reason that was 0 on April and shows a count on the final backup comes back to him. On 2026-10-15 Nitin Rajput approved capping each of the three at its April count (learningplan:orphan_course<=4, ratings:orphan_item<=87, ratings:unknown_area<=195): a count above its cap on the final backup also comes back to him. Q12, Q13 deletes confirmed; Q14 fold_reviewed confirmed as the way to accept request comment rows.",
   "basis": "owner instruction: do everything as recommended",
   "accepted_reasons": [
-    "learningplan:orphan_course",
-    "ratings:orphan_item",
-    "ratings:unknown_area"
+    "learningplan:orphan_course<=4",
+    "ratings:orphan_item<=87",
+    "ratings:unknown_area<=195"
   ],
   "decisions": {
     "framework.adr_accepted": {

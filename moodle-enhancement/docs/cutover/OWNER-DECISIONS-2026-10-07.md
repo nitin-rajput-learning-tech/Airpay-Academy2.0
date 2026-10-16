@@ -437,3 +437,25 @@ new hash at step 09 and the parity gate checks it at step 10.
 
 Still open: Q8 (only if Stage B shows guessed tenants), Q9 to Q11 (reader flags at cutover, after the UAT
 screenshots), and Q6 points 2 to 6 for Airpay Finance (GSTIN, series, credit notes, e-invoice IRN, retention).
+
+## 12. Skip caps of 2026-10-15
+
+Nitin Rajput approved in writing (chat, 2026-10-15) that each skip reason he accepted on 2026-10-14 (Q7) is accepted only
+up to its April count. `accepted_reasons` now uses the row-bounded form that the eval-followups merge added to
+`decisions` (`feature:code<=rows`):
+
+| Reason | April count | Accepted up to |
+|---|---|---|
+| `learningplan:orphan_course` | 4 | `<=4` |
+| `ratings:orphan_item` | 87 | `<=87` |
+| `ratings:unknown_area` | 195 (194 scanner probe rows, F-41) | `<=195` |
+
+A count above its cap on the final backup is no longer accepted, and comes back to Nitin as it would for a new reason.
+The file carries `reapproved_on: 2026-10-15`, and its `reapproval_note` records the caps. Its sha256 (CRLF normalised to
+LF) moved from `976394aa...` to `e27be56757b5a3c7562fba118df0c7cabc363cd561b8b631ac78b788d832357b`. Stage B records this
+hash at step 09, and the parity gate checks it at step 10 (`--expect-decisions-hash`). The fixture copies in both
+`sentientia_platform` trees were replaced with the signed file (`tools/check-bizlms-fixture-copies.php` OK).
+
+Tested on local XAMPP 5.1 on 2026-10-16: the 10 test files that load the signed copy (platform decisions and support,
+plus the BizLMS import tests of ratings, learningpath, classroom, programs, cart, core, emails and org) ran 363 tests
+with 0 failures.
