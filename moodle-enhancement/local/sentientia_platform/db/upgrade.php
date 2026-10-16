@@ -446,5 +446,15 @@ function xmldb_local_sentientia_platform_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026100802, 'local', 'sentientia_platform');
     }
 
+    // ── 2026-10-15 — ADR-032 framework code marker, merged from claude/eval-followups (written there as 2026100701,
+    // a number gap-integration had already used). No schema change: the PRESERVE sequence floor that never lowers a
+    // counter (writer::reset_sequence), step::target_children() with runner::preflight_target_children(), the
+    // row-bounded accepted_reasons, and customer::of_tenant(). local_sentientia_evaluation declares this version as
+    // its dependency, so an evaluation tree can never run beside a platform tree that lacks them. Nothing to alter, so
+    // the step only records the version (the savepoint keeps a re-run harmless).
+    if ($oldversion < 2026101500) {
+        upgrade_plugin_savepoint(true, 2026101500, 'local', 'sentientia_platform');
+    }
+
     return true;
 }

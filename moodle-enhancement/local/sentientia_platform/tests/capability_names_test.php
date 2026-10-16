@@ -99,11 +99,9 @@ final class capability_names_test extends \advanced_testcase {
         // (Bulk enrolment by audience gated on local/sentientia_classroom:enrol, which no access.php declares, so the
         // page, the form and both web services refused everyone. Fixed 2026-10-07, XC-CLS-ENROL: they gate on
         // :manage now, behind the flag sentientia.classroom.bulk_enrol_audience. The four entries are gone.)
-        // Evaluation response list and detail gate on :view, which only :manage
-        // and :respond exist next to. Declare :view (with a back-fill) or gate
-        // on :manage; a product decision, out of scope for the persona fixes.
-        'local_sentientia_evaluation/response_detail.php|local/sentientia_evaluation:view' => 1,
-        'local_sentientia_evaluation/response_list.php|local/sentientia_evaluation:view' => 1,
+        // The evaluation response list and detail pages were here (they gated on :view, declared nowhere). EV-06
+        // regated both on :manage behind the flag sentientia.evaluation.response_drilldown, so their entries are
+        // gone: a new undeclared capability there fails this test like any other.
     ];
 
     /**

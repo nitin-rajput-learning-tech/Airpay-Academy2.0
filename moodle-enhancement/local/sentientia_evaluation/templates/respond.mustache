@@ -319,8 +319,9 @@
         {{#is_numeric}}
         <input type="number" name="q-{{id}}" class="form-control" style="max-width: 180px;"
                step="1"
-               {{#numeric_min}}min="{{.}}"{{/numeric_min}}
-               {{#numeric_max}}max="{{.}}"{{/numeric_max}}
+               {{! has_numeric_*, not numeric_*, are the keys: a bound of 0 is the text "0", which Mustache reads as false. }}
+               {{#has_numeric_min}}min="{{numeric_min}}"{{/has_numeric_min}}
+               {{#has_numeric_max}}max="{{numeric_max}}"{{/has_numeric_max}}
                placeholder="0"
                {{#required}}required{{/required}}>
         {{#numeric_hint}}<small class="text-muted d-block mt-1">{{.}}</small>{{/numeric_hint}}

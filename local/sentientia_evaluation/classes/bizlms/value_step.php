@@ -19,10 +19,13 @@ use local_sentientia_platform\bizlms\step;
  * decided it, so they cannot disagree):
  *
  *  - accepted -> FOLDED into its response (in_response_data);
- *  - not accepted -> archived with the reason: the item is not a question here (item_not_imported), a second
- *    value for the same item (duplicate_value), or a value that cannot be an answer to its item
- *    (value_not_valid: a position that does not exist, text where a number belongs). It stays in the legacy
- *    table and the report counts it;
+ *  - not accepted -> archived with the reason. It stays in the legacy table and the report counts it:
+ *      item_not_imported  the item is a layout item (or otherwise not a question) of this very form: nothing to carry;
+ *      foreign_item       the item belongs to ANOTHER form (or a template): the answer is lost, for the owner;
+ *      missing_item       the item does not exist: the answer is lost, for the owner;
+ *      duplicate_value    a second value for the same item: the first wins, for the owner;
+ *      value_not_valid    a value that cannot be an answer to its item (a position that does not exist, text where
+ *                         a number belongs): for the owner;
  *  - its completion was not imported -> archived (response_not_imported); no completion row at all -> skipped
  *    (orphan_completed).
  *

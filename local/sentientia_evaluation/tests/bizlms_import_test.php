@@ -13,6 +13,7 @@ use local_sentientia_platform\bizlms\importer as framework_importer;
 use local_sentientia_platform\bizlms\legacymap;
 use local_sentientia_platform\bizlms\registry;
 use local_sentientia_platform\bizlms\report;
+use local_sentientia_platform\bizlms\runner;
 use local_sentientia_platform\phpunit\importer_contract;
 use local_sentientia_platform\phpunit\legacy_schema_fixture;
 
@@ -101,30 +102,43 @@ final class bizlms_import_test extends \advanced_testcase {
         'evaluation:value_not_valid', 'evaluation:duplicate_value', 'evaluation:orphan_form',
         'evaluation:orphan_template', 'evaluation:orphan_item', 'evaluation:orphan_user',
         'evaluation:orphan_assignee', 'evaluation:orphan_completed', 'evaluation:no_timestamp',
-        'evaluation:unmapped_enum',
+        'evaluation:unmapped_enum', 'evaluation:foreign_item', 'evaluation:missing_item',
     ];
 
     /**
-     * The seven choices the importer declares, with the given needs-owner reasons accepted.
+     * The nine choices the importer declares (evaluation.sticky_anonymity since EV-16,
+     * evaluation.tenant_editor_fallback since EV-TENANT), with the given needs-owner reasons accepted.
      *
      * @param string[] $accepted
      * @return decisions
      */
     private function decisions_accepting(array $accepted): decisions {
-        return decisions::from_array([
-            'tenant.unresolved.evaluation' => 'pathless',
-            'evaluation.open_forms' => 'archived',
-            'evaluation.multichoicerated' => 'multichoice',
-            'evaluation.sp_anonymous_subject' => 'hidden',
-            'evaluation.legacy_anonymous_linkage' => 'untouched_pending_legacy_privacy_adr',
-            'evaluation.trainer_feedback_form_names' => 'keep_bizlms_name',
-            'evaluation.imported_forms_read_only' => true,
+        return decisions::from_array($this->declared_choices() + [
             'accepted_reasons' => array_values($accepted),
         ]);
     }
 
     /**
-     * The owner's choices: the seven the importer declares, and every needs-owner reason accepted, so a run that
+     * The nine choices the importer declares, each with the one value it implements.
+     *
+     * @return array<string, mixed>
+     */
+    private function declared_choices(): array {
+        return [
+            'tenant.unresolved.evaluation' => 'pathless',
+            'evaluation.tenant_editor_fallback' => 'not_used',
+            'evaluation.open_forms' => 'archived',
+            'evaluation.multichoicerated' => 'multichoice',
+            'evaluation.sp_anonymous_subject' => 'hidden',
+            'evaluation.sticky_anonymity' => 'whole_form',
+            'evaluation.legacy_anonymous_linkage' => 'untouched_pending_legacy_privacy_adr',
+            'evaluation.trainer_feedback_form_names' => 'keep_bizlms_name',
+            'evaluation.imported_forms_read_only' => true,
+        ];
+    }
+
+    /**
+     * The owner's choices: the nine the importer declares, and every needs-owner reason accepted, so a run that
      * loses nothing unexpectedly exits 0.
      *
      * @return decisions
@@ -628,6 +642,39 @@ final class bizlms_import_test extends \advanced_testcase {
             $methods, 'form 3 has a padded path; forms 4 and 9 cannot be placed');
     }
 
+    /**
+     * EV-TENANT: a form that its path, its stored root and its classroom cannot place stays pathless. It used to be
+     * filed under the tenant of the person who last edited it, a guess that would show the form's named answers to
+     * administrators BizLMS never showed them to. Here that person works in /77 today.
+     */
+    public function test_a_form_with_no_clue_is_not_filed_under_the_tenant_of_the_user_who_last_edited_it(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->contract_seed();
+        // No path ('0', the BizLMS default), no stored root, no classroom; last edited by a /77 person.
+        $this->put_form(13, ['usermodified' => $this->u['u2']]);
+        [$result, $report] = $this->contract_run(true);
+        $this->assertSame(0, $result['exit'], implode('; ', array_merge($result['blockers'], $result['unproven'])));
+
+        $thirteen = $this->form(13);
+        $this->assertNull($thirteen->open_path, 'no path: the editor\'s tenant is not a clue');
+        $this->assertSame(0, (int) $thirteen->costcenterid);
+        $methods = $this->section($report, 'evaluation.forms', 'tenant_methods');
+        $this->assertEquals(3, $methods['unresolved'], 'forms 4, 9 and 13 cannot be placed, and the report says so');
+        $this->assertArrayNotHasKey('fallback:usermodified', $methods, 'the editor is not a candidate any more');
+
+        // Only cross-tenant callers see it: not an administrator of the editor's own tenant.
+        $admin77 = $this->getDataGenerator()->create_user(['username' => 'evimp_adm77']);
+        $DB->set_field('user', 'open_path', '/77', ['id' => $admin77->id]);
+        role_assign((int) $DB->get_field('role', 'id', ['shortname' => 'manager'], MUST_EXIST), $admin77->id,
+            \context_system::instance()->id);
+        accesslib_clear_all_caches_for_unit_testing();
+        $this->setUser($DB->get_record('user', ['id' => $admin77->id], '*', MUST_EXIST));
+        $this->assertFalse(evaluation_manager::can_manage_evaluation($thirteen));
+        $this->setAdminUser();
+        $this->assertTrue(evaluation_manager::can_manage_evaluation($thirteen));
+    }
+
     public function test_a_trainer_feedback_form_is_scoped_by_its_classroom_and_linked_to_it(): void {
         global $DB;
         $this->contract_begin();
@@ -833,7 +880,7 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertSame('folded', $this->entry('local_evaluation_value', 7)->outcome, 'an empty answer is an answer of none');
 
         $expected = [
-            8 => 'value_not_valid', 11 => 'duplicate_value', 12 => 'item_not_imported', 13 => 'item_not_imported',
+            8 => 'value_not_valid', 11 => 'duplicate_value', 12 => 'item_not_imported', 13 => 'foreign_item',
             23 => 'response_not_imported', 27 => 'response_not_imported',
         ];
         foreach ($expected as $value => $reason) {
@@ -882,6 +929,157 @@ final class bizlms_import_test extends \advanced_testcase {
         $old = $this->response_of(3002);
         $this->assertSame($this->u['u1'], (int) $old->userid, 'before evaluatedby existed the user is the one row holds');
         $this->assertNull($old->subject_userid);
+    }
+
+    /**
+     * EV-17: the form carries the mode BizLMS gave it, so Sentientia no longer guesses from the responses.
+     */
+    public function test_a_form_carries_the_evaluation_mode_bizlms_gave_it(): void {
+        global $DB;
+        $this->run_world();
+        foreach ($DB->get_records(importer::T_FORMS) as $form) {
+            $this->assertSame((int) $form->id === 3 ? 'SP' : 'SE', $form->evaluationmode,
+                "form {$form->id}: only the seeded supervisor evaluation is SP");
+        }
+    }
+
+    /**
+     * EV-17: a supervisor completion from before BizLMS recorded who filled it in follows the map (the completion's
+     * user answers, which is the person evaluated, and no subject is kept) and is counted, so the owner knows how
+     * many responses name the person evaluated as the responder.
+     */
+    public function test_an_old_supervisor_completion_with_no_evaluator_is_counted(): void {
+        $report = $this->run_world();
+        // 3002 is a named completion of supervisor form 3 with evaluatedby 0; 3001 names its evaluator.
+        $warnings = $this->section($report, 'evaluation.responses', 'warnings');
+        $this->assertEquals(1, $warnings['sp_responder_unknown'], 'only completion 3002 has no evaluator');
+        $this->assertSame($this->u['u1'], (int) $this->response_of(3002)->userid, 'still as the map says');
+        $this->assertNull($this->response_of(3002)->subject_userid);
+        $this->assertSame($this->u['sup'], (int) $this->response_of(3001)->userid);
+    }
+
+    /**
+     * EV-17: an anonymous supervisor evaluation keeps no subject, and the import implies a "responded" assignment
+     * for the person evaluated (no assignee row). Neither it nor the named supervisor form 3 reaches that person's
+     * history, because the forms say they are supervisor evaluations; their self evaluations still do.
+     */
+    public function test_the_person_evaluated_does_not_see_an_imported_supervisor_form_as_responded(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        $u1 = $this->u['u1'];
+        $this->put_form(14, ['evaluationmode' => 'SP', 'anonymous' => 1, 'open_path' => '/1/5']);
+        $this->put_item(1401, ['evaluation' => 14, 'typ' => 'textfield', 'position' => 1]);
+        $this->put_completed(14001, 14, $u1, self::T0 + 14000, ['anonymous_response' => 1]);
+        $this->put_value(41, 14001, 1401, 'Fine');
+        [$result] = $this->contract_run(true);
+        $this->assertSame(0, $result['exit'], implode('; ', array_merge($result['blockers'], $result['unproven'])));
+
+        $this->assertSame('SP', $this->form(14)->evaluationmode);
+        $this->assertSame(0, (int) $this->response_of(14001)->userid, 'anonymous: no responder');
+        $this->assertNull($this->response_of(14001)->subject_userid, 'and no subject: the old marker is gone');
+        $this->assertSame('responded', $this->assignment(14, $u1)->status, 'the import still implies the assignment');
+
+        $names = array_map(static fn(\stdClass $r): string => $r->name, learner_history::for_user($u1));
+        $this->assertContains('Form 1', $names, 'a self evaluation they answered is listed');
+        $this->assertNotContains('Form 3', $names, 'the named supervisor evaluation about them');
+        $this->assertNotContains('Form 14', $names, 'the anonymous one, whose response names nobody');
+    }
+
+    /**
+     * EV-17: verify names an imported form whose mode no longer matches BizLMS.
+     */
+    public function test_verify_names_a_form_whose_mode_no_longer_matches_bizlms(): void {
+        global $DB;
+        $this->run_world();
+        $runner = new runner(['decisions' => $this->contract_decisions()]);
+        $clean = $runner->verify(['evaluation']);
+        $this->assertSame(0, $clean['exit'], implode('; ', $clean['failures']['evaluation']));
+
+        // The supervisor evaluation loses its marker, and a self evaluation gains one.
+        $DB->set_field(importer::T_FORMS, 'evaluationmode', 'SE', ['id' => 3]);
+        $DB->set_field(importer::T_FORMS, 'evaluationmode', 'SP', ['id' => 1]);
+        $failures = $runner->verify(['evaluation']);
+        $this->assertSame(1, $failures['exit']);
+        $this->assertContains('imported_form_mode_mismatch:2', $failures['failures']['evaluation']);
+    }
+
+    /**
+     * Review round of 2026-10-07 (imported_form_mode_mismatch): the form step reads the BizLMS value strictly in PHP while
+     * verify compared it in SQL, where MySQL ignores case and trailing spaces. A value the owner mapped through the
+     * decisions file ('sp ', typed in lower case with a space) wrote SE and then failed verify. Both read it one way now.
+     */
+    public function test_a_mode_the_owner_mapped_reads_the_same_in_the_import_and_in_verify(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        $this->put_form(15, ['evaluationmode' => 'sp ', 'open_path' => '/1/5']);
+        $decisions = decisions::from_array($this->declared_choices() + [
+            'accepted_reasons' => array_values(self::NEEDS_OWNER),
+            'enums.local_evaluations.evaluationmode' => ['sp ' => 'supervisor evaluation, typed in lower case with a space'],
+        ]);
+        [$result] = $this->contract_run(true, ['decisions' => $decisions]);
+        $this->assertSame(0, $result['exit'], implode('; ', array_merge($result['blockers'], $result['unproven'])));
+
+        $this->assertSame('SP', $this->form(15)->evaluationmode, 'a mapped value that reads SP is a supervisor form');
+        $this->assertSame('SP', $this->form(3)->evaluationmode);
+        $this->assertSame('SE', $this->form(1)->evaluationmode);
+
+        $check = (new runner(['decisions' => $decisions]))->verify(['evaluation']);
+        $this->assertSame(0, $check['exit'], implode('; ', $check['failures']['evaluation'] ?? []));
+    }
+
+    /**
+     * The one reading of a BizLMS evaluationmode value: SP, ignoring case and surrounding spaces, or else SE.
+     */
+    public function test_the_evaluation_mode_of_a_bizlms_value(): void {
+        foreach (['SP', 'sp', ' SP', 'SP ', ' sP '] as $value) {
+            $this->assertSame('SP', importer::mode_of($value), "'{$value}'");
+            $this->assertTrue(importer::is_supervisor($value));
+        }
+        foreach (['SE', 'se', '', ' ', 'S P', 'SPX', 'XSP', null, 0, false, [], "\tSP"] as $value) {
+            $this->assertSame('SE', importer::mode_of($value), var_export($value, true));
+            $this->assertFalse(importer::is_supervisor($value));
+        }
+    }
+
+    /**
+     * Review round of 2026-10-07 (EV-17 back-fill): a site that imported before the column existed has every imported
+     * form at the default SE. The back-fill marks the named supervisor form by its subject (the old signal) and the
+     * ANONYMOUS supervisor form, which keeps no subject, through the import's map and the kept BizLMS row.
+     */
+    public function test_the_back_fill_uses_the_map_for_an_anonymous_supervisor_form(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->contract_seed();
+        $u1 = $this->u['u1'];
+        $this->put_form(14, ['evaluationmode' => 'SP', 'anonymous' => 1, 'open_path' => '/1/5']);
+        $this->put_item(1401, ['evaluation' => 14, 'typ' => 'textfield', 'position' => 1]);
+        $this->put_completed(14001, 14, $u1, self::T0 + 14000, ['anonymous_response' => 1]);
+        $this->put_value(41, 14001, 1401, 'Fine');
+        [$result] = $this->contract_run(true);
+        $this->assertSame(0, $result['exit'], implode('; ', array_merge($result['blockers'], $result['unproven'])));
+        $this->assertSame('SP', $this->form(14)->evaluationmode);
+        $this->assertNull($this->response_of(14001)->subject_userid, 'nothing in the responses says form 14 is a supervisor form');
+
+        // The site as it stands after upgrade step 2026100701 on a copy that imported earlier: the column holds SE.
+        $DB->set_field(importer::T_FORMS, 'evaluationmode', 'SE');
+        $this->assertSame('SE', $this->form(3)->evaluationmode);
+        $this->assertSame('SE', $this->form(14)->evaluationmode);
+
+        $counts = evaluation_mode_backfill::apply();
+        $this->assertSame(['subject' => 1, 'map' => 1], $counts, 'form 3 by its subject, form 14 by the map');
+        foreach ($DB->get_records(importer::T_FORMS) as $form) {
+            $this->assertSame(in_array((int) $form->id, [3, 14], true) ? 'SP' : 'SE', $form->evaluationmode,
+                "form {$form->id}: only the two BizLMS supervisor forms are SP");
+        }
+        // verify agrees with BizLMS again, and a second run changes nothing.
+        $check = (new runner(['decisions' => $this->contract_decisions()]))->verify(['evaluation']);
+        $this->assertSame(0, $check['exit'], implode('; ', $check['failures']['evaluation'] ?? []));
+        $this->assertSame(['subject' => 0, 'map' => 0], evaluation_mode_backfill::apply());
+
+        // Only SE becomes SP: a form BizLMS calls SE that somebody marked SP is left alone (that is verify's to name).
+        $DB->set_field(importer::T_FORMS, 'evaluationmode', 'SP', ['id' => 1]);
+        $this->assertSame(['subject' => 0, 'map' => 0], evaluation_mode_backfill::apply());
+        $this->assertSame('SP', $this->form(1)->evaluationmode);
     }
 
     public function test_responses_of_missing_people_and_missing_times_are_handled(): void {
@@ -993,6 +1191,100 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->assertSame(1, $DB->count_records(importer::T_ASSIGN, ['evaluationid' => 1, 'userid' => $this->u['u1']]));
     }
 
+    public function test_the_implied_assignment_comes_from_the_first_imported_completion(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->contract_seed();
+        $gen = $this->getDataGenerator();
+        $t = self::T0 + 20000;
+
+        // (a) A named self-evaluation form that has no time of its own. The person has no assignee row and two
+        // completions: the lower id (A) has no time either, so it is skipped (no_timestamp); B has one.
+        $this->put_form(10, ['timemodified' => 0, 'open_path' => '/1/5']);
+        $learner = $gen->create_user(['username' => 'evimp_first_imported']);
+        $DB->set_field('user', 'open_path', '/1/5', ['id' => $learner->id]);
+        $this->put_completed(1101, 10, (int) $learner->id, 0, ['anonymous_response' => 2]);
+        $this->put_completed(1102, 10, (int) $learner->id, $t, ['anonymous_response' => 2]);
+
+        // (b) A supervisor form. The subject S has no assignee row. The lower completion (A) was filled in by a user
+        // that does not exist, so it is skipped (orphan_user); B was filled in by an existing supervisor.
+        $this->put_form(11, ['evaluationmode' => 'SP', 'open_path' => '/1/5']);
+        $subject = $gen->create_user(['username' => 'evimp_subject']);
+        $DB->set_field('user', 'open_path', '/1/5', ['id' => $subject->id]);
+        $this->put_completed(1103, 11, (int) $subject->id, $t + 100, ['anonymous_response' => 2, 'evaluatedby' => 88881]);
+        $this->put_completed(1104, 11, (int) $subject->id, $t + 200,
+            ['anonymous_response' => 2, 'evaluatedby' => $this->u['sup']]);
+
+        // Every needs-owner reason is accepted by the contract's decisions, so the two skipped completions are fine.
+        [$result] = $this->contract_run(true);
+        $this->assertSame(0, $result['exit'], implode('; ', array_merge($result['blockers'], $result['unproven'])));
+
+        // (a) The skipped completion has no response and no assignment; the imported one carries the assignment.
+        $this->assertSame('skipped', $this->entry('local_evaluation_completed', 1101)->outcome);
+        $this->assertSame('no_timestamp', $this->entry('local_evaluation_completed', 1101)->reason);
+        $this->assertNull($this->target('local_evaluation_completed', 1101, 'assign'));
+        $this->assertSame(1, $DB->count_records(importer::T_ASSIGN, ['evaluationid' => 10, 'userid' => $learner->id]));
+        $assign = $this->assignment(10, (int) $learner->id);
+        $this->assertSame((int) $assign->id, $this->target('local_evaluation_completed', 1102, 'assign'));
+        $this->assertSame('responded', $assign->status);
+        $this->assertSame($t, (int) $assign->responded_at);
+        $this->assertSame($t, (int) $assign->timecreated);
+
+        // (b) Skipped for its responder; the supervisor's completion carries the subject's assignment, with its time.
+        $this->assertSame('skipped', $this->entry('local_evaluation_completed', 1103)->outcome);
+        $this->assertSame('orphan_user', $this->entry('local_evaluation_completed', 1103)->reason);
+        $this->assertNull($this->target('local_evaluation_completed', 1103, 'assign'));
+        $this->assertSame(1, $DB->count_records(importer::T_ASSIGN, ['evaluationid' => 11, 'userid' => $subject->id]));
+        $assign = $this->assignment(11, (int) $subject->id);
+        $this->assertSame((int) $assign->id, $this->target('local_evaluation_completed', 1104, 'assign'));
+        $this->assertSame($t + 200, (int) $assign->timecreated);
+        $this->assertSame($t + 200, (int) $assign->responded_at, 'the latest imported completion, not a skipped one');
+        // The response beside it is the supervisor's, about the subject.
+        $response = $this->response_of(1104);
+        $this->assertSame($this->u['sup'], (int) $response->userid);
+        $this->assertSame((int) $subject->id, (int) $response->subject_userid);
+    }
+
+    /**
+     * The test above has the skipped completion BEFORE the imported one, where the old "latest of every legacy
+     * completion" time and the new "latest imported" time agree. Here the skipped completion is the LATER one: a
+     * regression to the old time would stamp the person as having responded when a completion that was never
+     * imported happened.
+     */
+    public function test_the_implied_assignment_time_ignores_a_later_skipped_completion(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->contract_seed();
+        $gen = $this->getDataGenerator();
+        $t = self::T0 + 30000;
+
+        // A supervisor form. The subject has no assignee row and two completions. The lower one (A, 1201) is imported
+        // (its supervisor exists); the later one (B, 1202: higher id, later time) was filled in by a user that does
+        // not exist, so it is skipped (orphan_user).
+        $this->put_form(12, ['evaluationmode' => 'SP', 'open_path' => '/1/5']);
+        $subject = $gen->create_user(['username' => 'evimp_subject_late']);
+        $DB->set_field('user', 'open_path', '/1/5', ['id' => $subject->id]);
+        $this->put_completed(1201, 12, (int) $subject->id, $t + 200,
+            ['anonymous_response' => 2, 'evaluatedby' => $this->u['sup']]);
+        $this->put_completed(1202, 12, (int) $subject->id, $t + 900,
+            ['anonymous_response' => 2, 'evaluatedby' => 88882]);
+
+        [$result] = $this->contract_run(true);
+        $this->assertSame(0, $result['exit'], implode('; ', array_merge($result['blockers'], $result['unproven'])));
+
+        $this->assertSame('skipped', $this->entry('local_evaluation_completed', 1202)->outcome);
+        $this->assertSame('orphan_user', $this->entry('local_evaluation_completed', 1202)->reason);
+        $this->assertNull($this->target('local_evaluation_completed', 1202, 'assign'));
+
+        $this->assertSame(1, $DB->count_records(importer::T_ASSIGN, ['evaluationid' => 12, 'userid' => $subject->id]));
+        $assign = $this->assignment(12, (int) $subject->id);
+        $this->assertSame((int) $assign->id, $this->target('local_evaluation_completed', 1201, 'assign'));
+        $this->assertSame('responded', $assign->status);
+        $this->assertSame($t + 200, (int) $assign->timecreated);
+        $this->assertSame($t + 200, (int) $assign->responded_at,
+            'the latest IMPORTED completion; the skipped one at t+900 is not a response the person gave');
+    }
+
     public function test_assignment_times_on_a_protected_form_are_cut_to_the_day(): void {
         $this->run_world();
         $tz = \core_date::get_server_timezone_object();
@@ -1030,8 +1322,9 @@ final class bizlms_import_test extends \advanced_testcase {
         }
         ksort($tally);
         $expected = [
-            'deleted_form' => 1, 'dup_assignment' => 1, 'duplicate_value' => 1, 'in_response_data' => 20,
-            'in_template_payload' => 2, 'item_not_imported' => 2, 'not_a_question' => 5, 'orphan_assignee' => 1,
+            'deleted_form' => 1, 'dup_assignment' => 1, 'duplicate_value' => 1, 'foreign_item' => 1,
+            'in_response_data' => 20, 'in_template_payload' => 2, 'item_not_imported' => 1, 'not_a_question' => 5,
+            'orphan_assignee' => 1,
             'orphan_completed' => 1, 'orphan_form' => 3, 'orphan_item' => 1, 'orphan_template' => 1, 'orphan_user' => 1,
             'parent_deleted' => 3, 'response_not_imported' => 2, 'value_not_valid' => 1,
         ];
@@ -1108,13 +1401,7 @@ final class bizlms_import_test extends \advanced_testcase {
         $this->contract_seed();
         // Only "archived" is implemented: an active form would reopen answering with no assignment check.
         [$result] = $this->contract_run(true, [
-            'decisions' => decisions::from_array(['evaluation.open_forms' => 'active'] + [
-                'tenant.unresolved.evaluation' => 'pathless', 'evaluation.multichoicerated' => 'multichoice',
-                'evaluation.sp_anonymous_subject' => 'hidden',
-                'evaluation.legacy_anonymous_linkage' => 'untouched_pending_legacy_privacy_adr',
-                'evaluation.trainer_feedback_form_names' => 'keep_bizlms_name',
-                'evaluation.imported_forms_read_only' => true,
-            ]),
+            'decisions' => decisions::from_array(['evaluation.open_forms' => 'active'] + $this->declared_choices()),
         ]);
         $this->assertSame(1, $result['exit']);
         $this->assertStringContainsString('decision_value_not_allowed:evaluation.open_forms', implode(' ', $result['blockers']));
@@ -1126,6 +1413,39 @@ final class bizlms_import_test extends \advanced_testcase {
         [$result] = $this->contract_run(true, ['decisions' => decisions::none()]);
         $this->assertSame(1, $result['exit']);
         $this->assertStringContainsString('missing_decision:evaluation.open_forms', implode(' ', $result['blockers']));
+    }
+
+    /**
+     * EV-16: the sticky-anonymity choice is declared, so a decisions file signed before it existed cannot start the
+     * import.
+     */
+    public function test_a_decisions_file_without_the_sticky_anonymity_choice_blocks_the_feature(): void {
+        global $DB;
+        $this->contract_begin();
+        $this->contract_seed();
+        $without = $this->declared_choices();
+        unset($without['evaluation.sticky_anonymity']);
+        [$result] = $this->contract_run(true, ['decisions' => decisions::from_array($without)]);
+        $this->assertSame(1, $result['exit']);
+        $blockers = implode(' ', $result['blockers']);
+        $this->assertStringContainsString('missing_decision:evaluation.sticky_anonymity', $blockers);
+        $this->assertStringNotContainsString('missing_decision:evaluation.open_forms', $blockers,
+            'only the choice that is absent is named');
+        $this->assertSame(0, $DB->count_records(importer::T_FORMS), 'nothing is written while a blocker stands');
+    }
+
+    /**
+     * EV-16: a file that says the other thing (the named rows are kept) is refused too: only whole_form is implemented.
+     */
+    public function test_a_decisions_file_that_keeps_the_named_rows_blocks_the_feature(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        [$result] = $this->contract_run(true, [
+            'decisions' => decisions::from_array(['evaluation.sticky_anonymity' => 'named_rows_kept'] + $this->declared_choices()),
+        ]);
+        $this->assertSame(1, $result['exit']);
+        $this->assertStringContainsString('decision_value_not_allowed:evaluation.sticky_anonymity',
+            implode(' ', $result['blockers']));
     }
 
     public function test_a_native_form_with_a_bad_path_is_reported_before_the_run(): void {
@@ -1167,8 +1487,9 @@ final class bizlms_import_test extends \advanced_testcase {
         [$result] = $this->contract_run(true);
         $this->assertSame(1, $result['exit']);
         $blockers = implode(' ', $result['blockers']);
-        $this->assertStringContainsString('leftover_rows_at_legacy_form_ids:' . importer::T_ASSIGN . ':2', $blockers);
-        $this->assertStringContainsString('leftover_rows_at_legacy_form_ids:' . importer::T_TRIGGERS . ':1', $blockers);
+        // The framework's check (form_step::target_children(), item 7): the step, the table and the count, never a row.
+        $this->assertStringContainsString('leftover_rows_at_legacy_ids:evaluation.forms:' . importer::T_ASSIGN . ':2', $blockers);
+        $this->assertStringContainsString('leftover_rows_at_legacy_ids:evaluation.forms:' . importer::T_TRIGGERS . ':1', $blockers);
         $this->assertStringNotContainsString(importer::T_RESPONSES, $blockers, 'a table with no stray row is not named');
         $this->assertSame(0, $DB->count_records(importer::T_FORMS), 'nothing is written while a blocker stands');
         $this->assertSame(3, $DB->count_records(importer::T_ASSIGN), 'and the stray rows are not touched');
@@ -1182,6 +1503,8 @@ final class bizlms_import_test extends \advanced_testcase {
             $needs[$reason->code] = $reason->needsowner;
         }
         $this->assertTrue($needs['duplicate_value'], 'an answer the import drops is for the owner to look at');
+        $this->assertTrue($needs['foreign_item'], 'so is a value of another form\'s item');
+        $this->assertTrue($needs['missing_item'], 'and a value of an item that no longer exists');
         $this->assertFalse($needs['item_not_imported'], 'a value of a layout item is not');
 
         // The seed holds one such value (value 11). Until the owner accepts the reason, parity is unproven.
@@ -1189,6 +1512,93 @@ final class bizlms_import_test extends \advanced_testcase {
         [$result] = $this->contract_run(true, ['decisions' => $this->decisions_accepting($accepted)]);
         $this->assertSame(2, $result['exit']);
         $this->assertContains('evaluation:duplicate_value=1', $result['unproven']);
+    }
+
+    public function test_a_value_of_another_forms_item_or_of_no_item_is_left_to_the_owner(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+        // The seed already holds value 13, which names an item of ANOTHER form (item 201 belongs to form 2, the
+        // completion to form 1). This one names an item that does not exist at all. Seeded here, not in the shared
+        // world, so the tallies of the other tests do not move.
+        $this->put_value(41, 1001, 999999, '1');
+
+        // Strays the run will NOT archive as missing_item or foreign_item, because their completion is not imported,
+        // so the run reports them under another reason and the preflight must not count them:
+        $this->put_value(42, 1005, 888888, '1');        // no such item; completion 1005 is skipped (its user is gone)
+        $this->put_value(43, 5001, 888889, '1');        // no such item; completion of form 5, which is deleted
+        $this->put_value(44, 5001, 201, '1');           // item of form 2; the same deleted form
+        $this->put_form(10, ['timemodified' => 0, 'open_path' => '/1/5']);
+        $this->put_completed(1201, 10, $this->u['u1'], 0);   // no time of its own and none on its form: skipped
+        $this->put_value(45, 1201, 201, '1');           // item of form 2; completion 1201 is skipped (no time)
+        $this->put_value(46, 77777, 888890, '1');       // no such item; there is no completion 77777 at all
+
+        // The owner has accepted every reason but missing_item.
+        $accepted = array_diff(self::NEEDS_OWNER, ['evaluation:missing_item']);
+        [$result, $report] = $this->contract_run(true, ['decisions' => $this->decisions_accepting($accepted)]);
+
+        $this->assertSame(2, $result['exit'], 'an answer the import cannot carry is unproven until the owner accepts it');
+        $this->assertContains('evaluation:missing_item=1', $result['unproven']);
+        $this->assertNotContains('evaluation:foreign_item=1', $result['unproven'], 'accepted in this run');
+
+        // Each is archived under its own reason, and says which of the two it is.
+        $this->assertSame('archived', $this->entry('local_evaluation_value', 13)->outcome);
+        $this->assertSame('foreign_item', $this->entry('local_evaluation_value', 13)->reason);
+        $this->assertSame('archived', $this->entry('local_evaluation_value', 41)->outcome);
+        $this->assertSame('missing_item', $this->entry('local_evaluation_value', 41)->reason);
+        // A layout item of the form itself stays the harmless kind.
+        $this->assertSame('item_not_imported', $this->entry('local_evaluation_value', 12)->reason);
+        // A stray value of a completion that is not imported is reported under the completion's fate, as the run
+        // has always done: it is not "an answer the import lost", the whole response is.
+        foreach ([42, 43, 44, 45] as $valueid) {
+            $this->assertSame('response_not_imported', $this->entry('local_evaluation_value', $valueid)->reason,
+                "value {$valueid}");
+        }
+        $this->assertSame('orphan_completed', $this->entry('local_evaluation_value', 46)->reason);
+        // The completion's real answers are unaffected, and no stray value becomes an answer.
+        $this->assertSame('B', $this->answers_of(1001)[$this->qid(101)]);
+        $this->assertCount(12, $this->answers_of(1001), 'one key per imported question of form 1, no more');
+
+        // The preflight said so before the run, and said it of the values the run archives under each reason: one
+        // each (values 41 and 13). Counting every stray row would have said four and three; the strays of completions
+        // that are not imported (42 to 46) belong to the completion's own reason.
+        $preflight = $report->to_array()['features']['evaluation']['preflight'];
+        $this->assertSame(1, $preflight['counts']['values_missing_item']);
+        $this->assertSame(1, $preflight['counts']['values_foreign_item']);
+        $this->assertContains('values_missing_item:1', $preflight['warnings']);
+        $this->assertContains('values_foreign_item:1', $preflight['warnings']);
+        $this->assertSame([], $preflight['blockers'], 'a warning, not a blocker: the rows are reported and archived');
+    }
+
+    public function test_a_dry_run_without_its_parents_reports_the_classroom_as_deferred(): void {
+        $this->contract_begin();
+        $this->contract_seed();
+
+        // The evaluation feature ALONE: the classroom feature is neither complete nor simulated, so the trainer
+        // feedback form (form 4, classroom 7) cannot find its classroom in the map. That is the run's doing, not the
+        // data's, and the report says so instead of calling the classroom unresolved.
+        $report = new report();
+        $runner = new runner([
+            'apply' => false, 'decisions' => $this->contract_decisions(), 'report' => $report,
+            'batch' => $this->contract_batch(), 'atomic_threshold' => 0,
+        ]);
+        $result = $runner->run(['evaluation']);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        foreach (['evaluation.forms', 'evaluation.assignments', 'evaluation.responses'] as $step) {
+            $warnings = $this->section($report, $step, 'warnings');
+            $this->assertEquals(1, $warnings['deferred:local_classroom'] ?? 0, $step . ': the one trainer feedback form');
+            $this->assertArrayNotHasKey('classroom_unresolved', $warnings, $step);
+        }
+
+        // With every feature in the run the classroom is simulated; it is still not in the map, so now it IS
+        // unresolved, as before.
+        [$result, $report] = $this->contract_run(false);
+        $this->assertContains($result['exit'], [0, 2], implode('; ', $result['blockers']));
+        $warnings = $this->section($report, 'evaluation.assignments', 'warnings');
+        $this->assertEquals(1, $warnings['classroom_unresolved'] ?? 0);
+        $this->assertArrayNotHasKey('deferred:local_classroom', $warnings);
+        foreach (['evaluation.forms', 'evaluation.responses'] as $step) {
+            $this->assertArrayNotHasKey('deferred:local_classroom', $this->section($report, $step, 'warnings'), $step);
+        }
     }
 
     public function test_the_import_sends_nothing_and_queues_nothing(): void {

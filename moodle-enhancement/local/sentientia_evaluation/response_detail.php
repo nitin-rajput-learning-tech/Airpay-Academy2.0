@@ -8,6 +8,11 @@
  * Shows one respondent's full answers for one evaluation, including
  * comparison to all other respondents (avg / distribution per question).
  *
+ * Behind the default-OFF flag sentientia.evaluation.response_drilldown (read for the EVALUATION's tenant) and
+ * local/sentientia_evaluation:manage (EV-06): the page used to ask for ":view", which no plugin declares, so nobody
+ * could open it. An evaluation whose respondents are protected (evaluation_manager::identity_protected()) shows its
+ * totals only: this page answers with a notice instead of one respondent's answers.
+ *
  * @package local_sentientia_evaluation
  */
 
@@ -15,6 +20,10 @@ require_once(__DIR__ . '/../../config.php');
 require_login();
 
 global $DB, $OUTPUT, $PAGE;
+
+// EV-06: the capability comes first, so that nothing is read for a caller who may not be here. The rest of the gate
+// (the ADR-031 tenant and the flag, which is read for the EVALUATION's tenant) needs the evaluation: below.
+\local_sentientia_evaluation\evaluation_manager::require_response_drilldown_capability();
 
 $id = required_param('id', PARAM_INT);  // response id
 $response = $DB->get_record('local_sentientia_evaluation_responses',
@@ -27,113 +36,46 @@ $PAGE->set_context($ctx);
 $PAGE->set_url(new moodle_url('/local/sentientia_evaluation/response_detail.php', ['id' => $id]));
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title('Response detail');
-$PAGE->set_heading('Response detail — ' . format_string($evaluation->name));
-require_capability('local/sentientia_evaluation:view', $ctx);
-// ADR-031: one respondent's answers only for an evaluation in the caller's
-// tenant (in place before this page is ever re-enabled - :view is not
-// declared, so today it is dead for everyone).
-\local_sentientia_evaluation\evaluation_manager::require_evaluation_access($evaluation);
+// set_heading() runs format_string() on what it is given, so it takes the raw name (it leaves an "&" that already
+// starts an entity alone, so formatting it first made no difference to its output).
+$PAGE->set_heading('Response detail — ' . $evaluation->name);
+// ADR-031: one respondent's answers only for an evaluation in the caller's tenant; then the flag, read for that
+// evaluation's tenant (OFF answers "not available", as if the page did not exist).
+\local_sentientia_evaluation\evaluation_manager::require_response_drilldown($evaluation);
 
 // Anonymous check — if evaluation is anonymous, don't reveal userid.
 // 2026-09-25: sticky (evaluation_manager::identity_protected()) - anonymous
 // now, answered anonymously before, or with an anonymous question, whose
-// answer is on this very page. The submission time is then shown to the day.
+// answer is on this very page.
 $is_anonymous_eval = \local_sentientia_evaluation\evaluation_manager::identity_protected($evaluation);
-$user = null;
-if (!$is_anonymous_eval && $response->userid) {
-    $user = $DB->get_record('user', ['id' => $response->userid],
-        'firstname, lastname, email, open_employeeid');
+
+// 2026-10-07 (review): such an evaluation offers its totals only. Naming nobody is not enough on this page: it prints
+// one person's free-text answers beside the day and the course, program or classroom, which can single them out in a
+// small group. So the answers are not shown at all: a notice and the way back to the totals.
+if ($is_anonymous_eval) {
+    echo $OUTPUT->header();
+    echo \local_sentientia_evaluation\evaluation_manager::individual_responses_protected_notice($evaluation);
+    echo $OUTPUT->footer();
+    exit;
 }
 
-// Parse the response data.
-$answers = json_decode($response->response_data ?: '{}', true) ?: [];
+// An invited user's pending shell row (timesubmitted 0) is an invitation, not a response: refuse it, so it is never
+// shown as their answer.
+\local_sentientia_evaluation\evaluation_manager::require_submitted_response($response);
 
-// Load all questions in order.
-$questions = $DB->get_records('local_sentientia_evaluation_questions',
-    ['evaluationid' => $evaluation->id], 'sortorder ASC');
+// Who answered, named through fullname() like the response list and the CSV (the site's name format applies to all
+// three); nobody on a protected evaluation. Built in the manager so it can be tested.
+$respondent = \local_sentientia_evaluation\evaluation_manager::response_detail_respondent($response, $is_anonymous_eval);
 
-// Aggregate stats per question for comparison.
-$all_responses = $DB->get_records('local_sentientia_evaluation_responses',
-    ['evaluationid' => $evaluation->id]);
-
-$qstats = [];  // qid => ['count' => N, 'avg' => x, 'distribution' => {...}]
-foreach ($questions as $q) {
-    $vals = [];
-    foreach ($all_responses as $r) {
-        $data = json_decode($r->response_data ?: '{}', true) ?: [];
-        $key = 'q' . $q->id;
-        if (isset($data[$key]) && $data[$key] !== '') {
-            $vals[] = $data[$key];
-        }
-    }
-    $qstats[$q->id] = [
-        'count'  => count($vals),
-        'values' => $vals,
-    ];
-    if ($q->questiontype === 'rating' || $q->questiontype === 'numeric') {
-        $nums = array_filter($vals, 'is_numeric');
-        $qstats[$q->id]['avg'] = $nums ? round(array_sum($nums) / count($nums), 2) : 0;
-    }
-}
-
-// Build display data.
-$q_rows = [];
-foreach ($questions as $q) {
-    $key = 'q' . $q->id;
-    $my_answer = $answers[$key] ?? '(no answer)';
-    $opts = json_decode($q->options ?: '{}', true) ?: [];
-    $stats = $qstats[$q->id];
-
-    $row = [
-        'qid'           => (int) $q->id,
-        'type'          => $q->questiontype,
-        'text'          => format_string($q->questiontext),
-        'required'      => (bool) $q->required,
-        'anonymous'     => (bool) $q->anonymous,
-        'my_answer'     => is_array($my_answer) ? implode(', ', $my_answer) : (string) $my_answer,
-        'has_my_answer' => $my_answer !== '(no answer)',
-        'response_count' => $stats['count'],
-    ];
-
-    // Type-specific display.
-    if ($q->questiontype === 'rating') {
-        $row['max_rating'] = (int) ($opts['max'] ?? 5);
-        $row['avg'] = $stats['avg'] ?? 0;
-        // Build distribution histogram 1..max.
-        $hist = [];
-        for ($i = 1; $i <= $row['max_rating']; $i++) {
-            $count = count(array_filter($stats['values'], fn($v) => (int) $v === $i));
-            $hist[] = [
-                'level' => $i,
-                'count' => $count,
-                'pct'   => $stats['count'] > 0
-                    ? round(100 * $count / $stats['count'], 1) : 0,
-                'is_my_choice' => (int) $row['my_answer'] === $i,
-            ];
-        }
-        $row['histogram'] = $hist;
-    } else if ($q->questiontype === 'choice' || $q->questiontype === 'multichoice') {
-        $choices = $opts['choices'] ?? [];
-        $hist = [];
-        foreach ($choices as $choice) {
-            $count = count(array_filter($stats['values'],
-                fn($v) => is_array($v) ? in_array($choice, $v) : (string) $v === (string) $choice));
-            $hist[] = [
-                'label' => $choice,
-                'count' => $count,
-                'pct'   => $stats['count'] > 0
-                    ? round(100 * $count / $stats['count'], 1) : 0,
-            ];
-        }
-        $row['histogram'] = $hist;
-    }
-
-    $q_rows[] = $row;
-}
+// The respondent's answers, each beside how everybody else answered. Built in the manager so it can be tested:
+// it reads response_data by the bare question id and a choice question's options as a plain list (this page read
+// 'q<id>' keys and an options['choices'] list that nothing writes, so every answer showed as missing).
+$detail = \local_sentientia_evaluation\evaluation_manager::response_detail_rows($evaluation, $response);
+$q_rows = $detail['questions'];
 
 $data = [
     'response_id'   => (int) $response->id,
-    'eval_name'     => format_string($evaluation->name),
+    'eval_name'     => \local_sentientia_evaluation\evaluation_manager::display_text($evaluation->name),
     'eval_id'       => (int) $evaluation->id,
     'submitted_at'  => $is_anonymous_eval
         ? \local_sentientia_evaluation\evaluation_manager::submitted_label(
@@ -142,13 +84,13 @@ $data = [
     'kirkpatrick'   => (string) ($evaluation->kirkpatrick_level ?? '—'),
 
     'is_anonymous'  => $is_anonymous_eval,
-    'user_name'     => $user ? trim($user->firstname . ' ' . $user->lastname) : '(anonymous)',
-    'user_email'    => $user ? (string) $user->email : '',
-    'employee_id'   => $user ? (string) ($user->open_employeeid ?? '') : '',
+    'user_name'     => $respondent['user_name'],
+    'user_email'    => $respondent['user_email'],
+    'employee_id'   => $respondent['employee_id'],
 
     'questions'     => $q_rows,
-    'question_count' => count($questions),
-    'total_responses' => count($all_responses),
+    'question_count' => count($q_rows),
+    'total_responses' => $detail['total_responses'],
 
     'back_url'      => (new moodle_url('/local/sentientia_evaluation/responses.php',
         ['id' => $evaluation->id]))->out(false),

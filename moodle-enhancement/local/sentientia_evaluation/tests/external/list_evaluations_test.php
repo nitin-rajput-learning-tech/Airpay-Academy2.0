@@ -6,6 +6,9 @@ namespace local_sentientia_evaluation\external;
 
 defined('MOODLE_INTERNAL') || die();
 
+use local_sentientia_evaluation\evaluation_manager;
+use local_sentientia_platform\bizlms\legacymap;
+
 /**
  * Regression tests for list_evaluations WS.
  *
@@ -151,6 +154,86 @@ final class list_evaluations_test extends \advanced_testcase {
         } catch (\moodle_exception $e) {
             $this->assertSame('filterstoolong', $e->errorcode);
         }
+    }
+
+    /**
+     * The response count in the list is of SUBMITTED responses: the pending shell the trigger queue writes for an
+     * invited user (timesubmitted 0) is an invitation, not a response.
+     */
+    public function test_response_count_ignores_trigger_shells(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+
+        $id = $this->seed_evaluation('Airpay Survey', '/1', 1);
+        $learner = $this->getDataGenerator()->create_user();
+        foreach ([0, time()] as $submitted) {
+            $DB->insert_record('local_sentientia_evaluation_responses', (object) [
+                'evaluationid'  => $id,
+                'userid'        => $learner->id,
+                'response_data' => '{}',
+                'timesubmitted' => $submitted,
+            ]);
+        }
+
+        $u = $this->user_at_path('/1');
+        $this->setUser($u);
+        $result = list_evaluations::execute('', 'name', 'asc', 0, 25, '{}');
+
+        $this->assertSame(1, (int) $result['total']);
+        $this->assertSame(1, (int) $result['rows'][0]['rcount']);
+    }
+
+    /**
+     * A form the BizLMS import brought over is read-only history. The list offers Edit and Delete for it no more
+     * (every click would end in error_imported_form_read_only) and says why; a native form keeps both.
+     */
+    public function test_an_imported_form_offers_no_edit_or_delete(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+
+        $imported = $this->seed_evaluation('Brought over', '/1', 2);
+        $adopted = $this->seed_evaluation('Adopted', '/1', 2);
+        $mappedonly = $this->seed_evaluation('Mapped but archived in the legacy table', '/1', 1);
+        $native = $this->seed_evaluation('Made here', '/1', 1);
+        foreach ([[$imported, 'imported'], [$adopted, 'adopted'], [$mappedonly, 'archived']] as [$id, $outcome]) {
+            $DB->insert_record(legacymap::TABLE, (object) [
+                'feature' => 'evaluation', 'sourcetable' => 'local_evaluations', 'sourceid' => $id, 'subkey' => '',
+                'targettable' => $outcome === 'archived' ? '' : 'local_sentientia_evaluation',
+                'targetid' => $outcome === 'archived' ? null : $id,
+                'outcome' => $outcome, 'reason' => $outcome === 'archived' ? 'deleted_form' : null,
+                'detail' => null, 'runid' => 0, 'timecreated' => time(),
+            ]);
+        }
+
+        $this->setUser($this->user_at_path('/1'));
+        $result = list_evaluations::execute('', 'name', 'asc', 0, 25, '{}');
+        $actions = [];
+        foreach ($result['rows'] as $row) {
+            $actions[(int) $row['id']] = $row['actions'];
+        }
+        $this->assertCount(4, $actions);
+        $badge = s(get_string('imported_badge', 'local_sentientia_evaluation'));
+
+        foreach ([$imported, $adopted] as $id) {
+            $this->assertStringNotContainsString('data-action="edit-evaluation"', $actions[$id]);
+            $this->assertStringNotContainsString('data-action="delete-evaluation"', $actions[$id]);
+            $this->assertStringContainsString($badge, $actions[$id]);
+            // Reading it is what the list is for: Questions and Responses stay.
+            $this->assertStringContainsString('questions.php?id=' . $id, $actions[$id]);
+            $this->assertStringContainsString('responses.php?id=' . $id, $actions[$id]);
+        }
+        foreach ([$native, $mappedonly] as $id) {
+            $this->assertStringContainsString('data-action="edit-evaluation"', $actions[$id]);
+            $this->assertStringContainsString('data-action="delete-evaluation"', $actions[$id]);
+            $this->assertStringNotContainsString($badge, $actions[$id]);
+        }
+
+        // The helper the list uses answers the same as is_imported().
+        $found = evaluation_manager::imported_ids([$imported, $adopted, $mappedonly, $native, 0, -3]);
+        $this->assertSame([$imported, $adopted], array_keys($found));
+        $this->assertSame([], evaluation_manager::imported_ids([]));
     }
 
     /**

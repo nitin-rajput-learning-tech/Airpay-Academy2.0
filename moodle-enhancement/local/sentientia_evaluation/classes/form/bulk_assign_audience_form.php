@@ -76,13 +76,32 @@ class bulk_assign_audience_form extends \core_form\dynamic_form {
             get_string('bulk_assign_button', 'local_sentientia_evaluation'));
     }
 
+    /**
+     * The audience rule this form submits, as the assigner reads it.
+     *
+     * The ONE place the submitted values become a filter map, used by the validation below and by the submission, so the
+     * form can never accept a rule the service then refuses (EV-36: a whitespace-only designation passed the old
+     * empty() check and failed later with an exception instead of a field error).
+     *
+     * @param array|object $data The submitted values.
+     * @return array{designation: string, region: string, location: string, employmenttype: string, cohortid: int}
+     */
+    public static function filters_from($data): array {
+        $data = (array) $data;
+        return [
+            'designation'    => (string) ($data['designation']    ?? ''),
+            'region'         => (string) ($data['region']         ?? ''),
+            'location'       => (string) ($data['location']       ?? ''),
+            'employmenttype' => (string) ($data['employmenttype'] ?? ''),
+            'cohortid'       => (int)    ($data['cohortid']       ?? 0),
+        ];
+    }
+
     public function validation($data, $files) {
         $errors = [];
-        $any = false;
-        foreach (['designation', 'region', 'location', 'employmenttype'] as $k) {
-            if (!empty($data[$k])) { $any = true; break; }
-        }
-        if (!$any && empty($data['cohortid'])) {
+        // The same test the service applies (evaluation_audience_assigner::has_constraint()), on the same filter map:
+        // trimmed values, the same keys, a cohort that must be positive.
+        if (!\local_sentientia_evaluation\evaluation_audience_assigner::has_constraint(self::filters_from($data))) {
             $errors['designation'] = get_string('bulk_assign_pick_at_least_one',
                 'local_sentientia_evaluation');
         }
@@ -94,13 +113,7 @@ class bulk_assign_audience_form extends \core_form\dynamic_form {
         $data = $this->get_data();
         $evaluationid = (int) $data->evaluationid;
 
-        $filters = [
-            'designation'    => (string) ($data->designation    ?? ''),
-            'region'         => (string) ($data->region         ?? ''),
-            'location'       => (string) ($data->location       ?? ''),
-            'employmenttype' => (string) ($data->employmenttype ?? ''),
-            'cohortid'       => (int)    ($data->cohortid       ?? 0),
-        ];
+        $filters = self::filters_from($data);
 
         $result = \local_sentientia_evaluation\evaluation_audience_assigner::assign_by_filter(
             $evaluationid, $filters, (int) $USER->id, null);

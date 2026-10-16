@@ -37,7 +37,8 @@ use local_sentientia_platform\bizlms\tenant_resolver;
  *
  * Read the choices the owner made in docs/cutover/bizlms-import-decisions.json (keys below): every imported form
  * is ARCHIVED and manual, weighted multichoice becomes plain multichoice, an anonymous supervisor form hides its
- * subject, anonymous answers stay anonymous, the trainer's name is not added to trainer feedback forms, and an
+ * subject, anonymous answers stay anonymous (and a form that ever held one imports EVERY answer anonymous,
+ * evaluation.sticky_anonymity = whole_form), the trainer's name is not added to trainer feedback forms, and an
  * imported form is read-only (evaluation_manager refuses to edit, re-status or delete it).
  *
  * Nothing here sends a message, fires an event, enrols or queues anything; the importer only returns rows.
@@ -55,10 +56,44 @@ final class importer implements framework_importer {
     public const COMPONENT = 'local_sentientia_evaluation';
 
     /**
-     * The plugin version that adds responses.subject_userid, the column the importer writes and the privacy
-     * provider declares. The registry refuses to run the importer below it.
+     * The plugin version that adds forms.evaluationmode (EV-17), the column form_step writes, after
+     * responses.subject_userid (2026093001), which response_step writes and the privacy provider declares. The
+     * registry refuses to run the importer below it.
      */
-    public const REQUIRES_VERSION = 2026093001;
+    public const REQUIRES_VERSION = 2026100701;
+
+    /** local_evaluations.evaluationmode, and the same column on the Sentientia form (EV-17). */
+    public const MODE_SELF = \local_sentientia_evaluation\evaluation_manager::MODE_SELF;
+    public const MODE_SUPERVISOR = \local_sentientia_evaluation\evaluation_manager::MODE_SUPERVISOR;
+
+    /**
+     * The mode a BizLMS evaluationmode value stands for: SP when it reads SP, anything else (SE, nothing, a value the
+     * owner mapped that is not SP) is SE.
+     *
+     * Case and surrounding spaces are ignored, because the verify check imported_form_mode_mismatch compares in SQL
+     * (UPPER(TRIM(...)) of the same value), and a database compares case and trailing spaces its own way: reading
+     * 'sp ' strictly here would write SE while the check expected SP, and a form the owner mapped on purpose would
+     * fail verify. One reading, used by the form step, the response step, form_facts and the check, keeps them in
+     * agreement. A person evaluated is hidden from the learner history by SP, so a doubtful value that reads SP is
+     * the safer error.
+     *
+     * @param mixed $value local_evaluations.evaluationmode, or null when the column is absent
+     * @return string self::MODE_SUPERVISOR or self::MODE_SELF
+     */
+    public static function mode_of($value): string {
+        return strtoupper(trim(is_scalar($value) ? (string) $value : '', ' ')) === self::MODE_SUPERVISOR
+            ? self::MODE_SUPERVISOR : self::MODE_SELF;
+    }
+
+    /**
+     * Does a BizLMS evaluationmode value stand for a supervisor evaluation?
+     *
+     * @param mixed $value
+     * @return bool
+     */
+    public static function is_supervisor($value): bool {
+        return self::mode_of($value) === self::MODE_SUPERVISOR;
+    }
 
     /** BizLMS tables this feature claims. */
     public const SRC_FORMS = 'local_evaluations';
@@ -79,7 +114,7 @@ final class importer implements framework_importer {
     public const T_TEMPLATES = 'local_sentientia_evaluation_template';
     public const T_ASSIGN = 'local_sentientia_evaluation_assign';
 
-    /** The trigger queue. The import never writes it; preflight reads it for rows left at a legacy form id. */
+    /** The trigger queue. The import never writes it; the leftover-rows preflight (form_step::target_children()) reads it. */
     public const T_TRIGGERS = 'local_sentientia_evaluation_triggers';
 
     /** The classroom feature's target table, whose rows carry the path a trainer feedback form is scoped by. */
@@ -89,12 +124,19 @@ final class importer implements framework_importer {
     public const DECISIONS = [
         'tenant.unresolved.evaluation' => ['pathless',
             'A form with no resolvable organisation keeps no path and costcenterid 0: cross-tenant callers only, reported.'],
+        // EV-TENANT (owner delegation 2026-10-07): the user who last edited a form is not a tenant clue.
+        'evaluation.tenant_editor_fallback' => ['not_used',
+            'A form whose path, stored root and classroom give no tenant imports pathless; it is never filed under the tenant of the user who last edited it.'],
         'evaluation.open_forms' => ['archived',
             'Every imported form is archived and manual; an active one would reopen answering with no assignment check.'],
         'evaluation.multichoicerated' => ['multichoice',
             'Weighted multichoice becomes plain multichoice; the weights stay in the legacy table.'],
         'evaluation.sp_anonymous_subject' => ['hidden',
             'An anonymous supervisor form hides the subject too, since the subject could identify the respondent.'],
+        // EV-16 (owner delegation 2026-10-07). The alternative, named_rows_kept, is not implemented: only a value
+        // this code implements may be signed, so a file that says anything else blocks the feature.
+        'evaluation.sticky_anonymity' => ['whole_form',
+            'A form that ever held an anonymous answer imports every answer anonymous; the legacy table keeps the person link.'],
         'evaluation.legacy_anonymous_linkage' => ['untouched_pending_legacy_privacy_adr',
             'BizLMS links anonymous answers to people in the legacy tables; the import neither copies nor alters that.'],
         'evaluation.trainer_feedback_form_names' => ['keep_bizlms_name',
@@ -134,7 +176,7 @@ final class importer implements framework_importer {
                 // EVALUATION_ANONYMOUS_YES = 1, EVALUATION_ANONYMOUS_NO = 2 (BizLMS local/evaluation/lib.php).
                 'anonymous' => ['1' => 'anonymous', '2' => 'named'],
                 'deleted' => ['0' => 'kept', '1' => 'soft deleted'],
-                'evaluationmode' => ['SE' => 'self evaluation', 'SP' => 'supervisor evaluation'],
+                'evaluationmode' => [self::MODE_SELF => 'self evaluation', self::MODE_SUPERVISOR => 'supervisor evaluation'],
             ]),
             self::SRC_ITEMS => new source_spec(self::SRC_ITEMS, true, [
                 'typ' => array_fill_keys(array_merge(answer_mapper::QUESTION_TYPES, answer_mapper::NON_QUESTION_TYPES),
@@ -208,6 +250,10 @@ final class importer implements framework_importer {
             // so BizLMS could hold two stored answers for one question and Sentientia keeps one.
             new reason('value_not_valid', false, true),
             new reason('duplicate_value', false, true),
+            // A stored answer whose item is another form's, or no longer exists: BizLMS never joined them, and the answer
+            // cannot be carried. The map says "rejected and reported", so the owner looks at the count.
+            new reason('foreign_item', false, true),
+            new reason('missing_item', false, true),
             new reason('orphan_form', false, true),
             new reason('orphan_template', false, true),
             new reason('orphan_item', false, true),
@@ -323,16 +369,28 @@ final class importer implements framework_importer {
             }
         }
 
-        // Rows already sitting under the id of a form this import is about to bring in. Forms keep their BizLMS ids
-        // (PRESERVE), so anything in the child tables whose evaluationid is a legacy form id, with no form of that id
-        // yet, would attach to the imported form: stale rows would show as BizLMS history, and an assignment for the
-        // same person would collide with the unique key (evaluationid, userid, trigger_event, source_id) and roll the
-        // whole feature back. delete() used to leave assignment and trigger rows behind, so a rehearsal target can hold
-        // them. An id that is occupied by a form is the framework's collision blocker, not this one.
-        foreach ($this->rows_left_at_legacy_form_ids($ctx) as $table => $count) {
-            $pf->count('leftover_rows:' . $table, $count);
-            $pf->block('leftover_rows_at_legacy_form_ids:' . $table . ':' . $count);
+        // Stored answers whose item is gone (values_missing_item), or belongs to another form than the completion
+        // they sit in (values_foreign_item). The run archives each with its own reason (missing_item, foreign_item)
+        // and it is for the owner to look at; the count tells them before the run. Each count is of the values the run
+        // will archive under that reason, not of every stray row (see stray_values()).
+        if ($ctx->legacy->exists(self::SRC_VALUES) && $ctx->legacy->exists(self::SRC_ITEMS)
+                && $ctx->legacy->exists(self::SRC_COMPLETED) && $ctx->legacy->exists(self::SRC_FORMS)
+                && $ctx->legacy->has_column(self::SRC_VALUES, 'item')
+                && $ctx->legacy->has_column(self::SRC_VALUES, 'completed')
+                && $ctx->legacy->has_column(self::SRC_COMPLETED, 'evaluation')
+                && $ctx->legacy->has_column(self::SRC_ITEMS, 'evaluation')) {
+            foreach ($this->stray_values($ctx) as $reason => $count) {
+                if ($count > 0) {
+                    $pf->count('values_' . $reason, $count);
+                    $pf->warn('values_' . $reason . ':' . $count);
+                }
+            }
         }
+
+        // Rows already sitting under the id of a form this import is about to bring in are the framework's check
+        // (form_step::target_children(), blocker leftover_rows_at_legacy_ids): forms keep their BizLMS ids (PRESERVE),
+        // so a stale row in a child table would attach to the imported form, and an assignment for the same person
+        // would collide with the unique key and roll the whole feature back.
 
         // The framework's tenant check reads EVERY row of the form table after the load, native ones too. A native
         // form whose path is not a valid tenant path would fail that check after all the work; say so now.
@@ -344,30 +402,75 @@ final class importer implements framework_importer {
     }
 
     /**
-     * How many rows each child table holds for a legacy form id that has no Sentientia form yet.
+     * How many stored answers the run will archive as missing_item and as foreign_item.
      *
-     * Read-only; counts only (the blocker carries a table name and a number, never a row).
+     * Read-only. A value is a candidate when its item does not exist (missing_item), or when its item belongs to
+     * another form than the completion the value sits in (foreign_item). Those are few, so each is looked at: the run
+     * archives a candidate under its own reason only when its completion is imported (value_step); a value of a
+     * completion that is missing (orphan_completed), belongs to a deleted form, or is itself skipped (no time, an
+     * unknown responder: response_step) is reported under THAT reason instead, and is not counted here. The rules
+     * are the ones response_step applies, from the same code (form_facts::import_problem()), so the two cannot
+     * disagree.
      *
      * @param context $ctx
-     * @return array<string, int> Table => rows, only the tables that hold any.
+     * @return array{missing_item: int, foreign_item: int}
      */
-    private function rows_left_at_legacy_form_ids(context $ctx): array {
-        if (!$ctx->legacy->exists(self::SRC_FORMS) || !$ctx->legacy->exists(self::T_FORMS)) {
-            return [];
+    private function stray_values(context $ctx): array {
+        $facts = new form_facts();
+        $verdicts = [];
+        $counts = ['missing_item' => 0, 'foreign_item' => 0];
+        $candidates = [
+            'missing_item' => 'NOT EXISTS (SELECT 1 FROM {' . self::SRC_ITEMS . '} i WHERE i.id = t.item)',
+            'foreign_item' => 'EXISTS (SELECT 1 FROM {' . self::SRC_COMPLETED . '} c JOIN {' . self::SRC_ITEMS
+                . '} i ON i.id = t.item WHERE c.id = t.completed AND i.evaluation <> c.evaluation)',
+        ];
+        foreach ($candidates as $reason => $condition) {
+            $after = 0;
+            do {
+                $page = $ctx->legacy->page(self::SRC_VALUES, $after, legacy_reader::MAX_PAGE, ['id', 'completed'],
+                    [$condition, []]);
+                $unjudged = [];
+                foreach ($page as $id => $value) {
+                    $after = max($after, (int) $id);
+                    if (!isset($verdicts[(int) $value->completed])) {
+                        $unjudged[(int) $value->completed] = (int) $value->completed;
+                    }
+                }
+                $this->judge_completions($ctx, $facts, array_values($unjudged), $verdicts);
+                foreach ($page as $value) {
+                    if ($verdicts[(int) $value->completed]) {
+                        $counts[$reason]++;
+                    }
+                }
+            } while (count($page) >= legacy_reader::MAX_PAGE);
         }
-        $condition = 'EXISTS (SELECT 1 FROM {' . self::SRC_FORMS . '} f WHERE f.id = t.evaluationid)'
-            . ' AND NOT EXISTS (SELECT 1 FROM {' . self::T_FORMS . '} e WHERE e.id = t.evaluationid)';
-        $found = [];
-        foreach ([self::T_QUESTIONS, self::T_RESPONSES, self::T_ASSIGN, self::T_TRIGGERS] as $table) {
-            if (!$ctx->legacy->exists($table)) {
-                continue;
-            }
-            $count = $ctx->legacy->count($table, [$condition, []]);
-            if ($count > 0) {
-                $found[$table] = $count;
-            }
+        return $counts;
+    }
+
+    /**
+     * Will the run import each of these completions? Fills $verdicts (completion id => bool).
+     *
+     * Imported means what response_step decides: the completion exists, its form exists and is not deleted, and
+     * form_facts::import_problem() finds nothing wrong with it.
+     *
+     * @param context $ctx
+     * @param form_facts $facts
+     * @param int[] $ids Completion ids not judged yet.
+     * @param array<int, bool> $verdicts
+     * @return void
+     */
+    private function judge_completions(context $ctx, form_facts $facts, array $ids, array &$verdicts): void {
+        if (!$ids) {
+            return;
         }
-        return $found;
+        $completions = $ctx->legacy->fetch(self::SRC_COMPLETED, $ids,
+            ['id', 'evaluation', 'timemodified', 'userid', 'evaluatedby', 'anonymous_response']);
+        foreach ($ids as $id) {
+            $completed = $completions[$id] ?? null;
+            $form = $completed === null ? null : $facts->form($ctx, (int) $completed->evaluation);
+            $verdicts[$id] = $completed !== null && $form !== null && (int) ($form->deleted ?? 0) !== 1
+                && $facts->import_problem($ctx, $completed, $form)[0] === null;
+        }
     }
 
     /**
@@ -452,6 +555,11 @@ final class importer implements framework_importer {
                          OR e.notify_admin_on_response <> 0)",
                 $base + ['t' => self::T_FORMS, 'archived' => form_step::STATUS_ARCHIVED, 'manual' => 'manual'],
             ],
+            // EV-17: the form is a supervisor evaluation exactly when BizLMS said so. The learner history and the
+            // Subject column trust the column, so a form that lost or gained SP after the import would tell the person
+            // evaluated that they "responded", or hide the subject. Without the legacy column every imported form is
+            // a self evaluation.
+            'imported_form_mode_mismatch' => $this->form_mode_check($ctx, $map, $imported, $base),
             // A response has its form, a real submission time, and on an anonymous form no name and no subject.
             'imported_response_inconsistent' => [
                 "SELECT COUNT(1) FROM {$map} m JOIN {" . self::T_RESPONSES . "} r ON r.id = m.targetid
@@ -491,6 +599,36 @@ final class importer implements framework_importer {
             }
         }
         return $failures;
+    }
+
+    /**
+     * The SQL and parameters of the check that every imported form carries the mode BizLMS gave it (EV-17).
+     *
+     * The source value is read the way mode_of() reads it: UPPER(TRIM(...)), so what the database matches and what the
+     * form step wrote cannot disagree. The legacy table is joined through $DB, not read through the legacy reader: a
+     * join cannot be paged, and the framework's standing assumption is that the legacy tables share the database and
+     * the prefix of the targets (the framework's own checks join them the same way).
+     *
+     * @param context $ctx
+     * @param string $map The map table, braced.
+     * @param string $imported The WHERE fragment that selects the map rows of imported forms and other rows.
+     * @param array $base Parameters of that fragment.
+     * @return array{0: string, 1: array}
+     */
+    private function form_mode_check(context $ctx, string $map, string $imported, array $base): array {
+        $join = "FROM {$map} m JOIN {" . self::T_FORMS . "} e ON e.id = m.targetid";
+        $where = "WHERE {$imported} AND m.targettable = :t AND m.sourcetable = :src";
+        $params = $base + ['t' => self::T_FORMS, 'src' => self::SRC_FORMS];
+        if ($ctx->legacy->exists(self::SRC_FORMS) && $ctx->legacy->has_column(self::SRC_FORMS, 'evaluationmode')) {
+            // SP on the source means SP here; anything else on the source (SE, or nothing) means SE here. "SP" is read
+            // as mode_of() reads it: case and surrounding spaces do not count.
+            return ["SELECT COUNT(1) {$join} JOIN {" . self::SRC_FORMS . "} l ON l.id = m.sourceid {$where}
+                        AND ((UPPER(TRIM(l.evaluationmode)) = :spa AND e.evaluationmode <> :spb)
+                          OR (COALESCE(UPPER(TRIM(l.evaluationmode)), '') <> :spc AND e.evaluationmode <> :sea))",
+                $params + ['spa' => self::MODE_SUPERVISOR, 'spb' => self::MODE_SUPERVISOR,
+                    'spc' => self::MODE_SUPERVISOR, 'sea' => self::MODE_SELF]];
+        }
+        return ["SELECT COUNT(1) {$join} {$where} AND e.evaluationmode <> :seb", $params + ['seb' => self::MODE_SELF]];
     }
 
     /**

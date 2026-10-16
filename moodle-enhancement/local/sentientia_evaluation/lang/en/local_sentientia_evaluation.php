@@ -277,10 +277,53 @@ $string['my_evaluations_intro'] = 'The evaluations you were asked to complete or
 $string['my_evaluations_col_evaluation'] = 'Evaluation';
 $string['my_evaluations_col_status'] = 'Status';
 $string['my_evaluations_col_date'] = 'Date';
+// 2026-10-15: the Date column holds three different dates, so each cell says which one it is.
+$string['my_evaluations_date_submitted'] = 'Submitted';
+$string['my_evaluations_date_due'] = 'Due by';
+$string['my_evaluations_date_assigned'] = 'Assigned';
 $string['my_evaluations_status_responded'] = 'Responded';
 $string['my_evaluations_status_assigned'] = 'Waiting for you';
 $string['my_evaluations_status_expired'] = 'Closed without a response';
 $string['my_evaluations_imported'] = 'From the previous system';
-$string['my_evaluations_anonymous_note'] = 'Anonymous evaluation: your answers are not linked to you.';
+// EV-20-NOTE (2026-10-07): worded as what the results pages keep, not as a promise about every table. For a form
+// brought over from the previous system the old tables and the import's map still link an answer to its person, so
+// "not linked to you" was more than could be said. Revisit only if the legacy-table privacy ADR makes it true.
+$string['my_evaluations_anonymous_note'] = 'Anonymous evaluation: your name is not shown with your answers in its results.';
 $string['my_evaluations_none'] = 'You have no evaluations on record.';
 $string['my_evaluations_unavailable'] = 'Your evaluation history is not available yet.';
+
+// 2026-10-01 (EV-02): the person a supervisor evaluation is about.
+$string['responses_col_subject'] = 'Subject';
+
+// 2026-10-01 (EV-03): statistics for number and tick-all-that-apply questions (responses.php).
+$string['responses_numeric_average'] = 'average';
+$string['responses_numeric_lowest_highest'] = 'Lowest {$a->lowest}, highest {$a->highest}';
+$string['responses_numeric_range'] = 'Allowed range {$a->min} to {$a->max}';
+$string['responses_multi_summary'] = '{$a->picks} selections from {$a->respondents} respondents ({$a->avg} per respondent on average)';
+$string['responses_multi_share_note'] = 'One person can tick several options, so the shares can add up to more than 100%.';
+$string['responses_question_no_answers'] = 'No answers yet for this question.';
+
+// 2026-10-01 (EV-05): response_detail.php shows the average of a number question.
+$string['response_detail_numeric_avg'] = 'Average of all responses: {$a}';
+
+// 2026-10-01 (EV-09): imported forms are read-only history; the admin pages say so instead of offering controls that end in an error.
+$string['imported_badge'] = 'Imported';
+$string['imported_readonly_notice'] = 'Brought over from the previous system. This evaluation is read-only: it is a record of what was asked and answered. To run the same questions again, export it as a template and create a new evaluation from that.';
+$string['questiontype_multichoice_multi_short'] = 'Multiple choice (several)';
+$string['questiontype_numeric_short'] = 'Number';
+$string['questions_numeric_atleast'] = 'Allowed range: at least {$a}';
+$string['questions_numeric_atmost'] = 'Allowed range: at most {$a}';
+
+// 2026-10-07 (review of the evaluation follow-ups).
+$string['invalidresponse'] = 'Response not found.';
+$string['responses_subject_deleted'] = '(deleted user)';
+$string['responses_numeric_ignored'] = 'Stored answers that are not numbers are left out of these figures: {$a}.';
+
+// 2026-10-07 (EV-06): the individual responses pages come back, behind the default-OFF flag sentientia.evaluation.response_drilldown.
+$string['responses_individual_link'] = 'Individual responses';
+$string['response_drilldown_unavailable'] = 'The individual responses are not available yet.';
+
+// 2026-10-07 (review): an evaluation whose respondents are protected offers its totals only.
+$string['responses_individual_protected_note'] = 'Individual responses are not available for this evaluation because its responses are anonymous, in whole or in part. The totals below are still shown.';
+$string['response_list_protected'] = 'The responses to this evaluation are anonymous, in whole or in part, so individual responses are not available: only the totals are shown. A single response, with the day it came in and the course, program or classroom it came from, could be matched to the person who gave it.';
+$string['response_list_back_to_totals'] = 'Back to the totals';

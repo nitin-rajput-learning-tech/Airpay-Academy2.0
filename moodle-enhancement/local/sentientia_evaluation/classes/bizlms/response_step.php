@@ -18,17 +18,25 @@ use local_sentientia_platform\bizlms\step;
  * evaluation_manager::submit_response() writes: a JSON object keyed by the NEW question id, every imported
  * question present, null where nobody answered.
  *
- * Who answered. An anonymous answer stays anonymous: user id 0 and no subject, and BizLMS's own link from the
- * completion to a person stays in the legacy table and is never copied. A completion is anonymous when it says
- * so (anonymous_response = 1), when its form is anonymous (the flag, made sticky by form_facts), or when it has
- * no user (a guest). Otherwise the responder is evaluatedby when BizLMS recorded one (the supervisor who filled a
- * supervisor form in) and the completion's user when not; on a supervisor form (evaluationmode SP) the person
- * evaluated is kept as subject_userid.
+ * Who answered. An anonymous answer stays anonymous in its own row: user id 0 and no subject. BizLMS's link from
+ * the completion to a person stays in the legacy tables, which this step does not touch, and the import adds one
+ * trace of its own: for the completion that implies a person's assignment (below), the map holds the anonymous
+ * response (sub-key empty) and that person's assignment (sub-key assign) under the SAME completion id, and the
+ * assign row names the person. So the map and the assign rows can tie an anonymous response to a person at the
+ * database level (decision evaluation.legacy_anonymous_linkage, pending the legacy-table privacy ADR, which has to
+ * cover them as well as the legacy tables).
+ *
+ * A completion is anonymous when it says so (anonymous_response = 1), when its form is anonymous (the flag, made
+ * sticky by form_facts), or when it has no user (a guest). Otherwise the responder is evaluatedby when BizLMS
+ * recorded one (the supervisor who filled a supervisor form in) and the completion's user when not; on a
+ * supervisor form (evaluationmode SP) the person evaluated is kept as subject_userid.
  *
  * Two points where this goes beyond the letter of mapping doc section 18, both recorded in the plugin state card.
  * (1) Sticky anonymity reaches a completion that BizLMS stamped as named (anonymous_response = 2) when its form
  * ever held an anonymous answer: the more protective reading, and the one evaluation_manager::identity_protected()
- * applies to the form anyway. (2) A self evaluation whose evaluatedby names a user that no longer exists is not
+ * applies to the form anyway. It is the owner's decision evaluation.sticky_anonymity = whole_form (EV-16): pooling
+ * the answers means none can be singled out by subtracting the named ones. (2) A self evaluation whose
+ * evaluatedby names a user that no longer exists is not
  * dropped: the person evaluated is the person who answered there, so the completion's user is the responder
  * (warning responder_not_found). A supervisor form is still skipped (orphan_user), because the completion's user is
  * the person being evaluated and must not be shown as having answered.
@@ -37,9 +45,10 @@ use local_sentientia_platform\bizlms\step;
  * LONGTEXT as well, and a cut answer cannot be recovered once the legacy tables are dropped.
  *
  * The assignment beside it. A completion with no local_evaluation_users row for its form and person would leave
- * that person with no assignment, so the FIRST completion of the pair also creates a responded assignment
+ * that person with no assignment, so the FIRST IMPORTED completion of the pair also creates a responded assignment
  * (sub-key assign), on the same rules as assignment_step, with the times cut to the day on an identity-protected
- * form.
+ * form. "Imported" matters: if the lowest completion is skipped (no time, an unknown responder) the next one that is
+ * imported carries the assignment, so the person is not left with a response and no assignment.
  *
  * Never submit_response(): it sends administrators a message per response, checks the form is open and stamps
  * "now". This step only returns rows.
@@ -118,16 +127,17 @@ final class response_step extends step {
                 : outcome::archive($id, 'parent_deleted')];
         }
 
-        $submitted = (int) $row->timemodified;
-        $derived = false;
-        if ($submitted <= 0) {
-            // Sentientia reads timesubmitted 0 as a trigger-queue shell, not a response, so it must be real.
-            $submitted = (int) ($form->timemodified ?? 0);
-            $derived = true;
-        }
-        if ($submitted <= 0) {
+        // The rules that skip a completion live in form_facts::import_problem(), so the implied assignment can be
+        // keyed on the first completion that is imported. Sentientia reads timesubmitted 0 as a trigger-queue shell,
+        // not a response, so a completion with no time of its own takes the form's, or is skipped.
+        [$problem, $submitted] = $this->facts->import_problem($ctx, $row, $form);
+        if ($problem === 'no_timestamp') {
             return [outcome::skip($id, 'no_timestamp', 'no_source_time')];
         }
+        if ($problem === 'orphan_user') {
+            return [outcome::skip($id, 'orphan_user', 'user_not_found')];
+        }
+        $derived = (int) $row->timemodified <= 0;
 
         $completionuser = (int) $row->userid;
         $anonymous = $this->facts->anonymous_final($ctx, $form) || $completionuser <= 0
@@ -137,16 +147,21 @@ final class response_step extends step {
         $subject = null;
         $subjectunknown = false;
         $responderunknown = false;
+        $evaluatorunknown = false;
         if (!$anonymous) {
-            $supervised = (string) ($form->evaluationmode ?? 'SE') === 'SP';
+            $supervised = importer::is_supervisor($form->evaluationmode ?? null);
             $evaluatedby = (int) ($row->evaluatedby ?? 0);
+            // EV-17: a supervisor completion from before BizLMS recorded who filled it in (evaluatedby 0). The
+            // responder is then the completion's user, who is the person EVALUATED, so the response names them as
+            // the one who answered and keeps no subject. It still follows mapping doc section 18 (the responder is
+            // evaluatedby, else the completion's user); the warning counts these for the owner. The learner history
+            // no longer tells that person they responded, because the form says it is a supervisor evaluation.
+            $evaluatorunknown = $supervised && $evaluatedby <= 0;
             $userid = $evaluatedby > 0 ? $evaluatedby : $completionuser;
             if (!$ctx->lookups->user_exists($userid)) {
-                if ($supervised || $evaluatedby <= 0 || !$ctx->lookups->user_exists($completionuser)) {
-                    return [outcome::skip($id, 'orphan_user', 'user_not_found')];
-                }
-                // A self evaluation: whoever was recorded as filling it in has gone, and the person evaluated is
-                // the person who answered. Keep the answers rather than drop them.
+                // import_problem() let this through, so it is a self evaluation: whoever was recorded as filling it
+                // in has gone, and the person evaluated is the person who answered. Keep the answers rather than
+                // drop them.
                 $userid = $completionuser;
                 $responderunknown = true;
             }
@@ -169,6 +184,15 @@ final class response_step extends step {
         $instance = (int) ($form->instance ?? 0);
         $classroomid = ($plugin === 'classroom' && $instance > 0) ? $ctx->map->resolve(importer::SRC_CLASSROOM, $instance) : null;
         $programid = ($plugin === 'program' && $instance > 0) ? $ctx->map->resolve(importer::SRC_PROGRAM, $instance) : null;
+        // A single-feature dry run without the classroom or program feature: the response keeps no classroom or
+        // program, and the report says why instead of leaving it silent. Apply runs require those features first.
+        $deferredparents = [];
+        if ($plugin === 'classroom' && $instance > 0 && $classroomid === null && $ctx->is_deferred(importer::SRC_CLASSROOM)) {
+            $deferredparents[] = 'deferred:' . importer::SRC_CLASSROOM;
+        }
+        if ($plugin === 'program' && $instance > 0 && $programid === null && $ctx->is_deferred(importer::SRC_PROGRAM)) {
+            $deferredparents[] = 'deferred:' . importer::SRC_PROGRAM;
+        }
 
         $set = $this->facts->answers($ctx, $row, $form);
         $response = outcome::insert($id, importer::T_RESPONSES, (object) [
@@ -191,8 +215,14 @@ final class response_step extends step {
         if ($responderunknown) {
             $response->warn('responder_not_found');
         }
+        if ($evaluatorunknown) {
+            $response->warn('sp_responder_unknown');
+        }
         if ($courseunknown) {
             $response->warn('course_not_found');
+        }
+        foreach ($deferredparents as $warning) {
+            $response->warn($warning);
         }
         if ($set->rejected) {
             $response->warn('rejected_values');
@@ -209,9 +239,10 @@ final class response_step extends step {
     /**
      * The assignment a completion implies when BizLMS never recorded one, or null.
      *
-     * Only the first completion of a (form, person) pair creates it, so a person who answered a repeatable form
-     * three times still has one assignment; and only when local_evaluation_users has no row for the pair, because
-     * then assignment_step owns it.
+     * Only the first IMPORTED completion of a (form, person) pair creates it, so a person who answered a repeatable
+     * form three times still has one assignment, and a first completion that is skipped (no time, an unknown
+     * responder) does not leave the pair without one; and only when local_evaluation_users has no row for the pair,
+     * because then assignment_step owns it.
      *
      * @param context $ctx
      * @param \stdClass $row The completion.
@@ -226,12 +257,13 @@ final class response_step extends step {
             return null;
         }
         $pair = $this->facts->pair($ctx, (int) $row->evaluation, $person);
-        if ($pair->hasusers || $pair->firstid !== (int) $row->id) {
+        if ($pair->hasusers || $pair->firstimportedid !== (int) $row->id) {
             return null;
         }
         $protected = $this->facts->identity_protected($ctx, $form);
         $created = $protected ? $this->facts->day_start($ctx, $submitted) : $submitted;
-        $last = $pair->lasttime > 0 ? $pair->lasttime : $submitted;
+        // The latest time among the completions that are imported, not among every legacy one.
+        $last = $pair->lastimportedtime ?: $submitted;
         return outcome::insert((int) $row->id, importer::T_ASSIGN, (object) [
             'evaluationid' => $target,
             'userid' => $person,

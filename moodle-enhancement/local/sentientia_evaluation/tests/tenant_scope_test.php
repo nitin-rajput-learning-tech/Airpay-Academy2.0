@@ -457,4 +457,70 @@ final class tenant_scope_test extends \advanced_testcase {
         $this->assertSame([(int) $responded->id],
             $userids(evaluation_manager::list_assignments_for_view($named, 'responded')));
     }
+
+    /** A saved template whose organisation is $orgid (0 = belongs to no tenant). */
+    private function seed_template(string $name, int $orgid, int $ispublic = 0): int {
+        global $DB;
+        $now = time();
+        return (int) $DB->insert_record('local_sentientia_evaluation_template', (object) [
+            'name'             => $name,
+            'description'      => '',
+            'payload'          => json_encode(['format' => 1, 'evaluation' => ['name' => $name], 'questions' => []]),
+            'createdby_userid' => 0,
+            'costcenterid'     => $orgid,
+            'ispublic'         => $ispublic,
+            'timecreated'      => $now,
+            'timemodified'     => $now,
+        ]);
+    }
+
+    /**
+     * list_templates() used to return every tenant's templates for the argument 0, compared a non-zero argument
+     * with the template's organisation id as a bare number, and always added every tenant's public templates; and
+     * create_evaluation_from_template() / delete_template() had no tenant check at all.
+     */
+    public function test_template_library_is_tenant_scoped(): void {
+        $org15 = $this->seed_org('/1/5');
+        $org77 = $this->seed_org('/77');
+        $own = $this->seed_template('Airpay payments', $org15);
+        $foreign = $this->seed_template('Public tenant', $org77);
+        $global = $this->seed_template('No tenant', 0);
+        $foreignpublic = $this->seed_template('Public tenant, shared', $org77, 1);
+        $all = [$own, $foreign, $global, $foreignpublic];
+
+        // A /1 tenant admin sees the template of an organisation inside /1 and nothing else.
+        $this->setUser($this->tenant_admin('/1'));
+        $this->assertSame([$own], array_map('intval', array_keys(evaluation_manager::list_templates())));
+        $this->assertSame($own, (int) evaluation_manager::require_template_access($own)->id);
+        foreach ([$foreign, $global, $foreignpublic] as $id) {
+            $this->assert_outoftenant(fn() => evaluation_manager::require_template_access($id),
+                'A /1 tenant admin must not use a template outside /1 (template ' . $id . ').');
+        }
+
+        // The same boundary the evaluations have: /1 is not /10 or /100.
+        $org10 = $this->seed_org('/10');
+        $near = $this->seed_template('Tenant ten', $org10);
+        $this->assertNotContains($near, array_map('intval', array_keys(evaluation_manager::list_templates())));
+        $this->assert_outoftenant(fn() => evaluation_manager::require_template_access($near),
+            '/10 is not inside /1.');
+
+        // Cross-tenant callers (the site admin) see every template and may use any.
+        $this->setAdminUser();
+        $seen = array_map('intval', array_keys(evaluation_manager::list_templates()));
+        sort($seen);
+        $expected = array_merge($all, [$near]);
+        sort($expected);
+        $this->assertSame($expected, $seen);
+        foreach ($all as $id) {
+            $this->assertSame($id, (int) evaluation_manager::require_template_access($id)->id);
+        }
+
+        // A caller with no tenant sees none, and may use none.
+        $this->setUser($this->getDataGenerator()->create_user());
+        $this->assertSame([], evaluation_manager::list_templates());
+        foreach ($all as $id) {
+            $this->assert_outoftenant(fn() => evaluation_manager::require_template_access($id),
+                'A caller with no tenant must not use template ' . $id . '.');
+        }
+    }
 }

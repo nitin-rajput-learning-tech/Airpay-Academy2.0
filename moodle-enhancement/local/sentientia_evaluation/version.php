@@ -23,13 +23,29 @@ $plugin->component = 'local_sentientia_evaluation';
 // the learner's own evaluation history (my_evaluations.php) sits behind the default-OFF flag
 // sentientia.evaluation.learner_history. The importer class refuses to run below this version
 // (importer::REQUIRES_VERSION).
-// 2026100801 - Moodle 5.3 compat FX-20: the question card menu emits data-bs-toggle beside the Bootstrap 4 data-toggle. No schema change.
-// 2026100802 - Moodle 5.3 compat FX-20 round 1: data-bs-toggle removed again (a click on an element with both data-toggle and data-bs-toggle ran the theme's Bootstrap 4 handler AND core's Bootstrap 5 handler where core loads it, so the menu opened and closed at once). Template byte-identical to before 2026100801. No schema change.
-$plugin->version   = 2026100802;  // Moodle 5.3 compat FX-20 round 1 (on top of 2026100801)
-// 2026093001:  // ADR-032: evaluation importer, responses.subject_userid, imported forms read-only
+// EV-17 (2026-10-07) - local_sentientia_evaluation.evaluationmode (SE or SP, default SE): the form says whether it is a
+// supervisor evaluation, so the person evaluated is never told they "responded" (anonymous supervisor forms keep no
+// subject, and old completions carry no evaluator). The importer writes it from BizLMS evaluationmode; the learner
+// history, the Subject column and a verify check read it. Needs a (guarded) upgrade step, and importer::REQUIRES_VERSION
+// is the same number.
+// 2026100702 (2026-10-07, review round) - the EV-17 back-fill (db/upgrade.php, classes/evaluation_mode_backfill.php): a site
+// that imported before evaluationmode existed gets its imported supervisor forms marked SP; the individual responses pages
+// read the flag for the EVALUATION's tenant and are not offered on an identity-protected form. importer::REQUIRES_VERSION
+// stays 2026100701: it names the version that adds the column the importer writes, and the back-fill adds no schema.
+// The platform dependency is raised to 2026100701 (the framework code the importer relies on: step::target_children(), the
+// PRESERVE sequence floor, row-bounded acceptances, customer::of_tenant()).
+// 2026100801 - Moodle 5.3 compat FX-20: the question card menu emits data-bs-toggle beside the Bootstrap 4 data-toggle. No schema change.
+// 2026100802 - Moodle 5.3 compat FX-20 round 1: data-bs-toggle removed again (a click on an element with both data-toggle and data-bs-toggle ran the theme's Bootstrap 4 handler AND core's Bootstrap 5 handler where core loads it, so the menu opened and closed at once). Template byte-identical to before 2026100801. No schema change.
+// 2026093001:  // ADR-032: evaluation importer, responses.subject_userid, imported forms read-only
+// 2026101500 (2026-10-15) - claude/eval-followups (2026100702) merged with gap-integration (2026100802): both sets
+// of changes; the platform dependency is the merged platform version that carries the framework code.
+// 2026101501 (2026-10-15) - my_evaluations.php (EV-18 findings): the page prints its own title (the theme does not show the
+// $PAGE heading), and the Date column says which date each cell is (Submitted / Due by / Assigned: learner_history time_kind,
+// my_evaluations_date_* strings, en + hi). No schema change; the platform dependency is unchanged.
+$plugin->version   = 2026101501;  // eval-followups + 5.3 compat FX-20 round 1; EV-18 page title and date labels
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.16.0';  // +ADR-032 BizLMS evaluation import. 1.15.3: ADR-031 tenant scope
+$plugin->release   = '1.17.3';  // 1.17.3: my_evaluations page title and date labels. 1.17.2: merged with gap-integration (5.3 compat FX-20). 1.17.1: +EV-17 back-fill, review fixes. 1.17.0: +EV-17 evaluationmode. 1.16.0: ADR-032 BizLMS evaluation import. 1.15.3: ADR-031 tenant scope
 $plugin->dependencies = [
-    'local_sentientia_platform' => 2026093001,  // ADR-032 classes/bizlms (importer framework, provenance); ADR-031 tenant::is_cross_tenant() / scope_path()
+    'local_sentientia_platform' => 2026101500,  // ADR-032 classes/bizlms with step::target_children(), the EV-26 sequence floor and row-bounded acceptances; customer::of_tenant(); ADR-031 tenant::is_cross_tenant() / scope_path()
 ];

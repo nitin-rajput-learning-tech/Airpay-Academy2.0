@@ -44,6 +44,9 @@ final class form_facts {
     /** @var array<int, array<int, \stdClass>> Form id => item id => {qid, shape, position}. */
     private array $questions = [];
 
+    /** @var array<int, array<int, true>> Form id => every item id of that form (layout items and unimported ones too). */
+    private array $items = [];
+
     /** @var array<int, \stdClass> Completed id => {data, accepted, rejected}. */
     private array $answers = [];
 
@@ -133,11 +136,19 @@ final class form_facts {
     /**
      * Completions of one form by one person, and whether the form's assignment table names that person.
      *
+     * count, firstid, firsttime and lasttime describe every legacy completion of the pair, imported or not (the
+     * assignment step reads them: BizLMS had a completion, so the person responded). firstimportedid and
+     * lastimportedtime describe only the completions that will actually be imported ({@see self::import_problem()}),
+     * which is what the assignment a completion implies is keyed on: if the lowest completion is skipped, the next
+     * imported one must carry it.
+     *
      * @param context $ctx
      * @param int $formid
      * @param int $userid
-     * @return \stdClass count, firstid (the lowest completion id, 0 for none), firsttime, lasttime and
-     *         hasusers (a local_evaluation_users row exists for the pair).
+     * @return \stdClass count, firstid (the lowest completion id, 0 for none), firsttime, lasttime, hasusers (a
+     *         local_evaluation_users row exists for the pair), firstimportedid (the lowest id that will be
+     *         imported, 0 for none) and lastimportedtime (the latest submission time among those, the derived one
+     *         where BizLMS stored none).
      */
     public function pair(context $ctx, int $formid, int $userid): \stdClass {
         $key = $formid . '|' . $userid;
@@ -147,15 +158,27 @@ final class form_facts {
         if (count($this->pairs) >= self::KEEP) {
             $this->pairs = [];
         }
-        $rows = $ctx->legacy->page(importer::SRC_COMPLETED, 0, legacy_reader::MAX_PAGE, ['id', 'timemodified'],
+        $rows = $ctx->legacy->page(importer::SRC_COMPLETED, 0, legacy_reader::MAX_PAGE,
+            ['id', 'timemodified', 'userid', 'evaluatedby', 'anonymous_response'],
             ['t.evaluation = :evpf AND t.userid = :evpu', ['evpf' => $formid, 'evpu' => $userid]]);
-        $facts = (object) ['count' => count($rows), 'firstid' => 0, 'firsttime' => 0, 'lasttime' => 0, 'hasusers' => false];
+        $facts = (object) ['count' => count($rows), 'firstid' => 0, 'firsttime' => 0, 'lasttime' => 0, 'hasusers' => false,
+            'firstimportedid' => 0, 'lastimportedtime' => 0];
+        $form = $this->form($ctx, $formid);
         foreach ($rows as $id => $row) {
             if ($facts->firstid === 0) {
                 $facts->firstid = (int) $id;
                 $facts->firsttime = (int) $row->timemodified;
             }
             $facts->lasttime = max($facts->lasttime, (int) $row->timemodified);
+            if ($form !== null) {
+                [$problem, $submitted] = $this->import_problem($ctx, $row, $form);
+                if ($problem === null) {
+                    if ($facts->firstimportedid === 0) {
+                        $facts->firstimportedid = (int) $id;
+                    }
+                    $facts->lastimportedtime = max($facts->lastimportedtime, $submitted);
+                }
+            }
         }
         $facts->hasusers = $ctx->legacy->count(importer::SRC_USERS,
             ['t.evaluationid = :evua AND t.userid = :evub', ['evua' => $formid, 'evub' => $userid]]) > 0;
@@ -178,10 +201,15 @@ final class form_facts {
             return $this->questions[$formid];
         }
         if (count($this->questions) >= self::KEEP) {
+            // Both caches go together: answers() reads $items right after calling this.
             $this->questions = [];
+            $this->items = [];
         }
         $rows = $ctx->legacy->page(importer::SRC_ITEMS, 0, legacy_reader::MAX_PAGE,
             ['id', 'typ', 'presentation', 'position'], ['t.evaluation = :evqf', ['evqf' => $formid]]);
+        // Every item of the form, whether or not it becomes a question: answers() tells "an item of this form that
+        // is not a question" (nothing to carry) from "not an item of this form at all" (an answer that is lost).
+        $this->items[$formid] = array_fill_keys(array_map('intval', array_keys($rows)), true);
         $targets = $ctx->map->resolve_many(importer::SRC_ITEMS, array_keys($rows));
         $index = [];
         foreach ($rows as $id => $row) {
@@ -198,6 +226,50 @@ final class form_facts {
     }
 
     /**
+     * Will this completion of an imported form be skipped, and what submission time will its response carry?
+     *
+     * The rules response_step applies before it writes a response, in one place so that the assignment a
+     * completion implies can be keyed on the first completion that is actually imported (response_step::assignment()
+     * and {@see self::pair()}), not on the lowest id whether or not it is skipped:
+     *  - no_timestamp: BizLMS stored no time (timemodified 0) and the form has none to stand in (a response must
+     *    carry a real time, Sentientia reads timesubmitted 0 as a trigger-queue shell);
+     *  - orphan_user: the named responder does not exist. The responder is evaluatedby when BizLMS recorded one,
+     *    else the completion's user. The one exception is a SELF evaluation whose filler has gone while the
+     *    completion's user is still there: the person evaluated is the person who answered, so it is kept.
+     * An anonymous completion needs no responder, so it has no orphan_user case. The form's own state (it does not
+     * exist, it was not imported) is not decided here: the caller has already resolved the form.
+     *
+     * @param context $ctx
+     * @param \stdClass $completed Legacy completion row (timemodified, userid, evaluatedby, anonymous_response).
+     * @param \stdClass $form Legacy form row of that completion.
+     * @return array{0: string|null, 1: int} [no_timestamp|orphan_user|null, the submission time]. The time is the
+     *         completion's own, else the form's; 0 with no_timestamp.
+     */
+    public function import_problem(context $ctx, \stdClass $completed, \stdClass $form): array {
+        $submitted = (int) $completed->timemodified;
+        if ($submitted <= 0) {
+            $submitted = (int) ($form->timemodified ?? 0);
+        }
+        if ($submitted <= 0) {
+            return ['no_timestamp', 0];
+        }
+
+        $completionuser = (int) $completed->userid;
+        $anonymous = $this->anonymous_final($ctx, $form) || $completionuser <= 0
+            || (int) ($completed->anonymous_response ?? 0) === 1;
+        if (!$anonymous) {
+            $supervised = importer::is_supervisor($form->evaluationmode ?? null);
+            $evaluatedby = (int) ($completed->evaluatedby ?? 0);
+            $responder = $evaluatedby > 0 ? $evaluatedby : $completionuser;
+            if (!$ctx->lookups->user_exists($responder)
+                    && ($supervised || $evaluatedby <= 0 || !$ctx->lookups->user_exists($completionuser))) {
+                return ['orphan_user', $submitted];
+            }
+        }
+        return [null, $submitted];
+    }
+
+    /**
      * What one completion says, question by question, and which of its stored values made it into that.
      *
      * This is the single place that decides, so the response step (which writes the answers) and the value step
@@ -207,8 +279,10 @@ final class form_facts {
      * @param \stdClass $completed Legacy completion row.
      * @param \stdClass $form Legacy form row of that completion.
      * @return \stdClass data (Sentientia question id => answer, every imported question present, null for no
-     *         answer), accepted (value id => true) and rejected (value id => reason code: item_not_imported,
-     *         duplicate_value or value_not_valid).
+     *         answer), accepted (value id => true) and rejected (value id => reason code): item_not_imported (an
+     *         item of this form that is not a question: a layout item), foreign_item (the value names an item of
+     *         ANOTHER form, or of a template), missing_item (the item does not exist), duplicate_value or
+     *         value_not_valid. The last four are answers that are lost, so they are for the owner to look at.
      */
     public function answers(context $ctx, \stdClass $completed, \stdClass $form): \stdClass {
         $cid = (int) $completed->id;
@@ -220,6 +294,7 @@ final class form_facts {
             unset($this->answers[array_key_first($this->answers)]);
         }
         $index = $this->questions($ctx, (int) $form->id);
+        $formitems = $this->items[(int) $form->id] ?? [];
         $values = $ctx->legacy->page(importer::SRC_VALUES, 0, legacy_reader::MAX_PAGE, ['id', 'item', 'completed', 'value'],
             ['t.completed = :evvc', ['evvc' => $cid]]);
 
@@ -228,11 +303,17 @@ final class form_facts {
             $set->data[$question->qid] = null;
         }
         $seen = [];
+        $strangers = [];
         foreach ($values as $valueid => $value) {
             $itemid = (int) $value->item;
             if (!isset($index[$itemid])) {
-                // Another form's item, a layout item, or an item the import did not keep.
-                $set->rejected[(int) $valueid] = 'item_not_imported';
+                if (isset($formitems[$itemid])) {
+                    // A layout item (or one the import did not keep) of this very form: not an answer.
+                    $set->rejected[(int) $valueid] = 'item_not_imported';
+                } else {
+                    // Not an item of this form at all: another form's, or none. Told apart below.
+                    $strangers[(int) $valueid] = $itemid;
+                }
                 continue;
             }
             if (isset($seen[$itemid])) {
@@ -248,6 +329,14 @@ final class form_facts {
             $seen[$itemid] = true;
             $set->data[$index[$itemid]->qid] = $mapped;
             $set->accepted[(int) $valueid] = true;
+        }
+        if ($strangers) {
+            // One read for the completion: an item row that exists but belongs elsewhere is a value of another form's
+            // item (BizLMS never joined the two); no row at all is a value whose item was deleted.
+            $found = $ctx->legacy->fetch(importer::SRC_ITEMS, array_values($strangers), ['id', 'evaluation']);
+            foreach ($strangers as $valueid => $itemid) {
+                $set->rejected[$valueid] = isset($found[$itemid]) ? 'foreign_item' : 'missing_item';
+            }
         }
         $this->answers[$cid] = $set;
         return $set;

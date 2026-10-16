@@ -9,20 +9,26 @@
     Context variables required for this template:
       * has_rows  bool
       * rows      array of {name, status_label, status_responded, status_assigned, status_expired,
-                            date, has_date, anonymous, unlinked, imported}
+                            date, has_date, date_label, anonymous, unlinked, imported}
+
+    The page title is printed here, as an h2, like the plugin's other pages: the theme does not show the
+    $PAGE heading on the standard layout, so set_heading() alone left this page without a visible title.
 
     Example context (json):
     {
         "has_rows": true,
         "rows": [
             {"name": "Reaction survey", "status_label": "Responded", "status_responded": true,
-             "date": "12 Mar 2026", "has_date": true, "anonymous": true, "unlinked": true, "imported": true},
+             "date": "12 Mar 2026", "has_date": true, "date_label": "Submitted", "anonymous": true, "unlinked": true,
+             "imported": true},
             {"name": "Manager feedback", "status_label": "Waiting for you", "status_assigned": true,
-             "date": "", "has_date": false, "anonymous": false, "unlinked": false, "imported": false}
+             "date": "21 Oct 2026 17:00", "has_date": true, "date_label": "Due by", "anonymous": false,
+             "unlinked": false, "imported": false}
         ]
     }
 }}
 <div class="container" data-region="sentientia-eval-history">
+    <h2 class="mb-1" style="font-weight: 700;">{{# str }}my_evaluations_title, local_sentientia_evaluation{{/ str }}</h2>
     <p class="text-muted">{{# str }}my_evaluations_intro, local_sentientia_evaluation{{/ str }}</p>
 
     {{# has_rows }}
@@ -53,7 +59,10 @@
                         {{# status_expired }}<span class="badge bg-secondary">{{ status_label }}</span>{{/ status_expired }}
                     </td>
                     <td>
-                        {{# has_date }}<small>{{ date }}</small>{{/ has_date }}
+                        {{# has_date }}
+                        <span class="d-block small text-muted">{{ date_label }}</span>
+                        <small>{{ date }}</small>
+                        {{/ has_date }}
                         {{^ has_date }}<small class="text-muted">&mdash;</small>{{/ has_date }}
                     </td>
                 </tr>

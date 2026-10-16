@@ -112,14 +112,17 @@ final class assignment_step extends step {
 
         $trigger = 'manual';
         $source = 0;
-        $classroomunresolved = false;
+        $classroomwarning = null;
         if ((string) ($form->plugin ?? '') === 'classroom' && (int) ($form->instance ?? 0) > 0) {
             $classroom = $ctx->map->resolve(importer::SRC_CLASSROOM, (int) $form->instance);
             if ($classroom !== null) {
                 $trigger = 'classroom_end';
                 $source = (int) $classroom;
             } else {
-                $classroomunresolved = true;
+                // No map entry for the classroom: it is either missing, or (a single-feature dry run) the classroom
+                // feature is neither complete nor simulated here, which is not the data's fault.
+                $classroomwarning = $ctx->is_deferred(importer::SRC_CLASSROOM)
+                    ? 'deferred:' . importer::SRC_CLASSROOM : 'classroom_unresolved';
             }
         }
 
@@ -170,8 +173,8 @@ final class assignment_step extends step {
         if ($derived) {
             $outcome->warn('derived_timestamp');
         }
-        if ($classroomunresolved) {
-            $outcome->warn('classroom_unresolved');
+        if ($classroomwarning !== null) {
+            $outcome->warn($classroomwarning);
         }
         if ($assignerunknown) {
             $outcome->warn('assigner_not_found');

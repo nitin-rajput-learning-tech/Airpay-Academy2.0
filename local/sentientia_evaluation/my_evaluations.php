@@ -51,6 +51,11 @@ foreach (\local_sentientia_evaluation\learner_history::for_user((int) $USER->id)
             ? \local_sentientia_evaluation\evaluation_manager::submitted_label((int) $entry->time, (bool) $entry->anonymous)
             : '',
         'has_date' => $entry->time > 0,
+        // Which date that is: when the learner answered, the deadline, or the day it was assigned. One column holds all
+        // three, so the cell says it (Submitted / Due by / Assigned) rather than leaving "Date" to be guessed.
+        'date_label' => $entry->time > 0
+            ? get_string('my_evaluations_date_' . $entry->time_kind, 'local_sentientia_evaluation')
+            : '',
         'anonymous' => (bool) $entry->anonymous,
         // The note that the learner's answers are not linked to them: not every row of a protected evaluation.
         'unlinked' => (bool) $entry->unlinked,

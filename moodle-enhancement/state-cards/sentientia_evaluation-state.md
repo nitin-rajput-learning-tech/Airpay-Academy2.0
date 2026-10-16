@@ -1,10 +1,20 @@
-# State Card — `local_airpay_evaluation`
+# State Card — `local_sentientia_evaluation`
 
-**Component:** `local_airpay_evaluation`
-**Version:** `2026052032` / `1.15.2`  (+P1 #43 Hindi top-up)
+**Component:** `local_sentientia_evaluation` (was `local_airpay_evaluation`; the rename left the tables, strings and
+capabilities under the new name, and the old name appears nowhere in the code any more)
+**Version:** `2026100702` / `1.17.1` (the EV-17 back-fill and the review fixes of 2026-10-07). `2026100701` / `1.17.0` added
+`local_sentientia_evaluation.evaluationmode` (EV-17), and `importer::REQUIRES_VERSION` stays `2026100701`: it names the version
+that adds the column the importer writes, and the back-fill adds no schema. `2026093001` / `1.16.0` was the ADR-032
+evaluation importer.
+Depends on `local_sentientia_platform` >= `2026100701` (the framework code the importer relies on, see the last section).
 **Maturity:** `MATURITY_STABLE`
-**Status:** Live on airpay.academy. Replaces BizLMS evaluation forms.
-**Last refreshed:** 2026-05-24 (P1 state-card pass)
+**Status:** NOT live. All data on local and UAT is a test import of a production backup, and the importer has not run
+against real production. Replaces the BizLMS `local_evaluation` forms at cutover; `classes/bizlms/` brings their
+history over.
+**Last refreshed:** 2026-10-07 (the owner's delegated decisions EV-06, 16, 17, 20-NOTE, 36 and EV-TENANT built, plus
+three framework items, then the follow-ups of the data and safety reviews; see the last two sections, "2026-10-07 -
+evaluation decisions implemented" and "2026-10-07 - review follow-ups". Branch `claude/eval-followups`, PHPUnit NOT run
+there)
 
 ---
 
@@ -19,74 +29,123 @@ report rolls up to tenant dashboards.
 
 | Table | Purpose |
 |-------|---------|
-| `local_airpay_evaluation` | Evaluation form container |
-| `local_airpay_evaluation_questions` | Questions within a form |
-| `local_airpay_evaluation_responses` | Submitted responses (one per user × form) |
-| `local_airpay_evaluation_triggers` | When to fire the form (e.g. on course completion) |
-| `local_airpay_evaluation_template` | Reusable form templates |
-| `local_airpay_evaluation_assign` | Form-to-audience assignment rows |
+| `local_sentientia_evaluation` | Evaluation form container. An imported form keeps its BizLMS id and arrives archived (status 2, manual trigger); `costcenterid` / `open_path` carry its tenant (an organisation, never a bare root). `evaluationmode` (EV-17) is `SE` for every native form and a BizLMS self evaluation, `SP` for a supervisor evaluation; only the import writes `SP` |
+| `local_sentientia_evaluation_questions` | Questions within a form (`numeric` and `multichoice_multi` keep their settings in `options`: `{min, max}` and a plain option list) |
+| `local_sentientia_evaluation_responses` | Submitted responses; `response_data` is JSON keyed by the bare question id. `userid` 0 = anonymous. `subject_userid` = the person a supervisor form is about (written by the import only). `timesubmitted` 0 = the trigger queue's pending shell for an invitee, which is an invitation and never counted as a response |
+| `local_sentientia_evaluation_triggers` | Queue of triggers waiting for their delay (course, program or classroom completion) |
+| `local_sentientia_evaluation_template` | DB-backed reusable form templates (JSON payload as in export / import). `costcenterid` holds an ORGANISATION id; the library is tenant-scoped since EV-11 |
+| `local_sentientia_evaluation_assign` | Who was meant to answer a form (`UNIQUE(evaluationid, userid, trigger_event, source_id)`); the importer also writes `responded` rows for answers BizLMS never had an assignee row for |
 
-## Capabilities (2)
+## Capabilities (2 declared, none used undeclared)
 
-`local/airpay_evaluation:` `manage`, `respond`. Compact cap set because
-admin surface gates most operations; learner-side is "respond to one I'm assigned".
+`local/sentientia_evaluation:manage` (manager archetype; every admin page, the web services, the CSV export, and since
+EV-06 the individual responses pages) and `local/sentientia_evaluation:respond` (student and manager archetypes;
+`respond.php`, `my_evaluations.php`, the `submit_response` web service). Tenant scope on top of `:manage` is ADR-031
+(`require_evaluation_access()`).
+**EV-06 (built 2026-10-07, decided as option B):** `response_list.php` and `response_detail.php` used to call
+`require_capability('local/sentientia_evaluation:view', ...)`, which `db/access.php` never declared, so nobody could
+open them. They now ask for `:manage` behind the flag below, through `evaluation_manager::require_response_drilldown()`.
+Roles: the manager archetype only (role 1 manager, role 9 tenant administrator, site administrator); trainers (role 10,
+teacher archetype) and employees (role 5) get nothing. No capability was added, so no re-init for this item.
 
-## Feature flags
+## Feature flags (2)
 
-None registered.
+- `sentientia.evaluation.learner_history`, default OFF (`db/feature_flags.php`): gates `my_evaluations.php`, the
+  learner's own evaluation history.
+- `sentientia.evaluation.response_drilldown`, default OFF (EV-06): gates `response_list.php` and `response_detail.php` and
+  the "Individual responses" link on `responses.php`. OFF answers `response_drilldown_unavailable`, as if the pages did
+  not exist. Recommended flip (Nitin's call, not made here): ON for the Airpay customer after he has reviewed the
+  screenshots of both pages.
+
+Nothing else in the plugin is flagged: the importer is gated by its CLI guard, and the admin-page improvements of the
+follow-ups below change only pages that already existed, or rows that exist only after the import. The earlier text
+"None registered" stopped being true with ADR-032.
 
 ## Key files
 
+Both trees (`local/sentientia_evaluation/` and `moodle-enhancement/local/sentientia_evaluation/`) must stay
+byte-identical; `tools/check-tree-drift.php` proves it.
+
 ```
-local/airpay_evaluation/
-├── version.php                                  2026052032 / 1.15.2
+local/sentientia_evaluation/
+├── version.php                                  2026100702 / 1.17.1
 ├── README.md
 ├── index.php                                     Admin list
-├── analysis.php                                  Per-form analytics
-├── export_template.php                            Export form template (JSON)
-├── import_template.php                            Import form template (JSON)
+├── questions.php                                 Question list (read-only on an imported form)
+├── responses.php                                 Aggregate statistics per question
+├── response_list.php / response_detail.php       Per-response views (:manage + flag response_drilldown, EV-06)
+├── analysis.php                                  Per-form analytics (Kirkpatrick roll-up)
+├── non_respondents.php                           Responded / pending tabs
+├── respond.php                                   The learner's form
+├── my_evaluations.php                            Learner history (flag learner_history)
+├── export_template.php / import_template.php      Template JSON round trip
 ├── exportcsv.php                                  Per-response CSV export
 ├── classes/
-│   ├── evaluation_manager.php                    Form CRUD
-│   ├── evaluation_engine.php                     Response evaluation + scoring
-│   ├── evaluation_audience_assigner.php           Audience rule resolver
-│   ├── observer.php                               course_completed → fire triggers
+│   ├── evaluation_manager.php                    Form CRUD, statistics, CSV, tenant + anonymity gates
+│   ├── evaluation_engine.php                     Trigger queue (invitations, pending shell rows)
+│   ├── evaluation_audience_assigner.php           Audience rule resolver + bulk assign
+│   ├── evaluation_mode_backfill.php               Upgrade step 2026100702: marks imported supervisor forms SP
+│   ├── learner_history.php                        Rows for my_evaluations.php
+│   ├── observer.php                               Completion events → queue triggers
+│   ├── bizlms/                                    ADR-032 importer: importer, form/template/question/
+│   │                                              dependency/assignment/response/value steps, form_facts,
+│   │                                              answer_mapper, item_shape, tenant_scope
 │   ├── external/                                  WS endpoints
-│   ├── form/                                      Edit + response forms
-│   ├── task/                                      Scheduled triggers
-│   └── privacy/                                   GDPR / DPDP
+│   ├── form/                                      Edit + audience forms
+│   ├── task/                                      process_triggers, expire_assignments
+│   └── privacy/                                   GDPR / DPDP provider
 ├── db/
 │   ├── install.xml                                6 tables
-│   └── upgrade.php
-├── cli/                                           CLI tools (e.g. backfill responses)
-├── amd/
+│   ├── upgrade.php, access.php, events.php, messages.php, services.php, tasks.php
+│   ├── bizlms_import.php                          Registers the 'evaluation' importer
+│   └── feature_flags.php                          learner_history, response_drilldown
+├── cli/                                           smoke_template_io.php, smoke_anonymous_question.php
+├── amd/src/ + amd/build/                          Five modules (the build is the minified copy)
 ├── templates/
 ├── lang/
-│   ├── en/local_airpay_evaluation.php
-│   └── hi/local_airpay_evaluation.php             (100% parity post-P1 #43)
-└── tests/
-    ├── crud_test.php                              8 methods
-    ├── observer_test.php                          9 methods
-    ├── analysis_test.php                          15 methods
-    └── external/list_evaluations_test.php         5 methods (37 total)
+│   ├── en/local_sentientia_evaluation.php
+│   └── hi/local_sentientia_evaluation.php         (100% parity, drive-enforced)
+└── tests/                                         see Tests
 ```
 
 ## Tests
 
-4 PHPUnit classes, 37 methods. `analysis_test.php` is the deepest —
-covers aggregate scoring, NPS calculation, response-distribution
-rendering.
+14 PHPUnit classes (165 test methods as of 2026-10-07, after the decisions of that day), none of them run on the
+follow-ups branch, which is why every claim below says "not run":
+
+| Class | Covers |
+|-------|--------|
+| `crud_test` | Form and question CRUD, template round trip |
+| `observer_test` | Trigger queue, the invited user's shell row |
+| `analysis_test` | Statistics buckets, the response rows, CSV, trigger shells, response detail |
+| `anonymity_sticky_test` | Sticky anonymity (`identity_protected()`) |
+| `tenant_scope_test` (`tenant_isolation`) | ADR-031 gates, the template library |
+| `audience_assigner_test` | The audience filters, `has_constraint()`, `assign_by_filter()` (EV-36) |
+| `privacy_provider_test`, `privacy_subject_test` | Privacy provider, subject links |
+| `imported_history_test` | Imported forms are read-only, learner history, the anonymous note (EV-20-NOTE) |
+| `evaluation_mode_test` | `evaluationmode`: the column and its upgrade step, native = SE, the Subject column, learner history (EV-17) |
+| `response_drilldown_test` | The EV-06 gate: flag, capability, roles, tenant, the pages' order of checks, the link, the detail respondent |
+| `bizlms_import_test` (`bizlms_import`) | The importer (a 9-form seed), parity, preflight, the decisions it declares (EV-16, EV-TENANT), `evaluationmode` |
+| `external/list_evaluations_test` | The list web service |
+| `external/bulk_assign_by_audience_test` | The bulk-assign web service refuses an empty rule (EV-36) |
 
 ## Open items
 
-- [ ] Cohort-scoped triggers (today: per-course only)
-- [ ] Anonymous responses — admin toggle per form (today: always
-      attributed to userid)
-- [ ] Per-customer form template library
-- [ ] Behat coverage of the import/export round-trip
-- [ ] Email reminder for unfinished surveys (depends on
-      `local_airpay_emails` rule pipeline)
-- [ ] PHPUnit coverage for `evaluation_audience_assigner`
+- [ ] Cohort-scoped triggers, a per-customer template library and an email reminder for unfinished surveys are no longer
+      listed here (EV-35, decided C): they become three unscheduled entries in the PROJECT-STATE.md product backlog
+      (the lead writes them; not done on this branch), each to be specified with its own default-OFF flag before any
+      build
+- [x] `response_list.php` / `response_detail.php` asked for `local/sentientia_evaluation:view`, declared nowhere
+      (EV-06): regated on `:manage` behind `sentientia.evaluation.response_drilldown`, built 2026-10-07; screenshots owed
+- [ ] A trigger's pending shell row is never removed or turned into the response (EV-31 follow-up; needs the owner,
+      see the review round at the end: the privacy export still lists it as "submitted 1 Jan 1970", and on an
+      anonymous form it keeps the invitee's user id beside the anonymous answer)
+- [ ] `non_respondents.php` prints the evaluation name through `format_string()` and then `{{ name }}` (escaped
+      twice, the defect the review round fixed on the pages that branch touched); not touched, outside the branch's
+      pages
+- [x] Anonymous responses: a per-form toggle shipped (sticky once answered, 2026-09-25)
+- [x] PHPUnit coverage for `evaluation_audience_assigner` (EV-33)
+- [x] The import/export round trip, as PHPUnit instead of Behat, which this pipeline does not run (EV-32, EV-33)
 
 ## State card created — 2026-05-24
 
@@ -209,8 +268,9 @@ the `local_evaluation` tables -> this plugin's tables. Owner `local_sentientia_e
   payload built from the template's items. (3) items -> questions, or folded into a template's payload, or
   archived (`not_a_question`); then `dependency_step` sets `depends_on_qid` in a second pass (the parent may have a
   higher id). (4) `local_evaluation_users` -> `_assign`, **grouped** by (form, person): the earliest `timecreated`
-  wins, the rest merge (`dup_assignment`). (5) completions -> `_responses`; the first completion of a (form,
-  person) pair that has no assignee row also creates a `responded` assign row (sub-key `assign`). (6) values: no
+  wins, the rest merge (`dup_assignment`). (5) completions -> `_responses`; the first IMPORTED completion of a
+  (form, person) pair that has no assignee row also creates a `responded` assign row (sub-key `assign`; keyed on the
+  first completion that is imported, not the lowest id, since 2026-10-01). (6) values: no
   write; each value row is folded into its response or archived with a reason. `form_facts::answers()` decides for
   both (5) and (6), so they cannot disagree.
 - **What a form becomes.** Always archived (status 2), `trigger_event` manual, `days_after` 0,
@@ -224,10 +284,13 @@ the `local_evaluation` tables -> this plugin's tables. Owner `local_sentientia_e
   becomes the option text; checkboxes `1|3` -> `["A","C"]`; a number keeps its decimals (7.25 stays 7.25); text is
   entity-decoded once. A value that cannot be an answer (a position that does not exist, text for a number) is
   archived `value_not_valid`; a second value for the same item `duplicate_value` (needs-owner since the review of
-  2026-10-01: an answer the import drops is for the owner to look at); a value of a layout item or of another form's
-  item `item_not_imported`. Free text is kept whole (the 10,000-character cap was removed in the same review).
+  2026-10-01: an answer the import drops is for the owner to look at); a value of a layout item of the same form
+  `item_not_imported` (nothing to carry); a value of ANOTHER form's item `foreign_item` and a value of an item that
+  does not exist `missing_item` (both needs-owner since 2026-10-01, see the follow-ups below). Free text is kept whole (the 10,000-character cap was removed in the same review).
 - **Anonymity.** An anonymous completion (its own flag, the form's flag made sticky, or a guest) is stored with
-  user id 0 and `subject_userid` NULL; BizLMS's link from the completion to the person is never copied. Implied
+  user id 0 and `subject_userid` NULL (the response row names nobody); the legacy tables still link the completion to
+  the person, and the import's map ties the anonymous response and that person's implied assignment to the same
+  completion id (decision `evaluation.legacy_anonymous_linkage`, pending the legacy-table privacy ADR). Implied
   assignment times on an identity-protected form are cut to the start of the day in the server time zone, and so
   is `responded_at` of an assigned pair, because the anonymous response beside it carries the same minute.
   Supervisor forms (`evaluationmode` SP): the responder is `evaluatedby` (else the completion's user) and the
@@ -238,9 +301,10 @@ the `local_evaluation` tables -> this plugin's tables. Owner `local_sentientia_e
   unconditional (qid and value both NULL).
 - **Tenant.** An organisation, never a bare root: the form's `open_path` (walked up to an existing organisation),
   then `/<costcenterid>` (BizLMS kept the root there, in a char column), then the classroom's path (plugin
-  `classroom`, resolved through the map, read from `local_sentientia_classroom.open_path`), then the root of
-  `usermodified`; none = `costcenterid` 0 and `open_path` NULL, cross-tenant callers only (decision
-  `tenant.unresolved.evaluation`). Templates: `open_path`, then `costcenterid`.
+  `classroom`, resolved through the map, read from `local_sentientia_classroom.open_path`); none = `costcenterid` 0 and
+  `open_path` NULL, cross-tenant callers only (decision `tenant.unresolved.evaluation`). The root of `usermodified`
+  (the user who last edited the form) was a fourth clue until 2026-10-07 and is NOT one any more (EV-TENANT, decision
+  `evaluation.tenant_editor_fallback` = `not_used`: see the last section). Templates: `open_path`, then `costcenterid`.
 - **Schema.** `responses.subject_userid` INT NULL + `idx_subject` (install.xml and an idempotent upgrade step).
   Version 2026092500 -> 2026093001, release 1.16.0; `importer::REQUIRES_VERSION` is the same number. The platform
   dependency is now 2026093001 (the framework's `classes/bizlms` and `provenance`).
@@ -267,7 +331,8 @@ the `local_evaluation` tables -> this plugin's tables. Owner `local_sentientia_e
   (`multichoice_multi` and `numeric` buckets in `responses.php`) and 5 (`response_detail.php`) change admin pages and
   need screenshots; 2 and 5 are on a page that is dead today (`local/sentientia_evaluation:view` is not declared).
   8 is needed only if still-open forms were activated (they are not). 9 is a note for a future template picker.
-  1, 4, 6, 7 and 10 are done (above).
+  1, 4, 6, 7 and 10 are done (above). **Since built (2026-10-01, see the follow-ups section at the end):** 2 as EV-02,
+  3 as EV-03, 5 as EV-05 and 9 as EV-11; the page that 2 and 5 sit on is still dead (EV-06).
 - **Tests.** `tests/bizlms_import_test.php` (`@group bizlms_import`, tenant cases also `tenant_isolation`): the
   importer contract against a 9-form seed (anonymous, supervisor, trainer feedback, soft-deleted, root-only,
   sticky-anonymous, deep path, unplaceable), plus column maps, tenant attribution, the dependency second pass,
@@ -284,7 +349,8 @@ the `local_evaluation` tables -> this plugin's tables. Owner `local_sentientia_e
 - **Needs the owner** (`docs/cutover/bizlms-import-decisions.json` is not edited here): after the Stage B
   rehearsal, `accepted_reasons` for the needs-owner codes that actually occur (`evaluation:value_not_valid`,
   `duplicate_value`, `orphan_form`, `orphan_template`, `orphan_item`, `orphan_user`, `orphan_assignee`,
-  `orphan_completed`, `no_timestamp`, `unmapped_enum`). Only `archived` is implemented for "still-open forms": the
+  `orphan_completed`, `no_timestamp`, `unmapped_enum`, and, since 2026-10-01, `foreign_item` and `missing_item`).
+  Only `archived` is implemented for "still-open forms": the
   declared decision allows nothing else.
 
 ### 2026-10-01 - real-data check of the importer (read-only, April rehearsal dump)
@@ -304,8 +370,8 @@ The importer was run mentally against the April production dump (`bizlms_april`,
   1 named completion with 5 numeric answers, 1 assignee row (so no implied assignment). Every
   enumerated column now holds only declared values: anonymous {2}, deleted {0,1}, evaluationmode {SE}, typ {numeric},
   anonymous_response {2}. No drafts, no sitecourse rows, no templates, no orphans.
-- **Gap this makes real.** All five April items are numeric, and `responses.php` renders no bucket for `numeric` or
-  `multichoice_multi` (mapping doc code fix 3, still not built: it changes an admin page and needs screenshots). An
+- **Gap this made real (closed by EV-03, 2026-10-01; screenshots outstanding).** All five April items are numeric, and
+  `responses.php` rendered no bucket for `numeric` or `multichoice_multi` (mapping doc code fix 3, then not built). An
   imported numeric form therefore shows its questions with no statistics on that page until fix 3 lands; the answers
   themselves are in `response_data` and in the CSV export.
 
@@ -329,12 +395,25 @@ platform dependency are unchanged. Both trees byte-identical.
 - **A self evaluation whose `evaluatedby` user has gone is kept**, not skipped as `orphan_user`: the responder falls
   back to the completion's user with the warning `responder_not_found`. A supervisor evaluation is still skipped,
   because there the completion's user is the person evaluated and must not be shown as having answered.
-- **Preflight blocks on stray rows.** New blocker `leftover_rows_at_legacy_form_ids:<table>:<n>` for rows in
+- **Preflight blocks on stray rows.** (Since 2026-10-07 the check belongs to the framework, `form_step::target_children()`,
+  and the blocker reads `leftover_rows_at_legacy_ids:evaluation.forms:<table>:<n>`; the rest of this bullet is
+  unchanged.) Blocker `leftover_rows_at_legacy_form_ids:<table>:<n>` for rows in
   `questions`, `responses`, `assign` and `triggers` whose `evaluationid` is a legacy form id with no Sentientia form
   yet. Forms keep their BizLMS ids, so such rows (the old `delete()` left assignment and trigger rows behind) would
   show as BizLMS history or collide with the assignment unique key and roll the whole feature back. An id a form
   already occupies stays the framework's collision blocker. Counts only. Production has an empty target; this guards
   rehearsals and UAT.
+  **What to clear before importing again into a UAT or rehearsal target (added 2026-10-07, EV-21).** The check
+  (formerly `importer::rows_left_at_legacy_form_ids()`) looks at EVERY id in `local_evaluations`, not only the ids the import
+  is about to create, so it fires for **soft-deleted forms too**: such a form is archived in the map (`deleted_form`)
+  and never gets a Sentientia form, so a row left at its id is not cleared by a run and keeps blocking it until it is
+  removed.
+  Remove, by hand, the rows in `local_sentientia_evaluation_questions`, `_responses`, `_assign` and `_triggers` whose
+  `evaluationid` is a legacy form id (soft-deleted ones included) that has no row in `local_sentientia_evaluation`.
+  The message gives only the table and the count (`leftover_rows_at_legacy_ids:evaluation.forms:<table>:<n>`, never a row), so
+  the ids come from comparing `local_evaluations` with the form table. The import itself never deletes. One known way
+  to get such rows: a native test form that sat on an id the legacy table also uses and was deleted by the old
+  `delete()`, which left its assignment and trigger rows behind.
 - **Imported templates cannot be deleted.** `evaluation_manager::delete_template()` throws
   `error_imported_template_read_only` (en + hi) for a template the import created, as the decision
   `framework.protect_imported_history` says. No UI calls it today. `is_imported_template()` is the read.
@@ -346,16 +425,14 @@ platform dependency are unchanged. Both trees byte-identical.
   their own and either the form is anonymous or they answered a protected form. A learner with a named answer on a
   form that merely once took a guest's anonymous answer no longer sees it (the date still shows to the day).
 - **Not closed, needs a decision or a different kind of work:**
-  - *Anonymous supervisor evaluations.* The subject is deliberately not kept (decision
-    `evaluation.sp_anonymous_subject`), so the evaluated person's assignment row cannot be told from a self evaluation
-    and still reads "responded". Fixing it needs a marker on the form (a column, or a flag in the import), i.e. a
-    schema change. April holds no supervisor form, so nothing real is affected yet.
+  - *Anonymous supervisor evaluations.* **Closed 2026-10-07 by EV-17** (the form carries `evaluationmode`; see the last
+    section). It read: the subject is deliberately not kept (decision `evaluation.sp_anonymous_subject`), so the evaluated
+    person's assignment row could not be told from a self evaluation and still read "responded"; fixing it needed a
+    marker on the form, i.e. a schema change. April holds no supervisor form, so nothing real was affected.
   - *Visual evidence* for `my_evaluations.php` (desktop and mobile, plus README under `docs/visual-evidence/`) is
     still outstanding; the build sessions could not deploy or browse. It is the precondition for flipping the flag.
-  - *Mapping doc code fix 3* (`multichoice_multi` and `numeric` buckets in `responses.php`) is not built. April's
-    five items are all numeric, so the one real imported form shows its questions with no statistics on the admin
-    analysis page until it is; the answers are in `response_data` and the CSV. A cutover gap for Nitin, with
-    screenshots.
+  - *Mapping doc code fix 3* (`multichoice_multi` and `numeric` buckets in `responses.php`) was not built at that
+    point. **Built since as EV-03 (2026-10-01)**; what remains is its screenshots (below).
   - *Performance.* `form_facts::pair()` and `answers()` read per completion through a 64-entry cache. Fine at April
     volumes (1 completion, 5 values); an N+1 at scale. Time Stage B before assuming it is.
 - **Deviations from mapping doc section 18, for the doc (not editable from a build session):**
@@ -364,11 +441,12 @@ platform dependency are unchanged. Both trees byte-identical.
      anonymous", or a guest become 0. The choice is the more protective one and `identity_protected()` hides those
      respondents anyway, but the respondent loses their own export and history link in Sentientia (the legacy row
      keeps it). Pinned by `test_anonymous_answers_stay_anonymous` (form 7, completion 7002) and the verify check
-     `imported_response_inconsistent`. Needs an owner decision: record it, or follow the map.
+     `imported_response_inconsistent`. **Decided 2026-10-07 (EV-16, delegated): keep it**, as decision
+     `evaluation.sticky_anonymity` = `whole_form`; the importer declares it, so a decisions file without it blocks.
   2. *Template tenant fallback.* A form with no `open_path` falls back to `/<costcenterid>`; a template falls back
      from `open_path` to `costcenterid`.
   3. *New reason codes:* `duplicate_value` (needs-owner), `item_not_imported`, `response_not_imported`, `orphan_item`,
-     `orphan_template`; new warnings `responder_not_found`, `anonymity_made_sticky`.
+     `orphan_template` (and, 2026-10-01, `foreign_item` and `missing_item`, both needs-owner); new warnings `responder_not_found`, `anonymity_made_sticky`.
   4. *For the legacy-table privacy ADR* (decision `evaluation.legacy_anonymous_linkage`): the implied assignment is a
      sub-row `(local_evaluation_completed, <id>, 'assign')` of the same completion whose primary map row is the
      anonymous response, and synthesised assignment ids are inserted in completion order. So Sentientia-owned tables
@@ -380,6 +458,498 @@ platform dependency are unchanged. Both trees byte-identical.
   assignment not shown as a response, the `unlinked` note. Static checks run: `php -l` on every changed file, the
   ADR-032 static scan over `classes/bizlms/` (clean), tree drift, lang parity, path boundary, fixture copies.
 
+## 2026-10-01 - evaluation follow-ups (branch claude/eval-followups; no version change, stays 2026093001)
+
+Thirteen items from the importer re-review and the mapping doc section 18 "Code fixes", built together (EV-02, 03,
+05, 09, 11, 13, 14, 28, 31, 32 and 33 are code and tests; EV-20 and 21 are documentation). Both trees byte-identical.
+**PHPUnit NOT run** (the lead runs it once). Every UI change needs the screenshots listed per item before it is
+merged; they are collected, with a sample CSV header, in
+`docs/visual-evidence/2026-10-07/eval-followups/README.md`.
+
+- **EV-31 - trigger shells are not responses.** When a trigger fires, `evaluation_engine::process_due_triggers()`
+  writes a pending shell (`timesubmitted` 0, `response_data` `{}`) for the invitee. `has_user_responded()` counted
+  it, so on a named, non-pulse form the invited user saw "already responded" (`respond.php`) and `submit_response()`
+  threw `alreadyresponded` before they had answered. It is now `... AND timesubmitted > 0`. The same shells also
+  inflated every count and listing, so `timesubmitted > 0` is now part of `count_responses()`,
+  `count_responses_scoped()` (index tile), `get_response_stats()`, `build_response_filter()` (so
+  `get_responses_filtered()`, `count_responses_filtered()`, the filtered statistics, the Kirkpatrick roll-up and the
+  CSV), the `rcount` subquery of `list_evaluations` and the `response_list.php` query (`response_detail.php` is in
+  EV-05). The privacy provider still sees shells: they are personal data of the invitee. A shell is never turned into
+  the response when the invitee answers (a new row is inserted); it stays as an inert row. Tests:
+  `observer_test::test_an_invited_user_can_still_answer_a_named_form`,
+  `analysis_test::test_trigger_shells_are_not_counted_listed_or_exported` (and the empty-filter test now expects
+  `r.timesubmitted > 0` instead of `1=1`), `list_evaluations_test::test_response_count_ignores_trigger_shells`.
+  Screenshots needed: `respond.php` as an invited learner (the form, not the thank-you page) and `responses.php`
+  "Total Responses" for a form that holds a shell, desktop and 590 px.
+- **EV-02 - a Subject column for supervisor forms (mapping doc code fix 2).** The import keeps the person a
+  supervisor evaluation is about in `responses.subject_userid`, but nothing showed it. New
+  `evaluation_manager::shows_subject($evaluation, ?$identityprotected)` is true when the evaluation is NOT
+  identity-protected and some response has a subject. When it is, `csv_header_row($questions, true)` puts "Subject"
+  after Email and `response_to_csv_row(..., $identityprotected, true)` puts that person's name there
+  (`subject_label()`: empty for a response with no subject, "(deleted user)" when the account is deleted or gone;
+  never on a protected form). `exportcsv.php` works the flag out once for header and rows. `response_list.php` joins
+  the subject user (the review round replaced that join with `subject_names()`, see the end) and
+  `response_list.mustache` adds the column after Respondent. A native form never has a subject,
+  so its export and list are unchanged (the new parameters default to false). New string `responses_col_subject`
+  (en, hi). No flag (the gates of those pages are unchanged), no version change. The respondent lookup in the CSV now
+  reads every name field `fullname()` wants (it read four and relied on the rest being absent). Test:
+  `analysis_test::test_csv_subject_column_only_for_named_supervisor_responses`. `response_list.php` still needs
+  `local/sentientia_evaluation:view`, which `db/access.php` does not declare, so the page cannot be reached until that
+  is decided (EV-06); screenshots of it (desktop and 590 px, imported supervisor form, tenant admin) wait for that. A
+  sample CSV header line is in the evidence README.
+- **EV-03 - `responses.php` shows number and tick-all-that-apply statistics (mapping doc code fix 3).** The buckets
+  for `numeric` and `multichoice_multi` were always computed, but the page set flags only for rating, NPS, yes/no,
+  multiple choice and text, so April's only real imported form (five numeric 1..5 items) listed its questions and
+  counts with no statistics. The loop that built the rows moved from the page into
+  `evaluation_manager::response_question_rows($questions, $stats)` so it can be tested; `responses.php` calls it.
+  New: `is_multichoice_multi` rows carry a bar per option (share of RESPONDENTS, so the shares can add up to more
+  than 100%, with a note saying so), `respondents`, `total_picks`, `avg_picks` and a summary line; `is_numeric` rows
+  carry the average (`format_float(avg, 2, true, true)`), lowest and highest, the allowed range when both bounds are
+  set, and, for a bounded range of at most `NUMERIC_DISTRIBUTION_SPAN` (10) steps whose answers are all whole numbers
+  inside it, a bar per value (the bucket gained an int-keyed `distribution` and a `distribution_exact` flag, no
+  schema). One answer such as 7.25 or an out-of-range value switches the bars off and the average stays. Questions
+  nobody answered show "No answers yet" (new string). Strings (en, hi): `responses_numeric_average`,
+  `responses_numeric_lowest_highest`, `responses_numeric_range`, `responses_multi_summary`,
+  `responses_multi_share_note`, `responses_question_no_answers`. The page gate is unchanged; no flag, no version
+  change. Two side effects of the move, both display only: the rows no longer pre-escape question and option text
+  (`format_string(..., ['escape' => false])`, the template escapes once, so "Tom & Jerry" stops showing as
+  "Tom &amp; Jerry"), and the position badge counts 1..n (it printed question id + 1, because `get_questions()` is
+  keyed by id; `questions.php` was fixed under EV-09 and `respond.php` in the review round at the end). Since the
+  review round the lowest and highest answers are shown as stored (not rounded to two decimals) and an answer that is
+  not a number is left out of the figures. Tests:
+  `analysis_test::test_response_stats_buckets_for_numeric_and_multichoice_multi`,
+  `::test_response_question_rows_render_numeric_and_multichoice_multi`. Checked without Moodle: the buckets and the
+  rows against a stub of the Moodle string functions, and `responses.mustache` rendered with the bundled Mustache
+  engine. Not changed on purpose: `get_kirkpatrick_summary()` adds up only rating and NPS, so on `analysis.php` the
+  imported numeric form adds a response count but no average (the owner question "should numeric 1..5 items count as
+  ratings?" is decided, EV-03-KP: no, nothing changes; see the last section). Screenshots needed: `responses.php?id=<form with a number, a tick-all and one older question>` as a
+  tenant admin (manager role, not site admin), desktop and 590 px; and the imported April form 3 on the rehearsal
+  copy after an import.
+- **EV-05 - `response_detail.php` reads the keys and options the plugin really writes (mapping doc code fix 5).**
+  The page read each answer as `$data['q' . $id]` and a choice question's options as `$opts['choices']`. Nothing
+  writes either: `response_data` is keyed by the bare question id (`submit_response()`, the importer) and the options
+  JSON is a plain list. So every answer read "(no answer)", every comparison count was 0 and a choice question had no
+  histogram; `multichoice_multi` was not handled at all and the numeric average was computed but never printed. The
+  body (the old lines 59-132) moved into `evaluation_manager::response_detail_rows($evaluation, $response)`, which
+  reads `$data[(int) $q->id]`, takes the option list from `decode_options()`, builds a histogram per option for
+  `multichoice` and `multichoice_multi` (for tick-all, the people who ticked the option; `is_my_choice` by
+  `in_array`), keeps the rating histogram and exposes the numeric `avg` with `avg_label`. It reads every response
+  once (a recordset) instead of decoding all of them once per question, and it leaves pending trigger shells
+  (`timesubmitted` 0) out of the comparison and of `total_responses`. The ADR-031 and `identity_protected()` gates in
+  the page are untouched. `response_detail.mustache` prints the average and highlights the respondent's own option for
+  the choice histograms. New string `response_detail_numeric_avg` (en, hi). No version change. The page is still
+  unreachable for everyone (`local/sentientia_evaluation:view` is not declared in `db/access.php`: EV-06), so its
+  screenshots wait for that decision. Test: `analysis_test::test_response_detail_rows_read_question_id_keys_and_list_options`.
+  Checked without Moodle: the rows against a fake `$DB`.
+- **EV-09 - the admin UI stops offering controls that an imported form refuses.** `evaluation_manager` refuses to edit,
+  re-status or delete an imported form and to add, edit, delete or reorder its questions (error
+  `error_imported_form_read_only`), but the list and the question page still offered Edit, Delete, Add, drag and the
+  per-question menu, so every click ended in that error. `list_evaluations` now asks
+  `evaluation_manager::imported_ids($pageids)` (one query on the legacy map: `imported` or `adopted`, the same test as
+  `is_imported()`) and, for those rows, leaves out the Edit and Delete anchors and adds an "Imported" badge; Questions
+  and Responses stay. `questions.php` passes `readonly` (`is_imported()`), and `questions.mustache` then drops the Add
+  buttons, the drag handle and `draggable`, the row menu and the page's JS, and shows an info alert
+  (`imported_readonly_notice`); "Export template" stays (it is how to run the questions again). Found on the way and
+  fixed in the same page: the number type showed the raw key "numeric", a number question printed its `{min, max}` as an ordered
+  list (the bounds 1 and 5 as two list items, or two empty items when unset), and the position badge printed question
+  id + 1. Labels for `multichoice_multi` and `numeric` are lang strings, and a
+  number question now shows its allowed range (`decode_numeric_bounds()`; `responses_numeric_range`, or the new
+  "at least" / "at most" strings when only one bound is set). New strings (en, hi): `imported_badge`,
+  `imported_readonly_notice`, `questiontype_multichoice_multi_short`, `questiontype_numeric_short`,
+  `questions_numeric_atleast`, `questions_numeric_atmost`. The gates do not change and there is no flag: only imported
+  rows change, and they exist only after the import. No version change. Test:
+  `list_evaluations_test::test_an_imported_form_offers_no_edit_or_delete` (imported, adopted, a map row that is only
+  archived, and a native form). Checked without Moodle: `questions.mustache` rendered for a native form, a read-only
+  form and a read-only form with no questions. Screenshots needed: `index.php` with one imported and one native row, and
+  `questions.php` for an imported numeric form, desktop and 590 px, as a tenant admin; name that test form with a tag
+  as well as an ampersand (`Tom & Jerry <b>x</b>`, through `import_template.php`) so the breadcrumb shot proves the text
+  is escaped, not just that the "&" looks right.
+- **EV-11 - the template library is tenant-scoped (mapping doc code fix 9).** `list_templates(int $costcenterid)` returned
+  every row for 0, compared a non-zero argument with `costcenterid` as a bare number (the column holds an organisation
+  id, not a tenant number) and always added every tenant's `ispublic` templates; `create_evaluation_from_template()` and
+  `delete_template()` had no tenant check. `list_templates()` now takes no argument and works the scope out from the
+  caller: `tenant::is_cross_tenant()` (site admin, or the platform's `crosstenant` capability) sees all; anyone else
+  sees the templates whose organisation (`JOIN local_sentientia_org`) is inside their tenant by
+  `tenant::path_filter('o', 'path')`; a caller with no tenant sees none; `costcenterid` 0 is cross-tenant only, as for
+  evaluations. New `can_access_template()` / `require_template_access($id)` apply the same rule and are for the entry
+  point of any future page or web service to call before `create_evaluation_from_template()` or `delete_template()`
+  (those two take no session user, because the CLI drives them, so the gate is not inside them). Nothing calls
+  templates from a page today, so no UI and no strings change. **Decided 2026-10-07 (EV-11-PUB, delegated):** another tenant's
+  `ispublic` templates are NOT listed (the strict ADR-031 reading, option A now), yet the help text of "Make this
+  template available to other tenants" (`template_ispublic_help`) still promises sharing; those strings are shown
+  nowhere today and are reworded when a picker is built, which must follow option C as the only route to sharing. No version
+  change. Test: `tenant_scope_test::test_template_library_is_tenant_scoped` (a /1/5 template, a /77 one, one with no
+  tenant, a public /77 one, and /10 against /1).
+- **EV-32 - a template round trip keeps a number question's range.** `export_template()` writes a numeric question's
+  `options` as `{min, max}` (through `decode_options()`), and `import_template()` joined any options array into a
+  newline string, which is only right for a choice list; `build_question_options_json()` reads a number question's
+  bounds from `numeric_min` / `numeric_max` and ignored that string, so both came back unset. The documented way to
+  run an imported form again (export it as a template, create a new evaluation from it) therefore lost April's 1..5
+  range. `import_template()` now passes `numeric_min` / `numeric_max` for a `numeric` question whose options are an
+  associative array (and `options` empty); a list keeps today's behaviour. No version change. Tests:
+  `crud_test::test_template_round_trip_keeps_every_question_setting` (rating, multichoice, multichoice_multi, a bounded
+  and an unbounded number question and an anonymous text question, with `required`, `anonymous` and `sortorder`;
+  through the JSON file and through a saved template row) and a range assertion added to
+  `imported_history_test::test_an_imported_template_cannot_be_deleted_and_a_native_one_can`.
+- **EV-33 - audience assigner tests.** New `tests/audience_assigner_test.php` (the state card's "PHPUnit coverage for
+  `evaluation_audience_assigner`" item; `tenant_scope_test` already covered its tenant scope): each of the six
+  exact-match filters against its own column and not a prefix, filters ANDed with an empty value constraining
+  nothing, `org_path` matching the node and its children but not `/1/50` or `/15` (and normalised), the cohort
+  filter, suspended / deleted users and the built-in accounts never matched, the `MAX_AUDIENCE_SIZE` cap (2001
+  cloned users) and `assign_by_filter()` counting new against already-assigned people with the caller on the audit
+  trail. The Behat item for the import/export round trip is replaced by the PHPUnit round trip above (Behat is not part
+  of this pipeline). Tests only.
+- **EV-13 - a value of another form's item, or of an item that no longer exists, is for the owner (re-review
+  should-fix; mapping doc: "a value from another form ... rejected and reported").** `form_facts::answers()` filed
+  every value whose item was not an imported question of the completion's form as `item_not_imported`, which is not
+  needs-owner, so a lost answer was only a tally entry. It now tells three cases apart. `form_facts::questions()` also
+  remembers EVERY item id of the form (layout and unimported ones too), so: an item of this form that is not a question
+  stays `item_not_imported` (nothing to carry); anything else is collected and looked up once per completion
+  (`$ctx->legacy->fetch(SRC_ITEMS, ids, ['id', 'evaluation'])`): a row found means `foreign_item` (another form's item,
+  or a template's), none means `missing_item`. Both are declared in `importer::reasons()` as needs-owner, so parity
+  exits 2 until the decisions file accepts the count. Preflight counts and warns for them before the run:
+  `values_missing_item` / warning `values_missing_item:N` (item row missing) and `values_foreign_item` / warning
+  `values_foreign_item:N` (the item belongs to another form than its completion); renamed in the review round from
+  `orphans:local_evaluation_value:item` / `orphan_rows:local_evaluation_value:item:N` and `foreign_values` /
+  `foreign_values:N`, which counted every stray row. Each count is now of the values the run archives under that
+  reason (see the review round at the end), so it can be compared with the run's needs-owner tally one for one. The
+  value step's docblock and the codes listed above are updated. April: all five values belong to their completion's form, so
+  nothing changes there. No schema change, no version change. Tests in `bizlms_import_test.php`: `NEEDS_OWNER` gains
+  both codes, seed value 13 is now `foreign_item` (tally: `item_not_imported` 1, `foreign_item` 1), the needs-owner
+  assertions cover both, and new `test_a_value_of_another_forms_item_or_of_no_item_is_left_to_the_owner` (an extra
+  value for item 999999 seeded inside the test, parity exits 2 with `evaluation:missing_item=1`, and the preflight
+  counts). Checked without Moodle: `php -l`, and the ADR-032 static scan over `classes/bizlms/` (clean).
+- **EV-14 - the implied assignment is keyed on the first IMPORTED completion (re-review should-fix).**
+  `response_step::assignment()` created the `responded` assign row only when the completion was
+  `pair->firstid`, the lowest completion id of the (form, person) pair, imported or not. `map_row` returns early on
+  `no_timestamp` and `orphan_user`, so if the lowest completion was skipped no later one created the row and the
+  person ended up with a response and no assignment. The skip rules moved into
+  `form_facts::import_problem($ctx, $completed, $form)` (returns `[null|'no_timestamp'|'orphan_user', submission
+  time]`, the time being the completion's own, else the form's); `map_row` calls it and behaves as before.
+  `form_facts::pair()` now reads `id, timemodified, userid, evaluatedby, anonymous_response` and returns, besides the
+  unchanged legacy facts (`count`, `firstid`, `firsttime`, `lasttime`, `hasusers`, which `assignment_step` reads),
+  `firstimportedid` and `lastimportedtime` computed with that predicate. `assignment()` returns null unless
+  `firstimportedid` is this completion, and `responded_at` uses `lastimportedtime` (falling back to the completion's
+  own time). `assignment_step` is untouched (it still reads the legacy pair; a separate question, EV-15). April has one
+  completion and an assignee row, so nothing there changes. No schema change, no version change. Test:
+  `bizlms_import_test::test_the_implied_assignment_comes_from_the_first_imported_completion`, seeded inside the test (a
+  form with no time of its own whose first completion is skipped for it; a supervisor form whose first completion
+  was filled in by a user who is gone). Checked without Moodle through a stub of the framework context
+  (the real `form_facts`, `response_step` and `outcome` against in-memory tables): both cases, a pair with nothing
+  imported, and the unchanged legacy facts.
+- **EV-28 - a single-feature dry run reports a missing parent as deferred, not as the data's fault (re-review minor).**
+  `form_step`, `assignment_step` and `response_step` looked up a form's classroom (and `response_step` a program)
+  through the map without asking `$ctx->is_deferred()`. In a dry run of the evaluation feature alone the classroom and
+  program features are neither complete nor simulated, so every trainer or program feedback form reported
+  `classroom_unresolved` (assignments) or nothing at all (forms, responses) as though the data were wrong. Now, when
+  the map has no entry and `$ctx->is_deferred('local_classroom')` (or `'local_program'`) is true, the outcome carries
+  the warning `deferred:local_classroom` (or `deferred:local_program`) instead. `form_step::classroom_path()` returns
+  `[path, warning]`; the form's tenant fallback still applies, only the report says why. Outcomes do not change, so
+  the accounting and parity do not change, and an apply run is unaffected (the runner requires the dependencies to be
+  complete). When the parents ARE in the run and the classroom is still unmapped, `assignment_step` still says
+  `classroom_unresolved`. No schema change, no version change. Test:
+  `bizlms_import_test::test_a_dry_run_without_its_parents_reports_the_classroom_as_deferred` (an evaluation-only dry
+  run through `runner->run(['evaluation'])`, then an all-features dry run for the contrast). Checked without Moodle
+  through the stub harness: the assignment and response steps, deferred and not, mapped and not.
+- **EV-20 - the docs stop saying the person link is never copied (re-review should-fix).** `README.md`, the
+  `response_step` docblock and the Anonymity bullet of the importer section above said that BizLMS's link from an
+  anonymous answer to the person "is never copied". That holds for the legacy `userid` column, but not for the
+  import's own map: for the completion that implies a person's assignment, the map holds the anonymous response
+  (sub-key empty) and that person's `assign` row (sub-key `assign`) under the SAME completion id, and the assign row
+  names the person. The three texts now say that, in the same words: the response row names nobody, the legacy
+  tables still link the completion to the person, and the map ties the anonymous response and the implied assignment
+  to one completion id (decision `evaluation.legacy_anonymous_linkage`, pending the legacy-table privacy ADR, which
+  has to cover the map and the assignment rows as well as the legacy tables). Documentation only (the docblock is a
+  comment), both trees byte-identical. Left as it is, for the owner: the learner-facing note
+  `my_evaluations_anonymous_note` ("your answers are not linked to you") is true of the response row; reword it if
+  that ADR decides the map and the assign rows are to be treated as a link.
+- **EV-21 - this card.** The header, the table, capability and flag sections, the key-file tree, the test list and
+  the open items still described `local_airpay_evaluation` 1.15.2, "Live on airpay.academy", six tables under the old
+  name and "None registered" for flags. They now describe `local_sentientia_evaluation` 2026093001 / 1.16.0, which is
+  not live, with the real table names, the two declared capabilities plus the undeclared `:view` (EV-06), the one flag
+  and the eleven test classes. The importer section gained what to remove from a UAT or rehearsal target before
+  importing again (the leftover-rows blocker also fires at the id of a soft-deleted legacy form, which never gets a
+  Sentientia form), and its "not built" notes now point at the follow-ups that built them. Documentation only.
+
+## 2026-10-07 - review round on the evaluation follow-ups (branch claude/eval-followups; no version change, stays 2026093001)
+
+Two reviews of the twelve commits above (`review:ui` and `review:data`, both "ship", no must-fix) listed should-fix
+items. This round closes every one that is code or tests, in six commits on the same branch plus this one for the
+documentation. **PHPUnit NOT run**
+(the lead runs it once). No version bump, no schema, capability, cache or upgrade change, no flag. Both plugin trees
+byte-identical. Checked without Moodle: `php -l`, `tools/check-tree-drift.php`, `tools/check-lang-parity.php`,
+`tools/check-path-boundary.php`, the pre-commit hook on every commit, and the bundled Mustache engine over every
+template (tokenised, and `respond`, `response_detail` and `responses` rendered with sample data: an option whose text
+is "0", a lower bound of 0, an ampersand in a name, the new note).
+
+- **response_detail.php (EV-05).** A response id that is a trigger shell (`timesubmitted` 0) is refused with
+  `invalidresponse` ("Response not found.", en + hi) by `evaluation_manager::require_submitted_response()`, after the
+  capability and tenant checks, so it is never shown as the invitee's answer. Histogram rows carry `is_level` /
+  `is_option` and the template keys on those: Mustache reads the text "0" as false, so a choice whose text is "0"
+  vanished from the histogram with the respondent's pick on it. The respondent fallback is the existing string
+  `eval_response_responder_anonymous`. Tests: `analysis_test::test_a_pending_shell_is_not_a_response_to_open`,
+  `::test_a_choice_whose_text_is_zero_stays_on_the_response_detail_page` (renders the template).
+- **The Subject, one way (EV-02).** `response_list.php` used `trim(firstname . ' ' . lastname)`, the CSV `fullname()`
+  over every name field, so they disagreed under the site's name format. New `subject_names(array $ids)` (one query,
+  `fullname()` per live account) feeds both; `subject_label($id, ?array $names)` takes the map as an optional argument and
+  `response_to_csv_row()` takes it as an optional last one, so `exportcsv.php` reads every subject once instead of one
+  `core_user::get_user()` per row, and every existing caller is unchanged. The list's rows moved to
+  `evaluation_manager::response_list_rows($evaluation, $protected, $showsubject)` (timesubmitted DESC, id DESC; pending
+  shells not listed; a protected form names nobody). "(deleted user)" is a lang string on the page
+  (`responses_subject_deleted`, en + hi) and plain text in the CSV, like its Respondent column. **The CSV's Subject
+  header is plain English** like every other header (it was the one translated header); `responses_col_subject` is the
+  page's column heading only. Test: `analysis_test::test_the_response_list_names_the_subject_the_way_the_csv_does`;
+  the Subject-column test expects `Subject`. Follow-up round: the Respondent is one way too. The list selects every name
+  field and calls `fullname()` (it printed `trim(firstname . ' ' . lastname)`), and the CSV's per-row
+  `core_user::get_user()` is gone from the export: `respondent_records(array $userids)` reads them in one query and
+  `response_to_csv_row()` takes the map as its last optional argument (`exportcsv.php` passes it, and passes none for a
+  protected form). `response_list_rows()` also keeps the Subject off a protected form itself (`$showsubject &&
+  !$protected`), so it no longer depends on its caller. `response_detail.php` still builds the name with
+  `trim(firstname . ' ' . lastname)` (page unreachable until EV-06; same change when it is decided).
+- **Escaped exactly once.** `evaluation_manager::display_text()` is `format_string(..., ['escape' => false])` for values a
+  template prints with `{{ }}`; `$PAGE->set_title()` and `set_heading()` run `format_string()` on what they are given and
+  take the raw name. **The breadcrumb is the exception**: `questions.php` adds the evaluation name as the LAST crumb,
+  which the theme prints without a link and raw (`{{{text}}}` in `core/navbar`; only a crumb with a link goes through
+  `navigation_node::get_content()`), so that call is `$PAGE->navbar->add(format_string($evaluation->name))`. An
+  intermediate commit passed the raw name there, which let markup in an imported template's name run for a site admin;
+  fixed in the follow-up round. Do not copy "Moodle formats it, pass it raw" to other APIs. Applied on `responses.php`,
+  `questions.php`, `respond.php`, `response_list.php` and `response_detail.php` (name, description, question text,
+  option labels). `responses.php`'s anonymous badge is now
+  `identity_protected()` (via `responses_page_header()`), not the flag alone. Test:
+  `analysis_test::test_names_reach_the_templates_unescaped_and_the_badge_follows_identity_protection`.
+- **respond.php.** The question loop moved to `evaluation_manager::respond_question_rows()`. `position` counts 1..n (it
+  printed the question id + 1), only the two choice types get option rows (a number question's `{min, max}` was
+  offered as two options to tick), and `has_numeric_min` / `has_numeric_max` are the template's keys, so a lower bound
+  of 0 keeps its `min="0"` (the text "0" is false to Mustache; found while moving the code, not in the reviews). Test:
+  `analysis_test::test_the_respond_rows_count_from_one_and_keep_text_options_and_bounds_straight` (renders the template).
+- **Number statistics (EV-03).** Lowest and highest are shown as stored (`format_float(..., -1)`; only the average is
+  rounded to two decimals). A stored answer that is not a number is left out of the count, the average and the bars
+  (`non_numeric` is tallied, `distribution_exact` goes false), the page says how many (`responses_numeric_ignored`, en +
+  hi), and a question with no number at all shows "No answers yet" plus that line instead of "Lowest 0, highest 0".
+  Tests: `::test_a_stored_answer_that_is_not_a_number_is_left_out_of_the_numeric_figures`,
+  `::test_the_lowest_and_highest_numeric_answers_are_shown_as_stored`.
+- **Preflight tallies (EV-13).** `values_missing_item` and `values_foreign_item` (formerly `orphans:local_evaluation_
+  value:item` and `foreign_values`) count only the values the run will archive under that reason: the completion
+  exists, its form exists and is not deleted, and `form_facts::import_problem()` finds nothing wrong, the same code
+  `response_step` uses. A stray value of a completion that is skipped is `response_not_imported`, of a missing one
+  `orphan_completed`, as before. Read-only; with no stray value nothing extra is read. Test:
+  `bizlms_import_test::test_a_value_of_another_forms_item_or_of_no_item_is_left_to_the_owner` (five extra strays of
+  completions that are not imported; the old tallies would have said four and three, the new ones say one and one).
+- **EV-14 test.** `bizlms_import_test::test_the_implied_assignment_time_ignores_a_later_skipped_completion`: the skipped
+  completion is the LATER one (t+900), so the old `lasttime` would stamp `responded_at` t+900 instead of t+200.
+
+**Not code, carried to the owner (none can be decided on this branch).** *(Superseded in part on 2026-10-07: items 1, 3, 4, 5, 6, 7 and the Kirkpatrick and learner-note parts of 9 were decided, see the last section; the screenshots of item 2, item 8 and the non_respondents.php part of 9 are still open.)* (1) EV-06: declare `:view` (version bump and
+PHPUnit re-init) or gate `response_list.php` / `response_detail.php` on `:manage`; until then the Subject column and all
+of EV-05 are unreachable for everybody, site admin included. (2) The merge gate: no UI commit goes to production before
+the screenshots in `docs/visual-evidence/2026-10-07/eval-followups/README.md` exist (this round extended its list:
+`respond.php`, `responses.php`, `questions.php`, `response_list.php`, `response_detail.php`). (3) Should numeric 1..5
+items count as ratings in `get_kirkpatrick_summary()`? (4) Should another tenant's `ispublic` templates ever be listed?
+(5) After the Stage B rehearsal, add `evaluation:foreign_item` and `evaluation:missing_item` to `accepted_reasons` if they
+occur (April has none). (6) The legacy-table privacy ADR must cover the map and the `assign` rows (decision
+`evaluation.legacy_anonymous_linkage`); EV-14 widens the trace a little: when the lowest completion of a pair is
+skipped, the next imported one, which may be anonymous, now carries the person's `assign` sub-row under its id.
+(7) EV-15: `assignment_step` still marks `responded` from all legacy completions, skipped ones included. (8) EV-31
+follow-up, a data-hygiene question: `submit_response()` inserts a new row and leaves the invitee's shell (user id X,
+`timesubmitted` 0, `response_data` `{}`) in place. Every reader now filters shells, so nothing is miscounted, but the
+privacy export lists the shell as a response "submitted" on 1 Jan 1970, and on an anonymous form the shell keeps the
+invitee's user id beside the anonymous answer. Options: delete the caller's shell inside `submit_response()`, turn it
+into the response, and/or have `privacy\provider` leave shells out of the export. It changes what is stored and what a
+subject-access export contains, so it is the owner's call. (9) Left as it is: `get_kirkpatrick_summary()`, the
+learner-facing `my_evaluations_anonymous_note`, and `non_respondents.php` (same double-escape defect, a page this branch
+did not touch).
+
+## 2026-10-07 - evaluation decisions implemented (branch claude/eval-followups; 2026100701 / 1.17.0)
+
+The owner's delegated decisions of 2026-10-07 (corrected by the critic pass) for the evaluation feature, built on top of
+the follow-ups and review round above. **PHPUnit NOT run** (the lead re-inits once: the plugin version moved to
+`2026100701`, a new column). Checked without Moodle: `php -l` on every changed file, the ADR-032 static scan over
+`classes/bizlms/` of this plugin and of the framework (clean), `tools/check-tree-drift.php`,
+`tools/check-lang-parity.php`, `tools/check-path-boundary.php`, an XML load of `install.xml`, the pure
+`legacy_reader::counter_from_create_table()` against MariaDB and MySQL 8 statements, and the pre-commit hook on every
+commit. Both plugin trees (and the platform trees) byte-identical. No flag was flipped, no row or file deleted.
+
+**Built (code and tests):**
+
+- **EV-16 - sticky anonymity is a signed choice.** The importer declares `evaluation.sticky_anonymity` = `whole_form`
+  (`importer::DECISIONS`): a form that ever held an anonymous answer imports EVERY answer anonymous, including the ones
+  BizLMS stamped named (`anonymous_response` 2); the legacy table keeps the person link. Only `whole_form` is
+  implemented, so a decisions file without the key, or one that says `named_rows_kept`, blocks the feature
+  (`missing_decision:` / `decision_value_not_allowed:`). `tests/bizlms_import_test.php` `declared_choices()` carries it
+  and two tests pin both refusals. No schema change.
+- **EV-TENANT - the editor is not a tenant clue.** `form_step` no longer files a form under the tenant of the user who
+  last edited it (`usermodified`); `tenant_scope::user_root_path()` is removed. A form its `open_path`, its stored
+  `costcenterid` and its classroom cannot place imports pathless (`costcenterid` 0, cross-tenant callers only) and is
+  counted `unresolved` in the form step's `tenant_methods`. The importer declares
+  `evaluation.tenant_editor_fallback` = `not_used`. April: no form is affected. Test: a form edited by a /77 user with
+  no other clue stays pathless and a /77 administrator cannot manage it.
+- **EV-20-NOTE - the learner note says what the results keep.** `my_evaluations_anonymous_note` (en and hi) now reads
+  "Anonymous evaluation: your name is not shown with your answers in its results." instead of "your answers are not
+  linked to you", which the legacy tables and the import's map do not support for an imported form. Revisit only if the
+  legacy-table privacy ADR makes the stronger claim true.
+- **EV-36 - an empty audience rule assigns nobody.** `bulk_assign_by_audience` (after the tenant check) and
+  `evaluation_audience_assigner::assign_by_filter()` (after the evaluation lookup) throw `bulk_assign_pick_at_least_one`
+  when `has_constraint()` is false: no filter, blank or whitespace values, a cohort that is not positive, an org path of
+  only slashes, a value that is not plain. An org path naming a tenant root still assigns and reports `capped`. The
+  preview is unchanged. No flag, no `services.php` change, no version change, no screenshots.
+- **EV-06 - the individual responses pages come back, behind a flag.** `response_list.php` and `response_detail.php` call
+  `evaluation_manager::require_response_drilldown()` before they read anything: `:manage` (manager archetype), then the new
+  default-OFF flag `sentientia.evaluation.response_drilldown` (OFF answers `response_drilldown_unavailable`). The ADR-031
+  gate and `identity_protected()` are untouched. `responses.php` shows an "Individual responses" link only while the flag
+  is ON. `response_detail.php` names the respondent through `fullname()` (`response_detail_respondent()`), like the list and
+  the CSV, and names nobody on a protected form. The two `BASELINE` entries for `:view` are gone from
+  `capability_names_test.php` in both platform trees. New strings (en, hi): `responses_individual_link`,
+  `response_drilldown_unavailable`. No version change for this item on its own.
+- **EV-17 - the form says whether it is a supervisor evaluation.** New column `local_sentientia_evaluation.evaluationmode`
+  CHAR(2) NOT NULL DEFAULT `'SE'` (install.xml and a guarded upgrade step; version `2026100701`, release `1.17.0`;
+  `importer::REQUIRES_VERSION` raised to match). `form_step` writes it from the source column (`SE` or `SP`).
+  `learner_history::for_user()` lists only `SE` forms, assignments and responses alike, and the guess from
+  `subject_userid` is gone: an ANONYMOUS supervisor form and an old completion with `evaluatedby` 0 are no longer listed
+  as "responded" to the person evaluated. `shows_subject()` requires `SP`. `response_step` warns `sp_responder_unknown`
+  for a named SP completion with no evaluator (it still follows map section 18: the completion's user answers, no subject).
+  New verify check `imported_form_mode_mismatch`. A native form defaults to `SE`, and `update()` never changes it. The
+  privacy provider is unchanged (no person column). **A site that already ran the import (a rehearsal or UAT copy)** has
+  imported supervisor forms that read `SE` after step `2026100701`: step `2026100702` (the review round, below) marks them
+  `SP`; `verify` names any mismatch that is left. EV-17 must land before anyone proposes flipping
+  `sentientia.evaluation.learner_history`.
+- **Framework, EV-26 - a PRESERVE sequence is floored above every id the legacy table ever issued.**
+  `runner::finalise_feature` passes `writer::reset_sequence($table, $floor)` the floor
+  `max(legacy MAX(id) + 1, legacy AUTO_INCREMENT)`; the writer raises the counter to it (MySQL and MariaDB `ALTER TABLE ...
+  AUTO_INCREMENT`, Postgres `setval`). `legacy_reader::next_id()` reads the counter from `SHOW CREATE TABLE` (MySQL 8
+  caches `information_schema.TABLES.AUTO_INCREMENT` for 24 hours) and, on Postgres, the sequence's `last_value`. A counter
+  that cannot be read falls back to the highest id and warns `sequence_counter_unreadable`; a database family whose
+  counter cannot be set warns `sequence_floor_not_applied`. The report gains `features.<f>.sequences`. COMMS-R2 (item id 0
+  for a gone path, classroom or program) stays as defence in depth. ADR-032 rule 6 is the other agent's to edit.
+- **Framework, item 6 - an accepted reason carries a row bound.** `accepted_reasons` takes `feature:code<=n`; a count above
+  `n` at cutover is unproven again (`feature:code=n (accepted up to m)`); a bare entry accepts any count; the same reason
+  twice is refused. The `decisions.php` docblock now says an acceptance happens after the Stage B rehearsal, for codes that
+  occur (EV-23's wording).
+- **Framework, item 7 - the leftover-rows preflight is the framework's.** `step::target_children()` (opt-in, PRESERVE
+  only) names the child tables; `runner::preflight_preserve` blocks with `leftover_rows_at_legacy_ids:<step>:<table>:<n>`.
+  `form_step` declares questions, responses, assign and triggers; `importer::rows_left_at_legacy_form_ids()` is removed.
+  The clear-down advice in the 2026-10-01 section still applies, with the new blocker text.
+
+**Recorded here, nothing to build on this branch:**
+
+- **EV-15** (decided A): keep `responded` for a pair whose completion is dropped (`orphan_user`, `no_timestamp`). The
+  mapping doc section 18 line is the other agent's: status follows every legacy completion of the pair, skipped ones
+  included (both needs-owner); `responded_at` = MAX over them, cut to the day on a protected form. No code change.
+- **EV-18** (decided A or B, Nitin's pick): capture the learner page `my_evaluations.php` AFTER EV-20-NOTE (done) and with
+  the SP case now that EV-17 is in. Cover named responded, anonymous (with the new note), waiting, closed and the imported
+  badge, desktop and 590 px, a test persona and test forms only (the local copy holds real users). Needs the flag ON on
+  a test site, which is Nitin's call, so it is an evidence session, not code. The production flip is already decided:
+  `framework.reader_flags_airpay_at_cutover` = `on_after_nitin_reviews_visual_evidence`.
+- **EV-19** (decided A): keep the deferral. The decisions-file `why` of `evaluation.legacy_anonymous_linkage` is widened
+  (the import's map, where the `assign` sub-row and the anonymous response share a completion id, and the
+  completion-ordered ids of implied assignments); ADR-032 open decision 5 gets the scope sentence; the legacy-table
+  privacy ADR becomes a precondition for anonymising or dropping the legacy evaluation tables, not for cutover. The Stage B
+  report records the count of implied assignments on identity-protected forms (ids only). No importer code now.
+- **EV-23** (decided B): nothing is pre-accepted. `accepted_reasons` for the evaluation codes (`value_not_valid`,
+  `duplicate_value`, `foreign_item`, `missing_item`, `orphan_*`, `no_timestamp`, `unmapped_enum`) is filled in only after
+  the Stage B rehearsal, for codes that occur, and with a count (item 6). April produces none of them. ADR-032 lines
+  951-954 are the other agent's to correct; the `decisions.php` docblock is done.
+- **EV-25** (lead): finish and commit the program merge, check that `registry::load()` returns all 19 importers, run dry
+  runs of evaluation, request and ratings (EV-28 reports deferred parents), and switch the program, learningplan, classroom
+  and skills tests from stub parents to the real org importer. This plugin's own test still stands in for `classroom` and
+  `program` with `parent_stub_importer`.
+- **EV-35** (decided C): the three old roadmap items are off this card's open items. The lead adds three unscheduled
+  entries (spec plus default-OFF flag each) to the PROJECT-STATE.md product backlog.
+- **EV-03-KP** (decided A): numeric 1..5 questions do NOT count as ratings in the Kirkpatrick roll-up, so on `analysis.php`
+  an imported numeric form (April's only real one) adds a response count and no average. Map section 18 gets the note. A
+  future "numeric scale counts as rating" option would be a flagged product feature.
+- **EV-11-PUB** (decided A now, C later): another tenant's `ispublic` templates are not listed to a tenant admin. The
+  picker, when built, must follow option C as the only route to cross-tenant sharing, and `template_ispublic` and
+  `template_ispublic_help` (shown nowhere today) are reworded then.
+- **EV-FIX-FLAGS** (decided A): EV-02, EV-03, EV-05 and EV-09 get no flags of their own, only visual evidence. Merge
+  `claude/eval-followups` only after PHPUnit and the screenshots listed in
+  `docs/visual-evidence/2026-10-07/eval-followups/README.md`; the `response_list` and `response_detail` shots wait for the
+  EV-06 flag to be ON on a test site.
+- **Doc items for the other agent / the lead:** the decisions-file entries (`evaluation.sticky_anonymity`,
+  `evaluation.tenant_editor_fallback`, the widened `why` of `evaluation.legacy_anonymous_linkage`) must be in the signed
+  file BEFORE the Stage B hash is pinned, or the evaluation feature blocks on `missing_decision`; the mapping doc section
+  18 additions (template and form tenant fallback, `whole_form`, the EV-15 line, the reason codes `duplicate_value`,
+  `foreign_item`, `missing_item`, `item_not_imported`, `response_not_imported`, `orphan_item`, `orphan_template`, and the
+  warnings `responder_not_found`, `anonymity_made_sticky`, `deferred:local_classroom`, `deferred:local_program`,
+  `sp_responder_unknown`) and the section 23 row; the PROJECT-STATE.md session entry. EV-24 (an optional local prune of
+  the unreachable commit `32a6a9dbc`) is a Nitin-confirmed delete and was not done. Timing the evaluation feature on the
+  Stage B copy (`form_facts::pair()` and `answers()` read per completion, an N+1 at scale) is a Stage B task.
+  Before merging any importer, its preflight should be run read-only against `bizlms_april` and every `source_spec` enum
+  cross-checked against a real value histogram (the `anonymous_response` = 2 lesson).
+
+**Screenshots still owed** (the build session cannot browse or deploy; the full table is in
+`docs/visual-evidence/2026-10-07/eval-followups/README.md`): `response_list.php` and `response_detail.php` as a tenant
+admin with the EV-06 flag ON (an imported named supervisor form with the Subject column, and a protected form),
+`responses.php` with the new link, and the EV-18 learner page set, plus the earlier owed shots of `responses.php`,
+`questions.php`, `index.php` and `respond.php`.
+
+## 2026-10-07 - review follow-ups (branch claude/eval-followups; 2026100702 / 1.17.1, platform 2026100701)
+
+The data review and the safety review of the decisions section above both said "ship"; this round closes their should-fix
+items that are small and safe. **PHPUnit NOT run** (the lead re-inits: evaluation `2026100702`, platform `2026100701`).
+Checked without Moodle: `php -l` on every changed file, `tools/check-tree-drift.php`, `tools/check-lang-parity.php`,
+`tools/check-path-boundary.php`, `tools/check-bizlms-fixture-copies.php`, the pre-commit hook on every commit. Both trees
+of both plugins byte-identical. No flag flipped, no row or file deleted.
+
+- **EV-17 back-fill, a NEW upgrade step `2026100702`.** `2026100701` only added the column, so a site that had already
+  imported (a rehearsal, a UAT copy) read its imported supervisor forms as `SE`, and the plugin no longer guesses from the
+  responses. A new step, not an edit of `2026100701`, because that step may already have run on a copy (a PHPUnit init, a
+  developer site) and Moodle never replays a step a site has passed. `classes/evaluation_mode_backfill::apply()` marks `SP`:
+  (1) a form with a response that names a subject (`subject_userid` not NULL, the old signal) and (2) where
+  `local_sentientia_legacymap` and the kept `local_evaluations.evaluationmode` exist, an imported or adopted form BizLMS
+  called SP (this catches an anonymous supervisor form and one with no evaluator, which the old signal misses). It only ever
+  changes `SE` to `SP`, leaves `timemodified` alone, changes nothing on a second run and touches no native form. A fresh
+  install takes install.xml. `importer::REQUIRES_VERSION` stays `2026100701` (the version that adds the column the importer
+  writes; the back-fill adds no schema). Tests: `evaluation_mode_test` (old signal, never SP to SE, idempotent, the step and
+  its savepoint), `bizlms_import_test` (the map signal on an anonymous supervisor form, then verify agrees).
+- **Platform coupling made explicit.** `local_sentientia_platform` is `2026100701` / `1.11.0` (a guarded no-op step with a
+  savepoint; no schema) and this plugin now depends on it: `step::target_children()` with `runner::preflight_target_children()`
+  (which replaced the importer's own leftover-rows blocker), the EV-26 sequence floor and row-bounded acceptances live in the
+  platform, so an evaluation tree beside an older platform tree would have lost the check silently. Every other importer's
+  `REQUIRES_VERSION` is unchanged (each names its own plugin's schema version).
+- **The flag is read for the EVALUATION's tenant.** `evaluation_manager::flag_scope()` (the root of `open_path`, or
+  `/<costcenterid>` for a pathless tenant-bound form, else tenant 0 and the viewer's customer; the customer through the new
+  `customer::of_tenant()`), `response_drilldown_enabled(?$evaluation)`, and a two-step gate: `require_response_drilldown_capability()`
+  before the page reads anything, `require_response_drilldown($evaluation)` after it loads the evaluation (capability again,
+  the ADR-031 tenant gate first so another tenant's flag is never disclosed, then `is_enabled_for` with the form's customer and
+  tenant). A cross-tenant administrator whose own scope has the flag ON can no longer open a tenant where it is OFF.
+  The old no-argument `require_response_drilldown()` is gone.
+- **A protected evaluation offers no individual responses.** `individual_responses_offered()` is the flag for the evaluation's
+  tenant AND not `identity_protected()`. On a protected form (anonymous now, an anonymous answer on record, or an anonymous
+  question) `response_list.php` and `response_detail.php` show an info notice and a "Back to the totals" button instead of
+  anything read from the responses, and `responses.php` draws no "Individual responses" button but a muted line saying why
+  (new strings `response_list_protected`, `response_list_back_to_totals`, `responses_individual_protected_note`, en and hi).
+  Why the conservative fix and not a partial one: naming nobody does not protect a respondent in a small classroom when the
+  list also prints the day, the course, program or classroom id and sorts by the exact time, and the detail page prints one
+  person's free text beside them. **What this does not cover, for the owner:** `exportcsv.php` and the filters of
+  `responses.php` (date, course, program, classroom id) still let an administrator narrow a protected form's totals or CSV to a
+  handful of people, as before (the CSV already carried the same context columns and a day-only date); changing them alters an
+  existing export and is the owner's call. `response_list_rows()` keeps its protected branch as a second line of defence.
+- **`open_employeeid` is guarded.** `response_detail_respondent()` and `response_list_rows()` select it only when the user table
+  has the column (a customer schema without the BizLMS `open_*` columns shows no employee id instead of failing).
+- **EV-36, one rule.** `bulk_assign_audience_form::validation()` and the submission both build the filter map through
+  `filters_from()` and test it with `evaluation_audience_assigner::has_constraint()`, so the form never accepts what the service
+  refuses (a whitespace-only designation used to pass `empty()` and then throw).
+- **`imported_form_mode_mismatch` and the importer read the mode one way.** `importer::mode_of()` / `is_supervisor()` (SP, ignoring
+  case and surrounding spaces) are used by the form step, the response step and `form_facts`, and the verify SQL compares
+  `UPPER(TRIM(...))`, so a value the owner maps through the decisions file (`sp `) writes SP and verifies clean instead of writing
+  SE while the check expected SP.
+- **The link test cannot be fooled.** `responses.php` takes `has_list_link`, `list_url` and `list_protected_note` from
+  `evaluation_manager::individual_responses_link()`; the test renders the template with that helper's output, asserts the
+  flag, the tenant and the protection change it, and fails if `responses.php` names any of those keys itself.
+- **Docs.** The visual-evidence README table is whole again (a blank line had split it) and lists the new shots; the flag
+  description in `db/feature_flags.php` no longer says "exactly as before" (the pages used to fail with no permission) and states the
+  per-tenant read and the protected-form rule. The framework's same-database reads (`runner::preflight_target_children()`,
+  `importer::form_mode_check()`) are documented in place rather than routed through the legacy reader (a correlated join cannot be paged).
+
+**Left as it is, on purpose:**
+
+- The EV-06 decision text asked for a rendered "not available" notice; both this page and `my_evaluations.php` throw
+  `moodle_exception`, which gives the standard error page. Same effect; change both together if the screenshot review prefers the notice.
+- A named supervisor response with no recorded subject (`sp_responder_unknown`: evaluator not recorded, or the subject's account
+  is gone) lists the person evaluated as the Respondent with an empty Subject ("-"). The count is in the Stage B report as the
+  warning; no marker was added to the list, which cannot tell the two cases apart. Put the count in front of Nitin before
+  `response_drilldown` is flipped.
+- The signed decisions file does not yet carry `evaluation.sticky_anonymity` and `evaluation.tenant_editor_fallback` (see the doc
+  items above); it is the owner's file and was not edited.
 ## 2026-10-08 Moodle 5.3 compat FX-18
 
 Every `fputcsv()` / `fgetcsv()` / `str_getcsv()` call in this plugin now passes the `$escape` argument explicitly with the historic default (`',', '"', '\\'`, and `null` for the `fgetcsv` length). The output and the parsing are byte-identical; PHP 8.4 deprecates relying on the default, and the notice would otherwise be written into the CSV stream on a 8.4 host (UAT and production run PHP 8.3). No version bump, no schema change.
@@ -391,3 +961,12 @@ Every `fputcsv()` / `fgetcsv()` / `str_getcsv()` call in this plugin now passes 
 ## 2026-10-08 Moodle 5.3 compat FX-20 round 1 (version 2026100802)
 
 `data-bs-toggle="dropdown"` removed again from `templates/questions.mustache` (byte-identical to before 2026100801): with both attributes a click ran the theme's Bootstrap 4 handler and core's Bootstrap 5 handler on pages where core loads the latter, so the menu opened and closed at once. See the `sentientia_org` card for the full reasoning. No schema change.
+
+## 2026-10-15 EV-18 findings on `my_evaluations.php` (version 2026101501 / 1.17.3)
+
+Found by the 2026-10-14 scripted visual pass (`docs/visual-evidence/2026-10-14/ev18/README.md`, "Things that look wrong or odd"), fixed here:
+
+- **No visible title.** `set_heading()` was set but the theme shows no `$PAGE` heading on the `standard` layout, and the template had no heading, so the page opened on the intro sentence. `templates/my_evaluations.mustache` now prints the title as an `h2`, as the plugin's other templates do (`set_heading()` stays).
+- **The Date column meant three things.** `learner_history::for_user()` folded an answer time, a deadline (`due_at`) and the assigned day (`timecreated`) into one `time`. Each row now carries `time_kind` (`TIME_SUBMITTED`, `TIME_DUE`, `TIME_ASSIGNED`), kept through `merge()` with whichever time wins, and the page prints a word with the date: Submitted, Due by, Assigned (`my_evaluations_date_*`, en and hi). The time, its format (the day on a protected form), the order and the status are unchanged. A responded row whose completion time was never recorded (imported) shows its fallback time labelled Due by or Assigned, not Submitted.
+
+No schema change; the platform dependency is unchanged. Tests added in `tests/imported_history_test.php` (NOT run on this branch: the main session runs the suite in one serialized pass).

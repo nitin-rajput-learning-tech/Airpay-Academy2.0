@@ -26,6 +26,19 @@ class evaluation_manager {
     // W1-5 — the trigger queue (delete() now clears its rows too).
     private const TRIGGERS_TABLE = 'local_sentientia_evaluation_triggers';
 
+    /**
+     * A numeric question whose allowed range spans at most this many steps (max - min) keeps a count per value, so
+     * the admin view can draw bars (BizLMS "1 to 5" items). A wider range, or none, shows the average only.
+     */
+    public const NUMERIC_DISTRIBUTION_SPAN = 10;
+
+    /** local_sentientia_evaluation.evaluationmode: a self evaluation (every native form) or a supervisor evaluation (EV-17). */
+    public const MODE_SELF = 'SE';
+    public const MODE_SUPERVISOR = 'SP';
+
+    /** The default-OFF flag behind the individual responses pages (EV-06, db/feature_flags.php). */
+    public const FLAG_RESPONSE_DRILLDOWN = 'sentientia.evaluation.response_drilldown';
+
     /** Status values matching install.xml. */
     public const STATUS_DRAFT    = 0;
     public const STATUS_ACTIVE   = 1;
@@ -74,6 +87,28 @@ class evaluation_manager {
             return false;
         }
         return \local_sentientia_platform\bizlms\provenance::is_imported(self::TABLE, $evaluationid);
+    }
+
+    /**
+     * Which of these evaluations did the BizLMS import create? The same test as is_imported(), for a whole page of
+     * the admin list in one query.
+     *
+     * @param int[] $evaluationids
+     * @return array<int, true> The ids that are imported or adopted, as keys.
+     */
+    public static function imported_ids(array $evaluationids): array {
+        global $DB;
+        $ids = array_values(array_unique(array_filter(array_map('intval', $evaluationids), static fn(int $i): bool => $i > 0)));
+        if (!$ids || !class_exists(\local_sentientia_platform\bizlms\legacymap::class)) {
+            return [];
+        }
+        [$insql, $params] = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'impid');
+        $params['imptable'] = self::TABLE;
+        $found = $DB->get_fieldset_select(\local_sentientia_platform\bizlms\legacymap::TABLE, 'targetid',
+            "targettable = :imptable AND targetid {$insql} AND outcome IN ('imported', 'adopted')", $params);
+        $imported = array_fill_keys(array_map('intval', $found), true);
+        ksort($imported);
+        return $imported;
     }
 
     /**
@@ -300,11 +335,12 @@ class evaluation_manager {
             return 0;
         }
         [$tsql, $params] = self::scope_sql('e');
+        // Submitted responses only: the trigger queue's pending shell (timesubmitted 0) is an invitation.
         return (int) $DB->count_records_sql(
             "SELECT COUNT(1)
                FROM {" . self::RESPONSES_TABLE . "} r
                JOIN {" . self::TABLE . "} e ON e.id = r.evaluationid
-              WHERE {$tsql}", $params);
+              WHERE r.timesubmitted > 0 AND {$tsql}", $params);
     }
 
     /**
@@ -345,14 +381,25 @@ class evaluation_manager {
         return $DB->count_records(self::TABLE, ['status' => $status]);
     }
 
+    /**
+     * How many responses have been SUBMITTED (for one evaluation, or for all).
+     *
+     * The pending "shell" row evaluation_engine writes when a trigger fires (timesubmitted 0, response_data '{}')
+     * is an invitation, not a response, so it is not counted (until 2026-10-01 it was, and every invited user
+     * inflated the "Total Responses" tile before answering anything).
+     *
+     * @param int|null $evaluationid null = every evaluation
+     * @return int
+     */
     public static function count_responses(?int $evaluationid = null): int {
         global $DB;
         $dbman = $DB->get_manager();
         if (!$dbman->table_exists(self::RESPONSES_TABLE)) return 0;
         if ($evaluationid !== null) {
-            return $DB->count_records(self::RESPONSES_TABLE, ['evaluationid' => $evaluationid]);
+            return $DB->count_records_select(self::RESPONSES_TABLE,
+                'evaluationid = :eid AND timesubmitted > 0', ['eid' => $evaluationid]);
         }
-        return $DB->count_records(self::RESPONSES_TABLE);
+        return $DB->count_records_select(self::RESPONSES_TABLE, 'timesubmitted > 0');
     }
 
     public static function count_questions(int $evaluationid): int {
@@ -687,18 +734,30 @@ class evaluation_manager {
             foreach ($questions as $q) {
                 if (empty($q['questiontext'])) continue;
                 $sortorder++;
+                $questiontype = (string) ($q['questiontype'] ?? 'rating');
+                // A number question exports its bounds as {min, max} in `options` (export_template() writes the
+                // stored JSON through decode_options()); create_question() takes them as numeric_min / numeric_max.
+                // Joined into a newline string like a choice list they were lost: both came back unset, so reusing a
+                // form (the way to run an imported one again) dropped its 1..5 range.
+                $numericbounds = null;
+                if ($questiontype === 'numeric' && isset($q['options']) && is_array($q['options'])
+                        && !array_is_list($q['options'])) {
+                    $numericbounds = $q['options'];
+                }
                 self::create_question((object) [
                     'evaluationid' => $newid,
-                    'questiontype' => (string) ($q['questiontype'] ?? 'rating'),
+                    'questiontype' => $questiontype,
                     'questiontext' => (string) $q['questiontext'],
                     // create_question expects newline-separated text
                     // (parse_options() splits on \n). We stored the
                     // options as an array in the JSON template, so
                     // re-stringify them here.
-                    'options'      => isset($q['options']) && is_array($q['options'])
+                    'options'      => $numericbounds === null && isset($q['options']) && is_array($q['options'])
                         ? implode("\n", array_map('strval',
                             array_values($q['options'])))
                         : '',
+                    'numeric_min'  => $numericbounds['min'] ?? '',
+                    'numeric_max'  => $numericbounds['max'] ?? '',
                     'required'     => isset($q['required']) ? (int) $q['required'] : 1,
                     'anonymous'    => isset($q['anonymous']) ? (int) $q['anonymous'] : 0,
                     'sortorder'    => (int) ($q['sortorder'] ?? $sortorder),
@@ -1056,7 +1115,10 @@ class evaluation_manager {
      *   - the evaluation has multiple_submit=1 (P1 #17 — pulse surveys
      *     explicitly allow re-submission).
      *
-     * Otherwise checks for an existing response row.
+     * Otherwise checks for a SUBMITTED response row. The pending shell the trigger queue writes for an invited user
+     * (timesubmitted 0, see evaluation_engine::process_due_triggers()) is not a response: counting it told every
+     * invited user of a named form "you already responded" and made submit_response() throw alreadyresponded
+     * before they had answered anything (fixed 2026-10-01).
      */
     public static function has_user_responded(int $evaluationid, int $userid): bool {
         global $DB;
@@ -1068,8 +1130,9 @@ class evaluation_manager {
         if ((int) ($eval->multiple_submit ?? 0) === 1) {
             return false;
         }
-        return $DB->record_exists(self::RESPONSES_TABLE,
-            ['evaluationid' => $evaluationid, 'userid' => $userid]);
+        return $DB->record_exists_select(self::RESPONSES_TABLE,
+            'evaluationid = :eid AND userid = :uid AND timesubmitted > 0',
+            ['eid' => $evaluationid, 'uid' => $userid]);
     }
 
     /**
@@ -1338,6 +1401,32 @@ class evaluation_manager {
     }
 
     /**
+     * Do the response list and the CSV export carry a "Subject" column for this evaluation?
+     *
+     * A supervisor evaluation (BizLMS evaluationmode SP) is answered by one person ABOUT another, and the import
+     * keeps that person in responses.subject_userid. The form says it is one: its evaluationmode column is SP (EV-17;
+     * every native form is SE). Native forms never set a subject, so for them nothing changes: the column appears
+     * only on an SP form where some response names a subject, and never on a protected evaluation (the subject of
+     * an anonymous supervisor form could identify the respondent; the import does not keep it there either).
+     *
+     * @param \stdClass $evaluation record carrying id, anonymous and evaluationmode
+     * @param bool|null $identityprotected identity_protected($evaluation), when the caller has it already;
+     *                  null = work it out here
+     * @return bool
+     */
+    public static function shows_subject(\stdClass $evaluation, ?bool $identityprotected = null): bool {
+        global $DB;
+        if (($evaluation->evaluationmode ?? self::MODE_SELF) !== self::MODE_SUPERVISOR) {
+            return false;
+        }
+        if ($identityprotected ?? self::identity_protected($evaluation)) {
+            return false;
+        }
+        return $DB->record_exists_select(self::RESPONSES_TABLE,
+            'evaluationid = :eid AND subject_userid IS NOT NULL', ['eid' => (int) $evaluation->id]);
+    }
+
+    /**
      * Has anybody actually submitted this evaluation? The trigger queue's
      * pending "shell" rows (timesubmitted 0, see evaluation_engine) are not
      * responses.
@@ -1349,6 +1438,242 @@ class evaluation_manager {
         global $DB;
         return $DB->record_exists_select(self::RESPONSES_TABLE,
             'evaluationid = :eid AND timesubmitted > 0', ['eid' => $evaluationid]);
+    }
+
+    /**
+     * Refuse a response row that is not a submission.
+     *
+     * The trigger queue writes a pending "shell" for an invited user (timesubmitted 0, response_data '{}'): an
+     * invitation, not a response. response_detail.php opens any response id, so without this it showed the shell as
+     * the invitee's answer: their name, "submitted 1 Jan 1970" and every question unanswered.
+     *
+     * @param \stdClass $response a responses row
+     * @return void
+     * @throws \moodle_exception invalidresponse when the row is a shell
+     */
+    public static function require_submitted_response(\stdClass $response): void {
+        if ((int) ($response->timesubmitted ?? 0) <= 0) {
+            throw new \moodle_exception('invalidresponse', 'local_sentientia_evaluation');
+        }
+    }
+
+    /**
+     * The (customer, tenant root) a feature flag is read for when the question is about an EVALUATION and not about
+     * whoever is looking at it.
+     *
+     * The tenant is the root of the evaluation's own open_path, as the ADR-031 gate reads it; a tenant-bound evaluation
+     * with no path is '/<costcenterid>', as evaluation_engine and can_respond() treat it. An evaluation with neither (a
+     * global one, or an imported form no clue could place) belongs to no tenant: tenant 0, the customer-wide view, and
+     * the viewer's own customer, since nothing else names one. The customer is the one the tenant belongs to
+     * (customer::of_tenant()).
+     *
+     * @param \stdClass $evaluation record carrying open_path and costcenterid
+     * @return array{0: int, 1: int} [customer id, tenant root or 0]
+     */
+    public static function flag_scope(\stdClass $evaluation): array {
+        $path = trim(trim((string) ($evaluation->open_path ?? '')), '/');
+        $first = $path === '' ? '' : (string) explode('/', $path)[0];
+        $root = ctype_digit($first) ? (int) $first : 0;
+        if ($root <= 0 && (int) ($evaluation->costcenterid ?? 0) > 0) {
+            $root = (int) $evaluation->costcenterid;
+        }
+        $customerid = $root > 0
+            ? \local_sentientia_platform\customer::of_tenant($root)
+            : \local_sentientia_platform\customer::current();
+        return [$customerid, $root];
+    }
+
+    /**
+     * Are the individual responses pages (response_list.php and response_detail.php) switched on?
+     *
+     * For an evaluation: for THAT evaluation's customer and tenant, whoever is looking. A cross-tenant administrator's
+     * own scope used to decide, so one whose scope had the flag ON could open a tenant where it was OFF. Without an
+     * evaluation: for the current user's own customer and tenant (what a page that is about no evaluation yet may ask).
+     *
+     * @param \stdClass|null $evaluation
+     * @return bool
+     */
+    public static function response_drilldown_enabled(?\stdClass $evaluation = null): bool {
+        if ($evaluation === null) {
+            return \local_sentientia_platform\feature_flags::is_enabled(self::FLAG_RESPONSE_DRILLDOWN);
+        }
+        [$customerid, $tenantid] = self::flag_scope($evaluation);
+        return \local_sentientia_platform\feature_flags::is_enabled_for(self::FLAG_RESPONSE_DRILLDOWN, $customerid, $tenantid);
+    }
+
+    /**
+     * Does this evaluation offer its individual responses at all: the flag is ON for its tenant AND respondents are not
+     * protected ({@see self::identity_protected()}).
+     *
+     * An anonymous evaluation, or one that ever held an anonymous answer or has an anonymous question, shows its totals
+     * only. One response on its own, with the day it came in and the course, program or classroom it came from, can be
+     * matched to the person who gave it when the group is small (the list also sorts by the exact time), and the detail
+     * page prints that person's free-text answers beside it. Naming nobody is not enough, so neither page is offered.
+     *
+     * @param \stdClass $evaluation
+     * @return bool
+     */
+    public static function individual_responses_offered(\stdClass $evaluation): bool {
+        return self::response_drilldown_enabled($evaluation) && !self::identity_protected($evaluation);
+    }
+
+    /**
+     * What responses.php needs to say about the individual responses: whether to draw the link, where it goes, and, for
+     * a protected evaluation whose flag is ON, why there is none. Built here so a test can reach it, and so the page
+     * cannot hard-code the link.
+     *
+     * @param \stdClass $evaluation
+     * @return array{has_list_link: bool, list_url: string, list_protected_note: string}
+     */
+    public static function individual_responses_link(\stdClass $evaluation): array {
+        $enabled = self::response_drilldown_enabled($evaluation);
+        $protected = $enabled && self::identity_protected($evaluation);
+        return [
+            'has_list_link'       => $enabled && !$protected,
+            'list_url'            => (new \moodle_url('/local/sentientia_evaluation/response_list.php',
+                ['id' => (int) $evaluation->id]))->out(false),
+            'list_protected_note' => $protected ? get_string('responses_individual_protected_note',
+                'local_sentientia_evaluation') : '',
+        ];
+    }
+
+    /**
+     * The page body response_list.php and response_detail.php show instead of a response, for a protected evaluation:
+     * why there is none, and the way back to the totals.
+     *
+     * @param \stdClass $evaluation
+     * @return string HTML
+     */
+    public static function individual_responses_protected_notice(\stdClass $evaluation): string {
+        global $OUTPUT;
+        return $OUTPUT->notification(get_string('response_list_protected', 'local_sentientia_evaluation'),
+                \core\output\notification::NOTIFY_INFO, false)
+            . \html_writer::div(\html_writer::link(
+                new \moodle_url('/local/sentientia_evaluation/responses.php', ['id' => (int) $evaluation->id]),
+                get_string('response_list_back_to_totals', 'local_sentientia_evaluation'),
+                ['class' => 'btn btn-outline-secondary btn-sm', 'data-action' => 'back-to-totals']), 'mt-3');
+    }
+
+    /**
+     * Does the user table carry the BizLMS employee id column (open_employeeid)? Production does; a customer schema
+     * without the BizLMS open_* columns does not, and selecting the column there is a database error.
+     *
+     * @return bool
+     */
+    private static function user_has_employee_id(): bool {
+        global $DB;
+        return array_key_exists('open_employeeid', $DB->get_columns('user'));
+    }
+
+    /**
+     * Who the detail page says answered: name, e-mail and employee id, or nobody.
+     *
+     * The name goes through fullname() over every name field, as the response list and the CSV do, so the site's name
+     * format applies to all three (the page printed trim(firstname . ' ' . lastname)). A protected evaluation
+     * ({@see self::identity_protected()}) names nobody and shows the "anonymous" label, whatever the response row
+     * holds; so does a response with no user, or whose account is gone, as before.
+     *
+     * @param \stdClass $response a responses row
+     * @param bool $protected identity_protected($evaluation)
+     * @return array{user_name: string, user_email: string, employee_id: string}
+     */
+    public static function response_detail_respondent(\stdClass $response, bool $protected): array {
+        global $DB;
+        $anonymous = ['user_name' => get_string('eval_response_responder_anonymous', 'local_sentientia_evaluation'),
+            'user_email' => '', 'employee_id' => ''];
+        $userid = (int) ($response->userid ?? 0);
+        if ($protected || $userid <= 0) {
+            return $anonymous;
+        }
+        // open_employeeid belongs to the BizLMS schema: a customer without it simply has no employee id to show.
+        $user = $DB->get_record('user', ['id' => $userid],
+            self::respondent_fields() . (self::user_has_employee_id() ? ', open_employeeid' : ''));
+        if (!$user) {
+            return $anonymous;
+        }
+        return ['user_name' => fullname($user), 'user_email' => (string) $user->email,
+            'employee_id' => (string) ($user->open_employeeid ?? '')];
+    }
+
+    /**
+     * Step one of the gate of response_list.php and response_detail.php: local/sentientia_evaluation:manage, which only
+     * the manager archetype holds by default (a manager, a tenant administrator and a site administrator). A learner
+     * (":respond" only) and a trainer (the teacher archetype) are refused. The pages used to ask for ":view", which no
+     * plugin declares, so nobody could open them (EV-06).
+     *
+     * The pages call this before they read anything, so that a caller who may not be here learns nothing, not even
+     * whether the flag is on. The rest of the gate needs the evaluation: {@see self::require_response_drilldown()}.
+     *
+     * @return void
+     * @throws \required_capability_exception for a caller without :manage
+     */
+    public static function require_response_drilldown_capability(): void {
+        require_capability('local/sentientia_evaluation:manage', \context_system::instance());
+    }
+
+    /**
+     * Step two of the gate, once the page has the evaluation: the capability again, the ADR-031 tenant gate, then the
+     * flag {@see self::FLAG_RESPONSE_DRILLDOWN} for THIS evaluation's customer and tenant ({@see self::flag_scope()}).
+     * OFF answers "not available", as if the pages did not exist.
+     *
+     * The tenant gate comes first, so a caller outside the evaluation's tenant is refused as out of tenant and never
+     * learns whether another tenant's flag is on. The flag is read for the evaluation, not for the viewer: a
+     * cross-tenant administrator whose own scope has it ON cannot open a tenant where it is OFF.
+     *
+     * Neither this nor the tenant gate decides who sees NAMES (identity_protected() does, per evaluation), and neither
+     * decides whether a protected evaluation offers its individual responses at all
+     * ({@see self::individual_responses_offered()}): the pages answer that with a notice, after this.
+     *
+     * @param \stdClass $evaluation
+     * @return void
+     * @throws \required_capability_exception for a caller without :manage
+     * @throws \moodle_exception error_outoftenant for an evaluation outside the caller's tenant
+     * @throws \moodle_exception response_drilldown_unavailable when the flag is OFF for the evaluation's tenant
+     */
+    public static function require_response_drilldown(\stdClass $evaluation): void {
+        self::require_response_drilldown_capability();
+        self::require_evaluation_access($evaluation);
+        if (!self::response_drilldown_enabled($evaluation)) {
+            throw new \moodle_exception('response_drilldown_unavailable', 'local_sentientia_evaluation');
+        }
+    }
+
+    /**
+     * Text for a template that prints it with {{ }}.
+     *
+     * Mustache escapes once, in the template, so the text is filtered here (multilang tags and the like) and NOT
+     * escaped as well: format_string() with its default would turn "Tom & Jerry" into "Tom &amp; Jerry" and the
+     * template into "Tom &amp;amp; Jerry".
+     *
+     * This is the rule for a Mustache {{ }} only. Do not carry it over to other APIs: $PAGE->set_title() and
+     * set_heading() run format_string() on what they are given, so they take the raw text. A breadcrumb does not:
+     * navigation_node::get_content() formats a crumb that has a link, but the last crumb has its link removed by the
+     * theme and core/navbar prints it raw ({{{text}}}), so $PAGE->navbar->add() is given format_string($text).
+     *
+     * @param string|null $text
+     * @return string
+     */
+    public static function display_text(?string $text): string {
+        return format_string((string) $text, true, ['escape' => false]);
+    }
+
+    /**
+     * The heading part of the aggregate responses page (responses.php).
+     *
+     * is_anonymous is identity_protected(), the rule the response list and the CSV apply, so a form that is protected
+     * because it once collected anonymous answers (or has an anonymous question) is badged as well, not only one whose
+     * flag is set today.
+     *
+     * @param \stdClass $evaluation
+     * @return array{name: string, description: string, is_anonymous: bool, kirkpatrick_label: string}
+     */
+    public static function responses_page_header(\stdClass $evaluation): array {
+        return [
+            'name'              => self::display_text($evaluation->name ?? ''),
+            'description'       => self::display_text($evaluation->description ?? ''),
+            'is_anonymous'      => self::identity_protected($evaluation),
+            'kirkpatrick_label' => self::KIRKPATRICK_LEVELS[(int) ($evaluation->kirkpatrick_level ?? 0)] ?? '',
+        ];
     }
 
     /**
@@ -1514,6 +1839,9 @@ class evaluation_manager {
     /**
      * Create a new evaluation from a saved template.
      * Returns the array `import_template()` returns (id, name, question_count).
+     *
+     * No session check here (the CLI calls it): a page or web service that offers it calls
+     * {@see self::require_template_access()} first.
      */
     public static function create_evaluation_from_template(int $templateid,
                                                              int $target_costcenterid = 0,
@@ -1530,24 +1858,74 @@ class evaluation_manager {
     }
 
     /**
-     * Get templates visible to the given tenant. Returns ALL ispublic=1
-     * rows + the caller-tenant's own rows.
+     * The templates the CURRENT USER may see (ADR-031): a cross-tenant caller (site admin, or the platform's
+     * crosstenant capability) sees every template; anyone else sees the templates whose organisation is inside
+     * their own tenant. A caller with no tenant sees none.
      *
-     * @param int $caller_costcenterid  0 = siteadmin → return everything
-     * @return array<int, \stdClass>
+     * A template's costcenterid is an organisation id (the importer and the "save as template" call both store one),
+     * so the scope is read from that organisation's path, not by comparing the id with a tenant number. A template
+     * with costcenterid 0 belongs to no tenant and is for cross-tenant callers only, as a global evaluation is.
+     * Another tenant's `ispublic` templates are NOT included: that is the strict ADR-031 reading. Widening it
+     * (the help text of "Make this template available to other tenants" promises as much) is an owner decision for
+     * when a picker is built; until then nothing in the plugin lists templates to a user.
+     *
+     * Until 2026-10-01 this took a costcenterid, treated 0 as "everything", compared a non-zero one with the
+     * template's organisation id as a bare number, and always added every tenant's public templates.
+     *
+     * @return array<int, \stdClass> template rows, newest first
      */
-    public static function list_templates(int $caller_costcenterid = 0): array {
+    public static function list_templates(): array {
         global $DB;
-        if ($caller_costcenterid === 0) {
-            return $DB->get_records(self::TEMPLATE_TABLE, null,
-                'timemodified DESC');
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return $DB->get_records(self::TEMPLATE_TABLE, null, 'timemodified DESC, id DESC');
         }
+        // path_filter() is '1=0' for a caller with no tenant.
+        [$tsql, $tparams] = \local_sentientia_platform\tenant::path_filter('o', 'path');
         return $DB->get_records_sql(
-            "SELECT * FROM {" . self::TEMPLATE_TABLE . "}
-              WHERE ispublic = 1
-                 OR costcenterid = :cid
-           ORDER BY ispublic DESC, timemodified DESC",
-            ['cid' => $caller_costcenterid]);
+            "SELECT t.*
+               FROM {" . self::TEMPLATE_TABLE . "} t
+               JOIN {local_sentientia_org} o ON o.id = t.costcenterid
+              WHERE {$tsql}
+           ORDER BY t.timemodified DESC, t.id DESC", $tparams);
+    }
+
+    /**
+     * ADR-031: may the current user use (create an evaluation from, delete) this template? The same rule as
+     * list_templates().
+     *
+     * @param \stdClass $template a template row carrying costcenterid
+     * @return bool
+     */
+    public static function can_access_template(\stdClass $template): bool {
+        global $DB;
+        if (\local_sentientia_platform\tenant::is_cross_tenant()) {
+            return true;
+        }
+        $orgid = (int) ($template->costcenterid ?? 0);
+        if ($orgid <= 0) {
+            return false;
+        }
+        $path = (string) $DB->get_field('local_sentientia_org', 'path', ['id' => $orgid]);
+        return self::path_in_root($path, \local_sentientia_platform\tenant::root_for_current_user());
+    }
+
+    /**
+     * ADR-031: load a template by id and refuse unless can_access_template(). A page or web service that offers
+     * create_evaluation_from_template() or delete_template() calls this first, at the entry point, as the
+     * evaluation pages call require_evaluation_access(); those two methods take no session user (the CLI drives
+     * them), so the gate is not inside them.
+     *
+     * @param int $templateid
+     * @return \stdClass the template row
+     * @throws \moodle_exception error_outoftenant
+     */
+    public static function require_template_access(int $templateid): \stdClass {
+        global $DB;
+        $template = $DB->get_record(self::TEMPLATE_TABLE, ['id' => $templateid], '*', MUST_EXIST);
+        if (!self::can_access_template($template)) {
+            throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
+        }
+        return $template;
     }
 
     /**
@@ -1568,6 +1946,9 @@ class evaluation_manager {
      *
      * A template the BizLMS import created is part of the imported history and is kept (decision
      * framework.protect_imported_history: delete actions on imported rows are blocked).
+     *
+     * No session check here (the CLI calls it): a page or web service that offers it calls
+     * {@see self::require_template_access()} first.
      *
      * @param int $templateid
      * @return bool
@@ -1865,8 +2246,9 @@ class evaluation_manager {
         global $DB;
 
         $questions = self::get_questions($evaluationid);
-        $responses = $DB->get_records(self::RESPONSES_TABLE,
-            ['evaluationid' => $evaluationid], 'timesubmitted DESC');
+        // Submitted responses only (a trigger shell has no answers to add up).
+        $responses = $DB->get_records_select(self::RESPONSES_TABLE,
+            'evaluationid = :eid AND timesubmitted > 0', ['eid' => $evaluationid], 'timesubmitted DESC');
 
         $stats = [];
         foreach ($questions as $q) {
@@ -1923,9 +2305,19 @@ class evaluation_manager {
             case 'numeric':
                 // P1 #18 — running min/max/sum so finalise can compute avg.
                 $bounds = self::decode_numeric_bounds($q->options ?? null);
-                return ['type' => 'numeric', 'count' => 0, 'sum' => 0,
-                        'min_seen' => null, 'max_seen' => null,
+                // count is of NUMERIC answers only (the average and the bar shares divide by it); a stored answer
+                // that is not a number is tallied in non_numeric instead, see accumulate_stat().
+                $bucket = ['type' => 'numeric', 'count' => 0, 'sum' => 0,
+                        'min_seen' => null, 'max_seen' => null, 'non_numeric' => 0,
                         'bound_min' => $bounds['min'], 'bound_max' => $bounds['max']];
+                // A small bounded range also keeps a count per whole value (value => count). It is only shown
+                // while every answer so far is a whole number inside the range ('distribution_exact').
+                if ($bounds['min'] !== null && $bounds['max'] !== null && $bounds['max'] >= $bounds['min']
+                        && $bounds['max'] - $bounds['min'] <= self::NUMERIC_DISTRIBUTION_SPAN) {
+                    $bucket['distribution'] = array_fill_keys(range($bounds['min'], $bounds['max']), 0);
+                    $bucket['distribution_exact'] = true;
+                }
+                return $bucket;
             case 'text':
                 return ['type' => 'text', 'count' => 0, 'samples' => []];
             default:
@@ -1935,6 +2327,17 @@ class evaluation_manager {
 
     private static function accumulate_stat(array &$bucket, ?object $q, $answer): void {
         if (!$q) return;
+        if ($q->questiontype === 'numeric' && !is_numeric($answer)) {
+            // Imported or edited data can hold an answer that is not a number. It cannot be added up, so it stays out
+            // of the count, the average and the bars (counting it would pull the average down and leave the bars short
+            // of the count), and the page says how many were left out. The bars no longer cover every stored
+            // answer, so they are not shown as exact.
+            $bucket['non_numeric'] = (int) ($bucket['non_numeric'] ?? 0) + 1;
+            if (isset($bucket['distribution'])) {
+                $bucket['distribution_exact'] = false;
+            }
+            return;
+        }
         $bucket['count']++;
         switch ($q->questiontype) {
             case 'rating':
@@ -1978,7 +2381,6 @@ class evaluation_manager {
                 }
                 break;
             case 'numeric':
-                if (!is_numeric($answer)) break;
                 // Not (int): an imported BizLMS answer may be 7.25 (the item allowed decimals), and truncating
                 // it here would understate the sum and the average. A native answer is an int, which stays one.
                 $v = $answer + 0;
@@ -1988,6 +2390,15 @@ class evaluation_manager {
                 }
                 if ($bucket['max_seen'] === null || $v > $bucket['max_seen']) {
                     $bucket['max_seen'] = $v;
+                }
+                if (isset($bucket['distribution'])) {
+                    $whole = (int) $v;
+                    if ($v == $whole && isset($bucket['distribution'][$whole])) {
+                        $bucket['distribution'][$whole]++;
+                    } else {
+                        // 7.25, or a value outside the allowed range: bars would no longer add up to every answer.
+                        $bucket['distribution_exact'] = false;
+                    }
                 }
                 break;
             case 'text':
@@ -2036,6 +2447,420 @@ class evaluation_manager {
     }
 
     // ═══════════════════════════════════════════════════════════════════
+    // Admin response viewer (responses.php): the statistics, ready for the template
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * One display row per question for the aggregate view (responses.php), from the buckets get_response_stats()
+     * or get_response_stats_filtered() computed. Kept out of the page so it can be tested.
+     *
+     * Every row carries the flags is_rating, is_nps, is_yesno, is_multichoice, is_multichoice_multi, is_numeric and
+     * is_text; the data for a type is present only when somebody answered that question (count > 0), and the
+     * template shows its "no answers" text otherwise:
+     *  - rating: avg, avg_pct, distribution (level, count, pct, pct_label);
+     *  - nps: nps_score, avg, promoters, passives, detractors with their shares, nps_class;
+     *  - yesno: yes, no, yes_pct, no_pct;
+     *  - multichoice: distribution (option, count, pct);
+     *  - multichoice_multi: distribution (option, count, pct) where pct is the share of RESPONDENTS who ticked the
+     *    option, respondents, total_picks, avg_picks, summary and share_note;
+     *  - numeric: avg (two decimals), min_seen and max_seen (the lowest and highest answers as stored, every
+     *    decimal kept), bound_min, bound_max, lowest_highest, range_text (both bounds set only) and, for a small
+     *    bounded range whose answers are all whole numbers inside it, has_distribution with distribution (label,
+     *    count, pct). response_count is of numeric answers only: a stored answer that is not a number is left out
+     *    of every figure, and ignored_note (set whenever one was) says how many; with no number at all the row
+     *    carries no statistics;
+     *  - text: has_samples with samples.
+     *
+     * @param \stdClass[] $questions question records (from get_questions)
+     * @param array $stats buckets by question id
+     * @return array[] list of rows, in question order
+     */
+    public static function response_question_rows(array $questions, array $stats): array {
+        $component = 'local_sentientia_evaluation';
+        // {{ }} escapes once, in the template, so the text is not escaped here as well (format_string() would
+        // turn a '&' into '&amp;' and the template into '&amp;amp;').
+        $text = static fn(string $s): string => format_string($s, true, ['escape' => false]);
+        // An average is rounded to two decimals; the lowest and highest answers are real answers, so they are shown as
+        // stored (format_float() with -1 keeps every decimal, and strips trailing zeros).
+        $number = static fn($n): string => format_float((float) $n, 2, true, true);
+        $stored = static fn($n): string => format_float((float) $n, -1, true, true);
+
+        $rows = [];
+        $position = 0;
+        foreach ($questions as $q) {
+            $position++;
+            $bucket = $stats[$q->id] ?? ['type' => $q->questiontype, 'count' => 0];
+            $count = (int) ($bucket['count'] ?? 0);
+            if ($q->questiontype === 'numeric' && ($bucket['min_seen'] ?? null) === null) {
+                // No number was given: there is no average, lowest or highest to show, whatever else the bucket holds.
+                $count = 0;
+            }
+
+            $row = [
+                'id'           => $q->id,
+                'position'     => $position,
+                'questiontext' => $text((string) $q->questiontext),
+                'questiontype' => $q->questiontype,
+                'required'     => (bool) $q->required,
+                // Phase G.2 (2026-05-08) - per-question anonymous flag.
+                // Hidden in analysis only - the response_data still contains
+                // the responder's userid for audit purposes; the UI just
+                // doesn't surface it for this particular question.
+                'is_anonymous_question' => (int) ($q->anonymous ?? 0) === 1,
+                'response_count' => $count,
+                'is_rating'    => ($q->questiontype === 'rating'),
+                'is_nps'       => ($q->questiontype === 'nps'),
+                'is_yesno'     => ($q->questiontype === 'yesno'),
+                'is_multichoice' => ($q->questiontype === 'multichoice'),
+                'is_multichoice_multi' => ($q->questiontype === 'multichoice_multi'),
+                'is_numeric'   => ($q->questiontype === 'numeric'),
+                'is_text'      => ($q->questiontype === 'text'),
+            ];
+
+            if ($q->questiontype === 'rating' && $count > 0) {
+                $row['avg'] = $bucket['avg'];
+                $row['avg_pct'] = round(($bucket['avg'] / 5) * 100);
+                $dist_rows = [];
+                foreach ($bucket['distribution'] as $val => $n) {
+                    $pct = round(($n / $count) * 100);
+                    $dist_rows[] = [
+                        'level' => $val,
+                        'count' => $n,
+                        'pct'   => $pct,
+                        'pct_label' => $n . ' (' . $pct . '%)',
+                    ];
+                }
+                $row['distribution'] = $dist_rows;
+            }
+
+            if ($q->questiontype === 'nps' && $count > 0) {
+                $row['nps_score']  = $bucket['nps_score'];
+                $row['avg']        = $bucket['avg'];
+                $row['promoters']  = $bucket['promoters'];
+                $row['passives']   = $bucket['passives'];
+                $row['detractors'] = $bucket['detractors'];
+                $total = max(1, $count);
+                $row['promoter_pct']  = round(($bucket['promoters']  / $total) * 100);
+                $row['passive_pct']   = round(($bucket['passives']   / $total) * 100);
+                $row['detractor_pct'] = round(($bucket['detractors'] / $total) * 100);
+                $row['nps_class'] = $bucket['nps_score'] >= 50 ? 'text-success'
+                                  : ($bucket['nps_score'] >= 0 ? 'text-warning' : 'text-danger');
+            }
+
+            if ($q->questiontype === 'yesno' && $count > 0) {
+                $row['yes']     = $bucket['yes'];
+                $row['no']      = $bucket['no'];
+                $row['yes_pct'] = $bucket['yes_pct'];
+                $row['no_pct']  = 100 - $bucket['yes_pct'];
+            }
+
+            if ($q->questiontype === 'multichoice' && $count > 0) {
+                $dist_rows = [];
+                foreach ($bucket['distribution'] as $opt => $n) {
+                    $dist_rows[] = [
+                        'option' => $text((string) $opt),
+                        'count'  => $n,
+                        'pct'    => round(($n / $count) * 100),
+                    ];
+                }
+                $row['distribution'] = $dist_rows;
+            }
+
+            if ($q->questiontype === 'multichoice_multi' && $count > 0) {
+                // A person can tick several options, so each share is of RESPONDENTS and the shares can add up to
+                // more than 100%.
+                $dist_rows = [];
+                foreach ($bucket['distribution'] as $opt => $n) {
+                    $dist_rows[] = [
+                        'option' => $text((string) $opt),
+                        'count'  => $n,
+                        'pct'    => (int) round(($n / $count) * 100),
+                    ];
+                }
+                $row['distribution'] = $dist_rows;
+                $row['respondents'] = $count;
+                $row['total_picks'] = (int) $bucket['total_picks'];
+                $row['avg_picks'] = $number($bucket['avg_picks']);
+                $row['summary'] = get_string('responses_multi_summary', $component, (object) [
+                    'picks'       => $row['total_picks'],
+                    'respondents' => $count,
+                    'avg'         => $row['avg_picks'],
+                ]);
+                $row['share_note'] = get_string('responses_multi_share_note', $component);
+            }
+
+            if ($q->questiontype === 'numeric' && !empty($bucket['non_numeric'])) {
+                // Shown whether or not any number was given: answers that were left out are worth knowing about.
+                $row['ignored_note'] = get_string('responses_numeric_ignored', $component, (int) $bucket['non_numeric']);
+            }
+
+            if ($q->questiontype === 'numeric' && $count > 0) {
+                $row['avg'] = $number($bucket['avg']);
+                $row['min_seen'] = $stored($bucket['min_seen']);
+                $row['max_seen'] = $stored($bucket['max_seen']);
+                $row['bound_min'] = $bucket['bound_min'];
+                $row['bound_max'] = $bucket['bound_max'];
+                $row['lowest_highest'] = get_string('responses_numeric_lowest_highest', $component, (object) [
+                    'lowest'  => $row['min_seen'],
+                    'highest' => $row['max_seen'],
+                ]);
+                if ($bucket['bound_min'] !== null && $bucket['bound_max'] !== null) {
+                    $row['range_text'] = get_string('responses_numeric_range', $component, (object) [
+                        'min' => $bucket['bound_min'],
+                        'max' => $bucket['bound_max'],
+                    ]);
+                }
+                if (isset($bucket['distribution']) && !empty($bucket['distribution_exact'])) {
+                    $dist_rows = [];
+                    foreach ($bucket['distribution'] as $value => $n) {
+                        $pct = (int) round(($n / $count) * 100);
+                        $dist_rows[] = [
+                            'label' => (string) $value,
+                            'count' => $n,
+                            'pct'   => $pct,
+                        ];
+                    }
+                    $row['has_distribution'] = true;
+                    $row['distribution'] = $dist_rows;
+                }
+            }
+
+            if ($q->questiontype === 'text' && !empty($bucket['samples'])) {
+                $row['samples'] = array_map(static function ($sample) use ($text) {
+                    return ['text' => $text((string) $sample)];
+                }, $bucket['samples']);
+                $row['has_samples'] = true;
+            }
+
+            $rows[] = $row;
+        }
+        return $rows;
+    }
+
+    /**
+     * One row per question for the learner-facing form (respond.php), in form order. Kept out of the page so it can
+     * be tested.
+     *
+     *  - position counts 1..n: get_questions() is keyed by question id, so the loop index the page used printed the
+     *    id plus one;
+     *  - questiontext and the option labels are filtered but not escaped, because the template prints them with
+     *    {{ }}, which escapes once (format_string() with its default escaped them twice: "Tom & Jerry" showed as
+     *    "Tom &amp; Jerry");
+     *  - only the two choice types have options. A number question keeps {min, max} in the same column; those are
+     *    its bounds, and used to come out of decode_options() as two options to tick;
+     *  - has_numeric_min and has_numeric_max are the template's section keys: a bound of 0 is the text "0", which
+     *    Mustache reads as false, so numeric_min itself cannot be the key (the input lost its min="0").
+     *
+     * @param \stdClass[] $questions question records (from get_questions)
+     * @return array[]
+     */
+    public static function respond_question_rows(array $questions): array {
+        // Rating scale: 1-5 with descriptive labels.
+        $rating_scale = [
+            ['value' => 1, 'label' => 'Strongly Disagree'],
+            ['value' => 2, 'label' => 'Disagree'],
+            ['value' => 3, 'label' => 'Neutral'],
+            ['value' => 4, 'label' => 'Agree'],
+            ['value' => 5, 'label' => 'Strongly Agree'],
+        ];
+        // NPS scale: 0-10.
+        $nps_scale = [];
+        for ($n = 0; $n <= 10; $n++) {
+            $nps_scale[] = ['value' => $n, 'label' => (string) $n];
+        }
+
+        $rows = [];
+        $position = 0;
+        foreach ($questions as $q) {
+            $position++;
+
+            $option_rows = [];
+            if (in_array($q->questiontype, ['multichoice', 'multichoice_multi'], true)) {
+                foreach (self::decode_options($q->options ?? null) as $idx => $opt) {
+                    $option_rows[] = [
+                        'value'   => $opt,
+                        'label'   => self::display_text((string) $opt),
+                        'inputid' => 'q-' . $q->id . '-opt-' . $idx,
+                    ];
+                }
+            }
+
+            // P1 #18 — numeric bounds (decoded only when type=numeric).
+            $num_bounds = ($q->questiontype === 'numeric')
+                ? self::decode_numeric_bounds($q->options ?? null)
+                : ['min' => null, 'max' => null];
+
+            $rows[] = [
+                'id'              => $q->id,
+                'position'        => $position,
+                'questiontext'    => self::display_text((string) $q->questiontext),
+                'questiontype'    => $q->questiontype,
+                'is_rating'       => ($q->questiontype === 'rating'),
+                'is_nps'          => ($q->questiontype === 'nps'),
+                'is_yesno'        => ($q->questiontype === 'yesno'),
+                'is_multichoice'  => ($q->questiontype === 'multichoice'),
+                // P1 #18 — both new types surface as flags + share option rows
+                // for multichoice_multi.
+                'is_multichoice_multi' => ($q->questiontype === 'multichoice_multi'),
+                'is_numeric'      => ($q->questiontype === 'numeric'),
+                'is_text'         => ($q->questiontype === 'text'),
+                'required'        => (bool) $q->required,
+                'options'         => $option_rows,
+                'rating_scale'    => $rating_scale,
+                'nps_scale'       => $nps_scale,
+                // Mustache helpers — leave empty string when unset so the
+                // template's `<input min/max>` attrs render as the constraint
+                // only when present.
+                'has_numeric_min' => $num_bounds['min'] !== null,
+                'has_numeric_max' => $num_bounds['max'] !== null,
+                'numeric_min'     => $num_bounds['min'] !== null ? (string) $num_bounds['min'] : '',
+                'numeric_max'     => $num_bounds['max'] !== null ? (string) $num_bounds['max'] : '',
+                'numeric_hint'    => $num_bounds['min'] !== null || $num_bounds['max'] !== null
+                    ? sprintf('Range: %s to %s',
+                        $num_bounds['min'] !== null ? $num_bounds['min'] : '−∞',
+                        $num_bounds['max'] !== null ? $num_bounds['max'] : '+∞')
+                    : '',
+                // P1 #31 (2026-05-20) — dependency wire-up for client show/hide.
+                // We emit raw values for the JS to consume; the server-side
+                // visibility check happens again in submit_response so a
+                // tampered client payload still can't bypass required-when-hidden.
+                'has_dependency'   => (int) ($q->depends_on_qid ?? 0) > 0,
+                'depends_on_qid'   => (int) ($q->depends_on_qid ?? 0),
+                // depends_on_value is intentionally NOT format_string'd — JS
+                // compares string-equality against the parent's raw answer,
+                // which is the user's literal input. The template emits this
+                // via `s()` so the attribute is HTML-escaped safely.
+                'depends_on_value' => (string) ($q->depends_on_value ?? ''),
+            ];
+        }
+        return $rows;
+    }
+
+    /**
+     * One respondent's answers, question by question, each beside how everybody else answered (response_detail.php).
+     *
+     * response_data is keyed by the BARE question id (submit_response() and the BizLMS import both write it so), and
+     * a choice question's options JSON is a plain list; an answer is read as `$data[(int) $q->id]` and the options
+     * through decode_options(). Pending trigger shells (timesubmitted 0) are invitations, not responses, so they
+     * are left out of the comparison and of the total.
+     *
+     * Per row: qid, type, text, required, anonymous, my_answer (a tick-all answer joined with ', '; empty when
+     * unanswered), has_my_answer, response_count (how many people answered this question) and, by type:
+     *  - rating: max_rating, avg and a histogram of levels (is_level, level, count, pct, is_my_choice);
+     *  - multichoice, multichoice_multi: a histogram per option (is_option, label, count, pct, is_my_choice) - for
+     *    the tick-all type the count is of respondents who ticked the option, so the shares can exceed 100%
+     *    together. The template keys its rows on is_level / is_option, never on level / label (an option whose text
+     *    is "0" is falsy to Mustache);
+     *  - numeric: avg, has_avg and avg_label.
+     *
+     * @param \stdClass $evaluation the evaluation record
+     * @param \stdClass $response the response being shown
+     * @return array{questions: array[], total_responses: int}
+     */
+    public static function response_detail_rows(\stdClass $evaluation, \stdClass $response): array {
+        global $DB;
+        $text = static fn(string $s): string => format_string($s, true, ['escape' => false]);
+
+        $mine = json_decode((string) ($response->response_data ?: '{}'), true);
+        $mine = is_array($mine) ? $mine : [];
+
+        $questions = self::get_questions((int) $evaluation->id);
+
+        // Everybody's submitted answers, by question id. One pass over the responses.
+        $values = [];
+        $total = 0;
+        $submitted = $DB->get_recordset_select(self::RESPONSES_TABLE,
+            'evaluationid = :eid AND timesubmitted > 0', ['eid' => (int) $evaluation->id], 'id ASC', 'id, response_data');
+        foreach ($submitted as $r) {
+            $total++;
+            $data = json_decode((string) ($r->response_data ?: '{}'), true);
+            if (!is_array($data)) {
+                continue;
+            }
+            foreach ($data as $qid => $value) {
+                if ($value === null || $value === '' || $value === []) {
+                    continue;
+                }
+                $values[(int) $qid][] = $value;
+            }
+        }
+        $submitted->close();
+
+        $rows = [];
+        foreach ($questions as $q) {
+            $qid = (int) $q->id;
+            $answer = $mine[$qid] ?? null;
+            $answered = !($answer === null || $answer === '' || $answer === []);
+            $vals = $values[$qid] ?? [];
+            $count = count($vals);
+
+            $row = [
+                'qid'           => $qid,
+                'type'          => $q->questiontype,
+                'text'          => $text((string) $q->questiontext),
+                'required'      => (bool) $q->required,
+                'anonymous'     => (bool) ($q->anonymous ?? 0),
+                'my_answer'     => $answered
+                    ? (is_array($answer) ? implode(', ', array_map('strval', $answer)) : (string) $answer) : '',
+                'has_my_answer' => $answered,
+                'response_count' => $count,
+            ];
+
+            if ($q->questiontype === 'rating') {
+                $row['max_rating'] = (int) (self::decode_options($q->options)['max'] ?? 5);
+                $nums = array_filter($vals, 'is_numeric');
+                $row['avg'] = $nums ? round(array_sum($nums) / count($nums), 2) : 0;
+                $hist = [];
+                for ($i = 1; $i <= $row['max_rating']; $i++) {
+                    $n = count(array_filter($vals, static fn($v) => is_numeric($v) && (int) $v === $i));
+                    $hist[] = [
+                        'is_level' => true,
+                        'level' => $i,
+                        'count' => $n,
+                        'pct'   => $count > 0 ? round(100 * $n / $count, 1) : 0,
+                        'is_my_choice' => $answered && is_numeric($answer) && (int) $answer === $i,
+                    ];
+                }
+                $row['histogram'] = $hist;
+            } else if ($q->questiontype === 'multichoice' || $q->questiontype === 'multichoice_multi') {
+                $mineticked = is_array($answer) ? array_map('strval', $answer) : [];
+                $hist = [];
+                foreach (self::decode_options($q->options) as $option) {
+                    $option = (string) $option;
+                    $n = 0;
+                    foreach ($vals as $v) {
+                        if (is_array($v) ? in_array($option, array_map('strval', $v), true) : (string) $v === $option) {
+                            $n++;
+                        }
+                    }
+                    // is_option is the template's section key, not label: Mustache reads the text "0" as false, so a
+                    // choice whose text is "0" would be dropped from the histogram with the respondent's pick on it.
+                    $hist[] = [
+                        'is_option' => true,
+                        'label' => $text($option),
+                        'count' => $n,
+                        'pct'   => $count > 0 ? round(100 * $n / $count, 1) : 0,
+                        'is_my_choice' => $answered && (is_array($answer)
+                            ? in_array($option, $mineticked, true) : (string) $answer === $option),
+                    ];
+                }
+                $row['histogram'] = $hist;
+            } else if ($q->questiontype === 'numeric') {
+                $nums = array_filter($vals, 'is_numeric');
+                $row['avg'] = $nums ? round(array_sum($nums) / count($nums), 2) : 0;
+                $row['has_avg'] = (bool) $nums;
+                if ($nums) {
+                    $row['avg_label'] = get_string('response_detail_numeric_avg', 'local_sentientia_evaluation',
+                        format_float((float) $row['avg'], 2, true, true));
+                }
+            }
+
+            $rows[] = $row;
+        }
+        return ['questions' => $rows, 'total_responses' => $total];
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
     // FILTERED RESPONSES (G-05)
     // ═══════════════════════════════════════════════════════════════════
 
@@ -2049,12 +2874,15 @@ class evaluation_manager {
      *
      * The caller composes these into their own SELECT.
      *
+     * Always restricted to SUBMITTED responses (timesubmitted > 0): the pending shell the trigger queue writes
+     * for an invited user is not a response, so it is not counted, listed, exported or added up.
+     *
      * @param array $filters
      * @return array [string $where, array $params]
      */
     public static function build_response_filter(array $filters): array {
         global $DB;
-        $where  = ['1=1'];
+        $where  = ['r.timesubmitted > 0'];
         $params = [];
 
         if (!empty($filters['evaluationid'])) {
@@ -2311,10 +3139,21 @@ class evaluation_manager {
      * @param bool|null $identityprotected identity_protected($eval), when the
      *                  caller has it already (exportcsv.php, once per export);
      *                  null = work it out here
+     * @param bool      $withsubject true to add a Subject cell after Email: the person a supervisor evaluation is
+     *                  about ({@see self::shows_subject()}). It goes with csv_header_row()'s $withsubject, and is
+     *                  empty for a response with no subject and on a protected evaluation. Default false, so the
+     *                  layout of every native form's export is unchanged.
+     * @param array|null $subjectnames {@see self::subject_names()} for every response of the export (exportcsv.php
+     *                  reads them in one query); null = look each subject up as the row is built
+     * @param array|null $respondents {@see self::respondent_records()} for every response of the export (exportcsv.php
+     *                  reads them in one query, and only for a form that is not protected); null = look each
+     *                  respondent up as the row is built
      * @return array  row of strings
      */
     public static function response_to_csv_row(object $response, array $questions,
-                                                object $eval, ?bool $identityprotected = null): array {
+                                                object $eval, ?bool $identityprotected = null,
+                                                bool $withsubject = false, ?array $subjectnames = null,
+                                                ?array $respondents = null): array {
         global $DB;
 
         // Phase G.2 (2026-05-08) — when any question in the form is
@@ -2347,9 +3186,18 @@ class evaluation_manager {
             $row[] = '(anonymous)';
             $row[] = '';
         } else {
-            $u = \core_user::get_user((int) $response->userid, 'id, firstname, lastname, email');
+            // One query for the whole export when the caller read the respondents (exportcsv.php); otherwise this
+            // row's own lookup. Either way the record has every name field, so fullname() has what it may ask for.
+            $u = $respondents !== null
+                ? ($respondents[(int) $response->userid] ?? false)
+                : \core_user::get_user((int) $response->userid, self::respondent_fields());
             $row[] = $u ? fullname($u) : '(deleted user)';
             $row[] = $u ? $u->email : '';
+        }
+
+        // The person a supervisor evaluation is about. Never on a protected evaluation, whatever the row holds.
+        if ($withsubject) {
+            $row[] = $protected ? '' : self::subject_label($response->subject_userid ?? null, $subjectnames);
         }
 
         // Context columns.
@@ -2374,13 +3222,185 @@ class evaluation_manager {
     }
 
     /**
+     * The names of the people some responses are about, for the Subject column of the response list and the CSV.
+     *
+     * One query for all of them, and fullname() over every name field, so the list and the export print the same
+     * name for the same person (the site's name format applies to both). An account that is deleted, or gone, has
+     * no entry: the caller says "deleted user" in its own words (a lang string on the page, the plain text the CSV's
+     * Respondent column already uses).
+     *
+     * @param array $subjectids user ids (null, 0 and duplicates are ignored)
+     * @return array<int, string> user id => full name
+     */
+    public static function subject_names(array $subjectids): array {
+        global $DB;
+        $ids = self::positive_user_ids($subjectids);
+        if (!$ids) {
+            return [];
+        }
+        // Every name field, so fullname() has what the site's name format may ask for.
+        $fields = 'id, ' . implode(', ', \core_user\fields::get_name_fields());
+        $names = [];
+        foreach (array_chunk(array_values($ids), 1000) as $chunk) {
+            [$insql, $params] = $DB->get_in_or_equal($chunk, SQL_PARAMS_NAMED, 'subj');
+            $users = $DB->get_records_select('user', "deleted = 0 AND id $insql", $params, '', $fields);
+            foreach ($users as $user) {
+                $names[(int) $user->id] = fullname($user);
+            }
+        }
+        return $names;
+    }
+
+    /**
+     * The user fields that name a respondent: the id, the email and every name field, so fullname() has what the
+     * site's name format may ask for (in developer mode it reports a user object that lacks one).
+     *
+     * @return string
+     */
+    private static function respondent_fields(): string {
+        return 'id, email, ' . implode(', ', \core_user\fields::get_name_fields());
+    }
+
+    /**
+     * The respondents of some responses, for the Respondent and Email columns of the CSV, in one query.
+     *
+     * The records core_user::get_user() gave one row at a time: a deleted account is still here, with its name
+     * (response_to_csv_row() says "(deleted user)" only for an account that is gone). Pass the map to
+     * response_to_csv_row() as its last argument; the response list reads its respondents in its own query.
+     *
+     * @param array $userids user ids (null, 0 and duplicates are ignored)
+     * @return array<int, \stdClass> user id => record with id, email and every name field
+     */
+    public static function respondent_records(array $userids): array {
+        global $DB;
+        $ids = self::positive_user_ids($userids);
+        $records = [];
+        foreach (array_chunk(array_values($ids), 1000) as $chunk) {
+            [$insql, $params] = $DB->get_in_or_equal($chunk, SQL_PARAMS_NAMED, 'resp');
+            $users = $DB->get_records_select('user', "id $insql", $params, '', self::respondent_fields());
+            foreach ($users as $user) {
+                $records[(int) $user->id] = $user;
+            }
+        }
+        return $records;
+    }
+
+    /**
+     * The distinct user ids above 0 among some values (a column read off the responses: null, 0 and repeats are
+     * dropped).
+     *
+     * @param array $values
+     * @return array<int, int> id => id
+     */
+    private static function positive_user_ids(array $values): array {
+        $ids = [];
+        foreach ($values as $id) {
+            if ($id !== null && (int) $id > 0) {
+                $ids[(int) $id] = (int) $id;
+            }
+        }
+        return $ids;
+    }
+
+    /**
+     * The name of the person a response is about, for the CSV's Subject column.
+     *
+     * @param int|string|null $subjectid responses.subject_userid
+     * @param array<int, string>|null $names {@see self::subject_names()} for every subject of the export, so an
+     *        export makes one user query rather than one per row; null = look this one person up
+     * @return string '' when the response has no subject; '(deleted user)' when that account is gone or deleted
+     */
+    public static function subject_label($subjectid, ?array $names = null): string {
+        if ($subjectid === null || (int) $subjectid <= 0) {
+            return '';
+        }
+        $subjectid = (int) $subjectid;
+        $names ??= self::subject_names([$subjectid]);
+        return $names[$subjectid] ?? '(deleted user)';
+    }
+
+    /**
+     * The rows of the individual responses list (response_list.php), newest first.
+     *
+     * Only SUBMITTED responses: an invited user's pending shell (timesubmitted 0) is not a response. On a protected
+     * evaluation ($protected, {@see self::identity_protected()}) the respondent is not named and the time is the
+     * day; the Subject (the person a supervisor form is about) is named only when $showsubject says the form has
+     * one ({@see self::shows_subject()}) and the form is not protected (a protected form names nobody, whatever the
+     * caller passes). Respondent and Subject are both named through fullname(), as the CSV does.
+     *
+     * response_list.php does not call this for a protected evaluation at all ({@see self::individual_responses_offered()}):
+     * it shows the totals only. The branch stays as the second line of defence for any other caller.
+     *
+     * @param \stdClass $evaluation
+     * @param bool $protected identity_protected($evaluation)
+     * @param bool $showsubject shows_subject($evaluation, $protected)
+     * @return array[] id, subject_name, submitted_at, user_name, user_email, employee_id, context, detail_url
+     */
+    public static function response_list_rows(\stdClass $evaluation, bool $protected, bool $showsubject): array {
+        global $DB;
+        // Defence in depth: shows_subject() already says no for a protected form, and so does this.
+        $showsubject = $showsubject && !$protected;
+        // Every name field, so fullname() can apply the site's name format (the CSV's Respondent column does).
+        $namefields = 'u.' . implode(', u.', \core_user\fields::get_name_fields());
+        // open_employeeid belongs to the BizLMS schema: a customer without it has no employee id to list.
+        $employeeid = self::user_has_employee_id() ? ', u.open_employeeid' : '';
+        $responses = $DB->get_records_sql(
+            "SELECT r.id, r.userid, r.subject_userid, r.courseid, r.programid, r.classroomid, r.timesubmitted,
+                    $namefields, u.email{$employeeid}
+               FROM {" . self::RESPONSES_TABLE . "} r
+          LEFT JOIN {user} u ON u.id = r.userid
+              WHERE r.evaluationid = :eid
+                AND r.timesubmitted > 0
+           ORDER BY r.timesubmitted DESC, r.id DESC",
+            ['eid' => (int) $evaluation->id]);
+
+        $subjectnames = $showsubject ? self::subject_names(array_column($responses, 'subject_userid')) : [];
+        $gone = get_string('responses_subject_deleted', 'local_sentientia_evaluation');
+        $anonymous = get_string('eval_response_responder_anonymous', 'local_sentientia_evaluation');
+
+        $rows = [];
+        foreach ($responses as $r) {
+            // '' when the response has no subject (as in the CSV); the "deleted user" text when that account is gone
+            // or deleted.
+            $subjectname = '';
+            if ($showsubject && (int) ($r->subject_userid ?? 0) > 0) {
+                $subjectname = $subjectnames[(int) $r->subject_userid] ?? $gone;
+            }
+            $rows[] = [
+                'id'           => (int) $r->id,
+                'subject_name' => $subjectname,
+                'submitted_at' => self::submitted_label((int) $r->timesubmitted, $protected),
+                // fullname() is '' for a respondent whose account is gone (every name field is null).
+                'user_name'    => $protected ? $anonymous : fullname($r),
+                'user_email'   => $protected ? '' : (string) ($r->email ?? ''),
+                'employee_id'  => $protected ? '' : (string) ($r->open_employeeid ?? ''),
+                'context'      => ($r->courseid > 0)    ? "course #$r->courseid"
+                               : (($r->programid > 0)   ? "program #$r->programid"
+                               : (($r->classroomid > 0) ? "classroom #$r->classroomid" : '—')),
+                'detail_url'   => (new \moodle_url('/local/sentientia_evaluation/response_detail.php',
+                    ['id' => $r->id]))->out(false),
+            ];
+        }
+        return $rows;
+    }
+
+    /**
      * CSV header row matching response_to_csv_row().
      *
+     * Every header is plain English, the Subject one too: a CSV is read by spreadsheets and scripts, so its headers
+     * do not change with the language of whoever exports it.
+     *
      * @param array $questions ordered question records (from get_questions)
+     * @param bool $withsubject true to add the Subject column after Email ({@see self::shows_subject()}); it must
+     *             be passed to response_to_csv_row() as well
      * @return array
      */
-    public static function csv_header_row(array $questions): array {
-        $header = ['Submitted', 'Respondent', 'Email', 'Course ID', 'Program ID', 'Classroom ID'];
+    public static function csv_header_row(array $questions, bool $withsubject = false): array {
+        $header = ['Submitted', 'Respondent', 'Email'];
+        if ($withsubject) {
+            $header[] = 'Subject';
+        }
+        array_push($header, 'Course ID', 'Program ID', 'Classroom ID');
         $i = 1;
         foreach ($questions as $q) {
             $label = 'Q' . $i . ': ' . trim((string) $q->questiontext);

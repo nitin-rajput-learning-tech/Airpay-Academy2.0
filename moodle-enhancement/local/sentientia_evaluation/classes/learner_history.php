@@ -20,12 +20,11 @@ defined('MOODLE_INTERNAL') || die();
  *
  * Supervisor evaluations are not the learner's to answer. On one, the assignment row names the person being
  * evaluated, and its status says "responded" when the SUPERVISOR answered; showing that to the person evaluated
- * would tell them they responded to a form they never saw. BizLMS listed only self evaluations to learners, so the
- * assignment rows of a supervisor evaluation are left out here. The page recognises one by its responses: the
- * import stores the person evaluated in responses.subject_userid, and nothing else writes that column. What it
- * cannot recognise is an ANONYMOUS supervisor evaluation, whose subject is deliberately not kept (decision
- * evaluation.sp_anonymous_subject): the evaluated person would see it as responded. That needs a marker on the
- * form itself and is recorded as an open item in the plugin state card.
+ * would tell them they responded to a form they never saw. BizLMS listed only self evaluations to learners, so only
+ * self evaluations are listed here, assignments and responses alike. The form says which it is: its evaluationmode
+ * column (EV-17), SE for every native form and for a BizLMS self evaluation, SP for a supervisor evaluation. That
+ * holds for an ANONYMOUS supervisor evaluation too, whose subject is deliberately not kept (decision
+ * evaluation.sp_anonymous_subject), and for an old completion that names no evaluator: neither is told it responded.
  *
  * Shown behind the default-OFF flag sentientia.evaluation.learner_history (see my_evaluations.php).
  *
@@ -40,6 +39,17 @@ final class learner_history {
     public const STATUS_ASSIGNED = 'assigned';
     public const STATUS_EXPIRED = 'expired';
 
+    // What the time on a row is. The row has one time, and it does not mean the same thing on every row: the page
+    // prints it next to a word that says which, so a learner does not read a deadline as the day something happened.
+    // The values double as the tail of the page's lang strings (my_evaluations_date_<kind>).
+
+    /** When the learner answered (a response's own time, or the assignment's responded_at). */
+    public const TIME_SUBMITTED = 'submitted';
+    /** The assignment's deadline: on a waiting row what is coming, on a closed row the one that passed. */
+    public const TIME_DUE = 'due';
+    /** When the assignment was made: the only time an assignment with no deadline and no response has. */
+    public const TIME_ASSIGNED = 'assigned';
+
     /**
      * The evaluations one learner answered, was asked to answer, or was asked to answer and missed.
      *
@@ -48,9 +58,10 @@ final class learner_history {
      *
      * @param int $userid
      * @return \stdClass[] Each: evaluationid, name (raw; the caller formats it), status (a STATUS_ value),
-     *         time (Unix time, 0 when unknown), anonymous (bool: the evaluation keeps its respondents hidden, so
-     *         the time is shown to the day), unlinked (bool: the learner's answers are not linked to them, which is
-     *         what the page tells them), imported (bool: the form came from the previous system).
+     *         time (Unix time, 0 when unknown), time_kind (a TIME_ value: which time that is), anonymous (bool: the
+     *         evaluation keeps its respondents hidden, so the time is shown to the day), unlinked (bool: the
+     *         learner's answers are not linked to them, which is what the page tells them), imported (bool: the form
+     *         came from the previous system).
      */
     public static function for_user(int $userid): array {
         global $DB;
@@ -65,9 +76,9 @@ final class learner_history {
             "SELECT r.id, r.evaluationid, r.timesubmitted, e.name, e.anonymous
                FROM {local_sentientia_evaluation_responses} r
                JOIN {local_sentientia_evaluation} e ON e.id = r.evaluationid
-              WHERE r.userid = :uid AND r.timesubmitted > 0
+              WHERE r.userid = :uid AND r.timesubmitted > 0 AND e.evaluationmode = :mode
            ORDER BY r.timesubmitted ASC, r.id ASC",
-            ['uid' => $userid]);
+            ['uid' => $userid, 'mode' => evaluation_manager::MODE_SELF]);
         $named = [];
         foreach ($responses as $r) {
             $named[(int) $r->evaluationid] = true;
@@ -77,25 +88,25 @@ final class learner_history {
             "SELECT a.id, a.evaluationid, a.status, a.due_at, a.responded_at, a.timecreated, e.name, e.anonymous
                FROM {local_sentientia_evaluation_assign} a
                JOIN {local_sentientia_evaluation} e ON e.id = a.evaluationid
-              WHERE a.userid = :uid
+              WHERE a.userid = :uid AND e.evaluationmode = :mode
            ORDER BY a.timecreated ASC, a.id ASC",
-            ['uid' => $userid]);
-        $supervised = [];
+            ['uid' => $userid, 'mode' => evaluation_manager::MODE_SELF]);
         foreach ($assignments as $a) {
+            // Only self evaluations are listed (the query), so nobody is shown as having responded to a supervisor
+            // evaluation, where the assignment names the person evaluated.
             $evaluationid = (int) $a->evaluationid;
-            if (!array_key_exists($evaluationid, $supervised)) {
-                $supervised[$evaluationid] = self::is_supervisor_evaluation($evaluationid);
+            if ($a->responded_at) {
+                [$time, $kind] = [(int) $a->responded_at, self::TIME_SUBMITTED];
+            } else if ($a->due_at) {
+                [$time, $kind] = [(int) $a->due_at, self::TIME_DUE];
+            } else {
+                [$time, $kind] = [(int) $a->timecreated, self::TIME_ASSIGNED];
             }
-            if ($supervised[$evaluationid]) {
-                // The assignment names the person evaluated, not somebody who was asked to answer.
-                continue;
-            }
-            $time = (int) ($a->responded_at ?: ($a->due_at ?: $a->timecreated));
-            self::merge($rows, $evaluationid, (string) $a->name, (int) $a->anonymous, (string) $a->status, $time);
+            self::merge($rows, $evaluationid, (string) $a->name, (int) $a->anonymous, (string) $a->status, $time, $kind);
         }
         foreach ($responses as $r) {
             self::merge($rows, (int) $r->evaluationid, (string) $r->name, (int) $r->anonymous, self::STATUS_RESPONDED,
-                (int) $r->timesubmitted);
+                (int) $r->timesubmitted, self::TIME_SUBMITTED);
         }
 
         $out = [];
@@ -116,6 +127,7 @@ final class learner_history {
                 'name' => $row->name,
                 'status' => $row->status,
                 'time' => $row->time,
+                'time_kind' => $row->timekind,
                 'anonymous' => $protected,
                 'unlinked' => $unlinked,
                 'imported' => evaluation_manager::is_imported($row->evaluationid),
@@ -126,26 +138,11 @@ final class learner_history {
     }
 
     /**
-     * Is this a supervisor evaluation, as far as the stored responses can tell?
-     *
-     * The import keeps the person evaluated in responses.subject_userid on a supervisor evaluation and nowhere
-     * else, so a response with a subject marks the form. A supervisor evaluation that is anonymous keeps no
-     * subject and is not recognised.
-     *
-     * @param int $evaluationid
-     * @return bool
-     */
-    private static function is_supervisor_evaluation(int $evaluationid): bool {
-        global $DB;
-        return $DB->record_exists_select('local_sentientia_evaluation_responses',
-            'evaluationid = :eid AND subject_userid IS NOT NULL', ['eid' => $evaluationid]);
-    }
-
-    /**
      * Fold one assignment or response into the learner's row for its evaluation.
      *
      * Responded beats waiting, and waiting beats closed; within the same status the latest time wins. Once the
-     * learner has responded, a later waiting or closed assignment for the same form does not undo it.
+     * learner has responded, a later waiting or closed assignment for the same form does not undo it. The time
+     * keeps its kind (TIME_*): whichever time is kept, the row says what it is.
      *
      * @param \stdClass[] $rows Rows so far, by evaluation id.
      * @param int $evaluationid
@@ -153,24 +150,31 @@ final class learner_history {
      * @param int $flag The form's own anonymous flag.
      * @param string $status
      * @param int $time
+     * @param string $kind Which time that is: a TIME_ value.
      * @return void
      */
-    private static function merge(array &$rows, int $evaluationid, string $name, int $flag, string $status, int $time): void {
+    private static function merge(array &$rows, int $evaluationid, string $name, int $flag, string $status, int $time,
+            string $kind): void {
         if (!isset($rows[$evaluationid])) {
             $rows[$evaluationid] = (object) [
                 'evaluationid' => $evaluationid, 'name' => $name, 'flag' => $flag, 'status' => $status, 'time' => $time,
+                'timekind' => $kind,
             ];
             return;
         }
         $row = $rows[$evaluationid];
         if ($status === self::STATUS_RESPONDED) {
-            $row->time = $row->status === self::STATUS_RESPONDED ? max($row->time, $time) : $time;
+            if ($row->status !== self::STATUS_RESPONDED || $time > $row->time) {
+                [$row->time, $row->timekind] = [$time, $kind];
+            }
             $row->status = self::STATUS_RESPONDED;
         } else if ($row->status !== self::STATUS_RESPONDED) {
             if ($status === self::STATUS_ASSIGNED) {
                 $row->status = self::STATUS_ASSIGNED;
             }
-            $row->time = max($row->time, $time);
+            if ($time > $row->time) {
+                [$row->time, $row->timekind] = [$time, $kind];
+            }
         }
     }
 }

@@ -195,6 +195,161 @@ final class bizlms_runner_test extends \advanced_testcase {
         $this->assertGreaterThan(7, $id, 'the sequence continues after the highest legacy id that was kept');
     }
 
+    /**
+     * Set the AUTO_INCREMENT counter of a table (what a restored dump of a table that lost its highest rows shows).
+     *
+     * @param string $table Name without prefix.
+     * @param int $next
+     * @return void
+     */
+    private function raise_counter(string $table, int $next): void {
+        global $DB;
+        $prefixed = $DB->get_prefix() . $table;
+        switch ($DB->get_dbfamily()) {
+            case 'mysql':
+                $DB->change_database_structure("ALTER TABLE {$prefixed} AUTO_INCREMENT = {$next}");
+                break;
+            case 'postgres':
+                $DB->execute("SELECT setval(pg_get_serial_sequence(:t, 'id'), {$next}, false)", ['t' => $prefixed]);
+                break;
+            default:
+                $this->markTestSkipped('The counter of a table cannot be set on this database family.');
+        }
+    }
+
+    /**
+     * EV-26 (B): the legacy table's highest id counts whether or not the step carried the row. A row the import
+     * archives can hold the highest id BizLMS ever issued, and references to it survive elsewhere.
+     */
+    public function test_a_native_row_never_takes_the_id_of_a_legacy_row_the_import_did_not_carry(): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+        // status 9 is archived (not_history): it is mapped, not written, so the target's own maximum stays 7.
+        $DB->import_record('local_toy_org', (object) ['id' => 30, 'name' => 'Retired', 'parentid' => 0, 'path' => '/1',
+            'status' => 9, 'timecreated' => 1, 'timemodified' => 1]);
+
+        [, $report] = $this->execute();
+        $this->assertSame(7, (int) $DB->get_field_sql('SELECT MAX(id) FROM {local_sentientia_toy_org}'));
+        $id = $DB->insert_record('local_sentientia_toy_org', (object) ['name' => 'Native', 'path' => null, 'visible' => 1,
+            'timecreated' => 1, 'timemodified' => 1]);
+        $this->assertGreaterThanOrEqual(31, $id, 'above every id the legacy table holds, imported or not');
+        $sequence = $report->to_array()['features']['toy']['sequences']['local_sentientia_toy_org'];
+        $this->assertSame(31, $sequence['legacy_floor']);
+        $this->assertSame(31, $sequence['next_id']);
+    }
+
+    /**
+     * EV-26 (C): the legacy table's own counter also counts, because BizLMS hard-deleted rows are in no table but
+     * their ids are still stored in references elsewhere (a request's componentid, a classroom's feedback form).
+     */
+    public function test_a_native_row_never_takes_an_id_a_legacy_row_ever_held_even_if_it_was_hard_deleted(): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+        $this->raise_counter('local_toy_org', 60);
+        $this->assertSame(7, (int) $DB->get_field_sql('SELECT MAX(id) FROM {local_toy_org}'), 'no row holds an id above 7');
+
+        [, $report] = $this->execute();
+        $id = $DB->insert_record('local_sentientia_toy_org', (object) ['name' => 'Native', 'path' => null, 'visible' => 1,
+            'timecreated' => 1, 'timemodified' => 1]);
+        $this->assertSame(60, $id, 'the first native id is the legacy counter, not 8');
+        $sequence = $report->to_array()['features']['toy']['sequences']['local_sentientia_toy_org'];
+        $this->assertSame(60, $sequence['legacy_counter']);
+        $this->assertSame(60, $sequence['next_id']);
+        $this->assertArrayNotHasKey('sequence_counter_unreadable',
+            $report->to_array()['features']['toy']['steps']['toy.org']['warnings'] ?? []);
+    }
+
+    /**
+     * Item 6 of the evaluation follow-ups: an acceptance made after the Stage B rehearsal is for the rows that were
+     * looked at, so a count that has grown by cutover is unproven again.
+     */
+    public function test_a_needs_owner_reason_accepted_up_to_a_count_is_unproven_again_above_it(): void {
+        $this->begin();
+        $this->seed_toy_data();
+        [$first] = $this->execute();
+        $this->assertSame(2, $first['exit']);
+        $counts = [];
+        foreach ($first['unproven'] as $line) {
+            if (preg_match('/^toy:([a-z_]+)=(\d+)$/', $line, $m)) {
+                $counts[$m[1]] = (int) $m[2];
+            }
+        }
+        $this->assertNotSame([], $counts, 'the toy seed holds needs-owner rows');
+
+        // Every reason accepted for exactly the rows there are: nothing is unproven.
+        $exact = [];
+        foreach ($counts as $code => $n) {
+            $exact[] = "toy:{$code}<=" . $n;
+        }
+        [$accepted] = $this->execute(['decisions' => decisions::from_array(['accepted_reasons' => $exact])]);
+        $this->assertSame([], array_values(array_filter($accepted['unproven'], fn(string $l): bool => strpos($l, 'toy:') === 0)));
+        $this->assertSame(0, $accepted['exit']);
+
+        // One reason accepted for one row fewer than there are (a rehearsal that showed less data): it is named again,
+        // with what was accepted, and nothing else is.
+        $code = array_key_first($counts);
+        $short = $exact;
+        $short[0] = "toy:{$code}<=" . ($counts[$code] - 1);
+        [$grown] = $this->execute(['decisions' => decisions::from_array(['accepted_reasons' => $short])]);
+        $this->assertSame(2, $grown['exit']);
+        $this->assertSame(["toy:{$code}={$counts[$code]} (accepted up to " . ($counts[$code] - 1) . ')'],
+            array_values(array_filter($grown['unproven'], fn(string $l): bool => strpos($l, 'toy:') === 0)));
+
+        // A bare entry still accepts any count.
+        [$bare] = $this->execute(['decisions' => decisions::from_array(['accepted_reasons' => array_map(
+            fn(string $c): string => "toy:{$c}", array_keys($counts))])]);
+        $this->assertSame(0, $bare['exit']);
+    }
+
+    /**
+     * A row of a child table that names an id the legacy source holds, and the target does not hold yet, would attach to
+     * the parent the import is about to create (PRESERVE keeps the id). Opt-in per step; counts only.
+     *
+     * @return \stdClass A stray toy item row, as a row of the child table.
+     */
+    private function stray_item(int $orgid): \stdClass {
+        return (object) ['orgid' => $orgid, 'userid' => 1, 'title' => 'stray', 'kind' => 'a', 'tenantpath' => null,
+            'timecreated' => 1, 'timemodified' => 1];
+    }
+
+    public function test_rows_left_in_a_child_table_at_a_legacy_id_block_the_feature(): void {
+        global $DB;
+        $this->begin();
+        toy_importer::$orgchildren = true;
+        $this->seed_toy_data();
+        $DB->insert_record('local_sentientia_toy_item', $this->stray_item(2));
+        $DB->insert_record('local_sentientia_toy_item', $this->stray_item(2));
+        $DB->insert_record('local_sentientia_toy_item', $this->stray_item(999));   // not a legacy org: not this check's
+
+        [$result, $report] = $this->execute();
+        $this->assertSame(1, $result['exit']);
+        $this->assertSame('blocked', $result['status']);
+        $blockers = implode(' ', $result['blockers']);
+        $this->assertStringContainsString('leftover_rows_at_legacy_ids:toy.org:local_sentientia_toy_item:2', $blockers,
+            'the step, the child table and the count');
+        $this->assertSame(0, $DB->count_records('local_sentientia_legacymap'), 'nothing was written');
+        $this->assertSame(3, $DB->count_records('local_sentientia_toy_item'), 'and the stray rows were not touched');
+        $this->assertSame(2, $report->to_array()['features']['toy']['preflight']['counts']['leftover_rows:local_sentientia_toy_item']);
+    }
+
+    public function test_the_child_table_check_is_opt_in_and_ignores_an_id_the_target_already_holds(): void {
+        global $DB;
+        $this->begin();
+        $this->seed_toy_data();
+        $DB->insert_record('local_sentientia_toy_item', $this->stray_item(2));
+        // The step declares no children: the same row blocks nothing.
+        [$result] = $this->execute();
+        $this->assertStringNotContainsString('leftover_rows_at_legacy_ids', implode(' ', $result['blockers']));
+        $this->assertNotSame(1, $result['exit']);
+
+        // After the import the target holds org 2, so a child row that names it is no leftover.
+        toy_importer::$orgchildren = true;
+        [$again] = $this->execute();
+        $this->assertSame([], $again['blockers']);
+    }
+
     public function test_unknown_enum_value_blocks_until_the_decisions_file_maps_it(): void {
         global $DB;
         $this->begin();

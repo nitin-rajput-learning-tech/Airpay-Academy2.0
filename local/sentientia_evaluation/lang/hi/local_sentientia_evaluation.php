@@ -286,10 +286,51 @@ $string['my_evaluations_intro'] = 'वे मूल्यांकन जिन�
 $string['my_evaluations_col_evaluation'] = 'मूल्यांकन';
 $string['my_evaluations_col_status'] = 'स्थिति';
 $string['my_evaluations_col_date'] = 'तिथि';
+// 2026-10-15: तिथि स्तंभ में तीन अलग-अलग तिथियाँ होती हैं, इसलिए हर कक्ष बताता है कि वह कौन-सी है।
+$string['my_evaluations_date_submitted'] = 'जमा किया गया';
+$string['my_evaluations_date_due'] = 'देय तिथि';
+$string['my_evaluations_date_assigned'] = 'नियुक्त किया गया';
 $string['my_evaluations_status_responded'] = 'उत्तर दिया';
 $string['my_evaluations_status_assigned'] = 'आपकी प्रतीक्षा में';
 $string['my_evaluations_status_expired'] = 'बिना उत्तर के बंद';
 $string['my_evaluations_imported'] = 'पिछली प्रणाली से';
-$string['my_evaluations_anonymous_note'] = 'गुमनाम मूल्यांकन: आपके उत्तर आपसे जुड़े नहीं हैं।';
+// EV-20-NOTE (2026-10-07): अंग्रेज़ी पाठ देखें; दावा परिणाम पृष्ठों तक सीमित है, हर तालिका तक नहीं।
+$string['my_evaluations_anonymous_note'] = 'गुमनाम मूल्यांकन: इसके परिणामों में आपका नाम आपके उत्तरों के साथ नहीं दिखाया जाता।';
 $string['my_evaluations_none'] = 'आपका कोई मूल्यांकन रिकॉर्ड में नहीं है।';
 $string['my_evaluations_unavailable'] = 'आपका मूल्यांकन इतिहास अभी उपलब्ध नहीं है।';
+
+// 2026-10-01 (EV-02): वह व्यक्ति जिसके बारे में पर्यवेक्षक मूल्यांकन किया गया है।
+$string['responses_col_subject'] = 'मूल्यांकित व्यक्ति';
+
+// 2026-10-01 (EV-03): संख्या और "सभी लागू विकल्प चुनें" प्रश्नों के आँकड़े (responses.php)।
+$string['responses_numeric_average'] = 'औसत';
+$string['responses_numeric_lowest_highest'] = 'न्यूनतम {$a->lowest}, अधिकतम {$a->highest}';
+$string['responses_numeric_range'] = 'अनुमत सीमा {$a->min} से {$a->max}';
+$string['responses_multi_summary'] = '{$a->respondents} उत्तरदाताओं से {$a->picks} चयन (औसतन प्रति उत्तरदाता {$a->avg})';
+$string['responses_multi_share_note'] = 'एक व्यक्ति कई विकल्प चुन सकता है, इसलिए प्रतिशत का योग 100% से अधिक हो सकता है।';
+$string['responses_question_no_answers'] = 'इस प्रश्न के लिए अभी कोई उत्तर नहीं है।';
+
+// 2026-10-01 (EV-05): response_detail.php में संख्या वाले प्रश्न का औसत।
+$string['response_detail_numeric_avg'] = 'सभी उत्तरों का औसत: {$a}';
+
+// 2026-10-01 (EV-09): आयातित फॉर्म केवल-पढ़ने योग्य इतिहास हैं; एडमिन पेज ऐसे नियंत्रण नहीं दिखाते जिनका अंत त्रुटि में होता है।
+$string['imported_badge'] = 'आयातित';
+$string['imported_readonly_notice'] = 'पिछली प्रणाली से लाया गया। यह मूल्यांकन केवल-पढ़ने योग्य है: यह इस बात का रिकॉर्ड है कि क्या पूछा गया और क्या उत्तर दिया गया। वही प्रश्न फिर से चलाने के लिए इसे टेम्पलेट के रूप में निर्यात करें और उससे नया मूल्यांकन बनाएँ।';
+$string['questiontype_multichoice_multi_short'] = 'बहुविकल्प (कई उत्तर)';
+$string['questiontype_numeric_short'] = 'संख्या';
+$string['questions_numeric_atleast'] = 'अनुमत सीमा: कम से कम {$a}';
+$string['questions_numeric_atmost'] = 'अनुमत सीमा: अधिकतम {$a}';
+
+// 2026-10-07 (मूल्यांकन फ़ॉलो-अप की समीक्षा)।
+$string['invalidresponse'] = 'प्रतिक्रिया नहीं मिली।';
+$string['responses_subject_deleted'] = '(हटाया गया उपयोगकर्ता)';
+$string['responses_numeric_ignored'] = 'जो संग्रहीत उत्तर संख्या नहीं हैं, उन्हें इन आँकड़ों में शामिल नहीं किया गया: {$a}।';
+
+// 2026-10-07 (EV-06): व्यक्तिगत प्रतिक्रियाओं वाले पेज फ़ीचर फ़्लैग sentientia.evaluation.response_drilldown (डिफ़ॉल्ट बंद) के पीछे लौटते हैं।
+$string['responses_individual_link'] = 'व्यक्तिगत प्रतिक्रियाएँ';
+$string['response_drilldown_unavailable'] = 'व्यक्तिगत प्रतिक्रियाएँ अभी उपलब्ध नहीं हैं।';
+
+// 2026-10-07 (समीक्षा): जिस मूल्यांकन के उत्तरदाता सुरक्षित हैं, वह केवल कुल आँकड़े दिखाता है।
+$string['responses_individual_protected_note'] = 'इस मूल्यांकन की प्रतिक्रियाएँ पूरी तरह या आंशिक रूप से गुमनाम हैं, इसलिए व्यक्तिगत प्रतिक्रियाएँ उपलब्ध नहीं हैं। नीचे कुल आँकड़े अब भी दिखाए गए हैं।';
+$string['response_list_protected'] = 'इस मूल्यांकन की प्रतिक्रियाएँ पूरी तरह या आंशिक रूप से गुमनाम हैं, इसलिए व्यक्तिगत प्रतिक्रियाएँ उपलब्ध नहीं हैं: केवल कुल आँकड़े दिखाए जाते हैं। किसी एक प्रतिक्रिया को, उसके आने के दिन और उस कोर्स, प्रोग्राम या क्लासरूम के साथ, उसे देने वाले व्यक्ति से जोड़ा जा सकता है।';
+$string['response_list_back_to_totals'] = 'कुल आँकड़ों पर वापस जाएँ';

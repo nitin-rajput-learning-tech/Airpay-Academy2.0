@@ -22,6 +22,9 @@
     [data-region="airpay-eval-questions"] .question-item:hover {
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
+    [data-region="airpay-eval-questions"] .question-item--readonly {
+        cursor: default;
+    }
     [data-region="airpay-eval-questions"] .question-item.dragging {
         opacity: 0.5;
     }
@@ -80,11 +83,20 @@
            class="btn btn-outline-secondary btn-sm">
             <i class="fa fa-download fa-fw"></i> Export template
         </a>
+        {{^readonly}}
         <a href="#" class="btn btn-primary btn-sm" data-action="add-question">
             <i class="fa fa-plus fa-fw"></i> Add Question
         </a>
+        {{/readonly}}
     </div>
 </div>
+
+{{#readonly}}
+<div class="alert alert-info d-flex align-items-center mb-4">
+    <i class="fa fa-lock fa-fw me-2"></i>
+    <div>{{readonly_notice}}</div>
+</div>
+{{/readonly}}
 
 {{#status_banner_label}}
 <div class="alert {{status_banner_css}} d-flex align-items-center mb-4">
@@ -109,17 +121,21 @@
 </div>
 
 {{#has_questions}}
+{{^readonly}}
 <div class="mb-3 d-flex justify-content-between align-items-center">
     <p class="text-muted small mb-0">
         <i class="fa fa-arrows-v fa-fw"></i> Drag questions to reorder. Changes save automatically.
     </p>
 </div>
+{{/readonly}}
 <div id="airpay-question-list">
     {{#questions}}
-    <div class="question-item" data-questionid="{{id}}" draggable="true">
+    <div class="question-item{{#readonly}} question-item--readonly{{/readonly}}" data-questionid="{{id}}"{{^readonly}} draggable="true"{{/readonly}}>
+        {{^readonly}}
         <span class="question-handle" title="Drag to reorder">
             <i class="fa fa-bars"></i>
         </span>
+        {{/readonly}}
         <span class="question-position">{{position}}</span>
         <div class="question-body">
             <div class="fw-semibold">{{questiontext}}</div>
@@ -135,12 +151,14 @@
                 </span>
                 {{/is_anonymous}}
             </div>
+            {{#bounds_text}}<div class="question-meta">{{.}}</div>{{/bounds_text}}
             {{#has_options}}
             <ol class="question-options mb-0">
                 {{#options}}<li>{{.}}</li>{{/options}}
             </ol>
             {{/has_options}}
         </div>
+        {{^readonly}}
         <div class="dropdown">
             <button type="button" class="btn btn-sm btn-link text-muted p-0 dropdown-toggle no-arrow"
                     data-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
@@ -162,6 +180,7 @@
                 </li>
             </ul>
         </div>
+        {{/readonly}}
     </div>
     {{/questions}}
 </div>
@@ -171,16 +190,22 @@
 <div class="card border-0 shadow-sm"><div class="card-body text-center py-5">
     <i class="fa fa-question-circle fa-3x text-muted mb-3 d-block"></i>
     <h5 class="text-muted">No questions yet</h5>
+    {{^readonly}}
     <p class="text-muted mb-3">Add questions to define what learners will respond to. Choose from rating scales, NPS, multiple choice, yes/no, or free text.</p>
+    {{/readonly}}
+    {{^readonly}}
     <a href="#" class="btn btn-primary btn-sm" data-action="add-question">
         <i class="fa fa-plus fa-fw"></i> Add First Question
     </a>
+    {{/readonly}}
 </div></div>
 {{/has_questions}}
 
 </div>
+{{^readonly}}
 {{#js}}
 require(['local_sentientia_evaluation/question_actions'], function(QuestionActions) {
     QuestionActions.init();
 });
 {{/js}}
+{{/readonly}}

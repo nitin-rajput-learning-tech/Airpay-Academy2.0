@@ -148,6 +148,11 @@ final class imported_history_test extends \advanced_testcase {
         evaluation_manager::create_question((object) [
             'evaluationid' => $form, 'questiontext' => 'Question', 'questiontype' => 'text', 'required' => 0,
         ]);
+        // BizLMS numeric items arrive with their range (April: 1 to 5).
+        evaluation_manager::create_question((object) [
+            'evaluationid' => $form, 'questiontext' => 'Score', 'questiontype' => 'numeric', 'required' => 0,
+            'numeric_min' => 1, 'numeric_max' => 5,
+        ]);
         $imported = evaluation_manager::save_template_from_evaluation($form, 'Brought over', '', (int) $user->id);
         $native = evaluation_manager::save_template_from_evaluation($form, 'Saved by a person', '', (int) $user->id);
         $DB->insert_record(legacymap::TABLE, (object) [
@@ -171,7 +176,13 @@ final class imported_history_test extends \advanced_testcase {
         $this->assertTrue(evaluation_manager::delete_template($native));
         $this->assertFalse($DB->record_exists('local_sentientia_evaluation_template', ['id' => $native]));
         // Using the imported template to start a new evaluation is still how its questions are run again.
-        $this->assertSame(1, evaluation_manager::create_evaluation_from_template($imported)['question_count']);
+        $created = evaluation_manager::create_evaluation_from_template($imported);
+        $this->assertSame(2, $created['question_count']);
+        // ... with the range of its number question: it came back unbounded when only the count was checked.
+        $numeric = array_values(array_filter(evaluation_manager::get_questions($created['id']),
+            static fn($q): bool => $q->questiontype === 'numeric'));
+        $this->assertCount(1, $numeric);
+        $this->assertSame(['min' => 1, 'max' => 5], evaluation_manager::decode_numeric_bounds($numeric[0]->options));
     }
 
     public function test_numeric_answers_keep_their_decimals_in_the_statistics(): void {
@@ -294,8 +305,104 @@ final class imported_history_test extends \advanced_testcase {
         $this->assertTrue($byname['Missed']->imported);
         $this->assertFalse($byname['Waiting']->imported);
 
+        // Which time each row shows: the page prints the matching word (Submitted / Due by / Assigned) beside it.
+        $this->assertSame(learner_history::TIME_DUE, $byname['Waiting']->time_kind, 'the deadline that is coming');
+        $this->assertSame(learner_history::TIME_SUBMITTED, $byname['Named and answered']->time_kind);
+        $this->assertSame(learner_history::TIME_SUBMITTED, $byname['Anonymous and answered']->time_kind);
+        $this->assertSame(learner_history::TIME_DUE, $byname['Missed']->time_kind, 'the deadline that passed');
+
         $this->assertSame([], learner_history::for_user(0));
         $this->assertCount(1, learner_history::for_user($other));
+    }
+
+    /**
+     * EV-18 finding 2: the Date column held a deadline on a waiting or closed row, the answering time on an answered
+     * one, and (with no deadline) the day it was assigned, with nothing to say which. Each row now carries what its time
+     * is, and a fallback time is never passed off as the learner's answer.
+     */
+    public function test_each_row_says_which_date_it_shows(): void {
+        $this->resetAfterTest();
+        $me = (int) $this->getDataGenerator()->create_user()->id;
+        $t = 1700000000;   // What assign() writes as timecreated.
+
+        $open = $this->form('No deadline');
+        $this->assign($open, $me, 'assigned', null, null);
+        $dated = $this->form('Dated');
+        $this->assign($dated, $me, 'assigned', $t + 900, null);
+        $closed = $this->form('Closed');
+        $this->assign($closed, $me, 'expired', $t + 100, null);
+        // An answered form whose completion time the import could not find (responded, no responded_at, no response
+        // row): the time it falls back to is the deadline, and it is not called a submission.
+        $nocompletion = $this->form('Answered, time unknown');
+        $this->assign($nocompletion, $me, 'responded', $t + 50, null);
+        // An answer arrives for a form still showing a later deadline: the answer's own time wins, called Submitted.
+        $answered = $this->form('Answered before the deadline');
+        $this->assign($answered, $me, 'assigned', $t + 900, null);
+        $this->respond($answered, $me, $t + 300);
+
+        $byname = [];
+        foreach (learner_history::for_user($me) as $row) {
+            $byname[$row->name] = $row;
+        }
+        $this->assertSame([learner_history::TIME_ASSIGNED, $t],
+            [$byname['No deadline']->time_kind, $byname['No deadline']->time]);
+        $this->assertSame([learner_history::TIME_DUE, $t + 900], [$byname['Dated']->time_kind, $byname['Dated']->time]);
+        $this->assertSame([learner_history::TIME_DUE, $t + 100], [$byname['Closed']->time_kind, $byname['Closed']->time]);
+        $this->assertSame(learner_history::STATUS_RESPONDED, $byname['Answered, time unknown']->status);
+        $this->assertSame([learner_history::TIME_DUE, $t + 50],
+            [$byname['Answered, time unknown']->time_kind, $byname['Answered, time unknown']->time]);
+        $this->assertSame(learner_history::STATUS_RESPONDED, $byname['Answered before the deadline']->status);
+        $this->assertSame([learner_history::TIME_SUBMITTED, $t + 300],
+            [$byname['Answered before the deadline']->time_kind, $byname['Answered before the deadline']->time]);
+
+        // Every kind has a word, in English and in Hindi, and the Hindi is not the English left in place.
+        $string = [];
+        include(__DIR__ . '/../lang/hi/local_sentientia_evaluation.php');
+        foreach ([learner_history::TIME_SUBMITTED, learner_history::TIME_DUE, learner_history::TIME_ASSIGNED] as $kind) {
+            $key = 'my_evaluations_date_' . $kind;
+            $en = get_string($key, 'local_sentientia_evaluation');
+            $this->assertNotSame('', $en);
+            $this->assertStringNotContainsString('[[', $en, 'a missing string shows as [[key]]');
+            $this->assertArrayHasKey($key, $string, 'Hindi parity');
+            $this->assertNotSame('', $string[$key]);
+            $this->assertNotSame($en, $string[$key], 'the Hindi word is a translation');
+        }
+    }
+
+    /**
+     * EV-18 finding 1: the theme does not show the $PAGE heading on the standard layout, so the page had no visible
+     * title until the template printed one, as the plugin's other templates do.
+     */
+    public function test_the_page_prints_its_own_title_and_names_the_date_in_each_row(): void {
+        global $PAGE;
+        $this->resetAfterTest();
+        $PAGE->set_url('/local/sentientia_evaluation/my_evaluations.php');
+        $title = get_string('my_evaluations_title', 'local_sentientia_evaluation');
+        $html = $this->render_history_row(false);
+        $this->assertMatchesRegularExpression('/<h2[^>]*>\s*' . preg_quote(s($title), '/') . '\s*<\/h2>/', $html);
+        $this->assertLessThan(strpos($html, get_string('my_evaluations_intro', 'local_sentientia_evaluation')),
+            strpos($html, '<h2'), 'the title comes before the introduction');
+        // The page with no rows still has its title.
+        $empty = $this->render_history_rows([], false);
+        $this->assertStringContainsString(s($title), $empty);
+        $this->assertStringContainsString(get_string('my_evaluations_none', 'local_sentientia_evaluation'), $empty);
+
+        // The word for the date is printed with it.
+        $this->assertStringContainsString('Submitted', $html);
+        $this->assertStringContainsString('12 Mar 2026', $html);
+        $due = $this->render_history_rows([[
+            'name' => 'Feedback', 'status_assigned' => true, 'status_label' => 'Waiting for you', 'date' => '21 Oct 2026 17:00',
+            'has_date' => true, 'date_label' => 'Due by', 'anonymous' => false, 'unlinked' => false, 'imported' => false,
+        ]], true);
+        $this->assertStringContainsString('Due by', $due);
+        $this->assertStringContainsString('21 Oct 2026 17:00', $due);
+        // A row with no date shows a dash and no word.
+        $undated = $this->render_history_rows([[
+            'name' => 'Feedback', 'status_assigned' => true, 'status_label' => 'Waiting for you', 'date' => '',
+            'has_date' => false, 'date_label' => 'NOT-SHOWN', 'anonymous' => false, 'unlinked' => false, 'imported' => false,
+        ]], true);
+        $this->assertStringNotContainsString('NOT-SHOWN', $undated);
+        $this->assertStringContainsString('&mdash;', $undated);
     }
 
     public function test_the_person_evaluated_on_a_supervisor_form_is_not_shown_as_having_responded(): void {
@@ -306,9 +413,11 @@ final class imported_history_test extends \advanced_testcase {
         $supervisor = (int) $gen->create_user()->id;
         $t = 1700000000;
 
-        // A supervisor evaluation: the assignment names the team member evaluated, "responded" means the SUPERVISOR
-        // answered, and the response keeps the person it is about. BizLMS listed only self evaluations to learners.
+        // A supervisor evaluation (the form says so, EV-17): the assignment names the team member evaluated,
+        // "responded" means the SUPERVISOR answered, and the response keeps the person it is about. BizLMS listed only
+        // self evaluations to learners.
         $review = $this->form('Supervisor review');
+        $DB->set_field('local_sentientia_evaluation', 'evaluationmode', 'SP', ['id' => $review]);
         $this->mark_imported($review);
         $this->assign($review, $me, 'responded', null, $t + 100);
         $DB->insert_record('local_sentientia_evaluation_responses', (object) [
@@ -325,11 +434,10 @@ final class imported_history_test extends \advanced_testcase {
             array_map(static fn(\stdClass $r): string => $r->name, learner_history::for_user($me)),
             'the person evaluated did not respond to the supervisor review');
 
-        // The supervisor did answer it: that is their response, and it is listed.
-        $rows = learner_history::for_user($supervisor);
-        $this->assertSame(['Supervisor review'], array_map(static fn(\stdClass $r): string => $r->name, $rows));
-        $this->assertSame(learner_history::STATUS_RESPONDED, $rows[0]->status);
-        $this->assertSame($t + 110, $rows[0]->time, 'their own response, not the assignment row that names somebody else');
+        // The supervisor did answer it, but only self evaluations are in anybody's history (EV-17: the form's own
+        // evaluationmode decides, assignments and responses alike), so it is not listed for them either. The answer
+        // is theirs and stays in the responses table; it is just not a learner's evaluation to read back.
+        $this->assertSame([], learner_history::for_user($supervisor));
     }
 
     public function test_the_unlinked_note_is_for_a_learner_whose_answers_are_not_linked_to_them(): void {
@@ -379,6 +487,62 @@ final class imported_history_test extends \advanced_testcase {
         $this->assertCount(1, $rows);
         $this->assertSame(learner_history::STATUS_RESPONDED, $rows[0]->status, 'a response settles it');
         $this->assertSame(1700000300, $rows[0]->time, 'the latest answer');
+    }
+
+    /**
+     * EV-20-NOTE: for a form brought over from the previous system the old tables and the import's map still link an
+     * answer to its person, so the learner is told what the results keep (their name is not shown with the answers),
+     * not that the answers are "not linked" to them. The template prints the same string for every unlinked row.
+     */
+    public function test_the_anonymous_note_says_what_the_results_keep_and_promises_no_more(): void {
+        $this->resetAfterTest();
+        $en = get_string('my_evaluations_anonymous_note', 'local_sentientia_evaluation');
+        $this->assertStringContainsString('name is not shown', $en);
+        $this->assertStringNotContainsString('linked', $en, 'a claim about every table cannot be made for an imported form');
+
+        // The Hindi pack is read from its file (the test site may not have the language installed): the same
+        // weaker claim, and no trace of the old words for "not linked to you".
+        $string = [];
+        include(__DIR__ . '/../lang/hi/local_sentientia_evaluation.php');
+        $this->assertArrayHasKey('my_evaluations_anonymous_note', $string);
+        $this->assertStringNotContainsString('जुड़े', $string['my_evaluations_anonymous_note']);
+        $this->assertStringContainsString('नाम', $string['my_evaluations_anonymous_note']);
+
+        // The learner page still shows it for an anonymous row of an imported form.
+        global $PAGE;
+        $PAGE->set_url('/local/sentientia_evaluation/my_evaluations.php');
+        $html = $this->render_history_row(true);
+        $this->assertStringContainsString(s($en), $html);
+        $this->assertStringNotContainsString(s($en), $this->render_history_row(false), 'a linked row shows no note');
+    }
+
+    /**
+     * The history template with one row.
+     *
+     * @param bool $unlinked
+     * @return string
+     */
+    private function render_history_row(bool $unlinked): string {
+        return $this->render_history_rows([[
+            'name' => 'Survey', 'status_responded' => true, 'status_label' => 'Responded', 'date' => '12 Mar 2026',
+            'has_date' => true, 'date_label' => 'Submitted', 'anonymous' => $unlinked, 'unlinked' => $unlinked,
+            'imported' => true,
+        ]], true);
+    }
+
+    /**
+     * The history template with the given rows.
+     *
+     * @param array[] $rows
+     * @param bool $hasrows
+     * @return string
+     */
+    private function render_history_rows(array $rows, bool $hasrows): string {
+        global $OUTPUT;
+        return $OUTPUT->render_from_template('local_sentientia_evaluation/my_evaluations', [
+            'has_rows' => $hasrows,
+            'rows' => $rows,
+        ]);
     }
 
     public function test_the_history_page_is_behind_a_flag_that_is_off_by_default(): void {

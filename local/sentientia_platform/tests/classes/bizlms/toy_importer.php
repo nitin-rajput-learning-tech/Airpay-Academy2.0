@@ -67,6 +67,15 @@ class toy_importer implements importer, watches_tables {
     /** @var bool toy.org (a PRESERVE step) declares no external_refs: the registry must refuse it. */
     public static bool $preservenorefs = false;
 
+    /** @var bool toy.org (a PRESERVE step) declares local_sentientia_toy_item.orgid as a child table of its target. */
+    public static bool $orgchildren = false;
+
+    /** @var bool toy.item (a MAP step) wrongly declares target_children(): the registry must refuse it. */
+    public static bool $mapchildren = false;
+
+    /** @var bool toy.org declares a target_children() entry that is not [table, column]: the registry must refuse it. */
+    public static bool $badchildren = false;
+
     /** @var bool decisions() adds a required decision with no default. */
     public static bool $requiredecision = false;
 
@@ -156,6 +165,9 @@ class toy_importer implements importer, watches_tables {
         self::$omittimestamp = false;
         self::$maprefs = false;
         self::$preservenorefs = false;
+        self::$orgchildren = false;
+        self::$mapchildren = false;
+        self::$badchildren = false;
         self::$requiredecision = false;
         self::$requiresversion = 0;
         self::$legacytarget = false;
@@ -408,6 +420,13 @@ class toy_importer implements importer, watches_tables {
                 return toy_importer::$preservenorefs ? [] : [['local_toy_item', 'orgid']];
             }
 
+            public function target_children(): array {
+                if (toy_importer::$badchildren) {
+                    return [['local_sentientia_toy_item; DROP TABLE x', 'orgid']];
+                }
+                return toy_importer::$orgchildren ? [['local_sentientia_toy_item', 'orgid']] : [];
+            }
+
             public function transform(array $rows, context $ctx): array {
                 if (toy_importer::$dryleak) {
                     toy_importer::leak_log_row();
@@ -481,6 +500,10 @@ class toy_importer implements importer, watches_tables {
 
             public function external_refs(): array {
                 return toy_importer::$maprefs ? [['local_toy_unused', 'note']] : [];
+            }
+
+            public function target_children(): array {
+                return toy_importer::$mapchildren ? [['local_sentientia_toy_org', 'id']] : [];
             }
 
             public function transform(array $rows, context $ctx): array {

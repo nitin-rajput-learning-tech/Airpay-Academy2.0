@@ -155,4 +155,61 @@ final class crud_test extends \advanced_testcase {
         $this->expectException(\required_capability_exception::class);
         external\change_status::execute($eid, 1);
     }
+
+    /**
+     * Export a form as a template and make a new evaluation from it, both ways (the JSON file the import page reads,
+     * and a saved template row): every question comes back with the settings it had. Reusing a form this way is how
+     * an imported BizLMS form is run again, and its numeric bounds were lost on the way (the export writes
+     * {min, max}, the import joined them into a newline string and the question came back unbounded).
+     */
+    public function test_template_round_trip_keeps_every_question_setting(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $source = evaluation_manager::create((object) ['name' => 'Round trip', 'anonymous' => 0]);
+        $questions = [
+            ['questiontype' => 'rating', 'questiontext' => 'Overall', 'required' => 1, 'sortorder' => 3],
+            ['questiontype' => 'multichoice', 'questiontext' => 'Colour', 'options' => "Red\nGreen\nBlue",
+                'required' => 0, 'sortorder' => 5],
+            ['questiontype' => 'multichoice_multi', 'questiontext' => 'Topics', 'options' => "A\nB",
+                'required' => 1, 'sortorder' => 7],
+            ['questiontype' => 'numeric', 'questiontext' => 'Score', 'numeric_min' => 1, 'numeric_max' => 5,
+                'required' => 0, 'sortorder' => 9],
+            ['questiontype' => 'numeric', 'questiontext' => 'How many', 'required' => 1, 'sortorder' => 10],
+            ['questiontype' => 'text', 'questiontext' => 'Comments', 'required' => 1, 'anonymous' => 1, 'sortorder' => 11],
+        ];
+        foreach ($questions as $question) {
+            evaluation_manager::create_question((object) ($question + ['evaluationid' => $source]));
+        }
+        $original = array_values(evaluation_manager::get_questions($source));
+        $this->assertCount(6, $original);
+
+        // Way 1: the JSON file, as the import page reads it.
+        $payload = json_decode(json_encode(evaluation_manager::export_template($source)), true);
+        $fromfile = evaluation_manager::import_template($payload);
+
+        // Way 2: a saved template row.
+        $templateid = evaluation_manager::save_template_from_evaluation($source, 'Saved', '', (int) get_admin()->id);
+        $fromrow = evaluation_manager::create_evaluation_from_template($templateid);
+
+        foreach ([$fromfile, $fromrow] as $created) {
+            $this->assertSame(6, $created['question_count']);
+            $this->assertNotSame($source, $created['id']);
+            $copies = array_values(evaluation_manager::get_questions($created['id']));
+            $this->assertCount(6, $copies);
+            foreach ($original as $i => $question) {
+                $copy = $copies[$i];
+                $label = $question->questiontype . ' "' . $question->questiontext . '"';
+                $this->assertSame($question->questiontype, $copy->questiontype, $label);
+                $this->assertSame($question->questiontext, $copy->questiontext, $label);
+                $this->assertSame((int) $question->required, (int) $copy->required, $label . ' required');
+                $this->assertSame((int) $question->anonymous, (int) $copy->anonymous, $label . ' anonymous');
+                $this->assertSame((int) $question->sortorder, (int) $copy->sortorder, $label . ' sortorder');
+                $this->assertSame(evaluation_manager::decode_options($question->options),
+                    evaluation_manager::decode_options($copy->options), $label . ' options');
+            }
+            // The bounded number question keeps its range, the unbounded one stays unbounded.
+            $this->assertSame(['min' => 1, 'max' => 5], evaluation_manager::decode_numeric_bounds($copies[3]->options));
+            $this->assertSame(['min' => null, 'max' => null], evaluation_manager::decode_numeric_bounds($copies[4]->options));
+        }
+    }
 }

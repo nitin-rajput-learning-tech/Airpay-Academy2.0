@@ -803,6 +803,42 @@ final class runner {
         if ($collisions) {
             $pf->block('preserve_collision:' . $step->key() . ':' . $collisions . ' ids=' . implode(',', $first));
         }
+        $this->preflight_target_children($pf, $step);
+    }
+
+    /**
+     * Rows in a child table that name a legacy id the target does not hold yet (step::target_children()).
+     *
+     * Read-only, counts only: a blocker carries the child table and a number, never a row.
+     *
+     * The legacy table is read through $DB with a correlated EXISTS, not through legacy_reader: a join cannot be
+     * paged by the reader, and the framework's standing assumption (ADR-032, "Reading and performance") is that the
+     * legacy tables share the database and the prefix of the targets, as every other check in this class does.
+     *
+     * @param preflight $pf
+     * @param step $step A PRESERVE step.
+     * @return void
+     */
+    private function preflight_target_children(preflight $pf, step $step): void {
+        global $DB;
+        $source = $step->physical_table();
+        $target = $step->targettable();
+        foreach ($step->target_children() as [$child, $column]) {
+            fingerprint::assert_identifier($child);
+            fingerprint::assert_identifier($column);
+            $manager = $DB->get_manager();
+            if (!$manager->table_exists($child) || !$manager->field_exists($child, $column)) {
+                continue;
+            }
+            $count = (int) $DB->count_records_sql(
+                'SELECT COUNT(1) FROM {' . $child . '} c
+                  WHERE EXISTS (SELECT 1 FROM {' . $source . '} s WHERE s.id = c.' . $column . ')
+                    AND NOT EXISTS (SELECT 1 FROM {' . $target . '} p WHERE p.id = c.' . $column . ')');
+            if ($count > 0) {
+                $pf->count('leftover_rows:' . $child, $count);
+                $pf->block('leftover_rows_at_legacy_ids:' . $step->key() . ':' . $child . ':' . $count);
+            }
+        }
     }
 
     // Run bookkeeping.
@@ -1061,8 +1097,10 @@ final class runner {
         foreach ($tally as $feature => $codes) {
             foreach ($codes as $code => $n) {
                 $reason = $this->reasons[$feature][$code] ?? null;
-                if ($reason !== null && $reason->needsowner && !$this->decisions->accepts($feature, $code)) {
-                    $out[] = "{$feature}:{$code}={$n}";
+                if ($reason !== null && $reason->needsowner && !$this->decisions->accepts($feature, $code, $n)) {
+                    // A reason accepted for fewer rows than there are now is named with what was accepted.
+                    $limit = $this->decisions->accepted_limit($feature, $code);
+                    $out[] = "{$feature}:{$code}={$n}" . ($limit === null ? '' : " (accepted up to {$limit})");
                 }
             }
         }
@@ -1283,13 +1321,50 @@ final class runner {
         }
         $writer = $this->writer->for_importer($importer);
         $reset = [];
+        $sequences = [];
         foreach ($importer->steps() as $step) {
             if ($step instanceof step && $step->idpolicy() === idpolicy::PRESERVE && !isset($reset[$step->targettable()])) {
-                $writer->reset_sequence($step->targettable());
                 $reset[$step->targettable()] = true;
+                [$floor, $counter] = $this->sequence_floor($step);
+                $next = $writer->reset_sequence($step->targettable(), $floor);
+                $sequences[$step->targettable()] = ['next_id' => $next, 'legacy_floor' => $floor,
+                    'legacy_counter' => $counter ?? 'unreadable'];
+                if ($counter === null) {
+                    // B, not C: the legacy table's highest id still floors the counter, but the ids of rows BizLMS
+                    // hard-deleted above it are not known. COMMS-R2 (itemid 0 for a gone path, classroom or program)
+                    // stays as the defence in depth.
+                    $this->report->count_warning($importer->feature(), $step->key(), 'sequence_counter_unreadable');
+                }
+                if ($next < $floor) {
+                    $this->report->count_warning($importer->feature(), $step->key(), 'sequence_floor_not_applied');
+                }
             }
         }
+        if ($sequences) {
+            $this->report->set_feature($importer->feature(), ['sequences' => $sequences]);
+        }
         $importer->finalise($ctx);
+    }
+
+    /**
+     * The lowest id a PRESERVE target may hand out next, as far as the LEGACY table says (EV-26).
+     *
+     * max(legacy MAX(id) + 1, legacy AUTO_INCREMENT): the table's highest id counts whether or not the step carried
+     * the row (skipped, archived and soft-deleted rows are in it), and the counter also covers rows BizLMS
+     * hard-deleted, whose ids still sit in references that survive elsewhere. The writer adds the target's own
+     * highest id.
+     *
+     * @param step $step A PRESERVE step.
+     * @return array{0: int, 1: int|null} [the floor, the legacy counter or null when it cannot be read]. A source
+     *         table that is not there gives [0, null]: nothing to floor on.
+     */
+    private function sequence_floor(step $step): array {
+        $source = $step->physical_table();
+        if (!$this->legacy->exists($source)) {
+            return [0, null];
+        }
+        $counter = $this->legacy->next_id($source);
+        return [max($this->legacy->max_id($source) + 1, $counter ?? 0), $counter];
     }
 
     /**
