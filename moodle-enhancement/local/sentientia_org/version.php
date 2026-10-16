@@ -45,7 +45,10 @@ $plugin->component = 'local_sentientia_org';
 // with local_sentientia_platform 2026100701, which this plugin therefore requires.
 // 2026100801 - Moodle 5.3 compat FX-20: org tree dropdown/collapse emit data-bs-toggle (and data-bs-target) beside the Bootstrap 4 data-toggle. No schema change.
 // 2026100802 - Moodle 5.3 compat FX-20 round 1: the data-bs-toggle / data-bs-target attributes are REMOVED again. The theme's Bootstrap 4 jQuery data-api handles data-toggle on every page; core's Bootstrap 5 data-api is loaded on many pages (5.1/5.2: core/local/dropdown/dialog and collapsable_section; 5.3: usermenu, dialog, collapsable_section), so a click on an element with BOTH attributes ran two toggles (open, close). Templates are byte-identical to before 2026100801. No schema change.
-$plugin->version   = 2026100802;  // Moodle 5.3 compat FX-20 round 1 (on top of 2026100801)
+// 2026101501 - UI fix (visual pass 2026-10-14): admin.php gave org_node.mustache / manage.mustache names already escaped by format_string() and s(), which their {{ }} escaped again, so "Issuance & Loyalty" printed as "Issuance &amp; Loyalty" in the org tree (and in the row menu's data-name). org_manager::plain() is the text form admin.php now uses. No schema change.
+// 2026101502 - review follow-up: org_manager::plain() no longer depends on the site's formatstringstriptags being ON (OFF made format_string() return clean_text() HTML, so the double escape came back); the OFF result is reduced to text. Default (ON) behaviour unchanged. No schema change.
+$plugin->version   = 2026101502;  // UI fix review follow-up: plain() independent of formatstringstriptags (on top of 2026101501)
+// 2026101501: UI fix: org tree names escaped once (on top of 2026100802 FX-20 round 1)
 // 2026100701:  // ADR-032 IDN-04: copies_files marker (on top of 2026093002 cohort_scope importer)
 // 2026092500: ADR-031 tenant-bounded org tree + parent pick.
 // 2026092200: descendants-only access filter is /-bounded.

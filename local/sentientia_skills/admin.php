@@ -32,18 +32,20 @@ $cats_with_counts = $DB->get_records_sql(
 $cat_rows = [];
 $cat_options_for_filter = [];
 foreach ($cats_with_counts as $c) {
+    // TEXT for the template (skills_manager::plain()): manage.mustache escapes every {{ }} itself, so
+    // format_string()/s() here made "Compliance & Risk" print as "Compliance &amp; Risk".
     $cat_rows[] = [
         'id'         => $c->id,
-        'name'       => format_string($c->name),
-        'description' => format_string($c->description ?? ''),
-        'icon'       => s($c->icon ?? 'fa-cogs'),
-        'color'      => s($c->color ?? '#0066A7'),
+        'name'       => \local_sentientia_skills\skills_manager::plain($c->name),
+        'description' => \local_sentientia_skills\skills_manager::plain($c->description ?? ''),
+        'icon'       => (string) ($c->icon ?? 'fa-cogs'),
+        'color'      => (string) ($c->color ?? '#0066A7'),
         'sort_order' => (int) ($c->sort_order ?? 0),
         'skillcount' => (int) $c->skillcount,
     ];
     $cat_options_for_filter[] = [
         'id'   => (int) $c->id,
-        'name' => format_string($c->name),
+        'name' => \local_sentientia_skills\skills_manager::plain($c->name),
     ];
 }
 

@@ -275,7 +275,7 @@ class user_manager {
                     }
                 }
                 // Recommended courses to fill gaps.
-                $gap_courses = \local_sentientia_skills\skills_manager::get_gap_courses($userid, 5);
+                $gap_courses = \local_sentientia_skills\skills_manager::get_gap_courses($userid, 5, true);
                 if (!empty($gap_courses)) {
                     $context['ap_skills_gap_courses'] = $gap_courses;
                     $context['ap_has_gap_courses'] = true;

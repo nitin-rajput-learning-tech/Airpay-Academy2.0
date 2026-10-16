@@ -160,4 +160,29 @@ final class list_skills_test extends \advanced_testcase {
         sort($names);
         $this->assertSame(['Skill in A1', 'Skill in A2'], $names);
     }
+
+    /**
+     * UI fix 2026-10-15: the datatable escapes the name and category columns itself, so the rows carry TEXT. They
+     * carried format_string() output, and "Compliance & Risk" printed as "Compliance &amp; Risk". The actions
+     * column is HTML and escapes its own attribute once.
+     */
+    public function test_names_are_plain_text_and_the_actions_attribute_is_escaped_once(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->wipe_skills();
+
+        $catid = (int) $DB->insert_record('local_sentientia_skill_cats', (object) [
+            'name' => 'Compliance & Risk', 'icon' => 'fa-cogs', 'color' => '#0066A7',
+            'sort_order' => 1, 'timecreated' => time(),
+        ]);
+        $this->seed_skill('KYC & AML', $catid);
+
+        $this->setUser($this->user_with_manage());
+        $row = list_skills::execute('', 'name', 'asc', 0, 25, '{}')['rows'][0];
+
+        $this->assertSame('KYC & AML', $row['name']);
+        $this->assertSame('Compliance & Risk', $row['category']);
+        $this->assertStringContainsString('data-name="KYC &amp; AML"', $row['actions']);
+        $this->assertStringNotContainsString('&amp;amp;', $row['actions']);
+    }
 }

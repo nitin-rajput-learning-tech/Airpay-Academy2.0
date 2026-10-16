@@ -7,6 +7,7 @@ use core_external\external_api;
 use core_external\external_function_parameters;
 use core_external\external_single_structure;
 use core_external\external_value;
+use local_sentientia_skills\skills_manager;
 
 class list_skills extends external_api {
 
@@ -76,8 +77,11 @@ class list_skills extends external_api {
         foreach ($records as $s) {
             $rows[] = [
                 'id'        => (int) $s->id,
-                'name'      => format_string($s->name),
-                'category'  => $s->catname ? format_string($s->catname) : '—',
+                // TEXT, not HTML: the datatable escapes these columns itself (escapeHtml), so format_string() here
+                // printed "Compliance & Risk" as "Compliance &amp; Risk". The actions column below is HTML and
+                // escapes its own attributes once with s().
+                'name'      => skills_manager::plain($s->name),
+                'category'  => $s->catname ? skills_manager::plain($s->catname) : '—',
                 'max_level' => (int) $s->max_level,
                 'sort'      => (int) $s->sort_order,
                 'created'   => $s->timecreated ? userdate($s->timecreated, '%d %b %Y') : '—',
