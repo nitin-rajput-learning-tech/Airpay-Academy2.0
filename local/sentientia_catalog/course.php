@@ -70,6 +70,16 @@ if ($is_loggedin) {
     $is_enrolled = is_enrolled($coursecontext, $USER);
 }
 
+// Visual-pass finding 7 (a), 2026-10-15: "Request enrolment" where a request is the learner's way in
+// (local_sentientia_request, flag sentientia.request.catalog_button, default OFF): 'request', 'pending' or
+// 'none'. The one-click and cart routes below keep their place (enrolment::request_state() yields 'none'
+// for them); the dialog is loaded only when the button is.
+$requeststate = ($is_loggedin && !$is_enrolled)
+    ? \local_sentientia_catalog\enrolment::request_state($USER, $id, $pricing) : 'none';
+if ($requeststate === 'request') {
+    $PAGE->requires->js_call_amd('local_sentientia_request/request_button', 'init');
+}
+
 // Get enrollment count.
 $enrolled_count = $DB->count_records_sql(
     "SELECT COUNT(DISTINCT ue.userid) FROM {user_enrolments} ue
@@ -140,6 +150,22 @@ echo $OUTPUT->header();
                                 <i class="fa fa-sign-in"></i> <?php echo s(get_string('enrol_now_free', 'local_sentientia_catalog')); ?>
                             </button>
                         </form>
+                    <?php elseif ($requeststate === 'request'): ?>
+                        <!-- Request enrolment: nothing here enrols this learner themselves (local_sentientia_request). -->
+                        <button type="button" data-action="request-course"
+                                data-courseid="<?php echo (int) $id; ?>"
+                                data-coursename="<?php echo s(strip_tags(format_string($course->fullname, true, ['escape' => false]))); ?>"
+                                style="padding:10px 24px; border-radius:10px; font-size:15px; font-weight:600;
+                                       background:linear-gradient(135deg,#0066a7,#0d5da1); color:#fff; border:none; cursor:pointer;">
+                            <i class="fa fa-paper-plane"></i> <?php echo s(get_string('requestcourse_long', 'local_sentientia_request')); ?>
+                        </button>
+                    <?php elseif ($requeststate === 'pending'): ?>
+                        <span role="status"
+                              style="padding:10px 24px; border-radius:10px; font-size:15px; font-weight:600;
+                                     background:var(--ap-surface-2,#f8f9fc); color:var(--ap-text-secondary,#5a6070);
+                                     border:1px solid var(--ap-border,#e3eaf3);">
+                            <i class="fa fa-clock-o"></i> <?php echo s(get_string('requestpending_short', 'local_sentientia_request')); ?>
+                        </span>
                     <?php elseif ($pricing['is_free'] && $is_loggedin): ?>
                         <a href="<?php echo (new moodle_url('/enrol/index.php', ['id' => $id]))->out(); ?>"
                            style="padding:10px 24px; border-radius:10px; font-size:15px; font-weight:600;

@@ -20,6 +20,7 @@ $string['sentientia_request:overrideroute'] = 'Override the approval routing';
 // Actions.
 $string['requestcourse']   = 'Request access';
 $string['requestcourse_long'] = 'Request enrolment';
+$string['requestpending_short'] = 'Request pending';
 $string['approve']         = 'Approve';
 $string['reject']          = 'Reject';
 $string['cancel_request']  = 'Cancel request';

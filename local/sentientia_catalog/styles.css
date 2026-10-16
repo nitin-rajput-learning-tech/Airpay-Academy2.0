@@ -359,6 +359,20 @@ body.dark-mode .airpay-catalog__btn--continue,
 body.dark-mode .airpay-catalog__btn--continue:hover {
     color: #fff;
 }
+/* Request enrolment (local_sentientia_request, visual-pass finding 7a): the card offers a real <button>
+   rather than an anchor, so drop the native button chrome; "Request pending" is a muted, non-interactive
+   chip of the same size. */
+button.airpay-catalog__btn {
+    border: 0;
+    font-family: inherit;
+    line-height: inherit;
+}
+.airpay-catalog__btn--pending {
+    background: var(--ap-color-bg-surface-alt);
+    color: var(--ap-color-text-secondary);
+    box-shadow: inset 0 0 0 1px var(--ap-color-border);
+    cursor: default;
+}
 
 /* ── Categories Grid ─────────────────────────────────────────────────── */
 .airpay-catalog__categories {

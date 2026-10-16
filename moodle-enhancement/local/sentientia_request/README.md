@@ -36,9 +36,14 @@ Escalation:
 | Capability | Granted to | Purpose |
 |---|---|---|
 | `local/sentientia_request:request` | student, user | submit a request |
-| `local/sentientia_request:approve` | manager | approve/reject requests routed to you |
+| `local/sentientia_request:approve` | manager, user (2026-10-15) | approve/reject requests routed to you. Routing picks the requester's **line manager**, who on BizLMS data is an ordinary employee, so the capability is granted to every authenticated user, like `:request`. It gives no authority over anyone else's request: `list_pending` lists only what is assigned to the caller and `decide()` refuses anyone else (bar a tenant-checked `:overrideroute` holder). Existing sites are back-filled by upgrade step 2026101501 (`db/upgradelib.php`); an explicit setting an administrator made is never overridden |
 | `local/sentientia_request:overrideroute` | _(none by default)_ | bypass routing — but **only within own tenant** ← Phase 8.1 B10 |
 | `local/sentientia_request:view` | manager | view all-requests list (tenant-scoped) |
+
+The "Pending approvals" entry (preferences menu, and the button on My requests) is not shown to every employee
+just because they hold `:approve`: `request_manager::has_approvals_entry()` offers it to the holders of
+`:viewall` / `:overrideroute` (as before), to a line manager (someone with direct reports, through
+`\local_sentientia_core\org::is_manager()`), and to anyone with a request waiting on them.
 
 ## Tables (1)
 
@@ -57,6 +62,32 @@ Escalation:
 | `local_sentientia_request_list_pending` | List requests assigned to me as approver |
 | `local_sentientia_request_pending_count` | Badge count for nav |
 
+## Request enrolment on the catalogue (flag, default OFF)
+
+`amd/src/request_button.js` opens the Request enrolment dialog for any `[data-action="request-course"]`
+element, but until 2026-10-15 no page rendered one, so a learner could not start a request. With
+`sentientia.request.catalog_button` ON (per tenant or customer-wide from the Switchboard), the logged-in
+catalogue card and the catalogue course page (`local_sentientia_catalog`: `course_card.mustache`, `course.php`)
+offer the button. `classes/catalog_cta.php` owns the rule, so the catalogue does not re-implement it. The
+learner is offered **Request enrolment** when all of these hold:
+
+- a real, logged-in user holding `local/sentientia_request:request`;
+- not enrolled in the course already;
+- a course `submit()` would accept (visible, in the learner's tenant scope, ADR-031): `request_manager::can_request_course()`.
+
+Self-enrolment is **not** counted as a way in, with or without an enrolment key (fix 2026-10-15, version `2026101503`):
+the theme sends `/enrol/index.php`, where the key form and "Enrol me" render, to `/my` for everyone, so a learner can
+never use a self-enrolment instance and a course with only that would otherwise be a dead end with no button. A keyed
+course such as QA-walk E-01's course 71 therefore offers the request too. The only routes that come before a request
+are the catalogue's own, below. Count self-enrolment as a way in again only once a reachable self-enrol route exists.
+
+The catalogue adds its own two routes first (`enrolment::request_state()`): a **paid** course goes to the cart,
+and a **free** course the learner is offered one-click enrolment for
+(`sentientia.catalog.free_oneclick_enrol.enabled`) is enrolled at once. While a request of the learner's for the
+course is pending (imported BizLMS rows only when `imported_history` shows them) the button reads **Request
+pending** and is not clickable. With the flag OFF nothing is rendered and the catalogue is as it was. Not
+covered: the guest/Public storefront (`public.php`, cart), which keeps its Add-to-cart routes.
+
 ## Message providers
 
 | Provider | When |
@@ -65,6 +96,20 @@ Escalation:
 | `request_pending` | Sent to approver |
 | `request_decided` | Sent to requester on decision |
 | `request_escalated` | Sent to new approver after auto-escalate |
+
+**Notification preferences (visible change for every employee, version `2026101501` onwards).** A message provider
+is listed in a user's Notification preferences only while the user holds the provider's capability
+(`message_get_providers_for_user()`), and `request_pending` and `request_escalated` are bound to
+`local/sentientia_request:approve` (`db/messages.php`). `:approve` is now granted to the authenticated-user role
+(`db/access.php`, back-filled by the upgrade), so on the next page load roughly every employee (about 3,500 on
+Airpay) sees two new rows, "Request needs your approval (approver)" and "Request escalated past SLA", on their
+Notification preferences page, with email and web (popup) permitted and enabled by default (`db/messages.php`).
+Nothing is sent because of this: a notification goes only to the one approver a request is routed to, and
+`has_approvals_entry()` governs only the Pending approvals link and the My requests button, not the preferences
+page. The rows cannot be hidden for the ordinary employee without un-granting `:approve` from them, which is what
+stops the line manager being notified; a site that does not want them can set the two providers to "Disallowed"
+under Site administration, Messaging, Notification settings. The upgrade selects the authenticated-user role like
+the cart back-fill does: archetype `user`, shortname `user` and `$CFG->defaultuserroleid`.
 
 ## Settings (Site admin → Plugins → Local plugins → Airpay Request)
 
@@ -137,9 +182,10 @@ Nothing here runs by itself: the importer (`db/bizlms_import.php`, `classes/bizl
   route in words, status badges in All requests, the SLA column, real names on path requests) are **not**
   behind the flag: they repair existing native screens and ship as bug fixes (decision COMMS-R3, 2026-10-07).
 - **Runbook, after the flag is ON:** an L&D admin reviews the imported pending rows in All requests. Routing
-  is identical to a native submission, so a supervisor who lacks `local/sentientia_request:approve` leaves a row
-  stuck, and an imported row has no deadline, so it never escalates. Decide such rows with `overrideroute`
-  (COMMS-R6).
+  is identical to a native submission. Since 2026-10-15 every employee holds `:approve`, so a line manager who
+  is an ordinary employee can decide the rows routed to them. An imported row has no deadline, so it never
+  escalates: one whose approver can no longer act (suspended since the import, for example) stays stuck. Decide
+  such rows with `overrideroute` (COMMS-R6).
 - `request_manager::escalate_overdue()` and `auto_expire()` skip imported rows always.
 - The lists now show the name of every item type (path, classroom, program, certification), not only courses.
 

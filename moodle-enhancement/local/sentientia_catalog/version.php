@@ -68,12 +68,13 @@ $plugin->component = 'local_sentientia_catalog';
 // storefront, the homepage picks, get_courses() and get_trending() count learners once (COUNT DISTINCT userid) with the same
 // two status filters. A parity fix of what a restored database would otherwise show, so no flag; no schema/cap change.
 // Purge local_sentientia_catalog caches on deploy (in_progress, trending, new_courses and categories are cached).
-$plugin->version   = 2026100702;  // CRS-14 + readers: storefront excludes pseudo-courses, in-progress rail labels them and lists a course once; no schema/cap change
+// 2026101502: visual-pass finding 7 (a): course cards and course.php offer "Request enrolment" (local_sentientia_request, flag sentientia.request.catalog_button, default OFF) where a request is the learner's way in; enrolment::request_state(), catalog_manager::with_request_offers(); no schema/cap change.
+$plugin->version   = 2026101502;  // was 2026100702 (CRS-14 + readers: storefront excludes pseudo-courses, in-progress rail labels them and lists a course once)
 // 2026100701: cart.price_source: the enrol_fee cost is the price; enrol_now refuses a course the order cart prices; no schema/cap change
 // 2026100102: ADR-032 course_lookups reader fixes + course_type_labels flag (default OFF) and exams: catalog lists ordinary courses only; no schema/cap change
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.9-beta';  // 1.0.9: CRS-14 storefront/rail + enrolment-count readers (was 1.0.8-beta)
+$plugin->release   = '1.0.10-beta';  // 1.0.10: Request enrolment on cards and course.php, flagged (was 1.0.9: CRS-14 storefront/rail + enrolment-count readers)
 // tenant::is_cross_tenant() arrived in platform 2026092500 (ADR-031).
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026092500,

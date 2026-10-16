@@ -25,6 +25,7 @@ $string['sentientia_request:overrideroute'] = 'अनुमोदन रूट�
 // Actions.
 $string['requestcourse']      = 'एक्सेस अनुरोध करें';
 $string['requestcourse_long'] = 'नामांकन का अनुरोध करें';
+$string['requestpending_short'] = 'अनुरोध लंबित है';
 $string['approve']            = 'स्वीकृत करें';
 $string['reject']             = 'अस्वीकृत करें';
 $string['cancel_request']     = 'अनुरोध रद्द करें';

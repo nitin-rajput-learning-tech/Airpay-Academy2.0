@@ -76,5 +76,34 @@ function xmldb_local_sentientia_request_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026093001, 'local', 'sentientia_request');
     }
 
+    // 2026101501 - visual-pass finding 7 (T-01 class): approver_routing names the requester's line manager as
+    // the approver, and on BizLMS data a line manager is an ordinary employee without the Moodle manager role,
+    // so the approver could not open approvals.php, was refused by list_pending / decide, and never received
+    // request_pending (message_send() drops a notification whose provider capability the user lacks).
+    // db/access.php now lists the `user` archetype for :approve (as for :request); existing roles get the
+    // grant here, and a role that already has any setting for it is left alone. Authority is unchanged:
+    // request_manager::decide() still lets only the assigned approver (or a tenant-checked :overrideroute
+    // holder) decide. See db/upgradelib.php.
+    if ($oldversion < 2026101501) {
+        require_once(__DIR__ . '/upgradelib.php');
+        $granted = local_sentientia_request_backfill_approve_cap();
+        mtrace('local_sentientia_request: granted ' . $granted
+            . ' approve capability setting(s) to the authenticated-user role.');
+        upgrade_plugin_savepoint(true, 2026101501, 'local', 'sentientia_request');
+    }
+
+    // 2026101504 - review of finding 7 (b): the back-fill above found the authenticated-user role by
+    // archetype 'user' only. A restored BizLMS database can have renamed that role and cleared its archetype,
+    // and its line managers then still lacked :approve. The selection now also takes shortname 'user' and
+    // $CFG->defaultuserroleid, as the cart back-fill does. Re-run it: idempotent, fills a gap only, never
+    // overrides an explicit setting. See db/upgradelib.php.
+    if ($oldversion < 2026101504) {
+        require_once(__DIR__ . '/upgradelib.php');
+        $granted = local_sentientia_request_backfill_approve_cap();
+        mtrace('local_sentientia_request: granted ' . $granted
+            . ' approve capability setting(s) to the authenticated-user role (default-user-role selection).');
+        upgrade_plugin_savepoint(true, 2026101504, 'local', 'sentientia_request');
+    }
+
     return true;
 }

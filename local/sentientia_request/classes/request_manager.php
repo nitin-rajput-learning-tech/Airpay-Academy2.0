@@ -452,6 +452,42 @@ class request_manager {
             ['u' => $userid, 's' => 'pending']);
     }
 
+    /**
+     * Should the "Pending approvals" entry (preferences menu, and the button on My requests) be shown to this user?
+     *
+     * Visual-pass finding 7 (2026-10-15): :approve is now granted to the authenticated-user archetype, so that the
+     * line manager approver_routing picks (an ordinary employee on BizLMS data) can open the approvals page, use the
+     * list_pending / decide services and receive request_pending. Holding the capability is therefore no longer a
+     * sign of being an approver, and an entry shown to every employee would be a new element for ~3,500 people
+     * with an empty inbox behind it. So the entry is shown to:
+     *
+     *   - everyone who saw it before: the holders of :viewall or :overrideroute besides :approve (the manager
+     *     archetype, the 'administrator' tenant-admin role, site admins);
+     *   - an employee a request can reach: a line manager (someone with direct reports, read through the org seam
+     *     as team_manager does), or anyone with a request waiting on them (a course owner, a default approver).
+     *
+     * The page itself, the services and decide() still check the capability and, in decide(), the assignment: this
+     * only decides whether to offer the link.
+     *
+     * @param int $userid
+     * @return bool
+     */
+    public static function has_approvals_entry(int $userid): bool {
+        $ctx = \context_system::instance();
+        if (!has_capability('local/sentientia_request:approve', $ctx, $userid)) {
+            return false;
+        }
+        if (has_capability('local/sentientia_request:viewall', $ctx, $userid)
+                || has_capability('local/sentientia_request:overrideroute', $ctx, $userid)) {
+            return true;
+        }
+        if (self::pending_count_for_approver($userid) > 0) {
+            return true;
+        }
+        return class_exists('\\local_sentientia_core\\org')
+            && \local_sentientia_core\org::is_manager($userid);
+    }
+
     /** Cron: escalate overdue pending requests to next tier. */
     public static function escalate_overdue(): int {
         global $DB;
@@ -530,6 +566,27 @@ class request_manager {
         if (!$course || (int) $course->visible !== 1 || !self::course_in_scope($course, $root)) {
             throw new \moodle_exception('error_outoftenant', 'local_sentientia_platform');
         }
+    }
+
+    /**
+     * Would submit() accept a request from this user for this course, as far as the course is concerned?
+     *
+     * The same test submit() applies (require_course_requestable(): the requester has a tenant, and the course is
+     * visible and in their enrolment scope, or the requester is cross-tenant), without throwing. The catalogue uses
+     * it to offer "Request enrolment" only where a request would be accepted (catalog_cta), so a learner is not
+     * shown a button that ends in a tenant error.
+     *
+     * @param \stdClass $requester a user record carrying id and open_path
+     * @param int $courseid
+     * @return bool
+     */
+    public static function can_request_course(\stdClass $requester, int $courseid): bool {
+        try {
+            self::require_course_requestable($requester, $courseid);
+        } catch (\moodle_exception $e) {
+            return false;
+        }
+        return true;
     }
 
     /**

@@ -468,3 +468,16 @@ item the exams entry above left ("the Public tenant's exam courses would still s
 - **Visual evidence owed** (CLAUDE.md section 5): the guest storefront (`public.php`) with an exam course in the Public tenant,
   and the learner's in-progress rail with an enrolled exam labelled "Exam", desktop and 590 px. Not captured in this
   session (no browser access to the UAT build).
+
+## 2026-10-15 Request enrolment on cards and course.php (version `2026101502` / `1.0.10-beta`, no schema or capability change)
+
+Branch `claude/ui-fix-request`, visual-pass finding 7 (a); the full account is in the `local_sentientia_request` state card. Here:
+`classes/enrolment.php::request_state()` (the catalogue's own routes first, then `\local_sentientia_request\catalog_cta`),
+`classes/catalog_manager.php::with_request_offers()` (called by `index.php` after the cached trending / new lists are read),
+`templates/course_card.mustache` (the button and the "Request pending" chip), `course.php` (two branches before "Enroll Now - Free"),
+`styles.css`. The flag is `sentientia.request.catalog_button` in the request plugin, default OFF; the plugin is optional
+(`class_exists` guard). Tests, not run: `tests/request_offer_test.php`. Screenshots owed: the card and the course page with the flag
+ON, desktop and 590 px, in light and dark mode (the pending chip uses `--ap-color-bg-surface-alt`). Review fix, version of the
+request plugin `2026101503`: an enabled self-enrolment instance, keyed or open, is NOT a way in (the theme redirects
+`/enrol/index.php` to `/my`), so a free course whose only method is self-enrolment now gets the button too; the catalogue's own
+routes (paid to the cart, one-click enrols at once) still come first. No catalogue code change beyond a docblock.

@@ -38,3 +38,61 @@ function local_sentientia_request_ensure_legacy_source(database_manager $dbman):
     $dbman->add_field($table, $field);
     return true;
 }
+
+/**
+ * Visual-pass finding 7 back-fill: let the authenticated-user role hold local/sentientia_request:approve.
+ *
+ * db/access.php now lists the `user` archetype for :approve, as it already did for :request. Moodle applies
+ * archetype defaults only when a capability is first registered, so a site that already has the capability
+ * never gives it to an existing role; this grants it explicitly, as a fresh install now would. The reason
+ * is in db/access.php: the line manager that approver_routing picks is an ordinary employee on BizLMS data,
+ * who held neither the capability nor, because message_send() checks the message provider's capability, the
+ * request_pending notification.
+ *
+ * Idempotent, and it only fills a gap: a role that already has ANY setting for the capability at system
+ * context (ALLOW already, or an administrator's PREVENT or PROHIBIT) is left as it is, so nothing is ever
+ * downgraded or overridden. A capability that is not registered yet is skipped. Only the authenticated-user
+ * role is touched, and only :approve: :viewall and :overrideroute stay with the manager archetype and the
+ * tenant-admin role.
+ *
+ * "The authenticated-user role" is selected as local_sentientia_cart_backfill_user_purchase() selects it: every
+ * role of archetype `user`, plus the role with shortname `user` and the role $CFG->defaultuserroleid points at
+ * (how Moodle itself identifies Authenticated user), so a restored BizLMS database that renamed the role and
+ * cleared its archetype is covered and its line managers are not left without :approve. A custom role that is
+ * none of these, the guest role and the student archetype are not touched.
+ *
+ * Used by upgrade steps 2026101501 and 2026101504 (the second re-runs it for sites that ran the first with the
+ * archetype-only selection); a function so tests/approver_capability_test.php can prove it without replaying
+ * the upgrade.
+ *
+ * @return int number of grants made (0 when every such role already had a setting)
+ */
+function local_sentientia_request_backfill_approve_cap(): int {
+    global $CFG, $DB;
+
+    $cap = 'local/sentientia_request:approve';
+    if (!$DB->record_exists('capabilities', ['name' => $cap])) {
+        return 0;
+    }
+
+    $syscontext = \context_system::instance();
+    $granted = 0;
+    $select = 'archetype = :archetype OR shortname = :shortname';
+    $params = ['archetype' => 'user', 'shortname' => 'user'];
+    $defaultuserroleid = (int) ($CFG->defaultuserroleid ?? 0);
+    if ($defaultuserroleid > 0) {
+        $select .= ' OR id = :defaultuserroleid';
+        $params['defaultuserroleid'] = $defaultuserroleid;
+    }
+    foreach ($DB->get_records_select('role', $select, $params, 'id ASC', 'id') as $role) {
+        if ($DB->record_exists('role_capabilities',
+                ['roleid' => $role->id, 'capability' => $cap, 'contextid' => $syscontext->id])) {
+            continue;   // An explicit setting stands, whatever it is.
+        }
+        assign_capability($cap, CAP_ALLOW, $role->id, $syscontext->id, false);
+        $granted++;
+    }
+    $syscontext->mark_dirty();
+
+    return $granted;
+}

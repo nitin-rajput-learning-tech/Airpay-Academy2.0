@@ -1,10 +1,10 @@
 # State Card — `local_sentientia_request`
 
 **Component:** `local_sentientia_request` (was `local_airpay_request` until ADR-022/025; older sections below still use the old name)
-**Version:** `2026100701` / `1.5.1`  (ADR-032 importer was `2026093001` / `1.5.0`; the 2026-10-07 owner decisions below bump it with no schema change, for the cached flag registry and the batch's one-version-per-plugin ledger)
+**Version:** `2026101504` / `1.6.2`  (2026-10-15: the :approve back-fill also covers a renamed authenticated-user role, upgrade step `2026101504`; the catalogue button no longer treats self-enrolment as a way in; the line manager holds `:approve`, upgrade step `2026101501`; the catalogue Request enrolment button, flag OFF. Was `2026100801` / `1.5.1`; ADR-032 importer was `2026093001` / `1.5.0`. No schema change since 1.5.0.)
 **Maturity:** `MATURITY_STABLE`
 **Status:** Learner-driven course request workflow (Sentientia is not live yet; the live system is BizLMS).
-**Last refreshed:** 2026-10-07 (COMMS-R owner decisions)
+**Last refreshed:** 2026-10-15 (visual-pass finding 7: approver capability + catalogue button)
 
 ---
 
@@ -337,3 +337,121 @@ Written, NOT run. Both trees identical.
 - **Why:** the 5.3 package gate (`tools/packaging/build-standalone.sh`) fails the build when any shipped `amd/build` still names the removed factory module. The fallback was dead code on 5.2/5.3 and unreachable on 5.1 (`core/modal_save_cancel` exists there too), so behaviour is unchanged.
 - **Small behaviour fix:** `removeOnClose: true`. Before, a cancelled dialog stayed hidden in the DOM, so the next dialog read its reason / note from the stale textarea that shared its id.
 - **Not run:** PHPUnit (owner rule), a click-through (needs a runtime). Screenshots owed: the approve/reject dialog and the Request enrolment dialog at desktop and 590 px.
+
+## 2026-10-15 Visual-pass finding 7 (b): the line manager can approve (version `2026101501` / `1.5.2`, no schema change)
+
+Branch `claude/ui-fix-request`, from the 2026-10-14 visual pass on local XAMPP 5.1
+(`docs/visual-evidence/2026-10-08/moodle53/README.md`, finding 7). PHPUnit NOT run (the main session runs it once).
+
+- **Root cause.** `approver_routing::for_course()` and `for_path()` route to the requester's line manager
+  (`user.open_supervisorid`), and `db/access.php` granted `:approve` to the manager archetype only. On BizLMS data a
+  line manager is an ordinary employee (110 users have direct reports on the April copy, about 10 hold the manager
+  archetype). So the named approver (a) could not open `approvals.php` (`require_capability`), (b) was refused by
+  `list_pending` and `decide`, and (c) was never sent `request_pending` or `request_escalated`, because both message
+  providers are bound to `:approve` and `message_send()` drops a notification whose provider capability the user lacks.
+  The state card's mission ("routed to their line manager ... for approval") and COMMS-R6 both assumed the approver could act.
+- **The choice: grant, do not route only to holders.** Routing only to holders of `:approve` would send nearly every
+  request to the default approver, which defeats the line-manager route the plugin exists for, and would still leave a
+  course owner or default approver without the capability. So `db/access.php` now lists the `user` (authenticated-user)
+  archetype for `:approve`, exactly as it does for `:request`, and upgrade step 2026101501 (`db/upgradelib.php`
+  `local_sentientia_request_backfill_approve_cap()`) back-fills sites that already have the capability registered (a role
+  default applies only when a capability is first registered, the T-01 class). The back-fill only fills a gap: a role
+  with any setting for the capability (ALLOW, or an administrator's PREVENT or PROHIBIT) is left alone, only roles of the
+  `user` archetype are touched, and only `:approve`.
+- **Authority is not widened.** `list_pending` lists only requests where `approver_userid` is the caller, and `decide()`
+  lets only the assigned approver (or a tenant-checked `:overrideroute` holder) decide, with the ADR-031 tenant checks
+  unchanged. `:viewall` and `:overrideroute` stay with the manager archetype and the tenant-admin role.
+- **The entry is not shown to everyone.** `request_manager::has_approvals_entry()` (new) gates the preferences-menu
+  "Pending approvals" link (`lib.php`) and the button on My requests (`index.php`): holders of `:viewall` or
+  `:overrideroute` keep it, a line manager (`\local_sentientia_core\org::is_manager()`) and anyone with a request waiting
+  on them get it, an ordinary employee does not. `approvals.php`, the services and `decide()` are unchanged.
+- **Tests (not run):** `tests/approver_capability_test.php` (access.php lists the `user` archetype and nothing else widened;
+  a plain line manager is sent `request_pending`, lists and decides the request routed to them and the learner is
+  enrolled; a colleague holding `:approve` sees nothing and is refused; the entry follows the rules above; the back-fill
+  grants once, is idempotent, overrides no explicit setting and touches no other archetype).
+- **A screenshot should show:** as the learner's line manager (an employee without the manager role, e.g.
+  `vp_manager1`): Preferences, "Pending approvals (1)" present; `approvals.php` opens (no "Sorry, but you do not currently
+  have permissions") with the learner's request and Approve / Reject; as a learner with no reports, no "Pending approvals"
+  link and no button on My requests. After the upgrade runs on XAMPP, `role_capabilities` has one ALLOW row for the `user`
+  role and `local/sentientia_request:approve`.
+
+## 2026-10-15 Visual-pass finding 7 (a): the learner's "Request enrolment" button (version `2026101502` / `1.6.0`, no schema change)
+
+Same branch, `claude/ui-fix-request`. PHPUnit NOT run.
+
+- **Root cause.** `amd/src/request_button.js` (FX-06b) listens for a click on `[data-action="request-course"]`
+  with `data-courseid` and `data-coursename`, but `git grep` finds no template or PHP that renders such an element.
+  The logged-in catalogue card (`local_sentientia_catalog/templates/course_card.mustache:89-93`) renders only an
+  "Enroll" link to `/course/view.php`, and `course.php` only Continue, one-click, "Enroll Now - Free"
+  (`/enrol/index.php`), or Add to Cart. The theme redirects `/enrol/index.php` to `/my`
+  (`theme/sentientia/classes/output/core_renderer.php:1324`), so on a course with nothing to enrol through the learner
+  had no way to start a request at all.
+- **The rule (this plugin owns it): `classes/catalog_cta.php`.** A request is the way in when the viewer is a real
+  logged-in user with `:request`, is not enrolled and may be enrolled (`request_manager::can_request_course()`, new: the test
+  `submit()` applies, without throwing). Self-enrolment is NOT a way in (see the review fix below). A
+  pending request of the learner's for the course (imported rows only while `imported_history` shows them) gives the state
+  `pending` instead of a second button. Viewer only: it never answers for another user (`can_self_enrol()` reads `$USER`).
+- **Flag `sentientia.request.catalog_button`, default OFF** (`db/feature_flags.php`): CLAUDE.md section 13 says no
+  learner-visible element ships without one. OFF renders nothing and the catalogue is exactly as it was. Turning it on
+  for Airpay is Nitin's call after the visual evidence. New string `requestpending_short` (en + hi).
+- **Catalogue side (`local_sentientia_catalog` 1.0.10-beta, `2026101502`).** `enrolment::request_state()` keeps the
+  catalogue's own routes first (a paid course goes to the cart; a free course `should_offer_oneclick()` is true for is
+  enrolled at once), then asks `catalog_cta`. `catalog_manager::with_request_offers()` marks the cards AFTER the lists are
+  read (`index.php`), because trending and new_courses are cached for five minutes per user and a flag flip or a
+  just-submitted request must show on the next load. `course_card.mustache` renders the `<button>` (or the "Request
+  pending" chip); `course.php` gets two branches between the one-click and the "Enroll Now - Free" ones; `styles.css`
+  drops the native button chrome and styles the pending chip. `index.php` and `course.php` load
+  `local_sentientia_request/request_button` once, only when a button is rendered. `data-coursename` carries the plain name
+  (Mustache escapes it once, the module escapes it for its dialog), so "A &amp; B" is not shown twice-escaped.
+- **Not done:** `public.php` (the guest and Public-storefront grid) and the cart keep their Add-to-cart routes; the dialog's own
+  English strings in `request_button.js` are untouched; paths and other item types have no catalogue button (the dialog and
+  the service are course-only).
+- **Tests (not run):** `tests/catalog_cta_test.php` (flag registered and OFF; every gate; self-enrolment open and keyed offer the
+  request, as do disabled and expired ones; pending, decided, imported; foreign and hidden course; guest and other user; `can_request_course()` agrees with
+  `submit()`); catalogue `tests/request_offer_test.php` (paid and one-click first, flag OFF leaves cards untouched, enrolled
+  cards untouched, pending, plain name, viewer only).
+- **A screenshot should show** (flag ON for Airpay via `feature_flags::set('sentientia.request.catalog_button', 0, true)`, learner
+  on a course with only a manual instance, and on one with an enabled self-enrolment instance, keyed or open): the catalogue card footer with a primary
+  "Request enrolment" button instead of Enroll, desktop and 590 px; clicking it opens the dialog with Save and Cancel; after a
+  valid request, reloading the catalogue shows "Request pending" on that card; the same course on
+  `/local/sentientia_catalog/course.php?id=N`; the line manager's Pending approvals (finding 7b) lists it. With the flag OFF the
+  card shows Enroll again.
+
+### Review fix (2026-10-15, version `2026101503` / `1.6.1`): self-enrolment is not a way in
+
+The first cut of `catalog_cta::state()` skipped the button on any course with an enabled `self` instance the learner passed
+`can_self_enrol()` for, with or without an enrolment key, on the reasoning that the learner enters the key. On this theme
+nobody can: `enrol/index.php` uses the `incourse` layout, `theme/sentientia/layout/course.php:31` calls
+`$OUTPUT->custom_secured_redirection()`, and `core_renderer.php:1324` sends `/enrol/index.php` to `/my` (airpayux does the
+same from `full_header`), so neither the key form nor "Enrol me" ever renders. The card's Enroll link
+(`/course/view.php`, then `require_login`, then `/enrol/index.php`) and course.php's "Enroll Now - Free" both end on `/my`.
+Result with the flag ON: a free course with an enabled self instance (course 71, QA-walk E-01, is the keyed case on real
+data; BizLMS let learners in through the self instance, so this is probably most self-service courses) stayed a dead
+end with no button. `has_own_way_in()` is removed. The routes before a request are now only the catalogue's own (paid goes
+to the cart, one-click enrols at once). `tests/catalog_cta_test.php`: the case that locked the wrong behaviour in now
+asserts REQUEST for an open and a keyed self instance; the disabled and expired cases are kept. Flag description in
+`db/feature_flags.php`, both READMEs and the catalogue docblock updated. Revisit if a reachable self-enrol route is built.
+
+### Review fixes, round 2 (2026-10-15, version `2026101504` / `1.6.2`): back-fill selection, Notification preferences, evidence
+
+- **Back-fill role selection (finding 7 (b), review).** `local_sentientia_request_backfill_approve_cap()` found the
+  authenticated-user role by `archetype = 'user'` only. The earlier cart back-fill
+  (`local_sentientia_cart_backfill_user_purchase()`, step 2026093002, D1 review round 1) also takes shortname `user` and the
+  role `$CFG->defaultuserroleid` points at, so a restored BizLMS database that renamed the role and cleared its archetype is
+  still covered. The :approve back-fill now selects the same way, and upgrade step `2026101504` re-runs it (idempotent, fills a
+  gap only, never overrides an explicit ALLOW, PREVENT or PROHIBIT) for any site that ran step 2026101501 first. Tests
+  (not run): `approver_capability_test.php` gains the renamed-default-role case, that a custom role that is none of these
+  is left alone, and that an administrator's PROHIBIT on the default user role stands.
+- **A visible side effect of 7 (b): Notification preferences.** `message_get_providers_for_user()` follows each provider's
+  capability, and `request_pending` and `request_escalated` are bound to `:approve` (`db/messages.php`). Granting `:approve`
+  to the authenticated-user role therefore adds two rows, "Request needs your approval (approver)" and "Request escalated
+  past SLA", to the Notification preferences page of every employee (about 3,500 on Airpay), email and web permitted and
+  enabled by default. No message is sent because of it: only the one routed approver is notified. `has_approvals_entry()`
+  does not cover this page. Owner to see it before merge (the README says the same, with the way to hide the rows
+  site-wide). Alternatives not taken: keep :approve off ordinary employees and route only to holders (sends nearly every
+  request to the default approver and defeats the line-manager route), or split the two notification providers onto a
+  capability only line managers hold (a new capability and a back-fill for every line manager, so a bigger change than 7 (b)).
+- **Visual evidence owed.** Not captured in this session (no browser by instruction). The capture list is in
+  `moodle-enhancement/docs/visual-evidence/2026-10-15/request-ui-fix/README.md`. CLAUDE.md sections 5 and 13: nothing here merges without it.
+  Note that 7 (b) is NOT behind a flag: a line manager who is an ordinary employee now gets the Pending approvals entry and
+  can open `approvals.php` as soon as the upgrade runs.
