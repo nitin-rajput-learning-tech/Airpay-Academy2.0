@@ -219,3 +219,7 @@ $string['privacy:metadata:trainers'] = 'Every trainer of a classroom.';
 $string['privacy:metadata:trainers:classroomid'] = 'Classroom ID.';
 $string['privacy:metadata:trainers:trainerid'] = 'ID of the trainer.';
 $string['privacy:metadata:trainers:timecreated'] = 'When the trainer was attached to the classroom.';
+
+// Message provider (db/messages.php), 2026-10-20: it had no string, so notification preferences showed
+// [[messageprovider:waitlist_promoted]].
+$string['messageprovider:waitlist_promoted'] = 'A classroom waiting-list place became yours';

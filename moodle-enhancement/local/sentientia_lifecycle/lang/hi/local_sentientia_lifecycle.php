@@ -17,3 +17,6 @@ $string['mandatory_tag_desc']     = 'वह कोर्स टैग जो क
 
 // Privacy.
 $string['privacy:metadata'] = 'एयरपे लाइफ़साइकल प्लगइन प्लगइन-स्वामित्व वाली तालिकाओं में व्यक्तिगत डेटा संग्रहीत नहीं करता है।';
+
+// Message provider (db/messages.php), 2026-10-20.
+$string['messageprovider:compliance_deadline'] = 'अनुपालन कोर्स की समय-सीमा के रिमाइंडर';

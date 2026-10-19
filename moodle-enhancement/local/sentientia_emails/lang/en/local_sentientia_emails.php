@@ -132,3 +132,7 @@ $string['parity_log_subject_manager_completion'] = 'A team member has completed 
 $string['parity_enrolled_by_self']           = 'Self-enrolment';
 $string['parity_enrolled_by_system']         = 'System';
 $string['task_send_path_enrolments']         = 'Send learning-path enrolment e-mails';
+
+// Message provider (db/messages.php). Without it every user's notification preferences showed
+// [[messageprovider:notification_alert]] (found by the 2026-10-20 visual pass).
+$string['messageprovider:notification_alert'] = 'Learning notifications and reminders';

@@ -10,3 +10,7 @@ $string['mandatory_tag_desc'] = 'Course tag that marks a course as mandatory for
 
 // Privacy.
 $string['privacy:metadata'] = 'The Airpay sentientia_lifecycle plugin does not store personal data in plugin-owned tables.';
+
+// Message provider (db/messages.php). Without it every user's notification preferences showed
+// [[messageprovider:compliance_deadline]] (found by the 2026-10-20 visual pass).
+$string['messageprovider:compliance_deadline'] = 'Compliance course deadline reminders';

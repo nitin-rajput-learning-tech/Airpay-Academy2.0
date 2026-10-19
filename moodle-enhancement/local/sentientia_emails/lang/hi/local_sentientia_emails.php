@@ -127,3 +127,6 @@ $string['parity_log_subject_manager_completion'] = 'एक टीम सदस�
 $string['parity_enrolled_by_self']           = 'स्वयं नामांकन';
 $string['parity_enrolled_by_system']         = 'सिस्टम';
 $string['task_send_path_enrolments']         = 'लर्निंग-पाथ नामांकन ईमेल भेजें';
+
+// Message provider (db/messages.php), 2026-10-20.
+$string['messageprovider:notification_alert'] = 'लर्निंग सूचनाएँ और रिमाइंडर';

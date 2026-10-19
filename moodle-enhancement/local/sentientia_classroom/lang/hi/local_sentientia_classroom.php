@@ -213,3 +213,6 @@ $string['privacy:metadata:trainers'] = 'क्लासरूम के सभ�
 $string['privacy:metadata:trainers:classroomid'] = 'क्लासरूम ID।';
 $string['privacy:metadata:trainers:trainerid'] = 'प्रशिक्षक की ID।';
 $string['privacy:metadata:trainers:timecreated'] = 'प्रशिक्षक को क्लासरूम से कब जोड़ा गया।';
+
+// Message provider (db/messages.php), 2026-10-20.
+$string['messageprovider:waitlist_promoted'] = 'क्लासरूम की प्रतीक्षा-सूची में आपको स्थान मिला';
