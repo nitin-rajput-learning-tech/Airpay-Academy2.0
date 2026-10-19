@@ -41,3 +41,16 @@ tasks' next-run times are now more than three days in the past. The script count
 more than 6 hours, and no cron runs on this rehearsal database. On 10-15 the dump was minutes old, so the same check
 exited 0. On UAT, cron runs, so this does not carry over. After the upgrade, run `cron_health.php` on UAT once cron has
 had one cycle.
+
+## Run 2: the evaluation fix `1b6a00698` (the ref deployed to UAT)
+
+The screenshot pass found that the eval-followups merge had left two EV-17 upgrade steps below a version
+gap-integration had already shipped (evaluation state card, "2026-10-19 - EV-17 steps below a shipped version"). Commit
+`1b6a00698` adds evaluation 2026101900, a guarded repeat step. On the UAT path both old steps run, so the repeat finds the
+column and the back-fill changes nothing. This run proves that on the same 5.2 restore point.
+
+**Result: PASS.** Every hard check passed (`run2-1b6a00698/SUMMARY.txt`). The upgrade exited 0 in 1412 s, and
+`local_sentientia_evaluation` went from 2026092500 to 2026101900 (1.17.4). `cron_health` exits 1 for the same
+restore-point reason as run 1.
+
+The package for UAT was rebuilt from `1b6a00698` and is pinned in `UAT-SENTIENTIA-DEPLOY-CHECKLIST.md`.

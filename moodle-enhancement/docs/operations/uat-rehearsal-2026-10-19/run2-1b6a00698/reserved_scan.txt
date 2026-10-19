@@ -1,0 +1,14 @@
+scan 481252996e8939eaa818baecc3c49fcb5e32005e..1b6a00698cb30f3ebc762af963d60faf5efd6c8a: 88 changed/added db files
+judging: NEW identifiers; R84 list 262 words, WATCH list 29 words, Moodle own list: 271 words
+
+files with judged identifiers: 54; table and column names judged: 767 (the two plugin trees counted separately)
+
+== R84 hits in shipped schema (FAIL): 0
+== R84 words as TABLE names (informational: tables are prefixed mdl_): 0
+== R84 hits in test fixtures only (informational): 0
+== WATCH hits (informational): 0
+== identifiers over 64 characters (FAIL): 0
+== install.xml not well-formed (FAIL): 0
+== raw DDL strings on added lines (human review): 0
+
+RESULT: PASS (no MySQL 8.4 reserved word among the 767 judged table and column names)

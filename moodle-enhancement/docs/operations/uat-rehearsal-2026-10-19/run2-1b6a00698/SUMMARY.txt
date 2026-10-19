@@ -1,0 +1,26 @@
+UAT commit  481252996e8939eaa818baecc3c49fcb5e32005e
+target ref  1b6a00698 = 1b6a00698cb30f3ebc762af963d60faf5efd6c8a
+tree A      D:/Claude Local/kit-scratch/uatreh/a52/20261015-082359-5.2/moodle5.2
+tree B      D:/Claude Local/kit-scratch/uatreh/b53/20261019-145509-5.3/moodle5.3
+php         8.4.21
+database    version=11.4.13-MariaDB
+
+hard checks (the last result of each check):
+PASS:5.2_all_plugins_uptodate  -  480 plugins, 0 not up to date or missing
+PASS:5.2_schema_matches_install_xml  -  check_database_schema.php (tree A) exit 1: 60 known tenant-substrate finding(s) (open_* columns, 5 profile tables, in no install.xml), 0 unknown
+PASS:5.2_no_upgrade_pending  -  upgrade.php --is-pending (tree A) exit 0 (0 = nothing pending, 2 = pending)
+PASS:install_5.2_fresh  -  install_database.php (5.2 + 481252996, fresh database) exit 0 in 5926s; install tail present (rolesactive=1, admin password set); log: 0 fatal, 0 notice, 0 debugging, 2 warnings (Windows openssl_pkey_export in mod_lti and enrol_lti)
+PASS:5.3_upgrade_exit_0  -  upgrade.php exit 0 in 1412s; Command line upgrade from 5.2+ (Build: 20260519) (2026042000.04) to 5.3 (Build: 20261005) (2026100500) completed successfully.
+PASS:5.3_schema_matches_install_xml  -  check_database_schema.php (tree B) exit 1: 55 known tenant-substrate finding(s), 0 unknown, 0 new since the 5.2 site, 5 of the 5.2 site's findings resolved (tables now declared in an install.xml)
+PASS:5.3_all_plugins_uptodate_db_eq_disk  -  == after-upgrade status: 0 plugin(s) not uptodate: none == after-upgrade db version != disk version: 0: none 
+PASS:5.3_no_data_rows_lost  -  tables: before 654, after 692 (38 added, 0 dropped) rows:   before 11514, after 13036  ; == tables whose row count FELL: 0 (data-bearing: 0, volatile / registry tables: 0)
+PASS:5.3_posture_settings_unchanged  -  theme / forcelogin / enablemyhome / frontpage ...: 0 changed
+PASS:5.3_flags_stay_off  -  flags before 94, after 129; existing flag lines changed: 0; new flags not default-off: 0
+PASS:5.3_no_upgrade_pending  -  upgrade.php --is-pending (tree B) exit 0
+PASS:task_\local_sentientia_api\task\cleanup  -  scheduled_task.php --execute exit 0: ... used 16.4 MB peak memory Scheduled task complete: Sentientia API cleanup (rate counters, LTI nonces, request log) (local_sentientia_api\task\cleanup) 
+PASS:task_\local_sentientia_xapi\task\purge_old_statements  -  scheduled_task.php --execute exit 0: ... used 16.4 MB peak memory Scheduled task complete: Purge old xAPI statements (local_sentientia_xapi\task\purge_old_statements) 
+PASS:task_\local_sentientia_platform\task\publish_cron_health  -  scheduled_task.php --execute exit 0: ... used 16.2 MB peak memory Scheduled task complete: Airpay Core: publish cron-health summary (local_sentientia_platform\task\publish_cron_health) 
+PASS:render/login/index.php  -  web render on the upgraded database: HTTP 200, fatal markers 0, debug markers 0
+PASS:render/index.php  -  web render on the upgraded database: HTTP 200, fatal markers 0, debug markers 0
+PASS:render_smoke_53  -  render_smoke_53.sh (lib/javascript.php, theme/styles.php, r.php, theme/font.php, 2 rounds) exit 0
+PASS:mysql84_reserved_words  -  RESULT: PASS (no MySQL 8.4 reserved word among the 767 judged table and column names)

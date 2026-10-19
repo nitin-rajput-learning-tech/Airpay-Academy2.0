@@ -7,6 +7,8 @@
 **There is no database backup.** That was Nitin's decision and this runbook respects it. Section 7 says exactly which steps can be
 undone and which cannot. Read it before the window, not during it.
 
+**`<TARGET>` for the 2026-10-19 window: `1b6a00698`** (`claude/gap-integration` with the 2026-10-16 merges, the skip caps and the evaluation repeat step). The package is `Sentientia-LMS-5.3-Complete-Standalone-2026-10-19.zip`, SHA-256 `2dad2d98c87bc519...`, tag `v4.3.1-sentientia-5.3-package-2026-10-19`. The rehearsal on this exact ref passed: `uat-rehearsal-2026-10-19/run2-1b6a00698/`.
+
 ## At a glance
 
 - **Go:** the rehearsal upgraded a fresh 5.2 install of that commit to 5.3 with exit 0 in **24 minutes (and 20 minutes on a repeat)**, no error, no notice, 1 library warning;
