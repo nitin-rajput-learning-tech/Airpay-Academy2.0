@@ -42,10 +42,12 @@ $plugin->component = 'local_sentientia_evaluation';
 // 2026101501 (2026-10-15) - my_evaluations.php (EV-18 findings): the page prints its own title (the theme does not show the
 // $PAGE heading), and the Date column says which date each cell is (Submitted / Due by / Assigned: learner_history time_kind,
 // my_evaluations_date_* strings, en + hi). No schema change; the platform dependency is unchanged.
-$plugin->version   = 2026101501;  // eval-followups + 5.3 compat FX-20 round 1; EV-18 page title and date labels
+// 2026101900 (2026-10-19) - EV-17 repeated for the sites that skipped 2026100701/02 (they were below the 2026100802
+// gap-integration already had when the branch merged): evaluationmode column if missing + the idempotent SE->SP back-fill.
+$plugin->version   = 2026101900;  // eval-followups + 5.3 compat FX-20 round 1; EV-18 page title and date labels; EV-17 repeat step
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.17.3';  // 1.17.3: my_evaluations page title and date labels. 1.17.2: merged with gap-integration (5.3 compat FX-20). 1.17.1: +EV-17 back-fill, review fixes. 1.17.0: +EV-17 evaluationmode. 1.16.0: ADR-032 BizLMS evaluation import. 1.15.3: ADR-031 tenant scope
+$plugin->release   = '1.17.4';  // 1.17.4: EV-17 repeat step for sites that skipped 2026100701/02. 1.17.3: my_evaluations page title and date labels. 1.17.2: merged with gap-integration (5.3 compat FX-20). 1.17.1: +EV-17 back-fill, review fixes. 1.17.0: +EV-17 evaluationmode. 1.16.0: ADR-032 BizLMS evaluation import. 1.15.3: ADR-031 tenant scope
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026101500,  // ADR-032 classes/bizlms with step::target_children(), the EV-26 sequence floor and row-bounded acceptances; customer::of_tenant(); ADR-031 tenant::is_cross_tenant() / scope_path()
 ];

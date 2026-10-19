@@ -2,7 +2,7 @@
 
 **Component:** `local_sentientia_evaluation` (was `local_airpay_evaluation`; the rename left the tables, strings and
 capabilities under the new name, and the old name appears nowhere in the code any more)
-**Version:** `2026100702` / `1.17.1` (the EV-17 back-fill and the review fixes of 2026-10-07). `2026100701` / `1.17.0` added
+**Version:** `2026101900` / `1.17.4` (2026-10-19: the EV-17 repeat step, see "2026-10-19 - EV-17 steps below a shipped version"). Earlier: `2026100702` / `1.17.1` (the EV-17 back-fill and the review fixes of 2026-10-07).
 `local_sentientia_evaluation.evaluationmode` (EV-17), and `importer::REQUIRES_VERSION` stays `2026100701`: it names the version
 that adds the column the importer writes, and the back-fill adds no schema. `2026093001` / `1.16.0` was the ADR-032
 evaluation importer.
@@ -15,6 +15,29 @@ history over.
 three framework items, then the follow-ups of the data and safety reviews; see the last two sections, "2026-10-07 -
 evaluation decisions implemented" and "2026-10-07 - review follow-ups". Branch `claude/eval-followups`, PHPUnit NOT run
 there)
+
+
+## 2026-10-19 - EV-17 steps below a shipped version
+
+The 2026-10-16 merge of `claude/eval-followups` left its two upgrade steps at 2026100701 (add `evaluationmode`) and
+2026100702 (the SE to SP back-fill). gap-integration already had this plugin at 2026100802 (Moodle 5.3 compat FX-20). A
+site that had installed 2026100802 before the merge had `$oldversion` above both, so it skipped them. Found on local
+XAMPP: `my_evaluations.php` failed with "Unknown column 'e.evaluationmode'" when `sentientia.evaluation.learner_history`
+was ON. PHPUnit did not see it, because a test site installs from `install.xml`.
+
+Who was affected: only a site that ran 2026100802 to 2026101501 before getting this code, such as the local XAMPP and the
+local 5.3 runtime. Not UAT (2026092500: both steps run, as the 2026-10-19 rehearsal's schema check confirms), and not a
+fresh install (the Stage B target).
+
+Fix: version 2026101900 / 1.17.4 adds a repeat step. It adds the column only if it is missing, then runs the idempotent
+back-fill again (it only ever changes SE to SP). The two old steps are left as they are, because Moodle never replays a
+step a site has passed.
+- Test: `evaluation_mode_test::test_a_repeat_step_above_every_shipped_version_reaches_the_sites_that_skipped_ev17` pins
+  the step and asserts that the savepoints of `upgrade.php` appear in ascending order.
+- Local XAMPP after the upgrade: the plugin is at 2026101900, the column exists, and the 6 forms are SE.
+
+Of the 2026-10-16 merges, only this plugin added a step below its pre-merge version. Cart (2026101400), platform
+(2026101500) and request (2026101501, 2026101504) did not.
 
 ---
 

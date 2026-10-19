@@ -134,6 +134,32 @@ final class evaluation_mode_test extends \advanced_testcase {
     }
 
     /**
+     * 2026-10-19: steps 2026100701 and 2026100702 sit BELOW the 2026100802 that gap-integration already had when
+     * claude/eval-followups merged, so a site at 2026100802 skipped both (no evaluationmode column). A repeat step above
+     * every version this plugin has shipped adds the column if it is missing and runs the idempotent back-fill again.
+     */
+    public function test_a_repeat_step_above_every_shipped_version_reaches_the_sites_that_skipped_ev17(): void {
+        $upgrade = (string) file_get_contents(__DIR__ . '/../db/upgrade.php');
+        $this->assertMatchesRegularExpression('/if \(\$oldversion < 2026101900\) \{.*?'
+            . "new xmldb_field\('evaluationmode'.*?"
+            . 'if \(!\$dbman->field_exists\(\$table, \$field\)\) \{\s*\$dbman->add_field\(\$table, \$field\);\s*\}\s*'
+            . '\\\\local_sentientia_evaluation\\\\evaluation_mode_backfill::apply\(\);\s*'
+            . "upgrade_plugin_savepoint\(true, 2026101900, 'local', 'sentientia_evaluation'\);/s", $upgrade,
+            'a guarded column add plus the back-fill, with its savepoint');
+        // Every savepoint of this plugin is written in ascending order, so a step is never again added below one
+        // a site may already have passed.
+        preg_match_all("/upgrade_plugin_savepoint\(\s*true,\s*(\d{10}),\s*'local',\s*'sentientia_evaluation'/", $upgrade, $m);
+        $versions = array_map('intval', $m[1]);
+        $sorted = $versions;
+        sort($sorted);
+        $this->assertSame($sorted, $versions, 'the savepoints appear in ascending order');
+        $this->assertGreaterThan(2026100802, max($versions), 'the last step is above the version gap-integration had shipped');
+        $plugin = new \stdClass();
+        include(__DIR__ . '/../version.php');
+        $this->assertGreaterThanOrEqual(2026101900, $plugin->version);
+    }
+
+    /**
      * EV-17 back-fill, the old signal: a form with a response that names a subject becomes SP; nothing else changes.
      */
     public function test_the_back_fill_marks_a_form_whose_responses_name_a_subject_and_nothing_else(): void {

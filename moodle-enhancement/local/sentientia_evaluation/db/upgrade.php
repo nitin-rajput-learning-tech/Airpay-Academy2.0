@@ -360,5 +360,23 @@ function xmldb_local_sentientia_evaluation_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026100702, 'local', 'sentientia_evaluation');
     }
 
+    // 2026101900 - EV-17 again, for a site that passed 2026100701 and 2026100702 without running them.
+    //
+    // The two steps above came from claude/eval-followups. That branch was merged on 2026-10-16 into gap-integration,
+    // where this plugin was already at 2026100802 (Moodle 5.3 compat FX-20). So a site that had installed 2026100802
+    // before the merge (a developer site, the local 5.3 runtime) had $oldversion >= 2026100702 and skipped both: no
+    // evaluationmode column, and my_evaluations.php failed with "Unknown column 'e.evaluationmode'". UAT (2026092500)
+    // and a fresh install were never affected. This step repeats both, guarded: the column only if it is missing, and
+    // the back-fill, which only ever changes SE to SP. A site that already ran them sees no change.
+    if ($oldversion < 2026101900) {
+        $table = new xmldb_table('local_sentientia_evaluation');
+        $field = new xmldb_field('evaluationmode', XMLDB_TYPE_CHAR, '2', null, XMLDB_NOTNULL, null, 'SE', 'anonymous');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        \local_sentientia_evaluation\evaluation_mode_backfill::apply();
+        upgrade_plugin_savepoint(true, 2026101900, 'local', 'sentientia_evaluation');
+    }
+
     return true;
 }
