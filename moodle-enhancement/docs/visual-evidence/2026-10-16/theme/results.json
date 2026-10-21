@@ -1,0 +1,163 @@
+{
+ "generated": "2026-10-19T14:51:17.107Z",
+ "base": "http://localhost:8080",
+ "results": [
+  {
+   "name": "01-courseauthor-course-edit-switch-off",
+   "url": "/course/view.php?id=448",
+   "persona": "vp_courseauthor1 (editingteacher of the test course vp_journey_free)",
+   "shows": "The course page with edit mode off: the edit switch is the theme's styled toggle (Bootstrap 4 custom-switch), not a bare checkbox",
+   "http": 200,
+   "files": [
+    "01-courseauthor-course-edit-switch-off-desktop.png",
+    "01-courseauthor-course-edit-switch-off-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "bodyEditing": false,
+   "switchChecked": false,
+   "switchIsCustom": true,
+   "switchTrackWidth": "35px",
+   "chooserButtons": 0,
+   "sectionEditMenus": 0,
+   "bulkEditButton": 0
+  },
+  {
+   "name": "02-courseauthor-course-edit-mode-on",
+   "url": null,
+   "persona": "vp_courseauthor1",
+   "shows": "Edit mode on: the switch is on, the course content renders with its editing controls (add an activity, section menus), no console error",
+   "http": null,
+   "files": [
+    "02-courseauthor-course-edit-mode-on-desktop.png",
+    "02-courseauthor-course-edit-mode-on-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "bodyEditing": true,
+   "switchChecked": true,
+   "switchIsCustom": true,
+   "switchTrackWidth": "35px",
+   "chooserButtons": 5,
+   "sectionEditMenus": 5,
+   "bulkEditButton": 1
+  },
+  {
+   "name": "03-courseauthor-course-after-reload-still-editing",
+   "url": null,
+   "persona": "vp_courseauthor1",
+   "shows": "The same page after a reload: still in edit mode, editing controls still there (before the fix every load came back in viewing mode)",
+   "http": null,
+   "files": [
+    "03-courseauthor-course-after-reload-still-editing-desktop.png",
+    "03-courseauthor-course-after-reload-still-editing-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "bodyEditing": true,
+   "switchChecked": true,
+   "switchIsCustom": true,
+   "switchTrackWidth": "35px",
+   "chooserButtons": 5,
+   "sectionEditMenus": 5,
+   "bulkEditButton": 1
+  },
+  {
+   "name": "04-courseauthor-activity-chooser",
+   "persona": "vp_courseauthor1",
+   "shows": "Add an activity or resource opens the chooser (closed again, nothing added)",
+   "files": [
+    "04-courseauthor-activity-chooser-desktop.png",
+    "04-courseauthor-activity-chooser-mobile.png"
+   ],
+   "masked": 0,
+   "modalText": "Add an activity or resource Search for activities by name or description All Assessment Collaboration Communication Resources Interactive content All Assignment Book Choice Database Feedback File Folder Forum Glossary H5P IMS content package Lesson Page Quiz SCORM package Text and media area URL Wiki Workshop Browse more activities on Moodle Marketplace Add",
+   "console": []
+  },
+  {
+   "name": "05-learner-mycourses-sort-dropdown-open",
+   "url": null,
+   "persona": "vp_learner1",
+   "shows": "My courses: the sort selector (Bootstrap 5 markup, data-bs-toggle only) opened by ONE click in this Bootstrap 4.6 theme",
+   "http": null,
+   "files": [
+    "05-learner-mycourses-sort-dropdown-open-desktop.png"
+   ],
+   "overflow": {
+    "desktop": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "clicks": {
+    "found": true,
+    "initial": {
+     "expanded": "false",
+     "menuShown": false
+    },
+    "afterFirst": {
+     "expanded": "true",
+     "menuShown": true
+    }
+   }
+  },
+  {
+   "name": "05b-learner-mycourses-sort-dropdown-second-click",
+   "persona": "vp_learner1",
+   "shows": "A second click closes it",
+   "closed": {
+    "expanded": "false"
+   }
+  },
+  {
+   "name": "06-siteadmin-certificate-templates-row-menu-open",
+   "url": null,
+   "persona": "vp_siteadmin",
+   "shows": "Certificate templates: a core row action menu (data-bs-toggle only) opened by ONE click",
+   "http": null,
+   "files": [
+    "06-siteadmin-certificate-templates-row-menu-open-desktop.png"
+   ],
+   "overflow": {
+    "desktop": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "clicks": {
+    "found": true,
+    "initial": {
+     "expanded": "false",
+     "menuShown": false
+    },
+    "afterFirst": {
+     "expanded": "true",
+     "menuShown": true
+    }
+   }
+  },
+  {
+   "name": "06b-siteadmin-row-menu-second-click",
+   "persona": "vp_siteadmin",
+   "shows": "A second click closes it",
+   "closed": {
+    "expanded": "false"
+   }
+  }
+ ]
+}

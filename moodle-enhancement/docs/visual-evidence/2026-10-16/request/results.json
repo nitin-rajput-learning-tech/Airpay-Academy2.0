@@ -1,0 +1,313 @@
+{
+ "generated": "2026-10-19T21:06:15.339Z",
+ "base": "http://localhost:8080",
+ "results": [
+  {
+   "name": "07-learner-card-request-button",
+   "url": "/local/sentientia_catalog/index.php?q=A0008",
+   "persona": "vp_learner1 (learner /1; for this run, tenant 1: request button ON, one-click enrolment OFF)",
+   "shows": "A catalogue card for a course with only manual enrolment: \"Request enrolment\" where the card used to lead nowhere",
+   "http": 200,
+   "files": [
+    "07-learner-card-request-button-desktop.png",
+    "07-learner-card-request-button-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "requestButtons": 1,
+   "pendingChips": 0,
+   "buttonText": "Request enrolment"
+  },
+  {
+   "name": "08-learner-card-selfenrol-course-request",
+   "url": "/local/sentientia_catalog/index.php?q=A0001",
+   "persona": "vp_learner1",
+   "shows": "A free course with an enabled (open) self-enrolment instance also offers \"Request enrolment\" (self-enrolment is unreachable on this theme)",
+   "http": 200,
+   "files": [
+    "08-learner-card-selfenrol-course-request-desktop.png",
+    "08-learner-card-selfenrol-course-request-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "requestButtons": 1,
+   "pendingChips": 0,
+   "buttonText": "Request enrolment"
+  },
+  {
+   "name": "11-learner-course-page-request",
+   "url": "/local/sentientia_catalog/course.php?id=13",
+   "persona": "vp_learner1",
+   "shows": "The same course on the catalogue course page: the Request enrolment button",
+   "http": 200,
+   "files": [
+    "11-learner-course-page-request-desktop.png",
+    "11-learner-course-page-request-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "requestButtons": 1,
+   "pendingChips": 0,
+   "buttonText": " Request enrolment"
+  },
+  {
+   "name": "13a-learner-card-request-button-dark",
+   "url": "/local/sentientia_catalog/index.php?q=A0008",
+   "persona": "vp_learner1 (dark mode)",
+   "shows": "Shot 7 in dark mode",
+   "http": 200,
+   "files": [
+    "13a-learner-card-request-button-dark-desktop.png",
+    "13a-learner-card-request-button-dark-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "requestButtons": 1,
+   "pendingChips": 0,
+   "buttonText": "Request enrolment"
+  },
+  {
+   "name": "09-learner-request-dialog",
+   "persona": "vp_learner1",
+   "shows": "The Request enrolment dialog: a reason field, Save and Cancel",
+   "files": [
+    "09-learner-request-dialog-desktop.png",
+    "09-learner-request-dialog-mobile.png"
+   ],
+   "masked": 0,
+   "modalText": "Request enrolment Requesting access to Vyaapaar - एरिया सेल्स मैनेजर की भूमिकाएँ और जिम्मेदारियां. Your request will be routed to your manager (if assigned) or course owner. SLA: 48 hours. Reason (min 20 chars) e.g. \"Required for new role in operations team.\" Cancel Save changes"
+  },
+  {
+   "name": "10-learner-card-request-pending",
+   "url": "/local/sentientia_catalog/index.php?q=A0008",
+   "persona": "vp_learner1",
+   "shows": "After a valid request, the catalogue reloaded: the card shows \"Request pending\" instead of the button",
+   "http": 200,
+   "files": [
+    "10-learner-card-request-pending-desktop.png",
+    "10-learner-card-request-pending-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "requestButtons": 0,
+   "pendingChips": 1,
+   "buttonText": null
+  },
+  {
+   "name": "13b-learner-card-request-pending-dark",
+   "url": "/local/sentientia_catalog/index.php?q=A0008",
+   "persona": "vp_learner1 (dark mode)",
+   "shows": "Shot 10 in dark mode (the pending chip uses --ap-color-bg-surface-alt)",
+   "http": 200,
+   "files": [
+    "13b-learner-card-request-pending-dark-desktop.png",
+    "13b-learner-card-request-pending-dark-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "requestButtons": 0,
+   "pendingChips": 1,
+   "buttonText": null
+  },
+  {
+   "name": "10b-learner-course-page-request-pending",
+   "url": "/local/sentientia_catalog/course.php?id=13",
+   "persona": "vp_learner1",
+   "shows": "The course page while the request is pending",
+   "http": 200,
+   "files": [
+    "10b-learner-course-page-request-pending-desktop.png",
+    "10b-learner-course-page-request-pending-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "requestButtons": 0,
+   "pendingChips": 0,
+   "buttonText": null
+  },
+  {
+   "name": "04-employee-no-approvals-entry-preferences",
+   "url": "/user/preferences.php",
+   "persona": "vp_learner1 (no reports)",
+   "shows": "Preferences of an employee with no reports and nothing assigned: no \"Pending approvals\" link",
+   "http": 200,
+   "files": [
+    "04-employee-no-approvals-entry-preferences-desktop.png",
+    "04-employee-no-approvals-entry-preferences-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "approvalsLinks": 0
+  },
+  {
+   "name": "04b-employee-my-requests-no-button",
+   "url": "/local/sentientia_request/index.php",
+   "persona": "vp_learner1",
+   "shows": "My requests for the same employee: the pending request, and no Pending approvals button",
+   "http": 200,
+   "files": [
+    "04b-employee-my-requests-no-button-desktop.png",
+    "04b-employee-my-requests-no-button-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "approvalsLinks": 0
+  },
+  {
+   "name": "05-notification-prefs-request-rows",
+   "url": "/message/notificationpreferences.php",
+   "persona": "vp_learner1",
+   "shows": "Notification preferences of an ordinary employee: the Request rows \"Request needs your approval (approver)\" and \"Request escalated past SLA\"",
+   "http": 200,
+   "files": [
+    "05-notification-prefs-request-rows-desktop.png",
+    "05-notification-prefs-request-rows-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [
+    "missing string marker(s): [[messageprovider:notification_alert]] [[messageprovider:compliance_deadline]]"
+   ],
+   "console": [],
+   "masked": 0,
+   "rows": [
+    "Message contact requests notification Sending \"Message contact requests notification\" via \"Web\" enabled status Sending \"Message contact requests notification\" via \"Email\" enabled status",
+    "Outcome of your enrolment request Sending \"Outcome of your enrolment request\" via \"Web\" enabled status Sending \"Outcome of your enrolment request\" via \"Email\" enabled status",
+    "DPDP privacy request notifications Sending \"DPDP privacy request notifications\" via \"Web\" enabled status Sending \"DPDP privacy request notifications\" via \"Email\" enabled status",
+    "Sentientia Course Requests",
+    "Request submitted (requester) Sending \"Request submitted (requester)\" via \"Web\" enabled status Sending \"Request submitted (requester)\" via \"Email\" enabled status",
+    "Request needs your approval (approver) Sending \"Request needs your approval (approver)\" via \"Web\" enabled status Sending \"Request needs your approval (approver)\" via \"Email\" enabled status",
+    "Request decision (requester) Sending \"Request decision (requester)\" via \"Web\" enabled status Sending \"Request decision (requester)\" via \"Email\" enabled status",
+    "Request escalated past SLA Sending \"Request escalated past SLA\" via \"Web\" enabled status Sending \"Request escalated past SLA\" via \"Email\" enabled status"
+   ]
+  },
+  {
+   "name": "01-linemanager-pending-approvals-entry",
+   "url": "/user/preferences.php",
+   "persona": "vp_manager1 (line manager of vp_learner1, no Moodle manager role)",
+   "shows": "Preferences of the line manager: \"Pending approvals\" with the count",
+   "http": 200,
+   "files": [
+    "01-linemanager-pending-approvals-entry-desktop.png",
+    "01-linemanager-pending-approvals-entry-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "approvalsLinks": 1,
+   "linkText": "Pending approvals (2)"
+  },
+  {
+   "name": "02-linemanager-approvals-page",
+   "url": "/local/sentientia_request/approvals.php",
+   "persona": "vp_manager1",
+   "shows": "The approvals page opens (no \"you do not have permission\"): the learner's request with Approve and Reject (not pressed)",
+   "http": 200,
+   "files": [
+    "02-linemanager-approvals-page-desktop.png",
+    "02-linemanager-approvals-page-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "denied": false,
+   "approveButtons": 2
+  },
+  {
+   "name": "03-linemanager-my-requests-button",
+   "url": "/local/sentientia_request/index.php",
+   "persona": "vp_manager1",
+   "shows": "My requests for the line manager: the Pending approvals button",
+   "http": 200,
+   "files": [
+    "03-linemanager-my-requests-button-desktop.png",
+    "03-linemanager-my-requests-button-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "approvalsLinks": 1,
+   "linkText": " Pending approvals"
+  },
+  {
+   "name": "12-learner-card-flag-off",
+   "url": "/local/sentientia_catalog/index.php?q=A0001",
+   "persona": "vp_learner1 (flag OFF)",
+   "shows": "Flags restored (request button OFF, one-click ON as before): the card offers Enroll again",
+   "http": 200,
+   "files": [
+    "12-learner-card-flag-off-desktop.png",
+    "12-learner-card-flag-off-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "requestButtons": 0,
+   "pendingChips": 0,
+   "buttonText": null
+  }
+ ]
+}

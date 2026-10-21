@@ -1,0 +1,28 @@
+{
+ "generated": "2026-10-19T09:36:21.033Z",
+ "base": "http://localhost:8080",
+ "results": [
+  {
+   "name": "03-my-evaluations-flag-off",
+   "url": "/local/sentientia_evaluation/my_evaluations.php",
+   "persona": "vp_eval77 (test learner, /77)",
+   "shows": "Flag OFF (the default): the page answers \"not available\", as if it did not exist",
+   "http": 404,
+   "files": [
+    "03-my-evaluations-flag-off-desktop.png",
+    "03-my-evaluations-flag-off-mobile.png"
+   ],
+   "problems": [
+    "Moodle debug dump on page"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "console": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+   ],
+   "textExcerpt": "Skip to main content airpay academy Dashboard My Courses Catalog My Cart My Skills Certificates Profile Dark Mode VL VP Learner (evaluations) /77 Profile & Settings Log out airpay academy Your evaluation history is not available yet. More information about this error Debug info: Error code: my_evaluations_unavailable Dismiss this notification Stack trace: line 26 of \\public\\local\\sentientia_evaluation\\my_evaluations.php: core\\exception\\moodle_exception thrown Dismiss this notification Continue Privacy Terms Help Contact © 2026 airpay payment services pvt. ltd. Sentientia LMS · Private & confidential · For authorised users of Airpay Payment Services Pvt. Ltd. and Airpay Academy only © 2026 Ai"
+  }
+ ]
+}

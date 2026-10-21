@@ -1,0 +1,121 @@
+{
+ "generated": "2026-10-21T05:32:26.076Z",
+ "base": "http://localhost:8080",
+ "results": [
+  {
+   "name": "01-learner-my-skills",
+   "url": "/local/sentientia_skills/index.php",
+   "persona": "vp_learner1",
+   "shows": "My Skills: category and skill names with an ampersand (\"Compliance & Risk\", \"Data Privacy & GDPR\") print it once",
+   "http": 200,
+   "files": [
+    "01-learner-my-skills-desktop.png",
+    "01-learner-my-skills-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "visibleAmpEntity": 0,
+   "attrsWithAmpEntity": 0,
+   "ampersandNames": [
+    "Profile & Settings"
+   ]
+  },
+  {
+   "name": "02-learner-skill-view",
+   "url": "/local/sentientia_skills/view.php?id=3",
+   "persona": "vp_learner1",
+   "shows": "A skill whose name has an ampersand (\"Data Privacy & GDPR\"): the title and breadcrumb print it once",
+   "http": 200,
+   "files": [
+    "02-learner-skill-view-desktop.png",
+    "02-learner-skill-view-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "visibleAmpEntity": 0,
+   "attrsWithAmpEntity": 0,
+   "ampersandNames": [
+    "Profile & Settings",
+    "Privacy & GDPR",
+    "Compliance & Risk"
+   ]
+  },
+  {
+   "name": "03-learner-self-rate-no-level-warning",
+   "persona": "vp_learner1",
+   "shows": "Save pressed with no level: the warning shows inside the dialog under the select, the select is marked invalid, the dialog stays open (then cancelled, nothing saved)",
+   "files": [
+    "03-learner-self-rate-no-level-warning-desktop.png",
+    "03-learner-self-rate-no-level-warning-mobile.png"
+   ],
+   "dialogStillOpen": true,
+   "warning": "Please pick a level first.",
+   "selectInvalid": true,
+   "ariaInvalid": "true",
+   "console": []
+  },
+  {
+   "name": "04-siteadmin-skills-admin",
+   "url": "/local/sentientia_skills/admin.php",
+   "persona": "vp_siteadmin",
+   "shows": "Skills administration: the skill and category names in the table print \"&\" once",
+   "http": 200,
+   "files": [
+    "04-siteadmin-skills-admin-desktop.png",
+    "04-siteadmin-skills-admin-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "visibleAmpEntity": 0,
+   "attrsWithAmpEntity": 0,
+   "ampersandNames": [
+    "Profile & Settings",
+    "Compliance & Risk",
+    "Sales & Business",
+    "Acquiring & Settlement"
+   ]
+  },
+  {
+   "name": "05-siteadmin-org-tree",
+   "url": null,
+   "persona": "vp_siteadmin",
+   "shows": "Organisation tree, the Airpay tenant opened: unit names such as \"Alliances & Partnerships\" and \"Learning & Development\" print \"&\" once, and the row menus carry the plain name",
+   "http": null,
+   "files": [
+    "05-siteadmin-org-tree-desktop.png",
+    "05-siteadmin-org-tree-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "visibleAmpEntity": 0,
+   "attrsWithAmpEntity": 0,
+   "ampersandNames": [
+    "Profile & Settings",
+    "Compliance & Security",
+    "Finance & Accounts",
+    "Resources & Admin"
+   ],
+   "dataNamesWithAmpersand": 104
+  }
+ ]
+}

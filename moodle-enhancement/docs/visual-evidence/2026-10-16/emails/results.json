@@ -1,0 +1,47 @@
+{
+ "generated": "2026-10-19T11:56:54.925Z",
+ "base": "http://localhost:8080",
+ "results": [
+  {
+   "name": "01-siteadmin-template-editor-first-load",
+   "url": "/local/sentientia_emails/editor.php?template=compliance%2Fwelcome_enrolled",
+   "persona": "vp_siteadmin (site admin, cross-tenant)",
+   "shows": "The template editor on first load: the live preview shows the whole e-mail (the srcdoc carries the full document, doctype quotes included); the editor fits the viewport with no horizontal scroll",
+   "http": 200,
+   "files": [
+    "01-siteadmin-template-editor-first-load-desktop.png",
+    "01-siteadmin-template-editor-first-load-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "srcdocLength": 14835,
+   "srcdocHasDoctypeQuote": true,
+   "sandbox": "allow-same-origin",
+   "studioLeft": 0,
+   "studioRight": 1440,
+   "viewport": 1440,
+   "pageScrollWidth": 1440,
+   "previewTextLength": 940,
+   "previewTextStart": "Learning & Development Hi Priya, You have been enrolled in a mandatory compliance course. Please complete this course be"
+  },
+  {
+   "name": "01-siteadmin-template-editor-first-load-590-measure",
+   "persona": "vp_siteadmin",
+   "shows": "measurements at 590 px",
+   "srcdocLength": 14835,
+   "srcdocHasDoctypeQuote": true,
+   "sandbox": "allow-same-origin",
+   "studioLeft": 0,
+   "studioRight": 590,
+   "viewport": 590,
+   "pageScrollWidth": 590,
+   "previewTextLength": 940,
+   "previewTextStart": "Learning & Development Hi Priya, You have been enrolled in a mandatory compliance course. Please complete this course be"
+  }
+ ]
+}

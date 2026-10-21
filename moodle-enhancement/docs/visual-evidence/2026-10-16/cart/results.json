@@ -1,0 +1,490 @@
+{
+ "generated": "2026-10-16T05:21:09.101Z",
+ "base": "http://localhost:8080",
+ "results": [
+  {
+   "name": "01-siteadmin-admin-orders",
+   "url": "/local/sentientia_cart/admin_orders.php",
+   "persona": "vp_siteadmin (site admin, holds :viewallorders and :refund)",
+   "shows": "All orders: an Actions column; a Refund button only on the paid and partial refund rows (not on refunded or failed); Placed is the payment date; Status in words; totals with the rupee symbol",
+   "http": 200,
+   "files": [
+    "01-siteadmin-admin-orders-desktop.png",
+    "01-siteadmin-admin-orders-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 11,
+   "heads": [
+    "#",
+    "Placed",
+    "User",
+    "Total",
+    "Gateway",
+    "Status",
+    "Staff notes",
+    "Actions"
+   ],
+   "rows": [
+    [
+     "1",
+     "12 May 2026",
+     "[email hidden]",
+     "₹1,770.00",
+     "manual",
+     "Refunded",
+     "",
+     ""
+    ],
+    [
+     "2",
+     "12 May 2026",
+     "[email hidden]",
+     "₹1,770.00",
+     "manual",
+     "Refunded",
+     "",
+     ""
+    ],
+    [
+     "3",
+     "13 May 2026",
+     "[email hidden]",
+     "₹1,770.00",
+     "manual",
+     "Refunded",
+     "",
+     ""
+    ],
+    [
+     "4",
+     "13 May 2026",
+     "[email hidden]",
+     "₹1,770.00",
+     "manual",
+     "Refunded",
+     "",
+     ""
+    ],
+    [
+     "5",
+     "13 May 2026",
+     "[email hidden]",
+     "₹1,770.00",
+     "manual",
+     "Refunded",
+     "",
+     ""
+    ],
+    [
+     "6",
+     "13 May 2026",
+     "[email hidden]",
+     "₹1,770.00",
+     "manual",
+     "Refunded",
+     "",
+     ""
+    ],
+    [
+     "7",
+     "13 May 2026",
+     "[email hidden]",
+     "₹1,770.00",
+     "manual",
+     "Refunded",
+     "",
+     ""
+    ],
+    [
+     "8",
+     "13 May 2026",
+     "[email hidden]",
+     "₹1,770.00",
+     "manual",
+     "Refunded",
+     "",
+     ""
+    ],
+    [
+     "9",
+     "13 May 2026",
+     "[email hidden]",
+     "₹1,770.00",
+     "manual",
+     "Refunded",
+     "",
+     ""
+    ],
+    [
+     "10",
+     "13 May 2026",
+     "[email hidden]",
+     "₹1,770.00",
+     "manual",
+     "Refunded",
+     "",
+     ""
+    ],
+    [
+     "11",
+     "13 May 2026",
+     "[email hidden]",
+     "₹1,770.00",
+     "manual",
+     "Refunded",
+     "",
+     ""
+    ],
+    [
+     "12",
+     "14 Oct 2026",
+     "asha.verma@visualpass.localhost",
+     "₹4,130.59",
+     "airpay",
+     "Partial refund",
+     "",
+     "Refund"
+    ],
+    [
+     "13",
+     "14 Oct 2026",
+     "ravi.menon@visualpass.localhost",
+     "₹5,898.82",
+     "airpay",
+     "Partial refund",
+     "",
+     "Refund"
+    ],
+    [
+     "14",
+     "14 Oct 2026",
+     "accounts@meridian-test.visualpass.localhost",
+     "₹7,965.00",
+     "airpay",
+     "Partial refund",
+     "",
+     "Refund"
+    ],
+    [
+     "923430",
+     "29 Sept 2026",
+     "vp_learner1@example.invalid",
+     "₹2,000.00",
+     "airpay",
+     "Paid",
+     "ADR-031: order #923430: payment recorded, enrolment withheld for course id(s) 447 - not purchasable by this buyer at payment time. Refund due.",
+     "Refund"
+    ],
+    [
+     "933430",
+     "29 Sept 2026",
+     "vp_learner1@example.invalid",
+     "₹1,000.00",
+     "airpay",
+     "Failed",
+     "Gateway reported failure: {\"MESSAGE\":\"Declined <br>by bank\"}",
+     ""
+    ]
+   ],
+   "refundButtons": 4
+  },
+  {
+   "name": "02-siteadmin-refund-dialog",
+   "persona": "vp_siteadmin",
+   "shows": "The Refund dialog opened from a row button (cancelled, nothing refunded)",
+   "files": [
+    "02-siteadmin-refund-dialog-desktop.png",
+    "02-siteadmin-refund-dialog-mobile.png"
+   ],
+   "masked": 0,
+   "modalText": "Refund order #12 Order total: ₹4,130.59 Refund amount Leave blank for full refund. Reason Cancel Save changes"
+  },
+  {
+   "name": "03-siteadmin-order-history-no-refund",
+   "url": "/local/sentientia_cart/history.php",
+   "persona": "vp_siteadmin (site admin)",
+   "shows": "The order history page (history.php) opened by a site admin: Placed, Total and Status as on the admin page, and NO Refund button and no extra empty column",
+   "http": 200,
+   "files": [
+    "03-siteadmin-order-history-no-refund-desktop.png",
+    "03-siteadmin-order-history-no-refund-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "heads": [
+    "#",
+    "Placed",
+    "Total",
+    "Status"
+   ],
+   "rows": [
+    [
+     "1",
+     "12 May 2026",
+     "₹1,770.00",
+     "Refunded"
+    ],
+    [
+     "2",
+     "12 May 2026",
+     "₹1,770.00",
+     "Refunded"
+    ],
+    [
+     "3",
+     "13 May 2026",
+     "₹1,770.00",
+     "Refunded"
+    ],
+    [
+     "4",
+     "13 May 2026",
+     "₹1,770.00",
+     "Refunded"
+    ],
+    [
+     "5",
+     "13 May 2026",
+     "₹1,770.00",
+     "Refunded"
+    ],
+    [
+     "6",
+     "13 May 2026",
+     "₹1,770.00",
+     "Refunded"
+    ],
+    [
+     "7",
+     "13 May 2026",
+     "₹1,770.00",
+     "Refunded"
+    ],
+    [
+     "8",
+     "13 May 2026",
+     "₹1,770.00",
+     "Refunded"
+    ],
+    [
+     "9",
+     "13 May 2026",
+     "₹1,770.00",
+     "Refunded"
+    ],
+    [
+     "10",
+     "13 May 2026",
+     "₹1,770.00",
+     "Refunded"
+    ],
+    [
+     "11",
+     "13 May 2026",
+     "₹1,770.00",
+     "Refunded"
+    ],
+    [
+     "12",
+     "14 Oct 2026",
+     "₹4,130.59",
+     "Partial refund"
+    ],
+    [
+     "13",
+     "14 Oct 2026",
+     "₹5,898.82",
+     "Partial refund"
+    ],
+    [
+     "14",
+     "14 Oct 2026",
+     "₹7,965.00",
+     "Partial refund"
+    ],
+    [
+     "923430",
+     "29 Sept 2026",
+     "₹2,000.00",
+     "Paid"
+    ],
+    [
+     "933430",
+     "29 Sept 2026",
+     "₹1,000.00",
+     "Failed"
+    ]
+   ],
+   "refundButtons": 0
+  },
+  {
+   "name": "04-admin1-admin-orders",
+   "url": "/local/sentientia_cart/admin_orders.php",
+   "persona": "vp_admin1 (tenant admin /1, holds :viewallorders and :refund)",
+   "shows": "The tenant admin's orders (tenant /1 only): the paid order has the Refund button, the failed order has none",
+   "http": 200,
+   "files": [
+    "04-admin1-admin-orders-desktop.png",
+    "04-admin1-admin-orders-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "heads": [
+    "#",
+    "Placed",
+    "User",
+    "Total",
+    "Gateway",
+    "Status",
+    "Staff notes",
+    "Actions"
+   ],
+   "rows": [
+    [
+     "923430",
+     "29 Sept 2026",
+     "vp_learner1@example.invalid",
+     "₹2,000.00",
+     "airpay",
+     "Paid",
+     "ADR-031: order #923430: payment recorded, enrolment withheld for course id(s) 447 - not purchasable by this buyer at payment time. Refund due.",
+     "Refund"
+    ],
+    [
+     "933430",
+     "29 Sept 2026",
+     "vp_learner1@example.invalid",
+     "₹1,000.00",
+     "airpay",
+     "Failed",
+     "Gateway reported failure: {\"MESSAGE\":\"Declined <br>by bank\"}",
+     ""
+    ]
+   ],
+   "refundButtons": 1
+  },
+  {
+   "name": "05-admin1-refund-dialog-paid-order",
+   "persona": "vp_admin1",
+   "shows": "The Refund dialog of the paid order (cancelled)",
+   "files": [
+    "05-admin1-refund-dialog-paid-order-desktop.png",
+    "05-admin1-refund-dialog-paid-order-mobile.png"
+   ],
+   "masked": 0,
+   "modalText": "Refund order #923430 Order total: ₹2,000.00 Refund amount Leave blank for full refund. Reason Cancel Save changes"
+  },
+  {
+   "name": "06-public77-order-history",
+   "url": "/local/sentientia_cart/history.php",
+   "persona": "vp_public77 (buyer, /77, no :viewallorders)",
+   "shows": "The buyer's own history: three partial refund orders, Placed is the payment date, Status \"Partial refund\", totals with the rupee symbol, no Refund button",
+   "http": 200,
+   "files": [
+    "06-public77-order-history-desktop.png",
+    "06-public77-order-history-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "heads": [
+    "#",
+    "Placed",
+    "Total",
+    "Status"
+   ],
+   "rows": [
+    [
+     "12",
+     "14 Oct 2026",
+     "₹4,130.59",
+     "Partial refund"
+    ],
+    [
+     "13",
+     "14 Oct 2026",
+     "₹5,898.82",
+     "Partial refund"
+    ],
+    [
+     "14",
+     "14 Oct 2026",
+     "₹7,965.00",
+     "Partial refund"
+    ]
+   ],
+   "refundButtons": 0
+  },
+  {
+   "name": "07-learner1-order-history",
+   "url": "/local/sentientia_cart/history.php",
+   "persona": "vp_learner1 (buyer, /1)",
+   "shows": "A paid and a failed order in words (Paid, Failed) with the rupee symbol, no Refund button",
+   "http": 200,
+   "files": [
+    "07-learner1-order-history-desktop.png",
+    "07-learner1-order-history-mobile.png"
+   ],
+   "overflow": {
+    "desktop": 0,
+    "mobile": 0
+   },
+   "problems": [],
+   "console": [],
+   "masked": 0,
+   "heads": [
+    "#",
+    "Placed",
+    "Total",
+    "Status"
+   ],
+   "rows": [
+    [
+     "923430",
+     "29 Sept 2026",
+     "₹2,000.00",
+     "Paid"
+    ],
+    [
+     "933430",
+     "29 Sept 2026",
+     "₹1,000.00",
+     "Failed"
+    ]
+   ],
+   "refundButtons": 0
+  },
+  {
+   "name": "01b-siteadmin-admin-orders-scrolled",
+   "persona": "vp_siteadmin",
+   "shows": "The same page at 590 px with the table scrolled to its right end: Status, Staff notes and the Refund buttons are in the columns that sit off-screen until the table is scrolled",
+   "files": [
+    "01b-siteadmin-admin-orders-scrolled-mobile.png"
+   ],
+   "scroll": {
+    "scrolled": true,
+    "scrollWidth": 838,
+    "clientWidth": 488
+   }
+  }
+ ]
+}

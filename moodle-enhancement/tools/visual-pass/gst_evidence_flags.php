@@ -9,11 +9,12 @@
  * is REMOVED again by "off" (not written as false), so "off" restores the state the box had before the pass.
  *
  *   php gst_evidence_flags.php status [tenant]
- *   php gst_evidence_flags.php on  cart|evaluation|all [tenant]
- *   php gst_evidence_flags.php off cart|evaluation|all [tenant]
+ *   php gst_evidence_flags.php on  cart|evaluation|request|all [tenant]
+ *   php gst_evidence_flags.php off cart|evaluation|request|all [tenant]
  *
  *   cart       sentientia.cart.purchase_receipts + sentientia.cart.gst_tax_invoices
  *   evaluation sentientia.evaluation.learner_history
+ *   request    sentientia.request.catalog_button (added 2026-10-19 for the ui-fix-request evidence)
  */
 
 define('CLI_SCRIPT', true);
@@ -33,6 +34,7 @@ use local_sentientia_platform\feature_flags;
 $groups = [
     'cart' => ['sentientia.cart.purchase_receipts', 'sentientia.cart.gst_tax_invoices'],
     'evaluation' => ['sentientia.evaluation.learner_history'],
+    'request' => ['sentientia.request.catalog_button'],  // 2026-10-19 fix-branch evidence (ui-fix-request)
 ];
 $cmd = $argv[1] ?? 'status';
 $which = $argv[2] ?? 'all';
@@ -42,7 +44,7 @@ if ($cmd === 'status' && ctype_digit($which)) {
 }
 $keys = $which === 'all' ? array_merge(...array_values($groups)) : ($groups[$which] ?? null);
 if (!in_array($cmd, ['status', 'on', 'off'], true) || $keys === null || $tenant <= 0) {
-    fwrite(STDERR, "usage: gst_evidence_flags.php status [tenant] | on|off cart|evaluation|all [tenant]\n");
+    fwrite(STDERR, "usage: gst_evidence_flags.php status [tenant] | on|off cart|evaluation|request|all [tenant]\n");
     exit(1);
 }
 
