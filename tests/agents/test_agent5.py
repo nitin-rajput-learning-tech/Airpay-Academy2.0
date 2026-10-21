@@ -273,3 +273,102 @@ def test_cli_rejects_bad_mastery(tmp_path: Path) -> None:
     )
     assert proc.returncode == 1
     assert "mastery-score" in proc.stderr
+
+
+# ─── Runtime behaviour (2026-10-22): resume, no completion on close ──────
+
+
+def test_driver_finish_never_completes_the_course() -> None:
+    js = agent5.scorm_driver_js()
+    finish = js[js.index("finish: function"):js.index("suspend: function")]
+    assert "complete(" not in finish, "closing the page must not mark the course completed"
+    assert "'cmi.core.exit', 'suspend'" in finish
+    assert "cmi.core.session_time" in finish
+
+
+def test_driver_listens_to_pagehide_and_visibility() -> None:
+    js = agent5.scorm_driver_js()
+    assert "addEventListener('pagehide'" in js
+    assert "visibilitychange" in js
+
+
+def test_index_html_resumes_and_records_location() -> None:
+    html = agent5.index_html("T", _slides(3)["slides"], has_audio=False)
+    assert "SCORM.getLocation()" in html and "SCORM.setLocation(current)" in html
+    assert "alert(" not in html, "completion is announced in the page, not by a blocking alert"
+    assert 'role="status"' in html
+
+
+def test_index_html_language_and_direction() -> None:
+    assert '<html lang="en" dir="ltr">' in agent5.index_html("T", _slides(3)["slides"], has_audio=False)
+    assert '<html lang="hi" dir="ltr">' in agent5.index_html("T", _slides(3)["slides"], False, language="hi")
+    assert '<html lang="ar" dir="rtl">' in agent5.index_html("T", _slides(3)["slides"], False, language="ar")
+    # Anything but letters, digits and hyphens is dropped from the tag.
+    assert '<html lang="enx" dir="ltr">' in agent5.index_html("T", _slides(3)["slides"], False, language='en"><x')
+
+
+_NODE_HARNESS = r"""
+const vm = require('vm');
+const src = require('fs').readFileSync(process.argv[2], 'utf8');
+function run(initial) {
+  const store = Object.assign({}, initial);
+  const calls = [];
+  const api = {
+    LMSInitialize: () => { calls.push('init'); return 'true'; },
+    LMSGetValue: k => (k in store ? store[k] : ''),
+    LMSSetValue: (k, v) => { store[k] = v; return 'true'; },
+    LMSCommit: () => { calls.push('commit'); return 'true'; },
+    LMSFinish: () => { calls.push('finish'); return 'true'; },
+  };
+  const listeners = {};
+  // In a browser `window` IS the global object, so the driver's bare `SCORM` resolves: mirror that.
+  const win = { API: api, addEventListener: (t, f) => { listeners[t] = f; }, console: { warn() {} } };
+  win.parent = win;
+  win.window = win;
+  win.document = { addEventListener: (t, f) => { listeners['doc:' + t] = f; }, visibilityState: 'visible' };
+  vm.createContext(win);
+  vm.runInContext(src, win);
+  return { store, calls, fire: t => listeners[t] && listeners[t](), SCORM: win.SCORM };
+}
+const out = {};
+// 1. First launch, two moves, close the page.
+let r = run({ 'cmi.core.lesson_status': 'not attempted' });
+r.fire('load'); r.SCORM.setLocation(2); r.fire('pagehide'); r.fire('beforeunload');
+out.closed = { status: r.store['cmi.core.lesson_status'], exit: r.store['cmi.core.exit'],
+  location: r.store['cmi.core.lesson_location'], finishes: r.calls.filter(c => c === 'finish').length,
+  time: /^\d{4}:\d{2}:\d{2}\.\d{2}$/.test(r.store['cmi.core.session_time'] || '') };
+// 2. Relaunch of a passed attempt: the status stays passed.
+r = run({ 'cmi.core.lesson_status': 'passed', 'cmi.core.lesson_location': '3' });
+r.fire('load');
+out.relaunch = { status: r.store['cmi.core.lesson_status'], location: r.SCORM.getLocation() };
+// 3. Complete with a score at mastery.
+r = run({ 'cmi.core.lesson_status': 'incomplete' });
+r.fire('load'); r.SCORM.complete(100); r.fire('pagehide');
+out.done = { status: r.store['cmi.core.lesson_status'], exit: r.store['cmi.core.exit'], raw: r.store['cmi.core.score.raw'] };
+// 4. suspend_data over the SCORM 1.2 limit is refused.
+r = run({}); r.fire('load');
+out.big = r.SCORM.suspend({ x: 'y'.repeat(5000) });
+console.log(JSON.stringify(out));
+"""
+
+
+def test_driver_runtime_in_node(tmp_path: Path) -> None:
+    import shutil
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("node not available")
+    drv = tmp_path / "scormdriver.js"
+    drv.write_text(agent5.scorm_driver_js(80), encoding="utf-8")
+    harness = tmp_path / "harness.js"
+    harness.write_text(_NODE_HARNESS, encoding="utf-8")
+    proc = subprocess.run([node, str(harness), str(drv)], capture_output=True, text=True, check=False,
+                          stdin=subprocess.DEVNULL)
+    assert proc.returncode == 0, proc.stderr
+    out = json.loads(proc.stdout.strip().splitlines()[-1])
+    # Closing an unfinished course suspends it: not completed, place kept, finished exactly once.
+    assert out["closed"] == {"status": "incomplete", "exit": "suspend", "location": "2", "finishes": 1, "time": True}
+    # A relaunch of a passed attempt is not downgraded, and the place is readable.
+    assert out["relaunch"] == {"status": "passed", "location": 3}
+    # Completion at or above mastery passes and exits normally.
+    assert out["done"] == {"status": "passed", "exit": "", "raw": "100"}
+    assert out["big"] is False

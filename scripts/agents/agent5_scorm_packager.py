@@ -252,13 +252,38 @@ def scorm_driver_js(mastery_score: int = DEFAULT_MASTERY_SCORE) -> str:
         return api;
     }
 
+    var finished = false;
+    var startedAt = 0;
+    // SCORM 1.2 caps cmi.suspend_data at 4096 characters; a longer value is rejected by the LMS.
+    var SUSPEND_MAX = 4096;
+    var DONE = {'completed': 1, 'passed': 1, 'failed': 1};
+
+    // cmi.core.session_time is CMITimespan: HHHH:MM:SS.SS.
+    function timespan(ms) {
+        var s = Math.max(0, Math.round(ms / 10) / 100);
+        var h = Math.floor(s / 3600); s -= h * 3600;
+        var m = Math.floor(s / 60);   s -= m * 60;
+        function pad(n, w) { n = String(n); while (n.length < w) { n = '0' + n; } return n; }
+        var sec = s.toFixed(2);
+        if (sec.length < 5) { sec = '0' + sec; }
+        return pad(h, 4) + ':' + pad(m, 2) + ':' + sec;
+    }
+
     window.SCORM = {
         init: function () {
             var a = getAPI();
-            if (a) {
+            if (a && !initialized) {
                 a.LMSInitialize('');
                 initialized = true;
-                a.LMSSetValue('cmi.core.lesson_status', 'incomplete');
+                startedAt = Date.now();
+                // Only a first launch moves the status to incomplete. A relaunch of a completed, passed or failed
+                // attempt must not be downgraded (it was, on every launch, before 2026-10-22).
+                var status = a.LMSGetValue('cmi.core.lesson_status');
+                if (DONE[status]) {
+                    completed = true;
+                } else if (status !== 'incomplete') {
+                    a.LMSSetValue('cmi.core.lesson_status', 'incomplete');
+                }
             }
         },
         complete: function (score) {
@@ -273,23 +298,58 @@ def scorm_driver_js(mastery_score: int = DEFAULT_MASTERY_SCORE) -> str:
                 } else {
                     a.LMSSetValue('cmi.core.lesson_status', 'completed');
                 }
+                // A finished attempt exits normally, so the next launch starts as the LMS decides (review or new).
+                a.LMSSetValue('cmi.core.exit', '');
                 a.LMSCommit('');
                 completed = true;
             }
         },
-        finish: function () {
+        // The learner's place: the slide index, kept in cmi.core.lesson_location.
+        getLocation: function () {
             var a = getAPI();
             if (a && initialized) {
-                if (!completed) { this.complete(); }
+                var n = parseInt(a.LMSGetValue('cmi.core.lesson_location'), 10);
+                return isNaN(n) ? 0 : n;
+            }
+            return 0;
+        },
+        setLocation: function (index) {
+            var a = getAPI();
+            if (a && initialized && !finished) {
+                a.LMSSetValue('cmi.core.lesson_location', String(index));
+                if (!completed) { a.LMSSetValue('cmi.core.exit', 'suspend'); }
+                a.LMSCommit('');
+            }
+        },
+        save: function () {
+            var a = getAPI();
+            if (a && initialized && !finished) { a.LMSCommit(''); }
+        },
+        // Closing the page ENDS the session; it never completes the course. Before 2026-10-22 finish() called
+        // complete(), so a learner who opened the course and closed it at once was recorded as completed.
+        finish: function () {
+            var a = getAPI();
+            if (a && initialized && !finished) {
+                finished = true;
+                if (!completed) { a.LMSSetValue('cmi.core.exit', 'suspend'); }
+                a.LMSSetValue('cmi.core.session_time', timespan(Date.now() - startedAt));
+                a.LMSCommit('');
                 a.LMSFinish('');
             }
         },
         suspend: function (data) {
             var a = getAPI();
-            if (a && initialized) {
-                a.LMSSetValue('cmi.suspend_data', JSON.stringify(data));
+            if (a && initialized && !finished) {
+                var json = JSON.stringify(data);
+                if (json.length > SUSPEND_MAX) {
+                    if (window.console) { console.warn('suspend_data over ' + SUSPEND_MAX + ' characters, not saved'); }
+                    return false;
+                }
+                a.LMSSetValue('cmi.suspend_data', json);
                 a.LMSCommit('');
+                return true;
             }
+            return false;
         },
         getSuspendData: function () {
             var a = getAPI();
@@ -301,8 +361,14 @@ def scorm_driver_js(mastery_score: int = DEFAULT_MASTERY_SCORE) -> str:
         }
     };
 
-    window.addEventListener('load',         function () { SCORM.init(); });
+    window.addEventListener('load', function () { SCORM.init(); });
+    // beforeunload alone is unreliable on mobile browsers and is skipped on a back-forward cache restore:
+    // pagehide also ends the session, and hiding the tab commits what the learner has done so far.
+    window.addEventListener('pagehide',     function () { SCORM.finish(); });
     window.addEventListener('beforeunload', function () { SCORM.finish(); });
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'hidden') { SCORM.save(); }
+    });
 })();
 """ % int(mastery_score)
 
@@ -320,11 +386,28 @@ def _escape(s: str) -> str:
     )
 
 
+# Languages written right to left: the launch page sets dir="rtl" for them.
+RTL_LANGUAGES = {"ar", "ur", "fa", "he"}
+
+
+def _lang_tag(language: str | None) -> str:
+    """A safe BCP 47-ish tag for <html lang>: letters, digits and hyphens only, default "en"."""
+    tag = "".join(ch for ch in str(language or "").strip() if ch.isalnum() or ch == "-")[:20]
+    return tag or "en"
+
+
 def index_html(course_title: str, slides: list[dict], has_audio: bool,
-               audio_filename: str = AUDIO_ARCNAME) -> str:
+               audio_filename: str = AUDIO_ARCNAME, language: str | None = None) -> str:
     """Generate the SCORM launch file: a slide deck with prev/next +
     keyboard nav, optional narration audio, and a Complete button that
-    reports completion to the LMS via the SCORM driver."""
+    reports completion to the LMS via the SCORM driver.
+
+    The learner's place is kept in cmi.core.lesson_location: every move
+    records it, and a relaunch opens the slide the learner left
+    (2026-10-22; before, every launch started at slide 1). ``language``
+    sets <html lang> (and dir="rtl" for right-to-left languages)."""
+    lang = _lang_tag(language)
+    direction = "rtl" if lang.split("-")[0].lower() in RTL_LANGUAGES else "ltr"
     slide_html = ""
     for i, slide in enumerate(slides):
         active = " active" if i == 0 else ""
@@ -346,7 +429,7 @@ def index_html(course_title: str, slides: list[dict], has_audio: bool,
 
     return f"""\
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{lang}" dir="{direction}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -375,6 +458,7 @@ def index_html(course_title: str, slides: list[dict], has_audio: bool,
         .nav .next {{ background: #0066A7; color: #fff; }}
         .nav .complete {{ background: #16a34a; color: #fff; }}
         .progress {{ text-align: center; color: #9ca3b4; font-size: 0.85rem; }}
+        .done {{ margin-top: 16px; text-align: center; color: #4ade80; min-height: 1.5em; }}
     </style>
 </head>
 <body>
@@ -388,14 +472,15 @@ def index_html(course_title: str, slides: list[dict], has_audio: bool,
             <span class="progress" id="progress">Slide 1 of {len(slides)}</span>
             <button class="next" id="nextBtn" onclick="nav(1)">Next &rarr;</button>
         </div>
+        <p class="done" id="doneMsg" role="status" aria-live="polite"></p>
     </div>
     <script>
         var current = 0;
         var total = {len(slides)};
-        function nav(dir) {{
+        function show(index, record) {{
             var slides = document.querySelectorAll('.slide');
             slides[current].classList.remove('active');
-            current = Math.max(0, Math.min(total - 1, current + dir));
+            current = Math.max(0, Math.min(total - 1, index));
             slides[current].classList.add('active');
             document.getElementById('progress').textContent =
                 'Slide ' + (current + 1) + ' of ' + total;
@@ -405,14 +490,22 @@ def index_html(course_title: str, slides: list[dict], has_audio: bool,
                 btn.className = 'complete';
                 btn.onclick = function () {{
                     SCORM.complete(100);
-                    alert('Course completed!');
+                    document.getElementById('doneMsg').textContent = 'Course completed. You can close this window.';
                 }};
             }} else {{
                 btn.textContent = 'Next \\u2192';
                 btn.className = 'next';
                 btn.onclick = function () {{ nav(1); }};
             }}
+            if (record) {{ SCORM.setLocation(current); }}
         }}
+        function nav(dir) {{ show(current + dir, true); }}
+        // The driver's load handler (registered first, in <head>) has initialised the session: resume where the
+        // learner left off.
+        window.addEventListener('load', function () {{
+            var saved = SCORM.getLocation();
+            if (saved > 0 && saved < total) {{ show(saved, false); }}
+        }});
         document.addEventListener('keydown', function (e) {{
             if (e.key === 'ArrowRight') nav(1);
             if (e.key === 'ArrowLeft')  nav(-1);
@@ -515,7 +608,8 @@ def package_one(course_name: str, *, dry_run: bool, strict: bool,
     manifest_xml = generate_imsmanifest(
         course_id, title, files_in_zip, mastery_score=mastery_score)
     driver_js = scorm_driver_js(mastery_score)
-    html_doc = index_html(title, slides, has_audio)
+    html_doc = index_html(title, slides, has_audio,
+                          language=slides_data.get("language"))
 
     output_dir.mkdir(parents=True, exist_ok=True)
     zip_path = output_dir / f"{course_name}-scorm.zip"
