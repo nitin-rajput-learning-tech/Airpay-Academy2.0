@@ -61,6 +61,8 @@ shots were taken from the main session. The pass found three defects, all fixed 
 - `c3cc82ba6`: three `messageprovider:*` strings were missing (emails, lifecycle, classroom), so notification
   preferences showed `[[...]]`. A scan of all 62 providers now finds none missing.
 - `feb6f6cc9`: the theme's screen-reader page heading escaped "&" twice; `core_renderer::sr_heading_text()` fixes it.
+- PHPUnit (local XAMPP 5.1, after a re-init, 2026-10-21): `evaluation_mode_test` 7 tests and `sr_heading_text_test` 3 tests,
+  all OK.
 
 **UAT upgrade preparation (2026-10-19):**
 - The rehearsal was re-run on the merged code and passed twice: once on 8144bfc8c and once on 1b6a00698
