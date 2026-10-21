@@ -91,7 +91,9 @@ JS_URL="$(pick "[^\"' <>]*javascript\.php[/?][^\"' <>]+" "$TMP/login.html")"
 CSS_URL="$(pick "[^\"' <>]*styles\.php[/?][^\"' <>]+" "$TMP/login.html")"
 # The import map carries absolute URLs of the ESM loader (r.php, or its rewritten route when the router is on).
 sed -n '/type="importmap"/,/<\/script>/p' "$TMP/login.html" | tr -d '\n' > "$TMP/importmap.txt"
-ESM_URL="$(pick '"https?:[^"]+"' "$TMP/importmap.txt" | tr -d '"')"
+# Pick an entry that names a FILE (ends in .js): the map also carries scope prefixes such as
+# "@moodle/lms/theme-sentientia/", which are folder mappings and answer 404 by design (UAT, 2026-10-21).
+ESM_URL="$(pick '"https?:[^"]+\.js"' "$TMP/importmap.txt" | tr -d '"')"
 
 FONT_URL=""
 if [ -n "$CSS_URL" ]; then
