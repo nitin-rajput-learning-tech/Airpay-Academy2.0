@@ -1,5 +1,5 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-10-16 (**Nitin approved all seven review-queue branches; merged into gap-integration with the April skip caps; 10-16 screenshot pass running; production fast-forward waits for it; see the 2026-10-16 section**) **Previous:** 2026-10-15 (GST invoices built and evidenced on claude/gst-invoices; Nitin's 2026-10-14 answers recorded)
+**Updated:** 2026-10-21 (**the 2026-10-16 merges are evidenced and three defects fixed; UAT package v4.3.1 is rehearsed and pinned, waiting for the tunnel; see the 2026-10-16 section**) **Previous:** 2026-10-16 (seven branches merged on Nitin's ok)
 
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
 
@@ -52,7 +52,28 @@ restored to its previous value):
 - the evidence goes to `docs/visual-evidence/2026-10-16/<area>/`;
 - each area is checked independently for fix coverage and privacy.
 
-STATUS: running.
+STATUS (2026-10-21): DONE. The evidence is committed in 8b5b62fc9; the index is `docs/visual-evidence/2026-10-16/README.md`. The
+background workflow agents stalled for 10 minutes per step (a cancelled PostToolUse hook, likely the Remember plugin), so the
+shots were taken from the main session. The pass found three defects, all fixed on gap-integration:
+- `1b6a00698`: evaluation 2026101900, a repeat step. The eval-followups EV-17 steps sat below the 2026100802 that
+  gap-integration had already shipped, so a site at 2026100802 never got `evaluationmode`. UAT (2026092500) and fresh
+  installs were not affected.
+- `c3cc82ba6`: three `messageprovider:*` strings were missing (emails, lifecycle, classroom), so notification
+  preferences showed `[[...]]`. A scan of all 62 providers now finds none missing.
+- `feb6f6cc9`: the theme's screen-reader page heading escaped "&" twice; `core_renderer::sr_heading_text()` fixes it.
+
+**UAT upgrade preparation (2026-10-19):**
+- The rehearsal was re-run on the merged code and passed twice: once on 8144bfc8c and once on 1b6a00698
+  (`docs/operations/uat-rehearsal-2026-10-19/`).
+- The package is `v4.3.1-sentientia-5.3-package-2026-10-19`, from 1b6a00698, SHA-256 2dad2d98...; it is pinned in
+  `UAT-SENTIENTIA-DEPLOY-CHECKLIST.md`, and the runbook names the target.
+- The window waits on Nitin: the VPN was down on 10-19 evening.
+- Open choice: deploy v4.3.1 as rehearsed, or rebuild from the head to add c3cc82ba6 and feb6f6cc9. Those two change
+  only strings and one theme renderer line, with no schema or version change, so they need no new rehearsal.
+
+**Seen, left for a later pass:** request enrolment never shows in a tenant with one-click enrolment ON (tenants 1 and
+177 locally), by design. Also: the e-mail editor issues in the emails state card, the duplicated heading on
+`approvals.php`, and the "No groups" wrapping in edit mode.
 
 **Next:**
 1. Commit the evidence, then fast-forward `production`.
