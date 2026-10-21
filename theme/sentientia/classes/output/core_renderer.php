@@ -56,6 +56,24 @@ defined('MOODLE_INTERNAL') || die;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class core_renderer extends \core_renderer {
+    /**
+     * The text of a page heading or title, for an element that escapes it once with s().
+     *
+     * $PAGE->heading and $PAGE->title hold HTML (format_string() output: entities, possibly multilang spans or tags).
+     * Filters and multilang are applied by format_string() without escaping, then tags are stripped and entities
+     * decoded, so "Data Privacy &amp; GDPR" becomes "Data Privacy & GDPR" and s() prints the ampersand once.
+     *
+     * @param string|null $html
+     * @return string
+     */
+    public static function sr_heading_text(?string $html): string {
+        if ($html === null || trim($html) === '') {
+            return '';
+        }
+        $text = format_string($html, true, ['escape' => false]);
+        return trim(html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+    }
+
 
     // Phase 9.5 — decomposition started. Each trait is a self-contained
     // group of renderer methods extracted from this previously 2,339-line
@@ -348,7 +366,10 @@ class core_renderer extends \core_renderer {
         // Phase E (UI-NAV-AUDIT N-08): prefer the clean page HEADING — the
         // title carries the "| sitename" suffix, so screen readers were
         // hearing "My Skills | airpay" as the page's h1.
-        $page_title = format_string($this->page->heading) ?: $this->page->title;
+        // 2026-10-21: $PAGE->heading and title are HTML (set_heading() takes format_string() output, so "Data
+        // Privacy & GDPR" arrives as "Data Privacy &amp; GDPR"). format_string() + s() escaped it a second time and
+        // screen readers read "amp". Reduce to text once, then escape once.
+        $page_title = self::sr_heading_text($this->page->heading) ?: self::sr_heading_text($this->page->title);
         $h1 = '<h1 class="sr-only">' . s($page_title) . '</h1>';
 
         // A11Y-9: keep ONE main landmark. The outer ap-shell__content is
