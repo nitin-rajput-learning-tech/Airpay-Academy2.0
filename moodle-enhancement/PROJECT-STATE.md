@@ -1,7 +1,42 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-10-21 (**the 2026-10-16 merges are evidenced and three defects fixed; UAT package v4.3.1 is rehearsed and pinned, waiting for the tunnel; see the 2026-10-16 section**) **Previous:** 2026-10-16 (seven branches merged on Nitin's ok)
+**Updated:** 2026-10-21 (**UAT upgraded to Moodle 5.3 + Sentientia 4f847d434 (package v4.3.2); verification steps 1 to 9 green; the logged-in screen check is Nitin's; see the 2026-10-21 section**) **Previous:** 2026-10-21 (the 2026-10-16 merges evidenced; three defects fixed)
 
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
+
+---
+
+## 2026-10-21 - UAT upgraded to Moodle 5.3 LTS (Opus 5.5)
+
+`academy2.airpay.ninja` was upgraded from Moodle 5.2 + `481252996` to Moodle 5.3 + `4f847d434`. The package was
+`v4.3.2-sentientia-5.3-package-2026-10-21` (option b, chosen by Nitin: the rehearsed v4.3.1 plus the message-provider
+strings and the theme sr-only heading fix). The runbook was followed step by step. The record is in
+`docs/operations/uat-upgrade-2026-10-21/README.md`.
+- Pre-flight: green. UAT matched the rehearsal's starting point exactly (0 of 480 plugins differ).
+- Upgrade: exit 0 in about 3 minutes, no warnings.
+- Verification: steps 1 to 9 green.
+  - Schema: the known substrate only.
+  - Plugins: 0 out of date; 2 new, 1 gone, as expected.
+  - Data: 0 data rows lost.
+  - Flags: 35 new, all OFF; 0 changed.
+  - Tasks, cron, task repair and importers: OK.
+  - Render: 200 on all four URL classes, in both rounds.
+  - Web-service smoke: ERROR=0. Environment: OK.
+- Two runbook corrections:
+  - `render_smoke_53.sh` now picks an import-map file URL. A scope prefix answers 404 by design; that is what the
+    first run hit.
+  - Three importers see core source tables, as they did in the rehearsal, so "every feature 0/N" was too strict.
+
+**Open, for Nitin:**
+1. The logged-in screen check as a learner and a tenant admin. Claude does not type credentials into this host.
+2. Delete the backup folder `/var/backups/uat-5.3-20261021-191405/` after the acceptance day. It holds `config.php`
+   with the database password.
+3. `/var/www/html` still serves the old `Sentientia-LMS-5.2-Complete-Standalone-2026-08-19.zip` (code only, no
+   config) and `index.html` on the default vhost. Move them out when convenient.
+
+**Next (Nitin, 2026-10-21):** from the research study, improve the current product before adding features: (1) one
+content pipeline (retire the stale `sentientia/` agent tree), (2) the SCORM packager runtime fixes, (3) correct the
+docs that overstate the code, and (4) the kn/mr/sw language packs to 47/47. After that, the build guards (missing
+message-provider strings, upgrade steps below a shipped version) and the small UI items from the evidence pass.
 
 ---
 
