@@ -270,10 +270,12 @@ native robocopy "$(win "$BASE")" "$(win "$STAGE_TREE")" /E /MT:8 /R:1 /W:1 \
 if [ "$COMPOSER_VENDOR" = 1 ]; then
     : "${COMPOSER_PHAR:=/d/Claude Local/rehearsal/moodle51/composer.phar}"
     : "${COMPOSER_PHP:=/c/Users/nitin.rajput/AppData/Local/Microsoft/WinGet/Packages/PHP.PHP.8.4_Microsoft.Winget.Source_8wekyb3d8bbwe/php.exe}"
+    # The ini that loads openssl, curl, zip and intl: without it composer refuses to download (no TLS).
+    : "${COMPOSER_PHP_INI:=/d/Claude Local/moodle53/php84-moodle53.ini}"
     echo "── 2b. composer install --no-dev (from the base's composer.lock) -> $STAGE_TREE/vendor"
     [ -f "$STAGE_TREE/composer.lock" ] || { echo "the base has no composer.lock; refusing to continue" >&2; exit 1; }
     [ -f "$COMPOSER_PHAR" ] || { echo "composer.phar not found at $COMPOSER_PHAR (set COMPOSER_PHAR)" >&2; exit 1; }
-    ( cd "$STAGE_TREE" && "$COMPOSER_PHP" "$(win "$COMPOSER_PHAR")" install --no-dev --classmap-authoritative         --no-interaction --no-scripts --no-progress < /dev/null > "$RUN_DIR/composer-install.log" 2>&1 )         || { echo "composer install failed: see $RUN_DIR/composer-install.log" >&2; exit 1; }
+    ( cd "$STAGE_TREE" && "$COMPOSER_PHP" -c "$(win "$COMPOSER_PHP_INI")" "$(win "$COMPOSER_PHAR")" install --no-dev --classmap-authoritative         --no-interaction --no-scripts --no-progress < /dev/null > "$RUN_DIR/composer-install.log" 2>&1 )         || { echo "composer install failed: see $RUN_DIR/composer-install.log" >&2; exit 1; }
     tail -n 2 "$RUN_DIR/composer-install.log"
 fi
 
