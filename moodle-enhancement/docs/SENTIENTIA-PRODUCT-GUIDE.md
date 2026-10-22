@@ -12,8 +12,8 @@ Eighteen months ago, Airpay's L&D ran on a heavily customised, vendor-locked Moo
 
 **Where it stands today:**
 
-- **Live in production** at airpay.academy serving **3,500+ learners across 3 business units** (Airpay internal, Public/consumer, ZEEA Tanzania) — compliance training, exams, certifications, deadline enforcement, and manager escalations run on it daily.
-- **The product layer is complete and verified on our staging environment**: 40 Sentientia plugins, a custom design system, white-label branding, 5 languages, mobile PWA with push notifications, WhatsApp/SMS nudges, live classroom polling, AI quiz generation, a payment-enabled public course storefront — all behind feature flags, all version-controlled, all gated by an automated quality system.
+- **Customer-zero today:** airpay.academy still runs the legacy BizLMS platform, serving **3,500+ learners across 3 business units** (Airpay internal, Public/consumer, ZEEA Tanzania) — compliance training, exams, certifications, deadline enforcement, and manager escalations run on it daily. **Sentientia is not live yet:** it runs on the UAT server (Moodle 5.3 LTS since 21 October 2026) and replaces BizLMS at the cutover, after a rehearsal on a fresh live backup.
+- **The product layer is complete and verified on local test copies and on the UAT server**: 40 Sentientia plugins, a custom design system, white-label branding, 5 languages, mobile PWA with push notifications, WhatsApp/SMS nudges, live classroom polling, AI quiz generation, a payment-enabled public course storefront — all behind feature flags, all version-controlled, all gated by an automated quality system.
 - **The strategic asset**: any future customer gets the same platform by changing configuration — logo, colours, name, languages, features — with **zero code changes**. We proved this with a completed white-label audit in June 2026.
 
 **The decision in front of leadership** is no longer "should we build it" — it is built. It is: (1) schedule the production rollout of this quarter's product layer to airpay.academy, and (2) decide whether and how to take Sentientia to a second customer (packaging, pricing, go-to-market). Section 9 lists the specific asks.
@@ -82,7 +82,7 @@ HRMS sync (KeKa/Darwinbox-style CSV/cron), org hierarchy and tenant registry (co
 Public course **storefront** (Netflix-style catalog), cart and checkout through **Airpay's own payment gateway** (we dogfood our core product), one-click free enrolment for internal staff (flag-gated), and a designed-and-documented recurring-subscriptions model (ADR-023) ready to implement when the business wants it.
 
 ### Create content faster (the pipeline)
-The **SENTIENTIA content pipeline** turns an SOP PDF into a SCORM course through six agents: parse → narration script → slide deck → AI voice-over (ElevenLabs) → SCORM package → upload. Built and tested end-to-end in mock/local mode; per-character voice cost is confirm-gated so spend is always deliberate. **AI features** (quiz generation from course content with 4-layer cost defence, role-aware AI assistant, translation queue) are demoable today in mock mode and activate fully when we provision an Anthropic API key.
+The **SENTIENTIA content pipeline** turns an SOP PDF into a SCORM course through six agents: parse → narration script → slide deck → AI voice-over (ElevenLabs) → SCORM package → upload. Built and tested in mock/local mode on one sample SOP (the orchestrator still runs an older copy of the agents, being consolidated in October 2026; the SCORM packager's resume and completion bugs were fixed on 22 October 2026); per-character voice cost is confirm-gated so spend is always deliberate. **AI features** (quiz generation from course content with 4-layer cost defence, role-aware AI assistant, translation queue) are demoable today in mock mode and activate fully when we provision an Anthropic API key.
 
 ---
 
@@ -105,7 +105,7 @@ This is what makes Sentientia sellable rather than "Airpay's internal tool":
 - **Four-gate quality system (ADR-027)** — built because "we ran visual audits and still shipped UI bugs": Gate 0 static scanners catch the three recurring bug classes before commit; Gate 1 renders every persona × surface and fails on errors/template leaks; Gate 2 runs automated accessibility checks (WCAG A+AA, serious/critical fail the build) with screenshot-diff scaffolded; Gate 3 is an honest coverage matrix of what is and isn't tested.
 - **Security** — a payment-verification bypass found in the inherited gateway code was fixed with a fail-closed verifier and a 13-test suite (deployment is sandbox-test-gated — see §9); pre-commit blocks credentials, raw SQL/superglobals, and core-file edits; secrets live in environment files, never in git.
 - **Privacy & regulatory** — GDPR/DPDP privacy providers across plugins; DLT/TCCCPR consent for WhatsApp/SMS with timestamped logging; a DPDP-Act data-fiduciary statement page; PII never sent to external AI/voice services (enforced in the pipeline rules).
-- **Engineering discipline** — 27 ADRs, per-plugin state cards, CI on every push, conflict-marker and contract-drift gates born from real incidents, visual evidence required for every UI change.
+- **Engineering discipline** — 32 ADRs (ADR-001 to ADR-034), per-plugin state cards, CI on every push, conflict-marker and contract-drift gates born from real incidents, visual evidence required for every UI change.
 
 ---
 
@@ -114,7 +114,7 @@ This is what makes Sentientia sellable rather than "Airpay's internal tool":
 | | Capability | Status |
 |---|---|---|
 | ✅ **Live on airpay.academy today** | Core LMS, compliance training, exams, 3 tenants, HRMS sync, certificates, dashboards | Serving users now (the pre-product-layer deployment) |
-| 🟦 **Built & verified, awaiting production rollout** | Everything in §3–§7's product layer: Sentientia theme + rename, white-label, quality gates, PWA/push, WhatsApp bridge, Live, leaderboards, AI (mock), storefront polish, QA-walk fixes, paygw security fix | On the `production` git branch, verified on staging (local XAMPP with imported production data); **not yet file-deployed to the live server** — needs a scheduled deploy window with IT |
+| 🟦 **Built & verified, awaiting production rollout** | Everything in §3–§7's product layer: Sentientia theme + rename, white-label, quality gates, PWA/push, WhatsApp bridge, Live, leaderboards, AI (mock), storefront polish, QA-walk fixes, paygw security fix | On the `production` git branch, verified locally (XAMPP with a copy of production data) and on UAT (Moodle 5.3, October 2026); **not deployed to the live server** — needs a scheduled deploy window with IT |
 | 🟨 **Designed / scaffolded, switched off** | Recurring subscriptions (ADR-023), M365/Graph integration, AI live mode (needs API key), voice pipeline live mode (needs ElevenLabs budget), native mobile wrappers (ADR-005), polymorphic user-type migration phases 2–5 (ADR-017) | Activation is a business decision, not an engineering rebuild |
 
 ---
@@ -167,4 +167,4 @@ This quarter's work is committed, pushed, and staging-verified but not deployed 
 
 ---
 
-*Prepared from the live engineering record (PROJECT-STATE, ADRs, audits) as of 10 June 2026. Numbers are from the May-2026 production snapshot and the June-2026 capability audit.*
+*Prepared from the live engineering record (PROJECT-STATE, ADRs, audits) as of 10 June 2026. Numbers are from the May-2026 production snapshot and the June-2026 capability audit. Updated 22 October 2026: live and UAT status, ADR count, pipeline status.*
