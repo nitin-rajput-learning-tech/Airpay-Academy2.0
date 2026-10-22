@@ -237,6 +237,11 @@ Plan **3 hours** end to end. The upgrade step alone took 20 to 24 min in the reh
 
 ## 6. Verification (all of it, in this order)
 
+**0. Composer vendor (added 2026-10-22).** Moodle 5.3 loads about 20 libraries from `<root>/vendor`. Packages before
+v4.3.3 shipped without it, and UAT's authenticated `/api/rest` calls failed with HTTP 500 until it was added. Copy and run the
+check: `scp tools/uat/check_vendor53.php uat-lms:/tmp/ && ssh uat-lms "cd $OLD && sudo -u www-data php /tmp/check_vendor53.php"`.
+Pass: every line `ok`, exit 0.
+
 1. Schema: `sudo -u www-data php $OLD/admin/cli/check_database_schema.php | grep -E "^ \* "`. It always lists the tenant substrate (the `open_*` columns of `user` and `course`, and
    in 5.3 no profile tables any more): the rehearsal's list is `uat-rehearsal-2026-10-15/schema_findings_B.txt` (55 lines). Pass: nothing else.
 2. Plugin versions: rerun the pre-flight snapshots into `*-after` files and compare:
@@ -259,7 +264,7 @@ Plan **3 hours** end to end. The upgrade step alone took 20 to 24 min in the reh
    `bash moodle-enhancement/deploy/render_smoke_53.sh https://academy2.airpay.ninja --rounds 2`. All four URL classes (`lib/javascript.php`, `theme/styles.php`, `r.php`,
    `theme/font.php`) must return 200 in both rounds. A 500 on `r.php` or `font.php` means a leftover `ini_get_bool` polyfill (step 5.5).
 8. Web service smoke: `scp tools/uat/adr031_ws_smoke.php uat-lms:/tmp/ && ssh uat-lms "sudo -u www-data php /tmp/adr031_ws_smoke.php --i-am-uat"` expects `ERROR=0`.
-9. Environment page `/admin/environment.php` as the admin: 0 errors (the composer dev-dependency note is expected). `/admin/index.php`: no "plugins missing from disk" notice.
+9. Environment page `/admin/environment.php` as the admin: 0 errors. Since v4.3.3 the "Composer installed data not found" note must NOT appear any more: if it does, `vendor/` is missing (step 0). `/admin/index.php`: no "plugins missing from disk" notice.
 10. Screen check as learner and as tenant admin, desktop and 590 px (login, dashboard, catalog, a course page, manager team performance, the switchboard as site admin): evidence in
     `docs/visual-evidence/2026-10-19/uat/` with a README.
 

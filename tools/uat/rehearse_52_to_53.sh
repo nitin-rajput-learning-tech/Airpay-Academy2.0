@@ -356,6 +356,11 @@ if want checks; then
     php_in "$TREE_B" admin/cli/upgrade.php --is-pending > /dev/null 2>&1
     PRC=$?
     hard "5.3_no_upgrade_pending" "$([ "$PRC" -eq 0 ] && echo 0 || echo 1)" "upgrade.php --is-pending (tree B) exit $PRC"
+    # Moodle 5.3 loads ~20 libraries from <root>/vendor (composer). The packages built before 2026-10-22 had none, and
+    # UAT's authenticated /api/rest calls died on the missing League OAuth2 ScopeTrait; the web smoke never caught it.
+    php_in "$TREE_B" "$HERE_W/check_vendor53.php" > "$RUN/logs/vendor53_B.log" 2>&1
+    VRC=$?
+    hard "5.3_composer_vendor" "$VRC" "check_vendor53.php (tree B) exit $VRC: $(grep -c '^ok' "$RUN/logs/vendor53_B.log") ok, $(grep -c '^FAIL' "$RUN/logs/vendor53_B.log") failed"
     # Rollback fact for the runbook (read-only): what the 5.2 code says about the upgraded database
     php_in "$TREE_A" admin/cli/upgrade.php --is-pending > "$RUN/logs/downgrade_probe_A.log" 2>&1
     DRC=$?
