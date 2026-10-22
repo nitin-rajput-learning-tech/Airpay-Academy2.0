@@ -77,18 +77,23 @@ Each agent reads its input from disk, writes its output to disk, then exits. Age
 
 ### 7.2 Current build status
 
-| Agent | Input | Output | Build status (12 May 2026) |
+| Agent | Input | Output | Build status (23 October 2026) |
 |---|---|---|---|
-| 1. SOP Parser | `content/sops/*.pdf` | `content/parsed/*-parsed.json` | Prototype script at `sentientia/agent1_sop_parser.py`. Not run in production. |
-| 2. Narration Generator | parsed JSON | `content/narrations/*-narration.txt` | Architected but not built. Will use Claude as the language model. |
-| 3. Slides Generator | narration TXT | `content/slides/*-slides.json` | Architected but not built. Will use the Gamma HTTP API. |
-| 4. Voice Generator | narration TXT | `content/voice/*-voice.mp3` | Architected but not built. Will use the ElevenLabs HTTP API. |
-| 5. SCORM Packager | slides + voice | `content/scorm-output/*-scorm.zip` | Prototype script at `sentientia/agent5_scorm_packager.py`. Not run in production. |
-| 6. Moodle Upload | SCORM ZIP | live course on `airpay.academy` | Architected but not built. Will use Moodle's `core_files_upload` web service. |
+| 1. SOP Parser | `content/sops/*.pdf` | `content/parsed/*-parsed.json` | Built: `scripts/agents/agent1_sop_parser.py`. Local only, no API. |
+| 2. Narration Generator | parsed JSON | `content/narrations/*-narration.txt` | Built: `agent2_narration_generator.py`. Mock by default; Claude only with `--confirm` (never run live: the AI cap and key are pending). |
+| 3. Slides Generator | narration TXT | `content/slides/*-slides.json` | Built: `agent3_slides_generator.py`. Local, no external API (no Gamma client). |
+| 4. Voice Generator | narration TXT | `content/voice/*-voice.mp3` | Built: `agent4_voice_generator.py`. Mock by default (a placeholder MP3); ElevenLabs only with `--confirm` (never run live). |
+| 5. SCORM Packager | slides + voice | `content/scorm-output/*-scorm.zip` | Built: `agent5_scorm_packager.py`, SCORM 1.2. On 22 October 2026, resume-where-you-left-off was added and the bug where closing a package marked it completed was fixed; both were checked in Moodle's own player. |
+| 6. Moodle Upload | SCORM ZIP | a SCORM activity in a course | Built: `agent6_moodle_upload.py`. Mock by default; uploads only with `--confirm`. |
+
+All six run end to end through `scripts/agents/run_pipeline_test.py`, which spawns one fresh process per agent; every
+stage is mock unless `--live --confirm` is given. CI runs `tests/agents/` (147 tests on 22 October 2026). An older copy
+of the agents with a different command line was retired on 22 October 2026 (`sentientia/_retired-2026-05-13/`).
+`sentientia/run_pipeline.py` now forwards to the current runner in mock mode.
 
 ### 7.3 Throughput delivered to date
 
-Zero SOPs processed through the live pipeline at the time of writing. The `content/sops/`, `content/parsed/`, `content/narrations/`, `content/slides/`, `content/voice/` and `content/scorm-output/` directories are present on disk but empty.
+One sample SOP (`content/sops/SAMPLE-SOP.pdf`) has been run through the mock pipeline; no SOP has been processed live (status 23 October 2026). The rest of this paragraph is the 12 May 2026 snapshot. The `content/sops/`, `content/parsed/`, `content/narrations/`, `content/slides/`, `content/voice/` and `content/scorm-output/` directories are present on disk but empty.
 
 ### 7.4 ElevenLabs voice production
 
