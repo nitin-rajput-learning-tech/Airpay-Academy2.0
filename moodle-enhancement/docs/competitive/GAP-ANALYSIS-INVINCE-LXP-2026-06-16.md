@@ -9,6 +9,12 @@
 > exists as flag-OFF scaffolds; the operative question is promotion, not
 > construction). The §9 open questions are packaged for decision in
 > [`docs/business/DECISION-MEMO-2026-08-04.md`](../business/DECISION-MEMO-2026-08-04.md).
+>
+> **Status note (2026-10-22):** the comparison table below is the 2026-06-16 snapshot. Rows marked "absent" for
+> Sentientia have since been built as flag-OFF plugins. For example, P1.4 xAPI/cmi5 is `local_sentientia_xapi` 1.0.2:
+> an xAPI 1.0.3 statements endpoint and a cmi5 AU session tracker. It is not a conformant LRS, and it has no cmi5
+> launcher in Moodle. The current, code-checked comparison is the SCORM/LXP study of 2026-10-15
+> ([`docs/research/2026-10-15-scorm-lxp/STUDY.md`](../research/2026-10-15-scorm-lxp/STUDY.md), §4 and §5).
 
 **Scope:** Benchmark Sentientia LMS against Invince.ai and the broader AI-native
 LXP market; identify gaps; define a feature-flagged, plugin-level roadmap to

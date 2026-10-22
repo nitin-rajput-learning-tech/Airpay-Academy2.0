@@ -4,9 +4,9 @@
 **Gap:** P0.3 — GenAI Authoring Studio (Invince "Craft" competitor)
 **Source:** `moodle-enhancement/docs/competitive/GAP-ANALYSIS-INVINCE-LXP-2026-06-16.md` §6 P0.3
 **Branch:** `claude/gap-authoring`
-**Status:** v0.1.0-alpha — MVP scaffold COMPLETE. All flags default OFF. Mock-mode only. Not deployed.
+**Status:** `2026092500` / `0.2.2-alpha` (2026-10-22: this header said 0.1.0-alpha "MVP scaffold" until now). A real course builder since 0.2.0-alpha (2026-08-05): mod_book chapters plus a GIFT mastery quiz, built into a hidden course behind the mandatory review gate; the author role is seeded on a fresh install (T-01, 2026-09-07); ADR-031 tenant scoping. Every flag defaults OFF (`enabled`, `tts`, `live_api`, `publish.enabled`); mock mode only (the AI gateway has never made a live call). On UAT (Moodle 5.3 since 2026-10-21), not on the live site. Not built: a scenario graph model, packaging to any standard (SCORM/cmi5), live TTS. See the dated sections below.
 **Maturity:** MATURITY_ALPHA — requires prod sign-off before any flag flips.
-**Updated:** 2026-06-16
+**Updated:** 2026-10-22 (header refreshed; the history below is unchanged)
 
 ---
 
