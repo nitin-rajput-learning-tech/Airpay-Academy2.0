@@ -118,7 +118,7 @@ case "$TARGET" in
         PHP_REQ="PHP >= 8.3 (64-bit; intl, soap, sodium, gd, mbstring, xml, zip, curl, opcache); max_input_vars >= 5000 (install and upgrade stop below it)"
         DB_REQ="MySQL 8.4+ (application user on caching_sha2_password), or MariaDB 11.4+, or PostgreSQL 17+ (utf8mb4, innodb_file_per_table, ROW_FORMAT=DYNAMIC on MySQL/MariaDB)"
         UPGRADE_FROM="Moodle 4.4 or later ONLY (a live 4.1.2 site needs the 4.5.x hop first, then 5.3; PHP 8.3 is the one version both hops accept)"
-        ROOT_LIB=1; FORBID_SETUPLIB_MOD=1 ;;
+        ROOT_LIB=1; FORBID_SETUPLIB_MOD=1; COMPOSER_VENDOR=1 ;;
     5.2)
         : "${TREE_NAME:=moodle5.2}"
         RELEASE="5.2+ (Build: 20260519)"; REL_PREFIX="5.2"
@@ -126,7 +126,7 @@ case "$TARGET" in
         PHP_REQ="PHP >= 8.3 (intl, soap, sodium, gd, mbstring, xml, zip, curl, opcache); max_input_vars >= 5000"
         DB_REQ="MySQL 8.4 or MariaDB 10.11 (utf8mb4, innodb_file_per_table, ROW_FORMAT=DYNAMIC)"
         UPGRADE_FROM="Moodle 4.4 or later"
-        ROOT_LIB=0; FORBID_SETUPLIB_MOD=0 ;;
+        ROOT_LIB=0; FORBID_SETUPLIB_MOD=0; COMPOSER_VENDOR=0 ;;
     *) echo "--target must be 5.3 or 5.2 (got '${TARGET}')" >&2; exit 2 ;;
 esac
 : "${BASE:=$DEF_BASE}"; : "${STAGE_PARENT:=$DEF_STAGE}"
@@ -168,6 +168,9 @@ verify_archive() {
         [ "$n" -gt 0 ] && ok "has lib/bundles/bootstrap ($n entries)" || bad "missing lib/bundles/bootstrap"
         n="$(grep -cE "^${TN_RE}/public/lib/fonts(/|\$)" "$list" || true)"
         [ "$n" = 0 ] && ok "no public/lib/fonts (5.2 leftover)" || bad "public/lib/fonts present: a stale 5.2 file set, the base is not vanilla 5.3"
+        for f in "vendor/autoload.php" "vendor/composer/installed.json" "vendor/league/oauth2-server/src/Entities/Traits/ScopeTrait.php"; do
+            grep -qxF "${TREE_NAME}/${f}" "$list" && ok "has ${f}" || bad "missing ${f} (Moodle 5.3 loads its libraries from <root>/vendor)"
+        done
         n="$(grep -cE "^${TN_RE}/public/theme/classic(/|\$)" "$list" || true)"
         [ "$n" = 0 ] && ok "no public/theme/classic (removed in 5.3)" || bad "public/theme/classic present: a stale 5.2 file set, the base is not vanilla 5.3"
     fi
@@ -256,6 +259,25 @@ native robocopy "$(win "$BASE")" "$(win "$STAGE_TREE")" /E /MT:8 /R:1 /W:1 \
     || { echo "staged public/config.php differs from the vanilla base file; refusing to continue" >&2; exit 1; }
 
 # ---------------------------------------------------------------------------------------------
+# 2b. COMPOSER VENDOR (5.3)
+# ---------------------------------------------------------------------------------------------
+# The 5.3 base is a source tree: composer.json + composer.lock, no vendor/. Moodle 5.3 loads its third-party PHP
+# libraries from <root>/vendor (league/oauth2-server for the REST API's scopes, aws-sdk, zipstream, php-markdown,
+# symfony/console and more: about 20 that core no longer bundles in public/lib). The packages built before 2026-10-22
+# shipped without it: on UAT every authenticated /api/rest call died on a missing class (HTTP 500), and the
+# environment page reported "Composer installed data not found". The production set is installed here from the
+# base's own composer.lock: no dev packages, an authoritative class map, no scripts.
+if [ "$COMPOSER_VENDOR" = 1 ]; then
+    : "${COMPOSER_PHAR:=/d/Claude Local/rehearsal/moodle51/composer.phar}"
+    : "${COMPOSER_PHP:=/c/Users/nitin.rajput/AppData/Local/Microsoft/WinGet/Packages/PHP.PHP.8.4_Microsoft.Winget.Source_8wekyb3d8bbwe/php.exe}"
+    echo "── 2b. composer install --no-dev (from the base's composer.lock) -> $STAGE_TREE/vendor"
+    [ -f "$STAGE_TREE/composer.lock" ] || { echo "the base has no composer.lock; refusing to continue" >&2; exit 1; }
+    [ -f "$COMPOSER_PHAR" ] || { echo "composer.phar not found at $COMPOSER_PHAR (set COMPOSER_PHAR)" >&2; exit 1; }
+    ( cd "$STAGE_TREE" && "$COMPOSER_PHP" "$(win "$COMPOSER_PHAR")" install --no-dev --classmap-authoritative         --no-interaction --no-scripts --no-progress < /dev/null > "$RUN_DIR/composer-install.log" 2>&1 )         || { echo "composer install failed: see $RUN_DIR/composer-install.log" >&2; exit 1; }
+    tail -n 2 "$RUN_DIR/composer-install.log"
+fi
+
+# ---------------------------------------------------------------------------------------------
 # 3. OVERLAY
 # ---------------------------------------------------------------------------------------------
 echo "── 3. overlay (repo mode) -> $PUB"
@@ -313,6 +335,14 @@ if [ "${#SHIPPED[@]}" -gt 0 ]; then
     [ -z "$HITS" ] && ok "no shipped PHP instantiates Mustache_Engine (except the emails factory)" || { bad "new Mustache_Engine in shipped PHP (the class is gone on 5.2+)"; echo "$HITS" | head -n 8 | sed 's/^/    /' >&2; }
     HITS="$(grep -rIl --include='*.js' 'theme_airpayux' "$PUB/theme/sentientia/amd/build" 2>/dev/null || true)"
     [ -z "$HITS" ] && ok "no stale theme_airpayux module names in theme amd/build" || bad "stale theme_airpayux names in theme/sentientia/amd/build"
+fi
+if [ "$COMPOSER_VENDOR" = 1 ]; then
+    [ -f "$STAGE_TREE/vendor/autoload.php" ] && ok "vendor/autoload.php present" || bad "vendor/autoload.php missing (composer install did not run)"
+    [ -f "$STAGE_TREE/vendor/league/oauth2-server/src/Entities/Traits/ScopeTrait.php" ] && ok "vendor/league/oauth2-server present (REST API scopes)"         || bad "vendor/league/oauth2-server missing: every authenticated /api/rest call would fail"
+    [ ! -d "$STAGE_TREE/vendor/phpunit" ] && ok "no dev packages in vendor/ (phpunit absent)" || bad "vendor/ carries dev packages (phpunit): install with --no-dev"
+    NPKG="$(grep -o '"name": *"[^"]*/' "$STAGE_TREE/vendor/composer/installed.json" 2>/dev/null | wc -l)"
+    NLOCK="$(grep -o '"name": *"[^"]*/' "$STAGE_TREE/composer.lock" | wc -l)"
+    ok "vendor/composer/installed.json lists $NPKG package(s) (composer.lock names $NLOCK, dev included)"
 fi
 if [ "$FAILS" != 0 ]; then
     echo "stage verification FAILED ($FAILS). Nothing was zipped. Stage left at: $RUN_DIR" >&2
