@@ -16,7 +16,9 @@ global $OUTPUT, $PAGE;
 $ctx = context_system::instance();
 $PAGE->set_context($ctx);
 $PAGE->set_url(new moodle_url('/local/sentientia_request/approvals.php'));
-$PAGE->set_pagelayout('admin');
+// 'standard', like My requests: line managers use this page, and the theme's 'admin' layout printed a second
+// page header and breadcrumb above the template's own heading (2026-10-20 visual pass).
+$PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('pendingapprovals', 'local_sentientia_request'));
 $PAGE->set_heading(get_string('pendingapprovals', 'local_sentientia_request'));
 require_capability('local/sentientia_request:approve', $ctx);

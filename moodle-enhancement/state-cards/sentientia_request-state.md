@@ -6,6 +6,8 @@
 **Status:** Learner-driven course request workflow (Sentientia is not live yet; the live system is BizLMS).
 **Last refreshed:** 2026-10-15 (visual-pass finding 7: approver capability + catalogue button)
 
+
+**2026-10-23 - 2026102300 / 1.6.3:** `approvals.php` uses the `standard` layout (it used `admin`, whose page header and breadcrumb duplicated the template's; the 2026-10-20 visual pass). Evidence: `docs/visual-evidence/2026-10-23/request-approvals-layout/`.
 ---
 
 ## Mission
