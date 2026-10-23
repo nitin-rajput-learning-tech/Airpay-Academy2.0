@@ -477,7 +477,7 @@ defined('MOODLE_INTERNAL') || die();
 // 2026101501: 2026-10-15 dropdown_bridge: data-bs-toggle-only dropdowns open in the Bootstrap 4 theme
 // 2026101502: 2026-10-15 edit-mode switch styled as the theme's Bootstrap 4 custom switch
 // 2026101503: 2026-10-15 course author edit mode: no reset of $USER->editing, no orphan edit_switch init, header actions printed
-$plugin->version   = 2026101504;  // 2026-10-15 dropdown_bridge keeps core's Bootstrap 5 data-api off elements that carry both attributes (on top of 2026101503)
+$plugin->version   = 2026102300;  // 2026-10-23 activity group-mode badge: Boost's icon-only rules ported ("No groups" no longer wraps under the icon in edit mode). Was:  // 2026-10-15 dropdown_bridge keeps core's Bootstrap 5 data-api off elements that carry both attributes (on top of 2026101503)
 // 2026100807: Moodle 5.3 FX-15 follow-up: dashboard + frontpage course counts filter COALESCE(deletioninprogress, 0) = 0 (5.3's column is NULL for every course not being deleted; '= 0' counted none)
 // 2026090806:  // login/OTP placeholders + SSO title + block aria-label: {{#quote}} JSON-escaped Hindi into \uXXXX → attribute-safe cleanstr/escaped values (core 5.2 pattern)
 // 2026090805:  footer: GPL badge -> private Airpay notice; sidebar literals localised; scoped-admin subtitle
@@ -500,7 +500,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.58-beta';  // persona-pass theme shell bundle (language switcher OFF, grader 390px, sticky footer, course closing tags)
+$plugin->release   = '1.0.59-beta';  // 1.0.59: group-mode badge. 1.0.58:  // persona-pass theme shell bundle (language switcher OFF, grader 390px, sticky footer, course closing tags)
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to
