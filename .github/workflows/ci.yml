@@ -428,6 +428,39 @@ jobs:
             theme/sentientia
           echo "::notice::AMD src/build parity OK — no un-allowlisted gaps."
 
+  upgrade-step-versions:
+    name: New upgrade steps sit above the shipped version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: none
+
+      - name: Compare new savepoints with the base's plugin versions
+        run: |
+          # A step added at a version a site has already passed is skipped on
+          # that site, silently (the 2026-10-16 EV-17 merge: steps 2026100701/02
+          # under a shipped 2026100802; fixed by 1b6a00698). Base = the PR base,
+          # or the branch head before this push.
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE="${{ github.event.before }}"
+          fi
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            echo "no usable base commit (new branch?): comparing with origin/production"
+            git fetch -q origin production && BASE=$(git merge-base HEAD origin/production)
+          fi
+          php tools/check-upgrade-step-versions.php --base "$BASE"
+
   version-bump-check:
     name: version.php bump on plugin changes
     runs-on: ubuntu-latest
