@@ -374,6 +374,15 @@ jobs:
           # CHECK 17.
           php tools/check-lang-parity.php --quiet
 
+      - name: Check every message provider has its string
+        run: |
+          # Every db/messages.php provider needs 'messageprovider:<name>' in
+          # lang/en, or every user's notification preferences page shows
+          # [[messageprovider:...]]. Three plugins shipped that way until the
+          # 2026-10-20 visual pass (c3cc82ba6); lang parity cannot see a key
+          # missing from en and hi alike. Both plugin trees are checked.
+          php tools/check-message-provider-strings.php
+
   amd-build-parity:
     name: AMD src/build parity
     runs-on: ubuntu-latest
