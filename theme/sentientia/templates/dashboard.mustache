@@ -785,9 +785,23 @@
             Rendered HTML is empty when no featured courses are pinned. }}
         {{{ featured_widget_html }}}
 
-        {{! Moodle block regions — hidden when sidebar shell is active (blocks not used) }}
+        {{! Moodle block regions — hidden when sidebar shell is active (blocks not used).
+            Every region the mydashboard layout declares is printed here, not only the content region: core runs
+            the blocks of each declared region and queues their JS whether or not the markup is printed, and a block
+            whose markup is missing can fail. block_recentlyaccesseditems did: "Cannot read properties of null
+            (reading 'addEventListener')" for anyone with more than 3 recent items (UAT /my/, 2026-10-23). }}
         <div id="page-content" class="d-print-block" style="display: none;">
             {{{ output.main_content }}}
+            {{{ sidepreblocks }}}
+            {{{ layerone_detail_full }}}
+            {{{ layerone_detail_one }}}
+            {{{ layerone_detail_two }}}
+            {{{ layertwo_detail_one }}}
+            {{{ layertwo_detail_two }}}
+            {{{ layertwo_detail_three }}}
+            {{{ layertwo_detail_four }}}
+            {{{ layerone_bottom_one }}}
+            {{{ layerone_bottom_two }}}
         </div>
     </div>
     {{{ output.standard_after_main_region_html }}}
