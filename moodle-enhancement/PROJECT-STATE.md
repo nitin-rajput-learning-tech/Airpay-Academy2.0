@@ -1,7 +1,36 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-10-21 (**UAT upgraded to Moodle 5.3 + Sentientia 4f847d434 (package v4.3.2); verification steps 1 to 9 green; the logged-in screen check is Nitin's; see the 2026-10-21 section**) **Previous:** 2026-10-21 (the 2026-10-16 merges evidenced; three defects fixed)
+**Updated:** 2026-10-23 (**UAT 5.3: the missing composer vendor/ was found and fixed (v4.3.3; the HTTP 502 is gone); research items 1-4 done; one UAT TypeError on /my/ is still open; see the 2026-10-22 / 10-23 section**) **Previous:** 2026-10-21 (UAT upgraded to Moodle 5.3)
 
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
+
+---
+
+## 2026-10-22 / 10-23 - UAT vendor fix, research items 1-4, new gates (Opus 5.5)
+
+**UAT defect found by Nitin's check, fixed.** A popup "HTTP 502" appeared on the dashboard.
+- Cause: every 5.3 package lacked Moodle's composer `vendor/`, so ~20 libraries were missing. Authenticated
+  `/api/rest` calls died on the League OAuth2 `ScopeTrait`.
+- Reproduced on the local 5.3 runtime (php -S + router, MariaDB 3308).
+- Fixes:
+  - the builder runs `composer install --no-dev` (1f2cae095, 3d40c2d1e);
+  - package `v4.3.3` (sha256 83d80ee7...);
+  - UAT got `vendor/` from that package on 2026-10-23. `check_vendor53.php` is all ok, and the environment check
+    has 0 failing items. No 5xx since.
+- New gates:
+  - `tools/uat/check_vendor53.php`, as a rehearsal hard check and runbook step 0;
+  - `tools/check-message-provider-strings.php`, in CI.
+
+**Still open on UAT:** a "TypeError: Cannot read properties of null (reading 'addEventListener')" popup on `/my/`
+for Meera (a multi-role tenant admin), in both the Administrator and Employee views. It does not reproduce locally,
+even with UAT's 32 global flags ON. The stack trace is needed from Nitin's browser console.
+
+**Research items (Nitin, 2026-10-21: improve the current product first):**
+1. One content pipeline (f1e300d24): `scripts/agents` only; the old copies are in `sentientia/_retired-2026-05-13/`.
+2. SCORM packager (946e90b9f): closing no longer completes the course; resume via `lesson_location`. Checked in
+   Moodle's real player (`docs/visual-evidence/2026-10-22/scorm-resume/`).
+3. Docs truth: Product Guide v1.1 (not "live"), the authoring card, the Invince note.
+4. kn/mr/sw for 41 plugins plus Hindi for 4 blocks (16f339065): 4,429 strings per language. Machine drafts,
+   validated mechanically; native review pending.
 
 ---
 
