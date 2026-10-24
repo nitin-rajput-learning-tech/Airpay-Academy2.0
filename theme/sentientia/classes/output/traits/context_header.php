@@ -117,7 +117,10 @@ trait context_header {
                             'title' => get_string('message', 'message'),
                             'url'   => new \moodle_url('/message/index.php',
                                 ['id' => $user->id]),
-                            'image' => 'message',
+                            // 't/' names, as core passes them: core's format_button_images() looks for a
+                            // PNG/GIF of 't/' . image and only SVGs ship on 5.x, so a bare 'message' was treated as an
+                            // external image and rendered a 404 <img> on every profile/preferences header (2026-10-24).
+                            'image' => 't/message',
                             'linkattributes' => \core_message\helper::messageuser_link_params(
                                 $user->id),
                             'page'  => $this->page,
@@ -129,7 +132,7 @@ trait context_header {
                         $contacttitle     = $iscontact ? 'removefromyourcontacts'
                                                        : 'addtoyourcontacts';
                         $contacturlaction = $iscontact ? 'removecontact' : 'addcontact';
-                        $contactimage     = $iscontact ? 'removecontact' : 'addcontact';
+                        $contactimage     = $iscontact ? 't/removecontact' : 't/addcontact';
                         $userbuttons['togglecontact'] = [
                             'buttontype' => 'togglecontact',
                             'title'      => get_string($contacttitle, 'message'),
