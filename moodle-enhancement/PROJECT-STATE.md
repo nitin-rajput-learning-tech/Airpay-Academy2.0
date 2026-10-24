@@ -1,7 +1,52 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-10-23 (**UAT 5.3: the missing composer vendor/ was found and fixed (v4.3.3; the HTTP 502 is gone); research items 1-4 done; one UAT TypeError on /my/ is still open; see the 2026-10-22 / 10-23 section**) **Previous:** 2026-10-21 (UAT upgraded to Moodle 5.3)
+**Updated:** 2026-10-24 (**UAT /my/ TypeError root-caused and fixed in code (83f9f252f); a second UAT defect, a 404 Message-button icon, fixed (62149a665); new CI gate for unprinted layout regions; UAT deploy of 6 files waits for the tunnel. See the 2026-10-24 entry.**)
 
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
+
+---
+
+## 2026-10-24 - UAT /my/ TypeError fixed, context-header icon fixed, layout-region gate (Opus 5.5)
+
+**The UAT /my/ TypeError (Meera, Admin and Employee views) is root-caused and fixed in code: 83f9f252f.**
+- The stack's `theme_sentientia/chart_loader.min.js:4354` label was misleading. In Nitin's Chrome session, line 4354 of
+  the combined RequireJS bundle is core `block_recentlyaccesseditems/main`. Its `registerEventListeners()` runs when a
+  user has more than 3 recent items and calls `addEventListener` on a "Show more" link it never null-checks.
+- Core `standard_head_html()` (core_renderer.php:187) runs every declared region's blocks, so their JS is queued. The
+  `mydashboard` layout declares 10 regions (side-pre plus BizLMS's nine layer* regions), and `dashboard.mustache`
+  printed none of them. So the block's init ran with no markup.
+- Fix: the template prints every declared region into its existing hidden `#page-content` container (the
+  "blocks not used" design). Nothing becomes visible.
+- Rejected: dropping the layout's `blocks()` calls (no effect) and declaring no regions. With no regions, core's
+  `add_region('content')` takes the empty default region and merges the orphaned blocks into it, so they become visible.
+- Reproduced and verified on the local 5.3 runtime (e2e_learner seeded with the block and 5 recent items; same stack
+  before, 0 errors after, every block hidden, desktop and mobile). Evidence: `docs/visual-evidence/2026-10-24/dashboard-hidden-regions/`.
+
+**Second UAT defect from a read-only console sweep of Meera's session: fixed in 62149a665.** Every user context header
+(notification preferences, user preferences, profiles) asked for `/theme/image.php/sentientia/core/<rev>/message`,
+a 404. The theme's `context_header` trait passed bare `message` / `addcontact` / `removecontact`; core's
+`format_button_images()` cannot resolve those on 5.x (SVG-only pix), so they were treated as external images. It now
+passes `t/...` as core does. Evidence: `docs/visual-evidence/2026-10-24/context-header-icons/`.
+
+**Sweeps.**
+- UAT in Chrome (Meera): dashboard, my courses, catalog, certificates, profile, skills, compliance report, live
+  trainer, authoring studio, skills extraction queue, approvals, notification preferences. Only the two defects above.
+- Local 5.3, read-only: learner 14 pages and admin 12 pages. 0 console errors apart from the two above.
+
+**New CI gate (a5dfba98b).** `tools/check-theme-layout-regions.php` (lang-parity-check job): every region a theme
+layout declares must be printed by its template(s). It flags exactly the 10 dashboard regions on 585f358a4 and passes
+now. Listed exceptions: `embedded:side-pre` (fake blocks only, as in Boost) and `course:course-pre` (below).
+
+**Waiting for the tunnel: UAT deploy of 6 files** (theme 2026102400 / 1.0.61-beta, request 1.6.3). These are both fixes
+above, the 10-23 group-mode badge and the approvals layout. Dry-run verified:
+`tools/uat/deploy_to_uat.sh --yes theme/sentientia/templates/dashboard.mustache theme/sentientia/classes/output/traits/context_header.php theme/sentientia/scss/moodle/course.scss theme/sentientia/version.php moodle-enhancement/local/sentientia_request/approvals.php moodle-enhancement/local/sentientia_request/version.php`.
+The kn/mr/sw packs are left out until a native speaker has reviewed them.
+
+**Decisions for Nitin.**
+- Dashboard blocks (calendar, recent items, BizLMS layer blocks): keep hiding them (today's behaviour, kept by
+  the fix), or show side-pre in a drawer as Boost does.
+- `course-pre`: the course layout declares it and nothing prints it. Show it, or drop it; dropping moves those
+  blocks into the course drawer.
+- Still open from 10-23: UAT backup folder deletion, the old 5.2 zip, and native review of the kn/mr/sw packs.
 
 ---
 
