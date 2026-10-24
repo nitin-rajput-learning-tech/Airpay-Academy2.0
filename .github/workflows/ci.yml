@@ -383,6 +383,15 @@ jobs:
           # missing from en and hi alike. Both plugin trees are checked.
           php tools/check-message-provider-strings.php
 
+      - name: Check every theme layout region is printed
+        run: |
+          # Core runs the blocks of every region a layout declares (so their JS
+          # reaches the page head), printed or not. The mydashboard layout
+          # declared 10 regions its template never printed, and core
+          # block_recentlyaccesseditems' init then threw on UAT /my/ (fixed in
+          # 83f9f252f). Known exceptions are listed, with reasons, in the script.
+          php tools/check-theme-layout-regions.php
+
   amd-build-parity:
     name: AMD src/build parity
     runs-on: ubuntu-latest
