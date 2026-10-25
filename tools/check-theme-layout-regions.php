@@ -39,9 +39,6 @@ define('BLOCK_ADDBLOCK_POSITION_FLATNAV', 3);
 $allowed = [
     // Boost does the same: embedded pages print only fake blocks (quiz navigation) from side-pre.
     'embedded:side-pre' => 'fake blocks only, as in Boost',
-    // 2026-10-24: course-pre is printed by nothing; removing it would move its blocks into the course drawer (a
-    // visible change), so it waits for Nitin's call (docs/visual-evidence/2026-10-24/dashboard-hidden-regions).
-    'course:course-pre' => 'decision pending (show in drawer or drop)',
 ];
 
 $themedir = rtrim(str_replace('\\', '/', $argv[1] ?? getcwd() . '/theme/sentientia'), '/');

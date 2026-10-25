@@ -556,6 +556,22 @@ a.ap-sidebar__roleswitch-item:hover {
 }
 
 /* ── Topbar ────────────────────────────────────── */
+// Dashboard blocks drawer (2026-10-24, flag sentientia.dashboard.blocksdrawer.enabled). Boost places the drawer and
+// its toggle under a navbar of $navbar-height; on the dashboard the sticky .ap-topbar (z-index sticky) sits there
+// instead and would cover both. The drawer opens over the top bar (below modals), full height; the toggle is a tab at
+// mid-height on the right edge, clear of the top bar and the PWA install banner.
+.drawer.ap-dashboard-blocks-drawer {
+    top: 0;
+    height: 100vh;
+    z-index: var(--ap-z-offcanvas);
+}
+
+.drawer-toggles .drawer-toggler.ap-dashboard-blocks-toggle {
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: var(--ap-z-fixed);
+}
+
 .ap-topbar {
     position: sticky;
     top: 0;

@@ -194,6 +194,51 @@
             <main class="ap-shell__content" id="ap-shell-content">
                 <h1 class="sr-only">{{#str}}myhome, core{{/str}}</h1>
                 <div id="page" class="d-print-block">
+                    {{! Dashboard blocks drawer, behind sentientia.dashboard.blocksdrawer.enabled (Nitin, 2026-10-24):
+                        the course-editing drawer and toggle, holding the blocks of every region the layout declares. }}
+                    {{#blocksdrawer}}
+                        {{< theme_sentientia/drawer }}
+                            {{$id}}theme_sentientia-drawers-blocks{{/id}}
+                            {{$drawerclasses}}drawer drawer-right ap-dashboard-blocks-drawer{{#blockdraweropen}} show{{/blockdraweropen}}{{/drawerclasses}}
+                            {{$drawercontent}}
+                                <section class="d-print-none" aria-label="{{#str}}blocks{{/str}}">
+                                    {{{ addblockbutton }}}
+                                    {{{ sidepreblocks }}}
+                                    {{{ layerone_detail_full }}}
+                                    {{{ layerone_detail_one }}}
+                                    {{{ layerone_detail_two }}}
+                                    {{{ layertwo_detail_one }}}
+                                    {{{ layertwo_detail_two }}}
+                                    {{{ layertwo_detail_three }}}
+                                    {{{ layertwo_detail_four }}}
+                                    {{{ layerone_bottom_one }}}
+                                    {{{ layerone_bottom_two }}}
+                                </section>
+                            {{/drawercontent}}
+                            {{$drawerpreferencename}}drawer-open-block{{/drawerpreferencename}}
+                            {{$drawerstate}}show-drawer-right{{/drawerstate}}
+                            {{$tooltipplacement}}left{{/tooltipplacement}}
+                            {{$drawercloseonresize}}1{{/drawercloseonresize}}
+                            {{$closebuttontext}}{{#str}}closeblockdrawer, core{{/str}}{{/closebuttontext}}
+                        {{/ theme_sentientia/drawer}}
+                        <div class="drawer-toggles d-flex">
+                            <div class="drawer-toggler drawer-right-toggle ap-dashboard-blocks-toggle ml-auto d-print-none">
+                                <button
+                                    class="btn icon-no-margin"
+                                    data-toggler="drawers"
+                                    data-action="toggle"
+                                    data-target="theme_sentientia-drawers-blocks"
+                                    data-bs-toggle="tooltip"
+                                    data-placement="right"
+                                    title="{{#str}}opendrawerblocks, core{{/str}}"
+                                >
+                                    <span class="sr-only">{{#str}}opendrawerblocks, core{{/str}}</span>
+                                    <span class="dir-rtl-hide">{{#pix}}t/blocks_drawer, core{{/pix}}</span>
+                                    <span class="dir-ltr-hide">{{#pix}}t/blocks_drawer_rtl, core{{/pix}}</span>
+                                </button>
+                            </div>
+                        </div>
+                    {{/blocksdrawer}}
                     {{#secondarymoremenu}}
                         <div class="secondary-navigation">
                             {{> core/moremenu}}
@@ -786,12 +831,14 @@
         {{{ featured_widget_html }}}
 
         {{! Moodle block regions — hidden when sidebar shell is active (blocks not used).
-            Every region the mydashboard layout declares is printed here, not only the content region: core runs
+            Every region the mydashboard layout declares is printed here (or in the blocks drawer when
+            sentientia.dashboard.blocksdrawer.enabled is on), not only the content region: core runs
             the blocks of each declared region and queues their JS whether or not the markup is printed, and a block
             whose markup is missing can fail. block_recentlyaccesseditems did: "Cannot read properties of null
             (reading 'addEventListener')" for anyone with more than 3 recent items (UAT /my/, 2026-10-23). }}
         <div id="page-content" class="d-print-block" style="display: none;">
             {{{ output.main_content }}}
+            {{^blocksdrawer}}
             {{{ sidepreblocks }}}
             {{{ layerone_detail_full }}}
             {{{ layerone_detail_one }}}
@@ -802,6 +849,7 @@
             {{{ layertwo_detail_four }}}
             {{{ layerone_bottom_one }}}
             {{{ layerone_bottom_two }}}
+            {{/blocksdrawer}}
         </div>
     </div>
     {{{ output.standard_after_main_region_html }}}

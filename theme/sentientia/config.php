@@ -51,7 +51,9 @@ $THEME->layouts = [
    // Main course page.
    'course' => array(
         'file' => 'course.php',
-        'regions' => array('side-pre', 'course-pre'),
+        // course-pre dropped 2026-10-24 (Nitin): nothing printed it, so its blocks ran for nothing; core now merges
+        // blocks recorded there into side-pre (the course drawer / blocks column).
+        'regions' => array('side-pre'),
         'defaultregion' => 'side-pre',
         'options' => array('langmenu' => true),
     ),

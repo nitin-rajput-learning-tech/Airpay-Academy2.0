@@ -159,6 +159,17 @@ $layertwo_detail_four = $OUTPUT->blocks('layertwo_four', 'col-md-6 float-left');
 $layertwo_three_one = $OUTPUT->blocks('layerthree_one', 'col-md-12');
 $layertwo_three_two = $OUTPUT->blocks('layerthree_two', 'col-md-12');
 
+// Dashboard blocks drawer (Nitin, 2026-10-24). With sentientia.dashboard.blocksdrawer.enabled the blocks of every
+// region this layout declares go into a right-hand drawer, as Boost shows them; with it off they are printed into
+// the template's hidden container (core runs them either way, see dashboard.mustache).
+$dashboardblocks = $blockshtml . $layerone_detail_full . $layerone_detail_one . $layerone_detail_two
+    . $layertwo_detail_one . $layertwo_detail_two . $layertwo_detail_three . $layertwo_detail_four
+    . $layertwo_three_one . $layertwo_three_two;
+$blocksdrawer = class_exists('\\local_sentientia_platform\\feature_flags')
+    && \local_sentientia_platform\feature_flags::is_enabled('sentientia.dashboard.blocksdrawer.enabled')
+    && (strpos($dashboardblocks, 'data-block=') !== false || !empty($addblockbutton));
+$blockdraweropen = $blocksdrawer && get_user_preferences('drawer-open-block') == true;
+
 $header = $PAGE->activityheader;
 $headercontent = $header->export_for_template($renderer);
 $OUTPUT->seteditswtich_display(true);
@@ -1112,6 +1123,8 @@ $templatecontext = [
     'overflow' => $overflow,
     'isloggedin' => isloggedin(),
     'addblockbutton' => $addblockbutton,
+    'blocksdrawer' => $blocksdrawer,
+    'blockdraweropen' => $blockdraweropen,
     // Airpay UX dashboard data
     'airpay' => $airpay_dashboard ?? [],
 ];
