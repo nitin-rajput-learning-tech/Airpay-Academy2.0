@@ -25,7 +25,7 @@ $string['approve']         = 'Approve';
 $string['reject']          = 'Reject';
 $string['cancel_request']  = 'Cancel request';
 $string['reason']          = 'Reason';
-$string['reason_help']     = 'Tell the approver why you need this course (200 chars min).';
+$string['reason_help']     = 'Tell the approver why you need this course (20 characters minimum).';
 $string['decision_note']   = 'Decision note';
 $string['decision_note_help'] = 'Visible to the requester. Required for rejections.';
 
