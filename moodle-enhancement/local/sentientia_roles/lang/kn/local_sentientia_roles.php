@@ -18,7 +18,8 @@
  * Kannada strings for local_sentientia_roles.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    local_sentientia_roles
  * @copyright  2026 Airpay Payment Services
@@ -27,13 +28,13 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Sentientia ರೋಲ್ ಮ್ಯಾನೇಜ್‌ಮೆಂಟ್';
-$string['sentientia_roles:view'] = 'ರೋಲ್-ಮ್ಯಾನೇಜ್‌ಮೆಂಟ್ UI ನೋಡಿ';
+$string['pluginname'] = 'Sentientia ರೋಲ್ ನಿರ್ವಹಣೆ';
+$string['sentientia_roles:view'] = 'ರೋಲ್ ನಿರ್ವಹಣೆ UI ನೋಡಿ';
 $string['sentientia_roles:manage'] = 'ರೋಲ್‌ಗಳ ಕೆಪಾಬಿಲಿಟಿ ಅನುಮತಿಗಳನ್ನು ಎಡಿಟ್ ಮಾಡಿ';
 $string['sentientia_roles:assign'] = 'ಯೂಸರ್‌ಗಳಿಗೆ ರೋಲ್ ಅಸೈನ್ / ಅನ್‌ಅಸೈನ್ ಮಾಡಿ';
-$string['sentientia_roles:audit'] = 'ರೋಲ್-ಮ್ಯಾನೇಜ್‌ಮೆಂಟ್ ಆಡಿಟ್ ಲಾಗ್ ನೋಡಿ';
+$string['sentientia_roles:audit'] = 'ರೋಲ್ ನಿರ್ವಹಣೆಯ ಆಡಿಟ್ ಲಾಗ್ ನೋಡಿ';
 $string['sentientia_roles:export'] = 'ರೋಲ್ + ಕೆಪಾಬಿಲಿಟಿ ಡೇಟಾವನ್ನು CSV ಗೆ ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಮಾಡಿ';
-$string['heading_index'] = 'ರೋಲ್ ಮ್ಯಾನೇಜ್‌ಮೆಂಟ್';
+$string['heading_index'] = 'ರೋಲ್ ನಿರ್ವಹಣೆ';
 $string['heading_view'] = 'ರೋಲ್: {$a}';
 $string['heading_audit'] = 'ಆಡಿಟ್ ಲಾಗ್';
 $string['filter_archetype'] = 'ಆರ್ಕಿಟೈಪ್';
@@ -50,8 +51,8 @@ $string['col_archetype'] = 'ಆರ್ಕಿಟೈಪ್';
 $string['col_caps'] = 'ಕೆಪಾಬಿಲಿಟಿಗಳು';
 $string['col_assignments'] = 'ಅಸೈನ್‌ಮೆಂಟ್‌ಗಳು';
 $string['col_sortorder'] = 'ಕ್ರಮ';
-$string['col_actions'] = 'ಆಕ್ಷನ್‌ಗಳು';
-$string['tab_overview'] = 'ಅವಲೋಕನ';
+$string['col_actions'] = 'ಆ್ಯಕ್ಷನ್‌ಗಳು';
+$string['tab_overview'] = 'ಓವರ್‌ವ್ಯೂ';
 $string['tab_capabilities'] = 'ಕೆಪಾಬಿಲಿಟಿಗಳು';
 $string['tab_assignments'] = 'ಅಸೈನ್‌ಮೆಂಟ್‌ಗಳು';
 $string['tab_audit'] = 'ಆಡಿಟ್';
@@ -77,7 +78,7 @@ $string['cap_col_name'] = 'ಕೆಪಾಬಿಲಿಟಿ';
 $string['cap_col_component'] = 'ಕಾಂಪೊನೆಂಟ್';
 $string['cap_col_risks'] = 'ರಿಸ್ಕ್‌ಗಳು';
 $string['cap_col_perm'] = 'ಅನುಮತಿ';
-$string['cap_col_actions'] = 'ಆಕ್ಷನ್‌ಗಳು';
+$string['cap_col_actions'] = 'ಆ್ಯಕ್ಷನ್‌ಗಳು';
 $string['cap_no_results'] = 'ಈಗಿನ ಫಿಲ್ಟರ್‌ಗೆ ಯಾವುದೇ ಕೆಪಾಬಿಲಿಟಿ ಹೊಂದುತ್ತಿಲ್ಲ.';
 $string['form_edit_cap'] = 'ಕೆಪಾಬಿಲಿಟಿ ಎಡಿಟ್ ಮಾಡಿ';
 $string['form_capability'] = 'ಕೆಪಾಬಿಲಿಟಿ';
@@ -89,15 +90,15 @@ $string['form_cancel'] = 'ರದ್ದುಮಾಡಿ';
 $string['audit_col_when'] = 'ಯಾವಾಗ';
 $string['audit_col_who'] = 'ಯಾರು';
 $string['audit_col_role'] = 'ರೋಲ್';
-$string['audit_col_action'] = 'ಆಕ್ಷನ್';
+$string['audit_col_action'] = 'ಆ್ಯಕ್ಷನ್';
 $string['audit_col_cap'] = 'ಕೆಪಾಬಿಲಿಟಿ';
 $string['audit_col_change'] = 'ಬದಲಾವಣೆ';
 $string['audit_col_reason'] = 'ಕಾರಣ';
 $string['audit_no_entries'] = 'ಇನ್ನೂ ಯಾವುದೇ ಆಡಿಟ್ ಎಂಟ್ರಿಗಳಿಲ್ಲ.';
 $string['audit_filter_role'] = 'ರೋಲ್ ಪ್ರಕಾರ ಫಿಲ್ಟರ್ ಮಾಡಿ';
 $string['audit_filter_role_all'] = 'ಎಲ್ಲಾ ರೋಲ್‌ಗಳು';
-$string['audit_filter_action_all'] = 'ಎಲ್ಲಾ ಆಕ್ಷನ್‌ಗಳು';
-$string['audit_filter_action'] = 'ಆಕ್ಷನ್ ಪ್ರಕಾರ ಫಿಲ್ಟರ್ ಮಾಡಿ';
+$string['audit_filter_action_all'] = 'ಎಲ್ಲಾ ಆ್ಯಕ್ಷನ್‌ಗಳು';
+$string['audit_filter_action'] = 'ಆ್ಯಕ್ಷನ್ ಪ್ರಕಾರ ಫಿಲ್ಟರ್ ಮಾಡಿ';
 $string['audit_action_capability_set'] = 'ಕೆಪಾಬಿಲಿಟಿ ಬದಲಾಗಿದೆ';
 $string['audit_action_capability_unset'] = 'ಕೆಪಾಬಿಲಿಟಿ ರೀಸೆಟ್ ಆಗಿದೆ';
 $string['audit_action_role_assigned'] = 'ರೋಲ್ ಅಸೈನ್ ಆಗಿದೆ';
@@ -108,20 +109,20 @@ $string['err_role_not_found'] = 'ರೋಲ್ ಸಿಗಲಿಲ್ಲ.';
 $string['err_user_not_found'] = 'ಯೂಸರ್ ಸಿಗಲಿಲ್ಲ.';
 $string['err_capability_not_found'] = 'ಕೆಪಾಬಿಲಿಟಿ "{$a}" ಈ Sentientia LMS ಇನ್‌ಸ್ಟಾಲ್‌ನಲ್ಲಿ ರಿಜಿಸ್ಟರ್ ಆಗಿಲ್ಲ.';
 $string['err_invalid_permission'] = 'ಅನುಮತಿ ಇವುಗಳಲ್ಲಿ ಒಂದಾಗಿರಬೇಕು: inherit, allow, prevent, prohibit.';
-$string['err_cannot_modify_admin'] = 'ಸೈಟ್ ಅಡ್ಮಿನಿಸ್ಟ್ರೇಟರ್ ರೋಲ್‌ನ ಕೆಪಾಬಿಲಿಟಿಗಳನ್ನು ಬದಲಾಯಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.';
+$string['err_cannot_modify_admin'] = 'ಸೈಟ್ ಅಡ್ಮಿನ್ ರೋಲ್‌ನ ಕೆಪಾಬಿಲಿಟಿಗಳನ್ನು ಬದಲಾಯಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.';
 $string['err_filterstoolong'] = 'ಫಿಲ್ಟರ್ ಬ್ಲಾಬ್ ಮಿತಿಯನ್ನು ಮೀರಿದೆ.';
-$string['err_definitions_crosstenant'] = 'ರೋಲ್ ಡೆಫಿನಿಷನ್‌ಗಳನ್ನು ಎಲ್ಲಾ ಟೆನೆಂಟ್‌ಗಳು ಹಂಚಿಕೊಳ್ಳುತ್ತವೆ, ಹಾಗಾಗಿ ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ (ಕ್ರಾಸ್-ಟೆನೆಂಟ್) ಅಡ್ಮಿನಿಸ್ಟ್ರೇಟರ್ ಮಾತ್ರ ಅವುಗಳನ್ನು ಬದಲಾಯಿಸಬಹುದು.';
+$string['err_definitions_crosstenant'] = 'ರೋಲ್ ಡೆಫಿನಿಷನ್‌ಗಳು ಎಲ್ಲಾ ಟೆನೆಂಟ್‌ಗಳಿಗೂ ಸಾಮಾನ್ಯವಾಗಿವೆ, ಹಾಗಾಗಿ ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ (ಕ್ರಾಸ್-ಟೆನೆಂಟ್) ಅಡ್ಮಿನ್ ಮಾತ್ರ ಅವುಗಳನ್ನು ಬದಲಾಯಿಸಬಹುದು.';
 $string['err_role_not_assignable'] = 'ನೀವೇ ಹೊಂದಿರುವ ಮತ್ತು ಅಸೈನ್ ಮಾಡಲು ನಿಮಗೆ ಅನುಮತಿ ಇರುವ ರೋಲ್ ಅನ್ನು ಮಾತ್ರ, ನಿಮ್ಮದೇ ಸಂಸ್ಥೆಯ ಬೇರೊಬ್ಬರಿಗೆ ಅಸೈನ್ ಮಾಡಬಹುದು.';
 $string['err_assignment_not_found'] = 'ಆ ಯೂಸರ್ ಬಳಿ ಸೈಟ್ ಲೆವೆಲ್‌ನಲ್ಲಿ ಈ ರೋಲ್ ಇಲ್ಲ, ಹಾಗಾಗಿ ತೆಗೆದುಹಾಕಲು ಏನೂ ಇಲ್ಲ.';
 $string['assignment_scope_system'] = 'ಇಡೀ ಪ್ಲಾಟ್‌ಫಾರ್ಮ್';
-$string['privacy:metadata:auditlog'] = 'ರೋಲ್-ಮ್ಯಾನೇಜ್‌ಮೆಂಟ್ UI ಮೂಲಕ ಮಾಡಿದ ರೋಲ್ ಮತ್ತು ಕೆಪಾಬಿಲಿಟಿ ಬದಲಾವಣೆಗಳ, ಹಾಗೂ BizLMS ನಿಂದ ಇಂಪೋರ್ಟ್ ಮಾಡಿದ ರೋಲ್ ಅಸೈನ್‌ಮೆಂಟ್‌ಗಳ ಅಪೆಂಡ್-ಓನ್ಲಿ ಆಡಿಟ್ ಲಾಗ್.';
+$string['privacy:metadata:auditlog'] = 'ರೋಲ್ ನಿರ್ವಹಣೆ UI ಮೂಲಕ ಮಾಡಿದ ರೋಲ್ ಮತ್ತು ಕೆಪಾಬಿಲಿಟಿ ಬದಲಾವಣೆಗಳ, ಹಾಗೂ BizLMS ನಿಂದ ಇಂಪೋರ್ಟ್ ಮಾಡಿದ ರೋಲ್ ಅಸೈನ್‌ಮೆಂಟ್‌ಗಳ ಅಪೆಂಡ್-ಓನ್ಲಿ ಆಡಿಟ್ ಲಾಗ್.';
 $string['privacy:metadata:auditlog:roleid'] = 'ಬದಲಾಯಿಸಲಾಗುತ್ತಿರುವ ರೋಲ್.';
 $string['privacy:metadata:auditlog:capability'] = 'ಯಾವ ಕೆಪಾಬಿಲಿಟಿಯ ಅನುಮತಿ ಬದಲಾಗಿದೆಯೋ ಆ ಕೆಪಾಬಿಲಿಟಿ.';
 $string['privacy:metadata:auditlog:oldpermission'] = 'ಬದಲಾವಣೆಗೆ ಮೊದಲು ಇದ್ದ ಕೆಪಾಬಿಲಿಟಿ ಅನುಮತಿ.';
 $string['privacy:metadata:auditlog:newpermission'] = 'ಬದಲಾವಣೆಯ ನಂತರದ ಕೆಪಾಬಿಲಿಟಿ ಅನುಮತಿ.';
 $string['privacy:metadata:auditlog:changedby'] = 'ಬದಲಾವಣೆ ಮಾಡಿದ ಅಡ್ಮಿನ್‌ನ ಯೂಸರ್ ID.';
 $string['privacy:metadata:auditlog:targetuserid'] = 'ಅಸೈನ್ ಅಥವಾ ಅನ್‌ಅಸೈನ್ ಆಗುತ್ತಿರುವ ಯೂಸರ್‌ನ ID (ರೋಲ್-ಅಸೈನ್‌ಮೆಂಟ್ ಈವೆಂಟ್‌ಗಳಿಗೆ).';
-$string['privacy:metadata:auditlog:reason'] = 'ಅಡ್ಮಿನ್ ನೀಡಿದ ಐಚ್ಛಿಕ ಕಾರಣದ ಪಠ್ಯ.';
+$string['privacy:metadata:auditlog:reason'] = 'ಅಡ್ಮಿನ್ ನೀಡಿದ ಐಚ್ಛಿಕ ಕಾರಣದ ಟೆಕ್ಸ್ಟ್.';
 $string['privacy:metadata:auditlog:open_path'] = 'ಬದಲಾವಣೆಯ ಸಮಯದಲ್ಲಿ ಅಡ್ಮಿನ್‌ನ Airpay ಟೆನೆಂಟ್ ಪಾತ್.';
 $string['privacy:metadata:auditlog:timecreated'] = 'ಬದಲಾವಣೆ ಆದ ಸಮಯ.';
 $string['cap_updated_success'] = 'ಕೆಪಾಬಿಲಿಟಿ "{$a}" ಅಪ್‌ಡೇಟ್ ಆಗಿದೆ.';

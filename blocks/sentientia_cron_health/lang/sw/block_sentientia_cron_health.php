@@ -18,7 +18,8 @@
  * Swahili strings for block_sentientia_cron_health.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    block_sentientia_cron_health
  * @copyright  2026 Airpay Payment Services
@@ -32,14 +33,14 @@ $string['sentientia_cron_health:addinstance'] = 'Ongeza bloku ya Afya ya Cron ya
 $string['sentientia_cron_health:myaddinstance'] = 'Ongeza bloku ya Afya ya Cron ya Airpay kwenye ukurasa wa Moodle Yangu';
 $string['kpi_stuck_airpay'] = 'Kazi za Airpay zilizokwama';
 $string['kpi_stuck_other'] = 'Kazi nyingine zilizokwama';
-$string['kpi_in_backoff'] = 'Kwenye backoff ya hitilafu';
+$string['kpi_in_backoff'] = 'Zinasubiri kujaribiwa tena';
 $string['stuck_airpay_heading'] = 'Kazi za Airpay zilizokwama';
-$string['in_backoff_heading'] = 'Kazi zilizo kwenye backoff ya hitilafu';
-$string['view_task_logs'] = 'Tazama logi kamili za kazi →';
+$string['in_backoff_heading'] = 'Kazi zinazosubiri kujaribiwa tena baada ya hitilafu';
+$string['view_task_logs'] = 'Tazama kumbukumbu kamili za kazi →';
 $string['severity_ok'] = 'Sawa';
 $string['severity_warning'] = 'Onyo';
 $string['severity_critical'] = 'Hatari';
-$string['kpi_aria_label'] = '{$a->value} {$a->label}, kiwango {$a->severity}';
+$string['kpi_aria_label'] = '{$a->value} {$a->label}, kiwango cha ukali {$a->severity}';
 $string['region_label'] = 'Muhtasari wa afya ya cron ya Airpay';
 $string['overdue_label'] = 'imechelewa kwa {$a}';
-$string['privacy:metadata'] = 'Bloku ya Afya ya Cron haihifadhi data yoyote binafsi. Inasoma hali ya kazi zilizopangwa kutoka kwenye majedwali ya msingi ya Moodle.';
+$string['privacy:metadata'] = 'Bloku ya Afya ya Cron haihifadhi data yoyote binafsi. Inasoma hali ya kazi zilizoratibiwa kutoka kwenye majedwali ya msingi ya Moodle.';

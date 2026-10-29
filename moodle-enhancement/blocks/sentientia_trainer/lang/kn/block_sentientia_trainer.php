@@ -18,7 +18,8 @@
  * Kannada strings for block_sentientia_trainer.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    block_sentientia_trainer
  * @copyright  2026 Airpay Payment Services
@@ -27,10 +28,10 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Sentientia ಟ್ರೈನರ್ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್';
-$string['sentientia_trainer:addinstance'] = 'ಟ್ರೈನರ್ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಬ್ಲಾಕ್ ಸೇರಿಸಿ';
-$string['sentientia_trainer:myaddinstance'] = 'ನನ್ನ ಪೇಜ್‌ಗೆ ಟ್ರೈನರ್ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಸೇರಿಸಿ';
-$string['sentientia_trainer:viewtrainerslist'] = 'ಟ್ರೈನರ್‌ಗಳ ಪಟ್ಟಿ ನೋಡಿ';
-$string['notrainings'] = 'ಯಾವುದೇ ಟ್ರೈನಿಂಗ್ ಸೆಷನ್‌ಗಳನ್ನು ಅಸೈನ್ ಮಾಡಿಲ್ಲ.';
-$string['yoursessions'] = 'ನಿಮ್ಮ ಟ್ರೈನಿಂಗ್ ಸೆಷನ್‌ಗಳು';
-$string['privacy:metadata'] = 'ಟ್ರೈನರ್ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಬ್ಲಾಕ್ ಯಾವುದೇ ವೈಯಕ್ತಿಕ ಡೇಟಾವನ್ನು ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ. ಇದು ಕ್ಲಾಸ್‌ರೂಮ್ ಪ್ಲಗಿನ್‌ಗೆ ಸೇರಿದ ಕ್ಲಾಸ್‌ರೂಮ್ ಸೆಷನ್ ಡೇಟಾವನ್ನು ತೋರಿಸುತ್ತದೆ.';
+$string['pluginname'] = 'Sentientia ಟ್ರೇನರ್ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್';
+$string['sentientia_trainer:addinstance'] = 'ಟ್ರೇನರ್ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಬ್ಲಾಕ್ ಸೇರಿಸಿ';
+$string['sentientia_trainer:myaddinstance'] = 'ನನ್ನ ಪುಟಕ್ಕೆ ಟ್ರೇನರ್ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಸೇರಿಸಿ';
+$string['sentientia_trainer:viewtrainerslist'] = 'ಟ್ರೇನರ್‌ಗಳ ಪಟ್ಟಿ ನೋಡಿ';
+$string['notrainings'] = 'ಯಾವುದೇ ಟ್ರೇನಿಂಗ್ ಸೆಷನ್ ಅಸೈನ್ ಆಗಿಲ್ಲ.';
+$string['yoursessions'] = 'ನಿಮ್ಮ ಟ್ರೇನಿಂಗ್ ಸೆಷನ್‌ಗಳು';
+$string['privacy:metadata'] = 'ಟ್ರೇನರ್ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಬ್ಲಾಕ್ ಯಾವುದೇ ವೈಯಕ್ತಿಕ ಡೇಟಾವನ್ನು ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ. ಇದು ಕ್ಲಾಸ್‌ರೂಮ್ ಪ್ಲಗಿನ್‌ಗೆ ಸೇರಿದ ಕ್ಲಾಸ್‌ರೂಮ್ ಸೆಷನ್ ಡೇಟಾವನ್ನು ತೋರಿಸುತ್ತದೆ.';

@@ -18,7 +18,8 @@
  * Swahili strings for local_sentientia_manager.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    local_sentientia_manager
  * @copyright  2026 Airpay Payment Services
@@ -31,21 +32,21 @@ $string['pluginname'] = 'Dashibodi ya Meneja ya Sentientia';
 $string['myteam'] = 'Timu Yangu';
 $string['teamlearning'] = 'Dashibodi ya Mafunzo ya Timu';
 $string['emptyteam_title'] = 'Bado hujapangiwa wanatimu wowote';
-$string['emptyteam_message'] = 'Wanaoripoti kwako moja kwa moja hupangwa kupitia sehemu ya msimamizi kwenye wasifu wa mtumiaji.';
-$string['privacy:metadata'] = 'Plugin ya dashibodi ya meneja huhifadhi maombi ya kujiandikisha + ugawaji wa kozi uliofanywa na mameneja kwa madhumuni ya utiifu / ukaguzi.';
-$string['sentientia_manager:view'] = 'Tazama dashibodi ya timu + maombi + ugawaji';
-$string['sentientia_manager:approve'] = 'Idhinisha / kataa maombi ya kujiandikisha';
+$string['emptyteam_message'] = 'Wanaoripoti kwako moja kwa moja hupangwa kupitia sehemu ya meneja kwenye wasifu wa mtumiaji.';
+$string['privacy:metadata'] = 'Plugin ya dashibodi ya meneja huhifadhi maombi ya usajili + upangaji wa kozi unaofanywa na mameneja kwa madhumuni ya uzingatiaji / ukaguzi.';
+$string['sentientia_manager:view'] = 'Tazama dashibodi ya timu + maombi + upangaji';
+$string['sentientia_manager:approve'] = 'Idhinisha / kataa maombi ya usajili';
 $string['sentientia_manager:allocate'] = 'Wapangie kozi wanaoripoti kwako moja kwa moja';
-$string['messageprovider:request_decided'] = 'Matokeo ya ombi lako la kujiandikisha';
+$string['messageprovider:request_decided'] = 'Matokeo ya ombi lako la usajili';
 $string['messageprovider:allocation_assigned'] = 'Kozi uliyopangiwa na meneja wako';
 $string['duplicaterequest'] = 'Tayari una ombi linalosubiri kwa kozi hii.';
-$string['alreadydecided'] = 'Ombi hili tayari limeshaamuliwa.';
+$string['alreadydecided'] = 'Ombi hili limeshaamuliwa.';
 $string['notdirectreport'] = 'Mtumiaji uliyemchagua haripoti kwako moja kwa moja.';
 $string['duplicateallocation'] = 'Mtumiaji huyu tayari amepangiwa kozi hiyo.';
-$string['manualenrolnotavailable'] = 'Kozi hii haijawasha uandikishaji wa mwongozo. Isanidi kwenye njia za uandikishaji za kozi.';
+$string['manualenrolnotavailable'] = 'Usajili wa mkono haujawashwa kwenye kozi hii. Uwashe kwenye njia za usajili za kozi.';
 $string['filterstoolong'] = 'Data ya vichujio imezidi kikomo cha 4 KB.';
 $string['error_cannotviewmember'] = 'Samahani, kwa sasa huna ruhusa ya kumtazama mwanatimu huyu. Unaweza kuwatazama tu wanaoripoti kwako moja kwa moja na watu walio chini yako katika mstari wa kuripoti.';
-$string['privacy:metadata:requests'] = 'Maombi ya kujiandikisha kutoka kwa wanafunzi yanayosubiri idhini ya meneja.';
+$string['privacy:metadata:requests'] = 'Maombi ya usajili kutoka kwa wanafunzi yanayosubiri idhini ya meneja.';
 $string['privacy:metadata:requests:userid'] = 'Mwanafunzi aliyetuma ombi.';
 $string['privacy:metadata:requests:courseid'] = 'Kozi inayoombwa.';
 $string['privacy:metadata:requests:managerid'] = 'Meneja aliyepangiwa kufanya uamuzi.';
@@ -55,11 +56,11 @@ $string['privacy:metadata:requests:decision_reason'] = 'Maelezo ya meneja wakati
 $string['privacy:metadata:requests:decided_by'] = 'ID ya mtumiaji aliyebofya idhinisha/kataa.';
 $string['privacy:metadata:requests:decided_at'] = 'Wakati uamuzi ulipofanywa.';
 $string['privacy:metadata:requests:timecreated'] = 'Wakati ombi lilipowasilishwa.';
-$string['privacy:metadata:allocations'] = 'Ugawaji wa kozi uliofanywa na meneja kwa wanaoripoti kwake moja kwa moja.';
-$string['privacy:metadata:allocations:managerid'] = 'Meneja aliyeunda ugawaji.';
+$string['privacy:metadata:allocations'] = 'Upangaji wa kozi unaofanywa na meneja kwa wanaoripoti kwake moja kwa moja.';
+$string['privacy:metadata:allocations:managerid'] = 'Meneja aliyeunda upangaji.';
 $string['privacy:metadata:allocations:userid'] = 'Mwanafunzi aliyepangiwa kozi.';
-$string['privacy:metadata:allocations:courseid'] = 'Kozi iliyogawiwa.';
-$string['privacy:metadata:allocations:due_date'] = 'Tarehe ya mwisho isiyo ya lazima.';
+$string['privacy:metadata:allocations:courseid'] = 'Kozi iliyopangwa.';
+$string['privacy:metadata:allocations:due_date'] = 'Tarehe ya mwisho (si lazima).';
 $string['privacy:metadata:allocations:status'] = 'imepangwa | inaendelea | imekamilika | imechelewa | imeghairiwa.';
-$string['privacy:metadata:allocations:note'] = 'Maelezo ya meneja yaliyoambatishwa kwenye ugawaji.';
-$string['privacy:metadata:allocations:timecreated'] = 'Wakati ugawaji ulipoundwa.';
+$string['privacy:metadata:allocations:note'] = 'Maelezo ya meneja yaliyoambatishwa kwenye upangaji.';
+$string['privacy:metadata:allocations:timecreated'] = 'Wakati upangaji ulipoundwa.';

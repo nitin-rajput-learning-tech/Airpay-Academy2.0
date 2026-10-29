@@ -18,7 +18,8 @@
  * Swahili strings for block_sentientia_cert_health.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    block_sentientia_cert_health
  * @copyright  2026 Airpay Payment Services
@@ -27,16 +28,16 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Sentientia Hali ya Vyeti';
-$string['sentientia_cert_health:addinstance'] = 'Ongeza block ya Hali ya Vyeti ya Airpay';
-$string['sentientia_cert_health:myaddinstance'] = 'Ongeza block ya Hali ya Vyeti ya Airpay kwenye ukurasa wa My Moodle';
-$string['kpi_sent'] = 'Vyeti vilivyotumwa kwa email (siku 7)';
-$string['kpi_failed'] = 'Utumaji ulioshindwa (siku 7)';
+$string['pluginname'] = 'Hali ya Vyeti ya Sentientia';
+$string['sentientia_cert_health:addinstance'] = 'Ongeza bloku ya Hali ya Vyeti ya Airpay';
+$string['sentientia_cert_health:myaddinstance'] = 'Ongeza bloku ya Hali ya Vyeti ya Airpay kwenye ukurasa wa My Moodle';
+$string['kpi_sent'] = 'Vyeti vilivyotumwa kwa barua pepe (siku 7)';
+$string['kpi_failed'] = 'Utumaji ulioshindikana (siku 7)';
 $string['kpi_suppressed'] = 'Utumaji uliozuiwa (siku 7)';
 $string['severity_ok'] = 'Sawa';
 $string['severity_warning'] = 'Onyo';
 $string['severity_critical'] = 'Hatari';
-$string['kpi_aria_label'] = '{$a->value} {$a->label}, kiwango {$a->severity}';
-$string['region_label'] = 'Muhtasari wa hali ya email za vyeti vya Airpay';
-$string['view_full_log'] = 'Tazama log kamili ya utumaji wa email →';
-$string['privacy:metadata'] = 'Block ya Hali ya Vyeti haihifadhi data yoyote binafsi. Inaonyesha jumla ya idadi za utumaji kutoka kwenye log ya email inayomilikiwa na local_sentientia_emails.';
+$string['kpi_aria_label'] = '{$a->value} {$a->label}, hali {$a->severity}';
+$string['region_label'] = 'Muhtasari wa hali ya barua pepe za vyeti vya Airpay';
+$string['view_full_log'] = 'Tazama kumbukumbu kamili za utumaji wa barua pepe →';
+$string['privacy:metadata'] = 'Bloku ya Hali ya Vyeti haihifadhi data yoyote binafsi. Inaonyesha idadi za jumla za utumaji kutoka kwenye kumbukumbu za barua pepe zinazomilikiwa na local_sentientia_emails.';

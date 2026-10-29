@@ -18,7 +18,8 @@
  * Swahili strings for block_sentientia_compliance.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    block_sentientia_compliance
  * @copyright  2026 Airpay Payment Services
@@ -32,11 +33,11 @@ $string['sentientia_compliance'] = 'Dashibodi ya Uzingatiaji';
 $string['sentientia_compliance:addinstance'] = 'Ongeza bloku mpya ya Dashibodi ya Uzingatiaji';
 $string['sentientia_compliance:myaddinstance'] = 'Ongeza bloku mpya ya Dashibodi ya Uzingatiaji kwenye Dashibodi Yangu';
 $string['mandatory'] = 'Lazima';
-$string['optional'] = 'Si Lazima';
-$string['overdue'] = 'Muda Umepita';
-$string['ontrack'] = 'Inaendelea Vizuri';
+$string['optional'] = 'Si lazima';
+$string['overdue'] = 'Imechelewa';
+$string['ontrack'] = 'Inaendelea vizuri';
 $string['completed'] = 'Imekamilika';
 $string['notstarted'] = 'Haijaanza';
 $string['compliance_status'] = 'Hali ya Uzingatiaji';
 $string['export_csv'] = 'Hamisha CSV';
-$string['privacy:metadata'] = 'Bloku ya Dashibodi ya Uzingatiaji haihifadhi data yoyote binafsi. Inaonyesha data ya ukamilishaji wa kozi inayomilikiwa na Moodle core.';
+$string['privacy:metadata'] = 'Bloku ya Dashibodi ya Uzingatiaji haihifadhi data yoyote binafsi. Inaonyesha data ya ukamilishaji wa kozi inayomilikiwa na kiini (core) cha Moodle.';

@@ -18,7 +18,8 @@
  * Swahili strings for block_sentientia_leaderboard.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    block_sentientia_leaderboard
  * @copyright  2026 Airpay Payment Services
@@ -27,8 +28,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Ubao wa Viongozi wa Sentientia';
-$string['block_title'] = 'Ubao wa viongozi';
-$string['sentientia_leaderboard:addinstance'] = 'Ongeza kizuizi cha Ubao wa Viongozi wa Sentientia';
-$string['sentientia_leaderboard:myaddinstance'] = 'Ongeza kizuizi cha Ubao wa Viongozi wa Sentientia kwenye dashibodi';
-$string['privacy:metadata'] = 'Kizuizi cha Ubao wa Viongozi wa Sentientia hakihifadhi data yoyote binafsi chenyewe. Kinaonyesha nafasi za washiriki zilizohifadhiwa na plugin ya local_sentientia_leaderboard.';
+$string['pluginname'] = 'Ubao wa Vinara wa Sentientia';
+$string['block_title'] = 'Ubao wa vinara';
+$string['sentientia_leaderboard:addinstance'] = 'Ongeza bloku ya Ubao wa Vinara wa Sentientia';
+$string['sentientia_leaderboard:myaddinstance'] = 'Ongeza bloku ya Ubao wa Vinara wa Sentientia kwenye dashibodi';
+$string['privacy:metadata'] = 'Bloku ya Ubao wa Vinara wa Sentientia haihifadhi data yoyote binafsi yenyewe. Inaonyesha nafasi zilizohifadhiwa na plugin ya local_sentientia_leaderboard.';

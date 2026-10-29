@@ -18,7 +18,8 @@
  * Kannada strings for block_sentientia_cron_health.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    block_sentientia_cron_health
  * @copyright  2026 Airpay Payment Services
@@ -27,19 +28,19 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Sentientia ಕ್ರಾನ್ ಹೆಲ್ತ್';
-$string['sentientia_cron_health:addinstance'] = 'Airpay ಕ್ರಾನ್ ಹೆಲ್ತ್ ಬ್ಲಾಕ್ ಸೇರಿಸಿ';
-$string['sentientia_cron_health:myaddinstance'] = 'ನನ್ನ Moodle ಪೇಜ್‌ಗೆ Airpay ಕ್ರಾನ್ ಹೆಲ್ತ್ ಬ್ಲಾಕ್ ಸೇರಿಸಿ';
+$string['pluginname'] = 'Sentientia Cron ಹೆಲ್ತ್';
+$string['sentientia_cron_health:addinstance'] = 'Airpay Cron ಹೆಲ್ತ್ ಬ್ಲಾಕ್ ಸೇರಿಸಿ';
+$string['sentientia_cron_health:myaddinstance'] = 'My Moodle ಪುಟಕ್ಕೆ Airpay Cron ಹೆಲ್ತ್ ಬ್ಲಾಕ್ ಸೇರಿಸಿ';
 $string['kpi_stuck_airpay'] = 'Airpay ಟಾಸ್ಕ್‌ಗಳು ಸ್ಟಕ್ ಆಗಿವೆ';
 $string['kpi_stuck_other'] = 'ಇತರ ಟಾಸ್ಕ್‌ಗಳು ಸ್ಟಕ್ ಆಗಿವೆ';
-$string['kpi_in_backoff'] = 'ಫೇಲ್ಯೂರ್ ಬ್ಯಾಕ್‌ಆಫ್‌ನಲ್ಲಿ';
+$string['kpi_in_backoff'] = 'ವೈಫಲ್ಯದ ಬ್ಯಾಕ್‌ಆಫ್‌ನಲ್ಲಿ';
 $string['stuck_airpay_heading'] = 'ಸ್ಟಕ್ ಆಗಿರುವ Airpay ಟಾಸ್ಕ್‌ಗಳು';
-$string['in_backoff_heading'] = 'ಫೇಲ್ಯೂರ್ ಬ್ಯಾಕ್‌ಆಫ್‌ನಲ್ಲಿರುವ ಟಾಸ್ಕ್‌ಗಳು';
+$string['in_backoff_heading'] = 'ವೈಫಲ್ಯದ ಬ್ಯಾಕ್‌ಆಫ್‌ನಲ್ಲಿರುವ ಟಾಸ್ಕ್‌ಗಳು';
 $string['view_task_logs'] = 'ಪೂರ್ಣ ಟಾಸ್ಕ್ ಲಾಗ್‌ಗಳನ್ನು ನೋಡಿ →';
 $string['severity_ok'] = 'ಸರಿ';
 $string['severity_warning'] = 'ಎಚ್ಚರಿಕೆ';
 $string['severity_critical'] = 'ಗಂಭೀರ';
 $string['kpi_aria_label'] = '{$a->value} {$a->label}, ತೀವ್ರತೆ {$a->severity}';
-$string['region_label'] = 'Airpay ಕ್ರಾನ್ ಹೆಲ್ತ್ ಸಾರಾಂಶ';
+$string['region_label'] = 'Airpay cron ಹೆಲ್ತ್ ಸಾರಾಂಶ';
 $string['overdue_label'] = '{$a} ತಡವಾಗಿದೆ';
-$string['privacy:metadata'] = 'ಕ್ರಾನ್ ಹೆಲ್ತ್ ಬ್ಲಾಕ್ ಯಾವುದೇ ಪರ್ಸನಲ್ ಡೇಟಾವನ್ನು ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ. ಇದು Moodle ಕೋರ್ ಟೇಬಲ್‌ಗಳಿಂದ ಶೆಡ್ಯೂಲ್ಡ್ ಟಾಸ್ಕ್‌ಗಳ ಸ್ಥಿತಿಯನ್ನು ಓದುತ್ತದೆ.';
+$string['privacy:metadata'] = 'Cron ಹೆಲ್ತ್ ಬ್ಲಾಕ್ ಯಾವುದೇ ವೈಯಕ್ತಿಕ ಡೇಟಾವನ್ನು ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ. ಇದು Moodle ಕೋರ್ ಟೇಬಲ್‌ಗಳಿಂದ ಶೆಡ್ಯೂಲ್ಡ್ ಟಾಸ್ಕ್‌ಗಳ ಸ್ಥಿತಿಯನ್ನು ಓದುತ್ತದೆ.';

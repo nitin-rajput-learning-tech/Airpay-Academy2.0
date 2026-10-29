@@ -18,7 +18,8 @@
  * Marathi strings for local_sentientia_talent.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    local_sentientia_talent
  * @copyright  2026 Airpay Payment Services
@@ -28,14 +29,14 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'Sentientia टॅलेंट मोबिलिटी';
-$string['sentientia_talent:viewopportunities'] = 'अंतर्गत संधींचा बोर्ड पहा';
+$string['sentientia_talent:viewopportunities'] = 'अंतर्गत संधींचा बोर्ड पाहा';
 $string['sentientia_talent:registerinterest'] = 'अंतर्गत संधीमध्ये रस नोंदवा';
-$string['sentientia_talent:viewcareerpath'] = 'तुमच्या रोलसाठी करिअर पाथ पहा';
-$string['sentientia_talent:viewsuccession'] = 'सक्सेशन प्लॅन पहा (HR / मॅनेजर)';
+$string['sentientia_talent:viewcareerpath'] = 'तुमच्या रोलसाठी करिअर पाथ पाहा';
+$string['sentientia_talent:viewsuccession'] = 'सक्सेशन प्लॅन पाहा (HR / मॅनेजर)';
 $string['sentientia_talent:managesuccession'] = 'सक्सेशन नॉमिनेशन मॅनेज करा (HR / मॅनेजर)';
 $string['sentientia_talent:managecareerpaths'] = 'करिअर पाथ तयार करा आणि एडिट करा';
 $string['sentientia_talent:manageopportunities'] = 'अंतर्गत संधी पोस्ट करा आणि मॅनेज करा';
-$string['sentientia_talent:audit'] = 'टॅलेंट ऑडिट लॉग पहा';
+$string['sentientia_talent:audit'] = 'टॅलेंट ऑडिट लॉग पाहा';
 $string['nav_console'] = 'टॅलेंट मोबिलिटी';
 $string['nav_opportunities'] = 'अंतर्गत संधी';
 $string['heading_console'] = 'टॅलेंट मोबिलिटी कन्सोल';
@@ -47,7 +48,7 @@ $string['kpi_paths'] = 'करिअर पाथ';
 $string['kpi_successions'] = 'सक्सेशन नॉमिनेशन';
 $string['kpi_opportunities'] = 'खुल्या संधी';
 $string['col_path'] = 'पाथ';
-$string['col_from'] = 'मूळ रोल';
+$string['col_from'] = 'सुरुवातीचा रोल';
 $string['col_to'] = 'पुढचा रोल';
 $string['col_status'] = 'स्टेटस';
 $string['col_role'] = 'रोल';
@@ -78,43 +79,43 @@ $string['skillsource_skillsai'] = 'AI स्किल्स टॅक्सॉ�
 $string['skillsource_manual'] = 'मॅन्युअल स्किल्स मॅट्रिक्स (Sentientia Skills)';
 $string['settings_pagetitle'] = 'Sentientia टॅलेंट मोबिलिटी';
 $string['settings_section_general'] = 'टॅलेंट मोबिलिटी';
-$string['settings_section_general_desc'] = 'टॅलेंट मोबिलिटी सूट प्लॅटफॉर्मच्या फीचर-फ्लॅग Switchboard मधून नियंत्रित होतो. हे पेज सध्याच्या स्थितीचा सारांश देते.';
+$string['settings_section_general_desc'] = 'टॅलेंट मोबिलिटी सूट प्लॅटफॉर्मच्या फीचर-फ्लॅग Switchboard मधून नियंत्रित होतो. हे पेज सध्याच्या स्टेटसचा सारांश देते.';
 $string['setting_skillsource'] = 'ॲक्टिव्ह स्किल्स टॅक्सॉनॉमी';
-$string['setting_skillsource_desc'] = 'संधी आणि सक्सेशन उमेदवारांसाठी स्किल मॅचिंग सध्या हे वापरते: {$a}. AI स्किल्स प्लगिन इन्स्टॉल आणि एनेबल असेल तर ते आपोआप वापरले जाते; नाहीतर मॅन्युअल स्किल्स मॅट्रिक्स वापरले जाते.';
-$string['setting_switchboard'] = 'फीचर फ्लॅग';
-$string['setting_switchboard_desc'] = 'प्लॅटफॉर्म Switchboard मध्ये प्रत्येक टेनंटसाठी टॅलेंट मोबिलिटी सूट एनेबल किंवा डिसेबल करा.';
+$string['setting_skillsource_desc'] = 'संधी आणि सक्सेशन उमेदवारांसाठी स्किल मॅचिंग सध्या हे वापरते: {$a}. AI स्किल्स प्लगइन इन्स्टॉल केलेले आणि चालू असेल तर ते आपोआप वापरले जाते; नाहीतर मॅन्युअल स्किल्स मॅट्रिक्स वापरले जाते.';
+$string['setting_switchboard'] = 'फीचर फ्लॅग्स';
+$string['setting_switchboard_desc'] = 'प्लॅटफॉर्म Switchboard मध्ये प्रत्येक टेनंटसाठी टॅलेंट मोबिलिटी सूट सुरू किंवा बंद करा.';
 $string['setting_switchboard_btn'] = 'Switchboard उघडा';
-$string['error_featuredisabled'] = 'तुमच्या संस्थेसाठी टॅलेंट मोबिलिटी फीचर एनेबल केलेले नाही.';
+$string['error_featuredisabled'] = 'तुमच्या संस्थेसाठी टॅलेंट मोबिलिटी फीचर चालू नाही.';
 $string['error_missingfields'] = 'कृपया सर्व आवश्यक फील्ड भरा.';
 $string['error_invalidreadiness'] = 'तयारीची व्हॅल्यू चुकीची आहे.';
 $string['error_invalidstatus'] = 'संधीचा स्टेटस चुकीचा आहे.';
 $string['error_duplicatenomination'] = 'ही व्यक्ती या रोलसाठी आधीच सक्सेसर म्हणून नॉमिनेट झाली आहे.';
 $string['error_opportunityclosed'] = 'ही संधी आता रस नोंदवण्यासाठी खुली नाही.';
-$string['privacy:metadata:succ'] = 'उमेदवारांना महत्त्वाच्या रोलशी जोडणारी सक्सेशन नॉमिनेशन.';
+$string['privacy:metadata:succ'] = 'उमेदवारांना महत्त्वाच्या रोलशी जोडणारी सक्सेशन नॉमिनेशन्स.';
 $string['privacy:metadata:succ:designation'] = 'ज्या रोलसाठी सक्सेशन प्लॅनिंग होत आहे तो रोल.';
-$string['privacy:metadata:succ:candidateid'] = 'सक्सेसर म्हणून नॉमिनेट झालेला यूजर.';
-$string['privacy:metadata:succ:incumbentid'] = 'सध्या तो रोल सांभाळणारा यूजर.';
+$string['privacy:metadata:succ:candidateid'] = 'सक्सेसर म्हणून नॉमिनेट झालेला युजर.';
+$string['privacy:metadata:succ:incumbentid'] = 'सध्या तो रोल सांभाळणारा युजर.';
 $string['privacy:metadata:succ:readiness'] = 'उमेदवार तो रोल घेण्यासाठी किती तयार आहे.';
 $string['privacy:metadata:succ:notes'] = 'नॉमिनेशनबद्दल HR च्या नोट्स.';
 $string['privacy:metadata:succ:timecreated'] = 'नॉमिनेशन कधी तयार केले.';
 $string['privacy:metadata:int'] = 'अंतर्गत संधींमध्ये दाखवलेला रस.';
 $string['privacy:metadata:int:opportunityid'] = 'हा रस ज्या संधीशी संबंधित आहे ती संधी.';
-$string['privacy:metadata:int:userid'] = 'रस दाखवणारा यूजर.';
+$string['privacy:metadata:int:userid'] = 'रस दाखवणारा युजर.';
 $string['privacy:metadata:int:message'] = 'अर्जदाराची ऐच्छिक नोट.';
 $string['privacy:metadata:int:matchpct'] = 'रस नोंदवला त्या वेळचे स्किल-मॅच टक्के.';
 $string['privacy:metadata:int:timecreated'] = 'रस कधी नोंदवला.';
-$string['privacy:metadata:opp'] = 'अंतर्गत संधींच्या पोस्टिंग.';
+$string['privacy:metadata:opp'] = 'अंतर्गत संधींच्या पोस्टिंग्ज.';
 $string['privacy:metadata:opp:title'] = 'संधीचे शीर्षक.';
-$string['privacy:metadata:opp:postedby'] = 'संधी पोस्ट करणारा यूजर.';
+$string['privacy:metadata:opp:postedby'] = 'संधी पोस्ट करणारा युजर.';
 $string['privacy:metadata:opp:timecreated'] = 'संधी कधी पोस्ट केली.';
-$string['privacy:metadata:audit'] = 'HR-संवेदनशील टॅलेंट कृतींचा ऑडिट लॉग.';
-$string['privacy:metadata:audit:action'] = 'केलेली कृती.';
-$string['privacy:metadata:audit:targetuserid'] = 'कृती ज्या व्यक्तीशी संबंधित आहे ती व्यक्ती, असल्यास.';
-$string['privacy:metadata:audit:changedby'] = 'कृती करणारा यूजर.';
-$string['privacy:metadata:audit:timecreated'] = 'कृती कधी झाली.';
+$string['privacy:metadata:audit'] = 'HR-संवेदनशील टॅलेंट ॲक्शन्सचा ऑडिट लॉग.';
+$string['privacy:metadata:audit:action'] = 'केलेली ॲक्शन.';
+$string['privacy:metadata:audit:targetuserid'] = 'ॲक्शन ज्या व्यक्तीशी संबंधित आहे ती व्यक्ती, असल्यास.';
+$string['privacy:metadata:audit:changedby'] = 'ॲक्शन करणारा युजर.';
+$string['privacy:metadata:audit:timecreated'] = 'ॲक्शन कधी झाली.';
 $string['privacy:metadata:path'] = 'करिअर पाथच्या व्याख्या. एखाद्या व्यक्तीचा डेटा मिटवला तरी या राहतात; शेवटचे एडिट करणारी व्यक्ती त्यातून काढून टाकली जाते.';
 $string['privacy:metadata:path:name'] = 'करिअर पाथचे नाव.';
-$string['privacy:metadata:path:usermodified'] = 'करिअर पाथ शेवटचा एडिट करणारा यूजर. तो यूजर मिटवला गेल्यावर 0 वर सेट होते.';
+$string['privacy:metadata:path:usermodified'] = 'करिअर पाथ शेवटचा एडिट करणारा युजर. तो युजर मिटवला गेल्यावर हे 0 वर सेट होते.';
 $string['privacy:metadata:path:timemodified'] = 'करिअर पाथ शेवटचा कधी एडिट झाला.';
-$string['privacy:metadata:succ:usermodified'] = 'नॉमिनेशन शेवटचे एडिट करणारा यूजर. तो यूजर मिटवला गेल्यावर 0 वर सेट होते.';
-$string['privacy:metadata:opp:usermodified'] = 'संधी शेवटची एडिट करणारा यूजर. तो यूजर मिटवला गेल्यावर 0 वर सेट होते.';
+$string['privacy:metadata:succ:usermodified'] = 'नॉमिनेशन शेवटचे एडिट करणारा युजर. तो युजर मिटवला गेल्यावर हे 0 वर सेट होते.';
+$string['privacy:metadata:opp:usermodified'] = 'संधी शेवटची एडिट करणारा युजर. तो युजर मिटवला गेल्यावर हे 0 वर सेट होते.';

@@ -18,7 +18,8 @@
  * Marathi strings for block_sentientia_leaderboard.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    block_sentientia_leaderboard
  * @copyright  2026 Airpay Payment Services
@@ -31,4 +32,4 @@ $string['pluginname'] = 'Sentientia लीडरबोर्ड';
 $string['block_title'] = 'लीडरबोर्ड';
 $string['sentientia_leaderboard:addinstance'] = 'Sentientia लीडरबोर्ड ब्लॉक जोडा';
 $string['sentientia_leaderboard:myaddinstance'] = 'डॅशबोर्डवर Sentientia लीडरबोर्ड ब्लॉक जोडा';
-$string['privacy:metadata'] = 'Sentientia लीडरबोर्ड ब्लॉक स्वतः कोणताही वैयक्तिक डेटा साठवत नाही. तो local_sentientia_leaderboard प्लगिनने साठवलेली क्रमवारी दाखवतो.';
+$string['privacy:metadata'] = 'Sentientia लीडरबोर्ड ब्लॉक स्वतः कोणताही वैयक्तिक डेटा साठवत नाही. तो local_sentientia_leaderboard प्लगइनने साठवलेले रँकिंग दाखवतो.';

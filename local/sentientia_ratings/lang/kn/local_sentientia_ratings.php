@@ -18,7 +18,8 @@
  * Kannada strings for local_sentientia_ratings.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    local_sentientia_ratings
  * @copyright  2026 Airpay Payment Services
@@ -32,21 +33,21 @@ $string['rate'] = 'ರೇಟ್ ಮಾಡಿ';
 $string['yourrating'] = 'ನಿಮ್ಮ ರೇಟಿಂಗ್';
 $string['averagerating'] = 'ಸರಾಸರಿ ರೇಟಿಂಗ್';
 $string['noratings'] = 'ಇನ್ನೂ ಯಾವುದೇ ರೇಟಿಂಗ್ ಇಲ್ಲ';
-$string['sentientia_ratings:rate'] = 'ಕೋರ್ಸ್‌ಗಳು, ಕ್ಲಾಸ್‌ರೂಮ್‌ಗಳು, ಪ್ರೋಗ್ರಾಮ್‌ಗಳು ಮತ್ತು ಲರ್ನಿಂಗ್ ಪಾತ್‌ಗಳಿಗೆ ಸ್ಟಾರ್ ರೇಟಿಂಗ್ ನೀಡಿ';
+$string['sentientia_ratings:rate'] = 'ಕೋರ್ಸ್‌ಗಳು, ಕ್ಲಾಸ್‌ರೂಮ್‌ಗಳು, ಪ್ರೋಗ್ರಾಂಗಳು ಮತ್ತು ಲರ್ನಿಂಗ್ ಪಾತ್‌ಗಳಿಗೆ ಸ್ಟಾರ್ ರೇಟಿಂಗ್ ಸಲ್ಲಿಸಿ';
 $string['invalidrating'] = 'ರೇಟಿಂಗ್ 1 ರಿಂದ 5 ಸ್ಟಾರ್‌ಗಳ ನಡುವೆ ಇರಬೇಕು';
-$string['invalidratearea'] = 'ಗೊತ್ತಿಲ್ಲದ ರೇಟಿಂಗ್ ವಿಭಾಗ';
-$string['invaliditemid'] = 'ರೇಟ್ ಮಾಡಲು ಅಮಾನ್ಯ ಐಟಂ';
+$string['invalidratearea'] = 'ಗೊತ್ತಿಲ್ಲದ ರೇಟಿಂಗ್ ಏರಿಯಾ';
+$string['invaliditemid'] = 'ರೇಟ್ ಮಾಡಬೇಕಾದ ಐಟಂ ಸರಿಯಿಲ್ಲ';
 $string['cannotrateasguest'] = 'ರೇಟಿಂಗ್ ಸಲ್ಲಿಸಲು ನೀವು ಲಾಗಿನ್ ಆಗಿರಬೇಕು';
 $string['ratingsaved'] = 'ನಿಮ್ಮ ರೇಟಿಂಗ್ ಸೇವ್ ಆಗಿದೆ';
 $string['rateaccessibility'] = '5 ರಲ್ಲಿ {$a} ಎಂದು ರೇಟ್ ಮಾಡಿ';
 $string['privacy:metadata:ratings'] = 'ಉದ್ಯೋಗಿಯೊಬ್ಬರು ಕೋರ್ಸ್ ಅಥವಾ ಇತರ ಐಟಂಗೆ ನೀಡಿದ ರೇಟಿಂಗ್.';
-$string['privacy:metadata:ratings:userid'] = 'ಈ ರೆಕಾರ್ಡ್ ಯಾರ ಬಗ್ಗೆ ಇದೆಯೋ ಆ ಯೂಸರ್‌ನ ID.';
-$string['privacy:metadata:ratings:itemid'] = 'ರೇಟ್ ಮಾಡಲಾದ ವಸ್ತುವಿನ ID.';
-$string['privacy:metadata:ratings:ratearea'] = 'ಯಾವ ರೀತಿಯ ವಸ್ತುವನ್ನು ರೇಟ್ ಮಾಡಲಾಗಿದೆ.';
+$string['privacy:metadata:ratings:userid'] = 'ಈ ದಾಖಲೆ ಯಾರ ಬಗ್ಗೆ ಇದೆಯೋ ಆ ಯೂಸರ್‌ನ ID.';
+$string['privacy:metadata:ratings:itemid'] = 'ರೇಟ್ ಮಾಡಲಾದ ಐಟಂನ ID.';
+$string['privacy:metadata:ratings:ratearea'] = 'ಯಾವ ರೀತಿಯ ಐಟಂ ಅನ್ನು ರೇಟ್ ಮಾಡಲಾಗಿದೆ ಎಂಬುದು.';
 $string['privacy:metadata:ratings:rating'] = 'ಯೂಸರ್ ನೀಡಿದ ರೇಟಿಂಗ್.';
-$string['privacy:metadata:ratings:timecreated'] = 'ರೆಕಾರ್ಡ್ ಕ್ರಿಯೇಟ್ ಆದ ಸಮಯ.';
-$string['privacy:metadata:ratings:timemodified'] = 'ರೆಕಾರ್ಡ್ ಕೊನೆಯ ಬಾರಿ ಬದಲಾದ ಸಮಯ.';
-$string['err_feature_off'] = 'ಈ ಪೇಜ್ ಲಭ್ಯವಿಲ್ಲ.';
+$string['privacy:metadata:ratings:timecreated'] = 'ದಾಖಲೆ ರಚಿಸಿದ ಸಮಯ.';
+$string['privacy:metadata:ratings:timemodified'] = 'ದಾಖಲೆ ಕೊನೆಯ ಬಾರಿ ಬದಲಾದ ಸಮಯ.';
+$string['err_feature_off'] = 'ಈ ಪುಟ ಲಭ್ಯವಿಲ್ಲ.';
 $string['reviewspagetitle'] = 'ರಿವ್ಯೂಗಳು';
 $string['reviewsheading'] = 'ರೇಟಿಂಗ್‌ಗಳು ಮತ್ತು ರಿವ್ಯೂಗಳು';
 $string['reviewsempty'] = 'ತೋರಿಸಲು ಯಾವುದೇ ರಿವ್ಯೂಗಳಿಲ್ಲ.';
@@ -56,16 +57,16 @@ $string['reviewrating'] = '5 ರಲ್ಲಿ {$a}';
 $string['reactionlikes'] = 'ಲೈಕ್‌ಗಳು: {$a}';
 $string['reactiondislikes'] = 'ಡಿಸ್‌ಲೈಕ್‌ಗಳು: {$a}';
 $string['privacy:metadata:reviews'] = 'ಉದ್ಯೋಗಿಯೊಬ್ಬರು ಕೋರ್ಸ್ ಅಥವಾ ಇತರ ಐಟಂ ಬಗ್ಗೆ ಬರೆದ ರಿವ್ಯೂ.';
-$string['privacy:metadata:reviews:userid'] = 'ಈ ರೆಕಾರ್ಡ್ ಯಾರ ಬಗ್ಗೆ ಇದೆಯೋ ಆ ಯೂಸರ್‌ನ ID.';
-$string['privacy:metadata:reviews:itemid'] = 'ರಿವ್ಯೂ ಮಾಡಲಾದ ವಸ್ತುವಿನ ID.';
-$string['privacy:metadata:reviews:ratearea'] = 'ಯಾವ ರೀತಿಯ ವಸ್ತುವನ್ನು ರಿವ್ಯೂ ಮಾಡಲಾಗಿದೆ.';
+$string['privacy:metadata:reviews:userid'] = 'ಈ ದಾಖಲೆ ಯಾರ ಬಗ್ಗೆ ಇದೆಯೋ ಆ ಯೂಸರ್‌ನ ID.';
+$string['privacy:metadata:reviews:itemid'] = 'ರಿವ್ಯೂ ಮಾಡಲಾದ ಐಟಂನ ID.';
+$string['privacy:metadata:reviews:ratearea'] = 'ಯಾವ ರೀತಿಯ ಐಟಂ ಅನ್ನು ರಿವ್ಯೂ ಮಾಡಲಾಗಿದೆ ಎಂಬುದು.';
 $string['privacy:metadata:reviews:review'] = 'ಯೂಸರ್ ಬರೆದ ಟೆಕ್ಸ್ಟ್.';
 $string['privacy:metadata:reviews:timecreated'] = 'ರಿವ್ಯೂ ಬರೆದ ಸಮಯ.';
-$string['privacy:metadata:reviews:timemodified'] = 'ರೆಕಾರ್ಡ್ ಕೊನೆಯ ಬಾರಿ ಬದಲಾದ ಸಮಯ.';
+$string['privacy:metadata:reviews:timemodified'] = 'ದಾಖಲೆ ಕೊನೆಯ ಬಾರಿ ಬದಲಾದ ಸಮಯ.';
 $string['privacy:metadata:reactions'] = 'ಉದ್ಯೋಗಿಯೊಬ್ಬರು ಕೋರ್ಸ್ ಅಥವಾ ಇತರ ಐಟಂಗೆ ನೀಡಿದ ಲೈಕ್ ಅಥವಾ ಡಿಸ್‌ಲೈಕ್.';
-$string['privacy:metadata:reactions:userid'] = 'ಈ ರೆಕಾರ್ಡ್ ಯಾರ ಬಗ್ಗೆ ಇದೆಯೋ ಆ ಯೂಸರ್‌ನ ID.';
-$string['privacy:metadata:reactions:itemid'] = 'ರಿಯಾಕ್ಷನ್ ಪಡೆದ ವಸ್ತುವಿನ ID.';
-$string['privacy:metadata:reactions:ratearea'] = 'ಯಾವ ರೀತಿಯ ವಸ್ತುವಿಗೆ ರಿಯಾಕ್ಷನ್ ನೀಡಲಾಗಿದೆ.';
+$string['privacy:metadata:reactions:userid'] = 'ಈ ದಾಖಲೆ ಯಾರ ಬಗ್ಗೆ ಇದೆಯೋ ಆ ಯೂಸರ್‌ನ ID.';
+$string['privacy:metadata:reactions:itemid'] = 'ರಿಯಾಕ್ಷನ್ ಪಡೆದ ಐಟಂನ ID.';
+$string['privacy:metadata:reactions:ratearea'] = 'ಯಾವ ರೀತಿಯ ಐಟಂಗೆ ರಿಯಾಕ್ಷನ್ ನೀಡಲಾಗಿದೆ ಎಂಬುದು.';
 $string['privacy:metadata:reactions:likestatus'] = 'ಯೂಸರ್ ಐಟಂ ಅನ್ನು ಲೈಕ್ (1) ಮಾಡಿದರೋ ಅಥವಾ ಡಿಸ್‌ಲೈಕ್ (2) ಮಾಡಿದರೋ ಎಂಬುದು.';
-$string['privacy:metadata:reactions:timecreated'] = 'ರಿಯಾಕ್ಷನ್ ಮೊದಲ ಬಾರಿ ನೀಡಿದ ಸಮಯ.';
-$string['privacy:metadata:reactions:timemodified'] = 'ರೆಕಾರ್ಡ್ ಕೊನೆಯ ಬಾರಿ ಬದಲಾದ ಸಮಯ.';
+$string['privacy:metadata:reactions:timecreated'] = 'ಮೊದಲ ಬಾರಿ ರಿಯಾಕ್ಷನ್ ನೀಡಿದ ಸಮಯ.';
+$string['privacy:metadata:reactions:timemodified'] = 'ದಾಖಲೆ ಕೊನೆಯ ಬಾರಿ ಬದಲಾದ ಸಮಯ.';

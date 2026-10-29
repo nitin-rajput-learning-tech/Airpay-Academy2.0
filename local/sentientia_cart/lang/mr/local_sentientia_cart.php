@@ -18,7 +18,8 @@
  * Marathi strings for local_sentientia_cart.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    local_sentientia_cart
  * @copyright  2026 Airpay Payment Services
@@ -40,8 +41,8 @@ $string['sentientia_cart:viewallorders'] = 'सर्व ऑर्डर्स �
 $string['sentientia_cart:refund'] = 'रिफंड प्रोसेस करा';
 $string['sentientia_cart:manageprices'] = 'कोर्सच्या किमती मॅनेज करा';
 $string['emptycart'] = 'तुमचे कार्ट रिकामे आहे.';
-$string['emptycart_hint'] = 'कॅटलॉग पाहा आणि तुमच्या कार्टमध्ये कोर्सेस जोडा.';
-$string['browsecatalog'] = 'कॅटलॉग पाहा';
+$string['emptycart_hint'] = 'कॅटलॉग ब्राउझ करा आणि तुमच्या कार्टमध्ये कोर्सेस जोडा.';
+$string['browsecatalog'] = 'कॅटलॉग ब्राउझ करा';
 $string['itemstotal'] = '{$a} आयटम';
 $string['subtotal'] = 'सबटोटल';
 $string['tax'] = 'कर (GST 18%)';
@@ -62,7 +63,7 @@ $string['billinggstn'] = 'GST नंबर (ऐच्छिक)';
 $string['placeorder'] = 'ऑर्डर करा';
 $string['orderconfirmation'] = 'ऑर्डर कन्फर्मेशन';
 $string['ordernumber'] = 'ऑर्डर #{$a}';
-$string['ordersuccess'] = 'तुमची ऑर्डर यशस्वीपणे झाली आहे.';
+$string['ordersuccess'] = 'तुमची ऑर्डर झाली आहे.';
 $string['orderpending'] = 'तुमची ऑर्डर पेमेंट कन्फर्मेशनच्या प्रतीक्षेत आहे.';
 $string['orderfailed'] = 'पेमेंट अयशस्वी: {$a}';
 $string['downloadreceipt'] = 'पावती डाउनलोड करा';
@@ -82,7 +83,7 @@ $string['filter_status'] = 'स्टेटस';
 $string['filter_tenant'] = 'टेनंट';
 $string['filter_daterange'] = 'तारखेचा कालावधी';
 $string['exportcsv'] = 'CSV एक्सपोर्ट करा';
-$string['exportreport_daily'] = 'दैनिक बेरीज रिपोर्ट';
+$string['exportreport_daily'] = 'रोजच्या बेरजेचा रिपोर्ट';
 $string['refund_full'] = 'पूर्ण रिफंड';
 $string['refund_partial'] = 'अंशतः रिफंड';
 $string['refund_amount'] = 'रिफंड रक्कम';
@@ -103,27 +104,27 @@ $string['settings_gateway_airpay_endpoint'] = 'API एंडपॉइंट';
 $string['settings_gateway_airpay_endpoint_desc'] = 'Airpay Payment Services API URL (उदा. https://payments.airpay.co.in/pay/index.php)';
 $string['settings_gateway_airpay_merchantid'] = 'मर्चंट ID';
 $string['settings_gateway_airpay_secret'] = 'सीक्रेट की';
-$string['settings_gateway_airpay_secret_desc'] = 'पेलोड्सवर सही करण्यासाठी वापरली जाते. प्रोडक्शनमध्ये ही एन्व्हायर्नमेंट व्हेरिएबलमध्ये ठेवा.';
-$string['settings_currency'] = 'चलन';
+$string['settings_gateway_airpay_secret_desc'] = 'पेलोड साइन करण्यासाठी वापरली जाते. प्रोडक्शनमध्ये ही एन्व्हायर्नमेंट व्हेरिएबलमध्ये ठेवा.';
+$string['settings_currency'] = 'करन्सी';
 $string['settings_gstrate'] = 'GST दर (%)';
 $string['settings_gstn'] = 'आमचा GSTN';
 $string['settings_companyname'] = 'इनव्हॉइसवरील कंपनीचे नाव';
 $string['settings_companyaddress'] = 'कंपनीचा पत्ता';
 $string['settings_invoiceprefix'] = 'इनव्हॉइस नंबर प्रीफिक्स';
-$string['settings_enabled_tenants'] = 'ज्या टेनंट्समध्ये कार्ट सुरू आहे';
-$string['settings_enabled_tenants_desc'] = 'स्वल्पविरामाने वेगळे केलेले टेनंट रूट ID (उदा. "77,177"). सर्व टेनंट्ससाठी सुरू करण्यासाठी रिकामे ठेवा. ट्रेनिंग हा कर्मचाऱ्यांसाठी लाभ असल्याने Airpay टेनंटला (id=1) सहसा कार्टची गरज नसते.';
+$string['settings_enabled_tenants'] = 'ज्या टेनंट्समध्ये कार्ट चालू आहे';
+$string['settings_enabled_tenants_desc'] = 'कॉमाने वेगळे केलेले टेनंट रूट ID (उदा. "77,177"). सर्व टेनंट्ससाठी सुरू करण्यासाठी रिकामे ठेवा. ट्रेनिंग हा कर्मचाऱ्यांसाठी लाभ असल्याने Airpay टेनंटला (id=1) सहसा कार्टची गरज नसते.';
 $string['settings_callback_iplist'] = 'गेटवे कॉलबॅक IP अलाऊ-लिस्ट';
-$string['settings_callback_iplist_desc'] = '/local/sentientia_cart/callback.php वर POST करण्याची परवानगी असलेल्या CIDR रेंज किंवा एकेक IP, स्वल्पविरामाने वेगळे करून. रिकामे = कुठूनही स्वीकारले जाते (जुनी पद्धत). कॉन्फिगर केल्यावर, इतर स्रोतांकडून आलेल्या रिक्वेस्ट्स HTTP 404 सह शांतपणे ड्रॉप केल्या जातात. सुरू करण्यापूर्वी गेटवे IP Airpay कडून कन्फर्म करून घ्या.';
-$string['messageprovider:order_placed'] = 'ऑर्डर दिल्याचे कन्फर्मेशन';
+$string['settings_callback_iplist_desc'] = '/local/sentientia_cart/callback.php वर POST करण्याची परवानगी असलेल्या CIDR रेंज किंवा एकेक IP, कॉमाने वेगळे करून. रिकामे = कुठूनही स्वीकारले जाते (जुनी पद्धत). कॉन्फिगर केल्यावर, इतर सोर्सकडून आलेल्या रिक्वेस्ट्स HTTP 404 सह शांतपणे ड्रॉप केल्या जातात. सुरू करण्यापूर्वी गेटवे IP Airpay कडून कन्फर्म करून घ्या.';
+$string['messageprovider:order_placed'] = 'ऑर्डर केल्याचे कन्फर्मेशन';
 $string['messageprovider:payment_received'] = 'पेमेंट मिळाले';
 $string['messageprovider:order_failed'] = 'ऑर्डर अयशस्वी';
-$string['messageprovider:refund_processed'] = 'रिफंड प्रोसेस झाले';
+$string['messageprovider:refund_processed'] = 'रिफंड प्रोसेस झाला';
 $string['messageprovider:admin_new_order'] = 'नवीन ऑर्डर (ॲडमिन)';
 $string['refunddue'] = 'रिफंड बाकी';
 $string['paid_withheld'] = 'या ऑर्डरमध्ये असे {$a} कोर्स देखील होते जे आता तुमच्यासाठी उपलब्ध नाहीत. तुम्ही ते ॲक्सेस करू शकत नाही आणि तुम्हाला त्यात एनरोल केलेले नाही. त्यांचे पैसे तुम्हाला रिफंड केले जातील.';
-$string['admin_withheld'] = 'रिफंड बाकी: ऑर्डर #{$a->orderid} चे पेमेंट झाले, पण खरेदीदाराला कोर्स id {$a->courseids} मध्ये एनरोल केलेले नाही, कारण ते आता हे कोर्स खरेदी करू शकत नाहीत (ADR-031). त्या लाइन्ससाठी अंशतः रिफंड करा; पूर्ण रिफंड केल्यास खरेदीदाराला दिलेल्या कोर्सेसमधूनही त्यांना अनएनरोल केले जाते.';
+$string['admin_withheld'] = 'रिफंड बाकी: ऑर्डर #{$a->orderid} चे पेमेंट झाले, पण खरेदीदाराला कोर्स id {$a->courseids} मध्ये एनरोल केलेले नाही, कारण ते आता हे कोर्स खरेदी करू शकत नाहीत (ADR-031). त्या लाइन्ससाठी अंशतः रिफंड करा; पूर्ण रिफंड केल्यास खरेदीदाराला दिलेल्या कोर्सेसमधील त्यांची एनरोलमेंटही रद्द होते.';
 $string['ordernotes'] = 'स्टाफ नोट्स';
-$string['admin_withheld_amounts'] = 'फक्त तपासणीसाठी, हे इनव्हॉइस नाही: रोखून ठेवलेल्या प्रत्येक लाइनसाठी आकारलेली रक्कम (किंमत - डिस्काउंट + GST हिस्सा = आकारलेली रक्कम). GST हिस्सा ऑर्डरमध्ये नोंदवलेल्या करावरून, ऑर्डरच्या एकूण रकमेसाठी वापरलेल्या त्याच पैसे राउंडिंगने काढला जातो, त्यामुळे इनव्हॉइसपेक्षा एका पैशाचा फरक असू शकतो. रिफंड किती करायचा ते तुम्ही अंशतः रिफंडद्वारे ठरवा; कोणतीही GST क्रेडिट नोट फायनान्स टीम देते.';
+$string['admin_withheld_amounts'] = 'फक्त रिव्ह्यूसाठी, हे इनव्हॉइस नाही: रोखून ठेवलेल्या प्रत्येक लाइनसाठी आकारलेली रक्कम (किंमत - डिस्काउंट + GST हिस्सा = आकारलेली रक्कम). GST हिस्सा ऑर्डरमध्ये नोंदवलेल्या करावरून, ऑर्डरच्या एकूण रकमेसाठी वापरलेल्या त्याच पैशांच्या राउंडिंगने काढला जातो, त्यामुळे इनव्हॉइसपेक्षा एका पैशाचा फरक असू शकतो. रिफंड किती करायचा ते तुम्ही अंशतः रिफंडद्वारे ठरवा; कोणतीही GST क्रेडिट नोट फायनान्स टीम जारी करते.';
 $string['admin_withheld_line'] = '- कोर्स id {$a->courseid} ({$a->name}): {$a->price} - {$a->discount} + GST {$a->tax} = {$a->total} {$a->currency}';
 $string['admin_withheld_total'] = 'रोखलेल्या लाइन्सची एकूण रक्कम: {$a->total} {$a->currency} (ऑर्डरची एकूण रक्कम {$a->ordertotal} {$a->currency}).';
 $string['notify_paid_intro'] = 'धन्यवाद! तुमची ऑर्डर #{$a} कन्फर्म झाली आहे.';
@@ -133,7 +134,7 @@ $string['notify_paid_access'] = 'आता तुम्ही कॅटलॉग
 $string['notify_failed_subject'] = 'ऑर्डर #{$a} अयशस्वी';
 $string['notify_failed_body'] = 'तुमची ऑर्डर प्रोसेस होऊ शकली नाही. कारण: {$a}';
 $string['notify_failed_hint'] = 'कृपया तुमच्या कार्टमधून पुन्हा प्रयत्न करा, किंवा सपोर्टशी संपर्क साधा.';
-$string['notify_refund_subject'] = 'रिफंड प्रोसेस झाले';
+$string['notify_refund_subject'] = 'रिफंड प्रोसेस झाला';
 $string['notify_refund_full'] = 'तुमच्या ऑर्डर #{$a->orderid} चा पूर्ण रिफंड झाला आहे ({$a->currency} {$a->amount}).';
 $string['notify_refund_partial'] = 'ऑर्डर #{$a->orderid} साठी {$a->currency} {$a->amount} चा अंशतः रिफंड प्रोसेस केला आहे.';
 $string['notify_admin_subject'] = 'नवीन ऑर्डर #{$a}';
@@ -144,22 +145,22 @@ $string['error_alreadyenrolled'] = 'तुम्ही या कोर्सम
 $string['error_emptycart'] = 'तुमचे कार्ट रिकामे आहे.';
 $string['error_itemsunavailable'] = 'तुमच्या कार्टमधील काही कोर्सेस आता तुमच्यासाठी उपलब्ध नाहीत, म्हणून ते काढून टाकले आहेत. पेमेंट करण्यापूर्वी कृपया तुमची नवीन एकूण रक्कम तपासा.';
 $string['error_gatewaydown'] = 'पेमेंट गेटवे सध्या उपलब्ध नाही. कृपया पुन्हा प्रयत्न करा.';
-$string['error_invalidsignature'] = 'पेमेंट व्हेरिफिकेशन अयशस्वी झाले.';
-$string['error_invalidstate'] = 'या कृतीसाठी ऑर्डरची स्थिती योग्य नाही.';
-$string['error_outoftenant'] = 'ही कृती वेगवेगळ्या टेनंट्समध्ये करण्याची परवानगी नाही.';
+$string['error_invalidsignature'] = 'पेमेंटची पडताळणी अयशस्वी झाली.';
+$string['error_invalidstate'] = 'या ॲक्शनसाठी ऑर्डरचा स्टेटस चुकीचा आहे.';
+$string['error_outoftenant'] = 'ही ॲक्शन वेगवेगळ्या टेनंट्समध्ये करण्याची परवानगी नाही.';
 $string['privacy:metadata:local_sentientia_cart_history'] = 'कार्ट आणि ऑर्डर हिस्ट्री';
 $string['privacy:metadata:local_sentientia_cart_history:userid'] = 'ऑर्डर देणारा युजर';
 $string['privacy:metadata:local_sentientia_cart_history:items'] = 'खरेदीच्या वेळचे कोर्स ID आणि किमती';
 $string['privacy:metadata:local_sentientia_cart_history:totalamount'] = 'ऑर्डरची एकूण रक्कम';
 $string['privacy:metadata:local_sentientia_cart_history:status'] = 'ऑर्डर स्टेटस';
 $string['privacy:metadata:local_sentientia_cart_history:timecreated'] = 'ऑर्डर कधी दिली';
-$string['privacy:metadata:local_sentientia_cart_invoices'] = 'दिलेली GST टॅक्स इनव्हॉइस. कायद्यानुसार ती ठेवणे आवश्यक आहे (CGST कायदा कलम 36), त्यामुळे रिटेन्शन कालावधीपर्यंत ती न बदलता ठेवली जातात; तुम्ही डेटा हटवण्याची विनंती केल्यावर फक्त त्यापेक्षा जुन्या इनव्हॉइसवरील तुमचे तपशील रिकामे केले जातात.';
-$string['privacy:metadata:local_sentientia_cart_invoices:userid'] = 'ज्या युजरला इनव्हॉइस दिले गेले';
+$string['privacy:metadata:local_sentientia_cart_invoices'] = 'जारी केलेली GST टॅक्स इनव्हॉइस. कायद्यानुसार ती ठेवणे आवश्यक आहे (CGST कायदा कलम 36), त्यामुळे रिटेन्शन कालावधीपर्यंत ती न बदलता ठेवली जातात; तुम्ही डेटा डिलीट करण्याची विनंती केल्यावर फक्त त्यापेक्षा जुन्या इनव्हॉइसवरील तुमचे तपशील रिकामे केले जातात.';
+$string['privacy:metadata:local_sentientia_cart_invoices:userid'] = 'ज्या युजरला इनव्हॉइस जारी केले गेले';
 $string['privacy:metadata:local_sentientia_cart_invoices:billing_name'] = 'इनव्हॉइसवरील बिलिंग नाव';
 $string['privacy:metadata:local_sentientia_cart_invoices:billing_email'] = 'इनव्हॉइसवरील बिलिंग ईमेल';
 $string['privacy:metadata:local_sentientia_cart_invoices:billing_phone'] = 'इनव्हॉइसवरील बिलिंग फोन';
 $string['privacy:metadata:local_sentientia_cart_invoices:billing_address'] = 'इनव्हॉइसवरील बिलिंग पत्ता';
-$string['privacy:metadata:local_sentientia_cart_invoices:billing_gstn'] = 'दिला असल्यास ग्राहकाचा GSTN';
+$string['privacy:metadata:local_sentientia_cart_invoices:billing_gstn'] = 'खरेदीदाराचा GSTN (दिला असल्यास)';
 $string['privacy:metadata:local_sentientia_cart_ledger'] = 'पेमेंट लेजर (न बदलता येणारा ऑडिट लॉग)';
 $string['privacy:metadata:gateway'] = 'गेटवेला पाठवलेला पेमेंट डेटा';
 $string['privacy:metadata:gateway:email'] = 'पेमेंट पावतीसाठी ईमेल';
@@ -167,11 +168,11 @@ $string['privacy:metadata:gateway:name'] = 'बिलिंगसाठी न�
 $string['privacy:metadata:gateway:amount'] = 'आकारायची रक्कम';
 $string['privacy:metadata:local_sentientia_cart_id'] = 'तुम्ही उघडलेले पण अजून पेमेंट न केलेले शॉपिंग कार्ट.';
 $string['privacy:metadata:local_sentientia_cart_id:userid'] = 'ज्या युजरचे हे कार्ट आहे त्याचा ID.';
-$string['privacy:metadata:local_sentientia_cart_id:reserved'] = 'कार्टची अंतर्गत स्थिती.';
+$string['privacy:metadata:local_sentientia_cart_id:reserved'] = 'कार्टचा अंतर्गत स्टेटस.';
 $string['privacy:metadata:local_sentientia_cart_credits'] = 'तुमचा ट्रेनिंग-क्रेडिट बॅलन्स आणि तुम्ही कमावलेले व खर्च केलेले क्रेडिट.';
 $string['privacy:metadata:local_sentientia_cart_credits:userid'] = 'ज्या युजरचा हा बॅलन्स आहे त्याचा ID.';
 $string['privacy:metadata:local_sentientia_cart_credits:balance'] = 'सध्याचा क्रेडिट बॅलन्स.';
-$string['privacy:metadata:local_sentientia_cart_credits:currency'] = 'बॅलन्स ज्या चलनात आहे ते चलन.';
+$string['privacy:metadata:local_sentientia_cart_credits:currency'] = 'बॅलन्स ज्या करन्सीमध्ये आहे ती करन्सी.';
 $string['privacy:metadata:local_sentientia_cart_credits:lifetime_earned'] = 'आजपर्यंत कमावलेले एकूण क्रेडिट.';
 $string['privacy:metadata:local_sentientia_cart_credits:lifetime_spent'] = 'आजपर्यंत खर्च केलेले एकूण क्रेडिट.';
 $string['privacy:metadata:local_sentientia_cart_credits:timemodified'] = 'बॅलन्स शेवटचा कधी बदलला.';
@@ -181,9 +182,9 @@ $string['status_part_cancelled'] = 'अंशतः रद्द';
 $string['linestatus_paid'] = 'भरले';
 $string['linestatus_cancelled'] = 'रद्द';
 $string['linestatus_not_completed'] = 'पूर्ण झाले नाही';
-$string['legacyinvoice'] = 'ERPNext मध्ये {$a} म्हणून दिले';
-$string['legacyinvoicedate'] = 'इनव्हॉइस तारीख';
-$string['legacyinvoicenote'] = 'Sentientia वर येण्यापूर्वी ERPNext ने हे इनव्हॉइस दिले होते. हे पेज फक्त संदर्भासाठी आहे: Sentientia हे इनव्हॉइस देत नाही, बदलत नाही किंवा पुन्हा देत नाही.';
+$string['legacyinvoice'] = 'ERPNext मध्ये {$a} म्हणून जारी केले';
+$string['legacyinvoicedate'] = 'इनव्हॉइसची तारीख';
+$string['legacyinvoicenote'] = 'Sentientia वर येण्यापूर्वी ERPNext ने हे इनव्हॉइस जारी केले होते. हे पेज फक्त संदर्भासाठी आहे: Sentientia हे इनव्हॉइस जारी करत नाही, बदलत नाही किंवा पुन्हा जारी करत नाही.';
 $string['ordernumberlabel'] = 'ऑर्डर नंबर';
 $string['creditsadmin'] = 'क्रेडिट्स';
 $string['creditsadmin_title'] = 'BizLMS मधून इम्पोर्ट केलेली क्रेडिट्स';
@@ -217,11 +218,11 @@ $string['privacy:metadata:local_sentientia_cart_credit_txn:balance_after'] = '�
 $string['privacy:metadata:local_sentientia_cart_credit_txn:event_type'] = 'एंट्रीचा प्रकार.';
 $string['privacy:metadata:local_sentientia_cart_credit_txn:reason'] = 'एंट्रीसाठी दिलेले कारण.';
 $string['privacy:metadata:local_sentientia_cart_credit_txn:timecreated'] = 'एंट्री कधी केली.';
-$string['sentientia_cart:manageinvoices'] = 'ई-इनव्हॉइस IRN नोंदवा आणि त्यांची वाट पाहणारी इनव्हॉइस पाहा';
+$string['sentientia_cart:manageinvoices'] = 'ई-इनव्हॉइस IRN नोंदवा आणि IRN ची वाट पाहणारी इनव्हॉइस पाहा';
 $string['messageprovider:gst_admin_warning'] = 'GST इनव्हॉइसिंगकडे लक्ष देणे आवश्यक (ॲडमिन)';
 $string['task_issue_due_documents'] = 'बाकी असलेली GST टॅक्स इनव्हॉइस आणि क्रेडिट नोट्स जारी करा';
 $string['settings_gst'] = 'GST टॅक्स इनव्हॉइस आणि क्रेडिट नोट्स';
-$string['settings_gst_desc'] = 'GST टॅक्स इनव्हॉइस फ्लॅग ON असतानाच वापरले जाते. कंपनीचे नाव, कंपनीचा पत्ता, आमचा GSTN किंवा SAC कोड रिकामा असल्यास, किंवा GST राज्य योग्य नसल्यास इनव्हॉइसिंग सुरू होत नाही. तेव्हा डॉक्युमेंट्स बाकी राहतात, आणि साइट ॲडमिनिस्ट्रेटर्सना दिवसातून एकदा सूचना पाठवली जाते.';
+$string['settings_gst_desc'] = 'GST टॅक्स इनव्हॉइस फ्लॅग ON असतानाच वापरले जाते. कंपनीचे नाव, कंपनीचा पत्ता, आमचा GSTN किंवा SAC कोड रिकामा असल्यास, किंवा GST राज्य चुकीचे असल्यास इनव्हॉइसिंग सुरू होत नाही. तेव्हा डॉक्युमेंट्स बाकी राहतात, आणि साइट ॲडमिन्सना दिवसातून एकदा इशारा पाठवला जातो.';
 $string['settings_saccode'] = 'सेवेचा SAC कोड';
 $string['settings_saccode_desc'] = 'प्रत्येक टॅक्स इनव्हॉइस लाइनवर छापला जाणारा सर्व्हिसेस अकाउंटिंग कोड. आवश्यक, कोणताही डीफॉल्ट नाही: तुमची फायनान्स टीम तो कन्फर्म करते.';
 $string['settings_supplierstate'] = 'आमचे GST राज्य';
@@ -234,9 +235,9 @@ $string['settings_seriesperiod_desc'] = 'कॅलेंडर वर्ष न�
 $string['settings_seriesperiod_calendar'] = 'कॅलेंडर वर्ष (जानेवारी ते डिसेंबर)';
 $string['settings_seriesperiod_financial'] = 'आर्थिक वर्ष (एप्रिल ते मार्च)';
 $string['settings_einvoiceb2b'] = 'B2B डॉक्युमेंट्ससाठी ई-इनव्हॉइस IRN आवश्यक';
-$string['settings_einvoiceb2b_desc'] = 'खरेदीदाराने GSTIN दिल्यास, इनव्हॉइस किंवा क्रेडिट नोट तिच्या IRN ची वाट पाहते, जो फायनान्स टीम ई-इनव्हॉइस पेजवर नोंदवते. टर्नओव्हर ई-इनव्हॉइसिंग मर्यादेपेक्षा कमी असेल तरच हे बंद करा.';
+$string['settings_einvoiceb2b_desc'] = 'खरेदीदाराने GSTIN दिल्यास, इनव्हॉइस किंवा क्रेडिट नोट स्वतःच्या IRN ची वाट पाहते, जो फायनान्स टीम ई-इनव्हॉइस पेजवर नोंदवते. टर्नओव्हर ई-इनव्हॉइसिंग मर्यादेपेक्षा कमी असेल तरच हे बंद करा.';
 $string['settings_retentionyears'] = 'टॅक्स डॉक्युमेंट्स ठेवण्याची वर्षे';
-$string['settings_retentionyears_desc'] = 'डेटा हटवण्याच्या विनंतीमुळे फक्त यापेक्षा जुन्या इनव्हॉइस आणि क्रेडिट नोट्सवरील खरेदीदाराचे तपशील रिकामे केले जातात; त्यापेक्षा नवीन डॉक्युमेंट्स कायद्यानुसार ठेवले जातात (CGST कायदा कलम 36). डीफॉल्ट 8.';
+$string['settings_retentionyears_desc'] = 'डेटा डिलीट करण्याच्या विनंतीमुळे फक्त यापेक्षा जुन्या इनव्हॉइस आणि क्रेडिट नोट्सवरील खरेदीदाराचे तपशील रिकामे केले जातात; त्यापेक्षा नवीन डॉक्युमेंट्स कायद्यानुसार ठेवले जातात (CGST कायदा कलम 36). डीफॉल्ट 8.';
 $string['settings_signatory'] = 'सही करणाऱ्याची ओळ';
 $string['settings_signatory_desc'] = 'प्रत्येक डॉक्युमेंटच्या तळाशी कंपनीच्या नावाखाली छापली जाणारी ओळ.';
 $string['einvoice_link'] = 'ई-इनव्हॉइस IRN पेज';
@@ -250,7 +251,7 @@ $string['error_invoicesettings'] = 'GST इनव्हॉइसिंग सु
 $string['error_numbertoolong'] = 'डॉक्युमेंट नंबर {$a->number} {$a->length} कॅरेक्टर्सचा होईल, आणि मर्यादा {$a->max} आहे. सेटिंग्जमध्ये नंबर प्रीफिक्स लहान करा.';
 $string['error_creditnotelimit'] = 'एका इनव्हॉइसच्या क्रेडिट नोट्सची एकूण रक्कम त्या इनव्हॉइसपेक्षा जास्त असू शकत नाही.';
 $string['error_statemissing'] = 'कृपया तुमचे राज्य निवडा.';
-$string['error_statenotvalid'] = 'हा वैध GST राज्य कोड नाही.';
+$string['error_statenotvalid'] = 'हा GST राज्य कोड चुकीचा आहे.';
 $string['error_gstinformat'] = 'हा GST नंबरसारखा दिसत नाही. त्यात 15 अक्षरे आणि अंक असतात आणि तो दोन अंकी राज्य कोडने सुरू होतो.';
 $string['error_gstinstate'] = 'तुमच्या GST नंबरमधील राज्य तुम्ही निवडलेल्या राज्याशी जुळत नाही. कृपया दोन्ही तपासा.';
 $string['error_irninvalid'] = 'IRN मध्ये बरोबर 64 हेक्साडेसिमल कॅरेक्टर्स (0-9 आणि a-f) असणे आवश्यक आहे.';
@@ -272,7 +273,7 @@ $string['notify_gst_subject'] = 'GST इनव्हॉइसिंगकडे 
 $string['notify_gst_body'] = 'काही GST टॅक्स इनव्हॉइस किंवा क्रेडिट नोट्स जारी होऊ शकल्या नाहीत. त्या बाकी राहतात, आणि कारण दुरुस्त झाल्यावर 15 मिनिटांत आपोआप जारी केल्या जातात:
 {$a}
 
-Site administration > Plugins > Local plugins > Sentientia Cart अंतर्गत टॅक्स सेटिंग्ज तपासा (GSTN, SAC कोड, GST राज्य, नंबर प्रीफिक्स). कारण कायम असेपर्यंत ही सूचना दिवसातून एकदा पाठवली जाते.';
+Site administration > Plugins > Local plugins > Sentientia Cart अंतर्गत टॅक्स सेटिंग्ज तपासा (GSTN, SAC कोड, GST राज्य, नंबर प्रीफिक्स). कारण कायम असेपर्यंत हा इशारा दिवसातून एकदा पाठवला जातो.';
 $string['doc_taxinvoice'] = 'टॅक्स इनव्हॉइस';
 $string['doc_creditnote'] = 'क्रेडिट नोट';
 $string['doc_invoiceno'] = 'इनव्हॉइस क्र.';
@@ -341,7 +342,7 @@ $string['receipt_invoicewillfollow'] = 'तुमचे GST टॅक्स इ�
 $string['receipt_creditnotes'] = 'क्रेडिट नोट्स';
 $string['receipt_viewcreditnote'] = 'क्रेडिट नोट पाहा';
 $string['receipt_downloadpdf'] = 'PDF डाउनलोड करा';
-$string['receipt_print'] = 'प्रिंट';
+$string['receipt_print'] = 'प्रिंट करा';
 $string['receipt_status'] = 'स्टेटस';
 $string['einvoice_title'] = 'ई-इनव्हॉइस IRN';
 $string['einvoice_intro'] = 'B2B टॅक्स डॉक्युमेंट्स त्यांच्या ई-इनव्हॉइस IRN साठी इथे वाट पाहतात. प्रत्येक डॉक्युमेंट सरकारच्या इनव्हॉइस रजिस्ट्रेशन पोर्टलवर (IRP) नोंदवा, मग त्याचा IRN, ॲक्नॉलेजमेंट नंबर, ॲक्नॉलेजमेंट तारीख आणि साइन केलेली QR स्ट्रिंग इथे नोंदवा. त्यानंतर डॉक्युमेंट खरेदीदाराला दिसू लागते. Sentientia चा पोर्टलशी कोणताही संबंध नाही.';
@@ -360,13 +361,13 @@ $string['privacy:metadata:local_sentientia_cart_invoices:billing_state'] = 'ख�
 $string['privacy:metadata:local_sentientia_cart_invoices:place_of_supply'] = 'विक्रीच्या पुरवठ्याचे ठिकाण, GST राज्य कोडच्या स्वरूपात.';
 $string['privacy:metadata:local_sentientia_cart_invoices:line_items'] = 'काय खरेदी केले, त्याची किंमत आणि करासह.';
 $string['privacy:metadata:local_sentientia_cart_invoices:irn'] = 'B2B इनव्हॉइसचा ई-इनव्हॉइस रेफरन्स नंबर.';
-$string['privacy:metadata:local_sentientia_cart_creditnotes'] = 'ऑर्डरचा रिफंड झाल्यावर दिल्या जाणाऱ्या GST क्रेडिट नोट्स. ज्या इनव्हॉइसची रक्कम त्या कमी करतात त्याच्याप्रमाणेच, कर कायद्याने आवश्यक असलेल्या रिटेन्शन कालावधीपर्यंत (CGST कायदा कलम 36) त्या न बदलता ठेवल्या जातात; तुम्ही डेटा हटवण्याची विनंती केल्यावर फक्त त्यापेक्षा जुन्या डॉक्युमेंट्सवरील तुमचे तपशील रिकामे केले जातात.';
-$string['privacy:metadata:local_sentientia_cart_creditnotes:userid'] = 'ज्या युजरला क्रेडिट नोट दिली गेली.';
+$string['privacy:metadata:local_sentientia_cart_creditnotes'] = 'ऑर्डरचा रिफंड झाल्यावर जारी केल्या जाणाऱ्या GST क्रेडिट नोट्स. ज्या इनव्हॉइसची रक्कम त्या कमी करतात त्याच्याप्रमाणेच, कर कायद्याने आवश्यक असलेल्या रिटेन्शन कालावधीपर्यंत (CGST कायदा कलम 36) त्या न बदलता ठेवल्या जातात; तुम्ही डेटा डिलीट करण्याची विनंती केल्यावर फक्त त्यापेक्षा जुन्या डॉक्युमेंट्सवरील तुमचे तपशील रिकामे केले जातात.';
+$string['privacy:metadata:local_sentientia_cart_creditnotes:userid'] = 'ज्या युजरला क्रेडिट नोट जारी केली गेली.';
 $string['privacy:metadata:local_sentientia_cart_creditnotes:billing_name'] = 'क्रेडिट नोटवरील बिलिंग नाव.';
 $string['privacy:metadata:local_sentientia_cart_creditnotes:billing_email'] = 'क्रेडिट नोटवरील बिलिंग ईमेल.';
 $string['privacy:metadata:local_sentientia_cart_creditnotes:billing_phone'] = 'क्रेडिट नोटवरील बिलिंग फोन.';
 $string['privacy:metadata:local_sentientia_cart_creditnotes:billing_address'] = 'क्रेडिट नोटवरील बिलिंग पत्ता.';
-$string['privacy:metadata:local_sentientia_cart_creditnotes:billing_gstn'] = 'ग्राहकाचा GSTN, दिला असल्यास.';
+$string['privacy:metadata:local_sentientia_cart_creditnotes:billing_gstn'] = 'खरेदीदाराचा GSTN, दिला असल्यास.';
 $string['privacy:metadata:local_sentientia_cart_creditnotes:billing_state'] = 'खरेदीदाराचे राज्य.';
 $string['privacy:metadata:local_sentientia_cart_creditnotes:total'] = 'रिफंड केलेली रक्कम.';
 $string['privacy:metadata:local_sentientia_cart_creditnotes:reason'] = 'रिफंडसाठी दिलेले कारण.';
@@ -413,4 +414,4 @@ $string['gst_state_97'] = 'इतर प्रदेश';
 $string['error_einvoiceoff'] = 'तुम्ही जिथे काम करता तिथे सगळीकडे GST टॅक्स इनव्हॉइस बंद आहेत, त्यामुळे इथे नोंदवण्यासारखे काही नाही.';
 $string['gateway_name_airpay'] = 'Airpay';
 $string['gateway_name_manual'] = 'मॅन्युअल पेमेंट';
-$string['refund_button'] = 'रिफंड';
+$string['refund_button'] = 'रिफंड करा';

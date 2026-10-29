@@ -18,7 +18,8 @@
  * Swahili strings for local_sentientia_org.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    local_sentientia_org
  * @copyright  2026 Airpay Payment Services
@@ -53,19 +54,19 @@ $string['heading_branding'] = 'Chapa (si lazima)';
 $string['heading_visibility'] = 'Mwonekano';
 $string['org_fullname'] = 'Jina kamili';
 $string['org_shortname'] = 'Jina fupi';
-$string['shortname_help'] = 'Kitambulisho kifupi cha kipekee kwa shirika hili. Kinatumika kuchuja kwa path na kwenye slug za URL. k.m. "AirPay_Acquiring".';
+$string['shortname_help'] = 'Kitambulisho kifupi cha kipekee kwa shirika hili. Kinatumika kuchuja kwa njia (path) na kwenye slug za URL. k.m. "AirPay_Acquiring".';
 $string['description'] = 'Maelezo';
 $string['parent_org'] = 'Shirika kuu';
-$string['parent_org_help'] = 'Chagua mahali shirika hili linakaa kwenye muundo wa ngazi. Chagua "Tenant ya ngazi ya juu" ili kuunda tenant mpya. Muundo wa ngazi hukokotolewa kiotomatiki — kina na path hurithiwa kutoka kwa shirika kuu.';
+$string['parent_org_help'] = 'Chagua mahali shirika hili linakaa kwenye muundo wa ngazi. Chagua "Tenant ya ngazi ya juu" ili kuunda tenant mpya. Muundo wa ngazi hukokotolewa kiotomatiki — kina na njia (path) hurithiwa kutoka kwa shirika kuu.';
 $string['top_level_tenant'] = '— Tenant ya ngazi ya juu —';
 $string['brand_color'] = 'Rangi ya chapa (hex)';
 $string['button_color'] = 'Rangi ya kitufe (hex)';
 $string['hover_color'] = 'Rangi ya hover (hex)';
 $string['theme_scheme'] = 'Mpangilio wa theme';
-$string['branding_help'] = 'Mabadiliko ya kila tenant kwa theme ya airpayux. Acha wazi ili kutumia chaguo-msingi za tovuti. Muundo wa hex k.m. #0066A7.';
+$string['branding_help'] = 'Mipangilio maalum ya kila tenant kwa theme ya airpayux. Acha wazi ili kutumia chaguo-msingi za tovuti. Muundo wa hex k.m. #0066A7.';
 $string['visible'] = 'Mwonekano';
-$string['visible_yes'] = 'Hai (inaonekana kwa watumiaji)';
-$string['visible_no'] = 'Imefichwa (admin pekee)';
+$string['visible_yes'] = 'Inatumika (inaonekana kwa watumiaji)';
+$string['visible_no'] = 'Imefichwa (wasimamizi pekee)';
 $string['sortorder'] = 'Mpangilio';
 $string['missingrequiredfields'] = 'Tafadhali jaza sehemu zote zinazohitajika.';
 $string['name_required'] = 'Jina la shirika linahitajika.';
@@ -82,12 +83,12 @@ $string['org_created'] = 'Shirika limeundwa.';
 $string['org_updated'] = 'Shirika limesasishwa.';
 $string['orgdeleted'] = 'Shirika limefutwa.';
 $string['orgvisibilitychanged'] = 'Mwonekano wa shirika umesasishwa.';
-$string['privacy:metadata'] = 'Plugin ya Airpay sentientia_org huhifadhi rejea moja tu ya kibinafsi kwenye majedwali yake: msimamizi aliyebadilisha mwisho wigo wa tenant wa cohort. Majedwali ya mashirika hayana data ya kibinafsi; hali nyingine ya mtumiaji iko kwenye majedwali makuu ya Sentientia LMS, ambayo hutolewa (export) na provider zake husika.';
-$string['privacy:metadata:cohort_scope'] = 'Wigo wa tenant wa kila cohort: shirika na idara ambazo cohort hiyo ni sehemu yake, na nani aliyeubadilisha mwisho.';
-$string['privacy:metadata:cohort_scope:cohortid'] = 'Cohort ambayo wigo huu ni wake.';
-$string['privacy:metadata:cohort_scope:usermodified'] = 'id ya mtumiaji aliyebadilisha wigo mwisho. Mtumiaji akifutwa, thamani hii huwekwa 0 na safu inabaki.';
-$string['privacy:metadata:cohort_scope:timemodified'] = 'Wakati wigo ulipobadilishwa mwisho.';
-$string['privacy:subcontext:cohort_scope'] = 'Wigo za tenant za cohort ulizobadilisha mwisho';
+$string['privacy:metadata'] = 'Plugin ya Airpay sentientia_org huhifadhi rejea moja tu ya kibinafsi kwenye majedwali yake: msimamizi aliyebadilisha mara ya mwisho wigo wa tenant wa kundi. Majedwali ya mashirika hayana data binafsi; hali nyingine ya mtumiaji iko kwenye majedwali makuu ya Sentientia LMS, ambayo huhamishwa (export) na watoa huduma (providers) wake husika.';
+$string['privacy:metadata:cohort_scope'] = 'Wigo wa tenant wa kila kundi: shirika na idara ambazo kundi hilo ni sehemu yake, na nani aliyeubadilisha mara ya mwisho.';
+$string['privacy:metadata:cohort_scope:cohortid'] = 'Kundi ambalo wigo huu ni wake.';
+$string['privacy:metadata:cohort_scope:usermodified'] = 'id ya mtumiaji aliyebadilisha wigo mara ya mwisho. Mtumiaji akifutwa, thamani hii huwekwa 0 na safu inabaki.';
+$string['privacy:metadata:cohort_scope:timemodified'] = 'Wakati wigo ulipobadilishwa mara ya mwisho.';
+$string['privacy:subcontext:cohort_scope'] = 'Wigo wa tenant wa makundi ambao ulibadilisha mara ya mwisho';
 $string['org_logo'] = 'Nembo ya shirika';
 $string['cascade_l1'] = 'Shirika';
 $string['cascade_l2'] = 'Idara';

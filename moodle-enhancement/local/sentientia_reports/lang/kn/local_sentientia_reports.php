@@ -18,7 +18,8 @@
  * Kannada strings for local_sentientia_reports.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    local_sentientia_reports
  * @copyright  2026 Airpay Payment Services
@@ -35,54 +36,54 @@ $string['addreport'] = 'ರಿಪೋರ್ಟ್ ರಚಿಸಿ';
 $string['editreport'] = 'ರಿಪೋರ್ಟ್ ಎಡಿಟ್ ಮಾಡಿ';
 $string['deletereport'] = 'ರಿಪೋರ್ಟ್ ಡಿಲೀಟ್ ಮಾಡಿ';
 $string['archivereport'] = 'ರಿಪೋರ್ಟ್ ಆರ್ಕೈವ್ ಮಾಡಿ';
-$string['activatereport'] = 'ರಿಪೋರ್ಟ್ ಆಕ್ಟಿವೇಟ್ ಮಾಡಿ';
+$string['activatereport'] = 'ರಿಪೋರ್ಟ್ ಸಕ್ರಿಯಗೊಳಿಸಿ';
 $string['heading_basic'] = 'ರಿಪೋರ್ಟ್ ಗುರುತು';
 $string['heading_type'] = 'ರಿಪೋರ್ಟ್ ಪ್ರಕಾರ';
 $string['heading_scope'] = 'ಸಂಸ್ಥೆಯ ವ್ಯಾಪ್ತಿ';
 $string['report_name'] = 'ರಿಪೋರ್ಟ್ ಹೆಸರು';
 $string['description'] = 'ವಿವರಣೆ';
 $string['report_type'] = 'ರಿಪೋರ್ಟ್ ಪ್ರಕಾರ';
-$string['report_type_help'] = 'ಪ್ರತಿ ಬಿಲ್ಟ್-ಇನ್ ಪ್ರಕಾರ ಬೇರೆ ಬೇರೆ ಕ್ವೆರಿ ರನ್ ಮಾಡುತ್ತದೆ. ಕೋರ್ಸ್ ಕಂಪ್ಲೀಷನ್ ಪ್ರತಿ ಯೂಸರ್‌ನ ಕೋರ್ಸ್‌ವಾರು ಪ್ರಗತಿಯನ್ನು ತೋರಿಸುತ್ತದೆ. ಕಂಪ್ಲೈಯನ್ಸ್ ಓವರ್‌ವ್ಯೂ ಕಡ್ಡಾಯ ತರಬೇತಿಯ ದರಗಳನ್ನು ತೋರಿಸುತ್ತದೆ. ಯೂಸರ್ ಆಕ್ಟಿವಿಟಿ ಲಾಗಿನ್ ಎಂಗೇಜ್‌ಮೆಂಟ್ ಅನ್ನು ಟ್ರ್ಯಾಕ್ ಮಾಡುತ್ತದೆ. ಎನ್‌ರೋಲ್‌ಮೆಂಟ್ ಟ್ರೆಂಡ್ ತಿಂಗಳವಾರು ಎನ್‌ರೋಲ್‌ಮೆಂಟ್ ಸಂಖ್ಯೆಯನ್ನು ತೋರಿಸುತ್ತದೆ.';
+$string['report_type_help'] = 'ಪ್ರತಿ ಬಿಲ್ಟ್-ಇನ್ ಪ್ರಕಾರ ಬೇರೆ ಬೇರೆ ಕ್ವೆರಿ ರನ್ ಮಾಡುತ್ತದೆ. ಕೋರ್ಸ್ ಪೂರ್ಣಗೊಳಿಸುವಿಕೆ ಪ್ರತಿ ಯೂಸರ್‌ನ ಕೋರ್ಸ್‌ವಾರು ಪ್ರಗತಿಯನ್ನು ಪಟ್ಟಿ ಮಾಡುತ್ತದೆ. ಕಂಪ್ಲೈಯನ್ಸ್ ಓವರ್‌ವ್ಯೂ ಕಡ್ಡಾಯ ಟ್ರೇನಿಂಗ್‌ನ ದರಗಳನ್ನು ತೋರಿಸುತ್ತದೆ. ಯೂಸರ್ ಚಟುವಟಿಕೆ ಲಾಗಿನ್ ಎಂಗೇಜ್‌ಮೆಂಟ್ ಅನ್ನು ಟ್ರ್ಯಾಕ್ ಮಾಡುತ್ತದೆ. ಎನ್‌ರೋಲ್‌ಮೆಂಟ್ ಟ್ರೆಂಡ್ ತಿಂಗಳವಾರು ಎನ್‌ರೋಲ್‌ಮೆಂಟ್ ಸಂಖ್ಯೆಯನ್ನು ತೋರಿಸುತ್ತದೆ.';
 $string['organisation'] = 'ಸಂಸ್ಥೆ (ಟೆನೆಂಟ್ ವ್ಯಾಪ್ತಿ)';
 $string['organisation_help'] = 'ನಿಮ್ಮ ಹೈರಾರ್ಕಿಯಲ್ಲಿನ ಒಂದು ನಿರ್ದಿಷ್ಟ ಸಂಸ್ಥೆಗೆ ರಿಪೋರ್ಟ್ ಅನ್ನು ಸೀಮಿತಗೊಳಿಸಿ. ಎಲ್ಲಾ ಟೆನೆಂಟ್‌ಗಳನ್ನು ಸೇರಿಸಲು "ಎಲ್ಲಾ ಸಂಸ್ಥೆಗಳು" ಆಯ್ಕೆಯಲ್ಲೇ ಬಿಡಿ.';
-$string['status'] = 'ಸ್ಥಿತಿ';
+$string['status'] = 'ಸ್ಟೇಟಸ್';
 $string['status_active'] = 'ಸಕ್ರಿಯ';
 $string['status_archived'] = 'ಆರ್ಕೈವ್ ಆಗಿದೆ';
 $string['name_required'] = 'ರಿಪೋರ್ಟ್ ಹೆಸರು ಕಡ್ಡಾಯ.';
 $string['invalid_report_type'] = 'ರಿಪೋರ್ಟ್ ಪ್ರಕಾರ ಸರಿಯಿಲ್ಲ.';
 $string['invalidreport'] = 'ರಿಪೋರ್ಟ್ ಸಿಗಲಿಲ್ಲ.';
 $string['invalidreporttype'] = 'ರಿಪೋರ್ಟ್ ಪ್ರಕಾರ ಸರಿಯಿಲ್ಲ.';
-$string['missingrequiredfields'] = 'ದಯವಿಟ್ಟು ಎಲ್ಲಾ ಕಡ್ಡಾಯ ಫೀಲ್ಡ್‌ಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ.';
-$string['confirmdelete'] = '"{$a}" ರಿಪೋರ್ಟ್ ಡಿಲೀಟ್ ಮಾಡಬೇಕೆ? ಇದು ಸೇವ್ ಮಾಡಿದ ಡೆಫಿನಿಷನ್ ಅನ್ನು ಶಾಶ್ವತವಾಗಿ ತೆಗೆದುಹಾಕುತ್ತದೆ. ಈಗಾಗಲೇ ಜನರೇಟ್ ಆದ CSV ಎಕ್ಸ್‌ಪೋರ್ಟ್‌ಗಳ ಮೇಲೆ ಯಾವುದೇ ಪರಿಣಾಮ ಇಲ್ಲ. ಇದನ್ನು ಹಿಂಪಡೆಯಲು ಸಾಧ್ಯವಿಲ್ಲ.';
-$string['confirmarchive'] = '"{$a}" ಆರ್ಕೈವ್ ಮಾಡಬೇಕೆ? ಇದು ಆಕ್ಟಿವ್ ಲಿಸ್ಟ್‌ನಿಂದ ಮರೆಯಾಗುತ್ತದೆ, ಆದರೆ ಆಡಿಟ್‌ಗಾಗಿ ಉಳಿಸಿಕೊಳ್ಳಲಾಗುತ್ತದೆ. ಯಾವಾಗ ಬೇಕಾದರೂ ಮತ್ತೆ ಆಕ್ಟಿವೇಟ್ ಮಾಡಬಹುದು.';
-$string['confirmactivate'] = '"{$a}" ಆಕ್ಟಿವೇಟ್ ಮಾಡಬೇಕೆ? ಇದು ಮುಖ್ಯ ರಿಪೋರ್ಟ್ ಲಿಸ್ಟ್‌ನಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ ಮತ್ತು ಬೇಕಾದಾಗ ರನ್ ಆಗುತ್ತದೆ.';
+$string['missingrequiredfields'] = 'ಎಲ್ಲಾ ಕಡ್ಡಾಯ ಫೀಲ್ಡ್‌ಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ.';
+$string['confirmdelete'] = '"{$a}" ರಿಪೋರ್ಟ್ ಡಿಲೀಟ್ ಮಾಡಬೇಕೇ? ಇದು ಸೇವ್ ಮಾಡಿದ ಡೆಫಿನಿಷನ್ ಅನ್ನು ಶಾಶ್ವತವಾಗಿ ತೆಗೆದುಹಾಕುತ್ತದೆ. ಈಗಾಗಲೇ ಜನರೇಟ್ ಆದ CSV ಎಕ್ಸ್‌ಪೋರ್ಟ್‌ಗಳ ಮೇಲೆ ಯಾವುದೇ ಪರಿಣಾಮ ಇಲ್ಲ. ಇದನ್ನು ಹಿಂಪಡೆಯಲು ಸಾಧ್ಯವಿಲ್ಲ.';
+$string['confirmarchive'] = '"{$a}" ಆರ್ಕೈವ್ ಮಾಡಬೇಕೇ? ಇದನ್ನು ಸಕ್ರಿಯ ಲಿಸ್ಟ್‌ನಿಂದ ಮರೆಮಾಡಲಾಗುತ್ತದೆ, ಆದರೆ ಆಡಿಟ್‌ಗಾಗಿ ಉಳಿಸಿಕೊಳ್ಳಲಾಗುತ್ತದೆ. ಯಾವಾಗ ಬೇಕಾದರೂ ಮತ್ತೆ ಸಕ್ರಿಯಗೊಳಿಸಬಹುದು.';
+$string['confirmactivate'] = '"{$a}" ಸಕ್ರಿಯಗೊಳಿಸಬೇಕೇ? ಇದು ಮುಖ್ಯ ರಿಪೋರ್ಟ್ ಲಿಸ್ಟ್‌ನಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ ಮತ್ತು ಬೇಕಾದಾಗ ರನ್ ಆಗುತ್ತದೆ.';
 $string['report_created'] = 'ರಿಪೋರ್ಟ್ ರಚಿಸಲಾಗಿದೆ.';
 $string['report_updated'] = 'ರಿಪೋರ್ಟ್ ಅಪ್‌ಡೇಟ್ ಆಗಿದೆ.';
 $string['reportdeleted'] = 'ರಿಪೋರ್ಟ್ ಡಿಲೀಟ್ ಆಗಿದೆ.';
-$string['reportstatuschanged'] = 'ರಿಪೋರ್ಟ್ ಸ್ಥಿತಿ ಅಪ್‌ಡೇಟ್ ಆಗಿದೆ.';
-$string['privacy:metadata'] = 'Airpay ರಿಪೋರ್ಟ್ಸ್ ಪ್ಲಗಿನ್ ಸೇವ್ ಮಾಡಿದ ರಿಪೋರ್ಟ್ ಡೆಫಿನಿಷನ್‌ಗಳನ್ನು ಸಂಗ್ರಹಿಸುತ್ತದೆ, ಆದರೆ ಯೂಸರ್ ಡೇಟಾವನ್ನು ನೇರವಾಗಿ ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಮಾಡುವುದಿಲ್ಲ. ಜನರೇಟ್ ಮಾಡಿದ ರಿಪೋರ್ಟ್‌ಗಳು ಈಗಿರುವ ಕೋರ್ Sentientia LMS ಟೇಬಲ್‌ಗಳಿಂದ ಯೂಸರ್ ಆಕ್ಟಿವಿಟಿಯನ್ನು ಒಟ್ಟುಗೂಡಿಸಬಹುದು.';
+$string['reportstatuschanged'] = 'ರಿಪೋರ್ಟ್ ಸ್ಟೇಟಸ್ ಅಪ್‌ಡೇಟ್ ಆಗಿದೆ.';
+$string['privacy:metadata'] = 'Airpay ರಿಪೋರ್ಟ್‌ಗಳ ಪ್ಲಗಿನ್ ಸೇವ್ ಮಾಡಿದ ರಿಪೋರ್ಟ್ ಡೆಫಿನಿಷನ್‌ಗಳನ್ನು ಸಂಗ್ರಹಿಸುತ್ತದೆ, ಆದರೆ ಯೂಸರ್ ಡೇಟಾವನ್ನು ನೇರವಾಗಿ ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಮಾಡುವುದಿಲ್ಲ. ಜನರೇಟ್ ಮಾಡಿದ ರಿಪೋರ್ಟ್‌ಗಳು ಈಗಿರುವ ಕೋರ್ Sentientia LMS ಟೇಬಲ್‌ಗಳಿಂದ ಯೂಸರ್ ಚಟುವಟಿಕೆಯನ್ನು ಒಟ್ಟುಗೂಡಿಸಬಹುದು.';
 $string['privacy:metadata:reports'] = 'ಸೇವ್ ಮಾಡಿದ ರಿಪೋರ್ಟ್ ಡೆಫಿನಿಷನ್‌ಗಳು; ಪ್ರತಿ ರಿಪೋರ್ಟ್ ಅನ್ನು ಯಾವ ಯೂಸರ್ ರಚಿಸಿದರು ಎಂದು ದಾಖಲಿಸುತ್ತದೆ';
 $string['privacy:metadata:reports:created_by'] = 'ರಿಪೋರ್ಟ್ ರಚಿಸಿದ ಯೂಸರ್';
 $string['privacy:metadata:reports:name'] = 'ರಿಪೋರ್ಟ್ ಹೆಸರು';
 $string['privacy:metadata:reports:report_type'] = 'ರಿಪೋರ್ಟ್‌ನ ಪ್ರಕಾರ';
 $string['privacy:metadata:reports:timecreated'] = 'ರಿಪೋರ್ಟ್ ರಚಿಸಿದ ಸಮಯ';
-$string['report_type_training_transcript'] = 'ಟ್ರೈನಿಂಗ್ ಟ್ರಾನ್ಸ್‌ಕ್ರಿಪ್ಟ್ — ಹಿಂದಿನ ತರಬೇತಿ ದಾಖಲೆಗಳು (ಇಂಪೋರ್ಟ್ ಮಾಡಿದ)';
+$string['report_type_training_transcript'] = 'ಟ್ರೇನಿಂಗ್ ಟ್ರಾನ್ಸ್‌ಕ್ರಿಪ್ಟ್ — ಹಿಂದಿನ ಟ್ರೇನಿಂಗ್ ದಾಖಲೆಗಳು (ಇಂಪೋರ್ಟ್ ಮಾಡಿದವು)';
 $string['report_col_name'] = 'ಹೆಸರು';
 $string['report_col_empid'] = 'ಉದ್ಯೋಗಿ ID';
-$string['report_col_training'] = 'ಟ್ರೈನಿಂಗ್';
+$string['report_col_training'] = 'ಟ್ರೇನಿಂಗ್';
 $string['report_col_type'] = 'ಪ್ರಕಾರ';
-$string['report_col_completed'] = 'ಪೂರ್ಣಗೊಂಡಿದೆ';
-$string['report_col_status'] = 'ಸ್ಥಿತಿ';
-$string['report_col_statusraw'] = 'ಲೋಡ್ ಆದಾಗಿನ ಸ್ಥಿತಿ';
+$string['report_col_completed'] = 'ಪೂರ್ಣಗೊಂಡ ದಿನಾಂಕ';
+$string['report_col_status'] = 'ಸ್ಟೇಟಸ್';
+$string['report_col_statusraw'] = 'ಲೋಡ್ ಆದಾಗಿನ ಸ್ಟೇಟಸ್';
 $string['report_col_score'] = 'ಸ್ಕೋರ್';
 $string['report_col_hours'] = 'ಗಂಟೆಗಳು';
-$string['report_col_logindays'] = 'ಲಾಗಿನ್ ದಿನಗಳು (ಇಂಪೋರ್ಟ್ ಮಾಡಿದ)';
+$string['report_col_logindays'] = 'ಲಾಗಿನ್ ದಿನಗಳು (ಇಂಪೋರ್ಟ್ ಮಾಡಿದ್ದು)';
 $string['report_status_completed'] = 'ಪೂರ್ಣಗೊಂಡಿದೆ';
 $string['report_status_inprogress'] = 'ಪ್ರಗತಿಯಲ್ಲಿದೆ';
 $string['report_status_failed'] = 'ಫೇಲ್ ಆಗಿದೆ';
-$string['report_status_notstarted'] = 'ಪ್ರಾರಂಭಿಸಿಲ್ಲ';
+$string['report_status_notstarted'] = 'ಶುರುವಾಗಿಲ್ಲ';
 $string['report_status_cancelled'] = 'ರದ್ದಾಗಿದೆ';
-$string['report_status_unknown'] = 'ತಿಳಿದಿಲ್ಲ';
-$string['report_sum_records'] = 'ಒಟ್ಟು ರೆಕಾರ್ಡ್‌ಗಳು';
-$string['report_sum_completed'] = 'ಪೂರ್ಣಗೊಂಡಿದೆ';
+$string['report_status_unknown'] = 'ಗೊತ್ತಿಲ್ಲ';
+$string['report_sum_records'] = 'ಒಟ್ಟು ದಾಖಲೆಗಳು';
+$string['report_sum_completed'] = 'ಪೂರ್ಣಗೊಂಡವು';
 $string['report_sum_hours'] = 'ಒಟ್ಟು ಗಂಟೆಗಳು';

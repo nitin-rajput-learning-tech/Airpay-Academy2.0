@@ -18,7 +18,8 @@
  * Marathi strings for block_sentientia_compliance.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    block_sentientia_compliance
  * @copyright  2026 Airpay Payment Services
@@ -33,10 +34,10 @@ $string['sentientia_compliance:addinstance'] = 'नवीन कम्प्ल�
 $string['sentientia_compliance:myaddinstance'] = 'माझ्या डॅशबोर्डवर नवीन कम्प्लायन्स डॅशबोर्ड ब्लॉक जोडा';
 $string['mandatory'] = 'अनिवार्य';
 $string['optional'] = 'ऐच्छिक';
-$string['overdue'] = 'मुदत उलटली';
-$string['ontrack'] = 'योग्य मार्गावर';
-$string['completed'] = 'पूर्ण झाले';
+$string['overdue'] = 'ओव्हरड्यू';
+$string['ontrack'] = 'वेळेवर';
+$string['completed'] = 'पूर्ण';
 $string['notstarted'] = 'सुरू केले नाही';
-$string['compliance_status'] = 'कम्प्लायन्स स्थिती';
+$string['compliance_status'] = 'कम्प्लायन्स स्टेटस';
 $string['export_csv'] = 'CSV एक्सपोर्ट करा';
-$string['privacy:metadata'] = 'कम्प्लायन्स डॅशबोर्ड ब्लॉक कोणताही वैयक्तिक डेटा साठवत नाही. तो Moodle core च्या मालकीचा कोर्स पूर्ण केल्याचा डेटा दाखवतो.';
+$string['privacy:metadata'] = 'कम्प्लायन्स डॅशबोर्ड ब्लॉक कोणताही वैयक्तिक डेटा साठवत नाही. तो Moodle core कडे असलेला कोर्स कम्प्लीशन डेटा दाखवतो.';

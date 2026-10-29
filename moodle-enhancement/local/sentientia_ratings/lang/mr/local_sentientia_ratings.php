@@ -18,7 +18,8 @@
  * Marathi strings for local_sentientia_ratings.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    local_sentientia_ratings
  * @copyright  2026 Airpay Payment Services
@@ -35,8 +36,8 @@ $string['noratings'] = 'अजून कोणतेही रेटिंग �
 $string['sentientia_ratings:rate'] = 'कोर्सेस, क्लासरूम्स, प्रोग्राम्स आणि लर्निंग पाथ्सना स्टार रेटिंग द्या';
 $string['invalidrating'] = 'रेटिंग 1 ते 5 स्टार्सच्या दरम्यान असावे';
 $string['invalidratearea'] = 'अज्ञात रेटिंग एरिया';
-$string['invaliditemid'] = 'रेट करण्यासाठी अवैध आयटम';
-$string['cannotrateasguest'] = 'रेटिंग सबमिट करण्यासाठी तुम्ही लॉगिन केलेले असणे आवश्यक आहे';
+$string['invaliditemid'] = 'रेट करण्यासाठी निवडलेला आयटम चुकीचा आहे';
+$string['cannotrateasguest'] = 'रेटिंग सबमिट करण्यासाठी तुम्ही लॉग इन केलेले असणे आवश्यक आहे';
 $string['ratingsaved'] = 'तुमचे रेटिंग सेव्ह झाले आहे';
 $string['rateaccessibility'] = '5 पैकी {$a} रेट करा';
 $string['privacy:metadata:ratings'] = 'कर्मचाऱ्याने कोर्स किंवा इतर आयटमला दिलेले रेटिंग.';
@@ -51,7 +52,7 @@ $string['reviewspagetitle'] = 'रिव्ह्यूज';
 $string['reviewsheading'] = 'रेटिंग्ज आणि रिव्ह्यूज';
 $string['reviewsempty'] = 'दाखवण्यासाठी कोणतेही रिव्ह्यूज नाहीत.';
 $string['reviewsscope'] = 'फक्त तुमच्या स्वतःच्या संस्थेतील लोकांचे रिव्ह्यूज दाखवले आहेत.';
-$string['averagesummary'] = '{$a->count} रेटिंग्जमधून सरासरी रेटिंग {$a->average}';
+$string['averagesummary'] = '{$a->count} रेटिंग्जवरून सरासरी रेटिंग {$a->average}';
 $string['reviewrating'] = '5 पैकी {$a}';
 $string['reactionlikes'] = 'लाइक्स: {$a}';
 $string['reactiondislikes'] = 'डिसलाइक्स: {$a}';

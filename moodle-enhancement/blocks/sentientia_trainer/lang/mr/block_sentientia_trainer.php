@@ -18,7 +18,8 @@
  * Marathi strings for block_sentientia_trainer.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    block_sentientia_trainer
  * @copyright  2026 Airpay Payment Services
@@ -30,7 +31,7 @@ defined('MOODLE_INTERNAL') || die();
 $string['pluginname'] = 'Sentientia ट्रेनर डॅशबोर्ड';
 $string['sentientia_trainer:addinstance'] = 'ट्रेनर डॅशबोर्ड ब्लॉक जोडा';
 $string['sentientia_trainer:myaddinstance'] = 'माझ्या पेजवर ट्रेनर डॅशबोर्ड जोडा';
-$string['sentientia_trainer:viewtrainerslist'] = 'ट्रेनर्सची यादी पहा';
-$string['notrainings'] = 'कोणतेही ट्रेनिंग सेशन असाइन केलेले नाहीत.';
-$string['yoursessions'] = 'तुमचे ट्रेनिंग सेशन्स';
-$string['privacy:metadata'] = 'ट्रेनर डॅशबोर्ड ब्लॉक कोणताही वैयक्तिक डेटा साठवत नाही. तो क्लासरूम प्लगिनच्या मालकीचा क्लासरूम सेशन डेटा दाखवतो.';
+$string['sentientia_trainer:viewtrainerslist'] = 'ट्रेनर्सची यादी पाहा';
+$string['notrainings'] = 'एकही ट्रेनिंग सेशन असाइन केलेले नाही.';
+$string['yoursessions'] = 'तुमची ट्रेनिंग सेशन्स';
+$string['privacy:metadata'] = 'ट्रेनर डॅशबोर्ड ब्लॉक कोणताही वैयक्तिक डेटा सेव्ह करत नाही. तो क्लासरूम प्लगइनच्या मालकीचा क्लासरूम सेशन डेटा दाखवतो.';

@@ -18,7 +18,8 @@
  * Kannada strings for block_sentientia_leaderboard.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    block_sentientia_leaderboard
  * @copyright  2026 Airpay Payment Services
@@ -31,4 +32,4 @@ $string['pluginname'] = 'Sentientia ಲೀಡರ್‌ಬೋರ್ಡ್';
 $string['block_title'] = 'ಲೀಡರ್‌ಬೋರ್ಡ್';
 $string['sentientia_leaderboard:addinstance'] = 'Sentientia ಲೀಡರ್‌ಬೋರ್ಡ್ ಬ್ಲಾಕ್ ಸೇರಿಸಿ';
 $string['sentientia_leaderboard:myaddinstance'] = 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ಗೆ Sentientia ಲೀಡರ್‌ಬೋರ್ಡ್ ಬ್ಲಾಕ್ ಸೇರಿಸಿ';
-$string['privacy:metadata'] = 'Sentientia ಲೀಡರ್‌ಬೋರ್ಡ್ ಬ್ಲಾಕ್ ತಾನೇ ಯಾವುದೇ ವೈಯಕ್ತಿಕ ಡೇಟಾವನ್ನು ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ. ಇದು local_sentientia_leaderboard ಪ್ಲಗಿನ್ ಸಂಗ್ರಹಿಸಿದ ಶ್ರೇಯಾಂಕಗಳನ್ನು ತೋರಿಸುತ್ತದೆ.';
+$string['privacy:metadata'] = 'Sentientia ಲೀಡರ್‌ಬೋರ್ಡ್ ಬ್ಲಾಕ್ ತಾನಾಗಿ ಯಾವುದೇ ವೈಯಕ್ತಿಕ ಡೇಟಾವನ್ನು ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ. ಇದು local_sentientia_leaderboard ಪ್ಲಗಿನ್ ಸಂಗ್ರಹಿಸಿದ ರ್ಯಾಂಕಿಂಗ್ ಅನ್ನು ತೋರಿಸುತ್ತದೆ.';

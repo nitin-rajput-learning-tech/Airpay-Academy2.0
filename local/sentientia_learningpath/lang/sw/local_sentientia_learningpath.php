@@ -18,7 +18,8 @@
  * Swahili strings for local_sentientia_learningpath.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    local_sentientia_learningpath
  * @copyright  2026 Airpay Payment Services
@@ -27,7 +28,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Sentientia Njia za Kujifunza';
+$string['pluginname'] = 'Njia za Kujifunza za Sentientia';
 $string['sentientia_learningpath:manage'] = 'Simamia njia za kujifunza';
 $string['sentientia_learningpath:view'] = 'Tazama njia za kujifunza';
 $string['sentientia_learningpath:enrol'] = 'Sajili watumiaji kwenye njia za kujifunza';
@@ -37,25 +38,25 @@ $string['sentientia_learningpath:delete'] = 'Futa njia za kujifunza';
 $string['addpath'] = 'Ongeza Njia ya Kujifunza';
 $string['editpath'] = 'Hariri Njia ya Kujifunza';
 $string['deletepath'] = 'Futa Njia ya Kujifunza';
-$string['archivepath'] = 'Weka Njia Kumbukumbuni';
-$string['activatepath'] = 'Washa Njia';
+$string['archivepath'] = 'Weka Njia Kwenye Kumbukumbu';
+$string['activatepath'] = 'Wezesha Njia';
 $string['heading_basic'] = 'Maelezo ya Njia';
 $string['heading_org'] = 'Shirika';
-$string['heading_window'] = 'Kipindi cha usajili (si lazima)';
+$string['heading_window'] = 'Muda wa usajili (si lazima)';
 $string['heading_status'] = 'Hali';
 $string['startdate'] = 'Tarehe ya kuanza';
 $string['startdate_help'] = 'Si lazima. Njia inaanza kupokea usajili kuanzia tarehe hii. Acha wazi ili kuruhusu usajili mara moja.';
-$string['enddate'] = 'Tarehe ya mwisho';
+$string['enddate'] = 'Tarehe ya kumaliza';
 $string['enddate_help'] = 'Si lazima. Njia inaacha kupokea usajili mpya baada ya tarehe hii. Wanafunzi ambao tayari wamesajiliwa hawaathiriki.';
-$string['enddate_before_start'] = 'Tarehe ya mwisho lazima iwe siku ya kuanza au baada yake.';
-$string['audience_modal_title'] = 'Sajili kwa wingi kulingana na hadhira lengwa';
-$string['audience_form_intro'] = 'Chagua kigezo kimoja au zaidi cha kichujio ili kulenga kundi la watumiaji. Muhtasari ulio hapa chini unabadilika unapobadilisha vichujio. Bofya "Sajili watumiaji wanaolingana" ili kuthibitisha.';
+$string['enddate_before_start'] = 'Tarehe ya kumaliza lazima iwe siku ya kuanza au baada yake.';
+$string['audience_modal_title'] = 'Sajili kwa wingi kulingana na walengwa';
+$string['audience_form_intro'] = 'Chagua kigezo kimoja au zaidi cha kichujio ili kulenga kikundi cha watumiaji. Onyesho la awali hapa chini hubadilika unapobadilisha vichujio. Bofya "Sajili watumiaji wanaolingana" ili kuthibitisha.';
 $string['audience_any'] = 'Yoyote';
 $string['audience_any_cohort'] = 'Kundi lolote';
 $string['audience_users_matched'] = 'watumiaji wanalingana';
 $string['audience_pick_at_least_one'] = 'Chagua angalau kigezo kimoja cha kichujio (tumia fomu ya kawaida ya Sajili Watumiaji ili kusajili watumiaji wote).';
 $string['audience_enrol_button'] = 'Sajili watumiaji wanaolingana';
-$string['audience_enrol_result'] = 'Usajili mpya %d; watumiaji %d walilingana na hadhira.';
+$string['audience_enrol_result'] = 'Usajili mpya %d; watumiaji %d walilingana na walengwa.';
 $string['designation'] = 'Cheo';
 $string['region'] = 'Kanda';
 $string['location'] = 'Mahali';
@@ -67,17 +68,17 @@ $string['organisation'] = 'Shirika (tenant)';
 $string['organisation_help'] = 'Chagua tenant ambayo njia hii ya kujifunza ni yake. Acha "Hakuna shirika maalum" ili ipatikane kwa tenant zote.';
 $string['status'] = 'Hali';
 $string['status_active'] = 'Inatumika';
-$string['status_archived'] = 'Imewekwa kumbukumbuni';
+$string['status_archived'] = 'Kwenye kumbukumbu';
 $string['missingrequiredfields'] = 'Sehemu za lazima hazijajazwa.';
 $string['confirmdelete'] = 'Una uhakika unataka kufuta "{$a}"? Hii itaondoa kabisa njia hii, kozi zote zilizopangwa ndani yake, na usajili wa wanafunzi. Hatua hii haiwezi kutenduliwa.';
-$string['confirmarchive'] = 'Una uhakika unataka kuweka "{$a}" kumbukumbuni? Haitapatikana tena kwa wanafunzi wapya.';
-$string['confirmactivate'] = 'Washa "{$a}"? Wanafunzi wataweza kujisajili tena.';
+$string['confirmarchive'] = 'Una uhakika unataka kuweka "{$a}" kwenye kumbukumbu? Haitapatikana tena kwa wanafunzi wapya.';
+$string['confirmactivate'] = 'Wezesha "{$a}"? Wanafunzi wataweza kujisajili tena.';
 $string['pathcreated'] = 'Njia ya kujifunza imeundwa.';
 $string['pathupdated'] = 'Njia ya kujifunza imesasishwa.';
 $string['pathdeleted'] = 'Njia ya kujifunza imefutwa.';
 $string['pathstatuschanged'] = 'Hali imesasishwa.';
-$string['toomanycourses'] = 'Kozi ni nyingi mno katika ombi moja. Kikomo ni 100 kwa kila mwito.';
-$string['toomanyusers'] = 'Watumiaji ni wengi mno katika ombi moja. Kikomo ni 500 kwa kila mwito.';
+$string['toomanycourses'] = 'Kozi ni nyingi mno katika ombi moja. Kikomo ni 100 kwa kila ombi.';
+$string['toomanyusers'] = 'Watumiaji ni wengi mno katika ombi moja. Kikomo ni 500 kwa kila ombi.';
 $string['filterstoolong'] = 'Data ya vichujio ni ndefu mno.';
 $string['view_path_title'] = 'Njia ya kujifunza: {$a}';
 $string['tab_overview'] = 'Muhtasari';
@@ -92,9 +93,9 @@ $string['unenrol_courses_remain'] = 'Mwanafunzi ameondolewa kwenye njia, lakini 
 $string['no_courses_assigned'] = 'Bado hakuna kozi zilizopangwa. Bofya "Ongeza Kozi" ili kuanza.';
 $string['no_users_enrolled'] = 'Bado hakuna watumiaji waliosajiliwa. Bofya "Sajili Watumiaji" ili kuongeza wanafunzi.';
 $string['task_adaptive_sweep'] = 'Ukaguzi wa kasi wa safari zinazojirekebisha';
-$string['adaptive_mode'] = 'Modi ya kujirekebisha';
+$string['adaptive_mode'] = 'Hali ya kujirekebisha';
 $string['adaptive_mode_help'] = 'Ikiwashwa, njia hii hujigawa, huongeza kasi, au hutoa mafunzo ya marudio kulingana na alama za quiz, kasi ya ukamilishaji, na viashiria vya mapengo ya ujuzi.';
-$string['adaptive_mode_off'] = 'Tuli (kwa mpangilio)';
+$string['adaptive_mode_off'] = 'Isiyobadilika (kwa mfuatano)';
 $string['adaptive_mode_on'] = 'Inayojirekebisha (kulingana na utendaji)';
 $string['score_threshold_low'] = 'Kiwango cha marudio (%)';
 $string['score_threshold_low_help'] = 'Alama za quiz zilizo sawa au chini ya asilimia hii huanzisha tawi la marudio. Acha wazi ili kutumia chaguo-msingi la mfumo (50%).';
@@ -110,7 +111,7 @@ $string['trigger_skills_gap'] = 'Pengo la ujuzi';
 $string['trigger_combined'] = 'Viashiria vya pamoja';
 $string['adaptive_log_empty'] = 'Bado hakuna maamuzi ya kujirekebisha yaliyorekodiwa kwa njia hii.';
 $string['adaptive_log_title'] = 'Kumbukumbu ya maamuzi ya kujirekebisha';
-$string['adaptive_feature_flag_off'] = 'Kipengele cha safari za kujifunza zinazojirekebisha kimezimwa kwa sasa. Washa flag "sentientia.learningpath.adaptive.enabled" kwenye Switchboard ili kukiwezesha.';
+$string['adaptive_feature_flag_off'] = 'Kipengele cha safari za kujifunza zinazojirekebisha kimezimwa kwa sasa. Washa flag "sentientia.learningpath.adaptive.enabled" kwenye Switchboard ili kukiwasha.';
 $string['privacy:metadata:lp_adaptive_log'] = 'Kumbukumbu ya maamuzi ya safari zinazojirekebisha kwa njia za kujifunza.';
 $string['privacy:metadata:lp_adaptive_log:userid'] = 'Mtumiaji ambaye njia yake ilibadilishwa.';
 $string['privacy:metadata:lp_adaptive_log:pathid'] = 'Njia ya kujifunza ambayo uamuzi ulifanywa.';
@@ -118,12 +119,12 @@ $string['privacy:metadata:lp_adaptive_log:pivot_type'] = 'Aina ya mabadiliko yal
 $string['privacy:metadata:lp_adaptive_log:quiz_score'] = 'Alama ya quiz iliyosababisha mabadiliko (ikiwa inahusika).';
 $string['privacy:metadata:lp_adaptive_log:timecreated'] = 'Wakati uamuzi wa kujirekebisha ulipohifadhiwa.';
 $string['privacy:metadata'] = 'Plugin ya Njia za Kujifunza ya Airpay huhifadhi usajili wa watumiaji kwenye njia, maendeleo, na maamuzi ya safari zinazojirekebisha.';
-$string['privacy:metadata:lp'] = 'Ugawaji wa watumiaji kwa kila njia ya kujifunza.';
+$string['privacy:metadata:lp'] = 'Upangaji wa watumiaji kwa kila njia ya kujifunza.';
 $string['privacy:metadata:lp:pathid'] = 'ID ya njia ya kujifunza.';
 $string['privacy:metadata:lp:userid'] = 'ID ya mtumiaji aliyepangiwa.';
-$string['privacy:metadata:lp:status'] = 'Hali ya ugawaji.';
-$string['privacy:metadata:lp:timecreated'] = 'Muda wa ugawaji.';
-$string['privacy:metadata:lp:timecompleted'] = 'Muda wa kukamilika kwa ugawaji.';
+$string['privacy:metadata:lp:status'] = 'Hali ya upangaji.';
+$string['privacy:metadata:lp:timecreated'] = 'Muda wa upangaji.';
+$string['privacy:metadata:lp:timecompleted'] = 'Muda wa kukamilika kwa upangaji.';
 $string['privacy:metadata:lp:timemodified'] = 'Muda wa sasisho la mwisho.';
 $string['mypaths_title'] = 'Njia zangu za kujifunza';
 $string['mypaths_summary'] = 'Muhtasari wa njia zako za kujifunza';
@@ -141,9 +142,9 @@ $string['lpstate_enrolled'] = 'Haijaanza';
 $string['lpstate_inprogress'] = 'Inaendelea';
 $string['lpstate_completed'] = 'Imekamilika';
 $string['learner_paths_off'] = 'Ukurasa wa njia za kujifunza bado haupatikani.';
-$string['imported_history_protected'] = 'Hii ni historia ya kujifunza iliyoletwa kutoka mfumo uliopita na imelindwa. Weka njia hii ya kujifunza kumbukumbuni badala ya kuifuta au kuondoa wanafunzi wake.';
+$string['imported_history_protected'] = 'Hii ni historia ya kujifunza iliyoletwa kutoka mfumo uliopita na imelindwa. Weka njia hii ya kujifunza kwenye kumbukumbu badala ya kuifuta au kuondoa wanafunzi wake.';
 $string['privacy:metadata:lp:enrolledby'] = 'Aliyemsajili mwanafunzi kwenye njia (mwanafunzi mwenyewe ikiwa alijisajili).';
-$string['privacy:metadata:lp_path'] = 'Njia za kujifunza. Ni watu walioiunda au walioihariri njia mara ya mwisho tu ndio data binafsi.';
+$string['privacy:metadata:lp_path'] = 'Njia za kujifunza. Ni watu walioiunda njia au walioihariri mara ya mwisho tu ndio data binafsi.';
 $string['privacy:metadata:lp_path:usercreated'] = 'Mtumiaji aliyeunda njia.';
 $string['privacy:metadata:lp_path:usermodified'] = 'Mtumiaji aliyehariri njia mara ya mwisho.';
 $string['privacy:metadata:lp_course'] = 'Kozi zilizowekwa kwenye njia ya kujifunza. Ni watu walioongeza au kubadilisha safu tu ndio data binafsi.';

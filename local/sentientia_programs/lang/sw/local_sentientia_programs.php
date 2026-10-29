@@ -18,7 +18,8 @@
  * Swahili strings for local_sentientia_programs.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    local_sentientia_programs
  * @copyright  2026 Airpay Payment Services
@@ -28,12 +29,12 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'Programu za Vyeti za Sentientia';
-$string['sentientia_programs:view'] = 'Kuona programu za vyeti';
-$string['sentientia_programs:manage'] = 'Kusimamia programu za vyeti';
-$string['sentientia_programs:enrol'] = 'Kusajili kwenye programu';
-$string['sentientia_programs:create'] = 'Kuunda programu';
-$string['sentientia_programs:update'] = 'Kuhariri programu';
-$string['sentientia_programs:delete'] = 'Kufuta programu';
+$string['sentientia_programs:view'] = 'Tazama programu za vyeti';
+$string['sentientia_programs:manage'] = 'Simamia programu za vyeti';
+$string['sentientia_programs:enrol'] = 'Sajili kwenye programu';
+$string['sentientia_programs:create'] = 'Unda programu';
+$string['sentientia_programs:update'] = 'Hariri programu';
+$string['sentientia_programs:delete'] = 'Futa programu';
 $string['addprogram'] = 'Ongeza Programu ya Vyeti';
 $string['editprogram'] = 'Hariri Programu';
 $string['deleteprogram'] = 'Futa Programu';
@@ -43,18 +44,18 @@ $string['draftprogram'] = 'Rudisha Kwenye Rasimu';
 $string['heading_basic'] = 'Maelezo ya Programu';
 $string['heading_org'] = 'Shirika';
 $string['heading_completion'] = 'Kanuni za Kukamilisha';
-$string['heading_window'] = 'Kipindi cha usajili (si lazima)';
+$string['heading_window'] = 'Muda wa usajili (si lazima)';
 $string['heading_status'] = 'Hali';
 $string['startdate'] = 'Tarehe ya kuanza';
 $string['startdate_help'] = 'Si lazima. Programu itaanza kupokea usajili kuanzia tarehe hii. Iache wazi ili kuruhusu usajili mara moja.';
-$string['enddate'] = 'Tarehe ya mwisho';
+$string['enddate'] = 'Tarehe ya kumaliza';
 $string['enddate_help'] = 'Si lazima. Programu itafungwa kwa usajili mpya baada ya tarehe hii. Wanafunzi ambao tayari wamesajiliwa hawataathirika.';
-$string['enddate_before_start'] = 'Tarehe ya mwisho lazima iwe siku ya kuanza au baada yake.';
+$string['enddate_before_start'] = 'Tarehe ya kumaliza lazima iwe siku ya kuanza au baada yake.';
 $string['audience_modal_title'] = 'Sajili kwa wingi kulingana na walengwa';
-$string['audience_form_intro'] = 'Chagua kigezo kimoja au zaidi cha kichujio ili kulenga kundi la watumiaji. Onyesho la awali hapa chini hubadilika unapobadilisha vichujio. Bofya "Sajili watumiaji wanaolingana" ili kuthibitisha.';
+$string['audience_form_intro'] = 'Chagua kigezo kimoja au zaidi cha kichujio ili kulenga kikundi cha watumiaji. Onyesho la awali hapa chini hubadilika unapobadilisha vichujio. Bofya "Sajili watumiaji wanaolingana" ili kuthibitisha.';
 $string['audience_any'] = 'Yoyote';
 $string['audience_any_cohort'] = 'Kundi lolote';
-$string['audience_users_matched'] = 'watumiaji wamelingana';
+$string['audience_users_matched'] = 'watumiaji wanalingana';
 $string['audience_pick_at_least_one'] = 'Chagua angalau kigezo kimoja cha kichujio (tumia fomu ya kawaida ya Sajili Watumiaji ili kusajili watumiaji wote).';
 $string['audience_enrol_button'] = 'Sajili watumiaji wanaolingana';
 $string['audience_enrol_result'] = 'Usajili mpya %d; watumiaji %d walilingana na walengwa.';
@@ -107,7 +108,7 @@ $string['levelcreated'] = 'Ngazi imeongezwa.';
 $string['levelupdated'] = 'Ngazi imesasishwa.';
 $string['leveldeleted'] = 'Ngazi imefutwa.';
 $string['confirm_delete_level'] = 'Futa ngazi "{$a}"? Hii pia itaondoa kozi zilizopangwa kwake. Hatua hii haiwezi kutenduliwa.';
-$string['toomanylevels'] = 'Ngazi nyingi mno katika ombi moja (kikomo ni 200).';
+$string['toomanylevels'] = 'Ngazi ni nyingi mno katika ombi moja (kikomo ni 200).';
 $string['manage_level_courses'] = 'Simamia kozi za: {$a}';
 $string['back_to_program'] = 'Rudi kwenye programu';
 $string['add_courses'] = 'Ongeza Kozi';
@@ -116,14 +117,14 @@ $string['confirm_unassign_course'] = 'Ondoa "{$a}" kwenye ngazi hii?';
 $string['courseassigned'] = 'Kozi zimepangwa kwenye ngazi.';
 $string['courseunassigned'] = 'Kozi imeondolewa kwenye ngazi.';
 $string['courses_assigned_count'] = 'Kozi {$a} zimepangwa.';
-$string['toomanycourses'] = 'Kozi nyingi mno katika ombi moja (kikomo ni 100).';
+$string['toomanycourses'] = 'Kozi ni nyingi mno katika ombi moja (kikomo ni 100).';
 $string['enrol_users'] = 'Sajili Watumiaji';
 $string['unenrol_user'] = 'Ondoa kwenye programu';
 $string['no_users_enrolled'] = 'Bado hakuna wanafunzi waliosajiliwa kwenye programu hii.';
 $string['confirm_unenrol_user'] = 'Ondoa {$a} kwenye programu hii? Maendeleo yao ya ngazi pia yatafutwa.';
-$string['userunenrolled'] = 'Mtumiaji ameondolewa kwenye programu.';
+$string['userunenrolled'] = 'Usajili wa mtumiaji kwenye programu umeondolewa.';
 $string['users_enrolled_success'] = 'Watumiaji {$a} wamesajiliwa.';
-$string['toomanyusers'] = 'Watumiaji wengi mno katika ombi moja (kikomo ni 500).';
+$string['toomanyusers'] = 'Watumiaji ni wengi mno katika ombi moja (kikomo ni 500).';
 $string['privacy:metadata'] = 'Plugin ya Programu za Vyeti za Airpay huhifadhi usajili wa watumiaji kwa kila programu na maendeleo ya sasa ya ngazi ya kila mwanafunzi.';
 $string['privacy:metadata:enrol'] = 'Rekodi za usajili wa watumiaji kwa kila programu.';
 $string['privacy:metadata:enrol:programid'] = 'ID ya programu.';
@@ -137,10 +138,10 @@ $string['myprograms'] = 'Programu zangu';
 $string['myprograms_none'] = 'Bado hujasajiliwa kwenye programu yoyote ya vyeti.';
 $string['completed_on'] = 'Ilikamilika tarehe';
 $string['completed_on_date'] = 'Ilikamilika tarehe {$a}';
-$string['enrolled_on_date'] = 'Alisajiliwa tarehe {$a}';
+$string['enrolled_on_date'] = 'Ulisajiliwa tarehe {$a}';
 $string['status_completed'] = 'Imekamilika';
 $string['status_inprogress'] = 'Inaendelea';
-$string['status_enrolled'] = 'Amesajiliwa';
+$string['status_enrolled'] = 'Umesajiliwa';
 $string['levels_progress'] = 'Ngazi {$a->done} kati ya {$a->total}';
 $string['overall_progress'] = 'Maendeleo ya jumla ya programu';
 $string['level_locked'] = 'Imefungwa';

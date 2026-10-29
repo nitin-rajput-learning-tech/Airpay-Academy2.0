@@ -18,7 +18,8 @@
  * Swahili strings for block_sentientia_trainer.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    block_sentientia_trainer
  * @copyright  2026 Airpay Payment Services
@@ -28,9 +29,9 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'Dashibodi ya Mkufunzi ya Sentientia';
-$string['sentientia_trainer:addinstance'] = 'Ongeza block ya dashibodi ya mkufunzi';
+$string['sentientia_trainer:addinstance'] = 'Ongeza bloku ya dashibodi ya mkufunzi';
 $string['sentientia_trainer:myaddinstance'] = 'Ongeza dashibodi ya mkufunzi kwenye ukurasa wangu';
 $string['sentientia_trainer:viewtrainerslist'] = 'Tazama orodha ya wakufunzi';
 $string['notrainings'] = 'Hakuna vipindi vya mafunzo ulivyopangiwa.';
 $string['yoursessions'] = 'Vipindi Vyako vya Mafunzo';
-$string['privacy:metadata'] = 'Block ya Dashibodi ya Mkufunzi haihifadhi data yoyote binafsi. Inaonyesha data ya vipindi vya darasani inayomilikiwa na plugin ya classroom.';
+$string['privacy:metadata'] = 'Bloku ya Dashibodi ya Mkufunzi haihifadhi data yoyote binafsi. Inaonyesha data ya vipindi vya darasani inayomilikiwa na plugin ya mafunzo ya darasani (classroom).';

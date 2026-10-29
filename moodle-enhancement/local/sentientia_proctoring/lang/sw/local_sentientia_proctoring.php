@@ -18,7 +18,8 @@
  * Swahili strings for local_sentientia_proctoring.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    local_sentientia_proctoring
  * @copyright  2026 Airpay Payment Services
@@ -28,21 +29,21 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'Usimamizi wa Mitihani wa Sentientia';
-$string['adminhome'] = 'Admin wa usimamizi wa mitihani';
+$string['adminhome'] = 'Eneo la msimamizi — usimamizi wa mitihani';
 $string['reviewqueue'] = 'Foleni ya ukaguzi';
 $string['attempts'] = 'Majaribio yanayosimamiwa';
 $string['mysessions'] = 'Vipindi vyangu vinavyosimamiwa';
 $string['settings_h'] = 'Mipangilio ya usimamizi wa mitihani';
 $string['sentientia_proctoring:attempt'] = 'Fanya quiz inayosimamiwa';
-$string['sentientia_proctoring:viewattempts'] = 'Angalia maelezo ya majaribio yanayosimamiwa';
-$string['sentientia_proctoring:review'] = 'Kagua vipindi vinavyosimamiwa vilivyowekewa flag';
-$string['sentientia_proctoring:manage'] = 'Simamia mipangilio ya usimamizi wa mitihani + ugawaji wa wakaguzi';
-$string['sentientia_proctoring:bypass'] = 'Ruka usimamizi wa mtihani (dharura, hurekodiwa kwenye audit log)';
+$string['sentientia_proctoring:viewattempts'] = 'Tazama maelezo ya majaribio yanayosimamiwa';
+$string['sentientia_proctoring:review'] = 'Kagua vipindi vinavyosimamiwa vilivyoripotiwa';
+$string['sentientia_proctoring:manage'] = 'Simamia mipangilio ya usimamizi wa mitihani + upangaji wa wakaguzi';
+$string['sentientia_proctoring:bypass'] = 'Ruka usimamizi wa mtihani (dharura, hurekodiwa kwenye kumbukumbu za ukaguzi)';
 $string['consent_title'] = 'Mtihani unaorekodiwa — ridhaa inahitajika';
 $string['consent_intro'] = 'Mtihani huu unasimamiwa. Kabla ya kuanza, tafadhali soma na utoe ridhaa.';
 $string['consent_l1'] = '<strong>Uthibitishaji wa utambulisho</strong> — utaombwa kupakia picha ya kitambulisho cha serikali na selfie. Alama ya ulinganifu hukokotolewa na ni alama hiyo tu inayohifadhiwa.';
 $string['consent_l2'] = '<strong>Ufuatiliaji wa webcam na skrini</strong> — kamera na skrini yako vinarekodiwa muda wote wa mtihani. Sauti inanaswa kwa ajili ya kutambua kelele tu.';
-$string['consent_l3'] = '<strong>Ukaguzi wa kiotomatiki</strong> — rekodi huchunguzwa na AI kutafuta tabia za kutiliwa shaka (nyuso nyingi, kutoka nje ya fremu, kelele za nyuma za muda mrefu). Vipindi vilivyowekewa flag hukaguliwa na msimamizi binadamu.';
+$string['consent_l3'] = '<strong>Ukaguzi wa kiotomatiki</strong> — rekodi huchunguzwa na AI kutafuta tabia za kutiliwa shaka (nyuso nyingi, kutoka nje ya fremu, kelele za nyuma za muda mrefu). Vipindi vilivyoripotiwa hukaguliwa na msimamizi wa mtihani (binadamu).';
 $string['consent_retention'] = 'Rekodi huhifadhiwa kwa siku {$a} kisha hufutwa. Picha za utambulisho hufutwa mara tu baada ya kulinganishwa.';
 $string['consent_accept'] = 'Nimesoma na ninakubali masharti haya ya kurekodi';
 $string['consent_decline'] = 'Ghairi na utoke';
@@ -55,17 +56,17 @@ $string['identity_processing'] = 'Inathibitisha — hii inachukua sekunde 10-30.
 $string['identity_passed'] = 'Utambulisho umethibitishwa (alama ya ulinganifu: {$a})';
 $string['identity_failed'] = 'Uthibitishaji wa utambulisho umeshindikana. Tafadhali jaribu tena au wasiliana na timu ya msaada.';
 $string['identity_lowmatch'] = 'Alama ya ulinganifu ni ya chini mno ({$a}). Tafadhali piga selfie upya kwenye mwanga mzuri zaidi.';
-$string['monitor_title'] = 'Hatua ya 2 — Ufuatiliaji wa moja kwa moja unaendelea';
+$string['monitor_title'] = 'Hatua ya 2 — Ufuatiliaji mubashara unaendelea';
 $string['monitor_camera'] = 'Kamera imewashwa';
 $string['monitor_mic'] = 'Maikrofoni imewashwa';
 $string['monitor_screen'] = 'Skrini inarekodiwa';
-$string['monitor_lockwarn'] = 'Usiondoke kwenye tab hii ya kivinjari. Kubadilisha tab kunarekodiwa.';
+$string['monitor_lockwarn'] = 'Usiondoke kwenye kichupo hiki cha kivinjari. Kubadilisha kichupo kunarekodiwa.';
 $string['event_face_lost'] = 'Uso umetoka nje ya fremu';
 $string['event_multiple_faces'] = 'Nyuso nyingi zimegunduliwa';
-$string['event_tab_switch'] = 'Tab imebadilishwa';
-$string['event_window_blur'] = 'Dirisha limepoteza focus';
+$string['event_tab_switch'] = 'Kichupo kimebadilishwa';
+$string['event_window_blur'] = 'Umehamia dirisha lingine';
 $string['event_mic_noise'] = 'Kelele za nyuma zimeongezeka ghafla';
-$string['event_clipboard_paste'] = 'Paste imegunduliwa';
+$string['event_clipboard_paste'] = 'Kubandika kumegunduliwa';
 $string['event_fullscreen_exit'] = 'Umetoka kwenye skrini nzima';
 $string['event_session_start'] = 'Kipindi kimeanza';
 $string['event_session_end'] = 'Kipindi kimeisha';
@@ -74,21 +75,21 @@ $string['review_in_progress'] = 'Inakaguliwa';
 $string['review_completed'] = 'Imekaguliwa';
 $string['review_decision'] = 'Uamuzi';
 $string['review_decision_clean'] = 'Safi — hakuna tatizo';
-$string['review_decision_warn'] = 'Onyo — flag ndogo ndogo';
-$string['review_decision_fail'] = 'Udanganyifu umegunduliwa — jaribio limefeli';
+$string['review_decision_warn'] = 'Onyo — dosari ndogo ndogo';
+$string['review_decision_fail'] = 'Udanganyifu umegunduliwa — jaribio halijafaulu';
 $string['review_note'] = 'Maelezo ya mkaguzi';
-$string['review_assign'] = 'Teua mkaguzi';
+$string['review_assign'] = 'Panga mkaguzi';
 $string['status_new'] = 'Haijaanza';
 $string['status_consenting'] = 'Inasubiri ridhaa';
 $string['status_verifying'] = 'Inathibitisha utambulisho';
 $string['status_recording'] = 'Inarekodi';
 $string['status_finished'] = 'Imekamilika';
-$string['status_flagged'] = 'Imewekewa flag kwa ukaguzi';
+$string['status_flagged'] = 'Imeripotiwa kwa ukaguzi';
 $string['status_reviewed'] = 'Imekaguliwa';
 $string['settings_provider'] = 'Mtoa huduma wa uthibitishaji wa utambulisho';
-$string['settings_provider_desc'] = 'aws = AWS Rekognition (production), mock = mock ya ndani (majaribio/dev). Weka kwa kila mazingira.';
-$string['settings_aws_region'] = 'Region ya AWS';
-$string['settings_aws_key'] = 'ID ya access key ya AWS';
+$string['settings_provider_desc'] = 'aws = AWS Rekognition (mazingira halisi), mock = mock ya ndani (majaribio/dev). Weka kwa kila mazingira.';
+$string['settings_aws_region'] = 'Kanda ya AWS';
+$string['settings_aws_key'] = 'Access key ID ya AWS';
 $string['settings_aws_secret'] = 'Secret access key ya AWS';
 $string['settings_aws_s3_bucket'] = 'S3 bucket ya rekodi';
 $string['settings_match_threshold'] = 'Kiwango cha ulinganifu wa utambulisho (%)';
@@ -97,15 +98,15 @@ $string['settings_retention_days'] = 'Muda wa kuhifadhi rekodi (siku)';
 $string['settings_retention_days_desc'] = 'Idadi ya siku ambazo rekodi huhifadhiwa kabla ya kufutwa. Chaguo-msingi 90.';
 $string['settings_recording_chunk_secs'] = 'Ukubwa wa kipande cha rekodi (sekunde)';
 $string['settings_recording_chunk_secs_desc'] = 'Vipande vya video hupakiwa kila baada ya muda gani. Chaguo-msingi sekunde 30.';
-$string['settings_default_reviewer'] = 'User ID ya mkaguzi chaguo-msingi';
-$string['settings_default_reviewer_desc'] = 'Mtumiaji anayepokea vipindi vilivyowekewa flag ikiwa hakuna mkaguzi maalum aliyeteuliwa.';
-$string['messageprovider:session_flagged'] = 'Kipindi kinachosimamiwa kimewekewa flag kwa ukaguzi';
+$string['settings_default_reviewer'] = 'ID ya mtumiaji ya mkaguzi wa chaguo-msingi';
+$string['settings_default_reviewer_desc'] = 'Mtumiaji anayepokea vipindi vilivyoripotiwa ikiwa hakuna mkaguzi maalum aliyepangwa.';
+$string['messageprovider:session_flagged'] = 'Kipindi kinachosimamiwa kimeripotiwa kwa ukaguzi';
 $string['messageprovider:session_reviewed'] = 'Kipindi chako kinachosimamiwa kimekaguliwa';
 $string['messageprovider:identity_failed'] = 'Uthibitishaji wa utambulisho umeshindikana';
 $string['error_consent_required'] = 'Ridhaa inahitajika kabla ya kuanza mtihani unaosimamiwa.';
 $string['error_identity_required'] = 'Uthibitishaji wa utambulisho lazima ukamilike kabla ya kuanza.';
 $string['error_no_provider'] = 'Hakuna mtoa huduma wa utambulisho aliyesanidiwa.';
-$string['error_session_not_found'] = 'Kipindi cha usimamizi hakijapatikana.';
+$string['error_session_not_found'] = 'Kipindi cha usimamizi wa mtihani hakijapatikana.';
 $string['error_session_state'] = 'Hali ya kipindi si sahihi kwa kitendo hiki.';
 $string['error_review_not_allowed'] = 'Huna ruhusa ya kukagua kipindi hiki.';
 $string['privacy:metadata:local_sentientia_proctor_sessions'] = 'Vipindi vya mitihani inayosimamiwa';

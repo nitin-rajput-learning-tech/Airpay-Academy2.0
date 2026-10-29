@@ -18,7 +18,8 @@
  * Swahili strings for block_sentientia_recommendations.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    block_sentientia_recommendations
  * @copyright  2026 Airpay Payment Services
@@ -27,7 +28,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Inapendekezwa kwako (AI)';
-$string['sentientia_recommendations:addinstance'] = 'Ongeza kizuizi kipya cha Mapendekezo ya AI';
-$string['sentientia_recommendations:myaddinstance'] = 'Ongeza kizuizi kipya cha Mapendekezo ya AI kwenye Dashboard';
-$string['privacy:metadata'] = 'Kizuizi cha Mapendekezo ya AI hakihifadhi data yoyote binafsi chenyewe. Kinaonyesha mapendekezo yaliyohifadhiwa na plugin ya local_sentientia_recommendations.';
+$string['pluginname'] = 'Mapendekezo kwako (AI)';
+$string['sentientia_recommendations:addinstance'] = 'Ongeza bloku mpya ya Mapendekezo ya AI';
+$string['sentientia_recommendations:myaddinstance'] = 'Ongeza bloku mpya ya Mapendekezo ya AI kwenye Dashibodi';
+$string['privacy:metadata'] = 'Bloku ya Mapendekezo ya AI yenyewe haihifadhi data yoyote binafsi. Inaonyesha mapendekezo yaliyohifadhiwa na plugin ya local_sentientia_recommendations.';

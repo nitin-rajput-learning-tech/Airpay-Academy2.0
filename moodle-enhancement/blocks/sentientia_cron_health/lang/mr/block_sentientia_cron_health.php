@@ -18,7 +18,8 @@
  * Marathi strings for block_sentientia_cron_health.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    block_sentientia_cron_health
  * @copyright  2026 Airpay Payment Services
@@ -29,17 +30,17 @@ defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'Sentientia क्रॉन हेल्थ';
 $string['sentientia_cron_health:addinstance'] = 'Airpay क्रॉन हेल्थ ब्लॉक जोडा';
-$string['sentientia_cron_health:myaddinstance'] = 'माझ्या Moodle पेजवर Airpay क्रॉन हेल्थ ब्लॉक जोडा';
-$string['kpi_stuck_airpay'] = 'Airpay टास्क अडकलेले';
-$string['kpi_stuck_other'] = 'इतर टास्क अडकलेले';
-$string['kpi_in_backoff'] = 'फेल्युअर बॅकऑफमध्ये';
+$string['sentientia_cron_health:myaddinstance'] = 'My Moodle पेजवर Airpay क्रॉन हेल्थ ब्लॉक जोडा';
+$string['kpi_stuck_airpay'] = 'अडकलेले Airpay टास्क';
+$string['kpi_stuck_other'] = 'अडकलेले इतर टास्क';
+$string['kpi_in_backoff'] = 'अयशस्वी होऊन बॅकऑफमध्ये';
 $string['stuck_airpay_heading'] = 'अडकलेले Airpay टास्क';
-$string['in_backoff_heading'] = 'फेल्युअर बॅकऑफमधील टास्क';
-$string['view_task_logs'] = 'संपूर्ण टास्क लॉग पहा →';
+$string['in_backoff_heading'] = 'अयशस्वी होऊन बॅकऑफमध्ये असलेले टास्क';
+$string['view_task_logs'] = 'संपूर्ण टास्क लॉग पाहा →';
 $string['severity_ok'] = 'ठीक';
 $string['severity_warning'] = 'इशारा';
 $string['severity_critical'] = 'गंभीर';
 $string['kpi_aria_label'] = '{$a->value} {$a->label}, तीव्रता {$a->severity}';
 $string['region_label'] = 'Airpay क्रॉन हेल्थ सारांश';
-$string['overdue_label'] = '{$a} उशीर';
-$string['privacy:metadata'] = 'क्रॉन हेल्थ ब्लॉक कोणताही पर्सनल डेटा सेव्ह करत नाही. तो Moodle च्या कोर टेबल्समधून शेड्यूल्ड टास्कची स्थिती वाचतो.';
+$string['overdue_label'] = '{$a} ने ओव्हरड्यू';
+$string['privacy:metadata'] = 'क्रॉन हेल्थ ब्लॉक कोणताही वैयक्तिक डेटा सेव्ह करत नाही. तो Moodle च्या कोर टेबल्समधून शेड्यूल्ड टास्कचा स्टेटस वाचतो.';

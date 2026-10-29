@@ -18,7 +18,8 @@
  * Marathi strings for local_sentientia_roles.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    local_sentientia_roles
  * @copyright  2026 Airpay Payment Services
@@ -30,7 +31,7 @@ defined('MOODLE_INTERNAL') || die();
 $string['pluginname'] = 'Sentientia रोल मॅनेजमेंट';
 $string['sentientia_roles:view'] = 'रोल-मॅनेजमेंट UI पाहा';
 $string['sentientia_roles:manage'] = 'रोल्सवरील कॅपेबिलिटी परवानग्या एडिट करा';
-$string['sentientia_roles:assign'] = 'युजर्सना रोल्स असाइन / अनअसाइन करा';
+$string['sentientia_roles:assign'] = 'युजर्सना रोल्स असाइन करा / काढा';
 $string['sentientia_roles:audit'] = 'रोल-मॅनेजमेंट ऑडिट लॉग पाहा';
 $string['sentientia_roles:export'] = 'रोल + कॅपेबिलिटी डेटा CSV मध्ये एक्सपोर्ट करा';
 $string['heading_index'] = 'रोल मॅनेजमेंट';
@@ -83,7 +84,7 @@ $string['form_edit_cap'] = 'कॅपेबिलिटी एडिट कर�
 $string['form_capability'] = 'कॅपेबिलिटी';
 $string['form_permission'] = 'परवानगी';
 $string['form_reason'] = 'बदलाचे कारण';
-$string['form_reason_help'] = 'ऐच्छिक. कंप्लायन्स रिव्ह्यूसाठी ऑडिट लॉगमध्ये सेव्ह केले जाते.';
+$string['form_reason_help'] = 'ऐच्छिक. कम्प्लायन्स रिव्ह्यूसाठी ऑडिट लॉगमध्ये सेव्ह केले जाते.';
 $string['form_save'] = 'बदल सेव्ह करा';
 $string['form_cancel'] = 'रद्द करा';
 $string['audit_col_when'] = 'केव्हा';
@@ -93,24 +94,24 @@ $string['audit_col_action'] = 'ॲक्शन';
 $string['audit_col_cap'] = 'कॅपेबिलिटी';
 $string['audit_col_change'] = 'बदल';
 $string['audit_col_reason'] = 'कारण';
-$string['audit_no_entries'] = 'अजून कोणत्याही ऑडिट नोंदी नाहीत.';
+$string['audit_no_entries'] = 'अजून एकही ऑडिट नोंद नाही.';
 $string['audit_filter_role'] = 'रोलनुसार फिल्टर करा';
 $string['audit_filter_role_all'] = 'सर्व रोल्स';
 $string['audit_filter_action_all'] = 'सर्व ॲक्शन्स';
 $string['audit_filter_action'] = 'ॲक्शननुसार फिल्टर करा';
 $string['audit_action_capability_set'] = 'कॅपेबिलिटी बदलली';
-$string['audit_action_capability_unset'] = 'कॅपेबिलिटी रिसेट केली';
+$string['audit_action_capability_unset'] = 'कॅपेबिलिटी रीसेट केली';
 $string['audit_action_role_assigned'] = 'रोल असाइन केला';
-$string['audit_action_role_unassigned'] = 'रोल अनअसाइन केला';
+$string['audit_action_role_unassigned'] = 'रोल काढला';
 $string['audit_action_role_created'] = 'रोल तयार केला';
 $string['audit_action_role_deleted'] = 'रोल डिलीट केला';
 $string['err_role_not_found'] = 'रोल सापडला नाही.';
 $string['err_user_not_found'] = 'युजर सापडला नाही.';
-$string['err_capability_not_found'] = 'कॅपेबिलिटी "{$a}" या Sentientia LMS इंस्टॉलमध्ये रजिस्टर केलेली नाही.';
+$string['err_capability_not_found'] = 'कॅपेबिलिटी "{$a}" या Sentientia LMS इन्स्टॉलमध्ये रजिस्टर केलेली नाही.';
 $string['err_invalid_permission'] = 'परवानगी यापैकी एक असावी: inherit, allow, prevent, prohibit.';
-$string['err_cannot_modify_admin'] = 'साइट ॲडमिनिस्ट्रेटर रोलवरील कॅपेबिलिटीज बदलता येत नाहीत.';
+$string['err_cannot_modify_admin'] = 'साइट ॲडमिन रोलवरील कॅपेबिलिटीज बदलता येत नाहीत.';
 $string['err_filterstoolong'] = 'फिल्टर ब्लॉब मर्यादेपेक्षा मोठा आहे.';
-$string['err_definitions_crosstenant'] = 'रोल डेफिनिशन्स सर्व टेनंट्समध्ये शेअर केलेल्या असतात, त्यामुळे फक्त प्लॅटफॉर्म (क्रॉस-टेनंट) ॲडमिनिस्ट्रेटरच त्या बदलू शकतो.';
+$string['err_definitions_crosstenant'] = 'रोल डेफिनिशन्स सर्व टेनंट्समध्ये शेअर केलेल्या असतात, त्यामुळे फक्त प्लॅटफॉर्म (क्रॉस-टेनंट) ॲडमिनच त्या बदलू शकतो.';
 $string['err_role_not_assignable'] = 'तुम्ही फक्त असा रोल असाइन करू शकता जो तुमच्याकडे स्वतः आहे आणि जो असाइन करण्याची तुम्हाला परवानगी आहे, आणि तोही फक्त तुमच्याच संस्थेतील दुसऱ्या व्यक्तीला.';
 $string['err_assignment_not_found'] = 'त्या युजरकडे साइट लेव्हलवर हा रोल नाही, त्यामुळे काढण्यासारखे काहीही नाही.';
 $string['assignment_scope_system'] = 'संपूर्ण प्लॅटफॉर्म';
@@ -120,8 +121,8 @@ $string['privacy:metadata:auditlog:capability'] = 'ज्या कॅपेब�
 $string['privacy:metadata:auditlog:oldpermission'] = 'बदलापूर्वीची कॅपेबिलिटी परवानगी.';
 $string['privacy:metadata:auditlog:newpermission'] = 'बदलानंतरची कॅपेबिलिटी परवानगी.';
 $string['privacy:metadata:auditlog:changedby'] = 'बदल करणाऱ्या ॲडमिनचा युजर ID.';
-$string['privacy:metadata:auditlog:targetuserid'] = 'असाइन किंवा अनअसाइन होणाऱ्या युजरचा युजर ID (रोल-असाइनमेंट इव्हेंट्ससाठी).';
+$string['privacy:metadata:auditlog:targetuserid'] = 'ज्याला रोल असाइन केला जात आहे किंवा ज्याच्याकडून रोल काढला जात आहे त्या युजरचा युजर ID (रोल-असाइनमेंट इव्हेंट्ससाठी).';
 $string['privacy:metadata:auditlog:reason'] = 'ॲडमिनने दिलेल्या कारणाचा ऐच्छिक मजकूर.';
 $string['privacy:metadata:auditlog:open_path'] = 'बदलाच्या वेळी ॲडमिनचा Airpay टेनंट पाथ.';
 $string['privacy:metadata:auditlog:timecreated'] = 'बदल केव्हा झाला.';
-$string['cap_updated_success'] = 'कॅपेबिलिटी "{$a}" अपडेट केली.';
+$string['cap_updated_success'] = 'कॅपेबिलिटी "{$a}" अपडेट झाली.';

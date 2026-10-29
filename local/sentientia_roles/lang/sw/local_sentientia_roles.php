@@ -18,7 +18,8 @@
  * Swahili strings for local_sentientia_roles.
  *
  * Machine-drafted on 2026-10-23 (research item 4) following TRANSLATION-REVIEW-INSTRUCTIONS.md;
- * awaiting review by a native speaker.
+ * reviewed 2026-10-25 to 2026-10-29 by AI bilingual reviewers (glossary pass, then back-translation QA);
+ * not yet checked by a human native speaker.
  *
  * @package    local_sentientia_roles
  * @copyright  2026 Airpay Payment Services
@@ -30,9 +31,9 @@ defined('MOODLE_INTERNAL') || die();
 $string['pluginname'] = 'Usimamizi wa Majukumu wa Sentientia';
 $string['sentientia_roles:view'] = 'Tazama UI ya usimamizi wa majukumu';
 $string['sentientia_roles:manage'] = 'Hariri ruhusa za uwezo kwenye majukumu';
-$string['sentientia_roles:assign'] = 'Wape / waondolee watumiaji majukumu';
+$string['sentientia_roles:assign'] = 'Pangia au ondoa majukumu ya watumiaji';
 $string['sentientia_roles:audit'] = 'Tazama kumbukumbu za ukaguzi za usimamizi wa majukumu';
-$string['sentientia_roles:export'] = 'Hamisha data ya majukumu + uwezo kwenda CSV';
+$string['sentientia_roles:export'] = 'Hamisha data ya majukumu + uwezo kama CSV';
 $string['heading_index'] = 'Usimamizi wa majukumu';
 $string['heading_view'] = 'Jukumu: {$a}';
 $string['heading_audit'] = 'Kumbukumbu za ukaguzi';
@@ -48,12 +49,12 @@ $string['col_name'] = 'Jina';
 $string['col_shortname'] = 'Jina fupi';
 $string['col_archetype'] = 'Aina ya msingi';
 $string['col_caps'] = 'Uwezo';
-$string['col_assignments'] = 'Ugawaji';
+$string['col_assignments'] = 'Upangaji';
 $string['col_sortorder'] = 'Mpangilio';
 $string['col_actions'] = 'Vitendo';
 $string['tab_overview'] = 'Muhtasari';
 $string['tab_capabilities'] = 'Uwezo';
-$string['tab_assignments'] = 'Ugawaji';
+$string['tab_assignments'] = 'Upangaji';
 $string['tab_audit'] = 'Ukaguzi';
 $string['ov_id'] = 'ID ya jukumu';
 $string['ov_shortname'] = 'Jina fupi';
@@ -64,7 +65,7 @@ $string['ov_caps_total'] = 'Jumla ya uwezo';
 $string['ov_caps_allow'] = 'Ruhusu';
 $string['ov_caps_prevent'] = 'Zuia';
 $string['ov_caps_prohibit'] = 'Kataza';
-$string['ov_assignments'] = 'Ugawaji kwa watumiaji';
+$string['ov_assignments'] = 'Upangaji wa watumiaji';
 $string['ov_audit_entries'] = 'Rekodi za ukaguzi (jukumu hili)';
 $string['cap_filter_search'] = 'Chuja uwezo';
 $string['cap_filter_perm'] = 'Ruhusa';
@@ -83,7 +84,7 @@ $string['form_edit_cap'] = 'Hariri uwezo';
 $string['form_capability'] = 'Uwezo';
 $string['form_permission'] = 'Ruhusa';
 $string['form_reason'] = 'Sababu ya mabadiliko';
-$string['form_reason_help'] = 'Si lazima. Huhifadhiwa kwenye kumbukumbu za ukaguzi kwa ajili ya mapitio ya kufuata kanuni.';
+$string['form_reason_help'] = 'Si lazima. Huhifadhiwa kwenye kumbukumbu za ukaguzi kwa ajili ya ukaguzi wa uzingatiaji.';
 $string['form_save'] = 'Hifadhi mabadiliko';
 $string['form_cancel'] = 'Ghairi';
 $string['audit_col_when'] = 'Lini';
@@ -100,7 +101,7 @@ $string['audit_filter_action_all'] = 'Vitendo vyote';
 $string['audit_filter_action'] = 'Chuja kwa kitendo';
 $string['audit_action_capability_set'] = 'Uwezo umebadilishwa';
 $string['audit_action_capability_unset'] = 'Uwezo umewekwa upya';
-$string['audit_action_role_assigned'] = 'Jukumu limegawiwa';
+$string['audit_action_role_assigned'] = 'Jukumu limepangiwa mtumiaji';
 $string['audit_action_role_unassigned'] = 'Jukumu limeondolewa';
 $string['audit_action_role_created'] = 'Jukumu limeundwa';
 $string['audit_action_role_deleted'] = 'Jukumu limefutwa';
@@ -111,16 +112,16 @@ $string['err_invalid_permission'] = 'Ruhusa lazima iwe mojawapo ya: inherit, all
 $string['err_cannot_modify_admin'] = 'Huwezi kubadilisha uwezo kwenye jukumu la msimamizi wa tovuti.';
 $string['err_filterstoolong'] = 'Data ya vichujio imezidi kikomo.';
 $string['err_definitions_crosstenant'] = 'Ufafanuzi wa majukumu unashirikiwa na kila tenant, kwa hiyo ni msimamizi wa jukwaa (wa tenant zote) pekee anayeweza kuubadilisha.';
-$string['err_role_not_assignable'] = 'Unaweza tu kumpa mtu mwingine ndani ya shirika lako jukumu ambalo wewe mwenyewe unalo na unaruhusiwa kulitoa.';
+$string['err_role_not_assignable'] = 'Unaweza tu kumpangia mtu mwingine ndani ya shirika lako jukumu ambalo wewe mwenyewe unalo na unaruhusiwa kulipangia wengine.';
 $string['err_assignment_not_found'] = 'Mtumiaji huyo hana jukumu hili kwenye ngazi ya tovuti, kwa hiyo hakuna cha kuondoa.';
 $string['assignment_scope_system'] = 'Jukwaa zima';
-$string['privacy:metadata:auditlog'] = 'Kumbukumbu za ukaguzi zinazoongezwa tu za mabadiliko ya majukumu na uwezo yaliyofanywa kupitia UI ya usimamizi wa majukumu, pamoja na ugawaji wa majukumu ulioingizwa kutoka BizLMS.';
+$string['privacy:metadata:auditlog'] = 'Kumbukumbu za ukaguzi zinazoongezwa tu za mabadiliko ya majukumu na uwezo yaliyofanywa kupitia UI ya usimamizi wa majukumu, pamoja na upangaji wa majukumu ulioingizwa kutoka BizLMS.';
 $string['privacy:metadata:auditlog:roleid'] = 'Jukumu linalobadilishwa.';
 $string['privacy:metadata:auditlog:capability'] = 'Uwezo ambao ruhusa yake ilibadilishwa.';
 $string['privacy:metadata:auditlog:oldpermission'] = 'Ruhusa ya uwezo kabla ya mabadiliko.';
 $string['privacy:metadata:auditlog:newpermission'] = 'Ruhusa ya uwezo baada ya mabadiliko.';
 $string['privacy:metadata:auditlog:changedby'] = 'ID ya mtumiaji ya msimamizi aliyefanya mabadiliko.';
-$string['privacy:metadata:auditlog:targetuserid'] = 'ID ya mtumiaji anayepewa au kuondolewa jukumu (kwa matukio ya ugawaji wa majukumu).';
+$string['privacy:metadata:auditlog:targetuserid'] = 'ID ya mtumiaji anayepangiwa au kuondolewa jukumu (kwa matukio ya upangaji wa majukumu).';
 $string['privacy:metadata:auditlog:reason'] = 'Maelezo ya hiari ya msimamizi kuhusu sababu ya mabadiliko.';
 $string['privacy:metadata:auditlog:open_path'] = 'Njia ya tenant ya Airpay ya msimamizi wakati wa mabadiliko.';
 $string['privacy:metadata:auditlog:timecreated'] = 'Wakati mabadiliko yalipotokea.';
