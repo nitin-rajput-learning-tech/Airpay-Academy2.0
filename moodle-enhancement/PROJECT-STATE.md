@@ -1,7 +1,58 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-10-24 (**UAT /my/ TypeError root-caused and fixed in code (83f9f252f); a second UAT defect, a 404 Message-button icon, fixed (62149a665); new CI gate for unprinted layout regions; UAT deploy of 6 files waits for the tunnel. See the 2026-10-24 entry.**)
+**Updated:** 2026-10-30 (**UAT has the 10-24 fixes, the blocks-drawer flag is ON there, and the two approved deletions are done; kn/mr/sw packs reviewed and committed (27ce9fc35). Waiting on Nitin: the UAT /my/ browser check and the UAT deploy of the kn/mr/sw packs (Chrome and the tunnel were blocked on 10-29). See the 2026-10-29 / 10-30 entry.**)
 
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
+
+---
+
+## 2026-10-29 / 10-30 - UAT deploy, drawer flag ON, approved deletions, kn/mr/sw review committed (Opus 5.5)
+
+**UAT deploy (10-29, tunnel up 08:06): 14 files.** `tools/uat/deploy_to_uat.sh --yes`. The files are theme 2026102401
+(the 10-24 dashboard-region and context-header fixes, the course layout without course-pre, and the drawer), request
+2026102300 (approvals layout) and the en/hi lang of fe87b975f. Checksums, upgrade and purge were all OK. The box backup
+is `/tmp/uat-predeploy-backup-20261029-095420.tgz`.
+- First, git blobs were compared with UAT's sha256 (`kit-scratch/uatreh/cmp_uat_git.py` + `cmp_uat.py`). Exactly
+  these 14 files and the held-back kn/mr/sw files differed.
+- Working-tree hashes can't be used for this comparison: the checkout is CRLF (autocrlf).
+- Server-side checks: `styles.php` compiles with the drawer CSS, login returns 200, no Apache errors, no 5xx.
+
+**Flag `sentientia.dashboard.blocksdrawer.enabled` ON site-wide on UAT** (`tools/uat/set_flag.php`, Nitin 2026-10-24
+"show them in a side drawer").
+
+**Deleted on UAT (Nitin-approved; listed first, removed with `find -delete`).** Disk use went from 5.3G to 4.4G.
+- `/var/backups/uat-5.3-20261021-191405`: 764M, the pre-5.3 code tree.
+- `/var/www/html/Sentientia-LMS-5.2-Complete-Standalone-2026-08-19.zip`: 162 MB.
+
+**kn/mr/sw packs reviewed: 27ce9fc35** (41 plugins, 4,429 strings per language, both trees).
+- Nitin asked (10-24) for the native-speaker review to be done as well as possible with capable model agents.
+- One glossary-led reviewer pass per language, plus the two English source fixes of fe87b975f.
+- Then back-translation QA (workflow wf_80462ff1-14c). Per language: two checkers on the changed-string samples, one
+  independent checker (unsampled strings plus a grep of the whole pack for glossary stragglers), and a skeptical
+  reviewer who accepted or rejected every proposed fix.
+
+| Language | Strings checked | Fixes accepted |
+|----------|-----------------|----------------|
+| kn | 507 | 0 |
+| mr | 1,028 | 3: the misspelt "successfully" dropped from coursecreated / courseupdated, the request-status possessive fixed |
+| sw | 1,090 | 2: calendar privacy text said "expiry" for last-used; "maswali kuu" became "maswali makuu" |
+
+- No fixes were rejected.
+- Gates: placeholder, tag and URL equality against en (build tool); php -l on 237 files; lang parity 0 failures;
+  tree drift 0 new.
+- The file header now says "reviewed by AI bilingual reviewers; not yet checked by a human native speaker". A human
+  read before a Kannada, Marathi or Swahili tenant goes live is still advisable.
+- Checked and left alone: `local_sentientia_live` says NPS is "1-10" in one string and "0-10" in another. Both are
+  true: `rating_scale.php` defaults to 1-10 and allows any 0 <= min < max <= 10.
+
+**Waiting on Nitin (blocked 10-29 evening).** Claude in Chrome was "not connected" even after Nitin logged in as Meera,
+and `ssh uat-lms` was refused. Nitin suspects the new antivirus/monitoring layer and said not to force it.
+1. UAT `/my/` as Meera, read-only:
+   - no "Deferred exception" or TypeError in the console;
+   - the `.ap-dashboard-blocks-toggle` opens `#theme_sentientia-drawers-blocks` with the blocks;
+   - `/message/notificationpreferences.php` has no broken image.
+2. UAT deploy of the packs. The dry run is verified (123 files, purge only):
+   `tools/uat/deploy_to_uat.sh --yes --no-upgrade --prefer-me --commit 27ce9fc35`.
+   The packs only show where the kn/mr/sw core language packs are installed (local XAMPP has them).
 
 ---
 
