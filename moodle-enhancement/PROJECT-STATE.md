@@ -1,5 +1,5 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-10-30 (**UAT has the 10-24 fixes, the blocks-drawer flag is ON there, and the two approved deletions are done; kn/mr/sw packs reviewed and committed (27ce9fc35). Waiting on Nitin: the UAT /my/ browser check and the UAT deploy of the kn/mr/sw packs (Chrome and the tunnel were blocked on 10-29). See the 2026-10-29 / 10-30 entry.**)
+**Updated:** 2026-10-30 (**UAT has the 10-24 fixes, the blocks-drawer flag is ON there, the two approved deletions are done, and the reviewed kn/mr/sw packs are deployed there (27ce9fc35). The UAT /my/ check as Meera PASSED: clean console, the drawer opens with its blocks, no broken icon. Nothing is waiting on Nitin from this entry. See the 2026-10-29 / 10-30 entry.**)
 
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
 
@@ -44,15 +44,22 @@ is `/tmp/uat-predeploy-backup-20261029-095420.tgz`.
 - Checked and left alone: `local_sentientia_live` says NPS is "1-10" in one string and "0-10" in another. Both are
   true: `rating_scale.php` defaults to 1-10 and allows any 0 <= min < max <= 10.
 
-**Waiting on Nitin (blocked 10-29 evening).** Claude in Chrome was "not connected" even after Nitin logged in as Meera,
-and `ssh uat-lms` was refused. Nitin suspects the new antivirus/monitoring layer and said not to force it.
-1. UAT `/my/` as Meera, read-only:
-   - no "Deferred exception" or TypeError in the console;
-   - the `.ap-dashboard-blocks-toggle` opens `#theme_sentientia-drawers-blocks` with the blocks;
-   - `/message/notificationpreferences.php` has no broken image.
-2. UAT deploy of the packs. The dry run is verified (123 files, purge only):
-   `tools/uat/deploy_to_uat.sh --yes --no-upgrade --prefer-me --commit 27ce9fc35`.
-   The packs only show where the kn/mr/sw core language packs are installed (local XAMPP has them).
+**Both UAT steps closed 10-30.** They were blocked on the evening of 10-29: Chrome was "not connected" and the tunnel was
+refused. They were done on 10-30, once Nitin had the VPN up for SSH and then off for Chrome.
+1. **UAT deploy of the packs (11:56).**
+   - Command: `tools/uat/deploy_to_uat.sh --yes --no-upgrade --prefer-me --commit 27ce9fc35`. 123 files, all checksums
+     OK, caches purged.
+   - Box backup: `/tmp/uat-predeploy-backup-20261030-115614.tgz`.
+   - Afterwards: all 159 kn/mr/sw lang files on the box pass `php -l`, login returns 200, and Apache's error log has
+     nothing new.
+   - The packs show only where the kn/mr/sw core language packs are installed. UAT has none yet; local XAMPP has them.
+2. **UAT `/my/` as Meera, read-only (12:56-13:30): PASS.**
+   - The console is clean after a reload: no "Deferred exception" and no TypeError.
+   - The blocks toggle opens `#theme_sentientia-drawers-blocks` with Calendar and Recently accessed items.
+   - `/message/notificationpreferences.php` has no broken image, and the Message icon renders.
+   - Evidence and three small cosmetic notes are in `docs/visual-evidence/2026-10-30/uat-my-check/`. The notes: "Wed"
+     wraps in the 315 px drawer calendar, the toggle tooltip stays "Open" while the drawer is open, and the breadcrumb
+     shows twice on notification preferences.
 
 ---
 
