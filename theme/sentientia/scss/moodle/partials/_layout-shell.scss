@@ -809,6 +809,12 @@ body.ap-course-shell .ap-shell__breadcrumbs {
     padding: var(--ap-space-3) 0 0;
     margin-bottom: 0;
 }
+/* 2026-11-02: the drawers and course layouts also print core's page header, whose #page-navbar repeated this trail on
+   the right (UAT notification preferences, 10-30). Where this strip is printed it is the only trail. Pages with a
+   one-item trail print no strip and keep #page-navbar. */
+.ap-shell__breadcrumbs ~ #page #page-navbar {
+    display: none;
+}
 
 /* ── Phase D2 (N-06): topbar notification/message icon links ── */
 .ap-topbar__right {

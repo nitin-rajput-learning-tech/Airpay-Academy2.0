@@ -1,7 +1,41 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-10-30 (**UAT has the 10-24 fixes, the blocks-drawer flag is ON there, the two approved deletions are done, and the reviewed kn/mr/sw packs are deployed there (27ce9fc35). The UAT /my/ check as Meera PASSED: clean console, the drawer opens with its blocks, no broken icon. Nothing is waiting on Nitin from this entry. See the 2026-10-29 / 10-30 entry.**)
+**Updated:** 2026-11-02 (**Theme 2026110200 / 1.0.63-beta: one breadcrumb trail on drawers/course pages, block calendar day names on one line, and single-activity course pages no longer fatal on 5.x. Checked on local XAMPP, evidence in docs/visual-evidence/2026-11-02/theme-trail-calendar/. UAT deploy of the 4 theme files waits for the tunnel. See the 2026-11-02 entry.**)
 
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
+
+---
+
+## 2026-11-02 - theme 2026110200: breadcrumb trail, calendar day names, single-activity fatal (Opus 5.5)
+
+These are the follow-ups to the three cosmetic notes of the 10-30 UAT `/my/` check. One real defect was found along
+the way. Evidence (desktop + 590 px, local XAMPP) is in `docs/visual-evidence/2026-11-02/theme-trail-calendar/`.
+
+- **One breadcrumb trail.** The drawers and course layouts printed the shell's strip (`airpay_shell_start()`, phase B
+  N-03) and also core's page header with `#page-navbar`, so notification preferences and every activity page showed
+  the trail twice. Where the strip prints, `#page-navbar` is now hidden (`_layout-shell.scss`, one rule). Pages with a
+  one-item trail print no strip and keep `#page-navbar`. Course home pages show no trail, before and after.
+- **Block calendar day names.** "Wed" wrapped in the 315 px drawer because bold Montserrat is wider than Boost's
+  font. The day names are now 0.8em like the day numbers (`calendar.scss`). They may still wrap, for longer kn/mr/sw
+  names.
+- **Single-activity course pages were a fatal on 5.x (new defect).** `course_view.php::activityurl_get_course()`
+  called `format_singleactivity::reorder_activities()`, which Moodle 5.0 replaced with `get_main_activity()`. It now
+  uses `get_main_activity()` when the method exists, keeps the old call for 4.x, and returns null when there is no
+  activity yet. The retired airpayux/epsilon themes have the same call; they are not served.
+- **Left as it is:** the toggle tooltip staying up while the drawer opens. Core Boost 5.1 behaves the same, and the
+  tooltip hides when the pointer moves.
+- **Local XAMPP was behind UAT** by 5 theme files from 10-24 (drawer + context header). They are synced now.
+  - Helpers: `tools/visual-pass/blocksdrawer_flag.php` (save/apply/restore, tenant 1 only),
+    `seed_dashboard_calendar.php` and `theme_1102_checks.mjs`.
+  - The local flag is back to no override row.
+  - vp_admin1 keeps the seeded calendar block as test data.
+
+**Waiting for the tunnel: UAT deploy of 4 files.** The 3-file dry run passed. The command with the 4th file:
+`tools/uat/deploy_to_uat.sh --yes theme/sentientia/scss/moodle/partials/_layout-shell.scss theme/sentientia/scss/moodle/calendar.scss theme/sentientia/classes/output/traits/course_view.php theme/sentientia/version.php`
+(upgrade + purge). Then, with the VPN off, a Chrome look as Meera: notification preferences has one trail, and the
+drawer calendar has "Wed" on one line.
+
+**Still open:** a native-speaker read of the kn/mr/sw packs, and the empty left drawer on the course page. That is a
+design call from 10-23 and has no decision yet.
 
 ---
 

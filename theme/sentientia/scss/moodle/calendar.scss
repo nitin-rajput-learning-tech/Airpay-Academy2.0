@@ -633,6 +633,13 @@ table.calendartable caption {
                                 padding: 0;
                             }
 
+                            // 2026-11-02: bold Montserrat is wider than Boost's font, so the day names wrapped ("We / d")
+                            // in the 315 px blocks drawer. Sized like the day numbers below. No nowrap: longer kn/mr/sw
+                            // day names may wrap rather than push the table out of the drawer.
+                            th {
+                                font-size: 0.8em;
+                            }
+
                             td {
                                 height: auto;
                                 font-size: 0.8em;

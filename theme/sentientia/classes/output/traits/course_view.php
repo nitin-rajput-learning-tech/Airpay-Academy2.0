@@ -141,7 +141,15 @@ trait course_view {
         $courseformat = course_get_format($COURSE);
 
         if ($COURSE->format == 'singleactivity') {
-            $cm = $courseformat->reorder_activities();
+            // Moodle 5.0 replaced format_singleactivity::reorder_activities() with get_main_activity(). Calling the old
+            // name was a fatal on every single-activity course page on 5.x (found 2026-11-02, local course 4).
+            $cm = method_exists($courseformat, 'get_main_activity')
+                ? $courseformat->get_main_activity()
+                : $courseformat->reorder_activities();
+            if (!$cm) {
+                // No activity yet: core shows its own notice on the course page.
+                return null;
+            }
             // P0 #9 (Moodle 5.2) — go through resolver so a module callback
             // (mod_xxx_get_navigation_url) can override the launch target.
             // Falls back to $cm->url when no callback exists.
