@@ -68,12 +68,15 @@ class list_pending extends external_api {
                 $DB->sql_like('u.email',     ':s3', false),
                 $DB->sql_like('c.fullname',  ':s4', false),
                 $DB->sql_like('r.reason',    ':s5', false),
+                // A full name ("Rahul Sharma") matches neither name column alone (2026-11-03).
+                $DB->sql_like($DB->sql_fullname('u.firstname', 'u.lastname'), ':sfull', false),
             ];
             $args['s1'] = $term;
             $args['s2'] = $term;
             $args['s3'] = $term;
             $args['s4'] = $term;
             $args['s5'] = $term;
+            $args['sfull'] = $term;
             foreach ($items['search'] as $i => $column) {
                 $clauses[] = $DB->sql_like($column, ':si' . $i, false);
                 $args['si' . $i] = $term;

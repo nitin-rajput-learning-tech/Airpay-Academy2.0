@@ -11,10 +11,10 @@ $plugin->component = 'local_sentientia_programs';
 // 2026100701 (2026-10-07): ADR-032 owner decision IDN-04 - the importer implements the platform's copies_files marker (its
 // program-logo copy is a declared side effect, counted in the run report). No schema change. The marker interface ships
 // with local_sentientia_platform 2026100701, which this plugin therefore requires. One version for the batch (F-85).
-$plugin->version   = 2026100701;  // ADR-032 IDN-04: copies_files marker (on top of 2026093001: BizLMS program importer + schema additions + reader/engine fixes)
+$plugin->version   = 2026110300;  // user search matches a full name ("Rahul Sharma"), 2026-11-03. Was: 2026100701;  // ADR-032 IDN-04: copies_files marker (on top of 2026093001: BizLMS program importer + schema additions + reader/engine fixes)
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.9.1';  // ADR-032 IDN-04 copies_files marker (1.9.0: ADR-032 BizLMS program import; 1.8.2: ADR-031 tenant scope)
+$plugin->release   = '1.9.2';  // 1.9.2: full-name user search.  // ADR-032 IDN-04 copies_files marker (1.9.0: ADR-032 BizLMS program import; 1.8.2: ADR-031 tenant scope)
 $plugin->dependencies = [
     'local_sentientia_org'      => 2026041600,
     'local_sentientia_platform' => 2026100701,  // tenant scope + the ADR-032 import framework (classes/bizlms) + the copies_files marker (IDN-04)

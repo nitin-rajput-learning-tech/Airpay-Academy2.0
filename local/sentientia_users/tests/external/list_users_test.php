@@ -244,6 +244,36 @@ final class list_users_test extends \advanced_testcase {
     }
 
     /**
+     * A full name ("Rahul Sharma") matches neither name column alone, so the search found nobody (2026-11-03).
+     * It must find the user, case-insensitively, without lifting the tenant boundary. One word still matches.
+     */
+    public function test_search_matches_full_name(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+
+        $this->seed_org('/8001', 0, 1);
+        $this->seed_org('/8002', 0, 1);
+
+        $caller = $this->user_at_path('/8001');
+        $this->grant_cap($caller, 'local/sentientia_users:view');
+        $this->setUser($caller);
+
+        $own = $this->user_at_path('/8001/9001');
+        $other = $this->user_at_path('/8002');
+        foreach ([$own, $other] as $u) {
+            $DB->update_record('user', (object) ['id' => $u->id, 'firstname' => 'Rahul', 'lastname' => 'Sharma']);
+        }
+
+        foreach (['rahul sharma', 'Sharma'] as $term) {
+            $r = $this->call(['search' => $term, 'filters' => json_encode(['status' => 'all']), 'perpage' => 50]);
+            $ids = array_column($r['rows'], 'id');
+            $this->assertContains((int) $own->id, $ids, "'{$term}' must find the caller's own-tenant user");
+            $this->assertNotContains((int) $other->id, $ids, "'{$term}' must not reach another tenant");
+        }
+    }
+
+    /**
      * Fail closed (N1 review, 2026-09-24): an org filter naming an org that
      * does not exist used to drop the tenant clause altogether, so a /8001
      * caller saw every tenant. It must now fall back to the caller's tenant.

@@ -1,7 +1,80 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-11-02 (**Theme 2026110200 / 1.0.63-beta: one breadcrumb trail on drawers/course pages, block calendar day names on one line, and single-activity course pages no longer fatal on 5.x. Checked on local XAMPP, evidence in docs/visual-evidence/2026-11-02/theme-trail-calendar/. UAT deploy of the 4 theme files waits for the tunnel. See the 2026-11-02 entry.**)
+**Updated:** 2026-11-03 (**Overnight 11-02/11-03, local only (UAT tunnel down).**
+- **Persona journeys:** 127 PASS of 136. The 4 FAILs are seed, harness or import-data artifacts.
+- **Full-name user search fixed:** 11 searches in 8 plugins, both trees, versions 2026110300. The users suite passed (243 tests).
+- **Moodle 5.0-5.3 API sweep:** no new defect.
+- **UAT deploy waiting for the tunnel:** 20 files (theme 2026110200 plus the search fix), dry run OK.
+See the 2026-11-03 entry.)
 
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
+
+---
+
+## 2026-11-03 - overnight: persona journeys, full-name user search, Moodle 5.x API sweep (Opus 5.5)
+
+UAT was unreachable all night (the tunnel refused at 19:45 and again at 08:15), so all of this is local (XAMPP 5.1).
+
+**Persona journeys, all 126 steps x 11 personas** (`tools/visual-pass/persona_journeys.mjs --no-shots`, results in
+`D:/Claude Local/kit-scratch/journeys-1102/`): 127 PASS, 4 FAIL, 2 CHECK, 3 SKIP. On 09-30 it was 82 PASS. All 14
+product defects of the 09-30 triage are confirmed fixed. None of the remaining rows is a product defect:
+
+| Step | Result | Cause |
+|---|---|---|
+| 008 learner/page-activity | FAIL | Seed. The Page body is NULL (09-30 S1). `seed_journey_content.php` fills it now but had not been re-run locally. |
+| 056 admin1/users-isolation | FAIL | Harness. The topbar search mirror fired no table request. The service itself returns "VP Learner /1" for "Learner", and tenant isolation holds. |
+| 083 public77/cart-cleanup | FAIL | Seed overlap. The open cart also holds GST evidence course 455, and the cleanup removes only the journey course 450. |
+| 121 siteadmin/privacy-requests | FAIL | Import data (09-30 S2). `tool_dataprivacy_request` rows point at deleted users. Deleting them needs Nitin's ok. |
+| 039, 117 | CHECK | The first attempt hit the 120 s PHP limit under AV load; the retry passed. |
+
+**New defect found and fixed: a full name never matched in user searches.**
+- Searching "Rahul Sharma" found nobody. Each search matched first name, last name and email separately; only
+  `local_sentientia_cart` `list_orders` also matched `sql_fullname()`. 11 searches in 8 plugins now add that clause:
+  - users `list_users`;
+  - courses `list_course_enrolments`;
+  - classroom `session_manager` (x2);
+  - programs `program_manager` (x2);
+  - learningpath `path_manager`;
+  - manager `approval_manager` (x2);
+  - proctoring `list_review_queue`;
+  - request `list_pending`.
+- Both trees, byte-identical; the drift gate is OK.
+- Versions 2026110300, with patch releases.
+- A new test, `list_users_test::test_search_matches_full_name`: it finds a case-insensitive full name, a single
+  word still matches, and another tenant stays out.
+- Local checks:
+  - every changed search ran once with "VP Learner" and none raised an error (`kit-scratch/fullname/smoke.php`);
+  - as vp_admin1, list_users finds "VP Learner" and "vp learner /1" (1 each) and "Learner /177" finds 0.
+- Behaviour is a superset: results only grow, so there is no flag.
+- PHPUnit for the 8 plugins: the users suite passed: 243 tests (1 skipped), including the new test, in 1 h 47 min. The other 7 suites were still running at commit time; the log is `D:/Claude Local/kit-scratch/fullname/run.log`.
+
+**Moodle 5.0-5.3 API drift sweep: no new defect.** Prompted by yesterday's single-activity fatal.
+- A catalogue of 1,016 removed, deprecated or changed APIs was built from the 5.3 `UPGRADING.md` (sections 5.0-5.3)
+  by two agents. The six finder agents then died on a network error (ENOTFOUND), so `kit-scratch/drift/scan.py`
+  scanned the code in one pass: 2,637 files, 7,373 hits. Most hits are "changed" signatures and the aliased
+  `external_*` classes.
+- Removed or final-deprecated hits are all false matches:
+  - our own same-named methods (`merge`, `enrol_cohort`, `delete_override`, `count_questions`, `get_questions`);
+  - PHPUnit message sinks (`get_messages`);
+  - the VAPID key manager (`get_public_key`);
+  - lang strings ("request");
+  - our own templates (`flat_navigation`, `drawerheadercontent`).
+- The deprecated `user_*()` calls (theme renderer, context header, language switcher, platform `compat/user_api`)
+  are all behind a `\core\user` method check.
+- The theme's core template overrides that 5.3 changed (`editswitch`, `loginform`, the course index drawer) were
+  covered by the 10-08 5.3 pass.
+
+**New local tools.** All are in `tools/visual-pass/`; the URL list is read-only.
+- `coverage_urls.php` + `coverage_crawl.mjs`: one course per format, one activity per module type, and every
+  local_sentientia_* index. The first attempt failed at login (the 120 s limit while the journeys ran); it is re-run during the PHPUnit run.
+- `blocksdrawer_flag.php`, `seed_dashboard_calendar.php` and `theme_1102_checks.mjs` are from 11-02.
+
+**Waiting for the tunnel: one UAT deploy of 20 files, dry run OK.**
+- Theme 2026110200: breadcrumb, calendar, single-activity.
+- The search fix in 8 plugins.
+- The file list is `D:/Claude Local/kit-scratch/fullname/uat-deploy-files.txt`. Command:
+  `tools/uat/deploy_to_uat.sh --yes --prefer-me $(cat "D:/Claude Local/kit-scratch/fullname/uat-deploy-files.txt")`.
+- Then, as Meera in Chrome (VPN off): notification preferences shows one trail; "Wed" sits on one line in the drawer
+  calendar; Manage Users finds a learner by full name.
 
 ---
 

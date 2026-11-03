@@ -48,7 +48,7 @@ $plugin->component = 'local_sentientia_courses';
 //                 instance is DISABLED, never deleted, only when every learner on it keeps the same access through manual
 //                 enrolments (proved per learner-course pair); privacy docblock lists the trail tables. No capability change.
 // 2026100801: Moodle 5.3 compat FX-06: enrolledusers (Enrol user dialog) uses core/modal_save_cancel, the Save button exists again; amd build refreshed. No schema change.
-$plugin->version   = 2026100801;  // (2026100801: FX-06 amd refresh only; 2026100701 was) ADR-032 enrolments importer: trail of switched-off BizLMS instances (no user-visible change)
+$plugin->version   = 2026110300;  // user search matches a full name ("Rahul Sharma"), 2026-11-03. Was: 2026100801;  // (2026100801: FX-06 amd refresh only; 2026100701 was) ADR-032 enrolments importer: trail of switched-off BizLMS instances (no user-visible change)
 // 2026092501:  // ADR-031 follow-up: upgrade step rehomes tenant admins' 'All tenants' featured rows; own-roster unenrol; scoped Enrolled column
 // 2026092500:  // ADR-031: course writes, enrolment, featured, list/export tenant-scoped (no schema/cap change)
 // 2026092201:  // real privacy provider: requests + remind_sent (was null_provider)
@@ -56,7 +56,7 @@ $plugin->version   = 2026100801;  // (2026100801: FX-06 amd refresh only; 202610
 // 2026090800:
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.14.0';  // +ADR-032 enrolments importer: switch off proven-converted BizLMS instances (1.13.0: +course_tags and enrolments importers)
+$plugin->release   = '1.14.1';  // 1.14.1: full-name user search.  // +ADR-032 enrolments importer: switch off proven-converted BizLMS instances (1.13.0: +course_tags and enrolments importers)
 $plugin->dependencies = [
     'local_sentientia_org' => 2026041600,
     // tenant::is_cross_tenant() / scope_path() / require_same_tenant_user() (ADR-031).

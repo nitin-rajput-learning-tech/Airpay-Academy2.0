@@ -83,7 +83,7 @@ $plugin->component = 'local_sentientia_users';
 // imported HRMS sync runs sit behind the new default-OFF flag sentientia.users.imported_sync_history), IDN-06 (login days
 // are deleted on erasure, comment-only). Two strings (en + hi), no schema change.
 // 2026101501 - UI fix (visual pass 2026-10-14 review): the profile Suggested next courses card is a double-brace template, so user_manager now asks skills_manager::get_gap_courses() for plain-text names (plain = true). The HTML-escaped default printed an ampersand in a course or skill name as the literal text amp-semicolon, while the Skills rows above it (already plain) did not. No schema change.
-$plugin->version   = 2026101501;  // UI fix: profile gap-course names escaped once (on top of 2026100800)
+$plugin->version   = 2026110300;  // user search matches a full name ("Rahul Sharma"), 2026-11-03. Was: 2026101501;  // UI fix: profile gap-course names escaped once (on top of 2026100800)
 // 2026100800: SITEID is the DB string; strict === / !== against it never matched, so the site-course guard did nothing - now (int) SITEID: the transcript importer skips the site course again; no schema change
 // 2026100701: ADR-032 owner decisions: sync-history visibility + imported-history flag (on top of 2026100101)
 // 2026093001: persona pass D14: supervisor + sync-run name lookups load every fullname() field (no developer notice)
@@ -95,7 +95,7 @@ $plugin->version   = 2026101501;  // UI fix: profile gap-course names escaped on
 // 2026090302: H1, signup no longer reveals whether an email exists.
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '2.9.1';  // ADR-032 owner decisions: sync-history visibility + flag (2.9.0: users import; 2.8.2: name-field notice fix; 2.8.1: welcome email fix; 2.8.0: ADR-031)
+$plugin->release   = '2.9.2';  // 2.9.2: full-name user search.  // ADR-032 owner decisions: sync-history visibility + flag (2.9.0: users import; 2.8.2: name-field notice fix; 2.8.1: welcome email fix; 2.8.0: ADR-031)
 $plugin->dependencies = [
     'local_sentientia_org' => 2026051501,
     'local_sentientia_platform' => 2026093001,  // ADR-032: the bizlms import framework the importer implements

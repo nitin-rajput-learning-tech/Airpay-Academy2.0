@@ -1191,10 +1191,12 @@ class program_manager {
         $params = ['pid' => $programid] + $scopeparams;
         if (!empty($search)) {
             $term = '%' . $DB->sql_like_escape($search) . '%';
+            // A full name ("Rahul Sharma") matches neither name column alone (2026-11-03).
             $where[] = '(' . $DB->sql_like('u.firstname', ':s1', false) . ' OR ' .
                 $DB->sql_like('u.lastname', ':s2', false) . ' OR ' .
-                $DB->sql_like('u.email', ':s3', false) . ')';
-            $params['s1'] = $params['s2'] = $params['s3'] = $term;
+                $DB->sql_like('u.email', ':s3', false) . ' OR ' .
+                $DB->sql_like($DB->sql_fullname('u.firstname', 'u.lastname'), ':sfull', false) . ')';
+            $params['s1'] = $params['s2'] = $params['s3'] = $params['sfull'] = $term;
         }
         $wheresql = implode(' AND ', $where);
 
@@ -1517,10 +1519,12 @@ class program_manager {
         $params = ['pid' => $programid] + $scopeparams;
         if (!empty($search)) {
             $term = '%' . $DB->sql_like_escape($search) . '%';
+            // A full name ("Rahul Sharma") matches neither name column alone (2026-11-03).
             $where[] = '(' . $DB->sql_like('u.firstname', ':s1', false) . ' OR ' .
                 $DB->sql_like('u.lastname', ':s2', false) . ' OR ' .
-                $DB->sql_like('u.email', ':s3', false) . ')';
-            $params['s1'] = $params['s2'] = $params['s3'] = $term;
+                $DB->sql_like('u.email', ':s3', false) . ' OR ' .
+                $DB->sql_like($DB->sql_fullname('u.firstname', 'u.lastname'), ':sfull', false) . ')';
+            $params['s1'] = $params['s2'] = $params['s3'] = $params['sfull'] = $term;
         }
         $wheresql = implode(' AND ', $where);
 

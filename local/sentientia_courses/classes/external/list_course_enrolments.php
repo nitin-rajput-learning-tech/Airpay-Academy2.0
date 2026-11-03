@@ -83,9 +83,11 @@ class list_course_enrolments extends external_api {
             $where[] = '(' . $DB->sql_like('u.firstname', ':s1', false) . ' OR '
                 . $DB->sql_like('u.lastname', ':s2', false) . ' OR '
                 . $DB->sql_like('u.email', ':s3', false) . ' OR '
-                . $DB->sql_like("COALESCE(u.open_employeeid, '')", ':s4', false) . ')';
+                . $DB->sql_like("COALESCE(u.open_employeeid, '')", ':s4', false) . ' OR '
+                // A full name ("Rahul Sharma") matches neither name column alone (2026-11-03).
+                . $DB->sql_like($DB->sql_fullname('u.firstname', 'u.lastname'), ':s5', false) . ')';
             $args['s1'] = $term; $args['s2'] = $term;
-            $args['s3'] = $term; $args['s4'] = $term;
+            $args['s3'] = $term; $args['s4'] = $term; $args['s5'] = $term;
         }
 
         $wheresql = implode(' AND ', $where);

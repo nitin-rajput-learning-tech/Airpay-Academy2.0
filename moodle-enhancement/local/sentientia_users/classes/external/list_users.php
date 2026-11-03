@@ -229,12 +229,15 @@ class list_users extends external_api {
                 $DB->sql_like('u.firstname', ':s1', false) . ' OR ' .
                 $DB->sql_like('u.lastname',  ':s2', false) . ' OR ' .
                 $DB->sql_like('u.email',     ':s3', false) . ' OR ' .
-                $DB->sql_like("COALESCE(u.open_employeeid, '')", ':s4', false) .
+                $DB->sql_like("COALESCE(u.open_employeeid, '')", ':s4', false) . ' OR ' .
+                // A full name ("Rahul Sharma") matches neither name column alone (2026-11-03).
+                $DB->sql_like($DB->sql_fullname('u.firstname', 'u.lastname'), ':s5', false) .
             ')';
             $sqlparams['s1'] = $term;
             $sqlparams['s2'] = $term;
             $sqlparams['s3'] = $term;
             $sqlparams['s4'] = $term;
+            $sqlparams['s5'] = $term;
         }
 
         $wheresql = implode(' AND ', $where);
