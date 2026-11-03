@@ -65,8 +65,18 @@ product defects of the 09-30 triage are confirmed fixed. None of the remaining r
 
 **New local tools.** All are in `tools/visual-pass/`; the URL list is read-only.
 - `coverage_urls.php` + `coverage_crawl.mjs`: one course per format, one activity per module type, and every
-  local_sentientia_* index. The first attempt failed at login (the 120 s limit while the journeys ran); it is re-run during the PHPUnit run.
+  local_sentientia_* index. Run 11-03 (`D:/Claude Local/kit-scratch/journeys-1102/coverage.log`): 39 of 44 clean, and none of the 5 is a product defect.
+  - `local_sentientia_calendar` refuses because its flag is OFF locally (by design).
+  - `local_sentientia_pages/index.php` needs `?page=` (by design).
+  - The API page's 500 was an Apache restart at 13:49; it is clean on the re-crawl.
+  - The AI page and the Resource activity log `ERR_UNEXPECTED_PROXY_AUTH`: the corporate proxy refuses the Google
+    Fonts request.
+  - The Resource activity's video error is the empty local filedir.
 - `blocksdrawer_flag.php`, `seed_dashboard_calendar.php` and `theme_1102_checks.mjs` are from 11-02.
+
+**Local XAMPP was behind the repo, and is synced now.** It was missing 5 theme files (10-24 drawer + context header, synced 11-02) and 10 plugin files.
+- The plugin files were the fe87b975f en/hi lang fixes for courses and request, the 0438327fa comment fix in `notifications/rule_engine.php`, the widened tolerance in `recompletion/tests/engine_archive_test.php`, and four block Hindi packs.
+- So local tests and screenshots had been running against slightly stale code. Check with `git ls-files` + `diff --strip-trailing-cr` against `C:/xampp/htdocs/moodle5/public` before a local test pass (the list was `kit-scratch/drift/local-vs-repo.txt`).
 
 **Waiting for the tunnel: one UAT deploy of 20 files, dry run OK.**
 - Theme 2026110200: breadcrumb, calendar, single-activity.
