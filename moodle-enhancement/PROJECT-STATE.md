@@ -1,7 +1,7 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
 **Updated:** 2026-11-03 (**Overnight 11-02/11-03, local only (UAT tunnel down).**
 - **Persona journeys:** 127 PASS of 136. The 4 FAILs are seed, harness or import-data artifacts.
-- **Full-name user search fixed:** 11 searches in 8 plugins, both trees, versions 2026110300. The users suite passed (243 tests).
+- **Full-name user search fixed:** 11 searches in 8 plugins, both trees, versions 2026110300. All 8 plugin suites passed (1,200 tests).
 - **Moodle 5.0-5.3 API sweep:** no new defect.
 - **UAT deploy waiting for the tunnel:** 20 files (theme 2026110200 plus the search fix), dry run OK.
 See the 2026-11-03 entry.)
@@ -45,7 +45,11 @@ product defects of the 09-30 triage are confirmed fixed. None of the remaining r
   - every changed search ran once with "VP Learner" and none raised an error (`kit-scratch/fullname/smoke.php`);
   - as vp_admin1, list_users finds "VP Learner" and "vp learner /1" (1 each) and "Learner /177" finds 0.
 - Behaviour is a superset: results only grow, so there is no flag.
-- PHPUnit for the 8 plugins: the users suite passed: 243 tests (1 skipped), including the new test, in 1 h 47 min. The other 7 suites were still running at commit time; the log is `D:/Claude Local/kit-scratch/fullname/run.log`.
+- PHPUnit for the 8 plugins: all 8 suites passed on local XAMPP 5.1: 1,200 tests with 0 failures and 0 errors.
+  - users 243, including the new test; classroom 268; courses 204; learningpath 169; manager 56; proctoring 4;
+    programs 146; request 110.
+  - Skips and PHPUnit doc-comment deprecations only.
+  - The run took about 10 h on this box over 11-03/11-04. The log is `D:/Claude Local/kit-scratch/fullname/run.log`.
 
 **Moodle 5.0-5.3 API drift sweep: no new defect.** Prompted by yesterday's single-activity fatal.
 - A catalogue of 1,016 removed, deprecated or changed APIs was built from the 5.3 `UPGRADING.md` (sections 5.0-5.3)
