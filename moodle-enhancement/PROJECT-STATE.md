@@ -1,12 +1,47 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-11-03 (**Overnight 11-02/11-03, local only (UAT tunnel down).**
-- **Persona journeys:** 127 PASS of 136. The 4 FAILs are seed, harness or import-data artifacts.
-- **Full-name user search fixed:** 11 searches in 8 plugins, both trees, versions 2026110300. All 8 plugin suites passed (1,200 tests).
-- **Moodle 5.0-5.3 API sweep:** no new defect.
-- **UAT deploy waiting for the tunnel:** 20 files (theme 2026110200 plus the search fix), dry run OK.
-See the 2026-11-03 entry.)
+**Updated:** 2026-11-11 (**The 11-02/11-03 fixes are on UAT and checked as Meera.**
+- 20 files deployed: theme 2026110200 and the full-name search in 8 plugins at 2026110300.
+- Browser check as Meera passed on all 3 points: one breadcrumb trail; calendar day names on one line; Manage Users finds "rahul deshmukh".
+- Open for Nitin: ADR-034, the course-page empty left drawer, the local privacy-request rows, and the pinned footer on short windows (new observation).
+See the 2026-11-11 entry.)
 
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
+
+---
+
+## 2026-11-11 - UAT: theme 2026110200 + full-name search deployed and checked as Meera (Opus 5.5)
+
+**Deploy (tunnel opened by Nitin 12:26).** `tools/uat/deploy_to_uat.sh --yes --prefer-me` with the 20 paths in
+`D:/Claude Local/kit-scratch/fullname/uat-deploy-files.txt`. The dry run was repeated first because a week had passed.
+- All 20 files checksummed OK; the upgrade succeeded for the theme and 8 plugins; caches purged.
+- Box backup: `/tmp/uat-predeploy-backup-20261111-124641.tgz`. Log: `kit-scratch/fullname/uat-deploy-1111.log`.
+
+**Server checks.**
+- `get_config`: theme_sentientia 2026110200; users, classroom, courses, learningpath, manager, proctoring, programs and
+  request at 2026110300.
+- Login 200; no new Apache errors.
+- All 11 changed searches run on UAT's MySQL 8 without an error, and list_users finds a real user by their lowercase
+  full name. The smoke scripts were piped over SSH stdin, so no file was left on the box.
+
+**Browser check as Meera (VPN off, read-only).** Evidence in `docs/visual-evidence/2026-11-11/uat-fixes-check/`.
+1. Notification preferences: one breadcrumb trail; `#page-navbar` hidden; no console errors. PASS.
+2. `/my/` blocks drawer calendar: all 7 day names on one line (18 px, 12 px type). PASS. The drawer was closed again.
+3. Manage Users: "rahul deshmukh" gives "1-1 of 1", Rahul Deshmukh (UAT-004). PASS.
+- No mobile screenshots on UAT: Chrome would not resize the window, and per the blocked-access rule there was no
+  retry. The mobile evidence for the same fixes is the local 11-02 set.
+
+**Observation for Nitin (no change).**
+- On standard-layout pages (Manage Users) the 109 px footer stays at the bottom of the window. This is deliberate:
+  the 2026-05-29 app-shell scroll fix pins it and scrolls only the content. On a 665 px tall window it takes about a
+  sixth of the screen.
+- Design call: keep it, or let it scroll with the content below a given window height.
+
+**Still open for Nitin:**
+- ADR-034 acceptance (the content engine);
+- the course-page empty left drawer;
+- deleting the local privacy-request rows that point at deleted users;
+- a native-speaker read of kn/mr/sw;
+- the footer question above.
 
 ---
 
