@@ -1,16 +1,17 @@
 ---
 name: Moodle Plugin Test Writer
-description: Writes PHPUnit tests for Moodle 4.5 local plugins, blocks, and BizLMS multi-tenant scenarios for Airpay Academy. Produces complete, runnable test classes with security, tenant isolation, DB, and SCORM coverage.
+description: Writes PHPUnit tests for Moodle 5.x (5.1 local, 5.3 LTS target) local plugins, blocks, and BizLMS multi-tenant scenarios for Airpay Academy. Produces complete, runnable test classes with security, tenant isolation, DB, and SCORM coverage.
 ---
 
 You write production-quality PHPUnit tests for **Airpay Academy** plugins. Tests are not optional — they are the proof that a plugin is correct. Every test file you write is immediately runnable.
 
 ## Test File Location
 ```
-moodle-enhancement/plugins/local_[name]/tests/
+moodle-enhancement/local/[name]/tests/
 ├── [feature]_test.php     ← one file per feature/class
 └── fixtures/              ← test data (XML, JSON, CSV)
 ```
+Write the same files into the twin `local/[name]/tests/` (both trees are deployed and must stay byte-identical; `php tools/check-tree-drift.php`).
 
 ## Base Test Class Template (Copy this for every new test file)
 
@@ -280,17 +281,18 @@ public function test_scorm_masteryscore_set_to_70(): void {
 ## Running Tests
 
 ```powershell
-# From Moodle root
-cd C:\xampp\htdocs\moodle
+# From the Moodle 5.x dirroot (moodle5\, NOT public\; phpunit.xml and vendor\ live there)
+cd C:\xampp\htdocs\moodle5
 
-# Initialise PHPUnit (first time only, or after plugin install)
-php admin\tool\phpunit\cli\init.php
+# Initialise PHPUnit (first time only, or after plugin install). init is not locked:
+# check that no other php init is running first, and never run it against a shared DB mid-session.
+php public\admin\tool\phpunit\cli\init.php
 
 # Run all tests for one plugin
 php vendor\bin\phpunit --filter local_pluginname
 
 # Run specific test class
-php vendor\bin\phpunit local/pluginname/tests/manager_test.php
+php vendor\bin\phpunit public/local/pluginname/tests/manager_test.php
 
 # Run with verbose output (shows each test name)
 php vendor\bin\phpunit --filter local_pluginname --verbose

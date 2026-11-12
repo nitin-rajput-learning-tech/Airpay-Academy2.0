@@ -207,17 +207,28 @@ async function fullHeight(page) {
 }
 
 // Desktop (1440 wide) and mobile (590 wide) screenshots of the whole page into <out>/<name>-{desktop,mobile}.png.
-// Returns the file names. `prepare` (async, optional) runs after each resize, for things the resize resets.
-export async function shots(page, out, name, { prepare = null, maxHeight = 3400, mobile = true, minHeight = 900 } = {}) {
+// Opt-in `widths` (2026-11-12, borrowed from Hallmark's multi-width check), e.g. [1440, 1024, 768, 590, 390]: one
+// screenshot per width into <out>/<name>-<width>px.png instead, and `mobile` is ignored. files.overflow is keyed by
+// the same label ('desktop'/'mobile', or '<width>px').
+// Returns the file names. `prepare(label, width)` (async, optional) runs after each resize, for things the resize resets.
+export async function shots(page, out, name, { prepare = null, maxHeight = 3400, mobile = true, minHeight = 900, widths = null } = {}) {
   fs.mkdirSync(out, { recursive: true });
   const files = [];
   files.overflow = {};
-  const sizes = [['desktop', 1440, 900]];
-  if (mobile) sizes.push(['mobile', 590, 1000]);
+  let sizes = [['desktop', 1440, 900]];
+  if (widths !== null && !Array.isArray(widths)) throw new Error(`shots(): widths must be an array of integers, got ${widths}`);
+  if (Array.isArray(widths) && widths.length) {
+    sizes = [...new Set(widths)].map(w => {
+      if (!Number.isInteger(w) || w < 320 || w > 2560) throw new Error(`shots(): width ${w} must be an integer from 320 to 2560`);
+      return [`${w}px`, w, w > 768 ? 900 : 1000];
+    });
+  } else if (mobile) {
+    sizes.push(['mobile', 590, 1000]);
+  }
   for (const [label, w, h] of sizes) {
     await page.setViewportSize({ width: w, height: h });
     await page.waitForTimeout(700);
-    if (prepare) await prepare(label);
+    if (prepare) await prepare(label, w);
     const need = Math.min(Math.max(await fullHeight(page).catch(() => h), minHeight) + 8, maxHeight);
     if (need > h) {
       await page.setViewportSize({ width: w, height: need });

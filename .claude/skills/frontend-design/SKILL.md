@@ -1,10 +1,10 @@
 ---
-name: airpayux Frontend Design
-description: Guides frontend implementation for the airpayux Moodle theme. Provides complete component code, Mustache context variables, SCSS tokens, and deploy sequences for Sprint 1 (Navbar, Footer, Login) and all 10 surfaces of Phase 6B.
+name: sentientia Frontend Design
+description: Guides frontend work on the sentientia Moodle theme (theme/sentientia, the former airpayux fork). Points to the Brand Book 2026-06 tokens in _tokens.scss, the theme file map and the local deploy cycle. The Sprint 1 (Navbar, Footer, Login) component code below is historical reference only.
 metadata:
   priority: 9
   pathPatterns:
-    - '*/theme/airpayux/**'
+    - '*/theme/sentientia/**'
     - '*/templates/*.mustache'
     - '*/templates/**/*.mustache'
     - '*/scss/**/*.scss'
@@ -18,6 +18,7 @@ metadata:
   promptSignals:
     phrases:
       - "theme"
+      - "sentientia theme"
       - "airpayux"
       - "navbar"
       - "footer"
@@ -33,35 +34,61 @@ metadata:
       - "core_renderer"
 ---
 
-# airpayux Frontend Design Skill — Phase 6B
+# sentientia Frontend Design Skill
 
-You are implementing the airpayux theme for Airpay Academy. Every surface must match the 22 C-suite approved prototypes at `D:\Claude Local\Moodle Backup\03-prototypes\preview\`.
+You are working on the **sentientia** theme: `theme/sentientia/`, standalone (`$THEME->parents = []`), the former airpayux fork and the Sentientia LMS design-system base. Airpay Academy is customer zero. `theme/airpayux/` and `theme/epsilon/` are retired and not served: never edit them.
 
-**Reference prototype directory first before writing any component.**
-
----
-
-## Current Sprint: Sprint 1 — Navbar, Footer, Login
-
-**Status:** Starting now
-**Files to create/edit:**
-1. `templates/navbar.mustache`
-2. `templates/footer.mustache`
-3. `templates/core/loginform.mustache`
-4. `layout/login.php`
-5. `scss/moodle/custom_changes.scss` (component additions)
+**`.claude/rules/frontend.md` wins on any conflict with this skill.**
 
 ---
 
-## Complete Design Token Reference
+## Current facts (updated 2026-11-12; read these first)
+
+| Item | Value |
+|------|-------|
+| Working path | `D:\Claude Local\airpay-ld-os\theme\sentientia\` (the theme lives only here, not under `moodle-enhancement\`) |
+| Local XAMPP | `C:\xampp\htdocs\moodle5\public\theme\sentientia\`; site at http://localhost:8080/ (no `/moodle`) |
+| Brand source | Brand Book 2026-06: `moodle-enhancement/docs/audits/brand-revamp-2026-06/REVISED-BRAND-BOOK-2026-06.md` |
+| Tokens | `scss/moodle/_tokens.scss` (CSS custom properties); dark mode in `_tokens-dark.scss` |
+| Motion | `--ap-duration-*` / `--ap-transition-*` in `_tokens.scss`; they collapse to 0 ms under `prefers-reduced-motion` |
+| Lint | `theme/sentientia/.stylelintrc.json` (motion rule on `scss/moodle/partials/_surface-*.scss`) |
+| App shell | `templates/shell.mustache` + `scss/moodle/partials/_layout-shell.scss`, built in `classes/output/core_renderer.php` |
+| Per-customer branding | `\local_sentientia_platform\customer::branding()`, consumed by `core_renderer` |
+| Visual reference | 22 C-suite prototypes at `D:\Claude Local\Moodle Backup\03-prototypes\preview\` |
+| Status | `moodle-enhancement/PROJECT-STATE.md` |
+
+### Brand palette (Brand Book 2026-06)
+
+| Role | Hex | Token |
+|------|-----|-------|
+| Primary, Airpay Blue | `#0066A7` | `--ap-color-primary` (`--ap-blue-600`) |
+| Accent, bright blue ("for decks") | `#1985DD` | `--ap-color-accent` (`--ap-blue-bright`) |
+| Deep blue (pressed, gradient end) | `#0d5da1` | `--ap-blue-deep` |
+| Sky tint (light fills) | `#9cdbf4` | `--ap-blue-sky` |
+| Orange, sparing CTA or emphasis only | `#ed692b` | `--ap-color-highlight` (`--ap-orange-500`) |
+| Purple, sparing tertiary | `#6d58a5` | `--ap-color-tertiary` (`--ap-purple-500`) |
+| Page background | `#F2F4FB` | `--ap-neutral-50` |
+
+- **Teal `#0f7a73` is retired.** The book has no teal; never bring it back.
+- `#1985DD` is about 3.9:1 on white (3.86:1): it fails WCAG AA for body text (4.5:1) and passes only for large text and UI parts (3:1). Use the primary for text. (The Brand Book's "~3.4:1" understates it; the verdict is the same.)
+- Font: Montserrat 400-800. Spacing: 8 px grid. Radius: 8-20 px.
+- New code uses the CSS custom properties (`var(--ap-color-primary)`) and motion tokens (`var(--ap-transition-quick)`), not hex literals.
+
+---
+
+## HISTORICAL REFERENCE: Sprint 1 (Navbar, Footer, Login), Phase 6B
+
+Everything below was written for the airpayux theme in Phase 6B and is kept for reference only. Sprint 1 finished long ago. The live templates in `theme/sentientia/templates/` differ (app shell, sidebar, topbar), so read the real file before copying any snippet. Translate `theme_airpayux` strings to `theme_sentientia`, the teal accent to `#1985DD`, and inline timings to motion tokens.
+
+### Sass token reference (Phase 6B, historical; accent corrected to the Brand Book)
 
 ```scss
 /* === COLOURS === */
 $ap-primary:        #0066A7;   /* Airpay blue */
 $ap-primary-light:  #e8f2f9;   /* Tinted hover bg */
 $ap-primary-dark:   #004d80;   /* Pressed/focus */
-$ap-accent:         #0f7a73;   /* Teal */
-$ap-accent-light:   #e5f4f3;
+$ap-accent:         #1985DD;   /* Brand bright blue (was teal #0f7a73, retired 2026-06) */
+$ap-accent-light:   #e8f4fd;   /* Light blue tint (was teal #e5f4f3) */
 $ap-bg:             #F2F4FB;   /* Page background */
 $ap-surface:        #ffffff;   /* Card surface */
 $ap-surface-2:      #f8f9fc;   /* Nested surfaces */
@@ -99,7 +126,7 @@ $ap-shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
 
 ---
 
-## Surface 1: Navbar — Complete Implementation
+## Surface 1 (historical): Navbar — Sprint 1 implementation
 
 **Context variables available in `templates/navbar.mustache`:**
 ```
@@ -271,7 +298,7 @@ $ap-shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
 
 ---
 
-## Surface 2: Footer — Complete Implementation
+## Surface 2 (historical): Footer — Sprint 1 implementation
 
 ```mustache
 {{! templates/footer.mustache }}
@@ -300,7 +327,7 @@ $ap-shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
 
 ---
 
-## Surface 3: Login Page — Complete Implementation
+## Surface 3 (historical): Login Page — Sprint 1 implementation
 
 ```mustache
 {{! templates/core/loginform.mustache }}
@@ -383,34 +410,36 @@ $ap-shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
 
 ---
 
-## Deploy Sequence (Sprint 1)
+## Deploy Sequence (current paths; the file list is an example)
 
 ```powershell
-$AIRPAY_SRC = "D:\Claude Local\airpay-ld-os\moodle-enhancement\theme\airpayux"
-$AIRPAY_DST = "C:\xampp\htdocs\moodle\theme\airpayux"
+$THEME_SRC = "D:\Claude Local\airpay-ld-os\theme\sentientia"      # $env:AIRPAY_THEME_SRC
+$THEME_DST = "C:\xampp\htdocs\moodle5\public\theme\sentientia"    # $env:AIRPAY_THEME_DST
 
-# 1. PHP lint
-php -l "$AIRPAY_DST\layout\login.php"
+# 1. PHP lint (source file)
+php -l "$THEME_SRC\layout\login.php"
 
-# 2. Copy changed Sprint 1 files
+# 2. Copy only the files you changed
 @(
     "templates\navbar.mustache",
-    "templates\footer.mustache",
-    "templates\core\loginform.mustache",
     "layout\login.php",
     "scss\moodle\custom_changes.scss"
 ) | ForEach-Object {
-    Copy-Item "$AIRPAY_SRC\$_" "$AIRPAY_DST\$_" -Force
+    Copy-Item "$THEME_SRC\$_" "$THEME_DST\$_" -Force
     Write-Host "Copied: $_"
 }
 
-# 3. Purge caches
-php "C:\xampp\htdocs\moodle\admin\cli\purge_caches.php"
+# 3. Purge caches (admin\cli sits one level above public\; run with cwd = public\)
+Push-Location "C:\xampp\htdocs\moodle5\public"
+php ..\admin\cli\purge_caches.php
+Pop-Location
 
 # 4. Test URLs
 Write-Host ""
 Write-Host "Test these URLs (Ctrl+Shift+R first):"
-Write-Host "  Login:     http://localhost:8080/moodle/"
-Write-Host "  Dashboard: http://localhost:8080/moodle/my/dashboard.php"
+Write-Host "  Login:     http://localhost:8080/login/index.php"
+Write-Host "  Dashboard: http://localhost:8080/my/   (/my/dashboard.php is a BizLMS shim that redirects here)"
 Write-Host "  Mobile:    590px viewport in Chrome devtools"
 ```
+
+A version bump in `version.php` needs `php ..\admin\cli\upgrade.php --non-interactive` before the purge. UAT deploys go through `tools/uat/deploy_to_uat.sh` and only on Nitin's call.

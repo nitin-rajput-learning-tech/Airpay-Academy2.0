@@ -4,14 +4,15 @@ Automated deploy from working directory to XAMPP. Validates → copies → upgra
 
 ## Usage
 ```
-/deploy theme           → deploy all changed airpayux theme files
-/deploy plugin [name]   → deploy local plugin (e.g., /deploy plugin local_airhub)
+/deploy theme           → deploy all changed sentientia theme files
+/deploy plugin [name]   → deploy local plugin (e.g., /deploy plugin local_sentientia_catalog)
 /deploy block [name]    → deploy block plugin
 /deploy scorm [name]    → validate + package SCORM course
 /deploy all             → deploy theme + all plugins with changes
 ```
 
 **⚠ Production deploy = [CONFIRM] required. All commands below target LOCAL XAMPP only.**
+UAT (https://academy2.airpay.ninja) deploys use `tools/uat/deploy_to_uat.sh` (dry run by default, `--yes` deploys) and happen only on Nitin's call.
 
 ---
 
@@ -22,10 +23,11 @@ Automated deploy from working directory to XAMPP. Validates → copies → upgra
 # PHASE 1: VALIDATE
 # ═══════════════════════════════════════════════════
 
-$SRC = "D:\Claude Local\airpay-ld-os\moodle-enhancement\theme\airpayux"
-# Audit fix O1 (2026-05-15): Apache alias /moodle → moodle5\public\, not moodle\.
-# The old moodle\ directory is a stale 4.5 backup that is never served.
-$DST = "C:\xampp\htdocs\moodle5\public\theme\airpayux"
+# 2026-11-12: the theme is sentientia and lives only at <repo>\theme\sentientia\
+# (theme\airpayux\ is retired and not served). The served tree is moodle5\public\,
+# at http://localhost:8080/ (wwwroot has no /moodle).
+$SRC = "D:\Claude Local\airpay-ld-os\theme\sentientia"
+$DST = "C:\xampp\htdocs\moodle5\public\theme\sentientia"
 
 # Syntax check all PHP layout files
 Write-Host "→ PHP syntax check..."
@@ -63,8 +65,8 @@ Write-Host "  ✓ Copy complete"
 # ═══════════════════════════════════════════════════
 Write-Host "→ Purging Moodle caches..."
 # Audit fix O1 (2026-05-15): Moodle 5.1's admin/cli lives at the install
-# root, while config.php lives in public/. CLI scripts must be invoked
-# with the public/ directory as cwd so the relative config.php resolves.
+# root (moodle5\), one level above public\. CLI scripts must be invoked
+# with the public/ directory as cwd.
 Push-Location "C:\xampp\htdocs\moodle5\public"
 php "C:\xampp\htdocs\moodle5\admin\cli\purge_caches.php"
 Pop-Location
@@ -76,8 +78,8 @@ Write-Host "  ✓ Caches purged"
 Write-Host ""
 Write-Host "✅ Theme deployed. Verify checklist:"
 Write-Host "   □ Ctrl+Shift+R in browser (force reload)"
-Write-Host "   □ http://localhost:8080/moodle/ — login page"
-Write-Host "   □ http://localhost:8080/moodle/my/dashboard.php — dashboard"
+Write-Host "   □ http://localhost:8080/login/index.php — login page"
+Write-Host "   □ http://localhost:8080/my/ — dashboard (/my/dashboard.php is a shim that redirects here)"
 Write-Host "   □ Test as LEARNER role (not admin)"
 Write-Host "   □ Mobile viewport 590px (Chrome devtools)"
 Write-Host "   □ Browser console — zero JS errors"
@@ -92,11 +94,15 @@ param([string]$PluginName)  # e.g., "local_airhub"
 
 $PLUGIN_TYPE = $PluginName.Split('_')[0]   # "local", "block", "mod"
 $PLUGIN_DIR  = ($PluginName -replace '^[^_]+_', '')  # "airhub"
-# Audit fix O1 (2026-05-15):
-#   - Source plugins live under moodle-enhancement\<type>\<dir>\, not
-#     moodle-enhancement\plugins\<name>\.
+# The component prefix is "block_" but the folder is blocks\ (repo and Moodle).
+if ($PLUGIN_TYPE -eq 'block') { $PLUGIN_TYPE = 'blocks' }
+# Audit fix O1 (2026-05-15), corrected 2026-11-12:
+#   - Source plugins live under moodle-enhancement\<type>\<dir>\ (dir WITHOUT the
+#     type prefix, e.g. local\sentientia_catalog\), not moodle-enhancement\plugins\.
+#   - Every plugin has a twin at <repo>\<type>\<dir>\ that must be byte-identical:
+#     run php tools/check-tree-drift.php before deploying.
 #   - Destination is moodle5\public\<type>\<dir>\, not moodle\<type>\<dir>\.
-$SRC = "D:\Claude Local\airpay-ld-os\moodle-enhancement\$PLUGIN_TYPE\$PluginName"
+$SRC = "D:\Claude Local\airpay-ld-os\moodle-enhancement\$PLUGIN_TYPE\$PLUGIN_DIR"
 $DST = "C:\xampp\htdocs\moodle5\public\$PLUGIN_TYPE\$PLUGIN_DIR"
 
 # ═══════════════════════════════════════════════════
@@ -106,7 +112,7 @@ Write-Host "→ Plugin completeness check..."
 
 $required = @("version.php", "lang\en\$PluginName.php")
 if ($PLUGIN_TYPE -eq "local") { $required += "index.php" }
-if ($PLUGIN_TYPE -eq "block")  { $required += "block_$PLUGIN_DIR.php" }
+if ($PLUGIN_TYPE -eq "blocks") { $required += "block_$PLUGIN_DIR.php" }
 
 foreach ($req in $required) {
     if (-not (Test-Path "$SRC\$req")) {
@@ -155,8 +161,9 @@ Write-Host "  ✓ Copied to $DST"
 # PHASE 5: RUN MOODLE UPGRADE
 # ═══════════════════════════════════════════════════
 Write-Host "→ Running Moodle upgrade..."
-# Audit fix O1 (2026-05-15): Moodle 5.1's admin/cli lives at the install
-# root, public/ holds config.php. cd into public/ before running CLI tools.
+# Audit fix O1 (2026-05-15), corrected 2026-11-12: admin\cli lives in moodle5\,
+# one level above public\ (public\config.php is a stub that loads ..\config.php).
+# cd into public\ before running CLI tools.
 Push-Location "C:\xampp\htdocs\moodle5\public"
 php "C:\xampp\htdocs\moodle5\admin\cli\upgrade.php" --non-interactive
 Write-Host "  ✓ Upgrade complete"
@@ -172,10 +179,10 @@ Write-Host "  ✓ Caches purged"
 Write-Host ""
 Write-Host "✅ Plugin deployed. Verify checklist:"
 Write-Host "   □ Admin → Site admin → Plugins — $PluginName listed with correct version"
-Write-Host "   □ http://localhost:8080/moodle/local/$PLUGIN_DIR/ — index loads"
+Write-Host "   □ http://localhost:8080/$PLUGIN_TYPE/$PLUGIN_DIR/ — index loads"
 Write-Host "   □ No errors in: Get-Content 'C:\xampp\apache\logs\error.log' -Tail 10"
 Write-Host "   □ Test as LEARNER role"
-Write-Host "   □ Test with Airpay tenant (costcenterid=1) AND Public (costcenterid=77)"
+Write-Host "   □ Test with Airpay (costcenterid=1), Public (77) AND ZEEA (177)"
 ```
 
 ---

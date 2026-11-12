@@ -1,5 +1,7 @@
-# Database Rules — Moodle $DB API (MariaDB 10.11.16 / Moodle 4.5.10)
+# Database Rules — Moodle $DB API (Moodle 5.1 local on MariaDB 10.11.16; target 5.3 LTS on MySQL 8.4; UAT on Moodle 5.3)
 # ALWAYS LOADED when working on PHP files containing DB queries.
+# Code must run on MariaDB AND MySQL 8 (UAT, production): avoid MySQL 8 reserved words as
+# column or alias names. Tenant path filters: use \local_sentientia_platform\tenant::path_descendant_filter().
 
 ---
 

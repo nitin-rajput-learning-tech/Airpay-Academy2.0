@@ -20,10 +20,10 @@ Autonomous issue diagnosis and fix. Reads error logs → identifies root cause �
 Get-Content "C:\xampp\apache\logs\error.log" -Tail 50
 
 # Filter for Moodle-related errors
-Select-String "C:\xampp\apache\logs\error.log" -Pattern "moodle|local_|block_|theme_airpay" | Select-Object -Last 15
+Select-String "C:\xampp\apache\logs\error.log" -Pattern "moodle|local_|block_|theme_sentientia|theme_airpay" | Select-Object -Last 15
 
 # PHP parse check on recently edited file
-php -l "C:\xampp\htdocs\moodle\[recently-edited-file].php"
+php -l "C:\xampp\htdocs\moodle5\public\[recently-edited-file].php"
 ```
 
 ### STEP 2: Classify into decision tree
@@ -58,7 +58,7 @@ Is it a SCORM ISSUE?
 Is it a MULTI-TENANT BUG?
   → Check costcenterid filter in all queries
   → Check: (int)$costcenterid — not string comparison
-  → Test with both Airpay (id=1) AND Public (id=77) users
+  → Test with Airpay (id=1), Public (id=77) AND ZEEA (id=177) users
 ```
 
 ### STEP 3: Apply minimal fix
@@ -68,16 +68,18 @@ Is it a MULTI-TENANT BUG?
 
 ### STEP 4: Deploy and verify
 ```powershell
-# Copy fixed file to XAMPP
-Copy-Item "[fixed-file]" "C:\xampp\htdocs\moodle\[destination]" -Force
+# Copy fixed file to XAMPP (served tree is moodle5\public\; fix BOTH repo twins
+# moodle-enhancement\local\<plugin>\ and local\<plugin>\ first)
+Copy-Item "[fixed-file]" "C:\xampp\htdocs\moodle5\public\[destination]" -Force
 
-# Purge Moodle caches
-php "C:\xampp\htdocs\moodle\admin\cli\purge_caches.php"
+# Purge Moodle caches (cwd = public\; admin\cli sits one level up)
+Set-Location "C:\xampp\htdocs\moodle5\public"
+php ../admin/cli/purge_caches.php
 
 # Hard refresh browser: Ctrl+Shift+R
 
 # Test as LEARNER role (not admin — admin bypasses capability checks)
-# URL: http://localhost:8080/moodle/
+# URL: http://localhost:8080/
 
 # Confirm error gone from log
 Get-Content "C:\xampp\apache\logs\error.log" -Tail 10
@@ -93,7 +95,7 @@ After fixing, append to `moodle-enhancement/state-cards/[pluginname]-state.md`:
 ## Escalation Triggers (STOP — tell Nitin)
 ```
 □ Same error after 3 different fix attempts → describe all attempts + ask for input
-□ Root cause requires editing C:\xampp\htdocs\moodle\lib\ → STOP (core file)
+□ Root cause requires editing C:\xampp\htdocs\moodle5\public\lib\ → STOP (core file; needs ADR + moodle-enhancement/docs/core-mods/ record)
 □ Fix requires ALTER TABLE or DROP on production → STOP ([CONFIRM] required)
 □ SCORM fails validation after 2 complete repackaging attempts → STOP
 □ Error reveals employee PII was logged or sent externally → STOP + report urgently

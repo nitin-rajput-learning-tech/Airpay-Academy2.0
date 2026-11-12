@@ -81,8 +81,11 @@ git diff production...HEAD -- "*.php" | Select-String '^\+.*echo\s+\$'
 ## C. Plugin Completeness (If new plugin added)
 
 ```powershell
-# Find new plugin directories in diff
-git diff production...HEAD --name-only | Select-String '^moodle-enhancement/plugins/(local|block|mod)_'
+# Find new plugin directories in diff (added version.php files only; covers every plugin type we ship)
+git diff --name-only --diff-filter=A production...HEAD | Select-String '^(moodle-enhancement/)?(local|blocks|enrol|payment/gateway|mod/quiz/accessrule|admin/tool|mod)/[^/]+/version\.php$'
+
+# Twins: each plugin exists at moodle-enhancement/<type>/<dir>/ AND <type>/<dir>/ (byte-identical)
+php tools/check-tree-drift.php
 ```
 
 **Local plugin must have ALL:**
@@ -98,12 +101,13 @@ db/install.xml (if tables) | db/upgrade.php (if tables) | db/access.php (if caps
 ## D. Theme / Design System Review
 
 ```
-□ Colors: only $ap-primary #0066A7, $ap-accent #0f7a73, $ap-bg #F2F4FB (no hex literals in rules)
+□ Colors: Brand Book 2026-06 tokens only — primary #0066A7, accent #1985DD (teal #0f7a73 retired),
+  bg #F2F4FB; use var(--ap-color-*) from theme/sentientia/scss/moodle/_tokens.scss (no hex literals in rules)
 □ Font: Montserrat only, weights 400–800
 □ Spacing: multiples of 8px only
 □ Border radius: 8/12/16/20px only
 □ SCSS: used find-and-replace not full rewrite (< 50% of file changed)
-□ No Moodle core theme files touched (only theme/airpayux/)
+□ No Moodle core theme files touched (only theme/sentientia/; theme/airpayux/ is retired)
 □ Mobile breakpoint 590px preserved in custom_media.scss
 ```
 
@@ -147,7 +151,7 @@ git diff production...HEAD -- "*.mustache" | Select-String '^\+.*>[A-Z][a-z]+ [a
 
 ```
 $plugin->version   = YYYYMMDDNN  ← exactly 10 digits
-$plugin->requires  = 2024100700  ← Moodle 4.5 minimum
+$plugin->requires  = 2024100700  ← Moodle 4.5 floor (runs on 5.1 local, 5.3 LTS target)
 $plugin->component = 'local_[n]' ← matches directory name exactly
 $plugin->maturity  = MATURITY_STABLE
 ```

@@ -1,5 +1,7 @@
-# API Rules — Moodle REST + External APIs
+# API Rules — Moodle REST + External APIs (Moodle 5.1 local, 5.3 LTS target, UAT on 5.3)
 # ALWAYS LOADED when working with HTTP calls, REST API, ElevenLabs, Gamma, or Azure.
+# Pipeline code lives in scripts/agents/ (agent1..agent6, mock mode by default); the snippets
+# below are patterns, not files. UAT (https://academy2.airpay.ninja) writes are Nitin's call too.
 
 ---
 
@@ -21,7 +23,7 @@ Production Moodle direct    → [CONFIRM] (live users)
 ### Authentication & Base Call
 
 ```python
-# lib/moodle_api.py — shared client (use this pattern everywhere)
+# Pattern (the real client is call_moodle() in scripts/agents/agent6_moodle_upload.py)
 import os
 import requests
 from dotenv import load_dotenv
@@ -154,7 +156,7 @@ except requests.exceptions.ConnectionError:
 **[CONFIRM] REQUIRED — charged per character. ~$0.30/1000 chars.**
 
 ```python
-# content/voice/generate_voice.py
+# Pattern (the real code is scripts/agents/agent4_voice_generator.py: mock by default, --confirm for a live call)
 import os, requests
 from pathlib import Path
 from dotenv import load_dotenv

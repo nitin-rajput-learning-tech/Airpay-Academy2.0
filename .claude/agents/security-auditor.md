@@ -293,18 +293,21 @@ $narration_text = $sop_content;  // ✅ no PII
 ## H. MOODLE CORE INTEGRITY
 
 ```
-ABSOLUTE RULE: NEVER modify files in:
-  C:\xampp\htdocs\moodle\lib\
-  C:\xampp\htdocs\moodle\admin\
-  C:\xampp\htdocs\moodle\course\
-  C:\xampp\htdocs\moodle\mod\assign\
-  C:\xampp\htdocs\moodle\mod\quiz\
+RULE: NEVER modify Moodle core files (served tree C:\xampp\htdocs\moodle5\public\;
+the repo root mirrors it) unless the change has an ADR, a record in
+moodle-enhancement\docs\core-mods\, and a // SENTIENTIA-CORE-MOD: tag (root CLAUDE.md):
+  C:\xampp\htdocs\moodle5\public\lib\
+  C:\xampp\htdocs\moodle5\public\admin\
+  C:\xampp\htdocs\moodle5\public\course\
+  C:\xampp\htdocs\moodle5\public\mod\assign\
+  C:\xampp\htdocs\moodle5\public\mod\quiz\
 
 DETECTION:
-  git diff --name-only | Select-String "^moodle/lib/|^moodle/admin/"
+  git diff --name-only | Select-String "^(lib|admin|course|mod/assign|mod/quiz|my|login|user)/" | Select-String -NotMatch "^mod/quiz/accessrule/sentientia_|^admin/tool/sentientia_"
+  (our own plugin twins under mod/quiz/accessrule/ and admin/tool/ are not core; my/ holds core-mod overlays)
 
 CORRECT OVERRIDE PATTERNS:
-  Renderer → extend in theme/airpayux/classes/output/core_renderer.php
+  Renderer → extend in theme/sentientia/classes/output/core_renderer.php
   Navigation → use local_[plugin]_extend_navigation() in lib.php
   User profile → use local_[plugin]_extend_navigation_user_settings() in lib.php
   Auth → never override, use auth plugins or Moodle's auth hooks
@@ -344,7 +347,7 @@ Azure token in code (CRITICAL):
 
 ```markdown
 ## Security Audit — [Component Name]
-Date: YYYY-MM-DD | Moodle: 4.5.10 | PHP: 8.2.12
+Date: YYYY-MM-DD | Moodle: 5.1.3+ local / 5.3 UAT | PHP: 8.2.12 local
 
 ### Critical (BLOCK DEPLOY)
 | ID | File:Line | OWASP | Vulnerability | Evidence | Exact Fix |

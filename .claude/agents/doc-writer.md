@@ -35,9 +35,9 @@ User says...                    → Write this
 
 ---
 ## Deployment Path
-Source:  `D:\Claude Local\airpay-ld-os\moodle-enhancement\plugins\local_[name]\`
-XAMPP:   `C:\xampp\htdocs\moodle\local\[name]\`
-Server:  `/var/www/html/moodle/local/[name]/` (via FTP or git)
+Source:  `D:\Claude Local\airpay-ld-os\moodle-enhancement\local\[name]\` AND its twin `local\[name]\` (byte-identical)
+XAMPP:   `C:\xampp\htdocs\moodle5\public\local\[name]\`
+UAT:     via `tools/uat/deploy_to_uat.sh` (dry run by default; deploy only on Nitin's call)
 
 ---
 ## Database Tables
@@ -65,7 +65,7 @@ Server:  `/var/www/html/moodle/local/[name]/` (via FTP or git)
 
 ---
 ## Known Dependencies
-- BizLMS costcenter scoping: all queries filtered by costcenterid (1 or 77)
+- BizLMS costcenter scoping: all queries filtered by costcenterid (1, 77 or 177)
 - Requires: local_costcenter (BizLMS) to be installed
 
 ---
@@ -99,8 +99,8 @@ Next up: [Surface 2 or next task]
 ### Files Changed
 | File | Change |
 |------|--------|
-| `moodle-enhancement/plugins/local_airhub/version.php` | Created — v2026040300 |
-| `theme/airpayux/templates/navbar.mustache` | Navbar Sprint 1 implementation |
+| `moodle-enhancement/local/airhub/version.php` (+ twin `local/airhub/`) | Created — v2026040300 |
+| `theme/sentientia/templates/navbar.mustache` | Navbar change |
 
 ### Blockers
 - [ ] [anything blocking next session]
@@ -115,12 +115,12 @@ Next up: [Surface 2 or next task]
 
 ## TEMPLATE 3: Plugin README
 
-**File:** `moodle-enhancement/plugins/local_[name]/README.md`
+**File:** `moodle-enhancement/local/[name]/README.md` (+ twin `local/[name]/README.md`)
 
 ```markdown
 # local_[pluginname]
 
-**Version:** 1.0 (2026040300)  |  **Moodle:** 4.5.10+  |  **PHP:** 8.2+
+**Version:** 1.0 (2026040300)  |  **Moodle:** 5.1+ (5.3 LTS target)  |  **PHP:** 8.2+
 **Author:** Nitin Rajput, Airpay Payment Services
 
 ## What It Does
@@ -129,11 +129,12 @@ Next up: [Surface 2 or next task]
 ## Installation
 ```powershell
 # 1. Copy to XAMPP
-Copy-Item "moodle-enhancement\plugins\local_[name]" "C:\xampp\htdocs\moodle\local\[name]" -Recurse -Force
-# 2. Run upgrade
-php C:\xampp\htdocs\moodle\admin\cli\upgrade.php --non-interactive
+Copy-Item "moodle-enhancement\local\[name]" "C:\xampp\htdocs\moodle5\public\local\[name]" -Recurse -Force
+# 2. Run upgrade (cwd = public\; admin\cli sits one level up)
+Set-Location "C:\xampp\htdocs\moodle5\public"
+php ../admin/cli/upgrade.php --non-interactive
 # 3. Purge caches
-php C:\xampp\htdocs\moodle\admin\cli\purge_caches.php
+php ../admin/cli/purge_caches.php
 ```
 
 ## File Structure

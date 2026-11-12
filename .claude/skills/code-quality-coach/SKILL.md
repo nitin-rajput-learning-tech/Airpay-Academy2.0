@@ -1,5 +1,5 @@
 # Code Quality Coach — Karpathy Principles Validator
-**Version:** 1.0 | **For:** Airpay L&D OS (Phase 6B+) | **Trigger:** Pre-write validation or `/code-quality-coach [file]`
+**Version:** 1.1 (2026-11-12: "Write only what the task needs") | **For:** Airpay L&D OS (Phase 6B+) | **Trigger:** Pre-write validation or `/code-quality-coach [file]`
 
 ---
 
@@ -23,6 +23,64 @@ This skill prevents code debt and ensures Phase 6B/SENTIENTIA work stays maintai
 | **Simplicity First** | No unused variables, imports, or nested abstractions | `$data = get_data(); /* unused */` or 3+ nested if-statements | Remove unused var, extract complex logic to helper function |
 | **Surgical Changes** | Each commit touches ≤3 file categories (theme, plugin, content, db, api) | Commit with navbar.scss + settings.php + voice.py + install.xml (4 categories) | Split into 2 commits |
 | **Goal-Driven** | Error handling present, success/failure paths clear | API call without try-catch, missing return checks, no validation | Add try-catch, assert() checks, return validation |
+
+---
+
+<!--
+Source (2026-11-12): the rules in "Write only what the task needs" are paraphrased, not copied, from Ponytail (MIT),
+https://github.com/dietrichgebert/ponytail , files skills/ponytail/SKILL.md and AGENTS.md at commit
+96608e078b2d5ea607c5c3b8b5a54d1c1fba6846 (2026-10-29). Read-only; nothing installed (no hooks, no status band).
+No text is copied verbatim, but the step order and several bullets follow upstream closely, so its MIT notice is
+recorded in THIRD-PARTY-NOTICES.md as adapted material. The Moodle list is ours.
+-->
+
+## Write only what the task needs
+
+This sharpens **Simplicity First** and **Surgical Changes**. Smaller diffs are easier to review, but only once the
+change is complete.
+
+**Before writing.** Read the task, then the code around it. Write down everywhere the change has to land: callers,
+tests, fixtures, lang strings, both plugin trees, the state card. Those places are the scope; features nobody
+requested are outside it. For a bug fix, find all callers of the function before editing, and fix the cause in the
+shared function rather than patching one caller.
+
+**Go down this list and stop at the first answer that solves the whole task:**
+1. Is it needed at all? Do not add options, settings or flexibility that no one requested; list what you left out in one line.
+2. Does this codebase already have it? Reuse the helper, class or pattern the way the code around it does
+   (for example `\local_sentientia_platform\tenant::path_descendant_filter()`, `feature_flags::is_enabled()`,
+   `moodle-enhancement/tools/visual-pass/evidence_lib.mjs`).
+3. Does Moodle core or PHP already do it? Use the core API (`$DB`, `get_string()`, `html_writer`, the File API,
+   Mustache templates) before writing your own.
+4. Is a dependency already installed that does it? Use it. Do not add a new dependency to save a few lines.
+5. Otherwise, write the smallest code that works.
+
+**While writing.**
+- No wrapper, abstraction, setting or "for later" code that has one caller and no request behind it.
+- A short line is better only when a reader understands it at a glance.
+- Comments say why, not what, in one line.
+- Moved or merged code keeps the validation and error handling it had.
+- When two options are about the same size, prefer the one that handles edge cases: an empty list, zero, the last
+  item, the site course id, a tenant path boundary.
+- Logic that can go wrong (conditions, loops, parsing, money, security, tenant scoping) ships with a test. A
+  one-line rename or wording change does not need one.
+- A limit you accept on purpose gets a comment: `// shortcut: <the limit>, <when to revisit>`.
+
+**When done,** end with a line or two naming what you deliberately left out and anything you could not verify.
+
+**Never "extra" in this repo.** Moodle's required plugin files, lang strings, privacy providers, upgrade steps and
+tests are part of a complete change, never extra code to trim. Leaving any of these out is a defect, not a saving:
+- Moodle's required plugin files: everything root `CLAUDE.md` section 6 marks REQUIRED for the plugin type (for a
+  local plugin `version.php`, `lang/en/local_<name>.php`, `index.php`), and `db/access.php`, `db/install.xml`,
+  `db/upgrade.php`, `settings.php`, `db/feature_flags.php` when the plugin needs them.
+- Language strings: every new string in `lang/en` and `lang/hi` (en/hi parity is a CI gate).
+- A real privacy provider when the plugin stores personal data. A `null_provider` claims it stores none.
+- Upgrade steps in `db/upgrade.php` with their savepoint, and the version bump.
+- Tests for new logic, and a feature flag (default OFF) for any user-visible feature.
+- Both plugin trees (`moodle-enhancement/local/` and `local/`) kept byte-identical, and the state card update.
+- Validation at trust boundaries (`required_param()`/`optional_param()`, `require_login()`,
+  `require_capability()`, sesskey), output escaping (`s()`, `format_string()`), tenant scoping, error handling that
+  keeps data from being lost, and accessibility.
+- Anything the person asked for.
 
 ---
 
@@ -204,5 +262,6 @@ A: Yes. Edit `checks/11-14-custom.sh` in this skill directory. Patterns: regex +
 ## References
 
 - **Andrej Karpathy Skills:** https://github.com/forrestchang/andrej-karpathy-skills
+- **Ponytail** (MIT, paraphrased into "Write only what the task needs", 2026-11-12): https://github.com/dietrichgebert/ponytail at commit 96608e078b2d5ea607c5c3b8b5a54d1c1fba6846
 - **Airpay CLAUDE.md:** Root `CLAUDE.md` Section 5 (Coding Standards)
 - **Your Project State:** `moodle-enhancement/PROJECT-STATE.md`

@@ -90,7 +90,7 @@
           {
             "type": "command",
             "command": "bash \"D:/Claude Local/airpay-ld-os/.claude/hooks/lint-on-save.sh\" \"${CLAUDE_TOOL_INPUT_FILE_PATH}\"",
-            "timeout": 15000,
+            "timeout": 15,
             "blockOnFailure": false
           }
         ]
@@ -103,7 +103,7 @@
           {
             "type": "command",
             "command": "node -e \"const c=process.env.CLAUDE_TOOL_INPUT_COMMAND||''; const blocked=['Remove-Item','rm -rf','DROP TABLE','git push --force','ALTER TABLE']; const hit=blocked.find(p=>c.includes(p)); if(hit){console.error('BLOCKED: '+hit+' requires [CONFIRM] from Nitin'); process.exit(1);}\"",
-            "timeout": 5000,
+            "timeout": 5,
             "blockOnFailure": true
           }
         ]

@@ -1,4 +1,4 @@
-# Frontend Rules — airpayux Theme (Moodle 4.5.10)
+# Frontend Rules — sentientia Theme (Moodle 5.1 local, 5.3 LTS target, UAT on 5.3)
 # ALWAYS LOADED when editing theme files, SCSS, Mustache, or layout PHP.
 
 ---
@@ -6,15 +6,19 @@
 ## Identity — Read Before Every Theme Edit
 
 ```
-Theme name:   airpayux
-Type:         STANDALONE FORK of epsilon
-Inheritance:  $THEME->parents = [] — we own ALL 514 files
-XAMPP path:   C:\xampp\htdocs\moodle\theme\airpayux\
-Working path: D:\Claude Local\airpay-ld-os\moodle-enhancement\theme\airpayux\
+Theme name:   sentientia (theme_sentientia), the former airpayux fork of epsilon
+Type:         STANDALONE theme
+Inheritance:  $THEME->parents = [] — we own every file
+XAMPP path:   C:\xampp\htdocs\moodle5\public\theme\sentientia\
+Working path: D:\Claude Local\airpay-ld-os\theme\sentientia\   (the theme lives only here,
+              not under moodle-enhancement\)
+Local site:   http://localhost:8080/   (wwwroot has no /moodle)
+Brand source: moodle-enhancement\docs\audits\brand-revamp-2026-06\REVISED-BRAND-BOOK-2026-06.md
+Tokens:       theme\sentientia\scss\moodle\_tokens.scss (+ _tokens-dark.scss)
 Visual target: D:\Claude Local\Moodle Backup\03-prototypes\preview\ (22 approved prototypes)
 ```
 
-**NEVER EDIT `theme/epsilon/` — you are in `theme/airpayux/` and own every file.**
+**NEVER EDIT `theme/epsilon/` or `theme/airpayux/` (retired, not served) — you are in `theme/sentientia/` and own every file.**
 
 ---
 
@@ -98,7 +102,7 @@ $ap-transition-slow: 0.35s ease;
 
 The Sass `$ap-transition*` literals above are kept for legacy SCSS that still
 needs Sass values. **New code MUST use the CSS-custom-property tokens** defined
-in `scss/moodle/_tokens.scss:195–264`, because those tokens collapse to `0ms`
+in `scss/moodle/_tokens.scss` (motion block, about lines 240–310), because those tokens collapse to `0ms`
 under `@media (prefers-reduced-motion: reduce)`. Anything that hardcodes
 inline timing (e.g. `transition: all 0.2s ease`) bypasses the cascade and
 animates regardless of OS preference — a vestibular-accessibility violation.
@@ -160,7 +164,7 @@ animates regardless of OS preference — a vestibular-accessibility violation.
 
 ### Lint rule (enforced)
 
-`theme/airpayux/.stylelintrc.json` ships a `declaration-property-value-disallowed-list`
+`theme/sentientia/.stylelintrc.json` ships a `declaration-property-value-disallowed-list`
 rule scoped via `overrides` to `scss/moodle/partials/_surface-*.scss`:
 
 - `transition-duration` accepts only values that start with `var(` — anything
@@ -174,11 +178,11 @@ Run locally (stylelint is already a root devDependency at `^15.11.0`; run
 
 ```powershell
 # From repo root:
-npx stylelint --config moodle-enhancement/theme/airpayux/.stylelintrc.json `
-              "moodle-enhancement/theme/airpayux/scss/moodle/partials/_surface-*.scss"
+npx stylelint --config theme/sentientia/.stylelintrc.json `
+              "theme/sentientia/scss/moodle/partials/_surface-*.scss"
 
 # Or from the theme dir (auto-discovers the config):
-Set-Location moodle-enhancement\theme\airpayux
+Set-Location theme\sentientia
 npx stylelint "scss/moodle/partials/_surface-*.scss"
 ```
 
@@ -199,8 +203,8 @@ instead.
 
 ### Refs
 
-- Token cascade source: `theme/airpayux/scss/moodle/_tokens.scss:195–264`.
-- Lint rule config: `theme/airpayux/.stylelintrc.json`.
+- Token cascade source: `theme/sentientia/scss/moodle/_tokens.scss` (motion block, about lines 240–310).
+- Lint rule config: `theme/sentientia/.stylelintrc.json`.
 - Audit motivation: `moodle-enhancement/docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`
   §2.7 + P2 #19.
 - WCAG 2.3.3 — Animation from Interactions (Level AAA),
@@ -270,7 +274,7 @@ Available context (from `classes/output/core_renderer.php`):
 ### `layout/dashboard.php`
 Available PHP context:
 ```php
-$costcenterid     // BizLMS tenant ID (1=Airpay, 77=Public)
+$costcenterid     // BizLMS tenant ID (1=Airpay, 77=Public, 177=ZEEA)
 $USER             // logged-in user object
 $PAGE->blocks     // block manager
 $CFG->wwwroot     // site root URL
@@ -339,14 +343,19 @@ $costcenterid = (int)($this->page->theme->settings->costcenterid ?? 0);
 //   - Footer content
 //   - Some block visibility
 
-// Pattern for tenant-conditional output:
+// Pattern for tenant-conditional output (illustrative: the logo file names
+// below are examples, not files in theme/sentientia/pix/):
 if ($costcenterid === 1) {
-    return html_writer::img('/theme/airpayux/pix/logo-airpay.png', 'Airpay Academy');
+    return html_writer::img('/theme/sentientia/pix/logo-airpay.png', 'Airpay Academy');
 } elseif ($costcenterid === 77) {
-    return html_writer::img('/theme/airpayux/pix/logo-public.png', 'Airpay Learning');
+    return html_writer::img('/theme/sentientia/pix/logo-public.png', 'Airpay Learning');
 } else {
-    return html_writer::img('/theme/airpayux/pix/logo-default.png', get_config('moodle', 'sitename'));
+    return html_writer::img('/theme/sentientia/pix/logo-default.png', get_config('moodle', 'sitename'));
 }
+
+// Per-CUSTOMER branding (logo, colours, favicon) comes from
+// \local_sentientia_platform\customer::branding(); core_renderer injects it as
+// CSS custom properties (--ap-color-primary, --ap-color-bg) before the tenant layer.
 ```
 
 ---
@@ -381,20 +390,25 @@ if ($costcenterid === 1) {
 
 ---
 
-## 10 Surfaces — Phase 6B Sprint Plan
+## 10 Surfaces — Phase 6B map (historical sprint plan, current file paths)
 
-| # | Surface | Key Files | Sprint | Reference Prototype |
-|---|---------|-----------|--------|---------------------|
-| 1 | **Navbar** | `templates/navbar.mustache` | **1 — NOW** | navbar-*.html |
-| 2 | **Footer** | `templates/footer.mustache` | **1 — NOW** | footer-*.html |
-| 3 | **Login** | `templates/core/loginform.mustache` + `layout/login.php` | **1 — NOW** | login-*.html |
-| 4 | Emp Dashboard | `layout/dashboard.php` | 2 | dashboard-employee-*.html |
+The sprint column is the Phase 6B plan, kept for history; Sprint 1 is long done.
+Current status lives in `moodle-enhancement/PROJECT-STATE.md`. Theme paths are
+relative to `theme/sentientia/`; plugin paths exist twice
+(`moodle-enhancement/local/<plugin>/` and `local/<plugin>/`, kept byte-identical).
+
+| # | Surface | Key Files (current) | Sprint (6B plan) | Reference Prototype |
+|---|---------|---------------------|------------------|---------------------|
+| 1 | **Navbar / app shell** | `templates/navbar.mustache`, `templates/shell.mustache`, `templates/topbar.mustache`, `templates/sidebar.mustache` | 1 | navbar-*.html |
+| 2 | **Footer** | `templates/footer.mustache` | 1 | footer-*.html |
+| 3 | **Login** | `templates/core/loginform.mustache` + `layout/login.php` | 1 | login-*.html |
+| 4 | Emp Dashboard | `layout/dashboard.php` + `templates/dashboard.mustache` | 2 | dashboard-employee-*.html |
 | 5 | Admin Dashboard | `layout/dashboard.php` + blocks | 2 | dashboard-admin-*.html |
-| 6 | Course Catalog | `local/courses/templates/` | 3 | catalog-*.html |
-| 7 | Course Detail | `local/search/coursedetails.php` | 3 | course-detail-*.html |
-| 8 | User Profile | `local/users/templates/` | 4 | profile-*.html |
-| 9 | Mobile Layout | `scss/moodle/custom_media.scss` | 4 | mobile-*.html |
-| 10 | Service Worker | `templates/head.mustache` | 4 | — |
+| 6 | Course Catalog | `local/sentientia_catalog/` (`index.php`, `templates/catalog.mustache`) | 3 | catalog-*.html |
+| 7 | Course Detail | `local/sentientia_catalog/course.php` | 3 | course-detail-*.html |
+| 8 | User Profile | `local/sentientia_users/profile.php` + `templates/profile.mustache` | 4 | profile-*.html |
+| 9 | Mobile Layout | `scss/moodle/custom_media.scss`, `templates/mobile_bottom_nav.mustache` | 4 | mobile-*.html |
+| 10 | Service Worker / PWA | `local/sentientia_pwa/` (`sw.php`, `manifest.php`), `templates/head.mustache` | 4 | — |
 
 ---
 
@@ -402,21 +416,23 @@ if ($costcenterid === 1) {
 
 ```powershell
 # 1. PHP lint (if layout PHP changed)
-php -l "C:\xampp\htdocs\moodle\theme\airpayux\layout\[file].php"
+php -l "D:\Claude Local\airpay-ld-os\theme\sentientia\layout\[file].php"
 
-# 2. Copy changed files
-Copy-Item "D:\Claude Local\airpay-ld-os\moodle-enhancement\theme\airpayux\templates\navbar.mustache" `
-          "C:\xampp\htdocs\moodle\theme\airpayux\templates\navbar.mustache" -Force
+# 2. Copy changed files into the served tree (moodle5\public\)
+Copy-Item "D:\Claude Local\airpay-ld-os\theme\sentientia\templates\navbar.mustache" `
+          "C:\xampp\htdocs\moodle5\public\theme\sentientia\templates\navbar.mustache" -Force
 
-# 3. Purge caches
-php "C:\xampp\htdocs\moodle\admin\cli\purge_caches.php"
+# 3. Purge caches (admin\cli is one level above public\; run with cwd = public\)
+Set-Location "C:\xampp\htdocs\moodle5\public"
+php ../admin/cli/purge_caches.php
+#    (after a version.php bump: php ../admin/cli/upgrade.php --non-interactive first)
 
 # 4. Hard refresh browser
 # Ctrl+Shift+R
 
 # 5. Test checklist (every deploy):
-#    □ Login page: http://localhost:8080/moodle/
-#    □ Dashboard: http://localhost:8080/moodle/my/dashboard.php
+#    □ Login page: http://localhost:8080/login/index.php
+#    □ Dashboard: http://localhost:8080/my/  (/my/dashboard.php is a BizLMS shim that redirects here)
 #    □ As Learner role (not admin)
 #    □ Mobile viewport 590px (Chrome devtools → device toolbar)
 #    □ Browser console — zero JS errors
@@ -431,7 +447,8 @@ php "C:\xampp\htdocs\moodle\admin\cli\purge_caches.php"
 ❌ inline style="color: #0066A7"          → use CSS class
 ❌ hardcoded English in .mustache          → use {{# str }} helper
 ❌ {{{ user_input }}}                      → triple-brace on user input = XSS
-❌ editing theme/epsilon/ files            → you are in theme/airpayux/
+❌ editing theme/epsilon/ or theme/airpayux/ → you are in theme/sentientia/
+❌ teal #0f7a73 anywhere                   → retired by the Brand Book 2026-06; accent is #1985DD
 ❌ full SCSS file rewrite                  → component-by-component only
 ❌ testing only as admin                   → admin bypasses capability checks
 ❌ skipping Ctrl+Shift+R after purge       → browser cache hides your changes
