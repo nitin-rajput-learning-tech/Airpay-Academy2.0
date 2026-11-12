@@ -95,32 +95,41 @@ enabledPlugins:  vercel@claude-plugins-official = false (noise on a Moodle/PHP r
                  kept user-globally for Nitin's Vercel projects)
                  remember@claude-plugins-official = false (its PostToolUse hook has
                  no timeout and hung workflow subagents, 2026-11-12)
-Hook timeouts:   Claude Code reads a hook "timeout" in SECONDS: 15 (PostToolUse) and 5
-                 (PreToolUse). Until 2026-11-13 they were 15000 and 5000 (about 4 h and 83 min),
-                 no real limit: the same failure class as the remember hook.
+Hook timeouts:   Claude Code reads a hook "timeout" in SECONDS (default 600). The PostToolUse
+                 hook has 15. Until 2026-11-13 the values were 15000 and 5000 (about 4 h and
+                 83 min), no real limit: the same failure class as the remember hook.
 PostToolUse:     lint-on-save.sh after every Edit/Write. It is passed
                  "${CLAUDE_TOOL_INPUT_FILE_PATH}", which Claude Code does not set (tool input
-                 arrives as JSON on stdin), so the script most likely gets an empty path,
-                 prints its usage line and exits 0: it currently lints nothing (unverified live).
-PreToolUse:      node check meant to block Remove-Item, rm -rf, DROP TABLE, ALTER TABLE,
-                 git push --force; currently a no-op (exits 1, which does not block (only
-                 exit 2 does), reads an env var Claude Code does not set, and matches Bash
-                 only, so PowerShell calls are never checked). permissions.deny below is
-                 the real guard.
-Auto-allowed:    php -l, php -r, Get-ChildItem, Get-Content, Select-String, git status/diff/log/add,
-                 Copy-Item into C:\xampp\htdocs\moodle5\public\ (theme\sentientia, local\, blocks\)
-Auto-denied:     Remove-Item, rm -r/-rf, del /f, git push --force/-f, git reset --hard,
-                 git clean -f, DROP TABLE/DATABASE, ALTER ... DROP, curl to ElevenLabs/Gamma,
-                 web requests to airpay.academy, Copy-Item into moodle5\public core dirs
-                 (lib, admin, course, mod\assign, mod\quiz)
+                 arrives as JSON on stdin), so the script gets an empty path, prints its usage
+                 line and exits 0: it lints nothing. Run it by hand on a file instead.
+PreToolUse:      none. The old node check was removed 2026-11-13: exit 1 never blocks (only
+                 exit 2 does), it read an env var Claude Code does not set, and it started node
+                 on every Bash call. The deny rules below do the job.
+Permissions:     rules use the documented Tool(pattern) form: Bash(...), PowerShell(...),
+                 WebFetch(domain:...). Until 2026-11-13 they were bare strings ("rm -rf *"),
+                 which name no tool and matched nothing, silently: every allow and deny rule
+                 was inactive. Deny wins over allow at every level and applies to subagents;
+                 a denied call is refused, not prompted. A deny rule also catches the command
+                 inside && chains and subshells, but not inside bash -c / pwsh -c strings.
+Auto-allowed:    php -l / -r, the admin/cli purge + upgrade scripts (both ../admin and admin),
+                 phpunit, python, pip/npm install, npm run, git status/diff/log/add/branch/
+                 stash/show/tag, Get-ChildItem, Get-Content, Select-String, Set-Location,
+                 Test-Path, Copy-Item into moodle5\public (theme\sentientia, local\, blocks\)
+Auto-denied:     Remove-Item (and its aliases rm, del, ri, rd, erase in PowerShell),
+                 rm -r / -rf / -fr, git push --force / -f, git reset --hard, git clean -f,
+                 any command containing DROP TABLE, DROP DATABASE or ALTER TABLE ... DROP (a
+                 commit message with those words is refused too: put the text in a file and
+                 use git commit -F), curl / Invoke-WebRequest / Invoke-RestMethod to ElevenLabs,
+                 Gamma or airpay.academy, WebFetch of airpay.academy, Copy-Item into
+                 moodle5\public core dirs (lib, admin, course, mod\assign, mod\quiz).
 Env vars:        AIRPAY_MOODLE_LOCAL (http://localhost:8080), AIRPAY_MOODLE_PROD, AIRPAY_UAT,
                  AIRPAY_THEME_SRC / AIRPAY_THEME_DST (theme\sentientia),
                  AIRPAY_PLUGINS_SRC (moodle-enhancement\local) / AIRPAY_PLUGINS_DST (moodle5\public),
                  AIRPAY_SCORM_OUTPUT, AIRPAY_PROTOTYPES, AIRPAY_STATE_CARDS, AIRPAY_PROJECT_STATE,
                  MOODLE_ROOT (C:\xampp\htdocs\moodle5\public), MOODLE_VERSION, MOODLE_PHP,
                  AIRPAY_TENANT_ID=1, PUBLIC_TENANT_ID=77, ZEEA_TENANT_ID=177
-Still stale:     the informational "context" and "_meta" blocks in settings.json (Phase 6B,
-                 Moodle 4.5.10). Claude Code does not act on them; the root CLAUDE.md wins.
+Context/_meta:   informational blocks, refreshed 2026-11-13. Claude Code does not act on them;
+                 the root CLAUDE.md and PROJECT-STATE.md win where they differ.
 ```
 
 ---

@@ -278,7 +278,7 @@ $costcenterid     // BizLMS tenant ID (1=Airpay, 77=Public, 177=ZEEA)
 $USER             // logged-in user object
 $PAGE->blocks     // block manager
 $CFG->wwwroot     // site root URL
-// Dashboard URL: /my/dashboard.php (NOT /my/index.php)
+// Dashboard URL: /my/ (/my/index.php). /my/dashboard.php is a BizLMS shim that redirects there; keep it, the theme still links to it
 ```
 
 ---
