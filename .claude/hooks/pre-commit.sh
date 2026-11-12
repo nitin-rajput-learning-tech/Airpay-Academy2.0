@@ -152,25 +152,76 @@ fi
 # ============================================================
 # CHECK 6: MOODLE CORE FILE PROTECTION
 # ============================================================
+# The repo root is a Moodle tree (4.5 layout: lib/, admin/, course/ at the
+# root; a 5.1+ tree keeps the same dirs under public/, so that prefix is
+# accepted too). Core edits are allowed only with a record in
+# moodle-enhancement/docs/core-mods/ and a SENTIENTIA-CORE-MOD marker at the
+# change site (root CLAUDE.md section 3). A staged file in a guarded core dir
+# is an ERROR unless (1) a record in the index (committed or staged) names its
+# exact path, and (2) the staged file carries the marker. (2) applies to every
+# text file except JSON, source maps and CSV, which cannot hold a comment;
+# those, binary files and deletions need only (1). Renames are listed as a
+# delete plus an add (--no-renames), so moving a core file out of a guarded
+# dir still needs a record. Known gaps: a record that names a path only in
+# passing (e.g. as a caller) counts as (1); a marker anywhere in the staged
+# file counts as (2), so a later edit to a file that already has one passes
+# without a new marker; a record path written with a leading '/' is read as a
+# URL (/my/index.php) and does not count.
+#   Guarded: lib/ admin/ course/ my/ mod/assign/ mod/quiz/ (the core dirs that
+#            .claude/settings.json denies copying into, plus my/).
+#   Ours, never flagged: admin/tool/sentientia_*/, mod/quiz/accessrule/
+#            sentientia_*/, the my/ overlays (dashboard.php, switchrole.php,
+#            templates/dropdown.mustache). local/, blocks/, enrol/,
+#            payment/gateway/, theme/ and moodle-enhancement/ are outside the
+#            guarded dirs.
+#   Not guarded: other core dirs (auth/, login/, user/, question/ ...) and
+#            root files such as version.php.
+# Until 2026-11-13 the patterns were moodle/lib/, htdocs/moodle/... (no repo
+# path has those prefixes), so only lib/outputrenderers*, lib/navigationlib*
+# and admin/index.php were caught, and a documented core mod was blocked too.
 echo "→ [6/20] Moodle core file protection..."
 CORE_ISSUES=0
-CORE_PATTERNS=(
-    "moodle/lib/"
-    "moodle/admin/"
-    "moodle/course/"
-    "htdocs/moodle/lib/"
-    "htdocs/moodle/admin/"
-    "^lib/outputrenderers"
-    "^lib/navigationlib"
-    "^admin/index.php"
-)
-for pattern in "${CORE_PATTERNS[@]}"; do
-    if echo "$STAGED_ALL" | grep -qE "$pattern"; then
-        err "Moodle core file modification: $(echo "$STAGED_ALL" | grep -E "$pattern" | head -1)"
-        CORE_ISSUES=$((CORE_ISSUES+1))
+CORE_STAGED=$(git diff --cached --name-only --no-renames --diff-filter=ACDMT 2>/dev/null \
+    | grep -E '^(public/)?(lib|admin|course|my|mod/assign|mod/quiz)/' \
+    | grep -vE '^(public/)?(admin/tool/sentientia_[^/]+|mod/quiz/accessrule/sentientia_[^/]+)/' \
+    | grep -vE '^(public/)?my/(dashboard\.php|switchrole\.php|templates/dropdown\.mustache)$' || true)
+if [ -z "$CORE_STAGED" ]; then
+    ok "No core file modifications"
+else
+    # Every path-like token in the records, read from the index so the record
+    # has to be committed or staged. README.md is the ledger's guide; its
+    # example paths are not records. URL tokens (leading /) are dropped;
+    # public/ and trailing dots are stripped so 'public/lib/x.php' and
+    # 'lib/x.php.' both match lib/x.php.
+    CORE_RECORDED=$(git grep --cached -h -o -E '[A-Za-z0-9_./-]+' \
+        -- 'moodle-enhancement/docs/core-mods/*.md' 'docs/core-mods/*.md' ':(exclude)*README.md' 2>/dev/null \
+        | grep -v '^/' | sed -e 's#^public/##' -e 's#[.]*$##' | sort -u || true)
+    while IFS= read -r file; do
+        [ -n "$file" ] || continue
+        # Here-strings, not pipes into grep -q: under pipefail an early grep
+        # exit can SIGPIPE the writer and turn a match into a failure.
+        if ! grep -qxF "${file#public/}" <<< "$CORE_RECORDED"; then
+            err "Moodle core file modification without a core-mods record: $file"
+            CORE_ISSUES=$((CORE_ISSUES+1))
+        elif ! [[ "$file" =~ \.(json|map|csv)$ ]] && git cat-file -e ":$file" 2>/dev/null \
+             && [ "$(git --literal-pathspecs diff --cached --numstat --no-renames -- "$file" 2>/dev/null | cut -f1)" != "-" ]; then
+            # Staged, not deleted, and not binary (numstat prints '-' for binary).
+            MARKERS=$(git show ":$file" 2>/dev/null | grep -c 'SENTIENTIA-CORE-MOD' || true)
+            if [ "${MARKERS:-0}" -eq 0 ]; then
+                err "Moodle core file modification without a SENTIENTIA-CORE-MOD marker: $file"
+                CORE_ISSUES=$((CORE_ISSUES+1))
+            fi
+        fi
+    done <<< "$CORE_STAGED"
+    if [ "$CORE_ISSUES" -gt 0 ]; then
+        echo "       Each core edit needs a record in moodle-enhancement/docs/core-mods/YYYY-MM-DD-<slug>.md"
+        echo "       that names the file path (committed or staged with this commit) and a"
+        echo "       '// SENTIENTIA-CORE-MOD: <reason>' marker at the change site (root CLAUDE.md section 3;"
+        echo "       in XML/HTML/SVG use <!-- SENTIENTIA-CORE-MOD: <reason> -->, in YAML/.feature use #)."
+    else
+        ok "Core file modifications pass the core-mods record and marker rules ($(echo "$CORE_STAGED" | wc -l | tr -d ' ') file(s))"
     fi
-done
-[ "$CORE_ISSUES" -eq 0 ] && ok "No core file modifications"
+fi
 
 # ============================================================
 # CHECK 7: CONTENT/SOPS PROTECTION

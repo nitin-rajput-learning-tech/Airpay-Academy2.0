@@ -153,8 +153,14 @@ Write-Host "  ✓ version.php valid"
 # PHASE 4: COPY
 # ═══════════════════════════════════════════════════
 Write-Host "→ Copying $PluginName to XAMPP..."
-if (Test-Path $DST) { Remove-Item $DST -Recurse -Force }
-Copy-Item $SRC $DST -Recurse -Force
+# Copy the plugin's CONTENTS into the existing folder, overwriting in place. No delete
+# first: permissions.deny in .claude/settings.json lists 'Remove-Item *' (every
+# Remove-Item, recursive or not). Copy "$SRC\*",
+# not "$SRC": copying the folder itself into an existing $DST nests it as $DST\$PLUGIN_DIR.
+# Files removed from the repo are NOT removed from XAMPP by this copy; clean those by hand,
+# with Nitin's confirmation.
+if (-not (Test-Path $DST)) { New-Item -ItemType Directory -Path $DST -Force | Out-Null }
+Copy-Item -Path (Join-Path $SRC '*') -Destination $DST -Recurse -Force
 Write-Host "  ✓ Copied to $DST"
 
 # ═══════════════════════════════════════════════════

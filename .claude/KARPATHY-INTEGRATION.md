@@ -73,7 +73,7 @@ When you run `git commit`, checks 11–14 run automatically:
 Invoke the skill mid-session for detailed feedback:
 
 ```bash
-/code-quality-coach "moodle-enhancement/theme/airpayux/scss/custom_changes.scss"
+/code-quality-coach "theme/sentientia/scss/moodle/custom_changes.scss"
 ```
 
 Returns structured feedback with references to the SKILL.md documentation.
@@ -100,7 +100,7 @@ Returns structured feedback with references to the SKILL.md documentation.
 **Checkpoint:** Before writing SCSS, run coach on existing theme files:
 
 ```bash
-/code-quality-coach "theme/airpayux/scss/moodle/custom_changes.scss"
+/code-quality-coach "theme/sentientia/scss/moodle/custom_changes.scss"
 ```
 
 **Expectation:** SCSS should have ≤2 levels of nesting (BEM compliance). Coach flags deeper nesting.
@@ -120,7 +120,7 @@ Returns structured feedback with references to the SKILL.md documentation.
 **Checkpoint:** Before committing OAuth/MSAL code:
 
 ```bash
-/code-quality-coach "plugins/local_azure_auth/lib.php"
+/code-quality-coach "moodle-enhancement/local/<plugin>/lib.php"   # Workstream C is planned; no Azure plugin exists yet
 ```
 
 **Expectation:** Token handling has docblocks, error cases clear, no hardcoded secrets.

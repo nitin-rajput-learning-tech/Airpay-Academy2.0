@@ -114,10 +114,10 @@ When you run `git commit`, checks 11–14 (below) fire automatically:
 
 ```powershell
 # Invoke manually before writing critical files:
-/code-quality-coach "moodle-enhancement/theme/airpayux/scss/moodle/custom_changes.scss"
+/code-quality-coach "theme/sentientia/scss/moodle/custom_changes.scss"
 
-# Or check entire directory:
-/code-quality-coach "moodle-enhancement/plugins/"
+# Or check a whole plugin directory (its twin local/<plugin>/ must stay byte-identical):
+/code-quality-coach "moodle-enhancement/local/<plugin>/"
 ```
 
 ---
@@ -141,7 +141,7 @@ When you run `git commit`, checks 11–14 (below) fire automatically:
 
 **Bad (violates Karpathy principles):**
 ```php
-// moodle-enhancement/plugins/local_navbar/lib.php
+// moodle-enhancement/local/navbar/lib.php (twin: local/navbar/lib.php)
 function render_navbar($USER, $PAGE) {
     $items = array();
     $items[] = array('text' => 'Home', 'url' => '/');
@@ -222,14 +222,14 @@ function render_navbar($user, $page) {
 
 ## Output Format
 
-Coach runs silently on passes. On violations:
+Coach runs silently on passes. On violations (example output; the line count and line number are made up):
 
 ```
 ══════════════════════════════════════════════════════
   Code Quality Coach — Karpathy Principles Report
 ══════════════════════════════════════════════════════
 
-File: moodle-enhancement/theme/airpayux/scss/moodle/custom_changes.scss
+File: theme/sentientia/scss/moodle/custom_changes.scss
 Lines: 1247 | Issues: 1
 
 [Simplicity First]

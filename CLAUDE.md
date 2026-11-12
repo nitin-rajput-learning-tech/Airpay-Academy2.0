@@ -64,7 +64,7 @@ Mission: Build Sentientia LMS, with Airpay Academy as customer-zero.
 | Multi-tenant (current) | BizLMS costcenter (Airpay id=1, Public id=77, ZEEA id=177) |
 | Multi-customer (future) | New `local_sentientia_core` layer above tenant — each customer = top-level tenant tree |
 | Tenant detection | `$USER->open_path` (NOT `open_costcenterid` — column doesn't exist on production) |
-| Dashboard | `/my/dashboard.php` (NOT `/my/index.php`) |
+| Dashboard | `/my/` (`/my/index.php`). `/my/dashboard.php` is a BizLMS shim that redirects there with the query string. Do not remove it: the theme navigation still links to it (`core_renderer.php`, `mobile_bottom_nav.mustache`), as do old bookmarks, installed-PWA start URLs and e-mail links (record `moodle-enhancement/docs/core-mods/2026-06-19-my-overlays-5.2.md`) |
 | GitHub | `nitin-rajput-learning-tech/Airpay-Academy2.0` (production branch) |
 | Production DB | MySQL 8.0.44 on AWS RDS |
 | Deploy | File copy to server → Admin → Notifications → purge caches |
