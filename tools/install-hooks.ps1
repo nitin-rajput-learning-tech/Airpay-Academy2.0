@@ -1,9 +1,11 @@
 # install-hooks.ps1 — Airpay Academy git hook installer (PowerShell)
 #
 # Installs .claude/hooks/pre-commit.sh into .git/hooks/pre-commit so every
-# `git commit` from this clone runs the 11-check guard (PHP syntax, MOODLE
-# guards, superglobals, credentials, .env, core files, SOPs, SCORM ZIPs,
-# version.php format, CONFIRM placeholders, stray git conflict markers).
+# `git commit` from this clone runs the 20-check guard (the list is in the
+# hook's header: PHP syntax, MOODLE guards, superglobals, credentials, .env,
+# core files, SOPs, SCORM ZIPs, version.php format, CONFIRM placeholders,
+# conflict markers, state cards, and the theme, AMD, lang, tenant-path,
+# twin-tree and SITEID scans).
 #
 # Usage (from repo root in pwsh / PowerShell 5.1+):
 #
@@ -34,4 +36,4 @@ if (-not (Test-Path (Join-Path $repoRoot '.git'))) {
 
 Copy-Item -Path $source -Destination $target -Force
 Write-Host "Installed: $target" -ForegroundColor Green
-Write-Host "Next commit will run the 11-check guard." -ForegroundColor Cyan
+Write-Host "Next commit will run the 20-check guard." -ForegroundColor Cyan

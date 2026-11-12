@@ -257,7 +257,16 @@ Write-Host "  ✓ All validations passed"
 # PHASE 2: PACKAGE (MUST run from inside course folder)
 # ═══════════════════════════════════════════════════
 Write-Host "→ Packaging SCORM (from inside course folder)..."
-if (Test-Path $OUTPUT_ZIP) { Remove-Item $OUTPUT_ZIP -Force }
+# Overwrite the package in place. No delete first: permissions.deny in
+# .claude/settings.json lists 'Remove-Item *' (every Remove-Item). Compress-Archive
+# -Force replaces an existing $OUTPUT_ZIP rather than adding to it (checked 2026-11-13
+# on Windows PowerShell 5.1, Archive module 1.0.1.0: files left out of the second run
+# were gone from the zip; PowerShell 7 not checked). It does this by deleting the old
+# zip itself before it compresses, so a run that fails partway leaves no package at
+# that path: fix the cause and run /deploy scorm again. The path stays
+# content\scorm-output\<course>-scorm.zip, the name Agents 5 and 6 use.
+# Packages of renamed or retired courses stay in content\scorm-output\; clean those by
+# hand, with Nitin's confirmation.
 Set-Location $COURSE_DIR
 Compress-Archive -Path * -DestinationPath $OUTPUT_ZIP -Force
 Write-Host "  ✓ ZIP created: $OUTPUT_ZIP"

@@ -20,6 +20,14 @@
 #  12. State-card freshness — every staged plugin change should also
 #      stage its corresponding state-cards/<plugin>-state.md (Bucket
 #      E4, 2026-05-28 — F-099 Stabilization Audit).
+#  13. Mustache comment leak
+#  14. Stale theme_airpayux references
+#  15. Missing standard_end_of_body_html
+#  16. AMD src/build parity
+#  17. en/hi lang-pack parity
+#  18. Tenant path boundary
+#  19. Cross-tree plugin twins
+#  20. SITEID strict comparisons
 
 set -euo pipefail
 
@@ -40,14 +48,19 @@ echo "╔═══════════════════════�
 echo "║  Airpay Academy — Pre-Commit Security Check      ║"
 echo "╚══════════════════════════════════════════════════╝"
 
-STAGED_PHP=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep '\.php$' || true)
-STAGED_ALL=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || true)
-STAGED_ZIP=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep '\.zip$' || true)
+# Every staged-file list below uses --no-renames, so a moved or renamed file is
+# listed as an add (A) at its new path. Without it git lists the file as R, which
+# --diff-filter=ACM drops, and until 2026-11-13 a file that was renamed and
+# edited in the same commit skipped every check (syntax, credentials, conflict
+# markers, version.php ...).
+STAGED_PHP=$(git diff --cached --name-only --no-renames --diff-filter=ACM 2>/dev/null | grep '\.php$' || true)
+STAGED_ALL=$(git diff --cached --name-only --no-renames --diff-filter=ACM 2>/dev/null || true)
+STAGED_ZIP=$(git diff --cached --name-only --no-renames --diff-filter=ACM 2>/dev/null | grep '\.zip$' || true)
 # Conflict-marker scan targets — every text format that has ever broken
 # CI on a stray marker. .mustache uses {{<partial}} for parent-template
 # inheritance, which is why we anchor on ^<<<<<<< (line start) instead
 # of bare <<<<<<<.
-STAGED_CONFLICT=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null \
+STAGED_CONFLICT=$(git diff --cached --name-only --no-renames --diff-filter=ACM 2>/dev/null \
     | grep -E '\.(php|mustache|scss|js|json|xml|md|yml)$' || true)
 
 # ============================================================
@@ -55,11 +68,17 @@ STAGED_CONFLICT=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null \
 # ============================================================
 echo ""
 echo "→ [1/20] PHP syntax check..."
-if [ -n "$STAGED_PHP" ]; then
+# php -l exits non-zero on a parse error. Under set -euo pipefail that failed
+# the assignment, and until 2026-11-13 the hook stopped here with no message
+# (exit 255), so CHECKs 2-20 never ran. '|| true' keeps it going; the output is
+# what is checked.
+if [ -n "$STAGED_PHP" ] && ! command -v php >/dev/null 2>&1; then
+    warn "php is not on PATH - PHP syntax unchecked"
+elif [ -n "$STAGED_PHP" ]; then
     PHP_ERRORS=0
     while IFS= read -r file; do
         [ -f "$file" ] || continue
-        result=$(php -l "$file" 2>&1)
+        result=$(php -l "$file" 2>&1 || true)
         if echo "$result" | grep -qE "Parse error|Fatal error"; then
             err "PHP syntax: $file"
             echo "       $result" | head -3
@@ -226,10 +245,25 @@ fi
 # ============================================================
 # CHECK 7: CONTENT/SOPS PROTECTION
 # ============================================================
+# Renames are listed as a delete plus an add (--no-renames, as in CHECK 6).
+# Until 2026-11-13 git listed a move out of content/sops/ as a rename (R),
+# which neither filter saw, so the move passed as "SOP files protected". A
+# rename inside content/sops/ removes the old name too, so it is blocked as
+# well. The lists are captured first instead of piped into grep -q (see the
+# SIGPIPE note in CHECK 6). core.quotePath=false prints a non-ASCII path as it
+# is, so the listed path can be pasted into the restore command.
 echo "→ [7/20] SOP file protection..."
-if git diff --cached --name-only --diff-filter=D 2>/dev/null | grep -q 'content/sops/'; then
+SOP_DELETED=$(git -c core.quotePath=false diff --cached --name-only --no-renames --diff-filter=D 2>/dev/null | grep 'content/sops/' || true)
+SOP_MODIFIED=$(git -c core.quotePath=false diff --cached --name-only --no-renames --diff-filter=MT 2>/dev/null | grep 'content/sops/' || true)
+if [ -n "$SOP_DELETED" ]; then
     err "content/sops/ file DELETED — NEVER delete SOP source files"
-elif git diff --cached --name-only --diff-filter=M 2>/dev/null | grep -q 'content/sops/'; then
+    sed -e 's/^/       /' -e '20q' <<< "$SOP_DELETED"
+    SOP_DELETED_COUNT=$(wc -l <<< "$SOP_DELETED")
+    [ "$SOP_DELETED_COUNT" -gt 20 ] && echo "       ... $SOP_DELETED_COUNT files in all"
+    echo "       A move or rename counts as a delete: copy the file instead and keep the original."
+    echo "       To unstage the delete: git restore --staged -- <path>"
+    echo "       If the file is also gone from disk, then: git restore -- <path>"
+elif [ -n "$SOP_MODIFIED" ]; then
     warn "content/sops/ file modified — verify this is intentional"
 else
     ok "SOP files protected"
@@ -280,22 +314,40 @@ VERSION_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
     [[ "$(basename "$file")" != "version.php" ]] && continue
+    # Not plugin version files: Moodle core's own version.php declares $version,
+    # and version.php files under tests/fixtures/ are test inputs, some broken on
+    # purpose (lib/tests/fixtures/update_validator/). Moodle installs neither.
+    case "$file" in version.php|public/version.php|*/tests/fixtures/*) continue ;; esac
+
+    # The greps end in '|| true': under set -euo pipefail a grep with no match
+    # failed the assignment, and until 2026-11-13 the hook exited 1 here with no
+    # message. A missing line is reported as an error instead, because Moodle's
+    # upgrade stops on it (plugin_defective_exception in lib/upgradelib.php).
 
     # Check version is 10-digit YYYYMMDDNN
-    version_line=$(grep -oE '\$plugin->version\s*=\s*[0-9]+' "$file" 2>/dev/null | head -1)
+    version_line=$(grep -oE '\$plugin->version\s*=\s*[0-9]+' "$file" 2>/dev/null | head -1 || true)
     if [ -n "$version_line" ]; then
-        version_num=$(echo "$version_line" | grep -oE '[0-9]+')
+        version_num=$(echo "$version_line" | grep -oE '[0-9]+' || true)
         if [ ${#version_num} -ne 10 ]; then
             err "version.php: \$plugin->version must be 10 digits (YYYYMMDDNN), got: $version_num in $file"
             VERSION_ISSUES=$((VERSION_ISSUES+1))
         fi
+    else
+        err "version.php: no numeric \$plugin->version line in $file (Moodle's upgrade stops on this)"
+        VERSION_ISSUES=$((VERSION_ISSUES+1))
     fi
 
-    # Check component matches directory
-    component=$(grep -oE "\\\$plugin->component\s*=\s*'[^']+'" "$file" | grep -oE "'[^']+'")
-    if [ -n "$component" ]; then
-        dir=$(dirname "$file" | xargs basename)
-        component_clean=$(echo "$component" | tr -d "'")
+    # Check component matches directory ('single' or "double" quotes)
+    component=$(grep -oE "\\\$plugin->component\s*=\s*['\"][^'\"]+['\"]" "$file" 2>/dev/null \
+        | grep -oE "['\"][^'\"]+['\"]" || true)
+    if [ -z "$component" ]; then
+        err "version.php: no \$plugin->component line in $file (Moodle's upgrade stops on this)"
+        VERSION_ISSUES=$((VERSION_ISSUES+1))
+    else
+        # Not 'dirname | xargs basename': xargs splits on spaces and stops on a
+        # quote, which under set -e ended the hook with no summary.
+        dir=$(basename "$(dirname "$file")")
+        component_clean=$(echo "$component" | tr -d "'\"")
         # The directory must equal the component minus its type prefix
         # (local_airhub → airhub, local_sentientia_courses → sentientia_courses).
         # Fixed 2026-09-08: the old `##*_` stripped up to the LAST underscore, so
@@ -395,7 +447,7 @@ fi
 # on 2026-06-09. scan_mustache_comment_leaks.php is the single source
 # of truth for the detection (CI runs the same script over whole trees).
 echo "→ [13/20] Mustache comment-leak scan..."
-STAGED_MUSTACHE=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep '\.mustache$' || true)
+STAGED_MUSTACHE=$(git diff --cached --name-only --no-renames --diff-filter=ACM 2>/dev/null | grep '\.mustache$' || true)
 LEAK_SCANNER="moodle-enhancement/tools/scan_mustache_comment_leaks.php"
 if [ -z "$STAGED_MUSTACHE" ]; then
     ok "No .mustache files staged"
@@ -421,7 +473,7 @@ fi
 # scan_stale_theme_refs.php flags only quoted refs (real deps), excluding the
 # legacy theme dir + tooling/docs. CI runs the same script over whole trees.
 echo "→ [14/20] Stale theme_airpayux reference scan..."
-STAGED_REFS=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '\.(php|js|mustache|scss|json)$' || true)
+STAGED_REFS=$(git diff --cached --name-only --no-renames --diff-filter=ACM 2>/dev/null | grep -E '\.(php|js|mustache|scss|json)$' || true)
 REF_SCANNER="moodle-enhancement/tools/scan_stale_theme_refs.php"
 if [ -z "$STAGED_REFS" ]; then
     ok "No scan-eligible files staged"
@@ -447,7 +499,7 @@ fi
 # strips {{! }} comments and resolves footer/shell partials, and honours an
 # 'end-of-body-allow' marker for deliberate non-JS docs (e.g. the email wrapper).
 echo "→ [15/20] Missing standard_end_of_body_html scan..."
-STAGED_MUSTACHE=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '\.mustache$' || true)
+STAGED_MUSTACHE=$(git diff --cached --name-only --no-renames --diff-filter=ACM 2>/dev/null | grep -E '\.mustache$' || true)
 EOB_SCANNER="moodle-enhancement/tools/scan_missing_end_of_body.php"
 if [ -z "$STAGED_MUSTACHE" ]; then
     ok "No .mustache files staged"
@@ -478,7 +530,7 @@ fi
 # whole trees); pre-existing gaps are grandfathered in
 # tools/amd-build-parity-allowlist.txt, opt-out marker `amd-build-parity-allow`.
 echo "→ [16/20] AMD src/build parity..."
-STAGED_AMD_SRC=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '/amd/src/.*\.js$' || true)
+STAGED_AMD_SRC=$(git diff --cached --name-only --no-renames --diff-filter=ACM 2>/dev/null | grep -E '/amd/src/.*\.js$' || true)
 AMD_SCANNER="moodle-enhancement/tools/scan_amd_build_parity.php"
 if [ -z "$STAGED_AMD_SRC" ]; then
     ok "No amd/src JS staged"
@@ -499,7 +551,9 @@ else
         while IFS= read -r src; do
             [ -n "$src" ] || continue
             build="${src/\/amd\/src\//\/amd\/build\/}"; build="${build%.js}.min.js"
-            if [ -f "$build" ] && ! git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -qxF "$build"; then
+            # $STAGED_ALL is the same ACM list; a here-string, not a pipe into
+            # grep -q (see the SIGPIPE note in CHECK 6).
+            if [ -f "$build" ] && ! grep -qxF "$build" <<< "$STAGED_ALL"; then
                 warn "Built $build exists but is NOT staged — 'git add' it (CI checks the committed tree)"
             fi
         done <<< "$STAGED_AMD_SRC"
@@ -515,7 +569,7 @@ fi
 # drift where a hi pack exists; en-only components are warnings (known
 # backlog). CI twin: .github/workflows/ci.yml::lang-parity-check.
 echo "-> [17/20] en/hi lang-pack parity..."
-STAGED_LANG=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '/lang/(en|hi)/.*[.]php$' || true)
+STAGED_LANG=$(git diff --cached --name-only --no-renames --diff-filter=ACM 2>/dev/null | grep -E '/lang/(en|hi)/.*[.]php$' || true)
 if [ -z "$STAGED_LANG" ]; then
     ok "No lang files staged"
 elif [ -f "tools/check-lang-parity.php" ]; then
@@ -533,7 +587,7 @@ else
 fi
 
 echo "-> [18/20] Tenant path-boundary scan..."
-STAGED_PHP=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '[.]php$' || true)
+STAGED_PHP=$(git diff --cached --name-only --no-renames --diff-filter=ACM 2>/dev/null | grep -E '[.]php$' || true)
 if [ -z "$STAGED_PHP" ]; then
     ok "No PHP files staged"
 elif [ -f "tools/check-path-boundary.php" ]; then
@@ -562,7 +616,7 @@ echo "-> [19/20] Cross-tree plugin twin check..."
 #
 # The CI job walks both trees in full. This only checks what is staged, so it
 # is fast and catches the mistake while you can still fix it in one commit.
-TWIN_STAGED=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null \
+TWIN_STAGED=$(git diff --cached --name-only --no-renames --diff-filter=ACM 2>/dev/null \
     | grep -E '^(local|moodle-enhancement/local)/' || true)
 if [ -z "$TWIN_STAGED" ]; then
     ok "No dual-tree plugin files staged"
@@ -604,7 +658,7 @@ echo "-> [20/20] SITEID strict-comparison scan..."
 # '(int) $id !== SITEID' is therefore always true and '$id === SITEID' always
 # false: the site-course guard silently does nothing. It shipped five times
 # before 0eb31f32f. CI twin: .github/workflows/ci.yml::siteid-compare-check.
-STAGED_PHP=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '[.]php$' || true)
+STAGED_PHP=$(git diff --cached --name-only --no-renames --diff-filter=ACM 2>/dev/null | grep -E '[.]php$' || true)
 if [ -z "$STAGED_PHP" ]; then
     ok "No PHP files staged"
 elif [ -f "tools/check-siteid-compare.php" ]; then
