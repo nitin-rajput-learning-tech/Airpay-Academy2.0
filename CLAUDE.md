@@ -50,14 +50,17 @@ Mission: Build Sentientia LMS, with Airpay Academy as customer-zero.
 
 | Component | Value |
 |-----------|-------|
-| Local Moodle | 5.1.3+ at `C:\xampp\htdocs\moodle5\public\` (Apache alias `/moodle` → `moodle5\public\`) |
+| Target platform | **Moodle 5.3 LTS** (ADR-033): PHP 8.3+ and MySQL 8.4 on the new server (IT ask open) |
+| UAT | https://academy2.airpay.ninja on Moodle 5.3, reached through `ssh uat-lms` (VPN + tunnel on localhost:2222); deploy with `tools/uat/deploy_to_uat.sh` (dry run by default, `--yes` deploys) |
+| Local Moodle (XAMPP) | 5.1.3+ at `C:\xampp\htdocs\moodle5\public\` |
+| Local 5.3 runtime | `D:\Claude Local\moodle53` (PHP 8.4, MariaDB 11.4 on 127.0.0.1:3308) |
 | CLI tools | `C:\xampp\htdocs\moodle5\admin\cli\` (run with cwd = `public\`) |
 | PHP | 8.2.12 |
 | MariaDB | 10.11.16 |
 | Apache | 2.4.58 on port 8080 |
-| Local URL | http://localhost:8080/moodle/ |
-| Production | https://www.airpay.academy/ (Airpay Academy customer-zero deployment) |
-| Active Theme | **airpayux** — standalone fork of epsilon (`$THEME->parents = []`) |
+| Local URL | http://localhost:8080/ (wwwroot has no `/moodle`) |
+| Production | https://www.airpay.academy/ (live BizLMS on Moodle 4.1.2; Sentientia replaces it at cutover — it is NOT live yet) |
+| Active Theme | **sentientia** — standalone theme (`$THEME->parents = []`), the former airpayux fork |
 | Multi-tenant (current) | BizLMS costcenter (Airpay id=1, Public id=77, ZEEA id=177) |
 | Multi-customer (future) | New `local_sentientia_core` layer above tenant — each customer = top-level tenant tree |
 | Tenant detection | `$USER->open_path` (NOT `open_costcenterid` — column doesn't exist on production) |
@@ -214,15 +217,15 @@ $plugin->release   = '1.0.0';
 ```
 
 ---
-## 7. THEME — airpayux (Sentientia LMS design system base)
+## 7. THEME — sentientia (Sentientia LMS design system base)
 
-Standalone fork. `$THEME->parents = []`. We own all 514+ files.
-Local path: `C:\xampp\htdocs\moodle5\public\theme\airpayux\`
-Working path: `D:\Claude Local\airpay-ld-os\moodle-enhancement\theme\airpayux\`
+Standalone theme (the former airpayux fork). `$THEME->parents = []`. We own every file.
+Local path: `C:\xampp\htdocs\moodle5\public\theme\sentientia\`
+Working path: `D:\Claude Local\airpay-ld-os\theme\sentientia\` (the theme lives only here, not under `moodle-enhancement\`)
 
-**Design system (current — will evolve to Sentientia design system in Phase 2):**
+**Design system (Brand Book 2026-06; tokens in `scss/moodle/_tokens.scss`):**
 ```
-Primary: #0066A7  |  Accent: #0f7a73  |  BG: #F2F4FB
+Primary: #0066A7  |  Accent: #1985DD (teal #0f7a73 retired)  |  BG: #F2F4FB
 Font: Montserrat 400-800  |  Spacing: 8px base  |  Radius: 8-20px
 ```
 
@@ -244,7 +247,8 @@ Corrected 2026-09-22.)
 - `layout/dashboard.php` — dashboard PHP
 - `scss/moodle/custom_changes.scss` — main SCSS overrides
 - `scss/moodle/custom_media.scss` — responsive breakpoints
-- `classes/output/core_renderer.php` — per-tenant + per-customer branding
+- `classes/output/core_renderer.php` — per-tenant + per-customer branding, and the app shell (sidebar + topbar + content)
+- `templates/shell.mustache` + `scss/moodle/partials/_layout-shell.scss` — the authenticated app shell
 
 ---
 ## 8. SCORM PACKAGING (SCORM 1.2)
