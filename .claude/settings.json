@@ -1,16 +1,6 @@
 {
-  "model": "claude-sonnet-4-6",
-
-  "_pluginNote": "Vercel plugin disabled in this project — false-positive lexical matches on 'auth', 'nextjs', 'deployments-cicd' etc. add noise to a Moodle/PHP codebase. Kept user-globally for Nitin's other (real) Vercel projects.",
-  "disabledPlugins": [
-    "vercel@claude-plugins-official"
-  ],
-  "plugins": {
-    "disabled": [
-      "vercel@claude-plugins-official"
-    ]
-  },
-
+  "model": "claude-sonnet-5-5",
+  "_pluginNote": "enabledPlugins is the key Claude Code reads (the old disabledPlugins / plugins.disabled keys were ignored, so Vercel kept loading). Vercel: false-positive matches on auth/nextjs/deployments add noise to a Moodle/PHP codebase; kept user-globally for Nitin's Vercel projects. remember: its PostToolUse hook has no timeout and hung every tool call of workflow subagents for the 10-minute default (2026-11-12, Nitin: remove the blockades).",
   "permissions": {
     "allow": [
       "php -l *",
@@ -24,9 +14,9 @@
       "Get-Content *",
       "Set-Location *",
       "Test-Path *",
-      "Copy-Item * C:\\xampp\\htdocs\\moodle\\theme\\airpayux*",
-      "Copy-Item * C:\\xampp\\htdocs\\moodle\\local\\*",
-      "Copy-Item * C:\\xampp\\htdocs\\moodle\\blocks\\*",
+      "Copy-Item * C:\\xampp\\htdocs\\moodle5\\public\\theme\\sentientia*",
+      "Copy-Item * C:\\xampp\\htdocs\\moodle5\\public\\local\\*",
+      "Copy-Item * C:\\xampp\\htdocs\\moodle5\\public\\blocks\\*",
       "Compress-Archive -Path * -DestinationPath *scorm-output*",
       "python *.py",
       "python -c *",
@@ -66,32 +56,32 @@
       "curl * api.gamma*",
       "Invoke-WebRequest * airpay.academy*",
       "Invoke-RestMethod * airpay.academy*",
-      "Copy-Item * C:\\xampp\\htdocs\\moodle\\lib\\*",
-      "Copy-Item * C:\\xampp\\htdocs\\moodle\\admin\\*",
-      "Copy-Item * C:\\xampp\\htdocs\\moodle\\course\\",
-      "Copy-Item * C:\\xampp\\htdocs\\moodle\\mod\\assign*",
-      "Copy-Item * C:\\xampp\\htdocs\\moodle\\mod\\quiz*"
+      "Copy-Item * C:\\xampp\\htdocs\\moodle5\\public\\lib\\*",
+      "Copy-Item * C:\\xampp\\htdocs\\moodle5\\public\\admin\\*",
+      "Copy-Item * C:\\xampp\\htdocs\\moodle5\\public\\course\\",
+      "Copy-Item * C:\\xampp\\htdocs\\moodle5\\public\\mod\\assign*",
+      "Copy-Item * C:\\xampp\\htdocs\\moodle5\\public\\mod\\quiz*"
     ]
   },
-
   "env": {
-    "AIRPAY_MOODLE_LOCAL":  "http://localhost:8080/moodle",
-    "AIRPAY_MOODLE_PROD":   "https://www.airpay.academy",
-    "AIRPAY_THEME_SRC":     "D:\\Claude Local\\airpay-ld-os\\moodle-enhancement\\theme\\airpayux",
-    "AIRPAY_THEME_DST":     "C:\\xampp\\htdocs\\moodle\\theme\\airpayux",
-    "AIRPAY_PLUGINS_SRC":   "D:\\Claude Local\\airpay-ld-os\\moodle-enhancement\\plugins",
-    "AIRPAY_PLUGINS_DST":   "C:\\xampp\\htdocs\\moodle",
-    "AIRPAY_SCORM_OUTPUT":  "D:\\Claude Local\\airpay-ld-os\\content\\scorm-output",
-    "AIRPAY_PROTOTYPES":    "D:\\Claude Local\\Moodle Backup\\03-prototypes\\preview",
-    "AIRPAY_STATE_CARDS":   "D:\\Claude Local\\airpay-ld-os\\moodle-enhancement\\state-cards",
+    "AIRPAY_MOODLE_LOCAL": "http://localhost:8080",
+    "AIRPAY_MOODLE_PROD": "https://www.airpay.academy",
+    "AIRPAY_THEME_SRC": "D:\\Claude Local\\airpay-ld-os\\theme\\sentientia",
+    "AIRPAY_THEME_DST": "C:\\xampp\\htdocs\\moodle5\\public\\theme\\sentientia",
+    "AIRPAY_PLUGINS_SRC": "D:\\Claude Local\\airpay-ld-os\\moodle-enhancement\\local",
+    "AIRPAY_PLUGINS_DST": "C:\\xampp\\htdocs\\moodle5\\public",
+    "AIRPAY_SCORM_OUTPUT": "D:\\Claude Local\\airpay-ld-os\\content\\scorm-output",
+    "AIRPAY_PROTOTYPES": "D:\\Claude Local\\Moodle Backup\\03-prototypes\\preview",
+    "AIRPAY_STATE_CARDS": "D:\\Claude Local\\airpay-ld-os\\moodle-enhancement\\state-cards",
     "AIRPAY_PROJECT_STATE": "D:\\Claude Local\\airpay-ld-os\\moodle-enhancement\\PROJECT-STATE.md",
-    "MOODLE_ROOT":          "C:\\xampp\\htdocs\\moodle",
-    "MOODLE_VERSION":       "4.5.10",
-    "MOODLE_PHP":           "8.2.12",
-    "AIRPAY_TENANT_ID":     "1",
-    "PUBLIC_TENANT_ID":     "77"
+    "MOODLE_ROOT": "C:\\xampp\\htdocs\\moodle5\\public",
+    "MOODLE_VERSION": "5.1.3 local XAMPP; target 5.3 LTS (ADR-033); UAT on 5.3",
+    "MOODLE_PHP": "8.2.12",
+    "AIRPAY_TENANT_ID": "1",
+    "PUBLIC_TENANT_ID": "77",
+    "ZEEA_TENANT_ID": "177",
+    "AIRPAY_UAT": "https://academy2.airpay.ninja"
   },
-
   "hooks": {
     "PostToolUse": [
       {
@@ -120,15 +110,17 @@
       }
     ]
   },
-
   "includeCoAuthoredBy": true,
   "cleanupPeriodDays": 30,
   "autoUpdaterStatus": "disabled",
-
   "context": {
     "projectPhase": "6B — Sprint 1 (Navbar, Footer, Login)",
     "activeWorkstream": "A — Moodle Enhancement",
-    "nextSurfaces": ["Navbar (navbar.mustache)", "Footer (footer.mustache)", "Login (loginform.mustache + login.php)"],
+    "nextSurfaces": [
+      "Navbar (navbar.mustache)",
+      "Footer (footer.mustache)",
+      "Login (loginform.mustache + login.php)"
+    ],
     "sessionRule": "One session = one deliverable. Update PROJECT-STATE.md at end.",
     "atomicRule": "NEVER generate partial plugins. ALL required files or NOTHING.",
     "confirmRequired": [
@@ -142,12 +134,15 @@
       "git push to production branch"
     ]
   },
-
   "_meta": {
     "owner": "Nitin Rajput, Head of L&D, Airpay Payment Services",
     "platform": "Moodle 4.5.10 | PHP 8.2.12 | MariaDB 10.11.16 | Apache 2.4.58",
     "github": "nitin-rajput-learning-tech/Airpay-Academy2.0",
     "users": "3500+ across 3 tenants (BizLMS costcenter)",
     "escalate": "Same error 3x | core file touch | PII external | SCORM fail 2x | >50 file ops"
+  },
+  "enabledPlugins": {
+    "vercel@claude-plugins-official": false,
+    "remember@claude-plugins-official": false
   }
 }
