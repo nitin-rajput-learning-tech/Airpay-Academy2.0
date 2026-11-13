@@ -318,7 +318,16 @@ Both trees, byte-identical.
 column when it creates the table, and it calls `debugging()` each time it reads one. Core's
 `privacy/tests/privacy/provider_test.php::test_table_coverage` was risky for this component as a result.
 
-- The database already has no default on these columns, so dropping `DEFAULT=""` from `install.xml` makes the file
-  match it, with nothing to upgrade. Both trees are identical.
+- XMLDB ignores the declared empty default, and the database generator then applies its own. On MySQL/MariaDB that
+  is `DEFAULT ''` (checked on MariaDB 10.11: all six columns are `NOT NULL DEFAULT ''` after a fresh install from the
+  edited file). So the table comes out the same with or without `DEFAULT=""`, and there is nothing to upgrade.
+  Both trees are identical.
 - The code that writes the table always sets these columns.
 - The shipped 2026111200 upgrade step still passes `''` for them. It builds the same column, so it is left as it is.
+- Found while running this plugin's suite on a throwaway Moodle 4.5.10 site (not caused by the install.xml edit):
+  - 5 tests error with `Class "core_question\local\bank\question_bank_helper" not found`. That class arrived in
+    Moodle 5.0, so `course_builder.php:322` needs 5.x; run them on XAMPP 5.1 or 5.3.
+  - `course_generator_test::test_parser_drops_malformed_question_keeps_valid` and `::test_parser_empty_body_returns_empty_bundle`
+    fail with "Unexpected debugging() call": `response_parser` calls `debugging()` and the tests do not expect it
+    (`assertDebuggingCalled()` is missing). This is a test defect, open.
+

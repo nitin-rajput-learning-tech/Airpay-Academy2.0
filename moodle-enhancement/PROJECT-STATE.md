@@ -9,6 +9,31 @@
 
 ---
 
+## 2026-11-13 - core privacy compliance suite fully green (Opus 5.5, cloud session)
+
+`privacy/tests/privacy/provider_test.php`, whole file, on the throwaway Moodle 4.5.10 site (MariaDB 10.11):
+**OK, 1,913 tests, 0 failures, 0 risky** (before: 12 failures, 2 risky). Committed `b74e479e` on
+`claude/hopeful-feynman-d5kd7f`; not merged, not deployed.
+
+- 11 BizLMS-era plugins had no privacy provider, so each now has a `null_provider` with a reason string (en; hi where a hi
+  pack exists):
+  - enrol_classroom, enrol_learningplan, enrol_program (copies of enrol_self);
+  - blocks achievements, masterinfo, my_event_calendar, myskills, quick_navigation, suggested_courses,
+    trainerdashboard, userdashboard.
+
+  None has a table, a preference or a file area of its own. No version bump: deploy's cache purge picks up the class
+  and the string.
+- `block_trending_modules` 2019120901.06 sets two user preferences, so it needs more than a null provider. The new
+  provider declares and exports them (en + hi; test 3/3). Core deletes preferences with the user.
+- `tool_tcpdffonts` (vendor): the `privacy:metadata` string its null provider names is added (vendor-tagged; record
+  `docs/core-mods/2026-11-13-privacy-compliance-strings.md`).
+- `local_sentientia_authoring`: six `DEFAULT=""` on CHAR NOT NULL columns of `local_sentientia_scd_asset` dropped from
+  `install.xml` (both trees). The table is identical either way: on MySQL/MariaDB the generator adds `DEFAULT ''`.
+- **Found, not fixed:** in authoring's own suite, 5 tests need Moodle 5.0+ (`question_bank_helper`), and 2 parser
+  tests do not expect the `debugging()` the parser emits. Details are on the state card.
+
+---
+
 ## 2026-11-13 - privacy registry made honest: core's table-coverage test passes for every component (Opus 5.5, cloud session)
 
 Follow-on from ADR-035's PHPUnit run, which surfaced privacy-metadata defects in five other components. All committed on
