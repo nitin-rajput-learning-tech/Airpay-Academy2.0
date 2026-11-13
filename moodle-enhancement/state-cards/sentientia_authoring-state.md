@@ -310,3 +310,15 @@ Nitin accepted ADR-034 on 2026-11-12 (decision A1, all recommendations approved)
 - Still gated: speech (GPU) and any live AI call wait for the budget approval, with [CONFIRM] per paid call.
 
 Both trees, byte-identical.
+
+## 2026-11-13 - install.xml: six empty defaults dropped (no version change, no schema change)
+
+`local_sentientia_scd_asset` (ADR-034 slice 1) declared six CHAR NOT NULL columns with `DEFAULT=""`: `lang`,
+`mimetype`, `sha256`, `engine`, `voice`, `processing_region`. XMLDB strips an empty default from a CHAR NOT NULL
+column when it creates the table, and it calls `debugging()` each time it reads one. Core's
+`privacy/tests/privacy/provider_test.php::test_table_coverage` was risky for this component as a result.
+
+- The database already has no default on these columns, so dropping `DEFAULT=""` from `install.xml` makes the file
+  match it, with nothing to upgrade. Both trees are identical.
+- The code that writes the table always sets these columns.
+- The shipped 2026111200 upgrade step still passes `''` for them. It builds the same column, so it is left as it is.

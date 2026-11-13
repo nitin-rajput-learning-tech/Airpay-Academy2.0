@@ -13,3 +13,6 @@ $string['room'] = 'Room';
 $string['notificaton'] = 'Notification';
 $string['report'] = 'Report';
 $string['trainer'] = 'Trainer';
+
+// Privacy (2026-11-13).
+$string['privacy:metadata'] = 'The Master Info block only displays information held elsewhere. It stores no personal data.';

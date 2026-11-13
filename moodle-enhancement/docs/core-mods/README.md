@@ -66,6 +66,7 @@ Moodle 5.3; 5.2 stays the fallback target and keeps its notes.
 | `2026-09-03-tool-certificate-5.2-reset-caches.md` | `issue_handler::reset_caches(): void` (vendor patch) | Still required |
 | `2026-10-08-tool-certificate-duration-defaultunit.md` | `defaulunit` typo fix (vendor patch; throws on 5.3) | Required on 5.3 |
 | `2026-10-08-learnerscript-modal-factory-port.md` | learnerscript report modals ported off the removed modal factory (vendor patch) | Required on 5.2 and 5.3 |
+| `2026-11-13-privacy-compliance-strings.md` | tool_tcpdffonts: the `privacy:metadata` string its null provider names (vendor patch, one string) | Required until upstream adds it |
 | `2026-11-13-learnerscript-privacy-provider.md` | learnerscript privacy provider made to work: seven tables declared, exported and erased (vendor patch) | Required on every version while learnerscript ships |
 
 ## Decision criteria

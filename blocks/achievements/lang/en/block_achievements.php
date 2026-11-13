@@ -43,3 +43,6 @@ $string['badge_name'] = 'Badge Name';
 $string['issued_by'] = 'Issued By';
 $string['issued_on'] = 'Issued On';
 $string['nocertifications_achieved'] = 'No certifications Achieved yet';
+
+// Privacy (2026-11-13).
+$string['privacy:metadata'] = 'The My Achievements block only displays badges, certificates and points held elsewhere. It stores no personal data.';

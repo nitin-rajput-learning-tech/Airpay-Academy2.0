@@ -129,3 +129,6 @@ $string['program:holdkey'] = 'Program Holdkey';
 $string['select_program'] = 'Select Program';
 $string['program'] = 'Program';
 $string['instanceexists'] = 'Program is already synchronised with selected role';
+
+// Privacy (2026-11-13).
+$string['privacy:metadata'] = 'The program enrolment method stores no personal data of its own. The enrolments it creates are held by Moodle\'s enrolment system, which exports and deletes them.';

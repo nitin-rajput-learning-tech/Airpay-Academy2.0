@@ -389,21 +389,21 @@
                COMMENT="Relative path inside the package: no leading slash, drive letter, backslash or parent segment."/>
         <FIELD NAME="kind"              TYPE="char" LENGTH="16"  NOTNULL="true" DEFAULT="audio"
                COMMENT="audio | captions | timestamps | image | font | other."/>
-        <FIELD NAME="lang"              TYPE="char" LENGTH="16"  NOTNULL="true" DEFAULT=""
+        <FIELD NAME="lang"              TYPE="char" LENGTH="16"  NOTNULL="true"
                COMMENT="BCP-47 tag for language-specific assets; empty for shared ones."/>
-        <FIELD NAME="mimetype"          TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT=""
+        <FIELD NAME="mimetype"          TYPE="char" LENGTH="100" NOTNULL="true"
                COMMENT="MIME type, e.g. audio/mpeg, text/vtt."/>
-        <FIELD NAME="sha256"            TYPE="char" LENGTH="64"  NOTNULL="true" DEFAULT=""
+        <FIELD NAME="sha256"            TYPE="char" LENGTH="64"  NOTNULL="true"
                COMMENT="sha256 of the file content, lowercase hex."/>
         <FIELD NAME="filesize"          TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
                COMMENT="Size in bytes."/>
         <FIELD NAME="duration_ms"       TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
                COMMENT="Playing time of audio, 0 for other kinds."/>
-        <FIELD NAME="engine"            TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT=""
+        <FIELD NAME="engine"            TYPE="char" LENGTH="100" NOTNULL="true"
                COMMENT="Generator id, e.g. sentientia-speech/engine@version, mock-silent, human."/>
-        <FIELD NAME="voice"             TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT=""
+        <FIELD NAME="voice"             TYPE="char" LENGTH="100" NOTNULL="true"
                COMMENT="Voice id for synthesised audio."/>
-        <FIELD NAME="processing_region" TYPE="char" LENGTH="32"  NOTNULL="true" DEFAULT=""
+        <FIELD NAME="processing_region" TYPE="char" LENGTH="32"  NOTNULL="true"
                COMMENT="Where the asset was made, e.g. in-IN (ap-south-1), on-prem, local."/>
         <FIELD NAME="usercreated"       TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
                COMMENT="FK to user.id — who registered the asset. 0 = nobody (anonymised)."/>

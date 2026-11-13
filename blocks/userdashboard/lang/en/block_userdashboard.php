@@ -97,3 +97,6 @@ $string['completed_course'] = 'Completed Course';
 $string['continue_course'] = 'Continue Course';
 $string['start_course'] = 'Launch';
 $string['last_opened'] = 'Last accessed';
+
+// Privacy (2026-11-13).
+$string['privacy:metadata'] = 'The User Dashboard block only displays courses and progress held elsewhere. It stores no personal data.';

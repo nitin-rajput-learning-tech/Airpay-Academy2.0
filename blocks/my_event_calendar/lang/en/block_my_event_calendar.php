@@ -89,3 +89,6 @@ $string['sep'] = 'Sep';
 $string['oct'] = 'Oct'; 
 $string['nov'] = 'Nov'; 
 $string['dec'] = 'Dec';
+
+// Privacy (2026-11-13).
+$string['privacy:metadata'] = 'The My Event Calendar block only displays calendar events held elsewhere. It stores no personal data.';

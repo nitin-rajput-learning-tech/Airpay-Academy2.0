@@ -7,3 +7,6 @@ $string['proficiencylevel'] = 'Proficiency Level';
 $string['points'] = 'Points';
 $string['myskills:addinstance'] = 'Add instance';
 $string['myskills:myaddinstance'] = 'Add my instance';
+
+// Privacy (2026-11-13).
+$string['privacy:metadata'] = 'The My Skills block only displays skills held elsewhere. It stores no personal data.';

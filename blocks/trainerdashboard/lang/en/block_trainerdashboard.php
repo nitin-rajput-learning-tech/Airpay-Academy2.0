@@ -74,3 +74,6 @@ $string['upcomingtrainingsdashboards'] = 'Upcoming Trainings Dashboards';
 $string['filters'] = 'Filters';
 $string['trainermanhoursdashboards'] = 'Trainer Manhours Dashboards';
 $string['hours'] = 'Hours';
+
+// Privacy (2026-11-13).
+$string['privacy:metadata'] = 'The Trainer Dashboard block only displays information held elsewhere. It stores no personal data.';

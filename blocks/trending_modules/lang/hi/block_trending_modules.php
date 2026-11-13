@@ -51,3 +51,7 @@ $string['ascending'] = 'आरोही';
 $string['descinding'] = 'अवरोही';
 $string['search'] = 'खोज';
 $string['viewmore'] = 'और देखो';
+
+// Privacy (2026-11-13).
+$string['privacy:metadata:preference:show_trending_modules'] = 'क्या उपयोगकर्ता को अगली बार पेज खोलने पर ट्रेंडिंग मॉड्यूल पॉप-अप दिखाया जाए; हर लॉगिन पर सेट होता है, जब तक उपयोगकर्ता ने इसे बंद न किया हो।';
+$string['privacy:metadata:preference:force_dontshow_trending_modules'] = 'क्या उपयोगकर्ता ने ट्रेंडिंग मॉड्यूल पॉप-अप कभी न देखने का विकल्प चुना है।';

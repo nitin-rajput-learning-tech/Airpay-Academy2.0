@@ -29,3 +29,6 @@ $string['pluginname']='त्वरित नेविगेशन';
 $string['quick_navigation:viewquicknavigation']='त्वरित नेविगेशन ब्लॉक देखें';
 $string['users_content']='उपयोगकर्ता बनाएं और प्रबंधित करें।';
 $string['inactive_string']='सक्रिय में';
+
+// Privacy (2026-11-13).
+$string['privacy:metadata'] = 'त्वरित नेविगेशन ब्लॉक केवल लिंक दिखाता है। यह कोई व्यक्तिगत डेटा संग्रहीत नहीं करता।';

@@ -25,7 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version    = 2019120901.05;
+$plugin->version    = 2019120901.06;  // 2026-11-13: privacy provider (two user preferences declared and exported). Was 2019120901.05.
 $plugin->requires   = 2014041500;
 $plugin->component  = 'block_trending_modules';
 $plugin->maturity   = MATURITY_STABLE;

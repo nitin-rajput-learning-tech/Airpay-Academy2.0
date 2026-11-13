@@ -51,3 +51,6 @@ $string['descinding'] = 'Descinding';
 $string['search'] = 'Search';
 $string['viewmore'] = 'View More';
 $string['nocoursedesc'] = 'No Data Available';
+// Privacy (2026-11-13).
+$string['privacy:metadata:preference:show_trending_modules'] = 'Whether to show the trending modules pop-up to the user at their next page view; set at each login unless the user has opted out.';
+$string['privacy:metadata:preference:force_dontshow_trending_modules'] = 'Whether the user chose never to see the trending modules pop-up.';

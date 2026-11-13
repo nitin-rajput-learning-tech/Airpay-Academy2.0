@@ -131,3 +131,6 @@ $string['learningplan:manage']='Manage learningplan';
 $string['learningplan:unenroluser']='Unenrol users';
 $string['learningplan:unenrolself']='Unenrol self';
 $string['learningplan:unenrol'] = 'Unenrol'; 
+
+// Privacy (2026-11-13).
+$string['privacy:metadata'] = 'The learning plan enrolment method stores no personal data of its own. The enrolments it creates are held by Moodle\'s enrolment system, which exports and deletes them.';

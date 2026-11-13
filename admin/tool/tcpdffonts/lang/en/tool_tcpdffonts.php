@@ -137,3 +137,8 @@ You should make absolutely sure the contents of the zip file you upload here is 
 this does not guarantee anything at all. Due to the lack of a fully fledged validation mechanism (or literally any other definition file other than a PHP file; a JSON encoded definition for example would have been better) you are fully responsible for making sure the uploaded zip file doesn\'t contain any malicious code.
 </div>';
 $string['uploadzipfile:header'] = 'Upload font zip file';
+
+// SENTIENTIA-CORE-MOD (vendor): the null_provider returns 'privacy:metadata', which this pack never defined
+// (core's test_null_provider failed). Record: moodle-enhancement/docs/core-mods/2026-11-13-privacy-compliance-strings.md
+$string['privacy:metadata'] = 'The TCPDF fonts tool only manages font files for PDF generation. It stores no personal data.';
+// END SENTIENTIA-CORE-MOD

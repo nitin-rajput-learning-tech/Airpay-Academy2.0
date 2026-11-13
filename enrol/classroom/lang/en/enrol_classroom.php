@@ -129,3 +129,6 @@ $string['classroom:holdkey'] = 'Classroom Holdkey';
 $string['select_classroom'] = 'Select Classroom';
 $string['classroom'] = 'Classroom';
 $string['instanceexists'] = 'Classroom is already synchronised with selected role';
+
+// Privacy (2026-11-13).
+$string['privacy:metadata'] = 'The classroom enrolment method stores no personal data of its own. The enrolments it creates are held by Moodle\'s enrolment system, which exports and deletes them.';

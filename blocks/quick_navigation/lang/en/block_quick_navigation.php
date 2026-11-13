@@ -34,4 +34,5 @@ $string['active'] = 'Active';
 $string['total'] = 'Total';
 $string['pluginname'] = 'Quick navigation';
 
-
+// Privacy (2026-11-13).
+$string['privacy:metadata'] = 'The Quick Navigation block only displays links. It stores no personal data.';
