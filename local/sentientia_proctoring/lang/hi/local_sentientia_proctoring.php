@@ -128,3 +128,33 @@ $string['privacy:metadata:logstore']                        ='फ़्लैग
 // Decision A5 (2026-11-12): प्लेटफ़ॉर्म के ऑडिट लॉग में सूचीबद्ध दो ऑडिट इवेंट।
 $string['eventsessionflagged']  = 'प्रॉक्टर्ड सत्र समीक्षा के लिए फ़्लैग किया गया';
 $string['eventreviewsubmitted'] = 'प्रॉक्टरिंग समीक्षा सबमिट की गई';
+
+// Privacy metadata fields (2026-11-13). Shared keys first, then per table.
+$string['privacy:metadata:userid']      = 'वह उम्मीदवार जिसके बारे में रिकॉर्ड है';
+$string['privacy:metadata:sessionid']   = 'वह प्रॉक्टर्ड सत्र जिससे रिकॉर्ड जुड़ा है';
+$string['privacy:metadata:timecreated'] = 'रिकॉर्ड कब बनाया गया';
+$string['privacy:metadata:local_sentientia_proctor_sessions:quizid']           = 'वह क्विज़ जिसकी प्रॉक्टरिंग हुई';
+$string['privacy:metadata:local_sentientia_proctor_sessions:attemptid']        = 'वह क्विज़ प्रयास जिसके लिए सत्र है';
+$string['privacy:metadata:local_sentientia_proctor_sessions:status']           = 'प्रॉक्टरिंग प्रक्रिया में सत्र की वर्तमान स्थिति';
+$string['privacy:metadata:local_sentientia_proctor_sessions:consent_given_at'] = 'उम्मीदवार ने प्रॉक्टरिंग के लिए सहमति कब दी';
+$string['privacy:metadata:local_sentientia_proctor_sessions:risk_score']       = 'सत्र की घटनाओं से निकाला गया जोखिम स्कोर';
+$string['privacy:metadata:local_sentientia_proctor_sessions:auto_decision']    = 'मानव समीक्षा से पहले का स्वचालित निर्णय';
+$string['privacy:metadata:local_sentientia_proctor_sessions:human_decision']   = 'मानव समीक्षक का अंतिम निर्णय';
+$string['privacy:metadata:local_sentientia_proctor_sessions:timestarted']      = 'प्रॉक्टर्ड प्रयास कब शुरू हुआ';
+$string['privacy:metadata:local_sentientia_proctor_sessions:timefinished']     = 'प्रॉक्टर्ड प्रयास कब समाप्त हुआ';
+$string['privacy:metadata:local_sentientia_proctor_identity:provider']    = 'वह सेवा जिसने उम्मीदवार की पहचान जाँची';
+$string['privacy:metadata:local_sentientia_proctor_identity:match_score'] = 'सेल्फ़ी आईडी फ़ोटो से कितनी मिलती थी';
+$string['privacy:metadata:local_sentientia_proctor_identity:passed']      = 'पहचान जाँच सफल हुई या नहीं';
+$string['privacy:metadata:local_sentientia_proctor_identity:error_code']  = 'पहचान जाँच विफल होने पर त्रुटि कोड';
+$string['privacy:metadata:local_sentientia_proctor_identity:error_msg']   = 'पहचान जाँच विफल होने पर त्रुटि संदेश';
+$string['privacy:metadata:local_sentientia_proctor_events:event_type']   = 'प्रयास के दौरान क्या हुआ, जैसे टैब बदलना या दूसरा चेहरा';
+$string['privacy:metadata:local_sentientia_proctor_events:severity']     = 'घटना कितनी गंभीर है';
+$string['privacy:metadata:local_sentientia_proctor_events:payload_json'] = 'घटना के साथ दर्ज विवरण';
+$string['privacy:metadata:local_sentientia_proctor_recordings:kind']         = 'हिस्सा वेबकैम, स्क्रीन या ऑडियो का है';
+$string['privacy:metadata:local_sentientia_proctor_recordings:s3_key']       = 'रिकॉर्डिंग का हिस्सा S3 में कहाँ रखा है';
+$string['privacy:metadata:local_sentientia_proctor_recordings:size_bytes']   = 'रिकॉर्डिंग के हिस्से का आकार';
+$string['privacy:metadata:local_sentientia_proctor_recordings:duration_ms']  = 'रिकॉर्डिंग के हिस्से की अवधि';
+$string['privacy:metadata:local_sentientia_proctor_recordings:retain_until'] = 'रिकॉर्डिंग का हिस्सा कब हटाया जा सकता है';
+$string['privacy:metadata:local_sentientia_proctor_reviews:reviewer_userid'] = 'वह व्यक्ति जिसने सत्र की समीक्षा की';
+$string['privacy:metadata:local_sentientia_proctor_reviews:decision']        = 'समीक्षक का निर्णय';
+$string['privacy:metadata:local_sentientia_proctor_reviews:note']            = 'सत्र पर समीक्षक का नोट';

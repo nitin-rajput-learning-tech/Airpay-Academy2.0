@@ -19,11 +19,56 @@ class provider implements
     \core_privacy\local\request\core_userlist_provider {
 
     public static function get_metadata(collection $collection): collection {
-        $collection->add_database_table('local_sentientia_proctor_sessions', [], 'privacy:metadata:local_sentientia_proctor_sessions');
-        $collection->add_database_table('local_sentientia_proctor_identity', [], 'privacy:metadata:local_sentientia_proctor_identity');
-        $collection->add_database_table('local_sentientia_proctor_events',   [], 'privacy:metadata:local_sentientia_proctor_events');
-        $collection->add_database_table('local_sentientia_proctor_recordings', [], 'privacy:metadata:local_sentientia_proctor_recordings');
-        $collection->add_database_table('local_sentientia_proctor_reviews',  [], 'privacy:metadata:local_sentientia_proctor_reviews');
+        // 2026-11-13: every table names its personal-data fields. With an empty
+        // field list core calls debugging() under DEBUG_DEVELOPER, which failed
+        // local_sentientia_platform\privacy_coverage_test and made core's
+        // test_table_coverage risky for every component.
+        $collection->add_database_table('local_sentientia_proctor_sessions', [
+            'userid'           => 'privacy:metadata:userid',
+            'quizid'           => 'privacy:metadata:local_sentientia_proctor_sessions:quizid',
+            'attemptid'        => 'privacy:metadata:local_sentientia_proctor_sessions:attemptid',
+            'status'           => 'privacy:metadata:local_sentientia_proctor_sessions:status',
+            'consent_given_at' => 'privacy:metadata:local_sentientia_proctor_sessions:consent_given_at',
+            'risk_score'       => 'privacy:metadata:local_sentientia_proctor_sessions:risk_score',
+            'auto_decision'    => 'privacy:metadata:local_sentientia_proctor_sessions:auto_decision',
+            'human_decision'   => 'privacy:metadata:local_sentientia_proctor_sessions:human_decision',
+            'timestarted'      => 'privacy:metadata:local_sentientia_proctor_sessions:timestarted',
+            'timefinished'     => 'privacy:metadata:local_sentientia_proctor_sessions:timefinished',
+            'timecreated'      => 'privacy:metadata:timecreated',
+        ], 'privacy:metadata:local_sentientia_proctor_sessions');
+        $collection->add_database_table('local_sentientia_proctor_identity', [
+            'userid'      => 'privacy:metadata:userid',
+            'sessionid'   => 'privacy:metadata:sessionid',
+            'provider'    => 'privacy:metadata:local_sentientia_proctor_identity:provider',
+            'match_score' => 'privacy:metadata:local_sentientia_proctor_identity:match_score',
+            'passed'      => 'privacy:metadata:local_sentientia_proctor_identity:passed',
+            'error_code'  => 'privacy:metadata:local_sentientia_proctor_identity:error_code',
+            'error_msg'   => 'privacy:metadata:local_sentientia_proctor_identity:error_msg',
+            'timecreated' => 'privacy:metadata:timecreated',
+        ], 'privacy:metadata:local_sentientia_proctor_identity');
+        $collection->add_database_table('local_sentientia_proctor_events', [
+            'sessionid'    => 'privacy:metadata:sessionid',
+            'event_type'   => 'privacy:metadata:local_sentientia_proctor_events:event_type',
+            'severity'     => 'privacy:metadata:local_sentientia_proctor_events:severity',
+            'payload_json' => 'privacy:metadata:local_sentientia_proctor_events:payload_json',
+            'timecreated'  => 'privacy:metadata:timecreated',
+        ], 'privacy:metadata:local_sentientia_proctor_events');
+        $collection->add_database_table('local_sentientia_proctor_recordings', [
+            'sessionid'    => 'privacy:metadata:sessionid',
+            'kind'         => 'privacy:metadata:local_sentientia_proctor_recordings:kind',
+            's3_key'       => 'privacy:metadata:local_sentientia_proctor_recordings:s3_key',
+            'size_bytes'   => 'privacy:metadata:local_sentientia_proctor_recordings:size_bytes',
+            'duration_ms'  => 'privacy:metadata:local_sentientia_proctor_recordings:duration_ms',
+            'retain_until' => 'privacy:metadata:local_sentientia_proctor_recordings:retain_until',
+            'timecreated'  => 'privacy:metadata:timecreated',
+        ], 'privacy:metadata:local_sentientia_proctor_recordings');
+        $collection->add_database_table('local_sentientia_proctor_reviews', [
+            'sessionid'       => 'privacy:metadata:sessionid',
+            'reviewer_userid' => 'privacy:metadata:local_sentientia_proctor_reviews:reviewer_userid',
+            'decision'        => 'privacy:metadata:local_sentientia_proctor_reviews:decision',
+            'note'            => 'privacy:metadata:local_sentientia_proctor_reviews:note',
+            'timecreated'     => 'privacy:metadata:timecreated',
+        ], 'privacy:metadata:local_sentientia_proctor_reviews');
         $collection->add_external_location_link('aws_rekognition',
             ['photo' => 'privacy:metadata:aws_rekognition:photo'],
             'privacy:metadata:aws_rekognition');

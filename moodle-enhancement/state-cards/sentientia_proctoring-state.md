@@ -1,10 +1,10 @@
 # State Card — `local_airpay_proctoring`
 
 **Component:** `local_airpay_proctoring`
-**Version:** `2026111200` / `1.0.6`  (decision A5 audit events, 2026-11-12; the previous version was `2026110300` / `1.0.5`, the 2026-11-03 full-name user search, which has no dated section here; see the dated sections below)
+**Version:** `2026111300` / `1.0.7`  (privacy metadata fields, 2026-11-13; before that `2026111200` / `1.0.6`, decision A5 audit events, 2026-11-12; the previous version was `2026110300` / `1.0.5`, the 2026-11-03 full-name user search, which has no dated section here; see the dated sections below)
 **Maturity:** `MATURITY_STABLE`
 **Status:** Live on airpay.academy. Engine for `quizaccess_airpay_proctoring`.
-**Last refreshed:** 2026-11-12 (decision A5: session_flagged + review_submitted events)
+**Last refreshed:** 2026-11-13 (privacy metadata names every table's fields)
 
 ---
 
@@ -168,3 +168,20 @@ existed, so no flag and no verdict ever reached the audit trail. Nitin approved 
 
 Open: `flag_session` still writes `timemodified` when the session is already flagged (no event, no status change);
 `submit_review()` does not check that the session is flagged before accepting a verdict (unchanged behaviour).
+
+## 2026-11-13 - privacy metadata names every table's fields (1.0.7, 2026111300)
+
+`get_metadata()` declared all five tables (`sessions`, `identity`, `events`, `recordings`, `reviews`) with an empty
+field list. Under DEBUG_DEVELOPER, core's `database_table` constructor then calls `debugging()`, which:
+- errored `local_sentientia_platform\privacy_coverage_test::test_declared_providers_cover_the_tables_they_own`
+  ("Unexpected debugging() call");
+- made core's `privacy/tests/privacy/provider_test.php::test_table_coverage` risky for EVERY component's dataset,
+  because that test walks every provider's metadata.
+
+Found while running PHPUnit for ADR-035 (`local_sentientia_privacy` 2026111300). The fix declares each table's
+personal-data columns: candidate, quiz/attempt, status, consent time, risk score, AI and human verdicts, times;
+identity provider, match score, pass, error; event type, severity, payload; recording kind, S3 key, size, duration,
+retain-until; reviewer, decision, note. Ids, `costcenterid` and `identity_id` are not personal data and are left out.
+28 strings, en + hi (121/121); `userid`, `sessionid` and `timecreated` share one key each. kn/mr/sw fall back to en
+(they were already 3 strings behind). No behaviour change: export, delete and anonymise are untouched.
+

@@ -123,3 +123,33 @@ $string['privacy:metadata:logstore'] ='A flagged session and a submitted review 
 // Decision A5 (2026-11-12): the two audit events the platform's audit log lists.
 $string['eventsessionflagged']  = 'Proctored session flagged for review';
 $string['eventreviewsubmitted'] = 'Proctoring review submitted';
+
+// Privacy metadata fields (2026-11-13). Shared keys first, then per table.
+$string['privacy:metadata:userid']      = 'The candidate the record is about';
+$string['privacy:metadata:sessionid']   = 'The proctored session the record belongs to';
+$string['privacy:metadata:timecreated'] = 'When the record was created';
+$string['privacy:metadata:local_sentientia_proctor_sessions:quizid']           = 'The quiz that was proctored';
+$string['privacy:metadata:local_sentientia_proctor_sessions:attemptid']        = 'The quiz attempt the session covers';
+$string['privacy:metadata:local_sentientia_proctor_sessions:status']           = 'Where the session is in the proctoring flow';
+$string['privacy:metadata:local_sentientia_proctor_sessions:consent_given_at'] = 'When the candidate consented to proctoring';
+$string['privacy:metadata:local_sentientia_proctor_sessions:risk_score']       = 'The risk score worked out from the session\'s events';
+$string['privacy:metadata:local_sentientia_proctor_sessions:auto_decision']    = 'The automatic verdict before human review';
+$string['privacy:metadata:local_sentientia_proctor_sessions:human_decision']   = 'The final verdict of the human reviewer';
+$string['privacy:metadata:local_sentientia_proctor_sessions:timestarted']      = 'When the proctored attempt started';
+$string['privacy:metadata:local_sentientia_proctor_sessions:timefinished']     = 'When the proctored attempt finished';
+$string['privacy:metadata:local_sentientia_proctor_identity:provider']    = 'The service that checked the candidate\'s identity';
+$string['privacy:metadata:local_sentientia_proctor_identity:match_score'] = 'How closely the selfie matched the ID photo';
+$string['privacy:metadata:local_sentientia_proctor_identity:passed']      = 'Whether the identity check passed';
+$string['privacy:metadata:local_sentientia_proctor_identity:error_code']  = 'The error code if the identity check failed';
+$string['privacy:metadata:local_sentientia_proctor_identity:error_msg']   = 'The error message if the identity check failed';
+$string['privacy:metadata:local_sentientia_proctor_events:event_type']   = 'What happened during the attempt, such as a tab switch or a second face';
+$string['privacy:metadata:local_sentientia_proctor_events:severity']     = 'How serious the event is';
+$string['privacy:metadata:local_sentientia_proctor_events:payload_json'] = 'Details recorded with the event';
+$string['privacy:metadata:local_sentientia_proctor_recordings:kind']         = 'Whether the chunk is webcam, screen or audio';
+$string['privacy:metadata:local_sentientia_proctor_recordings:s3_key']       = 'Where the recording chunk is stored in S3';
+$string['privacy:metadata:local_sentientia_proctor_recordings:size_bytes']   = 'The size of the recording chunk';
+$string['privacy:metadata:local_sentientia_proctor_recordings:duration_ms']  = 'The length of the recording chunk';
+$string['privacy:metadata:local_sentientia_proctor_recordings:retain_until'] = 'When the recording chunk may be deleted';
+$string['privacy:metadata:local_sentientia_proctor_reviews:reviewer_userid'] = 'The person who reviewed the session';
+$string['privacy:metadata:local_sentientia_proctor_reviews:decision']        = 'The reviewer\'s verdict';
+$string['privacy:metadata:local_sentientia_proctor_reviews:note']            = 'The reviewer\'s note on the session';
