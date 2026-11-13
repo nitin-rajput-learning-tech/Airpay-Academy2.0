@@ -170,3 +170,25 @@ completion criteria.
   before the manager runs. Also taken: `delete_completion()` only for courses where the subject has completion or
   criteria-completion rows (not every course in the list), and method docblocks.
 - Not done here: the local rehearsal (ADR-035 "How a rehearsal proves it"), UAT, live, the upstream MDL report.
+
+## 2026-11-13 - ADR-035 PHPUnit results (cloud session, throwaway site)
+
+Run on a throwaway Moodle 4.5.10 test site built from the repo tree in the cloud container: MariaDB 10.11.14 (the
+XAMPP major version), PHP 8.3.6. A first attempt on PostgreSQL 16 stopped in `local_sentientia_core`'s install
+(raw backtick DDL in `substrate::ensure_table()`), which is not this change.
+
+| Suite | Result |
+|---|---|
+| `tests/privacy_supplement_test.php` | OK, 10 tests, 46 assertions, 0 skipped (both core defects reproduce on 4.5.10) |
+| `local_sentientia_privacy` whole suite | OK, 26 tests, 103 assertions |
+| core `privacy/tests/privacy/provider_test.php` @local_sentientia_privacy | 3 pass, 1 risky (see below) |
+| core `privacy/tests/contextlist_base_test.php` | OK, 12 tests |
+| `admin/tool/dataprivacy/tests/api_test.php` | OK, 125 tests |
+
+- Mutation check: removing the supplement's log delete fails `test_duplicate_log_contexts_are_all_erased`;
+  removing its completion discovery fails `test_completion_without_criteria_is_found_and_erased`. Source restored.
+- Not caused by this change: `local_sentientia_proctoring`'s provider declares two tables with no fields; core's
+  `debugging()` then errors `local_sentientia_platform\privacy_coverage_test` and makes core's `test_table_coverage`
+  risky for every component. Suggested as a separate task.
+- Still to run: local XAMPP 5.1 and the 5.3 runtime (ADR-033 gate item d), then the A4 rehearsal per ADR-035.
+

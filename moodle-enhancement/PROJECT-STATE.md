@@ -2,9 +2,53 @@
 **Updated:** 2026-11-13 (**Nitin's 11-12 decisions are being carried out; see the 2026-11-12 / 11-13 entry.**
 - Committed and on `production`: subagent-stall fix, Stage 0-2 tooling, working permission rules, hook and gate fixes, theme A2/A3.
 - Built, synced to local XAMPP, awaiting local PHPUnit: A1 (ADR-034 slice 1), A5 (audit events + tenant trail), AI gateway pricing.
-- A4 (515 automatic deletion requests) approved 11-13 as a local-only rehearsal with no e-mails or notifications: script being built and reviewed.)
+- A4 (515 automatic deletion requests) approved 11-13 as a local-only rehearsal with no e-mails or notifications: script being built and reviewed.
+- ADR-035 accepted 11-13 (option A, no flag): `local_sentientia_privacy` 2026111300 completes core's erasure; PHPUnit green on a throwaway 4.5.10 site; local XAMPP/5.3 runs and the A4 re-run are next.)
 
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
+
+---
+
+## 2026-11-13 - ADR-035: a 'Deleted' privacy request now erases what core misses (Opus 5.5, cloud session)
+
+**Why.** The A4 local erasure rehearsal found two stock Moodle defects that leave a subject's data behind while the
+request reads "Deleted":
+- a context list stops iterating at its first duplicate (`contextlist_base::set_contextids()` is `array_unique()`
+  without a reindex), so `tool_dataprivacy` approves only part of the `logstore_standard` and `report_stats` contexts
+  (about 15k log rows of the A4 subjects);
+- `core_course` finds `course_completions` only through completion criteria (1,718 of 1,926 rows of the A4 subjects).
+
+**Decision.** ADR-035 compared (A) a supplementary provider, (B) a one-line core mod amending ADR-033, and (C)
+waiting for upstream. Nitin chose **(A), no feature flag** (11-13). ADR-034's forward reference to "ADR-035" (TTS
+evaluation) was reworded.
+
+**Built (committed on `claude/hopeful-feynman-d5kd7f`, not merged to `production`):**
+- `local_sentientia_privacy` 2026111300 (1.1.0). The provider finds the subject's log, statistics and completion
+  contexts in one `UNION` query, then re-runs core's own delete/export helpers on them. Own tables are still kept.
+- The DPDP panel's erasure never calls it (`erasure_providers()` skips this plugin).
+- Both trees byte-identical, drift gate OK, en/hi 41/41.
+- PHPUnit on a throwaway Moodle 4.5.10 site in the cloud container (MariaDB 10.11, PHP 8.3):
+  - `privacy_supplement_test`: 10/10, both defects reproduced;
+  - the plugin suite: 26/26;
+  - core `contextlist_base_test` and `tool_dataprivacy` `api_test`: green;
+  - a mutation check confirmed the tests catch a missing log delete and a missing completion discovery.
+
+**Found in passing (not this change).**
+- `local_sentientia_proctoring`'s provider declares two tables without fields. The resulting `debugging()` errors
+  `local_sentientia_platform\privacy_coverage_test` and marks core's `test_table_coverage` risky. Queued as a
+  suggested task.
+- `local_sentientia_core`'s install cannot run on PostgreSQL (backtick DDL). That only matters if PostgreSQL is
+  ever a target.
+
+**Not done / next (each on Nitin's call where marked):**
+1. ADR-035 action 1: confirm both defects in the 5.3 source (`D:/Claude Local/moodle53`).
+2. Copy to local XAMPP, upgrade, run the plugin suite there and on the 5.3 runtime.
+3. Re-run the A4 rehearsal with the provider: census before/after, control vs supplement, idempotency, export
+   (ADR-035 "How a rehearsal proves it"). The evidence folder `kit-scratch/1113/a4/` was not reachable from the
+   cloud session, so the 15k / 1,718 figures above are from the investigator notes, not re-measured.
+4. Merge to `production` (Nitin).
+5. File the upstream MDL report from the local draft (Nitin; outward-facing).
+6. Legal/DPO: whether any rule requires keeping LMS activity logs after an erasure request (ADR-035 open question 3).
 
 ---
 

@@ -280,6 +280,17 @@ Run on the local production copy only, with the A4 script and its tripwires: no 
 5. **Docs:** the ADR index row, the plugin README and doc block, the state card, PROJECT-STATE.
 6. **Upstream report** from the draft. Filing it is Nitin's call, and it must contain no Airpay data.
 
+## Implementation record
+
+- 2026-11-13: built in `local_sentientia_privacy` 2026111300 (1.1.0), both trees byte-identical, en + hi strings.
+  Code review (code-reviewer agent): provider sound; two test fixtures fixed (a hole must be seeded directly,
+  because `add_from_sql()` merges with `array_merge()`, which renumbers keys) and `delete_completion()` narrowed to
+  courses where the subject has completion rows.
+- PHPUnit on a throwaway Moodle 4.5.10 site (MariaDB 10.11, PHP 8.3): `privacy_supplement_test` 10/10, plugin suite
+  26/26, core `contextlist_base_test` and `tool_dataprivacy` `api_test` green. Both defects reproduce on 4.5.10.
+  A mutation check showed the log and completion tests fail when the matching supplement part is removed.
+- Open: Implementation action 1 (5.3 check), local XAMPP and 5.3 PHPUnit runs, the rehearsal, the upstream report.
+
 ## Alternatives considered
 
 - (B) and (C) above; (A′) under Recommendation.
