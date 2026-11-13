@@ -4,9 +4,9 @@
 **Gap:** P0.3 — GenAI Authoring Studio (Invince "Craft" competitor)
 **Source:** `moodle-enhancement/docs/competitive/GAP-ANALYSIS-INVINCE-LXP-2026-06-16.md` §6 P0.3
 **Branch:** `claude/gap-authoring`
-**Status:** `2026092500` / `0.2.2-alpha` (2026-10-22: this header said 0.1.0-alpha "MVP scaffold" until now). A real course builder since 0.2.0-alpha (2026-08-05): mod_book chapters plus a GIFT mastery quiz, built into a hidden course behind the mandatory review gate; the author role is seeded on a fresh install (T-01, 2026-09-07); ADR-031 tenant scoping. Every flag defaults OFF (`enabled`, `tts`, `live_api`, `publish.enabled`); mock mode only (the AI gateway has never made a live call). On UAT (Moodle 5.3 since 2026-10-21), not on the live site. Not built: a scenario graph model, packaging to any standard (SCORM/cmi5), live TTS. See the dated sections below.
+**Status:** `2026111200` / `0.3.0-alpha` (2026-11-12: ADR-034 Stage 1 slice 1, the canonical course document foundation, flag OFF, no UI; see the last section). Before that `2026092500` / `0.2.2-alpha` (2026-10-22: this header said 0.1.0-alpha "MVP scaffold" until now). A real course builder since 0.2.0-alpha (2026-08-05): mod_book chapters plus a GIFT mastery quiz, built into a hidden course behind the mandatory review gate; the author role is seeded on a fresh install (T-01, 2026-09-07); ADR-031 tenant scoping. Every flag defaults OFF (`enabled`, `tts`, `live_api`, `publish.enabled`); mock mode only (the AI gateway has never made a live call). On UAT (Moodle 5.3 since 2026-10-21), not on the live site. Not built: a scenario graph model, packaging to any standard (SCORM/cmi5), live TTS. See the dated sections below.
 **Maturity:** MATURITY_ALPHA — requires prod sign-off before any flag flips.
-**Updated:** 2026-10-22 (header refreshed; the history below is unchanged)
+**Updated:** 2026-11-12 (ADR-034 slice 1 section added; 2026-10-22 header refresh)
 
 ---
 
@@ -263,3 +263,50 @@ A draft with `costcenterid` 0 (a tenantless, non-cross-tenant author) published 
 - Behaviour to know (review S3): tenant authors no longer see site-admin-created non-built-in templates (costcenterid 0); tenant trainers can no longer edit the 3 built-ins; courses a site admin publishes from a tenant's draft are stamped `/N` instead of NULL; the studio.php picker for a site admin no longer lists other tenantless authors' non-built-in templates.
 
 Tests: `tests/tenant_scope_test.php` (+4: tenantless author refused and nothing created, moved-tenant owner refused, scoped author still publishes and the course is `/1`, site admin and `:crosstenant` holder still pass). `course_builder_test::test_build_denies_without_capability` now gives the author tenant /1 so the capability gate is still what refuses. No schema/access change, version stays 2026092500. Written, not executed (shared test DB). Both trees.
+
+## 2026-11-12 - ADR-034 Stage 1 slice 1: the canonical course document (0.3.0-alpha, 2026111200)
+
+Nitin accepted ADR-034 on 2026-11-12 (decision A1, all recommendations approved). Slice 1 is the foundation the compiler will stand on. Nothing a learner or author can see: no page, no menu item, no web service. Flag `sentientia.content.scd.enabled`, default OFF.
+
+**Delivered**
+- `schema/sentientia-course.schema.json`: byte-identical copy of the reference harness's `docs/research/2026-10-15-scorm-lxp/pilot/schema/` file. Change the harness copy first, re-run its tests, then copy. `tests/scd_validator_test.php` pins the LF sha256 (`093280dc...`).
+- `classes/scd/document.php`: decode with JSON objects as `\stdClass` (an associative decode cannot tell `{}` from `[]`), the harness's canonical JSON byte for byte (sorted keys, ASCII escapes, no whitespace), sha256, JSON Pointer helpers. The fixture hashes to `f64b9f55...` in both languages.
+- `classes/scd/schema.php`: loads and caches the schema, lists the R01-R12 texts, LF-normalised hash.
+- `classes/scd/validator.php` + `validation_result.php`: port of `pilot/lib/schema_lite.py` (the reference semantics): the JSON Schema keyword subset, then R01-R12 with the same rule ids, levels and pointers. Never throws for a bad document. Two contexts: `store` (drafts allowed, R09 reported only) and `compile` (R09 enforced, `preview` as in the harness). Where it differs from the harness: stricter, `$` does not accept a trailing newline; less strict by design, the store context only reports R09 and R08 checks a file exists only against a passed asset list (`media_known`). Like the harness, an id of `"0"` counts as present (Python truthiness, not a PHP `(bool)` cast).
+- `classes/scd/repository.php`: `create()` (validate in the store context against the document's own `delivery.standards` for R05, refuse a missing, too-long or space-padded `course.version` and a too-long `course.slug`, refuse a duplicate `(customerid, costcenterid, slug, version)` (also when a concurrent insert hits the unique index), store the canonical JSON with its sha256), `get()`, `list_for_actor()` (no document text), `decode()` (re-checks the hash: `err_scd_integrity`). Tenant scope per ADR-031: own tenant and customer only, cross-tenant callers see all and name the tenant to file under, a caller without a tenant reads nothing and stores nothing. Flat `costcenterid` equality; no path matching (check-path-boundary clean). The flag is read for the tenant being filed under on `create()`, and for each row's own stored customer and tenant on `get()` and `list_for_actor()`. No capability check in this class: slice-2 callers must `require_capability()` (for example `:generate`) and pass `$USER` as the actor.
+- Tables (install.xml + upgrade step 2026111200, identical definitions, checked by script): `local_sentientia_scd` (customerid, costcenterid, slug, version, schemaversion, state, scd_json, sha256, usercreated, usermodified, timecreated, timemodified; unique `(customerid, costcenterid, slug, version)`, index on costcenterid and state) and `local_sentientia_scd_asset` (scdid, customerid, costcenterid, path, kind, lang, mimetype, sha256, filesize, duration_ms, engine, voice, processing_region, user/time columns; unique `(scdid, path)`, indexes on `(customerid, costcenterid)` and costcenterid). Asset rows are written by later slices; files live in filearea `scd_asset`, system context.
+- Privacy provider: both tables declared (usercreated, usermodified, the document text whose provenance can name people, asset path and kind); contexts and user lists include them; export adds a "Course documents" section with the decoded document (readable Hindi, not `\uXXXX`); erasure sets usercreated and usermodified to 0 and keeps the rows (same rule as drafts); delete-all also removes the `scd_asset` file area. 25 new strings, en + hi.
+- `local_sentientia_platform` dependency raised to 2026101500 (`customer::of_tenant()`, which reached this branch with the eval-followups merge).
+- `$plugin->requires` raised from 2022041900 (Moodle 4.0) to 2024100700 (Moodle 4.5, what its comment always said).
+
+**Rule coverage (slice 1)**
+
+| Rule | Covered here | Waits for the compiler (slice 2) |
+|---|---|---|
+| schema | full: required fields, types, enums, patterns, formats, bounds, unknown properties, block type dispatch | - |
+| R01 base-language completeness | full, plus pending units per language | - |
+| R02 langs include base, no duplicates | full | - |
+| R03 RTL languages | full (report only, as in the harness) | emitting `dir="rtl"` |
+| R04 graph integrity | full: edges and `next` resolve, start exists, all nodes reachable, every node reaches a terminal, decision/terminal/info shape, no cycles unless `allow_cycles` | - |
+| R05 SCORM 1.2 state budget | partial: the 60-node scenario cap (error when scorm12 is a target; on store, the targets are the document's `delivery.standards`) | the worst-case `suspend_data` token (3,500 chars) from the state-token encoder |
+| R06 question-type invariants | full | - |
+| R07 protected terms | full, with per-language overrides | - |
+| R08 declared media | partial: relative path inside the package; existence only against a passed `media_known` list | file existence against the built package |
+| R09 approval before compilation | full (compile context) | - |
+| R10 URL-safe unique ids | full | - |
+| R11 id-only responses within 255 chars | full | - |
+| R12 PII scan clean or redacted | full | - |
+
+`validator::coverage()` returns the same table to code.
+
+**Tests (written, not executed: no PHPUnit on the shared test DB)**
+- `tests/scd_validator_test.php` (24 tests): the harness's eleven FixtureValidation cases with the same mutations and expected statuses, plus schema and canonical-hash pins, canonical-form rules, R02, R04 "paths terminate" (a reachable loop with `allow_cycles` and no way out) and "no terminal node", R08 existence, R11, R12, the `"0"` id, structural errors reported not thrown, coverage table.
+- `tests/scd_repository_test.php` (11 tests, `@group tenant_isolation`): flag off by default, canonical JSON + hash stored, tenant read/list isolation, cross-tenant caller, tenantless caller, per-tenant flag (also for a cross-tenant caller's listing and reads), R05 judged against the document's own targets, invalid/no-version/space-padded version/too-long/bad-JSON refused with nothing stored, immutability (duplicate refused, new version accepted), tamper detection, privacy contexts/user list/anonymisation.
+- A standalone run of the validator classes (no Moodle, no DB, stubbed `core_text`/exceptions) mirrored the validator tests before the review fixes: 52 checks green, in both trees. The harness's own validator gives the same warnings and rule statuses on the fixture. The tests added by the review fixes (R04 loop and no terminal, R05 targets, space-padded version, flag per row) have not been run.
+
+**Open items**
+- **Blocks flipping `sentientia.content.scd.enabled`.** Names inside a stored document's provenance (`created_by`, `review.approvals[].by`) are free text: erasure keeps them (the stored version is immutable and its sha256 is the integrity anchor), and export finds a document only through `usercreated`/`usermodified`, so a named approver who did not store the row gets neither export nor erasure. Fix in slice 2, with the audit table, by one of: (a) the repository refuses or pseudonymises names and stores `user:<id>`; (b) erasure stores a re-hashed, anonymised version and audits it.
+- Slice 2: the compiler (`scorm12`, `scorm2004_4`, `cmi5`, `moodle_course`) as an adhoc task, the static player ported from the harness, the state-token encoder (completes R05), package checks (complete R08), `local_sentientia_scd_audit`, the remaining Stage 1 flags (`sentientia.content.compile.*`), the legacy-draft converter.
+- Still gated: speech (GPU) and any live AI call wait for the budget approval, with [CONFIRM] per paid call.
+
+Both trees, byte-identical.

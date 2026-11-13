@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/sentientia_authoring/db" VERSION="20260616"
+<XMLDB PATH="local/sentientia_authoring/db" VERSION="20261112"
        COMMENT="Sentientia LMS GenAI Authoring Studio — P0.3 (MVP) schema.
                 Five tables: template (instructional-design templates),
                 draft (one course-generation request), card (interactive
                 lesson cards within a draft), question (MCQ/MRQ/match items
                 with AI feedback), voiceover (TTS jobs, mock by default).
-                Every table carries customerid + costcenterid + timecreated
+                ADR-034 Stage 1 slice 1 (2026-11-12) adds two: scd (one
+                stored version of a Sentientia Canonical Course Document) and
+                scd_asset (the media file registry of a document).
+                Tenant tables carry customerid + costcenterid + timecreated
                 + timemodified per the multi-tenant scope convention.">
   <TABLES>
 
@@ -302,6 +305,126 @@
                COMMENT="Voiceover jobs for a draft, by status"/>
         <INDEX NAME="idx_customer_tenant" UNIQUE="false" FIELDS="customerid, costcenterid"
                COMMENT="Per-customer / per-tenant TTS cost analytics"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── CANONICAL COURSE DOCUMENTS (ADR-034 D1) ─── -->
+    <TABLE NAME="local_sentientia_scd"
+           COMMENT="ADR-034 Stage 1 slice 1 (2026-11-12) — one row per stored
+                    version of a Sentientia Canonical Course Document (SCD,
+                    schema/sentientia-course.schema.json v0.1), the single
+                    source every package (SCORM 1.2, SCORM 2004 4th Ed., cmi5,
+                    Moodle course) is compiled from. Rows are immutable: a
+                    changed course is a new version. slug and version come from
+                    course.slug and course.version; (customerid, costcenterid,
+                    slug, version) is unique. scd_json holds the canonical JSON
+                    (sorted keys, ASCII escapes, no whitespace) and sha256 its
+                    hash, the same bytes the reference harness hashes. state
+                    mirrors provenance.review.state (draft, in_review,
+                    approved, published, rejected). Written only through
+                    classes/scd/repository.php, behind the flag
+                    sentientia.content.scd.enabled (default OFF).">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="customerid"    TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="1"
+               COMMENT="Sentientia LMS customer scope: customer::of_tenant(costcenterid) when stored."/>
+        <FIELD NAME="costcenterid"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant root (1=Airpay, 77=Public, 177=ZEEA). Never 0: the repository refuses a tenantless document."/>
+        <FIELD NAME="slug"          TYPE="char" LENGTH="128" NOTNULL="true"
+               COMMENT="course.slug, lowercase words joined by hyphens."/>
+        <FIELD NAME="version"       TYPE="char" LENGTH="32"  NOTNULL="true"
+               COMMENT="course.version, the semantic version of the document."/>
+        <FIELD NAME="schemaversion" TYPE="char" LENGTH="8"   NOTNULL="true" DEFAULT="0.1"
+               COMMENT="scd_version of the document, so a later schema can find the rows to migrate."/>
+        <FIELD NAME="state"         TYPE="char" LENGTH="16"  NOTNULL="true" DEFAULT="draft"
+               COMMENT="provenance.review.state: draft | in_review | approved | published | rejected."/>
+        <FIELD NAME="scd_json"      TYPE="text" NOTNULL="true"
+               COMMENT="The canonical JSON text of the document. Its provenance may name authors, translators, reviewers and approvers."/>
+        <FIELD NAME="sha256"        TYPE="char" LENGTH="64"  NOTNULL="true"
+               COMMENT="sha256 of scd_json, lowercase hex."/>
+        <FIELD NAME="usercreated"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to user.id — who stored this version. 0 = nobody (anonymised by a privacy erasure)."/>
+        <FIELD NAME="usermodified"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to user.id — who last changed the row (state changes in later slices). 0 = nobody."/>
+        <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"         TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_usercreated"  TYPE="foreign" FIELDS="usercreated" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="fk_usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="uq_cust_tenant_slug_ver" UNIQUE="true" FIELDS="customerid, costcenterid, slug, version"
+               COMMENT="One row per version of a course in a tenant; also serves the tenant-scoped list query"/>
+        <INDEX NAME="idx_costcenterid" UNIQUE="false" FIELDS="costcenterid"
+               COMMENT="Tenant filtering across customers"/>
+        <INDEX NAME="idx_state" UNIQUE="false" FIELDS="state"
+               COMMENT="Review and compile queues by state"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── CANONICAL COURSE DOCUMENT ASSETS (ADR-034 D1) ─── -->
+    <TABLE NAME="local_sentientia_scd_asset"
+           COMMENT="ADR-034 Stage 1 slice 1 (2026-11-12) — the media file
+                    registry of a course document: narration audio, WebVTT
+                    captions, word-timestamp JSON, images, fonts. The file
+                    itself lives in Moodle file storage (component
+                    local_sentientia_authoring, filearea scd_asset, itemid =
+                    scdid, system context); path is its relative path inside
+                    a package (e.g. audio/hi/b01.mp3), the value the document's
+                    media references carry and rule R08 checks. engine, voice
+                    and processing_region record how and where an asset was
+                    made (ADR-034 D5/D6 residency). Created in slice 1; written
+                    by the compiler and speech slices.">
+      <FIELDS>
+        <FIELD NAME="id"                TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="scdid"             TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to local_sentientia_scd.id — the document version the asset belongs to."/>
+        <FIELD NAME="customerid"        TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="1"
+               COMMENT="Sentientia LMS customer scope, copied from the document row."/>
+        <FIELD NAME="costcenterid"      TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant root, copied from the document row."/>
+        <FIELD NAME="path"              TYPE="char" LENGTH="255" NOTNULL="true"
+               COMMENT="Relative path inside the package: no leading slash, drive letter, backslash or parent segment."/>
+        <FIELD NAME="kind"              TYPE="char" LENGTH="16"  NOTNULL="true" DEFAULT="audio"
+               COMMENT="audio | captions | timestamps | image | font | other."/>
+        <FIELD NAME="lang"              TYPE="char" LENGTH="16"  NOTNULL="true" DEFAULT=""
+               COMMENT="BCP-47 tag for language-specific assets; empty for shared ones."/>
+        <FIELD NAME="mimetype"          TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT=""
+               COMMENT="MIME type, e.g. audio/mpeg, text/vtt."/>
+        <FIELD NAME="sha256"            TYPE="char" LENGTH="64"  NOTNULL="true" DEFAULT=""
+               COMMENT="sha256 of the file content, lowercase hex."/>
+        <FIELD NAME="filesize"          TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Size in bytes."/>
+        <FIELD NAME="duration_ms"       TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Playing time of audio, 0 for other kinds."/>
+        <FIELD NAME="engine"            TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT=""
+               COMMENT="Generator id, e.g. sentientia-speech/engine@version, mock-silent, human."/>
+        <FIELD NAME="voice"             TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT=""
+               COMMENT="Voice id for synthesised audio."/>
+        <FIELD NAME="processing_region" TYPE="char" LENGTH="32"  NOTNULL="true" DEFAULT=""
+               COMMENT="Where the asset was made, e.g. in-IN (ap-south-1), on-prem, local."/>
+        <FIELD NAME="usercreated"       TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to user.id — who registered the asset. 0 = nobody (anonymised)."/>
+        <FIELD NAME="usermodified"      TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to user.id — who last changed the row. 0 = nobody."/>
+        <FIELD NAME="timecreated"       TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"      TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"         TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_scdid"        TYPE="foreign" FIELDS="scdid" REFTABLE="local_sentientia_scd" REFFIELDS="id"/>
+        <KEY NAME="fk_usercreated"  TYPE="foreign" FIELDS="usercreated" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="fk_usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="uq_scdid_path" UNIQUE="true" FIELDS="scdid, path"
+               COMMENT="One file per package path per document version"/>
+        <INDEX NAME="idx_customer_tenant" UNIQUE="false" FIELDS="customerid, costcenterid"
+               COMMENT="Per-customer / per-tenant asset and speech-cost queries"/>
+        <INDEX NAME="idx_costcenterid" UNIQUE="false" FIELDS="costcenterid"
+               COMMENT="Tenant filtering across customers"/>
       </INDEXES>
     </TABLE>
 

@@ -74,14 +74,26 @@ $plugin->component = 'local_sentientia_authoring';
 // editable by cross-tenant callers only; a tenantless caller sees only their
 // own drafts/templates; publish (missing import) no longer fatals and stamps
 // the course with the draft's tenant.
-$plugin->version   = 2026092500;  // ADR-031 cross-tenant authority
-$plugin->requires  = 2022041900;          // Moodle 4.5+
+// 2026111200 — ADR-034 Stage 1 slice 1 (accepted 2026-11-12): the Sentientia
+// Canonical Course Document. schema/sentientia-course.schema.json (byte-identical
+// to the reference harness), classes/scd/ (document = canonical JSON + sha256,
+// schema, validator = structure + R01-R12 with a coverage table, repository =
+// tenant-scoped create/get/list that validates first), two new tables
+// local_sentientia_scd + local_sentientia_scd_asset (install.xml + upgrade step),
+// flag sentientia.content.scd.enabled (default OFF), privacy provider for the
+// new tables (anonymise, keep). No page, no menu item, no compiler (slice 2).
+// Also: requires raised to 2024100700 (Moodle 4.5, what this line always said;
+// 2022041900 was Moodle 4.0) and the platform dependency to 2026101500.
+$plugin->version   = 2026111200;  // ADR-034 canonical course document (slice 1)
+$plugin->requires  = 2024100700;          // Moodle 4.5+
 $plugin->maturity  = MATURITY_ALPHA;      // MVP — prod sign-off before any flag flips
-$plugin->release   = '0.2.2-alpha';
+$plugin->release   = '0.3.0-alpha';
 $plugin->dependencies = [
-    // feature_flags resolver + tenant + customer scope, and (2026092500) the
-    // ADR-031 tenant::is_cross_tenant() authority.
-    'local_sentientia_platform' => 2026092500,
+    // feature_flags resolver + tenant + customer scope, the ADR-031
+    // tenant::is_cross_tenant() authority, and (2026111200) customer::of_tenant()
+    // (platform 2026101500, the eval-followups merge), which the course-document
+    // repository resolves a row's customer with.
+    'local_sentientia_platform' => 2026101500,
 ];
 
 // Release history
@@ -92,3 +104,5 @@ $plugin->dependencies = [
 //              All plugin-level gates unchanged; TTS path untouched.
 // 0.2.2-alpha  ADR-031 (2026-09-25): drafts and templates stay inside the
 //              caller's tenant; :manage_all is no longer a manager default.
+// 0.3.0-alpha  ADR-034 Stage 1 slice 1 (2026-11-12): canonical course document
+//              schema, validator, tables and repository; flag OFF; no UI.

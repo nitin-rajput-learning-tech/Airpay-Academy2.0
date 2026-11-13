@@ -1,11 +1,19 @@
 # ADR-034 — Content pipeline architecture: one canonical course document, three standards outputs, self-hosted speech
 
-- **Status:** Proposed — for Nitin's acceptance. Written 2026-10-15 from the owner decisions of the same day (study `docs/research/2026-10-15-scorm-lxp/`): full build including our own TTS/ASR (Q4), 10+ Indian languages plus Arabic and Urdu with RTL (Q5), one canonical JSON compiled to SCORM 1.2, SCORM 2004 4th Edition and cmi5/xAPI with DPDP residency (Q6), four course types staged (Q10).
+- **Status:** Accepted 2026-11-12 (Nitin: all recommendations approved). Proposed 2026-10-15; written from the owner decisions of the same day (study `docs/research/2026-10-15-scorm-lxp/`): full build including our own TTS/ASR (Q4), 10+ Indian languages plus Arabic and Urdu with RTL (Q5), one canonical JSON compiled to SCORM 1.2, SCORM 2004 4th Edition and cmi5/xAPI with DPDP residency (Q6), four course types staged (Q10).
 - **Date:** 2026-10-15
 - **Decision-makers:** Nitin Rajput (Head of L&D, Airpay Payment Services)
 - **Implementer:** Claude (engineering), with "unlocks if a developer joins" markers in the staged plan
 - **Amends:** ADR-016 (the translate plugin's T.1–T.4 deferrals become the localisation pipeline below); ADR-028 Phase 2.3 (AI live promotion now includes the content engine) and Phase 2.7 (the TTS vendor evaluation becomes a build decision with an evaluation gate); CLAUDE.md §8–§9 (the six-agent pipeline description is superseded by this architecture once Stage 1 ships).
 - **Grounded by:** the Phase 1 code inventory in `docs/research/2026-10-15-scorm-lxp/STUDY.md` §5 and the research notes in `.../sources/`.
+
+### Acceptance note (2026-11-12)
+
+Nitin approved every recommendation of this ADR on 2026-11-12 (decision A1 in `docs/cutover/NITIN-DECISIONS-2026-11-12.md`). Stage 1 is built in slices, one deliverable per session:
+
+- **Slice 1 (this change, `local_sentientia_authoring` 2026111200 / 0.3.0-alpha):** the foundation only. The schema moves into the plugin (`schema/sentientia-course.schema.json`, byte-identical to the harness copy); a PHP validator for the structure and the R01–R12 rules, with the harness's `schema_lite.py` as reference semantics and a per-rule coverage table (R05's state-token budget and R08's file existence wait for the compiler); the tables `local_sentientia_scd` and `local_sentientia_scd_asset` (install.xml and an upgrade step); a tenant-scoped repository that validates before it stores and keeps the canonical JSON with its sha256; the master flag `sentientia.content.scd.enabled` (default OFF); the privacy provider for the new tables; PHPUnit tests on the harness fixture. No page, no menu item, no compiler, nothing a learner or author can see.
+- **Slice 2:** the compiler (`scorm12`, `scorm2004_4`, `cmi5`, `moodle_course`), the static player, the state-token encoder that completes R05, the package checks that complete R08, and the `local_sentientia_scd_audit` table.
+- **Still gated, unchanged by this acceptance:** the speech service (GPU hosting) and any live AI call (translation, generation) wait for the budget approval (security and AI spend-plan annexes, the Addendum-A cap and the API key) and every paid call keeps its per-action [CONFIRM]. Mock mode remains the default everywhere.
 
 ---
 

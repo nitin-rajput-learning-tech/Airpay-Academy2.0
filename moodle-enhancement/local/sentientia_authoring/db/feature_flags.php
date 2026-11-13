@@ -29,6 +29,11 @@
  *                                      caller passes the per-action [CONFIRM]
  *                                      gate enforced in the UI layer.
  *
+ * Also registered (all default OFF): sentientia.authoring.publish.enabled
+ * (course-builder publish, 2026-08-05) and, since 2026-11-12,
+ * sentientia.content.scd.enabled (ADR-034 canonical course document master
+ * switch; gates classes/scd/repository.php, no UI in slice 1).
+ *
  * Mock-mode (live_api OFF) is what makes the whole studio demoable end to
  * end without spending money — the same discipline as local_sentientia_aiquiz
  * and local_sentientia_translate.
@@ -95,6 +100,24 @@ $flags = [
                           Companion flag sentientia.authoring.enabled must also
                           be ON. Mock-mode is the default so the MVP can be
                           demoed end-to-end without spending money.',
+    ],
+
+    // ─── Content pipeline (ADR-034 D7, Stage 1 slice 1, 2026-11-12) ──────
+    'sentientia.content.scd.enabled' => [
+        'default'     => false,
+        'description' => 'Sentientia Canonical Course Document (ADR-034 D1),
+                          master switch of the content pipeline. When OFF,
+                          classes/scd/repository.php refuses to store, read
+                          or list course documents for the tenant
+                          (err_scd_disabled) and nothing else changes. When
+                          ON, a document is validated against
+                          schema/sentientia-course.schema.json and rules
+                          R01-R12 before it is stored, tenant-scoped, with
+                          its canonical JSON and sha256. Slice 1 has no page
+                          and no menu item: the compiler (slice 2) and the
+                          studio are its first callers. Resolved for the
+                          document\'s own customer and tenant. Default OFF;
+                          nothing flips without Nitin\'s call.',
     ],
 
 ];

@@ -131,6 +131,71 @@ function xmldb_local_sentientia_authoring_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026092500, 'local', 'sentientia_authoring');
     }
 
+    // 2026111200 — ADR-034 Stage 1 slice 1: the Sentientia Canonical Course
+    // Document. Two new tables, identical to db/install.xml (field order, keys
+    // and indexes): local_sentientia_scd (one immutable stored version of a
+    // course document per tenant) and local_sentientia_scd_asset (its media
+    // file registry, filled by later slices). Additive only: no existing table
+    // or row changes, and nothing reads them while the flag
+    // sentientia.content.scd.enabled stays OFF (the default).
+    if ($oldversion < 2026111200) {
+        $table = new xmldb_table('local_sentientia_scd');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('customerid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '1');
+        $table->add_field('costcenterid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('slug', XMLDB_TYPE_CHAR, '128', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('version', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('schemaversion', XMLDB_TYPE_CHAR, '8', null, XMLDB_NOTNULL, null, '0.1');
+        $table->add_field('state', XMLDB_TYPE_CHAR, '16', null, XMLDB_NOTNULL, null, 'draft');
+        $table->add_field('scd_json', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+        $table->add_field('sha256', XMLDB_TYPE_CHAR, '64', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('fk_usercreated', XMLDB_KEY_FOREIGN, ['usercreated'], 'user', ['id']);
+        $table->add_key('fk_usermodified', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
+        $table->add_index('uq_cust_tenant_slug_ver', XMLDB_INDEX_UNIQUE, ['customerid', 'costcenterid', 'slug', 'version']);
+        $table->add_index('idx_costcenterid', XMLDB_INDEX_NOTUNIQUE, ['costcenterid']);
+        $table->add_index('idx_state', XMLDB_INDEX_NOTUNIQUE, ['state']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        $table = new xmldb_table('local_sentientia_scd_asset');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('scdid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('customerid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '1');
+        $table->add_field('costcenterid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('path', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('kind', XMLDB_TYPE_CHAR, '16', null, XMLDB_NOTNULL, null, 'audio');
+        $table->add_field('lang', XMLDB_TYPE_CHAR, '16', null, XMLDB_NOTNULL, null, '');
+        $table->add_field('mimetype', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL, null, '');
+        $table->add_field('sha256', XMLDB_TYPE_CHAR, '64', null, XMLDB_NOTNULL, null, '');
+        $table->add_field('filesize', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('duration_ms', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('engine', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL, null, '');
+        $table->add_field('voice', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL, null, '');
+        $table->add_field('processing_region', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null, '');
+        $table->add_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('fk_scdid', XMLDB_KEY_FOREIGN, ['scdid'], 'local_sentientia_scd', ['id']);
+        $table->add_key('fk_usercreated', XMLDB_KEY_FOREIGN, ['usercreated'], 'user', ['id']);
+        $table->add_key('fk_usermodified', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
+        $table->add_index('uq_scdid_path', XMLDB_INDEX_UNIQUE, ['scdid', 'path']);
+        $table->add_index('idx_customer_tenant', XMLDB_INDEX_NOTUNIQUE, ['customerid', 'costcenterid']);
+        $table->add_index('idx_costcenterid', XMLDB_INDEX_NOTUNIQUE, ['costcenterid']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026111200, 'local', 'sentientia_authoring');
+    }
+
     unset($dbman);
 
     return true;
