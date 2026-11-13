@@ -213,11 +213,12 @@
         </div>
     </div>
 
+    {{! 2026-11-12 (Nitin, decision A3): the footer is the last element of the content scroller, as in columns2. }}
+    {{> theme_sentientia/footer }}
+
     {{{ output.airpay_shell_end }}}
 
 </div>
-
-{{> theme_sentientia/footer }}
 
 {{#js}}
 M.util.js_pending('theme_sentientia/loader');

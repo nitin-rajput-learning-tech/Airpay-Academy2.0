@@ -63,6 +63,19 @@ if (defined('BEHAT_SITE_RUNNING')) {
 // course-editing tooling expects (course-index drawer, block drawer).
 $apcourseediting = $PAGE->user_is_editing();
 
+// Phase A: only build the boost course-index drawer in EDIT mode — the shell
+// template doesn't render it, and core_course_drawer() queues the
+// courseindex/placeholder AMD init whose DOM would be missing (console
+// errors "Reactive components needs a main DOM element").
+// 2026-11-12 (Nitin, decision A2): non-admins also get the theme's in-page "Course Content" sidebar below (the course
+// player enhancements, same condition). Beside it the core drawer opened as an empty dark panel (10-16 visual pass), so
+// the drawer, its toggle and the space it reserves are only built where no in-page sidebar is shown (site admins).
+$apinpagesidebar = $PAGE->course->id > 1 && isloggedin() && !is_siteadmin();
+$courseindex = ($apcourseediting && !$apinpagesidebar) ? core_course_drawer() : '';
+if (!$courseindex) {
+    $courseindexopen = false;
+}
+
 $extraclasses = $apcourseediting ? ['uses-drawers'] : ['ap-course-shell'];
 if ($apcourseediting && $courseindexopen) {
     $extraclasses[] = 'drawer-open-index';
@@ -72,14 +85,6 @@ $blockshtml = $OUTPUT->blocks('side-pre');
 $hasblocks = (strpos($blockshtml, 'data-block=') !== false || !empty($addblockbutton));
 if (!$hasblocks) {
     $blockdraweropen = false;
-}
-// Phase A: only build the boost course-index drawer in EDIT mode — the shell
-// template doesn't render it, and core_course_drawer() queues the
-// courseindex/placeholder AMD init whose DOM would be missing (console
-// errors "Reactive components needs a main DOM element").
-$courseindex = $apcourseediting ? core_course_drawer() : '';
-if (!$courseindex) {
-    $courseindexopen = false;
 }
 
 $bodyattributes = $OUTPUT->body_attributes($extraclasses);

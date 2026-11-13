@@ -81,17 +81,20 @@
         </div>
     </div>
 
+    {{! Footer — added 2026-05-11 (Phase 1H bug fix). columns2 is mapped to
+        'standard' / 'base' / 'admin' / 'mydashboard' layouts; without this
+        partial the page rendered with NO footer at all — missing the tenant
+        footer override (Phase 1G) AND the Moodle-required standard_footer_html
+        + standard_end_of_body_html blocks. The footer partial already includes
+        standard_end_of_body_html so we drop the duplicate that was here.
+        2026-11-12 (Nitin, decision A3): printed INSIDE the content scroller, as its last element, so it scrolls with
+        the page instead of staying pinned at the bottom of the window. standard_end_of_body_html is a token that
+        core replaces at the very end, so its position here does not change what loads. }}
+    {{> theme_sentientia/footer }}
+
     {{{ output.airpay_shell_end }}}
 
 </div>
-
-{{! Footer — added 2026-05-11 (Phase 1H bug fix). columns2 is mapped to
-    'standard' / 'base' / 'admin' / 'mydashboard' layouts; without this
-    partial the page rendered with NO footer at all — missing the tenant
-    footer override (Phase 1G) AND the Moodle-required standard_footer_html
-    + standard_end_of_body_html blocks. The footer partial already includes
-    standard_end_of_body_html so we drop the duplicate that was here. }}
-{{> theme_sentientia/footer }}
 
 </body>
 </html>

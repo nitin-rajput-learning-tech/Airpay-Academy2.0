@@ -236,10 +236,26 @@ body.dark-mode .airpay-footer__product-attribution {
    .ap-shell__main's margin-left (expanded + collapsed). Mobile (<=768px, where
    the sidebar is an overlay) keeps the footer full-width. */
 @media (min-width: 769px) {
-    body:has(.ap-shell) #page-footer {
+    /* 2026-11-12: only a BODY-LEVEL footer needs this. The columns2 and course templates now print the footer inside
+       .ap-shell__content, which already starts after the sidebar (decision A3). */
+    body:has(.ap-shell) > #page-footer {
         padding-left: var(--ap-sidebar-width);
     }
-    body:has(.ap-sidebar[data-collapsed="true"]) #page-footer {
+    body:has(.ap-sidebar[data-collapsed="true"]) > #page-footer {
         padding-left: var(--ap-sidebar-collapsed-width);
+    }
+}
+
+/* ── Footer inside the content scroller (2026-11-12, Nitin decision A3) ──
+   The columns2 and course templates print the footer as the last element of .ap-shell__content, so it scrolls with the
+   page instead of taking the bottom of the window. Cancel the scroller's side and bottom padding so it stays a
+   full-width band at the very end of the page. The padding is --ap-space-6, or --ap-space-4 at 768px and below
+   (_layout-shell.scss). */
+.ap-shell__content > #page-footer {
+    margin: var(--ap-space-6) calc(-1 * var(--ap-space-6)) calc(-1 * var(--ap-space-6));
+}
+@media (max-width: 768px) {
+    .ap-shell__content > #page-footer {
+        margin: var(--ap-space-4) calc(-1 * var(--ap-space-4)) calc(-1 * var(--ap-space-4));
     }
 }

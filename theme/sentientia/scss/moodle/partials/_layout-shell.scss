@@ -27,6 +27,9 @@ body:has(.ap-shell) > #page-wrapper {
 body:has(.ap-shell) > #page-footer {
     flex: 0 0 auto;        /* footer keeps its height, pinned at the bottom, always visible */
 }
+/* 2026-11-12 (Nitin, decision A3): the columns2 and course templates no longer print the footer at body level; it is
+   the last element of .ap-shell__content and scrolls with the page (see _surface-footer.scss). The rule above stays
+   for any layout that still prints a body-level footer next to the shell. */
 
 /* ── Shell grid ────────────────────────────────── */
 .ap-shell {
