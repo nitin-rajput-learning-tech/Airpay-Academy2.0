@@ -1,11 +1,63 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-11-11 (**The 11-02/11-03 fixes are on UAT and checked as Meera.**
-- 20 files deployed: theme 2026110200 and the full-name search in 8 plugins at 2026110300.
-- Browser check as Meera passed on all 3 points: one breadcrumb trail; calendar day names on one line; Manage Users finds "rahul deshmukh".
-- Open for Nitin: ADR-034, the course-page empty left drawer, the local privacy-request rows, and the pinned footer on short windows (new observation).
-See the 2026-11-11 entry.)
+**Updated:** 2026-11-13 (**Nitin's 11-12 decisions are being carried out; see the 2026-11-12 / 11-13 entry.**
+- Committed and on `production`: subagent-stall fix, Stage 0-2 tooling, working permission rules, hook and gate fixes, theme A2/A3.
+- Built, synced to local XAMPP, awaiting local PHPUnit: A1 (ADR-034 slice 1), A5 (audit events + tenant trail), AI gateway pricing.
+- A4 (515 automatic deletion requests) approved 11-13 as a local-only rehearsal with no e-mails or notifications: script being built and reviewed.)
 
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
+
+---
+
+## 2026-11-12 / 11-13 - Nitin's decisions carried out; subagent stall fixed; permission rules made real (Opus 5.5)
+
+**Decisions.** Nitin approved every recommendation in `docs/cutover/NITIN-DECISIONS-2026-11-12.md` (11-12 08:57 IST).
+On 11-13 he answered the two open questions: the local debug setting OK, and A4 approved as a local rehearsal with
+"no emails or notifications should be triggered". Both answers are recorded at the end of that brief.
+
+**Committed and pushed; `production` fast-forwarded to each:**
+- 648dd42ba A6 stale files removed (`git rm`); A7 CLAUDE.md sections 2 and 7 brought to current facts.
+- 91bafdf85 Workflow subagents unblocked.
+  - The `remember` plugin's PostToolUse hook has no timeout. It hung every subagent tool call for the 600 s default: 319 of 325 minutes of one agent were hook waits.
+  - Fix: `enabledPlugins` (the key Claude Code reads) is off for remember and vercel, plus a local guard in the cached hook script.
+  - A8 done: the resume watchdog stands down while the state is waiting-for-nitin or paused-by-nitin.
+- b824fafb3 GitHub-tooling plan Stages 0-2: `.claude/` docs, the humanizer skill, screenshot widths, a second-agent review for UI changes. Stage 3 (Impeccable) is read-only until the IT check.
+- 2f9f96220 Drafts C1-C3: the C-suite spend annex, the Finance GST e-mail and the IT request. Nothing sent.
+- a848ae604 Upgrade-step gate: no longer passes or fails on unreadable git objects; 3 s instead of up to 5 min; self-test 15/15.
+- c89b0fc91 Pre-commit CHECK 6 now guards the real core folders and needs a core-mods record plus a marker.
+- 490185a97 Permission rules.
+  - Every allow and deny rule in `.claude/settings.json` was a bare string, which matches nothing, so none was ever enforced.
+  - They are now `Bash(...)`, `PowerShell(...)` and `WebFetch(domain:...)` rules: 61 allow, 34 deny.
+  - The no-op PreToolUse node hook is removed.
+- 125e01229 Pre-commit: renamed files go through every check (`--no-renames`). CHECK 1 and CHECK 9 no longer end the hook silently. `/deploy scorm` works without Remove-Item.
+- 8c9908614 Theme 2026111200.
+  - A2: no empty course-index drawer beside the in-page index in edit mode.
+  - A3: the footer scrolls with the page.
+  - Evidence: `docs/visual-evidence/2026-11-12/theme-drawer-footer/`, checks 4/4.
+
+**Built, on local XAMPP (upgrade OK), NOT committed until local PHPUnit passes:**
+- A1, ADR-034 accepted: sentientia_authoring 2026111200, course-document (SCD) schema, validator and repository, flags OFF.
+- A5: the four audit events now exist and fire.
+  - cart: `order_paid`, `refund_processed` (1.2.2);
+  - proctoring: `session_flagged`, `review_submitted` (1.0.6);
+  - platform 2026111300: `audit_log::tenant_actions()` puts actor-less rows (gateway callback, password reset, self-registration) in the trail of the related user's tenant. Cross-tenant principals and the guest are excluded for scoped readers.
+  - The cutover checklist now says `logstore_standard | logguests` must stay 1, or `order_paid` is never logged.
+- AI gateway 2026111300: `rates_for()` strips a trailing 8-digit date before the price lookup. `claude-haiku-4-5-20251001` was priced at the fallback rate, about 15x too high. The spend annex is updated to match.
+
+**Local environment (Nitin OK 11-13).**
+- `$CFG->debug` is commented out in `C:/xampp/htdocs/moodle5/config.php` (backup `config.php.bak-20261113`); the DB setting `debug` is 32767.
+- Set in config.php, it had made every request rescan all plugins, which pushed pages past the 120 s limit. The login page now loads in about 9 s warm.
+- `innodb_flush_log_at_trx_commit` = 2 at runtime for PHPUnit; it reverts when MariaDB restarts.
+
+**A4 (515 automatic deletion requests): local rehearsal, in progress.**
+- Moodle's processing e-mails or messages the subject and requester, and messages the DPOs when a plugin fails, so the normal approval route breaks Nitin's condition.
+- A workflow maps every send path, builds a dry-run-by-default script with tripwires (`kit-scratch/1113/a4/rehearsal/`), and reviews it adversarially.
+- Run order: DB backup, dry run, 5 requests, then the rest.
+
+**Still open for Nitin:**
+- the mobile course index covering about 85% of the course page (since at least 10-16);
+- the floating help button covering the end of the footer copyright at 1280 px;
+- three A5 questions: limit actor-less rows to sensitive events? is the 1000-row cap acceptable? should platform staff acting on /177 appear in that tenant's trail?
+- renaming a file inside `content/sops/` is now blocked too (the CHECK 7 side effect).
 
 ---
 
