@@ -1101,3 +1101,19 @@ Branch `claude/owner-decisions-y`, both trees. **No version bump** (docs and a s
 ## 2026-10-08 Moodle 5.3 compat FX-18
 
 Every `fputcsv()` / `fgetcsv()` / `str_getcsv()` call in this plugin now passes the `$escape` argument explicitly with the historic default (`',', '"', '\\'`, and `null` for the `fgetcsv` length). The output and the parsing are byte-identical; PHP 8.4 deprecates relying on the default, and the notice would otherwise be written into the CSV stream on a 8.4 host (UAT and production run PHP 8.3). No version bump, no schema change.
+
+## 2026-11-13 - tenant shares are in the privacy provider (1.14.2, 2026111300)
+
+Core's `test_table_coverage` found `local_sentientia_courses_tenant_share.shared_by` (a foreign key to `user.id`)
+declared by no privacy provider. A share row is a tenant's catalog configuration, and `shared_by` is the admin who
+created or last changed it: an ACTOR column. So it follows the provider's owner/actor rule:
+- declared, with fields;
+- the system context is reported for a sharer;
+- the sharer is listed in `get_users_in_context()`;
+- export gives the sharer every share they are named on;
+- erasure (user, userlist and context-wide) sets `shared_by` to 0 and keeps the share.
+
+The readers of `shared_by` (`list_course_shares`, `cli/manage_shares.php`) only display it as an int, so 0 is safe.
+Strings: 7, en + hi, added at the same anchor in both trees (the lang files carry baselined drift). The provider is
+byte-identical in both trees. Test: `tests/privacy_tenant_share_test.php` (4).
+

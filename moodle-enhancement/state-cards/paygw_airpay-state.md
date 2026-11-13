@@ -1,10 +1,10 @@
 # State Card — `paygw_airpay`
 
 **Component:** `paygw_airpay`
-**Version:** `2024100700.10` / `1.0.1`
+**Version:** `2026111300` / `1.0.3`  (2026-11-13 privacy provider; see the dated sections for 1.0.2)
 **Maturity:** `MATURITY_STABLE`
 **Status:** Live payment gateway on airpay.academy
-**Last refreshed:** 2026-05-24 (P1 state-card pass)
+**Last refreshed:** 2026-11-13 (privacy provider)
 
 ---
 
@@ -107,3 +107,34 @@ Created now as part of the P1 state-card pass.
 ## 2026-10-08 Moodle 5.3 compat FX-13 (twin reconciliation)
 
 `classes/external/get_form.php` in the `moodle-enhancement/payment/gateway/airpay` twin still imported the legacy global `external_api`, `external_function_parameters`, `external_single_structure`, `external_value` and `require_once`d `externallib.php` (deprecation debugging on 5.2/5.3 through `lib/db/renamedclasses.php`). It now carries the top-level copy, which already uses `core_external\*` (valid since Moodle 4.2). The two trees are identical again. The cross-tree drift gate (`tools/check-tree-drift.php`) now also covers `payment/gateway`, `enrol`, `mod/quiz/accessrule` and `admin/tool`, so this cannot silently diverge again. No version bump (behaviour identical).
+
+## 2026-11-13 - a real privacy provider replaces the copied null_provider (1.0.3, 2026111300)
+
+`classes/privacy/provider.php` was a copy of core's `paygw_paypal` provider. That one declares `null_provider`
+because PayPal's table has no user column, but Airpay's three tables are keyed on the buyer. So the privacy registry
+said "stores no personal data", an export returned no logs, and an erasure left every log row. The copy also read
+`pp_orderid` (PayPal's column) instead of `ap_orderid`, so a payment export carried no order id. Found by core's
+`test_table_coverage` while running PHPUnit for ADR-035.
+
+Nitin's decision (2026-11-13): anonymise, keep the rows (the rule `local_sentientia_cart` uses for its ledger and
+invoices).
+- The provider implements `metadata\provider`, `paygw_provider`, `request\plugin\provider` and
+  `core_userlist_provider`, all in the system context.
+- **Declared:** the three tables, with fields, and an `airpay` external location for what `pay.php` posts at checkout
+  (e-mail, phone, first and last name, city, state, country, amount, order id).
+- **What erasure does to each table:**
+  - `paygw_course_enrolmentlog`: `userid` becomes 0 and `username` is blanked. Transaction id, order id, amount and
+    course stay.
+  - `paygw_airpay_errorlog`: `userid` becomes 0, and the `userid "(N)"` the gateway writes into the message becomes
+    `userid "(0)"`.
+  - `paygw_airpay`: unpaid or orphaned orders get `userid` 0. A paid order is unchanged; core_payment erases it with
+    the payment through `delete_data_for_payment_sql()`, as before.
+- **Export:** every row of all three tables. `export_payment_data()` reads `ap_orderid` and returns early if there
+  is no row.
+- **Strings:** 37 in `en`. The gateway has no `hi` pack, and a partial one would trip the en/hi parity hook.
+- **Tests:** `tests/privacy_provider_test.php`. The two tests that pinned `null_provider` and `get_reason()` are
+  replaced. The two `delete_data_for_payment_sql` tests are kept. New: metadata, erasure (rows kept, message text
+  redacted, paid order left to core), export (all tables, plus the payment export's order id), userlist and
+  context-wide.
+- Both trees byte-identical. No schema change. Not deployed.
+

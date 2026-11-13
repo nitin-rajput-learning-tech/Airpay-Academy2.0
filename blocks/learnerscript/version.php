@@ -27,7 +27,8 @@ defined('MOODLE_INTERNAL') || die();
 // single-destroy follow-up) reaches existing sites through Admin > Notifications and the cache purge that follows.
 // Kept in the vendor's decimal series: a later upstream release (2019052009 or higher) still upgrades cleanly.
 // No schema change, no upgrade step. Record: docs/core-mods/2026-10-08-learnerscript-modal-factory-port.md
-$plugin->version = 2019052008.6; // Plugin version.
+// SENTIENTIA-CORE-MOD (vendor): 2019052008.7 - working privacy provider (docs/core-mods/2026-11-13-learnerscript-privacy-provider.md); 2019052008.6 - modal factory port.
+$plugin->version = 2019052008.7; // Plugin version.
 $plugin->requires = 2019052000; // require Moodle version (3.7).
 $plugin->component = 'block_learnerscript'; // Full name of the plugin (used for diagnostics)
 $plugin->dependencies = array();

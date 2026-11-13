@@ -896,6 +896,33 @@ $string['privacy:metadata:block_devicels:pointingmethod'] = 'Type of browser poi
 $string['privacy:metadata:block_devicels:ismobiledevice'] = 'Mobile device information';
 $string['privacy:metadata:block_devicels:istablet'] = 'Tablet Information';
 $string['privacy:metadata:block_devicels:timemodified'] = 'User accessed time';
+// SENTIENTIA-CORE-MOD (vendor): privacy strings for the working provider (2026-11-13).
+$string['privacy:metadata:ls:userid'] = 'The user the row is about.';
+$string['privacy:metadata:ls:username'] = 'The user\'s full name, copied into the report cache.';
+$string['privacy:metadata:ls:courseid'] = 'The course.';
+$string['privacy:metadata:ls:timespent'] = 'The time the user spent.';
+$string['privacy:metadata:ls:enroldate'] = 'When the user was enrolled.';
+$string['privacy:metadata:ls:completiondate'] = 'When the user completed.';
+$string['privacy:metadata:ls:deadline'] = 'The user\'s upcoming deadline.';
+$string['privacy:metadata:ls:usermodified'] = 'The user who last changed the row.';
+$string['privacy:metadata:ls:timecreated'] = 'When the row was created.';
+$string['privacy:metadata:block_ls_schedule'] = 'Scheduled reports: who created each one and who receives it.';
+$string['privacy:metadata:block_ls_schedule:userid'] = 'The user who created the scheduled report.';
+$string['privacy:metadata:block_ls_schedule:sendinguserid'] = 'The users the report is sent to.';
+$string['privacy:metadata:block_ls_schedule:reportid'] = 'The report that is sent.';
+$string['privacy:metadata:block_ls_schedule:exportformat'] = 'The file format of the report.';
+$string['privacy:metadata:block_ls_schedule:frequency'] = 'How often the report is sent.';
+$string['privacy:metadata:block_ls_coursetimestats'] = 'Time each user spent in each course.';
+$string['privacy:metadata:block_ls_modtimestats'] = 'Time each user spent in each activity.';
+$string['privacy:metadata:block_ls_modtimestats:activityid'] = 'The activity.';
+$string['privacy:metadata:block_ls_learningformats'] = 'Report cache of each user\'s enrolments, completions and deadlines per learning format.';
+$string['privacy:metadata:block_ls_learningformats:name'] = 'The name of the learning item.';
+$string['privacy:metadata:block_ls_learningformats:overduedeadline'] = 'The user\'s overdue deadline.';
+$string['privacy:metadata:block_ls_exams'] = 'Report cache of each user\'s exams.';
+$string['privacy:metadata:block_ls_exams:examname'] = 'The name of the exam.';
+$string['privacy:metadata:block_ls_certificates'] = 'Report cache of each user\'s certificates.';
+$string['privacy:metadata:block_ls_certificates:certificatename'] = 'The name of the certificate.';
+// END SENTIENTIA-CORE-MOD
 
 $string['resetingls'] = 'Resetting LearnerScript';
 $string['usertimepsent'] = 'Learner Script';

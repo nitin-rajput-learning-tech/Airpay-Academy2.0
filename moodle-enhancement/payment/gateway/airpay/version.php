@@ -24,8 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2026100800; // 2026-10-08 Moodle 5.3 compat FX-05: gateways_modal uses core/modal (core/modal_factory is gone in 5.2+); dead form_submit module removed. Was 2024100700.10.
+$plugin->version = 2026111300; // 2026-11-13 privacy: a real metadata + request provider replaces the copied null_provider (three tables, the Airpay external link; erasure anonymises, rows stay; export order id read from ap_orderid). Was 2026100800; // 2026-10-08 Moodle 5.3 compat FX-05: gateways_modal uses core/modal (core/modal_factory is gone in 5.2+); dead form_submit module removed. Was 2024100700.10.
 $plugin->requires = 2022112800; // Requires this Moodle version.
 $plugin->component = 'paygw_airpay'; // Full name of the plugin (used for diagnostics).
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '1.0.2';
+$plugin->release = '1.0.3';

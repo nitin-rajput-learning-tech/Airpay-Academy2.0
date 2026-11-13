@@ -34,6 +34,9 @@ use core_privacy\local\request\writer;
  *       subject rows deleted on erasure
  *   - local_sentientia_course_type, local_sentientia_course_category (ADR-032 course_lookups import, 2026-10-01)
  *       shared configuration rows; actor column(s) anonymised: usercreated, usermodified
+ *   - local_sentientia_courses_tenant_share (cross-tenant course sharing; declared 2026-11-13, when core's
+ *       test_table_coverage found it missing)
+ *       shared configuration rows (a tenant's catalog); actor column anonymised: shared_by
  *   - local_sentientia_courses_detailfill (ADR-032 import trail): ids and timestamps only, no person, not declared
  *   - local_sentientia_courses_tagmove (ADR-032 course_tags import trail): ids and timestamps only, no person, not declared
  *   - local_sentientia_courses_enrolmove (ADR-032 enrolments import ledger): ids and timestamps only, no person, not declared
@@ -111,6 +114,19 @@ class provider implements
             'privacy:metadata:course_category'
         );
 
+        $collection->add_database_table(
+            'local_sentientia_courses_tenant_share',
+            [
+                'shared_by' => 'privacy:metadata:courses_tenant_share:shared_by',
+                'courseid' => 'privacy:metadata:courses_tenant_share:courseid',
+                'tenant_id' => 'privacy:metadata:courses_tenant_share:tenant_id',
+                'status' => 'privacy:metadata:courses_tenant_share:status',
+                'timeshared' => 'privacy:metadata:courses_tenant_share:timeshared',
+                'timemodified' => 'privacy:metadata:courses_tenant_share:timemodified',
+            ],
+            'privacy:metadata:courses_tenant_share'
+        );
+
         return $collection;
     }
 
@@ -141,6 +157,7 @@ class provider implements
             $found = $found || $DB->record_exists($table, ['usercreated' => $userid]);
             $found = $found || $DB->record_exists($table, ['usermodified' => $userid]);
         }
+        $found = $found || $DB->record_exists('local_sentientia_courses_tenant_share', ['shared_by' => $userid]);
 
         if ($found) {
             $contextlist->add_system_context();
@@ -165,6 +182,8 @@ class provider implements
             $userlist->add_from_sql('usercreated', "SELECT usercreated FROM {{$table}} WHERE usercreated > 0", []);
             $userlist->add_from_sql('usermodified', "SELECT usermodified FROM {{$table}} WHERE usermodified > 0", []);
         }
+        $userlist->add_from_sql('shared_by',
+            "SELECT shared_by FROM {local_sentientia_courses_tenant_share} WHERE shared_by > 0", []);
     }
 
     public static function export_user_data(approved_contextlist $contextlist): void {
@@ -261,6 +280,28 @@ class provider implements
                 );
             }
 
+            // local_sentientia_courses_tenant_share: the course shares this user created or last changed.
+            $shares = $DB->get_records('local_sentientia_courses_tenant_share',
+                ['shared_by' => $userid], 'timeshared ASC',
+                'id, courseid, tenant_id, status, shared_by, timeshared, timemodified');
+            if (!empty($shares)) {
+                $rows = [];
+                foreach ($shares as $r) {
+                    $rows[] = [
+                        'courseid' => $r->courseid,
+                        'tenant_id' => $r->tenant_id,
+                        'status' => $r->status,
+                        'shared_by' => $r->shared_by,
+                        'timeshared' => empty($r->timeshared) ? null : userdate((int) $r->timeshared),
+                        'timemodified' => empty($r->timemodified) ? null : userdate((int) $r->timemodified),
+                    ];
+                }
+                writer::with_context($context)->export_data(
+                    [$root, get_string('privacy:metadata:courses_tenant_share', 'local_sentientia_courses')],
+                    (object) ['courseshares' => $rows]
+                );
+            }
+
         }
     }
 
@@ -278,6 +319,8 @@ class provider implements
             $DB->set_field($table, 'usercreated', 0, []);
             $DB->set_field($table, 'usermodified', 0, []);
         }
+        // A course share is the tenant's catalog configuration: only the sharer goes.
+        $DB->set_field('local_sentientia_courses_tenant_share', 'shared_by', 0, []);
     }
 
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
@@ -309,6 +352,8 @@ class provider implements
                 $DB->set_field($table, 'usercreated', 0, ['usercreated' => $userid]);
                 $DB->set_field($table, 'usermodified', 0, ['usermodified' => $userid]);
             }
+            // A course share is the tenant's catalog configuration: the sharer column goes to 0, the share stays.
+            $DB->set_field('local_sentientia_courses_tenant_share', 'shared_by', 0, ['shared_by' => $userid]);
         }
     }
 
@@ -337,5 +382,6 @@ class provider implements
             $DB->set_field_select($table, 'usercreated', 0, "usercreated $insql", $params);
             $DB->set_field_select($table, 'usermodified', 0, "usermodified $insql", $params);
         }
+        $DB->set_field_select('local_sentientia_courses_tenant_share', 'shared_by', 0, "shared_by $insql", $params);
     }
 }
