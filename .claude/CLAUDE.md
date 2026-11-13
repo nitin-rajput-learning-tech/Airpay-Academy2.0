@@ -111,6 +111,12 @@ Permissions:     rules use the documented Tool(pattern) form: Bash(...), PowerSh
                  was inactive. Deny wins over allow at every level and applies to subagents;
                  a denied call is refused, not prompted. A deny rule also catches the command
                  inside && chains and subshells, but not inside bash -c / pwsh -c strings.
+                 Limit: the allowed interpreters (php -r, python -c, python *.py, npm run) and
+                 installers (pip install, npm install) can do anything the deny list forbids
+                 (python -c "import shutil; shutil.rmtree(...)" is not matched by rm -rf). The
+                 deny rules stop mistakes; they are not a sandbox. The allow entries follow the
+                 root CLAUDE.md section 3 "Run without asking" list; narrowing it is Nitin's call
+                 (security review 2026-11-13).
 Auto-allowed:    php -l / -r, the admin/cli purge + upgrade scripts (both ../admin and admin),
                  phpunit, python, pip/npm install, npm run, git status/diff/log/add/branch/
                  stash/show/tag, Get-ChildItem, Get-Content, Select-String, Set-Location,
