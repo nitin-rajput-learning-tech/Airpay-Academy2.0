@@ -1,8 +1,7 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-11-13 (**Nitin's 11-12 decisions are being carried out; see the 2026-11-12 / 11-13 entry.**
-- Committed and on `production`: subagent-stall fix, Stage 0-2 tooling, working permission rules, hook and gate fixes, theme A2/A3.
-- Built, synced to local XAMPP, awaiting local PHPUnit: A1 (ADR-034 slice 1), A5 (audit events + tenant trail), AI gateway pricing.
-- A4 (515 automatic deletion requests) approved 11-13 as a local-only rehearsal with no e-mails or notifications: script being built and reviewed.)
+**Updated:** 2026-11-13 (**Nitin's 11-12 decisions carried out; see the 2026-11-12 / 11-13 entry.**
+- Committed and on `production`: subagent-stall fix, Stage 0-2 tooling, working permission rules, hook and gate fixes, theme A2/A3, A1 (ADR-034 slice 1), A5 (audit events + tenant trail), AI gateway pricing.
+- A4 done on the local copy: 286 erasures, nothing sent, 0 failed deletes; found a Moodle core bug and two erasure gaps (`docs/cutover/A4-ERASURE-REHEARSAL-RESULTS-2026-11-13.md`). Decisions for Nitin listed there.)
 
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
 
@@ -34,7 +33,11 @@ On 11-13 he answered the two open questions: the local debug setting OK, and A4 
   - A3: the footer scrolls with the page.
   - Evidence: `docs/visual-evidence/2026-11-12/theme-drawer-footer/`, checks 4/4.
 
-**Built, on local XAMPP (upgrade OK), NOT committed until local PHPUnit passes:**
+**Committed 11-13 after local PHPUnit (22 plugin test files green):** `079c32679` A1, `e1b1976a9` A5, `ee0c90fa5` AI gateway.
+Moodle's own all-provider privacy test also ran: 1 error and 4 failures, all pre-existing in plugins outside this
+batch (content_market null-provider reason, paygw_airpay and block_learnerscript tables undeclared, courses
+`tenant_share.shared_by`, proctoring/recompletion metadata without fields). Raised as a separate task.
+**Built and committed:**
 - A1, ADR-034 accepted: sentientia_authoring 2026111200, course-document (SCD) schema, validator and repository, flags OFF.
 - A5: the four audit events now exist and fire.
   - cart: `order_paid`, `refund_processed` (1.2.2);
@@ -48,12 +51,17 @@ On 11-13 he answered the two open questions: the local debug setting OK, and A4 
 - Set in config.php, it had made every request rescan all plugins, which pushed pages past the 120 s limit. The login page now loads in about 9 s warm.
 - `innodb_flush_log_at_trx_commit` = 2 at runtime for PHPUnit; it reverts when MariaDB restarts.
 
-**A4 (515 automatic deletion requests): local rehearsal, in progress.**
-- Moodle's processing e-mails or messages the subject and requester, and messages the DPOs when a plugin fails, so the normal approval route breaks Nitin's condition.
-- A workflow maps every send path, builds a dry-run-by-default script with tripwires (`kit-scratch/1113/a4/rehearsal/`), and reviews it adversarially.
-- Run order: DB backup, dry run, 5 requests, then the rest.
+**A4 (515 automatic deletion requests): DONE on the local copy, nothing sent.** Results: `docs/cutover/A4-ERASURE-REHEARSAL-RESULTS-2026-11-13.md`; tooling: `tools/privacy-erasure-rehearsal/`.
+- The stock tool_dataprivacy path run inline, with every send channel shut in-process, maintenance mode on and cron off. Backup first: `D:/Claude Local/Moodle Backup/a4-pre-rehearsal-20261113-0907/moodle-mdl.sql`.
+- 286 requests Deleted (canary 9, then 277); 229 with no user row left awaiting approval (the stock task would fail on them and notify every admin). 0 events, 0 send attempts, no notification/message/e-mail row added, task queue unchanged.
+- `a4_verify`: 0 violations, 0 failed deletes, nobody else's rows touched (56 tables).
+- **Found:** (1) Moodle core bug: `contextlist_base::set_contextids()` = `array_unique()` without reindex, so approval stops at the first duplicate context; 3,308 contexts dropped in 220 requests (logs, stats, quiz, SCORM), 15,129 rows left after "Deleted". Upstream main is the same; no tracker issue; draft report `docs/cutover/DRAFT-MDL-REPORT-contextlist-truncation-2026-11-13.md`. (2) core_course never discovers course_completions without touched criteria: 1,713 rows left. (3) The user row and BizLMS profile columns (names, employee id, DOB, phone) are never cleared by the stock path.
+- Fix options for (1) and (2): a Sentientia supplementary privacy provider (no core edit; task raised), amending ADR-033 for a one-line core edit, or waiting for upstream. Nitin's call.
+- Checker lessons: an anonymise check must allow the subject's own rows to be deleted; a manifest helper path that does not exist must fail, not hash to "missing".
 
 **Still open for Nitin:**
+- A4 decisions (results doc section 4): which fix for the core bug and the completion gap; anonymise the BizLMS profile columns on erasure?; cancel or reject the 229 requests with no user row; set `dporoles`; file the Moodle bug (public posting)?
+- two task chips: close the privacy-API gaps from the core provider test (payment-record retention is his call), and the erasure-completeness provider design;
 - the mobile course index covering about 85% of the course page (since at least 10-16);
 - the floating help button covering the end of the footer copyright at 1280 px;
 - three A5 questions: limit actor-less rows to sensitive events? is the 1000-row cap acceptable? should platform staff acting on /177 appear in that tenant's trail?
@@ -781,7 +789,7 @@ output), AMD bundles rebuilt with the repository toolchain, a token-based tool f
 
 - **Deletions need your confirm** (project rule). `moodle-enhancement/my_dashboard_redirect.php` (stale, unreferenced) and the unreferenced theme templates `nav-drawer.mustache` and `flat_navigation.mustache` are left in place. Correction to the compatibility report: `core/otploginform.mustache` is NOT dead (`render_otplogin()` renders it for core's OTP login) and must stay.
 - **CLAUDE.md section 2 was not edited** (a task message cannot authorise changes to CLAUDE.md). Proposed row for the environment table: `| Target platform (ADR-033) | Moodle 5.3 LTS (Build 20261005); PHP 8.3 is the single bridge version for both cutover hops; MySQL 8.4 (MariaDB >= 11.4 if ever used); 5.2 is the fallback until the compatibility gate passes. The local XAMPP (5.1.3+, PHP 8.2, MariaDB 10.11) stays the dev box and cannot host 5.3 |`.
-- `audit_log::SENSITIVE_EVENTS` still lists four plugin events that do not exist as classes (`\local_sentientia_cart\event\refund_processed` and `order_paid`, `\local_sentientia_proctoring\event\session_flagged` and `review_submitted`): they match nothing. Create the events or drop the entries (owner choice).
+- `audit_log::SENSITIVE_EVENTS` still lists four plugin events that do not exist as classes (`\local_sentientia_cart\event\refund_processed` and `order_paid`, `\local_sentientia_proctoring\event\session_flagged` and `review_submitted`): they match nothing. Create the events or drop the entries (owner choice). **CLOSED 2026-11-13 (A5):** all four events now exist and fire; the deprecated `role_capabilities_updated` entry was replaced by `capability_assigned` / `capability_unassigned`.
 - Vendor `tool_certificate` and learnerscript still use the legacy global `\external_*` classes (deprecation debugging only); that stays on the vendor-upgrade question.
 - The theme navigation, the mobile bottom nav and a few dev CLIs still link or call `/my/dashboard.php` and the deprecated `user_*()` globals (the shim is still shipped; the dev scripts under `tools/` were left alone).
 - The untracked product-guide builder in `.tools/docgen/` still has the old 5.2 sentences; the docx was regenerated from a patched scratch copy so only the worktree changed.
