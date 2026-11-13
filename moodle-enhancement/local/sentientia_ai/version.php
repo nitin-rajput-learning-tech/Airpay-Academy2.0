@@ -36,10 +36,11 @@ $plugin->component = 'local_sentientia_ai';
 // 2026092500 — ADR-031: :viewledger and :manage have no default grant (new
 // db/upgrade.php step revokes existing grants); the ledger page also requires
 // tenant::is_cross_tenant() (ledger::can_view()).
-$plugin->version   = 2026092500;  // YYYYMMDDNN — ADR-031 cross-tenant authority
+// 2026111300 — gateway::estimate_cost() prices a dated model id (-YYYYMMDD) at its base entry; no schema change.
+$plugin->version   = 2026111300;  // YYYYMMDDNN — dated model id pricing fix
 $plugin->requires  = 2024100700;  // Moodle 4.5+
 $plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '0.1.1-alpha';
+$plugin->release   = '0.1.2-alpha';
 $plugin->dependencies = [
     // Flag resolution + customer/tenant scoping come from the platform layer;
     // 2026092500 is the ADR-031 tenant::is_cross_tenant() authority.

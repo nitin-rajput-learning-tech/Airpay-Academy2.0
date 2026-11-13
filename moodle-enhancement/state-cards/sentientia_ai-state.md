@@ -1,7 +1,7 @@
 # local_sentientia_ai — state card
 
 **Component:** `local_sentientia_ai` | **Created:** 2026-08-04 | **Owner:** Nitin Rajput
-**Version:** 2026080401 / 0.1.0-alpha (MATURITY_ALPHA) | **Depends:** local_sentientia_platform
+**Version:** 2026111300 / 0.1.2-alpha (MATURITY_ALPHA) | **Depends:** local_sentientia_platform 2026092500
 
 ## What it is
 
@@ -100,3 +100,12 @@ Site admins unchanged. Tests: `tests/tenant_scope_test.php` (`@group tenant_isol
 ## 2026-09-25 - ADR-031 wave-1 review follow-up (no code change)
 
 - S6: `index.php` stays gated by `ledger::can_view()` (`:viewledger` AND `tenant::is_cross_tenant()`) without `admin_externalpage_setup()`. Deliberate: adding it would also block a `:crosstenant` + `:viewledger` holder who lacks `moodle/site:config`, and change the page chrome.
+
+## 2026-11-13 - Dated model ids priced at their base entry (0.1.2-alpha, 2026111300)
+
+Found by the 11-12 spend-annex review. `gateway::estimate_cost()` looked up `PRICING_PER_MTOK` by exact model id only. `local_sentientia_assistant\ai_client::MODEL_FAST` passes `claude-haiku-4-5-20251001`, which missed the `claude-haiku-4-5` key and fell back to `default` ([15.00, 75.00] per 1M tokens instead of [1.00, 5.00]). The `estcost` of every live Haiku call, and so the month-to-date total (`ledger::cost_this_month()`, the sum of `estcost`) that `check_quotas()` compares against `monthly_cost_cap_usd`, was 15x too high, on input and output tokens alike. The cap setting itself was not changed. Mock calls record 0 cost, so they were not affected.
+
+- New private `gateway::rates_for()`: exact key, then the id with a trailing `-YYYYMMDD` removed, then `default`. No rate changed and no model added.
+- Every other model id passed to the gateway in the repo is `claude-sonnet-4-6` (the gateway's own fallback model, the default_model settings and DEFAULT_MODEL constants of aiquiz, skillsai, recommendations, translate, authoring and assistant agent_client, and assistant `ai_client::MODEL_SMART`), which already matched exactly.
+- Ledger rows written before this version keep their stored `estcost`; nothing recalculates them. Live flags are OFF everywhere, so no live row is expected to exist (not checked on any site).
+- Tests: three new cases in `tests/gateway_test.php` (dated Haiku id costs the same as `claude-haiku-4-5`; unknown and malformed-suffix ids use `default`; every table key resolves to its own row). Written, not run. Both trees.

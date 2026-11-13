@@ -70,12 +70,13 @@ US$ 4 / 20; Haiku 5.5 US$ 0.10 / 0.50. The gateway's own estimate table holds So
 1 / 5, and prices any model it does not know at the top tier, US$ 15 / 75 [G3]. The repository records no list price
 for Haiku 4.5, so this annex uses the gateway's estimate for it.
 
-**A mismatch to fix first.** The gateway looks a model up by its exact name, and the assistant asks for
-`claude-haiku-4-5-20251001`, which is not in the table [G3][G6]. So today every simple chat would be costed at US$ 15 / 75:
+**A mismatch, fixed in code on 13 November (not yet on UAT).** The gateway looked a model up by its exact name, and the
+assistant asks for `claude-haiku-4-5-20251001`, which is not in the table [G3][G6]. Until that fix every simple chat was costed at US$ 15 / 75:
 about ₹8.64 a message instead of ₹0.58, or about ₹7.26 on the 80/20 mix of A4 instead of ₹0.81. At the expected volume of
 A4, chat alone would count about ₹36,300 against the cap and the total about ₹43,000, and the ₹10,000 month-1 setting
-would trip early. This changes what the ledger counts against the cap, not what Anthropic bills. The figures below assume
-the table is corrected first (A5).
+would trip early. This changes what the ledger counts against the cap, not what Anthropic bills. Since `sentientia_ai`
+2026111300 the gateway removes a trailing 8-digit date from the model id before the lookup, so the dated Haiku id gets the
+Haiku 4.5 estimate. The figures below assume that fix is deployed before the key goes in (A5).
 
 **Cost of one call (₹) = (input tokens × input price + output tokens × output price) ÷ 1,000,000 × 87.**
 
@@ -138,11 +139,11 @@ that is about 12.7 lakh messages, or about ₹10 lakh a month at ₹0.81 each. T
    - **Raise the daily token limits with the money.** At the expected volumes the six features use about 25 million tokens
      a month, about 1.1 million a working day; today's limit for one customer is 100,000 a day [G4]. The 13-language pilot
      alone uses about 3.8 lakh tokens [C1].
-   - **Correct the gateway's price table before the key goes in.** The assistant asks for `claude-haiku-4-5-20251001`,
-     which is not in the gateway's price table, so today every simple chat is costed at US$ 15 / 75, about 15 times the
-     gateway's own Haiku estimate. Add that model id to the table before the key goes in, and keep the table in step
-     with any model change (a move to Sonnet 5.5 would trip the cap about 7.5 times too early) [G3][G6][C1]. The code
-     fix belongs to the `sentientia_ai` and `sentientia_assistant` track, in both plugin trees.
+   - **Deploy the gateway's price fix before the key goes in.** The assistant asks for `claude-haiku-4-5-20251001`,
+     which the exact-name lookup missed, so every simple chat was costed at US$ 15 / 75, about 15 times the gateway's
+     own Haiku estimate. `sentientia_ai` 2026111300 (13 November, both plugin trees, tests written but not yet run)
+     strips the trailing date before the lookup. It must reach UAT and live before the key, and the table must be kept
+     in step with any model change (a move to Sonnet 5.5 would trip the cap about 7.5 times too early) [G3][G6][C1].
    - Every paid call of quiz generation, skills extraction, recommendations, translation and course generation still
      needs a person's confirmation [G2]. The assistant's chat and agent calls do not: any learner triggers them, limited
      by 20 chat questions a day, the one-hour cache and the gateway limits; the agent's paid call runs before the
@@ -271,7 +272,7 @@ Points to settle with this approval:
 | [C1] | `moodle-enhancement/docs/research/2026-10-15-scorm-lxp/study-src/study-sections/12-cost-model.md` (list prices as of 2026-10-06; ₹87 planning rate; token counts per step; Haiku-class not for compliance translation; speech conclusion; standing T4 ≈ ₹40k a month; pilot cap ₹10,000) |
 | [G1] | `moodle-enhancement/state-cards/sentientia_ai-state.md` (gateway, flags OFF, six consumers routed, privacy provider) |
 | [G2] | `moodle-enhancement/local/sentientia_ai/README.md` (contract, fail-closed quotas, ledger, per-feature gates stay) |
-| [G3] | `moodle-enhancement/local/sentientia_ai/classes/gateway.php` (`ENDPOINT`, `PRICING_PER_MTOK` with the key `claude-haiku-4-5` only, `estimate_cost()` exact-name lookup with the `default` 15 / 75 fallback, `check_quotas()` counting every gateway call through `ledger::cost_this_month()`, `HARD_MAX_TOKENS` 8192) |
+| [G3] | `moodle-enhancement/local/sentientia_ai/classes/gateway.php` (`ENDPOINT`, `PRICING_PER_MTOK` with the key `claude-haiku-4-5` only, `estimate_cost()` lookup: exact name, then the name without a trailing 8-digit date (since 2026111300), then the `default` 15 / 75 fallback, `check_quotas()` counting every gateway call through `ledger::cost_this_month()`, `HARD_MAX_TOKENS` 8192) |
 | [G4] | `moodle-enhancement/local/sentientia_ai/settings.php` (defaults 200,000 / 100,000 tokens a day, US$ 25 a month, "modest placeholders"); `classes/ledger.php` (daily tokens = input + output) |
 | [G5] | `DEFAULT_MODEL` and `MAX_OUTPUT_TOKENS` in `moodle-enhancement/local/sentientia_{aiquiz,skillsai,recommendations,translate}/classes/anthropic_client.php`, `sentientia_authoring/classes/course_generator.php`, `sentientia_assistant/classes/agent/agent_client.php` |
 | [G6] | `moodle-enhancement/local/sentientia_assistant/classes/ai_client.php` (20 a day, 1-hour cache, `MODEL_FAST` `claude-haiku-4-5-20251001` / `MODEL_SMART` `claude-sonnet-4-6`, no confirmation step, `build_context()` contents, no own live flag, direct call with its own key when routing is off); `local/sentientia_platform/db/feature_flags.php` (`ai.assistant.enabled` default ON) |

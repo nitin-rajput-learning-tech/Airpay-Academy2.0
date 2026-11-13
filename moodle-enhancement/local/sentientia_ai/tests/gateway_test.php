@@ -224,6 +224,44 @@ final class gateway_test extends \advanced_testcase {
     }
 
     /**
+     * A dated snapshot id (base id + '-YYYYMMDD') is priced at its base
+     * entry. assistant\ai_client::MODEL_FAST passes
+     * 'claude-haiku-4-5-20251001'; before 2026-11-13 it missed the exact
+     * lookup and was priced at the default (opus) tier.
+     */
+    public function test_estimate_cost_dated_id_uses_base_rate(): void {
+        // haiku: (1M * 1.00 + 1M * 5.00) / 1M = 6.00
+        $this->assertEqualsWithDelta(6.0,
+            gateway::estimate_cost('claude-haiku-4-5-20251001', 1000000, 1000000), 0.0001);
+        $this->assertSame(
+            gateway::estimate_cost('claude-haiku-4-5', 1234, 567),
+            gateway::estimate_cost('claude-haiku-4-5-20251001', 1234, 567));
+    }
+
+    /**
+     * Ids with no exact key and no base key use 'default', including a dated
+     * id whose base is unknown and suffixes that are not exactly -YYYYMMDD.
+     */
+    public function test_estimate_cost_unknown_id_uses_default(): void {
+        $default = gateway::PRICING_PER_MTOK['default'][0] + gateway::PRICING_PER_MTOK['default'][1];
+        foreach (['mystery-model', 'mystery-model-20251001', 'claude-haiku-4-5-2025',
+                'claude-haiku-4-5-20251001-beta', ''] as $model) {
+            $this->assertEqualsWithDelta($default,
+                gateway::estimate_cost($model, 1000000, 1000000), 0.0001, "model '{$model}'");
+        }
+    }
+
+    /**
+     * Every key in the pricing table resolves to its own row by exact match.
+     */
+    public function test_estimate_cost_exact_key_wins(): void {
+        foreach (gateway::PRICING_PER_MTOK as $model => $rates) {
+            $this->assertEqualsWithDelta($rates[0] + $rates[1],
+                gateway::estimate_cost($model, 1000000, 1000000), 0.0001, "model '{$model}'");
+        }
+    }
+
+    /**
      * Malformed requests are programming errors and fail loudly.
      */
     public function test_missing_required_fields_throw(): void {

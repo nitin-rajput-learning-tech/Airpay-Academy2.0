@@ -54,7 +54,8 @@ class gateway {
      * ESTIMATED pricing per 1M tokens in USD [input, output]. A budgeting
      * signal for the ledger/quotas — not an invoice. Unknown models use
      * 'default' (priced at the top tier so estimates err on the safe,
-     * quota-consuming side — fail-closed philosophy).
+     * quota-consuming side — fail-closed philosophy). A dated snapshot id
+     * (base id + '-YYYYMMDD') uses its base key; see rates_for().
      */
     public const PRICING_PER_MTOK = [
         'claude-sonnet-4-6' => [3.00, 15.00],
@@ -187,8 +188,28 @@ class gateway {
      * @return float
      */
     public static function estimate_cost(string $model, int $tokensin, int $tokensout): float {
-        $rates = self::PRICING_PER_MTOK[$model] ?? self::PRICING_PER_MTOK['default'];
+        $rates = self::rates_for($model);
         return round(($tokensin * $rates[0] + $tokensout * $rates[1]) / 1000000, 6);
+    }
+
+    /**
+     * Pricing row for a model id. Lookup order: the exact key, then the id
+     * with a trailing '-' plus eight digits removed (a -YYYYMMDD snapshot
+     * date; the digits are not checked as a calendar date; callers pass
+     * dated ids such as 'claude-haiku-4-5-20251001'), then 'default'.
+     *
+     * @param string $model
+     * @return float[] [input, output] USD per 1M tokens
+     */
+    private static function rates_for(string $model): array {
+        if (isset(self::PRICING_PER_MTOK[$model])) {
+            return self::PRICING_PER_MTOK[$model];
+        }
+        $base = preg_replace('/-\d{8}$/', '', $model);
+        if (is_string($base) && $base !== $model && isset(self::PRICING_PER_MTOK[$base])) {
+            return self::PRICING_PER_MTOK[$base];
+        }
+        return self::PRICING_PER_MTOK['default'];
     }
 
     /**
