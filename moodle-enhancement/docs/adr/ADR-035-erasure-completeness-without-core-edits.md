@@ -1,6 +1,6 @@
 # ADR-035: Make a 'Deleted' privacy request erase everything, without editing core
 
-**Status:** Proposed (2026-11-13). Awaiting Nitin's choice between (A), (B) and (C); recommendation (A), with the upstream report from (C) filed in parallel.
+**Status:** Accepted (Nitin, 2026-11-13): option (A), shipped **without a feature flag**. Filing the upstream report (open question 4) and the Legal/DPO retention question (open question 3) stay open.
 **Date:** 2026-11-13
 **Decision-makers:** Nitin Rajput (Head of L&D, Airpay Payment Services)
 **Implementer:** Claude
@@ -300,8 +300,8 @@ Run on the local production copy only, with the A4 script and its tripwires: no 
 
 ## Open questions
 
-1. **Nitin:** (A), (B) or (C)?
-2. **Nitin:** ship (A) without a feature flag (proposed), or behind a flag that defaults OFF?
+1. ~~**Nitin:** (A), (B) or (C)?~~ Answered 2026-11-13: **(A)**.
+2. ~~**Nitin:** ship (A) without a feature flag (proposed), or behind a flag that defaults OFF?~~ Answered 2026-11-13: **no flag**.
 3. **Legal/DPO:** does any rule require Airpay to keep LMS activity logs for a period after an erasure request? If yes, set a protected purpose in the data registry. That is a separate change, on Nitin's call.
 4. **Nitin:** file the upstream MDL report, and when?
 5. **After the census:** which other components, if any, are cut short by defect 1?

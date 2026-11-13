@@ -32,6 +32,17 @@ $string['privacy:metadata:consent_log:ip_address']         = 'The IP address the
 $string['privacy:metadata:consent_log:user_agent']         = 'The browser user agent of the consent event';
 $string['privacy:metadata:consent_log:timecreated']        = 'When the consent event happened';
 
+// ADR-035 erasure supplement (2026-11-13): core data this provider also finds,
+// exports and erases when core's own privacy providers miss it.
+$string['privacy:metadata:supplement:logstore']         = 'When a data request is processed, this plugin also finds, exports and deletes the user\'s own entries in the standard log, which core can miss when a log context appears more than once. Entries that name the user only as the related or real user stay, as in core.';
+$string['privacy:metadata:supplement:completion']       = 'When a data request is processed, this plugin also finds, exports and deletes the user\'s course completion records, including those in courses without completion criteria, which core does not find.';
+$string['privacy:metadata:supplement:stats']            = 'When a data request is processed, this plugin also finds, exports and deletes the user\'s per-course activity statistics, which core can miss when a course appears more than once.';
+$string['privacy:metadata:supplement:stats:userid']     = 'The user the statistics are about';
+$string['privacy:metadata:supplement:stats:courseid']   = 'The course the statistics are for';
+$string['privacy:metadata:supplement:stats:statsreads'] = 'The number of read actions in the period';
+$string['privacy:metadata:supplement:stats:statswrites'] = 'The number of write actions in the period';
+$string['privacy:path:coursecompletion']                = 'Course completion record';
+
 // Right-to-erasure outcomes on the admin panel (2026-09-24).
 $string['incomplete']         = 'Incomplete';
 $string['needsfollowup']      = 'Needs manual follow-up';

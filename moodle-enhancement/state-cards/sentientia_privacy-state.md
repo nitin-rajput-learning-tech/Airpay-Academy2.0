@@ -140,3 +140,28 @@ written, not run.
 Open (product decision, not built): a per-tenant DPO panel. It needs the request list scoped with
 `tenant::path_descendant_filter()` on `u.open_path` (fail closed on a null `scope_path()`) and
 `tenant::require_same_tenant_user()` before Approve and Reject. The index.php header still lists it as planned.
+
+## 2026-11-13 - ADR-035: the privacy provider completes core erasure (1.1.0, 2026111300)
+
+Nitin chose ADR-035 option (A), no feature flag. The A4 local erasure rehearsal found two stock Moodle defects
+that leave a 'Deleted' request's data behind: a context list stops iterating at its first duplicate
+(`contextlist_base::set_contextids()` is `array_unique()` without a reindex), which cuts `logstore_standard` and
+`report_stats` short in `tool_dataprivacy`'s approval step; and `core_course` finds `course_completions` only through
+completion criteria.
+
+- `classes/privacy/provider.php` now also discovers the subject's log, per-user statistics and course-completion
+  contexts in ONE `add_from_sql()` over a `UNION` (its own list cannot be cut short). It re-runs core's own code on
+  them: `logstore_standard` delete/export (rows the subject performed; related/real-user rows stay, as in core),
+  `report_stats` (given a list named `report_stats`, which its guard requires), and
+  `core_completion::delete_completion()` / `delete_completion_by_approved_userlist()`. Userlist and context-wide
+  deletes use the matching core helpers. Export also writes the raw completion row (enrolled/started/completed).
+- Own tables (requests, consent log) are still kept: deletion of them stays a no-op.
+- The DPDP panel never calls the provider: `erasure_providers()` skips this plugin. A test pins it.
+- Metadata: `logstore` plugin-type link, `core_completion` subsystem link, the three `stats_user_*` tables. en + hi
+  strings (41/41).
+- No schema change, no capability, no UI. Both trees byte-identical; drift gate OK.
+- Tests: `tests/privacy_supplement_test.php` (10): duplicate-context fixture end to end, the core defect itself
+  (skips once fixed upstream), course without criteria and with untouched criteria, own list has no holes, second
+  pass is a no-op, own tables kept, userlist and context-wide deletes, export of every context, DPDP panel exclusion.
+  PHPUnit: pending at this commit (see the next entry).
+- Not done here: the local rehearsal (ADR-035 "How a rehearsal proves it"), UAT, live, the upstream MDL report.
