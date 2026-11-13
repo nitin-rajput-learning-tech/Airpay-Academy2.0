@@ -151,7 +151,7 @@ The harness in `pilot/` (55 tests) compiles one fixture course to SCORM 1.2, SCO
 
 ## Open questions for future ADRs
 
-- Which Indic TTS engine passes the gate first, and whether a second engine is needed for Urdu/Arabic (ADR-035 after the evaluation).
+- Which Indic TTS engine passes the gate first, and whether a second engine is needed for Urdu/Arabic (its own ADR after the evaluation; ADR-035 went to erasure completeness on 2026-11-13).
 - cmi5 inside Moodle: adopt `mod_cmi5launch` or build `mod_sentientia_cmi5` (decide in Stage 2).
 - Regional inference for Claude (India) and whether Bedrock/Vertex/Foundry regional endpoints change the residency posture (track; decide when a customer requires it).
 - Whether machine-only publication is ever allowed for low-stakes content (per-customer flag; after TM/QA track record).
