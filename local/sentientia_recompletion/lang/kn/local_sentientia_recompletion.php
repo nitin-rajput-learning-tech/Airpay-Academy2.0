@@ -164,7 +164,6 @@ $string['col_questionnaire'] = 'ಪ್ರಶ್ನಾವಳಿ';
 $string['col_question'] = 'ಪ್ರಶ್ನೆ';
 $string['col_answer'] = 'ಉತ್ತರ';
 $string['col_item'] = 'ಗ್ರೇಡ್ ಐಟಂ';
-$string['privacy:metadata:local_sentientia_recompletion_rules'] = 'ಮರು-ಪೂರ್ಣಗೊಳಿಸುವಿಕೆ ನಿಯಮಗಳ ವಿವರಗಳು';
 $string['privacy:metadata:local_sentientia_recompletion_history'] = 'ಪ್ರತಿ ಯೂಸರ್‌ನ ರೀಸೆಟ್ ಆಡಿಟ್ ಲಾಗ್';
 $string['privacy:metadata:local_sentientia_recompletion_history:userid'] = 'ಯಾರ ಪೂರ್ಣಗೊಳಿಸುವಿಕೆ ರೀಸೆಟ್ ಆಯಿತೋ ಆ ಯೂಸರ್';
 $string['privacy:metadata:local_sentientia_recompletion_history:courseid'] = 'ರೀಸೆಟ್ ಆದ ಕೋರ್ಸ್';

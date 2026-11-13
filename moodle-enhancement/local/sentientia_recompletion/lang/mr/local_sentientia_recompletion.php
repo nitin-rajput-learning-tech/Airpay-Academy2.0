@@ -164,7 +164,6 @@ $string['col_questionnaire'] = 'प्रश्नावली';
 $string['col_question'] = 'प्रश्न';
 $string['col_answer'] = 'उत्तर';
 $string['col_item'] = 'ग्रेड आयटम';
-$string['privacy:metadata:local_sentientia_recompletion_rules'] = 'रीकम्प्लीशन नियमांच्या व्याख्या';
 $string['privacy:metadata:local_sentientia_recompletion_history'] = 'प्रत्येक युजरचा रीसेट ऑडिट लॉग';
 $string['privacy:metadata:local_sentientia_recompletion_history:userid'] = 'ज्या युजरचे कम्प्लीशन रीसेट झाले तो युजर';
 $string['privacy:metadata:local_sentientia_recompletion_history:courseid'] = 'रीसेट झालेला कोर्स';

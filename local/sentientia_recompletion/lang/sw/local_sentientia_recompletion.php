@@ -164,7 +164,6 @@ $string['col_questionnaire'] = 'Dodoso';
 $string['col_question'] = 'Swali';
 $string['col_answer'] = 'Jibu';
 $string['col_item'] = 'Kipengele cha alama';
-$string['privacy:metadata:local_sentientia_recompletion_rules'] = 'Maelezo ya kanuni za kukamilisha upya';
 $string['privacy:metadata:local_sentientia_recompletion_history'] = 'Kumbukumbu za ukaguzi za uwekaji upya kwa kila mtumiaji';
 $string['privacy:metadata:local_sentientia_recompletion_history:userid'] = 'Mtumiaji ambaye ukamilishaji wake uliwekwa upya';
 $string['privacy:metadata:local_sentientia_recompletion_history:courseid'] = 'Kozi iliyowekwa upya';

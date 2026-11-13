@@ -24,10 +24,13 @@ $plugin->component = 'local_sentientia_recompletion';
 // 2026-10-08 (1.2.2) - the same run: both message providers required local/sentientia_recompletion:view, which only a
 // manager holds, so message_send() refused every notice addressed to a learner. db/messages.php now names no
 // capability; the upgrade (message_update_providers) clears it in the message_providers rows. No schema change.
-$plugin->version   = 2026100801;  // 1.2.2: message providers need no capability (ADR-032 schema step is 2026093001)
+// 2026-11-13 (1.2.3) - the privacy metadata no longer lists local_sentientia_recompletion_rules: it has no user column,
+// and declaring it with an empty field list made core call debugging(), which failed
+// local_sentientia_platform\privacy_coverage_test. Its now-unused string is removed from every pack. No schema change.
+$plugin->version   = 2026111300;  // 1.2.3: rules table out of the privacy metadata. Was 2026100801;  // 1.2.2: message providers need no capability (ADR-032 schema step is 2026093001)
 $plugin->requires  = 2024042200;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.2.2';     // 1.2.1: reminder cache key; 1.2.0: ADR-032 BizLMS import (1.1.2: ADR-031 tenant scope; 1.1.1: +P1 #53 Hindi pack)
+$plugin->release   = '1.2.3';     // 1.2.2: message providers need no capability; 1.2.1: reminder cache key; 1.2.0: ADR-032 BizLMS import (1.1.2: ADR-031 tenant scope; 1.1.1: +P1 #53 Hindi pack)
 $plugin->dependencies = [
     'local_sentientia_org'      => 2026040100,
     'local_sentientia_platform' => 2026092500,  // tenant::is_cross_tenant / scope_path

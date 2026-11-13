@@ -169,7 +169,6 @@ $string['col_answer']        = 'उत्तर';
 $string['col_item']          = 'ग्रेड आइटम';
 
 // Privacy.
-$string['privacy:metadata:local_sentientia_recompletion_rules']            = 'रीकम्प्लीशन नियम परिभाषाएँ';
 $string['privacy:metadata:local_sentientia_recompletion_history']          = 'प्रति-यूज़र रीसेट ऑडिट लॉग';
 $string['privacy:metadata:local_sentientia_recompletion_history:userid']   = 'जिस यूज़र की पूर्णता रीसेट की गई';
 $string['privacy:metadata:local_sentientia_recompletion_history:courseid'] = 'जो कोर्स रीसेट किया गया';

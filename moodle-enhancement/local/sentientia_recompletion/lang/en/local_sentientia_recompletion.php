@@ -165,7 +165,6 @@ $string['col_answer']        = 'Answer';
 $string['col_item']          = 'Grade item';
 
 // Privacy.
-$string['privacy:metadata:local_sentientia_recompletion_rules'] = 'Recompletion rule definitions';
 $string['privacy:metadata:local_sentientia_recompletion_history'] = 'Per-user reset audit log';
 $string['privacy:metadata:local_sentientia_recompletion_history:userid'] = 'The user whose completion was reset';
 $string['privacy:metadata:local_sentientia_recompletion_history:courseid'] = 'The course that was reset';

@@ -83,8 +83,10 @@ class provider implements
     private const SCAN_LIMIT = 500;
 
     public static function get_metadata(collection $collection): collection {
-        $collection->add_database_table('local_sentientia_recompletion_rules', [],
-            'privacy:metadata:local_sentientia_recompletion_rules');
+        // local_sentientia_recompletion_rules holds no user column (rule
+        // definitions only), so it is not personal data and is not declared.
+        // Declaring it with no fields made core call debugging(), which failed
+        // the platform privacy coverage test (removed 2026-11-13).
         $collection->add_database_table(self::TABLE_HISTORY, [
             'userid'   => 'privacy:metadata:local_sentientia_recompletion_history:userid',
             'courseid' => 'privacy:metadata:local_sentientia_recompletion_history:courseid',

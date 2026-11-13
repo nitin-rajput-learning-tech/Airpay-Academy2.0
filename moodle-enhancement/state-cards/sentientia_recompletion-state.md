@@ -1,10 +1,10 @@
 # State Card — `local_airpay_recompletion`
 
 **Component:** `local_airpay_recompletion`
-**Version:** `2026052001` / `1.1.1`  (+P1 #53 Hindi pack)
+**Version:** `2026111300` / `1.2.3`  (2026-11-13: rules table out of the privacy metadata; see the dated sections below for 1.1.2-1.2.2)
 **Maturity:** `MATURITY_STABLE`
 **Status:** Live on airpay.academy. Periodic course re-completion engine.
-**Last refreshed:** 2026-05-24 (P1 state-card pass)
+**Last refreshed:** 2026-11-13 (privacy metadata)
 
 ---
 
@@ -404,3 +404,16 @@ Branch `claude/phpunit-fixes-1008`, both trees. Plugin **2026100801 / 1.2.2** (t
 **Tests added:** `engine_archive_test` (`test_a_second_pass_within_the_day_does_not_repeat_the_reminder`, `test_both_notices_are_deliverable_to_a_learner_who_holds_no_recompletion_capability`; setUp purges `warn_dedupe` because the ids in its key repeat between tests), `engine_failure_test` (the two learners a batch resets are the two who are told).
 
 **Still open:** `warn_dedupe` holds a reminder back for 24 hours and the task is daily, so a learner inside the 30-day window is reminded every day (or every second day when the entry has not quite expired by the next run); the class docblock says once per cycle. Not changed: a product decision. The same capability-on-a-learner-facing-provider pattern may exist in other `local_sentientia_*` plugins (`cart`, `classroom`, `request`, `proctoring` name capabilities in `db/messages.php`; not checked against who receives each notice). The 7 PHPUnit notices of that run (privacy tests) were not investigated.
+
+## 2026-11-13 - the rules table is not personal data (1.2.3, 2026111300)
+
+`get_metadata()` declared `local_sentientia_recompletion_rules` with an empty field list. The table has no user column
+(rule definitions only; the provider's own doc block already said "No user column. Untouched"). Under DEBUG_DEVELOPER
+core's `database_table` constructor calls `debugging()` for an empty field list, which errored
+`local_sentientia_platform\privacy_coverage_test` and made core's `test_table_coverage` risky for every component.
+Found after the same fix to `local_sentientia_proctoring` (2026-11-13), while running PHPUnit for ADR-035.
+
+- The declaration is removed (a code comment says why), and so is the now-unused string
+  `privacy:metadata:local_sentientia_recompletion_rules` from en, hi, kn, mr and sw.
+- History and archive declarations, export, delete and anonymise are unchanged. No schema change.
+
