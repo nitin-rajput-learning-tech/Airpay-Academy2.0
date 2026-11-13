@@ -1,0 +1,70 @@
+name: Core mods gate
+
+# Moodle core file protection in CI: the twin of .claude/hooks/pre-commit.sh
+# CHECK 6, which a commit can skip (--no-verify, a GUI client, a clone without
+# the hook). The rules live in tools/ci/check-core-mods.sh.
+#
+# A workflow of its own with NO paths filter: it runs on every pull request
+# and every push to production, whatever the change touches, and takes
+# seconds. Inside ci.yml it ran only when that workflow's paths list matched
+# (GitHub matches path filters against the first 300 changed files only), so
+# narrowing the list would have switched the gate off without a word.
+#
+# Pull request: blocks the merge. Range = the PR base .. the merge commit, so
+# production's own newer changes are not listed. Every synchronize re-checks
+# the whole PR.
+#
+# Push to production: the commits have landed before CI starts, so the job
+# reports after the fact and cannot block. It is cumulative: every push
+# checks everything from CORE_MODS_BASELINE to HEAD, so a violation keeps
+# production red until it is fixed (the next push does not turn it green),
+# and a force-push cannot shrink the range to nothing. It never uses
+# github.event.before: after a force-push that commit is not in the clone,
+# and the old fallback (merge-base with origin/production, which on a push is
+# HEAD itself) compared HEAD with HEAD and passed without checking anything.
+#
+# CORE_MODS_BASELINE = 7cb584cd9 (2026-05-23, the Moodle 5.2 merge, Phase
+# B.12 final smoke gate), the oldest commit the check passes from: its parent
+# fails on admin/tool/certificate/db/subplugins.json. An upstream Moodle or
+# vendor import does not move it: the import's record carries a
+# 'Core-Mods-Upstream-Sync: <prefix>/ <version>' line instead (see
+# moodle-enhancement/docs/core-mods/README.md). Moving it forward is a
+# reviewed edit here, to a commit on production where
+# `bash tools/ci/check-core-mods.sh <old> <new>` passes.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - production
+
+permissions:
+  contents: read
+
+jobs:
+  core-mods-check:
+    name: Core edits carry a core-mods record and marker
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CORE_MODS_BASELINE: 7cb584cd94b6bd46059646b43ec7aa2830c92094
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Changed core files need a record and a SENTIENTIA-CORE-MOD marker
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          # resolve-base.sh fetches a missing commit by sha and fails (exit 1,
+          # ::error::) when it cannot; it never substitutes another base.
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            BASE=$(bash tools/ci/resolve-base.sh commit "$PR_BASE_SHA")
+          else
+            echo "push: cumulative check from the pinned baseline; this run reports, it cannot block"
+            BASE=$(bash tools/ci/resolve-base.sh commit "$CORE_MODS_BASELINE")
+          fi
+          bash tools/ci/check-core-mods.sh "$BASE" HEAD

@@ -37,6 +37,10 @@ name: CI — Airpay Academy
 #                              pre-commit hook CHECK 16; pre-existing gaps are
 #                              grandfathered in tools/amd-build-parity-allowlist.txt.
 #
+# The core-mods gate (CI twin of pre-commit CHECK 6) is NOT here: it is
+# .github/workflows/core-mods.yml, with no paths filter, so it runs whatever
+# a change touches.
+#
 # Local PHPUnit invocation (same suite, faster):
 #   cd C:\xampp\htdocs\moodle5
 #   php public/admin/tool/phpunit/cli/init.php
@@ -55,6 +59,11 @@ on:
       - 'tests/agents/**'
       - 'requirements.txt'
       - '.github/workflows/**'
+      # The upgrade-step-versions gate, its self-test and its base resolver,
+      # so a change to them runs the job that tests them. (The core-mods gate
+      # is in core-mods.yml, which has no paths filter.)
+      - 'tools/check-upgrade-step-versions*.php'
+      - 'tools/ci/resolve-base.sh'
   push:
     branches:
       - production
@@ -67,6 +76,8 @@ on:
       - 'tests/agents/**'
       - 'requirements.txt'
       - '.github/workflows/**'
+      - 'tools/check-upgrade-step-versions*.php'
+      - 'tools/ci/resolve-base.sh'
 
 jobs:
   php-lint:
@@ -447,26 +458,47 @@ jobs:
           fetch-depth: 0
 
       - name: Setup PHP
+        id: php
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
           coverage: none
           tools: none
 
+      - name: Self-test the gate (throwaway git repos)
+        run: |
+          # The self-test builds its own small repos under the runner temp dir
+          # with git plumbing, so it needs none of the checkout's history, no
+          # hooks and no git identity (it sets its own and runs git with an
+          # empty global config and no system config). It needs git 2.32 or
+          # later (GIT_CONFIG_GLOBAL). Exit 1 = a case failed, 2 = setup failed.
+          git --version
+          GITV=$(git --version | sed -E 's/^git version ([0-9]+)\.([0-9]+).*/\1 \2/')
+          set -- $GITV
+          if [ "$1" -lt 2 ] || { [ "$1" -eq 2 ] && [ "$2" -lt 32 ]; }; then
+            echo "::error::the self-test needs git 2.32 or later"
+            exit 1
+          fi
+          php tools/check-upgrade-step-versions-selftest.php --dir "${RUNNER_TEMP:-/tmp}"
+
       - name: Compare new savepoints with the base's plugin versions
+        # Runs even when the self-test failed, so both results show.
+        if: ${{ !cancelled() && steps.php.outcome == 'success' }}
         run: |
           # A step added at a version a site has already passed is skipped on
           # that site, silently (the 2026-10-16 EV-17 merge: steps 2026100701/02
           # under a shipped 2026100802; fixed by 1b6a00698). Base = the PR base,
-          # or the branch head before this push.
+          # or for a push the merge-base of the branch head before the push and
+          # HEAD (tools/ci/resolve-base.sh). It no longer falls back to the
+          # merge-base with origin/production: on a push to production that is
+          # HEAD itself, so after a force-push (old head not in the clone) the
+          # gate compared HEAD with HEAD and passed without checking anything.
+          # When no base can be worked out the step fails; then run
+          # php tools/check-upgrade-step-versions.php --base <known-good> by hand.
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            BASE="${{ github.event.pull_request.base.sha }}"
+            BASE=$(bash tools/ci/resolve-base.sh commit "${{ github.event.pull_request.base.sha }}")
           else
-            BASE="${{ github.event.before }}"
-          fi
-          if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
-            echo "no usable base commit (new branch?): comparing with origin/production"
-            git fetch -q origin production && BASE=$(git merge-base HEAD origin/production)
+            BASE=$(bash tools/ci/resolve-base.sh push "${{ github.event.before }}")
           fi
           php tools/check-upgrade-step-versions.php --base "$BASE"
 

@@ -181,11 +181,27 @@ fi
 # text file except JSON, source maps and CSV, which cannot hold a comment;
 # those, binary files and deletions need only (1). Renames are listed as a
 # delete plus an add (--no-renames), so moving a core file out of a guarded
-# dir still needs a record. Known gaps: a record that names a path only in
+# dir still needs a record.
+#   Revert: a file whose HEAD version has a marker and whose staged version
+#            has none is an undone core mod (dropped after an upstream fix,
+#            or rolled back). It needs only (1); the record stays, with a
+#            'Reverted' note. It is reported as a warning.
+#   Upstream sync: a record line 'Core-Mods-Upstream-Sync: <guarded dir
+#            prefix>/ <upstream version>' (line start, a record, not
+#            README.md) that is staged new with this commit (in the index's
+#            records, not in HEAD's) marks the files under the prefix as an
+#            upstream Moodle or vendor import: they need neither (1) nor (2).
+#            Upstream files carry no marker and a release changes hundreds of
+#            them. Commit the line with the import; a line already in HEAD
+#            exempts nothing.
+# Known gaps: a record that names a path only in
 # passing (e.g. as a caller) counts as (1); a marker anywhere in the staged
 # file counts as (2), so a later edit to a file that already has one passes
 # without a new marker; a record path written with a leading '/' is read as a
-# URL (/my/index.php) and does not count.
+# URL (/my/index.php) and does not count; a marked patch replaced by a
+# different unmarked edit passes as a revert; a sync line cannot prove the
+# files under its prefix are upstream content, so a local edit committed with
+# the sync passes (review the sync commit).
 #   Guarded: lib/ admin/ course/ my/ mod/assign/ mod/quiz/ (the core dirs that
 #            .claude/settings.json denies copying into, plus my/).
 #   Ours, never flagged: admin/tool/sentientia_*/, mod/quiz/accessrule/
@@ -198,6 +214,8 @@ fi
 # Until 2026-11-13 the patterns were moodle/lib/, htdocs/moodle/... (no repo
 # path has those prefixes), so only lib/outputrenderers*, lib/navigationlib*
 # and admin/index.php were caught, and a documented core mod was blocked too.
+# CI twin: tools/ci/check-core-mods.sh (.github/workflows/core-mods.yml)
+# applies these rules to a commit range; change both together.
 echo "→ [6/20] Moodle core file protection..."
 CORE_ISSUES=0
 CORE_STAGED=$(git diff --cached --name-only --no-renames --diff-filter=ACDMT 2>/dev/null \
@@ -215,8 +233,39 @@ else
     CORE_RECORDED=$(git grep --cached -h -o -E '[A-Za-z0-9_./-]+' \
         -- 'moodle-enhancement/docs/core-mods/*.md' 'docs/core-mods/*.md' ':(exclude)*README.md' 2>/dev/null \
         | grep -v '^/' | sed -e 's#^public/##' -e 's#[.]*$##' | sort -u || true)
+    # Upstream sync lines staged new with this commit (in the index's records,
+    # not in HEAD's). Group 2 of SYNC_RE is the prefix without public/; the
+    # same pattern is in tools/ci/check-core-mods.sh.
+    SYNC_RE='^Core-Mods-Upstream-Sync:[[:space:]]+(public/)?((lib|admin|course|my|mod/assign|mod/quiz)/([A-Za-z0-9_.-]+/)*)[[:space:]]+[^[:space:]]'
+    SYNC_OLD=$(git grep -h -E '^Core-Mods-Upstream-Sync:' HEAD \
+        -- 'moodle-enhancement/docs/core-mods/*.md' 'docs/core-mods/*.md' ':(exclude)*README.md' 2>/dev/null \
+        | tr -d '\r' | LC_ALL=C sort -u || true)
+    SYNC_IDX=$(git grep --cached -h -E '^Core-Mods-Upstream-Sync:' \
+        -- 'moodle-enhancement/docs/core-mods/*.md' 'docs/core-mods/*.md' ':(exclude)*README.md' 2>/dev/null \
+        | tr -d '\r' | LC_ALL=C sort -u || true)
+    SYNC_PREFIXES=""
+    while IFS= read -r line; do
+        [ -n "$line" ] || continue
+        grep -qxF -- "$line" <<< "$SYNC_OLD" && continue
+        if [[ "$line" =~ $SYNC_RE ]]; then
+            SYNC_PREFIXES+="${BASH_REMATCH[2]}"$'\n'
+        else
+            warn "Ignored a malformed sync line (want 'Core-Mods-Upstream-Sync: <guarded dir prefix>/ <upstream version>'): $line"
+        fi
+    done <<< "$SYNC_IDX"
+    CORE_SYNCED=0
+    CORE_REVERTS=0
     while IFS= read -r file; do
         [ -n "$file" ] || continue
+        SYNCED_BY=""
+        while IFS= read -r prefix; do
+            [ -n "$prefix" ] || continue
+            case "${file#public/}" in "$prefix"*) SYNCED_BY=$prefix; break ;; esac
+        done <<< "$SYNC_PREFIXES"
+        if [ -n "$SYNCED_BY" ]; then
+            CORE_SYNCED=$((CORE_SYNCED+1))
+            continue
+        fi
         # Here-strings, not pipes into grep -q: under pipefail an early grep
         # exit can SIGPIPE the writer and turn a match into a failure.
         if ! grep -qxF "${file#public/}" <<< "$CORE_RECORDED"; then
@@ -227,18 +276,30 @@ else
             # Staged, not deleted, and not binary (numstat prints '-' for binary).
             MARKERS=$(git show ":$file" 2>/dev/null | grep -c 'SENTIENTIA-CORE-MOD' || true)
             if [ "${MARKERS:-0}" -eq 0 ]; then
-                err "Moodle core file modification without a SENTIENTIA-CORE-MOD marker: $file"
-                CORE_ISSUES=$((CORE_ISSUES+1))
+                # A revert when HEAD's version carries a marker: (1) is enough.
+                BASE_MARKERS=$(git show "HEAD:$file" 2>/dev/null | grep -c 'SENTIENTIA-CORE-MOD' || true)
+                if [ "${BASE_MARKERS:-0}" -gt 0 ]; then
+                    warn "Revert of a recorded core mod (HEAD has a SENTIENTIA-CORE-MOD marker, the staged file has none): $file. Keep its record, with a 'Reverted' note."
+                    CORE_REVERTS=$((CORE_REVERTS+1))
+                else
+                    err "Moodle core file modification without a SENTIENTIA-CORE-MOD marker: $file"
+                    CORE_ISSUES=$((CORE_ISSUES+1))
+                fi
             fi
         fi
     done <<< "$CORE_STAGED"
+    CORE_DETAIL="$(echo "$CORE_STAGED" | wc -l | tr -d ' ') file(s)"
+    [ "$CORE_REVERTS" -eq 0 ] || CORE_DETAIL+=", $CORE_REVERTS revert(s)"
+    [ "$CORE_SYNCED" -eq 0 ] || CORE_DETAIL+=", $CORE_SYNCED under an upstream sync staged with this commit"
     if [ "$CORE_ISSUES" -gt 0 ]; then
         echo "       Each core edit needs a record in moodle-enhancement/docs/core-mods/YYYY-MM-DD-<slug>.md"
         echo "       that names the file path (committed or staged with this commit) and a"
         echo "       '// SENTIENTIA-CORE-MOD: <reason>' marker at the change site (root CLAUDE.md section 3;"
         echo "       in XML/HTML/SVG use <!-- SENTIENTIA-CORE-MOD: <reason> -->, in YAML/.feature use #)."
+        echo "       An upstream Moodle or vendor import stages a 'Core-Mods-Upstream-Sync: <prefix>/ <version>'"
+        echo "       line in its record instead (moodle-enhancement/docs/core-mods/README.md)."
     else
-        ok "Core file modifications pass the core-mods record and marker rules ($(echo "$CORE_STAGED" | wc -l | tr -d ' ') file(s))"
+        ok "Core file modifications pass the core-mods record and marker rules ($CORE_DETAIL)"
     fi
 fi
 

@@ -49,6 +49,60 @@ Inside the actual modified core file, mark every change site:
 
 This makes it grep-able when scanning a fresh upstream Moodle for our changes.
 
+## How the rules are checked
+
+Two checks apply the same rules: the pre-commit hook (`.claude/hooks/pre-commit.sh`
+CHECK 6, per commit, can be skipped with `--no-verify`) and CI
+(`.github/workflows/core-mods.yml` running `tools/ci/check-core-mods.sh`, on every
+pull request and every push to production, no paths filter). A changed file under
+`lib/`, `admin/`, `course/`, `my/`, `mod/assign/` or `mod/quiz/` (also under `public/`)
+fails unless a record here names its exact path and the file carries a
+`SENTIENTIA-CORE-MOD` marker. Our own plugins (`admin/tool/sentientia_*`,
+`mod/quiz/accessrule/sentientia_*`) and the `my/` overlays are not checked. JSON,
+source maps, CSV, binary files and deletions need only the record. This README is
+never read as a record.
+
+On a pull request CI blocks the merge. A push to production has landed before CI
+starts, so there CI only reports, but it checks everything since a pinned baseline
+(the 2026-05-23 Moodle 5.2 merge), so a violation stays red until it is fixed.
+
+### Undoing a core mod (revert)
+
+When upstream fixes the problem or a patch is rolled back, the file goes back to its
+upstream content and loses its marker. A file whose previous version had a
+`SENTIENTIA-CORE-MOD` marker and whose new version has none counts as a revert: it
+needs only the record. **Keep the record** and add a `Reverted` note (date, commit,
+why), and update the Index below. Deleting the record makes the revert fail.
+
+### Upstream Moodle or vendor imports
+
+Upstream files carry no marker and a release changes hundreds of them, so an import
+does not list every file. Its record carries one line per imported directory, at the
+start of a line:
+
+```
+Core-Mods-Upstream-Sync: <guarded dir prefix>/ <upstream version>
+```
+
+for example `Core-Mods-Upstream-Sync: admin/tool/certificate/ v5.0.3 (2025041403)` for
+a vendor plugin update, or one line each for `lib/`, `admin/`, `course/`, `my/`,
+`mod/assign/` and `mod/quiz/` for a Moodle release. The prefix must be one of the
+guarded dirs or a directory under one, and must end with `/`. The line says: every
+file under the prefix is upstream content, plus our recorded and marked patches, as
+of the commit that adds the line. Files under the prefix that are unchanged since that
+commit need neither a record path nor a marker.
+
+- Commit the line in the same commit as the import (the hook only honours a line that
+  is staged with the commit) or after it, never before it.
+- Re-apply our patches (with their markers) after the import. A file edited after the
+  sync commit follows the normal rules again.
+- A line already in the history before the checked range exempts nothing. Adding,
+  editing or moving the line re-asserts the claim as of that commit, so do that only
+  for a real import.
+- Neither check can prove that the files are upstream content: a local edit committed
+  with the import passes. Review the import commit against the upstream release.
+- The line is a record too, so keep it when the record is updated later.
+
 ## Index
 
 No existing Moodle core file is edited on Moodle 5.3 (ADR-033). The records below are either
