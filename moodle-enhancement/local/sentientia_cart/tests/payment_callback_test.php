@@ -99,6 +99,9 @@ final class payment_callback_test extends \advanced_testcase {
         $this->assertFalse($gateway->verify_callback($payload),
             'a callback signed with the shipped empty secret must be refused; '
             . 'accepting it grants a free enrolment and issues a real invoice');
+        // The refusal must also tell the admin why (it was an unasserted notice until 2026-11-13).
+        $this->assertDebuggingCalled('local_sentientia_cart: airpay_secret is not configured; '
+            . 'refusing to verify a payment callback.', DEBUG_NORMAL);
     }
 
     public function test_a_whitespace_only_secret_is_also_unconfigured(): void {
@@ -111,6 +114,8 @@ final class payment_callback_test extends \advanced_testcase {
 
         $this->assertFalse($gateway->verify_callback($payload),
             'a secret of only whitespace is a misconfiguration, not a secret');
+        $this->assertDebuggingCalled('local_sentientia_cart: airpay_secret is not configured; '
+            . 'refusing to verify a payment callback.', DEBUG_NORMAL);
     }
 
     // ── the normal path still works ──────────────────────────────────────

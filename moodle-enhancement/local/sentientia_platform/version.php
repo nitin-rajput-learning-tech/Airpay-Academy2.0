@@ -84,14 +84,15 @@ $plugin->component = 'local_sentientia_platform';
 // 2026101500 - claude/eval-followups merged: the ADR-032 framework code it wrote as 2026100701 (the PRESERVE sequence
 // floor that never lowers a counter, step::target_children() + runner::preflight_target_children(), row-bounded
 // accepted_reasons "<feature>:<code><=<rows>", customer::of_tenant()). No schema change; the upgrade step only records it.
-$plugin->version   = 2026101500;  // eval-followups framework code (on top of 2026100903 feature_flags state in \core\di)
+// 2026111300 - decision A5: audit_log::tenant_actions() lists a row with no real actor (userid 0, e.g. the payment gateway callback's order_paid, or the guest user) under its related user's tenant (never when that user is the guest, nor, for a scoped caller, a cross-tenant principal). No schema change.
+$plugin->version   = 2026111300;  // A5 actor-less audit rows (on top of 2026101500 eval-followups framework code)
 // 2026100802:  // Moodle 5.3 compat FX-16: PWA start_url -> /my/ (on top of 2026100801 FX-12 compat\user_api)
 // 2026092500 - ADR-031: local/sentientia_platform:crosstenant + tenant::is_cross_tenant/scope_path/require_same_tenant_user
 // 2026092400 - tests/exception_strings_test.php: platform guard - core-resolved exception keys must exist (N5)
 // 2026092200: tenant::path_descendant_filter() + DB-level path-boundary regression suite  // Phase 2.1: customer::current() de-hardwired via tenant_registry (dormant while legacy allow-list ON)
 $plugin->requires  = 2024100700;  // Moodle 4.5+: feature_flags uses the core DI container and clock (4.4+); Sentientia runs on 5.1/5.2/5.3
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.13.0';  // +eval-followups framework code: sequence floor, target_children, row-bounded acceptances, customer::of_tenant() (1.12.0: Stage B parity tooling; 1.11.x: compat, PWA start_url)
+$plugin->release   = '1.13.1';  // 1.13.1: tenant_actions() keeps actor-less rows (decision A5). 1.13.0: +eval-followups framework code: sequence floor, target_children, row-bounded acceptances, customer::of_tenant() (1.12.0: Stage B parity tooling; 1.11.x: compat, PWA start_url)
 // 1.9.0: +ADR-031 cross-tenant authority
 // 1.8.0: +ADR-017 Phase 0 user_type schema (5 tables)
 // Release history

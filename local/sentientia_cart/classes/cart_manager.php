@@ -492,6 +492,7 @@ class cart_manager {
      *    refunded; and admin_new_order to the site admins (get_admins()), with
      *    a refund-due line naming the order and the withheld course ids, and
      *    the per-line amounts to refund (for review), each in the admin's own language
+     * 6. After the commit, triggers event\order_paid for the audit trail (decision A5, 2026-11-12)
      *
      * The refund itself is manual (refund(), a PARTIAL refund of the withheld
      * lines: a full refund also unenrols the buyer from the granted ones).
@@ -599,7 +600,12 @@ class cart_manager {
             return false;  // unreachable; rollback rethrows
         }
 
-        // 6. After the commit: the invoice, in its own transaction. Never throws.
+        // 6. The audit trail (decision A5, 2026-11-12): the order_paid event the platform's audit log lists. After the
+        // commit, so the log never records a payment that rolled back; the replay and refusal paths above return or
+        // throw before reaching it.
+        event\order_paid::create_from_order($cart, count($withheld))->trigger();
+
+        // 7. After the commit: the invoice, in its own transaction. Never throws.
         self::issue_after_payment($cart);
         return true;
     }
@@ -806,6 +812,10 @@ class cart_manager {
             $transaction->rollback($e);
             return false;
         }
+
+        // The audit trail (decision A5, 2026-11-12): the refund_processed event the platform's audit log lists. After
+        // the commit, like order_paid; every refused refund threw before the transaction began.
+        event\refund_processed::create_from_refund($cart, $ledgerid, $amount, $initiatedby)->trigger();
 
         // GST credit note (2026-10-14, spec section 7): after the refund has committed, the same way an invoice is
         // issued after a payment. It is created due and issued in its own transaction; a failure never reaches the

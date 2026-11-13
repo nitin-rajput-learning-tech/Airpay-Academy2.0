@@ -127,6 +127,11 @@ class provider implements
             'timemodified'    => 'privacy:metadata:local_sentientia_cart_credits:timemodified',
         ], 'privacy:metadata:local_sentientia_cart_credits');
 
+        // Decision A5 (2026-11-12): the order_paid and refund_processed events reach the logstore plugin type
+        // (logstore_standard and any other enabled store), which exports and deletes its own rows; the plugin only
+        // names the link. logstore is a plugin type (a tool_log subplugin), not a core subsystem.
+        $collection->add_plugintype_link('logstore', [], 'privacy:metadata:logstore');
+
         return $collection;
     }
 

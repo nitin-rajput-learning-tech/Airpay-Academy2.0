@@ -24,7 +24,9 @@ defined('MOODLE_INTERNAL') || die();
  *
  *   audit_log::tenant_actions(int $tenantroot, int $from, int $to): array
  *     Everything that happened inside a tenant (joined with the user
- *     table's open_path so the filter works across plugins).
+ *     table's open_path so the filter works across plugins). A row with
+ *     no real actor (userid 0 or the guest user, e.g. the payment
+ *     gateway callback) belongs to its related user's tenant.
  *
  * Implementation notes:
  *   - We read from `logstore_standard_log` only. We do not write — the
@@ -52,7 +54,10 @@ class audit_log {
         // Role / permission changes.
         '\core\event\role_assigned',
         '\core\event\role_unassigned',
-        '\core\event\role_capabilities_updated',
+        // A role's permissions changing fires capability_assigned / capability_unassigned (since Moodle 3.8).
+        // role_capabilities_updated is deprecated and never fires, so listing it audited nothing (2026-11-13).
+        '\core\event\capability_assigned',
+        '\core\event\capability_unassigned',
         '\core\event\role_created',
         '\core\event\role_deleted',
 
@@ -197,13 +202,50 @@ class audit_log {
      * stays visible, what they did elsewhere does not (adversarial review S4,
      * 2026-09-25). Cross-tenant callers see every row, as before.
      *
+     * A row with no real actor is selected by its RELATED user's open_path
+     * instead (decision A5, 2026-11-13). "No real actor" means userid 0 (a
+     * request run by no one: the payment gateway's callback.php runs with
+     * NO_MOODLE_COOKIES, so cart_manager::mark_paid() logs order_paid with
+     * userid 0 and the buyer as relateduserid) or the guest user
+     * ($CFG->siteguest: one site-wide account, so its own open_path says
+     * nothing about a tenant). Such a row is in tenant N's trail when its
+     * related user is at /N or below it. One with no related user, a related
+     * user outside /N, or the guest as related user is in no tenant's trail.
+     * For a scoped caller, one whose related user is a cross-tenant principal
+     * is left out too: the related user stands in for the actor here, and a
+     * principal's own activity is not a scoped caller's to read (S4, as in
+     * actions_by_user()). Cross-tenant callers see those rows. (Not changed
+     * here: a real-actor row in which a principal acts on themselves still
+     * passes the actor rule above.)
+     *
+     * Before this, an inner JOIN on the actor dropped every userid 0 row (no
+     * user has id 0), so an order paid through the gateway never reached its
+     * tenant's trail; a guest row showed only if the guest account's own
+     * open_path sat under the tenant, whoever it was about.
+     *
+     * Reach: there is no eventname filter, so this covers EVERY actor-less
+     * row, not only order_paid. Core paths found by reading the Moodle 5.1
+     * code (not seen on a running site): a forgotten-password reset logs
+     * user_password_updated with userid 0 (login/lib.php sets the password
+     * before complete_user_login()); a login whose stored hash is a legacy
+     * bcrypt hash (password_is_legacy_hash(), as a Moodle 4.1 import would
+     * carry) is rehashed inside authentication and logs the same event with
+     * userid 0, once per user; self-registration logs user_created with
+     * userid 0. Other paths that log with no user set (for example CLI
+     * scripts) were not checked one by one. The result is capped at 1000
+     * rows, newest first, so a burst of actor-less rows inside the window
+     * (such as first logins after a data import) can push older real-actor
+     * rows out. Whether to limit the actor-less rows to SENSITIVE_EVENTS is
+     * open (for Nitin).
+     *
      * @throws \required_capability_exception without viewreports
      * @throws \moodle_exception error_outoftenant for another tenant, or a caller with none
      */
     public static function tenant_actions(int $tenantroot, int $from, int $to): array {
-        global $DB;
+        global $CFG, $DB;
         $actorscope = '';
         $actorparams = [];
+        $crossids = [];
         if (!tenant::is_cross_tenant()) {
             require_capability('moodle/site:viewreports', \context_system::instance());
             $viewerroot = tenant::root_for_current_user();
@@ -220,20 +262,36 @@ class audit_log {
         }
         $tenant_path_exact  = '/' . $tenantroot;
         $tenant_path_prefix = '/' . $tenantroot . '/%';
+        // Actor-less rows (see the docblock): userid 0 and the guest user. A real actor is anyone else, and
+        // keeps the actor rule above unchanged. Distinct parameter prefixes: Moodle refuses a named
+        // parameter used twice in one query.
+        $guestid = (int) ($CFG->siteguest ?? 0);
+        $noactorids = array_values(array_unique([0, $guestid]));
+        [$realsql, $realparams] = $DB->get_in_or_equal($noactorids, SQL_PARAMS_NAMED, 'tnreal', false);
+        [$noactsql, $noactparams] = $DB->get_in_or_equal($noactorids, SQL_PARAMS_NAMED, 'tnnoact');
+        [$relsql, $relparams] = tenant::path_descendant_filter('/' . $tenantroot, 'ru', 'open_path', 'tnactless');
+        // In an actor-less row the related user stands in for the actor, so it must be one of the
+        // tenant's own people: never the guest (its open_path says nothing about a tenant), and for a
+        // scoped caller never a cross-tenant principal, whose own activity is not a scoped caller's to
+        // read (S4; $crossids stays empty for a cross-tenant caller, who sees these rows).
+        $notrelated = array_values(array_unique(array_merge([$guestid], $crossids)));
+        [$nrsql, $nrparams] = $DB->get_in_or_equal($notrelated, SQL_PARAMS_NAMED, 'tnxr', false);
         $rows = $DB->get_records_sql(
             "SELECT l.id, l.eventname, l.action, l.target,
                     l.timecreated, l.userid AS actor_userid,
                     l.relateduserid, l.contextlevel
                FROM {logstore_standard_log} l
-               JOIN {user} u ON u.id = l.userid
+          LEFT JOIN {user} u ON u.id = l.userid
           LEFT JOIN {user} ru ON ru.id = l.relateduserid
               WHERE l.timecreated BETWEEN :f AND :t
-                AND (u.open_path = :tn_exact OR u.open_path LIKE :tn_prefix)
-                    $actorscope
+                AND ((l.userid $realsql
+                      AND (u.open_path = :tn_exact OR u.open_path LIKE :tn_prefix)
+                          $actorscope)
+                     OR (l.userid $noactsql AND l.relateduserid $nrsql AND $relsql))
            ORDER BY l.timecreated DESC",
             array_merge(['f' => $from, 't' => $to,
              'tn_exact' => $tenant_path_exact,
-             'tn_prefix' => $tenant_path_prefix], $actorparams),
+             'tn_prefix' => $tenant_path_prefix], $actorparams, $realparams, $noactparams, $nrparams, $relparams),
             0, 1000);
         return array_values($rows);
     }

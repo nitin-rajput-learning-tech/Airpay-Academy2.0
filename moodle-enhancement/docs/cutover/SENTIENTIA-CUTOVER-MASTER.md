@@ -51,6 +51,23 @@ under *Manage enrol plugins* (leave it disabled). **Rollback:** redeploy the pre
 (the upgrade only ADDED empty tables + dormant settings — safe to leave even on rollback).
 Detailed deploy steps: `moodle-enhancement/DEPLOYMENT-RUNBOOK.md`.
 
+**Config check: `logstore_standard | logguests` must stay `1` (decision A5 audit trail).**
+`local/sentientia_cart/callback.php` runs with no logged-in user and calls `cart_manager::mark_paid()`,
+which triggers the `order_paid` audit event. logstore_standard drops events from a not-logged-in or
+guest user when `logguests` is 0 (`is_event_ignored()`), and the audit log reads only that store, so
+paid orders would never reach it. Read-only check, on UAT and again on live, as the web server user
+(`<dirroot>` is the folder that holds `admin/` and `public/`). `cfg.php` reads through `get_config()`,
+so it also shows a value forced in `config.php`, which a database query would miss:
+```
+php <dirroot>/admin/cli/cfg.php --component=logstore_standard --name=logguests
+php <dirroot>/admin/cli/cfg.php --component=tool_log --name=enabled_stores
+```
+Pass: the first prints `1`, or exits 3 with "No such configuration variable found." (nothing stored;
+the store then uses 1), and the second prints a list that includes `logstore_standard`. Stop and fix
+the setting before any payment is taken if `logguests` is `0`, or if `enabled_stores` does not list
+`logstore_standard` or exits 3 (no store loaded, no audit rows). Not yet checked on UAT or live
+(2026-11-13).
+
 ---
 
 ## Gate B — Tenant registry cutover  (`tenant_registry_legacy`)

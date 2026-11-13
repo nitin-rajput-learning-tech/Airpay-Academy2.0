@@ -67,10 +67,16 @@ class audit_log_test extends \advanced_testcase {
         foreach (audit_log::SENSITIVE_EVENTS as $eventname) {
             if (strpos($eventname, '\\core\\event\\') === 0) {
                 $this->assertTrue(class_exists($eventname), "$eventname is not a Moodle event class");
+                // A deprecated event class still exists but no longer fires: role_capabilities_updated sat in the
+                // list until 2026-11-13. Loading one calls debugging(), so this fails on it.
+                $this->assertDebuggingNotCalled();
             }
         }
         $this->assertContains('\\core\\event\\user_loggedinas', audit_log::SENSITIVE_EVENTS);
         $this->assertNotContains('\\core\\event\\user_loggedin_as', audit_log::SENSITIVE_EVENTS);
+        $this->assertContains('\\core\\event\\capability_assigned', audit_log::SENSITIVE_EVENTS);
+        $this->assertContains('\\core\\event\\capability_unassigned', audit_log::SENSITIVE_EVENTS);
+        $this->assertNotContains('\\core\\event\\role_capabilities_updated', audit_log::SENSITIVE_EVENTS);
     }
 
     public function test_tenant_actions_requires_admin_or_viewreports(): void {

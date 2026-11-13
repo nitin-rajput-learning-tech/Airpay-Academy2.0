@@ -30,9 +30,15 @@ class flag_session extends external_api {
         // ADR-031: and a reviewer with no tenant flags nothing.
         \local_sentientia_proctoring\session_manager::require_session_access((int) $s->costcenterid);
 
+        $wasflagged = ($s->status === 'flagged');
         $s->status = 'flagged';
         $s->timemodified = time();
         $DB->update_record('local_sentientia_proctor_sessions', $s);
+        if (!$wasflagged) {
+            // Audit trail (decision A5, 2026-11-12): a reviewer flagged the session by hand. Flagging a session that
+            // is already flagged changes nothing, so it logs nothing.
+            \local_sentientia_proctoring\event\session_flagged::create_from_session($s, 'manual')->trigger();
+        }
         return ['success' => true, 'status' => $s->status];
     }
     public static function execute_returns(): external_single_structure {

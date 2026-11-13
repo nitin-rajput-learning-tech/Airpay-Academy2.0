@@ -1,10 +1,10 @@
 # State Card — `local_airpay_cart`
 
 **Component:** `local_airpay_cart`
-**Version:** `2026101500` / `1.2.1`  (order-list UI pass 2026-10-15: Refund button, payment date, status in words, currency symbol; 2026101400 / 1.2.0 was GST tax invoices, credit notes and purchase receipts, 2026-10-14; was `2026052001` / `1.0.2` when this card was first written; see the dated sections below)
+**Version:** `2026111200` / `1.2.2`  (decision A5 audit events 2026-11-12: order_paid + refund_processed; 2026101500 / 1.2.1 was the order-list UI pass 2026-10-15: Refund button, payment date, status in words, currency symbol; 2026101400 / 1.2.0 was GST tax invoices, credit notes and purchase receipts, 2026-10-14; was `2026052001` / `1.0.2` when this card was first written; see the dated sections below)
 **Maturity:** `MATURITY_STABLE`
 **Status:** Live on airpay.academy. Course-commerce + invoicing.
-**Last refreshed:** 2026-10-07 (owner decisions, finance cluster: finance keys declared, withheld-line refund amounts, notifier in the recipient's language, dev masking; catalogue price source in the catalog card)
+**Last refreshed:** 2026-11-12 (decision A5: the order_paid and refund_processed audit events). Before that 2026-10-07 (owner decisions, finance cluster: finance keys declared, withheld-line refund amounts, notifier in the recipient's language, dev masking; catalogue price source in the catalog card)
 
 ---
 
@@ -626,3 +626,43 @@ Known and left alone: `amd/src/history.js` listens for `airpay-datatable:rows-re
 (it fires `airpay:datatable:rendered`), and reads `tr.dataset.orderid`, which it never sets, so the order # in the
 buyer's history is not a link to `return.php`. The Refund dialog's own title and labels are English literals in the
 script.
+
+## 2026-11-12 - decision A5: the two audit events the platform names (2026111200, release 1.2.2)
+
+`\local_sentientia_platform\audit_log::SENSITIVE_EVENTS` has listed `\local_sentientia_cart\event\order_paid` and
+`\local_sentientia_cart\event\refund_processed` since the audit dashboard was built, but neither class existed, so no
+payment and no refund ever reached the audit trail. Nitin approved building them on 2026-11-12 (decision A5 in
+`docs/cutover/NITIN-DECISIONS-2026-11-12.md`). No schema, capability or flag change; `local_sentientia_platform` is
+untouched.
+
+- `classes/event/order_paid.php` (crud u, LEVEL_OTHER, object `local_sentientia_cart_history`, system context: one
+  order can hold courses of several categories; relateduserid the buyer, userid whoever ran the request, 0 for the
+  gateway callback). `other`: `orderid`, `amount` (paise), `currency`, `withheld` (lines paid for but not enrolled).
+  Triggered once by `cart_manager::mark_paid()` after its transaction commits and before the invoice attempt; the
+  idempotent replay, a refused status and an imported order return or throw before it.
+- `classes/event/refund_processed.php` (same shape; userid the refund's `initiatedby`). `other`: `ledgerid`,
+  `orderid`, `amount` (paise, positive), `currency`, `status` (refunded | partial_refund). Triggered once per refund by
+  `cart_manager::refund()` after its transaction commits and before the credit note; every refused refund throws before
+  the transaction. The free-text reason is never carried, nor any billing detail. The paise amount is the caller's
+  amount rounded to two decimals first (`round(round(abs($amount), 2) * 100)`), the value the ledger's DECIMAL(14,2)
+  stores, so a `PARAM_FLOAT` with more decimals cannot log a paisa the ledger does not hold.
+- Privacy: the provider now links the `logstore` plugin type (`add_plugintype_link('logstore', ...)`, string
+  `privacy:metadata:logstore`, en + hi), as `tool_log` itself declares it. logstore is a plugin type (a `tool_log`
+  subplugin), not a core subsystem: a first draft used `add_subsystem_link('core_logstore', ...)`, which core's
+  `core_privacy` metadata test (`is_core_subsystem()`) would fail.
+- Strings: `eventorderpaid`, `eventrefundprocessed`, `privacy:metadata:logstore` (en + hi).
+- Tests (written, not run in this session): `tests/event/order_paid_test.php`, `tests/event/refund_processed_test.php`
+  - the real mark_paid() / refund() under `redirectEvents()`: fires once with the right objectid / relateduserid /
+  userid / context and paise amount; nothing on a replay, a refused status, an over-balance refund or an imported order.
+  Not covered: a rollback inside mark_paid() / refund() (a notifier or enrolment failure) triggering no event; there
+  is no seam to force one without a mock.
+
+Note: no production caller wraps mark_paid() or refund() in an outer transaction. If one did, the event would be
+triggered inside that outer transaction, but the standard log would still be correct: `tool_log`'s observer is
+registered `internal => false` (`admin/tool/log/db/events.php`), so Moodle buffers the event and the log row is
+written only after the outer transaction commits, and is dropped if it rolls back.
+
+Cutover requirement: an `order_paid` from the payment gateway's callback has userid 0 and runs not logged in
+(`callback.php`, `NO_MOODLE_COOKIES`). `logstore_standard` ignores events from a user who is not logged in, or is the
+guest, when `logstore_standard | logguests` is 0 (`store.php`, `is_event_ignored()`). The default is 1, so gateway
+payments are logged today; the setting must stay 1 on UAT and live, or gateway payments never reach the audit trail.

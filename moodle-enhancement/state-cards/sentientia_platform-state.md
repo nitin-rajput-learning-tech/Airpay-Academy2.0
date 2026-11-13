@@ -1216,3 +1216,83 @@ against the branch's "insert only" narrowing), and kit fixes.
   in writing" path; see ADR-032 "FINDING".
 - **Not run:** PHPUnit (every test above), `migration_parity_check.php` under a bootstrapped Moodle, MySQL 8.4 / RDS, the hop to 5.3
   (ADR-033), `shellcheck`, a real 4.5 to 5.x hop with the kit.
+
+---
+
+## 2026-11-13 - Decision A5: actor-less rows reach the tenant audit trail (1.13.0 -> 1.13.1, 2026111300)
+
+Decision A5 (approved by Nitin 2026-11-12) makes the four cart and proctoring entries of `audit_log::SENSITIVE_EVENTS` real
+events (`order_paid`, `refund_processed`, `session_flagged`, `review_submitted`; written in sentientia_cart and
+sentientia_proctoring, not here). This entry is the reader side.
+
+- **Defect.** `tenant_actions()` picked rows by the ACTOR's open_path through an inner `JOIN {user} u ON u.id = l.userid`.
+  `cart_manager::mark_paid()` runs from the gateway's `callback.php`, which sets `NO_MOODLE_COOKIES` and logs no one in, so
+  `order_paid` is logged with userid 0 (relateduserid = the buyer, system context, objecttable
+  `local_sentientia_cart_history`). No user has id 0, so every gateway payment was dropped from every tenant's trail.
+  `sensitive_actions()` was not affected: it LEFT JOINs both users and classes rows by the related user
+  (`filter_by_viewer_tenant()`).
+- **Change.** A row whose actor is userid 0 or the guest user (`$CFG->siteguest`) is selected by its RELATED user's open_path,
+  through `tenant::path_descendant_filter('/N', 'ru', 'open_path', 'tnactless')`. One with no related user, a related user
+  outside /N, a related user id with no user row, or the guest as related user, is in no tenant's trail (cross-tenant
+  callers included: it has no tenant). For a scoped caller, one whose related user is a cross-tenant principal
+  (`tenant::cross_tenant_userids()`) is left out as well: in an actor-less row the related user stands in for the actor,
+  and a principal's own activity is not a scoped caller's to read (S4, as in `actions_by_user()`); cross-tenant callers
+  see those rows. Every other row keeps the actor rule exactly, including the S4 `$actorscope` rule for scoped callers.
+  The actor JOIN became a LEFT JOIN; a real actor with no user row still matches nothing (its open_path is NULL). Caller
+  checks (viewreports, own tenant, `error_outoftenant`) unchanged.
+- **Reach (review round, 2026-11-13).** `tenant_actions()` has no eventname filter, so the related-user rule covers EVERY
+  actor-less row, not only `order_paid`. Core paths found by reading the Moodle 5.1 code, not seen on a running site: a
+  forgotten-password reset logs `user_password_updated` with userid 0 (`login/lib.php` sets the password before
+  `complete_user_login()`); a login whose stored hash is a legacy bcrypt hash (`password_is_legacy_hash()`, which a Moodle
+  4.1 import would carry) is rehashed inside authentication and logs the same event with userid 0, once per user;
+  self-registration logs `user_created` with userid 0. CLI paths were not checked one by one. The query keeps the newest
+  1000 rows, so a burst of such rows in the window (for example the first logins after the cutover import) can push older
+  real-actor rows out. **Open for Nitin:** limit the actor-less rows to `SENSITIVE_EVENTS`? (`user_password_updated` is on
+  that list, so that alone would not drop the rehash rows.)
+- **Deliberate tightening for the guest user.** Before, a guest row showed in tenant N's trail when the guest account's own
+  open_path sat under /N, whatever the row was about. Now it goes by the related user. Whether any imported guest account
+  carries an open_path is not checked.
+- **Other `logstore_standard_log` readers checked (none fixed):** `actions_by_user()` (one user's own actions by design);
+  `sentientia_analytics` `analytics_manager::get_funnel()` (actor JOIN, but counts course views, not these events) and
+  `predictive_engine` (login counts per user); `sentientia_notifications` `rule_engine` (per user + course activity check);
+  `sentientia_privacy` `privacy_manager` export (`WHERE userid = :uid`: a buyer's own export does not list order_paid rows
+  about them, since they are the related user; a privacy-export question, not a tenant view); `sentientia_request` BizLMS
+  importer (NOT EXISTS check on import); `sentientia_recompletion` bizlms `sources.php` / `mapper.php` and
+  `sentientia_courses` `enrolments_importer` / `course_tags_importer` (import sources); the bizlms guard and parity tools,
+  the seed and masking CLIs (write or count only); outside the plugins, `theme/sentientia/layout/dashboard.php` (per-tenant
+  `user_loggedin` counts through an actor JOIN, which always has an actor; the learner's own timeline). None is a tenant
+  view of these four events.
+- **No production caller.** A grep of both plugin trees finds no non-test caller of `tenant_actions()` or
+  `sensitive_actions()` (as noted for `tenant_actions()` on 2026-09-25), so no page shows the change today; it takes effect
+  for whatever audit page calls them next.
+- **Noticed, not changed (the task kept the actor rule exactly):** a cross-tenant principal's row is in tenant N's trail only
+  when the principal's own open_path sits under /N. Platform staff at /1 refunding or reviewing for a /177 user therefore
+  are not in `tenant_actions(177)` for any caller. Pinned as today's behaviour by the new S4 test; a decision for Nitin if it
+  should change. Also pre-existing and unchanged: a real-actor row in which a principal at /1 acts on themselves or on
+  another principal at /1 passes the `$actorscope` rule (its related user is "in" /1), and `filter_by_viewer_tenant()`
+  lets the same case through in `sensitive_actions()`; the actor-less arm now excludes principals, the real-actor arm
+  does not.
+- **Tests:** `tests/audit_log_tenant_scope_test.php` (`@group tenant_isolation`), six new methods; rows inserted straight
+  into `logstore_standard_log`, as the file's existing tests do. `log_row()` takes optional column overrides; new
+  `order_paid_row()`. The review round added `test_an_actor_less_row_about_a_principal_is_for_cross_tenant_readers_only`
+  (a principal's own gateway payment and forgotten-password reset: out for a scoped /1 reader, in for the site admin) and
+  an actor-less row about the guest to the guest test. **PHPUnit NOT run** (this session's rules: no PHPUnit; a Moodle
+  upgrade may be running locally). A throwaway harness (outside the repo) ran the new and the HEAD `tenant_actions()` on
+  in-memory SQLite with stubbed Moodle globals and a copy of `fix_sql_params()`'s named-parameter checks, replaying the
+  same scenarios: new 46/46; HEAD 38/46, failing exactly the actor-less rows that should now show (payments, the guest
+  rows by related user, the site admin's view of rows about principals). SQLite is not MySQL or MariaDB.
+- **Not verified:** the SQL on MySQL 8 or MariaDB (php -l only); the query plan on a large log table (the OR of two branches
+  is bounded by the `timecreated` window, as before); a real gateway callback writing the row. With
+  `logstore_standard/logguests` set to 0 the standard store ignores an event raised while nobody is logged in
+  (`is_event_ignored()`), so on such a site `order_paid` from the callback is never written at all (the default is 1).
+  No schema change, no upgrade step, no flag. Both trees identical.
+- **Local PHPUnit, 2026-11-13** (Moodle 5.1.3+, MariaDB 10.11, after `init.php`): `audit_log_tenant_scope_test` 14/14 and
+  `audit_log_test` 5/5 pass. The SQL therefore runs on MariaDB; MySQL 8 and the plan on a large log table are still not checked.
+- **Second dead entry in `SENSITIVE_EVENTS` (found by that run, fixed the same day).** The run's one notice was core's
+  deprecation `debugging()` for `\core\event\role_capabilities_updated`, loaded by
+  `test_every_core_event_in_the_list_is_a_real_event_class()`. Since Moodle 3.8 a role's permissions changing fires
+  `capability_assigned` / `capability_unassigned` instead, so the entry matched nothing and permission changes never
+  reached the sensitive report. The imported production log has 0 rows under any of the three names, so no history
+  depends on the old one. The entry is replaced by the two live events. The test now calls `assertDebuggingNotCalled()`
+  after each `class_exists()`, so a deprecated event name fails it instead of raising a notice. Same version (a
+  constant; no upgrade step).

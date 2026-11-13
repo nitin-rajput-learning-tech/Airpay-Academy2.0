@@ -118,3 +118,8 @@ $string['privacy:metadata:aws_rekognition'] = 'AWS Rekognition (identity face ma
 $string['privacy:metadata:aws_rekognition:photo'] = 'ID photo and selfie (deleted after match, only score retained)';
 $string['privacy:metadata:aws_s3'] = 'AWS S3 (recording storage)';
 $string['privacy:metadata:aws_s3:video'] = 'Video chunks of the exam attempt';
+$string['privacy:metadata:logstore'] ='A flagged session and a submitted review are recorded in the standard log: the session, the quiz, the candidate, the reviewer and the decision.';
+
+// Decision A5 (2026-11-12): the two audit events the platform's audit log lists.
+$string['eventsessionflagged']  = 'Proctored session flagged for review';
+$string['eventreviewsubmitted'] = 'Proctoring review submitted';

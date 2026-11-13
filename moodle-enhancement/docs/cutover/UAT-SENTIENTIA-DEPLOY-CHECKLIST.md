@@ -167,6 +167,20 @@ rehearsal that must pass before any live cutover conversation.
       until the Addendum-A cap + key exist)
 - [ ] KeKa webhook: do NOT register until the hardening batch lands (see task/session
       in flight); CSV HRMS path may be pointed at a staging export if desired
+- [ ] `logstore_standard | logguests` stays `1` (the default) and
+      `tool_log | enabled_stores` lists `logstore_standard` (decision A5 audit trail). The cart's
+      `callback.php` runs with no logged-in user and calls `cart_manager::mark_paid()`,
+      which triggers `order_paid`; logstore_standard drops such events when
+      `logguests` is 0, so paid orders would never reach the audit log. Read-only
+      check on the LMS box (dirroot and user as in the Stage A notes above; `cfg.php`
+      reads through `get_config()`, so it also shows a value forced in `config.php`):
+      `sudo -u www-data php /var/www/html/moodle5.2/admin/cli/cfg.php --component=logstore_standard --name=logguests`
+      `sudo -u www-data php /var/www/html/moodle5.2/admin/cli/cfg.php --component=tool_log --name=enabled_stores`
+      Pass: `1` (or exit 3 "No such configuration variable found.": nothing stored,
+      the store uses 1), and a list that includes `logstore_standard`. Anything else
+      (`0`, the store not listed, exit 3 on the second command): stop and fix it
+      before any test payment. Same check on live at cutover. Not yet run on UAT
+      (2026-11-13).
 
 ## 6. Recorded asks back to DevOps/Cloud.in (copy into the ticket)
 

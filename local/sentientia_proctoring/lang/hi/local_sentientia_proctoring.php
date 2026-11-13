@@ -123,3 +123,8 @@ $string['privacy:metadata:aws_rekognition']                 = 'AWS Rekognition (
 $string['privacy:metadata:aws_rekognition:photo']           = 'ID फ़ोटो और सेल्फ़ी (मैच के बाद हटा दिए जाते हैं, केवल स्कोर बरकरार)';
 $string['privacy:metadata:aws_s3']                          = 'AWS S3 (रिकॉर्डिंग संग्रहण)';
 $string['privacy:metadata:aws_s3:video']                    = 'परीक्षा प्रयास के वीडियो चंक';
+$string['privacy:metadata:logstore']                        ='फ़्लैग किया गया सत्र और सबमिट की गई समीक्षा मानक लॉग में दर्ज होते हैं: सत्र, क्विज़, उम्मीदवार, समीक्षक और निर्णय।';
+
+// Decision A5 (2026-11-12): प्लेटफ़ॉर्म के ऑडिट लॉग में सूचीबद्ध दो ऑडिट इवेंट।
+$string['eventsessionflagged']  = 'प्रॉक्टर्ड सत्र समीक्षा के लिए फ़्लैग किया गया';
+$string['eventreviewsubmitted'] = 'प्रॉक्टरिंग समीक्षा सबमिट की गई';

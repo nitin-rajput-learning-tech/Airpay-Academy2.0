@@ -1,10 +1,10 @@
 # State Card — `local_airpay_proctoring`
 
 **Component:** `local_airpay_proctoring`
-**Version:** `2026052201` / `1.0.3`  (+Goal A Bug #10 WS-contract alignment)
+**Version:** `2026111200` / `1.0.6`  (decision A5 audit events, 2026-11-12; the previous version was `2026110300` / `1.0.5`, the 2026-11-03 full-name user search, which has no dated section here; see the dated sections below)
 **Maturity:** `MATURITY_STABLE`
 **Status:** Live on airpay.academy. Engine for `quizaccess_airpay_proctoring`.
-**Last refreshed:** 2026-05-24 (P1 state-card pass)
+**Last refreshed:** 2026-11-12 (decision A5: session_flagged + review_submitted events)
 
 ---
 
@@ -41,7 +41,7 @@ None registered.
 
 ```
 local/airpay_proctoring/
-├── version.php                                   2026052201 / 1.0.3
+├── version.php                                   2026111200 / 1.0.6
 ├── README.md
 ├── lib.php
 ├── admin.php                                      Admin operations
@@ -55,6 +55,7 @@ local/airpay_proctoring/
 │   ├── analyzer/                                  AI / heuristic analyzers
 │   ├── external/                                  WS endpoints (attempt + review)
 │   ├── task/                                      Scheduled tasks (finalize + purge)
+│   ├── event/                                     session_flagged + review_submitted (2026-11-12)
 │   └── privacy/                                   GDPR / DPDP
 ├── db/
 │   ├── install.xml                                5 tables
@@ -66,23 +67,29 @@ local/airpay_proctoring/
 ├── lang/
 │   ├── en/local_airpay_proctoring.php
 │   └── hi/local_airpay_proctoring.php
-└── (no tests/ directory yet)
+└── tests/
+    ├── tenant_scope_test.php                      ADR-031 tenant isolation (2026-09-25)
+    └── event/                                     session_flagged_test + review_submitted_test (2026-11-12)
 ```
 
 ## Tests
 
-None at the plugin level. Coverage is on
-`quizaccess_airpay_proctoring` (13 methods covering the mod_quiz
-integration). PHPUnit for the engine layer is on the P1 backlog.
+At the plugin level: `tests/tenant_scope_test.php` (`@group tenant_isolation`, ADR-031: queue badge, session
+access, flag notification recipient) and, since 2026-11-12, `tests/event/session_flagged_test.php` and
+`tests/event/review_submitted_test.php`, which drive `session_manager::finalize()`, `submit_review()` and the
+`flag_session` web service. The mod_quiz integration is covered on `quizaccess_airpay_proctoring` (13 methods).
 
 ## Open items
 
-- [ ] PHPUnit for `session_manager` + `analyzer/` (priority)
+- [ ] PHPUnit for `session_manager` + `analyzer/` - partly done: `finalize()`, `submit_review()`,
+      `require_session_access()` and `flag_recipient()` are covered (tenant_scope_test + tests/event); the analyzer
+      scoring, `start_session()` edge cases, `record_event()` / `register_chunk()` and the purge task are not
 - [ ] S3 chunk-replay tool for reviewers
 - [ ] Live face-detection feedback in `proctor.js` (today: post-attempt
       AI only)
 - [ ] Per-tenant identity-check tier (light / heavy)
-- [ ] Audit trail of reviewer overrides
+- [x] Audit trail of reviewer overrides (2026-11-12, decision A5: the `review_submitted` and `session_flagged`
+      events reach the standard log; see the dated section below)
 - [ ] Behat coverage of the consent flow
 - [ ] Inline AI verdict on the reviewer screen (today: queue-row badge
       only — clicking opens analyzer detail)
@@ -129,3 +136,35 @@ Tests: `tests/tenant_scope_test.php` (`@group tenant_isolation`).
 ## 2026-09-25 - ADR-031 wave-1 review follow-up (no version change; stays 2026092500)
 
 The flag notification (candidate user id, quiz id, risk score) went to the one site-wide `default_reviewer` whatever the session's tenant, so a reviewer in one tenant was told about another tenant's candidates, whose sessions they cannot open. `session_manager::flag_recipient()` now sends it only when the default reviewer passes `require_session_access()` for that session; otherwise nobody is notified. The shipped default (userid 2, the site admin) is unchanged. Per-tenant reviewer routing, so that other tenants' flags reach someone, is still open and needs a settings design. Test: `test_flag_notification_goes_only_to_a_reviewer_of_that_tenant`.
+
+## 2026-11-12 - decision A5: the two audit events the platform names (1.0.6, 2026111200)
+
+`\local_sentientia_platform\audit_log::SENSITIVE_EVENTS` has listed `\local_sentientia_proctoring\event\session_flagged`
+and `\local_sentientia_proctoring\event\review_submitted` since the audit dashboard was built, but neither class
+existed, so no flag and no verdict ever reached the audit trail. Nitin approved building them on 2026-11-12
+(decision A5 in `docs/cutover/NITIN-DECISIONS-2026-11-12.md`). No schema, capability or flag change;
+`local_sentientia_platform` is untouched.
+
+- `classes/event/session_flagged.php` (crud u, LEVEL_OTHER, object `local_sentientia_proctor_sessions`, relateduserid
+  the candidate). `other`: `quizid`, `source` (auto | manual). Triggered once, after the flag is stored:
+  `session_manager::finalize()` when the analyzer's verdict is not clean (source auto), and `external\flag_session` when
+  a reviewer flags a session that was not already flagged (source manual). A clean finish, a finalize() replay and a
+  re-flag trigger nothing.
+- `classes/event/review_submitted.php` (same shape; userid the reviewer). `other`: `reviewid`, `quizid`, `decision`
+  (clean | warn | fail). Triggered once by `session_manager::submit_review()` after the review row and the reviewed
+  status are stored; an unknown decision throws before anything is written. The reviewer's note is never carried.
+- Context: `session_manager::event_context()` - the quiz's module context, or the system context when the quiz is gone
+  (or quizid is 0). No risk score, name or free text in either event.
+- Privacy: the provider now links the `logstore` plugin type (`add_plugintype_link('logstore', ...)`, string
+  `privacy:metadata:logstore`, en + hi), as `tool_log` itself declares it. logstore is a plugin type (a `tool_log`
+  subplugin), not a core subsystem: a first draft used `add_subsystem_link('core_logstore', ...)`, which core's
+  `core_privacy` metadata test (`is_core_subsystem()`) would fail.
+- Strings: `eventsessionflagged`, `eventreviewsubmitted`, `privacy:metadata:logstore` (en + hi).
+- Tests (written, not run in this session): `tests/event/session_flagged_test.php`,
+  `tests/event/review_submitted_test.php` - real code paths under `redirectEvents()`: fires once with the right
+  objectid / relateduserid / userid / context; nothing on a clean finish, a replay, a re-flag, an unknown decision,
+  a non-owner finalize or an out-of-tenant reviewer. The system-context fallback is tested both for a session with
+  no quiz (quizid 0) and for a quiz deleted with `course_delete_module()` while the attempt was open.
+
+Open: `flag_session` still writes `timemodified` when the session is already flagged (no event, no status change);
+`submit_review()` does not check that the session is flagged before accepting a verdict (unchanged behaviour).

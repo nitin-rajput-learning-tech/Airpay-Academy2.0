@@ -451,3 +451,7 @@ $string['gateway_name_airpay'] = 'Airpay';
 $string['gateway_name_manual'] = 'Manual payment';
 // UI pass 2026-10-15: the Refund button of an order row on the admin orders page.
 $string['refund_button'] = 'Refund';
+// Decision A5 (2026-11-12): the two audit events the platform's audit log lists, and the standard log they reach.
+$string['eventorderpaid'] = 'Order paid';
+$string['eventrefundprocessed'] = 'Refund processed';
+$string['privacy:metadata:logstore'] ='A paid order and a processed refund are recorded in the standard log: the order, the buyer, the user who made the refund, the amount and the currency.';

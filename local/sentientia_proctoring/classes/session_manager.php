@@ -75,6 +75,26 @@ class session_manager {
         return $reviewerid;
     }
 
+    /**
+     * The context the audit events of a session are logged in (decision A5, 2026-11-12): the quiz's module context
+     * when the quiz still exists, else the system context (a quiz deleted since the attempt, or a session with no quiz).
+     *
+     * @param int $quizid local_sentientia_proctor_sessions.quizid, a quiz instance id
+     * @return \context
+     */
+    public static function event_context(int $quizid): \context {
+        if ($quizid > 0) {
+            $cm = get_coursemodule_from_instance('quiz', $quizid, 0, false, IGNORE_MISSING);
+            if ($cm) {
+                $context = \context_module::instance((int) $cm->id, IGNORE_MISSING);
+                if ($context) {
+                    return $context;
+                }
+            }
+        }
+        return \context_system::instance();
+    }
+
     /** Open a session — called when user clicks Start on a proctored quiz. */
     public static function start_session(int $userid, int $quizid): \stdClass {
         global $DB, $USER;
@@ -317,6 +337,11 @@ class session_manager {
         }
 
         $DB->update_record('local_sentientia_proctor_sessions', $session);
+        if ($session->status === 'flagged') {
+            // Audit trail (decision A5, 2026-11-12), once the flag is stored. A clean session is not flagged, and an
+            // already flagged or reviewed one returned above.
+            event\session_flagged::create_from_session($session, 'auto')->trigger();
+        }
         return $session;
     }
 
@@ -337,12 +362,16 @@ class session_manager {
             'note'            => $note,
             'timecreated'     => time(),
         ];
-        $DB->insert_record('local_sentientia_proctor_reviews', $review);
+        $reviewid = (int) $DB->insert_record('local_sentientia_proctor_reviews', $review);
 
         $session->human_decision = $decision;
         $session->status         = 'reviewed';
         $session->timemodified   = time();
         $DB->update_record('local_sentientia_proctor_sessions', $session);
+
+        // Audit trail (decision A5, 2026-11-12), once the review and the session's new status are stored. An unknown
+        // decision threw above, before anything was written.
+        event\review_submitted::create_from_review($session, $reviewid, $reviewerid)->trigger();
 
         notifier::session_reviewed($session);
         return $session;

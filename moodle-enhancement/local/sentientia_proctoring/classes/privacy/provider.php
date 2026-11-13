@@ -30,6 +30,10 @@ class provider implements
         $collection->add_external_location_link('aws_s3',
             ['video' => 'privacy:metadata:aws_s3:video'],
             'privacy:metadata:aws_s3');
+        // Decision A5 (2026-11-12): the session_flagged and review_submitted events reach the logstore plugin type
+        // (logstore_standard and any other enabled store), which exports and deletes its own rows; the plugin only
+        // names the link. logstore is a plugin type (a tool_log subplugin), not a core subsystem.
+        $collection->add_plugintype_link('logstore', [], 'privacy:metadata:logstore');
         return $collection;
     }
 
