@@ -124,13 +124,31 @@ final class privacy_supplement_test extends \core_privacy\tests\provider_testcas
     }
 
     /**
-     * Run a deletion the way process_data_request_task does: approve the
-     * collection by iterating it, then hand it to the privacy manager.
+     * A context list exactly as defect 1 leaves it after a discovery query
+     * that returned duplicate rows: set_contextids() keeps array_unique()'s
+     * keys, so [A, A, B] becomes [0 => A, 2 => B].
+     *
+     * Seeded directly because add_from_sql() merges with array_merge(),
+     * which renumbers: adding A, A, B one call at a time leaves no hole. Real
+     * holes come from duplicates inside one call (logstore_standard returns a
+     * row per log row) or across a merge (report_stats' three tables).
+     *
+     * @param string $component
+     * @param int[] $contextids
+     * @return contextlist
      */
-    private function process_deletion(contextlist_collection $collection, \stdClass $user): void {
-        $approved = api::get_approved_contextlist_collection_for_collection(
-            $collection, $user, api::DATAREQUEST_TYPE_DELETE);
-        (new \core_privacy\manager())->delete_data_for_user($approved);
+    private function list_with_holes(string $component, array $contextids): contextlist {
+        $list = new class extends contextlist {
+            /**
+             * @param int[] $contextids
+             */
+            public function seed(array $contextids): void {
+                $this->set_contextids($contextids);
+            }
+        };
+        $list->set_component($component);
+        $list->seed($contextids);
+        return $list;
     }
 
     /**
@@ -154,11 +172,7 @@ final class privacy_supplement_test extends \core_privacy\tests\provider_testcas
         $a = \context_course::instance($this->getDataGenerator()->create_course()->id);
         $b = \context_course::instance($this->getDataGenerator()->create_course()->id);
 
-        $list = new contextlist();
-        $list->set_component('tool_log');
-        $list->add_from_sql((string) $a->id, []);
-        $list->add_from_sql((string) $a->id, []);
-        $list->add_from_sql((string) $b->id, []);
+        $list = $this->list_with_holes('tool_log', [$a->id, $a->id, $b->id]);
 
         $iterated = 0;
         foreach ($list as $unused) {
@@ -209,19 +223,20 @@ final class privacy_supplement_test extends \core_privacy\tests\provider_testcas
         }
 
         // Core's tool_log list as defect 1 leaves it: [C1, C1, C2, C3].
-        $corelog = new contextlist();
-        $corelog->set_component('tool_log');
-        foreach ([1, 1, 2, 3] as $i) {
-            $corelog->add_from_sql((string) $c[$i]->id, []);
-        }
         $collection = new contextlist_collection($subject->id);
-        $collection->add_contextlist($corelog);
+        $collection->add_contextlist($this->list_with_holes('tool_log',
+            [$c[1]->id, $c[1]->id, $c[2]->id, $c[3]->id]));
 
         $ours = provider::get_contexts_for_userid($subject->id);
         $ours->set_component('local_sentientia_privacy');
         $collection->add_contextlist($ours);
 
-        $this->process_deletion($collection, $subject);
+        $approved = api::get_approved_contextlist_collection_for_collection(
+            $collection, $subject, api::DATAREQUEST_TYPE_DELETE);
+        $this->assertSame([(int) $c[1]->id], array_map('intval', array_values(
+            $approved->get_contextlist_for_component('tool_log')->get_contextids())),
+            'core approves only the first context: the defect this supplement exists for');
+        (new \core_privacy\manager())->delete_data_for_user($approved);
 
         $this->assertSame(0, $this->actor_logs($subject->id), 'every log row the subject performed is gone');
         $this->assertSame(0, $this->stats_rows($subject->id), 'every statistics row of the subject is gone');
@@ -389,6 +404,10 @@ final class privacy_supplement_test extends \core_privacy\tests\provider_testcas
 
     // ------------------------------------------- userlist and context-wide
 
+    /**
+     * The userlist route (context expiry): the subject's rows in that context
+     * go, their rows elsewhere and other users' rows stay.
+     */
     public function test_users_in_context_and_userlist_delete(): void {
         global $DB;
         $gen = $this->getDataGenerator();
@@ -421,6 +440,10 @@ final class privacy_supplement_test extends \core_privacy\tests\provider_testcas
         $this->assertSame(3, $this->stats_rows($other->id));
     }
 
+    /**
+     * The context-wide route: everything in that course goes, the next course
+     * is untouched.
+     */
     public function test_delete_for_all_users_in_a_course_context(): void {
         global $DB;
         $gen = $this->getDataGenerator();
@@ -493,7 +516,6 @@ final class privacy_supplement_test extends \core_privacy\tests\provider_testcas
      */
     public function test_the_dpdp_panel_never_calls_the_supplement(): void {
         $method = new \ReflectionMethod(privacy_manager::class, 'erasure_providers');
-        $method->setAccessible(true);
         $this->assertArrayNotHasKey('local_sentientia_privacy', $method->invoke(null));
     }
 }

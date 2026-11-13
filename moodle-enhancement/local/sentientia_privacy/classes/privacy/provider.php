@@ -69,6 +69,12 @@ class provider implements
     /** @var string[] Per-user statistics tables written by report_stats. */
     private const STATS_TABLES = ['stats_user_daily', 'stats_user_weekly', 'stats_user_monthly'];
 
+    /**
+     * Own tables, plus the core data the ADR-035 supplement reaches.
+     *
+     * @param collection $collection
+     * @return collection
+     */
     public static function get_metadata(collection $collection): collection {
 
         $collection->add_database_table(
@@ -175,6 +181,12 @@ class provider implements
         return $contextlist;
     }
 
+    /**
+     * Own tables in the system context, plus the subjects of the supplement's
+     * logs (any context) and statistics and completions (course context).
+     *
+     * @param userlist $userlist
+     */
     public static function get_users_in_context(userlist $userlist): void {
         $context = $userlist->get_context();
 
@@ -201,6 +213,11 @@ class provider implements
         }
     }
 
+    /**
+     * Own tables (system context), then the supplement.
+     *
+     * @param approved_contextlist $contextlist
+     */
     public static function export_user_data(approved_contextlist $contextlist): void {
         global $DB;
         $userid = $contextlist->get_user()->id;
@@ -286,6 +303,12 @@ class provider implements
     // retained when a user's other data is erased (same stance as
     // tool_dataprivacy). Each method then runs the ADR-035 supplement.
 
+    /**
+     * Context expiry: own tables kept; the supplement deletes everyone's logs,
+     * statistics and completions in the context, as core does.
+     *
+     * @param \context $context
+     */
     public static function delete_data_for_all_users_in_context(\context $context): void {
         // Core's providers already do exactly this for the context; this is a
         // second, normally empty pass with core's own helpers.
@@ -298,6 +321,12 @@ class provider implements
         }
     }
 
+    /**
+     * A deletion request: own tables kept; the supplement deletes the
+     * subject's own logs, statistics and completions in the approved contexts.
+     *
+     * @param approved_contextlist $contextlist
+     */
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
         $user = $contextlist->get_user();
         // get_contextids(), never foreach over the list: an approved list built
@@ -326,12 +355,20 @@ class provider implements
             \report_stats\privacy\provider::delete_data_for_user(
                 new approved_contextlist($user, 'report_stats', $chunk));
         }
-        foreach ($courses as $courseid) {
-            // What core_course runs for the courses it does find.
+        foreach (self::courses_with_completion((int) $user->id, array_values($courses)) as $courseid) {
+            // What core_course runs for the courses it does find. Only courses
+            // where the subject has completion rows: a course in the list for
+            // its logs alone would cost six empty queries.
             \core_completion\privacy\provider::delete_completion($user, $courseid);
         }
     }
 
+    /**
+     * The userlist route: own tables kept; the supplement deletes the listed
+     * users' logs, statistics and completions in the one context.
+     *
+     * @param approved_userlist $userlist
+     */
     public static function delete_data_for_users(approved_userlist $userlist): void {
         if (empty($userlist->get_userids())) {
             return;
@@ -412,6 +449,28 @@ class provider implements
                 "id {$insql} AND contextlevel = :courselevel", $params, '', 'id, instanceid'));
         }
         return $courses;
+    }
+
+    /**
+     * The courses, among those given, where the user has a course completion
+     * or a completion-criteria row.
+     *
+     * @param int $userid
+     * @param int[] $courseids
+     * @return int[]
+     */
+    private static function courses_with_completion(int $userid, array $courseids): array {
+        global $DB;
+        $found = [];
+        foreach (array_chunk($courseids, self::CHUNK) as $chunk) {
+            [$insql, $params] = $DB->get_in_or_equal($chunk, SQL_PARAMS_NAMED, 'cid');
+            $params['userid'] = $userid;
+            foreach (['course_completions', 'course_completion_crit_compl'] as $table) {
+                $found = array_merge($found, $DB->get_fieldset_select($table, 'DISTINCT course',
+                    "userid = :userid AND course {$insql}", $params));
+            }
+        }
+        return array_values(array_unique(array_map('intval', $found)));
     }
 
     /**

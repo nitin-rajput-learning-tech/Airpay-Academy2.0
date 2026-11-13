@@ -164,4 +164,9 @@ completion criteria.
   (skips once fixed upstream), course without criteria and with untouched criteria, own list has no holes, second
   pass is a no-op, own tables kept, userlist and context-wide deletes, export of every context, DPDP panel exclusion.
   PHPUnit: pending at this commit (see the next entry).
+- Review (code-reviewer agent, 11-13): provider sound. Two test fixes taken: `add_from_sql()` merges with
+  `array_merge()`, which renumbers keys, so adding A, A, B one call at a time leaves no hole; the defect-1 tests now
+  seed the hole directly (`list_with_holes()`), and the end-to-end test asserts core approves only the first context
+  before the manager runs. Also taken: `delete_completion()` only for courses where the subject has completion or
+  criteria-completion rows (not every course in the list), and method docblocks.
 - Not done here: the local rehearsal (ADR-035 "How a rehearsal proves it"), UAT, live, the upstream MDL report.
