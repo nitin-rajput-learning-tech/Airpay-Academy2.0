@@ -9,6 +9,39 @@
 
 ---
 
+## 2026-11-13 - privacy registry made honest: core's table-coverage test passes for every component (Opus 5.5, cloud session)
+
+Follow-on from ADR-035's PHPUnit run, which surfaced privacy-metadata defects in five other components. All committed on
+`claude/hopeful-feynman-d5kd7f` (not merged; not deployed).
+
+| Component (version) | Defect | Fix |
+|---|---|---|
+| `local_sentientia_proctoring` 2026111300 | 5 tables declared with no fields; core `debugging()` broke the platform coverage test and made `test_table_coverage` risky everywhere | each table's personal-data fields declared; 28 strings en + hi |
+| `local_sentientia_recompletion` 2026111300 | rules table (no user column) declared with no fields | declaration and its string removed |
+| `local_sentientia_courses` 2026111300 | `tenant_share.shared_by` undeclared | declared; actor column: erasure sets 0, share kept; exported; en + hi |
+| `paygw_airpay` 2026111300 | copied PayPal `null_provider`, but 3 tables keyed on the buyer; export read PayPal's `pp_orderid` | real provider. **Nitin: anonymise, keep the rows.** Logs: user id 0 (also in message text), name blanked. Unpaid orders: user id 0. Paid orders: core_payment as before. Airpay checkout declared as an external location. en only (no hi pack) |
+| `block_learnerscript` 2019052008.7 (vendor) | provider declared IP/location table but exported and erased nothing; 6 tables undeclared | **Nitin: full fix as vendor patch** (record `docs/core-mods/2026-11-13-learnerscript-privacy-provider.md`). Subject rows deleted, actor columns 0, user removed from schedule recipient lists, everything exported. en only |
+
+**PHPUnit** (throwaway Moodle 4.5.10, MariaDB 10.11, PHP 8.3):
+- core `test_table_coverage`: 589/589, 1 risky (`local_sentientia_authoring` install.xml, below);
+- core privacy compliance: green for all six components changed today (4 tests each);
+- `local_sentientia_platform\privacy_coverage_test`: OK;
+- new tests: courses 4/4, gateway 7/7, learnerscript 4/4;
+- suites: proctoring 16, recompletion 139, courses 208, gateway 36, privacy 26, all green (skips only).
+
+**Still failing, not touched (pre-existing):**
+- `test_all_providers_compliant` for 12 BizLMS-era components (enrol_classroom, enrol_learningplan, enrol_program, and the
+  blocks achievements, masterinfo, my_event_calendar, myskills, quick_navigation, suggested_courses, trainerdashboard,
+  trending_modules, userdashboard).
+- `tool_tcpdffonts`: missing `privacy:metadata` string.
+- `local_sentientia_authoring` install.xml: a CHAR NOT NULL `lang` column with an empty-string default (XMLDB warns).
+
+**Open for Nitin:** the DPDP panel (`privacy_manager::process_deletion()`) asks only `local_sentientia_*` providers.
+Its comment says every shipped block is a `null_provider`, which is no longer true for learnerscript, and the gateway
+logs are outside it too. So a panel erasure still misses both. Core's `tool_dataprivacy` route covers them.
+
+---
+
 ## 2026-11-13 - ADR-035: a 'Deleted' privacy request now erases what core misses (Opus 5.5, cloud session)
 
 **Why.** The A4 local erasure rehearsal found two stock Moodle defects that leave a subject's data behind while the
