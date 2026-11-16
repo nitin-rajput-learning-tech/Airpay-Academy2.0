@@ -955,24 +955,17 @@ JS;
             if(!is_siteadmin()){
                 if(isset($COURSE->open_coursecompletiondays) && $COURSE->open_coursecompletiondays != 0)
                 {
-                    $today = date('Y-m-d');
-                    $userenroldate = $DB->get_field_sql("SELECT max(ue.timecreated) as enrolldate 
-                            FROM {course} course
-                            JOIN {enrol} e ON e.courseid = course.id 
-                            JOIN {user_enrolments} ue ON ue.enrolid = e.id
-                            JOIN {user} u ON u.id = $USER->id AND course.id = $COURSE->id ");
-                      
+                    // The viewer's own latest enrolment in this course, through bound params (2026-11-16). The
+                    // old query interpolated $USER->id and $COURSE->id and never tied ue.userid to the viewer, so
+                    // it returned the latest enrolment of anybody in the course. See local\enrolment_countdown.
+                    // $duedays starts as null, not '': in PHP 8 '' != 0 is true and would print an empty cell.
+                    $duedays = null;
+                    $userenroldate = \theme_sentientia\local\enrolment_countdown::latest_enrolment_time(
+                        (int)$COURSE->id, (int)$USER->id);
+
                     if(!empty($userenroldate)){
-                        $userenroldate = date('Y-m-d',$userenroldate);
-                        //$userenroldate = '2023-04-12';
-                        $difference = strtotime($userenroldate) - strtotime($today);
-                        $days = abs($difference/(60 * 60)/24);                       
-                       
-                        if($days != 0 && $days < $COURSE->open_coursecompletiondays){
-                            $duedays = 'Due In : <strong>' .($COURSE->open_coursecompletiondays-$days). ' days </strong>';
-                        }else if($days != 0 && $days > $COURSE->open_coursecompletiondays){
-                            $duedays = 'Overdue by : ' .abs($COURSE->open_coursecompletiondays-$days). ' days';
-                        }
+                        $duedays = \theme_sentientia\local\enrolment_countdown::due_text(
+                            $userenroldate, time(), (int)$COURSE->open_coursecompletiondays);
                         if($duedays !=0 ){
                             $display_duedays =' <div class="col-md-3 user_enrollment d-flex align-items-center ">
                                                     <i class="fa fa-calendar"></i>                                                  

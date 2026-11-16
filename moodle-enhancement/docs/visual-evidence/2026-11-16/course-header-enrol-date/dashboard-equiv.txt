@@ -1,0 +1,8 @@
+# Read-only: layout/dashboard.php recommendations fallback, old implode() IN list vs new get_in_or_equal(), per user
+# (script D:/Claude Local/kit-scratch/1116/c/dashboard_equiv.php; full per-user list in D:/Claude Local/kit-scratch/1116/c/dashboard-equiv.txt). Test personas and the summary:
+user 3430: enrolled courses 2 | categories old 2 new 2 => same
+user 3432: enrolled courses 1 | categories old 1 new 1 => same
+user 3433: enrolled courses 1 | categories old 1 new 1 => same
+user 3435: enrolled courses 1 | categories old 1 new 1 => same
+user 3436: enrolled courses 4 | categories old 1 new 1 => same
+checked 2687 users (skipped 15 with no active enrolment): identical for 2687

@@ -1,0 +1,9 @@
+# Apache error.log lines from the countdown page loads (PHP warnings go there; debugdisplay is 0).
+## BEFORE, course 448 at N=33, vp_learner1 + vp_courseauthor1 view mode:
+[Mon Nov 16 13:51:40.674521 2026] [php:warn] [pid 27704:tid 2108]  PHP Warning:  Undefined variable $duedays in C:\\xampp\\htdocs\\moodle5\\public\\theme\\sentientia\\classes\\output\\core_renderer.php on line 976
+[Mon Nov 16 13:52:01.364750 2026] [php:warn] [pid 27704:tid 2056]  PHP Warning:  Undefined variable $duedays in C:\\xampp\\htdocs\\moodle5\\public\\theme\\sentientia\\classes\\output\\core_renderer.php on line 976
+## BEFORE, N=40 run: not captured (no days==N case for anybody: everyone got the 33-day course-wide date, N=40)
+## AFTER, N=40 run, four personas (lines matching duedays|core_renderer.php|enrolment_countdown|dashboard.php):
+(none)
+## AFTER, N=33 run, vp_learner1 + vp_courseauthor1 (same filter):
+(none)

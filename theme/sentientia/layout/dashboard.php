@@ -1060,9 +1060,11 @@ if (isloggedin() && !isguestuser()) {
         $enrolledids = array_keys($enrolledcourses ?? []);
         if (empty($recommendations) && !empty($enrolledids)) {
             // Get categories of enrolled courses
+            // Bound params (2026-11-16; the ids were implode()d into the SQL text).
+            [$enrolsql, $enrolparams] = $DB->get_in_or_equal($enrolledids, SQL_PARAMS_NAMED, 'enc');
             $categories = $DB->get_fieldset_sql(
-                "SELECT DISTINCT category FROM {course} WHERE id IN (" .
-                implode(',', array_map('intval', $enrolledids)) . ")"
+                "SELECT DISTINCT category FROM {course} WHERE id $enrolsql",
+                $enrolparams
             );
             if (!empty($categories)) {
                 [$catsql, $catparams] = $DB->get_in_or_equal($categories, SQL_PARAMS_NAMED, 'cat');

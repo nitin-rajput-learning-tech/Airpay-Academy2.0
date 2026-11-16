@@ -1,0 +1,45 @@
+PASS  -  edit mode on for vp_courseauthor1  {"wasOn":false}
+PASS  A  vp_courseauthor1 edit 390px light: title card colours as before  {"now":{"bg":"rgba(255, 255, 255, 0.92)","fg":"rgb(42, 53, 75)","ratio":10.75},"before
+PASS  B  vp_courseauthor1 edit 390px: "No groups" icon and text on one line, inside the button, clear of the actions menu  {"badges":3,"failing":[],"first":{"te
+PASS  C  vp_courseauthor1 edit 390px: header icon inside the banner, >= 8 px from Bulk actions  {"issues":[],"bannerBox":[0,0,390,261],"bannerHeight":"260.859px
+PASS  D  vp_courseauthor1 edit 390px: blocks tab clear of the content and the assistant, >= 44x44  {"issues":[],"tab":[346,81,44,55],"position":"absolute","assi
+PASS  D  vp_courseauthor1 edit 390px: a long course title's card stays clear of the tab and its focus ring  {"card":[20,24,321,105],"tab":[346,81,44,55],"ring":
+PASS  D  vp_courseauthor1 edit 390px light: tab keyboard focus ring visible on the banner (>= 3:1), scroll-margin clears the navbar  {"focused":true,"focusVisib
+PASS  D  vp_courseauthor1 edit 390px: Shift+Tab back onto the tab after scrolling leaves it below the navbar  {"next":"a.course_extended_menu_itemlink","scrolle
+PASS  D  vp_courseauthor1 edit 390px: tab opens and closes the blocks drawer  {"opened":{"drawerShow":true,"pageState":true,"drawerOnScreen":true},"closed":{"dr
+PASS  A  vp_courseauthor1 edit 390px dark: title >= 4.5:1 on its card  {"theme":"dark","darkClasses":true,"title":"VP Journey Free Course","bg":"rgb(26, 29, 39)
+PASS  D  vp_courseauthor1 edit 390px dark: tab keyboard focus ring visible on the banner (>= 3:1), scroll-margin clears the navbar  {"focused":true,"focusVisibl
+PASS  A  vp_courseauthor1 edit 590px light: title card colours as before  {"now":{"bg":"rgba(255, 255, 255, 0.92)","fg":"rgb(42, 53, 75)","ratio":10.75},"before
+PASS  B  vp_courseauthor1 edit 590px: "No groups" icon and text on one line, inside the button, clear of the actions menu  {"badges":3,"failing":[],"first":{"te
+PASS  C  vp_courseauthor1 edit 590px: header icon inside the banner, >= 8 px from Bulk actions  {"issues":[],"bannerBox":[0,0,590,272],"bannerHeight":"271.656px
+PASS  D  vp_courseauthor1 edit 590px: blocks tab clear of the content and the assistant, >= 44x44  {"issues":[],"tab":[546,81,44,55],"position":"absolute","assi
+PASS  D  vp_courseauthor1 edit 590px: a long course title's card stays clear of the tab and its focus ring  {"card":[20,24,521,88],"tab":[546,81,44,55],"ring":5
+PASS  D  vp_courseauthor1 edit 590px light: tab keyboard focus ring visible on the banner (>= 3:1), scroll-margin clears the navbar  {"focused":true,"focusVisib
+PASS  D  vp_courseauthor1 edit 590px: tab opens and closes the blocks drawer  {"opened":{"drawerShow":true,"pageState":true,"drawerOnScreen":true},"closed":{"dr
+PASS  C  vp_courseauthor1 edit 768px: header icon inside the banner, >= 8 px from Bulk actions  {"issues":[],"bannerBox":[16,70,736,253],"bannerHeight":"253.156
+PASS  A  vp_courseauthor1 edit 1440px light: title card colours as before  {"now":{"bg":"rgba(255, 255, 255, 0.92)","fg":"rgb(42, 53, 75)","ratio":10.75},"befor
+PASS  B  vp_courseauthor1 edit 1440px: icon-only group-mode button unchanged  {"now":[{"btn":[859,655,36,36],"wrap":[859,655,36,36],"textShown":false},{"btn":[9
+PASS  C  vp_courseauthor1 edit 1440px: banner, icon and Bulk actions boxes as before  {"now":{"bannerBox":[16,70,1408,240],"bannerHeight":"240px","iconBoxes":[[
+PASS  D  vp_courseauthor1 edit 1440px: blocks tab box as before  {"now":[1404,81,36,55],"position":"fixed","before":[1404,81,36,55]}
+PASS  A  vp_courseauthor1 edit 1440px dark: title >= 4.5:1 on its card  {"theme":"dark","darkClasses":true,"title":"VP Journey Free Course","bg":"rgb(26, 29, 39
+PASS  D  vp_courseauthor1 incourse 390px: blocks tab clear of the content and the assistant, >= 44x44  {"issues":[],"tab":[346,661,44,55],"position":"fixed","as
+PASS  D  vp_courseauthor1 section page edit 390px: fixed edge tab, >= 44x44, not over the Actions menu or Course Content, no control added by the width  {"issue
+PASS  D  vp_courseauthor1 section page edit 590px: fixed edge tab, >= 44x44, not over the Actions menu or Course Content, no control added by the width  {"issue
+NOTE  D  vp_courseauthor1 section page edit 590px: the fixed edge tab covers a.btn.add-content [539,855,26,26] at load, as the 36 px tab did before 2026-11-16 (
+PASS  -  console: vp_courseauthor1 course edit mode  {"errors":0}
+PASS  -  edit mode back off for vp_courseauthor1  {}
+PASS  A  vp_learner1 view 390px light: title card colours as before  {"now":{"bg":"rgba(255, 255, 255, 0.92)","fg":"rgb(42, 53, 75)","ratio":10.75},"before":{"b
+PASS  C  vp_learner1 view 390px: header icon inside the banner  {"issues":[],"bannerBox":[16,90,358,185],"bannerHeight":"185px","iconBoxes":[[56,219,36,36]],"ic
+PASS  D  vp_learner1 view 390px: no blocks tab printed in learner view  {"printed":false}
+PASS  A  vp_learner1 view 390px dark: title >= 4.5:1 on its card  {"theme":"dark","darkClasses":true,"title":"VP Journey Free Course","bg":"rgb(26, 29, 39)","fg
+PASS  A  vp_learner1 view 590px light: title card colours as before  {"now":{"bg":"rgba(255, 255, 255, 0.92)","fg":"rgb(42, 53, 75)","ratio":10.75},"before":{"b
+PASS  C  vp_learner1 view 590px: header icon inside the banner  {"issues":[],"bannerBox":[16,150,558,197],"bannerHeight":"197.422px","iconBoxes":[[259,286,36,36
+PASS  D  vp_learner1 view 590px: no blocks tab printed in learner view  {"printed":false}
+PASS  C  vp_learner1 view 768px: header icon inside the banner  {"issues":[],"bannerBox":[16,150,736,227],"bannerHeight":"226.938px","iconBoxes":[[437,321,36,36
+PASS  A  vp_learner1 view 1440px light: title card colours as before  {"now":{"bg":"rgba(255, 255, 255, 0.92)","fg":"rgb(42, 53, 75)","ratio":10.75},"before":{"
+PASS  C  vp_learner1 view 1440px: banner, icon and Bulk actions boxes as before  {"now":{"bannerBox":[96,150,1320,193],"bannerHeight":"193px","iconBoxes":[[1091
+PASS  A  vp_learner1 view 1440px dark: title >= 4.5:1 on its card  {"theme":"dark","darkClasses":true,"title":"VP Journey Free Course","bg":"rgb(26, 29, 39)","f
+NOTE  D  vp_learner1 /my/ 390px: no .drawer-toggles printed (flag sentientia.dashboard.blocksdrawer.enabled off); nothing to check
+NOTE  D  vp_learner1 /my/ 1440px: no .drawer-toggles printed (flag sentientia.dashboard.blocksdrawer.enabled off); nothing to check
+PASS  -  console: vp_learner1 course view and dashboard  {"errors":0}
+after: 41 passed, 0 failed {"-":{"pass":4,"fail":0},"A":{"pass":10,"fail":0},"B":{"pass":3,"fail":0},"C":{"pass":8,"fail":0},"D":{"pass":16,"fail":0}}; shots and facts-after.json in D:/Claude Local/kit-scratch/1116/c/regress-1116b

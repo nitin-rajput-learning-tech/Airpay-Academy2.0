@@ -1,0 +1,109 @@
+{
+ "phase": "after",
+ "tag": "n40",
+ "course": 448,
+ "at": "2026-11-16T09:21:11.346Z",
+ "runs": {
+  "vp_courseauthor1-390": {
+   "banner": true,
+   "editing": true,
+   "printed": true,
+   "text": "Due In : 7 days",
+   "cellHTML": "<div class=\"col-md-3 user_enrollment d-flex align-items-center \">\n                                                    <i class=\"fa fa-calendar\"></i>                                                  \n                                                    <div class=\"enroll_details d-flex\">\n                                                        <span class=\"details_content text-nowrap\"> </span>\n                                                        <span class=\"enroll_number\">Due In : <strong>7 days </strong></span>\n                                                    </div>\n                                                </div>",
+   "displayed": true,
+   "cellBox": [
+    5,
+    127,
+    380,
+    44
+   ],
+   "cellInsideViewportWidth": true,
+   "pageScrollsSideways": false,
+   "problems": [],
+   "consoleErrors": [],
+   "viewportShot": "after-n40-vp_courseauthor1-edit-390-viewport.png",
+   "shot": "after-n40-vp_courseauthor1-edit-390.png"
+  },
+  "vp_courseauthor1-590": {
+   "banner": true,
+   "editing": true,
+   "printed": true,
+   "text": "Due In : 7 days",
+   "cellHTML": "<div class=\"col-md-3 user_enrollment d-flex align-items-center \">\n                                                    <i class=\"fa fa-calendar\"></i>                                                  \n                                                    <div class=\"enroll_details d-flex\">\n                                                        <span class=\"details_content text-nowrap\"> </span>\n                                                        <span class=\"enroll_number\">Due In : <strong>7 days </strong></span>\n                                                    </div>\n                                                </div>",
+   "displayed": true,
+   "cellBox": [
+    5,
+    131,
+    580,
+    44
+   ],
+   "cellInsideViewportWidth": true,
+   "pageScrollsSideways": false,
+   "problems": [],
+   "consoleErrors": [],
+   "viewportShot": "after-n40-vp_courseauthor1-edit-590-viewport.png",
+   "shot": "after-n40-vp_courseauthor1-edit-590.png"
+  },
+  "vp_courseauthor1-editBackOff": true,
+  "vp_courseauthor1-editWasOn": false,
+  "vp_learner1-390": {
+   "banner": true,
+   "editing": false,
+   "printed": true,
+   "text": "Overdue by : 7 days",
+   "cellHTML": "<div class=\"col-md-3 user_enrollment d-flex align-items-center \">\n                                                    <i class=\"fa fa-calendar\"></i>                                                  \n                                                    <div class=\"enroll_details d-flex\">\n                                                        <span class=\"details_content text-nowrap\"> </span>\n                                                        <span class=\"enroll_number\">Overdue by : 7 days</span>\n                                                    </div>\n                                                </div>",
+   "displayed": false,
+   "cellBox": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "cellInsideViewportWidth": true,
+   "pageScrollsSideways": false,
+   "problems": [],
+   "consoleErrors": [],
+   "viewportShot": "after-n40-vp_learner1-view-390-viewport.png",
+   "shot": "after-n40-vp_learner1-view-390.png",
+   "revealedDisplayed": true,
+   "revealedCellBox": [
+    21,
+    195,
+    348,
+    44
+   ],
+   "revealedCellInsideViewportWidth": true,
+   "revealedShot": "after-n40-vp_learner1-view-390-revealed.png"
+  },
+  "vp_learner1-590": {
+   "banner": true,
+   "editing": false,
+   "printed": true,
+   "text": "Overdue by : 7 days",
+   "cellHTML": "<div class=\"col-md-3 user_enrollment d-flex align-items-center \">\n                                                    <i class=\"fa fa-calendar\"></i>                                                  \n                                                    <div class=\"enroll_details d-flex\">\n                                                        <span class=\"details_content text-nowrap\"> </span>\n                                                        <span class=\"enroll_number\">Overdue by : 7 days</span>\n                                                    </div>\n                                                </div>",
+   "displayed": false,
+   "cellBox": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "cellInsideViewportWidth": true,
+   "pageScrollsSideways": false,
+   "problems": [],
+   "consoleErrors": [],
+   "viewportShot": "after-n40-vp_learner1-view-590-viewport.png",
+   "shot": "after-n40-vp_learner1-view-590.png",
+   "revealedDisplayed": true,
+   "revealedCellBox": [
+    21,
+    258,
+    548,
+    44
+   ],
+   "revealedCellInsideViewportWidth": true,
+   "revealedShot": "after-n40-vp_learner1-view-590-revealed.png"
+  },
+  "vp_learner1-editWasOn": null
+ }
+}

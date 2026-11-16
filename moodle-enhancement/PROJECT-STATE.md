@@ -1,5 +1,5 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-11-16 (**Demo week: C-suite demo Thursday 2026-11-19. Theme 2026111600 + 2026111601 committed; see the 2026-11-16 entry.**)
+**Updated:** 2026-11-16 (**Demo week: C-suite demo Thursday 2026-11-19. Theme 2026111600, 2026111601 and 2026111602 committed. Paused 16:50 while Nitin travels; resumes tonight. See the 2026-11-16 entry.**)
 **Before that, 2026-11-13** (**Nitin's 11-12 decisions carried out; see the 2026-11-12 / 11-13 entry.**
 - Committed and on `production`: subagent-stall fix, Stage 0-2 tooling, working permission rules, hook and gate fixes, theme A2/A3, A1 (ADR-034 slice 1), A5 (audit events + tenant trail), AI gateway pricing.
 - A4 done on the local copy: 286 erasures, nothing sent, 0 failed deletes; found a Moodle core bug and two erasure gaps (`docs/cutover/A4-ERASURE-REHEARSAL-RESULTS-2026-11-13.md`). Decisions for Nitin listed there.)
@@ -26,15 +26,29 @@ added to the defined scope. The scheduled resume task stays disabled (IT securit
   41/0, `theme_1116_checks.mjs` 56/0 (re-run independently). Evidence
   `docs/visual-evidence/2026-11-16/edit-mode-phone-dark-banner/` (its README lists what was seen and not fixed).
 
-**In progress (uncommitted):** course-header completion countdown. `core_renderer::full_header()` read the enrolment
-date with SQL that interpolated `$USER->id`/`$COURSE->id` and never tied `ue.userid` to the viewer, so every learner
-got the latest enrolment of anyone in the course. Being fixed as theme 2026111602 (workflow `wf_4799a26d-07b`):
-parameterised, user-scoped, testable class, theme sweep for the same pattern. Nitin 11-16: the clock keeps starting
-at the enrolment date (`ue.timecreated`). The PHPUnit test runs tonight after the night PHPUnit init.
+- Theme 2026111602 (committed with this entry on Nitin's word): the course-header completion countdown.
+  `core_renderer::full_header()` read the enrolment date with SQL that interpolated `$USER->id`/`$COURSE->id` and
+  never tied `ue.userid` to the viewer, so every learner got the latest enrolment of anyone in the course (9,693 of
+  9,776 local user/course pairs showed the wrong date). Now bound parameters and the viewer's own latest enrolment,
+  in the testable class `theme_sentientia\local\enrolment_countdown`. The arithmetic and both HTML strings are
+  unchanged (240,000 cases compared). The same sweep fixed an `implode()` IN-clause in `layout/dashboard.php`.
+  Nitin 11-16: the clock keeps starting at the enrolment date (`ue.timecreated`). Workflow `wf_4799a26d-07b`.
+  Evidence `docs/visual-evidence/2026-11-16/course-header-enrol-date/` (its README lists what was seen and not
+  fixed). The PHPUnit test is written and not yet run.
 
-**Next:** tonight, resume the option A privacy build (`wf_3b996ce8-906`, PHPUnit). Tuesday: Nitin's review, deck
-refresh; Tuesday night the A4 re-run with flags ON and no emails, only if Monday night is green. Wednesday (Nitin's
-VPN window): UAT deploy of the 11-12 to 11-16 changes, demo data check, persona walk.
+**In progress (uncommitted, paused 16:50 for Nitin's travel):** the reminder and overdue tasks in
+`local_sentientia_courses` count the deadline from the enrolment date: the latest active `ue.timecreated`, one per
+learner and course (today they use `ue.timestart` and skip the 99.7% of enrolments without one). Both plugin trees,
+version 2026111600, a read-only `get_candidates()` for testing, PHPUnit test written and not run. Workflow
+`wf_23db5ce1-b2e`: diagnosis and build done and deployed locally; the two reviews were stopped for the shutdown and
+re-run on resume (`resumeFromRunId`). No-send check 16:48 against the 15:30 baseline: no notification, reminder
+record or task-log row added; both tasks still disabled and never run (the upgrade only moved their next run time to
+11-17 09:00 / 09:30 IST); config unchanged. Not yet reviewed by Nitin.
+
+**Next (tonight, on Nitin's resume):** finish the reminder workflow's reviews; the option A privacy build
+(`wf_3b996ce8-906`, PHPUnit), then both new PHPUnit tests (theme countdown, reminder) after the init. Tuesday:
+Nitin's review, deck refresh; Tuesday night the A4 re-run with flags ON and no emails, only if Monday night is
+green. Wednesday (Nitin's VPN window): UAT deploy of the 11-12 to 11-16 changes, demo data check, persona walk.
 
 ## 2026-11-12 / 11-13 - Nitin's decisions carried out; subagent stall fixed; permission rules made real (Opus 5.5)
 

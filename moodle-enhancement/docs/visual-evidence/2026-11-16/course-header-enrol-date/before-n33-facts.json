@@ -1,0 +1,34 @@
+{
+ "phase": "before",
+ "tag": "n33",
+ "course": 448,
+ "at": "2026-11-16T08:21:24.694Z",
+ "personas": {
+  "vp_learner1": {
+   "banner": true,
+   "editing": false,
+   "printed": false,
+   "text": null,
+   "innerHTML": null,
+   "cellHTML": null,
+   "displayed": false,
+   "problems": [],
+   "consoleErrors": [],
+   "shot": "before-n33-vp_learner1-view-1440.png",
+   "editWasOn": null
+  },
+  "vp_courseauthor1": {
+   "banner": true,
+   "editing": false,
+   "printed": false,
+   "text": null,
+   "innerHTML": null,
+   "cellHTML": null,
+   "displayed": false,
+   "problems": [],
+   "consoleErrors": [],
+   "shot": "before-n33-vp_courseauthor1-view-1440.png",
+   "editWasOn": null
+  }
+ }
+}

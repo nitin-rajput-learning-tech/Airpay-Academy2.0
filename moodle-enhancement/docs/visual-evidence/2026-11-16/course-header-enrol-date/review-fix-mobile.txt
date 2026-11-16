@@ -1,0 +1,37 @@
+# Review fix: phone-width evidence (2026-11-16, after the 1440 px run). Local only, test personas only.
+# Script: D:/Claude Local/kit-scratch/1116/c/countdown_shots_mobile.mjs (same DOM read and reveal style as countdown_shots.mjs).
+
+## course 448 set to 40 (temporary)
+$ php set448.php --set=40   (original NULL already recorded in 448-original.json; the record is never overwritten)
+
+## run 1 (element shots of #page-header)
+OK    vp_courseauthor1 390px  {"editing":true,"printed":true,"displayed":true,"text":"Due In : 7 days","cellBox":[5,127,380,44],"inside":true,"sideways":false,"problems":[],"consoleErrors":[]}
+OK    vp_courseauthor1 590px  {"editing":true,"printed":true,"displayed":true,"text":"Due In : 7 days","cellBox":[5,131,580,44],"inside":true,"sideways":false,"problems":[],"consoleErrors":[]}
+      vp_courseauthor1 edit mode switched back off: true
+OK    vp_learner1 390px  {"editing":false,"printed":true,"displayed":false,"text":"Overdue by : 7 days","cellBox":[0,0,0,0],"inside":true,"sideways":false,"revealedInside":true,"problems":[],"consoleErrors":[]}
+OK    vp_learner1 590px  {"editing":false,"printed":true,"displayed":false,"text":"Overdue by : 7 days","cellBox":[0,0,0,0],"inside":true,"sideways":false,"revealedInside":true,"problems":[],"consoleErrors":[]}
+$ php set448.php --restore
+course 448 open_coursecompletiondays now: '40'
+restored to NULL (recorded original NULL): VERIFIED
+Apache error.log growth during run 1: 0 bytes
+
+## run 2 (same, plus a viewport shot at the top of the page; these are the PNGs in this folder)
+$ php set448.php --set=40
+OK    vp_courseauthor1 390px  {"editing":true,"printed":true,"displayed":true,"text":"Due In : 7 days","cellBox":[5,127,380,44],"inside":true,"sideways":false,"problems":[],"consoleErrors":[]}
+OK    vp_courseauthor1 590px  {"editing":true,"printed":true,"displayed":true,"text":"Due In : 7 days","cellBox":[5,131,580,44],"inside":true,"sideways":false,"problems":[],"consoleErrors":[]}
+      vp_courseauthor1 edit mode switched back off: true
+OK    vp_learner1 390px  {"editing":false,"printed":true,"displayed":false,"text":"Overdue by : 7 days","cellBox":[0,0,0,0],"inside":true,"sideways":false,"revealedInside":true,"problems":[],"consoleErrors":[]}
+OK    vp_learner1 590px  {"editing":false,"printed":true,"displayed":false,"text":"Overdue by : 7 days","cellBox":[0,0,0,0],"inside":true,"sideways":false,"revealedInside":true,"problems":[],"consoleErrors":[]}
+$ php set448.php --restore
+course 448 open_coursecompletiondays now: '40'
+restored to NULL (recorded original NULL): VERIFIED
+Apache error.log growth during run 2: 0 bytes
+
+## countdown cell outerHTML, phone width vs the 1440 px facts files
+vp_courseauthor1-390 identical to after-n40 1440: true | identical to before-n40 1440: true
+vp_courseauthor1-590 identical to after-n40 1440: true | identical to before-n40 1440: true
+vp_learner1-390 identical to after-n40 1440: true
+vp_learner1-590 identical to after-n40 1440: true
+
+## course 448 at the end
+course 448 open_coursecompletiondays now: NULL

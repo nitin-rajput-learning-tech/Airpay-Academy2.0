@@ -1,0 +1,3 @@
+course 448 open_coursecompletiondays now: '33'
+restored to NULL (recorded original NULL): VERIFIED
+course 448 open_coursecompletiondays now: NULL

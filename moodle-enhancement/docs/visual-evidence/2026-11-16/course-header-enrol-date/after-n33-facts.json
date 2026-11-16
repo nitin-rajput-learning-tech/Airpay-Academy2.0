@@ -1,0 +1,36 @@
+{
+ "phase": "after",
+ "tag": "n33",
+ "course": 448,
+ "at": "2026-11-16T08:44:14.742Z",
+ "personas": {
+  "vp_learner1": {
+   "banner": true,
+   "editing": false,
+   "printed": true,
+   "text": "Overdue by : 14 days",
+   "innerHTML": "Overdue by : 14 days",
+   "cellHTML": "<div class=\"col-md-3 user_enrollment d-flex align-items-center \">\n                                                    <i class=\"fa fa-calendar\"></i>                                                  \n                                                    <div class=\"enroll_details d-flex\">\n                                                        <span class=\"details_content text-nowrap\"> </span>\n                                                        <span class=\"enroll_number\">Overdue by : 14 days</span>\n                                                    </div>\n                                                </div>",
+   "displayed": false,
+   "problems": [],
+   "consoleErrors": [],
+   "shot": "after-n33-vp_learner1-view-1440.png",
+   "revealedDisplayed": true,
+   "revealedShot": "after-n33-vp_learner1-view-1440-revealed.png",
+   "editWasOn": null
+  },
+  "vp_courseauthor1": {
+   "banner": true,
+   "editing": false,
+   "printed": false,
+   "text": null,
+   "innerHTML": null,
+   "cellHTML": null,
+   "displayed": false,
+   "problems": [],
+   "consoleErrors": [],
+   "shot": "after-n33-vp_courseauthor1-view-1440.png",
+   "editWasOn": null
+  }
+ }
+}

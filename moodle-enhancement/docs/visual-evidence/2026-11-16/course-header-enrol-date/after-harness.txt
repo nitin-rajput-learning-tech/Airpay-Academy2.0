@@ -1,0 +1,246 @@
+# AFTER (theme 2026111602 deployed). Same read-only harness; the 'new lookup' column is the deployed
+# theme_sentientia\local\enrolment_countdown, 'own' = equals the user's own MAX(ue.timecreated).
+
+######## 1. course 448 open_coursecompletiondays = 40 (temporary)
+== enrolment-date harness | now (server tz Asia/Kolkata) | new class deployed: yes
+
+-- course 448 | open_coursecompletiondays='40' | banner computed at all: yes | enrolled users: 3 | course-wide MAX(timecreated): 32.6d ago held by user id(s) 3435
+   userid who                                            | old date    | own date    | old code prints                    | new lookup | new code prints
+   3430   persona vp_learner1                            | 32.6d ago   | 47.1d ago   | 'Due In : <strong>7 days </strong>' | 47.1d ago   own      | 'Overdue by : 7 days'
+   3433   persona vp_author1                             | 32.6d ago   | 47.1d ago   | 'Due In : <strong>7 days </strong>' | 47.1d ago   own      | 'Overdue by : 7 days'
+   3435   persona vp_courseauthor1                       | 32.6d ago   | 32.6d ago   | 'Due In : <strong>7 days </strong>' | 32.6d ago   own      | 'Due In : <strong>7 days </strong>'
+   1      guest (not enrolled)                           | 32.6d ago   | none        | 'Due In : <strong>7 days </strong>' | none        own      | (no banner)
+   3429   persona vp_manager1 (not enrolled)             | 32.6d ago   | none        | 'Due In : <strong>7 days </strong>' | none        own      | (no banner)
+   3427   persona vp_admin1 (not enrolled), has course:view | 32.6d ago   | none        | 'Due In : <strong>7 days </strong>' | none        own      | (no banner)
+   course 448 totals: enrolled users 3 | old code shows the user's own enrolment DATE: 1 | countdown text differs from the user's own: 2 | new lookup returns the user's own MAX: 3
+
+-- course 5 | open_coursecompletiondays='1' | banner computed at all: yes | enrolled users: 1118 | course-wide MAX(timecreated): 229.1d ago held by user id(s) 3363
+   userid who                                            | old date    | own date    | old code prints                    | new lookup | new code prints
+   64     enrolled user                                  | 229.1d ago  | 1241.9d ago | 'Overdue by : 228 days'            | 1241.9d ago own      | 'Overdue by : 1241 days'
+   142    enrolled user                                  | 229.1d ago  | 1241.9d ago | 'Overdue by : 228 days'            | 1241.9d ago own      | 'Overdue by : 1241 days'
+   237    enrolled user                                  | 229.1d ago  | 1186.1d ago | 'Overdue by : 228 days'            | 1186.1d ago own      | 'Overdue by : 1185 days'
+   3363   enrolled user (course-wide latest)             | 229.1d ago  | 229.1d ago  | 'Overdue by : 228 days'            | 229.1d ago  own      | 'Overdue by : 228 days'
+   1      guest (not enrolled)                           | 229.1d ago  | none        | 'Overdue by : 228 days'            | none        own      | (no banner)
+   3429   persona vp_manager1 (not enrolled)             | 229.1d ago  | none        | 'Overdue by : 228 days'            | none        own      | (no banner)
+   3427   persona vp_admin1 (not enrolled), has course:view | 229.1d ago  | none        | 'Overdue by : 228 days'            | none        own      | (no banner)
+   course 5 totals: enrolled users 1118 | old code shows the user's own enrolment DATE: 1 | countdown text differs from the user's own: 1117 | new lookup returns the user's own MAX: 1118
+
+-- course 49 | open_coursecompletiondays='15' | banner computed at all: yes | enrolled users: 22 | course-wide MAX(timecreated): 605.9d ago held by user id(s) 802
+   userid who                                            | old date    | own date    | old code prints                    | new lookup | new code prints
+   802    enrolled user                                  | 605.9d ago  | 605.9d ago  | 'Overdue by : 591 days'            | 605.9d ago  own      | 'Overdue by : 591 days'
+   887    enrolled user                                  | 605.9d ago  | 955.0d ago  | 'Overdue by : 591 days'            | 955.0d ago  own      | 'Overdue by : 940 days'
+   924    enrolled user                                  | 605.9d ago  | 955.0d ago  | 'Overdue by : 591 days'            | 955.0d ago  own      | 'Overdue by : 940 days'
+   1      guest (not enrolled)                           | 605.9d ago  | none        | 'Overdue by : 591 days'            | none        own      | (no banner)
+   3429   persona vp_manager1 (not enrolled)             | 605.9d ago  | none        | 'Overdue by : 591 days'            | none        own      | (no banner)
+   3427   persona vp_admin1 (not enrolled), has course:view | 605.9d ago  | none        | 'Overdue by : 591 days'            | none        own      | (no banner)
+   course 49 totals: enrolled users 22 | old code shows the user's own enrolment DATE: 1 | countdown text differs from the user's own: 21 | new lookup returns the user's own MAX: 22
+
+-- course 41 | open_coursecompletiondays='1' | banner computed at all: yes | enrolled users: 932 | course-wide MAX(timecreated): 220.0d ago held by user id(s) 1001
+   userid who                                            | old date    | own date    | old code prints                    | new lookup | new code prints
+   2      enrolled user [siteadmin]                      | 220.0d ago  | 220.0d ago  | (not computed)                     | 220.0d ago  own      | (not computed)
+   64     enrolled user                                  | 220.0d ago  | 1027.9d ago | 'Overdue by : 219 days'            | 1027.9d ago own      | 'Overdue by : 1027 days'
+   142    enrolled user                                  | 220.0d ago  | 1027.9d ago | 'Overdue by : 219 days'            | 1027.9d ago own      | 'Overdue by : 1027 days'
+   1001   enrolled user (course-wide latest)             | 220.0d ago  | 220.0d ago  | 'Overdue by : 219 days'            | 220.0d ago  own      | 'Overdue by : 219 days'
+   1      guest (not enrolled)                           | 220.0d ago  | none        | 'Overdue by : 219 days'            | none        own      | (no banner)
+   3429   persona vp_manager1 (not enrolled)             | 220.0d ago  | none        | 'Overdue by : 219 days'            | none        own      | (no banner)
+   3427   persona vp_admin1 (not enrolled), has course:view | 220.0d ago  | none        | 'Overdue by : 219 days'            | none        own      | (no banner)
+   course 41 totals: enrolled users 932 | old code shows the user's own enrolment DATE: 28 | countdown text differs from the user's own: 904 | new lookup returns the user's own MAX: 932
+
+== totals over the courses above with the column set: enrolled users 2075 | old: own date 31 | old text differs from own 2044 | new: own MAX 2075
+done
+
+######## 2. course 448 open_coursecompletiondays = 33 (temporary)
+== enrolment-date harness | now (server tz Asia/Kolkata) | new class deployed: yes
+
+-- course 448 | open_coursecompletiondays='33' | banner computed at all: yes | enrolled users: 3 | course-wide MAX(timecreated): 32.6d ago held by user id(s) 3435
+   userid who                                            | old date    | own date    | old code prints                    | new lookup | new code prints
+   3430   persona vp_learner1                            | 32.6d ago   | 47.1d ago   | (no banner)                        | 47.1d ago   own      | 'Overdue by : 14 days'
+   3433   persona vp_author1                             | 32.6d ago   | 47.1d ago   | (no banner)                        | 47.1d ago   own      | 'Overdue by : 14 days'
+   3435   persona vp_courseauthor1                       | 32.6d ago   | 32.6d ago   | (no banner)                        | 32.6d ago   own      | (no banner)
+   1      guest (not enrolled)                           | 32.6d ago   | none        | (no banner)                        | none        own      | (no banner)
+   3429   persona vp_manager1 (not enrolled)             | 32.6d ago   | none        | (no banner)                        | none        own      | (no banner)
+   3427   persona vp_admin1 (not enrolled), has course:view | 32.6d ago   | none        | (no banner)                        | none        own      | (no banner)
+   course 448 totals: enrolled users 3 | old code shows the user's own enrolment DATE: 1 | countdown text differs from the user's own: 2 | new lookup returns the user's own MAX: 3
+
+-- course 5 | open_coursecompletiondays='1' | banner computed at all: yes | enrolled users: 1118 | course-wide MAX(timecreated): 229.1d ago held by user id(s) 3363
+   userid who                                            | old date    | own date    | old code prints                    | new lookup | new code prints
+   64     enrolled user                                  | 229.1d ago  | 1241.9d ago | 'Overdue by : 228 days'            | 1241.9d ago own      | 'Overdue by : 1241 days'
+   142    enrolled user                                  | 229.1d ago  | 1241.9d ago | 'Overdue by : 228 days'            | 1241.9d ago own      | 'Overdue by : 1241 days'
+   237    enrolled user                                  | 229.1d ago  | 1186.1d ago | 'Overdue by : 228 days'            | 1186.1d ago own      | 'Overdue by : 1185 days'
+   3363   enrolled user (course-wide latest)             | 229.1d ago  | 229.1d ago  | 'Overdue by : 228 days'            | 229.1d ago  own      | 'Overdue by : 228 days'
+   1      guest (not enrolled)                           | 229.1d ago  | none        | 'Overdue by : 228 days'            | none        own      | (no banner)
+   3429   persona vp_manager1 (not enrolled)             | 229.1d ago  | none        | 'Overdue by : 228 days'            | none        own      | (no banner)
+   3427   persona vp_admin1 (not enrolled), has course:view | 229.1d ago  | none        | 'Overdue by : 228 days'            | none        own      | (no banner)
+   course 5 totals: enrolled users 1118 | old code shows the user's own enrolment DATE: 1 | countdown text differs from the user's own: 1117 | new lookup returns the user's own MAX: 1118
+
+-- course 49 | open_coursecompletiondays='15' | banner computed at all: yes | enrolled users: 22 | course-wide MAX(timecreated): 605.9d ago held by user id(s) 802
+   userid who                                            | old date    | own date    | old code prints                    | new lookup | new code prints
+   802    enrolled user                                  | 605.9d ago  | 605.9d ago  | 'Overdue by : 591 days'            | 605.9d ago  own      | 'Overdue by : 591 days'
+   887    enrolled user                                  | 605.9d ago  | 955.0d ago  | 'Overdue by : 591 days'            | 955.0d ago  own      | 'Overdue by : 940 days'
+   924    enrolled user                                  | 605.9d ago  | 955.0d ago  | 'Overdue by : 591 days'            | 955.0d ago  own      | 'Overdue by : 940 days'
+   1      guest (not enrolled)                           | 605.9d ago  | none        | 'Overdue by : 591 days'            | none        own      | (no banner)
+   3429   persona vp_manager1 (not enrolled)             | 605.9d ago  | none        | 'Overdue by : 591 days'            | none        own      | (no banner)
+   3427   persona vp_admin1 (not enrolled), has course:view | 605.9d ago  | none        | 'Overdue by : 591 days'            | none        own      | (no banner)
+   course 49 totals: enrolled users 22 | old code shows the user's own enrolment DATE: 1 | countdown text differs from the user's own: 21 | new lookup returns the user's own MAX: 22
+
+-- course 41 | open_coursecompletiondays='1' | banner computed at all: yes | enrolled users: 932 | course-wide MAX(timecreated): 220.0d ago held by user id(s) 1001
+   userid who                                            | old date    | own date    | old code prints                    | new lookup | new code prints
+   2      enrolled user [siteadmin]                      | 220.0d ago  | 220.0d ago  | (not computed)                     | 220.0d ago  own      | (not computed)
+   64     enrolled user                                  | 220.0d ago  | 1027.9d ago | 'Overdue by : 219 days'            | 1027.9d ago own      | 'Overdue by : 1027 days'
+   142    enrolled user                                  | 220.0d ago  | 1027.9d ago | 'Overdue by : 219 days'            | 1027.9d ago own      | 'Overdue by : 1027 days'
+   1001   enrolled user (course-wide latest)             | 220.0d ago  | 220.0d ago  | 'Overdue by : 219 days'            | 220.0d ago  own      | 'Overdue by : 219 days'
+   1      guest (not enrolled)                           | 220.0d ago  | none        | 'Overdue by : 219 days'            | none        own      | (no banner)
+   3429   persona vp_manager1 (not enrolled)             | 220.0d ago  | none        | 'Overdue by : 219 days'            | none        own      | (no banner)
+   3427   persona vp_admin1 (not enrolled), has course:view | 220.0d ago  | none        | 'Overdue by : 219 days'            | none        own      | (no banner)
+   course 41 totals: enrolled users 932 | old code shows the user's own enrolment DATE: 28 | countdown text differs from the user's own: 904 | new lookup returns the user's own MAX: 932
+
+== totals over the courses above with the column set: enrolled users 2075 | old: own date 31 | old text differs from own 2044 | new: own MAX 2075
+done
+
+######## 3. course 448 restored to NULL
+== enrolment-date harness | now (server tz Asia/Kolkata) | new class deployed: yes
+
+-- course 448 | open_coursecompletiondays=NULL | banner computed at all: no (isset/!= 0 guard) | enrolled users: 3 | course-wide MAX(timecreated): 32.6d ago held by user id(s) 3435
+   userid who                                            | old date    | own date    | old code prints                    | new lookup | new code prints
+   3430   persona vp_learner1                            | 32.6d ago   | 47.1d ago   | (not computed)                     | 47.1d ago   own      | (not computed)
+   3433   persona vp_author1                             | 32.6d ago   | 47.1d ago   | (not computed)                     | 47.1d ago   own      | (not computed)
+   3435   persona vp_courseauthor1                       | 32.6d ago   | 32.6d ago   | (not computed)                     | 32.6d ago   own      | (not computed)
+   1      guest (not enrolled)                           | 32.6d ago   | none        | (not computed)                     | none        own      | (not computed)
+   3429   persona vp_manager1 (not enrolled)             | 32.6d ago   | none        | (not computed)                     | none        own      | (not computed)
+   3427   persona vp_admin1 (not enrolled), has course:view | 32.6d ago   | none        | (not computed)                     | none        own      | (not computed)
+
+-- course 5 | open_coursecompletiondays='1' | banner computed at all: yes | enrolled users: 1118 | course-wide MAX(timecreated): 229.1d ago held by user id(s) 3363
+   userid who                                            | old date    | own date    | old code prints                    | new lookup | new code prints
+   64     enrolled user                                  | 229.1d ago  | 1241.9d ago | 'Overdue by : 228 days'            | 1241.9d ago own      | 'Overdue by : 1241 days'
+   142    enrolled user                                  | 229.1d ago  | 1241.9d ago | 'Overdue by : 228 days'            | 1241.9d ago own      | 'Overdue by : 1241 days'
+   237    enrolled user                                  | 229.1d ago  | 1186.1d ago | 'Overdue by : 228 days'            | 1186.1d ago own      | 'Overdue by : 1185 days'
+   3363   enrolled user (course-wide latest)             | 229.1d ago  | 229.1d ago  | 'Overdue by : 228 days'            | 229.1d ago  own      | 'Overdue by : 228 days'
+   1      guest (not enrolled)                           | 229.1d ago  | none        | 'Overdue by : 228 days'            | none        own      | (no banner)
+   3429   persona vp_manager1 (not enrolled)             | 229.1d ago  | none        | 'Overdue by : 228 days'            | none        own      | (no banner)
+   3427   persona vp_admin1 (not enrolled), has course:view | 229.1d ago  | none        | 'Overdue by : 228 days'            | none        own      | (no banner)
+   course 5 totals: enrolled users 1118 | old code shows the user's own enrolment DATE: 1 | countdown text differs from the user's own: 1117 | new lookup returns the user's own MAX: 1118
+
+-- course 49 | open_coursecompletiondays='15' | banner computed at all: yes | enrolled users: 22 | course-wide MAX(timecreated): 605.9d ago held by user id(s) 802
+   userid who                                            | old date    | own date    | old code prints                    | new lookup | new code prints
+   802    enrolled user                                  | 605.9d ago  | 605.9d ago  | 'Overdue by : 591 days'            | 605.9d ago  own      | 'Overdue by : 591 days'
+   887    enrolled user                                  | 605.9d ago  | 955.0d ago  | 'Overdue by : 591 days'            | 955.0d ago  own      | 'Overdue by : 940 days'
+   924    enrolled user                                  | 605.9d ago  | 955.0d ago  | 'Overdue by : 591 days'            | 955.0d ago  own      | 'Overdue by : 940 days'
+   1      guest (not enrolled)                           | 605.9d ago  | none        | 'Overdue by : 591 days'            | none        own      | (no banner)
+   3429   persona vp_manager1 (not enrolled)             | 605.9d ago  | none        | 'Overdue by : 591 days'            | none        own      | (no banner)
+   3427   persona vp_admin1 (not enrolled), has course:view | 605.9d ago  | none        | 'Overdue by : 591 days'            | none        own      | (no banner)
+   course 49 totals: enrolled users 22 | old code shows the user's own enrolment DATE: 1 | countdown text differs from the user's own: 21 | new lookup returns the user's own MAX: 22
+
+-- course 41 | open_coursecompletiondays='1' | banner computed at all: yes | enrolled users: 932 | course-wide MAX(timecreated): 220.0d ago held by user id(s) 1001
+   userid who                                            | old date    | own date    | old code prints                    | new lookup | new code prints
+   2      enrolled user [siteadmin]                      | 220.0d ago  | 220.0d ago  | (not computed)                     | 220.0d ago  own      | (not computed)
+   64     enrolled user                                  | 220.0d ago  | 1027.9d ago | 'Overdue by : 219 days'            | 1027.9d ago own      | 'Overdue by : 1027 days'
+   142    enrolled user                                  | 220.0d ago  | 1027.9d ago | 'Overdue by : 219 days'            | 1027.9d ago own      | 'Overdue by : 1027 days'
+   1001   enrolled user (course-wide latest)             | 220.0d ago  | 220.0d ago  | 'Overdue by : 219 days'            | 220.0d ago  own      | 'Overdue by : 219 days'
+   1      guest (not enrolled)                           | 220.0d ago  | none        | 'Overdue by : 219 days'            | none        own      | (no banner)
+   3429   persona vp_manager1 (not enrolled)             | 220.0d ago  | none        | 'Overdue by : 219 days'            | none        own      | (no banner)
+   3427   persona vp_admin1 (not enrolled), has course:view | 220.0d ago  | none        | 'Overdue by : 219 days'            | none        own      | (no banner)
+   course 41 totals: enrolled users 932 | old code shows the user's own enrolment DATE: 28 | countdown text differs from the user's own: 904 | new lookup returns the user's own MAX: 932
+
+== totals over the courses above with the column set: enrolled users 2072 | old: own date 30 | old text differs from own 2042 | new: own MAX 2072
+done
+
+######## 4. every affected (course, user) pair (448 still at 40 during this run: 28 courses + 448)
+courses with the column set: 29 | (course, user) pairs: 9779 | lookup = own MAX: 9779 | pairs that get a countdown text: 9779
+######## 5. review fix (phone-width evidence), re-run of the same read-only harness
+######## 5a. course 448 open_coursecompletiondays = 40 (temporary, set for the 390/590 px shots; restored after)
+== enrolment-date harness | now (server tz Asia/Kolkata) | new class deployed: yes
+
+-- course 448 | open_coursecompletiondays='40' | banner computed at all: yes | enrolled users: 3 | course-wide MAX(timecreated): 32.6d ago held by user id(s) 3435
+   userid who                                            | old date    | own date    | old code prints                    | new lookup | new code prints
+   3430   persona vp_learner1                            | 32.6d ago   | 47.1d ago   | 'Due In : <strong>7 days </strong>' | 47.1d ago   own      | 'Overdue by : 7 days'
+   3433   persona vp_author1                             | 32.6d ago   | 47.2d ago   | 'Due In : <strong>7 days </strong>' | 47.2d ago   own      | 'Overdue by : 7 days'
+   3435   persona vp_courseauthor1                       | 32.6d ago   | 32.6d ago   | 'Due In : <strong>7 days </strong>' | 32.6d ago   own      | 'Due In : <strong>7 days </strong>'
+   1      guest (not enrolled)                           | 32.6d ago   | none        | 'Due In : <strong>7 days </strong>' | none        own      | (no banner)
+   3429   persona vp_manager1 (not enrolled)             | 32.6d ago   | none        | 'Due In : <strong>7 days </strong>' | none        own      | (no banner)
+   3427   persona vp_admin1 (not enrolled), has course:view | 32.6d ago   | none        | 'Due In : <strong>7 days </strong>' | none        own      | (no banner)
+   course 448 totals: enrolled users 3 | old code shows the user's own enrolment DATE: 1 | countdown text differs from the user's own: 2 | new lookup returns the user's own MAX: 3
+
+-- course 5 | open_coursecompletiondays='1' | banner computed at all: yes | enrolled users: 1118 | course-wide MAX(timecreated): 229.2d ago held by user id(s) 3363
+   userid who                                            | old date    | own date    | old code prints                    | new lookup | new code prints
+   64     enrolled user                                  | 229.2d ago  | 1241.9d ago | 'Overdue by : 228 days'            | 1241.9d ago own      | 'Overdue by : 1241 days'
+   142    enrolled user                                  | 229.2d ago  | 1241.9d ago | 'Overdue by : 228 days'            | 1241.9d ago own      | 'Overdue by : 1241 days'
+   237    enrolled user                                  | 229.2d ago  | 1186.1d ago | 'Overdue by : 228 days'            | 1186.1d ago own      | 'Overdue by : 1185 days'
+   3363   enrolled user (course-wide latest)             | 229.2d ago  | 229.2d ago  | 'Overdue by : 228 days'            | 229.2d ago  own      | 'Overdue by : 228 days'
+   1      guest (not enrolled)                           | 229.2d ago  | none        | 'Overdue by : 228 days'            | none        own      | (no banner)
+   3429   persona vp_manager1 (not enrolled)             | 229.2d ago  | none        | 'Overdue by : 228 days'            | none        own      | (no banner)
+   3427   persona vp_admin1 (not enrolled), has course:view | 229.2d ago  | none        | 'Overdue by : 228 days'            | none        own      | (no banner)
+   course 5 totals: enrolled users 1118 | old code shows the user's own enrolment DATE: 1 | countdown text differs from the user's own: 1117 | new lookup returns the user's own MAX: 1118
+
+-- course 49 | open_coursecompletiondays='15' | banner computed at all: yes | enrolled users: 22 | course-wide MAX(timecreated): 605.9d ago held by user id(s) 802
+   userid who                                            | old date    | own date    | old code prints                    | new lookup | new code prints
+   802    enrolled user                                  | 605.9d ago  | 605.9d ago  | 'Overdue by : 591 days'            | 605.9d ago  own      | 'Overdue by : 591 days'
+   887    enrolled user                                  | 605.9d ago  | 955.0d ago  | 'Overdue by : 591 days'            | 955.0d ago  own      | 'Overdue by : 940 days'
+   924    enrolled user                                  | 605.9d ago  | 955.0d ago  | 'Overdue by : 591 days'            | 955.0d ago  own      | 'Overdue by : 940 days'
+   1      guest (not enrolled)                           | 605.9d ago  | none        | 'Overdue by : 591 days'            | none        own      | (no banner)
+   3429   persona vp_manager1 (not enrolled)             | 605.9d ago  | none        | 'Overdue by : 591 days'            | none        own      | (no banner)
+   3427   persona vp_admin1 (not enrolled), has course:view | 605.9d ago  | none        | 'Overdue by : 591 days'            | none        own      | (no banner)
+   course 49 totals: enrolled users 22 | old code shows the user's own enrolment DATE: 1 | countdown text differs from the user's own: 21 | new lookup returns the user's own MAX: 22
+
+-- course 41 | open_coursecompletiondays='1' | banner computed at all: yes | enrolled users: 932 | course-wide MAX(timecreated): 220.0d ago held by user id(s) 1001
+   userid who                                            | old date    | own date    | old code prints                    | new lookup | new code prints
+   2      enrolled user [siteadmin]                      | 220.0d ago  | 220.0d ago  | (not computed)                     | 220.0d ago  own      | (not computed)
+   64     enrolled user                                  | 220.0d ago  | 1027.9d ago | 'Overdue by : 219 days'            | 1027.9d ago own      | 'Overdue by : 1027 days'
+   142    enrolled user                                  | 220.0d ago  | 1027.9d ago | 'Overdue by : 219 days'            | 1027.9d ago own      | 'Overdue by : 1027 days'
+   1001   enrolled user (course-wide latest)             | 220.0d ago  | 220.0d ago  | 'Overdue by : 219 days'            | 220.0d ago  own      | 'Overdue by : 219 days'
+   1      guest (not enrolled)                           | 220.0d ago  | none        | 'Overdue by : 219 days'            | none        own      | (no banner)
+   3429   persona vp_manager1 (not enrolled)             | 220.0d ago  | none        | 'Overdue by : 219 days'            | none        own      | (no banner)
+   3427   persona vp_admin1 (not enrolled), has course:view | 220.0d ago  | none        | 'Overdue by : 219 days'            | none        own      | (no banner)
+   course 41 totals: enrolled users 932 | old code shows the user's own enrolment DATE: 28 | countdown text differs from the user's own: 904 | new lookup returns the user's own MAX: 932
+
+== totals over the courses above with the column set: enrolled users 2075 | old: own date 31 | old text differs from own 2044 | new: own MAX 2075
+done
+
+######## 5b. every affected (course, user) pair (448 at 40 during this run: 28 courses + 448)
+courses with the column set: 29 | (course, user) pairs: 9779 | lookup = own MAX: 9779 | pairs that get a countdown text: 9779
+
+######## 5c. course 448 restored to NULL (after the second phone-width run)
+== enrolment-date harness | now (server tz Asia/Kolkata) | new class deployed: yes
+
+-- course 448 | open_coursecompletiondays=NULL | banner computed at all: no (isset/!= 0 guard) | enrolled users: 3 | course-wide MAX(timecreated): 32.6d ago held by user id(s) 3435
+   userid who                                            | old date    | own date    | old code prints                    | new lookup | new code prints
+   3430   persona vp_learner1                            | 32.6d ago   | 47.1d ago   | (not computed)                     | 47.1d ago   own      | (not computed)
+   3433   persona vp_author1                             | 32.6d ago   | 47.2d ago   | (not computed)                     | 47.2d ago   own      | (not computed)
+   3435   persona vp_courseauthor1                       | 32.6d ago   | 32.6d ago   | (not computed)                     | 32.6d ago   own      | (not computed)
+   1      guest (not enrolled)                           | 32.6d ago   | none        | (not computed)                     | none        own      | (not computed)
+   3429   persona vp_manager1 (not enrolled)             | 32.6d ago   | none        | (not computed)                     | none        own      | (not computed)
+   3427   persona vp_admin1 (not enrolled), has course:view | 32.6d ago   | none        | (not computed)                     | none        own      | (not computed)
+
+-- course 5 | open_coursecompletiondays='1' | banner computed at all: yes | enrolled users: 1118 | course-wide MAX(timecreated): 229.2d ago held by user id(s) 3363
+   userid who                                            | old date    | own date    | old code prints                    | new lookup | new code prints
+   64     enrolled user                                  | 229.2d ago  | 1241.9d ago | 'Overdue by : 228 days'            | 1241.9d ago own      | 'Overdue by : 1241 days'
+   142    enrolled user                                  | 229.2d ago  | 1241.9d ago | 'Overdue by : 228 days'            | 1241.9d ago own      | 'Overdue by : 1241 days'
+   237    enrolled user                                  | 229.2d ago  | 1186.1d ago | 'Overdue by : 228 days'            | 1186.1d ago own      | 'Overdue by : 1185 days'
+   3363   enrolled user (course-wide latest)             | 229.2d ago  | 229.2d ago  | 'Overdue by : 228 days'            | 229.2d ago  own      | 'Overdue by : 228 days'
+   1      guest (not enrolled)                           | 229.2d ago  | none        | 'Overdue by : 228 days'            | none        own      | (no banner)
+   3429   persona vp_manager1 (not enrolled)             | 229.2d ago  | none        | 'Overdue by : 228 days'            | none        own      | (no banner)
+   3427   persona vp_admin1 (not enrolled), has course:view | 229.2d ago  | none        | 'Overdue by : 228 days'            | none        own      | (no banner)
+   course 5 totals: enrolled users 1118 | old code shows the user's own enrolment DATE: 1 | countdown text differs from the user's own: 1117 | new lookup returns the user's own MAX: 1118
+
+-- course 49 | open_coursecompletiondays='15' | banner computed at all: yes | enrolled users: 22 | course-wide MAX(timecreated): 605.9d ago held by user id(s) 802
+   userid who                                            | old date    | own date    | old code prints                    | new lookup | new code prints
+   802    enrolled user                                  | 605.9d ago  | 605.9d ago  | 'Overdue by : 591 days'            | 605.9d ago  own      | 'Overdue by : 591 days'
+   887    enrolled user                                  | 605.9d ago  | 955.0d ago  | 'Overdue by : 591 days'            | 955.0d ago  own      | 'Overdue by : 940 days'
+   924    enrolled user                                  | 605.9d ago  | 955.0d ago  | 'Overdue by : 591 days'            | 955.0d ago  own      | 'Overdue by : 940 days'
+   1      guest (not enrolled)                           | 605.9d ago  | none        | 'Overdue by : 591 days'            | none        own      | (no banner)
+   3429   persona vp_manager1 (not enrolled)             | 605.9d ago  | none        | 'Overdue by : 591 days'            | none        own      | (no banner)
+   3427   persona vp_admin1 (not enrolled), has course:view | 605.9d ago  | none        | 'Overdue by : 591 days'            | none        own      | (no banner)
+   course 49 totals: enrolled users 22 | old code shows the user's own enrolment DATE: 1 | countdown text differs from the user's own: 21 | new lookup returns the user's own MAX: 22
+
+-- course 41 | open_coursecompletiondays='1' | banner computed at all: yes | enrolled users: 932 | course-wide MAX(timecreated): 220.0d ago held by user id(s) 1001
+   userid who                                            | old date    | own date    | old code prints                    | new lookup | new code prints
+   2      enrolled user [siteadmin]                      | 220.0d ago  | 220.0d ago  | (not computed)                     | 220.0d ago  own      | (not computed)
+   64     enrolled user                                  | 220.0d ago  | 1027.9d ago | 'Overdue by : 219 days'            | 1027.9d ago own      | 'Overdue by : 1027 days'
+   142    enrolled user                                  | 220.0d ago  | 1027.9d ago | 'Overdue by : 219 days'            | 1027.9d ago own      | 'Overdue by : 1027 days'
+   1001   enrolled user (course-wide latest)             | 220.0d ago  | 220.0d ago  | 'Overdue by : 219 days'            | 220.0d ago  own      | 'Overdue by : 219 days'
+   1      guest (not enrolled)                           | 220.0d ago  | none        | 'Overdue by : 219 days'            | none        own      | (no banner)
+   3429   persona vp_manager1 (not enrolled)             | 220.0d ago  | none        | 'Overdue by : 219 days'            | none        own      | (no banner)
+   3427   persona vp_admin1 (not enrolled), has course:view | 220.0d ago  | none        | 'Overdue by : 219 days'            | none        own      | (no banner)
+   course 41 totals: enrolled users 932 | old code shows the user's own enrolment DATE: 28 | countdown text differs from the user's own: 904 | new lookup returns the user's own MAX: 932
+
+== totals over the courses above with the column set: enrolled users 2072 | old: own date 30 | old text differs from own 2042 | new: own MAX 2072
+done
