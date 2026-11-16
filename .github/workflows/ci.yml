@@ -1040,6 +1040,16 @@ jobs:
           PHP
           php -l "$MOODLE_DIR/config.php"
 
+      # Moodle's PHPUnit bootstrap refuses to start without en_AU.UTF-8
+      # ("Required locale 'en_AU.UTF-8' is not installed", init.php exit 135,
+      # run #738). The Ubuntu runner ships without it; generate it, as
+      # moodle-plugin-ci's own GitHub Actions template does.
+      - name: Generate the en_AU.UTF-8 locale PHPUnit requires
+        run: |
+          set -e
+          sudo locale-gen en_AU.UTF-8
+          locale -a | grep -i '^en_AU\.utf' || { echo "::error::en_AU.UTF-8 still missing after locale-gen"; exit 1; }
+
       # No separate "install_database.php" step any more (removed 2026-11-16).
       # PHPUnit never uses the mdl_ site: init.php installs core and every
       # plugin into the phpu_ tables itself. The old step was a second full
