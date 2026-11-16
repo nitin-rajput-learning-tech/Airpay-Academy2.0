@@ -1064,7 +1064,18 @@ jobs:
           # into the checkout root and run `composer install` a second time
           # (public/lib/testing/lib.php testing_update_composer_dependencies).
           cp "$(command -v composer)" composer.phar
-          php public/admin/tool/phpunit/cli/init.php --disable-composer
+          # Run logs need a GitHub sign-in; annotations do not. On failure,
+          # publish the tail of init.php's output as ONE error annotation
+          # (newlines encoded as %0A) so the cause is readable either way.
+          set +e
+          php public/admin/tool/phpunit/cli/init.php --disable-composer 2>&1 | tee "$RUNNER_TEMP/phpunit-init.log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if [ "$code" -ne 0 ]; then
+            msg=$(tail -n 40 "$RUNNER_TEMP/phpunit-init.log" | sed -e 's/%/%25/g' -e 's/\r/%0D/g' | awk '{printf "%s%%0A", $0}')
+            echo "::error title=init.php exited ${code}::${msg}"
+            exit "$code"
+          fi
 
       - name: Build airpay testsuite list
         id: suites
@@ -1134,7 +1145,17 @@ jobs:
           N=$(grep -rl '@group tenant_isolation'                 public/local/*/tests/*.php                 public/theme/*/tests/*.php 2>/dev/null | wc -l)
           echo "tagged isolation suites: $N"
           test "$N" -ge 40
-          vendor/bin/phpunit --group tenant_isolation
+          # On failure, publish the tail (PHPUnit's failure list and summary)
+          # as one annotation: readable without signing in to GitHub.
+          set +e
+          vendor/bin/phpunit --group tenant_isolation 2>&1 | tee "$RUNNER_TEMP/phpunit-tenant.log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if [ "$code" -ne 0 ]; then
+            msg=$(tail -n 60 "$RUNNER_TEMP/phpunit-tenant.log" | sed -e 's/%/%25/g' -e 's/\r/%0D/g' | awk '{printf "%s%%0A", $0}')
+            echo "::error title=tenant_isolation group failed (exit ${code})::${msg}"
+            exit "$code"
+          fi
 
       # ── ADVISORY ───────────────────────────────────────────────────
       # Full 5.2 suite. Known unrelated failures; drain then make blocking.
