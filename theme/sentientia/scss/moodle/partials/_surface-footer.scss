@@ -259,3 +259,35 @@ body.dark-mode .airpay-footer__product-attribution {
         margin: var(--ap-space-4) calc(-1 * var(--ap-space-4)) calc(-1 * var(--ap-space-4));
     }
 }
+
+/* ── Footer text keeps clear of the floating assistant button (2026-11-16, demo quick wins) ──
+   local_sentientia_assistant pins its button to the bottom right of every page (its styles.css): inset --ap-space-6 and
+   56px wide, or inset --ap-space-4 and 48px wide at 590px and below. Since the footer scrolls to the bottom of the
+   window (decision A3), the end of the copyright line sat under the button at 1280px. Both footer rows now reserve the
+   button's footprint plus a --ap-space-2 gap at their inline end, at every width, so no footer text can pass under the
+   button while the page scrolls. Keep the two size properties in step with the plugin's button.
+   The space is reserved only when the button is in the page (#airpay-assistant, the plugin's chat_bubble.mustache). The
+   plugin prints it only for logged-in users, with its flag and its config on, and not on login pages; on every other
+   page (flag off, logged out, maintenance) the footer keeps its default padding. */
+.airpay-footer {
+    --ap-footer-fab-size: 56px;
+    --ap-footer-fab-inset: var(--ap-space-6);
+    --ap-footer-fab-clearance: calc(var(--ap-footer-fab-inset) + var(--ap-footer-fab-size) + var(--ap-space-2));
+}
+body:has(#airpay-assistant) .airpay-footer__compact {
+    padding-inline-end: var(--ap-footer-fab-clearance);
+}
+/* The band's text is centred, so it reserves the same space at its start and stays centred. */
+body:has(#airpay-assistant) .airpay-footer__product-attribution {
+    padding-inline: var(--ap-footer-fab-clearance);
+}
+@media (max-width: 590px) {
+    .airpay-footer {
+        --ap-footer-fab-size: 48px;
+        --ap-footer-fab-inset: var(--ap-space-4);
+    }
+    /* Too narrow to give the space away twice: the band reserves it at the end only. */
+    body:has(#airpay-assistant) .airpay-footer__product-attribution {
+        padding-inline: var(--ap-space-3) var(--ap-footer-fab-clearance);
+    }
+}

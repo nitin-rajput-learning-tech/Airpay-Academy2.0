@@ -119,8 +119,19 @@
         <div id="page-content" class="pb-3 d-print-block">
             <div class="ap-course-player {{#ap_has_sidebar}}ap-course-player--has-sidebar{{/ap_has_sidebar}}">
 
-                {{! ═══ COURSE SIDEBAR — the ONE in-course TOC (N-02) ═══ }}
+                {{! ═══ COURSE SIDEBAR — the ONE in-course TOC (N-02) ═══
+                    2026-11-16: at 992px and below the sidebar starts collapsed and the button opens and closes it
+                    (_course-player.scss). The button is hidden above 992px, where nothing changes. }}
                 {{#ap_has_sidebar}}
+                <button type="button"
+                        class="ap-course-player__toggle d-print-none"
+                        id="ap-course-sidebar-toggle"
+                        aria-expanded="false"
+                        aria-controls="ap-course-sidebar">
+                    <i class="fa fa-list-ul ap-course-player__toggle-icon" aria-hidden="true"></i>
+                    <span>{{#str}}course_content, theme_sentientia{{/str}}</span>
+                    <i class="fa fa-chevron-down ap-course-player__toggle-chevron" aria-hidden="true"></i>
+                </button>
                 <aside class="ap-course-sidebar" id="ap-course-sidebar">
                     <div class="ap-course-sidebar__header">
                         <h4 class="ap-course-sidebar__title">{{#str}}course_content, theme_sentientia{{/str}}</h4>
@@ -230,8 +241,22 @@ require(['theme_sentientia/loader'], function(Loader) {
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var sidebar = document.getElementById('ap-course-sidebar');
+    if (!sidebar) return;
+
+    // 2026-11-16: at 992px and below the sidebar starts collapsed (CSS) and this button opens and closes it.
+    var listToggle = document.getElementById('ap-course-sidebar-toggle');
+    var small = window.matchMedia ? window.matchMedia('(max-width: 992px)') : null;
+    var toggleList = function() {
+        var open = !sidebar.classList.contains('ap-course-sidebar--expanded');
+        sidebar.classList.toggle('ap-course-sidebar--expanded', open);
+        if (listToggle) listToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        // Closed with the B key while a list link had focus: hand focus to the button instead of losing it to <body>.
+        if (!open && listToggle && sidebar.contains(document.activeElement)) listToggle.focus();
+    };
+    if (listToggle) listToggle.addEventListener('click', toggleList);
+
     var toggleBtn = document.getElementById('ap-sidebar-toggle');
-    if (!sidebar || !toggleBtn) return;
+    if (!toggleBtn) return;
 
     // Restore saved state.
     var savedState = localStorage.getItem('ap_sidebar_open');
@@ -258,8 +283,12 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('keydown', function(e) {
         // Don't trigger in input fields.
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
-        // [B] Toggle sidebar.
+        // [B] Toggle sidebar (at 992px and below, the collapsed list).
         if (e.key === 'b' && !e.ctrlKey && !e.metaKey) {
+            if (small && small.matches) {
+                toggleList();
+                return;
+            }
             sidebar.classList.toggle('ap-course-sidebar--collapsed');
             localStorage.setItem('ap_sidebar_open',
                 !sidebar.classList.contains('ap-course-sidebar--collapsed'));

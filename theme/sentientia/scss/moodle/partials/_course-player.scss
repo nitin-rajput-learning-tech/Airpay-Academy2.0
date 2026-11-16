@@ -348,26 +348,113 @@ body.pagelayout-course:not(.editing) #page-header .courseheader .course_heading 
     min-width: 0;
 }
 
-/* ── Mobile: sidebar becomes overlay drawer ──────────────────────────── */
+/* ── 992px and below: collapsed list above the content (2026-11-16, demo quick wins) ──
+   Was a fixed overlay drawer that started open: at 590px it covered about 85% of the course page, in view and edit
+   mode, and its only toggle (in the progress bar, printed only for courses with completion tracking) sat under it.
+   Now the sidebar is part of the page flow and starts collapsed. The button .ap-course-player__toggle
+   (course.mustache, course_editing.mustache) opens it above the content and closes it again, and keeps aria-expanded
+   in step. The default is in CSS, so the list cannot flash open before the script runs. --expanded is the
+   small-screen state; --collapsed (the desktop state, saved in localStorage) has no effect here. Above 992px nothing
+   changes. The two-class selectors outrank the single-class landscape height rules in _surface-profile.scss and
+   _legacy-admin.scss. */
+.ap-course-player__toggle {
+    display: none;
+}
 @media (max-width: 992px) {
-    .ap-course-sidebar {
-        position: fixed;
-        left: 0;
-        top: 0;
-        height: 100vh;
-        z-index: var(--ap-z-offcanvas);
-        box-shadow: var(--ap-shadow-lg);
-        transform: translateX(0);
-        transition: transform var(--ap-transition-default);
+    .ap-course-player--has-sidebar {
+        display: block;
     }
-    .ap-course-sidebar--collapsed {
-        transform: translateX(-100%);
-        width: 280px;
+    /* As a flex item the column contained the floated #region-main; in block flow it needs its own formatting context
+       or it collapses to 0 high under the float. */
+    .ap-course-player--has-sidebar .ap-course-player__main {
+        display: flow-root;
+    }
+    .ap-course-player__toggle {
+        display: flex;
+        align-items: center;
+        gap: var(--ap-space-2);
+        width: 100%;
+        min-height: var(--ap-tap-target-min);
+        margin-bottom: var(--ap-space-3);
+        padding: var(--ap-space-2) var(--ap-space-4);
+        background: var(--ap-color-bg-surface);
+        border: 1px solid var(--ap-color-border);
+        border-radius: var(--ap-radius-md);
+        color: var(--ap-color-text-primary);
+        font-size: var(--ap-text-sm);
+        font-weight: var(--ap-weight-semibold);
+        text-align: start;
+        cursor: pointer;
+        transition: background var(--ap-transition-quick),
+                    color var(--ap-transition-quick),
+                    border-color var(--ap-transition-quick);
+    }
+    /* Hover only where the device can hover: on touch screens :hover sticks after a tap. In dark mode
+       --ap-color-primary-light flips to #172554 while --ap-color-primary stays #0066A7 (about 2.4:1), so the dark hover
+       uses the same pair as the dark .__item--current override below (about 5.2:1). */
+    @media (hover: hover) {
+        .ap-course-player__toggle:hover {
+            background: var(--ap-color-primary-light);
+            color: var(--ap-color-primary);
+        }
+        [data-theme="dark"] .ap-course-player__toggle:hover,
+        body.dark-mode .ap-course-player__toggle:hover {
+            background: var(--ap-blue-900);
+            color: var(--ap-blue-300);
+        }
+    }
+    .ap-course-player__toggle:focus-visible {
+        outline: var(--ap-focus-ring-width) solid var(--ap-focus-ring-color);
+        outline-offset: var(--ap-focus-ring-offset);
+    }
+    .ap-course-player__toggle-icon {
+        color: var(--ap-color-primary);
+    }
+    .ap-course-player__toggle-chevron {
+        margin-inline-start: auto;
+        transition: transform var(--ap-transition-quick);
+    }
+    .ap-course-player__toggle[aria-expanded="true"] .ap-course-player__toggle-chevron {
+        transform: rotate(180deg);
+    }
+    .ap-course-player--has-sidebar .ap-course-sidebar,
+    .ap-course-player--has-sidebar .ap-course-sidebar--collapsed {
+        display: none;
+        position: static;
+        width: auto;
+        height: auto;
+        max-height: 60vh;
+        margin-bottom: var(--ap-space-4);
+        overflow-y: auto;
         opacity: 1;
+        transform: none;
+        border: 1px solid var(--ap-color-border);
+        border-radius: var(--ap-radius-md);
+        box-shadow: none;
+    }
+    .ap-course-player--has-sidebar .ap-course-sidebar.ap-course-sidebar--expanded {
+        display: block;
+        animation: ap-course-sidebar-reveal var(--ap-transition-default);
+    }
+    /* The progress-bar toggle switches the desktop state (--collapsed), which has no effect here; in view mode it does
+       not even reach this sidebar, because its id is also the shell sidebar's collapse button, which getElementById
+       returns first. At these widths the button above replaces it. */
+    .ap-course-progress-bar__toggle {
+        display: none;
+    }
+}
+/* Reduced motion: --ap-duration-default is 0ms, so the list appears without animating. */
+@keyframes ap-course-sidebar-reveal {
+    from {
+        opacity: 0;
+        transform: translateY(calc(-1 * var(--ap-space-1)));
+    }
+    to {
+        opacity: 1;
+        transform: none;
     }
 }
 @media (max-width: 590px) {
-    .ap-course-sidebar { width: 85vw; }
     .ap-course-progress-bar__name { display: none; }
 }
 

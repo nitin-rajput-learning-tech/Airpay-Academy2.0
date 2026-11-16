@@ -1,0 +1,456 @@
+{
+ "footer": {
+  "vp_admin1": {
+   "1280x665": {
+    "footer": true,
+    "button": {
+     "left": 1200,
+     "right": 1256,
+     "top": 585,
+     "bottom": 641
+    },
+    "textBoxes": 8,
+    "rightmostText": 1240,
+    "gap": -40,
+    "columnClash": [
+     "© 2026 airpay payment services pvt. ltd. [1004-1240]"
+    ],
+    "overlapAtEnd": 1
+   },
+   "1366x768": {
+    "footer": true,
+    "button": {
+     "left": 1286,
+     "right": 1342,
+     "top": 688,
+     "bottom": 744
+    },
+    "textBoxes": 8,
+    "rightmostText": 1326,
+    "gap": -40,
+    "columnClash": [
+     "© 2026 airpay payment services pvt. ltd. [1090-1326]"
+    ],
+    "overlapAtEnd": 1
+   },
+   "1440x900": {
+    "footer": true,
+    "button": {
+     "left": 1360,
+     "right": 1416,
+     "top": 820,
+     "bottom": 876
+    },
+    "textBoxes": 8,
+    "rightmostText": 1400,
+    "gap": -40,
+    "columnClash": [
+     "© 2026 airpay payment services pvt. ltd. [1164-1400]"
+    ],
+    "overlapAtEnd": 1
+   },
+   "1920x1080": {
+    "footer": true,
+    "button": {
+     "left": 1840,
+     "right": 1896,
+     "top": 1000,
+     "bottom": 1056
+    },
+    "textBoxes": 8,
+    "rightmostText": 1650,
+    "gap": 190,
+    "columnClash": [],
+    "overlapAtEnd": 0
+   },
+   "768x1024": {
+    "footer": true,
+    "button": {
+     "left": 688,
+     "right": 744,
+     "top": 944,
+     "bottom": 1000
+    },
+    "textBoxes": 9,
+    "rightmostText": 728,
+    "gap": -40,
+    "columnClash": [
+     "Private & confidential · For authorised  [162-728]"
+    ],
+    "overlapAtEnd": 1
+   },
+   "590x1000": {
+    "footer": true,
+    "button": {
+     "left": 526,
+     "right": 574,
+     "top": 884,
+     "bottom": 932
+    },
+    "textBoxes": 9,
+    "rightmostText": 550,
+    "gap": -24,
+    "columnClash": [
+     "Private & confidential · For authorised  [162-550]"
+    ],
+    "overlapAtEnd": 1
+   },
+   "390x844": {
+    "footer": true,
+    "button": {
+     "left": 326,
+     "right": 374,
+     "top": 728,
+     "bottom": 776
+    },
+    "textBoxes": 10,
+    "rightmostText": 347,
+    "gap": -21,
+    "columnClash": [
+     "Private & confidential · For authorised  [175-338]",
+     "Private & confidential · For authorised  [43-347]"
+    ],
+    "overlapAtEnd": 1
+   }
+  },
+  "vp_learner1": {
+   "1280x665": {
+    "footer": true,
+    "button": {
+     "left": 1200,
+     "right": 1256,
+     "top": 585,
+     "bottom": 641
+    },
+    "textBoxes": 8,
+    "rightmostText": 1236,
+    "gap": -36,
+    "columnClash": [
+     "© 2026 airpay payment services pvt. ltd. [1000-1236]"
+    ],
+    "overlapAtEnd": 1
+   },
+   "1366x768": {
+    "footer": true,
+    "button": {
+     "left": 1286,
+     "right": 1342,
+     "top": 688,
+     "bottom": 744
+    },
+    "textBoxes": 8,
+    "rightmostText": 1279,
+    "gap": 7,
+    "columnClash": [],
+    "overlapAtEnd": 0
+   },
+   "1440x900": {
+    "footer": true,
+    "button": {
+     "left": 1360,
+     "right": 1416,
+     "top": 820,
+     "bottom": 876
+    },
+    "textBoxes": 8,
+    "rightmostText": 1316,
+    "gap": 44,
+    "columnClash": [],
+    "overlapAtEnd": 0
+   },
+   "1920x1080": {
+    "footer": true,
+    "button": {
+     "left": 1840,
+     "right": 1896,
+     "top": 1000,
+     "bottom": 1056
+    },
+    "textBoxes": 8,
+    "rightmostText": 1556,
+    "gap": 284,
+    "columnClash": [],
+    "overlapAtEnd": 0
+   },
+   "768x1024": {
+    "footer": true,
+    "button": {
+     "left": 688,
+     "right": 744,
+     "top": 944,
+     "bottom": 1000
+    },
+    "textBoxes": 9,
+    "rightmostText": 728,
+    "gap": -40,
+    "columnClash": [
+     "Private & confidential · For authorised  [162-728]"
+    ],
+    "overlapAtEnd": 1
+   },
+   "590x1000": {
+    "footer": true,
+    "button": {
+     "left": 526,
+     "right": 574,
+     "top": 884,
+     "bottom": 932
+    },
+    "textBoxes": 9,
+    "rightmostText": 550,
+    "gap": -24,
+    "columnClash": [
+     "Private & confidential · For authorised  [162-550]"
+    ],
+    "overlapAtEnd": 1
+   },
+   "390x844": {
+    "footer": true,
+    "button": {
+     "left": 326,
+     "right": 374,
+     "top": 728,
+     "bottom": 776
+    },
+    "textBoxes": 10,
+    "rightmostText": 347,
+    "gap": -21,
+    "columnClash": [
+     "Private & confidential · For authorised  [175-338]",
+     "Private & confidential · For authorised  [43-347]"
+    ],
+    "overlapAtEnd": 1
+   }
+  }
+ },
+ "sidebar": {
+  "vp_courseauthor1": {
+   "1440": {
+    "width": 1440,
+    "editing": true,
+    "sidebar": true,
+    "sidebarShown": true,
+    "sidebarPosition": "sticky",
+    "sidebarBox": [
+     16,
+     415,
+     260,
+     800
+    ],
+    "mainBox": [
+     276,
+     415,
+     1148,
+     1426
+    ],
+    "coversWindowPct": 0,
+    "overMain": false,
+    "toggle": false,
+    "toggleShown": false,
+    "toggleTag": null,
+    "toggleType": null,
+    "expanded": null,
+    "controls": null,
+    "toggleName": null
+   },
+   "590-onload": {
+    "width": 590,
+    "editing": true,
+    "sidebar": true,
+    "sidebarShown": true,
+    "sidebarPosition": "fixed",
+    "sidebarBox": [
+     0,
+     0,
+     502,
+     1000
+    ],
+    "mainBox": [
+     0,
+     338,
+     590,
+     1433
+    ],
+    "coversWindowPct": 85,
+    "overMain": true,
+    "toggle": false,
+    "toggleShown": false,
+    "toggleTag": null,
+    "toggleType": null,
+    "expanded": null,
+    "controls": null,
+    "toggleName": null
+   },
+   "390-onload": {
+    "width": 390,
+    "editing": true,
+    "sidebar": true,
+    "sidebarShown": true,
+    "sidebarPosition": "fixed",
+    "sidebarBox": [
+     0,
+     0,
+     332,
+     844
+    ],
+    "mainBox": [
+     0,
+     358,
+     390,
+     1442
+    ],
+    "coversWindowPct": 85,
+    "overMain": true,
+    "toggle": false,
+    "toggleShown": false,
+    "toggleTag": null,
+    "toggleType": null,
+    "expanded": null,
+    "controls": null,
+    "toggleName": null
+   },
+   "768-onload": {
+    "width": 768,
+    "editing": true,
+    "sidebar": true,
+    "sidebarShown": true,
+    "sidebarPosition": "fixed",
+    "sidebarBox": [
+     0,
+     0,
+     260,
+     1024
+    ],
+    "mainBox": [
+     16,
+     410,
+     736,
+     1414
+    ],
+    "coversWindowPct": 34,
+    "overMain": true,
+    "toggle": false,
+    "toggleShown": false,
+    "toggleTag": null,
+    "toggleType": null,
+    "expanded": null,
+    "controls": null,
+    "toggleName": null
+   }
+  },
+  "vp_learner1": {
+   "1440": {
+    "width": 1440,
+    "editing": false,
+    "sidebar": true,
+    "sidebarShown": true,
+    "sidebarPosition": "sticky",
+    "sidebarBox": [
+     96,
+     343,
+     260,
+     800
+    ],
+    "mainBox": [
+     356,
+     343,
+     1060,
+     800
+    ],
+    "coversWindowPct": 0,
+    "overMain": false,
+    "toggle": false,
+    "toggleShown": false,
+    "toggleTag": null,
+    "toggleType": null,
+    "expanded": null,
+    "controls": null,
+    "toggleName": null
+   },
+   "590-onload": {
+    "width": 590,
+    "editing": false,
+    "sidebar": true,
+    "sidebarShown": true,
+    "sidebarPosition": "fixed",
+    "sidebarBox": [
+     0,
+     0,
+     502,
+     1000
+    ],
+    "mainBox": [
+     16,
+     327,
+     558,
+     738
+    ],
+    "coversWindowPct": 85,
+    "overMain": true,
+    "toggle": false,
+    "toggleShown": false,
+    "toggleTag": null,
+    "toggleType": null,
+    "expanded": null,
+    "controls": null,
+    "toggleName": null
+   },
+   "390-onload": {
+    "width": 390,
+    "editing": false,
+    "sidebar": true,
+    "sidebarShown": true,
+    "sidebarPosition": "fixed",
+    "sidebarBox": [
+     0,
+     0,
+     332,
+     844
+    ],
+    "mainBox": [
+     16,
+     275,
+     358,
+     737
+    ],
+    "coversWindowPct": 85,
+    "overMain": true,
+    "toggle": false,
+    "toggleShown": false,
+    "toggleTag": null,
+    "toggleType": null,
+    "expanded": null,
+    "controls": null,
+    "toggleName": null
+   },
+   "768-onload": {
+    "width": 768,
+    "editing": false,
+    "sidebar": true,
+    "sidebarShown": true,
+    "sidebarPosition": "fixed",
+    "sidebarBox": [
+     0,
+     0,
+     260,
+     1024
+    ],
+    "mainBox": [
+     16,
+     357,
+     736,
+     754
+    ],
+    "coversWindowPct": 34,
+    "overMain": true,
+    "toggle": false,
+    "toggleShown": false,
+    "toggleTag": null,
+    "toggleType": null,
+    "expanded": null,
+    "controls": null,
+    "toggleName": null
+   }
+  }
+ }
+}

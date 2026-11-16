@@ -1,0 +1,794 @@
+{
+ "footer": {
+  "vp_admin1": {
+   "1280x665": {
+    "footer": true,
+    "button": {
+     "left": 1200,
+     "right": 1256,
+     "top": 585,
+     "bottom": 641
+    },
+    "textBoxes": 8,
+    "rightmostText": 1192,
+    "gap": 8,
+    "columnClash": [],
+    "overlapAtEnd": 0,
+    "padding": {
+     "withButton": {
+      "compactEnd": 88,
+      "bandStart": 88,
+      "bandEnd": 88
+     },
+     "withoutButton": {
+      "compactEnd": 40,
+      "bandStart": 16,
+      "bandEnd": 16
+     }
+    }
+   },
+   "1366x768": {
+    "footer": true,
+    "button": {
+     "left": 1286,
+     "right": 1342,
+     "top": 688,
+     "bottom": 744
+    },
+    "textBoxes": 8,
+    "rightmostText": 1278,
+    "gap": 8,
+    "columnClash": [],
+    "overlapAtEnd": 0,
+    "padding": {
+     "withButton": {
+      "compactEnd": 88,
+      "bandStart": 88,
+      "bandEnd": 88
+     },
+     "withoutButton": {
+      "compactEnd": 40,
+      "bandStart": 16,
+      "bandEnd": 16
+     }
+    }
+   },
+   "1440x900": {
+    "footer": true,
+    "button": {
+     "left": 1360,
+     "right": 1416,
+     "top": 820,
+     "bottom": 876
+    },
+    "textBoxes": 8,
+    "rightmostText": 1352,
+    "gap": 8,
+    "columnClash": [],
+    "overlapAtEnd": 0,
+    "padding": {
+     "withButton": {
+      "compactEnd": 88,
+      "bandStart": 88,
+      "bandEnd": 88
+     },
+     "withoutButton": {
+      "compactEnd": 40,
+      "bandStart": 16,
+      "bandEnd": 16
+     }
+    }
+   },
+   "1920x1080": {
+    "footer": true,
+    "button": {
+     "left": 1840,
+     "right": 1896,
+     "top": 1000,
+     "bottom": 1056
+    },
+    "textBoxes": 8,
+    "rightmostText": 1602,
+    "gap": 238,
+    "columnClash": [],
+    "overlapAtEnd": 0,
+    "padding": {
+     "withButton": {
+      "compactEnd": 88,
+      "bandStart": 88,
+      "bandEnd": 88
+     },
+     "withoutButton": {
+      "compactEnd": 40,
+      "bandStart": 16,
+      "bandEnd": 16
+     }
+    }
+   },
+   "768x1024": {
+    "footer": true,
+    "button": {
+     "left": 688,
+     "right": 744,
+     "top": 944,
+     "bottom": 1000
+    },
+    "textBoxes": 9,
+    "rightmostText": 680,
+    "gap": 8,
+    "columnClash": [],
+    "overlapAtEnd": 0,
+    "padding": {
+     "withButton": {
+      "compactEnd": 88,
+      "bandStart": 88,
+      "bandEnd": 88
+     },
+     "withoutButton": {
+      "compactEnd": 20,
+      "bandStart": 16,
+      "bandEnd": 16
+     }
+    }
+   },
+   "590x1000": {
+    "footer": true,
+    "button": {
+     "left": 526,
+     "right": 574,
+     "top": 884,
+     "bottom": 932
+    },
+    "textBoxes": 9,
+    "rightmostText": 490,
+    "gap": 36,
+    "columnClash": [],
+    "overlapAtEnd": 0,
+    "padding": {
+     "withButton": {
+      "compactEnd": 72,
+      "bandStart": 12,
+      "bandEnd": 72
+     },
+     "withoutButton": {
+      "compactEnd": 20,
+      "bandStart": 16,
+      "bandEnd": 16
+     }
+    }
+   },
+   "390x844": {
+    "footer": true,
+    "button": {
+     "left": 326,
+     "right": 374,
+     "top": 728,
+     "bottom": 776
+    },
+    "textBoxes": 10,
+    "rightmostText": 298,
+    "gap": 28,
+    "columnClash": [],
+    "overlapAtEnd": 0,
+    "padding": {
+     "withButton": {
+      "compactEnd": 72,
+      "bandStart": 12,
+      "bandEnd": 72
+     },
+     "withoutButton": {
+      "compactEnd": 20,
+      "bandStart": 16,
+      "bandEnd": 16
+     }
+    }
+   }
+  },
+  "vp_learner1": {
+   "1280x665": {
+    "footer": true,
+    "button": {
+     "left": 1200,
+     "right": 1256,
+     "top": 585,
+     "bottom": 641
+    },
+    "textBoxes": 8,
+    "rightmostText": 1188,
+    "gap": 12,
+    "columnClash": [],
+    "overlapAtEnd": 0,
+    "padding": {
+     "withButton": {
+      "compactEnd": 88,
+      "bandStart": 88,
+      "bandEnd": 88
+     },
+     "withoutButton": {
+      "compactEnd": 40,
+      "bandStart": 16,
+      "bandEnd": 16
+     }
+    }
+   },
+   "1366x768": {
+    "footer": true,
+    "button": {
+     "left": 1286,
+     "right": 1342,
+     "top": 688,
+     "bottom": 744
+    },
+    "textBoxes": 8,
+    "rightmostText": 1231,
+    "gap": 55,
+    "columnClash": [],
+    "overlapAtEnd": 0,
+    "padding": {
+     "withButton": {
+      "compactEnd": 88,
+      "bandStart": 88,
+      "bandEnd": 88
+     },
+     "withoutButton": {
+      "compactEnd": 40,
+      "bandStart": 16,
+      "bandEnd": 16
+     }
+    }
+   },
+   "1440x900": {
+    "footer": true,
+    "button": {
+     "left": 1360,
+     "right": 1416,
+     "top": 820,
+     "bottom": 876
+    },
+    "textBoxes": 8,
+    "rightmostText": 1268,
+    "gap": 92,
+    "columnClash": [],
+    "overlapAtEnd": 0,
+    "padding": {
+     "withButton": {
+      "compactEnd": 88,
+      "bandStart": 88,
+      "bandEnd": 88
+     },
+     "withoutButton": {
+      "compactEnd": 40,
+      "bandStart": 16,
+      "bandEnd": 16
+     }
+    }
+   },
+   "1920x1080": {
+    "footer": true,
+    "button": {
+     "left": 1840,
+     "right": 1896,
+     "top": 1000,
+     "bottom": 1056
+    },
+    "textBoxes": 8,
+    "rightmostText": 1508,
+    "gap": 332,
+    "columnClash": [],
+    "overlapAtEnd": 0,
+    "padding": {
+     "withButton": {
+      "compactEnd": 88,
+      "bandStart": 88,
+      "bandEnd": 88
+     },
+     "withoutButton": {
+      "compactEnd": 40,
+      "bandStart": 16,
+      "bandEnd": 16
+     }
+    }
+   },
+   "768x1024": {
+    "footer": true,
+    "button": {
+     "left": 688,
+     "right": 744,
+     "top": 944,
+     "bottom": 1000
+    },
+    "textBoxes": 9,
+    "rightmostText": 680,
+    "gap": 8,
+    "columnClash": [],
+    "overlapAtEnd": 0,
+    "padding": {
+     "withButton": {
+      "compactEnd": 88,
+      "bandStart": 88,
+      "bandEnd": 88
+     },
+     "withoutButton": {
+      "compactEnd": 20,
+      "bandStart": 16,
+      "bandEnd": 16
+     }
+    }
+   },
+   "590x1000": {
+    "footer": true,
+    "button": {
+     "left": 526,
+     "right": 574,
+     "top": 884,
+     "bottom": 932
+    },
+    "textBoxes": 9,
+    "rightmostText": 490,
+    "gap": 36,
+    "columnClash": [],
+    "overlapAtEnd": 0,
+    "padding": {
+     "withButton": {
+      "compactEnd": 72,
+      "bandStart": 12,
+      "bandEnd": 72
+     },
+     "withoutButton": {
+      "compactEnd": 20,
+      "bandStart": 16,
+      "bandEnd": 16
+     }
+    }
+   },
+   "390x844": {
+    "footer": true,
+    "button": {
+     "left": 326,
+     "right": 374,
+     "top": 728,
+     "bottom": 776
+    },
+    "textBoxes": 10,
+    "rightmostText": 298,
+    "gap": 28,
+    "columnClash": [],
+    "overlapAtEnd": 0,
+    "padding": {
+     "withButton": {
+      "compactEnd": 72,
+      "bandStart": 12,
+      "bandEnd": 72
+     },
+     "withoutButton": {
+      "compactEnd": 20,
+      "bandStart": 16,
+      "bandEnd": 16
+     }
+    }
+   }
+  }
+ },
+ "sidebar": {
+  "vp_courseauthor1": {
+   "1440": {
+    "width": 1440,
+    "editing": true,
+    "sidebar": true,
+    "sidebarShown": true,
+    "sidebarPosition": "sticky",
+    "sidebarBox": [
+     16,
+     415,
+     260,
+     800
+    ],
+    "mainBox": [
+     276,
+     415,
+     1148,
+     1426
+    ],
+    "coversWindowPct": 0,
+    "overMain": false,
+    "toggle": true,
+    "toggleShown": false,
+    "toggleTag": "button",
+    "toggleType": "button",
+    "expanded": "false",
+    "controls": "ap-course-sidebar",
+    "toggleName": "Course Content"
+   },
+   "590-onload": {
+    "width": 590,
+    "editing": true,
+    "sidebar": true,
+    "sidebarShown": false,
+    "sidebarPosition": "static",
+    "sidebarBox": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "mainBox": [
+     0,
+     394,
+     590,
+     1433
+    ],
+    "coversWindowPct": 0,
+    "overMain": false,
+    "toggle": true,
+    "toggleShown": true,
+    "toggleTag": "button",
+    "toggleType": "button",
+    "expanded": "false",
+    "controls": "ap-course-sidebar",
+    "toggleName": "Course Content"
+   },
+   "590-opened": {
+    "width": 590,
+    "editing": true,
+    "sidebar": true,
+    "sidebarShown": true,
+    "sidebarPosition": "static",
+    "sidebarBox": [
+     0,
+     394,
+     590,
+     332
+    ],
+    "mainBox": [
+     0,
+     742,
+     590,
+     1433
+    ],
+    "coversWindowPct": 0,
+    "overMain": false,
+    "toggle": true,
+    "toggleShown": true,
+    "toggleTag": "button",
+    "toggleType": "button",
+    "expanded": "true",
+    "controls": "ap-course-sidebar",
+    "toggleName": "Course Content"
+   },
+   "390-onload": {
+    "width": 390,
+    "editing": true,
+    "sidebar": true,
+    "sidebarShown": false,
+    "sidebarPosition": "static",
+    "sidebarBox": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "mainBox": [
+     0,
+     414,
+     390,
+     1442
+    ],
+    "coversWindowPct": 0,
+    "overMain": false,
+    "toggle": true,
+    "toggleShown": true,
+    "toggleTag": "button",
+    "toggleType": "button",
+    "expanded": "false",
+    "controls": "ap-course-sidebar",
+    "toggleName": "Course Content"
+   },
+   "390-opened": {
+    "width": 390,
+    "editing": true,
+    "sidebar": true,
+    "sidebarShown": true,
+    "sidebarPosition": "static",
+    "sidebarBox": [
+     0,
+     414,
+     390,
+     332
+    ],
+    "mainBox": [
+     0,
+     762,
+     390,
+     1442
+    ],
+    "coversWindowPct": 0,
+    "overMain": false,
+    "toggle": true,
+    "toggleShown": true,
+    "toggleTag": "button",
+    "toggleType": "button",
+    "expanded": "true",
+    "controls": "ap-course-sidebar",
+    "toggleName": "Course Content"
+   },
+   "768-onload": {
+    "width": 768,
+    "editing": true,
+    "sidebar": true,
+    "sidebarShown": false,
+    "sidebarPosition": "static",
+    "sidebarBox": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "mainBox": [
+     16,
+     466,
+     736,
+     1414
+    ],
+    "coversWindowPct": 0,
+    "overMain": false,
+    "toggle": true,
+    "toggleShown": true,
+    "toggleTag": "button",
+    "toggleType": "button",
+    "expanded": "false",
+    "controls": "ap-course-sidebar",
+    "toggleName": "Course Content"
+   },
+   "768-opened": {
+    "width": 768,
+    "editing": true,
+    "sidebar": true,
+    "sidebarShown": true,
+    "sidebarPosition": "static",
+    "sidebarBox": [
+     16,
+     466,
+     736,
+     332
+    ],
+    "mainBox": [
+     16,
+     814,
+     736,
+     1414
+    ],
+    "coversWindowPct": 0,
+    "overMain": false,
+    "toggle": true,
+    "toggleShown": true,
+    "toggleTag": "button",
+    "toggleType": "button",
+    "expanded": "true",
+    "controls": "ap-course-sidebar",
+    "toggleName": "Course Content"
+   }
+  },
+  "vp_learner1": {
+   "1440": {
+    "width": 1440,
+    "editing": false,
+    "sidebar": true,
+    "sidebarShown": true,
+    "sidebarPosition": "sticky",
+    "sidebarBox": [
+     96,
+     343,
+     260,
+     800
+    ],
+    "mainBox": [
+     356,
+     343,
+     1060,
+     800
+    ],
+    "coversWindowPct": 0,
+    "overMain": false,
+    "toggle": true,
+    "toggleShown": false,
+    "toggleTag": "button",
+    "toggleType": "button",
+    "expanded": "false",
+    "controls": "ap-course-sidebar",
+    "toggleName": "Course Content"
+   },
+   "590-onload": {
+    "width": 590,
+    "editing": false,
+    "sidebar": true,
+    "sidebarShown": false,
+    "sidebarPosition": "static",
+    "sidebarBox": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "mainBox": [
+     16,
+     383,
+     558,
+     738
+    ],
+    "coversWindowPct": 0,
+    "overMain": false,
+    "toggle": true,
+    "toggleShown": true,
+    "toggleTag": "button",
+    "toggleType": "button",
+    "expanded": "false",
+    "controls": "ap-course-sidebar",
+    "toggleName": "Course Content"
+   },
+   "590-opened": {
+    "width": 590,
+    "editing": false,
+    "sidebar": true,
+    "sidebarShown": true,
+    "sidebarPosition": "static",
+    "sidebarBox": [
+     16,
+     383,
+     558,
+     332
+    ],
+    "mainBox": [
+     16,
+     731,
+     558,
+     738
+    ],
+    "coversWindowPct": 0,
+    "overMain": false,
+    "toggle": true,
+    "toggleShown": true,
+    "toggleTag": "button",
+    "toggleType": "button",
+    "expanded": "true",
+    "controls": "ap-course-sidebar",
+    "toggleName": "Course Content"
+   },
+   "390-onload": {
+    "width": 390,
+    "editing": false,
+    "sidebar": true,
+    "sidebarShown": false,
+    "sidebarPosition": "static",
+    "sidebarBox": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "mainBox": [
+     16,
+     331,
+     358,
+     737
+    ],
+    "coversWindowPct": 0,
+    "overMain": false,
+    "toggle": true,
+    "toggleShown": true,
+    "toggleTag": "button",
+    "toggleType": "button",
+    "expanded": "false",
+    "controls": "ap-course-sidebar",
+    "toggleName": "Course Content"
+   },
+   "390-opened": {
+    "width": 390,
+    "editing": false,
+    "sidebar": true,
+    "sidebarShown": true,
+    "sidebarPosition": "static",
+    "sidebarBox": [
+     16,
+     331,
+     358,
+     332
+    ],
+    "mainBox": [
+     16,
+     679,
+     358,
+     737
+    ],
+    "coversWindowPct": 0,
+    "overMain": false,
+    "toggle": true,
+    "toggleShown": true,
+    "toggleTag": "button",
+    "toggleType": "button",
+    "expanded": "true",
+    "controls": "ap-course-sidebar",
+    "toggleName": "Course Content"
+   },
+   "768-onload": {
+    "width": 768,
+    "editing": false,
+    "sidebar": true,
+    "sidebarShown": false,
+    "sidebarPosition": "static",
+    "sidebarBox": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "mainBox": [
+     16,
+     413,
+     736,
+     754
+    ],
+    "coversWindowPct": 0,
+    "overMain": false,
+    "toggle": true,
+    "toggleShown": true,
+    "toggleTag": "button",
+    "toggleType": "button",
+    "expanded": "false",
+    "controls": "ap-course-sidebar",
+    "toggleName": "Course Content"
+   },
+   "768-opened": {
+    "width": 768,
+    "editing": false,
+    "sidebar": true,
+    "sidebarShown": true,
+    "sidebarPosition": "static",
+    "sidebarBox": [
+     16,
+     413,
+     736,
+     332
+    ],
+    "mainBox": [
+     16,
+     761,
+     736,
+     754
+    ],
+    "coversWindowPct": 0,
+    "overMain": false,
+    "toggle": true,
+    "toggleShown": true,
+    "toggleTag": "button",
+    "toggleType": "button",
+    "expanded": "true",
+    "controls": "ap-course-sidebar",
+    "toggleName": "Course Content"
+   }
+  }
+ },
+ "dark": {
+  "darkModeKillSwitchInPage": false,
+  "lightHover": {
+   "theme": "light",
+   "hovered": true,
+   "fg": "rgb(0, 102, 167)",
+   "bg": "rgb(232, 244, 253)",
+   "ratio": 5.43
+  },
+  "darkRest": {
+   "theme": "dark",
+   "hovered": false,
+   "fg": "rgb(232, 234, 237)",
+   "bg": "rgb(26, 29, 39)",
+   "ratio": 13.95
+  },
+  "darkHover": {
+   "theme": "dark",
+   "hovered": true,
+   "fg": "rgb(77, 168, 228)",
+   "bg": "rgb(0, 48, 80)",
+   "ratio": 5.22
+  }
+ }
+}
