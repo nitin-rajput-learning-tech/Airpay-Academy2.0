@@ -1162,8 +1162,24 @@ jobs:
           code=${PIPESTATUS[0]}
           set -e
           if [ "$code" -ne 0 ]; then
-            msg=$(tail -n 60 "$RUNNER_TEMP/phpunit-tenant.log" | sed -e 's/%/%25/g' -e 's/\r/%0D/g' | awk '{printf "%s%%0A", $0}')
-            echo "::error title=tenant_isolation group failed (exit ${code})::${msg}"
+            # An annotation holds at most 4096 characters and the log's tail is
+            # often debugging() stack traces. Publish PHPUnit's verdict instead:
+            # each numbered failure heading with its message line, plus the
+            # summary lines, split over up to 8 annotations. Fall back to the
+            # tail when no summary is found.
+            sum="$RUNNER_TEMP/phpunit-tenant-summary.txt"
+            awk '/^[0-9]+\) /{print; if ((getline nxt) > 0) print nxt; next}
+                 /^(OK|FAILURES!|ERRORS!|WARNINGS!|Tests: |There (was|were) [0-9]+ )/{print}' \
+              "$RUNNER_TEMP/phpunit-tenant.log" > "$sum" || true
+            [ -s "$sum" ] || tail -n 40 "$RUNNER_TEMP/phpunit-tenant.log" > "$sum"
+            split -b 3800 -d "$sum" "$RUNNER_TEMP/tenant-ann."
+            n=0
+            for part in "$RUNNER_TEMP"/tenant-ann.*; do
+              n=$((n + 1))
+              [ "$n" -le 8 ] || break
+              msg=$(sed -e 's/%/%25/g' -e 's/\r/%0D/g' "$part" | awk '{printf "%s%%0A", $0}')
+              echo "::error title=tenant_isolation group failed (exit ${code}) part ${n}::${msg}"
+            done
             exit "$code"
           fi
 
