@@ -1,10 +1,23 @@
 # State Card — `local_airpay_analytics`
 
-**Component:** `local_airpay_analytics`
-**Version:** `2026052001` / `1.0.1-beta`
+**Component:** `local_sentientia_analytics` (was `local_airpay_analytics`)
+**Version:** `2026111700` / `1.2.4-beta`
 **Maturity:** `MATURITY_BETA`
-**Status:** Live on airpay.academy. L&D analytics dashboards.
-**Last refreshed:** 2026-05-24 (P1 state-card pass)
+**Status:** Built; not live (Sentientia is not live yet: local and UAT only). L&D analytics dashboards.
+**Last refreshed:** 2026-11-17 (CI tenant_isolation gate fix)
+
+---
+
+## 2026-11-17 — certificates count 0 when tool_certificate is absent (2026111700)
+
+The first real run of CI's BLOCKING `tenant_isolation` group on Moodle 5.2 (run of commit `861961b2d`:
+2,203 tests, 4 errors) failed 4 tests in `tests/analytics_manager_test.php` with
+"Table 'phpu_tool_certificate_issues' doesn't exist". `get_kpis()` (certificates issued, current and previous
+period) and `get_funnel()` (Certified stage) queried `{tool_certificate_issues}` unguarded. `tool_certificate`
+is a third-party plugin, not core: the BizLMS clone has it, a vanilla 5.2 site (CI, a new customer) does not,
+and there the whole KPI and funnel calls threw. Now guarded with `table_exists()` and counted 0, the pattern
+`local_sentientia_manager\team_manager` and `local_sentientia_notifications\rule_engine` already use. Where
+tool_certificate is installed (Airpay local, UAT) nothing changes. Both trees. Verified by the next CI run.
 
 ---
 

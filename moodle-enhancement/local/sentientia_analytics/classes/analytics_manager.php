@@ -89,14 +89,18 @@ class analytics_manager {
                 AND cc.timecompleted IS NOT NULL $orgfilter",
             array_merge($params, ['start' => $previous_start, 'end' => $previous_end]));
 
-        // Certificates issued.
-        $cert_current = $DB->count_records_sql(
+        // Certificates issued. tool_certificate is a third-party plugin, not
+        // core: on a site without it (a vanilla Moodle, CI's phpu_ site, a new
+        // customer) the table does not exist and the query threw, failing the
+        // whole KPI call. Count 0 there, as team_manager and rule_engine do.
+        $hascerts = $DB->get_manager()->table_exists('tool_certificate_issues');
+        $cert_current = !$hascerts ? 0 : $DB->count_records_sql(
             "SELECT COUNT(ci.id) FROM {tool_certificate_issues} ci
                JOIN {user} u ON u.id = ci.userid
               WHERE ci.timecreated >= :start AND ci.timecreated < :end $orgfilter",
             array_merge($params, ['start' => $current_start, 'end' => $current_end]));
 
-        $cert_previous = $DB->count_records_sql(
+        $cert_previous = !$hascerts ? 0 : $DB->count_records_sql(
             "SELECT COUNT(ci.id) FROM {tool_certificate_issues} ci
                JOIN {user} u ON u.id = ci.userid
               WHERE ci.timecreated >= :start AND ci.timecreated < :end $orgfilter",
@@ -171,7 +175,8 @@ class analytics_manager {
                JOIN {user} u ON u.id = cc.userid
               WHERE cc.timecompleted IS NOT NULL AND u.deleted = 0 $orgfilter", $params);
 
-        $certified = $DB->count_records_sql(
+        // tool_certificate may not be installed (see get_kpis()): no certificates then.
+        $certified = !$DB->get_manager()->table_exists('tool_certificate_issues') ? 0 : $DB->count_records_sql(
             "SELECT COUNT(DISTINCT ci.userid) FROM {tool_certificate_issues} ci
                JOIN {user} u ON u.id = ci.userid WHERE u.deleted = 0 $orgfilter", $params);
 
