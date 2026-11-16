@@ -1,11 +1,40 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-11-13 (**Nitin's 11-12 decisions carried out; see the 2026-11-12 / 11-13 entry.**
+**Updated:** 2026-11-16 (**Demo week: C-suite demo Thursday 2026-11-19. Theme 2026111600 + 2026111601 committed; see the 2026-11-16 entry.**)
+**Before that, 2026-11-13** (**Nitin's 11-12 decisions carried out; see the 2026-11-12 / 11-13 entry.**
 - Committed and on `production`: subagent-stall fix, Stage 0-2 tooling, working permission rules, hook and gate fixes, theme A2/A3, A1 (ADR-034 slice 1), A5 (audit events + tenant trail), AI gateway pricing.
 - A4 done on the local copy: 286 erasures, nothing sent, 0 failed deletes; found a Moodle core bug and two erasure gaps (`docs/cutover/A4-ERASURE-REHEARSAL-RESULTS-2026-11-13.md`). Decisions for Nitin listed there.)
 
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
 
 ---
+
+## 2026-11-16 - Demo week, day 1: quick wins by day, heavy lifting at night (Opus 5.5)
+
+**Plan (Nitin, 11-16).** C-suite demo Thursday 2026-11-19 on UAT. Quick wins by day, heavy jobs at night, nothing
+added to the defined scope. The scheduled resume task stays disabled (IT security ticket about downloads, 11-14).
+
+**Committed and pushed; `production` fast-forwarded:**
+- fcc600af8 Demo script: `docs/business/DEMO-SCRIPT-2026-11-19.md` (run of show, persona walk, caveats, fallbacks,
+  Wednesday checklist with 15 items to confirm on UAT).
+- a0279c602 Theme 2026111600: the footer clears the floating assistant button; at 992px and below the in-page
+  Course Content list starts collapsed behind a toggle (tablets too, Nitin's call). Checks 56/0. Evidence
+  `docs/visual-evidence/2026-11-16/demo-quick-wins/`.
+- Theme 2026111601 (reviewed by Nitin, committed with this entry): dark-mode course title card readable (1.06:1 ->
+  13.95:1); "No groups" badge on one line on phones; the banner holds its icon toolbar at 992px and below (was over
+  Bulk actions); the phone blocks-drawer tab sits on the banner on /course/view.php with a white focus ring, 44px
+  minimum everywhere. Desktop unchanged except the dark title card. Checks `tools/visual-pass/theme_1116b_checks.mjs`
+  41/0, `theme_1116_checks.mjs` 56/0 (re-run independently). Evidence
+  `docs/visual-evidence/2026-11-16/edit-mode-phone-dark-banner/` (its README lists what was seen and not fixed).
+
+**In progress (uncommitted):** course-header completion countdown. `core_renderer::full_header()` read the enrolment
+date with SQL that interpolated `$USER->id`/`$COURSE->id` and never tied `ue.userid` to the viewer, so every learner
+got the latest enrolment of anyone in the course. Being fixed as theme 2026111602 (workflow `wf_4799a26d-07b`):
+parameterised, user-scoped, testable class, theme sweep for the same pattern. Nitin 11-16: the clock keeps starting
+at the enrolment date (`ue.timecreated`). The PHPUnit test runs tonight after the night PHPUnit init.
+
+**Next:** tonight, resume the option A privacy build (`wf_3b996ce8-906`, PHPUnit). Tuesday: Nitin's review, deck
+refresh; Tuesday night the A4 re-run with flags ON and no emails, only if Monday night is green. Wednesday (Nitin's
+VPN window): UAT deploy of the 11-12 to 11-16 changes, demo data check, persona walk.
 
 ## 2026-11-12 / 11-13 - Nitin's decisions carried out; subagent stall fixed; permission rules made real (Opus 5.5)
 

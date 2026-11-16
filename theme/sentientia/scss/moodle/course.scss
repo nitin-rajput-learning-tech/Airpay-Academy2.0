@@ -1533,6 +1533,10 @@ $activity-add-hover: theme-color-level('primary', -10) !default;
 // Activity group mode in course edit mode (2026-10-23). Moodle's Boost shows only the icon in a small square button
 // on desktop and reveals the "No groups" / "Separate groups" text below the sm breakpoint. This theme predated those
 // rules, so the text sat inside the round 36 px .btn-icon and wrapped under the icon (2026-10-20 visual pass).
+// 2026-11-16: the port never took effect below sm. The interactive badge is a <button class="... groupmode-information
+// btn btn-icon"> and buttons.scss (imported after this file) gives .btn.btn-icon the same (0,2,0) specificity, so its
+// 36 px round box with no padding won: "No groups" wrapped under the icon and ran onto the actions menu below it.
+// The trailing .btn-icon compound (0,3,0) below outranks it whatever the import order. Above sm nothing changes.
 .activity-groupmode-info {
     grid-area: groupmode;
     justify-self: end;
@@ -1553,10 +1557,16 @@ $activity-add-hover: theme-color-level('primary', -10) !default;
         margin-top: map-get($spacers, 2);
         padding-top: map-get($spacers, 2);
         border-top: $border-width solid $border-color;
-        .groupmode-information {
-            width: auto;
+        .groupmode-information,
+        .groupmode-information.btn-icon {
+            display: inline-flex;   // icon and text on one line, as Boost's inline-flex .btn shows them
+            align-items: center;
+            inline-size: auto;
             font-size: inherit;
-            padding: 0 map-get($spacers, 2);
+            white-space: nowrap;
+            padding-block: 0;
+            padding-inline: var(--ap-space-2);
+            border-radius: var(--ap-radius-sm);   // a 50% radius on a wide box would draw an ellipse
         }
         .groupmode-icon-info {
             display: inline;

@@ -164,6 +164,56 @@
     }
 }
 
+// 2026-11-16: below 768px the blocks-drawer tab (pages in edit mode, course_editing.mustache) sat fixed on the right edge
+// at calc(99vh - 175px), 36px wide. On the course page it lay over the activity cards (the sections run edge to edge,
+// there is no gutter) and 13px above the assistant button. Boost hides it on scroll-down with .scroll-down above, which
+// nothing sets. #page.drawers limits these rules to course_editing.mustache; the dashboard's #page has no .drawers class.
+// The left course-index tab (site admins only) keeps the rule above.
+@include media-breakpoint-down(sm) {
+    // Every page: at least the 44px tap target (WCAG 2.5.5).
+    #page.drawers .drawer-toggles .drawer-right-toggle .btn {
+        min-inline-size: var(--ap-tap-target-min);
+        min-block-size: var(--ap-tap-target-min);
+    }
+    // Course page: the tab scrolls with the page, placed like the tablet and desktop tab (right edge, just below the
+    // navbar), over the course banner, so it never sits over content or near the assistant. Above the banner's sticky
+    // title card (z-index 5), below the navbar. Pages without the banner keep the fixed edge tab: activity pages (the
+    // Course Content toggle and the page header are there) and /course/section.php.
+    // 2026-11-16 (review): the rules need the banner itself (:has(#page-header .courseheader), which only
+    // /course/view.php prints). body.path-course-view alone also matched /course/section.php (pagetype
+    // course-view-section-*, no banner), where the moved tab covered the section's Actions menu. Without :has support
+    // the rules drop and the tab stays the fixed edge tab.
+    body.path-course-view #page.drawers:has(#page-header .courseheader) .drawer-toggles {
+        position: relative;  // containing block for the tab: the row is the first thing in the page content
+        z-index: auto;       // the z-index: 100 above (inert until now) would give the row its own stacking context
+    }
+    body.path-course-view #page.drawers:has(#page-header .courseheader) .drawer-toggles .drawer-right-toggle {
+        position: absolute;
+        inset-block-start: calc(#{$navbar-height} + 0.7rem);
+        inset-inline-end: 0;
+        z-index: var(--ap-z-sticky);
+    }
+    body.path-course-view #page.drawers:has(#page-header .courseheader) .drawer-toggles .drawer-right-toggle .btn {
+        // 2026-11-16 (review): the tab no longer stays on screen by itself. Focus scrolling that lines its top edge up
+        // with the viewport would leave it under the fixed navbar: keep the navbar's height clear (Chrome centres a
+        // focused element and is not affected).
+        scroll-margin-block-start: calc(#{$navbar-height} + 0.7rem);
+
+        // 2026-11-16 (review): on the blue banner the blue focus box-shadow above cannot be seen, and Bootstrap's
+        // .btn:focus { outline: 0 } removes the theme's focus ring. White reads >= 3.86:1 on every banner stop
+        // (WCAG 2.4.7); the offset keeps a band of banner colour between the ring and the grey tab.
+        &:focus-visible {
+            outline: var(--ap-focus-ring-width) solid var(--ap-color-text-inverse);
+            outline-offset: var(--ap-focus-ring-offset);
+        }
+    }
+    // A long course title's card reaches the banner's inner edge (.courseheader padding: 20px) and would run under the
+    // 44px tab, or under the tab's focus ring: keep that much free.
+    body.path-course-view #page.drawers:has(#page-header .courseheader) .page-header-headings {
+        margin-inline-end: calc(var(--ap-tap-target-min) - 20px + var(--ap-focus-ring-width) + var(--ap-focus-ring-offset));
+    }
+}
+
 @include media-breakpoint-up(sm) {
     #page.drawers .main-inner {
         margin-top: 1.5rem;

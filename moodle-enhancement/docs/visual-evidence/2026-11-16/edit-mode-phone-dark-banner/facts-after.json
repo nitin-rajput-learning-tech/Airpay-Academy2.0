@@ -1,0 +1,1767 @@
+{
+ "edit": {
+  "390": {
+   "width": 390,
+   "height": 844,
+   "editing": true,
+   "pathClasses": [
+    "path-course",
+    "path-course-view"
+   ],
+   "banner": true,
+   "A": {
+    "theme": "light",
+    "darkClasses": false,
+    "title": "VP Journey Free Course",
+    "bg": "rgba(255, 255, 255, 0.92)",
+    "fg": "rgb(42, 53, 75)",
+    "cardAlpha": 0.92,
+    "stops": [
+     "rgb(0, 102, 167)",
+     "rgb(0, 77, 122)",
+     "rgb(25, 133, 221)"
+    ],
+    "ratio": 10.75,
+    "box": [
+     20,
+     24,
+     282,
+     57
+    ]
+   },
+   "B": [
+    {
+     "text": "No groups",
+     "textShown": true,
+     "lines": 1,
+     "textBox": [
+      68,
+      694,
+      75,
+      18
+     ],
+     "iconBox": [
+      44,
+      695,
+      16,
+      16
+     ],
+     "btnBox": [
+      35,
+      685,
+      117,
+      36
+     ],
+     "wrapBox": [
+      35,
+      676,
+      159,
+      45
+     ],
+     "triggerBox": [
+      35,
+      721,
+      36,
+      36
+     ],
+     "overflowY": 0,
+     "overflowX": 0,
+     "borderRadius": "12px",
+     "display": "inline-flex"
+    },
+    {
+     "text": "No groups",
+     "textShown": true,
+     "lines": 1,
+     "textBox": [
+      68,
+      920,
+      75,
+      18
+     ],
+     "iconBox": [
+      44,
+      921,
+      16,
+      16
+     ],
+     "btnBox": [
+      35,
+      911,
+      117,
+      36
+     ],
+     "wrapBox": [
+      35,
+      902,
+      243,
+      45
+     ],
+     "triggerBox": [
+      35,
+      947,
+      36,
+      36
+     ],
+     "overflowY": 0,
+     "overflowX": 0,
+     "borderRadius": "12px",
+     "display": "inline-flex"
+    },
+    {
+     "text": "No groups",
+     "textShown": true,
+     "lines": 1,
+     "textBox": [
+      68,
+      1563,
+      75,
+      18
+     ],
+     "iconBox": [
+      44,
+      1564,
+      16,
+      16
+     ],
+     "btnBox": [
+      35,
+      1554,
+      117,
+      36
+     ],
+     "wrapBox": [
+      35,
+      1545,
+      320,
+      45
+     ],
+     "triggerBox": [
+      35,
+      1590,
+      36,
+      36
+     ],
+     "overflowY": 0,
+     "overflowX": 0,
+     "borderRadius": "12px",
+     "display": "inline-flex"
+    }
+   ],
+   "C": {
+    "bannerBox": [
+     0,
+     0,
+     390,
+     261
+    ],
+    "bannerHeight": "260.859px",
+    "iconBoxes": [
+     [
+      72,
+      205,
+      36,
+      36
+     ]
+    ],
+    "iconTitles": [
+     "Reports"
+    ],
+    "rowBox": [
+     0,
+     261,
+     390,
+     35
+    ],
+    "bulkBox": [
+     231,
+     261,
+     143,
+     35
+    ],
+    "menuFloat": "none"
+   },
+   "D": {
+    "onTop": true,
+    "printed": true,
+    "shown": true,
+    "tabBox": [
+     346,
+     81,
+     44,
+     55
+    ],
+    "position": "absolute",
+    "zIndex": "1020",
+    "assistantBox": [
+     326,
+     728,
+     48,
+     48
+    ],
+    "obstacles": [],
+    "obstacleCount": 0,
+    "controls": [],
+    "controlCount": 0,
+    "controls36": [],
+    "cards": [
+     [
+      22,
+      593,
+      346,
+      173
+     ],
+     [
+      22,
+      840,
+      346,
+      152
+     ],
+     [
+      22,
+      1271,
+      346,
+      99
+     ]
+    ],
+    "sections": [
+     [
+      0,
+      452,
+      390,
+      662
+     ],
+     [
+      0,
+      1130,
+      390,
+      627
+     ]
+    ],
+    "scrollY": 0
+   }
+  },
+  "590": {
+   "width": 590,
+   "height": 1000,
+   "editing": true,
+   "pathClasses": [
+    "path-course",
+    "path-course-view"
+   ],
+   "banner": true,
+   "A": {
+    "theme": "light",
+    "darkClasses": false,
+    "title": "VP Journey Free Course",
+    "bg": "rgba(255, 255, 255, 0.92)",
+    "fg": "rgb(42, 53, 75)",
+    "cardAlpha": 0.92,
+    "stops": [
+     "rgb(0, 102, 167)",
+     "rgb(0, 77, 122)",
+     "rgb(25, 133, 221)"
+    ],
+    "ratio": 10.75,
+    "box": [
+     20,
+     24,
+     318,
+     60
+    ]
+   },
+   "B": [
+    {
+     "text": "No groups",
+     "textShown": true,
+     "lines": 1,
+     "textBox": [
+      68,
+      686,
+      79,
+      18
+     ],
+     "iconBox": [
+      44,
+      687,
+      16,
+      16
+     ],
+     "btnBox": [
+      35,
+      677,
+      121,
+      36
+     ],
+     "wrapBox": [
+      35,
+      668,
+      159,
+      45
+     ],
+     "triggerBox": [
+      43,
+      714,
+      36,
+      36
+     ],
+     "overflowY": 0,
+     "overflowX": 0,
+     "borderRadius": "12px",
+     "display": "inline-flex"
+    },
+    {
+     "text": "No groups",
+     "textShown": true,
+     "lines": 1,
+     "textBox": [
+      68,
+      913,
+      79,
+      18
+     ],
+     "iconBox": [
+      44,
+      914,
+      16,
+      16
+     ],
+     "btnBox": [
+      35,
+      904,
+      121,
+      36
+     ],
+     "wrapBox": [
+      35,
+      895,
+      243,
+      45
+     ],
+     "triggerBox": [
+      43,
+      941,
+      36,
+      36
+     ],
+     "overflowY": 0,
+     "overflowX": 0,
+     "borderRadius": "12px",
+     "display": "inline-flex"
+    },
+    {
+     "text": "No groups",
+     "textShown": true,
+     "lines": 1,
+     "textBox": [
+      68,
+      1543,
+      79,
+      18
+     ],
+     "iconBox": [
+      44,
+      1544,
+      16,
+      16
+     ],
+     "btnBox": [
+      35,
+      1534,
+      121,
+      36
+     ],
+     "wrapBox": [
+      35,
+      1525,
+      513,
+      45
+     ],
+     "triggerBox": [
+      43,
+      1571,
+      36,
+      36
+     ],
+     "overflowY": 0,
+     "overflowX": 0,
+     "borderRadius": "12px",
+     "display": "inline-flex"
+    }
+   ],
+   "C": {
+    "bannerBox": [
+     0,
+     0,
+     590,
+     272
+    ],
+    "bannerHeight": "271.656px",
+    "iconBoxes": [
+     [
+      275,
+      211,
+      36,
+      36
+     ]
+    ],
+    "iconTitles": [
+     "Reports"
+    ],
+    "rowBox": [
+     0,
+     272,
+     590,
+     35
+    ],
+    "bulkBox": [
+     431,
+     272,
+     143,
+     35
+    ],
+    "menuFloat": "right"
+   },
+   "D": {
+    "onTop": true,
+    "printed": true,
+    "shown": true,
+    "tabBox": [
+     546,
+     81,
+     44,
+     55
+    ],
+    "position": "absolute",
+    "zIndex": "1020",
+    "assistantBox": [
+     526,
+     884,
+     48,
+     48
+    ],
+    "obstacles": [],
+    "obstacleCount": 0,
+    "controls": [],
+    "controlCount": 0,
+    "controls36": [],
+    "cards": [
+     [
+      22,
+      585,
+      546,
+      174
+     ],
+     [
+      22,
+      833,
+      546,
+      153
+     ],
+     [
+      22,
+      1266,
+      546,
+      100
+     ]
+    ],
+    "sections": [
+     [
+      0,
+      443,
+      590,
+      665
+     ],
+     [
+      0,
+      1124,
+      590,
+      615
+     ]
+    ],
+    "scrollY": 0
+   }
+  },
+  "768": {
+   "width": 768,
+   "height": 1024,
+   "editing": true,
+   "pathClasses": [
+    "path-course",
+    "path-course-view"
+   ],
+   "banner": true,
+   "A": {
+    "theme": "light",
+    "darkClasses": false,
+    "title": "VP Journey Free Course",
+    "bg": "rgba(255, 255, 255, 0.92)",
+    "fg": "rgb(42, 53, 75)",
+    "cardAlpha": 0.92,
+    "stops": [
+     "rgb(0, 102, 167)",
+     "rgb(0, 77, 122)",
+     "rgb(25, 133, 221)"
+    ],
+    "ratio": 10.75,
+    "box": [
+     36,
+     126,
+     344,
+     63
+    ]
+   },
+   "B": [
+    {
+     "text": "No groups",
+     "textShown": false,
+     "lines": 0,
+     "textBox": null,
+     "iconBox": [
+      199,
+      728,
+      16,
+      16
+     ],
+     "btnBox": [
+      193,
+      717,
+      36,
+      36
+     ],
+     "wrapBox": [
+      193,
+      717,
+      36,
+      36
+     ],
+     "triggerBox": [
+      86,
+      754,
+      36,
+      36
+     ],
+     "overflowY": 0,
+     "overflowX": 0,
+     "borderRadius": "50%",
+     "display": "inline-block"
+    },
+    {
+     "text": "No groups",
+     "textShown": false,
+     "lines": 0,
+     "textBox": null,
+     "iconBox": [
+      283,
+      946,
+      16,
+      16
+     ],
+     "btnBox": [
+      277,
+      935,
+      36,
+      36
+     ],
+     "wrapBox": [
+      277,
+      935,
+      36,
+      36
+     ],
+     "triggerBox": [
+      86,
+      972,
+      36,
+      36
+     ],
+     "overflowY": 0,
+     "overflowX": 0,
+     "borderRadius": "50%",
+     "display": "inline-block"
+    },
+    {
+     "text": "No groups",
+     "textShown": false,
+     "lines": 0,
+     "textBox": null,
+     "iconBox": [
+      553,
+      1575,
+      16,
+      16
+     ],
+     "btnBox": [
+      547,
+      1565,
+      36,
+      36
+     ],
+     "wrapBox": [
+      547,
+      1565,
+      36,
+      36
+     ],
+     "triggerBox": [
+      86,
+      1602,
+      36,
+      36
+     ],
+     "overflowY": 0,
+     "overflowX": 0,
+     "borderRadius": "50%",
+     "display": "inline-block"
+    }
+   ],
+   "C": {
+    "bannerBox": [
+     16,
+     70,
+     736,
+     253
+    ],
+    "bannerHeight": "253.156px",
+    "iconBoxes": [
+     [
+      437,
+      267,
+      36,
+      36
+     ]
+    ],
+    "iconTitles": [
+     "Reports"
+    ],
+    "rowBox": [
+     16,
+     323,
+     736,
+     35
+    ],
+    "bulkBox": [
+     593,
+     323,
+     143,
+     35
+    ],
+    "menuFloat": "right"
+   },
+   "D": {
+    "onTop": true,
+    "printed": true,
+    "shown": true,
+    "tabBox": [
+     732,
+     81,
+     36,
+     55
+    ],
+    "position": "fixed",
+    "zIndex": "2",
+    "assistantBox": [
+     688,
+     944,
+     56,
+     56
+    ],
+    "obstacles": [],
+    "obstacleCount": 0,
+    "controls": [],
+    "controlCount": 0,
+    "controls36": [],
+    "cards": [
+     [
+      53,
+      638,
+      662,
+      165
+     ],
+     [
+      53,
+      877,
+      662,
+      144
+     ],
+     [
+      53,
+      1301,
+      662,
+      108
+     ]
+    ],
+    "sections": [
+     [
+      31,
+      496,
+      706,
+      647
+     ],
+     [
+      31,
+      1159,
+      706,
+      614
+     ]
+    ],
+    "scrollY": 0
+   }
+  },
+  "1440": {
+   "width": 1440,
+   "height": 900,
+   "editing": true,
+   "pathClasses": [
+    "path-course",
+    "path-course-view"
+   ],
+   "banner": true,
+   "A": {
+    "theme": "light",
+    "darkClasses": false,
+    "title": "VP Journey Free Course",
+    "bg": "rgba(255, 255, 255, 0.92)",
+    "fg": "rgb(42, 53, 75)",
+    "cardAlpha": 0.92,
+    "stops": [
+     "rgb(0, 102, 167)",
+     "rgb(0, 77, 122)",
+     "rgb(25, 133, 221)"
+    ],
+    "ratio": 10.75,
+    "box": [
+     36,
+     126,
+     407,
+     69
+    ]
+   },
+   "B": [
+    {
+     "text": "No groups",
+     "textShown": false,
+     "lines": 0,
+     "textBox": null,
+     "iconBox": [
+      865,
+      665,
+      16,
+      16
+     ],
+     "btnBox": [
+      859,
+      655,
+      36,
+      36
+     ],
+     "wrapBox": [
+      859,
+      655,
+      36,
+      36
+     ],
+     "triggerBox": [
+      352,
+      692,
+      36,
+      36
+     ],
+     "overflowY": 0,
+     "overflowX": 0,
+     "borderRadius": "50%",
+     "display": "inline-block"
+    },
+    {
+     "text": "No groups",
+     "textShown": false,
+     "lines": 0,
+     "textBox": null,
+     "iconBox": [
+      949,
+      883,
+      16,
+      16
+     ],
+     "btnBox": [
+      943,
+      873,
+      36,
+      36
+     ],
+     "wrapBox": [
+      943,
+      873,
+      36,
+      36
+     ],
+     "triggerBox": [
+      352,
+      910,
+      36,
+      36
+     ],
+     "overflowY": 0,
+     "overflowX": 0,
+     "borderRadius": "50%",
+     "display": "inline-block"
+    },
+    {
+     "text": "No groups",
+     "textShown": false,
+     "lines": 0,
+     "textBox": null,
+     "iconBox": [
+      919,
+      1519,
+      16,
+      16
+     ],
+     "btnBox": [
+      913,
+      1509,
+      36,
+      36
+     ],
+     "wrapBox": [
+      913,
+      1509,
+      36,
+      36
+     ],
+     "triggerBox": [
+      352,
+      1546,
+      36,
+      36
+     ],
+     "overflowY": 0,
+     "overflowX": 0,
+     "borderRadius": "50%",
+     "display": "inline-block"
+    }
+   ],
+   "C": {
+    "bannerBox": [
+     16,
+     70,
+     1408,
+     240
+    ],
+    "bannerHeight": "240px",
+    "iconBoxes": [
+     [
+      1099,
+      132,
+      40,
+      40
+     ]
+    ],
+    "iconTitles": [
+     "Reports"
+    ],
+    "rowBox": [
+     16,
+     310,
+     1408,
+     35
+    ],
+    "bulkBox": [
+     1265,
+     310,
+     143,
+     35
+    ],
+    "menuFloat": "right"
+   },
+   "D": {
+    "onTop": true,
+    "printed": true,
+    "shown": true,
+    "tabBox": [
+     1404,
+     81,
+     36,
+     55
+    ],
+    "position": "fixed",
+    "zIndex": "2",
+    "assistantBox": [
+     1360,
+     820,
+     56,
+     56
+    ],
+    "obstacles": [],
+    "obstacleCount": 0,
+    "controls": [],
+    "controlCount": 0,
+    "controls36": [],
+    "cards": [
+     [
+      319,
+      576,
+      1014,
+      165
+     ],
+     [
+      319,
+      815,
+      1014,
+      144
+     ],
+     [
+      319,
+      1245,
+      1014,
+      108
+     ]
+    ],
+    "sections": [
+     [
+      291,
+      432,
+      1070,
+      653
+     ],
+     [
+      291,
+      1101,
+      1070,
+      620
+     ]
+    ],
+    "scrollY": 0
+   }
+  },
+  "390-longtitle": {
+   "card": [
+    20,
+    24,
+    321,
+    105
+   ],
+   "tab": [
+    346,
+    81,
+    44,
+    55
+   ],
+   "ring": 5
+  },
+  "390-focus": {
+   "focused": true,
+   "focusVisible": true,
+   "outline": "solid 3px rgb(255, 255, 255) offset 2px",
+   "outlineStyle": "solid",
+   "outlineWidth": 3,
+   "stops": [
+    "rgb(0, 102, 167)",
+    "rgb(0, 77, 122)",
+    "rgb(25, 133, 221)"
+   ],
+   "minRatio": 3.86,
+   "tabOnBanner": true,
+   "tab": [
+    346,
+    81,
+    44,
+    55
+   ],
+   "scrollMargin": 81.2,
+   "navbarBottom": 71
+  },
+  "390-drawer": {
+   "opened": {
+    "drawerShow": true,
+    "pageState": true,
+    "drawerOnScreen": true
+   },
+   "closed": {
+    "drawerShow": false,
+    "focusOnTab": true
+   }
+  },
+  "390-dark": {
+   "A": {
+    "theme": "dark",
+    "darkClasses": true,
+    "title": "VP Journey Free Course",
+    "bg": "rgb(26, 29, 39)",
+    "fg": "rgb(232, 234, 237)",
+    "cardAlpha": 1,
+    "stops": [
+     "rgb(0, 102, 167)",
+     "rgb(0, 77, 122)",
+     "rgb(25, 133, 221)"
+    ],
+    "ratio": 13.95,
+    "box": [
+     20,
+     24,
+     282,
+     57
+    ]
+   }
+  },
+  "390-dark-focus": {
+   "focused": true,
+   "focusVisible": true,
+   "outline": "solid 3px rgb(255, 255, 255) offset 2px",
+   "outlineStyle": "solid",
+   "outlineWidth": 3,
+   "stops": [
+    "rgb(0, 102, 167)",
+    "rgb(0, 77, 122)",
+    "rgb(25, 133, 221)"
+   ],
+   "minRatio": 3.86,
+   "tabOnBanner": true,
+   "tab": [
+    346,
+    81,
+    44,
+    55
+   ],
+   "scrollMargin": 81.2,
+   "navbarBottom": 71
+  },
+  "590-longtitle": {
+   "card": [
+    20,
+    24,
+    521,
+    88
+   ],
+   "tab": [
+    546,
+    81,
+    44,
+    55
+   ],
+   "ring": 5
+  },
+  "590-focus": {
+   "focused": true,
+   "focusVisible": true,
+   "outline": "solid 3px rgb(255, 255, 255) offset 2px",
+   "outlineStyle": "solid",
+   "outlineWidth": 3,
+   "stops": [
+    "rgb(0, 102, 167)",
+    "rgb(0, 77, 122)",
+    "rgb(25, 133, 221)"
+   ],
+   "minRatio": 3.86,
+   "tabOnBanner": true,
+   "tab": [
+    546,
+    81,
+    44,
+    55
+   ],
+   "scrollMargin": 81.2,
+   "navbarBottom": 71
+  },
+  "590-drawer": {
+   "opened": {
+    "drawerShow": true,
+    "pageState": true,
+    "drawerOnScreen": true
+   },
+   "closed": {
+    "drawerShow": false,
+    "focusOnTab": true
+   }
+  },
+  "1440-dark": {
+   "A": {
+    "theme": "dark",
+    "darkClasses": true,
+    "title": "VP Journey Free Course",
+    "bg": "rgb(26, 29, 39)",
+    "fg": "rgb(232, 234, 237)",
+    "cardAlpha": 1,
+    "stops": [
+     "rgb(0, 102, 167)",
+     "rgb(0, 77, 122)",
+     "rgb(25, 133, 221)"
+    ],
+    "ratio": 13.95,
+    "box": [
+     36,
+     126,
+     407,
+     69
+    ]
+   }
+  }
+ },
+ "view": {
+  "390": {
+   "width": 390,
+   "height": 844,
+   "editing": false,
+   "pathClasses": [
+    "path-course",
+    "path-course-view"
+   ],
+   "banner": true,
+   "A": {
+    "theme": "light",
+    "darkClasses": false,
+    "title": "VP Journey Free Course",
+    "bg": "rgba(255, 255, 255, 0.92)",
+    "fg": "rgb(42, 53, 75)",
+    "cardAlpha": 0.92,
+    "stops": [
+     "rgb(0, 102, 167)",
+     "rgb(0, 77, 122)",
+     "rgb(25, 133, 221)"
+    ],
+    "ratio": 10.75,
+    "box": [
+     36,
+     114,
+     282,
+     57
+    ]
+   },
+   "B": [],
+   "C": {
+    "bannerBox": [
+     16,
+     90,
+     358,
+     185
+    ],
+    "bannerHeight": "185px",
+    "iconBoxes": [
+     [
+      56,
+      219,
+      36,
+      36
+     ]
+    ],
+    "iconTitles": [
+     "Reports"
+    ],
+    "rowBox": [
+     16,
+     275,
+     358,
+     0
+    ],
+    "bulkBox": null,
+    "menuFloat": "none"
+   },
+   "D": {
+    "onTop": null,
+    "printed": false,
+    "shown": false,
+    "tabBox": null,
+    "position": null,
+    "zIndex": null,
+    "assistantBox": [
+     326,
+     728,
+     48,
+     48
+    ],
+    "obstacles": [],
+    "obstacleCount": 0,
+    "controls": [],
+    "controlCount": 0,
+    "controls36": [],
+    "cards": [
+     [
+      38,
+      456,
+      314,
+      84
+     ],
+     [
+      38,
+      581,
+      314,
+      63
+     ],
+     [
+      38,
+      791,
+      314,
+      63
+     ]
+    ],
+    "sections": [
+     [
+      16,
+      348,
+      358,
+      319
+     ],
+     [
+      16,
+      683,
+      358,
+      337
+     ]
+    ],
+    "scrollY": 0
+   }
+  },
+  "590": {
+   "width": 590,
+   "height": 1000,
+   "editing": false,
+   "pathClasses": [
+    "path-course",
+    "path-course-view"
+   ],
+   "banner": true,
+   "A": {
+    "theme": "light",
+    "darkClasses": false,
+    "title": "VP Journey Free Course",
+    "bg": "rgba(255, 255, 255, 0.92)",
+    "fg": "rgb(42, 53, 75)",
+    "cardAlpha": 0.92,
+    "stops": [
+     "rgb(0, 102, 167)",
+     "rgb(0, 77, 122)",
+     "rgb(25, 133, 221)"
+    ],
+    "ratio": 10.75,
+    "box": [
+     36,
+     174,
+     318,
+     60
+    ]
+   },
+   "B": [],
+   "C": {
+    "bannerBox": [
+     16,
+     150,
+     558,
+     197
+    ],
+    "bannerHeight": "197.422px",
+    "iconBoxes": [
+     [
+      259,
+      286,
+      36,
+      36
+     ]
+    ],
+    "iconTitles": [
+     "Reports"
+    ],
+    "rowBox": [
+     16,
+     347,
+     558,
+     0
+    ],
+    "bulkBox": null,
+    "menuFloat": "right"
+   },
+   "D": {
+    "onTop": null,
+    "printed": false,
+    "shown": false,
+    "tabBox": null,
+    "position": null,
+    "zIndex": null,
+    "assistantBox": [
+     526,
+     884,
+     48,
+     48
+    ],
+    "obstacles": [],
+    "obstacleCount": 0,
+    "controls": [],
+    "controlCount": 0,
+    "controls36": [],
+    "cards": [
+     [
+      38,
+      528,
+      514,
+      84
+     ],
+     [
+      38,
+      653,
+      514,
+      63
+     ],
+     [
+      38,
+      863,
+      514,
+      63
+     ]
+    ],
+    "sections": [
+     [
+      16,
+      420,
+      558,
+      319
+     ],
+     [
+      16,
+      755,
+      558,
+      338
+     ]
+    ],
+    "scrollY": 0
+   }
+  },
+  "768": {
+   "width": 768,
+   "height": 1024,
+   "editing": false,
+   "pathClasses": [
+    "path-course",
+    "path-course-view"
+   ],
+   "banner": true,
+   "A": {
+    "theme": "light",
+    "darkClasses": false,
+    "title": "VP Journey Free Course",
+    "bg": "rgba(255, 255, 255, 0.92)",
+    "fg": "rgb(42, 53, 75)",
+    "cardAlpha": 0.92,
+    "stops": [
+     "rgb(0, 102, 167)",
+     "rgb(0, 77, 122)",
+     "rgb(25, 133, 221)"
+    ],
+    "ratio": 10.75,
+    "box": [
+     36,
+     206,
+     344,
+     63
+    ]
+   },
+   "B": [],
+   "C": {
+    "bannerBox": [
+     16,
+     150,
+     736,
+     227
+    ],
+    "bannerHeight": "226.938px",
+    "iconBoxes": [
+     [
+      437,
+      321,
+      36,
+      36
+     ]
+    ],
+    "iconTitles": [
+     "Reports"
+    ],
+    "rowBox": [
+     16,
+     377,
+     736,
+     0
+    ],
+    "bulkBox": null,
+    "menuFloat": "right"
+   },
+   "D": {
+    "onTop": null,
+    "printed": false,
+    "shown": false,
+    "tabBox": null,
+    "position": null,
+    "zIndex": null,
+    "assistantBox": [
+     688,
+     944,
+     56,
+     56
+    ],
+    "obstacles": [],
+    "obstacleCount": 0,
+    "controls": [],
+    "controlCount": 0,
+    "controls36": [],
+    "cards": [
+     [
+      38,
+      558,
+      692,
+      92
+     ],
+     [
+      38,
+      691,
+      692,
+      71
+     ],
+     [
+      38,
+      909,
+      692,
+      71
+     ]
+    ],
+    "sections": [
+     [
+      16,
+      450,
+      736,
+      335
+     ],
+     [
+      16,
+      801,
+      736,
+      338
+     ]
+    ],
+    "scrollY": 0
+   }
+  },
+  "1440": {
+   "width": 1440,
+   "height": 900,
+   "editing": false,
+   "pathClasses": [
+    "path-course",
+    "path-course-view"
+   ],
+   "banner": true,
+   "A": {
+    "theme": "light",
+    "darkClasses": false,
+    "title": "VP Journey Free Course",
+    "bg": "rgba(255, 255, 255, 0.92)",
+    "fg": "rgb(42, 53, 75)",
+    "cardAlpha": 0.92,
+    "stops": [
+     "rgb(0, 102, 167)",
+     "rgb(0, 77, 122)",
+     "rgb(25, 133, 221)"
+    ],
+    "ratio": 10.75,
+    "box": [
+     116,
+     206,
+     407,
+     69
+    ]
+   },
+   "B": [],
+   "C": {
+    "bannerBox": [
+     96,
+     150,
+     1320,
+     193
+    ],
+    "bannerHeight": "193px",
+    "iconBoxes": [
+     [
+      1091,
+      212,
+      40,
+      40
+     ]
+    ],
+    "iconTitles": [
+     "Reports"
+    ],
+    "rowBox": [
+     96,
+     343,
+     1320,
+     0
+    ],
+    "bulkBox": null,
+    "menuFloat": "right"
+   },
+   "D": {
+    "onTop": null,
+    "printed": false,
+    "shown": false,
+    "tabBox": null,
+    "position": null,
+    "zIndex": null,
+    "assistantBox": [
+     1360,
+     820,
+     56,
+     56
+    ],
+    "obstacles": [],
+    "obstacleCount": 0,
+    "controls": [],
+    "controlCount": 0,
+    "controls36": [],
+    "cards": [
+     [
+      384,
+      470,
+      1004,
+      92
+     ],
+     [
+      384,
+      603,
+      1004,
+      71
+     ],
+     [
+      384,
+      827,
+      1004,
+      71
+     ]
+    ],
+    "sections": [
+     [
+      356,
+      360,
+      1060,
+      341
+     ],
+     [
+      356,
+      717,
+      1060,
+      344
+     ]
+    ],
+    "scrollY": 0
+   }
+  },
+  "390-dark": {
+   "A": {
+    "theme": "dark",
+    "darkClasses": true,
+    "title": "VP Journey Free Course",
+    "bg": "rgb(26, 29, 39)",
+    "fg": "rgb(232, 234, 237)",
+    "cardAlpha": 1,
+    "stops": [
+     "rgb(0, 102, 167)",
+     "rgb(0, 77, 122)",
+     "rgb(25, 133, 221)"
+    ],
+    "ratio": 13.95,
+    "box": [
+     36,
+     114,
+     282,
+     57
+    ]
+   }
+  },
+  "1440-dark": {
+   "A": {
+    "theme": "dark",
+    "darkClasses": true,
+    "title": "VP Journey Free Course",
+    "bg": "rgb(26, 29, 39)",
+    "fg": "rgb(232, 234, 237)",
+    "cardAlpha": 1,
+    "stops": [
+     "rgb(0, 102, 167)",
+     "rgb(0, 77, 122)",
+     "rgb(25, 133, 221)"
+    ],
+    "ratio": 13.95,
+    "box": [
+     116,
+     206,
+     407,
+     69
+    ]
+   }
+  }
+ },
+ "incourse": {
+  "390": {
+   "url": "/mod/page/view.php?id=1877",
+   "D": {
+    "onTop": true,
+    "printed": true,
+    "shown": true,
+    "tabBox": [
+     346,
+     661,
+     44,
+     55
+    ],
+    "position": "fixed",
+    "zIndex": "2",
+    "assistantBox": [
+     326,
+     728,
+     48,
+     48
+    ],
+    "obstacles": [],
+    "obstacleCount": 0,
+    "controls": [],
+    "controlCount": 0,
+    "controls36": [],
+    "cards": [],
+    "sections": [],
+    "scrollY": 0
+   },
+   "editing": true
+  }
+ },
+ "section": {
+  "390": {
+   "url": "/course/section.php?id=499",
+   "pathClasses": [
+    "path-course",
+    "path-course-view",
+    "path-course-view-section"
+   ],
+   "banner": false,
+   "D": {
+    "onTop": true,
+    "printed": true,
+    "shown": true,
+    "tabBox": [
+     346,
+     661,
+     44,
+     55
+    ],
+    "position": "fixed",
+    "zIndex": "2",
+    "assistantBox": [
+     326,
+     728,
+     48,
+     48
+    ],
+    "obstacles": [
+     "li#section-0.section.course-section [8,233,374,626]",
+     "div.activity-item.focus-control [30,585,330,152]"
+    ],
+    "obstacleCount": 2,
+    "controls": [],
+    "controlCount": 0,
+    "controls36": [],
+    "cards": [
+     [
+      30,
+      338,
+      330,
+      173
+     ],
+     [
+      30,
+      585,
+      330,
+      152
+     ]
+    ],
+    "sections": [
+     [
+      8,
+      233,
+      374,
+      626
+     ]
+    ],
+    "scrollY": 0
+   },
+   "editing": true
+  },
+  "590": {
+   "url": "/course/section.php?id=499",
+   "pathClasses": [
+    "path-course",
+    "path-course-view",
+    "path-course-view-section"
+   ],
+   "banner": false,
+   "D": {
+    "onTop": true,
+    "printed": true,
+    "shown": true,
+    "tabBox": [
+     546,
+     815,
+     44,
+     55
+    ],
+    "position": "fixed",
+    "zIndex": "2",
+    "assistantBox": [
+     526,
+     884,
+     48,
+     48
+    ],
+    "obstacles": [
+     "li#section-0.section.course-section [8,255,574,628]",
+     "a.btn.add-content [539,855,26,26]"
+    ],
+    "obstacleCount": 2,
+    "controls": [
+     "a.btn.add-content [539,855,26,26]"
+    ],
+    "controlCount": 1,
+    "controls36": [
+     "a.btn.add-content [539,855,26,26]"
+    ],
+    "cards": [
+     [
+      30,
+      360,
+      530,
+      174
+     ],
+     [
+      30,
+      608,
+      530,
+      153
+     ]
+    ],
+    "sections": [
+     [
+      8,
+      255,
+      574,
+      628
+     ]
+    ],
+    "scrollY": 0
+   },
+   "editing": true
+  }
+ },
+ "dashboard": {
+  "390": {
+   "toggles": false,
+   "dashToggle": false
+  },
+  "1440": {
+   "toggles": false,
+   "dashToggle": false
+  }
+ }
+}

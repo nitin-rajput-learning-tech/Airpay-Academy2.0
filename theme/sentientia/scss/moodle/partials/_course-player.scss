@@ -156,6 +156,48 @@ body.pagelayout-course:not(.editing) #page-header .courseheader .course_heading 
     height: auto !important;  /* template hardcodes h-100 utility */
 }
 
+/* ── Course banner holds its icon toolbar at 992px and below (2026-11-16) ──
+   Below 1200px custom_media.scss makes the toolbar (.context-header-settings-menu:
+   the Reports link, and for managers the other course_context_header icons) static
+   after .course_heading, which fills the fixed 240px banner (.h-100). It hung over
+   the banner's bottom edge: in flow below 576px, floated from 576px and not
+   contained, because .courseheader is no block formatting context. In edit mode it
+   ran into the Bulk actions row (core header action, the next sibling) or squeezed
+   it aside. The banner now contains the toolbar and grows around it, 240px at least
+   (the slab height in _moodle-overrides.scss); view mode keeps min-height: 0 from
+   the compaction rule above, which is more specific. flow-root, not overflow:
+   hidden, so the managers' cog dropdown is not clipped. Above 992px unchanged. */
+@media (max-width: 992px) {
+    #page-header .courseheader {
+        display: flow-root;
+        block-size: auto;
+        min-block-size: 240px;
+    }
+}
+
+/* ── Dark mode: the banner's title card (2026-11-16) ─────────────────────
+   _legacy-admin.scss ("Course title at top - STICKY", body.path-course-view)
+   paints .page-header-headings rgba(255,255,255,.92), a literal the dark token
+   remap cannot reach, while _legacy-dark.scss sets the title to
+   var(--ap-color-text-primary) !important, light in dark mode: light text on
+   a light card, about 1.1:1, at every width, view and edit mode. The card takes
+   the dark surface dark_mode.scss gives .card, and the title its colour here too,
+   so the pair no longer hangs on the deprecated _legacy-dark.scss. The selectors
+   mirror the light rule's three. Light mode unchanged: every selector needs
+   data-theme="dark" or body.dark-mode. */
+[data-theme="dark"] body.path-course-view #region-main > .course-header,
+[data-theme="dark"] body.path-course-view .page-header-headings,
+[data-theme="dark"] body.path-course-view #region-main > h1,
+body.dark-mode.path-course-view #region-main > .course-header,
+body.dark-mode.path-course-view .page-header-headings,
+body.dark-mode.path-course-view #region-main > h1 {
+    background: var(--ap-color-bg-surface);
+}
+[data-theme="dark"] body.path-course-view #page-header .page-header-headings h1,
+body.dark-mode.path-course-view #page-header .page-header-headings h1 {
+    color: var(--ap-color-text-primary);
+}
+
 /* ── Progress-bar toggle (collapse sidebar) ──────────────────────────── */
 .ap-course-progress-bar__toggle {
     width: 28px;
