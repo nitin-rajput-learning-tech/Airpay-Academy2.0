@@ -1101,3 +1101,45 @@ Branch `claude/owner-decisions-y`, both trees. **No version bump** (docs and a s
 ## 2026-10-08 Moodle 5.3 compat FX-18
 
 Every `fputcsv()` / `fgetcsv()` / `str_getcsv()` call in this plugin now passes the `$escape` argument explicitly with the historic default (`',', '"', '\\'`, and `null` for the `fgetcsv` length). The output and the parsing are byte-identical; PHP 8.4 deprecates relying on the default, and the notice would otherwise be written into the CSV stream on a 8.4 host (UAT and production run PHP 8.3). No version bump, no schema change.
+
+## 2026-11-16 - deadline tasks count from the enrolment date (version 2026111600 / 1.14.2)
+
+Branch `claude/gap-integration`, both trees byte-identical. **Not committed.** Answers, for the two scheduled tasks only,
+the 2026-09-25 "Observation, not changed" above (`timestart = 0` means no deadline).
+
+- **Decision (Nitin, 2026-11-16):** the completion clock starts at the ENROLMENT DATE. BizLMS did the same
+  (`local/courses/classes/task/course_reminder.php` `send_reminder_notification()`, SQL lines 71-76:
+  `ue.timecreated + ((c.open_coursecompletiondays - $day) * 86400)`), and so does the course-header countdown
+  (`theme_sentientia\local\enrolment_countdown::latest_enrolment_time`, MAX(ue.timecreated)).
+- **What changed:** `course_reminder` and `course_overdue` compute ONE deadline per (user, course) =
+  MAX(ue.timecreated) over the user's ACTIVE enrolments in the course (ue.status = 0, e.status = 0) +
+  open_coursecompletiondays x 86400, through a derived table `le` (ONLY_FULL_GROUP_BY-safe, no reserved aliases).
+  `ue.timestart > 0` is gone; timecreated 0 = not set, skipped. ORDER BY le.enroltime, u.id, c.id (oldest enrolment
+  first, as before, plus deterministic tie-breakers). Buckets, windows, LIMIT (applied before the bucket matching, as
+  before), completion / deleted / suspended / visibility filters, supervisor joins, messages, recipients and the
+  `_remind_sent` dedupe key are unchanged.
+- **Testable selection:** each task has `public function get_candidates(int $now, int $max): array` (a list, one row
+  per pair, after the bucket matching; sends nothing, writes nothing, ignores the enabled flag and the dedupe).
+  `execute()` keeps the config gate, `$now = time()`, the send loop, dedupe and `set_config` calls, and sends to exactly
+  that list.
+- **Drift:** the two task files were the only code drift between the trees (`$a->sitename` white-label line, present in
+  `local/`, missing in the ME tree that XAMPP and UAT serve). Both trees now carry it; baseline lines removed, drift gate
+  49/49/0 new/0 stale. lang/en, lang/hi and `templates/share_page.mustache` still drift (baselined, out of scope).
+- **Test:** `tests/task/deadline_candidates_test.php` (both trees), 8 tests. Written, `php -l` clean, **not run** (runs
+  in the night job). The overdue boundary test encodes the CURRENT bucket mapping (defect D1 below).
+- **Local evidence:** `moodle-enhancement/docs/visual-evidence/2026-11-16/course-reminder-enrol-date/` (no UI change, no
+  screenshots). Candidate universe 28 -> 1158 reminder pairs, 0 -> 273 overdue pairs; at now .. now + 14 days both rules
+  select 0 (the local data ends in May 2026); replay 2025-03-31 .. 2026-05-25: reminders 28 -> 50, escalations 0 -> 48;
+  independent PHP cross-check 0 mismatches. Deployed to local XAMPP (upgrade without maintenance, caches purged); both
+  tasks still disabled, reminder_enabled / overdue_enabled still 0, nothing sent, `_remind_sent` still empty.
+- **Open, for Nitin (not changed):** D1 the overdue mapping (smallest bucket >= days past) sends the '7 days'
+  escalation on day 2 and the '14 days' one on day 8; the LIMIT counts rows before the bucket and dedupe filters, so with
+  more than 500 eligible rows the last-day reminders can starve; expired enrolments (timeend past, status 0) still count;
+  deadline date and language follow the cron run, not the recipient; the overdue HTML body interpolates raw learner
+  names; no tenant scope and no feature flag; no declared dependency on `local_sentientia_core` (the only creator of
+  `open_coursecompletiondays` and `open_supervisorid`); 26 of the 27 visible deadline courses have
+  open_coursecompletiondays = 1 locally; BizLMS's own reminder never matched in production (`c.open_path = NULL`), so
+  enabling these tasks is new mail volume. `get_completion_deadline()`, the calendar ICS feed, email rules,
+  notifications rule engine and reports still use `ue.timestart > 0`. The lang string `reminder_settings_intro` still
+  says "enrolment.timestart" (lang is out of scope). This card's header is stale (local_airpay_courses 1.11.4).
+

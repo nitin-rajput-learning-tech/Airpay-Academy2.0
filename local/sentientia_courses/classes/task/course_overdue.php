@@ -28,6 +28,13 @@ defined('MOODLE_INTERNAL') || die();
  *   positive N → reminder fired N days BEFORE the deadline (P1 #28)
  *   negative N → escalation fired |N| days AFTER the deadline (this task)
  *
+ * Deadline: same as P1 #28 since 2026111600 (Nitin, 2026-11-16): the
+ * enrolment date + open_coursecompletiondays × 86400, where the
+ * enrolment date is MAX(ue.timecreated) over the learner's ACTIVE
+ * enrolments in the course (ue.status = 0, e.status = 0); 0 = not set,
+ * skipped. One deadline per (user, course). Until 2026111600 this counted
+ * from ue.timestart and required timestart > 0.
+ *
  * Idempotency: same unique index on (userid, courseid,
  * days_before_deadline, deadline_ts) as P1 #28. Re-running the task on
  * the same day is a no-op.
@@ -48,21 +55,17 @@ class course_overdue extends \core\task\scheduled_task {
     }
 
     public function execute(): void {
-        global $DB;
-
         if (!(int) get_config('local_sentientia_courses', 'overdue_enabled')) {
             mtrace('local_sentientia_courses course_overdue: disabled '
                 . '(overdue_enabled = 0)');
             return;
         }
 
-        $buckets = $this->parse_buckets((string) get_config(
-            'local_sentientia_courses', 'overdue_days_after') ?: '1,7,14');
+        $buckets = $this->buckets();
         if (empty($buckets)) {
             mtrace('local_sentientia_courses course_overdue: no valid buckets');
             return;
         }
-        sort($buckets);  // ascending — '1-day-overdue' wins before '7-day-overdue'
 
         $max = max(1, min(5000, (int) get_config(
             'local_sentientia_courses', 'overdue_max_per_run') ?: 500));
@@ -71,57 +74,109 @@ class course_overdue extends \core\task\scheduled_task {
             . 'buckets=[' . implode(',', $buckets) . '] max=' . $max);
 
         $now = time();
+
+        $sent = 0;
+        $skipped = 0;
+
+        foreach ($this->get_candidates($now, $max) as $row) {
+            if ($this->send_one_escalation($row, (int) $row->bucket,
+                    (int) $row->deadline_ts, (int) $row->days_past)) {
+                $sent++;
+            } else {
+                $skipped++;
+            }
+        }
+
+        set_config('overdue_last_run', $now, 'local_sentientia_courses');
+        set_config('overdue_last_sent', $sent, 'local_sentientia_courses');
+
+        mtrace('local_sentientia_courses course_overdue: finished. '
+            . "sent=$sent skipped_dedupe=$skipped");
+    }
+
+    /**
+     * The (learner, course) pairs due a manager escalation at $now, one
+     * row per pair.
+     *
+     * Selects only: sends nothing, writes nothing, and checks neither
+     * `overdue_enabled` nor the `_remind_sent` dedupe
+     * (send_one_escalation() does that). execute() sends to exactly this
+     * list.
+     *
+     * @param int $now the run time (execute() passes time())
+     * @param int $max SQL LIMIT (overdue_max_per_run), applied before the
+     *                 bucket matching below, as it always was
+     * @return \stdClass[] list of rows: userid, firstname, lastname,
+     *                 open_supervisorid, courseid, fullname,
+     *                 days_to_deadline, enroltime, supervisorid, sup_first,
+     *                 sup_last, deadline_ts, days_past, bucket
+     */
+    public function get_candidates(int $now, int $max): array {
+        global $DB;
+
+        $buckets = $this->buckets();
+        if (empty($buckets)) {
+            return [];
+        }
         $widest = max($buckets);
 
         // Find (active enrolment × course-with-deadline × supervisor-set)
         // tuples where the deadline passed within the last `widest` days.
         // We join `user` twice — once for the learner (must be non-deleted,
         // have a supervisor) and once for the supervisor (must be non-deleted).
+        // The derived table `le` gives one row per (user, course): the
+        // enrolment date = MAX(ue.timecreated) over the ACTIVE enrolments
+        // (ONLY_FULL_GROUP_BY-safe: it selects only its GROUP BY columns
+        // and the MAX).
         $window_start = $now - ($widest + 1) * 86400;
         $window_end   = $now;
 
         $sql = "SELECT u.id AS userid,
-                        u.firstname, u.lastname,
-                        u.open_supervisorid,
-                        c.id AS courseid,
-                        c.fullname,
-                        c.open_coursecompletiondays AS days_to_deadline,
-                        ue.timestart,
-                        s.id AS supervisorid,
-                        s.firstname AS sup_first,
-                        s.lastname  AS sup_last
-                  FROM {course} c
-                  JOIN {enrol} e             ON e.courseid = c.id AND e.status = 0
-                  JOIN {user_enrolments} ue  ON ue.enrolid = e.id AND ue.status = 0
-                  JOIN {user} u              ON u.id = ue.userid
-                                            AND u.deleted = 0
-                                            AND u.suspended = 0
-                                            AND u.open_supervisorid > 0
-                  JOIN {user} s              ON s.id = u.open_supervisorid
-                                            AND s.deleted = 0
-                                            AND s.suspended = 0
+                       u.firstname, u.lastname,
+                       u.open_supervisorid,
+                       c.id AS courseid,
+                       c.fullname,
+                       c.open_coursecompletiondays AS days_to_deadline,
+                       le.enroltime,
+                       s.id AS supervisorid,
+                       s.firstname AS sup_first,
+                       s.lastname  AS sup_last
+                  FROM (SELECT ue.userid, e.courseid, MAX(ue.timecreated) AS enroltime
+                          FROM {course} c0
+                          JOIN {enrol} e            ON e.courseid = c0.id AND e.status = 0
+                          JOIN {user_enrolments} ue ON ue.enrolid = e.id AND ue.status = 0
+                         WHERE c0.id > 1
+                           AND c0.visible = 1
+                           AND c0.open_coursecompletiondays > 0
+                      GROUP BY ue.userid, e.courseid) le
+                  JOIN {course} c ON c.id = le.courseid
+                  JOIN {user} u   ON u.id = le.userid
+                                 AND u.deleted = 0
+                                 AND u.suspended = 0
+                                 AND u.open_supervisorid > 0
+                  JOIN {user} s   ON s.id = u.open_supervisorid
+                                 AND s.deleted = 0
+                                 AND s.suspended = 0
              LEFT JOIN {course_completions} cc ON cc.userid = u.id
                                               AND cc.course = c.id
                                               AND cc.timecompleted > 0
-                 WHERE c.id > 1
-                   AND c.visible = 1
-                   AND c.open_coursecompletiondays > 0
-                   AND cc.id IS NULL
-                   AND ue.timestart > 0
-                   AND (ue.timestart + c.open_coursecompletiondays * 86400)
+                 WHERE cc.id IS NULL
+                   AND le.enroltime > 0
+                   AND (le.enroltime + c.open_coursecompletiondays * 86400)
                        BETWEEN :winstart AND :winend
-              ORDER BY ue.timestart ASC";
+              ORDER BY le.enroltime ASC, u.id ASC, c.id ASC";
 
+        // A recordset, not get_records_sql(): userid (the first column) is
+        // not unique across courses, so a keyed array would collapse rows.
         $rs = $DB->get_recordset_sql($sql, [
             'winstart' => $window_start,
             'winend'   => $window_end,
         ], 0, $max);
 
-        $sent = 0;
-        $skipped = 0;
+        $candidates = [];
 
         foreach ($rs as $row) {
-            $deadline_ts = (int) $row->timestart
+            $deadline_ts = (int) $row->enroltime
                 + ((int) $row->days_to_deadline * 86400);
             $secs_past = $now - $deadline_ts;
             if ($secs_past <= 0) {
@@ -143,20 +198,27 @@ class course_overdue extends \core\task\scheduled_task {
                 continue;  // past the widest bucket — stop nagging
             }
 
-            if ($this->send_one_escalation($row, $bucket,
-                    $deadline_ts, $days_past)) {
-                $sent++;
-            } else {
-                $skipped++;
-            }
+            $row->deadline_ts = $deadline_ts;
+            $row->days_past   = $days_past;
+            $row->bucket      = $bucket;
+            $candidates[] = $row;
         }
         $rs->close();
 
-        set_config('overdue_last_run', $now, 'local_sentientia_courses');
-        set_config('overdue_last_sent', $sent, 'local_sentientia_courses');
+        return $candidates;
+    }
 
-        mtrace('local_sentientia_courses course_overdue: finished. '
-            . "sent=$sent skipped_dedupe=$skipped");
+    /**
+     * The configured escalation buckets (overdue_days_after, default
+     * 1,7,14), ascending — '1-day-overdue' wins before '7-day-overdue'.
+     *
+     * @return int[]
+     */
+    private function buckets(): array {
+        $buckets = $this->parse_buckets((string) get_config(
+            'local_sentientia_courses', 'overdue_days_after') ?: '1,7,14');
+        sort($buckets);
+        return $buckets;
     }
 
     private function send_one_escalation(\stdClass $row, int $bucket,

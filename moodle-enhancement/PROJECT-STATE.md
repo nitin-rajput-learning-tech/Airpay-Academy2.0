@@ -1,5 +1,5 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-11-16 (**Demo week: C-suite demo Thursday 2026-11-19. Theme 2026111600, 2026111601 and 2026111602 committed. Paused 16:50 while Nitin travels; resumes tonight. See the 2026-11-16 entry.**)
+**Updated:** 2026-11-16 (**Demo week: C-suite demo Thursday 2026-11-19. Theme 2026111600, 2026111601 and 2026111602 committed; reminder tasks count from the enrolment date (courses 2026111600) committed; option A privacy build running overnight. See the 2026-11-16 entry.**)
 **Before that, 2026-11-13** (**Nitin's 11-12 decisions carried out; see the 2026-11-12 / 11-13 entry.**
 - Committed and on `production`: subagent-stall fix, Stage 0-2 tooling, working permission rules, hook and gate fixes, theme A2/A3, A1 (ADR-034 slice 1), A5 (audit events + tenant trail), AI gateway pricing.
 - A4 done on the local copy: 286 erasures, nothing sent, 0 failed deletes; found a Moodle core bug and two erasure gaps (`docs/cutover/A4-ERASURE-REHEARSAL-RESULTS-2026-11-13.md`). Decisions for Nitin listed there.)
@@ -36,17 +36,22 @@ added to the defined scope. The scheduled resume task stays disabled (IT securit
   Evidence `docs/visual-evidence/2026-11-16/course-header-enrol-date/` (its README lists what was seen and not
   fixed). The PHPUnit test is written and not yet run.
 
-**In progress (uncommitted, paused 16:50 for Nitin's travel):** the reminder and overdue tasks in
-`local_sentientia_courses` count the deadline from the enrolment date: the latest active `ue.timecreated`, one per
-learner and course (today they use `ue.timestart` and skip the 99.7% of enrolments without one). Both plugin trees,
-version 2026111600, a read-only `get_candidates()` for testing, PHPUnit test written and not run. Workflow
-`wf_23db5ce1-b2e`: diagnosis and build done and deployed locally; the two reviews were stopped for the shutdown and
-re-run on resume (`resumeFromRunId`). No-send check 16:48 against the 15:30 baseline: no notification, reminder
-record or task-log row added; both tasks still disabled and never run (the upgrade only moved their next run time to
-11-17 09:00 / 09:30 IST); config unchanged. Not yet reviewed by Nitin.
+- local_sentientia_courses 2026111600 (approved by Nitin, committed with this line): the reminder and overdue tasks
+  count the deadline from the enrolment date, the latest active `ue.timecreated`, one per learner and course. They
+  used `ue.timestart` and skipped the 99.7% of enrolments without one. Both plugin trees identical (the newer
+  white-label `$a->sitename` line adopted, 2 drift-baseline lines retired), a read-only `get_candidates()` for
+  testing, PHPUnit test written. Workflow `wf_23db5ce1-b2e` (paused for the shutdown, resumed 18:12): two reviews
+  found nothing to fix. No-send check at 18:30 matched the 15:30 baseline; both tasks still disabled and never run.
+  On the backup period the new rule gives 50 reminders (was 28) and 48 escalations (was 0). Before either task is
+  ever switched on, Nitin decides: the escalation timing (the "7 days" email goes on day 2, "14 days" on day 8), the
+  1-day completion window on 26 of 27 courses, the new mail volume (the BizLMS reminder never fired on live), and the
+  other code still counting from `timestart`. Evidence `docs/visual-evidence/2026-11-16/course-reminder-enrol-date/`.
 
-**Next (tonight, on Nitin's resume):** finish the reminder workflow's reviews; the option A privacy build
-(`wf_3b996ce8-906`, PHPUnit), then both new PHPUnit tests (theme countdown, reminder) after the init. Tuesday:
+**Machine note (11-16 evening):** after the restart, PowerShell and cmd.exe are disabled by the administrator, so the
+XAMPP watchdog cannot restart anything; MariaDB and Apache were started directly from Git Bash.
+
+**Next (tonight):** the option A privacy build continuation (`wf_1de5682e-986`: re-check the 11-13 work, PHPUnit
+re-init and suites, read-only dry run, three reviews, fix), then both new PHPUnit tests (theme countdown, reminder). Tuesday:
 Nitin's review, deck refresh; Tuesday night the A4 re-run with flags ON and no emails, only if Monday night is
 green. Wednesday (Nitin's VPN window): UAT deploy of the 11-12 to 11-16 changes, demo data check, persona walk.
 

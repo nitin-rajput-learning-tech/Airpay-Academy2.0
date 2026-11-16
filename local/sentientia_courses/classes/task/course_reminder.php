@@ -16,7 +16,15 @@ defined('MOODLE_INTERNAL') || die();
  * `open_coursecompletiondays` (the field P1 #21 restored to the
  * edit_course form). For each (user, course) pair:
  *
- *   1. Compute the deadline = enrolment.timestart + days × 86400.
+ *   1. Compute the deadline = enrolment date + days × 86400, where the
+ *      enrolment date is MAX(ue.timecreated) over the user's ACTIVE
+ *      enrolments in the course (ue.status = 0, e.status = 0); 0 = not
+ *      set, skipped. One deadline per (user, course), never one per
+ *      enrolment row. (2026-11-16, Nitin: the completion clock starts at
+ *      the enrolment date, as in BizLMS local_courses course_reminder and
+ *      the course-header countdown. Until 2026111600 this counted from
+ *      ue.timestart and required timestart > 0, which is 0 on 99.7% of
+ *      the imported enrolments, so almost nobody was ever reminded.)
  *   2. Skip if the user has already completed the course.
  *   3. Skip if `now > deadline` (we're past the deadline — different
  *      surface; could become P1 #15's "overdue" digest).
@@ -45,22 +53,17 @@ class course_reminder extends \core\task\scheduled_task {
     }
 
     public function execute(): void {
-        global $DB, $CFG;
-
         if (!(int) get_config('local_sentientia_courses', 'reminder_enabled')) {
             mtrace('local_sentientia_courses course_reminder: disabled '
                 . '(reminder_enabled = 0)');
             return;
         }
 
-        $buckets = $this->parse_buckets((string) get_config(
-            'local_sentientia_courses', 'reminder_days_before') ?: '7,3,1');
+        $buckets = $this->buckets();
         if (empty($buckets)) {
             mtrace('local_sentientia_courses course_reminder: no valid buckets configured');
             return;
         }
-        sort($buckets);  // ascending so 1-day-out wins over 7-day-out
-                          // if a learner is somehow caught in both windows
 
         $max = max(1, min(5000, (int) get_config(
             'local_sentientia_courses', 'reminder_max_per_run') ?: 500));
@@ -69,6 +72,50 @@ class course_reminder extends \core\task\scheduled_task {
             . 'buckets=[' . implode(',', $buckets) . '] max=' . $max);
 
         $now = time();
+
+        $sent_count = 0;
+        $skipped_count = 0;
+
+        foreach ($this->get_candidates($now, $max) as $row) {
+            if ($this->send_one_reminder(
+                    (int) $row->userid, (int) $row->courseid,
+                    (string) $row->fullname,
+                    (int) $row->bucket, (int) $row->deadline_ts,
+                    (int) $row->days_remaining)) {
+                $sent_count++;
+            } else {
+                $skipped_count++;
+            }
+        }
+
+        set_config('reminder_last_run', $now, 'local_sentientia_courses');
+        set_config('reminder_last_sent', $sent_count, 'local_sentientia_courses');
+
+        mtrace('local_sentientia_courses course_reminder: finished. '
+            . "sent=$sent_count skipped_dedupe=$skipped_count");
+    }
+
+    /**
+     * The (user, course) pairs due a reminder at $now, one row per pair.
+     *
+     * Selects only: sends nothing, writes nothing, and checks neither
+     * `reminder_enabled` nor the `_remind_sent` dedupe (send_one_reminder()
+     * does that). execute() sends to exactly this list.
+     *
+     * @param int $now the run time (execute() passes time())
+     * @param int $max SQL LIMIT (reminder_max_per_run), applied before the
+     *                 bucket matching below, as it always was
+     * @return \stdClass[] list of rows: userid, courseid, fullname,
+     *                 days_to_deadline, enroltime, deadline_ts,
+     *                 days_remaining, bucket
+     */
+    public function get_candidates(int $now, int $max): array {
+        global $DB;
+
+        $buckets = $this->buckets();
+        if (empty($buckets)) {
+            return [];
+        }
         $widest_bucket = max($buckets);
 
         // Find every (user, course) pair where:
@@ -79,44 +126,53 @@ class course_reminder extends \core\task\scheduled_task {
         //   - user is not deleted/suspended
         //   - the computed deadline is within the widest configured bucket
         //
+        // The derived table `le` gives one row per (user, course): the
+        // enrolment date = MAX(ue.timecreated) over the ACTIVE enrolments.
+        // It selects only its GROUP BY columns and the MAX, so the query is
+        // ONLY_FULL_GROUP_BY-safe on MySQL 8 and MariaDB.
+        //
         // We over-fetch by one day on each side to handle clock skew
         // and partial-day rounding.
         $window_start = $now - 86400;  // 1 day grace for "today"
         $window_end   = $now + ($widest_bucket + 1) * 86400;
 
         $sql = "SELECT u.id AS userid,
-                        c.id AS courseid,
-                        c.fullname,
-                        c.open_coursecompletiondays AS days_to_deadline,
-                        ue.timestart
-                  FROM {course} c
-                  JOIN {enrol} e             ON e.courseid = c.id AND e.status = 0
-                  JOIN {user_enrolments} ue  ON ue.enrolid = e.id AND ue.status = 0
-                  JOIN {user} u              ON u.id = ue.userid
-                                            AND u.deleted = 0
-                                            AND u.suspended = 0
+                       c.id AS courseid,
+                       c.fullname,
+                       c.open_coursecompletiondays AS days_to_deadline,
+                       le.enroltime
+                  FROM (SELECT ue.userid, e.courseid, MAX(ue.timecreated) AS enroltime
+                          FROM {course} c0
+                          JOIN {enrol} e            ON e.courseid = c0.id AND e.status = 0
+                          JOIN {user_enrolments} ue ON ue.enrolid = e.id AND ue.status = 0
+                         WHERE c0.id > 1
+                           AND c0.visible = 1
+                           AND c0.open_coursecompletiondays > 0
+                      GROUP BY ue.userid, e.courseid) le
+                  JOIN {course} c ON c.id = le.courseid
+                  JOIN {user} u   ON u.id = le.userid
+                                 AND u.deleted = 0
+                                 AND u.suspended = 0
              LEFT JOIN {course_completions} cc ON cc.userid = u.id
                                               AND cc.course = c.id
                                               AND cc.timecompleted > 0
-                 WHERE c.id > 1
-                   AND c.visible = 1
-                   AND c.open_coursecompletiondays > 0
-                   AND cc.id IS NULL
-                   AND ue.timestart > 0
-                   AND (ue.timestart + c.open_coursecompletiondays * 86400)
+                 WHERE cc.id IS NULL
+                   AND le.enroltime > 0
+                   AND (le.enroltime + c.open_coursecompletiondays * 86400)
                        BETWEEN :winstart AND :winend
-              ORDER BY ue.timestart ASC";
+              ORDER BY le.enroltime ASC, u.id ASC, c.id ASC";
 
+        // A recordset, not get_records_sql(): userid (the first column) is
+        // not unique across courses, so a keyed array would collapse rows.
         $rs = $DB->get_recordset_sql($sql, [
             'winstart' => $window_start,
             'winend'   => $window_end,
         ], 0, $max);
 
-        $sent_count = 0;
-        $skipped_count = 0;
+        $candidates = [];
 
         foreach ($rs as $row) {
-            $deadline_ts = (int) $row->timestart
+            $deadline_ts = (int) $row->enroltime
                 + ((int) $row->days_to_deadline * 86400);
             $secs_remaining = $deadline_ts - $now;
             if ($secs_remaining <= 0) {
@@ -138,22 +194,28 @@ class course_reminder extends \core\task\scheduled_task {
                 continue;
             }
 
-            if ($this->send_one_reminder(
-                    (int) $row->userid, (int) $row->courseid,
-                    (string) $row->fullname,
-                    $bucket, $deadline_ts, $days_remaining)) {
-                $sent_count++;
-            } else {
-                $skipped_count++;
-            }
+            $row->deadline_ts    = $deadline_ts;
+            $row->days_remaining = $days_remaining;
+            $row->bucket         = $bucket;
+            $candidates[] = $row;
         }
         $rs->close();
 
-        set_config('reminder_last_run', $now, 'local_sentientia_courses');
-        set_config('reminder_last_sent', $sent_count, 'local_sentientia_courses');
+        return $candidates;
+    }
 
-        mtrace('local_sentientia_courses course_reminder: finished. '
-            . "sent=$sent_count skipped_dedupe=$skipped_count");
+    /**
+     * The configured reminder buckets (reminder_days_before, default
+     * 7,3,1), ascending so 1-day-out wins over 7-day-out if a learner is
+     * somehow caught in both windows.
+     *
+     * @return int[]
+     */
+    private function buckets(): array {
+        $buckets = $this->parse_buckets((string) get_config(
+            'local_sentientia_courses', 'reminder_days_before') ?: '7,3,1');
+        sort($buckets);
+        return $buckets;
     }
 
     /**

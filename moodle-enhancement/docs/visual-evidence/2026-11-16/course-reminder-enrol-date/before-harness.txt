@@ -1,0 +1,36 @@
+# local_sentientia_courses deadline tasks - BEFORE harness (read-only)
+run at          : 2026-11-16 16:01:15 IST (now=1794825075)
+database        : mysql 10.11.16, session sql_mode=STRICT_ALL_TABLES
+plugin version  : db 2026110300
+config          : reminder_enabled='0' overdue_enabled='0'
+reminder buckets: [1,3,7] max=500
+overdue buckets : [1,7,14] max=500
+
+course.open_coursecompletiondays: present, user.open_supervisorid: present
+
+## 1. Candidate universe, window unbounded (0 .. 2^40), no LIMIT
+old reminder SQL rows: 28
+old overdue  SQL rows: 0
+
+## 2. Candidates at now + k days (k = 0..14), configured buckets and max
+k= 0 2026-11-16 | OLD reminder sql=0 b1:0 b3:0 b7:0 pairs=0 dup=0 | OLD overdue sql=0 b1:0 b7:0 b14:0 pairs=0 dup=0
+k= 1 2026-11-17 | OLD reminder sql=0 b1:0 b3:0 b7:0 pairs=0 dup=0 | OLD overdue sql=0 b1:0 b7:0 b14:0 pairs=0 dup=0
+k= 2 2026-11-18 | OLD reminder sql=0 b1:0 b3:0 b7:0 pairs=0 dup=0 | OLD overdue sql=0 b1:0 b7:0 b14:0 pairs=0 dup=0
+k= 3 2026-11-19 | OLD reminder sql=0 b1:0 b3:0 b7:0 pairs=0 dup=0 | OLD overdue sql=0 b1:0 b7:0 b14:0 pairs=0 dup=0
+k= 4 2026-11-20 | OLD reminder sql=0 b1:0 b3:0 b7:0 pairs=0 dup=0 | OLD overdue sql=0 b1:0 b7:0 b14:0 pairs=0 dup=0
+k= 5 2026-11-21 | OLD reminder sql=0 b1:0 b3:0 b7:0 pairs=0 dup=0 | OLD overdue sql=0 b1:0 b7:0 b14:0 pairs=0 dup=0
+k= 6 2026-11-22 | OLD reminder sql=0 b1:0 b3:0 b7:0 pairs=0 dup=0 | OLD overdue sql=0 b1:0 b7:0 b14:0 pairs=0 dup=0
+k= 7 2026-11-23 | OLD reminder sql=0 b1:0 b3:0 b7:0 pairs=0 dup=0 | OLD overdue sql=0 b1:0 b7:0 b14:0 pairs=0 dup=0
+k= 8 2026-11-24 | OLD reminder sql=0 b1:0 b3:0 b7:0 pairs=0 dup=0 | OLD overdue sql=0 b1:0 b7:0 b14:0 pairs=0 dup=0
+k= 9 2026-11-25 | OLD reminder sql=0 b1:0 b3:0 b7:0 pairs=0 dup=0 | OLD overdue sql=0 b1:0 b7:0 b14:0 pairs=0 dup=0
+k=10 2026-11-26 | OLD reminder sql=0 b1:0 b3:0 b7:0 pairs=0 dup=0 | OLD overdue sql=0 b1:0 b7:0 b14:0 pairs=0 dup=0
+k=11 2026-11-27 | OLD reminder sql=0 b1:0 b3:0 b7:0 pairs=0 dup=0 | OLD overdue sql=0 b1:0 b7:0 b14:0 pairs=0 dup=0
+k=12 2026-11-28 | OLD reminder sql=0 b1:0 b3:0 b7:0 pairs=0 dup=0 | OLD overdue sql=0 b1:0 b7:0 b14:0 pairs=0 dup=0
+k=13 2026-11-29 | OLD reminder sql=0 b1:0 b3:0 b7:0 pairs=0 dup=0 | OLD overdue sql=0 b1:0 b7:0 b14:0 pairs=0 dup=0
+k=14 2026-11-30 | OLD reminder sql=0 b1:0 b3:0 b7:0 pairs=0 dup=0 | OLD overdue sql=0 b1:0 b7:0 b14:0 pairs=0 dup=0
+
+## 3. Historical replay 2025-03-31 .. 2026-05-25 (simulated daily runs, running dedupe, existence filter)
+OLD reminder would-send=28 on 1 days  [-1d:28]
+OLD overdue  would-send=0 on 0 days  []
+
+elapsed 6.6 s. Nothing was sent, written or executed.

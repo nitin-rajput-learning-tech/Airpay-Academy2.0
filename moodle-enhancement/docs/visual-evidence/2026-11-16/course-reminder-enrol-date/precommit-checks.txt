@@ -1,0 +1,55 @@
+== CHECK 1 php -l
+No syntax errors detected in moodle-enhancement/local/sentientia_courses/classes/task/course_reminder.php
+No syntax errors detected in moodle-enhancement/local/sentientia_courses/classes/task/course_overdue.php
+No syntax errors detected in moodle-enhancement/local/sentientia_courses/version.php
+No syntax errors detected in moodle-enhancement/local/sentientia_courses/tests/task/deadline_candidates_test.php
+No syntax errors detected in local/sentientia_courses/classes/task/course_reminder.php
+No syntax errors detected in local/sentientia_courses/classes/task/course_overdue.php
+No syntax errors detected in local/sentientia_courses/version.php
+No syntax errors detected in local/sentientia_courses/tests/task/deadline_candidates_test.php
+== CHECK 2 MOODLE_INTERNAL
+ok moodle-enhancement/local/sentientia_courses/classes/task/course_reminder.php
+ok moodle-enhancement/local/sentientia_courses/classes/task/course_overdue.php
+ok moodle-enhancement/local/sentientia_courses/version.php
+ok moodle-enhancement/local/sentientia_courses/tests/task/deadline_candidates_test.php
+ok local/sentientia_courses/classes/task/course_reminder.php
+ok local/sentientia_courses/classes/task/course_overdue.php
+ok local/sentientia_courses/version.php
+ok local/sentientia_courses/tests/task/deadline_candidates_test.php
+== CHECK 3 superglobals (tests skipped)
+(no output above = none)
+== CHECK 4 credentials
+(no HIT = none)
+== CHECK 9 version.php
+$plugin->version   = 2026111600
+->component = 'local_sentientia_courses'
+$plugin->version   = 2026111600
+->component = 'local_sentientia_courses'
+== CHECK 10 CONFIRM placeholders
+(no HIT = none)
+== CHECK 11 conflict markers
+(no HIT = none)
+== CHECK 14 stale theme_airpayux refs
+FLAGGED: 0 stale theme_airpayux reference(s)
+(no output = none)
+== CHECK 18 path boundary
+OK  path-boundary: 8 file(s) scanned, no unbounded path prefixes.
+rc=0
+== CHECK 20 SITEID compare
+OK  siteid-compare: 8 file(s) scanned, no strict comparison the types alone decide.
+rc=0
+== CHECK 19 cross-tree twins (cmp)
+identical classes/task/course_reminder.php
+identical classes/task/course_overdue.php
+identical version.php
+identical tests/task/deadline_candidates_test.php
+== CHECK 12 state-card freshness: soft warning only; card moodle-enhancement/state-cards/sentientia_courses-state.md updated in this change
+== tree drift
+Cross-tree drift: 47 plugins in both trees (local, payment/gateway, enrol, mod/quiz/accessrule, admin/tool)
+  total drifting files : 49
+  baselined (known)    : 49
+  NEW (blocking)       : 0
+  baseline now stale   : 0
+
+OK - no new cross-tree drift.
+rc=0

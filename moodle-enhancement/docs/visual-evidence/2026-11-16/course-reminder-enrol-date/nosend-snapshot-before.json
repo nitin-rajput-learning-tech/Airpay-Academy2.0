@@ -1,0 +1,66 @@
+{
+    "at": "2026-11-16T15:55:17+05:30",
+    "table_message": {
+        "count": 0,
+        "maxid": 0
+    },
+    "table_messages": {
+        "count": 0,
+        "maxid": 0
+    },
+    "table_notifications": {
+        "count": 4245,
+        "maxid": 1665968
+    },
+    "table_local_sentientia_courses_remind_sent": {
+        "count": 0,
+        "maxid": 0
+    },
+    "table_task_log": {
+        "count": 26905,
+        "maxid": 39141429
+    },
+    "table_task_adhoc": {
+        "count": 44,
+        "maxid": 16431
+    },
+    "task_log_course_reminder": 0,
+    "task_course_reminder": {
+        "disabled": "1",
+        "customised": "0",
+        "hour": "9",
+        "minute": "0",
+        "lastruntime": "0",
+        "nextruntime": "1793676600",
+        "faildelay": "0"
+    },
+    "task_log_course_overdue": 0,
+    "task_course_overdue": {
+        "disabled": "1",
+        "customised": "0",
+        "hour": "9",
+        "minute": "30",
+        "lastruntime": "0",
+        "nextruntime": "1793678400",
+        "faildelay": "0"
+    },
+    "notifications_component_courses": 0,
+    "cfg_reminder_enabled": "0",
+    "cfg_reminder_days_before": "7,3,1",
+    "cfg_reminder_max_per_run": "500",
+    "cfg_reminder_last_run": "1779244576",
+    "cfg_reminder_last_sent": "0",
+    "cfg_overdue_enabled": "0",
+    "cfg_overdue_days_after": "1,7,14",
+    "cfg_overdue_max_per_run": "500",
+    "cfg_overdue_last_run": "1779245634",
+    "cfg_overdue_last_sent": "0",
+    "cfg_version": "2026110300",
+    "noemailever": true,
+    "maintenance_enabled": false,
+    "climaintenance_file": false,
+    "outagelessupgrade": false,
+    "cron_enabled": "1",
+    "pending_plugins": [],
+    "allcomponenthash_matches": true
+}
