@@ -46,6 +46,93 @@ added to the defined scope. The scheduled resume task stays disabled (IT securit
   ever switched on, Nitin decides: the escalation timing (the "7 days" email goes on day 2, "14 days" on day 8), the
   1-day completion window on 26 of 27 courses, the new mail volume (the BizLMS reminder never fired on live), and the
   other code still counting from `timestart`. Evidence `docs/visual-evidence/2026-11-16/course-reminder-enrol-date/`.
+- **CI `phpunit-52` job fixed; committed and pushed 11-17 ~03:00 on Nitin's go (Option A's privacy step left out
+  of that commit; it lands with Option A).** The real GitHub log (run #736, read in the browser)
+  showed the job dying at "Install Moodle composer deps" on every push: PHP 8.2, while Moodle 5.2 requires PHP
+  >= 8.3. So neither BLOCKING group (`tenant_isolation`, `privacy_erasure`) had ever run on 5.2. Behind that, the job
+  still used the pre-5.1 layout. It copied plugins to `$MOODLE_DIR/local` (on 5.1+ that is `public/local`, and the
+  root dir does not exist), ran `init.php` from the root (it is under `public/` now) and took the theme from
+  `moodle-enhancement/theme/sentientia` (does not exist; the theme is only at the repo root). It also used Postgres 14
+  (5.2 needs 16), copied every local plugin twice through a duplicated glob, and its quiz-rule glob was still
+  `airpay_*`, so `quizaccess_sentientia_proctoring` was silently left out. A read-only review (9 agents, every
+  blocker confirmed by a second agent) then found what would fail next. (a) `install_database.php` was passed
+  `--non-interactive --allow-unstable`, which only `install.php` accepts, so the step exited 1. (b) On PostgreSQL
+  the job could never go green: `local_sentientia_core`'s install hook adds the BizLMS columns with MySQL DDL, and
+  Moodle wraps every PostgreSQL test in a transaction, which ~20 cart and classroom tenant tests cannot run under.
+  (c) The new privacy guard aborted under `pipefail` on a glob that matched nothing. Fixed: PHP 8.3; MariaDB 10.11
+  (Sentientia supports MySQL 8.4 / MariaDB only, ADR-033; the job comment says not to switch back without porting
+  those first; a MySQL 8.4 run is a sensible second entry later); database created utf8mb4; the redundant install
+  step removed (init.php installs the phpu_ site itself); `init.php --disable-composer` with composer.phar in place
+  (no second composer install, no download); plugins copied and suites discovered under `public/`; `THEME_SRC` for
+  the theme; a fail-loud layout check; the privacy guard glob corrected (Option A's hunk; commit it in this form).
+  An offline verifier (scratchpad `ci52/verify_phpunit52.py`) ran the job's own steps in a scratch 5.2 skeleton,
+  each blocking step as a whole script under its own `set -euo pipefail`: 30/30 checks pass (56 plugins, 55 suites,
+  130 + 1 tagged files). The first GitHub run after the push is the real proof; Nitin chose MariaDB 10.11.
+- **The other red CI jobs (11-16 night), committed and pushed with the above.**
+  - `stylelint-guard`: the 2026-06-08 airpayux->sentientia rename deleted `.stylelintrc.ci.json` and the job
+    pointed at `moodle-enhancement/theme/sentientia`, which does not exist, so this BLOCKING guard had not run since
+    June. The config was restored at `theme/sentientia/.stylelintrc.ci.json` (committed with this change)
+    and the job now points at `theme/sentientia`. Run locally as CI runs it: 87 files, 0 findings; a planted
+    `.costcenter_data` selector fails; the two grandfathered files pass.
+  - `ws-contract-gate`: `moodle-enhancement/tools/ci-ws-contract-check.php` still walked `airpay_*` only and read
+    its keys from the retired airpayux theme, so it found zero consumers (exit 2) on every push. Ported to mirror
+    `theme_sentientia\ws_contract_scanner`: keys and prefixes read live from that class, its other rules
+    fingerprinted (exit 2 if the class changes), both plugin trees audited, a skipped or unverifiable consumer
+    fails the gate. Result: 11 consumers in each tree, 0 failures, exit 0; the reviewer proved in a scratch tree
+    that a missing key, or a key present only in a comment, fails it.
+  - `playwright-linux` (advisory, so not what turned the run red): not PHP 8.2. It installs the repo ROOT, the
+    BizLMS clone on Moodle 4.5.10, which supports 8.2. Fixed two confirmed job bugs: `dataroot` built from
+    `GITHUB_WORKSPACE`, which is unset inside the container (now `/var/www/moodledata`), and the same invalid
+    `--non-interactive` flag. Left for Nitin: the site would still run Boost (no theme set), the Apache port edit can
+    race the container start, the CLI reporter list stops `junit.xml` being written, and above all the job tests
+    the 4.5 clone, not the 5.1/5.3 platform Sentientia runs. Re-pointing it to 5.x is a redesign, his call.
+  - Separate task raised, not started: the compliance report grants its RISK_PERSONAL export to a hard-coded role
+    id 9 (on a fresh install, likely the Sentientia Author role).
+- **Fresh-install and test-tagging defects from the CI review (11-17 night), not committed, tests not yet run.**
+  Two workflows: builders, then an adversarial review of each fix; every verdict was "sound".
+  - Author role caps: Moodle 5.2 runs a plugin's `install.php` before it registers that plugin's capabilities
+    (`upgradelib.php:755-765`), so on every fresh install (CI, phpu_, a new customer, the Stage B cutover) the
+    Sentientia Author role missed `skillsai:extract/:review`, and all three authoring caps on a site without
+    Skills AI. Both install hooks now call `update_capabilities()` first. New 2026111600 upgrade steps back-fill
+    only the gap's exact signature (the role has no system-context row for ANY of that plugin's author caps), so an
+    administrator's setting is never overridden. `skillsai` 2026111600 / 0.1.4-alpha, `authoring` 2026111600 /
+    0.3.1-alpha. Tests: `tests/install_caps_test.php` in both plugins, including a real-install check that
+    repairs nothing (advisory in CI). Open: `local_sentientia_aiquiz` has no install hook.
+  - Daily digest: its compliance-deadline section read `local_sentientia_compliance_snapshot`, which no plugin
+    creates, so it never ran. It now reads `local_compliance_snapshot` (`deadline_date`): exemptions, active
+    enrolment and the tenant's active compliance list are honoured, and the streak read is guarded where
+    gamification is absent (the task used to throw there). It ships behind the new flag
+    `sentientia.notifications.digest_deadlines.enabled`, default OFF, because the digest already goes out by email:
+    no one's digest changes until Nitin turns it on. `notifications` 2026111600 / 1.5.2. Test
+    `tests/daily_digest_compliance_test.php` (in the BLOCKING tenant_isolation group: run it before committing).
+    Found, not fixed: compliance_report's `rebuild_snapshot()` never applies a courseid-0 ("exclude from all
+    tracking") exemption, so excluded learners still get its reminder emails and count in its KPIs.
+  - Test metadata: under PHPUnit 11 a class or method with any attribute has its docblock tags ignored. A token
+    scan of all ~800 test files found one case: `badge_manager_test`, whose 2 tests were silently outside the
+    blocking tenant_isolation gate. Now `#[Group('tenant_isolation')]`; no lost `@dataProvider` anywhere.
+  - Compliance report, all-course exclusions (`compliance_report` 2026111701 / 1.0.7, review "sound"):
+    `rebuild_snapshot()` matched exemptions on the exact course id only, so a learner on the "Excluded Users" list
+    (`exclude_user()` writes courseid 0) was auto-enrolled into every compliance course (auto_enrol = 1 on the
+    production copy) and got the welcome, reminder and overdue emails, and their manager the weekly escalation. 0
+    such learners on the production copy today; on UAT the provisioning script excludes `uat_author_airpay`, which
+    was hit. Fixed with one condition: an active courseid-0 exemption now marks every applicable course exempted
+    (no enrolment, no email). No upgrade step: the hourly refresh rewrites the rows. Existing enrolments are left
+    in place. `compliance_engine.php` reconciled across the trees (the ME copy read a column that does not exist,
+    raising a warning on every escalation email); its drift-baseline line retired. Test
+    `tests/global_exclusion_test.php` (5 tests, message sink, `tenant_isolation`).
+    Merge with the other session's role-id-9 fix (worktree `brave-yonath-1848a0`, uncommitted): it renumbered to
+    `2026111702` / 1.0.8 with its revoke step guarded `< 2026111702`, so either change can ship first (verified in
+    both of its trees). Merged result: version.php `2026111702` / 1.0.8 (never back to 2026111701); upgrade.php
+    carries only its step, since this change adds none.
+    Decisions for Nitin (found, not changed): snapshot rows are never removed, so rows for courses taken off the
+    list, tenants a learner left, and suspended/deleted users stay frozen and are counted in the KPIs, scorecard,
+    defaulters, matrix, manager report and theme widget (fix proposed: a last-rebuild stamp plus a filter in each
+    reader); exempted rows count in every rate's denominator; the KPI tiles are cached with no expiry and never
+    refresh after a rebuild; managers never get the "overdue" alert (dedupe ignores the recipient); escalations
+    continue after an auto-enrolment has ended; a deleted tracked course would abort the whole hourly rebuild.
+  - Embargo: these version bumps (skillsai, authoring, notifications, compliance_report) must NOT reach
+    `C:/xampp` before the A4 re-run, whose restore step expects exactly three upgraded components. Afterwards:
+    deploy, PHPUnit re-init, run the four new test files.
 
 **Machine note (11-16 evening):** after the restart, PowerShell and cmd.exe are disabled by the administrator, so the
 XAMPP watchdog cannot restart anything; MariaDB and Apache were started directly from Git Bash.

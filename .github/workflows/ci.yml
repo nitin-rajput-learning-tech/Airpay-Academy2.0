@@ -233,16 +233,23 @@ jobs:
 
       - name: Run ws_contract gate (standalone static analysis)
         run: |
-          # Walks every airpay_* plugin mustache for data-region=
-          # "airpay-datatable" + data-ws-name="X" pairs, resolves each
-          # WS to its class file via db/services.php, and verifies the
-          # class declares all 6 contract keys (search, sort, sortdir,
-          # page, perpage, filters) in execute_parameters().
+          # Static mirror of theme_sentientia\ws_contract_scanner: walks every
+          # local/sentientia_* (and legacy airpay_*) mustache for
+          # data-region="airpay-datatable" + data-ws-name="X" pairs, resolves
+          # each WS to its class via db/services.php, and verifies the class's
+          # <method>_parameters() declares every required contract key. The
+          # keys and plugin prefixes are read live from
+          # theme/sentientia/classes/ws_contract_scanner.php. Audits BOTH
+          # trees (local/ and moodle-enhancement/local/); the worse result wins.
+          # Until 2026-11-16 this walked airpay_* only and found zero
+          # consumers after the rename, so every push failed with exit 2.
           #
           # Exit codes (block merge on 1 or 2):
           #   0  All contracts satisfied
-          #   1  One or more failures (specific keys missing)
-          #   2  Zero consumers found (scanner regex broken / config)
+          #   1  Missing keys, a consumer that cannot be verified statically,
+          #      or a skipped consumer (a full checkout should skip nothing)
+          #   2  Zero consumers found/verified, or the gate is misconfigured
+          #      (canonical scanner file or its constants unreadable)
           #
           # See ADR-009 + theme/sentientia/tests/ws_contract_test.php for
           # the Moodle-aware version that runs locally with PHPUnit.
@@ -640,7 +647,12 @@ jobs:
               'dbcollation' => 'utf8mb4_unicode_ci',
           );
           $CFG->wwwroot   = 'http://localhost:8000';
-          $CFG->dataroot  = getenv('GITHUB_WORKSPACE') . '/moodledata';
+          // The path as the CONTAINER sees it: config.php only ever runs inside
+          // moodle-web, which gets <workspace>/moodledata mounted at
+          // /var/www/moodledata. The old getenv('GITHUB_WORKSPACE') was unset
+          // in the container, so dataroot became /moodledata (absent) and the
+          // install failed (fixed 2026-11-16).
+          $CFG->dataroot  = '/var/www/moodledata';
           $CFG->admin     = 'admin';
           $CFG->directorypermissions = 0777;
           require_once(__DIR__ . '/lib/setup.php');
@@ -692,8 +704,10 @@ jobs:
             --adminpass='AdminPass!23' \
             --adminemail='ci@example.test' \
             --supportemail='ci@example.test' \
-            --lang=en \
-            --non-interactive" || echo "::warning::Moodle install_database.php exited non-zero — gate will surface as Playwright failures (advisory)."
+            --lang=en" || echo "::warning::Moodle install_database.php exited non-zero — gate will surface as Playwright failures (advisory)."
+          # (--non-interactive removed 2026-11-16: it belongs to install.php;
+          # install_database.php is non-interactive already and exits 1 on any
+          # option it does not know.)
 
       # Without these four accounts, learner.spec / manager.spec /
       # compliance.spec / author.spec each hit their top-level test.skip()
@@ -794,38 +808,68 @@ jobs:
     # broader signal without letting unrelated pre-existing failures block
     # every push. Drain those, then make the full run blocking too and delete
     # the `continue-on-error` on that step.
+    #
+    # ⚠ Moodle 5.1+ LAYOUT (fixed 2026-11-16). MOODLE_502_STABLE keeps the web
+    # root, every plugin-type dir (local/, blocks/, theme/, mod/, payment/)
+    # and admin/tool/phpunit/cli/init.php under public/. Only config.php,
+    # composer.json, vendor/, admin/cli/ and a lib/setup.php shim stay at the
+    # checkout root. Until 2026-11-16 this job still used the pre-5.1 layout
+    # and PHP 8.2 / Postgres 14, below the 5.2 minimums (PHP 8.3, Postgres 16,
+    # public/admin/environment.xml). Every run died at "Install Moodle composer
+    # deps" (composer.json requires php >=8.3.0), so neither blocking group
+    # below had ever executed on 5.2. Plugins copied to the root would also
+    # have been invisible to Moodle: the copy would have failed, because
+    # $MOODLE_DIR/local does not exist. Copy into $MOODLE_PUBLIC only.
+    #
     # Cold init takes ~10-15 min; with composer cache ~5-7 min. Hard cap
     # at 40 min so a stuck PHPUnit can't burn an hour of runner time.
     timeout-minutes: 40
 
-    # Booted-by-Actions Postgres 14 — matches Moodle 5.x supported list and
-    # is faster to provision than MariaDB. Plugins must NOT assume MySQL-
-    # specific SQL syntax (Moodle's $DB API abstracts this — see
-    # .claude/rules/database.md "NEVER raw SQL when API exists").
+    # MariaDB 10.11 (the Moodle 5.2 minimum, and the engine every local
+    # PHPUnit run of these suites has used). Until 2026-11-16 this job ran on
+    # PostgreSQL. Sentientia supports MySQL 8.4 / MariaDB only (ADR-033,
+    # .claude/rules/database.md), and a 2026-11-16 review found that on
+    # PostgreSQL the job could never go green, for reasons that do not exist
+    # in production:
+    #   - local_sentientia_core's install hook adds the BizLMS user/course
+    #     columns with MySQL DDL (substrate.php), so the plugins cannot be
+    #     installed at all;
+    #   - Moodle wraps every PostgreSQL test in a transaction
+    #     (advanced_testcase), which it does not do on MariaDB/MySQL. About
+    #     20 cart and classroom tenant_isolation tests depend on real
+    #     transaction boundaries.
+    # Do not switch back without porting those first. A MySQL 8.4 run (the
+    # production target, which also catches MySQL 8 reserved words) is a
+    # sensible second matrix entry later.
     services:
-      postgres:
-        image: postgres:14
+      mariadb:
+        image: mariadb:10.11
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: moodle
-          POSTGRES_HOST_AUTH_METHOD: trust
+          # Throwaway password for a container destroyed with the runner.
+          MYSQL_ROOT_PASSWORD: ci-root
         ports:
-          - 5432:5432
+          - 3306:3306
         options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
+          --health-cmd="mariadb-admin ping -pci-root"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
 
     env:
       MOODLE_BRANCH: MOODLE_502_STABLE
       MOODLE_DIR: ${{ github.workspace }}/moodle
+      # Moodle 5.1+ code root ($CFG->dirroot): plugins go here, not MOODLE_DIR.
+      MOODLE_PUBLIC: ${{ github.workspace }}/moodle/public
       PLUGINS_SRC: ${{ github.workspace }}/airpay-academy/moodle-enhancement
+      # The theme lives only at the repo root (theme/sentientia), not under
+      # moodle-enhancement/, so PLUGINS_SRC/theme/sentientia never existed.
+      THEME_SRC: ${{ github.workspace }}/airpay-academy/theme/sentientia
       JUNIT_DIR: ${{ github.workspace }}/tests/junit
-      # PHP 8.2 matches the moodlehq/moodle-php-apache:8.2 reference image
-      # and the production Airpay XAMPP runtime. Moodle 5.2 supports 8.2+.
-      PHP_VERSION: '8.2'
+      # PHP 8.3 is the Moodle 5.2 minimum: its composer.json requires
+      # php >=8.3.0 and the locked zipstream-php needs ^8.3. The 8.2 that
+      # stood here failed composer install on every run. It also matches the
+      # PHP 8.3+ IT ask for the new server (ADR-033).
+      PHP_VERSION: '8.3'
 
     steps:
       - name: Checkout airpay plugins
@@ -840,7 +884,7 @@ jobs:
           # Extensions Moodle 5.x mandates + a few our plugins use (soap for
           # whatsapp webhook signing, sodium for sentientia_calendar tokens,
           # zip for SCORM packaging tests).
-          extensions: zip,gd,intl,xml,curl,soap,sodium,mbstring,opcache,pgsql,exif,fileinfo,iconv,ldap,xmlreader,xmlwriter,simplexml,dom
+          extensions: zip,gd,intl,xml,curl,soap,sodium,mbstring,opcache,mysqli,exif,fileinfo,iconv,ldap,xmlreader,xmlwriter,simplexml,dom
           ini-values: max_input_vars=5000,memory_limit=512M,opcache.enable_cli=1
           coverage: none
           tools: composer:v2
@@ -876,68 +920,88 @@ jobs:
         run: |
           set -e
           # MOODLE_PLUGINS_PATH is NOT a Moodle config — it's how we organise
-          # source. Plugins must physically live under local/, blocks/, mod/.
+          # source. Plugins must physically live under the code root
+          # ($MOODLE_PUBLIC = public/ on 5.1+): public/local, public/blocks,
+          # public/mod, public/theme, public/payment/gateway.
           # Copy (not symlink) so plugins look like a normal install.
+          for parent in local blocks theme mod/quiz/accessrule payment/gateway; do
+            if [ ! -d "$MOODLE_PUBLIC/$parent" ]; then
+              echo "::error::$MOODLE_PUBLIC/$parent missing: not the Moodle 5.1+ public/ layout this job expects"
+              exit 1
+            fi
+          done
+          if [ ! -f "$THEME_SRC/version.php" ]; then
+            echo "::error::theme source $THEME_SRC/version.php missing"
+            exit 1
+          fi
           copied=0
 
-          # local/* plugins (airpay_* + sentientia_*) — only dirs with
-          # version.php count; airpay_lifecycle/airpay_pages are partial
-          # plugins-in-progress and don't install.
-          for d in "$PLUGINS_SRC"/local/sentientia_* "$PLUGINS_SRC"/local/sentientia_*; do
+          # local/sentientia_* plugins — only dirs with version.php count.
+          for d in "$PLUGINS_SRC"/local/sentientia_*; do
             [ -d "$d" ] && [ -f "$d/version.php" ] || continue
             name=$(basename "$d")
-            rm -rf "$MOODLE_DIR/local/$name"
-            cp -r "$d" "$MOODLE_DIR/local/$name"
+            rm -rf "$MOODLE_PUBLIC/local/$name"
+            cp -r "$d" "$MOODLE_PUBLIC/local/$name"
             copied=$((copied + 1))
             echo "  local/$name"
           done
 
-          # block/* plugins
-          for d in "$PLUGINS_SRC"/blocks/airpay_* "$PLUGINS_SRC"/blocks/sentientia_*; do
+          # blocks/sentientia_* plugins (blocks/learnerscript is vendored, skipped)
+          for d in "$PLUGINS_SRC"/blocks/sentientia_*; do
             [ -d "$d" ] && [ -f "$d/version.php" ] || continue
             name=$(basename "$d")
-            rm -rf "$MOODLE_DIR/blocks/$name"
-            cp -r "$d" "$MOODLE_DIR/blocks/$name"
+            rm -rf "$MOODLE_PUBLIC/blocks/$name"
+            cp -r "$d" "$MOODLE_PUBLIC/blocks/$name"
             copied=$((copied + 1))
             echo "  blocks/$name"
           done
 
-          # mod/quiz/accessrule/* (quizaccess sub-plugins)
-          if [ -d "$PLUGINS_SRC/mod/quiz/accessrule" ]; then
-            for d in "$PLUGINS_SRC"/mod/quiz/accessrule/airpay_*; do
-              [ -d "$d" ] && [ -f "$d/version.php" ] || continue
-              name=$(basename "$d")
-              rm -rf "$MOODLE_DIR/mod/quiz/accessrule/$name"
-              cp -r "$d" "$MOODLE_DIR/mod/quiz/accessrule/$name"
-              copied=$((copied + 1))
-              echo "  mod/quiz/accessrule/$name"
-            done
-          fi
+          # mod/quiz/accessrule/sentientia_* (quizaccess sub-plugins). The old
+          # airpay_* glob matched nothing after the rename, so
+          # quizaccess_sentientia_proctoring was silently left out.
+          for d in "$PLUGINS_SRC"/mod/quiz/accessrule/sentientia_*; do
+            [ -d "$d" ] && [ -f "$d/version.php" ] || continue
+            name=$(basename "$d")
+            rm -rf "$MOODLE_PUBLIC/mod/quiz/accessrule/$name"
+            cp -r "$d" "$MOODLE_PUBLIC/mod/quiz/accessrule/$name"
+            copied=$((copied + 1))
+            echo "  mod/quiz/accessrule/$name"
+          done
 
           # sentientia theme — needed so theme/sentientia/tests/ run with the
-          # rest of the suite (ws_contract, role_detector, etc.).
-          if [ -d "$PLUGINS_SRC/theme/sentientia" ]; then
-            rm -rf "$MOODLE_DIR/theme/sentientia"
-            cp -r "$PLUGINS_SRC/theme/sentientia" "$MOODLE_DIR/theme/sentientia"
-            copied=$((copied + 1))
-            echo "  theme/sentientia"
-          fi
+          # rest of the suite (ws_contract, role_detector, the dashboard's
+          # tenant_isolation tests, etc.).
+          rm -rf "$MOODLE_PUBLIC/theme/sentientia"
+          cp -r "$THEME_SRC" "$MOODLE_PUBLIC/theme/sentientia"
+          copied=$((copied + 1))
+          echo "  theme/sentientia"
 
           # paygw/airpay payment plugin (has tests/)
           if [ -d "$PLUGINS_SRC/payment/gateway/airpay" ]; then
-            mkdir -p "$MOODLE_DIR/payment/gateway"
-            rm -rf "$MOODLE_DIR/payment/gateway/airpay"
-            cp -r "$PLUGINS_SRC/payment/gateway/airpay" "$MOODLE_DIR/payment/gateway/airpay"
+            rm -rf "$MOODLE_PUBLIC/payment/gateway/airpay"
+            cp -r "$PLUGINS_SRC/payment/gateway/airpay" "$MOODLE_PUBLIC/payment/gateway/airpay"
             copied=$((copied + 1))
             echo "  payment/gateway/airpay"
           fi
 
           echo
-          echo "::notice::Copied $copied plugin(s) into the Moodle tree"
-          if [ $copied -eq 0 ]; then
-            echo "::error::No plugins were copied — check PLUGINS_SRC path"
+          echo "::notice::Copied $copied plugin(s) into $MOODLE_PUBLIC"
+          # Theme alone would make copied=1; a real run copies dozens.
+          if [ $copied -lt 10 ]; then
+            echo "::error::Only $copied plugin(s) copied — check PLUGINS_SRC path"
             exit 1
           fi
+
+      - name: Create the moodle database (utf8mb4)
+        env:
+          MYSQL_PWD: ci-root
+        run: |
+          set -e
+          # Explicit utf8mb4 + unicode collation rather than the image
+          # default; Moodle's full-unicode environment check needs utf8mb4.
+          # 127.0.0.1, not localhost: the client would try a unix socket.
+          mysql -h 127.0.0.1 -P 3306 -u root \
+            -e "CREATE DATABASE moodle DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
 
       - name: Write Moodle config.php for PHPUnit
         run: |
@@ -949,17 +1013,19 @@ jobs:
           unset($CFG);
           global $CFG;
           $CFG = new stdClass();
-          $CFG->dbtype    = 'pgsql';
+          $CFG->dbtype    = 'mariadb';
           $CFG->dblibrary = 'native';
-          $CFG->dbhost    = 'localhost';
+          // 127.0.0.1, not localhost: mysqli would try a unix socket.
+          $CFG->dbhost    = '127.0.0.1';
           $CFG->dbname    = 'moodle';
-          $CFG->dbuser    = 'postgres';
-          $CFG->dbpass    = 'postgres';
+          $CFG->dbuser    = 'root';
+          $CFG->dbpass    = 'ci-root';  // Throwaway: the service container dies with the runner.
           $CFG->prefix    = 'mdl_';
           $CFG->dboptions = [
-              'dbpersist' => false,
-              'dbport'    => 5432,
-              'dbsocket'  => '',
+              'dbpersist'   => false,
+              'dbport'      => 3306,
+              'dbsocket'    => '',
+              'dbcollation' => 'utf8mb4_unicode_ci',
           ];
           $CFG->wwwroot   = 'http://localhost';
           $CFG->dataroot  = getenv('HOME') . '/moodledata';
@@ -974,29 +1040,31 @@ jobs:
           PHP
           php -l "$MOODLE_DIR/config.php"
 
-      - name: Install Moodle database
-        working-directory: ${{ env.MOODLE_DIR }}
-        run: |
-          # install_database.php seeds mdl_* tables so plugin install hooks
-          # have somewhere to write. PHPUnit init then mirrors this into
-          # phpu_* tables — same fixture, separate namespace.
-          php admin/cli/install_database.php \
-            --agree-license \
-            --fullname="Airpay Academy CI" \
-            --shortname="aac-ci" \
-            --adminuser=admin \
-            --adminpass='ci-Password1!' \
-            --adminemail='ci@airpay.academy' \
-            --non-interactive \
-            --allow-unstable
-
+      # No separate "install_database.php" step any more (removed 2026-11-16).
+      # PHPUnit never uses the mdl_ site: init.php installs core and every
+      # plugin into the phpu_ tables itself. The old step was a second full
+      # install that cost minutes against the 40-minute cap, and it could
+      # never pass anyway: it passed --non-interactive and --allow-unstable,
+      # which belong to admin/cli/install.php. install_database.php rejects
+      # unknown options with cli_error() (5.2 admin/cli/install_database.php),
+      # so it exited 1 on its first line.
       - name: Initialise PHPUnit (build phpunit.xml + seed phpu_ DB)
         working-directory: ${{ env.MOODLE_DIR }}
         run: |
+          set -e
           # init.php auto-discovers every plugin with a tests/ dir and
           # adds <testsuite name="<frankenstyle>_testsuite"> entries to
-          # phpunit.xml (built from phpunit.xml.dist).
-          php admin/tool/phpunit/cli/init.php
+          # phpunit.xml (built from phpunit.xml.dist), which it writes at the
+          # checkout root with public/... directory paths. On 5.1+ the script
+          # itself lives under public/ (it chdir()s to its own dir, so the
+          # caller's cwd does not matter).
+          #
+          # Composer already ran above (cached vendor/). Without these two
+          # lines init.php would download composer.phar from getcomposer.org
+          # into the checkout root and run `composer install` a second time
+          # (public/lib/testing/lib.php testing_update_composer_dependencies).
+          cp "$(command -v composer)" composer.phar
+          php public/admin/tool/phpunit/cli/init.php --disable-composer
 
       - name: Build airpay testsuite list
         id: suites
@@ -1018,24 +1086,26 @@ jobs:
             fi
           }
 
+          # Paths are relative to the 5.1+ code root (public/); the suite
+          # names init.php generates do not carry the public/ prefix.
           echo "Discovered airpay testsuites:"
-          for d in local/sentientia_* local/sentientia_*; do
+          for d in public/local/sentientia_*; do
             [ -d "$d" ] && [ -f "$d/version.php" ] || continue
             add_suite "local_$(basename "$d")" "$d"
           done
-          for d in blocks/airpay_* blocks/sentientia_*; do
+          for d in public/blocks/sentientia_*; do
             [ -d "$d" ] && [ -f "$d/version.php" ] || continue
             add_suite "block_$(basename "$d")" "$d"
           done
-          for d in mod/quiz/accessrule/airpay_*; do
+          for d in public/mod/quiz/accessrule/sentientia_*; do
             [ -d "$d" ] && [ -f "$d/version.php" ] || continue
             add_suite "quizaccess_$(basename "$d")" "$d"
           done
-          if [ -d theme/sentientia/tests ]; then
-            add_suite "theme_sentientia" "theme/sentientia"
+          if [ -d public/theme/sentientia/tests ]; then
+            add_suite "theme_sentientia" "public/theme/sentientia"
           fi
-          if [ -d payment/gateway/airpay/tests ]; then
-            add_suite "paygw_airpay" "payment/gateway/airpay"
+          if [ -d public/payment/gateway/airpay/tests ]; then
+            add_suite "paygw_airpay" "public/payment/gateway/airpay"
           fi
 
           SUITES="${SUITES#,}"
@@ -1124,8 +1194,14 @@ jobs:
       - name: Install stylelint + postcss-scss
         run: npm install --no-save --no-audit --no-fund stylelint@^15.11.0 postcss-scss
 
+      # The theme lives only at the repo root (theme/sentientia). This pointed
+      # at moodle-enhancement/theme/sentientia, which does not exist, and the
+      # 2026-06-08 airpayux -> sentientia rename deleted .stylelintrc.ci.json
+      # without recreating it, so the guard never ran after the rename
+      # ("No such file or directory" on every push). Restored 2026-11-16;
+      # verified locally: 87 files, 0 findings, a planted violation fails.
       - name: Run the BizLMS-selector guard
-        working-directory: moodle-enhancement/theme/sentientia
+        working-directory: theme/sentientia
         run: |
           # npx resolves the stylelint binary from the repo-root node_modules
           # installed in the step above (searches up from this working dir).
