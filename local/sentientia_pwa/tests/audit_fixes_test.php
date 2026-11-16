@@ -284,19 +284,39 @@ class audit_fixes_test extends \advanced_testcase {
 
         $pem = "-----BEGIN EC PRIVATE KEY-----\nMHcCAQEE...sample\n-----END EC PRIVATE KEY-----\n";
         $wrapped = vapid_key_manager::wrap_pem($pem);
+        $this->assertSame($pem, vapid_key_manager::unwrap_pem($wrapped), 'Untampered envelope round-trips');
 
-        // Flip the last byte of the wrapped blob. After the enc:v1:
-        // prefix the rest is b64url(IV || ciphertext || tag).
-        $tampered = substr($wrapped, 0, -1) . (substr($wrapped, -1) === 'A' ? 'B' : 'A');
+        // Tamper the DECODED bytes, never the last base64url character. After
+        // the enc:v1: prefix the rest is b64url(IV[12] || tag[16] || ciphertext)
+        // (wrap_pem / unwrap_pem). A 106-byte blob leaves only 2 significant
+        // bits in the last character and base64_decode() ignores the rest, so
+        // the old "flip the last char A<->B" left the bytes unchanged 1 run in
+        // 4 (measured 1017/4000) and this test failed at random (CI run of
+        // adff0eedc, 2026-11-17). The code was right; the tampering was not.
+        $prefix = 'enc:v1:';
+        $this->assertStringStartsWith($prefix, $wrapped);
+        $blob = vapid_key_manager::b64url_decode(substr($wrapped, strlen($prefix)));
+        $this->assertGreaterThan(12 + 16, strlen($blob));
 
-        $threw = false;
-        try {
-            vapid_key_manager::unwrap_pem($tampered);
-        } catch (\Throwable $e) {
-            $threw = true;
+        // One bit in the middle of the ciphertext, then one bit in the tag.
+        $cases = [
+            'ciphertext' => 28 + intdiv(strlen($blob) - 28, 2),
+            'tag'        => 12 + 8,
+        ];
+        foreach ($cases as $where => $offset) {
+            $bytes = $blob;
+            $bytes[$offset] = chr(ord($bytes[$offset]) ^ 0x01);
+            $tampered = $prefix . vapid_key_manager::b64url_encode($bytes);
+
+            $threw = false;
+            try {
+                vapid_key_manager::unwrap_pem($tampered);
+            } catch (\Throwable $e) {
+                $threw = true;
+            }
+            $this->assertTrue($threw,
+                "Tampered {$where} MUST throw, not silently return garbage");
         }
-        $this->assertTrue($threw,
-            'Tampered ciphertext MUST throw, not silently return garbage');
     }
 
     // ════════════════════════════════════════════════════════════════
